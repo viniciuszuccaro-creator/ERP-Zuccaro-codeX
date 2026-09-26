@@ -53,6 +53,18 @@ function mapTimestamp(value: unknown): string | null {
   return value instanceof Date ? value.toISOString() : String(value);
 }
 
+function mapMoney(value: unknown, fallback = '0.000000'): string {
+  if (value == null || value === '') return fallback;
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) return fallback;
+  return amount.toFixed(6);
+}
+
+function mapNullableMoney(value: unknown): string | null {
+  if (value == null || value === '') return null;
+  return mapMoney(value);
+}
+
 function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
   const ativo = Boolean(row.ativo);
   const situacao = String(row.situacao_comercial ?? 'ATIVO') as ClienteEmpresa['situacao_comercial'];
@@ -75,6 +87,8 @@ function mapClienteEmpresa(row: Record<string, unknown>): ClienteEmpresa {
       : String(row.observacao_comercial),
     tabela_preco_id: row.tabela_preco_id == null ? null : String(row.tabela_preco_id),
     condicao_pagamento_id: row.condicao_pagamento_id == null ? null : String(row.condicao_pagamento_id),
+    limite_credito: mapNullableMoney(row.limite_credito),
+    limite_utilizado: mapMoney(row.limite_utilizado),
     origem: String(row.origem ?? 'ERP') as ClienteEmpresa['origem'],
     legacy_id: row.legacy_id == null ? null : String(row.legacy_id),
     legacy_code: row.legacy_code == null ? null : String(row.legacy_code),
@@ -415,11 +429,12 @@ export class PostgresClienteRepository implements ClienteRepository {
       const inserted = await client.query(
         `INSERT INTO cliente_empresas (
           group_id, cliente_id, empresa_id, ativo, situacao_comercial,
-          habilitado_operacao, bloqueado, observacao_comercial, condicao_pagamento_id, origem,
+          habilitado_operacao, bloqueado, observacao_comercial, condicao_pagamento_id,
+          limite_credito, limite_utilizado, origem,
           legacy_id, legacy_code, source_system, migration_batch, imported_at,
           created_by, updated_by
         ) VALUES (
-          $1,$2,$3,true,$4,$5,false,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14
+          $1,$2,$3,true,$4,$5,false,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$16
         )
         ON CONFLICT (cliente_id, empresa_id) DO NOTHING
         RETURNING *`,
@@ -431,6 +446,8 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.habilitado_operacao ?? true,
           data.observacao_comercial ?? null,
           data.condicao_pagamento_id ?? null,
+          data.limite_credito ?? null,
+          data.limite_utilizado ?? '0.000000',
           data.origem ?? 'ERP',
           data.legacy_id ?? null,
           data.legacy_code ?? null,
@@ -470,9 +487,10 @@ export class PostgresClienteRepository implements ClienteRepository {
       `UPDATE cliente_empresas SET
         situacao_comercial=$1, habilitado_operacao=$2, observacao_comercial=$3,
         tabela_preco_id=$4, condicao_pagamento_id=$5,
-        origem=$6, legacy_id=$7, legacy_code=$8, source_system=$9,
-        migration_batch=$10, imported_at=$11, updated_by=$12
-       WHERE group_id=$13 AND cliente_id=$14 AND empresa_id=$15
+        limite_credito=$6, limite_utilizado=$7,
+        origem=$8, legacy_id=$9, legacy_code=$10, source_system=$11,
+        migration_batch=$12, imported_at=$13, updated_by=$14
+       WHERE group_id=$15 AND cliente_id=$16 AND empresa_id=$17
        RETURNING *`,
       [
         data.situacao_comercial ?? current.situacao_comercial,
@@ -484,6 +502,8 @@ export class PostgresClienteRepository implements ClienteRepository {
           ? current.tabela_preco_id
           : data.tabela_preco_id,
         data.condicao_pagamento_id === undefined ? current.condicao_pagamento_id : data.condicao_pagamento_id,
+        data.limite_credito === undefined ? current.limite_credito : data.limite_credito,
+        data.limite_utilizado === undefined ? current.limite_utilizado : data.limite_utilizado,
         data.origem ?? current.origem,
         data.legacy_id === undefined ? current.legacy_id : data.legacy_id,
         data.legacy_code === undefined ? current.legacy_code : data.legacy_code,

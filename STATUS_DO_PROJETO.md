@@ -1,3 +1,20 @@
+## #67 STATUS REAL — Onda 6 CreditPort ClienteEmpresa (2026-09-26T20:52Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 032 + CreditPort + wire createApp |
+| Testado | **SIM** — credito 8/8 · runtime01 · runtime05 (032 colunas) |
+| CI | **SIM** @ `8d6d8dfb` frontend+backend SUCCESS |
+| Mesclado | **NÃO** (empilhada; bases #45/#46 primeiro) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 6 - adapter CreditPort (2026-09-26T20:52Z)
+
+- Branch `cursor/comercial360-onda6-credit-port-392b` (base #66).
+- `limite_credito` NULL = não configurado (skip assert). Insuficiente → `aprovar-credito`.
+- `runtime05` deixa de tratar limite_* como forbidden da 010 (são da 032).
+- Sem VPS / sem HD legado. Sem nova PR empilhada até bases estáveis.
+
 ## #66 STATUS REAL — Onda 6 ContaReceber↔Pedido multiempresa (2026-09-26T19:48Z)
 
 | Etapa | Estado |

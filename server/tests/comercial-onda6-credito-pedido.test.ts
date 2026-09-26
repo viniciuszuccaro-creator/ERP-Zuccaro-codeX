@@ -63,11 +63,20 @@ test('politica pura: total em micros e avaliacao fail-closed', () => {
   assert.match(none.motivo, /sem limite/i);
 });
 
-test('assertCredito: sem porta nao inventa; porta nega sem alçada', async () => {
+test('assertCredito: sem porta ou snapshot null nao inventa; porta insuficiente exige alçada', async () => {
   const skipped = await assertCreditoSuficienteOuAprovar({
     groupId, empresaId, clienteEmpresaId: clienteId, items, credit: null, canAprovarCredito: false,
   });
   assert.equal(skipped, null);
+
+  const unsetPort: ComercialCreditPort = {
+    async getClienteEmpresaCredit() {
+      return null;
+    },
+  };
+  assert.equal(await assertCreditoSuficienteOuAprovar({
+    groupId, empresaId, clienteEmpresaId: clienteId, items, credit: unsetPort, canAprovarCredito: false,
+  }), null);
 
   const port: ComercialCreditPort = {
     async getClienteEmpresaCredit() {
@@ -169,4 +178,42 @@ test('PedidoService com credito suficiente cria normalmente', async () => {
   const { service } = fixture({ credit });
   const created = await service.create(ctx, basePayload);
   assert.equal(created.total, '100.000000');
+});
+
+test('createClienteEmpresaCreditPort ignora limite nao configurado e aplica quando presente', async () => {
+  const { createClienteEmpresaCreditPort } = await import('../src/services/comercialCreditoPolicy.js');
+  const unset = createClienteEmpresaCreditPort({
+    getEmpresaLinkById: async () => ({
+      ativo: true,
+      limite_credito: null,
+      limite_utilizado: '0.000000',
+    }),
+  });
+  assert.equal(await unset.getClienteEmpresaCredit({
+    groupId, empresaId, clienteEmpresaId: clienteId,
+  }), null);
+
+  const configured = createClienteEmpresaCreditPort({
+    getEmpresaLinkById: async () => ({
+      ativo: true,
+      limite_credito: '250.000000',
+      limite_utilizado: '40.000000',
+    }),
+  });
+  assert.deepEqual(await configured.getClienteEmpresaCredit({
+    groupId, empresaId, clienteEmpresaId: clienteId,
+  }), { limite_credito: '250.000000', limite_utilizado: '40.000000' });
+
+  const { service } = fixture({ credit: configured });
+  const created = await service.create(ctx, basePayload);
+  assert.equal(created.total, '100.000000');
+});
+
+test('app.ts wiring usa createClienteEmpresaCreditPort', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  const migration = await readFile(new URL('../migrations/032_cliente_empresas_credito.sql', import.meta.url), 'utf8');
+  assert.match(app, /createClienteEmpresaCreditPort\(clienteRepo\)/);
+  assert.match(migration, /limite_credito/);
+  assert.match(migration, /limite_utilizado/);
 });

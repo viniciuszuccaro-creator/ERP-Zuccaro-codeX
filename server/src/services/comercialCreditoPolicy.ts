@@ -1,7 +1,8 @@
 /**
  * Crédito Comercial 360 (Onda 6) — política pura.
  * Saldo/limite NÃO são copiados para o Pedido; vêm de porta do Financeiro/Cadastros.
- * Sem porta → não inventa. Com porta e limite insuficiente → exige `aprovar-credito`.
+ * Sem porta / snapshot null → não inventa e não força alçada.
+ * Com porta e limite insuficiente → exige `aprovar-credito`.
  */
 import { AppError } from '../api/errors.js';
 
@@ -63,6 +64,35 @@ export function computePedidoTotalMicros(items: CreditoItem[]): bigint {
   return total;
 }
 
+/**
+ * Adapter CreditPort lendo limite no ClienteEmpresa canônico (Onda 6).
+ * limite_credito NULL → retorna null (não inventa / não força alçada).
+ */
+export function createClienteEmpresaCreditPort(
+  clientes: {
+    getEmpresaLinkById(
+      scope: { groupId: string; empresaId: string },
+      id: string,
+    ): Promise<{
+      ativo: boolean;
+      limite_credito: string | null;
+      limite_utilizado: string;
+    } | null>;
+  },
+): ComercialCreditPort {
+  return {
+    async getClienteEmpresaCredit({ groupId, empresaId, clienteEmpresaId }) {
+      const link = await clientes.getEmpresaLinkById({ groupId, empresaId }, clienteEmpresaId);
+      if (!link || !link.ativo) return null;
+      if (link.limite_credito == null || link.limite_credito === '') return null;
+      return {
+        limite_credito: link.limite_credito,
+        limite_utilizado: link.limite_utilizado || '0.000000',
+      };
+    },
+  };
+}
+
 export function evaluatePedidoCreditoSnapshot(options: {
   items: CreditoItem[];
   limite_credito: string;
@@ -106,21 +136,8 @@ export async function assertCreditoSuficienteOuAprovar(options: {
     clienteEmpresaId: options.clienteEmpresaId,
   });
   if (!snap) {
-    if (options.canAprovarCredito) {
-      return {
-        aprovado: true,
-        limite_total: '0.000000',
-        limite_utilizado: '0.000000',
-        limite_disponivel: '0.000000',
-        valor_pedido: microsToDecimal(computePedidoTotalMicros(options.items)),
-        motivo: 'Credito ausente com alçada aprovar-credito',
-      };
-    }
-    throw new AppError(
-      403,
-      'CREDITO_INDISPONIVEL',
-      `${options.entityLabel || 'Pedido'} sem snapshot de credito exige permissao aprovar-credito`,
-    );
+    // Snapshot ausente = crédito não configurado no ClienteEmpresa (não inventa, não força alçada).
+    return null;
   }
   const evaluation = evaluatePedidoCreditoSnapshot({
     items: options.items,
