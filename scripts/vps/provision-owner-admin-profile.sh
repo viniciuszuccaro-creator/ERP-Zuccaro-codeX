@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
-# Vincula a conta real do proprietário a um perfil admin ERP (role + permissoes + empresa).
-# Demote o usuário sintético (não privilegiar synth).
-# Não imprime UUID, senha, token ou e-mail completo.
-#
-# Pré-requisito: auth.users já existe para OWNER_EMAIL (login externo já funcionando).
+# Vincula a conta real do proprietário a um perfil admin ERP (único) e demove o synth.
+# Fail-closed: Auth única, perfil único, grupo/empresa explícitos e conferidos
+# ANTES de qualquer UPDATE; owner + demote synth na MESMA transação; aborta se
+# as contagens finais não forem as esperadas.
+# Não imprime UUID completo, senha, token ou e-mail completo.
+# NÃO executar automaticamente — só na Web Console com confirmação humana.
 #
 # Uso (Web Console VPS):
 #   CONFIRM_OWNER_ADMIN_PROFILE=YES \
 #     OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+#     OWNER_GROUP_ID='<uuid-grupo>' \
+#     OWNER_EMPRESA_ID='<uuid-empresa>' \
 #     SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' \
 #     DEMOTE_SYNTH=YES \
 #     bash scripts/vps/provision-owner-admin-profile.sh
+#
+# Contagens esperadas (obrigatórias):
+#   owner_auth_count=1 · owner_profile_count∈{0,1} pré-escrita · pós: owner_admin_ativos=1
+#   synth_admin_ativos=0 (se DEMOTE_SYNTH=YES)
 set -Eeuo pipefail
 
 CONFIRM_OWNER_ADMIN_PROFILE="${CONFIRM_OWNER_ADMIN_PROFILE:-}"
@@ -18,6 +25,12 @@ OWNER_EMAIL="${OWNER_EMAIL:-vinicius.zuccaro@gmail.com}"
 SYNTH_EMAIL="${SYNTH_EMAIL:-gate-d.synth@dev.synthetic.local}"
 DEMOTE_SYNTH="${DEMOTE_SYNTH:-YES}"
 OWNER_FULL_NAME="${OWNER_FULL_NAME:-Vinicius Zuccaro}"
+OWNER_GROUP_ID="${OWNER_GROUP_ID:-}"
+OWNER_EMPRESA_ID="${OWNER_EMPRESA_ID:-}"
+EXPECTED_OWNER_ADMIN="${EXPECTED_OWNER_ADMIN:-1}"
+EXPECTED_SYNTH_ADMIN="${EXPECTED_SYNTH_ADMIN:-0}"
+
+UUID_RE='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
 
 echo "OWNER_ADMIN_PROVISION_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 [[ "$CONFIRM_OWNER_ADMIN_PROFILE" == "YES" ]] || {
@@ -30,85 +43,264 @@ OWNER_LOCAL_LEN=$(( ${#OWNER_EMAIL} - ${#OWNER_DOMAIN} - 1 ))
 echo "owner_email_domain=${OWNER_DOMAIN}"
 echo "owner_email_local_len=${OWNER_LOCAL_LEN}"
 echo "demote_synth=${DEMOTE_SYNTH}"
+echo "expected_owner_admin=${EXPECTED_OWNER_ADMIN}"
+echo "expected_synth_admin=${EXPECTED_SYNTH_ADMIN}"
 
-AUTH_COUNT="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At -v owner_email="$OWNER_EMAIL" <<'SQL'
-SELECT count(*)::text
-FROM auth.users
-WHERE lower(coalesce(email, '')) = lower(:'owner_email');
+if [[ -z "$OWNER_GROUP_ID" || -z "$OWNER_EMPRESA_ID" ]]; then
+  echo 'BLOCKED: set OWNER_GROUP_ID and OWNER_EMPRESA_ID (explícitos) before any write' >&2
+  echo 'HINT: descubra com SELECT sanitizado (sem colar UUID no chat) e passe nos env' >&2
+  exit 2
+fi
+[[ "$OWNER_GROUP_ID" =~ $UUID_RE ]] || {
+  echo 'BLOCKED: OWNER_GROUP_ID_invalid_uuid' >&2
+  exit 2
+}
+[[ "$OWNER_EMPRESA_ID" =~ $UUID_RE ]] || {
+  echo 'BLOCKED: OWNER_EMPRESA_ID_invalid_uuid' >&2
+  exit 2
+}
+echo "owner_group_id_prefix=${OWNER_GROUP_ID:0:8}"
+echo "owner_empresa_id_prefix=${OWNER_EMPRESA_ID:0:8}"
+
+PRECHECK="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At -F '|' \
+  -v owner_email="$OWNER_EMAIL" \
+  -v owner_group_id="$OWNER_GROUP_ID" \
+  -v owner_empresa_id="$OWNER_EMPRESA_ID" \
+  -v synth_email="$SYNTH_EMAIL" <<'SQL'
+SELECT
+  (SELECT count(*)::text FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'owner_email')),
+  (SELECT count(*)::text FROM profiles p
+    WHERE lower(p.email) = lower(:'owner_email')
+       OR p.auth_user_id IN (SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'owner_email'))),
+  (SELECT count(*)::text FROM groups g WHERE g.id = :'owner_group_id'::uuid),
+  (SELECT count(*)::text FROM empresas e
+    WHERE e.id = :'owner_empresa_id'::uuid AND e.group_id = :'owner_group_id'::uuid),
+  (SELECT count(*)::text FROM profiles p
+    WHERE lower(p.email) = lower(:'synth_email')
+       OR p.auth_user_id IN (SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'synth_email')));
 SQL
 )"
-AUTH_COUNT="$(echo "$AUTH_COUNT" | tr -d '[:space:]')"
-echo "owner_auth_found_count=${AUTH_COUNT}"
-if [[ -z "$AUTH_COUNT" || "$AUTH_COUNT" == "0" ]]; then
-  echo 'BLOCKED: owner_auth_user_missing (faça um login com a conta real antes)' >&2
+PRECHECK="$(echo "$PRECHECK" | tr -d '[:space:]')"
+IFS='|' read -r AUTH_COUNT PROFILE_COUNT GROUP_OK EMPRESA_OK SYNTH_PROFILE_COUNT <<<"$PRECHECK"
+
+echo "owner_auth_count=${AUTH_COUNT}"
+echo "owner_profile_count=${PROFILE_COUNT}"
+echo "group_exists_count=${GROUP_OK}"
+echo "empresa_in_group_count=${EMPRESA_OK}"
+echo "synth_profile_count=${SYNTH_PROFILE_COUNT}"
+
+[[ "$AUTH_COUNT" == "1" ]] || {
+  echo "BLOCKED: owner_auth_must_be_unique got=${AUTH_COUNT}" >&2
+  exit 3
+}
+if [[ "$PROFILE_COUNT" != "0" && "$PROFILE_COUNT" != "1" ]]; then
+  echo "BLOCKED: owner_profile_must_be_unique got=${PROFILE_COUNT}" >&2
   exit 3
 fi
+[[ "$GROUP_OK" == "1" ]] || {
+  echo 'BLOCKED: OWNER_GROUP_ID_not_found' >&2
+  exit 3
+}
+[[ "$EMPRESA_OK" == "1" ]] || {
+  echo 'BLOCKED: OWNER_EMPRESA_ID_not_in_OWNER_GROUP_ID' >&2
+  exit 3
+}
+if [[ "$DEMOTE_SYNTH" == "YES" && "$SYNTH_PROFILE_COUNT" != "0" && "$SYNTH_PROFILE_COUNT" != "1" ]]; then
+  echo "BLOCKED: synth_profile_must_be_unique got=${SYNTH_PROFILE_COUNT}" >&2
+  exit 3
+fi
+echo 'precheck_ok=YES'
+echo 'precheck_group_empresa_conferidos=YES'
 
-docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+# TX atômica: params via TEMP TABLE (:'var' não expandem dentro de DO $$).
+if ! docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v owner_email="$OWNER_EMAIL" \
   -v owner_full_name="$OWNER_FULL_NAME" \
-  -v synth_email="$SYNTH_EMAIL" <<'SQL'
--- Atualiza perfil existente (por auth_user_id ou e-mail)
-UPDATE profiles p
-SET auth_user_id = COALESCE(
-      p.auth_user_id,
-      (SELECT u.id FROM auth.users u WHERE lower(coalesce(u.email,'')) = lower(:'owner_email') LIMIT 1)
-    ),
-    email = lower(:'owner_email'),
-    full_name = COALESCE(NULLIF(trim(p.full_name), ''), :'owner_full_name'),
-    role = 'admin',
-    ativo = true,
-    group_id = COALESCE(p.group_id, (SELECT id FROM groups ORDER BY id LIMIT 1)),
-    empresa_id = COALESCE(
-      p.empresa_id,
-      (SELECT e.id FROM empresas e
-        WHERE e.group_id = COALESCE(p.group_id, (SELECT id FROM groups ORDER BY id LIMIT 1))
-        ORDER BY e.id LIMIT 1)
-    ),
-    permissoes = jsonb_build_object(
-      '*', jsonb_build_array(
-        'visualizar','criar','editar','excluir','aprovar','cancelar',
-        'importar','exportar','configurar','executar','inativar','restaurar',
-        'receber','pagar','baixar','conciliar','estornar','emitir'
-      )
-    ),
-    updated_at = timezone('utc', now())
-WHERE lower(p.email) = lower(:'owner_email')
-   OR p.auth_user_id IN (
-        SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'owner_email')
-      );
+  -v owner_group_id="$OWNER_GROUP_ID" \
+  -v owner_empresa_id="$OWNER_EMPRESA_ID" \
+  -v synth_email="$SYNTH_EMAIL" \
+  -v demote_synth="$DEMOTE_SYNTH" \
+  -v expected_owner_admin="$EXPECTED_OWNER_ADMIN" \
+  -v expected_synth_admin="$EXPECTED_SYNTH_ADMIN" <<'SQL'
+BEGIN;
 
--- Insere se ainda não houver perfil para o auth user
-INSERT INTO profiles (
-  auth_user_id, email, full_name, role, ativo, group_id, empresa_id, permissoes
-)
-SELECT
-  u.id,
+CREATE TEMP TABLE _owner_prov (
+  owner_email text NOT NULL,
+  owner_full_name text NOT NULL,
+  group_id uuid NOT NULL,
+  empresa_id uuid NOT NULL,
+  synth_email text NOT NULL,
+  demote text NOT NULL,
+  expected_owner_admin int NOT NULL,
+  expected_synth_admin int NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO _owner_prov (
+  owner_email, owner_full_name, group_id, empresa_id,
+  synth_email, demote, expected_owner_admin, expected_synth_admin
+) VALUES (
   lower(:'owner_email'),
   :'owner_full_name',
-  'admin',
-  true,
-  (SELECT id FROM groups ORDER BY id LIMIT 1),
-  (SELECT e.id FROM empresas e
-    WHERE e.group_id = (SELECT id FROM groups ORDER BY id LIMIT 1)
-    ORDER BY e.id LIMIT 1),
-  jsonb_build_object(
-    '*', jsonb_build_array(
-      'visualizar','criar','editar','excluir','aprovar','cancelar',
-      'importar','exportar','configurar','executar','inativar','restaurar',
-      'receber','pagar','baixar','conciliar','estornar','emitir'
-    )
-  )
-FROM auth.users u
-WHERE lower(coalesce(u.email,'')) = lower(:'owner_email')
-  AND NOT EXISTS (
-    SELECT 1 FROM profiles p
-    WHERE p.auth_user_id = u.id
-       OR lower(p.email) = lower(:'owner_email')
-  )
-LIMIT 1;
+  :'owner_group_id'::uuid,
+  :'owner_empresa_id'::uuid,
+  lower(:'synth_email'),
+  upper(trim(:'demote_synth')),
+  :'expected_owner_admin'::int,
+  :'expected_synth_admin'::int
+);
 
-SELECT 'owner_admin_ativos=' || count(*)::text AS evidence
+DO $prov$
+DECLARE
+  r _owner_prov%ROWTYPE;
+  v_auth_count int;
+  v_auth_id uuid;
+  v_profile_count int;
+  v_profile_id uuid;
+  v_group_ok int;
+  v_empresa_ok int;
+  v_synth_count int;
+  v_owner_admin int;
+  v_synth_admin int;
+BEGIN
+  SELECT * INTO STRICT r FROM _owner_prov LIMIT 1;
+
+  SELECT count(*), min(id) INTO v_auth_count, v_auth_id
+  FROM auth.users
+  WHERE lower(coalesce(email, '')) = r.owner_email;
+
+  IF v_auth_count <> 1 OR v_auth_id IS NULL THEN
+    RAISE EXCEPTION 'BLOCKED: owner_auth_must_be_unique got=%', v_auth_count;
+  END IF;
+
+  SELECT count(*) INTO v_group_ok FROM groups WHERE id = r.group_id;
+  IF v_group_ok <> 1 THEN
+    RAISE EXCEPTION 'BLOCKED: OWNER_GROUP_ID_not_found';
+  END IF;
+
+  SELECT count(*) INTO v_empresa_ok
+  FROM empresas WHERE id = r.empresa_id AND group_id = r.group_id;
+  IF v_empresa_ok <> 1 THEN
+    RAISE EXCEPTION 'BLOCKED: OWNER_EMPRESA_ID_not_in_OWNER_GROUP_ID';
+  END IF;
+
+  SELECT count(*) INTO v_profile_count
+  FROM profiles p
+  WHERE lower(p.email) = r.owner_email OR p.auth_user_id = v_auth_id;
+
+  IF v_profile_count > 1 THEN
+    RAISE EXCEPTION 'BLOCKED: owner_profile_must_be_unique got=%', v_profile_count;
+  END IF;
+
+  IF v_profile_count = 1 THEN
+    SELECT p.id INTO v_profile_id
+    FROM profiles p
+    WHERE lower(p.email) = r.owner_email OR p.auth_user_id = v_auth_id
+    ORDER BY CASE WHEN p.auth_user_id = v_auth_id THEN 0 ELSE 1 END, p.id
+    LIMIT 1;
+
+    UPDATE profiles p
+    SET auth_user_id = v_auth_id,
+        email = r.owner_email,
+        full_name = COALESCE(NULLIF(trim(p.full_name), ''), r.owner_full_name),
+        role = 'admin',
+        ativo = true,
+        group_id = r.group_id,
+        empresa_id = r.empresa_id,
+        permissoes = jsonb_build_object(
+          '*', jsonb_build_array(
+            'visualizar','criar','editar','excluir','aprovar','cancelar',
+            'importar','exportar','configurar','executar','inativar','restaurar',
+            'receber','pagar','baixar','conciliar','estornar','emitir'
+          )
+        ),
+        updated_at = timezone('utc', now())
+    WHERE p.id = v_profile_id;
+  ELSE
+    INSERT INTO profiles (
+      auth_user_id, email, full_name, role, ativo, group_id, empresa_id, permissoes
+    ) VALUES (
+      v_auth_id,
+      r.owner_email,
+      r.owner_full_name,
+      'admin',
+      true,
+      r.group_id,
+      r.empresa_id,
+      jsonb_build_object(
+        '*', jsonb_build_array(
+          'visualizar','criar','editar','excluir','aprovar','cancelar',
+          'importar','exportar','configurar','executar','inativar','restaurar',
+          'receber','pagar','baixar','conciliar','estornar','emitir'
+        )
+      )
+    );
+  END IF;
+
+  IF r.demote = 'YES' THEN
+    SELECT count(*) INTO v_synth_count
+    FROM profiles p
+    WHERE lower(p.email) = r.synth_email
+       OR p.auth_user_id IN (
+            SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = r.synth_email
+          );
+    IF v_synth_count > 1 THEN
+      RAISE EXCEPTION 'BLOCKED: synth_profile_must_be_unique got=%', v_synth_count;
+    END IF;
+
+    UPDATE profiles p
+    SET role = 'user',
+        permissoes = '{}'::jsonb,
+        updated_at = timezone('utc', now())
+    WHERE lower(p.email) = r.synth_email
+       OR p.auth_user_id IN (
+            SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = r.synth_email
+          );
+  END IF;
+
+  SELECT count(*) INTO v_owner_admin
+  FROM profiles p
+  WHERE (lower(p.email) = r.owner_email OR p.auth_user_id = v_auth_id)
+    AND p.ativo IS TRUE
+    AND p.role = 'admin'
+    AND p.group_id = r.group_id
+    AND p.empresa_id = r.empresa_id
+    AND p.permissoes ? '*';
+
+  IF v_owner_admin <> r.expected_owner_admin THEN
+    RAISE EXCEPTION 'BLOCKED: owner_admin_count_mismatch got=% expected=%',
+      v_owner_admin, r.expected_owner_admin;
+  END IF;
+
+  SELECT count(*) INTO v_synth_admin
+  FROM profiles p
+  WHERE (lower(p.email) = r.synth_email
+      OR p.auth_user_id IN (
+           SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = r.synth_email
+         ))
+    AND p.ativo IS TRUE
+    AND p.role = 'admin';
+
+  IF r.demote = 'YES' AND v_synth_admin <> r.expected_synth_admin THEN
+    RAISE EXCEPTION 'BLOCKED: synth_admin_count_mismatch got=% expected=%',
+      v_synth_admin, r.expected_synth_admin;
+  END IF;
+END
+$prov$;
+
+COMMIT;
+SQL
+then
+  echo 'transaction=COMMITTED'
+else
+  echo 'BLOCKED: transaction_failed_rolled_back' >&2
+  exit 4
+fi
+
+OWNER_FINAL="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At \
+  -v owner_email="$OWNER_EMAIL" \
+  -v owner_group_id="$OWNER_GROUP_ID" \
+  -v owner_empresa_id="$OWNER_EMPRESA_ID" <<'SQL'
+SELECT count(*)::text
 FROM profiles p
 WHERE (lower(p.email) = lower(:'owner_email')
     OR p.auth_user_id IN (
@@ -116,35 +308,16 @@ WHERE (lower(p.email) = lower(:'owner_email')
        ))
   AND p.ativo IS TRUE
   AND p.role = 'admin'
-  AND p.group_id IS NOT NULL
-  AND p.empresa_id IS NOT NULL
+  AND p.group_id = :'owner_group_id'::uuid
+  AND p.empresa_id = :'owner_empresa_id'::uuid
   AND p.permissoes ? '*';
-
-SELECT 'owner_empresas_no_grupo=' || count(*)::text AS evidence
-FROM empresas e
-WHERE e.group_id = (
-  SELECT p.group_id FROM profiles p
-  WHERE lower(p.email) = lower(:'owner_email')
-     OR p.auth_user_id IN (
-          SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'owner_email')
-        )
-  LIMIT 1
-);
 SQL
+)"
+OWNER_FINAL="$(echo "$OWNER_FINAL" | tr -d '[:space:]')"
 
-if [[ "$DEMOTE_SYNTH" == "YES" ]]; then
-  docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
-    -v synth_email="$SYNTH_EMAIL" <<'SQL'
-UPDATE profiles p
-SET role = 'user',
-    permissoes = '{}'::jsonb,
-    updated_at = timezone('utc', now())
-WHERE lower(p.email) = lower(:'synth_email')
-   OR p.auth_user_id IN (
-        SELECT id FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'synth_email')
-      );
-
-SELECT 'synth_admin_ativos=' || count(*)::text AS evidence
+SYNTH_FINAL="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At \
+  -v synth_email="$SYNTH_EMAIL" <<'SQL'
+SELECT count(*)::text
 FROM profiles p
 WHERE (lower(p.email) = lower(:'synth_email')
     OR p.auth_user_id IN (
@@ -153,6 +326,21 @@ WHERE (lower(p.email) = lower(:'synth_email')
   AND p.ativo IS TRUE
   AND p.role = 'admin';
 SQL
+)"
+SYNTH_FINAL="$(echo "$SYNTH_FINAL" | tr -d '[:space:]')"
+
+echo "owner_admin_ativos=${OWNER_FINAL}"
+echo "synth_admin_ativos=${SYNTH_FINAL}"
+
+[[ "$OWNER_FINAL" == "$EXPECTED_OWNER_ADMIN" ]] || {
+  echo "BLOCKED: postcheck_owner_admin_mismatch got=${OWNER_FINAL} expected=${EXPECTED_OWNER_ADMIN}" >&2
+  exit 5
+}
+if [[ "$DEMOTE_SYNTH" == "YES" ]]; then
+  [[ "$SYNTH_FINAL" == "$EXPECTED_SYNTH_ADMIN" ]] || {
+    echo "BLOCKED: postcheck_synth_admin_mismatch got=${SYNTH_FINAL} expected=${EXPECTED_SYNTH_ADMIN}" >&2
+    exit 5
+  }
   echo 'synth_demote=YES'
 else
   echo 'synth_demote=SKIP'
@@ -160,4 +348,5 @@ fi
 
 echo "OWNER_ADMIN_PROVISION_OK"
 echo "NEXT=rebuild_api_web_logout_login_owner"
+echo "NOTE=nao_rodar_script_antigo_sem_OWNER_GROUP_ID_EMPRESA_ID"
 echo "OWNER_ADMIN_PROVISION_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

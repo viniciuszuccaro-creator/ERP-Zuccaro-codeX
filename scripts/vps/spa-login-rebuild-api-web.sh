@@ -2,10 +2,14 @@
 # Rebuild erp-api-dev + erp-web-dev com o formulário e-mail/senha (PR #45).
 # Não mexe no Supabase. Não usa down -v.
 #
-# NÃO renomeia containers do Compose (labels fazem o `compose up` recriar o
-# backup e disputar 3080/3081). Rollback = tag de imagem + stop/rm do oficial.
+# Preserva container_name oficiais e portas 127.0.0.1:3080 / 127.0.0.1:3081.
+# Antes de trocar: tag de rollback. Se health falhar após up: tenta rollback
+# automático via scripts/vps/spa-login-rollback-api-web.sh.
 #
-# Uso (Web Console VPS) — PR ainda aberta:
+# NÃO renomeia containers do Compose (labels fazem o `compose up` recriar o
+# backup e disputar 3080/3081).
+#
+# Uso (Web Console VPS) — NÃO rodar o script antigo sem este HEAD:
 #   cd /opt/erp-zuccaro
 #   git fetch origin cursor/spa-login-http-supabase-392b
 #   git checkout --detach origin/cursor/spa-login-http-supabase-392b
@@ -23,6 +27,8 @@ EXPECTED_MARKER_API='passwordLoginPath'
 EXPECTED_MARKER_SPA='erp-login-email'
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.erp.yml}"
 ENV_FILE="${ENV_FILE:-.env.erp.dev}"
+ROLLBACK_TAG_FILE="${ROLLBACK_TAG_FILE:-$ROOT/.spa-login-rollback-tags}"
+AUTO_ROLLBACK_ON_FAIL="${AUTO_ROLLBACK_ON_FAIL:-YES}"
 
 echo "SPA_LOGIN_REBUILD_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "git_ref=${GIT_REF}"
@@ -67,8 +73,9 @@ fi
 echo 'login_markers_on_ref=YES'
 
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
+ROLLBACK_API_TAG="erp-zuccaro-erp-api:pre-spa-login-${STAMP}"
+ROLLBACK_WEB_TAG="erp-zuccaro-erp-web:pre-spa-login-${STAMP}"
 
-# Tag imagens atuais para rollback (sem rename de container Compose).
 tag_running_image() {
   local name="$1" tag="$2"
   if ! docker ps -a --format '{{.Names}}' | grep -Fxq "$name"; then
@@ -81,11 +88,45 @@ tag_running_image() {
   echo "tag_${name}=${tag}"
 }
 
-tag_running_image erp-api-dev "erp-zuccaro-erp-api:pre-spa-login-${STAMP}"
-tag_running_image erp-web-dev "erp-zuccaro-erp-web:pre-spa-login-${STAMP}"
+tag_running_image erp-api-dev "$ROLLBACK_API_TAG"
+tag_running_image erp-web-dev "$ROLLBACK_WEB_TAG"
 
-# Parar/remover oficiais e qualquer residual *-pre-spa-login-* / backups
-# que ainda tenham label Compose e dispute porta.
+# Persistência das tags para rollback executável (humano ou auto).
+cat >"$ROLLBACK_TAG_FILE" <<EOF
+# Gerado por spa-login-rebuild-api-web.sh — sem segredos
+ROLLBACK_API_TAG='${ROLLBACK_API_TAG}'
+ROLLBACK_WEB_TAG='${ROLLBACK_WEB_TAG}'
+MERGE_SHA8='${MERGE_SHA8}'
+STAMP='${STAMP}'
+EOF
+echo "rollback_tag_file=${ROLLBACK_TAG_FILE}"
+echo "rollback_api_tag=${ROLLBACK_API_TAG}"
+echo "rollback_web_tag=${ROLLBACK_WEB_TAG}"
+
+attempt_auto_rollback() {
+  local reason="$1"
+  echo "AUTO_ROLLBACK_TRIGGER reason=${reason}"
+  if [[ "$AUTO_ROLLBACK_ON_FAIL" != "YES" ]]; then
+    echo 'auto_rollback=SKIP (AUTO_ROLLBACK_ON_FAIL!=YES)'
+    return 1
+  fi
+  if ! docker image inspect "$ROLLBACK_API_TAG" >/dev/null 2>&1; then
+    echo 'BLOCKED: auto_rollback_api_tag_missing' >&2
+    return 1
+  fi
+  if ! docker image inspect "$ROLLBACK_WEB_TAG" >/dev/null 2>&1; then
+    echo 'BLOCKED: auto_rollback_web_tag_missing' >&2
+    return 1
+  fi
+  CONFIRM_SPA_LOGIN_ROLLBACK=YES \
+    ERP_DOCKER_NETWORK="$ERP_DOCKER_NETWORK" \
+    ROLLBACK_API_TAG="$ROLLBACK_API_TAG" \
+    ROLLBACK_WEB_TAG="$ROLLBACK_WEB_TAG" \
+    COMPOSE_FILE="$COMPOSE_FILE" \
+    ENV_FILE="$ENV_FILE" \
+    bash "$ROOT/scripts/vps/spa-login-rollback-api-web.sh"
+}
+
 free_port_holders() {
   local port="$1"
   local ids
@@ -97,9 +138,14 @@ free_port_holders() {
   for id in $ids; do
     local n
     n="$(docker inspect -f '{{.Name}}' "$id" | sed 's#^/##')"
-    echo "stop_rm_port_${port}=${n}"
-    docker stop "$id" >/dev/null || true
-    docker rm "$id" >/dev/null || true
+    # Só remove oficiais ERP ou residuais spa-login — não outros serviços.
+    if [[ "$n" == "erp-api-dev" || "$n" == "erp-web-dev" || "$n" =~ ^erp-(api|web)-dev-pre-spa-login- ]]; then
+      echo "stop_rm_port_${port}=${n}"
+      docker stop "$id" >/dev/null || true
+      docker rm "$id" >/dev/null || true
+    else
+      echo "WARN: port_${port}_foreign_holder=${n} (não removido)"
+    fi
   done
 }
 
@@ -111,7 +157,6 @@ for name in erp-api-dev erp-web-dev; do
   fi
 done
 
-# Residuais de tentativa anterior (rename + compose recreate)
 while read -r n; do
   [[ -z "$n" ]] && continue
   echo "stop_rm_residual=${n}"
@@ -128,19 +173,26 @@ docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build erp-api erp-web
 echo "compose_up_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-api
 
+API_OK=0
 for i in 1 2 3 4 5 6 7 8 9 10; do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://127.0.0.1:3080/health 2>/dev/null || true)"
   echo "health_3080_poll_${i}=${code}"
-  [[ "$code" == "200" ]] && break
+  if [[ "$code" == "200" ]]; then API_OK=1; break; fi
   sleep 3
 done
+if [[ "$API_OK" != "1" ]]; then
+  echo 'BLOCKED: health_3080_not_200_after_recreate' >&2
+  attempt_auto_rollback 'api_health' || true
+  exit 4
+fi
 
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-web
 
+WEB_OK=0
 for i in 1 2 3 4 5 6 7 8; do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://127.0.0.1:3081/ 2>/dev/null || true)"
   echo "web_3081_poll_${i}=${code}"
-  [[ "$code" == "200" ]] && break
+  if [[ "$code" == "200" ]]; then WEB_OK=1; break; fi
   sleep 2
 done
 
@@ -151,6 +203,12 @@ echo "api_image=${API_IMAGE}"
 echo "web_image=${WEB_IMAGE}"
 echo "web_status=${WEB_STATUS}"
 
+# Confirma binds 3080/3081 nos oficiais.
+API_PORTS="$(docker inspect -f '{{json .HostConfig.PortBindings}}' erp-api-dev 2>/dev/null || echo missing)"
+WEB_PORTS="$(docker inspect -f '{{json .HostConfig.PortBindings}}' erp-web-dev 2>/dev/null || echo missing)"
+echo "api_port_bindings_has_3080=$(echo "$API_PORTS" | grep -q '3080' && echo YES || echo NO)"
+echo "web_port_bindings_has_3081=$(echo "$WEB_PORTS" | grep -q '3081' && echo YES || echo NO)"
+
 curl -sS -o /dev/null -w 'health_3080_after=%{http_code}\n' --connect-timeout 5 \
   http://127.0.0.1:3080/health 2>/dev/null || echo 'health_3080_after=000'
 curl -sS -o /dev/null -w 'ready_3080_after=%{http_code}\n' --connect-timeout 5 \
@@ -158,11 +216,12 @@ curl -sS -o /dev/null -w 'ready_3080_after=%{http_code}\n' --connect-timeout 5 \
 curl -sS -o /dev/null -w 'web_3081_after=%{http_code}\n' --connect-timeout 5 \
   http://127.0.0.1:3081/ 2>/dev/null || echo 'web_3081_after=000'
 
-if [[ "$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 http://127.0.0.1:3081/ 2>/dev/null || true)" != "200" ]]; then
+if [[ "$WEB_OK" != "1" ]]; then
   echo 'BLOCKED: web_3081_not_200' >&2
   docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E 'erp-web|NAMES' || true
   docker logs erp-web-dev --tail 60 2>&1 || true
   ss -lntp | grep -E ':3081|:3080' || true
+  attempt_auto_rollback 'web_health' || true
   exit 5
 fi
 
@@ -171,6 +230,7 @@ SESSION_PROBE="$(curl -sS -m 8 -X POST http://127.0.0.1:3080/api/v1/auth/session
 echo "auth_session_probe_len=${#SESSION_PROBE}"
 if echo "$SESSION_PROBE" | grep -q 'AUTH_REQUIRED'; then
   echo 'BLOCKED: auth_session_still_requires_token_old_api' >&2
+  attempt_auto_rollback 'auth_session_old' || true
   exit 4
 fi
 if echo "$SESSION_PROBE" | grep -qiE 'email|password|validation|INVALID|required'; then
@@ -189,10 +249,12 @@ if [[ -n "$ASSET" ]]; then
     echo 'spa_login_form_in_bundle=YES'
   else
     echo 'BLOCKED: spa_login_form_missing_in_built_bundle' >&2
+    attempt_auto_rollback 'spa_marker_missing' || true
     exit 5
   fi
 else
   echo 'BLOCKED: spa_index_asset_not_found' >&2
+  attempt_auto_rollback 'spa_asset_missing' || true
   exit 5
 fi
 
@@ -210,7 +272,10 @@ except Exception as e:
 ' "$META" 2>/dev/null || echo 'meta_parse=SKIP'
 
 echo "SPA_LOGIN_REBUILD_OK merge_sha8=${MERGE_SHA8}"
-echo "rollback_api_tag=erp-zuccaro-erp-api:pre-spa-login-${STAMP}"
-echo "rollback_web_tag=erp-zuccaro-erp-web:pre-spa-login-${STAMP}"
+echo "rollback_api_tag=${ROLLBACK_API_TAG}"
+echo "rollback_web_tag=${ROLLBACK_WEB_TAG}"
+echo "rollback_cmd=CONFIRM_SPA_LOGIN_ROLLBACK=YES ERP_DOCKER_NETWORK=${ERP_DOCKER_NETWORK} ROLLBACK_TAG_FILE=${ROLLBACK_TAG_FILE} bash scripts/vps/spa-login-rollback-api-web.sh"
+echo "port_3080_preserved=YES"
+echo "port_3081_preserved=YES"
 echo "NEXT=abrir_https://erp-dev.cpaferroeaco.com.br_hard_refresh_e_validar_campos_email_senha"
 echo "SPA_LOGIN_REBUILD_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

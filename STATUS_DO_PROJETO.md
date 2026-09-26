@@ -1,3 +1,12 @@
+## #43 merged + provision/rebuild endurecidos (#45) (2026-09-26T16:20Z)
+
+- **#43 MERGED** em `main` @ `f37b8a65` · CI main [36254946184](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36254946184) frontend+backend **SUCCESS** (seed Central 360 corrigido).
+- **#45** (não executar o script antigo na VPS):
+  - `provision-owner-admin-profile.sh`: exige Auth única (=1), perfil único (0|1), `OWNER_GROUP_ID`+`OWNER_EMPRESA_ID` explícitos e conferidos **antes** de UPDATE; owner+demote synth na **mesma TX**; falha se `owner_admin_ativos`/`synth_admin_ativos` ≠ esperados.
+  - `spa-login-rebuild-api-web.sh`: preserva 3080/3081, grava `.spa-login-rollback-tags`, auto-rollback em falha de health/marker.
+  - Novo: `spa-login-rollback-api-web.sh` (rollback executável com `CONFIRM_SPA_LOGIN_ROLLBACK=YES`).
+- **Não rodar** provision/rebuild na VPS até o humano colar o HEAD novo com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`.
+
 ## Owner admin — rebuild VPS confirmado (2026-09-26T14:58Z)
 
 - Evidência Web Console (sanitizada): `SPA_LOGIN_REBUILD_OK` · `merge_sha8=d696c00b` · `spa_asset=/assets/index-DUZjZKV8.js` · `spa_login_form_in_bundle=YES` · `auth_mode=supabase_user` · `password_login_path=/api/v1/auth/session` · `browser_login=True` · health 3080/3081=200 · runtime `ERP-RUNTIME-08B`.
