@@ -144,6 +144,36 @@ on_rebuild_err() {
 }
 trap on_rebuild_err ERR
 
+# Só inspeciona — NÃO para containers. Falha com return (não exit) para set -e/trap.
+assert_no_unknown_port_holders() {
+  local port="$1"
+  local allowed_csv="$2"
+  local ids
+  ids="$(docker ps -aq --filter publish="$port" 2>/dev/null || true)"
+  if [[ -z "$ids" ]]; then
+    echo "port_${port}_holders=none"
+    return 0
+  fi
+  IFS=',' read -r -a allowed_arr <<<"$allowed_csv"
+  for id in $ids; do
+    local n
+    n="$(docker inspect -f '{{.Name}}' "$id" | sed 's#^/##')"
+    local ok=0
+    for allowed in "${allowed_arr[@]}"; do
+      if [[ "$n" == "$allowed" || "$n" =~ ^erp-(api|web)-dev-pre-spa-login- ]]; then
+        ok=1
+        break
+      fi
+    done
+    if [[ "$ok" != "1" ]]; then
+      echo "BLOCKED: port_${port}_unknown_container name=${n}" >&2
+      return 6
+    fi
+    echo "port_${port}_holder_allowed=${n}"
+  done
+}
+
+# Para apenas holders permitidos. Desconhecido → return 6 (dispara trap se SWAP_STARTED=1).
 free_port_holders() {
   local port="$1"
   local allowed_csv="$2"
@@ -166,7 +196,7 @@ free_port_holders() {
     done
     if [[ "$ok" != "1" ]]; then
       echo "BLOCKED: port_${port}_unknown_container name=${n}" >&2
-      exit 6
+      return 6
     fi
     echo "stop_rm_port_${port}=${n}"
     docker stop "$id" >/dev/null || true
@@ -174,7 +204,11 @@ free_port_holders() {
   done
 }
 
-# Troca só depois do build ok — trap cobre falhas de stop/up/health.
+# Preflight completo das duas portas ANTES de qualquer stop/rm de oficiais.
+assert_no_unknown_port_holders 3080 "erp-api-dev"
+assert_no_unknown_port_holders 3081 "erp-web-dev"
+
+# Troca só depois do build + preflight ok — trap cobre falhas de stop/up/health.
 SWAP_STARTED=1
 echo "compose_swap_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -200,11 +234,13 @@ echo "compose_up_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-api
 
 API_OK=0
-for i in 1 2 3 4 5 6 7 8 9 10; do
+API_HEALTH_ATTEMPTS="${SPA_LOGIN_API_HEALTH_ATTEMPTS:-10}"
+API_HEALTH_SLEEP="${SPA_LOGIN_API_HEALTH_SLEEP:-3}"
+for ((i=1; i<=API_HEALTH_ATTEMPTS; i++)); do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://127.0.0.1:3080/health 2>/dev/null || true)"
   echo "health_3080_poll_${i}=${code}"
   if [[ "$code" == "200" ]]; then API_OK=1; break; fi
-  sleep 3
+  if (( i < API_HEALTH_ATTEMPTS )); then sleep "$API_HEALTH_SLEEP"; fi
 done
 if [[ "$API_OK" != "1" ]]; then
   echo 'BLOCKED: health_3080_not_200_after_recreate' >&2
@@ -215,11 +251,13 @@ fi
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-web
 
 WEB_OK=0
-for i in 1 2 3 4 5 6 7 8; do
+WEB_HEALTH_ATTEMPTS="${SPA_LOGIN_WEB_HEALTH_ATTEMPTS:-8}"
+WEB_HEALTH_SLEEP="${SPA_LOGIN_WEB_HEALTH_SLEEP:-2}"
+for ((i=1; i<=WEB_HEALTH_ATTEMPTS; i++)); do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://127.0.0.1:3081/ 2>/dev/null || true)"
   echo "web_3081_poll_${i}=${code}"
   if [[ "$code" == "200" ]]; then WEB_OK=1; break; fi
-  sleep 2
+  if (( i < WEB_HEALTH_ATTEMPTS )); then sleep "$WEB_HEALTH_SLEEP"; fi
 done
 
 API_IMAGE="$(docker inspect -f '{{.Config.Image}}' erp-api-dev 2>/dev/null || echo missing)"

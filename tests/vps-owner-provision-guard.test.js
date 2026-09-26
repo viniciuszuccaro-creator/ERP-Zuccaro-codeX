@@ -129,16 +129,203 @@ exit 0
   assert.equal(/transaction=COMMITTED/.test(fail.stdout), false);
 });
 
-test('rebuild script constrói antes de stop e tem trap de rollback', () => {
+test('rebuild script: preflight de porta ANTES de stop e return (não exit) em holder desconhecido', () => {
   const src = fs.readFileSync(REBUILD, 'utf8');
   const buildIdx = src.indexOf('compose_build_begin');
+  const preflightIdx = src.indexOf('assert_no_unknown_port_holders 3080');
   const swapIdx = src.indexOf('compose_swap_begin');
   const stopIdx = src.indexOf('stop_rm_${name}');
   assert.ok(buildIdx > 0);
-  assert.ok(swapIdx > buildIdx);
+  assert.ok(preflightIdx > buildIdx);
+  assert.ok(swapIdx > preflightIdx);
   assert.ok(stopIdx > swapIdx);
   assert.match(src, /trap on_rebuild_err ERR/);
-  assert.match(src, /SWAP_STARTED=1/);
+  assert.match(src, /assert_no_unknown_port_holders/);
+  assert.match(src, /return 6/);
+  assert.equal(/exit 6/.test(src), false);
+});
+
+test('REAL spa-login-rebuild: holder desconhecido NÃO remove oficiais', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spa-rebuild-real-'));
+  const bin = path.join(tmp, 'bin');
+  fs.mkdirSync(bin);
+  const events = path.join(tmp, 'events.log');
+  const tagFile = path.join(tmp, 'rollback-tags');
+
+  fs.writeFileSync(path.join(bin, 'curl'), `#!/usr/bin/env bash
+echo "curl:$*" >> "${events}"
+echo '000'
+exit 0
+`, { mode: 0o755 });
+
+  fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
+echo "docker:$*" >> "${events}"
+case "$1" in
+  ps)
+    if [[ "$*" == *"--filter publish=3080"* ]]; then exit 0; fi
+    if [[ "$*" == *"--filter publish=3081"* ]]; then
+      echo 'cid3081'
+      exit 0
+    fi
+    if [[ "$*" == *"--format {{.Names}}"* ]]; then
+      echo 'erp-api-dev'
+      echo 'erp-web-dev'
+      exit 0
+    fi
+    exit 0
+    ;;
+  inspect)
+    if [[ "$*" == *"{{.Name}}"* ]]; then
+      echo '/unknown-web'
+      exit 0
+    fi
+    if [[ "$*" == *"{{.Image}}"* ]]; then
+      echo 'sha256:deadbeef'
+      exit 0
+    fi
+    exit 0
+    ;;
+  tag) echo "tag_ok" >> "${events}"; exit 0 ;;
+  image) exit 0 ;;
+  compose)
+    if [[ "$*" == *build* ]]; then echo 'build_ok' >> "${events}"; exit 0; fi
+    if [[ "$*" == *up* ]]; then echo 'UP_CALLED' >> "${events}"; exit 1; fi
+    exit 0
+    ;;
+  stop) echo "STOP:$*" >> "${events}"; exit 0 ;;
+  rm) echo "RM:$*" >> "${events}"; exit 0 ;;
+esac
+exit 0
+`, { mode: 0o755 });
+
+  const result = spawnSync('bash', [REBUILD], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      CONFIRM_SPA_LOGIN_REBUILD: 'YES',
+      ERP_DOCKER_NETWORK: 'supabase_default',
+      GIT_REF: 'HEAD',
+      COMPOSE_FILE: 'docker-compose.erp.yml',
+      ENV_FILE: 'tests/fixtures/spa-login.env.erp.dev',
+      ROLLBACK_TAG_FILE: tagFile,
+      AUTO_ROLLBACK_ON_FAIL: 'YES',
+    },
+    cwd: ROOT,
+  });
+  assert.ok(fs.existsSync(events), `events missing; stdout=${result.stdout} stderr=${result.stderr}`);
+  const log = fs.readFileSync(events, 'utf8');
+  assert.notEqual(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stderr + result.stdout, /port_3081_unknown_container/);
+  assert.match(log, /build_ok/);
+  assert.equal(/STOP:.*erp-api-dev|stop_rm_erp-api-dev=YES/.test(log + result.stdout), false);
+  assert.equal(/STOP:.*erp-web-dev|stop_rm_erp-web-dev=YES/.test(log + result.stdout), false);
+  assert.equal(/UP_CALLED/.test(log), false);
+  assert.equal(/AUTO_ROLLBACK_TRIGGER/.test(result.stdout + result.stderr), false);
+});
+
+test('REAL spa-login-rebuild: falha compose up após swap dispara rollback', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spa-rebuild-upfail-'));
+  const bin = path.join(tmp, 'bin');
+  fs.mkdirSync(bin);
+  const events = path.join(tmp, 'events.log');
+  const tagFile = path.join(tmp, 'rollback-tags');
+  const rollbackScript = path.join(ROOT, 'scripts/vps/spa-login-rollback-api-web.sh');
+
+  fs.writeFileSync(path.join(bin, 'curl'), `#!/usr/bin/env bash
+echo "curl:$*" >> "${events}"
+# health polls after up → fail
+if [[ "$*" == *"3080/health"* ]]; then echo '000'; exit 0; fi
+echo '000'
+exit 0
+`, { mode: 0o755 });
+
+  fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
+echo "docker:$*" >> "${events}"
+case "$1" in
+  ps) exit 0 ;;
+  inspect)
+    if [[ "$*" == *"{{.Image}}"* ]]; then echo 'sha256:abc'; exit 0; fi
+    if [[ "$*" == *"{{.Config.Image}}"* ]]; then echo 'img:x'; exit 0; fi
+    if [[ "$*" == *"PortBindings"* ]]; then echo '{}'; exit 0; fi
+    if [[ "$*" == *"State.Status"* ]]; then echo 'exited'; exit 0; fi
+    exit 0
+    ;;
+  tag) exit 0 ;;
+  image) exit 0 ;;
+  compose)
+    if [[ "$*" == *build* ]]; then exit 0; fi
+    if [[ "$*" == *up* ]]; then echo 'UP' >> "${events}"; exit 0; fi
+    exit 0
+    ;;
+  stop) echo "STOP:$*" >> "${events}"; exit 0 ;;
+  rm) echo "RM:$*" >> "${events}"; exit 0 ;;
+  logs) exit 0 ;;
+esac
+exit 0
+`, { mode: 0o755 });
+
+  const result = spawnSync('bash', [REBUILD], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      CONFIRM_SPA_LOGIN_REBUILD: 'YES',
+      ERP_DOCKER_NETWORK: 'supabase_default',
+      GIT_REF: 'HEAD',
+      ENV_FILE: 'tests/fixtures/spa-login.env.erp.dev',
+      ROLLBACK_TAG_FILE: tagFile,
+      AUTO_ROLLBACK_ON_FAIL: 'YES',
+      SPA_LOGIN_API_HEALTH_ATTEMPTS: '1',
+      SPA_LOGIN_API_HEALTH_SLEEP: '0',
+      SPA_LOGIN_WEB_HEALTH_ATTEMPTS: '1',
+      SPA_LOGIN_WEB_HEALTH_SLEEP: '0',
+    },
+    cwd: ROOT,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /AUTO_ROLLBACK_TRIGGER|health_3080_not_200/);
+  assert.ok(fs.existsSync(rollbackScript));
+});
+
+test('REAL provision restore: falha docker cp não executa psql nem OK', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'owner-restore-cp-'));
+  const bin = path.join(tmp, 'bin');
+  fs.mkdirSync(bin);
+  const events = path.join(tmp, 'events.log');
+  const jsonFile = path.join(tmp, 'backup.json');
+  fs.writeFileSync(jsonFile, '[]\n');
+
+  fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
+echo "docker:$*" >> "${events}"
+if [[ "$1" == "cp" ]]; then
+  echo 'cp_fail' >> "${events}"
+  exit 1
+fi
+if [[ "$1" == "exec" ]]; then
+  echo 'PSQL_OR_EXEC' >> "${events}"
+  exit 0
+fi
+exit 0
+`, { mode: 0o755 });
+
+  const result = spawnSync('bash', [PROVISION], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      CONFIRM_OWNER_ADMIN_RESTORE: 'YES',
+      OWNER_PROV_RESTORE_FILE: jsonFile,
+      OWNER_PROFILE_EXISTED_BEFORE_FLAG: 'YES',
+      OWNER_EMAIL: 'owner@example.com',
+    },
+  });
+  const log = fs.readFileSync(events, 'utf8');
+  assert.notEqual(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stderr + result.stdout, /restore_docker_cp_failed/);
+  assert.equal(/OWNER_ADMIN_RESTORE_OK/.test(result.stdout), false);
+  assert.equal(/PSQL_OR_EXEC/.test(log), false);
+  assert.match(log, /cp_fail/);
 });
 
 test('spa-login-rollback: CONFIRM obrigatório e imagem ausente falha', () => {

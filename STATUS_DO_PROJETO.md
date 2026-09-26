@@ -1,15 +1,15 @@
-## #45 STATUS REAL — acesso owner (2026-09-26T17:30Z)
+## #45 STATUS REAL — acesso owner (2026-09-26T20:32Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado (código) | **SIM** — HEAD `62e5e46f`+ (testes rollback reforçados neste push) |
-| Testado (local) | **SIM** — provision/rebuild/rollback sucesso+falha; PGlite grant+restore; HTTP exact; sessão expirada/adulterada |
-| CI | **SIM** @ `62e5e46f` [36257934449](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36257934449) frontend+backend SUCCESS |
-| Re-review Codex | **PENDENTE** no HEAD ≥`67a3284b` (Codex ainda citava `cab15caa` às 17:08Z) |
+| Implementado (código) | **SIM** — preflight portas antes de stop; restore `docker cp` fail-closed + destino exclusivo |
+| Testado (local) | **SIM** — scripts **reais** com Docker stub: holder desconhecido sem remover oficiais; cp fail sem psql/OK; 11/11 |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — lista 5326727005 corrigida neste lote |
 | Mesclado em `main` | **NÃO** |
-| Implantado VPS | **BLOQUEADO** — exige (1) aprovação Codex do SHA, (2) humano colar `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`, (3) NÃO usar script antigo, (4) logout/login real |
+| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real (não declarar #45 concluída sem isso) |
 
-Script canônico: `scripts/vps/provision-owner-admin-profile.sh` + `spa-login-rebuild-api-web.sh` / `spa-login-rollback-api-web.sh`. Sem `min(uuid)`, if não invertido, build-antes-stop, restore seletivo JSON.
+Script canônico: `scripts/vps/provision-owner-admin-profile.sh` + `spa-login-rebuild-api-web.sh` / `spa-login-rollback-api-web.sh`. Sem `min(uuid)`, if não invertido, build-antes-stop, restore seletivo JSON, preflight 3080/3081 antes de qualquer stop.
 
 ### PASTE_VPS (só após Codex OK + IDs humanos) — registrar digests
 

@@ -47,11 +47,22 @@ restore_selective_profiles() {
     echo "BLOCKED: restore_file_missing path=${restore_file}" >&2
     return 3
   }
-  docker cp "$restore_file" supabase-db:/tmp/owner-prov-restore.json
+  # Destino exclusivo — não reutiliza /tmp/owner-prov-restore.json de restauração anterior.
+  local dest_name="owner-prov-restore-$(date -u +%Y%m%d%H%M%S)-$$-$RANDOM.json"
+  local dest_path="/tmp/${dest_name}"
+  if ! docker cp "$restore_file" "supabase-db:${dest_path}"; then
+    echo "BLOCKED: restore_docker_cp_failed dest=${dest_name}" >&2
+    return 5
+  fi
+  if ! docker exec supabase-db test -f "$dest_path"; then
+    echo "BLOCKED: restore_dest_missing_after_cp dest=${dest_name}" >&2
+    return 5
+  fi
   docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
     -v owner_email="$OWNER_EMAIL" \
     -v synth_email="$SYNTH_EMAIL" \
-    -v owner_existed_before="$owner_existed" <<'SQL'
+    -v owner_existed_before="$owner_existed" \
+    -v restore_path="$dest_path" <<'SQL'
 BEGIN;
 CREATE TEMP TABLE _owner_restore (
   payload jsonb NOT NULL,
@@ -60,7 +71,7 @@ CREATE TEMP TABLE _owner_restore (
   owner_existed text NOT NULL
 ) ON COMMIT DROP;
 INSERT INTO _owner_restore VALUES (
-  pg_read_file('/tmp/owner-prov-restore.json')::jsonb,
+  pg_read_file(:'restore_path')::jsonb,
   lower(:'owner_email'),
   lower(:'synth_email'),
   upper(trim(:'owner_existed_before'))
