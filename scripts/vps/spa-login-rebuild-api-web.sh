@@ -2,16 +2,15 @@
 # Rebuild erp-api-dev + erp-web-dev com o formulário e-mail/senha (PR #45).
 # Não mexe no Supabase. Não usa down -v.
 #
-# Uso (Web Console VPS) — com PR ainda aberta (deploy do branch):
+# NÃO renomeia containers do Compose (labels fazem o `compose up` recriar o
+# backup e disputar 3080/3081). Rollback = tag de imagem + stop/rm do oficial.
+#
+# Uso (Web Console VPS) — PR ainda aberta:
 #   cd /opt/erp-zuccaro
 #   git fetch origin cursor/spa-login-http-supabase-392b
 #   git checkout --detach origin/cursor/spa-login-http-supabase-392b
 #   CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 #     GIT_REF=HEAD \
-#     bash scripts/vps/spa-login-rebuild-api-web.sh
-#
-# Após merge #45 na main:
-#   CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 #     bash scripts/vps/spa-login-rebuild-api-web.sh
 set -Eeuo pipefail
 
@@ -47,7 +46,6 @@ curl -sS -o /dev/null -w 'web_3081_before=%{http_code}\n' --connect-timeout 3 \
 if [[ "$GIT_REF" == "HEAD" ]]; then
   echo 'git_checkout=SKIP_ALREADY_ON_REF'
 else
-  # Aceita branch remota (ex.: origin/cursor/spa-login-http-supabase-392b) ou main.
   REF_BRANCH="${GIT_REF#origin/}"
   git fetch origin "$REF_BRANCH"
   git checkout --detach "origin/${REF_BRANCH}"
@@ -60,48 +58,98 @@ echo "merge_sha8=${MERGE_SHA8}"
 
 if ! grep -q "$EXPECTED_MARKER_API" "$ROOT/server/src/api/router.ts"; then
   echo 'BLOCKED: auth_session_endpoint_missing_on_ref' >&2
-  echo 'HINT=fetch_PR_45_branch_or_merge_first' >&2
   exit 3
 fi
 if ! grep -q "$EXPECTED_MARKER_SPA" "$ROOT/src/components/UserNotRegisteredError.jsx"; then
   echo 'BLOCKED: spa_login_form_missing_on_ref' >&2
-  echo 'HINT=fetch_PR_45_branch_or_merge_first' >&2
   exit 3
 fi
 echo 'login_markers_on_ref=YES'
 
-# Preserve official containers by renaming before recreate (rollback names).
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
+
+# Tag imagens atuais para rollback (sem rename de container Compose).
+tag_running_image() {
+  local name="$1" tag="$2"
+  if ! docker ps -a --format '{{.Names}}' | grep -Fxq "$name"; then
+    echo "tag_${name}=SKIP_NOT_FOUND"
+    return 0
+  fi
+  local img
+  img="$(docker inspect -f '{{.Image}}' "$name")"
+  docker tag "$img" "$tag"
+  echo "tag_${name}=${tag}"
+}
+
+tag_running_image erp-api-dev "erp-zuccaro-erp-api:pre-spa-login-${STAMP}"
+tag_running_image erp-web-dev "erp-zuccaro-erp-web:pre-spa-login-${STAMP}"
+
+# Parar/remover oficiais e qualquer residual *-pre-spa-login-* / backups
+# que ainda tenham label Compose e dispute porta.
+free_port_holders() {
+  local port="$1"
+  local ids
+  ids="$(docker ps -aq --filter publish="$port" 2>/dev/null || true)"
+  if [[ -z "$ids" ]]; then
+    echo "port_${port}_holders=none"
+    return 0
+  fi
+  for id in $ids; do
+    local n
+    n="$(docker inspect -f '{{.Name}}' "$id" | sed 's#^/##')"
+    echo "stop_rm_port_${port}=${n}"
+    docker stop "$id" >/dev/null || true
+    docker rm "$id" >/dev/null || true
+  done
+}
+
 for name in erp-api-dev erp-web-dev; do
   if docker ps -a --format '{{.Names}}' | grep -Fxq "$name"; then
-    rollback="${name}-pre-spa-login-${STAMP}"
-    echo "rename_${name}=${rollback}"
-    docker rename "$name" "$rollback"
-    docker update --restart=no "$rollback" >/dev/null || true
-    docker stop "$rollback" >/dev/null || true
-  else
-    echo "rename_${name}=SKIP_NOT_FOUND"
+    echo "stop_rm_${name}=YES"
+    docker stop "$name" >/dev/null || true
+    docker rm "$name" >/dev/null || true
   fi
 done
+
+# Residuais de tentativa anterior (rename + compose recreate)
+while read -r n; do
+  [[ -z "$n" ]] && continue
+  echo "stop_rm_residual=${n}"
+  docker stop "$n" >/dev/null || true
+  docker rm "$n" >/dev/null || true
+done < <(docker ps -a --format '{{.Names}}' | grep -E '^erp-(api|web)-dev-pre-spa-login-' || true)
+
+free_port_holders 3080
+free_port_holders 3081
 
 export ERP_DOCKER_NETWORK
 echo "compose_build_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build erp-api erp-web
 echo "compose_up_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps erp-api
-# Wait health before web (depends_on health in compose)
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-api
+
 for i in 1 2 3 4 5 6 7 8 9 10; do
   code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://127.0.0.1:3080/health 2>/dev/null || true)"
   echo "health_3080_poll_${i}=${code}"
   [[ "$code" == "200" ]] && break
   sleep 3
 done
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps erp-web
+
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-web
+
+for i in 1 2 3 4 5 6 7 8; do
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://127.0.0.1:3081/ 2>/dev/null || true)"
+  echo "web_3081_poll_${i}=${code}"
+  [[ "$code" == "200" ]] && break
+  sleep 2
+done
 
 API_IMAGE="$(docker inspect -f '{{.Config.Image}}' erp-api-dev 2>/dev/null || echo missing)"
 WEB_IMAGE="$(docker inspect -f '{{.Config.Image}}' erp-web-dev 2>/dev/null || echo missing)"
+WEB_STATUS="$(docker inspect -f '{{.State.Status}}' erp-web-dev 2>/dev/null || echo missing)"
 echo "api_image=${API_IMAGE}"
 echo "web_image=${WEB_IMAGE}"
+echo "web_status=${WEB_STATUS}"
 
 curl -sS -o /dev/null -w 'health_3080_after=%{http_code}\n' --connect-timeout 5 \
   http://127.0.0.1:3080/health 2>/dev/null || echo 'health_3080_after=000'
@@ -110,7 +158,14 @@ curl -sS -o /dev/null -w 'ready_3080_after=%{http_code}\n' --connect-timeout 5 \
 curl -sS -o /dev/null -w 'web_3081_after=%{http_code}\n' --connect-timeout 5 \
   http://127.0.0.1:3081/ 2>/dev/null || echo 'web_3081_after=000'
 
-# Prove API route is public (empty body → validation, not AUTH_REQUIRED).
+if [[ "$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 http://127.0.0.1:3081/ 2>/dev/null || true)" != "200" ]]; then
+  echo 'BLOCKED: web_3081_not_200' >&2
+  docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E 'erp-web|NAMES' || true
+  docker logs erp-web-dev --tail 60 2>&1 || true
+  ss -lntp | grep -E ':3081|:3080' || true
+  exit 5
+fi
+
 SESSION_PROBE="$(curl -sS -m 8 -X POST http://127.0.0.1:3080/api/v1/auth/session \
   -H 'Content-Type: application/json' -d '{}' || true)"
 echo "auth_session_probe_len=${#SESSION_PROBE}"
@@ -125,7 +180,6 @@ else
   echo 'WARN: unexpected auth/session response — check API logs'
 fi
 
-# Prove SPA bundle exposes login field id (download index html → asset).
 HTML="$(curl -sS -m 8 http://127.0.0.1:3081/ || true)"
 ASSET="$(printf '%s' "$HTML" | grep -oE '/assets/index-[^"]+\.js' | head -1 || true)"
 echo "spa_asset=${ASSET:-missing}"
@@ -156,6 +210,7 @@ except Exception as e:
 ' "$META" 2>/dev/null || echo 'meta_parse=SKIP'
 
 echo "SPA_LOGIN_REBUILD_OK merge_sha8=${MERGE_SHA8}"
+echo "rollback_api_tag=erp-zuccaro-erp-api:pre-spa-login-${STAMP}"
+echo "rollback_web_tag=erp-zuccaro-erp-web:pre-spa-login-${STAMP}"
 echo "NEXT=abrir_https://erp-dev.cpaferroeaco.com.br_hard_refresh_e_validar_campos_email_senha"
-echo "HINT_AUTH=se_login_falhar_reactivar_perfil_sintetico_com_provision-gate-d-auth-synthetic.sh"
 echo "SPA_LOGIN_REBUILD_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
