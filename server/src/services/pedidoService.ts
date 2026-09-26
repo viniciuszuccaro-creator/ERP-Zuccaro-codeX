@@ -23,6 +23,10 @@ import {
   assertMargemDentroDaAlcadaOuAprovar,
   type ComercialCostPort,
 } from './comercialMargemAlcadaPolicy.js';
+import {
+  deveLiberarDescontoSemAprovarPorAvista,
+  type ComercialAlcadaConfigPort,
+} from './comercialCondicaoAvistaPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -42,7 +46,7 @@ export type PedidoSalePricePort = {
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
 
-export type { ComercialCostPort };
+export type { ComercialCostPort, ComercialAlcadaConfigPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status, cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id, tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao) });
@@ -65,6 +69,8 @@ export class PedidoService {
     private readonly prices: PedidoSalePricePort,
     /** Opcional: sem porta de custo a alçada de margem não roda (não inventa custo). */
     private readonly costs: ComercialCostPort | null = null,
+    /** Opcional: config de alçada (à vista); ausente = fail-closed (não libera). */
+    private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -74,8 +80,8 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
-      // Create: criador = actor → alçada acima da livre nunca autoaprova.
-      await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
+      // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
+      await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
@@ -117,9 +123,9 @@ export class PedidoService {
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
-        // Segregação: aprovador do desconto ≠ criador do Orçamento.
+        // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
-        const alcada = await this.assertDescontoAlcada(ctx, data.itens, criadorOrcamento);
+        const alcada = await this.assertDescontoAlcada(ctx, scope, data, criadorOrcamento, executor);
         const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
@@ -175,7 +181,7 @@ export class PedidoService {
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
       const criador = await this.resolveCriadorActorId('Pedido', id);
-      const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
+      const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
@@ -307,19 +313,41 @@ export class PedidoService {
 
   private async assertDescontoAlcada(
     ctx: RequestContext,
-    itens: PedidoCreate['itens'],
+    scope: PedidoScope,
+    data: PedidoCreate,
     criadorActorId: string | null,
+    executor?: DbQueryExecutor,
   ): Promise<DescontoAlcadaDecisao> {
-    if (!descontoExcedeAlcadaLivre(itens)) {
+    const liberadoPorAvista = await this.resolveLiberacaoAvista(scope, data.condicao_pagamento_id, executor);
+    if (!liberadoPorAvista && !descontoExcedeAlcadaLivre(data.itens)) {
       return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: 0 };
     }
 
     return assertDescontoDentroDaAlcadaOuAprovar({
-      items: itens,
-      canAprovar: await this.canAprovarComercial(ctx),
+      items: data.itens,
+      canAprovar: liberadoPorAvista ? false : await this.canAprovarComercial(ctx),
       actorId: ctx.actorId!,
       criadorActorId,
       entityLabel: 'Pedido',
+      liberadoPorAvista,
+    });
+  }
+
+  private async resolveLiberacaoAvista(
+    scope: PedidoScope,
+    condicaoId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<boolean> {
+    if (!this.alcadaConfig) return false;
+    const cfg = await this.alcadaConfig.getConfig({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+    });
+    if (cfg?.avistaLiberaDescontoSemAprovar !== true) return false;
+    const condicao = await this.condicoes.get(scope, condicaoId, executor);
+    return deveLiberarDescontoSemAprovarPorAvista({
+      parcelas: condicao?.parcelas,
+      regraPermite: true,
     });
   }
 
