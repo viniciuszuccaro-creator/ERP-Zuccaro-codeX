@@ -12,7 +12,7 @@ import type { ObraRepository } from '../repositories/inMemoryObraRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
-import { PEDIDO_ORIGENS, PEDIDO_STATUS, PEDIDO_TIPOS_COMERCIAIS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoCreateResolved, type PedidoOrigem, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoTipoComercial } from '../repositories/pedidoTypes.js';
+import { PEDIDO_ORIGENS, PEDIDO_STATUS, PEDIDO_TIPOS_COMERCIAIS, pedidoAnexoCreateSchema, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoCreateResolved, type PedidoOrigem, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoTipoComercial } from '../repositories/pedidoTypes.js';
 import { aggregatePedidoTipoComercial, resolveItemTipoComercial } from './comercialTipoComercialPolicy.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import { z } from 'zod';
@@ -213,6 +213,73 @@ export class PedidoService {
       await this.auditRow(ctx, 'change_status', before, after, executor);
       return after;
     });
+  }
+
+  async listAnexos(ctx: RequestContext, id: string) {
+    const scope = await this.prepare(ctx, 'visualizar');
+    this.assertId(id, 'pedidoId');
+    await this.requirePedido(scope, id);
+    return this.repo.listAnexos(scope, id);
+  }
+
+  async registerAnexo(ctx: RequestContext, id: string, payload: unknown) {
+    const scope = await this.prepare(ctx, 'editar');
+    this.assertId(id, 'pedidoId');
+    const parsed = pedidoAnexoCreateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Pedido anexo payload', parsed.error.flatten());
+    this.assertAnexoStorageKey(scope, id, parsed.data.storage_key);
+    return this.repo.withTransaction(async (executor) => {
+      const pedido = await this.requirePedido(scope, id, executor);
+      if (pedido.status !== 'EM_ABERTO') this.stateConflict();
+      try {
+        const created = await this.repo.createAnexo(scope, id, parsed.data, ctx.actorId!, executor);
+        await this.audit.append({
+          groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+          actorEmail: ctx.actorEmail, entity: 'PedidoAnexo', entityId: created.id, action: 'create',
+          afterData: sanitizeAuditSnapshot({
+            id: created.id, pedido_id: created.pedido_id, storage_key: created.storage_key,
+            mime_type: created.mime_type, tamanho_bytes: created.tamanho_bytes, status: created.status,
+            group_id: created.group_id, empresa_id: created.empresa_id,
+          }),
+          requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+        }, executor);
+        return created;
+      } catch (error) {
+        if (String((error as Error).message).includes('PEDIDO_ANEXO_STORAGE_KEY_CONFLICT')
+          || ((error as { code?: string }).code === '23505' && String((error as Error).message).includes('storage_key'))) {
+          throw new AppError(409, 'PEDIDO_ANEXO_STORAGE_KEY_CONFLICT', 'Anexo storage key already exists');
+        }
+        throw error;
+      }
+    });
+  }
+
+  async deactivateAnexo(ctx: RequestContext, id: string, anexoId: string) {
+    const scope = await this.prepare(ctx, 'editar');
+    this.assertId(id, 'pedidoId');
+    this.assertId(anexoId, 'anexoId');
+    return this.repo.withTransaction(async (executor) => {
+      await this.requirePedido(scope, id, executor);
+      const after = await this.repo.deactivateAnexo(scope, id, anexoId, ctx.actorId!, executor);
+      if (!after) throw new AppError(404, 'PEDIDO_ANEXO_NOT_FOUND', 'Anexo not found');
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail, entity: 'PedidoAnexo', entityId: after.id, action: 'change_status',
+        afterData: sanitizeAuditSnapshot({
+          id: after.id, pedido_id: after.pedido_id, status: after.status, ativo: after.ativo,
+          group_id: after.group_id, empresa_id: after.empresa_id,
+        }),
+        requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+      return after;
+    });
+  }
+
+  private assertAnexoStorageKey(scope: PedidoScope, pedidoId: string, storageKey: string) {
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/pedidos/${pedidoId}/documents/`;
+    if (!storageKey.startsWith(prefix)) {
+      throw new AppError(422, 'PEDIDO_ANEXO_PATH_INVALID', 'Anexo path outside pedido tenant scope');
+    }
   }
 
   private allowedTransition(row: Pedido, target: PedidoStatus) {

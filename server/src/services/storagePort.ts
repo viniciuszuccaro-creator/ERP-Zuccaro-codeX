@@ -2,7 +2,7 @@ export type StorageObjectContext = {
   groupId: string;
   empresaId?: string | null;
   actorId: string;
-  entity: 'Produto' | 'Orcamento';
+  entity: 'Produto' | 'Orcamento' | 'Pedido';
   entityId: string;
 };
 

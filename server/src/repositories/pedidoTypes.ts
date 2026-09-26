@@ -139,6 +139,29 @@ export function calculatePedido(
   };
 }
 
+export type PedidoAnexoStatus = 'QUARENTENA' | 'ATIVO' | 'REJEITADO' | 'INATIVO';
+
+export const pedidoAnexoCreateSchema = z.object({
+  storage_key: z.string().trim().min(1).max(500),
+  nome_arquivo: z.string().trim().min(1).max(255),
+  mime_type: z.string().trim().min(1).max(120),
+  tamanho_bytes: z.number().int().positive().max(52_428_800),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/i).transform((v) => v.toLowerCase()),
+  versao: z.number().int().positive().optional().default(1),
+}).strict();
+
+export type PedidoAnexoCreate = z.infer<typeof pedidoAnexoCreateSchema>;
+export type PedidoAnexo = PedidoAnexoCreate & {
+  id: string;
+  group_id: string;
+  empresa_id: string;
+  pedido_id: string;
+  status: PedidoAnexoStatus;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export interface PedidoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   create(scope: PedidoScope, data: PedidoCreateResolved, actorId: string, executor?: DbQueryExecutor): Promise<Pedido>;
@@ -150,4 +173,7 @@ export interface PedidoRepository {
   update(scope: PedidoScope, id: string, data: PedidoCreateResolved, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   history(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<PedidoHistorico[]>;
+  listAnexos(scope: PedidoScope, pedidoId: string, executor?: DbQueryExecutor): Promise<PedidoAnexo[]>;
+  createAnexo(scope: PedidoScope, pedidoId: string, data: PedidoAnexoCreate, actorId: string, executor?: DbQueryExecutor): Promise<PedidoAnexo>;
+  deactivateAnexo(scope: PedidoScope, pedidoId: string, anexoId: string, actorId: string, executor?: DbQueryExecutor): Promise<PedidoAnexo | null>;
 }

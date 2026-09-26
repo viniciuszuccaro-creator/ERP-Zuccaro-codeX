@@ -1095,6 +1095,18 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
     try { res.json({ data: await service.cancel(ctxFromReq(req), req.params.id, req.body?.motivo) }); }
     catch (error) { next(error); }
   });
+  router.get(`${base}/:id/anexos`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.listAnexos(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/anexos`, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.registerAnexo(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/anexos/:anexoId/inativar`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.deactivateAnexo(ctxFromReq(req), req.params.id, req.params.anexoId) }); }
+    catch (error) { next(error); }
+  });
   router.post('/api/v1/orcamentos/:id/converter-pedido', requireTenantScope, async (req, res, next) => {
     try { res.status(201).json({ data: await service.convert(ctxFromReq(req), req.params.id, req.body) }); }
     catch (error) { next(error); }
