@@ -1574,9 +1574,16 @@ const applyLocalEstoqueProdutoPatch = (db, produtoId, patch) => {
 
 const applyLocalFinanceiroTituloCreate = (db, entityName, record) => {
   if (!isTituloFinanceiroEntity(entityName)) return { record, reuse: null };
+  const pedidoId = String(record?.pedido_id || '').trim();
+  const pedido = pedidoId
+    ? getEntityStore(db, 'Pedido').find((item) => String(item?.id || '').trim() === pedidoId) || null
+    : null;
   return assertTituloOnCreate({
     record,
     titles: getEntityStore(db, entityName),
+    pedido,
+    groupId: record?.group_id || record?.grupo_id,
+    empresaId: record?.empresa_id,
   });
 };
 

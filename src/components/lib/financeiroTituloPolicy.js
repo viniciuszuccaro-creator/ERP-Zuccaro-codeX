@@ -129,22 +129,125 @@ const moneyChanged = (before, patch, field) => {
   return Math.abs(toMoney(before[field]) - toMoney(patch[field])) > 0.009;
 };
 
-/** @param {TituloCreateOptions} options */
-export const assertTituloOnCreate = ({ record = {}, titles = [] } = {}) => {
+/**
+ * Onda 6 — pedidos elegíveis ao vínculo ContaReceber no mesmo grupo/empresa.
+ * @param {{ pedidos?: FinanceRecord[], groupId?: unknown, empresaId?: unknown }} options
+ */
+export const filterPedidosParaTitulo = ({ pedidos = [], groupId, empresaId } = {}) => {
+  const group = firstText(groupId);
+  const empresa = firstText(empresaId);
+  return (Array.isArray(pedidos) ? pedidos : []).filter((pedido) => {
+    const pedidoEmpresa = firstText(pedido?.empresa_id);
+    const pedidoGroup = firstText(pedido?.group_id, pedido?.grupo_id);
+    if (empresa && pedidoEmpresa && pedidoEmpresa !== empresa) return false;
+    if (group && pedidoGroup && pedidoGroup !== group) return false;
+    if (empresa && !pedidoEmpresa) return false;
+    return Boolean(firstText(pedido?.id));
+  });
+};
+
+/**
+ * Aplica vínculo Pedido → ContaReceber sem inventar cadastro paralelo.
+ * @param {{ form?: FinanceRecord, pedido?: FinanceRecord | null }} options
+ */
+export const applyPedidoVinculoAoForm = ({ form = {}, pedido = null } = {}) => {
+  if (!pedido || !firstText(pedido.id)) {
+    const nextOrigem = firstText(form.origem_tipo) === 'pedido' ? 'manual' : firstText(form.origem_tipo) || 'manual';
+    return {
+      ...form,
+      pedido_id: '',
+      origem_documento_id: firstText(form.origem_documento_id) === firstText(form.pedido_id)
+        ? ''
+        : form.origem_documento_id,
+      origem_tipo: nextOrigem,
+    };
+  }
+  const clienteId = firstText(form.cliente_id) || firstText(pedido.cliente_id);
+  const clienteNome = firstText(form.cliente) || firstText(pedido.cliente_nome, pedido.cliente);
+  const pedidoValor = toMoney(pedido.valor_total ?? pedido.total ?? pedido.valor);
+  const keepValor = toMoney(form.valor) > 0;
+  const numero = firstText(pedido.numero_pedido, pedido.numero, pedido.id);
+  return {
+    ...form,
+    pedido_id: firstText(pedido.id),
+    origem_tipo: 'pedido',
+    origem_documento_id: firstText(pedido.id),
+    ...(clienteId ? { cliente_id: clienteId, cliente: clienteNome } : {}),
+    ...(!keepValor && pedidoValor > 0 ? { valor: pedidoValor } : {}),
+    ...(!firstText(form.descricao) ? { descricao: `Pedido ${numero}` } : {}),
+  };
+};
+
+/**
+ * Fail-closed: vínculo Pedido só no mesmo groupId/empresaId do título.
+ * @param {{ record?: FinanceRecord, pedido?: FinanceRecord | null, groupId?: unknown, empresaId?: unknown }} options
+ */
+export const assertPedidoVinculoTitulo = ({ record = {}, pedido = null, groupId, empresaId } = {}) => {
+  const pedidoId = firstText(record.pedido_id);
+  if (!pedidoId) {
+    return { record };
+  }
+  const group = firstText(groupId, record.group_id, record.grupo_id);
+  const empresa = firstText(empresaId, record.empresa_id);
+  if (!group || !empresa) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Contexto de grupo e empresa obrigatorio para vincular pedido ao titulo.'));
+    error.code = 'PEDIDO_VINCULO_CONTEXTO';
+    throw error;
+  }
+  if (!pedido || !firstText(pedido.id)) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Pedido vinculado nao encontrado no contexto.'));
+    error.code = 'PEDIDO_VINCULO_NAO_ENCONTRADO';
+    throw error;
+  }
+  if (firstText(pedido.id) !== pedidoId) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Pedido vinculado diverge do titulo.'));
+    error.code = 'PEDIDO_VINCULO_DIVERGENTE';
+    throw error;
+  }
+  const pedidoGroup = firstText(pedido.group_id, pedido.grupo_id);
+  const pedidoEmpresa = firstText(pedido.empresa_id);
+  if (!pedidoEmpresa) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Pedido sem empresa nao pode vincular titulo.'));
+    error.code = 'PEDIDO_VINCULO_SEM_EMPRESA';
+    throw error;
+  }
+  if (pedidoEmpresa !== empresa) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Pedido de outra empresa bloqueado no titulo.'));
+    error.code = 'PEDIDO_VINCULO_EMPRESA';
+    throw error;
+  }
+  if (pedidoGroup && pedidoGroup !== group) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Pedido de outro grupo bloqueado no titulo.'));
+    error.code = 'PEDIDO_VINCULO_GRUPO';
+    throw error;
+  }
+  return {
+    record: {
+      ...record,
+      origem_tipo: firstText(record.origem_tipo) || 'pedido',
+      origem_documento_id: firstText(record.origem_documento_id) || pedidoId,
+    },
+  };
+};
+
+/** @param {TituloCreateOptions & { pedido?: FinanceRecord | null, groupId?: unknown, empresaId?: unknown }} options */
+export const assertTituloOnCreate = ({ record = {}, titles = [], pedido = null, groupId, empresaId } = {}) => {
   if (isPendingManualReconciliation(record)) {
     throw new Error('Titulo pendente de conciliacao manual deve permanecer no staging.');
   }
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para titulo financeiro.');
   }
-  const duplicate = findDuplicateTitulo(record, titles);
-  if (duplicate) return { reuse: duplicate, record };
+  const linked = assertPedidoVinculoTitulo({ record, pedido, groupId, empresaId });
+  const nextRecord = linked.record;
+  const duplicate = findDuplicateTitulo(nextRecord, titles);
+  if (duplicate) return { reuse: duplicate, record: nextRecord };
   return {
     reuse: null,
     record: {
-      ...record,
-      origem_tipo: firstText(record.origem_tipo) || (record.pedido_id ? 'pedido' : 'manual'),
-      idempotency_key: tituloIdempotencyKey(record) || undefined,
+      ...nextRecord,
+      origem_tipo: firstText(nextRecord.origem_tipo) || (nextRecord.pedido_id ? 'pedido' : 'manual'),
+      idempotency_key: tituloIdempotencyKey(nextRecord) || undefined,
     },
   };
 };

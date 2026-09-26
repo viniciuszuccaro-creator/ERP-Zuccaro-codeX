@@ -47,7 +47,11 @@ export default function ContaReceberDadosGerais({ formData, setFormData, cliente
           <Label>Empresa *</Label>
           <Select
             value={formData.empresa_id}
-            onValueChange={(v) => setFormData({ ...formData, empresa_id: v })}
+            onValueChange={(v) => setFormData({
+              ...formData,
+              empresa_id: v,
+              ...(formData.pedido_id ? { pedido_id: '', origem_tipo: formData.origem_tipo === 'pedido' ? 'manual' : formData.origem_tipo } : {}),
+            })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione a empresa..." />

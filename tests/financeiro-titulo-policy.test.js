@@ -7,6 +7,9 @@ import {
   assertTituloOnDelete,
   assertTituloOnUpdate,
   assertTitulosProntosParaCaixa,
+  assertPedidoVinculoTitulo,
+  applyPedidoVinculoAoForm,
+  filterPedidosParaTitulo,
   findDuplicateTitulo,
   tituloIdempotencyKey,
   tituloSettlementPermissionActions,
@@ -82,14 +85,22 @@ test('estorno keeps the original value and history', () => {
 test('duplicate receivable from the same order installment is reused', () => {
   const incoming = {
     empresa_id: 'cpa-aco',
+    group_id: 'g-cpa',
     pedido_id: 'ped-1',
     numero_parcela: '1',
     origem_tipo: 'pedido',
     valor: 100,
   };
+  const pedido = { id: 'ped-1', empresa_id: 'cpa-aco', group_id: 'g-cpa' };
   assert.equal(tituloIdempotencyKey(incoming), tituloIdempotencyKey(titulo));
   assert.equal(findDuplicateTitulo(incoming, [titulo])?.id, 'cr-1');
-  assert.equal(assertTituloOnCreate({ record: incoming, titles: [titulo] }).reuse.id, 'cr-1');
+  assert.equal(assertTituloOnCreate({
+    record: incoming,
+    titles: [titulo],
+    pedido,
+    groupId: 'g-cpa',
+    empresaId: 'cpa-aco',
+  }).reuse.id, 'cr-1');
 });
 
 test('payment of another company is blocked', () => {
@@ -102,6 +113,85 @@ test('payment of another company is blocked', () => {
 test('settlement permission actions include baixa aliases', () => {
   assert.deepEqual(tituloSettlementPermissionActions('ContaReceber'), ['receber', 'baixar', 'liquidar']);
   assert.deepEqual(tituloSettlementPermissionActions('ContaPagar'), ['pagar', 'baixar', 'liquidar']);
+});
+
+test('vinculo pedido no titulo exige mesmo grupo/empresa', () => {
+  assert.throws(
+    () => assertPedidoVinculoTitulo({
+      record: { pedido_id: 'ped-1', empresa_id: 'e1' },
+      pedido: { id: 'ped-1', empresa_id: 'e1', group_id: 'g1' },
+      groupId: '',
+      empresaId: 'e1',
+    }),
+    /grupo e empresa/,
+  );
+  assert.throws(
+    () => assertPedidoVinculoTitulo({
+      record: { pedido_id: 'ped-1', empresa_id: 'e1', group_id: 'g1' },
+      pedido: { id: 'ped-1', empresa_id: 'outra', group_id: 'g1' },
+      groupId: 'g1',
+      empresaId: 'e1',
+    }),
+    /outra empresa/,
+  );
+  assert.throws(
+    () => assertPedidoVinculoTitulo({
+      record: { pedido_id: 'ped-1', empresa_id: 'e1', group_id: 'g1' },
+      pedido: null,
+      groupId: 'g1',
+      empresaId: 'e1',
+    }),
+    /nao encontrado/,
+  );
+  const ok = assertPedidoVinculoTitulo({
+    record: { pedido_id: 'ped-1', empresa_id: 'e1', group_id: 'g1', valor: 10 },
+    pedido: { id: 'ped-1', empresa_id: 'e1', group_id: 'g1' },
+    groupId: 'g1',
+    empresaId: 'e1',
+  });
+  assert.equal(ok.record.origem_tipo, 'pedido');
+  assert.equal(ok.record.origem_documento_id, 'ped-1');
+
+  const filtrados = filterPedidosParaTitulo({
+    pedidos: [
+      { id: 'a', empresa_id: 'e1', group_id: 'g1' },
+      { id: 'b', empresa_id: 'e2', group_id: 'g1' },
+      { id: 'c', empresa_id: 'e1', group_id: 'g2' },
+    ],
+    groupId: 'g1',
+    empresaId: 'e1',
+  });
+  assert.deepEqual(filtrados.map((p) => p.id), ['a']);
+
+  const linked = applyPedidoVinculoAoForm({
+    form: { descricao: '', valor: 0, origem_tipo: 'manual' },
+    pedido: { id: 'ped-9', numero_pedido: 'P-9', cliente_id: 'c1', cliente_nome: 'Cliente', valor_total: 55 },
+  });
+  assert.equal(linked.pedido_id, 'ped-9');
+  assert.equal(linked.origem_tipo, 'pedido');
+  assert.equal(linked.cliente_id, 'c1');
+  assert.equal(linked.valor, 55);
+  assert.match(linked.descricao, /P-9/);
+});
+
+test('create com pedido estranho a empresa e bloqueado', () => {
+  assert.throws(
+    () => assertTituloOnCreate({
+      record: { empresa_id: 'e1', group_id: 'g1', pedido_id: 'ped-x', valor: 10 },
+      pedido: { id: 'ped-x', empresa_id: 'e2', group_id: 'g1' },
+      groupId: 'g1',
+      empresaId: 'e1',
+    }),
+    /outra empresa/,
+  );
+  const created = assertTituloOnCreate({
+    record: { empresa_id: 'e1', group_id: 'g1', pedido_id: 'ped-x', valor: 10 },
+    pedido: { id: 'ped-x', empresa_id: 'e1', group_id: 'g1' },
+    groupId: 'g1',
+    empresaId: 'e1',
+  });
+  assert.equal(created.record.origem_tipo, 'pedido');
+  assert.equal(created.reuse, null);
 });
 
 test('envio ao caixa exige contexto unico e bloqueia titulo liquidado', () => {
@@ -177,4 +267,10 @@ test('finance persistence blocks delete of settled titles and closes caixa/conci
   assert.match(enviarCaixa, /assertTitulosProntosParaCaixa/);
   assert.match(enviarCaixa, /data-action="enviar-para-caixa"/);
   assert.match(enviarCaixa, /pedido_id/);
+  const vinculos = await readFile(new URL('../src/components/financeiro/ContaReceberVinculosSection.jsx', import.meta.url), 'utf8');
+  const form = await readFile(new URL('../src/components/financeiro/ContaReceberForm.jsx', import.meta.url), 'utf8');
+  assert.match(vinculos, /filterPedidosParaTitulo/);
+  assert.match(vinculos, /applyPedidoVinculoAoForm/);
+  assert.match(form, /assertTituloOnCreate/);
+  assert.match(client, /getEntityStore\(db, 'Pedido'\)/);
 });

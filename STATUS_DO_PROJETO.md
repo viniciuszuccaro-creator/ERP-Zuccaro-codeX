@@ -1,3 +1,20 @@
+## #66 STATUS REAL — Onda 6 ContaReceber↔Pedido multiempresa (2026-09-26T19:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `assertPedidoVinculoTitulo` + ContaReceberVinculos/Form |
+| Testado | **SIM** — financeiro-titulo-policy 13/13 |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #65→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 6 - vínculo ContaReceber↔Pedido (2026-09-26T19:45Z)
+
+- Branch `cursor/comercial360-onda6-cr-pedido-392b` (base #65).
+- Política fail-closed: pedido só no mesmo `groupId`/`empresaId`; create local consulta Pedido.
+- UI reutiliza aba Vínculos: filtra pedidos do escopo, aplica `origem_tipo=pedido`, limpa vínculo ao trocar empresa.
+- Sem módulo paralelo. Próximo: adapter CreditPort Financeiro real ou link pagamento Pedido.
+
 ## #65 STATUS REAL — Onda 6 EnviarParaCaixa multiempresa fail-closed (2026-09-26T19:41Z)
 
 | Etapa | Estado |
