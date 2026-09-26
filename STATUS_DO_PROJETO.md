@@ -3,8 +3,8 @@
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — `comercialCreditoPolicy` + PedidoService (create/convert/update) |
-| Testado | **SIM** — comercial-onda6-credito-pedido 6/6 · regressão origem 7/7 |
-| CI | **PENDENTE** |
+| Testado | **SIM** — comercial-onda6-credito-pedido 6/6 · regressão origem 7/7 · typecheck PASS |
+| CI | **PENDENTE** (fix typecheck: `aprovar-credito` em RbacAction) |
 | Mesclado | **NÃO** (empilhada #62→…) |
 | Implantado VPS | **NÃO** |
 
