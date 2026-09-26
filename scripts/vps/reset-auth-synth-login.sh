@@ -86,10 +86,12 @@ else:
   print("bff_login=UNKNOWN")
 ' "$BFF_JSON" 2>/dev/null || echo 'bff_parse=FAIL'
 
-# Contagens (sem UUID/e-mail)
-docker exec supabase-db psql -X -U postgres -d postgres -Atc \
-  "SELECT 'profiles_synth_ativos='||count(*)::text FROM profiles WHERE lower(email)=lower('${SYNTH_EMAIL}') AND ativo IS TRUE AND auth_user_id IS NOT NULL;" \
-  2>/dev/null || echo 'profiles_synth_ativos=ERR'
+# Contagens (sem UUID)
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -v synth_email="$SYNTH_EMAIL" -At <<'SQL' 2>/dev/null || echo 'profiles_synth_ativos=ERR'
+SELECT 'profiles_synth_ativos='||count(*)::text FROM profiles
+ WHERE lower(email)=lower(:'synth_email') AND ativo IS TRUE AND auth_user_id IS NOT NULL;
+SQL
 
 if [[ "$GOTRUE_HTTP" != "200" ]]; then
   echo 'BLOCKED: gotrue_password_grant_failed' >&2
