@@ -1,10 +1,10 @@
-## #54 STATUS REAL — Onda 4 Orçamento anexos via DAM (2026-09-26T19:40Z)
+## #54 STATUS REAL — Onda 4 Orçamento anexos via DAM (2026-09-26T19:30Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — migration 029 + StoragePort entity Orcamento + CRUD metadados |
 | Testado | **SIM** — anexos + storage adapter + regressão onda4/01 |
-| CI | **PENDENTE** |
+| CI | **SIM** — frontend+backend SUCCESS (`a2945ef8`) |
 | Mesclado | **NÃO** (empilhada #53→…) |
 | Implantado VPS | **NÃO** |
 
