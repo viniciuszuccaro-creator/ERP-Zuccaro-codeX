@@ -32,7 +32,7 @@ const payload = {
     unidade_sigla: 'UN',
     quantidade: '2',
     preco_unitario: '10',
-    desconto: '1',
+    desconto: '0',
   }],
 };
 
@@ -138,7 +138,7 @@ async function code(promise: Promise<unknown>) {
 test('create valida referencias calcula total e usa uma transacao', async () => {
   const { repo, service } = fixture();
   const row = await service.create(ctx, payload);
-  assert.equal(row.total, '19.000000');
+  assert.equal(row.total, '20.000000');
   assert.equal(repo.transactions, 1);
   assert.equal(repo.createExecutors[0], repo.executor);
 });
@@ -200,7 +200,7 @@ test('update valido preserva identidade e recalcula totais e itens', async () =>
       descricao: 'Snapshot atualizado',
       quantidade: '3',
       preco_unitario: '999',
-      desconto: '0.5',
+      desconto: '0',
     }],
   };
   const beforeTransactions = repo.transactions;
@@ -213,8 +213,8 @@ test('update valido preserva identidade e recalcula totais e itens', async () =>
   assert.equal(updated.created_at, created.created_at);
   assert.equal(updated.itens[0].preco_unitario, '10.000000'); // servidor ignora 999 do cliente
   assert.equal(updated.subtotal, '30.000000');
-  assert.equal(updated.desconto, '0.500000');
-  assert.equal(updated.total, '29.500000');
+  assert.equal(updated.desconto, '0.000000');
+  assert.equal(updated.total, '30.000000');
   assert.equal(updated.itens.length, 1);
   assert.equal(updated.itens[0].descricao, 'Snapshot atualizado');
   assert.ok(repo.getExecutors.includes(repo.executor));
@@ -257,7 +257,7 @@ test('update revalida todas as referencias sem persistir falha', async () => {
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
       assert.equal(await code(invalidService.update(ctx, validCreated.id, { ...payload, itens: [{ ...payload.itens[0], quantidade: '9' }] })), item.expected);
-      assert.equal((await valid.service.get(ctx, validCreated.id)).total, '19.000000');
+      assert.equal((await valid.service.get(ctx, validCreated.id)).total, '20.000000');
     }
   }
   const incompatible = fixture();

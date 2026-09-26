@@ -1,6 +1,7 @@
 /**
  * Alçada de desconto Comercial 360 (Onda 2) — política pura sobre itens já precificados.
- * Sem módulo paralelo: Orçamento/Pedido existentes exigem `aprovar` acima da alçada livre.
+ * Sem módulo paralelo: Orçamento/Pedido existentes exigem `aprovar` acima da alçada livre
+ * por um ator distinto do criador (segregação AGENTS.md).
  */
 import { AppError } from '../api/errors.js';
 
@@ -63,17 +64,48 @@ export function descontoExcedeAlcadaLivre(
   return descontoMicros * 10000n > subtotalMicros * BigInt(lim);
 }
 
+export type DescontoAlcadaDecisao = {
+  aprovacaoExigida: boolean;
+  aprovadaPorOutro: boolean;
+  descontoBps: number;
+};
+
+/**
+ * Desconto acima da alçada livre: exige `canAprovar` **e** ator distinto do criador.
+ * Create com o mesmo ator como criador → sempre nega (não há autoaprovação).
+ */
 export function assertDescontoDentroDaAlcadaOuAprovar(options: {
   items: DescontoAlcadaItem[];
   livreBps?: number;
   canAprovar: boolean;
+  actorId: string;
+  /** Ator que criou o documento; em create use o próprio actor (bloqueia autoaprovação). */
+  criadorActorId: string | null;
   entityLabel?: string;
-}): void {
-  if (!descontoExcedeAlcadaLivre(options.items, options.livreBps)) return;
-  if (options.canAprovar) return;
-  throw new AppError(
-    403,
-    'DESCONTO_ALCADA_DENIED',
-    `${options.entityLabel || 'Documento'} com desconto acima da alçada livre exige permissão de aprovar`,
-  );
+}): DescontoAlcadaDecisao {
+  const computed = computeDescontoBps(options.items);
+  if (!descontoExcedeAlcadaLivre(options.items, options.livreBps)) {
+    return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: computed.descontoBps };
+  }
+
+  const label = options.entityLabel || 'Documento';
+  if (!options.canAprovar) {
+    throw new AppError(
+      403,
+      'DESCONTO_ALCADA_DENIED',
+      `${label} com desconto acima da alçada livre exige permissão de aprovar`,
+    );
+  }
+
+  const actor = String(options.actorId ?? '').trim();
+  const criador = options.criadorActorId == null ? '' : String(options.criadorActorId).trim();
+  if (!actor || !criador || criador === actor) {
+    throw new AppError(
+      403,
+      'DESCONTO_ALCADA_DENIED',
+      `${label} com desconto acima da alçada livre exige outro aprovador`,
+    );
+  }
+
+  return { aprovacaoExigida: true, aprovadaPorOutro: true, descontoBps: computed.descontoBps };
 }

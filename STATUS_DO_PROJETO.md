@@ -1,3 +1,16 @@
+## #46 STATUS REAL — alçada desconto (2026-09-26T22:20Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — P1 segregação (outro aprovador + audit `approve`) + P2 catch só `PERMISSION_DENIED` |
+| Testado | **SIM** — 14/14 alcada unit+HTTP (autoaprovação 403; timeout → 500 não mascarado) |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — bloqueios discussion_r4112240714 / r4112240716 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** |
+
+Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` (sem autoaprovação). Update/convert: ator com `aprovar` ≠ criador (audit create) + log `approve`. Falha operacional RBAC propaga (não vira `DESCONTO_ALCADA_DENIED`).
+
 ## #46 STATUS REAL — alçada desconto (2026-09-26T17:30Z)
 
 | Etapa | Estado |

@@ -45,6 +45,11 @@ const payloadComDesconto = {
   itens: [itemComDesconto],
 };
 
+const payloadSemDesconto = {
+  ...payloadComDesconto,
+  itens: [itemSemDesconto],
+};
+
 function fixture(price = '10.000000') {
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
   const tenant = new InMemoryTenantGuard();
@@ -111,10 +116,10 @@ async function request(app: ReturnType<typeof createApp>['app'], path: string, i
   }
 }
 
-function assertDeniedAlcada(res: { status: number; body: any }) {
+function assertDeniedAlcada(res: { status: number; body: any }, messageRe = /alçada livre exige (permissão de aprovar|outro aprovador)/i) {
   assert.equal(res.status, 403);
   assert.equal(res.body.error.code, 'DESCONTO_ALCADA_DENIED');
-  assert.match(res.body.error.message, /alçada livre exige permissão de aprovar/i);
+  assert.match(res.body.error.message, messageRe);
   assert.ok(res.body.error.requestId);
 }
 
@@ -133,14 +138,51 @@ test('HTTP Orçamento create: sem aprovar → 403 e nenhuma persistência', asyn
   assert.equal(listed.status, 200);
   assert.equal(listed.body.meta.total, 0);
   assert.equal(listed.body.data.length, 0);
+});
 
-  const allowed = await request(app, '/api/v1/orcamentos', {
+test('HTTP Orçamento create: actor com criar+aprovar não autoaprova (403)', async () => {
+  const { app } = fixture();
+  const denied = await request(app, '/api/v1/orcamentos', {
     method: 'POST',
     headers: headers(approverId),
     body: JSON.stringify(payloadComDesconto),
   });
-  assert.equal(allowed.status, 201);
+  assertDeniedAlcada(denied, /outro aprovador/i);
+
+  const listed = await request(app, '/api/v1/orcamentos?limit=10&offset=0', {
+    headers: headers(approverId),
+  });
+  assert.equal(listed.body.meta.total, 0);
+});
+
+test('HTTP Orçamento update: outro aprovador libera desconto + audita approve', async () => {
+  const { app, auditRepo } = fixture();
+  const created = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(creatorId),
+    body: JSON.stringify(payloadSemDesconto),
+  });
+  assert.equal(created.status, 201);
+  const id = created.body.data.id as string;
+  assert.equal(created.body.data.total, '20.000000');
+
+  const denied = await request(app, `/api/v1/orcamentos/${id}`, {
+    method: 'PATCH',
+    headers: headers(creatorId),
+    body: JSON.stringify(payloadComDesconto),
+  });
+  assertDeniedAlcada(denied);
+
+  const allowed = await request(app, `/api/v1/orcamentos/${id}`, {
+    method: 'PATCH',
+    headers: headers(approverId),
+    body: JSON.stringify(payloadComDesconto),
+  });
+  assert.equal(allowed.status, 200);
   assert.equal(allowed.body.data.total, '19.000000');
+
+  const audits = await auditRepo.listByEntity('Orcamento', id);
+  assert.ok(audits.some((e) => e.action === 'approve' && e.actorId === approverId));
 });
 
 test('HTTP Orçamento create: desconto < 1 bp sem aprovar → 403 (regressão truncamento)', async () => {
@@ -165,7 +207,7 @@ test('HTTP Orçamento update: sem aprovar → 403 e documento inalterado', async
   const created = await request(app, '/api/v1/orcamentos', {
     method: 'POST',
     headers: headers(approverId),
-    body: JSON.stringify({ ...payloadComDesconto, itens: [itemSemDesconto] }),
+    body: JSON.stringify(payloadSemDesconto),
   });
   assert.equal(created.status, 201);
   const id = created.body.data.id as string;
@@ -186,7 +228,7 @@ test('HTTP Orçamento update: sem aprovar → 403 e documento inalterado', async
   assert.equal(fetched.body.data.itens[0].desconto, '0.000000');
 });
 
-test('HTTP Pedido create: sem aprovar → 403 e nenhuma persistência', async () => {
+test('HTTP Pedido create: desconto exige outro aprovador (sem autoaprovação)', async () => {
   const { app } = fixture();
   const pedidoPayload = {
     cliente_empresa_id: clienteId,
@@ -195,36 +237,44 @@ test('HTTP Pedido create: sem aprovar → 403 e nenhuma persistência', async ()
     data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
     itens: [itemComDesconto],
   };
-  const denied = await request(app, '/api/v1/pedidos', {
+  const deniedCreator = await request(app, '/api/v1/pedidos', {
     method: 'POST',
     headers: headers(creatorId),
     body: JSON.stringify(pedidoPayload),
   });
-  assertDeniedAlcada(denied);
+  assertDeniedAlcada(deniedCreator);
+
+  const deniedSelf = await request(app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(approverId),
+    body: JSON.stringify(pedidoPayload),
+  });
+  assertDeniedAlcada(deniedSelf, /outro aprovador/i);
 
   const listed = await request(app, '/api/v1/pedidos?limit=10&offset=0', {
     headers: headers(approverId),
   });
   assert.equal(listed.status, 200);
   assert.equal(listed.body.meta.total, 0);
-
-  const allowed = await request(app, '/api/v1/pedidos', {
-    method: 'POST',
-    headers: headers(approverId),
-    body: JSON.stringify(pedidoPayload),
-  });
-  assert.equal(allowed.status, 201);
 });
 
-test('HTTP Pedido convert: orçamento com desconto sem aprovar → 403 e sem pedido', async () => {
-  const { app } = fixture();
+test('HTTP Pedido convert: orçamento com desconto exige aprovador ≠ criador', async () => {
+  const { app, auditRepo } = fixture();
   const quote = await request(app, '/api/v1/orcamentos', {
     method: 'POST',
-    headers: headers(approverId),
-    body: JSON.stringify(payloadComDesconto),
+    headers: headers(creatorId),
+    body: JSON.stringify(payloadSemDesconto),
   });
   assert.equal(quote.status, 201);
   const orcId = quote.body.data.id as string;
+
+  const withDiscount = await request(app, `/api/v1/orcamentos/${orcId}`, {
+    method: 'PATCH',
+    headers: headers(approverId),
+    body: JSON.stringify(payloadComDesconto),
+  });
+  assert.equal(withDiscount.status, 200);
+  assert.equal(withDiscount.body.data.total, '19.000000');
 
   const denied = await request(app, `/api/v1/orcamentos/${orcId}/converter-pedido`, {
     method: 'POST',
@@ -236,10 +286,10 @@ test('HTTP Pedido convert: orçamento com desconto sem aprovar → 403 e sem ped
   });
   assertDeniedAlcada(denied);
 
-  const pedidos = await request(app, '/api/v1/pedidos?limit=10&offset=0', {
+  const pedidosBefore = await request(app, '/api/v1/pedidos?limit=10&offset=0', {
     headers: headers(approverId),
   });
-  assert.equal(pedidos.body.meta.total, 0);
+  assert.equal(pedidosBefore.body.meta.total, 0);
 
   const allowed = await request(app, `/api/v1/orcamentos/${orcId}/converter-pedido`, {
     method: 'POST',
@@ -250,4 +300,35 @@ test('HTTP Pedido convert: orçamento com desconto sem aprovar → 403 e sem ped
     }),
   });
   assert.equal(allowed.status, 201);
+
+  const pedidoId = allowed.body.data.id as string;
+  const audits = await auditRepo.listByEntity('Pedido', pedidoId);
+  assert.ok(audits.some((e) => e.action === 'approve' && e.actorId === approverId));
+});
+
+test('HTTP Orçamento: falha operacional RBAC (timeout) não vira DESCONTO_ALCADA_DENIED', async () => {
+  const runtime = fixture();
+  const original = runtime.orcamentoService['rbac'].assertAllowed.bind(runtime.orcamentoService['rbac']);
+  runtime.orcamentoService['rbac'].assertAllowed = async (ctx, moduleName, section, action, options) => {
+    if (action === 'aprovar') {
+      throw new Error('synthetic PostgreSQL timeout');
+    }
+    return original(ctx, moduleName, section, action, options);
+  };
+
+  const created = await request(runtime.app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(creatorId),
+    body: JSON.stringify(payloadSemDesconto),
+  });
+  assert.equal(created.status, 201);
+  const id = created.body.data.id as string;
+
+  const failed = await request(runtime.app, `/api/v1/orcamentos/${id}`, {
+    method: 'PATCH',
+    headers: headers(approverId),
+    body: JSON.stringify(payloadComDesconto),
+  });
+  assert.equal(failed.status, 500);
+  assert.notEqual(failed.body?.error?.code, 'DESCONTO_ALCADA_DENIED');
 });

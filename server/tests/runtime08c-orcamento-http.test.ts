@@ -28,7 +28,7 @@ const payload = {
     unidade_sigla: 'UN',
     quantidade: '2',
     preco_unitario: '10',
-    desconto: '1',
+    desconto: '0',
   }],
 };
 
@@ -86,7 +86,7 @@ test('HTTP Orcamento executa create list get update cancel e auditoria transacio
     method: 'POST', headers: headers(), body: JSON.stringify(payload),
   });
   assert.equal(created.status, 201);
-  assert.equal(created.body.data.total, '19.000000');
+  assert.equal(created.body.data.total, '20.000000');
   const id = created.body.data.id as string;
 
   const listed = await request(runtime.app, '/api/v1/orcamentos?limit=1&offset=0', { headers: headers() });
@@ -103,7 +103,7 @@ test('HTTP Orcamento executa create list get update cancel e auditoria transacio
   });
   assert.equal(updated.status, 200);
   assert.equal(updated.body.data.numero, created.body.data.numero);
-  assert.equal(updated.body.data.total, '29.000000');
+  assert.equal(updated.body.data.total, '30.000000');
 
   const cancelled = await request(runtime.app, `/api/v1/orcamentos/${id}/cancelar`, { method: 'POST', headers: headers() });
   assert.equal(cancelled.status, 200);

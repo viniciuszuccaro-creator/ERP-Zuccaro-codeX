@@ -1,4 +1,4 @@
-import { AppError } from '../api/errors.js';
+import { AppError, isAppError } from '../api/errors.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
 import type { DbQueryExecutor } from '../db/client.js';
@@ -14,7 +14,11 @@ import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoR
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus } from '../repositories/pedidoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
-import { assertDescontoDentroDaAlcadaOuAprovar } from './comercialDescontoAlcadaPolicy.js';
+import {
+  assertDescontoDentroDaAlcadaOuAprovar,
+  descontoExcedeAlcadaLivre,
+  type DescontoAlcadaDecisao,
+} from './comercialDescontoAlcadaPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -62,7 +66,8 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
-      await this.assertDescontoAlcada(ctx, priced.itens);
+      // Create: criador = actor → alçada acima da livre nunca autoaprova.
+      await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -102,9 +107,28 @@ export class PedidoService {
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
-        await this.assertDescontoAlcada(ctx, data.itens);
+        // Segregação: aprovador do desconto ≠ criador do Orçamento.
+        const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
+        const alcada = await this.assertDescontoAlcada(ctx, data.itens, criadorOrcamento);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
+        if (alcada.aprovadaPorOutro) {
+          await this.audit.append({
+            groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+            actorEmail: ctx.actorEmail, entity: 'Pedido', entityId: created.id, action: 'approve',
+            afterData: {
+              ...pedidoAuditSnapshot(created),
+              desconto_alcada: {
+                aprovada_por_outro: true,
+                desconto_bps: alcada.descontoBps,
+                criador_actor_id: criadorOrcamento,
+                origem: 'ORCAMENTO',
+                orcamento_id: orcamentoId,
+              },
+            },
+            requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+          }, executor);
+        }
         return created;
       });
     } catch (error) {
@@ -138,10 +162,27 @@ export class PedidoService {
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
-      await this.assertDescontoAlcada(ctx, priced.itens);
+      const criador = await this.resolveCriadorActorId('Pedido', id);
+      const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
+      if (alcada.aprovadaPorOutro) {
+        await this.audit.append({
+          groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+          actorEmail: ctx.actorEmail, entity: 'Pedido', entityId: after.id, action: 'approve',
+          beforeData: pedidoAuditSnapshot(before),
+          afterData: {
+            ...pedidoAuditSnapshot(after),
+            desconto_alcada: {
+              aprovada_por_outro: true,
+              desconto_bps: alcada.descontoBps,
+              criador_actor_id: criador,
+            },
+          },
+          requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+        }, executor);
+      }
       return after;
     });
   }
@@ -232,17 +273,37 @@ export class PedidoService {
     return { groupId: ctx.groupId, empresaId: ctx.empresaId };
   }
 
-  private async assertDescontoAlcada(ctx: RequestContext, itens: PedidoCreate['itens']) {
+  private async resolveCriadorActorId(entity: string, entityId: string): Promise<string | null> {
+    const entries = await this.audit.listByEntity(entity, entityId);
+    const created = entries.find((entry) => entry.action === 'create' && entry.actorId);
+    return created?.actorId ?? null;
+  }
+
+  private async assertDescontoAlcada(
+    ctx: RequestContext,
+    itens: PedidoCreate['itens'],
+    criadorActorId: string | null,
+  ): Promise<DescontoAlcadaDecisao> {
+    if (!descontoExcedeAlcadaLivre(itens)) {
+      return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: 0 };
+    }
+
     let canAprovar = false;
     try {
       await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false });
       canAprovar = true;
-    } catch {
-      canAprovar = false;
+    } catch (error) {
+      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
+        canAprovar = false;
+      } else {
+        throw error;
+      }
     }
-    assertDescontoDentroDaAlcadaOuAprovar({
+    return assertDescontoDentroDaAlcadaOuAprovar({
       items: itens,
       canAprovar,
+      actorId: ctx.actorId!,
+      criadorActorId,
       entityLabel: 'Pedido',
     });
   }
