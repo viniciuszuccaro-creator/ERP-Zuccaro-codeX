@@ -61,8 +61,9 @@ export class OrcamentoService {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
-      await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, executor);
+      await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -107,9 +108,10 @@ export class OrcamentoService {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
-      await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
+      await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
       return after;
     });
@@ -179,7 +181,7 @@ export class OrcamentoService {
     scope: OrcamentoScope,
     itens: OrcamentoCreate['itens'],
   ) {
-    await assertMargemDentroDaAlcadaOuAprovar({
+    return assertMargemDentroDaAlcadaOuAprovar({
       groupId: scope.groupId,
       empresaId: scope.empresaId,
       items: itens,
@@ -187,6 +189,30 @@ export class OrcamentoService {
       canAprovar: await this.canAprovarComercial(ctx),
       entityLabel: 'Orçamento',
     });
+  }
+
+  private async auditMargemOverride(
+    ctx: RequestContext,
+    entityId: string,
+    decision: Awaited<ReturnType<typeof assertMargemDentroDaAlcadaOuAprovar>>,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!decision?.overridden) return;
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Orcamento',
+      entityId,
+      action: 'approve',
+      afterData: {
+        margem_alcada_override: true,
+        margem_avaliacao: decision.evaluated,
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private normalizeMoney(value: string): string {

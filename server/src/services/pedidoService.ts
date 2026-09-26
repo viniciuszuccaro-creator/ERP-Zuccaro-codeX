@@ -71,8 +71,9 @@ export class PedidoService {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
-      await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+      await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -112,8 +113,9 @@ export class PedidoService {
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
         await this.assertDescontoAlcada(ctx, data.itens);
-        await this.assertMargemAlcada(ctx, scope, data.itens);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+        await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
       });
@@ -149,9 +151,10 @@ export class PedidoService {
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
       await this.assertDescontoAlcada(ctx, priced.itens);
-      await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
+      await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
       return after;
     });
@@ -265,7 +268,7 @@ export class PedidoService {
     scope: PedidoScope,
     itens: PedidoCreate['itens'],
   ) {
-    await assertMargemDentroDaAlcadaOuAprovar({
+    return assertMargemDentroDaAlcadaOuAprovar({
       groupId: scope.groupId,
       empresaId: scope.empresaId,
       items: itens,
@@ -273,6 +276,30 @@ export class PedidoService {
       canAprovar: await this.canAprovarComercial(ctx),
       entityLabel: 'Pedido',
     });
+  }
+
+  private async auditMargemOverride(
+    ctx: RequestContext,
+    entityId: string,
+    decision: Awaited<ReturnType<typeof assertMargemDentroDaAlcadaOuAprovar>>,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!decision?.overridden) return;
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Pedido',
+      entityId,
+      action: 'approve',
+      afterData: {
+        margem_alcada_override: true,
+        margem_avaliacao: decision.evaluated,
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private async requirePedido(scope: PedidoScope, id: string, executor?: DbQueryExecutor) { const row = await this.repo.get(scope, id, executor); if (!row) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found'); return row; }
