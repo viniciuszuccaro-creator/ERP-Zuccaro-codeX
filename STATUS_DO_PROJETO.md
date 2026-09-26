@@ -1,3 +1,16 @@
+## #45 STATUS REAL — acesso owner (2026-09-27T00:00Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado (código) | **SIM** — + restore usa `empresa_id` do perfil (não preferência local revogada) |
+| Testado (local) | **SIM** — erp-http-session 13/13 (A→B + fallback cruzado) |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — P2 tenant local revogado |
+| Mesclado em `main` | **NÃO** |
+| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
+
+`resolveRefreshEmpresaId`: vínculo explícito do perfil prevalece; perfil de Grupo só preserva preferência autorizada no mesmo grupo; fallback entre grupos não transporta empresa antiga.
+
 ## #45 STATUS REAL — acesso owner (2026-09-26T22:05Z)
 
 | Etapa | Estado |
