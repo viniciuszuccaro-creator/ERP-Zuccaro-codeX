@@ -1,18 +1,18 @@
-## #60 STATUS REAL — Onda 5 UI Pedido anexos no painel canônico (2026-09-26T20:05Z)
+## #60 STATUS REAL — Onda 5 UI Pedido anexos no painel canônico (2026-09-26T19:08Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — PedidoCanonicoPanel lista anexos via `listAnexos` |
 | Testado | **SIM** — pedido-frontend-integration 2/2 |
-| CI | **PENDENTE** |
+| CI | **SIM** — frontend+backend SUCCESS (`c73d47c7`) |
 | Mesclado | **NÃO** (empilhada #59→…) |
 | Implantado VPS | **NÃO** |
 
-## Comercial 360 / Onda 5 - UI anexos Pedido (2026-09-26T20:05Z)
+## Comercial 360 / Onda 5 - UI anexos Pedido (2026-09-26T19:08Z)
 
 - Branch `cursor/comercial360-onda5-pedido-ui-anexos-392b` (base #59).
 - Reutiliza painel HTTP e endpoint DAM já existentes; só leitura de metadados no detalhe.
-- Sem módulo/tela paralela. Próximo: Onda 6 crédito / próximo ck do programa.
+- Sem módulo/tela paralela. Ready for review. Próximo: registrar/inativar anexos Pedido no cliente HTTP + painel.
 
 ## #59 STATUS REAL — Onda 4 UI Orçamento versões/origem/anexos (2026-09-26T20:02Z)
 
