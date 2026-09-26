@@ -176,13 +176,22 @@ test('PostgreSQL: migration 010 é convergente, íntegra, única e RLS', async (
       SELECT column_name FROM information_schema.columns
       WHERE table_name='cliente_empresas'
         AND column_name IN (
-          'saldo_devedor', 'limite_credito', 'limite_utilizado', 'preco_efetivo',
+          'saldo_devedor', 'preco_efetivo',
           'estoque', 'endereco', 'contato', 'pedido_id', 'vendedor_id',
           'forma_pagamento_id'
         )
       ORDER BY column_name
     `);
     assert.deepEqual(stillForbidden.rows, []);
+
+    // 032 (Onda 6): crédito por ClienteEmpresa — aditivo intencional (não inventado na 010).
+    const creditoCols = await db.query<{ column_name: string }>(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name='cliente_empresas'
+        AND column_name IN ('limite_credito', 'limite_utilizado')
+      ORDER BY column_name
+    `);
+    assert.deepEqual(creditoCols.rows.map((r) => r.column_name), ['limite_credito', 'limite_utilizado']);
 
     // Slot comercial aditivo da 013 (não da 010): coluna existe após cadeia completa.
     const precoSlot = await db.query<{ column_name: string }>(`
