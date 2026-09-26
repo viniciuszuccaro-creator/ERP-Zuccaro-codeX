@@ -58,6 +58,7 @@ function fixture(options: {
     useMemory: true,
     tenantGuard: tenant,
     rbacGuard: rbac,
+    alcadaConfig: options.alcadaConfig === undefined ? null : options.alcadaConfig,
   });
   const stubRefs = (service: any) => {
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
@@ -77,9 +78,6 @@ function fixture(options: {
       }),
     };
     service.prices = { resolveSalePrice: async () => ({ preco: '100.000000' }) };
-    if (options.alcadaConfig !== undefined) {
-      service.alcadaConfig = options.alcadaConfig;
-    }
   };
   stubRefs(runtime.orcamentoService);
   stubRefs(runtime.pedidoService);
@@ -149,4 +147,29 @@ test('HTTP: a prazo + regra explícita → 403 (não liberta)', async () => {
   });
   assert.equal(denied.status, 403);
   assert.equal(denied.body.error.code, 'DESCONTO_ALCADA_DENIED');
+});
+
+test('HTTP: à vista + regra + desconto > subtotal → 422 (não 500)', async () => {
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const invalid = {
+    ...payloadOrc,
+    itens: [{ ...itemComDesconto, desconto: '101' }],
+  };
+  const denied = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(invalid),
+  });
+  assert.equal(denied.status, 422);
+  assert.equal(denied.body.error.code, 'ORCAMENTO_DESCONTO_INVALIDO');
+  const listed = await request(app, '/api/v1/orcamentos?limit=10&offset=0', {
+    headers: headers(),
+  });
+  assert.equal(listed.status, 200);
+  assert.equal(listed.body.meta.total, 0);
 });
