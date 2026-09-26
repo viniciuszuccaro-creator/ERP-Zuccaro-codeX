@@ -1,7 +1,8 @@
-## SPA login — CORS erp-dev OK na VPS (2026-09-26T14:14Z)
+## SPA login — Credenciais inválidas (2026-09-26T14:16Z)
 
-- Humano rodou `fix-cors-erp-dev-login.sh` → `CORS_ERP_DEV_FIX_OK` · `meta_cors_public=YES` · probe com Origin → 401 `AUTH_INVALID_CREDENTIALS` (esperado; não mais 500).
-- Próximo: hard refresh no browser e login com `gate-d.synth@dev.synthetic.local` + senha do cofre.
+- CORS OK; Entrar agora retorna `AUTH_INVALID_CREDENTIALS` (senha Auth não confere / synth não reprovisionado após cleanup).
+- Ação: `scripts/vps/reset-auth-synth-login.sh` — gera senha nova, provisiona, prova GoTrue+BFF (sem vazar token).
+- Colar: `CONFIRM_AUTH_SYNTH_RESET=YES bash scripts/vps/reset-auth-synth-login.sh` e usar E-MAIL/SENHA impressos no cofre.
 
 
 
