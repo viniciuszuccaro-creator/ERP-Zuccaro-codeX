@@ -1,15 +1,15 @@
-## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T18:05Z)
+## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado | **SIM** — HEAD `ac23d184` |
-| Testado | **SIM** — 11/11 unit+HTTP locais |
-| CI | **SIM** — frontend+backend SUCCESS |
-| Re-review Codex | **PENDENTE** |
+| Implementado | **SIM** — `costPort` no createApp + auditoria approve com avaliação |
+| Testado | **SIM** — 11/11 unit · 4/4 HTTP (wiring createApp, sem mutar service.costs) |
+| CI | **PENDENTE** @ `280629b5` |
+| Re-review Codex | **PENDENTE** (fechamento funcional: wiring + audit) |
 | Mesclado | **NÃO** (base #46 ainda aberta) |
 | Implantado VPS | **N/A** |
 
-Pilha Onda 2: #46 desconto → #47 margem → #49 à vista. Legado prep #48 (sem HD). #45 acesso: CI OK; **implantado BLOCKED** (humano VPS + re-login).
+Pilha Onda 2: #46 desconto → #47 margem → #49 à vista. Legado prep #48 (sem HD). #45 acesso: scripts P1 corrigidos em `af8fafd5`; **implantado BLOCKED** (humano VPS + re-login).
 
 ## Comercial 360 / Onda 2 - alçada de margem mínima (2026-09-26T17:45Z)
 
