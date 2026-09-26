@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Vincula a conta real do proprietário a um perfil admin ERP (único) e demove o synth.
 # Fail-closed: Auth única, perfil único, grupo/empresa explícitos e conferidos
-# ANTES de qualquer UPDATE; owner + demote synth na MESMA transação; aborta se
-# as contagens finais não forem as esperadas.
+# ANTES de qualquer UPDATE; backup de profiles; owner + demote synth na MESMA TX;
+# permissões explícitas por módulo (SEM wildcard *); aborta se contagens ≠ esperadas.
 # Não imprime UUID completo, senha, token ou e-mail completo.
 # NÃO executar automaticamente — só na Web Console com confirmação humana.
 #
@@ -14,12 +14,9 @@
 #     SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' \
 #     DEMOTE_SYNTH=YES \
 #     bash scripts/vps/provision-owner-admin-profile.sh
-#
-# Contagens esperadas (obrigatórias):
-#   owner_auth_count=1 · owner_profile_count∈{0,1} pré-escrita · pós: owner_admin_ativos=1
-#   synth_admin_ativos=0 (se DEMOTE_SYNTH=YES)
 set -Eeuo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONFIRM_OWNER_ADMIN_PROFILE="${CONFIRM_OWNER_ADMIN_PROFILE:-}"
 OWNER_EMAIL="${OWNER_EMAIL:-vinicius.zuccaro@gmail.com}"
 SYNTH_EMAIL="${SYNTH_EMAIL:-gate-d.synth@dev.synthetic.local}"
@@ -29,6 +26,8 @@ OWNER_GROUP_ID="${OWNER_GROUP_ID:-}"
 OWNER_EMPRESA_ID="${OWNER_EMPRESA_ID:-}"
 EXPECTED_OWNER_ADMIN="${EXPECTED_OWNER_ADMIN:-1}"
 EXPECTED_SYNTH_ADMIN="${EXPECTED_SYNTH_ADMIN:-0}"
+OWNER_PERMS_FILE="${OWNER_PERMS_FILE:-$ROOT/scripts/vps/owner-admin-permissoes.json}"
+OWNER_PROV_BACKUP_DIR="${OWNER_PROV_BACKUP_DIR:-$ROOT/backups/owner-provision}"
 
 UUID_RE='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
 
@@ -46,9 +45,29 @@ echo "demote_synth=${DEMOTE_SYNTH}"
 echo "expected_owner_admin=${EXPECTED_OWNER_ADMIN}"
 echo "expected_synth_admin=${EXPECTED_SYNTH_ADMIN}"
 
+[[ -f "$OWNER_PERMS_FILE" ]] || {
+  echo "BLOCKED: owner_perms_file_missing" >&2
+  exit 2
+}
+
+python3 - "$OWNER_PERMS_FILE" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding='utf-8') as f:
+    data = json.load(f)
+if not isinstance(data, dict):
+    raise SystemExit('BLOCKED: owner_perms_not_object')
+if '*' in data:
+    raise SystemExit('BLOCKED: owner_perms_has_wildcard')
+for mod in ('Cadastros', 'Comercial', 'Sistema'):
+    if mod not in data or not isinstance(data[mod], dict) or not data[mod]:
+        raise SystemExit(f'BLOCKED: owner_perms_missing_module_{mod}')
+print('owner_perms_modules=' + ','.join(sorted(data.keys())))
+print('owner_perms_wildcard=NO')
+PY
+
 if [[ -z "$OWNER_GROUP_ID" || -z "$OWNER_EMPRESA_ID" ]]; then
   echo 'BLOCKED: set OWNER_GROUP_ID and OWNER_EMPRESA_ID (explícitos) before any write' >&2
-  echo 'HINT: descubra com SELECT sanitizado (sem colar UUID no chat) e passe nos env' >&2
   exit 2
 fi
 [[ "$OWNER_GROUP_ID" =~ $UUID_RE ]] || {
@@ -112,7 +131,27 @@ fi
 echo 'precheck_ok=YES'
 echo 'precheck_group_empresa_conferidos=YES'
 
-# TX atômica: params via TEMP TABLE (:'var' não expandem dentro de DO $$).
+# Backup sanitizado (só tabela profiles) antes de mutar.
+STAMP="$(date -u +%Y%m%d-%H%M%S)"
+mkdir -p "$OWNER_PROV_BACKUP_DIR"
+BACKUP_NAME="profiles-pre-owner-prov-${STAMP}.sql"
+BACKUP_HOST="${OWNER_PROV_BACKUP_DIR}/${BACKUP_NAME}"
+docker exec supabase-db pg_dump -U postgres -d postgres \
+  --data-only --table=profiles --no-owner --no-privileges \
+  -f "/tmp/${BACKUP_NAME}"
+docker cp "supabase-db:/tmp/${BACKUP_NAME}" "$BACKUP_HOST"
+BACKUP_BYTES="$(wc -c <"$BACKUP_HOST" | tr -d '[:space:]')"
+[[ "${BACKUP_BYTES}" -gt 0 ]] || {
+  echo 'BLOCKED: backup_profiles_empty' >&2
+  exit 3
+}
+echo "backup_profiles_file=${BACKUP_NAME}"
+echo "backup_profiles_bytes=${BACKUP_BYTES}"
+echo "rollback_hint=psql -f backups/owner-provision/${BACKUP_NAME} (somente profiles; revisar antes)"
+
+# Copia árvore explícita para o container (lida via pg_read_file na TX).
+docker cp "$OWNER_PERMS_FILE" supabase-db:/tmp/owner-admin-permissoes.json
+
 if ! docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v owner_email="$OWNER_EMAIL" \
   -v owner_full_name="$OWNER_FULL_NAME" \
@@ -132,12 +171,13 @@ CREATE TEMP TABLE _owner_prov (
   synth_email text NOT NULL,
   demote text NOT NULL,
   expected_owner_admin int NOT NULL,
-  expected_synth_admin int NOT NULL
+  expected_synth_admin int NOT NULL,
+  permissoes jsonb NOT NULL
 ) ON COMMIT DROP;
 
 INSERT INTO _owner_prov (
   owner_email, owner_full_name, group_id, empresa_id,
-  synth_email, demote, expected_owner_admin, expected_synth_admin
+  synth_email, demote, expected_owner_admin, expected_synth_admin, permissoes
 ) VALUES (
   lower(:'owner_email'),
   :'owner_full_name',
@@ -146,7 +186,8 @@ INSERT INTO _owner_prov (
   lower(:'synth_email'),
   upper(trim(:'demote_synth')),
   :'expected_owner_admin'::int,
-  :'expected_synth_admin'::int
+  :'expected_synth_admin'::int,
+  pg_read_file('/tmp/owner-admin-permissoes.json')::jsonb
 );
 
 DO $prov$
@@ -163,6 +204,13 @@ DECLARE
   v_synth_admin int;
 BEGIN
   SELECT * INTO STRICT r FROM _owner_prov LIMIT 1;
+
+  IF r.permissoes ? '*' THEN
+    RAISE EXCEPTION 'BLOCKED: owner_perms_has_wildcard';
+  END IF;
+  IF NOT (r.permissoes ? 'Cadastros' AND r.permissoes ? 'Comercial' AND r.permissoes ? 'Sistema') THEN
+    RAISE EXCEPTION 'BLOCKED: owner_perms_missing_required_modules';
+  END IF;
 
   SELECT count(*), min(id) INTO v_auth_count, v_auth_id
   FROM auth.users
@@ -206,13 +254,7 @@ BEGIN
         ativo = true,
         group_id = r.group_id,
         empresa_id = r.empresa_id,
-        permissoes = jsonb_build_object(
-          '*', jsonb_build_array(
-            'visualizar','criar','editar','excluir','aprovar','cancelar',
-            'importar','exportar','configurar','executar','inativar','restaurar',
-            'receber','pagar','baixar','conciliar','estornar','emitir'
-          )
-        ),
+        permissoes = r.permissoes,
         updated_at = timezone('utc', now())
     WHERE p.id = v_profile_id;
   ELSE
@@ -226,13 +268,7 @@ BEGIN
       true,
       r.group_id,
       r.empresa_id,
-      jsonb_build_object(
-        '*', jsonb_build_array(
-          'visualizar','criar','editar','excluir','aprovar','cancelar',
-          'importar','exportar','configurar','executar','inativar','restaurar',
-          'receber','pagar','baixar','conciliar','estornar','emitir'
-        )
-      )
+      r.permissoes
     );
   END IF;
 
@@ -264,7 +300,10 @@ BEGIN
     AND p.role = 'admin'
     AND p.group_id = r.group_id
     AND p.empresa_id = r.empresa_id
-    AND p.permissoes ? '*';
+    AND NOT (p.permissoes ? '*')
+    AND p.permissoes ? 'Cadastros'
+    AND p.permissoes ? 'Comercial'
+    AND p.permissoes ? 'Sistema';
 
   IF v_owner_admin <> r.expected_owner_admin THEN
     RAISE EXCEPTION 'BLOCKED: owner_admin_count_mismatch got=% expected=%',
@@ -293,6 +332,7 @@ then
   echo 'transaction=COMMITTED'
 else
   echo 'BLOCKED: transaction_failed_rolled_back' >&2
+  echo "RESTORE_FROM_BACKUP=${BACKUP_NAME}" >&2
   exit 4
 fi
 
@@ -310,7 +350,10 @@ WHERE (lower(p.email) = lower(:'owner_email')
   AND p.role = 'admin'
   AND p.group_id = :'owner_group_id'::uuid
   AND p.empresa_id = :'owner_empresa_id'::uuid
-  AND p.permissoes ? '*';
+  AND NOT (p.permissoes ? '*')
+  AND p.permissoes ? 'Cadastros'
+  AND p.permissoes ? 'Comercial'
+  AND p.permissoes ? 'Sistema';
 SQL
 )"
 OWNER_FINAL="$(echo "$OWNER_FINAL" | tr -d '[:space:]')"
@@ -331,6 +374,7 @@ SYNTH_FINAL="$(echo "$SYNTH_FINAL" | tr -d '[:space:]')"
 
 echo "owner_admin_ativos=${OWNER_FINAL}"
 echo "synth_admin_ativos=${SYNTH_FINAL}"
+echo "owner_perms_wildcard=NO"
 
 [[ "$OWNER_FINAL" == "$EXPECTED_OWNER_ADMIN" ]] || {
   echo "BLOCKED: postcheck_owner_admin_mismatch got=${OWNER_FINAL} expected=${EXPECTED_OWNER_ADMIN}" >&2
@@ -348,5 +392,4 @@ fi
 
 echo "OWNER_ADMIN_PROVISION_OK"
 echo "NEXT=rebuild_api_web_logout_login_owner"
-echo "NOTE=nao_rodar_script_antigo_sem_OWNER_GROUP_ID_EMPRESA_ID"
 echo "OWNER_ADMIN_PROVISION_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

@@ -129,23 +129,31 @@ attempt_auto_rollback() {
 
 free_port_holders() {
   local port="$1"
+  local allowed_csv="$2"
   local ids
   ids="$(docker ps -aq --filter publish="$port" 2>/dev/null || true)"
   if [[ -z "$ids" ]]; then
     echo "port_${port}_holders=none"
     return 0
   fi
+  IFS=',' read -r -a allowed_arr <<<"$allowed_csv"
   for id in $ids; do
     local n
     n="$(docker inspect -f '{{.Name}}' "$id" | sed 's#^/##')"
-    # Só remove oficiais ERP ou residuais spa-login — não outros serviços.
-    if [[ "$n" == "erp-api-dev" || "$n" == "erp-web-dev" || "$n" =~ ^erp-(api|web)-dev-pre-spa-login- ]]; then
-      echo "stop_rm_port_${port}=${n}"
-      docker stop "$id" >/dev/null || true
-      docker rm "$id" >/dev/null || true
-    else
-      echo "WARN: port_${port}_foreign_holder=${n} (não removido)"
+    local ok=0
+    for allowed in "${allowed_arr[@]}"; do
+      if [[ "$n" == "$allowed" || "$n" =~ ^erp-(api|web)-dev-pre-spa-login- ]]; then
+        ok=1
+        break
+      fi
+    done
+    if [[ "$ok" != "1" ]]; then
+      echo "BLOCKED: port_${port}_unknown_container name=${n}" >&2
+      exit 6
     fi
+    echo "stop_rm_port_${port}=${n}"
+    docker stop "$id" >/dev/null || true
+    docker rm "$id" >/dev/null || true
   done
 }
 
@@ -164,8 +172,8 @@ while read -r n; do
   docker rm "$n" >/dev/null || true
 done < <(docker ps -a --format '{{.Names}}' | grep -E '^erp-(api|web)-dev-pre-spa-login-' || true)
 
-free_port_holders 3080
-free_port_holders 3081
+free_port_holders 3080 "erp-api-dev"
+free_port_holders 3081 "erp-web-dev"
 
 export ERP_DOCKER_NETWORK
 echo "compose_build_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

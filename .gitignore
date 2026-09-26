@@ -8,6 +8,7 @@
 
 # Tags locais de rollback SPA (VPS) — sem commit
 .spa-login-rollback-tags
+backups/owner-provision/
 
 # Logs
 logs

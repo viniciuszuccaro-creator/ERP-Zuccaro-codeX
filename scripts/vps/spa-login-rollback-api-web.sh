@@ -68,6 +68,7 @@ echo "compose_image_retarget=YES api=${COMPOSE_API_IMAGE} web=${COMPOSE_WEB_IMAG
 
 free_official_port() {
   local port="$1"
+  local allowed_names="$2" # espaço-separado
   local ids
   ids="$(docker ps -aq --filter publish="$port" 2>/dev/null || true)"
   if [[ -z "$ids" ]]; then
@@ -77,6 +78,15 @@ free_official_port() {
   for id in $ids; do
     local n
     n="$(docker inspect -f '{{.Name}}' "$id" | sed 's#^/##')"
+    local ok=0
+    for allowed in $allowed_names; do
+      if [[ "$n" == "$allowed" ]]; then ok=1; break; fi
+    done
+    if [[ "$ok" != "1" ]]; then
+      echo "BLOCKED: port_${port}_unknown_container name=${n}" >&2
+      echo 'HINT: remova/identifique o holder manualmente; rollback recusa containers não oficiais' >&2
+      exit 6
+    fi
     echo "stop_rm_port_${port}=${n}"
     docker stop "$id" >/dev/null || true
     docker rm "$id" >/dev/null || true
@@ -90,8 +100,9 @@ for name in erp-api-dev erp-web-dev; do
     docker rm "$name" >/dev/null || true
   fi
 done
-free_official_port 3080
-free_official_port 3081
+# Somente oficiais (ou já removidos acima). Qualquer outro holder → BLOCKED.
+free_official_port 3080 "erp-api-dev"
+free_official_port 3081 "erp-web-dev"
 
 export ERP_DOCKER_NETWORK
 echo "compose_up_rollback_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

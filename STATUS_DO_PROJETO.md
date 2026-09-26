@@ -24,31 +24,32 @@
 - PR #45 aberta (branch deployada). PR #44: HTTPS já OK → encerrar. PR #43 MERGEABLE/CI verde → merge humano para CI da `main`.
 - **Validação humana obrigatória:** após colar o bloco VPS abaixo + logout/login com a conta real, confirmar módulos/empresas e que o synth não é admin.
 
-### PASTE_TO_GIT_VPS (sanitizado — Web Console)
+### PASTE_TO_GIT_VPS (sanitizado — Web Console) — **somente após pull do HEAD novo**
 
 ```bash
 cd /opt/erp-zuccaro
 git fetch origin cursor/spa-login-http-supabase-392b
 git checkout --detach origin/cursor/spa-login-http-supabase-392b
 
+# OBRIGATÓRIO: grupo/empresa explícitos (não inventar — conferir no DB antes)
+export OWNER_GROUP_ID='<uuid-grupo>'
+export OWNER_EMPRESA_ID='<uuid-empresa>'
+
 CONFIRM_OWNER_ADMIN_PROFILE=YES \
   OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
   DEMOTE_SYNTH=YES \
   bash scripts/vps/provision-owner-admin-profile.sh
+# Esperado: precheck_ok=YES · owner_auth_count=1 · owner_admin_ativos=1 · synth_admin_ativos=0
 
 CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
   GIT_REF=HEAD \
   bash scripts/vps/spa-login-rebuild-api-web.sh
-
-# Evidência sanitizada (colar no chat):
-echo "PASTE_TO_GIT_OWNER_ADMIN_BEGIN"
-# owner_admin_ativos=1 · synth_admin_ativos=0 · merge_sha8=… · spa_marker=erp-login-email
-curl -sS https://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;d=json.load(sys.stdin);print("auth_mode="+d["auth"]["mode"]);print("password_login="+str(d.get("authSession",{}).get("passwordLoginPath")))'
-curl -sS -o /dev/null -w 'web_3081=%{http_code}\n' http://127.0.0.1:3081/
-echo "PASTE_TO_GIT_OWNER_ADMIN_END"
+# Rollback se preciso:
+# CONFIRM_SPA_LOGIN_ROLLBACK=YES ERP_DOCKER_NETWORK=supabase_default \
+#   bash scripts/vps/spa-login-rollback-api-web.sh
 ```
 
-Depois: **logout completo → login com a conta real** → validar acesso admin (configurar módulos + empresas do grupo).
+**Agente: não executar na VPS.** Humano cola evidência sanitizada + valida login owner.
 
 
 ## SPA login — acesso total DEV (2ª correção) (2026-09-26T14:45Z)
