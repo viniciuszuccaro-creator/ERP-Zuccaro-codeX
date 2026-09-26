@@ -1,9 +1,10 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:50Z)
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:52Z)
 
-- API rebuild OK (`auth_session_endpoint_reachable=YES`); web 3081 `connection reset` / `spa_asset=missing`.
-- Causa: `docker rename` + `compose up` recriou `erp-web-dev-pre-spa-login-*` (labels Compose) e disputou a porta.
-- Fix script: tag de imagem + `stop/rm` (sem rename); limpa residuais e holders de 3080/3081.
-- Recuperação imediata VPS: limpar containers `erp-web*`, `compose up --force-recreate erp-web`, provar `erp-login-email` no bundle.
+- VPS: API + web com login deployados. HTTPS externo serve `index-PXviNzYb.js` com `erp-login-email` (=1).
+- `POST /api/v1/auth/session` responde `AUTH_LOGIN_INVALID` (validação) — endpoint público OK (não mais `AUTH_REQUIRED`).
+- Próximo humano: hard refresh em `https://erp-dev.cpaferroeaco.com.br` e confirmar campos E-mail/Senha; depois login com perfil Auth ativo.
+- PR #45 ainda OPEN — mergear quando conveniente (código já na VPS via branch).
+
 
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
