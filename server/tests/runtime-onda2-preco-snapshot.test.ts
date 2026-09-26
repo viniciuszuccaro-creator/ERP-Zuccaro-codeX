@@ -78,7 +78,7 @@ function orcamentoFixture(options: { preco?: string | null; calls?: Array<unknow
   rbac.link({
     actorId,
     groupId,
-    permissions: { Comercial: { orcamento: ['visualizar', 'criar', 'editar', 'cancelar'] } },
+    permissions: { Comercial: { orcamento: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar'] } },
   });
   const prices = options.preco === null
     ? { resolveSalePrice: async () => null }
@@ -107,7 +107,7 @@ function pedidoFixture(options: { preco?: string | null; calls?: Array<unknown> 
     groupId,
     permissions: {
       Comercial: {
-        pedido: ['visualizar', 'criar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'],
+        pedido: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'],
       },
     },
   });

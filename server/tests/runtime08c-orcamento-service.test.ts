@@ -89,7 +89,7 @@ function fixture(overrides: {
   const repo = new TrackingRepo();
   const audit = new InMemoryAuditRepository();
   const rbac = new InMemoryRbacGuard();
-  rbac.link({ actorId: ctx.actorId, groupId, permissions: { Comercial: { orcamento: ['visualizar', 'criar', 'editar', 'cancelar'] } } });
+  rbac.link({ actorId: ctx.actorId, groupId, permissions: { Comercial: { orcamento: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar'] } } });
   const service = new OrcamentoService(
     repo,
     audit,

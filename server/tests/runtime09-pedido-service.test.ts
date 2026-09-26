@@ -19,7 +19,7 @@ const quote:OrcamentoCreate={cliente_empresa_id:clienteEmpresaId,condicao_pagame
 function fixture() {
   const repo=new InMemoryPedidoRepository(),orcamentos=new InMemoryOrcamentoRepository(),audit=new InMemoryAuditRepository(),tenant=new InMemoryTenantGuard(),rbac=new InMemoryRbacGuard();
   tenant.link(empresaId,groupId);
-  rbac.link({actorId,groupId,permissions:{Comercial:{pedido:['visualizar','criar','editar','cancelar','converter-pedido','alterar-status']}}});
+  rbac.link({actorId,groupId,permissions:{Comercial:{pedido: ['visualizar','criar', 'aprovar','editar','cancelar','converter-pedido','alterar-status']}}});
   const service=new PedidoService(repo,orcamentos,audit,tenant,rbac,
     {getEmpresaLinkById:async()=>({id:clienteEmpresaId,cliente_id:clienteId,ativo:true,bloqueado:false,habilitado_operacao:true} as never)},
     {getById:async()=>({id:produtoId,ativo:true,unidade_medida_id:unidadeId} as never)},

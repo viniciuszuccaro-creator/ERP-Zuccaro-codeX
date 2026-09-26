@@ -14,6 +14,7 @@ import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoR
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus } from '../repositories/pedidoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
+import { assertDescontoDentroDaAlcadaOuAprovar } from './comercialDescontoAlcadaPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -61,6 +62,7 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      await this.assertDescontoAlcada(ctx, priced.itens);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -100,6 +102,7 @@ export class PedidoService {
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
+        await this.assertDescontoAlcada(ctx, data.itens);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
@@ -135,6 +138,7 @@ export class PedidoService {
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
+      await this.assertDescontoAlcada(ctx, priced.itens);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -227,6 +231,22 @@ export class PedidoService {
     await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', action, { allowGlobalWildcard: false });
     return { groupId: ctx.groupId, empresaId: ctx.empresaId };
   }
+
+  private async assertDescontoAlcada(ctx: RequestContext, itens: PedidoCreate['itens']) {
+    let canAprovar = false;
+    try {
+      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false });
+      canAprovar = true;
+    } catch {
+      canAprovar = false;
+    }
+    assertDescontoDentroDaAlcadaOuAprovar({
+      items: itens,
+      canAprovar,
+      entityLabel: 'Pedido',
+    });
+  }
+
   private async requirePedido(scope: PedidoScope, id: string, executor?: DbQueryExecutor) { const row = await this.repo.get(scope, id, executor); if (!row) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found'); return row; }
   private async auditRow(ctx: RequestContext, action: AuditAction, before: Pedido | null, after: Pedido, executor?: DbQueryExecutor) { await this.audit.append({ groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId, actorEmail: ctx.actorEmail, entity: 'Pedido', entityId: after.id, action, beforeData: before ? pedidoAuditSnapshot(before) : undefined, afterData: pedidoAuditSnapshot(after), requestId: ctx.requestId, ipAddress: ctx.ipAddress }, executor); }
   private assertId(id: string, field: string) { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${field}`); }

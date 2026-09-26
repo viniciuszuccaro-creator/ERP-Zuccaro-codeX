@@ -38,7 +38,7 @@ function fixture() {
   tenant.link(empresaId, groupId);
   tenant.link(otherEmpresaId, groupId);
   const rbac = new InMemoryRbacGuard();
-  const permissions = { Comercial: { pedido: ['visualizar', 'criar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'], orcamento: ['visualizar', 'criar', 'editar', 'cancelar'] } };
+  const permissions = { Comercial: { pedido: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'], orcamento: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar'] } };
   rbac.link({ actorId, groupId, permissions });
   rbac.link({ actorId: deniedActorId, groupId, permissions: { Comercial: { pedido: [] } } });
   const runtime = createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard: tenant, rbacGuard: rbac });

@@ -10,6 +10,7 @@ import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondic
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
+import { assertDescontoDentroDaAlcadaOuAprovar } from './comercialDescontoAlcadaPolicy.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -51,6 +52,7 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      await this.assertDescontoAlcada(ctx, priced.itens);
       const created = await this.repo.create(scope, priced, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -95,6 +97,7 @@ export class OrcamentoService {
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      await this.assertDescontoAlcada(ctx, priced.itens);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -142,6 +145,21 @@ export class OrcamentoService {
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
     return { ...data, itens };
+  }
+
+  private async assertDescontoAlcada(ctx: RequestContext, itens: OrcamentoCreate['itens']) {
+    let canAprovar = false;
+    try {
+      await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false });
+      canAprovar = true;
+    } catch {
+      canAprovar = false;
+    }
+    assertDescontoDentroDaAlcadaOuAprovar({
+      items: itens,
+      canAprovar,
+      entityLabel: 'Orçamento',
+    });
   }
 
   private normalizeMoney(value: string): string {

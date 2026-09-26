@@ -1,3 +1,12 @@
+## Comercial 360 / Onda 2 - alçada de desconto (2026-09-26T16:40Z)
+
+- Branch `cursor/comercial360-onda2-alcada-desconto-392b` (separada da #45).
+- Política pura `comercialDescontoAlcadaPolicy`: desconto > alçada livre (0 bps) exige `Comercial.{orcamento|pedido}.aprovar`.
+- Orçamento/Pedido create/update/convert aplicam a regra após snapshot de preço; fail-closed 403 `DESCONTO_ALCADA_DENIED`.
+- Sem módulo paralelo; reutiliza agregados e RBAC existentes. UI `AprovacaoDescontos*` permanece a superfície legada.
+- Testes: alcada 3/3 + orc/ped service/http/onda2 — PASS.
+- #45 segue com RBAC owner explícito (implantação VPS após re-review Codex).
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
