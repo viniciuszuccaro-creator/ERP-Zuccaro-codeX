@@ -1,3 +1,13 @@
+## #45 Codex P1 — RBAC explícito + backup + rollback fail-closed (2026-09-26T16:30Z)
+
+- Achados Codex corrigidos na branch #45 (sem rodar VPS ainda):
+  1. Grupo/Empresa explícitos + `empresas.group_id` conferido (já no lote anterior; mantido).
+  2. **Sem `*`**: `scripts/vps/owner-admin-permissoes.json` + `OWNER_ERP_PERMISSION_TREE` (Cadastros/Comercial/Sistema); testes 403 para comum e ação fora da allowlist.
+  3. Backup `profiles` antes da TX + demote synth na mesma TX + rollback de imagens; rollback/rebuild **recusam** container desconhecido em 3080/3081.
+- Testes: `owner-permission-tree` 2/2 PASS · HEAD `f4910e3c`.
+- **Implantação VPS:** após re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; registrar SHA imagens + bundle; validar login owner.
+- Próximo código paralelo: Comercial 360 Onda 2 alçada/desconto/margem em branch separada.
+
 ## #43 merged + provision/rebuild endurecidos (#45) (2026-09-26T16:20Z)
 
 - **#43 MERGED** em `main` @ `f37b8a65` · CI main [36254946184](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36254946184) frontend+backend **SUCCESS** (seed Central 360 corrigido).
