@@ -1,0 +1,24 @@
+# Gate F — DNS OK; TLS ainda timeout após “ações externas concluídas” (2026-09-26)
+
+utc=2026-09-26T12:50:19Z
+source=cloud_agent_reachability
+
+## Probe
+- DNS erp-dev / api-erp-dev @8.8.8.8 = RESOLVED_A
+- GATE_F_HTTPS_PROBE=reachability → LAYER_A_DNS_TLS=BLOCKED
+- spa_origin_http=000 official_api_health=000
+- openssl s_client = FAIL (handshake timeout)
+- TCP 80/443: SYN aceito historicamente; HTTP/HTTPS sem bytes úteis
+
+## Conclusão
+Caddy/ACME/firewall painel ainda NÃO entregam TLS público.
+Acesso diário = NOT_DONE (e não pode ser marcado: HTTPS indisponível).
+
+## Próximo
+1. Painel Hostinger Firewall: 80+443 ALLOW (inbound)
+2. Web Console: script gate-f-apply-caddy-https-webconsole.sh com CADDY_ACME_EMAIL
+3. Colar PASTE_TO_GIT_* ; se tls_local=NO, journalctl -u caddy (sanitizado)
+4. Só depois reachability OK → humano navega no PC
+
+acesso_diario=NOT_DONE
+LAYER_A_DNS_TLS=BLOCKED

@@ -1,3 +1,10 @@
+## Gate F — TLS ainda timeout pós-ações (2026-09-26T12:50Z)
+
+- DNS OK; `GATE_F_HTTPS_PROBE=reachability` → `LAYER_A_DNS_TLS=BLOCKED` (spa/api=000).
+- TCP 80/443 abertos; HTTP/HTTPS sem resposta — Caddy/painel firewall ainda pendentes.
+- Evidência: `docs/vps/evidence/gate-f-https-tls-still-timeout-2026-09-26.txt`.
+- Acesso diário **NOT_DONE**. Refazer script Web Console + firewall Hostinger 80/443.
+
 ## Gate F — DNS OK · TLS/Caddy pendente (2026-09-26T12:35Z)
 
 - DNS público **OK**: `erp-dev` / `api-erp-dev` resolvem A em 8.8.8.8 (IP não no Git).
