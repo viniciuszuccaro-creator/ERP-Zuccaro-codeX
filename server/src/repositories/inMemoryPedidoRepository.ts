@@ -3,7 +3,7 @@ import type { DbQueryExecutor } from '../db/client.js';
 import {
   calculatePedido,
   type Pedido,
-  type PedidoCreate,
+  type PedidoCreateResolved,
   type PedidoHistorico,
   type PedidoListFilters,
   type PedidoOrigem,
@@ -28,7 +28,7 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     catch (error) { this.rows = rows; this.events = events; this.next = next; throw error; }
   }
 
-  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
+  async create(scope: PedidoScope, data: PedidoCreateResolved, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
     if (data.orcamento_id && await this.getByOrcamento(scope, data.orcamento_id)) throw new Error('PEDIDO_ORCAMENTO_ALREADY_CONVERTED');
     const origem = data.origem ?? 'MANUAL';
     if (data.idempotency_key && await this.getByIdempotencyKey(scope, origem, data.idempotency_key)) {
@@ -53,6 +53,7 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       canal: data.canal ?? null,
       external_id: data.external_id ?? null,
       idempotency_key: data.idempotency_key ?? null,
+      tipo_comercial: data.tipo_comercial ?? 'REVENDA',
       subtotal: totals.subtotal, desconto: totals.desconto, total: totals.total,
       ativo: true, itens: totals.itens, created_at: now, updated_at: now,
     };
@@ -99,12 +100,13 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       && (!filters.status || row.status === filters.status)
       && (!filters.clienteEmpresaId || row.cliente_empresa_id === filters.clienteEmpresaId)
       && (!filters.tipoOperacao || row.tipo_operacao === filters.tipoOperacao)
-      && (!filters.origem || row.origem === filters.origem))
+      && (!filters.origem || row.origem === filters.origem)
+      && (!filters.tipoComercial || row.tipo_comercial === filters.tipoComercial))
       .sort((a, b) => b.numero.localeCompare(a.numero) || b.id.localeCompare(a.id));
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
   }
 
-  async update(scope: PedidoScope, id: string, data: PedidoCreate, _actorId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async update(scope: PedidoScope, id: string, data: PedidoCreateResolved, _actorId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
     const current = await this.get(scope, id);
     if (!current || current.status !== 'EM_ABERTO') return null;
     const totals = calculatePedido(data.itens);
@@ -119,6 +121,7 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       canal: current.canal,
       external_id: current.external_id,
       idempotency_key: current.idempotency_key,
+      tipo_comercial: data.tipo_comercial,
       observacoes: data.observacoes ?? null,
       ...totals,
       updated_at: new Date().toISOString(),

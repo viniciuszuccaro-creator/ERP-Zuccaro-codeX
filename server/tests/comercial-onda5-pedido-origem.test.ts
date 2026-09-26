@@ -41,7 +41,7 @@ function fixture() {
   const service = new PedidoService(
     repo, orcamentos, audit, tenant, rbac,
     { getEmpresaLinkById: async () => ({ id: clienteId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true } as never) },
-    { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId } as never) },
+    { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId, tipo_item: 'Revenda' } as never) },
     { getById: async () => ({ id: unidadeId, ativo: true } as never) },
     { get: async () => ({ id: condicaoId, ativo: true } as never) },
     { get: async () => null as never },

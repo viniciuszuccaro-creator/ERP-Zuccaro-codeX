@@ -2,13 +2,14 @@ import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import {
   calculatePedido,
   type Pedido,
-  type PedidoCreate,
+  type PedidoCreateResolved,
   type PedidoHistorico,
   type PedidoListFilters,
   type PedidoOrigem,
   type PedidoRepository,
   type PedidoScope,
   type PedidoStatus,
+  type PedidoTipoComercial,
 } from './pedidoTypes.js';
 
 type Row = Record<string, unknown>;
@@ -24,12 +25,14 @@ const map = (row: Row): Pedido => ({
   canal: row.canal == null ? null : String(row.canal),
   external_id: row.external_id == null ? null : String(row.external_id),
   idempotency_key: row.idempotency_key == null ? null : String(row.idempotency_key),
+  tipo_comercial: String(row.tipo_comercial ?? 'REVENDA') as PedidoTipoComercial,
   created_at: new Date(String(row.created_at)).toISOString(), updated_at: new Date(String(row.updated_at)).toISOString(),
   itens: (Array.isArray(row.itens) ? row.itens : JSON.parse(String(row.itens ?? '[]'))).map((item: Row) => ({
     ...item, id: String(item.id), produto_id: String(item.produto_id), unidade_id: String(item.unidade_id),
     descricao: String(item.descricao_snapshot), unidade_sigla: String(item.unidade_snapshot),
     quantidade: String(item.quantidade), preco_unitario: String(item.preco_unitario), desconto: String(item.desconto),
     subtotal: String(item.subtotal), total: String(item.total), requer_producao: Boolean(item.requer_producao),
+    tipo_comercial_snapshot: String(item.tipo_comercial_snapshot ?? 'REVENDA') as Pedido['itens'][number]['tipo_comercial_snapshot'],
   })),
 });
 
@@ -38,11 +41,11 @@ export class PostgresPedidoRepository implements PedidoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> { return this.db.withTransaction(fn); }
   private run<T>(executor: DbQueryExecutor | undefined, fn: (query: DbQueryExecutor) => Promise<T>): Promise<T> { return executor ? fn(executor) : this.db.withTransaction(fn); }
 
-  private async insertItems(query: DbQueryExecutor, scope: PedidoScope, pedidoId: string, data: PedidoCreate, actorId: string) {
+  private async insertItems(query: DbQueryExecutor, scope: PedidoScope, pedidoId: string, data: PedidoCreateResolved, actorId: string) {
     const totals = calculatePedido(data.itens);
     for (const item of totals.itens) await query.query(
-      'INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,desconto,subtotal,total,requer_producao,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14)',
-      [scope.groupId, scope.empresaId, pedidoId, item.produto_id, item.unidade_id, item.descricao, item.unidade_sigla, item.quantidade, item.preco_unitario, item.desconto ?? '0', item.subtotal, item.total, item.requer_producao, actorId],
+      'INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15)',
+      [scope.groupId, scope.empresaId, pedidoId, item.produto_id, item.unidade_id, item.descricao, item.unidade_sigla, item.quantidade, item.preco_unitario, item.desconto ?? '0', item.subtotal, item.total, item.requer_producao, item.tipo_comercial_snapshot, actorId],
     );
     return totals;
   }
@@ -73,7 +76,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return result.rows[0] ? map(result.rows[0]) : null;
   }
 
-  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido> {
+  async create(scope: PedidoScope, data: PedidoCreateResolved, actorId: string, executor?: DbQueryExecutor): Promise<Pedido> {
     return this.run(executor, async (query) => {
       await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`pedido:${scope.empresaId}`]);
       const sequence = await query.query<{ next: string }>('SELECT COALESCE(MAX(numero::int),0)+1 next FROM pedidos WHERE empresa_id=$1', [scope.empresaId]);
@@ -85,13 +88,13 @@ export class PostgresPedidoRepository implements PedidoRepository {
         `INSERT INTO pedidos(
           group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,
           orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,origem,canal,external_id,idempotency_key,
-          subtotal,desconto,total,created_by,updated_by
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$10,$10) RETURNING id`,
+          tipo_comercial,subtotal,desconto,total,created_by,updated_by
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$10,$10) RETURNING id`,
         [
           scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null,
           data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao,
           data.data_entrega_solicitada, data.observacoes ?? null, origem, data.canal ?? null, data.external_id ?? null,
-          data.idempotency_key ?? null, totals.subtotal, totals.desconto, totals.total,
+          data.idempotency_key ?? null, data.tipo_comercial ?? 'REVENDA', totals.subtotal, totals.desconto, totals.total,
         ],
       );
       const id = String(inserted.rows[0]?.id);
@@ -103,24 +106,24 @@ export class PostgresPedidoRepository implements PedidoRepository {
 
   async list(scope: PedidoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: PedidoListFilters = {}) {
     const query = executor ?? this.db;
-    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6) AND ($7::text IS NULL OR p.origem=$7)`;
-    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null, filters.origem || null];
+    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6) AND ($7::text IS NULL OR p.origem=$7) AND ($8::text IS NULL OR p.tipo_comercial=$8)`;
+    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null, filters.origem || null, filters.tipoComercial || null];
     const params = [...filterParams, Math.min(200, Math.max(1, Math.trunc(limit))), Math.max(0, Math.trunc(offset))];
     const [count, rows] = await Promise.all([
       query.query<{ total: number }>(`SELECT count(*)::int total FROM pedidos p WHERE ${where}`, filterParams),
-      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $8 OFFSET $9`, params),
+      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $9 OFFSET $10`, params),
     ]);
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }
 
-  async update(scope: PedidoScope, id: string, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async update(scope: PedidoScope, id: string, data: PedidoCreateResolved, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
     return this.run(executor, async (query) => {
       const current = await this.get(scope, id, query);
       if (!current || current.status !== 'EM_ABERTO') return null;
       const totals = calculatePedido(data.itens);
       await query.query(
-        'UPDATE pedidos SET cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,condicao_pagamento_id=$8,tipo_operacao=$9,data_entrega_solicitada=$10,observacoes=$11,subtotal=$12,desconto=$13,total=$14,updated_by=$15 WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
-        [id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, actorId],
+        'UPDATE pedidos SET cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,condicao_pagamento_id=$8,tipo_operacao=$9,data_entrega_solicitada=$10,observacoes=$11,tipo_comercial=$12,subtotal=$13,desconto=$14,total=$15,updated_by=$16 WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+        [id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, data.tipo_comercial, totals.subtotal, totals.desconto, totals.total, actorId],
       );
       await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
       await this.insertItems(query, scope, id, data, actorId);
