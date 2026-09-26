@@ -1,0 +1,29 @@
+# Gate F — LAYER_A DNS+TLS OK (2026-09-26)
+
+utc=2026-09-26T13:16:18Z
+source=cloud_agent_reachability
+
+## Resultado
+- GATE_F_HTTPS_PROBE=reachability
+- LAYER_A_DNS_TLS=OK
+- spa_origin_http=200
+- spa_proxy_health=200
+- official_api_health=200
+- official_api_ready=200
+- spa same-origin /api/v1/meta=200
+- cert Let's Encrypt CN=erp-dev… e api-erp-dev… verify=ok
+- official_runtime=ERP-RUNTIME-08B
+- official_auth_mode=supabase_user
+
+## VPS PASTE (humano, 13:14Z)
+- caddy=APPLIED validate=OK ufw_80_443=ALLOWED
+- cors_https_spa=MISSING (SPA usa same-origin /api — login diário via erp-dev não depende de CORS no host api-*)
+- local_https_spa=000 na VPS (hairpin/NAT comum); externo OK
+
+## Acesso diário
+acesso_diario=NOT_DONE
+motivo=aguarda_humano_abrir_e_navegar_no_PC
+URL=https://erp-dev.cpaferroeaco.com.br/
+
+LAYER_C_EXTERNAL_NAV=SKIPPED
+GATE_F_HTTPS_EXTERNAL_NAV=NOT_PROVEN

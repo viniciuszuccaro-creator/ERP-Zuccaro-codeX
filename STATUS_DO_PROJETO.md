@@ -1,3 +1,10 @@
+## Gate F — LAYER_A DNS+TLS OK (2026-09-26T13:16Z)
+
+- Reachability externo: spa/api/health/ready **200** · LE cert OK · runtime `ERP-RUNTIME-08B` · `supabase_user`.
+- Evidência: `docs/vps/evidence/gate-f-https-layer-a-ok-2026-09-26.txt`.
+- CORS no host `api-erp-dev` ainda MISSING na VPS; SPA same-origin `/api` via `erp-dev` funciona (meta=200).
+- **Acesso diário NOT_DONE** — aguarda humano abrir `https://erp-dev.cpaferroeaco.com.br/` no PC e confirmar navegação.
+
 ## Gate F — TLS ainda timeout pós-ações (2026-09-26T12:50Z)
 
 - DNS OK; `GATE_F_HTTPS_PROBE=reachability` → `LAYER_A_DNS_TLS=BLOCKED` (spa/api=000).
