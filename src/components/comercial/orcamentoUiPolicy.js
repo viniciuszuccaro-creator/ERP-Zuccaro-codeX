@@ -41,14 +41,46 @@ export function canUseOrcamentoAction(hasPermission, action, status = 'EM_ABERTO
     );
   }
   if (!hasPermission('Comercial', 'orcamento', action)) return false;
-  return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
+  return ['editar', 'cancelar', 'versionar'].includes(action) ? status === 'EM_ABERTO' : true;
 }
+
+export const ORCAMENTO_ORIGEM_LABELS = {
+  MANUAL: 'Manual',
+  SITE: 'Site',
+  PORTAL_B2B: 'Portal B2B',
+  APP: 'App',
+  CHATBOT: 'Chatbot',
+  MARKETPLACE: 'Marketplace',
+  IMPORTACAO: 'Importação',
+  CRM: 'CRM',
+};
 
 export function formatOrcamentoStatusLabel(status) {
   if (status === 'EM_ABERTO') return 'Em aberto';
   if (status === 'SUPERSEDIDO') return 'Supersedido';
   if (status === 'CANCELADO') return 'Cancelado';
   return status || '-';
+}
+
+export function buildOrcamentoVersionPayload(orcamento) {
+  if (!orcamento?.cliente_empresa_id || !orcamento?.condicao_pagamento_id || !orcamento?.validade_em) {
+    throw new Error('Orçamento inválido para versionar.');
+  }
+  return buildOrcamentoPayload({
+    cliente_empresa_id: orcamento.cliente_empresa_id,
+    condicao_pagamento_id: orcamento.condicao_pagamento_id,
+    validade_em: String(orcamento.validade_em).slice(0, 10),
+    observacoes: orcamento.observacoes || '',
+    itens: (orcamento.itens || []).map((item) => ({
+      produto_id: item.produto_id,
+      unidade_id: item.unidade_id,
+      descricao: item.descricao,
+      unidade_sigla: item.unidade_sigla,
+      quantidade: item.quantidade,
+      preco_unitario: item.preco_unitario,
+      desconto: item.desconto || '0',
+    })),
+  });
 }
 
 export function buildOrcamentoPayload(form) {
