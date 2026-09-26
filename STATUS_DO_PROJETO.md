@@ -1,15 +1,15 @@
-## #45 STATUS REAL — acesso owner (2026-09-26T20:32Z)
+## #45 STATUS REAL — acesso owner (2026-09-26T22:05Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado (código) | **SIM** — preflight portas antes de stop; restore `docker cp` fail-closed + destino exclusivo |
-| Testado (local) | **SIM** — scripts **reais** com Docker stub: holder desconhecido sem remover oficiais; cp fail sem psql/OK; 11/11 |
+| Implementado (código) | **SIM** — scripts VPS + restore sessão via GET `/auth/session` + RBAC sem bypass admin |
+| Testado (local) | **SIM** — scripts reais 11/11 · erp-http-session 9/9 · auth-session 3/3 |
 | CI | **PENDENTE** neste HEAD |
-| Re-review Codex | **PENDENTE** — lista 5326727005 corrigida neste lote |
+| Re-review Codex | **PENDENTE** — sessão/RBAC + scripts |
 | Mesclado em `main` | **NÃO** |
-| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real (não declarar #45 concluída sem isso) |
+| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
 
-Script canônico: `scripts/vps/provision-owner-admin-profile.sh` + `spa-login-rebuild-api-web.sh` / `spa-login-rollback-api-web.sh`. Sem `min(uuid)`, if não invertido, build-antes-stop, restore seletivo JSON, preflight 3080/3081 antes de qualquer stop.
+Lote sessão/RBAC: `refreshErpHttpSessionFromServer` (Bearer validado); `permissoes` no perfil HTTP; `ProtectedSection`/`usePermissions` sem bypass `role=admin`; espelho `http_perfil_*` com árvore server-side. Scripts: preflight portas + restore cp fail-closed.
 
 ### PASTE_VPS (só após Codex OK + IDs humanos) — registrar digests
 
