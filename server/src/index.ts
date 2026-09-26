@@ -1,11 +1,24 @@
 import { createApp } from './app.js';
 import { loadConfig } from './config/env.js';
 import { createDbClient } from './db/client.js';
+import express from 'express';
+import { transactionScope } from './integrations/transactionScope.js';
+import { SaleIngress } from './integrations/saleIngress.js';
+import { loadChannelIdentities, saleIngressHttp } from './integrations/saleIngressHttp.js';
 
 async function main() {
   const config = loadConfig();
-  const db = createDbClient(config);
-  const { app } = createApp({ config, db });
+  const db = transactionScope(createDbClient(config));
+  const runtime = createApp({ config, db });
+  const app = express();
+  const identities = loadChannelIdentities(process.env);
+  if (identities.length) {
+    if (!db.pool || runtime.useMemory) throw new Error('Omnichannel requires PostgreSQL');
+    const ingress = new SaleIngress(db, runtime);
+    await ingress.assertDatabaseReady();
+    app.use('/api/v1/integracoes/vendas', saleIngressHttp(ingress, identities, config));
+  }
+  app.use(runtime.app);
 
   const server = app.listen(config.port, () => {
     console.log(JSON.stringify({
