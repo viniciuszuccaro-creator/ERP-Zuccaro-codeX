@@ -394,15 +394,26 @@ export function upsertHttpTenantLocalMirror(input = {}) {
       updated_date: now(),
     }));
   }
-  ensureRecord(db, 'PerfilAcesso', 'local_perfil_admin', () => ({
-    id: 'local_perfil_admin',
-    nome: 'Administrador Local',
+  const perfilId = String(input.perfilAcessoId || '').trim() || 'local_perfil_admin';
+  const permissoes = input.permissoes && typeof input.permissoes === 'object' && !Array.isArray(input.permissoes)
+    ? input.permissoes
+    : (perfilId === 'local_perfil_admin' ? { '*': [...GRANULAR_PERMISSION_ACTIONS] } : {});
+  const perfilNome = String(input.perfilNome || '').trim()
+    || (perfilId === 'local_perfil_admin' ? 'Administrador Local' : 'Perfil HTTP');
+  // Upsert forçado: atualiza árvore server-side a cada restore/login.
+  const store = getEntityStore(db, 'PerfilAcesso');
+  const idx = store.findIndex((item) => String(item.id) === perfilId);
+  const row = {
+    id: perfilId,
+    nome: perfilNome,
     ativo: true,
-    permissoes: { '*': [...GRANULAR_PERMISSION_ACTIONS] },
+    permissoes,
     group_id: groupId,
-    created_date: now(),
     updated_date: now(),
-  }));
+    created_date: idx >= 0 ? (store[idx].created_date || now()) : now(),
+  };
+  if (idx >= 0) store[idx] = { ...store[idx], ...row };
+  else store.push(row);
   saveDb(db);
   return { group: true, empresa: Boolean(empresaId), perfil: true };
 }

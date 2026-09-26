@@ -9,6 +9,7 @@ import {
   ensureHttpTenantLocalMirror,
   loginErpHttpSession,
   readErpHttpSession,
+  refreshErpHttpSessionFromServer,
 } from '@/api/erpHttpSession';
 
 const AuthContext = createContext();
@@ -41,16 +42,35 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
     }
+    // Sempre revalida Bearer + perfil/permissões no servidor (não confia em role do localStorage).
+    let trusted = session;
+    if (!session.permissoes || session._serverValidated !== true) {
+      trusted = await refreshErpHttpSessionFromServer({
+        preferredActorId: session.actorId,
+        preferredGroupId: session.groupId,
+        preferredEmpresaId: session.empresaId,
+      });
+      if (!trusted?.token) {
+        clearErpHttpSession();
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+        return false;
+      }
+    }
     try {
       await ensureHttpTenantLocalMirror({
-        groupId: session.groupId,
-        empresaId: session.empresaId,
+        groupId: trusted.groupId,
+        empresaId: trusted.empresaId,
+        perfilAcessoId: `http_perfil_${trusted.actorId}`,
+        permissoes: trusted.permissoes || {},
+        perfilNome: trusted.fullName || trusted.email || 'Perfil HTTP',
         base44Client: base44,
       });
     } catch (error) {
       console.warn('[Auth] espelho local Grupo/Empresa falhou; seguindo com sessão.', error);
     }
-    const sessionUser = buildHttpSessionUser(session);
+    const sessionUser = buildHttpSessionUser(trusted);
     if (!sessionUser) {
       clearErpHttpSession();
       setUser(null);
@@ -216,6 +236,8 @@ export const AuthProvider = ({ children }) => {
         role: session.role,
         fullName: session.fullName,
         expiresAt: session.expiresAt,
+        permissoes: session.permissoes || {},
+        _serverValidated: true,
       });
       setAuthChecked(true);
       setIsLoadingAuth(false);

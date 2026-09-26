@@ -7,6 +7,7 @@ import {
   loginErpHttpSession,
   persistErpHttpSession,
   readErpHttpSession,
+  refreshErpHttpSessionFromServer,
   switchErpHttpSessionEmpresa,
 } from '../src/api/erpHttpSession.js';
 
@@ -57,9 +58,11 @@ test('buildHttpSessionUser libera admin só quando role=admin no perfil', () => 
     email: 'vinicius.zuccaro@gmail.com',
     role: 'admin',
     fullName: 'Vinicius Zuccaro',
+    permissoes: { Sistema: { acessos: ['visualizar'] } },
   });
   assert.equal(admin.role, 'admin');
-  assert.equal(admin.perfil_acesso_id, 'local_perfil_admin');
+  assert.equal(admin.perfil_acesso_id, `http_perfil_${ACTOR}`);
+  assert.deepEqual(admin.permissoes, { Sistema: { acessos: ['visualizar'] } });
   assert.equal(admin.pode_ver_todas_empresas, true);
   assert.equal(admin.full_name, 'Vinicius Zuccaro');
   assert.equal(admin.empresa_atual_id, EMPRESA_A);
@@ -71,9 +74,11 @@ test('buildHttpSessionUser libera admin só quando role=admin no perfil', () => 
     email: 'gate-d.synth@dev.synthetic.local',
     role: 'user',
     fullName: 'Synth DEV',
+    permissoes: { Comercial: { pedido: ['visualizar'] } },
   });
   assert.equal(synth.role, 'user');
-  assert.equal(synth.perfil_acesso_id, null);
+  assert.equal(synth.perfil_acesso_id, `http_perfil_${ACTOR}`);
+  assert.deepEqual(synth.permissoes, { Comercial: { pedido: ['visualizar'] } });
   assert.equal(synth.pode_ver_todas_empresas, false);
   assert.equal(synth.full_name, 'Synth DEV');
 });
@@ -87,7 +92,7 @@ test('buildHttpDevAdminUser permanece alias de buildHttpSessionUser (sem forçar
     role: 'user',
   });
   assert.equal(user.role, 'user');
-  assert.equal(user.perfil_acesso_id, null);
+  assert.equal(user.perfil_acesso_id, `http_perfil_${ACTOR}`);
 });
 
 test('sessão expirada é limpa (fail-closed)', () => {
@@ -229,6 +234,7 @@ test('loginErpHttpSession persiste expires_in e monta admin/comum conforme role 
     });
     assert.equal(common.role, 'user');
     assert.equal(common.user.role, 'user');
+    assert.equal(common.user.perfil_acesso_id, `http_perfil_${ACTOR}`);
     assert.equal(common.empresaId, EMPRESA_B);
     assert.equal(readErpHttpSession(adminStorage).role, 'user');
   } finally {
@@ -240,5 +246,79 @@ test('loginErpHttpSession persiste expires_in e monta admin/comum conforme role 
         value: origLocal,
       });
     }
+  }
+});
+
+test('refreshErpHttpSessionFromServer rejeita token inválido e limpa storage', async () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({
+    accessToken: 'tok_fake',
+    groupId: GROUP,
+    empresaId: EMPRESA_A,
+    actorId: ACTOR,
+    role: 'admin',
+    expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    storage,
+  });
+  const origLocal = globalThis.localStorage;
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    const result = await refreshErpHttpSessionFromServer({
+      storage,
+      baseUrl: '',
+      fetchImpl: async () => ({ ok: false, status: 401, async json() { return { error: { code: 'AUTH_INVALID' } }; } }),
+    });
+    assert.equal(result, null);
+    assert.equal(readErpHttpSession(storage), null);
+  } finally {
+    if (origLocal === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: origLocal });
+  }
+});
+
+test('refreshErpHttpSessionFromServer aplica role/permissoes do servidor (não do localStorage)', async () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({
+    accessToken: 'tok_ok',
+    groupId: GROUP,
+    empresaId: EMPRESA_A,
+    actorId: ACTOR,
+    role: 'admin', // adulterado localmente
+    expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    storage,
+  });
+  const origLocal = globalThis.localStorage;
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    const result = await refreshErpHttpSessionFromServer({
+      storage,
+      baseUrl: '',
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        async json() {
+          return {
+            data: {
+              access_token: 'tok_ok',
+              user: { id: '11111111-1111-4111-8111-111111111111', email: 'user@example.com' },
+              profiles: [{
+                id: ACTOR,
+                group_id: GROUP,
+                empresa_id: EMPRESA_A,
+                role: 'user',
+                full_name: 'Comum',
+                permissoes: { Comercial: { pedido: ['visualizar'] } },
+              }],
+            },
+          };
+        },
+      }),
+    });
+    assert.equal(result.role, 'user');
+    assert.deepEqual(result.permissoes, { Comercial: { pedido: ['visualizar'] } });
+    assert.equal(readErpHttpSession(storage).role, 'user');
+  } finally {
+    if (origLocal === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: origLocal });
   }
 });

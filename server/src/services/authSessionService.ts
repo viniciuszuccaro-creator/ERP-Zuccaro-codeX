@@ -20,6 +20,8 @@ export type AuthSessionProfile = {
   empresaId: string | null;
   role: string;
   fullName: string | null;
+  /** Árvore RBAC do perfil (fonte server-side; nunca inventada no browser). */
+  permissoes: Record<string, unknown>;
 };
 
 export type AuthSessionResult = {
@@ -29,6 +31,56 @@ export type AuthSessionResult = {
   user: { id: string; email: string };
   profiles: AuthSessionProfile[];
 };
+
+type ProfileRow = {
+  id: string;
+  group_id: string;
+  empresa_id: string | null;
+  role: string | null;
+  full_name: string | null;
+  permissoes: unknown;
+};
+
+function mapProfileRows(rows: ProfileRow[]): AuthSessionProfile[] {
+  return rows
+    .filter((row) => UUID_RE.test(row.id) && UUID_RE.test(row.group_id))
+    .map((row) => ({
+      id: row.id,
+      groupId: row.group_id,
+      empresaId: row.empresa_id && UUID_RE.test(row.empresa_id) ? row.empresa_id : null,
+      role: typeof row.role === 'string' && row.role.trim() ? row.role.trim() : 'user',
+      fullName: typeof row.full_name === 'string' ? row.full_name : null,
+      permissoes: row.permissoes && typeof row.permissoes === 'object' && !Array.isArray(row.permissoes)
+        ? row.permissoes as Record<string, unknown>
+        : {},
+    }));
+}
+
+async function loadActiveProfiles(
+  db: Pick<DbClient, 'query'>,
+  authUserId: string,
+): Promise<AuthSessionProfile[]> {
+  try {
+    const result = await db.query<ProfileRow>(
+      `SELECT p.id, p.group_id, p.role, p.full_name, COALESCE(p.permissoes, '{}'::jsonb) AS permissoes,
+              COALESCE(
+                p.empresa_id,
+                (SELECT e.id FROM empresas e
+                  WHERE e.group_id = p.group_id
+                  ORDER BY e.id
+                  LIMIT 1)
+              ) AS empresa_id
+       FROM profiles p
+       WHERE p.auth_user_id = $1 AND p.ativo = true
+       ORDER BY p.empresa_id NULLS LAST, p.id
+       LIMIT 20`,
+      [authUserId],
+    );
+    return mapProfileRows(result.rows);
+  } catch {
+    throw new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable');
+  }
+}
 
 export async function createPasswordAuthSession(options: {
   config: AppConfig;
@@ -106,42 +158,7 @@ export async function createPasswordAuthSession(options: {
     throw new AppError(401, 'AUTH_INVALID_CREDENTIALS', 'Credenciais inválidas');
   }
 
-  let profiles: AuthSessionProfile[] = [];
-  try {
-    const result = await options.db.query<{
-      id: string;
-      group_id: string;
-      empresa_id: string | null;
-      role: string | null;
-      full_name: string | null;
-    }>(
-      `SELECT p.id, p.group_id, p.role, p.full_name,
-              COALESCE(
-                p.empresa_id,
-                (SELECT e.id FROM empresas e
-                  WHERE e.group_id = p.group_id
-                  ORDER BY e.id
-                  LIMIT 1)
-              ) AS empresa_id
-       FROM profiles p
-       WHERE p.auth_user_id = $1 AND p.ativo = true
-       ORDER BY p.empresa_id NULLS LAST, p.id
-       LIMIT 20`,
-      [userId],
-    );
-    profiles = result.rows
-      .filter((row) => UUID_RE.test(row.id) && UUID_RE.test(row.group_id))
-      .map((row) => ({
-        id: row.id,
-        groupId: row.group_id,
-        empresaId: row.empresa_id && UUID_RE.test(row.empresa_id) ? row.empresa_id : null,
-        role: typeof row.role === 'string' && row.role.trim() ? row.role.trim() : 'user',
-        fullName: typeof row.full_name === 'string' ? row.full_name : null,
-      }));
-  } catch {
-    throw new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable');
-  }
-
+  const profiles = await loadActiveProfiles(options.db, userId);
   if (profiles.length === 0) {
     throw new AppError(403, 'AUTH_NO_ACTIVE_PROFILE', 'Usuário autenticado sem perfil ativo no ERP');
   }
@@ -150,6 +167,67 @@ export async function createPasswordAuthSession(options: {
     accessToken,
     tokenType,
     expiresIn,
+    user: { id: userId, email },
+    profiles,
+  };
+}
+
+/**
+ * Revalida Bearer no Supabase e devolve perfis+permissões do Postgres.
+ * Usado no restore da SPA — não confia em role/permissoes do localStorage.
+ */
+export async function resolveBearerAuthSession(options: {
+  config: AppConfig;
+  db: Pick<DbClient, 'query'>;
+  authorizationHeader: string | undefined;
+  fetchImpl?: typeof fetch;
+}): Promise<Omit<AuthSessionResult, 'expiresIn'> & { expiresIn: number | null }> {
+  if (options.config.authMode !== 'supabase_user') {
+    throw new AppError(503, 'AUTH_MODE_UNSUPPORTED', 'Sessão Bearer exige auth.mode=supabase_user');
+  }
+  const supabaseUrl = options.config.supabaseUrl;
+  const anonKey = options.config.supabaseAnonKey;
+  if (!supabaseUrl || !anonKey) {
+    throw new AppError(503, 'AUTH_UNAVAILABLE', 'Identity service not configured');
+  }
+  const bearer = /^Bearer ([A-Za-z0-9._~-]+)$/.exec(String(options.authorizationHeader || '').trim());
+  if (!bearer || bearer[1].length > 8192) {
+    throw new AppError(401, 'AUTH_REQUIRED', 'Authenticated user token required');
+  }
+  const userUrl = new URL('auth/v1/user', `${supabaseUrl.replace(/\/+$/, '')}/`);
+  const fetchImpl = options.fetchImpl ?? fetch;
+  let response: globalThis.Response;
+  try {
+    response = await fetchImpl(userUrl, {
+      method: 'GET',
+      headers: { apikey: anonKey, Authorization: `Bearer ${bearer[1]}` },
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    throw new AppError(503, 'AUTH_UNAVAILABLE', 'Identity service unavailable');
+  }
+  let identity: Record<string, unknown> = {};
+  try {
+    identity = await response.json() as Record<string, unknown>;
+  } catch {
+    identity = {};
+  }
+  if (!response.ok) {
+    throw new AppError(401, 'AUTH_INVALID', 'Invalid user token');
+  }
+  const userId = typeof identity.id === 'string' ? identity.id : '';
+  const email = typeof identity.email === 'string' ? identity.email : '';
+  if (!UUID_RE.test(userId)) {
+    throw new AppError(401, 'AUTH_INVALID', 'Invalid user token');
+  }
+  const profiles = await loadActiveProfiles(options.db, userId);
+  if (profiles.length === 0) {
+    throw new AppError(403, 'AUTH_NO_ACTIVE_PROFILE', 'Usuário autenticado sem perfil ativo no ERP');
+  }
+  return {
+    accessToken: bearer[1],
+    tokenType: 'bearer',
+    expiresIn: null,
     user: { id: userId, email },
     profiles,
   };

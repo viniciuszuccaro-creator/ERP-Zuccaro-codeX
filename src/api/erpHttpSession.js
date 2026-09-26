@@ -233,13 +233,18 @@ export function buildHttpSessionUser(session) {
     ? String(session.fullName).trim()
     : (isAdmin ? 'Administrador' : (email || 'Usuário'));
   if (!groupId || !actorId) return null;
+  const permissoes = session?.permissoes && typeof session.permissoes === 'object' && !Array.isArray(session.permissoes)
+    ? session.permissoes
+    : {};
+  const perfilAcessoId = `http_perfil_${actorId}`;
   return {
     id: actorId,
     email: email || 'usuario@erp.local',
     full_name: fullName || (email || 'Usuário'),
     role,
     _app_role: role,
-    perfil_acesso_id: isAdmin ? 'local_perfil_admin' : null,
+    perfil_acesso_id: perfilAcessoId,
+    permissoes,
     mestre_local: false,
     disabled: false,
     is_verified: true,
@@ -272,7 +277,13 @@ export async function ensureHttpTenantLocalMirror(input) {
   if (!groupId) return { group: false, empresa: false, perfil: false };
 
   const { upsertHttpTenantLocalMirror } = await import('./localBase44Client.js');
-  const result = upsertHttpTenantLocalMirror({ groupId, empresaId });
+  const result = upsertHttpTenantLocalMirror({
+    groupId,
+    empresaId,
+    perfilAcessoId: input?.perfilAcessoId || null,
+    permissoes: input?.permissoes || null,
+    perfilNome: input?.perfilNome || null,
+  });
 
   try {
     if (typeof localStorage !== 'undefined') {
@@ -328,6 +339,9 @@ export async function loginErpHttpSession(input) {
   const fullName = typeof profile.full_name === 'string' && profile.full_name.trim()
     ? profile.full_name.trim()
     : null;
+  const permissoes = profile.permissoes && typeof profile.permissoes === 'object' && !Array.isArray(profile.permissoes)
+    ? profile.permissoes
+    : {};
   const session = {
     accessToken,
     groupId: String(profile.group_id),
@@ -347,10 +361,12 @@ export async function loginErpHttpSession(input) {
     email: session.email,
     role: session.role,
     fullName: session.fullName,
+    permissoes,
   });
   return {
     ...session,
     expiresAt,
+    permissoes,
     profiles,
     user: uiUser || {
       id: data.user?.id || profile.id,
@@ -360,5 +376,96 @@ export async function loginErpHttpSession(input) {
       grupo_atual_id: session.groupId,
       empresa_atual_id: session.empresaId,
     },
+  };
+}
+
+/**
+ * Revalida token no BFF (GET /api/v1/auth/session) e reconstrói usuário com role/permissões do servidor.
+ * Fail-closed: 401/403/erro → limpa storage e retorna null.
+ * @param {{
+ *   storage?: Storage | null,
+ *   baseUrl?: string,
+ *   fetchImpl?: typeof fetch,
+ *   preferredActorId?: string | null,
+ *   preferredGroupId?: string | null,
+ *   preferredEmpresaId?: string | null,
+ * }} [input]
+ */
+export async function refreshErpHttpSessionFromServer(input = {}) {
+  const storage = resolveStorage(input.storage);
+  const local = readErpHttpSession(storage);
+  if (!local?.token) {
+    clearErpHttpSession(storage);
+    return null;
+  }
+  const baseUrl = (input.baseUrl ?? resolveErpApiBaseUrl(import.meta.env) ?? '').replace(/\/$/, '');
+  const fetchImpl = input.fetchImpl ?? fetch;
+  let response;
+  try {
+    response = await fetchImpl(`${baseUrl}/api/v1/auth/session`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${local.token}`,
+      },
+    });
+  } catch {
+    clearErpHttpSession(storage);
+    return null;
+  }
+  let body = null;
+  try {
+    body = await response.json();
+  } catch {
+    body = null;
+  }
+  if (!response.ok) {
+    clearErpHttpSession(storage);
+    return null;
+  }
+  const data = body?.data || {};
+  const profiles = Array.isArray(data.profiles) ? data.profiles : [];
+  const preferredActor = String(input.preferredActorId || local.actorId || '').trim();
+  const preferredGroup = String(input.preferredGroupId || local.groupId || '').trim();
+  const profile = profiles.find((p) => String(p?.id) === preferredActor && String(p?.group_id) === preferredGroup)
+    || profiles.find((p) => String(p?.id) === preferredActor)
+    || profiles.find((p) => p?.group_id && p?.id)
+    || profiles[0];
+  if (!profile?.id || !profile?.group_id) {
+    clearErpHttpSession(storage);
+    return null;
+  }
+  const role = String(profile.role || 'user').trim().toLowerCase() === 'admin' ? 'admin' : 'user';
+  const fullName = typeof profile.full_name === 'string' && profile.full_name.trim()
+    ? profile.full_name.trim()
+    : null;
+  const permissoes = profile.permissoes && typeof profile.permissoes === 'object' && !Array.isArray(profile.permissoes)
+    ? profile.permissoes
+    : {};
+  const empresaId = input.preferredEmpresaId != null
+    ? (input.preferredEmpresaId ? String(input.preferredEmpresaId) : null)
+    : (profile.empresa_id ? String(profile.empresa_id) : (local.empresaId || null));
+  persistErpHttpSession({
+    accessToken: local.token,
+    groupId: String(profile.group_id),
+    empresaId,
+    actorId: String(profile.id),
+    email: data.user?.email || local.email || undefined,
+    role,
+    fullName,
+    expiresAt: local.expiresAt,
+    storage,
+  });
+  return {
+    token: local.token,
+    groupId: String(profile.group_id),
+    empresaId,
+    actorId: String(profile.id),
+    email: data.user?.email || local.email || null,
+    role,
+    fullName,
+    expiresAt: local.expiresAt,
+    permissoes,
+    profiles,
   };
 }

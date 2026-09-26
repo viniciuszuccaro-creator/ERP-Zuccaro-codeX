@@ -21,7 +21,7 @@ export default function ProtectedSection({
   hideInstead = false,
   disableInstead = false
 }) {
-  const { isLoading, hasPermission, isAdmin } = usePermissions();
+  const { isLoading, hasPermission } = usePermissions();
   const { user } = useUser();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const loggedRef = useRef(false);
@@ -29,18 +29,13 @@ export default function ProtectedSection({
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [requestedAccess, setRequestedAccess] = useState(false);
 
-  // Sempre manter a mesma ordem de hooks entre renders
-  const adminBypass = Boolean(isAdmin?.() || user?.role === 'admin' || user?._app_role === 'admin');
-  const allowed = !isLoading && (adminBypass || hasPermission(modulo, section, action));
+  // Sem bypass de role=admin: árvore explícita + entityGuard (fail-closed).
+  const allowed = !isLoading && hasPermission(modulo, section, action);
   const [allowedFinal, setAllowedFinal] = useState(null);
 
   useEffect(() => {
     if (isLoading) return;
     if (!modulo) { setAllowedFinal(allowed); return; }
-    if (adminBypass) {
-      setAllowedFinal(true);
-      return;
-    }
 
     const key = getGuardKey(modulo, section, action, empresaAtual?.id, grupoAtual?.id);
     const now = Date.now();
@@ -87,7 +82,7 @@ export default function ProtectedSection({
     }).finally(() => {
       __guardInflight.delete(key);
     });
-  }, [isLoading, allowed, adminBypass, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
+  }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
 
   useEffect(() => {
     if (isLoading) return;

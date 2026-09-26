@@ -33,7 +33,10 @@ export function createSupabaseAuthMiddleware({
   const userUrl = new URL('auth/v1/user', `${supabaseUrl.replace(/\/+$/, '')}/`);
   return async (req: Request, _res: Response, next: NextFunction) => {
     if (PUBLIC_GET_PATHS.has(req.path) && req.method === 'GET') { next(); return; }
-    if (req.path === '/api/v1/auth/session' && req.method === 'POST') { next(); return; }
+    if (req.path === '/api/v1/auth/session' && (req.method === 'POST' || req.method === 'GET')) {
+      next();
+      return;
+    }
     const bearer = /^Bearer ([A-Za-z0-9._~-]+)$/.exec(req.header('authorization') || '');
     if (!bearer || bearer[1].length > 8192) {
       next(new AppError(401, 'AUTH_REQUIRED', 'Authenticated user token required'));

@@ -17,7 +17,7 @@ import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
-import { createPasswordAuthSession } from '../services/authSessionService.js';
+import { createPasswordAuthSession, resolveBearerAuthSession } from '../services/authSessionService.js';
 
 type CrudLike = {
   list: (ctx: ReturnType<typeof ctxFromReq>, options?: { ativo?: boolean; search?: string; limit?: number }) => Promise<unknown>;
@@ -1130,6 +1130,36 @@ export function createApiRouter(deps: ApiDeps) {
             empresa_id: p.empresaId,
             role: p.role,
             full_name: p.fullName,
+            permissoes: p.permissoes,
+          })),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Revalida Bearer + devolve perfil/permissões server-side (restore SPA fail-closed). */
+  router.get('/api/v1/auth/session', async (req, res, next) => {
+    try {
+      const session = await resolveBearerAuthSession({
+        config: deps.config,
+        db: deps.db,
+        authorizationHeader: req.header('authorization') || undefined,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({
+        data: {
+          access_token: session.accessToken,
+          token_type: session.tokenType,
+          user: session.user,
+          profiles: session.profiles.map((p) => ({
+            id: p.id,
+            group_id: p.groupId,
+            empresa_id: p.empresaId,
+            role: p.role,
+            full_name: p.fullName,
+            permissoes: p.permissoes,
           })),
         },
       });
