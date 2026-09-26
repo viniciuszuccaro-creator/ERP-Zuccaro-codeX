@@ -68,7 +68,10 @@ export function assertDescontoDentroDaAlcadaOuAprovar(options: {
   livreBps?: number;
   canAprovar: boolean;
   entityLabel?: string;
+  /** Quando true (à vista + regra explícita), não exige aprovar. */
+  liberadoPorAvista?: boolean;
 }): void {
+  if (options.liberadoPorAvista === true) return;
   if (!descontoExcedeAlcadaLivre(options.items, options.livreBps)) return;
   if (options.canAprovar) return;
   throw new AppError(
