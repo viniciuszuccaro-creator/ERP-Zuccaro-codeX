@@ -10,6 +10,7 @@ import {
   calculateTotals,
   canUseOrcamentoAction,
   microsToDecimal,
+  prepareOrcamentoAnexoFile,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
 const form = () => ({
@@ -131,6 +132,9 @@ test('tela audita impressao e compartilhamento com RBAC fail-closed', async () =
   assert.match(tab, /createVersion/);
   assert.match(tab, /listVersions/);
   assert.match(tab, /listAnexos/);
+  assert.match(tab, /registerAnexo/);
+  assert.match(tab, /deactivateAnexo/);
+  assert.match(tab, /prepareOrcamentoAnexoFile/);
   assert.match(tab, /ORCAMENTO_ORIGEM_LABELS/);
   assert.match(tab, /data-permission="Comercial\.orcamento\.versionar"/);
   assert.match(page, /createInContext/);
@@ -148,4 +152,14 @@ test('versionar exige permissao e estado EM_ABERTO', () => {
   });
   assert.equal(payload.cliente_empresa_id, 'cliente-empresa-1');
   assert.equal(payload.itens.length, 1);
+});
+test('prepareOrcamentoAnexoFile exige tenant e path de documentos do orcamento', () => {
+  const file = { name: 'planta.pdf', type: 'application/pdf', size: 256 };
+  const meta = prepareOrcamentoAnexoFile(file, { groupId: 'g1', empresaId: 'e1', orcamentoId: 'o1' });
+  assert.equal(meta.nome_arquivo, 'planta.pdf');
+  assert.equal(meta.mime_type, 'application/pdf');
+  assert.equal(meta.tamanho_bytes, 256);
+  assert.match(meta.storage_key, /^groups\/g1\/companies\/e1\/orcamentos\/o1\/documents\/.+-planta\.pdf$/);
+  assert.throws(() => prepareOrcamentoAnexoFile(file, { groupId: '', empresaId: 'e1', orcamentoId: 'o1' }));
+  assert.throws(() => prepareOrcamentoAnexoFile({ name: 'x.exe', type: 'application/pdf', size: 10 }, { groupId: 'g1', empresaId: 'e1', orcamentoId: 'o1' }));
 });
