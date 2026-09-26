@@ -344,8 +344,12 @@ export function createHttpApiClient(options = {}) {
     },
   };
   const pedidos = {
-    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {
-      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });
+    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, origem, tipoComercial, signal } = {}) {
+      return request('/api/v1/pedidos', {
+        query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao, origem, tipoComercial },
+        signal,
+        unwrap: false,
+      });
     },
     get(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}`, { signal }); },
     create(payload, { signal } = {}) { return request('/api/v1/pedidos', { method: 'POST', body: payload, signal }); },
@@ -353,6 +357,7 @@ export function createHttpApiClient(options = {}) {
     cancel(id, motivo, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/cancelar`, { method: 'POST', body: motivo ? { motivo } : {}, signal }); },
     transition(id, status, motivo, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/status`, { method: 'POST', body: { status, ...(motivo ? { motivo } : {}) }, signal }); },
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
+    listAnexos(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/anexos`, { signal }); },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
   const clientes = {

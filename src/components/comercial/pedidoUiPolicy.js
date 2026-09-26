@@ -5,6 +5,27 @@ export const PEDIDO_STATUS_LABELS = {
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',
 };
 
+export const PEDIDO_ORIGEM_LABELS = {
+  MANUAL: 'Manual',
+  ORCAMENTO: 'Orçamento',
+  SITE: 'Site',
+  PORTAL_B2B: 'Portal B2B',
+  APP: 'App',
+  CHATBOT: 'Chatbot',
+  MARKETPLACE: 'Marketplace',
+  IMPORTACAO: 'Importação',
+};
+
+export const PEDIDO_TIPO_COMERCIAL_LABELS = {
+  REVENDA: 'Revenda',
+  ARMADO: 'Armado',
+  CORTE_DOBRA: 'Corte e dobra',
+  FABRICADO: 'Fabricado',
+  KIT: 'Kit',
+  SERVICO: 'Serviço',
+  MISTO: 'Misto',
+};
+
 export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') {
   if (!hasPermission('Comercial', 'pedido', action)) return false;
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
@@ -23,6 +44,7 @@ export function buildPedidoPayload(form) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.tipo_operacao || !form.data_entrega_solicitada) throw new Error('Preencha cliente, condição, operação e data de entrega.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
+  const campanha = String(form.campanha || '').trim();
   return {
     cliente_empresa_id: form.cliente_empresa_id,
     cliente_local_id: form.cliente_local_id || undefined,
@@ -33,6 +55,7 @@ export function buildPedidoPayload(form) {
     tipo_operacao: form.tipo_operacao,
     data_entrega_solicitada: new Date(`${form.data_entrega_solicitada}T12:00:00`).toISOString(),
     observacoes: String(form.observacoes || '').trim() || undefined,
+    campanha: campanha || undefined,
     itens: form.itens.map((item) => ({
       produto_id: item.produto_id,
       unidade_id: item.unidade_id,

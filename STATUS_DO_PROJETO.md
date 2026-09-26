@@ -1,3 +1,20 @@
+## #58 STATUS REAL — Onda 5 UI Pedido omnicanal (origem/tipo/campanha) (2026-09-26T19:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — PedidoCanonicoPanel + httpApiClient + pedidoUiPolicy |
+| Testado | **PENDENTE** |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #57→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 5 - UI Pedido omnicanal (2026-09-26T19:55Z)
+
+- Branch `cursor/comercial360-onda5-pedido-ui-omni-392b` (base #57).
+- Reutiliza painel HTTP canônico: filtros/colunas/detalhe de origem, tipo comercial e campanha.
+- Campanha editável só na criação (imutável no update, alinhado ao backend).
+- Sem tela/módulo paralelo.
+
 ## #57 STATUS REAL — Onda 5 Pedido campanha + marcos críticos (2026-09-26T19:48Z)
 
 | Etapa | Estado |
