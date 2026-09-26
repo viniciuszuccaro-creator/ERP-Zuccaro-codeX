@@ -7,11 +7,14 @@ import type { RbacGuard } from '../db/rbacGuard.js';
 import { AppError } from '../api/errors.js';
 import { assertIntegrationEventsReady } from './saleIngress.js';
 import { PostgresProdutoRepository } from '../repositories/postgresProdutoRepository.js';
+import { digest } from './saleIngressContract.js';
 
 const scope = z.object({ groupId: z.string().uuid(), empresaId: z.string().uuid(), actorId: z.string().uuid(), requestId: z.string().min(1).max(128) });
 export const catalogSignalSchema = z.object({ produtoId: z.string().uuid(), codigo: z.string().max(100).regex(/^[^<>\u0000-\u001f\u007f]*$/).nullable(),
   workflowStatus: z.literal('PUBLICADO'), schemaVersion: z.literal(1) }).strict();
 export type CatalogLease = { id: string; produtoId: string; key: string; attempt: number; expiresAt: string; payload: unknown };
+export type PublishedSignal = { id: string; key: string; attempt: number; createdAt: string };
+export type ReconciliationState = 'CONSISTENT' | 'MISSING' | 'CONFLICT' | 'UNAVAILABLE';
 type Event = { id: string; idempotency_key: string; attempts: number; max_attempts: number; status: string;
   locked_until: Date; payload: unknown; aggregate_id: string };
 const leaseSchema = z.object({ id: z.string().uuid(), key: z.string().min(1).max(512), attempt: z.number().int().positive(), expiresAt: z.string().datetime() });
@@ -123,6 +126,52 @@ export class CatalogOutbox {
       const product = await new PostgresProdutoRepository(this.db).getById(
         { groupId: ctx.groupId, empresaId: ctx.empresaId }, lease.produtoId, tx);
       return Boolean(product?.ativo && product.workflow_status === 'PUBLICADO' && product.codigo === codigo);
+    });
+  }
+
+  async publishedPage(ctx: RequestContext, limit: number, cursor?: { id: string; createdAt: string }) {
+    await this.authorize(ctx, 'catalogo-reconciliacao', 'editar');
+    const options = z.object({ limit: z.number().int().min(1).max(100), cursor: z.object({ id: z.string().uuid(), createdAt: z.string().datetime() }).optional() }).safeParse({ limit, cursor });
+    if (!options.success) throw new AppError(422, 'CATALOG_PAGE_INVALID', 'Invalid page');
+    return this.scoped(ctx, async (tx) => {
+      const result = await tx.query<PublishedSignal>(`SELECT id,idempotency_key AS key,attempts AS attempt,
+        to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt"
+        FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source='ERP' AND event_type='produto.publicado'
+        AND aggregate_type='Produto' AND status='published' AND idempotency_key IS NOT NULL
+        AND ($3::uuid IS NULL OR (created_at,id)>($4::timestamptz,$3::uuid))
+        ORDER BY created_at,id LIMIT $5`, [ctx.groupId, ctx.empresaId, cursor?.id ?? null, cursor?.createdAt ?? null, limit + 1]);
+      const items = result.rows.slice(0, limit); const hasMore = result.rows.length > limit;
+      const last = items.at(-1);
+      await this.guards.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', action: 'read', afterData: { examined: items.length, hasMore, limit } }, tx);
+      return { items, hasMore, nextCursor: hasMore && last ? { id: last.id, createdAt: last.createdAt } : null };
+    });
+  }
+
+  async recordReconciliation(ctx: RequestContext, source: PublishedSignal, observer: string, scanKey: string, state: ReconciliationState, observedHash: string | null) {
+    await this.authorize(ctx, 'catalogo-reconciliacao', 'editar');
+    const parsed = z.object({ source: z.object({ id: z.string().uuid(), key: z.string().min(1).max(512), attempt: z.number().int().positive(), createdAt: z.string().datetime() }),
+      observer: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/), scanKey: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
+      state: z.enum(['CONSISTENT','MISSING','CONFLICT','UNAVAILABLE']), observedHash: z.string().regex(/^[a-f0-9]{64}$/).nullable(),
+    }).safeParse({ source, observer, scanKey, state, observedHash });
+    if (!parsed.success) throw new AppError(422, 'CATALOG_OBSERVATION_INVALID', 'Invalid observation');
+    const payload = { sourceId: source.id, sourceAttempt: source.attempt, observer, state, observedHash };
+    const hash = digest(JSON.stringify(payload));
+    const key = `catalog-reconcile:v1:${digest(JSON.stringify([ctx.groupId,ctx.empresaId,observer,scanKey,source.id,source.attempt]))}`;
+    return this.scoped(ctx, async (tx) => {
+      await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+      const valid = await tx.query(`SELECT id FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3
+        AND source='ERP' AND event_type='produto.publicado' AND aggregate_type='Produto' AND status='published'
+        AND idempotency_key=$4 AND attempts=$5 FOR SHARE`, [source.id,ctx.groupId,ctx.empresaId,source.key,source.attempt]);
+      if (!valid.rows.length) throw new AppError(409, 'CATALOG_SOURCE_CHANGED', 'Source changed during reconciliation');
+      const existing = await tx.query<{ payload_checksum: string }>('SELECT payload_checksum FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND idempotency_key=$3', [ctx.groupId,ctx.empresaId,key]);
+      if (existing.rows[0]) {
+        if (existing.rows[0].payload_checksum !== hash) throw new AppError(409, 'CATALOG_SCAN_CONFLICT', 'Scan already recorded differently');
+        return { replayed: true };
+      }
+      const result = await tx.query<{ id: string }>(`INSERT INTO integration_events(group_id,empresa_id,source,event_type,idempotency_key,payload,status,schema_version,aggregate_type,aggregate_id,payload_checksum)
+        VALUES($1,$2,'ERP','catalogo.reconciliado',$3,$4::jsonb,'processed',1,'IntegracaoEvento',$5,$6) RETURNING id`, [ctx.groupId,ctx.empresaId,key,JSON.stringify(payload),source.id,hash]);
+      await this.guards.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', entityId: result.rows[0].id, action: 'create', afterData: payload }, tx);
+      return { replayed: false };
     });
   }
 }

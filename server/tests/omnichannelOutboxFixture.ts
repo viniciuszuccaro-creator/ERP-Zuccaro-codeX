@@ -8,7 +8,7 @@ import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 export async function outboxFixture(pg?: PGlite) {
   const f = await boot(pg);
   await f.pg.query("UPDATE produtos SET codigo='SYNTHETIC',workflow_status='PUBLICADO' WHERE id=$1", [S.produtoA]);
-  const permissions = { Integracoes: { catalogo: ['publicar','visualizar'], 'catalogo-reprocessamento': ['editar'] } };
+  const permissions = { Integracoes: { catalogo: ['publicar','visualizar'], 'catalogo-reprocessamento': ['editar'], 'catalogo-reconciliacao': ['editar'] } };
   await f.pg.query('UPDATE profiles SET permissoes=$1::jsonb WHERE id=$2', [JSON.stringify(permissions), S.runtimeActorA]);
   const ctx: RequestContext = { groupId: S.groupA, empresaId: S.empresaA, actorId: S.runtimeActorA, scopeType: 'empresa', requestId: 'synthetic-outbox' };
   const outbox = new CatalogOutbox(f.db, f.runtime);
