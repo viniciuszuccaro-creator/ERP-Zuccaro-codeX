@@ -33,8 +33,22 @@ export function calculateTotals(items) {
 }
 
 export function canUseOrcamentoAction(hasPermission, action, status = 'EM_ABERTO') {
+  if (action === 'imprimir') {
+    return Boolean(
+      hasPermission('Comercial', 'orcamento', 'imprimir')
+      || hasPermission('Comercial', 'Orcamento', 'imprimir')
+      || hasPermission('Comercial', 'orcamento', 'visualizar'),
+    );
+  }
   if (!hasPermission('Comercial', 'orcamento', action)) return false;
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
+}
+
+export function formatOrcamentoStatusLabel(status) {
+  if (status === 'EM_ABERTO') return 'Em aberto';
+  if (status === 'SUPERSEDIDO') return 'Supersedido';
+  if (status === 'CANCELADO') return 'Cancelado';
+  return status || '-';
 }
 
 export function buildOrcamentoPayload(form) {
@@ -60,8 +74,18 @@ export function buildOrcamentoPayload(form) {
 
 export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', clienteNome = 'Cliente' } = {}) {
   if (!orcamento?.numero) throw new Error('Orçamento inválido para compartilhamento');
-  const status = orcamento.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado';
+  const status = formatOrcamentoStatusLabel(orcamento.status);
+  const versao = orcamento.versao != null ? String(orcamento.versao) : '1';
   const total = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(orcamento.total || 0));
   const validade = orcamento.validade_em ? new Intl.DateTimeFormat('pt-BR').format(new Date(orcamento.validade_em)) : '-';
-  return [`${empresaNome} - Orçamento ${orcamento.numero}`, `Cliente: ${clienteNome}`, `Status: ${status}`, `Validade: ${validade}`, `Total: ${total}`, 'O documento completo deve ser conferido no ERP antes do envio.'].join('\n');
+  const origem = orcamento.origem || 'MANUAL';
+  return [
+    `${empresaNome} - Orçamento ${orcamento.numero} (v${versao})`,
+    `Cliente: ${clienteNome}`,
+    `Status: ${status}`,
+    `Origem: ${origem}`,
+    `Validade: ${validade}`,
+    `Total: ${total}`,
+    'O documento completo deve ser conferido no ERP antes do envio.',
+  ].join('\n');
 }

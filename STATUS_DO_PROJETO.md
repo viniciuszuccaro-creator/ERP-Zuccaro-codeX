@@ -1,3 +1,22 @@
+## #55 STATUS REAL — Onda 4 Orçamento PDF/impressão auditada (2026-09-26T19:35Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — PDF existente reforçado: versão/origem/canal, RBAC `imprimir`, auditoria impressão/compartilhamento |
+| Testado | **SIM** — `tests/orcamento-ui-policy.test.js` (10/10) |
+| CI | **SIM** — frontend+backend SUCCESS (`a4e32179`) |
+| Mesclado | **NÃO** (empilhada #54→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 4 - PDF/impressão Orçamento (2026-09-26T19:45Z)
+
+- Branch `cursor/comercial360-onda4-orcamento-pdf-392b` (base #54 anexos).
+- Reutiliza `gerarPDFOrcamento` + `OrcamentosTab` (sem módulo paralelo).
+- Fail-closed: contexto + permissão; AuditLog em impressão/compartilhamento.
+- Listagem/detalhe/PDF exibem versão e origem; filtro SUPERSEDIDO.
+- Aprovação desconto/margem: depende merge #46 (alçada) — não duplicar aqui.
+- Próximo código liberado: Onda 5 Pedido anexos via DAM (espelho #54) a partir de #51.
+
 ## #54 STATUS REAL — Onda 4 Orçamento anexos via DAM (2026-09-26T19:30Z)
 
 | Etapa | Estado |

@@ -46,6 +46,16 @@ test('politica visual exige permissao exata e estado editavel', () => {
   assert.equal(canUseOrcamentoAction(allow, 'editar', 'EM_ABERTO'), true);
   assert.equal(canUseOrcamentoAction(allow, 'editar', 'CANCELADO'), false);
   assert.equal(canUseOrcamentoAction(allow, 'cancelar', 'EM_ABERTO'), false);
+  assert.equal(canUseOrcamentoAction(allow, 'imprimir'), true);
+});
+
+test('impressao exige visualizar ou imprimir e falha fechado sem permissao', () => {
+  const deny = () => false;
+  const onlyView = (module, section, action) => module === 'Comercial' && section === 'orcamento' && action === 'visualizar';
+  const onlyPrint = (module, section, action) => module === 'Comercial' && section === 'orcamento' && action === 'imprimir';
+  assert.equal(canUseOrcamentoAction(deny, 'imprimir'), false);
+  assert.equal(canUseOrcamentoAction(onlyView, 'imprimir'), true);
+  assert.equal(canUseOrcamentoAction(onlyPrint, 'imprimir'), true);
 });
 
 test('Comercial integra orcamentos sem persistencia Base44 paralela', async () => {
@@ -83,9 +93,17 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
-  const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });
-  assert.match(text, /Orçamento 00000042/);
+  const text = buildOrcamentoShareText({
+    numero: '00000042',
+    status: 'EM_ABERTO',
+    versao: 2,
+    origem: 'CRM',
+    validade_em: '2027-01-31T00:00:00.000Z',
+    total: '125.500000',
+  }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });
+  assert.match(text, /Orçamento 00000042 \(v2\)/);
   assert.match(text, /Cliente Sintetico/);
+  assert.match(text, /Origem: CRM/);
   assert.match(text, /R\$\s*125,50/);
   assert.doesNotMatch(text, /groupId|empresaId|actorId|token/i);
 });
@@ -96,5 +114,19 @@ test('impressao de orcamento escapa campos livres e nao depende de credencial ex
   assert.match(source, /escapeDocumentText\(item\.descricao\)/);
   assert.match(source, /escapeDocumentText\(orcamento\.observacoes/);
   assert.match(source, /printWindow\.opener = null/);
+  assert.match(source, /orcamento\.versao/);
+  assert.match(source, /orcamento\.origem/);
   assert.doesNotMatch(source, /api[_-]?key|access[_-]?token|service[_-]?role/i);
+});
+
+test('tela audita impressao e compartilhamento com RBAC fail-closed', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const page = await readFile(new URL('../src/pages/Comercial.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /canPrint/);
+  assert.match(tab, /auditOrcamento/);
+  assert.match(tab, /Impressao bloqueada/);
+  assert.match(tab, /Compartilhamento preparado/);
+  assert.match(tab, /data-permission="Comercial\.orcamento\.imprimir"/);
+  assert.match(page, /createInContext/);
+  assert.match(page, /OrcamentosTab[\s\S]*createInContext/);
 });

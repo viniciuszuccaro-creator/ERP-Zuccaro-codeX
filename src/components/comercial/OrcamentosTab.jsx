@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, microsToDecimal } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, formatOrcamentoStatusLabel, microsToDecimal } from './orcamentoUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -30,7 +30,7 @@ const errorMessage = (error) => {
   return 'Não foi possível comunicar com o servidor. Tente novamente.';
 };
 
-export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, windowMode = false }) {
+export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, createInContext, windowMode = false }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -48,6 +48,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [appliedFilters, setAppliedFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
+  const canPrint = canUseOrcamentoAction(hasPermission, 'imprimir');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
   const contextReady = Boolean(groupId && empresaId && actorId);
@@ -170,14 +171,99 @@ const convertToPedido = async () => {
     } catch (error) { toast.error(errorMessage(error)); }
     finally { setSubmitting(false); }
   };
-  const printOrcamento = (row) => {
-    const opened = gerarPDFOrcamento(row, { empresa: empresaAtual, clienteNome: clienteLabel(row.cliente_empresa_id), condicaoPagamento: condicaoLabel(row.condicao_pagamento_id) });
+  const auditOrcamento = async ({ acao, orcamento = null, descricao, sucesso = true, detalhes = {} }) => {
+    if (typeof createInContext !== 'function') {
+      if (!sucesso) throw new Error('Auditoria obrigatória indisponível para orçamento.');
+      return;
+    }
+    try {
+      await createInContext('AuditLog', {
+        usuario: actorEmail || actorId || 'Sistema',
+        usuario_id: actorId || null,
+        acao,
+        modulo: 'Comercial',
+        entidade: 'Orcamento',
+        registro_id: orcamento?.id || detalhes?.orcamento_id || null,
+        descricao,
+        empresa_id: orcamento?.empresa_id || empresaId,
+        group_id: orcamento?.group_id || groupId,
+        grupo_id: orcamento?.group_id || groupId,
+        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
+        sucesso,
+        detalhes: {
+          origem: 'OrcamentosTab',
+          numero: orcamento?.numero,
+          versao: orcamento?.versao,
+          status: orcamento?.status,
+          canal_origem: orcamento?.origem,
+          ...detalhes,
+        },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Falha ao auditar orçamento:', error);
+      throw new Error('Auditoria obrigatória falhou para orçamento.');
+    }
+  };
+
+  const printOrcamento = async (row) => {
+    if (!contextReady || !canPrint) {
+      try {
+        await auditOrcamento({
+          acao: 'Impressao bloqueada',
+          orcamento: row,
+          descricao: !contextReady ? 'Impressão de orçamento bloqueada por falta de contexto' : 'Impressão de orçamento bloqueada por RBAC',
+          sucesso: false,
+          detalhes: { motivo: !contextReady ? 'contexto_obrigatorio' : 'permissao_negada' },
+        });
+      } catch {
+        /* falha de auditoria já é mensagem ao usuário abaixo */
+      }
+      toast.error(!contextReady ? 'Selecione grupo e empresa antes de imprimir.' : 'Sem permissão para imprimir orçamento.');
+      return;
+    }
+    try {
+      await auditOrcamento({ acao: 'Impressao', orcamento: row, descricao: 'Imprimir orçamento / gerar PDF' });
+    } catch (error) {
+      toast.error(error.message || 'Auditoria obrigatória falhou.');
+      return;
+    }
+    const opened = gerarPDFOrcamento(row, {
+      empresa: empresaAtual,
+      clienteNome: clienteLabel(row.cliente_empresa_id),
+      condicaoPagamento: condicaoLabel(row.condicao_pagamento_id),
+    });
     if (!opened) toast.error('Permita a abertura da janela de impressão para gerar o PDF.');
   };
+
   const prepareShare = async (row, channel) => {
-    const text = buildOrcamentoShareText(row, { empresaNome: empresaAtual?.razao_social || empresaAtual?.nome_fantasia || empresaAtual?.nome || 'Empresa', clienteNome: clienteLabel(row.cliente_empresa_id) });
+    if (!contextReady || !canPrint) {
+      try {
+        await auditOrcamento({
+          acao: 'Compartilhamento bloqueado',
+          orcamento: row,
+          descricao: !contextReady ? 'Compartilhamento de orçamento bloqueado por falta de contexto' : 'Compartilhamento de orçamento bloqueado por RBAC',
+          sucesso: false,
+          detalhes: { motivo: !contextReady ? 'contexto_obrigatorio' : 'permissao_negada', canal: channel },
+        });
+      } catch {
+        /* ignore */
+      }
+      toast.error(!contextReady ? 'Selecione grupo e empresa antes de compartilhar.' : 'Sem permissão para compartilhar orçamento.');
+      return;
+    }
+    const text = buildOrcamentoShareText(row, {
+      empresaNome: empresaAtual?.razao_social || empresaAtual?.nome_fantasia || empresaAtual?.nome || 'Empresa',
+      clienteNome: clienteLabel(row.cliente_empresa_id),
+    });
     try {
       await navigator.clipboard.writeText(text);
+      await auditOrcamento({
+        acao: 'Compartilhamento preparado',
+        orcamento: row,
+        descricao: `Preparar texto revisável para ${channel}`,
+        detalhes: { canal: channel },
+      });
       toast.success(`Texto para ${channel} copiado. Revise antes de enviar.`);
     } catch {
       toast.error('Não foi possível copiar o texto. Use a visualização de impressão.');
@@ -195,14 +281,14 @@ const convertToPedido = async () => {
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
-      <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
+      <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="SUPERSEDIDO">Supersedido</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
       <Select value={filters.clienteEmpresaId} onValueChange={(value) => setFilters((current) => ({ ...current, clienteEmpresaId: value }))}><SelectTrigger aria-label="Filtrar cliente"><SelectValue placeholder="Todos os clientes" /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select>
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
       <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
     </form>
     {listQuery.isLoading ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listQuery.isError ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento encontrado para os filtros desta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
-      <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>{canEdit(row) && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
+      <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}{row.versao != null ? ` · v${row.versao}` : ''}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{formatOrcamentoStatusLabel(row.status)}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>{canEdit(row) && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}
     <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={listQuery.isFetching} />
 
@@ -213,7 +299,7 @@ const convertToPedido = async () => {
       <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}{selected?.versao != null ? ` · v${selected.versao}` : ''}</DialogTitle><DialogDescription>{formatOrcamentoStatusLabel(selected?.status)} · validade {date(selected?.validade_em)}{selected?.origem ? ` · origem ${selected.origem}` : ''}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2">{canPrint && <Button variant="outline" data-permission="Comercial.orcamento.imprimir" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button>}{canPrint && <Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button>}{canPrint && <Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>}{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
     <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) setPendingConversion(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setPendingConversion(null)} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting}>{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}
