@@ -50,6 +50,7 @@ export const pedidoCreateSchema = z.object({
   canal: z.string().trim().min(1).max(80).nullable().optional(),
   external_id: z.string().trim().min(1).max(160).nullable().optional(),
   idempotency_key: z.string().trim().min(1).max(160).nullable().optional(),
+  campanha: z.string().trim().min(1).max(120).nullable().optional(),
   itens: z.array(pedidoItemSchema).min(1).max(1000),
 }).strict();
 
@@ -94,6 +95,7 @@ export type Pedido = {
   canal: string | null;
   external_id: string | null;
   idempotency_key: string | null;
+  campanha: string | null;
   tipo_comercial: PedidoTipoComercial;
   subtotal: string;
   desconto: string;
