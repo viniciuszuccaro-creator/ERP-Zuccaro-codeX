@@ -1,11 +1,10 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:45Z)
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:50Z)
 
-- Sintoma: “Sessão inválida” sem e-mail/senha (HTTPS ok; bundle antigo).
-- PR #45 CI verde · ainda OPEN (não na main) → script ausente no checkout VPS (`No such file`).
-- Colar VPS (deploy do branch, sem esperar merge):
-  `git fetch origin cursor/spa-login-http-supabase-392b && git checkout --detach origin/cursor/spa-login-http-supabase-392b`
-  depois `CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD bash scripts/vps/spa-login-rebuild-api-web.sh`
-- Script aceita `GIT_REF=HEAD` ou branch do PR (não exige main).
+- API rebuild OK (`auth_session_endpoint_reachable=YES`); web 3081 `connection reset` / `spa_asset=missing`.
+- Causa: `docker rename` + `compose up` recriou `erp-web-dev-pre-spa-login-*` (labels Compose) e disputou a porta.
+- Fix script: tag de imagem + `stop/rm` (sem rename); limpa residuais e holders de 3080/3081.
+- Recuperação imediata VPS: limpar containers `erp-web*`, `compose up --force-recreate erp-web`, provar `erp-login-email` no bundle.
+
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
