@@ -1,3 +1,23 @@
+## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T17:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — política `comercialMargemAlcadaPolicy` + CostPort opcional em Orçamento/Pedido |
+| Testado | **SIM** — 11/11 unit+HTTP locais (porta null=skip; stub custo→403 `MARGEM_ALCADA_DENIED`) |
+| CI | **PENDENTE** (primeiro push desta branch) |
+| Re-review Codex | **PENDENTE** |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** |
+
+## Comercial 360 / Onda 2 - alçada de margem mínima (2026-09-26T17:45Z)
+
+- Branch `cursor/comercial360-onda2-margem-392b` (empilhada sobre #46; PR própria).
+- Custo **não** está no Produto MASTER DATA (`PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS`). Porta opcional `ComercialCostPort`: ausente/null → **não inventa** custo (skip); stub/porto real → líquido vs custo com comparação inteira em micros; abaixo da mínima (default 0 bps = não vender abaixo do custo) exige `Comercial.{orcamento|pedido}.aprovar`.
+- Fail-closed 403 `MARGEM_ALCADA_DENIED`. Sem migration, rota ou módulo paralelo. Defaults fail-closed; sem percentuais de negócio inventados.
+- Testes: `comercial-margem-alcada.test.ts` + `comercial-margem-alcada-http.test.ts` (create Orçamento/Pedido + update com custo mutável).
+- #46: segregação desconto (outro aprovador + audit `approve` + catch só `PERMISSION_DENIED`) no onto; **mesclado NÃO**. #45: acesso owner — **implantado NÃO** (depende humano VPS + re-login).
+- Próximo Onda 2 após merge desta frente: condições/parcelas/promoções ou inventário legado sintético (HD indisponível).
+
 ## #46 STATUS REAL — alçada desconto (2026-09-26T22:20Z)
 
 | Etapa | Estado |
@@ -11,14 +31,15 @@
 
 Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` (sem autoaprovação). Update/convert: ator com `aprovar` ≠ criador (audit create) + log `approve`. Falha operacional RBAC propaga (não vira `DESCONTO_ALCADA_DENIED`).
 
+
 ## #46 STATUS REAL — alçada desconto (2026-09-26T17:30Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado | **SIM** — HEAD `e6490000` (P1 truncamento `<1 bp` + HTTP create/update/convert) |
+| Implementado | **SIM** — HEAD `4d0c50f7` |
 | Testado | **SIM** — 9/9 alcada unit+HTTP |
-| CI | **SIM** @ `e6490000` frontend+backend SUCCESS |
-| Re-review Codex | **PENDENTE** no HEAD ≥`5ba34df3` (review anterior era de `9415094f`) |
+| CI | **SIM** (frontend+backend SUCCESS nos checks do PR) |
+| Re-review Codex | **SIM** — aprovação técnica no delta P1; merge aguarda gates |
 | Mesclado | **NÃO** |
 | Implantado VPS | **N/A** (somente código/CI; sem deploy deste PR) |
 
