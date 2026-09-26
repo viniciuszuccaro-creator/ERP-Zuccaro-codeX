@@ -82,8 +82,19 @@ export function assertDescontoDentroDaAlcadaOuAprovar(options: {
   /** Ator que criou o documento; em create use o próprio actor (bloqueia autoaprovação). */
   criadorActorId: string | null;
   entityLabel?: string;
+  /**
+   * Quando true (à vista + regra explícita), dispensa alçada — não é autoaprovação.
+   * Se false/ausente e excede alçada, ainda exige outro aprovador (segregação #46).
+   */
+  liberadoPorAvista?: boolean;
 }): DescontoAlcadaDecisao {
+  // Valida desconto vs subtotal sempre (mesmo com isenção à vista) — evita 500 no calculate.
   const computed = computeDescontoBps(options.items);
+
+  if (options.liberadoPorAvista === true) {
+    return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: computed.descontoBps };
+  }
+
   if (!descontoExcedeAlcadaLivre(options.items, options.livreBps)) {
     return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: computed.descontoBps };
   }
