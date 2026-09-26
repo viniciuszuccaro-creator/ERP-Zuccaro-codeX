@@ -141,17 +141,63 @@ test('rebuild script constrói antes de stop e tem trap de rollback', () => {
   assert.match(src, /SWAP_STARTED=1/);
 });
 
+test('spa-login-rollback: CONFIRM obrigatório e imagem ausente falha', () => {
+  const ROLLBACK = path.join(ROOT, 'scripts/vps/spa-login-rollback-api-web.sh');
+  const src = fs.readFileSync(ROLLBACK, 'utf8');
+  assert.match(src, /CONFIRM_SPA_LOGIN_ROLLBACK/);
+  assert.match(src, /port_.*_unknown_container/);
+  assert.match(src, /SPA_LOGIN_ROLLBACK_OK/);
+
+  const noConfirm = spawnSync('bash', [ROLLBACK], {
+    encoding: 'utf8',
+    env: { ...process.env, ERP_DOCKER_NETWORK: 'supabase_default' },
+  });
+  assert.equal(noConfirm.status, 2);
+  assert.match(noConfirm.stderr, /CONFIRM_SPA_LOGIN_ROLLBACK/);
+
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spa-rb-'));
+  const bin = path.join(tmp, 'bin');
+  fs.mkdirSync(bin);
+  const compose = path.join(tmp, 'docker-compose.erp.yml');
+  const envFile = path.join(tmp, '.env.erp.dev');
+  fs.writeFileSync(compose, 'services: {}\n');
+  fs.writeFileSync(envFile, 'X=1\n');
+  fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
+if [[ "$1" == "image" && "$2" == "inspect" ]]; then
+  echo 'BLOCKED: image missing' >&2
+  exit 1
+fi
+exit 0
+`, { mode: 0o755 });
+
+  // Script resolve COMPOSE/ENV relative to its ROOT (repo). Use absolute via symlink into repo tmp — instead
+  // copy minimal files and invoke with env pointing at absolute paths by running from a fake root.
+  const fakeRoot = path.join(tmp, 'repo');
+  fs.mkdirSync(path.join(fakeRoot, 'scripts/vps'), { recursive: true });
+  fs.copyFileSync(ROLLBACK, path.join(fakeRoot, 'scripts/vps/spa-login-rollback-api-web.sh'));
+  fs.writeFileSync(path.join(fakeRoot, 'docker-compose.erp.yml'), 'services: {}\n');
+  fs.writeFileSync(path.join(fakeRoot, '.env.erp.dev'), 'X=1\n');
+
+  const miss = spawnSync('bash', [path.join(fakeRoot, 'scripts/vps/spa-login-rollback-api-web.sh')], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      CONFIRM_SPA_LOGIN_ROLLBACK: 'YES',
+      ERP_DOCKER_NETWORK: 'supabase_default',
+      ROLLBACK_API_TAG: 'erp-zuccaro-erp-api:pre-missing',
+      ROLLBACK_WEB_TAG: 'erp-zuccaro-erp-web:pre-missing',
+    },
+  });
+  assert.equal(miss.status, 3, miss.stderr + miss.stdout);
+  assert.match(miss.stderr, /rollback_api_image_missing/);
+});
+
 test('rebuild: falha de build não chama stop (PATH stub)', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spa-rebuild-'));
   const bin = path.join(tmp, 'bin');
   fs.mkdirSync(bin);
   const events = path.join(tmp, 'events.log');
-  const compose = path.join(tmp, 'docker-compose.erp.yml');
-  const envFile = path.join(tmp, '.env.erp.dev');
-  fs.writeFileSync(compose, 'services: {}\n');
-  fs.writeFileSync(envFile, 'X=1\n');
-
-  // Minimal harness mirroring order: build then swap
   const harness = path.join(tmp, 'harness.sh');
   fs.writeFileSync(harness, `#!/usr/bin/env bash
 set -Eeuo pipefail
@@ -172,30 +218,12 @@ SWAP_STARTED=1
 echo swap_begin >> "$EVENTS"
 docker stop erp-api-dev
 `, { mode: 0o755 });
-
   fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
 echo "docker:$*" >> "${events}"
-if [[ "$*" == *"compose build"* || "$*" == "compose -f"* ]]; then
-  exit 1
-fi
-if [[ "$1" == "stop" ]]; then
-  echo STOPPED >> "${events}"
-fi
+if [[ "$1" == "compose" && "$2" == "build" ]]; then exit 1; fi
+if [[ "$1" == "stop" ]]; then echo STOPPED >> "${events}"; fi
 exit 0
 `, { mode: 0o755 });
-
-  // Fix stub: docker compose is two args
-  fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
-echo "docker:$*" >> "${events}"
-if [[ "$1" == "compose" && "$2" == "build" ]]; then
-  exit 1
-fi
-if [[ "$1" == "stop" ]]; then
-  echo STOPPED >> "${events}"
-fi
-exit 0
-`, { mode: 0o755 });
-
   const result = spawnSync('bash', [harness], {
     encoding: 'utf8',
     env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
@@ -206,4 +234,55 @@ exit 0
   assert.equal(/STOPPED/.test(log), false);
   assert.equal(/swap_begin/.test(log), false);
   assert.match(log, /err:.*swap=0/);
+});
+
+test('rebuild: falha após swap dispara auto-rollback (PATH stub)', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'spa-swap-'));
+  const bin = path.join(tmp, 'bin');
+  fs.mkdirSync(bin);
+  const events = path.join(tmp, 'events.log');
+  const harness = path.join(tmp, 'harness.sh');
+  fs.writeFileSync(harness, `#!/usr/bin/env bash
+set -Eeuo pipefail
+EVENTS="${events}"
+SWAP_STARTED=0
+attempt_auto_rollback() { echo "rollback:$1" >> "$EVENTS"; return 0; }
+on_err() {
+  ec=$?
+  echo "err:$ec:swap=$SWAP_STARTED" >> "$EVENTS"
+  if [[ "$SWAP_STARTED" == "1" ]]; then attempt_auto_rollback "trap"; fi
+  exit "$ec"
+}
+trap on_err ERR
+docker compose build erp-api erp-web
+SWAP_STARTED=1
+docker compose up -d erp-api
+`, { mode: 0o755 });
+  fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
+echo "docker:$*" >> "${events}"
+if [[ "$1" == "compose" && "$2" == "build" ]]; then exit 0; fi
+if [[ "$1" == "compose" && "$2" == "up" ]]; then exit 1; fi
+exit 0
+`, { mode: 0o755 });
+  const result = spawnSync('bash', [harness], {
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+  });
+  assert.notEqual(result.status, 0);
+  const log = fs.readFileSync(events, 'utf8');
+  assert.match(log, /err:.*swap=1/);
+  assert.match(log, /rollback:trap/);
+});
+
+test('provision restore mode exige arquivo seletivo (fail-closed)', () => {
+  const miss = spawnSync('bash', [PROVISION], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CONFIRM_OWNER_ADMIN_RESTORE: 'YES',
+      OWNER_EMAIL: 'owner@example.com',
+    },
+  });
+  assert.equal(miss.status, 2);
+  assert.match(miss.stderr, /OWNER_PROV_RESTORE_FILE/);
 });
