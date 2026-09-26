@@ -120,6 +120,43 @@ export class CatalogOutbox {
     });
   }
 
+  /** Operational snapshot of this company's existing queue; thresholds are caller-supplied, never commercial defaults. */
+  async health(ctx: RequestContext, overdueSeconds: number) {
+    await this.authorize(ctx, 'catalogo', 'visualizar');
+    if (!Number.isInteger(overdueSeconds) || overdueSeconds < 1 || overdueSeconds > 604800) {
+      throw new AppError(422, 'CATALOG_HEALTH_INVALID', 'Explicit bounded monitoring threshold required');
+    }
+    return this.scoped(ctx, async (tx) => {
+      const result = await tx.query<{ backlog: number; overdue: number; expiredLeases: number; deadLetter: number; unknownStatus: number;
+        oldestBacklogSeconds: number | null; consistent: number; divergent: number; unavailable: number; unreconciled: number }>(`
+        WITH queue AS (
+          SELECT * FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source='ERP'
+          AND event_type='produto.publicado' AND aggregate_type='Produto'
+        ), latest AS (
+          SELECT q.id, observation.state FROM queue q CROSS JOIN LATERAL (
+            SELECT DISTINCT ON (r.payload->>'observer') r.payload->>'state' AS state
+            FROM integration_events r WHERE r.group_id=$1 AND r.empresa_id=$2 AND r.source='ERP'
+            AND r.event_type='catalogo.reconciliado' AND r.aggregate_type='IntegracaoEvento'
+            AND r.aggregate_id=q.id AND r.status='processed' AND r.payload->>'sourceAttempt'=q.attempts::text
+            ORDER BY r.payload->>'observer',r.created_at DESC,r.id DESC
+          ) observation WHERE q.status='published'
+        )
+        SELECT count(*) FILTER(WHERE status IN ('pending','retry','processing'))::int AS backlog,
+          count(*) FILTER(WHERE status IN ('pending','retry','processing') AND created_at < statement_timestamp()-($3*interval '1 second'))::int AS overdue,
+          count(*) FILTER(WHERE status='processing' AND (locked_until IS NULL OR locked_until<=statement_timestamp()))::int AS "expiredLeases",
+          count(*) FILTER(WHERE status='dead_letter')::int AS "deadLetter",
+          count(*) FILTER(WHERE status NOT IN ('pending','retry','processing','published','dead_letter','cancelled'))::int AS "unknownStatus",
+          floor(extract(epoch FROM statement_timestamp()-min(created_at) FILTER(WHERE status IN ('pending','retry','processing'))))::int AS "oldestBacklogSeconds",
+          (SELECT count(*)::int FROM latest WHERE state='CONSISTENT') AS consistent,
+          (SELECT count(*)::int FROM latest WHERE state IN ('MISSING','CONFLICT')) AS divergent,
+          (SELECT count(*)::int FROM latest WHERE state='UNAVAILABLE') AS unavailable,
+          (SELECT count(*)::int FROM queue q WHERE q.status='published' AND NOT EXISTS(SELECT 1 FROM latest l WHERE l.id=q.id)) AS unreconciled
+        FROM queue`, [ctx.groupId,ctx.empresaId,overdueSeconds]);
+      const snapshot = { ...result.rows[0], overdueThresholdSeconds: overdueSeconds, scope: 'COMPANY', correctiveActionApplied: false };
+      await this.guards.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', action: 'read', afterData: snapshot }, tx);
+      return snapshot;
+    });
+  }
   async isPublishable(ctx: RequestContext, lease: CatalogLease, codigo: string | null) {
     await this.authorize(ctx);
     return this.scoped(ctx, async (tx) => {
