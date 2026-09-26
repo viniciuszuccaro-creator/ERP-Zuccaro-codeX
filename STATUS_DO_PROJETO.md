@@ -4,7 +4,7 @@
 | --- | --- |
 | Implementado | **SIM** — backfill ORCAMENTO + 23505 canal antes de converted |
 | Testado | **SIM** — service + HTTP + migration order |
-| CI | **PENDENTE** neste HEAD |
+| CI | **SIM** @ `55fc45a0` frontend+backend SUCCESS |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** (migration 025 só após gate) |
 
