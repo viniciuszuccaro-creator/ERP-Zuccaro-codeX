@@ -1,9 +1,8 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:52Z)
+## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T13:56Z)
 
-- VPS: API + web com login deployados. HTTPS externo serve `index-PXviNzYb.js` com `erp-login-email` (=1).
-- `POST /api/v1/auth/session` responde `AUTH_LOGIN_INVALID` (validação) — endpoint público OK (não mais `AUTH_REQUIRED`).
-- Próximo humano: hard refresh em `https://erp-dev.cpaferroeaco.com.br` e confirmar campos E-mail/Senha; depois login com perfil Auth ativo.
-- PR #45 ainda OPEN — mergear quando conveniente (código já na VPS via branch).
+- Formulário HTTPS confirmado pelo humano (E-mail/Senha/Entrar).
+- Credencial: **não há senha padrão**. Provisionar Auth sintético na VPS (`provision-gate-d-auth-synthetic.sh`); e-mail `gate-d.synth@dev.synthetic.local`; senha gerada com `openssl` fica só no cofre local (nunca no chat/Git).
+- Script reativa/unban + vincula `profiles` (cleanup Gate F pode ter banido o synth).
 
 
 
