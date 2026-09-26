@@ -24,7 +24,7 @@ export function requestIdMiddleware(req: Request, res: Response, next: NextFunct
   res.setHeader('x-request-id', requestId);
   next();
 }
-const PUBLIC_PATHS = new Set(['/health', '/ready', '/api/v1/meta']);
+const PUBLIC_GET_PATHS = new Set(['/health', '/ready', '/api/v1/meta']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function createSupabaseAuthMiddleware({
@@ -32,7 +32,8 @@ export function createSupabaseAuthMiddleware({
 }: { supabaseUrl: string; anonKey: string; db: Pick<DbClient, 'query'>; fetchImpl?: typeof fetch }) {
   const userUrl = new URL('auth/v1/user', `${supabaseUrl.replace(/\/+$/, '')}/`);
   return async (req: Request, _res: Response, next: NextFunction) => {
-    if (PUBLIC_PATHS.has(req.path)) { next(); return; }
+    if (PUBLIC_GET_PATHS.has(req.path) && req.method === 'GET') { next(); return; }
+    if (req.path === '/api/v1/auth/session' && req.method === 'POST') { next(); return; }
     const bearer = /^Bearer ([A-Za-z0-9._~-]+)$/.exec(req.header('authorization') || '');
     if (!bearer || bearer[1].length > 8192) {
       next(new AppError(401, 'AUTH_REQUIRED', 'Authenticated user token required'));
