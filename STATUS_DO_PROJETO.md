@@ -1,10 +1,10 @@
-## #57 STATUS REAL — Onda 5 Pedido campanha + marcos críticos (2026-09-26T19:50Z)
+## #57 STATUS REAL — Onda 5 Pedido campanha + marcos críticos (2026-09-26T19:48Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — migration 031 campanha + `comercialPedidoMarcoPolicy` |
-| Testado | **PENDENTE** |
-| CI | **PENDENTE** |
+| Testado | **SIM** — campanha/marcos + regressão onda5 anexos/tipo |
+| CI | **SIM** — frontend+backend SUCCESS (`b2123a68`) |
 | Mesclado | **NÃO** (empilhada #56→…) |
 | Implantado VPS | **NÃO** |
 
@@ -13,7 +13,7 @@
 - Branch `cursor/comercial360-onda5-pedido-campanha-marcos-392b` (base #56).
 - Campo `campanha` alinhado ao Orçamento; imutável no update.
 - Política explícita: mutações comerciais só em `EM_ABERTO`; após marco crítico → 409.
-- Sem módulo paralelo. Aprovação Orçamento continua no stack #46.
+- Sem módulo paralelo. Próximo: UI canônica Pedido com origem/tipo/campanha.
 
 ## #56 STATUS REAL — Onda 5 Pedido anexos via DAM (2026-09-26T19:42Z)
 
