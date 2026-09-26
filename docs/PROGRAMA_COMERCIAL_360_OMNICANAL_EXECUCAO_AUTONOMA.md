@@ -599,6 +599,13 @@ Esse contrato ainda nao habilita worker, canal, rede, bucket ou publicacao exter
 
 ---
 
+### Checkpoint de código em 26/09/2026 — frente Codex de canais
+
+- #68 receptor de vendas assinadas; #69 recibos e concorrência PostgreSQL; #70 cliente server-side com retry idempotente. Implementados/testados, CIs verdes dos HEADs publicados; Draft, não mesclados/implantados. Detalhes e limites em COMERCIAL_OMNICANAL_INGRESS.md.
+- Consumidor controlado do outbox Produto em codex/comercial-catalogo-outbox: claim SKIP LOCKED, fencing por versão de lease, retry, dead-letter, reprocessamento/RBAC, auditoria atômica e summary; publisher injetado somente, sem canal real/timer/ativação. Testes/CI do novo HEAD em execução, sem conclusão de onda.
+- RLS/FORCE existem desde 002, sem policy permissiva; policy por Grupo/Empresa do contrato da frente requer migration coordenada. Runtime01/migrations 025–032 estão ocupados nas PRs Cursor; não alterar ou duplicar suas bases. Origem canônica de documentos aguarda #50/#53; mídia/preço/disponibilidade continuam dos módulos proprietários.
+- Nenhuma destas entregas fecha integralmente Ondas 15–19, homologação, acesso real, migração legado ou implantação. HD indisponível: dados exclusivamente sintéticos. Sem VPS/merge nesta tarefa. Prosseguir nos checkpoints independentes sem solicitar próximo.
+
 ## Onda 16 — Site CPA, e-commerce e portal B2B
 
 ### Jornadas

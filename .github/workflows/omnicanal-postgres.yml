@@ -22,5 +22,5 @@ jobs:
         with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
       - run: npm ci
       - run: npm run typecheck
-      - run: node --import tsx --test tests/omnichannel-concurrency.test.ts
+      - run: node --import tsx --test tests/omnichannel-concurrency.test.ts tests/omnichannel-outbox-postgres.test.ts
         env: { OMNICHANNEL_POSTGRES_URL: 'postgresql://erp_test:erp_test@localhost:5432/erp_omnichannel_test' }

@@ -62,7 +62,7 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
         'x-group-id': S.groupB, 'x-empresa-id': S.empresaB, 'x-actor-id': S.runtimeActorB }, body });
     return { status: response.status, body: await response.json() as { data?: { id: string }; replayed?: boolean; error?: { code: string } } };
   }
-  return { pg, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
+  return { pg, db, runtime, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
     close: async () => { await new Promise<void>((resolve) => server.close(() => resolve())); await pg.close(); } };
   } catch (error) { await pg.close(); throw error; }
 }
