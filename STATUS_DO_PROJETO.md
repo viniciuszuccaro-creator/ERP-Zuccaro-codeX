@@ -4,7 +4,7 @@
 | --- | --- |
 | Implementado | **SIM** — migration 025 + tipos/repos/service |
 | Testado | **SIM** — 7/7 onda5 + regressão pedido |
-| CI | **PENDENTE** |
+| CI | **CORRIGIDO** — falha `runtime01` (lista até 024); agora inclui 025 |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** (migration só após gate) |
 
