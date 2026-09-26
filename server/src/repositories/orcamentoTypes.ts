@@ -10,6 +10,19 @@ const money = z.string().regex(/^\d+(\.\d{1,6})?$/).transform((v) => (
 export const ORCAMENTO_STATUS = ['EM_ABERTO', 'CANCELADO', 'SUPERSEDIDO'] as const;
 export type OrcamentoStatus = typeof ORCAMENTO_STATUS[number];
 
+/** Origens canônicas Onda 4 — canais que criam Orçamento (sem ORCAMENTO). */
+export const ORCAMENTO_ORIGENS = [
+  'MANUAL',
+  'SITE',
+  'PORTAL_B2B',
+  'APP',
+  'CHATBOT',
+  'MARKETPLACE',
+  'IMPORTACAO',
+  'CRM',
+] as const;
+export type OrcamentoOrigem = typeof ORCAMENTO_ORIGENS[number];
+
 export const orcamentoItemSchema = z.object({
   produto_id: z.string().uuid(),
   unidade_id: z.string().uuid(),
@@ -25,6 +38,11 @@ export const orcamentoCreateSchema = z.object({
   condicao_pagamento_id: z.string().uuid(),
   validade_em: z.string().datetime(),
   observacoes: z.string().trim().max(1000).optional(),
+  origem: z.enum(ORCAMENTO_ORIGENS).optional(),
+  canal: z.string().trim().min(1).max(80).nullable().optional(),
+  external_id: z.string().trim().min(1).max(160).nullable().optional(),
+  idempotency_key: z.string().trim().min(1).max(160).nullable().optional(),
+  campanha: z.string().trim().min(1).max(120).nullable().optional(),
   itens: z.array(orcamentoItemSchema).min(1).max(1000),
 }).strict();
 
@@ -44,6 +62,11 @@ export type Orcamento = {
   condicao_pagamento_id: string;
   validade_em: string;
   observacoes: string | null;
+  origem: OrcamentoOrigem;
+  canal: string | null;
+  external_id: string | null;
+  idempotency_key: string | null;
+  campanha: string | null;
   subtotal: string;
   desconto: string;
   total: string;
@@ -83,12 +106,15 @@ export type OrcamentoListFilters = {
   clienteEmpresaId?: string;
   validadeDe?: string;
   validadeAte?: string;
+  origem?: OrcamentoOrigem;
 };
 
 export type OrcamentoRepository = {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   create(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor): Promise<Orcamento>;
   get(scope: OrcamentoScope, id: string, executor?: DbQueryExecutor): Promise<Orcamento | null>;
+  getByIdempotencyKey(scope: OrcamentoScope, origem: OrcamentoOrigem, idempotencyKey: string, executor?: DbQueryExecutor): Promise<Orcamento | null>;
+  getByExternalId(scope: OrcamentoScope, origem: OrcamentoOrigem, externalId: string, executor?: DbQueryExecutor): Promise<Orcamento | null>;
   list(scope: OrcamentoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: OrcamentoListFilters): Promise<OrcamentoPage>;
   listVersions(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<Orcamento[]>;
   update(scope: OrcamentoScope, id: string, data: OrcamentoCreate, executor?: DbQueryExecutor): Promise<Orcamento | null>;

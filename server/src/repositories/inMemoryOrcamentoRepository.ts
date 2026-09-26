@@ -5,6 +5,7 @@ import {
   type Orcamento,
   type OrcamentoCreate,
   type OrcamentoListFilters,
+  type OrcamentoOrigem,
   type OrcamentoRepository,
   type OrcamentoScope,
 } from './orcamentoTypes.js';
@@ -23,6 +24,13 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
   }
 
   async create(scope: OrcamentoScope, data: OrcamentoCreate, _executor?: DbQueryExecutor): Promise<Orcamento> {
+    const origem = data.origem ?? 'MANUAL';
+    if (data.idempotency_key && await this.getByIdempotencyKey(scope, origem, data.idempotency_key)) {
+      throw new Error('ORCAMENTO_IDEMPOTENCY_CONFLICT');
+    }
+    if (data.external_id && await this.getByExternalId(scope, origem, data.external_id)) {
+      throw new Error('ORCAMENTO_EXTERNAL_ID_CONFLICT');
+    }
     const now = new Date().toISOString();
     const id = randomUUID();
     const number = this.next.get(scope.empresaId) ?? 1;
@@ -40,6 +48,11 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
       condicao_pagamento_id: data.condicao_pagamento_id,
       validade_em: data.validade_em,
       observacoes: data.observacoes ?? null,
+      origem,
+      canal: data.canal ?? null,
+      external_id: data.external_id ?? null,
+      idempotency_key: data.idempotency_key ?? null,
+      campanha: data.campanha ?? null,
       desconto: totals.desconto,
       subtotal: totals.subtotal,
       total: totals.total,
@@ -58,6 +71,24 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
     return row && row.group_id === scope.groupId && row.empresa_id === scope.empresaId ? clone(row) : null;
   }
 
+  async getByIdempotencyKey(scope: OrcamentoScope, origem: OrcamentoOrigem, idempotencyKey: string, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const row = [...this.rows.values()].find((item) =>
+      item.group_id === scope.groupId
+      && item.empresa_id === scope.empresaId
+      && item.origem === origem
+      && item.idempotency_key === idempotencyKey);
+    return row ? clone(row) : null;
+  }
+
+  async getByExternalId(scope: OrcamentoScope, origem: OrcamentoOrigem, externalId: string, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const row = [...this.rows.values()].find((item) =>
+      item.group_id === scope.groupId
+      && item.empresa_id === scope.empresaId
+      && item.origem === origem
+      && item.external_id === externalId);
+    return row ? clone(row) : null;
+  }
+
   async list(
     scope: OrcamentoScope,
     limit = 50,
@@ -73,7 +104,8 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
       && (!filters.status || row.status === filters.status)
       && (!filters.clienteEmpresaId || row.cliente_empresa_id === filters.clienteEmpresaId)
       && (!filters.validadeDe || row.validade_em >= filters.validadeDe)
-      && (!filters.validadeAte || row.validade_em <= filters.validadeAte))
+      && (!filters.validadeAte || row.validade_em <= filters.validadeAte)
+      && (!filters.origem || row.origem === filters.origem))
       .sort((a, b) => b.numero.localeCompare(a.numero) || b.versao - a.versao || b.id.localeCompare(a.id));
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
   }
@@ -91,8 +123,15 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
     const totals = calculateOrcamento(data.itens);
     const updated: Orcamento = {
       ...current,
-      ...data,
+      cliente_empresa_id: data.cliente_empresa_id,
+      condicao_pagamento_id: data.condicao_pagamento_id,
+      validade_em: data.validade_em,
       observacoes: data.observacoes ?? null,
+      origem: current.origem,
+      canal: current.canal,
+      external_id: current.external_id,
+      idempotency_key: current.idempotency_key,
+      campanha: current.campanha,
       itens: totals.itens,
       subtotal: totals.subtotal,
       desconto: totals.desconto,
@@ -135,6 +174,11 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
       condicao_pagamento_id: data.condicao_pagamento_id,
       validade_em: data.validade_em,
       observacoes: data.observacoes ?? null,
+      origem: source.origem,
+      canal: source.canal,
+      external_id: source.external_id,
+      idempotency_key: null,
+      campanha: source.campanha,
       subtotal: totals.subtotal,
       desconto: totals.desconto,
       total: totals.total,

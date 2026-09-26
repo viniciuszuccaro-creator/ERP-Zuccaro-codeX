@@ -1013,6 +1013,7 @@ function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
         clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
         validadeDe: typeof req.query.validadeDe === 'string' ? req.query.validadeDe : undefined,
         validadeAte: typeof req.query.validadeAte === 'string' ? req.query.validadeAte : undefined,
+        origem: typeof req.query.origem === 'string' ? req.query.origem : undefined,
       }));
     } catch (error) { next(error); }
   });
