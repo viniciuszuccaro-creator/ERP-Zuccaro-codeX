@@ -15,6 +15,10 @@ import {
   descontoExcedeAlcadaLivre,
   type DescontoAlcadaDecisao,
 } from './comercialDescontoAlcadaPolicy.js';
+import {
+  assertMargemDentroDaAlcadaOuAprovar,
+  type ComercialCostPort,
+} from './comercialMargemAlcadaPolicy.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -26,6 +30,8 @@ export type OrcamentoSalePricePort = {
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
   ): Promise<{ preco: string } | null>;
 };
+
+export type { ComercialCostPort };
 
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
@@ -48,6 +54,8 @@ export class OrcamentoService {
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
     private readonly prices: OrcamentoSalePricePort,
+    /** Opcional: sem porta de custo a alçada de margem não roda (não inventa custo). */
+    private readonly costs: ComercialCostPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -58,7 +66,9 @@ export class OrcamentoService {
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       // Create: criador = actor → alçada acima da livre nunca autoaprova.
       await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, executor);
+      await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -104,8 +114,10 @@ export class OrcamentoService {
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       const criador = await this.resolveCriadorActorId('Orcamento', id);
       const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
+      await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
       if (alcada.aprovadaPorOutro) {
         await this.audit.append({
@@ -175,6 +187,18 @@ export class OrcamentoService {
     return created?.actorId ?? null;
   }
 
+  private async canAprovarComercial(ctx: RequestContext): Promise<boolean> {
+    try {
+      await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false });
+      return true;
+    } catch (error) {
+      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   private async assertDescontoAlcada(
     ctx: RequestContext,
     itens: OrcamentoCreate['itens'],
@@ -184,24 +208,54 @@ export class OrcamentoService {
       return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: 0 };
     }
 
-    let canAprovar = false;
-    try {
-      await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false });
-      canAprovar = true;
-    } catch (error) {
-      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
-        canAprovar = false;
-      } else {
-        throw error;
-      }
-    }
     return assertDescontoDentroDaAlcadaOuAprovar({
       items: itens,
-      canAprovar,
+      canAprovar: await this.canAprovarComercial(ctx),
       actorId: ctx.actorId!,
       criadorActorId,
       entityLabel: 'Orçamento',
     });
+  }
+
+  private async assertMargemAlcada(
+    ctx: RequestContext,
+    scope: OrcamentoScope,
+    itens: OrcamentoCreate['itens'],
+  ) {
+    // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
+    if (!this.costs) return null;
+    return assertMargemDentroDaAlcadaOuAprovar({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+      items: itens,
+      costs: this.costs,
+      canAprovar: await this.canAprovarComercial(ctx),
+      entityLabel: 'Orçamento',
+    });
+  }
+
+  private async auditMargemOverride(
+    ctx: RequestContext,
+    entityId: string,
+    decision: Awaited<ReturnType<typeof assertMargemDentroDaAlcadaOuAprovar>>,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!decision?.overridden) return;
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Orcamento',
+      entityId,
+      action: 'approve',
+      afterData: {
+        margem_alcada_override: true,
+        margem_avaliacao: decision.evaluated,
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private normalizeMoney(value: string): string {
