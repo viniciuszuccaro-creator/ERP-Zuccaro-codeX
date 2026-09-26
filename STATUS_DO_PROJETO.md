@@ -1,20 +1,19 @@
-## #67 STATUS REAL — Onda 6 CreditPort ClienteEmpresa (2026-09-26T19:56Z)
+## #67 STATUS REAL — Onda 6 CreditPort ClienteEmpresa (2026-09-26T20:52Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado | **SIM** — migration 032 + `createClienteEmpresaCreditPort` + wire PedidoService |
-| Testado | **SIM** — comercial-onda6-credito-pedido 8/8 · runtime01 · HTTP Pedido/Central |
-| CI | **PENDENTE** (fix pós-falha: snapshot null não força alçada) |
-| Mesclado | **NÃO** (empilhada #66→…) |
+| Implementado | **SIM** — migration 032 + CreditPort + wire createApp |
+| Testado | **SIM** — credito 8/8 · runtime01 · runtime05 (032 colunas) |
+| CI | **PENDENTE** @ `0ef8e631` |
+| Mesclado | **NÃO** (empilhada; bases #45/#46 primeiro) |
 | Implantado VPS | **NÃO** |
 
-## Comercial 360 / Onda 6 - adapter CreditPort (2026-09-26T19:56Z)
+## Comercial 360 / Onda 6 - adapter CreditPort (2026-09-26T20:52Z)
 
 - Branch `cursor/comercial360-onda6-credit-port-392b` (base #66).
-- Crédito no `cliente_empresas` existente: `limite_credito` NULL = não configurado (porta retorna null; assert pula sem forçar alçada).
-- Limite insuficiente continua exigindo `aprovar-credito` (`CREDITO_ALCADA_DENIED`).
-- Adapter multiempresa; `PedidoService` no `app.ts` usa a porta real; runtime01 até 032.
-- Sem módulo paralelo. Próximo: UI Cadastros editar limite / link pagamento Pedido / cobrança.
+- `limite_credito` NULL = não configurado (skip assert). Insuficiente → `aprovar-credito`.
+- `runtime05` deixa de tratar limite_* como forbidden da 010 (são da 032).
+- Sem VPS / sem HD legado. Sem nova PR empilhada até bases estáveis.
 
 ## #66 STATUS REAL — Onda 6 ContaReceber↔Pedido multiempresa (2026-09-26T19:48Z)
 
