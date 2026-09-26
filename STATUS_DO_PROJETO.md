@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 2 - alçada P1 truncamento <1 bp (2026-09-26T17:20Z)
+
+- Achado Codex no HEAD `9415094f`: `descontoBps` truncava BigInt → desconto 0.01/1000 (0.1 bp) passava com alçada 0.
+- Fix: comparação inteira `descontoMicros * 10000n > subtotalMicros * lim` em `descontoExcedeAlcadaLivre`.
+- Testes: regressão unitária + HTTP create/update/convert sem `aprovar` → 403 exact + sem persistência (9/9 PASS).
+- Pedido Codex: re-revisar novo HEAD. #45 permanece independente (acesso).
+
 ## Comercial 360 / Onda 2 - alçada HTTP exact DESCONTO_ALCADA_DENIED (2026-09-26T17:15Z)
 
 - Avanço #46 (branch separada; não bloqueia #45): teste HTTP exacto Orçamento/Pedido — criador sem `aprovar` → **403** `{ code: DESCONTO_ALCADA_DENIED }`; aprovador → 201.
