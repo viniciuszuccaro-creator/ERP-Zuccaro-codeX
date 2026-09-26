@@ -1,19 +1,19 @@
-## #63 STATUS REAL — Onda 6 crédito no Pedido via CreditPort (2026-09-26T19:25Z)
+## #63 STATUS REAL — Onda 6 crédito no Pedido via CreditPort (2026-09-26T19:29Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — `comercialCreditoPolicy` + PedidoService (create/convert/update) |
 | Testado | **SIM** — comercial-onda6-credito-pedido 6/6 · regressão origem 7/7 · typecheck PASS |
-| CI | **PENDENTE** (fix typecheck: `aprovar-credito` em RbacAction) |
+| CI | **SIM** — frontend+backend SUCCESS (`0e81de69`) |
 | Mesclado | **NÃO** (empilhada #62→…) |
 | Implantado VPS | **NÃO** |
 
-## Comercial 360 / Onda 6 - crédito Pedido (2026-09-26T19:25Z)
+## Comercial 360 / Onda 6 - crédito Pedido (2026-09-26T19:29Z)
 
 - Branch `cursor/comercial360-onda6-credito-pedido-392b` (base #62).
 - Política pura + porta opcional `ComercialCreditPort` (não inventa limite sem porta).
 - Crédito insuficiente / ausente exige RBAC `aprovar-credito` (403 `CREDITO_ALCADA_DENIED` / `CREDITO_INDISPONIVEL`).
-- Sem módulo paralelo; saldo não é copiado para o Pedido. Adapter Financeiro real e UI ficam para ck seguinte.
+- Sem módulo paralelo; saldo não é copiado para o Pedido. Ready for review. Próximo: UI ValidacaoCredito no painel canônico / adapter Financeiro.
 
 ## #62 STATUS REAL — Onda 4 registrar/inativar anexos Orçamento (2026-09-26T19:19Z)
 
