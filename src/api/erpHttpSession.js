@@ -427,7 +427,10 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
   const profiles = Array.isArray(data.profiles) ? data.profiles : [];
   const preferredActor = String(input.preferredActorId || local.actorId || '').trim();
   const preferredGroup = String(input.preferredGroupId || local.groupId || '').trim();
-  const profile = profiles.find((p) => String(p?.id) === preferredActor && String(p?.group_id) === preferredGroup)
+  const matchedSameGroup = profiles.find(
+    (p) => String(p?.id) === preferredActor && String(p?.group_id) === preferredGroup,
+  );
+  const profile = matchedSameGroup
     || profiles.find((p) => String(p?.id) === preferredActor)
     || profiles.find((p) => p?.group_id && p?.id)
     || profiles[0];
@@ -442,9 +445,16 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
   const permissoes = profile.permissoes && typeof profile.permissoes === 'object' && !Array.isArray(profile.permissoes)
     ? profile.permissoes
     : {};
-  const empresaId = input.preferredEmpresaId != null
-    ? (input.preferredEmpresaId ? String(input.preferredEmpresaId) : null)
-    : (profile.empresa_id ? String(profile.empresa_id) : (local.empresaId || null));
+  // Preferência de empresa só vale no mesmo grupo do perfil escolhido (nunca misturar tenant).
+  const sameGroupAsPreference = String(profile.group_id) === preferredGroup;
+  const rawPreferred = input.preferredEmpresaId !== undefined
+    ? input.preferredEmpresaId
+    : local.empresaId;
+  const empresaId = resolveRefreshEmpresaId({
+    profile,
+    profiles,
+    preferredEmpresaId: sameGroupAsPreference ? rawPreferred : null,
+  });
   persistErpHttpSession({
     accessToken: local.token,
     groupId: String(profile.group_id),
@@ -468,4 +478,37 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     permissoes,
     profiles,
   };
+}
+
+/**
+ * Resolve empresa no restore de sessão (fail-closed).
+ * - Perfil com `empresa_id` explícito → exclusivo (ignora preferência local revogada).
+ * - Perfil de Grupo (`empresa_id` null): só preserva preferência se UUID e houver
+ *   evidência de autorização no mesmo grupo (outro perfil do grupo com essa empresa).
+ * - Preferência incompatível → contexto autorizado do perfil ou null; nunca mistura.
+ * @param {{
+ *   profile: { group_id?: string, empresa_id?: string | null },
+ *   profiles: Array<{ group_id?: string, empresa_id?: string | null }>,
+ *   preferredEmpresaId?: string | null,
+ * }} input
+ * @returns {string | null}
+ */
+export function resolveRefreshEmpresaId(input) {
+  const profileEmpresa = input?.profile?.empresa_id ? String(input.profile.empresa_id).trim() : '';
+  if (profileEmpresa) {
+    return isUuid(profileEmpresa) ? profileEmpresa : null;
+  }
+
+  const preferred = input?.preferredEmpresaId ? String(input.preferredEmpresaId).trim() : '';
+  if (!preferred || !isUuid(preferred)) return null;
+
+  const groupId = String(input?.profile?.group_id || '').trim();
+  if (!groupId || !isUuid(groupId)) return null;
+
+  const authorizedInGroup = (Array.isArray(input.profiles) ? input.profiles : []).some((p) => {
+    if (String(p?.group_id || '') !== groupId) return false;
+    const eid = p?.empresa_id ? String(p.empresa_id).trim() : '';
+    return eid === preferred;
+  });
+  return authorizedInGroup ? preferred : null;
 }

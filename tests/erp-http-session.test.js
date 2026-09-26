@@ -8,6 +8,7 @@ import {
   persistErpHttpSession,
   readErpHttpSession,
   refreshErpHttpSessionFromServer,
+  resolveRefreshEmpresaId,
   switchErpHttpSessionEmpresa,
 } from '../src/api/erpHttpSession.js';
 
@@ -317,6 +318,134 @@ test('refreshErpHttpSessionFromServer aplica role/permissoes do servidor (não d
     assert.equal(result.role, 'user');
     assert.deepEqual(result.permissoes, { Comercial: { pedido: ['visualizar'] } });
     assert.equal(readErpHttpSession(storage).role, 'user');
+  } finally {
+    if (origLocal === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: origLocal });
+  }
+});
+
+test('resolveRefreshEmpresaId: vínculo explícito do perfil prevalece sobre preferência local', () => {
+  assert.equal(resolveRefreshEmpresaId({
+    profile: { group_id: GROUP, empresa_id: EMPRESA_B },
+    profiles: [{ group_id: GROUP, empresa_id: EMPRESA_B }],
+    preferredEmpresaId: EMPRESA_A,
+  }), EMPRESA_B);
+});
+
+test('resolveRefreshEmpresaId: perfil de grupo só preserva preferência autorizada no mesmo grupo', () => {
+  assert.equal(resolveRefreshEmpresaId({
+    profile: { group_id: GROUP, empresa_id: null },
+    profiles: [
+      { group_id: GROUP, empresa_id: null },
+      { group_id: GROUP, empresa_id: EMPRESA_A },
+    ],
+    preferredEmpresaId: EMPRESA_A,
+  }), EMPRESA_A);
+  assert.equal(resolveRefreshEmpresaId({
+    profile: { group_id: GROUP, empresa_id: null },
+    profiles: [{ group_id: GROUP, empresa_id: null }],
+    preferredEmpresaId: EMPRESA_A,
+  }), null);
+});
+
+test('refresh: reassociação A→B ignora empresa local revogada', async () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({
+    accessToken: 'tok_reassoc',
+    groupId: GROUP,
+    empresaId: EMPRESA_A,
+    actorId: ACTOR,
+    role: 'user',
+    expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    storage,
+  });
+  const origLocal = globalThis.localStorage;
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    const result = await refreshErpHttpSessionFromServer({
+      storage,
+      baseUrl: '',
+      preferredActorId: ACTOR,
+      preferredGroupId: GROUP,
+      preferredEmpresaId: EMPRESA_A,
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        async json() {
+          return {
+            data: {
+              access_token: 'tok_reassoc',
+              user: { id: '11111111-1111-4111-8111-111111111111', email: 'user@example.com' },
+              profiles: [{
+                id: ACTOR,
+                group_id: GROUP,
+                empresa_id: EMPRESA_B,
+                role: 'user',
+                full_name: 'Reassociado',
+                permissoes: {},
+              }],
+            },
+          };
+        },
+      }),
+    });
+    assert.equal(result.empresaId, EMPRESA_B);
+    assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_B);
+  } finally {
+    if (origLocal === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: origLocal });
+  }
+});
+
+test('refresh: fallback para outro grupo não transporta empresa antiga', async () => {
+  const GROUP_B = '66666666-6666-4666-8666-666666666666';
+  const ACTOR_B = '77777777-7777-4777-8777-777777777777';
+  const storage = memoryStorage();
+  persistErpHttpSession({
+    accessToken: 'tok_cross',
+    groupId: GROUP,
+    empresaId: EMPRESA_A,
+    actorId: ACTOR,
+    role: 'user',
+    expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    storage,
+  });
+  const origLocal = globalThis.localStorage;
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    const result = await refreshErpHttpSessionFromServer({
+      storage,
+      baseUrl: '',
+      preferredActorId: ACTOR,
+      preferredGroupId: GROUP,
+      preferredEmpresaId: EMPRESA_A,
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        async json() {
+          return {
+            data: {
+              access_token: 'tok_cross',
+              user: { id: '11111111-1111-4111-8111-111111111111', email: 'user@example.com' },
+              // Perfil antigo do grupo G/empresa A sumiu; só resta perfil noutro grupo.
+              profiles: [{
+                id: ACTOR_B,
+                group_id: GROUP_B,
+                empresa_id: EMPRESA_B,
+                role: 'user',
+                full_name: 'Outro Grupo',
+                permissoes: {},
+              }],
+            },
+          };
+        },
+      }),
+    });
+    assert.equal(result.groupId, GROUP_B);
+    assert.equal(result.actorId, ACTOR_B);
+    assert.equal(result.empresaId, EMPRESA_B);
+    assert.notEqual(result.empresaId, EMPRESA_A);
+    assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_B);
   } finally {
     if (origLocal === undefined) delete globalThis.localStorage;
     else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: origLocal });
