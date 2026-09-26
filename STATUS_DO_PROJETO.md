@@ -1,10 +1,10 @@
-## #53 STATUS REAL — Onda 4 Orçamento origem/canal/idempotency (2026-09-26T19:30Z)
+## #53 STATUS REAL — Onda 4 Orçamento origem/canal/idempotency (2026-09-26T19:25Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — migration 028 + service/repos |
-| Testado | **SIM** — origem + versao + 08c/01 + onda5 (75/75) |
-| CI | **PENDENTE** |
+| Testado | **SIM** — origem + versao + 08c/01 + onda5 |
+| CI | **SIM** — frontend+backend SUCCESS (`14694610`) |
 | Mesclado | **NÃO** (empilhada #50→#51→#52→#53) |
 | Implantado VPS | **NÃO** |
 
