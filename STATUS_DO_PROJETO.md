@@ -1,3 +1,9 @@
+## Comercial 360 / Onda 2 - alçada HTTP exact DESCONTO_ALCADA_DENIED (2026-09-26T17:15Z)
+
+- Avanço #46 (branch separada; não bloqueia #45): teste HTTP exacto Orçamento/Pedido — criador sem `aprovar` → **403** `{ code: DESCONTO_ALCADA_DENIED }`; aprovador → 201.
+- Arquivo: `server/tests/comercial-desconto-alcada-http.test.ts` (5/5 com unitários).
+- Próximo Onda 2 nesta branch: margem/custo sensível (permissão própria), após re-review Codex da alçada.
+
 ## Comercial 360 / Onda 2 - alçada de desconto (2026-09-26T16:40Z)
 
 - Branch `cursor/comercial360-onda2-alcada-desconto-392b` (separada da #45).
