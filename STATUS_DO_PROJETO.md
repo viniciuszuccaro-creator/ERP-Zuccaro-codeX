@@ -4,7 +4,7 @@
 | --- | --- |
 | Implementado | **SIM** — migration 032 + CreditPort + wire createApp |
 | Testado | **SIM** — credito 8/8 · runtime01 · runtime05 (032 colunas) |
-| CI | **PENDENTE** @ `0ef8e631` |
+| CI | **SIM** @ `8d6d8dfb` frontend+backend SUCCESS |
 | Mesclado | **NÃO** (empilhada; bases #45/#46 primeiro) |
 | Implantado VPS | **NÃO** |
 
