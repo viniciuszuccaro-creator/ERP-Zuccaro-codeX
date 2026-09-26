@@ -46,18 +46,50 @@ test('liberação: à vista + regraPermite true', () => {
   }), false);
 });
 
-test('assertDesconto: liberadoPorAvista ignora alçada', () => {
-  assert.doesNotThrow(() => assertDescontoDentroDaAlcadaOuAprovar({
+test('assertDesconto: liberadoPorAvista ignora alçada (não é autoaprovação)', () => {
+  const ACTOR_A = '55555555-5555-4555-8555-555555555555';
+  const decision = assertDescontoDentroDaAlcadaOuAprovar({
     items: [{ quantidade: '1', preco_unitario: '100', desconto: '20' }],
     canAprovar: false,
+    actorId: ACTOR_A,
+    criadorActorId: ACTOR_A,
     liberadoPorAvista: true,
-  }));
+  });
+  assert.equal(decision.aprovacaoExigida, false);
+  assert.equal(decision.aprovadaPorOutro, false);
   assert.throws(
     () => assertDescontoDentroDaAlcadaOuAprovar({
       items: [{ quantidade: '1', preco_unitario: '100', desconto: '20' }],
       canAprovar: false,
+      actorId: ACTOR_A,
+      criadorActorId: ACTOR_A,
       liberadoPorAvista: false,
     }),
     (err: any) => err?.code === 'DESCONTO_ALCADA_DENIED',
+  );
+  // Sem isenção à vista, mesmo com canAprovar o criador não autoaprova.
+  assert.throws(
+    () => assertDescontoDentroDaAlcadaOuAprovar({
+      items: [{ quantidade: '1', preco_unitario: '100', desconto: '20' }],
+      canAprovar: true,
+      actorId: ACTOR_A,
+      criadorActorId: ACTOR_A,
+      liberadoPorAvista: false,
+    }),
+    (err: any) => err?.code === 'DESCONTO_ALCADA_DENIED' && /outro aprovador/i.test(err?.message),
+  );
+});
+
+test('assertDesconto: liberadoPorAvista ainda valida desconto inválido (422)', () => {
+  const ACTOR_A = '55555555-5555-4555-8555-555555555555';
+  assert.throws(
+    () => assertDescontoDentroDaAlcadaOuAprovar({
+      items: [{ quantidade: '1', preco_unitario: '100', desconto: '101' }],
+      canAprovar: false,
+      actorId: ACTOR_A,
+      criadorActorId: ACTOR_A,
+      liberadoPorAvista: true,
+    }),
+    (err: any) => err?.statusCode === 422 && err?.code === 'ORCAMENTO_DESCONTO_INVALIDO',
   );
 });
