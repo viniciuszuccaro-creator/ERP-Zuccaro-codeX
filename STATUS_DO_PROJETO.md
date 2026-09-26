@@ -1,13 +1,15 @@
-## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T17:45Z)
+## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T18:05Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado | **SIM** — política `comercialMargemAlcadaPolicy` + CostPort opcional em Orçamento/Pedido |
-| Testado | **SIM** — 11/11 unit+HTTP locais (porta null=skip; stub custo→403 `MARGEM_ALCADA_DENIED`) |
-| CI | **PENDENTE** (primeiro push desta branch) |
+| Implementado | **SIM** — HEAD `ac23d184` |
+| Testado | **SIM** — 11/11 unit+HTTP locais |
+| CI | **SIM** — frontend+backend SUCCESS |
 | Re-review Codex | **PENDENTE** |
-| Mesclado | **NÃO** |
+| Mesclado | **NÃO** (base #46 ainda aberta) |
 | Implantado VPS | **N/A** |
+
+Pilha Onda 2: #46 desconto → #47 margem → #49 à vista. Legado prep #48 (sem HD). #45 acesso: CI OK; **implantado BLOCKED** (humano VPS + re-login).
 
 ## Comercial 360 / Onda 2 - alçada de margem mínima (2026-09-26T17:45Z)
 
