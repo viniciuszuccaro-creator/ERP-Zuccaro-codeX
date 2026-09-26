@@ -1,9 +1,7 @@
-## SPA login — Internal server error no Entrar (2026-09-26T14:10Z)
+## SPA login — CORS erp-dev OK na VPS (2026-09-26T14:14Z)
 
-- Sintoma: formulário OK; Entrar → “Internal server error”.
-- Causa: `CORS_ORIGINS` na VPS só tinha `127.0.0.1:3081`/`localhost:3081`. Browser em `https://erp-dev…` envia Origin e o middleware CORS lançava Error → 500 mascarado.
-- Fix: allowlist com `https://erp-dev.cpaferroeaco.com.br`; CORS rejeita sem throw 500; script `scripts/vps/fix-cors-erp-dev-login.sh`.
-- Colar VPS: `CONFIRM_CORS_ERP_DEV=YES ERP_DOCKER_NETWORK=supabase_default bash scripts/vps/fix-cors-erp-dev-login.sh`
+- Humano rodou `fix-cors-erp-dev-login.sh` → `CORS_ERP_DEV_FIX_OK` · `meta_cors_public=YES` · probe com Origin → 401 `AUTH_INVALID_CREDENTIALS` (esperado; não mais 500).
+- Próximo: hard refresh no browser e login com `gate-d.synth@dev.synthetic.local` + senha do cofre.
 
 
 
