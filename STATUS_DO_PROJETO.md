@@ -1,8 +1,9 @@
-## SPA login HTTP/supabase_user — formulário e-mail/senha (2026-09-26T14:00Z)
+## SPA login — Internal server error no Entrar (2026-09-26T14:10Z)
 
-- Formulário HTTPS confirmado; credencial via Auth sintético (`gate-d.synth@…` + senha openssl no cofre).
-- Branding aba: remove Base44 — `index.html` título **ERP Zuccaro** + `public/favicon.svg`; PWA/apple em `Layout.jsx` apontam para `/favicon.svg`.
-- Deploy: rebuild só `erp-web` na VPS após pull do branch.
+- Sintoma: formulário OK; Entrar → “Internal server error”.
+- Causa: `CORS_ORIGINS` na VPS só tinha `127.0.0.1:3081`/`localhost:3081`. Browser em `https://erp-dev…` envia Origin e o middleware CORS lançava Error → 500 mascarado.
+- Fix: allowlist com `https://erp-dev.cpaferroeaco.com.br`; CORS rejeita sem throw 500; script `scripts/vps/fix-cors-erp-dev-login.sh`.
+- Colar VPS: `CONFIRM_CORS_ERP_DEV=YES ERP_DOCKER_NETWORK=supabase_default bash scripts/vps/fix-cors-erp-dev-login.sh`
 
 
 

@@ -209,7 +209,9 @@ export function createApp(options: CreateAppOptions) {
         callback(null, true);
         return;
       }
-      callback(new Error('CORS_ORIGIN_DENIED'));
+      // Não lança Error (vira 500 "Internal server error" em produção).
+      // Origem fora da allowlist: rejeita CORS sem derrubar a request com 500.
+      callback(null, false);
     },
     credentials: true,
   }));

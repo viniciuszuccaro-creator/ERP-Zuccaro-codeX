@@ -8,6 +8,17 @@ export function notFoundHandler(_req: Request, _res: Response, next: NextFunctio
 
 export function createErrorHandler(config: AppConfig) {
   return (error: unknown, req: Request, res: Response, _next: NextFunction) => {
+    if (error instanceof Error && error.message === 'CORS_ORIGIN_DENIED') {
+      res.status(403).json({
+        error: {
+          code: 'CORS_ORIGIN_DENIED',
+          message: 'Origin não autorizada para a API ERP',
+          requestId: req.requestId,
+        },
+      });
+      return;
+    }
+
     if (error instanceof Error && error.message === 'GROUP_ID_REQUIRED') {
       res.status(400).json({
         error: {
