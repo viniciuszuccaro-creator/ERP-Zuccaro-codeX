@@ -80,6 +80,7 @@ function fixture(options: { price?: string; costs?: ComercialCostPort | null } =
     useMemory: true,
     tenantGuard: tenant,
     rbacGuard: rbac,
+    costPort: options.costs === undefined ? null : options.costs,
   });
   const stubRefs = (service: any) => {
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
@@ -87,9 +88,6 @@ function fixture(options: { price?: string; costs?: ComercialCostPort | null } =
     service.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
     service.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
     service.prices = { resolveSalePrice: async () => ({ preco: price }) };
-    if (options.costs !== undefined) {
-      service.costs = options.costs;
-    }
   };
   stubRefs(runtime.orcamentoService);
   stubRefs(runtime.pedidoService);
@@ -136,7 +134,7 @@ test('HTTP Orçamento: sem CostPort → create ok (não inventa custo)', async (
 });
 
 test('HTTP Orçamento create: custo > preço sem aprovar → 403 e sem persistência', async () => {
-  const { app } = fixture({ costs: stubCost('15') });
+  const { app, auditRepo } = fixture({ costs: stubCost('15') });
   const denied = await request(app, '/api/v1/orcamentos', {
     method: 'POST',
     headers: headers(creatorId),
@@ -157,6 +155,19 @@ test('HTTP Orçamento create: custo > preço sem aprovar → 403 e sem persistê
   });
   assert.equal(allowed.status, 201);
   assert.equal(allowed.body.data.total, '10.000000');
+
+  const audits = await auditRepo.listByEntity('Orcamento', allowed.body.data.id);
+  const approve = audits.filter((a) => a.action === 'approve');
+  assert.equal(approve.length, 1);
+  const after = approve[0].afterData as {
+    margem_alcada_override?: boolean;
+    margem_avaliacao?: Array<{ cost: string; abaixo_da_minima: boolean }>;
+  };
+  assert.equal(after.margem_alcada_override, true);
+  assert.ok(Array.isArray(after.margem_avaliacao));
+  assert.equal(after.margem_avaliacao![0].cost, '15.000000');
+  assert.equal(after.margem_avaliacao![0].abaixo_da_minima, true);
+  assert.equal(typeof after.margem_avaliacao![0].cost, 'string');
 });
 
 test('HTTP Pedido create: margem abaixo sem aprovar → 403', async () => {

@@ -76,8 +76,9 @@ export class PedidoService {
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       // Create: criador = actor → alçada acima da livre nunca autoaprova.
       await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
-      await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+      await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -119,8 +120,9 @@ export class PedidoService {
         // Segregação: aprovador do desconto ≠ criador do Orçamento.
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, data.itens, criadorOrcamento);
-        await this.assertMargemAlcada(ctx, scope, data.itens);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+        await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         if (alcada.aprovadaPorOutro) {
           await this.audit.append({
@@ -174,9 +176,10 @@ export class PedidoService {
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
-      await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
+      await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
       if (alcada.aprovadaPorOutro) {
         await this.audit.append({
@@ -325,7 +328,7 @@ export class PedidoService {
     scope: PedidoScope,
     itens: PedidoCreate['itens'],
   ) {
-    await assertMargemDentroDaAlcadaOuAprovar({
+    return assertMargemDentroDaAlcadaOuAprovar({
       groupId: scope.groupId,
       empresaId: scope.empresaId,
       items: itens,
@@ -333,6 +336,30 @@ export class PedidoService {
       canAprovar: await this.canAprovarComercial(ctx),
       entityLabel: 'Pedido',
     });
+  }
+
+  private async auditMargemOverride(
+    ctx: RequestContext,
+    entityId: string,
+    decision: Awaited<ReturnType<typeof assertMargemDentroDaAlcadaOuAprovar>>,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!decision?.overridden) return;
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Pedido',
+      entityId,
+      action: 'approve',
+      afterData: {
+        margem_alcada_override: true,
+        margem_avaliacao: decision.evaluated,
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private async requirePedido(scope: PedidoScope, id: string, executor?: DbQueryExecutor) { const row = await this.repo.get(scope, id, executor); if (!row) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found'); return row; }

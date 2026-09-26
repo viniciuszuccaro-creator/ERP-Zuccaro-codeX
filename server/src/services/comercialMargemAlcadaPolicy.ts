@@ -123,6 +123,45 @@ export async function evaluateMargemAlcada(options: {
   return { evaluated, anyAbaixo };
 }
 
+function microsToDecimal(value: bigint): string {
+  const neg = value < 0n;
+  const abs = neg ? -value : value;
+  const text = `${abs / MICROS}.${String(abs % MICROS).padStart(6, '0')}`;
+  return neg ? `-${text}` : text;
+}
+
+export type MargemAlcadaDecisionLine = {
+  produto_id: string;
+  net: string;
+  cost: string;
+  margem_bps: number | null;
+  minima_bps: number;
+  abaixo_da_minima: boolean;
+};
+
+/** Decisão serializável (sem BigInt) para auditoria. */
+export type MargemAlcadaDecision = {
+  overridden: boolean;
+  evaluated: MargemAlcadaDecisionLine[];
+};
+
+function serializeMargemDecision(
+  evaluated: MargemLineResult[],
+  overridden: boolean,
+): MargemAlcadaDecision {
+  return {
+    overridden,
+    evaluated: evaluated.map((line) => ({
+      produto_id: line.produto_id,
+      net: microsToDecimal(line.netMicros),
+      cost: microsToDecimal(line.costMicros),
+      margem_bps: line.margemBps,
+      minima_bps: line.minimaBps,
+      abaixo_da_minima: line.abaixoDaMinima,
+    })),
+  };
+}
+
 export async function assertMargemDentroDaAlcadaOuAprovar(options: {
   groupId: string;
   empresaId: string;
@@ -131,20 +170,21 @@ export async function assertMargemDentroDaAlcadaOuAprovar(options: {
   canAprovar: boolean;
   entityLabel?: string;
   defaultMinimaBps?: number;
-}): Promise<void> {
-  if (!options.costs) return; // porta ausente → skip (custo ainda não no MASTER DATA)
-  const { anyAbaixo } = await evaluateMargemAlcada({
+}): Promise<MargemAlcadaDecision | null> {
+  if (!options.costs) return null; // porta ausente → skip (custo ainda não no MASTER DATA)
+  const { evaluated, anyAbaixo } = await evaluateMargemAlcada({
     groupId: options.groupId,
     empresaId: options.empresaId,
     items: options.items,
     costs: options.costs,
     defaultMinimaBps: options.defaultMinimaBps,
   });
-  if (!anyAbaixo) return;
-  if (options.canAprovar) return;
+  if (!anyAbaixo) return serializeMargemDecision(evaluated, false);
+  if (options.canAprovar) return serializeMargemDecision(evaluated, true);
   throw new AppError(
     403,
     'MARGEM_ALCADA_DENIED',
     `${options.entityLabel || 'Documento'} com margem abaixo da mínima exige permissão de aprovar`,
+    serializeMargemDecision(evaluated, false),
   );
 }
