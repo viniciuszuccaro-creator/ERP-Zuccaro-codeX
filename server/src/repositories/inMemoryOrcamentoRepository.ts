@@ -3,6 +3,8 @@ import type { DbQueryExecutor } from '../db/client.js';
 import {
   calculateOrcamento,
   type Orcamento,
+  type OrcamentoAnexo,
+  type OrcamentoAnexoCreate,
   type OrcamentoCreate,
   type OrcamentoListFilters,
   type OrcamentoOrigem,
@@ -14,13 +16,15 @@ const clone = <T>(value: T): T => structuredClone(value);
 
 export class InMemoryOrcamentoRepository implements OrcamentoRepository {
   private rows = new Map<string, Orcamento>();
+  private anexos = new Map<string, OrcamentoAnexo>();
   private next = new Map<string, number>();
 
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const rows = clone(this.rows);
+    const anexos = clone(this.anexos);
     const next = new Map(this.next);
     try { return await fn(); }
-    catch (error) { this.rows = rows; this.next = next; throw error; }
+    catch (error) { this.rows = rows; this.anexos = anexos; this.next = next; throw error; }
   }
 
   async create(scope: OrcamentoScope, data: OrcamentoCreate, _executor?: DbQueryExecutor): Promise<Orcamento> {
@@ -196,5 +200,56 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
     this.rows.set(sourceId, previous);
     this.rows.set(newId, current);
     return { previous: clone(previous), current: clone(current) };
+  }
+
+  async listAnexos(scope: OrcamentoScope, orcamentoId: string, _executor?: DbQueryExecutor): Promise<OrcamentoAnexo[]> {
+    const rows = [...this.anexos.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.orcamento_id === orcamentoId && row.ativo)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    return clone(rows);
+  }
+
+  async createAnexo(
+    scope: OrcamentoScope,
+    orcamentoId: string,
+    data: OrcamentoAnexoCreate,
+    _actorId: string,
+    _executor?: DbQueryExecutor,
+  ): Promise<OrcamentoAnexo> {
+    if (!(await this.get(scope, orcamentoId))) throw new Error('ORCAMENTO_NOT_FOUND');
+    if ([...this.anexos.values()].some((row) =>
+      row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.storage_key === data.storage_key)) {
+      throw new Error('ORCAMENTO_ANEXO_STORAGE_KEY_CONFLICT');
+    }
+    const now = new Date().toISOString();
+    const row: OrcamentoAnexo = {
+      id: randomUUID(),
+      group_id: scope.groupId,
+      empresa_id: scope.empresaId,
+      orcamento_id: orcamentoId,
+      ...data,
+      status: 'QUARENTENA',
+      ativo: true,
+      created_at: now,
+      updated_at: now,
+    };
+    this.anexos.set(row.id, row);
+    return clone(row);
+  }
+
+  async deactivateAnexo(
+    scope: OrcamentoScope,
+    orcamentoId: string,
+    anexoId: string,
+    _actorId: string,
+    _executor?: DbQueryExecutor,
+  ): Promise<OrcamentoAnexo | null> {
+    const current = this.anexos.get(anexoId);
+    if (!current || current.group_id !== scope.groupId || current.empresa_id !== scope.empresaId || current.orcamento_id !== orcamentoId) {
+      return null;
+    }
+    const updated = { ...current, status: 'INATIVO' as const, ativo: false, updated_at: new Date().toISOString() };
+    this.anexos.set(anexoId, updated);
+    return clone(updated);
   }
 }
