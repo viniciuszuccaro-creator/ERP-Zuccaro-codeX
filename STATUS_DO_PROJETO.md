@@ -1,3 +1,20 @@
+## #65 STATUS REAL — Onda 6 EnviarParaCaixa multiempresa fail-closed (2026-09-26T19:38Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `assertTitulosProntosParaCaixa` + EnviarParaCaixa |
+| Testado | **SIM** — financeiro-titulo-policy 11/11 |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #64→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 6 - envio ao caixa (2026-09-26T19:38Z)
+
+- Branch `cursor/comercial360-onda6-caixa-envio-392b` (base #64).
+- Política reutiliza `financeiroTituloPolicy`: mesmo grupo/empresa, bloqueia liquidado, exige contexto.
+- Propaga `pedido_id` na ordem de liquidação; queryKey de invalidação com tenant.
+- Sem módulo paralelo.
+
 ## #64 STATUS REAL — Onda 6 UI ValidacaoCredito no painel Pedido (2026-09-26T19:35Z)
 
 | Etapa | Estado |
