@@ -9,6 +9,11 @@ export const channelIdentitySchema = z.object({
   channel: z.enum(['SITE', 'APP', 'CHATBOT', 'MARKETPLACE']),
   groupId: z.string().uuid(), empresaId: z.string().uuid(), actorId: z.string().uuid(),
   secret: z.string().min(32).max(256),
+  previousKey: z.object({ secret: z.string().min(32).max(256), validFrom: z.string().datetime(), validUntil: z.string().datetime() }).strict()
+    .refine((v) => {
+      const duration = Date.parse(v.validUntil)-Date.parse(v.validFrom);
+      return duration > 0 && duration <= 86_400_000;
+    }, 'Bounded key overlap required').optional(),
 }).strict();
 export type ChannelIdentity = z.infer<typeof channelIdentitySchema>;
 const plainText = (max: number) => z.string().trim().min(1).max(max)
@@ -44,7 +49,14 @@ export function verifySale(identity: ChannelIdentity, timestamp: string, nonce: 
     throw new AppError(401, 'CHANNEL_AUTH_INVALID', 'Invalid channel authentication');
   }
   const expected = signSale(identity.secret, identity.id, timestamp, nonce, body);
-  if (!timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'))) {
+  const currentMatches = timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
+  const previous = identity.previousKey;
+  const signedAt = Number(timestamp)*1000;
+  const overlapActive = previous && now >= Date.parse(previous.validFrom) && now < Date.parse(previous.validUntil)
+    && signedAt >= Date.parse(previous.validFrom) && signedAt < Date.parse(previous.validUntil);
+  const previousMatches = overlapActive
+    ? timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(signSale(previous.secret,identity.id,timestamp,nonce,body),'hex')) : false;
+  if (!currentMatches && !previousMatches) {
     throw new AppError(401, 'CHANNEL_AUTH_INVALID', 'Invalid channel authentication');
   }
 }
