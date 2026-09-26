@@ -1128,6 +1128,8 @@ export function createApiRouter(deps: ApiDeps) {
             id: p.id,
             group_id: p.groupId,
             empresa_id: p.empresaId,
+            role: p.role,
+            full_name: p.fullName,
           })),
         },
       });

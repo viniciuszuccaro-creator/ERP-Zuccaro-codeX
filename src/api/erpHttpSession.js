@@ -11,6 +11,8 @@ const TOKEN_KEY = 'base44_access_token';
  *   empresaId?: string | null,
  *   actorId: string,
  *   email?: string,
+ *   role?: string | null,
+ *   fullName?: string | null,
  *   storage?: Storage,
  * }} input
  */
@@ -21,6 +23,8 @@ export function persistErpHttpSession(input) {
   const groupId = String(input.groupId || '').trim();
   const actorId = String(input.actorId || '').trim();
   const empresaId = input.empresaId ? String(input.empresaId).trim() : '';
+  const role = String(input.role || 'user').trim().toLowerCase() || 'user';
+  const fullName = input.fullName ? String(input.fullName).trim() : '';
   if (!token || !groupId || !actorId) {
     throw new Error('Sessão incompleta: token, grupo e perfil são obrigatórios');
   }
@@ -31,6 +35,8 @@ export function persistErpHttpSession(input) {
     empresaId: empresaId || null,
     actorId,
     email: input.email || null,
+    role,
+    fullName: fullName || null,
   }));
 }
 
@@ -52,12 +58,17 @@ export function readErpHttpSession(storage = typeof window !== 'undefined' ? win
     const empresaId = typeof scope.empresaId === 'string' ? scope.empresaId.trim() : '';
     const actorId = typeof scope.actorId === 'string' ? scope.actorId.trim() : '';
     if (!token || !groupId || !actorId) return null;
+    const roleRaw = typeof scope.role === 'string' ? scope.role.trim().toLowerCase() : '';
     return {
       token,
       groupId,
       empresaId: empresaId || null,
       actorId,
       email: typeof scope.email === 'string' ? scope.email : null,
+      role: roleRaw === 'admin' ? 'admin' : (roleRaw || 'user'),
+      fullName: typeof scope.fullName === 'string' && scope.fullName.trim()
+        ? scope.fullName.trim()
+        : null,
     };
   } catch {
     return null;
@@ -65,23 +76,36 @@ export function readErpHttpSession(storage = typeof window !== 'undefined' ? win
 }
 
 /**
- * Usuário UI pós-login HTTP DEV: admin total para homologação
- * (funcionários/setores virão depois via PerfilAcesso real).
- * @param {{ token?: string, groupId: string, empresaId?: string | null, actorId: string, email?: string | null }} session
+ * Monta o usuário UI a partir da sessão HTTP + role do perfil no Postgres.
+ * Admin/proprietário só quando `role=admin` no perfil — sem privilegiar synth por default.
+ * @param {{
+ *   token?: string,
+ *   groupId: string,
+ *   empresaId?: string | null,
+ *   actorId: string,
+ *   email?: string | null,
+ *   role?: string | null,
+ *   fullName?: string | null,
+ * }} session
  */
-export function buildHttpDevAdminUser(session) {
+export function buildHttpSessionUser(session) {
   const groupId = String(session?.groupId || '').trim();
   const actorId = String(session?.actorId || '').trim();
   const empresaId = session?.empresaId ? String(session.empresaId).trim() : '';
-  const email = session?.email || 'admin-dev@erp.local';
+  const email = session?.email || null;
+  const role = String(session?.role || 'user').trim().toLowerCase() === 'admin' ? 'admin' : 'user';
+  const isAdmin = role === 'admin';
+  const fullName = session?.fullName
+    ? String(session.fullName).trim()
+    : (isAdmin ? 'Administrador' : (email || 'Usuário'));
   if (!groupId || !actorId) return null;
   return {
     id: actorId,
-    email,
-    full_name: 'Administrador DEV',
-    role: 'admin',
-    _app_role: 'admin',
-    perfil_acesso_id: 'local_perfil_admin',
+    email: email || 'usuario@erp.local',
+    full_name: fullName || (email || 'Usuário'),
+    role,
+    _app_role: role,
+    perfil_acesso_id: isAdmin ? 'local_perfil_admin' : null,
     mestre_local: false,
     disabled: false,
     is_verified: true,
@@ -90,11 +114,16 @@ export function buildHttpDevAdminUser(session) {
     grupo_padrao_id: groupId,
     empresa_atual_id: empresaId || null,
     empresa_padrao_id: empresaId || null,
-    pode_operar_em_grupo: true,
-    pode_ver_todas_empresas: true,
+    pode_operar_em_grupo: isAdmin,
+    pode_ver_todas_empresas: isAdmin,
     empresas_vinculadas: empresaId ? [{ empresa_id: empresaId, ativo: true }] : [],
     grupos_vinculados: [{ grupo_id: groupId, ativo: true }],
   };
+}
+
+/** @deprecated Use buildHttpSessionUser — mantido para imports existentes. */
+export function buildHttpDevAdminUser(session) {
+  return buildHttpSessionUser(session);
 }
 
 /**
@@ -157,22 +186,36 @@ export async function loginErpHttpSession(input) {
   if (!accessToken || !profile?.id || !profile?.group_id) {
     throw new Error('Login sem perfil ativo no ERP');
   }
+  const role = String(profile.role || 'user').trim().toLowerCase() === 'admin' ? 'admin' : 'user';
+  const fullName = typeof profile.full_name === 'string' && profile.full_name.trim()
+    ? profile.full_name.trim()
+    : null;
   const session = {
     accessToken,
     groupId: String(profile.group_id),
     empresaId: profile.empresa_id ? String(profile.empresa_id) : null,
     actorId: String(profile.id),
     email: data.user?.email || input.email,
+    role,
+    fullName,
   };
   persistErpHttpSession(session);
+  const uiUser = buildHttpSessionUser({
+    groupId: session.groupId,
+    empresaId: session.empresaId,
+    actorId: session.actorId,
+    email: session.email,
+    role: session.role,
+    fullName: session.fullName,
+  });
   return {
     ...session,
     profiles,
-    user: {
+    user: uiUser || {
       id: data.user?.id || profile.id,
       email: session.email,
-      full_name: session.email,
-      role: 'user',
+      full_name: session.fullName || session.email,
+      role: session.role,
       grupo_atual_id: session.groupId,
       empresa_atual_id: session.empresaId,
     },

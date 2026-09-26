@@ -18,6 +18,8 @@ export type AuthSessionProfile = {
   id: string;
   groupId: string;
   empresaId: string | null;
+  role: string;
+  fullName: string | null;
 };
 
 export type AuthSessionResult = {
@@ -106,8 +108,14 @@ export async function createPasswordAuthSession(options: {
 
   let profiles: AuthSessionProfile[] = [];
   try {
-    const result = await options.db.query<{ id: string; group_id: string; empresa_id: string | null }>(
-      `SELECT p.id, p.group_id,
+    const result = await options.db.query<{
+      id: string;
+      group_id: string;
+      empresa_id: string | null;
+      role: string | null;
+      full_name: string | null;
+    }>(
+      `SELECT p.id, p.group_id, p.role, p.full_name,
               COALESCE(
                 p.empresa_id,
                 (SELECT e.id FROM empresas e
@@ -127,6 +135,8 @@ export async function createPasswordAuthSession(options: {
         id: row.id,
         groupId: row.group_id,
         empresaId: row.empresa_id && UUID_RE.test(row.empresa_id) ? row.empresa_id : null,
+        role: typeof row.role === 'string' && row.role.trim() ? row.role.trim() : 'user',
+        fullName: typeof row.full_name === 'string' ? row.full_name : null,
       }));
   } catch {
     throw new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable');

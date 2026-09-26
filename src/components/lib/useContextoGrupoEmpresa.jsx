@@ -3,7 +3,7 @@ import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { empresaPertenceAoGrupo, userTemAcessoEmpresa, userTemAcessoGrupo } from "./contextoMultiempresaPolicy";
 import {
-  buildHttpDevAdminUser,
+  buildHttpSessionUser,
   ensureHttpTenantLocalMirror,
   readErpHttpSession,
 } from "@/api/erpHttpSession";
@@ -31,7 +31,7 @@ export function useContextoGrupoEmpresa() {
         groupId: session.groupId,
         empresaId: session.empresaId,
       });
-      return buildHttpDevAdminUser(session);
+      return buildHttpSessionUser(session);
     }
     if (isRemoteApiKeyMode) return localApiUser;
     return await base44.auth.me();

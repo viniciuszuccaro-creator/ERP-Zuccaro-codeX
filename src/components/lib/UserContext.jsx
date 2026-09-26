@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 import {
-  buildHttpDevAdminUser,
+  buildHttpSessionUser,
   ensureHttpTenantLocalMirror,
   readErpHttpSession,
 } from "@/api/erpHttpSession";
@@ -27,14 +27,14 @@ const resolveBootUser = async () => {
     } catch (error) {
       console.warn('[UserContext] espelho local tenant falhou.', error?.message || error);
     }
-    const adminUser = buildHttpDevAdminUser(session);
-    if (!adminUser) {
+    const sessionUser = buildHttpSessionUser(session);
+    if (!sessionUser) {
       const err = new Error('Authentication required');
       err.status = 401;
       err.authType = 'auth_required';
       throw err;
     }
-    return adminUser;
+    return sessionUser;
   }
 
   if (isApiKeyMode && !isLocalOnlyMode) {

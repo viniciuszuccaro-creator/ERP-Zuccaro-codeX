@@ -4,7 +4,7 @@ import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { assertInteractiveAuthAllowed } from '@/api/localAuthSessionPolicy';
 import {
-  buildHttpDevAdminUser,
+  buildHttpSessionUser,
   clearErpHttpSession,
   ensureHttpTenantLocalMirror,
   loginErpHttpSession,
@@ -39,14 +39,14 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.warn('[Auth] espelho local Grupo/Empresa falhou; seguindo com sessão.', error);
     }
-    const adminUser = buildHttpDevAdminUser(session);
-    if (!adminUser) {
+    const sessionUser = buildHttpSessionUser(session);
+    if (!sessionUser) {
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
       return false;
     }
-    setUser(adminUser);
+    setUser(sessionUser);
     setIsAuthenticated(true);
     setAuthError(null);
     return true;
@@ -201,6 +201,8 @@ export const AuthProvider = ({ children }) => {
         empresaId: session.empresaId,
         actorId: session.actorId,
         email: session.email,
+        role: session.role,
+        fullName: session.fullName,
       });
       setAuthChecked(true);
       setIsLoadingAuth(false);

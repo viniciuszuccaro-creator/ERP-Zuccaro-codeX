@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Garante profile synth com empresa + role admin (RBAC backend) para teste DEV.
+# ATENÇÃO: NÃO use para privilegiar o synth no lugar do proprietário real.
+# Preferir: scripts/vps/provision-owner-admin-profile.sh (owner admin + demote synth).
 # Não imprime UUID/senha.
 #
 # Uso:
@@ -12,6 +14,7 @@ CONFIRM_DEV_ADMIN_PROFILE="${CONFIRM_DEV_ADMIN_PROFILE:-}"
 SYNTH_EMAIL="${SYNTH_EMAIL:-gate-d.synth@dev.synthetic.local}"
 
 echo "DEV_ADMIN_PROFILE_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "WARN=prefer_provision_owner_admin_profile_for_real_account"
 [[ "$CONFIRM_DEV_ADMIN_PROFILE" == "YES" ]] || {
   echo 'BLOCKED: set CONFIRM_DEV_ADMIN_PROFILE=YES' >&2
   exit 2

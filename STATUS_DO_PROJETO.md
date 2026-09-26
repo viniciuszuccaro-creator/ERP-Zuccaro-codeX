@@ -1,3 +1,39 @@
+## Owner admin real + demote synth (2026-09-26T14:55Z)
+
+- Objetivo: vincular `vinicius.zuccaro@gmail.com` como admin proprietário (role + `permissoes.*` + grupo/empresa), sem privilegiar o synth.
+- Código: sessão BFF devolve `role`/`full_name`; SPA monta usuário via `buildHttpSessionUser` (admin só se `role=admin` no Postgres).
+- VPS script: `scripts/vps/provision-owner-admin-profile.sh` (owner admin + `DEMOTE_SYNTH=YES`).
+- Implantado agora em `erp-dev`: bundle `index-BL-7pNHC.js` (ainda força “Administrador DEV” — **pré** deste lote). API `authSession.passwordLoginPath` + `supabase_user` OK. HTTPS OK — **não** reexecutar script #44.
+- PR #45 aberta (branch deployada). PR #44: HTTPS já OK → encerrar. PR #43 MERGEABLE/CI verde → merge humano para CI da `main`.
+- **Validação humana obrigatória:** após colar o bloco VPS abaixo + logout/login com a conta real, confirmar módulos/empresas e que o synth não é admin.
+
+### PASTE_TO_GIT_VPS (sanitizado — Web Console)
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin cursor/spa-login-http-supabase-392b
+git checkout --detach origin/cursor/spa-login-http-supabase-392b
+
+CONFIRM_OWNER_ADMIN_PROFILE=YES \
+  OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+  DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
+  GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+
+# Evidência sanitizada (colar no chat):
+echo "PASTE_TO_GIT_OWNER_ADMIN_BEGIN"
+# owner_admin_ativos=1 · synth_admin_ativos=0 · merge_sha8=… · spa_marker=erp-login-email
+curl -sS https://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;d=json.load(sys.stdin);print("auth_mode="+d["auth"]["mode"]);print("password_login="+str(d.get("authSession",{}).get("passwordLoginPath")))'
+curl -sS -o /dev/null -w 'web_3081=%{http_code}\n' http://127.0.0.1:3081/
+echo "PASTE_TO_GIT_OWNER_ADMIN_END"
+```
+
+Depois: **logout completo → login com a conta real** → validar acesso admin (configurar módulos + empresas do grupo).
+
+
 ## SPA login — acesso total DEV (2ª correção) (2026-09-26T14:45Z)
 
 - Bundle anterior já tinha “Administrador DEV”, mas contexto HTTP ainda usava `localApiUser` → sem empresa real + entity create RBAC no espelho.

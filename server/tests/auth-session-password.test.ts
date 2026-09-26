@@ -24,7 +24,13 @@ test('createPasswordAuthSession troca senha por Bearer e lista perfis ativos', a
   const db = {
     async query() {
       return {
-        rows: [{ id: profileId, group_id: groupId, empresa_id: empresaId }],
+        rows: [{
+          id: profileId,
+          group_id: groupId,
+          empresa_id: empresaId,
+          role: 'admin',
+          full_name: 'Proprietario Teste',
+        }],
       };
     },
   };
@@ -45,6 +51,8 @@ test('createPasswordAuthSession troca senha por Bearer e lista perfis ativos', a
   assert.equal(session.profiles.length, 1);
   assert.equal(session.profiles[0].groupId, groupId);
   assert.equal(session.profiles[0].empresaId, empresaId);
+  assert.equal(session.profiles[0].role, 'admin');
+  assert.equal(session.profiles[0].fullName, 'Proprietario Teste');
 });
 
 test('createPasswordAuthSession rejeita credenciais inválidas sem vazar detalhes', async () => {
