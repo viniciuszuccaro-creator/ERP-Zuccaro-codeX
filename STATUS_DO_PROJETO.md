@@ -1,3 +1,20 @@
+## #64 STATUS REAL — Onda 6 UI ValidacaoCredito no painel Pedido (2026-09-26T19:32Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — ValidacaoCredito + PedidoCanonicoPanel (evaluatePedidoCredito) |
+| Testado | **SIM** — pedido-frontend-integration + pedido-faturamento-policy |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #63→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 6 - UI crédito Pedido (2026-09-26T19:32Z)
+
+- Branch `cursor/comercial360-onda6-credito-ui-392b` (base #63).
+- Reutiliza `ValidacaoCredito` existente com `evaluatePedidoCredito`; contexto grupo/empresa na queryKey.
+- Painel canônico mostra análise ao selecionar ClienteEmpresa; alçada visual via `aprovar-credito`.
+- Sem módulo paralelo. Adapter Financeiro/CreditPort HTTP permanece ck posterior.
+
 ## #63 STATUS REAL — Onda 6 crédito no Pedido via CreditPort (2026-09-26T19:29Z)
 
 | Etapa | Estado |
