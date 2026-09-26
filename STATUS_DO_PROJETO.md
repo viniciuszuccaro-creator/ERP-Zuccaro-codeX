@@ -7,8 +7,9 @@
   4. **backup seletivo JSON** + `CONFIRM_OWNER_ADMIN_RESTORE=YES` (sem replay `pg_dump --data-only`).
 - Sessão SPA: `expiresAt`/`expires_in`, fail-closed em expirada/adulterada; troca de empresa atualiza `erp_runtime_scope`.
 - Testes: `vps-owner-provision-guard` 5/5 · `erp-http-session` 7/7 · `owner-provision-sql` (PGlite) 2/2 · `auth-session-http-exact` 2/2 · `owner-permission-tree` 2/2 (HTTP 200/403 exactos).
+- HEAD `67a3284b` · CI [36257722349](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36257722349) frontend+backend **SUCCESS**. Comentário de re-review Codex postado na #45.
 - **VPS:** não executar até re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; depois logout/login real.
-- #46 permanece em branch separada (CI verde); não bloqueia esta correção de acesso.
+- #46 permanece em branch separada (avançada com HTTP exact alçada); não bloqueia esta correção de acesso.
 
 ## #45 Codex P1 — RBAC explícito + backup + rollback fail-closed (2026-09-26T16:30Z)
 
