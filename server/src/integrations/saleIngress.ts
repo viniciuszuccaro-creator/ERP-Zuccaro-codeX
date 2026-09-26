@@ -5,7 +5,7 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import { AppError } from '../api/errors.js';
-import { digest, type ChannelIdentity, type SaleEnvelope } from './saleIngressContract.js';
+import { digest, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery } from './saleIngressContract.js';
 
 type CanonicalSales = {
   pedidoService: Pick<PedidoService, 'create'>;
@@ -13,6 +13,8 @@ type CanonicalSales = {
   auditRepo: AuditRepository; tenantGuard: TenantGuard; rbacGuard: RbacGuard;
 };
 export type SaleReceipt = { id: string; tipo: 'Pedido' | 'Orcamento' };
+const receiptKey = (identity: ChannelIdentity, envelope: Pick<SaleEnvelope, 'tipo' | 'idempotencyKey'>) =>
+  `sale:v1:${digest(JSON.stringify([identity.groupId, identity.empresaId, identity.id, identity.channel, envelope.tipo, envelope.idempotencyKey]))}`;
 
 /** Transport adapter; commercial validations, pricing and writes stay in the canonical services. */
 export class SaleIngress {
@@ -32,7 +34,7 @@ export class SaleIngress {
     await this.sales.rbacGuard.assertAllowed(ctx, 'Integracoes', 'vendas', 'importar', { allowGlobalWildcard: false });
     await this.sales.rbacGuard.assertAllowed(ctx, 'Comercial', envelope.tipo === 'Pedido' ? 'pedido' : 'orcamento', 'criar', { allowGlobalWildcard: false });
     const partition = [identity.groupId, identity.empresaId, identity.id, identity.channel];
-    const key = `sale:v1:${digest(JSON.stringify([...partition, envelope.tipo, envelope.idempotencyKey]))}`;
+    const key = receiptKey(identity, envelope);
     const hash = digest(JSON.stringify(envelope));
     const nonceHash = digest(JSON.stringify([...partition, nonce]));
     return this.db.withTransaction(async (query) => {
@@ -68,6 +70,26 @@ export class SaleIngress {
         action: 'create', afterData: { canal: identity.channel, tipo: envelope.tipo, documento_id: created.id,
           schema_version: 1, request_hash: hash } }, query);
       return { receipt, replayed: false };
+    });
+  }
+
+  async receipt(identity: ChannelIdentity, lookup: ReceiptQuery, requestId: string) {
+    const ctx: RequestContext = { groupId: identity.groupId, empresaId: identity.empresaId,
+      actorId: identity.actorId, scopeType: 'empresa', requestId };
+    await this.sales.tenantGuard.assertEmpresaInGroup(identity.groupId, identity.empresaId);
+    await this.sales.rbacGuard.assertAllowed(ctx, 'Integracoes', 'vendas', 'visualizar', { allowGlobalWildcard: false });
+    await this.sales.rbacGuard.assertAllowed(ctx, 'Comercial', lookup.tipo === 'Pedido' ? 'pedido' : 'orcamento', 'visualizar', { allowGlobalWildcard: false });
+    return this.db.withTransaction(async (query) => {
+      await query.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)", [identity.groupId, identity.empresaId]);
+      const result = await query.query<{ id: string; payload: { receipt: SaleReceipt } }>(
+        "SELECT id,payload FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida' AND idempotency_key=$4 AND status='processed'",
+        [identity.groupId, identity.empresaId, identity.channel, receiptKey(identity, lookup)]);
+      const event = result.rows[0];
+      if (!event) throw new AppError(404, 'CHANNEL_RECEIPT_NOT_FOUND', 'Receipt not found');
+      await this.sales.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', entityId: event.id,
+        action: 'read', afterData: { canal: identity.channel, tipo: lookup.tipo, documento_id: event.payload.receipt.id } }, query);
+      // Receipt confirms ingestion, not current payment, fulfillment or document status.
+      return event.payload.receipt;
     });
   }
 }

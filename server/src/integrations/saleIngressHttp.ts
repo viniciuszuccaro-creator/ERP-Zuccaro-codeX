@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../api/errors.js';
-import { channelIdentitySchema, saleEnvelopeSchema, verifySale, type ChannelIdentity } from './saleIngressContract.js';
+import { channelIdentitySchema, saleEnvelopeSchema, receiptQuerySchema, verifySale, type ChannelIdentity } from './saleIngressContract.js';
 import { SaleIngress } from './saleIngress.js';
 
 export function loadChannelIdentities(env: NodeJS.ProcessEnv): ChannelIdentity[] {
@@ -25,7 +25,7 @@ export function saleIngressHttp(service: SaleIngress, identities: ChannelIdentit
   router.use(rateLimit({ windowMs: config.rateLimitWindowMs, max: config.rateLimitMax }));
   router.use((req, res, next) => { req.requestId = randomUUID(); res.setHeader('x-request-id', req.requestId); next(); });
   // Sign exact bytes, before parsing. No body, secret or external PII in error responses/logs.
-  router.post('/', express.raw({ type: 'application/json', limit: '128kb', inflate: false }), async (req, res, next) => {
+  router.post(['/', '/recibos'], express.raw({ type: 'application/json', limit: '128kb', inflate: false }), async (req, res, next) => {
     try {
       const identity = identities.find((i) => i.id === req.header('x-channel-id'));
       if (!identity || !Buffer.isBuffer(req.body)) throw new AppError(401, 'CHANNEL_AUTH_INVALID', 'Invalid channel authentication');
@@ -33,6 +33,13 @@ export function saleIngressHttp(service: SaleIngress, identities: ChannelIdentit
         req.header('x-channel-signature') ?? '', req.body, now());
       let payload: unknown;
       try { payload = JSON.parse(req.body.toString('utf8')); } catch { throw new AppError(422, 'CHANNEL_PAYLOAD_INVALID', 'Invalid sale payload'); }
+      if (req.path === '/recibos') {
+        const parsed = receiptQuerySchema.safeParse(payload);
+        if (!parsed.success) throw new AppError(422, 'CHANNEL_PAYLOAD_INVALID', 'Invalid receipt query');
+        const receipt = await service.receipt(identity, parsed.data, req.requestId);
+        res.status(200).json({ data: receipt });
+        return;
+      }
       const parsed = saleEnvelopeSchema.safeParse(payload);
       if (!parsed.success) throw new AppError(422, 'CHANNEL_PAYLOAD_INVALID', 'Invalid sale payload');
       const result = await service.receive(identity, parsed.data, req.header('x-channel-nonce')!, req.requestId);
