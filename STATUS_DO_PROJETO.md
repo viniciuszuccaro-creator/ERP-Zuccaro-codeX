@@ -1,3 +1,11 @@
+## Owner admin — rebuild VPS confirmado (2026-09-26T14:58Z)
+
+- Evidência Web Console (sanitizada): `SPA_LOGIN_REBUILD_OK` · `merge_sha8=d696c00b` · `spa_asset=/assets/index-DUZjZKV8.js` · `spa_login_form_in_bundle=YES` · `auth_mode=supabase_user` · `password_login_path=/api/v1/auth/session` · `browser_login=True` · health 3080/3081=200 · runtime `ERP-RUNTIME-08B`.
+- Probe externo agente: SPA 200 com `index-DUZjZKV8.js`; bundle **sem** “Administrador DEV” forçado; meta API alinhada.
+- Rollback tags: `pre-spa-login-20260926-145653` (api/web).
+- **Pendente humano:** (1) se ainda não rodou — `provision-owner-admin-profile.sh` (`owner_admin_ativos=1` · `synth_admin_ativos=0`); (2) hard refresh + **logout/login com a conta real** e validar admin (módulos + empresas).
+- #45 CI verde no mesmo SHA. #44 CLOSED. #43 MERGEABLE (merge humano → CI main).
+
 ## Owner admin real + demote synth (2026-09-26T14:55Z)
 
 - Objetivo: vincular `vinicius.zuccaro@gmail.com` como admin proprietário (role + `permissoes.*` + grupo/empresa), sem privilegiar o synth.
