@@ -1,18 +1,18 @@
-## #62 STATUS REAL — Onda 4 registrar/inativar anexos Orçamento (2026-09-26T19:16Z)
+## #62 STATUS REAL — Onda 4 registrar/inativar anexos Orçamento (2026-09-26T19:19Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — OrcamentosTab + prepareOrcamentoAnexoFile + httpApiClient |
-| Testado | **PENDENTE** |
-| CI | **PENDENTE** |
+| Testado | **SIM** — orcamento-ui-policy 12/12 · orcamento-http-client 6/6 |
+| CI | **SIM** — frontend+backend SUCCESS (`2b03fe11`) |
 | Mesclado | **NÃO** (empilhada #61→…) |
 | Implantado VPS | **NÃO** |
 
-## Comercial 360 / Onda 4 - mutação anexos Orçamento (2026-09-26T19:16Z)
+## Comercial 360 / Onda 4 - mutação anexos Orçamento (2026-09-26T19:19Z)
 
 - Branch `cursor/comercial360-onda4-orcamento-anexo-mutacao-392b` (base #61).
 - Espelho do Pedido: registra metadados DAM e inativa no detalhe; RBAC `editar` + `EM_ABERTO`.
-- Sem módulo paralelo; upload assinado StoragePort permanece ck posterior.
+- Sem módulo paralelo; upload assinado StoragePort permanece ck posterior. Ready for review. Próximo: Onda 6 crédito (política/vínculo Pedido no Financeiro existente) ou upload assinado DAM.
 
 ## #61 STATUS REAL — Onda 5 registrar/inativar anexos Pedido (2026-09-26T19:14Z)
 
