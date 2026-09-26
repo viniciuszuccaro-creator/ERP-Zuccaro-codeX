@@ -83,3 +83,20 @@ test('cliente HTTP envia pesquisa e filtros de orcamento sem tenant no query', a
   assert.equal(url.searchParams.has('groupId'), false);
   assert.equal(url.searchParams.has('empresaId'), false);
 });
+test('cliente HTTP Orçamento cobre listar registrar e inativar anexos', async () => {
+  const { client, calls } = setup();
+  await client.listAnexos('orc-1');
+  await client.registerAnexo('orc-1', {
+    storage_key: 'groups/g/companies/e/orcamentos/orc-1/documents/x.pdf',
+    nome_arquivo: 'x.pdf',
+    mime_type: 'application/pdf',
+    tamanho_bytes: 10,
+    sha256: 'a'.repeat(64),
+  });
+  await client.deactivateAnexo('orc-1', 'a1');
+  assert.deepEqual(calls.map((call) => [new URL(call.url).pathname, call.options.method || 'GET']), [
+    ['/api/v1/orcamentos/orc-1/anexos', 'GET'],
+    ['/api/v1/orcamentos/orc-1/anexos', 'POST'],
+    ['/api/v1/orcamentos/orc-1/anexos/a1/inativar', 'POST'],
+  ]);
+});
