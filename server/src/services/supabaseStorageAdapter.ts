@@ -15,7 +15,8 @@ export type SupabaseStorageOptions = {
 };
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
-const KEY = new RegExp(`^groups/(${UUID})/companies/(${UUID})/products/(${UUID})/([a-z-]+)/(${UUID})-([a-z0-9][a-z0-9._-]*)$`, 'i');
+const KEY_PRODUTO = new RegExp(`^groups/(${UUID})/companies/(${UUID})/products/(${UUID})/([a-z-]+)/(${UUID})-([a-z0-9][a-z0-9._-]*)$`, 'i');
+const KEY_ORCAMENTO = new RegExp(`^groups/(${UUID})/companies/(${UUID})/orcamentos/(${UUID})/([a-z-]+)/(${UUID})-([a-z0-9][a-z0-9._-]*)$`, 'i');
 const MIME_BY_CATEGORY: Record<string, Record<string, string>> = {
   images: { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' },
   videos: { mp4: 'video/mp4' },
@@ -26,13 +27,13 @@ const MIME_BY_CATEGORY: Record<string, Record<string, string>> = {
 };
 
 function assertContext(context: StorageObjectContext, storageKey: string): RegExpExecArray {
-  const match = KEY.exec(storageKey);
+  const match = context.entity === 'Orcamento' ? KEY_ORCAMENTO.exec(storageKey) : KEY_PRODUTO.exec(storageKey);
   if (!match || !context.actorId || !context.empresaId ||
-      match[1].toLowerCase() !== context.groupId.toLowerCase() ||
-      match[2].toLowerCase() !== context.empresaId.toLowerCase() ||
-      match[3].toLowerCase() !== context.entityId.toLowerCase() ||
-      !MIME_BY_CATEGORY[match[4].toLowerCase()] ||
-      context.entity !== 'Produto') {
+      match[1]!.toLowerCase() !== context.groupId.toLowerCase() ||
+      match[2]!.toLowerCase() !== context.empresaId.toLowerCase() ||
+      match[3]!.toLowerCase() !== context.entityId.toLowerCase() ||
+      !MIME_BY_CATEGORY[match[4]!.toLowerCase()] ||
+      (context.entity !== 'Produto' && context.entity !== 'Orcamento')) {
     throw new Error('STORAGE_SCOPE_INVALID');
   }
   return match;

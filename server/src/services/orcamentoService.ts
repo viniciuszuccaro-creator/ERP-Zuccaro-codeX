@@ -8,7 +8,7 @@ import type { UnidadeMedida } from '../repositories/cadastroTypes.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondicaoPagamentoRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
-import { orcamentoCreateSchema, ORCAMENTO_ORIGENS, ORCAMENTO_STATUS, type Orcamento, type OrcamentoCreate, type OrcamentoOrigem, type OrcamentoRepository, type OrcamentoScope, type OrcamentoStatus } from '../repositories/orcamentoTypes.js';
+import { orcamentoAnexoCreateSchema, orcamentoCreateSchema, ORCAMENTO_ORIGENS, ORCAMENTO_STATUS, type Orcamento, type OrcamentoCreate, type OrcamentoOrigem, type OrcamentoRepository, type OrcamentoScope, type OrcamentoStatus } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 
 const RBAC_MODULE = 'Comercial';
@@ -171,6 +171,73 @@ export class OrcamentoService {
       await this.auditRow(ctx, 'change_status', before, after, executor);
       return after;
     });
+  }
+
+  async listAnexos(ctx: RequestContext, id: string) {
+    const scope = await this.prepare(ctx, 'visualizar');
+    this.assertId(id);
+    await this.requireOrcamento(scope, id);
+    return this.repo.listAnexos(scope, id);
+  }
+
+  async registerAnexo(ctx: RequestContext, id: string, payload: unknown) {
+    const scope = await this.prepare(ctx, 'editar');
+    this.assertId(id);
+    const parsed = orcamentoAnexoCreateSchema.safeParse(payload);
+    if (!parsed.success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento anexo payload', parsed.error.flatten());
+    this.assertAnexoStorageKey(scope, id, parsed.data.storage_key);
+    return this.repo.withTransaction(async (executor) => {
+      const orcamento = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(orcamento);
+      try {
+        const created = await this.repo.createAnexo(scope, id, parsed.data, ctx.actorId!, executor);
+        await this.audit.append({
+          groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+          actorEmail: ctx.actorEmail, entity: 'OrcamentoAnexo', entityId: created.id, action: 'create',
+          afterData: sanitizeAuditSnapshot({
+            id: created.id, orcamento_id: created.orcamento_id, storage_key: created.storage_key,
+            mime_type: created.mime_type, tamanho_bytes: created.tamanho_bytes, status: created.status,
+            group_id: created.group_id, empresa_id: created.empresa_id,
+          }),
+          requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+        }, executor);
+        return created;
+      } catch (error) {
+        if (String((error as Error).message).includes('ORCAMENTO_ANEXO_STORAGE_KEY_CONFLICT')
+          || ((error as { code?: string }).code === '23505' && String((error as Error).message).includes('storage_key'))) {
+          throw new AppError(409, 'ORCAMENTO_ANEXO_STORAGE_KEY_CONFLICT', 'Anexo storage key already exists');
+        }
+        throw error;
+      }
+    });
+  }
+
+  async deactivateAnexo(ctx: RequestContext, id: string, anexoId: string) {
+    const scope = await this.prepare(ctx, 'editar');
+    this.assertId(id);
+    this.assertId(anexoId);
+    return this.repo.withTransaction(async (executor) => {
+      await this.requireOrcamento(scope, id, executor);
+      const after = await this.repo.deactivateAnexo(scope, id, anexoId, ctx.actorId!, executor);
+      if (!after) throw new AppError(404, 'ORCAMENTO_ANEXO_NOT_FOUND', 'Anexo not found');
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail, entity: 'OrcamentoAnexo', entityId: after.id, action: 'change_status',
+        afterData: sanitizeAuditSnapshot({
+          id: after.id, orcamento_id: after.orcamento_id, status: after.status, ativo: after.ativo,
+          group_id: after.group_id, empresa_id: after.empresa_id,
+        }),
+        requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+      return after;
+    });
+  }
+
+  private assertAnexoStorageKey(scope: OrcamentoScope, orcamentoId: string, storageKey: string) {
+    const prefix = `groups/${scope.groupId}/companies/${scope.empresaId}/orcamentos/${orcamentoId}/documents/`;
+    if (!storageKey.startsWith(prefix)) {
+      throw new AppError(422, 'ORCAMENTO_ANEXO_PATH_INVALID', 'Anexo path outside orcamento tenant scope');
+    }
   }
 
   private parse(payload: unknown): OrcamentoCreate {

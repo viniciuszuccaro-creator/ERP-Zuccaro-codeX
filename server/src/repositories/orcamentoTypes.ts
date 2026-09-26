@@ -98,6 +98,29 @@ export function calculateOrcamento(
   return { itens: rows, subtotal: fmt(subtotal), desconto: fmt(desconto), total: fmt(subtotal - desconto) };
 }
 
+export type OrcamentoAnexoStatus = 'QUARENTENA' | 'ATIVO' | 'REJEITADO' | 'INATIVO';
+
+export const orcamentoAnexoCreateSchema = z.object({
+  storage_key: z.string().trim().min(1).max(500),
+  nome_arquivo: z.string().trim().min(1).max(255),
+  mime_type: z.string().trim().min(1).max(120),
+  tamanho_bytes: z.number().int().positive().max(52_428_800),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/i).transform((v) => v.toLowerCase()),
+  versao: z.number().int().positive().optional().default(1),
+}).strict();
+
+export type OrcamentoAnexoCreate = z.infer<typeof orcamentoAnexoCreateSchema>;
+export type OrcamentoAnexo = OrcamentoAnexoCreate & {
+  id: string;
+  group_id: string;
+  empresa_id: string;
+  orcamento_id: string;
+  status: OrcamentoAnexoStatus;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type OrcamentoScope = { groupId: string; empresaId: string };
 export type OrcamentoPage = { rows: Orcamento[]; total: number };
 export type OrcamentoListFilters = {
@@ -125,4 +148,7 @@ export type OrcamentoRepository = {
     data: OrcamentoCreate,
     executor?: DbQueryExecutor,
   ): Promise<{ previous: Orcamento; current: Orcamento }>;
+  listAnexos(scope: OrcamentoScope, orcamentoId: string, executor?: DbQueryExecutor): Promise<OrcamentoAnexo[]>;
+  createAnexo(scope: OrcamentoScope, orcamentoId: string, data: OrcamentoAnexoCreate, actorId: string, executor?: DbQueryExecutor): Promise<OrcamentoAnexo>;
+  deactivateAnexo(scope: OrcamentoScope, orcamentoId: string, anexoId: string, actorId: string, executor?: DbQueryExecutor): Promise<OrcamentoAnexo | null>;
 };
