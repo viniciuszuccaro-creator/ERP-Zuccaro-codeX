@@ -2,6 +2,8 @@ import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import {
   calculatePedido,
   type Pedido,
+  type PedidoAnexo,
+  type PedidoAnexoCreate,
   type PedidoCreateResolved,
   type PedidoHistorico,
   type PedidoListFilters,
@@ -144,5 +146,85 @@ export class PostgresPedidoRepository implements PedidoRepository {
   async history(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<PedidoHistorico[]> {
     const result = await (executor ?? this.db).query<Row>('SELECT * FROM pedido_historico WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3 ORDER BY ordem', [id, scope.groupId, scope.empresaId]);
     return result.rows.map((row) => ({ id: String(row.id), group_id: String(row.group_id), empresa_id: String(row.empresa_id), pedido_id: String(row.pedido_id), status_anterior: row.status_anterior == null ? null : row.status_anterior as PedidoStatus, status_novo: row.status_novo as PedidoStatus, actor_id: String(row.actor_id), motivo: row.motivo == null ? null : String(row.motivo), created_at: new Date(String(row.created_at)).toISOString() }));
+  }
+
+  async listAnexos(scope: PedidoScope, pedidoId: string, executor?: DbQueryExecutor): Promise<PedidoAnexo[]> {
+    const query = executor ?? this.db;
+    const result = await query.query<Row>(
+      `SELECT * FROM pedido_anexos WHERE group_id=$1 AND empresa_id=$2 AND pedido_id=$3 AND ativo=true ORDER BY created_at DESC, id DESC`,
+      [scope.groupId, scope.empresaId, pedidoId],
+    );
+    return result.rows.map((row) => ({
+      id: String(row.id),
+      group_id: String(row.group_id),
+      empresa_id: String(row.empresa_id),
+      pedido_id: String(row.pedido_id),
+      storage_key: String(row.storage_key),
+      nome_arquivo: String(row.nome_arquivo),
+      mime_type: String(row.mime_type),
+      tamanho_bytes: Number(row.tamanho_bytes),
+      sha256: String(row.sha256),
+      versao: Number(row.versao ?? 1),
+      status: String(row.status) as PedidoAnexo['status'],
+      ativo: Boolean(row.ativo),
+      created_at: new Date(String(row.created_at)).toISOString(),
+      updated_at: new Date(String(row.updated_at)).toISOString(),
+    }));
+  }
+
+  async createAnexo(
+    scope: PedidoScope,
+    pedidoId: string,
+    data: PedidoAnexoCreate,
+    actorId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<PedidoAnexo> {
+    return this.run(executor, async (query) => {
+      if (!(await this.get(scope, pedidoId, query))) throw new Error('PEDIDO_NOT_FOUND');
+      const inserted = await query.query<{ id: string }>(
+        `INSERT INTO pedido_anexos(
+          group_id,empresa_id,pedido_id,storage_key,nome_arquivo,mime_type,tamanho_bytes,sha256,versao,created_by,updated_by
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10) RETURNING id`,
+        [scope.groupId, scope.empresaId, pedidoId, data.storage_key, data.nome_arquivo, data.mime_type, data.tamanho_bytes, data.sha256, data.versao ?? 1, actorId],
+      );
+      const rows = await this.listAnexos(scope, pedidoId, query);
+      const created = rows.find((row) => row.id === String(inserted.rows[0]?.id));
+      if (!created) throw new Error('PEDIDO_ANEXO_CREATE_FAILED');
+      return created;
+    });
+  }
+
+  async deactivateAnexo(
+    scope: PedidoScope,
+    pedidoId: string,
+    anexoId: string,
+    actorId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<PedidoAnexo | null> {
+    return this.run(executor, async (query) => {
+      const result = await query.query<Row>(
+        `UPDATE pedido_anexos SET status='INATIVO',ativo=false,updated_by=$5
+         WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND pedido_id=$4 AND ativo=true RETURNING *`,
+        [anexoId, scope.groupId, scope.empresaId, pedidoId, actorId],
+      );
+      if (!result.rows[0]) return null;
+      const row = result.rows[0];
+      return {
+        id: String(row.id),
+        group_id: String(row.group_id),
+        empresa_id: String(row.empresa_id),
+        pedido_id: String(row.pedido_id),
+        storage_key: String(row.storage_key),
+        nome_arquivo: String(row.nome_arquivo),
+        mime_type: String(row.mime_type),
+        tamanho_bytes: Number(row.tamanho_bytes),
+        sha256: String(row.sha256),
+        versao: Number(row.versao ?? 1),
+        status: String(row.status) as PedidoAnexo['status'],
+        ativo: Boolean(row.ativo),
+        created_at: new Date(String(row.created_at)).toISOString(),
+        updated_at: new Date(String(row.updated_at)).toISOString(),
+      };
+    });
   }
 }

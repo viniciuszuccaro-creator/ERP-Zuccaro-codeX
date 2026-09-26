@@ -1,3 +1,21 @@
+## #56 STATUS REAL — Onda 5 Pedido anexos via DAM (2026-09-26T19:40Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 030 + StoragePort entity Pedido + CRUD metadados |
+| Testado | **SIM** — anexos Pedido + storage + runtime01 (030) |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #55→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 5 - anexos Pedido (2026-09-26T19:40Z)
+
+- Branch `cursor/comercial360-onda5-pedido-anexos-392b` (base #55 PDF).
+- Reutiliza DAM: `StoragePort.entity` = `Produto | Orcamento | Pedido`; path `/pedidos/{id}/documents/`.
+- Metadados em `pedido_anexos`; binário só no storage.
+- Rotas `GET/POST /api/v1/pedidos/:id/anexos` e `POST .../inativar`.
+- Sem módulo DAM paralelo. Aprovação Orçamento ainda depende #46.
+
 ## #55 STATUS REAL — Onda 4 Orçamento PDF/impressão auditada (2026-09-26T19:35Z)
 
 | Etapa | Estado |

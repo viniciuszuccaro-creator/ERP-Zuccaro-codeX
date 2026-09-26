@@ -3,6 +3,8 @@ import type { DbQueryExecutor } from '../db/client.js';
 import {
   calculatePedido,
   type Pedido,
+  type PedidoAnexo,
+  type PedidoAnexoCreate,
   type PedidoCreateResolved,
   type PedidoHistorico,
   type PedidoListFilters,
@@ -18,14 +20,16 @@ const key = (scope: PedidoScope) => `${scope.groupId}:${scope.empresaId}`;
 export class InMemoryPedidoRepository implements PedidoRepository {
   private rows = new Map<string, Pedido>();
   private events: PedidoHistorico[] = [];
+  private anexos = new Map<string, PedidoAnexo>();
   private next = new Map<string, number>();
 
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const rows = clone(this.rows);
     const events = clone(this.events);
+    const anexos = clone(this.anexos);
     const next = new Map(this.next);
     try { return await fn(); }
-    catch (error) { this.rows = rows; this.events = events; this.next = next; throw error; }
+    catch (error) { this.rows = rows; this.events = events; this.anexos = anexos; this.next = next; throw error; }
   }
 
   async create(scope: PedidoScope, data: PedidoCreateResolved, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
@@ -142,5 +146,56 @@ export class InMemoryPedidoRepository implements PedidoRepository {
 
   async history(scope: PedidoScope, id: string, _executor?: DbQueryExecutor): Promise<PedidoHistorico[]> {
     return clone(this.events.filter((event) => event.group_id === scope.groupId && event.empresa_id === scope.empresaId && event.pedido_id === id));
+  }
+
+  async listAnexos(scope: PedidoScope, pedidoId: string, _executor?: DbQueryExecutor): Promise<PedidoAnexo[]> {
+    const rows = [...this.anexos.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.pedido_id === pedidoId && row.ativo)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+    return clone(rows);
+  }
+
+  async createAnexo(
+    scope: PedidoScope,
+    pedidoId: string,
+    data: PedidoAnexoCreate,
+    _actorId: string,
+    _executor?: DbQueryExecutor,
+  ): Promise<PedidoAnexo> {
+    if (!(await this.get(scope, pedidoId))) throw new Error('PEDIDO_NOT_FOUND');
+    if ([...this.anexos.values()].some((row) =>
+      row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.storage_key === data.storage_key)) {
+      throw new Error('PEDIDO_ANEXO_STORAGE_KEY_CONFLICT');
+    }
+    const now = new Date().toISOString();
+    const row: PedidoAnexo = {
+      id: randomUUID(),
+      group_id: scope.groupId,
+      empresa_id: scope.empresaId,
+      pedido_id: pedidoId,
+      ...data,
+      status: 'QUARENTENA',
+      ativo: true,
+      created_at: now,
+      updated_at: now,
+    };
+    this.anexos.set(row.id, row);
+    return clone(row);
+  }
+
+  async deactivateAnexo(
+    scope: PedidoScope,
+    pedidoId: string,
+    anexoId: string,
+    _actorId: string,
+    _executor?: DbQueryExecutor,
+  ): Promise<PedidoAnexo | null> {
+    const current = this.anexos.get(anexoId);
+    if (!current || current.group_id !== scope.groupId || current.empresa_id !== scope.empresaId || current.pedido_id !== pedidoId) {
+      return null;
+    }
+    const updated = { ...current, status: 'INATIVO' as const, ativo: false, updated_at: new Date().toISOString() };
+    this.anexos.set(anexoId, updated);
+    return clone(updated);
   }
 }

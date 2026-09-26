@@ -17,6 +17,7 @@ export type SupabaseStorageOptions = {
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const KEY_PRODUTO = new RegExp(`^groups/(${UUID})/companies/(${UUID})/products/(${UUID})/([a-z-]+)/(${UUID})-([a-z0-9][a-z0-9._-]*)$`, 'i');
 const KEY_ORCAMENTO = new RegExp(`^groups/(${UUID})/companies/(${UUID})/orcamentos/(${UUID})/([a-z-]+)/(${UUID})-([a-z0-9][a-z0-9._-]*)$`, 'i');
+const KEY_PEDIDO = new RegExp(`^groups/(${UUID})/companies/(${UUID})/pedidos/(${UUID})/([a-z-]+)/(${UUID})-([a-z0-9][a-z0-9._-]*)$`, 'i');
 const MIME_BY_CATEGORY: Record<string, Record<string, string>> = {
   images: { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' },
   videos: { mp4: 'video/mp4' },
@@ -26,14 +27,21 @@ const MIME_BY_CATEGORY: Record<string, Record<string, string>> = {
   documents: { pdf: 'application/pdf' },
 };
 
+function keyPatternForEntity(entity: StorageObjectContext['entity']): RegExp | null {
+  if (entity === 'Produto') return KEY_PRODUTO;
+  if (entity === 'Orcamento') return KEY_ORCAMENTO;
+  if (entity === 'Pedido') return KEY_PEDIDO;
+  return null;
+}
+
 function assertContext(context: StorageObjectContext, storageKey: string): RegExpExecArray {
-  const match = context.entity === 'Orcamento' ? KEY_ORCAMENTO.exec(storageKey) : KEY_PRODUTO.exec(storageKey);
+  const pattern = keyPatternForEntity(context.entity);
+  const match = pattern ? pattern.exec(storageKey) : null;
   if (!match || !context.actorId || !context.empresaId ||
       match[1]!.toLowerCase() !== context.groupId.toLowerCase() ||
       match[2]!.toLowerCase() !== context.empresaId.toLowerCase() ||
       match[3]!.toLowerCase() !== context.entityId.toLowerCase() ||
-      !MIME_BY_CATEGORY[match[4]!.toLowerCase()] ||
-      (context.entity !== 'Produto' && context.entity !== 'Orcamento')) {
+      !MIME_BY_CATEGORY[match[4]!.toLowerCase()]) {
     throw new Error('STORAGE_SCOPE_INVALID');
   }
   return match;
