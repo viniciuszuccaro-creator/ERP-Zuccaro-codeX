@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { boot } from './omnichannelFixture.js';
+import { isolatedPostgres } from './omnichannelPostgresFixture.js';
+
+const url = process.env.OMNICHANNEL_POSTGRES_URL;
+test('PostgreSQL multiconnection: one canonical sale under equivalent, conflicting and nonce-concurrent deliveries', { skip: !url }, async () => {
+  const f = await boot(await isolatedPostgres(url!));
+  try {
+    const equivalent = await Promise.all(Array.from({ length: 8 }, (_, i) => f.send(f.envelope, { nonce: `concurrent-equivalent-${i}` })));
+    assert.equal(equivalent.filter((r) => r.status === 201).length, 1);
+    assert.equal(equivalent.filter((r) => r.status === 200).length, 7);
+    assert.equal(new Set(equivalent.map((r) => r.body.data!.id)).size, 1);
+    const conflicts = await Promise.all(Array.from({ length: 8 }, (_, i) => f.send({ ...f.envelope, idempotencyKey: 'conflict',
+      documento: { ...f.envelope.documento, itens: [{ ...f.envelope.documento.itens[0], quantidade: String(i + 1) }] } }, { nonce: `concurrent-conflicting-${i}` })));
+    assert.equal(conflicts.filter((r) => r.status === 201).length, 1);
+    assert.equal(conflicts.filter((r) => r.body.error?.code === 'CHANNEL_IDEMPOTENCY_CONFLICT').length, 7);
+    const nonces = await Promise.all(Array.from({ length: 8 }, (_, i) => f.send({ ...f.envelope, idempotencyKey: `nonce-${i}` }, { nonce: 'same-concurrent-nonce' })));
+    assert.equal(nonces.filter((r) => r.status === 201).length, 1);
+    assert.equal(nonces.filter((r) => r.body.error?.code === 'CHANNEL_NONCE_REUSED').length, 7);
+    for (const table of ['pedidos', 'pedido_itens', 'pedido_historico']) assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length, 3);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length, 3);
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE entity='IntegracaoEvento'")).rows.length, 3);
+  } finally { await f.close(); }
+});
+
+test('PostgreSQL multiconnection: failed atomic audits leave no documents, receipts or consumed keys', { skip: !url }, async () => {
+  const f = await boot(await isolatedPostgres(url!));
+  try {
+    await f.pg.exec(`CREATE FUNCTION reject_concurrent_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.entity='IntegracaoEvento' THEN RAISE EXCEPTION 'SYNTHETIC_ATOMIC_FAILURE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER concurrent_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_concurrent_audit();`);
+    const results = await Promise.all(Array.from({ length: 4 }, (_, i) => f.send(f.envelope, { nonce: `concurrent-failed-${i}` })));
+    assert.ok(results.every((r) => r.status === 500));
+    for (const table of ['pedidos', 'pedido_itens', 'pedido_historico', 'audit_logs']) assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length, 0);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length, 0);
+    await f.pg.exec('DROP TRIGGER concurrent_audit_fail ON audit_logs');
+    assert.equal((await f.send(f.envelope, { nonce: 'concurrent-failed-0' })).status, 201);
+  } finally { await f.close(); }
+});
+
+test('isolated PostgreSQL fixture refuses DEV-like URLs before opening a connection', async () => {
+  await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@localhost/erp_dev'), /not isolated/);
+  await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@vps.example/erp_omnichannel_test'), /not isolated/);
+});

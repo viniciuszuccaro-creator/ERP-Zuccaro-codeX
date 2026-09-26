@@ -29,6 +29,11 @@ export const saleEnvelopeSchema = z.discriminatedUnion('tipo', [
   }).strict(),
 ]);
 export type SaleEnvelope = z.infer<typeof saleEnvelopeSchema>;
+// Operation is signed in the body: a sale signature cannot be replayed as a receipt query.
+export const receiptQuerySchema = z.object({ version: z.literal(1), operation: z.literal('receipt'),
+  tipo: z.enum(['Pedido', 'Orcamento']), idempotencyKey: z.string().regex(/^[a-zA-Z0-9_.:-]{1,160}$/),
+}).strict();
+export type ReceiptQuery = z.infer<typeof receiptQuerySchema>;
 export const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 export function signSale(secret: string, client: string, timestamp: string, nonce: string, body: Buffer): string {
   return createHmac('sha256', secret).update(`${client}.${timestamp}.${nonce}.`).update(body).digest('hex');

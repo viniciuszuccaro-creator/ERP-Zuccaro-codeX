@@ -91,3 +91,15 @@ efêmero, preservando os arquivos do Cursor. SHA/PR/CI final serão registrados 
 
 
 Validação local do lote: backend completo 234 PASS / 0 FAIL / 15 SKIP (249 testes); focados 5/5 PASS; runtime01 + ingresso 17 PASS / 2 SKIP. Auditoria baseline, lint, typecheck/build do backend e build frontend passaram. Suite raiz: 681 PASS / 5 FAIL por limitações locais de esbuild no sandbox, python3 ausente no Git Bash e caminhos Windows em fixtures Bash; nenhum desses arquivos foi alterado. Typecheck global tem erros existentes de frontend/Base44 fora deste lote. CI Linux ainda pendente; não declarar aprovação até o HEAD passar.
+
+## Lote 2 — consulta de recibo e concorrência
+
+Branch: codex/comercial-omnicanal-recibos, base PR #68 (beff57136fe09a71cba1fecdea086b28650b5a9b), cuja CI #975 passou. Não depende de arquivos em revisão pelo Cursor.
+
+POST /api/v1/integracoes/vendas/recibos exige a mesma assinatura sobre bytes e metadados. Corpo estrito: version:1, operation:receipt, tipo:Pedido|Orcamento, idempotencyKey. O discriminador operation impede reaproveitar a assinatura de criação como consulta e vice-versa. A chave original é resolvida na mesma partição de identidade/canal/Grupo/Empresa/tipo; não aceita IDs arbitrários de documento ou tenant externo. Exige Integracoes.vendas.visualizar e Comercial.pedido.visualizar ou Comercial.orcamento.visualizar, sem wildcard global, e ator ativo. Consulta bem-sucedida gera audit read na mesma transação. Falha na auditoria não devolve referência.
+
+Resposta 200 contém apenas data:{id,tipo}; comprova recebimento anterior, não estado atual de pagamento/estoque/entrega. Sem recibo próprio retorna 404 CHANNEL_RECEIPT_NOT_FOUND, inclusive em outra identidade do mesmo canal, empresa ou Grupo. A consulta é uma leitura e não consome nonce de criação; replay de leitura permanece sujeito a assinatura vigente e autorização atual. O canal não precisa reenviar a venda para recuperar o recibo após um timeout.
+
+Fixture reutilizada entre suites PGlite e PostgreSQL com serviços comerciais reais e preço sintético. CI omnicanal-postgres usa banco exclusivo erp_omnichannel_test com schemas aleatórios privados, nenhum DROP/alteração de schema public, sem DATABASE_URL como fallback. Guard valida localhost, usuário/database exclusivos e rejeita query/hash antes de conectar. Testes multiconexão provam oito entregas equivalentes, oito conflitantes, nonce simultâneo e rollback concorrente de auditoria, com contagem final de documento/itens/histórico/evento/audit.
+
+Validação local: focados 10 PASS / 0 FAIL / 2 SKIP (PostgreSQL efêmero ausente); backend completo 239 PASS / 0 FAIL / 17 SKIP; typecheck/build backend, lint e diff --check passaram. Frontend não alterado; limitações globais Windows/typecheck registradas no Lote 1 permanecem. CI deste HEAD e prova multiconexão ainda pendentes. Não mesclado/implantado. Gates de ativação e dependências #50/#53 descritos acima permanecem.
