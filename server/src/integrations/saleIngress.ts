@@ -13,6 +13,12 @@ type CanonicalSales = {
   auditRepo: AuditRepository; tenantGuard: TenantGuard; rbacGuard: RbacGuard;
 };
 export type SaleReceipt = { id: string; tipo: 'Pedido' | 'Orcamento' };
+export async function assertIntegrationEventsReady(db: DbClient) {
+  const result = await db.query<{ ready: boolean }>(`SELECT (c.relrowsecurity AND c.relforcerowsecurity
+    AND EXISTS(SELECT 1 FROM pg_policy p WHERE p.polrelid=c.oid AND p.polname='integration_events_scope')) AS ready
+    FROM pg_class c WHERE c.oid=to_regclass('integration_events')`);
+  if (result.rows[0]?.ready !== true) throw new Error('Omnichannel RLS gate not satisfied');
+}
 const receiptKey = (identity: ChannelIdentity, envelope: Pick<SaleEnvelope, 'tipo' | 'idempotencyKey'>) =>
   `sale:v1:${digest(JSON.stringify([identity.groupId, identity.empresaId, identity.id, identity.channel, envelope.tipo, envelope.idempotencyKey]))}`;
 
@@ -21,10 +27,7 @@ export class SaleIngress {
   constructor(private readonly db: DbClient, private readonly sales: CanonicalSales) {}
 
   async assertDatabaseReady() {
-    const result = await this.db.query<{ ready: boolean }>(`SELECT (c.relrowsecurity AND c.relforcerowsecurity
-      AND EXISTS(SELECT 1 FROM pg_policy p WHERE p.polrelid=c.oid AND p.polname='integration_events_scope')) AS ready
-      FROM pg_class c WHERE c.oid=to_regclass('integration_events')`);
-    if (result.rows[0]?.ready !== true) throw new Error('Omnichannel RLS gate not satisfied');
+    await assertIntegrationEventsReady(this.db);
   }
 
   async receive(identity: ChannelIdentity, envelope: SaleEnvelope, nonce: string, requestId: string) {
