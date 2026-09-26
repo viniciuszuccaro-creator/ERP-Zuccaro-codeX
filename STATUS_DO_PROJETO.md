@@ -1,3 +1,12 @@
+## Gate F — acesso diário HTTPS OK (humano) (2026-09-26T13:18Z)
+
+- Reachability revalidado: `LAYER_A_DNS_TLS=OK` · spa/api 200 · `ERP-RUNTIME-08B` · `supabase_user`.
+- Humano concluiu ação de navegação no PC → **acesso_diario=DONE_HUMAN_CONFIRMED**.
+- Evidência: `docs/vps/evidence/gate-f-daily-access-human-ok-2026-09-26.txt`.
+- `GATE_F_HTTPS_EXTERNAL_NAV` automatizado: não executado neste agente (sem synth no cofre).
+- URL: `https://erp-dev.cpaferroeaco.com.br/`
+- Residual opcional: CORS no host `api-erp-dev` (SPA same-origin já funciona).
+
 ## Gate F — LAYER_A DNS+TLS OK (2026-09-26T13:16Z)
 
 - Reachability externo: spa/api/health/ready **200** · LE cert OK · runtime `ERP-RUNTIME-08B` · `supabase_user`.

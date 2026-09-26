@@ -1,6 +1,6 @@
 # DNS + HTTPS ERP DEV — preparação (sem aplicar segredos)
 
-**Status:** `DNS_OK_TLS_PENDING` (2026-09-26) · A records públicos OK em 8.8.8.8 · TLS handshake externo ainda **timeout**.
+**Status:** `DAILY_ACCESS_HUMAN_OK` (2026-09-26) · DNS+TLS públicos OK · humano confirmou navegação no PC.
 NS autoritativo = **Registro.br** (`a.auto.dns.br` / `b.auto.dns.br`).
 
 **Estado atual**
@@ -8,26 +8,17 @@ NS autoritativo = **Registro.br** (`a.auto.dns.br` / `b.auto.dns.br`).
 | Camada | Resultado |
 |--------|-----------|
 | DNS A `erp-dev` / `api-erp-dev` | **OK** (IPv4 em 8.8.8.8; IP **não** colar no Git) |
-| TCP 80/443 | aceita SYN; TLS ClientHello **sem** resposta |
-| Caddy / ACME / painel firewall | **pendente** na VPS |
-| Acesso diário | **NÃO** concluído até humano navegar no laptop |
+| TLS / HTTPS (Caddy + Let's Encrypt) | **OK** · `LAYER_A_DNS_TLS=OK` |
+| SPA `/` `/health` `/ready` `/api/v1/meta` | **200** · runtime `ERP-RUNTIME-08B` · `supabase_user` |
+| Acesso diário (humano no PC) | **DONE** (confirmado pelo usuário) |
+| `GATE_F_HTTPS_EXTERNAL_NAV` automatizado | não executado neste agente (sem synth no cofre cloud) |
 
-**Próximo (humano na Web Console VPS `srv1982741`):**
+**URL diária:** `https://erp-dev.cpaferroeaco.com.br/`
 
-1. Liberar **80/tcp** e **443/tcp** no **firewall do painel Hostinger** (além do ufw).
-2. Rodar o script (com e-mail ACME real, não commitado):
+Evidências: `docs/vps/evidence/gate-f-https-layer-a-ok-2026-09-26.txt` · `docs/vps/evidence/gate-f-daily-access-human-ok-2026-09-26.txt`.
+Script VPS: `scripts/vps/gate-f-apply-caddy-https-webconsole.sh`.
 
-```bash
-cd /opt/erp-zuccaro   # ou path do repo na VPS
-git pull origin main  # após merge deste PR, ou checkout da branch
-export CADDY_ACME_EMAIL='voce@seu-dominio'
-# se CORS faltar no container: export ERP_API_ENV=/caminho/do/.env.compose
-bash scripts/vps/gate-f-apply-caddy-https-webconsole.sh
-```
-
-3. Colar no chat só o bloco `PASTE_TO_GIT_*` (sanitizado).
-4. Agente valida `GATE_F_HTTPS_PROBE=reachability` de fora.
-5. **Acesso diário:** só depois que você abrir `https://erp-dev.cpaferroeaco.com.br/` no **seu** PC e confirmar navegação (não marcar só com smoke VPS).
+Opcional residual: garantir `CORS_ORIGINS` com `https://erp-dev.cpaferroeaco.com.br` no `.env.erp.dev` se for chamar o host `api-erp-dev` direto do browser (SPA same-origin não depende disso).
 
 Não registrar IP público, tokens, chaves ou dados reais neste arquivo.
 
@@ -169,6 +160,7 @@ Alternativa: `ACCESS_TOKEN` + `TENANT_GROUP_ID` do cofre (sem chamar Auth).
 - [ ] **`GATE_F_HTTPS_PROBE=external_nav` = OK** a partir de máquina externa
 - [ ] Evidência sanitizada em `docs/vps/evidence/`
 
-**Evidência DNS OK / TLS pendente:** `docs/vps/evidence/gate-f-https-dns-ok-tls-pending-2026-09-26.txt`.
+**Evidência acesso diário humano:** `docs/vps/evidence/gate-f-daily-access-human-ok-2026-09-26.txt`.
+**Evidência LAYER_A:** `docs/vps/evidence/gate-f-https-layer-a-ok-2026-09-26.txt`.
 **Script VPS:** `scripts/vps/gate-f-apply-caddy-https-webconsole.sh`.
-**Acesso diário:** **não** concluído até humano navegar no laptop (e preferencialmente `external_nav` OK).
+**Acesso diário:** **DONE** (humano no PC) · `GATE_F_HTTPS_EXTERNAL_NAV` automatizado não rodado neste agente.

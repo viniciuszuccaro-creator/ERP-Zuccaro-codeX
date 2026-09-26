@@ -1,0 +1,24 @@
+# Gate F — acesso diário HTTPS confirmado (humano) (2026-09-26)
+
+utc=2026-09-26T13:17:46Z
+source=cloud_agent_reachability + human_browser_nav_action_completed
+
+## Camada A (agente, fora da VPS)
+- GATE_F_HTTPS_PROBE=reachability → LAYER_A_DNS_TLS=OK
+- spa_origin_http=200 spa_proxy_health=200
+- official_api_health=200 official_api_ready=200
+- spa /api/v1/meta=200
+- official_runtime=ERP-RUNTIME-08B
+- official_auth_mode=supabase_user
+- public_api_no_auth_orc=401 (fail-closed esperado)
+
+## Camada C / acesso diário
+- GATE_F_HTTPS_EXTERNAL_NAV=NOT_RUN_IN_AGENT (sem credenciais sintéticas no cloud agent)
+- humano_navegacao_pc=COMPLETED (ação externa env-setup confirmada pelo usuário)
+- acesso_diario=DONE_HUMAN_CONFIRMED
+- URL=https://erp-dev.cpaferroeaco.com.br/
+
+## Notas
+- SPA same-origin `/api` via Caddy→3081
+- CORS host api-erp-dev pode permanecer MISSING sem bloquear o fluxo SPA
+- Não colar IP/token/senha neste arquivo
