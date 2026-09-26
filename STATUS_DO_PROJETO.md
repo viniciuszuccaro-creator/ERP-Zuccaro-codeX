@@ -1,3 +1,34 @@
+## #45 STATUS REAL — acesso owner (2026-09-26T17:30Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado (código) | **SIM** — HEAD `62e5e46f`+ (testes rollback reforçados neste push) |
+| Testado (local) | **SIM** — provision/rebuild/rollback sucesso+falha; PGlite grant+restore; HTTP exact; sessão expirada/adulterada |
+| CI | **SIM** @ `62e5e46f` [36257934449](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36257934449) frontend+backend SUCCESS |
+| Re-review Codex | **PENDENTE** no HEAD ≥`67a3284b` (Codex ainda citava `cab15caa` às 17:08Z) |
+| Mesclado em `main` | **NÃO** |
+| Implantado VPS | **BLOQUEADO** — exige (1) aprovação Codex do SHA, (2) humano colar `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`, (3) NÃO usar script antigo, (4) logout/login real |
+
+Script canônico: `scripts/vps/provision-owner-admin-profile.sh` + `spa-login-rebuild-api-web.sh` / `spa-login-rollback-api-web.sh`. Sem `min(uuid)`, if não invertido, build-antes-stop, restore seletivo JSON.
+
+### PASTE_VPS (só após Codex OK + IDs humanos) — registrar digests
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin cursor/spa-login-http-supabase-392b
+git checkout --detach origin/cursor/spa-login-http-supabase-392b
+# Registrar ANTES:
+docker inspect -f '{{.Id}} {{.Config.Image}} {{index .RepoDigests 0}}' erp-api-dev erp-web-dev 2>/dev/null || true
+export OWNER_GROUP_ID='<uuid>' OWNER_EMPRESA_ID='<uuid>'
+CONFIRM_OWNER_ADMIN_PROFILE=YES OWNER_EMAIL='vinicius.zuccaro@gmail.com' DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+# Registrar DEPOIS (colar evidência sanitizada — sem tokens):
+docker inspect -f 'name={{.Name}} image={{.Config.Image}} id={{.Id}}' erp-api-dev erp-web-dev
+curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;m=json.load(sys.stdin);print("runtime",m.get("runtime"));print("auth", (m.get("auth") or {}).get("mode"));print("pwd",(m.get("authSession") or {}).get("passwordLoginPath"))'
+```
+
 ## #45 Codex P1 (cab15caa) — min(uuid), if invertido, rebuild, restore seletivo (2026-09-26T17:10Z)
 
 - Achados Codex do HEAD `cab15caa` corrigidos na mesma branch #45:
