@@ -1,0 +1,26 @@
+# Gate F — DNS público OK; TLS externo ainda pendente (2026-09-26)
+
+utc=2026-09-26T12:30:40Z
+source=cloud_agent_external_probe
+
+## DNS (8.8.8.8 / 1.1.1.1)
+- erp-dev.cpaferroeaco.com.br A → RESOLVED (humano confirmou; agente viu IPv4; IP não colado aqui)
+- api-erp-dev.cpaferroeaco.com.br A → RESOLVED (mesmo A)
+- NS → a.auto.dns.br / b.auto.dns.br (Registro.br)
+
+## HTTPS externo (agente cloud)
+- TCP 80/443: SYN aceito
+- TLS handshake: TIMEOUT (ClientHello sem ServerHello)
+- http_code spa/api = 000
+- 3080/3081: fechados na internet (esperado — bind loopback)
+
+## Interpretação
+DNS publicado. Proxy TLS (Caddy) e/ou firewall Hostinger 80/443 ainda não entregam HTTPS completo.
+
+## Próximo
+1. Web Console VPS: `scripts/vps/gate-f-apply-caddy-https-webconsole.sh` (CADDY_ACME_EMAIL + painel firewall 80/443)
+2. Agente: `GATE_F_HTTPS_PROBE=reachability`
+3. Acesso diário: **NÃO** marcar até humano abrir/navegar no laptop + (opcional) external_nav
+
+acesso_diario=NOT_DONE
+LAYER_A_DNS_TLS=DNS_OK_TLS_PENDING

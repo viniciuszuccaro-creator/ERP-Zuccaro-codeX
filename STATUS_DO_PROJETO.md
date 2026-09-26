@@ -1,3 +1,12 @@
+## Gate F — DNS OK · TLS/Caddy pendente (2026-09-26T12:35Z)
+
+- DNS público **OK**: `erp-dev` / `api-erp-dev` resolvem A em 8.8.8.8 (IP não no Git).
+- HTTPS externo: TCP 443 aceita, **TLS handshake timeout** — Caddy/ACME/firewall painel ainda faltam.
+- Script Web Console: `scripts/vps/gate-f-apply-caddy-https-webconsole.sh` (Caddy→3081/3080, ufw 80/443, CORS check).
+- Doc/evidência: `docs/vps/DNS_HTTPS_ERP_DEV.md` · `docs/vps/evidence/gate-f-https-dns-ok-tls-pending-2026-09-26.txt`.
+- **Acesso diário NÃO concluído** — só após humano abrir/navegar no laptop (pedido explícito).
+- Próximo humano: painel Hostinger firewall 80+443 → rodar script com `CADDY_ACME_EMAIL` → colar `PASTE_TO_GIT_*` → agente `reachability`.
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.

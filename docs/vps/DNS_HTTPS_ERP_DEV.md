@@ -1,15 +1,33 @@
 # DNS + HTTPS ERP DEV — preparação (sem aplicar segredos)
 
-**Status:** `BLOCKED_WRONG_DNS_PANEL` · NS autoritativo = **Registro.br** (`a.auto.dns.br` / `b.auto.dns.br`).  
-Registros só no painel Hostinger Domains **não** resolvem na internet (NXDOMAIN confirmado em 8.8.8.8 / 1.1.1.1).
+**Status:** `DNS_OK_TLS_PENDING` (2026-09-26) · A records públicos OK em 8.8.8.8 · TLS handshake externo ainda **timeout**.
+NS autoritativo = **Registro.br** (`a.auto.dns.br` / `b.auto.dns.br`).
 
-**Para concluir acesso diário agora (humano):**
+**Estado atual**
 
-1. **Registro.br** (ou trocar NS → Hostinger e usar o painel certo) → A `erp-dev` + A `api-erp-dev` → IP da VPS `srv1982741` (não colar IP no Git).
-2. Validar: `dig @8.8.8.8 +short erp-dev.cpaferroeaco.com.br A` → IPv4.
-3. VPS: Caddy 443 → `3081`/`3080` · firewall 443 · CORS `https://erp-dev.cpaferroeaco.com.br`.
-4. Responder no chat: `DNS publicado` e depois `TLS confirmado`.
-5. Agente valida `dig` + `GATE_F_HTTPS_PROBE=reachability` e `external_nav`.
+| Camada | Resultado |
+|--------|-----------|
+| DNS A `erp-dev` / `api-erp-dev` | **OK** (IPv4 em 8.8.8.8; IP **não** colar no Git) |
+| TCP 80/443 | aceita SYN; TLS ClientHello **sem** resposta |
+| Caddy / ACME / painel firewall | **pendente** na VPS |
+| Acesso diário | **NÃO** concluído até humano navegar no laptop |
+
+**Próximo (humano na Web Console VPS `srv1982741`):**
+
+1. Liberar **80/tcp** e **443/tcp** no **firewall do painel Hostinger** (além do ufw).
+2. Rodar o script (com e-mail ACME real, não commitado):
+
+```bash
+cd /opt/erp-zuccaro   # ou path do repo na VPS
+git pull origin main  # após merge deste PR, ou checkout da branch
+export CADDY_ACME_EMAIL='voce@seu-dominio'
+# se CORS faltar no container: export ERP_API_ENV=/caminho/do/.env.compose
+bash scripts/vps/gate-f-apply-caddy-https-webconsole.sh
+```
+
+3. Colar no chat só o bloco `PASTE_TO_GIT_*` (sanitizado).
+4. Agente valida `GATE_F_HTTPS_PROBE=reachability` de fora.
+5. **Acesso diário:** só depois que você abrir `https://erp-dev.cpaferroeaco.com.br/` no **seu** PC e confirmar navegação (não marcar só com smoke VPS).
 
 Não registrar IP público, tokens, chaves ou dados reais neste arquivo.
 
@@ -38,7 +56,7 @@ dig +short api-erp-dev.cpaferroeaco.com.br A
 
 ## 2. Proxy TLS (Caddy ou Nginx) na VPS
 
-Bind Docker permanece `127.0.0.1:3080` (API) e `127.0.0.1:3081` (SPA).  
+Bind Docker permanece `127.0.0.1:3080` (API) e `127.0.0.1:3081` (SPA).
 O proxy escuta `443` e encaminha:
 
 - `https://erp-dev…/` → `127.0.0.1:3081` (SPA + same-origin `/api` `/health` `/ready`)
@@ -89,7 +107,7 @@ Arquivo: `deploy/nginx-erp.conf` (rebuild `erp-web` após alteração).
 
 ### 4.2 Cache Hostinger / CDN (se houver)
 
-No painel Hostinger (Website → Cache / CDN), **purgar** cache do host `erp-dev` após rebuild do SPA.  
+No painel Hostinger (Website → Cache / CDN), **purgar** cache do host `erp-dev` após rebuild do SPA.
 Não usar API token no Git; purge manual ou MCP Hostinger autenticado fora do repo.
 
 ### 4.3 Browser
@@ -134,7 +152,7 @@ SYNTH_EMAIL=... SYNTH_PASS=... \
   bash scripts/vps/gate-f-smoke-https-external.sh
 ```
 
-Alternativa: `ACCESS_TOKEN` + `TENANT_GROUP_ID` do cofre (sem chamar Auth).  
+Alternativa: `ACCESS_TOKEN` + `TENANT_GROUP_ID` do cofre (sem chamar Auth).
 400/403 na listagem autenticada **não** contam. Colar só `PASTE_TO_GIT` sanitizado.
 
 **Implantação de acesso diário:** só com DNS+TLS **e** `GATE_F_HTTPS_EXTERNAL_NAV=OK`. `vps_api` sozinho **não** fecha.
@@ -143,13 +161,14 @@ Alternativa: `ACCESS_TOKEN` + `TENANT_GROUP_ID` do cofre (sem chamar Auth).
 
 ## 6. Checklist de aceite
 
-- [ ] A records resolvem de **fora** da VPS  
-- [ ] `https://erp-dev…/` → 200 (certificado válido) · HTML `Cache-Control: no-store`  
-- [ ] `https://api-erp-dev…/health` → 200  
-- [ ] CORS inclui origem HTTPS do SPA  
-- [ ] (Opcional) `GATE_F_HTTPS_PROBE=vps_api` = OK na VPS  
-- [ ] **`GATE_F_HTTPS_PROBE=external_nav` = OK** a partir de máquina externa  
-- [ ] Evidência sanitizada em `docs/vps/evidence/`  
+- [ ] A records resolvem de **fora** da VPS
+- [ ] `https://erp-dev…/` → 200 (certificado válido) · HTML `Cache-Control: no-store`
+- [ ] `https://api-erp-dev…/health` → 200
+- [ ] CORS inclui origem HTTPS do SPA
+- [ ] (Opcional) `GATE_F_HTTPS_PROBE=vps_api` = OK na VPS
+- [ ] **`GATE_F_HTTPS_PROBE=external_nav` = OK** a partir de máquina externa
+- [ ] Evidência sanitizada em `docs/vps/evidence/`
 
-**BLOCKED atual:** DNS NX (evidência `gate-f-https-external-dns-blocked-2026-09-25.txt`).  
-**Acesso diário:** **não** concluído até external_nav OK.
+**Evidência DNS OK / TLS pendente:** `docs/vps/evidence/gate-f-https-dns-ok-tls-pending-2026-09-26.txt`.
+**Script VPS:** `scripts/vps/gate-f-apply-caddy-https-webconsole.sh`.
+**Acesso diário:** **não** concluído até humano navegar no laptop (e preferencialmente `external_nav` OK).
