@@ -1032,6 +1032,14 @@ function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
     try { res.json({ data: await service.cancel(ctxFromReq(req), req.params.id) }); }
     catch (error) { next(error); }
   });
+  router.get(`${base}/:id/versoes`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.listVersions(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${base}/:id/versoes`, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createVersion(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
 }
 
 function mountPedidoRoutes(router: Router, service: PedidoService) {

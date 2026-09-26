@@ -1,5 +1,175 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
-import { calculateOrcamento, type Orcamento, type OrcamentoCreate, type OrcamentoListFilters, type OrcamentoRepository, type OrcamentoScope } from './orcamentoTypes.js';
-type Row=Record<string,unknown>; const map=(r:Row):Orcamento=>({...(r as any),id:String(r.id),group_id:String(r.group_id),empresa_id:String(r.empresa_id),numero:String(r.numero),ativo:Boolean(r.ativo),subtotal:String(r.subtotal),desconto:String(r.desconto),total:String(r.total),observacoes:r.observacoes==null?null:String(r.observacoes),created_at:new Date(String(r.created_at)).toISOString(),updated_at:new Date(String(r.updated_at)).toISOString(),itens:(Array.isArray(r.itens)?r.itens:JSON.parse(String(r.itens??'[]'))).map((i:Row)=>({...i,id:String(i.id),produto_id:String(i.produto_id),unidade_id:String(i.unidade_id),descricao:String(i.descricao_snapshot??i.descricao??''),unidade_sigla:String(i.unidade_snapshot??i.unidade_sigla??''),quantidade:String(i.quantidade),preco_unitario:String(i.preco_unitario),desconto:String(i.desconto??'0'),subtotal:String(i.subtotal),total:String(i.total)}))});
-const SELECT=`SELECT o.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.id) FROM orcamento_itens i WHERE i.orcamento_id=o.id AND i.group_id=o.group_id AND i.empresa_id=o.empresa_id),'[]') itens FROM orcamentos o`;
-export class PostgresOrcamentoRepository implements OrcamentoRepository { constructor(private readonly db:DbClient){} withTransaction<T>(fn:(executor?:DbQueryExecutor)=>Promise<T>):Promise<T>{return this.db.withTransaction(fn)} private runTransaction<T>(executor:DbQueryExecutor|undefined,fn:(tx:DbQueryExecutor)=>Promise<T>):Promise<T>{return executor?fn(executor):this.db.withTransaction(fn)} private async items(q:DbQueryExecutor,s:OrcamentoScope,id:string,d:OrcamentoCreate){const t=calculateOrcamento(d.itens);for(const i of t.itens)await q.query('INSERT INTO orcamento_itens(group_id,empresa_id,orcamento_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,desconto,subtotal,total) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',[s.groupId,s.empresaId,id,i.produto_id,i.unidade_id,i.descricao,i.unidade_sigla,i.quantidade,i.preco_unitario,i.desconto??'0',i.subtotal,i.total]);return t} async get(s:OrcamentoScope,id:string,q:DbQueryExecutor=this.db){const r=await q.query<Row>(`${SELECT} WHERE o.id=$1 AND o.group_id=$2 AND o.empresa_id=$3`,[id,s.groupId,s.empresaId]);return r.rows[0]?map(r.rows[0]):null} async create(s:OrcamentoScope,d:OrcamentoCreate,executor?:DbQueryExecutor){return this.runTransaction(executor,async q=>{await q.query('SELECT pg_advisory_xact_lock(hashtext($1))',[s.empresaId]);const n=await q.query<{n:string}>('SELECT COALESCE(MAX(numero::int),0)+1 n FROM orcamentos WHERE empresa_id=$1',[s.empresaId]);const numero=String(n.rows[0]?.n??'').padStart(8,'0');if(!/^\d{8}$/.test(numero))throw new Error('ORCAMENTO_NUMERO_RESERVATION_FAILED');const t=calculateOrcamento(d.itens),h=await q.query<Row>('INSERT INTO orcamentos(group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,validade_em,observacoes,subtotal,desconto,total) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',[s.groupId,s.empresaId,numero,d.cliente_empresa_id,d.condicao_pagamento_id,d.validade_em,d.observacoes??null,t.subtotal,t.desconto,t.total]);await this.items(q,s,String(h.rows[0]?.id),d);return (await this.get(s,String(h.rows[0]?.id),q))!})} async update(s:OrcamentoScope,id:string,d:OrcamentoCreate,executor?:DbQueryExecutor){return this.runTransaction(executor,async q=>{const current=await this.get(s,id,q);if(!current||current.status!=='EM_ABERTO')return null;const t=calculateOrcamento(d.itens);await q.query('UPDATE orcamentos SET cliente_empresa_id=$4,condicao_pagamento_id=$5,validade_em=$6,observacoes=$7,subtotal=$8,desconto=$9,total=$10 WHERE id=$1 AND group_id=$2 AND empresa_id=$3',[id,s.groupId,s.empresaId,d.cliente_empresa_id,d.condicao_pagamento_id,d.validade_em,d.observacoes??null,t.subtotal,t.desconto,t.total]);await q.query('DELETE FROM orcamento_itens WHERE orcamento_id=$1 AND group_id=$2 AND empresa_id=$3',[id,s.groupId,s.empresaId]);await this.items(q,s,id,d);return this.get(s,id,q)})} async list(s:OrcamentoScope,limit=50,offset=0,executor?:DbQueryExecutor,filters:OrcamentoListFilters={}){const q=executor??this.db;const where=`o.group_id=$1 AND o.empresa_id=$2 AND ($3::text IS NULL OR o.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR o.status=$4) AND ($5::uuid IS NULL OR o.cliente_empresa_id=$5) AND ($6::timestamptz IS NULL OR o.validade_em >= $6) AND ($7::timestamptz IS NULL OR o.validade_em <= $7)`;const fp=[s.groupId,s.empresaId,filters.search||null,filters.status||null,filters.clienteEmpresaId||null,filters.validadeDe||null,filters.validadeAte||null];const p=[...fp,Math.min(200,Math.max(1,Math.trunc(limit))),Math.max(0,Math.trunc(offset))];const [c,r]=await Promise.all([q.query<{total:number}>(`SELECT count(*)::int total FROM orcamentos o WHERE ${where}`,fp),q.query<Row>(`${SELECT} WHERE ${where} ORDER BY o.numero DESC,o.id DESC LIMIT $8 OFFSET $9`,p)]);return{rows:r.rows.map(map),total:Number(c.rows[0]?.total??0)}} async cancel(s:OrcamentoScope,id:string,executor?:DbQueryExecutor){return this.runTransaction(executor,async q=>{const r=await q.query<Row>("UPDATE orcamentos SET status='CANCELADO',ativo=false WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO' RETURNING id",[id,s.groupId,s.empresaId]);return r.rows[0]?this.get(s,String(r.rows[0].id),q):null})}}
+import {
+  calculateOrcamento,
+  type Orcamento,
+  type OrcamentoCreate,
+  type OrcamentoListFilters,
+  type OrcamentoRepository,
+  type OrcamentoScope,
+  type OrcamentoStatus,
+} from './orcamentoTypes.js';
+
+type Row = Record<string, unknown>;
+
+const map = (row: Row): Orcamento => ({
+  id: String(row.id),
+  group_id: String(row.group_id),
+  empresa_id: String(row.empresa_id),
+  numero: String(row.numero),
+  versao: Number(row.versao ?? 1),
+  orcamento_raiz_id: String(row.orcamento_raiz_id ?? row.id),
+  supersedido_por_id: row.supersedido_por_id == null ? null : String(row.supersedido_por_id),
+  status: String(row.status) as OrcamentoStatus,
+  cliente_empresa_id: String(row.cliente_empresa_id),
+  condicao_pagamento_id: String(row.condicao_pagamento_id),
+  validade_em: new Date(String(row.validade_em)).toISOString(),
+  observacoes: row.observacoes == null ? null : String(row.observacoes),
+  ativo: Boolean(row.ativo),
+  subtotal: String(row.subtotal),
+  desconto: String(row.desconto),
+  total: String(row.total),
+  created_at: new Date(String(row.created_at)).toISOString(),
+  updated_at: new Date(String(row.updated_at)).toISOString(),
+  itens: (Array.isArray(row.itens) ? row.itens : JSON.parse(String(row.itens ?? '[]'))).map((item: Row) => ({
+    produto_id: String(item.produto_id),
+    unidade_id: String(item.unidade_id),
+    descricao: String(item.descricao_snapshot ?? item.descricao ?? ''),
+    unidade_sigla: String(item.unidade_snapshot ?? item.unidade_sigla ?? ''),
+    quantidade: String(item.quantidade),
+    preco_unitario: String(item.preco_unitario),
+    desconto: String(item.desconto ?? '0'),
+    subtotal: String(item.subtotal),
+    total: String(item.total),
+  })),
+});
+
+const SELECT = `SELECT o.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.id) FROM orcamento_itens i WHERE i.orcamento_id=o.id AND i.group_id=o.group_id AND i.empresa_id=o.empresa_id),'[]') itens FROM orcamentos o`;
+
+export class PostgresOrcamentoRepository implements OrcamentoRepository {
+  constructor(private readonly db: DbClient) {}
+
+  withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    return this.db.withTransaction(fn);
+  }
+
+  private runTransaction<T>(executor: DbQueryExecutor | undefined, fn: (tx: DbQueryExecutor) => Promise<T>): Promise<T> {
+    return executor ? fn(executor) : this.db.withTransaction(fn);
+  }
+
+  private async insertItems(query: DbQueryExecutor, scope: OrcamentoScope, id: string, data: OrcamentoCreate) {
+    const totals = calculateOrcamento(data.itens);
+    for (const item of totals.itens) {
+      await query.query(
+        'INSERT INTO orcamento_itens(group_id,empresa_id,orcamento_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,desconto,subtotal,total) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+        [scope.groupId, scope.empresaId, id, item.produto_id, item.unidade_id, item.descricao, item.unidade_sigla, item.quantidade, item.preco_unitario, item.desconto ?? '0', item.subtotal, item.total],
+      );
+    }
+    return totals;
+  }
+
+  async get(scope: OrcamentoScope, id: string, query: DbQueryExecutor = this.db): Promise<Orcamento | null> {
+    const result = await query.query<Row>(`${SELECT} WHERE o.id=$1 AND o.group_id=$2 AND o.empresa_id=$3`, [id, scope.groupId, scope.empresaId]);
+    return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
+  async create(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor): Promise<Orcamento> {
+    return this.runTransaction(executor, async (query) => {
+      await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`orcamento:${scope.empresaId}`]);
+      const sequence = await query.query<{ n: string }>('SELECT COALESCE(MAX(numero::int),0)+1 n FROM orcamentos WHERE empresa_id=$1', [scope.empresaId]);
+      const numero = String(sequence.rows[0]?.n ?? '').padStart(8, '0');
+      if (!/^\d{8}$/.test(numero)) throw new Error('ORCAMENTO_NUMERO_RESERVATION_FAILED');
+      const totals = calculateOrcamento(data.itens);
+      const inserted = await query.query<{ id: string }>(
+        `INSERT INTO orcamentos(
+          group_id,empresa_id,numero,versao,cliente_empresa_id,condicao_pagamento_id,validade_em,observacoes,subtotal,desconto,total
+        ) VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+        [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total],
+      );
+      const id = String(inserted.rows[0]?.id);
+      await query.query('UPDATE orcamentos SET orcamento_raiz_id=$1 WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+      await this.insertItems(query, scope, id, data);
+      return (await this.get(scope, id, query))!;
+    });
+  }
+
+  async update(scope: OrcamentoScope, id: string, data: OrcamentoCreate, executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    return this.runTransaction(executor, async (query) => {
+      const current = await this.get(scope, id, query);
+      if (!current || current.status !== 'EM_ABERTO') return null;
+      const totals = calculateOrcamento(data.itens);
+      await query.query(
+        'UPDATE orcamentos SET cliente_empresa_id=$4,condicao_pagamento_id=$5,validade_em=$6,observacoes=$7,subtotal=$8,desconto=$9,total=$10 WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+        [id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total],
+      );
+      await query.query('DELETE FROM orcamento_itens WHERE orcamento_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+      await this.insertItems(query, scope, id, data);
+      return this.get(scope, id, query);
+    });
+  }
+
+  async list(scope: OrcamentoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: OrcamentoListFilters = {}) {
+    const query = executor ?? this.db;
+    const where = `o.group_id=$1 AND o.empresa_id=$2 AND ($3::text IS NULL OR o.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR o.status=$4) AND ($5::uuid IS NULL OR o.cliente_empresa_id=$5) AND ($6::timestamptz IS NULL OR o.validade_em >= $6) AND ($7::timestamptz IS NULL OR o.validade_em <= $7)`;
+    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.validadeDe || null, filters.validadeAte || null];
+    const params = [...filterParams, Math.min(200, Math.max(1, Math.trunc(limit))), Math.max(0, Math.trunc(offset))];
+    const [count, rows] = await Promise.all([
+      query.query<{ total: number }>(`SELECT count(*)::int total FROM orcamentos o WHERE ${where}`, filterParams),
+      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY o.numero DESC,o.versao DESC,o.id DESC LIMIT $8 OFFSET $9`, params),
+    ]);
+    return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
+  }
+
+  async listVersions(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<Orcamento[]> {
+    const query = executor ?? this.db;
+    const result = await query.query<Row>(
+      `${SELECT} WHERE o.group_id=$1 AND o.empresa_id=$2 AND o.orcamento_raiz_id=$3 ORDER BY o.versao DESC,o.id DESC`,
+      [scope.groupId, scope.empresaId, raizId],
+    );
+    return result.rows.map(map);
+  }
+
+  async cancel(scope: OrcamentoScope, id: string, executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    return this.runTransaction(executor, async (query) => {
+      const result = await query.query<Row>(
+        "UPDATE orcamentos SET status='CANCELADO',ativo=false WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO' RETURNING id",
+        [id, scope.groupId, scope.empresaId],
+      );
+      return result.rows[0] ? this.get(scope, String(result.rows[0].id), query) : null;
+    });
+  }
+
+  async createVersion(
+    scope: OrcamentoScope,
+    sourceId: string,
+    data: OrcamentoCreate,
+    executor?: DbQueryExecutor,
+  ): Promise<{ previous: Orcamento; current: Orcamento }> {
+    return this.runTransaction(executor, async (query) => {
+      await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`orcamento-ver:${scope.empresaId}:${sourceId}`]);
+      const source = await this.get(scope, sourceId, query);
+      if (!source || source.status !== 'EM_ABERTO') throw new Error('ORCAMENTO_STATE_CONFLICT');
+      const totals = calculateOrcamento(data.itens);
+      const inserted = await query.query<{ id: string }>(
+        `INSERT INTO orcamentos(
+          group_id,empresa_id,numero,versao,orcamento_raiz_id,cliente_empresa_id,condicao_pagamento_id,
+          validade_em,observacoes,subtotal,desconto,total
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+        [
+          scope.groupId, scope.empresaId, source.numero, source.versao + 1, source.orcamento_raiz_id,
+          data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em, data.observacoes ?? null,
+          totals.subtotal, totals.desconto, totals.total,
+        ],
+      );
+      const newId = String(inserted.rows[0]?.id);
+      await this.insertItems(query, scope, newId, data);
+      await query.query(
+        "UPDATE orcamentos SET status='SUPERSEDIDO',supersedido_por_id=$4 WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO'",
+        [sourceId, scope.groupId, scope.empresaId, newId],
+      );
+      const previous = await this.get(scope, sourceId, query);
+      const current = await this.get(scope, newId, query);
+      if (!previous || !current) throw new Error('ORCAMENTO_VERSION_CREATE_FAILED');
+      return { previous, current };
+    });
+  }
+}
