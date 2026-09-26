@@ -14,11 +14,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, formatOrcamentoStatusLabel, microsToDecimal } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, buildOrcamentoVersionPayload, calculateItem, calculateTotals, canUseOrcamentoAction, formatOrcamentoStatusLabel, microsToDecimal, ORCAMENTO_ORIGEM_LABELS } from './orcamentoUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
 const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', validade_em: '', observacoes: '', itens: [emptyItem()] });
+const emptyListFilters = () => ({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '', origem: 'TODOS' });
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
 const errorMessage = (error) => {
@@ -35,6 +36,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [selected, setSelected] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [anexos, setAnexos] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -44,13 +47,14 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [pendingCancel, setPendingCancel] = useState(null);
   const [pendingConversion, setPendingConversion] = useState(null);
   const [conversion, setConversion] = useState({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
-  const [filters, setFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
-  const [appliedFilters, setAppliedFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+  const [filters, setFilters] = useState(emptyListFilters);
+  const [appliedFilters, setAppliedFilters] = useState(emptyListFilters);
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canPrint = canUseOrcamentoAction(hasPermission, 'imprimir');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
+  const canVersion = (row) => canUseOrcamentoAction(hasPermission, 'versionar', row?.status);
   const contextReady = Boolean(groupId && empresaId && actorId);
   const http = useMemo(() => createHttpApiClient({
     getScope: () => ({ groupId, empresaId, actorId, actorEmail }),
@@ -61,7 +65,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
   const listQuery = useQuery({
     queryKey,
-    queryFn: ({ signal }) => api.list({ limit: pageSize, offset: (page - 1) * pageSize, search: appliedFilters.search || undefined, status: appliedFilters.status === 'TODOS' ? undefined : appliedFilters.status, clienteEmpresaId: appliedFilters.clienteEmpresaId === 'TODOS' ? undefined : appliedFilters.clienteEmpresaId, validadeDe: appliedFilters.validadeDe || undefined, validadeAte: appliedFilters.validadeAte || undefined, signal }),
+    queryFn: ({ signal }) => api.list({ limit: pageSize, offset: (page - 1) * pageSize, search: appliedFilters.search || undefined, status: appliedFilters.status === 'TODOS' ? undefined : appliedFilters.status, clienteEmpresaId: appliedFilters.clienteEmpresaId === 'TODOS' ? undefined : appliedFilters.clienteEmpresaId, validadeDe: appliedFilters.validadeDe || undefined, validadeAte: appliedFilters.validadeAte || undefined, origem: appliedFilters.origem === 'TODOS' ? undefined : appliedFilters.origem, signal }),
     enabled: contextReady && canView,
     retry: 1,
   });
@@ -89,7 +93,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   };
   const condicaoLabel = (id) => masters.condicoes.find((item) => item.id === id)?.nome || id;
 
-  useEffect(() => { setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId]);
+  useEffect(() => { setPage(1); setSelected(null); setVersions([]); setAnexos([]); setDetailOpen(false); setFormOpen(false); setFilters(emptyListFilters()); setAppliedFilters(emptyListFilters()); }, [groupId, empresaId]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -143,8 +147,36 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     finally { setSubmitting(false); }
   };
   const showDetail = async (row) => {
-    try { const detail = await api.get(row.id); setSelected(detail); setDetailOpen(true); }
-    catch (error) { toast.error(errorMessage(error)); }
+    try {
+      const [detail, versionRows, anexoRows] = await Promise.all([
+        api.get(row.id),
+        api.listVersions(row.id).catch(() => []),
+        api.listAnexos(row.id).catch(() => []),
+      ]);
+      setSelected(detail);
+      setVersions(Array.isArray(versionRows) ? versionRows : (versionRows?.data || []));
+      setAnexos(Array.isArray(anexoRows) ? anexoRows : (anexoRows?.data || []));
+      setDetailOpen(true);
+    } catch (error) { toast.error(errorMessage(error)); }
+  };
+  const createVersion = async (row) => {
+    if (!row || !canVersion(row) || submitting) return;
+    if (!window.confirm(`Criar nova versão do orçamento ${row.numero}? A versão atual será supersedida.`)) return;
+    setSubmitting(true);
+    try {
+      const payload = buildOrcamentoVersionPayload(row);
+      const created = await api.createVersion(row.id, payload);
+      toast.success(`Versão ${created.versao ?? ''} criada.`);
+      setSelected(created);
+      await queryClient.invalidateQueries({ queryKey: ['orcamentos-http', groupId, empresaId] });
+      const [versionRows, anexoRows] = await Promise.all([
+        api.listVersions(created.id).catch(() => []),
+        api.listAnexos(created.id).catch(() => []),
+      ]);
+      setVersions(Array.isArray(versionRows) ? versionRows : (versionRows?.data || []));
+      setAnexos(Array.isArray(anexoRows) ? anexoRows : (anexoRows?.data || []));
+    } catch (error) { toast.error(errorMessage(error)); }
+    finally { setSubmitting(false); }
   };
   const performCancel = async (row) => {
     if (!row || submitting) return;
@@ -279,12 +311,13 @@ const convertToPedido = async () => {
       {canCreate && <Button onClick={openCreate} disabled={!contextReady} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
-    <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
+    <form className="grid grid-cols-1 md:grid-cols-7 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="SUPERSEDIDO">Supersedido</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
+      <Select value={filters.origem} onValueChange={(value) => setFilters((current) => ({ ...current, origem: value }))}><SelectTrigger aria-label="Filtrar origem"><SelectValue placeholder="Origem" /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todas as origens</SelectItem>{Object.entries(ORCAMENTO_ORIGEM_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
       <Select value={filters.clienteEmpresaId} onValueChange={(value) => setFilters((current) => ({ ...current, clienteEmpresaId: value }))}><SelectTrigger aria-label="Filtrar cliente"><SelectValue placeholder="Todos os clientes" /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select>
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
-      <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
+      <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = emptyListFilters(); setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
     </form>
     {listQuery.isLoading ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listQuery.isError ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento encontrado para os filtros desta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
@@ -299,7 +332,7 @@ const convertToPedido = async () => {
       <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}{selected?.versao != null ? ` · v${selected.versao}` : ''}</DialogTitle><DialogDescription>{formatOrcamentoStatusLabel(selected?.status)} · validade {date(selected?.validade_em)}{selected?.origem ? ` · origem ${selected.origem}` : ''}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2">{canPrint && <Button variant="outline" data-permission="Comercial.orcamento.imprimir" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button>}{canPrint && <Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button>}{canPrint && <Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>}{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}{selected?.versao != null ? ` · v${selected.versao}` : ''}</DialogTitle><DialogDescription>{formatOrcamentoStatusLabel(selected?.status)} · validade {date(selected?.validade_em)}{selected?.origem ? ` · origem ${ORCAMENTO_ORIGEM_LABELS[selected.origem] || selected.origem}` : ''}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div><div><h3 className="font-semibold mb-2">Versões</h3>{versions.length === 0 ? <p className="text-sm text-slate-500">Somente esta versão.</p> : <div className="space-y-1">{versions.map((version) => <button key={version.id} type="button" className={`w-full text-left text-sm border-l-2 pl-3 py-1 ${version.id === selected.id ? 'border-blue-600 font-medium' : 'border-slate-200'}`} onClick={() => { if (version.id !== selected.id) void showDetail(version); }}>v{version.versao ?? 1} · {formatOrcamentoStatusLabel(version.status)} · {money(version.total)} · {date(version.created_at)}</button>)}</div>}</div><div><h3 className="font-semibold mb-2">Anexos</h3>{anexos.length === 0 ? <p className="text-sm text-slate-500">Nenhum anexo ativo.</p> : <ul className="text-sm space-y-1">{anexos.map((anexo) => <li key={anexo.id} className="border rounded px-2 py-1">{anexo.nome_arquivo} · {anexo.mime_type} · {anexo.status}</li>)}</ul>}</div></div>}<DialogFooter className="flex flex-wrap gap-2">{canPrint && <Button variant="outline" data-permission="Comercial.orcamento.imprimir" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button>}{canPrint && <Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button>}{canPrint && <Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>}{canVersion(selected) && <Button variant="outline" data-permission="Comercial.orcamento.versionar" onClick={() => createVersion(selected)} disabled={submitting}><FilePlus2 className="w-4 h-4 mr-2" />Nova versão</Button>}{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
     <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) setPendingConversion(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setPendingConversion(null)} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting}>{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}

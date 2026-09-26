@@ -5,6 +5,7 @@ import test from 'node:test';
 import {
   buildOrcamentoPayload,
   buildOrcamentoShareText,
+  buildOrcamentoVersionPayload,
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
@@ -127,6 +128,24 @@ test('tela audita impressao e compartilhamento com RBAC fail-closed', async () =
   assert.match(tab, /Impressao bloqueada/);
   assert.match(tab, /Compartilhamento preparado/);
   assert.match(tab, /data-permission="Comercial\.orcamento\.imprimir"/);
+  assert.match(tab, /createVersion/);
+  assert.match(tab, /listVersions/);
+  assert.match(tab, /listAnexos/);
+  assert.match(tab, /ORCAMENTO_ORIGEM_LABELS/);
+  assert.match(tab, /data-permission="Comercial\.orcamento\.versionar"/);
   assert.match(page, /createInContext/);
   assert.match(page, /OrcamentosTab[\s\S]*createInContext/);
+});
+test('versionar exige permissao e estado EM_ABERTO', () => {
+  const allow = (module, section, action) => module === 'Comercial' && section === 'orcamento' && action === 'versionar';
+  assert.equal(canUseOrcamentoAction(allow, 'versionar', 'EM_ABERTO'), true);
+  assert.equal(canUseOrcamentoAction(allow, 'versionar', 'SUPERSEDIDO'), false);
+  const payload = buildOrcamentoVersionPayload({
+    cliente_empresa_id: 'cliente-empresa-1',
+    condicao_pagamento_id: 'condicao-1',
+    validade_em: '2027-01-31T00:00:00.000Z',
+    itens: form().itens,
+  });
+  assert.equal(payload.cliente_empresa_id, 'cliente-empresa-1');
+  assert.equal(payload.itens.length, 1);
 });
