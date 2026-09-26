@@ -27,6 +27,7 @@ const map = (row: Row): Pedido => ({
   canal: row.canal == null ? null : String(row.canal),
   external_id: row.external_id == null ? null : String(row.external_id),
   idempotency_key: row.idempotency_key == null ? null : String(row.idempotency_key),
+  campanha: row.campanha == null ? null : String(row.campanha),
   tipo_comercial: String(row.tipo_comercial ?? 'REVENDA') as PedidoTipoComercial,
   created_at: new Date(String(row.created_at)).toISOString(), updated_at: new Date(String(row.updated_at)).toISOString(),
   itens: (Array.isArray(row.itens) ? row.itens : JSON.parse(String(row.itens ?? '[]'))).map((item: Row) => ({
@@ -90,13 +91,13 @@ export class PostgresPedidoRepository implements PedidoRepository {
         `INSERT INTO pedidos(
           group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,
           orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,origem,canal,external_id,idempotency_key,
-          tipo_comercial,subtotal,desconto,total,created_by,updated_by
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$10,$10) RETURNING id`,
+          campanha,tipo_comercial,subtotal,desconto,total,created_by,updated_by
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$10,$10) RETURNING id`,
         [
           scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null,
           data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao,
           data.data_entrega_solicitada, data.observacoes ?? null, origem, data.canal ?? null, data.external_id ?? null,
-          data.idempotency_key ?? null, data.tipo_comercial ?? 'REVENDA', totals.subtotal, totals.desconto, totals.total,
+          data.idempotency_key ?? null, data.campanha ?? null, data.tipo_comercial ?? 'REVENDA', totals.subtotal, totals.desconto, totals.total,
         ],
       );
       const id = String(inserted.rows[0]?.id);

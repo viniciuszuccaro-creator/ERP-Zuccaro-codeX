@@ -1,10 +1,27 @@
-## #56 STATUS REAL — Onda 5 Pedido anexos via DAM (2026-09-26T19:40Z)
+## #57 STATUS REAL — Onda 5 Pedido campanha + marcos críticos (2026-09-26T19:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 031 campanha + `comercialPedidoMarcoPolicy` |
+| Testado | **PENDENTE** |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #56→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 5 - campanha e marcos Pedido (2026-09-26T19:50Z)
+
+- Branch `cursor/comercial360-onda5-pedido-campanha-marcos-392b` (base #56).
+- Campo `campanha` alinhado ao Orçamento; imutável no update.
+- Política explícita: mutações comerciais só em `EM_ABERTO`; após marco crítico → 409.
+- Sem módulo paralelo. Aprovação Orçamento continua no stack #46.
+
+## #56 STATUS REAL — Onda 5 Pedido anexos via DAM (2026-09-26T19:42Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — migration 030 + StoragePort entity Pedido + CRUD metadados |
 | Testado | **SIM** — anexos Pedido + storage + runtime01 (030) |
-| CI | **PENDENTE** |
+| CI | **SIM** — frontend+backend SUCCESS (`2712fdee`) |
 | Mesclado | **NÃO** (empilhada #55→…) |
 | Implantado VPS | **NÃO** |
 
@@ -14,7 +31,7 @@
 - Reutiliza DAM: `StoragePort.entity` = `Produto | Orcamento | Pedido`; path `/pedidos/{id}/documents/`.
 - Metadados em `pedido_anexos`; binário só no storage.
 - Rotas `GET/POST /api/v1/pedidos/:id/anexos` e `POST .../inativar`.
-- Sem módulo DAM paralelo. Aprovação Orçamento ainda depende #46.
+- Sem módulo DAM paralelo. Próximo: campanha + marcos críticos no Pedido.
 
 ## #55 STATUS REAL — Onda 4 Orçamento PDF/impressão auditada (2026-09-26T19:35Z)
 

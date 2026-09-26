@@ -14,6 +14,7 @@ import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoR
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import { PEDIDO_ORIGENS, PEDIDO_STATUS, PEDIDO_TIPOS_COMERCIAIS, pedidoAnexoCreateSchema, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoCreateResolved, type PedidoOrigem, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoTipoComercial } from '../repositories/pedidoTypes.js';
 import { aggregatePedidoTipoComercial, resolveItemTipoComercial } from './comercialTipoComercialPolicy.js';
+import { assertPedidoComercialmenteEditavel } from './comercialPedidoMarcoPolicy.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import { z } from 'zod';
 
@@ -27,6 +28,7 @@ const conversionSchema = z.object({
   canal: z.string().trim().min(1).max(80).nullable().optional(),
   external_id: z.string().trim().min(1).max(160).nullable().optional(),
   idempotency_key: z.string().trim().min(1).max(160).nullable().optional(),
+  campanha: z.string().trim().min(1).max(120).nullable().optional(),
 }).strict();
 
 /** Porta mínima para snapshot de preço na venda direta (não usada na conversão de Orçamento). */
@@ -44,6 +46,7 @@ export function pedidoAuditSnapshot(row: Pedido) {
     tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id,
     vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada,
     origem: row.origem, canal: row.canal, external_id: row.external_id, idempotency_key: row.idempotency_key,
+    campanha: row.campanha,
     tipo_comercial: row.tipo_comercial,
     subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao),
@@ -110,6 +113,7 @@ export class PedidoService {
           cliente_empresa_id: quote.cliente_empresa_id,
           condicao_pagamento_id: quote.condicao_pagamento_id,
           observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
+          campanha: parsed.data.campanha ?? quote.campanha ?? null,
           itens: quote.itens.map((item) => ({
             produto_id: item.produto_id,
             unidade_id: item.unidade_id,
@@ -169,13 +173,16 @@ export class PedidoService {
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
-      if (before.status !== 'EM_ABERTO') this.stateConflict();
+      if (!assertPedidoComercialmenteEditavel(before.status).ok) this.stateConflict();
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       if (data.origem !== undefined && data.origem !== before.origem) this.validation({ origem: 'immutable' });
       if (data.canal !== undefined && (data.canal ?? null) !== before.canal) this.validation({ canal: 'immutable' });
       if (data.external_id !== undefined && (data.external_id ?? null) !== before.external_id) this.validation({ external_id: 'immutable' });
       if (data.idempotency_key !== undefined && (data.idempotency_key ?? null) !== before.idempotency_key) {
         this.validation({ idempotency_key: 'immutable' });
+      }
+      if (data.campanha !== undefined && (data.campanha ?? null) !== before.campanha) {
+        this.validation({ campanha: 'immutable' });
       }
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
@@ -207,7 +214,7 @@ export class PedidoService {
     if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) this.validation({ motivo: 'invalid' });
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
-      if (before.status !== 'EM_ABERTO') this.stateConflict();
+      if (!assertPedidoComercialmenteEditavel(before.status).ok) this.stateConflict();
       const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
@@ -230,7 +237,7 @@ export class PedidoService {
     this.assertAnexoStorageKey(scope, id, parsed.data.storage_key);
     return this.repo.withTransaction(async (executor) => {
       const pedido = await this.requirePedido(scope, id, executor);
-      if (pedido.status !== 'EM_ABERTO') this.stateConflict();
+      if (!assertPedidoComercialmenteEditavel(pedido.status).ok) this.stateConflict();
       try {
         const created = await this.repo.createAnexo(scope, id, parsed.data, ctx.actorId!, executor);
         await this.audit.append({
@@ -299,6 +306,7 @@ export class PedidoService {
       canal: data.canal ?? null,
       external_id: data.external_id ?? null,
       idempotency_key: data.idempotency_key ?? null,
+      campanha: data.campanha ?? null,
     };
   }
 
