@@ -15,6 +15,10 @@ import {
   assertMargemDentroDaAlcadaOuAprovar,
   type ComercialCostPort,
 } from './comercialMargemAlcadaPolicy.js';
+import {
+  deveLiberarDescontoSemAprovarPorAvista,
+  type ComercialAlcadaConfigPort,
+} from './comercialCondicaoAvistaPolicy.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -27,7 +31,7 @@ export type OrcamentoSalePricePort = {
   ): Promise<{ preco: string } | null>;
 };
 
-export type { ComercialCostPort };
+export type { ComercialCostPort, ComercialAlcadaConfigPort };
 
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
@@ -52,6 +56,8 @@ export class OrcamentoService {
     private readonly prices: OrcamentoSalePricePort,
     /** Opcional: sem porta de custo a alçada de margem não roda (não inventa custo). */
     private readonly costs: ComercialCostPort | null = null,
+    /** Opcional: config de alçada (à vista); ausente = fail-closed (não libera). */
+    private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -60,7 +66,7 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
-      await this.assertDescontoAlcada(ctx, priced.itens);
+      await this.assertDescontoAlcada(ctx, scope, priced, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
@@ -107,7 +113,7 @@ export class OrcamentoService {
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
-      await this.assertDescontoAlcada(ctx, priced.itens);
+      await this.assertDescontoAlcada(ctx, scope, priced, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
@@ -168,11 +174,36 @@ export class OrcamentoService {
     }
   }
 
-  private async assertDescontoAlcada(ctx: RequestContext, itens: OrcamentoCreate['itens']) {
+  private async assertDescontoAlcada(
+    ctx: RequestContext,
+    scope: OrcamentoScope,
+    data: OrcamentoCreate,
+    executor?: DbQueryExecutor,
+  ) {
+    const liberadoPorAvista = await this.resolveLiberacaoAvista(scope, data.condicao_pagamento_id, executor);
     assertDescontoDentroDaAlcadaOuAprovar({
-      items: itens,
+      items: data.itens,
       canAprovar: await this.canAprovarComercial(ctx),
       entityLabel: 'Orçamento',
+      liberadoPorAvista,
+    });
+  }
+
+  private async resolveLiberacaoAvista(
+    scope: OrcamentoScope,
+    condicaoId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<boolean> {
+    if (!this.alcadaConfig) return false;
+    const cfg = await this.alcadaConfig.getConfig({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+    });
+    if (cfg?.avistaLiberaDescontoSemAprovar !== true) return false;
+    const condicao = await this.condicoes.get(scope, condicaoId, executor);
+    return deveLiberarDescontoSemAprovarPorAvista({
+      parcelas: condicao?.parcelas,
+      regraPermite: true,
     });
   }
 

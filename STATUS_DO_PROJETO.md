@@ -1,3 +1,20 @@
+## #49 STATUS REAL — à vista libera desconto (Onda 2) (2026-09-26T20:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `comercialCondicaoAvistaPolicy` + porta `alcadaConfig` opcional |
+| Testado | **PENDENTE** após rebase sobre #47 wiring |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** |
+| Implantado | **N/A** |
+
+## Comercial 360 / Onda 2 - condição à vista (2026-09-26T18:00Z)
+
+- Branch `cursor/comercial360-onda2-avista-392b` (empilhada sobre #47 margem).
+- À vista = parcelas ativas com `dias === 0`. Liberação de alçada de desconto **somente** se config explícita `avistaLiberaDescontoSemAprovar === true` (porta opcional; default null = fail-closed).
+- Sem migration, sem percentuais inventados, sem módulo paralelo. Reutiliza CondicaoPagamento existente.
+- Testes: `comercial-condicao-avista*.test.ts`.
+
 ## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
 
 | Etapa | Estado |
