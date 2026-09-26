@@ -1,3 +1,14 @@
+## #46 STATUS REAL — alçada desconto (2026-09-26T17:30Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — HEAD `e6490000` (P1 truncamento `<1 bp` + HTTP create/update/convert) |
+| Testado | **SIM** — 9/9 alcada unit+HTTP |
+| CI | **SIM** @ `e6490000` frontend+backend SUCCESS |
+| Re-review Codex | **PENDENTE** no HEAD ≥`5ba34df3` (review anterior era de `9415094f`) |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** (somente código/CI; sem deploy deste PR) |
+
 ## Comercial 360 / Onda 2 - alçada P1 truncamento <1 bp (2026-09-26T17:20Z)
 
 - Achado Codex no HEAD `9415094f`: `descontoBps` truncava BigInt → desconto 0.01/1000 (0.1 bp) passava com alçada 0.
