@@ -1,3 +1,21 @@
+## #54 STATUS REAL — Onda 4 Orçamento anexos via DAM (2026-09-26T19:40Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 029 + StoragePort entity Orcamento + CRUD metadados |
+| Testado | **SIM** — anexos + storage adapter + regressão onda4/01 |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** (empilhada #53→…) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 4 - anexos Orçamento (2026-09-26T19:40Z)
+
+- Branch `cursor/comercial360-onda4-orcamento-anexos-392b` (base #53).
+- Estende DAM existente: `StoragePort.entity` = `Produto | Orcamento`; path `/orcamentos/{id}/documents/`.
+- Metadados em `orcamento_anexos` (QUARENTENA→INATIVO); binário só no storage.
+- Rotas `GET/POST /anexos` e `POST /anexos/:id/inativar`. Path fora do escopo → 422.
+- Sem módulo DAM paralelo. PDF/impressão e aprovação continuam próximos.
+
 ## #53 STATUS REAL — Onda 4 Orçamento origem/canal/idempotency (2026-09-26T19:25Z)
 
 | Etapa | Estado |
