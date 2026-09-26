@@ -4,7 +4,7 @@
 | --- | --- |
 | Implementado | **SIM** — migration 027 + createVersion/listVersions |
 | Testado | **SIM** — onda4 + runtime08c/01 + regressão onda5 (78/78) |
-| CI | **PENDENTE** |
+| CI | **PENDENTE** — aguardando workflow |
 | Mesclado | **NÃO** (empilhada #50→#51→#52) |
 | Implantado VPS | **NÃO** |
 
@@ -15,17 +15,17 @@
 - RBAC `Comercial.orcamento.versionar`; rotas `GET/POST /api/v1/orcamentos/:id/versoes`.
 - Sem módulo paralelo; anexos/PDF/aprovação ficam para checkpoint seguinte da Onda 4.
 
-## #51 STATUS REAL — Onda 5 ck2 tipo comercial Pedido (2026-09-26T19:20Z)
+## #51 STATUS REAL — Onda 5 ck2 tipo comercial Pedido (2026-09-26T19:12Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — migration 026 + policy + Pedido service/repos |
-| Testado | **SIM** — policy/service/HTTP regressão onda5 + runtime01/09 (47/47) |
-| CI | **PENDENTE** — aguardando push |
+| Testado | **SIM** — policy/service/HTTP regressão onda5 + runtime01/09 |
+| CI | **SIM** — frontend+backend SUCCESS (`f26a5ae7`) |
 | Mesclado | **NÃO** (empilhada sobre #50) |
 | Implantado VPS | **NÃO** |
 
-## Comercial 360 / Onda 5 ck2 - tipo comercial no Pedido (2026-09-26T19:20Z)
+## Comercial 360 / Onda 5 ck2 - tipo comercial no Pedido (2026-09-26T19:12Z)
 
 - Branch `cursor/comercial360-onda5-tipo-comercial-392b` (base `#50` / origem-canal).
 - `tipo_comercial` no cabeçalho; `tipo_comercial_snapshot` no item; derivado do `Produto.tipo_item`.
@@ -34,17 +34,17 @@
 - Filtro list `tipoComercial`; auditoria inclui tipo; sem módulo paralelo.
 - **#45/#46:** CI SIM, MERGEABLE, marcadas **ready for review**; mesclado NÃO; #45 VPS/re-login BLOCKED humano.
 
-## #50 STATUS REAL — Onda 5 Pedido origem/canal/idempotency (2026-09-26T19:00Z)
+## #50 STATUS REAL — Onda 5 Pedido origem/canal/idempotency (2026-09-26T19:12Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — checkpoint 1 (origem/canal/idempotency) |
 | Testado | **SIM** — service + HTTP exact (MANUAL default, 409 IDEMPOTENCY, convert ORCAMENTO) + runtime01/025 |
-| CI | **SIM** — frontend+backend SUCCESS em `d2907752`; re-CI após HTTP tests |
+| CI | **SIM** — frontend+backend SUCCESS (`79678f54`, HTTP tests) |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** (migration 025 só após gate) |
 
-## Comercial 360 / Onda 5 - origem/canal/idempotency no Pedido (2026-09-26T19:00Z)
+## Comercial 360 / Onda 5 - origem/canal/idempotency no Pedido (2026-09-26T19:12Z)
 
 - Branch `cursor/comercial360-onda5-pedido-origem-392b` (base `main`; PR #50 draft).
 - Campos aditivos no Pedido canônico: `origem`, `canal`, `external_id`, `idempotency_key`.
