@@ -1,24 +1,20 @@
-## #50 STATUS REAL — Onda 5 Pedido origem/canal/idempotency (2026-09-26T19:00Z)
+## #50 STATUS REAL — Onda 5 Pedido origem/canal/idempotency (2026-09-26T20:50Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado | **SIM** — checkpoint 1 (origem/canal/idempotency) |
-| Testado | **SIM** — service + HTTP exact (MANUAL default, 409 IDEMPOTENCY, convert ORCAMENTO) + runtime01/025 |
-| CI | **SIM** — frontend+backend SUCCESS em `d2907752`; re-CI após HTTP tests |
+| Implementado | **SIM** — backfill ORCAMENTO + 23505 canal antes de converted |
+| Testado | **SIM** — service + HTTP + migration order |
+| CI | **PENDENTE** neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** (migration 025 só após gate) |
 
-## Comercial 360 / Onda 5 - origem/canal/idempotency no Pedido (2026-09-26T19:00Z)
+## Comercial 360 / Onda 5 - origem/canal/idempotency no Pedido (2026-09-26T20:50Z)
 
-- Branch `cursor/comercial360-onda5-pedido-origem-392b` (base `main`; PR #50 draft).
+- Branch `cursor/comercial360-onda5-pedido-origem-392b` (base `main`; PR #50).
 - Campos aditivos no Pedido canônico: `origem`, `canal`, `external_id`, `idempotency_key`.
-- Origens allowlist: MANUAL/ORCAMENTO/SITE/PORTAL_B2B/APP/CHATBOT/MARKETPLACE/IMPORTACAO.
-- Unicidade (group,empresa,origem,chave) e (group,empresa,origem,external_id); 409 em conflito.
-- Conversão Orçamento→Pedido força `origem=ORCAMENTO`. Origem/canal/ids imutáveis no update.
-- HTTP: `comercial-onda5-pedido-origem-http.test.ts` — create MANUAL, retry SITE→409 `PEDIDO_IDEMPOTENCY_CONFLICT` sem 2ª persistência, convert→ORCAMENTO.
+- Backfill: pedidos com `orcamento_id` → `origem=ORCAMENTO` **antes** de DEFAULT/NOT NULL MANUAL.
+- Catch de convert: `rethrowChannelConflict` antes de `ORCAMENTO_ALREADY_CONVERTED` (ambos 23505).
 - Sem módulo paralelo; reutiliza Pedido 017. Migration **não** aplicada em VPS neste lote.
-- Pilha Onda 2 (#46→#47→#49) e #45/#48: CI SIM; **mesclado NÃO**. CRM Onda 3 HTTP continua BLOCKED (decisão A/B).
-- Próximo Onda 5 (checkpoint 2): tipo comercial do item/pedido + marcos de edição (sem outbox/crédito/reserva ainda).
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
