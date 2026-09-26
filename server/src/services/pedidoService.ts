@@ -15,6 +15,7 @@ import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import { PEDIDO_ORIGENS, PEDIDO_STATUS, PEDIDO_TIPOS_COMERCIAIS, pedidoAnexoCreateSchema, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoCreateResolved, type PedidoOrigem, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoTipoComercial } from '../repositories/pedidoTypes.js';
 import { aggregatePedidoTipoComercial, resolveItemTipoComercial } from './comercialTipoComercialPolicy.js';
 import { assertPedidoComercialmenteEditavel } from './comercialPedidoMarcoPolicy.js';
+import { assertCreditoSuficienteOuAprovar, type ComercialCreditPort } from './comercialCreditoPolicy.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import { z } from 'zod';
 
@@ -38,6 +39,8 @@ export type PedidoSalePricePort = {
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
+
+export type { ComercialCreditPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({
@@ -69,6 +72,8 @@ export class PedidoService {
     private readonly obras: Pick<ObraRepository, 'get'>,
     private readonly tabelas: Pick<TabelaPrecoRepository, 'get'>,
     private readonly prices: PedidoSalePricePort,
+    /** Opcional: sem porta a checagem de crédito não roda (não inventa limite). */
+    private readonly credit: ComercialCreditPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -84,6 +89,7 @@ export class PedidoService {
         await this.validateReferences(scope, data, executor);
         const priced = await this.applyServerPriceSnapshots(ctx, data);
         const resolved = await this.applyTipoComercialSnapshots(scope, priced, executor);
+        await this.assertCreditoAlcada(ctx, scope, resolved);
         const created = await this.repo.create(scope, resolved, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
@@ -131,6 +137,7 @@ export class PedidoService {
         await this.assertChannelUniqueness(scope, data, executor);
         await this.validateReferences(scope, data, executor);
         const resolved = await this.applyTipoComercialSnapshots(scope, data, executor);
+        await this.assertCreditoAlcada(ctx, scope, resolved);
         const created = await this.repo.create(scope, resolved, ctx.actorId!, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         return created;
@@ -188,6 +195,7 @@ export class PedidoService {
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
       const resolved = await this.applyTipoComercialSnapshots(scope, priced, executor);
+      await this.assertCreditoAlcada(ctx, scope, resolved);
       const after = await this.repo.update(scope, id, resolved, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -377,6 +385,29 @@ export class PedidoService {
       tipo_comercial: aggregatePedidoTipoComercial(itens.map((item) => item.tipo_comercial_snapshot)),
       itens,
     };
+  }
+
+  private async assertCreditoAlcada(
+    ctx: RequestContext,
+    scope: PedidoScope,
+    data: Pick<PedidoCreate, 'cliente_empresa_id' | 'itens'>,
+  ) {
+    let canAprovarCredito = false;
+    try {
+      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar-credito', { allowGlobalWildcard: false });
+      canAprovarCredito = true;
+    } catch {
+      canAprovarCredito = false;
+    }
+    await assertCreditoSuficienteOuAprovar({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+      clienteEmpresaId: data.cliente_empresa_id,
+      items: data.itens,
+      credit: this.credit,
+      canAprovarCredito,
+      entityLabel: 'Pedido',
+    });
   }
 
   private async prepare(ctx: RequestContext, action: RbacAction): Promise<PedidoScope> {
