@@ -2,25 +2,68 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  applyPedidoVinculoAoForm,
+  filterPedidosParaTitulo,
+} from "@/components/lib/financeiroTituloPolicy";
 
-export default function ContaReceberVinculosSection({ formData, setFormData, pedidos = [], centrosCusto = [], planosContas = [] }) {
+const PEDIDO_NENHUM = "__none__";
+
+function labelPedido(pedido) {
+  const numero = pedido?.numero_pedido || pedido?.numero || pedido?.id || "—";
+  const cliente = pedido?.cliente_nome || pedido?.cliente || "sem cliente";
+  const valor = Number(pedido?.valor_total ?? pedido?.total ?? pedido?.valor);
+  const valorTxt = Number.isFinite(valor) ? `R$ ${valor.toFixed(2)}` : "";
+  return [numero, cliente, valorTxt].filter(Boolean).join(" - ");
+}
+
+export default function ContaReceberVinculosSection({
+  formData,
+  setFormData,
+  pedidos = [],
+  centrosCusto = [],
+  planosContas = [],
+  groupId,
+  empresaId,
+}) {
+  const empresaEscopo = empresaId || formData.empresa_id;
+  const groupEscopo = groupId || formData.group_id || formData.grupo_id;
+  const pedidosEscopo = filterPedidosParaTitulo({
+    pedidos,
+    groupId: groupEscopo,
+    empresaId: empresaEscopo,
+  });
+  const pedidoSelecionado = formData.pedido_id || PEDIDO_NENHUM;
+
+  const onPedidoChange = (value) => {
+    if (!value || value === PEDIDO_NENHUM) {
+      setFormData(applyPedidoVinculoAoForm({ form: formData, pedido: null }));
+      return;
+    }
+    const pedido = pedidosEscopo.find((item) => item.id === value);
+    setFormData(applyPedidoVinculoAoForm({ form: formData, pedido: pedido || { id: value } }));
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div>
         <Label>Pedido Vinculado</Label>
-        <Select value={formData.pedido_id} onValueChange={(v) => setFormData({ ...formData, pedido_id: v })}>
+        <Select value={pedidoSelecionado} onValueChange={onPedidoChange} disabled={!empresaEscopo}>
           <SelectTrigger>
-            <SelectValue placeholder="Nenhum pedido vinculado..." />
+            <SelectValue placeholder={empresaEscopo ? "Nenhum pedido vinculado..." : "Selecione a empresa primeiro"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={null}>Nenhum</SelectItem>
-            {pedidos.map((p) => (
+            <SelectItem value={PEDIDO_NENHUM}>Nenhum</SelectItem>
+            {pedidosEscopo.map((p) => (
               <SelectItem key={p.id} value={p.id}>
-                {p.numero_pedido} - {p.cliente_nome} - R$ {p.valor_total?.toFixed(2)}
+                {labelPedido(p)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {!empresaEscopo && (
+          <p className="text-xs text-slate-500 mt-1">Informe a empresa do título para listar pedidos do mesmo escopo.</p>
+        )}
       </div>
 
       <div>

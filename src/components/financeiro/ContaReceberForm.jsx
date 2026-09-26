@@ -22,13 +22,15 @@ import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaReceberDadosGerais from "./ContaReceberDadosGerais";
 import ContaReceberFinanceiroSection from "@/components/financeiro/ContaReceberFinanceiroSection";
 import ContaReceberVinculosSection from "@/components/financeiro/ContaReceberVinculosSection";
+import { assertTituloOnCreate } from "@/components/lib/financeiroTituloPolicy";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
 
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [errorMessages, setErrorMessages] = useState([]);
   const { user: authUser } = useUser();
-  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contextoCanonico, filterInContext } = useContextoVisual();
+  const groupId = contextoCanonico?.groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
   const [formData, setFormData] = useState(() => conta || {
     descricao: '',
     cliente: '',
@@ -54,41 +56,61 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   });
 
   const { formasPagamento } = useFormasPagamento({ empresa_id: formData.empresa_id });
+  const tenantKey = [groupId, empresaAtual?.id, formData.empresa_id].filter(Boolean).join(':');
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
+    queryKey: ['clientes', tenantKey],
     queryFn: () => filterInContext('Cliente', {}, '-updated_date', 9999),
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
+    queryKey: ['pedidos', tenantKey],
     queryFn: () => filterInContext('Pedido', {}, '-updated_date', 9999),
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas', empresaAtual?.id],
+    queryKey: ['empresas', tenantKey],
     queryFn: () => filterInContext('Empresa', {}, '-updated_date', 9999),
   });
 
   const { data: centrosCusto = [] } = useQuery({
-    queryKey: ['centrosCusto', empresaAtual?.id],
+    queryKey: ['centrosCusto', tenantKey],
     queryFn: () => filterInContext('CentroCusto', {}, '-updated_date', 9999),
   });
   const { data: planosContas = [] } = useQuery({
-    queryKey: ['planosContas', empresaAtual?.id],
+    queryKey: ['planosContas', tenantKey],
     queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
   // Recebe payload já validado e carimbado pelo FormWrapper quando externalData é usado
   const handleSubmit = async (payload) => {
     setErrorMessages([]);
-    const enriched = {
-      ...payload,
-      valor: Number(payload?.valor) || 0,
-      criado_por: authUser?.full_name || authUser?.email,
-      criado_por_id: authUser?.id
-    };
-    onSubmit(enriched);
+    const pedidoId = String(payload?.pedido_id || formData.pedido_id || '').trim();
+    const pedido = pedidoId ? pedidos.find((item) => String(item?.id || '').trim() === pedidoId) || null : null;
+    try {
+      const decision = assertTituloOnCreate({
+        record: {
+          ...payload,
+          pedido_id: pedidoId || '',
+          group_id: payload?.group_id || formData.group_id || groupId,
+          empresa_id: payload?.empresa_id || formData.empresa_id,
+        },
+        pedido,
+        groupId: payload?.group_id || formData.group_id || groupId,
+        empresaId: payload?.empresa_id || formData.empresa_id,
+      });
+      const enriched = {
+        ...decision.record,
+        valor: Number(decision.record?.valor) || 0,
+        criado_por: authUser?.full_name || authUser?.email,
+        criado_por_id: authUser?.id
+      };
+      onSubmit(enriched);
+    } catch (error) {
+      const message = error?.message || 'Falha ao validar vínculo do título.';
+      setErrorMessages([message]);
+      toast.error(message);
+    }
   };
 
   const content = (
@@ -100,6 +122,14 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
         </AlertDescription>
       </Alert>
 
+      {errorMessages.length > 0 && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-700" />
+          <AlertDescription className="text-sm text-red-900">
+            {errorMessages.join(' · ')}
+          </AlertDescription>
+        </Alert>
+      )}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
         <TabsList className="grid grid-cols-4 w-full bg-slate-100">
           <TabsTrigger value="dados-gerais">
@@ -142,6 +172,8 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
             pedidos={pedidos}
             centrosCusto={centrosCusto}
             planosContas={planosContas}
+            groupId={groupId}
+            empresaId={formData.empresa_id || empresaAtual?.id}
           />
         </TabsContent>
 
