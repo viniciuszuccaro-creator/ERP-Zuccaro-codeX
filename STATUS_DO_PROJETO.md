@@ -1,3 +1,21 @@
+## #53 STATUS REAL — Onda 4 Orçamento origem/canal/idempotency (2026-09-26T19:25Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration 028 + service/repos |
+| Testado | **SIM** — origem + versao + 08c/01 + onda5 |
+| CI | **SIM** — frontend+backend SUCCESS (`14694610`) |
+| Mesclado | **NÃO** (empilhada #50→#51→#52→#53) |
+| Implantado VPS | **NÃO** |
+
+## Comercial 360 / Onda 4 - origem/canal no Orçamento (2026-09-26T19:30Z)
+
+- Branch `cursor/comercial360-onda4-orcamento-origem-392b` (base #52).
+- Campos: `origem`, `canal`, `external_id`, `idempotency_key`, `campanha`.
+- Allowlist: MANUAL/SITE/PORTAL_B2B/APP/CHATBOT/MARKETPLACE/IMPORTACAO/CRM.
+- 409 em conflito; imutáveis no update; versão herda canal e zera idempotency.
+- Sem módulo paralelo. Anexos/PDF/aprovação: próximo ck (DAM existente).
+
 ## #52 STATUS REAL — Onda 4 Orçamento versionamento (2026-09-26T19:15Z)
 
 | Etapa | Estado |

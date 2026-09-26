@@ -4,6 +4,7 @@ import {
   type Orcamento,
   type OrcamentoCreate,
   type OrcamentoListFilters,
+  type OrcamentoOrigem,
   type OrcamentoRepository,
   type OrcamentoScope,
   type OrcamentoStatus,
@@ -24,6 +25,11 @@ const map = (row: Row): Orcamento => ({
   condicao_pagamento_id: String(row.condicao_pagamento_id),
   validade_em: new Date(String(row.validade_em)).toISOString(),
   observacoes: row.observacoes == null ? null : String(row.observacoes),
+  origem: String(row.origem ?? 'MANUAL') as OrcamentoOrigem,
+  canal: row.canal == null ? null : String(row.canal),
+  external_id: row.external_id == null ? null : String(row.external_id),
+  idempotency_key: row.idempotency_key == null ? null : String(row.idempotency_key),
+  campanha: row.campanha == null ? null : String(row.campanha),
   ativo: Boolean(row.ativo),
   subtotal: String(row.subtotal),
   desconto: String(row.desconto),
@@ -72,6 +78,22 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
     return result.rows[0] ? map(result.rows[0]) : null;
   }
 
+  async getByIdempotencyKey(scope: OrcamentoScope, origem: OrcamentoOrigem, idempotencyKey: string, executor: DbQueryExecutor = this.db): Promise<Orcamento | null> {
+    const result = await executor.query<Row>(
+      `${SELECT} WHERE o.group_id=$1 AND o.empresa_id=$2 AND o.origem=$3 AND o.idempotency_key=$4`,
+      [scope.groupId, scope.empresaId, origem, idempotencyKey],
+    );
+    return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
+  async getByExternalId(scope: OrcamentoScope, origem: OrcamentoOrigem, externalId: string, executor: DbQueryExecutor = this.db): Promise<Orcamento | null> {
+    const result = await executor.query<Row>(
+      `${SELECT} WHERE o.group_id=$1 AND o.empresa_id=$2 AND o.origem=$3 AND o.external_id=$4`,
+      [scope.groupId, scope.empresaId, origem, externalId],
+    );
+    return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
   async create(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor): Promise<Orcamento> {
     return this.runTransaction(executor, async (query) => {
       await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`orcamento:${scope.empresaId}`]);
@@ -79,11 +101,17 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
       const numero = String(sequence.rows[0]?.n ?? '').padStart(8, '0');
       if (!/^\d{8}$/.test(numero)) throw new Error('ORCAMENTO_NUMERO_RESERVATION_FAILED');
       const totals = calculateOrcamento(data.itens);
+      const origem = data.origem ?? 'MANUAL';
       const inserted = await query.query<{ id: string }>(
         `INSERT INTO orcamentos(
-          group_id,empresa_id,numero,versao,cliente_empresa_id,condicao_pagamento_id,validade_em,observacoes,subtotal,desconto,total
-        ) VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-        [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total],
+          group_id,empresa_id,numero,versao,cliente_empresa_id,condicao_pagamento_id,validade_em,observacoes,
+          origem,canal,external_id,idempotency_key,campanha,subtotal,desconto,total
+        ) VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
+        [
+          scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em,
+          data.observacoes ?? null, origem, data.canal ?? null, data.external_id ?? null, data.idempotency_key ?? null,
+          data.campanha ?? null, totals.subtotal, totals.desconto, totals.total,
+        ],
       );
       const id = String(inserted.rows[0]?.id);
       await query.query('UPDATE orcamentos SET orcamento_raiz_id=$1 WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
@@ -109,12 +137,12 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
 
   async list(scope: OrcamentoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: OrcamentoListFilters = {}) {
     const query = executor ?? this.db;
-    const where = `o.group_id=$1 AND o.empresa_id=$2 AND ($3::text IS NULL OR o.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR o.status=$4) AND ($5::uuid IS NULL OR o.cliente_empresa_id=$5) AND ($6::timestamptz IS NULL OR o.validade_em >= $6) AND ($7::timestamptz IS NULL OR o.validade_em <= $7)`;
-    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.validadeDe || null, filters.validadeAte || null];
+    const where = `o.group_id=$1 AND o.empresa_id=$2 AND ($3::text IS NULL OR o.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR o.status=$4) AND ($5::uuid IS NULL OR o.cliente_empresa_id=$5) AND ($6::timestamptz IS NULL OR o.validade_em >= $6) AND ($7::timestamptz IS NULL OR o.validade_em <= $7) AND ($8::text IS NULL OR o.origem=$8)`;
+    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.validadeDe || null, filters.validadeAte || null, filters.origem || null];
     const params = [...filterParams, Math.min(200, Math.max(1, Math.trunc(limit))), Math.max(0, Math.trunc(offset))];
     const [count, rows] = await Promise.all([
       query.query<{ total: number }>(`SELECT count(*)::int total FROM orcamentos o WHERE ${where}`, filterParams),
-      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY o.numero DESC,o.versao DESC,o.id DESC LIMIT $8 OFFSET $9`, params),
+      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY o.numero DESC,o.versao DESC,o.id DESC LIMIT $9 OFFSET $10`, params),
     ]);
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }
@@ -152,11 +180,12 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
       const inserted = await query.query<{ id: string }>(
         `INSERT INTO orcamentos(
           group_id,empresa_id,numero,versao,orcamento_raiz_id,cliente_empresa_id,condicao_pagamento_id,
-          validade_em,observacoes,subtotal,desconto,total
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+          validade_em,observacoes,origem,canal,external_id,idempotency_key,campanha,subtotal,desconto,total
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NULL,$13,$14,$15,$16) RETURNING id`,
         [
           scope.groupId, scope.empresaId, source.numero, source.versao + 1, source.orcamento_raiz_id,
           data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em, data.observacoes ?? null,
+          source.origem, source.canal, source.external_id, source.campanha,
           totals.subtotal, totals.desconto, totals.total,
         ],
       );
