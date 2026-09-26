@@ -1,15 +1,9 @@
-<<<<<<< HEAD
-## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
-=======
-<<<<<<< HEAD
-## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T18:05Z)
-=======
-## #49 STATUS REAL — à vista libera desconto (Onda 2) (2026-09-26T18:00Z)
+## #49 STATUS REAL — à vista libera desconto (Onda 2) (2026-09-26T20:45Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — `comercialCondicaoAvistaPolicy` + porta `alcadaConfig` opcional |
-| Testado | **SIM** — unit+HTTP (fail-closed sem config; libera só à vista+flag) |
+| Testado | **PENDENTE** após rebase sobre #47 wiring |
 | CI | **PENDENTE** |
 | Mesclado | **NÃO** |
 | Implantado | **N/A** |
@@ -21,9 +15,7 @@
 - Sem migration, sem percentuais inventados, sem módulo paralelo. Reutiliza CondicaoPagamento existente.
 - Testes: `comercial-condicao-avista*.test.ts`.
 
-## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T17:45Z)
->>>>>>> 7a45a6e0 (feat(comercial): à vista libera desconto só com regra explícita)
->>>>>>> 048612df (feat(comercial): à vista libera desconto só com regra explícita)
+## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
 
 | Etapa | Estado |
 | --- | --- |
