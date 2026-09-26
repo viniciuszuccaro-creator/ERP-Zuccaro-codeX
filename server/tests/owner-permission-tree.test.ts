@@ -65,7 +65,6 @@ test('usuário comum e ação fora da allowlist recebem 403 (Permission denied)'
     (err: any) => err?.statusCode === 403 && err?.code === 'PERMISSION_DENIED',
   );
 
-  // HTTP: comum sem criar pedido → 403
   const { app, pedidoService } = createApp({
     config,
     db: createDbClient(config),
@@ -73,29 +72,41 @@ test('usuário comum e ação fora da allowlist recebem 403 (Permission denied)'
     tenantGuard: tenant,
     rbacGuard: rbac,
   });
-  // stub mínimo para não falhar antes do RBAC em create se chegar a validar payload —
-  // assertAllowed é a primeira barreira no service; chamamos direto o guard via HTTP list.
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const address = server.address();
   assert.ok(address && typeof address !== 'string');
   try {
-    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/pedidos`, {
+    const allowed = await fetch(`http://127.0.0.1:${address.port}/api/v1/pedidos`, {
       headers: {
         'x-group-id': SEED_IDS.groupA,
         'x-empresa-id': SEED_IDS.empresaA,
         'x-actor-id': commonId,
       },
     });
-    // visualizar é permitido ao comum → 200 ou lista vazia; mutação é o 403
-    assert.ok([200, 403].includes(denied.status));
+    assert.equal(allowed.status, 200);
+
+    const denied = await fetch(`http://127.0.0.1:${address.port}/api/v1/pedidos`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-group-id': SEED_IDS.groupA,
+        'x-empresa-id': SEED_IDS.empresaA,
+        'x-actor-id': commonId,
+      },
+      body: JSON.stringify({ cliente_empresa_id: 'c3c3c3c3-cccc-4ccc-8ccc-c3c3c3c3c3c3', itens: [] }),
+    });
+    assert.equal(denied.status, 403);
+    const body = await denied.json();
+    assert.equal(body.error.code, 'PERMISSION_DENIED');
+    assert.equal(body.error.message, 'Permission denied');
 
     await assert.rejects(
       () => pedidoService.create(ctxCommon, {
         cliente_empresa_id: 'c3c3c3c3-cccc-4ccc-8ccc-c3c3c3c3c3c3',
         itens: [],
       } as any),
-      (err: any) => err?.statusCode === 403 || /Permission denied/i.test(String(err?.message || err)),
+      (err: any) => err?.statusCode === 403 && err?.code === 'PERMISSION_DENIED',
     );
   } finally {
     await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())));

@@ -6,7 +6,7 @@
 # Não imprime UUID completo, senha, token ou e-mail completo.
 # NÃO executar automaticamente — só na Web Console com confirmação humana.
 #
-# Uso (Web Console VPS):
+# Uso (Web Console VPS) — concessão:
 #   CONFIRM_OWNER_ADMIN_PROFILE=YES \
 #     OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
 #     OWNER_GROUP_ID='<uuid-grupo>' \
@@ -14,10 +14,17 @@
 #     SYNTH_EMAIL='gate-d.synth@dev.synthetic.local' \
 #     DEMOTE_SYNTH=YES \
 #     bash scripts/vps/provision-owner-admin-profile.sh
+#
+# Rollback seletivo (após COMMITTED; NÃO usar pg_dump --data-only):
+#   CONFIRM_OWNER_ADMIN_RESTORE=YES \
+#     OWNER_PROV_RESTORE_FILE='profiles-selective-pre-owner-prov-....json' \
+#     OWNER_PROFILE_EXISTED_BEFORE_FLAG='YES'|'NO' \
+#     bash scripts/vps/provision-owner-admin-profile.sh
 set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONFIRM_OWNER_ADMIN_PROFILE="${CONFIRM_OWNER_ADMIN_PROFILE:-}"
+CONFIRM_OWNER_ADMIN_RESTORE="${CONFIRM_OWNER_ADMIN_RESTORE:-}"
 OWNER_EMAIL="${OWNER_EMAIL:-vinicius.zuccaro@gmail.com}"
 SYNTH_EMAIL="${SYNTH_EMAIL:-gate-d.synth@dev.synthetic.local}"
 DEMOTE_SYNTH="${DEMOTE_SYNTH:-YES}"
@@ -32,8 +39,106 @@ OWNER_PROV_BACKUP_DIR="${OWNER_PROV_BACKUP_DIR:-$ROOT/backups/owner-provision}"
 UUID_RE='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
 
 echo "OWNER_ADMIN_PROVISION_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+restore_selective_profiles() {
+  local restore_file="$1"
+  local owner_existed="$2"
+  [[ -f "$restore_file" ]] || {
+    echo "BLOCKED: restore_file_missing path=${restore_file}" >&2
+    return 3
+  }
+  docker cp "$restore_file" supabase-db:/tmp/owner-prov-restore.json
+  docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+    -v owner_email="$OWNER_EMAIL" \
+    -v synth_email="$SYNTH_EMAIL" \
+    -v owner_existed_before="$owner_existed" <<'SQL'
+BEGIN;
+CREATE TEMP TABLE _owner_restore (
+  payload jsonb NOT NULL,
+  owner_email text NOT NULL,
+  synth_email text NOT NULL,
+  owner_existed text NOT NULL
+) ON COMMIT DROP;
+INSERT INTO _owner_restore VALUES (
+  pg_read_file('/tmp/owner-prov-restore.json')::jsonb,
+  lower(:'owner_email'),
+  lower(:'synth_email'),
+  upper(trim(:'owner_existed_before'))
+);
+
+DO $rest$
+DECLARE
+  r _owner_restore%ROWTYPE;
+  item jsonb;
+  v_id uuid;
+  v_ids uuid[] := ARRAY[]::uuid[];
+BEGIN
+  SELECT * INTO STRICT r FROM _owner_restore LIMIT 1;
+  IF jsonb_typeof(r.payload) <> 'array' THEN
+    RAISE EXCEPTION 'BLOCKED: restore_payload_not_array';
+  END IF;
+
+  FOR item IN SELECT * FROM jsonb_array_elements(r.payload)
+  LOOP
+    v_id := (item->>'id')::uuid;
+    v_ids := array_append(v_ids, v_id);
+    IF EXISTS (SELECT 1 FROM profiles WHERE id = v_id) THEN
+      UPDATE profiles p SET
+        auth_user_id = NULLIF(item->>'auth_user_id','')::uuid,
+        email = item->>'email',
+        full_name = item->>'full_name',
+        role = item->>'role',
+        ativo = COALESCE((item->>'ativo')::boolean, true),
+        group_id = NULLIF(item->>'group_id','')::uuid,
+        empresa_id = NULLIF(item->>'empresa_id','')::uuid,
+        permissoes = COALESCE(item->'permissoes', '{}'::jsonb),
+        updated_at = timezone('utc', now())
+      WHERE p.id = v_id;
+    ELSE
+      INSERT INTO profiles (
+        id, auth_user_id, email, full_name, role, ativo, group_id, empresa_id, permissoes
+      ) VALUES (
+        v_id,
+        NULLIF(item->>'auth_user_id','')::uuid,
+        item->>'email',
+        item->>'full_name',
+        item->>'role',
+        COALESCE((item->>'ativo')::boolean, true),
+        NULLIF(item->>'group_id','')::uuid,
+        NULLIF(item->>'empresa_id','')::uuid,
+        COALESCE(item->'permissoes', '{}'::jsonb)
+      );
+    END IF;
+  END LOOP;
+
+  IF r.owner_existed <> 'YES' THEN
+    DELETE FROM profiles p
+    WHERE lower(p.email) = r.owner_email
+      AND (cardinality(v_ids) = 0 OR NOT (p.id = ANY (v_ids)));
+  END IF;
+END
+$rest$;
+COMMIT;
+SQL
+}
+
+if [[ "$CONFIRM_OWNER_ADMIN_RESTORE" == "YES" ]]; then
+  RESTORE_FILE="${OWNER_PROV_RESTORE_FILE:-}"
+  [[ -n "$RESTORE_FILE" ]] || {
+    echo 'BLOCKED: set OWNER_PROV_RESTORE_FILE to selective JSON backup' >&2
+    exit 2
+  }
+  [[ "$RESTORE_FILE" == /* ]] || RESTORE_FILE="${OWNER_PROV_BACKUP_DIR}/${RESTORE_FILE}"
+  EXISTED_FLAG="${OWNER_PROFILE_EXISTED_BEFORE_FLAG:-NO}"
+  echo "OWNER_ADMIN_RESTORE_BEGIN file=$(basename "$RESTORE_FILE")"
+  restore_selective_profiles "$RESTORE_FILE" "$EXISTED_FLAG" || exit $?
+  echo 'OWNER_ADMIN_RESTORE_OK'
+  echo "OWNER_ADMIN_PROVISION_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
 [[ "$CONFIRM_OWNER_ADMIN_PROFILE" == "YES" ]] || {
-  echo 'BLOCKED: set CONFIRM_OWNER_ADMIN_PROFILE=YES' >&2
+  echo 'BLOCKED: set CONFIRM_OWNER_ADMIN_PROFILE=YES (or CONFIRM_OWNER_ADMIN_RESTORE=YES)' >&2
   exit 2
 }
 
@@ -131,28 +236,54 @@ fi
 echo 'precheck_ok=YES'
 echo 'precheck_group_empresa_conferidos=YES'
 
-# Backup sanitizado (só tabela profiles) antes de mutar.
+# Backup seletivo dos perfis afetados (JSON). NÃO usar pg_dump --data-only como rollback:
+# replay de data-only conflita PK e não restaura linhas já COMMITADAS.
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
 mkdir -p "$OWNER_PROV_BACKUP_DIR"
-BACKUP_NAME="profiles-pre-owner-prov-${STAMP}.sql"
+BACKUP_NAME="profiles-selective-pre-owner-prov-${STAMP}.json"
 BACKUP_HOST="${OWNER_PROV_BACKUP_DIR}/${BACKUP_NAME}"
-docker exec supabase-db pg_dump -U postgres -d postgres \
-  --data-only --table=profiles --no-owner --no-privileges \
-  -f "/tmp/${BACKUP_NAME}"
-docker cp "supabase-db:/tmp/${BACKUP_NAME}" "$BACKUP_HOST"
+SELECTIVE_SNAPSHOT="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At \
+  -v owner_email="$OWNER_EMAIL" \
+  -v synth_email="$SYNTH_EMAIL" <<'SQL'
+SELECT coalesce(json_agg(row_to_json(t) ORDER BY t.email), '[]'::json)::text
+FROM (
+  SELECT p.id, p.auth_user_id, p.email, p.full_name, p.role, p.ativo,
+         p.group_id, p.empresa_id, p.permissoes
+  FROM profiles p
+  WHERE lower(p.email) IN (lower(:'owner_email'), lower(:'synth_email'))
+     OR p.auth_user_id IN (
+          SELECT id FROM auth.users
+          WHERE lower(coalesce(email,'')) IN (lower(:'owner_email'), lower(:'synth_email'))
+        )
+) t;
+SQL
+)"
+SELECTIVE_SNAPSHOT="$(printf '%s' "$SELECTIVE_SNAPSHOT" | tr -d '\n')"
+[[ -n "$SELECTIVE_SNAPSHOT" && "$SELECTIVE_SNAPSHOT" != "" ]] || SELECTIVE_SNAPSHOT='[]'
+printf '%s\n' "$SELECTIVE_SNAPSHOT" >"$BACKUP_HOST"
 BACKUP_BYTES="$(wc -c <"$BACKUP_HOST" | tr -d '[:space:]')"
 [[ "${BACKUP_BYTES}" -gt 0 ]] || {
-  echo 'BLOCKED: backup_profiles_empty' >&2
+  echo 'BLOCKED: backup_profiles_selective_empty' >&2
   exit 3
 }
-echo "backup_profiles_file=${BACKUP_NAME}"
-echo "backup_profiles_bytes=${BACKUP_BYTES}"
-echo "rollback_hint=psql -f backups/owner-provision/${BACKUP_NAME} (somente profiles; revisar antes)"
+OWNER_PROFILE_EXISTED_BEFORE="$(python3 - "$BACKUP_HOST" "$OWNER_EMAIL" <<'PY'
+import json, sys
+path, email = sys.argv[1], sys.argv[2].lower()
+rows = json.load(open(path, encoding='utf-8'))
+print('YES' if any(str(r.get('email','')).lower() == email for r in rows) else 'NO')
+PY
+)"
+echo "backup_profiles_selective_file=${BACKUP_NAME}"
+echo "backup_profiles_selective_bytes=${BACKUP_BYTES}"
+echo "owner_profile_existed_before=${OWNER_PROFILE_EXISTED_BEFORE}"
+echo "rollback_hint=CONFIRM_OWNER_ADMIN_RESTORE=YES OWNER_PROV_RESTORE_FILE=${BACKUP_NAME} OWNER_PROFILE_EXISTED_BEFORE_FLAG=${OWNER_PROFILE_EXISTED_BEFORE} bash scripts/vps/provision-owner-admin-profile.sh"
+echo "rollback_not=pg_dump_data_only_replay"
 
 # Copia árvore explícita para o container (lida via pg_read_file na TX).
 docker cp "$OWNER_PERMS_FILE" supabase-db:/tmp/owner-admin-permissoes.json
 
-if ! docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+# Condição NÃO invertida: exit 0 → COMMITTED; exit ≠0 → falha (TX já deu ROLLBACK).
+if docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
   -v owner_email="$OWNER_EMAIL" \
   -v owner_full_name="$OWNER_FULL_NAME" \
   -v owner_group_id="$OWNER_GROUP_ID" \
@@ -212,12 +343,22 @@ BEGIN
     RAISE EXCEPTION 'BLOCKED: owner_perms_missing_required_modules';
   END IF;
 
-  SELECT count(*), min(id) INTO v_auth_count, v_auth_id
+  -- auth.users.id é UUID: PostgreSQL não tem min(uuid). Separar count + SELECT.
+  SELECT count(*) INTO v_auth_count
   FROM auth.users
   WHERE lower(coalesce(email, '')) = r.owner_email;
 
-  IF v_auth_count <> 1 OR v_auth_id IS NULL THEN
+  IF v_auth_count <> 1 THEN
     RAISE EXCEPTION 'BLOCKED: owner_auth_must_be_unique got=%', v_auth_count;
+  END IF;
+
+  SELECT id INTO v_auth_id
+  FROM auth.users
+  WHERE lower(coalesce(email, '')) = r.owner_email
+  LIMIT 1;
+
+  IF v_auth_id IS NULL THEN
+    RAISE EXCEPTION 'BLOCKED: owner_auth_id_missing';
   END IF;
 
   SELECT count(*) INTO v_group_ok FROM groups WHERE id = r.group_id;
@@ -330,9 +471,13 @@ COMMIT;
 SQL
 then
   echo 'transaction=COMMITTED'
+  echo "owner_profile_existed_before=${OWNER_PROFILE_EXISTED_BEFORE}"
+  echo "selective_restore_file=${BACKUP_NAME}"
 else
   echo 'BLOCKED: transaction_failed_rolled_back' >&2
-  echo "RESTORE_FROM_BACKUP=${BACKUP_NAME}" >&2
+  echo 'tx_auto_rollback=YES' >&2
+  echo "selective_backup_kept=${BACKUP_NAME}" >&2
+  echo 'NOTE: SQL TX already rolled back; selective restore only needed after COMMITTED grant' >&2
   exit 4
 fi
 

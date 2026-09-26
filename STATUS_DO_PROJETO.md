@@ -1,3 +1,15 @@
+## #45 Codex P1 (cab15caa) — min(uuid), if invertido, rebuild, restore seletivo (2026-09-26T17:10Z)
+
+- Achados Codex do HEAD `cab15caa` corrigidos na mesma branch #45:
+  1. **sem `min(uuid)`**: count + `SELECT id` separados no provision.
+  2. **`if docker exec` não invertido**: exit 0 → `transaction=COMMITTED`; falha → exit 4 sem postcheck/OK.
+  3. **rebuild**: `compose build` **antes** de stop; `trap ERR` + `SWAP_STARTED` restaura 3080/3081 se a troca falhar.
+  4. **backup seletivo JSON** + `CONFIRM_OWNER_ADMIN_RESTORE=YES` (sem replay `pg_dump --data-only`).
+- Sessão SPA: `expiresAt`/`expires_in`, fail-closed em expirada/adulterada; troca de empresa atualiza `erp_runtime_scope`.
+- Testes: `vps-owner-provision-guard` 5/5 · `erp-http-session` 7/7 · `owner-provision-sql` (PGlite) 2/2 · `auth-session-http-exact` 2/2 · `owner-permission-tree` 2/2 (HTTP 200/403 exactos).
+- **VPS:** não executar até re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; depois logout/login real.
+- #46 permanece em branch separada (CI verde); não bloqueia esta correção de acesso.
+
 ## #45 Codex P1 — RBAC explícito + backup + rollback fail-closed (2026-09-26T16:30Z)
 
 - Achados Codex corrigidos na branch #45 (sem rodar VPS ainda):

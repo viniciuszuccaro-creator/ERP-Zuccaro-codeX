@@ -3,6 +3,35 @@ import { resolveErpApiBaseUrl } from './runtimeBackend.js';
 const SCOPE_KEY = 'erp_runtime_scope';
 const TOKEN_KEY = 'base44_access_token';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * @param {Storage | null | undefined} explicit
+ * @returns {Storage | null}
+ */
+function resolveStorage(explicit) {
+  if (explicit) return explicit;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is string}
+ */
+function isUuid(value) {
+  return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
 /**
  * Persiste Bearer + tenant no storage do browser (sem logar segredos).
  * @param {{
@@ -13,21 +42,41 @@ const TOKEN_KEY = 'base44_access_token';
  *   email?: string,
  *   role?: string | null,
  *   fullName?: string | null,
+ *   expiresAt?: string | number | null,
+ *   expiresIn?: number | null,
  *   storage?: Storage,
  * }} input
  */
 export function persistErpHttpSession(input) {
-  const storage = input.storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
+  const storage = resolveStorage(input.storage);
   if (!storage) return;
   const token = String(input.accessToken || '').trim();
   const groupId = String(input.groupId || '').trim();
   const actorId = String(input.actorId || '').trim();
   const empresaId = input.empresaId ? String(input.empresaId).trim() : '';
-  const role = String(input.role || 'user').trim().toLowerCase() || 'user';
+  const roleRaw = String(input.role || 'user').trim().toLowerCase() || 'user';
+  const role = roleRaw === 'admin' ? 'admin' : 'user';
   const fullName = input.fullName ? String(input.fullName).trim() : '';
-  if (!token || !groupId || !actorId) {
+  if (!token || !isUuid(groupId) || !isUuid(actorId)) {
     throw new Error('Sessão incompleta: token, grupo e perfil são obrigatórios');
   }
+  if (empresaId && !isUuid(empresaId)) {
+    throw new Error('Sessão inválida: empresaId adulterado');
+  }
+
+  let expiresAt = null;
+  if (input.expiresAt != null && input.expiresAt !== '') {
+    const ms = typeof input.expiresAt === 'number'
+      ? input.expiresAt
+      : Date.parse(String(input.expiresAt));
+    if (!Number.isFinite(ms)) {
+      throw new Error('Sessão inválida: expiresAt adulterado');
+    }
+    expiresAt = new Date(ms).toISOString();
+  } else if (typeof input.expiresIn === 'number' && Number.isFinite(input.expiresIn) && input.expiresIn > 0) {
+    expiresAt = new Date(Date.now() + Math.floor(input.expiresIn) * 1000).toISOString();
+  }
+
   storage.setItem(TOKEN_KEY, token);
   storage.setItem(SCOPE_KEY, JSON.stringify({
     token,
@@ -37,42 +86,127 @@ export function persistErpHttpSession(input) {
     email: input.email || null,
     role,
     fullName: fullName || null,
+    expiresAt,
   }));
 }
 
-export function clearErpHttpSession(storage = typeof window !== 'undefined' ? window.localStorage : null) {
-  if (!storage) return;
-  storage.removeItem(TOKEN_KEY);
-  storage.removeItem(SCOPE_KEY);
+export function clearErpHttpSession(storage = null) {
+  const store = resolveStorage(storage);
+  if (!store) return;
+  store.removeItem(TOKEN_KEY);
+  store.removeItem(SCOPE_KEY);
 }
 
-export function readErpHttpSession(storage = typeof window !== 'undefined' ? window.localStorage : null) {
-  if (!storage) return null;
+/**
+ * Lê sessão HTTP. Fail-closed: JSON inválido, campos adulterados ou expirada → null + limpa.
+ * @param {Storage | null} [storage]
+ * @param {{ now?: number }} [options]
+ */
+export function readErpHttpSession(storage = null, options = {}) {
+  const store = resolveStorage(storage);
+  if (!store) return null;
   try {
-    const raw = storage.getItem(SCOPE_KEY);
-    const scope = raw ? JSON.parse(raw) : {};
+    const raw = store.getItem(SCOPE_KEY);
+    if (raw == null || raw === '') {
+      const orphanToken = String(store.getItem(TOKEN_KEY) || '').trim();
+      if (orphanToken) clearErpHttpSession(store);
+      return null;
+    }
+    let scope;
+    try {
+      scope = JSON.parse(raw);
+    } catch {
+      clearErpHttpSession(store);
+      return null;
+    }
+    if (!scope || typeof scope !== 'object' || Array.isArray(scope)) {
+      clearErpHttpSession(store);
+      return null;
+    }
+
     const token = typeof scope.token === 'string' && scope.token.trim()
       ? scope.token.trim()
-      : String(storage.getItem(TOKEN_KEY) || '').trim();
+      : String(store.getItem(TOKEN_KEY) || '').trim();
     const groupId = typeof scope.groupId === 'string' ? scope.groupId.trim() : '';
     const empresaId = typeof scope.empresaId === 'string' ? scope.empresaId.trim() : '';
     const actorId = typeof scope.actorId === 'string' ? scope.actorId.trim() : '';
-    if (!token || !groupId || !actorId) return null;
     const roleRaw = typeof scope.role === 'string' ? scope.role.trim().toLowerCase() : '';
+
+    if (!token || !isUuid(groupId) || !isUuid(actorId)) {
+      clearErpHttpSession(store);
+      return null;
+    }
+    if (scope.empresaId != null && scope.empresaId !== '' && !isUuid(empresaId)) {
+      clearErpHttpSession(store);
+      return null;
+    }
+    if (roleRaw && roleRaw !== 'admin' && roleRaw !== 'user') {
+      clearErpHttpSession(store);
+      return null;
+    }
+
+    let expiresAt = null;
+    if (scope.expiresAt != null && scope.expiresAt !== '') {
+      const ms = Date.parse(String(scope.expiresAt));
+      if (!Number.isFinite(ms)) {
+        clearErpHttpSession(store);
+        return null;
+      }
+      expiresAt = new Date(ms).toISOString();
+      const now = typeof options.now === 'number' ? options.now : Date.now();
+      if (ms <= now) {
+        clearErpHttpSession(store);
+        return null;
+      }
+    }
+
     return {
       token,
       groupId,
       empresaId: empresaId || null,
       actorId,
       email: typeof scope.email === 'string' ? scope.email : null,
-      role: roleRaw === 'admin' ? 'admin' : (roleRaw || 'user'),
+      role: roleRaw === 'admin' ? 'admin' : 'user',
       fullName: typeof scope.fullName === 'string' && scope.fullName.trim()
         ? scope.fullName.trim()
         : null,
+      expiresAt,
     };
   } catch {
+    clearErpHttpSession(store);
     return null;
   }
+}
+
+/**
+ * Atualiza somente a empresa da sessão HTTP (troca de contexto), preservando token/expiração.
+ * @param {{
+ *   empresaId: string | null,
+ *   storage?: Storage | null,
+ * }} input
+ */
+export function switchErpHttpSessionEmpresa(input) {
+  const storage = resolveStorage(input.storage);
+  const current = readErpHttpSession(storage);
+  if (!current) {
+    throw new Error('Sessão HTTP ausente ou inválida para troca de empresa');
+  }
+  const empresaId = input.empresaId ? String(input.empresaId).trim() : '';
+  if (empresaId && !isUuid(empresaId)) {
+    throw new Error('empresaId inválido na troca de contexto');
+  }
+  persistErpHttpSession({
+    accessToken: current.token,
+    groupId: current.groupId,
+    empresaId: empresaId || null,
+    actorId: current.actorId,
+    email: current.email || undefined,
+    role: current.role,
+    fullName: current.fullName,
+    expiresAt: current.expiresAt,
+    storage,
+  });
+  return readErpHttpSession(storage);
 }
 
 /**
@@ -181,10 +315,14 @@ export async function loginErpHttpSession(input) {
   }
   const data = body?.data || {};
   const accessToken = String(data.access_token || '').trim();
+  const expiresIn = typeof data.expires_in === 'number' ? data.expires_in : 0;
   const profiles = Array.isArray(data.profiles) ? data.profiles : [];
   const profile = profiles.find((p) => p?.group_id && p?.id) || profiles[0];
   if (!accessToken || !profile?.id || !profile?.group_id) {
     throw new Error('Login sem perfil ativo no ERP');
+  }
+  if (expiresIn <= 0) {
+    throw new Error('Login sem expires_in válido');
   }
   const role = String(profile.role || 'user').trim().toLowerCase() === 'admin' ? 'admin' : 'user';
   const fullName = typeof profile.full_name === 'string' && profile.full_name.trim()
@@ -198,8 +336,10 @@ export async function loginErpHttpSession(input) {
     email: data.user?.email || input.email,
     role,
     fullName,
+    expiresIn,
   };
-  persistErpHttpSession(session);
+  const expiresAt = new Date(Date.now() + Math.floor(expiresIn) * 1000).toISOString();
+  persistErpHttpSession({ ...session, expiresAt });
   const uiUser = buildHttpSessionUser({
     groupId: session.groupId,
     empresaId: session.empresaId,
@@ -210,6 +350,7 @@ export async function loginErpHttpSession(input) {
   });
   return {
     ...session,
+    expiresAt,
     profiles,
     user: uiUser || {
       id: data.user?.id || profile.id,

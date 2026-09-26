@@ -6,6 +6,7 @@ import {
   buildHttpSessionUser,
   ensureHttpTenantLocalMirror,
   readErpHttpSession,
+  switchErpHttpSessionEmpresa,
 } from "@/api/erpHttpSession";
 
 export function useContextoGrupoEmpresa() {
@@ -114,6 +115,13 @@ export function useContextoGrupoEmpresa() {
       }
 
       if (isRemoteApiKeyMode || isHttpBackendMode) {
+        if (isHttpBackendMode) {
+          switchErpHttpSessionEmpresa({ empresaId: null });
+          await ensureHttpTenantLocalMirror({
+            groupId: grupo.id,
+            empresaId: null,
+          });
+        }
         return grupo;
       }
 
@@ -160,6 +168,13 @@ export function useContextoGrupoEmpresa() {
       }
 
       if (isRemoteApiKeyMode || isHttpBackendMode) {
+        if (isHttpBackendMode) {
+          switchErpHttpSessionEmpresa({ empresaId });
+          await ensureHttpTenantLocalMirror({
+            groupId: empresa.group_id || empresa.grupo_id || user?.grupo_atual_id,
+            empresaId,
+          });
+        }
         return empresa;
       }
 

@@ -127,6 +127,23 @@ attempt_auto_rollback() {
     bash "$ROOT/scripts/vps/spa-login-rollback-api-web.sh"
 }
 
+# Construir ANTES de parar os oficiais — falha de build não derruba 3080/3081.
+export ERP_DOCKER_NETWORK
+echo "compose_build_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build erp-api erp-web
+echo "compose_build_ok=YES"
+
+SWAP_STARTED=0
+on_rebuild_err() {
+  local ec=$?
+  echo "SPA_LOGIN_REBUILD_ERR exit=${ec} swap_started=${SWAP_STARTED}" >&2
+  if [[ "$SWAP_STARTED" == "1" ]]; then
+    attempt_auto_rollback "trap_exit_${ec}" || true
+  fi
+  exit "$ec"
+}
+trap on_rebuild_err ERR
+
 free_port_holders() {
   local port="$1"
   local allowed_csv="$2"
@@ -157,6 +174,10 @@ free_port_holders() {
   done
 }
 
+# Troca só depois do build ok — trap cobre falhas de stop/up/health.
+SWAP_STARTED=1
+echo "compose_swap_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
 for name in erp-api-dev erp-web-dev; do
   if docker ps -a --format '{{.Names}}' | grep -Fxq "$name"; then
     echo "stop_rm_${name}=YES"
@@ -175,9 +196,6 @@ done < <(docker ps -a --format '{{.Names}}' | grep -E '^erp-(api|web)-dev-pre-sp
 free_port_holders 3080 "erp-api-dev"
 free_port_holders 3081 "erp-web-dev"
 
-export ERP_DOCKER_NETWORK
-echo "compose_build_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build erp-api erp-web
 echo "compose_up_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-deps --force-recreate erp-api
 
@@ -287,3 +305,5 @@ echo "port_3080_preserved=YES"
 echo "port_3081_preserved=YES"
 echo "NEXT=abrir_https://erp-dev.cpaferroeaco.com.br_hard_refresh_e_validar_campos_email_senha"
 echo "SPA_LOGIN_REBUILD_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+SWAP_STARTED=0
+trap - ERR

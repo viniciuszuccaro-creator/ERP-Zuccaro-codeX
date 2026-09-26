@@ -25,10 +25,21 @@ export const AuthProvider = ({ children }) => {
 
   const applyHttpSession = useCallback(async (session) => {
     if (!session?.token || !session?.groupId || !session?.actorId) {
+      clearErpHttpSession();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
       return false;
+    }
+    if (session.expiresAt) {
+      const expiresMs = Date.parse(String(session.expiresAt));
+      if (!Number.isFinite(expiresMs) || expiresMs <= Date.now()) {
+        clearErpHttpSession();
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+        return false;
+      }
     }
     try {
       await ensureHttpTenantLocalMirror({
@@ -41,6 +52,7 @@ export const AuthProvider = ({ children }) => {
     }
     const sessionUser = buildHttpSessionUser(session);
     if (!sessionUser) {
+      clearErpHttpSession();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
@@ -203,6 +215,7 @@ export const AuthProvider = ({ children }) => {
         email: session.email,
         role: session.role,
         fullName: session.fullName,
+        expiresAt: session.expiresAt,
       });
       setAuthChecked(true);
       setIsLoadingAuth(false);
