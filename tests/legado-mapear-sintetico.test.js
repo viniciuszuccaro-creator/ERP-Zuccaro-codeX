@@ -77,6 +77,39 @@ test('mapear legado sintetico obra e condicao_pagamento', () => {
   assert.match(cond.chave_idempotente_migracao, /\|condicao_pagamento\|CP-30$/);
 });
 
+test('mapear legado sintetico tabela_preco, orcamento e pedido (sem valores reais)', () => {
+  const tab = mapLegadoRowToCanonicalStub({
+    codigo_tabela_legado: 'TAB-S1',
+    nome_tabela: 'Tabela Sintetica',
+    group_id: 'g1',
+    empresa_id: 'e1',
+  }, { entidade: 'tabela_preco', arquivoNome: 'tab.csv' });
+  assert.equal(tab.codigo_legado, 'TAB-S1');
+  assert.equal(tab.nome, 'Tabela Sintetica');
+  assert.equal(tab.destino_migracao, 'staging');
+  assert.match(tab.chave_idempotente_migracao, /\|tabela_preco\|TAB-S1$/);
+
+  const orc = mapLegadoRowToCanonicalStub({
+    numero_orcamento: 'ORC-9',
+    referencia: 'Orcamento sintetico',
+    group_id: 'g1',
+    empresa_id: 'e1',
+  }, { entidade: 'orcamento' });
+  assert.equal(orc.codigo_legado, 'ORC-9');
+  assert.match(orc.chave_idempotente_migracao, /\|orcamento\|ORC-9$/);
+
+  const ped = mapLegadoRowToCanonicalStub({
+    numero_pedido: 'PED-3',
+    titulo: 'Pedido sintetico',
+    group_id: 'g1',
+    empresa_id: 'e1',
+  }, { entidade: 'pedido' });
+  assert.equal(ped.codigo_legado, 'PED-3');
+  assert.match(ped.chave_idempotente_migracao, /\|pedido\|PED-3$/);
+  assert.equal('preco' in ped, false);
+  assert.equal('valor' in ped && ped.valor != null, false);
+});
+
 test('quarentena codigo empresa 0', () => {
   const q = avaliarQuarentenaLegado({ codigo_empresa: '0' }, { entidade: 'cliente' });
   assert.equal(q.quarentena, true);
