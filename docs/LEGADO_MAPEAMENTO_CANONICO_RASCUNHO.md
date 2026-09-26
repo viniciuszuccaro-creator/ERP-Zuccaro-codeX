@@ -36,13 +36,16 @@ somente leitura. Valores abaixo são **candidatos** do ERP canônico atual.
 | Produto / item | `produtos` (+ PIM/DAM na PR #33) | 006–008 (+018–024 na PR) | sem preço no master |
 | Tabela de preço | `tabelas_preco` / itens / empresas | 013 | `codigo_tabela_legado` já existe no legado UI |
 | Condição pagamento | `condicoes_pagamento` | 014–015 | |
-| Orçamento | agregado 016 (PR #33) | 016 | só após Gate E |
-| Pedido / venda | agregado 017 (PR #33) | 017 | snapshot preço/endereço |
+| Orçamento | agregado 016 | 016 | só após Gate E; aliases sintéticos `orcamento` |
+| Pedido / venda | agregado 017 | 017 | snapshot preço/endereço; aliases sintéticos `pedido` |
 | Conta pagar/receber | entidades financeiras existentes | staging + reconciliação | `PENDING_MANUAL_RECONCILIATION` |
 | NF | NotaFiscal + reconciliação fiscal | staging | permissões `Fiscal.Migracao.*` |
 | Código empresa legado `0` | **quarentena** (não propaga) | — | `avaliarQuarentenaLegado` |
 | Vendedor | **não** criar `Vendedor` paralelo | Colaborador/Pessoa | bloqueado até identidade canônica |
 | Contato / telefone | **não** inventar Contato2 | Pessoa canônica futura | PII |
+
+Aliases sintéticos adicionais (sem inventário HD): `tabela_preco`, `orcamento`, `pedido` em
+`LEGADO_FIELD_ALIASES` — só códigos/nomes; **sem** preços, custos ou PII no GitHub.
 
 ---
 
@@ -84,7 +87,10 @@ Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
 
 ## 6. Próximos passos desta frente
 
-1. Rodar inventário no HD (`BACKUP ERP ANTIGO - CODEX`) — metadados/hashes.
-2. Preencher “Formato/origem observada” na matriz §2.
+1. ~~Rodar inventário no HD~~ → **BLOCKED** até HD externo disponível (prep sintético OK).
+2. Preencher “Formato/origem observada” na matriz §2 **somente** após inventário somente leitura.
 3. Propor ETL idempotente real só após inventário + Onda 25.
 4. Staging isolado só com gate Onda 25.
+
+**HD indisponível (2026-09-26):** continuar Comercial 360 com dados sintéticos; não ler backup;
+não commitár dados reais. Aliases `tabela_preco` / `orcamento` / `pedido` já no mapper sintético.

@@ -36,6 +36,21 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     codigo: ['codigo', 'cod_condicao', 'codigo_condicao', 'condicao_id', 'codigo_legado'],
     nome: ['nome', 'descricao', 'condicao', 'titulo'],
   },
+  /** Hipótese até inventário HD — destino `tabelas_preco` (migration 013). Sem preços reais no GitHub. */
+  tabela_preco: {
+    codigo: ['codigo', 'cod_tabela', 'codigo_tabela', 'codigo_tabela_legado', 'tabela_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'tabela', 'titulo', 'nome_tabela'],
+  },
+  /** Hipótese até inventário HD — destino agregado Pedido (017). Sem valores monetários reais. */
+  pedido: {
+    codigo: ['codigo', 'cod_pedido', 'numero_pedido', 'numero', 'pedido_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'referencia', 'titulo'],
+  },
+  /** Hipótese até inventário HD — destino agregado Orçamento (016). */
+  orcamento: {
+    codigo: ['codigo', 'cod_orcamento', 'numero_orcamento', 'numero', 'orcamento_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'referencia', 'titulo'],
+  },
 });
 
 /** Códigos empresariais legados válidos conhecidos (Gate 18); `0` = quarentena. */

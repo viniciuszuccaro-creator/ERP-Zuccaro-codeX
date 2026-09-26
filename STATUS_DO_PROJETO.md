@@ -1,3 +1,17 @@
+## Legado prep sintético (sem HD) — STATUS REAL (2026-09-26T17:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — aliases `tabela_preco`/`orcamento`/`pedido` no mapper existente + docs HD indisponível |
+| Testado | **SIM** — 14/14 `legado-mapear` + `legado-inventario` |
+| CI | **PENDENTE** (primeiro push) |
+| Mesclado | **NÃO** |
+| Implantado / importação real | **NÃO** — HD externo indisponível; Onda 25 BLOCKED |
+
+- Reutilizado: `scripts/legado/mapear-registro-sintetico.mjs`, `migracaoErpPolicy`, docs LEGADO_* (sem módulo paralelo).
+- Sem dados reais, PII ou preços no GitHub.
+- Paralelismo Comercial 360: #45 acesso (VPS humano), #46 desconto (CI OK / merge pendente), #47 margem (CostPort).
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.
