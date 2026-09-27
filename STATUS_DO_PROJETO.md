@@ -1,3 +1,10 @@
+## #96 MESCLADA — próximo gate operacional (2026-09-27T14:36Z)
+
+PR #96 **merged** com SHA aprovado `23252cc97c7dd9dd4de60f8f88304ecdcbffabae`.
+Cursor: revisão encerrada neste lote de acesso; **não** executa APPLY/deploy.
+Codex: CI PUSH main → backup fresco → canário (identidade DB) → APPLY → promote → **browser do proprietário** (logout/login, CPA/3Z, Comercial/Config).
+Acesso **não** concluído até a prova browser. Continua revisão contínua #92/#93.
+
 ## PARECER FINAL CURSOR — #96 23252cc9 (2026-09-27T14:34Z)
 
 Resposta ao comentário Codex 5856750176: **revisão final já publicada** (não é silêncio; comentário Cursor na PR = 403).
