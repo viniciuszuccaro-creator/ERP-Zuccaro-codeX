@@ -1,33 +1,63 @@
-## REVISÃO CURSOR — divisão Codex implementa / Cursor revisa (2026-09-27)
+## REVISÃO CURSOR CONTÍNUA — #96 / #92 / #93 (2026-09-27T12:52Z)
 
-Papel Cursor: revisão independente; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.
+Papel Cursor: revisão independente; **sem** editar branches Codex; **sem** deploy/VPS.
+Publicação de comentário nas PRs GitHub: **BLOCKED** (`gh` issues/comments 403; ManagePullRequest sem associação à PR Codex). Parecer canônico neste STATUS + chat até permissão de comentário. Copiar o bloco abaixo para a PR quando o token permitir.
 
-### P1 Acesso — #95 / script na main (`deploy-owner-access-incidente.sh`)
+### #96 — `codex/acesso-owner-auditoria-segura` — **APROVADO**
 
-| ID | Sev. | Tema | Achado |
-|---|---|---|---|
-| A1 | Alta | Pré-auditoria | Script muta groups/empresas/Auth/rebuild **sem** fingerprint do DB ligado à API 3080 nem inventário sanitizado prévio. |
-| A2 | Alta | Duplicidade | `ON CONFLICT` nos UUIDs do seed A **renomeia** tenant sintético para Grupo CPA/CPA/3Z; risco de colisão semântica se já houver outro CPA ou se Gate D depender dos nomes DEV. |
-| A3 | Alta | Senha | `OWNER_PASS` no `curl`/histórico; `set -a; source .env` exporta service_role ao ambiente. Sem `unset` pós-uso. Não há eco da senha em `tee` (positivo). |
-| A4 | Média | Backup | Backup de profiles no provision; falta backup de groups/empresas antes do rename. |
-| A5 | Média | 3080/rollback | Rebuild via `spa-login-rebuild` preserva 3080 se `ERP_DOCKER_NETWORK` definido; rollback sem rede já falhou na VPS. |
+| Campo | Valor |
+|---|---|
+| SHA revisado | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` |
+| CI | frontend/backend SUCCESS (`36319383460` / `36319380602`) |
+| **Veredito** | **APROVADO** para merge e `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA |
 
-**Veredito P1:** não reexecutar cego na VPS até Codex abrir **nova PR** com: auditoria read-only → decisão → mutação; sem rename silencioso; senha endurecida; backup groups/empresas; evidência sanitizada. Acesso **não** resolvido sem teste humano no browser.
+Revalidação independente do HEAD (código + testes + script):
+- Sessão: role não amplia tenant; sem COALESCE de empresa; listagem só `Ativa` do `group_id`.
+- Middleware: empresa no escopo deve existir no grupo com `status='Ativa'`.
+- Grant: `OWNER_SCOPE=GROUP` sob `LOCK`; revalidação Auth/tenant na TX (`existing_owner_identity_or_tenant_conflict`); audit before/depois; demote synth na mesma TX; permissões sem `*`.
+- Deploy: default `AUDIT`; APPLY exige `APPROVED_SHA`+`EXPECTED_DATABASE`+UUIDs; rejeita `OWNER_PASS` em env; preflight bloqueia rename/reparent/duplicata; `pg_dump` antes de escrita; canário 3086/3087 → promote pelos mesmos digests/labels; rollback de imagem ≠ restore de perfil.
+- BOOTSTRAP só com `/dev/tty` e confirmações explícitas — **não** usar na conta/tenant já existentes.
 
-Comentário na PR GitHub: **BLOCKED** (API `addComment` / ManagePullRequest sem permissão neste agente). Achados ficam neste STATUS + chat.
+Gates operacionais (não veto de código): ordem AUDIT→backup→canário→grant→promote; acesso **não** resolvido sem browser do proprietário (logout→login→CPA/3Z→Comercial/Config). Novo push neste branch invalida esta aprovação.
 
-### P2 Omnicanal — #92
+### #92 — `codex/comercial-omnicanal-contratos-canonicos` — **BLOCKED** (merge/ativação)
 
-| ID | Sev. | Achado |
-|---|---|---|
-| B1 | Bloqueante | PR declara NÃO APTA (gates #51/#52/#53, 025 NOT NULL, grants/policies). |
-| B2 | Bloqueante | 033 RLS company exige destino empresarial nos produtores. |
-| B3 | Alta | Merge cumulativo #68–#90 sem fechar bases canônicas. |
+| Campo | Valor |
+|---|---|
+| SHA revisado | `44710e55294ba6eadca12b66311672b60d88ba9c` |
+| CI HEAD | frontend/backend/concurrency **SUCCESS** (selo de SHA verde confirmado) |
+| Delta 025 | remove `EXCEPTION WHEN others THEN NULL`; teste PGlite/PG prova 23502 e não grava `schema_migrations` |
+| **Veredito código pontual 025** | OK (correção fail-closed correta) |
+| **Veredito merge/ativação** | **BLOCKED** |
 
-**Veredito P2:** **não mergear #92** agora. Revisar #93 só após #92 aprovável. Canais OFF.
+Bloqueios reproduzíveis / gates (ainda abertos):
+1. **025 divergente de #50** (`165a0a8d`) — Cursor `#50` ainda engole falha do `SET NOT NULL`; #92 já removeu. Alinhar conteúdo canônico #50↔#92 antes de integrar.
+2. Gates canônicos abertos **#51 / #52 / #53** (tipo/classificação, versionamento, `external_id`).
+3. **033 RLS** (`033_integration_events_company_rls.sql`): exige `empresa_id` explícito nos produtores; sem backfill/inferência; sem ativação operacional.
+4. Grants/role dedicada NOSUPERUSER/NOBYPASSRLS: homologação operacional pendente (fixture CI ≠ produção).
+5. Canais **OFF** (`ERP_OMNICHANNEL_ENABLED!==true`).
 
-### Estado VPS (última evidência humana)
-Auth owner criada (`owner_auth_count_after=1`); provision bloqueado por placeholder UUID; `unset` + re-run pendente **após** PR Codex corrigir A1–A5. Cursor não aplica VPS neste papel.
+Sem novo defeito de segurança próprio no cumulativo além dos gates; **não mergear em main** nem ativar canais neste HEAD.
+
+### #93 — `codex/comercial-omnicanal-monitoramento-escalavel` — delta **APROVADO** / merge **BLOCKED**
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `d219e22c6361c40edf24f7b7d1fd94eb4341d10e` (avançou de `af32c0ff`) |
+| Base | `44710e55` (#92 HEAD) — **alinhada** após merge Codex |
+| CI HEAD | frontend/backend/concurrency SUCCESS |
+| Delta próprio | `catalogOutbox` health: CTE `observations AS MATERIALIZED` uma vez; EXPLAIN loops=1 (150/1350/900) |
+| **Veredito delta** | **APROVADO** sobre a base #92 atual |
+| **Veredito merge** | **BLOCKED** até #92 aprovável para integração + gates canônicos |
+
+### Próximo passo automático
+- Codex: aplicar #96 (`APPLY` com SHA acima) após merge; Cursor não faz deploy.
+- Alinhar 025 em #50 ao conteúdo fail-closed de #92; avançar #51→#52→#53.
+- Não mergear #92/#93 enquanto os gates acima permanecerem.
+- Se #96/#92/#93 mudarem HEAD: reabrir só o delta afetado (subscriptions PR ativas).
+
+### Histórico P1 #95 (superseded por #96)
+A1–A5 do script antigo na main permanecem como motivação do candidato #96; não reexecutar o script legado. Cursor não aplica VPS.
 
 ## INCIDENTE — OWNER_GROUP_ID placeholder (2026-09-27T10:44Z)
 
@@ -78,7 +108,7 @@ CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=HEAD ERP_DOCKER_NETWORK=supabase_default
   bash scripts/vps/deploy-owner-access-incidente.sh
 ```
 
-Prova esperada no final (sanitizada): `group_cpa=true`, `empresas_ativas=2`, `owner_admin=1`, `synth_admin=0`, `main_tip=…`.  
+Prova esperada no final (sanitizada): `group_cpa=true`, `empresas_ativas=2`, `owner_admin=1`, `synth_admin=0`, `main_tip=…`.
 Browser: **Sair** → login com e-mail proprietário + mesma senha → seletor Grupo CPA / CPA ferro e aço / 3Z → Comercial + Configurações.
 
 ## INCIDENTE ACESSO OWNER — harden + deploy (2026-09-27)
