@@ -193,7 +193,8 @@ test('ambiguous committed response retries exact payload with fresh nonce and yi
 
 test('transport rejects unsafe config and limits retries without exposing provider errors/secrets', async () => {
   const base = { endpoint: 'https://synthetic.invalid/api/v1/integracoes/vendas', id: 'synthetic-SITE', secret: identity.secret };
-  for (const endpoint of ['http://remote.invalid/sales', 'https://user:pass@synthetic.invalid/sales', 'https://synthetic.invalid/sales?secret=x']) {
+  for (const endpoint of ['http://remote.invalid/sales', 'https://user:pass@synthetic.invalid/sales', 'https://synthetic.invalid/sales?secret=x',
+    'https://synthetic.invalid/sales?', 'https://synthetic.invalid/sales#', 'https://synthetic.invalid/sales?#']) {
     assert.throws(() => new ChannelSalesClient({ ...base, endpoint }), ChannelTransportError);
   }
   assert.throws(() => new ChannelSalesClient({ ...base, attempts: 4 }), ChannelTransportError);
@@ -202,12 +203,12 @@ test('transport rejects unsafe config and limits retries without exposing provid
   const client = new ChannelSalesClient(base, response, () => now);
   const query = { version: 1, operation: 'receipt', tipo: 'Pedido', idempotencyKey: 'synthetic' } as const;
   await assert.rejects(() => client.receipt(query), (e: unknown) => e instanceof ChannelTransportError
-    && e.status === 503 && !e.message.includes('Synthetic private error') && !e.message.includes(identity.secret));
+    && e.code === 'CHANNEL_CLIENT_UNAVAILABLE' && e.status === 503 && !e.message.includes('Synthetic private error') && !e.message.includes(identity.secret));
   assert.equal(calls, 3);
   for (const status of [401, 403, 404, 409, 422, 429]) {
     calls = 0;
     const rejected = new ChannelSalesClient(base, async () => { calls++; return new Response('private', { status }); });
-    await assert.rejects(() => rejected.receipt(query), (e: unknown) => e instanceof ChannelTransportError && e.status === status);
+    await assert.rejects(() => rejected.receipt(query), (e: unknown) => e instanceof ChannelTransportError && e.code === 'CHANNEL_CLIENT_REJECTED' && e.status === status);
     assert.equal(calls, 1);
   }
   const malformed = new ChannelSalesClient(base, async () => new Response(JSON.stringify({ data: { id: 'bad', tipo: 'Pedido' } }), { status: 200 }));
@@ -258,5 +259,31 @@ test('caller stop bounds ignored transport and interrupts retry backoff',async()
    const start=Date.now();await assert.rejects(client.create(f.envelope,stop.signal),(e:any)=>e.code==='CHANNEL_CLIENT_INTERRUPTED');
    assert.ok(Date.now()-start<1000);assert.equal(calls,1);
   }
+ }finally{await f.close();}
+});
+
+test('exhausted 5xx after canonical commit stays unconfirmed and recovers with the same sale key',async()=>{
+ const f=await boot();try{
+  let calls=0;const nonces=new Set<string>();const bodies=new Set<string>();
+  const options={endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true,attempts:2};
+  const client=new ChannelSalesClient(options,async(input,init)=>{
+   calls++;nonces.add(String((init!.headers as Record<string,string>)['x-channel-nonce']));bodies.add(String(init!.body));
+   const response=await fetch(input,init);assert.ok(response.ok);await response.body?.cancel();return new Response('private',{status:503});
+  },()=>now);
+  const batch={operation:'sale-batch' as const,items:[0,1].map(i=>saleEnvelopeSchema.parse({...f.envelope,idempotencyKey:`5xx-${i}`}))};
+  assert.deepEqual((await client.create(batch)).items,[{index:0,state:'UNCONFIRMED',code:'CHANNEL_CLIENT_UNAVAILABLE',status:503},{index:1,state:'NOT_SENT'}]);
+  assert.equal(calls,2);assert.equal(nonces.size,2);assert.equal(bodies.size,1);
+  assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,1);
+  const recovery=new ChannelSalesClient(options,fetch,()=>now);
+  assert.ok((await recovery.receipt({version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:'5xx-0'})).data.id);
+  const resumed=await recovery.create(batch);
+  assert.deepEqual(resumed.items.map(i=>i.state==='CONFIRMED'?i.result.replayed:null),[true,false]);
+  assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,2);
+  // Encoded delimiters are path data, unlike literal query/fragment delimiters.
+  let route='';const encoded=new ChannelSalesClient({...options,endpoint:'https://synthetic.invalid/sales%3F%23'},async(input)=>{
+   route=String(input);return new Response(JSON.stringify({data:{id:(resumed.items[0] as any).result.data.id,tipo:'Pedido'}}),{headers:{'content-type':'application/json'}});
+  });
+  await encoded.receipt({version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:'5xx-0'});
+  assert.equal(route,'https://synthetic.invalid/sales%3F%23/recibos');
  }finally{await f.close();}
 });

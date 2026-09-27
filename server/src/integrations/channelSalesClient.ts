@@ -36,7 +36,7 @@ export class ChannelSalesClient {
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_CONFIG_INVALID');
     this.options = parsed.data;
     const url = new URL(this.options.endpoint);
-    if (url.username || url.password || url.search || url.hash
+    if (url.username || url.password || url.href.includes('?') || url.href.includes('#')
       || !(url.protocol === 'https:' || (this.options.allowInsecureLoopback && url.protocol === 'http:'
         && ['localhost', '127.0.0.1'].includes(url.hostname)))) throw new ChannelTransportError('CHANNEL_CLIENT_CONFIG_INVALID');
     this.endpoint = url.href.replace(/\/$/, '');
@@ -108,9 +108,10 @@ export class ChannelSalesClient {
         await this.backoff(attempt, signal); continue;
       }
       // Never replay rejected business/auth/schema requests. Treat transient failures as ambiguous delivery.
-      if (result.status < 500 || attempt + 1 === this.options.attempts) {
+      if (result.status < 500) {
         throw new ChannelTransportError('CHANNEL_CLIENT_REJECTED', result.status);
       }
+      if (attempt + 1 === this.options.attempts) throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE', result.status);
       await this.backoff(attempt, signal);
     }
     throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE');

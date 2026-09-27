@@ -157,3 +157,16 @@ test('PostgreSQL readiness rejects same-named permissive and extra policies', {s
   await f.ingress.assertDatabaseReady();
  }finally{await f.close();}
 });
+
+test('real PostgreSQL client recovers a sale committed before exhausted 5xx', {skip:!url},async()=>{
+ const f=await boot(await isolatedPostgres(url!));try{
+  const options={endpoint:f.endpoint,id:'synthetic-SITE',secret:identity.secret,allowInsecureLoopback:true,attempts:2};let calls=0;
+  const lost=new ChannelSalesClient(options,async(input,init)=>{calls++;const response=await fetch(input,init);
+   assert.ok(response.ok);await response.body?.cancel();return new Response('private',{status:503});},()=>now);
+  await assert.rejects(lost.create(saleEnvelopeSchema.parse(f.envelope)),(e:any)=>e.code==='CHANNEL_CLIENT_UNAVAILABLE'&&e.status===503);
+  assert.equal(calls,2);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,1);
+  const recovered=await new ChannelSalesClient(options,fetch,()=>now).create(saleEnvelopeSchema.parse(f.envelope));
+  assert.equal(recovered.replayed,true);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,1);
+  assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,1);
+ }finally{await f.close();}
+});

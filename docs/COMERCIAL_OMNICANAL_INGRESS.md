@@ -387,3 +387,18 @@ Review5328649322: normalização do gate preserva literais e identificadores SQL
 entre aspas, incluindo espaços, caixa e escapes. Remove somente formatação fora
 das aspas; nomes GUC com espaço final e NULLIF com literal espaço são recusados.
 Testes PGlite/PG reproduzem três predicados malformados e restauram o canônico.
+
+# Correções da revisão independente do transporte #70
+
+Review5328731796: ChannelSalesClient rejeita delimitadores literais ?/# na URL
+normalizada, inclusive vazios; %3F/%23 continuam dados válidos do caminho.
+Após esgotar respostas5xx, lança CHANNEL_CLIENT_UNAVAILABLE com status, sem expor
+corpo privado. Não classifica falha transitória como rejeição comercial. 4xx
+mantém CHANNEL_CLIENT_REJECTED sem retry; lotes permanecem UNCONFIRMED em qualquer
+incerteza e param os próximos itens. Prazo, limites e parada anteriores preservados.
+Reutiliza cliente/recibos/services canônicos, sem endpoint/fila/provider paralelo.
+PGlite/PG reproduzem venda comitada antes de respostas503, nonces novos com mesma
+chave/body, consulta de recibo e replay sem duplicar. Base#88, revisão independente
+pendente, integração da cadeia bloqueada até correções revisadas/bases revalidadas.
+Rollback anterior reintroduz configuração URL incorreta/classificação inadequada;
+nenhuma migration/dado alterado. Sem HD/VPS/merge/deploy, ondas não encerradas.
