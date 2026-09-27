@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
+import { HTTP_CONTEXT_CHANGED } from "@/api/erpHttpSession";
 
 const UserContext = createContext(null);
 
@@ -87,9 +88,11 @@ export function UserProvider({ children }) {
     };
 
     loadUser();
+    if (isHttpBackendMode) window.addEventListener(HTTP_CONTEXT_CHANGED, loadUser);
 
     return () => {
       mounted = false;
+      if (isHttpBackendMode) window.removeEventListener(HTTP_CONTEXT_CHANGED, loadUser);
     };
   }, []);
 

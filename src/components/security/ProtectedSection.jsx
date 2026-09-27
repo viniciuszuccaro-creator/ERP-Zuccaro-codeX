@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import usePermissions from "@/components/lib/usePermissions";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -31,16 +31,20 @@ export default function ProtectedSection({
 
   // Sem bypass de role=admin: árvore explícita + entityGuard (fail-closed).
   const allowed = !isLoading && hasPermission(modulo, section, action);
-  const [allowedFinal, setAllowedFinal] = useState(null);
+  const key = `${user?.id || '-'}|${user?.role || '-'}|${user?.empresa_id || '-'}|${JSON.stringify(user?.permissoes || {})}|${getGuardKey(modulo, section, action, empresaAtual?.id, grupoAtual?.id)}`;
+  const [guardResult, setGuardResult] = useState(null);
+  const allowedFinal = guardResult?.key === key ? guardResult.allowed : null;
 
   useEffect(() => {
+    const setAllowedFinal = (value) => setGuardResult({ key, allowed: value });
     if (isLoading) return;
     if (!modulo) { setAllowedFinal(allowed); return; }
 
-    const key = getGuardKey(modulo, section, action, empresaAtual?.id, grupoAtual?.id);
+    let active = true;
+    const commitAllowed = (value) => { if (active) setAllowedFinal(value); };
     const now = Date.now();
     const cached = __guardCache.get(key);
-    if (cached && (now - cached.ts < GUARD_TTL_MS)) {
+    if (!isHttpBackendMode && cached && (now - cached.ts < GUARD_TTL_MS)) {
       setAllowedFinal(Boolean(cached.allowed) && allowed);
       return;
     }
@@ -55,13 +59,13 @@ export default function ProtectedSection({
       __guardInflight.get(key)
         .then((backendAllowed) => {
           __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
-          setAllowedFinal(backendAllowed && allowed);
+          commitAllowed(backendAllowed && allowed);
         })
         .catch((error) => {
           console.warn('[RBAC] Guard indisponivel; secao protegida bloqueada.', error);
-          setAllowedFinal(false);
+          commitAllowed(false);
         });
-      return;
+      return () => { active = false; };
     }
 
     const p = base44.functions.invoke('entityGuard', {
@@ -78,11 +82,12 @@ export default function ProtectedSection({
 
     p.then((backendAllowed) => {
       __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
-      setAllowedFinal(backendAllowed && allowed);
+      commitAllowed(backendAllowed && allowed);
     }).finally(() => {
       __guardInflight.delete(key);
     });
-  }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
+    return () => { active = false; };
+  }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id, user?.id, user?.permissoes, key]);
 
   useEffect(() => {
     if (isLoading) return;

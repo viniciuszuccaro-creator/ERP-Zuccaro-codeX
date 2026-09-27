@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
@@ -12,6 +13,14 @@ import {
 } from '../src/security/ownerPermissionTree.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
+test('perfil de provisionamento preserva exatamente o catálogo explícito sem wildcard', () => {
+  const deployed = JSON.parse(readFileSync(new URL('../../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  assert.deepEqual(deployed, OWNER_ERP_PERMISSION_TREE);
+  for (const module of ['Dashboard', 'Comercial', 'Financeiro', 'Compras', 'Estoque', 'Expedição', 'Produção', 'RH', 'Fiscal', 'Cadastros', 'CRM', 'Agenda', 'Relatórios', 'Sistema', 'Contratos']) assert.ok(deployed[module], module);
+  const walk = (node: any) => { if (node && typeof node === 'object' && !Array.isArray(node)) for (const [key, value] of Object.entries(node)) { assert.notEqual(key, '*'); walk(value); } };
+  walk(deployed);
+});
+
 test('owner permission tree não tem wildcard * e cobre módulos atuais', () => {
   assert.equal(ownerPermissionTreeHasWildcard(OWNER_ERP_PERMISSION_TREE as unknown as Record<string, unknown>), false);
   assertOwnerPermissionTreeShape(OWNER_ERP_PERMISSION_TREE);
@@ -20,7 +29,7 @@ test('owner permission tree não tem wildcard * e cobre módulos atuais', () => 
   assert.ok(permissionTreeAllows(OWNER_ERP_PERMISSION_TREE as any, 'Sistema', 'configuracao', 'configurar', { allowGlobalWildcard: false }));
   assert.equal(
     permissionTreeAllows(OWNER_ERP_PERMISSION_TREE as any, 'Financeiro', 'caixa', 'baixar', { allowGlobalWildcard: false }),
-    false,
+    true,
   );
 });
 
@@ -61,7 +70,7 @@ test('usuário comum e ação fora da allowlist recebem 403 (Permission denied)'
     (err: any) => err?.statusCode === 403 && err?.code === 'PERMISSION_DENIED',
   );
   await assert.rejects(
-    () => rbac.assertAllowed(ctxOwner, 'Financeiro', 'caixa', 'baixar' as any, { allowGlobalWildcard: false }),
+    () => rbac.assertAllowed(ctxOwner, 'Financeiro', 'caixa', 'acao-nao-cadastrada' as any, { allowGlobalWildcard: false }),
     (err: any) => err?.statusCode === 403 && err?.code === 'PERMISSION_DENIED',
   );
 

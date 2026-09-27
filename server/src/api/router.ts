@@ -17,7 +17,7 @@ import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
-import { createPasswordAuthSession, resolveBearerAuthSession } from '../services/authSessionService.js';
+import { createPasswordAuthSession, resolveBearerAuthSession, resolveSessionEntityGuard } from '../services/authSessionService.js';
 
 type CrudLike = {
   list: (ctx: ReturnType<typeof ctxFromReq>, options?: { ativo?: boolean; search?: string; limit?: number }) => Promise<unknown>;
@@ -1161,6 +1161,13 @@ export function createApiRouter(deps: ApiDeps) {
         authorizationHeader: req.header('authorization') || undefined,
       });
       res.setHeader('Cache-Control', 'no-store');
+      if (req.query.guard !== undefined) {
+        if (typeof req.query.guard !== 'string' || req.query.guard.length > 4096) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid guard request');
+        let guard: unknown;
+        try { guard = JSON.parse(req.query.guard); } catch { throw new AppError(422, 'VALIDATION_ERROR', 'Invalid guard request'); }
+        res.status(200).json({ data: { allowed: resolveSessionEntityGuard(session.profiles, guard) } });
+        return;
+      }
       res.status(200).json({
         data: {
           access_token: session.accessToken,

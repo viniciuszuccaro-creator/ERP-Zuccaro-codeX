@@ -1,5 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+
+test('HTTP entityGuard usa sessão Bearer canônica e não aceita profile_id fabricado', async () => {
+  const client = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ token: 'synthetic-token', actorId: 'server-profile', groupId: 'synthetic-group' }),
+    fetchImpl: async (url, init) => {
+      const parsed = new URL(String(url));
+      assert.equal(parsed.pathname, '/api/v1/auth/session');
+      assert.equal(init.headers.Authorization, 'Bearer synthetic-token');
+      assert.equal(JSON.parse(parsed.searchParams.get('guard')).profile_id, 'server-profile');
+      assert.equal(parsed.search.includes('synthetic-token'), false);
+      return new Response(JSON.stringify({ data: { allowed: false } }), { status: 200 });
+    },
+  });
+  assert.deepEqual(await client.entityGuard({ profile_id: 'fabricated', module: 'Comercial', group_id: 'synthetic-group', empresa_id: null, action: 'visualizar' }), { data: { allowed: false } });
+  const missing = createHttpApiClient({ getScope: () => ({}), fetchImpl: async () => { throw new Error('must not fetch'); } });
+  await assert.rejects(missing.entityGuard(), error => error.status === 401);
+});
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 import {
   HTTP_PILOT_ENTITIES,
