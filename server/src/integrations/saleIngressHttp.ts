@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../api/errors.js';
-import { channelIdentitySchema, saleEnvelopeSchema, receiptQuerySchema, verifySale, type ChannelIdentity } from './saleIngressContract.js';
+import { channelIdentitySchema, saleEnvelopeSchema, receiptReadSchema, verifySale, type ChannelIdentity } from './saleIngressContract.js';
 import { SaleIngress } from './saleIngress.js';
 
 export function loadChannelIdentities(env: NodeJS.ProcessEnv): ChannelIdentity[] {
@@ -34,7 +34,7 @@ export function saleIngressHttp(service: SaleIngress, identities: ChannelIdentit
       let payload: unknown;
       try { payload = JSON.parse(req.body.toString('utf8')); } catch { throw new AppError(422, 'CHANNEL_PAYLOAD_INVALID', 'Invalid sale payload'); }
       if (req.path === '/recibos') {
-        const parsed = receiptQuerySchema.safeParse(payload);
+        const parsed = receiptReadSchema.safeParse(payload);
         if (!parsed.success) throw new AppError(422, 'CHANNEL_PAYLOAD_INVALID', 'Invalid receipt query');
         const receipt = await service.receipt(identity, parsed.data, req.requestId);
         res.status(200).json({ data: receipt });

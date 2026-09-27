@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { channelIdentitySchema, saleEnvelopeSchema, receiptQuerySchema, saleReceiptSchema, signSale,
-  type SaleEnvelope, type ReceiptQuery } from './saleIngressContract.js';
+import { channelIdentitySchema, saleEnvelopeSchema, receiptReadSchema, receiptPageSchema, saleReceiptSchema, signSale,
+  type SaleEnvelope, type ReceiptQuery, type ReceiptPageQuery } from './saleIngressContract.js';
 
 const created = z.object({ data: saleReceiptSchema, replayed: z.boolean() }).strict();
 const found = z.object({ data: saleReceiptSchema }).strict();
+const paged = z.object({ data:receiptPageSchema }).strict();
 const optionsSchema = channelIdentitySchema.pick({ id: true, secret: true }).extend({
   endpoint: z.string().url(), attempts: z.number().int().min(1).max(3).default(3),
   timeoutMs: z.number().int().min(100).max(30_000).default(10_000),
@@ -39,13 +40,15 @@ export class ChannelSalesClient {
     return this.request('', parsed.data, created);
   }
 
-  async receipt(payload: ReceiptQuery): Promise<z.infer<typeof found>> {
-    const parsed = receiptQuerySchema.safeParse(payload);
+  async receipt(payload:ReceiptQuery):Promise<z.infer<typeof found>>;
+  async receipt(payload:ReceiptPageQuery):Promise<z.infer<typeof paged>>;
+  async receipt(payload: ReceiptQuery|ReceiptPageQuery): Promise<z.infer<typeof found>|z.infer<typeof paged>> {
+    const parsed = receiptReadSchema.safeParse(payload);
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
-    return this.request('/recibos', parsed.data, found);
+    return parsed.data.operation==='receipt-page'?this.request('/recibos',parsed.data,paged):this.request('/recibos',parsed.data,found);
   }
 
-  private async request<T>(path: string, payload: SaleEnvelope | ReceiptQuery, schema: z.ZodType<T>): Promise<T> {
+  private async request<T>(path: string, payload: SaleEnvelope | ReceiptQuery | ReceiptPageQuery, schema: z.ZodType<T>): Promise<T> {
     // Serialize once: every retry retains exactly the same key and semantic payload.
     const body = Buffer.from(JSON.stringify(payload));
     if (body.length > 128 * 1024) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');

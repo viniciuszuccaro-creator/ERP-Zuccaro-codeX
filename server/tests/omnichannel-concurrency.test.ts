@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { boot } from './omnichannelFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
+import { ChannelSalesClient } from '../src/integrations/channelSalesClient.js';
+import { identity,now } from './omnichannelFixture.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 test('PostgreSQL multiconnection: one canonical sale under equivalent, conflicting and nonce-concurrent deliveries', { skip: !url }, async () => {
@@ -42,6 +44,29 @@ test('PostgreSQL multiconnection: failed atomic audits leave no documents, recei
 test('isolated PostgreSQL fixture refuses DEV-like URLs before opening a connection', async () => {
   await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@localhost/erp_dev'), /not isolated/);
   await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@vps.example/erp_omnichannel_test'), /not isolated/);
+});
+
+test('real PostgreSQL signed receipt history retains equal microsecond rows and tenant/client partition', {skip:!url},async()=>{
+  const f=await boot(await isolatedPostgres(url!),[{...identity,id:'synthetic-other-client'}]);
+  try{
+    const ids:string[]=[];
+    for(let i=0;i<3;i++){
+      const r=await f.send({...f.envelope,idempotencyKey:`history-${i}`},{nonce:`synthetic-history-nonce-${i}`});
+      assert.equal(r.status,201);ids.push(r.body.data!.id);
+    }
+    assert.equal((await f.send({...f.envelope,idempotencyKey:'foreign-client'},{channel:'synthetic-other-client'})).status,201);
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-01T00:00:00.123456Z' WHERE aggregate_id=ANY($1::uuid[])",[ids]);
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-SITE',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    const found:string[]=[];let cursor:{id:string;createdAt:string}|undefined;
+    for(let i=0;i<4;i++){
+      const page=(await client.receipt({version:1,operation:'receipt-page',tipo:'Pedido',limit:1,cursor})).data;
+      assert.equal(page.items.length,1);found.push(page.items[0].receipt.id);
+      if(!page.hasMore)break;assert.ok(page.nextCursor);cursor=page.nextCursor;
+    }
+    assert.deepEqual(found.sort(),ids.sort());
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,4);
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length,3);
+  }finally{await f.close();}
 });
 
 test('real PostgreSQL receipt integrity rejects forged metadata under concurrent replay without recreating a sale', {skip:!url}, async () => {

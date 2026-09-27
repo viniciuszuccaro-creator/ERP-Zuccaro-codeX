@@ -18,6 +18,18 @@ test('server-side channel client creates and queries canonical receipts for all 
   } finally { await f.close(); }
 });
 
+test('channel receipt history rejects invalid bounds and inconsistent page/cursor responses',async()=>{
+  const base={endpoint:'https://synthetic.invalid/sales',id:'synthetic-SITE',secret:identity.secret};
+  const query={version:1,operation:'receipt-page',tipo:'Pedido',limit:1} as const;
+  let calls=0;
+  const client=new ChannelSalesClient(base,async()=>{calls++;return new Response(JSON.stringify({data:{
+    tipo:'Pedido',items:[],hasMore:true,nextCursor:{id:'11111111-1111-4111-8111-111111111111',createdAt:'2026-01-01T00:00:00.000Z'},
+  }}));});
+  await assert.rejects(client.receipt({...query,limit:51}),(e:any)=>e.code==='CHANNEL_CLIENT_PAYLOAD_INVALID');
+  assert.equal(calls,0);
+  await assert.rejects(client.receipt(query),(e:any)=>e.code==='CHANNEL_CLIENT_RESPONSE_INVALID');assert.equal(calls,1);
+});
+
 test('receipt decoding bounds actual streamed bytes, accepts bounded fragmented JSON and rejects malformed UTF-8 without retry', async () => {
   const base={ endpoint:'https://synthetic.invalid/sales',id:'synthetic-SITE',secret:identity.secret };
   const query={version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:'synthetic'} as const;
