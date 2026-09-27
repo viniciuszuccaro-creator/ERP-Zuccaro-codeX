@@ -1,3 +1,56 @@
+## ACESSO — Cadastros Gerais local ≠ Postgres (2026-09-27)
+
+| Campo | Valor |
+|---|---|
+| **Sintoma** | Login “novo” ainda como **Gate D Synth Actor**; seletor mostra nomes de teste (DEV/TESTE), não Grupo CPA / CPA ferro e aço / 3Z; alert “sem acesso a este grupo”; módulos negados |
+| **Causa** | Em modo HTTP, grupo/empresa vêm do **Postgres** (seed Gate D: Grupo/Empresa DEV sintéticos). **Cadastros Gerais** do browser grava no **localBase44** (IndexedDB) — não alimenta o seletor HTTP. Conta synth ≠ proprietário. |
+| **Ação VPS** | (1) Renomear/garantir tenant CPA no Postgres; (2) provisionar owner + demote synth; (3) rebuild `main` com #91; (4) **Sair** e login com e-mail real |
+
+### PASTE_VPS — alinhar nomes CPA + owner + rebuild
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main && git checkout --detach origin/main
+echo "tip=$(git rev-parse --short HEAD)"
+
+# Ver o que existe hoje:
+docker exec -i supabase-db psql -X -U postgres -d postgres -At <<'SQL'
+SELECT 'group=' || id || '|' || nome_do_grupo FROM groups ORDER BY nome_do_grupo;
+SELECT 'empresa=' || id || '|' || COALESCE(nome_fantasia,razao_social) || '|g=' || group_id
+FROM empresas WHERE status='Ativa' ORDER BY 1;
+SQL
+
+# Se só houver seed sintético A (aaaaaaaa… / cccccccc… / c2c2c2c2…), alinhar NOMES
+# (sem CNPJ real). Ajuste os UUIDs se a consulta acima for diferente.
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+UPDATE groups SET nome_do_grupo = 'Grupo CPA', updated_at = timezone('utc', now())
+ WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+UPDATE empresas SET
+  razao_social = 'CPA FERRO E ACO LTDA',
+  nome_fantasia = 'CPA ferro e aço',
+  updated_at = timezone('utc', now())
+ WHERE id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+UPDATE empresas SET
+  razao_social = '3Z LTDA',
+  nome_fantasia = '3Z LTDA',
+  updated_at = timezone('utc', now())
+ WHERE id = 'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2';
+SQL
+
+export OWNER_GROUP_ID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+export OWNER_EMPRESA_ID='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+
+CONFIRM_OWNER_ADMIN_PROFILE=YES \
+  OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+  DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+```
+
+No browser: clicar **Sair** → login com **vinicius.zuccaro@gmail.com** (não Gate D). O canto inferior esquerdo deve mostrar **Vinicius Zuccaro**, não Gate D Synth. Seletor: Grupo CPA + CPA ferro e aço + 3Z LTDA.
+
 ## ACESSO #91 — mesclado na main; aguarda deploy VPS (2026-09-27)
 
 | Campo | Valor |
