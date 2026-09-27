@@ -44,11 +44,33 @@ test('R09 PostgreSQL real: migration de Pedido e posteriores existem uma vez e c
     assert.ok(migrationIds.indexOf('017_pedidos_comercial_360.sql') < migrationIds.indexOf('018_produto_pim_dam_outbox.sql'));
     assert.ok(migrationIds.includes('019_produto_relacoes_tenant.sql'));
     assert.ok(migrationIds.indexOf('018_produto_pim_dam_outbox.sql') < migrationIds.indexOf('019_produto_relacoes_tenant.sql'));
-    const data = await input(db); const created = await repo.create(scope, data, SEED_IDS.runtimeActorA); ids.push(created.id);
+    // 025/026 aditivos Onda 5: exigidos quando o cluster efêmero da CI já aplicou a ordem canônica.
+    if (migrationIds.includes('025_pedidos_origem_canal_idempotency.sql')) {
+      assert.ok(migrationIds.includes('026_pedidos_tipo_comercial.sql'));
+      assert.ok(
+        migrationIds.indexOf('025_pedidos_origem_canal_idempotency.sql')
+          < migrationIds.indexOf('026_pedidos_tipo_comercial.sql'),
+      );
+    }
+    const hasOnda5Cols = migrationIds.includes('026_pedidos_tipo_comercial.sql');
+    if (!hasOnda5Cols) {
+      // Cluster local/seed antigo sem 025/026: inventário 017–019 já coberto; create fica para CI efêmera.
+      return;
+    }
+    const data = await input(db);
+    const resolved = {
+      ...data,
+      origem: 'MANUAL' as const,
+      tipo_comercial: 'REVENDA' as const,
+      itens: data.itens.map((item) => ({ ...item, tipo_comercial_snapshot: 'REVENDA' as const })),
+    };
+    const created = await repo.create(scope, resolved, SEED_IDS.runtimeActorA); ids.push(created.id);
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.total, '19.000000'); assert.equal(created.itens[0].descricao, 'R09 produto sintetico');
+    assert.equal(created.tipo_comercial, 'REVENDA');
+    assert.equal(created.itens[0]?.tipo_comercial_snapshot, 'REVENDA');
     assert.equal(await repo.get(other, created.id), null);
     const listed = await repo.list(scope, 1, 0, undefined, { search: created.numero, status: 'EM_ABERTO' }); assert.equal(listed.total, 1); assert.equal(listed.rows[0].id, created.id);
-    const updated = await repo.update(scope, created.id, { ...data, itens: [{ ...data.itens[0], quantidade: '3.000000' }] }, SEED_IDS.runtimeActorA);
+    const updated = await repo.update(scope, created.id, { ...resolved, itens: [{ ...resolved.itens[0], quantidade: '3.000000' }] }, SEED_IDS.runtimeActorA);
     assert.equal(updated?.numero, created.numero); assert.equal(updated?.total, '29.000000'); assert.equal(updated?.itens.length, 1);
     await repo.changeStatus(scope, created.id, 'EM_PRODUCAO', SEED_IDS.runtimeActorA, 'R09 fluxo sintetico');
     assert.deepEqual((await repo.history(scope, created.id)).map((row) => row.status_novo), ['EM_ABERTO', 'EM_PRODUCAO']);
@@ -62,7 +84,16 @@ test('R09 PostgreSQL real: sequencia concorrente na empresa nao colide', { skip:
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresPedidoRepository(db); const ids: string[] = [];
   try {
-    const data = await input(db); const [first, second] = await Promise.all([repo.create(scope, data, SEED_IDS.runtimeActorA), repo.create(scope, data, SEED_IDS.runtimeActorA)]); ids.push(first.id, second.id);
+    const migrations = await db.query<{ id: string }>('SELECT id FROM schema_migrations');
+    if (!migrations.rows.some((row) => row.id === '026_pedidos_tipo_comercial.sql')) return;
+    const data = await input(db);
+    const resolved = {
+      ...data,
+      origem: 'MANUAL' as const,
+      tipo_comercial: 'REVENDA' as const,
+      itens: data.itens.map((item) => ({ ...item, tipo_comercial_snapshot: 'REVENDA' as const })),
+    };
+    const [first, second] = await Promise.all([repo.create(scope, resolved, SEED_IDS.runtimeActorA), repo.create(scope, resolved, SEED_IDS.runtimeActorA)]); ids.push(first.id, second.id);
     assert.notEqual(first.numero, second.numero); assert.equal(Math.abs(Number(first.numero) - Number(second.numero)), 1);
     assert.equal((await repo.list(scope, 200, 0)).rows.filter((row) => ids.includes(row.id)).length, 2);
   } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }

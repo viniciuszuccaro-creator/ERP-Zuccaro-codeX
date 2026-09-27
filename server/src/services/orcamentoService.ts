@@ -8,7 +8,7 @@ import type { UnidadeMedida } from '../repositories/cadastroTypes.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondicaoPagamentoRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
-import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
+import { orcamentoCreateSchema, ORCAMENTO_ORIGENS, ORCAMENTO_STATUS, type Orcamento, type OrcamentoCreate, type OrcamentoOrigem, type OrcamentoRepository, type OrcamentoScope, type OrcamentoStatus } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import {
   assertDescontoDentroDaAlcadaOuAprovar,
@@ -40,9 +40,12 @@ export type { ComercialCostPort, ComercialAlcadaConfigPort };
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
     id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero,
+    versao: row.versao, orcamento_raiz_id: row.orcamento_raiz_id, supersedido_por_id: row.supersedido_por_id,
     status: row.status, cliente_empresa_id: row.cliente_empresa_id,
-    condicao_pagamento_id: row.condicao_pagamento_id, subtotal: row.subtotal,
-    desconto: row.desconto, total: row.total, ativo: row.ativo,
+    condicao_pagamento_id: row.condicao_pagamento_id,
+    origem: row.origem, canal: row.canal, external_id: row.external_id, idempotency_key: row.idempotency_key,
+    campanha: row.campanha,
+    subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length,
   });
 }
@@ -66,18 +69,23 @@ export class OrcamentoService {
 
   async create(ctx: RequestContext, payload: unknown) {
     const scope = await this.prepare(ctx, 'criar');
-    const data = this.parse(payload);
-    return this.repo.withTransaction(async (executor) => {
-      await this.validateReferences(scope, data, executor);
-      const priced = await this.applyServerPriceSnapshots(ctx, data);
-      // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
-      await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const created = await this.repo.create(scope, priced, executor);
-      await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
-      await this.auditRow(ctx, 'create', null, created, executor);
-      return created;
-    });
+    const data = this.normalizeCreate(this.parse(payload));
+    try {
+      return await this.repo.withTransaction(async (executor) => {
+        await this.assertChannelUniqueness(scope, data, executor);
+        await this.validateReferences(scope, data, executor);
+        const priced = await this.applyServerPriceSnapshots(ctx, data);
+        await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+        const created = await this.repo.create(scope, priced, executor);
+        await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
+        await this.auditRow(ctx, 'create', null, created, executor);
+        return created;
+      });
+    } catch (error) {
+      this.rethrowChannelConflict(error);
+      throw error;
+    }
   }
 
   async get(ctx: RequestContext, id: string) {
@@ -86,7 +94,7 @@ export class OrcamentoService {
     return this.requireOrcamento(scope, id);
   }
 
-  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; validadeDe?: string; validadeAte?: string } = {}) {
+  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; validadeDe?: string; validadeAte?: string; origem?: string } = {}) {
     const scope = await this.prepare(ctx, 'visualizar');
     const requestedLimit = Number.isFinite(options.limit) ? Math.trunc(options.limit!) : 50;
     const requestedOffset = Number.isFinite(options.offset) ? Math.trunc(options.offset!) : 0;
@@ -94,19 +102,53 @@ export class OrcamentoService {
     const offset = Math.max(0, requestedOffset);
     const search = options.search?.trim();
     if (search && search.length > 80) throw new AppError(422, 'VALIDATION_ERROR', 'Search is too long');
-    if (options.status && !['EM_ABERTO', 'CANCELADO'].includes(options.status)) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento status filter');
+    if (options.status && !(ORCAMENTO_STATUS as readonly string[]).includes(options.status)) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento status filter');
+    }
+    if (options.origem && !(ORCAMENTO_ORIGENS as readonly string[]).includes(options.origem)) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento origem filter');
+    }
     if (options.clienteEmpresaId) this.assertId(options.clienteEmpresaId);
     const validadeDe = this.parseFilterDate(options.validadeDe, false);
     const validadeAte = this.parseFilterDate(options.validadeAte, true);
     if (validadeDe && validadeAte && validadeDe > validadeAte) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid validity period');
     const page = await this.repo.list(scope, limit, offset, undefined, {
       search: search || undefined,
-      status: options.status as 'EM_ABERTO' | 'CANCELADO' | undefined,
+      status: options.status as OrcamentoStatus | undefined,
       clienteEmpresaId: options.clienteEmpresaId,
       validadeDe,
       validadeAte,
+      origem: options.origem as OrcamentoOrigem | undefined,
     });
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
+  }
+
+  async listVersions(ctx: RequestContext, id: string) {
+    const scope = await this.prepare(ctx, 'visualizar');
+    this.assertId(id);
+    const current = await this.requireOrcamento(scope, id);
+    return this.repo.listVersions(scope, current.orcamento_raiz_id);
+  }
+
+  async createVersion(ctx: RequestContext, id: string, payload: unknown) {
+    const scope = await this.prepare(ctx, 'versionar');
+    this.assertId(id);
+    const data = this.parse(payload);
+    return this.repo.withTransaction(async (executor) => {
+      const before = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(before);
+      await this.validateReferences(scope, data, executor);
+      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      try {
+        const { previous, current } = await this.repo.createVersion(scope, id, priced, executor);
+        await this.auditRow(ctx, 'update', before, previous, executor);
+        await this.auditRow(ctx, 'create', null, current, executor);
+        return current;
+      } catch (error) {
+        if (String((error as Error).message).includes('ORCAMENTO_STATE_CONFLICT')) this.stateConflict();
+        throw error;
+      }
+    });
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
@@ -116,6 +158,21 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      if (data.origem !== undefined && data.origem !== before.origem) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { origem: 'immutable' });
+      }
+      if (data.canal !== undefined && (data.canal ?? null) !== before.canal) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { canal: 'immutable' });
+      }
+      if (data.external_id !== undefined && (data.external_id ?? null) !== before.external_id) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { external_id: 'immutable' });
+      }
+      if (data.idempotency_key !== undefined && (data.idempotency_key ?? null) !== before.idempotency_key) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { idempotency_key: 'immutable' });
+      }
+      if (data.campanha !== undefined && (data.campanha ?? null) !== before.campanha) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { campanha: 'immutable' });
+      }
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       const criador = await this.resolveCriadorActorId('Orcamento', id);
@@ -162,6 +219,40 @@ export class OrcamentoService {
     const parsed = orcamentoCreateSchema.safeParse(payload);
     if (!parsed.success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', parsed.error.flatten());
     return parsed.data;
+  }
+
+  private normalizeCreate(data: OrcamentoCreate): OrcamentoCreate {
+    return {
+      ...data,
+      origem: data.origem ?? 'MANUAL',
+      canal: data.canal ?? null,
+      external_id: data.external_id ?? null,
+      idempotency_key: data.idempotency_key ?? null,
+      campanha: data.campanha ?? null,
+    };
+  }
+
+  private async assertChannelUniqueness(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor) {
+    const origem = data.origem ?? 'MANUAL';
+    if (data.idempotency_key) {
+      const hit = await this.repo.getByIdempotencyKey(scope, origem, data.idempotency_key, executor);
+      if (hit) throw new AppError(409, 'ORCAMENTO_IDEMPOTENCY_CONFLICT', 'Orcamento with same idempotency key already exists');
+    }
+    if (data.external_id) {
+      const hit = await this.repo.getByExternalId(scope, origem, data.external_id, executor);
+      if (hit) throw new AppError(409, 'ORCAMENTO_EXTERNAL_ID_CONFLICT', 'Orcamento with same external id already exists');
+    }
+  }
+
+  private rethrowChannelConflict(error: unknown): void {
+    const message = String((error as Error)?.message ?? error);
+    const code = (error as { code?: string }).code;
+    if (message.includes('ORCAMENTO_IDEMPOTENCY_CONFLICT') || (code === '23505' && message.includes('uq_orcamentos_idempotency'))) {
+      throw new AppError(409, 'ORCAMENTO_IDEMPOTENCY_CONFLICT', 'Orcamento with same idempotency key already exists');
+    }
+    if (message.includes('ORCAMENTO_EXTERNAL_ID_CONFLICT') || (code === '23505' && message.includes('uq_orcamentos_external_id'))) {
+      throw new AppError(409, 'ORCAMENTO_EXTERNAL_ID_CONFLICT', 'Orcamento with same external id already exists');
+    }
   }
 
   /**
