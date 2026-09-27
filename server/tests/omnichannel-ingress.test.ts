@@ -120,6 +120,10 @@ test('readiness refuses weakened and additional RLS policies and price table ass
   await f.pg.exec('CREATE POLICY insecure_extra ON integration_events USING(true) WITH CHECK(true)');
   await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
   await f.pg.exec('DROP POLICY insecure_extra ON integration_events');await f.ingress.assertDatabaseReady();
+  await f.pg.exec('CREATE ROLE scope_excluded; ALTER POLICY integration_events_scope ON integration_events TO scope_excluded');
+  await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
+  await f.pg.exec('ALTER POLICY integration_events_scope ON integration_events TO PUBLIC; DROP ROLE scope_excluded');
+  await f.ingress.assertDatabaseReady();
  }finally{await f.close();}
 });
 

@@ -147,5 +147,9 @@ test('PostgreSQL readiness rejects same-named permissive and extra policies', {s
   await f.pg.exec('CREATE POLICY insecure_extra ON integration_events USING(true) WITH CHECK(true)');
   await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
   await f.pg.exec('DROP POLICY insecure_extra ON integration_events');await f.ingress.assertDatabaseReady();
+  await f.pg.exec('ALTER POLICY integration_events_scope ON integration_events TO pg_read_all_settings');
+  await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
+  await f.pg.exec('ALTER POLICY integration_events_scope ON integration_events TO PUBLIC');
+  await f.ingress.assertDatabaseReady();
  }finally{await f.close();}
 });

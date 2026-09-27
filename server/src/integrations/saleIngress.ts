@@ -16,7 +16,7 @@ export type { SaleReceipt } from './saleIngressContract.js';
 type ReceiptEvent = { payload: unknown; status: string; aggregate_type: string; aggregate_id: string };
 export async function assertIntegrationEventsReady(db: DbClient) {
   const result = await db.query<{ ready: boolean; qualifier: string; check: string }>(`SELECT
-    (c.relrowsecurity AND c.relforcerowsecurity AND p.polcmd='*' AND p.polpermissive
+    (c.relrowsecurity AND c.relforcerowsecurity AND p.polcmd='*' AND p.polpermissive AND p.polroles=ARRAY[0]::oid[]
       AND (SELECT count(*) FROM pg_policy WHERE polrelid=c.oid)=1) AS ready,
     pg_get_expr(p.polqual,p.polrelid) AS qualifier, pg_get_expr(p.polwithcheck,p.polrelid) AS check
     FROM pg_class c JOIN pg_policy p ON p.polrelid=c.oid AND p.polname='integration_events_scope'

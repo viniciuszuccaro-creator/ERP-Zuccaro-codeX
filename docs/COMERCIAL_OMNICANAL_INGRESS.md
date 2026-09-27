@@ -375,3 +375,10 @@ Rollback de código mantém eventos processados; porém código antigo reintrodu
 falhas de nonce/gate, portanto deixar ingress desativado nesse rollback. Sem
 HD/VPS/merge/deploy. A correção é dependente da cadeia #68–#87 e requer nova
 revisão independente; CI verde não aprova implantação nem fecha ondas.
+
+Revisão adicional #88/review5328624095: gate exige polroles exatamente PUBLIC
+como no contrato canônico; TO papel que exclui API é recusado antes da montagem.
+PUBLIC é alvo da policy, não grant de acesso às tabelas: privilégios continuam
+revogados de PUBLIC no contrato e concedidos separadamente ao papel operacional.
+Testes PGlite/PG alteram somente TO, preservando todos os predicados, e comprovam
+recusa seguida de readiness após restaurar PUBLIC. Não mudar policy em DEV.
