@@ -402,3 +402,31 @@ chave/body, consulta de recibo e replay sem duplicar. Base#88, revisão independ
 pendente, integração da cadeia bloqueada até correções revisadas/bases revalidadas.
 Rollback anterior reintroduz configuração URL incorreta/classificação inadequada;
 nenhuma migration/dado alterado. Sem HD/VPS/merge/deploy, ondas não encerradas.
+# Revisão da fila: descartes durante claim (2026-09-27)
+
+O worker existente distingue uma fila vazia de uma linha movida para dead-letter
+durante claim por ausência de chave ou orçamento esgotado. `claimWithOutcomes`
+reutiliza a transação, RBAC, RLS e auditoria de claim; `claim` preserva o retorno
+original de leases. O worker soma somente descartes persistidos e continua até
+o limite de eventos examinados (1–100), incluindo descartes, sem varredura
+ilimitada. Falha de auditoria propaga e reverte o descarte; parada ainda impede
+novas claims e o envio das linhas seguintes.
+
+Testes sintéticos cobrem dois descartes antes de um envio de sinal válido,
+limite com próxima linha preservada, recuperação na execução seguinte e
+rollback por falha de auditoria. A mesma sequência roda no PostgreSQL isolado
+da CI. Não se trata de publicação completa de preço, mídia ou estoque.
+
+Gate pendente da revisão #71/5328778588: o produtor canônico pode registrar
+`produto.publicado` com `empresa_id=NULL` para Produto do Grupo. Esses eventos
+não possuem destino empresarial explícito e continuam fora do consumidor e
+da policy por empresa. É necessário contrato canônico de destino autorizado;
+não inferir empresas, ampliar RLS para NULL ou tratar RASCUNHO de produto_canais
+como projeção aprovada. Coordenação registrada na #50/5852561182. Portanto
+esta correção do worker não torna a #71 ou a Onda 15 integralmente apta.
+
+Implementado/testado localmente: 12 focados PASS/0 FAIL; backend completo
+291 PASS/0 FAIL/32 SKIP (323 testes), typecheck/build backend, lint,
+audit:baseline e diff --check PASS. PostgreSQL local
+opcional, prova obrigatória na CI do novo HEAD. Revisão independente e CI serão
+registradas na PR. Sem merge, deploy, VPS, HD ou alteração de migration.

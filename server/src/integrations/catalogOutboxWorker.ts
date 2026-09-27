@@ -10,14 +10,20 @@ export type CatalogPublisher = {
 export class CatalogOutboxWorker {
   constructor(private readonly outbox: CatalogOutbox, private readonly publisher: CatalogPublisher) {}
   async runOnce(ctx: RequestContext, limit = 10, signal?: AbortSignal) {
+    // Limit counts examined events, including audited discards. Never scan an unbounded poisoned queue.
     // Claim one at a time: leases for later rows cannot expire while earlier network requests run.
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error('Invalid worker limit');
     if(signal!==undefined&&!(signal instanceof AbortSignal))throw new Error('Invalid worker signal');
     const counts = { published: 0, retry: 0, dead_letter: 0 };
     for (let i = 0; i < limit; i++) {
       if(signal?.aborted)break;
-      const [lease] = await this.outbox.claim(ctx, 1, 30);
-      if (!lease) break;
+      const claimed = await this.outbox.claimWithOutcomes(ctx, 1, 30);
+      counts.dead_letter += claimed.discarded;
+      const [lease] = claimed.leases;
+      if (!lease) {
+        if (claimed.discarded) continue;
+        break;
+      }
       if(signal?.aborted){
         const final=await this.outbox.finish(ctx,lease,{status:'retry',code:'CATALOG_RUN_INTERRUPTED'});
         counts[final]++;break;

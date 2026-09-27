@@ -9,6 +9,24 @@ import { CatalogOutboxWorker } from '../src/integrations/catalogOutboxWorker.js'
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 
+test('real PostgreSQL worker drains discarded rows without hiding audit outcomes',{skip:!url},async()=>{
+  const f=await outboxFixture(await isolatedPostgres(url!));
+  try{
+    const exhausted=await f.event(),missing=await f.event(),valid=await f.event(),later=await f.event();
+    await f.pg.query("UPDATE integration_events SET attempts=max_attempts,created_at='2026-01-01' WHERE id=$1",[exhausted]);
+    await f.pg.query("UPDATE integration_events SET idempotency_key=NULL,created_at='2026-01-02' WHERE id=$1",[missing]);
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-03' WHERE id=$1",[valid]);
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-04' WHERE id=$1",[later]);
+    const sent:string[]=[];
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async input=>{sent.push(input.eventId);return{eventId:input.eventId,key:input.key};}});
+    assert.deepEqual(await worker.runOnce(f.ctx,3),{published:1,retry:0,dead_letter:2});
+    assert.deepEqual(sent,[valid]);
+    assert.equal((await f.pg.query('SELECT status,attempts FROM integration_events WHERE id=$1',[later])).rows[0].status,'pending');
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE after_data->>'status'='dead_letter'")).rows.length,2);
+    assert.deepEqual(await worker.runOnce(f.ctx,3),{published:1,retry:0,dead_letter:0});
+  }finally{await f.close();}
+});
+
 test('real PostgreSQL interrupted worker retains idempotency, rejects late ACK and recovers with audit gates',{skip:!url},async()=>{
   const f=await outboxFixture(await isolatedPostgres(url!));
   try{
