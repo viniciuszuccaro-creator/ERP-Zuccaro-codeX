@@ -1,3 +1,30 @@
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 55d9014c (2026-09-27T13:11Z)
+
+Delta vs `6ac746df` (1 commit): fecha conversão silenciosa #51 no runtime.
+
+| Campo | Valor |
+|---|---|
+| SHA | `55d9014c063b21fede0777892e68dd1060c798d4` |
+| CI no momento | frontend/concurrency PASS; omnicanal-postgres **SUCCESS**; backend **em curso** |
+| **Veredito delta código** | **APROVADO** (selo de SHA após CI completa) |
+| **Veredito merge/ativação** | **BLOCKED** |
+
+### Achados
+- `mapProdutoTipoToComercialItem`: `default` deixa de virar REVENDA; lança `422 PEDIDO_TIPO_COMERCIAL_INVALIDO` / `PRODUCT_TYPE_UNKNOWN`.
+- Hint `ARMADO`/`requer_producao` **não** contorna tipo desconhecido (throw antes da resolução do hint).
+- Aliases canônicos (`Revenda`, `SERVICO`, …) inalterados; `null`/vazio ainda normalizam para Revenda (ausência ≠ legado desconhecido).
+- Teste canal: recusa sem pedidos/itens/histórico/audit/events; retry com mesmo nonce após mapear Produto → 201 REVENDA.
+
+### Gates ainda abertos
+1. CI completa deste HEAD (backend).
+2. **025 ≠ #50**.
+3. **Histórico 026 / classificação passada** — não inferir tipo pelo Produto atual (Codex mantém como gate explícito).
+4. **033 RLS** + grants/role operacional.
+5. Canais **OFF**.
+6. **#93** rebase sobre este HEAD.
+
+**#96** `4fea5a63` permanece **APROVADO** (prioridade). Cursor não edita Codex nem faz deploy.
+
 ## REVISÃO CURSOR CONTÍNUA — #92 HEAD 6ac746df (2026-09-27T13:09Z)
 
 Delta vs `44710e55` (1 commit): versionamento Orçamento #52/#53 no consolidado.
