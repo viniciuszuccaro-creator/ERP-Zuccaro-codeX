@@ -361,7 +361,10 @@ DECLARE
 BEGIN
   SELECT * INTO STRICT r FROM _owner_prov LIMIT 1;
 
-  IF EXISTS (SELECT 1 FROM profiles p WHERE lower(p.email)=r.synth_email AND p.group_id IS DISTINCT FROM r.group_id) THEN
+  IF EXISTS (SELECT 1 FROM profiles p
+    WHERE (lower(p.email)=r.synth_email OR p.auth_user_id IN (
+      SELECT id FROM auth.users WHERE lower(coalesce(email,''))=r.synth_email
+    )) AND p.group_id IS DISTINCT FROM r.group_id) THEN
     RAISE EXCEPTION 'BLOCKED: synth_profile_other_group';
   END IF;
 
@@ -512,7 +515,12 @@ SELECT p.group_id, COALESCE(p.empresa_id,r.empresa_id), 'system:vps-owner-provis
        CASE WHEN b.id IS NULL THEN NULL ELSE jsonb_build_object('role',b.role,'ativo',b.ativo,'group_id',b.group_id,'empresa_id',b.empresa_id,'permissoes',b.permissoes) END,
        jsonb_build_object('role',p.role,'ativo',p.ativo,'group_id',p.group_id,'empresa_id',p.empresa_id,'permissoes',p.permissoes)
 FROM profiles p CROSS JOIN _owner_prov r LEFT JOIN _owner_before b ON b.id=p.id
-WHERE lower(p.email)=r.owner_email OR (r.demote='YES' AND lower(p.email)=r.synth_email);
+WHERE (lower(p.email)=r.owner_email OR p.auth_user_id IN (
+        SELECT id FROM auth.users WHERE lower(coalesce(email,''))=r.owner_email
+      ))
+   OR (r.demote='YES' AND (lower(p.email)=r.synth_email OR p.auth_user_id IN (
+        SELECT id FROM auth.users WHERE lower(coalesce(email,''))=r.synth_email
+      )));
 
 COMMIT;
 SQL

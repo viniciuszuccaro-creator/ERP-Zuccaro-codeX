@@ -11500,3 +11500,13 @@ Checklist inicial:
 - Procedimento candidato: canário API/SPA em rede privada e loopback 3086/3087; build com label de SHA; promover os mesmos image IDs somente após readiness/proxy/identidade fabricada/login bundle. Preservar 3080/3081, imagens de rollback, snapshots seletivos e backup SQL. Rollback de imagens não desfaz banco; restore seletivo de perfil é gate independente.
 - Validação local backend: 277 PASS / 0 FAIL / 15 SKIP (292); testes PGlite executam SQL real e preflight real. Backend typecheck/build e lint aprovados. Frontend typecheck apresenta dívida preexistente fora dos arquivos alterados; suíte local sofre restrições do ambiente Windows; build frontend aprovado com --configLoader native (bundler de config bloqueado por sandbox) — resultados da CI serão registrados no PR, sem alegar aprovação inexistente.
 - Estado: IMPLEMENTADO candidato; revisão/CI/merge/deploy ainda pendentes. VPS mantém imagens anteriores, sem deploy nesta rodada. Acesso não resolvido até logout/login real, seleção das duas empresas e Comercial/Configurações testados pelo proprietário. Canais omnicanal continuam OFF e HD fora da intervenção.
+
+## Codex — acesso96: correções da revisão de segurança (2026-09-27)
+
+- Candidato próprio; sem VPS, grant, merge ou novos cadastros. Corrige os quatro achados da review5330636163 no HEAD4fea5a6.
+- `.dockerignore` exclui backups privados do contexto do build SPA, evitando dump e env de recuperação no COPY/intermediate cache.
+- Canário consulta identidade efetiva do banco e compara com o banco direto antes de provisionar/promover; divergência preserva oficiais e limpa somente candidatos.
+- Guard de tenant e auditoria usam o mesmo vínculo email OU Auth do perfil sintético; vínculo de outro Grupo aborta a transação, e email divergente no mesmo Grupo recebe before/after auditável.
+- SQL real PGlite4 PASS/0 FAIL, incluindo audit-failure rollback e vínculo Auth com email divergente. Backend completo277 PASS/0 FAIL/15 SKIP; typecheck/build/lint/audit/diff PASS. Teste Bash novo preservado para CI Linux: sandbox Windows bloqueou mkdir/traversal, não houve execução VPS nem expectativa enfraquecida.
+- Revisão Cursor e CI do novo HEAD obrigatórias; CI anterior1077 não aprova estas mudanças. Após os gates: CI PUSH main, backup fresco, canário/APPLY, SHA/digests e teste real do proprietário. Canais OFF.
+- Validação frontend local: Vite/esbuild bloqueado por ACL de leitura do sandbox Windows (Access is denied ao resolver vite.config.js). Não declarar build/frontend/npm test completo local aprovado; CI Linux do novo HEAD executará frontend e harness Bash integral. Nenhuma configuração de segurança/teste removida para contornar o ambiente.

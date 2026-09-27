@@ -31,7 +31,10 @@ if [[ "$MODE" != AUDIT ]]; then
 fi
 IDENTITY_SQL="SELECT current_database() || '|' || extract(epoch from pg_postmaster_start_time())::text"
 DIRECT_ID="$(docker exec supabase-db psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 -c "$IDENTITY_SQL")"
-API_ID="$(docker exec erp-api-dev node --input-type=module -e 'import pg from "pg"; const c=new pg.Client({connectionString:process.env.DATABASE_URL}); try { await c.connect(); const r=await c.query("SELECT current_database() || chr(124) || extract(epoch from pg_postmaster_start_time())::text AS identity"); console.log(r.rows[0].identity); } catch { console.error("BLOCKED: api_database_identity_unavailable"); process.exitCode=3; } finally { await c.end(); }')"
+database_identity() {
+  docker exec "$1" node --input-type=module -e 'import pg from "pg"; const c=new pg.Client({connectionString:process.env.DATABASE_URL}); try { await c.connect(); const r=await c.query("SELECT current_database() || chr(124) || extract(epoch from pg_postmaster_start_time())::text AS identity"); console.log(r.rows[0].identity); } catch { console.error("BLOCKED: api_database_identity_unavailable"); process.exitCode=3; } finally { await c.end(); }'
+}
+API_ID="$(database_identity erp-api-dev)"
 [[ "$DIRECT_ID" == "$API_ID" ]] || { echo 'BLOCKED: api_and_direct_database_differ' >&2; exit 3; }
 DATABASE="${API_ID%%|*}"
 echo 'database_identity_matches=YES'
@@ -145,6 +148,9 @@ for ((i=1;i<=30;i++)); do
   sleep 2
 done
 [[ "$CANARY_OK" == YES ]] || { echo 'BLOCKED: canary_readiness_failed_official_preserved' >&2; exit 4; }
+CANARY_ID="$(database_identity "$CANARY_API")"
+[[ "$CANARY_ID" == "$DIRECT_ID" ]] || { echo 'BLOCKED: canary_database_identity_mismatch_official_preserved' >&2; exit 4; }
+echo 'canary_database_identity_matches=YES'
 [[ "$(curl -sS -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:3087/api/v1/auth/session -H 'x-actor-id: fabricated' -H 'x-group-id: fabricated')" == 401 ]] || { echo 'BLOCKED: canary_fabricated_identity_accepted' >&2; exit 4; }
 HTML="$(curl -fsS -m 5 http://127.0.0.1:3087/)"
 ASSET="$(printf '%s' "$HTML" | grep -oE '/assets/index-[^"]+\.js' | head -1)"

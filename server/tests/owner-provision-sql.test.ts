@@ -259,6 +259,8 @@ test('actual provision SQL group scope and audit failure rollback', async () => 
   const db = new PGlite();
   try {
     await schema(db);
+    // Auth is authoritative even when the local profile email has drifted.
+    await db.query('UPDATE profiles SET email=$1 WHERE id=$2', ['drifted@example.com', PROFILE_SYNTH]);
     await db.exec('CREATE TABLE audit_logs(group_id uuid, empresa_id uuid, actor_email text, entity text, entity_id text, action text, before_data jsonb, after_data jsonb);');
     const source = fs.readFileSync(path.join(ROOT,'scripts/vps/provision-owner-admin-profile.sh'),'utf8');
     const raw = source.match(/<<'SQL'\r?\n(BEGIN;\r?\n\r?\nCREATE TEMP TABLE _owner_prov[\s\S]*?)\r?\nSQL/)!;
@@ -270,6 +272,11 @@ test('actual provision SQL group scope and audit failure rollback', async () => 
     assert.equal(owner.rows[0].empresa_id,null);
     const audit = await db.query('SELECT before_data,after_data FROM audit_logs');
     assert.equal(audit.rows.length,2);
+    const synthAudit = await db.query<{before_data:{role:string},after_data:{role:string}}>(
+      'SELECT before_data,after_data FROM audit_logs WHERE entity_id=$1', [PROFILE_SYNTH]);
+    assert.equal(synthAudit.rows.length,1);
+    assert.equal(synthAudit.rows[0].before_data.role,'admin');
+    assert.equal(synthAudit.rows[0].after_data.role,'user');
     assert.equal(JSON.stringify(audit.rows).includes(OWNER_EMAIL),false);
     assert.equal(JSON.stringify(audit.rows).includes('Synthetic owner'),false);
     await db.exec("DELETE FROM audit_logs; DELETE FROM profiles WHERE auth_user_id='"+AUTH_OWNER+"'; UPDATE profiles SET role='admin' WHERE auth_user_id='"+AUTH_SYNTH+"'; ALTER TABLE audit_logs ADD CONSTRAINT fail_audit CHECK(false);");
@@ -285,5 +292,14 @@ test('actual provision SQL group scope and audit failure rollback', async () => 
     const unchanged = await db.query('SELECT role,group_id FROM profiles WHERE auth_user_id=$1', [AUTH_OWNER]);
     assert.equal(unchanged.rows[0].role, 'user');
     assert.equal(unchanged.rows[0].group_id, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+    await db.query('DELETE FROM profiles WHERE auth_user_id=$1', [AUTH_OWNER]);
+    await db.query("UPDATE profiles SET group_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' WHERE id=$1", [PROFILE_SYNTH]);
+    await assert.rejects(()=>db.exec(sql), /synth_profile_other_group/);
+    await db.exec('ROLLBACK');
+    const foreign = await db.query('SELECT role,group_id FROM profiles WHERE id=$1', [PROFILE_SYNTH]);
+    assert.equal(foreign.rows[0].role,'admin');
+    assert.equal(foreign.rows[0].group_id,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+    assert.equal((await db.query('SELECT id FROM profiles WHERE auth_user_id=$1',[AUTH_OWNER])).rows.length,0);
+    assert.equal((await db.query('SELECT entity_id FROM audit_logs')).rows.length,0);
   } finally {await db.close();}
 });
