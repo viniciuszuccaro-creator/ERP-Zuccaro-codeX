@@ -61,12 +61,9 @@ restore_selective_profiles() {
     echo "BLOCKED: restore_dest_missing_after_cp dest=${dest_name}" >&2
     return 5
   fi
-  docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
-    -v owner_email="$OWNER_EMAIL" \
-    -v synth_email="$SYNTH_EMAIL" \
-    -v owner_existed_before="$owner_existed" \
-    -v restore_path="$dest_path" <<'SQL'
-BEGIN;
+  {
+    printf '%s\n' 'BEGIN;' 'CREATE TEMP TABLE _owner_json(payload jsonb NOT NULL) ON COMMIT DROP;' "\\copy _owner_json FROM '$dest_path' WITH (FORMAT csv, QUOTE E'\\x01', DELIMITER E'\\x02');"
+    cat <<'SQL'
 CREATE TEMP TABLE _owner_restore (
   payload jsonb NOT NULL,
   owner_email text NOT NULL,
@@ -74,7 +71,7 @@ CREATE TEMP TABLE _owner_restore (
   owner_existed text NOT NULL
 ) ON COMMIT DROP;
 INSERT INTO _owner_restore VALUES (
-  pg_read_file(:'restore_path')::jsonb,
+  (SELECT payload FROM _owner_json),
   lower(:'owner_email'),
   lower(:'synth_email'),
   upper(trim(:'owner_existed_before'))
@@ -134,6 +131,10 @@ END
 $rest$;
 COMMIT;
 SQL
+  } | docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+    -v owner_email="$OWNER_EMAIL" \
+    -v synth_email="$SYNTH_EMAIL" \
+    -v owner_existed_before="$owner_existed"
 }
 
 if [[ "$CONFIRM_OWNER_ADMIN_RESTORE" == "YES" ]]; then
@@ -293,8 +294,18 @@ echo "owner_profile_existed_before=${OWNER_PROFILE_EXISTED_BEFORE}"
 echo "rollback_hint=CONFIRM_OWNER_ADMIN_RESTORE=YES OWNER_PROV_RESTORE_FILE=${BACKUP_NAME} OWNER_PROFILE_EXISTED_BEFORE_FLAG=${OWNER_PROFILE_EXISTED_BEFORE} bash scripts/vps/provision-owner-admin-profile.sh"
 echo "rollback_not=pg_dump_data_only_replay"
 
-# Copia árvore explícita para o container (lida via pg_read_file na TX).
-docker cp "$OWNER_PERMS_FILE" supabase-db:/tmp/owner-admin-permissoes.json
+# COPY do cliente psql não exige leitura de arquivos pelo servidor.
+PERMS_COMPACT="$OWNER_PROV_BACKUP_DIR/permissions-$STAMP.json"
+python3 - "$OWNER_PERMS_FILE" "$PERMS_COMPACT" <<'PYJSON'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as source:
+    payload = json.load(source)
+if not isinstance(payload, dict):
+    raise ValueError('permissions_must_be_object')
+with open(sys.argv[2], 'w', encoding='utf-8') as target:
+    target.write(json.dumps(payload, ensure_ascii=True, separators=(',', ':')) + '\n')
+PYJSON
+docker cp "$PERMS_COMPACT" supabase-db:/tmp/owner-admin-permissoes.json
 
 # Condição NÃO invertida: exit 0 → COMMITTED; exit ≠0 → falha (TX já deu ROLLBACK).
 if docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
@@ -308,6 +319,9 @@ if docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1
   -v expected_owner_admin="$EXPECTED_OWNER_ADMIN" \
   -v expected_synth_admin="$EXPECTED_SYNTH_ADMIN" <<'SQL'
 BEGIN;
+
+CREATE TEMP TABLE _owner_json(payload jsonb NOT NULL) ON COMMIT DROP;
+\copy _owner_json FROM '/tmp/owner-admin-permissoes.json' WITH (FORMAT csv, QUOTE E'\x01', DELIMITER E'\x02');
 
 CREATE TEMP TABLE _owner_prov (
   owner_email text NOT NULL,
@@ -335,7 +349,7 @@ INSERT INTO _owner_prov (
   :'owner_scope',
   :'expected_owner_admin'::int,
   :'expected_synth_admin'::int,
-  pg_read_file('/tmp/owner-admin-permissoes.json')::jsonb
+  (SELECT payload FROM _owner_json)
 );
 
 -- Revalidar sob lock: nenhum cadastro/perfil pode mudar entre decisão e grant.
