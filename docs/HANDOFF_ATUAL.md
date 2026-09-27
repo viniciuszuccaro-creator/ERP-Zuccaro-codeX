@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #101 APROVADO d336734f (2026-09-27T20:15Z)
+
+SHA `d336734f576e7f1d72fe3fadf23d0b1a0bb27a88` — CI SUCCESS.
+**Veredito: APROVADO** para merge + deploy (guard HTTP + perfil owner) **somente** neste SHA.
+Cursor não deploya. Acesso só fecha após prova nos 3 contextos × módulos.
+
+---
+
 ## DIRETRIZ LOTE COMERCIAL (2026-09-27T19:41Z)
 
 Cursor: **só** parecer consolidado no HEAD final do lote #92/#93 (sem microcommits).
