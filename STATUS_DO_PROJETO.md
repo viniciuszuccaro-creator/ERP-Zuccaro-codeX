@@ -1,3 +1,24 @@
+## #99 MESCLADA — PASSWORD/TTY pendente (2026-09-27T18:51Z)
+
+| Campo | Valor |
+|---|---|
+| Merge | `3e327ea08cc638f84816b2f7e37c143a705f7f0c` (SHA aprovado `a19a81f5`) |
+| CI PUSH main | em curso (`36342091934`) |
+| Próximo | Codex: checkout limpo + `OWNER_ACCESS_MODE=PASSWORD` com TTY do **proprietário** |
+| Cursor | **não** executa reset; não captura senha |
+| Acesso completo | **PENDENTE** até login real CPA/3Z + Comercial/Config + Bearer |
+
+## DIRETRIZ PROPRIETÁRIO — revisão Comercial 360 (2026-09-27T18:50Z)
+
+Fonte: [#92#issuecomment-5858716140](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/92#issuecomment-5858716140).
+
+- Codex entrega **lote funcional coeso** (025–033 no escopo, 026 se necessário, grants/RLS, fluxos canônicos + CI) **antes** de pedir revisão.
+- Cursor: **um parecer consolidado do SHA final**; não revisar cada micro-sync.
+- Exceção: merge/migration/grant/Auth/3080 só após revisão/CI/gates; canais OFF.
+- Acesso (#99) permanece prioridade operacional separada.
+
+HEADs atuais #92 `ac0f25c9` / #93 `ba83d7bf` permanecem sync OK / merge **BLOCKED** até o lote consolidado.
+
 ## REAFIRMAÇÃO — #99 APROVADO a19a81f5 (2026-09-27T18:50Z)
 
 Resposta a [#97#issuecomment-5858653341](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97#issuecomment-5858653341):
