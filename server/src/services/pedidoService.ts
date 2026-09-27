@@ -19,6 +19,10 @@ import {
   descontoExcedeAlcadaLivre,
   type DescontoAlcadaDecisao,
 } from './comercialDescontoAlcadaPolicy.js';
+import {
+  assertMargemDentroDaAlcadaOuAprovar,
+  type ComercialCostPort,
+} from './comercialMargemAlcadaPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -37,6 +41,8 @@ export type PedidoSalePricePort = {
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
+
+export type { ComercialCostPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status, cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id, tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao) });
@@ -57,6 +63,8 @@ export class PedidoService {
     private readonly obras: Pick<ObraRepository, 'get'>,
     private readonly tabelas: Pick<TabelaPrecoRepository, 'get'>,
     private readonly prices: PedidoSalePricePort,
+    /** Opcional: sem porta de custo a alçada de margem não roda (não inventa custo). */
+    private readonly costs: ComercialCostPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -68,7 +76,9 @@ export class PedidoService {
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       // Create: criador = actor → alçada acima da livre nunca autoaprova.
       await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+      await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -110,7 +120,9 @@ export class PedidoService {
         // Segregação: aprovador do desconto ≠ criador do Orçamento.
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, data.itens, criadorOrcamento);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+        await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         if (alcada.aprovadaPorOutro) {
           await this.audit.append({
@@ -164,8 +176,10 @@ export class PedidoService {
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
+      await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
       if (alcada.aprovadaPorOutro) {
         await this.audit.append({
@@ -279,6 +293,18 @@ export class PedidoService {
     return created?.actorId ?? null;
   }
 
+  private async canAprovarComercial(ctx: RequestContext): Promise<boolean> {
+    try {
+      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false });
+      return true;
+    } catch (error) {
+      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   private async assertDescontoAlcada(
     ctx: RequestContext,
     itens: PedidoCreate['itens'],
@@ -288,24 +314,54 @@ export class PedidoService {
       return { aprovacaoExigida: false, aprovadaPorOutro: false, descontoBps: 0 };
     }
 
-    let canAprovar = false;
-    try {
-      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false });
-      canAprovar = true;
-    } catch (error) {
-      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
-        canAprovar = false;
-      } else {
-        throw error;
-      }
-    }
     return assertDescontoDentroDaAlcadaOuAprovar({
       items: itens,
-      canAprovar,
+      canAprovar: await this.canAprovarComercial(ctx),
       actorId: ctx.actorId!,
       criadorActorId,
       entityLabel: 'Pedido',
     });
+  }
+
+  private async assertMargemAlcada(
+    ctx: RequestContext,
+    scope: PedidoScope,
+    itens: PedidoCreate['itens'],
+  ) {
+    // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
+    if (!this.costs) return null;
+    return assertMargemDentroDaAlcadaOuAprovar({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+      items: itens,
+      costs: this.costs,
+      canAprovar: await this.canAprovarComercial(ctx),
+      entityLabel: 'Pedido',
+    });
+  }
+
+  private async auditMargemOverride(
+    ctx: RequestContext,
+    entityId: string,
+    decision: Awaited<ReturnType<typeof assertMargemDentroDaAlcadaOuAprovar>>,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!decision?.overridden) return;
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Pedido',
+      entityId,
+      action: 'approve',
+      afterData: {
+        margem_alcada_override: true,
+        margem_avaliacao: decision.evaluated,
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private async requirePedido(scope: PedidoScope, id: string, executor?: DbQueryExecutor) { const row = await this.repo.get(scope, id, executor); if (!row) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found'); return row; }
