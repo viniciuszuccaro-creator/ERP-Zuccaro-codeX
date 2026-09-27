@@ -5,6 +5,64 @@ import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 import { CatalogOutbox } from '../src/integrations/catalogOutbox.js';
 
+test('bounded reconciliation scans several pages and resumes exactly at the published cursor',async()=>{
+  const f=await outboxFixture();
+  try{
+    for(let i=0;i<5;i++)await f.event();
+    for(const lease of await f.outbox.claim(f.ctx))await f.outbox.finish(f.ctx,lease,{status:'published'});
+    const scanned:string[]=[];const scan=new CatalogReconciliation(f.outbox,'synthetic-site',{probe:async input=>{scanned.push(input.eventId);return input;}});
+    for(const maxPages of [0,26])await assert.rejects(()=>scan.runPage(f.ctx,'batch',2,undefined,{maxPages}));
+    assert.equal(scanned.length,0);
+    const first=await scan.runPage(f.ctx,'batch',2,undefined,{maxPages:2});
+    assert.equal(first.scope,'BATCH');assert.equal(first.pagesRead,2);assert.equal(first.interrupted,false);
+    assert.equal(first.counts.examined,4);assert.equal(first.counts.CONSISTENT,4);assert.equal(first.hasMore,true);assert.ok(first.nextCursor);
+    const next=await scan.runPage(f.ctx,'batch',2,first.nextCursor,{maxPages:2});
+    assert.equal(next.counts.examined,1);assert.equal(next.hasMore,false);assert.equal(next.nextCursor,null);
+    assert.equal(new Set(scanned).size,5);assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='catalogo.reconciliado'")).rows.length,5);
+  }finally{await f.close();}
+});
+
+test('interrupted reconciliation preserves only completed observations, ignores late ACK and resumes the unfinished source',async()=>{
+  const f=await outboxFixture();
+  try{
+    for(let i=0;i<3;i++)await f.event();
+    for(const lease of await f.outbox.claim(f.ctx))await f.outbox.finish(f.ctx,lease,{status:'published'});
+    const stopped=new AbortController();stopped.abort('PRIVATE_STOP');
+    let calls=0;let late:()=>void=()=>{};const seen:string[]=[];
+    const abort=new AbortController();
+    const scan=new CatalogReconciliation(f.outbox,'synthetic-app',{probe:async(input,signal)=>{
+      calls++;seen.push(input.eventId);if(calls===2){abort.abort('PRIVATE_STOP');assert.equal(signal.aborted,true);
+        return new Promise(resolve=>{late=()=>resolve(input);});}return input;
+    }});
+    const idle=await scan.runPage(f.ctx,'resume',3,undefined,{maxPages:2,signal:stopped.signal});
+    assert.equal(idle.counts.examined,0);assert.equal(idle.interrupted,true);assert.equal(idle.hasMore,true);assert.equal(idle.nextCursor,null);assert.equal(calls,0);
+    const partial=await scan.runPage(f.ctx,'resume',3,undefined,{maxPages:2,signal:abort.signal});
+    assert.equal(partial.counts.examined,1);assert.equal(partial.counts.UNAVAILABLE,0);assert.equal(partial.interrupted,true);assert.ok(partial.nextCursor);
+    assert.equal(partial.nextCursor.id,seen[0]);assert.equal(partial.hasMore,true);
+    late();await new Promise(resolve=>setImmediate(resolve));
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='catalogo.reconciliado'")).rows.length,1);
+    const rest=await scan.runPage(f.ctx,'resume',1,partial.nextCursor,{maxPages:3});
+    assert.equal(rest.counts.examined,2);assert.equal(rest.counts.CONSISTENT,2);assert.equal(rest.hasMore,false);
+    assert.equal(seen.filter(id=>id===seen[1]).length,2); // interrupted source was not skipped.
+    const rows=(await f.pg.query("SELECT payload FROM integration_events WHERE event_type='catalogo.reconciliado'")).rows;
+    assert.equal(rows.length,3);assert.ok(!JSON.stringify(rows).includes('PRIVATE_STOP'));
+  }finally{await f.close();}
+});
+
+test('bounded reconciliation revalidates permissions on later pages without losing completed observations',async()=>{
+  const f=await outboxFixture();
+  try{
+    for(let i=0;i<2;i++)await f.event();
+    for(const lease of await f.outbox.claim(f.ctx))await f.outbox.finish(f.ctx,lease,{status:'published'});
+    let calls=0;const record=f.outbox.recordReconciliation.bind(f.outbox);
+    f.outbox.recordReconciliation=async(...args)=>{const result=await record(...args);
+      await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);return result;};
+    const scan=new CatalogReconciliation(f.outbox,'synthetic-site',{probe:async input=>{calls++;return input;}});
+    await assert.rejects(()=>scan.runPage(f.ctx,'permission-pages',1,undefined,{maxPages:2}),(e:any)=>e.statusCode===403);
+    assert.equal(calls,1);assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='catalogo.reconciliado'")).rows.length,1);
+  }finally{await f.close();}
+});
+
 test('reconciliation is paginated, idempotent, scoped and never mistakes missing/invalid/unavailable ACKs for consistency', async () => {
   const f = await outboxFixture();
   try {
