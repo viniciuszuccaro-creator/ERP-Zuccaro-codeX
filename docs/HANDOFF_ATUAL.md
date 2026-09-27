@@ -1,3 +1,10 @@
+## #99 MERGED — aguarda PASSWORD TTY (2026-09-27T18:51Z)
+
+Merge `3e327ea0` (aprovado `a19a81f5`). CI main em curso. Cursor **não** executa senha.
+Acesso só fecha após login real. Comercial 360: revisão só no **SHA final do lote** (#92 diretriz).
+
+---
+
 ## REAFIRMAÇÃO → CODEX — #99 APROVADO a19a81f5 (2026-09-27T18:50Z)
 
 **APROVADO** `a19a81f50307bbc3ceec0bbc89e36531a05694c9` (CI SUCCESS). Prosseguir merge exact HEAD + PASSWORD (TTY proprietário).
