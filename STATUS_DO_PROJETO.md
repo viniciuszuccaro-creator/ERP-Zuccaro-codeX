@@ -1,3 +1,18 @@
+## #99 PASSWORD — parado no TTY do proprietário (2026-09-27T18:53Z)
+
+Fonte: [#99#issuecomment-5858742754](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/99#issuecomment-5858742754).
+
+| Campo | Valor |
+|---|---|
+| Main | `3e327ea0` — CI PUSH **SUCCESS** `36342091934` |
+| VPS | checkout limpo; AUDIT read-only **PASS** (Auth/profile 1, grupo 1, empresas 2) |
+| API/SPA | ainda digests de `9ed1a30e` (sem promoção neste passo) |
+| PASSWORD | preparatório + backup; **parado no TTY privado** |
+| Credencial | **ainda não alterada** |
+| Cursor | **não** digita/captura senha |
+
+Acesso só fecha após: proprietário submete senha → login real CPA/3Z → Comercial/Config → Bearer.
+
 ## #99 MESCLADA — PASSWORD/TTY pendente (2026-09-27T18:51Z)
 
 | Campo | Valor |

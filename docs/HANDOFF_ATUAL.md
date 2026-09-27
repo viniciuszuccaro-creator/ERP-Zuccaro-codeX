@@ -1,3 +1,10 @@
+## #99 PASSWORD no TTY do proprietário (2026-09-27T18:53Z)
+
+Main `3e327ea0` CI SUCCESS; AUDIT PASS; procedimento parado no TTY privado.
+Credencial **ainda não** alterada. Cursor não captura senha. Acesso pós-login real.
+
+---
+
 ## #99 MERGED — aguarda PASSWORD TTY (2026-09-27T18:51Z)
 
 Merge `3e327ea0` (aprovado `a19a81f5`). CI main em curso. Cursor **não** executa senha.
