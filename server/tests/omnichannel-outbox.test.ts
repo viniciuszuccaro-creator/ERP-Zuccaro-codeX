@@ -4,6 +4,51 @@ import { CatalogOutboxWorker } from '../src/integrations/catalogOutboxWorker.js'
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 
+test('catalog selection reprocess is bounded, tenant-scoped and preserves explicit per-event budgets',async()=>{
+  const f=await outboxFixture();
+  try{
+    const a=await f.event(),b=await f.event(),foreign=await f.event({empresa:S.empresaA2}),unrelated=await f.event({type:'unrelated.event'}),live=await f.event();
+    await f.pg.query("UPDATE integration_events SET status='dead_letter',attempts=3,dead_letter_at=clock_timestamp(),error_message='PRIVATE_SYNTHETIC' WHERE id=ANY($1::uuid[])",[[a,b,foreign,unrelated]]);
+    const before=(await f.pg.query('SELECT id,status,attempts,max_attempts FROM integration_events ORDER BY id')).rows;
+    for(const selection of [[],[{id:a,additionalAttempts:0}],[{id:a,additionalAttempts:11}],Array(26).fill({id:a,additionalAttempts:1}),
+      [{id:a,additionalAttempts:1},{id:a.toUpperCase(),additionalAttempts:2}]]){
+      await assert.rejects(()=>f.outbox.reprocess(f.ctx,selection),(e:any)=>e.code==='OUTBOX_REPROCESS_INVALID');
+    }
+    for(const id of [foreign,unrelated,live,'11111111-1111-4111-8111-111111111111']){
+      await assert.rejects(()=>f.outbox.reprocess(f.ctx,[{id:a,additionalAttempts:1},{id,additionalAttempts:1}]),(e:any)=>e.code==='OUTBOX_EVENT_NOT_FOUND');
+    }
+    assert.deepEqual((await f.pg.query('SELECT id,status,attempts,max_attempts FROM integration_events ORDER BY id')).rows,before);
+    assert.deepEqual(await f.outbox.reprocess(f.ctx,[{id:b,additionalAttempts:4},{id:a.toUpperCase(),additionalAttempts:1}]),{scheduled:[b,a]});
+    const rows=(await f.pg.query('SELECT id,status,attempts,max_attempts,error_message,locked_until FROM integration_events WHERE id=ANY($1::uuid[]) ORDER BY id',[[a,b]])).rows;
+    assert.ok(rows.every(r=>r.status==='retry'&&r.attempts===3&&r.error_message===null&&r.locked_until===null));
+    assert.equal(rows.find(r=>r.id===a)?.max_attempts,4);assert.equal(rows.find(r=>r.id===b)?.max_attempts,7);
+    const audit=(await f.pg.query("SELECT * FROM audit_logs WHERE entity='IntegracaoEvento' AND action='update'")).rows;
+    assert.equal(audit.length,2);assert.ok(!JSON.stringify(audit).includes('PRIVATE_SYNTHETIC'));
+    await assert.rejects(()=>f.outbox.reprocess(f.ctx,[{id:a,additionalAttempts:1}]),(e:any)=>e.code==='OUTBOX_EVENT_NOT_FOUND');
+    assert.deepEqual(await f.outbox.summary(f.ctx),[{status:'pending',total:1},{status:'retry',total:2}]);
+  }finally{await f.close();}
+});
+
+test('catalog selection reprocess rolls back every event when the last audit fails and blocks revoked permission',async()=>{
+  const f=await outboxFixture();
+  try{
+    const ids=[await f.event(),await f.event()].sort();
+    await f.pg.query("UPDATE integration_events SET status='dead_letter',attempts=2 WHERE id=ANY($1::uuid[])",[ids]);
+    const selection=ids.map(id=>({id,additionalAttempts:2}));
+    const before=(await f.pg.query('SELECT * FROM integration_events ORDER BY id')).rows;
+    await f.pg.exec(`CREATE FUNCTION reject_selection_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.entity_id='${ids[1]}' THEN RAISE EXCEPTION 'SYNTHETIC_BATCH_FAILURE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER selection_audit_fail AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_selection_audit();`);
+    await assert.rejects(()=>f.outbox.reprocess(f.ctx,selection));
+    assert.deepEqual((await f.pg.query('SELECT * FROM integration_events ORDER BY id')).rows,before);
+    assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,0);
+    await f.pg.exec('DROP TRIGGER selection_audit_fail ON audit_logs');
+    await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
+    await assert.rejects(()=>f.outbox.reprocess(f.ctx,selection),(e:any)=>e.statusCode===403);
+    assert.deepEqual((await f.pg.query('SELECT * FROM integration_events ORDER BY id')).rows,before);
+  }finally{await f.close();}
+});
+
 test('catalog worker filters existing events, validates signal and receipt and audits outcomes without provider PII', async () => {
   const f = await outboxFixture();
   try {

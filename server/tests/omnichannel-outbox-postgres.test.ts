@@ -7,6 +7,38 @@ import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 import { CatalogOutbox } from '../src/integrations/catalogOutbox.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
+
+test('real PostgreSQL selection reprocess locks consistently, schedules once and rolls back the final audit',{skip:!url},async()=>{
+  const f=await outboxFixture(await isolatedPostgres(url!));
+  try{
+    const ids=[await f.event(),await f.event()].sort();
+    await f.pg.query("UPDATE integration_events SET status='dead_letter',attempts=3 WHERE id=ANY($1::uuid[])",[ids]);
+    const selection=ids.map((id,i)=>({id,additionalAttempts:i+1}));
+    const race=await Promise.allSettled([f.outbox.reprocess(f.ctx,selection),f.outbox.reprocess(f.ctx,[...selection].reverse())]);
+    assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+    const rejected=race.find(r=>r.status==='rejected');assert.ok(rejected&&rejected.status==='rejected');
+    assert.equal(rejected.reason.code,'OUTBOX_EVENT_NOT_FOUND');
+    const rows=(await f.pg.query('SELECT id,status,attempts,max_attempts FROM integration_events ORDER BY id')).rows;
+    assert.deepEqual(rows,ids.map((id,i)=>({id,status:'retry',attempts:3,max_attempts:4+i})));
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='update'")).rows.length,2);
+    // A new operator selection is permitted only after both events return to dead letter.
+    await f.pg.query("UPDATE integration_events SET status='dead_letter',attempts=5,max_attempts=5 WHERE id=ANY($1::uuid[])",[ids]);
+    const before=(await f.pg.query('SELECT * FROM integration_events ORDER BY id')).rows;
+    const count=(await f.pg.query('SELECT id FROM audit_logs')).rows.length;
+    await f.pg.exec(`CREATE FUNCTION reject_final_reprocess_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.entity_id='${ids[1]}' THEN RAISE EXCEPTION 'SYNTHETIC_FINAL_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER final_reprocess_audit AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_final_reprocess_audit();`);
+    await assert.rejects(()=>f.outbox.reprocess(f.ctx,selection));
+    assert.deepEqual((await f.pg.query('SELECT * FROM integration_events ORDER BY id')).rows,before);
+    assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,count);
+    await f.pg.exec('DROP TRIGGER final_reprocess_audit ON audit_logs');
+    await f.outbox.reprocess(f.ctx,selection);
+    const leases=await f.outbox.claim(f.ctx,2);assert.equal(leases.length,2);assert.ok(leases.every(l=>l.attempt===6));
+    assert.equal(new Set(leases.map(l=>l.id)).size,2);
+    await Promise.all(leases.map(l=>f.outbox.finish(f.ctx,l,{status:'published'})));
+    assert.deepEqual(await f.outbox.summary(f.ctx),[{status:'published',total:2}]);
+  }finally{await f.close();}
+});
 test('PostgreSQL outbox claims are disjoint under concurrent consumers and preserve original Produto publisher', { skip: !url }, async () => {
   const f = await outboxFixture(await isolatedPostgres(url!));
   try {

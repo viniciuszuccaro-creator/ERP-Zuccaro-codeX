@@ -18,6 +18,10 @@ export type ReconciliationState = 'CONSISTENT' | 'MISSING' | 'CONFLICT' | 'UNAVA
 type Event = { id: string; idempotency_key: string; attempts: number; max_attempts: number; status: string;
   locked_until: Date; payload: unknown; aggregate_id: string };
 const leaseSchema = z.object({ id: z.string().uuid(), key: z.string().min(1).max(512), attempt: z.number().int().positive(), expiresAt: z.string().datetime() });
+const reprocessSelection = z.array(z.object({id:z.string().uuid().transform(v=>v.toLowerCase()),
+  additionalAttempts:z.number().int().min(1).max(10)}).strict()).min(1).max(25)
+  .refine(items=>new Set(items.map(i=>i.id)).size===items.length);
+export type CatalogReprocessSelection = z.input<typeof reprocessSelection>;
 
 /** Operates existing Produto publication events only. No provider, schema or parallel queue. */
 export class CatalogOutbox {
@@ -96,18 +100,26 @@ export class CatalogOutbox {
     });
   }
 
-  async reprocess(ctx: RequestContext, id: string, additionalAttempts: number) {
+  async reprocess(ctx:RequestContext,id:string,additionalAttempts:number):Promise<void>;
+  async reprocess(ctx:RequestContext,selection:CatalogReprocessSelection):Promise<{scheduled:string[]}>;
+  async reprocess(ctx: RequestContext, input: string|CatalogReprocessSelection, additionalAttempts?: number):Promise<void|{scheduled:string[]}> {
     await this.authorize(ctx, 'catalogo-reprocessamento', 'editar');
-    if (!z.string().uuid().safeParse(id).success || !Number.isInteger(additionalAttempts) || additionalAttempts < 1 || additionalAttempts > 10) {
+    const parsed=reprocessSelection.safeParse(typeof input==='string'?[{id:input,additionalAttempts}]:input);
+    if (!parsed.success || (typeof input!=='string'&&additionalAttempts!==undefined)) {
       throw new AppError(422, 'OUTBOX_REPROCESS_INVALID', 'Explicit bounded retry budget required');
     }
     return this.scoped(ctx, async (tx) => {
-      const result = await tx.query<Event>("SELECT * FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND source='ERP' AND event_type='produto.publicado' AND aggregate_type='Produto' AND status='dead_letter' FOR UPDATE", [id, ctx.groupId, ctx.empresaId]);
-      const event = result.rows[0];
-      if (!event) throw new AppError(404, 'OUTBOX_EVENT_NOT_FOUND', 'Event not available');
-      // Keep attempts monotonically increasing: an old worker can never acquire the new lease version.
-      await tx.query("UPDATE integration_events SET updated_at=clock_timestamp(),status='retry',max_attempts=attempts+$4,next_attempt_at=NULL,dead_letter_at=NULL,locked_until=NULL,error_message=NULL WHERE id=$1 AND group_id=$2 AND empresa_id=$3", [id, ctx.groupId, ctx.empresaId, additionalAttempts]);
-      await this.audit(ctx, tx, event, 'retry', event.attempts, undefined, event.attempts + additionalAttempts);
+      const ids=parsed.data.map(i=>i.id);
+      // Lock every eligible row in one stable order, then validate completeness before any write.
+      const result = await tx.query<Event>("SELECT * FROM integration_events WHERE id=ANY($1::uuid[]) AND group_id=$2 AND empresa_id=$3 AND source='ERP' AND event_type='produto.publicado' AND aggregate_type='Produto' AND status='dead_letter' ORDER BY id FOR UPDATE", [ids, ctx.groupId, ctx.empresaId]);
+      if(result.rows.length!==ids.length)throw new AppError(404,'OUTBOX_EVENT_NOT_FOUND','Event not available');
+      for(const event of result.rows){
+        const budget=parsed.data.find(i=>i.id===event.id)!.additionalAttempts;
+        // Keep attempts monotonically increasing: an old worker can never acquire the new lease version.
+        await tx.query("UPDATE integration_events SET updated_at=clock_timestamp(),status='retry',max_attempts=attempts+$4,next_attempt_at=NULL,dead_letter_at=NULL,locked_until=NULL,error_message=NULL WHERE id=$1 AND group_id=$2 AND empresa_id=$3", [event.id, ctx.groupId, ctx.empresaId, budget]);
+        await this.audit(ctx, tx, event, 'retry', event.attempts, undefined, event.attempts + budget);
+      }
+      if(typeof input!=='string')return {scheduled:ids};
     });
   }
 

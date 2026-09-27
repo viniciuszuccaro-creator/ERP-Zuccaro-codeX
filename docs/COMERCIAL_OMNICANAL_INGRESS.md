@@ -244,3 +244,32 @@ PostgreSQL efêmero prova leitura de cancelamento e rollback de auditoria em
 consultas concorrentes. Base #82; revisão independente/integração pendentes.
 Rollback de código mantém vendas/recibos, perdendo apenas a consulta opt-in de
 estado. Sem migration/provider/frontend novo, VPS/HD/merge ou implantação.
+# Reprocessamento de seleção do catálogo
+
+Onda 15: a função existente `CatalogOutbox.reprocess(ctx, selection)` aceita
+1–25 itens `{id,additionalAttempts}`, com 1–10 tentativas adicionais explícitas
+por evento. A chamada individual anterior mantém retorno/comportamento compatíveis.
+Não existe worker/endpoint/fila/publicação nova ou execução automática de provider.
+
+O contexto exige Grupo, Empresa, ator e permissão granular de reprocessamento.
+IDs são normalizados e duplicatas rejeitadas, inclusive variações de maiúsculas.
+Todos os eventos elegíveis são bloqueados em ordem estável antes de escrever;
+somente `produto.publicado` do ERP/Produto em dead_letter da Empresa pode entrar.
+ID inexistente, de outra Empresa ou inelegível rejeita toda a seleção com erro
+seguro. Nunca retorna quais IDs estrangeiros existem. Auditoria individual registra
+estado/tentativas/orçamento antes/depois; qualquer falha reverte todos os eventos
+e logs do lote. Nenhum payload, chave ou mensagem privada do provider sai no resultado.
+
+Contadores continuam crescentes e as chaves anteriores são preservadas. O orçamento
+passa a tentativas já consumidas + adicional autorizado, sem resetar geração/lease.
+Retorno da seleção contém somente IDs `scheduled` na ordem recebida; significa
+reagendamento, não publicação nem entrega comprovada. Segunda solicitação concorrente
+do mesmo evento já reagendado falha em vez de somar orçamento silenciosamente.
+
+Testes sintéticos: limites/duplicatas, budgets distintos, isolamento/estado, RBAC
+revogado, auditoria final falhando e preservação da chamada individual/leases.
+PostgreSQL efêmero prova seleções concorrentes invertidas sem deadlock, único
+reagendamento, rollback do último log e processamento posterior com geração nova.
+Base #83; revisão independente/integração pendentes. Sem schema/migration/HD/VPS,
+merge, deploy ou ativação. Rollback de código preserva os eventos já reagendados,
+auditados e processáveis pelo worker existente; não desfaz publicação externa.
