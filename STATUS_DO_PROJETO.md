@@ -1,3 +1,33 @@
+## INCIDENTE ACESSO — evidência VPS 10:40Z (2026-09-27)
+
+| Achado | Valor |
+|---|---|
+| `expected_group_present` | **false** — Grupo CPA **não existia** no Postgres |
+| `expected_companies_active` | **0** — CPA ferro e aço / 3Z ausentes |
+| `auth_other_accounts` | **0** — **não há Auth do proprietário**; só conta synth |
+| Script deploy | **No such file** — faltou `git checkout --detach origin/main` após fetch |
+| Rollback | incompleto sem `ERP_DOCKER_NETWORK` — **não use rollback**; siga deploy à frente |
+
+### PASTE_VPS corrigido (obrigatório nesta ordem)
+
+```bash
+cd /opt/erp-zuccaro
+# 1) Trazer o script para o disco (fetch sozinho NÃO atualiza arquivos)
+git fetch origin main
+git checkout --detach origin/main
+test -f scripts/vps/deploy-owner-access-incidente.sh || { echo MISSING_SCRIPT; exit 1; }
+echo "tip=$(git rev-parse --short HEAD)"
+
+# 2) Deploy: cria Grupo CPA + empresas, Auth owner (OWNER_PASS), RBAC, rebuild
+# Defina OWNER_PASS com a senha que você usará no login (mín. 8). Não cole a senha no chat.
+CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=HEAD ERP_DOCKER_NETWORK=supabase_default \
+  OWNER_PASS='…sua_senha…' \
+  bash scripts/vps/deploy-owner-access-incidente.sh
+```
+
+Prova esperada no final (sanitizada): `group_cpa=true`, `empresas_ativas=2`, `owner_admin=1`, `synth_admin=0`, `main_tip=…`.  
+Browser: **Sair** → login com e-mail proprietário + mesma senha → seletor Grupo CPA / CPA ferro e aço / 3Z → Comercial + Configurações.
+
 ## INCIDENTE ACESSO OWNER — harden + deploy (2026-09-27)
 
 | Etapa | Resultado |
