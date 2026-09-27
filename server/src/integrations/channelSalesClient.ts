@@ -53,39 +53,81 @@ export class ChannelSalesClient {
     for (let attempt = 0; attempt < this.options.attempts; attempt++) {
       const timestamp = String(Math.floor(this.now() / 1000));
       const nonce = randomUUID();
-      let response: Response;
+      let result: { value: T } | { status: number };
       try {
-        response = await this.transport(this.endpoint + path, { method: 'POST', redirect: 'error',
-          signal: AbortSignal.timeout(this.options.timeoutMs),
-          headers: { 'content-type': 'application/json', 'x-channel-id': this.options.id,
-            'x-channel-timestamp': timestamp, 'x-channel-nonce': nonce,
-            'x-channel-signature': signSale(this.options.secret, this.options.id, timestamp, nonce, body) }, body });
-        if (response.ok) {
-          let decoded: unknown;
-          try { decoded = await response.json(); }
-          catch { throw new ChannelTransportError('CHANNEL_CLIENT_RESPONSE_INVALID', response.status); }
-          const value = schema.safeParse(decoded);
-          if (!value.success || (value.data as { data: { tipo: string } }).data.tipo !== payload.tipo) {
-            throw new ChannelTransportError('CHANNEL_CLIENT_RESPONSE_INVALID', response.status);
-          }
-          return value.data;
-        }
+        result = await this.exchange(path, body, timestamp, nonce, schema, payload.tipo);
+        if ('value' in result) return result.value;
       } catch (error) {
         if (error instanceof ChannelTransportError) throw error;
         if (attempt + 1 === this.options.attempts) throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE');
         await this.backoff(attempt); continue;
       }
       // Never replay rejected business/auth/schema requests. Treat transient failures as ambiguous delivery.
-      const retryable = response.status >= 500;
-      // Do not consume/store/log arbitrary upstream error bodies, including cancellation failures.
-      try { await response.body?.cancel(); }
-      catch { throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE'); }
-      if (!retryable || attempt + 1 === this.options.attempts) {
-        throw new ChannelTransportError('CHANNEL_CLIENT_REJECTED', response.status);
+      if (result.status < 500 || attempt + 1 === this.options.attempts) {
+        throw new ChannelTransportError('CHANNEL_CLIENT_REJECTED', result.status);
       }
       await this.backoff(attempt);
     }
     throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE');
+  }
+
+  /** One deadline covers fetch, body read and error-body cancellation, even for injected transports. */
+  private async exchange<T>(path: string, body: Buffer<ArrayBuffer>, timestamp: string, nonce: string,
+    schema: z.ZodType<T>, tipo: string): Promise<{ value: T } | { status: number }> {
+    const abort = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => { reject(new Error('Channel deadline')); abort.abort(); }, this.options.timeoutMs);
+    });
+    const operation = async (): Promise<{ value: T } | { status: number }> => {
+      const response = await this.transport(this.endpoint + path, { method: 'POST', redirect: 'error', signal: abort.signal,
+          headers: { 'content-type': 'application/json', 'x-channel-id': this.options.id,
+            'x-channel-timestamp': timestamp, 'x-channel-nonce': nonce,
+            'x-channel-signature': signSale(this.options.secret, this.options.id, timestamp, nonce, body) }, body });
+      if (abort.signal.aborted) {
+        void response.body?.cancel().catch(() => {});
+        throw new Error('Channel deadline');
+      }
+      // Do not consume/store/log arbitrary upstream error bodies, including cancellation failures.
+      if (!response.ok) {
+        try { await response.body?.cancel(); }
+        catch { throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE'); }
+        return { status: response.status };
+      }
+      const decoded = await this.decode(response, abort.signal);
+      const value = schema.safeParse(decoded);
+      if (!value.success || (value.data as { data: { tipo: string } }).data.tipo !== tipo) {
+        throw new ChannelTransportError('CHANNEL_CLIENT_RESPONSE_INVALID', response.status);
+      }
+      return { value: value.data };
+    };
+    try { return await Promise.race([operation(), deadline]); }
+    finally { clearTimeout(timer); abort.abort(); }
+  }
+
+  /** Receipts contain identifiers only; never buffer an arbitrary upstream response. */
+  private async decode(response: Response, signal: AbortSignal): Promise<unknown> {
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    const cancel = () => { void reader?.cancel().catch(() => {}); };
+    signal.addEventListener('abort', cancel, { once: true });
+    try {
+      reader = response.body?.getReader();
+      const length = response.headers.get('content-length');
+      if (length && (!/^\d+$/.test(length) || Number(length) > 16 * 1024)) throw new Error('Response bound');
+      if (!reader) throw new Error('Missing response');
+      const chunks: Uint8Array[] = []; let bytes = 0;
+      for (;;) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        bytes += chunk.value.byteLength;
+        if (bytes > 16 * 1024) throw new Error('Response bound');
+        chunks.push(chunk.value);
+      }
+      return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
+    } catch {
+      cancel();
+      throw new ChannelTransportError('CHANNEL_CLIENT_RESPONSE_INVALID', response.status);
+    } finally { signal.removeEventListener('abort', cancel); reader?.releaseLock(); }
   }
 
   private async backoff(attempt: number) {
