@@ -15,6 +15,8 @@ type CanonicalSales = {
 export type { SaleReceipt } from './saleIngressContract.js';
 type ReceiptEvent = { payload: unknown; status: string; aggregate_type: string; aggregate_id: string };
 export async function assertIntegrationEventsReady(db: DbClient) {
+  const role=await db.query<{safe:boolean}>("SELECT (NOT rolsuper AND NOT rolbypassrls) AS safe FROM pg_roles WHERE rolname=current_user");
+  if(role.rows[0]?.safe!==true)throw new Error('Omnichannel runtime role must be NOSUPERUSER NOBYPASSRLS');
   const result = await db.query<{ ready: boolean; qualifier: string; check: string }>(`SELECT
     (c.relrowsecurity AND c.relforcerowsecurity AND p.polcmd='*' AND p.polpermissive AND p.polroles=ARRAY[0]::oid[]
       AND (SELECT count(*) FROM pg_policy WHERE polrelid=c.oid)=1) AS ready,
@@ -58,7 +60,8 @@ export class SaleIngress {
     await assertIntegrationEventsReady(this.db);
     const columns=await this.db.query<{total:number}>(`SELECT count(*)::int AS total FROM pg_attribute
       WHERE attrelid IN (to_regclass('pedidos'),to_regclass('orcamentos')) AND NOT attisdropped
-        AND attname IN ('origem','canal','external_id','idempotency_key') AND atttypid='text'::regtype`);
+        AND attname IN ('origem','canal','external_id','idempotency_key') AND atttypid='text'::regtype
+        AND (attname<>'origem' OR attnotnull)`);
     if(columns.rows[0]?.total!==8)throw new Error('Canonical sales channel contracts not ready (025/028)');
   }
 
@@ -73,6 +76,7 @@ export class SaleIngress {
     const hash = digest(JSON.stringify(envelope));
     const nonceHash = digest(JSON.stringify([...partition, nonce]));
     return this.db.withTransaction(async (query) => {
+      await assertIntegrationEventsReady({...this.db,query:query.query.bind(query)});
       await query.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)",
         [identity.groupId, identity.empresaId]);
       // Serialize by nonce first, then receipt key, preventing conflicting concurrent deliveries.
@@ -129,6 +133,7 @@ export class SaleIngress {
     await this.sales.rbacGuard.assertAllowed(ctx, 'Integracoes', 'vendas', 'visualizar', { allowGlobalWildcard: false });
     await this.sales.rbacGuard.assertAllowed(ctx, 'Comercial', lookup.tipo === 'Pedido' ? 'pedido' : 'orcamento', 'visualizar', { allowGlobalWildcard: false });
     return this.db.withTransaction(async (query) => {
+      await assertIntegrationEventsReady({...this.db,query:query.query.bind(query)});
       await query.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)", [identity.groupId, identity.empresaId]);
       if(lookup.operation==='receipt-page'){
         const result=await query.query<ReceiptEvent & {id:string;createdAt:string}>(`

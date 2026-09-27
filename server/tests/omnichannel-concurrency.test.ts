@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { boot, assertCanonicalChannelSales } from './omnichannelFixture.js';
+import { boot, assertCanonicalChannelSales, assertRuntimeReadinessGuards } from './omnichannelFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { ChannelSalesClient } from '../src/integrations/channelSalesClient.js';
 import { saleEnvelopeSchema } from '../src/integrations/saleIngressContract.js';
@@ -182,3 +182,5 @@ test('real PostgreSQL four channels use canonical origin, server prices, atomic 
     assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,4);
   } finally {await f.close();}
 });
+
+test('real PostgreSQL refuses privileged runtime and missing origin NOT NULL',{skip:!url},async()=>{const f=await boot(await isolatedPostgres(url!));try{await assertRuntimeReadinessGuards(f);}finally{await f.close();}});

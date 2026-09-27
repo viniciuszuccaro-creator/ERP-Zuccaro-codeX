@@ -148,7 +148,7 @@ test('real PostgreSQL failure triage preserves microsecond cursors, metadata pri
     const count = await auditCount();
     assert.ok(count >= 4);
     // Append the real audit in the same transaction, then simulate its failure; no partial audit may commit.
-    const failing = new CatalogOutbox(f.db, { ...f.runtime, auditRepo: { ...f.runtime.auditRepo,
+    const failing = new CatalogOutbox(f.integrationDb, { ...f.runtime, auditRepo: { ...f.runtime.auditRepo,
       append: async (...args: Parameters<typeof f.runtime.auditRepo.append>) => {
         await f.runtime.auditRepo.append(...args); throw new Error('synthetic audit failure');
       },

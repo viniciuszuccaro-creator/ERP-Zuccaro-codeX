@@ -452,3 +452,10 @@ Próximo lote próprio após #92, branch codex/comercial-omnicanal-monitoramento
 Teste sintético cobre 150 publicações e 1350 observações históricas; retorna 150 consistentes, 150 divergentes, 150 indisponíveis e zero não reconciliadas. PostgreSQL CI faz EXPLAIN ANALYZE e exige uma execução da agregação (900 últimas observações incluindo histórico de tentativa anterior, depois filtrado). Sem assert de tempo instável. Testes existentes preservam isolamento, tentativa atual, revogação de permissão e erro de auditoria. Sem migration/index novo.
 
 Dependência: #92 cumulativa, mesma ordem e gates canônicos/RLS/providers. Canais OFF; sem merge/deploy/VPS/HD. Resultados finais, SHA e CI ficam na PR.
+### Revisão independente da integração — papel efetivo e origem obrigatória
+
+#92/4114938306: readiness e cada transação de ingresso/consulta/outbox recusam o papel efetivo SUPERUSER/BYPASSRLS. O gate precisa de cliente dedicado NOSUPERUSER NOBYPASSRLS. As colunas origem de ambos os documentos também precisam de NOT NULL para readiness; a falha suprimida na migration025 (#92/4114938316) foi coordenada em #50/5854934498, sem editar migration reservada. Essa correção canônica continua bloqueio.
+
+Os testes agora executam transações de integração com role NOLOGIN/NOSUPERUSER/NOBYPASSRLS real. 033 continua a única fonte da policy integration_events. A migration002 mantém deliberadamente outras tabelas sem policies para clientes: o fixture efêmero acrescenta grants/policies sintéticos restritos ao papel de teste e contexto para referências/auditoria; eles NÃO são migrations/grants operacionais e NÃO comprovam homologação desses contratos em produção. Homologar role/grants/policies das referências e auditoria e pré-contexto dos guards canônicos é gate adicional obrigatório, além de providers/destino de Grupo. Não declarar runtime efetivo completo nem ativar canais.
+
+As provas negativas alteram apenas o papel sintético para SUPERUSER/BYPASSRLS, exigem recusa e zero documentos, restauram papel seguro, removem NOT NULL temporariamente de cada origem e exigem recusa. Dados e esquema reais não são acessados.

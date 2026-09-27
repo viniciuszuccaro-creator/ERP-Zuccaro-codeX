@@ -37,7 +37,7 @@ test('health is fail-closed for RBAC, threshold and audit failures', async () =>
     await assert.rejects(f.outbox.health(f.ctx,0),(e: any) => e.code==='CATALOG_HEALTH_INVALID');
     await assert.rejects(f.outbox.health(f.ctx,604801),(e: any) => e.code==='CATALOG_HEALTH_INVALID');
     assert.equal((await f.outbox.health(f.ctx,60)).oldestBacklogSeconds,null);
-    const failing = new CatalogOutbox(f.db,{ ...f.runtime,auditRepo:{ ...f.runtime.auditRepo,append:async () => { throw new Error('audit failure'); } } });
+    const failing = new CatalogOutbox(f.integrationDb,{ ...f.runtime,auditRepo:{ ...f.runtime.auditRepo,append:async () => { throw new Error('audit failure'); } } });
     await assert.rejects(failing.health(f.ctx,60),/audit failure/);
     await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
     await assert.rejects(f.outbox.health(f.ctx,60),(e: any) => e.statusCode===403);
@@ -82,7 +82,7 @@ test('failure triage rejects malformed bounds and blocks response on audit failu
   try {
     await assert.rejects(f.outbox.failures(f.ctx,101),(e:any)=>e.code==='CATALOG_PAGE_INVALID');
     await assert.rejects(f.outbox.failures(f.ctx,1,{id:'invalid',createdAt:'invalid'}),(e:any)=>e.code==='CATALOG_PAGE_INVALID');
-    const failing=new CatalogOutbox(f.db,{...f.runtime,auditRepo:{...f.runtime.auditRepo,append:async()=>{throw new Error('audit failure');}}});
+    const failing=new CatalogOutbox(f.integrationDb,{...f.runtime,auditRepo:{...f.runtime.auditRepo,append:async()=>{throw new Error('audit failure');}}});
     await assert.rejects(failing.failures(f.ctx),/audit failure/);
     await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
     await assert.rejects(f.outbox.failures(f.ctx),(e:any)=>e.statusCode===403);

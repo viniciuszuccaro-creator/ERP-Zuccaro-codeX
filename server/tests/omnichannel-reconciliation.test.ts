@@ -127,7 +127,7 @@ test('divergence triage validates cursor and fails closed for revoked permission
   try {
     await assert.rejects(f.outbox.divergences(f.ctx,0),(e:any)=>e.code==='CATALOG_PAGE_INVALID');
     await assert.rejects(f.outbox.divergences(f.ctx,1,{id:'invalid',createdAt:'invalid'}),(e:any)=>e.code==='CATALOG_PAGE_INVALID');
-    const failing=new CatalogOutbox(f.db,{...f.runtime,auditRepo:{...f.runtime.auditRepo,append:async()=>{throw new Error('synthetic audit failure');}}});
+    const failing=new CatalogOutbox(f.integrationDb,{...f.runtime,auditRepo:{...f.runtime.auditRepo,append:async()=>{throw new Error('synthetic audit failure');}}});
     await assert.rejects(failing.divergences(f.ctx),/synthetic audit failure/);
     await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
     await assert.rejects(f.outbox.divergences(f.ctx),(e:any)=>e.statusCode===403);

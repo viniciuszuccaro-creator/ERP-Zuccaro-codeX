@@ -36,6 +36,7 @@ export class CatalogOutbox {
 
   private async scoped<T>(ctx: RequestContext, fn: (tx: DbQueryExecutor) => Promise<T>) {
     return this.db.withTransaction(async (tx) => {
+      await assertIntegrationEventsReady({...this.db,query:tx.query.bind(tx)});
       await tx.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)", [ctx.groupId, ctx.empresaId]);
       return fn(tx);
     });
