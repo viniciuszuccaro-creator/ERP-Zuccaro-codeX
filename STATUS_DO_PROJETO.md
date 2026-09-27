@@ -1,3 +1,33 @@
+## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:50Z)
+
+| Item | #45 | #46 | #47 | #49 |
+| --- | --- | --- | --- | --- |
+| Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | **SIM** `b6897724` | em andamento |
+| CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | **SUCCESS** @ `b6897724` | pendente |
+| SHA ativo na VPS | **NÃO** | N/A | N/A | N/A |
+| Teste login proprietário | **PENDENTE** (humano) | N/A | N/A | N/A |
+
+Sem novas PRs empilhadas. Deploy #45: paste controlado abaixo (não executado neste agente).
+
+## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:16Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `comercialCondicaoAvistaPolicy` + porta `alcadaConfig` + segregação #46 |
+| Testado | **SIM** — 36/36 (`desconto-alcada*` + `margem*` + `condicao-avista*`) |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** |
+| Implantado | **N/A** |
+
+## Comercial 360 / Onda 2 - condição à vista (rebase #49) (2026-09-26T22:16Z)
+
+- Branch `cursor/comercial360-onda2-avista-392b` empilhada sobre `origin/cursor/comercial360-onda2-margem-392b` (`a261790d`).
+- Cherry-picks: `2a37c353` feat à vista · `59857100` alcadaConfig/422 · `ce420fc4` testes segregação.
+- À vista = parcelas ativas com `dias === 0`. Liberação de alçada **somente** com `avistaLiberaDescontoSemAprovar === true` (fail-closed sem config).
+- Mantém segregação #46 (outro aprovador; à vista **dispensa** alçada, não autoaprova). Valida `ORCAMENTO_DESCONTO_INVALIDO` antes da isenção.
+- Margem CostPort (#47) preservada. Sem UI omnicanal.
+- Testes: `comercial-condicao-avista*.ts` + desconto/margem — **36/36 PASS**.
+
 ## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:45Z)
 
 | Item | #45 | #46 | #47 | #49 |

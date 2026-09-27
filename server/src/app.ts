@@ -62,6 +62,7 @@ import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepositor
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
+import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
@@ -79,6 +80,8 @@ export type CreateAppOptions = {
   malwareScanPort?: MalwareScanPort;
   /** Porta de custo para alçada de margem (Onda 2). Null/omitido = skip (não inventa custo). */
   costPort?: ComercialCostPort | null;
+  /** Config de alçada (à vista). Null/omitido = fail-closed (não libera desconto). */
+  alcadaConfig?: ComercialAlcadaConfigPort | null;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -164,16 +167,19 @@ export function createApp(options: CreateAppOptions) {
   );
   const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
   const costPort = options.costPort ?? null;
+  const alcadaConfig = options.alcadaConfig ?? null;
   const orcamentoService = new OrcamentoService(
     orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
     tabelaPrecoService,
     costPort,
+    alcadaConfig,
   );
   const pedidoService = new PedidoService(
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
     unidadeRepo, condicaoPagamentoRepo, clienteLocalRepo, obraRepo, tabelaPrecoRepo,
     tabelaPrecoService,
     costPort,
+    alcadaConfig,
   );
   const obraService = new ObraService(
     obraRepo,
