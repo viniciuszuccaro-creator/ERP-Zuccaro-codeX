@@ -273,3 +273,32 @@ reagendamento, rollback do último log e processamento posterior com geração n
 Base #83; revisão independente/integração pendentes. Sem schema/migration/HD/VPS,
 merge, deploy ou ativação. Rollback de código preserva os eventos já reagendados,
 auditados e processáveis pelo worker existente; não desfaz publicação externa.
+# Parada controlada do worker existente
+
+Onda 15: `CatalogOutboxWorker.runOnce(ctx,limit,signal?)` aceita `AbortSignal`
+opt-in do supervisor. A chamada anterior continua compatível, sem timer, provider
+padrão, bootstrap ou ativação. Sinal já interrompido não reserva eventos nem chama
+rede. Entre eventos, a parada impede novas reservas desta execução; outros workers
+autorizados continuam independentes.
+
+Se a parada chegar após claim ou durante envio, o worker encerra o evento pelo
+`finish` existente como retry com código sanitizado `CATALOG_RUN_INTERRUPTED`;
+orçamento esgotado leva a dead_letter como antes. Tentativas, chave e fencing são
+preservados. A triagem existente reconhece o código, sem expor motivo do sinal.
+Provider recebe AbortSignal e a espera é interrompida mesmo se ele ignorar abort.
+Listener/deadline são limpos; ACK tardio não registra published nem altera o lease.
+Uma entrega externa pode ter ocorrido: recuperação conserva a chave idempotente,
+nunca inventa cancelamento externo nem desfaz automaticamente o documento.
+
+RBAC/tenant/lease e auditoria são revalidados ao encerrar. Falha DB/audit propaga,
+mantendo processing para recuperação após expiração do lease; não retorna retry
+falso. Os contadores mantêm o formato anterior e refletem somente resultados
+persistidos. Parada não significa publicação confirmada nem fila toda processada.
+
+Testes sintéticos: parada antes/depois de claim, provider que ignora abort e ACK
+tardio, próximo evento intacto, orçamento esgotado e audit AFTER INSERT falhando.
+PostgreSQL efêmero prova estado/chave/tentativas, retomada idempotente e recuperação
+de lease em falha de auditoria. Base #84; revisão independente/integração pendentes.
+Rollback de código mantém retry/dead-letter existentes e worker anterior consegue
+processá-los; remove apenas a parada opt-in. Sem migration/frontend/provider novo,
+HD/VPS/merge/deploy; nenhuma onda declarada integralmente concluída.

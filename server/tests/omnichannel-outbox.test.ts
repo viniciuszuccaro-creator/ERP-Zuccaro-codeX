@@ -4,6 +4,59 @@ import { CatalogOutboxWorker } from '../src/integrations/catalogOutboxWorker.js'
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 
+test('catalog stop before a run leaves queue untouched and stop after claim returns the lease without sending',async()=>{
+  const f=await outboxFixture();
+  try{
+    const id=await f.event();await f.event();const stopped=new AbortController();stopped.abort('PRIVATE_SYNTHETIC_REASON');
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async()=>{assert.fail('No provider call after stop');}});
+    assert.deepEqual(await worker.runOnce(f.ctx,10,stopped.signal),{published:0,retry:0,dead_letter:0});
+    assert.ok((await f.pg.query('SELECT status,attempts FROM integration_events')).rows.every(r=>r.status==='pending'&&r.attempts===0));
+    assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,0);
+    const abort=new AbortController();const claim=f.outbox.claim.bind(f.outbox);
+    f.outbox.claim=async(...args)=>{const leases=await claim(...args);abort.abort();return leases;};
+    assert.deepEqual(await worker.runOnce(f.ctx,10,abort.signal),{published:0,retry:1,dead_letter:0});
+    assert.equal((await f.pg.query('SELECT status FROM integration_events WHERE id=$1',[id])).rows[0].status,'retry');
+    assert.ok(!JSON.stringify((await f.pg.query('SELECT * FROM audit_logs')).rows).includes('PRIVATE_SYNTHETIC_REASON'));
+  }finally{await f.close();}
+});
+
+test('catalog in-flight stop bounds an ignoring provider, fences late ACK and preserves subsequent events',async()=>{
+  const f=await outboxFixture();
+  try{
+    const ids=[await f.event(),await f.event()];const abort=new AbortController();let calls=0;
+    let complete:()=>void=()=>{};let offeredSignal:AbortSignal|undefined;
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async(input,signal)=>{
+      calls++;offeredSignal=signal;abort.abort('PRIVATE_STOP');
+      return new Promise(resolve=>{complete=()=>resolve({eventId:input.eventId,key:input.key});});
+    }});
+    assert.deepEqual(await worker.runOnce(f.ctx,10,abort.signal),{published:0,retry:1,dead_letter:0});
+    assert.equal(calls,1);assert.equal(offeredSignal?.aborted,true);
+    complete();await new Promise(resolve=>setImmediate(resolve));
+    const rows=(await f.pg.query('SELECT status,attempts,error_message FROM integration_events WHERE id=ANY($1::uuid[])',[ids])).rows;
+    assert.equal(rows.filter(r=>r.status==='retry'&&r.error_message==='CATALOG_RUN_INTERRUPTED').length,1);
+    assert.equal(rows.filter(r=>r.status==='pending'&&r.attempts===0).length,1);
+    const triage=await f.outbox.failures(f.ctx);assert.equal(triage.items[0].code,'CATALOG_RUN_INTERRUPTED');
+    assert.ok(!JSON.stringify(triage).includes('PRIVATE_STOP'));
+  }finally{await f.close();}
+});
+
+test('catalog interruption respects retry budget and audit failure propagates with lease retained',async()=>{
+  const f=await outboxFixture();
+  try{
+    await f.event({max:1});const abort=new AbortController();
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async()=>{abort.abort();return new Promise(()=>{});}});
+    assert.deepEqual(await worker.runOnce(f.ctx,1,abort.signal),{published:0,retry:0,dead_letter:1});
+    const next=await f.event();const later=new AbortController();
+    await f.pg.exec(`CREATE FUNCTION reject_interruption_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.after_data->>'status'='retry' THEN RAISE EXCEPTION 'SYNTHETIC_INTERRUPTION_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER interruption_audit_fail AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_interruption_audit();`);
+    const failed=new CatalogOutboxWorker(f.outbox,{publish:async()=>{later.abort();return new Promise(()=>{});}});
+    await assert.rejects(()=>failed.runOnce(f.ctx,1,later.signal));
+    assert.equal((await f.pg.query('SELECT status FROM integration_events WHERE id=$1',[next])).rows[0].status,'processing');
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE after_data->>'status'='retry'")).rows.length,0);
+  }finally{await f.close();}
+});
+
 test('catalog selection reprocess is bounded, tenant-scoped and preserves explicit per-event budgets',async()=>{
   const f=await outboxFixture();
   try{
