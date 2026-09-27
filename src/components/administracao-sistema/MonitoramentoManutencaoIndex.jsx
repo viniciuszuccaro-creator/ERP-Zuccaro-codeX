@@ -118,7 +118,7 @@ export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramen
             <CardContent className="p-4">
               <ContextoConfigBanner />
               <HerancaConfigNotice />
-              <ProtectedSection module="Sistema" section={["Notificacoes","Notificações","Configuracoes","Configurações"]} action="visualizar">
+              <ProtectedSection module="Sistema" section={["Configurações","Notificações"]} action="visualizar">
                 <ConfiguracaoNotificacoes empresaId={empresaAtual?.id} grupoId={grupoAtual?.id || grupoAtivoId} />
               </ProtectedSection>
             </CardContent>
