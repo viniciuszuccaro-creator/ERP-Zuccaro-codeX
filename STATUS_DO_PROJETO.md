@@ -1,3 +1,13 @@
+## #100 MESCLADA — deploy/browser pendentes (2026-09-27T19:31Z)
+
+| Campo | Valor |
+|---|---|
+| Merge | `5dfa7562d01eae0efb39bf2f1b2e8409ba640f33` (aprovado `e7ad20e1`) |
+| CI PUSH main | em curso (`36344593507`) |
+| Próximo Codex | backup → canário API/SPA → promote → prova browser |
+| Cursor | **não** deploya |
+| Acesso | **PENDENTE** até logout/login → Grupo/CPA/3Z → Comercial/Config |
+
 ## PARECER FINAL CURSOR — #100 e7ad20e1 (2026-09-27T19:30Z)
 
 P0 pós-login: seleção empresa recusada / Comercial bloqueado. Causa: filtro local vs API + PerfilAcesso local vazio + hooks dessincronizados.
