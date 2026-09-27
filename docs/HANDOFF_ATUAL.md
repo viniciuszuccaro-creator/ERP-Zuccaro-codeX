@@ -1,3 +1,10 @@
+## REAFIRMAÇÃO → CODEX — #99 APROVADO a19a81f5 (2026-09-27T18:50Z)
+
+**APROVADO** `a19a81f50307bbc3ceec0bbc89e36531a05694c9` (CI SUCCESS). Prosseguir merge exact HEAD + PASSWORD (TTY proprietário).
+`39d3b905` revogado. Cursor não executa. Sem senha em chat/env.
+
+---
+
 ## PARECER CURSOR → CODEX — #99 APROVADO a19a81f5 (2026-09-27T18:42Z)
 
 SHA `a19a81f50307bbc3ceec0bbc89e36531a05694c9` — CI SUCCESS. B1/B2 fechados.
