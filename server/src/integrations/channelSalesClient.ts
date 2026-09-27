@@ -42,17 +42,17 @@ export class ChannelSalesClient {
     this.endpoint = url.href.replace(/\/$/, '');
   }
 
-  async create(payload: SaleEnvelope): Promise<z.infer<typeof created>>;
-  async create(payload: SaleBatch): Promise<SaleBatchResult>;
-  async create(payload: SaleEnvelope | SaleBatch): Promise<z.infer<typeof created> | SaleBatchResult> {
-    if (payload && typeof payload === 'object' && 'operation' in payload && payload.operation === 'sale-batch') return this.createBatch(payload);
+  async create(payload: SaleEnvelope, signal?: AbortSignal): Promise<z.infer<typeof created>>;
+  async create(payload: SaleBatch, signal?: AbortSignal): Promise<SaleBatchResult>;
+  async create(payload: SaleEnvelope | SaleBatch, signal?: AbortSignal): Promise<z.infer<typeof created> | SaleBatchResult> {
+    if (payload && typeof payload === 'object' && 'operation' in payload && payload.operation === 'sale-batch') return this.createBatch(payload, signal);
     const parsed = saleEnvelopeSchema.safeParse(payload);
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
-    return this.request('', parsed.data, created);
+    return this.request('', parsed.data, created, signal);
   }
 
   /** Each sale retains its canonical transaction. Stop on uncertainty; never roll back prior receipts. */
-  private async createBatch(payload: SaleBatch): Promise<SaleBatchResult> {
+  private async createBatch(payload: SaleBatch, signal?: AbortSignal): Promise<SaleBatchResult> {
     const parsed = batchSchema.safeParse(payload);
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
     // Validate and snapshot the entire queue before its first side effect. No browser/local persistence here.
@@ -67,8 +67,8 @@ export class ChannelSalesClient {
     }
     const items: SaleBatchResult['items'] = []; let stopped = false;
     for (const [index, item] of parsed.data.items.entries()) {
-      if (stopped) { items.push({ index, state: 'NOT_SENT' }); continue; }
-      try { items.push({ index, state: 'CONFIRMED', result: await this.request('', item, created) }); }
+      if (stopped || signal?.aborted) { items.push({ index, state: 'NOT_SENT' }); continue; }
+      try { items.push({ index, state: 'CONFIRMED', result: await this.request('', item, created, signal) }); }
       catch (error) {
         if (!(error instanceof ChannelTransportError)) throw error;
         // Even a final 4xx can follow an earlier ambiguous retry that committed. Never infer rejection.
@@ -79,49 +79,56 @@ export class ChannelSalesClient {
     return { items };
   }
 
-  async receipt(payload:ReceiptQuery):Promise<z.infer<typeof found>>;
-  async receipt(payload:ReceiptPageQuery):Promise<z.infer<typeof paged>>;
-  async receipt(payload:ReceiptStateQuery):Promise<z.infer<typeof state>>;
-  async receipt(payload: ReceiptQuery|ReceiptPageQuery|ReceiptStateQuery): Promise<z.infer<typeof found>|z.infer<typeof paged>|z.infer<typeof state>> {
+  async receipt(payload:ReceiptQuery, signal?: AbortSignal):Promise<z.infer<typeof found>>;
+  async receipt(payload:ReceiptPageQuery, signal?: AbortSignal):Promise<z.infer<typeof paged>>;
+  async receipt(payload:ReceiptStateQuery, signal?: AbortSignal):Promise<z.infer<typeof state>>;
+  async receipt(payload: ReceiptQuery|ReceiptPageQuery|ReceiptStateQuery, signal?: AbortSignal): Promise<z.infer<typeof found>|z.infer<typeof paged>|z.infer<typeof state>> {
     const parsed = receiptReadSchema.safeParse(payload);
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
-    if(parsed.data.operation==='receipt-page')return this.request('/recibos',parsed.data,paged);
-    if(parsed.data.operation==='receipt-state')return this.request('/recibos',parsed.data,state);
-    return this.request('/recibos',parsed.data,found);
+    if(parsed.data.operation==='receipt-page')return this.request('/recibos',parsed.data,paged,signal);
+    if(parsed.data.operation==='receipt-state')return this.request('/recibos',parsed.data,state,signal);
+    return this.request('/recibos',parsed.data,found,signal);
   }
 
-  private async request<T>(path: string, payload: SaleEnvelope | ReceiptQuery | ReceiptPageQuery | ReceiptStateQuery, schema: z.ZodType<T>): Promise<T> {
+  private async request<T>(path: string, payload: SaleEnvelope | ReceiptQuery | ReceiptPageQuery | ReceiptStateQuery, schema: z.ZodType<T>, signal?: AbortSignal): Promise<T> {
     // Serialize once: every retry retains exactly the same key and semantic payload.
     const body = Buffer.from(JSON.stringify(payload));
     if (body.length > 128 * 1024) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
     for (let attempt = 0; attempt < this.options.attempts; attempt++) {
+      if (signal?.aborted) throw new ChannelTransportError('CHANNEL_CLIENT_INTERRUPTED');
       const timestamp = String(Math.floor(this.now() / 1000));
       const nonce = randomUUID();
       let result: { value: T } | { status: number };
       try {
-        result = await this.exchange(path, body, timestamp, nonce, schema, payload.tipo);
+        result = await this.exchange(path, body, timestamp, nonce, schema, payload.tipo, signal);
         if ('value' in result) return result.value;
       } catch (error) {
         if (error instanceof ChannelTransportError) throw error;
         if (attempt + 1 === this.options.attempts) throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE');
-        await this.backoff(attempt); continue;
+        await this.backoff(attempt, signal); continue;
       }
       // Never replay rejected business/auth/schema requests. Treat transient failures as ambiguous delivery.
       if (result.status < 500 || attempt + 1 === this.options.attempts) {
         throw new ChannelTransportError('CHANNEL_CLIENT_REJECTED', result.status);
       }
-      await this.backoff(attempt);
+      await this.backoff(attempt, signal);
     }
     throw new ChannelTransportError('CHANNEL_CLIENT_UNAVAILABLE');
   }
 
   /** One deadline covers fetch, body read and error-body cancellation, even for injected transports. */
   private async exchange<T>(path: string, body: Buffer<ArrayBuffer>, timestamp: string, nonce: string,
-    schema: z.ZodType<T>, tipo: string): Promise<{ value: T } | { status: number }> {
+    schema: z.ZodType<T>, tipo: string, signal?: AbortSignal): Promise<{ value: T } | { status: number }> {
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const deadline = new Promise<never>((_resolve, reject) => {
       timer = setTimeout(() => { reject(new Error('Channel deadline')); abort.abort(); }, this.options.timeoutMs);
+    });
+    let interrupted: (() => void) | undefined;
+    const stopped = new Promise<never>((_resolve, reject) => {
+      interrupted = () => { reject(new ChannelTransportError('CHANNEL_CLIENT_INTERRUPTED')); abort.abort(); };
+      signal?.addEventListener('abort', interrupted, { once: true });
+      if (signal?.aborted) interrupted();
     });
     const operation = async (): Promise<{ value: T } | { status: number }> => {
       const response = await this.transport(this.endpoint + path, { method: 'POST', redirect: 'error', signal: abort.signal,
@@ -145,8 +152,8 @@ export class ChannelSalesClient {
       }
       return { value: value.data };
     };
-    try { return await Promise.race([operation(), deadline]); }
-    finally { clearTimeout(timer); abort.abort(); }
+    try { return await Promise.race([operation(), deadline, stopped]); }
+    finally { clearTimeout(timer); if (interrupted) signal?.removeEventListener('abort', interrupted); abort.abort(); }
   }
 
   /** Receipts contain identifiers only; never buffer an arbitrary upstream response. */
@@ -174,7 +181,14 @@ export class ChannelSalesClient {
     } finally { signal.removeEventListener('abort', cancel); reader?.releaseLock(); }
   }
 
-  private async backoff(attempt: number) {
-    await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt));
+  private async backoff(attempt: number, signal?: AbortSignal) {
+    if (signal?.aborted) throw new ChannelTransportError('CHANNEL_CLIENT_INTERRUPTED');
+    await new Promise<void>((resolve, reject) => {
+      const stop = () => { clearTimeout(timer); signal?.removeEventListener('abort', stop);
+        reject(new ChannelTransportError('CHANNEL_CLIENT_INTERRUPTED')); };
+      const timer = setTimeout(() => { signal?.removeEventListener('abort', stop); resolve(); }, 100 * 2 ** attempt);
+      signal?.addEventListener('abort', stop, { once: true });
+      if (signal?.aborted) stop();
+    });
   }
 }

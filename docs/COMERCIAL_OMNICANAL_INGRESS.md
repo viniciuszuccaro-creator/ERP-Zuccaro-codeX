@@ -334,3 +334,18 @@ Base #85; revisão independente/integração pendentes. Rollback de código pres
 observações existentes e volta à chamada por página. Sem migration/HD/VPS,
 provider/frontend novo, merge/deploy; reconcilia sinais ACK, não projeção completa
 de preços/mídia/estoque nem conclusão integral da onda/programa.
+
+# Parada opt-in do envio pelos canais
+
+Onda 17: ChannelSalesClient recebe AbortSignal opcional em create/receipt, mantendo
+interfaces anteriores e validação/snapshot integrais. Sinal já parado não envia:
+lote retorna NOT_SENT. Durante envio, leitura ou backoff, interrompe mesmo se o
+transporte ignorar abort, sem retry posterior. Envio em andamento é UNCONFIRMED
+(CHANNEL_CLIENT_INTERRUPTED); motivo privado do sinal não é exposto. Recibos
+CONFIRMED permanecem e seguintes são NOT_SENT. Parada não cancela venda que o
+servidor possa ter confirmado; retomar payload/chaves ou consultar recibo.
+ACK tardio não altera resultado. Testes sintéticos cobrem commit antes da parada,
+replay sem duplicar, sinal prévio, transporte ignorando abort e backoff.
+Reutiliza HMAC/RBAC/tenant/auditoria canônicos, sem fila/app/provider/migration nova.
+Base #86, revisão independente pendente. Rollback retira apenas opção de parada.
+Sem HD/VPS/merge/deploy; Onda 17 e programa não declarados integralmente concluídos.
