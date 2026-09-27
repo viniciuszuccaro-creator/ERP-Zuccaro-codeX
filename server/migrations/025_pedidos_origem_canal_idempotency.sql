@@ -1,11 +1,36 @@
 -- Comercial 360 Onda 5 — origem/canal/external_id/idempotency no Pedido canônico (aditiva).
 -- Sem módulo paralelo. Defaults fail-closed: MANUAL. Unicidade por tenant+origem.
+-- Pedidos já convertidos (orcamento_id NOT NULL) recebem origem ORCAMENTO no backfill
+-- antes de NOT NULL / default MANUAL — evita classificar histórico como MANUAL.
 
 ALTER TABLE pedidos
-  ADD COLUMN IF NOT EXISTS origem TEXT NOT NULL DEFAULT 'MANUAL',
+  ADD COLUMN IF NOT EXISTS origem TEXT,
   ADD COLUMN IF NOT EXISTS canal TEXT,
   ADD COLUMN IF NOT EXISTS external_id TEXT,
   ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+
+-- Backfill: conversões históricas antes do default MANUAL.
+UPDATE pedidos
+  SET origem = 'ORCAMENTO'
+  WHERE orcamento_id IS NOT NULL
+    AND (origem IS NULL OR origem = 'MANUAL');
+
+UPDATE pedidos
+  SET origem = 'MANUAL'
+  WHERE origem IS NULL;
+
+ALTER TABLE pedidos
+  ALTER COLUMN origem SET DEFAULT 'MANUAL';
+
+DO $$
+BEGIN
+  -- Torna NOT NULL só depois do backfill.
+  ALTER TABLE pedidos
+    ALTER COLUMN origem SET NOT NULL;
+EXCEPTION
+  WHEN others THEN
+    NULL; -- já NOT NULL em reexecução
+END $$;
 
 DO $$
 BEGIN

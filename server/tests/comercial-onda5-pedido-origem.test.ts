@@ -77,7 +77,14 @@ test('migration 025 adiciona origem/canal/idempotency únicos', async () => {
     'uq_pedidos_idempotency',
     'uq_pedidos_external_id',
     "'MARKETPLACE'",
+    "SET origem = 'ORCAMENTO'",
+    'orcamento_id IS NOT NULL',
   ]) assert.ok(source.includes(required), required);
+  // Default MANUAL só após backfill de conversões.
+  const backfillIdx = source.indexOf("SET origem = 'ORCAMENTO'");
+  const defaultIdx = source.indexOf("SET DEFAULT 'MANUAL'");
+  const notNullIdx = source.indexOf('SET NOT NULL');
+  assert.ok(backfillIdx > 0 && defaultIdx > backfillIdx && notNullIdx > backfillIdx);
 });
 
 test('create MANUAL default e SITE com idempotency', async () => {
@@ -182,4 +189,13 @@ test('conversão força origem ORCAMENTO', async () => {
   });
   assert.equal(order.origem, 'ORCAMENTO');
   assert.equal(order.orcamento_id, quote.id);
+});
+
+test('convert: conflito de canal/idempotency mapeia antes de ORCAMENTO_ALREADY_CONVERTED', async () => {
+  const source = await readFile(new URL('../src/services/pedidoService.ts', import.meta.url), 'utf8');
+  const convertFn = source.slice(source.indexOf('async convert'), source.indexOf('async get('));
+  const catchBlock = convertFn.slice(convertFn.lastIndexOf('} catch'));
+  const channelIdx = catchBlock.indexOf('rethrowChannelConflict');
+  const convertedIdx = catchBlock.indexOf('convertedConflict');
+  assert.ok(channelIdx > 0 && convertedIdx > channelIdx, 'channel conflict must precede convertedConflict in catch');
 });
