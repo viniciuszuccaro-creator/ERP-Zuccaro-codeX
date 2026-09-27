@@ -1,3 +1,12 @@
+## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
+
+- Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
+
+- Proprietário informou nunca ter definido/recebido senha. Leitura sanitizada DEV: conta única confirmada, senha existente, perfil GROUP/admin já vinculado; login real ainda NÃO concluído. #98 implantada em main9ed1a30e com API/SPA prontas, banco001–024 e backups/rollback preservados.
+- Melhoria do script existente: modo PASSWORD reutiliza Auth/perfil/tenant conferidos, backup e identidade efetiva. GET administrativo verifica ID/e-mail confirmado antes de PUT password; nenhuma conta/empresa/grant novo nem troca de API/SPA/3080.
+- Entrada e confirmação da nova senha exclusivamente pelo proprietário em TTY privada no Web Console, sem eco, export, argv, arquivo ou logs. Auditoria registra intenção antes da operação e resultado sem PII/credencial. Falha ambígua exige inspeção; não há retry nem rollback automático de Auth. Backup integral permanece privado; não restaurar credencial antiga desconhecida cegamente.
+- Testes exercitam código real com falhas de identidade/tenant/perfil, auditoria anterior/posterior e transporte. CI e revisão independente Cursor obrigatórias antes de merge/execução. Só concluir após login real, ambas empresas, Comercial e Configurações; canais OFF.
+
 ## REVISÃO CURSOR — divisão Codex implementa / Cursor revisa (2026-09-27)
 
 Papel Cursor: revisão independente; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.

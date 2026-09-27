@@ -7,7 +7,7 @@ umask 077
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 MODE="${OWNER_ACCESS_MODE:-AUDIT}"
-[[ "$MODE" == AUDIT || "$MODE" == APPLY || "$MODE" == BOOTSTRAP ]] || { echo 'BLOCKED: invalid_mode' >&2; exit 2; }
+[[ "$MODE" == AUDIT || "$MODE" == APPLY || "$MODE" == BOOTSTRAP || "$MODE" == PASSWORD ]] || { echo 'BLOCKED: invalid_mode' >&2; exit 2; }
 [[ -z "${OWNER_PASS:-}" ]] || { unset OWNER_PASS; echo 'BLOCKED: password_environment_not_allowed_use_tty' >&2; exit 2; }
 OWNER_EMAIL="${OWNER_EMAIL:-}"
 OWNER_GROUP_ID="${OWNER_GROUP_ID:-}"
@@ -41,12 +41,12 @@ echo 'database_identity_matches=YES'
 [[ "$MODE" == AUDIT || "$DATABASE" == "$EXPECTED_DATABASE" ]] || { echo 'BLOCKED: unexpected_database' >&2; exit 3; }
 GATE_JS="$(cat <<'JS'
 const fs=require('fs'), pg=require('pg');
-const [op,email,group,company,other,name,reuse,mode,password]=fs.readFileSync(0,'utf8').split('\0');
+const [op,email,group,company,other,name,reuse,mode,password,ownerPermissions]=fs.readFileSync(0,'utf8').split('\0');
 const client=new pg.Client({connectionString:process.env.DATABASE_URL});
 (async()=>{await client.connect();
 const fail=code=>{throw new Error(code);};
 const auth=await client.query('SELECT id FROM auth.users WHERE lower(email)=lower($1)',[email]);
-const profiles=await client.query('SELECT id,auth_user_id,group_id,empresa_id,ativo FROM profiles WHERE lower(email)=lower($1) OR auth_user_id IN (SELECT id FROM auth.users WHERE lower(email)=lower($1))',[email]);
+const profiles=await client.query('SELECT id,auth_user_id,group_id,empresa_id,ativo,role,permissoes FROM profiles WHERE lower(email)=lower($1) OR auth_user_id IN (SELECT id FROM auth.users WHERE lower(email)=lower($1))',[email]);
 const groups=await client.query("SELECT id,nome_do_grupo,status FROM groups WHERE id=$1::uuid OR lower(nome_do_grupo)=lower('Grupo CPA')",[group||null]);
 const companies=await client.query("SELECT id,group_id,nome_fantasia,razao_social,status FROM empresas WHERE group_id IN (SELECT id FROM groups WHERE id=$1::uuid OR lower(nome_do_grupo)=lower('Grupo CPA')) OR id=ANY($2::uuid[])",[group||null,[company,other].filter(Boolean)]);
 console.log(JSON.stringify({owner_auth_count:auth.rowCount,owner_profiles:profiles.rowCount,owner_active_profiles:profiles.rows.filter(p=>p.ativo).length,candidate_groups:groups.rowCount,active_companies:companies.rows.filter(e=>e.status==='Ativa').length}));
@@ -62,10 +62,40 @@ for(const [id,display] of expected){
 const row=companies.rows.find(e=>e.id===id);
 if(row && (row.group_id!==group || row.status!=='Ativa' || (row.nome_fantasia||row.razao_social).toLowerCase()!==display.toLowerCase())) fail('existing_company_mismatch_no_reparent');
 if(companies.rows.some(e=>e.id!==id && (e.nome_fantasia||e.razao_social).toLowerCase()===display.toLowerCase())) fail('duplicate_company_name_requires_resolution');
-if(mode==='APPLY' && !row) fail('existing_company_required');
+if((mode==='APPLY' || mode==='PASSWORD') && !row) fail('existing_company_required');
 }
-if(mode==='APPLY' && (!g || auth.rowCount!==1)) fail('existing_group_and_auth_required');
+if((mode==='APPLY' || mode==='PASSWORD') && (!g || auth.rowCount!==1)) fail('existing_group_and_auth_required');
+if(mode==='PASSWORD'){
+const profile=profiles.rows[0];
+if(profiles.rowCount!==1 || !profile.ativo || profile.auth_user_id!==auth.rows[0]?.id || profile.role!=='admin' || profile.empresa_id!==null) fail('active_group_owner_admin_required');
+const required=JSON.parse(ownerPermissions||'null');
+const contains=(actual,expected)=>Array.isArray(expected)?Array.isArray(actual)&&expected.every(action=>actual.includes(action)):expected&&typeof expected==='object'&&actual&&typeof actual==='object'&&!Array.isArray(actual)&&Object.entries(expected).every(([key,value])=>contains(actual[key],value));
+const wildcard=value=>Array.isArray(value)?value.includes('*'):value&&typeof value==='object'&&(Object.hasOwn(value,'*')||Object.values(value).some(wildcard));
+if(!required || Object.keys(required).length===0 || !contains(profile.permissoes,required) || wildcard(profile.permissoes)) fail('canonical_owner_permissions_required');
+}
 if(op==='preflight'){console.log('owner_preflight=PASS');return;}
+if(op==='password'){
+if(mode!=='PASSWORD' || !password || password.length<12 || password.length>200) fail('interactive_password_required');
+const base=process.env.SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+if(!base || !key) fail('auth_admin_configuration_missing');
+const url=new URL('auth/v1/admin/users/'+auth.rows[0].id,base.replace(/\/+$/,'')+'/');
+const headers={apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'};
+let existing;try{existing=await fetch(url,{headers,signal:AbortSignal.timeout(8000)});}catch{fail('auth_identity_unavailable');}
+if(!existing.ok) fail('auth_identity_unavailable');
+const identity=await existing.json();
+if(identity.id!==auth.rows[0].id || identity.email?.toLowerCase()!==email.toLowerCase() || !identity.email_confirmed_at) fail('auth_identity_mismatch_or_unconfirmed');
+const audit=async stage=>client.query("INSERT INTO audit_logs(group_id,empresa_id,actor_email,entity,entity_id,action,before_data,after_data) VALUES($1,$2,'system:vps-owner-password','Profile',$3,'update',NULL,$4::jsonb)",[group,company,profiles.rows[0].id,JSON.stringify({operation:'password_reset',stage})]);
+// Intent must persist before Auth mutation. Auth owns its credential/audit transaction.
+// No automatic retry: network ambiguity or completion-audit failure requires inspection.
+await audit('requested');
+const unconfirmed=async()=>{try{await audit('unconfirmed');}catch{}fail('password_reset_unconfirmed_no_automatic_retry');};
+let response;try{response=await fetch(url,{method:'PUT',headers,body:JSON.stringify({password}),signal:AbortSignal.timeout(8000)});}catch{await unconfirmed();}
+if(!response.ok){await audit('rejected');fail('password_reset_rejected');}
+let updated;try{updated=await response.json();}catch{await unconfirmed();}
+if(updated?.id!==auth.rows[0].id) await unconfirmed();
+try{await audit('completed');}catch{fail('password_changed_completion_audit_failed_no_automatic_retry');}
+console.log('owner_password_updated=YES');return;
+}
 if(op==='bootstrap'){
 if(mode!=='BOOTSTRAP') fail('bootstrap_not_authorized');
 if(auth.rowCount===0){
@@ -103,7 +133,7 @@ await client.query('COMMIT'); console.log('tenant_bootstrap=COMMITTED');
 JS
 )"
 run_gate() {
-  printf '%s\0' "$1" "$OWNER_EMAIL" "$OWNER_GROUP_ID" "$OWNER_EMPRESA_ID" "$EMPRESA_3Z_ID" "$OWNER_FULL_NAME" "$APPROVE_EXISTING_TENANT_MAPPING" "$MODE" "${PASSWORD:-}" | docker exec -i erp-api-dev node -e "$GATE_JS"
+  printf '%s\0' "$1" "$OWNER_EMAIL" "$OWNER_GROUP_ID" "$OWNER_EMPRESA_ID" "$EMPRESA_3Z_ID" "$OWNER_FULL_NAME" "$APPROVE_EXISTING_TENANT_MAPPING" "$MODE" "${PASSWORD:-}" "$(cat scripts/vps/owner-admin-permissoes.json)" | docker exec -i erp-api-dev node -e "$GATE_JS"
 }
 run_gate audit
 [[ "$MODE" != AUDIT ]] || { echo 'OWNER_ACCESS_AUDIT_ONLY_NO_WRITES'; exit 0; }
@@ -121,6 +151,21 @@ sha256sum "$BACKUP_DIR/database.dump" >"$BACKUP_DIR/database.sha256"
 cp .env.erp.dev "$BACKUP_DIR/api.env.restore"
 cp docker-compose.erp.yml "$BACKUP_DIR/compose.restore.yml"
 echo 'backup_archive_valid=YES'
+if [[ "$MODE" == PASSWORD ]]; then
+  unset PASSWORD PASSWORD_CONFIRM
+  [[ "${CONFIRM_OWNER_PASSWORD_RESET:-}" == YES && -r /dev/tty ]] || { echo 'BLOCKED: owner_private_password_handoff_required' >&2; exit 2; }
+  # The owner enters/confirms/submits privately in the Web Console. Never export.
+  trap 'unset PASSWORD PASSWORD_CONFIRM' EXIT
+  read -r -s -p 'Proprietário: nova senha (12 a 200 caracteres): ' PASSWORD </dev/tty
+  printf '\n' >/dev/tty
+  read -r -s -p 'Proprietário: confirme a nova senha: ' PASSWORD_CONFIRM </dev/tty
+  printf '\n' >/dev/tty
+  [[ "$PASSWORD" == "$PASSWORD_CONFIRM" ]] || { echo 'BLOCKED: passwords_do_not_match' >&2; exit 2; }
+  run_gate password
+  unset PASSWORD PASSWORD_CONFIRM
+  echo 'NEXT=owner_login_with_private_password_no_api_spa_changes'
+  exit 0
+fi
 # As imagens testadas no canário são as mesmas promovidas, sem rebuild posterior.
 CANARY_NETWORK="erp-owner-canary-$STAMP"
 CANARY_API="erp-owner-api-$STAMP"
