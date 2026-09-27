@@ -22,7 +22,9 @@ export async function assertIntegrationEventsReady(db: DbClient) {
     FROM pg_class c JOIN pg_policy p ON p.polrelid=c.oid AND p.polname='integration_events_scope'
     WHERE c.oid=to_regclass('integration_events')`);
   // Exact canonical expression, not substring matching: OR true/extra permissive policies must fail closed.
-  const normalize = (value: string) => value.replace(/::text|[\s()]/g, '').toLowerCase();
+  const normalize = (value: string) => (value.match(/'(?:''|[^'])*'|"(?:""|[^"])*"|[^'"]+/g) ?? [])
+    .map(part => part.startsWith("'") || part.startsWith('"') ? part
+      : part.replace(/::text\b|[\s()]/gi, '').toLowerCase()).join('');
   const expected = normalize("group_id = NULLIF(current_setting('erp.group_id', true), '')::uuid AND empresa_id = NULLIF(current_setting('erp.empresa_id', true), '')::uuid");
   const policy = result.rows[0];
   if (policy?.ready !== true || typeof policy.qualifier !== 'string' || typeof policy.check !== 'string'

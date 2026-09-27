@@ -113,6 +113,10 @@ test('readiness refuses weakened and additional RLS policies and price table ass
    await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
   }
   const predicate="group_id=NULLIF(current_setting('erp.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('erp.empresa_id',true),'')::uuid";
+  for(const malformed of [predicate.replace('erp.group_id','erp.group_id '),predicate.replace('erp.empresa_id','erp.empresa_id '),predicate.replace(",'')",",' ')")]){
+   await f.pg.exec(`ALTER POLICY integration_events_scope ON integration_events USING (${malformed}) WITH CHECK (${malformed})`);
+   await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
+  }
   await f.pg.exec(`ALTER POLICY integration_events_scope ON integration_events USING (${predicate}) WITH CHECK (true)`);
   await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
   await f.pg.exec(`ALTER POLICY integration_events_scope ON integration_events USING (${predicate}) WITH CHECK (${predicate})`);

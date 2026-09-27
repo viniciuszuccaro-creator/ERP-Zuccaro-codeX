@@ -382,3 +382,8 @@ PUBLIC é alvo da policy, não grant de acesso às tabelas: privilégios continu
 revogados de PUBLIC no contrato e concedidos separadamente ao papel operacional.
 Testes PGlite/PG alteram somente TO, preservando todos os predicados, e comprovam
 recusa seguida de readiness após restaurar PUBLIC. Não mudar policy em DEV.
+
+Review5328649322: normalização do gate preserva literais e identificadores SQL
+entre aspas, incluindo espaços, caixa e escapes. Remove somente formatação fora
+das aspas; nomes GUC com espaço final e NULLIF com literal espaço são recusados.
+Testes PGlite/PG reproduzem três predicados malformados e restauram o canônico.
