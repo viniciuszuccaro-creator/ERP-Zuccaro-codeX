@@ -21,6 +21,7 @@ import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
+import { useAuth } from "@/lib/AuthContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { WindowProvider } from "@/components/lib/WindowManager";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
@@ -109,6 +110,7 @@ function LayoutContent({ children, currentPageName }) {
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado
         const location = useLocation();
         const { user } = useUser();
+        const { logout } = useAuth();
         const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
         const { hasPermission } = usePermissions();
         const contextRef = React.useRef({ user, empresaAtual, grupoAtual, contexto, moduleName });
@@ -1334,7 +1336,7 @@ function LayoutContent({ children, currentPageName }) {
       pesquisaOpen={pesquisaOpen}
       setPesquisaOpen={setPesquisaOpen}
       canViewSystem={hasPermission('Sistema', null, 'ver')}
-      onLogout={() => base44.auth.logout()}
+      onLogout={() => logout(true)}
       onPrefetch={(item) => {
         prefetchForItem(item.title);
         prefetchModule(item.title);

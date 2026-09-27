@@ -59,6 +59,11 @@ test('buildHttpSessionUser libera admin só quando role=admin no perfil', () => 
     email: 'vinicius.zuccaro@gmail.com',
     role: 'admin',
     fullName: 'Vinicius Zuccaro',
+    groupName: 'Grupo CPA',
+    empresas: [
+      { id: EMPRESA_A, razao_social: 'CPA', nome_fantasia: 'CPA ferro e aço', status: 'Ativa' },
+      { id: EMPRESA_B, razao_social: '3Z', nome_fantasia: '3Z LTDA', status: 'Ativa' },
+    ],
     permissoes: { Sistema: { acessos: ['visualizar'] } },
   });
   assert.equal(admin.role, 'admin');
@@ -67,6 +72,8 @@ test('buildHttpSessionUser libera admin só quando role=admin no perfil', () => 
   assert.equal(admin.pode_ver_todas_empresas, true);
   assert.equal(admin.full_name, 'Vinicius Zuccaro');
   assert.equal(admin.empresa_atual_id, EMPRESA_A);
+  assert.equal(admin.empresas_vinculadas.length, 2);
+  assert.equal(admin.empresas_vinculadas[1].empresa_id, EMPRESA_B);
 
   const synth = buildHttpSessionUser({
     groupId: GROUP,

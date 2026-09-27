@@ -142,8 +142,14 @@ export default function AppLayoutShell({
                   <p className="text-xs text-slate-500 truncate">{user?.role === 'admin' ? 'Administrador' : 'Usuário'}</p>
                 </div>
               </Link>
-              <button onClick={onLogout} className="p-2 hover:bg-slate-200 rounded-lg transition-colors" title="Sair">
-                <LogOut className="w-4 h-4 text-slate-500" />
+              <button
+                type="button"
+                onClick={onLogout}
+                className="inline-flex items-center gap-1.5 px-2 py-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-xs font-medium hidden sm:inline">Sair</span>
               </button>
             </div>
           </SidebarFooter>
@@ -170,14 +176,31 @@ export default function AppLayoutShell({
                 <AcoesRapidasGlobal />
                 <NotificationCenter />
                 <Link to={createPageUrl('ConfiguracoesUsuario')}>
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Configurações do usuário">
+                  <button type="button" className="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Configurações do usuário">
                     <Settings className="w-5 h-5 text-slate-600" />
                   </button>
                 </Link>
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="inline-flex items-center gap-1.5 px-2 py-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
+                  title="Sair"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-sm font-medium hidden md:inline">Sair</span>
+                </button>
               </div>
             </div>
             {isOffline && <LayoutWarning>Modo offline: exibindo dados em cache. Algumas ações podem não estar disponíveis.</LayoutWarning>}
-            {!empresaAtual?.id && contexto !== 'grupo' && <LayoutWarning>Selecione uma empresa para carregar os dados. O acesso está bloqueado sem empresa selecionada.</LayoutWarning>}
+            {!empresaAtual?.id && contexto !== 'grupo' && (
+              <LayoutWarning>
+                Selecione uma empresa para carregar os dados. O acesso está bloqueado sem empresa selecionada.
+                {' '}
+                <button type="button" onClick={onLogout} className="underline font-medium">
+                  Sair e trocar de conta
+                </button>
+              </LayoutWarning>
+            )}
             {!integracoesOk && canViewSystem && (
               <LayoutWarning>
                 Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl('AdministracaoSistema?tab=integracoes')} className="underline">Configurar agora</Link>.
