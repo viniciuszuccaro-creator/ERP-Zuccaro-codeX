@@ -11,7 +11,7 @@ export async function outboxFixture(pg?: PGlite) {
   const permissions = { Integracoes: { catalogo: ['publicar','visualizar'], 'catalogo-reprocessamento': ['editar'], 'catalogo-reconciliacao': ['editar'] } };
   await f.pg.query('UPDATE profiles SET permissoes=$1::jsonb WHERE id=$2', [JSON.stringify(permissions), S.runtimeActorA]);
   const ctx: RequestContext = { groupId: S.groupA, empresaId: S.empresaA, actorId: S.runtimeActorA, scopeType: 'empresa', requestId: 'synthetic-outbox' };
-  const outbox = new CatalogOutbox(f.db, f.runtime);
+  const outbox = new CatalogOutbox(f.integrationDb, f.runtime);
   async function event(overrides: { empresa?: string; type?: string; max?: number; payload?: unknown } = {}) {
     const id = randomUUID();
     await f.pg.query(`INSERT INTO integration_events(id,group_id,empresa_id,source,event_type,idempotency_key,payload,status,aggregate_type,aggregate_id,max_attempts)

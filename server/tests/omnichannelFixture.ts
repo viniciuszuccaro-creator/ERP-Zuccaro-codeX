@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
@@ -17,6 +18,7 @@ export const identity: ChannelIdentity = { id: 'synthetic-site', channel: 'SITE'
   empresaId: S.empresaA, actorId: S.runtimeActorA, secret: 'synthetic-only-secret-never-use-live-123' };
 
 export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[] = [], rateLimitMax?: number) {
+  let cleanupRole=async()=>{};
   try {
   for (const file of readdirSync(new URL('../migrations', import.meta.url)).filter((s) => s.endsWith('.sql')).sort()) {
     await pg.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8').replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/i, ''));
@@ -31,7 +33,31 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
   const config = loadConfig({ NODE_ENV: 'test', DATABASE_URL: 'postgresql://synthetic/isolated' });
   if(rateLimitMax !== undefined) config.rateLimitMax=rateLimitMax;
   const runtime = createApp({ config, db });
-  const ingress = new SaleIngress(db, runtime);
+  // Test-only dedicated role; schema setup/seed stay privileged, operational integration TXs do not.
+  const role='omni_runtime_'+randomUUID().replaceAll('-','');
+  const schema=(await pg.query<{name:string}>('SELECT current_schema() AS name')).rows[0].name;
+  if(!/^(public|omni_test_[a-f0-9]{32})$/.test(schema))throw new Error('Unexpected isolated schema');
+  await pg.exec(`CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS NOLOGIN; GRANT USAGE ON SCHEMA ${schema} TO ${role};
+    GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA ${schema} TO ${role}; GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA ${schema} TO ${role}`);
+  // 002 intentionally has no BFF policies. These extra policies are isolated TEST scaffolding,
+  // not migrations or production grants. Runtime role/policies still require homologation.
+  const tables=await pg.query<{name:string;has_group:boolean;has_empresa:boolean}>(`SELECT c.relname AS name,
+    EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=c.oid AND a.attname='group_id') AS has_group,
+    EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=c.oid AND a.attname='empresa_id') AS has_empresa
+    FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname=current_schema() AND c.relrowsecurity AND c.relkind='r' AND c.relname<>'integration_events'`);
+  for(const table of tables.rows){
+    if(!/^[a-z_]+$/.test(table.name))throw new Error('Unexpected test table');
+    const group=table.has_group?"group_id=NULLIF(current_setting('erp.group_id',true),'')::uuid":"id=NULLIF(current_setting('erp.group_id',true),'')::uuid";
+    const empresa=table.has_empresa?" AND (empresa_id IS NULL OR empresa_id=NULLIF(current_setting('erp.empresa_id',true),'')::uuid)":'';
+    await pg.exec(`CREATE POLICY synthetic_runtime ON ${table.name} TO ${role} USING (${group}${empresa}) WITH CHECK (${group}${empresa})`);
+  }
+  cleanupRole=async()=>{for(const table of tables.rows)await pg.exec(`DROP POLICY synthetic_runtime ON ${table.name}`);await pg.exec(`REVOKE ALL ON ALL TABLES IN SCHEMA ${schema} FROM ${role}; REVOKE ALL ON ALL SEQUENCES IN SCHEMA ${schema} FROM ${role}; REVOKE USAGE ON SCHEMA ${schema} FROM ${role}; DROP ROLE ${role}`);};
+  const integrationDb:DbClient={...db,
+    query:(sql,params)=>db.withTransaction(async tx=>{await tx.query(`SET LOCAL ROLE ${role}`);return tx.query(sql,params);}),
+    withTransaction:fn=>db.withTransaction(async tx=>{await tx.query(`SET LOCAL ROLE ${role}`);return fn(tx);}),
+  };
+  const ingress = new SaleIngress(integrationDb, runtime);
   // Production migration 033, not a hand-applied policy fixture, is the source of readiness.
   await ingress.assertDatabaseReady();
   // Synthetic data, real canonical price repository and service (no pricing stub).
@@ -61,9 +87,9 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
     return { status: response.status, body: (response.headers.get('content-type')?.includes('application/json')
       ? await response.json() : {}) as { data?: { id: string }; replayed?: boolean; error?: { code: string } } };
   }
-  return { pg, db, runtime, ingress, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
-    close: async () => { await new Promise<void>((resolve) => server.close(() => resolve())); await pg.close(); } };
-  } catch (error) { await pg.close(); throw error; }
+  return { pg, db, integrationDb, role, runtime, ingress, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
+    close: async () => { await new Promise<void>((resolve) => server.close(() => resolve())); try {await cleanupRole();} finally {await pg.close();} } };
+  } catch (error) { try {await cleanupRole();} finally {await pg.close();} throw error; }
 }
 
 /** Shared assertions exercise the same contracts in PGlite and actual PostgreSQL CI. */
@@ -87,4 +113,21 @@ export async function assertCanonicalChannelSales(f: Awaited<ReturnType<typeof b
     }
     assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length, 4);
     assert.equal((await f.pg.query('SELECT id FROM orcamentos')).rows.length, 4);
+}
+
+export async function assertRuntimeReadinessGuards(f:Awaited<ReturnType<typeof boot>>) {
+  await assert.rejects(new SaleIngress(f.db,f.runtime).assertDatabaseReady(),/NOSUPERUSER NOBYPASSRLS/);
+  for(const flag of ['BYPASSRLS','SUPERUSER']){
+    await f.pg.exec(`ALTER ROLE ${f.role} ${flag}`);
+    await assert.rejects(f.ingress.assertDatabaseReady(),/NOSUPERUSER NOBYPASSRLS/);
+    assert.equal((await f.send(undefined,{nonce:'synthetic-unsafe-role'})).status,500);
+    await f.pg.exec(`ALTER ROLE ${f.role} NOSUPERUSER NOBYPASSRLS`);
+  }
+  for(const table of ['pedidos','orcamentos']){
+    await f.pg.exec(`ALTER TABLE ${table} ALTER COLUMN origem DROP NOT NULL`);
+    await assert.rejects(f.ingress.assertDatabaseReady(),/Canonical sales channel contracts not ready/);
+    await f.pg.exec(`ALTER TABLE ${table} ALTER COLUMN origem SET NOT NULL`);
+  }
+  await f.ingress.assertDatabaseReady();
+  assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,0);
 }

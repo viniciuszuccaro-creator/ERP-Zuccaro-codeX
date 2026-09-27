@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { boot, identity, now, assertCanonicalChannelSales } from './omnichannelFixture.js';
+import { boot, identity, now, assertCanonicalChannelSales, assertRuntimeReadinessGuards } from './omnichannelFixture.js';
 import { loadChannelIdentities } from '../src/integrations/saleIngressHttp.js';
 import { saleEnvelopeSchema } from '../src/integrations/saleIngressContract.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
@@ -133,3 +133,5 @@ test('outer ingress inherits one-hop proxy IP and isolates unauthenticated rate 
   assert.equal((await f.send(undefined,{...bad,forwardedFor:'203.0.113.12, 198.51.100.10'})).status,429);
  }finally{await f.close();}
 });
+
+test('runtime role and origin constraints fail closed before channels can be used',async()=>{const f=await boot();try{await assertRuntimeReadinessGuards(f);}finally{await f.close();}});
