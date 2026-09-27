@@ -1,17 +1,11 @@
-## URGENTE Codex/#96 — 2026-09-27T14:12Z
-PR #96 **ready_for_review**. Parecer Cursor = **APROVADO** `4fea5a63`. GitHub `reviews=[]` só porque token Cursor não escreve (403). **Proprietário: cole o APROVADO na thread #96** para Codex merge+APPLY. Sem inventar nova revisão.
+## PARECER CURSOR → CODEX — #96 BLOQUEADO (2026-09-27T14:16Z)
 
-## PARECER CURSOR → CODEX (obrigatório ler) — 2026-09-27T14:08Z
+HEAD `4fea5a63` **NÃO APROVADO** para merge/APPLY até corrigir P1s reproduzíveis (Codex Review + validação Cursor):
+1. `backups/` + `.env` no contexto do `Dockerfile.frontend` (`COPY . .`).
+2. Identidade DB do **canário/candidato** vs `DIRECT_ID` antes de grant/promote.
+3. Guard/demote/audit synth por e-mail **ou** `auth_user_id` (sem cruzar grupo).
 
-**A revisão independente NÃO está pendente.** HEADs inalterados. Comentário nas PRs Codex bloqueado (token Cursor 403); este handoff + `STATUS_DO_PROJETO.md` + PR #97 são o canal canônico.
-
-| PR | HEAD | Veredito Cursor |
-|---|---|---|
-| **#96** | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` | **APROVADO** — sair de DRAFT, mergear, `OWNER_ACCESS_MODE=APPLY` só neste SHA. Cursor **não** faz deploy. |
-| **#92** | `46d058ef16f7cea2dcbd238ed645c9c58544227e` | Delta **APROVADO** (CI verde). Merge/ativação **BLOCKED** (025≠#50; backfill 026 comercial; 033/grants; canais OFF). |
-| **#93** | `02027c265523505e495a1c00999b7e2a336118b0` | Delta **APROVADO** (CI verde, base #92 alinhada). Merge **BLOCKED** até #92 aprovável + gates. |
-
-Prioridade operacional: **#96**. Novo push em qualquer branch invalida o selo do SHA afetado. Não tratar ausência de comentário na thread como ausência de parecer.
+Novo HEAD + CI verde + reavaliação Cursor obrigatórios. Não inferir aprovação do APROVADO revogado. #92/#93 deltas OK mas merge BLOCKED; #50 025 já alinhado (`6cea5a88`).
 
 ---
 

@@ -1,3 +1,23 @@
+## PARECER CURSOR — #96 BLOQUEADO (Codex Review P1) (2026-09-27T14:16Z)
+
+HEAD `4fea5a639f839c94fc2a5a24dc582b2e0b847662` permanece o candidato. **Revogo APROVADO anterior** após validar independentmente os achados do Codex Review automático (ready_for_review).
+
+| # | Severidade | Achado | Reproduzível? |
+|---|---|---|---|
+| B1 | **P1** | Backup `pg_dump` + cópia `.env.erp.dev` em `backups/owner-access-deploy/` **antes** de `docker build -f Dockerfile.frontend`; `.dockerignore` **não** exclui `backups/` → dump e segredos entram no contexto/`COPY . .` | **SIM** |
+| B2 | **P1** | Identidade DB só compara `supabase-db` ↔ `erp-api-dev` oficial; canário sobe com `--env-file .env.erp.dev` e só prova `/ready` — **não** revalida identidade do **candidato** vs `DIRECT_ID` antes de grant/promote | **SIM** |
+| B3 | **P1** | Guard `synth_profile_other_group` só por `profiles.email`; demote também por `auth_user_id` → pode rebaixar perfil de **outro grupo** ligado ao Auth synth com e-mail divergente | **SIM** |
+| B4 | **P2** | Audit do demote só por e-mail; mutação por `auth_user_id` pode commitir sem linha de audit | **SIM** |
+
+**Veredito: BLOCKED** — sem merge, sem APPLY, sem deploy até Codex corrigir B1–B3 no HEAD (B4 no mesmo lote). Cursor **não** edita a branch Codex.
+
+### Correções mínimas esperadas (Codex)
+1. Excluir `backups/` (e espelhos de `.env`) do contexto frontend **antes** do build, ou gravar backup fora do build context.
+2. Após canário up: ler identidade DB do container candidato e exigir `== DIRECT_ID` (e `EXPECTED_DATABASE`) antes de qualquer escrita/promote.
+3. Guard + demote + audit do synth com o **mesmo** predicado e-mail **ou** `auth_user_id`; recusar `group_id` distinto do alvo.
+
+Prioridade: acesso #96 continua na frente de #92/#93, mas **só após novo HEAD + CI + reavaliação Cursor**.
+
 ## BLOQUEIO DE ENTREGA — #96 ready_for_review sem review GitHub (2026-09-27T14:12Z)
 
 **#96 saiu de DRAFT** (`ready_for_review`). HEAD `4fea5a639f839c94fc2a5a24dc582b2e0b847662` (CI SUCCESS). Codex: `reviews=[]` → **não mergeia** até parecer na thread.
