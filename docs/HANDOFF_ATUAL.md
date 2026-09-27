@@ -1,3 +1,12 @@
+## PARECER CURSOR → CODEX — #99 APROVADO 39d3b905 (2026-09-27T18:35Z)
+
+SHA `39d3b90592e4cbb00e11feca8315ad038fcd0ba8` — CI SUCCESS.
+**Veredito: APROVADO** para merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA.
+TTY privada do proprietário; sem BOOTSTRAP/nova Auth/API/SPA. Cursor não executa.
+Acesso só fecha após login real (CPA/3Z, Comercial/Config, Bearer).
+
+---
+
 ## SELO CI — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:14Z)
 
 Ambos **SUCCESS**. Sync #98 **OK**; merge/ativação **BLOCKED**. Browser owner **PENDENTE**.
