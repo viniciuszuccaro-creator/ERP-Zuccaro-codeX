@@ -1,6 +1,6 @@
 import { useUser } from "./UserContext";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { normalizeGuardAction } from "../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
 
 export default function usePermissions() {
@@ -13,7 +13,7 @@ export default function usePermissions() {
       if (!user?.perfil_acesso_id) return null;
       return await base44.entities.PerfilAcesso.get(user.perfil_acesso_id);
     },
-    enabled: !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),
+    enabled: !isHttpBackendMode && !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),
     staleTime: 300000,  // 5 min — evita re-fetches que causam flicker no RBAC
     gcTime: 600000,
     retry: 1,
@@ -143,7 +143,7 @@ export default function usePermissions() {
     // Fail-closed: admin HTTP/ERP usa a árvore explícita do perfil (sem bypass de role).
     // Apenas mestre local DEV mantém acesso total na UI local-only.
     if (user.mestre_local === true && (user.role === "admin" || user._app_role === "admin")) return true;
-    const perms = perfilAcesso?.permissoes || user?.permissoes;
+    const perms = isHttpBackendMode ? user?.permissoes : (perfilAcesso?.permissoes || user?.permissoes);
     if (!perms) return false;
     if (!section && typeof module === "string" && module.includes(".")) {
       const parsed = parsePermissionKey(module, action);
@@ -241,7 +241,7 @@ export default function usePermissions() {
     canExport,
     canCancel,
     resolveModuleKey,
-    isLoading: loadingUser || loadingPerfil,
+    isLoading: loadingUser || (!isHttpBackendMode && loadingPerfil),
     user,
     perfilAcesso
   };
