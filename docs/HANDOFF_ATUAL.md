@@ -1,7 +1,8 @@
-## PARECER CURSOR → CODEX — #98 bb7df2db (2026-09-27T14:59Z)
+## PARECER CURSOR → CODEX — #98 APROVADO bb7df2db (2026-09-27T15:00Z)
 
-Código **APROVADO** (sem `pg_read_file`; COPY cliente). Merge/APPLY após CI SUCCESS deste SHA.
-Gate 025 #50↔#92 fechado (blob idêntico). #92/#93 merge ainda BLOCKED (026 backfill, 033/grants, canais OFF).
+SHA `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` — CI SUCCESS. Sem `pg_read_file`.
+**Veredito: APROVADO** para merge + re-APPLY controlado (canário/identidade/grant/promote).
+Cursor não faz deploy. Novo HEAD invalida.
 
 ---
 

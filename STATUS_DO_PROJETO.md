@@ -12,13 +12,12 @@ Causa VPS: APPLY #96 abortou `permission denied for function pg_read_file` (TX r
 | Campo | Valor |
 |---|---|
 | SHA | `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` |
-| CI | em curso |
-| **Veredito código** | **APROVADO** |
-| **Veredito merge/APPLY** | **liberado após CI SUCCESS** |
+| CI | frontend/backend **SUCCESS** (`36327800151`) |
+| **Veredito** | **APROVADO** — merge + re-APPLY **somente** neste SHA |
 
 Correções: JSON via `\copy` cliente psql (sem `pg_read_file`); compactação JSON; restore seletivo mesmo canal; teste PG NOSUPERUSER prova EXECUTE negado + COPY OK (aspas/barra/acentos). Locks/tenant/audit/B1–B4 da #96 preservados.
 
-Após CI: merge → re-APPLY controlado (AUDIT→backup→canário→grant→promote) → browser proprietário. Cursor não faz deploy.
+CI verde; Codex Review sem findings. **Merge liberado.** Re-APPLY: AUDIT→backup→canário→grant→promote→browser proprietário. Cursor não faz deploy.
 
 ## #96 MESCLADA — próximo gate operacional (2026-09-27T14:36Z)
 
