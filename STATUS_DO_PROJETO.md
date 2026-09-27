@@ -1,3 +1,44 @@
+## PARECER FINAL CURSOR — lote Comercial #92/#93 (2026-09-27T23:12Z)
+
+Fonte handoff: [#97#issuecomment-5860688912](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97#issuecomment-5860688912).
+
+| PR | SHA | Base | CI | Veredito código |
+|---|---|---|---|---|
+| **#92** | `8d9ce6e544b802528aea79ae843e6df4e69bf9f8` | main `d02cd012` | runtime **#1214** + PG **#77** SUCCESS | **APROVADO_COM_GATES** |
+| **#93** | `264a61f479e77854e19f5e89ccb82e3e70bbd557` | #92 `8d9ce6e5` | runtime **#1216** + PG **#79** SUCCESS | **APROVADO_COM_GATES** (delta) |
+
+Guard/catálogo #101 preservados no merge (`entity_name` hints; `Sistema.Configurações`/`Segurança`).
+
+### O que está OK (#92)
+- **025** fail-closed alinhado; índices tenant `(group_id, empresa_id, …)`
+- **026** aborta com `PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED` se há pedidos/itens sem colunas — **correto** (DEV: 3+3 históricos)
+- **027** versionamento aditivo + FK tenant; nova versão anula `external_id`/`idempotency_key`
+- **033** FORCE RLS + `REVOKE ALL FROM PUBLIC`; policy exige `group_id`+`empresa_id`
+- Pedido/Orçamento: `groupId`/`empresaId` obrigatórios; RBAC sem `*`; auditoria; ingress opt-in (`ERP_OMNICHANNEL_ENABLED`)
+
+### Delta #93
+CTE `MATERIALIZED` na agregação de health; filtros `group_id`+`empresa_id` intactos; sem migration nova; dependência ancestral de #92 confirmada.
+
+### Achados / gates (merge≠ativação)
+
+| # | Sev | Gate |
+|---|---|---|
+| G1 | **P0 op** | **026** bloqueada até mapeamento explícito Pedido/itens (preflight DEV) |
+| G2 | **P0 op** | Não promover API que escreve colunas novas **antes** de 025–028 no schema |
+| G3 | **P1** | `saleStateSchema` Orçamento só `EM_ABERTO`/`CANCELADO` — `SUPERSEDIDO` (027) quebra canal se ON |
+| G4 | **P1** | **033**: role NOSUPERUSER/NOBYPASSRLS + grants least-privilege; produtores com `empresa_id` explícito |
+| G5 | **P2** | DEFAULT/`??` `REVENDA` pós-026 (defesa fraca se service falhar) |
+| — | — | Canais **OFF**; migrations **025–033 não aplicadas**; 029–032 ausentes no tree |
+
+### Veredito
+
+- **Código do lote:** APROVADO_COM_GATES nestes SHAs exclusivamente.
+- **Merge para main:** liberado **somente** se Codex mantiver **canais OFF** e **não** aplicar 025–033 até G1 (mapeamento) + plano G2/G4.
+- **Ativação schema / canais / go-live Comercial:** **BLOCKED** até G1+G2+G3+G4.
+- Cursor **não** mergeia/deploya. Browser owner acesso (#101) permanece **PENDENTE** em paralelo.
+
+---
+
 ## #101 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T22:16Z)
 
 Fonte: [#101](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/101) comentário 22:06Z.

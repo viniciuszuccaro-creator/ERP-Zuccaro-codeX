@@ -1,3 +1,16 @@
+## PARECER CURSOR → CODEX — lote #92/#93 APROVADO_COM_GATES (2026-09-27T23:12Z)
+
+|#|SHA|CI|Veredito|
+|---|---|---|---|
+|#92|`8d9ce6e544b802528aea79ae843e6df4e69bf9f8`|#1214+#77|APROVADO_COM_GATES|
+|#93|`264a61f479e77854e19f5e89ccb82e3e70bbd557`|#1216+#79|APROVADO_COM_GATES|
+
+Merge main OK **só** com canais OFF e **sem** apply 025–033 até mapeamento 026 (DEV 3 Pedidos).
+Ativação schema/canais **BLOCKED** (G1–G4). Guard #101 preservado.
+Cursor não mergeia/deploya. Browser acesso ainda PENDENTE.
+
+---
+
 ## #101 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T22:16Z)
 
 Main `d02cd012` APPLY+promote OK. API/SPA revision no merge.
