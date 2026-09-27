@@ -30,11 +30,34 @@ SUPA_ENV="${SUPA_ENV:-/opt/supabase/docker/.env}"
 DEFAULT_GROUP_ID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 DEFAULT_EMPRESA_CPA_ID='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 DEFAULT_EMPRESA_3Z_ID='c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2'
+UUID_RE='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
 
 mask_uuid() {
   local u="$1"
   [[ ${#u} -ge 12 ]] || { echo '********'; return; }
   echo "${u:0:8}…${u: -4}"
+}
+
+# Ignora placeholders tipo <uuid-grupo-cpa> deixados no shell de pastes anteriores.
+sanitize_uuid_or_default() {
+  local raw="${1:-}"
+  local fallback="$2"
+  local name="$3"
+  if [[ -z "$raw" ]]; then
+    echo "$fallback"
+    return
+  fi
+  if [[ "$raw" == *'<'* || "$raw" == *'>'* || "$raw" == *'…'* || "$raw" == *'...'* ]]; then
+    echo "WARN: ${name}_looks_like_placeholder_using_default" >&2
+    echo "$fallback"
+    return
+  fi
+  if [[ ! "$raw" =~ $UUID_RE ]]; then
+    echo "WARN: ${name}_invalid_uuid_using_default got_prefix=${raw:0:12}" >&2
+    echo "$fallback"
+    return
+  fi
+  echo "$raw"
 }
 
 [[ "$CONFIRM_OWNER_ACCESS_DEPLOY" == "YES" ]] || {
@@ -115,16 +138,18 @@ ON CONFLICT (id) DO UPDATE
       updated_at = timezone('utc', now());
 SQL
 
-OWNER_GROUP_ID="${OWNER_GROUP_ID:-$DEFAULT_GROUP_ID}"
-OWNER_EMPRESA_ID="${OWNER_EMPRESA_ID:-$DEFAULT_EMPRESA_CPA_ID}"
-EMPRESA_3Z_ID="${EMPRESA_3Z_ID:-$DEFAULT_EMPRESA_3Z_ID}"
+OWNER_GROUP_ID="$(sanitize_uuid_or_default "${OWNER_GROUP_ID:-}" "$DEFAULT_GROUP_ID" OWNER_GROUP_ID)"
+OWNER_EMPRESA_ID="$(sanitize_uuid_or_default "${OWNER_EMPRESA_ID:-}" "$DEFAULT_EMPRESA_CPA_ID" OWNER_EMPRESA_ID)"
+EMPRESA_3Z_ID="$(sanitize_uuid_or_default "${EMPRESA_3Z_ID:-}" "$DEFAULT_EMPRESA_3Z_ID" EMPRESA_3Z_ID)"
 
 echo "tenant_bootstrapped=YES group=$(mask_uuid "$OWNER_GROUP_ID")" | tee -a "$EVIDENCE_FILE"
+echo "owner_group_id_prefix=${OWNER_GROUP_ID:0:8}" | tee -a "$EVIDENCE_FILE"
+echo "owner_empresa_id_prefix=${OWNER_EMPRESA_ID:0:8}" | tee -a "$EVIDENCE_FILE"
 
 docker exec -i supabase-db psql -X -U postgres -d postgres -At <<SQL | tee -a "$EVIDENCE_FILE"
-SELECT 'group_cpa=' || (EXISTS (SELECT 1 FROM groups WHERE id='${OWNER_GROUP_ID}'::uuid AND nome_do_grupo='Grupo CPA'))::text;
+SELECT 'group_cpa=' || (EXISTS (SELECT 1 FROM groups WHERE id='${DEFAULT_GROUP_ID}'::uuid AND nome_do_grupo='Grupo CPA'))::text;
 SELECT 'empresas_ativas=' || count(*)::text FROM empresas
- WHERE group_id='${OWNER_GROUP_ID}'::uuid AND status='Ativa'
+ WHERE group_id='${DEFAULT_GROUP_ID}'::uuid AND status='Ativa'
    AND (
      lower(COALESCE(nome_fantasia,razao_social)) LIKE '%cpa ferro%'
      OR lower(COALESCE(nome_fantasia,razao_social)) LIKE '%3z%'
