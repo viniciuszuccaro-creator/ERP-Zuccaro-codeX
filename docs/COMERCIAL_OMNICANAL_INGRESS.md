@@ -216,3 +216,31 @@ real com falha de auditoria no segundo item, preservação do primeiro e retomad
 Dependência: histórico/cliente da cadeia #68–#81. Revisão independente e integração pendentes.
 Rollback de código remove apenas a sobrecarga de lote; recibos/documentos permanecem e
 podem ser consultados/reprocessados individualmente. Sem VPS, HD, merge ou implantação.
+# Estado canônico para canais
+
+Ondas 16/17/18: `ChannelSalesClient.receipt({version:1,operation:'receipt-state',tipo,
+idempotencyKey})` usa o POST `/recibos` assinado existente para consultar a venda
+da própria identidade. O recibo individual anterior permanece apenas confirmação
+de ingresso. A nova operação retorna `{data:{id,tipo,status,updatedAt}}`.
+
+O serviço resolve e valida o recibo, verifica Grupo/Empresa e permissões de leitura
+de Integrações e Pedido/Orçamento, e chama `get` do serviço comercial canônico na
+mesma transação escopada. Só esses quatro campos saem do servidor: nenhum cliente,
+contato, item, valor, observação, payload, chave/hash ou dado fiscal/financeiro.
+Tipos/status/datas e identidade do documento são validados antes da saída; estado
+desconhecido ou divergência fail-closed. Auditoria `read` identifica a operação e
+o status observado; falha reverte o log e impede resposta de dados.
+
+Os estados são os já existentes no núcleo: Pedido pode chegar a FINALIZADO ou
+CANCELADO; Orçamento usa EM_ABERTO/CANCELADO nesta base. Não inferir pagamento,
+NF, rastreamento ou entrega física a partir deles. `updatedAt` vem do documento
+canônico, não da data de ingresso. Consulta é um retrato do momento da leitura;
+não é webhook, polling automático nem API de mutação ou promessa de SLA.
+
+Testes sintéticos exercitam os quatro canais, transições canônicas de Pedido,
+cancelamento de Orçamento, preservação do recibo, bloqueio por identidade,
+permissão revogada, documento divergente, resposta inválida e falha de auditoria.
+PostgreSQL efêmero prova leitura de cancelamento e rollback de auditoria em
+consultas concorrentes. Base #82; revisão independente/integração pendentes.
+Rollback de código mantém vendas/recibos, perdendo apenas a consulta opt-in de
+estado. Sem migration/provider/frontend novo, VPS/HD/merge ou implantação.

@@ -4,6 +4,75 @@ import { boot, identity } from './omnichannelFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 import { ChannelSalesClient } from '../src/integrations/channelSalesClient.js';
 import { now } from './omnichannelFixture.js';
+import { saleEnvelopeSchema } from '../src/integrations/saleIngressContract.js';
+
+test('signed channel state follows canonical workflow while ingestion receipts stay unchanged',async()=>{
+  const f=await boot();
+  try{
+    const ctx={groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa' as const,requestId:'synthetic-workflow'};
+    await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"alterar-status\",\"cancelar\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+    for(const channel of ['SITE','APP','CHATBOT','MARKETPLACE']){
+      const client=new ChannelSalesClient({endpoint:f.endpoint,id:`synthetic-${channel}`,secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+      const created=await client.create(saleEnvelopeSchema.parse({...f.envelope,idempotencyKey:`state-${channel}`}));
+      const query={version:1,operation:'receipt-state',tipo:'Pedido',idempotencyKey:`state-${channel}`} as const;
+      const open=(await client.receipt(query)).data;
+      assert.equal(open.id,created.data.id);assert.equal(open.status,'EM_ABERTO');
+      assert.deepEqual(Object.keys(open).sort(),['id','status','tipo','updatedAt']);
+      await f.runtime.pedidoService.transition(ctx,created.data.id,'PRONTO_RETIRADA');
+      assert.equal((await client.receipt(query)).data.status,'PRONTO_RETIRADA');
+      await f.runtime.pedidoService.transition(ctx,created.data.id,'FINALIZADO');
+      const final=(await client.receipt(query)).data;assert.equal(final.status,'FINALIZADO');
+      assert.equal(final.updatedAt,(await f.runtime.pedidoService.get(ctx,created.data.id)).updated_at);
+      assert.deepEqual((await client.receipt({...query,operation:'receipt'})).data,created.data);
+    }
+    const reads=await f.pg.query("SELECT after_data FROM audit_logs WHERE action='read' AND after_data->>'operation'='receipt-state'");
+    assert.equal(reads.rows.length,12);assert.ok(!JSON.stringify(reads.rows).includes('cliente_empresa_id'));
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,4);
+  }finally{await f.close();}
+});
+
+test('state reads isolate identity, reject tampering and fail closed on revoked permissions, integrity or audit',async()=>{
+  const f=await boot(undefined,[{...identity,id:'synthetic-other-client'}]);
+  try{
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-SITE',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    const created=await client.create(saleEnvelopeSchema.parse(f.envelope));
+    const query={version:1,operation:'receipt-state',tipo:'Pedido',idempotencyKey:f.envelope.idempotencyKey} as const;
+    assert.equal((await f.send(query,{path:'/recibos',channel:'synthetic-other-client'})).status,404);
+    assert.equal((await f.send(query,{path:'/recibos',channel:'synthetic-APP'})).status,404);
+    assert.equal((await f.send({...query,documentoId:created.data.id},{path:'/recibos'})).status,422);
+    assert.equal((await f.send(query)).status,422);
+    const get=f.runtime.pedidoService.get.bind(f.runtime.pedidoService);
+    f.runtime.pedidoService.get=async(ctx,id)=>({...await get(ctx,id),empresa_id:S.empresaB});
+    const invalid=await f.send(query,{path:'/recibos'});assert.equal(invalid.status,500);
+    assert.equal(invalid.body.error?.code,'CHANNEL_DOCUMENT_STATE_INVALID');assert.equal(invalid.body.data,undefined);
+    f.runtime.pedidoService.get=get;
+    await f.pg.exec(`CREATE FUNCTION reject_state_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.action='read' THEN RAISE EXCEPTION 'SYNTHETIC_STATE_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER state_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_state_audit();`);
+    const failed=await f.send(query,{path:'/recibos'});assert.equal(failed.status,500);assert.equal(failed.body.data,undefined);
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length,0);
+    await f.pg.exec('DROP TRIGGER state_audit_fail ON audit_logs');
+    await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}', '[\"criar\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+    assert.equal((await f.send(query,{path:'/recibos'})).status,403);
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,1);
+    const malformed=new ChannelSalesClient({endpoint:'https://synthetic.invalid',id:'synthetic-SITE',secret:identity.secret},async()=>new Response(JSON.stringify({data:{id:created.data.id,tipo:'Pedido',status:'PAGO',updatedAt:'2026-01-01T00:00:00.000Z'}})));
+    await assert.rejects(malformed.receipt(query),(e:any)=>e.code==='CHANNEL_CLIENT_RESPONSE_INVALID');
+  }finally{await f.close();}
+});
+
+test('cancelled quote state uses canonical service and returns no quote details',async()=>{
+  const f=await boot();
+  try{
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-CHATBOT',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...quote}=f.envelope.documento;
+    const created=await client.create(saleEnvelopeSchema.parse({...f.envelope,tipo:'Orcamento',documento:{...quote,validade_em:'2027-03-01T00:00:00.000Z'}}));
+    await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\",\"cancelar\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+    await f.runtime.orcamentoService.cancel({groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa',requestId:'synthetic-cancel'},created.data.id);
+    const result=(await client.receipt({version:1,operation:'receipt-state',tipo:'Orcamento',idempotencyKey:f.envelope.idempotencyKey})).data;
+    assert.equal(result.status,'CANCELADO');assert.equal(result.id,created.data.id);
+    assert.deepEqual(Object.keys(result).sort(),['id','status','tipo','updatedAt']);
+  }finally{await f.close();}
+});
 
 test('receipt query returns only ingestion reference for owning identity and audits every successful read', async () => {
   const f = await boot();

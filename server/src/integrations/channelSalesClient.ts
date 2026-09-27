@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { channelIdentitySchema, saleEnvelopeSchema, receiptReadSchema, receiptPageSchema, saleReceiptSchema, signSale,
-  type SaleEnvelope, type ReceiptQuery, type ReceiptPageQuery } from './saleIngressContract.js';
+import { channelIdentitySchema, saleEnvelopeSchema, receiptReadSchema, receiptPageSchema, saleReceiptSchema, saleStateSchema, signSale,
+  type SaleEnvelope, type ReceiptQuery, type ReceiptPageQuery, type ReceiptStateQuery } from './saleIngressContract.js';
 
 const created = z.object({ data: saleReceiptSchema, replayed: z.boolean() }).strict();
 const found = z.object({ data: saleReceiptSchema }).strict();
 const paged = z.object({ data:receiptPageSchema }).strict();
+const state = z.object({data:saleStateSchema}).strict();
 const batchSchema = z.object({ operation: z.literal('sale-batch'), items: z.array(saleEnvelopeSchema).min(1).max(25) }).strict();
 export type SaleBatch = z.infer<typeof batchSchema>;
 export type SaleBatchResult = { items: Array<
@@ -80,13 +81,16 @@ export class ChannelSalesClient {
 
   async receipt(payload:ReceiptQuery):Promise<z.infer<typeof found>>;
   async receipt(payload:ReceiptPageQuery):Promise<z.infer<typeof paged>>;
-  async receipt(payload: ReceiptQuery|ReceiptPageQuery): Promise<z.infer<typeof found>|z.infer<typeof paged>> {
+  async receipt(payload:ReceiptStateQuery):Promise<z.infer<typeof state>>;
+  async receipt(payload: ReceiptQuery|ReceiptPageQuery|ReceiptStateQuery): Promise<z.infer<typeof found>|z.infer<typeof paged>|z.infer<typeof state>> {
     const parsed = receiptReadSchema.safeParse(payload);
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
-    return parsed.data.operation==='receipt-page'?this.request('/recibos',parsed.data,paged):this.request('/recibos',parsed.data,found);
+    if(parsed.data.operation==='receipt-page')return this.request('/recibos',parsed.data,paged);
+    if(parsed.data.operation==='receipt-state')return this.request('/recibos',parsed.data,state);
+    return this.request('/recibos',parsed.data,found);
   }
 
-  private async request<T>(path: string, payload: SaleEnvelope | ReceiptQuery | ReceiptPageQuery, schema: z.ZodType<T>): Promise<T> {
+  private async request<T>(path: string, payload: SaleEnvelope | ReceiptQuery | ReceiptPageQuery | ReceiptStateQuery, schema: z.ZodType<T>): Promise<T> {
     // Serialize once: every retry retains exactly the same key and semantic payload.
     const body = Buffer.from(JSON.stringify(payload));
     if (body.length > 128 * 1024) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
