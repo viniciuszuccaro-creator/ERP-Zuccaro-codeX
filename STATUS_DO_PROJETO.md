@@ -1,3 +1,28 @@
+## INCIDENTE ACESSO OWNER — harden + deploy (2026-09-27)
+
+| Etapa | Resultado |
+|---|---|
+| **#91 merge** | **SIM** `4daad5f9` (seletor + logout) |
+| **Revisão HEAD** | API: admin/grupo → só empresas **Ativas do `group_id` do perfil**; perfil com `empresa_id` → só essa. Sessão: refresh Bearer obrigatório; login passa `empresas[]`; troca de empresa rejeita UUID fora da lista; `auth.me`/UserContext revalidam no BFF (não aceitam identidade fabricada só no browser). |
+| **Harden PR** | branch `cursor/acesso-owner-incidente-392b` + script `scripts/vps/deploy-owner-access-incidente.sh` |
+| **CI main #91** | **SUCCESS** @ merge `4daad5f9` |
+| **Deploy VPS** | **BLOCKED neste agente** — sem SSH/Hostinger MCP/workers. Requer paste humano abaixo. |
+| **Prova SHA/digest VPS** | **PENDENTE** (após paste) |
+| **API Grupo CPA + CPA/3Z p/ owner** | **PENDENTE** (após paste) |
+| **Logout→login→empresas→Comercial/Config** | **PENDENTE** validação humana pós-deploy |
+
+### PASTE_VPS — incidente (backup/rollback embutidos no rebuild)
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main
+CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=origin/main \
+  bash scripts/vps/deploy-owner-access-incidente.sh
+# Rollback se health falhar: CONFIRM_SPA_LOGIN_ROLLBACK=YES bash scripts/vps/spa-login-rollback-api-web.sh
+```
+
+Depois no browser: **Sair** → login `vinicius.zuccaro@gmail.com` → seletor Grupo CPA / CPA ferro e aço / 3Z LTDA → Comercial + Configurações. Rodapé **não** pode ser Gate D Synth.
+
 ## ACESSO — Cadastros Gerais local ≠ Postgres (2026-09-27)
 
 | Campo | Valor |
