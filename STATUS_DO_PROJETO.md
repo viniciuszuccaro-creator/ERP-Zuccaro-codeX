@@ -1,3 +1,21 @@
+## PARECER FINAL CURSOR — #99 a19a81f5 (2026-09-27T18:42Z)
+
+Delta vs `39d3b905` fecha B1/B2. CI **SUCCESS**.
+
+| Campo | Valor |
+|---|---|
+| SHA | `a19a81f50307bbc3ceec0bbc89e36531a05694c9` |
+| CI | **SUCCESS** (frontend+backend; runs `36341342249` / `36341346301`) |
+| **Veredito** | **APROVADO** — merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA |
+
+### B1/B2
+| # | Correção | Evidência |
+|---|---|---|
+| B1 | Exige `role=admin`, `empresa_id=null` (GROUP), perms canônicas de `owner-admin-permissoes.json`, sem wildcard; demoted/company/permissions/wildcard bloqueiam **antes** GET/PUT | script + testes negativos |
+| B2 | PUT 2xx com JSON ilegível / id divergente / timeout → audit `unconfirmed` + `password_reset_unconfirmed_no_automatic_retry` | script + testes `json`/`responseIdentity`/`transport` |
+
+Ordem: merge exact HEAD → CI main → checkout `APPROVED_SHA` → Web Console do proprietário (TTY) → login real CPA/3Z/Comercial/Config. Cursor **não** executa. `39d3b905` permanece revogado.
+
 ## PARECER CURSOR — #99 BLOQUEADO (Codex Review P1/P2) (2026-09-27T18:36Z)
 
 HEAD `39d3b90592e4cbb00e11feca8315ad038fcd0ba8` permanece o candidato. **Revogo APROVADO** após validar independentemente os achados do Codex Review.
