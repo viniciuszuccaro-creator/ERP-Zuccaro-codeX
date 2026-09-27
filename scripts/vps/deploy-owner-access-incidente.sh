@@ -1,271 +1,178 @@
 #!/usr/bin/env bash
-# Deploy controlado do incidente de acesso do proprietário.
-# Cria/alinha Grupo CPA + empresas, garante Auth do owner, provisiona RBAC,
-# demove synth e rebuild API+SPA (com tags de rollback no script de rebuild).
-#
-# Uso (VPS) — SEMPRE checkout da main ANTES (senão o script não existe no disco):
-#   cd /opt/erp-zuccaro
-#   git fetch origin main && git checkout --detach origin/main
-#   CONFIRM_OWNER_ACCESS_DEPLOY=YES OWNER_PASS='***' \
-#     bash scripts/vps/deploy-owner-access-incidente.sh
-#
-# OWNER_PASS: senha da conta Auth do proprietário (mín. 8). Obrigatória se
-# auth.users ainda não tiver o e-mail do owner (evidência: auth_other_accounts=0).
+# AUDIT não escreve. APPLY reutiliza registros conferidos; BOOTSTRAP exige decisão explícita.
+# Senha nova apenas em /dev/tty, nunca argumento/env/arquivo. Rollback DB separado das imagens.
+set +x
 set -Eeuo pipefail
-
+umask 077
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
-
-CONFIRM_OWNER_ACCESS_DEPLOY="${CONFIRM_OWNER_ACCESS_DEPLOY:-}"
-OWNER_EMAIL="${OWNER_EMAIL:-vinicius.zuccaro@gmail.com}"
-OWNER_PASS="${OWNER_PASS:-}"
-OWNER_FULL_NAME="${OWNER_FULL_NAME:-Vinicius Zuccaro}"
-GIT_REF="${GIT_REF:-HEAD}"
-ERP_DOCKER_NETWORK="${ERP_DOCKER_NETWORK:-supabase_default}"
-EVIDENCE_DIR="${EVIDENCE_DIR:-$ROOT/backups/owner-access-deploy}"
-ENV_FILE="${ENV_FILE:-$ROOT/.env.erp.dev}"
-SUPA_ENV="${SUPA_ENV:-/opt/supabase/docker/.env}"
-
-# UUIDs canônicos do seed A (determinísticos). Usados se Grupo CPA ainda não existir.
-DEFAULT_GROUP_ID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-DEFAULT_EMPRESA_CPA_ID='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
-DEFAULT_EMPRESA_3Z_ID='c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2'
+MODE="${OWNER_ACCESS_MODE:-AUDIT}"
+[[ "$MODE" == AUDIT || "$MODE" == APPLY || "$MODE" == BOOTSTRAP ]] || { echo 'BLOCKED: invalid_mode' >&2; exit 2; }
+[[ -z "${OWNER_PASS:-}" ]] || { unset OWNER_PASS; echo 'BLOCKED: password_environment_not_allowed_use_tty' >&2; exit 2; }
+OWNER_EMAIL="${OWNER_EMAIL:-}"
+OWNER_GROUP_ID="${OWNER_GROUP_ID:-}"
+OWNER_EMPRESA_ID="${OWNER_EMPRESA_ID:-}"
+EMPRESA_3Z_ID="${EMPRESA_3Z_ID:-}"
+OWNER_FULL_NAME="${OWNER_FULL_NAME:-}"
+APPROVE_EXISTING_TENANT_MAPPING="${APPROVE_EXISTING_TENANT_MAPPING:-NO}"
 UUID_RE='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
-
-mask_uuid() {
-  local u="$1"
-  [[ ${#u} -ge 12 ]] || { echo '********'; return; }
-  echo "${u:0:8}…${u: -4}"
+[[ "$OWNER_EMAIL" == *@* && "$OWNER_EMAIL" != *$'\n'* ]] || { echo 'BLOCKED: explicit_owner_email_required' >&2; exit 2; }
+if [[ "$MODE" != AUDIT ]]; then
+  [[ "${CONFIRM_OWNER_ACCESS_DEPLOY:-}" == YES && "${CONFIRM_OWNER_GROUP_ADMIN:-}" == YES ]] || { echo 'BLOCKED: deployment_and_group_admin_confirmation_required' >&2; exit 2; }
+  for value in "$OWNER_GROUP_ID" "$OWNER_EMPRESA_ID" "$EMPRESA_3Z_ID"; do
+    [[ "$value" =~ $UUID_RE ]] || { echo 'BLOCKED: explicit_valid_tenant_ids_required_no_fallback' >&2; exit 2; }
+  done
+  [[ "$OWNER_EMPRESA_ID" != "$EMPRESA_3Z_ID" ]] || { echo 'BLOCKED: distinct_companies_required' >&2; exit 2; }
+  : "${ERP_DOCKER_NETWORK:?Discover the actual Docker network}"
+  : "${EXPECTED_DATABASE:?Confirm the actual API database}"
+  : "${APPROVED_SHA:?Full SHA reviewed by Cursor with green CI}"
+  [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ && "$(git rev-parse HEAD)" == "$APPROVED_SHA" ]] || { echo 'BLOCKED: checkout_not_reviewed_sha' >&2; exit 2; }
+  [[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo 'BLOCKED: tracked_checkout_dirty' >&2; exit 2; }
+fi
+IDENTITY_SQL="SELECT current_database() || '|' || extract(epoch from pg_postmaster_start_time())::text"
+DIRECT_ID="$(docker exec supabase-db psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 -c "$IDENTITY_SQL")"
+database_identity() {
+  docker exec "$1" node --input-type=module -e 'import pg from "pg"; const c=new pg.Client({connectionString:process.env.DATABASE_URL}); try { await c.connect(); const r=await c.query("SELECT current_database() || chr(124) || extract(epoch from pg_postmaster_start_time())::text AS identity"); console.log(r.rows[0].identity); } catch { console.error("BLOCKED: api_database_identity_unavailable"); process.exitCode=3; } finally { await c.end(); }'
 }
-
-# Ignora placeholders tipo <uuid-grupo-cpa> deixados no shell de pastes anteriores.
-sanitize_uuid_or_default() {
-  local raw="${1:-}"
-  local fallback="$2"
-  local name="$3"
-  if [[ -z "$raw" ]]; then
-    echo "$fallback"
-    return
-  fi
-  if [[ "$raw" == *'<'* || "$raw" == *'>'* || "$raw" == *'…'* || "$raw" == *'...'* ]]; then
-    echo "WARN: ${name}_looks_like_placeholder_using_default" >&2
-    echo "$fallback"
-    return
-  fi
-  if [[ ! "$raw" =~ $UUID_RE ]]; then
-    echo "WARN: ${name}_invalid_uuid_using_default got_prefix=${raw:0:12}" >&2
-    echo "$fallback"
-    return
-  fi
-  echo "$raw"
+API_ID="$(database_identity erp-api-dev)"
+[[ "$DIRECT_ID" == "$API_ID" ]] || { echo 'BLOCKED: api_and_direct_database_differ' >&2; exit 3; }
+DATABASE="${API_ID%%|*}"
+echo 'database_identity_matches=YES'
+[[ "$MODE" == AUDIT || "$DATABASE" == "$EXPECTED_DATABASE" ]] || { echo 'BLOCKED: unexpected_database' >&2; exit 3; }
+GATE_JS="$(cat <<'JS'
+const fs=require('fs'), pg=require('pg');
+const [op,email,group,company,other,name,reuse,mode,password]=fs.readFileSync(0,'utf8').split('\0');
+const client=new pg.Client({connectionString:process.env.DATABASE_URL});
+(async()=>{await client.connect();
+const fail=code=>{throw new Error(code);};
+const auth=await client.query('SELECT id FROM auth.users WHERE lower(email)=lower($1)',[email]);
+const profiles=await client.query('SELECT id,auth_user_id,group_id,empresa_id,ativo FROM profiles WHERE lower(email)=lower($1) OR auth_user_id IN (SELECT id FROM auth.users WHERE lower(email)=lower($1))',[email]);
+const groups=await client.query("SELECT id,nome_do_grupo,status FROM groups WHERE id=$1::uuid OR lower(nome_do_grupo)=lower('Grupo CPA')",[group||null]);
+const companies=await client.query("SELECT id,group_id,nome_fantasia,razao_social,status FROM empresas WHERE group_id IN (SELECT id FROM groups WHERE id=$1::uuid OR lower(nome_do_grupo)=lower('Grupo CPA')) OR id=ANY($2::uuid[])",[group||null,[company,other].filter(Boolean)]);
+console.log(JSON.stringify({owner_auth_count:auth.rowCount,owner_profiles:profiles.rowCount,owner_active_profiles:profiles.rows.filter(p=>p.ativo).length,candidate_groups:groups.rowCount,active_companies:companies.rows.filter(e=>e.status==='Ativa').length}));
+if(op==='audit') return;
+if(auth.rowCount>1 || profiles.rowCount>1) fail('duplicate_owner_identity');
+if(profiles.rows.some(p=>(p.auth_user_id && p.auth_user_id!==auth.rows[0]?.id) || p.group_id!==group)) fail('existing_profile_identity_or_tenant_conflict');
+if([group,company,other].some(id=>['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','cccccccc-cccc-4ccc-8ccc-cccccccccccc','c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2'].includes(id)) && reuse!=='YES') fail('synthetic_tenant_requires_owner_decision');
+if(groups.rows.some(g=>g.id!==group)) fail('ambiguous_existing_group_requires_resolution');
+const g=groups.rows.find(g=>g.id===group);
+if(g && (g.nome_do_grupo!=='Grupo CPA' || g.status!=='Ativo')) fail('existing_group_mismatch_no_rename');
+const expected=[[company,'CPA ferro e aço'],[other,'3Z LTDA']];
+for(const [id,display] of expected){
+const row=companies.rows.find(e=>e.id===id);
+if(row && (row.group_id!==group || row.status!=='Ativa' || (row.nome_fantasia||row.razao_social).toLowerCase()!==display.toLowerCase())) fail('existing_company_mismatch_no_reparent');
+if(companies.rows.some(e=>e.id!==id && (e.nome_fantasia||e.razao_social).toLowerCase()===display.toLowerCase())) fail('duplicate_company_name_requires_resolution');
+if(mode==='APPLY' && !row) fail('existing_company_required');
 }
-
-[[ "$CONFIRM_OWNER_ACCESS_DEPLOY" == "YES" ]] || {
-  echo 'BLOCKED: set CONFIRM_OWNER_ACCESS_DEPLOY=YES' >&2
-  exit 2
+if(mode==='APPLY' && (!g || auth.rowCount!==1)) fail('existing_group_and_auth_required');
+if(op==='preflight'){console.log('owner_preflight=PASS');return;}
+if(op==='bootstrap'){
+if(mode!=='BOOTSTRAP') fail('bootstrap_not_authorized');
+if(auth.rowCount===0){
+if(!password || password.length<12) fail('interactive_password_minimum_12');
+const base=process.env.SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+if(!base || !key) fail('auth_admin_configuration_missing');
+let response;try{response=await fetch(new URL('auth/v1/admin/users',base.replace(/\/+$/,'')+'/'),{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({email,password,email_confirm:true,user_metadata:{full_name:name}}),signal:AbortSignal.timeout(8000)});}catch{fail('auth_create_unconfirmed_reaudit_before_retry');}
+if(!response.ok) fail('auth_create_failed_reaudit_before_retry');
+const check=await client.query('SELECT id FROM auth.users WHERE lower(email)=lower($1)',[email]);
+if(check.rowCount!==1) fail('auth_created_in_different_database');
+console.log('owner_auth_created=YES');
 }
-
-mkdir -p "$EVIDENCE_DIR"
+await client.query('BEGIN');
+const created=[];
+try{
+await client.query('LOCK TABLE groups, empresas IN SHARE ROW EXCLUSIVE MODE');
+const duplicate=await client.query("SELECT id FROM groups WHERE lower(nome_do_grupo)=lower('Grupo CPA') AND id<>$1",[group]);
+if(duplicate.rowCount) fail('concurrent_group_conflict');
+const existing=await client.query('SELECT id,nome_do_grupo,status FROM groups WHERE id=$1',[group]);
+if(existing.rowCount && (existing.rows[0].nome_do_grupo!=='Grupo CPA' || existing.rows[0].status!=='Ativo')) fail('concurrent_group_id_conflict');
+if(!g && existing.rowCount) fail('concurrent_group_id_conflict');
+if(!existing.rowCount){await client.query("INSERT INTO groups(id,nome_do_grupo,status) VALUES($1,'Grupo CPA','Ativo')",[group]);created.push(['Group',group,company,{status:'Ativo'}]);}
+for(const [id,display] of expected){
+const conflict=await client.query('SELECT id FROM empresas WHERE lower(COALESCE(nome_fantasia,razao_social))=lower($1) AND group_id=$2 AND id<>$3',[display,group,id]);
+if(conflict.rowCount) fail('concurrent_company_conflict');
+const row=await client.query('SELECT group_id,nome_fantasia,razao_social,status FROM empresas WHERE id=$1',[id]);
+if(row.rowCount){const e=row.rows[0];if(e.group_id!==group || e.status!=='Ativa' || (e.nome_fantasia||e.razao_social).toLowerCase()!==display.toLowerCase()) fail('concurrent_company_id_conflict');}
+else {await client.query("INSERT INTO empresas(id,group_id,razao_social,nome_fantasia,status) VALUES($1,$2,$3,$3,'Ativa')",[id,group,display]);created.push(['Empresa',id,id,{status:'Ativa'}]);}
+}
+for(const [entity,id,empresa,after] of created) await client.query("INSERT INTO audit_logs(group_id,empresa_id,actor_email,entity,entity_id,action,before_data,after_data) VALUES($1,$2,'system:vps-owner-bootstrap',$3,$4,'create',NULL,$5::jsonb)",[group,empresa,entity,id,JSON.stringify(after)]);
+await client.query('COMMIT'); console.log('tenant_bootstrap=COMMITTED');
+}catch(error){await client.query('ROLLBACK');throw error;}
+}
+})().catch(error=>{console.error('BLOCKED: '+(/^[a-z0-9_]+$/.test(error.message)?error.message:'database_operation_failed'));process.exitCode=4;}).finally(()=>client.end());
+JS
+)"
+run_gate() {
+  printf '%s\0' "$1" "$OWNER_EMAIL" "$OWNER_GROUP_ID" "$OWNER_EMPRESA_ID" "$EMPRESA_3Z_ID" "$OWNER_FULL_NAME" "$APPROVE_EXISTING_TENANT_MAPPING" "$MODE" "${PASSWORD:-}" | docker exec -i erp-api-dev node -e "$GATE_JS"
+}
+run_gate audit
+[[ "$MODE" != AUDIT ]] || { echo 'OWNER_ACCESS_AUDIT_ONLY_NO_WRITES'; exit 0; }
+if [[ "$MODE" == BOOTSTRAP ]]; then
+  [[ "${CONFIRM_OWNER_TENANT_CREATE:-}" == YES && -n "$OWNER_FULL_NAME" ]] || { echo 'BLOCKED: explicit_bootstrap_decision_required' >&2; exit 2; }
+fi
+run_gate preflight
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
-EVIDENCE_FILE="$EVIDENCE_DIR/evidence-${STAMP}.txt"
-
-{
-  echo "OWNER_ACCESS_DEPLOY_BEGIN utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  echo "git_ref=${GIT_REF}"
-} | tee "$EVIDENCE_FILE"
-
-if [[ "$GIT_REF" != "HEAD" ]]; then
-  REF_BRANCH="${GIT_REF#origin/}"
-  git fetch origin "$REF_BRANCH"
-  git checkout --detach "origin/${REF_BRANCH}"
-fi
-TIP="$(git rev-parse HEAD)"
-TIP8="${TIP:0:8}"
-echo "main_tip=${TIP8}" | tee -a "$EVIDENCE_FILE"
-
-[[ -f "$ROOT/scripts/vps/deploy-owner-access-incidente.sh" ]] || {
-  echo 'BLOCKED: script_missing_after_checkout — rode git checkout --detach origin/main' >&2
-  exit 3
+BACKUP_DIR="$ROOT/backups/owner-access-deploy/$STAMP"
+mkdir -p "$BACKUP_DIR"
+docker exec supabase-db pg_dump -U postgres -d postgres -Fc >"$BACKUP_DIR/database.dump"
+[[ -s "$BACKUP_DIR/database.dump" ]] || { echo 'BLOCKED: empty_backup' >&2; exit 3; }
+docker exec -i supabase-db pg_restore -l <"$BACKUP_DIR/database.dump" >"$BACKUP_DIR/archive-list.txt"
+sha256sum "$BACKUP_DIR/database.dump" >"$BACKUP_DIR/database.sha256"
+cp .env.erp.dev "$BACKUP_DIR/api.env.restore"
+cp docker-compose.erp.yml "$BACKUP_DIR/compose.restore.yml"
+echo 'backup_archive_valid=YES'
+# As imagens testadas no canário são as mesmas promovidas, sem rebuild posterior.
+CANARY_NETWORK="erp-owner-canary-$STAMP"
+CANARY_API="erp-owner-api-$STAMP"
+CANARY_WEB="erp-owner-web-$STAMP"
+CANDIDATE_API_IMAGE="erp-zuccaro-owner-api:$APPROVED_SHA"
+CANDIDATE_WEB_IMAGE="erp-zuccaro-owner-web:$APPROVED_SHA"
+for port in 3086 3087; do
+  [[ -z "$(ss -H -lnt "sport = :$port")" ]] || { echo 'BLOCKED: canary_port_in_use' >&2; exit 3; }
+done
+cleanup_canary() {
+  docker rm -f "$CANARY_WEB" "$CANARY_API" >/dev/null 2>&1 || true
+  docker network rm "$CANARY_NETWORK" >/dev/null 2>&1 || true
 }
+# Nomes exclusivos; nunca remover containers oficiais, volumes, imagens ou backups.
+trap cleanup_canary EXIT
+docker build --label "org.opencontainers.image.revision=$APPROVED_SHA" -t "$CANDIDATE_API_IMAGE" server
+docker build --label "org.opencontainers.image.revision=$APPROVED_SHA" --build-arg VITE_ERP_BACKEND=http --build-arg VITE_ERP_API_SAME_ORIGIN=true -f Dockerfile.frontend -t "$CANDIDATE_WEB_IMAGE" .
+docker network create "$CANARY_NETWORK" >/dev/null
+docker run -d --name "$CANARY_API" --network "$ERP_DOCKER_NETWORK" --env-file .env.erp.dev -e NODE_ENV=production -e ERP_ENV=dev -e PORT=3080 -e REQUIRE_DATABASE=true --memory 512m --cpus 0.5 -p 127.0.0.1:3086:3080 "$CANDIDATE_API_IMAGE" >/dev/null
+docker network connect --alias erp-api "$CANARY_NETWORK" "$CANARY_API"
+docker run -d --name "$CANARY_WEB" --network "$CANARY_NETWORK" --memory 128m --cpus 0.25 -p 127.0.0.1:3087:80 "$CANDIDATE_WEB_IMAGE" >/dev/null
+CANARY_OK=NO
+for ((i=1;i<=30;i++)); do
+  if curl -fsS -m 3 http://127.0.0.1:3086/ready >/dev/null && curl -fsS -m 3 http://127.0.0.1:3087/ready >/dev/null; then CANARY_OK=YES; break; fi
+  sleep 2
+done
+[[ "$CANARY_OK" == YES ]] || { echo 'BLOCKED: canary_readiness_failed_official_preserved' >&2; exit 4; }
+CANARY_ID="$(database_identity "$CANARY_API")"
+[[ "$CANARY_ID" == "$DIRECT_ID" ]] || { echo 'BLOCKED: canary_database_identity_mismatch_official_preserved' >&2; exit 4; }
+echo 'canary_database_identity_matches=YES'
+[[ "$(curl -sS -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:3087/api/v1/auth/session -H 'x-actor-id: fabricated' -H 'x-group-id: fabricated')" == 401 ]] || { echo 'BLOCKED: canary_fabricated_identity_accepted' >&2; exit 4; }
+HTML="$(curl -fsS -m 5 http://127.0.0.1:3087/)"
+ASSET="$(printf '%s' "$HTML" | grep -oE '/assets/index-[^"]+\.js' | head -1)"
+[[ -n "$ASSET" ]] || { echo 'BLOCKED: canary_spa_asset_missing' >&2; exit 4; }
+curl -fsS -m 15 "http://127.0.0.1:3087$ASSET" >"$BACKUP_DIR/canary-bundle.js"
+grep -q 'erp-login-email' "$BACKUP_DIR/canary-bundle.js" || { echo 'BLOCKED: canary_login_missing' >&2; exit 4; }
+printf 'canary_source_sha=%s\n' "$APPROVED_SHA"
+docker inspect -f 'canary={{.Name}} digest={{.Image}}' "$CANARY_API" "$CANARY_WEB"
+cleanup_canary
+trap - EXIT
 
-docker inspect -f '{{.Name}} {{.Id}} {{.Config.Image}}' erp-api-dev erp-web-dev 2>/dev/null \
-  | tee -a "$EVIDENCE_FILE" || true
-
-# --- 1) Garantir Grupo CPA + empresas ativas (INSERT se ausente; UPDATE nomes) ---
-docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<SQL
-INSERT INTO groups (id, nome_do_grupo, status, observacoes)
-VALUES (
-  '${DEFAULT_GROUP_ID}'::uuid,
-  'Grupo CPA',
-  'Ativo',
-  'Owner-access bootstrap — tenant operacional CPA'
-)
-ON CONFLICT (id) DO UPDATE
-  SET nome_do_grupo = EXCLUDED.nome_do_grupo,
-      status = 'Ativo',
-      updated_at = timezone('utc', now());
-
-INSERT INTO empresas (id, group_id, razao_social, nome_fantasia, cnpj, status)
-VALUES (
-  '${DEFAULT_EMPRESA_CPA_ID}'::uuid,
-  '${DEFAULT_GROUP_ID}'::uuid,
-  'CPA FERRO E ACO LTDA',
-  'CPA ferro e aço',
-  NULL,
-  'Ativa'
-)
-ON CONFLICT (id) DO UPDATE
-  SET group_id = EXCLUDED.group_id,
-      razao_social = EXCLUDED.razao_social,
-      nome_fantasia = EXCLUDED.nome_fantasia,
-      status = 'Ativa',
-      updated_at = timezone('utc', now());
-
-INSERT INTO empresas (id, group_id, razao_social, nome_fantasia, cnpj, status)
-VALUES (
-  '${DEFAULT_EMPRESA_3Z_ID}'::uuid,
-  '${DEFAULT_GROUP_ID}'::uuid,
-  '3Z LTDA',
-  '3Z LTDA',
-  NULL,
-  'Ativa'
-)
-ON CONFLICT (id) DO UPDATE
-  SET group_id = EXCLUDED.group_id,
-      razao_social = EXCLUDED.razao_social,
-      nome_fantasia = EXCLUDED.nome_fantasia,
-      status = 'Ativa',
-      updated_at = timezone('utc', now());
-SQL
-
-OWNER_GROUP_ID="$(sanitize_uuid_or_default "${OWNER_GROUP_ID:-}" "$DEFAULT_GROUP_ID" OWNER_GROUP_ID)"
-OWNER_EMPRESA_ID="$(sanitize_uuid_or_default "${OWNER_EMPRESA_ID:-}" "$DEFAULT_EMPRESA_CPA_ID" OWNER_EMPRESA_ID)"
-EMPRESA_3Z_ID="$(sanitize_uuid_or_default "${EMPRESA_3Z_ID:-}" "$DEFAULT_EMPRESA_3Z_ID" EMPRESA_3Z_ID)"
-
-echo "tenant_bootstrapped=YES group=$(mask_uuid "$OWNER_GROUP_ID")" | tee -a "$EVIDENCE_FILE"
-echo "owner_group_id_prefix=${OWNER_GROUP_ID:0:8}" | tee -a "$EVIDENCE_FILE"
-echo "owner_empresa_id_prefix=${OWNER_EMPRESA_ID:0:8}" | tee -a "$EVIDENCE_FILE"
-
-docker exec -i supabase-db psql -X -U postgres -d postgres -At <<SQL | tee -a "$EVIDENCE_FILE"
-SELECT 'group_cpa=' || (EXISTS (SELECT 1 FROM groups WHERE id='${DEFAULT_GROUP_ID}'::uuid AND nome_do_grupo='Grupo CPA'))::text;
-SELECT 'empresas_ativas=' || count(*)::text FROM empresas
- WHERE group_id='${DEFAULT_GROUP_ID}'::uuid AND status='Ativa'
-   AND (
-     lower(COALESCE(nome_fantasia,razao_social)) LIKE '%cpa ferro%'
-     OR lower(COALESCE(nome_fantasia,razao_social)) LIKE '%3z%'
-   );
-SQL
-
-# --- 2) Garantir Auth do proprietário (evidência: auth_other_accounts=0) ---
-OWNER_AUTH_COUNT="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At \
-  -v owner_email="$OWNER_EMAIL" <<'SQL'
-SELECT count(*)::text FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'owner_email');
-SQL
-)"
-OWNER_AUTH_COUNT="$(echo "$OWNER_AUTH_COUNT" | tr -d '[:space:]')"
-echo "owner_auth_count=${OWNER_AUTH_COUNT}" | tee -a "$EVIDENCE_FILE"
-
-if [[ "$OWNER_AUTH_COUNT" != "1" ]]; then
-  [[ -n "$OWNER_PASS" && ${#OWNER_PASS} -ge 8 ]] || {
-    echo 'BLOCKED: owner_auth_missing — set OWNER_PASS (min 8) to create Auth user via Admin API' >&2
-    echo 'HINT=CONFIRM_OWNER_ACCESS_DEPLOY=YES OWNER_PASS=... bash scripts/vps/deploy-owner-access-incidente.sh' >&2
-    exit 4
-  }
-  # Carrega service_role sem ecoar valor
-  SR=""
-  if [[ -f "$ENV_FILE" ]]; then
-    # shellcheck disable=SC1090
-    set -a; source "$ENV_FILE"; set +a
-    SR="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-${JWT_SERVICE_ROLE:-}}}"
-  fi
-  if [[ -z "$SR" && -f "$SUPA_ENV" ]]; then
-    # shellcheck disable=SC1090
-    set -a; source "$SUPA_ENV"; set +a
-    SR="${SERVICE_ROLE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}"
-  fi
-  [[ -n "$SR" ]] || {
-    echo 'BLOCKED: service_role_missing_for_owner_auth_create' >&2
-    exit 5
-  }
-  AUTH_BASE="${SUPABASE_PUBLIC_URL:-http://127.0.0.1:8000}"
-  TMP_JSON="/tmp/owner-auth-create-$$.json"
-  HTTP_CREATE="$(curl -sS -o "$TMP_JSON" -w '%{http_code}' --connect-timeout 8 \
-    -X POST "${AUTH_BASE}/auth/v1/admin/users" \
-    -H "apikey: ${SR}" \
-    -H "Authorization: Bearer ${SR}" \
-    -H 'Content-Type: application/json' \
-    -d "{\"email\":\"${OWNER_EMAIL}\",\"password\":\"${OWNER_PASS}\",\"email_confirm\":true,\"user_metadata\":{\"full_name\":\"${OWNER_FULL_NAME}\"}}" \
-    2>/dev/null || echo '000')"
-  echo "owner_auth_create_http=${HTTP_CREATE}" | tee -a "$EVIDENCE_FILE"
-  # email_exists → ok; senão exige 200/201
-  if [[ "$HTTP_CREATE" != "200" && "$HTTP_CREATE" != "201" ]]; then
-    if grep -Eqi 'email_exists|already registered' "$TMP_JSON" 2>/dev/null; then
-      echo 'owner_auth_create=EXISTS' | tee -a "$EVIDENCE_FILE"
-    else
-      echo 'BLOCKED: owner_auth_create_failed' >&2
-      rm -f "$TMP_JSON"
-      exit 6
-    fi
-  else
-    echo 'owner_auth_create=YES' | tee -a "$EVIDENCE_FILE"
-  fi
-  rm -f "$TMP_JSON"
-  # Confirma count=1
-  OWNER_AUTH_COUNT="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At \
-    -v owner_email="$OWNER_EMAIL" <<'SQL'
-SELECT count(*)::text FROM auth.users WHERE lower(coalesce(email,'')) = lower(:'owner_email');
-SQL
-)"
-  OWNER_AUTH_COUNT="$(echo "$OWNER_AUTH_COUNT" | tr -d '[:space:]')"
-  echo "owner_auth_count_after=${OWNER_AUTH_COUNT}" | tee -a "$EVIDENCE_FILE"
-  [[ "$OWNER_AUTH_COUNT" == "1" ]] || {
-    echo "BLOCKED: owner_auth_still_missing got=${OWNER_AUTH_COUNT}" >&2
-    exit 7
-  }
+if [[ "$MODE" == BOOTSTRAP ]]; then
+  [[ -r /dev/tty ]] || { echo 'BLOCKED: secure_interactive_terminal_required' >&2; exit 2; }
+  read -r -s -p 'Senha nova apenas se Auth ausente (12+ caracteres): ' PASSWORD </dev/tty
+  printf '\n' >/dev/tty
+  run_gate bootstrap
+  unset PASSWORD
 fi
-
-# --- 3) Perfil admin ERP + demote synth ---
-CONFIRM_OWNER_ADMIN_PROFILE=YES \
-  OWNER_EMAIL="$OWNER_EMAIL" \
-  OWNER_GROUP_ID="$OWNER_GROUP_ID" \
-  OWNER_EMPRESA_ID="$OWNER_EMPRESA_ID" \
-  OWNER_FULL_NAME="$OWNER_FULL_NAME" \
-  DEMOTE_SYNTH=YES \
-  bash scripts/vps/provision-owner-admin-profile.sh | tee -a "$EVIDENCE_FILE"
-
-# --- 4) Rebuild API + SPA ---
-CONFIRM_SPA_LOGIN_REBUILD=YES \
-  ERP_DOCKER_NETWORK="$ERP_DOCKER_NETWORK" \
-  GIT_REF=HEAD \
-  bash scripts/vps/spa-login-rebuild-api-web.sh | tee -a "$EVIDENCE_FILE"
-
-docker inspect -f 'name={{.Name}} image={{.Config.Image}} id={{.Id}}' erp-api-dev erp-web-dev \
-  | tee -a "$EVIDENCE_FILE"
-
-docker exec -i supabase-db psql -X -U postgres -d postgres -At <<SQL | tee -a "$EVIDENCE_FILE"
-SELECT 'owner_admin=' || count(*)::text
-FROM profiles p
-WHERE lower(p.email) = lower('${OWNER_EMAIL}') AND p.ativo = true AND p.role = 'admin';
-SELECT 'owner_group=' || left(g.id::text,8) || '|' || g.nome_do_grupo
-FROM profiles p JOIN groups g ON g.id = p.group_id
-WHERE lower(p.email) = lower('${OWNER_EMAIL}') AND p.ativo = true LIMIT 1;
-SELECT 'empresa=' || left(e.id::text,8) || '|' || COALESCE(e.nome_fantasia, e.razao_social)
-FROM empresas e
-WHERE e.group_id = '${OWNER_GROUP_ID}'::uuid AND e.status = 'Ativa'
-ORDER BY COALESCE(e.nome_fantasia, e.razao_social);
-SELECT 'synth_admin=' || count(*)::text
-FROM profiles p
-WHERE lower(p.email) = lower('gate-d.synth@dev.synthetic.local') AND p.ativo = true AND p.role = 'admin';
-SQL
-
-curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c '
-import sys,json
-m=json.load(sys.stdin)
-print("runtime", m.get("runtime"))
-print("auth_mode", (m.get("auth") or {}).get("mode"))
-print("pwd_path", (m.get("authSession") or {}).get("passwordLoginPath"))
-' | tee -a "$EVIDENCE_FILE"
-
-echo "evidence_file=${EVIDENCE_FILE}" | tee -a "$EVIDENCE_FILE"
-echo "OWNER_ACCESS_DEPLOY_END tip=${TIP8}" | tee -a "$EVIDENCE_FILE"
-echo "NEXT=browser_Sair_login_owner_seletor_CPA_Comercial_Config"
+run_gate preflight
+CONFIRM_OWNER_ADMIN_PROFILE=YES OWNER_SCOPE=GROUP CONFIRM_OWNER_GROUP_ADMIN=YES OWNER_EMAIL="$OWNER_EMAIL" OWNER_GROUP_ID="$OWNER_GROUP_ID" OWNER_EMPRESA_ID="$OWNER_EMPRESA_ID" OWNER_FULL_NAME="$OWNER_FULL_NAME" DEMOTE_SYNTH=YES bash scripts/vps/provision-owner-admin-profile.sh >"$BACKUP_DIR/provision.log" 2>&1 || { echo 'BLOCKED: provisioning_failed_preserve_backup_private_log' >&2; exit 4; }
+echo 'database_changes_preserved_on_image_rollback=YES'
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK="$ERP_DOCKER_NETWORK" GIT_REF=HEAD APPROVED_SHA="$APPROVED_SHA" CANDIDATE_API_IMAGE="$CANDIDATE_API_IMAGE" CANDIDATE_WEB_IMAGE="$CANDIDATE_WEB_IMAGE" bash scripts/vps/spa-login-rebuild-api-web.sh
+printf 'reviewed_source_sha=%s\n' "$APPROVED_SHA"
+docker inspect -f 'service={{.Name}} digest={{.Image}}' erp-api-dev erp-web-dev
+echo 'NEXT=owner_logout_login_both_companies_Comercial_Configuracoes'

@@ -130,7 +130,20 @@ attempt_auto_rollback() {
 # Construir ANTES de parar os oficiais — falha de build não derruba 3080/3081.
 export ERP_DOCKER_NETWORK
 echo "compose_build_begin utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build erp-api erp-web
+if [[ -n "${CANDIDATE_API_IMAGE:-}" || -n "${CANDIDATE_WEB_IMAGE:-}" ]]; then
+  [[ -n "${APPROVED_SHA:-}" && "$APPROVED_SHA" == "$MERGE_SHA" ]] || { echo 'BLOCKED: candidate_source_sha_mismatch' >&2; exit 3; }
+  for image in "$CANDIDATE_API_IMAGE" "$CANDIDATE_WEB_IMAGE"; do
+    [[ "$(docker image inspect -f '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")" == "$APPROVED_SHA" ]] || { echo 'BLOCKED: candidate_image_revision_mismatch' >&2; exit 3; }
+  done
+  IMAGES="$(docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" config --images)"
+  printf '%s\n' "$IMAGES" | grep -Fxq 'erp-zuccaro-erp-api' || { echo 'BLOCKED: compose_api_image_unexpected' >&2; exit 3; }
+  printf '%s\n' "$IMAGES" | grep -Fxq 'erp-zuccaro-erp-web' || { echo 'BLOCKED: compose_web_image_unexpected' >&2; exit 3; }
+  docker tag "$CANDIDATE_API_IMAGE" erp-zuccaro-erp-api
+  docker tag "$CANDIDATE_WEB_IMAGE" erp-zuccaro-erp-web
+  echo 'compose_build=SKIP_PROMOTE_TESTED_CANDIDATES'
+else
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build erp-api erp-web
+fi
 echo "compose_build_ok=YES"
 
 SWAP_STARTED=0
@@ -335,6 +348,17 @@ except Exception as e:
   print("meta_parse=FAIL"); print(e)
 ' "$META" 2>/dev/null || echo 'meta_parse=SKIP'
 
+if [[ -n "${CANDIDATE_API_IMAGE:-}" ]]; then
+  for pair in "erp-api-dev|$CANDIDATE_API_IMAGE" "erp-web-dev|$CANDIDATE_WEB_IMAGE"; do
+    container="${pair%%|*}"; image="${pair#*|}"
+    if [[ "$(docker inspect -f '{{.Image}}' "$container")" != "$(docker image inspect -f '{{.Id}}' "$image")" ]]; then
+      echo 'BLOCKED: promoted_image_differs_from_tested_canary' >&2
+      attempt_auto_rollback 'candidate_digest_mismatch' || true
+      exit 5
+    fi
+    docker inspect -f 'active={{.Name}} sha={{index .Config.Labels "org.opencontainers.image.revision"}} digest={{.Image}}' "$container"
+  done
+fi
 echo "SPA_LOGIN_REBUILD_OK merge_sha8=${MERGE_SHA8}"
 echo "rollback_api_tag=${ROLLBACK_API_TAG}"
 echo "rollback_web_tag=${ROLLBACK_WEB_TAG}"
