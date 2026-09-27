@@ -6,9 +6,9 @@
 | Base | `55d9014c` (#92 HEAD final) — **alinhada** |
 | Delta próprio vs base | idêntico ao monitoramento anterior: `observations AS MATERIALIZED` + testes EXPLAIN/health (5 arquivos) |
 | Base incorporada | #51 422 tipo desconhecido + versionamento #52/#53 presentes |
-| CI | frontend/concurrency PASS; backend **em curso** |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
 | **Veredito delta** | **APROVADO** sobre a base #92 atual |
-| **Veredito merge** | **BLOCKED** até #92 aprovável + CI deste HEAD + gates (033/grants/canais OFF) |
+| **Veredito merge** | **BLOCKED** até #92 aprovável + gates (025≠#50, 026, 033/grants, canais OFF) |
 
 Sem perda do delta de agregação no merge. Prioridade **#96** `4fea5a63` APROVADO. Cursor não edita Codex nem faz deploy.
 
