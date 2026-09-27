@@ -1,3 +1,10 @@
+## #100 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T19:37Z)
+
+Main `5dfa7562` APPLY+promote OK. Formulário de login entregue ao proprietário.
+**Acesso NÃO fechado** até prova Grupo/CPA/3Z/Comercial/Administração.
+
+---
+
 ## #100 DEPLOY EM CURSO (2026-09-27T19:33Z)
 
 Main `5dfa7562` CI SUCCESS. Canário/promoção iniciados. Cursor não deploya.

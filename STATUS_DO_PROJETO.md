@@ -16,7 +16,7 @@ Fonte: [#100#issuecomment-5859127269](https://github.com/viniciuszuccaro-creator
 | Campo | Valor |
 |---|---|
 | Merge | `5dfa7562d01eae0efb39bf2f1b2e8409ba640f33` (aprovado `e7ad20e1`) |
-| CI PUSH main | em curso (`36344593507`) |
+| CI PUSH main | **SUCCESS** `36344593507` |
 | Próximo Codex | backup → canário API/SPA → promote → prova browser |
 | Cursor | **não** deploya |
 | Acesso | **PENDENTE** até logout/login → Grupo/CPA/3Z → Comercial/Config |
