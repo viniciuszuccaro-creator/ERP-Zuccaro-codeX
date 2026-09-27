@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpBackendMode } from "@/api/base44Client";
+import { readErpHttpSession } from "@/api/erpHttpSession";
 import { useQuery } from "@tanstack/react-query";
 import {
   Select,
@@ -38,8 +39,9 @@ export default function EmpresaSwitcher() {
 
   // Buscar grupos disponíveis para o usuário (somente vínculos; sem listagem global)
   const { data: gruposDisponiveis = [] } = useQuery({
-    queryKey: ['grupos-usuario', user?.id],
+    queryKey: ['grupos-usuario', user?.id, grupoAtual?.id],
     queryFn: async () => {
+      if (isHttpBackendMode) return grupoAtual ? [grupoAtual] : [];
       if (!user?.grupos_vinculados || user.grupos_vinculados.length === 0) {
         return [];
       }
@@ -64,8 +66,10 @@ export default function EmpresaSwitcher() {
 
   // Empresas disponíveis: somente empresas_vinculadas do usuario (sem Empresa.list global)
   const { data: empresasDisponiveis = [] } = useQuery({
-    queryKey: ['empresas-usuario', user?.id],
+    queryKey: ['empresas-usuario', user?.id, user?.grupo_atual_id, empresasDoGrupo],
     queryFn: async () => {
+      if (isHttpBackendMode) return (readErpHttpSession()?.empresas || [])
+        .filter(e => e.group_id === user?.grupo_atual_id && e.status === 'Ativa');
       if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
         const empresas = [];
         for (const rawVinculo of user.empresas_vinculadas) {

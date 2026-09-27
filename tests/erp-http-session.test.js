@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+import ts from 'typescript';
 import {
   buildHttpDevAdminUser,
   buildHttpSessionUser,
@@ -25,6 +28,94 @@ const GROUP = '33333333-3333-4333-8333-333333333333';
 const EMPRESA_A = '44444444-4444-4444-8444-444444444444';
 const EMPRESA_B = '55555555-5555-4555-8555-555555555555';
 const ACTOR = '22222222-2222-4222-8222-222222222222';
+
+async function loadRealHook(file, dependencies) {
+  const source = await readFile(new URL(file, import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS,
+    jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: id => {
+    assert.ok(id in dependencies, `Unmocked dependency ${id}`);
+    return dependencies[id];
+  }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} } });
+  return exports;
+}
+
+test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadastro local', async () => {
+  const mutations = [];
+  const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  const session = { token: 'synthetic', groupId: GROUP, actorId: ACTOR, role: 'admin', empresas };
+  const selected = [];
+  const localEntity = new Proxy({}, { get() { throw new Error('Local mirror must not authorize context'); } });
+  const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
+    react: { useState: value => [typeof value === 'function' ? value() : value, () => {}], useEffect() {} },
+    '@/api/base44Client': { isHttpBackendMode: true, base44: { entities: localEntity } },
+    '@tanstack/react-query': { useQuery: () => ({}), useQueryClient: () => ({ invalidateQueries() {} }),
+      useMutation: options => { mutations.push(options); return options; } },
+    './contextoMultiempresaPolicy': {},
+    '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'test',
+      refreshErpHttpSessionFromServer: async () => session,
+      buildHttpSessionUser: () => ({ pode_operar_em_grupo: true }),
+      switchErpHttpSessionEmpresa: ({empresaId}) => selected.push(empresaId),
+    },
+  });
+  hooks.useContextoGrupoEmpresa();
+  assert.equal((await mutations[0].mutationFn(GROUP)).id, GROUP);
+  for (const id of [EMPRESA_A, EMPRESA_B]) assert.equal((await mutations[1].mutationFn(id)).id, id);
+  await assert.rejects(mutations[1].mutationFn(ACTOR), /não autorizada/);
+  await assert.rejects(mutations[0].mutationFn(ACTOR), /não autorizado/);
+  assert.deepEqual(selected, [null, EMPRESA_A, EMPRESA_B]);
+});
+
+test('permissões HTTP do hook real usam perfil servidor mesmo com espelho local vazio', async () => {
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, permissoes: { Comercial: { pedido: ['visualizar'] } } } }) },
+    '@tanstack/react-query': { useQuery: options => { assert.equal(options.enabled, false); return { data: { permissoes: {} } }; } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  assert.equal(permissions.hasPermission('Comercial', null, 'ver'), true);
+  assert.equal(permissions.hasPermission('Comercial', 'pedido', 'aprovar'), false);
+  assert.equal(permissions.hasPermission('Fiscal', null, 'ver'), false);
+});
+
+test('admin de Grupo preserva visão consolidada; troca A/B/Grupo não fabrica empresa', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  const fetchImpl = async () => ({ ok: true, json: async () => ({ data: { profiles: [{
+    id: ACTOR, group_id: GROUP, empresa_id: null, role: 'admin', empresas,
+    permissoes: { Comercial: { pedido: ['visualizar', 'criar'] } },
+  }] } }) });
+  let session = await refreshErpHttpSessionFromServer({ storage, fetchImpl, baseUrl: '' });
+  assert.equal(session.empresaId, null);
+  assert.equal(buildHttpSessionUser(session).contexto_atual, 'grupo');
+  for (const empresaId of [EMPRESA_A, EMPRESA_B, null]) {
+    switchErpHttpSessionEmpresa({ storage, empresaId });
+    session = await refreshErpHttpSessionFromServer({ storage, fetchImpl, baseUrl: '' });
+    assert.equal(session.empresaId, empresaId);
+    assert.equal(buildHttpSessionUser(session).contexto_atual, empresaId ? 'empresa' : 'grupo');
+    assert.deepEqual(session.permissoes, { Comercial: { pedido: ['visualizar', 'criar'] } });
+  }
+});
+
+test('admin exclusivo de filial não recebe operação no Grupo nem outra empresa', async () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresaId: EMPRESA_A, scopeType: 'grupo', storage });
+  const session = await refreshErpHttpSessionFromServer({ storage, baseUrl: '', fetchImpl: async () => ({
+    ok: true, json: async () => ({ data: { profiles: [{ id: ACTOR, group_id: GROUP,
+      empresa_id: EMPRESA_A, role: 'admin', empresas: [{id: EMPRESA_A, group_id: GROUP, status: 'Ativa'}],
+      permissoes: { Comercial: { pedido: ['visualizar'] } },
+    }] } }),
+  }) });
+  assert.equal(session.empresaId, EMPRESA_A);
+  assert.equal(buildHttpSessionUser(session).pode_operar_em_grupo, false);
+  assert.throws(() => switchErpHttpSessionEmpresa({ storage, empresaId: null }), /Grupo/);
+  assert.throws(() => switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_B }), /não autorizada/);
+});
 
 test('persist/readErpHttpSession guarda token + tenant + role + expiresAt', () => {
   const storage = memoryStorage();
