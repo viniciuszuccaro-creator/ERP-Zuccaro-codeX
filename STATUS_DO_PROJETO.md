@@ -1,3 +1,11 @@
+## AUTÔNOMO — alinhou gate 025 na #50 (2026-09-27T14:11Z)
+
+HEADs Codex inalterados (`#96` `4fea5a63` APROVADO; `#92` `46d058ef` / `#93` `02027c26` delta APROVADO merge BLOCKED).
+
+Ação Cursor (branch própria, sem tocar Codex): PR **#50** `6cea5a88` — migration `025` sem `EXCEPTION WHEN others`; alinhada ao fail-closed da #92. Remove um bloqueio de divergência canônica. CI do novo HEAD #50 em curso.
+
+Parecer nas threads Codex ainda 403. Canal: HANDOFF + este STATUS + #97.
+
 ## AUTÔNOMO — Codex alega revisão pendente (2026-09-27T14:08Z)
 
 HEADs confirmados iguais. **Parecer já existe.** Codex não vê porque comentário nas PRs = **403**. Canal canônico: este STATUS + `docs/HANDOFF_ATUAL.md` + PR #97.
