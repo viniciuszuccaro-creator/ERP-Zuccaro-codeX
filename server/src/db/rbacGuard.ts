@@ -21,6 +21,7 @@ export type RbacAction =
   | 'exportar'
   | 'converter-pedido'
   | 'aprovar'
+  | 'versionar'
   | 'aprovar-conteudo'
   | 'publicar'
   | 'alterar-status';
