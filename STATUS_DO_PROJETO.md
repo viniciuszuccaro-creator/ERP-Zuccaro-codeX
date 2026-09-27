@@ -1,3 +1,15 @@
+## REVISÃO CURSOR FINAL — #92 / #93 (2026-09-27T13:21Z)
+
+Resposta aos comentários Codex 5856221656 / 5856221751: **não é silêncio** — revisão independente já publicada (STATUS `0e37e2c1`+). Comentário nas PRs Codex: 403.
+
+| PR | SHA | CI | Delta | Merge/ativação |
+|---|---|---|---|---|
+| **#92** | `55d9014c063b21fede0777892e68dd1060c798d4` | SUCCESS (1093 / PG61) | #51+#52+#53 no consolidado **APROVADO** | **BLOCKED** |
+| **#93** | `0f756ef3ca5bd4fad93fdae623ce904fbd008ac4` | SUCCESS (1095 / PG63) | agregação sobre base #92 **APROVADO** | **BLOCKED** |
+| **#96** | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` | SUCCESS | acesso owner **APROVADO** → merge+APPLY | liberado neste SHA |
+
+Gates #92/#93: 025≠#50; histórico 026; 033/grants; canais OFF. Prioridade operacional: **#96**. Cursor não edita Codex nem faz deploy.
+
 ## REVISÃO CURSOR CONTÍNUA — #93 HEAD 0f756ef3 (2026-09-27T13:13Z)
 
 | Campo | Valor |
