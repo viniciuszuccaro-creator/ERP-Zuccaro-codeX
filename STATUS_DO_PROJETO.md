@@ -1,3 +1,10 @@
+## Comercial 360 — candidato de reconciliação histórica 026 (2026-09-27)
+
+- Usuário confirmou navegação pelo ERP após #101 implantada; isso não homologa pedidos, fiscal ou canais. API/SPA oficiais usam `d02cd012948a597a734573ab0a5a7aed6d604a3b`; DEV permanece em migrations001–024 e canais OFF.
+- Auditoria read-only DEV encontrou Pedidos/itens históricos sem snapshot de tipo. Origem Orçamento e `requer_producao=false` não determinam tipo; 026 deve continuar bloqueada até decisão por item baseada em evidência histórica.
+- Candidato em branch Codex independente adiciona aplicação transacional de um plano privado completo: valida banco, Grupo, perfil revisor, cobertura Pedido/Empresa/item e backup; preenche snapshots, executa 026 canônica e audita hash do plano sem publicar IDs/dados. Nenhuma mutation DEV feita. Testes sintéticos PGlite/PostgreSQL CI e revisão Cursor exigidos antes de merge; plano real revisado, backup restaurável e reconciliação exigidos antes de aplicar na VPS.
+- #92/#93 alinhadas à main `d02cd012948a597a734573ab0a5a7aed6d604a3b`, CI runtime/PG verde nos HEADs de alinhamento; revisão Cursor final pendente. 025 idêntica à #50 e 028 à #53 no HEAD consultado; 029–033/grants/provedores e ativação ainda têm gates próprios.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
