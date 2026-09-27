@@ -41,12 +41,12 @@ echo 'database_identity_matches=YES'
 [[ "$MODE" == AUDIT || "$DATABASE" == "$EXPECTED_DATABASE" ]] || { echo 'BLOCKED: unexpected_database' >&2; exit 3; }
 GATE_JS="$(cat <<'JS'
 const fs=require('fs'), pg=require('pg');
-const [op,email,group,company,other,name,reuse,mode,password]=fs.readFileSync(0,'utf8').split('\0');
+const [op,email,group,company,other,name,reuse,mode,password,ownerPermissions]=fs.readFileSync(0,'utf8').split('\0');
 const client=new pg.Client({connectionString:process.env.DATABASE_URL});
 (async()=>{await client.connect();
 const fail=code=>{throw new Error(code);};
 const auth=await client.query('SELECT id FROM auth.users WHERE lower(email)=lower($1)',[email]);
-const profiles=await client.query('SELECT id,auth_user_id,group_id,empresa_id,ativo FROM profiles WHERE lower(email)=lower($1) OR auth_user_id IN (SELECT id FROM auth.users WHERE lower(email)=lower($1))',[email]);
+const profiles=await client.query('SELECT id,auth_user_id,group_id,empresa_id,ativo,role,permissoes FROM profiles WHERE lower(email)=lower($1) OR auth_user_id IN (SELECT id FROM auth.users WHERE lower(email)=lower($1))',[email]);
 const groups=await client.query("SELECT id,nome_do_grupo,status FROM groups WHERE id=$1::uuid OR lower(nome_do_grupo)=lower('Grupo CPA')",[group||null]);
 const companies=await client.query("SELECT id,group_id,nome_fantasia,razao_social,status FROM empresas WHERE group_id IN (SELECT id FROM groups WHERE id=$1::uuid OR lower(nome_do_grupo)=lower('Grupo CPA')) OR id=ANY($2::uuid[])",[group||null,[company,other].filter(Boolean)]);
 console.log(JSON.stringify({owner_auth_count:auth.rowCount,owner_profiles:profiles.rowCount,owner_active_profiles:profiles.rows.filter(p=>p.ativo).length,candidate_groups:groups.rowCount,active_companies:companies.rows.filter(e=>e.status==='Ativa').length}));
@@ -65,7 +65,14 @@ if(companies.rows.some(e=>e.id!==id && (e.nome_fantasia||e.razao_social).toLower
 if((mode==='APPLY' || mode==='PASSWORD') && !row) fail('existing_company_required');
 }
 if((mode==='APPLY' || mode==='PASSWORD') && (!g || auth.rowCount!==1)) fail('existing_group_and_auth_required');
-if(mode==='PASSWORD' && (profiles.rowCount!==1 || !profiles.rows[0].ativo || profiles.rows[0].auth_user_id!==auth.rows[0]?.id)) fail('active_owner_profile_required');
+if(mode==='PASSWORD'){
+const profile=profiles.rows[0];
+if(profiles.rowCount!==1 || !profile.ativo || profile.auth_user_id!==auth.rows[0]?.id || profile.role!=='admin' || profile.empresa_id!==null) fail('active_group_owner_admin_required');
+const required=JSON.parse(ownerPermissions||'null');
+const contains=(actual,expected)=>Array.isArray(expected)?Array.isArray(actual)&&expected.every(action=>actual.includes(action)):expected&&typeof expected==='object'&&actual&&typeof actual==='object'&&!Array.isArray(actual)&&Object.entries(expected).every(([key,value])=>contains(actual[key],value));
+const wildcard=value=>Array.isArray(value)?value.includes('*'):value&&typeof value==='object'&&(Object.hasOwn(value,'*')||Object.values(value).some(wildcard));
+if(!required || Object.keys(required).length===0 || !contains(profile.permissoes,required) || wildcard(profile.permissoes)) fail('canonical_owner_permissions_required');
+}
 if(op==='preflight'){console.log('owner_preflight=PASS');return;}
 if(op==='password'){
 if(mode!=='PASSWORD' || !password || password.length<12 || password.length>200) fail('interactive_password_required');
@@ -81,10 +88,11 @@ const audit=async stage=>client.query("INSERT INTO audit_logs(group_id,empresa_i
 // Intent must persist before Auth mutation. Auth owns its credential/audit transaction.
 // No automatic retry: network ambiguity or completion-audit failure requires inspection.
 await audit('requested');
-let response;try{response=await fetch(url,{method:'PUT',headers,body:JSON.stringify({password}),signal:AbortSignal.timeout(8000)});}catch{fail('password_reset_unconfirmed_no_automatic_retry');}
+const unconfirmed=async()=>{try{await audit('unconfirmed');}catch{}fail('password_reset_unconfirmed_no_automatic_retry');};
+let response;try{response=await fetch(url,{method:'PUT',headers,body:JSON.stringify({password}),signal:AbortSignal.timeout(8000)});}catch{await unconfirmed();}
 if(!response.ok){await audit('rejected');fail('password_reset_rejected');}
-const updated=await response.json();
-if(updated.id!==auth.rows[0].id) fail('password_reset_unconfirmed_no_automatic_retry');
+let updated;try{updated=await response.json();}catch{await unconfirmed();}
+if(updated?.id!==auth.rows[0].id) await unconfirmed();
 try{await audit('completed');}catch{fail('password_changed_completion_audit_failed_no_automatic_retry');}
 console.log('owner_password_updated=YES');return;
 }
@@ -125,7 +133,7 @@ await client.query('COMMIT'); console.log('tenant_bootstrap=COMMITTED');
 JS
 )"
 run_gate() {
-  printf '%s\0' "$1" "$OWNER_EMAIL" "$OWNER_GROUP_ID" "$OWNER_EMPRESA_ID" "$EMPRESA_3Z_ID" "$OWNER_FULL_NAME" "$APPROVE_EXISTING_TENANT_MAPPING" "$MODE" "${PASSWORD:-}" | docker exec -i erp-api-dev node -e "$GATE_JS"
+  printf '%s\0' "$1" "$OWNER_EMAIL" "$OWNER_GROUP_ID" "$OWNER_EMPRESA_ID" "$EMPRESA_3Z_ID" "$OWNER_FULL_NAME" "$APPROVE_EXISTING_TENANT_MAPPING" "$MODE" "${PASSWORD:-}" "$(cat scripts/vps/owner-admin-permissoes.json)" | docker exec -i erp-api-dev node -e "$GATE_JS"
 }
 run_gate audit
 [[ "$MODE" != AUDIT ]] || { echo 'OWNER_ACCESS_AUDIT_ONLY_NO_WRITES'; exit 0; }
