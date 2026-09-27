@@ -4,16 +4,52 @@ import { CatalogOutboxWorker } from '../src/integrations/catalogOutboxWorker.js'
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 
+test('catalog worker counts discarded rows and drains valid successors within the examined-event bound',async()=>{
+  const f=await outboxFixture();
+  try{
+    const exhausted=await f.event(),missing=await f.event(),valid=await f.event(),later=await f.event();
+    await f.pg.query("UPDATE integration_events SET attempts=max_attempts,created_at='2026-01-01' WHERE id=$1",[exhausted]);
+    await f.pg.query("UPDATE integration_events SET idempotency_key=NULL,created_at='2026-01-02' WHERE id=$1",[missing]);
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-03' WHERE id=$1",[valid]);
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-04' WHERE id=$1",[later]);
+    const sent:string[]=[];
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async input=>{sent.push(input.eventId);return{eventId:input.eventId,key:input.key};}});
+    assert.deepEqual(await worker.runOnce(f.ctx,3),{published:1,retry:0,dead_letter:2});
+    assert.deepEqual(sent,[valid]);
+    assert.equal((await f.pg.query('SELECT status,attempts FROM integration_events WHERE id=$1',[later])).rows[0].status,'pending');
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE after_data->>'status'='dead_letter'")).rows.length,2);
+    assert.deepEqual(await worker.runOnce(f.ctx,3),{published:1,retry:0,dead_letter:0});
+  }finally{await f.close();}
+});
+
+test('discard audit failure rolls back claim and stops the worker before later delivery',async()=>{
+  const f=await outboxFixture();
+  try{
+    const poison=await f.event();const valid=await f.event();
+    await f.pg.query("UPDATE integration_events SET attempts=max_attempts,created_at='2026-01-01' WHERE id=$1",[poison]);
+    await f.pg.exec(`CREATE FUNCTION reject_discard_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.after_data->>'status'='dead_letter' THEN RAISE EXCEPTION 'SYNTHETIC_DISCARD_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER discard_audit_fail AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_discard_audit();`);
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async()=>{assert.fail('No delivery after audit failure');}});
+    await assert.rejects(()=>worker.runOnce(f.ctx,10));
+    assert.equal((await f.pg.query('SELECT status FROM integration_events WHERE id=$1',[poison])).rows[0].status,'pending');
+    assert.equal((await f.pg.query('SELECT attempts FROM integration_events WHERE id=$1',[valid])).rows[0].attempts,0);
+    assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,0);
+  }finally{await f.close();}
+});
+
 test('catalog stop before a run leaves queue untouched and stop after claim returns the lease without sending',async()=>{
   const f=await outboxFixture();
   try{
-    const id=await f.event();await f.event();const stopped=new AbortController();stopped.abort('PRIVATE_SYNTHETIC_REASON');
+    const id=await f.event();await f.event();
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-01' WHERE id=$1",[id]);
+    const stopped=new AbortController();stopped.abort('PRIVATE_SYNTHETIC_REASON');
     const worker=new CatalogOutboxWorker(f.outbox,{publish:async()=>{assert.fail('No provider call after stop');}});
     assert.deepEqual(await worker.runOnce(f.ctx,10,stopped.signal),{published:0,retry:0,dead_letter:0});
     assert.ok((await f.pg.query('SELECT status,attempts FROM integration_events')).rows.every(r=>r.status==='pending'&&r.attempts===0));
     assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,0);
-    const abort=new AbortController();const claim=f.outbox.claim.bind(f.outbox);
-    f.outbox.claim=async(...args)=>{const leases=await claim(...args);abort.abort();return leases;};
+    const abort=new AbortController();const claim=f.outbox.claimWithOutcomes.bind(f.outbox);
+    f.outbox.claimWithOutcomes=async(...args)=>{const result=await claim(...args);abort.abort();return result;};
     assert.deepEqual(await worker.runOnce(f.ctx,10,abort.signal),{published:0,retry:1,dead_letter:0});
     assert.equal((await f.pg.query('SELECT status FROM integration_events WHERE id=$1',[id])).rows[0].status,'retry');
     assert.ok(!JSON.stringify((await f.pg.query('SELECT * FROM audit_logs')).rows).includes('PRIVATE_SYNTHETIC_REASON'));

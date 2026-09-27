@@ -48,6 +48,11 @@ export class CatalogOutbox {
   }
 
   async claim(ctx: RequestContext, limit = 10, leaseSeconds = 30): Promise<CatalogLease[]> {
+    return (await this.claimWithOutcomes(ctx, limit, leaseSeconds)).leases;
+  }
+
+  /** Same bounded claim transaction; distinguish audited discards from an empty queue. */
+  async claimWithOutcomes(ctx: RequestContext, limit = 10, leaseSeconds = 30) {
     await this.authorize(ctx);
     if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(leaseSeconds) || leaseSeconds < 5 || leaseSeconds > 300) {
       throw new AppError(422, 'OUTBOX_CLAIM_INVALID', 'Invalid claim bounds');
@@ -59,11 +64,12 @@ export class CatalogOutbox {
           OR (status='processing' AND locked_until<=clock_timestamp()))
         ORDER BY created_at,id LIMIT $3 FOR UPDATE SKIP LOCKED`, [ctx.groupId, ctx.empresaId, limit]);
       const leases: CatalogLease[] = [];
+      let discarded = 0;
       for (const event of result.rows) {
         if (event.attempts >= event.max_attempts || !event.idempotency_key) {
           const code = event.idempotency_key ? 'ATTEMPTS_EXHAUSTED' : 'OUTBOX_KEY_REQUIRED';
           await tx.query("UPDATE integration_events SET updated_at=clock_timestamp(),status='dead_letter',dead_letter_at=clock_timestamp(),locked_until=NULL,error_message=$4 WHERE id=$1 AND group_id=$2 AND empresa_id=$3", [event.id, ctx.groupId, ctx.empresaId, code]);
-          await this.audit(ctx, tx, event, 'dead_letter', event.attempts, code); continue;
+          await this.audit(ctx, tx, event, 'dead_letter', event.attempts, code); discarded++; continue;
         }
         const changed = await tx.query<Event>(`UPDATE integration_events SET updated_at=clock_timestamp(),status='processing', attempts=attempts+1,
           locked_until=date_trunc('milliseconds',clock_timestamp())+($4*interval '1 second'), next_attempt_at=NULL
@@ -72,7 +78,7 @@ export class CatalogOutbox {
         await this.audit(ctx, tx, event, 'processing', row.attempts);
         leases.push({ id: row.id, produtoId: row.aggregate_id, key: row.idempotency_key, attempt: row.attempts, expiresAt: row.locked_until.toISOString(), payload: row.payload });
       }
-      return leases;
+      return { leases, discarded };
     });
   }
 
