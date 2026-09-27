@@ -31,7 +31,7 @@ test('actual psql COPY loads private JSON without server file privilege', {skip:
     const source = fs.readFileSync(path.join(ROOT, 'scripts/vps/provision-owner-admin-profile.sh'), 'utf8');
     assert.equal(source.includes('pg_read_file'), false);
     const command = source.match(/^\\copy _owner_json[^\r\n]+/m)![0];
-    const restoreFormat = source.split('\n').find(line => line.trimStart().startsWith('printf "BEGIN;'))!;
+    const restoreFormat = source.split('\n').find(line => line.includes("printf '%s\\n' 'BEGIN;'"))!.trim();
     const emitted = spawnSync('bash', ['-c', 'dest_path="$1"; ' + restoreFormat, 'test', file.replaceAll('\\','/')], {encoding:'utf8'});
     assert.equal(emitted.status, 0, emitted.stderr);
     assert.equal(emitted.stdout.split('\n').find(line => line.startsWith('\\copy')), command.replace('/tmp/owner-admin-permissoes.json', file.replaceAll('\\','/')));

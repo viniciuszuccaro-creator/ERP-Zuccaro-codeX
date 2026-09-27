@@ -62,7 +62,7 @@ restore_selective_profiles() {
     return 5
   fi
   {
-    printf "BEGIN;\nCREATE TEMP TABLE _owner_json(payload jsonb NOT NULL) ON COMMIT DROP;\n\\\\copy _owner_json FROM '%s' WITH (FORMAT csv, QUOTE E'\\\\x01', DELIMITER E'\\\\x02');\n" "$dest_path"
+    printf '%s\n' 'BEGIN;' 'CREATE TEMP TABLE _owner_json(payload jsonb NOT NULL) ON COMMIT DROP;' "\\copy _owner_json FROM '$dest_path' WITH (FORMAT csv, QUOTE E'\\x01', DELIMITER E'\\x02');"
     cat <<'SQL'
 CREATE TEMP TABLE _owner_restore (
   payload jsonb NOT NULL,
