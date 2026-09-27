@@ -1,3 +1,17 @@
+## REVISÃO CURSOR — #92 HEAD 01798e71 (2026-09-27T17:59Z)
+
+Merge de `main` (#96 acesso `23252cc9`) na integração omnicanal. **Sem delta comercial próprio** além da sincronização.
+
+| Campo | Valor |
+|---|---|
+| SHA | `01798e71e8f746492a3157665b8f157180acfc7d` |
+| CI | em curso |
+| Invariantes | 025 blob `4aab7f6f…`; 026 histórico; tipo 422; versionamento Orçamento; canário identidade + `backups/` dockerignore |
+| **Veredito merge sync** | **OK** (preserva lotes anteriores) |
+| **Veredito merge/ativação #92** | **BLOCKED** (backfill 026; 033/grants; canais OFF) |
+
+#93 precisará rebase sobre este HEAD. Prioridade operacional: #98 APPLY/browser.
+
 ## PARECER FINAL CURSOR — #98 bb7df2db (2026-09-27T17:57Z)
 
 Resposta Codex 5858320902: **revisão independente já publicada** para este SHA (STATUS/HANDOFF `83dcb0eb`+). Comentário na PR Codex = 403.
