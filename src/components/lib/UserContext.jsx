@@ -22,6 +22,9 @@ const resolveBootUser = async () => {
       await ensureHttpTenantLocalMirror({
         groupId: session.groupId,
         empresaId: session.empresaId,
+        groupName: session.groupName,
+        empresas: session.empresas,
+        perfilAcessoId: `http_perfil_${session.actorId}`,
         base44Client: base44,
       });
     } catch (error) {

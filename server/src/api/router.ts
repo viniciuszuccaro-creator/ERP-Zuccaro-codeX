@@ -1142,6 +1142,8 @@ export function createApiRouter(deps: ApiDeps) {
             role: p.role,
             full_name: p.fullName,
             permissoes: p.permissoes,
+            group_name: p.groupName,
+            empresas: p.empresas,
           })),
         },
       });
@@ -1171,6 +1173,8 @@ export function createApiRouter(deps: ApiDeps) {
             role: p.role,
             full_name: p.fullName,
             permissoes: p.permissoes,
+            group_name: p.groupName,
+            empresas: p.empresas,
           })),
         },
       });

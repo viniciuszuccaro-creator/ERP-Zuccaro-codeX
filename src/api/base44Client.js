@@ -101,8 +101,66 @@ function createHttpHybridClient() {
     },
   });
 
+  // Auth no modo HTTP: sessão Bearer do BFF — não o auth.me local (senão GuardRails
+  // acusa "não autenticado" enquanto o header mostra o usuário HTTP).
+  const httpAuth = {
+    async me() {
+      const { readErpHttpSession, buildHttpSessionUser, ensureHttpTenantLocalMirror } = await import('./erpHttpSession.js');
+      const session = readErpHttpSession();
+      if (!session?.token) {
+        const err = createAuthDeniedError({ reason: 'http_session_missing' });
+        throw err;
+      }
+      try {
+        await ensureHttpTenantLocalMirror({
+          groupId: session.groupId,
+          empresaId: session.empresaId,
+          groupName: session.groupName,
+          empresas: session.empresas,
+          perfilAcessoId: `http_perfil_${session.actorId}`,
+        });
+      } catch {
+        /* espelho best-effort */
+      }
+      const user = buildHttpSessionUser(session);
+      if (!user) {
+        throw createAuthDeniedError({ reason: 'http_session_incomplete' });
+      }
+      return user;
+    },
+    async isAuthenticated() {
+      try {
+        await this.me();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async updateMe() {
+      return this.me();
+    },
+    async logout() {
+      const { clearErpHttpSession } = await import('./erpHttpSession.js');
+      clearErpHttpSession();
+      if (typeof window !== 'undefined') {
+        window.location.assign('/');
+      }
+      return true;
+    },
+    redirectToLogin() {
+      return import('./erpHttpSession.js').then(({ clearErpHttpSession }) => {
+        clearErpHttpSession();
+        if (typeof window !== 'undefined') {
+          window.location.assign('/');
+        }
+        return true;
+      });
+    },
+  };
+
   return {
     ...localBase44,
+    auth: httpAuth,
     entities,
     _http: http,
     _backend: 'http',

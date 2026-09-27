@@ -62,6 +62,8 @@ export const AuthProvider = ({ children }) => {
       await ensureHttpTenantLocalMirror({
         groupId: trusted.groupId,
         empresaId: trusted.empresaId,
+        groupName: trusted.groupName,
+        empresas: trusted.empresas,
         perfilAcessoId: `http_perfil_${trusted.actorId}`,
         permissoes: trusted.permissoes || {},
         perfilNome: trusted.fullName || trusted.email || 'Perfil HTTP',
@@ -263,6 +265,10 @@ export const AuthProvider = ({ children }) => {
 
     if (isHttpBackendMode) {
       clearErpHttpSession();
+      // Recarrega para desmontar layout bloqueado e mostrar o formulário de login.
+      if (shouldRedirect && typeof window !== 'undefined') {
+        window.location.assign('/');
+      }
       return;
     }
 
