@@ -302,3 +302,35 @@ de lease em falha de auditoria. Base #84; revisão independente/integração pen
 Rollback de código mantém retry/dead-letter existentes e worker anterior consegue
 processá-los; remove apenas a parada opt-in. Sem migration/frontend/provider novo,
 HD/VPS/merge/deploy; nenhuma onda declarada integralmente concluída.
+# Varredura de reconciliação limitada e retomável
+
+Onda 15: `CatalogReconciliation.runPage(ctx,scanKey,limit,cursor?,{maxPages,signal?})`
+amplia a função existente para 1–25 páginas explícitas, mantendo 1–100 registros por
+página e a interface de página única anterior. Usa o mesmo observer injetado, recibo
+idempotente, paginação por microssegundos/ID, RBAC/tenant e auditoria canônicos.
+Não cria scanner/endpoint/fila/provider ou corrige dados externos.
+
+O modo opt-in retorna scope BATCH, pagesRead e interrupted além dos contadores,
+hasMore e nextCursor existentes. Contadores somam observações confirmadas pela
+persistência (inclusive replay idempotente), não todos os itens buscados nem uma
+estimativa global. Ao atingir maxPages retorna cursor para a próxima chamada.
+Cursor segue o último registro concluído, inclusive em página parcial, sem avançar
+sobre a fonte cuja consulta foi interrompida. Se nenhum registro foi concluído,
+preserva cursor de entrada (null no início); interrupted=true exige parar a chamada,
+mesmo com hasMore=true. pagesRead conta leituras, inclusive página vazia/interrompida.
+
+Parada do supervisor aborta probe/espera mesmo se observer ignorar sinal; não grava
+UNAVAILABLE/CONSISTENT fictício nem aceita ACK tardio. Falha/timeout genuíno do
+observer continua UNAVAILABLE. Limpa listeners/deadlines. Cada observação mantém
+sua transação; as já concluídas permanecem. Falha de permissão/DB/audit propaga,
+sem retorno de sucesso parcial: replay da mesma scanKey é idempotente; resultados
+incompatíveis são conflito explícito. Consulta de página continua autorizada/auditada
+mesmo com sinal já parado. Varredura é ao vivo, não snapshot global congelado.
+
+Testes sintéticos: teto/paginação/retomada, parada antes e durante consulta,
+ACK tardio, sem observação fictícia e RBAC revogado na página seguinte. PostgreSQL
+efêmero prova fontes com timestamps iguais e retomada sem saltos/duplicatas.
+Base #85; revisão independente/integração pendentes. Rollback de código preserva
+observações existentes e volta à chamada por página. Sem migration/HD/VPS,
+provider/frontend novo, merge/deploy; reconcilia sinais ACK, não projeção completa
+de preços/mídia/estoque nem conclusão integral da onda/programa.
