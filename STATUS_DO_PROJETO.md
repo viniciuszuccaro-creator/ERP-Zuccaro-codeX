@@ -1,3 +1,14 @@
+## REVISÃO CURSOR CONTÍNUA — #93 HEAD 02027c26 (2026-09-27T14:00Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `02027c265523505e495a1c00999b7e2a336118b0` |
+| Base | `46d058ef` (#92 gate 026) — **alinhada** |
+| Delta próprio | idêntico (MATERIALIZED + testes); 026 histórico presente na base |
+| CI | concurrency PASS; frontend/backend em curso |
+| **Veredito delta** | **APROVADO** |
+| **Veredito merge** | **BLOCKED** (gates da #92 + CI deste HEAD) |
+
 ## REVISÃO CURSOR CONTÍNUA — #92 HEAD 46d058ef (2026-09-27T13:59Z)
 
 Delta vs `55d9014c` (1 commit): gate histórico **026** — aborta corrupção silenciosa.
