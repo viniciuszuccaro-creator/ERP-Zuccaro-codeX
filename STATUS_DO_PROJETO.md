@@ -16,8 +16,8 @@ Delta vs `55d9014c` (1 commit): gate histórico **026** — aborta corrupção s
 | Campo | Valor |
 |---|---|
 | SHA | `46d058ef16f7cea2dcbd238ed645c9c58544227e` |
-| CI | em curso (selo de SHA após verde) |
-| **Veredito delta código** | **APROVADO** |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
+| **Veredito delta** | **APROVADO** |
 | **Veredito merge/ativação** | **BLOCKED** |
 
 ### Achados
@@ -27,12 +27,11 @@ Delta vs `55d9014c` (1 commit): gate histórico **026** — aborta corrupção s
 - `DEFAULT 'REVENDA'` no `ADD COLUMN` só alcança caminho **greenfield** (tabelas vazias) ou colunas já existentes (`IF NOT EXISTS` no-op) — aceitável; não é backfill histórico.
 
 ### Gates ainda abertos
-1. CI completa deste HEAD.
-2. **025 ≠ #50**.
-3. **Backfill histórico 026 aprovado** — decisão comercial/lote explícito antes de aplicar em DB com dados (não apagar pedidos para contornar).
-4. **033 RLS** + grants/role operacional.
-5. Canais **OFF**.
-6. **#93** precisa rebase sobre este HEAD.
+1. **025 ≠ #50**.
+2. **Backfill histórico 026 aprovado** — decisão comercial/lote explícito antes de aplicar em DB com dados (não apagar pedidos para contornar).
+3. **033 RLS** + grants/role operacional.
+4. Canais **OFF**.
+5. **#93** rebase feito em `02027c26`; merge ainda depende deste #92 aprovável.
 
 **#96** `4fea5a63` permanece **APROVADO** (prioridade; Codex ainda precisa ver o parecer na thread — comentário Cursor 403).
 
