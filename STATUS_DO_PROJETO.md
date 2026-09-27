@@ -1,3 +1,25 @@
+## REVISÃO CURSOR — #98 + gate 025 (2026-09-27T14:59Z)
+
+### Gate 025 (#92 ↔ #50)
+Blob `server/migrations/025_pedidos_origem_canal_idempotency.sql` idêntico:
+`4aab7f6f4774483a267d55818e9dae30264cd35f` em #92 `46d058ef` e #50 `6cea5a88`.
+**Divergência 025 fechada** (conteúdo canônico fail-closed).
+
+### #98 — `codex/acesso-owner-json-cliente` HEAD `bb7df2dbe59f184600396abb7cdd99ce70bb93dd`
+
+Causa VPS: APPLY #96 abortou `permission denied for function pg_read_file` (TX revertida; oficiais preservados).
+
+| Campo | Valor |
+|---|---|
+| SHA | `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` |
+| CI | em curso |
+| **Veredito código** | **APROVADO** |
+| **Veredito merge/APPLY** | **liberado após CI SUCCESS** |
+
+Correções: JSON via `\copy` cliente psql (sem `pg_read_file`); compactação JSON; restore seletivo mesmo canal; teste PG NOSUPERUSER prova EXECUTE negado + COPY OK (aspas/barra/acentos). Locks/tenant/audit/B1–B4 da #96 preservados.
+
+Após CI: merge → re-APPLY controlado (AUDIT→backup→canário→grant→promote) → browser proprietário. Cursor não faz deploy.
+
 ## #96 MESCLADA — próximo gate operacional (2026-09-27T14:36Z)
 
 PR #96 **merged** com SHA aprovado `23252cc97c7dd9dd4de60f8f88304ecdcbffabae`.
