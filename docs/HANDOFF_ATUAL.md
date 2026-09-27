@@ -1,3 +1,11 @@
+## MODO AUTÔNOMO (2026-09-27T19:14Z)
+
+#99: MERGED; TTY proprietário; credencial não alterada. Cursor não captura senha.
+#92/#93: aguarda **lote final** para parecer consolidado (sem micro-sync).
+`4fea5a63` REVOKED.
+
+---
+
 ## #99 PASSWORD no TTY do proprietário (2026-09-27T18:53Z)
 
 Main `3e327ea0` CI SUCCESS; AUDIT PASS; procedimento parado no TTY privado.
