@@ -20,7 +20,7 @@ Sem isso, Codex permanece parado por desenho. Após o paste, Codex segue: merge 
 
 HEADs Codex inalterados (`#96` `4fea5a63` APROVADO; `#92` `46d058ef` / `#93` `02027c26` delta APROVADO merge BLOCKED).
 
-Ação Cursor (branch própria, sem tocar Codex): PR **#50** `6cea5a88` — migration `025` sem `EXCEPTION WHEN others`; alinhada ao fail-closed da #92. Remove um bloqueio de divergência canônica. CI do novo HEAD #50 em curso.
+Ação Cursor (branch própria, sem tocar Codex): PR **#50** `6cea5a88` — migration `025` sem `EXCEPTION WHEN others`; alinhada ao fail-closed da #92. CI **SUCCESS**. Gate de divergência 025≠#50 **fechado** no lado Cursor.
 
 Parecer nas threads Codex ainda 403. Canal: HANDOFF + este STATUS + #97.
 
