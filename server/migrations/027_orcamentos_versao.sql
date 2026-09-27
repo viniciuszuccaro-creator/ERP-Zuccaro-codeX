@@ -6,6 +6,10 @@ ALTER TABLE orcamentos
   ADD COLUMN IF NOT EXISTS orcamento_raiz_id UUID,
   ADD COLUMN IF NOT EXISTS supersedido_por_id UUID;
 
+-- A raiz física deve incluir os documentos anteriores ao versionamento.
+UPDATE orcamentos SET orcamento_raiz_id=id WHERE orcamento_raiz_id IS NULL;
+ALTER TABLE orcamentos ALTER COLUMN orcamento_raiz_id SET NOT NULL;
+
 ALTER TABLE orcamentos DROP CONSTRAINT IF EXISTS orcamentos_status_check;
 ALTER TABLE orcamentos
   ADD CONSTRAINT orcamentos_status_check

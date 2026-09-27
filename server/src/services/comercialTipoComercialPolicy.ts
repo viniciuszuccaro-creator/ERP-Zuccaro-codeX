@@ -1,4 +1,5 @@
 import { PRODUTO_TIPOS_CANONICOS, normalizeProdutoTipoItem } from '../repositories/produtoTypes.js';
+import { AppError } from '../api/errors.js';
 import {
   PEDIDO_TIPOS_COMERCIAIS_ITEM,
   type PedidoTipoComercial,
@@ -25,8 +26,9 @@ export function mapProdutoTipoToComercialItem(produtoTipoItem: string | null | u
     case PRODUTO_TIPOS_CANONICOS.CONSUMO_INTERNO:
       return 'FABRICADO';
     case PRODUTO_TIPOS_CANONICOS.REVENDA:
-    default:
       return 'REVENDA';
+    default:
+      throw new AppError(422, 'PEDIDO_TIPO_COMERCIAL_INVALIDO', 'Product type requires an explicit canonical mapping', { reason: 'PRODUCT_TYPE_UNKNOWN' });
   }
 }
 
