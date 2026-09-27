@@ -43,7 +43,7 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
         ] };
         await assert.rejects(() => mapHistoricalPedidoTypes(db,
           { ...plan, decisions: plan.decisions.slice(0, 2) }, migration), /HISTORICAL_TYPE_COVERAGE_INVALID/);
-        assert.equal((await pg.query('SELECT count(*) AS count FROM audit_logs')).rows[0].count, 0);
+        assert.equal(Number((await pg.query('SELECT count(*) AS count FROM audit_logs')).rows[0].count), 0);
         assert.equal((await pg.query("SELECT id FROM schema_migrations WHERE id LIKE '026%'")).rows.length, 0);
         assert.equal((await pg.query(`SELECT attname FROM pg_attribute WHERE attrelid='pedidos'::regclass
           AND attname='tipo_comercial' AND NOT attisdropped`)).rows.length, 0);
