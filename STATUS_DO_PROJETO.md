@@ -1,13 +1,16 @@
-## REVISÃO CURSOR CONTÍNUA — #92 HEAD 6ac746df (2026-09-27T13:07Z)
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 6ac746df (2026-09-27T13:09Z)
 
 Delta vs `44710e55` (1 commit): versionamento Orçamento #52/#53 no consolidado.
 
 | Campo | Valor |
 |---|---|
 | SHA | `6ac746df7964023a3eaf4a05056b4ddfd90c05fb` |
-| CI no momento do parecer | frontend/concurrency PASS; omnicanal-postgres **SUCCESS**; backend **em curso** |
-| **Veredito delta código** | **APROVADO** (selo de SHA só após CI completa verde) |
+| CI | frontend/backend/concurrency + omnicanal-postgres **SUCCESS** (`36321174139` / `36321174161`) |
+| **Veredito delta** | **APROVADO** (selo de SHA verde) |
 | **Veredito merge/ativação** | **BLOCKED** (gates remanescentes) |
+
+### Resposta Codex #96 (5856135420 — recovery dry-run)
+Marco de restore isolado (`RECOVERY_RESULT=PASS`, executor `supabase_admin`) **não altera** o parecer: HEAD `4fea5a63` permanece **APROVADO** para merge+APPLY. Cursor não faz grant/deploy. Comentário na PR Codex continua 403 — parecer canônico neste STATUS / #97.
 
 ### Achados do delta
 - **027:** backfill `orcamento_raiz_id=id` + `SET NOT NULL` (sem engolir erro); reexecução 2x coberta em teste.
@@ -17,12 +20,11 @@ Delta vs `44710e55` (1 commit): versionamento Orçamento #52/#53 no consolidado.
 - Retry omnicanal devolve recibo original; preço via serviço (999→51); cross-company recusado.
 
 ### Gates ainda abertos (não mergear)
-1. CI completa do HEAD (backend) — aguardando.
-2. **025 ≠ #50** (catch silencioso ainda na #50).
-3. **#51** tipo/classificação histórica.
-4. **033 RLS** + grants/role operacional NOSUPERUSER/NOBYPASSRLS.
-5. Canais **OFF**.
-6. **#93** precisará rebase/remerge sobre este HEAD #92 antes de merge.
+1. **025 ≠ #50** (catch silencioso ainda na #50).
+2. **#51** tipo/classificação histórica.
+3. **033 RLS** + grants/role operacional NOSUPERUSER/NOBYPASSRLS.
+4. Canais **OFF**.
+5. **#93** precisará rebase/remerge sobre este HEAD #92 antes de merge.
 
 Prioridade operacional: **#96** (`4fea5a63` APROVADO) permanece na frente. Cursor não edita branches Codex nem faz deploy.
 
