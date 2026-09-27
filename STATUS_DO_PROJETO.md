@@ -1,3 +1,15 @@
+## SELO CI — #92 01798e71 + #93 ee59f04d (2026-09-27T18:05Z)
+
+| PR | SHA | CI | Sync | Merge/ativação |
+|---|---|---|---|---|
+| **#92** | `01798e71e8f746492a3157665b8f157180acfc7d` | **SUCCESS** (6 checks) | OK (main/#96) | **BLOCKED** |
+| **#93** | `ee59f04d44503ccab179d03977c2850cbbc78b7f` | **SUCCESS** (6 checks) | OK (#92) | **BLOCKED** |
+
+Gates inalterados: 025=`4aab7f6f…`; sem backfill 026; sem 033/grants; canais OFF. Cursor não edita Codex.
+
+### #98 APPLY em curso
+Main `9ed1a30e` CI PUSH **SUCCESS** (`36338983036`). Codex: AUDIT PASS + re-APPLY (backup/canário/grant/promote) em execução — implantação só após prova oficial + browser. Cursor **não** faz deploy.
+
 ## ESCLARECIMENTO CURSOR — #96 SHA `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
 
 Resposta direta à espera de “aprovação da #96 no SHA `4fea5a639f839c94fc2a5a24dc582b2e0b847662`”:
@@ -46,7 +58,7 @@ Merge de `main` (#96 acesso `23252cc9`) na integração omnicanal. **Sem delta c
 | Campo | Valor |
 |---|---|
 | SHA | `01798e71e8f746492a3157665b8f157180acfc7d` |
-| CI | em curso |
+| CI | **SUCCESS** (6 checks; selado 18:05Z) |
 | Invariantes | 025 blob `4aab7f6f…`; 026 histórico; tipo 422; versionamento Orçamento; canário identidade + `backups/` dockerignore |
 | **Veredito merge sync** | **OK** (preserva lotes anteriores) |
 | **Veredito merge/ativação #92** | **BLOCKED** (backfill 026; 033/grants; canais OFF) |

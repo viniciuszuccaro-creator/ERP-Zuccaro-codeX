@@ -1,3 +1,11 @@
+## SELO CI + APPLY #98 (2026-09-27T18:05Z)
+
+#92 `01798e71` e #93 `ee59f04d`: CI **SUCCESS**; sync OK; merge/ativação **BLOCKED**.
+#98 MERGED `9ed1a30e`; main CI SUCCESS; Codex em re-APPLY — Cursor não deploya.
+`4fea5a63` permanece **REVOKED**.
+
+---
+
 ## ESCLARECIMENTO — #96 `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
 
 **Não registrar APROVADO de `4fea5a639f839c94fc2a5a24dc582b2e0b847662`.**
