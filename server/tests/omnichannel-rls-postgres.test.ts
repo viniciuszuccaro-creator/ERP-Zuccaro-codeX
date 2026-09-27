@@ -11,6 +11,33 @@ import { boot } from './omnichannelFixture.js';
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 
 for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: 026 blocks unclassified history before DDL and preserves classified snapshots on repeat`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const db=engine==='PGlite'?new PGlite():await isolatedPostgres(url!);
+    try {
+      await db.exec('CREATE TABLE pedidos(id uuid PRIMARY KEY,group_id uuid,empresa_id uuid,numero bigint); CREATE TABLE pedido_itens(id uuid PRIMARY KEY); CREATE TABLE schema_migrations(id text PRIMARY KEY);');
+      const header=randomUUID(),item=randomUUID();
+      await db.query('INSERT INTO pedidos VALUES($1,$2,$3,1)',[header,S.groupA,S.empresaA]);
+      await db.query('INSERT INTO pedido_itens VALUES($1)',[item]);
+      const migration=readFileSync(new URL('../migrations/026_pedidos_tipo_comercial.sql',import.meta.url),'utf8');
+      await assert.rejects(()=>db.transaction(async tx=>{
+        await tx.exec(migration);
+        await tx.query("INSERT INTO schema_migrations VALUES('026_pedidos_tipo_comercial.sql')");
+      }),/PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED/);
+      assert.equal((await db.query("SELECT attname FROM pg_attribute WHERE attrelid IN ('pedidos'::regclass,'pedido_itens'::regclass) AND attname IN ('tipo_comercial','tipo_comercial_snapshot') AND NOT attisdropped")).rows.length,0);
+      assert.equal((await db.query('SELECT id FROM schema_migrations')).rows.length,0);
+      assert.equal((await db.query('SELECT id FROM pedidos')).rows[0].id,header);
+      assert.equal((await db.query('SELECT id FROM pedido_itens')).rows[0].id,item);
+      // Explicit synthetic mapping simulates the separately approved historical lot.
+      await db.exec("ALTER TABLE pedidos ADD COLUMN tipo_comercial text; ALTER TABLE pedido_itens ADD COLUMN tipo_comercial_snapshot text;");
+      await db.query("UPDATE pedidos SET tipo_comercial='SERVICO' WHERE id=$1",[header]);
+      await db.query("UPDATE pedido_itens SET tipo_comercial_snapshot='SERVICO' WHERE id=$1",[item]);
+      await db.exec(migration);await db.exec(migration);
+      assert.equal((await db.query('SELECT tipo_comercial FROM pedidos')).rows[0].tipo_comercial,'SERVICO');
+      assert.equal((await db.query('SELECT tipo_comercial_snapshot FROM pedido_itens')).rows[0].tipo_comercial_snapshot,'SERVICO');
+      await assert.rejects(()=>db.query('UPDATE pedidos SET tipo_comercial=NULL'),(e:unknown)=>(e as {code:string}).code==='23502');
+    } finally { await db.close(); }
+  });
+
   test(`${engine}: unknown product type rejects channel sale without documents or consumed retry key`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
     try {

@@ -1,11 +1,34 @@
 -- Comercial 360 Onda 5 ck2 — tipo comercial no Pedido canônico (aditiva).
 -- Derivado do Produto/snapshots; MISTO quando itens divergem. Sem módulo paralelo.
 
+-- Não existe evidência histórica suficiente para inferir tipo pelo Produto atual.
+-- Impedir defaults falsos antes de qualquer DDL; backfill exige lote aprovado.
+DO $$
+BEGIN
+  LOCK TABLE pedidos, pedido_itens IN SHARE ROW EXCLUSIVE MODE;
+  IF (
+    NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid='pedidos'::regclass
+      AND attname='tipo_comercial' AND NOT attisdropped)
+    AND EXISTS (SELECT 1 FROM pedidos)
+  ) OR (
+    NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass
+      AND attname='tipo_comercial_snapshot' AND NOT attisdropped)
+    AND EXISTS (SELECT 1 FROM pedido_itens)
+  ) THEN
+    RAISE EXCEPTION 'PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED'
+      USING ERRCODE='P0001';
+  END IF;
+END $$;
+
 ALTER TABLE pedidos
   ADD COLUMN IF NOT EXISTS tipo_comercial TEXT NOT NULL DEFAULT 'REVENDA';
 
 ALTER TABLE pedido_itens
   ADD COLUMN IF NOT EXISTS tipo_comercial_snapshot TEXT NOT NULL DEFAULT 'REVENDA';
+
+-- IF NOT EXISTS não valida uma coluna preexistente incompleta.
+ALTER TABLE pedidos ALTER COLUMN tipo_comercial SET NOT NULL;
+ALTER TABLE pedido_itens ALTER COLUMN tipo_comercial_snapshot SET NOT NULL;
 
 DO $$
 BEGIN
