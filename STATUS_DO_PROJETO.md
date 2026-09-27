@@ -1,3 +1,21 @@
+## #100 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T19:37Z)
+
+Fonte: [#100#issuecomment-5859164417](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/100#issuecomment-5859164417).
+
+| Campo | Valor |
+|---|---|
+| Main | `5dfa7562` — CI PUSH SUCCESS |
+| AUDIT | PASS (Auth/profile 1, grupo 1, empresas 2) |
+| APPLY | EXIT 0; backup `20260927-193327` hash PASS |
+| Canário | identity/ready/anti-fabricado/login-bundle **PASS** |
+| API digest | `sha256:f433beb8…0f15a` (`revision`=`5dfa7562…`) |
+| SPA digest | `sha256:4e0a091f…8f68b5` |
+| Negativos | Bearer inválido / header fabricado → 401 |
+| UI | formulário de login real entregue ao proprietário |
+| **Acesso completo** | **NÃO** — falta Grupo/CPA/3Z/Comercial/Administração |
+
+Cursor **reconhece** implantação; **não** declara experiência fechada. Continua modo autônomo.
+
 ## #100 DEPLOY EM CURSO — CI main SUCCESS (2026-09-27T19:33Z)
 
 Fonte: [#100#issuecomment-5859127269](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/100#issuecomment-5859127269).
