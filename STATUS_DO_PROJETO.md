@@ -11523,3 +11523,28 @@ Checklist inicial:
 - O lote elimina a corrupção silenciosa da migration, mas não fornece um backfill comercial aprovado. Se DEV tiver históricos sem tipo, apenas essa migration deve parar até mapeamento/reconciliação revisados; não apagar registros nem usar defaults para contornar. Histórico001–024 imutável;026 ainda não aplicada na VPS. CanaisOFF.
 - #96 acesso mantém prioridade, HEAD4fea5a6/CISUCCESS mas sem parecer Cursor; nenhuma implantação ou concessão de acesso executada. Autorização contínua preservada, com revisão/CI/backup/rollback como gates.
 - Fechamento local: backend completo370PASS/0FAIL/39SKIP(409), build/typecheck/lint/audit:baseline/diffPASS. PostgreSQL real será comprovado pela CI do novo HEAD; frontend não alterado e validação completa Linux mantida no workflow.
+
+## Incidente proprietário — candidato Codex 2026-09-27
+
+- Branch `codex/acesso-owner-auditoria-segura`, base main `0acb6ac1ca0267f3e253904c633a5dc46aa2472e`. Codex implementa e Cursor revisa; não aplicar antes de revisão independente e CI do HEAD.
+- Auditoria na conexão efetiva da API: banco postgres; um Auth proprietário existente, nenhum perfil ativo vinculado; Grupo CPA e duas empresas ativas já existentes. Proprietário autorizou reaproveitamento; sem novo cadastro, renomeação ou alteração de Auth nesta rodada. Backup privado em formato custom gerado e listagem do arquivo validada; restauração completa não executada.
+- Sessão e middleware convergem: vínculo de empresa restringe mesmo admin; perfil explicitamente de grupo permite as empresas ativas do grupo, sem fallback silencioso. Cabeçalhos não substituem Bearer verificado.
+- Script existente passa a AUDIT por padrão, IDs explícitos sem UUID fixture como fallback, prova banco API/direto, preflight sem mutação, backup antes de escrita. APPLY reutiliza existentes; BOOTSTRAP exige autorização separada, senha no terminal seguro e bloqueia senha em ambiente. Grant/demote geram auditoria atômica minimizada; falha no audit reverte perfil.
+- Procedimento candidato: canário API/SPA em rede privada e loopback 3086/3087; build com label de SHA; promover os mesmos image IDs somente após readiness/proxy/identidade fabricada/login bundle. Preservar 3080/3081, imagens de rollback, snapshots seletivos e backup SQL. Rollback de imagens não desfaz banco; restore seletivo de perfil é gate independente.
+- Validação local backend: 277 PASS / 0 FAIL / 15 SKIP (292); testes PGlite executam SQL real e preflight real. Backend typecheck/build e lint aprovados. Frontend typecheck apresenta dívida preexistente fora dos arquivos alterados; suíte local sofre restrições do ambiente Windows; build frontend aprovado com --configLoader native (bundler de config bloqueado por sandbox) — resultados da CI serão registrados no PR, sem alegar aprovação inexistente.
+- Estado: IMPLEMENTADO candidato; revisão/CI/merge/deploy ainda pendentes. VPS mantém imagens anteriores, sem deploy nesta rodada. Acesso não resolvido até logout/login real, seleção das duas empresas e Comercial/Configurações testados pelo proprietário. Canais omnicanal continuam OFF e HD fora da intervenção.
+
+## Codex — acesso96: correções da revisão de segurança (2026-09-27)
+
+- Candidato próprio; sem VPS, grant, merge ou novos cadastros. Corrige os quatro achados da review5330636163 no HEAD4fea5a6.
+- `.dockerignore` exclui backups privados do contexto do build SPA, evitando dump e env de recuperação no COPY/intermediate cache.
+- Canário consulta identidade efetiva do banco e compara com o banco direto antes de provisionar/promover; divergência preserva oficiais e limpa somente candidatos.
+- Guard de tenant e auditoria usam o mesmo vínculo email OU Auth do perfil sintético; vínculo de outro Grupo aborta a transação, e email divergente no mesmo Grupo recebe before/after auditável.
+- SQL real PGlite4 PASS/0 FAIL, incluindo audit-failure rollback e vínculo Auth com email divergente. Backend completo277 PASS/0 FAIL/15 SKIP; typecheck/build/lint/audit/diff PASS. Teste Bash novo preservado para CI Linux: sandbox Windows bloqueou mkdir/traversal, não houve execução VPS nem expectativa enfraquecida.
+- Revisão Cursor e CI do novo HEAD obrigatórias; CI anterior1077 não aprova estas mudanças. Após os gates: CI PUSH main, backup fresco, canário/APPLY, SHA/digests e teste real do proprietário. Canais OFF.
+- Validação frontend local: Vite/esbuild bloqueado por ACL de leitura do sandbox Windows (Access is denied ao resolver vite.config.js). Não declarar build/frontend/npm test completo local aprovado; CI Linux do novo HEAD executará frontend e harness Bash integral. Nenhuma configuração de segurança/teste removida para contornar o ambiente.
+
+## Codex — #92 alinhada à main de acesso (2026-09-27)
+
+- Incorporada main56dae6966ae39a11eac3064ca7bb0d67553e7765 na branch própria, preservando Auth/perfil/tenant da #96 e o histórico das duas frentes. requestContext/authSessionService idênticos à main; conflito exclusivamente documental concatenado sem apagar entregas.
+- 025 idêntica ao blob4aab7f6f da #50 atual; 026 continua fail-closed para histórico não mapeado, migration033/canais não ativados. Novos HEADs92/93 requerem CI e revisão independente Cursor. Acesso bloqueado apenas pela revisão do hotfix98 após pg_read_file; não equivale a deploy.

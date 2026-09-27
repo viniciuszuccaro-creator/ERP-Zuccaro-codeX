@@ -86,7 +86,7 @@ export function createSupabaseAuthMiddleware({
          WHERE p.auth_user_id = $1 AND p.ativo = true AND p.group_id = $2
            AND (($3::uuid IS NULL AND p.empresa_id IS NULL)
              OR ($3::uuid IS NOT NULL AND (p.empresa_id IS NULL OR p.empresa_id = $3)
-               AND EXISTS (SELECT 1 FROM empresas e WHERE e.id = $3 AND e.group_id = $2)))
+               AND EXISTS (SELECT 1 FROM empresas e WHERE e.id = $3 AND e.group_id = $2 AND e.status = 'Ativa')))
          LIMIT 1`,
         [id, groupId, empresaId || null],
       );

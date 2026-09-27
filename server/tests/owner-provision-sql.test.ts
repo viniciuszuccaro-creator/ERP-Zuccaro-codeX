@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import vm from 'node:vm';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,6 +18,45 @@ const EMPRESA_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const AUTH_OWNER = '11111111-1111-4111-8111-111111111111';
 const AUTH_SYNTH = '22222222-2222-4222-8222-222222222222';
 const PROFILE_SYNTH = '33333333-3333-4333-8333-333333333333';
+
+test('actual deployment preflight is read-only and blocks unauthorized tenant reuse', async () => {
+  const db = new PGlite();
+  try {
+    await schema(db);
+    const other = 'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2';
+    await db.exec("ALTER TABLE groups ADD COLUMN nome_do_grupo text, ADD COLUMN status text; ALTER TABLE empresas ADD COLUMN nome_fantasia text, ADD COLUMN razao_social text, ADD COLUMN status text; UPDATE groups SET nome_do_grupo='Grupo CPA',status='Ativo'; UPDATE empresas SET nome_fantasia='CPA ferro e aço',razao_social='CPA ferro e aço',status='Ativa';");
+    await db.query("INSERT INTO empresas(id,group_id,nome_fantasia,razao_social,status) VALUES($1,$2,'3Z LTDA','3Z LTDA','Ativa')", [other, GROUP_ID]);
+    const source = fs.readFileSync(path.join(ROOT, 'scripts/vps/deploy-owner-access-incidente.sh'), 'utf8');
+    const code = source.match(/GATE_JS="\$\(cat <<'JS'\r?\n([\s\S]*?)\r?\nJS/);
+    assert.ok(code, 'execute actual deployment gate');
+    async function gate(op: string, reuse = 'YES', email = OWNER_EMAIL) {
+      const logs: string[] = [];
+      let writes = 0;
+      await new Promise<void>((resolve, reject) => {
+        const client = { connect: async () => {}, query: async (sql: string, args?: unknown[]) => {
+          if (/^(INSERT|UPDATE|DELETE|BEGIN|COMMIT|LOCK)/i.test(sql)) writes++;
+          const result = await db.query(sql, args);
+          return { ...result, rowCount: result.rows.length };
+        }, end: async () => { resolve(); } };
+        const context = {
+          require: (name: string) => name === 'fs' ? { readFileSync: () => [op, email, GROUP_ID, EMPRESA_ID, other, 'Synthetic owner', reuse, 'APPLY', ''].join('\0') } : { Client: class { constructor() { return client; } } },
+          process: { env: {}, exitCode: 0 }, console: { log: (value: unknown) => logs.push(String(value)), error: (value: unknown) => logs.push(String(value)) },
+        };
+        try { vm.runInNewContext(code![1], context); } catch (error) { reject(error); }
+      });
+      assert.equal(writes, 0);
+      assert.equal(logs.join('').includes(email), false);
+      return logs.join('\n');
+    }
+    assert.match(await gate('audit', 'NO'), /owner_auth_count/);
+    assert.match(await gate('preflight', 'NO'), /synthetic_tenant_requires_owner_decision/);
+    assert.match(await gate('preflight'), /owner_preflight=PASS/);
+    assert.match(await gate('preflight', 'YES', 'missing@example.com'), /existing_group_and_auth_required/);
+    await db.query("INSERT INTO groups(id,nome_do_grupo,status) VALUES('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Other','Ativo')");
+    await db.query("UPDATE empresas SET group_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' WHERE id=$1", [other]);
+    assert.match(await gate('preflight'), /existing_company_mismatch_no_reparent/);
+  } finally { await db.close(); }
+});
 
 async function schema(db: PGlite) {
   await db.exec(`
@@ -213,4 +253,53 @@ test('PGlite: falha na TX faz ROLLBACK (sem estado parcial)', async () => {
   const after = await snapshotProfiles(db);
   assert.equal(after.length, before.length);
   assert.equal(after[0]?.role, 'admin');
+});
+
+test('actual provision SQL group scope and audit failure rollback', async () => {
+  const db = new PGlite();
+  try {
+    await schema(db);
+    // Auth is authoritative even when the local profile email has drifted.
+    await db.query('UPDATE profiles SET email=$1 WHERE id=$2', ['drifted@example.com', PROFILE_SYNTH]);
+    await db.exec('CREATE TABLE audit_logs(group_id uuid, empresa_id uuid, actor_email text, entity text, entity_id text, action text, before_data jsonb, after_data jsonb);');
+    const source = fs.readFileSync(path.join(ROOT,'scripts/vps/provision-owner-admin-profile.sh'),'utf8');
+    const raw = source.match(/<<'SQL'\r?\n(BEGIN;\r?\n\r?\nCREATE TEMP TABLE _owner_prov[\s\S]*?)\r?\nSQL/)!;
+    assert.ok(raw,'execute actual shell SQL');
+    const variables: Record<string,string> = {owner_email:OWNER_EMAIL,owner_full_name:'Synthetic owner',owner_group_id:GROUP_ID,owner_empresa_id:EMPRESA_ID,synth_email:SYNTH_EMAIL,demote_synth:'YES',owner_scope:'GROUP',expected_owner_admin:'1',expected_synth_admin:'0'};
+    const sql = raw[1].replace(/:'([a-z_]+)'/g,(_all,key)=>{assert.ok(key in variables,key);return "'"+variables[key].replaceAll("'","''")+"'";}).replace("pg_read_file('/tmp/owner-admin-permissoes.json')::jsonb","'"+JSON.stringify(PERMS).replaceAll("'","''")+"'::jsonb");
+    await db.exec(sql);
+    const owner = await db.query<{empresa_id:string|null}>('SELECT empresa_id FROM profiles WHERE auth_user_id=$1',[AUTH_OWNER]);
+    assert.equal(owner.rows[0].empresa_id,null);
+    const audit = await db.query('SELECT before_data,after_data FROM audit_logs');
+    assert.equal(audit.rows.length,2);
+    const synthAudit = await db.query<{before_data:{role:string},after_data:{role:string}}>(
+      'SELECT before_data,after_data FROM audit_logs WHERE entity_id=$1', [PROFILE_SYNTH]);
+    assert.equal(synthAudit.rows.length,1);
+    assert.equal(synthAudit.rows[0].before_data.role,'admin');
+    assert.equal(synthAudit.rows[0].after_data.role,'user');
+    assert.equal(JSON.stringify(audit.rows).includes(OWNER_EMAIL),false);
+    assert.equal(JSON.stringify(audit.rows).includes('Synthetic owner'),false);
+    await db.exec("DELETE FROM audit_logs; DELETE FROM profiles WHERE auth_user_id='"+AUTH_OWNER+"'; UPDATE profiles SET role='admin' WHERE auth_user_id='"+AUTH_SYNTH+"'; ALTER TABLE audit_logs ADD CONSTRAINT fail_audit CHECK(false);");
+    await assert.rejects(()=>db.exec(sql));
+    await db.exec('ROLLBACK');
+    const restored = await db.query('SELECT role FROM profiles WHERE auth_user_id=$1',[AUTH_SYNTH]);
+    assert.equal(restored.rows[0].role,'admin');
+    const absent = await db.query('SELECT id FROM profiles WHERE auth_user_id=$1',[AUTH_OWNER]);
+    assert.equal(absent.rows.length,0);
+    await db.query("INSERT INTO profiles(auth_user_id,email,role,ativo,group_id) VALUES($1,$2,'user',true,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')", [AUTH_OWNER, OWNER_EMAIL]);
+    await assert.rejects(()=>db.exec(sql), /existing_owner_identity_or_tenant_conflict/);
+    await db.exec('ROLLBACK');
+    const unchanged = await db.query('SELECT role,group_id FROM profiles WHERE auth_user_id=$1', [AUTH_OWNER]);
+    assert.equal(unchanged.rows[0].role, 'user');
+    assert.equal(unchanged.rows[0].group_id, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+    await db.query('DELETE FROM profiles WHERE auth_user_id=$1', [AUTH_OWNER]);
+    await db.query("UPDATE profiles SET group_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' WHERE id=$1", [PROFILE_SYNTH]);
+    await assert.rejects(()=>db.exec(sql), /synth_profile_other_group/);
+    await db.exec('ROLLBACK');
+    const foreign = await db.query('SELECT role,group_id FROM profiles WHERE id=$1', [PROFILE_SYNTH]);
+    assert.equal(foreign.rows[0].role,'admin');
+    assert.equal(foreign.rows[0].group_id,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+    assert.equal((await db.query('SELECT id FROM profiles WHERE auth_user_id=$1',[AUTH_OWNER])).rows.length,0);
+    assert.equal((await db.query('SELECT entity_id FROM audit_logs')).rows.length,0);
+  } finally {await db.close();}
 });
