@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AppError } from '../api/errors.js';
 import { orcamentoCreateSchema, orcamentoItemSchema } from '../repositories/orcamentoTypes.js';
 import { pedidoCreateSchema } from '../repositories/pedidoTypes.js';
+import { PEDIDO_STATUS } from '../repositories/pedidoTypes.js';
 
 export const channelIdentitySchema = z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
@@ -41,11 +42,18 @@ export const receiptQuerySchema = z.object({ version: z.literal(1), operation: z
   tipo: z.enum(['Pedido', 'Orcamento']), idempotencyKey: z.string().regex(/^[a-zA-Z0-9_.:-]{1,160}$/),
 }).strict();
 export type ReceiptQuery = z.infer<typeof receiptQuerySchema>;
+export const receiptStateQuerySchema = receiptQuerySchema.extend({operation:z.literal('receipt-state')}).strict();
+export type ReceiptStateQuery = z.infer<typeof receiptStateQuerySchema>;
+export const saleStateSchema = z.discriminatedUnion('tipo',[
+  z.object({id:z.string().uuid(),tipo:z.literal('Pedido'),status:z.enum(PEDIDO_STATUS),updatedAt:z.string().datetime()}).strict(),
+  z.object({id:z.string().uuid(),tipo:z.literal('Orcamento'),status:z.enum(['EM_ABERTO','CANCELADO']),updatedAt:z.string().datetime()}).strict(),
+]);
+export type SaleState = z.infer<typeof saleStateSchema>;
 const receiptCursor = z.object({ id:z.string().uuid(),createdAt:z.string().datetime() }).strict();
 export const receiptPageQuerySchema = z.object({version:z.literal(1),operation:z.literal('receipt-page'),
   tipo:z.enum(['Pedido','Orcamento']),limit:z.number().int().min(1).max(50),cursor:receiptCursor.optional(),
 }).strict();
-export const receiptReadSchema = z.discriminatedUnion('operation',[receiptQuerySchema,receiptPageQuerySchema]);
+export const receiptReadSchema = z.discriminatedUnion('operation',[receiptQuerySchema,receiptPageQuerySchema,receiptStateQuerySchema]);
 export type ReceiptPageQuery = z.infer<typeof receiptPageQuerySchema>;
 export const receiptPageSchema = z.object({tipo:z.enum(['Pedido','Orcamento']),
   items:z.array(z.object({eventId:z.string().uuid(),receipt:saleReceiptSchema,receivedAt:z.string().datetime()}).strict()).max(50),

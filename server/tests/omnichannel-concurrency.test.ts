@@ -72,6 +72,30 @@ test('isolated PostgreSQL fixture refuses DEV-like URLs before opening a connect
   await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@vps.example/erp_omnichannel_test'), /not isolated/);
 });
 
+test('real PostgreSQL channel state reads canonical status and rolls back audit failure without exposing data',{skip:!url},async()=>{
+  const f=await boot(await isolatedPostgres(url!));
+  try{
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-SITE',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    const created=await client.create(saleEnvelopeSchema.parse(f.envelope));
+    const query={version:1,operation:'receipt-state',tipo:'Pedido',idempotencyKey:f.envelope.idempotencyKey} as const;
+    assert.equal((await client.receipt(query)).data.status,'EM_ABERTO');
+    await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"criar\",\"visualizar\",\"cancelar\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+    await f.runtime.pedidoService.cancel({groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa',requestId:'synthetic-state-cancel'},created.data.id,'Synthetic cancellation');
+    assert.equal((await client.receipt(query)).data.status,'CANCELADO');
+    const before=(await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length;
+    await f.pg.exec(`CREATE FUNCTION reject_pg_state_read() RETURNS trigger AS $$ BEGIN
+      IF NEW.action='read' THEN RAISE EXCEPTION 'SYNTHETIC_STATE_FAILURE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER pg_state_read_fail AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_pg_state_read();`);
+    const failures=await Promise.all(Array.from({length:3},()=>f.send(query,{path:'/recibos'})));
+    assert.ok(failures.every(r=>r.status===500&&r.body.data===undefined));
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length,before);
+    assert.deepEqual((await f.pg.query('SELECT status,ativo FROM pedidos')).rows,[{status:'CANCELADO',ativo:false}]);
+    await f.pg.exec('DROP TRIGGER pg_state_read_fail ON audit_logs');
+    assert.equal((await client.receipt(query)).data.status,'CANCELADO');
+    assert.deepEqual((await client.receipt({...query,operation:'receipt'})).data,created.data);
+  }finally{await f.close();}
+});
+
 test('real PostgreSQL signed receipt history retains equal microsecond rows and tenant/client partition', {skip:!url},async()=>{
   const f=await boot(await isolatedPostgres(url!),[{...identity,id:'synthetic-other-client'}]);
   try{

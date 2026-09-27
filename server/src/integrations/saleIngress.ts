@@ -5,11 +5,11 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import { AppError } from '../api/errors.js';
-import { digest, saleReceiptSchema, type SaleReceipt, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery, type ReceiptPageQuery, type ReceiptPage } from './saleIngressContract.js';
+import { digest, saleReceiptSchema, saleStateSchema, type SaleState, type ReceiptStateQuery, type SaleReceipt, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery, type ReceiptPageQuery, type ReceiptPage } from './saleIngressContract.js';
 
 type CanonicalSales = {
-  pedidoService: Pick<PedidoService, 'create'>;
-  orcamentoService: Pick<OrcamentoService, 'create'>;
+  pedidoService: Pick<PedidoService, 'create'|'get'>;
+  orcamentoService: Pick<OrcamentoService, 'create'|'get'>;
   auditRepo: AuditRepository; tenantGuard: TenantGuard; rbacGuard: RbacGuard;
 };
 export type { SaleReceipt } from './saleIngressContract.js';
@@ -94,8 +94,9 @@ export class SaleIngress {
 
   async receipt(identity:ChannelIdentity,lookup:ReceiptQuery,requestId:string):Promise<SaleReceipt>;
   async receipt(identity:ChannelIdentity,lookup:ReceiptPageQuery,requestId:string):Promise<ReceiptPage>;
-  async receipt(identity:ChannelIdentity,lookup:ReceiptQuery|ReceiptPageQuery,requestId:string):Promise<SaleReceipt|ReceiptPage>;
-  async receipt(identity: ChannelIdentity, lookup: ReceiptQuery|ReceiptPageQuery, requestId: string) {
+  async receipt(identity:ChannelIdentity,lookup:ReceiptStateQuery,requestId:string):Promise<SaleState>;
+  async receipt(identity:ChannelIdentity,lookup:ReceiptQuery|ReceiptPageQuery|ReceiptStateQuery,requestId:string):Promise<SaleReceipt|ReceiptPage|SaleState>;
+  async receipt(identity: ChannelIdentity, lookup: ReceiptQuery|ReceiptPageQuery|ReceiptStateQuery, requestId: string) {
     const ctx: RequestContext = { groupId: identity.groupId, empresaId: identity.empresaId,
       actorId: identity.actorId, scopeType: 'empresa', requestId };
     await this.sales.tenantGuard.assertEmpresaInGroup(identity.groupId, identity.empresaId);
@@ -126,6 +127,18 @@ export class SaleIngress {
       const event = result.rows[0];
       if (!event) throw new AppError(404, 'CHANNEL_RECEIPT_NOT_FOUND', 'Receipt not found');
       const receipt = await this.validateReceipt(event,lookup.tipo,ctx,query);
+      if(lookup.operation==='receipt-state'){
+        // Services/repositories remain the canonical read model and run in this scoped transaction.
+        const document=lookup.tipo==='Pedido'?await this.sales.pedidoService.get(ctx,receipt.id)
+          :await this.sales.orcamentoService.get(ctx,receipt.id);
+        const state=saleStateSchema.safeParse({id:document.id,tipo:lookup.tipo,status:document.status,updatedAt:document.updated_at});
+        if(!state.success||document.id!==receipt.id||document.group_id!==ctx.groupId||document.empresa_id!==ctx.empresaId){
+          throw new AppError(500,'CHANNEL_DOCUMENT_STATE_INVALID','Canonical document state integrity failed');
+        }
+        await this.sales.auditRepo.append({...ctx,entity:'IntegracaoEvento',entityId:event.id,action:'read',
+          afterData:{operation:'receipt-state',canal:identity.channel,tipo:lookup.tipo,documento_id:receipt.id,status:state.data.status}},query);
+        return state.data;
+      }
       await this.sales.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', entityId: event.id,
         action: 'read', afterData: { canal: identity.channel, tipo: lookup.tipo, documento_id: receipt.id } }, query);
       // Receipt confirms ingestion, not current payment, fulfillment or document status.
