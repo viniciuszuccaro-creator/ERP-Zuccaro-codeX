@@ -120,6 +120,36 @@ export class CatalogOutbox {
     });
   }
 
+  /** Read-only operator triage; no raw payload/key/provider message and no implicit retry. */
+  async failures(ctx: RequestContext, limit = 20, cursor?: { id: string; createdAt: string }) {
+    await this.authorize(ctx, 'catalogo', 'visualizar');
+    const parsed = z.object({ limit: z.number().int().min(1).max(100),
+      cursor: z.object({ id: z.string().uuid(), createdAt: z.string().datetime() }).strict().optional(),
+    }).safeParse({ limit,cursor });
+    if (!parsed.success) throw new AppError(422, 'CATALOG_PAGE_INVALID', 'Invalid page');
+    return this.scoped(ctx, async (tx) => {
+      const result = await tx.query<{ id: string; status: 'retry'|'dead_letter'|'processing'; attempts: number;
+        maxAttempts: number; createdAt: string; nextAttemptAt: Date|null; lockedUntil: Date|null; code: string|null }>(`
+        SELECT id,status,attempts,max_attempts AS "maxAttempts",
+          to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt",
+          next_attempt_at AS "nextAttemptAt",locked_until AS "lockedUntil",
+          CASE WHEN error_message IN ('CATALOG_PAYLOAD_INVALID','CATALOG_SOURCE_CHANGED','CATALOG_RECEIPT_INVALID',
+            'CATALOG_PROVIDER_UNAVAILABLE','ATTEMPTS_EXHAUSTED','OUTBOX_KEY_REQUIRED') THEN error_message
+            WHEN error_message IS NULL THEN NULL ELSE 'OUTBOX_ERROR_REDACTED' END AS code
+        FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source='ERP'
+          AND event_type='produto.publicado' AND aggregate_type='Produto'
+          AND (status IN ('retry','dead_letter') OR (status='processing' AND (locked_until IS NULL OR locked_until<=statement_timestamp())))
+          AND ($3::uuid IS NULL OR (created_at,id)>($4::timestamptz,$3::uuid))
+        ORDER BY created_at,id LIMIT $5`,[ctx.groupId,ctx.empresaId,cursor?.id??null,cursor?.createdAt??null,limit+1]);
+      const items = result.rows.slice(0,limit), hasMore = result.rows.length>limit;
+      const last = items.at(-1);
+      await this.guards.auditRepo.append({ ...ctx,entity:'IntegracaoEvento',action:'read',
+        afterData:{ operation:'catalog.failures',examined:items.length,limit,hasMore } },tx);
+      return { items,hasMore,nextCursor:hasMore&&last?{id:last.id,createdAt:last.createdAt}:null,
+        scope:'COMPANY',reprocessApplied:false };
+    });
+  }
+
   /** Operational snapshot of this company's existing queue; thresholds are caller-supplied, never commercial defaults. */
   async health(ctx: RequestContext, overdueSeconds: number) {
     await this.authorize(ctx, 'catalogo', 'visualizar');

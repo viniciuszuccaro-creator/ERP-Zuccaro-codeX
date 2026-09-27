@@ -43,3 +43,48 @@ test('health is fail-closed for RBAC, threshold and audit failures', async () =>
     await assert.rejects(f.outbox.health(f.ctx,60),(e: any) => e.statusCode===403);
   } finally { await f.close(); }
 });
+
+test('failure triage pages metadata only, masks legacy errors and identifies expired leases without mutating queue', async () => {
+  const f = await outboxFixture();
+  try {
+    const ids = await Promise.all(Array.from({length:3},() => f.event()));
+    const privateEvent = await f.event({empresa:S.empresaA2});
+    const unrelated = await f.event({type:'unrelated.event'});
+    const liveLease = await f.event();
+    await f.pg.query("UPDATE integration_events SET status='dead_letter',error_message='PRIVATE_CUSTOMER_DATA' WHERE id=$1",[ids[0]]);
+    await f.pg.query("UPDATE integration_events SET status='retry',error_message='CATALOG_PROVIDER_UNAVAILABLE',next_attempt_at=now()+interval '1 hour' WHERE id=$1",[ids[1]]);
+    await f.pg.query("UPDATE integration_events SET status='processing',locked_until=now()-interval '1 second' WHERE id=$1",[ids[2]]);
+    await f.pg.query("UPDATE integration_events SET status='dead_letter' WHERE id IN ($1,$2)",[privateEvent,unrelated]);
+    await f.pg.query("UPDATE integration_events SET status='processing',locked_until=now()+interval '1 hour' WHERE id=$1",[liveLease]);
+    // Keep microsecond precision so a one-row cursor cannot return the same row repeatedly.
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-01T00:00:00.123456Z' WHERE id=ANY($1::uuid[])",[ids]);
+    const before = (await f.pg.query('SELECT id,status,attempts,locked_until FROM integration_events ORDER BY id')).rows;
+    const found: string[]=[]; let cursor: {id:string;createdAt:string}|undefined;
+    do {
+      const page=await f.outbox.failures(f.ctx,1,cursor);
+      assert.equal(page.scope,'COMPANY'); assert.equal(page.reprocessApplied,false);
+      assert.equal(page.items.length,1); found.push(page.items[0].id);
+      assert.ok(!JSON.stringify(page).includes('PRIVATE_CUSTOMER_DATA'));
+      assert.ok(!('payload' in page.items[0])); assert.ok(!('key' in page.items[0]));
+      cursor=page.nextCursor??undefined;
+    } while(cursor);
+    assert.deepEqual(found.sort(),[...ids].sort());
+    const page=await f.outbox.failures(f.ctx);
+    assert.equal(page.items.find((r)=>r.id===ids[0])?.code,'OUTBOX_ERROR_REDACTED');
+    assert.equal(page.items.find((r)=>r.id===ids[1])?.code,'CATALOG_PROVIDER_UNAVAILABLE');
+    assert.deepEqual((await f.pg.query('SELECT id,status,attempts,locked_until FROM integration_events ORDER BY id')).rows,before);
+    assert.ok((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length>=4);
+  } finally { await f.close(); }
+});
+
+test('failure triage rejects malformed bounds and blocks response on audit failure or read revocation', async () => {
+  const f=await outboxFixture();
+  try {
+    await assert.rejects(f.outbox.failures(f.ctx,101),(e:any)=>e.code==='CATALOG_PAGE_INVALID');
+    await assert.rejects(f.outbox.failures(f.ctx,1,{id:'invalid',createdAt:'invalid'}),(e:any)=>e.code==='CATALOG_PAGE_INVALID');
+    const failing=new CatalogOutbox(f.db,{...f.runtime,auditRepo:{...f.runtime.auditRepo,append:async()=>{throw new Error('audit failure');}}});
+    await assert.rejects(failing.failures(f.ctx),/audit failure/);
+    await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
+    await assert.rejects(f.outbox.failures(f.ctx),(e:any)=>e.statusCode===403);
+  } finally { await f.close(); }
+});
