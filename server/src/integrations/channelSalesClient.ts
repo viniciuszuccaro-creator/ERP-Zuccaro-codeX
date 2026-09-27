@@ -6,6 +6,13 @@ import { channelIdentitySchema, saleEnvelopeSchema, receiptReadSchema, receiptPa
 const created = z.object({ data: saleReceiptSchema, replayed: z.boolean() }).strict();
 const found = z.object({ data: saleReceiptSchema }).strict();
 const paged = z.object({ data:receiptPageSchema }).strict();
+const batchSchema = z.object({ operation: z.literal('sale-batch'), items: z.array(saleEnvelopeSchema).min(1).max(25) }).strict();
+export type SaleBatch = z.infer<typeof batchSchema>;
+export type SaleBatchResult = { items: Array<
+  | { index: number; state: 'CONFIRMED'; result: z.infer<typeof created> }
+  | { index: number; state: 'UNCONFIRMED'; code: string; status?: number }
+  | { index: number; state: 'NOT_SENT' }
+> };
 const optionsSchema = channelIdentitySchema.pick({ id: true, secret: true }).extend({
   endpoint: z.string().url(), attempts: z.number().int().min(1).max(3).default(3),
   timeoutMs: z.number().int().min(100).max(30_000).default(10_000),
@@ -34,10 +41,41 @@ export class ChannelSalesClient {
     this.endpoint = url.href.replace(/\/$/, '');
   }
 
-  async create(payload: SaleEnvelope): Promise<z.infer<typeof created>> {
+  async create(payload: SaleEnvelope): Promise<z.infer<typeof created>>;
+  async create(payload: SaleBatch): Promise<SaleBatchResult>;
+  async create(payload: SaleEnvelope | SaleBatch): Promise<z.infer<typeof created> | SaleBatchResult> {
+    if (payload && typeof payload === 'object' && 'operation' in payload && payload.operation === 'sale-batch') return this.createBatch(payload);
     const parsed = saleEnvelopeSchema.safeParse(payload);
     if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
     return this.request('', parsed.data, created);
+  }
+
+  /** Each sale retains its canonical transaction. Stop on uncertainty; never roll back prior receipts. */
+  private async createBatch(payload: SaleBatch): Promise<SaleBatchResult> {
+    const parsed = batchSchema.safeParse(payload);
+    if (!parsed.success) throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
+    // Validate and snapshot the entire queue before its first side effect. No browser/local persistence here.
+    const keys = new Set<string>(); let bytes = 0;
+    for (const item of parsed.data.items) {
+      const key = JSON.stringify([item.tipo, item.idempotencyKey]);
+      const size = Buffer.byteLength(JSON.stringify(item)); bytes += size;
+      if (keys.has(key) || size > 128 * 1024 || bytes > 1024 * 1024) {
+        throw new ChannelTransportError('CHANNEL_CLIENT_PAYLOAD_INVALID');
+      }
+      keys.add(key);
+    }
+    const items: SaleBatchResult['items'] = []; let stopped = false;
+    for (const [index, item] of parsed.data.items.entries()) {
+      if (stopped) { items.push({ index, state: 'NOT_SENT' }); continue; }
+      try { items.push({ index, state: 'CONFIRMED', result: await this.request('', item, created) }); }
+      catch (error) {
+        if (!(error instanceof ChannelTransportError)) throw error;
+        // Even a final 4xx can follow an earlier ambiguous retry that committed. Never infer rejection.
+        items.push({ index, state: 'UNCONFIRMED', code: error.code, ...(error.status ? { status: error.status } : {}) });
+        stopped = true;
+      }
+    }
+    return { items };
   }
 
   async receipt(payload:ReceiptQuery):Promise<z.infer<typeof found>>;

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { boot } from './omnichannelFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { ChannelSalesClient } from '../src/integrations/channelSalesClient.js';
+import { saleEnvelopeSchema } from '../src/integrations/saleIngressContract.js';
 import { identity,now } from './omnichannelFixture.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
@@ -39,6 +40,31 @@ test('PostgreSQL multiconnection: failed atomic audits leave no documents, recei
     await f.pg.exec('DROP TRIGGER concurrent_audit_fail ON audit_logs');
     assert.equal((await f.send(f.envelope, { nonce: 'concurrent-failed-0' })).status, 201);
   } finally { await f.close(); }
+});
+
+test('real PostgreSQL batch preserves confirmed transactions and rolls back only the failed sale audit',{skip:!url},async()=>{
+  const f=await boot(await isolatedPostgres(url!));
+  try{
+    let calls=0;
+    const options={endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true,attempts:1};
+    const client=new ChannelSalesClient(options,async(input,init)=>{
+      const response=await fetch(input,init);calls++;
+      if(calls===1)await f.pg.exec(`CREATE FUNCTION reject_batch_audit() RETURNS trigger AS $$ BEGIN
+        IF NEW.entity='IntegracaoEvento' THEN RAISE EXCEPTION 'SYNTHETIC_BATCH_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+        CREATE TRIGGER batch_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_batch_audit();`);
+      return response;
+    },()=>now);
+    const batch={operation:'sale-batch' as const,items:[0,1,2].map(i=>saleEnvelopeSchema.parse({...f.envelope,idempotencyKey:`pg-batch-${i}`}))};
+    const first=await client.create(batch);
+    assert.deepEqual(first.items.map(i=>i.state),['CONFIRMED','UNCONFIRMED','NOT_SENT']);assert.equal(calls,2);
+    for(const table of ['pedidos','pedido_itens','pedido_historico'])assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length,1);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,1);
+    await f.pg.exec('DROP TRIGGER batch_audit_fail ON audit_logs');
+    const resumed=await new ChannelSalesClient(options,fetch,()=>now).create(batch);
+    assert.deepEqual(resumed.items.map(i=>i.state==='CONFIRMED'?i.result.replayed:null),[true,false,false]);
+    for(const table of ['pedidos','pedido_itens','pedido_historico'])assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length,3);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,3);
+  }finally{await f.close();}
 });
 
 test('isolated PostgreSQL fixture refuses DEV-like URLs before opening a connection', async () => {
