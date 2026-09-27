@@ -43,9 +43,9 @@ function controlledDb(results: Array<{ rows: unknown[] }>) {
 
 test('postgres orcamento cria e recupera agregado com itens dentro da transacao', async () => {
   const fixture = row();
-  // lock, sequence, insert, set raiz, insert item, get
+  // lock, sequence, insert with physical root, insert item, get
   const { db, calls } = controlledDb([
-    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] },
   ]);
   const created = await new PostgresOrcamentoRepository(db).create(scope, payload);
   assert.equal(created.numero, '00000001');
@@ -77,13 +77,13 @@ test('postgres orcamento lista com paginacao deterministica e itens sem N+1', as
 test('postgres orcamento abre transacao somente sem executor', async () => {
   const fixture = row();
   const direct = controlledDb([
-    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] },
   ]);
   await new PostgresOrcamentoRepository(direct.db).create(scope, payload);
   assert.equal(direct.transactionCount(), 1);
 
   const supplied = controlledDb([
-    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
+    { rows: [] }, { rows: [{ n: '1' }] }, { rows: [{ id: fixture.id }] }, { rows: [] }, { rows: [fixture] },
     { rows: [fixture] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [fixture] },
     { rows: [{ id: fixture.id }] }, { rows: [{ ...fixture, status: 'CANCELADO', ativo: false }] },
   ]);

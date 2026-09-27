@@ -6,8 +6,66 @@ import { PGlite } from '@electric-sql/pglite';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
+import { boot } from './omnichannelFixture.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
+
+for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: historical quote roots survive repeatable 027 and prohibit null roots`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const db = engine === 'PGlite' ? new PGlite() : await isolatedPostgres(url!);
+    try {
+      await db.exec(`CREATE TABLE orcamentos(id uuid PRIMARY KEY,group_id uuid NOT NULL,empresa_id uuid NOT NULL,numero text,status text,
+        UNIQUE(id,group_id,empresa_id),CONSTRAINT orcamentos_empresa_id_numero_key UNIQUE(empresa_id,numero));`);
+      const id = randomUUID();
+      await db.query("INSERT INTO orcamentos VALUES($1,$2,$3,'00000001','EM_ABERTO')", [id,S.groupA,S.empresaA]);
+      const migration = readFileSync(new URL('../migrations/027_orcamentos_versao.sql', import.meta.url), 'utf8');
+      await db.exec(migration); await db.exec(migration);
+      assert.equal((await db.query('SELECT orcamento_raiz_id FROM orcamentos WHERE id=$1',[id])).rows[0].orcamento_raiz_id,id);
+      await assert.rejects(() => db.query('UPDATE orcamentos SET orcamento_raiz_id=NULL WHERE id=$1',[id]), (e: unknown)=>(e as {code:string}).code==='23502');
+    } finally { await db.close(); }
+  });
+
+  test(`${engine}: four channel quotes version atomically without transport identity duplication`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const f = await boot(engine === 'PGlite' ? new PGlite() : await isolatedPostgres(url!));
+    try {
+      await f.pg.query('UPDATE profiles SET permissoes=$1::jsonb WHERE id=$2', [JSON.stringify({Integracoes:{vendas:['importar','visualizar']},Comercial:{orcamento:['criar','visualizar','versionar']}}), S.runtimeActorA]);
+      const ctx = {groupId:S.groupA,empresaId:S.empresaA,actorId:S.runtimeActorA,requestId:'synthetic-version'};
+      const {tipo_operacao:_tipo,data_entrega_solicitada:_data,...base}=f.envelope.documento;
+      const documento={...base,validade_em:'2027-01-01T00:00:00.000Z'};
+      const versionPayload={...documento,itens:documento.itens.map(item=>({...item,preco_unitario:'999',desconto:'0'}))};
+      for (const channel of ['SITE','APP','CHATBOT','MARKETPLACE']) {
+        const envelope={...f.envelope,tipo:'Orcamento',idempotencyKey:'version-'+channel,documento};
+        const response=await f.send(envelope,{channel:'synthetic-'+channel,nonce:'version-create-'+channel});
+        assert.equal(response.status,201); const id=response.body.data!.id;
+        const first=await f.runtime.orcamentoService.get(ctx,id);
+        const next=await f.runtime.orcamentoService.createVersion(ctx,id,versionPayload);
+        assert.equal(next.versao,2); assert.equal(next.orcamento_raiz_id,id); assert.equal(next.total,'51.000000');
+        assert.equal(next.origem,channel); assert.equal(next.canal,channel);
+        assert.equal(next.external_id,null); assert.equal(next.idempotency_key,null);
+        const history=await f.runtime.orcamentoService.listVersions(ctx,id);
+        assert.deepEqual(history.map(q=>q.versao),[2,1]);
+        assert.equal(history[1].external_id,first.external_id); assert.equal(history[1].supersedido_por_id,next.id);
+        const retry=await f.send(envelope,{channel:'synthetic-'+channel,nonce:'version-retry-'+channel});
+        assert.equal(retry.status,200); assert.equal(retry.body.data!.id,id);
+        assert.equal((await f.pg.query('SELECT id FROM orcamentos WHERE orcamento_raiz_id=$1',[id])).rows.length,2);
+        await assert.rejects(()=>f.runtime.orcamentoService.get({...ctx,empresaId:S.empresaA2},next.id));
+        await f.pg.exec(`CREATE FUNCTION reject_quote_version_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+          IF NEW.entity='Orcamento' THEN RAISE EXCEPTION 'SYNTHETIC_QUOTE_AUDIT_FAILURE'; END IF; RETURN NEW; END $$;
+          CREATE TRIGGER quote_version_audit BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_quote_version_audit();`);
+        const audits=(await f.pg.query('SELECT id FROM audit_logs')).rows.length;
+        await assert.rejects(()=>f.runtime.orcamentoService.createVersion(ctx,next.id,versionPayload),/SYNTHETIC_QUOTE_AUDIT_FAILURE/);
+        assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,audits);
+        assert.equal((await f.runtime.orcamentoService.get(ctx,next.id)).status,'EM_ABERTO');
+        assert.equal((await f.runtime.orcamentoService.listVersions(ctx,id)).length,2);
+        await f.pg.exec('DROP TRIGGER quote_version_audit ON audit_logs; DROP FUNCTION reject_quote_version_audit();');
+        const third=await f.runtime.orcamentoService.createVersion(ctx,next.id,versionPayload);
+        assert.equal(third.versao,3); assert.equal(third.orcamento_raiz_id,id);
+        assert.equal((await f.pg.query('SELECT id FROM audit_logs')).rows.length,audits+2);
+        assert.equal((await f.pg.query("SELECT id FROM orcamentos WHERE orcamento_raiz_id=$1 AND status='EM_ABERTO'",[id])).rows.length,1);
+      }
+    } finally { await f.close(); }
+  });
+}
 
 for (const engine of ['PGlite', 'PostgreSQL real']) {
   test(`${engine}: canonical 025 repeats safely and constraint failure never records migration`, { skip: engine === 'PostgreSQL real' && !url }, async () => {

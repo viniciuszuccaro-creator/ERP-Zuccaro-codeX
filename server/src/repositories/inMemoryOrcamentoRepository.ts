@@ -176,7 +176,7 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
       observacoes: data.observacoes ?? null,
       origem: source.origem,
       canal: source.canal,
-      external_id: source.external_id,
+      external_id: null,
       idempotency_key: null,
       campanha: source.campanha,
       subtotal: totals.subtotal,

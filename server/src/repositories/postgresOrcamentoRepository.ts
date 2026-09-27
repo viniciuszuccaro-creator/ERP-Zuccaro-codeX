@@ -103,10 +103,10 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
       const totals = calculateOrcamento(data.itens);
       const origem = data.origem ?? 'MANUAL';
       const inserted = await query.query<{ id: string }>(
-        `INSERT INTO orcamentos(
-          group_id,empresa_id,numero,versao,cliente_empresa_id,condicao_pagamento_id,validade_em,observacoes,
+        `WITH identity AS (SELECT gen_random_uuid() id) INSERT INTO orcamentos(
+          id,orcamento_raiz_id,group_id,empresa_id,numero,versao,cliente_empresa_id,condicao_pagamento_id,validade_em,observacoes,
           origem,canal,external_id,idempotency_key,campanha,subtotal,desconto,total
-        ) VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
+        ) SELECT id,id,$1,$2,$3,1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15 FROM identity RETURNING id`,
         [
           scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em,
           data.observacoes ?? null, origem, data.canal ?? null, data.external_id ?? null, data.idempotency_key ?? null,
@@ -114,7 +114,6 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
         ],
       );
       const id = String(inserted.rows[0]?.id);
-      await query.query('UPDATE orcamentos SET orcamento_raiz_id=$1 WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
       await this.insertItems(query, scope, id, data);
       return (await this.get(scope, id, query))!;
     });
@@ -176,23 +175,31 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
       await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`orcamento-ver:${scope.empresaId}:${sourceId}`]);
       const source = await this.get(scope, sourceId, query);
       if (!source || source.status !== 'EM_ABERTO') throw new Error('ORCAMENTO_STATE_CONFLICT');
+      // Release the immediate unique open-number index in this same transaction.
+      // Any insert/item/audit failure rolls this transition back with the caller.
+      const superseded = await query.query<{ id: string }>(
+        "UPDATE orcamentos SET status='SUPERSEDIDO' WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO' RETURNING id",
+        [sourceId, scope.groupId, scope.empresaId],
+      );
+      if (!superseded.rows[0]) throw new Error('ORCAMENTO_STATE_CONFLICT');
       const totals = calculateOrcamento(data.itens);
       const inserted = await query.query<{ id: string }>(
         `INSERT INTO orcamentos(
           group_id,empresa_id,numero,versao,orcamento_raiz_id,cliente_empresa_id,condicao_pagamento_id,
           validade_em,observacoes,origem,canal,external_id,idempotency_key,campanha,subtotal,desconto,total
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NULL,$13,$14,$15,$16) RETURNING id`,
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NULL,NULL,$12,$13,$14,$15) RETURNING id`,
         [
           scope.groupId, scope.empresaId, source.numero, source.versao + 1, source.orcamento_raiz_id,
           data.cliente_empresa_id, data.condicao_pagamento_id, data.validade_em, data.observacoes ?? null,
-          source.origem, source.canal, source.external_id, source.campanha,
+          // Transport identity belongs to the original receipt, never another sale.
+          source.origem, source.canal, source.campanha,
           totals.subtotal, totals.desconto, totals.total,
         ],
       );
       const newId = String(inserted.rows[0]?.id);
       await this.insertItems(query, scope, newId, data);
       await query.query(
-        "UPDATE orcamentos SET status='SUPERSEDIDO',supersedido_por_id=$4 WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO'",
+        "UPDATE orcamentos SET supersedido_por_id=$4 WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='SUPERSEDIDO'",
         [sourceId, scope.groupId, scope.empresaId, newId],
       );
       const previous = await this.get(scope, sourceId, query);
