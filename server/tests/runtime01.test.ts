@@ -127,7 +127,9 @@ test('migrations include foundation through 028 in canonical order', () => {
   assert.ok(files.indexOf('026_pedidos_tipo_comercial.sql') < files.indexOf('027_orcamentos_versao.sql'));
   assert.ok(files.includes('028_orcamentos_origem_canal_idempotency.sql'));
   assert.ok(files.indexOf('027_orcamentos_versao.sql') < files.indexOf('028_orcamentos_origem_canal_idempotency.sql'));
-  assert.equal(files.at(-1), '028_orcamentos_origem_canal_idempotency.sql');
+  assert.ok(files.includes('033_integration_events_company_rls.sql'));
+  assert.ok(files.indexOf('028_orcamentos_origem_canal_idempotency.sql') < files.indexOf('033_integration_events_company_rls.sql'));
+  assert.equal(files.at(-1), '033_integration_events_company_rls.sql');
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {

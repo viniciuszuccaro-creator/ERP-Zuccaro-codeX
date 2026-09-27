@@ -430,3 +430,17 @@ Implementado/testado localmente: 12 focados PASS/0 FAIL; backend completo
 audit:baseline e diff --check PASS. PostgreSQL local
 opcional, prova obrigatória na CI do novo HEAD. Revisão independente e CI serão
 registradas na PR. Sem merge, deploy, VPS, HD ou alteração de migration.
+
+## Integração dos contratos canônicos e migration 033
+
+Branch própria codex/comercial-omnicanal-contratos-canonicos incorpora main 534743def9b8a95a9156ec3a6e5efb546fd6cbf3, #53 694d262aa113180cddf5ea24bd098b015d0d71b2 (ancestrais #51/#52) e #50 165a0a8d1ad09874df4132ed78d7a6f21b553214. Não altera as branches Cursor. Preserva alçadas, margem, política à vista e auditoria da main. STATUS reservado continua exatamente o da main.
+
+As migrations 025/028 fornecem origem, canal, external_id e idempotency_key nos dois documentos. O adaptador deriva origem/canal da identidade assinada configurada e gera identificadores por grupo, empresa, cliente do canal, canal, tipo e chave original; rejeita atribuição externa desses metadados e preços. Serviços existentes calculam preços pela tabela real, validam referências/RBAC e gravam documentos/auditoria na mesma transação do recibo. Retries reutilizam o documento e consomem nonce novo. Readiness exige ambos os contratos e RLS aprovado; flags continuam desativadas.
+
+033_integration_events_company_rls.sql, numeração reservada com Cursor na #50/5854771409, substitui apenas integration_events_scope. Rejeita políticas desconhecidas, mantém ENABLE/FORCE RLS, revoga grants PUBLIC e exige grupo E empresa em USING/WITH CHECK. TO PUBLIC é alvo da policy, não permissão de tabela. Não infere empresa nem transforma eventos históricos de Grupo. SQL repetido duas vezes e papel NOSUPERUSER/NOBYPASSRLS são verificados na CI PostgreSQL; nenhuma migration é aplicada fora do banco sintético efêmero.
+
+Ordem de integração controlada: main #45→#46→#47→#49; resolver/aprovar #51/#52/#53 e integrar #50→#51→#52→#53; integrar dependências canônicas seguintes com migrations reservadas 029–032; revalidar o candidato cumulativo omnicanal #68–#90 com correções #88/#89/#90 e esta integração/033 no mesmo gate, canais desativados. Nunca ativar os HEADs antigos #68/#70 com defeitos já corrigidos no cumulativo. Após qualquer merge pelo responsável conferir CI PUSH da main e revalidar bases/HEADs. CI verde não prova merge ou implantação.
+
+Bloqueios ainda próprios: produtores de catálogo de Grupo podem gerar empresa_id=NULL; exigem destino empresarial explícito homologado antes de aplicar 033 operacionalmente. Contrato de catálogo 024 ainda somente RASCUNHO; sinais/ACK não são catálogo integral. Bases #51 (classificação histórica/tipo desconhecido), #52 (versionamento/raiz histórica), #53 (external_id herdado ao versionar conflita com unicidade) precisam correções e revisão canônica. Providers reais, origem documental, fiscal/pagamento e homologação permanecem gates. Não ligar canais, migrar VPS, usar HD, publicar dados reais ou fazer merge nesta tarefa.
+
+Provas sintéticas: quatro canais × Pedido/Orçamento, origem/canal persistidos, oito documentos apesar de dezesseis envios, preço 25.500000 obtido do repositório canônico (sem stub), auditoria/retry/RBAC; concorrência e rollback auditável existentes preservados. Resultados finais e SHA exato publicados na PR, incluindo skips locais opcionais e prova PG sem skips.

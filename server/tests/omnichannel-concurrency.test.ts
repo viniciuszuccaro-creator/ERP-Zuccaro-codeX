@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { boot } from './omnichannelFixture.js';
+import { boot, assertCanonicalChannelSales } from './omnichannelFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { ChannelSalesClient } from '../src/integrations/channelSalesClient.js';
 import { saleEnvelopeSchema } from '../src/integrations/saleIngressContract.js';
@@ -169,4 +169,16 @@ test('real PostgreSQL client recovers a sale committed before exhausted 5xx', {s
   assert.equal(recovered.replayed,true);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,1);
   assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,1);
  }finally{await f.close();}
+});
+
+test('real PostgreSQL four channels use canonical origin, server prices, atomic audit and idempotent orders/quotes', {skip: !url}, async () => {
+  const f=await boot(await isolatedPostgres(url!));
+  try {
+    await assertCanonicalChannelSales(f);
+    const audits=await f.pg.query("SELECT id FROM audit_logs WHERE entity='IntegracaoEvento'");
+    assert.equal(audits.rows.length,16);
+    await f.pg.query('UPDATE profiles SET permissoes=$1::jsonb WHERE id=$2',[JSON.stringify({Integracoes:{vendas:['importar']},Comercial:{pedido:['visualizar']}}),identity.actorId]);
+    assert.equal((await f.send({...f.envelope,idempotencyKey:'denied-new-sale'},{nonce:'synthetic-denied-rbac'})).status,403);
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,4);
+  } finally {await f.close();}
 });

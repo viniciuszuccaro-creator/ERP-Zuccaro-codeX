@@ -32,15 +32,10 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
   if(rateLimitMax !== undefined) config.rateLimitMax=rateLimitMax;
   const runtime = createApp({ config, db });
   const ingress = new SaleIngress(db, runtime);
-  await assert.rejects(() => ingress.assertDatabaseReady(), /RLS gate not satisfied/);
-  await pg.exec(readFileSync(new URL('../src/integrations/ingressRls.sql', import.meta.url), 'utf8'));
+  // Production migration 033, not a hand-applied policy fixture, is the source of readiness.
   await ingress.assertDatabaseReady();
-  // Only the price source is synthetic. Document/reference repositories, RBAC and audit use PostgreSQL.
-  for (const service of [runtime.orcamentoService, runtime.pedidoService]) {
-    (service as unknown as { prices: { resolveSalePrice: () => Promise<{ preco: string }> } }).prices = {
-      resolveSalePrice: async () => ({ preco: '25.500000' }),
-    };
-  }
+  // Synthetic data, real canonical price repository and service (no pricing stub).
+  await pg.query('UPDATE tabela_preco_itens SET preco=25.500000 WHERE id=$1', [S.tabelaPrecoItemAKg]);
   const client = await pg.query<{ id: string }>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 LIMIT 1', [S.groupA, S.empresaA]);
   const documento = { cliente_empresa_id: client.rows[0].id, condicao_pagamento_id: S.condicaoPagamentoA,
     tipo_operacao: 'RETIRADA', data_entrega_solicitada: '2027-03-01T00:00:00.000Z',
@@ -69,4 +64,27 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
   return { pg, db, runtime, ingress, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
     close: async () => { await new Promise<void>((resolve) => server.close(() => resolve())); await pg.close(); } };
   } catch (error) { await pg.close(); throw error; }
+}
+
+/** Shared assertions exercise the same contracts in PGlite and actual PostgreSQL CI. */
+export async function assertCanonicalChannelSales(f: Awaited<ReturnType<typeof boot>>) {
+    const { tipo_operacao: _tipo, data_entrega_solicitada: _data, ...base } = f.envelope.documento;
+    for (const channel of ['SITE', 'APP', 'CHATBOT', 'MARKETPLACE']) {
+      for (const tipo of ['Pedido', 'Orcamento']) {
+        const payload = { ...f.envelope, tipo, idempotencyKey: channel+'-'+tipo,
+          documento: tipo === 'Pedido' ? f.envelope.documento : { ...base, validade_em: '2027-01-01T00:00:00.000Z' } };
+        const options = { channel: 'synthetic-'+channel, nonce: 'synthetic-create-'+tipo };
+        const created = await f.send(payload, options); assert.equal(created.status, 201);
+        const repeated = await f.send(payload, { ...options, nonce: 'synthetic-retry-'+tipo });
+        assert.equal(repeated.status, 200); assert.equal(repeated.body.data?.id, created.body.data?.id);
+        const table = tipo === 'Pedido' ? 'pedidos' : 'orcamentos';
+        const row = (await f.pg.query<{ total: string; group_id: string; empresa_id: string; origem: string; canal: string; external_id: string; idempotency_key: string }>(
+          'SELECT total,group_id,empresa_id,origem,canal,external_id,idempotency_key FROM '+table+' WHERE id=$1', [created.body.data!.id])).rows[0];
+        assert.equal(row.total, '51.000000'); assert.equal(row.group_id, S.groupA); assert.equal(row.empresa_id, S.empresaA);
+        assert.equal(row.origem, channel); assert.equal(row.canal, channel);
+        assert.match(row.external_id, /^omni:v1:[a-f0-9]{64}$/); assert.match(row.idempotency_key, /^sale:v1:[a-f0-9]{64}$/);
+      }
+    }
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length, 4);
+    assert.equal((await f.pg.query('SELECT id FROM orcamentos')).rows.length, 4);
 }

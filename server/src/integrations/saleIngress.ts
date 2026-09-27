@@ -56,6 +56,10 @@ export class SaleIngress {
 
   async assertDatabaseReady() {
     await assertIntegrationEventsReady(this.db);
+    const columns=await this.db.query<{total:number}>(`SELECT count(*)::int AS total FROM pg_attribute
+      WHERE attrelid IN (to_regclass('pedidos'),to_regclass('orcamentos')) AND NOT attisdropped
+        AND attname IN ('origem','canal','external_id','idempotency_key') AND atttypid='text'::regtype`);
+    if(columns.rows[0]?.total!==8)throw new Error('Canonical sales channel contracts not ready (025/028)');
   }
 
   async receive(identity: ChannelIdentity, envelope: SaleEnvelope, nonce: string, requestId: string) {
@@ -92,7 +96,9 @@ export class SaleIngress {
           action:'create',afterData:{canal:identity.channel,tipo:envelope.tipo,documento_id:receipt.id,replayed:true}},query);
         return { receipt, replayed: true };
       }
-      const document = { ...envelope.documento, itens: envelope.documento.itens.map((item) => ({
+      const document = { ...envelope.documento, origem:identity.channel,canal:identity.channel,
+        external_id:`omni:v1:${digest(JSON.stringify([...partition,envelope.tipo,envelope.idempotencyKey]))}`,
+        idempotency_key:key, itens: envelope.documento.itens.map((item) => ({
         ...item, preco_unitario: '0', desconto: '0',
       })) };
       const created = envelope.tipo === 'Pedido'

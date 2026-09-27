@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
@@ -14,6 +15,8 @@ test('real PostgreSQL FORCE RLS fences reads, writes and claims for a non-bypass
   let created = false;
   const denied = (e: unknown) => (e as { code: string }).code==='42501';
   try {
+    const migration = readFileSync(new URL('../migrations/033_integration_events_company_rls.sql', import.meta.url), 'utf8');
+    await f.pg.exec(migration); await f.pg.exec(migration); // canonical migration is repeatable
     const own = await f.event(); const other = await f.event({ empresa: S.empresaA2 });
     await f.pg.exec(`CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS NOLOGIN`); created = true;
     await f.pg.exec(`GRANT USAGE ON SCHEMA ${schema} TO ${role}; GRANT SELECT,INSERT,UPDATE ON integration_events TO ${role}`);
@@ -42,6 +45,11 @@ test('real PostgreSQL FORCE RLS fences reads, writes and claims for a non-bypass
       await tx.exec(`SET LOCAL ROLE ${role}`);
       await tx.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)",[S.groupA,S.empresaA]);
       await tx.query("INSERT INTO integration_events(group_id,empresa_id,source,event_type) VALUES($1,$2,'ERP','catalogo.reconciliado')",[S.groupB,S.empresaB]);
+    }),denied);
+    await assert.rejects(f.pg.transaction(async (tx) => {
+      await tx.exec('SET LOCAL ROLE '+role);
+      await tx.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)",[S.groupA,S.empresaA]);
+      await tx.query("INSERT INTO integration_events(group_id,empresa_id,source,event_type) VALUES($1,NULL,'ERP','catalogo.reconciliado')",[S.groupA]);
     }),denied);
     assert.equal((await f.pg.query('SELECT empresa_id FROM integration_events WHERE id=$1',[own])).rows[0].empresa_id,S.empresaA);
   } finally {
