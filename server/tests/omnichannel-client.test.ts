@@ -4,6 +4,90 @@ import { ChannelSalesClient, ChannelTransportError } from '../src/integrations/c
 import { saleEnvelopeSchema } from '../src/integrations/saleIngressContract.js';
 import { boot, identity, now } from './omnichannelFixture.js';
 
+test('pending channel batches create mixed canonical documents and replay without duplicate sales', async () => {
+  const f = await boot();
+  try {
+    for (const channel of ['SITE', 'APP', 'CHATBOT', 'MARKETPLACE']) {
+      const client = new ChannelSalesClient({ endpoint:f.endpoint,id:`synthetic-${channel}`,secret:identity.secret,
+        allowInsecureLoopback:true },fetch,()=>now);
+      const {tipo_operacao: _operation,data_entrega_solicitada: _delivery,...quote}=f.envelope.documento;
+      const batch = { operation:'sale-batch',items:['Pedido','Orcamento'].map(tipo=>saleEnvelopeSchema.parse({
+        ...f.envelope,tipo,idempotencyKey:`batch-${channel}-${tipo}`,
+        documento:tipo==='Pedido'?f.envelope.documento:{...quote,validade_em:'2027-03-01T00:00:00.000Z'},
+      })) } as const;
+      const first=await client.create(batch);const replay=await client.create(batch);
+      assert.ok(first.items.every(i=>i.state==='CONFIRMED'&&!i.result.replayed));
+      assert.ok(replay.items.every(i=>i.state==='CONFIRMED'&&i.result.replayed));
+    }
+    for(const table of ['pedidos','orcamentos'])assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length,4);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,8);
+  } finally { await f.close(); }
+});
+
+test('batch validates every input before sending and preserves a snapshot across asynchronous delivery', async () => {
+  const f=await boot();
+  try {
+    let calls=0;
+    const transport:typeof fetch=async(input,init)=>{calls++;return fetch(input,init);};
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true},transport,()=>now);
+    const one=saleEnvelopeSchema.parse(f.envelope);
+    for(const items of [[],Array(26).fill(one),[one,one],[one,{...one,idempotencyKey:'bad',documento:{}}]]) {
+      await assert.rejects(client.create({operation:'sale-batch',items} as any),(e:any)=>e.code==='CHANNEL_CLIENT_PAYLOAD_INVALID');
+    }
+    assert.equal(calls,0);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,0);
+    const large={...one,documento:{...one.documento,itens:Array.from({length:100},()=>({...one.documento.itens[0],descricao:'x'.repeat(240),quantidade:'1'.repeat(200)}))}};
+    await assert.rejects(client.create({operation:'sale-batch',items:Array.from({length:25},(_,i)=>({...large,idempotencyKey:`size-${i}`}))}),
+      (e:any)=>e.code==='CHANNEL_CLIENT_PAYLOAD_INVALID');
+    assert.equal(calls,0);
+    const batch={operation:'sale-batch' as const,items:[{...one,idempotencyKey:'snapshot-one'},{...one,idempotencyKey:'snapshot-two'}]};
+    const pending=client.create(batch);batch.items[1].idempotencyKey='mutated';
+    assert.ok((await pending).items.every(i=>i.state==='CONFIRMED'));
+    const receipt=await client.receipt({version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:'snapshot-two'});
+    assert.ok(receipt.data.id);
+  } finally {await f.close();}
+});
+
+test('batch stops at unconfirmed delivery, retains committed sales and resumes with the original keys',async()=>{
+  const f=await boot();
+  try {
+    let calls=0;
+    const options={endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true,attempts:1};
+    const batch={operation:'sale-batch' as const,items:[0,1,2].map(i=>saleEnvelopeSchema.parse({...f.envelope,idempotencyKey:`pending-${i}`}))};
+    const ambiguous=new ChannelSalesClient(options,async(input,init)=>{
+      const response=await fetch(input,init);calls++;
+      if(calls===2){await response.body?.cancel();throw new Error('Synthetic response loss');}
+      return response;
+    },()=>now);
+    const result=await ambiguous.create(batch);
+    assert.deepEqual(result.items.map(i=>i.state),['CONFIRMED','UNCONFIRMED','NOT_SENT']);
+    assert.equal(calls,2);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,2);
+    const recovered=new ChannelSalesClient(options,fetch,()=>now);
+    const receipt=await recovered.receipt({version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:'pending-1'});
+    assert.ok(receipt.data.id);
+    const resumed=await recovered.create(batch);
+    assert.deepEqual(resumed.items.map(i=>i.state==='CONFIRMED'?i.result.replayed:null),[true,true,false]);
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,3);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,3);
+  }finally{await f.close();}
+});
+
+test('a late RBAC denial after a committed retry remains unconfirmed and stops following sales',async()=>{
+  const f=await boot();
+  try{
+    let calls=0;
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true,attempts:2},async(input,init)=>{
+      calls++;
+      if(calls===1){const response=await fetch(input,init);await response.body?.cancel();
+        await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[identity.actorId]);
+        throw new Error('Synthetic lost response');}
+      return fetch(input,init);
+    },()=>now);
+    const result=await client.create({operation:'sale-batch',items:[0,1].map(i=>saleEnvelopeSchema.parse({...f.envelope,idempotencyKey:`late-rbac-${i}`}))});
+    assert.deepEqual(result.items,[{index:0,state:'UNCONFIRMED',code:'CHANNEL_CLIENT_REJECTED',status:403},{index:1,state:'NOT_SENT'}]);
+    assert.equal(calls,2);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,1);
+  }finally{await f.close();}
+});
+
 test('server-side channel client creates and queries canonical receipts for all four channels', async () => {
   const f = await boot();
   try {

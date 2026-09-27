@@ -188,3 +188,31 @@ O `ChannelSalesClient` existente limita respostas bem-sucedidas de recibo a 16Ki
 `CatalogOutbox.divergences` reutiliza a fila e as observações existentes: lista somente MISSING/CONFLICT/UNAVAILABLE da última observação de cada observador na tentativa atual de um sinal publicado. Uma observação CONSISTENT posterior elimina a falha anterior desse observador da consulta, preservando o histórico e divergências de outros observadores. A tentativa nova invalida observações antigas. Leitura exige Grupo/Empresa e `Integracoes.catalogo.visualizar`, com audit read atômico; não retorna payload, chave, hash ou mensagem do provider. Identificador de observador legado fora do contrato é mascarado. Paginação usa microssegundos e UUID; a fila é viva, sem promessa de snapshot entre páginas. Nenhuma correção/publicação é aplicada, não há novo endpoint/UI/provider/migration. Base #77; revisão independente, ativação/RLS e homologação continuam pendentes. Testes sintéticos incluem prova PostgreSQL obrigatória na CI.
 
 O lote `codex/comercial-omnicanal-triagem-postgres`, baseado na #76, amplia a suite efêmera existente: cursor com microssegundos e empate de timestamp, isolamento de Empresa e tipo de evento, exclusão de lease ainda vigente, erros livres mascarados, fila intacta, revogação de leitura e rollback do audit real após falha injetada. A iteração é limitada para falhar sem travar em regressão de cursor. Sem URL isolada, o teste local é marcado como skip; o workflow PostgreSQL fornece a URL obrigatória e deve comprovar zero skips. Nenhuma migration/ativação/provider/VPS é introduzida. Publicação e revisão independente continuam gates separados.
+# Sincronização de vendas pendentes — cliente existente
+
+Onda 17: `ChannelSalesClient.create({operation:'sale-batch',items:[...]})` envia de 1 a 25
+vendas sequencialmente pelas chamadas individuais assinadas existentes. Cada item conserva
+tipo, chave idempotente e sua transação canônica; não existe transação global do lote.
+A interface individual continua compatível. Não há novo endpoint, banco offline, módulo,
+provider, migration ou ativação de frontend. O adaptador permanece exclusivamente no BFF/backend.
+
+Antes de qualquer envio, valida todos os itens, rejeita repetição de tipo/chave, limita
+128 KiB por venda e 1 MiB no lote e captura os valores validados. Alterações do objeto pelo
+chamador durante a execução não mudam os documentos enviados. Grupo/Empresa/ator continuam
+da identidade assinada no servidor; RBAC, preço, auditoria e RLS são reavaliados por venda.
+
+Resultado por posição: `CONFIRMED` contém recibo/replayed; `UNCONFIRMED` contém somente
+código/status sanitizados; os seguintes são `NOT_SENT`. A primeira falha interrompe o lote.
+Mesmo um 4xx final pode seguir uma tentativa já gravada cuja resposta se perdeu: não
+declarar rejeição definitiva, cancelar, desfazer os confirmados ou inventar nova chave.
+Consultar recibo e reenviar com as mesmas chaves após resolver a causa. Erros internos
+inesperados propagam; não se convertem em sucesso. O chamador conserva sua fila existente.
+Não há continuação silenciosa nem política comercial nova. Retentativas/timeout continuam
+limitados por chamada; o lote inteiro pode durar até 25 dessas chamadas sequenciais.
+
+Testes sintéticos: quatro canais com Pedido/Orçamento mistos e replays; validação integral
+antes de rede; snapshot; resposta perdida e retomada; revogação RBAC após commit; PostgreSQL
+real com falha de auditoria no segundo item, preservação do primeiro e retomada sem duplicar.
+Dependência: histórico/cliente da cadeia #68–#81. Revisão independente e integração pendentes.
+Rollback de código remove apenas a sobrecarga de lote; recibos/documentos permanecem e
+podem ser consultados/reprocessados individualmente. Sem VPS, HD, merge ou implantação.
