@@ -1,3 +1,11 @@
+## #101 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T22:16Z)
+
+Main `d02cd012` APPLY+promote OK. API/SPA revision no merge.
+**Acesso NÃO fechado** até prova owner Grupo/CPA/3Z/Comercial/Administração.
+Observação: “Acesso negado” isolado no topo de Administração (Integrações carrega).
+
+---
+
 ## #101 PÓS-MERGE — NÃO implantado (2026-09-27T21:16Z)
 
 Merge `d02cd012` / CI SUCCESS. Codex: **ainda NÃO implantado** (política navegador p/ catálogo admin).

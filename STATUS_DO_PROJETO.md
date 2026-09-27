@@ -1,3 +1,27 @@
+## #101 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T22:16Z)
+
+Fonte: [#101](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/101) comentário 22:06Z.
+
+| Campo | Valor |
+|---|---|
+| Main | `d02cd012` (aprovado `4a5270a8`) |
+| CI PUSH | SUCCESS `36349770102` (#1209) |
+| APPLY | EXIT 0; backup custom validado |
+| Canário | API+SPA no SHA completo; promote mesmas imagens |
+| API digest | `sha256:5292dc91…ef9b8e5` (`revision`=`d02cd012…`) |
+| SPA digest | `sha256:16272bd4…2fd94da` |
+| Negativos | Bearer inválido → 401 |
+| Readiness | 200/200 |
+| Perfil | admin Grupo; Comercial/Financeiro/Sistema=1; empresas ativas=2; migrations=24 |
+| UI parcial | sessão existente: Comercial com abas em Grupo e CPA; Administração/Integrações abriu |
+| Observação | texto isolado “Acesso negado” no bloco superior de Administração (Integrações carrega) — triagem se persistir no teste owner |
+| Migrations 025–033 | **não** aplicadas |
+| **Acesso completo** | **NÃO** — falta logout/login → Grupo/CPA/3Z → Comercial/Config |
+
+Cursor **reconhece** implantação; **não** declara experiência fechada. Continua modo autônomo.
+
+---
+
 ## #101 PÓS-MERGE — NÃO implantado (2026-09-27T21:16Z)
 
 Fonte: [#101#issuecomment](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/101) (21:06Z).
