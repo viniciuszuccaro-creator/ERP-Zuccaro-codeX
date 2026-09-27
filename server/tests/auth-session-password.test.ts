@@ -22,14 +22,34 @@ test('createPasswordAuthSession troca senha por Bearer e lista perfis ativos', a
   });
 
   const db = {
-    async query() {
+    async query(sql) {
+      if (String(sql).includes('razao_social')) {
+        return {
+          rows: [{
+            id: empresaId,
+            group_id: groupId,
+            razao_social: 'CPA Ferro e Aco LTDA',
+            nome_fantasia: 'CPA ferro e aço',
+            status: 'Ativa',
+          }, {
+            id: '55555555-5555-4555-8555-555555555555',
+            group_id: groupId,
+            razao_social: '3Z LTDA',
+            nome_fantasia: '3Z LTDA',
+            status: 'Ativa',
+          }],
+        };
+      }
       return {
         rows: [{
           id: profileId,
           group_id: groupId,
           empresa_id: empresaId,
+          empresa_id_raw: null,
           role: 'admin',
           full_name: 'Proprietario Teste',
+          group_name: 'Grupo CPA',
+          permissoes: {},
         }],
       };
     },
@@ -53,6 +73,9 @@ test('createPasswordAuthSession troca senha por Bearer e lista perfis ativos', a
   assert.equal(session.profiles[0].empresaId, empresaId);
   assert.equal(session.profiles[0].role, 'admin');
   assert.equal(session.profiles[0].fullName, 'Proprietario Teste');
+  assert.equal(session.profiles[0].groupName, 'Grupo CPA');
+  assert.equal(session.profiles[0].empresas.length, 2);
+  assert.equal(session.profiles[0].empresas[0].nome_fantasia, 'CPA ferro e aço');
   assert.deepEqual(session.profiles[0].permissoes, {});
 });
 
@@ -81,14 +104,27 @@ test('resolveBearerAuthSession rejeita token inválido e devolve permissoes do p
       supabaseAnonKey: 'anon-test',
     },
     db: {
-      async query() {
+      async query(sql) {
+        if (String(sql).includes('razao_social')) {
+          return {
+            rows: [{
+              id: '44444444-4444-4444-8444-444444444444',
+              group_id: groupId,
+              razao_social: 'Empresa A',
+              nome_fantasia: 'Empresa A',
+              status: 'Ativa',
+            }],
+          };
+        }
         return {
           rows: [{
             id: profileId,
             group_id: groupId,
             empresa_id: null,
+            empresa_id_raw: null,
             role: 'user',
             full_name: 'Comum',
+            group_name: 'Grupo Teste',
             permissoes: { Comercial: { pedido: ['visualizar'] } },
           }],
         };

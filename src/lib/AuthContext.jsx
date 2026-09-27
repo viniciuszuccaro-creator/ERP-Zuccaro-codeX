@@ -62,6 +62,8 @@ export const AuthProvider = ({ children }) => {
       await ensureHttpTenantLocalMirror({
         groupId: trusted.groupId,
         empresaId: trusted.empresaId,
+        groupName: trusted.groupName,
+        empresas: trusted.empresas,
         perfilAcessoId: `http_perfil_${trusted.actorId}`,
         permissoes: trusted.permissoes || {},
         perfilNome: trusted.fullName || trusted.email || 'Perfil HTTP',

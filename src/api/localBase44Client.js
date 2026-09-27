@@ -372,28 +372,55 @@ export function upsertHttpTenantLocalMirror(input = {}) {
   const empresaId = input.empresaId ? String(input.empresaId).trim() : '';
   if (!groupId) return { group: false, empresa: false, perfil: false };
   const db = loadDb();
-  ensureRecord(db, 'GrupoEmpresarial', groupId, () => ({
+  const groupName = String(input.groupName || '').trim() || 'Grupo ERP';
+  const groupStore = getEntityStore(db, 'GrupoEmpresarial');
+  const groupIdx = groupStore.findIndex((item) => String(item.id) === groupId);
+  const groupRow = {
     id: groupId,
-    nome_do_grupo: 'Grupo ERP DEV',
-    nome: 'Grupo ERP DEV',
+    nome_do_grupo: groupName,
+    nome: groupName,
     status: 'Ativo',
-    created_date: now(),
     updated_date: now(),
-  }));
-  if (empresaId) {
-    ensureRecord(db, 'Empresa', empresaId, () => ({
-      id: empresaId,
-      nome_fantasia: 'Empresa ERP DEV',
-      razao_social: 'Empresa ERP DEV',
+    created_date: groupIdx >= 0 ? (groupStore[groupIdx].created_date || now()) : now(),
+  };
+  if (groupIdx >= 0) groupStore[groupIdx] = { ...groupStore[groupIdx], ...groupRow };
+  else groupStore.push(groupRow);
+
+  const empresasInput = Array.isArray(input.empresas) ? input.empresas : [];
+  const empresaStore = getEntityStore(db, 'Empresa');
+  let mirroredEmpresas = 0;
+  const upsertEmpresa = (row) => {
+    const id = row?.id ? String(row.id).trim() : '';
+    if (!id) return;
+    const nome = String(row.nome_fantasia || row.razao_social || 'Empresa').trim() || 'Empresa';
+    const razao = String(row.razao_social || row.nome_fantasia || nome).trim() || nome;
+    const idx = empresaStore.findIndex((item) => String(item.id) === id);
+    const next = {
+      id,
+      nome_fantasia: nome,
+      razao_social: razao,
       group_id: groupId,
       grupo_id: groupId,
-      status: 'Ativa',
+      status: String(row.status || 'Ativa'),
       tipo: 'Matriz',
       ativo: true,
-      created_date: now(),
       updated_date: now(),
-    }));
+      created_date: idx >= 0 ? (empresaStore[idx].created_date || now()) : now(),
+    };
+    if (idx >= 0) empresaStore[idx] = { ...empresaStore[idx], ...next };
+    else empresaStore.push(next);
+    mirroredEmpresas += 1;
+  };
+  empresasInput.forEach(upsertEmpresa);
+  if (empresaId && !empresasInput.some((e) => String(e?.id) === empresaId)) {
+    upsertEmpresa({
+      id: empresaId,
+      nome_fantasia: 'Empresa ERP',
+      razao_social: 'Empresa ERP',
+      status: 'Ativa',
+    });
   }
+
   const perfilId = String(input.perfilAcessoId || '').trim() || 'local_perfil_admin';
   const permissoes = input.permissoes && typeof input.permissoes === 'object' && !Array.isArray(input.permissoes)
     ? input.permissoes
@@ -415,7 +442,7 @@ export function upsertHttpTenantLocalMirror(input = {}) {
   if (idx >= 0) store[idx] = { ...store[idx], ...row };
   else store.push(row);
   saveDb(db);
-  return { group: true, empresa: Boolean(empresaId), perfil: true };
+  return { group: true, empresa: mirroredEmpresas > 0 || Boolean(empresaId), perfil: true, empresas: mirroredEmpresas };
 }
 
 const uniqueByString = (items = []) => {

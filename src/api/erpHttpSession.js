@@ -44,6 +44,8 @@ function isUuid(value) {
  *   fullName?: string | null,
  *   expiresAt?: string | number | null,
  *   expiresIn?: number | null,
+ *   groupName?: string | null,
+ *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, status?: string }>,
  *   storage?: Storage,
  * }} input
  */
@@ -57,6 +59,22 @@ export function persistErpHttpSession(input) {
   const roleRaw = String(input.role || 'user').trim().toLowerCase() || 'user';
   const role = roleRaw === 'admin' ? 'admin' : 'user';
   const fullName = input.fullName ? String(input.fullName).trim() : '';
+  const groupName = input.groupName ? String(input.groupName).trim() : '';
+  const empresas = Array.isArray(input.empresas)
+    ? input.empresas
+      .map((e) => {
+        const id = e?.id ? String(e.id).trim() : '';
+        if (!id || !isUuid(id)) return null;
+        return {
+          id,
+          group_id: e.group_id ? String(e.group_id) : groupId,
+          razao_social: String(e.razao_social || e.nome_fantasia || 'Empresa'),
+          nome_fantasia: e.nome_fantasia == null ? null : String(e.nome_fantasia),
+          status: String(e.status || 'Ativa'),
+        };
+      })
+      .filter(Boolean)
+    : [];
   if (!token || !isUuid(groupId) || !isUuid(actorId)) {
     throw new Error('Sessão incompleta: token, grupo e perfil são obrigatórios');
   }
@@ -86,6 +104,8 @@ export function persistErpHttpSession(input) {
     email: input.email || null,
     role,
     fullName: fullName || null,
+    groupName: groupName || null,
+    empresas,
     expiresAt,
   }));
 }
@@ -170,6 +190,10 @@ export function readErpHttpSession(storage = null, options = {}) {
       fullName: typeof scope.fullName === 'string' && scope.fullName.trim()
         ? scope.fullName.trim()
         : null,
+      groupName: typeof scope.groupName === 'string' && scope.groupName.trim()
+        ? scope.groupName.trim()
+        : null,
+      empresas: Array.isArray(scope.empresas) ? scope.empresas : [],
       expiresAt,
     };
   } catch {
@@ -203,6 +227,8 @@ export function switchErpHttpSessionEmpresa(input) {
     email: current.email || undefined,
     role: current.role,
     fullName: current.fullName,
+    groupName: current.groupName,
+    empresas: current.empresas,
     expiresAt: current.expiresAt,
     storage,
   });
@@ -220,6 +246,9 @@ export function switchErpHttpSessionEmpresa(input) {
  *   email?: string | null,
  *   role?: string | null,
  *   fullName?: string | null,
+ *   groupName?: string | null,
+ *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, status?: string }>,
+ *   permissoes?: Record<string, unknown>,
  * }} session
  */
 export function buildHttpSessionUser(session) {
@@ -236,6 +265,19 @@ export function buildHttpSessionUser(session) {
   const permissoes = session?.permissoes && typeof session.permissoes === 'object' && !Array.isArray(session.permissoes)
     ? session.permissoes
     : {};
+  const empresasServer = Array.isArray(session?.empresas) ? session.empresas : [];
+  const empresasVinculadas = empresasServer
+    .map((e) => {
+      const id = e?.id ? String(e.id).trim() : '';
+      return id && isUuid(id) ? { empresa_id: id, ativo: true } : null;
+    })
+    .filter(Boolean);
+  if (empresasVinculadas.length === 0 && empresaId && isUuid(empresaId)) {
+    empresasVinculadas.push({ empresa_id: empresaId, ativo: true });
+  }
+  const empresaAtual = empresaId && isUuid(empresaId)
+    ? empresaId
+    : (empresasVinculadas[0]?.empresa_id || null);
   const perfilAcessoId = `http_perfil_${actorId}`;
   return {
     id: actorId,
@@ -248,15 +290,16 @@ export function buildHttpSessionUser(session) {
     mestre_local: false,
     disabled: false,
     is_verified: true,
-    contexto_atual: empresaId ? 'empresa' : 'grupo',
+    contexto_atual: empresaAtual ? 'empresa' : 'grupo',
     grupo_atual_id: groupId,
     grupo_padrao_id: groupId,
-    empresa_atual_id: empresaId || null,
-    empresa_padrao_id: empresaId || null,
+    empresa_atual_id: empresaAtual,
+    empresa_padrao_id: empresaAtual,
     pode_operar_em_grupo: isAdmin,
-    pode_ver_todas_empresas: isAdmin,
-    empresas_vinculadas: empresaId ? [{ empresa_id: empresaId, ativo: true }] : [],
+    pode_ver_todas_empresas: isAdmin || empresasVinculadas.length > 1,
+    empresas_vinculadas: empresasVinculadas,
     grupos_vinculados: [{ grupo_id: groupId, ativo: true }],
+    group_name: session?.groupName || null,
   };
 }
 
@@ -269,7 +312,16 @@ export function buildHttpDevAdminUser(session) {
  * Espelha Grupo/Empresa do Postgres no localBase44 (IDs reais da sessão)
  * para o seletor multiempresa e o PerfilAcesso admin existirem no browser.
  * Usa upsert direto (sem RBAC create) — bootstrap de sessão HTTP.
- * @param {{ groupId: string, empresaId?: string | null, base44Client?: unknown }} input
+ * @param {{
+ *   groupId: string,
+ *   empresaId?: string | null,
+ *   groupName?: string | null,
+ *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, status?: string }>,
+ *   perfilAcessoId?: string | null,
+ *   permissoes?: Record<string, unknown> | null,
+ *   perfilNome?: string | null,
+ *   base44Client?: unknown,
+ * }} input
  */
 export async function ensureHttpTenantLocalMirror(input) {
   const groupId = String(input?.groupId || '').trim();
@@ -280,6 +332,8 @@ export async function ensureHttpTenantLocalMirror(input) {
   const result = upsertHttpTenantLocalMirror({
     groupId,
     empresaId,
+    groupName: input?.groupName || null,
+    empresas: Array.isArray(input?.empresas) ? input.empresas : [],
     perfilAcessoId: input?.perfilAcessoId || null,
     permissoes: input?.permissoes || null,
     perfilNome: input?.perfilNome || null,
@@ -342,6 +396,10 @@ export async function loginErpHttpSession(input) {
   const permissoes = profile.permissoes && typeof profile.permissoes === 'object' && !Array.isArray(profile.permissoes)
     ? profile.permissoes
     : {};
+  const groupName = typeof profile.group_name === 'string' && profile.group_name.trim()
+    ? profile.group_name.trim()
+    : null;
+  const empresas = Array.isArray(profile.empresas) ? profile.empresas : [];
   const session = {
     accessToken,
     groupId: String(profile.group_id),
@@ -350,10 +408,25 @@ export async function loginErpHttpSession(input) {
     email: data.user?.email || input.email,
     role,
     fullName,
+    groupName,
+    empresas,
     expiresIn,
   };
   const expiresAt = new Date(Date.now() + Math.floor(expiresIn) * 1000).toISOString();
   persistErpHttpSession({ ...session, expiresAt });
+  try {
+    await ensureHttpTenantLocalMirror({
+      groupId: session.groupId,
+      empresaId: session.empresaId,
+      groupName,
+      empresas,
+      perfilAcessoId: `http_perfil_${session.actorId}`,
+      permissoes,
+      perfilNome: fullName || session.email,
+    });
+  } catch {
+    /* espelho best-effort no login */
+  }
   const uiUser = buildHttpSessionUser({
     groupId: session.groupId,
     empresaId: session.empresaId,
@@ -361,6 +434,8 @@ export async function loginErpHttpSession(input) {
     email: session.email,
     role: session.role,
     fullName: session.fullName,
+    groupName,
+    empresas,
     permissoes,
   });
   return {
@@ -445,16 +520,24 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
   const permissoes = profile.permissoes && typeof profile.permissoes === 'object' && !Array.isArray(profile.permissoes)
     ? profile.permissoes
     : {};
+  const groupName = typeof profile.group_name === 'string' && profile.group_name.trim()
+    ? profile.group_name.trim()
+    : null;
+  const empresas = Array.isArray(profile.empresas) ? profile.empresas : [];
   // Preferência de empresa só vale no mesmo grupo do perfil escolhido (nunca misturar tenant).
   const sameGroupAsPreference = String(profile.group_id) === preferredGroup;
   const rawPreferred = input.preferredEmpresaId !== undefined
     ? input.preferredEmpresaId
     : local.empresaId;
-  const empresaId = resolveRefreshEmpresaId({
+  let empresaId = resolveRefreshEmpresaId({
     profile,
     profiles,
     preferredEmpresaId: sameGroupAsPreference ? rawPreferred : null,
   });
+  // Se o servidor listou empresas e a preferência/perfil não bate, usa a primeira autorizada.
+  if (!empresaId && empresas.length > 0) {
+    empresaId = String(empresas[0].id);
+  }
   persistErpHttpSession({
     accessToken: local.token,
     groupId: String(profile.group_id),
@@ -463,9 +546,24 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     email: data.user?.email || local.email || undefined,
     role,
     fullName,
+    groupName,
+    empresas,
     expiresAt: local.expiresAt,
     storage,
   });
+  try {
+    await ensureHttpTenantLocalMirror({
+      groupId: String(profile.group_id),
+      empresaId,
+      groupName,
+      empresas,
+      perfilAcessoId: `http_perfil_${profile.id}`,
+      permissoes,
+      perfilNome: fullName || data.user?.email || local.email,
+    });
+  } catch {
+    /* espelho best-effort */
+  }
   return {
     token: local.token,
     groupId: String(profile.group_id),
@@ -474,6 +572,8 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     email: data.user?.email || local.email || null,
     role,
     fullName,
+    groupName,
+    empresas,
     expiresAt: local.expiresAt,
     permissoes,
     profiles,
