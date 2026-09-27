@@ -22,6 +22,20 @@ export type AuthSessionProfile = {
   fullName: string | null;
   /** Árvore RBAC do perfil (fonte server-side; nunca inventada no browser). */
   permissoes: Record<string, unknown>;
+  /** Nome do grupo (Cadastros) para o seletor SPA. */
+  groupName: string | null;
+  /**
+   * Empresas autorizadas no grupo do perfil.
+   * Admin / perfil sem empresa_id explícito → todas Ativas do grupo.
+   * Perfil vinculado a uma empresa → somente essa (se Ativa).
+   */
+  empresas: Array<{
+    id: string;
+    group_id: string;
+    razao_social: string;
+    nome_fantasia: string | null;
+    status: string;
+  }>;
 };
 
 export type AuthSessionResult = {
@@ -39,6 +53,17 @@ type ProfileRow = {
   role: string | null;
   full_name: string | null;
   permissoes: unknown;
+  /** empresa_id bruto da coluna (antes do COALESCE de fallback). */
+  empresa_id_raw: string | null;
+  group_name: string | null;
+};
+
+type EmpresaRow = {
+  id: string;
+  group_id: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+  status: string;
 };
 
 function mapProfileRows(rows: ProfileRow[]): AuthSessionProfile[] {
@@ -53,7 +78,56 @@ function mapProfileRows(rows: ProfileRow[]): AuthSessionProfile[] {
       permissoes: row.permissoes && typeof row.permissoes === 'object' && !Array.isArray(row.permissoes)
         ? row.permissoes as Record<string, unknown>
         : {},
+      groupName: typeof row.group_name === 'string' && row.group_name.trim()
+        ? row.group_name.trim()
+        : null,
+      empresas: [],
     }));
+}
+
+async function loadEmpresasForProfile(
+  db: Pick<DbClient, 'query'>,
+  profile: AuthSessionProfile,
+  empresaIdRaw: string | null,
+): Promise<AuthSessionProfile['empresas']> {
+  const role = String(profile.role || 'user').trim().toLowerCase();
+  const lockedToEmpresa = Boolean(empresaIdRaw && UUID_RE.test(empresaIdRaw));
+  // Admin ou perfil de grupo (sem empresa_id na coluna) → todas Ativas do grupo.
+  const listAll = role === 'admin' || !lockedToEmpresa;
+  try {
+    if (listAll) {
+      const result = await db.query<EmpresaRow>(
+        `SELECT id, group_id, razao_social, nome_fantasia, status
+         FROM empresas
+         WHERE group_id = $1 AND status = 'Ativa'
+         ORDER BY COALESCE(nome_fantasia, razao_social) ASC`,
+        [profile.groupId],
+      );
+      return result.rows.map((row) => ({
+        id: row.id,
+        group_id: row.group_id,
+        razao_social: row.razao_social,
+        nome_fantasia: row.nome_fantasia,
+        status: row.status,
+      }));
+    }
+    const result = await db.query<EmpresaRow>(
+      `SELECT id, group_id, razao_social, nome_fantasia, status
+       FROM empresas
+       WHERE group_id = $1 AND id = $2 AND status = 'Ativa'
+       LIMIT 1`,
+      [profile.groupId, empresaIdRaw],
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      group_id: row.group_id,
+      razao_social: row.razao_social,
+      nome_fantasia: row.nome_fantasia,
+      status: row.status,
+    }));
+  } catch {
+    throw new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable');
+  }
 }
 
 async function loadActiveProfiles(
@@ -63,21 +137,32 @@ async function loadActiveProfiles(
   try {
     const result = await db.query<ProfileRow>(
       `SELECT p.id, p.group_id, p.role, p.full_name, COALESCE(p.permissoes, '{}'::jsonb) AS permissoes,
+              p.empresa_id AS empresa_id_raw,
               COALESCE(
                 p.empresa_id,
                 (SELECT e.id FROM empresas e
-                  WHERE e.group_id = p.group_id
+                  WHERE e.group_id = p.group_id AND e.status = 'Ativa'
                   ORDER BY e.id
                   LIMIT 1)
-              ) AS empresa_id
+              ) AS empresa_id,
+              g.nome_do_grupo AS group_name
        FROM profiles p
+       LEFT JOIN groups g ON g.id = p.group_id
        WHERE p.auth_user_id = $1 AND p.ativo = true
        ORDER BY p.empresa_id NULLS LAST, p.id
        LIMIT 20`,
       [authUserId],
     );
-    return mapProfileRows(result.rows);
-  } catch {
+    const mapped = mapProfileRows(result.rows);
+    const enriched: AuthSessionProfile[] = [];
+    for (let i = 0; i < mapped.length; i += 1) {
+      const raw = result.rows[i];
+      const empresas = await loadEmpresasForProfile(db, mapped[i], raw?.empresa_id_raw ?? null);
+      enriched.push({ ...mapped[i], empresas });
+    }
+    return enriched;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
     throw new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable');
   }
 }

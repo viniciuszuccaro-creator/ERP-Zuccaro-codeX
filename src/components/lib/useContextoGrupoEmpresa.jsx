@@ -31,6 +31,8 @@ export function useContextoGrupoEmpresa() {
       await ensureHttpTenantLocalMirror({
         groupId: session.groupId,
         empresaId: session.empresaId,
+        groupName: session.groupName,
+        empresas: session.empresas,
       });
       return buildHttpSessionUser(session);
     }
@@ -83,13 +85,25 @@ export function useContextoGrupoEmpresa() {
       } else {
         const grupo = await carregarGrupoPorIdOuPadrao(currentUser);
         const groupId = grupo?.id || currentUser.grupo_atual_id || currentUser.grupo_padrao_id;
-        const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
+        let empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
+        // HTTP: se ainda sem empresa, auto-seleciona a primeira vinculada (desbloqueia GuardRails).
+        if (!empresaId && Array.isArray(currentUser.empresas_vinculadas) && currentUser.empresas_vinculadas.length > 0) {
+          const first = currentUser.empresas_vinculadas.find((v) => {
+            const id = typeof v === 'string' ? v : v?.empresa_id;
+            return id && (v?.ativo !== false);
+          });
+          empresaId = typeof first === 'string' ? first : first?.empresa_id;
+        }
         if (empresaId && groupId) {
           const empresas = await base44.entities.Empresa.filter({ id: empresaId });
           const empresa = empresas[0];
           if (empresa && empresaPertenceAoGrupo(empresa, groupId) && userTemAcessoEmpresa(currentUser, empresa)) {
             setEmpresaAtual(empresa);
             try { localStorage.setItem('empresa_atual_id', empresa.id); } catch { /* Estado em memoria permanece valido. */ }
+            if (isHttpBackendMode) {
+              switchErpHttpSessionEmpresa({ empresaId: empresa.id });
+              setUser((prev) => prev ? { ...prev, empresa_atual_id: empresa.id, contexto_atual: 'empresa' } : prev);
+            }
           } else {
             try { localStorage.removeItem('empresa_atual_id'); } catch { /* Estado em memoria permanece valido. */ }
           }
@@ -117,9 +131,12 @@ export function useContextoGrupoEmpresa() {
       if (isRemoteApiKeyMode || isHttpBackendMode) {
         if (isHttpBackendMode) {
           switchErpHttpSessionEmpresa({ empresaId: null });
+          const session = readErpHttpSession();
           await ensureHttpTenantLocalMirror({
             groupId: grupo.id,
             empresaId: null,
+            groupName: session?.groupName || grupo.nome_do_grupo,
+            empresas: session?.empresas || [],
           });
         }
         return grupo;
@@ -170,9 +187,12 @@ export function useContextoGrupoEmpresa() {
       if (isRemoteApiKeyMode || isHttpBackendMode) {
         if (isHttpBackendMode) {
           switchErpHttpSessionEmpresa({ empresaId });
+          const session = readErpHttpSession();
           await ensureHttpTenantLocalMirror({
             groupId: empresa.group_id || empresa.grupo_id || user?.grupo_atual_id,
             empresaId,
+            groupName: session?.groupName,
+            empresas: session?.empresas || [],
           });
         }
         return empresa;

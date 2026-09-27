@@ -1,3 +1,22 @@
+## ACESSO — logout travado sem empresa (2026-09-27)
+
+| Campo | Valor |
+|---|---|
+| **Problema** | Usuário sem empresa/bloqueado não consegue sair (botão Sair só limpava sessão local e não voltava ao login) |
+| **Correção** | `AuthContext.logout` + `auth.logout` HTTP limpam Bearer e recarregam `/`; Layout usa `useAuth().logout`; botão **Sair** no header; escape **Sair e entrar com outra conta** nas telas GuardRails / banner sem empresa |
+| **Workaround imediato (antes do deploy)** | No console do browser em `erp-dev`: `localStorage.removeItem('base44_access_token'); localStorage.removeItem('erp_runtime_scope'); location.assign('/');` |
+| **PR** | #91 |
+
+## ACESSO — seletor de empresas vazio + GuardRails (2026-09-27)
+
+| Campo | Valor |
+|---|---|
+| **Problema** | Dropdown EMPRESA vazio; banner “selecione empresa”; tela “Acesso necessário”; usuário ainda como Gate D Synth Actor |
+| **Causa** | (1) Sessão HTTP só colocava 0–1 empresa em `empresas_vinculadas` e espelhava stub “Empresa ERP DEV”, sem listar Postgres. (2) `createHttpHybridClient` reutilizava `auth.isAuthenticated` local → GuardRails falhava com sessão Bearer válida. |
+| **Correção** | `GET/POST /api/v1/auth/session` devolve `group_name` + `empresas[]` do grupo; SPA espelha nomes reais; `buildHttpSessionUser` preenche vínculos; hybrid client usa auth HTTP; auto-seleciona 1ª empresa no boot. |
+| **Testes** | `server/tests/auth-session-password.test.ts` 3/3; `tests/erp-http-session.test.js` 13/13; `tsc` server OK |
+| **Deploy** | Após merge: rebuild SPA+API na VPS; **logout** do synth; **login** com a conta proprietária; validar Grupo CPA + CPA ferro e aço + 3Z LTDA no seletor |
+
 ## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:55Z)
 
 Campos **separados** (não misturar):
@@ -9,7 +28,7 @@ Campos **separados** (não misturar):
 | **SHA ativo na VPS** | **NÃO** — deploy ainda não executado | N/A código-only | N/A | N/A |
 | **Teste login proprietário** | **PENDENTE** (humano: logout/login + config + empresas) | N/A | N/A | N/A |
 
-Main tip após lote: **`534743de`**. Sem novas PRs empilhadas nesta janela. Codex: revisão cruzada dos merges + organizar #68–#89 sobre #50–#67.
+Main tip após lote de merges: **`534743de`** (+ docs `4b78b9ec`+). Sem novas PRs empilhadas nesta janela. Codex: revisão cruzada dos merges + organizar #68–#89 sobre #50–#67.
 
 ### PASTE_VPS #45 — deploy controlado (humano; NÃO executado pelo agente)
 
