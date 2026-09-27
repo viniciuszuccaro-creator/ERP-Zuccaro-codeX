@@ -1,3 +1,16 @@
+## #100 DEPLOY EM CURSO — CI main SUCCESS (2026-09-27T19:33Z)
+
+Fonte: [#100#issuecomment-5859127269](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/100#issuecomment-5859127269).
+
+| Campo | Valor |
+|---|---|
+| Merge | `5dfa7562` (aprovado `e7ad20e1`) |
+| CI PUSH main | **SUCCESS** `36344593507` |
+| VPS | checkout limpo no merge; API/SPA ainda digests `9ed1a30e` (200/200) |
+| Próximo Codex | auditoria/backup/canário/promoção |
+| Cursor | **não** deploya |
+| Acesso | **PENDENTE** até promote + prova browser |
+
 ## #100 MESCLADA — deploy/browser pendentes (2026-09-27T19:31Z)
 
 | Campo | Valor |

@@ -1,3 +1,10 @@
+## #100 DEPLOY EM CURSO (2026-09-27T19:33Z)
+
+Main `5dfa7562` CI SUCCESS. Canário/promoção iniciados. Cursor não deploya.
+Acesso só fecha após promote + browser (Grupo/CPA/3Z/Comercial/Config).
+
+---
+
 ## #100 MERGED — aguarda deploy + browser (2026-09-27T19:31Z)
 
 Merge `5dfa7562` (aprovado `e7ad20e1`). CI main em curso. Cursor não deploya.
