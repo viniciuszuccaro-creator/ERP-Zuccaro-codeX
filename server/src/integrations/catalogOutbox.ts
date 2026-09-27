@@ -150,6 +150,40 @@ export class CatalogOutbox {
     });
   }
 
+  /** Latest unresolved ACK observations in the current publication attempt; historical scans remain intact. */
+  async divergences(ctx: RequestContext, limit = 20, cursor?: { id: string; createdAt: string }) {
+    await this.authorize(ctx, 'catalogo', 'visualizar');
+    const parsed = z.object({ limit: z.number().int().min(1).max(100),
+      cursor: z.object({ id: z.string().uuid(), createdAt: z.string().datetime() }).strict().optional(),
+    }).safeParse({ limit,cursor });
+    if (!parsed.success) throw new AppError(422, 'CATALOG_PAGE_INVALID', 'Invalid page');
+    return this.scoped(ctx, async (tx) => {
+      const result = await tx.query<{ id: string; sourceId: string; sourceAttempt: number; observer: string;
+        state: 'MISSING'|'CONFLICT'|'UNAVAILABLE'; createdAt: string }>(`
+        WITH latest AS (
+          SELECT DISTINCT ON (r.aggregate_id,r.payload->>'observer') r.id,r.aggregate_id,r.created_at,
+            q.attempts,r.payload->>'observer' AS observer,r.payload->>'state' AS state
+          FROM integration_events r JOIN integration_events q ON q.id=r.aggregate_id
+            AND q.group_id=$1 AND q.empresa_id=$2 AND q.source='ERP' AND q.event_type='produto.publicado'
+            AND q.aggregate_type='Produto' AND q.status='published'
+          WHERE r.group_id=$1 AND r.empresa_id=$2 AND r.source='ERP' AND r.event_type='catalogo.reconciliado'
+            AND r.aggregate_type='IntegracaoEvento' AND r.status='processed'
+            AND r.payload->>'sourceAttempt'=q.attempts::text
+          ORDER BY r.aggregate_id,r.payload->>'observer',r.created_at DESC,r.id DESC
+        ) SELECT id,aggregate_id AS "sourceId",attempts AS "sourceAttempt",
+          CASE WHEN observer ~ '^[a-zA-Z0-9_-]{1,64}$' THEN observer ELSE 'OBSERVER_REDACTED' END AS observer,state,
+          to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt"
+        FROM latest WHERE state IN ('MISSING','CONFLICT','UNAVAILABLE')
+          AND ($3::uuid IS NULL OR (created_at,id)>($4::timestamptz,$3::uuid))
+        ORDER BY created_at,id LIMIT $5`,[ctx.groupId,ctx.empresaId,cursor?.id??null,cursor?.createdAt??null,limit+1]);
+      const items=result.rows.slice(0,limit),hasMore=result.rows.length>limit,last=items.at(-1);
+      await this.guards.auditRepo.append({ ...ctx,entity:'IntegracaoEvento',action:'read',
+        afterData:{ operation:'catalog.divergences',examined:items.length,limit,hasMore } },tx);
+      return { items,hasMore,nextCursor:hasMore&&last?{id:last.id,createdAt:last.createdAt}:null,
+        scope:'COMPANY',correctionApplied:false };
+    });
+  }
+
   /** Operational snapshot of this company's existing queue; thresholds are caller-supplied, never commercial defaults. */
   async health(ctx: RequestContext, overdueSeconds: number) {
     await this.authorize(ctx, 'catalogo', 'visualizar');
