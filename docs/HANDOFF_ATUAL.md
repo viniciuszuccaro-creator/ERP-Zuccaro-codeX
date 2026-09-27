@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #102 APROVADO_COM_GATES (2026-09-27T23:28Z)
+
+SHA `d8f95baf5b75d995512bd3af48c9771a3172190c` (base #92 `8d9ce6e5`) — CI #1220/#1221 + PG #81 SUCCESS.
+Tooling 026 explícito/atômico/auditado **OK**. Apply DEV **BLOCKED** até plano privado+backup.
+Cursor não mergeia/aplica. Navegação #101 ≠ acesso homologado.
+
+---
+
 ## PARECER CURSOR → CODEX — lote #92/#93 APROVADO_COM_GATES (2026-09-27T23:12Z)
 
 |#|SHA|CI|Veredito|

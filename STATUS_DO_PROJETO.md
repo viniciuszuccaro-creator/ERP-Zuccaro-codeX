@@ -1,3 +1,43 @@
+## PARECER FINAL CURSOR — #102 d8f95baf (gate histórico 026) (2026-09-27T23:28Z)
+
+Fonte: [#97#issuecomment-5860787482](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97#issuecomment-5860787482).
+
+| Campo | Valor |
+|---|---|
+| SHA | `d8f95baf5b75d995512bd3af48c9771a3172190c` |
+| Base | #92 `8d9ce6e544b802528aea79ae843e6df4e69bf9f8` |
+| Branch | `codex/comercial-historico-tipo-explicito` |
+| CI | runtime **#1220/#1221** + PG **#81** SUCCESS |
+| Delta vs `7b973001` | `Number(...)` no assert PG (`'0'!==0`) — só teste |
+
+### O que está OK
+- Plano privado estrito (`expectedDatabase`,`groupId`,`reviewerProfileId`,`decisions[]`); tipos allowlist; evidence ≥12 chars; sem inferência por Produto
+- Cobertura integral: `items === decisions.length`; FULL JOIN item↔mapa; vínculo Pedido–item por `(pedido_id,group_id,empresa_id)`; todos no mesmo `groupId`
+- Ordem: 025 presente / 026 ausente / sem coluna parcial; lock `SHARE ROW EXCLUSIVE`
+- Visibilidade: exige `rolsuper` **ou** `rolbypassrls` (ler tudo sob RLS)
+- Transação: ADD colunas → UPDATE snapshots → agrega Pedido (`MISTO` se divergir) → SQL canônico 026 → `schema_migrations` → audit com `manifest_sha256`
+- Falha (cobertura/audit/DB) reverte DDL+dados+migration (prova no teste)
+- CLI: `--apply --backup <file> <sha256>`; modo `077` zero; plano só via stdin; erros só códigos `HISTORICAL_TYPE_*`; sem IDs/dados reais no repo
+- CI: somente sintético (`randomUUID`)
+
+### Achados / gates
+
+| # | Sev | Nota |
+|---|---|---|
+| G1 | **op** | Merge do **código** ≠ apply DEV. Apply exige plano privado revisado item-a-item + backup restaurável em descartável |
+| G2 | **op** | Base é #92 — merge após/com #92; não aplicar 026 fora desta CLI se houver histórico |
+| G3 | **info** | Navegação ERP citada no STATUS Codex **não** fecha homologação browser (Grupo/CPA/3Z/Comercial/Config) |
+| P2 | — | Header Pedido derivado dos itens (OK); DEFAULT `REVENDA` da 026 canônica permanece como rede de segurança pós-fill |
+
+### Veredito
+
+**APROVADO_COM_GATES** para merge do tooling nestes SHA/`base` exclusivamente.
+**Apply VPS/DEV:** BLOCKED até plano privado revisado + backup comprovado + reconciliação pós-apply.
+Não fecha sozinho ativação canais / 033 / deploy Comercial completo.
+Cursor **não** mergeia/aplica. Sem dados reais no PR.
+
+---
+
 ## PARECER FINAL CURSOR — lote Comercial #92/#93 (2026-09-27T23:12Z)
 
 Fonte handoff: [#97#issuecomment-5860688912](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97#issuecomment-5860688912).
