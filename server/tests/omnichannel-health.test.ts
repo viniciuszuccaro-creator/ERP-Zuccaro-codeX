@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CatalogOutbox } from '../src/integrations/catalogOutbox.js';
-import { outboxFixture } from './omnichannelOutboxFixture.js';
+import { outboxFixture, assertHealthGrowth } from './omnichannelOutboxFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 
 test('health isolates company and retains divergence across observers without exposing payloads', async () => {
@@ -87,4 +87,8 @@ test('failure triage rejects malformed bounds and blocks response on audit failu
     await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
     await assert.rejects(f.outbox.failures(f.ctx),(e:any)=>e.statusCode===403);
   } finally { await f.close(); }
+});
+
+test('health groups growing reconciliation history once and retains current observer outcomes',async()=>{
+  const f=await outboxFixture();try{await assertHealthGrowth(f);}finally{await f.close();}
 });

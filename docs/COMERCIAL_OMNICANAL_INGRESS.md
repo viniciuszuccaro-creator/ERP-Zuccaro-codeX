@@ -444,3 +444,11 @@ Ordem de integração controlada: main #45→#46→#47→#49; resolver/aprovar #
 Bloqueios ainda próprios: produtores de catálogo de Grupo podem gerar empresa_id=NULL; exigem destino empresarial explícito homologado antes de aplicar 033 operacionalmente. Contrato de catálogo 024 ainda somente RASCUNHO; sinais/ACK não são catálogo integral. Bases #51 (classificação histórica/tipo desconhecido), #52 (versionamento/raiz histórica), #53 (external_id herdado ao versionar conflita com unicidade) precisam correções e revisão canônica. Providers reais, origem documental, fiscal/pagamento e homologação permanecem gates. Não ligar canais, migrar VPS, usar HD, publicar dados reais ou fazer merge nesta tarefa.
 
 Provas sintéticas: quatro canais × Pedido/Orçamento, origem/canal persistidos, oito documentos apesar de dezesseis envios, preço 25.500000 obtido do repositório canônico (sem stub), auditoria/retry/RBAC; concorrência e rollback auditável existentes preservados. Resultados finais e SHA exato publicados na PR, incluindo skips locais opcionais e prova PG sem skips.
+
+## Monitoramento com agregação única de observações
+
+Próximo lote próprio após #92, branch codex/comercial-omnicanal-monitoramento-escalavel. Corrige o achado #73/4114863801: health pesquisava/sortia R reconciliações para cada uma de P publicações. Agora materializa as últimas observações por aggregate_id, sourceAttempt e observer em uma passagem antes do join com a tentativa atual das publicações. Mantém desempate created_at/id, divergência por observador, eventos sem observação, Grupo/Empresa, RBAC, limiar explícito e auditoria transacional. Não aplica correção automática nem muda estados/preços/providers.
+
+Teste sintético cobre 150 publicações e 1350 observações históricas; retorna 150 consistentes, 150 divergentes, 150 indisponíveis e zero não reconciliadas. PostgreSQL CI faz EXPLAIN ANALYZE e exige uma execução da agregação (900 últimas observações incluindo histórico de tentativa anterior, depois filtrado). Sem assert de tempo instável. Testes existentes preservam isolamento, tentativa atual, revogação de permissão e erro de auditoria. Sem migration/index novo.
+
+Dependência: #92 cumulativa, mesma ordem e gates canônicos/RLS/providers. Canais OFF; sem merge/deploy/VPS/HD. Resultados finais, SHA e CI ficam na PR.
