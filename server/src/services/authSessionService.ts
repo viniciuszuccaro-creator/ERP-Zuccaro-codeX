@@ -6,6 +6,33 @@ import { z } from 'zod';
 import { AppError } from '../api/errors.js';
 import type { AppConfig } from '../config/env.js';
 import type { DbClient } from '../db/client.js';
+import { permissionViewAllows } from '../db/rbacGuard.js';
+
+const sessionGuardSchema = z.object({
+  profile_id: z.string().uuid(),
+  group_id: z.string().uuid(),
+  empresa_id: z.string().uuid().nullable(),
+  scope_type: z.enum(['group', 'company', 'grupo', 'empresa']).optional(),
+  module: z.string().trim().min(1).max(80),
+  section: z.union([z.string().max(200), z.array(z.string().min(1).max(80)).max(12)]).nullable().optional(),
+  action: z.string().trim().min(1).max(80),
+}).strict();
+
+/** Advisory UI check only. Mutations still require the domain RBAC/RLS guards. */
+export function resolveSessionEntityGuard(profiles: AuthSessionProfile[], payload: unknown): boolean {
+  const parsed = sessionGuardSchema.safeParse(payload);
+  if (!parsed.success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid guard request');
+  const guard = parsed.data;
+  const profile = profiles.find(p => p.id === guard.profile_id && p.groupId === guard.group_id);
+  if (!profile) return false;
+  const groupView = guard.empresa_id === null;
+  if (guard.scope_type && ['group', 'grupo'].includes(guard.scope_type) !== groupView) return false;
+  if (groupView) {
+    if (profile.empresaId !== null || profile.role !== 'admin') return false;
+  } else if (!profile.empresas.some(e => e.id === guard.empresa_id)
+    || (profile.empresaId !== null && profile.empresaId !== guard.empresa_id)) return false;
+  return permissionViewAllows(profile.permissoes, guard.module, guard.section ?? null, guard.action);
+}
 
 const loginBodySchema = z.object({
   email: z.string().trim().email().max(320),

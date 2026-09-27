@@ -68,7 +68,7 @@ let httpHybridClient = null;
 
 /**
  * Modo http: entidades piloto no BFF; demais no localBase44 (migracao incremental).
- * Auth/functions/integrations permanecem no fallback local neste lote.
+ * Auth e entityGuard usam o BFF; demais functions/integrations preservam o fluxo existente.
  */
 function createHttpHybridClient() {
   const http = createHttpApiClient({
@@ -171,6 +171,13 @@ function createHttpHybridClient() {
     ...localBase44,
     auth: httpAuth,
     entities,
+    functions: {
+      ...localBase44.functions,
+      async invoke(name, payload = {}) {
+        if (name === 'entityGuard') return http.entityGuard(payload);
+        return localBase44.functions.invoke(name, payload);
+      },
+    },
     _http: http,
     _backend: 'http',
   };

@@ -30,7 +30,7 @@ const EMPRESA_B = '55555555-5555-4555-8555-555555555555';
 const ACTOR = '22222222-2222-4222-8222-222222222222';
 
 async function loadRealHook(file, dependencies) {
-  const source = await readFile(new URL(file, import.meta.url), 'utf8');
+  const source = (await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('import.meta.env', '({ VITE_ERP_BACKEND: "http" })');
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS,
     jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
@@ -40,6 +40,58 @@ async function loadRealHook(file, dependencies) {
   }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} } });
   return exports;
 }
+
+test('fachada Base44 real em HTTP encaminha entityGuard somente ao BFF, sem fallback em falha', async () => {
+  let localCalls = 0; let backendCalls = 0;
+  const facade = await loadRealHook('../src/api/base44Client.js', {
+    '@base44/sdk': {}, '@/lib/app-params': { appParams: {} },
+    './localBase44Client.js': { localApiUser: {}, localBase44: { entities: {}, auth: {}, functions: { invoke: async () => { localCalls++; return 'legacy'; } } } },
+    './localAuthSessionPolicy.js': { assertInteractiveAuthAllowed: () => ({ allowed: true }) },
+    './httpApiClient.js': { createHttpApiClient: () => ({ entities: {}, entityGuard: async payload => { backendCalls++; assert.equal(payload.module, 'Comercial'); throw new Error('Bearer rejected'); } }) },
+    './runtimeBackend.js': { HTTP_PILOT_ENTITIES: [], resolveErpApiBaseUrl: () => '', resolveErpBackendMode: () => 'http', resolveHttpPilotEntities: () => [] },
+  });
+  await assert.rejects(facade.base44.functions.invoke('entityGuard', { module: 'Comercial' }), /Bearer rejected/);
+  assert.equal(backendCalls, 1); assert.equal(localCalls, 0);
+  assert.equal(await facade.base44.functions.invoke('legacyFlow', {}), 'legacy');
+  assert.equal(localCalls, 1);
+});
+
+test('ProtectedSection real revalida HTTP e não reaproveita aprovação entre perfis/empresas', async () => {
+  let user = { id: ACTOR, permissoes: { Comercial: { pedido: ['visualizar'] } } };
+  let company = EMPRESA_A;
+  const states = []; let cursor = 0; const effects = [];
+  const pending = []; const calls = []; const cache = new Map(); const inflight = new Map();
+  const react = { createElement: (type, props, ...children) => ({ type, props, children }),
+    useRef: () => ({ current: false }),
+    useState: initial => { const i = cursor++; if (!(i in states)) states[i] = initial; return [states[i], value => { states[i] = value; }]; },
+    useEffect: fn => effects.push(fn),
+  };
+  const hook = await loadRealHook('../src/components/security/ProtectedSection.jsx', {
+    react: { ...react, default: react },
+    '@/components/lib/usePermissions': { default: () => ({ isLoading: false, hasPermission: () => true }) },
+    '@/api/base44Client': { isHttpBackendMode: true, base44: { functions: { invoke: (name, body) => { assert.equal(name, 'entityGuard'); calls.push(body); return new Promise(resolve => pending.push(resolve)); } }, entities: { AuditLog: { create() {} } } } },
+    '@/components/lib/useContextoVisual': { useContextoVisual: () => ({ empresaAtual: { id: company }, grupoAtual: { id: GROUP } }) },
+    '@/components/lib/UserContext': { useUser: () => ({ user }) },
+    '@/components/ui/dialog': {}, '@/components/ui/button': {},
+    '@/components/lib/sensitiveActionGuardPolicy': { getSensitiveGuardState: () => ({ cache, inflight }), isSensitiveGuardAllowed: value => value.data.allowed === true },
+  });
+  const render = () => { cursor = 0; effects.length = 0; return hook.default({ module: 'Comercial', children: 'PRIVATE' }); };
+  const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
+  assert.ok(render().props['data-ps-loading'] === true);
+  const cleanup = effects[0]();
+  pending.shift()({ data: { allowed: true } }); await flush();
+  assert.equal(render().children[0], 'PRIVATE');
+  const secondCleanup = effects[0](); assert.equal(calls.length, 2); // HTTP never consumes completed TTL approval.
+  company = EMPRESA_B; user = { ...user, id: 'another-profile' };
+  assert.ok(render().props['data-ps-loading'] === true);
+  cleanup(); secondCleanup();
+  const oldCleanup = effects[0]();
+  // Stop this request before its late ACK; current context must remain unapproved.
+  oldCleanup(); company = EMPRESA_A; user = { ...user, id: ACTOR };
+  render();
+  pending.splice(0).forEach(resolve => resolve({ data: { allowed: true } })); await flush();
+  assert.ok(render().props['data-ps-loading'] === true);
+});
 
 test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadastro local', async () => {
   const mutations = [];

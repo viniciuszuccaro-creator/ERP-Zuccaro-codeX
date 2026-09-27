@@ -27,6 +27,32 @@ export type RbacAction =
 
 export type PermissionTree = Record<string, unknown>;
 
+/** Mirrors the existing UI vocabulary; never changes canonical mutation permissions. */
+export function permissionViewAllows(tree: PermissionTree, module: string, section: string | string[] | null, action: string): boolean {
+  const key = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const aliases: Record<string, string> = {
+    comercialevendas: 'comercial', financeiroecontabil: 'financeiro', comprasesuprimentos: 'compras',
+    estoqueealmoxarifado: 'estoque', expedicaologistica: 'expedicao', producaoemanufatura: 'producao',
+    fiscaletributario: 'fiscal', recursoshumanos: 'rh', cadastrosgerais: 'cadastros',
+    dashboardcorporativo: 'dashboard', relatorioseanalises: 'relatorios',
+    administracaosistema: 'sistema', configuracoesdosistema: 'sistema',
+    controledeacesso: 'acessos', configuracoesgerais: 'configuracoes',
+  };
+  const normalized = (value: string) => aliases[key(value)] ?? key(value);
+  const actions: Record<string, string> = { ver: 'visualizar', view: 'visualizar', read: 'visualizar', listar: 'visualizar', consultar: 'visualizar', create: 'criar', edit: 'editar', update: 'editar', approve: 'aprovar', delete: 'excluir', export: 'exportar' };
+  const desired = actions[action.toLowerCase()] ?? action.toLowerCase();
+  const allows = (node: unknown): boolean => Array.isArray(node)
+    ? node.some(a => typeof a === 'string' && (actions[a.toLowerCase()] ?? a.toLowerCase()) === desired)
+    : !!node && typeof node === 'object' && Object.entries(node).some(([k, v]) => k !== '*' && allows(v));
+  let node: unknown = tree[Object.keys(tree).find(k => k !== '*' && normalized(k) === normalized(module)) ?? ''];
+  for (const segment of (Array.isArray(section) ? section : section?.split('.').filter(Boolean) ?? [])) {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) return false;
+    const current = node as Record<string, unknown>;
+    node = current[Object.keys(current).find(k => k !== '*' && normalized(k) === normalized(segment)) ?? ''];
+  }
+  return allows(node);
+}
+
 export interface RbacGuard {
   assertAllowed(
     ctx: RequestContext,
