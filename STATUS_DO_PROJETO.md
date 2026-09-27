@@ -1,3 +1,25 @@
+## INCIDENTE — OWNER_GROUP_ID placeholder (2026-09-27T10:44Z)
+
+| Achado | Valor |
+|---|---|
+| Erro | `BLOCKED: OWNER_GROUP_ID_invalid_uuid` + SQL `invalid input syntax for type uuid: "<uuid-grupo-cpa>"` |
+| Causa | Variável de shell `OWNER_GROUP_ID='<uuid-grupo-cpa>'` de paste antigo (placeholder), sobrescreveu o UUID real |
+| Auth owner | `owner_auth_create=YES` / `owner_auth_count_after=1` — Auth criada; falta só provision+rebuild |
+| Correção | Script ignora placeholders; use `unset` + re-executar |
+
+### PASTE imediato (sem placeholders)
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main && git checkout --detach origin/main
+unset OWNER_GROUP_ID OWNER_EMPRESA_ID EMPRESA_3Z_ID
+# OWNER_PASS já pode existir; Auth do owner já foi criada — pode omitir se count=1
+CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=HEAD ERP_DOCKER_NETWORK=supabase_default \
+  bash scripts/vps/deploy-owner-access-incidente.sh
+```
+
+Se pedir `OWNER_PASS` de novo, use a mesma senha do login (mín. 8). Não cole senha no chat.
+
 ## INCIDENTE ACESSO — evidência VPS 10:40Z (2026-09-27)
 
 | Achado | Valor |
