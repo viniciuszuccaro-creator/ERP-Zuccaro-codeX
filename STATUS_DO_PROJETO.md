@@ -1,3 +1,12 @@
+## ACESSO — logout travado sem empresa (2026-09-27)
+
+| Campo | Valor |
+|---|---|
+| **Problema** | Usuário sem empresa/bloqueado não consegue sair (botão Sair só limpava sessão local e não voltava ao login) |
+| **Correção** | `AuthContext.logout` + `auth.logout` HTTP limpam Bearer e recarregam `/`; Layout usa `useAuth().logout`; botão **Sair** no header; escape **Sair e entrar com outra conta** nas telas GuardRails / banner sem empresa |
+| **Workaround imediato (antes do deploy)** | No console do browser em `erp-dev`: `localStorage.removeItem('base44_access_token'); localStorage.removeItem('erp_runtime_scope'); location.assign('/');` |
+| **PR** | #91 |
+
 ## ACESSO — seletor de empresas vazio + GuardRails (2026-09-27)
 
 | Campo | Valor |
