@@ -7,7 +7,7 @@ umask 077
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 MODE="${OWNER_ACCESS_MODE:-AUDIT}"
-[[ "$MODE" == AUDIT || "$MODE" == APPLY || "$MODE" == BOOTSTRAP ]] || { echo 'BLOCKED: invalid_mode' >&2; exit 2; }
+[[ "$MODE" == AUDIT || "$MODE" == APPLY || "$MODE" == BOOTSTRAP || "$MODE" == PASSWORD ]] || { echo 'BLOCKED: invalid_mode' >&2; exit 2; }
 [[ -z "${OWNER_PASS:-}" ]] || { unset OWNER_PASS; echo 'BLOCKED: password_environment_not_allowed_use_tty' >&2; exit 2; }
 OWNER_EMAIL="${OWNER_EMAIL:-}"
 OWNER_GROUP_ID="${OWNER_GROUP_ID:-}"
@@ -62,10 +62,32 @@ for(const [id,display] of expected){
 const row=companies.rows.find(e=>e.id===id);
 if(row && (row.group_id!==group || row.status!=='Ativa' || (row.nome_fantasia||row.razao_social).toLowerCase()!==display.toLowerCase())) fail('existing_company_mismatch_no_reparent');
 if(companies.rows.some(e=>e.id!==id && (e.nome_fantasia||e.razao_social).toLowerCase()===display.toLowerCase())) fail('duplicate_company_name_requires_resolution');
-if(mode==='APPLY' && !row) fail('existing_company_required');
+if((mode==='APPLY' || mode==='PASSWORD') && !row) fail('existing_company_required');
 }
-if(mode==='APPLY' && (!g || auth.rowCount!==1)) fail('existing_group_and_auth_required');
+if((mode==='APPLY' || mode==='PASSWORD') && (!g || auth.rowCount!==1)) fail('existing_group_and_auth_required');
+if(mode==='PASSWORD' && (profiles.rowCount!==1 || !profiles.rows[0].ativo || profiles.rows[0].auth_user_id!==auth.rows[0]?.id)) fail('active_owner_profile_required');
 if(op==='preflight'){console.log('owner_preflight=PASS');return;}
+if(op==='password'){
+if(mode!=='PASSWORD' || !password || password.length<12 || password.length>200) fail('interactive_password_required');
+const base=process.env.SUPABASE_URL, key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+if(!base || !key) fail('auth_admin_configuration_missing');
+const url=new URL('auth/v1/admin/users/'+auth.rows[0].id,base.replace(/\/+$/,'')+'/');
+const headers={apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'};
+let existing;try{existing=await fetch(url,{headers,signal:AbortSignal.timeout(8000)});}catch{fail('auth_identity_unavailable');}
+if(!existing.ok) fail('auth_identity_unavailable');
+const identity=await existing.json();
+if(identity.id!==auth.rows[0].id || identity.email?.toLowerCase()!==email.toLowerCase() || !identity.email_confirmed_at) fail('auth_identity_mismatch_or_unconfirmed');
+const audit=async stage=>client.query("INSERT INTO audit_logs(group_id,empresa_id,actor_email,entity,entity_id,action,before_data,after_data) VALUES($1,$2,'system:vps-owner-password','Profile',$3,'update',NULL,$4::jsonb)",[group,company,profiles.rows[0].id,JSON.stringify({operation:'password_reset',stage})]);
+// Intent must persist before Auth mutation. Auth owns its credential/audit transaction.
+// No automatic retry: network ambiguity or completion-audit failure requires inspection.
+await audit('requested');
+let response;try{response=await fetch(url,{method:'PUT',headers,body:JSON.stringify({password}),signal:AbortSignal.timeout(8000)});}catch{fail('password_reset_unconfirmed_no_automatic_retry');}
+if(!response.ok){await audit('rejected');fail('password_reset_rejected');}
+const updated=await response.json();
+if(updated.id!==auth.rows[0].id) fail('password_reset_unconfirmed_no_automatic_retry');
+try{await audit('completed');}catch{fail('password_changed_completion_audit_failed_no_automatic_retry');}
+console.log('owner_password_updated=YES');return;
+}
 if(op==='bootstrap'){
 if(mode!=='BOOTSTRAP') fail('bootstrap_not_authorized');
 if(auth.rowCount===0){
@@ -121,6 +143,21 @@ sha256sum "$BACKUP_DIR/database.dump" >"$BACKUP_DIR/database.sha256"
 cp .env.erp.dev "$BACKUP_DIR/api.env.restore"
 cp docker-compose.erp.yml "$BACKUP_DIR/compose.restore.yml"
 echo 'backup_archive_valid=YES'
+if [[ "$MODE" == PASSWORD ]]; then
+  unset PASSWORD PASSWORD_CONFIRM
+  [[ "${CONFIRM_OWNER_PASSWORD_RESET:-}" == YES && -r /dev/tty ]] || { echo 'BLOCKED: owner_private_password_handoff_required' >&2; exit 2; }
+  # The owner enters/confirms/submits privately in the Web Console. Never export.
+  trap 'unset PASSWORD PASSWORD_CONFIRM' EXIT
+  read -r -s -p 'Proprietário: nova senha (12 a 200 caracteres): ' PASSWORD </dev/tty
+  printf '\n' >/dev/tty
+  read -r -s -p 'Proprietário: confirme a nova senha: ' PASSWORD_CONFIRM </dev/tty
+  printf '\n' >/dev/tty
+  [[ "$PASSWORD" == "$PASSWORD_CONFIRM" ]] || { echo 'BLOCKED: passwords_do_not_match' >&2; exit 2; }
+  run_gate password
+  unset PASSWORD PASSWORD_CONFIRM
+  echo 'NEXT=owner_login_with_private_password_no_api_spa_changes'
+  exit 0
+fi
 # As imagens testadas no canário são as mesmas promovidas, sem rebuild posterior.
 CANARY_NETWORK="erp-owner-canary-$STAMP"
 CANARY_API="erp-owner-api-$STAMP"
