@@ -105,11 +105,17 @@ function createHttpHybridClient() {
   // acusa "não autenticado" enquanto o header mostra o usuário HTTP).
   const httpAuth = {
     async me() {
-      const { readErpHttpSession, buildHttpSessionUser, ensureHttpTenantLocalMirror } = await import('./erpHttpSession.js');
-      const session = readErpHttpSession();
+      const {
+        refreshErpHttpSessionFromServer,
+        buildHttpSessionUser,
+        ensureHttpTenantLocalMirror,
+        clearErpHttpSession,
+      } = await import('./erpHttpSession.js');
+      // Sempre revalida no BFF — não monta usuário só com localStorage fabricável.
+      const session = await refreshErpHttpSessionFromServer({});
       if (!session?.token) {
-        const err = createAuthDeniedError({ reason: 'http_session_missing' });
-        throw err;
+        clearErpHttpSession();
+        throw createAuthDeniedError({ reason: 'http_session_missing' });
       }
       try {
         await ensureHttpTenantLocalMirror({
@@ -118,12 +124,15 @@ function createHttpHybridClient() {
           groupName: session.groupName,
           empresas: session.empresas,
           perfilAcessoId: `http_perfil_${session.actorId}`,
+          permissoes: session.permissoes || {},
+          perfilNome: session.fullName || session.email,
         });
       } catch {
         /* espelho best-effort */
       }
       const user = buildHttpSessionUser(session);
       if (!user) {
+        clearErpHttpSession();
         throw createAuthDeniedError({ reason: 'http_session_incomplete' });
       }
       return user;

@@ -42,9 +42,14 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
     }
-    // Sempre revalida Bearer + perfil/permissões no servidor (não confia em role do localStorage).
+    // Sempre revalida no servidor, exceto login acabou de devolver perfil+empresas+permissoes.
+    // Nunca confiar em role/empresas fabricados só no localStorage.
+    const loginFresh = session._serverValidated === true
+      && session.permissoes
+      && typeof session.permissoes === 'object'
+      && Array.isArray(session.empresas);
     let trusted = session;
-    if (!session.permissoes || session._serverValidated !== true) {
+    if (!loginFresh) {
       trusted = await refreshErpHttpSessionFromServer({
         preferredActorId: session.actorId,
         preferredGroupId: session.groupId,
@@ -237,6 +242,8 @@ export const AuthProvider = ({ children }) => {
         email: session.email,
         role: session.role,
         fullName: session.fullName,
+        groupName: session.groupName,
+        empresas: Array.isArray(session.empresas) ? session.empresas : [],
         expiresAt: session.expiresAt,
         permissoes: session.permissoes || {},
         _serverValidated: true,
