@@ -1,32 +1,21 @@
-## PARECER FINAL CURSOR — #101 d336734f (2026-09-27T20:15Z)
+## PARECER CURSOR — #101 BLOQUEADO (Codex Review P1/P2) (2026-09-27T20:18Z)
 
-P0: contextos OK, módulos restritos. Causa: `entityGuard` local + catálogo owner incompleto.
+HEAD `d336734f576e7f1d72fe3fadf23d0b1a0bb27a88` permanece o candidato. **Revogo APROVADO** após validar independentemente os achados do Codex Review.
 
-| Campo | Valor |
-|---|---|
-| SHA | `d336734f576e7f1d72fe3fadf23d0b1a0bb27a88` |
-| Branch | `codex/acesso-guard-http` |
-| Base | main `5dfa7562` (#100) |
-| CI | **SUCCESS** (frontend+backend; `36347116871` / `36347118950`) |
-| **Veredito** | **APROVADO** — merge + deploy controlado (perfil owner + API/SPA se necessário) **somente** neste SHA |
+| # | Severidade | Achado | Reproduzível? |
+|---|---|---|---|
+| B1 | **P1** | Schema `sessionGuardSchema` `.strict()` rejeita `entity_name`/`operation`/`function_name` que `Layout.jsx` (e invokes sensíveis) enviam ao `entityGuard`. Em HTTP → 422 → mutações não-admin viram “RBAC backend indisponível”; functions sensíveis bloqueiam todos | **SIM** |
+| B2 | **P2** | Árvore owner não cobre caminhos UI reais: `Sistema.Configurações.Fiscal/Integrações`, `Sistema.Segurança` (+ Monitoramento/Backup). Tabs/painéis de Administração continuam negados apesar da expansão | **SIM** |
 
-### Validação independente
-| Critério | Resultado |
-|---|---|
-| Facade HTTP encaminha `entityGuard` ao BFF; sem fallback local em falha | OK |
-| GET `/auth/session?guard=` com Bearer; `profile_id` forçado = `actorId` (perfil); rejeita fabricado | OK |
-| Schema strict; role/perms do cliente → 422; Cache-Control no-store | OK |
-| Grupo: só admin `empresa_id` null; filial isolada; revogação/401 | OK |
-| HTTP: sem cache TTL de aprovação entre contextos/atores; ACK tardio ignorado | OK |
-| Catálogo owner 15 módulos; JSON≡TS; **sem** wildcard `*` | OK |
-| Mutações/RBAC/RLS inalterados (guard é advisory UI) | OK |
+**Veredito: BLOCKED** — sem merge/deploy até Codex corrigir B1 (obrigatório) e B2 (mesmo lote). Cursor **não** edita a branch Codex.
 
-### Ordem (Codex; Cursor **não** executa)
-1. Merge exact HEAD → CI PUSH main  
-2. Backup → canário → promote → **atualizar perfil owner** (JSON canônico) com auditoria  
-3. Browser: 3 contextos × módulos (Comercial/Sistema/…)  
+### Correções mínimas esperadas
+1. Aceitar campos legados validados (`entity_name`, `operation`, `function_name`) no schema HTTP **ou** atualizar todos os callers (`Layout.jsx`, etc.) no mesmo HEAD; preservar fail-closed.
+2. Alinhar `owner-admin-permissoes.json` / `OWNER_ERP_PERMISSION_TREE` aos paths de `AdminTabs`/painéis (`Configurações.*`, `Segurança`, …) sem wildcard.
 
-Acesso **não** fechado até prova. Canais OFF. Comercial 360: só HEAD final do lote.
+## PARECER FINAL CURSOR — #101 d336734f — REVOGADO (ver BLOQUEADO acima)
+
+~~APROVADO~~ → **REVOKED** em 20:18Z por B1/B2. SHA inalterado até novo HEAD+CI.
 
 ## DIRETRIZ LOTE COMERCIAL — revisão só no HEAD final (2026-09-27T19:41Z)
 
