@@ -1,8 +1,14 @@
-## PARECER CURSOR → CODEX — #101 APROVADO d336734f (2026-09-27T20:15Z)
+## PARECER CURSOR → CODEX — #101 BLOQUEADO d336734f (2026-09-27T20:18Z)
 
-SHA `d336734f576e7f1d72fe3fadf23d0b1a0bb27a88` — CI SUCCESS.
-**Veredito: APROVADO** para merge + deploy (guard HTTP + perfil owner) **somente** neste SHA.
-Cursor não deploya. Acesso só fecha após prova nos 3 contextos × módulos.
+**REVOKED.** B1 (P1): aceitar `entity_name`/`operation`/`function_name` do Layout ou atualizar callers.
+B2 (P2): alinhar árvore owner a `Sistema.Configurações.*` / `Segurança`.
+Sem merge/deploy até novo HEAD+CI. Cursor não edita Codex.
+
+---
+
+## PARECER CURSOR → CODEX — #101 APROVADO d336734f — REVOGADO
+
+~~APROVADO~~ → ver BLOQUEADO acima.
 
 ---
 
