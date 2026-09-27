@@ -2,6 +2,7 @@ import { resolveErpApiBaseUrl } from './runtimeBackend.js';
 
 const SCOPE_KEY = 'erp_runtime_scope';
 const TOKEN_KEY = 'base44_access_token';
+export const HTTP_CONTEXT_CHANGED = 'erp-http-context-changed';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -39,6 +40,8 @@ function isUuid(value) {
  *   groupId: string,
  *   empresaId?: string | null,
  *   actorId: string,
+ *   profileEmpresaId?: string | null,
+ *   scopeType?: string,
  *   email?: string,
  *   role?: string | null,
  *   fullName?: string | null,
@@ -106,6 +109,8 @@ export function persistErpHttpSession(input) {
     fullName: fullName || null,
     groupName: groupName || null,
     empresas,
+    profileEmpresaId: input.profileEmpresaId || null,
+    scopeType: input.scopeType || (empresaId ? 'empresa' : 'grupo'),
     expiresAt,
   }));
 }
@@ -194,6 +199,8 @@ export function readErpHttpSession(storage = null, options = {}) {
         ? scope.groupName.trim()
         : null,
       empresas: Array.isArray(scope.empresas) ? scope.empresas : [],
+      profileEmpresaId: scope.profileEmpresaId || null,
+      scopeType: scope.scopeType === 'grupo' ? 'grupo' : 'empresa',
       expiresAt,
     };
   } catch {
@@ -219,6 +226,9 @@ export function switchErpHttpSessionEmpresa(input) {
   if (empresaId && !isUuid(empresaId)) {
     throw new Error('empresaId inválido na troca de contexto');
   }
+  if (!empresaId && (current.profileEmpresaId || current.role !== 'admin')) {
+    throw new Error('Perfil sem autorização para operar no Grupo');
+  }
   // Só permite empresa listada pelo servidor na sessão (anti-fabricação no browser).
   const authorized = Array.isArray(current.empresas) ? current.empresas : [];
   if (empresaId) {
@@ -238,9 +248,12 @@ export function switchErpHttpSessionEmpresa(input) {
     fullName: current.fullName,
     groupName: current.groupName,
     empresas: current.empresas,
+    profileEmpresaId: current.profileEmpresaId,
+    scopeType: empresaId ? 'empresa' : 'grupo',
     expiresAt: current.expiresAt,
     storage,
   });
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(HTTP_CONTEXT_CHANGED));
   return readErpHttpSession(storage);
 }
 
@@ -252,6 +265,8 @@ export function switchErpHttpSessionEmpresa(input) {
  *   groupId: string,
  *   empresaId?: string | null,
  *   actorId: string,
+ *   profileEmpresaId?: string | null,
+ *   scopeType?: string,
  *   email?: string | null,
  *   role?: string | null,
  *   fullName?: string | null,
@@ -284,7 +299,7 @@ export function buildHttpSessionUser(session) {
   if (empresasVinculadas.length === 0 && empresaId && isUuid(empresaId)) {
     empresasVinculadas.push({ empresa_id: empresaId, ativo: true });
   }
-  const empresaAtual = empresaId && isUuid(empresaId)
+  const empresaAtual = session.scopeType === 'grupo' ? null : empresaId && isUuid(empresaId)
     ? empresaId
     : (empresasVinculadas[0]?.empresa_id || null);
   const perfilAcessoId = `http_perfil_${actorId}`;
@@ -304,7 +319,7 @@ export function buildHttpSessionUser(session) {
     grupo_padrao_id: groupId,
     empresa_atual_id: empresaAtual,
     empresa_padrao_id: empresaAtual,
-    pode_operar_em_grupo: isAdmin,
+    pode_operar_em_grupo: isAdmin && !session.profileEmpresaId,
     pode_ver_todas_empresas: isAdmin || empresasVinculadas.length > 1,
     empresas_vinculadas: empresasVinculadas,
     grupos_vinculados: [{ grupo_id: groupId, ativo: true }],
@@ -419,6 +434,8 @@ export async function loginErpHttpSession(input) {
     fullName,
     groupName,
     empresas,
+    profileEmpresaId: profile.empresa_id || null,
+    scopeType: !profile.empresa_id && role === 'admin' ? 'grupo' : 'empresa',
     expiresIn,
   };
   const expiresAt = new Date(Date.now() + Math.floor(expiresIn) * 1000).toISOString();
@@ -446,6 +463,8 @@ export async function loginErpHttpSession(input) {
     groupName,
     empresas,
     permissoes,
+    profileEmpresaId: session.profileEmpresaId,
+    scopeType: session.scopeType,
   });
   return {
     ...session,
@@ -544,7 +563,9 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     preferredEmpresaId: sameGroupAsPreference ? rawPreferred : null,
   });
   // Se o servidor listou empresas e a preferência/perfil não bate, usa a primeira autorizada.
-  if (!empresaId && empresas.length > 0) {
+  const groupView = !profile.empresa_id && role === 'admin' && local.scopeType === 'grupo';
+  if (groupView) empresaId = null;
+  if (!groupView && !empresaId && empresas.length > 0) {
     empresaId = String(empresas[0].id);
   }
   persistErpHttpSession({
@@ -557,6 +578,8 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     fullName,
     groupName,
     empresas,
+    profileEmpresaId: profile.empresa_id || null,
+    scopeType: groupView ? 'grupo' : 'empresa',
     expiresAt: local.expiresAt,
     storage,
   });
@@ -583,6 +606,8 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     fullName,
     groupName,
     empresas,
+    profileEmpresaId: profile.empresa_id || null,
+    scopeType: groupView ? 'grupo' : 'empresa',
     expiresAt: local.expiresAt,
     permissoes,
     profiles,

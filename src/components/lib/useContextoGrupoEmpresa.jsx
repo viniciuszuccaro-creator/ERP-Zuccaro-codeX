@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { empresaPertenceAoGrupo, userTemAcessoEmpresa, userTemAcessoGrupo } from "./contextoMultiempresaPolicy";
 import {
   buildHttpSessionUser,
+  HTTP_CONTEXT_CHANGED,
   ensureHttpTenantLocalMirror,
   readErpHttpSession,
   refreshErpHttpSessionFromServer,
@@ -50,7 +51,9 @@ export function useContextoGrupoEmpresa() {
       return null;
     }
 
-    const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+    const grupos = isHttpBackendMode
+      ? [{ id: grupoId, nome_do_grupo: currentUser.group_name, status: 'Ativo' }]
+      : await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
     if (grupos[0]) {
       setGrupoAtual(grupos[0]);
       try { localStorage.setItem('group_atual_id', grupos[0].id); } catch { /* Estado em memoria permanece valido. */ }
@@ -62,6 +65,10 @@ export function useContextoGrupoEmpresa() {
 
   useEffect(() => {
     carregarContextoInicial();
+    if (isHttpBackendMode) {
+      window.addEventListener(HTTP_CONTEXT_CHANGED, carregarContextoInicial);
+      return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, carregarContextoInicial);
+    }
   }, []);
 
   const carregarContextoInicial = async () => {
@@ -85,6 +92,7 @@ export function useContextoGrupoEmpresa() {
       try { localStorage.setItem('contexto_atual', ctx); } catch { /* Estado em memoria permanece valido. */ }
 
       if (ctx === 'grupo') {
+        setEmpresaAtual(null);
         await carregarGrupoPorIdOuPadrao(currentUser);
       } else {
         const grupo = await carregarGrupoPorIdOuPadrao(currentUser);
@@ -99,13 +107,14 @@ export function useContextoGrupoEmpresa() {
           empresaId = typeof first === 'string' ? first : first?.empresa_id;
         }
         if (empresaId && groupId) {
-          const empresas = await base44.entities.Empresa.filter({ id: empresaId });
+          const empresas = isHttpBackendMode
+            ? (readErpHttpSession()?.empresas || []).filter(e => e.id === empresaId)
+            : await base44.entities.Empresa.filter({ id: empresaId });
           const empresa = empresas[0];
           if (empresa && empresaPertenceAoGrupo(empresa, groupId) && userTemAcessoEmpresa(currentUser, empresa)) {
             setEmpresaAtual(empresa);
             try { localStorage.setItem('empresa_atual_id', empresa.id); } catch { /* Estado em memoria permanece valido. */ }
             if (isHttpBackendMode) {
-              switchErpHttpSessionEmpresa({ empresaId: empresa.id });
               setUser((prev) => prev ? { ...prev, empresa_atual_id: empresa.id, contexto_atual: 'empresa' } : prev);
             }
           } else {
@@ -125,7 +134,17 @@ export function useContextoGrupoEmpresa() {
   };
 
   const trocarParaGrupo = useMutation({
+    /** @param {string} grupoId */
     mutationFn: async (grupoId) => {
+      if (isHttpBackendMode) {
+        const session = await refreshErpHttpSessionFromServer({});
+        const serverUser = session && buildHttpSessionUser(session);
+        if (!serverUser?.pode_operar_em_grupo || session.groupId !== grupoId) {
+          throw new Error('Grupo não autorizado para este perfil');
+        }
+        switchErpHttpSessionEmpresa({ empresaId: null });
+        return { id: grupoId, nome_do_grupo: session.groupName, status: 'Ativo' };
+      }
       const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
       const grupo = grupos[0];
       if (!grupo || !userTemAcessoGrupo(user, grupoId)) {
@@ -181,7 +200,15 @@ export function useContextoGrupoEmpresa() {
   });
 
   const trocarParaEmpresa = useMutation({
+    /** @param {string} empresaId */
     mutationFn: async (empresaId) => {
+      if (isHttpBackendMode) {
+        const session = await refreshErpHttpSessionFromServer({});
+        const empresa = session?.empresas?.find(e => e.id === empresaId && e.group_id === session.groupId && e.status === 'Ativa');
+        if (!empresa) throw new Error('Empresa não autorizada para este perfil');
+        switchErpHttpSessionEmpresa({ empresaId });
+        return empresa;
+      }
       const empresas = await base44.entities.Empresa.filter({ id: empresaId });
       const empresa = empresas[0];
       if (!empresa || !userTemAcessoEmpresa(user, empresa)) {
@@ -239,6 +266,7 @@ export function useContextoGrupoEmpresa() {
     queryKey: ['empresas-grupo', grupoAtual?.id],
     queryFn: async () => {
       if (!grupoAtual?.id) return [];
+      if (isHttpBackendMode) return (readErpHttpSession()?.empresas || []).filter(e => e.group_id === grupoAtual.id && e.status === 'Ativa');
       return await base44.entities.Empresa.filter({
         $or: [
           { group_id: grupoAtual.id },

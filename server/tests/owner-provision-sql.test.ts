@@ -21,6 +21,58 @@ const AUTH_OWNER = '11111111-1111-4111-8111-111111111111';
 const AUTH_SYNTH = '22222222-2222-4222-8222-222222222222';
 const PROFILE_SYNTH = '33333333-3333-4333-8333-333333333333';
 
+test('owner password recovery targets existing identity and preserves private input on failures', async () => {
+  const source = fs.readFileSync(path.join(ROOT, 'scripts/vps/deploy-owner-access-incidente.sh'), 'utf8');
+  const code = source.match(/GATE_JS="\$\(cat <<'JS'\r?\n([\s\S]*?)\r?\nJS/)![1];
+  const other = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+  async function run(fault = '', password = 'synthetic-password-only') {
+    const stages: string[] = [], logs: string[] = [], requests: string[] = [];
+    let exitCode = 0;
+    await new Promise<void>(resolve => {
+      const client = {connect: async () => {}, end: async () => resolve(), query: async (sql: string, args: unknown[]) => {
+        let rows: unknown[] = [];
+        if (sql.startsWith('SELECT id FROM auth.users')) rows = fault === 'missing' ? [] : [{id:AUTH_OWNER}];
+        else if (sql.startsWith('SELECT id,auth_user_id')) rows = [{id:PROFILE_SYNTH, auth_user_id:AUTH_OWNER, group_id:fault==='tenant' ? other : GROUP_ID, ativo:fault!=='inactive',role:fault==='demoted'?'user':'admin',empresa_id:fault==='company'?EMPRESA_ID:null,permissoes:fault==='permissions'?{Comercial:{}}:fault==='wildcard'?{...PERMS,'*':['visualizar']}:PERMS}];
+        else if (sql.startsWith('SELECT id,nome_do_grupo')) rows = [{id:GROUP_ID,nome_do_grupo:'Grupo CPA',status:'Ativo'}];
+        else if (sql.startsWith('SELECT id,group_id')) rows = [{id:EMPRESA_ID,group_id:GROUP_ID,nome_fantasia:'CPA ferro e aço',status:'Ativa'}, {id:other,group_id:GROUP_ID,nome_fantasia:'3Z LTDA',status:'Ativa'}];
+        else if (sql.startsWith('INSERT INTO audit_logs')) {
+          const payload = JSON.parse(args[3] as string);
+          assert.deepEqual(Object.keys(payload).sort(), ['operation','stage']);
+          assert.equal(JSON.stringify(args).includes(password), false);
+          if (fault==='intent' && payload.stage==='requested') throw new Error('audit failure');
+          if (fault==='completion' && payload.stage==='completed') throw new Error('audit failure');
+          stages.push(payload.stage);
+        } else throw new Error('unexpected SQL mutation');
+        return {rows, rowCount:rows.length};
+      }};
+      const processMock = {env:{SUPABASE_URL:'http://auth.synthetic', SUPABASE_SERVICE_ROLE_KEY:'synthetic-admin'}, get exitCode(){return exitCode;}, set exitCode(value:number){exitCode=value;}};
+      vm.runInNewContext(code, {
+        require: (name:string)=>name==='fs'?{readFileSync:()=>['password',OWNER_EMAIL,GROUP_ID,EMPRESA_ID,other,'Synthetic','YES','PASSWORD',password,JSON.stringify(PERMS)].join('\0')}:{Client:class {constructor(){return client;}}},
+        process:processMock, console:{log:(v:unknown)=>logs.push(String(v)),error:(v:unknown)=>logs.push(String(v))}, URL, AbortSignal,
+        fetch: async (_url:URL, options:{method?:string;body?:string})=>{
+          const method=options.method??'GET'; requests.push(method);
+          if(method==='PUT') {assert.deepEqual(stages,['requested']);assert.deepEqual(JSON.parse(options.body!),{password});if(fault==='transport') throw new Error('private transport details');}
+          return {ok:!(method==='PUT' && fault==='rejected'),json:async()=>{if(method==='PUT' && fault==='json') throw new Error('private invalid response');return {id:fault==='identity'||(method==='PUT'&&fault==='responseIdentity')?AUTH_SYNTH:AUTH_OWNER,email:OWNER_EMAIL,email_confirmed_at:'2026-01-01'};}};
+        },
+      });
+    });
+    assert.equal(logs.join('\n').includes(password),false);
+    assert.equal(logs.join('\n').includes(OWNER_EMAIL),false);
+    assert.equal(logs.join('\n').includes('private transport details'),false);
+    return {stages,logs:logs.join('\n'),requests,exitCode};
+  }
+  const ok=await run(); assert.equal(ok.exitCode,0); assert.deepEqual(ok.requests,['GET','PUT']); assert.deepEqual(ok.stages,['requested','completed']);
+  for(const fault of ['missing','tenant','inactive','demoted','company','permissions','wildcard','identity','intent']) {const result=await run(fault);assert.notEqual(result.exitCode,0);assert.equal(result.requests.includes('PUT'),false);}
+  assert.equal((await run('', 'short')).requests.length,0);
+  const lost=await run('transport');assert.deepEqual(lost.requests,['GET','PUT']);assert.match(lost.logs,/unconfirmed_no_automatic_retry/);
+  assert.deepEqual(lost.stages,['requested','unconfirmed']);
+  for(const fault of ['json','responseIdentity']) {const result=await run(fault);assert.deepEqual(result.requests,['GET','PUT']);assert.deepEqual(result.stages,['requested','unconfirmed']);assert.match(result.logs,/unconfirmed_no_automatic_retry/);}
+  assert.deepEqual((await run('rejected')).stages,['requested','rejected']);
+  assert.match((await run('completion')).logs,/password_changed_completion_audit_failed/);
+  assert.match(source,/unset PASSWORD PASSWORD_CONFIRM\r?\n\s*\[\[/);
+  assert.match(source,/read -r -s -p 'Proprietário: confirme/);
+});
+
 test('actual psql COPY loads private JSON without server file privilege', {skip: !process.env.DATABASE_URL}, () => {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'owner-copy-'));
   const file = path.join(folder, 'synthetic.json');

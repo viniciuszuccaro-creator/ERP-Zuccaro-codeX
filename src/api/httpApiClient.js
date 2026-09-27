@@ -388,6 +388,16 @@ export function createHttpApiClient(options = {}) {
 
   return {
     entities,
+    async entityGuard(payload = {}) {
+      /** @type {{ token?: string, actorId?: string, groupId?: string }} */
+      const scope = getScope() || {};
+      if (!scope.token || !scope.actorId || !scope.groupId) throw createHttpError(401, { error: { code: 'AUTH_REQUIRED' } }, undefined);
+      // Profile is a selector, never identity: the BFF binds it to the verified Bearer.
+      return request('/api/v1/auth/session', {
+        query: { guard: JSON.stringify({ ...payload, profile_id: scope.actorId }) },
+        unwrap: false,
+      });
+    },
     orcamentos,
     pedidos,
     clientes,

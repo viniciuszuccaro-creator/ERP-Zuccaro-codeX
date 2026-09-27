@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
 import { buildMultiempresaReadFilter, entityRequiresEmpresaOnWrite, normalizeMultiempresaContext, resolveEmpresaIdOnWrite, validateMultiempresaContext } from "./contextoMultiempresaPolicy";
@@ -31,8 +31,8 @@ export function useContextoVisual() {
 
   const groupIdForEmpresas = grupoAtual?.id || empresaContexto?.group_id || empresaContexto?.grupo_id;
   const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
-    queryKey: ['empresas', groupIdForEmpresas],
-    queryFn: () => groupIdForEmpresas
+    queryKey: ['empresas', user?.id, groupIdForEmpresas, empresasDoGrupoContexto],
+    queryFn: () => isHttpBackendMode ? Promise.resolve(empresasDoGrupoContexto) : groupIdForEmpresas
       ? base44.entities.Empresa.filter({
           $or: [
             { group_id: groupIdForEmpresas },
@@ -56,7 +56,7 @@ export function useContextoVisual() {
     }
   }, [empresaContexto]);
 
-  const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null);
+  const empresaAtual = (contexto === 'grupo') ? null : (isHttpBackendMode ? empresaContexto : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null));
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
   const contextoCanonico = normalizeMultiempresaContext({
