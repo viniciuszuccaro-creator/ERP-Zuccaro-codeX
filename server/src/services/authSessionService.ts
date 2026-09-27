@@ -26,7 +26,7 @@ export type AuthSessionProfile = {
   groupName: string | null;
   /**
    * Empresas autorizadas no grupo do perfil.
-   * Admin / perfil sem empresa_id explícito → todas Ativas do grupo.
+   * Perfil sem empresa_id explícito → todas Ativas do grupo; role não amplia tenant.
    * Perfil vinculado a uma empresa → somente essa (se Ativa).
    */
   empresas: Array<{
@@ -90,10 +90,9 @@ async function loadEmpresasForProfile(
   profile: AuthSessionProfile,
   empresaIdRaw: string | null,
 ): Promise<AuthSessionProfile['empresas']> {
-  const role = String(profile.role || 'user').trim().toLowerCase();
   const lockedToEmpresa = Boolean(empresaIdRaw && UUID_RE.test(empresaIdRaw));
-  // Admin ou perfil de grupo (sem empresa_id na coluna) → todas Ativas do grupo.
-  const listAll = role === 'admin' || !lockedToEmpresa;
+  // Role não amplia tenant; mesmo contrato do middleware.
+  const listAll = !lockedToEmpresa;
   try {
     if (listAll) {
       const result = await db.query<EmpresaRow>(
@@ -138,13 +137,7 @@ async function loadActiveProfiles(
     const result = await db.query<ProfileRow>(
       `SELECT p.id, p.group_id, p.role, p.full_name, COALESCE(p.permissoes, '{}'::jsonb) AS permissoes,
               p.empresa_id AS empresa_id_raw,
-              COALESCE(
-                p.empresa_id,
-                (SELECT e.id FROM empresas e
-                  WHERE e.group_id = p.group_id AND e.status = 'Ativa'
-                  ORDER BY e.id
-                  LIMIT 1)
-              ) AS empresa_id,
+              p.empresa_id AS empresa_id,
               g.nome_do_grupo AS group_name
        FROM profiles p
        LEFT JOIN groups g ON g.id = p.group_id
@@ -156,7 +149,7 @@ async function loadActiveProfiles(
     const mapped = mapProfileRows(result.rows);
     const enriched: AuthSessionProfile[] = [];
     for (let i = 0; i < mapped.length; i += 1) {
-      const raw = result.rows[i];
+      const raw = result.rows.find((row) => row.id === mapped[i].id && row.group_id === mapped[i].groupId);
       const empresas = await loadEmpresasForProfile(db, mapped[i], raw?.empresa_id_raw ?? null);
       enriched.push({ ...mapped[i], empresas });
     }

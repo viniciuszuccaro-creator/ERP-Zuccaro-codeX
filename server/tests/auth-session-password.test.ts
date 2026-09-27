@@ -161,3 +161,46 @@ test('createPasswordAuthSession rejeita credenciais inválidas sem vazar detalhe
     (err) => err?.code === 'AUTH_INVALID_CREDENTIALS' && err?.statusCode === 401,
   );
 });
+
+// Real SQL + actual middleware: the session list must agree with endpoint authorization.
+test('tenant session: company admin A, group owner A/B, inactive and cross-group denied', async () => {
+  const { PGlite } = await import('@electric-sql/pglite');
+  const { resolveBearerAuthSession } = await import('../src/services/authSessionService.ts');
+  const { createSupabaseAuthMiddleware } = await import('../src/middleware/requestContext.ts');
+  const db = new PGlite();
+  const user = '11111111-1111-4111-8111-111111111111';
+  const actor = '22222222-2222-4222-8222-222222222222';
+  const group = '33333333-3333-4333-8333-333333333333';
+  const a = '44444444-4444-4444-8444-444444444444';
+  const b = '55555555-5555-4555-8555-555555555555';
+  const other = '66666666-6666-4666-8666-666666666666';
+  const c = '77777777-7777-4777-8777-777777777777';
+  try {
+    await db.exec(`CREATE TABLE groups(id uuid, nome_do_grupo text);
+      CREATE TABLE empresas(id uuid, group_id uuid, razao_social text, nome_fantasia text, status text);
+      CREATE TABLE profiles(id uuid, auth_user_id uuid, group_id uuid, empresa_id uuid, role text, full_name text, permissoes jsonb, ativo boolean);`);
+    await db.query('INSERT INTO groups VALUES ($1,$2),($3,$4)', [group,'Synthetic group',other,'Other']);
+    for (const [id,g] of [[a,group],[b,group],[c,other]]) await db.query("INSERT INTO empresas VALUES($1,$2,'Synthetic','Synthetic','Ativa')",[id,g]);
+    await db.query("INSERT INTO profiles VALUES($1,$2,$3,$4,'admin','Synthetic','{}',true)",[actor,user,group,a]);
+    const fetchImpl = async () => ({ok:true,status:200,json:async()=>({id:user,email:'owner@example.com'})}) as Response;
+    const adapter = {query:async(sql:string,params?:unknown[])=>db.query(sql,params)};
+    const session = () => resolveBearerAuthSession({config:{authMode:'supabase_user',supabaseUrl:'http://auth.test',supabaseAnonKey:'synthetic'},db:adapter as any,authorizationHeader:'Bearer synthetic',fetchImpl:fetchImpl as typeof fetch});
+    const middleware = createSupabaseAuthMiddleware({supabaseUrl:'http://auth.test',anonKey:'synthetic',db:adapter as any,fetchImpl:fetchImpl as typeof fetch});
+    const access = (company:string, actorHeader=actor) => new Promise<any>(resolve=>middleware({path:'/api/v1/pedidos',method:'GET',query:{},header:(key:string)=>({authorization:'Bearer synthetic','x-group-id':group,'x-empresa-id':company,'x-actor-id':actorHeader}[key])} as any,{} as any,resolve));
+    assert.deepEqual((await session()).profiles[0].empresas.map(e=>e.id),[a]);
+    assert.equal(await access(a),undefined);
+    assert.equal((await access(b)).code,'ACTOR_SCOPE_DENIED');
+    assert.equal((await access(c)).code,'ACTOR_SCOPE_DENIED');
+    await db.query('UPDATE profiles SET empresa_id=NULL WHERE id=$1',[actor]);
+    const owner = (await session()).profiles[0];
+    assert.equal(owner.empresaId,null,'group scope is not a synthetic first-company binding');
+    assert.deepEqual(new Set(owner.empresas.map(e=>e.id)),new Set([a,b]));
+    assert.equal(await access(a),undefined);
+    assert.equal(await access(b),undefined);
+    assert.equal((await access(c)).code,'ACTOR_SCOPE_DENIED');
+    assert.equal((await access(a,c)).code,'ACTOR_HEADER_MISMATCH');
+    await db.query("UPDATE empresas SET status='Inativa' WHERE id=$1",[b]);
+    assert.deepEqual((await session()).profiles[0].empresas.map(e=>e.id),[a]);
+    assert.equal((await access(b)).code,'ACTOR_SCOPE_DENIED');
+  } finally {await db.close();}
+});

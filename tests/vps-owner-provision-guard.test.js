@@ -473,3 +473,81 @@ test('provision restore mode exige arquivo seletivo (fail-closed)', () => {
   assert.equal(miss.status, 2);
   assert.match(miss.stderr, /OWNER_PROV_RESTORE_FILE/);
 });
+
+
+test('owner deploy blocks password environment and invalid tenant before Docker', () => {
+  const deploy=path.join(ROOT,'scripts/vps/deploy-owner-access-incidente.sh');
+  const base={...process.env,OWNER_ACCESS_MODE:'APPLY',OWNER_EMAIL:'owner@example.com',CONFIRM_OWNER_ACCESS_DEPLOY:'YES',CONFIRM_OWNER_GROUP_ADMIN:'YES',OWNER_GROUP_ID:'placeholder',OWNER_EMPRESA_ID:'placeholder',EMPRESA_3Z_ID:'placeholder'};
+  const invalid=spawnSync('bash',[deploy],{encoding:'utf8',env:base});
+  assert.equal(invalid.status,2,invalid.stderr);
+  assert.match(invalid.stderr,/explicit_valid_tenant_ids_required_no_fallback/);
+  const credential=spawnSync('bash',[deploy],{encoding:'utf8',env:{...base,OWNER_PASS:'synthetic-value-not-a-credential'}});
+  assert.equal(credential.status,2,credential.stderr);
+  assert.match(credential.stderr,/password_environment_not_allowed/);
+  assert.equal(credential.stderr.includes('synthetic-value'),false);
+});
+
+test('owner deploy canary rejects another reachable database before provisioning or promotion', () => {
+  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'owner-canary-identity-'));
+  const repo=path.join(tmp,'repo'), bin=path.join(tmp,'bin');
+  fs.mkdirSync(path.join(repo,'scripts/vps'),{recursive:true});
+  fs.mkdirSync(bin);
+  const deploy=path.join(repo,'scripts/vps/deploy-owner-access-incidente.sh');
+  fs.copyFileSync(path.join(ROOT,'scripts/vps/deploy-owner-access-incidente.sh'),deploy);
+  fs.writeFileSync(path.join(repo,'.env.erp.dev'),'SYNTHETIC_CONFIG=1\n');
+  fs.writeFileSync(path.join(repo,'docker-compose.erp.yml'),'services: {}\n');
+  const events=path.join(tmp,'events');
+  const sha='a'.repeat(40);
+  fs.writeFileSync(path.join(bin,'git'),`#!/usr/bin/env bash
+if [[ "$1" == rev-parse ]]; then echo '${sha}'; fi
+`,{mode:0o755});
+  fs.writeFileSync(path.join(bin,'ss'),'#!/usr/bin/env bash\nexit 0\n',{mode:0o755});
+  fs.writeFileSync(path.join(bin,'docker'),`#!/usr/bin/env bash
+echo "$*" >> "$EVENTS"
+case "$1" in
+ exec)
+   if [[ "$*" == *pg_dump* ]]; then echo 'synthetic archive'; exit 0; fi
+   if [[ "$*" == *pg_restore* ]]; then cat >/dev/null; exit 0; fi
+   if [[ "$*" == *pg_postmaster_start_time* ]]; then
+     if [[ "$*" == *erp-owner-api-* && "$DRIFT" == YES ]]; then echo 'other|123'; else echo 'postgres|123'; fi
+     exit 0
+   fi
+   cat >/dev/null; echo 'owner_preflight=PASS'; exit 0;;
+esac
+exit 0
+`,{mode:0o755});
+  fs.writeFileSync(path.join(bin,'curl'),`#!/usr/bin/env bash
+if [[ "$*" == *'/ready'* ]]; then exit 0; fi
+echo 'UNEXPECTED_AFTER_IDENTITY_GATE' >> "$EVENTS"
+exit 8
+`,{mode:0o755});
+  for(const drift of ['YES','NO']) {
+    fs.writeFileSync(events,'');
+    const shellPath=value=>process.platform==='win32'?value.replaceAll('\\','/').replace(/^([A-Za-z]):/,(_all,drive)=>'/'+drive.toLowerCase()):value;
+    const bash=process.platform==='win32'?'C:/Program Files/Git/bin/bash.exe':'bash';
+    const run=spawnSync(bash,['-c','export PATH="$MOCK_BIN:$PATH"; exec bash "$DEPLOY_SCRIPT"'],{encoding:'utf8',env:{...process.env,MOCK_BIN:shellPath(bin),DEPLOY_SCRIPT:shellPath(deploy),EVENTS:shellPath(events),DRIFT:drift,
+      OWNER_ACCESS_MODE:'APPLY',OWNER_EMAIL:'owner@example.com',CONFIRM_OWNER_ACCESS_DEPLOY:'YES',CONFIRM_OWNER_GROUP_ADMIN:'YES',
+      OWNER_GROUP_ID:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',OWNER_EMPRESA_ID:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      EMPRESA_3Z_ID:'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2',ERP_DOCKER_NETWORK:'synthetic',EXPECTED_DATABASE:'postgres',APPROVED_SHA:sha}});
+    assert.ifError(run.error);
+    assert.notEqual(run.status,0,run.stderr+run.stdout);
+    const log=fs.readFileSync(events,'utf8');
+    if(drift==='YES') {
+      assert.match(run.stderr,/canary_database_identity_mismatch_official_preserved/);
+      assert.doesNotMatch(log,/UNEXPECTED_AFTER_IDENTITY_GATE/);
+    } else {
+      assert.match(run.stdout,/canary_database_identity_matches=YES/);
+      assert.match(log,/UNEXPECTED_AFTER_IDENTITY_GATE/);
+    }
+    assert.doesNotMatch(log,/stop .*erp-api-dev|rm .*erp-api-dev|provision|compose .*up/);
+    assert.match(log,/rm -f erp-owner-web-.*erp-owner-api-/);
+  }
+});
+
+test('frontend build context excludes private deployment backups', () => {
+  const patterns=fs.readFileSync(path.join(ROOT,'.dockerignore'),'utf8').split(/\r?\n/).filter(line=>line.trim()&&!line.startsWith('#'));
+  const exclusion=patterns.lastIndexOf('backups/');
+  assert.ok(exclusion>=0,'backup dump and api.env.restore never enter COPY . .');
+  assert.equal(patterns.slice(exclusion+1).some(line=>line.startsWith('!')),false,'no later inclusion exposes backups');
+  assert.ok(patterns.includes('.env.*'),'private env files excluded');
+});

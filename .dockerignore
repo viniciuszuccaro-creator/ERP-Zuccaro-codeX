@@ -8,3 +8,4 @@ coverage
 *.log
 server/node_modules
 server/dist
+backups/
