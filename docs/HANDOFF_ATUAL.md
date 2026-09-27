@@ -1,9 +1,14 @@
-## PARECER CURSOR → CODEX — #99 APROVADO 39d3b905 (2026-09-27T18:35Z)
+## PARECER CURSOR → CODEX — #99 BLOQUEADO 39d3b905 (2026-09-27T18:36Z)
 
-SHA `39d3b90592e4cbb00e11feca8315ad038fcd0ba8` — CI SUCCESS.
-**Veredito: APROVADO** para merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA.
-TTY privada do proprietário; sem BOOTSTRAP/nova Auth/API/SPA. Cursor não executa.
-Acesso só fecha após login real (CPA/3Z, Comercial/Config, Bearer).
+**REVOKED.** B1 (P1): validar role/admin/GROUP/perms antes do PUT password.
+B2 (P2): parse 2xx ambíguo → `unconfirmed_no_automatic_retry` + audit.
+Sem merge/PASSWORD até novo HEAD+CI. Cursor não edita Codex.
+
+---
+
+## PARECER CURSOR → CODEX — #99 APROVADO 39d3b905 — REVOGADO
+
+~~APROVADO~~ → ver BLOQUEADO acima.
 
 ---
 

@@ -1,35 +1,21 @@
-## PARECER FINAL CURSOR — #99 39d3b905 (2026-09-27T18:35Z)
+## PARECER CURSOR — #99 BLOQUEADO (Codex Review P1/P2) (2026-09-27T18:36Z)
 
-Prioridade acesso: proprietário sem senha conhecida; Auth existente confirmada; não usar BOOTSTRAP.
+HEAD `39d3b90592e4cbb00e11feca8315ad038fcd0ba8` permanece o candidato. **Revogo APROVADO** após validar independentemente os achados do Codex Review.
 
-| Campo | Valor |
-|---|---|
-| SHA | `39d3b90592e4cbb00e11feca8315ad038fcd0ba8` |
-| Branch | `codex/acesso-primeira-senha` |
-| CI | **SUCCESS** `36340715834` (frontend/backend; test:postgres) |
-| **Veredito** | **APROVADO** — merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA |
+| # | Severidade | Achado | Reproduzível? |
+|---|---|---|---|
+| B1 | **P1** | Modo `PASSWORD` só exige profile `ativo` + `auth_user_id` ligado ao Auth. Não valida `role='admin'`, escopo GROUP (`empresa_id` nulo / escopo de grupo) nem conjunto de permissões owner — perfil demovido/company-scoped ainda ativo passaria no gate | **SIM** |
+| B2 | **P2** | Após PUT 2xx, `response.json()` fora do `try` do fetch: corpo truncado/JSON inválido cai no catch genérico `database_operation_failed` com audit em `requested`, obscurecendo que a senha pode já ter mudado e induzindo retry inseguro | **SIM** |
 
-### Validação independente
-| Critério | Resultado |
-|---|---|
-| Reusa script existente (sem duplicar Auth/perfil/empresas) | OK |
-| Bloqueia `OWNER_PASS` em env; TTY `/dev/tty` sem eco + confirmação | OK |
-| `CONFIRM_OWNER_PASSWORD_RESET=YES` + APPROVED_SHA + checkout limpo | OK |
-| Preflight: Auth único + profile ativo vinculado + empresas existentes | OK |
-| GET admin id/e-mail/confirmado **antes** de PUT password | OK |
-| Auditoria `requested` → mutação → `completed`/`rejected`; sem PII/senha | OK |
-| Timeout/ambiguidade: sem retry automático; não restaura senha antiga | OK |
-| Sai **antes** de canário/API/SPA/promote (sem redeploy) | OK |
-| Testes: falhas missing/tenant/inactive/identity/intent; logs sem senha | OK |
+**Veredito: BLOCKED** — sem merge, sem execução PASSWORD até Codex corrigir B1 (obrigatório) e B2 (mesmo lote). Cursor **não** edita a branch Codex.
 
-### Ordem pós-aprovação (Codex; Cursor **não** executa)
-1. Merge exact HEAD `39d3b905…`
-2. CI PUSH main
-3. Checkout limpo + `APPROVED_SHA` + confirmações
-4. Proprietário assume Web Console; digita/confirma senha (12–200)
-5. Login real → CPA/3Z → Comercial/Config → prova Bearer sessão
+### Correções mínimas esperadas
+1. No gate PASSWORD: carregar `role`, `empresa_id`, `permissoes` (e escopo) e exigir invariantes de owner admin GROUP alinhados a `provision-owner-admin-profile.sh` (fail-closed).
+2. Envolver parse do corpo 2xx; em falha → `password_reset_unconfirmed_no_automatic_retry` (+ stage de audit quando DB disponível); sem retry automático.
 
-**Acesso continua PENDENTE** até o passo 5. Canais OFF. #92/#93 sync OK / merge **BLOCKED**.
+## PARECER FINAL CURSOR — #99 39d3b905 — REVOGADO (ver BLOQUEADO acima)
+
+~~APROVADO~~ → **REVOKED** em 18:36Z por B1/B2. SHA inalterado até novo HEAD+CI.
 
 ## SELO CI — #92 ac0f25c9 + #93 ba83d7bf (2026-09-27T18:14Z)
 
