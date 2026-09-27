@@ -27,7 +27,7 @@ const items = z.array(item).min(1).max(100);
 export const saleEnvelopeSchema = z.discriminatedUnion('tipo', [
   z.object({ version: z.literal(1), tipo: z.literal('Pedido'),
     idempotencyKey: z.string().regex(/^[a-zA-Z0-9_.:-]{1,160}$/),
-    documento: pedidoCreateSchema.omit({ itens: true, orcamento_id: true }).extend({ itens: items, observacoes: plainText(1000).optional() }).strict(),
+    documento: pedidoCreateSchema.omit({ itens: true, orcamento_id: true, tabela_preco_id: true }).extend({ itens: items, observacoes: plainText(1000).optional() }).strict(),
   }).strict(),
   z.object({ version: z.literal(1), tipo: z.literal('Orcamento'),
     idempotencyKey: z.string().regex(/^[a-zA-Z0-9_.:-]{1,160}$/),

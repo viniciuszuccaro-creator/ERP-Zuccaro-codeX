@@ -16,7 +16,7 @@ export const now = 1_790_454_000_000;
 export const identity: ChannelIdentity = { id: 'synthetic-site', channel: 'SITE', groupId: S.groupA,
   empresaId: S.empresaA, actorId: S.runtimeActorA, secret: 'synthetic-only-secret-never-use-live-123' };
 
-export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[] = []) {
+export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[] = [], rateLimitMax?: number) {
   try {
   for (const file of readdirSync(new URL('../migrations', import.meta.url)).filter((s) => s.endsWith('.sql')).sort()) {
     await pg.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8').replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/i, ''));
@@ -29,6 +29,7 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
     checkConnection: async () => true, end: async () => pg.close() };
   const db = transactionScope(base);
   const config = loadConfig({ NODE_ENV: 'test', DATABASE_URL: 'postgresql://synthetic/isolated' });
+  if(rateLimitMax !== undefined) config.rateLimitMax=rateLimitMax;
   const runtime = createApp({ config, db });
   const ingress = new SaleIngress(db, runtime);
   await assert.rejects(() => ingress.assertDatabaseReady(), /RLS gate not satisfied/);
@@ -47,11 +48,12 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
   const envelope = { version: 1, tipo: 'Pedido', idempotencyKey: 'synthetic-order-1', documento };
   const identities = [...(['SITE', 'APP', 'CHATBOT', 'MARKETPLACE'] as const).map((channel) => ({ ...identity, id: `synthetic-${channel}`, channel })), ...extraIdentities];
   const app = express();
+  app.set('trust proxy', runtime.app.get('trust proxy'));
   app.use('/sales', saleIngressHttp(ingress, identities, config, () => now));
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
-  async function send(payload: unknown = envelope, options: { channel?: string; nonce?: string; time?: string; signature?: string; body?: string; path?: string } = {}) {
+  async function send(payload: unknown = envelope, options: { channel?: string; nonce?: string; time?: string; signature?: string; body?: string; path?: string; forwardedFor?: string } = {}) {
     const clientId = options.channel ?? 'synthetic-SITE';
     const timestamp = options.time ?? String(now / 1000);
     const nonce = options.nonce ?? 'synthetic-nonce-00001';
@@ -59,10 +61,12 @@ export async function boot(pg = new PGlite(), extraIdentities: ChannelIdentity[]
     const response = await fetch(`http://127.0.0.1:${address.port}/sales${options.path ?? ''}`, { method: 'POST',
       headers: { 'content-type': 'application/json', 'x-channel-id': clientId, 'x-channel-timestamp': timestamp,
         'x-channel-nonce': nonce, 'x-channel-signature': options.signature ?? signSale(identity.secret, clientId, timestamp, nonce, body),
-        'x-group-id': S.groupB, 'x-empresa-id': S.empresaB, 'x-actor-id': S.runtimeActorB }, body });
-    return { status: response.status, body: await response.json() as { data?: { id: string }; replayed?: boolean; error?: { code: string } } };
+        'x-group-id': S.groupB, 'x-empresa-id': S.empresaB, 'x-actor-id': S.runtimeActorB,
+        ...(options.forwardedFor?{'x-forwarded-for':options.forwardedFor}:{}) }, body });
+    return { status: response.status, body: (response.headers.get('content-type')?.includes('application/json')
+      ? await response.json() : {}) as { data?: { id: string }; replayed?: boolean; error?: { code: string } } };
   }
-  return { pg, db, runtime, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
+  return { pg, db, runtime, ingress, envelope, send, endpoint: `http://127.0.0.1:${address.port}/sales`,
     close: async () => { await new Promise<void>((resolve) => server.close(() => resolve())); await pg.close(); } };
   } catch (error) { await pg.close(); throw error; }
 }

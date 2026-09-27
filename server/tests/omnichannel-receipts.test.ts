@@ -166,7 +166,7 @@ test('stored receipt corruption fails closed on reads and replays without leakin
       await f.pg.query('UPDATE integration_events SET payload=$2::jsonb,aggregate_type=$3,aggregate_id=$4,status=$5 WHERE id=$1',
         [event.id,JSON.stringify(changed.payload===undefined?event.payload:changed.payload),
           changed.aggregate_type??event.aggregate_type,changed.aggregate_id??event.aggregate_id,changed.status??event.status]);
-      for(const result of [await f.send(query,{path:'/recibos'}),await f.send()]){
+      for(const result of [await f.send(query,{path:'/recibos'}),await f.send(f.envelope,{nonce:'receipt-corruption-retry'})]){
         assert.equal(result.status,500);assert.equal(result.body.error.code,'CHANNEL_RECEIPT_INVALID');
         assert.equal(result.body.data,undefined);assert.ok(!JSON.stringify(result.body).includes('SYNTHETIC_PRIVATE_DATA'));
       }
@@ -175,7 +175,7 @@ test('stored receipt corruption fails closed on reads and replays without leakin
     }
     await f.pg.query('UPDATE integration_events SET payload=$2::jsonb,aggregate_type=$3,aggregate_id=$4,status=$5 WHERE id=$1',
       [event.id,JSON.stringify(event.payload),event.aggregate_type,event.aggregate_id,event.status]);
-    assert.equal((await f.send()).status,200);
+    assert.equal((await f.send(f.envelope,{nonce:'receipt-corruption-retry'})).status,200);
     assert.deepEqual((await f.send(query,{path:'/recibos'})).body,{data:created.body.data});
   } finally {await f.close();}
 });
@@ -196,7 +196,7 @@ test('receipt reference must resolve to a canonical document in the same company
     for(const id of [S.produtoA,foreign.body.data!.id]){
       await f.pg.query("UPDATE integration_events SET aggregate_id=$1::uuid,payload=jsonb_set(payload,'{receipt,id}',to_jsonb(($1::uuid)::text)) WHERE event_type='venda.recebida' AND group_id=$2",[id,S.groupA]);
       assert.equal((await f.send(query,{path:'/recibos'})).body.error.code,'CHANNEL_RECEIPT_INVALID');
-      assert.equal((await f.send()).body.error.code,'CHANNEL_RECEIPT_INVALID');
+      assert.equal((await f.send(f.envelope,{nonce:'receipt-reference-retry'})).body.error.code,'CHANNEL_RECEIPT_INVALID');
     }
     assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,2);
     await f.pg.query("UPDATE integration_events SET aggregate_id=$1::uuid,payload=jsonb_set(payload,'{receipt,id}',to_jsonb(($1::uuid)::text)) WHERE event_type='venda.recebida' AND group_id=$2",[created.body.data!.id,S.groupA]);

@@ -23,7 +23,10 @@ test('PostgreSQL multiconnection: one canonical sale under equivalent, conflicti
     assert.equal(nonces.filter((r) => r.body.error?.code === 'CHANNEL_NONCE_REUSED').length, 7);
     for (const table of ['pedidos', 'pedido_itens', 'pedido_historico']) assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length, 3);
     assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length, 3);
-    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE entity='IntegracaoEvento'")).rows.length, 3);
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE entity='IntegracaoEvento'")).rows.length, 10);
+    const duplicates=await Promise.all(Array.from({length:4},()=>f.send(f.envelope,{nonce:'concurrent-equivalent-0'})));
+    assert.ok(duplicates.every(r=>r.body.error?.code==='CHANNEL_NONCE_REUSED'));
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.nonce'")).rows.length,7);
   } finally { await f.close(); }
 });
 
@@ -132,4 +135,17 @@ test('real PostgreSQL receipt integrity rejects forged metadata under concurrent
     assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,1);
     assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length,0);
   } finally {await f.close();}
+});
+
+test('PostgreSQL readiness rejects same-named permissive and extra policies', {skip:!url}, async()=>{
+ const f=await boot(await isolatedPostgres(url!));try{
+  await f.pg.exec('ALTER POLICY integration_events_scope ON integration_events USING(true) WITH CHECK(true)');
+  await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
+  const predicate="group_id=NULLIF(current_setting('erp.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('erp.empresa_id',true),'')::uuid";
+  await f.pg.exec(`ALTER POLICY integration_events_scope ON integration_events USING (${predicate}) WITH CHECK (${predicate})`);
+  await f.ingress.assertDatabaseReady();
+  await f.pg.exec('CREATE POLICY insecure_extra ON integration_events USING(true) WITH CHECK(true)');
+  await assert.rejects(f.ingress.assertDatabaseReady(),/RLS gate not satisfied/);
+  await f.pg.exec('DROP POLICY insecure_extra ON integration_events');await f.ingress.assertDatabaseReady();
+ }finally{await f.close();}
 });
