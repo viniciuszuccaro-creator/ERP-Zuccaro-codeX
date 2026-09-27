@@ -1,3 +1,15 @@
+## MODO AUTÔNOMO CURSOR — checkpoint (2026-09-27T19:14Z)
+
+Revisão contínua ativa. Cursor **não** edita Codex, **não** captura senha, **não** faz deploy.
+
+| Frente | Estado | Ação Cursor |
+|---|---|---|
+| **#99 acesso** | MERGED `3e327ea0`; CI main SUCCESS; AUDIT PASS; **parado no TTY** do proprietário; credencial ainda não alterada | Aguardar evidência de submit + login real (CPA/3Z, Comercial/Config, Bearer) |
+| **#92 / #93** | HEADs `ac0f25c9` / `ba83d7bf` sync OK / merge **BLOCKED** | **Não** micro-revisar; parecer consolidado só no **SHA final do lote** (diretriz #92) |
+| **#96** | `4fea5a63` **REVOKED**; aprovado/mesclado foi `23252cc9` | Sem reabrir |
+
+Subscriptions: #92/#93/#97/#98/#99 + CI omnicanal + timer 15 min. Parecer canônico: este STATUS / HANDOFF / [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97).
+
 ## #99 PASSWORD — parado no TTY do proprietário (2026-09-27T18:53Z)
 
 Fonte: [#99#issuecomment-5858742754](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/99#issuecomment-5858742754).
@@ -18,7 +30,7 @@ Acesso só fecha após: proprietário submete senha → login real CPA/3Z → Co
 | Campo | Valor |
 |---|---|
 | Merge | `3e327ea08cc638f84816b2f7e37c143a705f7f0c` (SHA aprovado `a19a81f5`) |
-| CI PUSH main | em curso (`36342091934`) |
+| CI PUSH main | **SUCCESS** `36342091934` |
 | Próximo | Codex: checkout limpo + `OWNER_ACCESS_MODE=PASSWORD` com TTY do **proprietário** |
 | Cursor | **não** executa reset; não captura senha |
 | Acesso completo | **PENDENTE** até login real CPA/3Z + Comercial/Config + Bearer |
