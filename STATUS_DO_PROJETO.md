@@ -1,3 +1,47 @@
+## ACESSO #91 — mesclado na main; aguarda deploy VPS (2026-09-27)
+
+| Campo | Valor |
+|---|---|
+| **Merge main** | **SIM** `4daad5f9` (PR #91 — seletor empresas + logout HTTP) |
+| **CI main** | em validação pós-merge |
+| **SHA ativo VPS** | **ainda NÃO** — build antigo explica seletor vazio após login novo |
+| **Login proprietário** | **PENDENTE** após paste abaixo |
+
+### PASTE_VPS #91 — rebuild + vincular proprietário (colar no SSH da VPS)
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main
+git checkout --detach origin/main
+git merge-base --is-ancestor 4daad5f9 HEAD || { echo "BLOCKED: main sem merge #91"; git rev-parse HEAD; exit 1; }
+echo "main_tip=$(git rev-parse --short HEAD)"
+
+# 1) Descobrir UUIDs reais (Grupo CPA / empresas) — sem imprimir token:
+docker exec -i supabase-db psql -X -U postgres -d postgres -At <<'SQL'
+SELECT 'group=' || id || '|' || nome_do_grupo FROM groups ORDER BY nome_do_grupo;
+SELECT 'empresa=' || id || '|' || COALESCE(nome_fantasia, razao_social) || '|group=' || group_id
+FROM empresas WHERE status = 'Ativa' ORDER BY nome_fantasia NULLS LAST, razao_social;
+SQL
+
+# 2) Substitua os UUIDs abaixo pelos da consulta (Grupo CPA + uma empresa, ex. CPA ferro e aço):
+export OWNER_GROUP_ID='<uuid-grupo-cpa>'
+export OWNER_EMPRESA_ID='<uuid-cpa-ferro-e-aco>'
+
+CONFIRM_OWNER_ADMIN_PROFILE=YES \
+  OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+  DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+
+# 3) Rebuild API + SPA com o código da main (seletor + logout):
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+
+docker inspect -f 'name={{.Name}} image={{.Config.Image}} id={{.Id}}' erp-api-dev erp-web-dev
+curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;m=json.load(sys.stdin);print(m.get("runtime"), (m.get("auth") or {}).get("mode"))'
+```
+
+Depois no navegador **novo**: abrir erp-dev → login com a conta real → confirmar Grupo CPA, CPA ferro e aço e 3Z LTDA no seletor → abrir Comercial.
+
 ## ACESSO — logout travado sem empresa (2026-09-27)
 
 | Campo | Valor |
