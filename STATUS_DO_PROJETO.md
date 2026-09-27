@@ -4,8 +4,9 @@
 |---|---|
 | **#91 merge** | **SIM** `4daad5f9` (seletor + logout) |
 | **Revisão HEAD** | API: admin/grupo → só empresas **Ativas do `group_id` do perfil**; perfil com `empresa_id` → só essa. Sessão: refresh Bearer obrigatório; login passa `empresas[]`; troca de empresa rejeita UUID fora da lista; `auth.me`/UserContext revalidam no BFF (não aceitam identidade fabricada só no browser). |
-| **Harden PR** | branch `cursor/acesso-owner-incidente-392b` + script `scripts/vps/deploy-owner-access-incidente.sh` |
+| **Harden PR** | **#94** mesclada em `main` `022e4714` + script `scripts/vps/deploy-owner-access-incidente.sh` |
 | **CI main #91** | **SUCCESS** @ merge `4daad5f9` |
+| **CI main harden** | em validação pós `022e4714` |
 | **Deploy VPS** | **BLOCKED neste agente** — sem SSH/Hostinger MCP/workers. Requer paste humano abaixo. |
 | **Prova SHA/digest VPS** | **PENDENTE** (após paste) |
 | **API Grupo CPA + CPA/3Z p/ owner** | **PENDENTE** (após paste) |
