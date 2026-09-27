@@ -43,3 +43,18 @@ test('isolated PostgreSQL fixture refuses DEV-like URLs before opening a connect
   await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@localhost/erp_dev'), /not isolated/);
   await assert.rejects(() => isolatedPostgres('postgresql://erp_test:test@vps.example/erp_omnichannel_test'), /not isolated/);
 });
+
+test('real PostgreSQL receipt integrity rejects forged metadata under concurrent replay without recreating a sale', {skip:!url}, async () => {
+  const f=await boot(await isolatedPostgres(url!));
+  try {
+    const created=await f.send();assert.equal(created.status,201);
+    await f.pg.query("UPDATE integration_events SET payload=jsonb_set(payload,'{receipt,private}',to_jsonb('SYNTHETIC_PRIVATE_DATA'::text)) WHERE event_type='venda.recebida'");
+    const query={version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:f.envelope.idempotencyKey};
+    const results=await Promise.all([f.send(query,{path:'/recibos'}),...Array.from({length:4},(_,i)=>f.send(f.envelope,{nonce:`integrity-replay-${i}`}))]);
+    assert.ok(results.every(r=>r.status===500&&r.body.error?.code==='CHANNEL_RECEIPT_INVALID'&&r.body.data===undefined));
+    assert.ok(!JSON.stringify(results).includes('SYNTHETIC_PRIVATE_DATA'));
+    for(const table of ['pedidos','pedido_itens','pedido_historico'])assert.equal((await f.pg.query(`SELECT id FROM ${table}`)).rows.length,1);
+    assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='venda.recebida'")).rows.length,1);
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length,0);
+  } finally {await f.close();}
+});
