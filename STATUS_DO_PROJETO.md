@@ -1,3 +1,31 @@
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 6ac746df (2026-09-27T13:07Z)
+
+Delta vs `44710e55` (1 commit): versionamento Orçamento #52/#53 no consolidado.
+
+| Campo | Valor |
+|---|---|
+| SHA | `6ac746df7964023a3eaf4a05056b4ddfd90c05fb` |
+| CI no momento do parecer | frontend/concurrency PASS; omnicanal-postgres **SUCCESS**; backend **em curso** |
+| **Veredito delta código** | **APROVADO** (selo de SHA só após CI completa verde) |
+| **Veredito merge/ativação** | **BLOCKED** (gates remanescentes) |
+
+### Achados do delta
+- **027:** backfill `orcamento_raiz_id=id` + `SET NOT NULL` (sem engolir erro); reexecução 2x coberta em teste.
+- **create:** `id`/`orcamento_raiz_id` atômicos via `WITH identity`; remove UPDATE posterior.
+- **createVersion:** supersessão `EM_ABERTO→SUPERSEDIDO` **antes** do INSERT na mesma TX (libera `uq_orcamentos_open_numero`); descendente com `external_id`/`idempotency_key` **NULL** (identidade de transporte só na raiz); `supersedido_por_id` depois; audit no serviço na mesma `withTransaction` (falha de audit reverte supersessão — prova nos 4 canais).
+- inMemory alinhado (`external_id: null` na versão).
+- Retry omnicanal devolve recibo original; preço via serviço (999→51); cross-company recusado.
+
+### Gates ainda abertos (não mergear)
+1. CI completa do HEAD (backend) — aguardando.
+2. **025 ≠ #50** (catch silencioso ainda na #50).
+3. **#51** tipo/classificação histórica.
+4. **033 RLS** + grants/role operacional NOSUPERUSER/NOBYPASSRLS.
+5. Canais **OFF**.
+6. **#93** precisará rebase/remerge sobre este HEAD #92 antes de merge.
+
+Prioridade operacional: **#96** (`4fea5a63` APROVADO) permanece na frente. Cursor não edita branches Codex nem faz deploy.
+
 ## REVISÃO CURSOR CONTÍNUA — #96 / #92 / #93 (2026-09-27T12:56Z)
 
 Papel Cursor: revisão independente; **sem** editar branches Codex; **sem** deploy/VPS.
