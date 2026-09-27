@@ -15,10 +15,22 @@ type CanonicalSales = {
 export type { SaleReceipt } from './saleIngressContract.js';
 type ReceiptEvent = { payload: unknown; status: string; aggregate_type: string; aggregate_id: string };
 export async function assertIntegrationEventsReady(db: DbClient) {
-  const result = await db.query<{ ready: boolean }>(`SELECT (c.relrowsecurity AND c.relforcerowsecurity
-    AND EXISTS(SELECT 1 FROM pg_policy p WHERE p.polrelid=c.oid AND p.polname='integration_events_scope')) AS ready
-    FROM pg_class c WHERE c.oid=to_regclass('integration_events')`);
-  if (result.rows[0]?.ready !== true) throw new Error('Omnichannel RLS gate not satisfied');
+  const result = await db.query<{ ready: boolean; qualifier: string; check: string }>(`SELECT
+    (c.relrowsecurity AND c.relforcerowsecurity AND p.polcmd='*' AND p.polpermissive AND p.polroles=ARRAY[0]::oid[]
+      AND (SELECT count(*) FROM pg_policy WHERE polrelid=c.oid)=1) AS ready,
+    pg_get_expr(p.polqual,p.polrelid) AS qualifier, pg_get_expr(p.polwithcheck,p.polrelid) AS check
+    FROM pg_class c JOIN pg_policy p ON p.polrelid=c.oid AND p.polname='integration_events_scope'
+    WHERE c.oid=to_regclass('integration_events')`);
+  // Exact canonical expression, not substring matching: OR true/extra permissive policies must fail closed.
+  const normalize = (value: string) => (value.match(/'(?:''|[^'])*'|"(?:""|[^"])*"|[^'"]+/g) ?? [])
+    .map(part => part.startsWith("'") || part.startsWith('"') ? part
+      : part.replace(/::text\b|[\s()]/gi, '').toLowerCase()).join('');
+  const expected = normalize("group_id = NULLIF(current_setting('erp.group_id', true), '')::uuid AND empresa_id = NULLIF(current_setting('erp.empresa_id', true), '')::uuid");
+  const policy = result.rows[0];
+  if (policy?.ready !== true || typeof policy.qualifier !== 'string' || typeof policy.check !== 'string'
+    || normalize(policy.qualifier) !== expected || normalize(policy.check) !== expected) {
+    throw new Error('Omnichannel RLS gate not satisfied');
+  }
 }
 const receiptKey = (identity: ChannelIdentity, envelope: Pick<SaleEnvelope, 'tipo' | 'idempotencyKey'>) =>
   `sale:v1:${digest(JSON.stringify([identity.groupId, identity.empresaId, identity.id, identity.channel, envelope.tipo, envelope.idempotencyKey]))}`;
@@ -61,17 +73,25 @@ export class SaleIngress {
         [identity.groupId, identity.empresaId]);
       // Serialize by nonce first, then receipt key, preventing conflicting concurrent deliveries.
       for (const lock of [nonceHash, key]) await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [lock]);
+      const reused = await query.query(
+        "SELECT id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type IN ('venda.recebida','venda.nonce') AND payload->>'nonce_hash'=$4 LIMIT 1",
+        [identity.groupId, identity.empresaId, identity.channel, nonceHash]);
+      if (reused.rows.length) throw new AppError(409, 'CHANNEL_NONCE_REUSED', 'Nonce already used');
       const existing = await query.query<ReceiptEvent & { payload_checksum: string }>(
         'SELECT payload_checksum,payload,status,aggregate_type,aggregate_id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type=$4 AND idempotency_key=$5',
         [identity.groupId, identity.empresaId, identity.channel, 'venda.recebida', key]);
       if (existing.rows[0]) {
         if (existing.rows[0].payload_checksum !== hash) throw new AppError(409, 'CHANNEL_IDEMPOTENCY_CONFLICT', 'Key already used for different sale');
-        return { receipt: await this.validateReceipt(existing.rows[0],envelope.tipo,ctx,query), replayed: true };
+        const receipt = await this.validateReceipt(existing.rows[0],envelope.tipo,ctx,query);
+        // Consume fresh retry nonces too, atomically with audit; never overwrite the original receipt.
+        const nonceEvent = await query.query<{ id: string }>(`INSERT INTO integration_events
+          (group_id,empresa_id,source,event_type,idempotency_key,payload,status,schema_version,aggregate_type,aggregate_id,correlation_id)
+          VALUES($1,$2,$3,'venda.nonce',$4,$5::jsonb,'processed',1,$6,$7,$8) RETURNING id`,
+          [identity.groupId,identity.empresaId,identity.channel,`nonce:v1:${nonceHash}`,JSON.stringify({nonce_hash:nonceHash}),envelope.tipo,receipt.id,requestId]);
+        await this.sales.auditRepo.append({...ctx,entity:'IntegracaoEvento',entityId:nonceEvent.rows[0].id,
+          action:'create',afterData:{canal:identity.channel,tipo:envelope.tipo,documento_id:receipt.id,replayed:true}},query);
+        return { receipt, replayed: true };
       }
-      const reused = await query.query(
-        "SELECT id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida' AND payload->>'nonce_hash'=$4 LIMIT 1",
-        [identity.groupId, identity.empresaId, identity.channel, nonceHash]);
-      if (reused.rows.length) throw new AppError(409, 'CHANNEL_NONCE_REUSED', 'Nonce already used');
       const document = { ...envelope.documento, itens: envelope.documento.itens.map((item) => ({
         ...item, preco_unitario: '0', desconto: '0',
       })) };

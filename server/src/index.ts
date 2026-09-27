@@ -11,6 +11,7 @@ async function main() {
   const db = transactionScope(createDbClient(config));
   const runtime = createApp({ config, db });
   const app = express();
+  app.set('trust proxy', runtime.app.get('trust proxy'));
   const identities = loadChannelIdentities(process.env);
   if (identities.length) {
     if (!db.pool || runtime.useMemory) throw new Error('Omnichannel requires PostgreSQL');

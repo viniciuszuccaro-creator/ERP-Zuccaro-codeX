@@ -349,3 +349,41 @@ replay sem duplicar, sinal prévio, transporte ignorando abort e backoff.
 Reutiliza HMAC/RBAC/tenant/auditoria canônicos, sem fila/app/provider/migration nova.
 Base #86, revisão independente pendente. Rollback retira apenas opção de parada.
 Sem HD/VPS/merge/deploy; Onda 17 e programa não declarados integralmente concluídos.
+
+# Correções da revisão independente da base #68
+
+Review 5328566505: quatro defeitos confirmados no HEAD base beff571. Corrigidos
+no HEAD cumulativo após #87, preservando histórico e sem alterar branches Cursor.
+Nonce é verificado antes do cache; retries com nonce novo também o consomem em
+integration_events, event_type venda.nonce, processado e auditado na mesma TX.
+Falha de audit/integridade conflita ou reverte o consumo; replay não duplica o
+Pedido/Orçamento, e não sobrescreve recibo original. Eventos só contêm hash/refs;
+consultas de recibos/outbox continuam filtrando tipos próprios. Nonces históricos
+de retries que nunca foram persistidos não podem ser reconstruídos retroativamente.
+
+Gate de inicialização valida RLS/FORCE, policy ALL canônica única e predicados
+USING/WITH CHECK exatos de group_id e empresa_id; recusa true, filtro só de Grupo,
+WITH CHECK permissivo e policy extra. Mudança semântica exige gate coordenado,
+não aceitar nome como prova. Nenhuma migration aplicada/criada. Pedido externo
+rejeita tabela_preco_id: cabeçalho e snapshots vêm da resolução server-side.
+App Express externo herda trust proxy do runtime (atualmente um hop), antes do
+limiter. Mantém topologia canônica; rede deve impedir acesso direto sem proxy.
+
+Testes sintéticos e PG efêmero cobrem replay/concorrência de nonce, rollback de
+nonce em audit, predicados adulterados/extra, allowlist e buckets por IP via proxy.
+Rollback de código mantém eventos processados; porém código antigo reintroduz
+falhas de nonce/gate, portanto deixar ingress desativado nesse rollback. Sem
+HD/VPS/merge/deploy. A correção é dependente da cadeia #68–#87 e requer nova
+revisão independente; CI verde não aprova implantação nem fecha ondas.
+
+Revisão adicional #88/review5328624095: gate exige polroles exatamente PUBLIC
+como no contrato canônico; TO papel que exclui API é recusado antes da montagem.
+PUBLIC é alvo da policy, não grant de acesso às tabelas: privilégios continuam
+revogados de PUBLIC no contrato e concedidos separadamente ao papel operacional.
+Testes PGlite/PG alteram somente TO, preservando todos os predicados, e comprovam
+recusa seguida de readiness após restaurar PUBLIC. Não mudar policy em DEV.
+
+Review5328649322: normalização do gate preserva literais e identificadores SQL
+entre aspas, incluindo espaços, caixa e escapes. Remove somente formatação fora
+das aspas; nomes GUC com espaço final e NULLIF com literal espaço são recusados.
+Testes PGlite/PG reproduzem três predicados malformados e restauram o canônico.
