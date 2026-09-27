@@ -1,3 +1,34 @@
+## REVISÃO CURSOR — divisão Codex implementa / Cursor revisa (2026-09-27)
+
+Papel Cursor: revisão independente; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.
+
+### P1 Acesso — #95 / script na main (`deploy-owner-access-incidente.sh`)
+
+| ID | Sev. | Tema | Achado |
+|---|---|---|---|
+| A1 | Alta | Pré-auditoria | Script muta groups/empresas/Auth/rebuild **sem** fingerprint do DB ligado à API 3080 nem inventário sanitizado prévio. |
+| A2 | Alta | Duplicidade | `ON CONFLICT` nos UUIDs do seed A **renomeia** tenant sintético para Grupo CPA/CPA/3Z; risco de colisão semântica se já houver outro CPA ou se Gate D depender dos nomes DEV. |
+| A3 | Alta | Senha | `OWNER_PASS` no `curl`/histórico; `set -a; source .env` exporta service_role ao ambiente. Sem `unset` pós-uso. Não há eco da senha em `tee` (positivo). |
+| A4 | Média | Backup | Backup de profiles no provision; falta backup de groups/empresas antes do rename. |
+| A5 | Média | 3080/rollback | Rebuild via `spa-login-rebuild` preserva 3080 se `ERP_DOCKER_NETWORK` definido; rollback sem rede já falhou na VPS. |
+
+**Veredito P1:** não reexecutar cego na VPS até Codex abrir **nova PR** com: auditoria read-only → decisão → mutação; sem rename silencioso; senha endurecida; backup groups/empresas; evidência sanitizada. Acesso **não** resolvido sem teste humano no browser.
+
+Comentário na PR GitHub: **BLOCKED** (API `addComment` / ManagePullRequest sem permissão neste agente). Achados ficam neste STATUS + chat.
+
+### P2 Omnicanal — #92
+
+| ID | Sev. | Achado |
+|---|---|---|
+| B1 | Bloqueante | PR declara NÃO APTA (gates #51/#52/#53, 025 NOT NULL, grants/policies). |
+| B2 | Bloqueante | 033 RLS company exige destino empresarial nos produtores. |
+| B3 | Alta | Merge cumulativo #68–#90 sem fechar bases canônicas. |
+
+**Veredito P2:** **não mergear #92** agora. Revisar #93 só após #92 aprovável. Canais OFF.
+
+### Estado VPS (última evidência humana)
+Auth owner criada (`owner_auth_count_after=1`); provision bloqueado por placeholder UUID; `unset` + re-run pendente **após** PR Codex corrigir A1–A5. Cursor não aplica VPS neste papel.
+
 ## INCIDENTE — OWNER_GROUP_ID placeholder (2026-09-27T10:44Z)
 
 | Achado | Valor |
