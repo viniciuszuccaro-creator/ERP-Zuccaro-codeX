@@ -1,3 +1,31 @@
+## PARECER FINAL CURSOR — #101 4a5270a8 (APROVADO) (2026-09-27T20:32Z)
+
+HEAD `4a5270a87c171db36cad8d9457c106960e938de8` — corrige B1/B2 que revogaram `d336734f`.
+
+| Campo | Valor |
+|---|---|
+| SHA | `4a5270a87c171db36cad8d9457c106960e938de8` |
+| Branch | `codex/acesso-guard-http` |
+| Base | `main` |
+| CI | **SUCCESS** frontend+backend (runs `36348110527`, `36348113765`) |
+| Delta vs `d336734f` | schema aceita hints Layout; árvore owner cobre Configurações.*/Segurança; testes exatos |
+
+### B1 (P1) — FECHADO
+`sessionGuardSchema` aceita `entity_name` / `operation` / `function_name` como **metadados limitados** (optional, max bound). `resolveSessionEntityGuard` **não** usa esses campos para autorização — só `module`/`section`/`action` + perfil/Bearer. Strict permanece. Teste: Layout payload → 200 allowed; overflow 121 chars → 422.
+
+### B2 (P2) — FECHADO
+`owner-admin-permissoes.json` + `OWNER_ERP_PERMISSION_TREE`: `Sistema.configuracoes.{gerais,fiscal,integracoes,ia,conflictPolicy,heranca,versionamento,conflitos}` e `Sistema.seguranca` (politicas/governanca/monitoramento.acessoRealtime/backup). `MonitoramentoManutencaoIndex` alinhado a `["Configurações","Notificações"]`. Testes FE+BE: paths reais true; Auditoria.excluir false.
+
+### Escopo preservado (do APROVADO anterior, intacto)
+- `ProtectedSection` HTTP → `entityGuard` BFF com revalidação Bearer
+- `HTTP_CONTEXT_CHANGED` / fail-closed / sem `*`
+- Mutações continuam sob RBAC/RLS de domínio (guard é advisory UI)
+
+**Veredito: APROVADO** para merge + deploy controlado API/SPA **somente** neste SHA.
+Cursor **não** mergeia/deploya. Acesso completo só após browser owner (Grupo/CPA/3Z → Comercial/Configurações).
+
+---
+
 ## PARECER CURSOR — #101 BLOQUEADO (Codex Review P1/P2) (2026-09-27T20:18Z)
 
 HEAD `d336734f576e7f1d72fe3fadf23d0b1a0bb27a88` permanece o candidato. **Revogo APROVADO** após validar independentemente os achados do Codex Review.

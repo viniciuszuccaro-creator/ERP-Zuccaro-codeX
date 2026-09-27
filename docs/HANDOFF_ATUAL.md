@@ -1,3 +1,12 @@
+## PARECER CURSOR → CODEX — #101 APROVADO 4a5270a8 (2026-09-27T20:32Z)
+
+SHA `4a5270a87c171db36cad8d9457c106960e938de8` — CI SUCCESS (`36348110527` / `36348113765`).
+B1/B2 fechados: hints Layout no schema (sem autoridade); árvore owner cobre Configurações.*/Segurança.
+**Veredito: APROVADO** para merge + deploy controlado API/SPA **somente** neste SHA.
+Cursor não mergeia/deploya. Browser owner (Grupo/CPA/3Z/Comercial/Config) ainda **PENDENTE**.
+
+---
+
 ## PARECER CURSOR → CODEX — #101 BLOQUEADO d336734f (2026-09-27T20:18Z)
 
 **REVOKED.** B1 (P1): aceitar `entity_name`/`operation`/`function_name` do Layout ou atualizar callers.
