@@ -146,7 +146,7 @@ export class CatalogOutbox {
           to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt",
           next_attempt_at AS "nextAttemptAt",locked_until AS "lockedUntil",
           CASE WHEN error_message IN ('CATALOG_PAYLOAD_INVALID','CATALOG_SOURCE_CHANGED','CATALOG_RECEIPT_INVALID',
-            'CATALOG_PROVIDER_UNAVAILABLE','ATTEMPTS_EXHAUSTED','OUTBOX_KEY_REQUIRED') THEN error_message
+            'CATALOG_PROVIDER_UNAVAILABLE','CATALOG_RUN_INTERRUPTED','ATTEMPTS_EXHAUSTED','OUTBOX_KEY_REQUIRED') THEN error_message
             WHEN error_message IS NULL THEN NULL ELSE 'OUTBOX_ERROR_REDACTED' END AS code
         FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source='ERP'
           AND event_type='produto.publicado' AND aggregate_type='Produto'

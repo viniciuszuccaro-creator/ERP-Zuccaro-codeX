@@ -5,8 +5,42 @@ import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 import { CatalogOutbox } from '../src/integrations/catalogOutbox.js';
+import { CatalogOutboxWorker } from '../src/integrations/catalogOutboxWorker.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
+
+test('real PostgreSQL interrupted worker retains idempotency, rejects late ACK and recovers with audit gates',{skip:!url},async()=>{
+  const f=await outboxFixture(await isolatedPostgres(url!));
+  try{
+    const ids=[await f.event(),await f.event()];const abort=new AbortController();
+    let late:()=>void=()=>{};let sentId='';let sentKey='';
+    const worker=new CatalogOutboxWorker(f.outbox,{publish:async(input,signal)=>{
+      sentId=input.eventId;sentKey=input.key;abort.abort('PRIVATE_STOP_REASON');assert.equal(signal.aborted,true);
+      return new Promise(resolve=>{late=()=>resolve({eventId:input.eventId,key:input.key});});
+    }});
+    assert.deepEqual(await worker.runOnce(f.ctx,10,abort.signal),{published:0,retry:1,dead_letter:0});
+    late();await new Promise(resolve=>setImmediate(resolve));
+    const rows=(await f.pg.query('SELECT id,status,attempts,error_message,idempotency_key FROM integration_events ORDER BY id')).rows;
+    assert.equal(rows.find(r=>r.id===sentId)?.status,'retry');assert.equal(rows.find(r=>r.id===sentId)?.idempotency_key,sentKey);
+    assert.equal(rows.filter(r=>r.status==='pending'&&r.attempts===0).length,1);
+    assert.equal((await f.outbox.failures(f.ctx)).items[0].code,'CATALOG_RUN_INTERRUPTED');
+    assert.ok(!JSON.stringify((await f.pg.query('SELECT * FROM audit_logs')).rows).includes('PRIVATE_STOP_REASON'));
+    await f.pg.query('UPDATE integration_events SET next_attempt_at=clock_timestamp() WHERE id=$1',[sentId]);
+    const delivered:string[]=[];
+    const resumed=new CatalogOutboxWorker(f.outbox,{publish:async(input)=>{delivered.push(input.eventId);return{eventId:input.eventId,key:input.key};}});
+    assert.deepEqual(await resumed.runOnce(f.ctx),{published:2,retry:0,dead_letter:0});
+    assert.deepEqual(delivered.sort(),ids.sort());
+    assert.equal((await f.pg.query('SELECT attempts FROM integration_events WHERE id=$1',[sentId])).rows[0].attempts,2);
+    const next=await f.event();const failing=new AbortController();
+    await f.pg.exec(`CREATE FUNCTION reject_stop_retry_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.after_data->>'status'='retry' THEN RAISE EXCEPTION 'SYNTHETIC_STOP_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER stop_retry_audit AFTER INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_stop_retry_audit();`);
+    const failed=new CatalogOutboxWorker(f.outbox,{publish:async()=>{failing.abort();return new Promise(()=>{});}});
+    await assert.rejects(()=>failed.runOnce(f.ctx,1,failing.signal));
+    assert.equal((await f.pg.query('SELECT status FROM integration_events WHERE id=$1',[next])).rows[0].status,'processing');
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE entity_id=$1 AND after_data->>'status'='retry'",[next])).rows.length,0);
+  }finally{await f.close();}
+});
 
 test('real PostgreSQL selection reprocess locks consistently, schedules once and rolls back the final audit',{skip:!url},async()=>{
   const f=await outboxFixture(await isolatedPostgres(url!));
