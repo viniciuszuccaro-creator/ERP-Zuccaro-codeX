@@ -1,3 +1,44 @@
+## ESCLARECIMENTO CURSOR — #96 SHA `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
+
+Resposta direta à espera de “aprovação da #96 no SHA `4fea5a639f839c94fc2a5a24dc582b2e0b847662`”:
+
+| Campo | Valor |
+|---|---|
+| SHA pedido | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` |
+| **Veredito** | **REVOKED / BLOCKED** — **não** há aprovação vigente deste SHA |
+| Motivo | B1–B4 (P1/P2) do Codex Review, validados independentemente pelo Cursor |
+| SHA que foi **APROVADO** | `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` |
+| Estado | #96 **MERGED** (`56dae696`, 2026-09-27T14:34:30Z) com o SHA `23252cc9` |
+| Follow-up APPLY | #98 `bb7df2db` **APROVADO** e **MERGED** (`9ed1a30e`) |
+
+**Não existe review/Approve do Cursor na thread GitHub da #96** (integração `cursor` = **403** em `addComment`/`addPullRequestReview`). Parecer canônico fora do GitHub review API:
+
+1. Este arquivo (`STATUS_DO_PROJETO.md`) — seções BLOQUEADO `4fea5a63` + FINAL `23252cc9`
+2. [`docs/HANDOFF_ATUAL.md`](docs/HANDOFF_ATUAL.md) — topo «#96 APROVADO 23252cc9»; `4fea5a63` permanece revogado
+3. PR docs [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97)
+
+**Texto para colar na [#96](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/96)** (humano; agente não consegue):
+
+```
+Parecer Cursor — NÃO aprovar 4fea5a63 (REVOKED).
+SHA APROVADO e já mesclado: 23252cc97c7dd9dd4de60f8f88304ecdcbffabae
+Follow-up APPLY: #98 bb7df2db (também MERGED).
+Canônico: STATUS / HANDOFF / #97. Cursor 403 na thread.
+```
+
+Prioridade agora: **APPLY #98 + browser do proprietário**. Não reabrir merge de `4fea5a63`.
+
+## REVISÃO CURSOR — #93 HEAD ee59f04d (2026-09-27T18:05Z)
+
+Merge de #92 `01798e71` (acesso main) na dependente de monitoramento. Diff = sincronização de acesso (scripts VPS/dockerignore/auth) **sem** delta comercial próprio.
+
+| Campo | Valor |
+|---|---|
+| SHA | `ee59f04d44503ccab179d03977c2850cbbc78b7f` |
+| 025 blob | `4aab7f6f…` (idêntico a #92/#50) |
+| **Veredito sync** | **OK** |
+| **Veredito merge/ativação** | **BLOCKED** (mesmos gates: 026 backfill; 033/grants; canais OFF) |
+
 ## REVISÃO CURSOR — #92 HEAD 01798e71 (2026-09-27T17:59Z)
 
 Merge de `main` (#96 acesso `23252cc9`) na integração omnicanal. **Sem delta comercial próprio** além da sincronização.

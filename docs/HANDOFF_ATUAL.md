@@ -1,8 +1,18 @@
+## ESCLARECIMENTO — #96 `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
+
+**Não registrar APROVADO de `4fea5a639f839c94fc2a5a24dc582b2e0b847662`.**
+Esse SHA foi **REVOKED** (B1–B4). Aprovação vigente foi `23252cc9` (já MERGED na #96).
+Follow-up APPLY: #98 `bb7df2db` (já MERGED). Cursor **não** consegue comentar na #96 (403).
+Canônico: STATUS + este HANDOFF + [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97).
+Próximo gate: APPLY #98 + browser proprietário. Não reabrir `4fea5a63`.
+
+---
+
 ## PARECER CURSOR → CODEX — #98 APROVADO bb7df2db (2026-09-27T15:00Z)
 
 SHA `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` — CI SUCCESS. Sem `pg_read_file`.
 **Veredito: APROVADO** para merge + re-APPLY controlado (canário/identidade/grant/promote).
-Cursor não faz deploy. Novo HEAD invalida.
+Cursor não faz deploy. Novo HEAD invalida. (#98 já MERGED `9ed1a30e`.)
 
 ---
 
@@ -11,7 +21,7 @@ Cursor não faz deploy. Novo HEAD invalida.
 SHA `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` — CI SUCCESS. B1–B4 fechados.
 **Veredito: APROVADO** para merge + `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA.
 Ordem: AUDIT IDs → backup → canário (identidade DB) → grant → promote imagens testadas → browser proprietário.
-Cursor não faz deploy. `4fea5a63` permanece revogado. Novo push invalida.
+Cursor não faz deploy. `4fea5a63` permanece revogado. Novo push invalida. (#96 já MERGED `56dae696`.)
 
 ---
 
