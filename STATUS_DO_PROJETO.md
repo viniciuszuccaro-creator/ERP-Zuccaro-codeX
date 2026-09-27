@@ -1,3 +1,30 @@
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 46d058ef (2026-09-27T13:59Z)
+
+Delta vs `55d9014c` (1 commit): gate histórico **026** — aborta corrupção silenciosa.
+
+| Campo | Valor |
+|---|---|
+| SHA | `46d058ef16f7cea2dcbd238ed645c9c58544227e` |
+| CI | em curso (selo de SHA após verde) |
+| **Veredito delta código** | **APROVADO** |
+| **Veredito merge/ativação** | **BLOCKED** |
+
+### Achados
+- Prefixo sob `LOCK`: se colunas `tipo_comercial` / `tipo_comercial_snapshot` **ainda não existem** e há linhas em `pedidos`/`pedido_itens` → `RAISE PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED` **antes** do DDL.
+- Sem default falso REVENDA em histórico; dados/IDs preservados; migration não registrada no rollback (prova PGlite/PG).
+- Reexecução com colunas já classificadas (lote sintético SERVICO) preserva snapshot + `SET NOT NULL` (23502).
+- `DEFAULT 'REVENDA'` no `ADD COLUMN` só alcança caminho **greenfield** (tabelas vazias) ou colunas já existentes (`IF NOT EXISTS` no-op) — aceitável; não é backfill histórico.
+
+### Gates ainda abertos
+1. CI completa deste HEAD.
+2. **025 ≠ #50**.
+3. **Backfill histórico 026 aprovado** — decisão comercial/lote explícito antes de aplicar em DB com dados (não apagar pedidos para contornar).
+4. **033 RLS** + grants/role operacional.
+5. Canais **OFF**.
+6. **#93** precisa rebase sobre este HEAD.
+
+**#96** `4fea5a63` permanece **APROVADO** (prioridade; Codex ainda precisa ver o parecer na thread — comentário Cursor 403).
+
 ## REVISÃO CURSOR FINAL — #92 / #93 (2026-09-27T13:21Z)
 
 Resposta aos comentários Codex 5856221656 / 5856221751: **não é silêncio** — revisão independente já publicada (STATUS `0e37e2c1`+). Comentário nas PRs Codex: 403.
