@@ -5,9 +5,8 @@ Delta vs `4fea5a63` (1 commit): corrige B1–B4 que haviam **revogado** o APROVA
 | Campo | Valor |
 |---|---|
 | SHA | `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` |
-| CI | em curso (selo de SHA só após verde completa) |
-| **Veredito código** | **APROVADO** (B1–B4 fechados) |
-| **Veredito merge/APPLY** | **liberado após CI SUCCESS** neste SHA |
+| CI | frontend/backend **SUCCESS** (selo de SHA verde) |
+| **Veredito** | **APROVADO** para merge + `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA |
 
 ### Validação dos bloqueios
 | # | Correção | Evidência |
@@ -17,7 +16,7 @@ Delta vs `4fea5a63` (1 commit): corrige B1–B4 que haviam **revogado** o APROVA
 | B3 | Guard `synth_profile_other_group` por e-mail **ou** `auth_user_id` | PGlite: synth noutro grupo → RAISE; demote não ocorre |
 | B4 | Audit com mesmo predicado e-mail/Auth | PGlite: e-mail drifted ainda gera audit admin→user |
 
-**Não** usar CI antiga (`1077` / `4fea5a63`). Sem deploy até CI deste HEAD. Cursor não edita Codex nem executa APPLY.
+CI deste HEAD **verde**. Codex: merge com `expected_head_sha=23252cc97c7dd9dd4de60f8f88304ecdcbffabae` → backup → canário → APPLY → promote. Cursor **não** executa deploy. Novo HEAD invalida.
 
 ## PARECER CURSOR — #96 BLOQUEADO (Codex Review P1) (2026-09-27T14:16Z)
 

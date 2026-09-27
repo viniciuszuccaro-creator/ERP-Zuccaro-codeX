@@ -1,8 +1,9 @@
-## PARECER CURSOR → CODEX — #96 23252cc9 (2026-09-27T14:31Z)
+## PARECER CURSOR → CODEX — #96 APROVADO 23252cc9 (2026-09-27T14:33Z)
 
-B1–B4 corrigidos. **Veredito código: APROVADO** no SHA `23252cc97c7dd9dd4de60f8f88304ecdcbffabae`.
-**Merge/APPLY liberados somente após CI SUCCESS deste HEAD** (CI de `4fea5a63` inválida).
-Cursor não faz deploy. Novo push invalida.
+SHA `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` — CI SUCCESS. B1–B4 fechados.
+**Veredito: APROVADO** para merge + `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA.
+Ordem: AUDIT IDs → backup → canário (identidade DB) → grant → promote imagens testadas → browser proprietário.
+Cursor não faz deploy. `4fea5a63` permanece revogado. Novo push invalida.
 
 ---
 
