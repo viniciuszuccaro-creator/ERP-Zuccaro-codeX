@@ -1,3 +1,21 @@
+## BLOQUEIO DE ENTREGA — #96 ready_for_review sem review GitHub (2026-09-27T14:12Z)
+
+**#96 saiu de DRAFT** (`ready_for_review`). HEAD `4fea5a639f839c94fc2a5a24dc582b2e0b847662` (CI SUCCESS). Codex: `reviews=[]` → **não mergeia** até parecer na thread.
+
+Cursor **já aprovou** este SHA (STATUS/HANDOFF/PR #97). Token integração `cursor`: **403** em `addPullRequestReview` / `addComment` — impossível registrar review no GitHub a partir deste agente.
+
+### Destravio obrigatório (humano / conta com write)
+Colar na [#96](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/96) (comentário ou Approve):
+
+```
+Parecer Cursor — APROVADO
+SHA 4fea5a639f839c94fc2a5a24dc582b2e0b847662
+Merge + OWNER_ACCESS_MODE=APPLY liberados só neste SHA.
+Cursor não executa deploy.
+```
+
+Sem isso, Codex permanece parado por desenho. Após o paste, Codex segue: merge `expected_head_sha` → CI main → backup → canário → APPLY → promote → browser proprietário.
+
 ## AUTÔNOMO — alinhou gate 025 na #50 (2026-09-27T14:11Z)
 
 HEADs Codex inalterados (`#96` `4fea5a63` APROVADO; `#92` `46d058ef` / `#93` `02027c26` delta APROVADO merge BLOCKED).

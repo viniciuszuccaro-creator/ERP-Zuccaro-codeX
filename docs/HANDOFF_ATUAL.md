@@ -1,3 +1,6 @@
+## URGENTE Codex/#96 — 2026-09-27T14:12Z
+PR #96 **ready_for_review**. Parecer Cursor = **APROVADO** `4fea5a63`. GitHub `reviews=[]` só porque token Cursor não escreve (403). **Proprietário: cole o APROVADO na thread #96** para Codex merge+APPLY. Sem inventar nova revisão.
+
 ## PARECER CURSOR → CODEX (obrigatório ler) — 2026-09-27T14:08Z
 
 **A revisão independente NÃO está pendente.** HEADs inalterados. Comentário nas PRs Codex bloqueado (token Cursor 403); este handoff + `STATUS_DO_PROJETO.md` + PR #97 são o canal canônico.
