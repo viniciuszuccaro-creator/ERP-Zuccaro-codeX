@@ -21,6 +21,7 @@
 #     OWNER_PROFILE_EXISTED_BEFORE_FLAG='YES'|'NO' \
 #     bash scripts/vps/provision-owner-admin-profile.sh
 set -Eeuo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONFIRM_OWNER_ADMIN_PROFILE="${CONFIRM_OWNER_ADMIN_PROFILE:-}"
@@ -29,6 +30,8 @@ OWNER_EMAIL="${OWNER_EMAIL:-vinicius.zuccaro@gmail.com}"
 SYNTH_EMAIL="${SYNTH_EMAIL:-gate-d.synth@dev.synthetic.local}"
 DEMOTE_SYNTH="${DEMOTE_SYNTH:-YES}"
 OWNER_FULL_NAME="${OWNER_FULL_NAME:-Vinicius Zuccaro}"
+OWNER_SCOPE="${OWNER_SCOPE:-COMPANY}"
+[[ "$OWNER_SCOPE" == COMPANY || ("$OWNER_SCOPE" == GROUP && "${CONFIRM_OWNER_GROUP_ADMIN:-}" == YES) ]] || { echo 'BLOCKED: explicit_group_admin_confirmation_required' >&2; exit 2; }
 OWNER_GROUP_ID="${OWNER_GROUP_ID:-}"
 OWNER_EMPRESA_ID="${OWNER_EMPRESA_ID:-}"
 EXPECTED_OWNER_ADMIN="${EXPECTED_OWNER_ADMIN:-1}"
@@ -301,6 +304,7 @@ if docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1
   -v owner_empresa_id="$OWNER_EMPRESA_ID" \
   -v synth_email="$SYNTH_EMAIL" \
   -v demote_synth="$DEMOTE_SYNTH" \
+  -v owner_scope="$OWNER_SCOPE" \
   -v expected_owner_admin="$EXPECTED_OWNER_ADMIN" \
   -v expected_synth_admin="$EXPECTED_SYNTH_ADMIN" <<'SQL'
 BEGIN;
@@ -312,6 +316,7 @@ CREATE TEMP TABLE _owner_prov (
   empresa_id uuid NOT NULL,
   synth_email text NOT NULL,
   demote text NOT NULL,
+  owner_scope text NOT NULL,
   expected_owner_admin int NOT NULL,
   expected_synth_admin int NOT NULL,
   permissoes jsonb NOT NULL
@@ -319,7 +324,7 @@ CREATE TEMP TABLE _owner_prov (
 
 INSERT INTO _owner_prov (
   owner_email, owner_full_name, group_id, empresa_id,
-  synth_email, demote, expected_owner_admin, expected_synth_admin, permissoes
+  synth_email, demote, owner_scope, expected_owner_admin, expected_synth_admin, permissoes
 ) VALUES (
   lower(:'owner_email'),
   :'owner_full_name',
@@ -327,10 +332,16 @@ INSERT INTO _owner_prov (
   :'owner_empresa_id'::uuid,
   lower(:'synth_email'),
   upper(trim(:'demote_synth')),
+  :'owner_scope',
   :'expected_owner_admin'::int,
   :'expected_synth_admin'::int,
   pg_read_file('/tmp/owner-admin-permissoes.json')::jsonb
 );
+
+CREATE TEMP TABLE _owner_before ON COMMIT DROP AS
+SELECT p.id, p.group_id, p.empresa_id, p.role, p.ativo, p.permissoes
+FROM profiles p, _owner_prov r
+WHERE lower(p.email) IN (r.owner_email, r.synth_email);
 
 DO $prov$
 DECLARE
@@ -346,6 +357,14 @@ DECLARE
   v_synth_admin int;
 BEGIN
   SELECT * INTO STRICT r FROM _owner_prov LIMIT 1;
+
+  IF EXISTS (SELECT 1 FROM profiles p WHERE lower(p.email)=r.synth_email AND p.group_id IS DISTINCT FROM r.group_id) THEN
+    RAISE EXCEPTION 'BLOCKED: synth_profile_other_group';
+  END IF;
+
+  IF r.owner_scope NOT IN ('COMPANY', 'GROUP') THEN
+    RAISE EXCEPTION 'BLOCKED: invalid_owner_scope';
+  END IF;
 
   IF r.permissoes ? '*' THEN
     RAISE EXCEPTION 'BLOCKED: owner_perms_has_wildcard';
@@ -405,7 +424,7 @@ BEGIN
         role = 'admin',
         ativo = true,
         group_id = r.group_id,
-        empresa_id = r.empresa_id,
+        empresa_id = CASE WHEN r.owner_scope = 'GROUP' THEN NULL ELSE r.empresa_id END,
         permissoes = r.permissoes,
         updated_at = timezone('utc', now())
     WHERE p.id = v_profile_id;
@@ -419,7 +438,7 @@ BEGIN
       'admin',
       true,
       r.group_id,
-      r.empresa_id,
+      CASE WHEN r.owner_scope = 'GROUP' THEN NULL ELSE r.empresa_id END,
       r.permissoes
     );
   END IF;
@@ -451,7 +470,7 @@ BEGIN
     AND p.ativo IS TRUE
     AND p.role = 'admin'
     AND p.group_id = r.group_id
-    AND p.empresa_id = r.empresa_id
+    AND p.empresa_id IS NOT DISTINCT FROM CASE WHEN r.owner_scope = 'GROUP' THEN NULL ELSE r.empresa_id END
     AND NOT (p.permissoes ? '*')
     AND p.permissoes ? 'Cadastros'
     AND p.permissoes ? 'Comercial'
@@ -478,6 +497,13 @@ BEGIN
 END
 $prov$;
 
+INSERT INTO audit_logs(group_id, empresa_id, actor_email, entity, entity_id, action, before_data, after_data)
+SELECT p.group_id, COALESCE(p.empresa_id,r.empresa_id), 'system:vps-owner-provision', 'profiles', p.id::text, 'provision_owner_access',
+       CASE WHEN b.id IS NULL THEN NULL ELSE jsonb_build_object('role',b.role,'ativo',b.ativo,'group_id',b.group_id,'empresa_id',b.empresa_id,'permissoes',b.permissoes) END,
+       jsonb_build_object('role',p.role,'ativo',p.ativo,'group_id',p.group_id,'empresa_id',p.empresa_id,'permissoes',p.permissoes)
+FROM profiles p CROSS JOIN _owner_prov r LEFT JOIN _owner_before b ON b.id=p.id
+WHERE lower(p.email)=r.owner_email OR (r.demote='YES' AND lower(p.email)=r.synth_email);
+
 COMMIT;
 SQL
 then
@@ -495,7 +521,8 @@ fi
 OWNER_FINAL="$(docker exec -i supabase-db psql -X -U postgres -d postgres -At \
   -v owner_email="$OWNER_EMAIL" \
   -v owner_group_id="$OWNER_GROUP_ID" \
-  -v owner_empresa_id="$OWNER_EMPRESA_ID" <<'SQL'
+  -v owner_empresa_id="$OWNER_EMPRESA_ID" \
+  -v owner_scope="$OWNER_SCOPE" <<'SQL'
 SELECT count(*)::text
 FROM profiles p
 WHERE (lower(p.email) = lower(:'owner_email')
@@ -505,7 +532,7 @@ WHERE (lower(p.email) = lower(:'owner_email')
   AND p.ativo IS TRUE
   AND p.role = 'admin'
   AND p.group_id = :'owner_group_id'::uuid
-  AND p.empresa_id = :'owner_empresa_id'::uuid
+  AND p.empresa_id IS NOT DISTINCT FROM CASE WHEN :'owner_scope' = 'GROUP' THEN NULL ELSE :'owner_empresa_id'::uuid END
   AND NOT (p.permissoes ? '*')
   AND p.permissoes ? 'Cadastros'
   AND p.permissoes ? 'Comercial'

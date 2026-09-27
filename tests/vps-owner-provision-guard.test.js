@@ -473,3 +473,16 @@ test('provision restore mode exige arquivo seletivo (fail-closed)', () => {
   assert.equal(miss.status, 2);
   assert.match(miss.stderr, /OWNER_PROV_RESTORE_FILE/);
 });
+
+
+test('owner deploy blocks password environment and invalid tenant before Docker', () => {
+  const deploy=path.join(ROOT,'scripts/vps/deploy-owner-access-incidente.sh');
+  const base={...process.env,OWNER_ACCESS_MODE:'APPLY',OWNER_EMAIL:'owner@example.com',CONFIRM_OWNER_ACCESS_DEPLOY:'YES',CONFIRM_OWNER_GROUP_ADMIN:'YES',OWNER_GROUP_ID:'placeholder',OWNER_EMPRESA_ID:'placeholder',EMPRESA_3Z_ID:'placeholder'};
+  const invalid=spawnSync('bash',[deploy],{encoding:'utf8',env:base});
+  assert.equal(invalid.status,2,invalid.stderr);
+  assert.match(invalid.stderr,/explicit_valid_tenant_ids_required_no_fallback/);
+  const credential=spawnSync('bash',[deploy],{encoding:'utf8',env:{...base,OWNER_PASS:'synthetic-value-not-a-credential'}});
+  assert.equal(credential.status,2,credential.stderr);
+  assert.match(credential.stderr,/password_environment_not_allowed/);
+  assert.equal(credential.stderr.includes('synthetic-value'),false);
+});
