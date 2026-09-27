@@ -164,6 +164,10 @@ test('troca de empresa atualiza sessão HTTP preservando token e expiração', (
     email: 'owner@example.com',
     role: 'admin',
     expiresAt,
+    empresas: [
+      { id: EMPRESA_A, razao_social: 'A', status: 'Ativa' },
+      { id: EMPRESA_B, razao_social: 'B', status: 'Ativa' },
+    ],
     storage,
   });
   const switched = switchErpHttpSessionEmpresa({ empresaId: EMPRESA_B, storage });
@@ -172,6 +176,23 @@ test('troca de empresa atualiza sessão HTTP preservando token e expiração', (
   assert.equal(switched.groupId, GROUP);
   assert.equal(switched.expiresAt, expiresAt);
   assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_B);
+});
+
+test('troca de empresa rejeita UUID fabricado fora da lista do servidor', () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({
+    accessToken: 'tok_switch',
+    groupId: GROUP,
+    empresaId: EMPRESA_A,
+    actorId: ACTOR,
+    role: 'admin',
+    empresas: [{ id: EMPRESA_A, razao_social: 'A', status: 'Ativa' }],
+    storage,
+  });
+  assert.throws(
+    () => switchErpHttpSessionEmpresa({ empresaId: EMPRESA_B, storage }),
+    /não autorizada/,
+  );
 });
 
 test('loginErpHttpSession persiste expires_in e monta admin/comum conforme role HTTP', async () => {

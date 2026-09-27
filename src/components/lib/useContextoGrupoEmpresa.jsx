@@ -6,6 +6,7 @@ import {
   buildHttpSessionUser,
   ensureHttpTenantLocalMirror,
   readErpHttpSession,
+  refreshErpHttpSessionFromServer,
   switchErpHttpSessionEmpresa,
 } from "@/api/erpHttpSession";
 
@@ -26,13 +27,16 @@ export function useContextoGrupoEmpresa() {
 
   const resolveSessionUser = async () => {
     if (isHttpBackendMode) {
-      const session = readErpHttpSession();
-      if (!session) return null;
+      const session = await refreshErpHttpSessionFromServer({});
+      if (!session?.token) return null;
       await ensureHttpTenantLocalMirror({
         groupId: session.groupId,
         empresaId: session.empresaId,
         groupName: session.groupName,
         empresas: session.empresas,
+        permissoes: session.permissoes || {},
+        perfilAcessoId: `http_perfil_${session.actorId}`,
+        perfilNome: session.fullName || session.email,
       });
       return buildHttpSessionUser(session);
     }

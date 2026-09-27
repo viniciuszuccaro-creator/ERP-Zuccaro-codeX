@@ -219,6 +219,15 @@ export function switchErpHttpSessionEmpresa(input) {
   if (empresaId && !isUuid(empresaId)) {
     throw new Error('empresaId inválido na troca de contexto');
   }
+  // Só permite empresa listada pelo servidor na sessão (anti-fabricação no browser).
+  const authorized = Array.isArray(current.empresas) ? current.empresas : [];
+  if (empresaId) {
+    const allowed = authorized.some((e) => String(e?.id || '') === empresaId)
+      || (authorized.length === 0 && current.empresaId === empresaId);
+    if (!allowed) {
+      throw new Error('Empresa não autorizada para este perfil. Faça login novamente.');
+    }
+  }
   persistErpHttpSession({
     accessToken: current.token,
     groupId: current.groupId,
@@ -595,12 +604,26 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
  */
 export function resolveRefreshEmpresaId(input) {
   const profileEmpresa = input?.profile?.empresa_id ? String(input.profile.empresa_id).trim() : '';
+  const empresas = Array.isArray(input?.profile?.empresas) ? input.profile.empresas : [];
+  const authorizedIds = new Set(
+    empresas.map((e) => String(e?.id || '').trim()).filter((id) => isUuid(id)),
+  );
+
   if (profileEmpresa) {
-    return isUuid(profileEmpresa) ? profileEmpresa : null;
+    if (!isUuid(profileEmpresa)) return null;
+    // Se o servidor listou empresas, o vínculo explícito também precisa estar na lista.
+    if (authorizedIds.size > 0 && !authorizedIds.has(profileEmpresa)) {
+      return [...authorizedIds][0] || null;
+    }
+    return profileEmpresa;
   }
 
   const preferred = input?.preferredEmpresaId ? String(input.preferredEmpresaId).trim() : '';
   if (!preferred || !isUuid(preferred)) return null;
+
+  if (authorizedIds.size > 0) {
+    return authorizedIds.has(preferred) ? preferred : null;
+  }
 
   const groupId = String(input?.profile?.group_id || '').trim();
   if (!groupId || !isUuid(groupId)) return null;

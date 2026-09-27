@@ -1,3 +1,165 @@
+## REVISÃO CURSOR — divisão Codex implementa / Cursor revisa (2026-09-27)
+
+Papel Cursor: revisão independente; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.
+
+### P1 Acesso — #95 / script na main (`deploy-owner-access-incidente.sh`)
+
+| ID | Sev. | Tema | Achado |
+|---|---|---|---|
+| A1 | Alta | Pré-auditoria | Script muta groups/empresas/Auth/rebuild **sem** fingerprint do DB ligado à API 3080 nem inventário sanitizado prévio. |
+| A2 | Alta | Duplicidade | `ON CONFLICT` nos UUIDs do seed A **renomeia** tenant sintético para Grupo CPA/CPA/3Z; risco de colisão semântica se já houver outro CPA ou se Gate D depender dos nomes DEV. |
+| A3 | Alta | Senha | `OWNER_PASS` no `curl`/histórico; `set -a; source .env` exporta service_role ao ambiente. Sem `unset` pós-uso. Não há eco da senha em `tee` (positivo). |
+| A4 | Média | Backup | Backup de profiles no provision; falta backup de groups/empresas antes do rename. |
+| A5 | Média | 3080/rollback | Rebuild via `spa-login-rebuild` preserva 3080 se `ERP_DOCKER_NETWORK` definido; rollback sem rede já falhou na VPS. |
+
+**Veredito P1:** não reexecutar cego na VPS até Codex abrir **nova PR** com: auditoria read-only → decisão → mutação; sem rename silencioso; senha endurecida; backup groups/empresas; evidência sanitizada. Acesso **não** resolvido sem teste humano no browser.
+
+Comentário na PR GitHub: **BLOCKED** (API `addComment` / ManagePullRequest sem permissão neste agente). Achados ficam neste STATUS + chat.
+
+### P2 Omnicanal — #92
+
+| ID | Sev. | Achado |
+|---|---|---|
+| B1 | Bloqueante | PR declara NÃO APTA (gates #51/#52/#53, 025 NOT NULL, grants/policies). |
+| B2 | Bloqueante | 033 RLS company exige destino empresarial nos produtores. |
+| B3 | Alta | Merge cumulativo #68–#90 sem fechar bases canônicas. |
+
+**Veredito P2:** **não mergear #92** agora. Revisar #93 só após #92 aprovável. Canais OFF.
+
+### Estado VPS (última evidência humana)
+Auth owner criada (`owner_auth_count_after=1`); provision bloqueado por placeholder UUID; `unset` + re-run pendente **após** PR Codex corrigir A1–A5. Cursor não aplica VPS neste papel.
+
+## INCIDENTE — OWNER_GROUP_ID placeholder (2026-09-27T10:44Z)
+
+| Achado | Valor |
+|---|---|
+| Erro | `BLOCKED: OWNER_GROUP_ID_invalid_uuid` + SQL `invalid input syntax for type uuid: "<uuid-grupo-cpa>"` |
+| Causa | Variável de shell `OWNER_GROUP_ID='<uuid-grupo-cpa>'` de paste antigo (placeholder), sobrescreveu o UUID real |
+| Auth owner | `owner_auth_create=YES` / `owner_auth_count_after=1` — Auth criada; falta só provision+rebuild |
+| Correção | Script ignora placeholders; use `unset` + re-executar |
+
+### PASTE imediato (sem placeholders)
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main && git checkout --detach origin/main
+unset OWNER_GROUP_ID OWNER_EMPRESA_ID EMPRESA_3Z_ID
+# OWNER_PASS já pode existir; Auth do owner já foi criada — pode omitir se count=1
+CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=HEAD ERP_DOCKER_NETWORK=supabase_default \
+  bash scripts/vps/deploy-owner-access-incidente.sh
+```
+
+Se pedir `OWNER_PASS` de novo, use a mesma senha do login (mín. 8). Não cole senha no chat.
+
+## INCIDENTE ACESSO — evidência VPS 10:40Z (2026-09-27)
+
+| Achado | Valor |
+|---|---|
+| `expected_group_present` | **false** — Grupo CPA **não existia** no Postgres |
+| `expected_companies_active` | **0** — CPA ferro e aço / 3Z ausentes |
+| `auth_other_accounts` | **0** — **não há Auth do proprietário**; só conta synth |
+| Script deploy | **No such file** — faltou `git checkout --detach origin/main` após fetch |
+| Rollback | incompleto sem `ERP_DOCKER_NETWORK` — **não use rollback**; siga deploy à frente |
+
+### PASTE_VPS corrigido (obrigatório nesta ordem)
+
+```bash
+cd /opt/erp-zuccaro
+# 1) Trazer o script para o disco (fetch sozinho NÃO atualiza arquivos)
+git fetch origin main
+git checkout --detach origin/main
+test -f scripts/vps/deploy-owner-access-incidente.sh || { echo MISSING_SCRIPT; exit 1; }
+echo "tip=$(git rev-parse --short HEAD)"
+
+# 2) Deploy: cria Grupo CPA + empresas, Auth owner (OWNER_PASS), RBAC, rebuild
+# Defina OWNER_PASS com a senha que você usará no login (mín. 8). Não cole a senha no chat.
+CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=HEAD ERP_DOCKER_NETWORK=supabase_default \
+  OWNER_PASS='…sua_senha…' \
+  bash scripts/vps/deploy-owner-access-incidente.sh
+```
+
+Prova esperada no final (sanitizada): `group_cpa=true`, `empresas_ativas=2`, `owner_admin=1`, `synth_admin=0`, `main_tip=…`.  
+Browser: **Sair** → login com e-mail proprietário + mesma senha → seletor Grupo CPA / CPA ferro e aço / 3Z → Comercial + Configurações.
+
+## INCIDENTE ACESSO OWNER — harden + deploy (2026-09-27)
+
+| Etapa | Resultado |
+|---|---|
+| **#91 merge** | **SIM** `4daad5f9` (seletor + logout) |
+| **Revisão HEAD** | API: admin/grupo → só empresas **Ativas do `group_id` do perfil**; perfil com `empresa_id` → só essa. Sessão: refresh Bearer obrigatório; login passa `empresas[]`; troca de empresa rejeita UUID fora da lista; `auth.me`/UserContext revalidam no BFF (não aceitam identidade fabricada só no browser). |
+| **Harden PR** | **#94** mesclada em `main` `022e4714` + script `scripts/vps/deploy-owner-access-incidente.sh` |
+| **CI main #91** | **SUCCESS** @ merge `4daad5f9` |
+| **CI main harden** | em validação pós `022e4714` |
+| **Deploy VPS** | **BLOCKED neste agente** — sem SSH/Hostinger MCP/workers. Requer paste humano abaixo. |
+| **Prova SHA/digest VPS** | **PENDENTE** (após paste) |
+| **API Grupo CPA + CPA/3Z p/ owner** | **PENDENTE** (após paste) |
+| **Logout→login→empresas→Comercial/Config** | **PENDENTE** validação humana pós-deploy |
+
+### PASTE_VPS — incidente (backup/rollback embutidos no rebuild)
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main
+CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=origin/main \
+  bash scripts/vps/deploy-owner-access-incidente.sh
+# Rollback se health falhar: CONFIRM_SPA_LOGIN_ROLLBACK=YES bash scripts/vps/spa-login-rollback-api-web.sh
+```
+
+Depois no browser: **Sair** → login `vinicius.zuccaro@gmail.com` → seletor Grupo CPA / CPA ferro e aço / 3Z LTDA → Comercial + Configurações. Rodapé **não** pode ser Gate D Synth.
+
+## ACESSO — Cadastros Gerais local ≠ Postgres (2026-09-27)
+
+| Campo | Valor |
+|---|---|
+| **Sintoma** | Login “novo” ainda como **Gate D Synth Actor**; seletor mostra nomes de teste (DEV/TESTE), não Grupo CPA / CPA ferro e aço / 3Z; alert “sem acesso a este grupo”; módulos negados |
+| **Causa** | Em modo HTTP, grupo/empresa vêm do **Postgres** (seed Gate D: Grupo/Empresa DEV sintéticos). **Cadastros Gerais** do browser grava no **localBase44** (IndexedDB) — não alimenta o seletor HTTP. Conta synth ≠ proprietário. |
+| **Ação VPS** | (1) Renomear/garantir tenant CPA no Postgres; (2) provisionar owner + demote synth; (3) rebuild `main` com #91; (4) **Sair** e login com e-mail real |
+
+### PASTE_VPS — alinhar nomes CPA + owner + rebuild
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main && git checkout --detach origin/main
+echo "tip=$(git rev-parse --short HEAD)"
+
+# Ver o que existe hoje:
+docker exec -i supabase-db psql -X -U postgres -d postgres -At <<'SQL'
+SELECT 'group=' || id || '|' || nome_do_grupo FROM groups ORDER BY nome_do_grupo;
+SELECT 'empresa=' || id || '|' || COALESCE(nome_fantasia,razao_social) || '|g=' || group_id
+FROM empresas WHERE status='Ativa' ORDER BY 1;
+SQL
+
+# Se só houver seed sintético A (aaaaaaaa… / cccccccc… / c2c2c2c2…), alinhar NOMES
+# (sem CNPJ real). Ajuste os UUIDs se a consulta acima for diferente.
+docker exec -i supabase-db psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+UPDATE groups SET nome_do_grupo = 'Grupo CPA', updated_at = timezone('utc', now())
+ WHERE id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+UPDATE empresas SET
+  razao_social = 'CPA FERRO E ACO LTDA',
+  nome_fantasia = 'CPA ferro e aço',
+  updated_at = timezone('utc', now())
+ WHERE id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+UPDATE empresas SET
+  razao_social = '3Z LTDA',
+  nome_fantasia = '3Z LTDA',
+  updated_at = timezone('utc', now())
+ WHERE id = 'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2';
+SQL
+
+export OWNER_GROUP_ID='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+export OWNER_EMPRESA_ID='cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+
+CONFIRM_OWNER_ADMIN_PROFILE=YES \
+  OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+  DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+```
+
+No browser: clicar **Sair** → login com **vinicius.zuccaro@gmail.com** (não Gate D). O canto inferior esquerdo deve mostrar **Vinicius Zuccaro**, não Gate D Synth. Seletor: Grupo CPA + CPA ferro e aço + 3Z LTDA.
+
 ## ACESSO #91 — mesclado na main; aguarda deploy VPS (2026-09-27)
 
 | Campo | Valor |
