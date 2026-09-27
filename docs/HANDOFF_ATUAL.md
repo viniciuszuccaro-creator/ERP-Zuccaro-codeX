@@ -1,11 +1,8 @@
-## PARECER CURSOR → CODEX — #96 BLOQUEADO (2026-09-27T14:16Z)
+## PARECER CURSOR → CODEX — #96 23252cc9 (2026-09-27T14:31Z)
 
-HEAD `4fea5a63` **NÃO APROVADO** para merge/APPLY até corrigir P1s reproduzíveis (Codex Review + validação Cursor):
-1. `backups/` + `.env` no contexto do `Dockerfile.frontend` (`COPY . .`).
-2. Identidade DB do **canário/candidato** vs `DIRECT_ID` antes de grant/promote.
-3. Guard/demote/audit synth por e-mail **ou** `auth_user_id` (sem cruzar grupo).
-
-Novo HEAD + CI verde + reavaliação Cursor obrigatórios. Não inferir aprovação do APROVADO revogado. #92/#93 deltas OK mas merge BLOCKED; #50 025 já alinhado (`6cea5a88`).
+B1–B4 corrigidos. **Veredito código: APROVADO** no SHA `23252cc97c7dd9dd4de60f8f88304ecdcbffabae`.
+**Merge/APPLY liberados somente após CI SUCCESS deste HEAD** (CI de `4fea5a63` inválida).
+Cursor não faz deploy. Novo push invalida.
 
 ---
 
