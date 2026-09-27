@@ -17,6 +17,7 @@ import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
+import { createPasswordAuthSession, resolveBearerAuthSession } from '../services/authSessionService.js';
 
 type CrudLike = {
   list: (ctx: ReturnType<typeof ctxFromReq>, options?: { ativo?: boolean; search?: string; limit?: number }) => Promise<unknown>;
@@ -1109,6 +1110,64 @@ export function createApiRouter(deps: ApiDeps) {
     });
   });
 
+  router.post('/api/v1/auth/session', async (req, res, next) => {
+    try {
+      const session = await createPasswordAuthSession({
+        config: deps.config,
+        db: deps.db,
+        body: req.body,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({
+        data: {
+          access_token: session.accessToken,
+          token_type: session.tokenType,
+          expires_in: session.expiresIn,
+          user: session.user,
+          profiles: session.profiles.map((p) => ({
+            id: p.id,
+            group_id: p.groupId,
+            empresa_id: p.empresaId,
+            role: p.role,
+            full_name: p.fullName,
+            permissoes: p.permissoes,
+          })),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Revalida Bearer + devolve perfil/permissões server-side (restore SPA fail-closed). */
+  router.get('/api/v1/auth/session', async (req, res, next) => {
+    try {
+      const session = await resolveBearerAuthSession({
+        config: deps.config,
+        db: deps.db,
+        authorizationHeader: req.header('authorization') || undefined,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({
+        data: {
+          access_token: session.accessToken,
+          token_type: session.tokenType,
+          user: session.user,
+          profiles: session.profiles.map((p) => ({
+            id: p.id,
+            group_id: p.groupId,
+            empresa_id: p.empresaId,
+            role: p.role,
+            full_name: p.fullName,
+            permissoes: p.permissoes,
+          })),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/api/v1/meta', (_req, res) => {
     res.json({
       runtime: 'ERP-RUNTIME-08B',
@@ -1119,6 +1178,10 @@ export function createApiRouter(deps: ApiDeps) {
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
       note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      authSession: {
+        passwordLoginPath: '/api/v1/auth/session',
+        browserLogin: deps.config.authMode === 'supabase_user',
+      },
       produto: {
         masterData: true,
         pagination: true,

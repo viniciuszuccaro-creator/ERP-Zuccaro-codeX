@@ -20,7 +20,17 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const {
+    isLoadingAuth,
+    isLoadingPublicSettings,
+    authError,
+    isAuthenticated,
+    navigateToLogin,
+    supportsPasswordLogin,
+    loginWithPassword,
+    loginBusy,
+    loginError,
+  } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -59,13 +69,19 @@ const AuthenticatedApp = () => {
     if (blocked) {
       return <UserNotRegisteredError title={blocked.title} message={blocked.message} />;
     }
-    if (authError?.type === 'auth_required' || !authError) {
+    // Modo HTTP: formulário e-mail/senha (supabase_user). Outros modos: redirect legado.
+    if (!supportsPasswordLogin && (authError?.type === 'auth_required' || !authError)) {
       navigateToLogin();
     }
     return (
       <UserNotRegisteredError
         title="Sessão inválida"
-        message="Faça login novamente. Usuário não autenticado não acessa dados internos."
+        message={supportsPasswordLogin
+          ? 'Entre com e-mail e senha do usuário Auth (supabase_user) para acessar o ERP.'
+          : 'Faça login novamente. Usuário não autenticado não acessa dados internos.'}
+        onLogin={supportsPasswordLogin ? loginWithPassword : null}
+        loginBusy={loginBusy}
+        loginError={loginError}
       />
     );
   }

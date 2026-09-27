@@ -1,3 +1,252 @@
+## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:50Z)
+
+| Item | #45 | #46 | #47 | #49 |
+| --- | --- | --- | --- | --- |
+| Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | **SIM** `b6897724` | em andamento |
+| CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | **SUCCESS** @ `b6897724` | pendente |
+| SHA ativo na VPS | **NÃO** | N/A | N/A | N/A |
+| Teste login proprietário | **PENDENTE** (humano) | N/A | N/A | N/A |
+
+Sem novas PRs empilhadas. Deploy #45: paste controlado abaixo (não executado neste agente).
+
+## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:16Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `comercialCondicaoAvistaPolicy` + porta `alcadaConfig` + segregação #46 |
+| Testado | **SIM** — 36/36 (`desconto-alcada*` + `margem*` + `condicao-avista*`) |
+| CI | **PENDENTE** |
+| Mesclado | **NÃO** |
+| Implantado | **N/A** |
+
+## Comercial 360 / Onda 2 - condição à vista (rebase #49) (2026-09-26T22:16Z)
+
+- Branch `cursor/comercial360-onda2-avista-392b` empilhada sobre `origin/cursor/comercial360-onda2-margem-392b` (`a261790d`).
+- Cherry-picks: `2a37c353` feat à vista · `59857100` alcadaConfig/422 · `ce420fc4` testes segregação.
+- À vista = parcelas ativas com `dias === 0`. Liberação de alçada **somente** com `avistaLiberaDescontoSemAprovar === true` (fail-closed sem config).
+- Mantém segregação #46 (outro aprovador; à vista **dispensa** alçada, não autoaprova). Valida `ORCAMENTO_DESCONTO_INVALIDO` antes da isenção.
+- Margem CostPort (#47) preservada. Sem UI omnicanal.
+- Testes: `comercial-condicao-avista*.ts` + desconto/margem — **36/36 PASS**.
+
+## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:45Z)
+
+| Item | #45 | #46 | #47 | #49 |
+| --- | --- | --- | --- | --- |
+| Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | em andamento | pendente |
+| CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | pendente | pendente |
+| SHA ativo na VPS | **NÃO** | N/A | N/A | N/A |
+| Teste login proprietário | **PENDENTE** (humano) | N/A | N/A | N/A |
+
+Ordem: #45 → #46 → #47 → #49. Deploy #45 controlado só após este lote + IDs humanos.
+
+## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `costPort` no createApp + auditoria approve com avaliação |
+| Testado | **SIM** — 11/11 unit · 4/4 HTTP (wiring createApp, sem mutar service.costs) |
+| CI | **PENDENTE** @ `280629b5` |
+| Re-review Codex | **PENDENTE** (fechamento funcional: wiring + audit) |
+| Mesclado | **NÃO** (base #46 ainda aberta) |
+| Implantado VPS | **N/A** |
+
+Pilha Onda 2: #46 desconto → #47 margem → #49 à vista. Legado prep #48 (sem HD). #45 acesso: scripts P1 corrigidos em `af8fafd5`; **implantado BLOCKED** (humano VPS + re-login).
+
+## Comercial 360 / Onda 2 - alçada de margem mínima (2026-09-26T17:45Z)
+
+- Branch `cursor/comercial360-onda2-margem-392b` (empilhada sobre #46; PR própria).
+- Custo **não** está no Produto MASTER DATA (`PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS`). Porta opcional `ComercialCostPort`: ausente/null → **não inventa** custo (skip); stub/porto real → líquido vs custo com comparação inteira em micros; abaixo da mínima (default 0 bps = não vender abaixo do custo) exige `Comercial.{orcamento|pedido}.aprovar`.
+- Fail-closed 403 `MARGEM_ALCADA_DENIED`. Sem migration, rota ou módulo paralelo. Defaults fail-closed; sem percentuais de negócio inventados.
+- Testes: `comercial-margem-alcada.test.ts` + `comercial-margem-alcada-http.test.ts` (create Orçamento/Pedido + update com custo mutável).
+- #46: segregação desconto (outro aprovador + audit `approve` + catch só `PERMISSION_DENIED`) no onto; **mesclado NÃO**. #45: acesso owner — **implantado NÃO** (depende humano VPS + re-login).
+- Próximo Onda 2 após merge desta frente: condições/parcelas/promoções ou inventário legado sintético (HD indisponível).
+
+## #45 MERGE — acesso owner (2026-09-27T09:35Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** |
+| Mesclado em `main` | **SIM** — merge `da6fc9f0` (HEAD branch `48aaa4dc`) |
+| CI da `main` | **SUCCESS** @ `da6fc9f0` |
+| SHA ativo na VPS | **NÃO** |
+| Teste login proprietário | **PENDENTE** |
+
+## #46 STATUS REAL — alçada desconto (2026-09-26T22:20Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — P1 segregação (outro aprovador + audit `approve`) + P2 catch só `PERMISSION_DENIED` |
+| Testado | **SIM** — 14/14 alcada unit+HTTP (autoaprovação 403; timeout → 500 não mascarado) |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — bloqueios discussion_r4112240714 / r4112240716 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** |
+
+Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` (sem autoaprovação). Update/convert: ator com `aprovar` ≠ criador (audit create) + log `approve`. Falha operacional RBAC propaga (não vira `DESCONTO_ALCADA_DENIED`).
+
+
+## #46 STATUS REAL — alçada desconto (2026-09-26T17:30Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — HEAD `4d0c50f7` |
+| Testado | **SIM** — 9/9 alcada unit+HTTP |
+| CI | **SIM** (frontend+backend SUCCESS nos checks do PR) |
+| Re-review Codex | **SIM** — aprovação técnica no delta P1; merge aguarda gates |
+| Mesclado | **NÃO** |
+| Implantado VPS | **N/A** (somente código/CI; sem deploy deste PR) |
+
+## Comercial 360 / Onda 2 - alçada P1 truncamento <1 bp (2026-09-26T17:20Z)
+
+- Achado Codex no HEAD `9415094f`: `descontoBps` truncava BigInt → desconto 0.01/1000 (0.1 bp) passava com alçada 0.
+- Fix: comparação inteira `descontoMicros * 10000n > subtotalMicros * lim` em `descontoExcedeAlcadaLivre`.
+- Testes: regressão unitária + HTTP create/update/convert sem `aprovar` → 403 exact + sem persistência (9/9 PASS).
+- Pedido Codex: re-revisar novo HEAD. #45 permanece independente (acesso).
+
+## Comercial 360 / Onda 2 - alçada HTTP exact DESCONTO_ALCADA_DENIED (2026-09-26T17:15Z)
+
+- Avanço #46 (branch separada; não bloqueia #45): teste HTTP exacto Orçamento/Pedido — criador sem `aprovar` → **403** `{ code: DESCONTO_ALCADA_DENIED }`; aprovador → 201.
+- Arquivo: `server/tests/comercial-desconto-alcada-http.test.ts` (5/5 com unitários).
+- Próximo Onda 2 nesta branch: margem/custo sensível (permissão própria), após re-review Codex da alçada.
+
+## Comercial 360 / Onda 2 - alçada de desconto (2026-09-26T16:40Z)
+
+- Branch `cursor/comercial360-onda2-alcada-desconto-392b` (separada da #45).
+- Política pura `comercialDescontoAlcadaPolicy`: desconto > alçada livre (0 bps) exige `Comercial.{orcamento|pedido}.aprovar`.
+- Orçamento/Pedido create/update/convert aplicam a regra após snapshot de preço; fail-closed 403 `DESCONTO_ALCADA_DENIED`.
+- Sem módulo paralelo; reutiliza agregados e RBAC existentes. UI `AprovacaoDescontos*` permanece a superfície legada.
+- Testes: alcada 3/3 + orc/ped service/http/onda2 — PASS.
+- #45 segue com RBAC owner explícito (implantação VPS após re-review Codex).
+
+## #45 STATUS REAL — acesso owner (2026-09-27T00:00Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado (código) | **SIM** — + restore usa `empresa_id` do perfil (não preferência local revogada) |
+| Testado (local) | **SIM** — erp-http-session 13/13 (A→B + fallback cruzado) |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — P2 tenant local revogado |
+| Mesclado em `main` | **NÃO** |
+| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
+
+`resolveRefreshEmpresaId`: vínculo explícito do perfil prevalece; perfil de Grupo só preserva preferência autorizada no mesmo grupo; fallback entre grupos não transporta empresa antiga.
+
+## #45 STATUS REAL — acesso owner (2026-09-26T22:05Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado (código) | **SIM** — scripts VPS + restore sessão via GET `/auth/session` + RBAC sem bypass admin |
+| Testado (local) | **SIM** — scripts reais 11/11 · erp-http-session 9/9 · auth-session 3/3 |
+| CI | **PENDENTE** neste HEAD |
+| Re-review Codex | **PENDENTE** — sessão/RBAC + scripts |
+| Mesclado em `main` | **NÃO** |
+| Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
+
+Lote sessão/RBAC: `refreshErpHttpSessionFromServer` (Bearer validado); `permissoes` no perfil HTTP; `ProtectedSection`/`usePermissions` sem bypass `role=admin`; espelho `http_perfil_*` com árvore server-side. Scripts: preflight portas + restore cp fail-closed.
+
+### PASTE_VPS (só após Codex OK + IDs humanos) — registrar digests
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin cursor/spa-login-http-supabase-392b
+git checkout --detach origin/cursor/spa-login-http-supabase-392b
+# Registrar ANTES:
+docker inspect -f '{{.Id}} {{.Config.Image}} {{index .RepoDigests 0}}' erp-api-dev erp-web-dev 2>/dev/null || true
+export OWNER_GROUP_ID='<uuid>' OWNER_EMPRESA_ID='<uuid>'
+CONFIRM_OWNER_ADMIN_PROFILE=YES OWNER_EMAIL='vinicius.zuccaro@gmail.com' DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+# Registrar DEPOIS (colar evidência sanitizada — sem tokens):
+docker inspect -f 'name={{.Name}} image={{.Config.Image}} id={{.Id}}' erp-api-dev erp-web-dev
+curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;m=json.load(sys.stdin);print("runtime",m.get("runtime"));print("auth", (m.get("auth") or {}).get("mode"));print("pwd",(m.get("authSession") or {}).get("passwordLoginPath"))'
+```
+
+## #45 Codex P1 (cab15caa) — min(uuid), if invertido, rebuild, restore seletivo (2026-09-26T17:10Z)
+
+- Achados Codex do HEAD `cab15caa` corrigidos na mesma branch #45:
+  1. **sem `min(uuid)`**: count + `SELECT id` separados no provision.
+  2. **`if docker exec` não invertido**: exit 0 → `transaction=COMMITTED`; falha → exit 4 sem postcheck/OK.
+  3. **rebuild**: `compose build` **antes** de stop; `trap ERR` + `SWAP_STARTED` restaura 3080/3081 se a troca falhar.
+  4. **backup seletivo JSON** + `CONFIRM_OWNER_ADMIN_RESTORE=YES` (sem replay `pg_dump --data-only`).
+- Sessão SPA: `expiresAt`/`expires_in`, fail-closed em expirada/adulterada; troca de empresa atualiza `erp_runtime_scope`.
+- Testes: `vps-owner-provision-guard` 5/5 · `erp-http-session` 7/7 · `owner-provision-sql` (PGlite) 2/2 · `auth-session-http-exact` 2/2 · `owner-permission-tree` 2/2 (HTTP 200/403 exactos).
+- HEAD `67a3284b` · CI [36257722349](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36257722349) frontend+backend **SUCCESS**. Comentário de re-review Codex postado na #45.
+- **VPS:** não executar até re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; depois logout/login real.
+- #46 permanece em branch separada (avançada com HTTP exact alçada); não bloqueia esta correção de acesso.
+
+## #45 Codex P1 — RBAC explícito + backup + rollback fail-closed (2026-09-26T16:30Z)
+
+- Achados Codex corrigidos na branch #45 (sem rodar VPS ainda):
+  1. Grupo/Empresa explícitos + `empresas.group_id` conferido (já no lote anterior; mantido).
+  2. **Sem `*`**: `scripts/vps/owner-admin-permissoes.json` + `OWNER_ERP_PERMISSION_TREE` (Cadastros/Comercial/Sistema); testes 403 para comum e ação fora da allowlist.
+  3. Backup `profiles` antes da TX + demote synth na mesma TX + rollback de imagens; rollback/rebuild **recusam** container desconhecido em 3080/3081.
+- Testes: `owner-permission-tree` 2/2 PASS · HEAD `f4910e3c`.
+- **Implantação VPS:** após re-review Codex + humano com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`; registrar SHA imagens + bundle; validar login owner.
+- Próximo código paralelo: Comercial 360 Onda 2 alçada/desconto/margem em branch separada.
+
+## #43 merged + provision/rebuild endurecidos (#45) (2026-09-26T16:20Z)
+
+- **#43 MERGED** em `main` @ `f37b8a65` · CI main [36254946184](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36254946184) frontend+backend **SUCCESS** (seed Central 360 corrigido).
+- **#45** (não executar o script antigo na VPS):
+  - `provision-owner-admin-profile.sh`: exige Auth única (=1), perfil único (0|1), `OWNER_GROUP_ID`+`OWNER_EMPRESA_ID` explícitos e conferidos **antes** de UPDATE; owner+demote synth na **mesma TX**; falha se `owner_admin_ativos`/`synth_admin_ativos` ≠ esperados.
+  - `spa-login-rebuild-api-web.sh`: preserva 3080/3081, grava `.spa-login-rollback-tags`, auto-rollback em falha de health/marker.
+  - Novo: `spa-login-rollback-api-web.sh` (rollback executável com `CONFIRM_SPA_LOGIN_ROLLBACK=YES`).
+- **Não rodar** provision/rebuild na VPS até o humano colar o HEAD novo com `OWNER_GROUP_ID`/`OWNER_EMPRESA_ID`.
+
+## Owner admin — rebuild VPS confirmado (2026-09-26T14:58Z)
+
+- Evidência Web Console (sanitizada): `SPA_LOGIN_REBUILD_OK` · `merge_sha8=d696c00b` · `spa_asset=/assets/index-DUZjZKV8.js` · `spa_login_form_in_bundle=YES` · `auth_mode=supabase_user` · `password_login_path=/api/v1/auth/session` · `browser_login=True` · health 3080/3081=200 · runtime `ERP-RUNTIME-08B`.
+- Probe externo agente: SPA 200 com `index-DUZjZKV8.js`; bundle **sem** “Administrador DEV” forçado; meta API alinhada.
+- Rollback tags: `pre-spa-login-20260926-145653` (api/web).
+- **Pendente humano:** (1) se ainda não rodou — `provision-owner-admin-profile.sh` (`owner_admin_ativos=1` · `synth_admin_ativos=0`); (2) hard refresh + **logout/login com a conta real** e validar admin (módulos + empresas).
+- #45 CI verde no mesmo SHA. #44 CLOSED. #43 MERGEABLE (merge humano → CI main).
+
+## Owner admin real + demote synth (2026-09-26T14:55Z)
+
+- Objetivo: vincular `vinicius.zuccaro@gmail.com` como admin proprietário (role + `permissoes.*` + grupo/empresa), sem privilegiar o synth.
+- Código: sessão BFF devolve `role`/`full_name`; SPA monta usuário via `buildHttpSessionUser` (admin só se `role=admin` no Postgres).
+- VPS script: `scripts/vps/provision-owner-admin-profile.sh` (owner admin + `DEMOTE_SYNTH=YES`).
+- Implantado agora em `erp-dev`: bundle `index-BL-7pNHC.js` (ainda força “Administrador DEV” — **pré** deste lote). API `authSession.passwordLoginPath` + `supabase_user` OK. HTTPS OK — **não** reexecutar script #44.
+- PR #45 aberta (branch deployada). PR #44: HTTPS já OK → encerrar. PR #43 MERGEABLE/CI verde → merge humano para CI da `main`.
+- **Validação humana obrigatória:** após colar o bloco VPS abaixo + logout/login com a conta real, confirmar módulos/empresas e que o synth não é admin.
+
+### PASTE_TO_GIT_VPS (sanitizado — Web Console) — **somente após pull do HEAD novo**
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin cursor/spa-login-http-supabase-392b
+git checkout --detach origin/cursor/spa-login-http-supabase-392b
+
+# OBRIGATÓRIO: grupo/empresa explícitos (não inventar — conferir no DB antes)
+export OWNER_GROUP_ID='<uuid-grupo>'
+export OWNER_EMPRESA_ID='<uuid-empresa>'
+
+CONFIRM_OWNER_ADMIN_PROFILE=YES \
+  OWNER_EMAIL='vinicius.zuccaro@gmail.com' \
+  DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+# Esperado: precheck_ok=YES · owner_auth_count=1 · owner_admin_ativos=1 · synth_admin_ativos=0
+
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
+  GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+# Rollback se preciso:
+# CONFIRM_SPA_LOGIN_ROLLBACK=YES ERP_DOCKER_NETWORK=supabase_default \
+#   bash scripts/vps/spa-login-rollback-api-web.sh
+```
+
+**Agente: não executar na VPS.** Humano cola evidência sanitizada + valida login owner.
+
+
+## SPA login — acesso total DEV (2ª correção) (2026-09-26T14:45Z)
+
+- Bundle anterior já tinha “Administrador DEV”, mas contexto HTTP ainda usava `localApiUser` → sem empresa real + entity create RBAC no espelho.
+- Fix: `useContextoGrupoEmpresa` usa sessão HTTP; espelho via `upsertHttpTenantLocalMirror` (sem RBAC); admin em `userTemAcessoEmpresa`; login BFF preenche `empresa_id` via COALESCE.
+- Colar VPS: grant profile + rebuild **api e web** + logout/login.
+
+
+
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
 - Causa CI vermelha: HTTP Orçamento/Pedido usavam `TabelaPrecoService` real (memória vazia) → 404 no create após Onda 2 exigir `resolveSalePrice`.

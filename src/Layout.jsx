@@ -319,8 +319,8 @@ function LayoutContent({ children, currentPageName }) {
         background_color: '#0f172a',
         theme_color: '#0f172a',
         icons: [
-          { src: 'https://base44.com/logo_v2.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-          { src: 'https://base44.com/logo_v2.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+          { src: '/favicon.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: '/favicon.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
         ]
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -345,7 +345,7 @@ function LayoutContent({ children, currentPageName }) {
 
       const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement('link');
       appleIcon.setAttribute('rel', 'apple-touch-icon');
-      appleIcon.setAttribute('href', 'https://base44.com/logo_v2.svg');
+      appleIcon.setAttribute('href', '/favicon.svg');
       if (!appleIcon.parentElement) document.head.appendChild(appleIcon);
 
       // CSP meta (melhora segurança client-side)

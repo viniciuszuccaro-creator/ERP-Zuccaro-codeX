@@ -1,8 +1,16 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { base44, isApiKeyMode, isLocalOnlyMode } from '@/api/base44Client';
+import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { assertInteractiveAuthAllowed } from '@/api/localAuthSessionPolicy';
+import {
+  buildHttpSessionUser,
+  clearErpHttpSession,
+  ensureHttpTenantLocalMirror,
+  loginErpHttpSession,
+  readErpHttpSession,
+  refreshErpHttpSessionFromServer,
+} from '@/api/erpHttpSession';
 
 const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
@@ -13,10 +21,79 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState(null);
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginError, setLoginError] = useState(null);
+
+  const applyHttpSession = useCallback(async (session) => {
+    if (!session?.token || !session?.groupId || !session?.actorId) {
+      clearErpHttpSession();
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      return false;
+    }
+    if (session.expiresAt) {
+      const expiresMs = Date.parse(String(session.expiresAt));
+      if (!Number.isFinite(expiresMs) || expiresMs <= Date.now()) {
+        clearErpHttpSession();
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+        return false;
+      }
+    }
+    // Sempre revalida Bearer + perfil/permissões no servidor (não confia em role do localStorage).
+    let trusted = session;
+    if (!session.permissoes || session._serverValidated !== true) {
+      trusted = await refreshErpHttpSessionFromServer({
+        preferredActorId: session.actorId,
+        preferredGroupId: session.groupId,
+        preferredEmpresaId: session.empresaId,
+      });
+      if (!trusted?.token) {
+        clearErpHttpSession();
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError({ type: 'auth_required', message: 'Authentication required' });
+        return false;
+      }
+    }
+    try {
+      await ensureHttpTenantLocalMirror({
+        groupId: trusted.groupId,
+        empresaId: trusted.empresaId,
+        perfilAcessoId: `http_perfil_${trusted.actorId}`,
+        permissoes: trusted.permissoes || {},
+        perfilNome: trusted.fullName || trusted.email || 'Perfil HTTP',
+        base44Client: base44,
+      });
+    } catch (error) {
+      console.warn('[Auth] espelho local Grupo/Empresa falhou; seguindo com sessão.', error);
+    }
+    const sessionUser = buildHttpSessionUser(trusted);
+    if (!sessionUser) {
+      clearErpHttpSession();
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      return false;
+    }
+    setUser(sessionUser);
+    setIsAuthenticated(true);
+    setAuthError(null);
+    return true;
+  }, []);
 
   const checkUserAuth = useCallback(async () => {
     try {
       setIsLoadingAuth(true);
+      if (isHttpBackendMode) {
+        const session = readErpHttpSession();
+        const ok = await applyHttpSession(session);
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return ok;
+      }
       const currentUser = await base44.auth.me();
       const authenticated = await base44.auth.isAuthenticated();
       setUser(authenticated ? currentUser : null);
@@ -37,10 +114,18 @@ export const AuthProvider = ({ children }) => {
       });
       return false;
     }
-  }, []);
+  }, [applyHttpSession]);
 
   const checkAppState = useCallback(async () => {
     setAuthChecked(false);
+    setLoginError(null);
+
+    if (isHttpBackendMode) {
+      setAppPublicSettings({ id: appParams.appId || 'erp-http', public_settings: { auth: 'supabase_user' } });
+      setIsLoadingPublicSettings(false);
+      await checkUserAuth();
+      return;
+    }
 
     if (isLocalOnlyMode) {
       await checkUserAuth();
@@ -133,11 +218,53 @@ export const AuthProvider = ({ children }) => {
     checkAppState();
   }, [checkAppState]);
 
+  const loginWithPassword = useCallback(async ({ email, password }) => {
+    if (!isHttpBackendMode) {
+      setLoginError('Login por senha disponível apenas no modo HTTP/supabase_user.');
+      return false;
+    }
+    setLoginBusy(true);
+    setLoginError(null);
+    try {
+      const session = await loginErpHttpSession({ email, password });
+      await applyHttpSession({
+        token: session.accessToken,
+        groupId: session.groupId,
+        empresaId: session.empresaId,
+        actorId: session.actorId,
+        email: session.email,
+        role: session.role,
+        fullName: session.fullName,
+        expiresAt: session.expiresAt,
+        permissoes: session.permissoes || {},
+        _serverValidated: true,
+      });
+      setAuthChecked(true);
+      setIsLoadingAuth(false);
+      return true;
+    } catch (error) {
+      clearErpHttpSession();
+      setUser(null);
+      setIsAuthenticated(false);
+      setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      setLoginError(error?.message || 'Falha no login');
+      return false;
+    } finally {
+      setLoginBusy(false);
+    }
+  }, [applyHttpSession]);
+
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
     setAuthChecked(true);
     setAuthError({ type: 'auth_required', message: 'Authentication required' });
+    setLoginError(null);
+
+    if (isHttpBackendMode) {
+      clearErpHttpSession();
+      return;
+    }
 
     if (shouldRedirect) {
       base44.auth.logout(window.location.href);
@@ -147,6 +274,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
+    if (isHttpBackendMode) {
+      // Formulário de login é renderizado na própria tela de sessão inválida.
+      setAuthError({ type: 'auth_required', message: 'Authentication required' });
+      return true;
+    }
     base44.auth.redirectToLogin(window.location.href);
   };
 
@@ -159,6 +291,10 @@ export const AuthProvider = ({ children }) => {
       authChecked,
       authError,
       appPublicSettings,
+      loginBusy,
+      loginError,
+      loginWithPassword,
+      supportsPasswordLogin: isHttpBackendMode,
       logout,
       navigateToLogin,
       checkAppState,
