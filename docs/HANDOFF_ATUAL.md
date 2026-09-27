@@ -1,7 +1,13 @@
+## SELO CI — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:14Z)
+
+Ambos **SUCCESS**. Sync #98 **OK**; merge/ativação **BLOCKED**. Browser owner **PENDENTE**.
+
+---
+
 ## REVISÃO — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:12Z)
 
 Sync main `#98` nas omnicanal: **OK** (sem delta comercial). Merge/ativação **BLOCKED**.
-CI dos novos HEADs em curso. Deploy #98 OK; browser owner **PENDENTE**.
+CI **SUCCESS** (selo 18:14Z). Deploy #98 OK; browser owner **PENDENTE**.
 
 ---
 

@@ -1,14 +1,22 @@
+## SELO CI — #92 ac0f25c9 + #93 ba83d7bf (2026-09-27T18:14Z)
+
+| PR | SHA | CI | Sync | Merge/ativação |
+|---|---|---|---|---|
+| **#92** | `ac0f25c9c2faf6608d0b6a9a2c19fe27be6461f6` | **SUCCESS** (6 checks) | OK (#98) | **BLOCKED** |
+| **#93** | `ba83d7bfb83192a9014e53fa8c7b9a27ad010cb1` | **SUCCESS** (6 checks) | OK (#92+#98) | **BLOCKED** |
+
+Gates inalterados. Browser owner #98 ainda **PENDENTE**.
+
 ## REVISÃO CURSOR — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:12Z)
 
 Merge de main `#98` (`9ed1a30e` hotfix `\copy`) nas branches omnicanal. **Sem delta comercial próprio.**
 
 | PR | SHA | Delta vs anterior | CI | Sync | Merge/ativação |
 |---|---|---|---|---|---|
-| **#92** | `ac0f25c9c2faf6608d0b6a9a2c19fe27be6461f6` | vs `01798e71`: provision/tests/docs acesso | em curso | **OK** | **BLOCKED** |
-| **#93** | `ba83d7bfb83192a9014e53fa8c7b9a27ad010cb1` | vs `ee59f04d`: propaga #92+#98 | em curso | **OK** | **BLOCKED** |
+| **#92** | `ac0f25c9c2faf6608d0b6a9a2c19fe27be6461f6` | vs `01798e71`: provision/tests/docs acesso | **SUCCESS** | **OK** | **BLOCKED** |
+| **#93** | `ba83d7bfb83192a9014e53fa8c7b9a27ad010cb1` | vs `ee59f04d`: propaga #92+#98 | **SUCCESS** | **OK** | **BLOCKED** |
 
 Invariantes: 025=`4aab7f6f…`; `\copy` + guard synth e-mail\|auth_user_id; `.dockerignore` `backups/`; sem backfill 026; sem 033/grants; canais OFF.
-Parecer anterior de sync **não** substitui selo CI deste HEAD — reafirmar quando verde.
 
 Acesso: deploy #98 comprovado; browser owner **PENDENTE**. Cursor não edita Codex nem deploya.
 
