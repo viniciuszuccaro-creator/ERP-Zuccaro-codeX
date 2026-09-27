@@ -23,13 +23,13 @@ const pedidoPayload = {
   tipo_operacao: 'ENTREGA',
   data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
   observacoes: 'Pedido sintetico',
-  itens: [{ produto_id: produtoId, unidade_id: unidadeId, descricao: 'Produto sintetico', unidade_sigla: 'UN', quantidade: '2', preco_unitario: '10', desconto: '1', requer_producao: true }],
+  itens: [{ produto_id: produtoId, unidade_id: unidadeId, descricao: 'Produto sintetico', unidade_sigla: 'UN', quantidade: '2', preco_unitario: '10', desconto: '0', requer_producao: true }],
 };
 const orcamentoPayload = {
   cliente_empresa_id: clienteEmpresaId,
   condicao_pagamento_id: condicaoId,
   validade_em: '2027-02-10T00:00:00.000Z',
-  itens: [{ produto_id: produtoId, unidade_id: unidadeId, descricao: 'Produto sintetico', unidade_sigla: 'UN', quantidade: '2', preco_unitario: '10', desconto: '1' }],
+  itens: [{ produto_id: produtoId, unidade_id: unidadeId, descricao: 'Produto sintetico', unidade_sigla: 'UN', quantidade: '2', preco_unitario: '10', desconto: '0' }],
 };
 
 function fixture() {
@@ -38,7 +38,7 @@ function fixture() {
   tenant.link(empresaId, groupId);
   tenant.link(otherEmpresaId, groupId);
   const rbac = new InMemoryRbacGuard();
-  const permissions = { Comercial: { pedido: ['visualizar', 'criar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'], orcamento: ['visualizar', 'criar', 'editar', 'cancelar'] } };
+  const permissions = { Comercial: { pedido: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'], orcamento: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar'] } };
   rbac.link({ actorId, groupId, permissions });
   rbac.link({ actorId: deniedActorId, groupId, permissions: { Comercial: { pedido: [] } } });
   const runtime = createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard: tenant, rbacGuard: rbac });
@@ -64,12 +64,12 @@ async function request(app: ReturnType<typeof createApp>['app'], path: string, i
 test('HTTP Pedido executa ciclo tenant-scoped com historico e auditoria', async () => {
   const runtime = fixture();
   const created = await request(runtime.app, '/api/v1/pedidos', { method: 'POST', headers: headers(), body: JSON.stringify(pedidoPayload) });
-  assert.equal(created.status, 201); assert.equal(created.body.data.total, '19.000000'); const id = created.body.data.id;
+  assert.equal(created.status, 201); assert.equal(created.body.data.total, '20.000000'); const id = created.body.data.id;
   const listed = await request(runtime.app, '/api/v1/pedidos?limit=1&offset=0&status=EM_ABERTO', { headers: headers() });
   assert.equal(listed.status, 200); assert.deepEqual(listed.body.meta, { limit: 1, offset: 0, total: 1, hasMore: false });
   assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}`, { headers: headers() })).status, 200);
   const updated = await request(runtime.app, `/api/v1/pedidos/${id}`, { method: 'PATCH', headers: headers(), body: JSON.stringify({ ...pedidoPayload, itens: [{ ...pedidoPayload.itens[0], quantidade: '3' }] }) });
-  assert.equal(updated.status, 200); assert.equal(updated.body.data.numero, created.body.data.numero); assert.equal(updated.body.data.total, '29.000000');
+  assert.equal(updated.status, 200); assert.equal(updated.body.data.numero, created.body.data.numero); assert.equal(updated.body.data.total, '30.000000');
   for (const status of ['EM_PRODUCAO', 'PRONTO_ENTREGA', 'FINALIZADO']) assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/status`, { method: 'POST', headers: headers(), body: JSON.stringify({ status }) })).status, 200);
   const history = await request(runtime.app, `/api/v1/pedidos/${id}/historico`, { headers: headers() });
   assert.deepEqual(history.body.data.map((row: { status_novo: string }) => row.status_novo), ['EM_ABERTO', 'EM_PRODUCAO', 'PRONTO_ENTREGA', 'FINALIZADO']);

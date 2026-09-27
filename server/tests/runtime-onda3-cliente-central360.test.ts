@@ -56,7 +56,7 @@ function fixture() {
     groupId: GROUP_A,
     permissions: {
       Cadastros: CADASTROS_OPS,
-      Comercial: { orcamento: ['visualizar', 'criar'], pedido: ['visualizar', 'criar'] },
+      Comercial: { orcamento: ['visualizar', 'criar', 'aprovar'], pedido: ['visualizar', 'criar', 'aprovar'] },
     },
   });
   rbac.link({
@@ -64,7 +64,7 @@ function fixture() {
     groupId: GROUP_A,
     permissions: {
       Cadastros: CADASTROS_NO_PII,
-      Comercial: { orcamento: ['visualizar', 'criar'], pedido: ['visualizar', 'criar'] },
+      Comercial: { orcamento: ['visualizar', 'criar', 'aprovar'], pedido: ['visualizar', 'criar', 'aprovar'] },
     },
   });
   rbac.link({
@@ -72,7 +72,7 @@ function fixture() {
     groupId: GROUP_A,
     permissions: {
       Cadastros: CADASTROS_NO_PII,
-      Comercial: { orcamento: ['visualizar', 'criar'], pedido: ['visualizar', 'criar'] },
+      Comercial: { orcamento: ['visualizar', 'criar', 'aprovar'], pedido: ['visualizar', 'criar', 'aprovar'] },
     },
   });
   rbac.link({
@@ -85,7 +85,7 @@ function fixture() {
         cliente_local: ['visualizar', 'criar', 'principal'],
         obra: ['visualizar', 'criar', 'principal', 'vincular-local', 'vincular-empresa'],
       },
-      Comercial: { orcamento: ['visualizar', 'criar'], pedido: ['visualizar', 'criar'] },
+      Comercial: { orcamento: ['visualizar', 'criar', 'aprovar'], pedido: ['visualizar', 'criar', 'aprovar'] },
     },
   });
   const runtime = createApp({
