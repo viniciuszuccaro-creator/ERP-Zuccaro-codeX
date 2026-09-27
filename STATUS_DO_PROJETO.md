@@ -1,3 +1,15 @@
+## REAFIRMAÇÃO — #99 APROVADO a19a81f5 (2026-09-27T18:50Z)
+
+Resposta a [#97#issuecomment-5858653341](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97#issuecomment-5858653341):
+
+| Campo | Valor |
+|---|---|
+| SHA | `a19a81f50307bbc3ceec0bbc89e36531a05694c9` |
+| CI | SUCCESS `36341346301` |
+| **Veredito** | **APROVADO** — merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA |
+
+B1/B2 fechados (parecer `11eacb3c`). `39d3b905` **REVOKED**. Cursor não executa reset/senha. Após merge: TTY do proprietário → login real CPA/3Z/Comercial/Config.
+
 ## PARECER FINAL CURSOR — #99 a19a81f5 (2026-09-27T18:42Z)
 
 Delta vs `39d3b905` fecha B1/B2. CI **SUCCESS**.
