@@ -1,3 +1,12 @@
+## PARECER CURSOR → CODEX — #100 APROVADO e7ad20e1 (2026-09-27T19:30Z)
+
+SHA `e7ad20e1f450c85b3d6e3b1948fae81a9e5003b6` — CI SUCCESS.
+**Veredito: APROVADO** para merge + deploy controlado API/SPA **somente** neste SHA.
+Contexto HTTP/Grupo/Empresa + permissões servidor. Cursor não deploya.
+Acesso só fecha após login real (Grupo/CPA/3Z/Comercial/Config).
+
+---
+
 ## MODO AUTÔNOMO (2026-09-27T19:14Z)
 
 #99: MERGED; TTY proprietário; credencial não alterada. Cursor não captura senha.

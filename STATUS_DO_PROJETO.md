@@ -1,3 +1,34 @@
+## PARECER FINAL CURSOR — #100 e7ad20e1 (2026-09-27T19:30Z)
+
+P0 pós-login: seleção empresa recusada / Comercial bloqueado. Causa: filtro local vs API + PerfilAcesso local vazio + hooks dessincronizados.
+
+| Campo | Valor |
+|---|---|
+| SHA | `e7ad20e1f450c85b3d6e3b1948fae81a9e5003b6` |
+| Branch | `codex/acesso-contexto-grupo` |
+| Base | main `3e327ea0` (#99) |
+| CI | **SUCCESS** (frontend+backend; runs `36344329549` / `36344332648`) |
+| **Veredito** | **APROVADO** — merge + deploy controlado API/SPA **somente** neste SHA |
+
+### Validação independente
+| Critério | Resultado |
+|---|---|
+| HTTP: empresas/contexto da sessão revalidada (não `Empresa.filter` local) | OK |
+| `usePermissions` HTTP ignora PerfilAcesso local vazio; usa `user.permissoes` | OK |
+| Evento `HTTP_CONTEXT_CHANGED` sincroniza UserProvider/hooks | OK |
+| Admin GROUP (`empresa_id` null) preserva visão Grupo no restore | OK |
+| Admin filial: sem Grupo; sem outra empresa (testes + `switch` fail-closed) | OK |
+| Revogação / ID adulterado cobertos nos testes focados | OK |
+| Sem migration/grant/credencial/Auth neste lote | OK |
+| Backend/RBAC/RLS permanecem definitivos (frontend não autoriza) | OK |
+
+### Ordem (Codex; Cursor **não** executa)
+1. Merge exact HEAD → CI PUSH main  
+2. Backup → build/canário API+SPA → promote mesmas imagens  
+3. Proprietário: logout/login → Grupo/CPA/3Z → Comercial/Config  
+
+Acesso **não** fechado até prova browser. Canais OFF. Comercial 360 (#92/#93): continua aguardando **lote final**.
+
 ## MODO AUTÔNOMO CURSOR — checkpoint (2026-09-27T19:14Z)
 
 Revisão contínua ativa. Cursor **não** edita Codex, **não** captura senha, **não** faz deploy.
