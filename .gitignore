@@ -6,6 +6,10 @@
 !.env.site-cpa.hml.example
 !server/.env.example
 
+# Tags locais de rollback SPA (VPS) — sem commit
+.spa-login-rollback-tags
+backups/owner-provision/
+
 # Logs
 logs
 *.log
