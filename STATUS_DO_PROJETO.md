@@ -5,9 +5,9 @@
 | SHA | `02027c265523505e495a1c00999b7e2a336118b0` |
 | Base | `46d058ef` (#92 gate 026) — **alinhada** |
 | Delta próprio | idêntico (MATERIALIZED + testes); 026 histórico presente na base |
-| CI | concurrency PASS; frontend/backend em curso |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
 | **Veredito delta** | **APROVADO** |
-| **Veredito merge** | **BLOCKED** (gates da #92 + CI deste HEAD) |
+| **Veredito merge** | **BLOCKED** (gates da #92: 025≠#50, backfill 026, 033/grants, canais OFF) |
 
 ## REVISÃO CURSOR CONTÍNUA — #92 HEAD 46d058ef (2026-09-27T13:59Z)
 
