@@ -1,13 +1,46 @@
-## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:50Z)
+## INTEGRAÇÃO MAIN — registro separado (2026-09-27T09:55Z)
 
-| Item | #45 | #46 | #47 | #49 |
+Campos **separados** (não misturar):
+
+| Campo | #45 acesso | #46 alçada | #47 margem | #49 à vista |
 | --- | --- | --- | --- | --- |
-| Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | **SIM** `b6897724` | em andamento |
-| CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | **SUCCESS** @ `b6897724` | pendente |
-| SHA ativo na VPS | **NÃO** | N/A | N/A | N/A |
-| Teste login proprietário | **PENDENTE** (humano) | N/A | N/A | N/A |
+| **Merge em `main`** | SIM `da6fc9f0` | SIM `f98f2987` | SIM `b6897724` (tip `a261790d` ancestral) | SIM `534743de` (tip `ef72c4bd` ancestral) |
+| **CI da `main` após merge** | SUCCESS @ `da6fc9f0` | SUCCESS @ `f98f2987` | SUCCESS @ `b6897724` | SUCCESS @ `534743de` |
+| **SHA ativo na VPS** | **NÃO** — deploy ainda não executado | N/A código-only | N/A | N/A |
+| **Teste login proprietário** | **PENDENTE** (humano: logout/login + config + empresas) | N/A | N/A | N/A |
 
-Sem novas PRs empilhadas. Deploy #45: paste controlado abaixo (não executado neste agente).
+Main tip após lote: **`534743de`**. Sem novas PRs empilhadas nesta janela. Codex: revisão cruzada dos merges + organizar #68–#89 sobre #50–#67.
+
+### PASTE_VPS #45 — deploy controlado (humano; NÃO executado pelo agente)
+
+Pré-requisitos: `OWNER_GROUP_ID` + `OWNER_EMPRESA_ID` reais; backup/rollback tags; Web Console VPS.
+
+```bash
+cd /opt/erp-zuccaro
+git fetch origin main
+git checkout --detach origin/main
+# Exige lote #45–#49 na árvore (merge tip 534743de); tip pode ser docs posterior.
+git merge-base --is-ancestor 534743de HEAD || { echo "BLOCKED: main sem merge #49 (534743de)"; git rev-parse HEAD; exit 1; }
+echo "main_tip=$(git rev-parse --short HEAD) lote_min=534743de"
+
+# Registrar ANTES (colar no STATUS — sem tokens):
+docker inspect -f '{{.Name}} {{.Id}} {{.Config.Image}}' erp-api-dev erp-web-dev 2>/dev/null || true
+
+export OWNER_GROUP_ID='<uuid>' OWNER_EMPRESA_ID='<uuid>'
+CONFIRM_OWNER_ADMIN_PROFILE=YES OWNER_EMAIL='vinicius.zuccaro@gmail.com' DEMOTE_SYNTH=YES \
+  bash scripts/vps/provision-owner-admin-profile.sh
+
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=HEAD \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+
+# Registrar DEPOIS + SHA ativo VPS:
+docker inspect -f 'name={{.Name}} image={{.Config.Image}} id={{.Id}}' erp-api-dev erp-web-dev
+curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;m=json.load(sys.stdin);print("runtime",m.get("runtime"));print("auth",(m.get("auth") or {}).get("mode"));print("pwd",(m.get("authSession") or {}).get("passwordLoginPath"))'
+```
+
+Rollback: `CONFIRM_SPA_LOGIN_ROLLBACK=YES bash scripts/vps/spa-login-rollback-api-web.sh`
+
+Após paste: proprietário testa logout/login, configurações e empresas. Só então marcar **Implantado** + **Login OK**.
 
 ## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:16Z)
 
