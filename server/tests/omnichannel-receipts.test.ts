@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { boot, identity } from './omnichannelFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
+import { ChannelSalesClient } from '../src/integrations/channelSalesClient.js';
+import { now } from './omnichannelFixture.js';
 
 test('receipt query returns only ingestion reference for owning identity and audits every successful read', async () => {
   const f = await boot();
@@ -20,6 +22,60 @@ test('receipt query returns only ingestion reference for owning identity and aud
     assert.equal(reads.rows.length, 1);
     assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length, 1);
   } finally { await f.close(); }
+});
+
+test('signed receipt history pages only owning client references and excludes unverified legacy ownership', async()=>{
+  const f=await boot(undefined,[{...identity,id:'synthetic-other-client'}]);
+  try{
+    const ids:string[]=[];
+    for(let i=0;i<3;i++){
+      const created=await f.send({...f.envelope,idempotencyKey:`page-${i}`},{nonce:`synthetic-page-nonce-${i}`});
+      assert.equal(created.status,201);ids.push(created.body.data!.id);
+    }
+    assert.equal((await f.send({...f.envelope,idempotencyKey:'other-client'},{channel:'synthetic-other-client'})).status,201);
+    assert.equal((await f.send({...f.envelope,idempotencyKey:'other-channel'},{channel:'synthetic-APP'})).status,201);
+    await f.pg.query("UPDATE integration_events SET payload=payload-'client_hash' WHERE aggregate_id=$1",[ids[0]]);
+    await f.pg.query("UPDATE integration_events SET created_at='2026-01-01T00:00:00.123456Z' WHERE aggregate_id=ANY($1::uuid[])",[ids]);
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-SITE',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    const query={version:1,operation:'receipt-page',tipo:'Pedido',limit:1} as const;
+    const a=(await client.receipt(query)).data;assert.ok(a.nextCursor);assert.equal(a.hasMore,true);
+    const b=(await client.receipt({...query,cursor:a.nextCursor})).data;
+    assert.equal(b.hasMore,false);assert.equal(b.nextCursor,null);
+    const items=[...a.items,...b.items];assert.equal(new Set(items.map(x=>x.eventId)).size,2);
+    assert.deepEqual(items.map(x=>x.receipt.id).sort(),ids.slice(1).sort());
+    assert.ok(items.every(x=>x.receivedAt==='2026-01-01T00:00:00.123456Z'));
+    assert.ok(!JSON.stringify(items).includes('client_hash'));assert.ok(!JSON.stringify(items).includes('nonce_hash'));
+    const legacy=await client.receipt({version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:'page-0'});
+    assert.equal(legacy.data.id,ids[0]);
+    const other=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-other-client',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    assert.equal((await other.receipt({...query,limit:50})).data.items.length,1);
+    assert.equal((await client.receipt({...query,tipo:'Orcamento'})).data.items.length,0);
+    assert.equal((await f.send(query)).status,422);
+    assert.equal((await f.send({...query,groupId:S.groupB},{path:'/recibos'})).status,422);
+    assert.equal((await f.send({...query,limit:51},{path:'/recibos'})).status,422);
+    assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,5);
+  }finally{await f.close();}
+});
+
+test('receipt history blocks malformed references, audit failure and revoked read permission without returning a partial page',async()=>{
+  const f=await boot();
+  try{
+    const created=await f.send();assert.equal(created.status,201);
+    const query={version:1,operation:'receipt-page',tipo:'Pedido',limit:50};
+    await f.pg.query("UPDATE integration_events SET payload=jsonb_set(payload,'{receipt,private}',to_jsonb('SYNTHETIC_PRIVATE_DATA'::text)) WHERE event_type='venda.recebida'");
+    const invalid=await f.send(query,{path:'/recibos'});
+    assert.equal(invalid.status,500);assert.equal(invalid.body.error?.code,'CHANNEL_RECEIPT_INVALID');
+    assert.equal(invalid.body.data,undefined);assert.ok(!JSON.stringify(invalid).includes('SYNTHETIC_PRIVATE_DATA'));
+    await f.pg.query("UPDATE integration_events SET payload=jsonb_set(payload,'{receipt}',(payload->'receipt')-'private') WHERE event_type='venda.recebida'");
+    await f.pg.exec(`CREATE FUNCTION reject_page_audit() RETURNS trigger AS $$ BEGIN
+      IF NEW.action='read' THEN RAISE EXCEPTION 'SYNTHETIC_PAGE_AUDIT'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER page_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION reject_page_audit();`);
+    assert.equal((await f.send(query,{path:'/recibos'})).status,500);
+    await f.pg.exec('DROP TRIGGER page_audit_fail ON audit_logs');
+    await f.pg.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1",[S.runtimeActorA]);
+    assert.equal((await f.send(query,{path:'/recibos'})).status,403);
+    assert.equal((await f.pg.query("SELECT id FROM audit_logs WHERE action='read'")).rows.length,0);
+  }finally{await f.close();}
 });
 
 test('stored receipt corruption fails closed on reads and replays without leaking data or recreating documents', async () => {

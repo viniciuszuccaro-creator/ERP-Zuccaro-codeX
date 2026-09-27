@@ -41,6 +41,18 @@ export const receiptQuerySchema = z.object({ version: z.literal(1), operation: z
   tipo: z.enum(['Pedido', 'Orcamento']), idempotencyKey: z.string().regex(/^[a-zA-Z0-9_.:-]{1,160}$/),
 }).strict();
 export type ReceiptQuery = z.infer<typeof receiptQuerySchema>;
+const receiptCursor = z.object({ id:z.string().uuid(),createdAt:z.string().datetime() }).strict();
+export const receiptPageQuerySchema = z.object({version:z.literal(1),operation:z.literal('receipt-page'),
+  tipo:z.enum(['Pedido','Orcamento']),limit:z.number().int().min(1).max(50),cursor:receiptCursor.optional(),
+}).strict();
+export const receiptReadSchema = z.discriminatedUnion('operation',[receiptQuerySchema,receiptPageQuerySchema]);
+export type ReceiptPageQuery = z.infer<typeof receiptPageQuerySchema>;
+export const receiptPageSchema = z.object({tipo:z.enum(['Pedido','Orcamento']),
+  items:z.array(z.object({eventId:z.string().uuid(),receipt:saleReceiptSchema,receivedAt:z.string().datetime()}).strict()).max(50),
+  hasMore:z.boolean(),nextCursor:receiptCursor.nullable(),
+}).strict().refine(p=>p.items.every(i=>i.receipt.tipo===p.tipo)&&p.hasMore===(p.nextCursor!==null)
+  &&(!p.hasMore||(p.items.length>0&&p.nextCursor?.id===p.items.at(-1)?.eventId&&p.nextCursor?.createdAt===p.items.at(-1)?.receivedAt)));
+export type ReceiptPage = z.infer<typeof receiptPageSchema>;
 export const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 export function signSale(secret: string, client: string, timestamp: string, nonce: string, body: Buffer): string {
   return createHmac('sha256', secret).update(`${client}.${timestamp}.${nonce}.`).update(body).digest('hex');

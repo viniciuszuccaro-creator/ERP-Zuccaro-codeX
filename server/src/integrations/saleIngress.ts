@@ -5,7 +5,7 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import { AppError } from '../api/errors.js';
-import { digest, saleReceiptSchema, type SaleReceipt, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery } from './saleIngressContract.js';
+import { digest, saleReceiptSchema, type SaleReceipt, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery, type ReceiptPageQuery, type ReceiptPage } from './saleIngressContract.js';
 
 type CanonicalSales = {
   pedidoService: Pick<PedidoService, 'create'>;
@@ -22,6 +22,7 @@ export async function assertIntegrationEventsReady(db: DbClient) {
 }
 const receiptKey = (identity: ChannelIdentity, envelope: Pick<SaleEnvelope, 'tipo' | 'idempotencyKey'>) =>
   `sale:v1:${digest(JSON.stringify([identity.groupId, identity.empresaId, identity.id, identity.channel, envelope.tipo, envelope.idempotencyKey]))}`;
+const clientHash = (identity:ChannelIdentity)=>digest(JSON.stringify([identity.groupId,identity.empresaId,identity.id,identity.channel]));
 
 /** Transport adapter; commercial validations, pricing and writes stay in the canonical services. */
 export class SaleIngress {
@@ -82,7 +83,7 @@ export class SaleIngress {
         `INSERT INTO integration_events(group_id,empresa_id,source,event_type,idempotency_key,payload,status,
           schema_version,aggregate_type,aggregate_id,correlation_id,payload_checksum)
          VALUES($1,$2,$3,'venda.recebida',$4,$5::jsonb,'processed',1,$6,$7,$8,$9) RETURNING id`,
-        [identity.groupId, identity.empresaId, identity.channel, key, JSON.stringify({ receipt, nonce_hash: nonceHash }),
+        [identity.groupId, identity.empresaId, identity.channel, key, JSON.stringify({ receipt, nonce_hash: nonceHash,client_hash:clientHash(identity) }),
           envelope.tipo, created.id, requestId, hash]);
       await this.sales.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', entityId: result.rows[0].id,
         action: 'create', afterData: { canal: identity.channel, tipo: envelope.tipo, documento_id: created.id,
@@ -91,7 +92,10 @@ export class SaleIngress {
     });
   }
 
-  async receipt(identity: ChannelIdentity, lookup: ReceiptQuery, requestId: string) {
+  async receipt(identity:ChannelIdentity,lookup:ReceiptQuery,requestId:string):Promise<SaleReceipt>;
+  async receipt(identity:ChannelIdentity,lookup:ReceiptPageQuery,requestId:string):Promise<ReceiptPage>;
+  async receipt(identity:ChannelIdentity,lookup:ReceiptQuery|ReceiptPageQuery,requestId:string):Promise<SaleReceipt|ReceiptPage>;
+  async receipt(identity: ChannelIdentity, lookup: ReceiptQuery|ReceiptPageQuery, requestId: string) {
     const ctx: RequestContext = { groupId: identity.groupId, empresaId: identity.empresaId,
       actorId: identity.actorId, scopeType: 'empresa', requestId };
     await this.sales.tenantGuard.assertEmpresaInGroup(identity.groupId, identity.empresaId);
@@ -99,6 +103,23 @@ export class SaleIngress {
     await this.sales.rbacGuard.assertAllowed(ctx, 'Comercial', lookup.tipo === 'Pedido' ? 'pedido' : 'orcamento', 'visualizar', { allowGlobalWildcard: false });
     return this.db.withTransaction(async (query) => {
       await query.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)", [identity.groupId, identity.empresaId]);
+      if(lookup.operation==='receipt-page'){
+        const result=await query.query<ReceiptEvent & {id:string;createdAt:string}>(`
+          SELECT id,payload,status,aggregate_type,aggregate_id,
+            to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "createdAt"
+          FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida'
+            AND payload->>'client_hash'=$4 AND aggregate_type=$5
+            AND ($6::uuid IS NULL OR (created_at,id)>($7::timestamptz,$6::uuid))
+          ORDER BY created_at,id LIMIT $8`,[identity.groupId,identity.empresaId,identity.channel,clientHash(identity),lookup.tipo,
+            lookup.cursor?.id??null,lookup.cursor?.createdAt??null,lookup.limit+1]);
+        const items=[];
+        for(const event of result.rows.slice(0,lookup.limit))items.push({eventId:event.id,
+          receipt:await this.validateReceipt(event,lookup.tipo,ctx,query),receivedAt:event.createdAt});
+        const hasMore=result.rows.length>lookup.limit,last=items.at(-1);
+        await this.sales.auditRepo.append({...ctx,entity:'IntegracaoEvento',action:'read',
+          afterData:{operation:'receipt-page',canal:identity.channel,tipo:lookup.tipo,examined:items.length,limit:lookup.limit,hasMore}},query);
+        return {tipo:lookup.tipo,items,hasMore,nextCursor:hasMore&&last?{id:last.eventId,createdAt:last.receivedAt}:null};
+      }
       const result = await query.query<ReceiptEvent & { id: string }>(
         "SELECT id,payload,status,aggregate_type,aggregate_id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida' AND idempotency_key=$4",
         [identity.groupId, identity.empresaId, identity.channel, receiptKey(identity, lookup)]);
