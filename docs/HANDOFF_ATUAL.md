@@ -1,3 +1,10 @@
+## #101 PÓS-MERGE — NÃO implantado (2026-09-27T21:16Z)
+
+Merge `d02cd012` / CI SUCCESS. Codex: **ainda NÃO implantado** (política navegador p/ catálogo admin).
+Cursor não deploya. Acesso só após promote + browser owner.
+
+---
+
 ## #101 MERGED — aguarda deploy + browser (2026-09-27T20:58Z)
 
 Merge `d02cd012948a597a734573ab0a5a7aed6d604a3b` (aprovado `4a5270a87c171db36cad8d9457c106960e938de8`). CI main SUCCESS `36349770102`.
