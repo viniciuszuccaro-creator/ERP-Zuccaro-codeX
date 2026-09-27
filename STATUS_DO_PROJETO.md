@@ -1,3 +1,24 @@
+## #98 DEPLOY DEV COMPROVADO — browser owner PENDENTE (2026-09-27T18:07Z)
+
+Fonte: [#98#issuecomment-5858407946](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/98#issuecomment-5858407946).
+
+| Campo | Valor |
+|---|---|
+| Main SHA | `9ed1a30e3fd37ec2f14b9c65a36b2c396ea7b74d` |
+| Parecer Cursor | #97 / HANDOFF `bb7df2db` APROVADO |
+| CI PUSH main | SUCCESS `36338983036` |
+| AUDIT / backup | PASS; backup `20260927-180236` hash verificado |
+| Canário | identidade DB/API/SPA/401/login-bundle **PASS** |
+| APPLY | EXIT 0; grant atômico + audit; promote mesmas imagens |
+| API digest | `sha256:79f3ec308530bbc2…2bc143` (`source_sha` = `9ed1a30…`) |
+| SPA digest | `sha256:6dd543df7abfef51…0a490f` |
+| Pós-check DB | owner Auth/profile ativo único; scope GROUP/admin; Comercial+Sistema explícitos; 2 empresas; audit 1; migrations 24 |
+| Negativos | fabricado/Bearer inválido/HTTPS pública → 401 |
+| Synth UI | logout → formulário senha estável (sem SynthActor) |
+| **Acesso completo** | **NÃO** — falta login real do proprietário + CPA/3Z + Comercial/Config + prova API Bearer da sessão |
+
+Cursor **reconhece** a evidência de implantação; **não** declara experiência fechada. Continua revisão #92/#93 (merge BLOCKED).
+
 ## SELO CI — #92 01798e71 + #93 ee59f04d (2026-09-27T18:05Z)
 
 | PR | SHA | CI | Sync | Merge/ativação |
@@ -7,8 +28,7 @@
 
 Gates inalterados: 025=`4aab7f6f…`; sem backfill 026; sem 033/grants; canais OFF. Cursor não edita Codex.
 
-### #98 APPLY em curso
-Main `9ed1a30e` CI PUSH **SUCCESS** (`36338983036`). Codex: AUDIT PASS + re-APPLY (backup/canário/grant/promote) em execução — implantação só após prova oficial + browser. Cursor **não** faz deploy.
+### #98 APPLY — atualizado acima (deploy comprovado; browser pendente)
 
 ## ESCLARECIMENTO CURSOR — #96 SHA `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
 

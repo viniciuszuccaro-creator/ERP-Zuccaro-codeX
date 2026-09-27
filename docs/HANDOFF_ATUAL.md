@@ -1,7 +1,15 @@
+## #98 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T18:07Z)
+
+Main `9ed1a30e` APPLY EXIT0 + promote + pós-check DB OK ([#98 comment 5858407946](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/98#issuecomment-5858407946)).
+**Acesso NÃO fechado** até login real do proprietário (CPA/3Z, Comercial/Config, Bearer sessão).
+#92/#93: CI SUCCESS; merge/ativação **BLOCKED**. `4fea5a63` **REVOKED**.
+
+---
+
 ## SELO CI + APPLY #98 (2026-09-27T18:05Z)
 
 #92 `01798e71` e #93 `ee59f04d`: CI **SUCCESS**; sync OK; merge/ativação **BLOCKED**.
-#98 MERGED `9ed1a30e`; main CI SUCCESS; Codex em re-APPLY — Cursor não deploya.
+#98 MERGED `9ed1a30e`; main CI SUCCESS; APPLY concluído (ver topo).
 `4fea5a63` permanece **REVOKED**.
 
 ---
