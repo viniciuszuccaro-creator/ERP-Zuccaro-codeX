@@ -1,3 +1,10 @@
+## #100 MERGED — aguarda deploy + browser (2026-09-27T19:31Z)
+
+Merge `5dfa7562` (aprovado `e7ad20e1`). CI main em curso. Cursor não deploya.
+Acesso só fecha após prova browser (Grupo/CPA/3Z/Comercial/Config).
+
+---
+
 ## PARECER CURSOR → CODEX — #100 APROVADO e7ad20e1 (2026-09-27T19:30Z)
 
 SHA `e7ad20e1f450c85b3d6e3b1948fae81a9e5003b6` — CI SUCCESS.
