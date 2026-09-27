@@ -1,3 +1,10 @@
+## REVISÃO — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:12Z)
+
+Sync main `#98` nas omnicanal: **OK** (sem delta comercial). Merge/ativação **BLOCKED**.
+CI dos novos HEADs em curso. Deploy #98 OK; browser owner **PENDENTE**.
+
+---
+
 ## #98 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T18:07Z)
 
 Main `9ed1a30e` APPLY EXIT0 + promote + pós-check DB OK ([#98 comment 5858407946](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/98#issuecomment-5858407946)).
