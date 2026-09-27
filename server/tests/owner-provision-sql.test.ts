@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,6 +20,34 @@ const EMPRESA_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const AUTH_OWNER = '11111111-1111-4111-8111-111111111111';
 const AUTH_SYNTH = '22222222-2222-4222-8222-222222222222';
 const PROFILE_SYNTH = '33333333-3333-4333-8333-333333333333';
+
+test('actual psql COPY loads private JSON without server file privilege', {skip: !process.env.DATABASE_URL}, () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'owner-copy-'));
+  const file = path.join(folder, 'synthetic.json');
+  const role = `owner_copy_${process.pid}`;
+  const payload = {label: "Aspas ' e \" / barra \\ / aço", nested: PERMS};
+  fs.writeFileSync(file, JSON.stringify(payload) + '\n', {mode: 0o600});
+  try {
+    const source = fs.readFileSync(path.join(ROOT, 'scripts/vps/provision-owner-admin-profile.sh'), 'utf8');
+    assert.equal(source.includes('pg_read_file'), false);
+    const command = source.match(/^\\copy _owner_json[^\r\n]+/m)![0];
+    const restoreFormat = source.split('\n').find(line => line.includes("printf '%s\\n' 'BEGIN;'"))!.trim();
+    const emitted = spawnSync('bash', ['-c', 'dest_path="$1"; ' + restoreFormat, 'test', file.replaceAll('\\','/')], {encoding:'utf8'});
+    assert.equal(emitted.status, 0, emitted.stderr);
+    assert.equal(emitted.stdout.split('\n').find(line => line.startsWith('\\copy')), command.replace('/tmp/owner-admin-permissoes.json', file.replaceAll('\\','/')));
+    const sql = `BEGIN; CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS; SET LOCAL ROLE ${role};
+SELECT has_function_privilege(current_user, 'pg_read_file(text)', 'EXECUTE');
+CREATE TEMP TABLE _owner_json(payload jsonb NOT NULL) ON COMMIT DROP;
+${command.replace('/tmp/owner-admin-permissoes.json', file.replaceAll('\\', '/'))}
+SELECT payload FROM _owner_json;
+ROLLBACK;`;
+    const result = spawnSync('psql', ['-X', '-A', '-t', '-v', 'ON_ERROR_STOP=1', process.env.DATABASE_URL!], {input: sql, encoding:'utf8'});
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(result.stdout.split('\n').includes('f'), 'role cannot read server files');
+    const copied = result.stdout.split('\n').find(line => line.startsWith('{'))!;
+    assert.deepEqual(JSON.parse(copied), payload);
+  } finally {fs.rmSync(folder, {recursive:true, force:true});}
+});
 
 test('actual deployment preflight is read-only and blocks unauthorized tenant reuse', async () => {
   const db = new PGlite();
@@ -263,10 +293,10 @@ test('actual provision SQL group scope and audit failure rollback', async () => 
     await db.query('UPDATE profiles SET email=$1 WHERE id=$2', ['drifted@example.com', PROFILE_SYNTH]);
     await db.exec('CREATE TABLE audit_logs(group_id uuid, empresa_id uuid, actor_email text, entity text, entity_id text, action text, before_data jsonb, after_data jsonb);');
     const source = fs.readFileSync(path.join(ROOT,'scripts/vps/provision-owner-admin-profile.sh'),'utf8');
-    const raw = source.match(/<<'SQL'\r?\n(BEGIN;\r?\n\r?\nCREATE TEMP TABLE _owner_prov[\s\S]*?)\r?\nSQL/)!;
+    const raw = source.match(/<<'SQL'\r?\n(BEGIN;\r?\n\r?\nCREATE TEMP TABLE _owner_json[\s\S]*?)\r?\nSQL/)!;
     assert.ok(raw,'execute actual shell SQL');
     const variables: Record<string,string> = {owner_email:OWNER_EMAIL,owner_full_name:'Synthetic owner',owner_group_id:GROUP_ID,owner_empresa_id:EMPRESA_ID,synth_email:SYNTH_EMAIL,demote_synth:'YES',owner_scope:'GROUP',expected_owner_admin:'1',expected_synth_admin:'0'};
-    const sql = raw[1].replace(/:'([a-z_]+)'/g,(_all,key)=>{assert.ok(key in variables,key);return "'"+variables[key].replaceAll("'","''")+"'";}).replace("pg_read_file('/tmp/owner-admin-permissoes.json')::jsonb","'"+JSON.stringify(PERMS).replaceAll("'","''")+"'::jsonb");
+    const sql = raw[1].replace(/:'([a-z_]+)'/g,(_all,key)=>{assert.ok(key in variables,key);return "'"+variables[key].replaceAll("'","''")+"'";}).replace(/\\copy _owner_json[^\r\n]+/,"INSERT INTO _owner_json VALUES ('"+JSON.stringify(PERMS).replaceAll("'","''")+"'::jsonb);");
     await db.exec(sql);
     const owner = await db.query<{empresa_id:string|null}>('SELECT empresa_id FROM profiles WHERE auth_user_id=$1',[AUTH_OWNER]);
     assert.equal(owner.rows[0].empresa_id,null);

@@ -11548,3 +11548,18 @@ Checklist inicial:
 
 - Incorporada main56dae6966ae39a11eac3064ca7bb0d67553e7765 na branch própria, preservando Auth/perfil/tenant da #96 e o histórico das duas frentes. requestContext/authSessionService idênticos à main; conflito exclusivamente documental concatenado sem apagar entregas.
 - 025 idêntica ao blob4aab7f6f da #50 atual; 026 continua fail-closed para histórico não mapeado, migration033/canais não ativados. Novos HEADs92/93 requerem CI e revisão independente Cursor. Acesso bloqueado apenas pela revisão do hotfix98 após pg_read_file; não equivale a deploy.
+
+## Acesso proprietário — falha operacional pg_read_file (2026-09-27)
+
+- #96 mesclada na main 56dae6966ae39a11eac3064ca7bb0d67553e7765 após parecer Cursor sobre 23252cc e CI; CI PUSH main #1135/run36326407270 SUCCESS frontend/backend.
+- VPS atualizada para esse SHA; AUDIT, identidade efetiva do banco, backup custom e canário API/SPA aprovados. APPLY abortou no provisionamento: `permission denied for function pg_read_file`, transação revertida, nenhuma promoção. Oficiais preservados; canário antigo exclusivamente localhost3086 parado reversivelmente com container/imagem preservados. Backups privados preservados.
+- Correção candidata em branch própria: JSON por COPY do cliente psql tanto na concessão quanto no restore seletivo, sem conceder leitura de arquivos do servidor nem elevar o usuário PostgreSQL. Preserva locks, validação de tenant, auditoria, transação e decisões do proprietário. Teste PostgreSQL CI com NOSUPERUSER/NOBYPASSRLS verifica leitura negada e COPY bem-sucedido, inclusive aspas/barra/acentos e comando real do restore.
+- Ainda requer CI do novo HEAD e revisão independente Cursor antes de merge/APPLY. Não declarar acesso/deploy concluído. Login real, duas empresas e Comercial/Configurações continuam pendentes; canais OFF. Nenhuma migration ou dado real publicado.
+
+## Codex — integração main pós-hotfix e marco DEV (2026-09-27)
+
+- Incorporada main9ed1a30e3fd37ec2f14b9c65a36b2c396ea7b74d (#98), preservando COPY cliente do grant/restore e testes PostgreSQL reais, sem reintroduzir pg_read_file. Histórico de status preservado; blocos antigos pendentes são superados por este marco.
+- Cursor aprovou bb7df2dbe59f184600396abb7cdd99ce70bb93dd em #97/docsHandoff15:00Z; CI PUSH main1154/run36338983036 SUCCESS. DEV AUDIT/backup fresco/hash/canário/identidade/grant/auditoria/promote EXIT0. API e SPA têm label SHA completo9ed1a30 e digests iguais aos canários: API79f3ec308530bbc2392e20e881c702c50371de13ae6d4092e1a73a5cbf2bc143; SPA6dd543df7abfef519df3e1e1a573e150bc57f2d5c8454de72f7ba26b250a490f.
+- Pós-check: Auth/perfil proprietário único ativo1, GROUP/admin/RBAC explícito válido, empresas ativas autorizadas2, auditprovision1, migrations24, ready200/200 e identidade fabricada/Bearer inválido401. HTML público coincide com SPA oficial. Backups e rollback06A preservados. Nenhuma senha/novo cadastro/renomeação/migration/canal.
+- Logout sintético pela UI, formulário real pronto; confirmação proprietário de login/duas empresas/Comercial/Configurações solicitada e PENDENTE. Deploy não equivale a experiência validada pelo usuário. Evidências sanitizadas na #98comentário5858407946.
+- #92/93 continuam candidatos não mesclados/implantados, 025 alinhada à #50 e gates histórico026/contratos029–032/grants/papel033/provedores preservados. Canais OFF. CIs e revisão Cursor devem validar estes novos HEADs; selos antigos não se transferem.
