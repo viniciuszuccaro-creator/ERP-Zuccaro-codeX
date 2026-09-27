@@ -1,18 +1,19 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import type { RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import { AppError } from '../api/errors.js';
-import { digest, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery } from './saleIngressContract.js';
+import { digest, saleReceiptSchema, type SaleReceipt, type ChannelIdentity, type SaleEnvelope, type ReceiptQuery } from './saleIngressContract.js';
 
 type CanonicalSales = {
   pedidoService: Pick<PedidoService, 'create'>;
   orcamentoService: Pick<OrcamentoService, 'create'>;
   auditRepo: AuditRepository; tenantGuard: TenantGuard; rbacGuard: RbacGuard;
 };
-export type SaleReceipt = { id: string; tipo: 'Pedido' | 'Orcamento' };
+export type { SaleReceipt } from './saleIngressContract.js';
+type ReceiptEvent = { payload: unknown; status: string; aggregate_type: string; aggregate_id: string };
 export async function assertIntegrationEventsReady(db: DbClient) {
   const result = await db.query<{ ready: boolean }>(`SELECT (c.relrowsecurity AND c.relforcerowsecurity
     AND EXISTS(SELECT 1 FROM pg_policy p WHERE p.polrelid=c.oid AND p.polname='integration_events_scope')) AS ready
@@ -25,6 +26,20 @@ const receiptKey = (identity: ChannelIdentity, envelope: Pick<SaleEnvelope, 'tip
 /** Transport adapter; commercial validations, pricing and writes stay in the canonical services. */
 export class SaleIngress {
   constructor(private readonly db: DbClient, private readonly sales: CanonicalSales) {}
+
+  private async validateReceipt(event: ReceiptEvent, tipo: SaleReceipt['tipo'], ctx: RequestContext, query: DbQueryExecutor) {
+    const parsed = saleReceiptSchema.safeParse((event.payload as { receipt?: unknown } | null)?.receipt);
+    if (!parsed.success || parsed.data.tipo !== tipo || event.status !== 'processed'
+      || event.aggregate_type !== tipo || event.aggregate_id !== parsed.data.id) {
+      throw new AppError(500, 'CHANNEL_RECEIPT_INVALID', 'Stored receipt integrity failed');
+    }
+    // Fixed table allowlist; no status filter: ingestion receipt is not current fulfillment/payment state.
+    const table = tipo === 'Pedido' ? 'pedidos' : 'orcamentos';
+    const document = await query.query(`SELECT id FROM ${table} WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+      [parsed.data.id,ctx.groupId,ctx.empresaId]);
+    if (!document.rows.length) throw new AppError(500, 'CHANNEL_RECEIPT_INVALID', 'Stored receipt integrity failed');
+    return parsed.data;
+  }
 
   async assertDatabaseReady() {
     await assertIntegrationEventsReady(this.db);
@@ -45,12 +60,12 @@ export class SaleIngress {
         [identity.groupId, identity.empresaId]);
       // Serialize by nonce first, then receipt key, preventing conflicting concurrent deliveries.
       for (const lock of [nonceHash, key]) await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [lock]);
-      const existing = await query.query<{ payload_checksum: string; payload: { receipt: SaleReceipt } }>(
-        'SELECT payload_checksum,payload FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type=$4 AND idempotency_key=$5',
+      const existing = await query.query<ReceiptEvent & { payload_checksum: string }>(
+        'SELECT payload_checksum,payload,status,aggregate_type,aggregate_id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type=$4 AND idempotency_key=$5',
         [identity.groupId, identity.empresaId, identity.channel, 'venda.recebida', key]);
       if (existing.rows[0]) {
         if (existing.rows[0].payload_checksum !== hash) throw new AppError(409, 'CHANNEL_IDEMPOTENCY_CONFLICT', 'Key already used for different sale');
-        return { receipt: existing.rows[0].payload.receipt, replayed: true };
+        return { receipt: await this.validateReceipt(existing.rows[0],envelope.tipo,ctx,query), replayed: true };
       }
       const reused = await query.query(
         "SELECT id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida' AND payload->>'nonce_hash'=$4 LIMIT 1",
@@ -84,15 +99,16 @@ export class SaleIngress {
     await this.sales.rbacGuard.assertAllowed(ctx, 'Comercial', lookup.tipo === 'Pedido' ? 'pedido' : 'orcamento', 'visualizar', { allowGlobalWildcard: false });
     return this.db.withTransaction(async (query) => {
       await query.query("SELECT set_config('erp.group_id',$1,true),set_config('erp.empresa_id',$2,true)", [identity.groupId, identity.empresaId]);
-      const result = await query.query<{ id: string; payload: { receipt: SaleReceipt } }>(
-        "SELECT id,payload FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida' AND idempotency_key=$4 AND status='processed'",
+      const result = await query.query<ReceiptEvent & { id: string }>(
+        "SELECT id,payload,status,aggregate_type,aggregate_id FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source=$3 AND event_type='venda.recebida' AND idempotency_key=$4",
         [identity.groupId, identity.empresaId, identity.channel, receiptKey(identity, lookup)]);
       const event = result.rows[0];
       if (!event) throw new AppError(404, 'CHANNEL_RECEIPT_NOT_FOUND', 'Receipt not found');
+      const receipt = await this.validateReceipt(event,lookup.tipo,ctx,query);
       await this.sales.auditRepo.append({ ...ctx, entity: 'IntegracaoEvento', entityId: event.id,
-        action: 'read', afterData: { canal: identity.channel, tipo: lookup.tipo, documento_id: event.payload.receipt.id } }, query);
+        action: 'read', afterData: { canal: identity.channel, tipo: lookup.tipo, documento_id: receipt.id } }, query);
       // Receipt confirms ingestion, not current payment, fulfillment or document status.
-      return event.payload.receipt;
+      return receipt;
     });
   }
 }

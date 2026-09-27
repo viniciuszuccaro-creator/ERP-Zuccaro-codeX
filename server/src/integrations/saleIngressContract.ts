@@ -34,6 +34,8 @@ export const saleEnvelopeSchema = z.discriminatedUnion('tipo', [
   }).strict(),
 ]);
 export type SaleEnvelope = z.infer<typeof saleEnvelopeSchema>;
+export const saleReceiptSchema = z.object({ id: z.string().uuid(), tipo: z.enum(['Pedido','Orcamento']) }).strict();
+export type SaleReceipt = z.infer<typeof saleReceiptSchema>;
 // Operation is signed in the body: a sale signature cannot be replayed as a receipt query.
 export const receiptQuerySchema = z.object({ version: z.literal(1), operation: z.literal('receipt'),
   tipo: z.enum(['Pedido', 'Orcamento']), idempotencyKey: z.string().regex(/^[a-zA-Z0-9_.:-]{1,160}$/),

@@ -1,11 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { channelIdentitySchema, saleEnvelopeSchema, receiptQuerySchema, signSale,
+import { channelIdentitySchema, saleEnvelopeSchema, receiptQuerySchema, saleReceiptSchema, signSale,
   type SaleEnvelope, type ReceiptQuery } from './saleIngressContract.js';
 
-const receipt = z.object({ id: z.string().uuid(), tipo: z.enum(['Pedido', 'Orcamento']) }).strict();
-const created = z.object({ data: receipt, replayed: z.boolean() }).strict();
-const found = z.object({ data: receipt }).strict();
+const created = z.object({ data: saleReceiptSchema, replayed: z.boolean() }).strict();
+const found = z.object({ data: saleReceiptSchema }).strict();
 const optionsSchema = channelIdentitySchema.pick({ id: true, secret: true }).extend({
   endpoint: z.string().url(), attempts: z.number().int().min(1).max(3).default(3),
   timeoutMs: z.number().int().min(100).max(30_000).default(10_000),
