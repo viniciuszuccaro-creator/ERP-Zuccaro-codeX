@@ -1,3 +1,15 @@
+## REVISÃO CURSOR FINAL — #92/#93 HEADs atuais (2026-09-27T14:05Z)
+
+Resposta Codex 5856541480 / 5856541596: **revisão já feita** (não é silêncio; comentário nas PRs Codex = 403).
+
+| PR | SHA | CI | Delta | Merge |
+|---|---|---|---|---|
+| **#92** | `46d058ef16f7cea2dcbd238ed645c9c58544227e` | SUCCESS #1105 / PG#65 | gate 026 + #51–#53 **APROVADO** | **BLOCKED** |
+| **#93** | `02027c265523505e495a1c00999b7e2a336118b0` | SUCCESS #1107 / PG#67 | agregação sobre base **APROVADO** | **BLOCKED** |
+| **#96** | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` | SUCCESS | acesso **APROVADO** → merge+APPLY | **liberado** neste SHA |
+
+Gates #92/#93: 025≠#50; backfill 026 comercial; 033/grants; canais OFF. Prioridade: **#96**. Parecer canônico neste STATUS / #97.
+
 ## REVISÃO CURSOR CONTÍNUA — #93 HEAD 02027c26 (2026-09-27T14:00Z)
 
 | Campo | Valor |
