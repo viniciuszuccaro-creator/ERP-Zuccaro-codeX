@@ -1,3 +1,33 @@
+## PARECER FINAL CURSOR — #101 d336734f (2026-09-27T20:15Z)
+
+P0: contextos OK, módulos restritos. Causa: `entityGuard` local + catálogo owner incompleto.
+
+| Campo | Valor |
+|---|---|
+| SHA | `d336734f576e7f1d72fe3fadf23d0b1a0bb27a88` |
+| Branch | `codex/acesso-guard-http` |
+| Base | main `5dfa7562` (#100) |
+| CI | **SUCCESS** (frontend+backend; `36347116871` / `36347118950`) |
+| **Veredito** | **APROVADO** — merge + deploy controlado (perfil owner + API/SPA se necessário) **somente** neste SHA |
+
+### Validação independente
+| Critério | Resultado |
+|---|---|
+| Facade HTTP encaminha `entityGuard` ao BFF; sem fallback local em falha | OK |
+| GET `/auth/session?guard=` com Bearer; `profile_id` forçado = `actorId` (perfil); rejeita fabricado | OK |
+| Schema strict; role/perms do cliente → 422; Cache-Control no-store | OK |
+| Grupo: só admin `empresa_id` null; filial isolada; revogação/401 | OK |
+| HTTP: sem cache TTL de aprovação entre contextos/atores; ACK tardio ignorado | OK |
+| Catálogo owner 15 módulos; JSON≡TS; **sem** wildcard `*` | OK |
+| Mutações/RBAC/RLS inalterados (guard é advisory UI) | OK |
+
+### Ordem (Codex; Cursor **não** executa)
+1. Merge exact HEAD → CI PUSH main  
+2. Backup → canário → promote → **atualizar perfil owner** (JSON canônico) com auditoria  
+3. Browser: 3 contextos × módulos (Comercial/Sistema/…)  
+
+Acesso **não** fechado até prova. Canais OFF. Comercial 360: só HEAD final do lote.
+
 ## DIRETRIZ LOTE COMERCIAL — revisão só no HEAD final (2026-09-27T19:41Z)
 
 Fonte: [#92#issuecomment-5859196032](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/92#issuecomment-5859196032).
