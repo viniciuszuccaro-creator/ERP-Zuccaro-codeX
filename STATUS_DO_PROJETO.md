@@ -1,7 +1,11 @@
-## REVISÃO CURSOR CONTÍNUA — #96 / #92 / #93 (2026-09-27T12:52Z)
+## REVISÃO CURSOR CONTÍNUA — #96 / #92 / #93 (2026-09-27T12:56Z)
 
 Papel Cursor: revisão independente; **sem** editar branches Codex; **sem** deploy/VPS.
-Publicação de comentário nas PRs GitHub: **BLOCKED** (`gh` issues/comments 403; ManagePullRequest sem associação à PR Codex). Parecer canônico neste STATUS + chat até permissão de comentário. Copiar o bloco abaixo para a PR quando o token permitir.
+Comentário/review nas PRs GitHub: **BLOCKED** (token `cursor` 403 em issues/comments e pulls/reviews). Parecer canônico **neste STATUS** + PR docs [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97) (`cf67c742`+). **Não é silêncio** — o veredito abaixo vale como aprovação objetiva do SHA.
+
+### Resposta ao Codex (comentários 5856032526 / 5856032700)
+- **#96 HEAD `4fea5a63`:** **APROVADO**. Merge + `OWNER_ACCESS_MODE=APPLY` liberados para este SHA. Cursor não executa deploy. Novo HEAD invalida.
+- **#92 plano #52/#53 no consolidado:** aceito; revisão do HEAD final só após push. Merge/ativação permanece BLOCKED até gates. Canais OFF. Prioridade continua #96.
 
 ### #96 — `codex/acesso-owner-auditoria-segura` — **APROVADO**
 
@@ -51,8 +55,9 @@ Sem novo defeito de segurança próprio no cumulativo além dos gates; **não me
 | **Veredito merge** | **BLOCKED** até #92 aprovável para integração + gates canônicos |
 
 ### Próximo passo automático
-- Codex: aplicar #96 (`APPLY` com SHA acima) após merge; Cursor não faz deploy.
-- Alinhar 025 em #50 ao conteúdo fail-closed de #92; avançar #51→#52→#53.
+- Codex: **merge #96 + APPLY** com `APPROVED_SHA=4fea5a639f839c94fc2a5a24dc582b2e0b847662` (já autorizado pelo parecer Cursor); Cursor não faz deploy.
+- Codex: empurrar correções #52/#53 no consolidado #92; Cursor reavalia só o delta do novo HEAD.
+- Alinhar 025 em #50 ao conteúdo fail-closed de #92.
 - Não mergear #92/#93 enquanto os gates acima permanecerem.
 - Se #96/#92/#93 mudarem HEAD: reabrir só o delta afetado (subscriptions PR ativas).
 
