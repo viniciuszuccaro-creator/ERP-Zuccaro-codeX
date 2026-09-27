@@ -2,11 +2,37 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
+
+for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: canonical 025 repeats safely and constraint failure never records migration`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const db = engine === 'PGlite' ? new PGlite() : await isolatedPostgres(url!);
+    try {
+      await db.exec('CREATE TABLE pedidos(id uuid PRIMARY KEY, group_id uuid, empresa_id uuid, orcamento_id uuid, numero bigint, origem text); CREATE TABLE schema_migrations(id text PRIMARY KEY);');
+      const manual = randomUUID(), converted = randomUUID();
+      await db.query('INSERT INTO pedidos(id,numero,orcamento_id) VALUES($1,1,NULL),($2,2,$3)', [manual, converted, randomUUID()]);
+      const migration = readFileSync(new URL('../migrations/025_pedidos_origem_canal_idempotency.sql', import.meta.url), 'utf8');
+      await db.exec(migration); await db.exec(migration);
+      assert.deepEqual((await db.query('SELECT origem FROM pedidos ORDER BY numero')).rows.map(r => r.origem), ['MANUAL', 'ORCAMENTO']);
+      await assert.rejects(() => db.query('UPDATE pedidos SET origem=NULL WHERE id=$1', [manual]), (e: unknown) => (e as {code: string}).code === '23502');
+      await db.exec('ALTER TABLE pedidos ALTER COLUMN origem DROP NOT NULL;');
+      await db.query('UPDATE pedidos SET origem=NULL WHERE id=$1', [manual]);
+      // A real trigger defeats the backfill, reproducing a legacy NULL that must abort.
+      await db.exec("CREATE FUNCTION preserve_legacy_null() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.origem:=NULL; RETURN NEW; END $$; CREATE TRIGGER preserve_legacy_null BEFORE UPDATE ON pedidos FOR EACH ROW EXECUTE FUNCTION preserve_legacy_null();");
+      await assert.rejects(() => db.transaction(async tx => {
+        await tx.exec(migration);
+        await tx.query("INSERT INTO schema_migrations(id) VALUES('025_pedidos_origem_canal_idempotency.sql')");
+      }), (e: unknown) => (e as {code: string}).code === '23502');
+      assert.equal((await db.query('SELECT id FROM schema_migrations')).rows.length, 0);
+      assert.equal((await db.query('SELECT origem FROM pedidos WHERE id=$1', [manual])).rows[0].origem, null);
+    } finally { await db.close(); }
+  });
+}
 test('real PostgreSQL FORCE RLS fences reads, writes and claims for a non-bypass role and resets scope per transaction', { skip: !url }, async () => {
   const f = await outboxFixture(await isolatedPostgres(url!));
   const role = `omni_role_${randomUUID().replaceAll('-','')}`;

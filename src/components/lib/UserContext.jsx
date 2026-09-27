@@ -1,18 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
-import {
-  buildHttpSessionUser,
-  ensureHttpTenantLocalMirror,
-  readErpHttpSession,
-} from "@/api/erpHttpSession";
 
 const UserContext = createContext(null);
 
 const resolveBootUser = async () => {
-  // HTTP/supabase_user: usar sessão Bearer + tenant real (não o admin local paralelo).
+  // HTTP/supabase_user: Bearer revalidado no BFF (não confiar em localStorage).
   if (isHttpBackendMode) {
-    const session = readErpHttpSession();
-    if (!session) {
+    const { refreshErpHttpSessionFromServer, buildHttpSessionUser, ensureHttpTenantLocalMirror } = await import('@/api/erpHttpSession');
+    const session = await refreshErpHttpSessionFromServer({});
+    if (!session?.token) {
       const err = new Error('Authentication required');
       err.status = 401;
       err.authType = 'auth_required';
@@ -25,6 +21,8 @@ const resolveBootUser = async () => {
         groupName: session.groupName,
         empresas: session.empresas,
         perfilAcessoId: `http_perfil_${session.actorId}`,
+        permissoes: session.permissoes || {},
+        perfilNome: session.fullName || session.email,
         base44Client: base44,
       });
     } catch (error) {

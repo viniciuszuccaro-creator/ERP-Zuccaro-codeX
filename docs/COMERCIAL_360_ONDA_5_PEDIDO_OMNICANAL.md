@@ -56,3 +56,7 @@ Frontend canônico e operação legada preservada como fallback continuam na mes
 ## Aceite
 
 Um único Pedido por operação externa; nenhuma duplicação por retry; Empresa proprietária preservada; snapshots e valores server-side; marcos impedem mutação retroativa; downstream explícito e idempotente; RBAC/auditoria/tenant em todas as ações; zero dados reais.
+
+## Gate 025 — correção Codex coordenada (2026-09-27)
+
+A migration 025 ainda não aplicada na VPS (auditoria read-only:001–024) deixa falhas de SET NOT NULL propagarem ao migrator. Reexecução2x preserva origem MANUAL/ORCAMENTO. Trigger sintético que mantém NULL no backfill prova erro23502 e rollback sem registrar schema_migrations, em PGlite e PostgreSQL isolado da CI. Nenhuma migration histórica001–024 alterada nem migration paralela criada. Conteúdo deve ser adotado como canônico entre #50 e #92, com revisão Cursor antes da integração; não aplicar na VPS nesta frente. #51/#52/#53, grants/policies operacionais e providers permanecem gates independentes; canaisOFF. #96 acesso tem prioridade e não é substituída por este lote.
