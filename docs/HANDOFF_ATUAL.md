@@ -1,3 +1,10 @@
+## DIRETRIZ LOTE COMERCIAL (2026-09-27T19:41Z)
+
+Cursor: **só** parecer consolidado no HEAD final do lote #92/#93 (sem microcommits).
+#100 deploy OK; browser owner **PENDENTE**. `4fea5a63` REVOKED.
+
+---
+
 ## #100 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T19:37Z)
 
 Main `5dfa7562` APPLY+promote OK. Formulário de login entregue ao proprietário.

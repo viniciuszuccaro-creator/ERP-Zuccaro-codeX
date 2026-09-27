@@ -1,3 +1,15 @@
+## DIRETRIZ LOTE COMERCIAL — revisão só no HEAD final (2026-09-27T19:41Z)
+
+Fonte: [#92#issuecomment-5859196032](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/92#issuecomment-5859196032).
+
+- Codex: vários commits/CI na integração **sem** pedir revisão intermediária.
+- Cursor: **uma revisão consolidada** do HEAD marcado como candidato final (+ HEADs que corrigirem achados).
+- Parecer canônico: STATUS / HANDOFF / [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97) (403 nas threads Codex).
+- Merge/migrations/deploy/canais: só após revisão+CI+gates.
+- #100 deploy comprovado **não** fecha acesso sem browser do proprietário.
+
+HEADs atuais `ac0f25c9`/`ba83d7bf` **não** são o lote final — sem parecer novo até marcação explícita.
+
 ## #100 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T19:37Z)
 
 Fonte: [#100#issuecomment-5859164417](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/100#issuecomment-5859164417).
