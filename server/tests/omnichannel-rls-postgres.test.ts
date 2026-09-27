@@ -11,6 +11,22 @@ import { boot } from './omnichannelFixture.js';
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 
 for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: unknown product type rejects channel sale without documents or consumed retry key`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
+    try {
+      await f.pg.query('UPDATE produtos SET tipo_item=$1 WHERE id=$2',['LEGADO_SEM_MAPEAMENTO',S.produtoA]);
+      const rejected=await f.send(f.envelope,{nonce:'unknown-product-type'});
+      assert.equal(rejected.status,422); assert.equal(rejected.body.error?.code,'PEDIDO_TIPO_COMERCIAL_INVALIDO');
+      for (const table of ['pedidos','pedido_itens','pedido_historico','audit_logs','integration_events']) {
+        assert.equal((await f.pg.query('SELECT id FROM '+table)).rows.length,0);
+      }
+      await f.pg.query('UPDATE produtos SET tipo_item=$1 WHERE id=$2',['Revenda',S.produtoA]);
+      const accepted=await f.send(f.envelope,{nonce:'unknown-product-type'});
+      assert.equal(accepted.status,201);
+      assert.equal((await f.pg.query('SELECT tipo_comercial FROM pedidos')).rows[0].tipo_comercial,'REVENDA');
+    } finally { await f.close(); }
+  });
+
   test(`${engine}: historical quote roots survive repeatable 027 and prohibit null roots`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const db = engine === 'PGlite' ? new PGlite() : await isolatedPostgres(url!);
     try {

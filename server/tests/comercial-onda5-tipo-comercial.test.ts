@@ -100,6 +100,15 @@ test('policy mapeia Produto → tipo comercial e agrega MISTO', () => {
   assert.equal(aggregatePedidoTipoComercial(['REVENDA', 'SERVICO']), 'MISTO');
 });
 
+test('legacy unknown product type requires mapping instead of a false resale snapshot', () => {
+  for (const produtoTipoItem of ['LEGADO_SEM_MAPEAMENTO', 'tipo especial desconhecido']) {
+    assert.throws(()=>mapProdutoTipoToComercialItem(produtoTipoItem), (e: unknown)=>
+      (e as {code:string;statusCode:number}).code==='PEDIDO_TIPO_COMERCIAL_INVALIDO' && (e as {statusCode:number}).statusCode===422);
+    assert.throws(()=>resolveItemTipoComercial({produtoTipoItem,requerProducao:true,hint:'ARMADO'}));
+  }
+  assert.equal(mapProdutoTipoToComercialItem('SERVICO'),'SERVICO');
+});
+
 test('policy: ARMADO exige requer_producao; hint divergente bloqueado', () => {
   assert.equal(resolveItemTipoComercial({
     produtoTipoItem: PRODUTO_TIPOS_CANONICOS.REVENDA,
