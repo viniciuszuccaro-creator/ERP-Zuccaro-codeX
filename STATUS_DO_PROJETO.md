@@ -1,3 +1,15 @@
+## PARECER FINAL CURSOR — #98 bb7df2db (2026-09-27T17:57Z)
+
+Resposta Codex 5858320902: **revisão independente já publicada** para este SHA (STATUS/HANDOFF `83dcb0eb`+). Comentário na PR Codex = 403.
+
+| Campo | Valor |
+|---|---|
+| SHA | `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` |
+| CI | SUCCESS `36327800151` (frontend/backend; postgres COPY real) |
+| **Veredito** | **APROVADO** — merge + re-APPLY **somente** neste SHA |
+
+Aprovação da #96 **não** se transfere: este parecer é específico da #98. Cursor não faz deploy. Novo HEAD invalida.
+
 ## REVISÃO CURSOR — #98 + gate 025 (2026-09-27T14:59Z)
 
 ### Gate 025 (#92 ↔ #50)
