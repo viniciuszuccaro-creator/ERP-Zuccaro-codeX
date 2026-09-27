@@ -431,7 +431,7 @@ test('PostgreSQL real: Supabase identity maps to active ERP profile and scoped c
     try {
       await db.withTransaction(async (executor) => {
         await executor.query('CREATE TEMP TABLE profiles (id uuid, auth_user_id uuid, ativo boolean, group_id uuid, empresa_id uuid) ON COMMIT DROP');
-        await executor.query('CREATE TEMP TABLE empresas (id uuid, group_id uuid) ON COMMIT DROP');
+        await executor.query("CREATE TEMP TABLE empresas (id uuid, group_id uuid, status text NOT NULL DEFAULT 'Ativa') ON COMMIT DROP");
         await executor.query('INSERT INTO empresas (id, group_id) VALUES ($1, $2), ($3, $4)', [EMPRESA_A, GROUP_A, EMPRESA_B, GROUP_B]);
         await executor.query('INSERT INTO profiles (id, auth_user_id, ativo, group_id, empresa_id) VALUES ($1, $2, true, $3, $4)', [profileId, authUserId, GROUP_A, EMPRESA_A]);
         const app = express();
@@ -460,6 +460,21 @@ test('PostgreSQL real: Supabase identity maps to active ERP profile and scoped c
           authorization: 'Bearer synthetic.jwt.token', 'x-group-id': GROUP_A,
         } });
         assert.equal(groupView.statusCode, 403);
+        const secondCompany = 'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2';
+        await executor.query('INSERT INTO empresas (id, group_id) VALUES ($1, $2)', [secondCompany, GROUP_A]);
+        await executor.query('UPDATE profiles SET empresa_id = NULL WHERE id = $1', [profileId]);
+        for (const companyId of [EMPRESA_A, secondCompany]) {
+          const groupOwner = await fetchStatus(app, '/identity', { headers: {
+            authorization: 'Bearer synthetic.jwt.token', 'x-group-id': GROUP_A, 'x-empresa-id': companyId,
+          } });
+          assert.equal(groupOwner.statusCode, 200);
+          assert.equal(groupOwner.body.empresaId, companyId);
+        }
+        await executor.query("UPDATE empresas SET status = 'Inativa' WHERE id = $1", [secondCompany]);
+        const inactiveCompany = await fetchStatus(app, '/identity', { headers: {
+          authorization: 'Bearer synthetic.jwt.token', 'x-group-id': GROUP_A, 'x-empresa-id': secondCompany,
+        } });
+        assert.equal(inactiveCompany.statusCode, 403);
         await executor.query('UPDATE profiles SET ativo = false WHERE id = $1', [profileId]);
         const inactive = await fetchStatus(app, '/identity', { headers: {
           authorization: 'Bearer synthetic.jwt.token', 'x-group-id': GROUP_A, 'x-empresa-id': EMPRESA_A,
