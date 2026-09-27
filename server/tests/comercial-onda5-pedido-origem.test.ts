@@ -85,6 +85,9 @@ test('migration 025 adiciona origem/canal/idempotency únicos', async () => {
   const defaultIdx = source.indexOf("SET DEFAULT 'MANUAL'");
   const notNullIdx = source.indexOf('SET NOT NULL');
   assert.ok(backfillIdx > 0 && defaultIdx > backfillIdx && notNullIdx > backfillIdx);
+  // Fail-closed: never swallow SET NOT NULL failures (aligned with #92 canonical).
+  assert.equal(source.includes('EXCEPTION'), false);
+  assert.equal(source.includes('WHEN others'), false);
 });
 
 test('create MANUAL default e SITE com idempotency', async () => {

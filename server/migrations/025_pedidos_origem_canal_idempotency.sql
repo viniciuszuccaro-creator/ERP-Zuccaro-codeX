@@ -22,15 +22,9 @@ UPDATE pedidos
 ALTER TABLE pedidos
   ALTER COLUMN origem SET DEFAULT 'MANUAL';
 
-DO $$
-BEGIN
-  -- Torna NOT NULL só depois do backfill.
-  ALTER TABLE pedidos
-    ALTER COLUMN origem SET NOT NULL;
-EXCEPTION
-  WHEN others THEN
-    NULL; -- já NOT NULL em reexecução
-END $$;
+-- SET NOT NULL já é idempotente. Falha deve abortar a transação do migrator,
+-- nunca permitir que uma origem nullable seja registrada como migration aplicada.
+ALTER TABLE pedidos ALTER COLUMN origem SET NOT NULL;
 
 DO $$
 BEGIN
