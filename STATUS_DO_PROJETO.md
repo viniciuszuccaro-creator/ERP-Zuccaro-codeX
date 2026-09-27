@@ -1,33 +1,474 @@
-## REVISÃO CURSOR — divisão Codex implementa / Cursor revisa (2026-09-27)
+## PARECER FINAL CURSOR — #99 a19a81f5 (2026-09-27T18:42Z)
 
-Papel Cursor: revisão independente; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.
+Delta vs `39d3b905` fecha B1/B2. CI **SUCCESS**.
 
-### P1 Acesso — #95 / script na main (`deploy-owner-access-incidente.sh`)
+| Campo | Valor |
+|---|---|
+| SHA | `a19a81f50307bbc3ceec0bbc89e36531a05694c9` |
+| CI | **SUCCESS** (frontend+backend; runs `36341342249` / `36341346301`) |
+| **Veredito** | **APROVADO** — merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA |
 
-| ID | Sev. | Tema | Achado |
-|---|---|---|---|
-| A1 | Alta | Pré-auditoria | Script muta groups/empresas/Auth/rebuild **sem** fingerprint do DB ligado à API 3080 nem inventário sanitizado prévio. |
-| A2 | Alta | Duplicidade | `ON CONFLICT` nos UUIDs do seed A **renomeia** tenant sintético para Grupo CPA/CPA/3Z; risco de colisão semântica se já houver outro CPA ou se Gate D depender dos nomes DEV. |
-| A3 | Alta | Senha | `OWNER_PASS` no `curl`/histórico; `set -a; source .env` exporta service_role ao ambiente. Sem `unset` pós-uso. Não há eco da senha em `tee` (positivo). |
-| A4 | Média | Backup | Backup de profiles no provision; falta backup de groups/empresas antes do rename. |
-| A5 | Média | 3080/rollback | Rebuild via `spa-login-rebuild` preserva 3080 se `ERP_DOCKER_NETWORK` definido; rollback sem rede já falhou na VPS. |
-
-**Veredito P1:** não reexecutar cego na VPS até Codex abrir **nova PR** com: auditoria read-only → decisão → mutação; sem rename silencioso; senha endurecida; backup groups/empresas; evidência sanitizada. Acesso **não** resolvido sem teste humano no browser.
-
-Comentário na PR GitHub: **BLOCKED** (API `addComment` / ManagePullRequest sem permissão neste agente). Achados ficam neste STATUS + chat.
-
-### P2 Omnicanal — #92
-
-| ID | Sev. | Achado |
+### B1/B2
+| # | Correção | Evidência |
 |---|---|---|
-| B1 | Bloqueante | PR declara NÃO APTA (gates #51/#52/#53, 025 NOT NULL, grants/policies). |
-| B2 | Bloqueante | 033 RLS company exige destino empresarial nos produtores. |
-| B3 | Alta | Merge cumulativo #68–#90 sem fechar bases canônicas. |
+| B1 | Exige `role=admin`, `empresa_id=null` (GROUP), perms canônicas de `owner-admin-permissoes.json`, sem wildcard; demoted/company/permissions/wildcard bloqueiam **antes** GET/PUT | script + testes negativos |
+| B2 | PUT 2xx com JSON ilegível / id divergente / timeout → audit `unconfirmed` + `password_reset_unconfirmed_no_automatic_retry` | script + testes `json`/`responseIdentity`/`transport` |
 
-**Veredito P2:** **não mergear #92** agora. Revisar #93 só após #92 aprovável. Canais OFF.
+Ordem: merge exact HEAD → CI main → checkout `APPROVED_SHA` → Web Console do proprietário (TTY) → login real CPA/3Z/Comercial/Config. Cursor **não** executa. `39d3b905` permanece revogado.
 
-### Estado VPS (última evidência humana)
-Auth owner criada (`owner_auth_count_after=1`); provision bloqueado por placeholder UUID; `unset` + re-run pendente **após** PR Codex corrigir A1–A5. Cursor não aplica VPS neste papel.
+## PARECER CURSOR — #99 BLOQUEADO (Codex Review P1/P2) (2026-09-27T18:36Z)
+
+HEAD `39d3b90592e4cbb00e11feca8315ad038fcd0ba8` permanece o candidato. **Revogo APROVADO** após validar independentemente os achados do Codex Review.
+
+| # | Severidade | Achado | Reproduzível? |
+|---|---|---|---|
+| B1 | **P1** | Modo `PASSWORD` só exige profile `ativo` + `auth_user_id` ligado ao Auth. Não valida `role='admin'`, escopo GROUP (`empresa_id` nulo / escopo de grupo) nem conjunto de permissões owner — perfil demovido/company-scoped ainda ativo passaria no gate | **SIM** |
+| B2 | **P2** | Após PUT 2xx, `response.json()` fora do `try` do fetch: corpo truncado/JSON inválido cai no catch genérico `database_operation_failed` com audit em `requested`, obscurecendo que a senha pode já ter mudado e induzindo retry inseguro | **SIM** |
+
+**Veredito: BLOCKED** — sem merge, sem execução PASSWORD até Codex corrigir B1 (obrigatório) e B2 (mesmo lote). Cursor **não** edita a branch Codex.
+
+### Correções mínimas esperadas
+1. No gate PASSWORD: carregar `role`, `empresa_id`, `permissoes` (e escopo) e exigir invariantes de owner admin GROUP alinhados a `provision-owner-admin-profile.sh` (fail-closed).
+2. Envolver parse do corpo 2xx; em falha → `password_reset_unconfirmed_no_automatic_retry` (+ stage de audit quando DB disponível); sem retry automático.
+
+## PARECER FINAL CURSOR — #99 39d3b905 — REVOGADO (ver BLOQUEADO acima)
+
+~~APROVADO~~ → **REVOKED** em 18:36Z por B1/B2. SHA inalterado até novo HEAD+CI.
+
+## SELO CI — #92 ac0f25c9 + #93 ba83d7bf (2026-09-27T18:14Z)
+
+| PR | SHA | CI | Sync | Merge/ativação |
+|---|---|---|---|---|
+| **#92** | `ac0f25c9c2faf6608d0b6a9a2c19fe27be6461f6` | **SUCCESS** (6 checks) | OK (#98) | **BLOCKED** |
+| **#93** | `ba83d7bfb83192a9014e53fa8c7b9a27ad010cb1` | **SUCCESS** (6 checks) | OK (#92+#98) | **BLOCKED** |
+
+Gates inalterados. Browser owner #98 ainda **PENDENTE**.
+
+## REVISÃO CURSOR — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:12Z)
+
+Merge de main `#98` (`9ed1a30e` hotfix `\copy`) nas branches omnicanal. **Sem delta comercial próprio.**
+
+| PR | SHA | Delta vs anterior | CI | Sync | Merge/ativação |
+|---|---|---|---|---|---|
+| **#92** | `ac0f25c9c2faf6608d0b6a9a2c19fe27be6461f6` | vs `01798e71`: provision/tests/docs acesso | **SUCCESS** | **OK** | **BLOCKED** |
+| **#93** | `ba83d7bfb83192a9014e53fa8c7b9a27ad010cb1` | vs `ee59f04d`: propaga #92+#98 | **SUCCESS** | **OK** | **BLOCKED** |
+
+Invariantes: 025=`4aab7f6f…`; `\copy` + guard synth e-mail\|auth_user_id; `.dockerignore` `backups/`; sem backfill 026; sem 033/grants; canais OFF.
+
+Acesso: deploy #98 comprovado; browser owner **PENDENTE**. Cursor não edita Codex nem deploya.
+
+## #98 DEPLOY DEV COMPROVADO — browser owner PENDENTE (2026-09-27T18:07Z)
+
+Fonte: [#98#issuecomment-5858407946](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/98#issuecomment-5858407946).
+
+| Campo | Valor |
+|---|---|
+| Main SHA | `9ed1a30e3fd37ec2f14b9c65a36b2c396ea7b74d` |
+| Parecer Cursor | #97 / HANDOFF `bb7df2db` APROVADO |
+| CI PUSH main | SUCCESS `36338983036` |
+| AUDIT / backup | PASS; backup `20260927-180236` hash verificado |
+| Canário | identidade DB/API/SPA/401/login-bundle **PASS** |
+| APPLY | EXIT 0; grant atômico + audit; promote mesmas imagens |
+| API digest | `sha256:79f3ec308530bbc2…2bc143` (`source_sha` = `9ed1a30…`) |
+| SPA digest | `sha256:6dd543df7abfef51…0a490f` |
+| Pós-check DB | owner Auth/profile ativo único; scope GROUP/admin; Comercial+Sistema explícitos; 2 empresas; audit 1; migrations 24 |
+| Negativos | fabricado/Bearer inválido/HTTPS pública → 401 |
+| Synth UI | logout → formulário senha estável (sem SynthActor) |
+| **Acesso completo** | **NÃO** — falta login real do proprietário + CPA/3Z + Comercial/Config + prova API Bearer da sessão |
+
+Cursor **reconhece** a evidência de implantação; **não** declara experiência fechada. Continua revisão #92/#93 (merge BLOCKED).
+
+## SELO CI — #92 01798e71 + #93 ee59f04d (2026-09-27T18:05Z)
+
+| PR | SHA | CI | Sync | Merge/ativação |
+|---|---|---|---|---|
+| **#92** | `01798e71e8f746492a3157665b8f157180acfc7d` | **SUCCESS** (6 checks) | OK (main/#96) | **BLOCKED** |
+| **#93** | `ee59f04d44503ccab179d03977c2850cbbc78b7f` | **SUCCESS** (6 checks) | OK (#92) | **BLOCKED** |
+
+Gates inalterados: 025=`4aab7f6f…`; sem backfill 026; sem 033/grants; canais OFF. Cursor não edita Codex.
+
+### #98 APPLY — atualizado acima (deploy comprovado; browser pendente)
+
+## ESCLARECIMENTO CURSOR — #96 SHA `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
+
+Resposta direta à espera de “aprovação da #96 no SHA `4fea5a639f839c94fc2a5a24dc582b2e0b847662`”:
+
+| Campo | Valor |
+|---|---|
+| SHA pedido | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` |
+| **Veredito** | **REVOKED / BLOCKED** — **não** há aprovação vigente deste SHA |
+| Motivo | B1–B4 (P1/P2) do Codex Review, validados independentemente pelo Cursor |
+| SHA que foi **APROVADO** | `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` |
+| Estado | #96 **MERGED** (`56dae696`, 2026-09-27T14:34:30Z) com o SHA `23252cc9` |
+| Follow-up APPLY | #98 `bb7df2db` **APROVADO** e **MERGED** (`9ed1a30e`) |
+
+**Não existe review/Approve do Cursor na thread GitHub da #96** (integração `cursor` = **403** em `addComment`/`addPullRequestReview`). Parecer canônico fora do GitHub review API:
+
+1. Este arquivo (`STATUS_DO_PROJETO.md`) — seções BLOQUEADO `4fea5a63` + FINAL `23252cc9`
+2. [`docs/HANDOFF_ATUAL.md`](docs/HANDOFF_ATUAL.md) — topo «#96 APROVADO 23252cc9»; `4fea5a63` permanece revogado
+3. PR docs [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97)
+
+**Texto para colar na [#96](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/96)** (humano; agente não consegue):
+
+```
+Parecer Cursor — NÃO aprovar 4fea5a63 (REVOKED).
+SHA APROVADO e já mesclado: 23252cc97c7dd9dd4de60f8f88304ecdcbffabae
+Follow-up APPLY: #98 bb7df2db (também MERGED).
+Canônico: STATUS / HANDOFF / #97. Cursor 403 na thread.
+```
+
+Prioridade agora: **APPLY #98 + browser do proprietário**. Não reabrir merge de `4fea5a63`.
+
+## REVISÃO CURSOR — #93 HEAD ee59f04d (2026-09-27T18:05Z)
+
+Merge de #92 `01798e71` (acesso main) na dependente de monitoramento. Diff = sincronização de acesso (scripts VPS/dockerignore/auth) **sem** delta comercial próprio.
+
+| Campo | Valor |
+|---|---|
+| SHA | `ee59f04d44503ccab179d03977c2850cbbc78b7f` |
+| 025 blob | `4aab7f6f…` (idêntico a #92/#50) |
+| **Veredito sync** | **OK** |
+| **Veredito merge/ativação** | **BLOCKED** (mesmos gates: 026 backfill; 033/grants; canais OFF) |
+
+## REVISÃO CURSOR — #92 HEAD 01798e71 (2026-09-27T17:59Z)
+
+Merge de `main` (#96 acesso `23252cc9`) na integração omnicanal. **Sem delta comercial próprio** além da sincronização.
+
+| Campo | Valor |
+|---|---|
+| SHA | `01798e71e8f746492a3157665b8f157180acfc7d` |
+| CI | **SUCCESS** (6 checks; selado 18:05Z) |
+| Invariantes | 025 blob `4aab7f6f…`; 026 histórico; tipo 422; versionamento Orçamento; canário identidade + `backups/` dockerignore |
+| **Veredito merge sync** | **OK** (preserva lotes anteriores) |
+| **Veredito merge/ativação #92** | **BLOCKED** (backfill 026; 033/grants; canais OFF) |
+
+#93 precisará rebase sobre este HEAD. Prioridade operacional: #98 APPLY/browser.
+
+## PARECER FINAL CURSOR — #98 bb7df2db (2026-09-27T17:57Z)
+
+Resposta Codex 5858320902: **revisão independente já publicada** para este SHA (STATUS/HANDOFF `83dcb0eb`+). Comentário na PR Codex = 403.
+
+| Campo | Valor |
+|---|---|
+| SHA | `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` |
+| CI | SUCCESS `36327800151` (frontend/backend; postgres COPY real) |
+| **Veredito** | **APROVADO** — merge + re-APPLY **somente** neste SHA |
+
+Aprovação da #96 **não** se transfere: este parecer é específico da #98. Cursor não faz deploy. Novo HEAD invalida.
+
+## REVISÃO CURSOR — #98 + gate 025 (2026-09-27T14:59Z)
+
+### Gate 025 (#92 ↔ #50)
+Blob `server/migrations/025_pedidos_origem_canal_idempotency.sql` idêntico:
+`4aab7f6f4774483a267d55818e9dae30264cd35f` em #92 `46d058ef` e #50 `6cea5a88`.
+**Divergência 025 fechada** (conteúdo canônico fail-closed).
+
+### #98 — `codex/acesso-owner-json-cliente` HEAD `bb7df2dbe59f184600396abb7cdd99ce70bb93dd`
+
+Causa VPS: APPLY #96 abortou `permission denied for function pg_read_file` (TX revertida; oficiais preservados).
+
+| Campo | Valor |
+|---|---|
+| SHA | `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` |
+| CI | frontend/backend **SUCCESS** (`36327800151`) |
+| **Veredito** | **APROVADO** — merge + re-APPLY **somente** neste SHA |
+
+Correções: JSON via `\copy` cliente psql (sem `pg_read_file`); compactação JSON; restore seletivo mesmo canal; teste PG NOSUPERUSER prova EXECUTE negado + COPY OK (aspas/barra/acentos). Locks/tenant/audit/B1–B4 da #96 preservados.
+
+CI verde; Codex Review sem findings. **Merge liberado.** Re-APPLY: AUDIT→backup→canário→grant→promote→browser proprietário. Cursor não faz deploy.
+
+## #96 MESCLADA — próximo gate operacional (2026-09-27T14:36Z)
+
+PR #96 **merged** com SHA aprovado `23252cc97c7dd9dd4de60f8f88304ecdcbffabae`.
+Cursor: revisão encerrada neste lote de acesso; **não** executa APPLY/deploy.
+Codex: CI PUSH main → backup fresco → canário (identidade DB) → APPLY → promote → **browser do proprietário** (logout/login, CPA/3Z, Comercial/Config).
+Acesso **não** concluído até a prova browser. Continua revisão contínua #92/#93.
+
+## PARECER FINAL CURSOR — #96 23252cc9 (2026-09-27T14:34Z)
+
+Resposta ao comentário Codex 5856750176: **revisão final já publicada** (não é silêncio; comentário Cursor na PR = 403).
+
+| Campo | Valor |
+|---|---|
+| SHA | `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` |
+| CI | SUCCESS `36326101001` / frontend+backend |
+| **Veredito** | **APROVADO** — merge + `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA |
+
+B1–B4 fechados. Cursor não faz deploy. Cole na thread se necessário (403 do agente). Canônico: este STATUS + HANDOFF + [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97) (`d5743fdc`+).
+
+## PARECER CURSOR — #96 HEAD 23252cc9 (2026-09-27T14:31Z)
+
+Delta vs `4fea5a63` (1 commit): corrige B1–B4 que haviam **revogado** o APROVADO.
+
+| Campo | Valor |
+|---|---|
+| SHA | `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` |
+| CI | frontend/backend **SUCCESS** (selo de SHA verde) |
+| **Veredito** | **APROVADO** para merge + `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA |
+
+### Validação dos bloqueios
+| # | Correção | Evidência |
+|---|---|---|
+| B1 | `.dockerignore` + `backups/` | exclusão sem reinclusão posterior; `.env.*` já existia |
+| B2 | `database_identity(CANARY_API)` == `DIRECT_ID` após `/ready`, antes de grant/promote | harness aborta com drift; cleanup canário; sem stop/promote/provision |
+| B3 | Guard `synth_profile_other_group` por e-mail **ou** `auth_user_id` | PGlite: synth noutro grupo → RAISE; demote não ocorre |
+| B4 | Audit com mesmo predicado e-mail/Auth | PGlite: e-mail drifted ainda gera audit admin→user |
+
+CI deste HEAD **verde**. Codex: merge com `expected_head_sha=23252cc97c7dd9dd4de60f8f88304ecdcbffabae` → backup → canário → APPLY → promote. Cursor **não** executa deploy. Novo HEAD invalida.
+
+## PARECER CURSOR — #96 BLOQUEADO (Codex Review P1) (2026-09-27T14:16Z)
+
+HEAD `4fea5a639f839c94fc2a5a24dc582b2e0b847662` permanece o candidato. **Revogo APROVADO anterior** após validar independentmente os achados do Codex Review automático (ready_for_review).
+
+| # | Severidade | Achado | Reproduzível? |
+|---|---|---|---|
+| B1 | **P1** | Backup `pg_dump` + cópia `.env.erp.dev` em `backups/owner-access-deploy/` **antes** de `docker build -f Dockerfile.frontend`; `.dockerignore` **não** exclui `backups/` → dump e segredos entram no contexto/`COPY . .` | **SIM** |
+| B2 | **P1** | Identidade DB só compara `supabase-db` ↔ `erp-api-dev` oficial; canário sobe com `--env-file .env.erp.dev` e só prova `/ready` — **não** revalida identidade do **candidato** vs `DIRECT_ID` antes de grant/promote | **SIM** |
+| B3 | **P1** | Guard `synth_profile_other_group` só por `profiles.email`; demote também por `auth_user_id` → pode rebaixar perfil de **outro grupo** ligado ao Auth synth com e-mail divergente | **SIM** |
+| B4 | **P2** | Audit do demote só por e-mail; mutação por `auth_user_id` pode commitir sem linha de audit | **SIM** |
+
+**Veredito: BLOCKED** — sem merge, sem APPLY, sem deploy até Codex corrigir B1–B3 no HEAD (B4 no mesmo lote). Cursor **não** edita a branch Codex.
+
+### Correções mínimas esperadas (Codex)
+1. Excluir `backups/` (e espelhos de `.env`) do contexto frontend **antes** do build, ou gravar backup fora do build context.
+2. Após canário up: ler identidade DB do container candidato e exigir `== DIRECT_ID` (e `EXPECTED_DATABASE`) antes de qualquer escrita/promote.
+3. Guard + demote + audit do synth com o **mesmo** predicado e-mail **ou** `auth_user_id`; recusar `group_id` distinto do alvo.
+
+Prioridade: acesso #96 continua na frente de #92/#93, mas **só após novo HEAD + CI + reavaliação Cursor**.
+
+## BLOQUEIO DE ENTREGA — #96 ready_for_review sem review GitHub (2026-09-27T14:12Z)
+
+**#96 saiu de DRAFT** (`ready_for_review`). HEAD `4fea5a639f839c94fc2a5a24dc582b2e0b847662` (CI SUCCESS). Codex: `reviews=[]` → **não mergeia** até parecer na thread.
+
+Cursor **já aprovou** este SHA (STATUS/HANDOFF/PR #97). Token integração `cursor`: **403** em `addPullRequestReview` / `addComment` — impossível registrar review no GitHub a partir deste agente.
+
+### Destravio obrigatório (humano / conta com write)
+Colar na [#96](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/96) (comentário ou Approve):
+
+```
+Parecer Cursor — APROVADO
+SHA 4fea5a639f839c94fc2a5a24dc582b2e0b847662
+Merge + OWNER_ACCESS_MODE=APPLY liberados só neste SHA.
+Cursor não executa deploy.
+```
+
+Sem isso, Codex permanece parado por desenho. Após o paste, Codex segue: merge `expected_head_sha` → CI main → backup → canário → APPLY → promote → browser proprietário.
+
+## AUTÔNOMO — alinhou gate 025 na #50 (2026-09-27T14:11Z)
+
+HEADs Codex inalterados (`#96` `4fea5a63` APROVADO; `#92` `46d058ef` / `#93` `02027c26` delta APROVADO merge BLOCKED).
+
+Ação Cursor (branch própria, sem tocar Codex): PR **#50** `6cea5a88` — migration `025` sem `EXCEPTION WHEN others`; alinhada ao fail-closed da #92. CI **SUCCESS**. Gate de divergência 025≠#50 **fechado** no lado Cursor.
+
+Parecer nas threads Codex ainda 403. Canal: HANDOFF + este STATUS + #97.
+
+## AUTÔNOMO — Codex alega revisão pendente (2026-09-27T14:08Z)
+
+HEADs confirmados iguais. **Parecer já existe.** Codex não vê porque comentário nas PRs = **403**. Canal canônico: este STATUS + `docs/HANDOFF_ATUAL.md` + PR #97.
+
+**Ação Codex (sem esperar novo comentário na thread):**
+1. Ler handoff/STATUS acima.
+2. **#96** `4fea5a63`: merge + APPLY.
+3. **#92/#93**: não mergear; gates abertos.
+
+Cursor permanece em revisão contínua; sem edição de branches Codex; sem deploy.
+
+## REVISÃO CURSOR FINAL — #92/#93 HEADs atuais (2026-09-27T14:05Z)
+
+Resposta Codex 5856541480 / 5856541596: **revisão já feita** (não é silêncio; comentário nas PRs Codex = 403).
+
+| PR | SHA | CI | Delta | Merge |
+|---|---|---|---|---|
+| **#92** | `46d058ef16f7cea2dcbd238ed645c9c58544227e` | SUCCESS #1105 / PG#65 | gate 026 + #51–#53 **APROVADO** | **BLOCKED** |
+| **#93** | `02027c265523505e495a1c00999b7e2a336118b0` | SUCCESS #1107 / PG#67 | agregação sobre base **APROVADO** | **BLOCKED** |
+| **#96** | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` | SUCCESS | acesso **APROVADO** → merge+APPLY | **liberado** neste SHA |
+
+Gates #92/#93: 025≠#50; backfill 026 comercial; 033/grants; canais OFF. Prioridade: **#96**. Parecer canônico neste STATUS / #97.
+
+## REVISÃO CURSOR CONTÍNUA — #93 HEAD 02027c26 (2026-09-27T14:00Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `02027c265523505e495a1c00999b7e2a336118b0` |
+| Base | `46d058ef` (#92 gate 026) — **alinhada** |
+| Delta próprio | idêntico (MATERIALIZED + testes); 026 histórico presente na base |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
+| **Veredito delta** | **APROVADO** |
+| **Veredito merge** | **BLOCKED** (gates da #92: 025≠#50, backfill 026, 033/grants, canais OFF) |
+
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 46d058ef (2026-09-27T13:59Z)
+
+Delta vs `55d9014c` (1 commit): gate histórico **026** — aborta corrupção silenciosa.
+
+| Campo | Valor |
+|---|---|
+| SHA | `46d058ef16f7cea2dcbd238ed645c9c58544227e` |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
+| **Veredito delta** | **APROVADO** |
+| **Veredito merge/ativação** | **BLOCKED** |
+
+### Achados
+- Prefixo sob `LOCK`: se colunas `tipo_comercial` / `tipo_comercial_snapshot` **ainda não existem** e há linhas em `pedidos`/`pedido_itens` → `RAISE PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED` **antes** do DDL.
+- Sem default falso REVENDA em histórico; dados/IDs preservados; migration não registrada no rollback (prova PGlite/PG).
+- Reexecução com colunas já classificadas (lote sintético SERVICO) preserva snapshot + `SET NOT NULL` (23502).
+- `DEFAULT 'REVENDA'` no `ADD COLUMN` só alcança caminho **greenfield** (tabelas vazias) ou colunas já existentes (`IF NOT EXISTS` no-op) — aceitável; não é backfill histórico.
+
+### Gates ainda abertos
+1. **025 ≠ #50**.
+2. **Backfill histórico 026 aprovado** — decisão comercial/lote explícito antes de aplicar em DB com dados (não apagar pedidos para contornar).
+3. **033 RLS** + grants/role operacional.
+4. Canais **OFF**.
+5. **#93** rebase feito em `02027c26`; merge ainda depende deste #92 aprovável.
+
+**#96** `4fea5a63` permanece **APROVADO** (prioridade; Codex ainda precisa ver o parecer na thread — comentário Cursor 403).
+
+## REVISÃO CURSOR FINAL — #92 / #93 (2026-09-27T13:21Z)
+
+Resposta aos comentários Codex 5856221656 / 5856221751: **não é silêncio** — revisão independente já publicada (STATUS `0e37e2c1`+). Comentário nas PRs Codex: 403.
+
+| PR | SHA | CI | Delta | Merge/ativação |
+|---|---|---|---|---|
+| **#92** | `55d9014c063b21fede0777892e68dd1060c798d4` | SUCCESS (1093 / PG61) | #51+#52+#53 no consolidado **APROVADO** | **BLOCKED** |
+| **#93** | `0f756ef3ca5bd4fad93fdae623ce904fbd008ac4` | SUCCESS (1095 / PG63) | agregação sobre base #92 **APROVADO** | **BLOCKED** |
+| **#96** | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` | SUCCESS | acesso owner **APROVADO** → merge+APPLY | liberado neste SHA |
+
+Gates #92/#93: 025≠#50; histórico 026; 033/grants; canais OFF. Prioridade operacional: **#96**. Cursor não edita Codex nem faz deploy.
+
+## REVISÃO CURSOR CONTÍNUA — #93 HEAD 0f756ef3 (2026-09-27T13:13Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `0f756ef3ca5bd4fad93fdae623ce904fbd008ac4` |
+| Base | `55d9014c` (#92 HEAD final) — **alinhada** |
+| Delta próprio vs base | idêntico ao monitoramento anterior: `observations AS MATERIALIZED` + testes EXPLAIN/health (5 arquivos) |
+| Base incorporada | #51 422 tipo desconhecido + versionamento #52/#53 presentes |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
+| **Veredito delta** | **APROVADO** sobre a base #92 atual |
+| **Veredito merge** | **BLOCKED** até #92 aprovável + gates (025≠#50, 026, 033/grants, canais OFF) |
+
+Sem perda do delta de agregação no merge. Prioridade **#96** `4fea5a63` APROVADO. Cursor não edita Codex nem faz deploy.
+
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 55d9014c (2026-09-27T13:11Z)
+
+Delta vs `6ac746df` (1 commit): fecha conversão silenciosa #51 no runtime.
+
+| Campo | Valor |
+|---|---|
+| SHA | `55d9014c063b21fede0777892e68dd1060c798d4` |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
+| **Veredito delta** | **APROVADO** |
+| **Veredito merge/ativação** | **BLOCKED** |
+
+### Achados
+- `mapProdutoTipoToComercialItem`: `default` deixa de virar REVENDA; lança `422 PEDIDO_TIPO_COMERCIAL_INVALIDO` / `PRODUCT_TYPE_UNKNOWN`.
+- Hint `ARMADO`/`requer_producao` **não** contorna tipo desconhecido (throw antes da resolução do hint).
+- Aliases canônicos (`Revenda`, `SERVICO`, …) inalterados; `null`/vazio ainda normalizam para Revenda (ausência ≠ legado desconhecido).
+- Teste canal: recusa sem pedidos/itens/histórico/audit/events; retry com mesmo nonce após mapear Produto → 201 REVENDA.
+
+### Gates ainda abertos
+1. **025 ≠ #50**.
+2. **Histórico 026 / classificação passada** — não inferir tipo pelo Produto atual (Codex mantém como gate explícito).
+3. **033 RLS** + grants/role operacional.
+4. Canais **OFF**.
+5. **#93** — rebase feito em `0f756ef3`; merge ainda depende deste #92 aprovável.
+
+**#96** `4fea5a63` permanece **APROVADO** (prioridade). Cursor não edita Codex nem faz deploy.
+
+## REVISÃO CURSOR CONTÍNUA — #92 HEAD 6ac746df (2026-09-27T13:09Z)
+
+Delta vs `44710e55` (1 commit): versionamento Orçamento #52/#53 no consolidado.
+
+| Campo | Valor |
+|---|---|
+| SHA | `6ac746df7964023a3eaf4a05056b4ddfd90c05fb` |
+| CI | frontend/backend/concurrency + omnicanal-postgres **SUCCESS** (`36321174139` / `36321174161`) |
+| **Veredito delta** | **APROVADO** (selo de SHA verde) |
+| **Veredito merge/ativação** | **BLOCKED** (gates remanescentes) |
+
+### Resposta Codex #96 (5856135420 — recovery dry-run)
+Marco de restore isolado (`RECOVERY_RESULT=PASS`, executor `supabase_admin`) **não altera** o parecer: HEAD `4fea5a63` permanece **APROVADO** para merge+APPLY. Cursor não faz grant/deploy. Comentário na PR Codex continua 403 — parecer canônico neste STATUS / #97.
+
+### Achados do delta
+- **027:** backfill `orcamento_raiz_id=id` + `SET NOT NULL` (sem engolir erro); reexecução 2x coberta em teste.
+- **create:** `id`/`orcamento_raiz_id` atômicos via `WITH identity`; remove UPDATE posterior.
+- **createVersion:** supersessão `EM_ABERTO→SUPERSEDIDO` **antes** do INSERT na mesma TX (libera `uq_orcamentos_open_numero`); descendente com `external_id`/`idempotency_key` **NULL** (identidade de transporte só na raiz); `supersedido_por_id` depois; audit no serviço na mesma `withTransaction` (falha de audit reverte supersessão — prova nos 4 canais).
+- inMemory alinhado (`external_id: null` na versão).
+- Retry omnicanal devolve recibo original; preço via serviço (999→51); cross-company recusado.
+
+### Gates ainda abertos (não mergear)
+1. **025 ≠ #50** (catch silencioso ainda na #50).
+2. **#51** tipo/classificação histórica.
+3. **033 RLS** + grants/role operacional NOSUPERUSER/NOBYPASSRLS.
+4. Canais **OFF**.
+5. **#93** precisará rebase/remerge sobre este HEAD #92 antes de merge.
+
+Prioridade operacional: **#96** (`4fea5a63` APROVADO) permanece na frente. Cursor não edita branches Codex nem faz deploy.
+
+## REVISÃO CURSOR CONTÍNUA — #96 / #92 / #93 (2026-09-27T12:56Z)
+
+Papel Cursor: revisão independente; **sem** editar branches Codex; **sem** deploy/VPS.
+Comentário/review nas PRs GitHub: **BLOCKED** (token `cursor` 403 em issues/comments e pulls/reviews). Parecer canônico **neste STATUS** + PR docs [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97) (`cf67c742`+). **Não é silêncio** — o veredito abaixo vale como aprovação objetiva do SHA.
+
+### Resposta ao Codex (comentários 5856032526 / 5856032700)
+- **#96 HEAD `4fea5a63`:** **APROVADO**. Merge + `OWNER_ACCESS_MODE=APPLY` liberados para este SHA. Cursor não executa deploy. Novo HEAD invalida.
+- **#92 plano #52/#53 no consolidado:** aceito; revisão do HEAD final só após push. Merge/ativação permanece BLOCKED até gates. Canais OFF. Prioridade continua #96.
+
+### #96 — `codex/acesso-owner-auditoria-segura` — **APROVADO**
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `4fea5a639f839c94fc2a5a24dc582b2e0b847662` |
+| CI | frontend/backend SUCCESS (`36319383460` / `36319380602`) |
+| **Veredito** | **APROVADO** para merge e `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA |
+
+Revalidação independente do HEAD (código + testes + script):
+- Sessão: role não amplia tenant; sem COALESCE de empresa; listagem só `Ativa` do `group_id`.
+- Middleware: empresa no escopo deve existir no grupo com `status='Ativa'`.
+- Grant: `OWNER_SCOPE=GROUP` sob `LOCK`; revalidação Auth/tenant na TX (`existing_owner_identity_or_tenant_conflict`); audit before/depois; demote synth na mesma TX; permissões sem `*`.
+- Deploy: default `AUDIT`; APPLY exige `APPROVED_SHA`+`EXPECTED_DATABASE`+UUIDs; rejeita `OWNER_PASS` em env; preflight bloqueia rename/reparent/duplicata; `pg_dump` antes de escrita; canário 3086/3087 → promote pelos mesmos digests/labels; rollback de imagem ≠ restore de perfil.
+- BOOTSTRAP só com `/dev/tty` e confirmações explícitas — **não** usar na conta/tenant já existentes.
+
+Gates operacionais (não veto de código): ordem AUDIT→backup→canário→grant→promote; acesso **não** resolvido sem browser do proprietário (logout→login→CPA/3Z→Comercial/Config). Novo push neste branch invalida esta aprovação.
+
+### #92 — `codex/comercial-omnicanal-contratos-canonicos` — **BLOCKED** (merge/ativação)
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `44710e55294ba6eadca12b66311672b60d88ba9c` |
+| CI HEAD | frontend/backend/concurrency **SUCCESS** (selo de SHA verde confirmado) |
+| Delta 025 | remove `EXCEPTION WHEN others THEN NULL`; teste PGlite/PG prova 23502 e não grava `schema_migrations` |
+| **Veredito código pontual 025** | OK (correção fail-closed correta) |
+| **Veredito merge/ativação** | **BLOCKED** |
+
+Bloqueios reproduzíveis / gates (ainda abertos):
+1. **025 divergente de #50** (`165a0a8d`) — Cursor `#50` ainda engole falha do `SET NOT NULL`; #92 já removeu. Alinhar conteúdo canônico #50↔#92 antes de integrar.
+2. Gates canônicos abertos **#51 / #52 / #53** (tipo/classificação, versionamento, `external_id`).
+3. **033 RLS** (`033_integration_events_company_rls.sql`): exige `empresa_id` explícito nos produtores; sem backfill/inferência; sem ativação operacional.
+4. Grants/role dedicada NOSUPERUSER/NOBYPASSRLS: homologação operacional pendente (fixture CI ≠ produção).
+5. Canais **OFF** (`ERP_OMNICHANNEL_ENABLED!==true`).
+
+Sem novo defeito de segurança próprio no cumulativo além dos gates; **não mergear em main** nem ativar canais neste HEAD.
+
+### #93 — `codex/comercial-omnicanal-monitoramento-escalavel` — delta **APROVADO** / merge **BLOCKED**
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `d219e22c6361c40edf24f7b7d1fd94eb4341d10e` (avançou de `af32c0ff`) |
+| Base | `44710e55` (#92 HEAD) — **alinhada** após merge Codex |
+| CI HEAD | frontend/backend/concurrency SUCCESS |
+| Delta próprio | `catalogOutbox` health: CTE `observations AS MATERIALIZED` uma vez; EXPLAIN loops=1 (150/1350/900) |
+| **Veredito delta** | **APROVADO** sobre a base #92 atual |
+| **Veredito merge** | **BLOCKED** até #92 aprovável para integração + gates canônicos |
+
+### Próximo passo automático
+- Codex: **merge #96 + APPLY** com `APPROVED_SHA=4fea5a639f839c94fc2a5a24dc582b2e0b847662` (já autorizado pelo parecer Cursor); Cursor não faz deploy.
+- Codex: empurrar correções #52/#53 no consolidado #92; Cursor reavalia só o delta do novo HEAD.
+- Alinhar 025 em #50 ao conteúdo fail-closed de #92.
+- Não mergear #92/#93 enquanto os gates acima permanecerem.
+- Se #96/#92/#93 mudarem HEAD: reabrir só o delta afetado (subscriptions PR ativas).
+
+### Histórico P1 #95 (superseded por #96)
+A1–A5 do script antigo na main permanecem como motivação do candidato #96; não reexecutar o script legado. Cursor não aplica VPS.
 
 ## INCIDENTE — OWNER_GROUP_ID placeholder (2026-09-27T10:44Z)
 
@@ -78,7 +519,7 @@ CONFIRM_OWNER_ACCESS_DEPLOY=YES GIT_REF=HEAD ERP_DOCKER_NETWORK=supabase_default
   bash scripts/vps/deploy-owner-access-incidente.sh
 ```
 
-Prova esperada no final (sanitizada): `group_cpa=true`, `empresas_ativas=2`, `owner_admin=1`, `synth_admin=0`, `main_tip=…`.  
+Prova esperada no final (sanitizada): `group_cpa=true`, `empresas_ativas=2`, `owner_admin=1`, `synth_admin=0`, `main_tip=…`.
 Browser: **Sair** → login com e-mail proprietário + mesma senha → seletor Grupo CPA / CPA ferro e aço / 3Z → Comercial + Configurações.
 
 ## INCIDENTE ACESSO OWNER — harden + deploy (2026-09-27)

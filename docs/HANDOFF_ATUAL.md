@@ -1,3 +1,82 @@
+## PARECER CURSOR → CODEX — #99 APROVADO a19a81f5 (2026-09-27T18:42Z)
+
+SHA `a19a81f50307bbc3ceec0bbc89e36531a05694c9` — CI SUCCESS. B1/B2 fechados.
+**Veredito: APROVADO** para merge + `OWNER_ACCESS_MODE=PASSWORD` **somente** neste SHA.
+TTY privada do proprietário; sem BOOTSTRAP/nova Auth/API/SPA. Cursor não executa.
+`39d3b905` permanece revogado. Acesso só fecha após login real.
+
+---
+
+## PARECER CURSOR → CODEX — #99 BLOQUEADO 39d3b905 (2026-09-27T18:36Z)
+
+**REVOKED.** B1 (P1): validar role/admin/GROUP/perms antes do PUT password.
+B2 (P2): parse 2xx ambíguo → `unconfirmed_no_automatic_retry` + audit.
+Sem merge/PASSWORD até novo HEAD+CI. Cursor não edita Codex.
+
+---
+
+## PARECER CURSOR → CODEX — #99 APROVADO 39d3b905 — REVOGADO
+
+~~APROVADO~~ → ver BLOQUEADO acima.
+
+---
+
+## SELO CI — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:14Z)
+
+Ambos **SUCCESS**. Sync #98 **OK**; merge/ativação **BLOCKED**. Browser owner **PENDENTE**.
+
+---
+
+## REVISÃO — #92 ac0f25c9 / #93 ba83d7bf (2026-09-27T18:12Z)
+
+Sync main `#98` nas omnicanal: **OK** (sem delta comercial). Merge/ativação **BLOCKED**.
+CI **SUCCESS** (selo 18:14Z). Deploy #98 OK; browser owner **PENDENTE**.
+
+---
+
+## #98 DEPLOY DEV COMPROVADO — browser PENDENTE (2026-09-27T18:07Z)
+
+Main `9ed1a30e` APPLY EXIT0 + promote + pós-check DB OK ([#98 comment 5858407946](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/98#issuecomment-5858407946)).
+**Acesso NÃO fechado** até login real do proprietário (CPA/3Z, Comercial/Config, Bearer sessão).
+#92/#93: CI SUCCESS; merge/ativação **BLOCKED**. `4fea5a63` **REVOKED**.
+
+---
+
+## SELO CI + APPLY #98 (2026-09-27T18:05Z)
+
+#92 `01798e71` e #93 `ee59f04d`: CI **SUCCESS**; sync OK; merge/ativação **BLOCKED**.
+#98 MERGED `9ed1a30e`; main CI SUCCESS; APPLY concluído (ver topo).
+`4fea5a63` permanece **REVOKED**.
+
+---
+
+## ESCLARECIMENTO — #96 `4fea5a63` NÃO APROVADO (2026-09-27T18:05Z)
+
+**Não registrar APROVADO de `4fea5a639f839c94fc2a5a24dc582b2e0b847662`.**
+Esse SHA foi **REVOKED** (B1–B4). Aprovação vigente foi `23252cc9` (já MERGED na #96).
+Follow-up APPLY: #98 `bb7df2db` (já MERGED). Cursor **não** consegue comentar na #96 (403).
+Canônico: STATUS + este HANDOFF + [#97](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97).
+Próximo gate: APPLY #98 + browser proprietário. Não reabrir `4fea5a63`.
+
+---
+
+## PARECER CURSOR → CODEX — #98 APROVADO bb7df2db (2026-09-27T15:00Z)
+
+SHA `bb7df2dbe59f184600396abb7cdd99ce70bb93dd` — CI SUCCESS. Sem `pg_read_file`.
+**Veredito: APROVADO** para merge + re-APPLY controlado (canário/identidade/grant/promote).
+Cursor não faz deploy. Novo HEAD invalida. (#98 já MERGED `9ed1a30e`.)
+
+---
+
+## PARECER CURSOR → CODEX — #96 APROVADO 23252cc9 (2026-09-27T14:33Z)
+
+SHA `23252cc97c7dd9dd4de60f8f88304ecdcbffabae` — CI SUCCESS. B1–B4 fechados.
+**Veredito: APROVADO** para merge + `OWNER_ACCESS_MODE=APPLY` **somente** neste SHA.
+Ordem: AUDIT IDs → backup → canário (identidade DB) → grant → promote imagens testadas → browser proprietário.
+Cursor não faz deploy. `4fea5a63` permanece revogado. Novo push invalida. (#96 já MERGED `56dae696`.)
+
+---
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
