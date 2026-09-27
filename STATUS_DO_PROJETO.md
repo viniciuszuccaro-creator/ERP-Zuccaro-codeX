@@ -1,3 +1,17 @@
+## REVISÃO CURSOR CONTÍNUA — #93 HEAD 0f756ef3 (2026-09-27T13:13Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `0f756ef3ca5bd4fad93fdae623ce904fbd008ac4` |
+| Base | `55d9014c` (#92 HEAD final) — **alinhada** |
+| Delta próprio vs base | idêntico ao monitoramento anterior: `observations AS MATERIALIZED` + testes EXPLAIN/health (5 arquivos) |
+| Base incorporada | #51 422 tipo desconhecido + versionamento #52/#53 presentes |
+| CI | frontend/concurrency PASS; backend **em curso** |
+| **Veredito delta** | **APROVADO** sobre a base #92 atual |
+| **Veredito merge** | **BLOCKED** até #92 aprovável + CI deste HEAD + gates (033/grants/canais OFF) |
+
+Sem perda do delta de agregação no merge. Prioridade **#96** `4fea5a63` APROVADO. Cursor não edita Codex nem faz deploy.
+
 ## REVISÃO CURSOR CONTÍNUA — #92 HEAD 55d9014c (2026-09-27T13:11Z)
 
 Delta vs `6ac746df` (1 commit): fecha conversão silenciosa #51 no runtime.
@@ -5,8 +19,8 @@ Delta vs `6ac746df` (1 commit): fecha conversão silenciosa #51 no runtime.
 | Campo | Valor |
 |---|---|
 | SHA | `55d9014c063b21fede0777892e68dd1060c798d4` |
-| CI no momento | frontend/concurrency PASS; omnicanal-postgres **SUCCESS**; backend **em curso** |
-| **Veredito delta código** | **APROVADO** (selo de SHA após CI completa) |
+| CI | frontend/backend/concurrency **SUCCESS** (selo de SHA verde) |
+| **Veredito delta** | **APROVADO** |
 | **Veredito merge/ativação** | **BLOCKED** |
 
 ### Achados
@@ -16,12 +30,11 @@ Delta vs `6ac746df` (1 commit): fecha conversão silenciosa #51 no runtime.
 - Teste canal: recusa sem pedidos/itens/histórico/audit/events; retry com mesmo nonce após mapear Produto → 201 REVENDA.
 
 ### Gates ainda abertos
-1. CI completa deste HEAD (backend).
-2. **025 ≠ #50**.
-3. **Histórico 026 / classificação passada** — não inferir tipo pelo Produto atual (Codex mantém como gate explícito).
-4. **033 RLS** + grants/role operacional.
-5. Canais **OFF**.
-6. **#93** rebase sobre este HEAD.
+1. **025 ≠ #50**.
+2. **Histórico 026 / classificação passada** — não inferir tipo pelo Produto atual (Codex mantém como gate explícito).
+3. **033 RLS** + grants/role operacional.
+4. Canais **OFF**.
+5. **#93** — rebase feito em `0f756ef3`; merge ainda depende deste #92 aprovável.
 
 **#96** `4fea5a63` permanece **APROVADO** (prioridade). Cursor não edita Codex nem faz deploy.
 
