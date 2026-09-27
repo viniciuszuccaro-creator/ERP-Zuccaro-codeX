@@ -11489,3 +11489,12 @@ Checklist inicial:
 - Testes sinteticos cobrem MIME/assinatura forjados com hash correto e scanner sem resposta. Nenhum scanner real, estado de midia, RBAC, tenant, auditoria, rota ou migration foi alterado. Midia continua QUARENTENA e Produto HTTP desligado.
 - Validacoes locais: testes direcionados 12/12; backend serial 208 total / 197 pass / 0 fail / 11 skips condicionais sem DATABASE_URL; backend typecheck/build, frontend lint e audit:baseline, `git diff --check` PASS. Frontend nao foi alterado; a CI da PR repetira frontend/backend/PostgreSQL efemero. Sem VPS, bucket, 3080, dados reais ou merge.
 - Proximo passo: definir persistencia tenant-scoped de evidencia de scan e revisao comercial separada antes de adicionar transicao de QUARENTENA; gate DEV real continua pendente.
+
+
+## Codex — gate canônico 025 da integração omnicanal (2026-09-27)
+
+- #92 continua candidata cumulativa, sem merge/deploy; incorporada main8fbd94f887a7c9c62624c5563acfd36d3562ef77 preservando alterações de acesso. Nenhuma branch Cursor editada.
+- Nova divisão: Codex implementa, Cursor revisa. #96 acesso HEAD4fea5a639f839c94fc2a5a24dc582b2e0b847662 CI1077/run36319383460 SUCCESS, revisão independente e teste proprietário pendentes; não substituídos por este lote.
+- Auditoria read-only na VPS confirmou migrations001–024;025 ainda não aplicada. Correção na cópia canônica025 da branch Codex elimina catch que ocultava erro de NOT NULL; histórico001–024 intocado, sem migration paralela.
+- Teste executa SQL0252x preservando MANUAL/ORCAMENTO e trigger que derrota backfill: erro23502 aborta transação sem registrar schema_migrations. PGlite1PASS/0FAIL; PostgreSQL real será comprovado na CI isolada.
+- Coordenação na #50; Cursor precisa revisar conteúdo e alinhar candidato de integração. #51/#52/#53, grants/policies operacionais e providers continuam gates; canaisOFF, sem HD/VPS write/deploy.
