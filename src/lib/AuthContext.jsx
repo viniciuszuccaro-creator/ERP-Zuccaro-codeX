@@ -265,6 +265,10 @@ export const AuthProvider = ({ children }) => {
 
     if (isHttpBackendMode) {
       clearErpHttpSession();
+      // Recarrega para desmontar layout bloqueado e mostrar o formulário de login.
+      if (shouldRedirect && typeof window !== 'undefined') {
+        window.location.assign('/');
+      }
       return;
     }
 

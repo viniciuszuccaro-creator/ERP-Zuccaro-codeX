@@ -142,6 +142,9 @@ function createHttpHybridClient() {
     async logout() {
       const { clearErpHttpSession } = await import('./erpHttpSession.js');
       clearErpHttpSession();
+      if (typeof window !== 'undefined') {
+        window.location.assign('/');
+      }
       return true;
     },
     redirectToLogin() {
