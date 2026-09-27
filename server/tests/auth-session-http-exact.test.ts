@@ -56,6 +56,15 @@ test('guard HTTP revalida Bearer/perfil; owner em grupo/A/A2, filial isolada e r
     await allows({ group_id: SEED_IDS.groupB }, false);
     await allows({ empresa_id: SEED_IDS.empresaB }, false);
     await allows({ module: 'Modulo inexistente' }, false);
+    // Exact metadata contract sent by Layout entity and sensitive-function wrappers.
+    await allows({ empresa_id: SEED_IDS.empresaA, section: 'pedido', action: 'criar', entity_name: 'Pedido', operation: 'create' }, true);
+    await allows({ module: 'Sistema', section: ['Configurações', 'Gerais'], function_name: 'upsertConfig', action: 'editar' }, true);
+    for (const section of ['Fiscal', 'Integrações', 'IA', 'ConflictPolicy', 'Notificações']) await allows({ module: 'Sistema', section: ['Configurações', section] }, true);
+    await allows({ module: 'Sistema', section: ['Segurança', 'Monitoramento', 'AcessoRealtime'] }, true);
+    await allows({ module: 'Sistema', section: ['Segurança', 'Backup'], action: 'restaurar' }, true);
+    await allows({ module: 'Sistema', section: 'Auditoria', action: 'excluir' }, false);
+    await allows({ module: 'Modulo inexistente', function_name: 'upsertConfig', entity_name: 'Pedido', operation: 'create' }, false);
+    assert.equal((await check({ entity_name: 'x'.repeat(121) })).status, 422);
     assert.equal((await check({}, null)).status, 401);
     assert.equal((await check({}, 'expired')).status, 401);
     assert.equal((await check({ role: 'admin', permissoes: { '*': ['visualizar'] } })).status, 422);

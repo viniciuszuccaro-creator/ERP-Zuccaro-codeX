@@ -158,6 +158,8 @@ export const OWNER_ERP_PERMISSION_TREE = {
   },
   Sistema: {
     ...OWNER_UI_PERMISSION_TREE.Sistema,
+    configuracoes: { ...OWNER_UI_PERMISSION_TREE.Sistema.configuracoes, gerais: A, fiscal: A, integracoes: A, ia: A, conflictPolicy: A, heranca: A, versionamento: A, conflitos: A },
+    seguranca: { _acoes: A, politicas: A, governanca: A, monitoramento: { _acoes: A, acessoRealtime: A }, backup: A },
     'Controle de Acesso': A,
     configuracao: A,
     auditoria: ['visualizar', 'exportar'],

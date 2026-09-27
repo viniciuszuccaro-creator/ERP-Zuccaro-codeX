@@ -132,6 +132,19 @@ test('permissões HTTP do hook real usam perfil servidor mesmo com espelho local
   assert.equal(permissions.hasPermission('Fiscal', null, 'ver'), false);
 });
 
+test('owner canônico abre paths reais de Configurações/Segurança no hook frontend', async () => {
+  const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, role: 'admin', permissoes } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { permissoes: {} } }) },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  for (const section of [['Configurações', 'Gerais'], ['Configurações', 'Fiscal'], ['Configurações', 'Integrações'], ['Configurações', 'IA'], ['Configurações', 'ConflictPolicy'], ['Configurações', 'Notificações'], ['Segurança'], ['Segurança', 'Monitoramento'], ['Segurança', 'Monitoramento', 'AcessoRealtime'], ['Segurança', 'Backup']]) assert.equal(permissions.hasPermission('Sistema', section, 'visualizar'), true, section.join('.'));
+  assert.equal(permissions.hasPermission('Sistema', 'Auditoria', 'excluir'), false);
+});
+
 test('admin de Grupo preserva visão consolidada; troca A/B/Grupo não fabrica empresa', async () => {
   const storage = memoryStorage();
   const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));

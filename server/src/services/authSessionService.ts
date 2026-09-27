@@ -16,6 +16,10 @@ const sessionGuardSchema = z.object({
   module: z.string().trim().min(1).max(80),
   section: z.union([z.string().max(200), z.array(z.string().min(1).max(80)).max(12)]).nullable().optional(),
   action: z.string().trim().min(1).max(80),
+  // Existing Layout hints: bounded metadata only, never identity or authority.
+  entity_name: z.string().trim().min(1).max(120).optional(),
+  operation: z.string().trim().min(1).max(80).optional(),
+  function_name: z.string().trim().min(1).max(120).optional(),
 }).strict();
 
 /** Advisory UI check only. Mutations still require the domain RBAC/RLS guards. */
