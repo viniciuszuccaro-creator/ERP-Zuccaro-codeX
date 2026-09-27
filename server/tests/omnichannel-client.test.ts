@@ -217,3 +217,46 @@ test('transport rejects unsafe config and limits retries without exposing provid
   await assert.rejects(() => invalidJson.receipt(query), (e: unknown) => e instanceof ChannelTransportError && e.code === 'CHANNEL_CLIENT_RESPONSE_INVALID');
   assert.equal(calls, 1);
 });
+
+test('caller stop leaves unsent batch intact and interrupts receipt without transport',async()=>{
+ const f=await boot();try{
+  const stop=new AbortController();stop.abort('private');let calls=0;
+  const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true},async()=>{calls++;throw new Error('unused');},()=>now);
+  assert.deepEqual((await client.create({operation:'sale-batch',items:[f.envelope]},stop.signal)).items,[{index:0,state:'NOT_SENT'}]);
+  await assert.rejects(client.create({operation:'sale-batch',items:[]} as any,stop.signal),(e:any)=>e.code==='CHANNEL_CLIENT_PAYLOAD_INVALID');
+  await assert.rejects(client.receipt({version:1,operation:'receipt',tipo:'Pedido',idempotencyKey:f.envelope.idempotencyKey},stop.signal),(e:any)=>e.code==='CHANNEL_CLIENT_INTERRUPTED');assert.equal(calls,0);
+ }finally{await f.close();}
+});
+
+test('interrupted committed batch resumes idempotently without accepting late receipt',async()=>{
+ const f=await boot();try{
+  const stop=new AbortController();let calls=0;let release!:()=>void;
+  const late=new Promise<void>(r=>{release=r;});
+  const options={endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true,attempts:3};
+  const client=new ChannelSalesClient(options,async(input,init)=>{
+   calls++;const response=await fetch(input,init);if(calls===2){stop.abort('private');await late;}return response;
+  },()=>now);
+  const batch={operation:'sale-batch' as const,items:[0,1,2].map(i=>saleEnvelopeSchema.parse({...f.envelope,idempotencyKey:`stop-${i}`}))};
+  const result=await client.create(batch,stop.signal);
+  assert.deepEqual(result.items.map(i=>i.state),['CONFIRMED','UNCONFIRMED','NOT_SENT']);
+  assert.deepEqual(result.items[1],{index:1,state:'UNCONFIRMED',code:'CHANNEL_CLIENT_INTERRUPTED'});
+  assert.equal(calls,2);assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,2);
+  release();await new Promise(r=>setTimeout(r,10));
+  const resumed=await new ChannelSalesClient(options,fetch,()=>now).create(batch);
+  assert.deepEqual(resumed.items.map(i=>i.state==='CONFIRMED'?i.result.replayed:null),[true,true,false]);
+  assert.equal((await f.pg.query('SELECT id FROM pedidos')).rows.length,3);
+ }finally{await f.close();}
+});
+
+test('caller stop bounds ignored transport and interrupts retry backoff',async()=>{
+ const f=await boot();try{
+  for(const ignored of [true,false]){
+   const stop=new AbortController();let calls=0;
+   const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-APP',secret:identity.secret,allowInsecureLoopback:true,attempts:3,timeoutMs:30000},async()=>{
+    calls++;setTimeout(()=>stop.abort(),10);if(ignored)return new Promise<Response>(()=>{});throw new Error('unavailable');
+   },()=>now);
+   const start=Date.now();await assert.rejects(client.create(f.envelope,stop.signal),(e:any)=>e.code==='CHANNEL_CLIENT_INTERRUPTED');
+   assert.ok(Date.now()-start<1000);assert.equal(calls,1);
+  }
+ }finally{await f.close();}
+});
