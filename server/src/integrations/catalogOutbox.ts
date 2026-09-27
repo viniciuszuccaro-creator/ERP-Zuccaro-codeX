@@ -215,14 +215,15 @@ export class CatalogOutbox {
         WITH queue AS (
           SELECT * FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND source='ERP'
           AND event_type='produto.publicado' AND aggregate_type='Produto'
+        ), observations AS MATERIALIZED (
+          SELECT DISTINCT ON (r.aggregate_id,r.payload->>'sourceAttempt',r.payload->>'observer')
+            r.aggregate_id, r.payload->>'sourceAttempt' AS attempt, r.payload->>'state' AS state
+          FROM integration_events r WHERE r.group_id=$1 AND r.empresa_id=$2 AND r.source='ERP'
+            AND r.event_type='catalogo.reconciliado' AND r.aggregate_type='IntegracaoEvento' AND r.status='processed'
+          ORDER BY r.aggregate_id,r.payload->>'sourceAttempt',r.payload->>'observer',r.created_at DESC,r.id DESC
         ), latest AS (
-          SELECT q.id, observation.state FROM queue q CROSS JOIN LATERAL (
-            SELECT DISTINCT ON (r.payload->>'observer') r.payload->>'state' AS state
-            FROM integration_events r WHERE r.group_id=$1 AND r.empresa_id=$2 AND r.source='ERP'
-            AND r.event_type='catalogo.reconciliado' AND r.aggregate_type='IntegracaoEvento'
-            AND r.aggregate_id=q.id AND r.status='processed' AND r.payload->>'sourceAttempt'=q.attempts::text
-            ORDER BY r.payload->>'observer',r.created_at DESC,r.id DESC
-          ) observation WHERE q.status='published'
+          SELECT q.id,o.state FROM queue q JOIN observations o ON o.aggregate_id=q.id AND o.attempt=q.attempts::text
+          WHERE q.status='published'
         )
         SELECT count(*) FILTER(WHERE status IN ('pending','retry','processing'))::int AS backlog,
           count(*) FILTER(WHERE status IN ('pending','retry','processing') AND created_at < statement_timestamp()-($3*interval '1 second'))::int AS overdue,

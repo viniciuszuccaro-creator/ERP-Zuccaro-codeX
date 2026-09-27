@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { outboxFixture } from './omnichannelOutboxFixture.js';
+import { outboxFixture, assertHealthGrowth } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { CatalogReconciliation } from '../src/integrations/catalogReconciliation.js';
 
@@ -66,4 +66,24 @@ test('real PostgreSQL divergence triage excludes superseded ACK failures and pag
     assert.deepEqual((await f.outbox.divergences(f.ctx)).items,[]);
     assert.equal((await f.pg.query("SELECT id FROM integration_events WHERE event_type='catalogo.reconciliado'")).rows.length,4);
   } finally { await f.close(); }
+});
+
+test('real PostgreSQL health groups 1350 observations once for 150 publications',{skip:!url},async()=>{
+  const f=await outboxFixture(await isolatedPostgres(url!));
+  let healthQuery: {sql:string;params:unknown[]}|undefined;
+  const transaction=f.db.withTransaction.bind(f.db);
+  f.db.withTransaction=fn=>transaction(tx=>fn({...tx,query:(sql,params)=>{
+    if(sql.includes('observations AS MATERIALIZED'))healthQuery={sql,params:[...(params??[])]};
+    return tx.query(sql,params);
+  }}));
+  try{
+    await assertHealthGrowth(f);assert.ok(healthQuery);
+    const explained=await f.pg.query('EXPLAIN (ANALYZE, FORMAT JSON) '+healthQuery.sql,healthQuery.params);
+    const plans:Record<string,unknown>[]=[];
+    function collect(p:Record<string,unknown>){plans.push(p);for(const child of (p.Plans??[]) as Record<string,unknown>[])collect(child);}
+    collect((explained.rows[0]['QUERY PLAN'] as {Plan:Record<string,unknown>}[])[0].Plan);
+    const observations=plans.find(p=>p['Subplan Name']==='CTE observations');assert.ok(observations);
+    assert.equal(observations['Actual Loops'],1);assert.equal(observations['Actual Rows'],900);
+    console.log('HEALTH_GROUPED_PASS publications=150 observations=1350 grouped=900 loops=1');
+  }finally{await f.close();}
 });
