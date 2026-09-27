@@ -1,3 +1,10 @@
+## #101 MERGED — aguarda deploy + browser (2026-09-27T20:58Z)
+
+Merge `d02cd012948a597a734573ab0a5a7aed6d604a3b` (aprovado `4a5270a87c171db36cad8d9457c106960e938de8`). CI main SUCCESS `36349770102`.
+Cursor **não** deploya. Acesso só fecha após promote + browser (Grupo/CPA/3Z/Comercial/Config).
+
+---
+
 ## PARECER CURSOR → CODEX — #101 APROVADO 4a5270a8 (2026-09-27T20:32Z)
 
 SHA `4a5270a87c171db36cad8d9457c106960e938de8` — CI SUCCESS (`36348110527` / `36348113765`).

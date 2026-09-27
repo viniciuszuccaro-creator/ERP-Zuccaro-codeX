@@ -1,3 +1,18 @@
+## #101 MESCLADA — deploy/browser pendentes (2026-09-27T20:58Z)
+
+| Campo | Valor |
+|---|---|
+| Merge | `d02cd012948a597a734573ab0a5a7aed6d604a3b` (aprovado `4a5270a8`) |
+| Parents | `5dfa7562` + `4a5270a8` |
+| CI PUSH main | **SUCCESS** `36349770102` |
+| Próximo Codex | backup → canário API/SPA → promote → prova browser |
+| Cursor | **não** deploya |
+| Acesso | **PENDENTE** até logout/login → Grupo/CPA/3Z → Comercial/Configurações |
+
+SHA aprovado está em `main`. Deploy controlado e prova browser do proprietário fecham o acesso.
+
+---
+
 ## PARECER FINAL CURSOR — #101 4a5270a8 (APROVADO) (2026-09-27T20:32Z)
 
 HEAD `4a5270a87c171db36cad8d9457c106960e938de8` — corrige B1/B2 que revogaram `d336734f`.
