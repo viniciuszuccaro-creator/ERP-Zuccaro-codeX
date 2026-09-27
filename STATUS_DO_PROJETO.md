@@ -19,7 +19,9 @@ Pré-requisitos: `OWNER_GROUP_ID` + `OWNER_EMPRESA_ID` reais; backup/rollback ta
 cd /opt/erp-zuccaro
 git fetch origin main
 git checkout --detach origin/main
-test "$(git rev-parse --short HEAD)" = "534743de" || { echo "BLOCKED: main tip esperado 534743de"; git rev-parse HEAD; exit 1; }
+# Exige lote #45–#49 na árvore (merge tip 534743de); tip pode ser docs posterior.
+git merge-base --is-ancestor 534743de HEAD || { echo "BLOCKED: main sem merge #49 (534743de)"; git rev-parse HEAD; exit 1; }
+echo "main_tip=$(git rev-parse --short HEAD) lote_min=534743de"
 
 # Registrar ANTES (colar no STATUS — sem tokens):
 docker inspect -f '{{.Name}} {{.Id}} {{.Config.Image}}' erp-api-dev erp-web-dev 2>/dev/null || true
