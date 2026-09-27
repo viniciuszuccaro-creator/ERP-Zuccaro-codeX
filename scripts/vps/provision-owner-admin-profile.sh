@@ -338,10 +338,13 @@ INSERT INTO _owner_prov (
   pg_read_file('/tmp/owner-admin-permissoes.json')::jsonb
 );
 
+-- Revalidar sob lock: nenhum cadastro/perfil pode mudar entre decisão e grant.
+LOCK TABLE profiles, auth.users, groups, empresas IN SHARE ROW EXCLUSIVE MODE;
 CREATE TEMP TABLE _owner_before ON COMMIT DROP AS
 SELECT p.id, p.group_id, p.empresa_id, p.role, p.ativo, p.permissoes
 FROM profiles p, _owner_prov r
-WHERE lower(p.email) IN (r.owner_email, r.synth_email);
+WHERE lower(p.email) IN (r.owner_email, r.synth_email)
+   OR p.auth_user_id IN (SELECT id FROM auth.users WHERE lower(email) IN (r.owner_email, r.synth_email));
 
 DO $prov$
 DECLARE
@@ -389,6 +392,13 @@ BEGIN
 
   IF v_auth_id IS NULL THEN
     RAISE EXCEPTION 'BLOCKED: owner_auth_id_missing';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM profiles p
+    WHERE (lower(p.email)=r.owner_email OR p.auth_user_id=v_auth_id)
+      AND (p.group_id IS DISTINCT FROM r.group_id
+        OR (p.auth_user_id IS NOT NULL AND p.auth_user_id<>v_auth_id))) THEN
+    RAISE EXCEPTION 'BLOCKED: existing_owner_identity_or_tenant_conflict';
   END IF;
 
   SELECT count(*) INTO v_group_ok FROM groups WHERE id = r.group_id;

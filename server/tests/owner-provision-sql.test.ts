@@ -279,5 +279,11 @@ test('actual provision SQL group scope and audit failure rollback', async () => 
     assert.equal(restored.rows[0].role,'admin');
     const absent = await db.query('SELECT id FROM profiles WHERE auth_user_id=$1',[AUTH_OWNER]);
     assert.equal(absent.rows.length,0);
+    await db.query("INSERT INTO profiles(auth_user_id,email,role,ativo,group_id) VALUES($1,$2,'user',true,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')", [AUTH_OWNER, OWNER_EMAIL]);
+    await assert.rejects(()=>db.exec(sql), /existing_owner_identity_or_tenant_conflict/);
+    await db.exec('ROLLBACK');
+    const unchanged = await db.query('SELECT role,group_id FROM profiles WHERE auth_user_id=$1', [AUTH_OWNER]);
+    assert.equal(unchanged.rows[0].role, 'user');
+    assert.equal(unchanged.rows[0].group_id, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
   } finally {await db.close();}
 });
