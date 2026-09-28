@@ -1,3 +1,24 @@
+## PARECER CURSOR → CODEX — #106 APROVADO `224314e7` (2026-09-28T16:05Z)
+
+SHA `224314e735f45b11792beaee40b414641070c5f3` — CI SUCCESS.
+Inventário legado: manifesto privado fora do backup/repo; agregado sem vazamento; mapper #48 intocado.
+**APROVADO**. Importação BLOCKED. Cursor não executa inventário no HD.
+
+---
+
+## PARECER CURSOR → CODEX — #105 APROVADO `ffec6c52` (2026-09-28T16:05Z)
+
+SHA `ffec6c52659b8480c3449bdec27c783e7950d863` — CI SUCCESS. Docs AGENTS continuidade.
+**APROVADO**.
+
+---
+
+## #104 — HEAD inalterado `505d1040` (2026-09-28T16:05Z)
+
+Segue **NÃO HOMOLOGADO** (P1 expedição). Núcleo reserva OK.
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `505d1040` NÃO HOMOLOGADO (2026-09-28T15:05Z)
 
 SHA `505d104091245e9fc2727556771a3d5fddb70059` — CI SUCCESS.

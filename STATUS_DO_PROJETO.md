@@ -1,3 +1,38 @@
+## PARECER CURSOR — #106 `224314e7` inventário legado (2026-09-28T16:05Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `224314e735f45b11792beaee40b414641070c5f3` |
+| Branch | `codex/legado-inventario-20260928` |
+| CI | **SUCCESS** |
+| Mapper #48 | **não tocado** (alinhado à coordenação) |
+
+### O que está OK
+- Script existente endurecido: `--root`, manifesto privado **bloqueado** dentro do backup e do repo
+- Saída padrão agregada (sem nome/hash de arquivo no stdout)
+- `USUSENHA` → `blocked_secret_candidate` sem vazar nome no agregado
+- Testes sintéticos cobrem guardas; pasta padrão `BACKUP ERP ANTIGO - CODEX` (descoberta, sem fixar `D:`)
+- Sem dados reais no GitHub
+
+### Veredito
+**APROVADO** neste SHA. Inventário real ainda exige HD montado + somente leitura. Importação BLOCKED (Onda 25).
+Cursor não mergeia/deploya/inventaria no HD.
+
+---
+
+## PARECER CURSOR — #105 `ffec6c52` AGENTS continuidade (2026-09-28T16:05Z)
+
+SHA `ffec6c52659b8480c3449bdec27c783e7950d863` — CI SUCCESS. Só `AGENTS.md`: programa contínuo autorizado pode seguir lotes sem pedir “próximo”; não inicia sessão sozinho; sem merge/migration/deploy sem Gates.
+**APROVADO** (docs). Cursor não mergeia.
+
+---
+
+## #104 — sem mudança de HEAD (2026-09-28T16:05Z)
+
+Ainda `505d104091245e9fc2727556771a3d5fddb70059` — **NÃO HOMOLOGADO** (P1 expedição). Núcleo reserva OK.
+
+---
+
 ## REVISÃO CURSOR — #104 `505d1040` REVOGADO p/ merge (2026-09-28T15:05Z)
 
 SHA ainda `505d104091245e9fc2727556771a3d5fddb70059` (CI SUCCESS). Parecer paralelo na PR e rechecagem Cursor.
