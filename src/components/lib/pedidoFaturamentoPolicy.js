@@ -97,8 +97,44 @@ export const resolverNotaResidualPedido = ({ pedido = {}, notasExistentes = [] }
     ...(pedido.itens_armado_padrao || []).filter((_item, index) => !excluidos.has(`armado-${index}`)),
     ...(pedido.itens_corte_dobra || []).filter((_item, index) => !excluidos.has(`corte-${index}`)),
   ];
-  if (itens.length === 0) throw new Error('NF residual sem itens nao pode ser emitida automaticamente');
-  return { valor_total: restante, itens };
+  const todosIds = new Set([
+    ...(pedido.itens_revenda || []).map((_item, index) => `revenda-${index}`),
+    ...(pedido.itens_armado_padrao || []).map((_item, index) => `armado-${index}`),
+    ...(pedido.itens_corte_dobra || []).map((_item, index) => `corte-${index}`),
+  ]);
+  const etapasIncluidas = [];
+  for (const etapa of pedido.etapas_entrega || []) {
+    if (!Array.isArray(etapa.itens_etapa) || etapa.itens_etapa.length === 0) continue;
+    const ids = etapa.itens_etapa.map((item) => String(item.item_pedido_id || ''));
+    if (ids.some((id) => !todosIds.has(id))) throw new Error('Etapa com item sem vinculo ao pedido');
+    if (ids.every((id) => excluidos.has(id) || todosIds.has(id))) etapasIncluidas.push(etapa.id);
+  }
+  if (itens.length === 0) throw new Error('Saldo apenas monetario exige ajuste na ultima NF de etapa ou conciliacao fiscal');
+  return { valor_total: restante, itens, etapasIncluidas };
+};
+
+/** Inclui frete/diferenca na ultima NF de etapa quando todos os itens estao alocados. */
+export const resolverUltimaEtapaMonetaria = ({ pedido = {}, etapaId, notasExistentes = [], valorEtapa = 0 } = {}) => {
+  const etapas = pedido.etapas_entrega || [];
+  const etapa = etapas.find((item) => String(item.id) === String(etapaId));
+  if (!etapa || etapas.some((item) => String(item.id) !== String(etapaId) && !item.faturada)) return null;
+  const ids = new Set(etapas.flatMap((item) => (item.itens_etapa || []).map((linha) => String(linha.item_pedido_id || ''))));
+  const todos = [
+    ...(pedido.itens_revenda || []).map((_item, index) => `revenda-${index}`),
+    ...(pedido.itens_armado_padrao || []).map((_item, index) => `armado-${index}`),
+    ...(pedido.itens_corte_dobra || []).map((_item, index) => `corte-${index}`),
+  ];
+  if (todos.some((id) => !ids.has(id))) return null;
+  const restante = remainingValorFaturar({ pedido, notasExistentes });
+  const acrescimo = toMoney(restante - toMoney(valorEtapa));
+  if (acrescimo < 0) throw new Error('Valor da ultima etapa excede saldo do pedido');
+  const frete = Math.min(acrescimo, toMoney(pedido.valor_frete));
+  return {
+    valor_total: restante,
+    valor_produtos: toMoney(valorEtapa),
+    valor_frete: frete,
+    outras_despesas: toMoney(acrescimo - frete),
+  };
 };
 
 /** @param {FaturamentoOptions} options */
