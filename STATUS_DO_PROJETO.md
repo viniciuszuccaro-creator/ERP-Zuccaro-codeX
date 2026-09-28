@@ -11565,11 +11565,11 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
 ## Onda 7 #104 — saldo de reserva, faturamento e reconferência (2026-09-28)
 
 - Objetivo/causa: distinguir compensação de saída física; o histórico de reservas fazia faturamento pular a baixa e cancelamento liberar além do saldo do pedido.
 - Mudança: saldo aberto por pedido/produto; saída física `saida`; cancelamento limitado ao saldo vigente; peças de armado sem produto não entram na reserva; reconferência divergente atualiza registro existente com auditoria, preservando vínculo de entrega.
 - Reuso/escopo: `useFluxoPedido`, `pedidoFaturamentoPolicy`, `SeparacaoConferenciaIA` e políticas existentes; Grupo/Empresa/RBAC mantidos. Sem VPS, dados reais ou importação.
 - Validação: 46 testes focados aprovados, incluindo execução isolada das funções reais de baixa e cancelamento; `git diff --check` aprovado. CI e revisão Cursor exigidas no HEAD final.
-- Commit final do lote: f0cfefbdb5068f8db4ec37da1117b445b1c6ef90. Próximo passo: confirmar CI e novo parecer do Cursor na #104.
-
+- Commits funcionais: a556787, 7f163b8, 01109e5, ef70dfd, 3553d67, f0cfefb. Próximo passo: confirmar CI e novo parecer do Cursor na #104.
