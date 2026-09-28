@@ -27,10 +27,10 @@ test('separacao recalcula divergencia por quantidade antes de liberar pedido', a
 
 test('separacao IA exige grupo e empresa antes de consultar ou gravar', async () => {
   const separacaoIA = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
-  assert.match(separacaoIA, /const contextoBaseValido = Boolean\\(baseGroupId && baseEmpresaId\\)/);
-  assert.match(separacaoIA, /const contextoValido = Boolean\\(effectiveGroupId && effectiveEmpresaId\\)/);
-  assert.doesNotMatch(separacaoIA, /Boolean\\(baseGroupId \\|\\| baseEmpresaId\\)/);
-  assert.doesNotMatch(separacaoIA, /Boolean\\(effectiveGroupId \\|\\| effectiveEmpresaId\\)/);
+  assert.match(separacaoIA, /const contextoBaseValido = Boolean\(baseGroupId && baseEmpresaId\)/);
+  assert.match(separacaoIA, /const contextoValido = Boolean\(effectiveGroupId && effectiveEmpresaId\)/);
+  assert.doesNotMatch(separacaoIA, /Boolean\(baseGroupId \|\| baseEmpresaId\)/);
+  assert.doesNotMatch(separacaoIA, /Boolean\(effectiveGroupId \|\| effectiveEmpresaId\)/);
 });
 
 test('formulario exige Grupo e empresa autorizada no contexto', () => {
