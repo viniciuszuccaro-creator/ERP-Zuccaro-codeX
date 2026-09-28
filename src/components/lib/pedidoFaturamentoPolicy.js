@@ -154,6 +154,18 @@ export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId }
   });
 };
 
+/** Valida linhas de reserva sem permitir sub-reserva por idempotência. */
+export const validarItensReservaEstoque = (itens = []) => {
+  const produtoIds = new Set();
+  const invalidos = [];
+  for (const item of Array.isArray(itens) ? itens : []) {
+    const produtoId = String(item?.produto_id || '');
+    if (!produtoId || produtoIds.has(produtoId)) invalidos.push(item);
+    produtoIds.add(produtoId);
+  }
+  return { valido: invalidos.length === 0, invalidos };
+};
+
 /** @param {MovimentoPedidoOptions} options */
 export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
