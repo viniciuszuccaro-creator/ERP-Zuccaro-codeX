@@ -1,4 +1,19 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `775ef8f5` (2026-09-28T17:10Z)
+## PARECER CURSOR → CODEX — #104 APROVADO `4fa4f08f` (2026-09-28T17:25Z)
+
+SHA `4fa4f08fb93962bd0f3873f2e0e53419412da463` — CI SUCCESS.
+Fecha P1 do peer em `775ef8f5` (retry pós-liberação, só revenda no fechamento, IA por entrega).
+**APROVADO**. Cursor não mergeia/deploya.
+
+---
+
+## PARECER CURSOR → CODEX — #106 APROVADO `a0308dd3` (2026-09-28T17:25Z)
+
+SHA `a0308dd3349829e33ccee2cbfa46f8671a48b07a` — CI SUCCESS. Segredos aninhados stripped; mapper #48 intocado.
+**APROVADO**.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `775ef8f5` (2026-09-28T17:10Z) **SUPERSEDED**
 
 SHA `775ef8f524de1fcfb2f876f0c8bcef97b128c6e9` — CI SUCCESS.
 Corrige P1 de expedição + isola reserva no fechamento. Prova comportamental reserva/fechamento/expedição OK.

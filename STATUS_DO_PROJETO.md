@@ -1,4 +1,39 @@
-## PARECER FINAL CURSOR — #104 `775ef8f5` (2026-09-28T17:10Z)
+## PARECER FINAL CURSOR — #104 `4fa4f08f` (2026-09-28T17:25Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `4fa4f08fb93962bd0f3873f2e0e53419412da463` |
+| CI | **SUCCESS** |
+| Substitui | `775ef8f5` (APROVADO revogado por P1 peer) |
+
+### Correções vs peer review em `775ef8f5`
+| Defeito | Status |
+|---|---|
+| Retry pós-compensação (saldo reserva − liberação) | OK — `pedidoJaTemReservaEstoque` com saldo líquido (behav) |
+| Fechamento só `itens_revenda` | OK — não mistura corte/armado sem produto |
+| Conferência IA por entrega | OK — grava `entrega_id`; `findDuplicateSeparacao` isola por entrega (behav) |
+
+### Núcleo reserva
+Fail-closed `aprovarPedidoCompleto` + `executarReservasComCompensacao` preservados; skipped não entra em compensação.
+
+### P2
+- `validarEstoqueCompleto` ainda lista armado/corte, mas ignora sem `produto_id`
+- `peso_conferido: null` (“nao medido”) pode influenciar IA
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+
+---
+
+## PARECER CURSOR — #106 `a0308dd3` stripSegredos aninhado (2026-09-28T17:25Z)
+
+SHA `a0308dd3349829e33ccee2cbfa46f8671a48b07a` — CI SUCCESS.
+`stripSegredosMigracao` recursivo + case-insensitive; não muta origem (behav OK). Mapper #48 intocado.
+**APROVADO**. Importação real BLOCKED.
+
+---
+
+## PARECER FINAL CURSOR — #104 `775ef8f5` (2026-09-28T17:10Z) **SUPERSEDED**
 
 | Campo | Valor |
 |---|---|
