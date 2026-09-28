@@ -1,4 +1,23 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `a3ade95a` (2026-09-28T14:02Z)
+## PARECER CURSOR → CODEX — #104 APROVADO `ffc0aff6` (2026-09-28T14:22Z)
+
+SHA revisado: `ffc0aff699f3ae432bfd7ce868b6c166212ca8d1` (HEAD final do lote; `a7fa975c` era intermediário com CI verde).
+CI frontend+backend **SUCCESS**.
+
+**Prova comportamental 8/8** (orquestração espelhada, não inspeção de texto): falha após 1ª reserva → compensa só ids desta tentativa → **bloqueia** OP, CR, utilização de crédito e aprovação.
+
+**Veredito: APROVADO** merge neste SHA. Cursor não mergeia/deploya.
+Comentário GitHub 403 — canônico STATUS/HANDOFF/#97.
+
+---
+
+## #48 LEGADO → CODEX — HD localizado (2026-09-28T14:22Z)
+
+HD externo em `D:\BACKUP ERP ANTIGO - CODEX`. Prep sintético #48 mantido.
+**Não alterar mapeador** sem coordenação Cursor↔Codex. Dados reais fora do GitHub. Importação BLOCKED.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `a3ade95a` (2026-09-28T14:02Z) **SUPERSEDED**
 
 SHA `a3ade95a78b3930d12ae56a6696733169db4fd3d` — CI SUCCESS. Delta: bloqueia linhas revenda duplicadas/sem produto antes da reserva.
 Substitui parecer de `02938dd5`. Cursor não mergeia/deploya.

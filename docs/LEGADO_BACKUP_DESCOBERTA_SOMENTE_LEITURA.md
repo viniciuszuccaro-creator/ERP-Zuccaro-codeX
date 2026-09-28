@@ -1,6 +1,6 @@
 # Legado — descoberta somente leitura do backup do ERP antigo
 
-**Status:** `FERRAMENTA PREPARADA / INVENTÁRIO REAL PENDENTE`
+**Status:** `HD LOCALIZADO (owner) / INVENTÁRIO REAL PENDENTE NO CLOUD`
 **Onda:** 25 (bloqueada até autorização + staging isolado)
 **Programa:** seção Onda 25 de
 `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md` (PR #33)
@@ -64,6 +64,9 @@ previstos em `migracaoErpPolicy.js` (`origem_migracao`, `lote_migracao`,
 
 | Item | Estado |
 |---|---|
+| HD externo (owner) | **localizado** em `D:\BACKUP ERP ANTIGO - CODEX` (2026-09-28) |
 | HD externo montado no cloud agent | **não detectado** (`/mnt` sem a pasta) |
-| Inventário real | **pendente** (máquina com o HD ou montagem autorizada) |
+| Inventário real | **pendente** (máquina com o HD ou montagem autorizada; somente leitura) |
+| Mapeador (`mapear-registro-sintetico.mjs` / canônico) | **não alterar** sem coordenação Cursor↔Codex |
+| Dados reais no GitHub | **proibido** |
 | Staging / importação | **bloqueado** (Onda 25) |

@@ -1,4 +1,71 @@
-## PARECER FINAL CURSOR — #104 a3ade95a (delta anti-duplicidade) (2026-09-28T14:02Z)
+## PARECER FINAL CURSOR — #104 `ffc0aff6` (prova comportamental) (2026-09-28T14:22Z)
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `ffc0aff699f3ae432bfd7ce868b6c166212ca8d1` |
+| Branch | `codex/estoque-reserva-atomica` |
+| Base | main |
+| CI | **SUCCESS** frontend+backend neste HEAD |
+| Nota | Usuário citou `a7fa975c` (CI verde); Codex avançou o lote — revisão no **HEAD final** |
+
+### Escopo do lote (desde `a7fa975c`)
+- Fail-closed pós-reserva → `avaliarReservaParcial` + compensação só de `baixasEstoque`
+- Anti-duplicidade → agregação mesma unidade; conflito de unidade / sem produto bloqueia
+- `liberarReservaEstoque` idempotente via `pedidoJaTemSaidaEstoque`
+
+### Prova comportamental (independente — **não** é inspeção de texto)
+Espelho da orquestração de `aprovarPedidoCompleto` (pós-crédito) + policy do SHA acima: **8/8 pass** (`/tmp/review-104-final/behav-reserva-parcial.test.mjs`).
+
+| Caso | Resultado |
+|---|---|
+| Falha após 1ª reserva (p2); loop segue p3 | Compensa **somente** `res-p1`+`res-p3`; `res-OLD` fora |
+| Downstream | OP=0, CR=0, crédito utilização=0, `status=Aprovado`=0 |
+| Sucesso total | Não compensa; OP/CR/crédito/status liberados |
+| Agregação UN+UN | 1 reserva qty somada; falha no 2º produto compensa só a 1ª |
+| UN vs KG / sem produto | Bloqueia sem reservar |
+| skipped / sem id | Fora de `compensar` |
+
+O teste estrutural da PR (slice do fonte) **não** foi tratado como prova suficiente.
+
+### O que está OK
+- Compensação limitada às reservas **desta tentativa**
+- Bloqueio de OP, Contas a Receber, utilização de crédito e aprovação
+- Validação de crédito **antes** da reserva permanece; utilização **depois** do return fail-closed
+- Multiempresa via `normalizarContextoOperacao` / scoped helpers preservada
+- Sem migration/VPS/dados reais
+
+### Achados
+
+| # | Sev | Nota |
+|---|---|---|
+| P2 | — | Motivo audit de `liberarReservaEstoque` ainda diz “pedido cancelado” |
+| P2 | — | Camada frontend legado (sem TX server) |
+| info | — | `CentralAprovacoesManager` não chama `aprovarPedidoCompleto` |
+| info | — | Comentário GitHub #104/#97/#48 = 403; canônico = este STATUS + HANDOFF |
+
+### Veredito
+
+**APROVADO** exclusivamente neste SHA `ffc0aff699f3ae432bfd7ce868b6c166212ca8d1` (substitui `a7fa975c` / `a3ade95a` / `02938dd5`).
+Cursor **não** mergeia/deploya. Não altera gates #92/#93/#102.
+
+---
+
+## #48 LEGADO — HD localizado (2026-09-28T14:22Z)
+
+| Item | Estado |
+|---|---|
+| PR | #48 `cursor/comercial360-legado-prep-sintetico-392b` (`22613b06`) OPEN |
+| HD externo | **Localizado** em `D:\BACKUP ERP ANTIGO - CODEX` |
+| Prep sintético | Mantido (aliases mapper + testes sem dados reais) |
+| Mapeador | **Não alterar** sem coordenação prévia Cursor↔Codex |
+| Dados reais | **Fora do GitHub** (proibido commitar backup/PII/dumps) |
+| Inventário / importação | Ainda **BLOCKED** (Onda 25; cloud agent sem HD montado) |
+
+Docs atualizados: `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+
+---
+
+## PARECER FINAL CURSOR — #104 a3ade95a (delta anti-duplicidade) (2026-09-28T14:02Z) **SUPERSEDED**
 
 HEAD novo vs APROVADO `02938dd5`. CI **SUCCESS**.
 

@@ -8,6 +8,10 @@
 Este documento **não** autoriza importação. Serve para alinhar Cursor ↔ Codex
 quando o inventário do HD externo existir.
 
+**Atualização 2026-09-28:** HD localizado pelo owner em
+`D:\BACKUP ERP ANTIGO - CODEX`. Qualquer alteração no mapeador exige
+coordenação prévia Cursor↔Codex. Dados reais permanecem fora do GitHub.
+
 ---
 
 ## 1. Princípios
