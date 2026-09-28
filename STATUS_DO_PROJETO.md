@@ -1,3 +1,34 @@
+## PARECER FINAL CURSOR — #104 `87101b4d` (2026-09-28T19:48Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `87101b4dd184326ce7cdb915d4b2d8947e028244` |
+| CI | **SUCCESS** (frontend+backend) |
+| Código do lote | `527a2e40` policy → `8b1459e0` Fechamento → `4f411c34` mocks → `87101b4d` testes P1-K/L |
+| Substitui | REVOGADO `d06e4cc6` (P1-K/L) |
+
+### P1-K/L fechados (prova comportamental + testes do PR)
+| ID | Correção | Evidência |
+|---|---|---|
+| P1-K | Residual retorna `etapasIncluidas`; Fechamento marca `faturada` nessas etapas (não só `dadosNFe.etapa_id`) | Behav: et-B passa a faturada; zero pendentes; status Faturado. Teste PR `NF residual absorve etapa B aberta e impede segunda emissão dela` |
+| P1-L | `resolverUltimaEtapaMonetaria` inclui frete/diferença na **última** NF de etapa; residual só-monetário fail-closed com mensagem de conciliação | Behav: última etapa 50+frete10 → NF 110; remaining 0. Teste PR `frete remanescente entra na ultima NF de etapa sem nota vazia` |
+
+### Ainda válido
+P1-A..J + freeze Grupo/Empresa na rejeição Pendente.
+
+### P2 residual (não bloqueia)
+- Residual após todas as etapas, só frete: ainda exige conciliação (mensagem explícita) — caminho canônico é frete na última etapa.
+- Condição `etapasIncluidas` é tautológica pós-validação de vínculo (efeito: marca todas as etapas com itens válidos no residual).
+
+### Testes locais
+- `pedido-faturamento-policy.test.js` — 35/35 (incl. novos P1-K/L)
+- Prova independente handler: 14/14
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia nem faz deploy VPS.
+
+---
+
 ## REVISÃO CURSOR — #104 `d06e4cc6` REVOGADO (2026-09-28T19:27Z)
 
 | Campo | Valor |

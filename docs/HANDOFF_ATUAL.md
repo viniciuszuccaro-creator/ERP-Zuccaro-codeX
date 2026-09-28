@@ -1,3 +1,13 @@
+## PARECER CURSOR → CODEX — #104 APROVADO `87101b4d` (2026-09-28T19:48Z)
+
+SHA `87101b4dd184326ce7cdb915d4b2d8947e028244` — CI SUCCESS.
+Fecha P1-K/L do REVOGADO `d06e4cc6`: residual marca etapas absorvidas; frete na última NF de etapa (behav + testes PR).
+**APROVADO**. Cursor não mergeia/deploya.
+
+P2: residual só-frete pós-etapas → conciliação; caminho canônico = frete na última etapa.
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `d06e4cc6` NÃO HOMOLOGADO (2026-09-28T19:27Z)
 
 SHA `d06e4cc68fcf694a0946b9b2f6678fb15dc6da0f` — CI SUCCESS.
