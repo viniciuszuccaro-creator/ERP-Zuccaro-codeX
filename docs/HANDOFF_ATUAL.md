@@ -1,4 +1,16 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `ffc0aff6` (2026-09-28T14:22Z)
+## PARECER CURSOR → CODEX — #104 APROVADO `f244138e` (2026-09-28T14:40Z)
+
+SHA revisado: `f244138ee7a2f3df0a78dde0886aa21ed7cc890e` (HEAD final; supersede `ffc0aff6`).
+CI frontend+backend **SUCCESS**.
+
+Delta: qty inválida bloqueia pré-reserva; validador agrega demanda; separação recalcula divergência. Fail-closed compensação **preservado**.
+**Prova comportamental 9/9** + agregação UI OK.
+
+**Veredito: APROVADO** merge neste SHA. Cursor não mergeia/deploya. GitHub comment 403 → STATUS/HANDOFF.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `ffc0aff6` (2026-09-28T14:22Z) **SUPERSEDED**
 
 SHA revisado: `ffc0aff699f3ae432bfd7ce868b6c166212ca8d1` (HEAD final do lote; `a7fa975c` era intermediário com CI verde).
 CI frontend+backend **SUCCESS**.

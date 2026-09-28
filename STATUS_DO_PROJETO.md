@@ -1,4 +1,40 @@
-## PARECER FINAL CURSOR — #104 `ffc0aff6` (prova comportamental) (2026-09-28T14:22Z)
+## PARECER FINAL CURSOR — #104 `f244138e` (HEAD final lote) (2026-09-28T14:40Z)
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `f244138ee7a2f3df0a78dde0886aa21ed7cc890e` |
+| Branch | `codex/estoque-reserva-atomica` |
+| CI | **SUCCESS** frontend+backend |
+| Substitui | `ffc0aff6` / `a7fa975c` / anteriores |
+
+### Delta vs `ffc0aff6`
+- `validarItensReservaEstoque`: rejeita quantidade `<=0` / não finita **antes** de reservar
+- `ValidadorEstoquePedido`: compara saldo disponível com **demanda agregada** por produto
+- `SeparacaoConferencia`: divergência também se `quantidade_separada !== quantidade_pedida` no fechamento
+- Fail-closed de `aprovarPedidoCompleto` **preservado** (`avaliarReservaParcial` → compensa só `baixasEstoque` → return antes de OP/CR/crédito/status)
+
+### Prova comportamental (independente)
+Orquestração espelhada + policy deste SHA: **9/9 pass**. Agregação do validador UI: demanda 2+3 vs estoque 4 bloqueia; vs 5 libera.
+
+Cenário núcleo: falha após 1ª reserva → compensa só ids desta tentativa → **bloqueia** OP, CR, utilização de crédito e aprovação. `res-OLD` fora.
+
+### Achados
+
+| # | Sev | Nota |
+|---|---|---|
+| P2 | — | UI do validador mostra qtd da linha, mas o check usa total agregado |
+| P2 | — | Motivo audit `liberarReservaEstoque` ainda “pedido cancelado” |
+| P2 | — | Testes novos do validador/expedição ainda inspecionam fonte; núcleo fail-closed tem prova comportamental Cursor |
+| info | — | Comentário GitHub 403; canônico STATUS/HANDOFF |
+
+### Veredito
+
+**APROVADO** exclusivamente neste SHA `f244138ee7a2f3df0a78dde0886aa21ed7cc890e`.
+Cursor **não** mergeia/deploya.
+
+---
+
+## PARECER FINAL CURSOR — #104 `ffc0aff6` (prova comportamental) (2026-09-28T14:22Z) **SUPERSEDED**
 
 | Campo | Valor |
 |---|---|
