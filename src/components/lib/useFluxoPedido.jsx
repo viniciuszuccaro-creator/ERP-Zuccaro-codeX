@@ -254,6 +254,9 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
   }, contextoOperacao);
+  if (pedidoJaTemSaidaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
+    throw new Error('Pedido ja possui saida fisica deste produto; nova reserva bloqueada');
+  }
   if (pedidoJaTemReservaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
     return { skipped: true, produto_id: item.produto_id };
   }
@@ -796,6 +799,11 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
 
   try {
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+    const pedidosAtuais = await filterScoped('Pedido', { id: pedido.id }, contextoOperacao);
+    const pedidoAtual = pedidosAtuais.find((item) => String(item.id) === String(pedido.id));
+    if (!pedidoAtual || ['Faturado', 'Faturado Parcial', 'Cancelado'].includes(String(pedidoAtual.status || ''))) {
+      throw new Error('Pedido inexistente ou ja faturado/cancelado; fechamento bloqueado');
+    }
     onLog('🚀 Iniciando fechamento automático...', 'info');
     onProgresso(0);
 
