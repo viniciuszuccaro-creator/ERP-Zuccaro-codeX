@@ -18,7 +18,7 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { avaliarScanConferencia, conferirQuantidadesPedido } from "@/components/lib/expedicaoEntregaPolicy";
+import { avaliarScanConferencia, conferirQuantidadesPedido, validarRespostaConferenciaIA } from "@/components/lib/expedicaoEntregaPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
 
@@ -379,7 +379,13 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           data_hora_separacao: new Date().toISOString()
         };
 
-        const validacao = await validarIAMutation.mutateAsync(novoItem);
+        let validacao;
+        try {
+          validacao = validarRespostaConferenciaIA(await validarIAMutation.mutateAsync(novoItem));
+        } catch (error) {
+          toast({ title: "Falha na validação IA", description: error?.message || "Tente novamente.", variant: "destructive" });
+          return;
+        }
 
         setSeparacao(prev => ({
           ...prev,
