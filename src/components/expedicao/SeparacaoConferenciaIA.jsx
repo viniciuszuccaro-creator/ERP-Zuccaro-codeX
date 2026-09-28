@@ -54,7 +54,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
 
   const baseEmpresaId = empresaAtual?.id || null;
   const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoBaseValido = Boolean(baseGroupId || baseEmpresaId);
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canUseSeparacaoIA = hasPermission("Expedicao", "Separacao", "editar") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
     hasPermission("Expedicao", "Entregas", "editar");
@@ -70,7 +70,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
 
   const effectiveEmpresaId = pedido?.empresa_id || baseEmpresaId;
   const effectiveGroupId = pedido?.group_id || pedido?.grupo_id || baseGroupId;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ["produtos-separacao-ia", effectiveGroupId, effectiveEmpresaId],
