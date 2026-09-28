@@ -122,6 +122,13 @@ test('cancelling a reservation is idempotent after a prior release', async () =>
   assert.match(releaseBody, /skipped: true/);
 });
 
+test('stock validator uses tenant-scoped available balance instead of physical balance', async () => {
+  const validator = await readFile(new URL('../src/components/comercial/ValidadorEstoquePedido.jsx', import.meta.url), 'utf8');
+  assert.match(validator, /group_id: groupId, empresa_id: empresaId/);
+  assert.match(validator, /estoqueAtual - estoqueReservado/);
+  assert.match(validator, /estoqueDisponivel >= quantidadeNecessaria/);
+});
+
 test('commercial billing persists the NF instead of logging it', async () => {
   const fechamento = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
