@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #104 APROVADO `2d24ed14` (2026-09-28T18:30Z)
+
+SHA `2d24ed14e51073e13d4c4f4779ae4ce4b3a83485` — CI SUCCESS.
+Fecha P1-F/G do REVOGADO `dcdebdb5`: bloqueio de reserva pós-saida; NF Pendente → baixa → status Pedido; falha rejeita NF (preserva se baixa já OK).
+**APROVADO**. Cursor não mergeia/deploya.
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `dcdebdb5` NÃO HOMOLOGADO (2026-09-28T18:20Z)
 
 SHA `dcdebdb50624b116f7149de1e11a5cef64d3b09d` — CI SUCCESS.

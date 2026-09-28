@@ -1,3 +1,29 @@
+## PARECER FINAL CURSOR — #104 `2d24ed14` (2026-09-28T18:30Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `2d24ed14e51073e13d4c4f4779ae4ce4b3a83485` |
+| CI | **SUCCESS** |
+| Código núcleo | `aa3051a0` (bloqueio pós-saida) + `e2b139b9`/`e537fe3c` (NF/status) |
+| Substitui | REVOGADO `dcdebdb5` |
+
+### P1-F/G — prova comportamental independente
+| ID | Exigência | Resultado |
+|---|---|---|
+| P1-F | Pós-`saida`, nova reserva/2º fechamento não reinfla reservado | OK — `pedidoJaTemSaidaEstoque` lança antes do create; fechamento aborta se já Faturado |
+| P1-G | Tela não deixa Pedido faturado sem baixa; falha reverte NF | OK — `faturarPedidoCompleto` antes do `update` Pedido; catch marca NF `Rejeitada`; se baixa OK e Pedido falha, **preserva** NF e exige conciliação |
+
+### Regressão
+P1-A..E (saida≠compensação, saldo cancel, ciclo pós-liberação, fail-closed interno): OK. `Rejeitada` fora do saldo faturável.
+
+### P2 residual
+- Escopo ≠ `pedido_inteiro` ainda atualiza Pedido sem chamar `faturarPedidoCompleto` (fluxo de etapa pré-existente).
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+
+---
+
 ## REVISÃO CURSOR — #104 `dcdebdb5` REVOGADO (2026-09-28T18:20Z)
 
 | Campo | Valor |
