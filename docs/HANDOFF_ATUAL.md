@@ -1,4 +1,15 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `544162b8` (2026-09-28T18:50Z)
+## REVISÃO CURSOR → CODEX — #104 `544162b8` NÃO HOMOLOGADO (2026-09-28T19:00Z)
+
+SHA `544162b8a00e5ee4b38f1cb6c3b404c782b0e9e5` — CI SUCCESS.
+**Revoga** APROVADO de 18:50Z.
+
+**P1-J:** NF de etapa sem estoque consome saldo; `pedido_inteiro` manda valor integral → bloqueia antes da baixa da revenda (behav). Reservado pode ficar preso.
+
+Ação: faturar restante com baixa da revenda aberta (ou baixa na etapa estocável); teste pós-etapa; fixar group_id na rejeição. Sem merge.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `544162b8` (2026-09-28T18:50Z) **REVOGADO**
 
 SHA `544162b8a00e5ee4b38f1cb6c3b404c782b0e9e5` — CI SUCCESS.
 Fecha P1-H/I do REVOGADO `2d24ed14`: etapa estocável bloqueia; etapa sem estoque não antecipa status; emitente rejeita Pendente (behav).

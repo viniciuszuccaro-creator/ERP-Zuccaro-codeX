@@ -1,4 +1,36 @@
-## PARECER FINAL CURSOR — #104 `544162b8` (2026-09-28T18:50Z)
+## REVISÃO CURSOR — #104 `544162b8` REVOGADO (2026-09-28T19:00Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `544162b8a00e5ee4b38f1cb6c3b404c782b0e9e5` |
+| CI | **SUCCESS** |
+| Ação | **Revoga** APROVADO de 18:50Z |
+
+### P1 confirmado (prova comportamental independente)
+| ID | Defeito | Evidência |
+|---|---|---|
+| P1-J | Após NF de etapa **sem estoque** (ex.: 30), `pedido_inteiro` envia `valor_total` **integral** do pedido; `assertFaturamentoDentroDoPedido` bloqueia (remaining 70 < 100) **antes** de `faturarPedidoCompleto`/baixa da revenda | Behav: etapa armado OK; etapa revenda bloqueada; remaining 70; notaNova 100 → «Faturamento acima do pedido bloqueado»; modal usa `pedidoData?.valor_total` no pedido inteiro |
+
+### Consequência
+Revenda estocável fica sem caminho de baixa via UI; fechamento ainda pode reservar (status livre); reservado fica preso até cancelamento.
+
+### Ainda válido (não libera merge)
+P1-H (etapa estocável bloqueia antes da NF; etapa sem estoque não antecipa status) e P1-I (emitente rejeita Pendente).
+
+### P2 residual
+- Rejeição carimba `group_id` do contexto; empresa é restaurada, grupo não.
+
+### Ação exigida ao Codex
+1. Após etapa sem estoque, saldo restante faturável com baixa só da revenda aberta (modal/`notaNova` = remaining, ou escopo parcial); **ou** etapa estocável executa a baixa em vez de só recusar.
+2. Teste: emitir pedido inteiro (ou restante) **depois** da NF de etapa e comprovar baixa da revenda.
+3. Na rejeição, fixar `group_id`/`grupo_id` do registro anterior como a empresa.
+
+### Veredito
+**NÃO HOMOLOGADO / REPROVADO** neste SHA. Sem merge.
+
+---
+
+## PARECER FINAL CURSOR — #104 `544162b8` (2026-09-28T18:50Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|
