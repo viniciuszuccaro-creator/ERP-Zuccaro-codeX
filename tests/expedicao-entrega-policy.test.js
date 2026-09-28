@@ -8,6 +8,7 @@ import {
   assertEntregaOnUpdate,
   assertRomaneioOnCreate,
   assertSeparacaoOnCreate,
+  conferirQuantidadesPedido,
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
@@ -39,6 +40,32 @@ test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem
     record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia' },
     separacoes: [existing],
   }).reuse, null);
+});
+
+test('conferencia IA bloqueia pedido incompleto mesmo quando IA nao detecta divergencia', async () => {
+  const pedido = [
+    { produto_id: 'p1', quantidade: 2 },
+    { produto_id: 'p1', quantidade: 1 },
+    { produto_id: 'p2', quantidade: 1 },
+  ];
+  assert.deepEqual(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 1 },
+    { produto_id: 'p1', quantidade_separada: 1 },
+  ]), { conforme: false, divergencias: ['p1', 'p2'] });
+  assert.deepEqual(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 1 },
+    { produto_id: 'p1', quantidade_separada: 2 },
+    { produto_id: 'p2', quantidade_separada: 1 },
+  ]), { conforme: true, divergencias: [] });
+  assert.equal(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 3 },
+    { produto_id: 'p2', quantidade_separada: 2 },
+  ]).conforme, false);
+  assert.equal(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 'abc' },
+  ]).conforme, false);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.match(source, /const temDivergencia = separacao.divergencias.length > 0 \\|\\| !conferenciaQuantidades.conforme/);
 });
 
 test('separacao IA exige grupo e empresa antes de consultar ou gravar', async () => {
