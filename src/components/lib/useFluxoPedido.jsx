@@ -6,6 +6,7 @@ import {
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
+  saldoReservaPedidoProduto,
   validarItensReservaEstoque,
 } from "@/components/lib/pedidoFaturamentoPolicy";
 
@@ -417,7 +418,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
   try {
 
     if (pedido.itens_revenda?.length > 0) {
-      for (const item of pedido.itens_revenda) {
+      for (const item of validarItensReservaEstoque(pedido.itens_revenda).itens) {
         try {
           const baixa = await baixarEstoqueItem(item, pedido, contextoOperacao.empresaId);
           resultados.baixasEstoque.push(baixa);
@@ -491,14 +492,14 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
     produto_id: item.produto_id,
   }, contextoOperacao);
   if (pedidoJaTemSaidaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
-    return movimentosExistentes.find((mov) => {
-      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
-      return tipo === 'saida' || tipo.includes('liberacao');
-    }) || { skipped: true, produto_id: item.produto_id };
+    return { skipped: true, produto_id: item.produto_id };
   }
 
-  const novoReservado = Math.max(0, (produto.estoque_reservado || 0) - item.quantidade);
-  const novoEstoque = (produto.estoque_atual || 0) - item.quantidade;
+  const saldoPedido = saldoReservaPedidoProduto({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id });
+  if (saldoPedido + 1e-6 < Number(item.quantidade)) throw new Error('Reserva insuficiente para baixa fisica');
+  if (Number(produto.estoque_reservado || 0) + 1e-6 < Number(item.quantidade)) throw new Error('Saldo reservado do produto insuficiente');
+  const novoReservado = Number(produto.estoque_reservado || 0) - Number(item.quantidade);
+  const novoEstoque = Number(produto.estoque_atual || 0) - Number(item.quantidade);
 
   if (novoEstoque < 0) {
     throw new Error(`Estoque insuficiente para ${produto.descricao}`);
@@ -508,7 +509,7 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
   const movimentacao = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
-    tipo_movimento: 'liberacao_reserva',
+    tipo_movimento: 'saida',
     origem_movimento: 'pedido',
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
@@ -652,18 +653,26 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
   try {
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
     const movimentacoes = await filterScoped('MovimentacaoEstoque', {
-      origem_documento_id: pedido.id,
-      tipo_movimento: 'reserva'
+      origem_documento_id: pedido.id
     }, contextoOperacao);
+    const produtosReservados = [...new Set(movimentacoes
+      .filter((mov) => String(mov.tipo_movimento || '').toLowerCase() === 'reserva')
+      .map((mov) => String(mov.produto_id || '')).filter(Boolean))];
 
-    for (const mov of movimentacoes) {
+    for (const produtoId of produtosReservados) {
+      const saldo = saldoReservaPedidoProduto({ movimentos: movimentacoes, pedidoId: pedido.id, produtoId });
+      if (saldo <= 1e-6) continue;
       try {
-        const reservaLiberada = await liberarReservaEstoque(mov, contextoOperacao.empresaId);
-        resultados.reservasLiberadas.push(reservaLiberada || mov);
+        const reservaLiberada = await liberarReservaEstoque({
+          origem_documento_id: pedido.id, produto_id: produtoId, quantidade: saldo, documento: pedido.numero_pedido,
+          empresa_id: contextoOperacao.empresaId, group_id: contextoOperacao.groupId
+        }, contextoOperacao.empresaId);
+        if (reservaLiberada && !reservaLiberada.skipped) resultados.reservasLiberadas.push(reservaLiberada);
       } catch (error) {
         resultados.erros.push(`Erro ao liberar reserva: ${error.message}`);
       }
     }
+    if (resultados.erros.length > 0) return resultados;
 
     const contas = await filterScoped('ContaReceber', {
       pedido_id: pedido.id,
@@ -708,15 +717,16 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
     origem_documento_id: movimentacaoReserva.origem_documento_id,
     produto_id: movimentacaoReserva.produto_id,
   }, contextoOperacao);
-  if (!pedidoJaTemReservaEstoque({
+  const saldo = saldoReservaPedidoProduto({
     movimentos: movimentosExistentes,
     pedidoId: movimentacaoReserva.origem_documento_id,
     produtoId: movimentacaoReserva.produto_id,
-  })) {
-    return { skipped: true, produto_id: movimentacaoReserva.produto_id };
-  }
-
-  const reservadoAtual = Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade);
+  });
+  if (saldo <= 1e-6) return { skipped: true, produto_id: movimentacaoReserva.produto_id };
+  const quantidadeLiberar = Math.min(saldo, Number(movimentacaoReserva.quantidade));
+  if (!Number.isFinite(quantidadeLiberar) || quantidadeLiberar <= 0) throw new Error('Quantidade de liberacao invalida');
+  if (Number(produto.estoque_reservado || 0) + 1e-6 < quantidadeLiberar) throw new Error('Saldo reservado do produto insuficiente');
+  const reservadoAtual = Number(produto.estoque_reservado || 0) - quantidadeLiberar;
   const user = await getUsuarioAtual();
   const mov = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
@@ -727,7 +737,7 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
     produto_id: produto.id,
     produto_descricao: produto.descricao,
     codigo_produto: produto.codigo,
-    quantidade: movimentacaoReserva.quantidade,
+    quantidade: quantidadeLiberar,
     unidade_medida: produto.unidade_medida,
     estoque_anterior: produto.estoque_atual,
     estoque_atual: produto.estoque_atual,
