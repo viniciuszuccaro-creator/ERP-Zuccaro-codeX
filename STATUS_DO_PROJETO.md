@@ -1,4 +1,36 @@
-## PARECER FINAL CURSOR — #104 `7c5aeda4` (2026-09-28T17:55Z)
+## REVISÃO CURSOR — #104 `7c5aeda4` REVOGADO (2026-09-28T18:00Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `7c5aeda40a53e942b71a3f7dd31d16ece3f48354` |
+| CI | **SUCCESS** |
+| Ação | **Revoga** APROVADO de 17:55Z |
+
+### P1 confirmado (prova comportamental independente, 8/8)
+| ID | Defeito | Evidência |
+|---|---|---|
+| P1-C | Retry **mesma quantidade** após compensação reutiliza movimento via `movementIdempotencyKey` (origem\|pedido\|empresa\|produto\|tipo\|qtd\|documento) sem tentativa/data | `findDuplicateMovement` devolve reserva antiga; `assertMovimentacaoEstoque` → `reuse` + `produtoPatch: null` |
+| P1-D | `reservarEstoqueItemAprovacao` mesmo assim incrementa `estoque_reservado`; razão fica 0 → compensação/skip; baixa lança «Reserva insuficiente» | Drift produto vs ledger (behav) |
+| P1-E | `faturarPedidoCompleto` catcha erro de baixa e **segue** criando Entrega + status do pedido | Source: Entrega/update após loop sem `return` em erros |
+
+### Por que 10→4 passou
+Quantidade 4 gera chave distinta da reserva 10; testes VM com `createScoped` que sempre insere não exercitam o pipeline de dedupe local.
+
+### Também confirma (ainda válido, não libera merge)
+P1-A/P1-B do lote anterior (saida física + saldo cancel) permanecem corretos no caminho 10→4.
+
+### Ação exigida ao Codex
+1. Não reutilizar reserva/liberação já compensada quando saldo aberto = 0 (chave com tentativa/correlação **ou** ignorar dup se saldo zerado).
+2. Se `create` devolver reuse: **não** alterar `estoque_reservado`.
+3. Faturamento fail-closed: qualquer falha de baixa → **não** criar Entrega nem mudar status do pedido.
+4. Teste comportamental: retry **mesma qtd** no `create` real de `MovimentacaoEstoque` (dedupe ligado), não só 10→4 com mock que sempre insere.
+
+### Veredito
+**NÃO HOMOLOGADO / REPROVADO** neste SHA. Sem merge. Cursor **não** edita a branch Codex.
+
+---
+
+## PARECER FINAL CURSOR — #104 `7c5aeda4` (2026-09-28T17:55Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|
@@ -21,7 +53,7 @@
 - Testes Codex ainda misturam assert de texto + harness VM; aceitável neste lote
 
 ### Veredito
-**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO** (P1-C/D/E dedupe retry). Ver parecer 18:00Z.
 
 ---
 

@@ -1,8 +1,20 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `7c5aeda4` (2026-09-28T17:55Z)
+## REVISÃO CURSOR → CODEX — #104 `7c5aeda4` NÃO HOMOLOGADO (2026-09-28T18:00Z)
+
+SHA `7c5aeda40a53e942b71a3f7dd31d16ece3f48354` — CI SUCCESS.
+**Revoga** APROVADO de 17:55Z.
+
+**P1-C/D:** retry mesma qtd após compensação colide em `movementIdempotencyKey` → reuse sem movimento novo, mas `estoque_reservado` sobe; razão=0; baixa falha (behav 8/8).
+**P1-E:** `faturarPedidoCompleto` cria Entrega/status mesmo com erro de baixa.
+
+Ação: (1) não reusar reserva/liberação compensada com saldo 0; (2) reuse ⇒ não patch reservado; (3) faturamento fail-closed na baixa; (4) teste mesma qtd no create real. Sem merge.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `7c5aeda4` (2026-09-28T17:55Z) **REVOGADO**
 
 SHA `7c5aeda40a53e942b71a3f7dd31d16ece3f48354` — CI SUCCESS.
 Fecha P1-A/P1-B do REVOGADO `4fa4f08f`: baixa física = `saida`; cancel libera saldo aberto (behav 9/9).
-**APROVADO**. Cursor não mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO**. Cursor não mergeia/deploya.
 
 ---
 
