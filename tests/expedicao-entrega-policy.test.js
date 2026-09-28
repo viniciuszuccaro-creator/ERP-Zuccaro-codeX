@@ -75,34 +75,40 @@ test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem
   }).reuse, null);
 });
 
-test('scanner nao confirma leitura se IA falha ou omite classificacao', async () => {
+test('scanner valida resposta IA antes de auditar sucesso ou incluir item', async () => {
   assert.throws(() => validarRespostaConferenciaIA(null), /incompleta/);
   assert.throws(() => validarRespostaConferenciaIA({ divergencia_quantidade: false }), /incompleta/);
   assert.deepEqual(validarRespostaConferenciaIA({
     divergencia_quantidade: false, divergencia_peso: false,
   }), { divergencia_quantidade: false, divergencia_peso: false });
   const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
-  assert.ok(source.indexOf('validarRespostaConferenciaIA(await validarIAMutation.mutateAsync(novoItem))')
+  const mutation = source.slice(source.indexOf('const validarIAMutation'), source.indexOf('const otimizarRotaMutation'));
+  assert.ok(mutation.indexOf('return validarRespostaConferenciaIA(resultado)') < mutation.indexOf('onSuccess:'));
+  assert.match(mutation, /onError:[\\s\\S]*?validacao_erro/);
+  assert.ok(source.indexOf('validacao = await validarIAMutation.mutateAsync(novoItem)')
     < source.indexOf('itens_separados: [...prev.itens_separados, novoItem]'));
+  assert.match(source, /peso_total_kg: Number\\(produto.peso_liquido_kg \\|\\| 0\\) \\* quantidadeScan/);
+  assert.match(source, /peso_conferido: null/);
 });
 
-test('scanner aceita tres leituras para tres unidades e bloqueia excesso', async () => {
-  const itensPedido = [{ produto_id: 'p1', quantidade: 2 }, { produto_id: 'p1', quantidade: 1 }];
+test('scanner soma unidades fracionadas por produto e bloqueia codigo de outro ID', async () => {
+  const itensPedido = [{ produto_id: 'p1', codigo: 'COD-A', quantidade: 2.5 }];
   const item = { produto_id: 'p1', quantidade_separada: 1 };
-  for (const quantidade of [0, 1, 2]) {
-    assert.equal(avaliarScanConferencia({
-      itensPedido, itensSeparados: Array(quantidade).fill(item), produtoId: 'p1',
-    }).permitido, true);
-  }
-  assert.deepEqual(avaliarScanConferencia({
-    itensPedido, itensSeparados: Array(3).fill(item), produtoId: 'p1',
-  }), { permitido: false, motivo: 'quantidade_excedida' });
+  assert.equal(avaliarScanConferencia({ itensPedido, itensSeparados: [], produtoId: 'p1' }).quantidade, 1);
+  assert.equal(avaliarScanConferencia({ itensPedido, itensSeparados: [item], produtoId: 'p1' }).quantidade, 1);
+  assert.equal(avaliarScanConferencia({ itensPedido, itensSeparados: [item, item], produtoId: 'p1' }).quantidade, 0.5);
   assert.equal(avaliarScanConferencia({
-    itensPedido: [{ produto_id: 'p1', quantidade: -1 }], itensSeparados: [], produtoId: 'p1',
+    itensPedido, itensSeparados: [item, item, { produto_id: 'p1', quantidade_separada: 0.5 }], produtoId: 'p1',
   }).permitido, false);
+  assert.equal(avaliarScanConferencia({
+    itensPedido, itensSeparados: [], produtoId: 'p2', codigo: 'COD-A',
+  }).motivo, 'produto_fora_pedido');
+  assert.deepEqual(conferirQuantidadesPedido(itensPedido, [
+    item, item, { produto_id: 'p1', quantidade_separada: 0.5 },
+  ]), { conforme: true, divergencias: [] });
   const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
-  assert.match(source, /const decisaoScan = avaliarScanConferencia/);
-  assert.match(source, /quantidade_pedida: 1/);
+  assert.match(source, /quantidade_pedida: quantidadeScan/);
+  assert.match(source, /find\\(i => i.produto_id === produto.id\\)/);
 });
 
 test('conferencia IA bloqueia pedido incompleto mesmo quando IA nao detecta divergencia', async () => {
@@ -223,6 +229,16 @@ test('retry do mesmo pedido reusa a entrega', () => {
     entregas: [existing],
   });
   assert.equal(decision.reuse.id, 'ent-1');
+});
+
+test('conferencia manual e IA do mesmo pedido reutilizam a origem', () => {
+  const manual = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia_ia',
+  }, [manual])?.id, 's1');
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia',
+  }, [manual]), null);
 });
 
 test('separacao cancelada nao bloqueia nova conferencia, mas concluida e reutilizada', () => {
