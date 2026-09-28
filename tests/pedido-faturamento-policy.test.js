@@ -323,6 +323,38 @@ test('tela reverte NF pendente e nao marca pedido faturado quando baixa falha', 
   assert.ok(closure.includes("'Faturado', 'Faturado Parcial', 'Cancelado'"));
 });
 
+test('handler real de NF rejeita pendente e preserva Pedido quando baixa falha', async () => {
+  const source = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('onEmitir={async (dadosNFe) => {');
+  const end = source.indexOf('\n        }}', start);
+  assert.ok(start > 0 && end > start);
+  const handlerSource = source.slice(start + 'onEmitir={'.length, end) + '\n}';
+  const efeitos = [];
+  const ctx = {
+    formData: { id: 'ped-1', empresa_id: 'e1', numero_pedido: 'PED-1', etapas_entrega: [] },
+    empresaId: 'e1', groupId: 'g1', valorTotal: 10,
+    toast: { error: () => {}, success: () => { efeitos.push('sucesso'); } },
+    filterInContext: async () => [],
+    assertFaturamentoDentroDoPedido: () => ({ status: 'Faturado' }),
+    createInContext: async (entity) => {
+      efeitos.push('criar:' + entity);
+      return { id: 'nf-1', status: 'Pendente' };
+    },
+    updateInContext: async (entity, _id, patch) => {
+      efeitos.push('atualizar:' + entity + ':' + patch.status);
+      return patch;
+    },
+    faturarPedidoCompleto: async () => ({ erros: ['baixa falhou'] }),
+    auditFechamento: async () => {},
+    setFormData: () => { efeitos.push('setFormData'); },
+    setModalNFeOpen: () => {},
+  };
+  const emitir = runInNewContext('(' + handlerSource + ')', ctx);
+  await assert.rejects(() => emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1',
+    cliente_id: 'c1', cliente_nome: 'Cliente', valor_total: 10, escopo: 'pedido_inteiro' }), /baixa falhou/);
+  assert.deepEqual(efeitos, ['criar:NotaFiscal', 'atualizar:NotaFiscal:Rejeitada']);
+});
+
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const approvalStart = fluxo.indexOf('export async function aprovarPedidoCompleto');
