@@ -86,7 +86,7 @@ export const resolverNotaResidualPedido = ({ pedido = {}, notasExistentes = [] }
     }
     for (const item of etapa.itens_etapa) {
       const ref = String(item.item_pedido_id || '');
-      if (!/^(revenda|armado|corte)-\\d+$/.test(ref)) {
+      if (!/^(revenda|armado|corte)-\d+$/.test(ref)) {
         throw new Error('Item de etapa anterior sem vinculo canonico');
       }
       excluidos.add(ref);
