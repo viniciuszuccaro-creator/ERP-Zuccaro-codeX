@@ -139,6 +139,17 @@ export const evaluatePedidoCredito = ({
   };
 };
 
+/** Decide a compensação sem liberar efeitos downstream após reserva parcial. */
+export const avaliarReservaParcial = ({ reservas = [], erros = [] } = {}) => {
+  const bloqueado = Array.isArray(erros) && erros.length > 0;
+  return {
+    bloqueado,
+    compensar: bloqueado
+      ? (Array.isArray(reservas) ? reservas : []).filter((reserva) => reserva?.id && !reserva?.skipped)
+      : [],
+  };
+};
+
 /** Idempotencia: ja existe saida/liberacao de reserva do pedido para o produto. */
 /** @param {MovimentoPedidoOptions} options */
 export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
