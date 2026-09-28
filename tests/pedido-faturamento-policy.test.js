@@ -1,6 +1,7 @@
 import {
   assertFaturamentoDentroDoPedido,
   avaliarEtapaFaturamento,
+  resolverNotaResidualPedido,
   avaliarReservaParcial,
   executarReservasComCompensacao,
   cicloReservaPedidoProduto,
@@ -90,6 +91,53 @@ test('etapa com revenda estocavel bloqueia antes da NF; etapa de armado preserva
   await assert.rejects(() => emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1',
     valor_total: 20, escopo: 'etapa_especifica', etapa_id: 'et1' }), /baixa antes da NF/);
   assert.deepEqual(efeitos, []);
+});
+
+test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async () => {
+  const pedidoMisto = {
+    id: 'ped-1', numero_pedido: 'PED-1', status: 'Aprovado', valor_total: 100,
+    itens_revenda: [{ produto_id: 'p1', descricao: 'Revenda', quantidade: 1, valor_item: 70 }],
+    itens_armado_padrao: [{ id: 'a1', descricao_automatica: 'Armado', preco_venda_total: 30 }],
+    etapas_entrega: [{ id: 'et-armado', faturada: false, valor_total_etapa: 30,
+      itens_etapa: [{ item_pedido_id: 'armado-0', origem_item: 'armado_padrao' }] }],
+  };
+  const source = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('onEmitir={async (dadosNFe) => {');
+  const end = source.indexOf('\n        }}', start);
+  const handlerSource = source.slice(start + 'onEmitir={'.length, end) + '\n}';
+  const notas = [];
+  const baixas = [];
+  const ctx = {
+    formData: pedidoMisto, empresaId: 'e1', groupId: 'g1', valorTotal: 100,
+    toast: { error: () => {}, success: () => {} },
+    avaliarEtapaFaturamento, resolverNotaResidualPedido, assertFaturamentoDentroDoPedido,
+    filterInContext: async () => notas,
+    createInContext: async (_entity, payload) => {
+      const nota = { ...payload, id: 'nf-' + (notas.length + 1) };
+      notas.push(nota);
+      return nota;
+    },
+    updateInContext: async (_entity, _id, patch) => patch,
+    faturarPedidoCompleto: async (_pedido, nota) => {
+      baixas.push(nota);
+      return { erros: [] };
+    },
+    auditFechamento: async () => {},
+    setFormData: (updater) => { ctx.formData = updater(ctx.formData); },
+    setModalNFeOpen: () => {},
+  };
+  const emitir = runInNewContext('(' + handlerSource + ')', ctx);
+  await emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1', valor_total: 30,
+    escopo: 'etapa_especifica', etapa_id: 'et-armado' });
+  assert.equal(notas[0].valor_total, 30);
+  assert.equal(ctx.formData.status, 'Aprovado');
+  await emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1', valor_total: 100,
+    escopo: 'pedido_inteiro', itens: [...pedidoMisto.itens_revenda, ...pedidoMisto.itens_armado_padrao] });
+  assert.equal(notas[1].valor_total, 70);
+  assert.deepEqual(notas[1].itens, pedidoMisto.itens_revenda);
+  assert.equal(baixas.length, 1);
+  assert.equal(baixas[0].id, notas[1].id);
+  assert.equal(ctx.formData.status, 'Faturado');
 });
 
 test('pedido numbers are reserved with prefix on create, not invented in the form', () => {
