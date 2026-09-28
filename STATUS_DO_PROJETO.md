@@ -1,3 +1,25 @@
+## COORDENAÇÃO LEGADO — evidência owner #106/#48 (2026-09-28T18:40Z)
+
+Fonte: comentário owner em [#106](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/106).
+
+### Seletor legado (não misturar domínio)
+| Código | Papel | Nota |
+|---|---|---|
+| `003 GRUPO CPA` | **Grupo** | Não tratar como empresa jurídica |
+| `001 CPA` | Empresa | |
+| `002 3Z ARMACAO` | Empresa | |
+| `005 ZUCCARO` | Empresa | |
+
+Códigos de tipo de NF são **outro domínio** — não confundir com grupo/empresa.
+
+### Fronteira de PRs
+- **#106** (`a0308dd3` APROVADO): só inventário/segurança do staging; sem atribuir registros; sem importar dados reais; mapper intocado.
+- **#48**: dona do mapeador — correção contratual Grupo×Empresa encaminhada aqui; prep sintético; HD em `D:\BACKUP ERP ANTIGO - CODEX`; dados reais fora do GitHub.
+
+Cursor **não** altera mapper nem importa. Coordena antes de qualquer mudança no mapeador.
+
+---
+
 ## REVISÃO CURSOR — #104 `2d24ed14` REVOGADO (2026-09-28T18:35Z)
 
 | Campo | Valor |

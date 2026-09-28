@@ -1,3 +1,10 @@
+## COORDENAÇÃO LEGADO → CODEX — #106/#48 (2026-09-28T18:40Z)
+
+Owner: seletor distingue Grupo `003 GRUPO CPA` de Empresas `001`/`002`/`005`. Não tratar `003` como empresa. Tipo de NF ≠ grupo/empresa.
+Correção contratual → **#48** (mapper). **#106** segue só inventário/segurança staging; sem atribuição/import real. Dados reais fora do GitHub.
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `2d24ed14` NÃO HOMOLOGADO (2026-09-28T18:35Z)
 
 SHA `2d24ed14e51073e13d4c4f4779ae4ce4b3a83485` — CI SUCCESS.
