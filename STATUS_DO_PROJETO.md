@@ -1,3 +1,36 @@
+## PARECER FINAL CURSOR — #104 `775ef8f5` (2026-09-28T17:10Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `775ef8f524de1fcfb2f876f0c8bcef97b128c6e9` |
+| CI | **SUCCESS** |
+| Substitui | `505d1040` (NÃO HOMOLOGADO) |
+
+### Núcleo reserva
+- `aprovarPedidoCompleto` fail-closed preservado; prova orquestração **14/14**
+- Novo `executarReservasComCompensacao` no fechamento: falha → compensar só desta tentativa → **não** entra financeiro/logística (behav **5/5** no pacote expedição/fechamento)
+
+### P1 expedição (rechecados)
+| Tema | Status |
+|---|---|
+| Cache/ID Entrega tenant-scoped (`selecionarEntregaConferencia`, queryKey com grupo/empresa, AND) | OK |
+| Vínculo pedido+entrega na manual; promove `Pronto para Faturar` via `pedidoOperacao` | OK |
+| Reuso: early-return `_reused` **antes** de alterar status do pedido (manual e IA) | OK |
+| `findDuplicateSeparacao` cruza conferencia/IA pelo pedido | OK (behav) |
+| Fração/KG: `avaliarScanConferencia` + `conferirQuantidadesPedido` (behav) | OK |
+| Validação IA no `mutationFn` antes do scan efetivo; toast distinto | OK |
+| Manual chama `conferirQuantidadesPedido` | OK |
+
+### P2 remanescentes
+- Conferência IA ainda grava só `pedido_id` (sem `entrega_id`) quando a tela não tem entrega
+- `peso_conferido: null` (“nao medido”) — IA ainda pode marcar divergência de peso
+- `aprovarPedidoCompleto` continua o loop após falha; fechamento faz `break` (ambos compensam só o criado)
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+
+---
+
 ## COORDENAÇÃO CURSOR ← CODEX (2026-09-28T16:40Z)
 
 ### #104
