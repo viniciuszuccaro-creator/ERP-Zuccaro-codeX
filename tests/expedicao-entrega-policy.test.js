@@ -88,7 +88,7 @@ test('scanner valida resposta IA antes de auditar sucesso ou incluir item', asyn
   assert.ok(mutation.indexOf('onError:') < mutation.indexOf('validacao_erro'));
   assert.ok(source.indexOf('validacao = await validarIAMutation.mutateAsync(novoItem)')
     < source.indexOf('itens_separados: [...prev.itens_separados, novoItem]'));
-  assert.match(source, /peso_total_kg: Number\\(produto.peso_liquido_kg \\|\\| 0\\) \\* quantidadeScan/);
+  assert.ok(source.includes('peso_total_kg: Number(produto.peso_liquido_kg || 0) * quantidadeScan'));
   assert.match(source, /peso_conferido: null/);
 });
 
