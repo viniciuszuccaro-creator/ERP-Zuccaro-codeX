@@ -2,6 +2,7 @@ import {
   assertFaturamentoDentroDoPedido,
   avaliarEtapaFaturamento,
   resolverNotaResidualPedido,
+  resolverUltimaEtapaMonetaria,
   avaliarReservaParcial,
   executarReservasComCompensacao,
   cicloReservaPedidoProduto,
@@ -69,7 +70,7 @@ test('etapa com revenda estocavel bloqueia antes da NF; etapa de armado preserva
   const ctx = {
     formData: semEstoque, empresaId: 'e1', groupId: 'g1', valorTotal: 100,
     toast: { error: () => {}, success: () => {} },
-    avaliarEtapaFaturamento,
+    avaliarEtapaFaturamento, resolverUltimaEtapaMonetaria,
     filterInContext: async () => [],
     assertFaturamentoDentroDoPedido: () => ({ status: 'Faturado Parcial' }),
     createInContext: async (entity) => { efeitos.push('criar:' + entity); return { id: 'nf-1' }; },
@@ -129,7 +130,7 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
   const ctx = {
     formData: pedidoMisto, empresaId: 'e1', groupId: 'g1', valorTotal: 100,
     toast: { error: () => {}, success: () => {} },
-    avaliarEtapaFaturamento, resolverNotaResidualPedido, assertFaturamentoDentroDoPedido,
+    avaliarEtapaFaturamento, resolverNotaResidualPedido, resolverUltimaEtapaMonetaria, assertFaturamentoDentroDoPedido,
     filterInContext: async () => notas,
     createInContext: async (_entity, payload) => {
       const nota = { ...payload, id: 'nf-' + (notas.length + 1) };
