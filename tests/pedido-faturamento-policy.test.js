@@ -276,6 +276,9 @@ test('retry de quantidade igual cria nova reserva na deduplicação real', async
   assert.equal(produto.estoque_reservado, 0);
   await baixar(item, ped, 'e1');
   assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'saida').length, 1);
+  await assert.rejects(() => reservar(item, ped, 'e1'), /ja possui saida fisica/);
+  assert.equal(produto.estoque_reservado, 0);
+  assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'reserva').length, 2);
 });
 
 test('falha da baixa bloqueia Entrega e status no faturamento real', async () => {
@@ -300,6 +303,19 @@ test('falha da baixa bloqueia Entrega e status no faturamento real', async () =>
   assert.equal(resultado.entrega, null);
   assert.match(resultado.erros.join(' '), /baixa falhou/);
   assert.deepEqual(efeitos, []);
+});
+
+test('tela reverte NF pendente e nao marca pedido faturado quando baixa falha', async () => {
+  const source = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
+  const emission = source.slice(source.indexOf('onEmitir={async (dadosNFe) => {'));
+  assert.ok(emission.indexOf('faturarPedidoCompleto(pedidoValorado, nota, empresaId)')
+    < emission.indexOf("await updateInContext('Pedido', formData.id"));
+  assert.ok(emission.includes("await updateInContext('NotaFiscal', nota.id, { status: 'Cancelada' })"));
+  assert.ok(emission.includes('conciliacao manual obrigatoria'));
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const closure = fluxo.slice(fluxo.indexOf('export async function executarFechamentoCompleto'));
+  assert.ok(closure.indexOf('pedidosAtuais') < closure.indexOf('executarReservasComCompensacao'));
+  assert.ok(closure.includes("'Faturado', 'Faturado Parcial', 'Cancelado'"));
 });
 
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
