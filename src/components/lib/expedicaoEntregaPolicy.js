@@ -125,6 +125,33 @@ export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
   )) || null;
 };
 
+/**
+ * Reconcilia o total pedido com os scans sem confiar na classificacao da IA.
+ * @param {ExpedicaoRecord[]} pedidos
+ * @param {ExpedicaoRecord[]} separados
+ */
+export const conferirQuantidadesPedido = (pedidos = [], separados = []) => {
+  const esperadas = new Map();
+  const obtidas = new Map();
+  const somar = (map, item, campo) => {
+    const id = firstText(item?.produto_id);
+    const quantidade = Number(item?.[campo]);
+    if (!id || !Number.isFinite(quantidade) || quantidade <= 0) return false;
+    map.set(id, (map.get(id) || 0) + quantidade);
+    return true;
+  };
+  if (!Array.isArray(pedidos) || pedidos.length === 0 || !Array.isArray(separados)) {
+    return { conforme: false, divergencias: ['itens_invalidos'] };
+  }
+  if (!pedidos.every((item) => somar(esperadas, item, 'quantidade'))
+    || !separados.every((item) => somar(obtidas, item, 'quantidade_separada'))) {
+    return { conforme: false, divergencias: ['quantidade_invalida'] };
+  }
+  const divergencias = [...new Set([...esperadas.keys(), ...obtidas.keys()])]
+    .filter((id) => esperadas.get(id) !== obtidas.get(id));
+  return { conforme: divergencias.length === 0, divergencias };
+};
+
 /** @param {EntregaCreateOptions} options */
 export const assertEntregaOnCreate = ({ record = {}, entregas = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
