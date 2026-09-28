@@ -3,6 +3,7 @@ import {
   assertFaturamentoDentroDoPedido,
   avaliarReservaParcial,
   executarReservasComCompensacao,
+  cicloReservaPedidoProduto,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
@@ -270,11 +271,14 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
   }
 
   const novoReservado = reservadoAtual + qtd;
+  const ciclo = cicloReservaPedidoProduto({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id });
+  const chaveReserva = [contextoOperacao.groupId, contextoOperacao.empresaId, pedido.id, item.produto_id, 'reserva', ciclo].join('|');
   const user = await getUsuarioAtual();
   const movimentacao = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
     tipo_movimento: 'reserva',
+    idempotency_key: chaveReserva,
     origem_movimento: 'pedido',
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
@@ -298,11 +302,17 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
     aprovado: true
   }, contextoOperacao);
 
-  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, {
-    estoque_reservado: novoReservado,
-  }, contextoOperacao);
+  if (String(movimentacao?.idempotency_key || '') !== chaveReserva) {
+    throw new Error('Reserva reutilizada fora do ciclo ativo; estoque nao atualizado');
+  }
+  const produtosApos = await filterScoped('Produto', { id: item.produto_id }, contextoOperacao);
+  if (Number(produtosApos[0]?.estoque_reservado || 0) !== novoReservado) {
+    const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, {
+      estoque_reservado: novoReservado,
+    }, contextoOperacao);
+    await auditar('Estoque', 'Produto', 'update', item.produto_id, `Reserva atualizada por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
+  }
   await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Reserva por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
-  await auditar('Estoque', 'Produto', 'update', item.produto_id, `Reserva atualizada por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
   return movimentacao;
 }
 
@@ -417,8 +427,10 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
 
   try {
 
-    if (pedido.itens_revenda?.length > 0) {
-      for (const item of validarItensReservaEstoque(pedido.itens_revenda).itens) {
+    const itensFaturar = validarItensReservaEstoque(pedido.itens_revenda || []);
+    if (!itensFaturar.valido) throw new Error('Itens de revenda invalidos para baixa fisica');
+    if (itensFaturar.itens.length > 0) {
+      for (const item of itensFaturar.itens) {
         try {
           const baixa = await baixarEstoqueItem(item, pedido, contextoOperacao.empresaId);
           resultados.baixasEstoque.push(baixa);
@@ -428,6 +440,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       }
     }
 
+    if (resultados.erros.length > 0) return resultados;
     const user = await getUsuarioAtual();
     const entrega = await createScoped('Entrega', {
       empresa_id: contextoOperacao.empresaId,
@@ -724,6 +737,8 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
   });
   if (saldo <= 1e-6) return { skipped: true, produto_id: movimentacaoReserva.produto_id };
   const quantidadeLiberar = Math.min(saldo, Number(movimentacaoReserva.quantidade));
+  const ciclo = cicloReservaPedidoProduto({ movimentos: movimentosExistentes, pedidoId: movimentacaoReserva.origem_documento_id, produtoId: movimentacaoReserva.produto_id });
+  const chaveLiberacao = [contextoOperacao.groupId, contextoOperacao.empresaId, movimentacaoReserva.origem_documento_id, movimentacaoReserva.produto_id, 'liberacao_reserva', ciclo].join('|');
   if (!Number.isFinite(quantidadeLiberar) || quantidadeLiberar <= 0) throw new Error('Quantidade de liberacao invalida');
   if (Number(produto.estoque_reservado || 0) + 1e-6 < quantidadeLiberar) throw new Error('Saldo reservado do produto insuficiente');
   const reservadoAtual = Number(produto.estoque_reservado || 0) - quantidadeLiberar;
@@ -732,6 +747,7 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
     tipo_movimento: 'liberacao_reserva',
+    idempotency_key: chaveLiberacao,
     origem_movimento: 'pedido',
     origem_documento_id: movimentacaoReserva.origem_documento_id,
     produto_id: produto.id,
