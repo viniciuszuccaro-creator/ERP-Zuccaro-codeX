@@ -14,6 +14,7 @@ import { applyCodigoOnCreate } from '../src/api/localCadastroMasterPolicy.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 const pedido = { id: 'ped-1', valor_total: 1000 };
 
@@ -140,6 +141,86 @@ test('peça de armado sem produto não bloqueia revenda estocável', () => {
   assert.deepEqual(validarItensReservaEstoque(itens).itens.map((item) => item.produto_id), ['p1']);
   assert.equal(validarItensReservaEstoque(itens).valido, true);
   assert.equal(validarItensReservaEstoque([{ produto_id: null, quantidade: 1 }]).valido, false);
+});
+
+test('fluxo real baixa depois de compensar e reserva de novo, sem dupla baixa', async () => {
+  const source = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('async function baixarEstoqueItem');
+  const fnSource = source.slice(start, source.indexOf('/**', start + 1));
+  const movimentos = [
+    { id: 'r10', tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { id: 'c10', tipo_movimento: 'liberacao_reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { id: 'r4', tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 4 },
+  ];
+  const produto = { id: 'p1', descricao: 'Produto', estoque_atual: 20, estoque_reservado: 4 };
+  const ctx = {
+    normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
+    filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
+      : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
+    pedidoJaTemSaidaEstoque, saldoReservaPedidoProduto,
+    getUsuarioAtual: async () => ({ id: 'u1' }),
+    createScoped: async (_entity, payload) => {
+      const mov = { ...payload, id: 'saida-1' };
+      movimentos.push(mov);
+      return mov;
+    },
+    updateScoped: async (_entity, _id, patch) => {
+      Object.assign(produto, patch);
+      return { before: null, updated: produto };
+    },
+    auditar: async () => {},
+  };
+  const baixar = runInNewContext(fnSource + '; baixarEstoqueItem', ctx);
+  const item = { produto_id: 'p1', quantidade: 4, descricao: 'Produto', unidade: 'UN' };
+  const ped = { id: 'ped-1', numero_pedido: 'PED-1' };
+  const baixa = await baixar(item, ped, 'e1');
+  assert.equal(baixa.tipo_movimento, 'saida');
+  assert.equal(produto.estoque_atual, 16);
+  assert.equal(produto.estoque_reservado, 0);
+  assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'saida').length, 1);
+  await baixar(item, ped, 'e1');
+  assert.equal(produto.estoque_atual, 16);
+  assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'saida').length, 1);
+});
+
+test('fluxo real cancela só saldo aberto do pedido após retry menor', async () => {
+  const source = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const cancelStart = source.indexOf('export async function cancelarPedidoCompleto');
+  const releaseStart = source.indexOf('async function liberarReservaEstoque', cancelStart);
+  const cancelSource = source.slice(cancelStart, source.indexOf('/**', cancelStart + 10)).replace('export ', '');
+  const releaseSource = source.slice(releaseStart, source.indexOf('/**', releaseStart + 10));
+  const movimentos = [
+    { id: 'r10', tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { id: 'c10', tipo_movimento: 'liberacao_reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { id: 'r4', tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 4 },
+    { id: 'r7', tipo_movimento: 'reserva', origem_documento_id: 'ped-2', produto_id: 'p1', quantidade: 7 },
+  ];
+  const produto = { id: 'p1', descricao: 'Produto', estoque_atual: 20, estoque_reservado: 11 };
+  const pedidoEstado = { id: 'ped-1', numero_pedido: 'PED-1', status: 'Aprovado' };
+  const ctx = {
+    normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
+    filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
+      : entity === 'ContaReceber' ? [] : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
+    saldoReservaPedidoProduto, getUsuarioAtual: async () => ({ id: 'u1' }),
+    createScoped: async (_entity, payload) => {
+      const mov = { ...payload, id: 'liberacao-4' };
+      movimentos.push(mov);
+      return mov;
+    },
+    updateScoped: async (entity, _id, patch) => {
+      const target = entity === 'Produto' ? produto : pedidoEstado;
+      Object.assign(target, patch);
+      return { before: null, updated: target };
+    },
+    auditar: async () => {},
+  };
+  const cancelar = runInNewContext(releaseSource + '\n' + cancelSource + '; cancelarPedidoCompleto', ctx);
+  const resultado = await cancelar(pedidoEstado, 'e1');
+  assert.equal(resultado.erros.length, 0);
+  assert.equal(resultado.reservasLiberadas.length, 1);
+  assert.equal(resultado.reservasLiberadas[0].quantidade, 4);
+  assert.equal(produto.estoque_reservado, 7);
+  assert.equal(saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-2', produtoId: 'p1' }), 7);
 });
 
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
