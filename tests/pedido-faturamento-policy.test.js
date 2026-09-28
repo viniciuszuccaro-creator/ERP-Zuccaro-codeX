@@ -76,6 +76,19 @@ test('stock movement idempotency helpers detect reserva and saida', () => {
   assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), false);
 });
 
+test('approval blocks downstream effects and compensates partial stock reservations', async () => {
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const approvalStart = fluxo.indexOf('export async function aprovarPedidoCompleto');
+  const productionStart = fluxo.indexOf("if (pedido.itens_producao?.length > 0)", approvalStart);
+  const failClosedStart = fluxo.indexOf('resultados.reservaEstoqueBloqueada = true;', approvalStart);
+
+  assert.ok(failClosedStart > approvalStart);
+  assert.ok(failClosedStart < productionStart);
+  assert.match(fluxo.slice(approvalStart, productionStart), /reservasCompensadas/);
+  assert.match(fluxo.slice(approvalStart, productionStart), /liberarReservaEstoque\(reserva, contextoOperacao\.empresaId\)/);
+  assert.match(fluxo.slice(approvalStart, productionStart), /return resultados;/);
+});
+
 test('commercial billing persists the NF instead of logging it', async () => {
   const fechamento = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
