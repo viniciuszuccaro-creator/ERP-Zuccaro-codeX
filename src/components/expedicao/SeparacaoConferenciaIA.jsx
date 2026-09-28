@@ -18,7 +18,7 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { conferirQuantidadesPedido } from "@/components/lib/expedicaoEntregaPolicy";
+import { avaliarScanConferencia, conferirQuantidadesPedido } from "@/components/lib/expedicaoEntregaPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
 
@@ -359,13 +359,13 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       const itemPedido = pedido?.itens_revenda?.find(i => i.produto_id === produto.id || i.codigo === produto.codigo);
 
       if (itemPedido) {
-        const quantidadeEsperada = pedido.itens_revenda
-          .filter((item) => item.produto_id === produto.id || item.codigo === produto.codigo)
-          .reduce((total, item) => total + Number(item.quantidade || 0), 0);
-        const quantidadeEscaneada = separacao.itens_separados
-          .filter((item) => item.produto_id === produto.id)
-          .reduce((total, item) => total + Number(item.quantidade_separada || 0), 0);
-        if (!Number.isFinite(quantidadeEsperada) || quantidadeEsperada <= 0 || quantidadeEscaneada >= quantidadeEsperada) {
+        const decisaoScan = avaliarScanConferencia({
+          itensPedido: pedido.itens_revenda,
+          itensSeparados: separacao.itens_separados,
+          produtoId: produto.id,
+          codigo: produto.codigo
+        });
+        if (!decisaoScan.permitido) {
           toast({ title: "Quantidade excedida", description: "Confira a quantidade pedida antes de escanear novamente.", variant: "destructive" });
           return;
         }
