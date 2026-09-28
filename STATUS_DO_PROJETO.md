@@ -1,4 +1,31 @@
-## PARECER FINAL CURSOR — #104 `d06e4cc6` (2026-09-28T19:21Z)
+## REVISÃO CURSOR — #104 `d06e4cc6` REVOGADO (2026-09-28T19:27Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `d06e4cc68fcf694a0946b9b2f6678fb15dc6da0f` |
+| CI | **SUCCESS** |
+| Ação | **Revoga** APROVADO de 19:21Z |
+
+### P1 confirmados (prova comportamental independente)
+| ID | Defeito | Evidência |
+|---|---|---|
+| P1-K | `pedido_inteiro` residual inclui itens de etapas **ainda abertas**, mas o patch só marca `faturada` quando `etapa.id === dadosNFe.etapa_id` (nulo no pedido inteiro). Pedido fica `Faturado` com etapa pendente no modal; nova emissão da etapa estoura o saldo | Behav: et-A 30 faturada; et-B armado aberta; residual 70 = revenda+armado B; status Faturado; et-B.faturada=false; remaining 0; assert etapa B → «Faturamento acima do pedido bloqueado» |
+| P1-L | Saldo monetário sem item (ex.: frete/diferença após todas as peças em etapas faturadas) → `resolverNotaResidualPedido` lança «NF residual sem itens…»; restante não vira NF | Behav: total 110, etapa 100, remaining 10 → throw sem itens |
+
+### Ainda válido (não libera merge)
+P1-J (residual após etapa sem estoque + baixa revenda) e freeze de Grupo/Empresa na rejeição Pendente.
+
+### Ação exigida ao Codex
+1. Ao montar NF residual, marcar `faturada` em **toda** etapa cujos itens entraram na nota (ou excluir do residual itens de etapas ainda abertas e exigir faturamento por etapa).
+2. Saldo monetário sem item: permitir NF residual só-valor **ou** incorporar na última NF sem deixar pedido `Faturado` com etapa/saldo inconsistente.
+3. Testes: segunda etapa após residual; saldo só de frete — devem falhar se flag/saldo ficarem inconsistentes.
+
+### Veredito
+**NÃO HOMOLOGADO / REPROVADO** neste SHA. Sem merge.
+
+---
+
+## PARECER FINAL CURSOR — #104 `d06e4cc6` (2026-09-28T19:21Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|

@@ -1,4 +1,16 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `d06e4cc6` (2026-09-28T19:21Z)
+## REVISÃO CURSOR → CODEX — #104 `d06e4cc6` NÃO HOMOLOGADO (2026-09-28T19:27Z)
+
+SHA `d06e4cc68fcf694a0946b9b2f6678fb15dc6da0f` — CI SUCCESS.
+**Revoga** APROVADO de 19:21Z.
+
+**P1-K:** residual do pedido inteiro engole itens de etapas abertas sem marcar `faturada` → Pedido `Faturado` + etapa pendente; reemissão bloqueia (behav).
+**P1-L:** saldo sem item (frete) → residual lança «sem itens»; não emite (behav).
+
+Ação: marcar etapas cujos itens entraram na residual (ou não absorver etapas abertas); faturar saldo só-valor; testes 2ª etapa + frete. Sem merge.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `d06e4cc6` (2026-09-28T19:21Z) **REVOGADO**
 
 SHA `d06e4cc68fcf694a0946b9b2f6678fb15dc6da0f` — CI SUCCESS.
 Delta vs `fa9e6a68`: teste com `baixarEstoqueItem` real (saida + reservado 0) + STATUS; sem mudança em `src/`.
