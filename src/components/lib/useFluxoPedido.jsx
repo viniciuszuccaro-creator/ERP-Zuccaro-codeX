@@ -703,6 +703,18 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
   const produto = produtos[0];
   if (!produto) return null;
 
+  const movimentosExistentes = await filterScoped('MovimentacaoEstoque', {
+    origem_documento_id: movimentacaoReserva.origem_documento_id,
+    produto_id: movimentacaoReserva.produto_id,
+  }, contextoOperacao);
+  if (pedidoJaTemSaidaEstoque({
+    movimentos: movimentosExistentes,
+    pedidoId: movimentacaoReserva.origem_documento_id,
+    produtoId: movimentacaoReserva.produto_id,
+  })) {
+    return { skipped: true, produto_id: movimentacaoReserva.produto_id };
+  }
+
   const reservadoAtual = Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade);
   const user = await getUsuarioAtual();
   const mov = await createScoped('MovimentacaoEstoque', {
