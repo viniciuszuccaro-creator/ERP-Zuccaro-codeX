@@ -177,6 +177,16 @@ export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], 
     : { permitido: false, motivo: 'quantidade_excedida' };
 };
 
+/** @param {unknown} resposta */
+export const validarRespostaConferenciaIA = (resposta) => {
+  if (!resposta || typeof resposta !== 'object'
+    || typeof resposta.divergencia_quantidade !== 'boolean'
+    || typeof resposta.divergencia_peso !== 'boolean') {
+    throw new Error('Resposta da IA incompleta; item nao foi confirmado.');
+  }
+  return resposta;
+};
+
 /** @param {EntregaCreateOptions} options */
 export const assertEntregaOnCreate = ({ record = {}, entregas = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
