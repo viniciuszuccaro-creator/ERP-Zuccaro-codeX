@@ -25,6 +25,14 @@ test('separacao recalcula divergencia por quantidade antes de liberar pedido', a
   assert.match(separacao, /i\.divergencia \|\| Number\(i\.quantidade_separada \|\| 0\) !== Number\(i\.quantidade_pedida \|\| 0\)/);
 });
 
+test('separacao IA exige grupo e empresa antes de consultar ou gravar', async () => {
+  const separacaoIA = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.match(separacaoIA, /const contextoBaseValido = Boolean\\(baseGroupId && baseEmpresaId\\)/);
+  assert.match(separacaoIA, /const contextoValido = Boolean\\(effectiveGroupId && effectiveEmpresaId\\)/);
+  assert.doesNotMatch(separacaoIA, /Boolean\\(baseGroupId \\|\\| baseEmpresaId\\)/);
+  assert.doesNotMatch(separacaoIA, /Boolean\\(effectiveGroupId \\|\\| effectiveEmpresaId\\)/);
+});
+
 test('formulario exige Grupo e empresa autorizada no contexto', () => {
   assert.deepEqual(resolveEntregaContext({ grupoAtual: { id: 'g1' }, estaNoGrupo: true }), {
     groupId: 'g1', empresaId: null, empresaPertence: false, contextoValido: false,
