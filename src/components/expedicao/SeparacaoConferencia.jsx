@@ -27,7 +27,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
-  const contextoBaseValido = Boolean(grupoAtual?.id || empresaAtual?.id || empresaId);
+  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const baseEmpresaId = empresaAtual?.id || empresaId || null;
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canConcluirSeparacao = hasPermission("Expedicao", "Separacao", "conferir") ||
     hasPermission("Expedicao", "Entrega", "conferir") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
@@ -39,12 +41,14 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   // Fetch the delivery details (only if entregaId provided and no pedido)
   const { data: entrega, isLoading, isError, error } = useQuery({
-    queryKey: ['entrega', entregaId],
+    queryKey: ['entrega', entregaId, baseGroupId, baseEmpresaId],
     queryFn: async () => {
       const entregas = await filterInContext("Entrega", { id: entregaId }, undefined, 1);
-      return entregas[0] || null;
+      return entregas.find((item) => item.id === entregaId
+        && item.empresa_id === baseEmpresaId
+        && (item.group_id || item.grupo_id) === baseGroupId) || null;
     },
-    enabled: !!entregaId && !pedido && contextoBaseValido && canConcluirSeparacao,
+    enabled: !!entregaId && contextoBaseValido && canConcluirSeparacao,
   });
 
   const [itens, setItens] = useState([]);
