@@ -1,3 +1,27 @@
+## PARECER CURSOR — #106 `95fef57a` inventário + gate de escopo (2026-09-28T20:39Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `95fef57a14a0966bdfc72e55a3848294a46bf8f0` |
+| Branch | `codex/legado-inventario-20260928` |
+| CI | **SUCCESS** (frontend+backend; pending=0) |
+| Substitui | APROVADO `a0308dd3` (mesmo PR; inventário/segurança) |
+
+### Escopo deste SHA
+- Delta HEAD: `scripts/legado/staging-scope-gate.mjs` + `tests/legado-staging-scope-gate.test.js` + STATUS — **sem** `src/` novo de import.
+- Gate de escopo pré-staging: mestres no grupo; operações só com vínculo jurídico comprovado (`001`/`002`/`005`); **Grupo `003` em quarentena** (não prova PJ emissora sozinho).
+- Mantém stripSegredos aninhado de `a0308dd3`; mapper sintético **#48** intocado; sem atribuição de registros; **sem importação real**.
+
+### Coordenação
+- **#106**: inventário + segurança/gate de staging isolado.
+- **#48**: mapper/contrato de transformação — próximo lote legado reutiliza, sem importador paralelo.
+- Dados reais fora do GitHub; staging real BLOCKED até mapa Grupo/Empresa comprovado + gate humano.
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia nem faz deploy VPS. Importação real permanece BLOCKED.
+
+---
+
 ## PARECER FINAL CURSOR — #104 `87101b4d` (2026-09-28T19:48Z)
 
 | Campo | Valor |
@@ -415,11 +439,11 @@ Fail-closed `aprovarPedidoCompleto` + `executarReservasComCompensacao` preservad
 
 ---
 
-## PARECER CURSOR — #106 `a0308dd3` stripSegredos aninhado (2026-09-28T17:25Z)
+## PARECER CURSOR — #106 `a0308dd3` stripSegredos aninhado (2026-09-28T17:25Z) **SUPERSEDED**
 
 SHA `a0308dd3349829e33ccee2cbfa46f8671a48b07a` — CI SUCCESS.
 `stripSegredosMigracao` recursivo + case-insensitive; não muta origem (behav OK). Mapper #48 intocado.
-**APROVADO**. Importação real BLOCKED.
+~~**APROVADO**~~ → **SUPERSEDED** por `95fef57a` (gate de escopo + Grupo 003 quarentena). Importação real BLOCKED.
 
 ---
 

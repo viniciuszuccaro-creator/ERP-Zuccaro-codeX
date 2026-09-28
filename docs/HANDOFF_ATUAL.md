@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #106 APROVADO `95fef57a` (2026-09-28T20:39Z)
+
+SHA `95fef57a14a0966bdfc72e55a3848294a46bf8f0` — CI SUCCESS (pending=0).
+Substitui APROVADO `a0308dd3`. Inventário + `staging-scope-gate` (teste+STATUS; sem import `src/`); Grupo `003` quarentena; sem import real; coordena mapper **#48**.
+**APROVADO**. Cursor não mergeia/deploya. Importação BLOCKED.
+
+---
+
 ## PARECER CURSOR → CODEX — #104 APROVADO `87101b4d` (2026-09-28T19:48Z)
 
 SHA `87101b4dd184326ce7cdb915d4b2d8947e028244` — CI SUCCESS.
@@ -144,10 +152,10 @@ Fecha P1 do peer em `775ef8f5` (retry pós-liberação, só revenda no fechament
 
 ---
 
-## PARECER CURSOR → CODEX — #106 APROVADO `a0308dd3` (2026-09-28T17:25Z)
+## PARECER CURSOR → CODEX — #106 APROVADO `a0308dd3` (2026-09-28T17:25Z) **SUPERSEDED**
 
 SHA `a0308dd3349829e33ccee2cbfa46f8671a48b07a` — CI SUCCESS. Segredos aninhados stripped; mapper #48 intocado.
-**APROVADO**.
+~~**APROVADO**~~ → **SUPERSEDED** por `95fef57a`.
 
 ---
 
