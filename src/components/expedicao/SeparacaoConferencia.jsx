@@ -154,8 +154,24 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         throw new Error("Sem permissao para concluir separacao/conferencia.");
       }
 
-      const temDivergencia = itens.some(i => i.divergencia || Number(i.quantidade_separada || 0) !== Number(i.quantidade_pedida || 0));
-      
+      const quantidades = conferirQuantidadesPedido(
+        pedidoOperacao?.itens_revenda || dadosParaSeparacao.itens_revenda, itens
+      );
+      const temDivergencia = itens.some(i => i.divergencia || Number(i.quantidade_separada || 0) !== Number(i.quantidade_pedida || 0))
+        || !quantidades.conforme;
+      const origem = {
+        empresa_id: effectiveEmpresaId,
+        pedido_id: pedidoOperacao?.id || entrega?.pedido_id || null,
+        entrega_id: entrega?.id || null,
+        tipo: "conferencia"
+      };
+      const filtroExistente = origem.entrega_id
+        ? { entrega_id: origem.entrega_id, tipo: origem.tipo }
+        : { pedido_id: origem.pedido_id, tipo: origem.tipo };
+      const anteriores = await filterInContext("SeparacaoConferencia", filtroExistente, "-created_date", 100);
+      const existente = findDuplicateSeparacao(origem, anteriores);
+      if (existente) return { ...existente, _reused: true };
+
       const separacao = await createInContext("SeparacaoConferencia", {
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
@@ -231,6 +247,16 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       return separacao;
     },
     onSuccess: async (separacao) => {
+      if (separacao?._reused) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.reutilizada",
+          descricao: "Conferencia ja registrada; nenhum status foi alterado.",
+          dadosNovos: { registro_id: separacao.id },
+          registroId: separacao.id
+        });
+        toast({ title: "Conferência já registrada", description: "Nenhum novo efeito foi aplicado." });
+        return;
+      }
       // Auditoria mínima
       try {
         await base44.entities.AuditLog.create({
@@ -342,8 +368,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       return;
     }
 
-    const todosConferidos = itens.every(i => i.quantidade_separada === i.quantidade_pedida); // Check exact match
-    const todosSeparadosMinimo = itens.every(i => i.quantidade_separada > 0); // Check if at least some quantity separated
+    const todosSeparadosMinimo = itens.length > 0 && itens.every(i => Number(i.quantidade_separada) > 0);
 
     if (!todosSeparadosMinimo) {
       toast({
