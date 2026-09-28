@@ -18,6 +18,7 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { avaliarScanConferencia, conferirQuantidadesPedido, findDuplicateSeparacao, validarRespostaConferenciaIA } from "@/components/lib/expedicaoEntregaPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
 
@@ -33,6 +34,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   const { hasPermission } = usePermissions();
 
   const [codigoBarras, setCodigoBarras] = useState("");
+  const [entregaSelecionadaId, setEntregaSelecionadaId] = useState("");
   const [cronometro, setCronometro] = useState({ ativo: true, segundos: 0 });
   const [desempenho, setDesempenho] = useState({ itensPorHora: 0, acuracia: 100 });
   const [separacao, setSeparacao] = useState({
@@ -54,7 +56,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
 
   const baseEmpresaId = empresaAtual?.id || null;
   const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoBaseValido = Boolean(baseGroupId || baseEmpresaId);
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canUseSeparacaoIA = hasPermission("Expedicao", "Separacao", "editar") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
     hasPermission("Expedicao", "Entregas", "editar");
@@ -70,7 +72,20 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
 
   const effectiveEmpresaId = pedido?.empresa_id || baseEmpresaId;
   const effectiveGroupId = pedido?.group_id || pedido?.grupo_id || baseGroupId;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
+
+  const { data: entregas = [], isLoading: entregasCarregando } = useQuery({
+    queryKey: ["entregas-separacao-ia", pedidoId, effectiveGroupId, effectiveEmpresaId],
+    queryFn: async () => {
+      const rows = await filterInContext("Entrega", { pedido_id: pedidoId }, undefined, 101);
+      return rows.filter((item) => String(item?.pedido_id) === String(pedidoId)
+        && String(item?.empresa_id) === String(effectiveEmpresaId)
+        && String(item?.group_id || item?.grupo_id) === String(effectiveGroupId));
+    },
+    enabled: Boolean(pedidoId && contextoValido && canUseSeparacaoIA)
+  });
+  const entregaAtiva = entregas.length === 1 ? entregas[0]
+    : entregas.find((item) => String(item.id) === entregaSelecionadaId) || null;
 
   const { data: produtos = [] } = useQuery({
     queryKey: ["produtos-separacao-ia", effectiveGroupId, effectiveEmpresaId],
@@ -120,18 +135,18 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
         throw new Error("Contexto e permissao sao obrigatorios para validar por IA.");
       }
 
-      return await base44.integrations.Core.InvokeLLM({
+      const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise a separacao do item de forma objetiva e segura.
 
 Item Pedido: ${sanitizeText(item.descricao)}
 Quantidade Pedida: ${Number(item.quantidade_pedida || item.quantidade || 0)}
 Quantidade Separada: ${Number(item.quantidade_separada || 0)}
 Peso Esperado: ${Number(item.peso_total_kg || 0)} kg
-Peso Conferido: ${Number(item.peso_conferido || 0)} kg
+Peso Conferido: ${item.peso_conferido == null ? 'nao medido' : Number(item.peso_conferido) + ' kg'}
 
 Identifique divergencias e sugira acoes operacionais:
 1. Ha divergencia de quantidade?
-2. Ha divergencia de peso significativa acima de 5%?
+2. Ha divergencia de peso significativa acima de 5%? Se o peso nao foi medido, nao assuma divergencia.
 3. Existem produtos similares seguros se o item estiver em falta?
 4. Classificacao de risco: Baixo, Medio ou Alto.`,
         response_json_schema: {
@@ -145,6 +160,7 @@ Identifique divergencias e sugira acoes operacionais:
           }
         }
       });
+      return validarRespostaConferenciaIA(resultado);
     },
     onSuccess: (resultado, item) => auditarSeparacaoIA({
       acao: "SeparacaoConferenciaIA.validar_item",
@@ -245,14 +261,37 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         throw new Error("Finalizacao cancelada pelo usuario.");
       }
 
+      if (entregasCarregando || (entregas.length > 1 && !entregaAtiva)) {
+        throw new Error("Selecione a entrega para finalizar a conferencia deste pedido.");
+      }
+      if (entregas.length > 100) {
+        throw new Error("Entregas excedem o limite de consulta; conferencia bloqueada.");
+      }
+
+      const anteriores = await filterInContext("SeparacaoConferencia", { pedido_id: pedido.id }, "-created_date", 100);
+      const legadoSemEntrega = anteriores.find((item) => String(item?.pedido_id) === String(pedido.id)
+        && String(item?.empresa_id) === String(effectiveEmpresaId)
+        && !item?.entrega_id && !String(item?.status || '').toLowerCase().includes('cancel'));
+      if (entregas.length > 1 && legadoSemEntrega) {
+        throw new Error("Conferencia legada sem entrega definida; regularize o vinculo antes de finalizar.");
+      }
+      const existente = findDuplicateSeparacao({
+        pedido_id: pedido.id, entrega_id: entregaAtiva?.id || null, empresa_id: effectiveEmpresaId, tipo: "conferencia_ia"
+      }, anteriores) || (entregas.length === 1 ? legadoSemEntrega : null);
+      if (existente && !String(existente.status || '').toLowerCase().includes('diverg')) {
+        return { ...existente, _reused: true };
+      }
+
       const tempoTotalMinutos = Math.floor(cronometro.segundos / 60);
-      const temDivergencia = separacao.divergencias.length > 0;
-      const registro = await createInContext("SeparacaoConferencia", {
+      const conferenciaQuantidades = conferirQuantidadesPedido(pedido.itens_revenda, separacao.itens_separados);
+      const temDivergencia = separacao.divergencias.length > 0 || !conferenciaQuantidades.conforme;
+      const payloadConferencia = {
         ...separacao,
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
         pedido_id: pedido.id,
+        entrega_id: entregaAtiva?.id || null,
         numero_pedido: pedido.numero_pedido,
         cliente_id: pedido.cliente_id,
         cliente_nome: pedido.cliente_nome,
@@ -264,10 +303,15 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         tempo_separacao_min: tempoTotalMinutos,
         status: temDivergencia ? "com_divergencia" : "concluido",
         tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia ? `${separacao.divergencias.length} divergencia(s) detectada(s) pela IA.` : "",
+        divergencias_resumo: temDivergencia
+          ? `${separacao.divergencias.length} divergencia(s) detectada(s) pela IA; ${conferenciaQuantidades.divergencias.length} divergencia(s) de quantidade.`
+          : "",
         itens: separacao.itens_separados,
         observacoes: sanitizeText(separacao.observacoes)
-      });
+      };
+      const registro = existente
+        ? await updateInContext("SeparacaoConferencia", existente.id, payloadConferencia)
+        : await createInContext("SeparacaoConferencia", payloadConferencia);
 
       await updateInContext("Pedido", pedido.id, {
         group_id: effectiveGroupId,
@@ -291,14 +335,19 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       await auditarSeparacaoIA({
         acao: "SeparacaoConferenciaIA.finalizar",
         descricao: "Separacao/conferencia IA finalizada e pedido atualizado.",
-        dadosAnteriores: pedido,
+        dadosAnteriores: existente || pedido,
         dadosNovos: registro,
         registroId: registro.id
       });
 
       return registro;
     },
-    onSuccess: () => {
+    onSuccess: (registro) => {
+      if (registro?._reused) {
+        toast({ title: "Conferência já registrada", description: "Nenhum novo status foi aplicado." });
+        onClose?.();
+        return;
+      }
       setCronometro(prev => ({ ...prev, ativo: false }));
       queryClient.invalidateQueries({ queryKey: ["pedido-separacao-ia"] });
       queryClient.invalidateQueries({ queryKey: ["pedido"] });
@@ -336,7 +385,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
 
   const handleScanCodigoBarras = async () => {
     const codigo = sanitizeText(codigoBarras);
-    if (!codigo) return;
+    if (!codigo || validarIAMutation.isPending) return;
 
     if (!contextoValido || !canUseSeparacaoIA) {
       await auditarSeparacaoIA({
@@ -352,25 +401,44 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
     const produto = produtos.find(p => p.codigo_barras === codigo || p.codigo === codigo);
 
     if (produto) {
-      const itemPedido = pedido?.itens_revenda?.find(i => i.produto_id === produto.id || i.codigo === produto.codigo);
+      const itemPedido = pedido?.itens_revenda?.find(i => i.produto_id === produto.id);
 
       if (itemPedido) {
+        const decisaoScan = avaliarScanConferencia({
+          itensPedido: pedido.itens_revenda,
+          itensSeparados: separacao.itens_separados,
+          produtoId: produto.id,
+          codigo: produto.codigo
+        });
+        if (!decisaoScan.permitido) {
+          toast({ title: "Leitura bloqueada", description: decisaoScan.motivo === "quantidade_excedida"
+            ? "Quantidade pedida já foi escaneada." : "Produto ou quantidade inválida no pedido.", variant: "destructive" });
+          return;
+        }
+        const quantidadeScan = decisaoScan.quantidade;
         const novoItem = {
           produto_id: produto.id,
           descricao: sanitizeText(produto.descricao || itemPedido.produto_descricao),
-          quantidade_pedida: Number(itemPedido.quantidade || 0),
-          quantidade_separada: 1,
-          peso_conferido: Number(produto.peso_liquido_kg || 0),
+          quantidade_pedida: quantidadeScan,
+          quantidade_separada: quantidadeScan,
+          peso_total_kg: Number(produto.peso_liquido_kg || 0) * quantidadeScan,
+          peso_conferido: null,
           localizacao: sanitizeText(produto.localizacao || "N/A"),
           data_hora_separacao: new Date().toISOString()
         };
+
+        let validacao;
+        try {
+          validacao = await validarIAMutation.mutateAsync(novoItem);
+        } catch (error) {
+          toast({ title: "Falha na validação IA", description: error?.message || "Tente novamente.", variant: "destructive" });
+          return;
+        }
 
         setSeparacao(prev => ({
           ...prev,
           itens_separados: [...prev.itens_separados, novoItem]
         }));
-
-        const validacao = await validarIAMutation.mutateAsync(novoItem);
 
         if (validacao.divergencia_quantidade || validacao.divergencia_peso) {
           setSeparacao(prev => ({
@@ -470,6 +538,20 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
             </div>
           </CardHeader>
         </Card>
+
+        {entregas.length > 1 && (
+          <label className="block text-sm">
+            Entrega a conferir
+            <select className="mt-1 w-full rounded border p-2" value={entregaSelecionadaId}
+              onChange={(event) => setEntregaSelecionadaId(event.target.value)}
+              data-context-required="true">
+              <option value="">Selecione a entrega</option>
+              {entregas.map((item) => (
+                <option key={item.id} value={item.id}>{item.numero_entrega || item.id}</option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>

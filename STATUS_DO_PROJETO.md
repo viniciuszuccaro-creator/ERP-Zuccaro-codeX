@@ -1,3 +1,14 @@
+## Onda 7 Comercial 360 — conferência e expedição (#104, 2026-09-28)
+
+- Objetivo: impedir liberação de pedido com conferência incompleta e corrigir o vínculo entre entrega e pedido.
+- Causa: a conferência IA usava apenas divergências declaradas pela IA; a conferência comum gravava o ID da entrega como pedido e consultava somente 500 entregas.
+- Estruturas reutilizadas: SeparacaoConferencia, SeparacaoConferenciaIA, expedicaoEntregaPolicy, filterInContext e RBAC/contexto existentes.
+- Mudança: origem separada em entrega_id e pedido_id; consulta direta por ID; reconciliação de quantidade por produto antes de marcar pronto para faturar; scanner limita leituras ao pedido e registra item após validação IA.
+- Multiempresa/RBAC/auditoria: mantidos Grupo, Empresa e alçadas existentes. Sem VPS, migrations, dados reais ou alterações na #48.
+- Validação: 43 testes focados aprovados; git diff --check aprovado. Suite completa falha em testes Bash sem Bash no Windows; eslint, tsc e vite ausentes localmente. CI da #104 será verificada por SHA.
+- Commits funcionais: cacea93, a666b88, ceb4b82, e87ebb3, a3d3583, f71527e, f8d7be9, 16cf308, 4a33428, 6be38bf, f0a349d.
+- Próximo passo: revisão independente do HEAD final da #104; sem retomada automática sem automação configurada.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
@@ -11554,3 +11565,52 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## Onda 7 #104 — saldo de reserva, faturamento e reconferência (2026-09-28)
+
+- Objetivo/causa: distinguir compensação de saída física; o histórico de reservas fazia faturamento pular a baixa e cancelamento liberar além do saldo do pedido.
+- Mudança: saldo aberto por pedido/produto; saída física `saida`; cancelamento limitado ao saldo vigente; peças de armado sem produto não entram na reserva; reconferência divergente atualiza registro existente com auditoria, preservando vínculo de entrega.
+- Reuso/escopo: `useFluxoPedido`, `pedidoFaturamentoPolicy`, `SeparacaoConferenciaIA` e políticas existentes; Grupo/Empresa/RBAC mantidos. Sem VPS, dados reais ou importação.
+- Validação: 46 testes focados aprovados, incluindo execução isolada das funções reais de baixa e cancelamento; `git diff --check` aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: a556787, 7f163b8, 01109e5, ef70dfd, 3553d67, f0cfefb. Próximo passo: confirmar CI e novo parecer do Cursor na #104.
+
+## Onda 7 #104 — retry idempotente e bloqueio de expedição (2026-09-28)
+
+- Causa: a chave legada de reserva reutilizava movimento já compensado quando a quantidade do retry era igual; a falha de baixa não impedia criação de Entrega/status.
+- Mudança: chave por ciclo de compensação, tenant, pedido e produto; conferência do movimento e saldo persistidos antes de auditar; faturamento retorna antes de Entrega/status se qualquer baixa falhar. Reutilizadas as políticas de estoque e o fluxo existente.
+- Segurança/auditoria: contexto Grupo/Empresa mantido, falha é explícita e bloqueia efeitos posteriores. Sem VPS, dados reais ou alterações na frente legada.
+- Validação: 48 testes focados aprovados, incluindo dedup real de compensação 10 → retry 10 → saída física única, falha de baixa sem Entrega/status e cancelamento 10 → 4. Diff-check aprovado. CI e revisão Cursor pendentes do HEAD final.
+- Commits funcionais: 6d17dc5, d1fb7ac, 4ee099e, b8326ca. Próximo passo: confirmar CI e parecer do Cursor.
+
+## Onda 7 #104 — segundo fechamento e NF pendente (2026-09-28)
+
+- Causa: segundo fechamento podia reservar produto já baixado; a tela gravava NF e status antes da baixa, deixando faturamento aparente após erro.
+- Mudança: reserva e fechamento bloqueados após saída física/faturamento; tela atualiza Pedido só após baixa sem erros e marca NF ainda pendente como Rejeitada quando a baixa falha, com auditoria e alerta se a reversão falhar. NF rejeitada não consome saldo faturável.
+- Reuso/segurança: fluxo, política de faturamento e handler existentes; Grupo/Empresa e RBAC mantidos. Sem cancelamento fiscal automático, VPS, dados reais ou #106.
+- Validação: 52 testes focados aprovados, incluindo segundo fechamento pós-saída e execução isolada do handler real de NF com falha de baixa ou atualização do Pedido; diff-check aprovado. CI/revisão Cursor exigidas no HEAD final.
+- Se a baixa concluiu mas falhou a atualização posterior do Pedido, a NF não é rejeitada: o caso é auditado e exige conciliação manual. Sem cancelamento fiscal automático.
+- Commits funcionais: aa3051a, e2b139b, b02eba6, 741e912, 35aebc5, a47e0fd, 10ae485, 88c4f7c, e537fe3, 5a261cf. Próximo passo: CI e parecer do Cursor.
+
+## Onda 7 #104 — etapa fiscal e rejeição da NF pendente (2026-09-28)
+
+- Causa: etapa específica marcava Pedido faturado sem baixa; emissor sem editar não conseguia rejeitar a NF pendente após falha.
+- Mudança: etapa sem estoque mantém status operacional e grava a etapa; etapa com revenda estocável falha antes de criar NF até existir fluxo de baixa por etapa. Transição restrita Pendente → Rejeitada aceita permissão emitir/enviar sem autorizar alteração de valor nem cancelamento fiscal.
+- Estruturas reutilizadas: handler de FechamentoFinanceiroTab, pedidoFaturamentoPolicy, notaFiscalEmissaoPolicy e guarda local de RBAC. Grupo/Empresa e auditoria preservados; sem VPS, dados reais ou #106.
+- Validação: 57 testes focados aprovados, incluindo execução do handler de etapa e transição real de NotaFiscal com perfil somente emitente; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: e5fb805, e8dc5d4, 68e2541, 56b92e0, c7816e0, 8c11ae0, f6eb010. Próximo passo: CI, revisão e fluxo seguro de baixa por etapa estocável.
+
+## Onda 7 #104 — NF residual e tenant fiscal imutável (2026-09-28)
+
+- Causa: NF de etapa sem estoque consumia parte do valor, mas pedido inteiro tentava emitir o valor total; rejeição pendente aceitava Grupo carimbado pelo contexto da tela.
+- Mudança: pedido inteiro após etapa emite apenas saldo e itens não faturados, preservando a baixa real da revenda aberta; NFs parciais sem etapa/vínculo canônico bloqueiam para conciliação. Transição de NotaFiscal fixa Grupo/Empresa do registro original.
+- Reuso/segurança: `remainingValorFaturar`, handler fiscal e políticas de transição existentes; RBAC do emitente e auditoria mantidos. Sem VPS, dados reais ou #106.
+- Validação: 59 testes focados aprovados, incluindo handler real de etapa → NF residual → `baixarEstoqueItem` real e carimbo de Grupo pela preparação local real; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: cfe9b46, c38160b, 12a6bf1, d0bdeb6, 75ea4ea, d071caa, fa9e6a6. Próximo passo: CI e novo parecer do Cursor.
+
+## Onda 7 #104 — etapas residuais e frete final (2026-09-28)
+
+- Causa: NF residual incluía item de etapa ainda aberta sem marcar a etapa faturada; saldo só monetário de frete/diferença ficava sem NF.
+- Mudança: NF residual marca etapas cujos itens foram absorvidos e bloqueia vínculo inválido; a última NF de etapa, quando cobre todos os itens, incorpora frete/diferença nos campos fiscais existentes. Saldo antigo sem item e sem última etapa verificável exige conciliação fiscal, sem NF vazia automática.
+- Reuso/segurança: políticas de faturamento e handler fiscal existentes, sem alterar Grupo/Empresa, RBAC ou auditoria. Sem VPS, dados reais ou #106.
+- Validação: 61 testes focados aprovados, incluindo handler de duas etapas, frete na última etapa e handler → `faturarPedidoCompleto` real → baixa/Entrega; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: 527a2e4, 8b1459e, 4f411c3 e teste adicional. Próximo passo: CI e parecer independente.
