@@ -133,8 +133,17 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
     }
 
     const baixasEstoque = [];
-    if (pedido.itens_revenda?.length > 0) {
-      for (const item of pedido.itens_revenda) {
+    const itensRevenda = pedido.itens_revenda || [];
+    const produtoIdsReserva = new Set();
+    for (const item of itensRevenda) {
+      const produtoId = String(item?.produto_id || '');
+      if (!produtoId || produtoIdsReserva.has(produtoId)) {
+        resultados.erros.push(`Item de revenda duplicado ou sem produto para reserva: ${item?.descricao || produtoId || 'sem identificador'}`);
+      }
+      produtoIdsReserva.add(produtoId);
+    }
+    if (resultados.erros.length === 0 && itensRevenda.length > 0) {
+      for (const item of itensRevenda) {
         try {
           // Aprovacao apenas RESERVA; saida fisica ocorre no faturamento
           const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
