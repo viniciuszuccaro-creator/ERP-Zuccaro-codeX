@@ -256,6 +256,15 @@ test('duas entregas do pedido permanecem independentes na conferencia IA', async
   assert.ok(source.includes('value={entregaSelecionadaId}'));
 });
 
+test('reconferencia da mesma entrega atualiza registro divergente com auditoria', async () => {
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.ok(source.includes('await updateInContext("SeparacaoConferencia", existente.id, payloadConferencia)'));
+  assert.ok(source.includes('dadosAnteriores: existente || pedido'));
+  assert.ok(source.includes('if (entregas.length > 100)'));
+  assert.ok(source.includes('undefined, 101'));
+  assert.ok(source.includes('entregas.length > 1 && legadoSemEntrega'));
+});
+
 test('separacao cancelada nao bloqueia nova conferencia, mas concluida e reutilizada', () => {
   const record = { empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia' };
   const cancelada = assertSeparacaoOnCreate({
