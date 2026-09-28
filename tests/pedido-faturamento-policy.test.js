@@ -355,6 +355,34 @@ test('handler real de NF rejeita pendente e preserva Pedido quando baixa falha',
   assert.deepEqual(efeitos, ['criar:NotaFiscal', 'atualizar:NotaFiscal:Rejeitada']);
 });
 
+test('falha ao atualizar Pedido após baixa não rejeita NF válida', async () => {
+  const source = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('onEmitir={async (dadosNFe) => {');
+  const end = source.indexOf('\n        }}', start);
+  const handlerSource = source.slice(start + 'onEmitir={'.length, end) + '\n}';
+  const efeitos = [];
+  const ctx = {
+    formData: { id: 'ped-1', empresa_id: 'e1', numero_pedido: 'PED-1', etapas_entrega: [] },
+    empresaId: 'e1', groupId: 'g1', valorTotal: 10,
+    toast: { error: () => {}, success: () => {} },
+    filterInContext: async () => [],
+    assertFaturamentoDentroDoPedido: () => ({ status: 'Faturado' }),
+    createInContext: async () => ({ id: 'nf-1', status: 'Pendente' }),
+    updateInContext: async (entity) => {
+      efeitos.push(entity);
+      if (entity === 'Pedido') throw new Error('falha pedido');
+    },
+    faturarPedidoCompleto: async () => ({ erros: [] }),
+    auditFechamento: async () => {},
+    setFormData: () => {},
+    setModalNFeOpen: () => {},
+  };
+  const emitir = runInNewContext('(' + handlerSource + ')', ctx);
+  await assert.rejects(() => emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1',
+    cliente_id: 'c1', cliente_nome: 'Cliente', valor_total: 10, escopo: 'pedido_inteiro' }), /conciliacao manual/);
+  assert.deepEqual(efeitos, ['Pedido']);
+});
+
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const approvalStart = fluxo.indexOf('export async function aprovarPedidoCompleto');
