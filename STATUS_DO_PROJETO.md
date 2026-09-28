@@ -1,3 +1,29 @@
+## PARECER FINAL CURSOR — #104 `544162b8` (2026-09-28T18:50Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `544162b8a00e5ee4b38f1cb6c3b404c782b0e9e5` |
+| CI | **SUCCESS** |
+| Código do lote | `f6eb010ad7c4` (regex) + `56b92e01`/`e8dc5d4b` (etapa/permissão); commit final só STATUS |
+| Substitui | REVOGADO `2d24ed14` |
+
+### P1-H/I — prova comportamental independente
+| ID | Exigência | Resultado |
+|---|---|---|
+| P1-H | Etapa estocável bloqueia antes da NF; etapa sem estoque **não** grava status Faturado | OK — `avaliarEtapaFaturamento` + patch só `etapas_entrega`; regex `revenda-(\d+)` corrigido |
+| P1-I | Emitente rejeita NF `Pendente` sem `editar` | OK — `rejectPending` + `nfeEmitActions` em `localEntityUpdateTransitions` |
+
+### Regressão
+P1-A..G (saida física, ciclo, fail-closed faturamento, bloqueio pós-saida, NF/status pedido_inteiro): preservados.
+
+### P2 residual
+- Flag `baixaConcluida` = faturar sem erros; baixa parcial com erro ainda rejeita NF inteira (já conhecido).
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+
+---
+
 ## COORDENAÇÃO LEGADO — evidência owner #106/#48 (2026-09-28T18:40Z)
 
 Fonte: comentário owner em [#106](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/106).
