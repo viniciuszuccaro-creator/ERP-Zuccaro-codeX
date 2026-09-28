@@ -11590,3 +11590,11 @@ Checklist inicial:
 - Validação: 52 testes focados aprovados, incluindo segundo fechamento pós-saída e execução isolada do handler real de NF com falha de baixa ou atualização do Pedido; diff-check aprovado. CI/revisão Cursor exigidas no HEAD final.
 - Se a baixa concluiu mas falhou a atualização posterior do Pedido, a NF não é rejeitada: o caso é auditado e exige conciliação manual. Sem cancelamento fiscal automático.
 - Commits funcionais: aa3051a, e2b139b, b02eba6, 741e912, 35aebc5, a47e0fd, 10ae485, 88c4f7c, e537fe3, 5a261cf. Próximo passo: CI e parecer do Cursor.
+
+## Onda 7 #104 — etapa fiscal e rejeição da NF pendente (2026-09-28)
+
+- Causa: etapa específica marcava Pedido faturado sem baixa; emissor sem editar não conseguia rejeitar a NF pendente após falha.
+- Mudança: etapa sem estoque mantém status operacional e grava a etapa; etapa com revenda estocável falha antes de criar NF até existir fluxo de baixa por etapa. Transição restrita Pendente → Rejeitada aceita permissão emitir/enviar sem autorizar alteração de valor nem cancelamento fiscal.
+- Estruturas reutilizadas: handler de FechamentoFinanceiroTab, pedidoFaturamentoPolicy, notaFiscalEmissaoPolicy e guarda local de RBAC. Grupo/Empresa e auditoria preservados; sem VPS, dados reais ou #106.
+- Validação: 57 testes focados aprovados, incluindo execução do handler de etapa e transição real de NotaFiscal com perfil somente emitente; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: e5fb805, e8dc5d4, 68e2541, 56b92e0, c7816e0, 8c11ae0, f6eb010. Próximo passo: CI, revisão e fluxo seguro de baixa por etapa estocável.
