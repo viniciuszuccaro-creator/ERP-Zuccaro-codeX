@@ -14,7 +14,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
-import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
+import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -424,6 +424,10 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             toast.error('Selecione a empresa faturadora.');
             throw new Error('Empresa obrigatoria para emitir NF-e.');
           }
+          if (dadosNFe.escopo === 'etapa_especifica') {
+            const etapa = avaliarEtapaFaturamento({ pedido: formData, etapaId: dadosNFe.etapa_id });
+            if (!etapa.permitido) throw new Error(etapa.motivo);
+          }
           const notas = await filterInContext('NotaFiscal', { pedido_id: formData.id }, '-created_date', 200);
           const pedidoValorado = { ...formData, valor_total: valorTotal };
           const { status } = assertFaturamentoDentroDoPedido({
@@ -460,11 +464,11 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               if (resultado?.erros?.length) throw new Error(resultado.erros.join('; '));
               baixaConcluida = true;
             }
-            await updateInContext('Pedido', formData.id, {
-              status,
-              etapas_entrega: etapasAtualizadas,
-            });
-            setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
+            const patchPedido = dadosNFe.escopo === 'pedido_inteiro'
+              ? { status, etapas_entrega: etapasAtualizadas }
+              : { etapas_entrega: etapasAtualizadas };
+            await updateInContext('Pedido', formData.id, patchPedido);
+            setFormData((prev) => ({ ...prev, ...patchPedido }));
           } catch (error) {
             if (baixaConcluida) {
               await auditFechamento('nfe_fechamento_atualizacao_pedido_falhou', {
