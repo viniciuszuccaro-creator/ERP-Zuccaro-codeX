@@ -1,4 +1,31 @@
-## PARECER FINAL CURSOR — #104 `f244138e` (HEAD final lote) (2026-09-28T14:40Z)
+## PARECER FINAL CURSOR — #104 `505d1040` (HEAD final lote) (2026-09-28T15:00Z)
+
+| Campo | Valor |
+|---|---|
+| SHA revisado | `505d104091245e9fc2727556771a3d5fddb70059` |
+| Branch | `codex/estoque-reserva-atomica` |
+| CI | **SUCCESS** frontend+backend |
+| Substitui | `f244138e` / `ffc0aff6` / `a7fa975c` |
+
+### Núcleo reserva (pedido)
+`pedidoFaturamentoPolicy.js` + `useFluxoPedido.jsx` **byte-idênticos** a `f244138e`.
+Prova comportamental **9/9** reexecutada neste HEAD: falha após 1ª reserva → compensa só desta tentativa → bloqueia OP/CR/crédito/aprovação.
+
+### Delta expedição (pós-`f244138e`)
+- Separação cancelada não bloqueia nova; concluída ainda reutiliza
+- Conferência IA exige `groupId` **e** `empresaId`
+- `conferirQuantidadesPedido`: reconcilia demanda agregada vs scans (prova behav OK; falta/excesso bloqueiam)
+- Scanner: limite de leituras; rejeita resposta IA incompleta/inválida
+- Consulta entrega por ID no escopo; vínculo pedido/entrega
+
+### Veredito
+
+**APROVADO** exclusivamente neste SHA `505d104091245e9fc2727556771a3d5fddb70059`.
+Cursor **não** mergeia/deploya. GitHub comment 403 → STATUS/HANDOFF.
+
+---
+
+## PARECER FINAL CURSOR — #104 `f244138e` (HEAD final lote) (2026-09-28T14:40Z) **SUPERSEDED**
 
 | Campo | Valor |
 |---|---|
