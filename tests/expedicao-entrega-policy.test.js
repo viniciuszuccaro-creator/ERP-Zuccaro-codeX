@@ -27,6 +27,7 @@ test('separacao recalcula divergencia por quantidade antes de liberar pedido', a
 
 test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem', async () => {
   const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(source, /filterInContext\("Entrega", \{ id: entregaId \}, undefined, 1\)/);
   assert.match(source, /pedido_id: pedido\\?\\.id \\|\\| entrega\\?\\.pedido_id \\|\\| null/);
   assert.match(source, /entrega_id: entrega\\?\\.id \\|\\| null/);
   const existing = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
