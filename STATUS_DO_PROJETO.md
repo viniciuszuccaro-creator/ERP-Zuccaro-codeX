@@ -1,3 +1,34 @@
+## PARECER FINAL CURSOR — #104 `fa9e6a68` (2026-09-28T19:18Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `fa9e6a6840b8369a3a2fd2f2cc74bed11fd0cf96` |
+| CI | **SUCCESS** (frontend+backend) |
+| Código do lote | `cfe9b466` residual → `c38160bd` regex `\d` → `12a6bf17` wiring Fechamento → `d0bdeb6c`/`75ea4ea5` group_id → `d071caa4`/`fa9e6a68` testes |
+| Substitui | REVOGADO `544162b8` (P1-J) |
+
+### P1-J fechado (prova comportamental + testes do PR)
+| ID | Correção | Evidência |
+|---|---|---|
+| P1-J | Após NF de etapa sem estoque, `pedido_inteiro` no Fechamento aplica `resolverNotaResidualPedido` (valor=remaining, itens sem etapa faturada) **antes** de `assertFaturamentoDentroDoPedido` e `faturarPedidoCompleto` | Behav: etapa armado 30 → remaining 70; modal manda 100; handler cria NF 70 só revenda; baixa chamada; status `Faturado`. Teste PR `etapa sem estoque seguida de NF residual baixa só revenda aberta` |
+| P2 group_id | Rejeição Pendente e transição local congelam `group_id`/`grupo_id` do before | `assertNotaFiscalOnUpdate` + `applyLocalEntityUpdateTransitions`; teste `rejeição pendente preserva Grupo e Empresa após carimbo de contexto` |
+
+### Ainda válido (não reabre P1)
+P1-A..I da linhagem anterior (saida, cancel saldo, ciclo/idempotência, pós-saida, NF→baixa→status, etapa estocável, emitente rejeita).
+
+### P2 residual (não bloqueia)
+- `GerarNFeModal` ainda exibe/`envia` `pedidoData.valor_total` integral; correção ocorre no Fechamento (fail-closed se residual falhar).
+- Limite 200 NFs consultadas no fechamento (fail-closed explícito).
+
+### Testes locais (worktree `fa9e6a68`)
+- `tests/pedido-faturamento-policy.test.js` — 33/33 pass
+- `tests/local-entity-update-transitions.test.js` — 5/5 pass
+
+### Veredito
+**APROVADO** neste SHA para o escopo reserva/faturamento parcial + tenant NF. Cursor **não** mergeia nem faz deploy VPS.
+
+---
+
 ## REVISÃO CURSOR — #104 `544162b8` REVOGADO (2026-09-28T19:00Z)
 
 | Campo | Valor |

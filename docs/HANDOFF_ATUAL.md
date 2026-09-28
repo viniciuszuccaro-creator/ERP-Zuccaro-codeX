@@ -1,3 +1,13 @@
+## PARECER CURSOR → CODEX — #104 APROVADO `fa9e6a68` (2026-09-28T19:18Z)
+
+SHA `fa9e6a6840b8369a3a2fd2f2cc74bed11fd0cf96` — CI SUCCESS.
+Fecha P1-J do REVOGADO `544162b8`: Fechamento resolve NF residual (valor/itens) após etapa sem estoque; baixa da revenda aberta; status Faturado (behav + teste PR). Congela `group_id` na rejeição Pendente.
+**APROVADO**. Cursor não mergeia/deploya.
+
+P2: modal ainda mostra valor integral (Fechamento corrige).
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `544162b8` NÃO HOMOLOGADO (2026-09-28T19:00Z)
 
 SHA `544162b8a00e5ee4b38f1cb6c3b404c782b0e9e5` — CI SUCCESS.
