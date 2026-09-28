@@ -1,3 +1,14 @@
+## Onda 7 Comercial 360 — conferência e expedição (#104, 2026-09-28)
+
+- Objetivo: impedir liberação de pedido com conferência incompleta e corrigir o vínculo entre entrega e pedido.
+- Causa: a conferência IA usava apenas divergências declaradas pela IA; a conferência comum gravava o ID da entrega como pedido e consultava somente 500 entregas.
+- Estruturas reutilizadas: SeparacaoConferencia, SeparacaoConferenciaIA, expedicaoEntregaPolicy, filterInContext e RBAC/contexto existentes.
+- Mudança: origem separada em entrega_id e pedido_id; consulta direta por ID; reconciliação de quantidade por produto antes de marcar pronto para faturar; scanner limita leituras ao pedido e registra item após validação IA.
+- Multiempresa/RBAC/auditoria: mantidos Grupo, Empresa e alçadas existentes. Sem VPS, migrations, dados reais ou alterações na #48.
+- Validação: 43 testes focados aprovados; git diff --check aprovado. Suite completa falha em testes Bash sem Bash no Windows; eslint, tsc e vite ausentes localmente. CI da #104 será verificada por SHA.
+- Commits funcionais: cacea93, a666b88, ceb4b82, e87ebb3, a3d3583, f71527e, f8d7be9, 16cf308, 4a33428, 6be38bf, f0a349d.
+- Próximo passo: revisão independente do HEAD final da #104; sem retomada automática sem automação configurada.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
