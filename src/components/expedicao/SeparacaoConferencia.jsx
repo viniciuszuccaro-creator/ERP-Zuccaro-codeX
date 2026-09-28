@@ -41,8 +41,8 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const { data: entrega, isLoading, isError, error } = useQuery({
     queryKey: ['entrega', entregaId],
     queryFn: async () => {
-      const entregas = await filterInContext("Entrega", {}, "-created_date", 500);
-      return entregas.find(e => e.id === entregaId);
+      const entregas = await filterInContext("Entrega", { id: entregaId }, undefined, 1);
+      return entregas[0] || null;
     },
     enabled: !!entregaId && !pedido && contextoBaseValido && canConcluirSeparacao,
   });
