@@ -129,6 +129,13 @@ test('stock validator uses tenant-scoped available balance instead of physical b
   assert.match(validator, /estoqueDisponivel >= quantidadeNecessaria/);
 });
 
+test('stock validator aggregates repeated product demand before comparing availability', async () => {
+  const validator = await readFile(new URL('../src/components/comercial/ValidadorEstoquePedido.jsx', import.meta.url), 'utf8');
+  assert.match(validator, /demandaPorProduto/);
+  assert.match(validator, /quantidadeTotalProduto/);
+  assert.match(validator, /estoqueDisponivel >= quantidadeTotalProduto/);
+});
+
 test('commercial billing persists the NF instead of logging it', async () => {
   const fechamento = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
