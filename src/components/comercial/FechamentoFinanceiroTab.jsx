@@ -453,16 +453,29 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           const etapasAtualizadas = (formData.etapas_entrega || []).map((etapa) => (
             etapa.id === dadosNFe.etapa_id ? { ...etapa, faturada: true } : etapa
           ));
-          await updateInContext('Pedido', formData.id, {
-            status,
-            etapas_entrega: etapasAtualizadas,
-          });
-          setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
-          if (dadosNFe.escopo === 'pedido_inteiro') {
-            const resultado = await faturarPedidoCompleto({ ...pedidoValorado, status }, nota, empresaId);
-            if (resultado?.erros?.length) {
-              throw new Error(resultado.erros[0]);
+          try {
+            if (dadosNFe.escopo === 'pedido_inteiro') {
+              const resultado = await faturarPedidoCompleto(pedidoValorado, nota, empresaId);
+              if (resultado?.erros?.length) throw new Error(resultado.erros.join('; '));
             }
+            await updateInContext('Pedido', formData.id, {
+              status,
+              etapas_entrega: etapasAtualizadas,
+            });
+            setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
+          } catch (error) {
+            try {
+              await updateInContext('NotaFiscal', nota.id, { status: 'Cancelada' });
+              await auditFechamento('nfe_fechamento_revertida', {
+                entidade: 'NotaFiscal', nota_id: nota.id, motivo: error?.message || 'falha_faturamento'
+              }, false);
+            } catch (rollbackError) {
+              await auditFechamento('nfe_fechamento_reversao_falhou', {
+                entidade: 'NotaFiscal', nota_id: nota.id, motivo: rollbackError?.message || 'erro_reversao'
+              }, false);
+              throw new Error('Faturamento falhou e a NF pendente nao foi cancelada; conciliacao manual obrigatoria.');
+            }
+            throw error;
           }
           await auditFechamento('nfe_fechamento_emitida', { entidade: 'NotaFiscal', escopo: dadosNFe?.escopo, etapa_id: dadosNFe?.etapa_id, nota_id: nota.id }, true);
           setModalNFeOpen(false);
