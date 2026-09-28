@@ -133,7 +133,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         throw new Error("Sem permissao para concluir separacao/conferencia.");
       }
 
-      const temDivergencia = itens.some(i => i.divergencia);
+      const temDivergencia = itens.some(i => i.divergencia || Number(i.quantidade_separada || 0) !== Number(i.quantidade_pedida || 0));
       
       const separacao = await createInContext("SeparacaoConferencia", {
         group_id: effectiveGroupId,
