@@ -77,7 +77,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   const { data: entregas = [], isLoading: entregasCarregando } = useQuery({
     queryKey: ["entregas-separacao-ia", pedidoId, effectiveGroupId, effectiveEmpresaId],
     queryFn: async () => {
-      const rows = await filterInContext("Entrega", { pedido_id: pedidoId }, undefined, 100);
+      const rows = await filterInContext("Entrega", { pedido_id: pedidoId }, undefined, 101);
       return rows.filter((item) => String(item?.pedido_id) === String(pedidoId)
         && String(item?.empresa_id) === String(effectiveEmpresaId)
         && String(item?.group_id || item?.grupo_id) === String(effectiveGroupId));
@@ -264,20 +264,28 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       if (entregasCarregando || (entregas.length > 1 && !entregaAtiva)) {
         throw new Error("Selecione a entrega para finalizar a conferencia deste pedido.");
       }
-      if (entregas.length === 100) {
+      if (entregas.length > 100) {
         throw new Error("Entregas excedem o limite de consulta; conferencia bloqueada.");
       }
 
       const anteriores = await filterInContext("SeparacaoConferencia", { pedido_id: pedido.id }, "-created_date", 100);
+      const legadoSemEntrega = anteriores.find((item) => String(item?.pedido_id) === String(pedido.id)
+        && String(item?.empresa_id) === String(effectiveEmpresaId)
+        && !item?.entrega_id && !String(item?.status || '').toLowerCase().includes('cancel'));
+      if (entregas.length > 1 && legadoSemEntrega) {
+        throw new Error("Conferencia legada sem entrega definida; regularize o vinculo antes de finalizar.");
+      }
       const existente = findDuplicateSeparacao({
         pedido_id: pedido.id, entrega_id: entregaAtiva?.id || null, empresa_id: effectiveEmpresaId, tipo: "conferencia_ia"
-      }, anteriores);
-      if (existente) return { ...existente, _reused: true };
+      }, anteriores) || (entregas.length === 1 ? legadoSemEntrega : null);
+      if (existente && !String(existente.status || '').toLowerCase().includes('diverg')) {
+        return { ...existente, _reused: true };
+      }
 
       const tempoTotalMinutos = Math.floor(cronometro.segundos / 60);
       const conferenciaQuantidades = conferirQuantidadesPedido(pedido.itens_revenda, separacao.itens_separados);
       const temDivergencia = separacao.divergencias.length > 0 || !conferenciaQuantidades.conforme;
-      const registro = await createInContext("SeparacaoConferencia", {
+      const payloadConferencia = {
         ...separacao,
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
@@ -300,7 +308,10 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           : "",
         itens: separacao.itens_separados,
         observacoes: sanitizeText(separacao.observacoes)
-      });
+      };
+      const registro = existente
+        ? await updateInContext("SeparacaoConferencia", existente.id, payloadConferencia)
+        : await createInContext("SeparacaoConferencia", payloadConferencia);
 
       await updateInContext("Pedido", pedido.id, {
         group_id: effectiveGroupId,
@@ -324,7 +335,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       await auditarSeparacaoIA({
         acao: "SeparacaoConferenciaIA.finalizar",
         descricao: "Separacao/conferencia IA finalizada e pedido atualizado.",
-        dadosAnteriores: pedido,
+        dadosAnteriores: existente || pedido,
         dadosNovos: registro,
         registroId: registro.id
       });
