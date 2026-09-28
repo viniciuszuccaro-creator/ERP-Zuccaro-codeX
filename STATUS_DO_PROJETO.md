@@ -11587,5 +11587,6 @@ Checklist inicial:
 - Causa: segundo fechamento podia reservar produto já baixado; a tela gravava NF e status antes da baixa, deixando faturamento aparente após erro.
 - Mudança: reserva e fechamento bloqueados após saída física/faturamento; tela atualiza Pedido só após baixa sem erros e marca NF ainda pendente como Rejeitada quando a baixa falha, com auditoria e alerta se a reversão falhar. NF rejeitada não consome saldo faturável.
 - Reuso/segurança: fluxo, política de faturamento e handler existentes; Grupo/Empresa e RBAC mantidos. Sem cancelamento fiscal automático, VPS, dados reais ou #106.
-- Validação: 51 testes focados aprovados, incluindo segundo fechamento pós-saída e execução isolada do handler real de NF com falha de baixa; diff-check aprovado. CI/revisão Cursor exigidas no HEAD final.
-- Commits funcionais: aa3051a, e2b139b, b02eba6, 741e912, 35aebc5, a47e0fd, 10ae485, 88c4f7c. Próximo passo: CI e parecer do Cursor.
+- Validação: 52 testes focados aprovados, incluindo segundo fechamento pós-saída e execução isolada do handler real de NF com falha de baixa ou atualização do Pedido; diff-check aprovado. CI/revisão Cursor exigidas no HEAD final.
+- Se a baixa concluiu mas falhou a atualização posterior do Pedido, a NF não é rejeitada: o caso é auditado e exige conciliação manual. Sem cancelamento fiscal automático.
+- Commits funcionais: aa3051a, e2b139b, b02eba6, 741e912, 35aebc5, a47e0fd, 10ae485, 88c4f7c, e537fe3, 5a261cf. Próximo passo: CI e parecer do Cursor.
