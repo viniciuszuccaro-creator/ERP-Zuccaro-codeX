@@ -1,3 +1,20 @@
+## Gate 18 - sanitizacao do staging legado (2026-09-28)
+
+- Tarefa: endurecer o contrato existente `migracaoErpPolicy` sem duplicar o mapeador sintetico da PR #48.
+- Causa: `stripSegredosMigracao` removia apenas chaves exatas no nivel superior; segredos em payloads aninhados ou chaves maiusculas podiam seguir para staging.
+- Mudanca: filtragem recursiva de objetos/arrays JSON, case-insensitive para as chaves secretas ja reconhecidas, preservando codigo legado e sem mutar a origem.
+- Testes sinteticos direcionados: 25 PASS, 0 FAIL; incluem stamp de Cliente e staging financeiro de ContaReceber sem senha/token/chave aninhados. `audit:baseline`, lint, build e diff-check passaram. Typecheck global continua falhando em mais de 2 mil diagnosticos preexistentes de arquivos nao alterados. Nenhum dado real ou credencial foi usado.
+- Limite: nao foi feita extracao, transformacao de registros reais, vinculacao empresarial comprovada ou carga. O proximo lote deve reutilizar o mapper da #48 e validar Grupo/Empresa em staging isolado, com reconciliacao e gate antes de importar.
+
+## Gate 18 - inventario agregado seguro do legado (2026-09-28)
+
+- Frente isolada `codex/legado-inventario-20260928`, sem editar a branch da PR #48 do Cursor.
+- O inventario existente passou a emitir somente agregados no terminal. Manifesto com nomes/hashes individuais e privado, rejeitado se o destino estiver dentro do backup ou do repositorio; `--root` restringe a busca ao caminho informado. Python local configuravel, padrao CI preservado.
+- Pasta identificada por nome em leitura de metadados: 2.785 arquivos, 41.303.077.763 bytes, 18 MDF, 18 LDF e 595 TPS. Esses totais abrangem copias preservadas/de trabalho; nao representam arquivos originais distintos.
+- Testes sinteticos dirigidos: 5 PASS, 0 FAIL. `git diff --check` aprovado. Nenhum registro, nome de arquivo, documento, hash individual, segredo ou dado comercial real foi publicado.
+- Nenhum original foi alterado, nenhum banco foi anexado, nenhum arquivo foi importado e nenhuma migration foi aplicada. Staging real permanece bloqueado ate mapa Grupo/Empresa comprovado, reconciliacao, backup restauravel do destino e gate humano.
+- Proximo lote: validar o esquema/contrato de transformacao em staging sintetico reutilizando `migracaoErpPolicy` e coordenando o mapeador da PR #48; resolver alias empresarial sem inferir vinculo pelo nome da pasta.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
@@ -11554,3 +11571,11 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## Migração legada #106 — preflight de escopo para staging (2026-09-28)
+
+- Objetivo: impedir que o mapeador sintético da #48 receba `groupId`/`empresaId` assumidos para operações. O seletor legado comprova 003 como Grupo CPA e 001/002/005 como opções de Empresas, mas nao comprova sozinho CNPJ ou empresa juridica de cada pedido, estoque, titulo ou nota.
+- `scripts/legado/staging-scope-gate.mjs` valida, antes do staging isolado, mestres compartilhados no Grupo e operacoes somente com vinculo juridico explicitamente verificado para o mesmo Grupo/Empresa. Codigos 0, 003, 004 e desconhecidos permanecem em quarentena; o relatorio resume apenas totais e motivos.
+- Nao altera o mapeador da PR #48, nao le o HD, nao grava staging nem importa dados reais. O vinculo 001/002/005 com as empresas juridicas do ERP novo segue pendente de prova documental/CNPJ e correção do override de escopo na #48 antes de carga real.
+- Testes sintéticos direcionados: 39 PASS/0 FAIL. Proximo: compatibilizar o preflight com a #48 corrigida, preparar staging fisicamente isolado e reconciliar contagens por entidade/empresa; somente depois solicitar gate de importacao real, backup do destino e rollback.
+- Validacao do lote: `npm run audit:baseline`, `npm run lint` e `npm run build` PASS. `npm test` global falha em scripts Bash/PATH e arquivos temporarios ausentes no Windows, fora deste lote; WSL nao instalado. `npm run typecheck` global continua com diagnosticos preexistentes em arquivos nao alterados. A CI Linux do novo HEAD e obrigatoria antes de considerar o checkpoint aprovado.
