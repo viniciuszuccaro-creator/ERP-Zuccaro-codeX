@@ -1,5 +1,6 @@
 import {
   assertFaturamentoDentroDoPedido,
+  avaliarReservaParcial,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
@@ -90,6 +91,15 @@ test('approval blocks downstream effects and compensates partial stock reservati
   assert.match(fluxo.slice(approvalStart, productionStart), /return resultados;/);
   assert.match(fluxo.slice(approvalStart, productionStart), /validarItensReservaEstoque/);
   assert.match(fluxo.slice(approvalStart, productionStart), /duplicado ou sem produto para reserva/);
+});
+
+test('partial reservation failure compensates created moves and blocks downstream effects', () => {
+  const decision = avaliarReservaParcial({
+    reservas: [{ id: 'r1' }, { skipped: true }, { id: 'r2' }],
+    erros: ['estoque insuficiente no item seguinte'],
+  });
+  assert.deepEqual(decision, { bloqueado: true, compensar: [{ id: 'r1' }, { id: 'r2' }] });
+  assert.deepEqual(avaliarReservaParcial({ reservas: [{ id: 'r1' }], erros: [] }), { bloqueado: false, compensar: [] });
 });
 
 test('stock reservation rejects duplicate or missing product lines before persistence', () => {
