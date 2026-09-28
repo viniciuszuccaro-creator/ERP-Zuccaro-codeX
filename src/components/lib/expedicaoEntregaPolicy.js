@@ -113,16 +113,22 @@ export const findDuplicateRomaneio = (record = {}, romaneios = []) => {
  * @param {ExpedicaoRecord[]} separacoes
  */
 export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
-  const origem = firstText(record.entrega_id, record.pedido_id);
+  const entregaId = firstText(record.entrega_id);
+  const pedidoId = firstText(record.pedido_id);
   const empresaId = firstText(record.empresa_id);
   const tipo = firstText(record.tipo) || 'conferencia';
-  if (!origem || !empresaId) return null;
-  return (Array.isArray(separacoes) ? separacoes : []).find((item) => (
-    !statusOf(item).includes('cancel')
-    && firstText(item.empresa_id) === empresaId
-    && firstText(item.tipo) === tipo
-    && firstText(item.entrega_id, item.pedido_id) === origem
-  )) || null;
+  if ((!entregaId && !pedidoId) || !empresaId) return null;
+  return (Array.isArray(separacoes) ? separacoes : []).find((item) => {
+    const tipoExistente = firstText(item.tipo) || 'conferencia';
+    const mesmaFamilia = ['conferencia', 'conferencia_ia'].includes(tipo)
+      && ['conferencia', 'conferencia_ia'].includes(tipoExistente);
+    if (statusOf(item).includes('cancel') || firstText(item.empresa_id) !== empresaId
+      || (!mesmaFamilia && tipoExistente !== tipo)) return false;
+    const outraEntrega = firstText(item.entrega_id);
+    if (entregaId && outraEntrega && entregaId !== outraEntrega) return false;
+    return Boolean((entregaId && outraEntrega === entregaId)
+      || (pedidoId && firstText(item.pedido_id) === pedidoId));
+  }) || null;
 };
 
 /**
@@ -148,7 +154,7 @@ export const conferirQuantidadesPedido = (pedidos = [], separados = []) => {
     return { conforme: false, divergencias: ['quantidade_invalida'] };
   }
   const divergencias = [...new Set([...esperadas.keys(), ...obtidas.keys()])]
-    .filter((id) => esperadas.get(id) !== obtidas.get(id));
+    .filter((id) => Math.abs((esperadas.get(id) || 0) - (obtidas.get(id) || 0)) > 0.000001);
   return { conforme: divergencias.length === 0, divergencias };
 };
 
@@ -156,9 +162,9 @@ export const conferirQuantidadesPedido = (pedidos = [], separados = []) => {
  * Limita cada leitura do scanner ao total pedido do produto.
  * @param {{ itensPedido?: ExpedicaoRecord[], itensSeparados?: ExpedicaoRecord[], produtoId?: unknown, codigo?: unknown }} options
  */
-export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], produtoId, codigo } = {}) => {
+export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], produtoId } = {}) => {
   const esperado = (Array.isArray(itensPedido) ? itensPedido : [])
-    .filter((item) => firstText(item.produto_id) === firstText(produtoId) || (firstText(codigo) && firstText(item.codigo) === firstText(codigo)));
+    .filter((item) => firstText(item.produto_id) === firstText(produtoId));
   if (!firstText(produtoId) || esperado.length === 0) return { permitido: false, motivo: 'produto_fora_pedido' };
   const quantidades = esperado.map((item) => Number(item.quantidade));
   if (quantidades.some((valor) => !Number.isFinite(valor) || valor <= 0)) {
@@ -172,8 +178,9 @@ export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], 
     return { permitido: false, motivo: 'scan_invalido' };
   }
   const total = scans.reduce((soma, valor) => soma + valor, 0);
-  return total < limite
-    ? { permitido: true, motivo: null }
+  const restante = Number((limite - total).toFixed(6));
+  return restante > 0.000001
+    ? { permitido: true, motivo: null, quantidade: Math.min(1, restante) }
     : { permitido: false, motivo: 'quantidade_excedida' };
 };
 
