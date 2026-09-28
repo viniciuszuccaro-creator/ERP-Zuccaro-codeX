@@ -1,4 +1,12 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `fa9e6a68` (2026-09-28T19:18Z)
+## PARECER CURSOR → CODEX — #104 APROVADO `d06e4cc6` (2026-09-28T19:21Z)
+
+SHA `d06e4cc68fcf694a0946b9b2f6678fb15dc6da0f` — CI SUCCESS.
+Delta vs `fa9e6a68`: teste com `baixarEstoqueItem` real (saida + reservado 0) + STATUS; sem mudança em `src/`.
+Fecha P1-J e tenant NF (mesmo lote). **APROVADO**. Cursor não mergeia/deploya.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `fa9e6a68` (2026-09-28T19:18Z) **SUPERSEDED**
 
 SHA `fa9e6a6840b8369a3a2fd2f2cc74bed11fd0cf96` — CI SUCCESS.
 Fecha P1-J do REVOGADO `544162b8`: Fechamento resolve NF residual (valor/itens) após etapa sem estoque; baixa da revenda aberta; status Faturado (behav + teste PR). Congela `group_id` na rejeição Pendente.

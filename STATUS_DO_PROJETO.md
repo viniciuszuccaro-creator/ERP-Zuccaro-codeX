@@ -1,4 +1,28 @@
-## PARECER FINAL CURSOR — #104 `fa9e6a68` (2026-09-28T19:18Z)
+## PARECER FINAL CURSOR — #104 `d06e4cc6` (2026-09-28T19:21Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `d06e4cc68fcf694a0946b9b2f6678fb15dc6da0f` |
+| CI | **SUCCESS** (frontend+backend) |
+| Delta vs `fa9e6a68` | Só teste (baixa real `baixarEstoqueItem`) + STATUS Codex; **sem** mudança em `src/` |
+| Substitui | APROVADO `fa9e6a68` (mesmo lote funcional) |
+
+### Confirmação independente
+| Item | Resultado |
+|---|---|
+| P1-J residual | Mantido: handler etapa → NF 70/itens revenda → `baixarEstoqueItem` real → `saida`, estoque 9, reservado 0, status Faturado |
+| Tenant NF | Mantido: rejeição Pendente congela Grupo/Empresa do before (prepare+transition) |
+| Testes locais | `pedido-faturamento-policy` 33/33; residual+baixa 1/1; `local-entity-update-transitions` 5/5 |
+
+### P2 residual (não bloqueia)
+Modal ainda exibe valor integral; Fechamento corrige com residual fail-closed.
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia nem faz deploy VPS.
+
+---
+
+## PARECER FINAL CURSOR — #104 `fa9e6a68` (2026-09-28T19:18Z) **SUPERSEDED**
 
 | Campo | Valor |
 |---|---|
