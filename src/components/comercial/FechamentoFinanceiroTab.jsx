@@ -14,7 +14,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
-import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento, resolverNotaResidualPedido } from '@/components/lib/pedidoFaturamentoPolicy';
+import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento, resolverNotaResidualPedido, resolverUltimaEtapaMonetaria } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -433,9 +433,15 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           const pedidoValorado = { ...formData, valor_total: valorTotal };
           const temNotaAnteriorAtiva = notas.some((nota) =>
             String(nota.pedido_id) === String(formData.id) && !/(cancel|rejeitad)/i.test(String(nota.status || '')));
+          const complementoEtapa = dadosNFe.escopo === 'etapa_especifica'
+            ? resolverUltimaEtapaMonetaria({
+              pedido: pedidoValorado, etapaId: dadosNFe.etapa_id,
+              notasExistentes: notas, valorEtapa: dadosNFe.valor_total
+            })
+            : null;
           const dadosNota = dadosNFe.escopo === 'pedido_inteiro' && temNotaAnteriorAtiva
             ? { ...dadosNFe, ...resolverNotaResidualPedido({ pedido: pedidoValorado, notasExistentes: notas }) }
-            : dadosNFe;
+            : { ...dadosNFe, ...(complementoEtapa || {}) };
           const { status } = assertFaturamentoDentroDoPedido({
             pedido: pedidoValorado,
             notasExistentes: notas,
@@ -447,8 +453,10 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             numero_pedido: dadosNFe.numero_pedido,
             cliente_id: dadosNFe.cliente_id,
             cliente_fornecedor: dadosNFe.cliente_nome,
-            valor_produtos: dadosNota.valor_total,
+            valor_produtos: dadosNota.valor_produtos ?? dadosNota.valor_total,
             valor_total: dadosNota.valor_total,
+            valor_frete: dadosNota.valor_frete || 0,
+            outras_despesas: dadosNota.outras_despesas || 0,
             status: 'Pendente',
             empresa_id: empresaId,
             empresa_faturamento_id: empresaId,
@@ -461,7 +469,8 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             observacoes: dadosNFe.observacoes_nfe || '',
           }, 'empresa_faturamento_id');
           const etapasAtualizadas = (formData.etapas_entrega || []).map((etapa) => (
-            etapa.id === dadosNFe.etapa_id ? { ...etapa, faturada: true } : etapa
+            etapa.id === dadosNFe.etapa_id || dadosNota.etapasIncluidas?.includes(etapa.id)
+              ? { ...etapa, faturada: true } : etapa
           ));
           let baixaConcluida = false;
           try {
