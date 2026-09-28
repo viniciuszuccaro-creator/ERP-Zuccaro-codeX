@@ -172,13 +172,14 @@ export const validarItensReservaEstoque = (itens = []) => {
   for (const item of Array.isArray(itens) ? itens : []) {
     const produtoId = String(item?.produto_id || '');
     const unidade = String(item?.unidade || item?.unidade_medida || '').trim().toUpperCase();
-    if (!produtoId) { invalidos.push(item); continue; }
+    const quantidade = Number(item?.quantidade);
+    if (!produtoId || !Number.isFinite(quantidade) || quantidade <= 0) { invalidos.push(item); continue; }
     const anterior = porProduto.get(produtoId);
     if (anterior && anterior.unidade !== unidade) { invalidos.push(item); continue; }
     if (anterior) {
-      anterior.quantidade = Number(anterior.quantidade || 0) + Number(item?.quantidade || 0);
+      anterior.quantidade = Number(anterior.quantidade || 0) + quantidade;
       anterior.valor_total = Number(anterior.valor_total || 0) + Number(item?.valor_total || 0);
-    } else porProduto.set(produtoId, { ...item, unidade });
+    } else porProduto.set(produtoId, { ...item, quantidade, unidade });
   }
   return { valido: invalidos.length === 0, invalidos, itens: [...porProduto.values()] };
 };
