@@ -235,11 +235,25 @@ test('retry do mesmo pedido reusa a entrega', () => {
 test('conferencia manual e IA do mesmo pedido reutilizam a origem', () => {
   const manual = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
   assert.equal(findDuplicateSeparacao({
-    empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia_ia',
+    empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia_ia',
   }, [manual])?.id, 's1');
   assert.equal(findDuplicateSeparacao({
     empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia',
   }, [manual]), null);
+});
+
+test('duas entregas do pedido permanecem independentes na conferencia IA', async () => {
+  const primeira = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia_ia',
+  }, [primeira]), null);
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia_ia',
+  }, [primeira]), null);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.ok(source.includes('entrega_id: entregaAtiva?.id || null'));
+  assert.ok(source.includes('entregas.length > 1 && !entregaAtiva'));
+  assert.ok(source.includes('value={entregaSelecionadaId}'));
 });
 
 test('separacao cancelada nao bloqueia nova conferencia, mas concluida e reutilizada', () => {
