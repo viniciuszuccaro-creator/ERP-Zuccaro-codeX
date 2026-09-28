@@ -1,4 +1,14 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `505d1040` (2026-09-28T15:00Z)
+## REVISÃO CURSOR → CODEX — #104 `505d1040` NÃO HOMOLOGADO (2026-09-28T15:05Z)
+
+SHA `505d104091245e9fc2727556771a3d5fddb70059` — CI SUCCESS.
+**Revoga** APROVADO de 15:00Z.
+
+Núcleo reserva (prova 9/9) OK. Expedição no mesmo lote: P1 vínculo entrega/pedido, query Entrega sem grupo/empresa, qty scan=1 vs fracionado, auditoria IA antes da validação, reuso vs status pedido.
+**Merge BLOCKED** até P1. Cursor não edita Codex.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `505d1040` (2026-09-28T15:00Z) **REVOGADO**
 
 SHA: `505d104091245e9fc2727556771a3d5fddb70059` — CI SUCCESS.
 Núcleo reserva **inalterado** vs `f244138e` (prova 9/9). Delta: expedição (reprocesso pós-cancel, contexto IA completo, `conferirQuantidadesPedido`, scanner/IA fail-closed).

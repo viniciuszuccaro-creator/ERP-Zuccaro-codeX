@@ -1,4 +1,31 @@
-## PARECER FINAL CURSOR — #104 `505d1040` (HEAD final lote) (2026-09-28T15:00Z)
+## REVISÃO CURSOR — #104 `505d1040` REVOGADO p/ merge (2026-09-28T15:05Z)
+
+SHA ainda `505d104091245e9fc2727556771a3d5fddb70059` (CI SUCCESS). Parecer paralelo na PR e rechecagem Cursor.
+
+### Núcleo reserva (pedido) — mantém-se OK
+`pedidoFaturamentoPolicy.js` / `useFluxoPedido.jsx` inalterados; prova comportamental 9/9 (compensação só desta tentativa; bloqueia OP/CR/crédito/aprovação) **segue válida**.
+
+### Expedição no mesmo SHA — bloqueia merge
+Confirmado no fonte:
+
+| # | Sev | Defeito |
+|---|---|---|
+| P1 | — | `SeparacaoConferenciaIA` grava `pedido_id` sem `entrega_id`; `findDuplicateSeparacao` compara só o 1º entre entrega/pedido |
+| P1 | — | Manual: com só entrega, `Pronto para Faturar` exige `pedido?.id` e não promove; com pedido, query de entrega nem roda (`!pedido`) → `entrega_id` null |
+| P1 | — | Query Entrega: `queryKey` sem grupo/empresa; `contextoBaseValido` com **OR**; usa `entregas[0]` sem checar id |
+| P1 | — | Scan IA grava qty `1`; fracionado/KG não fecha `conferirQuantidadesPedido` → impede faturar |
+| P1 | — | `onSuccess` da mutation audita “validado” **antes** de `validarRespostaConferenciaIA`; peso esperado `0` no prompt |
+| P2 | — | Tela manual não chama `conferirQuantidadesPedido`; toast genérico “Quantidade excedida”; reuso create pode ainda atualizar status do pedido |
+
+### Veredito
+
+**NÃO HOMOLOGADO** para merge neste SHA (revoga APROVADO de 15:00Z).
+Núcleo reserva OK em isolamento; PR #104 como lote **bloqueada** até correção dos P1 de expedição.
+Cursor **não** edita branch Codex nem mergeia/deploya.
+
+---
+
+## PARECER FINAL CURSOR — #104 `505d1040` (HEAD final lote) (2026-09-28T15:00Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|
