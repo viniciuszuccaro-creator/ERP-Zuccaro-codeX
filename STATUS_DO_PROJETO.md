@@ -11573,3 +11573,11 @@ Checklist inicial:
 - Reuso/escopo: `useFluxoPedido`, `pedidoFaturamentoPolicy`, `SeparacaoConferenciaIA` e políticas existentes; Grupo/Empresa/RBAC mantidos. Sem VPS, dados reais ou importação.
 - Validação: 46 testes focados aprovados, incluindo execução isolada das funções reais de baixa e cancelamento; `git diff --check` aprovado. CI e revisão Cursor exigidas no HEAD final.
 - Commits funcionais: a556787, 7f163b8, 01109e5, ef70dfd, 3553d67, f0cfefb. Próximo passo: confirmar CI e novo parecer do Cursor na #104.
+
+## Onda 7 #104 — retry idempotente e bloqueio de expedição (2026-09-28)
+
+- Causa: a chave legada de reserva reutilizava movimento já compensado quando a quantidade do retry era igual; a falha de baixa não impedia criação de Entrega/status.
+- Mudança: chave por ciclo de compensação, tenant, pedido e produto; conferência do movimento e saldo persistidos antes de auditar; faturamento retorna antes de Entrega/status se qualquer baixa falhar. Reutilizadas as políticas de estoque e o fluxo existente.
+- Segurança/auditoria: contexto Grupo/Empresa mantido, falha é explícita e bloqueia efeitos posteriores. Sem VPS, dados reais ou alterações na frente legada.
+- Validação: 48 testes focados aprovados, incluindo dedup real de compensação 10 → retry 10 → saída física única, falha de baixa sem Entrega/status e cancelamento 10 → 4. Diff-check aprovado. CI e revisão Cursor pendentes do HEAD final.
+- Commits funcionais: 6d17dc5, d1fb7ac, 4ee099e, b8326ca. Próximo passo: confirmar CI e parecer do Cursor.
