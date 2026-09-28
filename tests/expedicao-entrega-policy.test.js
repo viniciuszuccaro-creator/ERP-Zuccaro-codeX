@@ -25,6 +25,21 @@ test('separacao recalcula divergencia por quantidade antes de liberar pedido', a
   assert.match(separacao, /i\.divergencia \|\| Number\(i\.quantidade_separada \|\| 0\) !== Number\(i\.quantidade_pedida \|\| 0\)/);
 });
 
+test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem', async () => {
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(source, /pedido_id: pedido\\?\\.id \\|\\| entrega\\?\\.pedido_id \\|\\| null/);
+  assert.match(source, /entrega_id: entrega\\?\\.id \\|\\| null/);
+  const existing = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
+  assert.equal(assertSeparacaoOnCreate({
+    record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia' },
+    separacoes: [existing],
+  }).reuse?.id, 's1');
+  assert.equal(assertSeparacaoOnCreate({
+    record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia' },
+    separacoes: [existing],
+  }).reuse, null);
+});
+
 test('separacao IA exige grupo e empresa antes de consultar ou gravar', async () => {
   const separacaoIA = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
   assert.match(separacaoIA, /const contextoBaseValido = Boolean\(baseGroupId && baseEmpresaId\)/);
