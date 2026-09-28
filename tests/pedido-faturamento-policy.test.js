@@ -1,6 +1,7 @@
 import {
   assertFaturamentoDentroDoPedido,
   avaliarReservaParcial,
+  executarReservasComCompensacao,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
@@ -100,6 +101,33 @@ test('partial reservation failure compensates created moves and blocks downstrea
   });
   assert.deepEqual(decision, { bloqueado: true, compensar: [{ id: 'r1' }, { id: 'r2' }] });
   assert.deepEqual(avaliarReservaParcial({ reservas: [{ id: 'r1' }], erros: [] }), { bloqueado: false, compensar: [] });
+});
+
+test('fechamento compensa reserva parcial e nao entra em financeiro ou logistica', async () => {
+  const efeitos = [];
+  const reserva = await executarReservasComCompensacao({
+    itens: [
+      { produto_id: 'p1', quantidade: 1, unidade: 'UN' },
+      { produto_id: 'p2', quantidade: 1, unidade: 'UN' },
+    ],
+    reservar: async (item) => {
+      efeitos.push('reservar:' + item.produto_id);
+      if (item.produto_id === 'p2') throw new Error('falha-p2');
+      return { id: 'r1', produto_id: item.produto_id };
+    },
+    compensar: async (movimento) => {
+      efeitos.push('compensar:' + movimento.id);
+      return { id: 'c1' };
+    },
+  });
+  if (!reserva.bloqueado) efeitos.push('financeiro', 'logistica', 'status');
+  assert.deepEqual(efeitos, ['reservar:p1', 'reservar:p2', 'compensar:r1']);
+  assert.equal(reserva.bloqueado, true);
+  assert.deepEqual(reserva.compensadas, [{ id: 'c1' }]);
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const fechamento = fluxo.slice(fluxo.indexOf('export async function executarFechamentoCompleto'));
+  assert.ok(fechamento.indexOf('if (reserva.bloqueado)') < fechamento.indexOf('// ETAPA 2: Gerar Financeiro'));
+  assert.match(fechamento, /return resultados;[\s\S]*?\/\/ ETAPA 2: Gerar Financeiro/);
 });
 
 test('stock reservation rejects duplicate or missing product lines before persistence', () => {
