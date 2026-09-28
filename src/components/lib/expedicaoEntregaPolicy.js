@@ -118,7 +118,8 @@ export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
   const tipo = firstText(record.tipo) || 'conferencia';
   if (!origem || !empresaId) return null;
   return (Array.isArray(separacoes) ? separacoes : []).find((item) => (
-    firstText(item.empresa_id) === empresaId
+    !statusOf(item).includes('cancel')
+    && firstText(item.empresa_id) === empresaId
     && firstText(item.tipo) === tipo
     && firstText(item.entrega_id, item.pedido_id) === origem
   )) || null;
