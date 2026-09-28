@@ -15,7 +15,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { selecionarEntregaConferencia } from "@/components/lib/expedicaoEntregaPolicy";
+import { conferirQuantidadesPedido, findDuplicateSeparacao, selecionarEntregaConferencia } from "@/components/lib/expedicaoEntregaPolicy";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
 
@@ -52,13 +52,29 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
     enabled: !!entregaId && contextoBaseValido && canConcluirSeparacao,
   });
 
+  const { data: pedidoDaEntrega, isLoading: pedidoLoading } = useQuery({
+    queryKey: ['pedido-da-entrega', entrega?.pedido_id, baseGroupId, baseEmpresaId],
+    queryFn: async () => {
+      const pedidos = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
+      return pedidos.find((item) => item.id === entrega.pedido_id
+        && item.empresa_id === baseEmpresaId
+        && (item.group_id || item.grupo_id) === baseGroupId) || null;
+    },
+    enabled: !!entrega?.pedido_id && !pedido && contextoBaseValido && canConcluirSeparacao,
+  });
+
   const [itens, setItens] = useState([]);
 
+  const pedidoOperacao = pedido || pedidoDaEntrega;
   // Use pedido if provided, otherwise use entrega
   const dadosParaSeparacao = pedido || entrega;
   const effectiveEmpresaId = dadosParaSeparacao?.empresa_id || empresaId || empresaAtual?.id || null;
   const effectiveGroupId = dadosParaSeparacao?.group_id || dadosParaSeparacao?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
+  const vinculoValido = !entregaId || (entrega?.id === entregaId
+    && (!pedidoOperacao || entrega.pedido_id === pedidoOperacao.id)
+    && (!entrega.pedido_id || pedidoOperacao?.id === entrega.pedido_id));
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId
+    && effectiveGroupId === baseGroupId && effectiveEmpresaId === baseEmpresaId && vinculoValido);
 
   const auditarSeparacao = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = null, registroId = null }) => {
     try {
@@ -144,7 +160,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
-        pedido_id: pedido?.id || entrega?.pedido_id || null,
+        pedido_id: pedidoOperacao?.id || entrega?.pedido_id || null,
         entrega_id: entrega?.id || null,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
         cliente_id: dadosParaSeparacao.cliente_id,
@@ -184,8 +200,8 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
           });
         }
         
-        if (pedido?.id) {
-          await updateInContext("Pedido", pedido.id, {
+        if (pedidoOperacao?.id) {
+          await updateInContext("Pedido", pedidoOperacao.id, {
             status: "Pronto para Faturar",
             group_id: effectiveGroupId,
             grupo_id: effectiveGroupId,
@@ -363,7 +379,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   const itensDivergentes = itens.filter(i => i.divergencia);
 
-  if (isLoading) {
+  if (isLoading || pedidoLoading) {
     return <p>Carregando dados da entrega...</p>;
   }
 
