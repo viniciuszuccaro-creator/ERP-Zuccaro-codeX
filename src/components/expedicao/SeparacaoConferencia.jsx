@@ -15,6 +15,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { selecionarEntregaConferencia } from "@/components/lib/expedicaoEntregaPolicy";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
 
@@ -44,9 +45,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
     queryKey: ['entrega', entregaId, baseGroupId, baseEmpresaId],
     queryFn: async () => {
       const entregas = await filterInContext("Entrega", { id: entregaId }, undefined, 1);
-      return entregas.find((item) => item.id === entregaId
-        && item.empresa_id === baseEmpresaId
-        && (item.group_id || item.grupo_id) === baseGroupId) || null;
+      return selecionarEntregaConferencia(entregas, {
+        id: entregaId, groupId: baseGroupId, empresaId: baseEmpresaId
+      });
     },
     enabled: !!entregaId && contextoBaseValido && canConcluirSeparacao,
   });
