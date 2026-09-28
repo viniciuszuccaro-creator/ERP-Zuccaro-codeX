@@ -18,6 +18,7 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { conferirQuantidadesPedido } from "@/components/lib/expedicaoEntregaPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
 
@@ -246,7 +247,8 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       }
 
       const tempoTotalMinutos = Math.floor(cronometro.segundos / 60);
-      const temDivergencia = separacao.divergencias.length > 0;
+      const conferenciaQuantidades = conferirQuantidadesPedido(pedido.itens_revenda, separacao.itens_separados);
+      const temDivergencia = separacao.divergencias.length > 0 || !conferenciaQuantidades.conforme;
       const registro = await createInContext("SeparacaoConferencia", {
         ...separacao,
         group_id: effectiveGroupId,
@@ -264,7 +266,9 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         tempo_separacao_min: tempoTotalMinutos,
         status: temDivergencia ? "com_divergencia" : "concluido",
         tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia ? `${separacao.divergencias.length} divergencia(s) detectada(s) pela IA.` : "",
+        divergencias_resumo: temDivergencia
+          ? `${separacao.divergencias.length} divergencia(s) detectada(s) pela IA; ${conferenciaQuantidades.divergencias.length} divergencia(s) de quantidade.`
+          : "",
         itens: separacao.itens_separados,
         observacoes: sanitizeText(separacao.observacoes)
       });
