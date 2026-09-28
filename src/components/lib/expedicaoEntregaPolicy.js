@@ -152,6 +152,31 @@ export const conferirQuantidadesPedido = (pedidos = [], separados = []) => {
   return { conforme: divergencias.length === 0, divergencias };
 };
 
+/**
+ * Limita cada leitura do scanner ao total pedido do produto.
+ * @param {{ itensPedido?: ExpedicaoRecord[], itensSeparados?: ExpedicaoRecord[], produtoId?: unknown, codigo?: unknown }} options
+ */
+export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], produtoId, codigo } = {}) => {
+  const esperado = (Array.isArray(itensPedido) ? itensPedido : [])
+    .filter((item) => firstText(item.produto_id) === firstText(produtoId) || (firstText(codigo) && firstText(item.codigo) === firstText(codigo)));
+  if (!firstText(produtoId) || esperado.length === 0) return { permitido: false, motivo: 'produto_fora_pedido' };
+  const quantidades = esperado.map((item) => Number(item.quantidade));
+  if (quantidades.some((valor) => !Number.isFinite(valor) || valor <= 0)) {
+    return { permitido: false, motivo: 'quantidade_invalida' };
+  }
+  const limite = quantidades.reduce((total, valor) => total + valor, 0);
+  const scans = (Array.isArray(itensSeparados) ? itensSeparados : [])
+    .filter((item) => firstText(item.produto_id) === firstText(produtoId))
+    .map((item) => Number(item.quantidade_separada));
+  if (scans.some((valor) => !Number.isFinite(valor) || valor <= 0)) {
+    return { permitido: false, motivo: 'scan_invalido' };
+  }
+  const total = scans.reduce((soma, valor) => soma + valor, 0);
+  return total < limite
+    ? { permitido: true, motivo: null }
+    : { permitido: false, motivo: 'quantidade_excedida' };
+};
+
 /** @param {EntregaCreateOptions} options */
 export const assertEntregaOnCreate = ({ record = {}, entregas = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
