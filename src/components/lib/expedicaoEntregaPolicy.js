@@ -125,9 +125,8 @@ export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
     if (statusOf(item).includes('cancel') || firstText(item.empresa_id) !== empresaId
       || (!mesmaFamilia && tipoExistente !== tipo)) return false;
     const outraEntrega = firstText(item.entrega_id);
-    if (entregaId && outraEntrega && entregaId !== outraEntrega) return false;
-    return Boolean((entregaId && outraEntrega === entregaId)
-      || (pedidoId && firstText(item.pedido_id) === pedidoId));
+    if (entregaId || outraEntrega) return Boolean(entregaId && outraEntrega === entregaId);
+    return Boolean(pedidoId && firstText(item.pedido_id) === pedidoId);
   }) || null;
 };
 
