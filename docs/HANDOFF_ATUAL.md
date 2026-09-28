@@ -1,3 +1,12 @@
+## Checkpoint de continuidade — Comercial 360 e legado (2026-09-28)
+
+- Worktree canônico confirmado em `C:\Users\cpaba\ERP-Zuccaro-comercial-360-20260928`; leitura e escrita local foram verificadas com arquivo temporário exclusivo removido em seguida. O worktree em `D:` não foi usado.
+- `origin/main` confirmado em `d02cd012948a597a734573ab0a5a7aed6d604a3b`. A candidata de Produto/Publicação por Empresa permanece separada no commit `8d9ce6e544b802528aea79ae843e6df4e69bf9f8`; não foi alterada neste checkpoint.
+- Teste focado de política de tipo comercial passou: `node --test tests/produto-tipo-policy.test.js` — 10 PASS, 0 FAIL. Não houve alteração de código, migration, dado real, canal, merge, implantação ou operação na VPS.
+- A decisão de descarte dos três Pedidos DEV permanece bloqueada até identificação privada exata, vínculos e efeitos, backup restaurável isolado, reconciliação, auditoria, revisão e gate explícito. Não executar `DELETE` nem a migration 026 como atalho; classificação histórica não pode ser inferida do Produto atual.
+- A preparação do mapeamento legado já em trabalho do Cursor (PR #48) não será duplicada nem sua branch será editada. A descoberta de backup limita-se a metadados e relatórios estruturais sanitizados; importação real exige staging isolado e gate próprio.
+- Estados de PR/CI devem ser reconferidos por API estruturada antes de revisão, merge ou novo lote dependente. Este checkpoint não declara PR, revisão, CI, merge, implantação ou importação como concluídos.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
