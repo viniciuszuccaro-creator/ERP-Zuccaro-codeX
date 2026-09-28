@@ -126,7 +126,7 @@ test('stock validator uses tenant-scoped available balance instead of physical b
   const validator = await readFile(new URL('../src/components/comercial/ValidadorEstoquePedido.jsx', import.meta.url), 'utf8');
   assert.match(validator, /group_id: groupId, empresa_id: empresaId/);
   assert.match(validator, /estoqueAtual - estoqueReservado/);
-  assert.match(validator, /estoqueDisponivel >= quantidadeNecessaria/);
+  assert.match(validator, /estoqueDisponivel >= quantidadeTotalProduto/);
 });
 
 test('stock validator aggregates repeated product demand before comparing availability', async () => {
