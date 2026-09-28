@@ -34,6 +34,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   const { hasPermission } = usePermissions();
 
   const [codigoBarras, setCodigoBarras] = useState("");
+  const [entregaSelecionadaId, setEntregaSelecionadaId] = useState("");
   const [cronometro, setCronometro] = useState({ ativo: true, segundos: 0 });
   const [desempenho, setDesempenho] = useState({ itensPorHora: 0, acuracia: 100 });
   const [separacao, setSeparacao] = useState({
@@ -72,6 +73,19 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   const effectiveEmpresaId = pedido?.empresa_id || baseEmpresaId;
   const effectiveGroupId = pedido?.group_id || pedido?.grupo_id || baseGroupId;
   const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
+
+  const { data: entregas = [], isLoading: entregasCarregando } = useQuery({
+    queryKey: ["entregas-separacao-ia", pedidoId, effectiveGroupId, effectiveEmpresaId],
+    queryFn: async () => {
+      const rows = await filterInContext("Entrega", { pedido_id: pedidoId }, undefined, 100);
+      return rows.filter((item) => String(item?.pedido_id) === String(pedidoId)
+        && String(item?.empresa_id) === String(effectiveEmpresaId)
+        && String(item?.group_id || item?.grupo_id) === String(effectiveGroupId));
+    },
+    enabled: Boolean(pedidoId && contextoValido && canUseSeparacaoIA)
+  });
+  const entregaAtiva = entregas.length === 1 ? entregas[0]
+    : entregas.find((item) => String(item.id) === entregaSelecionadaId) || null;
 
   const { data: produtos = [] } = useQuery({
     queryKey: ["produtos-separacao-ia", effectiveGroupId, effectiveEmpresaId],
@@ -247,9 +261,16 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         throw new Error("Finalizacao cancelada pelo usuario.");
       }
 
+      if (entregasCarregando || (entregas.length > 1 && !entregaAtiva)) {
+        throw new Error("Selecione a entrega para finalizar a conferencia deste pedido.");
+      }
+      if (entregas.length === 100) {
+        throw new Error("Entregas excedem o limite de consulta; conferencia bloqueada.");
+      }
+
       const anteriores = await filterInContext("SeparacaoConferencia", { pedido_id: pedido.id }, "-created_date", 100);
       const existente = findDuplicateSeparacao({
-        pedido_id: pedido.id, empresa_id: effectiveEmpresaId, tipo: "conferencia_ia"
+        pedido_id: pedido.id, entrega_id: entregaAtiva?.id || null, empresa_id: effectiveEmpresaId, tipo: "conferencia_ia"
       }, anteriores);
       if (existente) return { ...existente, _reused: true };
 
@@ -262,6 +283,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
         pedido_id: pedido.id,
+        entrega_id: entregaAtiva?.id || null,
         numero_pedido: pedido.numero_pedido,
         cliente_id: pedido.cliente_id,
         cliente_nome: pedido.cliente_nome,
@@ -505,6 +527,20 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
             </div>
           </CardHeader>
         </Card>
+
+        {entregas.length > 1 && (
+          <label className="block text-sm">
+            Entrega a conferir
+            <select className="mt-1 w-full rounded border p-2" value={entregaSelecionadaId}
+              onChange={(event) => setEntregaSelecionadaId(event.target.value)}
+              data-context-required="true">
+              <option value="">Selecione a entrega</option>
+              {entregas.map((item) => (
+                <option key={item.id} value={item.id}>{item.numero_entrega || item.id}</option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
