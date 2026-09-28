@@ -142,8 +142,8 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
         resultados.erros.push(`Item de revenda duplicado ou sem produto para reserva: ${item?.descricao || item?.produto_id || 'sem identificador'}`);
       }
     }
-    if (resultados.erros.length === 0 && itensRevenda.length > 0) {
-      for (const item of itensRevenda) {
+    if (resultados.erros.length === 0 && validacaoItensReserva.itens.length > 0) {
+      for (const item of validacaoItensReserva.itens) {
         try {
           // Aprovacao apenas RESERVA; saida fisica ocorre no faturamento
           const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
