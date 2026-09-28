@@ -159,7 +159,7 @@ test('cancelling a reservation is idempotent after a prior release', async () =>
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const releaseStart = fluxo.indexOf('async function liberarReservaEstoque');
   const releaseBody = fluxo.slice(releaseStart, fluxo.indexOf('/**', releaseStart + 1));
-  assert.match(releaseBody, /pedidoJaTemSaidaEstoque/);
+  assert.match(releaseBody, /!pedidoJaTemReservaEstoque/);
   assert.match(releaseBody, /skipped: true/);
 });
 
