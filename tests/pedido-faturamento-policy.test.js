@@ -107,6 +107,25 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
   const handlerSource = source.slice(start + 'onEmitir={'.length, end) + '\n}';
   const notas = [];
   const baixas = [];
+  const movimentos = [{ id: 'r1', tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 1 }];
+  const produto = { id: 'p1', descricao: 'Revenda', estoque_atual: 10, estoque_reservado: 1 };
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const baixaStart = fluxo.indexOf('async function baixarEstoqueItem');
+  const baixaSource = fluxo.slice(baixaStart, fluxo.indexOf('/**', baixaStart + 1));
+  const baixar = runInNewContext(baixaSource + '; baixarEstoqueItem', {
+    normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
+    filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
+      : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
+    pedidoJaTemSaidaEstoque, saldoReservaPedidoProduto,
+    getUsuarioAtual: async () => ({ id: 'u1' }),
+    createScoped: async (_entity, payload) => {
+      const mov = { ...payload, id: 'saida-1' }; movimentos.push(mov); return mov;
+    },
+    updateScoped: async (_entity, _id, patch) => {
+      Object.assign(produto, patch); return { before: null, updated: produto };
+    },
+    auditar: async () => {},
+  });
   const ctx = {
     formData: pedidoMisto, empresaId: 'e1', groupId: 'g1', valorTotal: 100,
     toast: { error: () => {}, success: () => {} },
@@ -119,7 +138,8 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
     },
     updateInContext: async (_entity, _id, patch) => patch,
     faturarPedidoCompleto: async (_pedido, nota) => {
-      baixas.push(nota);
+      const saida = await baixar(pedidoMisto.itens_revenda[0], pedidoMisto, 'e1');
+      baixas.push({ nota, saida });
       return { erros: [] };
     },
     auditFechamento: async () => {},
@@ -136,7 +156,10 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
   assert.equal(notas[1].valor_total, 70);
   assert.deepEqual(notas[1].itens, pedidoMisto.itens_revenda);
   assert.equal(baixas.length, 1);
-  assert.equal(baixas[0].id, notas[1].id);
+  assert.equal(baixas[0].nota.id, notas[1].id);
+  assert.equal(baixas[0].saida.tipo_movimento, 'saida');
+  assert.equal(produto.estoque_atual, 9);
+  assert.equal(produto.estoque_reservado, 0);
   assert.equal(ctx.formData.status, 'Faturado');
 });
 

@@ -11598,3 +11598,11 @@ Checklist inicial:
 - Estruturas reutilizadas: handler de FechamentoFinanceiroTab, pedidoFaturamentoPolicy, notaFiscalEmissaoPolicy e guarda local de RBAC. Grupo/Empresa e auditoria preservados; sem VPS, dados reais ou #106.
 - Validação: 57 testes focados aprovados, incluindo execução do handler de etapa e transição real de NotaFiscal com perfil somente emitente; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
 - Commits funcionais: e5fb805, e8dc5d4, 68e2541, 56b92e0, c7816e0, 8c11ae0, f6eb010. Próximo passo: CI, revisão e fluxo seguro de baixa por etapa estocável.
+
+## Onda 7 #104 — NF residual e tenant fiscal imutável (2026-09-28)
+
+- Causa: NF de etapa sem estoque consumia parte do valor, mas pedido inteiro tentava emitir o valor total; rejeição pendente aceitava Grupo carimbado pelo contexto da tela.
+- Mudança: pedido inteiro após etapa emite apenas saldo e itens não faturados, preservando a baixa real da revenda aberta; NFs parciais sem etapa/vínculo canônico bloqueiam para conciliação. Transição de NotaFiscal fixa Grupo/Empresa do registro original.
+- Reuso/segurança: `remainingValorFaturar`, handler fiscal e políticas de transição existentes; RBAC do emitente e auditoria mantidos. Sem VPS, dados reais ou #106.
+- Validação: 59 testes focados aprovados, incluindo handler real de etapa → NF residual → `baixarEstoqueItem` real e carimbo de Grupo pela preparação local real; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: cfe9b46, c38160b, 12a6bf1, d0bdeb6, 75ea4ea, d071caa, fa9e6a6. Próximo passo: CI e novo parecer do Cursor.
