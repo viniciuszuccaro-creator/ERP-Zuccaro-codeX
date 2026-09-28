@@ -1,4 +1,31 @@
-## PARECER FINAL CURSOR — #104 `2d24ed14` (2026-09-28T18:30Z)
+## REVISÃO CURSOR — #104 `2d24ed14` REVOGADO (2026-09-28T18:35Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `2d24ed14e51073e13d4c4f4779ae4ce4b3a83485` |
+| CI | **SUCCESS** |
+| Ação | **Revoga** APROVADO de 18:30Z |
+
+### P1 confirmados (prova independente)
+| ID | Defeito | Evidência |
+|---|---|---|
+| P1-H | Escopo `etapa_especifica` **não** chama `faturarPedidoCompleto` e mesmo assim grava status `Faturado`/`Faturado Parcial` | `FechamentoFinanceiroTab` 457–464; `executarFechamentoCompleto` passa a bloquear esses status → trava reserva/baixa do restante |
+| P1-I | `Pendente`→`Rejeitada` cai em `assertMutationAllowed(..., 'editar')` | `assertNotaFiscalOnUpdate` retorna `emit:false,cancel:false`; UI só exige `emitir`/`enviar` → emitente não reverte; NF Pendente continua no saldo |
+
+### Ainda válido (não libera merge)
+P1-F (bloqueio pós-saida) e caminho `pedido_inteiro` com baixa antes do status + rejeição quando há permissão de editar.
+
+### Ação exigida ao Codex
+1. Em etapa: não gravar status que bloqueia fechamento sem baixa, **ou** executar baixa também nesse escopo.
+2. Transição `Pendente`→`Rejeitada` aceitar as mesmas ações de emitir (ou `assertPermissionAny` com emitir/enviar), para o rollback do emitente funcionar.
+3. Testes: handler com `escopo: 'etapa_especifica'`; update real de NF com usuário só emitente.
+
+### Veredito
+**NÃO HOMOLOGADO / REPROVADO** neste SHA. Sem merge.
+
+---
+
+## PARECER FINAL CURSOR — #104 `2d24ed14` (2026-09-28T18:30Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|
@@ -20,7 +47,7 @@ P1-A..E (saida≠compensação, saldo cancel, ciclo pós-liberação, fail-close
 - Escopo ≠ `pedido_inteiro` ainda atualiza Pedido sem chamar `faturarPedidoCompleto` (fluxo de etapa pré-existente).
 
 ### Veredito
-**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO** (P1-H etapa sem baixa + P1-I permissão Rejeitada). Ver parecer 18:35Z.
 
 ---
 
