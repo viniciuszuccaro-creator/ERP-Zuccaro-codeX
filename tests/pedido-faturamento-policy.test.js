@@ -240,7 +240,7 @@ test('retry de quantidade igual cria nova reserva na deduplicação real', async
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
       : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
-    pedidoJaTemReservaEstoque, cicloReservaPedidoProduto,
+    pedidoJaTemReservaEstoque, pedidoJaTemSaidaEstoque, saldoReservaPedidoProduto, cicloReservaPedidoProduto,
     getUsuarioAtual: async () => ({ id: 'u1' }),
     createScoped: async (_entity, payload) => {
       const duplicado = findDuplicateMovement(payload, movimentos);
@@ -248,6 +248,7 @@ test('retry de quantidade igual cria nova reserva na deduplicação real', async
       const mov = { ...payload, id: 'r-nova' };
       movimentos.push(mov);
       produto.estoque_reservado = payload.reservado_atual;
+      if (payload.tipo_movimento === 'saida') produto.estoque_atual = payload.estoque_atual;
       return mov;
     },
     updateScoped: async (_entity, _id, patch) => {
@@ -266,6 +267,15 @@ test('retry de quantidade igual cria nova reserva na deduplicação real', async
   assert.equal(repetida.skipped, true);
   assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'reserva').length, 2);
   assert.equal(produto.estoque_reservado, 10);
+  const baixaStart = source.indexOf('async function baixarEstoqueItem');
+  const baixaSource = source.slice(baixaStart, source.indexOf('/**', baixaStart + 1));
+  const baixar = runInNewContext(baixaSource + '; baixarEstoqueItem', ctx);
+  const saida = await baixar(item, ped, 'e1');
+  assert.equal(saida.tipo_movimento, 'saida');
+  assert.equal(produto.estoque_atual, 10);
+  assert.equal(produto.estoque_reservado, 0);
+  await baixar(item, ped, 'e1');
+  assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'saida').length, 1);
 });
 
 test('falha da baixa bloqueia Entrega e status no faturamento real', async () => {
