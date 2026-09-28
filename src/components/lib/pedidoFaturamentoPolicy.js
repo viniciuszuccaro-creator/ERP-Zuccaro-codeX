@@ -169,6 +169,19 @@ export const saldoReservaPedidoProduto = ({ movimentos = [], pedidoId, produtoId
   return Math.max(0, saldo);
 };
 
+/** Ciclo deterministico: uma compensacao completa abre nova chave para o retry. */
+export const cicloReservaPedidoProduto = ({ movimentos = [], pedidoId, produtoId } = {}) => {
+  const pid = String(pedidoId || '');
+  const prod = String(produtoId || '');
+  if (!pid || !prod) return 0;
+  return (Array.isArray(movimentos) ? movimentos : []).filter((mov) => {
+    const tipo = String(mov?.tipo_movimento || '').toLowerCase();
+    return (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva')
+      && String(mov?.origem_documento_id || '') === pid
+      && String(mov?.produto_id || '') === prod;
+  }).length;
+};
+
 /** Uma liberacao compensatoria nao equivale a baixa fisica. */
 export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
