@@ -108,9 +108,10 @@ test('stock reservation rejects duplicate or missing product lines before persis
   assert.equal(valid.invalidos.length, 0);
   assert.equal(valid.itens.length, 1);
   assert.equal(valid.itens[0].quantidade, 5);
-  const duplicate = validarItensReservaEstoque([{ produto_id: 'p1', unidade: 'UN' }, { produto_id: 'p1', unidade: 'KG' }, {}]);
+  const duplicate = validarItensReservaEstoque([{ produto_id: 'p1', unidade: 'UN', quantidade: 1 }, { produto_id: 'p1', unidade: 'KG', quantidade: 1 }, { quantidade: 0 }]);
   assert.equal(duplicate.valido, false);
   assert.equal(duplicate.invalidos.length, 2);
+  assert.equal(validarItensReservaEstoque([{ produto_id: 'p3', quantidade: 'abc' }]).valido, false);
 });
 
 test('cancelling a reservation is idempotent after a prior release', async () => {
