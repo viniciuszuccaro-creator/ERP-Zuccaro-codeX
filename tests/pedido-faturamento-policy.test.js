@@ -2,6 +2,7 @@ import {
   assertFaturamentoDentroDoPedido,
   avaliarReservaParcial,
   executarReservasComCompensacao,
+  cicloReservaPedidoProduto,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
@@ -201,7 +202,7 @@ test('fluxo real cancela só saldo aberto do pedido após retry menor', async ()
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
       : entity === 'ContaReceber' ? [] : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
-    saldoReservaPedidoProduto, getUsuarioAtual: async () => ({ id: 'u1' }),
+    saldoReservaPedidoProduto, cicloReservaPedidoProduto, getUsuarioAtual: async () => ({ id: 'u1' }),
     createScoped: async (_entity, payload) => {
       const mov = { ...payload, id: 'liberacao-4' };
       movimentos.push(mov);
@@ -221,6 +222,74 @@ test('fluxo real cancela só saldo aberto do pedido após retry menor', async ()
   assert.equal(resultado.reservasLiberadas[0].quantidade, 4);
   assert.equal(produto.estoque_reservado, 7);
   assert.equal(saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-2', produtoId: 'p1' }), 7);
+});
+
+test('retry de quantidade igual cria nova reserva na deduplicação real', async () => {
+  const source = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('async function reservarEstoqueItemAprovacao');
+  const fnSource = source.slice(start, source.indexOf('async function gerarOPAutomatica', start));
+  const { findDuplicateMovement } = await import('../src/components/lib/estoqueMovimentoPolicy.js');
+  const movimentos = [
+    { id: 'r-antiga', tipo_movimento: 'reserva', origem_movimento: 'pedido', origem_documento_id: 'ped-1',
+      empresa_id: 'e1', group_id: 'g1', produto_id: 'p1', quantidade: 10, documento: 'PED-1' },
+    { id: 'c-antiga', tipo_movimento: 'liberacao_reserva', origem_movimento: 'pedido', origem_documento_id: 'ped-1',
+      empresa_id: 'e1', group_id: 'g1', produto_id: 'p1', quantidade: 10, documento: 'PED-1' },
+  ];
+  const produto = { id: 'p1', descricao: 'Produto', estoque_atual: 20, estoque_reservado: 0 };
+  const ctx = {
+    normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
+    filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
+      : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
+    pedidoJaTemReservaEstoque, cicloReservaPedidoProduto,
+    getUsuarioAtual: async () => ({ id: 'u1' }),
+    createScoped: async (_entity, payload) => {
+      const duplicado = findDuplicateMovement(payload, movimentos);
+      if (duplicado) return duplicado;
+      const mov = { ...payload, id: 'r-nova' };
+      movimentos.push(mov);
+      produto.estoque_reservado = payload.reservado_atual;
+      return mov;
+    },
+    updateScoped: async (_entity, _id, patch) => {
+      Object.assign(produto, patch);
+      return { before: null, updated: produto };
+    },
+    auditar: async () => {},
+  };
+  const reservar = runInNewContext(fnSource + '; reservarEstoqueItemAprovacao', ctx);
+  const item = { produto_id: 'p1', quantidade: 10, descricao: 'Produto', unidade: 'UN' };
+  const ped = { id: 'ped-1', numero_pedido: 'PED-1' };
+  const nova = await reservar(item, ped, 'e1');
+  assert.equal(nova.id, 'r-nova');
+  assert.equal(produto.estoque_reservado, 10);
+  const repetida = await reservar(item, ped, 'e1');
+  assert.equal(repetida.skipped, true);
+  assert.equal(movimentos.filter((mov) => mov.tipo_movimento === 'reserva').length, 2);
+  assert.equal(produto.estoque_reservado, 10);
+});
+
+test('falha da baixa bloqueia Entrega e status no faturamento real', async () => {
+  const source = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('export async function faturarPedidoCompleto');
+  const fnSource = source.slice(start, source.indexOf('async function baixarEstoqueItem', start)).replace('export ', '');
+  const efeitos = [];
+  const ctx = {
+    normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
+    filterScoped: async () => [],
+    assertFaturamentoDentroDoPedido: () => ({ status: 'Faturado' }),
+    validarItensReservaEstoque,
+    baixarEstoqueItem: async () => { throw new Error('baixa falhou'); },
+    createScoped: async (entity) => { efeitos.push(entity); return { id: 'ent-1' }; },
+    updateScoped: async (entity) => { efeitos.push(entity); return { before: null, updated: {} }; },
+    getUsuarioAtual: async () => ({ id: 'u1' }),
+    auditar: async () => {},
+  };
+  const faturar = runInNewContext(fnSource + '; faturarPedidoCompleto', ctx);
+  const resultado = await faturar({ id: 'ped-1', numero_pedido: 'PED-1', valor_total: 10,
+    itens_revenda: [{ produto_id: 'p1', quantidade: 1, unidade: 'UN' }] }, null, 'e1');
+  assert.equal(resultado.entrega, null);
+  assert.match(resultado.erros.join(' '), /baixa falhou/);
+  assert.deepEqual(efeitos, []);
 });
 
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
