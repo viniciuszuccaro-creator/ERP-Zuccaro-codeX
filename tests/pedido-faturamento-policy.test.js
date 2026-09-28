@@ -109,6 +109,14 @@ test('stock reservation rejects duplicate or missing product lines before persis
   assert.equal(duplicate.invalidos.length, 2);
 });
 
+test('cancelling a reservation is idempotent after a prior release', async () => {
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const releaseStart = fluxo.indexOf('async function liberarReservaEstoque');
+  const releaseBody = fluxo.slice(releaseStart, fluxo.indexOf('/**', releaseStart + 1));
+  assert.match(releaseBody, /pedidoJaTemSaidaEstoque/);
+  assert.match(releaseBody, /skipped: true/);
+});
+
 test('commercial billing persists the NF instead of logging it', async () => {
   const fechamento = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
