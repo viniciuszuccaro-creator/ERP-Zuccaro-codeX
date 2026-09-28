@@ -1,3 +1,12 @@
+## Gate 18 - inventario agregado seguro do legado (2026-09-28)
+
+- Frente isolada `codex/legado-inventario-20260928`, sem editar a branch da PR #48 do Cursor.
+- O inventario existente passou a emitir somente agregados no terminal. Manifesto com nomes/hashes individuais e privado, rejeitado se o destino estiver dentro do backup ou do repositorio; `--root` restringe a busca ao caminho informado. Python local configuravel, padrao CI preservado.
+- Pasta identificada por nome em leitura de metadados: 2.785 arquivos, 41.303.077.763 bytes, 18 MDF, 18 LDF e 595 TPS. Esses totais abrangem copias preservadas/de trabalho; nao representam arquivos originais distintos.
+- Testes sinteticos dirigidos: 5 PASS, 0 FAIL. `git diff --check` aprovado. Nenhum registro, nome de arquivo, documento, hash individual, segredo ou dado comercial real foi publicado.
+- Nenhum original foi alterado, nenhum banco foi anexado, nenhum arquivo foi importado e nenhuma migration foi aplicada. Staging real permanece bloqueado ate mapa Grupo/Empresa comprovado, reconciliacao, backup restauravel do destino e gate humano.
+- Proximo lote: validar o esquema/contrato de transformacao em staging sintetico reutilizando `migracaoErpPolicy` e coordenando o mapeador da PR #48; resolver alias empresarial sem inferir vinculo pelo nome da pasta.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
