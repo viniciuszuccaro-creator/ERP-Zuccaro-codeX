@@ -46,6 +46,31 @@ export const remainingValorFaturar = ({ pedido = {}, notasExistentes = [] } = {}
   return Math.max(0, toMoney(pedidoValor - faturado));
 };
 
+/** Faturamento por etapa sem baixa: somente itens sem produto estocavel. */
+export const avaliarEtapaFaturamento = ({ pedido = {}, etapaId } = {}) => {
+  const etapa = (pedido.etapas_entrega || []).find((item) => String(item.id) === String(etapaId));
+  if (!etapa || etapa.faturada || !Array.isArray(etapa.itens_etapa) || etapa.itens_etapa.length === 0) {
+    return { permitido: false, motivo: 'Etapa inexistente, vazia ou ja faturada' };
+  }
+  for (const item of etapa.itens_etapa) {
+    const origem = String(item?.origem_item || '');
+    if (origem === 'revenda') {
+      const match = /^revenda-(\\d+)$/.exec(String(item.item_pedido_id || ''));
+      const original = match ? pedido.itens_revenda?.[Number(match[1])] : null;
+      if (!original) return { permitido: false, motivo: 'Item de revenda da etapa nao encontrado' };
+      if (original.produto_id) {
+        return { permitido: false, motivo: 'Etapa com produto estocavel exige baixa antes da NF' };
+      }
+      if (!original.origem_armado || !original.item_producao_id) {
+        return { permitido: false, motivo: 'Item sem produto e origem nao comprovada' };
+      }
+    } else if (!['armado_padrao', 'corte_dobra'].includes(origem)) {
+      return { permitido: false, motivo: 'Origem da etapa nao reconhecida' };
+    }
+  }
+  return { permitido: true, etapa };
+};
+
 /** @param {FaturamentoOptions} options */
 export const resolveStatusFaturamentoPedido = ({ pedido = {}, notasExistentes = [], notaNova = {} } = {}) => {
   const pedidoValor = toMoney(pedido.valor_total || pedido.valor_produtos);
