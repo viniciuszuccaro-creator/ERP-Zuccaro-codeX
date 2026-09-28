@@ -9,6 +9,7 @@
  *   conciliation?: boolean,
  *   emit?: boolean,
  *   cancel?: boolean,
+ *   rejectPending?: boolean,
  * }} UpdateDecision
  */
 /**
@@ -139,7 +140,7 @@ export const applyLocalEntityUpdateTransitions = ({
       );
       return { reuse: decision.reuse };
     }
-    if (decision.emit) dependencies.assertPermissionAny(entityName, dependencies.nfeEmitActions(), id);
+    if (decision.emit || decision.rejectPending) dependencies.assertPermissionAny(entityName, dependencies.nfeEmitActions(), id);
     else if (decision.cancel) dependencies.assertPermissionAny(entityName, dependencies.nfeCancelActions(), id);
     else dependencies.assertMutationAllowed(entityName, 'editar', id);
     nextRecord = decision.record;
