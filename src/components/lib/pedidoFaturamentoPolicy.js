@@ -71,6 +71,36 @@ export const avaliarEtapaFaturamento = ({ pedido = {}, etapaId } = {}) => {
   return { permitido: true, etapa };
 };
 
+/** Recompõe a NF residual sem repetir itens de etapas já faturadas. */
+export const resolverNotaResidualPedido = ({ pedido = {}, notasExistentes = [] } = {}) => {
+  const notasAtivas = (Array.isArray(notasExistentes) ? notasExistentes : [])
+    .filter((nota) => String(nota.pedido_id || '') === String(pedido.id || '') && notaAtiva(nota));
+  const restante = remainingValorFaturar({ pedido, notasExistentes: notasAtivas });
+  if (restante <= 0) throw new Error('Pedido sem saldo faturavel');
+  const excluidos = new Set();
+  for (const nota of notasAtivas) {
+    if (!nota.etapa_id) throw new Error('NF parcial sem etapa vinculada exige conciliacao antes do pedido inteiro');
+    const etapa = (pedido.etapas_entrega || []).find((item) => String(item.id) === String(nota.etapa_id));
+    if (!etapa || !Array.isArray(etapa.itens_etapa)) {
+      throw new Error('Etapa da NF anterior nao encontrada no pedido');
+    }
+    for (const item of etapa.itens_etapa) {
+      const ref = String(item.item_pedido_id || '');
+      if (!/^(revenda|armado|corte)-\\d+$/.test(ref)) {
+        throw new Error('Item de etapa anterior sem vinculo canonico');
+      }
+      excluidos.add(ref);
+    }
+  }
+  const itens = [
+    ...(pedido.itens_revenda || []).filter((_item, index) => !excluidos.has(`revenda-${index}`)),
+    ...(pedido.itens_armado_padrao || []).filter((_item, index) => !excluidos.has(`armado-${index}`)),
+    ...(pedido.itens_corte_dobra || []).filter((_item, index) => !excluidos.has(`corte-${index}`)),
+  ];
+  if (itens.length === 0) throw new Error('NF residual sem itens nao pode ser emitida automaticamente');
+  return { valor_total: restante, itens };
+};
+
 /** @param {FaturamentoOptions} options */
 export const resolveStatusFaturamentoPedido = ({ pedido = {}, notasExistentes = [], notaNova = {} } = {}) => {
   const pedidoValor = toMoney(pedido.valor_total || pedido.valor_produtos);
