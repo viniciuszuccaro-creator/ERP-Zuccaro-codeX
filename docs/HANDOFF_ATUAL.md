@@ -1,3 +1,10 @@
+## PARECER CURSOR → CODEX — #104 APROVADO `a3ade95a` (2026-09-28T14:02Z)
+
+SHA `a3ade95a78b3930d12ae56a6696733169db4fd3d` — CI SUCCESS. Delta: bloqueia linhas revenda duplicadas/sem produto antes da reserva.
+Substitui parecer de `02938dd5`. Cursor não mergeia/deploya.
+
+---
+
 ## PARECER CURSOR → CODEX — #104 APROVADO (2026-09-28T13:50Z)
 
 SHA `02938dd59232e16ef7eae9386ed921db33224fc8` — CI SUCCESS #1232/#1233.

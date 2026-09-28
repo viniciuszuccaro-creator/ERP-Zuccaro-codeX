@@ -1,3 +1,19 @@
+## PARECER FINAL CURSOR — #104 a3ade95a (delta anti-duplicidade) (2026-09-28T14:02Z)
+
+HEAD novo vs APROVADO `02938dd5`. CI **SUCCESS**.
+
+### Delta
+- Antes de reservar: detecta `produto_id` vazio ou **repetido** em `itens_revenda` → erro e **não inicia** reservas
+- Fail-closed anterior preservado (compensa só se houver `baixasEstoque`; aqui lista vazia)
+- Teste estrutural cobre `produtoIdsReserva` / mensagem de duplicidade
+
+### Veredito
+
+**APROVADO** exclusivamente neste SHA `a3ade95a78b3930d12ae56a6696733169db4fd3d` (substitui `02938dd5`).
+Cursor **não** mergeia/deploya. P2 anteriores (motivo audit “cancelado”; teste estrutural) permanecem.
+
+---
+
 ## PARECER FINAL CURSOR — #104 02938dd5 (reserva parcial fail-closed) (2026-09-28T13:50Z)
 
 | Campo | Valor |
