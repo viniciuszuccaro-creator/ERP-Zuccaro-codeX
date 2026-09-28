@@ -34,7 +34,7 @@ const toMoney = (value) => {
 };
 
 /** @param {PedidoFaturamentoRecord} nota */
-const notaAtiva = (nota = {}) => !/cancel/i.test(String(nota.status || ''));
+const notaAtiva = (nota = {}) => !/(cancel|rejeitad)/i.test(String(nota.status || ''));
 
 /** @param {FaturamentoLeituraOptions} options */
 export const remainingValorFaturar = ({ pedido = {}, notasExistentes = [] } = {}) => {
