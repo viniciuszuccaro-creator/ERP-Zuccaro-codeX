@@ -11606,3 +11606,11 @@ Checklist inicial:
 - Reuso/segurança: `remainingValorFaturar`, handler fiscal e políticas de transição existentes; RBAC do emitente e auditoria mantidos. Sem VPS, dados reais ou #106.
 - Validação: 59 testes focados aprovados, incluindo handler real de etapa → NF residual → `baixarEstoqueItem` real e carimbo de Grupo pela preparação local real; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
 - Commits funcionais: cfe9b46, c38160b, 12a6bf1, d0bdeb6, 75ea4ea, d071caa, fa9e6a6. Próximo passo: CI e novo parecer do Cursor.
+
+## Onda 7 #104 — etapas residuais e frete final (2026-09-28)
+
+- Causa: NF residual incluía item de etapa ainda aberta sem marcar a etapa faturada; saldo só monetário de frete/diferença ficava sem NF.
+- Mudança: NF residual marca etapas cujos itens foram absorvidos e bloqueia vínculo inválido; a última NF de etapa, quando cobre todos os itens, incorpora frete/diferença nos campos fiscais existentes. Saldo antigo sem item e sem última etapa verificável exige conciliação fiscal, sem NF vazia automática.
+- Reuso/segurança: políticas de faturamento e handler fiscal existentes, sem alterar Grupo/Empresa, RBAC ou auditoria. Sem VPS, dados reais ou #106.
+- Validação: 61 testes focados aprovados, incluindo handler de duas etapas, frete na última etapa e handler → `faturarPedidoCompleto` real → baixa/Entrega; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: 527a2e4, 8b1459e, 4f411c3 e teste adicional. Próximo passo: CI e parecer independente.
