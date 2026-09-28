@@ -190,6 +190,16 @@ export const validarRespostaConferenciaIA = (resposta) => {
   return campos;
 };
 
+/** Seleciona somente a entrega pedida no escopo completo. */
+export const selecionarEntregaConferencia = (entregas = [], { id, groupId, empresaId } = {}) => {
+  if (!firstText(id) || !firstText(groupId) || !firstText(empresaId)) return null;
+  return (Array.isArray(entregas) ? entregas : []).find((item) => (
+    firstText(item.id) === firstText(id)
+    && firstText(item.empresa_id) === firstText(empresaId)
+    && firstText(item.group_id, item.grupo_id) === firstText(groupId)
+  )) || null;
+};
+
 /** @param {EntregaCreateOptions} options */
 export const assertEntregaOnCreate = ({ record = {}, entregas = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
