@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import {
   assertFaturamentoDentroDoPedido,
+  avaliarReservaParcial,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
@@ -157,8 +158,9 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
     // Aprovacao fail-closed: nenhuma etapa comercial pode continuar quando a
     // reserva de algum item falhar. O legado persiste movimentos por item, por
     // isso compensamos exclusivamente as reservas criadas nesta tentativa.
-    if (resultados.erros.length > 0) {
-      for (const reserva of baixasEstoque) {
+    const decisaoReserva = avaliarReservaParcial({ reservas: baixasEstoque, erros: resultados.erros });
+    if (decisaoReserva.bloqueado) {
+      for (const reserva of decisaoReserva.compensar) {
         if (reserva?.skipped || !reserva?.id) continue;
         try {
           const compensacao = await liberarReservaEstoque(reserva, contextoOperacao.empresaId);
