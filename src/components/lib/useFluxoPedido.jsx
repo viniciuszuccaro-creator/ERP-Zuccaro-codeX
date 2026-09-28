@@ -4,6 +4,7 @@ import {
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
+  validarItensReservaEstoque,
 } from "@/components/lib/pedidoFaturamentoPolicy";
 
 // Auditoria helpers
@@ -134,13 +135,11 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
 
     const baixasEstoque = [];
     const itensRevenda = pedido.itens_revenda || [];
-    const produtoIdsReserva = new Set();
-    for (const item of itensRevenda) {
-      const produtoId = String(item?.produto_id || '');
-      if (!produtoId || produtoIdsReserva.has(produtoId)) {
-        resultados.erros.push(`Item de revenda duplicado ou sem produto para reserva: ${item?.descricao || produtoId || 'sem identificador'}`);
+    const validacaoItensReserva = validarItensReservaEstoque(itensRevenda);
+    if (!validacaoItensReserva.valido) {
+      for (const item of validacaoItensReserva.invalidos) {
+        resultados.erros.push(`Item de revenda duplicado ou sem produto para reserva: ${item?.descricao || item?.produto_id || 'sem identificador'}`);
       }
-      produtoIdsReserva.add(produtoId);
     }
     if (resultados.erros.length === 0 && itensRevenda.length > 0) {
       for (const item of itensRevenda) {
