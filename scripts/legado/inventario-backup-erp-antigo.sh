@@ -83,7 +83,7 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export BACKUP_DIR REPORT FOLDER_NAME REPO_ROOT
-python3 - <<'PY'
+"${PYTHON_BIN:-python3}" - <<'PY'
 import hashlib, json, os, time
 from collections import Counter
 from pathlib import Path
