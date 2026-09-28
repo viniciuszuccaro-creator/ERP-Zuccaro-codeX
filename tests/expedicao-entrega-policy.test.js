@@ -7,6 +7,7 @@ import {
   assertEntregaOnDelete,
   assertEntregaOnUpdate,
   assertRomaneioOnCreate,
+  assertSeparacaoOnCreate,
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
@@ -108,6 +109,21 @@ test('retry do mesmo pedido reusa a entrega', () => {
     entregas: [existing],
   });
   assert.equal(decision.reuse.id, 'ent-1');
+});
+
+test('separacao cancelada nao bloqueia nova conferencia, mas concluida e reutilizada', () => {
+  const record = { empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia' };
+  const cancelada = assertSeparacaoOnCreate({
+    record,
+    separacoes: [{ id: 's-cancelada', empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia', status: 'Cancelada' }],
+  });
+  assert.equal(cancelada.reuse, null);
+
+  const concluida = assertSeparacaoOnCreate({
+    record,
+    separacoes: [{ id: 's-concluida', empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia', status: 'concluido' }],
+  });
+  assert.equal(concluida.reuse.id, 's-concluida');
 });
 
 test('romaneio exige motorista, veiculo e empresa', () => {
