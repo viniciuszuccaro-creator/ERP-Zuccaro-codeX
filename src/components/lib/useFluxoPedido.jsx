@@ -253,7 +253,7 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
     produto_id: item.produto_id,
   }, contextoOperacao);
   if (pedidoJaTemReservaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
-    return movimentosExistentes.find((mov) => String(mov.tipo_movimento || '').toLowerCase() === 'reserva') || { skipped: true, produto_id: item.produto_id };
+    return { skipped: true, produto_id: item.produto_id };
   }
 
   const estoqueAtual = Number(produto.estoque_atual || 0);
@@ -708,7 +708,7 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
     origem_documento_id: movimentacaoReserva.origem_documento_id,
     produto_id: movimentacaoReserva.produto_id,
   }, contextoOperacao);
-  if (pedidoJaTemSaidaEstoque({
+  if (!pedidoJaTemReservaEstoque({
     movimentos: movimentosExistentes,
     pedidoId: movimentacaoReserva.origem_documento_id,
     produtoId: movimentacaoReserva.produto_id,
@@ -775,11 +775,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
 
     // ETAPA 1: Reservar estoque (saida fisica somente no faturamento)
     onLog('📦 Processando reserva de estoque...', 'info');
-    const itens = [
-      ...(pedido.itens_revenda || []),
-      ...(pedido.itens_armado_padrao || []),
-      ...(pedido.itens_corte_dobra || [])
-    ];
+    const itens = pedido.itens_revenda || [];
     const reserva = await executarReservasComCompensacao({
       itens,
       reservar: (item) => reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId),
