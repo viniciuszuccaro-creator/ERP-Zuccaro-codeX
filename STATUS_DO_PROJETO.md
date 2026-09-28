@@ -1,3 +1,30 @@
+## PARECER FINAL CURSOR — #104 `dcdebdb5` (2026-09-28T18:15Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `dcdebdb50624b116f7149de1e11a5cef64d3b09d` |
+| CI | **SUCCESS** |
+| Código do lote | `d1fb7ac0570b` (+ testes `4ee099e7`/`b8326cac`; STATUS docs) |
+| Substitui | REVOGADO `7c5aeda4` |
+
+### P1-C/D/E — prova comportamental independente
+| ID | Exigência | Resultado |
+|---|---|---|
+| P1-C | Retry **mesma qtd** após compensação não reusa movimento | OK — `cicloReservaPedidoProduto` + `idempotency_key` explícita; assertMovimentacao/findDuplicate não colide |
+| P1-D | Reuse fora do ciclo não patcha `estoque_reservado` | OK — guard `idempotency_key !== chaveReserva` lança antes do update; fluxo real cria `r-nova` e saldo razão=10 |
+| P1-E | Falha de baixa bloqueia Entrega/status | OK — `if (resultados.erros.length > 0) return resultados` antes de Entrega (behav) |
+
+### Regressão
+P1-A/B (saida física + saldo cancel) + fail-closed parcial: OK.
+
+### P2 residual
+- `liberarReservaEstoque` não espelha o guard de chave da reserva (mitigado por ciclo + skip saldo=0).
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+
+---
+
 ## REVISÃO CURSOR — #104 `7c5aeda4` REVOGADO (2026-09-28T18:00Z)
 
 | Campo | Valor |

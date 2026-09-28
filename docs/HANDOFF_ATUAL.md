@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #104 APROVADO `dcdebdb5` (2026-09-28T18:15Z)
+
+SHA `dcdebdb50624b116f7149de1e11a5cef64d3b09d` — CI SUCCESS.
+Fecha P1-C/D/E do REVOGADO `7c5aeda4`: ciclo na chave de reserva/liberação; retry mesma qtd grava movimento novo; faturamento fail-closed na baixa (behav).
+**APROVADO**. Cursor não mergeia/deploya.
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `7c5aeda4` NÃO HOMOLOGADO (2026-09-28T18:00Z)
 
 SHA `7c5aeda40a53e942b71a3f7dd31d16ece3f48354` — CI SUCCESS.
