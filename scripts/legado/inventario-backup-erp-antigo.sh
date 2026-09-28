@@ -37,12 +37,13 @@ DEFAULT_ROOTS=(
 )
 
 ROOTS_EFFECTIVE=()
-for r in "${DEFAULT_ROOTS[@]}"; do
-  [[ -d "$r" ]] || continue
-  ROOTS_EFFECTIVE+=("$r")
-done
 if ((${#ROOTS[@]} > 0)); then
   for r in "${ROOTS[@]}"; do
+    [[ -d "$r" ]] || continue
+    ROOTS_EFFECTIVE+=("$r")
+  done
+else
+  for r in "${DEFAULT_ROOTS[@]}"; do
     [[ -d "$r" ]] || continue
     ROOTS_EFFECTIVE+=("$r")
   done
