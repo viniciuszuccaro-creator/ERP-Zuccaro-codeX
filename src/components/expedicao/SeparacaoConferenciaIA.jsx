@@ -340,7 +340,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
 
   const handleScanCodigoBarras = async () => {
     const codigo = sanitizeText(codigoBarras);
-    if (!codigo) return;
+    if (!codigo || validarIAMutation.isPending) return;
 
     if (!contextoValido || !canUseSeparacaoIA) {
       await auditarSeparacaoIA({
@@ -359,22 +359,32 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       const itemPedido = pedido?.itens_revenda?.find(i => i.produto_id === produto.id || i.codigo === produto.codigo);
 
       if (itemPedido) {
+        const quantidadeEsperada = pedido.itens_revenda
+          .filter((item) => item.produto_id === produto.id || item.codigo === produto.codigo)
+          .reduce((total, item) => total + Number(item.quantidade || 0), 0);
+        const quantidadeEscaneada = separacao.itens_separados
+          .filter((item) => item.produto_id === produto.id)
+          .reduce((total, item) => total + Number(item.quantidade_separada || 0), 0);
+        if (!Number.isFinite(quantidadeEsperada) || quantidadeEsperada <= 0 || quantidadeEscaneada >= quantidadeEsperada) {
+          toast({ title: "Quantidade excedida", description: "Confira a quantidade pedida antes de escanear novamente.", variant: "destructive" });
+          return;
+        }
         const novoItem = {
           produto_id: produto.id,
           descricao: sanitizeText(produto.descricao || itemPedido.produto_descricao),
-          quantidade_pedida: Number(itemPedido.quantidade || 0),
+          quantidade_pedida: 1,
           quantidade_separada: 1,
           peso_conferido: Number(produto.peso_liquido_kg || 0),
           localizacao: sanitizeText(produto.localizacao || "N/A"),
           data_hora_separacao: new Date().toISOString()
         };
 
+        const validacao = await validarIAMutation.mutateAsync(novoItem);
+
         setSeparacao(prev => ({
           ...prev,
           itens_separados: [...prev.itens_separados, novoItem]
         }));
-
-        const validacao = await validarIAMutation.mutateAsync(novoItem);
 
         if (validacao.divergencia_quantidade || validacao.divergencia_peso) {
           setSeparacao(prev => ({
