@@ -79,6 +79,19 @@ test('stock movement idempotency helpers detect reserva and saida', () => {
   assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), false);
 });
 
+test('retry apos compensacao exige nova reserva antes do financeiro', async () => {
+  const movimentos = [
+    { tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 2 },
+    { tipo_movimento: 'liberacao_reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 2 },
+  ];
+  assert.equal(pedidoJaTemReservaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), false);
+  movimentos.push({ tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 2 });
+  assert.equal(pedidoJaTemReservaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), true);
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  assert.ok(fluxo.includes('return { skipped: true, produto_id: item.produto_id };'));
+  assert.ok(fluxo.includes('const itens = pedido.itens_revenda || [];'));
+});
+
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const approvalStart = fluxo.indexOf('export async function aprovarPedidoCompleto');
