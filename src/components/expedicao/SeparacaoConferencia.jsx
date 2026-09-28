@@ -67,7 +67,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   const pedidoOperacao = pedido || pedidoDaEntrega;
   // Use pedido if provided, otherwise use entrega
-  const dadosParaSeparacao = pedido || entrega;
+  const dadosParaSeparacao = pedido || pedidoDaEntrega || entrega;
   const effectiveEmpresaId = dadosParaSeparacao?.empresa_id || empresaId || empresaAtual?.id || null;
   const effectiveGroupId = dadosParaSeparacao?.group_id || dadosParaSeparacao?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const vinculoValido = !entregaId || (entrega?.id === entregaId
