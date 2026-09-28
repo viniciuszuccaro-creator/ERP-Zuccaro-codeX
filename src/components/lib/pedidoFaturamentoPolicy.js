@@ -184,6 +184,35 @@ export const validarItensReservaEstoque = (itens = []) => {
   return { valido: invalidos.length === 0, invalidos, itens: [...porProduto.values()] };
 };
 
+/** Executa a etapa de reserva isoladamente; nenhuma etapa posterior deve rodar se bloqueado. */
+export const executarReservasComCompensacao = async ({ itens = [], reservar, compensar } = {}) => {
+  const validacao = validarItensReservaEstoque(itens);
+  if (!validacao.valido) {
+    return { bloqueado: true, reservas: [], compensadas: [], erros: ['Itens invalidos para reserva'], invalidos: validacao.invalidos };
+  }
+  const reservas = [];
+  const erros = [];
+  for (const item of validacao.itens) {
+    try {
+      reservas.push(await reservar(item));
+    } catch (error) {
+      erros.push(error?.message || 'Falha na reserva de estoque');
+      break;
+    }
+  }
+  const compensadas = [];
+  if (erros.length > 0) {
+    for (const reserva of avaliarReservaParcial({ reservas, erros }).compensar) {
+      try {
+        compensadas.push(await compensar(reserva));
+      } catch (error) {
+        erros.push(error?.message || 'Falha ao compensar reserva');
+      }
+    }
+  }
+  return { bloqueado: erros.length > 0, reservas, compensadas, erros, invalidos: [] };
+};
+
 /** @param {MovimentoPedidoOptions} options */
 export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
