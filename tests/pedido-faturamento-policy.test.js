@@ -87,6 +87,8 @@ test('approval blocks downstream effects and compensates partial stock reservati
   assert.match(fluxo.slice(approvalStart, productionStart), /reservasCompensadas/);
   assert.match(fluxo.slice(approvalStart, productionStart), /liberarReservaEstoque\(reserva, contextoOperacao\.empresaId\)/);
   assert.match(fluxo.slice(approvalStart, productionStart), /return resultados;/);
+  assert.match(fluxo.slice(approvalStart, productionStart), /produtoIdsReserva/);
+  assert.match(fluxo.slice(approvalStart, productionStart), /duplicado ou sem produto para reserva/);
 });
 
 test('commercial billing persists the NF instead of logging it', async () => {
