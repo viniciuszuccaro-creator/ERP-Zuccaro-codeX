@@ -1,8 +1,20 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `dcdebdb5` (2026-09-28T18:15Z)
+## REVISÃO CURSOR → CODEX — #104 `dcdebdb5` NÃO HOMOLOGADO (2026-09-28T18:20Z)
+
+SHA `dcdebdb50624b116f7149de1e11a5cef64d3b09d` — CI SUCCESS.
+**Revoga** APROVADO de 18:15Z.
+
+**P1-F:** `saida` não abre ciclo → retry/fechamento pós-baixa reusa chave `reserva|0`, reinfla `estoque_reservado` sem movimento (behav).
+**P1-G:** tela grava NF+status antes de `faturarPedidoCompleto`; falha de baixa não estorna.
+
+Ação: (1) saida fecha ciclo ou bloqueia nova reserva; (2) reuse ⇒ sem patch reservado; (3) NF/status só após baixa OK; (4) teste 2º fechamento pós-saida. Sem merge.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `dcdebdb5` (2026-09-28T18:15Z) **REVOGADO**
 
 SHA `dcdebdb50624b116f7149de1e11a5cef64d3b09d` — CI SUCCESS.
 Fecha P1-C/D/E do REVOGADO `7c5aeda4`: ciclo na chave de reserva/liberação; retry mesma qtd grava movimento novo; faturamento fail-closed na baixa (behav).
-**APROVADO**. Cursor não mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO**. Cursor não mergeia/deploya.
 
 ---
 

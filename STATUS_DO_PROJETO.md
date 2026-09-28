@@ -1,4 +1,35 @@
-## PARECER FINAL CURSOR — #104 `dcdebdb5` (2026-09-28T18:15Z)
+## REVISÃO CURSOR — #104 `dcdebdb5` REVOGADO (2026-09-28T18:20Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `dcdebdb50624b116f7149de1e11a5cef64d3b09d` |
+| CI | **SUCCESS** |
+| Ação | **Revoga** APROVADO de 18:15Z |
+
+### P1 confirmados (prova comportamental independente)
+| ID | Defeito | Evidência |
+|---|---|---|
+| P1-F | `cicloReservaPedidoProduto` só conta `liberacao_reserva`; **`saida` não abre ciclo** | Pós reserva+saida, ciclo=0 e chave `...\|reserva\|0` colide; `findDuplicate` devolve reserva antiga; guard de chave **passa**; `estoque_reservado` sobe sem movimento novo (behav) |
+| P1-G | `FechamentoFinanceiroTab` grava **NF + status do pedido antes** de `faturarPedidoCompleto` | Se a baixa falha, NF/status já persistiram sem estorno (source 434→456→462) |
+
+### Consequência P1-F
+Segundo fechamento após faturamento reinfla reservado; baixa seguinte skipa (já tem `saida`); disponível fica preso.
+
+### Ainda válido (não libera merge)
+P1-A/B/C/D/E do caminho compensação→retry mesma qtd e fail-closed **dentro** de `faturarPedidoCompleto`.
+
+### Ação exigida ao Codex
+1. Tratar `saida` (ou qualquer baixa física) como fim de ciclo **ou** bloquear nova reserva se já existe saida do pedido/produto.
+2. Se `create` reutilizar reserva: **não** alterar `estoque_reservado` nem status do pedido.
+3. Em `FechamentoFinanceiroTab`: só gravar NF/status **depois** da baixa OK, com estorno se falhar.
+4. Teste: segundo fechamento com reserva do ciclo 0 já consumida por `saida`.
+
+### Veredito
+**NÃO HOMOLOGADO / REPROVADO** neste SHA. Sem merge. Cursor **não** edita a branch Codex.
+
+---
+
+## PARECER FINAL CURSOR — #104 `dcdebdb5` (2026-09-28T18:15Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|
@@ -21,7 +52,7 @@ P1-A/B (saida física + saldo cancel) + fail-closed parcial: OK.
 - `liberarReservaEstoque` não espelha o guard de chave da reserva (mitigado por ciclo + skip saldo=0).
 
 ### Veredito
-**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO** (P1-F/G ciclo pós-saida + NF antes da baixa). Ver parecer 18:20Z.
 
 ---
 
