@@ -310,7 +310,7 @@ test('tela reverte NF pendente e nao marca pedido faturado quando baixa falha', 
   const emission = source.slice(source.indexOf('onEmitir={async (dadosNFe) => {'));
   assert.ok(emission.indexOf('faturarPedidoCompleto(pedidoValorado, nota, empresaId)')
     < emission.indexOf("await updateInContext('Pedido', formData.id"));
-  assert.ok(emission.includes("await updateInContext('NotaFiscal', nota.id, { status: 'Cancelada' })"));
+  assert.ok(emission.includes("await updateInContext('NotaFiscal', nota.id, { status: 'Rejeitada' })"));
   assert.ok(emission.includes('conciliacao manual obrigatoria'));
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const closure = fluxo.slice(fluxo.indexOf('export async function executarFechamentoCompleto'));
