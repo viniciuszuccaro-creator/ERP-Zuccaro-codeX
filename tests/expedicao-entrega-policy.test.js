@@ -9,6 +9,7 @@ import {
   assertRomaneioOnCreate,
   assertSeparacaoOnCreate,
   conferirQuantidadesPedido,
+  avaliarScanConferencia,
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
@@ -40,6 +41,25 @@ test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem
     record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia' },
     separacoes: [existing],
   }).reuse, null);
+});
+
+test('scanner aceita tres leituras para tres unidades e bloqueia excesso', async () => {
+  const itensPedido = [{ produto_id: 'p1', quantidade: 2 }, { produto_id: 'p1', quantidade: 1 }];
+  const item = { produto_id: 'p1', quantidade_separada: 1 };
+  for (const quantidade of [0, 1, 2]) {
+    assert.equal(avaliarScanConferencia({
+      itensPedido, itensSeparados: Array(quantidade).fill(item), produtoId: 'p1',
+    }).permitido, true);
+  }
+  assert.deepEqual(avaliarScanConferencia({
+    itensPedido, itensSeparados: Array(3).fill(item), produtoId: 'p1',
+  }), { permitido: false, motivo: 'quantidade_excedida' });
+  assert.equal(avaliarScanConferencia({
+    itensPedido: [{ produto_id: 'p1', quantidade: -1 }], itensSeparados: [], produtoId: 'p1',
+  }).permitido, false);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.match(source, /const decisaoScan = avaliarScanConferencia/);
+  assert.match(source, /quantidade_pedida: 1/);
 });
 
 test('conferencia IA bloqueia pedido incompleto mesmo quando IA nao detecta divergencia', async () => {
