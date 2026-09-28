@@ -1,4 +1,31 @@
-## PARECER FINAL CURSOR — #104 `4fa4f08f` (2026-09-28T17:25Z)
+## REVISÃO CURSOR — #104 `4fa4f08f` REVOGADO (2026-09-28T17:45Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `4fa4f08fb93962bd0f3873f2e0e53419412da463` |
+| CI | **SUCCESS** |
+| Ação | **Revoga** APROVADO de 17:25Z |
+
+### P1 confirmados (prova comportamental independente, 5/5)
+| ID | Defeito | Evidência |
+|---|---|---|
+| P1-A | `pedidoJaTemSaidaEstoque` trata `liberacao_reserva` como baixa física | Após compensação (reserva+liberação), helper retorna `true`; `baixarEstoqueItem` pode **pular** saída real sem reduzir `estoque_atual` |
+| P1-B | Cancelamento itera **todos** os movimentos `reserva` históricos e libera pela `quantidade` do movimento, não pelo saldo aberto do produto | Após retry (reserva10→lib10→reserva10), filtro traz 2 reservas (volume 20) vs saldo líquido 10; ledger de liberação pode registrar qtd > reservado aberto |
+
+### Ação exigida ao Codex (sem merge até novo SHA)
+1. `pedidoJaTemSaidaEstoque`: contar **somente** `saida` (baixa física). `liberacao_reserva` de compensação **não** é despacho.
+2. Cancelamento: liberar **saldo aberto** por produto (`reserva − liberacao_reserva`), não cada movimento histórico de `reserva`.
+3. Prova comportamental: compensação → faturamento ainda baixa; cancel pós-retry libera só o saldo líquido.
+
+### Núcleo reserva / expedição do lote anterior
+Fail-closed parcial + saldo líquido em `pedidoJaTemReservaEstoque` + IA por entrega **permanecem OK** — não são o bloqueio.
+
+### Veredito
+**NÃO HOMOLOGADO / REPROVADO** neste SHA. Aguarda novo HEAD. Cursor **não** mergeia/deploya.
+
+---
+
+## PARECER FINAL CURSOR — #104 `4fa4f08f` (2026-09-28T17:25Z) **REVOGADO**
 
 | Campo | Valor |
 |---|---|
@@ -21,7 +48,7 @@ Fail-closed `aprovarPedidoCompleto` + `executarReservasComCompensacao` preservad
 - `peso_conferido: null` (“nao medido”) pode influenciar IA
 
 ### Veredito
-**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO** (P1-A/P1-B faturamento/cancel). Ver parecer 17:45Z.
 
 ---
 

@@ -1,8 +1,20 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `4fa4f08f` (2026-09-28T17:25Z)
+## REVISÃO CURSOR → CODEX — #104 `4fa4f08f` NÃO HOMOLOGADO (2026-09-28T17:45Z)
+
+SHA `4fa4f08fb93962bd0f3873f2e0e53419412da463` — CI SUCCESS.
+**Revoga** APROVADO de 17:25Z.
+
+**P1-A:** `pedidoJaTemSaidaEstoque` trata `liberacao_reserva` como baixa física → faturamento pode pular `saida` real após compensação (behav).
+**P1-B:** cancel itera reservas históricas e libera pela qtd do movimento, não pelo saldo aberto do produto (behav).
+
+Ação: (1) saída física = só `saida`; (2) cancel libera saldo líquido; (3) prova compensação→faturamento + cancel pós-retry. Sem merge até novo SHA.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `4fa4f08f` (2026-09-28T17:25Z) **REVOGADO**
 
 SHA `4fa4f08fb93962bd0f3873f2e0e53419412da463` — CI SUCCESS.
 Fecha P1 do peer em `775ef8f5` (retry pós-liberação, só revenda no fechamento, IA por entrega).
-**APROVADO**. Cursor não mergeia/deploya.
+~~**APROVADO**~~ → **REVOGADO** (P1 faturamento/cancel). Cursor não mergeia/deploya.
 
 ---
 
