@@ -179,12 +179,15 @@ export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], 
 
 /** @param {unknown} resposta */
 export const validarRespostaConferenciaIA = (resposta) => {
-  if (!resposta || typeof resposta !== 'object'
-    || typeof resposta.divergencia_quantidade !== 'boolean'
-    || typeof resposta.divergencia_peso !== 'boolean') {
+  if (!resposta || typeof resposta !== 'object' || Array.isArray(resposta)) {
     throw new Error('Resposta da IA incompleta; item nao foi confirmado.');
   }
-  return resposta;
+  const campos = /** @type {Record<string, unknown>} */ (resposta);
+  if (typeof campos.divergencia_quantidade !== 'boolean'
+    || typeof campos.divergencia_peso !== 'boolean') {
+    throw new Error('Resposta da IA incompleta; item nao foi confirmado.');
+  }
+  return campos;
 };
 
 /** @param {EntregaCreateOptions} options */
