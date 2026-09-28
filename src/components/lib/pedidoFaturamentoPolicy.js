@@ -55,7 +55,7 @@ export const avaliarEtapaFaturamento = ({ pedido = {}, etapaId } = {}) => {
   for (const item of etapa.itens_etapa) {
     const origem = String(item?.origem_item || '');
     if (origem === 'revenda') {
-      const match = /^revenda-(\\d+)$/.exec(String(item.item_pedido_id || ''));
+      const match = /^revenda-(\d+)$/.exec(String(item.item_pedido_id || ''));
       const original = match ? pedido.itens_revenda?.[Number(match[1])] : null;
       if (!original) return { permitido: false, motivo: 'Item de revenda da etapa nao encontrado' };
       if (original.produto_id) {
