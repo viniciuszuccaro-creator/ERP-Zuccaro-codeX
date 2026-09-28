@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import {
   assertFaturamentoDentroDoPedido,
   avaliarReservaParcial,
+  executarReservasComCompensacao,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
@@ -774,32 +775,27 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
 
     // ETAPA 1: Reservar estoque (saida fisica somente no faturamento)
     onLog('📦 Processando reserva de estoque...', 'info');
-    try {
-      const itens = [
-        ...(pedido.itens_revenda || []),
-        ...(pedido.itens_armado_padrao || []),
-        ...(pedido.itens_corte_dobra || [])
-      ];
-
-      for (const item of itens) {
-        if (item.produto_id) {
-          try {
-            const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
-            resultados.estoque.itens.push(baixa);
-            onLog(`✅ ${item.descricao}: ${item.quantidade} ${item.unidade} reservado(s)`, 'success');
-          } catch (error) {
-            resultados.estoque.erros.push(error.message);
-            onLog(`⚠️ ${item.descricao}: ${error.message}`, 'warning');
-          }
-        }
-      }
-      
-      resultados.estoque.sucesso = resultados.estoque.erros.length === 0;
-      onEtapaConcluida('estoque', resultados.estoque.sucesso);
-      onProgresso(25);
-    } catch (error) {
-      resultados.estoque.erros.push(error.message);
-      onLog(`❌ Erro na reserva de estoque: ${error.message}`, 'error');
+    const itens = [
+      ...(pedido.itens_revenda || []),
+      ...(pedido.itens_armado_padrao || []),
+      ...(pedido.itens_corte_dobra || [])
+    ];
+    const reserva = await executarReservasComCompensacao({
+      itens,
+      reservar: (item) => reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId),
+      compensar: (movimento) => liberarReservaEstoque(movimento, contextoOperacao.empresaId)
+    });
+    resultados.estoque.itens = reserva.reservas;
+    resultados.estoque.compensadas = reserva.compensadas;
+    resultados.estoque.erros.push(...reserva.erros);
+    resultados.estoque.sucesso = !reserva.bloqueado;
+    onEtapaConcluida('estoque', resultados.estoque.sucesso);
+    onProgresso(25);
+    if (reserva.bloqueado) {
+      const erro = new Error('Reserva de estoque incompleta; fechamento bloqueado antes do financeiro e da logistica.');
+      onLog(erro.message, 'error');
+      onError(erro);
+      return resultados;
     }
 
     // ETAPA 2: Gerar Financeiro
