@@ -3,6 +3,7 @@ import {
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
+  validarItensReservaEstoque,
   remainingValorFaturar,
   resolveStatusFaturamentoPedido,
 } from '../src/components/lib/pedidoFaturamentoPolicy.js';
@@ -89,6 +90,13 @@ test('approval blocks downstream effects and compensates partial stock reservati
   assert.match(fluxo.slice(approvalStart, productionStart), /return resultados;/);
   assert.match(fluxo.slice(approvalStart, productionStart), /produtoIdsReserva/);
   assert.match(fluxo.slice(approvalStart, productionStart), /duplicado ou sem produto para reserva/);
+});
+
+test('stock reservation rejects duplicate or missing product lines before persistence', () => {
+  assert.deepEqual(validarItensReservaEstoque([{ produto_id: 'p1' }, { produto_id: 'p2' }]), { valido: true, invalidos: [] });
+  const duplicate = validarItensReservaEstoque([{ produto_id: 'p1' }, { produto_id: 'p1' }, {}]);
+  assert.equal(duplicate.valido, false);
+  assert.equal(duplicate.invalidos.length, 2);
 });
 
 test('commercial billing persists the NF instead of logging it', async () => {
