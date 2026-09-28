@@ -465,7 +465,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
           } catch (error) {
             try {
-              await updateInContext('NotaFiscal', nota.id, { status: 'Cancelada' });
+              await updateInContext('NotaFiscal', nota.id, { status: 'Rejeitada' });
               await auditFechamento('nfe_fechamento_revertida', {
                 entidade: 'NotaFiscal', nota_id: nota.id, motivo: error?.message || 'falha_faturamento'
               }, false);
