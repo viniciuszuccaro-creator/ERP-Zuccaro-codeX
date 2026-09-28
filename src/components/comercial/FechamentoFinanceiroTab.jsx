@@ -453,10 +453,12 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           const etapasAtualizadas = (formData.etapas_entrega || []).map((etapa) => (
             etapa.id === dadosNFe.etapa_id ? { ...etapa, faturada: true } : etapa
           ));
+          let baixaConcluida = false;
           try {
             if (dadosNFe.escopo === 'pedido_inteiro') {
               const resultado = await faturarPedidoCompleto(pedidoValorado, nota, empresaId);
               if (resultado?.erros?.length) throw new Error(resultado.erros.join('; '));
+              baixaConcluida = true;
             }
             await updateInContext('Pedido', formData.id, {
               status,
@@ -464,6 +466,12 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             });
             setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
           } catch (error) {
+            if (baixaConcluida) {
+              await auditFechamento('nfe_fechamento_atualizacao_pedido_falhou', {
+                entidade: 'Pedido', nota_id: nota.id, motivo: error?.message || 'erro_atualizacao'
+              }, false);
+              throw new Error('Baixa concluida, mas a atualizacao do Pedido falhou; conciliacao manual obrigatoria.');
+            }
             try {
               await updateInContext('NotaFiscal', nota.id, { status: 'Rejeitada' });
               await auditFechamento('nfe_fechamento_revertida', {
@@ -473,7 +481,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               await auditFechamento('nfe_fechamento_reversao_falhou', {
                 entidade: 'NotaFiscal', nota_id: nota.id, motivo: rollbackError?.message || 'erro_reversao'
               }, false);
-              throw new Error('Faturamento falhou e a NF pendente nao foi cancelada; conciliacao manual obrigatoria.');
+              throw new Error('Faturamento falhou e a NF pendente nao foi rejeitada; conciliacao manual obrigatoria.');
             }
             throw error;
           }
