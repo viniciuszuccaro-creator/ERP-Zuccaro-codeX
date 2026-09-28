@@ -218,9 +218,16 @@ export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId
   const pid = String(pedidoId || '');
   const prod = String(produtoId || '');
   if (!pid || !prod) return false;
-  return (Array.isArray(movimentos) ? movimentos : []).some((mov) => (
-    String(mov?.tipo_movimento || '').toLowerCase() === 'reserva'
-    && String(mov?.origem_documento_id || '') === pid
-    && String(mov?.produto_id || '') === prod
-  ));
+  const saldo = (Array.isArray(movimentos) ? movimentos : [])
+    .filter((mov) => String(mov?.origem_documento_id || '') === pid
+      && String(mov?.produto_id || '') === prod)
+    .reduce((total, mov) => {
+      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
+      const quantidade = Number(mov?.quantidade ?? 1);
+      if (!Number.isFinite(quantidade) || quantidade <= 0) return total;
+      if (tipo === 'reserva') return total + quantidade;
+      if (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva') return total - quantidade;
+      return total;
+    }, 0);
+  return saldo > 1e-6;
 };
