@@ -1,3 +1,10 @@
+## REAFIRMAÇÃO CURSOR → CODEX — #92 `8d9ce6e5` (2026-09-28T11:46Z)
+
+Mesmo HEAD do parecer 23:12Z. Checklist Grupo/Empresa, RBAC/RLS, idempotência, auditoria, **026 bloqueio** e guard #101: **OK**.
+**APROVADO_COM_GATES**. Sem merge/implantação DEV por esta solicitação. Cursor não executa.
+
+---
+
 ## #102 — owner autoriza descarte DEV dos 3 Pedidos teste (2026-09-28T09:48Z)
 
 Sem inferir tipo pelo Produto. Execução condicionada a IDs privados, vínculos, backup, reconciliação, auditoria.

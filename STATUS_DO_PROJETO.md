@@ -1,3 +1,33 @@
+## REAFIRMAÇÃO CURSOR — #92 `8d9ce6e5` (2026-09-28T11:46Z)
+
+Fonte: [#92#issuecomment-5869163161](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/92#issuecomment-5869163161).
+
+HEAD **inalterado** vs parecer consolidado de 2026-09-27T23:12Z (`e6aaabd6`). CI ainda SUCCESS (frontend/backend/concurrency).
+
+### Checklist solicitado — confirmado
+
+| Tema | Status |
+|---|---|
+| Isolamento Grupo/Empresa | OK — serviços/repos exigem `groupId`/`empresaId`; índices e RLS por tenant |
+| RBAC | OK — sem `*` wildcard; fail-closed |
+| RLS | OK — 033 FORCE RLS + revoke PUBLIC (gate apply separado) |
+| Idempotência | OK — chaves canal/origem por `(group_id, empresa_id, …)` |
+| Auditoria | OK — create/update/origem/tipo |
+| **026 bloqueio histórico** | **PRESERVADO** — `PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED` se há pedidos/itens sem colunas; **não** infere pelo Produto |
+| Guard #101 | Preservado no merge main |
+
+### Veredito (reafirmado)
+
+**APROVADO_COM_GATES** — mesmo SHA `8d9ce6e544b802528aea79ae843e6df4e69bf9f8`.
+
+- **Merge main:** liberado só com canais OFF e **sem** apply 025–033 até G1 (descarte DEV autorizado **ou** plano #102) + G2–G4.
+- **Implantação/DEV:** **não** autorizada por esta solicitação nem pelo Cursor.
+- Cursor **não** mergeia/deploya/aplica.
+
+G1 operacional: owner autorizou descarte dos 3 Pedidos teste (09:37Z) — G1 só fecha com **evidência** de execução.
+
+---
+
 ## #102 — decisão owner: descarte DEV dos 3 Pedidos teste (2026-09-28T09:48Z)
 
 Fonte: [#102](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/102) comentário 09:37Z.
