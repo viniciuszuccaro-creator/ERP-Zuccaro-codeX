@@ -11,6 +11,7 @@ import {
   conferirQuantidadesPedido,
   avaliarScanConferencia,
   validarRespostaConferenciaIA,
+  selecionarEntregaConferencia,
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
@@ -26,6 +27,23 @@ import {
 test('separacao recalcula divergencia por quantidade antes de liberar pedido', async () => {
   const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
   assert.match(separacao, /i\.divergencia \|\| Number\(i\.quantidade_separada \|\| 0\) !== Number\(i\.quantidade_pedida \|\| 0\)/);
+});
+
+test('consulta de entrega rejeita ID ou tenant diferente mesmo em cache', async () => {
+  const rows = [
+    { id: 'outra', group_id: 'g1', empresa_id: 'e1' },
+    { id: 'ent1', group_id: 'g1', empresa_id: 'e2' },
+    { id: 'ent1', group_id: 'g1', empresa_id: 'e1' },
+  ];
+  assert.deepEqual(selecionarEntregaConferencia(rows, {
+    id: 'ent1', groupId: 'g1', empresaId: 'e1',
+  }), rows[2]);
+  assert.equal(selecionarEntregaConferencia(rows, {
+    id: 'ent1', groupId: 'g2', empresaId: 'e1',
+  }), null);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(source, /queryKey: \['entrega', entregaId, baseGroupId, baseEmpresaId\]/);
+  assert.match(source, /selecionarEntregaConferencia\(entregas/);
 });
 
 test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem', async () => {
