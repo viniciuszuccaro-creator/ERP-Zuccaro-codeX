@@ -10,6 +10,7 @@ import {
   assertSeparacaoOnCreate,
   conferirQuantidadesPedido,
   avaliarScanConferencia,
+  validarRespostaConferenciaIA,
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
@@ -41,6 +42,17 @@ test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem
     record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia' },
     separacoes: [existing],
   }).reuse, null);
+});
+
+test('scanner nao confirma leitura se IA falha ou omite classificacao', async () => {
+  assert.throws(() => validarRespostaConferenciaIA(null), /incompleta/);
+  assert.throws(() => validarRespostaConferenciaIA({ divergencia_quantidade: false }), /incompleta/);
+  assert.deepEqual(validarRespostaConferenciaIA({
+    divergencia_quantidade: false, divergencia_peso: false,
+  }), { divergencia_quantidade: false, divergencia_peso: false });
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.ok(source.indexOf('validarRespostaConferenciaIA(await validarIAMutation.mutateAsync(novoItem))')
+    < source.indexOf('itens_separados: [...prev.itens_separados, novoItem]'));
 });
 
 test('scanner aceita tres leituras para tres unidades e bloqueia excesso', async () => {
