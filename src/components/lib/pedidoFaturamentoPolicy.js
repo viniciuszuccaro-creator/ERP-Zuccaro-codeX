@@ -167,14 +167,20 @@ export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId }
 
 /** Valida linhas de reserva sem permitir sub-reserva por idempotência. */
 export const validarItensReservaEstoque = (itens = []) => {
-  const produtoIds = new Set();
+  const porProduto = new Map();
   const invalidos = [];
   for (const item of Array.isArray(itens) ? itens : []) {
     const produtoId = String(item?.produto_id || '');
-    if (!produtoId || produtoIds.has(produtoId)) invalidos.push(item);
-    produtoIds.add(produtoId);
+    const unidade = String(item?.unidade || item?.unidade_medida || '').trim().toUpperCase();
+    if (!produtoId) { invalidos.push(item); continue; }
+    const anterior = porProduto.get(produtoId);
+    if (anterior && anterior.unidade !== unidade) { invalidos.push(item); continue; }
+    if (anterior) {
+      anterior.quantidade = Number(anterior.quantidade || 0) + Number(item?.quantidade || 0);
+      anterior.valor_total = Number(anterior.valor_total || 0) + Number(item?.valor_total || 0);
+    } else porProduto.set(produtoId, { ...item, unidade });
   }
-  return { valido: invalidos.length === 0, invalidos };
+  return { valido: invalidos.length === 0, invalidos, itens: [...porProduto.values()] };
 };
 
 /** @param {MovimentoPedidoOptions} options */
