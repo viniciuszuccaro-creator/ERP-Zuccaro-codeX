@@ -217,6 +217,38 @@ test('senha legada e removida na migracao de usuario', () => {
   assert.equal(stripSegredosMigracao({ senha_hash: 'x', nome: 'Ana' }).senha_hash, undefined);
 });
 
+test('segredos aninhados e chaves legadas em maiusculas nao chegam ao staging', () => {
+  const origem = {
+    group_id: 'g1',
+    empresa_id: 'e1',
+    codigo_legado: 'CLI-SINTETICO-1',
+    SENHA: 'nao-publicar',
+    dados_origem_migracao: {
+      nome: 'Cliente Sintetico',
+      TOKEN: 'nao-publicar',
+      contatos: [{ tipo: 'comercial', API_KEY: 'nao-publicar' }],
+    },
+  };
+  const filtrado = stripSegredosMigracao(origem);
+  assert.equal('SENHA' in filtrado, false);
+  assert.equal('TOKEN' in filtrado.dados_origem_migracao, false);
+  assert.equal('API_KEY' in filtrado.dados_origem_migracao.contatos[0], false);
+  assert.equal(filtrado.dados_origem_migracao.nome, 'Cliente Sintetico');
+  assert.equal(origem.dados_origem_migracao.TOKEN, 'nao-publicar');
+
+  const stamped = stampMigracaoRecord(origem, { entidade: 'Cliente' });
+  assert.equal(JSON.stringify(stamped).includes('nao-publicar'), false);
+  assert.equal(stamped.codigo_legado, 'CLI-SINTETICO-1');
+
+  const staging = buildPendingManualReconciliation(origem, {
+    entidade: 'ContaReceber',
+    registradoPor: 'auditor-sintetico',
+    registradoEm: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(JSON.stringify(staging).includes('nao-publicar'), false);
+  assert.equal(staging.destino_migracao, 'staging');
+});
+
 test('codigo legado permanece mesmo sem conflito interno', () => {
   const record = applyCodigoOnCreate({
     entityName: 'Produto',

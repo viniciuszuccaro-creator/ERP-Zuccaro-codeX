@@ -113,11 +113,15 @@ export const isMigracaoRecord = (record = {}) => Boolean(
  * @returns {Record<string, unknown>}
  */
 export const stripSegredosMigracao = (record = {}) => {
-  const next = { ...record };
-  SECRET_MIGRACAO_KEYS.forEach((key) => {
-    if (key in next) delete next[key];
-  });
-  return next;
+  const secretKeys = new Set(SECRET_MIGRACAO_KEYS);
+  const sanitize = (value) => {
+    if (Array.isArray(value)) return value.map(sanitize);
+    if (!value || Object.getPrototypeOf(value) !== Object.prototype) return value;
+    return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => !secretKeys.has(key.toLowerCase()))
+      .map(([key, item]) => [key, sanitize(item)]));
+  };
+  return sanitize(record);
 };
 
 /** @param {{ arquivoNome?: unknown, groupId?: unknown, empresaId?: unknown, entidade?: string }} options */

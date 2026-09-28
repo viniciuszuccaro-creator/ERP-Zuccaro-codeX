@@ -1,3 +1,11 @@
+## Gate 18 - sanitizacao do staging legado (2026-09-28)
+
+- Tarefa: endurecer o contrato existente `migracaoErpPolicy` sem duplicar o mapeador sintetico da PR #48.
+- Causa: `stripSegredosMigracao` removia apenas chaves exatas no nivel superior; segredos em payloads aninhados ou chaves maiusculas podiam seguir para staging.
+- Mudanca: filtragem recursiva de objetos/arrays JSON, case-insensitive para as chaves secretas ja reconhecidas, preservando codigo legado e sem mutar a origem.
+- Testes sinteticos direcionados: 25 PASS, 0 FAIL; incluem stamp de Cliente e staging financeiro de ContaReceber sem senha/token/chave aninhados. `audit:baseline`, lint, build e diff-check passaram. Typecheck global continua falhando em mais de 2 mil diagnosticos preexistentes de arquivos nao alterados. Nenhum dado real ou credencial foi usado.
+- Limite: nao foi feita extracao, transformacao de registros reais, vinculacao empresarial comprovada ou carga. O proximo lote deve reutilizar o mapper da #48 e validar Grupo/Empresa em staging isolado, com reconciliacao e gate antes de importar.
+
 ## Gate 18 - inventario agregado seguro do legado (2026-09-28)
 
 - Frente isolada `codex/legado-inventario-20260928`, sem editar a branch da PR #48 do Cursor.
