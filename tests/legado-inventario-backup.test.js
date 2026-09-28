@@ -36,7 +36,7 @@ test('inventario legado: descobre pasta sintética, hasheia e não altera origem
   assert.equal(json.files[0].name, 'amostra_sintetica.sql');
   assert.equal(json.files[0].bytes, Buffer.byteLength(payload));
   assert.match(json.files[0].sha256, /^[a-f0-9]{64}$/);
-  assert.equal(json.note.includes('Sem conteudo'), true);
+  assert.match(json.note, /sem conteudo de registros/i);
 });
 
 test('inventario legado: marca USUSENHA como blocked_secret_candidate', () => {
