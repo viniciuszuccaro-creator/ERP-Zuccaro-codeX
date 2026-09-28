@@ -299,7 +299,9 @@ export const assertNotaFiscalOnUpdate = ({ before = {}, patch = {} } = {}) => {
     return {
       reuse: null, emit: false, cancel: false, rejectPending: true,
       record: { ...patch, status: 'Rejeitada', empresa_id: before.empresa_id,
-        empresa_faturamento_id: before.empresa_faturamento_id || before.empresa_id },
+        empresa_faturamento_id: before.empresa_faturamento_id || before.empresa_id,
+        group_id: before.group_id || before.grupo_id,
+        grupo_id: before.grupo_id || before.group_id },
     };
   }
 
