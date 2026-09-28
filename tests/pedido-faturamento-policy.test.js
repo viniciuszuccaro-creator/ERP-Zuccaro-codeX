@@ -103,8 +103,12 @@ test('partial reservation failure compensates created moves and blocks downstrea
 });
 
 test('stock reservation rejects duplicate or missing product lines before persistence', () => {
-  assert.deepEqual(validarItensReservaEstoque([{ produto_id: 'p1' }, { produto_id: 'p2' }]), { valido: true, invalidos: [] });
-  const duplicate = validarItensReservaEstoque([{ produto_id: 'p1' }, { produto_id: 'p1' }, {}]);
+  const valid = validarItensReservaEstoque([{ produto_id: 'p1', unidade: 'UN', quantidade: 2 }, { produto_id: 'p1', unidade: 'UN', quantidade: 3 }]);
+  assert.equal(valid.valido, true);
+  assert.equal(valid.invalidos.length, 0);
+  assert.equal(valid.itens.length, 1);
+  assert.equal(valid.itens[0].quantidade, 5);
+  const duplicate = validarItensReservaEstoque([{ produto_id: 'p1', unidade: 'UN' }, { produto_id: 'p1', unidade: 'KG' }, {}]);
   assert.equal(duplicate.valido, false);
   assert.equal(duplicate.invalidos.length, 2);
 });
