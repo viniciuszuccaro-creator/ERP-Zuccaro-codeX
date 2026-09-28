@@ -39,6 +39,11 @@ test('cancelled notes do not consume the remaining balance', () => {
   assert.equal(remainingValorFaturar({ pedido, notasExistentes: notas }), 1000);
 });
 
+test('nota pendente rejeitada após falha não consome saldo faturável', () => {
+  const notas = [{ pedido_id: 'ped-1', valor_total: 1000, status: 'Rejeitada' }];
+  assert.equal(remainingValorFaturar({ pedido, notasExistentes: notas }), 1000);
+});
+
 test('pedido numbers are reserved with prefix on create, not invented in the form', () => {
   const record = applyCodigoOnCreate({
     entityName: 'Pedido',
