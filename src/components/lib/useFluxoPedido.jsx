@@ -115,6 +115,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
   const resultados = {
     validacaoCredito: null,
     reservasEstoque: [],
+    reservasCompensadas: [],
     opsGeradas: [],
     contasReceber: [],
     erros: []
@@ -144,6 +145,23 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       }
     }
     resultados.reservasEstoque = baixasEstoque;
+
+    // Aprovacao fail-closed: nenhuma etapa comercial pode continuar quando a
+    // reserva de algum item falhar. O legado persiste movimentos por item, por
+    // isso compensamos exclusivamente as reservas criadas nesta tentativa.
+    if (resultados.erros.length > 0) {
+      for (const reserva of baixasEstoque) {
+        if (reserva?.skipped || !reserva?.id) continue;
+        try {
+          const compensacao = await liberarReservaEstoque(reserva, contextoOperacao.empresaId);
+          if (compensacao) resultados.reservasCompensadas.push(compensacao);
+        } catch (error) {
+          resultados.erros.push(`Erro ao compensar reserva de estoque: ${error.message}`);
+        }
+      }
+      resultados.reservaEstoqueBloqueada = true;
+      return resultados;
+    }
 
     if (pedido.itens_producao?.length > 0) {
       try {
