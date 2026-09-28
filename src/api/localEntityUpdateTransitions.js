@@ -146,6 +146,10 @@ export const applyLocalEntityUpdateTransitions = ({
     nextRecord = decision.record;
     if (before.empresa_id) nextRecord.empresa_id = before.empresa_id;
     if (before.empresa_faturamento_id) nextRecord.empresa_faturamento_id = before.empresa_faturamento_id;
+    if (before.group_id || before.grupo_id) {
+      nextRecord.group_id = before.group_id || before.grupo_id;
+      nextRecord.grupo_id = before.grupo_id || before.group_id;
+    }
   }
 
   if (entityName === 'OrdemProducao') {
