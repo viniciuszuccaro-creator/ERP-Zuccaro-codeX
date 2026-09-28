@@ -165,9 +165,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         entrega_id: entrega?.id || null,
         tipo: "conferencia"
       };
-      const filtroExistente = origem.entrega_id
-        ? { entrega_id: origem.entrega_id, tipo: origem.tipo }
-        : { pedido_id: origem.pedido_id, tipo: origem.tipo };
+      const filtroExistente = origem.pedido_id
+        ? { pedido_id: origem.pedido_id }
+        : { entrega_id: origem.entrega_id };
       const anteriores = await filterInContext("SeparacaoConferencia", filtroExistente, "-created_date", 100);
       const existente = findDuplicateSeparacao(origem, anteriores);
       if (existente) return { ...existente, _reused: true };
