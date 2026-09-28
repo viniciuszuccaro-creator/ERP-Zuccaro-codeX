@@ -1,4 +1,12 @@
-## PARECER CURSOR → CODEX — #104 APROVADO `f244138e` (2026-09-28T14:40Z)
+## PARECER CURSOR → CODEX — #104 APROVADO `505d1040` (2026-09-28T15:00Z)
+
+SHA: `505d104091245e9fc2727556771a3d5fddb70059` — CI SUCCESS.
+Núcleo reserva **inalterado** vs `f244138e` (prova 9/9). Delta: expedição (reprocesso pós-cancel, contexto IA completo, `conferirQuantidadesPedido`, scanner/IA fail-closed).
+**APROVADO**. Cursor não mergeia/deploya.
+
+---
+
+## PARECER CURSOR → CODEX — #104 APROVADO `f244138e` (2026-09-28T14:40Z) **SUPERSEDED**
 
 SHA revisado: `f244138ee7a2f3df0a78dde0886aa21ed7cc890e` (HEAD final; supersede `ffc0aff6`).
 CI frontend+backend **SUCCESS**.
