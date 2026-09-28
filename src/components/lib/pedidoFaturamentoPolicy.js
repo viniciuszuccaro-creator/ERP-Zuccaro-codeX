@@ -150,16 +150,35 @@ export const avaliarReservaParcial = ({ reservas = [], erros = [] } = {}) => {
   };
 };
 
-/** Idempotencia: ja existe saida/liberacao de reserva do pedido para o produto. */
-/** @param {MovimentoPedidoOptions} options */
+/** Saldo aberto da reserva, restrito ao pedido e produto. Saida fisica consome a reserva. */
+export const saldoReservaPedidoProduto = ({ movimentos = [], pedidoId, produtoId } = {}) => {
+  const pid = String(pedidoId || '');
+  const prod = String(produtoId || '');
+  if (!pid || !prod) return 0;
+  const saldo = (Array.isArray(movimentos) ? movimentos : [])
+    .filter((mov) => String(mov?.origem_documento_id || '') === pid
+      && String(mov?.produto_id || '') === prod)
+    .reduce((total, mov) => {
+      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
+      const quantidade = Number(mov?.quantidade ?? 1);
+      if (!Number.isFinite(quantidade) || quantidade <= 0) return total;
+      if (tipo === 'reserva') return total + quantidade;
+      if (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva' || tipo === 'saida') return total - quantidade;
+      return total;
+    }, 0);
+  return Math.max(0, saldo);
+};
+
+/** Uma liberacao compensatoria nao equivale a baixa fisica. */
 export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
   const prod = String(produtoId || '');
   if (!pid || !prod) return false;
   return (Array.isArray(movimentos) ? movimentos : []).some((mov) => {
     const tipo = String(mov?.tipo_movimento || '').toLowerCase();
-    const isSaida = tipo === 'saida' || tipo === 'liberacao_reserva' || tipo === 'liberação_reserva';
-    return isSaida
+    const baixaLegada = (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva')
+      && /baixa por faturamento/i.test(String(mov?.motivo || ''));
+    return (tipo === 'saida' || baixaLegada)
       && String(mov?.origem_documento_id || '') === pid
       && String(mov?.produto_id || '') === prod;
   });
@@ -173,6 +192,7 @@ export const validarItensReservaEstoque = (itens = []) => {
     const produtoId = String(item?.produto_id || '');
     const unidade = String(item?.unidade || item?.unidade_medida || '').trim().toUpperCase();
     const quantidade = Number(item?.quantidade);
+    if (!produtoId && item?.origem_armado === true && item?.item_producao_id) continue;
     if (!produtoId || !Number.isFinite(quantidade) || quantidade <= 0) { invalidos.push(item); continue; }
     const anterior = porProduto.get(produtoId);
     if (anterior && anterior.unidade !== unidade) { invalidos.push(item); continue; }
@@ -214,20 +234,4 @@ export const executarReservasComCompensacao = async ({ itens = [], reservar, com
 };
 
 /** @param {MovimentoPedidoOptions} options */
-export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
-  const pid = String(pedidoId || '');
-  const prod = String(produtoId || '');
-  if (!pid || !prod) return false;
-  const saldo = (Array.isArray(movimentos) ? movimentos : [])
-    .filter((mov) => String(mov?.origem_documento_id || '') === pid
-      && String(mov?.produto_id || '') === prod)
-    .reduce((total, mov) => {
-      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
-      const quantidade = Number(mov?.quantidade ?? 1);
-      if (!Number.isFinite(quantidade) || quantidade <= 0) return total;
-      if (tipo === 'reserva') return total + quantidade;
-      if (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva') return total - quantidade;
-      return total;
-    }, 0);
-  return saldo > 1e-6;
-};
+export const pedidoJaTemReservaEstoque = (options = {}) => saldoReservaPedidoProduto(options) > 1e-6;
