@@ -18,7 +18,7 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { avaliarScanConferencia, conferirQuantidadesPedido, validarRespostaConferenciaIA } from "@/components/lib/expedicaoEntregaPolicy";
+import { avaliarScanConferencia, conferirQuantidadesPedido, findDuplicateSeparacao, validarRespostaConferenciaIA } from "@/components/lib/expedicaoEntregaPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
 
@@ -121,18 +121,18 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
         throw new Error("Contexto e permissao sao obrigatorios para validar por IA.");
       }
 
-      return await base44.integrations.Core.InvokeLLM({
+      const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise a separacao do item de forma objetiva e segura.
 
 Item Pedido: ${sanitizeText(item.descricao)}
 Quantidade Pedida: ${Number(item.quantidade_pedida || item.quantidade || 0)}
 Quantidade Separada: ${Number(item.quantidade_separada || 0)}
 Peso Esperado: ${Number(item.peso_total_kg || 0)} kg
-Peso Conferido: ${Number(item.peso_conferido || 0)} kg
+Peso Conferido: ${item.peso_conferido == null ? 'nao medido' : Number(item.peso_conferido) + ' kg'}
 
 Identifique divergencias e sugira acoes operacionais:
 1. Ha divergencia de quantidade?
-2. Ha divergencia de peso significativa acima de 5%?
+2. Ha divergencia de peso significativa acima de 5%? Se o peso nao foi medido, nao assuma divergencia.
 3. Existem produtos similares seguros se o item estiver em falta?
 4. Classificacao de risco: Baixo, Medio ou Alto.`,
         response_json_schema: {
@@ -146,6 +146,7 @@ Identifique divergencias e sugira acoes operacionais:
           }
         }
       });
+      return validarRespostaConferenciaIA(resultado);
     },
     onSuccess: (resultado, item) => auditarSeparacaoIA({
       acao: "SeparacaoConferenciaIA.validar_item",
@@ -246,6 +247,12 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         throw new Error("Finalizacao cancelada pelo usuario.");
       }
 
+      const anteriores = await filterInContext("SeparacaoConferencia", { pedido_id: pedido.id }, "-created_date", 100);
+      const existente = findDuplicateSeparacao({
+        pedido_id: pedido.id, empresa_id: effectiveEmpresaId, tipo: "conferencia_ia"
+      }, anteriores);
+      if (existente) return { ...existente, _reused: true };
+
       const tempoTotalMinutos = Math.floor(cronometro.segundos / 60);
       const conferenciaQuantidades = conferirQuantidadesPedido(pedido.itens_revenda, separacao.itens_separados);
       const temDivergencia = separacao.divergencias.length > 0 || !conferenciaQuantidades.conforme;
@@ -302,7 +309,12 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
 
       return registro;
     },
-    onSuccess: () => {
+    onSuccess: (registro) => {
+      if (registro?._reused) {
+        toast({ title: "Conferência já registrada", description: "Nenhum novo status foi aplicado." });
+        onClose?.();
+        return;
+      }
       setCronometro(prev => ({ ...prev, ativo: false }));
       queryClient.invalidateQueries({ queryKey: ["pedido-separacao-ia"] });
       queryClient.invalidateQueries({ queryKey: ["pedido"] });
@@ -356,7 +368,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
     const produto = produtos.find(p => p.codigo_barras === codigo || p.codigo === codigo);
 
     if (produto) {
-      const itemPedido = pedido?.itens_revenda?.find(i => i.produto_id === produto.id || i.codigo === produto.codigo);
+      const itemPedido = pedido?.itens_revenda?.find(i => i.produto_id === produto.id);
 
       if (itemPedido) {
         const decisaoScan = avaliarScanConferencia({
@@ -366,22 +378,25 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           codigo: produto.codigo
         });
         if (!decisaoScan.permitido) {
-          toast({ title: "Quantidade excedida", description: "Confira a quantidade pedida antes de escanear novamente.", variant: "destructive" });
+          toast({ title: "Leitura bloqueada", description: decisaoScan.motivo === "quantidade_excedida"
+            ? "Quantidade pedida já foi escaneada." : "Produto ou quantidade inválida no pedido.", variant: "destructive" });
           return;
         }
+        const quantidadeScan = decisaoScan.quantidade;
         const novoItem = {
           produto_id: produto.id,
           descricao: sanitizeText(produto.descricao || itemPedido.produto_descricao),
-          quantidade_pedida: 1,
-          quantidade_separada: 1,
-          peso_conferido: Number(produto.peso_liquido_kg || 0),
+          quantidade_pedida: quantidadeScan,
+          quantidade_separada: quantidadeScan,
+          peso_total_kg: Number(produto.peso_liquido_kg || 0) * quantidadeScan,
+          peso_conferido: null,
           localizacao: sanitizeText(produto.localizacao || "N/A"),
           data_hora_separacao: new Date().toISOString()
         };
 
         let validacao;
         try {
-          validacao = validarRespostaConferenciaIA(await validarIAMutation.mutateAsync(novoItem));
+          validacao = await validarIAMutation.mutateAsync(novoItem);
         } catch (error) {
           toast({ title: "Falha na validação IA", description: error?.message || "Tente novamente.", variant: "destructive" });
           return;
