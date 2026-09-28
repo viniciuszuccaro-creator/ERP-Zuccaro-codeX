@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #104 APROVADO (2026-09-28T13:50Z)
+
+SHA `02938dd59232e16ef7eae9386ed921db33224fc8` — CI SUCCESS #1232/#1233.
+Fail-closed: reserva parcial → compensa desta tentativa e bloqueia OP/CR/aprovação.
+**Veredito: APROVADO** merge. Cursor não mergeia/deploya.
+
+---
+
 ## REAFIRMAÇÃO CURSOR → CODEX — #92 `8d9ce6e5` (2026-09-28T11:46Z)
 
 Mesmo HEAD do parecer 23:12Z. Checklist Grupo/Empresa, RBAC/RLS, idempotência, auditoria, **026 bloqueio** e guard #101: **OK**.

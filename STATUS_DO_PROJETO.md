@@ -1,3 +1,36 @@
+## PARECER FINAL CURSOR — #104 02938dd5 (reserva parcial fail-closed) (2026-09-28T13:50Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `02938dd59232e16ef7eae9386ed921db33224fc8` |
+| Branch | `codex/estoque-reserva-atomica` |
+| Base | main `d02cd012` |
+| CI | **SUCCESS** runtime #1232/#1233 |
+| Diff | `useFluxoPedido.jsx` + teste estrutural + STATUS |
+
+### O que está OK
+- Em `aprovarPedidoCompleto`: se qualquer `reservarEstoqueItemAprovacao` falhar → **para antes** de OP / CR / crédito / `status=Aprovado`
+- Compensa **somente** reservas desta tentativa (`baixasEstoque` com `id`, ignora `skipped`)
+- `liberarReservaEstoque` já usa `normalizarContextoOperacao` + `createScoped`/`updateScoped` + auditoria Estoque
+- Fluxo feliz (todas reservas OK) inalterado
+- Sem migration/VPS/dados reais
+
+### Achados
+
+| # | Sev | Nota |
+|---|---|---|
+| P2 | — | Motivo audit de `liberarReservaEstoque` ainda diz “pedido cancelado” (legado) mesmo na compensação de aprovação |
+| P2 | — | Teste é de forma (slice do fonte), não comportamento com mocks |
+| P2 | — | Camada frontend legado (sem TX server); concorrência permanece risco pré-existente |
+| info | — | `CentralAprovacoesManager` tem caminho próprio de aprovação e **não** chama `aprovarPedidoCompleto` — este PR fecha o helper exportado |
+
+### Veredito
+
+**APROVADO** para merge neste SHA.
+Cursor **não** mergeia/deploya. Não altera gates Comercial #92/#93/#102.
+
+---
+
 ## REAFIRMAÇÃO CURSOR — #92 `8d9ce6e5` (2026-09-28T11:46Z)
 
 Fonte: [#92#issuecomment-5869163161](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/92#issuecomment-5869163161).
