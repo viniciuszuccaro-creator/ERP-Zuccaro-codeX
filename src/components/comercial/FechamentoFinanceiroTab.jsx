@@ -14,7 +14,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
-import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento } from '@/components/lib/pedidoFaturamentoPolicy';
+import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento, resolverNotaResidualPedido } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -429,11 +429,17 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             if (!etapa.permitido) throw new Error(etapa.motivo);
           }
           const notas = await filterInContext('NotaFiscal', { pedido_id: formData.id }, '-created_date', 200);
+          if (notas.length >= 200) throw new Error('Limite de NFs consultadas; concilie o pedido antes de faturar');
           const pedidoValorado = { ...formData, valor_total: valorTotal };
+          const temNotaAnteriorAtiva = notas.some((nota) =>
+            String(nota.pedido_id) === String(formData.id) && !/(cancel|rejeitad)/i.test(String(nota.status || '')));
+          const dadosNota = dadosNFe.escopo === 'pedido_inteiro' && temNotaAnteriorAtiva
+            ? { ...dadosNFe, ...resolverNotaResidualPedido({ pedido: pedidoValorado, notasExistentes: notas }) }
+            : dadosNFe;
           const { status } = assertFaturamentoDentroDoPedido({
             pedido: pedidoValorado,
             notasExistentes: notas,
-            notaNova: dadosNFe,
+            notaNova: dadosNota,
           });
           const nota = await createInContext('NotaFiscal', {
             tipo: 'NF-e (Saida)',
@@ -441,15 +447,15 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             numero_pedido: dadosNFe.numero_pedido,
             cliente_id: dadosNFe.cliente_id,
             cliente_fornecedor: dadosNFe.cliente_nome,
-            valor_produtos: dadosNFe.valor_total,
-            valor_total: dadosNFe.valor_total,
+            valor_produtos: dadosNota.valor_total,
+            valor_total: dadosNota.valor_total,
             status: 'Pendente',
             empresa_id: empresaId,
             empresa_faturamento_id: empresaId,
             group_id: groupId,
             grupo_id: groupId,
             etapa_id: dadosNFe.etapa_id || null,
-            itens: dadosNFe.itens || [],
+            itens: dadosNota.itens || [],
             cfop: dadosNFe.cfop || formData.cfop_pedido || '5102',
             ambiente: 'Homologacao',
             observacoes: dadosNFe.observacoes_nfe || '',
