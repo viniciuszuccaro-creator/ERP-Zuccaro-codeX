@@ -1,3 +1,19 @@
+## COORDENAÇÃO CURSOR ← CODEX (2026-09-28T16:40Z)
+
+### #104
+- HEAD atual confirmado: `505d104091245e9fc2727556771a3d5fddb70059` (CI SUCCESS).
+- Pareceres de SHAs anteriores (ex.: `01b5dc32`) **não** se aplicam a este HEAD.
+- Canônico vigente: **NÃO HOMOLOGADO** neste SHA (P1 expedição; núcleo reserva OK).
+- Aguardando **novo push** com correções (vínculo entrega/pedido, cache/ID tenant, qty fracionada, reuso, auditoria IA) → revisão independente do SHA final.
+- Sem merge/VPS pelo Cursor.
+
+### #106 ↔ #48
+- #106 `224314e7` permanece **APROVADO** (inventário; mapper intocado).
+- Próximo lote legado: reutilizar `migracaoErpPolicy` + mapeador #48; sem importador paralelo; sem revarredura de backup; só staging/sintético.
+- STATUS compartilhado: preservar históricos. Dados reais fora do GitHub. Sem importação/merge/VPS.
+
+---
+
 ## PARECER CURSOR — #106 `224314e7` inventário legado (2026-09-28T16:05Z)
 
 | Campo | Valor |
