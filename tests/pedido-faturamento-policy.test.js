@@ -5,6 +5,7 @@ import {
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
+  saldoReservaPedidoProduto,
   validarItensReservaEstoque,
   remainingValorFaturar,
   resolveStatusFaturamentoPedido,
@@ -75,7 +76,7 @@ test('stock movement idempotency helpers detect reserva and saida', () => {
   ];
   assert.equal(pedidoJaTemReservaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), true);
   assert.equal(pedidoJaTemReservaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p2' }), false);
-  assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p2' }), true);
+  assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p2' }), false);
   assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), false);
 });
 
@@ -90,6 +91,55 @@ test('retry apos compensacao exige nova reserva antes do financeiro', async () =
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   assert.ok(fluxo.includes('return { skipped: true, produto_id: item.produto_id };'));
   assert.ok(fluxo.includes('const itens = pedido.itens_revenda || [];'));
+});
+
+test('compensacao, retry e faturamento consomem a reserva nova uma vez', async () => {
+  const movimentos = [
+    { tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { tipo_movimento: 'liberacao_reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 4 },
+  ];
+  assert.equal(saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), 4);
+  assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), false);
+  movimentos.push({ tipo_movimento: 'saida', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 4 });
+  assert.equal(saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), 0);
+  assert.equal(pedidoJaTemSaidaEstoque({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), true);
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const baixa = fluxo.slice(fluxo.indexOf('async function baixarEstoqueItem'), fluxo.indexOf('export async function concluirOPCompleto'));
+  assert.match(baixa, /tipo_movimento: 'saida'/);
+  assert.match(baixa, /saldoReservaPedidoProduto/);
+  assert.match(baixa, /estoque_atual: novoEstoque/);
+  assert.match(baixa, /estoque_reservado: novoReservado/);
+});
+
+test('cancelamento libera apenas quatro apos compensar dez e preserva outro pedido', async () => {
+  const movimentos = [
+    { tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { tipo_movimento: 'liberacao_reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 10 },
+    { tipo_movimento: 'reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: 4 },
+    { tipo_movimento: 'reserva', origem_documento_id: 'ped-2', produto_id: 'p1', quantidade: 7 },
+  ];
+  const liberar = saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' });
+  assert.equal(liberar, 4);
+  movimentos.push({ tipo_movimento: 'liberacao_reserva', origem_documento_id: 'ped-1', produto_id: 'p1', quantidade: liberar });
+  assert.equal(saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-1', produtoId: 'p1' }), 0);
+  assert.equal(saldoReservaPedidoProduto({ movimentos, pedidoId: 'ped-2', produtoId: 'p1' }), 7);
+  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const cancelamento = fluxo.slice(fluxo.indexOf('export async function cancelarPedidoCompleto'), fluxo.indexOf('async function liberarReservaEstoque'));
+  assert.match(cancelamento, /quantidade: saldo/);
+  assert.doesNotMatch(cancelamento, /tipo_movimento: 'reserva'\s*\}/);
+  const liberacao = fluxo.slice(fluxo.indexOf('async function liberarReservaEstoque'));
+  assert.match(liberacao, /Math.min\(saldo, Number\(movimentacaoReserva.quantidade\)\)/);
+});
+
+test('peça de armado sem produto não bloqueia revenda estocável', () => {
+  const itens = [
+    { produto_id: null, origem_armado: true, item_producao_id: 'arm-1', quantidade: 1 },
+    { produto_id: 'p1', unidade: 'UN', quantidade: 2 },
+  ];
+  assert.deepEqual(validarItensReservaEstoque(itens).itens.map((item) => item.produto_id), ['p1']);
+  assert.equal(validarItensReservaEstoque(itens).valido, true);
+  assert.equal(validarItensReservaEstoque([{ produto_id: null, quantidade: 1 }]).valido, false);
 });
 
 test('approval blocks downstream effects and compensates partial stock reservations', async () => {
@@ -159,7 +209,7 @@ test('cancelling a reservation is idempotent after a prior release', async () =>
   const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
   const releaseStart = fluxo.indexOf('async function liberarReservaEstoque');
   const releaseBody = fluxo.slice(releaseStart, fluxo.indexOf('/**', releaseStart + 1));
-  assert.match(releaseBody, /!pedidoJaTemReservaEstoque/);
+  assert.match(releaseBody, /saldoReservaPedidoProduto/);
   assert.match(releaseBody, /skipped: true/);
 });
 
