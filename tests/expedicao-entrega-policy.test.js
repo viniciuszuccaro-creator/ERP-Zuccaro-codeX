@@ -19,6 +19,11 @@ import {
   summarizePredictionAudit,
 } from '../src/components/expedicao/formulario-entrega/entregaFormPolicy.js';
 
+test('separacao recalcula divergencia por quantidade antes de liberar pedido', async () => {
+  const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(separacao, /i\.divergencia \|\| Number\(i\.quantidade_separada \|\| 0\) !== Number\(i\.quantidade_pedida \|\| 0\)/);
+});
+
 test('formulario exige Grupo e empresa autorizada no contexto', () => {
   assert.deepEqual(resolveEntregaContext({ grupoAtual: { id: 'g1' }, estaNoGrupo: true }), {
     groupId: 'g1', empresaId: null, empresaPertence: false, contextoValido: false,
