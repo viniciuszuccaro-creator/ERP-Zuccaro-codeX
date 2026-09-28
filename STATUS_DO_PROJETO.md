@@ -1,3 +1,25 @@
+## #102 — decisão owner: descarte DEV dos 3 Pedidos teste (2026-09-28T09:48Z)
+
+Fonte: [#102](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/102) comentário 09:37Z.
+
+| Campo | Valor |
+|---|---|
+| Decisão | Descartar os **3 Pedidos de teste** do DEV (sem inferir tipo pelo Produto) |
+| Alternativa | Em vez do plano item-a-item do tooling #102 para este destino |
+| HEAD tooling | `d8f95baf` permanece **APROVADO_COM_GATES** (código); apply mapping **não** exigido se descarte fechar G1 |
+| Execução | **CONDICIONADA** a: IDs privados exatos, vínculos/efeitos, backup restaurável, reconciliação, auditoria, revisão do procedimento |
+| Publicado | nenhum ID/dado/backup; **nenhuma** exclusão/migration neste comentário |
+| Cursor | **não** executa descarte/migration/apply |
+
+### Efeito nos gates
+- **G1 (026 histórico):** pode fechar via (A) descarte autorizado + 026 em tabelas sem histórico não classificado, **ou** (B) plano privado + CLI #102.
+- Após descarte comprovado + 026: liberar cadeia 025→028→033 sob gates restantes (#92 G2–G4; canais OFF).
+- Browser owner (#101) e merge #92/#93 sob gates **inalterados**.
+
+Cursor **reconhece** a autorização funcional; **não** declara G1 fechado até evidência de execução + reconciliação.
+
+---
+
 ## PARECER FINAL CURSOR — #102 d8f95baf (gate histórico 026) (2026-09-27T23:28Z)
 
 Fonte: [#97#issuecomment-5860787482](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/97#issuecomment-5860787482).
