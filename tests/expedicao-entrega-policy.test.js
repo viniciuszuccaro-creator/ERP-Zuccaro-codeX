@@ -29,6 +29,19 @@ test('separacao recalcula divergencia por quantidade antes de liberar pedido', a
   assert.match(separacao, /i\.divergencia \|\| Number\(i\.quantidade_separada \|\| 0\) !== Number\(i\.quantidade_pedida \|\| 0\)/);
 });
 
+test('conferencia manual reusa registro antes de atualizar pedido e bloqueia lista vazia', async () => {
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  const mutation = source.slice(source.indexOf('const criarSeparacaoMutation'));
+  assert.ok(mutation.indexOf('if (existente) return { ...existente, _reused: true }')
+    < mutation.indexOf('createInContext("SeparacaoConferencia"'));
+  assert.ok(mutation.indexOf('if (existente) return { ...existente, _reused: true }')
+    < mutation.indexOf('updateInContext("Pedido"'));
+  assert.match(source, /itens.length > 0 && itens.every/);
+  assert.match(source, /conferirQuantidadesPedido\(/);
+  assert.match(source, /pedidoOperacao\?\.id/);
+  assert.match(source, /pedido-da-entrega/);
+});
+
 test('consulta de entrega rejeita ID ou tenant diferente mesmo em cache', async () => {
   const rows = [
     { id: 'outra', group_id: 'g1', empresa_id: 'e1' },
