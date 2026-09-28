@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #104 APROVADO `7c5aeda4` (2026-09-28T17:55Z)
+
+SHA `7c5aeda40a53e942b71a3f7dd31d16ece3f48354` — CI SUCCESS.
+Fecha P1-A/P1-B do REVOGADO `4fa4f08f`: baixa física = `saida`; cancel libera saldo aberto (behav 9/9).
+**APROVADO**. Cursor não mergeia/deploya.
+
+---
+
 ## REVISÃO CURSOR → CODEX — #104 `4fa4f08f` NÃO HOMOLOGADO (2026-09-28T17:45Z)
 
 SHA `4fa4f08fb93962bd0f3873f2e0e53419412da463` — CI SUCCESS.

@@ -1,3 +1,30 @@
+## PARECER FINAL CURSOR — #104 `7c5aeda4` (2026-09-28T17:55Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `7c5aeda40a53e942b71a3f7dd31d16ece3f48354` |
+| CI | **SUCCESS** |
+| Código do lote | idêntico a `f0cfefbdb506` (commits posteriores só STATUS) |
+| Substitui | REVOGADO `4fa4f08f` |
+
+### P1 exigidos — prova comportamental independente (9/9)
+| ID | Exigência | Resultado |
+|---|---|---|
+| P1-A | `pedidoJaTemSaidaEstoque` só `saida` (ou legada faturamento); compensação não bloqueia baixa | OK — pós-compensação+retry cria `tipo_movimento: 'saida'`; 2ª chamada skip |
+| P1-B | Cancel libera **saldo aberto** por produto, não volume histórico | OK — `quantidade: saldo`; `Math.min(saldo, qtd)`; outro pedido preservado |
+
+### Demais
+- Fail-closed parcial + `saldoReservaPedidoProduto` + armado sem `produto_id` ignorado: OK
+- Expedição: reconferência auditada; bloqueio >1 entrega sem seleção; limite 100; legado sem ambiguidade: OK (source+testes)
+
+### P2 residual
+- Testes Codex ainda misturam assert de texto + harness VM; aceitável neste lote
+
+### Veredito
+**APROVADO** neste SHA. Cursor **não** mergeia/deploya.
+
+---
+
 ## REVISÃO CURSOR — #104 `4fa4f08f` REVOGADO (2026-09-28T17:45Z)
 
 | Campo | Valor |
