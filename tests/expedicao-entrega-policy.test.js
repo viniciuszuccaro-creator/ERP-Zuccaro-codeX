@@ -16,6 +16,7 @@ import {
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
   hasProvaEntrega,
+  findDuplicateSeparacao,
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
 import {
   resolveEntregaContext,
@@ -84,7 +85,7 @@ test('scanner valida resposta IA antes de auditar sucesso ou incluir item', asyn
   const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
   const mutation = source.slice(source.indexOf('const validarIAMutation'), source.indexOf('const otimizarRotaMutation'));
   assert.ok(mutation.indexOf('return validarRespostaConferenciaIA(resultado)') < mutation.indexOf('onSuccess:'));
-  assert.match(mutation, /onError:[\\s\\S]*?validacao_erro/);
+  assert.ok(mutation.indexOf('onError:') < mutation.indexOf('validacao_erro'));
   assert.ok(source.indexOf('validacao = await validarIAMutation.mutateAsync(novoItem)')
     < source.indexOf('itens_separados: [...prev.itens_separados, novoItem]'));
   assert.match(source, /peso_total_kg: Number\\(produto.peso_liquido_kg \\|\\| 0\\) \\* quantidadeScan/);
@@ -108,7 +109,7 @@ test('scanner soma unidades fracionadas por produto e bloqueia codigo de outro I
   ]), { conforme: true, divergencias: [] });
   const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
   assert.match(source, /quantidade_pedida: quantidadeScan/);
-  assert.match(source, /find\\(i => i.produto_id === produto.id\\)/);
+  assert.ok(source.includes('find(i => i.produto_id === produto.id)'));
 });
 
 test('conferencia IA bloqueia pedido incompleto mesmo quando IA nao detecta divergencia', async () => {
