@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip Pedido Imprimir/PDF (2026-09-29T22:50Z)
 
-Tip empilhada em #165: Pedido Imprimir/PDF canônico fail-closed (`gerarPDFPedido` + gate).
-#165 validade CI SUCCESS. Sem merge/VPS. Continuando.
+Draft PR **#166** empilhada em #165: Pedido Imprimir/PDF canônico fail-closed.
+#165 CI SUCCESS. CI #166 em curso. Sem merge/VPS.
 
 ---
 
