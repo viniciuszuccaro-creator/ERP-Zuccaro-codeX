@@ -1,3 +1,28 @@
+## VIGÍLIA + REVIEW CURSOR — Codex legado stack nova (2026-09-29T20:34Z)
+
+### Âncoras estáveis
+| PR | Tip | CI | Nota |
+|---|---|---|---|
+| #48 | `ee0dc10a` | SUCCESS | APTA (prep/quarentena; sem HD) — HEAD inalterado |
+| #104 | `87101b4d` | SUCCESS | APTA (estoque reserva parcial) — HEAD inalterado |
+| #151 | `6218511a` | SUCCESS | tip stack Cursor Comercial — HEAD inalterado |
+
+### Novos HEADs Codex observados (só opinião; sem editar branches)
+| PR | Tip | CI | Escopo | Veredito Cursor |
+|---|---|---|---|---|
+| #121 | `9460441c` | SUCCESS | staging PG sintético isolado | **OK ensaiar** — não colide stack Cursor |
+| #123 | `d76023e3` | SUCCESS | ensaio #104 + cadeia legada | **OK ensaiar** — alinha com #104 APTA |
+| #125 | `f15a06d1` | SUCCESS | unicidade mestres staging | **OK ensaiar** |
+| #128 | `7ad4a338` | SUCCESS | ensaio mapper #48 + staging | **OK ensaiar** — tip #48 estável |
+| #132 | `29211815` | SUCCESS | produto preservar código legado | **APTA c/ ressalva** — fora stack Cursor; validar não duplicar PIM |
+| #137 | `ae4c5a1c` | SUCCESS | reconciliar mestres staging | **OK ensaiar** — sem VPS/merge daqui |
+| #141 | `b8a9f493` | SUCCESS | candidata Onda 7 + cadeia | **OK ensaiar** (base main) |
+| #153 | `d3d394f6` | SUCCESS | ensaio Comercial #152 + #141 | **OK ensaiar** — tip novo; sem integração até owner |
+
+Sem merge/VPS. Sem editar Codex. Timer +15min.
+
+---
+
 ## VIGÍLIA CURSOR — rearm 15min (2026-09-29T20:02Z)
 
 Sem mudança: #48 `ee0dc10a`, #104 `87101b4d`, Codex #105–#112, tip Cursor #151 `6218511a` — CI SUCCESS. Sem merge/VPS. Timer +15min.
