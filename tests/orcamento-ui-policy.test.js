@@ -21,6 +21,8 @@ import {
   orcamentoConvertSnapshotHint,
   orcamentoValidadeHint,
   evaluateOrcamentoValidadeUiGate,
+  evaluateOrcamentoPrintPdfUiGate,
+  evaluateOrcamentoShareUiGate,
   todayOrcamentoValidadeCalendarDay,
   resolveOrcamentoResumoPreviewState,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
@@ -416,4 +418,26 @@ test('mapOrcamentoRowToForm recarrega campos canônicos sem inventar snapshots',
   assert.equal(mapped.itens.length, 1);
   assert.equal('condicao_pagamento_nome_snapshot' in mapped, false);
   assert.equal('numero' in mapped, false);
+});
+
+test('orcamento print/share gates fail-closed', () => {
+  assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: '', empresaId: 'e', canPrint: true }).mode, 'context');
+  assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: false }).mode, 'permission');
+  assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: null, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'missing');
+  assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'invalid');
+  assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: true }).blockPrint, false);
+  assert.equal(evaluateOrcamentoShareUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canShare: false }).mode, 'permission');
+  assert.equal(evaluateOrcamentoShareUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canShare: true }).blockShare, false);
+});
+
+test('painel orçamento wire Imprimir/PDF e share fail-closed', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /evaluateOrcamentoPrintPdfUiGate/);
+  assert.match(tab, /evaluateOrcamentoShareUiGate/);
+  assert.match(tab, /orcamento-print-pdf/);
+  assert.match(tab, /orcamento-share-whatsapp/);
+  assert.match(tab, /orcamento-share-email/);
+  assert.match(tab, /printPdfGate\.blockPrint/);
+  assert.match(tab, /shareGate\.blockShare/);
+  assert.doesNotMatch(tab, /api\.whatsapp|twilio/i);
 });

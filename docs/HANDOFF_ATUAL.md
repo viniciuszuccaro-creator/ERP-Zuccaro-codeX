@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Orçamento print/share gate (2026-09-29T23:20Z)
+
+Tip empilhada em #168: Orçamento print/share fail-closed (paridade Pedido).
+#166/#167/#168 CI SUCCESS. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Pedido detalhe summary (2026-09-29T23:10Z)
 
 Draft PR **#168** empilhada em #167: detalhe Pedido summary fail-closed.

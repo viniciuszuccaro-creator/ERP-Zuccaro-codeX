@@ -608,6 +608,38 @@ export function resolvePromocaoPayloadRef(form, options = {}) {
   return null;
 }
 
+
+/** Gate fail-closed para Imprimir/PDF do Orçamento canônico. */
+export function evaluateOrcamentoPrintPdfUiGate({ row, groupId, empresaId, canPrint } = {}) {
+  if (!groupId || !empresaId) {
+    return { blockPrint: true, mode: 'context', hint: 'Selecione grupo e empresa antes de imprimir.' };
+  }
+  if (!canPrint) {
+    return { blockPrint: true, mode: 'permission', hint: 'Sem permissão para imprimir orçamento.' };
+  }
+  if (!row || !row.numero) {
+    return { blockPrint: true, mode: 'missing', hint: 'Orçamento indisponível para impressão (fail-closed).' };
+  }
+  if (!Array.isArray(row.itens)) {
+    return { blockPrint: true, mode: 'invalid', hint: 'Itens do orçamento indisponíveis (fail-closed).' };
+  }
+  return { blockPrint: false, mode: 'ready', hint: null };
+}
+
+/** Gate fail-closed para compartilhar texto do Orçamento (clipboard only). */
+export function evaluateOrcamentoShareUiGate({ row, groupId, empresaId, canShare } = {}) {
+  if (!groupId || !empresaId) {
+    return { blockShare: true, mode: 'context', hint: 'Selecione grupo e empresa antes de compartilhar.' };
+  }
+  if (!canShare) {
+    return { blockShare: true, mode: 'permission', hint: 'Sem permissão para compartilhar orçamento.' };
+  }
+  if (!row || !row.numero) {
+    return { blockShare: true, mode: 'missing', hint: 'Orçamento indisponível para compartilhamento (fail-closed).' };
+  }
+  return { blockShare: false, mode: 'ready', hint: null };
+}
+
 export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', clienteNome = 'Cliente' } = {}) {
   if (!orcamento?.numero) throw new Error('Orçamento inválido para compartilhamento');
   const status = orcamento.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado';

@@ -1,3 +1,16 @@
+## AUTÔNOMO — tip Orçamento print/share gate (pós-#168) (2026-09-29T23:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Orçamento Imprimir/PDF + share fail-closed** (paridade Pedido #166/#167) |
+| Branch | `cursor/comercial360-onda5-orcamento-print-share-gate-392b` |
+| Base | tip #168 `cursor/comercial360-onda5-pedido-detail-ux-392b` CI SUCCESS |
+| Escopo | `evaluateOrcamentoPrintPdfUiGate` + `evaluateOrcamentoShareUiGate`; botões disabled; meta orçamento `printPdfUiFailClosed`/`shareTextUiFailClosed`; **sem migration** |
+| Colisão | origem/anexo; CreditPort 032; sem Codex/merge/VPS |
+| Próximo | CostPort BFF (sem inventar custo) / Onda 6 se 032 |
+
+---
+
 ## AUTÔNOMO — tip Pedido detalhe summary UX (pós-#167 share) (2026-09-29T23:10Z)
 
 | Campo | Valor |
