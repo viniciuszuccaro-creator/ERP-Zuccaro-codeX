@@ -1,3 +1,24 @@
+## LOTE CURSOR — offline/network retry list/masters/simular (pós-#150 a11y-live) (2026-09-29T19:06Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Offline/network retry — banner + Retry explícito em list/masters/simular (rede/5xx); reusa `formatComercialHttpError`; fail-closed (sem empty silencioso); 4xx sem retry |
+| Branch | `cursor/comercial360-onda3-network-retry-392b` |
+| Base | `origin/cursor/comercial360-onda3-a11y-live-392b` tip `33c3b456` (#150) |
+| Tip | _(após commit)_ |
+| Draft PR | base `#150` — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-a11y-live-392b...cursor/comercial360-onda3-network-retry-392b?expand=1 |
+| Escopo | `isComercialRetryableHttpError` + `buildSimularHttpErrorBannerText`; Retry gated em list/masters; banner simular reinvoca `runSimularVenda`; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `retry rede/5xx` + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **22/22**; `orcamento-ui-policy` **16/16**; `pedido-ui-policy` **25/25**; `git diff --check` PASS |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#150; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: list/masters já tinham Retry em todo erro; simular só toast. Agora Retry só rede/5xx; simular ganha banner fail-closed que reinvoca a mesma ação.
+
+---
+
 ## LOTE CURSOR — a11y aria-live + item aria-invalid + action labels (pós-#149 inactive master) (2026-09-29T18:57Z)
 
 | Campo | Valor |

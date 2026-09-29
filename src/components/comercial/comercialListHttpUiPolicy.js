@@ -213,6 +213,34 @@ export function formatComercialHttpError(error, options = {}) {
 }
 
 /**
+ * Rede/offline ou 5xx — Retry reinvoca o mesmo load/simular.
+ * 4xx (403/404/409/422) não são retryáveis pela mesma ação.
+ * @param {unknown} error
+ */
+export function isComercialRetryableHttpError(error) {
+  if (error == null) return false;
+  const status = Number(error?.status);
+  if (Number.isFinite(status) && status >= 500) return true;
+  // Sem status HTTP válido (Failed to fetch / offline / abort genérico) → rede
+  if (!Number.isFinite(status) || status === 0) return true;
+  return false;
+}
+
+/**
+ * Banner de falha simular-venda (rede/5xx) — reusa formatComercialHttpError.
+ * Fail-closed: nunca sugere preview/empty silencioso.
+ * @param {unknown} error
+ * @param {{ entityLabel?: string, conflictMessage?: string }} [options]
+ */
+export function buildSimularHttpErrorBannerText(error, options = {}) {
+  const formatted = formatComercialHttpError(error, {
+    entityLabel: options.entityLabel || 'Simulação',
+    conflictMessage: options.conflictMessage,
+  });
+  return `${formatted} Simulação não aplicada — use Tentar novamente (não trate como preview vazio).`;
+}
+
+/**
  * Estado visual da listagem: erro nunca colapsa em empty.
  * @returns {'loading'|'error'|'empty'|'ready'}
  */
@@ -622,6 +650,7 @@ export function buildOrcamentoTenantSwitchReset(options = {}) {
     simulacaoPreview: null,
     lastSimulation: null,
     simulacaoDirty: false,
+    simularHttpError: null,
     condicaoSnapshot: null,
     tabelaSnapshot: null,
     promocaoSnapshot: null,
@@ -651,6 +680,7 @@ export function buildPedidoTenantSwitchReset(options = {}) {
     simulacaoPreview: null,
     lastSimulation: null,
     simulacaoDirty: false,
+    simularHttpError: null,
     condicaoSnapshot: null,
     tabelaSnapshot: null,
     promocaoSnapshot: null,

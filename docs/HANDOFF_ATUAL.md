@@ -1,3 +1,19 @@
+## LOTE CURSOR — offline/network retry Comercial 360 (pós-#150) (2026-09-29T19:06Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Offline/network retry — list/masters/simular rede/5xx + banner Retry |
+| Branch | `cursor/comercial360-onda3-network-retry-392b` |
+| Base | `#150` tip `33c3b456` (`cursor/comercial360-onda3-a11y-live-392b`) |
+| Tip | _(após commit)_ |
+| Draft PR | base `#150` — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-a11y-live-392b...cursor/comercial360-onda3-network-retry-392b?expand=1) |
+| Meta | retry rede/5xx + **Pedido backend HTTP is active** |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#150 |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## LOTE CURSOR — a11y aria-live Comercial 360 (pós-#149) (2026-09-29T18:57Z)
 
 | Campo | Valor |

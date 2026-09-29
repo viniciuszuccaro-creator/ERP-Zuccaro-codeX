@@ -23,6 +23,8 @@ import {
   resolveHttpMasterPickerState,
   formatMasterPickerPlaceholder,
   buildMastersHttpBannerText,
+  buildSimularHttpErrorBannerText,
+  isComercialRetryableHttpError,
   isMasterPickerBlocked,
   sanitizeListSearchText,
   sanitizeObservacoesText,
@@ -329,6 +331,7 @@ test('tenant switch: reset Orçamento/Pedido descarta form dirty e diálogos', (
   assert.equal(orc.simulacaoDirty, false);
   assert.equal(orc.simulacaoPreview, null);
   assert.equal(orc.lastSimulation, null);
+  assert.equal(orc.simularHttpError, null);
   assert.equal(orc.condicaoSnapshot, null);
   assert.deepEqual(orc.filters, ORCAMENTO_LIST_FILTER_DEFAULTS);
   assert.deepEqual(orc.appliedFilters, ORCAMENTO_LIST_FILTER_DEFAULTS);
@@ -344,6 +347,7 @@ test('tenant switch: reset Orçamento/Pedido descarta form dirty e diálogos', (
   assert.deepEqual(ped.filters, PEDIDO_LIST_FILTER_DEFAULTS);
   assert.deepEqual(ped.applied, PEDIDO_LIST_FILTER_DEFAULTS);
   assert.equal(ped.promocaoSnapshot, null);
+  assert.equal(ped.simularHttpError, null);
 });
 
 test('resolveHttpMasterPickerState: 403/5xx e denied nunca viram empty silencioso', () => {
@@ -492,6 +496,31 @@ test('a11y: nomes acessíveis Simular/Salvar/Cancelar/Resumo/Converter/Retry', (
   assert.equal(comercialActionAriaLabel('retry'), 'Tentar novamente');
 });
 
+test('isComercialRetryableHttpError: só rede/5xx — 4xx não retry', () => {
+  assert.equal(isComercialRetryableHttpError({ status: 500 }), true);
+  assert.equal(isComercialRetryableHttpError({ status: 503 }), true);
+  assert.equal(isComercialRetryableHttpError({ status: 0 }), true);
+  assert.equal(isComercialRetryableHttpError({ message: 'Failed to fetch' }), true);
+  assert.equal(isComercialRetryableHttpError({ status: 403 }), false);
+  assert.equal(isComercialRetryableHttpError({ status: 404 }), false);
+  assert.equal(isComercialRetryableHttpError({ status: 409 }), false);
+  assert.equal(isComercialRetryableHttpError({ status: 422 }), false);
+  assert.equal(isComercialRetryableHttpError(null), false);
+});
+
+test('buildSimularHttpErrorBannerText reusa formatComercialHttpError e fail-closed', () => {
+  const net = buildSimularHttpErrorBannerText({ message: 'Failed to fetch' }, { entityLabel: 'Pedido' });
+  assert.match(net, /comunicar com o servidor/i);
+  assert.match(net, /Tentar novamente/i);
+  assert.match(net, /não trate como preview vazio/i);
+  assert.doesNotMatch(net, /nenhum|lista vazia|encontrado nesta empresa/i);
+  const srv = buildSimularHttpErrorBannerText({ status: 502 }, { entityLabel: 'Orçamento' });
+  assert.match(srv, /servidor/i);
+  assert.match(srv, /Simulação não aplicada/i);
+  // Mensagem base alinhada ao helper compartilhado
+  assert.match(formatComercialHttpError({ status: 500 }), /servidor/i);
+});
+
 test('painéis Orçamento/Pedido wire a11y banners e labels (sem lib nova)', async () => {
   const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
@@ -510,4 +539,38 @@ test('painéis Orçamento/Pedido wire a11y banners e labels (sem lib nova)', asy
   assert.match(orc, /comercialActionAriaLabel\('converter'/);
   assert.match(meta, /Pedido backend HTTP is active/);
   assert.match(meta, /a11y Comercial HTTP/);
+});
+
+test('painéis Orçamento/Pedido: retry rede/5xx list/masters/simular fail-closed', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const meta = await readFile(new URL('../server/src/api/router.ts', import.meta.url), 'utf8');
+  for (const src of [orc, ped]) {
+    assert.match(src, /isComercialRetryableHttpError/);
+    assert.match(src, /buildSimularHttpErrorBannerText/);
+    assert.match(src, /simularHttpError/);
+    assert.match(src, /simular-network-error/);
+    assert.match(src, /data-retryable/);
+    assert.match(src, /list-retry|masters-retry|simular-retry/);
+    // Retry do list/masters gated por isComercialRetryableHttpError (não em todo isError)
+    assert.match(src, /isComercialRetryableHttpError\([^)]*\)\s*&&/);
+    assert.match(src, /Tentar novamente/);
+    // Retry de simular reinvoca a mesma ação
+    assert.match(src, /runSimularVenda/);
+    assert.match(src, /setSimularHttpError\(isComercialRetryableHttpError/);
+    assert.match(src, /onClick=\{\(\)\s*=>\s*\{\s*void runSimularVenda\(\);\s*\}\}|onClick=\{\(\)=>\{\s*void runSimularVenda\(\);\s*\}\}/);
+  }
+  assert.match(orc, /orcamento-simular-network-error/);
+  assert.match(orc, /orcamento-list-retry/);
+  assert.match(orc, /orcamento-masters-retry/);
+  assert.match(orc, /orcamento-simular-retry/);
+  assert.match(ped, /pedido-simular-network-error/);
+  assert.match(ped, /pedido-list-retry/);
+  assert.match(ped, /pedido-masters-retry/);
+  assert.match(ped, /pedido-simular-retry/);
+  assert.match(meta, /retry rede\/5xx/);
+  assert.match(meta, /Pedido backend HTTP is active/);
+  // Fail-closed: erro de list ainda resolve via resolveHttpListViewState (nunca empty silencioso)
+  assert.match(orc, /resolveHttpListViewState/);
+  assert.match(ped, /resolveHttpListViewState/);
 });
