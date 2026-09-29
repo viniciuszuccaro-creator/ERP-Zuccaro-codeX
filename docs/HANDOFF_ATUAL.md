@@ -1,3 +1,10 @@
+## AUTÔNOMO — CI #161 OK + #162 obs limit UX (2026-09-29T22:25Z)
+
+#161 convert-banner CI SUCCESS. Novo: **#162** observações maxLength/contador fail-closed.
+Sem merge/VPS. Continuando.
+
+---
+
 ## AUTÔNOMO — CI tip verde + #161 convert-banner (2026-09-29T22:18Z)
 
 Fix beforeunload assert OK (#154–#160). Novo: **#161** banner motivos converter Orçamento. Sem merge/VPS. Continuando.
