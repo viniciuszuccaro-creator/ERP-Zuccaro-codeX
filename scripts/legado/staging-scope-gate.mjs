@@ -4,12 +4,23 @@
  * a pessoa juridica emissora de uma operacao.
  */
 import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolicy.js';
+import { types as utilTypes } from 'node:util';
 const MESTRES_GRUPO = new Set(['cliente', 'fornecedor', 'produto_revenda']);
 const OPERACOES = new Set(['pedido', 'estoque', 'conta_receber', 'conta_pagar', 'nota_fiscal']);
 const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
 const TIPOS_EVIDENCIA = new Set(['cnpj', 'documento_fiscal']);
+const TIPOS_EVIDENCIA_OPERACAO = new Set(['coluna_empresa_origem', 'documento_fiscal']);
 
-const atestacaoComFormatoValido = (vinculo) => {
+const dadosInertes = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || utilTypes.isProxy(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return false;
+  return Object.values(Object.getOwnPropertyDescriptors(value)).every((property) =>
+    Object.hasOwn(property, 'value') && (typeof property.value !== 'object'
+      || property.value === null || dadosInertes(property.value)));
+};
+
+const atestacaoComFormatoValido = (vinculo, tipos = TIPOS_EVIDENCIA) => {
   const evidencia = vinculo?.evidencia;
   const data = evidencia?.aprovadoEm;
   const dataValida = typeof data === 'string'
@@ -17,7 +28,7 @@ const atestacaoComFormatoValido = (vinculo) => {
     && Number.isFinite(Date.parse(data))
     && new Date(data).toISOString() === (data.includes('.') ? data : data.replace('Z', '.000Z'));
   return vinculo?.comprovado === true
-    && TIPOS_EVIDENCIA.has(evidencia?.tipo)
+    && tipos.has(evidencia?.tipo)
     && typeof evidencia?.sha256 === 'string'
     && /^[a-f0-9]{64}$/.test(evidencia.sha256)
     && !/^0{64}$/.test(evidencia.sha256)
@@ -31,7 +42,8 @@ const codigo = (value) => {
   return /^\d{1,3}$/.test(raw) ? raw.padStart(3, '0') : '';
 };
 
-export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, groupId, empresaId, vinculosVerificados = {} }) {
+export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, groupId, empresaId,
+  codigoLegado, assinaturaOrigem, vinculosVerificados = {}, evidenciasOperacaoVerificadas = {} }) {
   const motivos = [];
   if (!groupId) motivos.push('grupo_nao_informado');
   if (!MESTRES_GRUPO.has(entidade) && !OPERACOES.has(entidade)) motivos.push('entidade_nao_suportada');
@@ -43,6 +55,18 @@ export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, grou
     const vinculo = vinculosVerificados[legado];
     if (!vinculo?.empresaId || vinculo.groupId !== groupId || vinculo.empresaId !== empresaId || !atestacaoComFormatoValido(vinculo)) {
       motivos.push('vinculo_juridico_nao_comprovado');
+    }
+    const chaveProva = JSON.stringify([groupId, empresaId, entidade, codigoLegado, assinaturaOrigem]);
+    const provasValidas = dadosInertes(evidenciasOperacaoVerificadas);
+    const prova = provasValidas && Object.hasOwn(evidenciasOperacaoVerificadas, chaveProva)
+      ? evidenciasOperacaoVerificadas[chaveProva] : undefined;
+    if (!/^[a-f0-9]{64}$/.test(assinaturaOrigem ?? '') || !codigoLegado
+      || prova?.groupId !== groupId || prova?.empresaId !== empresaId
+      || prova?.entidade !== entidade || prova?.codigoLegado !== codigoLegado
+      || codigo(prova?.codigoEmpresaLegado) !== legado
+      || !atestacaoComFormatoValido(prova, TIPOS_EVIDENCIA_OPERACAO)
+      || prova.evidencia.registroSha256 !== assinaturaOrigem) {
+      motivos.push('propriedade_operacao_nao_comprovada');
     }
   }
   return { aptoParaStaging: motivos.length === 0, motivos, destino: 'staging_isolado' };
@@ -68,7 +92,8 @@ export function reconciliarEscoposStaging(itens) {
  * A chave usa tenant, entidade e codigo legado; um retry identico e reuso,
  * enquanto uma divergencia na mesma chave exige conciliacao humana.
  */
-export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosVerificados = {}, existentes = [] } = {}) {
+export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosVerificados = {},
+  evidenciasOperacaoVerificadas = {}, existentes = [] } = {}) {
   if (autorizado !== true) throw new Error('Permissao de preparar staging legado obrigatoria.');
   if (!Array.isArray(itens) || itens.length === 0) throw new Error('Lote legado vazio ou invalido.');
   if (!Array.isArray(existentes)) throw new Error('Indice de staging existente invalido.');
@@ -102,7 +127,8 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
     const empresaId = String(item?.empresaId ?? '').trim();
     const legado = codigo(item?.codigoEmpresaLegado);
     const codigoLegado = String(item?.codigoLegado ?? '').trim();
-    const escopo = avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado: legado, groupId, empresaId, vinculosVerificados });
+    const escopo = avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado: legado, groupId, empresaId,
+      codigoLegado, assinaturaOrigem: item?.assinaturaOrigem, vinculosVerificados, evidenciasOperacaoVerificadas });
     const motivos = [...escopo.motivos];
     if (!codigoLegado) motivos.push('codigo_legado_ausente');
     if (motivos.length) {
@@ -143,7 +169,8 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
  * Dependencias so podem apontar para mestre do Grupo ou operacao da mesma Empresa.
  */
 export function reconciliarPlanoStagingLegado({
-  itens, existentes = [], vinculosVerificados = {}, autorizado = false, groupId, contagensEsperadas = [],
+  itens, existentes = [], vinculosVerificados = {}, evidenciasOperacaoVerificadas = {},
+  autorizado = false, groupId, contagensEsperadas = [],
 } = {}) {
   const grupo = String(groupId ?? '').trim();
   if (!grupo) throw new Error('Grupo do plano de staging obrigatorio.');
@@ -156,7 +183,8 @@ export function reconciliarPlanoStagingLegado({
   if ([...linhas, ...indice].some((item) => String(item?.groupId ?? '').trim() !== grupo)) {
     throw new Error('Plano de staging mistura Grupos.');
   }
-  const preparado = prepararLoteStagingLegado(linhas, { autorizado, vinculosVerificados, existentes: indice });
+  const preparado = prepararLoteStagingLegado(linhas, { autorizado, vinculosVerificados,
+    evidenciasOperacaoVerificadas, existentes: indice });
   if (preparado.bloqueado) return preparado;
   const porMotivo = { ...preparado.relatorio.porMotivo };
   const contar = (motivo) => { porMotivo[motivo] = (porMotivo[motivo] || 0) + 1; };

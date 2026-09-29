@@ -49,7 +49,22 @@ test('staging PostgreSQL sintetico usa apenas banco isolado, transacao e retry',
       ) ON COMMIT DROP`);
       const item = { entidade: 'pedido', groupId, empresaId, codigoEmpresaLegado: '001',
         codigoLegado: 'PED-SINT-1', assinaturaOrigem: 'b'.repeat(64) };
-      const first = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados });
+      const evidenciasOperacaoVerificadas = {
+        [JSON.stringify([groupId, empresaId, item.entidade, item.codigoLegado, item.assinaturaOrigem])]: {
+          groupId, empresaId, entidade: item.entidade, codigoLegado: item.codigoLegado,
+          codigoEmpresaLegado: '001', comprovado: true,
+          evidencia: { ...evidencia, tipo: 'coluna_empresa_origem',
+            registroSha256: item.assinaturaOrigem },
+        },
+      };
+      const aliasSemProva = prepararLoteStagingLegado([item], { autorizado: true,
+        vinculosVerificados });
+      assert.equal(aliasSemProva.bloqueado, true);
+      assert.deepEqual(aliasSemProva.privados, []);
+      const vazio = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico');
+      assert.equal(vazio.rows[0].total, 0);
+      const first = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados,
+        evidenciasOperacaoVerificadas });
       assert.equal(first.bloqueado, false);
       assert.equal(first.privados.length, 1);
       const staged = first.privados[0];
@@ -60,13 +75,14 @@ test('staging PostgreSQL sintetico usa apenas banco isolado, transacao e retry',
         FROM legado_staging_sintetico WHERE group_id=$1 AND empresa_id=$2`, [groupId, empresaId]);
       assert.equal(stored.rowCount, 1);
       const retry = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados,
+        evidenciasOperacaoVerificadas,
         existentes: stored.rows.map((row) => ({ groupId: row.group_id, empresaId: row.empresa_id,
           entidade: row.entidade, codigoLegado: row.codigo_legado, assinaturaOrigem: row.assinatura })) });
       assert.equal(retry.bloqueado, false);
       assert.equal(retry.relatorio.reusos, 1);
       assert.deepEqual(retry.privados, []);
       const foreign = prepararLoteStagingLegado([{ ...item, empresaId: groupId }],
-        { autorizado: true, vinculosVerificados });
+        { autorizado: true, vinculosVerificados, evidenciasOperacaoVerificadas });
       assert.equal(foreign.bloqueado, true);
       assert.deepEqual(foreign.privados, []);
       const unchanged = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico');

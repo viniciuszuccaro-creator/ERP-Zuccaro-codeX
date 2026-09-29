@@ -5,6 +5,15 @@ import { avaliarEscopoStagingLegado, prepararLoteStagingLegado, reconciliarEscop
 const evidencia = { tipo: 'cnpj', sha256: 'a'.repeat(64),
   aprovadoPor: '11111111-1111-4111-8111-111111111111', aprovadoEm: '2026-09-29T12:00:00Z' };
 const vinculos = { '001': { groupId: 'g1', empresaId: 'e1', comprovado: true, evidencia } };
+const provaOperacao = (item) => ({
+  [JSON.stringify([item.groupId, item.empresaId, item.entidade, item.codigoLegado, item.assinaturaOrigem])]: {
+    groupId: item.groupId, empresaId: item.empresaId, entidade: item.entidade,
+    codigoLegado: item.codigoLegado, codigoEmpresaLegado: item.codigoEmpresaLegado,
+    comprovado: true, evidencia: { ...evidencia, tipo: 'coluna_empresa_origem',
+      registroSha256: item.assinaturaOrigem },
+  },
+});
+const provas = (...items) => Object.assign({}, ...items.map(provaOperacao));
 
 test('mestres compartilhados ficam somente no Grupo', () => {
   for (const entidade of ['cliente', 'fornecedor', 'produto_revenda']) {
@@ -15,11 +24,65 @@ test('mestres compartilhados ficam somente no Grupo', () => {
 });
 
 test('operacao exige vinculo juridico explicito no mesmo Grupo e Empresa', () => {
-  const base = { entidade: 'pedido', codigoEmpresaLegado: '1', groupId: 'g1', empresaId: 'e1', vinculosVerificados: vinculos };
+  const item = { entidade: 'pedido', codigoEmpresaLegado: '1', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-S1', assinaturaOrigem: 'b'.repeat(64) };
+  const base = { ...item, vinculosVerificados: vinculos,
+    evidenciasOperacaoVerificadas: provas(item) };
   assert.equal(avaliarEscopoStagingLegado(base).aptoParaStaging, true);
+  assert.ok(avaliarEscopoStagingLegado({ ...base, evidenciasOperacaoVerificadas: {} })
+    .motivos.includes('propriedade_operacao_nao_comprovada'));
   assert.ok(avaliarEscopoStagingLegado({ ...base, empresaId: 'e2' }).motivos.includes('vinculo_juridico_nao_comprovado'));
   assert.ok(avaliarEscopoStagingLegado({ ...base, groupId: 'g2' }).motivos.includes('vinculo_juridico_nao_comprovado'));
   assert.ok(avaliarEscopoStagingLegado({ ...base, vinculosVerificados: {} }).motivos.includes('vinculo_juridico_nao_comprovado'));
+});
+
+test('alias aprovado nao libera operacao sem prova vinculada a linha e empresa', () => {
+  const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-PROVA', assinaturaOrigem: 'f'.repeat(64) };
+  const opts = { autorizado: true, vinculosVerificados: vinculos };
+  const semProva = prepararLoteStagingLegado([item], opts);
+  assert.equal(semProva.bloqueado, true);
+  assert.deepEqual(semProva.privados, []);
+  assert.equal(semProva.relatorio.porMotivo.propriedade_operacao_nao_comprovada, 1);
+  assert.equal(JSON.stringify(semProva.relatorio).includes(item.codigoLegado), false);
+
+  const vinculadas = provas(item);
+  const chave = Object.keys(vinculadas)[0];
+  for (const alteracao of [
+    { empresaId: 'e2' }, { entidade: 'nota_fiscal' }, { codigoLegado: 'OUTRO' },
+    { evidencia: { ...vinculadas[chave].evidencia, registroSha256: 'e'.repeat(64) } },
+    { evidencia: { ...vinculadas[chave].evidencia, tipo: 'cnpj' } },
+  ]) {
+    const result = prepararLoteStagingLegado([item], { ...opts,
+      evidenciasOperacaoVerificadas: { [chave]: { ...vinculadas[chave], ...alteracao } } });
+    assert.equal(result.bloqueado, true);
+    assert.deepEqual(result.privados, []);
+  }
+  const aprovado = prepararLoteStagingLegado([item], { ...opts,
+    evidenciasOperacaoVerificadas: vinculadas });
+  assert.equal(aprovado.bloqueado, false);
+  assert.equal(aprovado.privados.length, 1);
+  const trocado = prepararLoteStagingLegado([{ ...item, assinaturaOrigem: 'e'.repeat(64) }],
+    { ...opts, evidenciasOperacaoVerificadas: vinculadas });
+  assert.equal(trocado.bloqueado, true);
+  assert.deepEqual(trocado.privados, []);
+});
+
+test('prova dinamica nao executa getter ou Proxy nem libera registros privados', () => {
+  const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-INERTE', assinaturaOrigem: 'f'.repeat(64) };
+  let acessos = 0;
+  const chave = Object.keys(provas(item))[0];
+  for (const evidenciasOperacaoVerificadas of [
+    Object.defineProperty({}, chave, { enumerable: true, get() { acessos += 1; return provas(item)[chave]; } }),
+    new Proxy(provas(item), { get(target, property) { acessos += 1; return target[property]; } }),
+  ]) {
+    const result = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados: vinculos,
+      evidenciasOperacaoVerificadas });
+    assert.equal(result.bloqueado, true);
+    assert.deepEqual(result.privados, []);
+  }
+  assert.equal(acessos, 0);
 });
 
 test('booleano comprovado sem evidencia e aprovacao nao libera operacao', () => {
@@ -59,9 +122,12 @@ test('grupo seletor 003, codigo zero e desconhecido nao viram empresa juridica',
 });
 
 test('reconciliacao publica somente totais e motivos, sem registros', () => {
+  const pedidoComProva = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1',
+    empresaId: 'e1', codigoLegado: 'PED-S1', assinaturaOrigem: 'b'.repeat(64) };
   const result = reconciliarEscoposStaging([
     { entidade: 'cliente', groupId: 'g1', nome: 'Pessoa Sintetica' },
-    { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1', vinculosVerificados: vinculos },
+    { ...pedidoComProva, vinculosVerificados: vinculos,
+      evidenciasOperacaoVerificadas: provas(pedidoComProva) },
     { entidade: 'pedido', codigoEmpresaLegado: '003', groupId: 'g1', empresaId: 'e1' },
   ]);
   assert.equal(result.origem, 3);
@@ -74,7 +140,8 @@ test('staging sintetico exige permissao, vinculo e assinatura; retry reutiliza s
   const base = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'PED-S1', assinaturaOrigem: 'a'.repeat(64), nome: 'Pessoa Sintetica' };
   assert.throws(() => prepararLoteStagingLegado([base]), /Permissao/);
-  const result = prepararLoteStagingLegado([base, { ...base }], { autorizado: true, vinculosVerificados: vinculos });
+  const result = prepararLoteStagingLegado([base, { ...base }], { autorizado: true,
+    vinculosVerificados: vinculos, evidenciasOperacaoVerificadas: provas(base) });
   assert.equal(result.bloqueado, false);
   assert.equal(result.privados.length, 1);
   assert.deepEqual(result.relatorio.porEntidadeEmpresa, { 'pedido|001': 1 });
@@ -110,7 +177,8 @@ test('falha no item seguinte bloqueia lote, isola conflito e nao vaza dados no r
     base,
     { ...base, assinaturaOrigem: 'c'.repeat(64) },
     { ...base, codigoLegado: 'CR-S2', codigoEmpresaLegado: '003' },
-  ], { autorizado: true, vinculosVerificados: vinculos });
+  ], { autorizado: true, vinculosVerificados: vinculos,
+    evidenciasOperacaoVerificadas: provas(base, { ...base, assinaturaOrigem: 'c'.repeat(64) }) });
   assert.equal(result.bloqueado, true);
   assert.deepEqual(result.privados, []);
   assert.equal(result.relatorio.aptos, 1);
@@ -139,7 +207,8 @@ test('codigo empresarial nao numerico e grupo 003 nao viram empresa por normaliz
 test('retry entre lotes reutiliza staging existente sem nova linha nem misturar empresa', () => {
   const base = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'PED-S1', assinaturaOrigem: 'd'.repeat(64) };
-  const opts = { autorizado: true, vinculosVerificados: vinculos };
+  const opts = { autorizado: true, vinculosVerificados: vinculos,
+    evidenciasOperacaoVerificadas: provas(base, { ...base, assinaturaOrigem: 'e'.repeat(64) }) };
   const first = prepararLoteStagingLegado([base], opts);
   assert.equal(first.privados.length, 1);
   const retry = prepararLoteStagingLegado([base], { ...opts, existentes: [base] });
@@ -172,6 +241,7 @@ const cliente = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1', as
 const pedido = { entidade: 'pedido', groupId: 'g1', empresaId: 'e1', codigoEmpresaLegado: '001',
   codigoLegado: 'PED-S1', assinaturaOrigem: 'b'.repeat(64),
   dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1', escopo: 'grupo' }] };
+planoBase.evidenciasOperacaoVerificadas = provas(pedido);
 
 test('plano reconcilia mestre do Grupo e pedido da Empresa sem copiar operacao ao Grupo', () => {
   const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedido] });
@@ -223,6 +293,7 @@ test('empresa 002 usa vinculo proprio e nao compartilha operacao com 001', () =>
     dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1', escopo: 'grupo' }] };
   const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, empresa2],
     vinculosVerificados: { ...vinculos, '002': { groupId: 'g1', empresaId: 'e2', comprovado: true, evidencia } },
+    evidenciasOperacaoVerificadas: provas(empresa2),
     contagensEsperadas: [planoBase.contagensEsperadas[0], { entidade: 'pedido', codigoEmpresaLegado: '002', quantidade: 1 }] });
   assert.equal(result.bloqueado, false);
   assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 1, 'pedido|002': 1 });
@@ -234,6 +305,7 @@ test('dependencia circular entre operacoes nao avanca o lote', () => {
   const pedidoB = { ...pedido, codigoLegado: 'PED-B', assinaturaOrigem: 'c'.repeat(64), dependencias: [
     { entidade: 'pedido', codigoLegado: 'PED-A', escopo: 'empresa' }] };
   const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedidoA, pedidoB],
+    evidenciasOperacaoVerificadas: provas(pedidoA, pedidoB),
     contagensEsperadas: [planoBase.contagensEsperadas[0],
       { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
   assert.equal(result.bloqueado, true);
@@ -248,6 +320,7 @@ test('ciclo entre novo pedido e retry do indice bloqueia o lote', () => {
   const retry = { ...pedido, codigoLegado: 'PED-B', assinaturaOrigem: 'c'.repeat(64), dependencias: [
     { entidade: 'pedido', codigoLegado: 'PED-A', escopo: 'empresa' }] };
   const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, novo, retry],
+    evidenciasOperacaoVerificadas: provas(novo, retry),
     existentes: [retry], contagensEsperadas: [planoBase.contagensEsperadas[0],
       { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
   assert.equal(result.bloqueado, true);
