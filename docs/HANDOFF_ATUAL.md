@@ -1,3 +1,17 @@
+## OPINIÃO CURSOR — stack #126–#131 Comercial 360 (2026-09-29T16:29Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #126 | `45195749` | **SUCCESS** | snapshot condição **029** |
+| #127 | `8fba0782` | **SUCCESS** | Produto frontendHttp |
+| #129 | `6f42f061` | **SUCCESS** | promoção snapshot **030** |
+| #130 | `080dd951` | **SUCCESS** | simular→persist desconto/total |
+| #131 | `cursor/comercial360-onda3-tabela-snapshot-392b` | pendente | TabelaPreço snapshot **031** |
+
+Próximo: Onda 4 slice **sem** colisão migrations 025–028 (#50/#92) **ou** revisão cruzada #104/#48 no HEAD final. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #129 CI SUCCESS + #130 simular-persist (2026-09-29T16:18Z)
 
 | Campo | Valor |
