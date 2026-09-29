@@ -11750,3 +11750,8 @@ Checklist inicial:
 - O mesmo adaptador oferece verificacao conjunta de Cliente, Fornecedor e Produto de revenda. Contagens esperadas sao conferidas por entidade; falha, exclusao ou divergencia em qualquer parte zera a entrega privada do lote inteiro, sem misturar Grupo/Empresa nem publicar PII no relatorio.
 - Testes sintéticos cobrem sucesso, falha no ultimo mestre, entidade estranha, contagem sem lote e empresa sem prova. O E2E PostgreSQL efemero verifica o lote completo e o bloqueado junto da tabela temporaria transacional; nao representa gravacao persistente nem acesso ao backup.
 - Validacao local focada: 46/46 PASS, backend typecheck/build e diff-check PASS. Na suite backend concorrente Windows, `runtime07b.test.ts` falhou como arquivo (272 PASS, 1 FAIL, 16 SKIP); o mesmo arquivo isolado passou 13/13. A suite Linux e a prova PostgreSQL do novo HEAD continuam obrigatorias para aprovar este incremento. Nenhuma importacao real/VPS foi executada.
+
+## Hardening da entrada do lote mestre (2026-09-29)
+
+- A verificacao conjunta rejeita objeto de lotes, arrays e opcoes com getters/setters ou Proxy antes de iterar campos, evitando executar codigo do extrator ou ler registro privado durante o preflight. A checagem individual de tenant e a sanitizacao existentes continuam em vigor.
+- Testes adversariais verificam que nenhum getter e chamado. Nao ha alteracao no mapeador #48, schema, staging persistente ou importacao. CI do novo HEAD permanece obrigatoria.

@@ -123,6 +123,33 @@ test('lote de mestres rejeita entidade estranha, contagem extra e escopo empresa
   /vinculo empresarial legado nao comprovado/);
 });
 
+test('lote de mestres rejeita getters e proxies antes de ler registros privados', () => {
+  let leituras = 0;
+  const getter = { cliente: loteMestres.cliente };
+  Object.defineProperty(getter, 'fornecedor', { enumerable: true,
+    get() { leituras += 1; return loteMestres.fornecedor; } });
+  assert.throws(() => verificarLoteMestresParaStaging(getter, opcoes), /JSON simples/);
+  assert.equal(leituras, 0);
+
+  const array = [...loteMestres.cliente];
+  Object.defineProperty(array, '0', { enumerable: true, configurable: true,
+    get() { leituras += 1; return loteMestres.cliente[0]; } });
+  assert.throws(() => verificarLoteMestresParaStaging({ cliente: array }, opcoes),
+    /lote de mestres invalido/);
+  assert.equal(leituras, 0);
+
+  const proxy = new Proxy(loteMestres, { get(target, key) { leituras += 1; return target[key]; } });
+  assert.throws(() => verificarLoteMestresParaStaging(proxy, opcoes), /Lotes de mestres invalidos/);
+  assert.equal(leituras, 0);
+
+  const opcoesGetter = { ...opcoes };
+  Object.defineProperty(opcoesGetter, 'contagensEsperadas', { enumerable: true,
+    get() { leituras += 1; return contagensMestres; } });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoesGetter),
+    /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+});
+
 test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => {
   const row = { cod_cliente: 'C-102', nome: 'Teste' };
   assert.throws(() => verificarMapeadorParaStaging([row], { ...opcoes, grupoComprovado: false }));

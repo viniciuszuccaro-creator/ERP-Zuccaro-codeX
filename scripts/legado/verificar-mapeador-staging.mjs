@@ -106,15 +106,31 @@ export function verificarMapeadorParaStaging(rows, {
  * Nenhum registro privado sai se qualquer entidade falhar ou divergir.
  */
 export function verificarLoteMestresParaStaging(lotes, opcoes = {}) {
+  if (!opcoes || typeof opcoes !== 'object' || Array.isArray(opcoes) || utilTypes.isProxy(opcoes)
+    || Object.values(Object.getOwnPropertyDescriptors(opcoes)).some((descriptor) =>
+      'get' in descriptor || 'set' in descriptor)) {
+    throw new Error('Opcoes do lote de mestres invalidas.');
+  }
   if (!lotes || typeof lotes !== 'object' || Array.isArray(lotes) || utilTypes.isProxy(lotes)) {
     throw new Error('Lotes de mestres invalidos.');
   }
+  if (Object.values(Object.getOwnPropertyDescriptors(lotes)).some((descriptor) =>
+    'get' in descriptor || 'set' in descriptor)) {
+    throw new Error('Lotes de mestres exigem registros JSON simples.');
+  }
   const entradas = Object.entries(lotes);
   if (entradas.length === 0 || entradas.some(([entidade, rows]) =>
-    !ENTIDADES_MESTRE[entidade] || !Array.isArray(rows) || rows.length === 0)) {
+    !ENTIDADES_MESTRE[entidade] || !Array.isArray(rows) || utilTypes.isProxy(rows) || rows.length === 0
+    || Object.values(Object.getOwnPropertyDescriptors(rows)).some((descriptor) =>
+      'get' in descriptor || 'set' in descriptor))) {
     throw new Error('Entidade ou lote de mestres invalido.');
   }
   if (opcoes.contagensEsperadas !== undefined && !Array.isArray(opcoes.contagensEsperadas)) {
+    throw new Error('Contagens esperadas invalidas.');
+  }
+  if (opcoes.contagensEsperadas && (utilTypes.isProxy(opcoes.contagensEsperadas)
+    || Object.values(Object.getOwnPropertyDescriptors(opcoes.contagensEsperadas)).some((descriptor) =>
+      'get' in descriptor || 'set' in descriptor))) {
     throw new Error('Contagens esperadas invalidas.');
   }
   if (opcoes.contagensEsperadas?.some((item) => !entradas.some(([entidade]) => entidade === item?.entidade))) {
