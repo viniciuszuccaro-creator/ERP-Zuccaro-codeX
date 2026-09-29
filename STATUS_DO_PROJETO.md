@@ -10,7 +10,7 @@
 | Implantado VPS | **NÃO** |
 | Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
 | Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
-| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#135** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/135 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
 | Tip | `c2bfb17c` |
 | Meta | note preserva **Pedido backend HTTP is active** + `cancelByState` / convert+validade flags intactos |
