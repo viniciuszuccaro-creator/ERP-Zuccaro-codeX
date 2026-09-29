@@ -1,3 +1,11 @@
+## FIX CI AUTÔNOMO — beforeunload assert (2026-09-29T22:10Z)
+
+Causa: `orcamento-ui-policy.test.js` exigia literal `/beforeunload/` em `OrcamentosTab`; o painel usa `bindComercialFormBeforeUnload` (literal no helper).
+
+Fix: tip #154 `8521554e` + merge em #156–#160. CI re-run.
+
+---
+
 ## AUTÔNOMO — tip #160 multi-select (2026-09-29T22:08Z)
 
 Empilhado: #154→#156→#157→#158→#159→**#160** (multi-select stub). Continuando Comercial 360. Sem merge/VPS.
