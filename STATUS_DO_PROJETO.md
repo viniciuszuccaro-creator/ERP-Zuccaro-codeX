@@ -11625,3 +11625,4 @@ Checklist inicial:
 
 - Branch empilhada sobre a #119, sem editar mapeador #48 nem Produto/Fornecedor. CI provisiona banco efemero nomeado, aplica guarda de URL isolada e usa somente tabela temporaria/transacao para testar preflight, insercao, unicidade, retry e escopo de Empresa.
 - A prova cobre mecanica de staging em PostgreSQL sintetico, nao origem real, identidade juridica, restauracao do backup nem importacao operacional. Nenhum dump, CNPJ ou registro real entra na CI/GitHub. Revisao, testes e CI do HEAD deste lote ainda obrigatorios.
+- Revisao interna do primeiro HEAD encontrou retry usando indice apenas em memoria. O E2E agora insere o item do preflight, rele a linha por SQL para compor o indice de retry e confere por SQL que Empresa negada nao mudou a contagem. Novo HEAD requer CI e revisao.

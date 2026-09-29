@@ -43,13 +43,16 @@ test('staging PostgreSQL sintetico usa apenas banco isolado, transacao e retry',
       const first = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados });
       assert.equal(first.bloqueado, false);
       assert.equal(first.privados.length, 1);
+      const staged = first.privados[0];
       await client.query(`INSERT INTO legado_staging_sintetico
         (group_id, empresa_id, entidade, codigo_legado, assinatura) VALUES ($1,$2,$3,$4,$5)`,
-      [groupId, empresaId, item.entidade, item.codigoLegado, item.assinaturaOrigem]);
-      const stored = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico WHERE group_id=$1 AND empresa_id=$2', [groupId, empresaId]);
-      assert.equal(stored.rows[0].total, 1);
+      [staged.groupId, staged.empresaId, staged.entidade, staged.codigoLegado, staged.assinaturaOrigem]);
+      const stored = await client.query(`SELECT group_id, empresa_id, entidade, codigo_legado, assinatura
+        FROM legado_staging_sintetico WHERE group_id=$1 AND empresa_id=$2`, [groupId, empresaId]);
+      assert.equal(stored.rowCount, 1);
       const retry = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados,
-        existentes: [{ ...item }] });
+        existentes: stored.rows.map((row) => ({ groupId: row.group_id, empresaId: row.empresa_id,
+          entidade: row.entidade, codigoLegado: row.codigo_legado, assinaturaOrigem: row.assinatura })) });
       assert.equal(retry.bloqueado, false);
       assert.equal(retry.relatorio.reusos, 1);
       assert.deepEqual(retry.privados, []);
@@ -57,6 +60,8 @@ test('staging PostgreSQL sintetico usa apenas banco isolado, transacao e retry',
         { autorizado: true, vinculosVerificados });
       assert.equal(foreign.bloqueado, true);
       assert.deepEqual(foreign.privados, []);
+      const unchanged = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico');
+      assert.equal(unchanged.rows[0].total, 1);
       await assert.rejects(client.query(`INSERT INTO legado_staging_sintetico
         (group_id, empresa_id, entidade, codigo_legado, assinatura) VALUES ($1,$2,$3,$4,$5)`,
       [groupId, empresaId, item.entidade, item.codigoLegado, item.assinaturaOrigem]),

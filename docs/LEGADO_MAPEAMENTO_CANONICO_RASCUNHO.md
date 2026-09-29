@@ -109,7 +109,7 @@ autorizada ou executada.
 A CI cria `erp_restore_isolated_legado_ci` no PostgreSQL efemero, passa pelo
 guarda `assert-isolated-database-url.sh` e executa o preflight de Pedido com
 atestado sintetico. Uma tabela temporaria dentro de transacao verifica escrita,
-unicidade por Grupo/Empresa, retry sem segunda entrega e bloqueio de outra
+unicidade por Grupo/Empresa, retry a partir do indice relido por SQL sem segunda entrega e bloqueio de outra
 Empresa; a transacao termina em rollback. A prova nao restaura backup, nao
 aplica migrations legadas e nao representa staging com dados reais. O banco
 DEV e a porta 3080 nao participam.
