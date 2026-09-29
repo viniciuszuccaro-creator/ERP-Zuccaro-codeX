@@ -1,3 +1,26 @@
+## LOTE CURSOR — delivery Local/Obra address summary fail-closed (pós-#142) (2026-09-29T17:55Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Resumo de endereço Local/Obra após seleção (fail-closed se HTTP get falhar) |
+| Branch | `cursor/comercial360-onda3-delivery-address-392b` |
+| Base | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` tip `d7871c23` (#142) |
+| Tip | `d65d9618` (`d65d961891b84a04e8146b2f76179d02814c0673`) — docs tip `207c26cc`+ |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-delivery-address-392b` |
+| Escopo | Pedido canônico: após Local/Obra, `getLocal`/`getObra` (+ getLocal do principal) montam resumo; erro/loading bloqueia Salvar; listagem Local/Obra 403/5xx ≠ empty; reusa clients nested; sem migration |
+| Meta | `deliveryAddressSummaryFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-cliente-local-obra UI/client + pedido/list/simulação — **46/46 PASS**; runtime07b+08c+09 — **23/23 PASS**; `server` typecheck PASS; `git diff --check` PASS |
+| Colisão | A search/filter e C simular dirty já cobertos no stack #126–#142; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+
+Arquivos: `comercialClienteLocalObraHttpUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests local-obra UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico de escolha: **A** listagem Orçamento/Pedido já tem filtros server-side + `queryKey` com filtros+tenant + empty≠error (`comercialListHttpUiPolicy` / #136). **C** botão Simular + invalidação dirty (limpa preview ao mudar condição/itens/promo) já no stack pós-#116/#130/#142. **B** era o maior gap seguro: pickers Local/Obra existiam sem resumo de endereço pós-seleção.
+
+---
+
 ## LOTE CURSOR — parcela schedule preview fail-closed (pós-#140) (2026-09-29T17:45Z)
 
 | Campo | Valor |
@@ -108,7 +131,7 @@ Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplem
 | Implantado VPS | **NÃO** |
 | Base | `#136` tip `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
 | Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
-| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Draft PR | **#143** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/143 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** + descontoAlcadaUiFailClosed / saveIdempotency |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 (sem migration neste lote) |
 

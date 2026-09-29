@@ -198,9 +198,11 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.saveIdempotency, true);
   assert.equal(result.body.pedido.mastersPickerFailClosed, true);
   assert.equal(result.body.pedido.parcelaSchedulePreviewFailClosed, true);
+  assert.equal(result.body.pedido.deliveryAddressSummaryFailClosed, true);
   assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
   assert.match(result.body.note, /Pedido cancel fail-closed/);
   assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
+  assert.match(result.body.note, /resumo de endereço Local\/Obra/);
   assert.equal(result.body.comercialSimulacao.persistOnWrite, true);
   assert.match(result.body.note, /desconto\/total aplicados no servidor \(simular-venda\)/);
   assert.match(result.body.note, /snapshot de TabelaPreco/);

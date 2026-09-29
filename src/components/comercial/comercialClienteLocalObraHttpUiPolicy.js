@@ -135,3 +135,261 @@ export function buildObraDisplayLabel(obra, fallback = '') {
   if (obra.codigo && obra.nome) return `${obra.codigo} — ${obra.nome}`;
   return obra.nome || obra.codigo || obra.id || fallback || '';
 }
+
+function trimText(value) {
+  return String(value ?? '').trim();
+}
+
+/**
+ * Resumo de endereço a partir do ClienteLocal (list/get HTTP).
+ * Não inventa campos — só monta linhas a partir do payload do servidor.
+ * @param {object | null | undefined} local
+ * @returns {{
+ *   kind: 'local',
+ *   id: string|null,
+ *   title: string,
+ *   lines: string[],
+ *   line: string,
+ *   incomplete: boolean,
+ *   source: string,
+ * } | null}
+ */
+export function buildClienteLocalAddressSummary(local) {
+  if (!local || typeof local !== 'object') return null;
+  const title = buildClienteLocalDisplayLabel(local) || 'Local';
+  const logradouro = trimText(local.logradouro);
+  const numero = trimText(local.numero);
+  const complemento = trimText(local.complemento);
+  const bairro = trimText(local.bairro);
+  const cidade = trimText(local.cidade);
+  const uf = trimText(local.uf);
+  const cep = trimText(local.cep);
+  const street = [logradouro, numero].filter(Boolean).join(', ');
+  const streetLine = complemento
+    ? `${street}${street ? ' — ' : ''}${complemento}`
+    : street;
+  const cityLine = [bairro, [cidade, uf].filter(Boolean).join('/')].filter(Boolean).join(' · ');
+  const cepLine = cep ? `CEP ${cep}` : '';
+  const lines = [streetLine, cityLine, cepLine].filter(Boolean);
+  const incomplete = Boolean(local.endereco_incompleto)
+    || !logradouro
+    || !cidade
+    || !uf;
+  return {
+    kind: 'local',
+    id: local.id ? String(local.id) : null,
+    title,
+    lines,
+    line: lines.join(' · ') || title,
+    incomplete,
+    source: 'cliente_local',
+  };
+}
+
+/**
+ * Resumo de endereço da Obra: prefere Local principal enriquecido via getLocal;
+ * senão usa cidade/UF ecoados em local_principal (sem inventar logradouro).
+ * @param {object | null | undefined} obra
+ * @param {object | null | undefined} [principalLocal]
+ */
+export function buildObraAddressSummary(obra, principalLocal = null) {
+  if (!obra || typeof obra !== 'object') return null;
+  const title = buildObraDisplayLabel(obra) || 'Obra';
+  if (principalLocal && typeof principalLocal === 'object') {
+    const localSummary = buildClienteLocalAddressSummary(principalLocal);
+    if (localSummary) {
+      return {
+        ...localSummary,
+        kind: 'obra',
+        id: obra.id ? String(obra.id) : null,
+        title,
+        obraCodigo: obra.codigo ? String(obra.codigo) : null,
+        localPrincipalId: principalLocal.id
+          ? String(principalLocal.id)
+          : (obra.local_principal?.id ? String(obra.local_principal.id) : null),
+        source: 'obra+local',
+      };
+    }
+  }
+  const lp = obra.local_principal;
+  if (lp && typeof lp === 'object') {
+    const nome = trimText(lp.nome);
+    const cidade = trimText(lp.cidade);
+    const uf = trimText(lp.uf);
+    const cityLine = [cidade, uf].filter(Boolean).join('/');
+    const lines = [nome, cityLine].filter(Boolean);
+    return {
+      kind: 'obra',
+      id: obra.id ? String(obra.id) : null,
+      title,
+      lines,
+      line: lines.join(' · ') || title,
+      incomplete: !cidade || !uf,
+      localPrincipalId: lp.id ? String(lp.id) : null,
+      source: 'obra_local_principal',
+      obraCodigo: obra.codigo ? String(obra.codigo) : null,
+    };
+  }
+  return {
+    kind: 'obra',
+    id: obra.id ? String(obra.id) : null,
+    title,
+    lines: [],
+    line: title,
+    incomplete: true,
+    localPrincipalId: null,
+    source: 'obra_sem_local',
+    obraCodigo: obra.codigo ? String(obra.codigo) : null,
+  };
+}
+
+/**
+ * Estado UI do resumo de endereço pós-seleção Local/Obra.
+ * Fail-closed: erro de HTTP get nunca colapsa em empty/ok; save bloqueado.
+ * @param {{
+ *   tipoOperacao?: string,
+ *   clienteLocalId?: string,
+ *   obraId?: string,
+ *   localRow?: object|null,
+ *   obraRow?: object|null,
+ *   obraPrincipalLocal?: object|null,
+ *   localError?: unknown,
+ *   obraError?: unknown,
+ *   isLoading?: boolean,
+ *   scope?: { groupId?: string, clienteId?: string },
+ * }} [input]
+ * @returns {{
+ *   mode: 'none'|'loading'|'error'|'incomplete'|'ready',
+ *   summaries: object[],
+ *   hint: string|null,
+ *   blockSave: boolean,
+ *   error?: unknown,
+ * }}
+ */
+export function resolveDeliveryAddressUiState(input = {}) {
+  const localId = trimText(input.clienteLocalId);
+  const obraId = trimText(input.obraId);
+  const hasSelection = Boolean(localId || obraId);
+  const tipo = trimText(input.tipoOperacao).toUpperCase();
+
+  if (!hasSelection) {
+    return {
+      mode: 'none',
+      summaries: [],
+      hint: tipo === 'ENTREGA'
+        ? 'Selecione Local e/ou Obra para conferir o endereço de entrega.'
+        : null,
+      blockSave: false,
+    };
+  }
+
+  if (input.isLoading) {
+    return {
+      mode: 'loading',
+      summaries: [],
+      hint: 'Carregando endereço de entrega do servidor...',
+      blockSave: true,
+    };
+  }
+
+  if (input.localError || input.obraError) {
+    const parts = [];
+    if (input.localError) parts.push('Local');
+    if (input.obraError) parts.push('Obra');
+    return {
+      mode: 'error',
+      summaries: [],
+      hint: `Falha ao carregar endereço de ${parts.join('/')} — não use resumo inventado (fail-closed).`,
+      blockSave: true,
+      error: input.localError || input.obraError,
+    };
+  }
+
+  const scope = input.scope || {};
+  /** @type {object[]} */
+  const summaries = [];
+
+  if (localId) {
+    if (!input.localRow) {
+      return {
+        mode: 'error',
+        summaries: [],
+        hint: 'Local selecionado sem endereço do servidor (fail-closed).',
+        blockSave: true,
+      };
+    }
+    try {
+      const local = assertClienteLocalNoContexto(input.localRow, scope);
+      const summary = buildClienteLocalAddressSummary(local);
+      if (!summary) {
+        return {
+          mode: 'error',
+          summaries: [],
+          hint: 'Local selecionado sem endereço do servidor (fail-closed).',
+          blockSave: true,
+        };
+      }
+      summaries.push(summary);
+    } catch (error) {
+      return {
+        mode: 'error',
+        summaries: [],
+        hint: error?.message || 'Local fora do contexto (fail-closed).',
+        blockSave: true,
+        error,
+      };
+    }
+  }
+
+  if (obraId) {
+    if (!input.obraRow) {
+      return {
+        mode: 'error',
+        summaries: [],
+        hint: 'Obra selecionada sem dados do servidor (fail-closed).',
+        blockSave: true,
+      };
+    }
+    try {
+      const obra = assertObraNoContexto(input.obraRow, scope);
+      const summary = buildObraAddressSummary(obra, input.obraPrincipalLocal || null);
+      if (!summary) {
+        return {
+          mode: 'error',
+          summaries: [],
+          hint: 'Obra selecionada sem endereço do servidor (fail-closed).',
+          blockSave: true,
+        };
+      }
+      // Principal local exigido no get: se obra tem local_principal.id e enrich falhou → já caiu em obraError.
+      summaries.push(summary);
+    } catch (error) {
+      return {
+        mode: 'error',
+        summaries: [],
+        hint: error?.message || 'Obra fora do contexto (fail-closed).',
+        blockSave: true,
+        error,
+      };
+    }
+  }
+
+  if (summaries.length === 0) {
+    return {
+      mode: 'error',
+      summaries: [],
+      hint: 'Endereço de entrega indisponível (fail-closed).',
+      blockSave: true,
+    };
+  }
+
+  const incomplete = summaries.some((row) => row.incomplete);
+  return {
+    mode: incomplete ? 'incomplete' : 'ready',
+    summaries,
+    hint: incomplete
+      ? 'Endereço incompleto no cadastro — revise Local/Obra antes de confirmar a entrega.'
+      : null,
+    blockSave: false,
+  };
+}
