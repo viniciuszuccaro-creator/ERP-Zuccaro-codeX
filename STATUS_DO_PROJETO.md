@@ -5,7 +5,7 @@
 | Choice | **A** a11y — aria-live polite/assertive em banners/list errors; aria-invalid+aria-describedby em linhas inválidas; nomes acessíveis Simular/Salvar/Cancelar/Resumo/Converter; helpers em `comercialListHttpUiPolicy` |
 | Branch | `cursor/comercial360-onda3-a11y-live-392b` |
 | Base | `origin/cursor/comercial360-onda3-inactive-master-picker-392b` tip `50dc8b5c` (#149) |
-| Tip | `f3a02dfe` (`f3a02dfe439ab640b3ac2becbf38a11d16855364`) · feat `aaa96026` |
+| Tip |  () · feat  |
 | Draft PR | **BLOCKED** createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
 | Escopo | helpers a11y + wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration; sem lib a11y nova |
 | Meta | a11y note + preserva **Pedido backend HTTP is active** |
