@@ -11,7 +11,12 @@ import {
   buildHttpListQueryKey,
   buildOrcamentoListRequestParams,
   buildPedidoListRequestParams,
+  buildOrcamentoTenantSwitchReset,
+  buildPedidoTenantSwitchReset,
+  clearComercialHttpCacheOnTenantSwitch,
+  didComercialTenantScopeChange,
   hasActiveComercialListFilters,
+  isStaleComercialHttpCacheQueryKey,
   normalizeOrcamentoListFilters,
   normalizePedidoListFilters,
   resolveHttpListViewState,
@@ -21,6 +26,7 @@ import {
   isMasterPickerBlocked,
   sanitizeListSearchText,
   sanitizeObservacoesText,
+  COMERCIAL_HTTP_CACHE_PREFIXES,
 } from '../src/components/comercial/comercialListHttpUiPolicy.js';
 import { buildOrcamentoPayload } from '../src/components/comercial/orcamentoUiPolicy.js';
 import { buildPedidoPayload } from '../src/components/comercial/pedidoUiPolicy.js';
@@ -200,13 +206,16 @@ test('painéis Pedido/Orçamento usam list search/filter fail-closed e queryKey 
     assert.match(source, /isMasterPickerBlocked/);
     assert.match(source, /masters-form-banner/);
     assert.match(source, /data-empty-filtered/);
+    assert.match(source, /clearComercialHttpCacheOnTenantSwitch/);
   }
   assert.match(pedido, /normalizePedidoListFilters/);
   assert.match(pedido, /buildPedidoListRequestParams/);
   assert.match(pedido, /PEDIDO_LIST_FILTER_DEFAULTS/);
+  assert.match(pedido, /buildPedidoTenantSwitchReset/);
   assert.match(orcamento, /normalizeOrcamentoListFilters/);
   assert.match(orcamento, /buildOrcamentoListRequestParams/);
   assert.match(orcamento, /ORCAMENTO_LIST_FILTER_DEFAULTS/);
+  assert.match(orcamento, /buildOrcamentoTenantSwitchReset/);
   assert.match(pedido, /prefix:\s*'pedidos-http'|prefix:'pedidos-http'/);
   assert.match(orcamento, /prefix:\s*'orcamentos-http'/);
   assert.match(pedido, /pedido-list-error/);
@@ -225,6 +234,100 @@ test('painéis Pedido/Orçamento usam list search/filter fail-closed e queryKey 
   // erro não colapsa no empty state
   assert.doesNotMatch(pedido, /list\.isError\s*\?\s*rows\.length/);
   assert.doesNotMatch(orcamento, /listQuery\.isError\s*\?\s*rows\.length/);
+});
+
+test('tenant switch: detecta mudança e marca cache de outro tenant como stale', () => {
+  assert.equal(didComercialTenantScopeChange({ groupId: 'g1', empresaId: 'e1' }, { groupId: 'g1', empresaId: 'e1' }), false);
+  assert.equal(didComercialTenantScopeChange({ groupId: 'g1', empresaId: 'e1' }, { groupId: 'g1', empresaId: 'e2' }), true);
+  assert.equal(didComercialTenantScopeChange({ groupId: 'g1', empresaId: 'e1' }, { groupId: 'g2', empresaId: 'e1' }), true);
+  assert.equal(didComercialTenantScopeChange({}, { groupId: 'g1', empresaId: 'e1' }), true);
+  assert.ok(COMERCIAL_HTTP_CACHE_PREFIXES.includes('orcamentos-http'));
+  assert.ok(COMERCIAL_HTTP_CACHE_PREFIXES.includes('pedidos-http'));
+  assert.ok(COMERCIAL_HTTP_CACHE_PREFIXES.includes('pedido-delivery'));
+  assert.equal(
+    isStaleComercialHttpCacheQueryKey(['pedidos-http', 'g1', 'e1', 1, 20, {}], { groupId: 'g1', empresaId: 'e2' }),
+    true,
+  );
+  assert.equal(
+    isStaleComercialHttpCacheQueryKey(['pedidos-http', 'g1', 'e2', 1, 20, {}], { groupId: 'g1', empresaId: 'e2' }),
+    false,
+  );
+  assert.equal(
+    isStaleComercialHttpCacheQueryKey(['orcamento-masters', 'g1', 'e1'], { groupId: 'g1', empresaId: 'e1' }),
+    false,
+  );
+  assert.equal(
+    isStaleComercialHttpCacheQueryKey(['unrelated', 'g1', 'e9'], { groupId: 'g1', empresaId: 'e1' }),
+    false,
+  );
+  // Sem escopo atual: qualquer chave comercial prefixada é stale (fail-closed)
+  assert.equal(isStaleComercialHttpCacheQueryKey(['pedidos-http', 'g1', 'e1'], {}), true);
+});
+
+test('tenant switch: clearComercialHttpCache remove stale e invalida atual', () => {
+  const removed = [];
+  const invalidated = [];
+  const client = {
+    removeQueries: ({ predicate }) => {
+      const samples = [
+        { queryKey: ['pedidos-http', 'g-old', 'e-old', 1, 20, {}] },
+        { queryKey: ['pedidos-http', 'g-new', 'e-new', 1, 20, {}] },
+        { queryKey: ['orcamentos-http', 'g-old', 'e-old'] },
+        { queryKey: ['pedido-masters', 'g-new', 'e-new'] },
+        { queryKey: ['other', 'g-old', 'e-old'] },
+      ];
+      for (const sample of samples) {
+        if (predicate(sample)) removed.push(sample.queryKey[0] + ':' + sample.queryKey[1] + ':' + sample.queryKey[2]);
+      }
+    },
+    invalidateQueries: ({ queryKey }) => {
+      invalidated.push(queryKey.join('|'));
+    },
+  };
+  const result = clearComercialHttpCacheOnTenantSwitch(client, { groupId: 'g-new', empresaId: 'e-new' });
+  assert.equal(result.removedStale, true);
+  assert.equal(result.invalidatedCurrent, true);
+  assert.deepEqual(removed.sort(), [
+    'orcamentos-http:g-old:e-old',
+    'pedidos-http:g-old:e-old',
+  ].sort());
+  assert.ok(invalidated.some((key) => key.startsWith('pedidos-http|g-new|e-new')));
+  assert.ok(invalidated.some((key) => key.startsWith('orcamentos-http|g-new|e-new')));
+  assert.throws(
+    () => clearComercialHttpCacheOnTenantSwitch(null, { groupId: 'g', empresaId: 'e' }),
+    /queryClient obrigatório/,
+  );
+});
+
+test('tenant switch: reset Orçamento/Pedido descarta form dirty e diálogos', () => {
+  const orc = buildOrcamentoTenantSwitchReset({
+    emptyForm: () => ({ cliente_empresa_id: '', itens: [] }),
+  });
+  assert.equal(orc.formOpen, false);
+  assert.equal(orc.detailOpen, false);
+  assert.equal(orc.dirty, false);
+  assert.equal(orc.editing, null);
+  assert.equal(orc.selected, null);
+  assert.equal(orc.pendingCancel, null);
+  assert.equal(orc.pendingConversion, null);
+  assert.equal(orc.simulacaoDirty, false);
+  assert.equal(orc.simulacaoPreview, null);
+  assert.equal(orc.lastSimulation, null);
+  assert.equal(orc.condicaoSnapshot, null);
+  assert.deepEqual(orc.filters, ORCAMENTO_LIST_FILTER_DEFAULTS);
+  assert.deepEqual(orc.appliedFilters, ORCAMENTO_LIST_FILTER_DEFAULTS);
+  assert.deepEqual(orc.form, { cliente_empresa_id: '', itens: [] });
+  const ped = buildPedidoTenantSwitchReset({
+    emptyForm: () => ({ cliente_empresa_id: '', tipo_operacao: 'ENTREGA', itens: [] }),
+  });
+  assert.equal(ped.formOpen, false);
+  assert.equal(ped.dirty, false);
+  assert.equal(ped.editing, null);
+  assert.deepEqual(ped.history, []);
+  assert.equal(ped.pendingCancel, null);
+  assert.deepEqual(ped.filters, PEDIDO_LIST_FILTER_DEFAULTS);
+  assert.deepEqual(ped.applied, PEDIDO_LIST_FILTER_DEFAULTS);
+  assert.equal(ped.promocaoSnapshot, null);
 });
 
 test('resolveHttpMasterPickerState: 403/5xx e denied nunca viram empty silencioso', () => {

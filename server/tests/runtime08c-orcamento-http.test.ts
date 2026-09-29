@@ -175,6 +175,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     convertSnapshotFailClosed: true,
     listFailClosed: true,
     listSearchFilterFailClosed: true,
+    tenantCacheFailClosed: true,
     observacoesSanitized: true,
     descontoAlcadaUiFailClosed: true,
     saveIdempotency: true,
@@ -189,6 +190,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /simular-venda dirty-state fail-closed/);
   assert.match(result.body.note, /queryKey groupId\+empresaId\+filters/);
   assert.match(result.body.note, /busca vazia ≠ erro HTTP/);
+  assert.match(result.body.note, /troca de tenant limpa form\/list cache comercial fail-closed/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
@@ -199,6 +201,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.cancelByState, true);
   assert.equal(result.body.pedido.listFailClosed, true);
   assert.equal(result.body.pedido.listSearchFilterFailClosed, true);
+  assert.equal(result.body.pedido.tenantCacheFailClosed, true);
   assert.equal(result.body.pedido.observacoesSanitized, true);
   assert.equal(result.body.pedido.descontoAlcadaUiFailClosed, true);
   assert.equal(result.body.pedido.saveIdempotency, true);

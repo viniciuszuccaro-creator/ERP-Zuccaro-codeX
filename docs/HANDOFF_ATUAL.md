@@ -1,3 +1,17 @@
+## LOTE CURSOR — tenant cache fail-closed (pós-#145) (2026-09-29T18:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** tenant switch limpa form/list cache comercial fail-closed |
+| Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
+| Base | `#145` tip `73279042` (`cursor/comercial360-onda3-list-search-392b`) |
+| Tip | *(após commit)* |
+| Draft PR | base=`cursor/comercial360-onda3-list-search-392b` |
+| Meta | `tenantCacheFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | A/B fracos; margem #47; anexos/PDF #52–#62; stack #126–#145 |
+
+---
+
 ## LOTE CURSOR — list search/filter fail-closed (pós-#144) (2026-09-29T18:20Z)
 
 | Campo | Valor |

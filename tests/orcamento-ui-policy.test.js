@@ -139,7 +139,9 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /openEdit/);
   assert.match(tab, /Cancelar orçamento\?/);
   assert.match(tab, /beforeunload/);
-  assert.match(tab, /\[groupId, empresaId\]/);
+  assert.match(tab, /\[groupId, empresaId, queryClient\]/);
+  assert.match(tab, /clearComercialHttpCacheOnTenantSwitch/);
+  assert.match(tab, /buildOrcamentoTenantSwitchReset/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
   assert.match(tab, /orcamentoValidadeHint|Comercial\.orcamento\.validade-hint/);
   assert.match(listPolicy, /ORCAMENTO_VALIDADE_EXPIRADA/);

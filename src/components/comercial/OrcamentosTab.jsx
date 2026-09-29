@@ -62,6 +62,8 @@ import {
   buildHttpListQueryKey,
   buildMastersHttpBannerText,
   buildOrcamentoListRequestParams,
+  buildOrcamentoTenantSwitchReset,
+  clearComercialHttpCacheOnTenantSwitch,
   formatComercialHttpError,
   formatHttpListEmptyMessage,
   formatMasterPickerPlaceholder,
@@ -217,14 +219,29 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const produtoLabel = (produto) => buildProdutoDisplayLabel(produto);
 
   useEffect(() => {
-    const clean = { ...ORCAMENTO_LIST_FILTER_DEFAULTS };
-    setPage(1);
-    setSelected(null);
-    setDetailOpen(false);
-    setFormOpen(false);
-    setFilters(clean);
-    setAppliedFilters(clean);
-  }, [groupId, empresaId]);
+    // Troca de grupo/empresa: limpa cache HTTP de outro tenant e descarta rascunho fail-closed (sem prompt).
+    clearComercialHttpCacheOnTenantSwitch(queryClient, { groupId, empresaId });
+    const reset = buildOrcamentoTenantSwitchReset({ emptyForm });
+    setPage(reset.page);
+    setSelected(reset.selected);
+    setDetailOpen(reset.detailOpen);
+    setFormOpen(reset.formOpen);
+    setEditing(reset.editing);
+    setForm(reset.form);
+    setDirty(reset.dirty);
+    setPendingCancel(reset.pendingCancel);
+    setPendingConversion(reset.pendingConversion);
+    setFilters(reset.filters);
+    setAppliedFilters(reset.appliedFilters);
+    setPromoBps(reset.promoBps);
+    setPromoCupom(reset.promoCupom);
+    setSimulacaoPreview(reset.simulacaoPreview);
+    setLastSimulation(reset.lastSimulation);
+    setSimulacaoDirty(reset.simulacaoDirty);
+    setCondicaoSnapshot(reset.condicaoSnapshot);
+    setTabelaSnapshot(reset.tabelaSnapshot);
+    setPromocaoSnapshot(reset.promocaoSnapshot);
+  }, [groupId, empresaId, queryClient]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);

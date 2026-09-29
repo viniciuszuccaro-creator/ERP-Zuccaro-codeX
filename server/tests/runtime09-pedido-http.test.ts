@@ -116,6 +116,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.cancelByState, true);
   assert.equal(meta.body.pedido.listFailClosed, true);
   assert.equal(meta.body.pedido.listSearchFilterFailClosed, true);
+  assert.equal(meta.body.pedido.tenantCacheFailClosed, true);
   assert.equal(meta.body.pedido.updateBlockedWhenCancelled, true);
   assert.equal(meta.body.pedido.descontoAlcadaUiFailClosed, true);
   assert.equal(meta.body.pedido.saveIdempotency, true);
@@ -128,6 +129,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.match(String(meta.body.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
   assert.match(String(meta.body.note || ''), /queryKey groupId\+empresaId\+filters/);
   assert.match(String(meta.body.note || ''), /busca vazia ≠ erro HTTP/);
+  assert.match(String(meta.body.note || ''), /troca de tenant limpa form\/list cache comercial fail-closed/);
   assert.match(String(meta.body.note || ''), /UI alçada de desconto fail-closed/);
   assert.match(String(meta.body.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
   assert.match(String(meta.body.note || ''), /agenda de parcelas read-only/);

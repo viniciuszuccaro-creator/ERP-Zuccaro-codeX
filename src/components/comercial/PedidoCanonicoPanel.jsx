@@ -78,6 +78,8 @@ import {
   buildHttpListQueryKey,
   buildMastersHttpBannerText,
   buildPedidoListRequestParams,
+  buildPedidoTenantSwitchReset,
+  clearComercialHttpCacheOnTenantSwitch,
   formatComercialHttpError,
   formatHttpListEmptyMessage,
   formatMasterPickerPlaceholder,
@@ -126,7 +128,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const addressObraLocal=useQuery({queryKey:['pedido-delivery-obra-local',groupId,empresaId,selectedClienteId,obraPrincipalLocalId],queryFn:async({signal})=>{const raw=await clientesApi.getLocal(selectedClienteId,obraPrincipalLocalId,{signal});return assertClienteLocalNoContexto(raw,{groupId,clienteId:selectedClienteId});},enabled:ready&&canView&&formOpen&&Boolean(selectedClienteId)&&Boolean(obraPrincipalLocalId),retry:1});
   const deliveryAddressLoading=Boolean((form.cliente_local_id&&addressLocal.isLoading)||(form.obra_id&&addressObra.isLoading)||(obraPrincipalLocalId&&addressObraLocal.isLoading));
   const deliveryAddressUi=resolveDeliveryAddressUiState({tipoOperacao:form.tipo_operacao,clienteLocalId:form.cliente_local_id,obraId:form.obra_id,localRow:addressLocal.data||null,obraRow:addressObra.data||null,obraPrincipalLocal:addressObraLocal.data||null,localError:addressLocal.isError?addressLocal.error:null,obraError:addressObra.isError?addressObra.error:(obraPrincipalLocalId&&addressObraLocal.isError?addressObraLocal.error:null),isLoading:deliveryAddressLoading,scope:{groupId,clienteId:selectedClienteId}});
-  useEffect(()=>{const clean={...PEDIDO_LIST_FILTER_DEFAULTS};setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setFilters(clean);setApplied(clean);},[groupId,empresaId]);
+  useEffect(()=>{clearComercialHttpCacheOnTenantSwitch(queryClient,{groupId,empresaId});const reset=buildPedidoTenantSwitchReset({emptyForm});setPage(reset.page);setSelected(reset.selected);setFormOpen(reset.formOpen);setDetailOpen(reset.detailOpen);setEditing(reset.editing);setForm(reset.form);setDirty(reset.dirty);setHistory(reset.history);setPendingCancel(reset.pendingCancel);setFilters(reset.filters);setApplied(reset.applied);setPromoBps(reset.promoBps);setPromoCupom(reset.promoCupom);setSimulacaoPreview(reset.simulacaoPreview);setLastSimulation(reset.lastSimulation);setSimulacaoDirty(reset.simulacaoDirty);setCondicaoSnapshot(reset.condicaoSnapshot);setTabelaSnapshot(reset.tabelaSnapshot);setPromocaoSnapshot(reset.promocaoSnapshot);},[groupId,empresaId,queryClient]);
   useEffect(()=>{const warn=(e)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   const resetSimulacao=()=>{setSimulacaoPreview(null);setLastSimulation(null);setSimulacaoDirty(false);setPromoBps('');setPromoCupom('');setCondicaoSnapshot(null);setTabelaSnapshot(null);setPromocaoSnapshot(null);};
   const invalidateSimulacaoPreview=()=>{setSimulacaoPreview(null);setLastSimulation(null);setSimulacaoDirty(true);};
