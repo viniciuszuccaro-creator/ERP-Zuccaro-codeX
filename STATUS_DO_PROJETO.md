@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda5-multiselect-stub-392b` |
 | Base | `origin/cursor/comercial360-onda5-data-entrega-failclosed-392b` tip `6e45a27d` (#159) |
 | Tip | feat `7a6e6a8b` · `7a6e6a8b9765cd3fd7fcdcb0597b73e35e2d96f5` |
-| Draft PR | **ManagePullRequest / gh pr create 403 write** — abrir draft: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-data-entrega-failclosed-392b...cursor/comercial360-onda5-multiselect-stub-392b?expand=1 |
+| Draft PR | **#160** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/160 |
 | Meta | `listMultiSelectStubFailClosed` + **Pedido backend HTTP is active** |
 | Testes | list-http-ui-policy multi-select + integration + runtime07b/08c/09 **PASS** |
 | Colisão | sem mig; sem API bulk cancel; sem anexos #59–62; sem merge/VPS |
