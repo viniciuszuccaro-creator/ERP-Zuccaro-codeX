@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda4-margem-ui-failclosed-392b` |
 | Base | `#156` tip `9e342c32` (`cursor/comercial360-onda4-credito-ui-failclosed-392b`) |
 | Tip | `bf901ddc` (feat `a5de9c28`) |
-| Draft PR | **PENDENTE** (abrir compare → draft) — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-credito-ui-failclosed-392b...cursor/comercial360-onda4-margem-ui-failclosed-392b?expand=1 |
+| Draft PR | **#157** (abrir compare → draft) — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-credito-ui-failclosed-392b...cursor/comercial360-onda4-margem-ui-failclosed-392b?expand=1 |
 | Meta | `margemAlcadaUiFailClosed` + **Pedido backend HTTP is active** |
 | Testes | margem-ui-policy + runtime08c/09 meta PASS |
 | Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
