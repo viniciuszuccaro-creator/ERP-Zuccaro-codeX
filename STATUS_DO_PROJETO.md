@@ -8,7 +8,7 @@
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
-| Branch | `cursor/comercial360-onda3-cliente-http-392b` @ `daadbdfe` |
+| Branch | `cursor/comercial360-onda3-cliente-http-392b` @ `6ffafb6f` (feat `daadbdfe`) |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-tabela-http-392b...cursor/comercial360-onda3-cliente-http-392b?expand=1 |
 | Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
