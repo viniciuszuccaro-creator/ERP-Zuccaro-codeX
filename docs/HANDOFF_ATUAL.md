@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #126 CI fix + #127 empilhada (2026-09-29T15:59Z)
+
+| Campo | Valor |
+|---|---|
+| #126 tip | `45195749` — stub à-vista HTTP com codigo+nome (causa: ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO) |
+| #127 tip | `8fba0782` — merge do tip #126 |
+| CI | re-run em andamento em ambas |
+| Próximo lote | promoção snapshot (030?) **ou** Onda 4 sem colisão #50/#92 |
+
+---
+
 ## OPINIÃO CURSOR — #127 Produto frontendHttp (2026-09-29T15:54Z)
 
 | Campo | Valor |
