@@ -1,3 +1,16 @@
+## AUTÔNOMO — BLOCKED tip #174 CI SUCCESS (2026-09-30T00:25Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#174** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/174 CI SUCCESS |
+| Stack | #154→#174 Onda 4/5 polish tip Cursor (sem merge/VPS) |
+| Parecer | **BLOCKED** — polish Onda 4/5 seguro sem migration **esgotado** |
+| Motivos | (1) CostPort BFF sem fonte de custo — inventar = BLOCKED; (2) CreditPort/Onda 6 exige mig **032**; (3) anexos/origem/campanha/versões colidem com Codex #50/#59–#67; (4) bulk stub deliberado (sem endpoint) |
+| Ação | Vigília CI/#153 HEAD; sem merge/main/VPS; sem inventar porta |
+| Desbloqueio | CostPort real **ou** 032+CreditPort **ou** anexos pós-coordenação Codex |
+
+---
+
 ## AUTÔNOMO — tip Pedido histórico UI fail-closed (pós-#173) (2026-09-30T00:20Z)
 
 | Campo | Valor |
@@ -7,9 +20,9 @@
 | Draft PR | **#174** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/174 |
 | Base | tip #173 status confirm |
 | Escopo | `resolvePedidoHistoryUiState`; loadHistory separado do get; meta `historyUiFailClosed` |
-| Testes | pedido-ui + runtime09/08c/07b |
+| Testes | pedido-ui + runtime09/08c/07b; **CI tip SUCCESS** |
 | Colisão | CostPort invent BLOCKED; CreditPort 032; anexos; sem Codex/merge/VPS |
-| Próximo | Onda 5 polish esgotado → **BLOCKED** até 032/CostPort real/anexo pós-Codex |
+| Próximo | **BLOCKED** até 032/CostPort real/anexo pós-Codex |
 
 ---
 
