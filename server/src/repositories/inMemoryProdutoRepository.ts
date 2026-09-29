@@ -72,6 +72,7 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
     codigo: data.codigo ?? null,
+    codigo_legado: data.codigo_legado ?? null,
     codigo_barras: data.codigo_barras ?? null,
     descricao: data.descricao,
     nome: data.nome ?? data.descricao,

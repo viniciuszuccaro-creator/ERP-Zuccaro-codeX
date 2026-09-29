@@ -140,6 +140,22 @@ test('Produto valida e normaliza atributos PIM universais existentes', () => {
     assert.equal(produtoCreateSchema.safeParse(payload).success, false);
   }
 });
+
+test('Produto preserva codigo legado sem alterar codigo canonico e isola empresas em memoria', async () => {
+  const repo = createInMemoryProdutoRepo();
+  const scope = { groupId: GROUP_A, empresaId: EMPRESA_A };
+  const created = await repo.create(scope, produtoCreateSchema.parse({
+    codigo: 'ERP-100', codigo_legado: '000123', descricao: 'Revenda sintetica',
+  }));
+  assert.equal(created.codigo, 'ERP-100');
+  assert.equal(created.codigo_legado, '000123');
+  assert.equal((await repo.getById(scope, created.id))?.codigo_legado, '000123');
+  assert.equal(await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_B }, created.id), null);
+  const updated = await repo.update(scope, created.id, produtoUpdateSchema.parse({ descricao: 'Revenda revisada' }));
+  assert.equal(updated?.codigo, 'ERP-100');
+  assert.equal(updated?.codigo_legado, '000123');
+  assert.equal(produtoCreateSchema.safeParse({ descricao: 'Invalido', codigo_legado: '' }).success, false);
+});
 test('Produto RBAC falha fechado e classificação bloqueia novos valores desconhecidos', async () => {
   const canonicalValue: ProdutoTipoCanonico = PRODUTO_TIPOS_CANONICOS.REVENDA;
   assert.equal(canonicalValue, 'Revenda');

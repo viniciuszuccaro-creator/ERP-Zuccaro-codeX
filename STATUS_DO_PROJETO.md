@@ -11605,3 +11605,10 @@ Checklist inicial:
 
 - #101 foi aprovada pelo Cursor, mesclada na main `d02cd012948a597a734573ab0a5a7aed6d604a3b` e validada pela CI push #1209. API e SPA desse SHA foram implantadas em DEV com backup, canário e rollback preservado. O proprietário confirmou que consegue navegar em todo o sistema. Isso não homologa automaticamente fluxos comerciais, fiscais ou integrações externas.
 - #92 incorpora a main `d02cd012948a597a734573ab0a5a7aed6d604a3b`, preservando a correção de acesso e os contratos existentes. Os blobs de migration 025 e 028 permanecem idênticos aos HEADs atuais das PRs #50 e #53. Nenhuma migration 025–033 foi executada em DEV nesta atualização; canais e provedores continuam desligados. Revisão independente e CI do novo HEAD são necessárias antes de integração ou implantação da #92 e da #93 dependente.
+
+## Comercial 360 - codigo legado de Produto (candidato, 2026-09-29)
+
+- Produto canonico agora modela `codigo_legado` separadamente de `codigo`, preservando zeros a esquerda sem renumerar o codigo ERP. Schema estrito, repositórios PostgreSQL/in-memory e migration aditiva 034; sem unicidade no codigo legado porque colisões da origem exigem reconciliação, mantendo a unicidade canônica existente.
+- Testes sinteticos cobrem create/get/update, isolamento por empresa, rollback PostgreSQL e constraint de formato. PostgreSQL real fica para CI efemera; migration 034 nao foi aplicada na VPS nem no DEV.
+- Local: backend 378 pass/0 fail/41 skip sem `DATABASE_URL`; testes focados 29 pass/0 fail/2 skip; backend typecheck/build, frontend audit/lint/build e `git diff --check` passaram. `npm test` raiz no Windows falha em scripts que invocam Bash; typecheck raiz apresenta erros preexistentes em Base44/JSX fora do diff. CI Linux e revisao independente ainda pendentes.
+- Proximo gate: validar PostgreSQL na CI, revisar HEAD final, integrar somente conforme ordem de migrations acordada; carga legada real continua bloqueada por mapa juridico Grupo/Empresa, staging e reconciliacao.

@@ -16,6 +16,36 @@ import { assertProdutoMediaContract, assertProdutoRelationsContract } from './pr
 
 const enabled = Boolean(process.env.DATABASE_URL);
 
+test('R10 PostgreSQL real: codigo legado de Produto preservado sem renumerar o codigo ERP', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  let createdId = '';
+  try {
+    const migration = await db.query<{ total: number }>(
+      "SELECT count(*)::int total FROM schema_migrations WHERE id='034_produtos_codigo_legado.sql'",
+    );
+    assert.equal(migration.rows[0]?.total, 1);
+    await assert.rejects(db.withTransaction(async (tx) => {
+      const created = await repo.create(scope, produtoCreateSchema.parse({
+        descricao: 'Revenda sintetica', codigo: `ERP-${randomUUID()}`, codigo_legado: '000123',
+      }), tx);
+      createdId = created.id;
+      assert.equal(created.codigo_legado, '000123');
+      assert.equal((await repo.getById(scope, created.id, tx))?.codigo_legado, '000123');
+      assert.equal(await repo.getById({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, created.id, tx), null);
+      const updated = await repo.update(scope, created.id, { descricao: 'Revenda revisada' }, tx);
+      assert.equal(updated?.codigo, created.codigo);
+      assert.equal(updated?.codigo_legado, '000123');
+      await assert.rejects(tx.query('UPDATE produtos SET codigo_legado=$1 WHERE id=$2', ['', created.id]), /check constraint/i);
+      throw new Error('ROLLBACK_CODIGO_LEGADO_SYNTHETIC');
+    }), /ROLLBACK_CODIGO_LEGADO_SYNTHETIC/);
+    assert.equal(await repo.getById(scope, createdId), null);
+  } finally {
+    await db.end();
+  }
+});
+
 test('R10 PostgreSQL real: migration 018 preserva PIM, tenant, DAM, RLS e outbox', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const productId = randomUUID();
