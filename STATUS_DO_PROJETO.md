@@ -5,8 +5,8 @@
 | Choice | **Onda 4** Dirty form abandon — beforeunload + confirm ao fechar dialog/navegar; dirty\|simulacaoDirty; fail-closed (sem perda silenciosa) |
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `origin/cursor/comercial360-onda3-network-retry-392b` tip `6218511a` (#151) |
-| Tip | *(commit em seguida nesta sessão)* |
-| Draft PR | base `#151` — draft após push |
+| Tip | `b7352fa8` (`b7352fa84362ecf360e09977180df2f1e09237e1`) |
+| Draft PR | base `#151` — draft após push (gh/ManagePullRequest) |
 | Escopo | Helpers em `comercialListHttpUiPolicy` (`isComercialFormDirtyForAbandon`, `confirmComercialFormAbandon`, `resolveComercialFormDialogOpenChange`, `bindComercialFormBeforeUnload`); wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `form dirty abandon fail-closed` + preserva **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **25/25**; `git diff --check` PASS |

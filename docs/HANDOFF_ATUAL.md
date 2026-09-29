@@ -5,7 +5,7 @@
 | Choice | **Onda 4** Dirty form abandon — beforeunload + confirm dialog/navegar |
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `#151` tip `6218511a` (`cursor/comercial360-onda3-network-retry-392b`) |
-| Tip | *(commit em seguida)* |
+| Tip | `b7352fa8` (`b7352fa84362ecf360e09977180df2f1e09237e1`) |
 | Meta | form dirty abandon fail-closed + **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **25/25** |
 | Colisão | #138 alçada já completa; margem #47; PDF/anexos #52–62; sem merge/VPS |
