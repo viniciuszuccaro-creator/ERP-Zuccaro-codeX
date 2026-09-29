@@ -5,9 +5,9 @@
 | Implementado | **SIM** — choice A: migration `025` aditiva + wire create/update/get/convert + UI reload |
 | Testado | **SIM** — 94/94 focados PASS; typecheck PASS |
 | Base | `#124` tip `7c70de69` (`cursor/comercial360-onda3-cliente-local-obra-http-392b`) |
-| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` @ `4495d5a4` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-local-obra-http-392b...cursor/comercial360-onda3-condicao-snapshot-392b?expand=1 |
-| Draft PR | pendente (`ManagePullRequest` / `gh`) |
+| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration` |
 | Próximo | Produto frontendHttp piloto **ou** promoção snapshot; sem CRM paralelo |
 
 Reservados: migration 025, comercialCondicaoSnapshot, orcamento/pedido services+repos+types, router meta, comercialCondicaoHttpUiPolicy, OrcamentosTab, PedidoCanonicoPanel, testes snapshot/UI/stubs. Sem Codex/#104/#48, sem merge/VPS. Meta preserva Pedido backend HTTP is active.

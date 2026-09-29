@@ -8,9 +8,9 @@
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
-| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` @ feat `4495d5a4` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-local-obra-http-392b...cursor/comercial360-onda3-condicao-snapshot-392b?expand=1 |
-| Draft PR | pendente (`ManagePullRequest` / `gh pr create`) |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#124; não editar em Codex/#104/#48)
 
