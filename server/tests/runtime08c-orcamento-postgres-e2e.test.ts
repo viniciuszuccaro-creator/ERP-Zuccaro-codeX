@@ -11,6 +11,20 @@ const enabled = Boolean(process.env.DATABASE_URL);
 const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
 const other = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 };
 
+function repositorySnapshots() {
+  return {
+    condicao_pagamento_codigo_snapshot: 'COND-28',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
+    tabela_preco_id: null,
+    tabela_preco_codigo_snapshot: null,
+    tabela_preco_nome_snapshot: null,
+    promocao_aplicada: false,
+    promocao_bps: null,
+    promocao_cupom: null,
+  };
+}
+
 test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresOrcamentoRepository(db);
@@ -21,7 +35,7 @@ test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento
     const client = await db.query<{ id: string }>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo=true LIMIT 1', [scope.groupId, scope.empresaId]);
     assert.ok(client.rows[0]?.id);
     const input = { cliente_empresa_id: client.rows[0].id, condicao_pagamento_id: SEED_IDS.condicaoPagamentoA, validade_em: '2026-10-01T00:00:00.000Z', itens: [{ produto_id: SEED_IDS.produtoA, unidade_id: SEED_IDS.unidadeA, descricao: 'R08C sintetico', unidade_sigla: 'UN', quantidade: '2.000000', preco_unitario: '10.000000', desconto: '0.000000' }] };
-    const created = await repo.create(scope, input); id = created.id;
+    const created = await repo.create(scope, { ...input, ...repositorySnapshots() }); id = created.id;
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.itens.length, 1); assert.equal(created.total, '20.000000');
     assert.equal(created.versao, 1);
     assert.equal(created.orcamento_raiz_id, created.id);
@@ -32,9 +46,9 @@ test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento
     assert.equal(reloaded?.itens[0].unidade_sigla, 'UN');
     assert.equal((await repo.get(other, id)), null);
     const page = await repo.list(scope, 1, 0); assert.ok(page.total >= 1); assert.ok(page.rows.every((x) => x.itens.length >= 1));
-    const updated = await repo.update(scope, id, { ...input, itens: [{ ...input.itens[0], quantidade: '3.000000' }] });
+    const updated = await repo.update(scope, id, { ...input, ...repositorySnapshots(), itens: [{ ...input.itens[0], quantidade: '3.000000' }] });
     assert.equal(updated?.total, '30.000000'); assert.equal(updated?.itens.length, 1);
-    assert.equal(await repo.update(other, id, input), null);
+    assert.equal(await repo.update(other, id, { ...input, ...repositorySnapshots() }), null);
     const cancelled = await repo.cancel(scope, id); assert.equal(cancelled?.status, 'CANCELADO'); assert.equal(cancelled?.ativo, false);
     assert.equal(await repo.cancel(scope, id), null);
   } finally {
@@ -73,7 +87,7 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
         desconto: '0.000000',
       }],
     };
-    const baseline = await repo.create(scope, input);
+    const baseline = await repo.create(scope, { ...input, ...repositorySnapshots() });
     ids.push(baseline.id);
     const before = await db.query<{ total: number; max_numero: number }>(
       'SELECT count(*)::int total, COALESCE(MAX(numero::int),0)::int max_numero FROM orcamentos WHERE group_id=$1 AND empresa_id=$2',
@@ -123,7 +137,7 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
 
     await db.query('DROP TRIGGER trg_force_orcamento_audit_failure ON audit_logs');
     await db.query('DROP FUNCTION force_orcamento_audit_failure()');
-    const afterRollback = await repo.create(scope, input);
+    const afterRollback = await repo.create(scope, { ...input, ...repositorySnapshots() });
     ids.push(afterRollback.id);
     assert.equal(Number(afterRollback.numero), before.rows[0].max_numero + 1);
   } finally {
