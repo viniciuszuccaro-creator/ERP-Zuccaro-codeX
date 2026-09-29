@@ -32,6 +32,60 @@ function stripControlChars(raw) {
 }
 
 /** Limite canônico alinhado a Zod/migration (Pedido/Orçamento ≤ 1000). */
+
+/** Limite alinhado a cancel Pedido/Orçamento HTTP (3–500). */
+export const COMERCIAL_CANCEL_MOTIVO_MIN = 3;
+export const COMERCIAL_CANCEL_MOTIVO_MAX = 500;
+
+/**
+ * Motivo de cancelamento comercial (Pedido/Orçamento) — fail-closed.
+ * @param {unknown} motivo
+ */
+export function evaluateComercialCancelMotivoUiGate(motivo) {
+  const raw = String(motivo ?? '');
+  const trimmed = raw.trim();
+  const length = raw.length;
+  if (!trimmed) {
+    return {
+      motivo: '',
+      length,
+      blockConfirm: true,
+      hint: 'Informe o motivo do cancelamento (mínimo 3 caracteres).',
+      counterLabel: `${length}/${COMERCIAL_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  if (trimmed.length < COMERCIAL_CANCEL_MOTIVO_MIN) {
+    return {
+      motivo: trimmed,
+      length,
+      blockConfirm: true,
+      hint: `Motivo muito curto (mínimo ${COMERCIAL_CANCEL_MOTIVO_MIN} caracteres).`,
+      counterLabel: `${length}/${COMERCIAL_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  if (length > COMERCIAL_CANCEL_MOTIVO_MAX) {
+    return {
+      motivo: trimmed.slice(0, COMERCIAL_CANCEL_MOTIVO_MAX),
+      length,
+      blockConfirm: true,
+      hint: `Motivo excede ${COMERCIAL_CANCEL_MOTIVO_MAX} caracteres.`,
+      counterLabel: `${length}/${COMERCIAL_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  return {
+    motivo: trimmed.slice(0, COMERCIAL_CANCEL_MOTIVO_MAX),
+    length,
+    blockConfirm: false,
+    hint: null,
+    counterLabel: `${length}/${COMERCIAL_CANCEL_MOTIVO_MAX}`,
+  };
+}
+
+/** Clamp do textarea de motivo de cancelamento. */
+export function clampComercialCancelMotivo(value) {
+  return String(value ?? '').slice(0, COMERCIAL_CANCEL_MOTIVO_MAX);
+}
+
 export const COMERCIAL_OBSERVACOES_MAX_LENGTH = 1000;
 
 /** Sanitiza observações livres (XSS/controle) antes do payload HTTP. */

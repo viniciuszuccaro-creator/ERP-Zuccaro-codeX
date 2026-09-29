@@ -179,15 +179,32 @@ export class OrcamentoService {
     });
   }
 
-  async cancel(ctx: RequestContext, id: string) {
+  /**
+   * Cancel fail-closed: RBAC cancelar + EM_ABERTO + auditoria before/after.
+   * Motivo opcional no body (3–500); quando informado entra no afterData da auditoria (sem migration).
+   */
+  async cancel(ctx: RequestContext, id: string, motivo?: unknown) {
     const scope = await this.prepare(ctx, 'cancelar');
     this.assertId(id);
+    let cancelMotivo: string | undefined;
+    if (motivo !== undefined) {
+      if (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid cancel motivo', { motivo: 'invalid' });
+      }
+      cancelMotivo = motivo.trim().slice(0, 500);
+    }
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
       const after = await this.repo.cancel(scope, id, executor);
       if (!after) this.stateConflict();
-      await this.auditRow(ctx, 'change_status', before, after, executor);
+      await this.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail, entity: 'Orcamento', entityId: after.id, action: 'change_status',
+        beforeData: orcamentoAuditSnapshot(before),
+        afterData: sanitizeAuditSnapshot({ ...orcamentoAuditSnapshot(after), ...(cancelMotivo ? { cancel_motivo: cancelMotivo } : {}) }),
+        requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
       return after;
     });
   }

@@ -1,4 +1,4 @@
-import { sanitizeObservacoesText } from './comercialListHttpUiPolicy.js';
+import { sanitizeObservacoesText, evaluateComercialCancelMotivoUiGate, clampComercialCancelMotivo, COMERCIAL_CANCEL_MOTIVO_MAX, COMERCIAL_CANCEL_MOTIVO_MIN } from './comercialListHttpUiPolicy.js';
 
 const MICROS = 1_000_000n;
 
@@ -148,6 +148,22 @@ export function calculateTotals(items) {
     acc.total += decimalToMicros(values.total);
     return acc;
   }, { subtotal: 0n, desconto: 0n, total: 0n });
+}
+
+
+
+
+/** Limite alinhado ao cancel Orçamento (3–500; paridade Pedido). */
+export const ORCAMENTO_CANCEL_MOTIVO_MIN = COMERCIAL_CANCEL_MOTIVO_MIN;
+export const ORCAMENTO_CANCEL_MOTIVO_MAX = COMERCIAL_CANCEL_MOTIVO_MAX;
+
+/** Motivo de cancelamento Orçamento — fail-closed. */
+export function evaluateOrcamentoCancelMotivoUiGate(motivo) {
+  return evaluateComercialCancelMotivoUiGate(motivo);
+}
+
+export function clampOrcamentoCancelMotivo(value) {
+  return clampComercialCancelMotivo(value);
 }
 
 export function canUseOrcamentoAction(hasPermission, action, status = 'EM_ABERTO') {
