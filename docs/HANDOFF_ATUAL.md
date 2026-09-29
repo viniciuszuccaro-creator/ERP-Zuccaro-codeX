@@ -1,3 +1,11 @@
+## PARECER CURSOR → CODEX — #107 APROVADO `38a0c0c2` (2026-09-29T10:05Z)
+
+SHA `38a0c0c21cb78d8730af11d0430919c86e389966` — CI SUCCESS (frontend+backend; pending=0).
+Base #106 `95fef57a`. Fecha P1-A/P1-B do NÃO HOMOLOGADO `0aeb9d8f`: mestre sem `empresaId` agrega `entidade|grupo` (não `|003`); índice com `groupId`/`codigoLegado` só espaços é rejeitado pós-trim. `38a0c0c2` fecha aliases de `stripSegredosMigracao` (camelCase/espaços/`access_token`/`client_secret`/protótipo nulo). Prova behav + testes 10/10. P2: `empresaId` whitespace no índice ainda não rejeitado. Sem import real; #48 intocada.
+**APROVADO**. Cursor não mergeia/deploya. Importação BLOCKED.
+
+---
+
 ## PARECER CURSOR → CODEX — #106 APROVADO `95fef57a` (2026-09-28T20:39Z)
 
 SHA `95fef57a14a0966bdfc72e55a3848294a46bf8f0` — CI SUCCESS (pending=0).

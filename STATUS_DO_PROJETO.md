@@ -1,3 +1,46 @@
+## PARECER CURSOR — #107 `38a0c0c2` preflight staging / prepararLoteStagingLegado (2026-09-29T10:05Z)
+
+| Campo | Valor |
+|---|---|
+| SHA | `38a0c0c21cb78d8730af11d0430919c86e389966` |
+| Branch | `codex/legado-staging-reconciliacao-20260929` |
+| Base | #106 `95fef57a` (`codex/legado-inventario-20260928`) |
+| CI | **SUCCESS** (frontend+backend; pending=0; runs 36553094991 / 36553088390) |
+| Substitui | NÃO HOMOLOGADO peer `0aeb9d8f` (P1-A/P1-B); intermediário `82daf4c3` (P1s fechados, CI então pendente) |
+
+### Escopo deste SHA (delta vs `0aeb9d8f`)
+- Commits: `82daf4c3` (agregado grupo + índice trim) → `38a0c0c2` (aliases stripSegredos).
+- `scripts/legado/staging-scope-gate.mjs` + `tests/legado-staging-scope-gate.test.js`
+- `src/components/lib/migracaoErpPolicy.js` + `tests/migracao-erp-policy.test.js` (normalização camelCase/espaços/`access_token`/`client_secret`/protótipo nulo)
+- STATUS Codex; **sem** import `src/` novo; mapper **#48** intocado; sem dados reais / import / VPS / merge.
+
+### P1 fechados (prova comportamental independente no SHA)
+| ID | Defeito em `0aeb9d8f` | Prova em `38a0c0c2` |
+|---|---|---|
+| P1-A | Mestre sem `empresaId` + `codigoEmpresaLegado: '003'` apto e agregado `cliente\|003` | `bloqueado=false`, `aptos=1`, `porEntidadeEmpresa={"cliente\|grupo":1}`; **sem** `cliente\|003` |
+| P1-B | Índice com `groupId`/`codigoLegado` só espaços não rejeitado antes do trim | Ambos lançam `Indice de staging existente sem identidade e assinatura validas.` |
+
+### Sanitização (achado residual de `0aeb9d8f`, fechado em `38a0c0c2`)
+- `apiKey` / `APIKEY` / `senhaHash` / `access_token` / `client_secret` / `'token '` / nested protótipo nulo: `JSON.stringify(filtrado)` **sem** `SEGREDO`; origem intacta.
+
+### Testes locais (worktree `38a0c0c2`)
+- `tests/legado-staging-scope-gate.test.js` — **10/10** pass (incl. mestre→`\|grupo` e índice whitespace)
+
+### P2 residual (não bloqueia homologação)
+- `empresaId` só espaços no índice **não** é rejeitado: chave fica vazia, retry de `e1` não conta reuso e o lote devolve registro novo (`aptos=1`, `privados=1`). Preferível alinhar ao mesmo trim fail-closed de `groupId`/`codigoLegado`, mas fora do escopo P1-A/B.
+
+### Coordenação
+- Preflight em memória; staging/importação real permanece **BLOCKED** até vínculos jurídicos comprovados + gate humano + coordenação/#48.
+- Cursor **não** mergeia nem faz deploy VPS. Sem PII/legado real no GitHub.
+
+### Peer
+- Comentários GitHub em `9d99b53f` / `0aeb9d8f` / `82daf4c3`; em `38a0c0c2` só ack «Taking a look!» — sem parecer canônico do peer neste SHA. Este STATUS/HANDOFF é o parecer canônico.
+
+### Veredito
+**APROVADO** neste SHA (`38a0c0c2`). P1-A e P1-B fechados; CI SUCCESS; sem P1 novo bloqueante.
+
+---
+
 ## PARECER CURSOR — #106 `95fef57a` inventário + gate de escopo (2026-09-28T20:39Z)
 
 | Campo | Valor |
