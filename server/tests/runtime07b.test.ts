@@ -432,6 +432,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.equal(meta.orcamento?.listPageCsvExportFailClosed, true);
     assert.equal(meta.pedido?.observacoesMaxLengthUiFailClosed, true);
     assert.equal(meta.pedido?.listPageCsvExportFailClosed, true);
+    assert.equal(meta.pedido?.cancelMotivoUiFailClosed, true);
     assert.match(String(meta.note || ''), /Pedido cancel fail-closed/);
     assert.match(String(meta.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
     assert.match(String(meta.note || ''), /queryKey groupId\+empresaId\+filters/);
