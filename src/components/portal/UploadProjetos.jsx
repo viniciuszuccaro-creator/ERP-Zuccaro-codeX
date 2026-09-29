@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, FileText, CheckCircle2, Clock, AlertCircle, Download } from "lucide-react";
 import { format } from "date-fns";
+import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * V21.5 - Upload de Projetos COMPLETO
@@ -56,9 +57,10 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
   const uploadProjetoMutation = useMutation({
     mutationFn: async (file) => {
       setUploading(true);
-      
+      await assertTechnicalUploadAllowed(file);
       // Upload do arquivo
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const confirmedUrl = assertConfirmedTechnicalUploadUrl(file_url);
       
       // Criar pedido rascunho com o projeto
       const pedido = await base44.entities.Pedido.create({
@@ -72,7 +74,7 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
         valor_total: 0,
         observacoes_publicas: descricaoProjeto,
         projetos_ia: [{
-          arquivo_url: file_url,
+          arquivo_url: confirmedUrl,
           arquivo_nome: file.name,
           tipo_arquivo: file.name.split('.').pop().toUpperCase(),
           data_upload: new Date().toISOString(),
@@ -82,7 +84,7 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
         }]
       });
 
-      return { pedido, file_url };
+      return { pedido, file_url: confirmedUrl };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projetosCliente', clienteId] });
@@ -104,31 +106,20 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
     }
   });
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const extensao = file.name.split('.').pop().toLowerCase();
-      const extensoesPermitidas = ['pdf', 'dwg', 'dxf', 'png', 'jpg', 'jpeg'];
-      
-      if (!extensoesPermitidas.includes(extensao)) {
+      try {
+        await assertTechnicalUploadAllowed(file);
+        setArquivoSelecionado(file);
+      } catch (error) {
+        setArquivoSelecionado(null);
         toast({
-          title: "Arquivo Inválido",
-          description: "Envie apenas arquivos PDF, DWG, DXF ou imagens",
+          title: "Arquivo inválido",
+          description: error.message,
           variant: "destructive"
         });
-        return;
       }
-
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "Arquivo Muito Grande",
-          description: "O arquivo deve ter no máximo 10MB",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setArquivoSelecionado(file);
     }
   };
 
@@ -143,7 +134,7 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
       <div>
         <h2 className="text-xl sm:text-2xl font-bold">Enviar Projeto</h2>
         <p className="text-sm text-slate-600">
-          Envie seus projetos (PDF, DWG, DXF, Imagens) e receba um orçamento detalhado com análise IA
+          Envie PDF ou imagem para análise. Arquivos CAD aguardam validação de segurança.
         </p>
       </div>
 
@@ -165,14 +156,14 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
                     ) : (
                       <>
                         <p className="text-sm text-slate-600">Clique para selecionar</p>
-                        <p className="text-xs text-slate-500">PDF, DWG, DXF ou Imagem (máx. 10MB)</p>
+                        <p className="text-xs text-slate-500">PDF, JPG ou PNG (máx. 10MB)</p>
                       </>
                     )}
                   </div>
                   <input
                     type="file"
                     className="hidden"
-                    accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+                    accept={TECHNICAL_UPLOAD_ACCEPT}
                     onChange={handleFileSelect}
                     disabled={uploading}
                   />

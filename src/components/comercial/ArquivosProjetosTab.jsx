@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Upload, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * Aba 7: Arquivos e Projetos
@@ -15,12 +16,14 @@ export default function ArquivosProjetosTab({ formData, setFormData }) {
     if (!file) return;
 
     try {
+      const tipo = await assertTechnicalUploadAllowed(file);
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const url = assertConfirmedTechnicalUploadUrl(file_url);
 
       const novoAnexo = {
-        tipo: file.name.endsWith('.pdf') ? 'PDF' : file.name.endsWith('.dwg') ? 'DWG' : 'Outro',
+        tipo,
         nome_arquivo: file.name,
-        url: file_url,
+        url,
         data_upload: new Date().toISOString()
       };
 
@@ -31,7 +34,7 @@ export default function ArquivosProjetosTab({ formData, setFormData }) {
 
       toast.success('✅ Arquivo anexado');
     } catch (error) {
-      toast.error('❌ Erro ao fazer upload');
+      toast.error(error.message || 'Erro ao fazer upload');
     }
   };
 
@@ -45,12 +48,12 @@ export default function ArquivosProjetosTab({ formData, setFormData }) {
             Anexar Arquivos
           </h3>
           <p className="text-sm text-blue-700 mb-4">
-            PDFs, DWGs, DXFs, Imagens
+            PDF, JPG ou PNG (CAD aguarda validação de segurança)
           </p>
           
           <input
             type="file"
-            accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+            accept={TECHNICAL_UPLOAD_ACCEPT}
             onChange={handleUpload}
             className="hidden"
             id="upload-anexo"
