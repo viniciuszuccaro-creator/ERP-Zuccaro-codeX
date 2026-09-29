@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip #162–#164 (2026-09-29T22:40Z)
+
+Stack: #161 convert-banner → **#162** obs limit → **#163** CSV página → **#164** cancel motivo.
+Fix CI meta flags em #163/#164. Sem merge/VPS. Vigília ativa.
+
+---
+
 ## AUTÔNOMO — #162+#163 tip (2026-09-29T22:28Z)
 
 #161 CI OK. **#162** observações maxLength/contador. **#163** export CSV página atual.
