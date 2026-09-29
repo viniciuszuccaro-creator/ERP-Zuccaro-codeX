@@ -373,6 +373,12 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.ok(meta.httpPilotEntities.includes('ClienteEmpresa'));
     assert.ok(meta.preparedEntities.includes('ClienteEmpresa'));
     assert.ok(meta.httpEntities.includes('ClienteEmpresa'));
+    assert.equal((meta as { clienteLocal?: { frontendHttp: boolean } }).clienteLocal?.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('ClienteLocal'));
+    assert.ok(meta.httpEntities.includes('ClienteLocal'));
+    assert.equal((meta as { obra?: { frontendHttp: boolean } }).obra?.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('Obra'));
+    assert.ok(meta.httpEntities.includes('Obra'));
     assert.ok(meta.preparedEntities.includes('Pedido'));
     assert.ok(meta.httpEntities.includes('Pedido'));
     assert.equal(meta.pedido.backendHttp, true);
@@ -380,6 +386,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.match(String(meta.note || ''), /Pedido backend HTTP is active/);
     assert.match(String(meta.note || ''), /Cliente frontendHttp/);
     assert.match(String(meta.note || ''), /ClienteEmpresa frontendHttp/);
+    assert.match(String(meta.note || ''), /ClienteLocal e Obra frontendHttp/);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {

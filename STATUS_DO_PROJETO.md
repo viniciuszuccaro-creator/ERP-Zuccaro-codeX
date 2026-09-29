@@ -1,3 +1,45 @@
+## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `ClienteLocal` + `Obra` nested (`/clientes/:id/locais|obras`); Pedido carrega endereço/obra por `cliente_id` fail-closed; Central 360 já via `central-360`; sem migration |
+| Testado | **SIM** — client+policy novos + empresa/http-api-client (33/33) + runtime06a/06b/07b 20/20 (meta Pedido backend HTTP preservado) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#122`/`#121` `cursor/comercial360-onda3-cliente-empresa-http-392b` (tip `d82c7096`) |
+| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ feat `a2c59236` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#122; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + ClienteLocal + Obra)
+- `src/api/httpApiClient.js` (entity nested + `clientes.listLocais/listObras/getLocal/getObra`)
+- `server/src/api/router.ts` (meta `clienteLocal`/`obra.frontendHttp` + pilot/httpEntities; note preserva Pedido backend HTTP)
+- `src/components/comercial/comercialClienteLocalObraHttpUiPolicy.js`
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (delivery HTTP por cliente)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js` (comentário)
+- `tests/comercial-cliente-local-obra-http-client.test.js` / `comercial-cliente-local-obra-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-empresa-http-client.test.js`
+- `server/tests/runtime06a.test.ts` / `runtime06b.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_06A.md` / `ERP_RUNTIME_06B.md` / `ERP_RUNTIME_05.md`
+
+### Escopo
+
+- Reutiliza API R06A/R06B nested já existente; **sem migration**; sem flat list-for-scope.
+- Multiempresa: tenant só em headers; Obra Pedido usa `operacional=true` (exige empresaId).
+- RBAC Cadastros.cliente_local / Cadastros.obra ou Comercial.pedido.visualizar fail-closed no UI.
+- Troca de ClienteEmpresa limpa `cliente_local_id`/`obra_id`. Central 360 blocos locais/obras inalterados (já HTTP via read-model).
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas (**migration** autorizada); sem CRM paralelo.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #121/#122 → **#123**.
+
+---
+
 ## LOTE CURSOR — #121 ClienteEmpresa list-for-scope frontendHttp (2026-09-29T15:35Z)
 
 | Etapa | Estado |

@@ -1,7 +1,7 @@
 /**
  * Política UI Cliente HTTP (Onda 3) — mestres Comercial + Central 360.
  * Reutiliza API R04/R05 já existente; sem migration; sem CRM paralelo.
- * ClienteEmpresa / Local / Obra permanecem fora do piloto neste lote.
+ * ClienteEmpresa, ClienteLocal e Obra têm piloto HTTP próprio (nested/flat).
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

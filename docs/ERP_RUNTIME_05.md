@@ -188,7 +188,8 @@ mutações ClienteEmpresa continuam nested sob Cliente.
 
 Ficam fora até suas fontes PostgreSQL canônicas no piloto flat:
 
-- ClienteLocal / Obra frontendHttp;
+- ~~ClienteLocal / Obra frontendHttp~~ — ativados em lote posterior via rotas
+  nested (`/clientes/:id/locais|obras`), sem flat list-for-scope;
 - vendedor/Colaborador/Representante;
 - crédito e títulos do Financeiro.
 
@@ -219,5 +220,6 @@ Resultados:
 - `erp-api-dev-runtime04-backup` e `erp-api-dev-runtime03-backup` permanecem
   preservados temporariamente;
 - ClienteEmpresa **entra** em `HTTP_PILOT_ENTITIES` no piloto Onda 3
-  (`GET /api/v1/cliente-empresas` list-for-scope); Local/Obra permanecem fora;
-- planejamento, sem implementação: RUNTIME-06 — Locais/Endereços/Obras.
+  (`GET /api/v1/cliente-empresas` list-for-scope); Local/Obra entram depois via
+  nested HTTP R06A/R06B (sem flat list-for-scope);
+- planejamento histórico RUNTIME-06 — Locais/Endereços/Obras — implementado.
