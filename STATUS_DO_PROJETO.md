@@ -11731,3 +11731,9 @@ Checklist inicial:
 - Branch separada, baseada na #123; o mapper do Cursor foi incorporado por merge sem editar a branch #48. Conflitos textuais em status e contrato foram resolvidos preservando os dois historicos.
 - Testes combinados expuseram contrato divergente: o mapper atualizado omite `empresa_id` do mestre de Grupo, exige classificacao explicita de Produto de revenda e pode excluir todo o lote. O adaptador Codex agora bloqueia entrega parcial quando houver exclusoes, reporta apenas a contagem e nao chama o preflight com lista vazia. Fixtures de Produto declaram `revenda`; nenhum Produto sem classificacao e promovido por hipotese.
 - Testes sinteticos de mapper, preflight e adaptador: 57/57 PASS. CI Linux do HEAD final ainda obrigatoria. Nao houve leitura do backup, importacao, migration, VPS ou merge na main; vinculo juridico e destino real continuam pendentes dos gates proprios.
+
+## Ensaio E2E mapper → staging PostgreSQL isolado (2026-09-29)
+
+- O E2E efemero agora exercita o mapper #48 atraves do adaptador Codex: Cliente mestre e Produto explicitamente de revenda entram em tabela temporaria com codigo legado preservado e `empresa_id` nulo. O indice do Cliente e relido por SQL para comprovar retry sem segunda entrega.
+- Grupo divergente falha antes do SQL; lote misto com Produto nao-revenda devolve zero registros e contagem sanitizada de exclusoes. A constraint PostgreSQL rejeita duplicata do mestre e toda a transacao termina em rollback.
+- Esta prova nao representa extracao do HD, vinculo juridico real, staging persistente nem importacao operacional. CI PostgreSQL do novo HEAD e obrigatoria antes de aprovar o ensaio.
