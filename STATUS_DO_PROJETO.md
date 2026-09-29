@@ -1,3 +1,16 @@
+## OPINIÃO CURSOR — #134 CI SUCCESS + #135 Pedido cancel (2026-09-29T16:57Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #131 | `1682f686` | SUCCESS | TabelaPreço snapshot 031 |
+| #133 | `70576db7` | SUCCESS | Validade Orçamento |
+| #134 | `fa362ff0` | **SUCCESS** | Convert snapshots fail-closed |
+| #135 | `cursor/comercial360-onda3-pedido-cancel-392b` | pendente | Pedido cancel fail-closed |
+
+Próximo: Onda 4 slice **sem** 025–028 **ou** list empty-state HTTP. Sem merge/VPS. Sem Codex/#104/#48.
+
+---
+
 ## OPINIÃO CURSOR — #133 CI SUCCESS + #134 convert-snapshot (2026-09-29T16:47Z)
 
 | PR | Tip | CI | Escopo |
