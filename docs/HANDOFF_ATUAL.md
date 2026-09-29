@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip Pedido detalhe summary (2026-09-29T23:10Z)
 
-Tip empilhada em #167: detalhe Pedido com summary canônico fail-closed.
-CI #166/#167 em curso. Sem merge/VPS.
+Draft PR **#168** empilhada em #167: detalhe Pedido summary fail-closed.
+CI tip em curso. Sem merge/VPS.
 
 ---
 
