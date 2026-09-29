@@ -1,3 +1,48 @@
+## LOTE CURSOR — Orçamento convert banner consolidado (pós multi-select) (2026-09-29T22:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Orçamento convert disabled reasons — banner único (validade+snapshot+dirty+simular) |
+| Branch | `cursor/comercial360-onda5-convert-banner-392b` |
+| Base | `origin/cursor/comercial360-onda5-multiselect-stub-392b` tip `84e17c88` (#160 CI SUCCESS) |
+| Tip | feat `cc74f381` · branch HEAD `61fb0fba` (docs) |
+| Draft PR | **#161** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/161 |
+| Escopo | `evaluateOrcamentoConvertUiGate` consolida motivos; um Alert fail-closed no detalhe + diálogo Converter; dirty/simular só no mesmo `editingId`; meta `convertDisabledReasonsBannerFailClosed`; **sem migration** |
+| Meta | `convertDisabledReasonsBannerFailClosed` + preserva **Pedido backend HTTP is active** |
+| Testes | orcamento-ui-policy **18/18** + frontend-integration **2/2**; runtime07b/08c/09 **23/23**; `git diff --check` PASS |
+| Colisão | A sem campos Pedido parcial; D overlap #160 bulk export; anexos #59–67; CreditPort 032; sem Codex/merge/VPS; sem 025–028 |
+| Próximo | **B** Observações length counter UX **ou** **D** list export CSV stub toolbar **ou** CostPort BFF / PDF-anexos sem colidir |
+
+Arquivos: `orcamentoUiPolicy.js`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, `tests/orcamento-ui-policy.test.js`, `tests/pedido-frontend-integration.test.js`, `server/tests/runtime07b.test.ts`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: validade+snapshot já eram Alerts separados; faltava consolidar + dirty/simular no botão Converter.
+
+---
+
+## AUTÔNOMO ATIVO — owner ausente (2026-09-29T22:20Z)
+
+Continuando Comercial 360 sem merge/VPS.
+
+### Empilhados agora (tip → main via #151)
+| PR | Escopo |
+|---|---|
+| #154 | Dirty form abandon |
+| #156 | Crédito UI fail-closed |
+| #157 | Margem UI fail-closed |
+| #158 | Entrega exige endereço |
+| #159 | Data Entrega Cliente fail-closed |
+| #160 | Multi-select stub fail-closed |
+| (este) | Convert banner consolidado |
+
+### Bloqueios registrados
+- #153 consolidada **NÃO APTA** merge (`fba7f72b`)
+- Onda 4–6 antiga (#50/#53/#59–#67) **NÃO APTA** (migrations 025–031 em conflito)
+- #47 CostPort já em `main`
+
+Próximo: Observações counter **ou** export CSV stub toolbar **ou** CostPort BFF / PDF-anexos sem colisão.
+
+---
+
 ## LOTE CURSOR — multi-select stub fail-closed (pós data-entrega) (2026-09-29T22:07Z)
 
 | Campo | Valor |

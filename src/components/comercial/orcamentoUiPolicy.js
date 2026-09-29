@@ -224,6 +224,86 @@ export function orcamentoConvertSnapshotHint(row) {
   return comercialDocumentoSnapshotGapHint(row, { purpose: 'convert', entityLabel: 'orçamento' });
 }
 
+/** Form dirty no mesmo orçamento — converter usaria estado servidor desatualizado. */
+export const ORCAMENTO_CONVERT_DIRTY_HINT =
+  'Há alterações não salvas neste orçamento — salve ou descarte antes de converter.';
+
+/** Simulação dirty no mesmo orçamento — totais/promo podem divergir do persistido. */
+export const ORCAMENTO_CONVERT_SIMULAR_DIRTY_HINT =
+  'Simulação desatualizada — simule novamente e salve antes de converter (fail-closed).';
+
+/**
+ * Gate consolidado do botão Converter Orçamento→Pedido.
+ * Motivos: validade + snapshot + dirty + simular dirty (um banner, fail-closed).
+ * Dirty/simular só aplicam quando o formulário edita o mesmo id do row.
+ *
+ * @param {{
+ *   row?: object | null,
+ *   dirty?: boolean,
+ *   simulacaoDirty?: boolean,
+ *   editingId?: unknown,
+ *   now?: Date | number,
+ * }} [input]
+ * @returns {{
+ *   blockConvert: boolean,
+ *   reasons: Array<{ code: string, message: string }>,
+ *   bannerText: string | null,
+ *   title: string | null,
+ *   validade: boolean,
+ *   snapshot: boolean,
+ *   dirty: boolean,
+ *   simularDirty: boolean,
+ * }}
+ */
+export function evaluateOrcamentoConvertUiGate(input = {}) {
+  const row = input.row;
+  const now = input.now ?? new Date();
+  /** @type {Array<{ code: string, message: string }>} */
+  const reasons = [];
+
+  if (!row || typeof row !== 'object') {
+    reasons.push({ code: 'MISSING', message: 'Orçamento inválido para conversão.' });
+  } else {
+    if (row.status && String(row.status) !== 'EM_ABERTO') {
+      reasons.push({
+        code: 'STATUS',
+        message: 'Somente orçamentos em aberto podem ser convertidos.',
+      });
+    }
+    const validadeHint = orcamentoValidadeHint(row.validade_em, now);
+    if (validadeHint) {
+      reasons.push({ code: 'VALIDADE', message: validadeHint });
+    }
+    const snapshotHint = orcamentoConvertSnapshotHint(row);
+    if (snapshotHint) {
+      reasons.push({ code: 'SNAPSHOT', message: snapshotHint });
+    }
+  }
+
+  const rowId = row?.id != null ? String(row.id).trim() : '';
+  const editingId = input.editingId != null ? String(input.editingId).trim() : '';
+  const formAffectsRow = Boolean(rowId) && Boolean(editingId) && rowId === editingId;
+  if (formAffectsRow && Boolean(input.dirty)) {
+    reasons.push({ code: 'DIRTY', message: ORCAMENTO_CONVERT_DIRTY_HINT });
+  }
+  if (formAffectsRow && Boolean(input.simulacaoDirty)) {
+    reasons.push({ code: 'SIMULAR_DIRTY', message: ORCAMENTO_CONVERT_SIMULAR_DIRTY_HINT });
+  }
+
+  const blockConvert = reasons.length > 0;
+  const joined = blockConvert ? reasons.map((item) => item.message).join(' · ') : '';
+  return {
+    blockConvert,
+    reasons,
+    bannerText: blockConvert ? `Conversão bloqueada: ${joined}` : null,
+    title: blockConvert ? joined : null,
+    validade: reasons.some((item) => item.code === 'VALIDADE'),
+    snapshot: reasons.some((item) => item.code === 'SNAPSHOT'),
+    dirty: reasons.some((item) => item.code === 'DIRTY'),
+    simularDirty: reasons.some((item) => item.code === 'SIMULAR_DIRTY'),
+  };
+}
+
 function formatResumoMoney(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 }

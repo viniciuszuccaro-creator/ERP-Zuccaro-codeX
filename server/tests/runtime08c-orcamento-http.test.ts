@@ -185,6 +185,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     simulacaoDirtyFailClosed: true,
     textoResumoPreviewFailClosed: true,
     listMultiSelectStubFailClosed: true,
+    convertDisabledReasonsBannerFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.match(result.body.note, /UI alçada de desconto fail-closed/);
@@ -197,6 +198,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /busca vazia ≠ erro HTTP/);
   assert.match(result.body.note, /troca de tenant limpa form\/list cache comercial fail-closed/);
   assert.match(result.body.note, /multi-select stub fail-closed/);
+  assert.match(result.body.note, /Converter disabled reasons consolidados|evaluateOrcamentoConvertUiGate/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
