@@ -540,15 +540,20 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
   assert.equal(meta.obra.optionalOnPedido, true);
   assert.ok(!meta.httpPilotEntities.includes('Obra'));
   assert.ok(!meta.httpPilotEntities.includes('ClienteLocal'));
-  assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
   if (['ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime)) {
-    assert.equal(meta.tabelaPreco?.frontendHttp, false);
     assert.ok(meta.preparedEntities.includes('TabelaPreco'));
     if (meta.runtime === 'ERP-RUNTIME-08B') {
+      assert.equal(meta.tabelaPreco?.frontendHttp, true);
+      assert.ok(meta.httpPilotEntities.includes('TabelaPreco'));
       assert.ok(meta.preparedEntities.includes('CondicaoPagamento'));
       assert.equal(meta.condicaoPagamento?.frontendHttp, true);
       assert.ok(meta.httpPilotEntities.includes('CondicaoPagamento'));
+    } else {
+      assert.equal(meta.tabelaPreco?.frontendHttp, false);
+      assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
     }
+  } else {
+    assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
   }
 
   const viewHeaders = groupHeaders(ACTOR_VIEW);

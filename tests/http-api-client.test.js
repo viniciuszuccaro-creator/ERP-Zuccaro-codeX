@@ -63,19 +63,21 @@ test('HttpApiClient supports relative same-origin URLs', async () => {
   assert.equal(urls[0].startsWith('/api/v1/marcas'), true);
 });
 
-test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento sem Produto', () => {
+test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + TabelaPreco sem Produto', () => {
   assert.deepEqual([...HTTP_PILOT_ENTITIES], [
     'Marca',
     'UnidadeMedida',
     'GrupoProduto',
     'SetorAtividade',
     'CondicaoPagamento',
+    'TabelaPreco',
   ]);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Produto'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Cliente'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('CondicaoPagamento'), true);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('TabelaPreco'), true);
 });
 test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do formulario', () => {
   assert.equal(resolveHttpPilotEntities({}).includes('Produto'), false);

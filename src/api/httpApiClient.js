@@ -299,6 +299,105 @@ export function createHttpApiClient(options = {}) {
         },
       };
     })(),
+    // TabelaPreco R07B — piloto HTTP (CRUD + vínculo/padrão/itens + preco-cliente).
+    TabelaPreco: (() => {
+      const base = createCrudEntity('/api/v1/tabelas-preco', {
+        searchKeys: ['search', 'nome', 'codigo'],
+        ativoKeys: ['ativo'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/tabelas-preco', { query: { limit, ativo: true } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/tabelas-preco', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.codigo,
+              ativo: query.ativo ?? query.ativa,
+              vigente: query.vigente,
+              eh_padrao: query.eh_padrao ?? query.ehPadrao,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        restore(id, { signal } = {}) {
+          return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/restore`, {
+            method: 'POST',
+            signal,
+          });
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        linkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        unlinkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'DELETE', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        restoreEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        setPadrao(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/padrao`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options] */
+        listItens(id, { limit = 100, offset = 0, ativo, signal } = {}) {
+          return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+            query: { limit, offset, ativo },
+            signal,
+            unwrap: false,
+          });
+        },
+        /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+        createItem(id, payload, { signal } = {}) {
+          return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+            method: 'POST',
+            body: payload,
+            signal,
+          });
+        },
+        /** @param {string} id @param {string} itemId @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+        updateItem(id, itemId, payload, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+            { method: 'PATCH', body: payload, signal },
+          );
+        },
+        /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+        softDeleteItem(id, itemId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+            { method: 'DELETE', signal },
+          );
+        },
+        /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+        restoreItem(id, itemId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}/restore`,
+            { method: 'POST', signal },
+          );
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -531,6 +630,141 @@ export function createHttpApiClient(options = {}) {
       });
     },
   };
+  /**
+   * TabelaPreco canônica (R07B + Onda 2 preco-cliente).
+   * Tenant só nos headers via getScope; RBAC Cadastros.tabela_preco.* no BFF.
+   */
+  const tabelasPreco = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, vigente?: boolean, ehPadrao?: boolean, signal?: AbortSignal }} [options]
+     */
+    list({ limit = 50, offset = 0, search, ativo = true, vigente, ehPadrao, signal } = {}) {
+      return request('/api/v1/tabelas-preco', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          vigente,
+          eh_padrao: ehPadrao,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/tabelas-preco', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    softDelete(id, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    restore(id, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    linkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    unlinkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'DELETE', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    restoreEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    setPadrao(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/padrao`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options] */
+    listItens(id, { limit = 100, offset = 0, ativo, signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+        query: { limit, offset, ativo },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    createItem(id, payload, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+        method: 'POST',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {string} itemId @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    updateItem(id, itemId, payload, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+        { method: 'PATCH', body: payload, signal },
+      );
+    },
+    /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+    softDeleteItem(id, itemId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+        { method: 'DELETE', signal },
+      );
+    },
+    /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+    restoreItem(id, itemId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}/restore`,
+        { method: 'POST', signal },
+      );
+    },
+    /**
+     * Resolve preço fail-closed via vínculo ClienteEmpresa → padrão Empresa.
+     * (Cadastros.tabela_preco.visualizar + cliente_empresa.visualizar no backend).
+     * @param {{ clienteEmpresaId: string, produtoId: string, unidadeMedidaId: string, businessDate?: string }} params
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    resolveClientPrice(params, { signal } = {}) {
+      return request('/api/v1/tabelas-preco/preco-cliente', {
+        query: {
+          clienteEmpresaId: params.clienteEmpresaId,
+          produtoId: params.produtoId,
+          unidadeMedidaId: params.unidadeMedidaId,
+          businessDate: params.businessDate,
+        },
+        signal,
+      });
+    },
+  };
   const clientes = {
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
@@ -578,6 +812,7 @@ export function createHttpApiClient(options = {}) {
     pedidos,
     comercial,
     condicoesPagamento,
+    tabelasPreco,
     clientes,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
