@@ -9,7 +9,7 @@
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#127` `cursor/comercial360-onda3-produto-http-392b` (tip `8fba0782`) |
 | Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
-| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; `ManagePullRequest` indisponível |
+| Draft PR | **#129** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/129 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; `ManagePullRequest` indisponível |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
 | Tip | `7dbfe5cf` |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; 030 (029=condição; 025–028 reservados #50/#92) |
