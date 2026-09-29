@@ -9,7 +9,7 @@
 | Implantado VPS | **NÃO** |
 | Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
 | Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
-| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Draft PR | **#131** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/131 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
 | Tip | `07561d2d` |
 | Meta | note preserva **Pedido backend HTTP is active** + `tabelaSnapshot` / snapshot TabelaPreco |
