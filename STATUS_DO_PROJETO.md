@@ -1,3 +1,26 @@
+## LOTE CURSOR — simular-venda dirty-state fail-closed (pós-#143) (2026-09-29T18:05Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Simular-venda dirty-state: limpa preview/agenda ao mudar condição/itens/promo; exige re-simular antes de salvar (fail-closed UI+tests) |
+| Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
+| Base | `origin/cursor/comercial360-onda3-delivery-address-392b` tip `4777b4fb` (#143) |
+| Tip | *(pendente commit)* |
+| Draft PR | base=`cursor/comercial360-onda3-delivery-address-392b` — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-simular-dirty-392b` |
+| Escopo | Flag `simulacaoDirty` + gate Salvar em Orçamento/Pedido; invalidação só em campos de preço (não observações/Local/Obra); banner dirty; meta `simulacaoDirtyFailClosed`; sem migration |
+| Meta | `simulacaoDirtyFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-simulacao-ui-policy **17/17 PASS**; orcamento/list/alcada/pedido UI **35/35 PASS**; runtime07b+08c+09 **23/23 PASS**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | B list empty≠error já #136; C masters banner #140; delivery #143; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+
+Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico de escolha: limpeza de preview já existia, mas **Salvar seguia liberado** sem re-simular — maior gap seguro pós-#143. B/C já cobertos no stack.
+
+---
+
 ## LOTE CURSOR — delivery Local/Obra address summary fail-closed (pós-#142) (2026-09-29T17:55Z)
 
 | Campo | Valor |

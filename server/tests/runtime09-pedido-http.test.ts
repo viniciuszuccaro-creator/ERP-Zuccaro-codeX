@@ -121,10 +121,12 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.mastersPickerFailClosed, true);
   assert.equal(meta.body.pedido.parcelaSchedulePreviewFailClosed, true);
   assert.equal(meta.body.pedido.deliveryAddressSummaryFailClosed, true);
+  assert.equal(meta.body.pedido.simulacaoDirtyFailClosed, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido cancel fail-closed/);
   assert.match(String(meta.body.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
   assert.match(String(meta.body.note || ''), /UI alçada de desconto fail-closed/);
   assert.match(String(meta.body.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
   assert.match(String(meta.body.note || ''), /agenda de parcelas read-only/);
+  assert.match(String(meta.body.note || ''), /simular-venda dirty-state fail-closed/);
 });

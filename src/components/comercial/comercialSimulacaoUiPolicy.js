@@ -182,6 +182,68 @@ export function mergeSimulacaoBeforeSave(form, lastSimulation, scope) {
   return applySimulacaoToForm(form, simulation);
 }
 
+/** Mensagem canônica quando preview/agenda ficou obsoleto após mudar condição/itens/promo. */
+export const SIMULACAO_DIRTY_HINT =
+  'Condição, itens ou promoção mudaram após a simulação — simule novamente antes de salvar (fail-closed).';
+
+/**
+ * Campos do formulário que invalidam preview/agenda de simular-venda.
+ * Observações, Local/Obra e flags operacionais NÃO invalidam.
+ */
+export const SIMULACAO_INVALIDATING_FORM_KEYS = Object.freeze([
+  'cliente_empresa_id',
+  'condicao_pagamento_id',
+  'itens',
+  'validade_em',
+  'data_entrega_solicitada',
+]);
+
+/**
+ * @param {string} key
+ * @returns {boolean}
+ */
+export function shouldInvalidateSimulacaoOnFormKey(key) {
+  return SIMULACAO_INVALIDATING_FORM_KEYS.includes(key);
+}
+
+/**
+ * Após mudança em condição/itens/promo/base_date: limpa preview e marca dirty.
+ * @returns {{ simulacaoDirty: true, simulacaoPreview: null, lastSimulation: null }}
+ */
+export function markSimulacaoDirtyAfterPricingChange() {
+  return {
+    simulacaoDirty: true,
+    simulacaoPreview: null,
+    lastSimulation: null,
+  };
+}
+
+/**
+ * Gate fail-closed do Salvar: se dirty e o usuário pode simular, exige re-simular.
+ * Sem permissão de simular não soft-locka (backend continua autoridade no write).
+ * @param {{ simulacaoDirty?: boolean, canSimular?: boolean }} input
+ * @returns {{ blockSave: boolean, dirty: boolean, hint: string | null }}
+ */
+export function evaluateSimulacaoDirtySaveGate(input = {}) {
+  const dirty = Boolean(input.simulacaoDirty);
+  const canSimular = Boolean(input.canSimular);
+  if (!canSimular || !dirty) {
+    return { blockSave: false, dirty, hint: null };
+  }
+  return { blockSave: true, dirty: true, hint: SIMULACAO_DIRTY_HINT };
+}
+
+/**
+ * @param {{ simulacaoDirty?: boolean, canSimular?: boolean }} input
+ */
+export function assertSimulacaoFreshForSave(input = {}) {
+  const gate = evaluateSimulacaoDirtySaveGate(input);
+  if (gate.blockSave) {
+    throw new Error(gate.hint || SIMULACAO_DIRTY_HINT);
+  }
+  return gate;
+}
+
 /**
  * Totais exibidos: prioriza preview do servidor; senão rascunho local (não persistido).
  */
