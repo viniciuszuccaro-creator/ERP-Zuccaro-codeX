@@ -437,7 +437,7 @@ Preferir commits pequenos, coerentes e reversíveis. Não misturar vários módu
 
 Não reescrever histórico, fazer force push, reset destrutivo ou apagar branch sem autorização explícita.
 
-Após commit de lote válido: `git push origin main`. Não deixar commits só na máquina local. Não esperar o usuário pedir push. Se as validações do lote falharem, não commitar nem enviar.
+Após commit de lote válido: `git push origin <branch-de-trabalho>` e confirmar o SHA remoto. Não deixar commits só na máquina local. Não esperar o usuário pedir push. Se as validações do lote falharem, não commitar nem enviar. A `main` muda somente por integração revisada e autorizada da PR; o push de checkpoints intermediários nunca deve ir diretamente para `main`.
 
 Mensagem de commit deve descrever a finalidade, não apenas “ajustes”.
 
@@ -473,7 +473,7 @@ Sequência obrigatória:
 3. Se as validações do lote falharem: não fazer commit e não fazer push.
 4. `git add` somente dos arquivos do lote.
 5. `git commit` com mensagem curta em português, no estilo do repositório, explicando o porquê.
-6. `git push origin main`.
+6. `git push origin <branch-de-trabalho>`; manter a PR correspondente atualizada. Não fazer push direto na `main` nem mesclar sem revisão e autorização aplicáveis.
 7. Informar o hash do commit e confirmar que o push chegou ao remoto.
 
 Regras:
