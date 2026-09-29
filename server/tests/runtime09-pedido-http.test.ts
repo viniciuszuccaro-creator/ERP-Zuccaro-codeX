@@ -137,6 +137,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.orcamento?.validadeUiFailClosed, true);
   assert.equal(meta.body.orcamento?.printPdfUiFailClosed, true);
   assert.equal(meta.body.orcamento?.shareTextUiFailClosed, true);
+  assert.equal(meta.body.orcamento?.detailSummaryUiFailClosed, true);
   assert.equal(meta.body.pedido.observacoesMaxLengthUiFailClosed, true);
   assert.equal(meta.body.pedido.listPageCsvExportFailClosed, true);
   assert.equal(meta.body.pedido.cancelMotivoUiFailClosed, true);
@@ -162,4 +163,5 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.match(String(meta.body.note || ''), /Pedido compartilhar texto WhatsApp|evaluatePedidoShareUiGate/);
   assert.match(String(meta.body.note || ''), /Pedido detalhe summary UI fail-closed|resolvePedidoDetailSummaryUiState/);
   assert.match(String(meta.body.note || ''), /Orçamento Imprimir\/PDF e compartilhar texto fail-closed|evaluateOrcamentoPrintPdfUiGate/);
+  assert.match(String(meta.body.note || ''), /Orçamento detalhe summary UI fail-closed|resolveOrcamentoDetailSummaryUiState/);
 });

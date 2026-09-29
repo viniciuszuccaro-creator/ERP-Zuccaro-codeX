@@ -433,6 +433,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.equal(meta.orcamento?.validadeUiFailClosed, true);
     assert.equal(meta.orcamento?.printPdfUiFailClosed, true);
     assert.equal(meta.orcamento?.shareTextUiFailClosed, true);
+    assert.equal(meta.orcamento?.detailSummaryUiFailClosed, true);
     assert.equal(meta.pedido?.observacoesMaxLengthUiFailClosed, true);
     assert.equal(meta.pedido?.listPageCsvExportFailClosed, true);
     assert.equal(meta.pedido?.cancelMotivoUiFailClosed, true);
@@ -459,6 +460,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.match(String(meta.note || ''), /Pedido compartilhar texto WhatsApp|evaluatePedidoShareUiGate/);
     assert.match(String(meta.note || ''), /Pedido detalhe summary UI fail-closed|resolvePedidoDetailSummaryUiState/);
     assert.match(String(meta.note || ''), /Orçamento Imprimir\/PDF e compartilhar texto fail-closed|evaluateOrcamentoPrintPdfUiGate/);
+    assert.match(String(meta.note || ''), /Orçamento detalhe summary UI fail-closed|resolveOrcamentoDetailSummaryUiState/);
     assert.match(String(meta.note || ''), /conversao Orçamento→Pedido copia\/verifica snapshots fail-closed/);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {

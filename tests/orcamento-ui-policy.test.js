@@ -23,6 +23,7 @@ import {
   evaluateOrcamentoValidadeUiGate,
   evaluateOrcamentoPrintPdfUiGate,
   evaluateOrcamentoShareUiGate,
+  resolveOrcamentoDetailSummaryUiState,
   todayOrcamentoValidadeCalendarDay,
   resolveOrcamentoResumoPreviewState,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
@@ -440,4 +441,30 @@ test('painel orçamento wire Imprimir/PDF e share fail-closed', async () => {
   assert.match(tab, /printPdfGate\.blockPrint/);
   assert.match(tab, /shareGate\.blockShare/);
   assert.doesNotMatch(tab, /api\.whatsapp|twilio/i);
+});
+
+test('orcamento detail summary UI fail-closed e snapshot gap', () => {
+  const completo = {
+    numero: '00000077', status: 'EM_ABERTO', validade_em: '2027-04-01T12:00:00.000Z',
+    condicao_pagamento_id: 'cp', condicao_pagamento_codigo_snapshot: 'AV', condicao_pagamento_nome_snapshot: 'À vista',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 0, percentual: '100.000000' }],
+    tabela_preco_id: 'tab', tabela_preco_codigo_snapshot: 'VAREJ', tabela_preco_nome_snapshot: 'Varejo',
+    promocao_aplicada: false, subtotal: '10', desconto: '0', total: '10',
+    itens: [{ id: 'i1', descricao: 'X', unidade_sigla: 'UN', quantidade: '1', preco_unitario: '10', desconto: '0', total: '10' }],
+  };
+  const ready = resolveOrcamentoDetailSummaryUiState(completo, { clienteNome: 'Cli' });
+  assert.equal(ready.mode, 'ready');
+  assert.equal(ready.fields.clienteNome, 'Cli');
+  assert.equal(resolveOrcamentoDetailSummaryUiState(null).mode, 'missing');
+  assert.equal(resolveOrcamentoDetailSummaryUiState({ numero: '1' }).mode, 'invalid');
+  const gap = resolveOrcamentoDetailSummaryUiState({ ...completo, tabela_preco_nome_snapshot: '' });
+  assert.equal(gap.mode, 'snapshot_gap');
+});
+
+test('painel orçamento wire detalhe summary snapshot gap', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /resolveOrcamentoDetailSummaryUiState/);
+  assert.match(tab, /orcamento-detail-summary/);
+  assert.match(tab, /orcamento-detail-snapshot-gap/);
+  assert.match(tab, /Comercial\.orcamento\.detail-summary/);
 });
