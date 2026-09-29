@@ -1,45 +1,57 @@
-## PARECER CURSOR — #107 `38a0c0c2` preflight staging / prepararLoteStagingLegado (2026-09-29T10:05Z)
+## PARECER CURSOR — #107 `91552de1` preflight staging / prepararLoteStagingLegado (2026-09-29T10:11Z)
 
 | Campo | Valor |
 |---|---|
-| SHA | `38a0c0c21cb78d8730af11d0430919c86e389966` |
+| SHA | `91552de18523334a98b6d247390d162f8da66bc9` |
 | Branch | `codex/legado-staging-reconciliacao-20260929` |
 | Base | #106 `95fef57a` (`codex/legado-inventario-20260928`) |
-| CI | **SUCCESS** (frontend+backend; pending=0; runs 36553094991 / 36553088390) |
-| Substitui | NÃO HOMOLOGADO peer `0aeb9d8f` (P1-A/P1-B); intermediário `82daf4c3` (P1s fechados, CI então pendente) |
+| CI | **SUCCESS** (frontend+backend; pending=0) |
+| Substitui | NÃO HOMOLOGADO peer `0aeb9d8f` (P1-A/P1-B); intermediários `82daf4c3`/`38a0c0c2`/`fd56309e` |
 
-### Escopo deste SHA (delta vs `0aeb9d8f`)
-- Commits: `82daf4c3` (agregado grupo + índice trim) → `38a0c0c2` (aliases stripSegredos).
-- `scripts/legado/staging-scope-gate.mjs` + `tests/legado-staging-scope-gate.test.js`
-- `src/components/lib/migracaoErpPolicy.js` + `tests/migracao-erp-policy.test.js` (normalização camelCase/espaços/`access_token`/`client_secret`/protótipo nulo)
-- STATUS Codex; **sem** import `src/` novo; mapper **#48** intocado; sem dados reais / import / VPS / merge.
+### Escopo (delta vs `0aeb9d8f`)
+- `82daf4c3` agregado grupo + índice trim → `38a0c0c2` aliases stripSegredos → `fd56309e` índice `empresaId` → `91552de1` rejeita payload não-JSON na sanitização.
+- Arquivos: `scripts/legado/staging-scope-gate.mjs`, `tests/legado-staging-scope-gate.test.js`, `src/components/lib/migracaoErpPolicy.js`, `tests/migracao-erp-policy.test.js`, STATUS.
+- Mapper **#48** intocado; sem dados reais / import / VPS / merge.
 
-### P1 fechados (prova comportamental independente no SHA)
-| ID | Defeito em `0aeb9d8f` | Prova em `38a0c0c2` |
+### P1 fechados (prova behav independente neste SHA)
+| ID | Em `0aeb9d8f` | Prova `91552de1` |
 |---|---|---|
-| P1-A | Mestre sem `empresaId` + `codigoEmpresaLegado: '003'` apto e agregado `cliente\|003` | `bloqueado=false`, `aptos=1`, `porEntidadeEmpresa={"cliente\|grupo":1}`; **sem** `cliente\|003` |
-| P1-B | Índice com `groupId`/`codigoLegado` só espaços não rejeitado antes do trim | Ambos lançam `Indice de staging existente sem identidade e assinatura validas.` |
+| P1-A | Mestre sem `empresaId` + `codigoEmpresaLegado: '003'` → agregado `cliente\|003` | `porEntidadeEmpresa={ 'cliente\|grupo': 1 }` |
+| P1-B | Índice `groupId`/`codigoLegado` só espaços aceito | Lança `Indice de staging existente…` |
 
-### Sanitização (achado residual de `0aeb9d8f`, fechado em `38a0c0c2`)
-- `apiKey` / `APIKEY` / `senhaHash` / `access_token` / `client_secret` / `'token '` / nested protótipo nulo: `JSON.stringify(filtrado)` **sem** `SEGREDO`; origem intacta.
+### Residuais fechados na linhagem
+| Item | Fechado em | Prova |
+|---|---|---|
+| Aliases stripSegredos (camelCase/espaços/`access_token`/`client_secret`/protótipo nulo) | `38a0c0c2` | `JSON` sem `SEGREDO` |
+| Índice `empresaId` whitespace / mestre com empresa | `fd56309e` | Lança `Indice de staging existente…` |
+| Instância de classe compartilhava `token` por referência | `91552de1` | `stripSegredosMigracao({nested: new Box()})` lança `Migracao aceita somente registros JSON simples para sanitizacao.` |
 
-### Testes locais (worktree `38a0c0c2`)
-- `tests/legado-staging-scope-gate.test.js` — **10/10** pass (incl. mestre→`\|grupo` e índice whitespace)
-
-### P2 residual (não bloqueia homologação)
-- `empresaId` só espaços no índice **não** é rejeitado: chave fica vazia, retry de `e1` não conta reuso e o lote devolve registro novo (`aptos=1`, `privados=1`). Preferível alinhar ao mesmo trim fail-closed de `groupId`/`codigoLegado`, mas fora do escopo P1-A/B.
+### Testes locais
+- `tests/legado-staging-scope-gate.test.js` — **10/10** pass
 
 ### Coordenação
-- Preflight em memória; staging/importação real permanece **BLOCKED** até vínculos jurídicos comprovados + gate humano + coordenação/#48.
-- Cursor **não** mergeia nem faz deploy VPS. Sem PII/legado real no GitHub.
+- Preflight em memória; importação/staging real **BLOCKED** até vínculos jurídicos + gate humano + #48.
+- Cursor **não** mergeia / deploy VPS. Sem PII no GitHub.
 
 ### Peer
-- Comentários GitHub em `9d99b53f` / `0aeb9d8f` / `82daf4c3`; em `38a0c0c2` só ack «Taking a look!» — sem parecer canônico do peer neste SHA. Este STATUS/HANDOFF é o parecer canônico.
+- Peer comentou `fd56309e` (CI então pendente; sem APROVADO formal). Em `91552de1` só ack «Taking a look!» no momento desta publicação. STATUS/HANDOFF = parecer canônico.
 
 ### Veredito
-**APROVADO** neste SHA (`38a0c0c2`). P1-A e P1-B fechados; CI SUCCESS; sem P1 novo bloqueante.
+**APROVADO** neste SHA (`91552de1`). P1-A/P1-B fechados; residuais índice/sanitização fechados; CI SUCCESS; sem P1 novo.
 
 ---
+
+## NOTA — #107 SHAs intermediários (2026-09-29)
+
+| SHA | Situação |
+|---|---|
+| `0aeb9d8f` | Peer **NÃO HOMOLOGADO** (P1-A/P1-B + vazamento aliases) |
+| `82daf4c3` | P1-A/B corrigidos; CI/peer então pendentes; residual `empresaId` |
+| `38a0c0c2` | Aliases OK + CI SUCCESS; residual `empresaId` / classe — **SUPERSEDED** |
+| `fd56309e` | Índice `empresaId` OK; peer sem CI terminal no comentário — **SUPERSEDED** por `91552de1` |
+
+---
+
 
 ## PARECER CURSOR — #106 `95fef57a` inventário + gate de escopo (2026-09-28T20:39Z)
 

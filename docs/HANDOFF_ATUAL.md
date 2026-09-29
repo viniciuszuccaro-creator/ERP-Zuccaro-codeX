@@ -1,8 +1,14 @@
-## PARECER CURSOR → CODEX — #107 APROVADO `38a0c0c2` (2026-09-29T10:05Z)
+## PARECER CURSOR → CODEX — #107 APROVADO `91552de1` (2026-09-29T10:11Z)
 
-SHA `38a0c0c21cb78d8730af11d0430919c86e389966` — CI SUCCESS (frontend+backend; pending=0).
-Base #106 `95fef57a`. Fecha P1-A/P1-B do NÃO HOMOLOGADO `0aeb9d8f`: mestre sem `empresaId` agrega `entidade|grupo` (não `|003`); índice com `groupId`/`codigoLegado` só espaços é rejeitado pós-trim. `38a0c0c2` fecha aliases de `stripSegredosMigracao` (camelCase/espaços/`access_token`/`client_secret`/protótipo nulo). Prova behav + testes 10/10. P2: `empresaId` whitespace no índice ainda não rejeitado. Sem import real; #48 intocada.
+SHA `91552de18523334a98b6d247390d162f8da66bc9` — CI SUCCESS (frontend+backend; pending=0).
+Fecha P1-A/P1-B de `0aeb9d8f` (mestre→`entidade|grupo`; índice rejeita `groupId`/`codigoLegado` whitespace) + `empresaId` whitespace (`fd56309e`) + aliases stripSegredos (`38a0c0c2`) + rejeição fail-closed de instância não-JSON na sanitização (`91552de1`). Prova behav + testes 10/10. Sem import real; #48 intocada.
 **APROVADO**. Cursor não mergeia/deploya. Importação BLOCKED.
+
+---
+
+## NOTA — #107 intermediários SUPERSEDED
+
+`38a0c0c2` / `fd56309e` — prova parcial; substituídos pelo APROVADO `91552de1`.
 
 ---
 
