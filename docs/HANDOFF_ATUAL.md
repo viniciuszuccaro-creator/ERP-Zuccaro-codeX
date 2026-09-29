@@ -7,7 +7,9 @@
 | Base | `#127` tip `8fba0782` (`cursor/comercial360-onda3-produto-http-392b`) |
 | Escopo | migration **030** + wire create/update/get/convert + UI save refs; reusa `comercialPromocaoPolicy` |
 | Meta | note preserva `Pedido backend HTTP is active` |
-| Testes | 64 server focados + 20 UI PASS; typecheck PASS |
+| Tip | `7dbfe5cf` |
+| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
 | Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
 | Próximo | choice B (simular→persist desconto) **ou** Onda 4 sem colisão #50/#92 |
 
