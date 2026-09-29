@@ -1,3 +1,44 @@
+## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `TabelaPreco` + CRUD/vínculo/padrão/itens/`preco-cliente` no cliente; Pedido lista tabelas via HTTP; Orçamento/Pedido resolvem preço ao selecionar produto; sem migration |
+| Testado | **SIM** — 13 novos (client+policy) + http-api-client/condicao regressão (42/42) + runtime07b 13/13 + runtime08c 6/6 (note Pedido backend HTTP) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#117` `cursor/comercial360-onda2-condicao-http-392b` (tip `9bb3bccc`) |
+| Branch | `cursor/comercial360-onda2-tabela-http-392b` @ `d3147801` (feat `988c6ce3`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-condicao-http-392b...cursor/comercial360-onda2-tabela-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#117; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + TabelaPreco)
+- `src/api/httpApiClient.js` (entity + `tabelasPreco` CRUD + `resolveClientPrice`)
+- `server/src/api/router.ts` (meta `frontendHttp: true` + pilot/httpEntities; note preserva `Pedido backend HTTP is active`)
+- `src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (resolve preço no produto)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (masters HTTP + resolve preço)
+- `tests/comercial-tabela-preco-http-client.test.js`
+- `tests/comercial-tabela-preco-http-ui-policy.test.js`
+- `tests/http-api-client.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_07B.md` / `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`
+
+### Escopo
+
+- Reutiliza API R07B já existente (`/api/v1/tabelas-preco` + `preco-cliente`); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.tabela_preco.* fail-closed no BFF.
+- Persistência canônica: `tabela_preco_id` no Pedido; preço de item continua autoridade do servidor no save. Preview no form é local.
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, snapshot persistido de preço.
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas/preço em Orçamento/Pedido (**migration** autorizada); Onda 3 follow-up sem CRM paralelo.
+
+---
+
 ## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:45Z)
 
 | Etapa | Estado |
