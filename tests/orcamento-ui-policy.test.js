@@ -176,7 +176,7 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /showDetail/);
   assert.match(tab, /openEdit/);
   assert.match(tab, /Cancelar orçamento\?/);
-  assert.match(tab, /beforeunload/);
+  assert.match(tab, /bindComercialFormBeforeUnload/);
   assert.match(tab, /\[groupId, empresaId, queryClient\]/);
   assert.match(tab, /clearComercialHttpCacheOnTenantSwitch/);
   assert.match(tab, /buildOrcamentoTenantSwitchReset/);
