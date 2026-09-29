@@ -1,4 +1,28 @@
-## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
+## LOTE CURSOR — #48 mapeador Grupo×Empresa (2026-09-29T13:08Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/legado-mapper-48-grupo003-392b` |
+| Base | `main` `d02cd012` |
+| Diretriz | `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` @ #105 `485bbe24` |
+| Arquivos reservados | `scripts/legado/mapear-registro-sintetico.mjs`, `tests/legado-mapear-sintetico.test.js`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md` |
+
+### Mudança
+- `003`/`3` = seletor de **Grupo** (quarentena `codigo_empresa_legado_grupo_seletor`); **não** empresa emissora.
+- PJ candidatas: `001`/`1`, `002`/`2`, `005`/`5` (`aptoComoEmpresa`); `004` inativa; `0`/`000` quarentena.
+- Normalização 1–3 dígitos; `abc`/`1x`/`0001` não viram empresa.
+- Mestres no Grupo (`empresa_id` vazio → chave `…\|grupo\|…`); aliases `fornecedor`/`tabela_preco`/`orcamento`/`pedido`.
+- Sem dados reais / import / VPS. Codex (#106/#107/#108) consome sem editar estes arquivos.
+
+### Testes
+- `node --test tests/legado-mapear-sintetico.test.js` — **13/13** pass + prova behav 003.
+
+### Mensagem única (Codex + Cursor)
+> Leia a PR #105 e siga docs/EXECUCAO_PARALELA_CODEX_CURSOR.md no HEAD 485bbe24. Assuma sua frente de implementação, registre os arquivos sob sua responsabilidade e entregue um lote funcional grande com testes, commit, push e CI. Revise o trabalho do outro somente no HEAD final da PR. Não encerre a execução após um microajuste ou uma consulta de status.
+
+---
+
+
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
 
