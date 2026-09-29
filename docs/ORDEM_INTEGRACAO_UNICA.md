@@ -135,3 +135,9 @@ Enquanto esta ordem não for aceita: não mergear #151 nem os degraus #114–#15
 ## Fora desta ordem
 
 Linhas abertas que não são o conjunto Comercial nem a #141 (omnicanal #68–#90, onda 6 #64–#67, handoff e demais drafts) ficam de fora até uma ordem posterior. Não entram no HEAD `6218511a`.
+
+## Ensaio integrado Codex sem merge na main
+
+- Branch `codex/integracao-comercial-legado-20260929` criada de `main` `d02cd012`. Foram integrados, somente nela, os HEADs exatos #152 `2b34338e` e #141 `b8a9f493`. O conflito de `STATUS_DO_PROJETO.md` foi resolvido preservando os registros de ambas as frentes; nao houve conflito de codigo entre essas duas candidatas.
+- O ensaio seguinte com #92 `8d9ce6e5` foi interrompido sem commit. Conflitaram `STATUS_DO_PROJETO.md`, os tipos, repositories e services de Orcamento/Pedido e `runtime01.test.ts`; nenhuma resolucao automatica por "ours/theirs" foi aceita. A #132 depende da #92 e nao entrou.
+- A integracao de #92 exige compor origem/idempotencia/versoes com snapshots de condicao, promocao e tabela, e testar especialmente insert com `pedidos.origem` obrigatoria, conversao Orcamento→Pedido, tenant, auditoria e rollback. Migrations 025–028/033 nao foram aplicadas na VPS ou no DEV. CI da branch parcial comprova somente #152 + #141, nunca o conjunto de quatro candidatas.

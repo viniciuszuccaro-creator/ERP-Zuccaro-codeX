@@ -1,5 +1,7 @@
 ## ORDEM ÚNICA — congelar HEAD Comercial e candidata contra `main` (2026-09-29T19:20Z)
 
+**Ensaio Codex posterior:** branch `codex/integracao-comercial-legado-20260929` integra #152 `2b34338e` e #141 `b8a9f493` sem tocar a `main`; conflito apenas neste status, preservando os dois blocos. Merge experimental de #92 revelou incompatibilidade nos tipos/repositórios/serviços de Orçamento/Pedido e em `runtime01.test.ts`; foi abortado sem commit. #132 permanece dependente da #92. Detalhes em `docs/ORDEM_INTEGRACAO_UNICA.md`. Esta branch parcial não comprova as quatro PRs nem autoriza merge/VPS/importação.
+
 | Campo | Valor |
 |---|---|
 | Objetivo | Congelar o conjunto #114–#151 e registrar a ordem única antes de merge ou gate VPS |
