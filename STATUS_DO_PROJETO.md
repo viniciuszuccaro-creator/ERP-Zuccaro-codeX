@@ -1,3 +1,44 @@
+## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `Produto` em `HTTP_PILOT_ENTITIES`; `http.produtos.list/get`; meta `produto.frontendHttp=true`; Orçamento/Pedido carregam itens via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy Produto + http-api-client/cliente/tabela/condicao/local-obra (52+27) + runtime03/04/07b (43/43 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#126` `cursor/comercial360-onda3-condicao-snapshot-392b` (tip `2e221def`) |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Draft PR | base `#126` — criar draft sobre `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; sem CRM paralelo |
+
+### Arquivos reservados (Cursor — lote pós-#126; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Produto)
+- `src/api/httpApiClient.js` (`produtos` list/get + entity piloto)
+- `server/src/api/router.ts` (meta `produto.frontendHttp` + pilot; note preserva **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialProdutoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx` (picker HTTP)
+- `tests/comercial-produto-http-client.test.js` / `comercial-produto-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime03.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_03.md`
+
+### Escopo
+
+- Reutiliza API R03 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; assert cross-tenant na UI policy.
+- RBAC Cadastros.produto / Comercial.orcamento|pedido.visualizar fail-closed no seletor.
+- Form V22 permanece com opt-in `VITE_ERP_HTTP_PRODUTO` via `preparedEntities` (DAM/workflow).
+
+### Próximo item independente restante
+
+- Snapshot de promoção / refs persistidas **ou** cutover restante de pickers legados; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → **este lote**.
+
+---
+
 ## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
 
 | Etapa | Estado |

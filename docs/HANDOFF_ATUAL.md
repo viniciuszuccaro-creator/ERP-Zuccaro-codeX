@@ -1,3 +1,18 @@
+## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP Produto + picker Orçamento/Pedido fail-closed; sem migration |
+| Testado | **SIM** — client/policy + http-api-client + runtime03/04/07b PASS; typecheck PASS |
+| Base | `#126` tip `2e221def` (`cursor/comercial360-onda3-condicao-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Draft PR | base `#126` — ManagePullRequest draft |
+| Próximo | promoção snapshot **ou** pickers legados; sem Codex/#104/#48 |
+
+Reservados: runtimeBackend, httpApiClient (`produtos`), router meta (Pedido backend HTTP is active), comercialProdutoHttpUiPolicy, OrcamentosTab, PedidoCanonicoPanel, testes client/policy/runtime03/07b, docs R03. Sem merge/VPS.
+
+---
+
 ## LOTE CURSOR — snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
 
 | Etapa | Estado |
