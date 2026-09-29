@@ -1,3 +1,11 @@
+## AUTÔNOMO — tip #162–#165 (2026-09-29T22:45Z)
+
+#163/#164 CI SUCCESS. Novo: **#165** validade Orçamento min+gate.
+Stack tip: …→#162 obs→#163 CSV→#164 cancel motivo→**#165** validade.
+Sem merge/VPS. Continuando.
+
+---
+
 ## AUTÔNOMO — tip #162–#164 (2026-09-29T22:40Z)
 
 Stack: #161 convert-banner → **#162** obs limit → **#163** CSV página → **#164** cancel motivo.
