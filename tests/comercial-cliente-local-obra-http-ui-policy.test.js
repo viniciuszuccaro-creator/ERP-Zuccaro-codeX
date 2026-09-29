@@ -4,13 +4,16 @@ import test from 'node:test';
 import {
   assertClienteLocalNoContexto,
   assertObraNoContexto,
+  buildClienteLocalAddressSummary,
   buildClienteLocalDisplayLabel,
+  buildObraAddressSummary,
   buildObraDisplayLabel,
   canLoadClienteLocaisHttp,
   canLoadObrasHttp,
   normalizeClienteLocaisListPayload,
   normalizeObrasListPayload,
   resolveClienteIdFromEmpresaLink,
+  resolveDeliveryAddressUiState,
 } from '../src/components/comercial/comercialClienteLocalObraHttpUiPolicy.js';
 
 const GROUP = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -121,4 +124,163 @@ test('assertClienteLocalNoContexto e assertObraNoContexto falham cross-tenant', 
 test('display labels preferem nome/código', () => {
   assert.equal(buildClienteLocalDisplayLabel({ nome: 'Depósito' }), 'Depósito');
   assert.equal(buildObraDisplayLabel({ codigo: '000001', nome: 'Torre' }), '000001 — Torre');
+});
+
+test('buildClienteLocalAddressSummary monta linhas sem inventar campos', () => {
+  const summary = buildClienteLocalAddressSummary({
+    id: LOCAL,
+    nome: 'Obra Norte',
+    logradouro: 'Rua A',
+    numero: '100',
+    complemento: 'Galpão',
+    bairro: 'Centro',
+    cidade: 'Campinas',
+    uf: 'SP',
+    cep: '13000-000',
+    endereco_incompleto: false,
+  });
+  assert.equal(summary.kind, 'local');
+  assert.equal(summary.incomplete, false);
+  assert.equal(summary.lines[0], 'Rua A, 100 — Galpão');
+  assert.match(summary.lines.join(' '), /Campinas\/SP/);
+  assert.match(summary.lines.join(' '), /CEP 13000-000/);
+  assert.equal(buildClienteLocalAddressSummary(null), null);
+});
+
+test('buildClienteLocalAddressSummary marca incompleto sem logradouro/cidade', () => {
+  const summary = buildClienteLocalAddressSummary({
+    id: LOCAL,
+    nome: 'X',
+    logradouro: '',
+    cidade: '',
+    uf: 'SP',
+  });
+  assert.equal(summary.incomplete, true);
+});
+
+test('buildObraAddressSummary prefere local enriquecido; senão local_principal', () => {
+  const enriched = buildObraAddressSummary(
+    { id: OBRA, codigo: '000001', nome: 'Torre', local_principal: { id: LOCAL, nome: 'LP', cidade: 'X', uf: 'SP' } },
+    {
+      id: LOCAL,
+      nome: 'Principal',
+      logradouro: 'Av B',
+      numero: '10',
+      bairro: 'Jardim',
+      cidade: 'Campinas',
+      uf: 'SP',
+      cep: '13010-000',
+    },
+  );
+  assert.equal(enriched.kind, 'obra');
+  assert.equal(enriched.source, 'obra+local');
+  assert.match(enriched.line, /Av B, 10/);
+  assert.equal(enriched.incomplete, false);
+
+  const partial = buildObraAddressSummary({
+    id: OBRA,
+    codigo: '000002',
+    nome: 'Lote',
+    local_principal: { id: LOCAL, nome: 'Canteiro', cidade: 'Valinhos', uf: 'SP' },
+  });
+  assert.equal(partial.source, 'obra_local_principal');
+  assert.equal(partial.incomplete, false);
+  assert.match(partial.line, /Valinhos\/SP/);
+
+  const bare = buildObraAddressSummary({ id: OBRA, codigo: '000003', nome: 'Sem local' });
+  assert.equal(bare.source, 'obra_sem_local');
+  assert.equal(bare.incomplete, true);
+});
+
+test('resolveDeliveryAddressUiState fail-closed em erro HTTP get e loading', () => {
+  const none = resolveDeliveryAddressUiState({ tipoOperacao: 'ENTREGA' });
+  assert.equal(none.mode, 'none');
+  assert.equal(none.blockSave, false);
+
+  const loading = resolveDeliveryAddressUiState({
+    clienteLocalId: LOCAL,
+    isLoading: true,
+  });
+  assert.equal(loading.mode, 'loading');
+  assert.equal(loading.blockSave, true);
+
+  const erro = resolveDeliveryAddressUiState({
+    clienteLocalId: LOCAL,
+    localError: { status: 500 },
+  });
+  assert.equal(erro.mode, 'error');
+  assert.equal(erro.blockSave, true);
+  assert.match(erro.hint, /fail-closed/);
+
+  const missing = resolveDeliveryAddressUiState({
+    clienteLocalId: LOCAL,
+    localRow: null,
+  });
+  assert.equal(missing.mode, 'error');
+  assert.equal(missing.blockSave, true);
+
+  const ready = resolveDeliveryAddressUiState({
+    tipoOperacao: 'ENTREGA',
+    clienteLocalId: LOCAL,
+    localRow: {
+      id: LOCAL,
+      group_id: GROUP,
+      cliente_id: CLIENTE,
+      nome: 'Depósito',
+      logradouro: 'Rua C',
+      numero: '1',
+      bairro: 'Centro',
+      cidade: 'Campinas',
+      uf: 'SP',
+      cep: '13000-111',
+    },
+    scope: { groupId: GROUP, clienteId: CLIENTE },
+  });
+  assert.equal(ready.mode, 'ready');
+  assert.equal(ready.blockSave, false);
+  assert.equal(ready.summaries[0].kind, 'local');
+
+  const cross = resolveDeliveryAddressUiState({
+    clienteLocalId: LOCAL,
+    localRow: {
+      id: LOCAL,
+      group_id: 'ffffffff-ffff-4fff-8fff-ffffffffffff',
+      cliente_id: CLIENTE,
+      logradouro: 'Rua',
+      cidade: 'X',
+      uf: 'SP',
+    },
+    scope: { groupId: GROUP, clienteId: CLIENTE },
+  });
+  assert.equal(cross.mode, 'error');
+  assert.equal(cross.blockSave, true);
+});
+
+test('resolveDeliveryAddressUiState obra usa getLocal do principal', () => {
+  const state = resolveDeliveryAddressUiState({
+    obraId: OBRA,
+    obraRow: {
+      id: OBRA,
+      group_id: GROUP,
+      cliente_id: CLIENTE,
+      codigo: '000001',
+      nome: 'Torre',
+      local_principal: { id: LOCAL, nome: 'Canteiro', cidade: 'Campinas', uf: 'SP' },
+    },
+    obraPrincipalLocal: {
+      id: LOCAL,
+      group_id: GROUP,
+      cliente_id: CLIENTE,
+      nome: 'Canteiro',
+      logradouro: 'Rua Obra',
+      numero: '50',
+      cidade: 'Campinas',
+      uf: 'SP',
+      cep: '13020-000',
+    },
+    scope: { groupId: GROUP, clienteId: CLIENTE },
+  });
+  assert.equal(state.mode, 'ready');
+  assert.equal(state.summaries[0].source, 'obra+local');
+  assert.match(state.summaries[0].line, /Rua Obra, 50/);
 });
