@@ -1,3 +1,25 @@
+## AUTÔNOMO ATIVO — owner ausente (2026-09-29T22:02Z)
+
+Continuando Comercial 360 sem merge/VPS.
+
+### Empilhados agora (tip → main via #151)
+| PR | Escopo |
+|---|---|
+| #154 | Dirty form abandon |
+| #156 | Crédito UI fail-closed |
+| #157 | Margem UI fail-closed |
+| #158 | Entrega exige endereço |
+| #159 | Data Entrega Cliente fail-closed |
+
+### Bloqueios registrados
+- #153 consolidada **NÃO APTA** merge (`fba7f72b`)
+- Onda 4–6 antiga (#50/#53/#59–#67) **NÃO APTA** (migrations 025–031 em conflito)
+- #47 CostPort já em `main`
+
+Próximo: multi-select stub **ou** PDF/anexos sem colisão **ou** CreditPort backend quando 032 liberado.
+
+---
+
 ## AUTÔNOMO — tip Onda4/5 (2026-09-29T21:57Z)
 
 Stack tip avançando: #151 → #154 dirty → #156 crédito UI → #157 margem UI → #158 Entrega/endereço.  
