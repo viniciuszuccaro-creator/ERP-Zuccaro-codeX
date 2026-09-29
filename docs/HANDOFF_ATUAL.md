@@ -1,3 +1,19 @@
+## LOTE CURSOR — a11y aria-live Comercial 360 (pós-#149) (2026-09-29T18:57Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** a11y aria-live / aria-invalid+describedby / action labels |
+| Branch | `cursor/comercial360-onda3-a11y-live-392b` |
+| Base | `#149` tip `50dc8b5c` (`cursor/comercial360-onda3-inactive-master-picker-392b`) |
+| Tip | `291164d5` (`291164d53711245f67f311f0d80daf059b22d21c`) · feat `aaa96026` |
+| Draft PR | **#150** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/150 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
+| Meta | a11y + **Pedido backend HTTP is active** |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#149 |
+
+Próximo: offline retry polish **ou** margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
 
 | PR/Branch | Tip | CI | Escopo |
