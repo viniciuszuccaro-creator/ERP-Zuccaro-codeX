@@ -5,8 +5,8 @@
 | Choice | **B** Item line validation UX — quantidade/preço >0 fail-closed antes de simular/salvar; mensagens claras; reusa forms Orçamento/Pedido |
 | Branch | `cursor/comercial360-onda3-item-line-validation-392b` |
 | Base | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` tip `0e7111af` (#147) |
-| Tip | `1e9f06e5` (`1e9f06e5acf9ce85f6db5e12c3f77118bc22b5a2`) · feat `6c3587a2` |
-| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` 403. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-resumo-texto-392b...cursor/comercial360-onda3-item-line-validation-392b?expand=1 |
+| Tip | `fdbfce92` (`fdbfce9256518818c3f9c7f5c948bdff4bac7f25`) · feat `6c3587a2` |
+| Draft PR | **#148** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/148 — ManagePullRequest indisponível; `gh pr create` 403. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-resumo-texto-392b...cursor/comercial360-onda3-item-line-validation-392b?expand=1 |
 | Escopo | `calculateItem` exige preço >0; `collectItemLineIssues`/`evaluateItemLinesGate`; wire `OrcamentosTab`+`PedidoCanonicoPanel` (alertas linha + disable Salvar/Simular); meta note; sem migration |
 | Meta | note + `Pedido backend HTTP is active` |
 | Testes | `orcamento-ui-policy`+`pedido-ui-policy`+simulacao/alcada/list/pedido-frontend **71/71**; `git diff --check` PASS |
