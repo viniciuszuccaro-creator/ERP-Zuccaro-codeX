@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #143 CI SUCCESS + #144 simular-dirty (2026-09-29T18:07Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #143 | `4777b4fb` | **SUCCESS** | resumo endereço Local/Obra |
+| #144 | `cursor/comercial360-onda3-simular-dirty-392b` | pendente | dirty-state simular bloqueia Salvar |
+
+Próximo: margem UI pós-#47 **ou** list search/filter **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #142 CI SUCCESS + #143 delivery-address (2026-09-29T17:57Z)
 
 | PR | Tip | CI | Escopo |
