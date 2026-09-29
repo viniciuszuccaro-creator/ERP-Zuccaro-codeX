@@ -140,3 +140,39 @@ test('mudanca no mesmo codigo legado bloqueia lote completo sem vazamento no rel
   assert.equal(JSON.stringify(result.relatorio).includes('Privado'), false);
   assert.equal(JSON.stringify(result.relatorio).includes('C-501'), false);
 });
+
+test('cliente mestre percorre mapper e plano de contagens sem copiar empresa', () => {
+  const rows = [
+    { cod_cliente: 'C-601', nome: 'Pessoa Sintetica Um', group_id: 'g-sint' },
+    { cod_cliente: 'C-602', nome: 'Pessoa Sintetica Dois', group_id: 'g-sint' },
+  ];
+  const result = verificarMapeadorParaStaging(rows, { ...opcoes,
+    contagensEsperadas: [{ entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 2 }],
+  });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.privados.length, 2);
+  assert.ok(result.privados.every((item) => item.group_id === 'g-sint' && !item.empresa_id));
+  assert.equal(result.relatorio.divergencias, 0);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 2 });
+  assert.equal(JSON.stringify(result.relatorio).includes('Pessoa Sintetica'), false);
+});
+
+test('contagem divergente bloqueia lote inteiro depois do mapeamento', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-601', descricao: 'Produto Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda',
+    contagensEsperadas: [{ entidade: 'produto_revenda', codigoEmpresaLegado: 'grupo', quantidade: 2 }],
+  });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.divergencias, 1);
+});
+
+test('indice de outro Grupo nao pode participar do plano de mestres', () => {
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-603', nome: 'Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, existentes: [{ entidade: 'cliente', groupId: 'outro', empresaId: '',
+    codigoLegado: 'C-601', assinaturaOrigem: 'a'.repeat(64) }],
+    contagensEsperadas: [{ entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 1 }],
+  }), /mistura Grupos/);
+});

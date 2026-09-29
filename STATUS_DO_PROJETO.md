@@ -11602,3 +11602,10 @@ Checklist inicial:
 - `verificarMapeadorParaStaging` agora recebe o indice `existentes` do preflight canonico: retry identico nao reenvia registro, novo codigo segue apto, e assinatura divergente bloqueia o lote inteiro. Relatorio permanece agregado e sem dados pessoais.
 - Testes sinteticos direcionados: 58 pass, 0 fail. `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais falham neste ambiente Windows em testes/diagnosticos fora deste diff; a CI Linux do HEAD-base #108 estava verde. O novo HEAD ainda requer CI propria antes de revisao.
 - Nao houve leitura do backup, persistencia real, carga, migration, VPS ou alteracao de 3080. Staging em banco isolado e vinculo juridico Grupo/Empresa continuam pendentes de prova e gate.
+
+## Legado - plano de mestres integrado ao mapeador sintetico (2026-09-29)
+
+- Branch `codex/legado-plano-mestres` integra os contratos #109 e #111 sem alterar suas branches nem o mapeador Cursor da #48.
+- Cliente e Produto de revenda mestre do Grupo podem passar por mapeamento, indice de retry, contagens esperadas e verificacao de Grupo em um unico preflight em memoria. Contagem divergente ou indice de outro Grupo bloqueia o lote; nenhum registro parcial e entregue.
+- 44 testes direcionados passaram; `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais permanecem falhando neste Windows em arquivos fora do diff; CI Linux do novo HEAD deve ser observada antes de revisao.
+- Somente fixtures sinteticas. Nao houve leitura do backup, staging real, importacao, migration, merge ou VPS. Vínculos juridicos por operacao e aprovacao do mapeador #48 continuam gates separados.

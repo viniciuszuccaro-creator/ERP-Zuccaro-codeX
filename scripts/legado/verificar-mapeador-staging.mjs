@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { types as utilTypes } from 'node:util';
 import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolicy.js';
 import { mapLegadoLoteSintetico } from './mapear-registro-sintetico.mjs';
-import { prepararLoteStagingLegado } from './staging-scope-gate.mjs';
+import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './staging-scope-gate.mjs';
 
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', produto_revenda: 'produto' });
 const GRUPO_ALIASES = new Set(['group_id', 'grupo_id', 'groupid', 'grupoid']);
@@ -18,6 +18,7 @@ export function verificarMapeadorParaStaging(rows, {
   grupoComprovado = false,
   arquivoNome = 'sintetico.csv',
   existentes = [],
+  contagensEsperadas,
 } = {}) {
   if (grupoComprovado !== true || !groupId) throw new Error('Grupo de destino nao comprovado.');
   const tipoMapeador = ENTIDADES_MESTRE[entidade];
@@ -59,7 +60,7 @@ export function verificarMapeadorParaStaging(rows, {
   if (mapeado.gravados.some((row) => row.group_id !== groupId || row.empresa_id)) {
     throw new Error('Mapeador alterou o escopo validado.');
   }
-  const preparados = prepararLoteStagingLegado(mapeado.gravados.map((row) => ({
+  const itens = mapeado.gravados.map((row) => ({
     entidade,
     groupId,
     codigoLegado: row.codigo_legado,
@@ -69,12 +70,19 @@ export function verificarMapeadorParaStaging(rows, {
       descricao: row.descricao,
       documento: row.documento,
     })).digest('hex'),
-  })), { autorizado: true, existentes });
+  }));
+  const preparados = contagensEsperadas === undefined
+    ? prepararLoteStagingLegado(itens, { autorizado: true, existentes })
+    : reconciliarPlanoStagingLegado({ itens, existentes, groupId, autorizado: true, contagensEsperadas });
   const novosCodigos = new Set(preparados.privados.map((row) => row.codigoLegado));
   return { bloqueado: preparados.bloqueado,
     privados: preparados.bloqueado ? [] : mapeado.gravados.filter((row) => novosCodigos.has(row.codigo_legado)),
     relatorio: { origem: rows.length, aptos: preparados.relatorio.aptos,
       reusos: preparados.relatorio.reusos, erros: 0,
       conflitos: preparados.relatorio.conflitos,
-      quarentena: preparados.relatorio.quarentena } };
+      quarentena: preparados.relatorio.quarentena,
+      ...(contagensEsperadas === undefined ? {} : {
+        divergencias: preparados.relatorio.divergencias,
+        porEntidadeEmpresaOrigem: preparados.relatorio.porEntidadeEmpresaOrigem,
+      }) } };
 }
