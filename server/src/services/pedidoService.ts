@@ -31,6 +31,11 @@ import {
   assertPersistedCondicaoSnapshot,
   buildCondicaoPagamentoDocumentoSnapshot,
 } from './comercialCondicaoSnapshot.js';
+import {
+  assertPersistedPromocaoSnapshot,
+  buildPromocaoDocumentoSnapshot,
+  type ComercialPromocaoConfigPort,
+} from './comercialPromocaoPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -50,7 +55,7 @@ export type PedidoSalePricePort = {
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
 
-export type { ComercialCostPort, ComercialAlcadaConfigPort };
+export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({
@@ -60,6 +65,9 @@ export function pedidoAuditSnapshot(row: Pedido) {
     condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot,
     condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
     condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
+    promocao_aplicada: row.promocao_aplicada,
+    promocao_bps: row.promocao_bps,
+    promocao_cupom: row.promocao_cupom,
     orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao,
     data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto,
     total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length,
@@ -86,6 +94,8 @@ export class PedidoService {
     private readonly costs: ComercialCostPort | null = null,
     /** Opcional: config de alçada (à vista); ausente = fail-closed (não libera). */
     private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
+    /** Opcional: config de promoção; ausente = fail-closed se payload pedir promoção. */
+    private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -146,7 +156,9 @@ export class PedidoService {
             await this.condicoes.get(scope, data.condicao_pagamento_id, executor),
             'PEDIDO',
           );
-        const write: PedidoWrite = { ...data, ...condicaoSnapshot };
+        const promocaoSnapshot = assertPersistedPromocaoSnapshot(quote);
+        const { promocao: _ignored, ...rest } = data;
+        const write: PedidoWrite = { ...rest, ...condicaoSnapshot, ...promocaoSnapshot };
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
@@ -298,7 +310,19 @@ export class PedidoService {
   ): Promise<PedidoWrite> {
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
     const snapshot = buildCondicaoPagamentoDocumentoSnapshot(condicao, 'PEDIDO');
-    return { ...data, ...snapshot };
+    const cfg = this.promocaoConfig
+      ? await this.promocaoConfig.getPromocaoConfig({
+        groupId: scope.groupId,
+        empresaId: scope.empresaId,
+      })
+      : null;
+    const { promocao: _ignored, ...rest } = data;
+    const promo = buildPromocaoDocumentoSnapshot({
+      promocao: data.promocao,
+      config: cfg,
+      items: data.itens,
+    });
+    return { ...rest, ...snapshot, ...promo };
   }
 
   private normalizeMoney(value: string): string {

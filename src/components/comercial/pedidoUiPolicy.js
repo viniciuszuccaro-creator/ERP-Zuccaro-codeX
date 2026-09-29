@@ -1,4 +1,4 @@
-import { calculateItem, calculateTotals, decimalToMicros, microsToDecimal } from './orcamentoUiPolicy.js';
+import { calculateItem, calculateTotals, decimalToMicros, microsToDecimal, resolvePromocaoPayloadRef } from './orcamentoUiPolicy.js';
 
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
@@ -19,11 +19,12 @@ export function nextPedidoStatus(row) {
   return null;
 }
 
-export function buildPedidoPayload(form) {
+export function buildPedidoPayload(form, options = {}) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.tipo_operacao || !form.data_entrega_solicitada) throw new Error('Preencha cliente, condição, operação e data de entrega.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
-  return {
+  /** @type {Record<string, unknown>} */
+  const payload = {
     cliente_empresa_id: form.cliente_empresa_id,
     cliente_local_id: form.cliente_local_id || undefined,
     obra_id: form.obra_id || undefined,
@@ -44,6 +45,9 @@ export function buildPedidoPayload(form) {
       requer_producao: Boolean(item.requer_producao),
     })),
   };
+  const promocao = resolvePromocaoPayloadRef(form, options);
+  if (promocao) payload.promocao = promocao;
+  return payload;
 }
 
 export function calculatePedidoTotals(items) {

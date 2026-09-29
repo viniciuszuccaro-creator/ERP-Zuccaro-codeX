@@ -24,6 +24,10 @@ import {
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
 import { buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
+import {
+  buildPromocaoDocumentoSnapshot,
+  type ComercialPromocaoConfigPort,
+} from './comercialPromocaoPolicy.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -36,7 +40,7 @@ export type OrcamentoSalePricePort = {
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
 
-export type { ComercialCostPort, ComercialAlcadaConfigPort };
+export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort };
 
 export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
@@ -47,6 +51,9 @@ export function orcamentoAuditSnapshot(row: Orcamento) {
     condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
     condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
     tabela_preco_id: row.tabela_preco_id,
+    promocao_aplicada: row.promocao_aplicada,
+    promocao_bps: row.promocao_bps,
+    promocao_cupom: row.promocao_cupom,
     subtotal: row.subtotal,
     desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length,
@@ -68,6 +75,8 @@ export class OrcamentoService {
     private readonly costs: ComercialCostPort | null = null,
     /** Opcional: config de alçada (à vista); ausente = fail-closed (não libera). */
     private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
+    /** Opcional: config de promoção; ausente = fail-closed se payload pedir promoção. */
+    private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -198,8 +207,8 @@ export class OrcamentoService {
   }
 
   /**
-   * Snapshot de condição (id+codigo+nome+parcelas) no momento da gravação.
-   * Fail-closed: condição sem parcelas/nome/código válidos → 422.
+   * Snapshot de condição (id+codigo+nome+parcelas) + refs de promoção fail-closed.
+   * Servidor é autoridade; payload `promocao` só declara intenção — config/cupom/bps validados.
    */
   private async applyCondicaoSnapshot(
     scope: OrcamentoScope,
@@ -208,10 +217,23 @@ export class OrcamentoService {
   ): Promise<OrcamentoWrite> {
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
     const snapshot = buildCondicaoPagamentoDocumentoSnapshot(condicao, 'ORCAMENTO');
+    const cfg = this.promocaoConfig
+      ? await this.promocaoConfig.getPromocaoConfig({
+        groupId: scope.groupId,
+        empresaId: scope.empresaId,
+      })
+      : null;
+    const { promocao: _ignored, ...rest } = data;
+    const promo = buildPromocaoDocumentoSnapshot({
+      promocao: data.promocao,
+      config: cfg,
+      items: data.itens,
+    });
     return {
-      ...data,
+      ...rest,
       tabela_preco_id: data.tabela_preco_id ?? null,
       ...snapshot,
+      ...promo,
     };
   }
 

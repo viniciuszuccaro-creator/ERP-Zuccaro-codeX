@@ -37,11 +37,12 @@ export function canUseOrcamentoAction(hasPermission, action, status = 'EM_ABERTO
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
 }
 
-export function buildOrcamentoPayload(form) {
+export function buildOrcamentoPayload(form, options = {}) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.validade_em) throw new Error('Preencha cliente, condição e validade.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
-  return {
+  /** @type {Record<string, unknown>} */
+  const payload = {
     cliente_empresa_id: form.cliente_empresa_id,
     condicao_pagamento_id: form.condicao_pagamento_id,
     validade_em: new Date(`${form.validade_em}T12:00:00`).toISOString(),
@@ -56,6 +57,30 @@ export function buildOrcamentoPayload(form) {
       desconto: microsToDecimal(decimalToMicros(item.desconto || '0')),
     })),
   };
+  const promocao = resolvePromocaoPayloadRef(form, options);
+  if (promocao) payload.promocao = promocao;
+  return payload;
+}
+
+/**
+ * Refs de promoção a persistir (fail-closed no backend).
+ * Preferência: options.promocao da última simulação aplicada; senão form.promocao_*.
+ */
+export function resolvePromocaoPayloadRef(form, options = {}) {
+  const fromOption = options?.promocao;
+  if (fromOption && fromOption.aplicada === true && Number.isInteger(Number(fromOption.bps)) && Number(fromOption.bps) > 0) {
+    const ref = { bps: Math.trunc(Number(fromOption.bps)) };
+    const cupom = String(fromOption.cupom || options.cupom || '').trim();
+    if (cupom) ref.cupom = cupom.slice(0, 64);
+    return ref;
+  }
+  if (form?.promocao_aplicada === true && Number.isInteger(Number(form.promocao_bps)) && Number(form.promocao_bps) > 0) {
+    const ref = { bps: Math.trunc(Number(form.promocao_bps)) };
+    const cupom = String(form.promocao_cupom || '').trim();
+    if (cupom) ref.cupom = cupom.slice(0, 64);
+    return ref;
+  }
+  return null;
 }
 
 export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', clienteNome = 'Cliente' } = {}) {

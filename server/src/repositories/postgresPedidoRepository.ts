@@ -13,6 +13,9 @@ const map = (row: Row): Pedido => ({
   condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot == null ? null : String(row.condicao_pagamento_codigo_snapshot),
   condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot == null ? null : String(row.condicao_pagamento_nome_snapshot),
   condicao_pagamento_parcelas_snapshot: mapParcelasSnapshotFromJson(row.condicao_pagamento_parcelas_snapshot),
+  promocao_aplicada: Boolean(row.promocao_aplicada),
+  promocao_bps: row.promocao_bps == null ? null : Number(row.promocao_bps),
+  promocao_cupom: row.promocao_cupom == null ? null : String(row.promocao_cupom),
   orcamento_id: row.orcamento_id == null ? null : String(row.orcamento_id),
   vendedor_id: String(row.vendedor_id), ativo: Boolean(row.ativo), subtotal: String(row.subtotal), desconto: String(row.desconto), total: String(row.total),
   created_at: new Date(String(row.created_at)).toISOString(), updated_at: new Date(String(row.updated_at)).toISOString(),
@@ -59,12 +62,14 @@ export class PostgresPedidoRepository implements PedidoRepository {
         `INSERT INTO pedidos(
           group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,
           condicao_pagamento_id,condicao_pagamento_codigo_snapshot,condicao_pagamento_nome_snapshot,condicao_pagamento_parcelas_snapshot,
+          promocao_aplicada,promocao_bps,promocao_cupom,
           orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,subtotal,desconto,total,created_by,updated_by
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17,$18,$19,$13,$13) RETURNING id`,
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$16,$16) RETURNING id`,
         [
           scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null,
           data.condicao_pagamento_id, data.condicao_pagamento_codigo_snapshot, data.condicao_pagamento_nome_snapshot,
           JSON.stringify(data.condicao_pagamento_parcelas_snapshot),
+          Boolean(data.promocao_aplicada), data.promocao_bps ?? null, data.promocao_cupom ?? null,
           data.orcamento_id ?? null, actorId, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null,
           totals.subtotal, totals.desconto, totals.total,
         ],
@@ -97,11 +102,13 @@ export class PostgresPedidoRepository implements PedidoRepository {
         `UPDATE pedidos SET
           cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,condicao_pagamento_id=$8,
           condicao_pagamento_codigo_snapshot=$9,condicao_pagamento_nome_snapshot=$10,condicao_pagamento_parcelas_snapshot=$11::jsonb,
-          tipo_operacao=$12,data_entrega_solicitada=$13,observacoes=$14,subtotal=$15,desconto=$16,total=$17,updated_by=$18
+          promocao_aplicada=$12,promocao_bps=$13,promocao_cupom=$14,
+          tipo_operacao=$15,data_entrega_solicitada=$16,observacoes=$17,subtotal=$18,desconto=$19,total=$20,updated_by=$21
          WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
         [
           id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id,
           data.condicao_pagamento_codigo_snapshot, data.condicao_pagamento_nome_snapshot, JSON.stringify(data.condicao_pagamento_parcelas_snapshot),
+          Boolean(data.promocao_aplicada), data.promocao_bps ?? null, data.promocao_cupom ?? null,
           data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, actorId,
         ],
       );

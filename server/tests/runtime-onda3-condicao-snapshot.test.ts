@@ -215,6 +215,9 @@ test('Onda3: conversão copia snapshot do Orçamento (não-retroatividade)', asy
     condicao_pagamento_nome_snapshot: 'Snapshot original',
     condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
     tabela_preco_id: tabelaId,
+    promocao_aplicada: false,
+    promocao_bps: null,
+    promocao_cupom: null,
   } as never);
   const order = await service.convert(ctx, quote.id, {
     tipo_operacao: 'RETIRADA',

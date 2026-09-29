@@ -310,7 +310,11 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (submitting) return;
     setSubmitting(true);
     try {
-      const payload = buildOrcamentoPayload(form);
+      const payload = buildOrcamentoPayload(form, {
+        promocao: simulacaoPreview?.promocao?.aplicada
+          ? { aplicada: true, bps: simulacaoPreview.promocao.bps, cupom: promoCupom }
+          : undefined,
+      });
       const saved = editing ? await api.update(editing.id, payload) : await api.create(payload);
       toast.success(editing ? 'Orçamento atualizado.' : 'Orçamento criado.');
       setDirty(false); setFormOpen(false); setEditing(null); setSelected(saved); resetSimulacaoUi();

@@ -1,3 +1,18 @@
+## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** — persist refs promoção fail-closed |
+| Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
+| Base | `#127` tip `8fba0782` (`cursor/comercial360-onda3-produto-http-392b`) |
+| Escopo | migration **030** + wire create/update/get/convert + UI save refs; reusa `comercialPromocaoPolicy` |
+| Meta | note preserva `Pedido backend HTTP is active` |
+| Testes | 64 server focados + 20 UI PASS; typecheck PASS |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | choice B (simular→persist desconto) **ou** Onda 4 sem colisão #50/#92 |
+
+---
+
 ## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
 
 | Etapa | Estado |
