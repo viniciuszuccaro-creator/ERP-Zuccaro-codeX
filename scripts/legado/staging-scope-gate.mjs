@@ -64,7 +64,8 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
       String(anterior?.entidade ?? '').trim(), String(anterior?.codigoLegado ?? '').trim(),
     ]);
     const assinatura = String(anterior?.assinaturaOrigem ?? '').trim();
-    if (!anterior?.groupId || !anterior?.entidade || !anterior?.codigoLegado || !/^[a-f0-9]{64}$/.test(assinatura)) {
+    if (!String(anterior?.groupId ?? '').trim() || !String(anterior?.entidade ?? '').trim()
+      || !String(anterior?.codigoLegado ?? '').trim() || !/^[a-f0-9]{64}$/.test(assinatura)) {
       throw new Error('Indice de staging existente sem identidade e assinatura validas.');
     }
     if (porChave.has(chave) && porChave.get(chave) !== assinatura) {
@@ -105,7 +106,7 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
     porChave.set(chave, assinatura);
     privados.push(stripSegredosMigracao(item));
     relatorio.aptos += 1;
-    contar(relatorio.porEntidadeEmpresa, `${entidade}|${legado || 'grupo'}`);
+    contar(relatorio.porEntidadeEmpresa, `${entidade}|${empresaId ? legado : 'grupo'}`);
   }
   const bloqueado = relatorio.conflitos > 0 || relatorio.quarentena > 0;
   // Nao entregar lote parcial ao consumidor: o relatorio preserva apenas contagens.

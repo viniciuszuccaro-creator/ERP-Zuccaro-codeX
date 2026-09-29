@@ -63,6 +63,15 @@ test('registros privados passam pelo sanitizador canonico sem mutar a origem', (
   assert.equal(item.TOKEN, 'SEGREDO');
 });
 
+test('mestre compartilhado conta apenas no Grupo mesmo com seletor legado', () => {
+  for (const [entidade, codigoEmpresaLegado] of [['cliente', '003'], ['fornecedor', '001']]) {
+    const result = prepararLoteStagingLegado([{ entidade, codigoEmpresaLegado, groupId: 'g1',
+      codigoLegado: 'S-1', assinaturaOrigem: 'a'.repeat(64) }], { autorizado: true });
+    assert.equal(result.bloqueado, false);
+    assert.deepEqual(result.relatorio.porEntidadeEmpresa, { [`${entidade}|grupo`]: 1 });
+  }
+});
+
 test('falha no item seguinte bloqueia lote, isola conflito e nao vaza dados no relatorio', () => {
   const base = { entidade: 'conta_receber', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'CR-S1', assinaturaOrigem: 'b'.repeat(64), documento: 'DOCUMENTO_PRIVADO' };
@@ -106,5 +115,9 @@ test('retry entre lotes reutiliza staging existente sem nova linha nem misturar 
   assert.equal(altered.relatorio.conflitos, 1);
   assert.deepEqual(altered.privados, []);
   assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, assinaturaOrigem: '' }] }),
+    /Indice de staging existente/);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, groupId: '   ' }] }),
+    /Indice de staging existente/);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, codigoLegado: '   ' }] }),
     /Indice de staging existente/);
 });
