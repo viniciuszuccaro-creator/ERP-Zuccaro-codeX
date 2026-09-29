@@ -5,7 +5,7 @@
 | Choice | **B** Resumo de endereço Local/Obra após seleção (fail-closed se HTTP get falhar) |
 | Branch | `cursor/comercial360-onda3-delivery-address-392b` |
 | Base | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` tip `d7871c23` (#142) |
-| Tip | `207c26cc` (`207c26cc9af45cc3cbed9b18bd26cf1b86af0f31`) — feat `d65d9618` |
+| Tip | `d65d9618` (`d65d961891b84a04e8146b2f76179d02814c0673`) — docs tip `207c26cc`+ |
 | Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-delivery-address-392b` |
@@ -131,7 +131,7 @@ Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplem
 | Implantado VPS | **NÃO** |
 | Base | `#136` tip `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
 | Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
-| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Draft PR | **#143** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/143 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** + descontoAlcadaUiFailClosed / saveIdempotency |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 (sem migration neste lote) |
 

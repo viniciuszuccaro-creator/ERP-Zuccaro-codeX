@@ -5,7 +5,7 @@
 | Choice | **B** resumo endereço Local/Obra pós-seleção; fail-closed se HTTP get falhar |
 | Branch | `cursor/comercial360-onda3-delivery-address-392b` |
 | Base | `#142` tip `d7871c23` (`cursor/comercial360-onda3-parcela-schedule-ui-392b`) |
-| Tip | `207c26cc9af45cc3cbed9b18bd26cf1b86af0f31` (feat `d65d9618`) |
+| Tip | `d65d9618` feat / docs tip `207c26cc`+ |
 | Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
 | Meta | `deliveryAddressSummaryFailClosed` + **Pedido backend HTTP is active** |
