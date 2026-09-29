@@ -1,3 +1,9 @@
+## AUTÔNOMO — CI tip verde + #161 convert-banner (2026-09-29T22:18Z)
+
+Fix beforeunload assert OK (#154–#160). Novo: **#161** banner motivos converter Orçamento. Sem merge/VPS. Continuando.
+
+---
+
 ## FIX CI AUTÔNOMO — beforeunload assert (2026-09-29T22:10Z)
 
 Causa: `orcamento-ui-policy.test.js` exigia literal `/beforeunload/` em `OrcamentosTab`; o painel usa `bindComercialFormBeforeUnload` (literal no helper).
