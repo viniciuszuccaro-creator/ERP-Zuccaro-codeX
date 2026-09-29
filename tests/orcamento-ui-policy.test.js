@@ -9,6 +9,7 @@ import {
   calculateTotals,
   canUseOrcamentoAction,
   isOrcamentoValidadeExpirada,
+  mapOrcamentoRowToForm,
   microsToDecimal,
   orcamentoConvertSnapshotHint,
   orcamentoValidadeHint,
@@ -159,4 +160,27 @@ test('impressao de orcamento escapa campos livres e nao depende de credencial ex
   assert.match(source, /escapeDocumentText\(orcamento\.observacoes/);
   assert.match(source, /printWindow\.opener = null/);
   assert.doesNotMatch(source, /api[_-]?key|access[_-]?token|service[_-]?role/i);
+});
+
+test('mapOrcamentoRowToForm recarrega campos canônicos sem inventar snapshots', () => {
+  const mapped = mapOrcamentoRowToForm({
+    id: 'o1',
+    numero: '00000001',
+    cliente_empresa_id: 'ce',
+    condicao_pagamento_id: 'cp',
+    validade_em: '2026-12-01T12:00:00.000Z',
+    observacoes: 'ok',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    itens: [{
+      produto_id: 'p', unidade_id: 'u', descricao: 'X', unidade_sigla: 'UN',
+      quantidade: '1.000000', preco_unitario: '10.000000', desconto: '0.000000',
+    }],
+  });
+  assert.equal(mapped.cliente_empresa_id, 'ce');
+  assert.equal(mapped.condicao_pagamento_id, 'cp');
+  assert.equal(mapped.validade_em, '2026-12-01');
+  assert.equal(mapped.observacoes, 'ok');
+  assert.equal(mapped.itens.length, 1);
+  assert.equal('condicao_pagamento_nome_snapshot' in mapped, false);
+  assert.equal('numero' in mapped, false);
 });

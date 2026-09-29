@@ -61,3 +61,36 @@ export function calculatePedidoTotals(items) {
   const total = calculateTotals(items);
   return { subtotal: microsToDecimal(total.subtotal), desconto: microsToDecimal(total.desconto), total: microsToDecimal(total.total) };
 }
+
+/**
+ * Mapeia documento Pedido HTTP → formulário de edição (reload pós-save / openEdit).
+ * Não inclui snapshots — use collectPersistedCommercialSnapshots na UI.
+ * @param {object} row
+ */
+export function mapPedidoRowToForm(row) {
+  if (!row || typeof row !== 'object') {
+    throw new Error('Pedido inválido para recarregar o formulário.');
+  }
+  return {
+    cliente_empresa_id: row.cliente_empresa_id || '',
+    cliente_local_id: row.cliente_local_id || '',
+    obra_id: row.obra_id || '',
+    tabela_preco_id: row.tabela_preco_id || '',
+    condicao_pagamento_id: row.condicao_pagamento_id || '',
+    tipo_operacao: row.tipo_operacao || 'ENTREGA',
+    data_entrega_solicitada: String(row.data_entrega_solicitada || '').slice(0, 10),
+    observacoes: row.observacoes || '',
+    itens: Array.isArray(row.itens)
+      ? row.itens.map((item) => ({
+        produto_id: item.produto_id,
+        unidade_id: item.unidade_id,
+        descricao: item.descricao,
+        unidade_sigla: item.unidade_sigla,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario,
+        desconto: item.desconto,
+        requer_producao: Boolean(item.requer_producao),
+      }))
+      : [],
+  };
+}

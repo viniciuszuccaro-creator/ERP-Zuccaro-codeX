@@ -151,3 +151,31 @@ export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', cl
   const validade = orcamento.validade_em ? new Intl.DateTimeFormat('pt-BR').format(new Date(orcamento.validade_em)) : '-';
   return [`${empresaNome} - Orçamento ${orcamento.numero}`, `Cliente: ${clienteNome}`, `Status: ${status}`, `Validade: ${validade}`, `Total: ${total}`, 'O documento completo deve ser conferido no ERP antes do envio.'].join('\n');
 }
+
+/**
+ * Mapeia documento Orçamento HTTP → formulário de edição (reload pós-save / openEdit).
+ * Não inclui snapshots — use collectPersistedCommercialSnapshots na UI.
+ * @param {object} row
+ */
+export function mapOrcamentoRowToForm(row) {
+  if (!row || typeof row !== 'object') {
+    throw new Error('Orçamento inválido para recarregar o formulário.');
+  }
+  return {
+    cliente_empresa_id: row.cliente_empresa_id || '',
+    condicao_pagamento_id: row.condicao_pagamento_id || '',
+    validade_em: String(row.validade_em || '').slice(0, 10),
+    observacoes: row.observacoes || '',
+    itens: Array.isArray(row.itens)
+      ? row.itens.map((item) => ({
+        produto_id: item.produto_id,
+        unidade_id: item.unidade_id,
+        descricao: item.descricao,
+        unidade_sigla: item.unidade_sigla,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario,
+        desconto: item.desconto,
+      }))
+      : [],
+  };
+}

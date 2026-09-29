@@ -188,3 +188,73 @@ test('Orçamento e Pedido canônicos ligam simular-venda sem módulo paralelo', 
   assert.doesNotMatch(orc, /ComercialV2|SimulacaoVendaTab/);
   assert.doesNotMatch(ped, /base44\.entities/);
 });
+
+test('buildPersistedPromocaoSnapshotFromRow e collectPersistedCommercialSnapshots proveem round-trip', async () => {
+  const {
+    buildPersistedPromocaoSnapshotFromRow,
+    collectPersistedCommercialSnapshots,
+    promoInputsFromPersistedSnapshot,
+  } = await import('../src/components/comercial/comercialSimulacaoUiPolicy.js');
+
+  assert.equal(buildPersistedPromocaoSnapshotFromRow(null), null);
+  assert.equal(buildPersistedPromocaoSnapshotFromRow({ promocao_aplicada: true, promocao_bps: 0 }), null);
+  assert.deepEqual(buildPersistedPromocaoSnapshotFromRow({ promocao_aplicada: false }), {
+    aplicada: false,
+    bps: null,
+    cupom: null,
+    fonte: 'persistido',
+    persistido: true,
+  });
+  const promo = buildPersistedPromocaoSnapshotFromRow({
+    promocao_aplicada: true,
+    promocao_bps: 500,
+    promocao_cupom: 'CPA10',
+  });
+  assert.equal(promo.aplicada, true);
+  assert.equal(promo.bps, 500);
+  assert.equal(promo.cupom, 'CPA10');
+  assert.equal(promo.persistido, true);
+  assert.deepEqual(promoInputsFromPersistedSnapshot(promo), { promoBps: '500', promoCupom: 'CPA10' });
+  assert.deepEqual(promoInputsFromPersistedSnapshot({ aplicada: false }), { promoBps: '', promoCupom: '' });
+
+  const COND = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const TAB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const snaps = collectPersistedCommercialSnapshots({
+    condicao_pagamento_id: COND,
+    condicao_pagamento_codigo_snapshot: '000010',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
+    tabela_preco_id: TAB,
+    tabela_preco_codigo_snapshot: '000020',
+    tabela_preco_nome_snapshot: 'Atacado',
+    promocao_aplicada: true,
+    promocao_bps: 250,
+    promocao_cupom: 'VIP5',
+  });
+  assert.equal(snaps.condicao?.persistido, true);
+  assert.equal(snaps.condicao?.nome, '28 dias');
+  assert.equal(snaps.condicao?.parcelas?.[0]?.dias, 28);
+  assert.equal(snaps.tabela?.persistido, true);
+  assert.equal(snaps.tabela?.codigo, '000020');
+  assert.equal(snaps.promocao?.bps, 250);
+  assert.equal(snaps.promocao?.cupom, 'VIP5');
+});
+
+test('Orçamento/Pedido mantêm formulário aberto e recarregam snapshots após save', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(orc, /collectPersistedCommercialSnapshots/);
+  assert.match(orc, /mapOrcamentoRowToForm\(saved\)/);
+  assert.match(orc, /applyPersistedSnapshotsFromRow\(saved\)/);
+  assert.match(orc, /setFormOpen\(true\)/);
+  assert.match(orc, /data-testid="orcamento-condicao-snapshot"/);
+  assert.match(orc, /data-testid="orcamento-tabela-snapshot"/);
+  assert.match(orc, /data-testid="orcamento-promocao-snapshot"/);
+  assert.match(ped, /collectPersistedCommercialSnapshots/);
+  assert.match(ped, /mapPedidoRowToForm\(saved\)/);
+  assert.match(ped, /applyPersistedSnapshotsFromRow\(saved\)/);
+  assert.match(ped, /data-testid="pedido-condicao-snapshot"/);
+  assert.match(ped, /data-testid="pedido-tabela-snapshot"/);
+  assert.match(ped, /data-testid="pedido-promocao-snapshot"/);
+  assert.doesNotMatch(orc, /setFormOpen\(false\);\s*setEditing\(null\);\s*setSelected\(saved\);\s*resetSimulacaoUi/);
+});
