@@ -1,3 +1,21 @@
+## MENSAGEM ÚNICA — execução paralela Codex/Cursor (2026-09-29T13:09Z)
+
+Owner publicou `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` na #105 HEAD `485bbe241d577bbfaec04ebc9e065b6c6aee1745` (CI SUCCESS). Corrige a regra de não avançar automaticamente quando há programa contínuo autorizado.
+
+**Mensagem para ambos:**
+> Leia a PR #105 e siga docs/EXECUCAO_PARALELA_CODEX_CURSOR.md no HEAD 485bbe24. Assuma sua frente de implementação, registre os arquivos sob sua responsabilidade e entregue um lote funcional grande com testes, commit, push e CI. Revise o trabalho do outro somente no HEAD final da PR. Não encerre a execução após um microajuste ou uma consulta de status.
+
+| Frente | Implementador | Checkpoint Cursor |
+|---|---|---|
+| Integração #104 | Codex | APROVADO `87101b4d` — Cursor não mergeia |
+| Legado staging #106/#107 | Codex | APROVADO `fac27243` / `95fef57a` |
+| Mapeador #48 | Cursor | **#110** `5799038e` — `003` ≠ empresa; CI SUCCESS |
+| Comercial 360 Onda 2 (promo/parcelas) | Cursor | **#114** `53900f3d` — simulação venda |
+
+Arquivos Cursor #48: `scripts/legado/mapear-registro-sintetico.mjs`, `tests/legado-mapear-sintetico.test.js`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+
+---
+
 ## NOTA CURSOR — #104 preparo integração somente leitura (2026-09-29T11:08Z)
 
 Owner documentou preparo no HEAD homologado `87101b4dd184326ce7cdb915d4b2d8947e028244`.

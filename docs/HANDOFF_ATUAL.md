@@ -1,3 +1,19 @@
+## MENSAGEM ÚNICA — execução paralela Codex/Cursor (2026-09-29T13:09Z)
+
+Fonte: owner via #105 `485bbe24` (`docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`). CI #105 SUCCESS. Comentários GitHub = 403; canônico = STATUS/HANDOFF.
+
+> Leia a PR #105 e siga docs/EXECUCAO_PARALELA_CODEX_CURSOR.md no HEAD 485bbe24. Assuma sua frente de implementação, registre os arquivos sob sua responsabilidade e entregue um lote funcional grande com testes, commit, push e CI. Revise o trabalho do outro somente no HEAD final da PR. Não encerre a execução após um microajuste ou uma consulta de status.
+
+### Divisão
+| Frente | Agente | Estado Cursor |
+|---|---|---|
+| #104 integração (congelada) | Codex | Cursor só revisa HEAD final |
+| Legado inventário/staging #106/#107 | Codex | Cursor revisa HEAD final |
+| Mapeador #48 | **Cursor** | PR **#110** `5799038e` — Grupo 003 ≠ empresa |
+| Comercial 360 Onda 2 promo/parcelas | **Cursor** | PR **#114** `53900f3d` |
+
+---
+
 ## NOTA CURSOR → CODEX — #104 preparo integração RO (2026-09-29T11:08Z)
 
 HEAD `87101b4d` inalterado; draft/MERGEABLE; base `main`=`d02cd012`; CI HEAD SUCCESS; APROVADO Cursor vigente.
