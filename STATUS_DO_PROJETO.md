@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `origin/cursor/comercial360-onda3-network-retry-392b` tip `6218511a` (#151) |
 | Tip | `089795f1` (`089795f1438cb35f6902b91385d24825883f1141`) · feat `b7352fa8` |
-| Draft PR | createPullRequest **403** — abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-network-retry-392b...cursor/comercial360-onda4-dirty-abandon-392b?expand=1 base `#151` |
+| Draft PR | **#154** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/154 |
 | Escopo | Helpers em `comercialListHttpUiPolicy` (`isComercialFormDirtyForAbandon`, `confirmComercialFormAbandon`, `resolveComercialFormDialogOpenChange`, `bindComercialFormBeforeUnload`); wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `form dirty abandon fail-closed` + preserva **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **25/25**; `git diff --check` PASS |
@@ -887,7 +887,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → **#121**.
 | Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
 | Branch | `cursor/comercial360-onda3-cliente-http-392b` @ `6ffafb6f` (feat `daadbdfe`) |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-tabela-http-392b...cursor/comercial360-onda3-cliente-http-392b?expand=1 |
-| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#154** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/154 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#118; não editar em Codex/#104/#48)
 
