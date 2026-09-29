@@ -4,10 +4,12 @@
 | --- | --- |
 | Implementado | **SIM** — Orçamento/Pedido canônicos chamam `POST /api/v1/comercial/simular-venda`; agenda de parcelas + promoção fail-closed na UI; aplica preço/desconto/condição no formulário **sem migration** |
 | Testado | **SIM** — 12 novos (`comercial-simulacao-ui-policy` + `comercial-simulacao-http-client`) + regressão orcamento/pedido UI/HTTP (27/27 no lote focado) |
-| CI | pendente neste HEAD |
+| CI | pendente neste HEAD (`689bbaee`) — draft PR: **BLOCKED** (`gh`/`ManagePullRequest` sem permissão createPullRequest); branch pushada |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#114` `cursor/comercial360-onda2-promocoes-parcelas-392b` |
+| Branch | `cursor/comercial360-onda2-simular-ui-392b` @ `689bbaee` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-promocoes-parcelas-392b...cursor/comercial360-onda2-simular-ui-392b?expand=1 |
 
 ### Arquivos reservados (Cursor — lote UI pós-#114)
 
