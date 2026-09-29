@@ -12,6 +12,8 @@
 
 ---
 
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
+
 ## OPINIÃO CURSOR — #135 tip + list fail-closed A+C (pós-#135) (2026-09-29T17:05Z)
 
 | PR | Tip / Branch | CI | Escopo |

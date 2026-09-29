@@ -12,6 +12,8 @@
 
 ---
 
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
+
 ## LOTE CURSOR — List fail-closed HTTP + update CANCELADO (pós-#135) (2026-09-29T17:05Z)
 
 | Etapa | Estado |

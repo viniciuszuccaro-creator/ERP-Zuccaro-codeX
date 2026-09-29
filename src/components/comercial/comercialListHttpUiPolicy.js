@@ -5,8 +5,14 @@
 
 /** Sanitiza observações livres (XSS/controle) antes do payload HTTP. */
 export function sanitizeObservacoesText(value, max = 1000) {
-  const cleaned = String(value ?? '')
-    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  const raw = String(value ?? '');
+  let withoutControls = '';
+  for (let i = 0; i < raw.length; i += 1) {
+    const code = raw.charCodeAt(i);
+    // C0 + DEL → espaço (evita no-control-regex no eslint)
+    withoutControls += code <= 0x1f || code === 0x7f ? ' ' : raw[i];
+  }
+  const cleaned = withoutControls
     .replace(/[<>]/g, '')
     .replace(/javascript:\s*/gi, '')
     .replace(/\s+/g, ' ')
