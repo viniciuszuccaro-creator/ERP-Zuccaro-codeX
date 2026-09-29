@@ -5,7 +5,7 @@
 | Choice | **Onda 4** Dirty form abandon — beforeunload + confirm ao fechar dialog/navegar; dirty\|simulacaoDirty; fail-closed (sem perda silenciosa) |
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `origin/cursor/comercial360-onda3-network-retry-392b` tip `6218511a` (#151) |
-| Tip | `b899c8d7` (`b899c8d7b03261ec377926095aa40778d613fd77`) · feat `b7352fa8` |
+| Tip | `089795f1` (`089795f1438cb35f6902b91385d24825883f1141`) · feat `b7352fa8` |
 | Draft PR | createPullRequest **403** — abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-network-retry-392b...cursor/comercial360-onda4-dirty-abandon-392b?expand=1 base `#151` |
 | Escopo | Helpers em `comercialListHttpUiPolicy` (`isComercialFormDirtyForAbandon`, `confirmComercialFormAbandon`, `resolveComercialFormDialogOpenChange`, `bindComercialFormBeforeUnload`); wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `form dirty abandon fail-closed` + preserva **Pedido backend HTTP is active** |

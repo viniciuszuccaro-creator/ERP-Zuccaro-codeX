@@ -5,7 +5,7 @@
 | Choice | **Onda 4** Dirty form abandon — beforeunload + confirm dialog/navegar |
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `#151` tip `6218511a` (`cursor/comercial360-onda3-network-retry-392b`) |
-| Tip | `b899c8d7` (`b899c8d7b03261ec377926095aa40778d613fd77`) · feat `b7352fa8` |
+| Tip | `089795f1` (`089795f1438cb35f6902b91385d24825883f1141`) · feat `b7352fa8` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-network-retry-392b...cursor/comercial360-onda4-dirty-abandon-392b?expand=1 base `#151` (gh createPullRequest 403) |
 | Meta | form dirty abandon fail-closed + **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **25/25** |
