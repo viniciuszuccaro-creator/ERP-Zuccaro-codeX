@@ -132,10 +132,13 @@ export function reconciliarPlanoStagingLegado({
   if (!Array.isArray(itens) || !Array.isArray(existentes) || !Array.isArray(contagensEsperadas)) {
     throw new Error('Plano de staging exige listas validas.');
   }
-  if ([...itens, ...existentes].some((item) => String(item?.groupId ?? '').trim() !== grupo)) {
+  // Valida estruturas JSON antes de qualquer leitura de campos usada no relatorio.
+  const linhas = itens.map((item) => stripSegredosMigracao(item));
+  const indice = existentes.map((item) => stripSegredosMigracao(item));
+  if ([...linhas, ...indice].some((item) => String(item?.groupId ?? '').trim() !== grupo)) {
     throw new Error('Plano de staging mistura Grupos.');
   }
-  const preparado = prepararLoteStagingLegado(itens, { autorizado, vinculosVerificados, existentes });
+  const preparado = prepararLoteStagingLegado(linhas, { autorizado, vinculosVerificados, existentes: indice });
   if (preparado.bloqueado) return preparado;
   const porMotivo = { ...preparado.relatorio.porMotivo };
   const contar = (motivo) => { porMotivo[motivo] = (porMotivo[motivo] || 0) + 1; };
@@ -143,16 +146,21 @@ export function reconciliarPlanoStagingLegado({
     grupo, String(item?.empresaId ?? '').trim(), String(item?.entidade ?? '').trim(),
     String(item?.codigoLegado ?? '').trim(),
   ]);
-  const conhecidos = new Set([...existentes, ...preparado.privados].map(chave));
-  const novos = new Set(preparado.privados.map(chave));
-  const dependentes = new Map([...novos].map((id) => [id, new Set()]));
-  const graus = new Map([...novos].map((id) => [id, 0]));
+  const conhecidos = new Set([...indice, ...preparado.privados].map(chave));
+  // Inclui retries do lote: eles podem fechar um ciclo com uma linha nova.
+  const idsLote = new Set(linhas.map(chave));
+  const dependentes = new Map([...idsLote].map((id) => [id, new Set()]));
+  const graus = new Map([...idsLote].map((id) => [id, 0]));
   let dependenciasPendentes = 0;
-  for (const item of itens) {
+  for (const item of linhas) {
     const itemKey = chave(item);
     const deps = item?.dependencias ?? [];
     if (!Array.isArray(deps)) throw new Error('Dependencias do staging invalidas.');
     for (const dep of deps) {
+      if (!dep || typeof dep !== 'object' || Array.isArray(dep)
+        || Object.keys(dep).some((campo) => !['entidade', 'codigoLegado', 'escopo'].includes(campo))) {
+        throw new Error('Dependencia do staging contem campos nao permitidos.');
+      }
       const entidade = String(dep?.entidade ?? '').trim();
       const codigoLegado = String(dep?.codigoLegado ?? '').trim();
       const escopo = String(dep?.escopo ?? '').trim();
@@ -164,7 +172,7 @@ export function reconciliarPlanoStagingLegado({
         || !conhecidos.has(depKey)) {
         dependenciasPendentes += 1;
         contar('dependencia_nao_comprovada');
-      } else if (novos.has(itemKey) && novos.has(depKey) && !dependentes.get(depKey).has(itemKey)) {
+      } else if (idsLote.has(depKey) && !dependentes.get(depKey).has(itemKey)) {
         dependentes.get(depKey).add(itemKey);
         graus.set(itemKey, graus.get(itemKey) + 1);
       }
@@ -181,10 +189,10 @@ export function reconciliarPlanoStagingLegado({
       if (grau === 0) fila.push(dependente);
     }
   }
-  const dependenciasCiclicas = novos.size - ordenados;
+  const dependenciasCiclicas = idsLote.size - ordenados;
   if (dependenciasCiclicas > 0) contar('dependencia_ciclica');
   const observadas = {};
-  for (const item of itens) {
+  for (const item of linhas) {
     const entidade = String(item.entidade).trim();
     const empresa = String(item.empresaId ?? '').trim() ? codigo(item.codigoEmpresaLegado) : 'grupo';
     const categoria = `${entidade}|${empresa}`;

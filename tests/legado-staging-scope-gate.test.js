@@ -211,3 +211,35 @@ test('dependencia circular entre operacoes nao avanca o lote', () => {
   assert.equal(result.relatorio.dependenciasCiclicas, 2);
   assert.equal(result.relatorio.porMotivo.dependencia_ciclica, 1);
 });
+
+test('ciclo entre novo pedido e retry do indice bloqueia o lote', () => {
+  const novo = { ...pedido, codigoLegado: 'PED-A', dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-B', escopo: 'empresa' }] };
+  const retry = { ...pedido, codigoLegado: 'PED-B', assinaturaOrigem: 'c'.repeat(64), dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-A', escopo: 'empresa' }] };
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, novo, retry],
+    existentes: [retry], contagensEsperadas: [planoBase.contagensEsperadas[0],
+      { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.dependenciasCiclicas, 2);
+});
+
+test('getter no retry nao pode contaminar contagem agregada', () => {
+  let lido = false;
+  const retry = { ...cliente };
+  Object.defineProperty(retry, 'entidade', { enumerable: true, get() { lido = true; return 'DOC-PRIVADO'; } });
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, retry, pedido],
+    contagensEsperadas: [
+      { entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 2 },
+      planoBase.contagensEsperadas[1],
+    ] }), /JSON simples/);
+  assert.equal(lido, false);
+});
+
+test('dependencia com empresa contraditoria ou campo privado e recusada antes da entrega', () => {
+  const contraditorio = { ...pedido, dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1',
+    escopo: 'grupo', empresaId: 'e2', documento: 'DOC-PRIVADO' }] };
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, contraditorio] }),
+    /campos nao permitidos/);
+});
