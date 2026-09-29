@@ -639,6 +639,7 @@ export function buildOrcamentoTenantSwitchReset(options = {}) {
   return {
     page: 1,
     selected: null,
+    selectedIds: [],
     formOpen: false,
     detailOpen: false,
     editing: null,
@@ -669,6 +670,7 @@ export function buildPedidoTenantSwitchReset(options = {}) {
   return {
     page: 1,
     selected: null,
+    selectedIds: [],
     formOpen: false,
     detailOpen: false,
     editing: null,
@@ -687,6 +689,134 @@ export function buildPedidoTenantSwitchReset(options = {}) {
     condicaoSnapshot: null,
     tabelaSnapshot: null,
     promocaoSnapshot: null,
+  };
+}
+
+/** Motivo canônico: bulk UI visível mas nunca executa (sem endpoint). */
+export const COMERCIAL_LIST_BULK_STUB_REASON = 'em breve / sem endpoint';
+
+/**
+ * Normaliza ids selecionados da listagem (dedupe, trim, sem vazios).
+ * @param {unknown} selectedIds
+ * @returns {string[]}
+ */
+export function normalizeComercialListSelectedIds(selectedIds) {
+  if (!Array.isArray(selectedIds)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const raw of selectedIds) {
+    const id = String(raw ?? '').trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+/**
+ * @param {unknown} selectedIds
+ * @param {unknown} rowId
+ */
+export function isComercialListRowSelected(selectedIds, rowId) {
+  const id = String(rowId ?? '').trim();
+  if (!id) return false;
+  return normalizeComercialListSelectedIds(selectedIds).includes(id);
+}
+
+/**
+ * Alterna seleção de uma linha (UI only — sem mutação HTTP).
+ * @param {unknown} selectedIds
+ * @param {unknown} rowId
+ * @returns {string[]}
+ */
+export function toggleComercialListRowSelection(selectedIds, rowId) {
+  const id = String(rowId ?? '').trim();
+  const current = normalizeComercialListSelectedIds(selectedIds);
+  if (!id) return current;
+  return current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+}
+
+/**
+ * Extrai ids de linhas da página atual.
+ * @param {unknown} pageRows
+ * @returns {string[]}
+ */
+export function comercialListPageRowIds(pageRows) {
+  if (!Array.isArray(pageRows)) return [];
+  return pageRows
+    .map((row) => String(row?.id ?? row ?? '').trim())
+    .filter(Boolean);
+}
+
+/**
+ * Seleciona/desmarca todos os ids da página atual (mantém ids de outras páginas).
+ * @param {unknown} selectedIds
+ * @param {unknown} pageRows
+ * @returns {string[]}
+ */
+export function toggleComercialListPageSelection(selectedIds, pageRows) {
+  const pageIds = comercialListPageRowIds(pageRows);
+  const current = normalizeComercialListSelectedIds(selectedIds);
+  if (pageIds.length === 0) return current;
+  const allSelected = pageIds.every((id) => current.includes(id));
+  if (allSelected) {
+    const drop = new Set(pageIds);
+    return current.filter((id) => !drop.has(id));
+  }
+  const seen = new Set(current);
+  const next = [...current];
+  for (const id of pageIds) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      next.push(id);
+    }
+  }
+  return next;
+}
+
+/**
+ * Bulk actions sempre desabilitadas — stub fail-closed (sem inventar API).
+ * @param {unknown} [_action]
+ * @returns {false}
+ */
+export function isComercialListBulkActionEnabled(_action) {
+  void _action;
+  return false;
+}
+
+/**
+ * Tooltip/title das ações em lote (motivo + rótulo).
+ * @param {'cancelar' | 'exportar' | string} [action]
+ */
+export function comercialListBulkActionTitle(action = 'cancelar') {
+  const label = action === 'exportar'
+    ? 'Exportar selecionados'
+    : (action === 'cancelar' ? 'Cancelar selecionados' : 'Ação em lote');
+  return `${label}: ${COMERCIAL_LIST_BULK_STUB_REASON}`;
+}
+
+/**
+ * Estado UI da multi-seleção + barra de bulk (sempre disabled).
+ * @param {{ selectedIds?: unknown, pageRows?: unknown }} [input]
+ */
+export function resolveComercialListBulkUiState(input = {}) {
+  const selectedIds = normalizeComercialListSelectedIds(input.selectedIds);
+  const pageIds = comercialListPageRowIds(input.pageRows);
+  const selectedOnPage = pageIds.filter((id) => selectedIds.includes(id));
+  const allPageSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
+  const somePageSelected = selectedOnPage.length > 0 && !allPageSelected;
+  return {
+    selectedIds,
+    selectedCount: selectedIds.length,
+    pageIds,
+    allPageSelected,
+    somePageSelected,
+    headerChecked: allPageSelected,
+    headerIndeterminate: somePageSelected,
+    bulkEnabled: isComercialListBulkActionEnabled(),
+    bulkReason: COMERCIAL_LIST_BULK_STUB_REASON,
+    cancelTitle: comercialListBulkActionTitle('cancelar'),
+    exportTitle: comercialListBulkActionTitle('exportar'),
   };
 }
 

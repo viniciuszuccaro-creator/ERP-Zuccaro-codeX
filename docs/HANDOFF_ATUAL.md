@@ -1,3 +1,20 @@
+## LOTE CURSOR — multi-select stub fail-closed (pós data-entrega) (2026-09-29T22:07Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Multi-select Pedido/Orçamento — checkboxes; bulk DISABLED |
+| Branch | `cursor/comercial360-onda5-multiselect-stub-392b` |
+| Base | tip `6e45a27d` (`cursor/comercial360-onda5-data-entrega-failclosed-392b`) |
+| Tip | (após commit) |
+| Draft PR | (após push) |
+| Meta | `listMultiSelectStubFailClosed` + **Pedido backend HTTP is active** |
+| Testes | list-http-ui-policy + integration + runtime07b/08c/09 **PASS** |
+| Colisão | sem mig; sem API bulk; sem merge/VPS |
+
+Próximo: CostPort BFF **ou** PDF/anexos sem colidir **ou** CreditPort quando 032 liberado.
+
+---
+
 ## LOTE CURSOR — Pedido Data entrega cliente fail-closed (pós entrega-address) (2026-09-29T22:30Z)
 
 | Campo | Valor |

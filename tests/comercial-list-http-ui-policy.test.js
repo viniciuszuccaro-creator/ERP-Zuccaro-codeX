@@ -46,6 +46,15 @@ import {
   resolveComercialFormDialogOpenChange,
   createComercialFormBeforeUnloadHandler,
   bindComercialFormBeforeUnload,
+  COMERCIAL_LIST_BULK_STUB_REASON,
+  normalizeComercialListSelectedIds,
+  isComercialListRowSelected,
+  toggleComercialListRowSelection,
+  toggleComercialListPageSelection,
+  comercialListPageRowIds,
+  isComercialListBulkActionEnabled,
+  comercialListBulkActionTitle,
+  resolveComercialListBulkUiState,
 } from '../src/components/comercial/comercialListHttpUiPolicy.js';
 import { buildOrcamentoPayload } from '../src/components/comercial/orcamentoUiPolicy.js';
 import { buildPedidoPayload } from '../src/components/comercial/pedidoUiPolicy.js';
@@ -332,6 +341,7 @@ test('tenant switch: reset Orçamento/Pedido descarta form dirty e diálogos', (
   assert.equal(orc.dirty, false);
   assert.equal(orc.editing, null);
   assert.equal(orc.selected, null);
+  assert.deepEqual(orc.selectedIds, []);
   assert.equal(orc.pendingCancel, null);
   assert.equal(orc.pendingConversion, null);
   assert.equal(orc.simulacaoDirty, false);
@@ -348,6 +358,7 @@ test('tenant switch: reset Orçamento/Pedido descarta form dirty e diálogos', (
   assert.equal(ped.formOpen, false);
   assert.equal(ped.dirty, false);
   assert.equal(ped.editing, null);
+  assert.deepEqual(ped.selectedIds, []);
   assert.deepEqual(ped.history, []);
   assert.equal(ped.pendingCancel, null);
   assert.deepEqual(ped.filters, PEDIDO_LIST_FILTER_DEFAULTS);
@@ -661,5 +672,71 @@ test('painéis Orçamento/Pedido: dirty abandon fail-closed (beforeunload + dial
     assert.doesNotMatch(src, /window\.confirm\('Descartar/);
   }
   assert.match(meta, /form dirty abandon fail-closed/);
+  assert.match(meta, /Pedido backend HTTP is active/);
+});
+
+test('multi-select stub: normalize/toggle/page selection + bulk sempre disabled', () => {
+  assert.deepEqual(normalizeComercialListSelectedIds([' a ', '', 'a', 'b', null]), ['a', 'b']);
+  assert.deepEqual(normalizeComercialListSelectedIds(null), []);
+  assert.equal(isComercialListRowSelected(['x', 'y'], 'y'), true);
+  assert.equal(isComercialListRowSelected(['x'], 'z'), false);
+  assert.equal(isComercialListRowSelected(['x'], ''), false);
+  assert.deepEqual(toggleComercialListRowSelection(['a'], 'b'), ['a', 'b']);
+  assert.deepEqual(toggleComercialListRowSelection(['a', 'b'], 'a'), ['b']);
+  assert.deepEqual(toggleComercialListRowSelection(['a'], ''), ['a']);
+  assert.deepEqual(comercialListPageRowIds([{ id: '1' }, { id: '2' }, { id: '' }]), ['1', '2']);
+  assert.deepEqual(
+    toggleComercialListPageSelection(['keep'], [{ id: '1' }, { id: '2' }]),
+    ['keep', '1', '2'],
+  );
+  assert.deepEqual(
+    toggleComercialListPageSelection(['keep', '1', '2'], [{ id: '1' }, { id: '2' }]),
+    ['keep'],
+  );
+  assert.equal(isComercialListBulkActionEnabled('cancelar'), false);
+  assert.equal(isComercialListBulkActionEnabled('exportar'), false);
+  assert.equal(COMERCIAL_LIST_BULK_STUB_REASON, 'em breve / sem endpoint');
+  assert.match(comercialListBulkActionTitle('cancelar'), /em breve \/ sem endpoint/i);
+  assert.match(comercialListBulkActionTitle('exportar'), /Exportar selecionados/);
+  const ui = resolveComercialListBulkUiState({
+    selectedIds: ['1', 'keep'],
+    pageRows: [{ id: '1' }, { id: '2' }],
+  });
+  assert.equal(ui.selectedCount, 2);
+  assert.equal(ui.allPageSelected, false);
+  assert.equal(ui.somePageSelected, true);
+  assert.equal(ui.headerChecked, false);
+  assert.equal(ui.headerIndeterminate, true);
+  assert.equal(ui.bulkEnabled, false);
+  assert.equal(ui.bulkReason, COMERCIAL_LIST_BULK_STUB_REASON);
+  assert.match(ui.cancelTitle, /sem endpoint/i);
+  const all = resolveComercialListBulkUiState({
+    selectedIds: ['1', '2'],
+    pageRows: [{ id: '1' }, { id: '2' }],
+  });
+  assert.equal(all.headerChecked, true);
+  assert.equal(all.headerIndeterminate, false);
+  assert.equal(all.bulkEnabled, false);
+});
+
+test('painéis Orçamento/Pedido: multi-select UI stub fail-closed (sem API bulk)', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const meta = await readFile(new URL('../server/src/api/router.ts', import.meta.url), 'utf8');
+  for (const src of [orc, ped]) {
+    assert.match(src, /resolveComercialListBulkUiState/);
+    assert.match(src, /toggleComercialListRowSelection/);
+    assert.match(src, /toggleComercialListPageSelection/);
+    assert.match(src, /selectedIds/);
+    assert.match(src, /list-bulk-bar/);
+    assert.match(src, /list-bulk-cancel/);
+    assert.match(src, /list-select-all/);
+    assert.match(src, /data-bulk-enabled="false"/);
+    assert.match(src, /data-bulk-reason=\{listBulkUi\.bulkReason\}/);
+    assert.doesNotMatch(src, /bulkCancel|bulk-cancel-api|\/bulk\/cancel|cancelMany|cancelSelected\(/i);
+  }
+  assert.match(meta, /listMultiSelectStubFailClosed: true/);
+  assert.match(meta, /multi-select stub fail-closed/);
+  assert.match(meta, /em breve \/ sem endpoint/);
   assert.match(meta, /Pedido backend HTTP is active/);
 });
