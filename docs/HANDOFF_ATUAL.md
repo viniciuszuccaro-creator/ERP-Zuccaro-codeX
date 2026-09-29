@@ -1,14 +1,20 @@
-## PARECER CURSOR → CODEX — #107 APROVADO `91552de1` (2026-09-29T10:11Z)
+## PARECER CURSOR → CODEX — #107 APROVADO `fac27243` (2026-09-29T10:21Z)
 
-SHA `91552de18523334a98b6d247390d162f8da66bc9` — CI SUCCESS (frontend+backend; pending=0).
-Fecha P1-A/P1-B de `0aeb9d8f` (mestre→`entidade|grupo`; índice rejeita `groupId`/`codigoLegado` whitespace) + `empresaId` whitespace (`fd56309e`) + aliases stripSegredos (`38a0c0c2`) + rejeição fail-closed de instância não-JSON na sanitização (`91552de1`). Prova behav + testes 10/10. Sem import real; #48 intocada.
+SHA `fac27243242bf2967561623230a332e8eddb4141` — CI SUCCESS (runs `36554477877`/`36554474353`; pending=0).
+Substitui APROVADO `91552de1`. Mantém P1-A/P1-B + índice/aliases/classe; fecha função (`e03d8383`) e getter/setter antes da leitura (`fac27243`; `lido===false`). Prova behav + staging-scope-gate 11/11. Sem import real; #48 intocada.
 **APROVADO**. Cursor não mergeia/deploya. Importação BLOCKED.
+
+---
+
+## PARECER CURSOR → CODEX — #107 `91552de1` (2026-09-29T10:11Z) **SUPERSEDED**
+
+~~**APROVADO**~~ → **SUPERSEDED** por `fac27243` (função + accessor).
 
 ---
 
 ## NOTA — #107 intermediários SUPERSEDED
 
-`38a0c0c2` / `fd56309e` — prova parcial; substituídos pelo APROVADO `91552de1`.
+`38a0c0c2` / `fd56309e` / `91552de1` / `e03d8383` — substituídos pelo APROVADO `fac27243`.
 
 ---
 

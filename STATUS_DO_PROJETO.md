@@ -1,43 +1,50 @@
-## PARECER CURSOR — #107 `91552de1` preflight staging / prepararLoteStagingLegado (2026-09-29T10:11Z)
+## PARECER CURSOR — #107 `fac27243` preflight staging / prepararLoteStagingLegado (2026-09-29T10:21Z)
 
 | Campo | Valor |
 |---|---|
-| SHA | `91552de18523334a98b6d247390d162f8da66bc9` |
+| SHA | `fac27243242bf2967561623230a332e8eddb4141` |
 | Branch | `codex/legado-staging-reconciliacao-20260929` |
 | Base | #106 `95fef57a` (`codex/legado-inventario-20260928`) |
-| CI | **SUCCESS** (frontend+backend; pending=0) |
-| Substitui | NÃO HOMOLOGADO peer `0aeb9d8f` (P1-A/P1-B); intermediários `82daf4c3`/`38a0c0c2`/`fd56309e` |
+| CI | **SUCCESS** (frontend+backend; runs `36554477877`/`36554474353`; pending=0) |
+| Substitui | APROVADO `91552de1` (mesmo PR; sanitização incomplete vs função/getter) |
 
-### Escopo (delta vs `0aeb9d8f`)
-- `82daf4c3` agregado grupo + índice trim → `38a0c0c2` aliases stripSegredos → `fd56309e` índice `empresaId` → `91552de1` rejeita payload não-JSON na sanitização.
-- Arquivos: `scripts/legado/staging-scope-gate.mjs`, `tests/legado-staging-scope-gate.test.js`, `src/components/lib/migracaoErpPolicy.js`, `tests/migracao-erp-policy.test.js`, STATUS.
+### Escopo (delta vs `91552de1`)
+- `e03d8383` — `stripSegredosMigracao` rejeita `typeof === 'function'` (lote parcial não devolve).
+- `fac27243` — rejeita descriptors com `get`/`set` **antes** de ler valores (`lido === false`).
+- Mantém P1-A/P1-B + índice `empresaId` + aliases + rejeição de classe de `91552de1` e linhagem.
 - Mapper **#48** intocado; sem dados reais / import / VPS / merge.
 
-### P1 fechados (prova behav independente neste SHA)
-| ID | Em `0aeb9d8f` | Prova `91552de1` |
-|---|---|---|
-| P1-A | Mestre sem `empresaId` + `codigoEmpresaLegado: '003'` → agregado `cliente\|003` | `porEntidadeEmpresa={ 'cliente\|grupo': 1 }` |
-| P1-B | Índice `groupId`/`codigoLegado` só espaços aceito | Lança `Indice de staging existente…` |
-
-### Residuais fechados na linhagem
-| Item | Fechado em | Prova |
-|---|---|---|
-| Aliases stripSegredos (camelCase/espaços/`access_token`/`client_secret`/protótipo nulo) | `38a0c0c2` | `JSON` sem `SEGREDO` |
-| Índice `empresaId` whitespace / mestre com empresa | `fd56309e` | Lança `Indice de staging existente…` |
-| Instância de classe compartilhava `token` por referência | `91552de1` | `stripSegredosMigracao({nested: new Box()})` lança `Migracao aceita somente registros JSON simples para sanitizacao.` |
+### Prova behav independente neste SHA
+| ID | Resultado |
+|---|---|
+| P1-A mestre + `codigoEmpresaLegado: '003'` | `porEntidadeEmpresa={ 'cliente\|grupo': 1 }` |
+| P1-B índice `groupId`/`codigoLegado`/`empresaId` whitespace | Lança `Indice de staging existente…` |
+| Função no 2º registro | Throw `/JSON simples/`; sem lote parcial |
+| Getter/setter enumerável (obj + array) | Throw antes de executar; `lido === false` |
+| JSON simples | `token`/`api_key` removidos; `nome` preservado |
 
 ### Testes locais
-- `tests/legado-staging-scope-gate.test.js` — **10/10** pass
+- `tests/legado-staging-scope-gate.test.js` — **11/11** pass
 
 ### Coordenação
 - Preflight em memória; importação/staging real **BLOCKED** até vínculos jurídicos + gate humano + #48.
 - Cursor **não** mergeia / deploy VPS. Sem PII no GitHub.
-
-### Peer
-- Peer comentou `fd56309e` (CI então pendente; sem APROVADO formal). Em `91552de1` só ack «Taking a look!» no momento desta publicação. STATUS/HANDOFF = parecer canônico.
+- Owner fechou lote no HEAD remoto; peer alinhado ao mesmo SHA.
 
 ### Veredito
-**APROVADO** neste SHA (`91552de1`). P1-A/P1-B fechados; residuais índice/sanitização fechados; CI SUCCESS; sem P1 novo.
+**APROVADO** neste SHA (`fac27243`). Residuais função/getter fechados; P1-A/B mantidos; CI SUCCESS; sem P1 novo.
+
+---
+
+## PARECER CURSOR — #107 `91552de1` (2026-09-29T10:11Z) **SUPERSEDED**
+
+| Campo | Valor |
+|---|---|
+| SHA | `91552de18523334a98b6d247390d162f8da66bc9` |
+| Situação | **SUPERSEDED** por `fac27243` (função `e03d8383` + getter `fac27243`) |
+| CI à época | SUCCESS |
+
+~~**APROVADO**~~ → **SUPERSEDED**. P1-A/P1-B e classe OK; residual função/accessor fechados nos SHAs seguintes.
 
 ---
 
@@ -46,9 +53,11 @@
 | SHA | Situação |
 |---|---|
 | `0aeb9d8f` | Peer **NÃO HOMOLOGADO** (P1-A/P1-B + vazamento aliases) |
-| `82daf4c3` | P1-A/B corrigidos; CI/peer então pendentes; residual `empresaId` |
-| `38a0c0c2` | Aliases OK + CI SUCCESS; residual `empresaId` / classe — **SUPERSEDED** |
-| `fd56309e` | Índice `empresaId` OK; peer sem CI terminal no comentário — **SUPERSEDED** por `91552de1` |
+| `82daf4c3` | P1-A/B corrigidos; residual `empresaId` |
+| `38a0c0c2` | Aliases OK — **SUPERSEDED** |
+| `fd56309e` | Índice `empresaId` OK — **SUPERSEDED** |
+| `91552de1` | Classe/não-JSON OK — **SUPERSEDED** por `fac27243` |
+| `e03d8383` | Função OK — **SUPERSEDED** por `fac27243` (getter) |
 
 ---
 
