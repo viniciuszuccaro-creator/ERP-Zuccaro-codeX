@@ -1,3 +1,24 @@
+## LOTE CURSOR — item-line validation qtd/preço fail-closed (pós-#147 resumo texto) (2026-09-29T18:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Item line validation UX — quantidade/preço >0 fail-closed antes de simular/salvar; mensagens claras; reusa forms Orçamento/Pedido |
+| Branch | `cursor/comercial360-onda3-item-line-validation-392b` |
+| Base | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` tip `0e7111af` (#147) |
+| Tip | `fdbfce92` (`fdbfce9256518818c3f9c7f5c948bdff4bac7f25`) · feat `6c3587a2` |
+| Draft PR | **#148** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/148 — ManagePullRequest indisponível; `gh pr create` 403. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-resumo-texto-392b...cursor/comercial360-onda3-item-line-validation-392b?expand=1 |
+| Escopo | `calculateItem` exige preço >0; `collectItemLineIssues`/`evaluateItemLinesGate`; wire `OrcamentosTab`+`PedidoCanonicoPanel` (alertas linha + disable Salvar/Simular); meta note; sem migration |
+| Meta | note + `Pedido backend HTTP is active` |
+| Testes | `orcamento-ui-policy`+`pedido-ui-policy`+simulacao/alcada/list/pedido-frontend **71/71**; `git diff --check` PASS |
+| Colisão | margem #47 OPEN; PDF/anexos #52–62; stack #126–#147; a11y A (Radix Escape já); C histórico Pedido já exibe `history`; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** a11y Escape/focus polish **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/orcamento-ui-policy.test.js`, `tests/pedido-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
+
+Diagnóstico: emptyItem inicia `preco_unitario:'0'`; UI engolia erro de `calculateItem`; save só falhava no toast genérico. Maior polish seguro independente pós-#147.
+
+---
+
 ## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
 
 | PR/Branch | Tip | CI | Escopo |

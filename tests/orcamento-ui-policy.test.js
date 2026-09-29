@@ -9,7 +9,9 @@ import {
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
+  collectItemLineIssues,
   comercialDocumentoSnapshotGapHint,
+  evaluateItemLinesGate,
   isOrcamentoValidadeExpirada,
   mapOrcamentoRowToForm,
   microsToDecimal,
@@ -85,11 +87,44 @@ test('payload invalido e bloqueado antes da chamada HTTP', () => {
   assert.throws(() => buildOrcamentoPayload({ ...form(), cliente_empresa_id: '' }), /cliente/i);
   assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [] }), /item/i);
   assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], quantidade: '0' }] }), /quantidade/i);
+  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], preco_unitario: '0' }] }), /preço unitário/i);
   assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], desconto: '99' }] }), /desconto/i);
   assert.throws(
     () => buildOrcamentoPayload({ ...form(), validade_em: '2020-01-01' }, { now: new Date('2026-09-29T15:00:00.000Z') }),
     /Validade expirada/i,
   );
+});
+
+test('gate de itens bloqueia save com preço/quantidade zero e simular sem produto', () => {
+  assert.throws(() => calculateItem({ ...form().itens[0], preco_unitario: '0' }), /preço unitário/i);
+  const zeroPrice = evaluateItemLinesGate([{ ...form().itens[0], preco_unitario: '0' }]);
+  assert.equal(zeroPrice.blockSave, true);
+  assert.equal(zeroPrice.ok, false);
+  assert.match(zeroPrice.hint || '', /preço unitário/i);
+  assert.match(zeroPrice.lineHints[0] || '', /preço unitário/i);
+
+  const zeroQty = evaluateItemLinesGate([{ ...form().itens[0], quantidade: '0' }]);
+  assert.equal(zeroQty.blockSave, true);
+  assert.match(zeroQty.hint || '', /quantidade/i);
+
+  const empty = evaluateItemLinesGate([]);
+  assert.equal(empty.blockSave, true);
+  assert.equal(empty.blockSimular, true);
+
+  const missingProduct = collectItemLineIssues({
+    produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0',
+  }, 0, { purpose: 'simular' });
+  assert.ok(missingProduct.some((issue) => issue.field === 'produto_id'));
+  const simGate = evaluateItemLinesGate([{
+    produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0',
+  }]);
+  assert.equal(simGate.blockSimular, true);
+  assert.equal(simGate.blockSave, true);
+
+  const ok = evaluateItemLinesGate([form().itens[0]]);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.blockSave, false);
+  assert.equal(ok.blockSimular, false);
 });
 
 test('hint e detecção de validade expirada no UI policy', () => {
@@ -215,6 +250,15 @@ test('painel orçamento wire resumo texto sem PDF novo', async () => {
   assert.match(tab, /Comercial\.orcamento\.resumo-texto/);
   assert.match(tab, /Resumo texto/);
   assert.doesNotMatch(tab, /jspdf|pdfkit|html2pdf/i);
+});
+
+test('painel orçamento wire gate de itens quantidade/preço fail-closed', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /evaluateItemLinesGate/);
+  assert.match(tab, /orcamento-item-lines-gate/);
+  assert.match(tab, /itemLinesGate\.blockSave/);
+  assert.match(tab, /itemLinesGate\.blockSimular/);
+  assert.match(tab, /Comercial\.orcamento\.item-line-validation/);
 });
 
 test('impressao de orcamento escapa campos livres e nao depende de credencial externa', async () => {

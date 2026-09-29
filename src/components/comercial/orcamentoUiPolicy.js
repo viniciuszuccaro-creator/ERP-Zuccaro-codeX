@@ -20,8 +20,124 @@ export function calculateItem(item) {
   const discount = decimalToMicros(item.desconto || '0');
   const subtotal = (quantity * unitPrice) / MICROS;
   if (quantity <= 0n) throw new Error('A quantidade deve ser maior que zero.');
+  if (unitPrice <= 0n) throw new Error('O preço unitário deve ser maior que zero.');
   if (discount > subtotal) throw new Error('O desconto não pode superar o subtotal.');
   return { subtotal: microsToDecimal(subtotal), total: microsToDecimal(subtotal - discount) };
+}
+
+const ITEM_LINES_EMPTY_HINT = 'Inclua pelo menos um item com quantidade e preço maiores que zero.';
+
+/**
+ * Valida uma linha do formulário (fail-closed) para UX antes de simular/salvar.
+ * Simular: quantidade > 0 + produto/unidade/descrição (preço vem do servidor).
+ * Salvar: quantidade e preço unitário > 0 + desconto ≤ subtotal.
+ * @param {object} item
+ * @param {number} [index]
+ * @param {{ purpose?: 'save' | 'simular' }} [options]
+ * @returns {Array<{ index: number, field: string, message: string }>}
+ */
+export function collectItemLineIssues(item, index = 0, options = {}) {
+  const purpose = options.purpose === 'simular' ? 'simular' : 'save';
+  const label = `Item ${index + 1}`;
+  /** @type {Array<{ index: number, field: string, message: string }>} */
+  const issues = [];
+
+  try {
+    const quantity = decimalToMicros(item?.quantidade);
+    if (quantity <= 0n) {
+      issues.push({ index, field: 'quantidade', message: `${label}: quantidade deve ser maior que zero.` });
+    }
+  } catch {
+    issues.push({ index, field: 'quantidade', message: `${label}: quantidade inválida.` });
+  }
+
+  if (purpose === 'simular') {
+    if (!String(item?.produto_id || '').trim()) {
+      issues.push({ index, field: 'produto_id', message: `${label}: selecione o produto.` });
+    }
+    if (!String(item?.unidade_id || '').trim()) {
+      issues.push({ index, field: 'unidade_id', message: `${label}: unidade inválida.` });
+    }
+    if (!String(item?.descricao || '').trim()) {
+      issues.push({ index, field: 'descricao', message: `${label}: informe a descrição.` });
+    }
+    if (!String(item?.unidade_sigla || '').trim()) {
+      issues.push({ index, field: 'unidade_sigla', message: `${label}: informe a sigla da unidade.` });
+    }
+    return issues;
+  }
+
+  try {
+    const unitPrice = decimalToMicros(item?.preco_unitario);
+    if (unitPrice <= 0n) {
+      issues.push({ index, field: 'preco_unitario', message: `${label}: preço unitário deve ser maior que zero.` });
+    }
+  } catch {
+    issues.push({ index, field: 'preco_unitario', message: `${label}: preço unitário inválido.` });
+  }
+
+  if (issues.length === 0) {
+    try {
+      calculateItem(item);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || 'linha inválida');
+      issues.push({ index, field: 'desconto', message: `${label}: ${message}` });
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Gate fail-closed de itens do formulário Orçamento/Pedido.
+ * @param {unknown} itens
+ * @returns {{
+ *   ok: boolean,
+ *   blockSave: boolean,
+ *   blockSimular: boolean,
+ *   hint: string | null,
+ *   issues: Array<{ index: number, field: string, message: string }>,
+ *   simularIssues: Array<{ index: number, field: string, message: string }>,
+ *   lineHints: Record<number, string>,
+ * }}
+ */
+export function evaluateItemLinesGate(itens) {
+  const list = Array.isArray(itens) ? itens : [];
+  if (list.length === 0) {
+    const emptyIssue = { index: -1, field: 'itens', message: 'Inclua pelo menos um item.' };
+    return {
+      ok: false,
+      blockSave: true,
+      blockSimular: true,
+      hint: ITEM_LINES_EMPTY_HINT,
+      issues: [emptyIssue],
+      simularIssues: [emptyIssue],
+      lineHints: {},
+    };
+  }
+
+  const issues = list.flatMap((item, index) => collectItemLineIssues(item, index, { purpose: 'save' }));
+  const simularIssues = list.flatMap((item, index) => collectItemLineIssues(item, index, { purpose: 'simular' }));
+  /** @type {Record<number, string>} */
+  const lineHints = {};
+  for (const issue of issues) {
+    if (issue.index < 0 || lineHints[issue.index]) continue;
+    lineHints[issue.index] = issue.message;
+  }
+  for (const issue of simularIssues) {
+    if (issue.index < 0 || lineHints[issue.index]) continue;
+    lineHints[issue.index] = issue.message;
+  }
+
+  return {
+    ok: issues.length === 0,
+    blockSave: issues.length > 0,
+    blockSimular: simularIssues.length > 0,
+    hint: issues[0]?.message || simularIssues[0]?.message || null,
+    issues,
+    simularIssues,
+    lineHints,
+  };
 }
 
 export function calculateTotals(items) {
