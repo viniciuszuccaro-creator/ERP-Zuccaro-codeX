@@ -11775,6 +11775,6 @@ Checklist inicial:
 
 ## Evidencia sanitizada de identidade legada (2026-09-29)
 
-- Consulta somente leitura de resumos privados ja existentes, sem varrer novamente o backup: o relatorio SQL das 15:31 apontava 3 vinculos nao resolvidos em 5 linhas; a validacao humana posterior das 15:49 confirmou 3 decisoes, 0 pendentes e mapa de 3 aliases aprovado. O dry-run das 17:34 fez 0 escritas; `importAuthorized=false`. Nao apresentar o diagnostico anterior como pendencia atual do mapa de aliases.
+- Consulta somente leitura em 2026-09-29 de resumos privados gerados em 2026-09-10, sem varrer novamente o backup: o relatorio SQL gerado as 15:31 apontava 3 vinculos nao resolvidos em 5 linhas; a validacao humana posterior, gerada as 15:49, confirmou 3 decisoes, 0 pendentes e mapa de 3 aliases aprovado. O dry-run gerado as 17:34 fez 0 escritas; `importAuthorized=false`. Os horarios sao dos relatorios, nao dos commits Git. Nao apresentar o diagnostico anterior como pendencia atual do mapa de aliases.
 - Aprovacao dos aliases nao comprova a empresa proprietaria de cada Pedido, movimento de estoque, titulo ou nota. O adaptador permanece fail-closed; conjunto operacional sem coluna/origem e vinculo juridico comprovados vai para quarentena. Nenhum valor, CNPJ, registro ou arquivo privado foi copiado para o GitHub.
 - Proximo gate: comprovar, por conjunto operacional, origem e Empresa juridica sem extrapolar a aprovacao do mapa de aliases; depois validar staging isolado e plano de reversao antes de solicitar autorizacao de importacao real.
