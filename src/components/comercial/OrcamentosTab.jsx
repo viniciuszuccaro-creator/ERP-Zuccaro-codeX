@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, isOrcamentoValidadeExpirada, microsToDecimal, orcamentoConvertSnapshotHint, orcamentoValidadeHint } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, isOrcamentoValidadeExpirada, mapOrcamentoRowToForm, microsToDecimal, orcamentoConvertSnapshotHint, orcamentoValidadeHint } from './orcamentoUiPolicy';
 import {
   applySimulacaoToForm,
   assertPromocaoAplicadaOuFalhar,
@@ -22,20 +22,20 @@ import {
   buildSimularVendaPayload,
   buildSimulacaoPreviewState,
   canSimularVenda,
+  collectPersistedCommercialSnapshots,
   mergeSimulacaoBeforeSave,
+  promoInputsFromPersistedSnapshot,
   resolveDisplayTotals,
 } from './comercialSimulacaoUiPolicy';
 import {
   applyResolvedCondicaoToForm,
   assertCondicaoResolucaoNoContexto,
   buildCondicaoSnapshotPreview,
-  buildPersistedCondicaoSnapshotFromRow,
   normalizeCondicoesListPayload,
 } from './comercialCondicaoHttpUiPolicy';
 import {
   applyResolvedPrecoToItem,
   assertPrecoResolucaoNoContexto,
-  buildPersistedTabelaSnapshotFromRow,
 } from './comercialTabelaPrecoHttpUiPolicy';
 import {
   buildClienteDisplayLabel,
@@ -95,6 +95,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [simulating, setSimulating] = useState(false);
   const [condicaoSnapshot, setCondicaoSnapshot] = useState(null);
   const [tabelaSnapshot, setTabelaSnapshot] = useState(null);
+  const [promocaoSnapshot, setPromocaoSnapshot] = useState(null);
   const [resolvingCondicao, setResolvingCondicao] = useState(false);
   const [resolvingPreco, setResolvingPreco] = useState(false);
   const saveInFlightRef = useRef(false);
@@ -176,6 +177,19 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setSimulacaoPreview(null); setLastSimulation(null); setPromoBps(''); setPromoCupom('');
     setCondicaoSnapshot(null);
     setTabelaSnapshot(null);
+    setPromocaoSnapshot(null);
+  };
+  const applyPersistedSnapshotsFromRow = (row) => {
+    const snaps = collectPersistedCommercialSnapshots(row);
+    setCondicaoSnapshot(snaps.condicao);
+    setTabelaSnapshot(snaps.tabela);
+    setPromocaoSnapshot(snaps.promocao);
+    const promoInputs = promoInputsFromPersistedSnapshot(snaps.promocao);
+    setPromoBps(promoInputs.promoBps);
+    setPromoCupom(promoInputs.promoCupom);
+    setSimulacaoPreview(null);
+    setLastSimulation(null);
+    return snaps;
   };
   const closeForm = () => {
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
@@ -185,16 +199,9 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const openEdit = (row) => {
     if (!canEdit(row)) return;
     setEditing(row);
-    setForm({
-      cliente_empresa_id: row.cliente_empresa_id,
-      condicao_pagamento_id: row.condicao_pagamento_id,
-      validade_em: String(row.validade_em || '').slice(0, 10),
-      observacoes: row.observacoes || '',
-      itens: row.itens.map((item) => ({ produto_id: item.produto_id, unidade_id: item.unidade_id, descricao: item.descricao, unidade_sigla: item.unidade_sigla, quantidade: item.quantidade, preco_unitario: item.preco_unitario, desconto: item.desconto })),
-    });
-    setDirty(false); setDetailOpen(false); resetSimulacaoUi();
-    setCondicaoSnapshot(buildPersistedCondicaoSnapshotFromRow(row));
-    setTabelaSnapshot(buildPersistedTabelaSnapshotFromRow(row));
+    setForm(mapOrcamentoRowToForm(row));
+    setDirty(false); setDetailOpen(false);
+    applyPersistedSnapshotsFromRow(row);
     setFormOpen(true);
   };
   const changeForm = (key, value) => {
@@ -359,7 +366,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       });
       const saved = editing ? await api.update(editing.id, payload) : await api.create(payload);
       toast.success(editing ? 'Orçamento atualizado.' : 'Orçamento criado.');
-      setDirty(false); setFormOpen(false); setEditing(null); setSelected(saved); resetSimulacaoUi();
+      setSelected(saved);
+      setEditing(saved);
+      setForm(mapOrcamentoRowToForm(saved));
+      setDirty(false);
+      applyPersistedSnapshotsFromRow(saved);
+      setFormOpen(true);
       await queryClient.invalidateQueries({ queryKey: ['orcamentos-http', groupId, empresaId] });
     } catch (error) { toast.error(errorMessage(error)); }
     finally { setSubmitting(false); endSaveOnce(saveInFlightRef); }
@@ -442,8 +454,9 @@ const convertToPedido = async () => {
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Os totais serão conferidos novamente pelo servidor.</DialogDescription></DialogHeader>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => { void changeClienteEmpresa(v); }}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.clientesEmpresa.filter((item) => item.ativo !== false && item.habilitado_operacao !== false && item.bloqueado !== true).map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)} disabled={resolvingCondicao}><SelectTrigger id="orc-condicao"><SelectValue placeholder={resolvingCondicao ? 'Resolvendo...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} aria-invalid={Boolean(validadeHint && form.validade_em)} /><p className={`text-xs mt-1 ${validadeHint && form.validade_em ? 'text-amber-700' : 'text-slate-500'}`} data-action="Comercial.orcamento.validade-hint">{validadeHint || 'Proposta válida até o meio-dia desta data (servidor bloqueia se expirada).'}</p></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
-      {condicaoSnapshot?.parcelas?.length > 0 && <div className="border rounded-md p-3 space-y-2 bg-white" data-action="Comercial.condicao-snapshot-preview"><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Resolução: {condicaoSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{condicaoSnapshot.nome || condicaoSnapshot.codigo || condicaoSnapshot.id}</Badge><span className="text-xs text-slate-500">Pré-visualização — ao salvar, o servidor persiste snapshot id+nome+parcelas (não-retroativo).</span></div><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead></TableRow></TableHeader><TableBody>{condicaoSnapshot.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.dias}-${parcela.percentual}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell></TableRow>)}</TableBody></Table></div>}
-      {tabelaSnapshot?.id && <div className="border rounded-md p-3 bg-white" data-action="Comercial.tabela-snapshot-preview"><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Tabela: {tabelaSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{tabelaSnapshot.nome || tabelaSnapshot.codigo || tabelaSnapshot.id}</Badge><span className="text-xs text-slate-500">Snapshot codigo+nome persistido pelo servidor (não-retroativo).</span></div></div>}
+      {condicaoSnapshot?.parcelas?.length > 0 && <div className="border rounded-md p-3 space-y-2 bg-white" data-action="Comercial.condicao-snapshot-preview" data-testid="orcamento-condicao-snapshot" data-persistido={condicaoSnapshot.persistido ? 'true' : 'false'}><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Resolução: {condicaoSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{condicaoSnapshot.nome || condicaoSnapshot.codigo || condicaoSnapshot.id}</Badge>{condicaoSnapshot.persistido && <Badge variant="secondary">Persistido</Badge>}<span className="text-xs text-slate-500">{condicaoSnapshot.persistido ? 'Snapshot recarregado do servidor após salvar (id+codigo+nome+parcelas).' : 'Pré-visualização — ao salvar, o servidor persiste snapshot id+nome+parcelas (não-retroativo).'}</span></div><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead></TableRow></TableHeader><TableBody>{condicaoSnapshot.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.dias}-${parcela.percentual}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell></TableRow>)}</TableBody></Table></div>}
+      {tabelaSnapshot?.id && <div className="border rounded-md p-3 bg-white" data-action="Comercial.tabela-snapshot-preview" data-testid="orcamento-tabela-snapshot" data-persistido={tabelaSnapshot.persistido ? 'true' : 'false'}><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Tabela: {tabelaSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{tabelaSnapshot.nome || tabelaSnapshot.codigo || tabelaSnapshot.id}</Badge>{tabelaSnapshot.persistido && <Badge variant="secondary">Persistido</Badge>}<span className="text-xs text-slate-500">{tabelaSnapshot.persistido ? 'Snapshot codigo+nome recarregado do servidor após salvar.' : 'Snapshot codigo+nome persistido pelo servidor (não-retroativo).'}</span></div></div>}
+      {promocaoSnapshot?.persistido && <div className="border rounded-md p-3 bg-white" data-action="Comercial.promocao-snapshot-preview" data-testid="orcamento-promocao-snapshot" data-persistido="true"><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Promoção: persistido</Badge>{promocaoSnapshot.aplicada ? <Badge>Promo {promocaoSnapshot.bps} bps{promocaoSnapshot.cupom ? ` · ${promocaoSnapshot.cupom}` : ''}</Badge> : <Badge variant="secondary">Sem promoção</Badge>}<span className="text-xs text-slate-500">Snapshot de promoção recarregado do servidor após salvar (migration 030).</span></div></div>}
       <div className="space-y-2"><div className="flex justify-between"><h3 className="font-semibold">Itens</h3><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => { void selectProduct(index, v); }} disabled={resolvingPreco}><SelectTrigger><SelectValue placeholder={resolvingPreco ? 'Resolvendo preço...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.produtos.filter((p) => p.ativo !== false).map((p) => <SelectItem key={p.id} value={p.id}>{produtoLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
       {descontoAlcada.excedeu && <Alert variant={descontoAlcada.canSave ? 'default' : 'destructive'} className="border-amber-300" data-action="Comercial.orcamento.desconto-alcada" data-testid="orcamento-desconto-alcada-alert"><AlertCircle className="h-4 w-4" /><AlertDescription>{descontoAlcada.hint}{descontoAlcada.descontoBps > 0 ? ` (${descontoAlcada.descontoBps} bps).` : ''}</AlertDescription></Alert>}

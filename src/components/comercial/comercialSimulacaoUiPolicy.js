@@ -4,6 +4,9 @@
  * via applyPromocaoOnPersist (UI não inventa total persistido).
  */
 
+import { buildPersistedCondicaoSnapshotFromRow } from './comercialCondicaoHttpUiPolicy.js';
+import { buildPersistedTabelaSnapshotFromRow } from './comercialTabelaPrecoHttpUiPolicy.js';
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MONEY_RE = /^\d+(\.\d{1,6})?$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -243,5 +246,73 @@ export function buildSimulacaoPreviewState(simulation) {
       : null,
     parcelas: formatParcelasSchedule(simulation?.parcelas),
     baseDate: simulation?.base_date || null,
+  };
+}
+
+/**
+ * Preview de promoção a partir do documento Orçamento/Pedido já gravado (reload após save).
+ * Espelha campos persistidos pela migration 030 — sem inventar bps.
+ * @param {object | null | undefined} row
+ * @returns {{ aplicada: boolean, bps: number | null, cupom: string | null, fonte: string, persistido: boolean } | null}
+ */
+export function buildPersistedPromocaoSnapshotFromRow(row) {
+  if (!row || typeof row !== 'object') return null;
+  if (row.promocao_aplicada !== true) {
+    if (row.promocao_aplicada === false) {
+      return {
+        aplicada: false,
+        bps: null,
+        cupom: null,
+        fonte: 'persistido',
+        persistido: true,
+      };
+    }
+    return null;
+  }
+  const bps = Number(row.promocao_bps);
+  if (!Number.isInteger(bps) || bps <= 0 || bps > 10000) return null;
+  const cupom = String(row.promocao_cupom || '').trim();
+  return {
+    aplicada: true,
+    bps,
+    cupom: cupom ? cupom.slice(0, 64) : null,
+    fonte: 'persistido',
+    persistido: true,
+  };
+}
+
+/**
+ * Coleta snapshots comerciais persistidos do documento salvo (condição + tabela + promoção).
+ * Usado no reload pós-save para provar round-trip na UI sem reabrir o seletor.
+ * @param {object | null | undefined} row
+ * @param {{
+ *   buildCondicao?: (row: object) => object | null,
+ *   buildTabela?: (row: object) => object | null,
+ * }} [builders] — injetáveis nos testes; default = políticas HTTP existentes
+ */
+export function collectPersistedCommercialSnapshots(row, builders = {}) {
+  if (!row || typeof row !== 'object') {
+    return { condicao: null, tabela: null, promocao: null };
+  }
+  const buildCondicao = builders.buildCondicao || buildPersistedCondicaoSnapshotFromRow;
+  const buildTabela = builders.buildTabela || buildPersistedTabelaSnapshotFromRow;
+  return {
+    condicao: buildCondicao(row) || null,
+    tabela: buildTabela(row) || null,
+    promocao: buildPersistedPromocaoSnapshotFromRow(row),
+  };
+}
+
+/**
+ * Campos de input de promoção a partir do snapshot persistido (reload).
+ * @param {{ aplicada?: boolean, bps?: number | null, cupom?: string | null } | null | undefined} snapshot
+ */
+export function promoInputsFromPersistedSnapshot(snapshot) {
+  if (!snapshot || snapshot.aplicada !== true || !Number.isInteger(Number(snapshot.bps))) {
+    return { promoBps: '', promoCupom: '' };
+  }
+  return {
+    promoBps: String(Math.trunc(Number(snapshot.bps))),
+    promoCupom: snapshot.cupom ? String(snapshot.cupom).slice(0, 64) : '',
   };
 }
