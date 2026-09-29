@@ -355,6 +355,26 @@ export function createHttpApiClient(options = {}) {
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
+  /** Simulação comercial Onda 2 (não persiste). Tenant só nos headers via getScope. */
+  const comercial = {
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    simularVenda(payload, { signal } = {}) {
+      return request('/api/v1/comercial/simular-venda', { method: 'POST', body: payload, signal });
+    },
+  };
+  /** Resolve fail-closed ClienteEmpresa → padrão Empresa (Cadastros.condicao_pagamento.visualizar no backend). */
+  const condicoesPagamento = {
+    /**
+     * @param {string} clienteEmpresaId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    resolve(clienteEmpresaId, { signal } = {}) {
+      return request('/api/v1/condicoes-pagamento/resolve', {
+        query: { clienteEmpresaId },
+        signal,
+      });
+    },
+  };
   const clientes = {
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
@@ -400,6 +420,8 @@ export function createHttpApiClient(options = {}) {
     },
     orcamentos,
     pedidos,
+    comercial,
+    condicoesPagamento,
     clientes,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
