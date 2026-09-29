@@ -59,13 +59,18 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
   const relatorio = { origem: itens.length, aptos: 0, reusos: 0, conflitos: 0, quarentena: 0, porEntidadeEmpresa: {}, porMotivo: {} };
   const contar = (objeto, chave) => { objeto[chave] = (objeto[chave] || 0) + 1; };
   for (const anterior of existentes) {
+    const entidadeExistente = String(anterior?.entidade ?? '').trim();
+    const empresaExistente = String(anterior?.empresaId ?? '').trim();
     const chave = JSON.stringify([
-      String(anterior?.groupId ?? '').trim(), String(anterior?.empresaId ?? '').trim(),
-      String(anterior?.entidade ?? '').trim(), String(anterior?.codigoLegado ?? '').trim(),
+      String(anterior?.groupId ?? '').trim(), empresaExistente,
+      entidadeExistente, String(anterior?.codigoLegado ?? '').trim(),
     ]);
     const assinatura = String(anterior?.assinaturaOrigem ?? '').trim();
-    if (!String(anterior?.groupId ?? '').trim() || !String(anterior?.entidade ?? '').trim()
-      || !String(anterior?.codigoLegado ?? '').trim() || !/^[a-f0-9]{64}$/.test(assinatura)) {
+    if (!String(anterior?.groupId ?? '').trim() || !entidadeExistente
+      || !String(anterior?.codigoLegado ?? '').trim() || !/^[a-f0-9]{64}$/.test(assinatura)
+      || (OPERACOES.has(entidadeExistente) && !empresaExistente)
+      || (MESTRES_GRUPO.has(entidadeExistente) && empresaExistente)
+      || (String(anterior?.empresaId ?? '') && !empresaExistente)) {
       throw new Error('Indice de staging existente sem identidade e assinatura validas.');
     }
     if (porChave.has(chave) && porChave.get(chave) !== assinatura) {

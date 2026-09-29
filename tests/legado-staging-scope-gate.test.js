@@ -121,4 +121,6 @@ test('retry entre lotes reutiliza staging existente sem nova linha nem misturar 
     /Indice de staging existente/);
   assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, codigoLegado: '   ' }] }),
     /Indice de staging existente/);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, empresaId: '   ' }] }),
+    /Indice de staging existente/);
 });
