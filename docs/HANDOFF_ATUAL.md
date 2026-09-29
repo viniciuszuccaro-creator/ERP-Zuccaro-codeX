@@ -1,3 +1,20 @@
+## LOTE CURSOR — margem mínima UI fail-closed (pós #156 crédito) (2026-09-29T22:00Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Margem mínima UI fail-closed — CostPort snapshot; sem inventar custo |
+| Branch | `cursor/comercial360-onda4-margem-ui-failclosed-392b` |
+| Base | `#156` tip `9e342c32` (`cursor/comercial360-onda4-credito-ui-failclosed-392b`) |
+| Tip | _(após push)_ |
+| Draft PR | _(após abrir)_ |
+| Meta | `margemAlcadaUiFailClosed` + **Pedido backend HTTP is active** |
+| Testes | margem-ui-policy + runtime08c/09 meta PASS |
+| Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
+
+Próximo: CostPort BFF real **ou** CreditPort/#63–67 com mig 032 **ou** PDF/anexos sem colidir.
+
+---
+
 ## LOTE CURSOR — Pedido crédito UI fail-closed (pós dirty-abandon) (2026-09-29T21:50Z)
 
 | Campo | Valor |

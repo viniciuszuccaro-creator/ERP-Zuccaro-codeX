@@ -1,3 +1,24 @@
+## LOTE CURSOR — margem mínima UI fail-closed (pós crédito UI) (2026-09-29T22:00Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Margem mínima UI display/gate Orçamento/Pedido — CostPort snapshot explícito; fail-closed sem migration |
+| Branch | `cursor/comercial360-onda4-margem-ui-failclosed-392b` |
+| Base | `origin/cursor/comercial360-onda4-credito-ui-failclosed-392b` tip `9e342c32` (#156) |
+| Tip | _(após push)_ |
+| Draft PR | _(após abrir)_ |
+| Escopo | `comercialMargemAlcadaUiPolicy` (paridade micros/#47); wire `OrcamentosTab`+`PedidoCanonicoPanel` (Alert + Salvar gate); `formatComercialHttpError` → `MARGEM_ALCADA_DENIED`; meta `margemAlcadaUiFailClosed` + note; **sem migration**; sem inventar custo |
+| Meta | `margemAlcadaUiFailClosed` + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-margem-alcada-ui-policy` + list-http-ui (MARGEM map) + runtime08c/09 meta **PASS**; `git diff --check` |
+| Colisão | B tipo comercial (sem campo / mig 026); C histórico Pedido já no tip; D WhatsApp share stub adiado; anexos #59–62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | CostPort real no BFF (custo na UI sem inventar) **ou** CreditPort/#63–67 com mig 032 **ou** PDF/anexos sem colidir #59–62 |
+
+Arquivos: `comercialMargemAlcadaUiPolicy.js`, `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-margem-alcada-ui-policy.test.js`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `server/tests/runtime07b.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: backend CostPort/#47 já no tip; UI adiada por “sem custo inventado”. Gate espelha desconto: sem snapshot → skip; com `custo_unitario`/lookup explícito abaixo da mínima → exige `aprovar` e bloqueia Salvar; HTTP 403 mapeado.
+
+---
+
 ## LOTE CURSOR — Pedido crédito UI fail-closed (pós dirty-abandon) (2026-09-29T21:50Z)
 
 | Campo | Valor |

@@ -196,6 +196,9 @@ export function formatComercialHttpError(error, options = {}) {
     }
     return `${entity}: desconto acima da alçada livre exige permissão de aprovar.`;
   }
+  if (code === 'MARGEM_ALCADA_DENIED' || (status === 403 && /margem.*m[ií]nima/i.test(String(error?.body?.error?.message || '')))) {
+    return `${entity}: margem abaixo da mínima exige permissão de aprovar.`;
+  }
   if (status === 403) return 'Seu perfil não possui permissão para esta ação.';
   if (status === 404) return `${entity} não encontrado neste contexto.`;
   if (status === 409) {

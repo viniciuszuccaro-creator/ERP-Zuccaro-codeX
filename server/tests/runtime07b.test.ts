@@ -410,6 +410,8 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.equal(meta.pedido?.updateBlockedWhenCancelled, true);
     assert.equal(meta.orcamento?.descontoAlcadaUiFailClosed, true);
     assert.equal(meta.pedido?.descontoAlcadaUiFailClosed, true);
+    assert.equal(meta.orcamento?.margemAlcadaUiFailClosed, true);
+    assert.equal(meta.pedido?.margemAlcadaUiFailClosed, true);
     assert.equal(meta.orcamento?.saveIdempotency, true);
     assert.equal(meta.pedido?.saveIdempotency, true);
     assert.equal(meta.orcamento?.mastersPickerFailClosed, true);
