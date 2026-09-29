@@ -5,8 +5,8 @@
 | Choice | **C** Multi-select Pedido/Orçamento — checkboxes; bulk DISABLED |
 | Branch | `cursor/comercial360-onda5-multiselect-stub-392b` |
 | Base | tip `6e45a27d` (`cursor/comercial360-onda5-data-entrega-failclosed-392b`) |
-| Tip | (após commit) |
-| Draft PR | (após push) |
+| Tip | feat `7a6e6a8b` · `7a6e6a8b9765cd3fd7fcdcb0597b73e35e2d96f5` |
+| Draft PR | **ManagePullRequest / gh pr create 403 write** — abrir draft: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-data-entrega-failclosed-392b...cursor/comercial360-onda5-multiselect-stub-392b?expand=1 |
 | Meta | `listMultiSelectStubFailClosed` + **Pedido backend HTTP is active** |
 | Testes | list-http-ui-policy + integration + runtime07b/08c/09 **PASS** |
 | Colisão | sem mig; sem API bulk; sem merge/VPS |
