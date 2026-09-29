@@ -225,7 +225,7 @@ Margem preview persistência de exibição (após #47 na stack) **ou** Onda 4 an
 | Implantado VPS | **NÃO** |
 | Base | `#135` tip `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
 | Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
-| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Draft PR | **#145** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/145 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** + listFailClosed / updateBlockedWhenCancelled / cancel+convert flags intactos |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
