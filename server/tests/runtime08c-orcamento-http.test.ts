@@ -189,6 +189,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     observacoesMaxLengthUiFailClosed: true,
     listPageCsvExportFailClosed: true,
     validadeUiFailClosed: true,
+    printPdfUiFailClosed: true,
+    shareTextUiFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.match(result.body.note, /UI alçada de desconto fail-closed/);
@@ -209,6 +211,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /Pedido Imprimir\/PDF canônico fail-closed|evaluatePedidoPrintPdfUiGate/);
   assert.match(result.body.note, /Pedido compartilhar texto WhatsApp|evaluatePedidoShareUiGate/);
   assert.match(result.body.note, /Pedido detalhe summary UI fail-closed|resolvePedidoDetailSummaryUiState/);
+  assert.match(result.body.note, /Orçamento Imprimir\/PDF e compartilhar texto fail-closed|evaluateOrcamentoPrintPdfUiGate/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
