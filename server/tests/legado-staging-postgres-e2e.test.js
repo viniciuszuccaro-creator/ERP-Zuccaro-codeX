@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import pg from 'pg';
 import { prepararLoteStagingLegado } from '../../scripts/legado/staging-scope-gate.mjs';
+import { verificarMapeadorParaStaging } from '../../scripts/legado/verificar-mapeador-staging.mjs';
 
 const DB_NAME = 'erp_restore_isolated_legado_ci';
 const groupId = '11111111-1111-4111-8111-111111111111';
@@ -123,6 +125,70 @@ test('staging sintetico protege codigo mestre no Grupo e isola codigos das Empre
         'PED-SINT-SHARED', 'e'.repeat(64));
       const count = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico');
       assert.equal(count.rows[0].total, 3);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+  } finally {
+    await client.end();
+  }
+});
+
+test('mapper e staging PostgreSQL isolado reconciliam mestres sem entrega parcial', async () => {
+  assertIsolatedTarget(process.env.DATABASE_URL, process.env.ISOLATED_DATABASE_NAME,
+    process.env.LEGACY_STAGING_SYNTHETIC);
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  try {
+    assert.equal((await client.query('SELECT current_database() AS name')).rows[0].name, DB_NAME);
+    await client.query('BEGIN');
+    try {
+      await client.query(`CREATE TEMP TABLE legado_staging_sintetico (
+        group_id uuid NOT NULL, empresa_id uuid, entidade text NOT NULL,
+        codigo_legado text NOT NULL, assinatura text NOT NULL,
+        UNIQUE NULLS NOT DISTINCT (group_id, empresa_id, entidade, codigo_legado)
+      ) ON COMMIT DROP`);
+      const opts = { groupId, grupoComprovado: true };
+      const cliente = { cod_cliente: 'CLI-MAP-SINT-1', nome: 'Cliente Sintetico', group_id: groupId };
+      const mapped = verificarMapeadorParaStaging([cliente], { ...opts, entidade: 'cliente' });
+      assert.equal(mapped.bloqueado, false);
+      assert.equal(mapped.privados.length, 1);
+      assert.equal(mapped.privados[0].empresa_id, undefined);
+      const signature = (row) => createHash('sha256').update(JSON.stringify({
+        codigo: row.codigo_legado, nome: row.nome, descricao: row.descricao,
+        documento: row.documento,
+      })).digest('hex');
+      const insert = (row, entidade) => client.query(`INSERT INTO legado_staging_sintetico
+        (group_id, empresa_id, entidade, codigo_legado, assinatura) VALUES ($1,$2,$3,$4,$5)`,
+      [row.group_id, row.empresa_id ?? null, entidade, row.codigo_legado, signature(row)]);
+      await insert(mapped.privados[0], 'cliente');
+      const stored = await client.query(`SELECT group_id, empresa_id, entidade, codigo_legado, assinatura
+        FROM legado_staging_sintetico WHERE group_id=$1 AND empresa_id IS NULL`, [groupId]);
+      assert.equal(stored.rowCount, 1);
+      const retry = verificarMapeadorParaStaging([cliente], { ...opts, entidade: 'cliente',
+        existentes: stored.rows.map((row) => ({ groupId: row.group_id, empresaId: row.empresa_id,
+          entidade: row.entidade, codigoLegado: row.codigo_legado, assinaturaOrigem: row.assinatura })) });
+      assert.equal(retry.bloqueado, false);
+      assert.equal(retry.relatorio.reusos, 1);
+      assert.deepEqual(retry.privados, []);
+      const produto = { sku: 'SKU-MAP-SINT-1', descricao: 'Revenda Sintetica',
+        tipo_produto: 'revenda', group_id: groupId };
+      const revenda = verificarMapeadorParaStaging([produto], { ...opts, entidade: 'produto_revenda' });
+      assert.equal(revenda.bloqueado, false);
+      await insert(revenda.privados[0], 'produto_revenda');
+      assert.throws(() => verificarMapeadorParaStaging([{ ...cliente, group_id: empresaId }],
+        { ...opts, entidade: 'cliente' }), /Grupo da linha diverge/);
+      const mixed = verificarMapeadorParaStaging([produto, {
+        sku: 'SKU-MAP-SINT-2', descricao: 'Fabricacao Sintetica',
+        tipo_produto: 'fabricacao', group_id: groupId,
+      }], { ...opts, entidade: 'produto_revenda' });
+      assert.equal(mixed.bloqueado, true);
+      assert.equal(mixed.relatorio.excluidos, 1);
+      assert.deepEqual(mixed.privados, []);
+      const count = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico');
+      assert.equal(count.rows[0].total, 2);
+      await client.query('SAVEPOINT duplicate_mapped_master');
+      await assert.rejects(insert(mapped.privados[0], 'cliente'), (error) => error.code === '23505');
+      await client.query('ROLLBACK TO SAVEPOINT duplicate_mapped_master');
     } finally {
       await client.query('ROLLBACK');
     }

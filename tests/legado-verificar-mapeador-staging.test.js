@@ -13,12 +13,12 @@ test('cliente mestre sintetico usa apenas Grupo e codigo antigo', () => {
   assert.equal(result.relatorio.aptos, 1);
   assert.equal(result.privados[0].codigo_legado, 'C-101');
   assert.equal(result.privados[0].group_id, 'g-sint');
-  assert.equal(result.privados[0].empresa_id, '');
+  assert.equal(result.privados[0].empresa_id, undefined);
 });
 
 test('produto de revenda reutiliza mapper de Produto e fica no Grupo', () => {
   const result = verificarMapeadorParaStaging([
-    { sku: 'SKU-1', descricao: 'Produto Sintetico', group_id: 'g-sint' },
+    { sku: 'SKU-1', descricao: 'Produto Sintetico', tipo_produto: 'revenda', group_id: 'g-sint' },
   ], { ...opcoes, entidade: 'produto_revenda' });
   assert.equal(result.bloqueado, false);
   assert.equal(result.privados[0].descricao, 'Produto Sintetico');
@@ -185,13 +185,34 @@ test('cliente mestre percorre mapper e plano de contagens sem copiar empresa', (
 
 test('contagem divergente bloqueia lote inteiro depois do mapeamento', () => {
   const result = verificarMapeadorParaStaging([
-    { sku: 'SKU-601', descricao: 'Produto Sintetico', group_id: 'g-sint' },
+    { sku: 'SKU-601', descricao: 'Produto Sintetico', tipo_produto: 'revenda', group_id: 'g-sint' },
   ], { ...opcoes, entidade: 'produto_revenda',
     contagensEsperadas: [{ entidade: 'produto_revenda', codigoEmpresaLegado: 'grupo', quantidade: 2 }],
   });
   assert.equal(result.bloqueado, true);
   assert.deepEqual(result.privados, []);
   assert.equal(result.relatorio.divergencias, 1);
+});
+
+test('produto sem classificacao de revenda fica excluido sem erro generico ou entrega parcial', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-SEM-TIPO', descricao: 'Produto Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda' });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.excluidos, 1);
+  assert.equal(JSON.stringify(result.relatorio).includes('SKU-SEM-TIPO'), false);
+});
+
+test('produto excluido no segundo registro bloqueia lote de revenda inteiro', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-REV', descricao: 'Revenda Sintetica', tipo_produto: 'revenda', group_id: 'g-sint' },
+    { sku: 'SKU-FAB', descricao: 'Fabricacao Sintetica', tipo_produto: 'fabricacao', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda' });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.excluidos, 1);
+  assert.equal(result.relatorio.aptos, 0);
 });
 
 test('indice de outro Grupo nao pode participar do plano de mestres', () => {
