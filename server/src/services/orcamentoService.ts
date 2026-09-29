@@ -32,6 +32,7 @@ import {
   buildTabelaPrecoDocumentoSnapshot,
   emptyTabelaPrecoDocumentoSnapshot,
 } from './comercialTabelaSnapshot.js';
+import { assertOrcamentoValidadeVigente } from './comercialOrcamentoValidadePolicy.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 
 const RBAC_MODULE = 'Comercial';
@@ -96,6 +97,7 @@ export class OrcamentoService {
   async create(ctx: RequestContext, payload: unknown) {
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
+    assertOrcamentoValidadeVigente(data.validade_em);
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
@@ -143,6 +145,7 @@ export class OrcamentoService {
     const scope = await this.prepare(ctx, 'editar');
     this.assertId(id);
     const data = this.parse(payload);
+    assertOrcamentoValidadeVigente(data.validade_em);
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);

@@ -171,6 +171,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     tabelaSnapshot: true,
     promocaoSnapshotFailClosed: true,
     simularPersistFailClosed: true,
+    validadeFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.equal(result.body.pedido.backendHttp, true);
@@ -178,9 +179,11 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
   assert.equal(result.body.pedido.simularPersistFailClosed, true);
   assert.equal(result.body.pedido.tabelaSnapshot, true);
+  assert.equal(result.body.pedido.convertValidadeFailClosed, true);
   assert.equal(result.body.comercialSimulacao.persistOnWrite, true);
   assert.match(result.body.note, /desconto\/total aplicados no servidor \(simular-venda\)/);
   assert.match(result.body.note, /snapshot de TabelaPreco/);
+  assert.match(result.body.note, /validade_em fail-closed/);
   assert.equal(result.body.runtime, 'ERP-RUNTIME-08B');
 });
 

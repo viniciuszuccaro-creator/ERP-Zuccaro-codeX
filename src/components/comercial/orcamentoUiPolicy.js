@@ -37,8 +37,37 @@ export function canUseOrcamentoAction(hasPermission, action, status = 'EM_ABERTO
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
 }
 
+/**
+ * Validade vigente: validade_em (date YYYY-MM-DD ou ISO) ainda não passou.
+ * Compara o fim do dia civil local da data informada quando só há YYYY-MM-DD
+ * (mesmo padrão do payload T12:00:00 — usa meio-dia local).
+ */
+export function isOrcamentoValidadeExpirada(validadeEm, now = new Date()) {
+  if (!validadeEm) return true;
+  const text = String(validadeEm).trim();
+  if (!text) return true;
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T12:00:00`)
+    : new Date(text);
+  if (Number.isNaN(parsed.getTime())) return true;
+  const nowMs = now instanceof Date ? now.getTime() : Number(now);
+  return parsed.getTime() < nowMs;
+}
+
+/** Hint curto para formulário / conversão quando validade já expirou. */
+export function orcamentoValidadeHint(validadeEm, now = new Date()) {
+  if (!validadeEm) return 'Informe a validade da proposta.';
+  if (isOrcamentoValidadeExpirada(validadeEm, now)) {
+    return 'Validade expirada — altere a data antes de salvar ou converter.';
+  }
+  return null;
+}
+
 export function buildOrcamentoPayload(form, options = {}) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.validade_em) throw new Error('Preencha cliente, condição e validade.');
+  if (isOrcamentoValidadeExpirada(form.validade_em, options.now)) {
+    throw new Error('Validade expirada — altere a data antes de salvar.');
+  }
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
   /** @type {Record<string, unknown>} */

@@ -41,6 +41,7 @@ import {
   buildTabelaPrecoDocumentoSnapshot,
   emptyTabelaPrecoDocumentoSnapshot,
 } from './comercialTabelaSnapshot.js';
+import { assertOrcamentoValidadeVigente } from './comercialOrcamentoValidadePolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -140,6 +141,7 @@ export class PedidoService {
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+        assertOrcamentoValidadeVigente(quote.validade_em);
         // Não-retroatividade: preserva preco_unitario e snapshots já gravados no Orçamento.
         const draft = {
           ...parsed.data,
