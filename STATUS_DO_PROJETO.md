@@ -1,3 +1,17 @@
+## AUTÔNOMO — tip Orçamento detalhe snapshot gap (pós-#169) (2026-09-29T23:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Orçamento detalhe summary + snapshot gap** (paridade Pedido #168) |
+| Branch | `cursor/comercial360-onda5-orcamento-detail-snapshot-392b` |
+| Draft PR | **#170** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/170 |
+| Base | tip #169 CI SUCCESS |
+| Escopo | `resolveOrcamentoDetailSummaryUiState`; banner no detalhe; meta `detailSummaryUiFailClosed`; **sem migration** |
+| Colisão | CostPort BFF (sem fonte de custo — BLOCKED inventar); CreditPort 032; anexos; sem Codex/merge/VPS |
+| Próximo | CostPort só com porta real; Onda 6 se 032; ou fechar Onda 5 polish residual |
+
+---
+
 ## AUTÔNOMO — tip Orçamento print/share gate (pós-#168) (2026-09-29T23:20Z)
 
 | Campo | Valor |

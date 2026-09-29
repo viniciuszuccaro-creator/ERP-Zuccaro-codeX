@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Orçamento detalhe snapshot (2026-09-29T23:30Z)
+
+Draft PR **#170** empilhada em #169: Orçamento detalhe snapshot gap fail-closed.
+#169 CI SUCCESS. CostPort BFF BLOCKED sem inventar custo. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Orçamento print/share gate (2026-09-29T23:20Z)
 
 Draft PR **#169** empilhada em #168: Orçamento print/share fail-closed.

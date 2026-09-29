@@ -640,6 +640,45 @@ export function evaluateOrcamentoShareUiGate({ row, groupId, empresaId, canShare
   return { blockShare: false, mode: 'ready', hint: null };
 }
 
+
+/**
+ * Resumo do painel de detalhe do Orçamento (somente leitura).
+ * Fail-closed: avisa snapshot incompleto pós-031; não inventa campos.
+ */
+export function resolveOrcamentoDetailSummaryUiState(row, { clienteNome = '', condicaoLabel = '' } = {}) {
+  if (!row || !row.numero) {
+    return { mode: 'missing', hint: 'Orçamento indisponível (fail-closed).', fields: null, snapshotGap: null };
+  }
+  if (!Array.isArray(row.itens)) {
+    return { mode: 'invalid', hint: 'Itens do orçamento indisponíveis (fail-closed).', fields: null, snapshotGap: null };
+  }
+  const snapshotGap = comercialDocumentoSnapshotGapHint(row, { purpose: 'resumo', entityLabel: 'orçamento' });
+  const condicao = [row.condicao_pagamento_codigo_snapshot, row.condicao_pagamento_nome_snapshot]
+    .filter(Boolean).join(' — ') || condicaoLabel || null;
+  const tabela = [row.tabela_preco_codigo_snapshot, row.tabela_preco_nome_snapshot]
+    .filter(Boolean).join(' — ') || null;
+  return {
+    mode: snapshotGap ? 'snapshot_gap' : 'ready',
+    hint: snapshotGap || null,
+    snapshotGap,
+    fields: {
+      numero: row.numero,
+      status: row.status,
+      clienteNome: clienteNome || '—',
+      condicao: condicao || '—',
+      tabela: tabela || (row.tabela_preco_id ? String(row.tabela_preco_id) : '—'),
+      validadeEm: row.validade_em || null,
+      observacoes: row.observacoes || '',
+      subtotal: row.subtotal,
+      desconto: row.desconto,
+      total: row.total,
+      createdAt: row.created_at || null,
+      updatedAt: row.updated_at || null,
+      promocaoAplicada: row.promocao_aplicada === true,
+    },
+  };
+}
+
 export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', clienteNome = 'Cliente' } = {}) {
   if (!orcamento?.numero) throw new Error('Orçamento inválido para compartilhamento');
   const status = orcamento.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado';
