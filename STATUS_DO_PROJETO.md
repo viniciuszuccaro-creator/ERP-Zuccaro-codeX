@@ -5,8 +5,8 @@
 | Choice | **A** Margem mínima UI display/gate Orçamento/Pedido — CostPort snapshot explícito; fail-closed sem migration |
 | Branch | `cursor/comercial360-onda4-margem-ui-failclosed-392b` |
 | Base | `origin/cursor/comercial360-onda4-credito-ui-failclosed-392b` tip `9e342c32` (#156) |
-| Tip | _(após push)_ |
-| Draft PR | _(após abrir)_ |
+| Tip | `a5de9c28` (`a5de9c28c7b0b2df0cc23d2112267f0935c56060`) |
+| Draft PR | **PENDENTE** — ManagePullRequest indisponível neste subagent; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-credito-ui-failclosed-392b...cursor/comercial360-onda4-margem-ui-failclosed-392b?expand=1 |
 | Escopo | `comercialMargemAlcadaUiPolicy` (paridade micros/#47); wire `OrcamentosTab`+`PedidoCanonicoPanel` (Alert + Salvar gate); `formatComercialHttpError` → `MARGEM_ALCADA_DENIED`; meta `margemAlcadaUiFailClosed` + note; **sem migration**; sem inventar custo |
 | Meta | `margemAlcadaUiFailClosed` + preserva **Pedido backend HTTP is active** |
 | Testes | `comercial-margem-alcada-ui-policy` + list-http-ui (MARGEM map) + runtime08c/09 meta **PASS**; `git diff --check` |
