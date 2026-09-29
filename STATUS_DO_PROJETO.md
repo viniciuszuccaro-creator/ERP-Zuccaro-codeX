@@ -5,8 +5,8 @@
 | Choice | **A** Simular-venda dirty-state: limpa preview/agenda ao mudar condição/itens/promo; exige re-simular antes de salvar (fail-closed UI+tests) |
 | Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
 | Base | `origin/cursor/comercial360-onda3-delivery-address-392b` tip `4777b4fb` (#143) |
-| Tip | `9d5235bf` (`9d5235bf9260040543891fe2c879fc0bd74934fe`) |
-| Draft PR | base=`cursor/comercial360-onda3-delivery-address-392b` — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Tip | `9d5235bf` feat / docs tip `1eee761b` (`1eee761bb41e5ea2dc100d1576814a4404381b87`) |
+| Draft PR | **BLOCKED** createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-simular-dirty-392b` |
 | Escopo | Flag `simulacaoDirty` + gate Salvar em Orçamento/Pedido; invalidação só em campos de preço (não observações/Local/Obra); banner dirty; meta `simulacaoDirtyFailClosed`; sem migration |
