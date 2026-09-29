@@ -5,13 +5,14 @@
 | Choice | **Pedido cancel** — simetria fail-closed com Orçamento cancel (sem migration) |
 | Implementado | **SIM** — `requireOpen` + cancel RBAC/audit; UI disable unauthorized/cancelled; meta `cancelByState`; note + **Pedido backend HTTP is active** |
 | Testado | **SIM** — runtime09 security+http+service 13/13; 08c http/security 12/12; convert-snapshot+preco 13/13; UI pedido/orc 15/15; runtime07b meta; `server:typecheck` PASS; `git diff --check` PASS |
-| CI | tip pendente push |
+| CI | tip `c2bfb17c` |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
 | Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
-| Draft PR | pendente — ManagePullRequest indisponível; tentar `gh pr create` |
+| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
+| Tip | `c2bfb17c` |
 | Meta | note preserva **Pedido backend HTTP is active** + `cancelByState` / convert+validade flags intactos |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
