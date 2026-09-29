@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip #162 observações limit (2026-09-29T22:25Z)
+
+Draft PR **#162** empilhada em #161. Contador/maxLength 1000 Observações. CI em curso.
+Próximo: export CSV stub lista **ou** PDF/anexo sem colisão. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — #162 observações limit UX (2026-09-29T22:25Z approx → 2026-09-29T22:23Z)
 
 Tip empilhada em #161: gate fail-closed Observações (max 1000 + contador) Orçamento/Pedido.
