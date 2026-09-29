@@ -5,8 +5,8 @@
 | Choice | **A** list search/filter: empty busca ≠ erro; queryKey tenant+filters; sanitize na policy |
 | Branch | `cursor/comercial360-onda3-list-search-392b` |
 | Base | `#144` tip `01ee61de` (`cursor/comercial360-onda3-simular-dirty-392b`) |
-| Tip | *(após commit)* |
-| Draft PR | base=`cursor/comercial360-onda3-simular-dirty-392b` — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Tip | `dbe72104` (`dbe7210426534a2f6571b2a1dfaf25d68d712648`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
 | Meta | `listSearchFilterFailClosed` + **Pedido backend HTTP is active** |
 | Colisão | #136 base; dirty #144; margem #47; anexos/PDF #52–#62 |
