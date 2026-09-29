@@ -1,3 +1,17 @@
+## LOTE CURSOR — #122 ClienteEmpresa frontendHttp (2026-09-29T15:18Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#122** (base #120) |
+| Tip | `d82c7096` (feat `6e780d73`) |
+| CI | **SUCCESS** |
+
+List-for-scope HTTP exige `empresaId`; Orçamento/Pedido via HTTP; sem migration.
+
+Pilha: #114 → #116 → #117 → #118 → #120 → **#122**.
+
+---
+
 ## LOTE CURSOR — #120 Onda 3 Cliente frontendHttp (2026-09-29T15:04Z)
 
 | Campo | Valor |
