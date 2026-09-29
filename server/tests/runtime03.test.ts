@@ -140,6 +140,24 @@ test('Produto valida e normaliza atributos PIM universais existentes', () => {
     assert.equal(produtoCreateSchema.safeParse(payload).success, false);
   }
 });
+
+test('Produto preserva codigo legado sem alterar codigo canonico e isola empresas em memoria', async () => {
+  const repo = createInMemoryProdutoRepo();
+  const scope = { groupId: GROUP_A, empresaId: EMPRESA_A };
+  const created = await repo.create(scope, produtoCreateSchema.parse({
+    codigo: 'ERP-100', codigo_legado: '000123', descricao: 'Revenda sintetica',
+  }));
+  assert.equal(created.codigo, 'ERP-100');
+  assert.equal(created.codigo_legado, '000123');
+  assert.equal((await repo.getById(scope, created.id))?.codigo_legado, '000123');
+  assert.equal((await repo.listPage({ ...scope, search: '00123' })).total, 1);
+  assert.equal((await repo.listPage({ groupId: GROUP_A, empresaId: EMPRESA_B, search: '00123' })).total, 0);
+  assert.equal(await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_B }, created.id), null);
+  const updated = await repo.update(scope, created.id, produtoUpdateSchema.parse({ descricao: 'Revenda revisada' }));
+  assert.equal(updated?.codigo, 'ERP-100');
+  assert.equal(updated?.codigo_legado, '000123');
+  assert.equal(produtoCreateSchema.safeParse({ descricao: 'Invalido', codigo_legado: '' }).success, false);
+});
 test('Produto RBAC falha fechado e classificação bloqueia novos valores desconhecidos', async () => {
   const canonicalValue: ProdutoTipoCanonico = PRODUTO_TIPOS_CANONICOS.REVENDA;
   assert.equal(canonicalValue, 'Revenda');
@@ -256,13 +274,14 @@ test('Produto rollbacka create update e inativacao quando auditoria falha', asyn
 
   const original = await repo.create(
     { groupId: GROUP_A, empresaId: EMPRESA_A },
-    { descricao: 'ORIGINAL', codigo: 'TX-EXISTENTE' },
+    { descricao: 'ORIGINAL', codigo: 'TX-EXISTENTE', codigo_legado: 'ANTIGO-01' },
   );
   await assert.rejects(
-    () => service.update(ctx, original.id, { descricao: 'NAO PERSISTE' }),
+    () => service.update(ctx, original.id, { descricao: 'NAO PERSISTE', codigo_legado: 'NOVO-01' }),
     /AUDIT_FAILURE/,
   );
   assert.equal((await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, original.id))?.descricao, 'ORIGINAL');
+  assert.equal((await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_A }, original.id))?.codigo_legado, 'ANTIGO-01');
 
   await assert.rejects(
     () => service.softDelete(ctx, original.id),
@@ -609,6 +628,75 @@ test('API Produto cross-tenant empresa and FK via HTTP', async () => {
   });
   assert.equal(crossFk.statusCode, 409);
   assert.equal(crossFk.body.error.code, 'TENANT_FK_MISMATCH');
+});
+
+test('API Produto preserva codigo legado em create/get/search/update com tenant, RBAC e auditoria', async () => {
+  const config = testConfig();
+  const { app, auditRepo } = createApp({
+    config,
+    db: createDbClient(config),
+    useMemory: true,
+    tenantGuard: linkedGuard(),
+    produtoRelationGuard: linkedRelations(),
+    rbacGuard: linkedRbac(),
+  });
+  const headers = { 'content-type': 'application/json', 'x-group-id': GROUP_A, 'x-empresa-id': EMPRESA_A };
+  const created = await fetchStatus(app, '/api/v1/produtos', {
+    method: 'POST', headers,
+    body: JSON.stringify({ descricao: 'Revenda sintetica', codigo: 'ERP-LEG-1', codigo_legado: '000314' }),
+  });
+  assert.equal(created.statusCode, 201);
+  const id = created.body.data.id;
+  assert.equal(created.body.data.codigo_legado, '000314');
+  assert.equal(created.body.data.codigo, 'ERP-LEG-1');
+  assert.equal((await fetchOk(app, `/api/v1/produtos/${id}`, { headers })).data.codigo_legado, '000314');
+  const listed = await fetchOk(app, '/api/v1/produtos?search=00314', { headers });
+  assert.equal(listed.meta.total, 1);
+  assert.equal(listed.data[0].id, id);
+  assert.equal((await fetchOk(app, '/api/v1/produtos?search=00314', {
+    headers: { 'x-group-id': GROUP_B, 'x-empresa-id': EMPRESA_B },
+  })).meta.total, 0);
+  const crossTenant = await fetchStatus(app, `/api/v1/produtos/${id}`, {
+    headers: { 'x-group-id': GROUP_B, 'x-empresa-id': EMPRESA_B },
+  });
+  assert.equal(crossTenant.statusCode, 404);
+
+  const updated = await fetchOk(app, `/api/v1/produtos/${id}`, {
+    method: 'PATCH', headers,
+    body: JSON.stringify({ codigo_legado: '000315' }),
+  });
+  assert.equal(updated.data.codigo_legado, '000315');
+  assert.equal(updated.data.codigo, 'ERP-LEG-1');
+  assert.equal((await fetchOk(app, '/api/v1/produtos?search=00314', { headers })).meta.total, 0);
+  assert.equal((await fetchOk(app, '/api/v1/produtos?search=00315', { headers })).meta.total, 1);
+  const logs = await auditRepo.listByEntity('Produto', id);
+  assert.equal((logs.find((row) => row.action === 'create')?.afterData as { codigo_legado: string }).codigo_legado, '000314');
+  const change = logs.find((row) => row.action === 'update');
+  assert.equal((change?.beforeData as { codigo_legado: string }).codigo_legado, '000314');
+  assert.equal((change?.afterData as { codigo_legado: string }).codigo_legado, '000315');
+  assert.equal(logs.every((row) => row.groupId === GROUP_A && row.empresaId === EMPRESA_A), true);
+
+  const invalid = await fetchStatus(app, '/api/v1/produtos', {
+    method: 'POST', headers, body: JSON.stringify({ descricao: 'Invalido', codigo_legado: '' }),
+  });
+  assert.equal(invalid.statusCode, 400);
+  const forged = await fetchStatus(app, '/api/v1/produtos', {
+    method: 'POST', headers, body: JSON.stringify({ descricao: 'Invalido', groupId: GROUP_B }),
+  });
+  assert.equal(forged.statusCode, 400);
+  const { app: deniedApp } = createApp({
+    config,
+    db: createDbClient(config),
+    useMemory: true,
+    tenantGuard: linkedGuard(),
+    produtoRelationGuard: linkedRelations(),
+    rbacGuard: new InMemoryRbacGuard(),
+  });
+  const denied = await fetchStatus(deniedApp, '/api/v1/produtos', {
+    method: 'POST', headers,
+    body: JSON.stringify({ descricao: 'Negado', codigo_legado: '000316' }),
+  });
+  assert.equal(denied.statusCode, 403);
 });
 
 test('soft-deleted produto excluded from default list/search/count (defeito VPS)', async () => {

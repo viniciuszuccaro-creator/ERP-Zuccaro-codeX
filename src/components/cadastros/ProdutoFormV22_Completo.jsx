@@ -81,6 +81,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     if (produto) {
       return {
         ...produto,
+        codigo_legado: produto.codigo_legado || '',
         tipo_item: normalizeProdutoTipoItem(produto.tipo_item),
         // Garante que a Unidade Principal apareça selecionada no formulário
         unidade_principal: produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : 'UN'),
@@ -140,6 +141,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     return {
       descricao: '',
       codigo: '',
+      codigo_legado: '',
       codigo_barras: '',
       tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA,
       grupo: 'Outros',
@@ -888,7 +890,7 @@ Caso contrário, sugira:
                 </Alert>
               )}
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <div>
                   <Label>Código/SKU</Label>
                   <Input
@@ -902,6 +904,20 @@ Caso contrário, sugira:
                   <p className="text-xs text-slate-500 mt-1">
                     {produto ? 'Código do produto' : `Próximo: ${formData.codigo}`}
                   </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="produto-codigo-legado">Código do ERP antigo</Label>
+                  <Input
+                    id="produto-codigo-legado"
+                    value={formData.codigo_legado || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, codigo_legado: e.target.value }))}
+                    maxLength={80}
+                    disabled={!contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
+                    data-permission="Cadastros.Produto.editar"
+                    data-action="editar-codigo-legado-produto"
+                    data-sensitive
+                  />
                 </div>
 
                 <div>

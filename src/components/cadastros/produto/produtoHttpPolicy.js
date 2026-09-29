@@ -3,7 +3,7 @@
 const MASTER_FIELDS = [
   'descricao', 'material', 'liga', 'norma_tecnica', 'descricao_tecnica', 'descricao_comercial', 'titulo_seo',
   'descricao_seo', 'embalagem_tipo', 'multiplo_venda', 'quantidade_minima_venda',
-  'permite_fracionamento', 'nome', 'tipo_item', 'tipo_aco', 'eh_bitola',
+  'permite_fracionamento', 'nome', 'tipo_item', 'tipo_aco', 'eh_bitola', 'codigo_legado',
   'peso_teorico_kg_m', 'bitola_diametro_mm', 'comprimento_barra_padrao_m',
   'unidade_medida_id', 'unidade_medida', 'unidade_principal',
   'unidades_secundarias', 'grupo_produto_id', 'marca_id', 'setor_atividade_id',
@@ -19,7 +19,7 @@ const REFERENCE_FIELDS = new Set(['unidade_medida_id', 'grupo_produto_id', 'marc
 
 const CLEARABLE_PIM_FIELDS = new Set([
   'material', 'liga', 'norma_tecnica', 'descricao_tecnica', 'descricao_comercial',
-  'titulo_seo', 'descricao_seo', 'embalagem_tipo',
+  'titulo_seo', 'descricao_seo', 'embalagem_tipo', 'codigo_legado',
 ]);
 
 export function validateProdutoPimQuantities(form) {
@@ -41,6 +41,12 @@ export function toProdutoHttpPayload(form, { update = false } = {}) {
     if (value === '') {
       if (update && CLEARABLE_PIM_FIELDS.has(key)) result[key] = null;
       continue;
+    }
+    if (key === 'codigo_legado') {
+      if (value == null) continue;
+      if (typeof value !== 'string') throw new Error('Codigo legado invalido');
+      value = value.trim();
+      if (!value || value.length > 80) throw new Error('Codigo legado invalido');
     }
     if (REFERENCE_FIELDS.has(key) && value == null) continue;
     if (NON_NEGATIVE.has(key) || key === 'multiplo_venda') {
