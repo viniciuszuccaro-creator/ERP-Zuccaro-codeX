@@ -8,7 +8,7 @@
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#126` `cursor/comercial360-onda3-condicao-snapshot-392b` (tip `2e221def`) |
-| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` @ feat `68f78585` |
 | Draft PR | base `#126` — criar draft sobre `cursor/comercial360-onda3-condicao-snapshot-392b` |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; sem CRM paralelo |
 
