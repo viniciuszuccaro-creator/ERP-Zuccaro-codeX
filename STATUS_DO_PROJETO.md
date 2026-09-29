@@ -75,9 +75,9 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 
 ### Próximo item independente restante
 
-- Snapshot código/nome TabelaPreco (**031** aditiva, evitar 025–028) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
+- ~~Snapshot código/nome TabelaPreco (**031**)~~ → lote seguinte nesta pilha.
 
-Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **este lote**.
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **#130**.
 
 ---
 
