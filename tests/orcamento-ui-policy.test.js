@@ -127,7 +127,9 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   const listPolicy = await readFile(new URL('../src/components/comercial/comercialListHttpUiPolicy.js', import.meta.url), 'utf8');
   assert.match(tab, /Carregando orçamentos/);
-  assert.match(tab, /Nenhum orçamento encontrado para os filtros desta empresa/);
+  assert.match(tab, /formatHttpListEmptyMessage/);
+  assert.match(tab, /listEmptyMessage/);
+  assert.match(listPolicy, /Nenhum \$\{entity\} encontrado para os filtros desta empresa/);
   assert.match(tab, /Pesquisar número/);
   assert.match(tab, /clienteEmpresaId/);
   assert.match(tab, /validadeDe/);

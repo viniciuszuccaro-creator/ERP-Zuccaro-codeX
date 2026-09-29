@@ -1,3 +1,26 @@
+## LOTE CURSOR — list search/filter fail-closed (pós-#144) (2026-09-29T18:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Orçamento/Pedido list search/filter: empty busca ≠ HTTP error; queryKey groupId+empresaId+filters; sanitize/normalize via `comercialListHttpUiPolicy`; 403/5xx permanece banner de erro |
+| Branch | `cursor/comercial360-onda3-list-search-392b` |
+| Base | `origin/cursor/comercial360-onda3-simular-dirty-392b` tip `01ee61de` (#144) |
+| Tip | *(após commit)* |
+| Draft PR | *(após push)* base=`cursor/comercial360-onda3-simular-dirty-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-list-search-392b` |
+| Escopo | Extrai sanitize/normalize/buildParams/queryKey/empty-message na policy existente; wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `listSearchFilterFailClosed`; sem migration |
+| Meta | `listSearchFilterFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy **11/11**; orcamento/alcada/simulacao/pedido UI **58/58**; runtime07b+08c+09 **23/23**; `git diff --check` PASS |
+| Colisão | empty≠error base #136; dirty #144; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico de escolha: #136 cobria empty≠error básico; faltava sanitize/normalize de filtros, queryKey com filters na policy, empty message filtrado vs sem filtro no Pedido, e meta `listSearchFilterFailClosed` — maior gap seguro pós-#144 sem tocar #47/#52–#62.
+
+---
+
 ## LOTE CURSOR — simular-venda dirty-state fail-closed (pós-#143) (2026-09-29T18:05Z)
 
 | Campo | Valor |
