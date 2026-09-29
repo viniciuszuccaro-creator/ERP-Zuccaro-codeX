@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-network-retry-392b` |
 | Base | `origin/cursor/comercial360-onda3-a11y-live-392b` tip `33c3b456` (#150) |
 | Tip | `050e8eff` (`050e8eff3a8d854995c97ef35e7f1c114c5145e1`) · feat `93bf4b56` |
-| Draft PR | BLOCKED createPullRequest 403 — ManagePullRequest indisponível; abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-a11y-live-392b...cursor/comercial360-onda3-network-retry-392b?expand=1 base `#150` |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 |
 | Escopo | `isComercialRetryableHttpError` + `buildSimularHttpErrorBannerText`; Retry gated em list/masters; banner simular reinvoca `runSimularVenda`; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `retry rede/5xx` + preserva **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **22/22**; `orcamento-ui-policy` **16/16**; `pedido-ui-policy` **25/25**; `git diff --check` PASS |
@@ -823,7 +823,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #121/#122 
 | Base | empilhada em `#120` `cursor/comercial360-onda3-cliente-http-392b` (tip `5b444a69`) |
 | Branch | `cursor/comercial360-onda3-cliente-empresa-http-392b` @ feat `6e780d73` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-http-392b...cursor/comercial360-onda3-cliente-empresa-http-392b?expand=1 |
-| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#120; não editar em Codex/#104/#48)
 
