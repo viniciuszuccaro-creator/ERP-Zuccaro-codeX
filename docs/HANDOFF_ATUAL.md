@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Onda4/5 (2026-09-29T21:57Z)
+
+Stack tip avançando: #151 → #154 dirty → #156 crédito UI → #157 margem UI → #158 Entrega/endereço.  
+Onda 4–6 antiga (#50/#59–#67) continua **NÃO APTA** (colisões migration). Sem merge/VPS. Continuando.
+
+---
+
 ## AUTÔNOMO CURSOR — progresso Onda 4 (2026-09-29T21:52Z)
 
 | PR | Escopo | Estado |
