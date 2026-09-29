@@ -1,3 +1,17 @@
+## LOTE CURSOR — #124 ClienteLocal + Obra frontendHttp (2026-09-29T15:31Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#124** (base #122) |
+| Tip | `7c70de69` (feat `a2c59236`) |
+| CI | **SUCCESS** |
+
+Piloto nested Local/Obra; Pedido carrega por `cliente_id`; sem migration.
+
+Pilha: #114 → #116 → #117 → #118 → #120 → #122 → **#124**.
+
+---
+
 ## LOTE CURSOR — #122 ClienteEmpresa frontendHttp (2026-09-29T15:18Z)
 
 | Campo | Valor |

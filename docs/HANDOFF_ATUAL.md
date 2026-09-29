@@ -1,3 +1,9 @@
+## LOTE CURSOR — #124 ClienteLocal + Obra frontendHttp (2026-09-29T15:31Z)
+
+PR **#124** tip `7c70de69` CI SUCCESS (base #122). Sem migration.
+
+---
+
 ## LOTE CURSOR — #122 ClienteEmpresa frontendHttp (2026-09-29T15:18Z)
 
 PR **#122** tip `d82c7096` CI SUCCESS (base #120). Sem migration.
