@@ -103,3 +103,13 @@ Falta de qualquer campo, codigo nao reconhecido ou empresa divergente mantem a
 operacao em quarentena. Mestre do Grupo nao ganha empresa proprietaria por esse
 contrato. Testes de CI usam apenas valores sinteticos; nenhuma carga real foi
 autorizada ou executada.
+
+## 8. Prova PostgreSQL sintetica isolada
+
+A CI cria `erp_restore_isolated_legado_ci` no PostgreSQL efemero, passa pelo
+guarda `assert-isolated-database-url.sh` e executa o preflight de Pedido com
+atestado sintetico. Uma tabela temporaria dentro de transacao verifica escrita,
+unicidade por Grupo/Empresa, retry a partir do indice relido por SQL sem segunda entrega e bloqueio de outra
+Empresa; a transacao termina em rollback. A prova nao restaura backup, nao
+aplica migrations legadas e nao representa staging com dados reais. O banco
+DEV e a porta 3080 nao participam.
