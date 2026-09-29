@@ -1,3 +1,16 @@
+## OPINIÃO CURSOR — #127 Produto frontendHttp (2026-09-29T15:54Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#127** (base #126) — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Escopo | Produto HTTP piloto list/get; picker Orçamento/Pedido fail-closed; sem migration |
+| Meta | note preserva `Pedido backend HTTP is active` |
+| Integração | draft; sem merge/VPS |
+| Próximo | promoção snapshot **ou** Onda 4 independente sem colisão Codex |
+
+---
+
 ## OPINIÃO CURSOR — #126 snapshot CondicaoPagamento (migration 029) (2026-09-29T15:47Z)
 
 | Campo | Valor |
