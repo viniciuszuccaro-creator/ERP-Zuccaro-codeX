@@ -6,7 +6,7 @@ import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './stag
 
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', produto_revenda: 'produto' });
 const GRUPO_ALIASES = new Set(['group_id', 'grupo_id', 'groupid', 'grupoid']);
-const EMPRESA_ALIASES = new Set(['codigo_empresa', 'codigoempresa', 'cod_empresa', 'empresa_codigo', 'empresa_id', 'empresaid']);
+const EMPRESA_ALIASES = new Set(['codigo_empresa', 'codigoempresa', 'cod_empresa', 'codempresa', 'empresa_codigo', 'empresacodigo', 'empresa_id', 'empresaid']);
 
 /**
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.
@@ -24,6 +24,15 @@ export function verificarMapeadorParaStaging(rows, {
   const tipoMapeador = ENTIDADES_MESTRE[entidade];
   if (!tipoMapeador) throw new Error('Entidade sem mapeador mestre homologado para staging.');
   if (!Array.isArray(rows) || rows.length === 0) throw new Error('Lote vazio ou invalido.');
+  if (!Array.isArray(existentes)) throw new Error('Indice de staging existente invalido.');
+
+  const indice = existentes.map((item) => {
+    if (utilTypes.isProxy(item)) throw new Error('Indice de staging dinamico nao permitido.');
+    return stripSegredosMigracao(item);
+  });
+  if (indice.some((item) => String(item?.groupId ?? '').trim() !== groupId)) {
+    throw new Error('Indice de staging mistura Grupos.');
+  }
 
   // Valida o lote inteiro antes de permitir que o mapeador leia aliases.
   const seguros = rows.map((row) => {
@@ -72,8 +81,8 @@ export function verificarMapeadorParaStaging(rows, {
     })).digest('hex'),
   }));
   const preparados = contagensEsperadas === undefined
-    ? prepararLoteStagingLegado(itens, { autorizado: true, existentes })
-    : reconciliarPlanoStagingLegado({ itens, existentes, groupId, autorizado: true, contagensEsperadas });
+    ? prepararLoteStagingLegado(itens, { autorizado: true, existentes: indice })
+    : reconciliarPlanoStagingLegado({ itens, existentes: indice, groupId, autorizado: true, contagensEsperadas });
   const novosCodigos = new Set(preparados.privados.map((row) => row.codigoLegado));
   return { bloqueado: preparados.bloqueado,
     privados: preparados.bloqueado ? [] : mapeado.gravados.filter((row) => novosCodigos.has(row.codigo_legado)),

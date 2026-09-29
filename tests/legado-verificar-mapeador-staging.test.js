@@ -35,7 +35,7 @@ test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => 
 
 test('codigo de empresa legado e aliases exigem prova antes do mapeador mestre', () => {
   for (const legado of ['1', '2', '3', '5', '001', '003']) {
-    for (const alias of ['codigo_empresa', 'empresa_codigo']) {
+    for (const alias of ['codigo_empresa', 'empresa_codigo', 'empresaCodigo', 'codEmpresa']) {
       assert.throws(() => verificarMapeadorParaStaging([{
         cod_cliente: 'C-200', nome: 'Sintetico', group_id: 'g-sint', [alias]: legado,
       }], opcoes), /vinculo empresarial legado nao comprovado/);
@@ -169,10 +169,22 @@ test('contagem divergente bloqueia lote inteiro depois do mapeamento', () => {
 });
 
 test('indice de outro Grupo nao pode participar do plano de mestres', () => {
-  assert.throws(() => verificarMapeadorParaStaging([
-    { cod_cliente: 'C-603', nome: 'Sintetico', group_id: 'g-sint' },
-  ], { ...opcoes, existentes: [{ entidade: 'cliente', groupId: 'outro', empresaId: '',
-    codigoLegado: 'C-601', assinaturaOrigem: 'a'.repeat(64) }],
+  const rows = [{ cod_cliente: 'C-603', nome: 'Sintetico', group_id: 'g-sint' }];
+  const existentes = [{ entidade: 'cliente', groupId: 'outro', empresaId: '',
+    codigoLegado: 'C-601', assinaturaOrigem: 'a'.repeat(64) }];
+  assert.throws(() => verificarMapeadorParaStaging(rows, { ...opcoes, existentes }), /mistura Grupos/);
+  assert.throws(() => verificarMapeadorParaStaging(rows, { ...opcoes, existentes,
     contagensEsperadas: [{ entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 1 }],
   }), /mistura Grupos/);
+});
+
+test('indice dinamico e recusado sem executar getters de tenant', () => {
+  let leituras = 0;
+  const indice = new Proxy({ groupId: 'g-sint' }, {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-604', nome: 'Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, existentes: [indice] }), /dinamico nao permitido/);
+  assert.equal(leituras, 0);
 });
