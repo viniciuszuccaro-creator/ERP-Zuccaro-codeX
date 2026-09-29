@@ -206,7 +206,47 @@ export function resolveDisplayTotals(simulacaoPreview, localTotals) {
 }
 
 /**
+ * Fail-closed: resposta de simular-venda deve trazer agenda completa do servidor
+ * (espelha comercialParcelaSchedulePolicy — ordem/dias/%/valor/vencimento).
+ * @param {object} simulation
+ * @returns {Array<{ ordem: number, dias: number, percentual: string, valor: string, vencimento: string }>}
+ */
+export function assertParcelaScheduleFromSimulacao(simulation) {
+  if (!simulation || typeof simulation !== 'object') {
+    throw new Error('Simulação sem agenda de parcelas do servidor (fail-closed).');
+  }
+  const rows = simulation.parcelas;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error('Agenda de parcelas ausente na simulação (fail-closed).');
+  }
+  return rows.map((row, index) => {
+    const ordem = Number(row?.ordem);
+    const dias = Number(row?.dias);
+    const percentual = String(row?.percentual ?? '').trim();
+    const valor = String(row?.valor ?? '').trim();
+    const vencimento = String(row?.vencimento ?? '').trim();
+    if (!Number.isInteger(ordem) || ordem <= 0) {
+      throw new Error(`Parcela ${index + 1}: ordem inválida na agenda do servidor.`);
+    }
+    if (!Number.isInteger(dias) || dias < 0) {
+      throw new Error(`Parcela ${index + 1}: dias inválidos na agenda do servidor.`);
+    }
+    if (!MONEY_RE.test(percentual) || Number(percentual) <= 0) {
+      throw new Error(`Parcela ${index + 1}: percentual inválido na agenda do servidor.`);
+    }
+    if (!MONEY_RE.test(valor)) {
+      throw new Error(`Parcela ${index + 1}: valor inválido na agenda do servidor.`);
+    }
+    if (!DATE_RE.test(vencimento)) {
+      throw new Error(`Parcela ${index + 1}: vencimento inválido na agenda do servidor.`);
+    }
+    return { ordem, dias, percentual, valor, vencimento };
+  });
+}
+
+/**
  * Resumo seguro da agenda de parcelas (somente leitura UI).
+ * Preferir assertParcelaScheduleFromSimulacao antes de exibir após simular-venda.
  * @returns {Array<{ ordem: number, dias: number, percentual: string, valor: string, vencimento: string, label: string }>}
  */
 export function formatParcelasSchedule(parcelas) {
@@ -229,9 +269,63 @@ export function formatParcelasSchedule(parcelas) {
 }
 
 /**
+ * Template read-only da condição resolvida (só #/dias/% — sem valor/vencimento).
+ * Agenda completa com valores vem exclusivamente de simular-venda.
+ * @param {{ parcelas?: Array<{ ordem?: number, dias?: number, percentual?: string }> } | null | undefined} condicaoSnapshot
+ */
+export function buildCondicaoParcelaTemplatePreview(condicaoSnapshot) {
+  const rows = Array.isArray(condicaoSnapshot?.parcelas) ? condicaoSnapshot.parcelas : [];
+  if (rows.length === 0) {
+    return { mode: 'none', parcelas: [], hint: null };
+  }
+  const parcelas = rows.map((row) => ({
+    ordem: Number(row?.ordem) || 0,
+    dias: Number(row?.dias) || 0,
+    percentual: String(row?.percentual ?? ''),
+  }));
+  return {
+    mode: 'template',
+    parcelas,
+    hint: 'Template da condição (#/dias/%). Valores e vencimentos só após Simular venda (servidor).',
+  };
+}
+
+/**
+ * Estado UI da agenda: prioriza schedule do servidor (simular); senão template da condição.
+ * Fail-closed: se houve simulação sem parcelas válidas → mode missing.
+ * @param {{
+ *   simulacaoPreview?: { parcelas?: unknown[] } | null,
+ *   condicaoSnapshot?: { parcelas?: unknown[] } | null,
+ *   simulationAsserted?: boolean,
+ * }} input
+ */
+export function resolveParcelaScheduleUiState(input = {}) {
+  const previewParcelas = Array.isArray(input.simulacaoPreview?.parcelas)
+    ? input.simulacaoPreview.parcelas
+    : null;
+  if (previewParcelas) {
+    if (previewParcelas.length === 0) {
+      return {
+        mode: 'missing',
+        parcelas: [],
+        hint: 'Agenda de parcelas ausente na simulação — recarregue com Simular venda (fail-closed).',
+      };
+    }
+    return {
+      mode: 'server',
+      parcelas: previewParcelas,
+      hint: 'Agenda read-only do servidor (simular-venda / comercialParcelaSchedulePolicy).',
+    };
+  }
+  return buildCondicaoParcelaTemplatePreview(input.condicaoSnapshot);
+}
+
+/**
  * Snapshot leve para UI + refs a reenviar no save (migration 030).
+ * Fail-closed: exige agenda de parcelas completa do servidor.
  */
 export function buildSimulacaoPreviewState(simulation) {
+  const parcelasAsserted = assertParcelaScheduleFromSimulacao(simulation);
   return {
     condicaoId: simulation?.condicao?.id || null,
     condicaoCodigo: simulation?.condicao?.codigo || null,
@@ -244,7 +338,7 @@ export function buildSimulacaoPreviewState(simulation) {
     promocao: simulation?.promocao?.aplicada === true
       ? { aplicada: true, bps: simulation.promocao.promocaoBps, cupom: simulation.promocao.cupom || null }
       : null,
-    parcelas: formatParcelasSchedule(simulation?.parcelas),
+    parcelas: formatParcelasSchedule(parcelasAsserted),
     baseDate: simulation?.base_date || null,
   };
 }
