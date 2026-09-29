@@ -11583,6 +11583,14 @@ Checklist inicial:
 
 ## Migração legada #106 — preflight de escopo para staging (2026-09-28)
 
+### Contrato sintetico mapeador → staging (2026-09-29)
+
+- Branch propria baseada no HEAD da #107; mapeador da #48 intocado. Composicao somente em memoria usa o mapeador existente e o preflight de staging, com codigo legado preservado e relatorio agregado.
+- Cliente e Produto de revenda sao mestres do Grupo somente com destino explicitamente comprovado. Divergencia de Grupo, empresa proprietaria, duplicata, erro e quarentena bloqueiam entrega parcial. Fornecedor e operacoes seguem sem mapeador homologado e nao sao liberados.
+- Assinatura SHA-256 em memoria auxilia apenas a idempotencia sintetica; nao substitui manifesto de origem ou prova juridica. O lote inteiro passa pelo sanitizador canonico antes da leitura de aliases; getter em segundo item falha sem execucao nem entrega parcial. Sem HD, dados reais, banco operacional, migration ou VPS. Testes direcionados: 54 PASS/0 FAIL.
+- Checks locais: audit baseline, lint e build PASS; `npm test` global falha em testes de scripts Bash/PATH temporarios no Windows e `npm run typecheck` global mantem diagnosticos antigos fora do diff. CI Linux do novo HEAD obrigatoria para aprovar o checkpoint; nenhuma dessas falhas foi ocultada ou teve teste alterado.
+- Proximo: corrigir o override do escopo no mapeador da #48, provar Grupo/Empresa por registro e testar staging fisicamente isolado com contagens, conflitos e plano de reversao antes de pedir gate de carga real.
+
 - Objetivo: impedir que o mapeador sintético da #48 receba `groupId`/`empresaId` assumidos para operações. O seletor legado comprova 003 como Grupo CPA e 001/002/005 como opções de Empresas, mas nao comprova sozinho CNPJ ou empresa juridica de cada pedido, estoque, titulo ou nota.
 - `scripts/legado/staging-scope-gate.mjs` valida, antes do staging isolado, mestres compartilhados no Grupo e operacoes somente com vinculo juridico explicitamente verificado para o mesmo Grupo/Empresa. Codigos 0, 003, 004 e desconhecidos permanecem em quarentena; o relatorio resume apenas totais e motivos.
 - Nao altera o mapeador da PR #48, nao le o HD, nao grava staging nem importa dados reais. O vinculo 001/002/005 com as empresas juridicas do ERP novo segue pendente de prova documental/CNPJ e correção do override de escopo na #48 antes de carga real.
