@@ -1,6 +1,8 @@
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
+
+> **Checkpoint de integração em 29/09/2026 (prevalece para retomada; confirmar HEAD remoto antes de executar):** `main` estava em `d02cd012`; candidata draft #153 integra #152 (Comercial) e #141 (Onda 7/legado) com CI 36625784748 verde, incluindo PostgreSQL efêmero. #92 (origem/idempotência/tipo/versões; migrations 025-028/033) e #132 (proveniência de Produto; migration 034) ainda não entraram na candidata; há conflitos semânticos em Pedido e Orçamento. Migration 032 não existe nesta sequência. A orientação contínua está em `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; ordem, conflitos e gates estão em `docs/ORDEM_INTEGRACAO_UNICA.md`, com retomada em `docs/HANDOFF_ATUAL.md`. Este checkpoint não comprova versão na VPS, Auth, canais ativos ou importação real. O baseline abaixo é histórico, não o HEAD atual.
 > Baseline verificado em 24/09/2026: PR #33 draft, branch `codex/comercial-360`,
 > Checkpoint funcional anterior `c09d69654259eafffd8ad8d2df5362f098308a53` (fundacao dos rascunhos por canal); consultar o HEAD atual da PR #33 no GitHub. Gate C operacional ainda parcial.
 > Migrations 001-024 presentes no repositorio; 023 material/liga/norma foi validada em codigo/CI e nao aplicada na VPS; 024 prepara apenas rascunhos por canal, validada na CI efemera e nao aplicada na VPS.

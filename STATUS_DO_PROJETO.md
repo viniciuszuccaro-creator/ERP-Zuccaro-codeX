@@ -1,3 +1,7 @@
+## Checkpoint de orientação e integração (2026-09-29)
+
+Na candidata draft #153, a orientação da #105 foi incorporada sem criar política paralela: `AGENTS.md` aponta para `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; handoff e programa mestre distinguem o baseline histórico da situação atual. #152 + #141 estão integradas somente na branch da #153 e tiveram CI verde no HEAD anterior `d3d394f6`. #92 + #132 continuam pendentes de reconciliação semântica e CI do conjunto. Nenhuma dessas entregas foi mesclada na `main`, implantada na VPS ou usada para importação real. Próximo passo: compor Pedido/Orçamento da #92 com snapshots da #152, testar migrations e fluxos integrados, incluir #132 e pedir revisão do HEAD final.
+
 ## ORDEM ÚNICA — congelar HEAD Comercial e candidata contra `main` (2026-09-29T19:20Z)
 
 **Ensaio Codex posterior:** branch `codex/integracao-comercial-legado-20260929` integra #152 `2b34338e` e #141 `b8a9f493` sem tocar a `main`; conflito apenas neste status, preservando os dois blocos. Merge experimental de #92 revelou incompatibilidade nos tipos/repositórios/serviços de Orçamento/Pedido e em `runtime01.test.ts`; foi abortado sem commit. #132 permanece dependente da #92. Detalhes em `docs/ORDEM_INTEGRACAO_UNICA.md`. Esta branch parcial não comprova as quatro PRs nem autoriza merge/VPS/importação.

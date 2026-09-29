@@ -1,3 +1,14 @@
+## Checkpoint de integração Codex (2026-09-29)
+
+Fonte canônica: `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` (orientação da #105, agora incorporada à candidata draft #153). Confirmar HEADs remotos novamente antes de agir: os SHAs abaixo são evidência deste checkpoint, não valores permanentes.
+
+- `main` remota: `d02cd012948a597a734573ab0a5a7aed6d604a3b` na conferência deste checkpoint. Nada da #153 foi mesclado.
+- #153: `d3d394f640dfda495caa07bee725f346056e0c61` antes de incorporar #105. Integra #152 (`2b34338e`) e #141 (`b8a9f493`) em branch isolada; CI 36625784748 passou com frontend, backend, PostgreSQL efêmero e staging sintético. Isso não comprova #92/#132, implantação ou importação real.
+- #92 (`8d9ce6e5`) e #132 (`29211815`) continuam fora. O ensaio de merge da #92 foi abortado sem commit por conflitos de contrato em Pedido/Orçamento. A migration 026 exige classificação histórica comprovada antes de um banco com Pedidos; não inferir tipo comercial pelo Produto atual. Detalhes e testes exigidos em `docs/ORDEM_INTEGRACAO_UNICA.md`.
+- Próximo lote de código: reconciliar origem, idempotência e versões da #92 com snapshots de condição/promoção/tabela da #152; só então incluir #132 e solicitar revisão independente do HEAD integrado. Nenhum merge, migration VPS, canário, carga real ou ativação de canal foi autorizado por esta candidata.
+
+---
+
 ## ORDEM ÚNICA — candidata Comercial × #141 × #92/#132 (2026-09-29T19:20Z)
 
 HEAD funcional Comercial congelado: `6218511a` (#151). Candidata revisável contra `main`: draft **#152** (`cursor/comercial360-candidata-main-53c4`, só registro em cima desse SHA). CI do conjunto SUCCESS em `11a5914a` ([36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250)). #92 `8d9ce6e5` e #132 `29211815` estão fora da #141. #141 permanece `b8a9f493` (CI 36617354170 SUCCESS); branch não editada e sem merge. Conflito Comercial×#141: somente `STATUS_DO_PROJETO.md`. Migrations: 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 vazia. Detalhe e ordem 1→4 em `docs/ORDEM_INTEGRACAO_UNICA.md`. Sem merge e sem gate VPS.
