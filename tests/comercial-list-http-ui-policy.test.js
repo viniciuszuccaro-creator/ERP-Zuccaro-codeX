@@ -33,6 +33,11 @@ import {
   formatMasterPickerOptionLabel,
   inactiveMasterSelectionHint,
   filterActiveMasterRowsKeepingSelection,
+  resolveComercialBannerAriaLive,
+  buildComercialBannerA11yProps,
+  buildItemLineHintId,
+  buildItemLineFieldA11y,
+  comercialActionAriaLabel,
 } from '../src/components/comercial/comercialListHttpUiPolicy.js';
 import { buildOrcamentoPayload } from '../src/components/comercial/orcamentoUiPolicy.js';
 import { buildPedidoPayload } from '../src/components/comercial/pedidoUiPolicy.js';
@@ -420,4 +425,89 @@ test('filterActiveMasterRowsKeepingSelection: esconde inativos exceto seleção 
     { placeholderById: { p2: { descricao: 'Linha antiga' } } },
   );
   assert.deepEqual(produtos.map((r) => r.id).sort(), ['p1', 'p2']);
+});
+
+test('a11y: aria-live assertive em erro e polite em loading/info', () => {
+  assert.equal(resolveComercialBannerAriaLive('error'), 'assertive');
+  assert.equal(resolveComercialBannerAriaLive('destructive'), 'assertive');
+  assert.equal(resolveComercialBannerAriaLive('loading'), 'polite');
+  assert.equal(resolveComercialBannerAriaLive('info'), 'polite');
+  assert.deepEqual(buildComercialBannerA11yProps('error'), {
+    role: 'alert',
+    'aria-live': 'assertive',
+    'aria-atomic': true,
+  });
+  assert.deepEqual(buildComercialBannerA11yProps('loading'), {
+    role: 'status',
+    'aria-live': 'polite',
+    'aria-atomic': true,
+  });
+});
+
+test('a11y: item line field aria-invalid + aria-describedby', () => {
+  const issues = [
+    { index: 0, field: 'quantidade', message: 'Item 1: quantidade deve ser maior que zero.' },
+    { index: 1, field: 'preco_unitario', message: 'Item 2: preço unitário inválido.' },
+  ];
+  const qtd = buildItemLineFieldA11y({
+    index: 0,
+    field: 'quantidade',
+    issues,
+    lineHint: issues[0].message,
+    idPrefix: 'orcamento-item',
+  });
+  assert.equal(qtd['aria-invalid'], true);
+  assert.equal(qtd['aria-describedby'], 'orcamento-item-0-hint');
+  assert.equal(qtd.describedById, buildItemLineHintId(0, 'orcamento-item'));
+
+  const precoOk = buildItemLineFieldA11y({
+    index: 0,
+    field: 'preco_unitario',
+    issues,
+    lineHint: issues[0].message,
+    idPrefix: 'orcamento-item',
+  });
+  assert.equal(precoOk['aria-invalid'], false);
+  assert.equal(precoOk['aria-describedby'], undefined);
+
+  const byHint = buildItemLineFieldA11y({
+    index: 2,
+    field: 'preco_unitario',
+    issues: [],
+    lineHint: 'Item 3: preço unitário deve ser maior que zero.',
+    idPrefix: 'pedido-item',
+  });
+  assert.equal(byHint['aria-invalid'], true);
+  assert.equal(byHint['aria-describedby'], 'pedido-item-2-hint');
+});
+
+test('a11y: nomes acessíveis Simular/Salvar/Cancelar/Resumo/Converter/Retry', () => {
+  assert.equal(comercialActionAriaLabel('simular'), 'Simular venda');
+  assert.equal(comercialActionAriaLabel('simular', { busy: true }), 'Simulando venda');
+  assert.equal(comercialActionAriaLabel('salvar', { entityLabel: 'pedido' }), 'Salvar pedido');
+  assert.equal(comercialActionAriaLabel('salvar', { entityLabel: 'orçamento', busy: true }), 'Salvando orçamento');
+  assert.equal(comercialActionAriaLabel('cancelar', { entityLabel: 'pedido', numero: '00000007' }), 'Cancelar pedido 00000007');
+  assert.equal(comercialActionAriaLabel('resumo', { entityLabel: 'orçamento', numero: 12 }), 'Abrir resumo texto do orçamento 12');
+  assert.equal(comercialActionAriaLabel('converter'), 'Converter orçamento em pedido');
+  assert.equal(comercialActionAriaLabel('retry'), 'Tentar novamente');
+});
+
+test('painéis Orçamento/Pedido wire a11y banners e labels (sem lib nova)', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const meta = await readFile(new URL('../server/src/api/router.ts', import.meta.url), 'utf8');
+  for (const src of [orc, ped]) {
+    assert.match(src, /buildComercialBannerA11yProps/);
+    assert.match(src, /buildItemLineFieldA11y/);
+    assert.match(src, /comercialActionAriaLabel\('simular'/);
+    assert.match(src, /comercialActionAriaLabel\('salvar'/);
+    assert.match(src, /comercialActionAriaLabel\('cancelar'/);
+    assert.match(src, /comercialActionAriaLabel\('resumo'/);
+    assert.match(src, /aria-describedby=\{/);
+    assert.match(src, /buildItemLineHintId/);
+    assert.doesNotMatch(src, /@radix-ui\/react-toast|react-aria|axe-core/);
+  }
+  assert.match(orc, /comercialActionAriaLabel\('converter'/);
+  assert.match(meta, /Pedido backend HTTP is active/);
+  assert.match(meta, /a11y Comercial HTTP/);
 });

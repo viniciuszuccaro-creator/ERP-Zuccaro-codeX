@@ -417,6 +417,120 @@ export function buildMastersHttpBannerText(error, options = {}) {
 }
 
 /**
+ * aria-live para banners/list errors comerciais.
+ * Erro/destructive → assertive; loading/info/hint → polite.
+ * @param {'error'|'destructive'|'assertive'|'info'|'loading'|'polite'|string} [tone]
+ * @returns {'assertive'|'polite'}
+ */
+export function resolveComercialBannerAriaLive(tone = 'info') {
+  const normalized = String(tone || 'info').toLowerCase();
+  if (normalized === 'error' || normalized === 'destructive' || normalized === 'assertive') {
+    return 'assertive';
+  }
+  return 'polite';
+}
+
+/**
+ * Props a11y para banners (Alert/list error). Sobrescreve role padrão do Alert
+ * quando o tom é polite (status) vs error (alert+assertive).
+ * @param {'error'|'destructive'|'assertive'|'info'|'loading'|'polite'|string} [tone]
+ * @returns {{ role: 'alert'|'status', 'aria-live': 'assertive'|'polite', 'aria-atomic': true }}
+ */
+export function buildComercialBannerA11yProps(tone = 'info') {
+  const live = resolveComercialBannerAriaLive(tone);
+  return {
+    role: live === 'assertive' ? 'alert' : 'status',
+    'aria-live': live,
+    'aria-atomic': true,
+  };
+}
+
+/**
+ * Id estável do hint de linha de item (aria-describedby).
+ * @param {number} index
+ * @param {string} [idPrefix]
+ */
+export function buildItemLineHintId(index, idPrefix = 'comercial-item') {
+  const safeIndex = Number.isFinite(Number(index)) ? Math.max(0, Math.trunc(Number(index))) : 0;
+  const prefix = String(idPrefix || 'comercial-item').trim() || 'comercial-item';
+  return `${prefix}-${safeIndex}-hint`;
+}
+
+/**
+ * aria-invalid + aria-describedby para campo de linha inválida (fail-closed UX).
+ * @param {{
+ *   index?: number,
+ *   field?: string,
+ *   issues?: Array<{ index?: number, field?: string, message?: string }>,
+ *   lineHint?: string | null,
+ *   idPrefix?: string,
+ * }} [input]
+ * @returns {{ 'aria-invalid': boolean, 'aria-describedby'?: string, describedById: string }}
+ */
+export function buildItemLineFieldA11y(input = {}) {
+  const index = Number.isFinite(Number(input.index)) ? Math.max(0, Math.trunc(Number(input.index))) : 0;
+  const field = String(input.field || '').trim();
+  const issues = Array.isArray(input.issues) ? input.issues : [];
+  const lineHint = String(input.lineHint || '').trim();
+  const describedById = buildItemLineHintId(index, input.idPrefix);
+  const fieldHit = issues.some((issue) => (
+    issue
+    && Number(issue.index) === index
+    && String(issue.field || '').trim() === field
+  ));
+  let hintHit = false;
+  if (lineHint && field) {
+    if (field === 'quantidade') hintHit = /quantidade/i.test(lineHint);
+    else if (field === 'preco_unitario') hintHit = /preço|preco/i.test(lineHint);
+    else if (field === 'desconto') hintHit = /desconto/i.test(lineHint);
+    else if (field === 'descricao') hintHit = /descri/i.test(lineHint);
+    else if (field === 'produto_id') hintHit = /produto/i.test(lineHint);
+    else if (field === 'unidade_id' || field === 'unidade_sigla') hintHit = /unidade|sigla/i.test(lineHint);
+  }
+  const invalid = Boolean(fieldHit || hintHit);
+  /** @type {{ 'aria-invalid': boolean, 'aria-describedby'?: string, describedById: string }} */
+  const props = {
+    'aria-invalid': invalid,
+    describedById,
+  };
+  if (invalid) props['aria-describedby'] = describedById;
+  return props;
+}
+
+/**
+ * Nome acessível estável para ações canônicas Orçamento/Pedido
+ * (Simular / Salvar / Cancelar / Resumo / Converter / Retry).
+ * @param {string} action
+ * @param {{ entityLabel?: string, entity?: string, numero?: unknown, busy?: boolean, fallback?: string }} [options]
+ */
+export function comercialActionAriaLabel(action, options = {}) {
+  const entity = String(options.entityLabel || options.entity || 'documento').trim() || 'documento';
+  const numeroRaw = options.numero != null ? String(options.numero).trim() : '';
+  const numero = numeroRaw ? ` ${numeroRaw}` : '';
+  const busy = options.busy === true;
+  switch (String(action || '').toLowerCase()) {
+    case 'simular':
+      return busy ? 'Simulando venda' : 'Simular venda';
+    case 'salvar':
+      return busy ? `Salvando ${entity}` : `Salvar ${entity}`;
+    case 'cancelar':
+      return `Cancelar ${entity}${numero}`;
+    case 'resumo':
+      return `Abrir resumo texto do ${entity}${numero}`;
+    case 'converter':
+    case 'convert':
+      return busy ? 'Convertendo orçamento em pedido' : 'Converter orçamento em pedido';
+    case 'fechar':
+      return 'Fechar';
+    case 'retry':
+    case 'tentar-novamente':
+      return 'Tentar novamente';
+    default:
+      return String(options.fallback || action || 'Ação comercial').trim() || 'Ação comercial';
+  }
+}
+
+/**
  * Pickers mestres devem bloquear interação enquanto loading/erro.
  * @param {{ isLoading?: boolean, isError?: boolean }} [query]
  */
