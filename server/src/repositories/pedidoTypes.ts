@@ -100,7 +100,7 @@ export type Pedido = {
 };
 
 export type PedidoScope = { groupId: string; empresaId: string };
-export type PedidoListFilters = { search?: string; status?: PedidoStatus; clienteEmpresaId?: string; tipoOperacao?: typeof PEDIDO_TIPOS_OPERACAO[number] };
+export type PedidoListFilters = { search?: string; status?: PedidoStatus; clienteEmpresaId?: string; tipoOperacao?: typeof PEDIDO_TIPOS_OPERACAO[number]; dataEntregaDe?: string; dataEntregaAte?: string };
 export type PedidoPage = { rows: Pedido[]; total: number };
 
 export function calculatePedido(items: z.infer<typeof pedidoItemSchema>[]): Pick<Pedido, 'itens' | 'subtotal' | 'desconto' | 'total'> {

@@ -68,7 +68,9 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       && (!search || row.numero.toLocaleLowerCase('pt-BR').includes(search))
       && (!filters.status || row.status === filters.status)
       && (!filters.clienteEmpresaId || row.cliente_empresa_id === filters.clienteEmpresaId)
-      && (!filters.tipoOperacao || row.tipo_operacao === filters.tipoOperacao))
+      && (!filters.tipoOperacao || row.tipo_operacao === filters.tipoOperacao)
+      && (!filters.dataEntregaDe || row.data_entrega_solicitada >= filters.dataEntregaDe)
+      && (!filters.dataEntregaAte || row.data_entrega_solicitada <= filters.dataEntregaAte))
       .sort((a, b) => b.numero.localeCompare(a.numero) || b.id.localeCompare(a.id));
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
   }

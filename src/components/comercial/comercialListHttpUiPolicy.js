@@ -17,6 +17,8 @@ export const PEDIDO_LIST_FILTER_DEFAULTS = Object.freeze({
   status: 'TODOS',
   clienteEmpresaId: 'TODOS',
   tipoOperacao: 'TODOS',
+  dataEntregaDe: '',
+  dataEntregaAte: '',
 });
 
 const LIST_SEARCH_MAX = 80;
@@ -191,6 +193,8 @@ export function normalizePedidoListFilters(raw = {}) {
     tipoOperacao: src.tipoOperacao === 'ENTREGA' || src.tipoOperacao === 'RETIRADA'
       ? src.tipoOperacao
       : 'TODOS',
+    dataEntregaDe: /^\d{4}-\d{2}-\d{2}$/.test(String(src.dataEntregaDe || '')) ? String(src.dataEntregaDe) : '',
+    dataEntregaAte: /^\d{4}-\d{2}-\d{2}$/.test(String(src.dataEntregaAte || '')) ? String(src.dataEntregaAte) : '',
   };
 }
 
@@ -248,6 +252,8 @@ export function buildPedidoListRequestParams(filters, paging = {}) {
   if (filters.tipoOperacao && filters.tipoOperacao !== 'TODOS') {
     params.tipoOperacao = filters.tipoOperacao;
   }
+  if (filters.dataEntregaDe) params.dataEntregaDe = filters.dataEntregaDe;
+  if (filters.dataEntregaAte) params.dataEntregaAte = filters.dataEntregaAte;
   if (paging.signal) params.signal = paging.signal;
   return params;
 }

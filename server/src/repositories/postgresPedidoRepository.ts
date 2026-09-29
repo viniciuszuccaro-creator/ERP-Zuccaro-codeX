@@ -87,12 +87,12 @@ export class PostgresPedidoRepository implements PedidoRepository {
 
   async list(scope: PedidoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: PedidoListFilters = {}) {
     const query = executor ?? this.db;
-    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6)`;
-    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null];
+    const where = `p.group_id=$1 AND p.empresa_id=$2 AND ($3::text IS NULL OR p.numero ILIKE '%'||$3||'%') AND ($4::text IS NULL OR p.status=$4) AND ($5::uuid IS NULL OR p.cliente_empresa_id=$5) AND ($6::text IS NULL OR p.tipo_operacao=$6) AND ($7::timestamptz IS NULL OR p.data_entrega_solicitada >= $7) AND ($8::timestamptz IS NULL OR p.data_entrega_solicitada <= $8)`;
+    const filterParams = [scope.groupId, scope.empresaId, filters.search || null, filters.status || null, filters.clienteEmpresaId || null, filters.tipoOperacao || null, filters.dataEntregaDe || null, filters.dataEntregaAte || null];
     const params = [...filterParams, Math.min(200, Math.max(1, Math.trunc(limit))), Math.max(0, Math.trunc(offset))];
     const [count, rows] = await Promise.all([
       query.query<{ total: number }>(`SELECT count(*)::int total FROM pedidos p WHERE ${where}`, filterParams),
-      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $7 OFFSET $8`, params),
+      query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $9 OFFSET $10`, params),
     ]);
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }

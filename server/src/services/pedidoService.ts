@@ -214,7 +214,7 @@ export class PedidoService {
   async get(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); return this.requirePedido(scope, id); }
   async history(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); await this.requirePedido(scope, id); return this.repo.history(scope, id); }
 
-  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; tipoOperacao?: string } = {}) {
+  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; tipoOperacao?: string; dataEntregaDe?: string; dataEntregaAte?: string } = {}) {
     const scope = await this.prepare(ctx, 'visualizar');
     const limit = Math.min(200, Math.max(1, Number.isFinite(options.limit) ? Math.trunc(options.limit!) : 50));
     const offset = Math.max(0, Number.isFinite(options.offset) ? Math.trunc(options.offset!) : 0);
@@ -223,7 +223,17 @@ export class PedidoService {
     if (options.status && !PEDIDO_STATUS.includes(options.status as PedidoStatus)) this.validation({ status: 'invalid' });
     if (options.clienteEmpresaId) this.assertId(options.clienteEmpresaId, 'clienteEmpresaId');
     if (options.tipoOperacao && !['ENTREGA', 'RETIRADA'].includes(options.tipoOperacao)) this.validation({ tipoOperacao: 'invalid' });
-    const page = await this.repo.list(scope, limit, offset, undefined, { search: search || undefined, status: options.status as PedidoStatus | undefined, clienteEmpresaId: options.clienteEmpresaId, tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined });
+    const dataEntregaDe = this.parseFilterDate(options.dataEntregaDe, false);
+    const dataEntregaAte = this.parseFilterDate(options.dataEntregaAte, true);
+    if (dataEntregaDe && dataEntregaAte && dataEntregaDe > dataEntregaAte) this.validation({ dataEntrega: 'invalid_period' });
+    const page = await this.repo.list(scope, limit, offset, undefined, {
+      search: search || undefined,
+      status: options.status as PedidoStatus | undefined,
+      clienteEmpresaId: options.clienteEmpresaId,
+      tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined,
+      dataEntregaDe,
+      dataEntregaAte,
+    });
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
   }
 
@@ -531,6 +541,12 @@ export class PedidoService {
     if (row.status !== 'EM_ABERTO') this.stateConflict();
   }
   private async auditRow(ctx: RequestContext, action: AuditAction, before: Pedido | null, after: Pedido, executor?: DbQueryExecutor) { await this.audit.append({ groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId, actorEmail: ctx.actorEmail, entity: 'Pedido', entityId: after.id, action, beforeData: before ? pedidoAuditSnapshot(before) : undefined, afterData: pedidoAuditSnapshot(after), requestId: ctx.requestId, ipAddress: ctx.ipAddress }, executor); }
+  private parseFilterDate(value: string | undefined, endOfDay: boolean) {
+    if (!value) return undefined;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`) : new Date(value);
+    if (Number.isNaN(date.getTime())) this.validation({ dataEntrega: 'invalid_date' });
+    return date.toISOString();
+  }
   private assertId(id: string, field: string) { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${field}`); }
   private validation(details: unknown): never { throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Pedido payload', details); }
   private stateConflict(): never { throw new AppError(409, 'PEDIDO_STATE_CONFLICT', 'Pedido state does not allow this operation'); }
