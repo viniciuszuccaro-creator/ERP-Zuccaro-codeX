@@ -27,6 +27,12 @@ import {
   sanitizeListSearchText,
   sanitizeObservacoesText,
   COMERCIAL_HTTP_CACHE_PREFIXES,
+  isComercialMasterRowActive,
+  isInactiveMasterSelectionKept,
+  buildInactiveMasterSelectionPlaceholder,
+  formatMasterPickerOptionLabel,
+  inactiveMasterSelectionHint,
+  filterActiveMasterRowsKeepingSelection,
 } from '../src/components/comercial/comercialListHttpUiPolicy.js';
 import { buildOrcamentoPayload } from '../src/components/comercial/orcamentoUiPolicy.js';
 import { buildPedidoPayload } from '../src/components/comercial/pedidoUiPolicy.js';
@@ -204,9 +210,14 @@ test('painéis Pedido/Orçamento usam list search/filter fail-closed e queryKey 
     assert.match(source, /formatMasterPickerPlaceholder/);
     assert.match(source, /buildMastersHttpBannerText/);
     assert.match(source, /isMasterPickerBlocked/);
+    assert.match(source, /filterActiveMasterRowsKeepingSelection/);
+    assert.match(source, /formatMasterPickerOptionLabel/);
+    assert.match(source, /inactiveMasterSelectionHint/);
     assert.match(source, /masters-form-banner/);
     assert.match(source, /data-empty-filtered/);
     assert.match(source, /clearComercialHttpCacheOnTenantSwitch/);
+    assert.match(source, /inactive-master-hint/);
+    assert.match(source, /data-inactive/);
   }
   assert.match(pedido, /normalizePedidoListFilters/);
   assert.match(pedido, /buildPedidoListRequestParams/);
@@ -352,4 +363,61 @@ test('formatMasterPickerPlaceholder e banner masters não mascaram erro como vaz
   assert.equal(isMasterPickerBlocked({ isLoading: true, isError: false }), true);
   assert.equal(isMasterPickerBlocked({ isLoading: false, isError: true }), true);
   assert.equal(isMasterPickerBlocked({ isLoading: false, isError: false }), false);
+});
+
+test('filterActiveMasterRowsKeepingSelection: esconde inativos exceto seleção atual', () => {
+  const rows = [
+    { id: 'a', nome: 'Ativa', ativo: true },
+    { id: 'b', nome: 'Inativa', ativo: false },
+    { id: 'c', nome: 'Outra inativa', ativo: false },
+    { id: 'd', nome: 'Bloqueada', ativo: true, bloqueado: true, habilitado_operacao: true },
+    { id: 'e', nome: 'Desabilitada', ativo: true, bloqueado: false, habilitado_operacao: false },
+  ];
+  // Sem flags CE: inativos somem; ativo+bloqueado ainda entra (flag rejectBloqueado off)
+  const onlyActive = filterActiveMasterRowsKeepingSelection(rows, null);
+  assert.deepEqual(onlyActive.map((r) => r.id).sort(), ['a', 'd', 'e']);
+
+  const keepB = filterActiveMasterRowsKeepingSelection(rows, 'b');
+  assert.deepEqual(keepB.map((r) => r.id).sort(), ['a', 'b', 'd', 'e']);
+  assert.equal(isInactiveMasterSelectionKept(keepB.find((r) => r.id === 'b')), true);
+  assert.match(formatMasterPickerOptionLabel(keepB.find((r) => r.id === 'b')), /inativo/i);
+  assert.equal(isInactiveMasterSelectionKept(keepB.find((r) => r.id === 'a')), false);
+
+  // outros inativos continuam ocultos
+  assert.equal(keepB.some((r) => r.id === 'c'), false);
+
+  // seleção ausente da lista → ghost via placeholder
+  const ghost = filterActiveMasterRowsKeepingSelection(rows, 'ghost-1', {
+    placeholderById: { 'ghost-1': { codigo: 'LEG', nome: 'Legado' } },
+  });
+  assert.ok(ghost.some((r) => r.id === 'ghost-1'));
+  const ghostRow = ghost.find((r) => r.id === 'ghost-1');
+  assert.equal(ghostRow._inactiveSelection, true);
+  assert.equal(ghostRow.ativo, false);
+  assert.match(formatMasterPickerOptionLabel(ghostRow), /Legado \(inativo\)/);
+
+  // ClienteEmpresa: exige habilitado e rejeita bloqueado, mas mantém seleção
+  const ce = filterActiveMasterRowsKeepingSelection(rows, 'd', {
+    requireHabilitadoOperacao: true,
+    rejectBloqueado: true,
+  });
+  assert.deepEqual(ce.map((r) => r.id).sort(), ['a', 'd']);
+  assert.ok(ce.some((r) => r.id === 'd'));
+  assert.equal(ce.some((r) => r.id === 'e'), false);
+  assert.equal(isComercialMasterRowActive(rows[3], { rejectBloqueado: true }), false);
+  assert.equal(isComercialMasterRowActive(rows[4], { requireHabilitadoOperacao: true }), false);
+  assert.match(inactiveMasterSelectionHint(ce, 'Cliente'), /Cliente atual está inativo/i);
+
+  // sem seleção: placeholder não vaza
+  assert.equal(buildInactiveMasterSelectionPlaceholder(''), null);
+  assert.equal(buildInactiveMasterSelectionPlaceholder(null), null);
+  assert.equal(inactiveMasterSelectionHint([{ id: 'a', ativo: true }]), null);
+
+  // múltiplas seleções de produto (linhas)
+  const produtos = filterActiveMasterRowsKeepingSelection(
+    [{ id: 'p1', descricao: 'P1', ativo: true }, { id: 'p2', descricao: 'P2', ativo: false }],
+    ['p1', 'p2', ''],
+    { placeholderById: { p2: { descricao: 'Linha antiga' } } },
+  );
+  assert.deepEqual(produtos.map((r) => r.id).sort(), ['p1', 'p2']);
 });

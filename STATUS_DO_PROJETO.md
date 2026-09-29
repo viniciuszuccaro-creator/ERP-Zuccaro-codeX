@@ -1,3 +1,24 @@
+## LOTE CURSOR — inactive master picker keep-current (pós-#148 item-line) (2026-09-29T18:55Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Soft-delete/inactive master picker — esconde Condicao/Tabela/Produto/ClienteEmpresa inativos exceto seleção atual (ghost+snapshot); fail-closed |
+| Branch | `cursor/comercial360-onda3-inactive-master-picker-392b` |
+| Base | `origin/cursor/comercial360-onda3-item-line-validation-392b` tip `c38a768d` (#148 CI SUCCESS) |
+| Tip | `8729e1c8` (`8729e1c86f73ea34c6f44d9f3ff474c51d7bef36`) · feat `b08dcb10` |
+| Draft PR | **#149** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/149 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-item-line-validation-392b...cursor/comercial360-onda3-inactive-master-picker-392b?expand=1) base `#148` |
+| Escopo | `filterActiveMasterRowsKeepingSelection` + labels `(inativo)` + hint UI; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `inactiveMasterPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **15/15**; `git diff --check` PASS |
+| Colisão | B ConfirmDialog cancel já existe (#135); A a11y parcial (aria-invalid linhas); margem #47; PDF/anexos #52–62; stack #126–#148; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** a11y aria-live/labels polish **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
+
+Diagnóstico: list HTTP já filtra `ativo:true` e normalizers descartam inativos; edição com FK inativa sumia do Select. Maior polish seguro independente pós-#148 (B já ConfirmDialog; A parcial).
+
+---
+
 ## LOTE CURSOR — item-line validation qtd/preço fail-closed (pós-#147 resumo texto) (2026-09-29T18:45Z)
 
 | Campo | Valor |
