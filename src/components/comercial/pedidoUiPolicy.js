@@ -55,8 +55,82 @@ export function nextPedidoStatus(row) {
   return null;
 }
 
+/**
+ * Dia civil YYYY-MM-DD a partir de date-only ou ISO (UTC calendar day).
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+export function toPedidoEntregaCalendarDay(value) {
+  if (value == null) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10);
+}
+
+/** Hoje em YYYY-MM-DD (UTC), alinhado ao policy do servidor. */
+export function todayPedidoEntregaCalendarDay(now = new Date()) {
+  const ms = now instanceof Date ? now.getTime() : Number(now);
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * Data solicitada no passado (dia civil anterior a hoje). Ausente/inválida → true (fail-closed na ENTREGA).
+ * @param {unknown} dataEntregaSolicitada
+ * @param {Date | number} [now]
+ */
+export function isPedidoDataEntregaPassada(dataEntregaSolicitada, now = new Date()) {
+  const day = toPedidoEntregaCalendarDay(dataEntregaSolicitada);
+  if (!day) return true;
+  return day < todayPedidoEntregaCalendarDay(now);
+}
+
+/**
+ * Gate UI: Data de Entrega do Cliente obrigatória e hoje+ quando modalidade ENTREGA.
+ * RETIRADA: não bloqueia por este gate (campo permanece no formulário/schema).
+ * @param {{ tipoOperacao?: string, dataEntregaSolicitada?: string, now?: Date | number }} input
+ */
+export function evaluatePedidoDataEntregaUiGate(input = {}) {
+  const tipo = String(input.tipoOperacao || '').trim().toUpperCase();
+  if (tipo !== 'ENTREGA') {
+    return { blockSave: false, hint: null, mode: 'optional' };
+  }
+  const raw = String(input.dataEntregaSolicitada || '').trim();
+  if (!raw) {
+    return {
+      blockSave: true,
+      hint: 'Entrega exige data solicitada pelo cliente (hoje ou futura) — fail-closed.',
+      mode: 'missing',
+    };
+  }
+  const day = toPedidoEntregaCalendarDay(raw);
+  if (!day) {
+    return {
+      blockSave: true,
+      hint: 'Data de entrega do cliente inválida — informe uma data válida (fail-closed).',
+      mode: 'invalid',
+    };
+  }
+  if (isPedidoDataEntregaPassada(raw, input.now)) {
+    return {
+      blockSave: true,
+      hint: 'Data de entrega do cliente no passado — informe hoje ou futura (fail-closed).',
+      mode: 'past',
+    };
+  }
+  return { blockSave: false, hint: null, mode: 'ready' };
+}
+
 export function buildPedidoPayload(form, options = {}) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.tipo_operacao || !form.data_entrega_solicitada) throw new Error('Preencha cliente, condição, operação e data de entrega.');
+  const dataGate = evaluatePedidoDataEntregaUiGate({
+    tipoOperacao: form.tipo_operacao,
+    dataEntregaSolicitada: form.data_entrega_solicitada,
+    now: options.now,
+  });
+  if (dataGate.blockSave) throw new Error(dataGate.hint || 'Data de entrega do cliente inválida.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
   /** @type {Record<string, unknown>} */

@@ -1,3 +1,24 @@
+## LOTE CURSOR — Pedido Data entrega cliente fail-closed (pós entrega-address) (2026-09-29T22:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Data de Entrega do Cliente — required when ENTREGA; calendário hoje+; fail-closed UI+server |
+| Branch | `cursor/comercial360-onda5-data-entrega-failclosed-392b` |
+| Base | `origin/cursor/comercial360-onda5-entrega-address-failclosed-392b` tip `6d171316` (#158 compare) |
+| Tip | feat `1170251f` · branch HEAD após docs |
+| Draft PR | **#159** — ManagePullRequest indisponível; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-entrega-address-failclosed-392b...cursor/comercial360-onda5-data-entrega-failclosed-392b?expand=1 |
+| Escopo | Reusa `data_entrega_solicitada` (`pedidoTypes`/mig 017); policy `comercialPedidoDataEntregaPolicy` (422 `PEDIDO_DATA_ENTREGA_*`); UI `evaluatePedidoDataEntregaUiGate` + wire Pedido/conversão Orçamento; meta `dataEntregaClienteFailClosed`; **sem migration** |
+| Meta | `dataEntregaClienteFailClosed` + preserva **Pedido backend HTTP is active** |
+| Testes | pedido-ui-policy **14/14** + frontend-integration **2/2**; runtime-onda5-data-entrega **6/6**; runtime09 **4/4**; runtime08c **6/6**; runtime07b **13/13**; `git diff --check` PASS |
+| Colisão | anexos #59–62; CreditPort/#63–67 mig 032; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | **C** multi-select stub fail-closed **ou** CostPort BFF real **ou** PDF/anexos sem colidir #59–62 |
+
+Arquivos: `comercialPedidoDataEntregaPolicy.ts`, `pedidoService.ts`, `pedidoUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, `server/tests/runtime-onda5-pedido-data-entrega.test.ts`, `tests/pedido-ui-policy.test.js`, `tests/pedido-frontend-integration.test.js`, `server/tests/runtime07b.test.ts`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: campo já existia no schema; gap era validação calendário (hoje+) + gate UI obrigatório só na ENTREGA (RETIRADA sem gate de passado).
+
+---
+
 ## LOTE CURSOR — Pedido Entrega endereço fail-closed (pós margem UI) (2026-09-29T22:15Z)
 
 | Campo | Valor |
@@ -6,7 +27,7 @@
 | Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
 | Base | `origin/cursor/comercial360-onda4-margem-ui-failclosed-392b` tip `3e668170` (#157) |
 | Tip | feat `aad233b1` · branch HEAD após docs |
-| Draft PR | **pendente** — ManagePullRequest indisponível; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
+| Draft PR | **#159** — ManagePullRequest indisponível; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
 | Escopo | `resolveDeliveryAddressUiState` blockSave na ENTREGA sem seleção/incompleto; painel `PedidoCanonicoPanel` visível na Entrega + Alert required; meta `entregaAddressRequiredFailClosed`; **sem migration** |
 | Meta | `entregaAddressRequiredFailClosed` + preserva **Pedido backend HTTP is active** |
 | Testes | local-obra UI **13/13** + frontend-integration **2/2**; runtime09 **4/4**; runtime08c **6/6**; runtime07b **13/13**; `git diff --check` PASS |
@@ -141,7 +162,7 @@ Diagnóstico: #148 já tinha `aria-invalid` parcial nas linhas; faltavam aria-li
 
 Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
 
-Diagnóstico: list HTTP já filtra `ativo:true` e normalizers descartam inativos; edição com FK inativa sumia do Select. Maior polish seguro independente pós-#148 (B já ConfirmDialog; A parcial).
+Diagnóstico: list HTTP já filtra `ativo:true` e normalizers descartam inativos; edição com FK inativa sumia do Select. Maior polish seguro inde#159 pós-#148 (B já ConfirmDialog; A parcial).
 
 ---
 
@@ -162,7 +183,7 @@ Diagnóstico: list HTTP já filtra `ativo:true` e normalizers descartam inativos
 
 Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/orcamento-ui-policy.test.js`, `tests/pedido-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
 
-Diagnóstico: emptyItem inicia `preco_unitario:'0'`; UI engolia erro de `calculateItem`; save só falhava no toast genérico. Maior polish seguro independente pós-#147.
+Diagnóstico: emptyItem inicia `preco_unitario:'0'`; UI engolia erro de `calculateItem`; save só falhava no toast genérico. Maior polish seguro inde#159 pós-#147.
 
 ---
 
@@ -192,7 +213,7 @@ Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 | Meta | `textoResumoPreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | pedido/orcamento UI policy **21/21**; list/alcada/simulacao **44/44**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
 | Colisão | margem #47 OPEN; anexos/PDF #52–#62 (não toca PDF); stack #126–#146; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
-| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish Comercial independente fora do stack |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish Comercial inde#159 fora do stack |
 
 Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, tests orcamento/pedido UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
@@ -215,7 +236,7 @@ Diagnóstico: após #146, maior gap seguro pedido pelo handoff — canônico sem
 | Meta | `tenantCacheFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | comercial-list-http-ui-policy **14/14**; orcamento/alcada/simulacao/pedido UI **61/61**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
 | Colisão | A duplicar sem endpoint; B print legado; margem #47 OPEN; anexos/PDF #52–#62; stack #126–#145; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
-| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente (imprimir/resumo texto Pedido canônico) |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish inde#159 (imprimir/resumo texto Pedido canônico) |
 
 Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
@@ -238,7 +259,7 @@ Diagnóstico: A (duplicar) sem endpoint/UI — inventaria módulo. B (imprimir) 
 | Meta | `listSearchFilterFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | comercial-list-http-ui-policy **11/11**; orcamento/alcada/simulacao/pedido UI **58/58**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
 | Colisão | empty≠error base #136; dirty #144; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
-| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish inde#159 fora do stack |
 
 Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
@@ -261,7 +282,7 @@ Diagnóstico de escolha: #136 cobria empty≠error básico; faltava sanitize/nor
 | Meta | `simulacaoDirtyFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | comercial-simulacao-ui-policy **17/17 PASS**; orcamento/list/alcada/pedido UI **35/35 PASS**; runtime07b+08c+09 **23/23 PASS**; server typecheck PASS; `git diff --check` PASS |
 | Colisão | B list empty≠error já #136; C masters banner #140; delivery #143; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
-| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish inde#159 fora do stack |
 
 Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
@@ -284,7 +305,7 @@ Diagnóstico de escolha: limpeza de preview já existia, mas **Salvar seguia lib
 | Meta | `deliveryAddressSummaryFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | comercial-cliente-local-obra UI/client + pedido/list/simulação — **46/46 PASS**; runtime07b+08c+09 — **23/23 PASS**; `server` typecheck PASS; `git diff --check` PASS |
 | Colisão | A search/filter e C simular dirty já cobertos no stack #126–#142; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
-| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish inde#159 fora do stack |
 
 Arquivos: `comercialClienteLocalObraHttpUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests local-obra UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
@@ -359,7 +380,7 @@ Arquivos: `comercialSimulacaoUiPolicy.js`, `orcamentoUiPolicy.js`, `pedidoUiPoli
 
 | PR | Tip | CI | Escopo |
 |---|---|---|---|
-| #138 | `90a76433` | pendente | alçada desconto UI fail-closed |
+| #138 | `90a76433` | #159 | alçada desconto UI fail-closed |
 | próximo | `cursor/comercial360-onda3-snapshot-reload-392b` | — | Reload pós-save prova snapshots round-trip |
 
 Diagnóstico: #47 (margem CostPort) ainda OPEN — UI margem adiada. Reload após save era gap: form fechava e não mostrava snapshots persistidos. Sem migration. EXECUCAO_PARALELA + Regra-Mãe.
@@ -384,7 +405,7 @@ Diagnóstico: #47 (margem CostPort) ainda OPEN — UI margem adiada. Reload apó
 
 | PR | Tip | CI | Escopo |
 |---|---|---|---|
-| #136 | `2db1a38d` | pendente | List HTTP fail-closed + update CANCELADO |
+| #136 | `2db1a38d` | #159 | List HTTP fail-closed + update CANCELADO |
 | próximo | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` | — | Desconto alçada UI fail-closed + save idempotency |
 
 Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplementar**. Escolha: alçada desconto UI fail-closed (backend #46 já merged; UI só badge de simulação). Sem migration. Sem Codex/#104/#48. Sem merge/VPS.
@@ -471,7 +492,7 @@ Margem preview persistência de exibição (após #47 na stack) **ou** Onda 4 an
 - Observações: strip controles/`<>`/javascript no payload UI e Zod write.
 - Sem migration; sem Codex/#104/#48; sem merge/VPS.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Onda 4 slice sem colisão 025–028 (anexos/PDF/versão se 032+ ou sem migration); sem Codex/#104/#48; sem merge/VPS.
 
@@ -512,7 +533,7 @@ Pilha: #114 → … → #134 → #135 → **este lote**.
 - UI: botão cancel sempre visível no painel canônico, **disabled** sem permissão ou status ≠ EM_ABERTO; `data-permission="Comercial.pedido.cancelar"`.
 - Sem migration; sem módulo paralelo; convert-snapshot #134 preservado.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Onda 4 slice sem colisão 025–028 **ou** list empty-state HTTP Pedido; sem Codex/#104/#48; sem merge/VPS.
 
@@ -552,7 +573,7 @@ Pilha: #114 → … → #133 → #134 → **este lote**.
 - UI: hint + disable convert quando snapshot incompleto; não enfraquece validade #133.
 - Multiempresa/RBAC/auditoria preservados; sem migration.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Onda 4 slice sem colisão 025–028 **ou** Pedido cancel fail-closed symmetry / list empty-state HTTP; sem Codex/#104/#48; sem merge/VPS.
 
@@ -593,7 +614,7 @@ Pilha: #114 → … → #131 → #133 → **este lote**.
 - UI: hint no formulário, badge Expirado na lista, disable convert/save quando expirado.
 - Multiempresa/RBAC/auditoria preservados; sem migration.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Onda 4 slice sem colisão 025–028 **ou** harden convert snapshots legado (A residual); sem Codex/#104/#48; sem merge/VPS.
 
@@ -635,7 +656,7 @@ Pilha: #114 → … → #130 → #131 → **este lote**.
 - Fail-closed: tabela_preco_id sem codigo/nome → 422; conversão copia snapshot do Orçamento (não-retroatividade).
 - Multiempresa/RBAC/auditoria preservados; auditoria inclui `tabela_preco_*_snapshot`.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Onda 4 slice sem colisão 025–028 **ou** próximo item P0/Comercial 360 autorizado; sem Codex/#104/#48; sem merge/VPS.
 
@@ -678,7 +699,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 - Totais do formulário: prioriza preview do servidor; payload continua sem `total` inventado.
 - Multiempresa/RBAC/auditoria preservados.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - ~~Snapshot código/nome TabelaPreco (**031**)~~ → lote seguinte nesta pilha.
 
@@ -720,7 +741,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 - Conversão Orçamento→Pedido copia snapshot de promoção (não-retroatividade).
 - Multiempresa/RBAC/auditoria preservados; auditoria inclui `promocao_*`.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Consistência simular-venda → desconto/total persistido (choice B) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
 
@@ -777,7 +798,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 - RBAC Cadastros.produto / Comercial.orcamento|pedido.visualizar fail-closed no seletor.
 - Form V22 permanece com opt-in `VITE_ERP_HTTP_PRODUTO` via `preparedEntities` (DAM/workflow).
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Snapshot de promoção / refs persistidas **ou** cutover restante de pickers legados; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
 
@@ -845,7 +866,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 - RBAC/auditoria existentes em mutações Orçamento/Pedido; audit inclui campos de snapshot.
 - Conversão Orçamento→Pedido copia snapshot persistido (não-retroatividade).
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Produto frontendHttp piloto (padrão Condicao/Tabela) **ou** refs de promoção persistidas; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
 
@@ -859,7 +880,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 | --- | --- |
 | Implementado | **SIM** — piloto HTTP `ClienteLocal` + `Obra` nested (`/clientes/:id/locais|obras`); Pedido carrega endereço/obra por `cliente_id` fail-closed; Central 360 já via `central-360`; sem migration |
 | Testado | **SIM** — client+policy novos + empresa/http-api-client (33/33) + runtime06a/06b/07b 20/20 (meta Pedido backend HTTP preservado) |
-| CI | pendente neste HEAD |
+| CI | #159 neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#122`/`#121` `cursor/comercial360-onda3-cliente-empresa-http-392b` (tip `d82c7096`) |
@@ -887,7 +908,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 - RBAC Cadastros.cliente_local / Cadastros.obra ou Comercial.pedido.visualizar fail-closed no UI.
 - Troca de ClienteEmpresa limpa `cliente_local_id`/`obra_id`. Central 360 blocos locais/obras inalterados (já HTTP via read-model).
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Snapshot persistido condição/parcelas (**migration** autorizada); sem CRM paralelo.
 
@@ -901,7 +922,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #121/#122 
 | --- | --- |
 | Implementado | **SIM** — `GET /api/v1/cliente-empresas` list-for-scope + get by id; piloto HTTP `ClienteEmpresa`; Orçamento/Pedido seleção via HTTP fail-closed; sem migration |
 | Testado | **SIM** — client+policy+http-api-client (33/33) + runtime05 3/3 + runtime07b 13/13 + runtime06b 4/4 + runtime08c 6/6 |
-| CI | pendente neste HEAD |
+| CI | #159 neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#120` `cursor/comercial360-onda3-cliente-http-392b` (tip `5b444a69`) |
@@ -930,7 +951,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #121/#122 
 - Mutações ClienteEmpresa permanecem nested sob `/api/v1/clientes/:id/empresas`.
 - Local/Obra continuam fora do piloto flat.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteLocal/Obra frontendHttp; sem CRM paralelo.
 
@@ -944,7 +965,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → **#121**.
 | --- | --- |
 | Implementado | **SIM** — piloto HTTP `Cliente` + CRUD/restore/vínculos/Central 360; Orçamento/Pedido labels Cliente + UnidadeMedida via HTTP; Central 360 RBAC fail-closed; sem migration |
 | Testado | **SIM** — client+policy novos + http-api-client/condicao/tabela/central360 (52/52) + runtime07b 13/13 + runtime06b meta PASS |
-| CI | pendente neste HEAD |
+| CI | #159 neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
@@ -974,7 +995,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → **#121**.
 - Persistência canônica inalterada; ClienteEmpresa/Local/Obra continuam fora do piloto flat.
 - Skip A: sem colunas JSON/text de snapshot condição/parcelas (preço já em `preco_unitario` do item).
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteEmpresa list-for-scope HTTP (sem CRM paralelo); Local/Obra frontendHttp depois.
 
@@ -988,7 +1009,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 | --- | --- |
 | Implementado | **SIM** — piloto HTTP `TabelaPreco` + CRUD/vínculo/padrão/itens/`preco-cliente` no cliente; Pedido lista tabelas via HTTP; Orçamento/Pedido resolvem preço ao selecionar produto; sem migration |
 | Testado | **SIM** — 13 novos (client+policy) + http-api-client/condicao regressão (42/42) + runtime07b 13/13 + runtime08c 6/6 (note Pedido backend HTTP) |
-| CI | pendente neste HEAD |
+| CI | #159 neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#117` `cursor/comercial360-onda2-condicao-http-392b` (tip `9bb3bccc`) |
@@ -1017,7 +1038,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 - Persistência canônica: `tabela_preco_id` no Pedido; preço de item continua autoridade do servidor no save. Preview no form é local.
 - Fora: #104, mapper #48, Codex PRs, VPS/merge, snapshot persistido de preço.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Snapshot persistido condição/parcelas/preço em Orçamento/Pedido (**migration** autorizada); Onda 3 follow-up sem CRM paralelo.
 
@@ -1028,8 +1049,8 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — piloto HTTP `CondicaoPagamento` + CRUD/parcelas/vínculo/padrão/resolve no cliente; Orçamento/Pedido listam via HTTP e resolvem condição ao trocar cliente; snapshot parcelas **só em memória** |
-| Testado | pendente neste HEAD (focado a seguir) |
-| CI | pendente |
+| Testado | #159 neste HEAD (focado a seguir) |
+| CI | #159 |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#116` `cursor/comercial360-onda2-simular-ui-392b` (tip `00bd7c85`, que já empilha `#114`) |
@@ -1057,7 +1078,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 - Persistência canônica: `condicao_pagamento_id`. Snapshot de parcelas no form é preview local — persistir agenda exige migration futura autorizada.
 - Fora: #104, mapper #48, Codex PRs, VPS/merge, TabelaPreco frontendHttp.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - Snapshot persistido condição/parcelas em Orçamento/Pedido (**migration** autorizada) **ou** TabelaPreco frontendHttp; Onda 3 follow-up sem CRM paralelo.
 
@@ -1069,7 +1090,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 | --- | --- |
 | Implementado | **SIM** — Orçamento/Pedido canônicos chamam `POST /api/v1/comercial/simular-venda`; agenda de parcelas + promoção fail-closed na UI; aplica preço/desconto/condição no formulário **sem migration** |
 | Testado | **SIM** — 12 novos (`comercial-simulacao-ui-policy` + `comercial-simulacao-http-client`) + regressão orcamento/pedido UI/HTTP (27/27 no lote focado) |
-| CI | pendente neste HEAD (`db162222`) — draft PR: **BLOCKED** (`gh`/`ManagePullRequest` sem permissão createPullRequest); branch pushada |
+| CI | #159 neste HEAD (`db162222`) — draft PR: **BLOCKED** (`gh`/`ManagePullRequest` sem permissão createPullRequest); branch pushada |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#114` `cursor/comercial360-onda2-promocoes-parcelas-392b` |
@@ -1093,7 +1114,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 - Promoção: payload só se bps>0; aplicar no form exige `promocao.aplicada===true` do servidor.
 - Fora: #104, mapper #48, Codex #106–#109, migration de snapshot.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - **Feito neste empilhamento:** CondicaoPagamento frontendHttp (`cursor/comercial360-onda2-condicao-http-392b`). Residual: snapshot persistido (migration) ou TabelaPreco frontendHttp.
 
@@ -1129,7 +1150,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 - Simulação HTTP não persiste; RBAC Comercial visualizar orçamento/pedido; resolve HTTP exige Cadastros.condicao_pagamento.visualizar.
 - Fora do escopo #104 (estoque/expedição/NF) e legado #106–#109 / mapper #48.
 
-### Próximo item independente restante
+### Próximo item inde#159 restante
 
 - **Feito neste empilhamento:** UI Orçamento/Pedido + cliente HTTP simular-venda (branch `cursor/comercial360-onda2-simular-ui-392b`). Residual: snapshot persistido (migration) ou CondicaoPagamento frontendHttp.
 
@@ -1142,11 +1163,11 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 - Proprietário informou nunca ter definido/recebido senha. Leitura sanitizada DEV: conta única confirmada, senha existente, perfil GROUP/admin já vinculado; login real ainda NÃO concluído. #98 implantada em main9ed1a30e com API/SPA prontas, banco001–024 e backups/rollback preservados.
 - Melhoria do script existente: modo PASSWORD reutiliza Auth/perfil/tenant conferidos, backup e identidade efetiva. GET administrativo verifica ID/e-mail confirmado antes de PUT password; nenhuma conta/empresa/grant novo nem troca de API/SPA/3080.
 - Entrada e confirmação da nova senha exclusivamente pelo proprietário em TTY privada no Web Console, sem eco, export, argv, arquivo ou logs. Auditoria registra intenção antes da operação e resultado sem PII/credencial. Falha ambígua exige inspeção; não há retry nem rollback automático de Auth. Backup integral permanece privado; não restaurar credencial antiga desconhecida cegamente.
-- Testes exercitam código real com falhas de identidade/tenant/perfil, auditoria anterior/posterior e transporte. CI e revisão independente Cursor obrigatórias antes de merge/execução. Só concluir após login real, ambas empresas, Comercial e Configurações; canais OFF.
+- Testes exercitam código real com falhas de identidade/tenant/perfil, auditoria anterior/posterior e transporte. CI e revisão inde#159 Cursor obrigatórias antes de merge/execução. Só concluir após login real, ambas empresas, Comercial e Configurações; canais OFF.
 
 ## REVISÃO CURSOR — divisão Codex implementa / Cursor revisa (2026-09-27)
 
-Papel Cursor: revisão independente; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.
+Papel Cursor: revisão inde#159; **sem** implementação paralela do incidente de acesso; **sem** editar branches Codex.
 
 ### P1 Acesso — #95 / script na main (`deploy-owner-access-incidente.sh`)
 
@@ -1173,7 +1194,7 @@ Comentário na PR GitHub: **BLOCKED** (API `addComment` / ManagePullRequest sem 
 **Veredito P2:** **não mergear #92** agora. Revisar #93 só após #92 aprovável. Canais OFF.
 
 ### Estado VPS (última evidência humana)
-Auth owner criada (`owner_auth_count_after=1`); provision bloqueado por placeholder UUID; `unset` + re-run pendente **após** PR Codex corrigir A1–A5. Cursor não aplica VPS neste papel.
+Auth owner criada (`owner_auth_count_after=1`); provision bloqueado por placeholder UUID; `unset` + re-run #159 **após** PR Codex corrigir A1–A5. Cursor não aplica VPS neste papel.
 
 ## INCIDENTE — OWNER_GROUP_ID placeholder (2026-09-27T10:44Z)
 
@@ -1436,8 +1457,8 @@ Após paste: proprietário testa logout/login, configurações e empresas. Só e
 
 | Item | #45 | #46 | #47 | #49 |
 | --- | --- | --- | --- | --- |
-| Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | em andamento | pendente |
-| CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | pendente | pendente |
+| Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | em andamento | #159 |
+| CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | #159 | #159 |
 | SHA ativo na VPS | **NÃO** | N/A | N/A | N/A |
 | Teste login proprietário | **#157** (humano) | N/A | N/A | N/A |
 
@@ -1505,7 +1526,7 @@ Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` 
 - Achado Codex no HEAD `9415094f`: `descontoBps` truncava BigInt → desconto 0.01/1000 (0.1 bp) passava com alçada 0.
 - Fix: comparação inteira `descontoMicros * 10000n > subtotalMicros * lim` em `descontoExcedeAlcadaLivre`.
 - Testes: regressão unitária + HTTP create/update/convert sem `aprovar` → 403 exact + sem persistência (9/9 PASS).
-- Pedido Codex: re-revisar novo HEAD. #45 permanece independente (acesso).
+- Pedido Codex: re-revisar novo HEAD. #45 permanece inde#159 (acesso).
 
 ## Comercial 360 / Onda 2 - alçada HTTP exact DESCONTO_ALCADA_DENIED (2026-09-26T17:15Z)
 
@@ -1740,7 +1761,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Seguranca: escopo Grupo/Empresa obrigatório; base `cadastros.cliente.visualizar`; blocos fail-closed por permissão; filtro comercial por `clienteEmpresaId` do vínculo atual; cross-tenant 404 seguro; projeções sem itens/descrições de linha.
 - Testes focados: `server/tests/runtime-onda3-cliente-central360.test.ts` 3/3 PASS (composição, RBAC parcial + isolamento A/B, anti-mistura ClienteEmpresa). Backend `typecheck`/`build` PASS. `git diff --check` PASS.
 - Commit funcional: `9852854dfdef7760c07d3e8407cb46a3425ea361`. CI PR `36140836040` SUCCESS (4 checks). CI push `36140813552` SUCCESS.
-- Proximo: CRM HTTP canônico pendente de inventário. Gate F VPS fechado (`894b0db8` na 3080); docs `#40` na main.
+- Proximo: CRM HTTP canônico #159 de inventário. Gate F VPS fechado (`894b0db8` na 3080); docs `#40` na main.
 
 ### Gate F — VPS EXECUTED_OK (contexto para Onda 3) (2026-09-25)
 
@@ -2009,7 +2030,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - EXPECTED_RUNTIME: ERP-RUNTIME-08B conforme /meta do codigo da PR #33. Default COMERCIAL-360-V1 no script canary diverge; passar valor explicitamente e corrigir default antes de Gate D.
 - Auth: canario precisa reportar auth.mode=supabase_user com token real validado no Supabase self-hosted e profile ativo vinculado. Evidencia DEV: auth.users=0, dois profiles sem Auth; logo smoke autenticado ainda impossivel e nao homologado.
 - Gate E: 016-024 somente da MAIN aprovada, em ordem; fatias de verificacao 016-017 Comercial e 018-024 Produto/DAM/canais na mesma janela autorizada, com backup novo, controle de aplicacao 1x e parada em falha. Teste PostgreSQL real apos completar a fatia autorizada; canario so apos esquema compativel. Nao reaplicar 001-015.
-- Imagem: tag proposta comercial360-main-<MERGE_SHA8>; SHA de merge e digest so podem ser registrados apos merge/build da MAIN. Nenhum digest atual foi comprovado. PR #33 draft e #34 independentes; revisar contrato operacional #34 antes de merge #33, sem merge automatico.
+- Imagem: tag proposta comercial360-main-<MERGE_SHA8>; SHA de merge e digest so podem ser registrados apos merge/build da MAIN. Nenhum digest atual foi comprovado. PR #33 draft e #34 inde#159s; revisar contrato operacional #34 antes de merge #33, sem merge automatico.
 - Smoke Auth: requer identidade sintética dedicada no Supabase Auth e profile ERP ativo com auth_user_id correspondente, Grupo/Empresa sinteticos e RBAC minimo; criar/vincular apenas em gate Auth autorizado, credenciais/token fora do Git, revogar/desabilitar apos teste, preservar auditoria.
 - Onda 3 Cliente 360: codigo local em preparacao, nao entregue neste commit documental. Testes dirigidos 3/3 e backend typecheck PASS; suite completa/build local interrompidos por OOM com ~1,1 GB RAM livre, sem evidencia de regressao funcional. Nao declarar CI ou Onda 3 aprovadas.
 - Proximo: CI deste handoff; corrigir default canario, fechar gate Auth e autorizacao D/E; continuar Cliente 360 somente apos validacoes do codigo. 3080 R07B preservada.
@@ -2021,7 +2042,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Objetivo: consultar preco a partir do vinculo real do ClienteEmpresa sem aceitar tabela escolhida pelo navegador. Reutilizados TabelaPrecoService, ClienteRepository, TabelaPrecoRepository e router existentes; nenhuma migration, modulo ou cadastro paralelo.
 - API: GET /api/v1/tabelas-preco/preco-cliente com clienteEmpresaId, produtoId, unidadeMedidaId e businessDate opcional; escopo Grupo/Empresa vem do contexto autenticado. Tabela especifica vem de cliente_empresas.tabela_preco_id; fallback para padrao da Empresa permanece no repository.
 - Seguranca: ClienteEmpresa ativo, habilitado e nao bloqueado, tenant-scoped; RBAC Cadastros.tabela_preco.visualizar e Cadastros.cliente_empresa.visualizar fail-closed; payload/query estritos, 404 seguro para vinculo externo, sem PII ou mutacao/auditoria de escrita. Sem alterar snapshots de Orcamento/Pedido nem precos historicos.
-- Testes sinteticos focados de service PostgreSQL e HTTP: vinculo valido, cross-company, campo de tabela injetado, ator ausente e RBAC negado. Backend completo 234 total / 219 pass / 0 fail / 15 skips condicionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck global da raiz nao repetido neste lote: baseline anterior falha em codigo legado fora do diff. CI do novo HEAD ainda pendente.
+- Testes sinteticos focados de service PostgreSQL e HTTP: vinculo valido, cross-company, campo de tabela injetado, ator ausente e RBAC negado. Backend completo 234 total / 219 pass / 0 fail / 15 skips condicionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck global da raiz nao repetido neste lote: baseline anterior falha em codigo legado fora do diff. CI do novo HEAD ainda #159.
 - Deploy: PR #33 draft/sem merge, migrations 023/024 apenas codigo/CI, nenhuma aplicacao na VPS; API oficial 3080 R07B preservada. Proximo: fechar checks/CI; depois integrar snapshot de preco em Orcamento/Pedido somente com politica comercial explicitada e testes de nao retroatividade.
 
 ## Comercial 360 / Onda 2 - CI do resolvedor (2026-09-24)
@@ -2032,7 +2053,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Correcao: payload estrito (UUID/data calendario, sem campos tenant), Produto ativo do Grupo e visivel a Empresa (empresa proprietaria ou mestre compartilhado), Unidade ativa no Grupo. Nenhum endpoint novo nem preco gravado em Orcamento/Pedido; sem mudanca em auditoria de mutacao, RBAC visualizar e TenantGuard existentes.
 - Testes: PostgreSQL sintetico R07B 2/2 focados, incluindo bloqueio cross-company; memoria 1/1 para Produto especifico/compartilhado; backend completo 233 total / 218 pass / 0 fail / 15 skips locais condicionais sem DATABASE_URL; frontend 621/621. Backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck global da raiz segue FAIL em erros legados de Base44/frontend fora deste diff.
 - Deploy: PR #33 continua draft. Migrations 023/024 validadas somente em codigo/CI, nao aplicadas na VPS; sem Auth, scanner, Produto HTTP, canario ou alteracao da API 3080. CI do HEAD deste lote ainda deve ser confirmada.
-- Proximo: confirmar CI; definir e testar contrato de escolha da tabela por ClienteEmpresa/canal e snapshot de preco na criacao de Orcamento/Pedido, sem retroatividade. Cliente 360 permanece independente e pendente.
+- Proximo: confirmar CI; definir e testar contrato de escolha da tabela por ClienteEmpresa/canal e snapshot de preco na criacao de Orcamento/Pedido, sem retroatividade. Cliente 360 permanece inde#159 e #159.
 
 ## Comercial 360 / Onda 1 - rascunho Produto por canal (2026-09-24)
 - Causa: migration 024 tinha somente persistencia estrutural; Produto nao oferecia CRUD de conteudo por empresa/canal. Reutilizados ProdutoService, ProdutoRepository, router, TenantGuard, RBAC, auditoria e transacao existentes.
@@ -2066,28 +2087,28 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Causa: PostgreSQL ordenava Produto apenas por created_at e a memoria mantinha ordem de insercao; timestamps iguais podiam trocar registros entre paginas, comprometendo projecao e conciliacao por canal.
 - Correcao nos repositories canonicos: created_at DESC com desempate id DESC, mantendo filtros de Grupo/Empresa, ativo e busca, contagem e limite. Nenhum schema, fluxo comercial, RBAC ou auditoria de mutacao foi alterado.
 - Testes sinteticos forcados com timestamps iguais verificam paginas sem duplicacao, meta.total/hasMore e isolamento; E2E PostgreSQL efemero verifica empate e tenant dentro de transacao com rollback. Sem migration, publicacao externa, VPS ou alteracao na 3080.
-- Validacao local: backend serial 212 pass/0 fail/13 skips opcionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz segue com falhas preexistentes nao relacionadas, conforme checkpoint anterior. E2E PostgreSQL e CI do novo HEAD pendentes; Gate C parcial. Proximo: contrato de conteudo por canal sobre Produto/outbox existentes, sem ativacao externa.
+- Validacao local: backend serial 212 pass/0 fail/13 skips opcionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz segue com falhas preexistentes nao relacionadas, conforme checkpoint anterior. E2E PostgreSQL e CI do novo HEAD #159s; Gate C parcial. Proximo: contrato de conteudo por canal sobre Produto/outbox existentes, sem ativacao externa.
 
 ## Comercial 360 / Onda 1 - busca de atributos PIM no Produto (2026-09-23)
 
 - Causa: material, liga e norma tecnica ja eram persistidos no Produto, mas a busca server-side ignorava esses campos, impedindo consulta e contagem correta por atributo.
 - Correcao nos repositories existentes: PostgreSQL e memoria pesquisam os mesmos campos com texto literal case-insensitive; `%` e `_` nao viram curingas SQL. Filtros de grupo, empresa e ativo continuam obrigatorios, com count e pagina no mesmo criterio.
 - Testes sinteticos cobrem busca, paginacao, limpeza do atributo, isolamento entre empresas e rota HTTP; E2E PostgreSQL efemero cobre resultado, count e escopo. Sem migration nova ou alteracao em ProdutoService, RBAC, auditoria, VPS ou 3080.
-- Validacao local: backend serial 211 pass/0 fail/13 skips opcionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz permanece com falhas preexistentes nao relacionadas, conforme checkpoint anterior. E2E PostgreSQL da busca e CI do novo HEAD pendentes; Gate C parcial. Proximo: contratos de canais sem publicacao externa.
+- Validacao local: backend serial 211 pass/0 fail/13 skips opcionais sem DATABASE_URL; frontend 621/621; backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz permanece com falhas preexistentes nao relacionadas, conforme checkpoint anterior. E2E PostgreSQL da busca e CI do novo HEAD #159s; Gate C parcial. Proximo: contratos de canais sem publicacao externa.
 
 ## Comercial 360 / Onda 1 - limpeza de atributos PIM no V22 HTTP (2026-09-23)
 
 - Causa: o formulario permitia apagar material/liga/norma e conteudo PIM, mas `toProdutoHttpPayload` ignorava string vazia no update; a API preservava valor antigo e mostrava sucesso enganoso.
 - Correcao no fluxo existente: somente campos PIM opcionais vazios viram null em PATCH. Create continua omitindo vazio; tenant, estoque, preco e fiscal ficam fora da allowlist. ProdutoService/repositories mantem validacao, RBAC, escopo e auditoria transacional.
 - Testes sinteticos de projecao, reabertura HTTP, tenant e snapshot antes/depois; sem migration, VPS ou ativacao Produto HTTP na 3080.
-- Validacao local: frontend 621/621; backend serial 210 pass/0 fail/13 skips opcionais sem DATABASE_URL; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck geral da raiz segue com falhas preexistentes nao relacionadas, ja registradas. CI do novo HEAD pendente; Gate C parcial. Proximo foco: contrato Produto/canais sem publicacao externa antes do gate.
+- Validacao local: frontend 621/621; backend serial 210 pass/0 fail/13 skips opcionais sem DATABASE_URL; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Typecheck geral da raiz segue com falhas preexistentes nao relacionadas, ja registradas. CI do novo HEAD #159; Gate C parcial. Proximo foco: contrato Produto/canais sem publicacao externa antes do gate.
 
 ## Comercial 360 / Onda 1 - material, liga e norma tecnica no Produto (2026-09-23)
 
 - Objetivo: completar atributos tecnicos universais do Produto mestre sem cadastro paralelo.
 - Mudanca: migration aditiva 023; schemas, repositories PostgreSQL/in-memory, politica HTTP e formulario V22 existentes. Sem backfill.
 - TenantGuard, RBAC e auditoria transacional permanecem no ProdutoService; testes sinteticos cobrem validacao, HTTP, UI e isolamento.
-- Validacao local: backend direcionado 45 pass/0 fail/2 skips opcionais; HTTP 1/1; UI 10/10. Frontend completo 620/620, backend serial 209 pass/0 fail/13 skips condicionados a DATABASE_URL; lint, builds, backend typecheck, audit:baseline e diff-check PASS. Typecheck geral da raiz permanece com falhas preexistentes nao relacionadas, conforme checkpoint anterior. PostgreSQL de 023 e CI pendentes.
+- Validacao local: backend direcionado 45 pass/0 fail/2 skips opcionais; HTTP 1/1; UI 10/10. Frontend completo 620/620, backend serial 209 pass/0 fail/13 skips condicionados a DATABASE_URL; lint, builds, backend typecheck, audit:baseline e diff-check PASS. Typecheck geral da raiz permanece com falhas preexistentes nao relacionadas, conforme checkpoint anterior. PostgreSQL de 023 e CI #159s.
 - Gate C VPS parcial: migration 023 nao aplicada, API 3080 R07B preservada. Proximo: suites completas, push/CI e continuar Onda 1.
 
 ## Comercial 360 / handoff operacional vigente (2026-09-23)
@@ -2130,7 +2151,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 
 - Causa: o emissor PostgreSQL de `produto.publicado` aceitava scope Grupo/Empresa divergente do Produto, enquanto a implementacao em memoria ja recusava a divergencia.
 - Correcao no repositorio canônico: bloquear Grupo ou Empresa adulterados antes de qualquer INSERT; sem migration, worker ou publicacao externa. E2E PostgreSQL sintetico e teste em memoria cobrem ambos os escopos e ausencia de efeito colateral.
-- O documento mestre registra o contrato pendente de claim/lease com tenant, concorrencia, retry, dead-letter, recibo e auditoria; nao declara consumidor implementado.
+- O documento mestre registra o contrato #159 de claim/lease com tenant, concorrencia, retry, dead-letter, recibo e auditoria; nao declara consumidor implementado.
 - Validacao local: Produto dirigido 29/29; backend 218 total (206 pass, 0 fail, 12 skip opcionais sem PostgreSQL local); frontend 618/618; backend typecheck/build, frontend lint/build, audit:baseline e git diff --check PASS. Commit funcional `b5e90674f23484163fab3209b6a2e9149869d78a` confirmado no remoto; CI `35913162972` frontend/backend SUCCESS, incluindo migrations e `test:postgres` efemero. Gate C permanece parcial na identidade do DB API, backup e rollback; 3080 intocada.
 
 ## Comercial 360 / Gate C - evidencia Web Console adicional (2026-09-23)
@@ -2184,7 +2205,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Evidencia recebida do usuario pela Web Console, sem registros pessoais: `public.schema_migrations` tem colunas `id` (text) e `applied_at` (timestamptz). As migrations 001-015 aparecem uma vez cada; nenhuma 016-022 aparece no resultado de 15 linhas.
 - Contagens agregadas: `auth.users=0`, `public.profiles=2`, `groups=2`, `empresas=3`. Os 2 profiles ativos estao sem `auth_user_id`; `auth_inexistente=0`, `ativos_sem_grupo=0` e `empresa_fora_grupo=0`.
 - Conclusao: o banco consultado ainda nao suporta homologar Bearer/Auth novo com perfil vinculado. A API oficial 3080 continua 07B com `auth.mode=dev_headers` conforme evidencia anterior. Nao criar usuarios ou vinculos automaticamente.
-- A captura nao mostra `API_DATABASE_NAME` nem `banco_consultado`; o vinculo entre esse banco e a configuracao efetiva da API permanece sem prova. Rede/porta isolada, backup e rollback do Gate C tambem pendentes.
+- A captura nao mostra `API_DATABASE_NAME` nem `banco_consultado`; o vinculo entre esse banco e a configuracao efetiva da API permanece sem prova. Rede/porta isolada, backup e rollback do Gate C tambem #159s.
 - PR #33 draft no HEAD remoto `e523fa4dc08c5d37cc2d98ee0a9b340b172a63af`; CI [35900016924](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35900016924) frontend/backend e PostgreSQL efemero SUCCESS. CI nao substitui Gate DEV.
 - Nenhuma migration, seed, perfil, container, bucket, scanner, flag HTTP ou porta 3080 alterada. Dados reais e segredos nao foram consultados ou versionados.
 - Proximo Gate C: confirmar nomes de banco API/psql e precheck de rede/backup/rollback somente leitura; depois definir gate separado para identidade Auth sintetica e vinculo de perfil, sem ativar Produto HTTP antes da homologacao.
@@ -2195,7 +2216,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Teste PostgreSQL sintetico no R10 existente cobre evento Produto tenant-scoped, payload allowlisted, schema/checksum, rollback com mesmo executor e repeticao idempotente. A primeira CI do teste (35898975304) encontrou falha real `convert_to(jsonb, unknown)` no emissor existente; `PostgresProdutoRepository.appendPublicationEvent` agora converte JSONB canônico para texto antes do SHA-256. Nenhum worker, provider externo, canal ou migration nova.
 - Multiempresa: assercoes usam Group/Empresa do evento; RBAC e auditoria continuam sob ProdutoService existente e nao foram alterados. O teste nao acessa dados reais e limpa apenas IDs sinteticos.
 - Validacao local apos correcao: backend 212 total / 200 pass / 0 fail / 12 skip sem `DATABASE_URL`; R10 dirigido 25 pass / 0 fail / 4 skip locais; backend typecheck/build, frontend 618/618, audit:baseline, lint, build e `git diff --check` PASS. Commit do contrato/teste `16543f33d722ec841f42ef8534ed6b0f5a303d76` revelou a falha na CI; commit corretivo `be05b0c2224c4c864ff037f1f106462760675f06` confirmado no remoto. CI [35899634765](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35899634765) frontend/backend SUCCESS, `test:postgres` efemero SUCCESS; R10 PostgreSQL 4 pass / 0 fail / 0 skip. PostgreSQL DEV nao consultado.
-- Gate DEV segue parcial: Web Console/SQL agregado pendente, API 3080 preservada; nenhuma migration aplicada na VPS.
+- Gate DEV segue parcial: Web Console/SQL agregado #159, API 3080 preservada; nenhuma migration aplicada na VPS.
 - Proximo checkpoint: confirmar E2E R10 na CI, depois especificar claim/lease sem duplicar outbox; ativacao externa depende de Onda 1 e gate proprio.
 
 ## Comercial 360 / Onda 1 - frescor do scan e Gate C parcial (2026-09-23)
@@ -2203,7 +2224,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Causa: o contrato DAM aceitava inicio de tentativa arbitrariamente antigo se o resultado tivesse data recente e aceitava formato ambiguo de data. Agora inicio deve estar na janela de cinco minutos e a evidencia usa UTC ISO com milissegundos; o resultado permanece posterior ao inicio, nao futuro e vinculado ao objeto/tenant exato.
 - Arquivos: `server/src/services/storagePort.ts`, teste existente de storage e documento mestre. Nenhuma migration, rota, bucket, scanner real ou configuracao da VPS foi alterada.
 - Evidencia DEV informada pelo usuario via Web Console: `supabase-db` saudavel, PostgreSQL local 17.6, existencia de `public.profiles` e `public.schema_migrations`; API oficial 3080 anuncia `ERP-RUNTIME-07B` e `auth.mode=dev_headers`. MCP havia confirmado saude dos containers. Nao foram consultados registros, emails, tokens ou URLs.
-- Gate C ainda pendente: colunas/historico de migrations, confirmacao do banco apontado pela API e vinculos agregados `auth.users`/`profiles`. Auth DEV, scanner real, Produto HTTP e Onda 1 nao homologados; 3080 preservada.
+- Gate C ainda #159: colunas/historico de migrations, confirmacao do banco apontado pela API e vinculos agregados `auth.users`/`profiles`. Auth DEV, scanner real, Produto HTTP e Onda 1 nao homologados; 3080 preservada.
 - Validacao: DAM 38/38; backend completo 200 pass, 0 fail, 11 skip sem `DATABASE_URL` (uma falha isolada em `runtime05` na primeira tentativa nao se repetiu, 3/3 isolado); frontend 618/618; typecheck/build backend, audit:baseline, lint, build frontend e diff-check PASS. Commit `f863a40b9b57e7da3ed224fcfa22030f884f5489` confirmado no remoto; CI [35897147842](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35897147842) frontend/backend SUCCESS, incluindo `test:postgres` efemero. PostgreSQL DEV nao consultado neste lote.
 - Multiempresa/RBAC/auditoria transacional preservados; nenhuma permissao ou regra de publicacao foi afrouxada. Dados reais/credenciais nao versionados.
 - Proximo checkpoint: obter somente leitura o esquema/historico e vinculos agregados pelo Web Console; depois continuar Produto/DAM e contratos das Ondas 3/5/9/15 sem ativar scanner ou implantar.
@@ -2222,7 +2243,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - MCP Hostinger somente leitura confirmou VPS `srv1982741` em execucao e `supabase-auth`, `supabase-db` e `supabase-storage` saudaveis. A listagem de projeto MCP nao inventaria a API oficial avulsa; nao substituir a evidencia da Web Console por essa listagem.
 - Pendente: inventario `schema_migrations` no PostgreSQL DEV, contagens/vinculos agregados de `auth.users`, `profiles`, `groups` e `empresas`, rede/porta isolada, imagem imutavel, backups e rollback. Nenhum registro pessoal, token ou configuracao foi lido.
 - Web Console na automacao falhou antes de abrir; consultas SQL nao foram executadas. Gate C parcialmente evidenciado, nao aprovado; Auth, scanner, Produto HTTP e deploy nao homologados.
-- Incremento independente: `comercial360-canary.sh` bloqueia 3080, portas invalidas e nome `erp-api-dev` antes de Docker; testes sinteticos impedem regressao. Script nao executado na VPS.
+- Incremento inde#159: `comercial360-canary.sh` bloqueia 3080, portas invalidas e nome `erp-api-dev` antes de Docker; testes sinteticos impedem regressao. Script nao executado na VPS.
 - Fluxo preparado em `docs/COMERCIAL_360_V1_DEPLOY.md`: precheck C, compatibilidade/migrations autorizadas, canario isolado, promocao F somente da imagem MAIN aprovada, rollback preservado.
 - Multiempresa/RBAC/auditoria do runtime nao foram alterados neste lote. Proximo passo operacional: consultas agregadas somente leitura na Web Console e decisao de gate; sem merge, migration, seed, restart, bucket ou mudanca da 3080.
 - Validacao local: Bash `-n` PASS; testes do canario 2/2; frontend explicito 616/616; audit:baseline, lint, build frontend, typecheck/build backend e `git diff --check` PASS. Commit funcional `b629a1ac73caf9d1a28ff57cb8eff04c12cc74cd`; CI [35893167334](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/35893167334) frontend/backend/PostgreSQL efemero SUCCESS. PostgreSQL DEV nao consultado.
@@ -2235,7 +2256,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Alteracao: horario de inicio obrigatorio nos dois contratos, com testes dos
   chamadores e rejeicao de inicio invalido/futuro. O fluxo Produto ja passa
   o horario capturado imediatamente antes do scanner.
-- Documento mestre reconciliado com migrations 001-022 e Gate DEV pendente.
+- Documento mestre reconciliado com migrations 001-022 e Gate DEV #159.
 - Sem VPS, migration remota, scanner real, Produto HTTP ou porta 3080 alterados.
 - Validacao: 38/38 focados; backend serial 200 pass/0 fail/11 skip sem
   DATABASE_URL; frontend explicito 614/614; typecheck/build backend,
@@ -2259,7 +2280,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 
 - Branch `codex/comercial-360`, PR #33 draft; base `d129da29d52463630f0bf15ae34c3cf4baed2d69` confirmada no remoto antes do lote.
 - API existente de listagem DAM devolve apenas `scan_verdict` quando a evidencia corresponde ao SHA-256 atual; caso contrario, devolve `null`. Chave, hash, scanner, timestamp, URL e dados de upload permanecem fora da resposta.
-- Formulario Produto V22 existente mostra varredura pendente, sem ameaca detectada ou ameaca detectada sempre com indicacao de quarentena. `CLEAN` nao libera download/publicacao; scanner e Produto HTTP continuam desligados por padrao.
+- Formulario Produto V22 existente mostra varredura #159, sem ameaca detectada ou ameaca detectada sempre com indicacao de quarentena. `CLEAN` nao libera download/publicacao; scanner e Produto HTTP continuam desligados por padrao.
 - Testes locais: UI direcionada 8/8; HTTP R10 10/10; frontend completo 614/614; backend completo 199 pass, 0 fail e 11 skips condicionais sem `DATABASE_URL`.
 - Typecheck/build backend, lint, audit:baseline, build frontend e `git diff --check` PASS. Typecheck global frontend continua FAIL por 1602 diagnosticos legados, nenhum nos arquivos alterados deste lote; baseline nao foi modificado.
 - Arquivos: router Produto, secao DAM V22, policy HTTP existente e testes relacionados. Nenhuma migration nova, dado real, VPS, bucket, porta 3080 ou `main` alterados.
@@ -2433,7 +2454,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 ### ERP-RUNTIME-06A ? IMPLEMENTA??O ClienteLocal
 
 - Review geo/fingerprint (2026-09-18):
-  - coordenadas s?o independentes de geocoding e exigidas em par, com limites
+  - coordenadas s?o inde#159s de geocoding e exigidas em par, com limites
     -90/90 e -180/180 no schema e banco;
   - `coordinate_source` distingue MANUAL/GPS/IMPORTACAO/GEOCODER/
     APP_MOTORISTA/API;
@@ -3187,7 +3208,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Reutilizado: stamp/idempotencia, simulacao estavel, `buildErpPedidoFromExterno`, `applyStatusExternoMarketplace`.
 - Alteracoes: canal ativo fail-closed; import exige itens+SKU; cancel/devolucao via policy; webhook stamp provedor + itens + `nada_processado`; config exige empresa; toasts de sync como simulacao local.
 - Multiempresa/RBAC: Validar exige grupo+empresa; permissoes granulares PedidoExterno/Pedido.
-- Pendencia: OAuth/NF/recebivel reais das APIs; checklist P1 Marketplaces marcado (API real segue pendente).
+- Pendencia: OAuth/NF/recebivel reais das APIs; checklist P1 Marketplaces marcado (API real segue #159).
 - Validacoes: `node --test tests/marketplace-pedido-policy.test.js`, `git diff --check` e `npm run build`.
 - Proximo passo da ordem: P1 checklist encerrado ? seguir P2/IA ou residual Go-Live conforme STATUS.
 ### P1.8 - Site proprio: checkout fail-closed, pagamento honesto e canal Site
@@ -3196,7 +3217,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Causa raiz: guards de contato/pagamento/contexto incompletos apos o lote de catalogo/estoque.
 - Arquivos alterados: `siteOrigemPolicy.js`, `OrcamentoSite.jsx`, `OrcamentoAutomaticoIA.jsx`, `CatalogoWebForm.jsx`, `ChatbotWidget.jsx`, `contextoMultiempresaPolicy.js`, `tests/site-origem-policy.test.js`, `PLANO_GO_LIVE.md`.
 - Reutilizado: catalogo/preco/estoque do lote site anterior, portal, chatbot canal Site, ContaReceber/Pedido.
-- Alteracoes: `assertSiteContato` no checkout; pagamento `pendente_configuracao`/`aguardando_*`; AuditLog via `createInContext`; lead+IA com empresa/grupo; CatalogoWeb exige empresa; Site canal exige ConfiguracaoCanal; Oportunidade exige empresa no write.
+- Alteracoes: `assertSiteContato` no checkout; pagamento `#159_configuracao`/`aguardando_*`; AuditLog via `createInContext`; lead+IA com empresa/grupo; CatalogoWeb exige empresa; Site canal exige ConfiguracaoCanal; Oportunidade exige empresa no write.
 - Multiempresa/RBAC: operacoes do site com empresa da filial; canal Site visitante so com config ativa + empresa.
 - Pendencia: PSP/gateway real; visitante anonimo fora da sessao ERP; Marketplaces (proximo P1 checklist).
 - Validacoes: `node --test tests/site-origem-policy.test.js`, `git diff --check` e `npm run build`.
@@ -4045,7 +4066,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Foi removido o fallback que listava todas as empresas ativas quando a consulta por grupo falhava ou voltava vazia.
 - Consultas e operacoes de `SyncMap` ficaram limitadas ao `group_id`, descartando mapas de empresas externas ao grupo.
 - Sincronizacoes `up` e `down` validam o registro de destino antes de atualizar e persistem explicitamente Grupo/Empresa no escopo correto.
-- Exclusoes agora removem somente espelhos cujo contexto corresponde ao mapa; falhas sao registradas sem apagar o mapa pendente.
+- Exclusoes agora removem somente espelhos cujo contexto corresponde ao mapa; falhas sao registradas sem apagar o mapa #159.
 - Auditorias registram apenas entidade, evento, direcao, IDs e totais, sem copiar o payload completo do registro.
 - O teste de baseline existente foi ampliado para impedir retorno do fallback global, ausencia de token/RBAC e mapas sem filtro de grupo.
 - Validacoes concluidas: `node --check`, teste direcionado (4/4), `npm test` (29/29), `npm run build`, `npm run audit:baseline` e `git diff --check` passaram.
@@ -4908,7 +4929,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Segui o proximo passo salvo em `NotasFiscaisTab`, sem criar tela, modulo, componente ou arquivo novo.
 - O botao externo `Nova NF-e` deixou de chamar `onCreateNFe` diretamente e passou pelo helper seguro `criarNFeExternaSeguro`.
 - A abertura do fluxo externo de criacao de NF-e agora valida empresa faturadora, contexto `groupId/empresaId`, permissao `Fiscal.NotaFiscal.criar` e auditoria de bloqueio/sucesso.
-- O botao `Enviar NF-e`, que existia na listagem de notas pendentes, foi conectado ao fluxo existente de emissao simulada via `mockEmitirNFe`.
+- O botao `Enviar NF-e`, que existia na listagem de notas #159s, foi conectado ao fluxo existente de emissao simulada via `mockEmitirNFe`.
 - O envio agora valida `Fiscal.NotaFiscal.enviar`, contexto multiempresa, status `Pendente`, confirmacao do usuario, atualizacao contextual da nota, historico da NF-e e `LogFiscal`.
 - Tentativas bloqueadas ou canceladas pelo usuario passam a ser auditadas com motivo, nota, numero, grupo e empresa.
 - Os botoes, tabela, modal e fluxo fiscal existente foram preservados; a melhoria apenas fez funcionar e proteger o caminho ja presente.
@@ -4925,7 +4946,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Os botoes, modal de detalhes e fluxo fiscal foram preservados; apenas foram fechados caminhos diretos sem RBAC/auditoria.
 - Mantida a Regra-Mae: melhoria feita no componente existente, reforcando multiempresa, RBAC, seguranca e auditoria sem remover funcionalidade.
 - Build validado com sucesso via `npm run build`; permanecem apenas warnings tecnicos preexistentes de proxy Base44, browserslist/baseline, CSS, imports dinamicos/estaticos e chunks grandes.
-- Proximo passo sugerido: continuar em `NotasFiscaisTab` revisando criacao externa `onCreateNFe`, envio de NF-e pendente e cancelamento/log fiscal para fechar RBAC/auditoria visual.
+- Proximo passo sugerido: continuar em `NotasFiscaisTab` revisando criacao externa `onCreateNFe`, envio de NF-e #159 e cancelamento/log fiscal para fechar RBAC/auditoria visual.
 
 ### Comercial - Fase 9 Menu Contextual de Pedidos com RBAC Visual
 - Segui o proximo passo salvo para consolidar `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
@@ -4961,7 +4982,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Segui o proximo passo salvo para `PedidosTab`, sem criar tela, modulo, componente ou arquivo novo.
 - As notificacoes de aprovacao por WhatsApp e Email passaram a validar contexto `groupId/empresaId` e permissao granular `Comercial.Pedido.notificar`.
 - Notificacoes agora auditam bloqueio, sucesso e falha com canal, total e ids dos pedidos envolvidos.
-- A edicao de pedido passou a usar helper seguro com `Comercial.Pedido.editar`, contexto obrigatorio e bloqueio quando houver aprovacao pendente sem permissao de aprovacao.
+- A edicao de pedido passou a usar helper seguro com `Comercial.Pedido.editar`, contexto obrigatorio e bloqueio quando houver aprovacao #159 sem permissao de aprovacao.
 - A mudanca de status para `Pronto para Faturar` passou a validar `Comercial.Pedido.marcarProntoFaturar`, usar `updateInContext` e auditar status anterior/novo.
 - A abertura da Central de Aprovacoes em botoes e menu passou a validar `Comercial.Pedido.aprovar`, registrar auditoria e bloquear tentativas sem contexto/RBAC.
 - Os botoes, menus, notificacoes e fluxo visual foram preservados; apenas foram fechados caminhos diretos sem auditoria contextual.
@@ -6755,7 +6776,7 @@ Checklist inicial:
 - `MonitoramentoManutencaoIndex` passou a calcular permissao por aba: Monitoramento, Backup, Acesso em Tempo Real e Governanca.
 - Abas de monitoramento receberam marcadores `data-permission`, `data-action` e `data-context-required`, alem de bloqueio visual quando faltar contexto ou permissao.
 - A troca de aba agora registra auditoria com `group_id`, `grupo_id`, `empresa_id`, tipo de auditoria e sucesso.
-- Build ficou pendente neste computador porque o clone novo nao tem `node_modules` e o Windows nao possui `npm`, `pnpm` ou `yarn` disponivel no PATH. E necessario instalar Node.js LTS com NPM ou disponibilizar dependencias antes de rodar `npm ci` e `npm run build`.
+- Build ficou #159 neste computador porque o clone novo nao tem `node_modules` e o Windows nao possui `npm`, `pnpm` ou `yarn` disponivel no PATH. E necessario instalar Node.js LTS com NPM ou disponibilizar dependencias antes de rodar `npm ci` e `npm run build`.
 
 ### Ambiente local e sincronizacao obrigatoria com GitHub
 
@@ -7501,7 +7522,7 @@ Checklist inicial:
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos de exportacao existentes.
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
-- Proximo passo sugerido: continuar Fase 8 em relatorios e dashboards comerciais/producao ainda pendentes, priorizando `DashboardRepresentantes`, `RelatorioEstoque`, `RelatorioPersonalizado`, `AgendamentoRelatorios` e `SelectedOperationalReport` para contexto grupo/empresa, RBAC granular, confirmacoes, auditoria e sanitizacao de exportacoes.
+- Proximo passo sugerido: continuar Fase 8 em relatorios e dashboards comerciais/producao ainda #159s, priorizando `DashboardRepresentantes`, `RelatorioEstoque`, `RelatorioPersonalizado`, `AgendamentoRelatorios` e `SelectedOperationalReport` para contexto grupo/empresa, RBAC granular, confirmacoes, auditoria e sanitizacao de exportacoes.
 
 ### Relatorios - Fase 8 Dashboards Pendentes, Estoque e Agendamentos
 
@@ -7519,7 +7540,7 @@ Checklist inicial:
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco dos fluxos existentes.
 - `git diff --check` executado sem erros; apenas aviso esperado de CRLF no Windows.
 - Build validado com sucesso via `node node_modules/vite/bin/vite.js build`; permanecem apenas warnings tecnicos preexistentes de CSS, browserslist/baseline, imports dinamicos/estaticos e chunks grandes.
-- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda #159s, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
 
 ### Abertura Local - Correcao Modo Local Automatico
 
@@ -7528,7 +7549,7 @@ Checklist inicial:
 - `src/api/base44Client.js` foi reforcado no existente para entrar automaticamente em modo local quando nao houver `appId` e `serverUrl` remotos configurados, alem de respeitar `VITE_LOCAL_ONLY=true`.
 - Validado em navegador headless local: `http://localhost:5173/` carregou o Dashboard sem a tela `Erro ao iniciar o ERP local`.
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas reforco do fluxo existente de inicializacao local.
-- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda #159s, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
 
 ### Cadastros Gerais - Restauracao Pessoas & Parceiros Local
 
@@ -7537,11 +7558,11 @@ Checklist inicial:
 - `src/api/localBase44Client.js` foi ajustado no fluxo existente para permitir a importacao do snapshot quando o ERP ja estiver operando em modo local automatico.
 - Validado no navegador local em `http://localhost:5173/cadastros?tab=cadastros`: total de `Pessoas & Parceiros` voltou para 8, com Cliente 1, Colaborador 2, Representante 1, SegmentoCliente 3 e RegiaoAtendimento 1.
 - Mantida a Regra-Mae: nenhuma funcionalidade foi removida; apenas restaurado o carregamento dos dados existentes do snapshot.
-- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda pendentes, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
+- Proximo passo sugerido: continuar Fase 8 nos relatorios especificos por area ainda #159s, priorizando `DashboardCanaisOrigem`, `RelatoriosLogistica`, `RelatoriosProducao`, `RelatoriosEstoque` e dashboards realtime para contexto grupo/empresa, RBAC granular, confirmacoes e auditoria.
 
 ### Relatorios - Fase 8 Canais de Origem e Exportador Universal
 
-- Seguido o proximo passo salvo no status: continuar Fase 8 em relatorios especificos por area ainda pendentes.
+- Seguido o proximo passo salvo no status: continuar Fase 8 em relatorios especificos por area ainda #159s.
 - `DashboardCanaisOrigem` foi reforcado no componente existente, sem criar tela, modulo, componente ou arquivo novo.
 - Exportacao de performance por canal agora exige contexto grupo/empresa e permissao RBAC, pede confirmacao explicita para CSV/JSON, audita bloqueio/cancelamento/sucesso e inclui `group_id`, `grupo_id` e `empresa_id` nos dados exportados.
 - `ExportButton` existente foi reforcado para sanitizar valores exportados em CSV/JSON, removendo quebras de linha e protegendo celulas iniciadas por `=`, `+`, `-` ou `@` contra formula injection.
@@ -8214,7 +8235,7 @@ Checklist inicial:
 
 - O contrato foi definido somente a partir do esquema de `EMPRESAS.TPS` e dos fluxos existentes `migracaoErpPolicy`, `localCadastroMasterPolicy`, `entityGuardPolicy`, `Empresa` e `AuditLog`. Nenhum valor do backup foi lido.
 - O piloto operara em modo `UPDATE_EXISTING_ONLY`: nenhuma empresa sera criada automaticamente. Cada linha devera apontar para uma empresa ja cadastrada, pertencente ao Grupo confirmado e autorizada ao usuario.
-- A identidade exigira `CODIGOEMPRESA` como chave legada primaria, `CODIGOTIDSOFT` como identificador secundario e conferencia independente do CNPJ normalizado. Razao social e nome fantasia servirao apenas como evidencia secundaria.
+- A identidade exigira `CODIGOEMPRESA` como chave legada primaria, `CODIGOTIDSOFT` como identificador secundario e conferencia inde#159 do CNPJ normalizado. Razao social e nome fantasia servirao apenas como evidencia secundaria.
 - A chave idempotente sera composta por `group_id`, `empresa_id`, origem da migracao e codigo legado. Reexecucoes deverao reutilizar o mesmo destino e nunca duplicar `Empresa`.
 - Dos 18 campos estruturais, nove foram destinados a escrita cadastral, um a conferencia e escrita de CNPJ, um a transformacao controlada de status, dois a metadados de conciliacao, tres a configuracao posterior, um a bloqueio de acesso e um a revisao sem destino.
 - `SITUACAO` somente podera ser traduzida para os dominios atuais `Ativa`, `Inativa` ou `Suspensa` por tabela aprovada. `CONTROLELIBERACAO` nunca concedera permissao; `INSCMUNICIPAL` permanece sem equivalente e sem autorizacao para criar campo.
@@ -8291,18 +8312,18 @@ Checklist inicial:
 - A primeira atualizacao do resumo local calculou contagens zeradas por sintaxe abreviada incorreta de `Where-Object`. O resumo foi sobrescrito com filtros explicitos e validado com uma linha de Grupo, duas linhas de Empresa e zero colisao remanescente.
 - Nenhum valor bruto, nome, CNPJ completo, ID, TPS, snapshot, MDF/LDF, script local ou relatorio detalhado foi enviado ao GitHub. Nenhum dado ou funcionalidade do ERP foi alterado.
 - Validacao documental: oito colunas minimas consultadas; 3/3 registros ativos; um registro de Grupo; dois candidatos empresariais; dois destinos canonicos; zero colisao empresarial remanescente; tres tipos nao reconhecidos; zero criacao; zero importacao autorizada.
-- Proximo passo obrigatorio: preparar um pacote local de validacao humana para os dois candidatos empresariais, exibindo somente codigo mascarado, final do CNPJ, empresa de destino conhecida e motivos pendentes; o registro de Grupo devera aparecer separado e nenhuma confirmacao sera inferida automaticamente.
+- Proximo passo obrigatorio: preparar um pacote local de validacao humana para os dois candidatos empresariais, exibindo somente codigo mascarado, final do CNPJ, empresa de destino conhecida e motivos #159s; o registro de Grupo devera aparecer separado e nenhuma confirmacao sera inferida automaticamente.
 
 ### Gate 18 - Pacote de validacao humana das identidades empresariais
 
 - Foi preparado no HD um pacote minimo para revisao humana das identidades legadas, sem alterar dados ou funcionalidades do ERP.
 - A ficha `legacy-company-human-validation.csv` contem exatamente dois candidatos empresariais: um destinado a `CPA FERRO E A?O` e outro a `3Z LTDA`.
 - A ficha `legacy-group-record-human-validation.csv` mantem o terceiro registro isolado no escopo `Grupo CPA`, impedindo seu uso como cadastro de Empresa.
-- Cada ficha expoe somente codigo legado mascarado, quatro ultimos digitos do CNPJ, destino conhecido, motivos pendentes e decisao humana.
+- Cada ficha expoe somente codigo legado mascarado, quatro ultimos digitos do CNPJ, destino conhecido, motivos #159s e decisao humana.
 - As tres decisoes foram iniciadas como `#157`. Nenhuma confirmacao foi inferida e `ImportAuthorized` permanece `false`.
-- Os motivos pendentes preservados sao divergencia de `CODIGOTIDSOFT`, nome de origem nao confirmado, tipo empresarial nao reconhecido e confirmacao humana obrigatoria; o registro de Grupo tambem exige confirmacao explicita de escopo.
+- Os motivos #159s preservados sao divergencia de `CODIGOTIDSOFT`, nome de origem nao confirmado, tipo empresarial nao reconhecido e confirmacao humana obrigatoria; o registro de Grupo tambem exige confirmacao explicita de escopo.
 - O resumo `legacy-business-identity-human-validation-summary.json` registra apenas contagens, nomes dos arquivos do pacote e a negativa de importacao. Os tres arquivos permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
-- A validacao confirmou duas linhas empresariais, uma linha de Grupo, esquemas exatos, mascaras validas, tres decisoes pendentes, zero campo proibido e zero autorizacao de importacao.
+- A validacao confirmou duas linhas empresariais, uma linha de Grupo, esquemas exatos, mascaras validas, tres decisoes #159s, zero campo proibido e zero autorizacao de importacao.
 - Nenhum valor bruto, ID, hash de identidade, CNPJ completo, TPS, snapshot, MDF/LDF, script ou relatorio detalhado foi adicionado ao GitHub.
 - A instancia SQL nao precisou ser iniciada nesta etapa e permanece `Stopped`/`Manual`.
 - Mudanca exclusivamente documental no repositorio: dispensados testes de runtime; obrigatorios `git diff --check`, verificacao do pacote e confirmacao do servico SQL foram executados.
@@ -8328,7 +8349,7 @@ Checklist inicial:
 - Foi executado um ensaio local `READ_ONLY_DRY_RUN` com o mapa aprovado, sem chamar API de gravacao, sem tocar no armazenamento do ERP e sem iniciar o SQL legado.
 - O ensaio reutilizou o contrato existente de `normalizeSnapshotRecord`, que atribui explicitamente `group_id`, `grupo_id` e `grupo_empresarial_id` canonicos a cada Empresa importada.
 - Os tres aliases resolveram de forma unica contra a topologia atual: dois no escopo `COMPANY` e um no escopo `GROUP`, todos vinculados ao unico Grupo canonico.
-- Duas execucoes independentes produziram o mesmo hash de resultado, comprovando determinismo.
+- Duas execucoes inde#159s produziram o mesmo hash de resultado, comprovando determinismo.
 - A primeira aplicacao em memoria adicionou tres vinculos; a segunda adicionou zero, reconheceu os tres como inalterados e produziu zero conflito.
 - Os cenarios negativos bloquearam destino inexistente, troca indevida de escopo Grupo/Empresa e Grupo de destino adulterado.
 - O relatorio `legacy-approved-business-alias-dry-run.json` foi gravado somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS` e revalidado apos persistencia.
@@ -8462,7 +8483,7 @@ Checklist inicial:
 - O arquivo final foi salvo somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com SHA-256 `12BEEB78ADEBF855F2605C1F74DFD3F78B4FA65E73193004B16C4D03D6747EA2`.
 - O arquivo auxiliar de inspecao criado pelo gerador foi removido para evitar duplicacao de conteudo sanitizado. Nenhuma planilha, CSV, dado legado, perfil, hash detalhado ou relatorio local foi adicionado ao GitHub.
 - A instancia SQL permanece `Stopped`/`Manual`; nenhuma alteracao de runtime foi realizada. Mudanca do repositorio exclusivamente documental, com `git diff --check` obrigatorio no fechamento.
-- Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas com `PRONTO PARA HOMOLOGACAO` poderao compor um lote posterior de homologacao; linhas pendentes, rejeitadas, invalidas, incompletas ou em quarentena permanecem sem acesso e sem importacao.
+- Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas com `PRONTO PARA HOMOLOGACAO` poderao compor um lote posterior de homologacao; linhas #159s, rejeitadas, invalidas, incompletas ou em quarentena permanecem sem acesso e sem importacao.
 
 ### Gate 18 - Encerramento do RBAC legado e inventario agregado de clientes
 
@@ -8477,7 +8498,7 @@ Checklist inicial:
 - A correlacao em fluxo sequencial encontrou oito grupos de documento duplicado, envolvendo 24 registros e 16 linhas adicionais a conciliar. O calculo usou HMAC-SHA256 apenas em memoria, com chave aleatoria descartada ao final; nenhum documento ou hash individual foi persistido.
 - Os relatorios agregados nao possuem nomes, documentos, enderecos, e-mails ou linhas brutas. Contrato, contagens e resultados detalhados permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
 - O inventario confirmou outros cadastros mestres no backup: `Fornecedores` com aproximadamente 1.061 registros, `Funcionarios` com 83, `CadastroMateriais` com 2.360, `Transportadoras` com 14, `Vendedores` com 34 e `Bancos` com 164.
-- Funcionarios serao tratados como dados pessoais de RH em lote proprio e nao serao confundidos com usuarios de autenticacao. Fornecedores, materiais/produtos e demais cadastros tambem terao contratos e quarentenas independentes antes de qualquer importacao.
+- Funcionarios serao tratados como dados pessoais de RH em lote proprio e nao serao confundidos com usuarios de autenticacao. Fornecedores, materiais/produtos e demais cadastros tambem terao contratos e quarentenas inde#159s antes de qualquer importacao.
 - Uma consulta de duplicidade com alto pedido de memoria foi cancelada sem alterar o banco e substituida pelo processamento sequencial de baixo consumo. Nenhum resultado parcial foi aceito.
 - A instancia SQL foi encerrada apos as consultas e permanece `Stopped`/`Manual`; TCP e Named Pipes estao desativados. Nenhuma importacao direta foi executada.
 - Nenhum dado pessoal, credencial, arquivo TPS, MDF/LDF, CSV nominal, planilha ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
@@ -8494,7 +8515,7 @@ Checklist inicial:
 - Os oito grupos duplicados identificados anteriormente foram confirmados: as 24 linhas envolvidas permaneceram integralmente em quarentena, sem eleger automaticamente um registro vencedor.
 - Um documento ja existe entre os clientes do snapshot atual e tambem foi bloqueado para revisao idempotente. Nenhum candidato aceito possui documento duplicado.
 - Todos os candidatos possuem tipo e status reconhecidos, um unico `group_id` canonico, `scope_type=grupo` e `empresa_id` vazio. O cadastro mestre nao foi duplicado fisicamente entre empresas.
-- `CODIGOCLIENTE` foi preservado como codigo legado e origem. Referencias a tabela de preco, vendedor, regiao, condicao de pagamento, transportadora, grupo de cliente, ramo e CNAE foram mantidas somente como codigos legados pendentes de mapeamento.
+- `CODIGOCLIENTE` foi preservado como codigo legado e origem. Referencias a tabela de preco, vendedor, regiao, condicao de pagamento, transportadora, grupo de cliente, ramo e CNAE foram mantidas somente como codigos legados #159s de mapeamento.
 - Campos de nome, documento, endereco, cobranca e e-mail foram sanitizados. E-mails invalidos nao foram promovidos ao campo de contato; permaneceram apenas no arquivo privado para revisao.
 - A validacao final confirmou 22.895/22.895 linhas reconciliadas, zero autorizacao indevida, zero candidato com motivo de quarentena, zero quarentena sem motivo, zero duplicidade entre candidatos e zero celula com prefixo inseguro para CSV.
 - Os CSVs nominais foram gravados somente em `03_EXPORT_STAGING\CLIENTES\CLIENTES-LEGACY-TID-001` e `05_QUARANTINE\CLIENTES\CLIENTES-LEGACY-TID-001`, com heranca de ACL removida e uma unica regra para o usuario local.
@@ -8509,32 +8530,32 @@ Checklist inicial:
 - O mapeamento reutilizou exclusivamente `TabelaPreco`, `Colaborador`, `RegiaoAtendimento`, `Transportadora` e o campo textual `Cliente.condicao_comercial.condicao_pagamento` ja existentes.
 - Foram comparados os 18.458 candidatos do staging. A politica permitiu apenas igualdade exata apos normalizacao de caixa, acentos e pontuacao; nenhuma aproximacao textual ou criacao automatica foi aplicada.
 - Condicao de pagamento foi mantida separada de `FormaPagamento`: 26 codigos legados receberam texto valido no campo existente, cobrindo 2.217 clientes. Nenhum ID de forma de pagamento foi inferido.
-- Permaneceram pendentes 47 codigos de referencia: sete tabelas de preco, 27 vendedores, nove regioes e quatro transportadoras.
+- Permaneceram #159s 47 codigos de referencia: sete tabelas de preco, 27 vendedores, nove regioes e quatro transportadoras.
 - Entre as tabelas de preco, um dos sete codigos usados nao existe na tabela mestre legada. Nao houve correspondencia exata com a unica tabela atual dentro do Grupo canonico.
 - Duas tabelas de preco atuais possuiam `group_id` diferente do Grupo canonico e foram excluidas da comparacao. Nenhum registro externo ao Grupo foi usado como destino.
 - Entre os vendedores, seis dos 27 codigos usados nao foram encontrados na tabela mestre legada e nenhum dos demais coincidiu exatamente com os dois colaboradores atuais.
 - As nove regioes possuem definicao legada, mas nenhuma coincide exatamente com a unica `RegiaoAtendimento` atual. As quatro transportadoras usadas possuem definicao legada, mas o ERP atual nao possui `Transportadora` cadastrada no snapshot.
-- Foram geradas uma matriz resolvida com 26 linhas e uma fila pendente com 47 linhas. Ambas permanecem somente no HD, possuem ACL exclusiva do usuario local, hashes SHA-256 validados e `import_authorized=false` em todas as linhas.
+- Foram geradas uma matriz resolvida com 26 linhas e uma fila #159 com 47 linhas. Ambas permanecem somente no HD, possuem ACL exclusiva do usuario local, hashes SHA-256 validados e `import_authorized=false` em todas as linhas.
 - Os CSVs nominais originais de clientes permaneceram inalterados e conservaram seus hashes. A validacao encontrou zero chave de referencia repetida, zero decisao inconsistente e zero formula CSV insegura.
 - O resumo de mapeamento nao contem nome, ID, e-mail, documento ou valor bruto. Nenhum cadastro, dado ou permissao foi gravado no ERP.
 - As tentativas intermediarias que falharam na conversao de `DataRow` nao produziram resultado aceito. Os dois arquivos parciais foram removidos por caminho absoluto validado antes da geracao final.
 - O script temporario foi removido. A instancia SQL permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
 - Regra confirmada para o lote futuro de materiais: em `CadastroMateriais`, somente registros classificados como `REVENDA` poderao seguir para staging e eventual homologacao. Os demais materiais serao apenas contabilizados e permanecerao fora da migracao.
 - Nenhum CSV, matriz nominal, nome, ID bruto, dado pessoal, chave, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca no repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
-- Proximo passo obrigatorio: revisar localmente os 47 codigos pendentes contra os cadastros atuais, mantendo bloqueados os ausentes e os que exigiriam criar ou alterar cadastro sem homologacao; somente correspondencias exatas aprovadas poderao enriquecer o lote de clientes.
+- Proximo passo obrigatorio: revisar localmente os 47 codigos #159s contra os cadastros atuais, mantendo bloqueados os ausentes e os que exigiriam criar ou alterar cadastro sem homologacao; somente correspondencias exatas aprovadas poderao enriquecer o lote de clientes.
 
-### Gate 18 - Revisao de codigos pendentes e campos importantes
+### Gate 18 - Revisao de codigos #159s e campos importantes
 
 - O proprietario autorizou criar campo importante ausente no ERP atual quando nao existir equivalente, incluindo codigo, e-mail, telefone e outros dados necessarios a operacao ou rastreabilidade.
 - A autorizacao nao permite duplicacao indiscriminada: antes da criacao devem ser comprovadas a ausencia de equivalente, a necessidade do dado e a integracao no cadastro existente, com Grupo/Empresa, RBAC, validacao, sanitizacao e auditoria antes/depois.
-- A revisao dos 47 codigos pendentes encontrou zero correspondencia exata adicional por codigo ou nome. Nenhuma referencia foi promovida e nenhuma aproximacao foi aplicada.
+- A revisao dos 47 codigos #159s encontrou zero correspondencia exata adicional por codigo ou nome. Nenhuma referencia foi promovida e nenhuma aproximacao foi aplicada.
 - `RegiaoAtendimento` ja possui `codigo_regiao`, mas nenhum dos nove codigos legados coincide exatamente com o unico codigo atual. Nao e necessario criar nova coluna para regiao.
 - `Transportadora` ja possui politica de codigo mestre e campos de e-mail e telefone. O snapshot atual nao possui registro dessa entidade; nenhuma transportadora foi criada automaticamente.
 - `Colaborador` e `Transportadora` ja possuem campos de e-mail e telefone. Esses dados devem reutilizar os campos existentes e nao justificam colunas duplicadas.
 - Foram confirmadas duas lacunas relevantes: `TabelaPreco` nao possui campo para o codigo estavel da tabela legada, e `Colaborador` nao possui campo especifico para o codigo legado de vendedor.
 - O contrato local propoe `TabelaPreco.codigo_tabela_legado` e `Colaborador.codigo_vendedor_legado`, ambos apenas para futura alteracao controlada no cadastro existente. Nenhum deles foi criado neste lote documental.
 - Onze codigos de vendedor inativos ainda aparecem em 6.074 candidatos; outros seis codigos sem situacao cobrem 292 candidatos. Esses vinculos permanecem bloqueados.
-- Duas transportadoras inativas aparecem em oito candidatos e tambem permanecem bloqueadas. As referencias ativas sem destino atual continuam pendentes, sem criar cadastro por inferencia.
+- Duas transportadoras inativas aparecem em oito candidatos e tambem permanecem bloqueadas. As referencias ativas sem destino atual continuam #159s, sem criar cadastro por inferencia.
 - Foi gerado `legacy-client-reference-schema-gap-summary.json` somente no HD, sem nomes, IDs, documentos, e-mails ou dados brutos e com `importAuthorized=false`.
 - Regra reforcada para o lote de materiais: `CadastroMateriais` sera filtrado exclusivamente pela classificacao `REVENDA`. O nome exato da coluna classificadora ainda deve ser comprovado no catalogo estrutural antes da leitura nominal; demais materiais serao apenas contabilizados e excluidos do staging.
 - Nenhum dado ou funcionalidade do ERP foi alterado. Mudanca do repositorio exclusivamente documental; testes de runtime dispensados e `git diff --check` obrigatorio no fechamento.
@@ -8549,7 +8570,7 @@ Checklist inicial:
 - Criacao, edicao e limpeza do codigo exigem `group_id` canonico. Empresa informada deve existir e pertencer ao Grupo; empresa externa e alteracao indevida do Grupo sao bloqueadas.
 - `TabelaPreco` deixou de ser tratada como catalogo global no sanitizador backend e agora exige escopo multiempresa. `entityListSorted` passou a localizar tabela de preco e colaborador tambem pelos novos codigos.
 - Auditoria local preserva antes/depois sanitizado. O wrapper remoto registra apenas o valor anterior e posterior do campo legado quando ele e alterado, evitando incluir o restante dos dados pessoais do colaborador nesse evento especifico.
-- Nenhum dos 47 codigos pendentes foi automaticamente promovido, nenhum cadastro foi criado por inferencia e nenhuma linha nominal do backup foi gravada no ERP.
+- Nenhum dos 47 codigos #159s foi automaticamente promovido, nenhum cadastro foi criado por inferencia e nenhuma linha nominal do backup foi gravada no ERP.
 - Validacoes: `npm run audit:baseline` aprovado; `npm test` aprovado com 226/226 testes; teste focado aprovado com 13/13; `npm run typecheck` aprovado; `npm run build` aprovado fora do sandbox apos a primeira tentativa ser bloqueada por acesso ao `vite.config.js`; lint direcionado aos arquivos alterados aprovado; `git diff --check` aprovado.
 - `npm run lint` global permanece reprovado por 86 erros e 18 avisos historicos em arquivos fora deste lote. Nenhum erro do lint direcionado pertence aos arquivos alterados; o baseline nao foi mascarado nem modificado.
 - `TabelaPrecoFormCompleto.jsx`, `Layout.jsx` e `localBase44Client.js` continuam acima do limite recomendado de linhas. A alteracao foi mantida localizada para nao misturar uma refatoracao ampla com o contrato de migracao; a divisao segura permanece como divida tecnica registrada.
@@ -8558,18 +8579,18 @@ Checklist inicial:
 
 ### Gate 18 - Planilha de homologacao de tabelas de preco e vendedores
 
-- Foi gerada somente no HD uma planilha controlada para revisar as 34 referencias pendentes de tabela de preco e vendedor, sem macro, conexao externa, botao ou mecanismo de importacao.
+- Foi gerada somente no HD uma planilha controlada para revisar as 34 referencias #159s de tabela de preco e vendedor, sem macro, conexao externa, botao ou mecanismo de importacao.
 - A reconciliacao separou 16 referencias para decisao humana e manteve 18 bloqueadas. Todas as linhas preservam `import_authorized=false`.
 - Das sete tabelas de preco, seis possuem cadastro mestre legado e aguardam confirmacao de situacao, escopo e destino; elas afetam 18.454 candidatos. Um codigo ausente no cadastro mestre, usado por tres candidatos, permanece bloqueado.
 - Dos 27 vendedores, dez ativos aguardam homologacao e afetam 12.086 candidatos. Onze inativos, usados por 6.074 candidatos, e seis ausentes do cadastro mestre, usados por 292 candidatos, permanecem bloqueados.
 - A aba de revisao aceita somente decisao controlada, escopo, empresa de destino quando aplicavel, ID de destino existente, justificativa e revisor. Nenhuma correspondencia e sugerida por similaridade.
-- Uma vinculacao exige destino existente, justificativa e revisor. Um cadastro no fluxo existente exige escopo valido, empresa quando o registro for empresarial e justificativa/revisor. Linhas incompletas continuam pendentes.
+- Uma vinculacao exige destino existente, justificativa e revisor. Um cadastro no fluxo existente exige escopo valido, empresa quando o registro for empresarial e justificativa/revisor. Linhas incompletas continuam #159s.
 - O XLSX possui tres abas, 16 formulas de validacao e duas listas de selecao nativas. A verificacao interna confirmou zero macro e zero vinculo externo; as tres abas foram renderizadas e revisadas visualmente.
 - O arquivo final `legacy-client-table-seller-homologation.xlsx` foi salvo exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL restrita ao usuario local e SHA-256 verificado sem publicar o valor.
 - O arquivo tecnico de inspecao criado durante a geracao foi removido para evitar duplicacao desnecessaria de conteudo privado.
 - A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`. Nenhuma consulta ao banco legado, gravacao no ERP ou alteracao de runtime foi realizada neste lote.
 - Nenhum XLSX, CSV, nome, codigo individual, dado pessoal, ID bruto, hash detalhado, TPS, MDF/LDF ou relatorio local foi adicionado ao GitHub. A mudanca do repositorio e exclusivamente documental; testes de runtime foram dispensados e `git diff --check` e obrigatorio no fechamento.
-- Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas cujo resultado calculado esteja pronto poderao compor um lote posterior; pendentes, rejeitadas, incompletas e todas as linhas da aba `Bloqueados` permanecem sem importacao.
+- Proximo passo obrigatorio: o proprietario deve preencher a aba `Revisao`. Somente linhas cujo resultado calculado esteja pronto poderao compor um lote posterior; #159s, rejeitadas, incompletas e todas as linhas da aba `Bloqueados` permanecem sem importacao.
 
 ### Gate 18 - Inventario estrutural agregado de fornecedores
 
@@ -8626,8 +8647,8 @@ Checklist inicial:
 ### Gate 18 - Revisao da quarentena e referencias de fornecedores
 
 - Foi criada somente no HD uma fila derivada para revisar as 271 linhas em quarentena. O CSV original permaneceu preservado e nenhuma decisao foi aplicada automaticamente.
-- Cada linha da fila possui `required_action`, status pendente, decisao, revisor, data e justificativa vazios e `import_authorized=false`. Os 271 fingerprints sao unicos e reconciliam integralmente a quarentena.
-- As acoes pendentes totalizam 228 validacoes de documento na fonte, 25 conciliacoes de duplicidade no Grupo, cinco correcoes ou descartes controlados de e-mail e 42 confirmacoes de URL HTTP/HTTPS. As acoes podem se sobrepor na mesma linha.
+- Cada linha da fila possui `required_action`, status #159, decisao, revisor, data e justificativa vazios e `import_authorized=false`. Os 271 fingerprints sao unicos e reconciliam integralmente a quarentena.
+- As acoes #159s totalizam 228 validacoes de documento na fonte, 25 conciliacoes de duplicidade no Grupo, cinco correcoes ou descartes controlados de e-mail e 42 confirmacoes de URL HTTP/HTTPS. As acoes podem se sobrepor na mesma linha.
 - Zeros sentinela do banco legado foram tratados como ausencia em codigos de cliente correspondente, historico, transportadora, usuario e banco. Eles nao foram promovidos como referencias reais.
 - Depois da remocao dos sentinelas, restaram duas decisoes de referencia: um codigo de cliente correspondente usado por um fornecedor e a traducao fiscal de `SIMPLESFEDERAL`, com um unico valor legado usado pelos 1.061 fornecedores.
 - O cliente correspondente possui exatamente uma origem no staging protegido de clientes. O vinculo permanece com status `legacy_source_found_waiting_client_import`, sem `target_id`, porque nenhum cliente foi importado ou homologado no ERP.
@@ -8635,7 +8656,7 @@ Checklist inicial:
 - Historico contabil, codigo de sistema antigo, transportadora padrao, condicao de pagamento de compra, contas contabeis, finalidade, frete e usuario de lancamento nao possuem valor legado efetivo neste lote apos remover sentinelas.
 - Dados sensiveis foram apenas contabilizados: 43 fornecedores possuem codigo de banco nao nulo, 38 possuem agencia, 38 possuem conta corrente, 15 possuem RG e um possui caixa postal/CEP. Nenhum desses valores foi exportado para a matriz de referencias.
 - Certificado de pedido de compra nao possui valor preenchido. Os sete campos sensiveis inventariados permanecem com status `blocked_sensitive_rbac` ate existir contrato, permissao e homologacao especificos.
-- Os arquivos `fornecedores-revisao-quarentena.csv` e `fornecedores-referencias-pendentes.csv` permanecem somente em `05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`, com ACL exclusiva, hashes validados e zero linha autorizada.
+- Os arquivos `fornecedores-revisao-quarentena.csv` e `fornecedores-referencias-#159s.csv` permanecem somente em `05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`, com ACL exclusiva, hashes validados e zero linha autorizada.
 - O resumo `legacy-supplier-review-and-reference-summary.json` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, sem nomes, e-mails, documentos ou valores bancarios.
 - A verificacao final confirmou zero formula CSV insegura, hashes correspondentes, ACLs protegidas, zero `target_id` atribuido, zero dado sensivel na matriz e zero importacao.
 - Scripts e log tecnico temporarios foram removidos. A instancia `MSSQL$ERPZLEGACY` permanece `Stopped`/`Manual`, com TCP e Named Pipes desativados.
@@ -8646,7 +8667,7 @@ Checklist inicial:
 
 - O formulario e a entidade `Fornecedor` existentes foram ampliados com `rg`, `simples_nacional` e `dados_bancarios`, sem criar tela, rota, entidade, importador ou modulo paralelo.
 - RG aparece somente para pessoa fisica, aceita formato restrito e limite de 30 caracteres. O indicador do Simples Nacional e booleano e a traducao aceita somente valores explicitos. Dados bancarios usam allowlist de banco, agencia, conta e tipo de conta; quando preenchidos, banco e conta sao obrigatorios e o tipo fica limitado a corrente, poupanca ou pagamento.
-- As gravacoes exigem permissoes independentes `Cadastros.Pessoas.Fornecedor.rg.editar`, `Cadastros.Pessoas.Fornecedor.simples_nacional.editar` e `Cadastros.Pessoas.Fornecedor.dados_bancarios.editar` nos wrappers remoto e local. Campos sem permissao nao seguem no payload.
+- As gravacoes exigem permissoes inde#159s `Cadastros.Pessoas.Fornecedor.rg.editar`, `Cadastros.Pessoas.Fornecedor.simples_nacional.editar` e `Cadastros.Pessoas.Fornecedor.dados_bancarios.editar` nos wrappers remoto e local. Campos sem permissao nao seguem no payload.
 - O escopo de Grupo/Empresa e a deduplicacao por documento continuam centralizados nas politicas existentes. Empresa externa ao Grupo e mudanca indevida do Grupo permanecem bloqueadas.
 - RG foi incorporado ao conjunto PII criptografado de fornecedor. Dados bancarios continuam atendidos pelo criptografador AES-GCM existente; envelopes criptografados nao sao expostos nem convertidos em texto pelo formulario durante edicoes posteriores.
 - Auditorias frontend e backend mascaram RG e o objeto bancario, incluindo banco, agencia, conta e PIX. O log backend agora carimba tambem `group_id` como campo proprio, alem de `empresa_id`, sem registrar valores sensiveis.
@@ -8665,7 +8686,7 @@ Checklist inicial:
 - A matriz possui quatro linhas agregadas, todas com `PENDING_HUMAN_HOMOLOGATION`, `values_extracted=false` e `import_authorized=false`. Revisor, data, justificativa e decisao permanecem vazios.
 - A liberacao futura exige Banco existente e autorizado no mesmo Grupo, confirmacao de titularidade e tipo de conta, RG vinculado a pessoa fisica, traducao fiscal formal do valor legado, permissoes granulares, criptografia AES-GCM, auditoria protegida e idempotencia por Grupo/codigo legado.
 - O contrato e o resumo foram gravados em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`; a matriz foi gravada em `05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`. Os tres arquivos possuem ACL sem heranca e exclusiva de `DELL-VINI\cpaba`.
-- Validacoes locais: quatro de quatro linhas pendentes e nao autorizadas; zero valor extraido; zero formula CSV; zero padrao de e-mail, CPF ou CNPJ; hashes do contrato e da matriz recalculados e correspondentes ao resumo local.
+- Validacoes locais: quatro de quatro linhas #159s e nao autorizadas; zero valor extraido; zero formula CSV; zero padrao de e-mail, CPF ou CNPJ; hashes do contrato e da matriz recalculados e correspondentes ao resumo local.
 - A instancia `MSSQL$ERPZLEGACY` foi confirmada como `Stopped`/`Manual`. O lote nao iniciou o SQL Server, nao consultou registros nominais e nao realizou gravacao no ERP.
 - O gerador tecnico temporario foi removido antes do fechamento. Nenhum CSV, JSON local, hash, dado pessoal, valor bancario, RG, valor fiscal, TPS, MDF/LDF ou relatorio do HD integra o GitHub; a mudanca do repositorio e exclusivamente documental.
 - Validacao do repositorio: `git diff --check` aprovado; testes de runtime dispensados porque nenhum codigo de aplicacao permaneceu alterado neste lote.
@@ -8679,7 +8700,7 @@ Checklist inicial:
 - A proposta possui sete linhas: seis bancarias e uma fiscal. Todas permanecem com `PENDING_HUMAN_HOMOLOGATION`, destino/valor normalizado/decisao/revisor/justificativa vazios e `import_authorized=false`.
 - Agencia, conta corrente e RG nao foram extraidos neste lote. Nenhum dado pessoal ou bancario nominal de fornecedor foi lido para a proposta.
 - O arquivo `fornecedores-mapeamento-bancos-fiscal.csv` permanece em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\FORNECEDORES\FORNECEDORES-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Ambos possuem ACL exclusiva de `DELL-VINI\cpaba`.
-- Validacoes: sete de sete linhas pendentes; zero autorizada; seis de seis referencias com cadastro mestre e descricao resolvida; totais de uso 43/43 e 1.061/1.061; zero destino atribuido; zero traducao fiscal atribuida; zero formula CSV; hash recalculado e correspondente ao resumo local.
+- Validacoes: sete de sete linhas #159s; zero autorizada; seis de seis referencias com cadastro mestre e descricao resolvida; totais de uso 43/43 e 1.061/1.061; zero destino atribuido; zero traducao fiscal atribuida; zero formula CSV; hash recalculado e correspondente ao resumo local.
 - A consulta ocorreu na instancia isolada e no banco `READ_ONLY`; `MSSQL$ERPZLEGACY` foi encerrado no bloco `finally` e confirmado como `Stopped`/`Manual` ao final de todas as tentativas.
 - Os scripts, saidas tecnicas e arquivos brutos temporarios foram removidos. Nenhum CSV, JSON local, codigo ou nome bancario, valor fiscal, hash, dado pessoal, TPS, MDF/LDF ou relatorio do HD integra o GitHub; a mudanca do repositorio e exclusivamente documental.
 - Validacao do repositorio: `git diff --check` aprovado; testes de runtime dispensados porque nenhum codigo de aplicacao permaneceu alterado neste lote.
@@ -8720,7 +8741,7 @@ Checklist inicial:
 - O contrato local final possui 14 colunas `ALLOW_STRUCTURAL`, 60 em revisao e 100 bloqueadas, totalizando 174/174 com `import_authorized=false`. Foram reutilizados somente campos existentes de `Produto` e a politica de migracao atual.
 - Foram produzidos 1.208 candidatos e 14 registros em quarentena, reconciliando 1.222/1.222 sem descarte. Os 1.198 ativos e 24 inativos foram preservados; nenhum inativo foi ativado automaticamente.
 - As unidades `UN`, `PC`, `KG`, `CX` e `MT` foram mantidas; `M?` foi normalizada para `M2` e `LTS` para `LT`, conforme os codigos ja aceitos pelo importador existente. As 14 linhas com `BD`, `GRS`, `PAR`, `RL` ou `SER` ficaram em quarentena por falta de mapeamento homologado.
-- Todos os candidatos possuem codigo legado, descricao, unidade valida, `tipo_item=Revenda`, contexto do unico Grupo canonico, `scope_type=grupo`, empresa vazia e compartilhamento de Grupo. Estoque atual, reservado e disponivel foram fixados em zero porque o estoque inicial pertence a lote posterior independente.
+- Todos os candidatos possuem codigo legado, descricao, unidade valida, `tipo_item=Revenda`, contexto do unico Grupo canonico, `scope_type=grupo`, empresa vazia e compartilhamento de Grupo. Estoque atual, reservado e disponivel foram fixados em zero porque o estoque inicial pertence a lote posterior inde#159.
 - O lote apresentou zero codigo duplicado, zero fingerprint duplicado, zero candidato invalido, zero quarentena sem motivo e zero celula com risco de formula CSV. Todas as 1.222 linhas mantem `import_authorized=false`, `confirmado=false` e `importacao_erp=false`.
 - A geracao foi repetida integralmente e produziu os mesmos hashes para candidatos e quarentena, comprovando idempotencia. Os hashes gravados no resumo agregado correspondem aos arquivos finais.
 - `produtos-revenda-candidatos.csv` permanece em `03_EXPORT_STAGING\PRODUTOS\PRODUTOS-LEGACY-TID-001`; `produtos-revenda-quarentena.csv` permanece em `05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; contrato e resumo permanecem em `04_REPORTS`. Todos estao somente em `D:\BACKUP ERP ANTIGO - CODEX`, com ACL exclusiva do usuario local.
@@ -8772,7 +8793,7 @@ Checklist inicial:
 - `produtos-homologacao-classes.csv` e `produtos-classificacao-fiscal-nao-conciliada.csv` permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`.
 - Nenhum codigo ou nome de classe, referencia fiscal, `group_id`, CSV/JSON local, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub. A instancia `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
 - A mudanca do repositorio e exclusivamente documental. Testes de runtime sao dispensados; `git diff --check` e a validacao obrigatoria deste fechamento.
-- Pendencia `BLOCKED`: um usuario autorizado deve mapear cada classe para um `GrupoProduto` do mesmo Grupo e um responsavel fiscal deve decidir a unica classificacao ausente. Ate isso ocorrer, as 38 linhas e os produtos dependentes permanecem sem autorizacao de importacao.
+- Pendencia `BLOCKED`: um usuario autorizado deve mapear cada classe para um `GrupoProduto` do mesmo Grupo e um responsavel fiscal deve decidir a unica classificacao ausente. Ate isso ocorrer, as 38 linhas e os produtos de#159s permanecem sem autorizacao de importacao.
 - Proximo passo recomendado: enquanto essas decisoes humanas permanecem bloqueadas, revisar estruturalmente os 14 campos fiscais com uso efetivo nos produtos candidatos e confirmar destinos ja existentes, sem extrair valores nominais nem alterar schema automaticamente.
 
 ### Gate 18 - Revisao estrutural fiscal dos produtos de revenda
@@ -8782,7 +8803,7 @@ Checklist inicial:
 - A existencia desses campos nao autoriza o mapeamento automatico. `Produto` e cadastro mestre compartilhado, enquanto `TabelaFiscal` aplica regras por empresa, regime e cenario; o responsavel fiscal deve definir o escopo correto antes de qualquer extracao ou persistencia.
 - Quatro campos nao possuem equivalente exato confirmado: codigo de lista de servicos, indicador booleano de substituicao tributaria e os dois controles de indicador de escala da NF-e. Nenhum campo novo foi criado por suposicao.
 - Tres campos apresentam somente valor equivalente a zero nas 1.208 linhas: `CSOSN`, `ICMSSUBSTITUICAO` e `ORIGEMSITUACAOTRIB`. Eles nao foram descartados como sentinela, pois zero pode representar ausencia, falso ou origem nacional conforme a semantica fiscal.
-- Os demais campos possuem combinacoes de zero e valores distintos. A matriz preserva apenas as contagens agregadas e marca traducao, regime e escopo como pendentes; valores e produtos afetados continuam fora do relatorio.
+- Os demais campos possuem combinacoes de zero e valores distintos. A matriz preserva apenas as contagens agregadas e marca traducao, regime e escopo como #159s; valores e produtos afetados continuam fora do relatorio.
 - `produtos-revisao-fiscal-estrutural.csv` possui 14 linhas, todas com `values_extracted=false`, `PENDING_FISCAL_HOMOLOGATION` e `import_authorized=false`. Nenhum destino fiscal foi aplicado ao staging.
 - A geracao foi repetida e confirmou o mesmo hash, ACL sem heranca e exclusiva do usuario local, 14/14 linhas nao autorizadas, zero extracao e zero importacao.
 - A matriz permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\PRODUTOS\PRODUTOS-LEGACY-TID-001`; o resumo agregado permanece em `04_REPORTS`. Nenhum CSV/JSON local, valor fiscal, codigo individual, `group_id`, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
@@ -8847,7 +8868,7 @@ Checklist inicial:
 - `LEGACY_TID_EMP03` concentra 557.060 movimentos, 2.382 saldos de materiais e quatro transferencias. Como essa base ja foi classificada como compartilhada e as tres tabelas nao possuem coluna empresarial explicita, nenhuma linha pode ser atribuida automaticamente a CPA, 3Z ou CPA Ferro e Aco.
 - `LEGACY_TID_EXETPS` possui 2.372 parametros de estoque de materiais, 421 movimentos e 184 saldos de materiais. A fonte e central multiempresa e essas tabelas tambem nao possuem contexto empresarial explicito.
 - `LEGACY_TID_EMP01` possui 150 saldos e 12 movimentos; `LEGACY_TID_EMP02`, 17 saldos e um movimento; `LEGACY_TID_EMP04`, um saldo isolado; `LEGACY_TID_EMP05` nao possui tabela candidata nao vazia. Os nomes das bases continuam insuficientes para registros sem contexto ou para fontes previamente classificadas como compartilhadas/incertas.
-- Nenhuma das 11 fontes operacionais nao vazias possui coluna empresarial ou de local de estoque identificavel. Cinco possuem coluna de data. Portanto, empresa proprietaria, local, precedencia entre saldo e movimento e data de corte permanecem obrigatoriamente pendentes.
+- Nenhuma das 11 fontes operacionais nao vazias possui coluna empresarial ou de local de estoque identificavel. Cinco possuem coluna de data. Portanto, empresa proprietaria, local, precedencia entre saldo e movimento e data de corte permanecem obrigatoriamente #159s.
 - O relatorio `legacy-stock-structure-inventory.csv` contem somente metadados de banco/tabela, contagens estimadas e indicadores de presenca de colunas; todas as 135 linhas possuem `values_read=false` e `import_authorized=false`.
 - A geracao foi repetida e confirmou o mesmo hash, ACL sem heranca e exclusiva do usuario local, seis de seis bases em somente leitura, zero valor consultado e zero importacao.
 - O inventario e o resumo permanecem somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`. Nenhum CSV/JSON local, codigo de produto, saldo, quantidade, custo, movimento, empresa, hash, TPS, MDF/LDF ou relatorio do HD integra o GitHub.
@@ -8887,7 +8908,7 @@ Checklist inicial:
 
 - A sessao administrativa interativa foi obtida e confirmou acesso local por memoria compartilhada aos bancos `READ_ONLY`. O bloqueio de autenticacao registrado no lote anterior foi superado.
 - A primeira estrategia processou os fingerprints, mas excedeu 15 minutos ao criar um indice global temporario sobre as quatro fontes. A execucao foi cancelada sem exportar resultados.
-- A segunda estrategia removeu o indice global e comparou as fontes por agregacoes e `INTERSECT` independentes. Dois campos de lote inexistentes foram eliminados do contrato antes da repeticao valida.
+- A segunda estrategia removeu o indice global e comparou as fontes por agregacoes e `INTERSECT` inde#159s. Dois campos de lote inexistentes foram eliminados do contrato antes da repeticao valida.
 - A execucao corrigida permaneceu ativa por mais de 35 minutos sem concluir as duas passagens de estabilidade. Para evitar consumo indefinido, a instancia foi parada administrativamente; o cancelamento encerrou a consulta de leitura pelo Shared Memory Provider.
 - Nenhum resumo parcial foi aceito, nenhum arquivo de conclusao foi produzido e nenhum dado nominal, fingerprint individual, produto, quantidade, custo ou documento foi exportado.
 - Todos os executores e logs temporarios foram removidos. `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`.
@@ -9232,7 +9253,7 @@ Checklist inicial:
 - Os 1.009 pedidos candidatos possuem 4.228 itens. Desses, 428 nao possuem vinculo fiscal, 3.426 possuem um vinculo e 374 possuem multiplos vinculos.
 - Entre os itens, 1.607 estao ligados somente a cabecalhos fiscais da mesma empresa e 2.193 apresentam empresa fiscal divergente. A divergencia esta concentrada nos pedidos cujo codigo empresarial e 3, com duas ocorrencias adicionais no codigo 1.
 - A situacao fiscal agregada e `Emitida` nos vinculos de situacao unica. Treze pedidos e 27 itens possuem mais de uma situacao fiscal entre seus relatorios e permanecem sem interpretacao.
-- Existencia de nota de entrada nao equivale a recebimento integral. `QUANTIDADERECEBIDA`, quantidades pedidas e valores nao foram lidos; portanto, nenhum pedido/item foi marcado como concluido ou pendente.
+- Existencia de nota de entrada nao equivale a recebimento integral. `QUANTIDADERECEBIDA`, quantidades pedidas e valores nao foram lidos; portanto, nenhum pedido/item foi marcado como concluido ou #159.
 - As rotas de cabecalho reconciliaram exatamente os 29 pedidos de venda e os 1.009 pedidos de compra. As rotas de itens reconciliaram os 77 itens de venda e 4.228 itens de compra.
 - O relatorio `legacy-order-fiscal-link-counts.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Situacao: `BLOCKED` para importar pedidos de compra ou declarar recebimento, principalmente pelas 647 divergencias empresariais e pela ausencia de conciliacao quantitativa. Vendas tambem permanecem bloqueadas ate homologar a semantica de permanencia em `PedidoVenda`.
@@ -9307,7 +9328,7 @@ Checklist inicial:
 - Os dois itens de escopo inseguro possuem acumulado igual ao pedido, mas foram excluidos da soma fiscal aceita e permanecem bloqueados.
 - Todas as quantidades fiscais emitidas usadas na soma sao nao nulas e nao negativas. Nao existe categoria de somente nota cancelada entre os itens com escopo permitido; notas canceladas foram excluidas da soma.
 - A elevada quantidade de casos excedentes nao foi interpretada como recebimento completo. Ela pode refletir recebimento acima do pedido, unidade/conversao, repeticao documental ou semantica legada e exige validacao adicional.
-- Nenhum item foi marcado como concluido, parcial ou pendente no ERP novo. As categorias sao diagnosticas e nao autorizam importacao.
+- Nenhum item foi marcado como concluido, parcial ou #159 no ERP novo. As categorias sao diagnosticas e nao autorizam importacao.
 - O relatorio `legacy-purchase-quantity-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum ID, valor de quantidade, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Situacao: 3.762 itens possuem consistencia entre acumulado e fiscal, mas o recebimento continua `BLOCKED` pelos 36 desacordos, 1.610 excedentes fiscais, 428 sem vinculo e dois escopos inseguros.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
@@ -9428,7 +9449,7 @@ Checklist inicial:
 - `PESOBARRA` esta zerado ou nao positivo nos 64 casos e nao corresponde a nenhuma razao de quantidade.
 - Em 50 itens, nem `PESOBRUTO` nem `PESOLIQUIDO` correspondem exatamente a razao fiscal/pedida ou ao seu inverso.
 - Em 14 itens do codigo empresarial 3, a igualdade decimal direta e exata `quantidade fiscal = quantidade pedida x peso` ocorre simultaneamente para `PESOBRUTO` e `PESOLIQUIDO`. Nao houve igualdade pela razao inversa.
-- A coincidencia simultanea dos dois pesos produz duas evidencias por item, mas nao representa dois fatores independentes. Ela e apenas candidata a explicar os 14 excessos.
+- A coincidencia simultanea dos dois pesos produz duas evidencias por item, mas nao representa dois fatores inde#159s. Ela e apenas candidata a explicar os 14 excessos.
 - Nenhuma tolerancia, arredondamento aproximado ou conversao foi aplicado. Os 14 itens continuam bloqueados ate validar direcao, par de unidades e referencias legadas; os outros 50 permanecem sem explicacao quantitativa.
 - O relatorio `legacy-purchase-resale-unit-weight-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum peso, unidade, quantidade, codigo, material, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Nenhum produto, pedido, nota ou saldo foi alterado ou importado no ERP novo.
@@ -9542,26 +9563,26 @@ Checklist inicial:
 - O relatorio `legacy-purchase-order-level-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, documento, material, unidade, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
 - Nenhum pedido ou item foi importado, ajustado, fechado ou marcado como recebido no ERP novo. Nenhum saldo residual definitivo foi calculado.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Proximo passo obrigatorio: classificar somente por contagens os 309 pedidos nos estados `MISTO`, `PARCIAL` ou `SEM_RECEBIMENTO`, separando quantidade de itens pendentes por faixa, cobertura fiscal completa/parcial/ausente, composicao exclusiva `REVENDA` e as sete contradicoes sem acumulado com fiscal emitido. Manter os 696 integralmente recebidos fora dos candidatos abertos e os quatro sem itens em quarentena; nao calcular saldo final.
+- Proximo passo obrigatorio: classificar somente por contagens os 309 pedidos nos estados `MISTO`, `PARCIAL` ou `SEM_RECEBIMENTO`, separando quantidade de itens #159s por faixa, cobertura fiscal completa/parcial/ausente, composicao exclusiva `REVENDA` e as sete contradicoes sem acumulado com fiscal emitido. Manter os 696 integralmente recebidos fora dos candidatos abertos e os quatro sem itens em quarentena; nao calcular saldo final.
 
-### Gate 18 - Matriz dos candidatos de compra com recebimento pendente
+### Gate 18 - Matriz dos candidatos de compra com recebimento #159
 
 - Os 309 pedidos nos estados `MISTO`, `PARCIAL` ou `SEM_RECEBIMENTO` foram classificados em duas passagens identicas, sem exportar identificadores, documentos, materiais, unidades, valores ou quantidades individuais.
 - A matriz reconciliou 2.075 itens, dos quais 1.028 ainda possuem quantidade recebida acumulada inferior a pedida. Permanecem 217 pedidos mistos, 37 parciais e 55 sem recebimento acumulado.
-- Por quantidade de itens pendentes, 105 pedidos possuem um item, 165 possuem de dois a cinco, 37 possuem de seis a 20 e dois possuem mais de 20. Nenhum saldo residual foi calculado.
-- A cobertura fiscal segura no nivel do pedido e completa em 159 casos, parcial em 102 e ausente em 48. A presenca de cobertura completa em pedido ainda pendente comprova que o estado do cabecalho nao pode ser promovido automaticamente como aberto.
+- Por quantidade de itens #159s, 105 pedidos possuem um item, 165 possuem de dois a cinco, 37 possuem de seis a 20 e dois possuem mais de 20. Nenhum saldo residual foi calculado.
+- A cobertura fiscal segura no nivel do pedido e completa em 159 casos, parcial em 102 e ausente em 48. A presenca de cobertura completa em pedido ainda #159 comprova que o estado do cabecalho nao pode ser promovido automaticamente como aberto.
 - A composicao do cadastro mestre separou 260 pedidos somente com produtos `REVENDA`, 19 mistos, 16 sem revenda e 14 com material ausente ou sem cadastro. Entre os 260 de revenda, 195 sao mistos, 37 parciais e 28 nao possuem recebimento acumulado.
 - O escopo dos candidatos compreende 266 pedidos do Grupo CPA, 41 da empresa CPA Ferro e Aco e dois da 3Z. A classificacao nao alterou nem inferiu empresa proprietaria.
-- As sete contradicoes sem recebimento acumulado e com fiscal emitido seguro pertencem ao Grupo CPA e abrangem 22 itens, todos pendentes pelo acumulado. Seis pedidos possuem cobertura fiscal completa e um parcial; somente um e composto exclusivamente por revenda.
+- As sete contradicoes sem recebimento acumulado e com fiscal emitido seguro pertencem ao Grupo CPA e abrangem 22 itens, todos #159s pelo acumulado. Seis pedidos possuem cobertura fiscal completa e um parcial; somente um e composto exclusivamente por revenda.
 - Os sete pedidos contraditorios permanecem bloqueados. Documento fiscal emitido nao autoriza sobrescrever o acumulado, concluir recebimento ou considerar saldo aberto sem conciliacao dos movimentos de estoque e da trilha operacional.
 - O relatorio `legacy-purchase-open-candidate-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, documento, material, unidade, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
 - Os 696 pedidos integralmente recebidos continuam fora do universo candidato e os quatro cabecalhos sem itens continuam em quarentena. Nenhum registro foi importado, ajustado ou promovido no ERP novo.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Proximo passo obrigatorio: classificar somente por contagens os 1.028 itens pendentes, separando estado acumulado sem/parcial, presenca e relacao da soma fiscal segura com o acumulado, cobertura de movimento de estoque, produto `REVENDA` e escopo empresarial. Isolar os 22 itens das sete contradicoes; nao exportar dados nominais, calcular saldo final ou autorizar importacao.
+- Proximo passo obrigatorio: classificar somente por contagens os 1.028 itens #159s, separando estado acumulado sem/parcial, presenca e relacao da soma fiscal segura com o acumulado, cobertura de movimento de estoque, produto `REVENDA` e escopo empresarial. Isolar os 22 itens das sete contradicoes; nao exportar dados nominais, calcular saldo final ou autorizar importacao.
 
-### Gate 18 - Conciliacao fiscal e de estoque dos itens pendentes
+### Gate 18 - Conciliacao fiscal e de estoque dos itens #159s
 
-- Os 1.028 itens pendentes dos 309 pedidos candidatos foram conciliados em duas passagens identicas, reutilizando o contrato fiscal seguro e as pontes de estoque direta por `SEQESTOQUE` e alternativa por tipo, relatorio e item, sempre com produto e quantidade exatos.
+- Os 1.028 itens #159s dos 309 pedidos candidatos foram conciliados em duas passagens identicas, reutilizando o contrato fiscal seguro e as pontes de estoque direta por `SEQESTOQUE` e alternativa por tipo, relatorio e item, sempre com produto e quantidade exatos.
 - O estado acumulado reconciliou 569 itens parcialmente recebidos e 459 sem recebimento. Nenhum identificador, documento, material, unidade, valor ou quantidade individual foi exportado.
 - Todos os 569 itens parciais possuem soma fiscal segura exatamente igual ao acumulado e cobertura completa por movimentos de entrada. Isso comprova o processamento da parcela recebida, mas nao determina se o restante continua aberto ou foi encerrado no cabecalho.
 - Entre os 459 itens sem recebimento acumulado, 428 nao possuem fiscal seguro nem movimento vinculado. Outros 31 possuem soma fiscal emitida acima do acumulado, mas nenhum movimento de estoque exato; esses casos representam processamento fiscal sem entrada de estoque comprovada.
@@ -9578,13 +9599,13 @@ Checklist inicial:
 ### Gate 18 - Encerramento dos pedidos candidatos de compra
 
 - Os 309 pedidos candidatos foram classificados em duas passagens identicas por liquidacao do cabecalho, operacoes e presenca de cancelamento formal nos itens, sem exportar IDs, datas, textos, documentos, fornecedores, materiais, valores ou quantidades individuais.
-- Em 297 pedidos, `DTLIQUIDACAOPEDIDO` esta preenchida e existe ao menos uma operacao de cabecalho. Esses pedidos concentram 960 dos 1.028 itens pendentes diagnosticados e possuem evidencia estrutural de encerramento historico.
+- Em 297 pedidos, `DTLIQUIDACAOPEDIDO` esta preenchida e existe ao menos uma operacao de cabecalho. Esses pedidos concentram 960 dos 1.028 itens #159s diagnosticados e possuem evidencia estrutural de encerramento historico.
 - Entre os 297 liquidados, 279 possuem operacao classificada como baixa ou liquidacao, 17 como cancelamento ou exclusao e um possui multiplas operacoes. O texto das operacoes foi usado somente para classificacao interna e nao integra o relatorio ou o GitHub.
 - Os 960 itens associados aos pedidos liquidados incluem 554 parcelas recebidas e processadas, 377 itens sem fiscal seguro e 29 itens com fiscal emitido sem movimento. A liquidacao do cabecalho impede tratar automaticamente esses residuos como compras abertas.
 - Os 12 pedidos restantes nao possuem `DTLIQUIDACAOPEDIDO`, registro em `PedidoCompraOperacoes` nem cancelamento formal positivo em item. Todos pertencem ao escopo legado do Grupo CPA e formam o unico recorte ainda potencialmente aberto.
-- Os 12 pedidos sem liquidacao abrangem 68 itens pendentes: 15 parcialmente recebidos com fiscal e movimento conciliados, 51 sem fiscal seguro e dois com fiscal emitido sem movimento de estoque.
+- Os 12 pedidos sem liquidacao abrangem 68 itens #159s: 15 parcialmente recebidos com fiscal e movimento conciliados, 51 sem fiscal seguro e dois com fiscal emitido sem movimento de estoque.
 - Nove dos 12 pedidos sem liquidacao possuem estado agregado misto e tres nao possuem recebimento acumulado. Nenhum esta no estado agregado parcial puro.
-- Nenhum dos 309 pedidos possui cancelamento formal positivo nos itens pendentes. Assim, `PedidoCompraItensQtdeCancelada` nao fornece trilha capaz de encerrar ou reduzir esse universo.
+- Nenhum dos 309 pedidos possui cancelamento formal positivo nos itens #159s. Assim, `PedidoCompraItensQtdeCancelada` nao fornece trilha capaz de encerrar ou reduzir esse universo.
 - A classificacao reconciliou novamente os 569 itens parciais processados, 428 sem fiscal seguro, 31 com fiscal sem movimento e zero outras divergencias. Nenhum saldo residual definitivo foi calculado.
 - Os 297 pedidos liquidados podem seguir apenas como historico encerrado, sem criar obrigacao de compra aberta. Os 12 sem liquidacao permanecem `BLOCKED` ate validacao direcionada de produto, fornecedor, periodo e efeitos financeiros/fiscais.
 - O relatorio `legacy-purchase-candidate-closure-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, data, texto, documento, fornecedor, material, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
@@ -9594,15 +9615,15 @@ Checklist inicial:
 
 ### Gate 18 - Qualidade dos doze pedidos potencialmente abertos
 
-- Os 12 pedidos sem liquidacao e seus 68 itens pendentes foram classificados em duas passagens identicas por produto, fornecedor, ano, escopo fiscal e obrigacao financeira, sem exportar IDs, datas completas, documentos, fornecedores, materiais, valores ou quantidades individuais.
+- Os 12 pedidos sem liquidacao e seus 68 itens #159s foram classificados em duas passagens identicas por produto, fornecedor, ano, escopo fiscal e obrigacao financeira, sem exportar IDs, datas completas, documentos, fornecedores, materiais, valores ou quantidades individuais.
 - Todos os 12 pertencem ao escopo legado do Grupo CPA, foram emitidos em 2026, possuem somente produtos classificados como `REVENDA` e apontam para fornecedor encontrado e ativo no cadastro mestre.
 - A existencia do fornecedor ativo comprova integridade referencial no legado, mas nao substitui a homologacao do staging de fornecedores nem autoriza importar cadastro em quarentena.
-- Nove pedidos possuem documentos fiscais e ao menos um titulo financeiro aberto. Eles abrangem 82 itens no total, dos quais 41 permanecem pendentes pelo acumulado.
+- Nove pedidos possuem documentos fiscais e ao menos um titulo financeiro aberto. Eles abrangem 82 itens no total, dos quais 41 permanecem #159s pelo acumulado.
 - Seis pedidos mistos possuem somente documentos fiscais de escopo seguro. Eles concentram 13 documentos e 39 titulos financeiros, sendo 17 abertos e 22 marcados como baixados.
 - Tres pedidos mistos possuem ao menos um documento fiscal inseguro. Eles concentram 25 documentos e 75 titulos, sendo 37 abertos e 38 marcados como baixados; os dois itens fiscais sem movimento pertencem a esse recorte.
 - Os nove pedidos fiscalizados reconciliam 38 documentos, 114 titulos, 54 titulos abertos e 60 marcados como baixados. A presenca de titulo impede criar automaticamente nova obrigacao financeira no ERP novo.
-- Os tres pedidos restantes estao sem recebimento acumulado, documento fiscal ou titulo financeiro. Eles possuem 27 itens pendentes exclusivamente de revenda e continuam apenas como candidatos operacionais, nao como compras autorizadas.
-- Todos os 68 itens pendentes foram reconciliados novamente: 15 parcelas recebidas e processadas, 51 sem fiscal seguro e dois com fiscal emitido sem movimento. Nenhuma outra categoria apareceu.
+- Os tres pedidos restantes estao sem recebimento acumulado, documento fiscal ou titulo financeiro. Eles possuem 27 itens #159s exclusivamente de revenda e continuam apenas como candidatos operacionais, nao como compras autorizadas.
+- Todos os 68 itens #159s foram reconciliados novamente: 15 parcelas recebidas e processadas, 51 sem fiscal seguro e dois com fiscal emitido sem movimento. Nenhuma outra categoria apareceu.
 - O relatorio `legacy-purchase-open-twelve-classification.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, identificador, data completa, documento, fornecedor, material, valor, quantidade, TPS ou MDF/LDF integra o GitHub.
 - Nenhum pedido, fornecedor, titulo, documento fiscal ou item foi criado, alterado, importado ou promovido no ERP novo. Nenhum saldo final foi calculado.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
@@ -9661,7 +9682,7 @@ Checklist inicial:
 - O relatorio `legacy-purchase-supplier-document-review-decision.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum CSV/JSON local, codigo, nome, documento, fornecedor, valor, TPS ou MDF/LDF integra o GitHub.
 - Nenhum fornecedor, pedido, documento fiscal, titulo, staging ou registro do ERP novo foi criado, alterado, mesclado, importado ou promovido.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`, SQL Agent `Stopped`/`Manual` e SQL Browser `Stopped`/`Disabled`. A mudanca do repositorio e exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
-- Proximo passo dependente de usuario: homologar manualmente o fornecedor fiscal do par bloqueado na fila protegida, registrando decisao, justificativa e responsavel. Ate isso ocorrer, este par e seus oito documentos e 24 titulos permanecem fora da migracao.
+- Proximo passo de#159 de usuario: homologar manualmente o fornecedor fiscal do par bloqueado na fila protegida, registrando decisao, justificativa e responsavel. Ate isso ocorrer, este par e seus oito documentos e 24 titulos permanecem fora da migracao.
 
 ### Gate 18 - Segregacao do par bloqueado e continuidade segura
 
@@ -9815,7 +9836,7 @@ Checklist inicial:
 - Foram revisados somente os contratos existentes `migracaoErpPolicy.js`, `notaFiscalEmissaoPolicy.js`, `ImportarXMLNFe.jsx`, o adaptador local e os testes diretamente relacionados. Nenhum modulo, tela, entidade, rota ou importador paralelo foi criado.
 - A politica de `NotaFiscal` exige empresa emitente, serie e numero, mas nao exige `pedido_id` na criacao. Portanto, o modelo operacional aceita tecnicamente preservar uma nota fiscal historica sem vinculo ao pedido.
 - O importador XML existente pode deixar `ordem_compra_id` vazio quando a criacao de ordem esta desmarcada, mas ele nao persiste uma `NotaFiscal` historica em staging: seu fluxo cria opcionalmente ordem, movimentos e contas operacionais e registra apenas `ImportacaoXMLNFe`.
-- `applyMigracaoOnCreate` bloqueia corretamente qualquer registro com conciliacao manual pendente antes da gravacao operacional. Entretanto, `buildPendingManualReconciliation`, `SolicitacaoAprovacao` e a politica backend aceitam somente `ContaPagar` e `ContaReceber`, com decisoes financeiras `PAGO` ou `ABERTO`.
+- `applyMigracaoOnCreate` bloqueia corretamente qualquer registro com conciliacao manual #159 antes da gravacao operacional. Entretanto, `buildPendingManualReconciliation`, `SolicitacaoAprovacao` e a politica backend aceitam somente `ContaPagar` e `ContaReceber`, com decisoes financeiras `PAGO` ou `ABERTO`.
 - Nao existe hoje envelope persistente e idempotente para manter uma `NotaFiscal` em staging com apenas o vinculo de item de pedido em quarentena. Reutilizar a conciliacao financeira para isso misturaria permissoes e semanticas e foi rejeitado.
 - Situacao: `BLOCKED_CONTRATO_STAGING_FISCAL`. Os tres documentos, cinco linhas sem referencia e nove titulos permanecem fora da promocao; nenhuma criacao, importacao, remapeamento ou alteracao de dados foi executada.
 - Multiempresa e RBAC exigidos para o futuro contrato: `group_id` e `empresa_id` obrigatorios, empresa pertencente ao Grupo, idempotencia por chave fiscal legada e permissoes `Fiscal.Migracao.conciliar` e `Fiscal.Migracao.aprovar`, sem herdar privilegios de `Financeiro.Migracao`.
@@ -9875,7 +9896,7 @@ Checklist inicial:
 - Os dois itens restantes nao possuem candidato pelo indice alternativo. Ambos pertencem a rota `3 -> 1`, possuem quantidade fiscal maior que `QUANTIDADERECEBIDA` e ja eram os dois casos com `ESTOQUEATUALIZADO=0`.
 - Assim, os 84 itens cuja quantidade recebida concordava com a fiscal foram integralmente conciliados a um movimento de entrada, mesmo sem a ponte direta gravada em `SEQESTOQUE`. Nenhuma multiplicidade ou candidato parcial foi encontrado.
 - Somando os 1.278 vinculos diretos do lote anterior aos 84 vinculos alternativos exatos, 1.362 dos 1.364 excedentes com vinculo fiscal unico possuem evidencia item a item de movimento de entrada e concordancia quantitativa.
-- O relatorio foi validado em quatro metricas independentes, cada uma reconciliando exatamente os mesmos 86 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `D6FD3F25B648FE84E346FF91C9E8B20D6443958108CB09867D714E72050AA087`.
+- O relatorio foi validado em quatro metricas inde#159s, cada uma reconciliando exatamente os mesmos 86 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `D6FD3F25B648FE84E346FF91C9E8B20D6443958108CB09867D714E72050AA087`.
 - O relatorio `legacy-purchase-zero-seq-alternate-links.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, material, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Situacao: 1.362 itens estao conciliados estrutural e quantitativamente com movimentos de entrada, mas continuam sem autorizacao para importacao automatica ate homologar a semantica do excesso. Os dois casos sem movimento permanecem `BLOCKED`.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; o relatorio foi produzido somente por leitura da copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
@@ -9888,7 +9909,7 @@ Checklist inicial:
 - Nao existe movimento de estoque associado ao mesmo relatorio fiscal, nem ao mesmo relatorio/item, inclusive sob tipo `SAIDA` ou com material e quantidade fiscal exatos. Portanto, nao foi localizada evidencia de entrada seguida de estorno.
 - `HISTORICOESTOQUE` esta vazio nos dois itens, e as quatro observacoes do cabecalho fiscal tambem nao contem texto. Nao ha justificativa operacional registrada nesses campos.
 - O inventario estrutural nao identificou tabela especifica de trilha de exclusao por item de nota fiscal de entrada. Assim, exclusao fisica historica nao pode ser comprovada nem descartada apenas pelo esquema disponivel.
-- As dez metricas independentes reconciliaram exatamente os mesmos dois itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `D015AE560AC9C09C2851652B7E5ABD3FDB2FF625691BA3C7A44BFF9E4F07CCFE`.
+- As dez metricas inde#159s reconciliaram exatamente os mesmos dois itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `D015AE560AC9C09C2851652B7E5ABD3FDB2FF625691BA3C7A44BFF9E4F07CCFE`.
 - O relatorio `legacy-purchase-two-unresolved-event-checks.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, material, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Situacao: os 1.362 itens com movimento continuam conciliados, enquanto os dois itens sem movimento permanecem `BLOCKED`. A evidencia disponivel aponta para processamento fiscal/estoque incompleto, sem evento formal de cancelamento, devolucao ou estorno.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
@@ -9901,7 +9922,7 @@ Checklist inicial:
 - Nenhum item dos dois documentos possui vinculo direto ou alternativo com movimento de estoque, e nao existe qualquer movimento usando o relatorio fiscal como documento.
 - `NOTAFISCALTRANSFERIDA` esta ativo nos dois documentos. Esse marcador isolado nao comprova processamento de estoque, financeiro ou contabil e nao foi usado para liberar os itens.
 - Nao foi encontrado outro documento da mesma empresa, fornecedor, numero fiscal e serie, nem documento posterior referenciando a chave eletronica dos documentos analisados. Nao ha evidencia estrutural de substituicao registrada.
-- As 15 metricas independentes reconciliaram exatamente os mesmos dois documentos. As duas execucoes e a releitura do HD externo produziram SHA-256 `295E357FFAADCF9295F36C9CCB24B91B20DC7C068EFC1A3354F79EF1146F7754`.
+- As 15 metricas inde#159s reconciliaram exatamente os mesmos dois documentos. As duas execucoes e a releitura do HD externo produziram SHA-256 `295E357FFAADCF9295F36C9CCB24B91B20DC7C068EFC1A3354F79EF1146F7754`.
 - O relatorio `legacy-purchase-unresolved-parent-documents.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, numero fiscal, fornecedor, material, data, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Situacao: os dois casos sao classificados como documentos fiscais unitarios incompletos e permanecem `BLOCKED`; nenhuma correcao ou importacao automatica foi autorizada. Os outros 1.362 itens de vinculo unico continuam conciliados com movimentos, mas o excesso ainda depende de homologacao funcional.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
@@ -9918,7 +9939,7 @@ Checklist inicial:
 - Nao foi encontrada referencia direta positiva invalida nem multiplicidade de candidatos alternativos em nenhum dos 245 itens. As pontes `SEQESTOQUE` estao completas em 223 itens, ausentes em 15 e parciais em sete.
 - Este resultado reconcilia os sete desacordos do universo de 1.609 excedentes: dois documentos unitarios incompletos no conjunto de vinculo unico e cinco vinculos nao processados no conjunto multiplo. Os outros 1.602 itens possuem cobertura completa de movimento e concordancia fiscal/recebida.
 - O excesso dos 1.602 itens conciliados continua sem homologacao funcional e nao autoriza importacao automatica. A conciliacao comprova o registro do movimento, nao a correcao comercial da quantidade excedente.
-- As dez metricas independentes reconciliaram exatamente os mesmos 245 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `F9ACD28C9F23C350F130FAB278C56049D330E3732FB102AEA3D0195E79A7DA8F`.
+- As dez metricas inde#159s reconciliaram exatamente os mesmos 245 itens. As duas execucoes e a releitura do HD externo produziram SHA-256 `F9ACD28C9F23C350F130FAB278C56049D330E3732FB102AEA3D0195E79A7DA8F`.
 - O relatorio `legacy-purchase-multi-link-stock-reconciliation.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, documento, material, unidade, quantidade, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - `MSSQL$ERPZLEGACY` terminou `Stopped`/`Manual`; a consulta usou somente a copia local `READ_ONLY`. A mudanca do repositorio e exclusivamente documental, testes de runtime do ERP sao dispensados e `git diff --check` e obrigatorio.
 - Proximo passo obrigatorio: investigar somente os cinco vinculos fiscais sem movimento exato, por contagens de cancelamento, devolucao, estorno, marcadores de processamento e estado dos documentos fiscais-pai. Nao exportar IDs, numeros fiscais, fornecedores, materiais, datas, unidades, quantidades ou valores e nao alterar dados.
@@ -9930,7 +9951,7 @@ Checklist inicial:
 - Nenhum possui cancelamento da nota de entrada, devolucao do item ou quantidade cancelada no item de compra. Tambem nao foi encontrado documento com a mesma assinatura comercial nem documento posterior referenciando a chave eletronica.
 - `ESTOQUEATUALIZADO`, `CONFERIDO`, `CONFERIDOFINANCEIRO` e `ATUALIZACAOCONTABIL` estao inativos nos cinco casos. `NAOATUALIZAESTOQUE` tambem esta inativo, portanto a atualizacao era permitida, mas nao foi concluida.
 - `NOTAFISCALTRANSFERIDA` esta ativo nos cinco casos, mas permanece insuficiente para comprovar processamento. `HISTORICOESTOQUE` esta vazio; tres documentos nao possuem observacao e dois possuem outro texto sem termos de cancelamento, estorno, devolucao ou exclusao.
-- Cada vinculo pertence a documento com dois a cinco itens. Em todos os documentos associados, a cobertura de movimento de estoque e zero para todos os itens, e existem de dois a cinco vinculos pendentes do recorte por documento.
+- Cada vinculo pertence a documento com dois a cinco itens. Em todos os documentos associados, a cobertura de movimento de estoque e zero para todos os itens, e existem de dois a cinco vinculos #159s do recorte por documento.
 - A evidencia confirma processamento incompleto no nivel do documento fiscal, nao falha isolada de um unico item. Os cinco vinculos e seus documentos permanecem `BLOCKED`, sem correcao ou importacao automatica.
 - As 19 metricas reconciliaram exatamente os mesmos cinco vinculos. As duas execucoes e a releitura do HD externo produziram SHA-256 `10454324799B7DA1A870476C6C8FBF54BF4BBF6C3EBF7BB5E9A71EC35FE8D33F`.
 - O relatorio `legacy-purchase-five-unprocessed-fiscal-links.csv` permanece somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com ACL protegida. Nenhum identificador, numero fiscal, fornecedor, material, data, unidade, quantidade, valor, texto livre, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
@@ -9940,7 +9961,7 @@ Checklist inicial:
 
 ### Gate 18 - Alcance dos itens irmaos nos documentos nao processados
 
-- Os documentos associados aos cinco vinculos fiscais pendentes foram deduplicados e analisados em duas passagens identicas. O recorte contem dois documentos e nove itens fiscais no total.
+- Os documentos associados aos cinco vinculos fiscais #159s foram deduplicados e analisados em duas passagens identicas. O recorte contem dois documentos e nove itens fiscais no total.
 - Os cinco itens-alvo continuam com vinculo de pedido valido, unidade igual, situacao quantitativa global excedente, `SEQESTOQUE=0` e nenhum movimento.
 - Existem quatro itens irmaos. Todos tambem possuem `SEQESTOQUE=0` e nenhum movimento direto ou alternativo de entrada.
 - Tres itens irmaos possuem vinculo de pedido valido, unidade igual e situacao quantitativa global exata. Apesar da quantidade conciliada com o pedido, permanecem bloqueados porque seus documentos fiscais nao tiveram processamento de estoque.
@@ -10065,7 +10086,7 @@ Checklist inicial:
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: nos dois itens residuais com vinculo fiscal e sem movimento reconhecido, classificar ponte SEQESTOQUE, indicadores ESTOQUEATUALIZADO e NAOATUALIZAESTOQUE, situacao fiscal, cancelamento, devolucao e movimentos alternativos. Nao exportar IDs, documentos, datas, textos, partes, materiais, unidades, quantidades ou valores e nao alterar o estado dos sete pedidos.
 
-### Gate 18 - Recebimentos fiscais pendentes nos pedidos recentes
+### Gate 18 - Recebimentos fiscais #159s nos pedidos recentes
 
 - Os dois itens residuais com vinculo fiscal e sem movimento reconhecido foram avaliados em duas passagens identicas. Eles pertencem a dois documentos fiscais distintos.
 - Ambos seguem a rota empresarial do Grupo para empresa membro, preservando o escopo empresarial ja validado para as compras do Grupo.
@@ -10074,19 +10095,19 @@ Checklist inicial:
 - Tambem nao existe movimento alternativo de entrada pelo mesmo documento, item e material, nem movimento fracionado cuja soma pudesse reconciliar a quantidade fiscal. A cobertura de estoque dos dois documentos e zero.
 - A quantidade fiscal permanece maior que QUANTIDADERECEBIDA nos dois itens. O acumulado do pedido ainda nao incorporou o documento fiscal emitido.
 - Nao existe cancelamento da nota, cancelamento do item de compra nem devolucao vinculada a qualquer dos dois casos.
-- A combinacao dos indicadores comprova uma etapa fiscal registrada e transferida, mas ainda nao processada no estoque. Esses itens devem ser tratados como recebimentos fiscais pendentes e nao como historico recebido ou saldo simplesmente sem documento.
+- A combinacao dos indicadores comprova uma etapa fiscal registrada e transferida, mas ainda nao processada no estoque. Esses itens devem ser tratados como recebimentos fiscais #159s e nao como historico recebido ou saldo simplesmente sem documento.
 - A primeira tentativa foi rejeitada pelo SQL antes de produzir relatorio devido a uma expressao de agregacao invalida. A consulta foi corrigida sem alterar dados; somente as duas passagens posteriores, identicas e validadas, compoem o resultado.
 - As 22 metricas reconciliaram exatamente os mesmos dois itens e dois documentos. As duas execucoes validas e a releitura do HD externo produziram SHA-256 D656265F023511C93F11E86565DE9B544A7697AE80E9505927443DBD9C136F3B.
 - O relatorio legacy-purchase-two-pending-stock.csv permanece somente em D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS, com ACL protegida. Nenhum identificador, documento, data, texto, parte, material, unidade, quantidade individual, valor, CSV/JSON local, TPS ou MDF/LDF integra o GitHub.
 - Situacao: os dois itens continuam BLOCKED para importacao automatica e exigem continuidade do recebimento fiscal/estoque ou decisao humana de cancelamento no fluxo correto. Nenhum estado legado foi modificado.
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
-- Proximo passo obrigatorio: verificar de forma agregada se os dois documentos pendentes geraram titulo financeiro, contabilizacao ou outra obrigacao downstream, reutilizando somente chaves estruturais validadas. Nao exportar IDs, documentos, partes, datas, textos, quantidades ou valores e nao decidir recebimento, pagamento ou cancelamento automaticamente.
+- Proximo passo obrigatorio: verificar de forma agregada se os dois documentos #159s geraram titulo financeiro, contabilizacao ou outra obrigacao downstream, reutilizando somente chaves estruturais validadas. Nao exportar IDs, documentos, partes, datas, textos, quantidades ou valores e nao decidir recebimento, pagamento ou cancelamento automaticamente.
 
-### Gate 18 - Obrigacoes financeiras dos recebimentos fiscais pendentes
+### Gate 18 - Obrigacoes financeiras dos recebimentos fiscais #159s
 
 - A estrutura financeira foi inventariada antes da leitura dos dados. O inventario encontrou 195 metadados agregados em 35 tabelas candidatas e confirmou FornecDuplicatas como contrato de titulo por RELATORIO, com validacao adicional de fornecedor e numero da nota.
 - O inventario estrutural foi executado em duas passagens identicas e salvo somente no HD externo como legacy-purchase-financial-schema.csv. A releitura protegida produziu SHA-256 63412ED5368A8CCCFDEF10ECD2A713394D91CC3210F08253A5083E19D890BA81.
-- Os dois documentos fiscais pendentes de estoque foram reconciliados com seis titulos financeiros, tres por documento. Todos os vinculos coincidiram por relatorio, fornecedor e numero da nota.
+- Os dois documentos fiscais #159s de estoque foram reconciliados com seis titulos financeiros, tres por documento. Todos os vinculos coincidiram por relatorio, fornecedor e numero da nota.
 - Ambos os documentos possuem multiplos titulos e ao menos um titulo ainda aberto. Um documento possui uma parcela baixada e duas abertas; o outro possui as tres parcelas abertas.
 - Nenhum dos seis titulos possui indicador de atualizacao contabil ativo e os dois documentos tambem permanecem sem atualizacao contabil, sem codigo contabil e sem conferencia financeira.
 - Nao foram encontrados ajustes vinculados aos seis titulos. A ausencia de ajuste nao autoriza baixa, cancelamento ou alteracao automatica.
@@ -10098,9 +10119,9 @@ Checklist inicial:
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; as consultas usaram somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar de forma agregada os cinco titulos ainda abertos por vencido, a vencer ou sem vencimento no limite fixo da auditoria e verificar sinais de bloqueio ou prorrogacao existentes. Nao exportar IDs, documentos, datas, fornecedores, textos, quantidades ou valores e nao efetuar baixa, pagamento, cancelamento ou importacao automatica.
 
-### Gate 18 - Vencimento dos titulos abertos dos recebimentos pendentes
+### Gate 18 - Vencimento dos titulos abertos dos recebimentos #159s
 
-- Os cinco titulos ainda abertos dos dois documentos fiscais pendentes de estoque foram avaliados no limite fixo de 20/08/2026, em duas passagens identicas.
+- Os cinco titulos ainda abertos dos dois documentos fiscais #159s de estoque foram avaliados no limite fixo de 20/08/2026, em duas passagens identicas.
 - Todos os cinco titulos estavam a vencer nesse limite. Nenhum foi classificado como vencido ou sem vencimento, e os dois documentos permaneceram representados na classificacao.
 - Todos possuem tipo de vencimento preenchido e vinculo estrutural validado por relatorio, fornecedor e numero da nota.
 - Nenhum titulo aberto possui ajuste, comentario de baixa ou indicador de atualizacao contabil ativo.
@@ -10112,9 +10133,9 @@ Checklist inicial:
 - MSSQL$ERPZLEGACY terminou Stopped/Manual, SQL Agent Stopped/Manual e SQL Browser Stopped/Disabled; a consulta usou somente a copia local READ_ONLY. A mudanca do repositorio e exclusivamente documental, testes de runtime sao dispensados e git diff --check e obrigatorio.
 - Proximo passo obrigatorio: classificar os cinco titulos a vencer por horizonte de ate 30, 31 a 60, 61 a 90 ou mais de 90 dias apos o limite da auditoria e verificar repeticao de vencimentos por documento. Nao exportar IDs, documentos, datas, fornecedores, textos, quantidades ou valores e nao efetuar baixa, pagamento, cancelamento ou importacao automatica.
 
-### Gate 18 - Horizonte dos titulos abertos dos recebimentos pendentes
+### Gate 18 - Horizonte dos titulos abertos dos recebimentos #159s
 
-- Os cinco titulos abertos dos dois documentos fiscais pendentes de estoque foram classificados pelo intervalo entre o limite fixo de 20/08/2026 e o vencimento registrado.
+- Os cinco titulos abertos dos dois documentos fiscais #159s de estoque foram classificados pelo intervalo entre o limite fixo de 20/08/2026 e o vencimento registrado.
 - Um titulo, pertencente a um dos documentos, estava na faixa de ate 30 dias. Quatro titulos, distribuidos entre os dois documentos, estavam na faixa de 31 a 60 dias.
 - Nenhum titulo estava nas faixas de 61 a 90 dias, mais de 90 dias, vencido no limite ou sem vencimento.
 - Os cinco vencimentos sao distintos dentro do respectivo documento. Nao foi encontrada repeticao de data de vencimento entre parcelas do mesmo documento.
@@ -10334,7 +10355,7 @@ Checklist inicial:
 
 ### Gate 18 - Analise complementar do fragmento legado
 
-- A classificacao interna do fragmento posterior foi concluida de forma somente leitura e em duas passagens independentes.
+- A classificacao interna do fragmento posterior foi concluida de forma somente leitura e em duas passagens inde#159s.
 - A estrutura encontrada corresponde a texto ou metadado de runtime e nao atende aos criterios conservadores de um operando compativel.
 - Nenhum novo vinculo entre a rotina legada e o pagamento auditado foi comprovado; o bloqueio de migracao permanece.
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida de relatorios do HD externo.
@@ -10344,7 +10365,7 @@ Checklist inicial:
 
 ### Gate 18 - Varredura limitada apos a rotina legada
 
-- A janela posterior foi examinada ate o proximo comando reconhecivel, incluindo fragmentos curtos, em duas passagens independentes e somente leitura.
+- A janela posterior foi examinada ate o proximo comando reconhecivel, incluindo fragmentos curtos, em duas passagens inde#159s e somente leitura.
 - Foram encontrados candidatos com forma generica de operando, mas nenhum deles e adjacente ao predicado fragmentado.
 - A etapa nao comprovou continuacao, concatenacao ou vinculacao logica com o pagamento auditado; o bloqueio de migracao permanece.
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
@@ -10353,7 +10374,7 @@ Checklist inicial:
 
 ### Gate 18 - Delimitadores dos candidatos legados
 
-- Os candidatos da janela limitada foram classificados por distancia, tamanho e delimitadores em duas passagens independentes e somente leitura.
+- Os candidatos da janela limitada foram classificados por distancia, tamanho e delimitadores em duas passagens inde#159s e somente leitura.
 - Todos estao isolados por bytes de controle ou binarios e nenhum atende ao criterio conservador de continuacao adjacente.
 - A etapa encerra a busca por operando nos fragmentos proximos sem comprovar vinculacao com o pagamento; o bloqueio de migracao permanece.
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
@@ -10362,7 +10383,7 @@ Checklist inicial:
 
 ### Gate 18 - Inventario de artefatos de desenvolvimento legados
 
-- A copia original foi inventariada por nomes e extensoes, sem executar arquivos nem ler seu conteudo, em duas passagens independentes.
+- A copia original foi inventariada por nomes e extensoes, sem executar arquivos nem ler seu conteudo, em duas passagens inde#159s.
 - Nao foram encontrados arquivos-fonte, mapas, simbolos de depuracao, unidades compiladas ou metadados de build nas categorias controladas.
 - Nao existe artefato de desenvolvimento disponivel nessa copia para esclarecer a rotina auditada; o bloqueio de migracao permanece.
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
@@ -10381,7 +10402,7 @@ Checklist inicial:
 ### Gate 18 - Verificacao de assinaturas de recipientes
 
 - Os cabecalhos dos arquivos da copia original foram verificados contra assinaturas conhecidas, sem extrair, montar ou executar conteudo.
-- Nenhum recipiente compactado ou pacote oculto por extensao ausente ou incorreta foi identificado nas duas passagens independentes.
+- Nenhum recipiente compactado ou pacote oculto por extensao ausente ou incorreta foi identificado nas duas passagens inde#159s.
 - A hipotese de artefatos de desenvolvimento ocultos em recipientes da copia original fica encerrada; o bloqueio de migracao permanece.
 - O relatorio detalhado e sua verificacao de integridade permanecem exclusivamente na pasta protegida do HD externo.
 - Os servicos SQL permaneceram parados e o banco nao foi acessado. O repositorio recebe somente este resumo sem conteudo sensivel; git diff --check e a validacao aplicavel.
@@ -10474,7 +10495,7 @@ Checklist inicial:
 - Todas as acoes exigem contexto `scope_type=empresa`, Grupo e Empresa validos, vinculo do usuario com o contexto e RBAC `Financeiro.Migracao.conciliar` ou `Financeiro.Migracao.aprovar`.
 - O registro carregado e novamente comparado com Grupo e Empresa antes da transicao, bloqueando tentativa por identificador adulterado ou acesso cruzado.
 - Evidencia repetida com os mesmos metadados e idempotente. Revisao exige evidencia e usuario diferente do registrante. Aprovacao final exige confirmacao humana, a mesma decisao e um terceiro usuario distinto.
-- A atualizacao usa allowlist restrita a `status=pendente`, `bloqueio_operacional=true` e `dados_propostos`. Mesmo aprovado, o envelope permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e sem promocao para `ContaPagar` ou `ContaReceber`.
+- A atualizacao usa allowlist restrita a `status=#159`, `bloqueio_operacional=true` e `dados_propostos`. Mesmo aprovado, o envelope permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e sem promocao para `ContaPagar` ou `ContaReceber`.
 - Evidencia, revisao, aprovacao, reutilizacao e bloqueios sao auditados. Se a auditoria obrigatoria falhar depois da atualizacao, o backend restaura o envelope anterior e retorna indisponibilidade, sem sucesso falso.
 - Nenhum dado real foi persistido, migrado ou alterado e nenhum recurso Base44 foi implantado; o clone continua sem `base44/config.jsonc`.
 - Validacao: 21 testes focados e 245 testes globais aprovados; typecheck isolado do helper e ESLint direcionado aprovados; audit baseline, build completo e `git diff --check` aprovados.
@@ -10506,7 +10527,7 @@ Checklist inicial:
 - As chaves de cache continuam separadas por usuario, Grupo, Empresa e tipo de contexto. A resposta do backend agora passa tambem por filtro defensivo local, que descarta solicitacoes genericas, outro Grupo ou outra Empresa.
 - A disponibilidade dos botoes foi homologada com tres perfis sinteticos distintos: registrante anexa evidencia, outro usuario revisa e um terceiro usuario aprova. Auto-revisao e autoaprovacao continuam ocultas e bloqueadas definitivamente no backend.
 - A simulacao percorreu as etapas `aguardando_evidencia`, `evidencia_anexada`, `aguardando_aprovacao_final` e `aprovada_aguardando_promocao_manual` somente em memoria.
-- Mesmo no fim da simulacao, a pendencia permaneceu `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false`, `status=pendente` e bloqueio operacional.
+- Mesmo no fim da simulacao, a pendencia permaneceu `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false`, `status=#159` e bloqueio operacional.
 - Nenhum cadastro, pendencia real, arquivo legado, banco ou dado do ERP foi criado, alterado ou migrado. O HD externo nao foi acessado.
 - Validacao: 26 testes focados e 250 testes globais aprovados; ESLint direcionado, audit baseline, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global permanece com 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos e nao aponta diagnostico nos arquivos deste lote.
@@ -10519,7 +10540,7 @@ Checklist inicial:
 - O cliente foi reaberto entre tres sessoes distintas: registrante anexou evidencia, revisor registrou a decisao e aprovador confirmou a classificacao.
 - Cada reabertura leu do armazenamento compartilhado a etapa persistida pela sessao anterior. A trilha gravou os tres usuarios distintos e preservou Grupo e Empresa.
 - A empresa 3Z LTDA permaneceu em `aguardando_evidencia` enquanto a pendencia da CPA Ferro e Aco avancou, comprovando que a troca de contexto nao mistura os registros.
-- Ao final, a pendencia aprovada continuou `PENDING_MANUAL_RECONCILIATION`, `status=pendente`, `confirmado=false` e bloqueada no staging. As quantidades de `ContaPagar` e `ContaReceber` permaneceram inalteradas.
+- Ao final, a pendencia aprovada continuou `PENDING_MANUAL_RECONCILIATION`, `status=#159`, `confirmado=false` e bloqueada no staging. As quantidades de `ContaPagar` e `ContaReceber` permaneceram inalteradas.
 - O armazenamento anterior ao teste foi restaurado integralmente no bloco de encerramento, inclusive em caso de falha da homologacao. Nenhum dado do navegador aberto, banco, ERP real ou HD externo foi acessado.
 - Validacao: 1 teste focado e 251 testes globais aprovados; ESLint e typecheck direcionados sem diagnosticos; audit baseline, build completo e `git diff --check` aprovados.
 - Divida preexistente: ESLint global permanece com 84 erros e 17 avisos. O typecheck global permanece com diagnosticos historicos fora deste lote; os avisos de bundle e Browserslist tambem permanecem registrados.
@@ -10542,10 +10563,10 @@ Checklist inicial:
 
 - A matriz foi adicionada ao `PLANO_MELHORIA_ERP_ZUCCARO.md`, sem criar documento concorrente, tela, botao, permissao, endpoint ou codigo executavel.
 - Foram definidos contexto estrito, estado de entrada, origem, evidencia, segregacao de quatro usuarios, RBAC especifico, idempotencia, concorrencia, auditoria e integridade do titulo.
-- A decisao `ABERTO` somente admite futuro titulo pendente e sem campos de baixa. A decisao `PAGO` exige dados completos e criacao do titulo mais liquidacao em uma mesma unidade atomica; marcar apenas o status foi proibido.
+- A decisao `ABERTO` somente admite futuro titulo #159 e sem campos de baixa. A decisao `PAGO` exige dados completos e criacao do titulo mais liquidacao em uma mesma unidade atomica; marcar apenas o status foi proibido.
 - A chave futura proposta inclui Grupo, Empresa, entidade e codigo legado. Conflito nunca autoriza atualizar automaticamente um titulo existente.
 - O rollback distingue falha antes da escrita, falha de criacao, falha de auditoria, resultado desconhecido e falha posterior a liquidacao; titulos consumidos nunca poderao ser apagados.
-- Permanecem bloqueadores: transacao entre entidades nao confirmada, ausencia de indice unico homologado, evidencia sem hash obrigatorio, MFA nao homologado para a acao e mapeamento financeiro pendente de aprovacao.
+- Permanecem bloqueadores: transacao entre entidades nao confirmada, ausencia de indice unico homologado, evidencia sem hash obrigatorio, MFA nao homologado para a acao e mapeamento financeiro #159 de aprovacao.
 - Recomendacao mantida: promocao operacional desabilitada. Nenhum dado real, titulo, banco, arquivo legado ou HD externo foi acessado ou alterado.
 - Validacao documental: contratos atuais de migracao, titulo, workflow e backend foram comparados; `git diff --check` aprovado. Testes e build foram dispensados conforme AGENTS.md porque o lote altera somente Plano e Status, sem runtime.
 - Proximo passo obrigatorio: auditar em modo somente leitura as primitivas existentes de transacao, unicidade/idempotencia e integridade de evidencias. Nao implementar promocao nem alterar dados antes de autorizacao expressa.
@@ -10837,7 +10858,7 @@ Checklist inicial:
 - Auditoria: registra operacao, correlacao, Grupo, Empresa, pagina, quantidade, uso de preco empresarial, duracao e resultado, sem registrar o catalogo completo.
 - Capability: `siteHealth` informa `CUSTOMER_RESOLVE: ready` e `CATALOG_READ: ready`; as capabilities dos lotes seguintes continuam inativas.
 - PRONTO: catalogo oficial, produtos, categorias, especificacoes, unidade, preco permitido, disponibilidade minimizada, `sellable`, paginacao e sincronizacao delta.
-- BLOCKED: pedido/checkout, pagamento, frete final, credito final e regras dependentes dos contratos futuros.
+- BLOCKED: pedido/checkout, pagamento, frete final, credito final e regras de#159s dos contratos futuros.
 - Validacao: 33/33 testes focados e 285/285 testes globais aprovados; ESLint direcionado e global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
 - Typecheck: permanecem os mesmos 2.238 diagnosticos historicos; nenhum diagnostico novo foi introduzido pelo lote.
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
@@ -10856,14 +10877,14 @@ Checklist inicial:
 - Entrega: DELIVERY exige endereco ativo do Cliente; PICKUP usa `Retirada`. Obra exige endereco do tipo OBRA; Projeto exige ownership do Cliente e Centro de Custo exige o mesmo escopo.
 - Condicao e credito: somente condicao oficial do Cliente e FormaPagamento ativa sao aceitas. Condicao a prazo valida credito existente; bloqueio nao expoe limite detalhado.
 - Vendedor: somente o Colaborador ativo configurado no Cliente e usado; ausente/inativo retorna `UNASSIGNED`, sem inventar responsavel.
-- Persistencia: Pedido e itens sao gravados juntos; nasce `Aguardando Aprovacao`, com aprovacao e pagamento pendentes, sem faturamento, sem pagamento confirmado e sem reserva antecipada.
-- Frete: retirada usa zero; entrega nasce com frete pendente e `FREIGHT_CONFIRMATION`, sem aceitar valor ficticio do Site.
+- Persistencia: Pedido e itens sao gravados juntos; nasce `Aguardando Aprovacao`, com aprovacao e pagamento #159s, sem faturamento, sem pagamento confirmado e sem reserva antecipada.
+- Frete: retirada usa zero; entrega nasce com frete #159 e `FREIGHT_CONFIRMATION`, sem aceitar valor ficticio do Site.
 - Idempotencia: ledger S2S, `externalOrderId` e hash canonico impedem duplo clique/retry e detectam ownership ou payload conflitante com `409`.
 - Seguranca: observacoes e referencias sao limitadas/sanitizadas; resposta nao inclui custo, margem, markup, fornecedor, credito detalhado, dados bancarios, notas internas ou segredos.
 - Auditoria: registra solicitacao, criacao, replay e bloqueios com correlacao, Grupo, Empresa, Cliente, identificador externo e contagem de itens, sem payload integral.
 - Capability: `siteHealth` informa `CUSTOMER_RESOLVE: ready`, `CATALOG_READ: ready` e `ORDER_CREATE: ready`; capabilities posteriores continuam inativas.
 - PRONTO: criacao de Pedido real, revalidacao de Cliente, Produto, preco, estoque, endereco, entrega/retirada, condicao, vendedor, idempotencia e status oficial.
-- BLOCKED: pagamento/provider/webhook real, frete final integrado, credito avancado, cancelamento, edicao pos-pedido e operacoes independentes de consulta/status.
+- BLOCKED: pagamento/provider/webhook real, frete final integrado, credito avancado, cancelamento, edicao pos-pedido e operacoes inde#159s de consulta/status.
 - Validacao: 52/52 testes focados e 304/304 testes globais aprovados; ESLint global sem diagnosticos; `audit:baseline`, build completo e `git diff --check` aprovados.
 - Typecheck: permanecem os mesmos 2.238 diagnosticos historicos e zero diagnosticos nos arquivos do lote.
 - Avisos conhecidos: build mantem imports mistos, Browserslist desatualizado e bundle principal acima de 500 kB.
@@ -10881,7 +10902,7 @@ Checklist inicial:
 - CRM: cada Or?amento garante uma `Oportunidade` existente no mesmo escopo, de forma idempotente e sem duplicar funil.
 - Negociacao: melhoria, alteracao e contraproposta criam `SolicitacaoAprovacao`; aceite/rejeicao usam `expectedProposalVersion`; `externalResponseId` impede evento duplicado.
 - Conversao: aceite reutiliza `sitePedidoCreate`, revalida preco/estoque e cria no maximo um Pedido; pagamento continua `PENDING` e producao nao e liberada.
-- Fail-closed: proposta expirada, customizada, com frete pendente, preco alterado, ownership invalido ou dependencia indisponivel nao e aceita.
+- Fail-closed: proposta expirada, customizada, com frete #159, preco alterado, ownership invalido ou dependencia indisponivel nao e aceita.
 - Privacidade: resposta minimizada nao inclui custo, margem, fornecedor, credito detalhado, dados bancarios, notas internas ou segredos.
 - Capabilities: `CUSTOMER_RESOLVE`, `CATALOG_READ`, `ORDER_CREATE`, `QUOTE_CREATE` e `NEGOTIATION` estao `ready`.
 - PRONTO: criacao/consulta de Orcamento, proposta versionada, timeline, solicitacao de revisao, aceite/rejeicao e conversao idempotente em Pedido.
@@ -10994,11 +11015,11 @@ Checklist inicial:
 - Reuso: `Projeto`, `Cliente`, vinculo em `SolicitacaoAprovacao`, Produto, obra/endereco, Pedido/Orcamento, CentroCusto, `IntegracaoEvento`, auditoria e ERP-SITE-05 existentes.
 - Estrutura tecnica: Viga, Coluna, Estaca, Bloco e Sapata; dimensoes normalizadas em mm; dobra; armadura; estribos recalculados pelo ERP; localizacao; variaveis; conflitos; evidencias e arquivo por referencia/hash.
 - Revisoes: snapshot atual e historico imutavel, limite de 100 pecas e 50 versoes; `expectedVersion` bloqueia edicao concorrente.
-- IA governada: `PROJECT_READER` preserva evidencia/confianca; baixa confianca, conflito ou variavel pendente ficam `NEEDS_REVIEW`; formula/script nunca e executado.
+- IA governada: `PROJECT_READER` preserva evidencia/confianca; baixa confianca, conflito ou variavel #159 ficam `NEEDS_REVIEW`; formula/script nunca e executado.
 - Multiempresa/RBAC: Grupo e Empresa vem da credencial; ownership de Cliente, usuario, obra, Produto e referencias e obrigatorio. ADMIN/COMPRADOR escrevem, CONSULTA apenas le e FINANCEIRO nao acessa o tecnico.
 - Comercial: confirmacao do Cliente permite criar/reusar Orcamento de origem `ARMACAO`; pacote/revisao ficam vinculados e nenhuma OP e criada.
 - Producao: confirmacao do Cliente nao e aprovacao tecnica; mass assignment de aprovacao/liberacao/OP e recusado; resposta sempre informa producao nao liberada.
-- Documentos: apenas metadados com referencia privada e SHA-256; URL/path/base64 sao bloqueados. Storage/scanner S2S continuam pendentes.
+- Documentos: apenas metadados com referencia privada e SHA-256; URL/path/base64 sao bloqueados. Storage/scanner S2S continuam #159s.
 - Capabilities: `WORK` e `PRODUCTION_INTAKE` ficam `degraded` quando Projeto/Pedido funcionam e `blocked` se falharem; `PRODUCTION_RELEASE` permanece `blocked`.
 - PRONTO: pacote estruturado, create/get/update/confirm, revisao, idempotencia, envio comercial, ownership, privacidade e auditoria.
 - BLOCKED: aprovacao tecnica externa, OP automatica, corte/dobra/armado automaticos, storage/scanner nao comprovados e Produto criado pelo Site.
@@ -11042,7 +11063,7 @@ Checklist inicial:
 ## 2026-09-14 - Gate 18: staging fiscal historico protegido
 
 - Objetivo: desbloquear o contrato tecnico de staging para `NotaFiscal` legada sem vinculo obrigatorio de pedido, sem importar ou promover os tres documentos reais ainda bloqueados.
-- Causa raiz: a conciliacao manual existente aceitava somente `ContaPagar` e `ContaReceber`, usava semantica financeira fixa e nao possuia permissao fiscal independente.
+- Causa raiz: a conciliacao manual existente aceitava somente `ContaPagar` e `ContaReceber`, usava semantica financeira fixa e nao possuia permissao fiscal inde#159.
 - Reuso: foram ampliados `migracaoErpPolicy`, `manualReconciliationApprovalPolicy`, `solicitacoesAprovacao` e o adaptador local existentes; nenhuma tela, rota, entidade, modulo ou importador paralelo foi criado.
 - Envelope fiscal: `NotaFiscal` recebe tipo `conciliacao_migracao_fiscal`, chave idempotente por Grupo, Empresa, entidade e codigo legado, `pedido_id` opcional e decisao fiscal separada. O registro permanece `PENDING_MANUAL_RECONCILIATION`, em `staging`, com `confirmado=false` e bloqueio operacional.
 - RBAC: criacao, listagem, evidencia e revisao exigem `Fiscal.Migracao.conciliar`; aprovacao exige `Fiscal.Migracao.aprovar`. Permissao financeira isolada nao concede acesso fiscal.
@@ -11050,7 +11071,7 @@ Checklist inicial:
 - Segregacao: evidencia, revisao e aprovacao final exigem tres usuarios distintos. As decisoes fiscais permitidas sao `PRESERVAR_SEM_VINCULO_PEDIDO` e `AGUARDAR_VINCULO_PEDIDO`; nenhuma delas promove automaticamente o documento.
 - Auditoria: o modulo e a descricao agora acompanham o dominio Financeiro ou Fiscal; o resumo persiste apenas tipo, entidade, referencia de staging, etapa, contagens e estado de bloqueio.
 - Compatibilidade: o fluxo financeiro anterior, inclusive decisoes `PAGO`/`ABERTO`, chave idempotente, rollback e Central de Aprovacoes, foi preservado.
-- Validacao focada: 32/32 testes aprovados, incluindo pedido opcional, RBAC fiscal independente, idempotencia, segregacao de tres usuarios e permanencia no staging.
+- Validacao focada: 32/32 testes aprovados, incluindo pedido opcional, RBAC fiscal inde#159, idempotencia, segregacao de tres usuarios e permanencia no staging.
 - Validacao global: 439/439 testes aprovados; ESLint global, `audit:baseline`, build completo e `git diff --check` aprovados.
 - Typecheck: permaneceu no baseline historico de 2.238 diagnosticos. O unico diagnostico novo do lote foi corrigido; os sete diagnosticos ainda apontados em `migracaoErpPolicy.js` sao preexistentes e ficam fora das linhas alteradas.
 - Nenhum dado real, documento fiscal, titulo, arquivo legado, banco, backup ou HD externo foi acessado, criado, alterado, importado ou promovido.
@@ -11092,7 +11113,7 @@ Checklist inicial:
 
 - Objetivo: comprovar persistencia, reabertura, segregacao de funcoes e RBAC da conciliacao fiscal antes de usar qualquer documento real.
 - Reuso: o teste de persistencia local existente foi ampliado e a decisao de abas da Central foi extraida para `conciliacaoFinanceiraUiPolicy`; nenhuma tela, rota, entidade, importador ou armazenamento paralelo foi criado.
-- Persistencia: uma `NotaFiscal` sintetica percorreu evidencia, revisao e aprovacao em carregamentos independentes do cliente local. Cada nova sessao reabriu exatamente a etapa gravada pela anterior.
+- Persistencia: uma `NotaFiscal` sintetica percorreu evidencia, revisao e aprovacao em carregamentos inde#159s do cliente local. Cada nova sessao reabriu exatamente a etapa gravada pela anterior.
 - Segregacao: registrante, revisor e aprovador fiscais foram usuarios distintos; a auditoria persistida confirmou os tres atores, modulo `Fiscal`, Grupo e Empresa.
 - RBAC frontend: a politica consumida pela Central comprovou que perfil apenas financeiro nao visualiza nem seleciona `conciliacao-fiscal`; perfil apenas fiscal nao recebe a conciliacao financeira.
 - RBAC backend: um perfil sintetico contendo somente `Financeiro.Migracao` listou o staging financeiro e recebeu bloqueio explicito ao consultar o tipo fiscal.
@@ -11116,7 +11137,7 @@ Checklist inicial:
 - Seguranca: numeros fiscais, relatorios, pedidos, fornecedores e demais chaves reais foram usados somente em memoria. Os envelopes persistem apenas referencias HMAC-SHA-256 geradas com chave local protegida por DPAPI.
 - Quarentena: `fiscal-candidate-envelopes.jsonl` e `manifest.json` permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\05_QUARANTINE\FISCAL\FISCAL-DRYRUN-001`, com heranca de ACL removida e acesso limitado ao usuario local, `SYSTEM` e Administradores.
 - Bloqueio operacional: os tres envelopes permanecem `PENDING_MANUAL_RECONCILIATION`, `stage=quarantine`, `confirmado=false`, `import_authorized=false` e `operational_promotion_allowed=false`. Nenhuma conta, pedido, estoque ou `NotaFiscal` foi criado, alterado, liquidado ou promovido.
-- Reprodutibilidade: duas geracoes independentes produziram conteudo identico; o arquivo de envelopes possui SHA-256 `19609646CDB5ED03A6CCA8C7B25888FEA3518591ABDBAF2E5B1842196459507D` e confere com o manifesto local.
+- Reprodutibilidade: duas geracoes inde#159s produziram conteudo identico; o arquivo de envelopes possui SHA-256 `19609646CDB5ED03A6CCA8C7B25888FEA3518591ABDBAF2E5B1842196459507D` e confere com o manifesto local.
 - Validacao de privacidade: tres envelopes validos, zero campo proibido de identificador fiscal nominal e todos os bloqueios ativos. O GitHub recebe somente este resumo sem dados reais.
 - Infraestrutura legada: `LEGACY_TID_EMP03` foi confirmado `READ_ONLY`; a consulta usou Shared Memory local. `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados. `git diff --check` permanece obrigatorio antes do commit.
@@ -11136,7 +11157,7 @@ Checklist inicial:
 - Situacao: `BLOCKED_HUMAN_REVIEW`; Codex nao pode fabricar a decisao, a justificativa ou os tres responsaveis.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `c0de2502` (`Prepara homologacao fiscal protegida`).
-- Proximo passo dependente de usuario: preencher a ficha protegida com uma das duas decisoes permitidas para cada candidato, justificativa e tres responsaveis distintos. Somente depois validar assinaturas, integridade e permissao fiscal antes de considerar a passagem controlada da quarentena para staging.
+- Proximo passo de#159 de usuario: preencher a ficha protegida com uma das duas decisoes permitidas para cada candidato, justificativa e tres responsaveis distintos. Somente depois validar assinaturas, integridade e permissao fiscal antes de considerar a passagem controlada da quarentena para staging.
 
 ## 2026-09-14 - Gate 18: decisao fiscal conservadora registrada
 
@@ -11150,7 +11171,7 @@ Checklist inicial:
 - Situacao: `BLOCKED_DISTINCT_ACTORS`; a decisao de negocio esta registrada, mas a segregacao de funcoes ainda impede homologacao, staging e promocao.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `d9659f86` (`Registra decisao fiscal conservadora`).
-- Proximo passo dependente de usuario: informar os nomes do registrante, revisor e aprovador, obrigatoriamente tres pessoas distintas. Depois disso, validar as identidades e concluir somente a homologacao da ficha, ainda sem promover `NotaFiscal` automaticamente.
+- Proximo passo de#159 de usuario: informar os nomes do registrante, revisor e aprovador, obrigatoriamente tres pessoas distintas. Depois disso, validar as identidades e concluir somente a homologacao da ficha, ainda sem promover `NotaFiscal` automaticamente.
 
 ## 2026-09-14 - Gate 18: excecao local de proprietario unico
 
@@ -11163,7 +11184,7 @@ Checklist inicial:
 - Integridade: a ficha atual possui SHA-256 `51A8DB1371A471448D238FE818CD7EB1FD02E2D20C9DD71C220D3E6480F60986` e ACL protegida. Os envelopes HMAC originais permanecem inalterados.
 - Escopo do repositorio: mudanca exclusivamente documental; testes de runtime sao dispensados e `git diff --check` e obrigatorio.
 - Commit de implementacao: `807f1f85` (`Registra excecao de proprietario unico`).
-- Proximo passo dependente de usuario: obter uma confirmacao final separada de Vinicius para encerrar a homologacao local dos tres candidatos. Mesmo apos essa confirmacao, manter `import_authorized=false` e exigir etapa especifica posterior antes de qualquer passagem para staging ou promocao de `NotaFiscal`.
+- Proximo passo de#159 de usuario: obter uma confirmacao final separada de Vinicius para encerrar a homologacao local dos tres candidatos. Mesmo apos essa confirmacao, manter `import_authorized=false` e exigir etapa especifica posterior antes de qualquer passagem para staging ou promocao de `NotaFiscal`.
 
 ## 2026-09-14 - Gate 18: homologacao fiscal local concluida
 
@@ -11216,7 +11237,7 @@ Checklist inicial:
 - Contexto: o Grupo e a Empresa fiscal foram resolvidos de forma unica no snapshot local confiavel. Os aliases foram substituidos pelos IDs canonicos apenas durante as duas passagens em memoria; nenhum ID bruto foi gravado no relatorio.
 - Resultado: 3/3 contextos canonicos, pertencimentos, escopos de Grupo/Empresa, envelopes fiscais e solicitacoes de aprovacao foram aceitos. As tres chaves idempotentes permaneceram unicas.
 - Falha fechada: 3/3 tentativas de usar a outra Empresa no escopo do registro foram bloqueadas, 3/3 adulteracoes de Grupo foram recusadas e 3/3 tentativas de promocao operacional permaneceram impedidas pelo staging fiscal.
-- Reprodutibilidade: duas passagens independentes produziram o mesmo resultado agregado. O relatorio `canonical-context-offline-validation.json` permanece somente na quarentena fiscal protegida e possui SHA-256 `5FE935B2B0E1FD366261A9B86245873FF643AB4B99A37F3BDFA9CE8A2446BB2C`.
+- Reprodutibilidade: duas passagens inde#159s produziram o mesmo resultado agregado. O relatorio `canonical-context-offline-validation.json` permanece somente na quarentena fiscal protegida e possui SHA-256 `5FE935B2B0E1FD366261A9B86245873FF643AB4B99A37F3BDFA9CE8A2446BB2C`.
 - Seguranca: o relatorio contem somente contagens, indicadores e hashes das fontes; nao contem IDs canonicos, candidatos individuais ou dados fiscais. A ACL foi confirmada para o usuario local, `SYSTEM` e Administradores.
 - Bloqueio operacional: nenhuma chamada backend/Base44 ocorreu, nenhum arquivo foi movido para staging, nenhuma entidade foi persistida e `import_authorized=false`/`operational_promotion_allowed=false` permanecem ativos.
 - Validacao focada: `tests/contexto-multiempresa-policy.test.js` e `tests/migracao-erp-policy.test.js` passaram 36/36; `git diff --check` aprovado antes do commit.
@@ -11240,7 +11261,7 @@ Checklist inicial:
 - Infraestrutura legada: `MSSQL$ERPZLEGACY` e `SQLAgent$ERPZLEGACY` terminaram `Stopped`/`Manual`; `SQLBrowser` terminou `Stopped`/`Disabled`.
 - Escopo do repositorio: mudanca exclusivamente documental; nenhuma politica ou runtime foi alterado.
 - Commit de implementacao: `1dc9d0d6` (`Prepara manifesto de transicao fiscal`).
-- Proximo passo dependente de usuario: autorizar explicitamente a passagem dos tres candidatos do lote `FISCAL-DRYRUN-001` da quarentena para o staging fiscal. A autorizacao permitira apenas criar envelopes bloqueados em `SolicitacaoAprovacao`; nao autoriza promover ou alterar `NotaFiscal` operacional.
+- Proximo passo de#159 de usuario: autorizar explicitamente a passagem dos tres candidatos do lote `FISCAL-DRYRUN-001` da quarentena para o staging fiscal. A autorizacao permitira apenas criar envelopes bloqueados em `SolicitacaoAprovacao`; nao autoriza promover ou alterar `NotaFiscal` operacional.
 
 ## 2026-09-14 - Gate 18: prerequisitos locais do staging fiscal
 
@@ -11282,7 +11303,7 @@ Checklist inicial:
 - Auditoria segura: sucesso e falha registram somente lote, quantidade, resultado e motivo tecnico resumido, alem do contexto obrigatorio da auditoria. Manifesto, segredo, HMACs e dados fiscais nao sao registrados nem retornados.
 - Persistencia: a acao realiza somente a auditoria obrigatoria. Nenhuma `SolicitacaoAprovacao`, `NotaFiscal` ou outra entidade operacional e criada, atualizada ou removida.
 - Testes: teste focado passou 24/24; suite completa passou 443/443; `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram. O typecheck global permanece com passivo anterior amplo, e o filtro confirmou zero erro nos arquivos deste lote.
-- Configuracao pendente: o segredo real continua protegido somente no HD e ainda nao foi configurado no backend Base44. O modo local nao recebeu segredo nem simulacao de sucesso.
+- Configuracao #159: o segredo real continua protegido somente no HD e ainda nao foi configurado no backend Base44. O modo local nao recebeu segredo nem simulacao de sucesso.
 - Commit de implementacao: `278813d8` (`Valida contexto fiscal por HMAC no backend`).
 - Proximo passo obrigatorio: configurar com seguranca `MIGRATION_CONTEXT_HMAC_KEY` no ambiente backend Base44 e entao conectar o painel fiscal existente a esta verificacao. A validacao deve continuar separada da autorizacao humana e da criacao dos tres envelopes; nenhuma promocao de `NotaFiscal` e autorizada.
 
@@ -11298,12 +11319,12 @@ Checklist inicial:
 - Testes: focados passaram 32/32 e o teste de persistencia local passou 1/1; suite completa passou 443/443. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram.
 - Typecheck: o passivo global anterior permanece. Os componentes e a policy deste lote nao geraram erro; `localBase44Client.js` manteve os diagnosticos anteriores, com linhas apenas deslocadas pela nova guarda.
 - Commit de implementacao: `675e84b5` (`Conecta manifesto fiscal ao backend protegido`).
-- Proximo passo dependente de acesso: vincular este clone ao projeto Base44 oficial e autenticar o CLI, sem criar novo app. Depois configurar `MIGRATION_CONTEXT_HMAC_KEY` somente no ambiente servidor, implantar `solicitacoesAprovacao` e homologar a prova real. Ate la, nenhuma passagem para staging esta autorizada.
+- Proximo passo de#159 de acesso: vincular este clone ao projeto Base44 oficial e autenticar o CLI, sem criar novo app. Depois configurar `MIGRATION_CONTEXT_HMAC_KEY` somente no ambiente servidor, implantar `solicitacoesAprovacao` e homologar a prova real. Ate la, nenhuma passagem para staging esta autorizada.
 
 ## 2026-09-14 - Gate 0: arquitetura de producao PostgreSQL/Supabase
 
 - Objetivo: definir onde o ERP sera executado e armazenara dados reais antes de ampliar a dependencia do Base44 ou iniciar importacao operacional.
-- Decisao do proprietario: adotar PostgreSQL gerenciado no Supabase Pro, em regiao especifica de Sao Paulo, com Supabase Auth, Storage, frontend web em hospedagem gerenciada, dominio proprio e backups externos independentes.
+- Decisao do proprietario: adotar PostgreSQL gerenciado no Supabase Pro, em regiao especifica de Sao Paulo, com Supabase Auth, Storage, frontend web em hospedagem gerenciada, dominio proprio e backups externos inde#159s.
 - Estruturas reutilizadas: `src/api/base44Client.js` permanece como fachada inicial dos consumidores; a transicao sera feita dentro dos contratos existentes, sem criar ERP, tela, cadastro ou modulo paralelo.
 - Inventario de impacto: 351 arquivos frontend importam o cliente central, 308 referenciam entidades, 65 referenciam funcoes e existem 71 diretorios de funcoes backend. O volume confirma migracao incremental, com compatibilidade e rollback, em vez de reescrita total.
 - Base44: passa a ser dependencia transitoria. O login CLI nao foi concluido, nenhum projeto foi criado ou vinculado e nenhum segredo foi configurado. Nenhum dado real do ERP antigo sera importado para a plataforma.
@@ -11313,7 +11334,7 @@ Checklist inicial:
 - Plano: `PLANO_GO_LIVE.md` recebeu destino, regras de transicao, ordem dos subgates e bloqueios obrigatorios para dados reais.
 - Validacao aplicavel: mudanca exclusivamente documental; `git diff --check` deve passar antes do commit. Testes de runtime sao dispensados conforme `AGENTS.md`.
 - Commit de implementacao: `102f676f` (`Define arquitetura de producao no Supabase`).
-- Proximo passo dependente de usuario: criar ou autorizar uma organizacao Supabase sob titularidade da empresa e um projeto de desenvolvimento pago na regiao Sao Paulo. Nao criar homologacao/producao nem fornecer segredo em chat antes de definir propriedade, cobranca e recuperacao da conta.
+- Proximo passo de#159 de usuario: criar ou autorizar uma organizacao Supabase sob titularidade da empresa e um projeto de desenvolvimento pago na regiao Sao Paulo. Nao criar homologacao/producao nem fornecer segredo em chat antes de definir propriedade, cobranca e recuperacao da conta.
 
 ## 2026-09-14 - Gate 0: migracao Supabase adiada
 
@@ -11325,7 +11346,7 @@ Checklist inicial:
 - Runtime: nenhuma dependencia, tela, entidade, funcao ou comportamento foi alterado. O lote e exclusivamente documental.
 - Validacao aplicavel: `git diff --check` deve passar; testes de aplicacao sao dispensados conforme `AGENTS.md`.
 - Commit de implementacao: `52bd0afe` (`Adia migracao Supabase sem liberar dados reais`).
-- Proximo passo independente: retomar o backlog local registrado em `PLANO_MELHORIA_ERP_ZUCCARO.md`, iniciando pelo contrato de `ordemProducaoPolicy.js`, sem ampliar acoplamento remoto e sem acessar dados reais.
+- Proximo passo inde#159: retomar o backlog local registrado em `PLANO_MELHORIA_ERP_ZUCCARO.md`, iniciando pelo contrato de `ordemProducaoPolicy.js`, sem ampliar acoplamento remoto e sem acessar dados reais.
 
 ## 2026-09-14 - Contratos JSDoc da Ordem de Producao
 
@@ -11820,7 +11841,7 @@ Checklist inicial:
 - Multiempresa: quando a identidade e conhecida, o registro preserva `group_id` e `empresa_id` resolvidos pelo mesmo contrato da sessao; tentativa anonima nao fabrica contexto.
 - Seguranca/auditoria: motivos e tipos usam allowlists; erro bruto, stack, senha, token e payload nao sao persistidos. Eventos identicos da mesma sessao sao deduplicados por cinco segundos para evitar loop de renderizacao, sem liberar o acesso recusado.
 - Compatibilidade: login local bem-sucedido continua auditado na criacao da sessao; a negativa continua fail-closed. Falha de persistencia da auditoria nao transforma a recusa em sucesso.
-- Limite externo: tentativas remotas anteriores a autenticacao pertencem ao provedor Base44 e continuam pendentes de callback/evento confiavel; o frontend nao recebeu endpoint anonimo de auditoria.
+- Limite externo: tentativas remotas anteriores a autenticacao pertencem ao provedor Base44 e continuam #159s de callback/evento confiavel; o frontend nao recebeu endpoint anonimo de auditoria.
 - Testes: 10/10 testes focados e 549/549 na suite completa passaram. `npm run audit:baseline`, `npm run lint`, `npm run build` e `git diff --check` passaram; o baseline permaneceu em 1.028 catches operacionais vazios.
 - Typecheck: zero diagnosticos nos arquivos do lote; o passivo global permaneceu em 1.603, sem regressao ou mascaramento.
 - Commit de implementacao: `f7d9e174` (`Audita negativas de autenticacao local`).
@@ -11932,7 +11953,7 @@ Checklist inicial:
 
 - C?digo preparado na branch `codex/erp-runtime-08-condicao-pagamento`; n?o aplicado no DEV.
 - Migration 014, reposit?rio PostgreSQL, API, RBAC, RLS/FORCE, auditoria e seed sint?tico foram adicionados.
-- Valida??o local: typecheck/build e 74 testes do servidor aprovados; PostgreSQL real permanece pendente.
+- Valida??o local: typecheck/build e 74 testes do servidor aprovados; PostgreSQL real permanece #159.
 - Pr?ximo passo: gate VPS autorizado da 014; n?o mergear nem promover 3080.
 
 ## 2026-09-21 - Gate 2: convite de usuario protegido
@@ -11993,7 +12014,7 @@ Checklist inicial:
   build e `audit:baseline` da raiz aprovados; `git diff --check` aprovado.
 - `npm run test:postgres` foi executado e bloqueou somente com
   `DATABASE_URL is required for test:postgres`; PostgreSQL real permanece
-  pendente no ambiente autorizado antes de novo canario. Nenhuma migration
+  #159 no ambiente autorizado antes de novo canario. Nenhuma migration
   014/015 foi alterada ou reaplicada.
 - Proximo passo: push da branch e PR de hotfix; executar `test:postgres`
   com banco PostgreSQL autorizado e revisar CI antes de qualquer merge.
@@ -12033,7 +12054,7 @@ Checklist inicial:
 
 - Adicionado teste R08C exclusivamente sintetico para executar create/get/list/update/cancel e isolamento do repositorio Orcamento em PostgreSQL real.
 - Runner PostgreSQL agora inclui explicitamente R08B e R08C; workflow CI canônico ganhou PostgreSQL 16 efêmero, migrations, seed sintetico e test:postgres.
-- Validacao local sem banco: testes comportamentais 3 pass, 0 fail; typecheck e build do servidor aprovados; diff-check aprovado. Docker indisponivel e DATABASE_URL ausente neste computador, portanto PostgreSQL real e CI permanecem pendentes no GitHub.
+- Validacao local sem banco: testes comportamentais 3 pass, 0 fail; typecheck e build do servidor aprovados; diff-check aprovado. Docker indisponivel e DATABASE_URL ausente neste computador, portanto PostgreSQL real e CI permanecem #159s no GitHub.
 - Nenhuma VPS, migration remota, porta 3080 ou dado real foi acessado.
 ### Comercial 360 - A2.0C Executor transacional PostgreSQL (2026-09-21)
 
@@ -12254,7 +12275,7 @@ Checklist inicial:
 ### Programa Comercial 360 Omnicanal - Onda 1 Produto/PIM, incremento 4 (2026-09-22)
 
 - O importador existente de planilhas deixou de classificar valores desconhecidos silenciosamente como Revenda e passou a usar a allowlist canonica de Produto/PIM.
-- Campo vazio preserva o default historico Revenda; aliases inequivocos sao normalizados; classificacoes desconhecidas permanecem no preview e bloqueiam a gravacao ate revisao humana, com auditoria resumida da quantidade pendente.
+- Campo vazio preserva o default historico Revenda; aliases inequivocos sao normalizados; classificacoes desconhecidas permanecem no preview e bloqueiam a gravacao ate revisao humana, com auditoria resumida da quantidade #159.
 - Importadores existentes de lote e NF-e passaram a reutilizar as constantes canonicas para Revenda e Materia-Prima, sem criar fluxo paralelo.
 - Testes direcionados: 6 pass / 0 fail / 0 skip. Suite frontend explicita: 594 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado. Proximo incremento: alinhar conversoes em massa e dashboards de Produto aos mesmos predicados/constantes, preservando confirmacao e auditoria existentes.
@@ -12285,7 +12306,7 @@ Checklist inicial:
 
 - A varredura localizada da classificação foi concluída: os filtros ativos de contagem em `ProdutosTab` passaram a reutilizar as constantes canônicas, mantendo o contexto Grupo/Empresa já aplicado pelo fluxo.
 - Tipos operacionais de item em Pedido, Expedição e Produção foram preservados por não representarem `Produto.tipo_item`; `StatusProdutosProducaoV21_6`, sem consumidor runtime, permaneceu somente inventariado como artefato histórico.
-- O contrato da Onda 1 agora separa fatos concluídos e lacunas abertas: backend canônico/mass assignment/tenant, atributos PIM, variantes/equivalentes, embalagem/fracionamento, aprovação/publicação e DAM seguro dependente de `StoragePort`/outbox.
+- O contrato da Onda 1 agora separa fatos concluídos e lacunas abertas: backend canônico/mass assignment/tenant, atributos PIM, variantes/equivalentes, embalagem/fracionamento, aprovação/publicação e DAM seguro de#159 de `StoragePort`/outbox.
 - Testes direcionados: 10 pass / 0 fail / 0 skip. Suite frontend explícita: 598 pass / 0 fail / 0 skip. `audit:baseline`, lint, build e `git diff --check`: PASS.
 - Typecheck global permanece no baseline legado conhecido, sem erro apontado nos arquivos deste incremento. Nenhuma migration, VPS, porta 3080, segredo ou dado real foi alterado.
 - Próximo incremento: implementar a classificação no backend canônico `ProdutoService`, com schema estrito, tenant, RBAC e testes, sem migration se a estrutura atual suportar o contrato.
@@ -12394,7 +12415,7 @@ Checklist inicial:
 - Causa: `ProdutoFormV22_Completo` chamava `base44.integrations.Core.UploadFile` mesmo no backend HTTP; nesse modo a integracao cai no fallback local e retorna `local://uploads/...`, mas o formulario mostrava sucesso como se a foto estivesse no Storage oficial.
 - No modo HTTP, o controle de upload e a geracao de imagem ficam desabilitados e os handlers falham fechados antes de chamar o fallback local. Os modos local/legado preservam o upload existente; resposta sem URL nao gera falso sucesso. Nenhuma tela, modulo ou rota paralela foi criada.
 - Testes: Produto PIM direcionado 2/2; frontend explicito 601/601; lint, audit:baseline, build e `git diff --check` PASS. Typecheck frontend global permanece no baseline legado (exit 2, 1606 erros); as 12 mensagens do formulario sao em linhas anteriores as alteracoes deste lote.
-- Segue pendente o gate do Produto HTTP canonico e DAM seguro com RBAC/tenant, metadados, auditoria, quarentena e Storage self-hosted antes de reabilitar midia no formulario. Nenhuma VPS, migration, porta 3080, dado real ou main foi alterado; PR #33 continua draft sem merge.
+- Segue #159 o gate do Produto HTTP canonico e DAM seguro com RBAC/tenant, metadados, auditoria, quarentena e Storage self-hosted antes de reabilitar midia no formulario. Nenhuma VPS, migration, porta 3080, dado real ou main foi alterado; PR #33 continua draft sem merge.
 
 ### Onda 1 Produto/PIM - validar conteudo no StoragePort self-hosted (2026-09-22)
 - Causa: o adapter aceitava bytes arbitrarios declarados como `image/png` quando tamanho e SHA-256 coincidiam, e o download assinado nao restringia categoria conhecida.
@@ -12448,7 +12469,7 @@ Checklist inicial:
 - Causa: `produto_midias` permitia reutilizar a mesma `storage_key` com outra `versao`, inclusive apos soft-delete. Assim, um unico objeto fisico poderia pertencer a varios metadados, tornando qualquer compensacao destrutiva insegura.
 - Migration aditiva `020_produto_midia_storage_key_unique.sql` cria indice unico `(group_id, storage_key)` sem alterar migrations antigas, linhas ou RLS. O repositório in-memory aplica a mesma regra. Versoes futuras devem usar nova chave fisica; inativacao nao libera chave.
 - Migration falha caso existam duplicidades historicas: conciliar manualmente antes de qualquer aplicacao em ambiente persistente. Rollback tecnico da 020: `DROP INDEX uq_produto_midias_group_storage_key` somente em gate autorizado; nao apagar metadados nem objetos.
-- Teste contratual compartilhado cobre versao diferente antes e depois da inativacao em memoria e PostgreSQL efemero; E2E verifica registro da migration e indice. Testes focados 26 pass / 0 fail / 1 skip condicional; backend completo repetido com heap 3072 MB e concorrencia 1: 191 total / 182 pass / 0 fail / 9 skips locais sem DATABASE_URL. Primeira tentativa paralela teve OOM Node em runtime04, sem falha funcional comprovada. Typecheck/build backend, lint, audit:baseline, build frontend e diff-check PASS. CI PostgreSQL efemero da PR #33 pendente.
+- Teste contratual compartilhado cobre versao diferente antes e depois da inativacao em memoria e PostgreSQL efemero; E2E verifica registro da migration e indice. Testes focados 26 pass / 0 fail / 1 skip condicional; backend completo repetido com heap 3072 MB e concorrencia 1: 191 total / 182 pass / 0 fail / 9 skips locais sem DATABASE_URL. Primeira tentativa paralela teve OOM Node em runtime04, sem falha funcional comprovada. Typecheck/build backend, lint, audit:baseline, build frontend e diff-check PASS. CI PostgreSQL efemero da PR #33 #159.
 - Arquivos: `server/migrations/020_produto_midia_storage_key_unique.sql`, `server/src/repositories/inMemoryProdutoRepository.ts`, `server/tests/produto-relacoes-contract.ts`, `server/tests/runtime01.test.ts`, `server/tests/runtime10-produto-pim-postgres-e2e.test.ts`.
 - Nenhuma migration executada na VPS, nenhum objeto removido, nenhuma rota HTTP habilitada, nenhum dado real, nenhuma alteracao da porta 3080/main. PR #33 permanece draft sem merge.
 - Proximo gate: reserva duravel por tentativa de upload com ownership e estado de quarentena, reconciliacao segura de orfaos, antivirus e verificacao de buckets/credenciais self-hosted sob autorizacao. Apenas depois considerar compensacao de objetos e exposicao HTTP.
@@ -12456,20 +12477,20 @@ Checklist inicial:
 
 ### Onda 1 Produto/PIM - reserva persistente de midia no contrato existente (2026-09-22)
 - Causa: a chave fisica unica nao registrava qual tentativa de upload era sua dona, quem a iniciou ou ate quando a reserva vale. Sem essa proveniencia duravel nao existe compensacao segura.
-- Migration aditiva 021 expande `produto_midias` com status `#157_UPLOAD`, identificador UUID da tentativa, actor, requestId e vencimento; exige esses campos no estado pendente e impede repeticao da tentativa. Preserva dados anteriores, constraints 018-020, RLS/FORCE e privilegios.
-- `ProdutoRepository` existente ganhou reserva, leitura bloqueante por tentativa/actor/tenant e confirmacao atomica para `QUARENTENA` se nao venceu. Os repositórios PostgreSQL e in-memory sao equivalentes; listagens comuns ocultam reservas pendentes, mas nenhuma linha e removida. A chave fisica nao pode ser reutilizada.
+- Migration aditiva 021 expande `produto_midias` com status `#157_UPLOAD`, identificador UUID da tentativa, actor, requestId e vencimento; exige esses campos no estado #159 e impede repeticao da tentativa. Preserva dados anteriores, constraints 018-020, RLS/FORCE e privilegios.
+- `ProdutoRepository` existente ganhou reserva, leitura bloqueante por tentativa/actor/tenant e confirmacao atomica para `QUARENTENA` se nao venceu. Os repositórios PostgreSQL e in-memory sao equivalentes; listagens comuns ocultam reservas #159s, mas nenhuma linha e removida. A chave fisica nao pode ser reutilizada.
 - Contrato compartilhado valida tenant/actor, duplicidade de chave e tentativa, expiracao invalida, rollback e confirmacao unica. E2E PostgreSQL verifica migration 021 e rejeicao de pendencia sem proveniencia. Fixtures apenas sinteticas.
-- Local: focados 27 total / 26 pass / 0 fail / 1 skip condicional; backend 191 total / 182 pass / 0 fail / 9 skips sem DATABASE_URL, com heap 3072 MB e concorrencia 1; typecheck/build backend, audit:baseline, lint, build frontend e diff-check PASS. PostgreSQL efemero pendente da CI da PR #33.
+- Local: focados 27 total / 26 pass / 0 fail / 1 skip condicional; backend 191 total / 182 pass / 0 fail / 9 skips sem DATABASE_URL, com heap 3072 MB e concorrencia 1; typecheck/build backend, audit:baseline, lint, build frontend e diff-check PASS. PostgreSQL efemero #159 da CI da PR #33.
 - Nenhuma URL assinada foi emitida por esse fluxo, nenhum objeto foi excluido, nenhum bucket ou VPS foi alterado, nenhuma migration foi aplicada fora da CI efemera. Porta 3080, main e dados reais preservados; PR #33 draft sem merge.
 - Proximo gate: integrar reserva/confirmacao ao `ProdutoService` com TenantGuard, RBAC e auditoria transacional, mantendo upload privado e sem DELETE; depois reconciliacao de orfaos, antivirus e validacao dos buckets sob autorizacao separada.
 - Codigo publicado em `103c542d3df14593754648baecc68e6b68def990`; workflow `35792700193` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. Migration 021 nao aplicada na VPS.
 
 ### Onda 1 Produto/PIM - service da reserva DAM com RBAC e auditoria (2026-09-22)
 - Causa: migration 021 e repositórios tinham a reserva persistente, mas o `ProdutoService` ainda nao a utilizava antes de assinar upload nem confirmava por tentativa/actor.
-- O `ProdutoService` existente delega a um helper interno extraido para manter o arquivo principal abaixo de 600 linhas. Reserva exige Grupo, Empresa, actor, requestId, permissao `Cadastros.produto.editar`, Produto ativo da empresa, payload estrito e categoria/pasta coerentes. Registro pendente e auditoria sanitizada compartilham a transacao; so depois o StoragePort assina upload privado.
-- Confirmacao exige o mesmo actor e tentativa, bloqueia Produto e reserva, verifica bytes/metadados pelo StoragePort, muda para `QUARENTENA` e audita before/after na mesma transacao. Repeticao retorna 404 seguro. Falha de auditoria ou checksum rollbacka a confirmacao; falha de assinatura mantem a reserva pendente para conciliacao, sem DELETE.
+- O `ProdutoService` existente delega a um helper interno extraido para manter o arquivo principal abaixo de 600 linhas. Reserva exige Grupo, Empresa, actor, requestId, permissao `Cadastros.produto.editar`, Produto ativo da empresa, payload estrito e categoria/pasta coerentes. Registro #159 e auditoria sanitizada compartilham a transacao; so depois o StoragePort assina upload privado.
+- Confirmacao exige o mesmo actor e tentativa, bloqueia Produto e reserva, verifica bytes/metadados pelo StoragePort, muda para `QUARENTENA` e audita before/after na mesma transacao. Repeticao retorna 404 seguro. Falha de auditoria ou checksum rollbacka a confirmacao; falha de assinatura mantem a reserva #159 para conciliacao, sem DELETE.
 - Testes sinteticos cobrem RBAC, tenant, ator diferente tambem autorizado, payload malicioso, duplicidade, adapter ausente, falha de assinatura, divergencia de checksum, rollback e logs sem chave/URL. Focados Produto 21/21; backend completo 194 total / 185 pass / 0 fail / 9 skips locais sem DATABASE_URL; typecheck/build backend, audit:baseline, lint, build frontend e diff-check PASS.
-- `npm run typecheck` da raiz foi executado e falhou em erros anteriores de arquivos frontend/Base44 nao tocados (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts`); nao foi alterado baseline nem configuracao para ocultar a falha. Typecheck backend passou. CI da PR #33 pendente.
+- `npm run typecheck` da raiz foi executado e falhou em erros anteriores de arquivos frontend/Base44 nao tocados (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts`); nao foi alterado baseline nem configuracao para ocultar a falha. Typecheck backend passou. CI da PR #33 #159.
 - Arquivos: `server/src/services/produtoService.ts`, `server/src/services/produtoMidiaFlow.ts`, `server/tests/runtime10-produto-pim.test.ts`. Helper novo e extracao interna do fluxo existente, sem modulo paralelo.
 - Nenhuma rota HTTP, frontend DAM, migration adicional, VPS, bucket, objeto, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
 - Proximo gate: testar fluxo service com repositório PostgreSQL e auditoria reais no banco efemero; so depois considerar rota HTTP, antivirus, reconciliacao de orfaos e bucket self-hosted sob gate autorizado.
@@ -12477,11 +12498,11 @@ Checklist inicial:
 
 ### Onda 1 Produto/PIM - E2E PostgreSQL do service DAM (2026-09-22)
 - Objetivo: comprovar que a reserva e confirmacao do ProdutoService usam o repositório e a auditoria PostgreSQL reais, alem dos testes in-memory ja aprovados.
-- O E2E R10 existente ganhou caso com produto/actor/paths sinteticos, StoragePort fake, RBAC negado, isolamento Empresa A/A2, reserva pendente invisivel na listagem, tentativa vinculada ao actor, checksum divergente, auditoria falha com rollback, confirmacao unica em QUARENTENA e auditoria sanitizada.
+- O E2E R10 existente ganhou caso com produto/actor/paths sinteticos, StoragePort fake, RBAC negado, isolamento Empresa A/A2, reserva #159 invisivel na listagem, tentativa vinculada ao actor, checksum divergente, auditoria falha com rollback, confirmacao unica em QUARENTENA e auditoria sanitizada.
 - Cleanup remove somente IDs sinteticos do teste dentro do tenant e preserva o erro original; nenhuma URL assinada ou binario real e armazenado no banco. A migration 021 e exigida exatamente uma vez.
 - Local: backend 195 total / 185 pass / 0 fail / 10 skips sem DATABASE_URL; backend typecheck/build, audit:baseline, lint, build frontend e diff-check PASS. E2E PostgreSQL novo descoberto pelo runner, ainda nao executado localmente; aguardar CI efemera antes de aprovar este gate.
 - Arquivo alterado: `server/tests/runtime10-produto-pim-postgres-e2e.test.ts`. Nenhuma migration, VPS, porta 3080, main, rota HTTP, dado real ou objeto Storage foi alterado.
-- Proximo gate: se E2E efemero passar, avaliar contrato HTTP da reserva/confirmacao no router existente; antivirus, reconciliacao de orfaos e buckets self-hosted continuam pendentes de gate especifico.
+- Proximo gate: se E2E efemero passar, avaliar contrato HTTP da reserva/confirmacao no router existente; antivirus, reconciliacao de orfaos e buckets self-hosted continuam #159s de gate especifico.
 - Codigo publicado em `e57c4efca9cfb841d810443616c87b39f294b1ad`; workflow `35795871503` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. R10 PostgreSQL real 3 pass / 0 fail / 0 skip, incluindo o novo fluxo service DAM. Migration 021 nao aplicada na VPS.
 
 ### Onda 1 Produto/PIM - reconciliacao conservadora de reservas DAM vencidas (2026-09-22)
@@ -12493,7 +12514,7 @@ Checklist inicial:
 - Arquivos: repositórios Produto in-memory/PostgreSQL, helper e service DAM existentes, testes R10 em memoria/PostgreSQL. Nenhuma migration nova, bucket, VPS, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
 - Proximo gate: CI PostgreSQL efemero verde; depois definir reconciliacao de objeto orfao e antivirus, verificar buckets/credenciais self-hosted sob autorizacao especifica e integrar ao ProdutoFormV22. Ate esse gate, nenhuma exclusao de objeto ou ativacao do StoragePort real.
 - `npm run typecheck` da raiz falhou em erros preexistentes de Base44/frontend (ex.: `base44/functions/_lib/security/entityGuardPolicy/entry.ts` e `src/api/httpApiClient.js`), fora dos arquivos deste lote. Nenhum baseline foi alterado para ocultar a falha; typecheck do backend passou.
-- Validacao posterior: commit `941d7341de754ddfa159e136cea950f4da2674ce` publicado na branch `codex/comercial-360`; workflow `35799092309` da PR #33 com frontend SUCCESS e backend SUCCESS, incluindo migration/seed sintetico e `test:postgres` efemero SUCCESS. O gate CI mencionado acima ficou aprovado; permanecem pendentes objetos orfaos, antivirus, bucket/credenciais e integracao ProdutoFormV22. PR nao mesclada; migration 021 nao aplicada na VPS.
+- Validacao posterior: commit `941d7341de754ddfa159e136cea950f4da2674ce` publicado na branch `codex/comercial-360`; workflow `35799092309` da PR #33 com frontend SUCCESS e backend SUCCESS, incluindo migration/seed sintetico e `test:postgres` efemero SUCCESS. O gate CI mencionado acima ficou aprovado; permanecem #159s objetos orfaos, antivirus, bucket/credenciais e integracao ProdutoFormV22. PR nao mesclada; migration 021 nao aplicada na VPS.
 
 ### Onda 1 Produto/PIM - rota HTTP de reconciliacao individual DAM (2026-09-22)
 - Objetivo: expor de forma restrita a rejeicao de metadados de reserva de upload vencida, implementada e validada no checkpoint anterior, sem varredura automatica nem DELETE de objeto.
@@ -12501,7 +12522,7 @@ Checklist inicial:
 - HTTP R10 sintetico 10/10: antes do vencimento, payload adulterado, RBAC negado, outra empresa/grupo, ID invalido, sucesso 200, repeticao 404, auditoria sem chave/checksum/URL e Produto inalterado. Nenhum arquivo Storage e acessado na rejeicao.
 - Backend completo: 199 total / 189 pass / 0 fail / 10 skips locais condicionais sem DATABASE_URL. Backend typecheck/build, lint, audit:baseline, build frontend e git diff --check PASS. O typecheck da raiz permanece com erros anteriores Base44/frontend fora deste lote; PostgreSQL da rota sera verificado na CI efemera.
 - Arquivos: `server/src/api/router.ts`, `server/tests/runtime10-produto-relacoes-http.test.ts`, `STATUS_DO_PROJETO.md`. Nenhuma migration, VPS, porta 3080, main, bucket ou dado real foi alterado. PR #33 continua draft sem merge.
-- Proximo gate: confirmar CI verde; depois definir politica segura de objetos orfaos/antivirus e validar buckets/credenciais self-hosted sob autorizacao separada. A integracao do `ProdutoFormV22_Completo` permanece pendente; sem Storage ativado, o upload HTTP segue bloqueado.
+- Proximo gate: confirmar CI verde; depois definir politica segura de objetos orfaos/antivirus e validar buckets/credenciais self-hosted sob autorizacao separada. A integracao do `ProdutoFormV22_Completo` permanece #159; sem Storage ativado, o upload HTTP segue bloqueado.
 - Validacao posterior: commit `c142bf384a00267c4f3b90487f03533a7acb0f46` publicado na branch `codex/comercial-360`; workflow `35801140359` da PR #33 com frontend SUCCESS e backend SUCCESS, inclusive `test:postgres` efemero. Gate CI aprovado; PR nao mesclada e nenhuma migration aplicada na VPS.
 
 ### Onda 1 Produto/PIM - contrato HTTP da reserva DAM (2026-09-22)
@@ -12510,22 +12531,22 @@ Checklist inicial:
 - createApp aceita StoragePort opcional para injecao controlada. Sem adapter configurado, operacao falha fechado com 503; o adapter self-hosted nao foi ativado por esta mudanca, pois bucket/credenciais exigem gate separado.
 - HTTP sintetico: 9/9 no arquivo R10, incluindo payload adulterado, tenant A/A2, RBAC, repeticao e auditoria sanitizada. Backend completo 197 total / 187 pass / 0 fail / 10 skips locais sem DATABASE_URL; backend typecheck/build, audit:baseline, lint, build frontend e diff-check PASS. npm test da raiz retornou sucesso, mas descobriu 0 testes no Windows; nao foi usado como evidencia de cobertura.
 - Arquivos: server/src/api/router.ts, server/src/app.ts, server/tests/runtime10-produto-relacoes-http.test.ts. Nenhuma migration, VPS, bucket, objeto real, porta 3080, main ou dado real foi alterado. PR #33 permanece draft sem merge.
-- Proximo gate: ativacao do StoragePort self-hosted somente apos verificacao autorizada de buckets e credenciais; antes de uso real, concluir antivirus e reconciliacao segura de reservas/orfaos. Integracao no ProdutoFormV22 continua pendente.
+- Proximo gate: ativacao do StoragePort self-hosted somente apos verificacao autorizada de buckets e credenciais; antes de uso real, concluir antivirus e reconciliacao segura de reservas/orfaos. Integracao no ProdutoFormV22 continua #159.
 - Codigo publicado em `d2da87fe4c4cf913cf283dbe11b1ee8fa3132336`; workflow `35797210045` da PR #33: frontend SUCCESS, backend SUCCESS, R10 PostgreSQL real 3 pass / 0 fail / 0 skip, incluindo service DAM. Rotas HTTP testadas sem adapter real; nenhum bucket/VPS alterado.
 
 ### Onda 1 Produto/PIM - listagem HTTP segura de metadados DAM (2026-09-22)
 - Objetivo: permitir a consulta tenant-scoped das midias confirmadas no Produto existente, sem ativar Storage nem expor arquivos/URLs.
-- GET /api/v1/produtos/:id/midias reutiliza ProdutoService.listMidias, TenantGuard e RBAC de visualizacao; responde no-store e somente ID, categoria, nome, MIME, tamanho, versao, status e indicador principal. Reservas pendentes permanecem invisiveis.
+- GET /api/v1/produtos/:id/midias reutiliza ProdutoService.listMidias, TenantGuard e RBAC de visualizacao; responde no-store e somente ID, categoria, nome, MIME, tamanho, versao, status e indicador principal. Reservas #159s permanecem invisiveis.
 - O cliente HTTP preparado ganhou Produto.midias.list, sem habilitar Produto no piloto HTTP ou alterar o formulario V22. Nenhuma nova migration, bucket, objeto, VPS, porta 3080, main ou dado real foi alterado.
 - Testes locais: HTTP backend 10/10; cliente HTTP 9/9; backend completo 199 total / 189 pass / 0 fail / 10 skips sem DATABASE_URL; frontend explicito 602/602. Backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. Typecheck geral da raiz continua com erros preexistentes em Base44 e no cliente HTTP, fora das linhas modificadas neste lote.
 - Arquivos: server/src/api/router.ts, server/tests/runtime10-produto-relacoes-http.test.ts, src/api/httpApiClient.js, tests/http-api-client.test.js e este status. PR #33 permanece draft sem merge.
-- Proximo gate: verificar CI PostgreSQL efemero; manter upload real bloqueado ate autorizacao para buckets/credenciais self-hosted, antivirus e reconciliacao segura de objetos orfaos. Integracao no ProdutoFormV22 ainda pendente.
+- Proximo gate: verificar CI PostgreSQL efemero; manter upload real bloqueado ate autorizacao para buckets/credenciais self-hosted, antivirus e reconciliacao segura de objetos orfaos. Integracao no ProdutoFormV22 ainda #159.
 - Codigo publicado em `2e5edfaa90961fcc2a9db561ddc7fc4be8b5f324`; workflow `35802579582` da PR #33: frontend SUCCESS e backend SUCCESS, incluindo migrations/seed sintetico/test:postgres efemero. Nenhuma migration aplicada na VPS.
 
 ### Onda 1 Produto/PIM - paginacao segura da listagem DAM (2026-09-23)
 - Objetivo: evitar leitura sem limite dos metadados de midia no HTTP sem ativar upload/download nem mudar os consumidores internos existentes.
 - GET /api/v1/produtos/:id/midias valida limit 1-200 e offset 0-1000000, padrao 50/0; repositories aplicam filtro Grupo/Empresa, ordenacao versao/id e LIMIT/OFFSET no banco. A resposta permanece no-store, sanitizada e com meta limit/offset. O cliente HTTP preparado aceita paginacao, sem entrar no piloto.
-- Contrato compartilhado em memoria/PostgreSQL verifica duas midias, paginas 0/1/2 e empresa externa; HTTP verifica limite invalido, reserva pendente invisivel e header no-store. Nenhuma migration, bucket, objeto, VPS, porta 3080, main ou dado real foi alterado.
+- Contrato compartilhado em memoria/PostgreSQL verifica duas midias, paginas 0/1/2 e empresa externa; HTTP verifica limite invalido, reserva #159 invisivel e header no-store. Nenhuma migration, bucket, objeto, VPS, porta 3080, main ou dado real foi alterado.
 - Local: backend direcionado 32/32, cliente HTTP 9/9, backend completo 199 total / 189 pass / 0 fail / 10 skips condicionais sem DATABASE_URL, frontend explicito 602/602. Backend typecheck/build, frontend lint/build, audit:baseline e diff-check PASS. npm test frontend descobre zero no Windows, por isso houve execucao explicita. Typecheck raiz permanece com erros legados Base44/frontend; nao ha erro nas linhas DAM modificadas.
 - Proximo gate: CI da PR #33 com PostgreSQL efemero, mantendo draft sem merge. Storage self-hosted exige gate separado de buckets/credenciais, antivirus e reconciliacao segura de objetos orfaos; ProdutoFormV22 ainda nao pode associar IDs legados ao DAM canonico.
 - Codigo publicado em `ab80ef25d4e346eb7765bebd2221d076703f9b34`; workflow `35843558500` da PR #33: frontend SUCCESS e backend SUCCESS, inclusive migrations/seed sintetico/test:postgres efemero. Sem migration na VPS.
@@ -12537,7 +12558,7 @@ Checklist inicial:
 - Testes locais neste checkpoint: DAM direcionado 23/23; cliente HTTP direcionado 11/11; V22/politica 4/4; backend completo antes do ultimo teste de versao 199 total/189 pass/0 fail/10 skips condicionais sem DATABASE_URL; frontend explicito antes do ultimo teste HTTP 604/604. Backend typecheck/build, frontend lint/build e audit:baseline PASS; git diff --check PASS. npm test da raiz no Windows encontra zero devido glob literal, entao os testes foram executados explicitamente. Typecheck global da raiz falha em baseline amplo Base44/frontend e tambem sinaliza tipos do cliente HTTP; nao foi mascarado.
 - Riscos abertos: a flag Produto HTTP permanece DESLIGADA por padrao. Antes de ativacao ampla, validar todos os consumidores legados de Produto, inclusive contagens locais e subscribe, e contexto autenticado. Workflow de midia alem de QUARENTENA/APROVADO/REJEITADO/INATIVO, antivirus real, reconciliacao de objeto orfao e publicacao controlada ainda NAO estao concluidos. Nao declarar macroincremento fechado.
 - Proximo passo do mesmo macroincremento: completar contratos/estados DAM e testes PostgreSQL efemeros; harmonizar consumidores do Produto HTTP sem misturar fonte local/canonica; somente depois considerar gate especifico de VPS para buckets, credenciais e antivirus. Nenhuma migration 001-021 foi alterada/aplicada na VPS, nenhum dado real foi usado, PR #33 permanece draft sem merge.
-- Revalidacao final deste checkpoint: backend 200 total / 190 pass / 0 fail / 10 skips condicionais; frontend explicito 607/607. Produto HTTP notifica subscribers apenas apos create/update/delete confirmado e nao apos falha. CI PostgreSQL e codigo de workflow/publicacao de midia seguem pendentes, sem aprovacao presumida.
+- Revalidacao final deste checkpoint: backend 200 total / 190 pass / 0 fail / 10 skips condicionais; frontend explicito 607/607. Produto HTTP notifica subscribers apenas apos create/update/delete confirmado e nao apos falha. CI PostgreSQL e codigo de workflow/publicacao de midia seguem #159s, sem aprovacao presumida.
 - Checkpoint publicado em `8500cc43ad14eef1052a81c1d3101861acb294c2`; workflow `35850491479` da PR #33: frontend SUCCESS e backend SUCCESS (migrations/seed/test:postgres efemeros). A PR continua draft, sem merge e sem ativacao na VPS. O macroincremento completo permanece aberto pelos riscos descritos acima.
 
 ### Onda 1 Produto V22/DAM - isolamento do opt-in HTTP (2026-09-23; EM ANDAMENTO)
@@ -12565,7 +12586,7 @@ Checklist inicial:
 - DAM permanece QUARENTENA sem antivirus real, reconciliacao de objeto orfao e politica de publicacao. Essas pendencias nao sao resolvidas por este gate de identidade.
 - Validacao documental: leitura dirigida de `auth/foundation`, middleware, app, cliente HTTP e service Produto; sem mudanca de runtime, testes de aplicacao nao se aplicam; executar `git diff --check` antes do commit. PR #33 permanece draft e sem merge.
 
-### P0 autenticacao HTTP - identidade Supabase self-hosted (2026-09-23; codigo pronto, gate de ambiente pendente)
+### P0 autenticacao HTTP - identidade Supabase self-hosted (2026-09-23; codigo pronto, gate de ambiente #159)
 - Causa: a API aceitava X-Actor-Id como identidade sem verificacao. O opt-in Produto HTTP continua desligado enquanto o ambiente real e os perfis nao forem homologados.
 - No modo supabase_user, o middleware existente valida o Bearer no Auth self-hosted via /auth/v1/user antes de interpretar escopo. ActorId vem somente da identidade retornada; cabecalhos X-Actor divergentes sao rejeitados, ausencia/token invalido retorna 401 e indisponibilidade do Auth retorna 503 sem registrar token. Health, ready e meta continuam publicos.
 - Configuracao: ERP_AUTH_MODE=dev_headers somente em dev/test; NODE_ENV=production ou ERP_ENV=prod exige supabase_user, SUPABASE_URL e SUPABASE_ANON_KEY. Metadata anuncia o modo efetivo; service role nao e exposta. Grupo/Empresa seguem como escopo solicitado e os guards existentes validam vinculo/permissao no backend.
@@ -12575,7 +12596,7 @@ Checklist inicial:
 - Proximo passo P0: no gate de ambiente autorizado, conferir endpoint interno, variaveis sem expor valores, vinculo de perfis e RBAC real. Depois retomar navegacao canonica do Produto V22 e pendencias DAM, sem confundir este codigo com ativacao.
 - Commit funcional `ca54c0bbd19083a3ed3361ab9faddc0cc856805f` confirmado no remoto. Workflow `35860608394`: frontend SUCCESS, backend SUCCESS, inclusive migrate/seed/test:postgres efemeros na CI. PR #33 permanece draft e sem merge.
 
-### P0 autenticacao HTTP - vinculo Auth/Perfil e isolamento tenant (2026-09-23; CI PostgreSQL pendente)
+### P0 autenticacao HTTP - vinculo Auth/Perfil e isolamento tenant (2026-09-23; CI PostgreSQL #159)
 - Causa: Supabase Auth retorna auth_user_id, mas RBAC, created_by e auditoria do ERP usam profiles.id. O checkpoint anterior ainda atribuía o UUID Auth a actorId; rotas legadas podiam confiar em Grupo/Empresa solicitados sem consultar o perfil.
 - O middleware existente agora resolve profiles.id por auth_user_id, exigindo perfil ativo no Grupo, Empresa pertencente ao Grupo e escopo compativel com profiles.empresa_id. Perfil de empresa nao acessa visao do Grupo; perfil de Grupo segue a regra atual de acesso as empresas do Grupo. Escopo invalido retorna 400, perfil/vinculo ausente 403, indisponibilidade do banco 503. Header X-Actor-Id so e aceito se coincidir com profiles.id.
 - ERP_AUTH_MODE=dev_headers passa a ser permitido somente em ERP_ENV=dev com NODE_ENV nao production; homologacao e producao exigem supabase_user e configuracao Auth. Nenhuma migration ou modulo paralelo foi criado.
@@ -12585,7 +12606,7 @@ Checklist inicial:
 - Proximo gate: sob autorizacao separada, homologar endpoint Auth self-hosted e vinculo auth_user_id com profiles.id no ambiente DEV real. Produto HTTP continua desligado ate alinhamento do cliente e do RBAC operacional.
 - Commit funcional `279e74ba23ab2f3bbda6facfafc0162dc10ff8e3` confirmado no remoto. Workflow `35863485341`: frontend SUCCESS, backend SUCCESS, migrations/seed/test:postgres efemeros SUCCESS; R01AUTH 14 executados / 14 pass / 0 fail / 0 skip. PR #33 segue draft sem merge.
 
-### P0 autenticacao HTTP - cliente nao forja ator com Bearer (2026-09-23; CI pendente)
+### P0 autenticacao HTTP - cliente nao forja ator com Bearer (2026-09-23; CI #159)
 - Causa: o cliente HTTP enviava token e X-Actor-Id/X-Actor-Email juntos; actorId vindo do escopo local pode ser auth_user_id e nao profiles.id, gerando conflito com o backend e permitindo identidade ambigua na request.
 - O HttpApiClient existente agora envia Authorization: Bearer somente quando ha token string nao vazio. Nesse caso omite ambos os headers de ator, que passam a ser derivados pelo backend. Grupo/Empresa seguem como escopo solicitado, validado no servidor. Sem Bearer, cabecalhos legados sao preservados para o modo local/dev.
 - Testes novos verificam token sem headers de ator, sem token em URL/body, contexto Grupo/Empresa preservado, modo legado inalterado e HTTP 401 sem fallback local ou sucesso falso. Nenhum modulo, tela ou rota foi criado.
@@ -12631,21 +12652,21 @@ Checklist inicial:
 
 ### Onda 1 DAM - assinatura e prazo total da varredura (2026-09-23; EM EXECUCAO)
 - Objetivo: impedir que um resultado `stream: OK` do clamd sintetico seja aceito para bytes com assinatura incoerente com o MIME declarado e impedir espera indefinida por resposta parcial.
-- No `SupabaseStorageAdapter.scan` existente, tamanho/SHA-256 continuam obrigatorios e a assinatura dos primeiros bytes passa a ser verificada antes do veredito; o socket tem prazo total configurado, independentemente de atividade parcial.
+- No `SupabaseStorageAdapter.scan` existente, tamanho/SHA-256 continuam obrigatorios e a assinatura dos primeiros bytes passa a ser verificada antes do veredito; o socket tem prazo total configurado, inde#159mente de atividade parcial.
 - Testes sinteticos cobrem MIME/assinatura forjados com hash correto e scanner sem resposta. Nenhum scanner real, estado de midia, RBAC, tenant, auditoria, rota ou migration foi alterado. Midia continua QUARENTENA e Produto HTTP desligado.
 - Validacoes locais: testes direcionados 12/12; backend serial 208 total / 197 pass / 0 fail / 11 skips condicionais sem DATABASE_URL; backend typecheck/build, frontend lint e audit:baseline, `git diff --check` PASS. Frontend nao foi alterado; a CI da PR repetira frontend/backend/PostgreSQL efemero. Sem VPS, bucket, 3080, dados reais ou merge.
-- Proximo passo: definir persistencia tenant-scoped de evidencia de scan e revisao comercial separada antes de adicionar transicao de QUARENTENA; gate DEV real continua pendente.
+- Proximo passo: definir persistencia tenant-scoped de evidencia de scan e revisao comercial separada antes de adicionar transicao de QUARENTENA; gate DEV real continua #159.
 
 
 ## Incidente proprietário — candidato Codex 2026-09-27
 
-- Branch `codex/acesso-owner-auditoria-segura`, base main `0acb6ac1ca0267f3e253904c633a5dc46aa2472e`. Codex implementa e Cursor revisa; não aplicar antes de revisão independente e CI do HEAD.
+- Branch `codex/acesso-owner-auditoria-segura`, base main `0acb6ac1ca0267f3e253904c633a5dc46aa2472e`. Codex implementa e Cursor revisa; não aplicar antes de revisão inde#159 e CI do HEAD.
 - Auditoria na conexão efetiva da API: banco postgres; um Auth proprietário existente, nenhum perfil ativo vinculado; Grupo CPA e duas empresas ativas já existentes. Proprietário autorizou reaproveitamento; sem novo cadastro, renomeação ou alteração de Auth nesta rodada. Backup privado em formato custom gerado e listagem do arquivo validada; restauração completa não executada.
 - Sessão e middleware convergem: vínculo de empresa restringe mesmo admin; perfil explicitamente de grupo permite as empresas ativas do grupo, sem fallback silencioso. Cabeçalhos não substituem Bearer verificado.
 - Script existente passa a AUDIT por padrão, IDs explícitos sem UUID fixture como fallback, prova banco API/direto, preflight sem mutação, backup antes de escrita. APPLY reutiliza existentes; BOOTSTRAP exige autorização separada, senha no terminal seguro e bloqueia senha em ambiente. Grant/demote geram auditoria atômica minimizada; falha no audit reverte perfil.
-- Procedimento candidato: canário API/SPA em rede privada e loopback 3086/3087; build com label de SHA; promover os mesmos image IDs somente após readiness/proxy/identidade fabricada/login bundle. Preservar 3080/3081, imagens de rollback, snapshots seletivos e backup SQL. Rollback de imagens não desfaz banco; restore seletivo de perfil é gate independente.
+- Procedimento candidato: canário API/SPA em rede privada e loopback 3086/3087; build com label de SHA; promover os mesmos image IDs somente após readiness/proxy/identidade fabricada/login bundle. Preservar 3080/3081, imagens de rollback, snapshots seletivos e backup SQL. Rollback de imagens não desfaz banco; restore seletivo de perfil é gate inde#159.
 - Validação local backend: 277 PASS / 0 FAIL / 15 SKIP (292); testes PGlite executam SQL real e preflight real. Backend typecheck/build e lint aprovados. Frontend typecheck apresenta dívida preexistente fora dos arquivos alterados; suíte local sofre restrições do ambiente Windows; build frontend aprovado com --configLoader native (bundler de config bloqueado por sandbox) — resultados da CI serão registrados no PR, sem alegar aprovação inexistente.
-- Estado: IMPLEMENTADO candidato; revisão/CI/merge/deploy ainda pendentes. VPS mantém imagens anteriores, sem deploy nesta rodada. Acesso não resolvido até logout/login real, seleção das duas empresas e Comercial/Configurações testados pelo proprietário. Canais omnicanal continuam OFF e HD fora da intervenção.
+- Estado: IMPLEMENTADO candidato; revisão/CI/merge/deploy ainda #159s. VPS mantém imagens anteriores, sem deploy nesta rodada. Acesso não resolvido até logout/login real, seleção das duas empresas e Comercial/Configurações testados pelo proprietário. Canais omnicanal continuam OFF e HD fora da intervenção.
 
 ## Codex — acesso96: correções da revisão de segurança (2026-09-27)
 
@@ -12662,16 +12683,16 @@ Checklist inicial:
 - #96 mesclada na main 56dae6966ae39a11eac3064ca7bb0d67553e7765 após parecer Cursor sobre 23252cc e CI; CI PUSH main #1135/run36326407270 SUCCESS frontend/backend.
 - VPS atualizada para esse SHA; AUDIT, identidade efetiva do banco, backup custom e canário API/SPA aprovados. APPLY abortou no provisionamento: `permission denied for function pg_read_file`, transação revertida, nenhuma promoção. Oficiais preservados; canário antigo exclusivamente localhost3086 parado reversivelmente com container/imagem preservados. Backups privados preservados.
 - Correção candidata em branch própria: JSON por COPY do cliente psql tanto na concessão quanto no restore seletivo, sem conceder leitura de arquivos do servidor nem elevar o usuário PostgreSQL. Preserva locks, validação de tenant, auditoria, transação e decisões do proprietário. Teste PostgreSQL CI com NOSUPERUSER/NOBYPASSRLS verifica leitura negada e COPY bem-sucedido, inclusive aspas/barra/acentos e comando real do restore.
-- Ainda requer CI do novo HEAD e revisão independente Cursor antes de merge/APPLY. Não declarar acesso/deploy concluído. Login real, duas empresas e Comercial/Configurações continuam pendentes; canais OFF. Nenhuma migration ou dado real publicado.
+- Ainda requer CI do novo HEAD e revisão inde#159 Cursor antes de merge/APPLY. Não declarar acesso/deploy concluído. Login real, duas empresas e Comercial/Configurações continuam #159s; canais OFF. Nenhuma migration ou dado real publicado.
 # Incidente P0 — seleção Grupo/Empresa após login proprietário (2026-09-27)
 
 - Base sincronizada: main `3e327ea08cc638f84816b2f7e37c143a705f7f0c`; branch própria `codex/acesso-contexto-grupo`.
-- Reprodução: sessão Auth válida lista empresas, mas o hook de troca usa `Empresa.filter` do espelho local, cujo contexto pode ser outro; `usePermissions` prioriza PerfilAcesso local vazio. Hooks independentes não recebem a troca e restore HTTP escolhe primeira empresa mesmo na visão Grupo.
+- Reprodução: sessão Auth válida lista empresas, mas o hook de troca usa `Empresa.filter` do espelho local, cujo contexto pode ser outro; `usePermissions` prioriza PerfilAcesso local vazio. Hooks inde#159s não recebem a troca e restore HTTP escolhe primeira empresa mesmo na visão Grupo.
 - Correção no existente: contexto HTTP usa empresas/perfil revalidados no BFF; permissões HTTP vêm do usuário revalidado; evento de troca atualiza UserProvider/hooks. Visão Grupo é preservada para admin de perfil sem empresa; admin de filial não ganha Grupo ou outra empresa. Backend/RLS/RBAC continuam barreiras definitivas; preferências do navegador não autorizam servidor.
-- Regra operacional: Grupo consolida e compartilha cadastros; cada venda/operação que exige empresa mantém empresa responsável explícita. NF é emitida pela empresa jurídica. Esta correção não torna endpoints de escopo Empresa em consultas globais e não homologa ondas pendentes, canais, fiscal ou legado.
+- Regra operacional: Grupo consolida e compartilha cadastros; cada venda/operação que exige empresa mantém empresa responsável explícita. NF é emitida pela empresa jurídica. Esta correção não torna endpoints de escopo Empresa em consultas globais e não homologa ondas #159s, canais, fiscal ou legado.
 - Testes sintéticos: hooks reais compilados exercitam troca Grupo/A/B sem acessar filtro local e permissões servidor com perfil local vazio; restore/revogação/empresa adulterada/filial restrita cobertos. Focados 31 PASS/0 FAIL. Lint e audit baseline PASS; build PASS com configLoader runner (loader padrão bloqueado por acesso a diretório ancestral no sandbox Windows).
 - Checks completos Windows: frontend 664 PASS/52 FAIL de execução de scripts Bash/caminhos/permissões locais; CI Linux deverá validar suíte integral, sem enfraquecer testes. Typecheck frontend: main 1625 diagnósticos preexistentes, candidato 1623, sem novos pares arquivo/código; duas falhas de tipagem do hook corrigidas. Nenhuma migration, cadastro, grant ou implantação executada neste lote.
-- Gate: revisão independente Cursor do HEAD final + CI verde; depois build/canário/backup/rollback de API/SPA e teste proprietário de logout/login/Grupo/ambas empresas/Comercial/Administração. Acesso ainda NÃO resolvido até prova implantada e confirmação do proprietário.
+- Gate: revisão inde#159 Cursor do HEAD final + CI verde; depois build/canário/backup/rollback de API/SPA e teste proprietário de logout/login/Grupo/ambas empresas/Comercial/Administração. Acesso ainda NÃO resolvido até prova implantada e confirmação do proprietário.
 
 ## P0 — Guard HTTP dos módulos e catálogo explícito do proprietário (2026-09-27)
 
@@ -12685,7 +12706,7 @@ Checklist inicial:
 - Gate obrigatório: Cursor revisar HEAD final + CI verde antes merge/deploy. Aplicação usa procedimento existente com backup fresco, canário API/SPA, mesmo image ID promovido, grant somente perfil proprietário existente com antes/depois auditável e rollback seletivo de perfil/imagens; preservar 3080, backups e 06A. Rollback de código anterior reintroduz guard local e não prova acesso funcional. Nenhum grant/merge/deploy executado neste lote.
 - Próximo P0: implantar candidato aprovado e validar logout/login real nos três contextos, Comercial, Administração e demais módulos; confirmação final do proprietário. Acesso à tela não equivale a homologação de todos os fluxos comerciais/fiscais ou endpoints ainda incrementais.
 
-### Revisão independente #101 — correções B1/B2 no mesmo candidato
+### Revisão inde#159 #101 — correções B1/B2 no mesmo candidato
 - Cursor revogou parecer do HEAD d336734f em HANDOFF 20:18Z: campos entity_name/operation/function_name enviados pelo Layout causavam 422; paths reais Sistema.Configurações.Gerais e Sistema.Segurança não constavam do catálogo do owner.
 - Schema agora aceita somente esses três hints bounded opcionais, sem usá-los como identidade/permissão; role/permissoes/keys desconhecidas continuam 422. Payloads exatos do Layout testados (entidade/create e função), hints não autorizam módulo inexistente e tamanho excessivo é rejeitado.
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.

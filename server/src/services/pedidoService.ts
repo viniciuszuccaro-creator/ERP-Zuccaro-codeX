@@ -38,6 +38,7 @@ import {
   emptyTabelaPrecoDocumentoSnapshot,
 } from './comercialTabelaSnapshot.js';
 import { assertOrcamentoValidadeVigente } from './comercialOrcamentoValidadePolicy.js';
+import { assertPedidoDataEntregaCliente } from './comercialPedidoDataEntregaPolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -119,6 +120,7 @@ export class PedidoService {
   async create(ctx: RequestContext, payload: unknown) {
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
+    assertPedidoDataEntregaCliente(data.tipo_operacao, data.data_entrega_solicitada);
     if (data.orcamento_id) throw new AppError(422, 'PEDIDO_ORIGEM_INVALIDA', 'Use quotation conversion endpoint');
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
@@ -168,6 +170,7 @@ export class PedidoService {
         const dataParsed = pedidoCreateSchema.safeParse(draft);
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
+        assertPedidoDataEntregaCliente(data.tipo_operacao, data.data_entrega_solicitada);
         await this.validateReferences(scope, data, executor);
         // Não-retroatividade: copia snapshots do Orçamento; pós-031 fail-closed se incompletos.
         // Legado pré-029 sem nenhum campo de condição ainda resolve condição ao vivo.
@@ -226,6 +229,7 @@ export class PedidoService {
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
+    assertPedidoDataEntregaCliente(data.tipo_operacao, data.data_entrega_solicitada);
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
       this.requireOpen(before);

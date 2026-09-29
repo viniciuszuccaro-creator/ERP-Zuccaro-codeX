@@ -214,6 +214,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.parcelaSchedulePreviewFailClosed, true);
   assert.equal(result.body.pedido.deliveryAddressSummaryFailClosed, true);
   assert.equal(result.body.pedido.entregaAddressRequiredFailClosed, true);
+  assert.equal(result.body.pedido.dataEntregaClienteFailClosed, true);
   assert.equal(result.body.pedido.simulacaoDirtyFailClosed, true);
   assert.equal(result.body.pedido.textoResumoPreviewFailClosed, true);
   assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
@@ -221,6 +222,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
   assert.match(result.body.note, /resumo de endereço Local\/Obra/);
   assert.match(result.body.note, /Pedido Entrega vs Retirada fail-closed/);
+  assert.match(result.body.note, /data_entrega_solicitada fail-closed/);
   assert.equal(result.body.comercialSimulacao.persistOnWrite, true);
   assert.match(result.body.note, /desconto\/total aplicados no servidor \(simular-venda\)/);
   assert.match(result.body.note, /snapshot de TabelaPreco/);

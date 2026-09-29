@@ -1,3 +1,20 @@
+## LOTE CURSOR — Pedido Data entrega cliente fail-closed (pós entrega-address) (2026-09-29T22:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Data entrega cliente — ENTREGA exige hoje+ (fail-closed UI+server) |
+| Branch | `cursor/comercial360-onda5-data-entrega-failclosed-392b` |
+| Base | tip `6d171316` (`cursor/comercial360-onda5-entrega-address-failclosed-392b`) |
+| Tip | feat `1170251f` · branch HEAD após docs |
+| Draft PR | **#159** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-entrega-address-failclosed-392b...cursor/comercial360-onda5-data-entrega-failclosed-392b?expand=1 |
+| Meta | `dataEntregaClienteFailClosed` + **Pedido backend HTTP is active** |
+| Testes | UI 14+2 · onda5 data-entrega 6 · runtime07b/08c/09 **PASS** |
+| Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
+
+Próximo: multi-select stub (C) **ou** CostPort BFF **ou** PDF/anexos sem colidir.
+
+---
+
 ## LOTE CURSOR — Pedido Entrega endereço fail-closed (pós #157 margem) (2026-09-29T22:15Z)
 
 | Campo | Valor |
@@ -6,7 +23,7 @@
 | Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
 | Base | `#157` tip `3e668170` (`cursor/comercial360-onda4-margem-ui-failclosed-392b`) |
 | Tip | feat `aad233b1` · branch HEAD após docs |
-| Draft PR | **pendente** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
+| Draft PR | **#159** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
 | Meta | `entregaAddressRequiredFailClosed` + **Pedido backend HTTP is active** |
 | Testes | local-obra + integration + runtime07b/08c/09 **PASS** |
 | Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
@@ -249,8 +266,8 @@ Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 | PR | Tip / Branch | CI | Escopo |
 | --- | --- | --- | --- |
 | #134 | `fa362ff0` | **SUCCESS** | Convert snapshots fail-closed |
-| #135 | `5b559c9a` | pendente | Pedido cancel fail-closed |
-| este | `cursor/comercial360-onda3-list-failclosed-392b` | pendente | List HTTP fail-closed + update CANCELADO |
+| #135 | `5b559c9a` | #159 | Pedido cancel fail-closed |
+| este | `cursor/comercial360-onda3-list-failclosed-392b` | #159 | List HTTP fail-closed + update CANCELADO |
 
 Próximo após este: Onda 4 slice **sem** 025–028. Sem merge/VPS. Sem Codex/#104/#48.
 
@@ -412,7 +429,7 @@ Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObr
 - 4. Tag futura `erp-zuccaro-erp-api:comercial360-main-<MERGE_SHA8>` construida somente do SHA efetivamente mesclado na MAIN. Registrar MERGE_SHA, image ID/digest obtidos do build/inspect e prova do canario usando a mesma imagem; nao reutilizar SHA da branch. Digest/tag finais INDETERMINADOS ate merge e build; nao alegar imagem imutavel existente.
 - 5. `auth.users=0` e dois profiles ativos sem `auth_user_id` tornam smoke Bearer impossivel hoje. Em gate Auth separado e autorizado, provisionar identidade de teste exclusivamente sintética no Supabase Auth self-hosted, vincular seu UUID a profile ERP sintetico ativo no Grupo/Empresa sinteticos autorizados, com permissoes minimas Orcamento/Pedido. Validar scope positivo e RBAC/tenant negativos. Token, senha, email e chaves somente no ambiente seguro; nenhum valor no Git/log/handoff. Depois revogar sessao/desabilitar identidade de teste conforme procedimento auditavel. Nao reutilizar automaticamente os dois profiles existentes sem provar que sao sinteticos.
 - Coordenacao: Cursor revisa este contrato e as verificacoes Gate D/E na PR #34; Codex revisa requisitos da PR #33. Ordem sugerida: fechar/revisar PR #34 documental-operacional primeiro; revisar PR #33 e seu default de runtime; so entao decidir merges por revisao humana e atualizar SHA da MAIN. PR #33 segue draft, sem merge; 3080 continua R07B.
-- Frente independente Cliente 360 esta somente no workspace local, sem push e sem CI deste codigo; testes focados passaram, suite completa e build local sofreram OOM. Nao apresentar o endpoint como disponivel no remoto ou na VPS.
+- Frente inde#159 Cliente 360 esta somente no workspace local, sem push e sem CI deste codigo; testes focados passaram, suite completa e build local sofreram OOM. Nao apresentar o endpoint como disponivel no remoto ou na VPS.
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.
@@ -447,7 +464,7 @@ Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObr
 - As secoes de 23/09 abaixo sao historicas e nao substituem este checkpoint.
 
 ## Gate C - precheck Web Console adicional (2026-09-23)
-- Backup SQL de 21/09/2026 encontrado com 486969 bytes, SHA-256 calculado e marcador de dump completo; restauracao nao testada e backup atualizado ainda pendente para o gate autorizado.
+- Backup SQL de 21/09/2026 encontrado com 486969 bytes, SHA-256 calculado e marcador de dump completo; restauracao nao testada e backup atualizado ainda #159 para o gate autorizado.
 - API oficial `erp-api-dev` running na imagem R07B; container de rollback R07B exited e imagem preservada. Porta 3086 sem listener nem container ativo no instante da consulta; 3080 preservada.
 - Gate C segue parcial ate comparacao read-only da conexao efetiva da API com `supabase-db`. Nao iniciar canario, Auth novo, migration ou promocao com base apenas nesse precheck.
 
@@ -463,7 +480,7 @@ Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObr
 
 ## Gate C DEV - evidencia SQL agregada (2026-09-23)
 - Web Console informada pelo usuario: `schema_migrations` possui `id`/`applied_at`; 001-015 cada 1x, 016-022 ausentes nas 15 linhas. `auth.users=0`, `profiles=2`, `groups=2`, `empresas=3`; ambos os perfis ativos estao sem Auth. Sem vinculos de grupo/empresa invalidos nas contagens.
-- Nome do banco da API e `current_database()` nao visiveis na captura; identidade do banco da API ainda pendente. Gate C nao aprovado para Auth/canario: API oficial 3080 permanece 07B/`dev_headers`.
+- Nome do banco da API e `current_database()` nao visiveis na captura; identidade do banco da API ainda #159. Gate C nao aprovado para Auth/canario: API oficial 3080 permanece 07B/`dev_headers`.
 - Nenhuma escrita VPS realizada. Continuar somente leitura para banco/rede/backup/rollback; identidade sintetica e perfil requerem gate autorizado separado.
 
 ## Gate DEV parcial - 2026-09-23

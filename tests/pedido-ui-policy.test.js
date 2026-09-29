@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, isPedidoCancelDisabled, mapPedidoRowToForm, nextPedidoStatus, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
-test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
+const nowFixed = new Date('2026-09-29T15:00:00.000Z');
+test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
 test('pedido UI inclui promoção confirmada no payload de save',()=>{
   const payload=buildPedidoPayload(
     {cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item]},
-    {promocao:{aplicada:true,bps:500,cupom:'CPA10'}},
+    {promocao:{aplicada:true,bps:500,cupom:'CPA10'},now:nowFixed},
   );
   assert.deepEqual(payload.promocao,{bps:500,cupom:'CPA10'});
 });
@@ -112,7 +113,32 @@ test('pedido payload bloqueia preço unitário zero', () => {
     () => buildPedidoPayload({
       cliente_empresa_id: 'c', condicao_pagamento_id: 'f', tipo_operacao: 'ENTREGA',
       data_entrega_solicitada: '2027-01-01', itens: [{ ...item, preco_unitario: '0' }],
-    }),
+    }, { now: nowFixed }),
     /preço unitário/i,
   );
+});
+
+test('pedido data entrega UI gate: ENTREGA exige hoje+ e bloqueia passado/ausente', () => {
+  assert.equal(isPedidoDataEntregaPassada('2026-09-28', nowFixed), true);
+  assert.equal(isPedidoDataEntregaPassada('2026-09-29', nowFixed), false);
+  assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'RETIRADA', dataEntregaSolicitada: '', now: nowFixed }).blockSave, false);
+  assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'ENTREGA', dataEntregaSolicitada: '', now: nowFixed }).mode, 'missing');
+  assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'ENTREGA', dataEntregaSolicitada: '2026-09-28', now: nowFixed }).mode, 'past');
+  assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'ENTREGA', dataEntregaSolicitada: '2026-09-29', now: nowFixed }).mode, 'ready');
+  assert.throws(
+    () => buildPedidoPayload({
+      cliente_empresa_id: 'c', condicao_pagamento_id: 'f', tipo_operacao: 'ENTREGA',
+      data_entrega_solicitada: '2020-01-01', itens: [item],
+    }, { now: nowFixed }),
+    /passado/i,
+  );
+});
+
+test('painel pedido wire data entrega fail-closed', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /evaluatePedidoDataEntregaUiGate/);
+  assert.match(panel, /pedido-data-entrega-gate/);
+  assert.match(panel, /dataEntregaUi\.blockSave/);
+  assert.match(panel, /Comercial\.pedido\.data-entrega/);
+  assert.match(panel, /pedido-data-entrega/);
 });
