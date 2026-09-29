@@ -35,12 +35,23 @@ test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => 
 
 test('codigo de empresa legado e aliases exigem prova antes do mapeador mestre', () => {
   for (const legado of ['1', '2', '3', '5', '001', '003']) {
-    for (const alias of ['codigo_empresa', 'empresa_codigo', 'empresaCodigo', 'codEmpresa']) {
+    for (const alias of ['codigo_empresa', 'empresa_codigo', 'empresaCodigo', 'codEmpresa',
+      'empresa-codigo', 'cod-empresa', 'codigo-empresa', 'CODIGO-EMPRESA']) {
       assert.throws(() => verificarMapeadorParaStaging([{
         cod_cliente: 'C-200', nome: 'Sintetico', group_id: 'g-sint', [alias]: legado,
       }], opcoes), /vinculo empresarial legado nao comprovado/);
     }
   }
+});
+
+test('alias empresarial na segunda linha bloqueia o lote inteiro', () => {
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-201', nome: 'Primeiro', group_id: 'g-sint' },
+    { cod_cliente: 'C-202', nome: 'Segundo', 'empresa-codigo': '001', group_id: 'g-sint' },
+  ], opcoes), /vinculo empresarial legado nao comprovado/);
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-201', nome: 'Primeiro', 'group-id': 'outro' },
+  ], opcoes), /Grupo da linha diverge/);
 });
 
 test('pedido, fornecedor e produto fora de revenda aguardam mapeador validado', () => {

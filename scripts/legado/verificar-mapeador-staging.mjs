@@ -5,8 +5,9 @@ import { mapLegadoLoteSintetico } from './mapear-registro-sintetico.mjs';
 import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './staging-scope-gate.mjs';
 
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', produto_revenda: 'produto' });
-const GRUPO_ALIASES = new Set(['group_id', 'grupo_id', 'groupid', 'grupoid']);
-const EMPRESA_ALIASES = new Set(['codigo_empresa', 'codigoempresa', 'cod_empresa', 'codempresa', 'empresa_codigo', 'empresacodigo', 'empresa_id', 'empresaid']);
+const GRUPO_ALIASES = new Set(['groupid', 'grupoid']);
+const EMPRESA_ALIASES = new Set(['codigoempresa', 'codempresa', 'empresacodigo', 'empresaid']);
+const normalizarAlias = (key) => key.toLowerCase().replace(/[-_]/g, '');
 
 /**
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.
@@ -44,7 +45,7 @@ export function verificarMapeadorParaStaging(rows, {
   for (const row of seguros) {
     if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Registro legado invalido.');
     for (const [key, value] of Object.entries(row)) {
-      const alias = key.toLowerCase();
+      const alias = normalizarAlias(key);
       const valor = String(value ?? '').trim();
       if (GRUPO_ALIASES.has(alias) && valor && valor !== groupId) {
         throw new Error('Grupo da linha diverge do destino validado.');
