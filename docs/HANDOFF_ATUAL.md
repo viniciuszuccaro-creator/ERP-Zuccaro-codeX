@@ -1,3 +1,19 @@
+## LOTE CURSOR — snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:42Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice A: migration `025` aditiva + wire create/update/get/convert + UI reload |
+| Testado | **SIM** — 94/94 focados PASS; typecheck PASS |
+| Base | `#124` tip `7c70de69` (`cursor/comercial360-onda3-cliente-local-obra-http-392b`) |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-local-obra-http-392b...cursor/comercial360-onda3-condicao-snapshot-392b?expand=1 |
+| Draft PR | pendente (`ManagePullRequest` / `gh`) |
+| Próximo | Produto frontendHttp piloto **ou** promoção snapshot; sem CRM paralelo |
+
+Reservados: migration 025, comercialCondicaoSnapshot, orcamento/pedido services+repos+types, router meta, comercialCondicaoHttpUiPolicy, OrcamentosTab, PedidoCanonicoPanel, testes snapshot/UI/stubs. Sem Codex/#104/#48, sem merge/VPS. Meta preserva Pedido backend HTTP is active.
+
+---
+
 ## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
 
 | Etapa | Estado |

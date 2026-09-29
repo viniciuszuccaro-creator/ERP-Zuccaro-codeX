@@ -112,6 +112,22 @@ test('buildCondicaoSnapshotPreview normaliza parcelas sem inventar campos de per
     codigo: null,
     nome: 'À vista',
     fonte: 'empresa_padrao',
+    persistido: false,
     parcelas: [{ ordem: 1, dias: 0, percentual: '100' }],
   });
+});
+
+test('buildPersistedCondicaoSnapshotFromRow recarrega snapshot gravado', async () => {
+  const { buildPersistedCondicaoSnapshotFromRow } = await import('../src/components/comercial/comercialCondicaoHttpUiPolicy.js');
+  const preview = buildPersistedCondicaoSnapshotFromRow({
+    condicao_pagamento_id: CONDICAO,
+    condicao_pagamento_codigo_snapshot: '000010',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
+  });
+  assert.equal(preview.id, CONDICAO);
+  assert.equal(preview.nome, '28 dias');
+  assert.equal(preview.fonte, 'persistido');
+  assert.equal(preview.persistido, true);
+  assert.equal(preview.parcelas[0].dias, 28);
 });

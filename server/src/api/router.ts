@@ -1243,7 +1243,7 @@ export function createApiRouter(deps: ApiDeps) {
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas); Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',

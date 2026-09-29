@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
-import { calculatePedido, type Pedido, type PedidoCreate, type PedidoHistorico, type PedidoListFilters, type PedidoRepository, type PedidoScope, type PedidoStatus } from './pedidoTypes.js';
+import { calculatePedido, type Pedido, type PedidoHistorico, type PedidoListFilters, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoWrite } from './pedidoTypes.js';
 
 const clone = <T>(value: T): T => structuredClone(value);
 const key = (scope: PedidoScope) => `${scope.groupId}:${scope.empresaId}`;
@@ -18,7 +18,7 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     catch (error) { this.rows = rows; this.events = events; this.next = next; throw error; }
   }
 
-  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
+  async create(scope: PedidoScope, data: PedidoWrite, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
     if (data.orcamento_id && await this.getByOrcamento(scope, data.orcamento_id)) throw new Error('PEDIDO_ORCAMENTO_ALREADY_CONVERTED');
     const now = new Date().toISOString();
     const sequenceKey = key(scope);
@@ -29,7 +29,11 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       numero: String(number).padStart(8, '0'), status: 'EM_ABERTO',
       cliente_empresa_id: data.cliente_empresa_id, cliente_local_id: data.cliente_local_id ?? null,
       obra_id: data.obra_id ?? null, tabela_preco_id: data.tabela_preco_id ?? null,
-      condicao_pagamento_id: data.condicao_pagamento_id, orcamento_id: data.orcamento_id ?? null,
+      condicao_pagamento_id: data.condicao_pagamento_id,
+      condicao_pagamento_codigo_snapshot: data.condicao_pagamento_codigo_snapshot,
+      condicao_pagamento_nome_snapshot: data.condicao_pagamento_nome_snapshot,
+      condicao_pagamento_parcelas_snapshot: clone(data.condicao_pagamento_parcelas_snapshot),
+      orcamento_id: data.orcamento_id ?? null,
       vendedor_id: actorId, tipo_operacao: data.tipo_operacao,
       data_entrega_solicitada: data.data_entrega_solicitada, observacoes: data.observacoes ?? null,
       subtotal: totals.subtotal, desconto: totals.desconto, total: totals.total,
@@ -64,11 +68,24 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
   }
 
-  async update(scope: PedidoScope, id: string, data: PedidoCreate, _actorId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async update(scope: PedidoScope, id: string, data: PedidoWrite, _actorId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
     const current = await this.get(scope, id);
     if (!current || current.status !== 'EM_ABERTO') return null;
     const totals = calculatePedido(data.itens);
-    const updated: Pedido = { ...current, ...data, cliente_local_id: data.cliente_local_id ?? null, obra_id: data.obra_id ?? null, tabela_preco_id: data.tabela_preco_id ?? null, orcamento_id: current.orcamento_id, observacoes: data.observacoes ?? null, ...totals, updated_at: new Date().toISOString() };
+    const updated: Pedido = {
+      ...current,
+      ...data,
+      cliente_local_id: data.cliente_local_id ?? null,
+      obra_id: data.obra_id ?? null,
+      tabela_preco_id: data.tabela_preco_id ?? null,
+      orcamento_id: current.orcamento_id,
+      condicao_pagamento_codigo_snapshot: data.condicao_pagamento_codigo_snapshot,
+      condicao_pagamento_nome_snapshot: data.condicao_pagamento_nome_snapshot,
+      condicao_pagamento_parcelas_snapshot: clone(data.condicao_pagamento_parcelas_snapshot),
+      observacoes: data.observacoes ?? null,
+      ...totals,
+      updated_at: new Date().toISOString(),
+    };
     this.rows.set(id, updated);
     return clone(updated);
   }

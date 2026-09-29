@@ -1,3 +1,47 @@
+## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:42Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `025_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
+| Testado | **SIM** — runtime-onda3-condicao-snapshot (+migration) + onda2-preco + 08c orcamento + 09 pedido + runtime01/07b + desconto/margem HTTP + UI policy (94/94 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-local-obra-http-392b...cursor/comercial360-onda3-condicao-snapshot-392b?expand=1 |
+| Draft PR | pendente (`ManagePullRequest` / `gh pr create`) |
+
+### Arquivos reservados (Cursor — lote pós-#124; não editar em Codex/#104/#48)
+
+- `server/migrations/025_orcamento_pedido_condicao_snapshot.sql`
+- `server/src/services/comercialCondicaoSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts`
+- `server/src/repositories/inMemoryOrcamentoRepository.ts` / `postgresOrcamentoRepository.ts`
+- `server/src/repositories/inMemoryPedidoRepository.ts` / `postgresPedidoRepository.ts`
+- `server/src/api/router.ts` (meta note: snapshot + **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-condicao-snapshot*.test.ts` + stubs runtime08c/09/onda2/alcada + `runtime01`/`runtime07b`
+- `tests/comercial-condicao-http-ui-policy.test.js`
+
+### Escopo
+
+- Somente colunas aditivas; sem DROP/TRUNCATE executável.
+- Snapshot autoridade do servidor (payload não envia snapshot).
+- Multiempresa: tenant triggers atualizados para `tabela_preco_id` no Orçamento.
+- RBAC/auditoria existentes em mutações Orçamento/Pedido; audit inclui campos de snapshot.
+- Conversão Orçamento→Pedido copia snapshot persistido (não-retroatividade).
+
+### Próximo item independente restante
+
+- Produto frontendHttp piloto (padrão Condicao/Tabela) **ou** refs de promoção persistidas; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → **este lote**.
+
+---
+
 ## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
 
 | Etapa | Estado |
