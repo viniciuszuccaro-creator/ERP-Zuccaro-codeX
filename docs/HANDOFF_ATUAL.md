@@ -1,3 +1,23 @@
+## RE-REVISÃO CURSOR — #153 HEAD `12c37e8b` (2026-09-29T22:55Z)
+
+| Campo | Valor |
+|---|---|
+| Antes | `fba7f72b` — **NÃO APTA** |
+| Agora | `12c37e8b` (docs/governança; CI SUCCESS; MERGEABLE) |
+| Escopo real vs main | ~134 files / +18k (ensaio #152+#141); migrations **029–031**; UI Comercial atrás do tip Cursor #154–#166 |
+| Parecer | **NÃO APTA** merge |
+| Motivos | (1) PR declara ensaio sem auth de merge/VPS; (2) 029–031 na main colidiriam com tip Cursor empilhada (#154–#166) em `PedidoCanonicoPanel`/`orcamentoUiPolicy`/etc.; (3) #92 excluída — integração incompleta; (4) EXECUCAO_PARALELA: Cursor não merge Codex |
+| Ação | Sem merge/comentário no PR; tip Cursor segue independente |
+
+---
+
+## AUTÔNOMO — tip Pedido Imprimir/PDF (2026-09-29T22:50Z)
+
+Draft PR **#166** empilhada em #165: Pedido Imprimir/PDF canônico fail-closed.
+#165 CI SUCCESS. CI #166 em curso. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — #165 validade min UX (2026-09-29T22:45Z)
 
 Tip empilhada em #164: Orçamento validade obrigatória + min=hoje fail-closed.

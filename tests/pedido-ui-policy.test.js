@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
 const nowFixed = new Date('2026-09-29T15:00:00.000Z');
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
@@ -161,4 +161,30 @@ test('painel pedido wire data entrega fail-closed', async () => {
   assert.match(panel, /dataEntregaUi\.blockSave/);
   assert.match(panel, /Comercial\.pedido\.data-entrega/);
   assert.match(panel, /pedido-data-entrega/);
+});
+
+test('pedido print PDF gate fail-closed sem contexto/permissão/itens', () => {
+  assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: '', empresaId: 'e', canPrint: true }).mode, 'context');
+  assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: false }).mode, 'permission');
+  assert.equal(evaluatePedidoPrintPdfUiGate({ row: null, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'missing');
+  assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'invalid');
+  assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'ready');
+  assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: true }).blockPrint, false);
+});
+
+test('painel pedido wire Imprimir/PDF canônico fail-closed', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../src/components/lib/exportacaoPDF.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /evaluatePedidoPrintPdfUiGate/);
+  assert.match(panel, /gerarPDFPedido/);
+  assert.match(panel, /pedido-print-pdf/);
+  assert.match(panel, /Comercial\.pedido\.imprimir-pdf/);
+  assert.match(panel, /printPdfGate\.blockPrint/);
+  assert.match(panel, /Imprimir\/PDF/);
+  assert.doesNotMatch(panel, /jspdf|pdfkit|html2pdf/i);
+  assert.match(source, /export function gerarPDFPedido/);
+  assert.match(source, /escapeDocumentText\(item\.descricao\)/);
+  assert.match(source, /escapeDocumentText\(pedido\.observacoes/);
+  assert.match(source, /printWindow\.opener = null/);
+  assert.match(source, /pedido\.numero \|\| pedido\.numero_pedido/);
 });
