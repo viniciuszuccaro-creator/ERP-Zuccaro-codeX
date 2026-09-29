@@ -22,7 +22,7 @@ Próximo: CreditPort backend (#63/#67) com mig autorizada **ou** margem UI com c
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `#151` tip `6218511a` (`cursor/comercial360-onda3-network-retry-392b`) |
 | Tip | `089795f1` (`089795f1438cb35f6902b91385d24825883f1141`) · feat `b7352fa8` |
-| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-network-retry-392b...cursor/comercial360-onda4-dirty-abandon-392b?expand=1 base `#151` (gh createPullRequest 403) |
+| Draft PR | **#154** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/154 |
 | Meta | form dirty abandon fail-closed + **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **25/25** |
 | Colisão | #138 alçada já completa; margem #47; PDF/anexos #52–62; sem merge/VPS |
