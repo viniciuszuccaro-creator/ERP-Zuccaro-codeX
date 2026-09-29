@@ -1,3 +1,18 @@
+## LOTE CURSOR — Pedido crédito UI fail-closed (pós dirty-abandon) (2026-09-29T21:50Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Pedido crédito UI fail-closed — ValidacaoCredito + gate Salvar |
+| Branch | `cursor/comercial360-onda4-credito-ui-failclosed-392b` |
+| Base | dirty-abandon tip `6ace0c1e` |
+| Meta | UI crédito Pedido fail-closed + **Pedido backend HTTP is active** |
+| Testes | pedido-faturamento + frontend-integration + pedido-ui-policy **20/20** |
+| Colisão | sem mig 032/#67; sem anexos #59–62; sem merge/VPS |
+
+Próximo: CreditPort backend (#63/#67) com mig autorizada **ou** margem UI com cost snapshot **ou** PDF/anexos sem colidir.
+
+---
+
 ## LOTE CURSOR — dirty form abandon fail-closed (pós-#151) (2026-09-29T21:40Z)
 
 | Campo | Valor |

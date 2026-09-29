@@ -1,3 +1,24 @@
+## LOTE CURSOR — Pedido crédito UI fail-closed (pós dirty-abandon) (2026-09-29T21:50Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Pedido crédito validation UI fail-closed — limite/disponível/bloqueio + Salvar gate |
+| Branch | `cursor/comercial360-onda4-credito-ui-failclosed-392b` |
+| Base | `origin/cursor/comercial360-onda4-dirty-abandon-392b` tip `6ace0c1e` |
+| Tip | *(após push)* |
+| Draft PR | *(após ManagePullRequest / compare)* |
+| Escopo | `evaluatePedidoCreditoUiGate` + `resolvePedidoCreditoSnapshot` / `canAprovarCreditoPedido` em `pedidoFaturamentoPolicy`; melhora `ValidacaoCredito`; wire `PedidoCanonicoPanel` (display + disable/guard Salvar); meta note; **sem migration** (não copia 032/#67) |
+| Meta | `UI crédito Pedido fail-closed` + preserva **Pedido backend HTTP is active** |
+| Testes | `pedido-faturamento-policy` + `pedido-frontend-integration` + `pedido-ui-policy` **20/20**; `git diff --check` PASS |
+| Colisão | #63–#67 CreditPort/UI/mig 032 NÃO rebased (só patterns); anexos #59–62; margem CostPort backend já no tip — UI margem sem custo inventado (adiada); sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | CreditPort backend (#63/#67) quando migration 032 autorizada **ou** margem UI se cost snapshot na UI **ou** Onda 4 PDF/anexos sem colidir #59–62 |
+
+Arquivos: `pedidoFaturamentoPolicy.js`, `ValidacaoCredito.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/pedido-faturamento-policy.test.js`, `tests/pedido-frontend-integration.test.js`, `tests/pedido-ui-policy.test.js`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: tip sem CreditPort/`comercialCreditoPolicy`; #64 só exibia ValidacaoCredito sem bloquear Salvar. Gate UI reusa `evaluatePedidoCredito`; snapshot Prefer ClienteEmpresa.limite_* (padrão #67) senão condicao_comercial; porta/campo ausente não inventa nem bloqueia; CreditPort explícito null ou limite insuficiente → blockSave sem `aprovar-credito`.
+
+---
+
 ## LOTE CURSOR — dirty form abandon fail-closed (pós-#151 network-retry) (2026-09-29T21:40Z)
 
 | Campo | Valor |
