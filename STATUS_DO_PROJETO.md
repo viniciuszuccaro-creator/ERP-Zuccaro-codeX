@@ -1,3 +1,45 @@
+## LOTE CURSOR — multi-select stub fail-closed (pós data-entrega) (2026-09-29T22:07Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Multi-select Pedido/Orçamento — checkboxes UI; bulk DISABLED fail-closed |
+| Branch | `cursor/comercial360-onda5-multiselect-stub-392b` |
+| Base | `origin/cursor/comercial360-onda5-data-entrega-failclosed-392b` tip `6e45a27d` (#159) |
+| Tip | feat `7a6e6a8b` · `7a6e6a8b9765cd3fd7fcdcb0597b73e35e2d96f5` |
+| Draft PR | **#160** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/160 |
+| Meta | `listMultiSelectStubFailClosed` + **Pedido backend HTTP is active** |
+| Testes | list-http-ui-policy multi-select + integration + runtime07b/08c/09 **PASS** |
+| Colisão | sem mig; sem API bulk cancel; sem anexos #59–62; sem merge/VPS |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `tests/pedido-frontend-integration.test.js`, `server/tests/runtime07b.test.ts`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Próximo: CostPort BFF real **ou** PDF/anexos sem colidir #59–62 **ou** CreditPort backend quando 032 liberado.
+
+---
+
+## AUTÔNOMO ATIVO — owner ausente (2026-09-29T22:07Z)
+
+Continuando Comercial 360 sem merge/VPS.
+
+### Empilhados agora (tip → main via #151)
+| PR | Escopo |
+|---|---|
+| #154 | Dirty form abandon |
+| #156 | Crédito UI fail-closed |
+| #157 | Margem UI fail-closed |
+| #158 | Entrega exige endereço |
+| #159 | Data Entrega Cliente fail-closed |
+| (este) | Multi-select stub fail-closed |
+
+### Bloqueios registrados
+- #153 consolidada **NÃO APTA** merge (`fba7f72b`)
+- Onda 4–6 antiga (#50/#53/#59–#67) **NÃO APTA** (migrations 025–031 em conflito)
+- #47 CostPort já em `main`
+
+Próximo: CostPort BFF **ou** PDF/anexos sem colisão **ou** CreditPort backend quando 032 liberado.
+
+---
+
 ## LOTE CURSOR — Pedido Data entrega cliente fail-closed (pós entrega-address) (2026-09-29T22:30Z)
 
 | Campo | Valor |
