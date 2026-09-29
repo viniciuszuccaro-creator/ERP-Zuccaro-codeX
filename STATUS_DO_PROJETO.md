@@ -11620,3 +11620,8 @@ Checklist inicial:
 - Nenhum documento, CNPJ, backup, registro real ou credencial foi lido ou enviado. Proximo: conferir juridicamente 001/002/005 em canal privado, revisar o mapeador #48 e provar staging em banco isolado antes de solicitar qualquer carga operacional.
 - Validacao local: 38 testes sinteticos integrados, audit baseline, lint, build e diff-check PASS. `npm test` global neste Windows falha em `vps-owner-provision-guard.test.js` (execucao Bash/PATH sem codigo de saida); typecheck global acusa diagnosticos preexistentes fora deste diff em `entityGuardPolicy/entry.ts` e `erpHttpSession.js`. CI Linux do novo HEAD e obrigatoria antes de considerar o lote validado.
 - Revisao Cursor do HEAD inicial apontou coercoes de arrays e datas impossiveis. O validador agora exige strings e timestamp UTC ISO com roundtrip de calendario, rejeita hash trivial de zeros e tem nome que descreve validacao de formato, nao prova juridica. Testes sintéticos ampliados; novo HEAD requer CI e revisao final.
+
+## Legado - prova sintetica PostgreSQL isolada (2026-09-29)
+
+- Branch empilhada sobre a #119, sem editar mapeador #48 nem Produto/Fornecedor. CI provisiona banco efemero nomeado, aplica guarda de URL isolada e usa somente tabela temporaria/transacao para testar preflight, insercao, unicidade, retry e escopo de Empresa.
+- A prova cobre mecanica de staging em PostgreSQL sintetico, nao origem real, identidade juridica, restauracao do backup nem importacao operacional. Nenhum dump, CNPJ ou registro real entra na CI/GitHub. Revisao, testes e CI do HEAD deste lote ainda obrigatorios.
