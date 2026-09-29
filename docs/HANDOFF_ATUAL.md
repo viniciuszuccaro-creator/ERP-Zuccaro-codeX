@@ -6,7 +6,8 @@
 | Testado | **SIM** — client/policy + http-api-client + runtime03/04/07b PASS; typecheck PASS |
 | Base | `#126` tip `2e221def` (`cursor/comercial360-onda3-condicao-snapshot-392b`) |
 | Branch | `cursor/comercial360-onda3-produto-http-392b` |
-| Draft PR | base `#126` — ManagePullRequest draft |
+| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-condicao-snapshot-392b...cursor/comercial360-onda3-produto-http-392b?expand=1 |
 | Próximo | promoção snapshot **ou** pickers legados; sem Codex/#104/#48 |
 
 Reservados: runtimeBackend, httpApiClient (`produtos`), router meta (Pedido backend HTTP is active), comercialProdutoHttpUiPolicy, OrcamentosTab, PedidoCanonicoPanel, testes client/policy/runtime03/07b, docs R03. Sem merge/VPS.
