@@ -51,23 +51,20 @@ import {
   canLoadProdutosHttp,
   normalizeProdutosListPayload,
 } from './comercialProdutoHttpUiPolicy';
+import {
+  formatComercialHttpError,
+  resolveHttpListViewState,
+} from './comercialListHttpUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
 const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', validade_em: '', observacoes: '', itens: [emptyItem()] });
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
-const errorMessage = (error) => {
-  if (error?.status === 403) return 'Seu perfil não possui permissão para esta ação.';
-  if (error?.status === 404) return 'Orçamento não encontrado neste contexto.';
-  if (error?.status === 409) return 'O orçamento foi alterado e não está mais em aberto.';
-  if (error?.status === 422 && error?.body?.error?.code === 'ORCAMENTO_VALIDADE_EXPIRADA') {
-    return 'Validade expirada — altere a data antes de salvar ou converter.';
-  }
-  if (error?.status === 422) return error?.body?.error?.message || 'Revise os dados informados.';
-  if (error?.status === 400) return 'Contexto ou identificador inválido.';
-  return 'Não foi possível comunicar com o servidor. Tente novamente.';
-};
+const errorMessage = (error) => formatComercialHttpError(error, {
+  entityLabel: 'Orçamento',
+  conflictMessage: 'O orçamento foi alterado e não está mais em aberto.',
+});
 
 export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, windowMode = false }) {
   void filterInContext;
@@ -397,6 +394,7 @@ const convertToPedido = async () => {
 
   if (!canView) return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4" /><AlertDescription>Acesso negado aos Orçamentos.</AlertDescription></Alert></div>;
   const rows = listQuery.data?.data || [];
+  const listView = resolveHttpListViewState({ isLoading: listQuery.isLoading, isError: listQuery.isError, rowCount: rows.length });
   const meta = listQuery.data?.meta || { total: 0 };
   return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar">
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -404,6 +402,7 @@ const convertToPedido = async () => {
       {canCreate && <Button onClick={openCreate} disabled={!contextReady} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
+    {mastersQuery.isError && <Alert variant="destructive" className="mb-3" data-testid="orcamento-masters-error"><AlertCircle className="h-4 w-4" /><AlertDescription>{errorMessage(mastersQuery.error)} Masters não carregados — não trate como lista vazia.</AlertDescription></Alert>}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
@@ -411,7 +410,7 @@ const convertToPedido = async () => {
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
       <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
     </form>
-    {listQuery.isLoading ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listQuery.isError ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento encontrado para os filtros desta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
+    {listView === 'loading' ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listView === 'error' ? <div className="flex-1 flex flex-col items-center justify-center gap-3" data-testid="orcamento-list-error"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : listView === 'empty' ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500" data-testid="orcamento-list-empty"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento encontrado para os filtros desta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell><span className="inline-flex items-center gap-1">{date(row.validade_em)}{isOrcamentoValidadeExpirada(row.validade_em) && <Badge variant="destructive">Expirado</Badge>}</span></TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>{canEdit(row) && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}

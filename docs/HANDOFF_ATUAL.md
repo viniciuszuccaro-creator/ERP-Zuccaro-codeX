@@ -1,3 +1,15 @@
+## OPINIÃO CURSOR — #135 tip + list fail-closed A+C (pós-#135) (2026-09-29T17:05Z)
+
+| PR | Tip / Branch | CI | Escopo |
+| --- | --- | --- | --- |
+| #134 | `fa362ff0` | **SUCCESS** | Convert snapshots fail-closed |
+| #135 | `5b559c9a` | pendente | Pedido cancel fail-closed |
+| este | `cursor/comercial360-onda3-list-failclosed-392b` | pendente | List HTTP fail-closed + update CANCELADO |
+
+Próximo após este: Onda 4 slice **sem** 025–028. Sem merge/VPS. Sem Codex/#104/#48.
+
+---
+
 ## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
 
 | Campo | Valor |

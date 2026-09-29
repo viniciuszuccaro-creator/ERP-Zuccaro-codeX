@@ -46,7 +46,15 @@ const conversionSchema = z.object({
   cliente_local_id: z.string().uuid().nullable().optional(),
   obra_id: z.string().uuid().nullable().optional(),
   tabela_preco_id: z.string().uuid().nullable().optional(),
-  observacoes: z.string().trim().max(1000).optional(),
+  observacoes: z.string().trim().max(1000).transform((value) => {
+    const cleaned = value
+      .replace(/[\u0000-\u001F\u007F]/g, ' ')
+      .replace(/[<>]/g, '')
+      .replace(/javascript:\s*/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned || undefined;
+  }).optional(),
 }).strict();
 
 /** Porta mínima para snapshot de preço na venda direta (não usada na conversão de Orçamento). */

@@ -88,6 +88,13 @@ test('HTTP Pedido cancela sem exclusao e bloqueia repeticao', async () => {
   assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 409);
   assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers({ 'x-actor-id': deniedActorId }), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 403);
   assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers({ 'x-empresa-id': otherEmpresaId }), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 404);
+  const updateBlocked = await request(runtime.app, `/api/v1/pedidos/${id}`, {
+    method: 'PATCH',
+    headers: headers(),
+    body: JSON.stringify({ ...pedidoPayload, itens: [{ ...pedidoPayload.itens[0], quantidade: '9' }] }),
+  });
+  assert.equal(updateBlocked.status, 409);
+  assert.equal(updateBlocked.body.error.code, 'PEDIDO_STATE_CONFLICT');
 });
 
 test('HTTP converte Orcamento em Pedido uma unica vez', async () => {
@@ -107,6 +114,9 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(cross.status, 404); assert.equal(cross.body.error.code, 'PEDIDO_NOT_FOUND');
   const meta = await request(runtime.app, '/api/v1/meta'); assert.equal(meta.body.pedido.backendHttp, true); assert.equal(meta.body.pedido.frontendHttp, true);
   assert.equal(meta.body.pedido.cancelByState, true);
+  assert.equal(meta.body.pedido.listFailClosed, true);
+  assert.equal(meta.body.pedido.updateBlockedWhenCancelled, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido cancel fail-closed/);
+  assert.match(String(meta.body.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
 });

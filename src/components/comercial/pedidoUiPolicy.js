@@ -1,4 +1,5 @@
 import { calculateItem, calculateTotals, decimalToMicros, microsToDecimal, resolvePromocaoPayloadRef } from './orcamentoUiPolicy.js';
+import { sanitizeObservacoesText } from './comercialListHttpUiPolicy.js';
 
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
@@ -39,7 +40,7 @@ export function buildPedidoPayload(form, options = {}) {
     orcamento_id: form.orcamento_id || undefined,
     tipo_operacao: form.tipo_operacao,
     data_entrega_solicitada: new Date(`${form.data_entrega_solicitada}T12:00:00`).toISOString(),
-    observacoes: String(form.observacoes || '').trim() || undefined,
+    observacoes: sanitizeObservacoesText(form.observacoes) || undefined,
     itens: form.itens.map((item) => ({
       produto_id: item.produto_id,
       unidade_id: item.unidade_id,
