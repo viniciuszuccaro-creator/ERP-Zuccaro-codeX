@@ -5,13 +5,14 @@
 | Choice | **B** — servidor aplica promoção/desconto/total no create/update (fail-closed; UI não inventa totais) |
 | Implementado | **SIM** — `applyPromocaoOnPersist` (idempotente com UI pós-simular); wire Orçamento/Pedido; UI `mergeSimulacaoBeforeSave` + `resolveDisplayTotals`; sem migration nova |
 | Testado | **SIM** — promo snapshot 15/15 + runtime08c/simular/condição 19/19 + UI simulação 10/10 + orçamento/pedido UI 12/12 + runtime07b meta PASS; `server` typecheck PASS; `git diff --check` PASS |
-| CI | tip a empurrar |
+| CI | tip `102da085` |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
 | Branch | `cursor/comercial360-onda3-simular-persist-392b` |
 | Draft PR | a abrir — base `cursor/comercial360-onda3-promocao-snapshot-392b` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
+| Tip | `102da085` |
 | Meta | note preserva **Pedido backend HTTP is active** + `simularPersistFailClosed` / `persistOnWrite` |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe |
 

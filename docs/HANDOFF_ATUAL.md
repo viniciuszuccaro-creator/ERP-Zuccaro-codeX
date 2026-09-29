@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-simular-persist-392b` |
 | Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
 | Escopo | sem migration; servidor aplica promo/desconto/total; UI merge+preview servidor; meta preserva `Pedido backend HTTP is active` |
-| Tip | a gravar |
+| Tip | `102da085` |
 | Draft PR | a abrir — base promoção-snapshot |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
 | Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
