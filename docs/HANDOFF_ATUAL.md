@@ -5,7 +5,7 @@
 | Choice | **B** reload after save prova snapshots condição/promo/tabela |
 | Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
 | Base | `#138` tip `90a76433` (`cursor/comercial360-onda3-alcada-ui-failclosed-392b`) |
-| Tip | `b0ce1a77f4bc39803fc179c56da5661316ac1621` (feat `0acbec43`) |
+| Tip | `953ca272e365dbd22aff22d823065c67425e9b67` (feat `0acbec43`) |
 | Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** |
 | Colisão | Margem UI adiada (#47 OPEN); anexos/PDF #52–#62 |
@@ -195,7 +195,7 @@ Reservados: migration 029, comercialCondicaoSnapshot, orcamento/pedido services+
 | Base | `#122` tip `d82c7096` (`cursor/comercial360-onda3-cliente-empresa-http-392b`) |
 | Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ `a2c59236` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
-| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration` |
+| Draft PR | **#139** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/139 — `gh pr create` → `Resource not accessible by integration` |
 | Próximo | snapshot condição/parcelas (migration) |
 
 Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObraHttpUiPolicy, PedidoCanonicoPanel, testes client/policy/runtime06a/06b/07b, docs 06A/06B/05. Sem Codex/#104/#48, sem merge/VPS.

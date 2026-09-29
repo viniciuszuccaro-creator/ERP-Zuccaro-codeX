@@ -5,8 +5,8 @@
 | Choice | **B** Pedido/Orçamento reload after save prova snapshots (condição/promo/tabela) — A colide com #47 margem/CostPort aberto |
 | Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
 | Base | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` tip `90a76433` (#138) |
-| Tip | `b0ce1a77` (`b0ce1a77f4bc39803fc179c56da5661316ac1621`) — feat `0acbec43` |
-| Draft PR | **BLOCKED** `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Tip | `953ca272` (`953ca272e365dbd22aff22d823065c67425e9b67`) — feat `0acbec43` |
+| Draft PR | **#139** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/139 `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-snapshot-reload-392b` |
 | Escopo | Após create/update, formulário permanece aberto e recarrega snapshots persistidos (condição+tabela+promo); badges Persistido; sem migration |
