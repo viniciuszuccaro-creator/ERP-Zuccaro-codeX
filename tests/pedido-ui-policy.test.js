@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
 const nowFixed = new Date('2026-09-29T15:00:00.000Z');
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
@@ -22,6 +22,26 @@ test('pedido UI cancel disable quando sem permissao ou ja cancelado',()=>{
   assert.equal(isPedidoCancelDisabled(denyCancel,'EM_ABERTO'),true);
   assert.equal(isPedidoCancelDisabled(null,'EM_ABERTO'),true);
   assert.equal(canUsePedidoAction(allowCancel,'cancelar','FINALIZADO'),false);
+});
+test('pedido cancel motivo UI fail-closed (3–500)',()=>{
+  assert.equal(PEDIDO_CANCEL_MOTIVO_MIN,3);
+  assert.equal(PEDIDO_CANCEL_MOTIVO_MAX,500);
+  assert.equal(evaluatePedidoCancelMotivoUiGate('').blockConfirm,true);
+  assert.equal(evaluatePedidoCancelMotivoUiGate('  ab  ').blockConfirm,true);
+  assert.equal(evaluatePedidoCancelMotivoUiGate('ok!').blockConfirm,false);
+  assert.equal(evaluatePedidoCancelMotivoUiGate('ok!').motivo,'ok!');
+  assert.equal(evaluatePedidoCancelMotivoUiGate('x'.repeat(501)).blockConfirm,true);
+  assert.equal(clampPedidoCancelMotivo('x'.repeat(600)).length,500);
+});
+test('painel Pedido: dialog cancel com motivo obrigatório', async ()=>{
+  const source=await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url),'utf8');
+  assert.match(source,/evaluatePedidoCancelMotivoUiGate/);
+  assert.match(source,/clampPedidoCancelMotivo/);
+  assert.match(source,/pedido-cancel-motivo/);
+  assert.match(source,/cancelMotivoUi\.blockConfirm/);
+  assert.match(source,/api\.cancel\(row\.id,\s*gate\.motivo\)/);
+  assert.doesNotMatch(source,/Cancelamento confirmado pelo usuário/);
+  assert.doesNotMatch(source,/ConfirmDialog/);
 });
 test('mapPedidoRowToForm recarrega campos canônicos pós-save sem inventar snapshots',()=>{
   const mapped=mapPedidoRowToForm({
