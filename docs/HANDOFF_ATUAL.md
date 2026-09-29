@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #142 CI SUCCESS + #143 delivery-address (2026-09-29T17:57Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #142 | `d7871c23` | **SUCCESS** | preview cronograma parcelas |
+| #143 | `cursor/comercial360-onda3-delivery-address-392b` | pendente | resumo endereço Local/Obra |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #140 CI SUCCESS + #142 parcelas + review #104/#48 (2026-09-29T17:46Z)
 
 | PR | Tip | CI/Veredito | Escopo |
