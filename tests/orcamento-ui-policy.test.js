@@ -10,6 +10,7 @@ import {
   canUseOrcamentoAction,
   isOrcamentoValidadeExpirada,
   microsToDecimal,
+  orcamentoConvertSnapshotHint,
   orcamentoValidadeHint,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
@@ -95,6 +96,32 @@ test('hint e detecção de validade expirada no UI policy', () => {
   assert.equal(orcamentoValidadeHint('2027-01-01', now), null);
 });
 
+test('hint de convert snapshot incompleto (pós-031) no UI policy', () => {
+  assert.match(
+    String(orcamentoConvertSnapshotHint({
+      tabela_preco_id: '55555555-5555-4555-8555-555555555555',
+    })),
+    /tabela/i,
+  );
+  assert.match(
+    String(orcamentoConvertSnapshotHint({
+      condicao_pagamento_codigo_snapshot: 'SNAP',
+      condicao_pagamento_nome_snapshot: '',
+    })),
+    /condição/i,
+  );
+  assert.equal(orcamentoConvertSnapshotHint({
+    condicao_pagamento_codigo_snapshot: 'SNAP-28',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
+    tabela_preco_id: '55555555-5555-4555-8555-555555555555',
+    tabela_preco_codigo_snapshot: 'TAB',
+    tabela_preco_nome_snapshot: 'Tabela',
+    promocao_aplicada: false,
+  }), null);
+  assert.equal(orcamentoConvertSnapshotHint({ condicao_pagamento_id: 'x' }), null);
+});
+
 test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por empresa', async () => {
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   assert.match(tab, /Carregando orçamentos/);
@@ -113,6 +140,7 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /orcamentoValidadeHint|Comercial\.orcamento\.validade-hint/);
   assert.match(tab, /ORCAMENTO_VALIDADE_EXPIRADA/);
   assert.match(tab, /isOrcamentoValidadeExpirada/);
+  assert.match(tab, /orcamentoConvertSnapshotHint|Comercial\.orcamento\.convert-snapshot-hint/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
   const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });

@@ -1,3 +1,20 @@
+## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A residual** — convert Orçamento→Pedido copy/verify ALL snapshots fail-closed pós-031 |
+| Branch | `cursor/comercial360-onda3-convert-snapshot-392b` |
+| Base | `#133` tip `70576db7` (`cursor/comercial360-onda3-orc-validade-392b`) |
+| Escopo | sem migration; policy convert; UI hint; meta `convertSnapshotFailClosed`; note preserva `Pedido backend HTTP is active`; validade #133 intacta |
+| Testes | convert-snapshot 8/8 + regressões 60/60 + UI 11/11 + 07b 13/13; typecheck PASS |
+| Tip | pendente push |
+| Draft PR | ManagePullRequest indisponível; `gh pr create` a tentar |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-orc-validade-392b...cursor/comercial360-onda3-convert-snapshot-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 sem colisão 025–028 **ou** Pedido cancel fail-closed / list empty-state HTTP |
+
+---
+
 ## LOTE CURSOR — Validade Orçamento fail-closed (pós-#131) (2026-09-29T16:50Z)
 
 | Campo | Valor |

@@ -349,6 +349,8 @@ test('Onda3: conversão copia snapshot de promoção do Orçamento', async () =>
     condicao_pagamento_nome_snapshot: 'Snapshot original',
     condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
     tabela_preco_id: tabelaId,
+    tabela_preco_codigo_snapshot: 'SNAP-TAB',
+    tabela_preco_nome_snapshot: 'Tabela snapshot original',
     promocao_aplicada: true,
     promocao_bps: 500,
     promocao_cupom: 'CPA10',
@@ -360,6 +362,7 @@ test('Onda3: conversão copia snapshot de promoção do Orçamento', async () =>
   assert.equal(order.promocao_aplicada, true);
   assert.equal(order.promocao_bps, 500);
   assert.equal(order.promocao_cupom, 'CPA10');
+  assert.equal(order.tabela_preco_codigo_snapshot, 'SNAP-TAB');
 });
 
 test('Onda3: Pedido update regrava promoção (fail-closed ou limpa)', async () => {

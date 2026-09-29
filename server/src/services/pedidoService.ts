@@ -27,17 +27,13 @@ import {
   deveLiberarDescontoSemAprovarPorAvista,
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
-import {
-  assertPersistedCondicaoSnapshot,
-  buildCondicaoPagamentoDocumentoSnapshot,
-} from './comercialCondicaoSnapshot.js';
+import { buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
+import { resolveOrcamentoConvertSnapshots } from './comercialConvertSnapshotPolicy.js';
 import {
   applyPromocaoOnPersist,
-  assertPersistedPromocaoSnapshot,
   type ComercialPromocaoConfigPort,
 } from './comercialPromocaoPolicy.js';
 import {
-  assertPersistedTabelaSnapshot,
   buildTabelaPrecoDocumentoSnapshot,
   emptyTabelaPrecoDocumentoSnapshot,
 } from './comercialTabelaSnapshot.js';
@@ -165,24 +161,13 @@ export class PedidoService {
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
-        // Prefer snapshot do Orçamento; se legado sem snapshot, resolve da condição atual (fail-closed).
-        const condicaoSnapshot = quote.condicao_pagamento_parcelas_snapshot
-          ? assertPersistedCondicaoSnapshot(quote, 'ORCAMENTO')
-          : buildCondicaoPagamentoDocumentoSnapshot(
-            await this.condicoes.get(scope, data.condicao_pagamento_id, executor),
-            'PEDIDO',
-          );
-        const promocaoSnapshot = assertPersistedPromocaoSnapshot(quote);
-        const tabelaSnapshot = quote.tabela_preco_codigo_snapshot || quote.tabela_preco_nome_snapshot
-          ? assertPersistedTabelaSnapshot(quote, 'ORCAMENTO')
-          : data.tabela_preco_id
-            ? buildTabelaPrecoDocumentoSnapshot(
-              await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor),
-              'PEDIDO',
-            )
-            : emptyTabelaPrecoDocumentoSnapshot();
+        // Não-retroatividade: copia snapshots do Orçamento; pós-031 fail-closed se incompletos.
+        // Legado pré-029 sem nenhum campo de condição ainda resolve condição ao vivo.
+        const convertSnaps = await resolveOrcamentoConvertSnapshots(quote, {
+          resolveLegacyCondicao: async () => this.condicoes.get(scope, data.condicao_pagamento_id, executor),
+        });
         const { promocao: _ignored, ...rest } = data;
-        const write: PedidoWrite = { ...rest, ...condicaoSnapshot, ...tabelaSnapshot, ...promocaoSnapshot };
+        const write: PedidoWrite = { ...rest, ...convertSnaps };
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);

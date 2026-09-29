@@ -215,6 +215,8 @@ test('Onda3: conversão copia snapshot do Orçamento (não-retroatividade)', asy
     condicao_pagamento_nome_snapshot: 'Snapshot original',
     condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
     tabela_preco_id: tabelaId,
+    tabela_preco_codigo_snapshot: 'SNAP-TAB',
+    tabela_preco_nome_snapshot: 'Tabela snapshot original',
     promocao_aplicada: false,
     promocao_bps: null,
     promocao_cupom: null,
@@ -226,6 +228,7 @@ test('Onda3: conversão copia snapshot do Orçamento (não-retroatividade)', asy
   assert.equal(order.condicao_pagamento_codigo_snapshot, 'SNAP-28');
   assert.equal(order.condicao_pagamento_nome_snapshot, 'Snapshot original');
   assert.equal(order.condicao_pagamento_parcelas_snapshot?.[0]?.dias, 28);
+  assert.equal(order.tabela_preco_codigo_snapshot, 'SNAP-TAB');
   assert.notEqual(order.condicao_pagamento_nome_snapshot, 'Condição atual alterada');
 });
 

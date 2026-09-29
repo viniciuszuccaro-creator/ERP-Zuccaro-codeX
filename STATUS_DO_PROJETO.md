@@ -1,3 +1,43 @@
+## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **A residual** — harden Orçamento→Pedido copy/verify ALL snapshots fail-closed pós-031 |
+| Implementado | **SIM** — `comercialConvertSnapshotPolicy`; wire convert; UI hint; meta `convertSnapshotFailClosed`; sem migration; validade #133 preservada |
+| Testado | **SIM** — convert-snapshot 8/8 + condição/promo/tabela/validade + 08c/09/onda2 60/60 + UI 11/11 + runtime07b 13/13; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip pendente push |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#133` tip `70576db7` (`cursor/comercial360-onda3-orc-validade-392b`) |
+| Branch | `cursor/comercial360-onda3-convert-snapshot-392b` |
+| Draft PR | pendente — ManagePullRequest indisponível; tentar `gh pr create` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-orc-validade-392b...cursor/comercial360-onda3-convert-snapshot-392b?expand=1 |
+| Tip | pendente |
+| Meta | note preserva **Pedido backend HTTP is active** + `convertSnapshotFailClosed` / validade flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028/032 |
+
+### Arquivos (Cursor — lote pós-#133)
+
+- `server/src/services/comercialConvertSnapshotPolicy.ts` (extração)
+- `server/src/services/pedidoService.ts` / `server/src/api/router.ts`
+- `src/components/comercial/orcamentoUiPolicy.js` / `OrcamentosTab.jsx`
+- `server/tests/runtime-onda3-convert-snapshot.test.ts` + fixtures condição/promo + meta 07b/08c
+- `tests/orcamento-ui-policy.test.js`
+
+### Escopo
+
+- Convert copia condição (codigo+nome+parcelas), promoção e tabela (codigo+nome); pós-031 `tabela_preco_id` sem snap → 422; condição parcial → 422; legado sem nenhum campo de condição ainda resolve live.
+- UI: hint + disable convert quando snapshot incompleto; não enfraquece validade #133.
+- Multiempresa/RBAC/auditoria preservados; sem migration.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** Pedido cancel fail-closed symmetry / list empty-state HTTP; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #131 → #133 → **este lote**.
+
+---
+
 ## LOTE CURSOR — Validade Orçamento fail-closed (pós-#131) (2026-09-29T16:50Z)
 
 | Etapa | Estado |
