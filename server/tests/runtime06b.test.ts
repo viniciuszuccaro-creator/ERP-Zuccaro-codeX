@@ -550,6 +550,8 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
       assert.ok(meta.httpPilotEntities.includes('CondicaoPagamento'));
       assert.equal(meta.cliente?.frontendHttp, true);
       assert.ok(meta.httpPilotEntities.includes('Cliente'));
+      assert.equal(meta.clienteEmpresa?.frontendHttp, true);
+      assert.ok(meta.httpPilotEntities.includes('ClienteEmpresa'));
     } else {
       assert.equal(meta.tabelaPreco?.frontendHttp, false);
       assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));

@@ -442,6 +442,43 @@ function mountClienteRoutes(
     }
   });
 
+  // Flat list-for-scope (Onda 3): vínculos da Empresa do contexto — seleção Comercial.
+  router.get('/api/v1/cliente-empresas', requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = ['empresa', 'situacao', 'created_at'].includes(orderByRaw ?? '')
+        ? orderByRaw as 'empresa' | 'situacao' | 'created_at'
+        : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'asc' || orderDirRaw === 'desc' ? orderDirRaw : undefined;
+      const page = await service.listEmpresaLinksForScope(ctxFromReq(req), {
+        ativo: parseAtivoQuery(req.query.ativo),
+        bloqueado: req.query.bloqueado == null ? undefined : parseAtivoQuery(req.query.bloqueado),
+        habilitadoOperacao: req.query.habilitado_operacao == null
+          ? undefined
+          : parseAtivoQuery(req.query.habilitado_operacao),
+        situacaoComercial: req.query.situacao ? String(req.query.situacao) : undefined,
+        search: req.query.search ? String(req.query.search) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/api/v1/cliente-empresas/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.getEmpresaLinkById(ctxFromReq(req), req.params.id);
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {
     try {
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
@@ -1202,11 +1239,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Cliente', 'Orcamento', 'Pedido'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Cliente', 'ClienteEmpresa', 'Orcamento', 'Pedido'],
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1232,7 +1269,8 @@ export function createApiRouter(deps: ApiDeps) {
         tenantIntegrity: true,
         softDeleteRestore: true,
         tabelaPrecoLink: true,
-        frontendHttp: false,
+        listForScope: true,
+        frontendHttp: true,
       },
       clienteLocal: {
         canonicalAddress: true,

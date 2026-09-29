@@ -1,3 +1,46 @@
+## LOTE CURSOR — #121 ClienteEmpresa list-for-scope frontendHttp (2026-09-29T15:35Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `GET /api/v1/cliente-empresas` list-for-scope + get by id; piloto HTTP `ClienteEmpresa`; Orçamento/Pedido seleção via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy+http-api-client (33/33) + runtime05 3/3 + runtime07b 13/13 + runtime06b 4/4 + runtime08c 6/6 |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#120` `cursor/comercial360-onda3-cliente-http-392b` (tip `5b444a69`) |
+| Branch | `cursor/comercial360-onda3-cliente-empresa-http-392b` @ feat `6e780d73` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-http-392b...cursor/comercial360-onda3-cliente-empresa-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#120; não editar em Codex/#104/#48)
+
+- `server/src/repositories/inMemoryClienteRepository.ts` / `postgresClienteRepository.ts` (clienteId opcional + habilitadoOperacao)
+- `server/src/services/clienteEmpresaOperations.ts` / `clienteService.ts` (`listForScope`/`getById`)
+- `server/src/api/router.ts` (rotas flat + meta `clienteEmpresa.frontendHttp` + pilot; note preserva Pedido backend HTTP)
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + ClienteEmpresa)
+- `src/api/httpApiClient.js` (entity + `clienteEmpresas` list/get)
+- `src/components/comercial/comercialClienteEmpresaHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `tests/comercial-cliente-empresa-http-client.test.js` / `comercial-cliente-empresa-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime05.test.ts` / `runtime06b.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_05.md`
+
+### Escopo
+
+- Reutiliza R05 nested; **sem migration**. List-for-scope exige `empresaId` no contexto (fail-closed).
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente_empresa.visualizar no BFF.
+- Mutações ClienteEmpresa permanecem nested sob `/api/v1/clientes/:id/empresas`.
+- Local/Obra continuam fora do piloto flat.
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteLocal/Obra frontendHttp; sem CRM paralelo.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → **#121**.
+
+---
+
 ## LOTE CURSOR — #119 Cliente frontendHttp Onda 3 (2026-09-29T15:10Z)
 
 | Etapa | Estado |
