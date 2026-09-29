@@ -387,6 +387,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.match(String(meta.note || ''), /Cliente frontendHttp/);
     assert.match(String(meta.note || ''), /ClienteEmpresa frontendHttp/);
     assert.match(String(meta.note || ''), /ClienteLocal e Obra frontendHttp/);
+    assert.match(String(meta.note || ''), /snapshot de CondicaoPagamento/);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {

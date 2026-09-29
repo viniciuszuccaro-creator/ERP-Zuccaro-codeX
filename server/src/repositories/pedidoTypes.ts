@@ -1,6 +1,7 @@
 import type { DbQueryExecutor } from '../db/client.js';
 import { z } from 'zod';
 import { calculateOrcamento, orcamentoItemSchema } from './orcamentoTypes.js';
+import type { CondicaoPagamentoParcelaSnapshot } from '../services/comercialCondicaoSnapshot.js';
 
 export const PEDIDO_STATUS = ['EM_ABERTO', 'EM_PRODUCAO', 'PRONTO_ENTREGA', 'PRONTO_RETIRADA', 'FINALIZADO', 'CANCELADO'] as const;
 export const PEDIDO_TIPOS_OPERACAO = ['ENTREGA', 'RETIRADA'] as const;
@@ -9,6 +10,7 @@ export const pedidoItemSchema = orcamentoItemSchema.extend({
   requer_producao: z.boolean().optional().default(false),
 }).strict();
 
+/** Payload do cliente — snapshot de condição é autoridade do servidor. */
 export const pedidoCreateSchema = z.object({
   cliente_empresa_id: z.string().uuid(),
   cliente_local_id: z.string().uuid().nullable().optional(),
@@ -23,6 +25,11 @@ export const pedidoCreateSchema = z.object({
 }).strict();
 
 export type PedidoCreate = z.infer<typeof pedidoCreateSchema>;
+export type PedidoWrite = PedidoCreate & {
+  condicao_pagamento_codigo_snapshot: string;
+  condicao_pagamento_nome_snapshot: string;
+  condicao_pagamento_parcelas_snapshot: CondicaoPagamentoParcelaSnapshot[];
+};
 export type PedidoStatus = typeof PEDIDO_STATUS[number];
 export type PedidoItem = z.infer<typeof pedidoItemSchema> & { subtotal: string; total: string };
 export type PedidoHistorico = {
@@ -47,6 +54,9 @@ export type Pedido = {
   obra_id: string | null;
   tabela_preco_id: string | null;
   condicao_pagamento_id: string;
+  condicao_pagamento_codigo_snapshot: string | null;
+  condicao_pagamento_nome_snapshot: string | null;
+  condicao_pagamento_parcelas_snapshot: CondicaoPagamentoParcelaSnapshot[] | null;
   orcamento_id: string | null;
   vendedor_id: string;
   tipo_operacao: typeof PEDIDO_TIPOS_OPERACAO[number];
@@ -75,11 +85,11 @@ export function calculatePedido(items: z.infer<typeof pedidoItemSchema>[]): Pick
 
 export interface PedidoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
-  create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido>;
+  create(scope: PedidoScope, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor): Promise<Pedido>;
   get(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByOrcamento(scope: PedidoScope, orcamentoId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   list(scope: PedidoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: PedidoListFilters): Promise<PedidoPage>;
-  update(scope: PedidoScope, id: string, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
+  update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   history(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<PedidoHistorico[]>;
 }

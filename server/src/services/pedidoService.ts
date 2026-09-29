@@ -12,7 +12,7 @@ import type { ObraRepository } from '../repositories/inMemoryObraRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
-import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus } from '../repositories/pedidoTypes.js';
+import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoWrite } from '../repositories/pedidoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import {
   assertDescontoDentroDaAlcadaOuAprovar,
@@ -27,6 +27,10 @@ import {
   deveLiberarDescontoSemAprovarPorAvista,
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
+import {
+  assertPersistedCondicaoSnapshot,
+  buildCondicaoPagamentoDocumentoSnapshot,
+} from './comercialCondicaoSnapshot.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -49,7 +53,18 @@ export type PedidoSalePricePort = {
 export type { ComercialCostPort, ComercialAlcadaConfigPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
-  return sanitizeAuditSnapshot({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status, cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id, tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao) });
+  return sanitizeAuditSnapshot({
+    id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status,
+    cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id,
+    tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id,
+    condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot,
+    condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
+    condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
+    orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao,
+    data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto,
+    total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length,
+    requer_producao: row.itens.some((item) => item.requer_producao),
+  });
 }
 
 export class PedidoService {
@@ -80,10 +95,11 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const write = await this.applyCondicaoSnapshot(scope, priced, executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
-      await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+      await this.assertDescontoAlcada(ctx, scope, write, ctx.actorId!, executor);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const created = await this.repo.create(scope, write, ctx.actorId!, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -101,7 +117,7 @@ export class PedidoService {
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
-        // Não-retroatividade: preserva preco_unitario já snapshotado no Orçamento.
+        // Não-retroatividade: preserva preco_unitario e snapshot de condição já gravados no Orçamento.
         const draft = {
           ...parsed.data,
           orcamento_id: quote.id,
@@ -123,11 +139,19 @@ export class PedidoService {
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
+        // Prefer snapshot do Orçamento; se legado sem snapshot, resolve da condição atual (fail-closed).
+        const condicaoSnapshot = quote.condicao_pagamento_parcelas_snapshot
+          ? assertPersistedCondicaoSnapshot(quote, 'ORCAMENTO')
+          : buildCondicaoPagamentoDocumentoSnapshot(
+            await this.condicoes.get(scope, data.condicao_pagamento_id, executor),
+            'PEDIDO',
+          );
+        const write: PedidoWrite = { ...data, ...condicaoSnapshot };
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
-        const alcada = await this.assertDescontoAlcada(ctx, scope, data, criadorOrcamento, executor);
-        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
-        const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+        const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+        const created = await this.repo.create(scope, write, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         if (alcada.aprovadaPorOutro) {
@@ -180,10 +204,12 @@ export class PedidoService {
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
+      // Documento aberto: re-snapshot da condição atual; conversão já copiou o snapshot do Orçamento.
+      const write = await this.applyCondicaoSnapshot(scope, priced, executor);
       const criador = await this.resolveCriadorActorId('Pedido', id);
-      const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
+      const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const after = await this.repo.update(scope, id, write, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -263,6 +289,16 @@ export class PedidoService {
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
     return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
+  }
+
+  private async applyCondicaoSnapshot(
+    scope: PedidoScope,
+    data: PedidoCreate,
+    executor?: DbQueryExecutor,
+  ): Promise<PedidoWrite> {
+    const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
+    const snapshot = buildCondicaoPagamentoDocumentoSnapshot(condicao, 'PEDIDO');
+    return { ...data, ...snapshot };
   }
 
   private normalizeMoney(value: string): string {

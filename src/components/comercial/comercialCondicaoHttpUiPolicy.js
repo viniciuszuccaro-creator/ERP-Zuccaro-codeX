@@ -1,7 +1,7 @@
 /**
- * Política UI CondicaoPagamento HTTP (Onda 2) — lista/resolve nas telas canônicas.
- * Snapshot de parcelas fica só em memória do formulário (sem migration).
- * Persistência canônica continua sendo `condicao_pagamento_id`.
+ * Política UI CondicaoPagamento HTTP (Onda 2/3) — lista/resolve nas telas canônicas.
+ * Snapshot id+codigo+nome+parcelas é persistido pelo servidor no Orçamento/Pedido (migration 029).
+ * Payload de save continua só com `condicao_pagamento_id`; snapshot é autoridade do backend.
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -69,24 +69,50 @@ export function applyResolvedCondicaoToForm(form, resolved) {
 }
 
 /**
- * Preview local de parcelas resolvidas (não é payload de save).
+ * Preview local de parcelas resolvidas (pré-save) ou recarregadas do documento.
  * @param {object | null | undefined} snapshot
  */
 export function buildCondicaoSnapshotPreview(snapshot) {
-  if (!snapshot?.id) return null;
+  if (!snapshot?.id && !snapshot?.condicao_pagamento_id) return null;
   return {
-    id: snapshot.id,
-    codigo: snapshot.codigo || null,
-    nome: snapshot.nome || null,
-    fonte: snapshot.fonte || null,
+    id: snapshot.id || snapshot.condicao_pagamento_id || null,
+    codigo: snapshot.codigo || snapshot.condicao_pagamento_codigo_snapshot || null,
+    nome: snapshot.nome || snapshot.condicao_pagamento_nome_snapshot || null,
+    fonte: snapshot.fonte || (snapshot.condicao_pagamento_parcelas_snapshot ? 'persistido' : null),
+    persistido: Boolean(snapshot.condicao_pagamento_parcelas_snapshot || snapshot.persistido),
     parcelas: Array.isArray(snapshot.parcelas)
       ? snapshot.parcelas.map((parcela) => ({
         ordem: parcela.ordem,
         dias: parcela.dias,
         percentual: String(parcela.percentual ?? ''),
       }))
-      : [],
+      : Array.isArray(snapshot.condicao_pagamento_parcelas_snapshot)
+        ? snapshot.condicao_pagamento_parcelas_snapshot.map((parcela) => ({
+          ordem: parcela.ordem,
+          dias: parcela.dias,
+          percentual: String(parcela.percentual ?? ''),
+        }))
+        : [],
   };
+}
+
+/**
+ * Monta preview a partir do documento Orçamento/Pedido já gravado (reload).
+ * @param {object | null | undefined} row
+ */
+export function buildPersistedCondicaoSnapshotFromRow(row) {
+  if (!row?.condicao_pagamento_id) return null;
+  if (!row.condicao_pagamento_nome_snapshot && !Array.isArray(row.condicao_pagamento_parcelas_snapshot)) {
+    return null;
+  }
+  return buildCondicaoSnapshotPreview({
+    condicao_pagamento_id: row.condicao_pagamento_id,
+    condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot,
+    condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
+    condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
+    persistido: true,
+    fonte: 'persistido',
+  });
 }
 
 /**

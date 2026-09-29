@@ -91,7 +91,7 @@ function orcamentoFixture(options: { preco?: string | null; calls?: Array<unknow
     { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as never,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as never,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
-    { get: async () => ({ id: condicaoId, ativo: true }) } as never,
+    { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as never,
     prices,
   );
   return { service, repo, prices, calls: options.calls };
@@ -123,7 +123,7 @@ function pedidoFixture(options: { preco?: string | null; calls?: Array<unknown> 
     { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as never,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as never,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
-    { get: async () => ({ id: condicaoId, ativo: true }) } as never,
+    { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as never,
     { get: async () => ({ id: 'local', ativo: true }) } as never,
     { get: async () => ({ id: 'obra', ativo: true }) } as never,
     { get: async () => ({ id: tabelaId, ativo: true }) } as never,

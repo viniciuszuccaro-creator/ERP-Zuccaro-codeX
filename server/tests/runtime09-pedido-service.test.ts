@@ -24,7 +24,7 @@ function fixture() {
     {getEmpresaLinkById:async()=>({id:clienteEmpresaId,cliente_id:clienteId,ativo:true,bloqueado:false,habilitado_operacao:true} as never)},
     {getById:async()=>({id:produtoId,ativo:true,unidade_medida_id:unidadeId} as never)},
     {getById:async()=>({id:unidadeId,ativo:true} as never)},
-    {get:async()=>({id:condicaoId,ativo:true} as never)},
+    {get:async()=>({id:condicaoId,codigo:'COND-28',nome:'28 dias',ativo:true,parcelas:[{id:'p1',ordem:1,dias:28,percentual:'100.000000',ativo:true}]} as never)},
     {get:async()=>({id:'local',ativo:true} as never)},
     {get:async()=>({id:'obra',ativo:true} as never)},
     {get:async()=>({id:'tabela',ativo:true} as never)},

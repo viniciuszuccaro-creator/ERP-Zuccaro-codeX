@@ -111,7 +111,7 @@ function fixture() {
   });
   const produtos = { getById: async () => ({ id: PRODUTO_ID, ativo: true, unidade_medida_id: UNIDADE_ID }) };
   const unidades = { getById: async () => ({ id: UNIDADE_ID, ativo: true }) };
-  const condicoes = { get: async () => ({ id: CONDICAO_ID, ativo: true }) };
+  const condicoes = { get: async () => ({ id: CONDICAO_ID, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
   const clientes = { getEmpresaLinkById: resolveCliente };
   // Onda 2 na main: create Orçamento/Pedido exige resolveSalePrice (TabelaPreco vazia em memória).
   const prices = {

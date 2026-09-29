@@ -51,7 +51,7 @@ function fixture() {
   refs.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
   refs.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   refs.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
-  refs.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
+  refs.condicoes = { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
   // Onda 2: snapshot de preço no servidor — HTTP fixture stub (TabelaPreco vazia em memória).
   refs.prices = { resolveSalePrice: async () => ({ preco: '10.000000' }) };
   return runtime;

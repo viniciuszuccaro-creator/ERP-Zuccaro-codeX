@@ -8,7 +8,7 @@ import type { UnidadeMedida } from '../repositories/cadastroTypes.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { CondicaoPagamentoRepository } from '../repositories/inMemoryCondicaoPagamentoRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
-import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope } from '../repositories/orcamentoTypes.js';
+import { orcamentoCreateSchema, type Orcamento, type OrcamentoCreate, type OrcamentoRepository, type OrcamentoScope, type OrcamentoWrite } from '../repositories/orcamentoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import {
   assertDescontoDentroDaAlcadaOuAprovar,
@@ -23,6 +23,7 @@ import {
   deveLiberarDescontoSemAprovarPorAvista,
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
+import { buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -32,7 +33,7 @@ export type OrcamentoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
-  ): Promise<{ preco: string } | null>;
+  ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
 
 export type { ComercialCostPort, ComercialAlcadaConfigPort };
@@ -41,7 +42,12 @@ export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
     id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero,
     status: row.status, cliente_empresa_id: row.cliente_empresa_id,
-    condicao_pagamento_id: row.condicao_pagamento_id, subtotal: row.subtotal,
+    condicao_pagamento_id: row.condicao_pagamento_id,
+    condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot,
+    condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
+    condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
+    tabela_preco_id: row.tabela_preco_id,
+    subtotal: row.subtotal,
     desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length,
   });
@@ -70,10 +76,11 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const write = await this.applyCondicaoSnapshot(scope, priced, executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
-      await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const created = await this.repo.create(scope, priced, executor);
+      await this.assertDescontoAlcada(ctx, scope, write, ctx.actorId!, executor);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const created = await this.repo.create(scope, write, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -118,10 +125,11 @@ export class OrcamentoService {
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const write = await this.applyCondicaoSnapshot(scope, priced, executor);
       const criador = await this.resolveCriadorActorId('Orcamento', id);
-      const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const after = await this.repo.update(scope, id, priced, executor);
+      const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const after = await this.repo.update(scope, id, write, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -168,8 +176,9 @@ export class OrcamentoService {
    * Política Onda 2: preço unitário vem do servidor (ClienteEmpresa → tabela).
    * Payload do cliente não é autoridade; cancelados não passam por aqui (requireOpen).
    */
-  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate> {
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate & { tabela_preco_id?: string | null }> {
     const itens = [];
+    let tabelaId: string | null | undefined;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -182,9 +191,28 @@ export class OrcamentoService {
           unidade_id: item.unidade_id,
         });
       }
+      if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
-    return { ...data, itens };
+    return { ...data, tabela_preco_id: tabelaId ?? null, itens };
+  }
+
+  /**
+   * Snapshot de condição (id+codigo+nome+parcelas) no momento da gravação.
+   * Fail-closed: condição sem parcelas/nome/código válidos → 422.
+   */
+  private async applyCondicaoSnapshot(
+    scope: OrcamentoScope,
+    data: OrcamentoCreate & { tabela_preco_id?: string | null },
+    executor?: DbQueryExecutor,
+  ): Promise<OrcamentoWrite> {
+    const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
+    const snapshot = buildCondicaoPagamentoDocumentoSnapshot(condicao, 'ORCAMENTO');
+    return {
+      ...data,
+      tabela_preco_id: data.tabela_preco_id ?? null,
+      ...snapshot,
+    };
   }
 
   private async resolveCriadorActorId(entity: string, entityId: string): Promise<string | null> {
@@ -294,6 +322,7 @@ export class OrcamentoService {
   private async validateReferences(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor) {
     const cliente = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!cliente || !cliente.ativo || cliente.bloqueado || !cliente.habilitado_operacao) throw new AppError(422, 'ORCAMENTO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');
+    // Condição: existência/ativo + snapshot completo validados em applyCondicaoSnapshot (fail-closed).
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
     if (!condicao || !condicao.ativo) throw new AppError(422, 'ORCAMENTO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {

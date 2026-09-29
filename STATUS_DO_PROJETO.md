@@ -1,3 +1,71 @@
+## LOTE CURSOR — CI fix #126 stub à-vista + snapshot condição (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — fixture `comercial-condicao-avista-http` passa a devolver `codigo`+`nome` (+parcelas) no stub de `condicoes.get`, alinhado aos outros HTTP harnesses; path de produção fail-closed intacto |
+| Causa | create Orçamento exige snapshot CondicaoPagamento (`codigo`+`nome`+parcelas); stub à-vista só tinha `id`+`ativo`+parcelas → 422 `ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO` antes de 403/201/`DESCONTO_INVALIDO` |
+| Testado | **SIM** — `comercial-condicao-avista-http` 4/4 + `comercial-condicao-avista` 7/7 + `runtime-onda3-condicao-snapshot` 7/7 + desconto/margem HTTP 12/12 PASS |
+| CI | tip pós-fix empurrado; aguardar verde em #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Propagação | tip mergeado em `#127` `cursor/comercial360-onda3-produto-http-392b` |
+
+### Arquivos
+
+- `server/tests/comercial-condicao-avista-http.test.ts`
+
+### Próximo
+
+- Aguardar CI #126; empilhar tip no #127; sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `029_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
+| Testado | **SIM** — runtime-onda3-condicao-snapshot (+migration) + onda2-preco + 08c orcamento + 09 pedido + runtime01/07b + desconto/margem HTTP + UI policy (94/94 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | **FAIL** tip `2e221def` — 4× à-vista HTTP (stub sem codigo/nome) → corrigido no lote CI fix acima |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Coordenação | **025 renumerado para 029** — evita colisão com #50/#92 (`025_pedidos_origem_canal_idempotency` … `028`) |
+
+### Arquivos reservados (Cursor — lote pós-#124; não editar em Codex/#104/#48)
+
+- `server/migrations/029_orcamento_pedido_condicao_snapshot.sql`
+- `server/src/services/comercialCondicaoSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts`
+- `server/src/repositories/inMemoryOrcamentoRepository.ts` / `postgresOrcamentoRepository.ts`
+- `server/src/repositories/inMemoryPedidoRepository.ts` / `postgresPedidoRepository.ts`
+- `server/src/api/router.ts` (meta note: snapshot + **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-condicao-snapshot*.test.ts` + stubs runtime08c/09/onda2/alcada + `runtime01`/`runtime07b`
+- `tests/comercial-condicao-http-ui-policy.test.js`
+
+### Escopo
+
+- Somente colunas aditivas; sem DROP/TRUNCATE executável.
+- Snapshot autoridade do servidor (payload não envia snapshot).
+- Multiempresa: tenant triggers atualizados para `tabela_preco_id` no Orçamento.
+- RBAC/auditoria existentes em mutações Orçamento/Pedido; audit inclui campos de snapshot.
+- Conversão Orçamento→Pedido copia snapshot persistido (não-retroatividade).
+
+### Próximo item independente restante
+
+- Produto frontendHttp piloto (padrão Condicao/Tabela) **ou** refs de promoção persistidas; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → **este lote**.
+
+---
+
 ## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
 
 | Etapa | Estado |
