@@ -1,6 +1,6 @@
 ## AUTÔNOMO — tip Pedido filtro data entrega (2026-09-29T23:55Z)
 
-Branch `cursor/comercial360-onda5-pedido-entrega-filter-392b` empilhada em #171:
+Draft PR **#172** empilhada em #171 (`cursor/comercial360-onda5-pedido-entrega-filter-392b`):
 listagem Pedido filtra `data_entrega_solicitada` De/Até fail-closed. Sem merge/VPS.
 
 ---

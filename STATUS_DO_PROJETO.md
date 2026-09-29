@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **Pedido listagem `dataEntregaDe`/`dataEntregaAte`** fail-closed (paridade validade Orçamento; sem migration) |
 | Branch | `cursor/comercial360-onda5-pedido-entrega-filter-392b` |
+| Draft PR | **#172** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/172 |
 | Base | tip #171 Orçamento cancel motivo |
 | Escopo | normalize/params UI; HTTP query; repo `data_entrega_solicitada`; De>Até/data inválida → 422; meta `listDataEntregaFilterFailClosed` |
 | Testes | comercial-list + pedido-http-client + frontend-integration; runtime09/08c/07b |
