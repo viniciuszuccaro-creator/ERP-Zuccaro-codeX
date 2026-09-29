@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #133 CI SUCCESS + #134 convert-snapshot (2026-09-29T16:47Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #133 | `70576db7` | **SUCCESS** | Validade Orçamento fail-closed |
+| #134 | `cursor/comercial360-onda3-convert-snapshot-392b` | pendente | Convert copia todos snapshots fail-closed |
+
+Stack verde até #133. Próximo: Pedido cancel fail-closed **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #131 CI SUCCESS + #133 validade (2026-09-29T16:39Z)
 
 | PR | Tip | CI | Escopo |
