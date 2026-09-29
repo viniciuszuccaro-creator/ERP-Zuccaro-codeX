@@ -11583,8 +11583,32 @@ Checklist inicial:
 
 ## Migração legada #106 — preflight de escopo para staging (2026-09-28)
 
+### Contrato sintetico mapeador → staging (2026-09-29)
+
+- Branch propria baseada no HEAD da #107; mapeador da #48 intocado. Composicao somente em memoria usa o mapeador existente e o preflight de staging, com codigo legado preservado e relatorio agregado.
+- Cliente e Produto de revenda sao mestres do Grupo somente com destino explicitamente comprovado. Divergencia de Grupo, empresa proprietaria, duplicata, erro e quarentena bloqueiam entrega parcial. Fornecedor e operacoes seguem sem mapeador homologado e nao sao liberados.
+- Assinatura SHA-256 em memoria auxilia apenas a idempotencia sintetica; nao substitui manifesto de origem ou prova juridica. O lote inteiro passa pelo sanitizador canonico antes da leitura de aliases; getter e Proxy sao recusados sem executar leitura dinamica. Revisao Cursor de 7771b3b8 encontrou codigo empresarial legado 1/2/3/5 atravessando o mapper: qualquer alias empresarial preenchido agora e recusado antes de mapear, assim como aliases de Grupo conflitantes. Sem HD, dados reais, banco operacional, migration ou VPS. Testes direcionados: 56 PASS/0 FAIL.
+- Checks locais: audit baseline, lint e build PASS; `npm test` global falha em testes de scripts Bash/PATH temporarios no Windows e `npm run typecheck` global mantem diagnosticos antigos fora do diff. CI Linux do novo HEAD obrigatoria para aprovar o checkpoint; nenhuma dessas falhas foi ocultada ou teve teste alterado.
+- Proximo: corrigir o override do escopo no mapeador da #48, provar Grupo/Empresa por registro e testar staging fisicamente isolado com contagens, conflitos e plano de reversao antes de pedir gate de carga real.
+
 - Objetivo: impedir que o mapeador sintético da #48 receba `groupId`/`empresaId` assumidos para operações. O seletor legado comprova 003 como Grupo CPA e 001/002/005 como opções de Empresas, mas nao comprova sozinho CNPJ ou empresa juridica de cada pedido, estoque, titulo ou nota.
 - `scripts/legado/staging-scope-gate.mjs` valida, antes do staging isolado, mestres compartilhados no Grupo e operacoes somente com vinculo juridico explicitamente verificado para o mesmo Grupo/Empresa. Codigos 0, 003, 004 e desconhecidos permanecem em quarentena; o relatorio resume apenas totais e motivos.
 - Nao altera o mapeador da PR #48, nao le o HD, nao grava staging nem importa dados reais. O vinculo 001/002/005 com as empresas juridicas do ERP novo segue pendente de prova documental/CNPJ e correção do override de escopo na #48 antes de carga real.
 - Testes sintéticos direcionados: 39 PASS/0 FAIL. Proximo: compatibilizar o preflight com a #48 corrigida, preparar staging fisicamente isolado e reconciliar contagens por entidade/empresa; somente depois solicitar gate de importacao real, backup do destino e rollback.
 - Validacao do lote: `npm run audit:baseline`, `npm run lint` e `npm run build` PASS. `npm test` global falha em scripts Bash/PATH e arquivos temporarios ausentes no Windows, fora deste lote; WSL nao instalado. `npm run typecheck` global continua com diagnosticos preexistentes em arquivos nao alterados. A CI Linux do novo HEAD e obrigatoria antes de considerar o checkpoint aprovado.
+## Legado - retry entre lotes de staging sintetico (2026-09-29)
+
+- Branch isolada `codex/legado-staging-persistencia`, baseada no contrato aprovado da #108. #104 congelada; #48, #106, #107 e #108 nao foram editadas.
+- `verificarMapeadorParaStaging` agora recebe o indice `existentes` do preflight canonico: retry identico nao reenvia registro, novo codigo segue apto, e assinatura divergente bloqueia o lote inteiro. Relatorio permanece agregado e sem dados pessoais.
+- Testes sinteticos direcionados: 58 pass, 0 fail. `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais falham neste ambiente Windows em testes/diagnosticos fora deste diff; a CI Linux do HEAD-base #108 estava verde. O novo HEAD ainda requer CI propria antes de revisao.
+- Nao houve leitura do backup, persistencia real, carga, migration, VPS ou alteracao de 3080. Staging em banco isolado e vinculo juridico Grupo/Empresa continuam pendentes de prova e gate.
+
+## Legado - plano de mestres integrado ao mapeador sintetico (2026-09-29)
+
+- Branch `codex/legado-plano-mestres` integra os contratos #109 e #111 sem alterar suas branches nem o mapeador Cursor da #48.
+- Cliente e Produto de revenda mestre do Grupo podem passar por mapeamento, indice de retry, contagens esperadas e verificacao de Grupo em um unico preflight em memoria. Contagem divergente ou indice de outro Grupo bloqueia o lote; nenhum registro parcial e entregue.
+- 44 testes direcionados passaram; `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais permanecem falhando neste Windows em arquivos fora do diff; CI Linux do novo HEAD deve ser observada antes de revisao.
+- Somente fixtures sinteticas. Nao houve leitura do backup, staging real, importacao, migration, merge ou VPS. Vínculos juridicos por operacao e aprovacao do mapeador #48 continuam gates separados.
+- Revisao Cursor do HEAD inicial apontou indice de outro Grupo aceito no caminho sem contagens e aliases empresariais camelCase nao reconhecidos. Corrigidos ambos no integrador, sem tocar no mapeador #48: `empresaCodigo`/`codEmpresa` falham fechado, e o indice existente exige o mesmo Grupo antes dos dois caminhos de preflight. `aptos` e contagem diagnostica anterior ao bloqueio; somente `bloqueado=false` com `privados` nao vazio autoriza entrega ao staging. Testes focados: 45 pass, 0 fail; lint, audit baseline e build passaram. CI do novo HEAD ainda obrigatoria.
+- Revisao subsequente confirmou esses bloqueios e mostrou aliases com hifen ainda aceitos. O filtro agora normaliza somente maiusculas, `_` e `-` nos nomes de campos de Grupo/Empresa; aliases empresariais com hifen, inclusive na segunda linha, bloqueiam o lote inteiro. 46 testes focados passaram, alem de lint, audit baseline e build. Nenhum dado real foi lido ou persistido.
+- Revisao do HEAD 49718d12 confirmou o hifen e apontou espaco, ponto e objeto aninhado. O preflight agora reconhece esses separadores em aliases de escopo e recusa qualquer valor aninhado antes de mapear linhas planas; o lote inteiro falha fechado. Testes sinteticos novos cobrem empresa com espaco/ponto, Grupo divergente com ponto e empresa aninhada na segunda linha. Sem leitura do backup ou staging real; prova juridica e revisao do novo HEAD seguem pendentes.
