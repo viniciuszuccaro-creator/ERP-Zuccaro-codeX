@@ -1,3 +1,26 @@
+## LOTE CURSOR — tenant cache fail-closed (pós-#145 list-search) (2026-09-29T18:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Troca de tenant limpa form/list cache comercial fail-closed |
+| Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
+| Base | `origin/cursor/comercial360-onda3-list-search-392b` tip `73279042` (#145) |
+| Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-tenant-cache-392b` |
+| Escopo | Policy: `clearComercialHttpCacheOnTenantSwitch` + reset Orçamento/Pedido (descarta dirty/diálogos/snapshots sem prompt); wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `tenantCacheFailClosed`; sem migration |
+| Meta | `tenantCacheFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy **14/14**; orcamento/alcada/simulacao/pedido UI **61/61**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | A duplicar sem endpoint; B print legado; margem #47 OPEN; anexos/PDF #52–#62; stack #126–#145; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente (imprimir/resumo texto Pedido canônico) |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: A (duplicar) sem endpoint/UI — inventaria módulo. B (imprimir) já existe em legado `ImprimirPedido`; canônico sem print mas colide com superfície anexos/PDF. **C** maior gap seguro: useEffect de tenant só fechava diálogos e deixava form/dirty/editing/histórico/snapshots de outro tenant + cache React Query cruzado.
+
+---
+
 ## LOTE CURSOR — list search/filter fail-closed (pós-#144) (2026-09-29T18:20Z)
 
 | Campo | Valor |
@@ -640,7 +663,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 | Base | empilhada em `#122`/`#121` `cursor/comercial360-onda3-cliente-empresa-http-392b` (tip `d82c7096`) |
 | Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ feat `a2c59236` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
-| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#122; não editar em Codex/#104/#48)
 

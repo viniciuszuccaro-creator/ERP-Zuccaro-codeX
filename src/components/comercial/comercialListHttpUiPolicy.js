@@ -305,3 +305,122 @@ export function buildMastersHttpBannerText(error, options = {}) {
 export function isMasterPickerBlocked(query = {}) {
   return Boolean(query.isLoading) || Boolean(query.isError);
 }
+
+/** Prefixos React Query do Comercial HTTP canônico (lista/mestres/delivery). */
+export const COMERCIAL_HTTP_CACHE_PREFIXES = Object.freeze([
+  'orcamentos-http',
+  'pedidos-http',
+  'orcamento-masters',
+  'pedido-masters',
+  'pedido-delivery',
+  'pedido-delivery-local',
+  'pedido-delivery-obra',
+  'pedido-delivery-obra-local',
+]);
+
+/**
+ * True quando groupId/empresaId mudou — troca de tenant exige reset fail-closed.
+ * @param {{ groupId?: unknown, empresaId?: unknown }} previous
+ * @param {{ groupId?: unknown, empresaId?: unknown }} next
+ */
+export function didComercialTenantScopeChange(previous = {}, next = {}) {
+  return String(previous.groupId || '') !== String(next.groupId || '')
+    || String(previous.empresaId || '') !== String(next.empresaId || '');
+}
+
+/**
+ * queryKey comercial HTTP de outro tenant (ou sem escopo) — candidata a remoção.
+ * Mantém apenas chaves do tenant atual; sem groupId+empresaId atuais remove todas as prefixadas.
+ * @param {unknown} queryKey
+ * @param {{ groupId?: string, empresaId?: string }} currentScope
+ */
+export function isStaleComercialHttpCacheQueryKey(queryKey, currentScope = {}) {
+  if (!Array.isArray(queryKey) || queryKey.length < 1) return false;
+  const prefix = queryKey[0];
+  if (!COMERCIAL_HTTP_CACHE_PREFIXES.includes(prefix)) return false;
+  const groupId = String(currentScope.groupId || '');
+  const empresaId = String(currentScope.empresaId || '');
+  if (!groupId || !empresaId) return true;
+  return String(queryKey[1] || '') !== groupId || String(queryKey[2] || '') !== empresaId;
+}
+
+/**
+ * Remove cache comercial HTTP de outro tenant e invalida o escopo atual (fail-closed).
+ * @param {{ removeQueries?: Function, invalidateQueries?: Function }} queryClient
+ * @param {{ groupId?: string, empresaId?: string }} currentScope
+ */
+export function clearComercialHttpCacheOnTenantSwitch(queryClient, currentScope = {}) {
+  if (!queryClient || typeof queryClient.removeQueries !== 'function') {
+    throw new Error('queryClient obrigatório para limpar cache comercial na troca de tenant.');
+  }
+  queryClient.removeQueries({
+    predicate: (query) => isStaleComercialHttpCacheQueryKey(query?.queryKey, currentScope),
+  });
+  const groupId = String(currentScope.groupId || '');
+  const empresaId = String(currentScope.empresaId || '');
+  if (!groupId || !empresaId || typeof queryClient.invalidateQueries !== 'function') {
+    return { removedStale: true, invalidatedCurrent: false };
+  }
+  for (const prefix of COMERCIAL_HTTP_CACHE_PREFIXES) {
+    queryClient.invalidateQueries({ queryKey: [prefix, groupId, empresaId] });
+  }
+  return { removedStale: true, invalidatedCurrent: true };
+}
+
+/**
+ * Patch de UI Orçamento após troca de tenant — descarta rascunho/diálogos sem prompt.
+ * @param {{ emptyForm?: () => Record<string, unknown> }} [options]
+ */
+export function buildOrcamentoTenantSwitchReset(options = {}) {
+  const emptyForm = typeof options.emptyForm === 'function' ? options.emptyForm : () => ({});
+  return {
+    page: 1,
+    selected: null,
+    formOpen: false,
+    detailOpen: false,
+    editing: null,
+    form: emptyForm(),
+    dirty: false,
+    pendingCancel: null,
+    pendingConversion: null,
+    filters: { ...ORCAMENTO_LIST_FILTER_DEFAULTS },
+    appliedFilters: { ...ORCAMENTO_LIST_FILTER_DEFAULTS },
+    promoBps: '',
+    promoCupom: '',
+    simulacaoPreview: null,
+    lastSimulation: null,
+    simulacaoDirty: false,
+    condicaoSnapshot: null,
+    tabelaSnapshot: null,
+    promocaoSnapshot: null,
+  };
+}
+
+/**
+ * Patch de UI Pedido após troca de tenant — descarta rascunho/diálogos sem prompt.
+ * @param {{ emptyForm?: () => Record<string, unknown> }} [options]
+ */
+export function buildPedidoTenantSwitchReset(options = {}) {
+  const emptyForm = typeof options.emptyForm === 'function' ? options.emptyForm : () => ({});
+  return {
+    page: 1,
+    selected: null,
+    formOpen: false,
+    detailOpen: false,
+    editing: null,
+    form: emptyForm(),
+    dirty: false,
+    history: [],
+    pendingCancel: null,
+    filters: { ...PEDIDO_LIST_FILTER_DEFAULTS },
+    applied: { ...PEDIDO_LIST_FILTER_DEFAULTS },
+    promoBps: '',
+    promoCupom: '',
+    simulacaoPreview: null,
+    lastSimulation: null,
+    simulacaoDirty: false,
+    condicaoSnapshot: null,
+    tabelaSnapshot: null,
+    promocaoSnapshot: null,
+  };
+}
