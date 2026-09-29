@@ -2,8 +2,10 @@ import {
   buildComercialDocumentoResumoTexto,
   calculateItem,
   calculateTotals,
+  collectItemLineIssues,
   comercialDocumentoSnapshotGapHint,
   decimalToMicros,
+  evaluateItemLinesGate,
   microsToDecimal,
   openComercialResumoTextoWindow,
   resolveComercialResumoPreviewState,
@@ -11,7 +13,7 @@ import {
 } from './orcamentoUiPolicy.js';
 import { sanitizeObservacoesText } from './comercialListHttpUiPolicy.js';
 
-export { openComercialResumoTextoWindow };
+export { collectItemLineIssues, evaluateItemLinesGate, openComercialResumoTextoWindow };
 
 /** Snapshot gap pós-031 no Pedido (mesmo contrato do Orçamento). */
 export function pedidoDocumentoSnapshotGapHint(row) {

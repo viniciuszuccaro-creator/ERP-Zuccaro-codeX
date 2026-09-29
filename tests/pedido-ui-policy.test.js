@@ -83,3 +83,22 @@ test('painel pedido wire resumo texto painel/janela', async () => {
   assert.match(panel, /Comercial\.pedido\.resumo-texto/);
   assert.match(panel, /setResumoOpen\(false\)/);
 });
+
+test('painel pedido wire gate de itens quantidade/preço fail-closed', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /evaluateItemLinesGate/);
+  assert.match(panel, /pedido-item-lines-gate/);
+  assert.match(panel, /itemLinesGate\.blockSave/);
+  assert.match(panel, /itemLinesGate\.blockSimular/);
+  assert.match(panel, /Comercial\.pedido\.item-line-validation/);
+});
+
+test('pedido payload bloqueia preço unitário zero', () => {
+  assert.throws(
+    () => buildPedidoPayload({
+      cliente_empresa_id: 'c', condicao_pagamento_id: 'f', tipo_operacao: 'ENTREGA',
+      data_entrega_solicitada: '2027-01-01', itens: [{ ...item, preco_unitario: '0' }],
+    }),
+    /preço unitário/i,
+  );
+});
