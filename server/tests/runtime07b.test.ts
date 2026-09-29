@@ -321,7 +321,7 @@ test('audit rollback no CREATE de TabelaPreco', async () => {
   }
 });
 
-test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', async () => {
+test('meta ERP-RUNTIME-08B ativa CondicaoPagamento no piloto frontend HTTP', async () => {
   assert.ok(CLIENTE_FORBIDDEN_FIELDS.includes('tabela_preco_id'));
   const config = loadConfig({
     NODE_ENV: 'test',
@@ -358,9 +358,9 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
     assert.ok(meta.preparedEntities.includes('CondicaoPagamento'));
     assert.equal(meta.condicaoPagamento.masterData, true);
     assert.equal(meta.condicaoPagamento.parcelasAtomicas, true);
-    assert.equal(meta.condicaoPagamento.frontendHttp, false);
-    assert.ok(!meta.httpPilotEntities.includes('CondicaoPagamento'));
-    assert.ok(!meta.httpEntities.includes('CondicaoPagamento'));
+    assert.equal(meta.condicaoPagamento.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('CondicaoPagamento'));
+    assert.ok(meta.httpEntities.includes('CondicaoPagamento'));
     assert.ok(meta.preparedEntities.includes('Pedido'));
     assert.ok(meta.httpEntities.includes('Pedido'));
     assert.equal(meta.pedido.backendHttp, true);

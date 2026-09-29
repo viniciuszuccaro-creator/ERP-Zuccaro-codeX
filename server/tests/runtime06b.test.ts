@@ -546,7 +546,8 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
     assert.ok(meta.preparedEntities.includes('TabelaPreco'));
     if (meta.runtime === 'ERP-RUNTIME-08B') {
       assert.ok(meta.preparedEntities.includes('CondicaoPagamento'));
-      assert.equal(meta.condicaoPagamento?.frontendHttp, false);
+      assert.equal(meta.condicaoPagamento?.frontendHttp, true);
+      assert.ok(meta.httpPilotEntities.includes('CondicaoPagamento'));
     }
   }
 

@@ -230,6 +230,75 @@ export function createHttpApiClient(options = {}) {
     SetorAtividade: createCrudEntity('/api/v1/setores-atividade', {
       searchKeys: ['nome', 'search'],
     }),
+    // CondicaoPagamento R08B — piloto HTTP (CRUD + parcelas/vínculo/padrão/resolve).
+    CondicaoPagamento: (() => {
+      const base = createCrudEntity('/api/v1/condicoes-pagamento', {
+        searchKeys: ['search', 'nome', 'codigo'],
+        ativoKeys: ['ativo'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/condicoes-pagamento', { query: { limit, ativo: true } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/condicoes-pagamento', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.codigo,
+              ativo: query.ativo ?? query.ativa,
+              eh_padrao: query.eh_padrao ?? query.ehPadrao,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        restore(id, { signal } = {}) {
+          return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/restore`, {
+            method: 'POST',
+            signal,
+          });
+        },
+        /** @param {string} id @param {unknown} parcelas @param {{ signal?: AbortSignal }} [options] */
+        replaceParcelas(id, parcelas, { signal } = {}) {
+          return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/parcelas`, {
+            method: 'PUT',
+            body: parcelas,
+            signal,
+          });
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        linkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        unlinkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'DELETE', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        restoreEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        setPadrao(id, { signal } = {}) {
+          return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/padrao`, {
+            method: 'POST',
+            signal,
+          });
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -362,9 +431,96 @@ export function createHttpApiClient(options = {}) {
       return request('/api/v1/comercial/simular-venda', { method: 'POST', body: payload, signal });
     },
   };
-  /** Resolve fail-closed ClienteEmpresa → padrão Empresa (Cadastros.condicao_pagamento.visualizar no backend). */
+  /**
+   * CondicaoPagamento canônica (R08B + Onda 2 resolve).
+   * Tenant só nos headers via getScope; RBAC Cadastros.condicao_pagamento.* no BFF.
+   */
   const condicoesPagamento = {
     /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, ehPadrao?: boolean, signal?: AbortSignal }} [options]
+     */
+    list({ limit = 50, offset = 0, search, ativo = true, ehPadrao, signal } = {}) {
+      return request('/api/v1/condicoes-pagamento', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          eh_padrao: ehPadrao,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/condicoes-pagamento', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    softDelete(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    restore(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /** @param {string} id @param {unknown} parcelas @param {{ signal?: AbortSignal }} [options] */
+    replaceParcelas(id, parcelas, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/parcelas`, {
+        method: 'PUT',
+        body: parcelas,
+        signal,
+      });
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    linkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    unlinkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'DELETE', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    restoreEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    setPadrao(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/padrao`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /**
+     * Resolve fail-closed ClienteEmpresa → padrão Empresa
+     * (Cadastros.condicao_pagamento.visualizar no backend).
      * @param {string} clienteEmpresaId
      * @param {{ signal?: AbortSignal }} [options]
      */

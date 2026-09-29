@@ -23,6 +23,12 @@ import {
   buildSimulacaoPreviewState,
   canSimularVenda,
 } from './comercialSimulacaoUiPolicy';
+import {
+  applyResolvedCondicaoToForm,
+  assertCondicaoResolucaoNoContexto,
+  buildCondicaoSnapshotPreview,
+  normalizeCondicoesListPayload,
+} from './comercialCondicaoHttpUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -59,6 +65,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [simulacaoPreview, setSimulacaoPreview] = useState(null);
   const [lastSimulation, setLastSimulation] = useState(null);
   const [simulating, setSimulating] = useState(false);
+  const [condicaoSnapshot, setCondicaoSnapshot] = useState(null);
+  const [resolvingCondicao, setResolvingCondicao] = useState(false);
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
@@ -71,6 +79,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const api = http.orcamentos;
   const pedidosApi = http.pedidos;
   const comercialApi = http.comercial;
+  const condicoesApi = http.condicoesPagamento;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
   const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
   const listQuery = useQuery({
@@ -81,15 +90,21 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   });
   const mastersQuery = useQuery({
     queryKey: ['orcamento-masters', groupId, empresaId],
-    queryFn: async () => {
-      const [clientesEmpresa, clientes, condicoes, produtos, unidades] = await Promise.all([
+    queryFn: async ({ signal }) => {
+      const [clientesEmpresa, clientes, condicoesPayload, produtos, unidades] = await Promise.all([
         filterInContext('ClienteEmpresa', { ativo: true, habilitado_operacao: true }, 'codigo', 500),
         filterInContext('Cliente', { ativo: true }, 'razao_social', 500),
-        filterInContext('CondicaoPagamento', { ativo: true }, 'nome', 500),
+        condicoesApi.list({ ativo: true, limit: 200, signal }),
         filterInContext('Produto', { ativo: true }, 'descricao', 500),
         filterInContext('UnidadeMedida', { ativo: true }, 'sigla', 500),
       ]);
-      return { clientesEmpresa, clientes, condicoes, produtos, unidades };
+      return {
+        clientesEmpresa,
+        clientes,
+        condicoes: normalizeCondicoesListPayload(condicoesPayload),
+        produtos,
+        unidades,
+      };
     },
     enabled: contextReady && canView,
     staleTime: 30000,
@@ -112,6 +127,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
 
   const resetSimulacaoUi = () => {
     setSimulacaoPreview(null); setLastSimulation(null); setPromoBps(''); setPromoCupom('');
+    setCondicaoSnapshot(null);
   };
   const closeForm = () => {
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
@@ -130,7 +146,46 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     });
     setDirty(false); setDetailOpen(false); resetSimulacaoUi(); setFormOpen(true);
   };
-  const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); setSimulacaoPreview(null); setLastSimulation(null); };
+  const changeForm = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setDirty(true);
+    setSimulacaoPreview(null);
+    setLastSimulation(null);
+    if (key === 'condicao_pagamento_id') setCondicaoSnapshot(null);
+  };
+  const changeClienteEmpresa = async (clienteEmpresaId) => {
+    setForm((current) => ({ ...current, cliente_empresa_id: clienteEmpresaId }));
+    setDirty(true);
+    setSimulacaoPreview(null);
+    setLastSimulation(null);
+    setCondicaoSnapshot(null);
+    if (!clienteEmpresaId || !contextReady) return;
+    setResolvingCondicao(true);
+    try {
+      const raw = await condicoesApi.resolve(clienteEmpresaId);
+      const resolved = assertCondicaoResolucaoNoContexto(raw, { groupId, empresaId });
+      setForm((current) => {
+        const applied = applyResolvedCondicaoToForm(
+          { ...current, cliente_empresa_id: clienteEmpresaId },
+          resolved,
+        );
+        return applied.form;
+      });
+      const previewApplied = applyResolvedCondicaoToForm(
+        { cliente_empresa_id: clienteEmpresaId, condicao_pagamento_id: '' },
+        resolved,
+      );
+      setCondicaoSnapshot(buildCondicaoSnapshotPreview(previewApplied.snapshot));
+      if (resolved.fonte === 'nenhuma') {
+        toast.message('Nenhuma condição padrão resolvida para este cliente.');
+      }
+    } catch (error) {
+      setCondicaoSnapshot(null);
+      toast.error(error?.message || errorMessage(error));
+    } finally {
+      setResolvingCondicao(false);
+    }
+  };
   const changeItem = (index, key, value) => {
     setForm((current) => ({ ...current, itens: current.itens.map((item, i) => i === index ? { ...item, [key]: value } : item) }));
     setDirty(true); setSimulacaoPreview(null); setLastSimulation(null);
@@ -261,7 +316,8 @@ const convertToPedido = async () => {
     <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={listQuery.isFetching} />
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Os totais serão conferidos novamente pelo servidor.</DialogDescription></DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => changeForm('cliente_empresa_id', v)}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.clientesEmpresa.filter((item) => item.ativo !== false && item.habilitado_operacao !== false && item.bloqueado !== true).map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)}><SelectTrigger id="orc-condicao"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => { void changeClienteEmpresa(v); }}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.clientesEmpresa.filter((item) => item.ativo !== false && item.habilitado_operacao !== false && item.bloqueado !== true).map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)} disabled={resolvingCondicao}><SelectTrigger id="orc-condicao"><SelectValue placeholder={resolvingCondicao ? 'Resolvendo...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
+      {condicaoSnapshot?.parcelas?.length > 0 && <div className="border rounded-md p-3 space-y-2 bg-white" data-action="Comercial.condicao-snapshot-preview"><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Resolução: {condicaoSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{condicaoSnapshot.nome || condicaoSnapshot.codigo || condicaoSnapshot.id}</Badge><span className="text-xs text-slate-500">Parcelas em memória — só `condicao_pagamento_id` é gravado no salvar (sem migration de snapshot).</span></div><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead></TableRow></TableHeader><TableBody>{condicaoSnapshot.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.dias}-${parcela.percentual}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell></TableRow>)}</TableBody></Table></div>}
       <div className="space-y-2"><div className="flex justify-between"><h3 className="font-semibold">Itens</h3><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => selectProduct(index, v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.produtos.filter((p) => p.ativo !== false).map((p) => <SelectItem key={p.id} value={p.id}>{p.codigo ? `${p.codigo} - ` : ''}{p.descricao || p.nome}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
       {canSimular && <div className="border rounded-md p-3 space-y-3 bg-slate-50" data-permission="Comercial.orcamento.visualizar" data-action="Comercial.simular-venda">
