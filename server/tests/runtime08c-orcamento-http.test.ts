@@ -188,6 +188,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     convertDisabledReasonsBannerFailClosed: true,
     observacoesMaxLengthUiFailClosed: true,
     listPageCsvExportFailClosed: true,
+    validadeUiFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.match(result.body.note, /UI alçada de desconto fail-closed/);
@@ -204,6 +205,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /Observações UI maxLength 1000|evaluateObservacoesUiGate/);
   assert.match(result.body.note, /export CSV da página atual|buildComercialListCsv/);
   assert.match(result.body.note, /Pedido cancel exige motivo UI fail-closed|evaluatePedidoCancelMotivoUiGate/);
+  assert.match(result.body.note, /Orçamento validade UI fail-closed|evaluateOrcamentoValidadeUiGate/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
