@@ -5,7 +5,7 @@
 | Choice | **A** Pedido crédito UI fail-closed — ValidacaoCredito + gate Salvar |
 | Branch | `cursor/comercial360-onda4-credito-ui-failclosed-392b` |
 | Tip | `641d04f8` |
-| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-dirty-abandon-392b...cursor/comercial360-onda4-credito-ui-failclosed-392b?expand=1 (gh createPullRequest 403; ManagePullRequest indisponível) |
+| Draft PR | **#156** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/156 |
 | Meta | UI crédito Pedido fail-closed + **Pedido backend HTTP is active** |
 | Testes | pedido-faturamento + frontend-integration + pedido-ui-policy **20/20** |
 | Colisão | sem mig 032/#67; sem anexos #59–62; sem merge/VPS |
