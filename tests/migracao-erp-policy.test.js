@@ -249,6 +249,18 @@ test('segredos aninhados e chaves legadas em maiusculas nao chegam ao staging', 
   assert.equal(staging.destino_migracao, 'staging');
 });
 
+test('sanitizador legado cobre aliases camelCase, espaços e objetos de prototipo nulo', () => {
+  const nested = Object.assign(Object.create(null), { token: 'SEGREDO', nome: 'Sintetico' });
+  const origem = { apiKey: 'SEGREDO', APIKEY: 'SEGREDO', senhaHash: 'SEGREDO', access_token: 'SEGREDO',
+    client_secret: 'SEGREDO', 'token ': 'SEGREDO', nested };
+  const filtrado = stripSegredosMigracao(origem);
+  assert.equal(JSON.stringify(filtrado).includes('SEGREDO'), false);
+  assert.equal(filtrado.nested.nome, 'Sintetico');
+  assert.notEqual(filtrado.nested, nested);
+  assert.equal(origem.apiKey, 'SEGREDO');
+  assert.equal(nested.token, 'SEGREDO');
+});
+
 test('codigo legado permanece mesmo sem conflito interno', () => {
   const record = applyCodigoOnCreate({
     entityName: 'Produto',

@@ -55,7 +55,8 @@ test('staging sintetico exige permissao, vinculo e assinatura; retry reutiliza s
 
 test('registros privados passam pelo sanitizador canonico sem mutar a origem', () => {
   const item = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1',
-    assinaturaOrigem: 'a'.repeat(64), TOKEN: 'SEGREDO', dados: { senha_hash: 'SEGREDO', nome: 'Sintetico' } };
+    assinaturaOrigem: 'a'.repeat(64), TOKEN: 'SEGREDO', apiKey: 'SEGREDO',
+    dados: { senha_hash: 'SEGREDO', 'token ': 'SEGREDO', nome: 'Sintetico' } };
   const result = prepararLoteStagingLegado([item], { autorizado: true });
   assert.equal(result.bloqueado, false);
   assert.equal(JSON.stringify(result.privados).includes('SEGREDO'), false);
