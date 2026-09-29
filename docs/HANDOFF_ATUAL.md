@@ -1,3 +1,20 @@
+## LOTE CURSOR — Pedido Data entrega cliente fail-closed (pós entrega-address) (2026-09-29T22:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Data entrega cliente — ENTREGA exige hoje+ (fail-closed UI+server) |
+| Branch | `cursor/comercial360-onda5-data-entrega-failclosed-392b` |
+| Base | tip `6d171316` (`cursor/comercial360-onda5-entrega-address-failclosed-392b`) |
+| Tip | feat `1170251f` · branch HEAD após docs |
+| Draft PR | **pendente** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-entrega-address-failclosed-392b...cursor/comercial360-onda5-data-entrega-failclosed-392b?expand=1 |
+| Meta | `dataEntregaClienteFailClosed` + **Pedido backend HTTP is active** |
+| Testes | UI 14+2 · onda5 data-entrega 6 · runtime07b/08c/09 **PASS** |
+| Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
+
+Próximo: multi-select stub (C) **ou** CostPort BFF **ou** PDF/anexos sem colidir.
+
+---
+
 ## LOTE CURSOR — Pedido Entrega endereço fail-closed (pós #157 margem) (2026-09-29T22:15Z)
 
 | Campo | Valor |

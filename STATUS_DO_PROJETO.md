@@ -1,3 +1,24 @@
+## LOTE CURSOR — Pedido Data entrega cliente fail-closed (pós entrega-address) (2026-09-29T22:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Data de Entrega do Cliente — required when ENTREGA; calendário hoje+; fail-closed UI+server |
+| Branch | `cursor/comercial360-onda5-data-entrega-failclosed-392b` |
+| Base | `origin/cursor/comercial360-onda5-entrega-address-failclosed-392b` tip `6d171316` (#158 compare) |
+| Tip | feat `1170251f` · branch HEAD após docs |
+| Draft PR | **pendente** — ManagePullRequest indisponível; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-entrega-address-failclosed-392b...cursor/comercial360-onda5-data-entrega-failclosed-392b?expand=1 |
+| Escopo | Reusa `data_entrega_solicitada` (`pedidoTypes`/mig 017); policy `comercialPedidoDataEntregaPolicy` (422 `PEDIDO_DATA_ENTREGA_*`); UI `evaluatePedidoDataEntregaUiGate` + wire Pedido/conversão Orçamento; meta `dataEntregaClienteFailClosed`; **sem migration** |
+| Meta | `dataEntregaClienteFailClosed` + preserva **Pedido backend HTTP is active** |
+| Testes | pedido-ui-policy **14/14** + frontend-integration **2/2**; runtime-onda5-data-entrega **6/6**; runtime09 **4/4**; runtime08c **6/6**; runtime07b **13/13**; `git diff --check` PASS |
+| Colisão | anexos #59–62; CreditPort/#63–67 mig 032; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | **C** multi-select stub fail-closed **ou** CostPort BFF real **ou** PDF/anexos sem colidir #59–62 |
+
+Arquivos: `comercialPedidoDataEntregaPolicy.ts`, `pedidoService.ts`, `pedidoUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, `server/tests/runtime-onda5-pedido-data-entrega.test.ts`, `tests/pedido-ui-policy.test.js`, `tests/pedido-frontend-integration.test.js`, `server/tests/runtime07b.test.ts`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: campo já existia no schema; gap era validação calendário (hoje+) + gate UI obrigatório só na ENTREGA (RETIRADA sem gate de passado).
+
+---
+
 ## LOTE CURSOR — Pedido Entrega endereço fail-closed (pós margem UI) (2026-09-29T22:15Z)
 
 | Campo | Valor |
