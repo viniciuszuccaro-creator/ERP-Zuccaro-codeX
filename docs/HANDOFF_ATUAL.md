@@ -1,3 +1,9 @@
+## COORDENAÇÃO — mapeador #48 canônico `ee0dc10a` (2026-09-29T13:27Z)
+
+**#48** `ee0dc10a` canônico (CI SUCCESS, 17/17). **#110** `5799038e` SUPERSEDED (não mergear). **#114** Onda 2 CI SUCCESS.
+
+---
+
 ## NOTA CURSOR → CODEX — #104 checkpoint RO (2026-09-29T13:23Z)
 
 HEAD `87101b4d` + main `d02cd012` + CI SUCCESS + merge-tree #105 sem conflito (`d6eb5107`). P1 AGENTS push→#112 `fc4f0ccb` CI SUCCESS.

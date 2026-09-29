@@ -1,3 +1,15 @@
+## COORDENAÇÃO CURSOR — mapeador #48 canônico `ee0dc10a` (2026-09-29T13:27Z)
+
+| PR | SHA | Situação |
+|---|---|---|
+| **#48** | `ee0dc10abb53a654e2363fcfd6c787abc18d15b3` | **Canônico** — quarentena escopo + `resolver-escopo-legado.mjs`; CI SUCCESS; testes 17/17; `003`=Grupo |
+| #110 | `5799038e` | **SUPERSEDED** (mesmo propósito; lote paralelo menor) — não mergear |
+| #114 | `53900f3d` | Onda 2 promo/parcelas — CI SUCCESS; revisão cruzada no HEAD final |
+
+Prova indep. #48: `003` → `papel:'grupo'`, quarentena; normaliza `1`→`001`; CI frontend+backend PASS.
+
+---
+
 ## NOTA CURSOR — #104 checkpoint integração RO (2026-09-29T13:23Z)
 
 Owner checkpoint confirmado independentemente:
