@@ -1,24 +1,183 @@
 /**
  * Listagem HTTP Orçamento/Pedido: empty-state ≠ erro (403/5xx/rede).
  * Extraído das telas canônicas para política testável e fail-closed compartilhada.
+ * Filtros/search: sanitize + queryKey tenant+filters; empty de busca ≠ banner de erro.
  */
+
+export const ORCAMENTO_LIST_FILTER_DEFAULTS = Object.freeze({
+  search: '',
+  status: 'TODOS',
+  clienteEmpresaId: 'TODOS',
+  validadeDe: '',
+  validadeAte: '',
+});
+
+export const PEDIDO_LIST_FILTER_DEFAULTS = Object.freeze({
+  search: '',
+  status: 'TODOS',
+  clienteEmpresaId: 'TODOS',
+  tipoOperacao: 'TODOS',
+});
+
+const LIST_SEARCH_MAX = 80;
+
+/** Remove controles C0/DEL sem regex (eslint no-control-regex). */
+function stripControlChars(raw) {
+  let out = '';
+  for (let i = 0; i < raw.length; i += 1) {
+    const code = raw.charCodeAt(i);
+    out += code <= 0x1f || code === 0x7f ? ' ' : raw[i];
+  }
+  return out;
+}
 
 /** Sanitiza observações livres (XSS/controle) antes do payload HTTP. */
 export function sanitizeObservacoesText(value, max = 1000) {
-  const raw = String(value ?? '');
-  let withoutControls = '';
-  for (let i = 0; i < raw.length; i += 1) {
-    const code = raw.charCodeAt(i);
-    // C0 + DEL → espaço (evita no-control-regex no eslint)
-    withoutControls += code <= 0x1f || code === 0x7f ? ' ' : raw[i];
-  }
-  const cleaned = withoutControls
+  const cleaned = stripControlChars(String(value ?? ''))
     .replace(/[<>]/g, '')
     .replace(/javascript:\s*/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (!cleaned) return '';
   return cleaned.slice(0, max);
+}
+
+/**
+ * Sanitiza texto de busca da listagem (número/termo) — nunca envia markup/controle.
+ * Empty após sanitize é resultado de busca válido (≠ erro HTTP).
+ * @param {unknown} value
+ * @param {number} [max]
+ */
+export function sanitizeListSearchText(value, max = LIST_SEARCH_MAX) {
+  const limit = Number.isFinite(max) && max > 0 ? max : LIST_SEARCH_MAX;
+  const cleaned = stripControlChars(String(value ?? ''))
+    .replace(/[<>]/g, '')
+    .replace(/javascript:\s*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return '';
+  return cleaned.slice(0, limit);
+}
+
+/**
+ * Normaliza filtros UI de Orçamento antes de aplicar/queryKey/API.
+ * @param {Record<string, unknown>} [raw]
+ */
+export function normalizeOrcamentoListFilters(raw = {}) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  return {
+    search: sanitizeListSearchText(src.search),
+    status: src.status === 'EM_ABERTO' || src.status === 'CANCELADO' ? src.status : 'TODOS',
+    clienteEmpresaId: src.clienteEmpresaId && src.clienteEmpresaId !== 'TODOS'
+      ? String(src.clienteEmpresaId).trim().slice(0, 80)
+      : 'TODOS',
+    validadeDe: /^\d{4}-\d{2}-\d{2}$/.test(String(src.validadeDe || '')) ? String(src.validadeDe) : '',
+    validadeAte: /^\d{4}-\d{2}-\d{2}$/.test(String(src.validadeAte || '')) ? String(src.validadeAte) : '',
+  };
+}
+
+/**
+ * Normaliza filtros UI de Pedido antes de aplicar/queryKey/API.
+ * @param {Record<string, unknown>} [raw]
+ */
+export function normalizePedidoListFilters(raw = {}) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const status = String(src.status || 'TODOS');
+  return {
+    search: sanitizeListSearchText(src.search),
+    status: status && status !== 'TODOS' ? status.slice(0, 40) : 'TODOS',
+    clienteEmpresaId: src.clienteEmpresaId && src.clienteEmpresaId !== 'TODOS'
+      ? String(src.clienteEmpresaId).trim().slice(0, 80)
+      : 'TODOS',
+    tipoOperacao: src.tipoOperacao === 'ENTREGA' || src.tipoOperacao === 'RETIRADA'
+      ? src.tipoOperacao
+      : 'TODOS',
+  };
+}
+
+/**
+ * True quando há filtro ativo além do default (busca vazia sem filtros ≠ erro).
+ * @param {Record<string, unknown>} filters
+ * @param {Record<string, unknown>} defaults
+ */
+export function hasActiveComercialListFilters(filters, defaults) {
+  const current = filters && typeof filters === 'object' ? filters : {};
+  const base = defaults && typeof defaults === 'object' ? defaults : {};
+  return Object.keys(base).some((key) => String(current[key] ?? '') !== String(base[key] ?? ''));
+}
+
+/**
+ * Params HTTP de listagem Orçamento a partir dos filtros normalizados.
+ * @param {ReturnType<typeof normalizeOrcamentoListFilters>} filters
+ * @param {{ page?: number, pageSize?: number, signal?: AbortSignal }} [paging]
+ */
+export function buildOrcamentoListRequestParams(filters, paging = {}) {
+  const page = Math.max(1, Number(paging.page) || 1);
+  const pageSize = Math.max(1, Math.min(100, Number(paging.pageSize) || 20));
+  const params = {
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  };
+  if (filters.search) params.search = filters.search;
+  if (filters.status && filters.status !== 'TODOS') params.status = filters.status;
+  if (filters.clienteEmpresaId && filters.clienteEmpresaId !== 'TODOS') {
+    params.clienteEmpresaId = filters.clienteEmpresaId;
+  }
+  if (filters.validadeDe) params.validadeDe = filters.validadeDe;
+  if (filters.validadeAte) params.validadeAte = filters.validadeAte;
+  if (paging.signal) params.signal = paging.signal;
+  return params;
+}
+
+/**
+ * Params HTTP de listagem Pedido a partir dos filtros normalizados.
+ * @param {ReturnType<typeof normalizePedidoListFilters>} filters
+ * @param {{ page?: number, pageSize?: number, signal?: AbortSignal }} [paging]
+ */
+export function buildPedidoListRequestParams(filters, paging = {}) {
+  const page = Math.max(1, Number(paging.page) || 1);
+  const pageSize = Math.max(1, Math.min(100, Number(paging.pageSize) || 20));
+  const params = {
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  };
+  if (filters.search) params.search = filters.search;
+  if (filters.status && filters.status !== 'TODOS') params.status = filters.status;
+  if (filters.clienteEmpresaId && filters.clienteEmpresaId !== 'TODOS') {
+    params.clienteEmpresaId = filters.clienteEmpresaId;
+  }
+  if (filters.tipoOperacao && filters.tipoOperacao !== 'TODOS') {
+    params.tipoOperacao = filters.tipoOperacao;
+  }
+  if (paging.signal) params.signal = paging.signal;
+  return params;
+}
+
+/**
+ * queryKey canônica: prefix + groupId + empresaId + page + pageSize + filters.
+ * @param {{ prefix: string, groupId?: string, empresaId?: string, page?: number, pageSize?: number, filters?: unknown }} input
+ */
+export function buildHttpListQueryKey(input = {}) {
+  return [
+    input.prefix,
+    input.groupId,
+    input.empresaId,
+    input.page ?? 1,
+    input.pageSize ?? 20,
+    input.filters ?? null,
+  ];
+}
+
+/**
+ * Mensagem de empty-state — nunca usada em erro HTTP (403/5xx).
+ * @param {{ entityLabel?: string, hasActiveFilters?: boolean }} [options]
+ */
+export function formatHttpListEmptyMessage(options = {}) {
+  const entity = options.entityLabel || 'registro';
+  if (options.hasActiveFilters) {
+    return `Nenhum ${entity} encontrado para os filtros desta empresa.`;
+  }
+  return `Nenhum ${entity} encontrado nesta empresa.`;
 }
 
 /**
@@ -67,8 +226,10 @@ export function resolveHttpListViewState({ isLoading, isError, rowCount } = {}) 
 
 /**
  * queryKey de listagem HTTP deve incluir groupId + empresaId (multiempresa).
+ * Quando `requireFilters` ou `filters` for informado, exige o slot de filtros
+ * (índice 5 em buildHttpListQueryKey) — empty search ainda é filtro válido.
  * @param {unknown[]} queryKey
- * @param {{ groupId?: string, empresaId?: string, prefix?: string }} [scope]
+ * @param {{ groupId?: string, empresaId?: string, prefix?: string, requireFilters?: boolean, filters?: unknown }} [scope]
  */
 export function isHttpListQueryKeyScoped(queryKey, scope = {}) {
   if (!Array.isArray(queryKey) || queryKey.length < 3) return false;
@@ -78,7 +239,19 @@ export function isHttpListQueryKeyScoped(queryKey, scope = {}) {
   const empresaId = scope.empresaId != null ? scope.empresaId : queryKey[2];
   if (scope.groupId != null && queryKey[1] !== scope.groupId) return false;
   if (scope.empresaId != null && queryKey[2] !== scope.empresaId) return false;
-  return Boolean(groupId) && Boolean(empresaId);
+  if (!groupId || !empresaId) return false;
+  const needsFilters = scope.requireFilters === true || Object.prototype.hasOwnProperty.call(scope, 'filters');
+  if (needsFilters) {
+    if (queryKey.length < 6) return false;
+    if (Object.prototype.hasOwnProperty.call(scope, 'filters')) {
+      try {
+        if (JSON.stringify(queryKey[5]) !== JSON.stringify(scope.filters)) return false;
+      } catch {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 /**
