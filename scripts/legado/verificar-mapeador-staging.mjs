@@ -64,10 +64,11 @@ export function verificarMapeadorParaStaging(rows, {
     groupId,
     arquivoNome,
   });
-  if (mapeado.erros.length || mapeado.quarentenas.length || mapeado.reusos.length) {
+  if (mapeado.erros.length || mapeado.quarentenas.length || mapeado.reusos.length || mapeado.excluidos.length) {
     return { bloqueado: true, privados: [], relatorio: {
       origem: rows.length, aptos: 0, reusos: mapeado.reusos.length,
       erros: mapeado.erros.length, quarentena: mapeado.quarentenas.length,
+      excluidos: mapeado.excluidos.length,
     } };
   }
   if (mapeado.gravados.some((row) => row.group_id !== groupId || row.empresa_id)) {

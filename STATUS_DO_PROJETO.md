@@ -549,6 +549,32 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Colar VPS: grant profile + rebuild **api e web** + logout/login.
 
 
+## Legado #48 — contrato de escopo sintético (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — contexto do lote não substitui a linha; `003` é grupo; operação exige vínculo comprovado |
+| Testado | **SIM** — 17/17 `tests/legado-mapear-sintetico.test.js` |
+| CI | pendente neste push |
+| Mesclado | **NÃO** |
+| Importação / VPS / migration | **NÃO** |
+
+Arquivos desta frente: `scripts/legado/mapear-registro-sintetico.mjs`, `scripts/legado/resolver-escopo-legado.mjs` (extração do contrato), `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`, `tests/legado-mapear-sintetico.test.js`.
+Codex permanece dono do inventário/staging (#106/#107). Sem dados reais.
+
+## Legado prep sintético (sem HD) — STATUS REAL (2026-09-26T17:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — aliases `tabela_preco`/`orcamento`/`pedido` no mapper existente + docs HD indisponível |
+| Testado | **SIM** — 14/14 `legado-mapear` + `legado-inventario` |
+| CI | **PENDENTE** (primeiro push) |
+| Mesclado | **NÃO** |
+| Implantado / importação real | **NÃO** — HD externo indisponível; Onda 25 BLOCKED |
+
+- Reutilizado: `scripts/legado/mapear-registro-sintetico.mjs`, `migracaoErpPolicy`, docs LEGADO_* (sem módulo paralelo).
+- Sem dados reais, PII ou preços no GitHub.
+- Paralelismo Comercial 360: #45 acesso (VPS humano), #46 desconto (CI OK / merge pendente), #47 margem (CostPort).
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
@@ -11699,3 +11725,9 @@ Checklist inicial:
 
 - A guarda anterior comparava apenas o nome do banco; uma URL remota com o mesmo nome podia passar antes do `DROP SCHEMA` do ensaio R07B. Agora exige `ISOLATED_DATABASE_HOST` igual ao host da URL e bloqueia parametros de URL que possam trocar o destino. A CI declara `localhost` explicitamente nos dois ensaios isolados e o E2E legado rejeita host remoto e override de `dbname`.
 - Mudanca fail-closed: qualquer execucao externa do ensaio R07B precisa declarar o host isolado esperado e validar novamente seu destino antes de usar a guarda. Nenhuma URL, credencial, banco DEV ou VPS foi acessado neste lote.
+
+## Ensaio de integracao do mapeador #48 com staging legado (2026-09-29)
+
+- Branch separada, baseada na #123; o mapper do Cursor foi incorporado por merge sem editar a branch #48. Conflitos textuais em status e contrato foram resolvidos preservando os dois historicos.
+- Testes combinados expuseram contrato divergente: o mapper atualizado omite `empresa_id` do mestre de Grupo, exige classificacao explicita de Produto de revenda e pode excluir todo o lote. O adaptador Codex agora bloqueia entrega parcial quando houver exclusoes, reporta apenas a contagem e nao chama o preflight com lista vazia. Fixtures de Produto declaram `revenda`; nenhum Produto sem classificacao e promovido por hipotese.
+- Testes sinteticos de mapper, preflight e adaptador: 57/57 PASS. CI Linux do HEAD final ainda obrigatoria. Nao houve leitura do backup, importacao, migration, VPS ou merge na main; vinculo juridico e destino real continuam pendentes dos gates proprios.
