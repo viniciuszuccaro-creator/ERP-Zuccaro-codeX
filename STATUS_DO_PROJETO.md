@@ -1,3 +1,1077 @@
+## ORDEM ÚNICA — congelar HEAD Comercial e candidata contra `main` (2026-09-29T19:20Z)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Congelar o conjunto #114–#151 e registrar a ordem única antes de merge ou gate VPS |
+| HEAD funcional | `6218511a19b43f7ca87ed32b89d48dcfbd4ee195` (tip da #151; 116 commits / 101 arquivos à frente de `main` `d02cd012`) |
+| Candidata | draft **#152** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/152 (`cursor/comercial360-candidata-main-53c4` contra `main`; commit extra só de registro) |
+| CI do conjunto | SUCCESS em `11a5914a` — [36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250) frontend+backend (PR) e [36618410386](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618410386) frontend+backend (push) |
+| #141 | `b8a9f493` em `codex/legado-integracao-candidata`; CI [36617354170](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36617354170) SUCCESS; branch não editada |
+| #92 / #132 | `8d9ce6e5` / `29211815` — fora da #141 (`merge-base --is-ancestor` = não) |
+| Migrations | 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 inexistente; #141 e `main` param em 024 |
+| Conflito × #141 | somente `STATUS_DO_PROJETO.md` (`git merge-tree --write-tree`, exit 1). Código mergeia limpo |
+| Conflito × #92/#132 | 9 arquivos de Orçamento/Pedido + `runtime01.test.ts`; #132 herda os mesmos 9 |
+| Ordem | 1 Comercial consolidada → 2 #141 (STATUS no commit de integração) → 3 #92 → 4 #132 |
+| Runtime | inalterado neste registro |
+| Pendência | revisão humana da ordem; sem merge; sem VPS |
+
+Fonte: `docs/ORDEM_INTEGRACAO_UNICA.md`.
+
+---
+
+## LOTE CURSOR — offline/network retry list/masters/simular (pós-#150 a11y-live) (2026-09-29T19:06Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Offline/network retry — banner + Retry explícito em list/masters/simular (rede/5xx); reusa `formatComercialHttpError`; fail-closed (sem empty silencioso); 4xx sem retry |
+| Branch | `cursor/comercial360-onda3-network-retry-392b` |
+| Base | `origin/cursor/comercial360-onda3-a11y-live-392b` tip `33c3b456` (#150) |
+| Tip | `050e8eff` (`050e8eff3a8d854995c97ef35e7f1c114c5145e1`) · feat `93bf4b56` |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 |
+| Escopo | `isComercialRetryableHttpError` + `buildSimularHttpErrorBannerText`; Retry gated em list/masters; banner simular reinvoca `runSimularVenda`; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `retry rede/5xx` + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **22/22**; `orcamento-ui-policy` **16/16**; `pedido-ui-policy` **25/25**; `git diff --check` PASS |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#150; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: list/masters já tinham Retry em todo erro; simular só toast. Agora Retry só rede/5xx; simular ganha banner fail-closed que reinvoca a mesma ação.
+
+---
+
+## LOTE CURSOR — a11y aria-live + item aria-invalid + action labels (pós-#149 inactive master) (2026-09-29T18:57Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** a11y — aria-live polite/assertive em banners/list errors; aria-invalid+aria-describedby em linhas inválidas; nomes acessíveis Simular/Salvar/Cancelar/Resumo/Converter; helpers em `comercialListHttpUiPolicy` |
+| Branch | `cursor/comercial360-onda3-a11y-live-392b` |
+| Base | `origin/cursor/comercial360-onda3-inactive-master-picker-392b` tip `50dc8b5c` (#149) |
+| Tip | `291164d5` (`291164d53711245f67f311f0d80daf059b22d21c`) · feat `aaa96026` |
+| Draft PR | **#150** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/150 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
+| Escopo | helpers a11y + wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration; sem lib a11y nova |
+| Meta | a11y note + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **19/19**; `orcamento-ui-policy`+`pedido-ui-policy` **25/25**; `git diff --check` PASS |
+| Colisão | B offline retry (Retry já existe nos banners — próximo polish); margem #47; PDF/anexos #52–62; stack #126–#149; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Offline/network retry banner polish **ou** margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
+
+Diagnóstico: #148 já tinha `aria-invalid` parcial nas linhas; faltavam aria-live nos banners/list errors, aria-describedby ligando hint→campo, e aria-label estável nas ações canônicas. Extraído em helpers testáveis no UiPolicy existente.
+
+---
+
+## LOTE CURSOR — inactive master picker keep-current (pós-#148 item-line) (2026-09-29T18:55Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Soft-delete/inactive master picker — esconde Condicao/Tabela/Produto/ClienteEmpresa inativos exceto seleção atual (ghost+snapshot); fail-closed |
+| Branch | `cursor/comercial360-onda3-inactive-master-picker-392b` |
+| Base | `origin/cursor/comercial360-onda3-item-line-validation-392b` tip `c38a768d` (#148 CI SUCCESS) |
+| Tip | `8729e1c8` (`8729e1c86f73ea34c6f44d9f3ff474c51d7bef36`) · feat `b08dcb10` |
+| Draft PR | **#149** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/149 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-item-line-validation-392b...cursor/comercial360-onda3-inactive-master-picker-392b?expand=1) base `#148` |
+| Escopo | `filterActiveMasterRowsKeepingSelection` + labels `(inativo)` + hint UI; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `inactiveMasterPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **15/15**; `git diff --check` PASS |
+| Colisão | B ConfirmDialog cancel já existe (#135); A a11y parcial (aria-invalid linhas); margem #47; PDF/anexos #52–62; stack #126–#148; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** a11y aria-live/labels polish **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
+
+Diagnóstico: list HTTP já filtra `ativo:true` e normalizers descartam inativos; edição com FK inativa sumia do Select. Maior polish seguro independente pós-#148 (B já ConfirmDialog; A parcial).
+
+---
+
+## LOTE CURSOR — item-line validation qtd/preço fail-closed (pós-#147 resumo texto) (2026-09-29T18:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Item line validation UX — quantidade/preço >0 fail-closed antes de simular/salvar; mensagens claras; reusa forms Orçamento/Pedido |
+| Branch | `cursor/comercial360-onda3-item-line-validation-392b` |
+| Base | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` tip `0e7111af` (#147) |
+| Tip | `fdbfce92` (`fdbfce9256518818c3f9c7f5c948bdff4bac7f25`) · feat `6c3587a2` |
+| Draft PR | **#148** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/148 — ManagePullRequest indisponível; `gh pr create` 403. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-resumo-texto-392b...cursor/comercial360-onda3-item-line-validation-392b?expand=1 |
+| Escopo | `calculateItem` exige preço >0; `collectItemLineIssues`/`evaluateItemLinesGate`; wire `OrcamentosTab`+`PedidoCanonicoPanel` (alertas linha + disable Salvar/Simular); meta note; sem migration |
+| Meta | note + `Pedido backend HTTP is active` |
+| Testes | `orcamento-ui-policy`+`pedido-ui-policy`+simulacao/alcada/list/pedido-frontend **71/71**; `git diff --check` PASS |
+| Colisão | margem #47 OPEN; PDF/anexos #52–62; stack #126–#147; a11y A (Radix Escape já); C histórico Pedido já exibe `history`; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** a11y Escape/focus polish **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/orcamento-ui-policy.test.js`, `tests/pedido-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
+
+Diagnóstico: emptyItem inicia `preco_unitario:'0'`; UI engolia erro de `calculateItem`; save só falhava no toast genérico. Maior polish seguro independente pós-#147.
+
+---
+
+## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
+
+| PR/Branch | Tip | CI | Escopo |
+|---|---|---|---|
+| #146 | `c1fdf63d` | stack | tenant cache |
+| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `2a76c8cc` | — | resumo texto fail-closed |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Pedido/Orçamento resumo texto fail-closed (pós-#146 tenant-cache) (2026-09-29T18:29Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Resumo texto read-only Pedido (+ Orçamento) a partir da entidade + snapshots; painel/janela texto imprimível; fail-closed se snapshots pós-031 incompletos; sem PDF novo |
+| Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Base | `origin/cursor/comercial360-onda3-tenant-cache-392b` tip `c1fdf63d` (#146) |
+| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
+| Draft PR | **#147** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/147 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Escopo | Policy: `comercialDocumentoSnapshotGapHint` + `buildComercialDocumentoResumoTexto` / `resolveComercialResumoPreviewState` / `openComercialResumoTextoWindow`; wrappers Pedido; wire `PedidoCanonicoPanel` + `OrcamentosTab` (painel + copiar/imprimir texto); meta `textoResumoPreviewFailClosed`; sem migration |
+| Meta | `textoResumoPreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | pedido/orcamento UI policy **21/21**; list/alcada/simulacao **44/44**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | margem #47 OPEN; anexos/PDF #52–#62 (não toca PDF); stack #126–#146; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish Comercial independente fora do stack |
+
+Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, tests orcamento/pedido UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: após #146, maior gap seguro pedido pelo handoff — canônico sem resumo texto imprimível; legado `ImprimirPedido`/PDF Orçamento existem mas tarefa pede texto read-only com snapshots fail-closed, sem módulo PDF.
+
+---
+
+## LOTE CURSOR — tenant cache fail-closed (pós-#145 list-search) (2026-09-29T18:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Troca de tenant limpa form/list cache comercial fail-closed |
+| Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
+| Base | `origin/cursor/comercial360-onda3-list-search-392b` tip `73279042` (#145) |
+| Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-tenant-cache-392b` |
+| Escopo | Policy: `clearComercialHttpCacheOnTenantSwitch` + reset Orçamento/Pedido (descarta dirty/diálogos/snapshots sem prompt); wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `tenantCacheFailClosed`; sem migration |
+| Meta | `tenantCacheFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy **14/14**; orcamento/alcada/simulacao/pedido UI **61/61**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | A duplicar sem endpoint; B print legado; margem #47 OPEN; anexos/PDF #52–#62; stack #126–#145; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente (imprimir/resumo texto Pedido canônico) |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: A (duplicar) sem endpoint/UI — inventaria módulo. B (imprimir) já existe em legado `ImprimirPedido`; canônico sem print mas colide com superfície anexos/PDF. **C** maior gap seguro: useEffect de tenant só fechava diálogos e deixava form/dirty/editing/histórico/snapshots de outro tenant + cache React Query cruzado.
+
+---
+
+## LOTE CURSOR — list search/filter fail-closed (pós-#144) (2026-09-29T18:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Orçamento/Pedido list search/filter: empty busca ≠ HTTP error; queryKey groupId+empresaId+filters; sanitize/normalize via `comercialListHttpUiPolicy`; 403/5xx permanece banner de erro |
+| Branch | `cursor/comercial360-onda3-list-search-392b` |
+| Base | `origin/cursor/comercial360-onda3-simular-dirty-392b` tip `01ee61de` (#144) |
+| Tip | `dbe72104` (`dbe7210426534a2f6571b2a1dfaf25d68d712648`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-list-search-392b` |
+| Escopo | Extrai sanitize/normalize/buildParams/queryKey/empty-message na policy existente; wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `listSearchFilterFailClosed`; sem migration |
+| Meta | `listSearchFilterFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy **11/11**; orcamento/alcada/simulacao/pedido UI **58/58**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | empty≠error base #136; dirty #144; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico de escolha: #136 cobria empty≠error básico; faltava sanitize/normalize de filtros, queryKey com filters na policy, empty message filtrado vs sem filtro no Pedido, e meta `listSearchFilterFailClosed` — maior gap seguro pós-#144 sem tocar #47/#52–#62.
+
+---
+
+## LOTE CURSOR — simular-venda dirty-state fail-closed (pós-#143) (2026-09-29T18:05Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Simular-venda dirty-state: limpa preview/agenda ao mudar condição/itens/promo; exige re-simular antes de salvar (fail-closed UI+tests) |
+| Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
+| Base | `origin/cursor/comercial360-onda3-delivery-address-392b` tip `4777b4fb` (#143) |
+| Tip | `9d5235bf` feat / docs tip `1eee761b` (`1eee761bb41e5ea2dc100d1576814a4404381b87`) |
+| Draft PR | **#144** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/144 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-simular-dirty-392b` |
+| Escopo | Flag `simulacaoDirty` + gate Salvar em Orçamento/Pedido; invalidação só em campos de preço (não observações/Local/Obra); banner dirty; meta `simulacaoDirtyFailClosed`; sem migration |
+| Meta | `simulacaoDirtyFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-simulacao-ui-policy **17/17 PASS**; orcamento/list/alcada/pedido UI **35/35 PASS**; runtime07b+08c+09 **23/23 PASS**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | B list empty≠error já #136; C masters banner #140; delivery #143; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+
+Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico de escolha: limpeza de preview já existia, mas **Salvar seguia liberado** sem re-simular — maior gap seguro pós-#143. B/C já cobertos no stack.
+
+---
+
+## LOTE CURSOR — delivery Local/Obra address summary fail-closed (pós-#142) (2026-09-29T17:55Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Resumo de endereço Local/Obra após seleção (fail-closed se HTTP get falhar) |
+| Branch | `cursor/comercial360-onda3-delivery-address-392b` |
+| Base | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` tip `d7871c23` (#142) |
+| Tip | `d65d9618` (`d65d961891b84a04e8146b2f76179d02814c0673`) — docs tip `207c26cc`+ |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-delivery-address-392b` |
+| Escopo | Pedido canônico: após Local/Obra, `getLocal`/`getObra` (+ getLocal do principal) montam resumo; erro/loading bloqueia Salvar; listagem Local/Obra 403/5xx ≠ empty; reusa clients nested; sem migration |
+| Meta | `deliveryAddressSummaryFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-cliente-local-obra UI/client + pedido/list/simulação — **46/46 PASS**; runtime07b+08c+09 — **23/23 PASS**; `server` typecheck PASS; `git diff --check` PASS |
+| Colisão | A search/filter e C simular dirty já cobertos no stack #126–#142; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
+
+Arquivos: `comercialClienteLocalObraHttpUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests local-obra UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico de escolha: **A** listagem Orçamento/Pedido já tem filtros server-side + `queryKey` com filtros+tenant + empty≠error (`comercialListHttpUiPolicy` / #136). **C** botão Simular + invalidação dirty (limpa preview ao mudar condição/itens/promo) já no stack pós-#116/#130/#142. **B** era o maior gap seguro: pickers Local/Obra existiam sem resumo de endereço pós-seleção.
+
+---
+
+## LOTE CURSOR — parcela schedule preview fail-closed (pós-#140) (2026-09-29T17:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Parcela schedule preview UI após simular-venda / resolução de condição |
+| Branch | `cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Base | `origin/cursor/comercial360-onda3-masters-banner-392b` tip `f5009c7c` (#140) |
+| Tip | `ad927286` (`ad927286f533379abd7c7aa5abe70a2ac4354193`) — docs tip `bc5c4595`+ |
+| Draft PR | **#142** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/142 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Escopo | Agenda read-only do servidor (ordem/dias/%/valor/vencimento) após simular; template #/dias/% pós-condição; fail-closed se agenda ausente/inválida; reusa `comercialParcelaSchedulePolicy` via resposta simular; `OrcamentosTab` + `PedidoCanonicoPanel`; sem migration |
+| Meta | `parcelaSchedulePreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-simulacao-ui-policy 15/15; orcamento+pedido UI 32/32; list-http-ui 8/8; runtime07b 13/13; runtime08c+09 10/10; `git diff --check` PASS |
+| Colisão | B convert UX já em #133/#134; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`.
+
+---
+
+## LOTE CURSOR — masters picker loading/error banner fail-closed (pós-#139) (2026-09-29T17:35Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Condicao/Tabela/Produto (+Cliente) HTTP picker loading + error banner fail-closed |
+| Branch | `cursor/comercial360-onda3-masters-banner-392b` |
+| Base | `origin/cursor/comercial360-onda3-snapshot-reload-392b` tip `3da72df5` (#139) |
+| Tip | `ec9dcb21` (`ec9dcb210e3adafb6b2929b68122ae7eb2f0c605`) |
+| Draft PR | **#140** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/140 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-snapshot-reload-392b...cursor/comercial360-onda3-masters-banner-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-masters-banner-392b` |
+| Escopo | Pickers Cliente/Condição/Produto/Tabela nunca empty silencioso em 403/5xx; loading placeholder; banner + retry na lista e no formulário; Salvar bloqueado enquanto masters loading/erro; sem migration |
+| Meta | `mastersPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy + condicao/tabela/produto/orcamento/pedido UI — **46/46 PASS**; runtime07b+08c+09 meta — **23/23 PASS**; `git diff --check` PASS |
+| Colisão | Sem Codex/#104/#48; sem merge/VPS; sem 025–028; EXECUCAO_PARALELA + Regra-Mãe |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list-policy + runtime07b/08c/09, `STATUS_DO_PROJETO.md`.
+
+---
+
+## LOTE CURSOR — snapshot reload pós-save (pós-#138) (2026-09-29T17:25Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Pedido/Orçamento reload after save prova snapshots (condição/promo/tabela) — A colide com #47 margem/CostPort aberto |
+| Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
+| Base | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` tip `90a76433` (#138) |
+| Tip | `953ca272` (`953ca272e365dbd22aff22d823065c67425e9b67`) — feat `0acbec43` |
+| Draft PR | **#139** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/139 `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-snapshot-reload-392b` |
+| Escopo | Após create/update, formulário permanece aberto e recarrega snapshots persistidos (condição+tabela+promo); badges Persistido; sem migration |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Testes | `node --test` policies simulacao/orcamento/pedido/condicao/tabela — **45/45 PASS** |
+| Colisão | A) margem UI → #47 OPEN CostPort; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** masters loading/error banner (C) **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialSimulacaoUiPolicy.js`, `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, tests simulacao/orcamento/pedido.
+
+---
+
+## OPINIÃO CURSOR — #138 tip + escolha B snapshot-reload (2026-09-29T17:25Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #138 | `90a76433` | pendente | alçada desconto UI fail-closed |
+| próximo | `cursor/comercial360-onda3-snapshot-reload-392b` | — | Reload pós-save prova snapshots round-trip |
+
+Diagnóstico: #47 (margem CostPort) ainda OPEN — UI margem adiada. Reload após save era gap: form fechava e não mostrava snapshots persistidos. Sem migration. EXECUCAO_PARALELA + Regra-Mãe.
+
+---
+
+## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `dcde4cef` (`dcde4ceff12c9e027d57a282b27d5b571c7f07c7`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Base | `#136` `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Draft PR | **#138** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/138 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+
+---
+
+## OPINIÃO CURSOR — #136 tip + alçada UI fail-closed (2026-09-29T17:15Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #136 | `2db1a38d` | pendente | List HTTP fail-closed + update CANCELADO |
+| próximo | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` | — | Desconto alçada UI fail-closed + save idempotency |
+
+Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplementar**. Escolha: alçada desconto UI fail-closed (backend #46 já merged; UI só badge de simulação). Sem migration. Sem Codex/#104/#48. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Desconto alçada UI fail-closed (pós-#136) (2026-09-29T17:15Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **Desconto alçada UI fail-closed** (+ trava save anti duplo-clique) — anexos/PDF colidem com #52–#62; margem #47 em stack separada |
+| Implementado | **SIM** — `comercialDescontoAlcadaUiPolicy`; Alert + Salvar disabled; create sem autoaprovação; HTTP `DESCONTO_ALCADA_DENIED` mapeado; meta `descontoAlcadaUiFailClosed` / `saveIdempotency`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — comercial-desconto-alcada-ui-policy 13/13; comercial-list-http-ui-policy 6/6; runtime08c 6/6; runtime09-pedido-http 4/4 (arquivo completo 10/10); `git diff --check` PASS |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#136` tip `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Draft PR | **#143** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/143 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + descontoAlcadaUiFailClosed / saveIdempotency |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 (sem migration neste lote) |
+
+### Arquivos
+
+- `src/components/comercial/comercialDescontoAlcadaUiPolicy.js` (novo — espelho UI da política #46)
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `src/components/comercial/comercialListHttpUiPolicy.js` (map DESCONTO_ALCADA_DENIED)
+- `server/src/api/router.ts` (meta + note)
+- `tests/comercial-desconto-alcada-ui-policy.test.js`
+- `tests/comercial-list-http-ui-policy.test.js`
+- `server/tests/runtime08c-orcamento-http.test.ts` / `runtime09-pedido-http.test.ts` / `runtime07b.test.ts`
+
+### Próximo
+
+Margem preview persistência de exibição (após #47 na stack) **ou** Onda 4 anexos/PDF só se stack #52+ mergear. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `3880793b` (`3880793be2e741e2320fd25469d3c59ce3b7063f`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Base | `#135` `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Draft PR | **#136** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/136 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-list-failclosed-392b` |
+
+---
+
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
+
+## LOTE CURSOR — List fail-closed HTTP + update CANCELADO (pós-#135) (2026-09-29T17:05Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **A** (+ **C**) — Pedido/Orçamento list empty-state HTTP fail-closed (403/5xx ≠ silent empty); queryKey groupId+empresaId; update bloqueado quando CANCELADO; observacoes sanitizadas no write; sem migration |
+| Implementado | **SIM** — `comercialListHttpUiPolicy`; painéis canônicos; schemas observacoes; meta `listFailClosed` / `updateBlockedWhenCancelled`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — comercial-list-http-ui-policy + UI pedido/orc 23/23; runtime09 security+http 10/10; 08c http 6/6; runtime07b 13/13; `server:typecheck` PASS; `git diff --check` PASS |
+| CI | tip `3880793b` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#135` tip `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Draft PR | **#145** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/145 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + listFailClosed / updateBlockedWhenCancelled / cancel+convert flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
+
+### Arquivos (Cursor — lote pós-#135)
+
+- `src/components/comercial/comercialListHttpUiPolicy.js` (extração: resolveHttpListViewState / formatComercialHttpError / sanitizeObservacoesText)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` / `OrcamentosTab.jsx`
+- `src/components/comercial/pedidoUiPolicy.js` / `orcamentoUiPolicy.js`
+- `server/src/repositories/pedidoTypes.ts` / `orcamentoTypes.ts` / `pedidoService.ts` (conversion observacoes)
+- `server/src/api/router.ts` (meta + note)
+- `tests/comercial-list-http-ui-policy.test.js` + ajustes UI policy
+- `server/tests/runtime09-pedido-security.test.ts` / `runtime09-pedido-http.test.ts` / `runtime08c-orcamento-http.test.ts` / `runtime07b.test.ts`
+
+### Escopo
+
+- Listagem HTTP: `isError` → erro + retry; nunca empty em 403/5xx/rede; masters.isError banner; queryKey com groupId+empresaId.
+- Pedido update após CANCELADO → 409 `PEDIDO_STATE_CONFLICT` (simetria cancel).
+- Observações: strip controles/`<>`/javascript no payload UI e Zod write.
+- Sem migration; sem Codex/#104/#48; sem merge/VPS.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 (anexos/PDF/versão se 032+ ou sem migration); sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #134 → #135 → **este lote**.
+
+---
+
+## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **Pedido cancel** — simetria fail-closed com Orçamento cancel (sem migration) |
+| Implementado | **SIM** — `requireOpen` + cancel RBAC/audit; UI disable unauthorized/cancelled; meta `cancelByState`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — runtime09 security+http+service 13/13; 08c http/security 12/12; convert-snapshot+preco 13/13; UI pedido/orc 15/15; runtime07b meta; `server:typecheck` PASS; `git diff --check` PASS |
+| CI | tip `c2bfb17c` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
+| Draft PR | **#135** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/135 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
+| Tip | `c2bfb17c` |
+| Meta | note preserva **Pedido backend HTTP is active** + `cancelByState` / convert+validade flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
+
+### Arquivos (Cursor — lote pós-#134)
+
+- `server/src/services/pedidoService.ts` (`requireOpen`, cancel fail-closed documentado)
+- `server/src/api/router.ts` (meta `pedido.cancelByState` + note cancel fail-closed)
+- `src/components/comercial/pedidoUiPolicy.js` / `PedidoCanonicoPanel.jsx` (disable + guard)
+- `server/tests/runtime09-pedido-security.test.ts` (novo, simetria 08c)
+- `server/tests/runtime09-pedido-http.test.ts` / `runtime08c-orcamento-http.test.ts` / `runtime07b.test.ts`
+- `tests/pedido-ui-policy.test.js`
+
+### Escopo
+
+- Cancel Pedido: permissão `cancelar` após tenant; só `EM_ABERTO`; auditoria before/after na transação; repetição/já cancelado → 409; isolamento tenant → 404; RBAC deny → 403.
+- UI: botão cancel sempre visível no painel canônico, **disabled** sem permissão ou status ≠ EM_ABERTO; `data-permission="Comercial.pedido.cancelar"`.
+- Sem migration; sem módulo paralelo; convert-snapshot #134 preservado.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** list empty-state HTTP Pedido; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #133 → #134 → **este lote**.
+
+---
+
+## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **A residual** — harden Orçamento→Pedido copy/verify ALL snapshots fail-closed pós-031 |
+| Implementado | **SIM** — `comercialConvertSnapshotPolicy`; wire convert; UI hint; meta `convertSnapshotFailClosed`; sem migration; validade #133 preservada |
+| Testado | **SIM** — convert-snapshot 8/8 + condição/promo/tabela/validade + 08c/09/onda2 60/60 + UI 11/11 + runtime07b 13/13; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `01521a92` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#133` tip `70576db7` (`cursor/comercial360-onda3-orc-validade-392b`) |
+| Branch | `cursor/comercial360-onda3-convert-snapshot-392b` |
+| Draft PR | **#134** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/134 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-orc-validade-392b...cursor/comercial360-onda3-convert-snapshot-392b?expand=1 |
+| Tip | `01521a92` |
+| Meta | note preserva **Pedido backend HTTP is active** + `convertSnapshotFailClosed` / validade flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028/032 |
+
+### Arquivos (Cursor — lote pós-#133)
+
+- `server/src/services/comercialConvertSnapshotPolicy.ts` (extração)
+- `server/src/services/pedidoService.ts` / `server/src/api/router.ts`
+- `src/components/comercial/orcamentoUiPolicy.js` / `OrcamentosTab.jsx`
+- `server/tests/runtime-onda3-convert-snapshot.test.ts` + fixtures condição/promo + meta 07b/08c
+- `tests/orcamento-ui-policy.test.js`
+
+### Escopo
+
+- Convert copia condição (codigo+nome+parcelas), promoção e tabela (codigo+nome); pós-031 `tabela_preco_id` sem snap → 422; condição parcial → 422; legado sem nenhum campo de condição ainda resolve live.
+- UI: hint + disable convert quando snapshot incompleto; não enfraquece validade #133.
+- Multiempresa/RBAC/auditoria preservados; sem migration.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** Pedido cancel fail-closed symmetry / list empty-state HTTP; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #131 → #133 → **este lote**.
+
+---
+
+## LOTE CURSOR — Validade Orçamento fail-closed (pós-#131) (2026-09-29T16:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **B** — `validade_em` fail-closed em create/update/convert (A já sólido em #126/#129/#131) |
+| Implementado | **SIM** — policy `comercialOrcamentoValidadePolicy`; wire Orçamento/Pedido convert; UI hint/badge/bloqueio save+convert; sem migration |
+| Testado | **SIM** — validade 8/8 + UI policy 10/10 + regressões snapshot/HTTP meta 35/35; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `de369c4b` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#131` tip `1682f686` (`cursor/comercial360-onda3-tabela-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-orc-validade-392b` |
+| Draft PR | **#133** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/133 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
+| Tip | `de369c4b` (feat `53aeda8d`) |
+| Meta | note preserva **Pedido backend HTTP is active** + `validadeFailClosed` / `convertValidadeFailClosed` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
+
+### Arquivos (Cursor — lote pós-#131)
+
+- `server/src/services/comercialOrcamentoValidadePolicy.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/orcamentoUiPolicy.js` / `OrcamentosTab.jsx`
+- `server/tests/runtime-onda3-orcamento-validade.test.ts` + meta asserts `runtime07b` / `runtime08c`
+- `tests/orcamento-ui-policy.test.js`
+
+### Escopo
+
+- Fail-closed 422 `ORCAMENTO_VALIDADE_EXPIRADA` quando `validade_em < now` em create/update/convert.
+- UI: hint no formulário, badge Expirado na lista, disable convert/save quando expirado.
+- Multiempresa/RBAC/auditoria preservados; sem migration.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** harden convert snapshots legado (A residual); sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #130 → #131 → **este lote**.
+
+---
+
+## LOTE CURSOR — TabelaPreço codigo+nome snapshot (pós-#130) (2026-09-29T16:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration aditiva `031_orcamento_pedido_tabela_snapshot.sql` (codigo+nome); create/update/get/convert fail-closed via `comercialTabelaSnapshot`; UI reload; harness stubs com codigo/nome |
+| Testado | **SIM** — tabela snapshot 8/8 + migration 1/1 + condição/promo/onda2/pedido/runtime01/07b/08c 72/72 + UI policy 8/8; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `07561d2d` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
+| Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
+| Draft PR | **#131** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/131 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
+| Tip | `07561d2d` |
+| Meta | note preserva **Pedido backend HTTP is active** + `tabelaSnapshot` / snapshot TabelaPreco |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; numeração **031** (evita 025–028) |
+
+### Arquivos reservados (Cursor — lote pós-#130)
+
+- `server/migrations/031_orcamento_pedido_tabela_snapshot.sql`
+- `server/src/services/comercialTabelaSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts` + inMemory/postgres repos
+- `server/src/app.ts` / `server/src/api/router.ts` (meta note + `tabelaSnapshot`)
+- `src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-tabela-snapshot*.test.ts` + stubs/harness
+
+### Escopo
+
+- Snapshot imutável codigo+nome TabelaPreco em Orçamento/Pedido (espelha padrão condição 029).
+- Fail-closed: tabela_preco_id sem codigo/nome → 422; conversão copia snapshot do Orçamento (não-retroatividade).
+- Multiempresa/RBAC/auditoria preservados; auditoria inclui `tabela_preco_*_snapshot`.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** próximo item P0/Comercial 360 autorizado; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → #130 → **este lote**.
+
+---
+
+## LOTE CURSOR — simular-venda → persist desconto/total (pós-#129) (2026-09-29T16:30Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **B** — servidor aplica promoção/desconto/total no create/update (fail-closed; UI não inventa totais) |
+| Implementado | **SIM** — `applyPromocaoOnPersist` (idempotente com UI pós-simular); wire Orçamento/Pedido; UI `mergeSimulacaoBeforeSave` + `resolveDisplayTotals`; sem migration nova |
+| Testado | **SIM** — promo snapshot 15/15 + runtime08c/simular/condição 19/19 + UI simulação 10/10 + orçamento/pedido UI 12/12 + runtime07b meta PASS; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `eef875b7` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-simular-persist-392b` |
+| Draft PR | **#130** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/130 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
+| Tip | `eef875b7` (feat `f51f021c`) |
+| Meta | note preserva **Pedido backend HTTP is active** + `simularPersistFailClosed` / `persistOnWrite` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe |
+
+### Arquivos reservados (Cursor — lote pós-#129)
+
+- `server/src/services/comercialPromocaoPolicy.ts` (`applyPromocaoOnPersist` / strip idempotente)
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-promocao-snapshot.test.ts` / `runtime08c-orcamento-http.test.ts`
+- `tests/comercial-simulacao-ui-policy.test.js`
+
+### Escopo
+
+- Sem migration: colunas 030 bastam; servidor reaplica promoção no write (mesmo contrato do `simular-venda`).
+- Idempotente: UI que já aplicou simulação não dobra desconto.
+- Totais do formulário: prioriza preview do servidor; payload continua sem `total` inventado.
+- Multiempresa/RBAC/auditoria preservados.
+
+### Próximo item independente restante
+
+- ~~Snapshot código/nome TabelaPreco (**031**)~~ → lote seguinte nesta pilha.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **#130**.
+
+---
+
+## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `030_orcamento_pedido_promocao_snapshot.sql` (bps+cupom+aplicada); create/update/get/convert validam via `comercialPromocaoPolicy` fail-closed; UI envia refs no save; meta preserva **Pedido backend HTTP is active** |
+| Testado | **SIM** — promo snapshot 12/12 + migration 1/1 + condição 7/7 + Onda2 promo/simular 15/15 + orcamento/pedido service+http+runtime01 64/64 PASS; UI policy orçamento/pedido/simulação 20/20 PASS; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip a empurrar |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#127` `cursor/comercial360-onda3-produto-http-392b` (tip `8fba0782`) |
+| Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
+| Draft PR | **#129** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/129 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; `ManagePullRequest` indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
+| Tip | `7dbfe5cf` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; 030 (029=condição; 025–028 reservados #50/#92) |
+
+### Arquivos reservados (Cursor — lote pós-#127)
+
+- `server/migrations/030_orcamento_pedido_promocao_snapshot.sql`
+- `server/src/services/comercialPromocaoPolicy.ts` (assert/build/persist refs)
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts` + inMemory/postgres repos
+- `server/src/app.ts` / `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/orcamentoUiPolicy.js` / `pedidoUiPolicy.js` / `comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-promocao-snapshot*.test.ts` + UI tests
+
+### Escopo
+
+- Sem colunas prévias de promoção → migration **030** aditiva.
+- Fail-closed: promoção no payload exige config ativa, cupom allowlist, bps ≤ teto e desconto de linha ≥ bps reclamado.
+- Conversão Orçamento→Pedido copia snapshot de promoção (não-retroatividade).
+- Multiempresa/RBAC/auditoria preservados; auditoria inclui `promocao_*`.
+
+### Próximo item independente restante
+
+- Consistência simular-venda → desconto/total persistido (choice B) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → **este lote**.
+
+---
+
+## LOTE CURSOR — #127 merge tip #126 CI fix stub à-vista (2026-09-29T16:00Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — merge de `45195749` (#126) em `cursor/comercial360-onda3-produto-http-392b` para herdar stub `codigo`+`nome` no harness à-vista |
+| Testado | **SIM** no #126 — avista-http 4/4 + snapshot 7/7 + avista unit 7/7 + desconto/margem HTTP 12/12; revalidar CI #127 |
+| CI | tip pós-merge empurrado; aguardar verde em #127 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 |
+| Base | `#126` @ `45195749` |
+
+---
+
+## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `Produto` em `HTTP_PILOT_ENTITIES`; `http.produtos.list/get`; meta `produto.frontendHttp=true`; Orçamento/Pedido carregam itens via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy Produto + http-api-client/cliente/tabela/condicao/local-obra (52+27) + runtime03/04/07b (43/43 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip atualizado após merge do CI fix #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#126` `cursor/comercial360-onda3-condicao-snapshot-392b` (tip `45195749`) |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` @ feat `68f78585` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-condicao-snapshot-392b...cursor/comercial360-onda3-produto-http-392b?expand=1 |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; sem CRM paralelo |
+
+### Arquivos reservados (Cursor — lote pós-#126; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Produto)
+- `src/api/httpApiClient.js` (`produtos` list/get + entity piloto)
+- `server/src/api/router.ts` (meta `produto.frontendHttp` + pilot; note preserva **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialProdutoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx` (picker HTTP)
+- `tests/comercial-produto-http-client.test.js` / `comercial-produto-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime03.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_03.md`
+
+### Escopo
+
+- Reutiliza API R03 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; assert cross-tenant na UI policy.
+- RBAC Cadastros.produto / Comercial.orcamento|pedido.visualizar fail-closed no seletor.
+- Form V22 permanece com opt-in `VITE_ERP_HTTP_PRODUTO` via `preparedEntities` (DAM/workflow).
+
+### Próximo item independente restante
+
+- Snapshot de promoção / refs persistidas **ou** cutover restante de pickers legados; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → **este lote**.
+
+---
+
+## LOTE CURSOR — CI fix #126 stub à-vista + snapshot condição (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — fixture `comercial-condicao-avista-http` passa a devolver `codigo`+`nome` (+parcelas) no stub de `condicoes.get`, alinhado aos outros HTTP harnesses; path de produção fail-closed intacto |
+| Causa | create Orçamento exige snapshot CondicaoPagamento (`codigo`+`nome`+parcelas); stub à-vista só tinha `id`+`ativo`+parcelas → 422 `ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO` antes de 403/201/`DESCONTO_INVALIDO` |
+| Testado | **SIM** — `comercial-condicao-avista-http` 4/4 + `comercial-condicao-avista` 7/7 + `runtime-onda3-condicao-snapshot` 7/7 + desconto/margem HTTP 12/12 PASS |
+| CI | tip `45195749` empurrado; aguardar verde em #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Propagação | tip mergeado em `#127` `cursor/comercial360-onda3-produto-http-392b` |
+
+### Arquivos
+
+- `server/tests/comercial-condicao-avista-http.test.ts`
+
+### Próximo
+
+- Aguardar CI #126/#127; sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `029_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
+| Testado | **SIM** — runtime-onda3-condicao-snapshot (+migration) + onda2-preco + 08c orcamento + 09 pedido + runtime01/07b + desconto/margem HTTP + UI policy (94/94 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | **FAIL** tip `2e221def` — 4× à-vista HTTP (stub sem codigo/nome) → corrigido no lote CI fix acima |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Coordenação | **025 renumerado para 029** — evita colisão com #50/#92 (`025_pedidos_origem_canal_idempotency` … `028`) |
+
+### Arquivos reservados (Cursor — lote pós-#124; não editar em Codex/#104/#48)
+
+- `server/migrations/029_orcamento_pedido_condicao_snapshot.sql`
+- `server/src/services/comercialCondicaoSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts`
+- `server/src/repositories/inMemoryOrcamentoRepository.ts` / `postgresOrcamentoRepository.ts`
+- `server/src/repositories/inMemoryPedidoRepository.ts` / `postgresPedidoRepository.ts`
+- `server/src/api/router.ts` (meta note: snapshot + **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-condicao-snapshot*.test.ts` + stubs runtime08c/09/onda2/alcada + `runtime01`/`runtime07b`
+- `tests/comercial-condicao-http-ui-policy.test.js`
+
+### Escopo
+
+- Somente colunas aditivas; sem DROP/TRUNCATE executável.
+- Snapshot autoridade do servidor (payload não envia snapshot).
+- Multiempresa: tenant triggers atualizados para `tabela_preco_id` no Orçamento.
+- RBAC/auditoria existentes em mutações Orçamento/Pedido; audit inclui campos de snapshot.
+- Conversão Orçamento→Pedido copia snapshot persistido (não-retroatividade).
+
+### Próximo item independente restante
+
+- Produto frontendHttp piloto (padrão Condicao/Tabela) **ou** refs de promoção persistidas; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → **este lote**.
+
+---
+
+## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `ClienteLocal` + `Obra` nested (`/clientes/:id/locais|obras`); Pedido carrega endereço/obra por `cliente_id` fail-closed; Central 360 já via `central-360`; sem migration |
+| Testado | **SIM** — client+policy novos + empresa/http-api-client (33/33) + runtime06a/06b/07b 20/20 (meta Pedido backend HTTP preservado) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#122`/`#121` `cursor/comercial360-onda3-cliente-empresa-http-392b` (tip `d82c7096`) |
+| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ feat `a2c59236` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#122; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + ClienteLocal + Obra)
+- `src/api/httpApiClient.js` (entity nested + `clientes.listLocais/listObras/getLocal/getObra`)
+- `server/src/api/router.ts` (meta `clienteLocal`/`obra.frontendHttp` + pilot/httpEntities; note preserva Pedido backend HTTP)
+- `src/components/comercial/comercialClienteLocalObraHttpUiPolicy.js`
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (delivery HTTP por cliente)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js` (comentário)
+- `tests/comercial-cliente-local-obra-http-client.test.js` / `comercial-cliente-local-obra-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-empresa-http-client.test.js`
+- `server/tests/runtime06a.test.ts` / `runtime06b.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_06A.md` / `ERP_RUNTIME_06B.md` / `ERP_RUNTIME_05.md`
+
+### Escopo
+
+- Reutiliza API R06A/R06B nested já existente; **sem migration**; sem flat list-for-scope.
+- Multiempresa: tenant só em headers; Obra Pedido usa `operacional=true` (exige empresaId).
+- RBAC Cadastros.cliente_local / Cadastros.obra ou Comercial.pedido.visualizar fail-closed no UI.
+- Troca de ClienteEmpresa limpa `cliente_local_id`/`obra_id`. Central 360 blocos locais/obras inalterados (já HTTP via read-model).
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas (**migration** autorizada); sem CRM paralelo.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #121/#122 → **#123**.
+
+---
+
+## LOTE CURSOR — #121 ClienteEmpresa list-for-scope frontendHttp (2026-09-29T15:35Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `GET /api/v1/cliente-empresas` list-for-scope + get by id; piloto HTTP `ClienteEmpresa`; Orçamento/Pedido seleção via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy+http-api-client (33/33) + runtime05 3/3 + runtime07b 13/13 + runtime06b 4/4 + runtime08c 6/6 |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#120` `cursor/comercial360-onda3-cliente-http-392b` (tip `5b444a69`) |
+| Branch | `cursor/comercial360-onda3-cliente-empresa-http-392b` @ feat `6e780d73` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-http-392b...cursor/comercial360-onda3-cliente-empresa-http-392b?expand=1 |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#120; não editar em Codex/#104/#48)
+
+- `server/src/repositories/inMemoryClienteRepository.ts` / `postgresClienteRepository.ts` (clienteId opcional + habilitadoOperacao)
+- `server/src/services/clienteEmpresaOperations.ts` / `clienteService.ts` (`listForScope`/`getById`)
+- `server/src/api/router.ts` (rotas flat + meta `clienteEmpresa.frontendHttp` + pilot; note preserva Pedido backend HTTP)
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + ClienteEmpresa)
+- `src/api/httpApiClient.js` (entity + `clienteEmpresas` list/get)
+- `src/components/comercial/comercialClienteEmpresaHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `tests/comercial-cliente-empresa-http-client.test.js` / `comercial-cliente-empresa-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime05.test.ts` / `runtime06b.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_05.md`
+
+### Escopo
+
+- Reutiliza R05 nested; **sem migration**. List-for-scope exige `empresaId` no contexto (fail-closed).
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente_empresa.visualizar no BFF.
+- Mutações ClienteEmpresa permanecem nested sob `/api/v1/clientes/:id/empresas`.
+- Local/Obra continuam fora do piloto flat.
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteLocal/Obra frontendHttp; sem CRM paralelo.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → **#121**.
+
+---
+
+## LOTE CURSOR — #119 Cliente frontendHttp Onda 3 (2026-09-29T15:10Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `Cliente` + CRUD/restore/vínculos/Central 360; Orçamento/Pedido labels Cliente + UnidadeMedida via HTTP; Central 360 RBAC fail-closed; sem migration |
+| Testado | **SIM** — client+policy novos + http-api-client/condicao/tabela/central360 (52/52) + runtime07b 13/13 + runtime06b meta PASS |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
+| Branch | `cursor/comercial360-onda3-cliente-http-392b` @ `6ffafb6f` (feat `daadbdfe`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-tabela-http-392b...cursor/comercial360-onda3-cliente-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#118; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Cliente)
+- `src/api/httpApiClient.js` (entity Cliente + `clientes` CRUD/empresas/central360 + `unidadesMedida`)
+- `server/src/api/router.ts` (meta `cliente.frontendHttp: true` + pilot; note preserva Pedido backend HTTP)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/CentralCliente360Panel.jsx` / `DetalhesCliente.jsx` (fail-closed RBAC)
+- `tests/comercial-cliente-http-client.test.js`
+- `tests/comercial-cliente-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `tests/central-cliente-360-session.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_04.md`
+
+### Escopo
+
+- Reutiliza API R04/Central 360 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente.* fail-closed no BFF.
+- Persistência canônica inalterada; ClienteEmpresa/Local/Obra continuam fora do piloto flat.
+- Skip A: sem colunas JSON/text de snapshot condição/parcelas (preço já em `preco_unitario` do item).
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteEmpresa list-for-scope HTTP (sem CRM paralelo); Local/Obra frontendHttp depois.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
+
+---
+
+## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `TabelaPreco` + CRUD/vínculo/padrão/itens/`preco-cliente` no cliente; Pedido lista tabelas via HTTP; Orçamento/Pedido resolvem preço ao selecionar produto; sem migration |
+| Testado | **SIM** — 13 novos (client+policy) + http-api-client/condicao regressão (42/42) + runtime07b 13/13 + runtime08c 6/6 (note Pedido backend HTTP) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#117` `cursor/comercial360-onda2-condicao-http-392b` (tip `9bb3bccc`) |
+| Branch | `cursor/comercial360-onda2-tabela-http-392b` @ `d3147801` (feat `988c6ce3`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-condicao-http-392b...cursor/comercial360-onda2-tabela-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#117; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + TabelaPreco)
+- `src/api/httpApiClient.js` (entity + `tabelasPreco` CRUD + `resolveClientPrice`)
+- `server/src/api/router.ts` (meta `frontendHttp: true` + pilot/httpEntities; note preserva `Pedido backend HTTP is active`)
+- `src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (resolve preço no produto)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (masters HTTP + resolve preço)
+- `tests/comercial-tabela-preco-http-client.test.js`
+- `tests/comercial-tabela-preco-http-ui-policy.test.js`
+- `tests/http-api-client.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_07B.md` / `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`
+
+### Escopo
+
+- Reutiliza API R07B já existente (`/api/v1/tabelas-preco` + `preco-cliente`); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.tabela_preco.* fail-closed no BFF.
+- Persistência canônica: `tabela_preco_id` no Pedido; preço de item continua autoridade do servidor no save. Preview no form é local.
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, snapshot persistido de preço.
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas/preço em Orçamento/Pedido (**migration** autorizada); Onda 3 follow-up sem CRM paralelo.
+
+---
+
+## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `CondicaoPagamento` + CRUD/parcelas/vínculo/padrão/resolve no cliente; Orçamento/Pedido listam via HTTP e resolvem condição ao trocar cliente; snapshot parcelas **só em memória** |
+| Testado | pendente neste HEAD (focado a seguir) |
+| CI | pendente |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#116` `cursor/comercial360-onda2-simular-ui-392b` (tip `00bd7c85`, que já empilha `#114`) |
+| Branch | `cursor/comercial360-onda2-condicao-http-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-simular-ui-392b...cursor/comercial360-onda2-condicao-http-392b?expand=1 |
+
+### Arquivos reservados (Cursor — lote pós-#116; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + CondicaoPagamento)
+- `src/api/httpApiClient.js` (entity + `condicoesPagamento` CRUD completo)
+- `server/src/api/router.ts` (meta `frontendHttp: true` + pilot/httpEntities)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (masters HTTP + resolve)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (masters HTTP + resolve)
+- `tests/comercial-condicao-pagamento-http-client.test.js`
+- `tests/comercial-condicao-http-ui-policy.test.js`
+- `tests/http-api-client.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_08B.md`
+
+### Escopo
+
+- Reutiliza API R08B/Onda 2 já existente (`/api/v1/condicoes-pagamento` + resolve); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.condicao_pagamento.* fail-closed no BFF.
+- Persistência canônica: `condicao_pagamento_id`. Snapshot de parcelas no form é preview local — persistir agenda exige migration futura autorizada.
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, TabelaPreco frontendHttp.
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas em Orçamento/Pedido (**migration** autorizada) **ou** TabelaPreco frontendHttp; Onda 3 follow-up sem CRM paralelo.
+
+---
+
+## Comercial 360 / Onda 2 — UI simular-venda + preview parcelas/promo (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — Orçamento/Pedido canônicos chamam `POST /api/v1/comercial/simular-venda`; agenda de parcelas + promoção fail-closed na UI; aplica preço/desconto/condição no formulário **sem migration** |
+| Testado | **SIM** — 12 novos (`comercial-simulacao-ui-policy` + `comercial-simulacao-http-client`) + regressão orcamento/pedido UI/HTTP (27/27 no lote focado) |
+| CI | pendente neste HEAD (`db162222`) — draft PR: **BLOCKED** (`gh`/`ManagePullRequest` sem permissão createPullRequest); branch pushada |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#114` `cursor/comercial360-onda2-promocoes-parcelas-392b` |
+| Branch | `cursor/comercial360-onda2-simular-ui-392b` @ `db162222` (feat `689bbaee`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-promocoes-parcelas-392b...cursor/comercial360-onda2-simular-ui-392b?expand=1 |
+
+### Arquivos reservados (Cursor — lote UI pós-#114)
+
+- `src/components/comercial/comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (bloco simular + aplicar)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (bloco simular + aplicar)
+- `src/api/httpApiClient.js` (`comercial.simularVenda` + `condicoesPagamento.resolve`)
+- `tests/comercial-simulacao-ui-policy.test.js`
+- `tests/comercial-simulacao-http-client.test.js`
+
+### Escopo
+
+- Diagnóstico: Orçamento/Pedido já têm `condicao_pagamento_id`; **não** há colunas de snapshot parcelas/promo — sem migration neste lote.
+- UI reutiliza telas canônicas; simulação não persiste; Salvar continua no contrato create/update existente.
+- RBAC: botão só com `Comercial.orcamento|pedido.visualizar`; backend continua fail-closed.
+- Promoção: payload só se bps>0; aplicar no form exige `promocao.aplicada===true` do servidor.
+- Fora: #104, mapper #48, Codex #106–#109, migration de snapshot.
+
+### Próximo item independente restante
+
+- **Feito neste empilhamento:** CondicaoPagamento frontendHttp (`cursor/comercial360-onda2-condicao-http-392b`). Residual: snapshot persistido (migration) ou TabelaPreco frontendHttp.
+
+---
+
+## Comercial 360 / Onda 2 — resolução condição + parcelas + promoção + simulação (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — resolve fail-closed + schedule parcelas + promo cupom + `POST /api/v1/comercial/simular-venda` |
+| Testado | **SIM** — 13/13 (`comercial-onda2-condicao-promocao-parcelas` + `comercial-onda2-simular-venda-http`) + regressão avista/preço/R08 |
+| CI | **SIM** @ `2ef5ca86` frontend+backend SUCCESS (`36574117990`) |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+
+### Arquivos reservados (Cursor — não editar em frentes Codex #104/#106–#109)
+
+- `server/src/services/comercialCondicaoResolucaoPolicy.ts`
+- `server/src/services/comercialParcelaSchedulePolicy.ts`
+- `server/src/services/comercialPromocaoPolicy.ts`
+- `server/src/services/comercialSimulacaoVendaService.ts`
+- `server/src/services/condicaoPagamentoService.ts`
+- `server/src/api/router.ts` (rotas resolve + simular-venda + meta)
+- `server/src/app.ts` (wire `clienteRepo` + `promocaoConfig` + simulacao)
+- `server/tests/comercial-onda2-condicao-promocao-parcelas.test.ts`
+- `server/tests/comercial-onda2-simular-venda-http.test.ts`
+
+### Escopo
+
+- Reutiliza CondicaoPagamento / TabelaPreco / alçada existentes — **sem** módulo/tabela CRM paralela nem migration.
+- Resolução: ClienteEmpresa específica → padrão Empresa → nenhuma (fail-closed).
+- Parcelas: agenda com resíduo na última; promoção só com `ativa===true` + teto bps + cupom allowlist.
+- Simulação HTTP não persiste; RBAC Comercial visualizar orçamento/pedido; resolve HTTP exige Cadastros.condicao_pagamento.visualizar.
+- Fora do escopo #104 (estoque/expedição/NF) e legado #106–#109 / mapper #48.
+
+### Próximo item independente restante
+
+- **Feito neste empilhamento:** UI Orçamento/Pedido + cliente HTTP simular-venda (branch `cursor/comercial360-onda2-simular-ui-392b`). Residual: snapshot persistido (migration) ou CondicaoPagamento frontendHttp.
+
+---
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

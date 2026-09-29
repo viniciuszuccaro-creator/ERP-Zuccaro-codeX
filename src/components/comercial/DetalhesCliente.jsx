@@ -93,6 +93,7 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
             actorId={actorId}
             actorEmail={actorEmail}
             token={sessionToken}
+            hasPermission={hasPermission}
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>

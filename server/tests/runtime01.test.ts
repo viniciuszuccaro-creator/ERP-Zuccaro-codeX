@@ -119,7 +119,13 @@ test('migrations include foundation through 024 in canonical order', () => {
   assert.ok(files.indexOf('022_produto_midia_scan_evidence.sql') < files.indexOf('023_produto_material_norma.sql'));
   assert.ok(files.includes('024_produto_canais_rascunho.sql'));
   assert.ok(files.indexOf('023_produto_material_norma.sql') < files.indexOf('024_produto_canais_rascunho.sql'));
-  assert.equal(files.at(-1), '024_produto_canais_rascunho.sql');
+  assert.ok(files.includes('029_orcamento_pedido_condicao_snapshot.sql'));
+  assert.ok(files.indexOf('024_produto_canais_rascunho.sql') < files.indexOf('029_orcamento_pedido_condicao_snapshot.sql'));
+  assert.ok(files.includes('030_orcamento_pedido_promocao_snapshot.sql'));
+  assert.ok(files.indexOf('029_orcamento_pedido_condicao_snapshot.sql') < files.indexOf('030_orcamento_pedido_promocao_snapshot.sql'));
+  assert.ok(files.includes('031_orcamento_pedido_tabela_snapshot.sql'));
+  assert.ok(files.indexOf('030_orcamento_pedido_promocao_snapshot.sql') < files.indexOf('031_orcamento_pedido_tabela_snapshot.sql'));
+  assert.equal(files.at(-1), '031_orcamento_pedido_tabela_snapshot.sql');
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {

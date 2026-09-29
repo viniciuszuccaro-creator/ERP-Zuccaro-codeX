@@ -564,9 +564,9 @@ test('API Produto pagination + tenant isolation + search no leak', async () => {
     ['ERP-RUNTIME-03', 'ERP-RUNTIME-04', 'ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B', 'ERP-RUNTIME-07B', 'ERP-RUNTIME-08B']
       .includes(meta.runtime),
   );
-  assert.equal(meta.produto.frontendHttp, false);
+  assert.equal(meta.produto.frontendHttp, true);
   assert.ok(meta.preparedEntities.includes('Produto'));
-  assert.ok(!meta.httpPilotEntities.includes('Produto'));
+  assert.ok(meta.httpPilotEntities.includes('Produto'));
 });
 
 test('API Produto cross-tenant empresa and FK via HTTP', async () => {
