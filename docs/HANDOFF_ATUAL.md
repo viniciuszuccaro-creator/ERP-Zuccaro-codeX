@@ -1,3 +1,18 @@
+## AUTÔNOMO — BLOCKED tip #174 (2026-09-30T00:25Z)
+
+Tip **#174** CI SUCCESS. Polish Onda 4/5 seguro sem migration **esgotado**.
+BLOCKED: CostPort real / CreditPort+032 / anexos pós-Codex.
+Sem merge/VPS. Vigília ativa.
+
+---
+
+## AUTÔNOMO — tip Pedido histórico UI (2026-09-30T00:20Z)
+
+Draft PR **#174** empilhada em #173 (`cursor/comercial360-onda5-pedido-history-ux-392b`):
+histórico Pedido loading/empty/error fail-closed. CI SUCCESS. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Pedido status confirm (2026-09-30T00:10Z)
 
 Draft PR **#173** empilhada em #172 (`cursor/comercial360-onda5-pedido-status-confirm-392b`):

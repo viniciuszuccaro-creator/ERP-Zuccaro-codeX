@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, evaluatePedidoStatusMotivoUiGate, evaluatePedidoStatusTransitionUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText, resolvePedidoDetailSummaryUiState } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, evaluatePedidoStatusMotivoUiGate, evaluatePedidoStatusTransitionUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoHistoryUiState, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText, resolvePedidoDetailSummaryUiState } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
 const nowFixed = new Date('2026-09-29T15:00:00.000Z');
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
@@ -65,6 +65,23 @@ test('painel Pedido: dialog avanço status com confirmação e motivo opcional',
   assert.match(source,/requestTransition/);
   assert.match(source,/api\.transition\(row\.id,target,motivoGate\.motivo/);
   assert.doesNotMatch(source,/onClick=\{\(\)=>transition\(selected\)\}/);
+});
+test('pedido history UI fail-closed empty≠erro',()=>{
+  assert.equal(resolvePedidoHistoryUiState({isLoading:true}).mode,'loading');
+  assert.equal(resolvePedidoHistoryUiState({isError:true,errorMessage:'boom'}).mode,'error');
+  assert.equal(resolvePedidoHistoryUiState({isError:true}).canRetry,true);
+  assert.equal(resolvePedidoHistoryUiState({events:[]}).mode,'empty');
+  assert.equal(resolvePedidoHistoryUiState({events:null}).mode,'invalid');
+  assert.equal(resolvePedidoHistoryUiState({events:[{id:'1'}]}).mode,'ready');
+});
+test('painel Pedido: histórico loading/empty/error fail-closed', async ()=>{
+  const source=await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url),'utf8');
+  assert.match(source,/resolvePedidoHistoryUiState/);
+  assert.match(source,/pedido-history-error/);
+  assert.match(source,/pedido-history-empty/);
+  assert.match(source,/pedido-history-retry/);
+  assert.match(source,/loadHistory/);
+  assert.doesNotMatch(source,/history\.map\(event/);
 });
 test('mapPedidoRowToForm recarrega campos canônicos pós-save sem inventar snapshots',()=>{
   const mapped=mapPedidoRowToForm({
