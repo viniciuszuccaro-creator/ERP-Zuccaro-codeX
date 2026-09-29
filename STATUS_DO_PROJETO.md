@@ -5,7 +5,7 @@
 | Choice | **A** Simular-venda dirty-state: limpa preview/agenda ao mudar condição/itens/promo; exige re-simular antes de salvar (fail-closed UI+tests) |
 | Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
 | Base | `origin/cursor/comercial360-onda3-delivery-address-392b` tip `4777b4fb` (#143) |
-| Tip | *(pendente commit)* |
+| Tip | `9d5235bf` (`9d5235bf9260040543891fe2c879fc0bd74934fe`) |
 | Draft PR | base=`cursor/comercial360-onda3-delivery-address-392b` — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-simular-dirty-392b` |
