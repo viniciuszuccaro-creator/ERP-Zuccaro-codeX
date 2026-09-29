@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Pedido share (2026-09-29T23:00Z)
+
+Draft PR **#167** empilhada em #166: Pedido WhatsApp/e-mail texto revisável fail-closed.
+CI #166/#167 em curso. Sem merge/VPS.
+
+---
+
 ## RE-REVISÃO CURSOR — #153 HEAD `12c37e8b` (2026-09-29T22:55Z)
 
 | Campo | Valor |

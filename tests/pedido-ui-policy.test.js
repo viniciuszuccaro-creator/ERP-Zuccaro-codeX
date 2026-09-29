@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
 const nowFixed = new Date('2026-09-29T15:00:00.000Z');
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
@@ -187,4 +187,31 @@ test('painel pedido wire Imprimir/PDF canônico fail-closed', async () => {
   assert.match(source, /escapeDocumentText\(pedido\.observacoes/);
   assert.match(source, /printWindow\.opener = null/);
   assert.match(source, /pedido\.numero \|\| pedido\.numero_pedido/);
+});
+
+test('pedido share texto revisável e gate fail-closed', () => {
+  const text = buildPedidoShareText(
+    { numero: '00000042', status: 'EM_ABERTO', tipo_operacao: 'ENTREGA', data_entrega_solicitada: '2027-04-01T12:00:00.000Z', total: '19.000000' },
+    { empresaNome: 'CPA', clienteNome: 'Cliente X', statusLabel: 'Em aberto' },
+  );
+  assert.match(text, /Pedido 00000042/);
+  assert.match(text, /Cliente: Cliente X/);
+  assert.match(text, /conferido no ERP/);
+  assert.doesNotMatch(text, /groupId|token|api[_-]?key/i);
+  assert.throws(() => buildPedidoShareText({}), /inválido/i);
+  assert.equal(evaluatePedidoShareUiGate({ row: { numero: '1' }, groupId: '', empresaId: 'e', canShare: true }).mode, 'context');
+  assert.equal(evaluatePedidoShareUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canShare: false }).mode, 'permission');
+  assert.equal(evaluatePedidoShareUiGate({ row: null, groupId: 'g', empresaId: 'e', canShare: true }).mode, 'missing');
+  assert.equal(evaluatePedidoShareUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canShare: true }).blockShare, false);
+});
+
+test('painel pedido wire WhatsApp/e-mail share fail-closed', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /evaluatePedidoShareUiGate/);
+  assert.match(panel, /buildPedidoShareText/);
+  assert.match(panel, /pedido-share-whatsapp/);
+  assert.match(panel, /pedido-share-email/);
+  assert.match(panel, /Comercial\.pedido\.compartilhar-whatsapp/);
+  assert.match(panel, /shareGate\.blockShare/);
+  assert.doesNotMatch(panel, /api\.whatsapp|twilio|wavoip/i);
 });
