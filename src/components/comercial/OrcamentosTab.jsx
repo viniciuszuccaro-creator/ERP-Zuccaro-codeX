@@ -43,6 +43,11 @@ import {
   canLoadClienteEmpresasHttp,
   normalizeClienteEmpresasListPayload,
 } from './comercialClienteEmpresaHttpUiPolicy';
+import {
+  buildProdutoDisplayLabel,
+  canLoadProdutosHttp,
+  normalizeProdutosListPayload,
+} from './comercialProdutoHttpUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -59,6 +64,7 @@ const errorMessage = (error) => {
 };
 
 export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, windowMode = false }) {
+  void filterInContext;
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -99,6 +105,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const clientesApi = http.clientes;
   const clienteEmpresasApi = http.clienteEmpresas;
   const unidadesApi = http.unidadesMedida;
+  const produtosApi = http.produtos;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
   const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
   const listQuery = useQuery({
@@ -111,20 +118,23 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     queryKey: ['orcamento-masters', groupId, empresaId],
     queryFn: async ({ signal }) => {
       const canLinks = canLoadClienteEmpresasHttp(hasPermission);
-      const [clientesEmpresaPayload, clientesPayload, condicoesPayload, produtos, unidadesPayload] = await Promise.all([
+      const canProdutos = canLoadProdutosHttp(hasPermission);
+      const [clientesEmpresaPayload, clientesPayload, condicoesPayload, produtosPayload, unidadesPayload] = await Promise.all([
         canLinks
           ? clienteEmpresasApi.list({ ativo: true, habilitadoOperacao: true, limit: 200, signal })
           : Promise.resolve({ data: [] }),
         clientesApi.list({ ativo: true, limit: 200, orderBy: 'nome', signal }),
         condicoesApi.list({ ativo: true, limit: 200, signal }),
-        filterInContext('Produto', { ativo: true }, 'descricao', 500),
+        canProdutos
+          ? produtosApi.list({ ativo: true, limit: 200, signal })
+          : Promise.resolve({ data: [] }),
         unidadesApi.list({ ativo: true, limit: 200, signal }),
       ]);
       return {
         clientesEmpresa: normalizeClienteEmpresasListPayload(clientesEmpresaPayload),
         clientes: normalizeClientesListPayload(clientesPayload),
         condicoes: normalizeCondicoesListPayload(condicoesPayload),
-        produtos,
+        produtos: normalizeProdutosListPayload(produtosPayload),
         unidades: normalizeUnidadesListPayload(unidadesPayload),
       };
     },
@@ -138,6 +148,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     return buildClienteDisplayLabel(clientesById.get(link?.cliente_id), link?.codigo || linkId);
   };
   const condicaoLabel = (id) => masters.condicoes.find((item) => item.id === id)?.nome || id;
+  const produtoLabel = (produto) => buildProdutoDisplayLabel(produto);
 
   useEffect(() => { setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId]);
   useEffect(() => {
@@ -375,7 +386,7 @@ const convertToPedido = async () => {
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Os totais serão conferidos novamente pelo servidor.</DialogDescription></DialogHeader>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => { void changeClienteEmpresa(v); }}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.clientesEmpresa.filter((item) => item.ativo !== false && item.habilitado_operacao !== false && item.bloqueado !== true).map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)} disabled={resolvingCondicao}><SelectTrigger id="orc-condicao"><SelectValue placeholder={resolvingCondicao ? 'Resolvendo...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
       {condicaoSnapshot?.parcelas?.length > 0 && <div className="border rounded-md p-3 space-y-2 bg-white" data-action="Comercial.condicao-snapshot-preview"><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Resolução: {condicaoSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{condicaoSnapshot.nome || condicaoSnapshot.codigo || condicaoSnapshot.id}</Badge><span className="text-xs text-slate-500">Pré-visualização — ao salvar, o servidor persiste snapshot id+nome+parcelas (não-retroativo).</span></div><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead></TableRow></TableHeader><TableBody>{condicaoSnapshot.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.dias}-${parcela.percentual}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell></TableRow>)}</TableBody></Table></div>}
-      <div className="space-y-2"><div className="flex justify-between"><h3 className="font-semibold">Itens</h3><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => { void selectProduct(index, v); }} disabled={resolvingPreco}><SelectTrigger><SelectValue placeholder={resolvingPreco ? 'Resolvendo preço...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.produtos.filter((p) => p.ativo !== false).map((p) => <SelectItem key={p.id} value={p.id}>{p.codigo ? `${p.codigo} - ` : ''}{p.descricao || p.nome}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
+      <div className="space-y-2"><div className="flex justify-between"><h3 className="font-semibold">Itens</h3><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => { void selectProduct(index, v); }} disabled={resolvingPreco}><SelectTrigger><SelectValue placeholder={resolvingPreco ? 'Resolvendo preço...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.produtos.filter((p) => p.ativo !== false).map((p) => <SelectItem key={p.id} value={p.id}>{produtoLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
       {canSimular && <div className="border rounded-md p-3 space-y-3 bg-slate-50" data-permission="Comercial.orcamento.visualizar" data-action="Comercial.simular-venda">
         <div className="flex flex-wrap items-end gap-3">

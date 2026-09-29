@@ -1239,11 +1239,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'Orcamento', 'Pedido'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'Produto', 'Orcamento', 'Pedido'],
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas); Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'Produto frontendHttp piloto ativo (list/get Comercial); ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas); Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1252,7 +1252,7 @@ export function createApiRouter(deps: ApiDeps) {
         masterData: true,
         pagination: true,
         tenantFkIntegrity: true,
-        frontendHttp: false,
+        frontendHttp: true,
       },
       cliente: {
         masterData: true,
