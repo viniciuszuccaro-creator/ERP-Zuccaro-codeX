@@ -40,6 +40,21 @@ test('payload permite somente campos comerciais e ignora tenant, status, numero 
   assert.equal('total' in payload, false);
 });
 
+test('payload inclui refs de promoção quando a simulação aplicada confirma', () => {
+  const payload = buildOrcamentoPayload(form(), {
+    promocao: { aplicada: true, bps: 500, cupom: 'CPA10' },
+  });
+  assert.deepEqual(payload.promocao, { bps: 500, cupom: 'CPA10' });
+  const fromPersisted = buildOrcamentoPayload({
+    ...form(),
+    promocao_aplicada: true,
+    promocao_bps: 250,
+    promocao_cupom: 'VIP5',
+  });
+  assert.deepEqual(fromPersisted.promocao, { bps: 250, cupom: 'VIP5' });
+  assert.equal('promocao' in buildOrcamentoPayload(form()), false);
+});
+
 test('politica visual exige permissao exata e estado editavel', () => {
   const allow = (module, section, action) => module === 'Comercial' && section === 'orcamento' && action !== 'cancelar';
   assert.equal(canUseOrcamentoAction(allow, 'visualizar'), true);

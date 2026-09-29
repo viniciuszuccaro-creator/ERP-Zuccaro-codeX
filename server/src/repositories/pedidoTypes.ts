@@ -10,7 +10,12 @@ export const pedidoItemSchema = orcamentoItemSchema.extend({
   requer_producao: z.boolean().optional().default(false),
 }).strict();
 
-/** Payload do cliente — snapshot de condição é autoridade do servidor. */
+/** Payload do cliente — snapshots de condição/promoção são autoridade do servidor. */
+export const pedidoPromocaoSchema = z.object({
+  bps: z.number().int().positive().max(10000),
+  cupom: z.string().trim().max(64).optional(),
+}).strict();
+
 export const pedidoCreateSchema = z.object({
   cliente_empresa_id: z.string().uuid(),
   cliente_local_id: z.string().uuid().nullable().optional(),
@@ -21,14 +26,18 @@ export const pedidoCreateSchema = z.object({
   tipo_operacao: z.enum(PEDIDO_TIPOS_OPERACAO),
   data_entrega_solicitada: z.string().datetime(),
   observacoes: z.string().trim().max(1000).optional(),
+  promocao: pedidoPromocaoSchema.optional(),
   itens: z.array(pedidoItemSchema).min(1).max(1000),
 }).strict();
 
 export type PedidoCreate = z.infer<typeof pedidoCreateSchema>;
-export type PedidoWrite = PedidoCreate & {
+export type PedidoWrite = Omit<PedidoCreate, 'promocao'> & {
   condicao_pagamento_codigo_snapshot: string;
   condicao_pagamento_nome_snapshot: string;
   condicao_pagamento_parcelas_snapshot: CondicaoPagamentoParcelaSnapshot[];
+  promocao_aplicada: boolean;
+  promocao_bps: number | null;
+  promocao_cupom: string | null;
 };
 export type PedidoStatus = typeof PEDIDO_STATUS[number];
 export type PedidoItem = z.infer<typeof pedidoItemSchema> & { subtotal: string; total: string };
@@ -57,6 +66,9 @@ export type Pedido = {
   condicao_pagamento_codigo_snapshot: string | null;
   condicao_pagamento_nome_snapshot: string | null;
   condicao_pagamento_parcelas_snapshot: CondicaoPagamentoParcelaSnapshot[] | null;
+  promocao_aplicada: boolean;
+  promocao_bps: number | null;
+  promocao_cupom: string | null;
   orcamento_id: string | null;
   vendedor_id: string;
   tipo_operacao: typeof PEDIDO_TIPOS_OPERACAO[number];

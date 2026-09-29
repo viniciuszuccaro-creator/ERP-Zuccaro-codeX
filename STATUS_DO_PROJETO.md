@@ -1,3 +1,45 @@
+## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `030_orcamento_pedido_promocao_snapshot.sql` (bps+cupom+aplicada); create/update/get/convert validam via `comercialPromocaoPolicy` fail-closed; UI envia refs no save; meta preserva **Pedido backend HTTP is active** |
+| Testado | **SIM** — promo snapshot 12/12 + migration 1/1 + condição 7/7 + Onda2 promo/simular 15/15 + orcamento/pedido service+http+runtime01 64/64 PASS; UI policy orçamento/pedido/simulação 20/20 PASS; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip a empurrar |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#127` `cursor/comercial360-onda3-produto-http-392b` (tip `8fba0782`) |
+| Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
+| Draft PR | **#129** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/129 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; `ManagePullRequest` indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
+| Tip | `7dbfe5cf` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; 030 (029=condição; 025–028 reservados #50/#92) |
+
+### Arquivos reservados (Cursor — lote pós-#127)
+
+- `server/migrations/030_orcamento_pedido_promocao_snapshot.sql`
+- `server/src/services/comercialPromocaoPolicy.ts` (assert/build/persist refs)
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts` + inMemory/postgres repos
+- `server/src/app.ts` / `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/orcamentoUiPolicy.js` / `pedidoUiPolicy.js` / `comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-promocao-snapshot*.test.ts` + UI tests
+
+### Escopo
+
+- Sem colunas prévias de promoção → migration **030** aditiva.
+- Fail-closed: promoção no payload exige config ativa, cupom allowlist, bps ≤ teto e desconto de linha ≥ bps reclamado.
+- Conversão Orçamento→Pedido copia snapshot de promoção (não-retroatividade).
+- Multiempresa/RBAC/auditoria preservados; auditoria inclui `promocao_*`.
+
+### Próximo item independente restante
+
+- Consistência simular-venda → desconto/total persistido (choice B) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → **este lote**.
+
+---
+
 ## LOTE CURSOR — #127 merge tip #126 CI fix stub à-vista (2026-09-29T16:00Z)
 
 | Etapa | Estado |

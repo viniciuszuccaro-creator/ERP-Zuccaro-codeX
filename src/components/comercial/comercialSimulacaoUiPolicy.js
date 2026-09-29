@@ -1,7 +1,7 @@
 /**
  * Política UI da simulação de venda (Onda 2) — Orçamento/Pedido existentes.
- * Não persiste snapshot (sem migration); aplica preço/desconto/condição no formulário
- * e exibe agenda de parcelas retornada por POST /api/v1/comercial/simular-venda.
+ * Aplica preço/desconto/condição no formulário; refs de promoção vão no create/update
+ * (migration 030) via buildOrcamentoPayload/buildPedidoPayload.
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -192,7 +192,7 @@ export function formatParcelasSchedule(parcelas) {
 }
 
 /**
- * Snapshot leve só para UI (não enviar no create/update — sem coluna no banco).
+ * Snapshot leve para UI + refs a reenviar no save (migration 030).
  */
 export function buildSimulacaoPreviewState(simulation) {
   return {
@@ -205,7 +205,7 @@ export function buildSimulacaoPreviewState(simulation) {
     descontoBps: simulation?.desconto_bps ?? null,
     aprovacaoDescontoExigida: Boolean(simulation?.aprovacao_desconto_exigida),
     promocao: simulation?.promocao?.aplicada === true
-      ? { aplicada: true, bps: simulation.promocao.promocaoBps }
+      ? { aplicada: true, bps: simulation.promocao.promocaoBps, cupom: simulation.promocao.cupom || null }
       : null,
     parcelas: formatParcelasSchedule(simulation?.parcelas),
     baseDate: simulation?.base_date || null,

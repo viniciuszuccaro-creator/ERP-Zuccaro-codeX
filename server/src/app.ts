@@ -180,6 +180,7 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+    promocaoConfig,
   );
   const pedidoService = new PedidoService(
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
@@ -187,6 +188,7 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+    promocaoConfig,
   );
   const comercialSimulacaoVendaService = new ComercialSimulacaoVendaService(
     tenantGuard,

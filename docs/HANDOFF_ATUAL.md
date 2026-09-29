@@ -1,3 +1,20 @@
+## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** — persist refs promoção fail-closed |
+| Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
+| Base | `#127` tip `8fba0782` (`cursor/comercial360-onda3-produto-http-392b`) |
+| Escopo | migration **030** + wire create/update/get/convert + UI save refs; reusa `comercialPromocaoPolicy` |
+| Meta | note preserva `Pedido backend HTTP is active` |
+| Tip | `7dbfe5cf` |
+| Draft PR | **#129** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/129 — `gh pr create` → `Resource not accessible by integration`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | choice B (simular→persist desconto) **ou** Onda 4 sem colisão #50/#92 |
+
+---
+
 ## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
 
 | Etapa | Estado |
