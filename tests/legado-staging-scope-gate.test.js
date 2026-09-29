@@ -85,6 +85,26 @@ test('prova dinamica nao executa getter ou Proxy nem libera registros privados',
   assert.equal(acessos, 0);
 });
 
+test('prova circular ou aninhada demais bloqueia lote sem erro de recursao', () => {
+  const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-CICLO', assinaturaOrigem: 'f'.repeat(64) };
+  const circular = provas(item);
+  circular.self = circular;
+  const profunda = provas(item);
+  let atual = profunda;
+  for (let index = 0; index < 8; index += 1) {
+    atual.extra = {};
+    atual = atual.extra;
+  }
+  for (const evidenciasOperacaoVerificadas of [circular, profunda]) {
+    const result = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados: vinculos,
+      evidenciasOperacaoVerificadas });
+    assert.equal(result.bloqueado, true);
+    assert.deepEqual(result.privados, []);
+    assert.equal(result.relatorio.porMotivo.propriedade_operacao_nao_comprovada, 1);
+  }
+});
+
 test('booleano comprovado sem evidencia e aprovacao nao libera operacao', () => {
   const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'PED-S2', assinaturaOrigem: 'b'.repeat(64) };

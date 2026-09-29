@@ -11,13 +11,23 @@ const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
 const TIPOS_EVIDENCIA = new Set(['cnpj', 'documento_fiscal']);
 const TIPOS_EVIDENCIA_OPERACAO = new Set(['coluna_empresa_origem', 'documento_fiscal']);
 
-const dadosInertes = (value) => {
+const dadosInertes = (value, visitados = new WeakSet(), profundidade = 0) => {
   if (!value || typeof value !== 'object' || Array.isArray(value) || utilTypes.isProxy(value)) return false;
+  if (profundidade > 4 || visitados.has(value)) return false;
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) return false;
-  return Object.values(Object.getOwnPropertyDescriptors(value)).every((property) =>
-    Object.hasOwn(property, 'value') && (typeof property.value !== 'object'
-      || property.value === null || dadosInertes(property.value)));
+  visitados.add(value);
+  const valido = Reflect.ownKeys(value).every((key) => {
+    if (typeof key !== 'string') return false;
+    const property = Object.getOwnPropertyDescriptor(value, key);
+    if (!Object.hasOwn(property, 'value')) return false;
+    const dado = property.value;
+    return dado === null || typeof dado === 'string' || typeof dado === 'boolean'
+      || (typeof dado === 'number' && Number.isFinite(dado))
+      || dadosInertes(dado, visitados, profundidade + 1);
+  });
+  visitados.delete(value);
+  return valido;
 };
 
 const atestacaoComFormatoValido = (vinculo, tipos = TIPOS_EVIDENCIA) => {
