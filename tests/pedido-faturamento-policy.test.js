@@ -1,9 +1,12 @@
 import {
   assertFaturamentoDentroDoPedido,
+  canAprovarCreditoPedido,
   evaluatePedidoCredito,
+  evaluatePedidoCreditoUiGate,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
   remainingValorFaturar,
+  resolvePedidoCreditoSnapshot,
   resolveStatusFaturamentoPedido,
 } from '../src/components/lib/pedidoFaturamentoPolicy.js';
 import { applyCodigoOnCreate } from '../src/api/localCadastroMasterPolicy.js';
@@ -63,6 +66,72 @@ test('credit evaluation fails closed without client, limit or alcada', () => {
     pedido: { cliente_id: 'c1', valor_total: 80 },
     cliente: { condicao_comercial: { limite_credito: 100, limite_credito_utilizado: 10 } },
   }).aprovado, true);
+});
+
+test('credit UI gate fail-closed: contexto, snapshot e bloqueio sem aprovar-credito', () => {
+  const deny = () => false;
+  const allowCredito = (_m, _s, a) => a === 'aprovar-credito';
+
+  assert.equal(evaluatePedidoCreditoUiGate({ groupId: null, empresaId: 'e' }).blockSave, true);
+  assert.equal(evaluatePedidoCreditoUiGate({
+    groupId: 'g', empresaId: 'e', clienteEmpresaId: null,
+  }).status, 'idle');
+
+  // Sem snapshot (porta ausente) — não inventa nem bloqueia
+  const semSnap = evaluatePedidoCreditoUiGate({
+    groupId: 'g', empresaId: 'e', clienteEmpresaId: 'ce1',
+    clienteEmpresa: { id: 'ce1', codigo: 'C1' },
+    valorPedido: 100,
+    hasPermission: deny,
+  });
+  assert.equal(semSnap.status, 'porta_ausente');
+  assert.equal(semSnap.blockSave, false);
+
+  // CreditPort explícito null → bloqueia sem override
+  const portNull = evaluatePedidoCreditoUiGate({
+    groupId: 'g', empresaId: 'e', clienteEmpresaId: 'ce1',
+    creditPortSnapshot: null,
+    valorPedido: 100,
+    hasPermission: deny,
+  });
+  assert.equal(portNull.status, 'indisponivel');
+  assert.equal(portNull.blockSave, true);
+  assert.equal(evaluatePedidoCreditoUiGate({
+    groupId: 'g', empresaId: 'e', clienteEmpresaId: 'ce1',
+    creditPortSnapshot: null,
+    valorPedido: 100,
+    hasPermission: allowCredito,
+  }).blockSave, false);
+
+  // Snapshot ClienteEmpresa insuficiente
+  const bloqueado = evaluatePedidoCreditoUiGate({
+    groupId: 'g', empresaId: 'e', clienteEmpresaId: 'ce1', clienteId: 'c1',
+    clienteEmpresa: { id: 'ce1', limite_credito: 50, limite_utilizado: 10 },
+    valorPedido: 80,
+    hasPermission: deny,
+  });
+  assert.equal(bloqueado.blockSave, true);
+  assert.equal(bloqueado.status, 'bloqueado');
+  assert.equal(bloqueado.evaluation.limite_disponivel, 40);
+  assert.match(bloqueado.hint || '', /bloqueado|insuficiente|aprovar-credito/i);
+
+  const ok = evaluatePedidoCreditoUiGate({
+    groupId: 'g', empresaId: 'e', clienteEmpresaId: 'ce1', clienteId: 'c1',
+    clienteEmpresa: { id: 'ce1', limite_credito: 100, limite_utilizado: 10 },
+    valorPedido: 80,
+    hasPermission: deny,
+  });
+  assert.equal(ok.blockSave, false);
+  assert.equal(ok.status, 'aprovado');
+
+  assert.deepEqual(resolvePedidoCreditoSnapshot({
+    clienteEmpresa: { limite_credito: null },
+  }), null);
+  assert.equal(resolvePedidoCreditoSnapshot({
+    clienteEmpresa: { limite_credito: '90', limite_utilizado: '5' },
+  }).fonte, 'cliente_empresa');
+  assert.equal(canAprovarCreditoPedido(allowCredito), true);
+  assert.equal(canAprovarCreditoPedido(deny), false);
 });
 
 test('stock movement idempotency helpers detect reserva and saida', () => {

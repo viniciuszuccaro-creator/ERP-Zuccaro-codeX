@@ -139,6 +139,229 @@ export const evaluatePedidoCredito = ({
   };
 };
 
+/**
+ * Snapshot de crédito para UI (Onda 4/6) — espelha CreditPort sem migration.
+ * Prefer ClienteEmpresa.limite_credito (+ limite_utilizado); fallback condicao_comercial.
+ * limite_credito null/ausente → null (não inventa; paridade porta ausente / snap null).
+ *
+ * @param {{
+ *   clienteEmpresa?: Record<string, unknown> | null,
+ *   cliente?: ClienteCreditoRecord | null,
+ * }} [options]
+ * @returns {{ limite_credito: number|string, limite_utilizado: number|string, fonte: string } | null}
+ */
+export const resolvePedidoCreditoSnapshot = ({
+  clienteEmpresa = null,
+  cliente = null,
+} = {}) => {
+  if (clienteEmpresa && typeof clienteEmpresa === 'object' && 'limite_credito' in clienteEmpresa) {
+    const raw = clienteEmpresa.limite_credito;
+    if (raw == null || raw === '') return null;
+    const utilizado = clienteEmpresa.limite_utilizado ?? clienteEmpresa.limite_credito_utilizado ?? 0;
+    return { limite_credito: raw, limite_utilizado: utilizado, fonte: 'cliente_empresa' };
+  }
+  const cond = cliente?.condicao_comercial;
+  if (cond && typeof cond === 'object' && 'limite_credito' in cond) {
+    const raw = cond.limite_credito;
+    if (raw == null || raw === '') return null;
+    return {
+      limite_credito: raw,
+      limite_utilizado: cond.limite_credito_utilizado ?? 0,
+      fonte: 'cliente_condicao',
+    };
+  }
+  return null;
+};
+
+/**
+ * RBAC fail-closed para override de crédito (chave granular `aprovar-credito`).
+ * @param {(module: string, section?: string|string[], action?: string) => boolean} [hasPermission]
+ */
+export const canAprovarCreditoPedido = (hasPermission) => {
+  if (typeof hasPermission !== 'function') return false;
+  return hasPermission('Comercial', 'pedido', 'aprovar-credito') === true;
+};
+
+/**
+ * Gate UI fail-closed do Pedido (display + Salvar).
+ * - Sem group/empresa: bloqueia.
+ * - Sem cliente selecionado: idle (não bloqueia; payload exige cliente).
+ * - Snapshot ausente (porta/campo null): status porta_ausente — não inventa; não bloqueia
+ *   (paridade CreditPort null no tip; bloqueio real quando snapshot existir e reprovar).
+ * - Snapshot presente e reprovado: bloqueia sem `aprovar-credito`.
+ *
+ * @param {{
+ *   groupId?: string|null,
+ *   empresaId?: string|null,
+ *   clienteEmpresaId?: string|null,
+ *   clienteId?: string|null,
+ *   clienteEmpresa?: Record<string, unknown>|null,
+ *   cliente?: ClienteCreditoRecord|null,
+ *   valorPedido?: unknown,
+ *   creditPortSnapshot?: { limite_credito: unknown, limite_utilizado?: unknown }|null,
+ *   hasPermission?: Function,
+ * }} [options]
+ */
+export const evaluatePedidoCreditoUiGate = ({
+  groupId = null,
+  empresaId = null,
+  clienteEmpresaId = null,
+  clienteId = null,
+  clienteEmpresa = null,
+  cliente = null,
+  valorPedido = 0,
+  creditPortSnapshot,
+  hasPermission,
+} = {}) => {
+  const emptyEval = {
+    aprovado: false,
+    limite_total: 0,
+    limite_utilizado: 0,
+    limite_disponivel: 0,
+    valor_pedido: toMoney(valorPedido),
+    motivo: '',
+  };
+  if (!groupId || !empresaId) {
+    return {
+      canSave: false,
+      blockSave: true,
+      status: 'contexto',
+      hint: 'Selecione grupo e empresa para validar crédito (fail-closed).',
+      evaluation: { ...emptyEval, motivo: 'Contexto groupId/empresaId obrigatório' },
+      snapshotFonte: null,
+      canOverride: false,
+    };
+  }
+  const canOverride = canAprovarCreditoPedido(hasPermission);
+  if (!clienteEmpresaId) {
+    return {
+      canSave: true,
+      blockSave: false,
+      status: 'idle',
+      hint: null,
+      evaluation: null,
+      snapshotFonte: null,
+      canOverride,
+    };
+  }
+
+  let snap = null;
+  let snapshotFonte = null;
+  if (creditPortSnapshot !== undefined) {
+    if (creditPortSnapshot == null) {
+      snap = null;
+      snapshotFonte = 'credit_port';
+    } else {
+      snap = {
+        limite_credito: creditPortSnapshot.limite_credito,
+        limite_utilizado: creditPortSnapshot.limite_utilizado ?? 0,
+        fonte: 'credit_port',
+      };
+      snapshotFonte = 'credit_port';
+    }
+  } else {
+    snap = resolvePedidoCreditoSnapshot({ clienteEmpresa, cliente });
+    snapshotFonte = snap?.fonte || null;
+  }
+
+  if (!snap) {
+    // Porta/campo ausente: não inventa limite. Com creditPort explícito null → exige override.
+    const portSaidMissing = creditPortSnapshot !== undefined && creditPortSnapshot == null;
+    if (portSaidMissing && !canOverride) {
+      return {
+        canSave: false,
+        blockSave: true,
+        status: 'indisponivel',
+        hint: 'Snapshot de crédito indisponível — exige permissão Comercial.pedido.aprovar-credito.',
+        evaluation: {
+          ...emptyEval,
+          motivo: 'Credito ausente (CreditPort sem snapshot)',
+        },
+        snapshotFonte: 'credit_port',
+        canOverride,
+      };
+    }
+    if (portSaidMissing && canOverride) {
+      return {
+        canSave: true,
+        blockSave: false,
+        status: 'override',
+        hint: 'Crédito ausente com alçada aprovar-credito — salvar permitido; servidor revalida.',
+        evaluation: {
+          ...emptyEval,
+          aprovado: true,
+          motivo: 'Credito ausente com alçada aprovar-credito',
+        },
+        snapshotFonte: 'credit_port',
+        canOverride,
+      };
+    }
+    return {
+      canSave: true,
+      blockSave: false,
+      status: 'porta_ausente',
+      hint: 'Snapshot de crédito não configurado no vínculo ClienteEmpresa — UI não inventa limite (fail-closed display).',
+      evaluation: {
+        ...emptyEval,
+        motivo: 'Porta/snapshot de credito ausente (nao inventa)',
+      },
+      snapshotFonte: null,
+      canOverride,
+    };
+  }
+
+  const clienteParaEval = {
+    id: clienteId || cliente?.id || clienteEmpresaId,
+    condicao_comercial: {
+      limite_credito: snap.limite_credito,
+      limite_credito_utilizado: snap.limite_utilizado,
+    },
+  };
+  const evaluation = evaluatePedidoCredito({
+    pedido: {
+      cliente_id: clienteId || cliente?.id || clienteEmpresaId,
+      valor_total: valorPedido,
+      limite_credito_override: false,
+    },
+    cliente: clienteParaEval,
+    permitirOverride: canOverride,
+  });
+
+  if (evaluation.aprovado) {
+    return {
+      canSave: true,
+      blockSave: false,
+      status: 'aprovado',
+      hint: null,
+      evaluation,
+      snapshotFonte,
+      canOverride,
+    };
+  }
+
+  if (canOverride) {
+    return {
+      canSave: true,
+      blockSave: false,
+      status: 'override',
+      hint: `${evaluation.motivo || 'Crédito insuficiente'}; override aprovar-credito — servidor revalida.`,
+      evaluation: { ...evaluation, aprovado: true, motivo: `${evaluation.motivo}; override aprovar-credito` },
+      snapshotFonte,
+      canOverride,
+    };
+  }
+
+  return {
+    canSave: false,
+    blockSave: true,
+    status: /sem limite/i.test(evaluation.motivo || '') ? 'sem_limite' : 'bloqueado',
+    hint: `${evaluation.motivo || 'Crédito insuficiente'} — salvar bloqueado (fail-closed). Solicite Comercial.pedido.aprovar-credito ou ajuste o pedido.`,
+    evaluation,
+    snapshotFonte,
+    canOverride,
+  };
+};
+
 /** Idempotencia: ja existe saida/liberacao de reserva do pedido para o produto. */
 /** @param {MovimentoPedidoOptions} options */
 export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {

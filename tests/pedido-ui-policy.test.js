@@ -93,6 +93,20 @@ test('painel pedido wire gate de itens quantidade/preço fail-closed', async () 
   assert.match(panel, /Comercial\.pedido\.item-line-validation/);
 });
 
+test('painel pedido wire crédito UI fail-closed (ValidacaoCredito + gate Salvar)', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const creditoUi = await readFile(new URL('../src/components/financeiro/ValidacaoCredito.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /ValidacaoCredito/);
+  assert.match(panel, /evaluatePedidoCreditoUiGate/);
+  assert.match(panel, /creditoGate\.blockSave/);
+  assert.match(panel, /pedido-credito-alcada-alert/);
+  assert.match(panel, /canAprovarCreditoPedido/);
+  assert.match(panel, /Comercial\.pedido\.credito/);
+  assert.match(creditoUi, /evaluatePedidoCreditoUiGate/);
+  assert.match(creditoUi, /pedido-credito-validacao/);
+  assert.match(creditoUi, /pedido-credito-bloqueio/);
+});
+
 test('pedido payload bloqueia preço unitário zero', () => {
   assert.throws(
     () => buildPedidoPayload({
