@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #145 CI SUCCESS + #146 tenant-cache (2026-09-29T18:22Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #145 | `73279042` | **SUCCESS** | busca/filtro listagem |
+| #146 | `cursor/comercial360-onda3-tenant-cache-392b` | pendente | limpar cache/form ao trocar tenant |
+
+Próximo: margem UI pós-#47 **ou** Pedido resumo texto **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #144 CI SUCCESS + #145 list-search (2026-09-29T18:15Z)
 
 | PR | Tip | CI | Escopo |
