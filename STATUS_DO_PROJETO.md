@@ -1,3 +1,17 @@
+## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `dcde4cef` (`dcde4cef` full via `git rev-parse`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Base | `#136` `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+
+---
+
 ## OPINIÃO CURSOR — #136 tip + alçada UI fail-closed (2026-09-29T17:15Z)
 
 | PR | Tip | CI | Escopo |
@@ -20,7 +34,7 @@ Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplem
 | Implantado VPS | **NÃO** |
 | Base | `#136` tip `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
 | Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
-| Draft PR | pendente — base `#136` |
+| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** + descontoAlcadaUiFailClosed / saveIdempotency |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 (sem migration neste lote) |
 
