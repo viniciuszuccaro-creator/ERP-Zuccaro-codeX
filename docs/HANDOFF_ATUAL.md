@@ -1,3 +1,15 @@
+## AUTÔNOMO CURSOR — progresso Onda 4 (2026-09-29T21:52Z)
+
+| PR | Escopo | Estado |
+|---|---|---|
+| #154 | Dirty form abandon | draft empilhada em #151 |
+| #156 | Crédito Pedido UI fail-closed | draft empilhada em #154 |
+| next | Margem UI fail-closed | branch `cursor/comercial360-onda4-margem-ui-failclosed-392b` |
+
+Onda 4–6 legada (#50/#53/#59–#67): **NÃO APTA** merge (colisões 025–031). #47 CostPort já em `main`. #153 **NÃO APTA** @`fba7f72b`. Sem merge/VPS. Continuando lotes.
+
+---
+
 ## PARECER CONSOLIDADO CURSOR — #47/#50/#53/#59–#67 (2026-09-29T21:25Z)
 
 **Veredito: Onda 4–6 (#50/#53/#59–#67) NÃO APTA merge/VPS.** #47 CostPort **já em main** (PR órfão OPEN). Tip Cursor **#151 `6218511a`**; #153 consolida outro caminho (NÃO APTA `fba7f72b`). Branches dos PRs **não editadas**.
