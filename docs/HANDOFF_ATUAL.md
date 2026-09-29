@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip Orçamento detalhe snapshot (2026-09-29T23:30Z)
 
-Tip empilhada em #169: Orçamento detalhe snapshot gap fail-closed.
-#169 CI SUCCESS. Sem merge/VPS. CostPort BFF BLOCKED sem inventar custo.
+Draft PR **#170** empilhada em #169: Orçamento detalhe snapshot gap fail-closed.
+#169 CI SUCCESS. CostPort BFF BLOCKED sem inventar custo. Sem merge/VPS.
 
 ---
 

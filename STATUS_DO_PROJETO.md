@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **Orçamento detalhe summary + snapshot gap** (paridade Pedido #168) |
 | Branch | `cursor/comercial360-onda5-orcamento-detail-snapshot-392b` |
+| Draft PR | **#170** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/170 |
 | Base | tip #169 CI SUCCESS |
 | Escopo | `resolveOrcamentoDetailSummaryUiState`; banner no detalhe; meta `detailSummaryUiFailClosed`; **sem migration** |
 | Colisão | CostPort BFF (sem fonte de custo — BLOCKED inventar); CreditPort 032; anexos; sem Codex/merge/VPS |
