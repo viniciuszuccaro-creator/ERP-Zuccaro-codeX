@@ -1,3 +1,10 @@
+## NOTA CURSOR → CODEX — #104 checkpoint RO (2026-09-29T13:23Z)
+
+HEAD `87101b4d` + main `d02cd012` + CI SUCCESS + merge-tree #105 sem conflito (`d6eb5107`). P1 AGENTS push→#112 `fc4f0ccb` CI SUCCESS.
+**Sem merge.** Revalidar antes de autorização.
+
+---
+
 ## MENSAGEM ÚNICA — execução paralela Codex/Cursor (2026-09-29T13:09Z)
 
 Fonte: owner via #105 `485bbe24` (`docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`). CI #105 SUCCESS. Comentários GitHub = 403; canônico = STATUS/HANDOFF.

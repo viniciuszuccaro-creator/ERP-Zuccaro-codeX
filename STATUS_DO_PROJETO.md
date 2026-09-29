@@ -1,3 +1,22 @@
+## NOTA CURSOR — #104 checkpoint integração RO (2026-09-29T13:23Z)
+
+Owner checkpoint confirmado independentemente:
+
+| Checagem | Resultado |
+|---|---|
+| HEAD #104 | `87101b4d` (APROVADO vigente) |
+| `main` | `d02cd012` |
+| PR | draft + `MERGEABLE` |
+| CI HEAD | `36474488547` SUCCESS |
+| `git diff --check` main…#104 | limpo |
+| `merge-tree` #104 × #105 `485bbe24` | sem conflito → tree `d6eb5107` |
+| #105 CI | `36572254761` SUCCESS |
+| P1 #105 (`push origin main` vs branch/PR) | corrigida na **#112** `fc4f0ccb` (CI SUCCESS; empilhada sobre #105) |
+
+**Sem merge / VPS / migration.** Revalidar HEAD/main/CI imediatamente antes de merge autorizado. Cursor não integra.
+
+---
+
 ## MENSAGEM ÚNICA — execução paralela Codex/Cursor (2026-09-29T13:09Z)
 
 Owner publicou `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` na #105 HEAD `485bbe241d577bbfaec04ebc9e065b6c6aee1745` (CI SUCCESS). Corrige a regra de não avançar automaticamente quando há programa contínuo autorizado.
