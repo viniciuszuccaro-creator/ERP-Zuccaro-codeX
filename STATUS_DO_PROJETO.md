@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #144 CI SUCCESS + #145 list-search (2026-09-29T18:15Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #144 | `01ee61de` | **SUCCESS** | simular dirty-state |
+| #145 | `cursor/comercial360-onda3-list-search-392b` | pendente | busca/filtro listagem empty≠erro |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #143 CI SUCCESS + #144 simular-dirty (2026-09-29T18:07Z)
 
 | PR | Tip | CI | Escopo |
