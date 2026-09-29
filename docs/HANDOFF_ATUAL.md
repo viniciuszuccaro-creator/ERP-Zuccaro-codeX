@@ -1,3 +1,19 @@
+## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — nested HTTP Local/Obra + Pedido delivery fail-closed; sem migration |
+| Testado | **SIM** — 33 frontend + runtime06a/06b/07b 20/20 |
+| Base | `#122` tip `d82c7096` (`cursor/comercial360-onda3-cliente-empresa-http-392b`) |
+| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
+| Draft PR | pendente |
+| Próximo | snapshot condição/parcelas (migration) |
+
+Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObraHttpUiPolicy, PedidoCanonicoPanel, testes client/policy/runtime06a/06b/07b, docs 06A/06B/05. Sem Codex/#104/#48, sem merge/VPS.
+
+---
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

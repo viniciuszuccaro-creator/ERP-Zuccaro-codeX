@@ -4,7 +4,8 @@
 **Branch:** `cursor/erp-runtime-06b-obras-392b`
 **Base:** `f7fd49a12699a17db1a3e9f3cc57a4efdf44a88a`
 **Software/API DEV oficial:** permanece `ERP-RUNTIME-06A` até promoção futura.
-**Frontend HTTP:** `false`. Obra **não** entra em `HTTP_PILOT_ENTITIES`.
+**Frontend HTTP:** `true`. Obra entra em `HTTP_PILOT_ENTITIES` com rotas nested
+`/api/v1/clientes/:clienteId/obras` (seleção operacional no Pedido; sem flat list-for-scope).
 
 Diagnóstico canônico: `docs/ERP_RUNTIME_06B_DIAGNOSTICO.md`.
 Este arquivo descreve a implementação na branch. Não promove DEV, não acessa

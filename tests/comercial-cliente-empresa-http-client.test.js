@@ -64,7 +64,8 @@ function setup(scopeEmpresa = EMPRESA_A) {
 test('piloto HTTP inclui ClienteEmpresa', () => {
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteEmpresa'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Cliente'), true);
-  assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), false);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), true);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), true);
 });
 
 test('HTTP list-for-scope ClienteEmpresa preserva envelope e tenant nos headers', async () => {

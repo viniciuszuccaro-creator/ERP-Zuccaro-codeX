@@ -63,7 +63,7 @@ test('HttpApiClient supports relative same-origin URLs', async () => {
   assert.equal(urls[0].startsWith('/api/v1/marcas'), true);
 });
 
-test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + TabelaPreco + Cliente + ClienteEmpresa sem Produto', () => {
+test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + TabelaPreco + Cliente + ClienteEmpresa + ClienteLocal + Obra sem Produto', () => {
   assert.deepEqual([...HTTP_PILOT_ENTITIES], [
     'Marca',
     'UnidadeMedida',
@@ -73,12 +73,14 @@ test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + Ta
     'TabelaPreco',
     'Cliente',
     'ClienteEmpresa',
+    'ClienteLocal',
+    'Obra',
   ]);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Produto'), false);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Cliente'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteEmpresa'), true);
-  assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), false);
-  assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), false);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), true);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('Obra'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('CondicaoPagamento'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('TabelaPreco'), true);
 });

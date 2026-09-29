@@ -536,10 +536,10 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
 
   const meta = await fetchOk(app, '/api/v1/meta');
   assert.ok(['ERP-RUNTIME-06B', 'ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime));
-  assert.equal(meta.obra.frontendHttp, false);
+  assert.equal(meta.obra.frontendHttp, true);
   assert.equal(meta.obra.optionalOnPedido, true);
-  assert.ok(!meta.httpPilotEntities.includes('Obra'));
-  assert.ok(!meta.httpPilotEntities.includes('ClienteLocal'));
+  assert.ok(meta.httpPilotEntities.includes('Obra'));
+  assert.ok(meta.httpPilotEntities.includes('ClienteLocal'));
   if (['ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime)) {
     assert.ok(meta.preparedEntities.includes('TabelaPreco'));
     if (meta.runtime === 'ERP-RUNTIME-08B') {
@@ -552,6 +552,8 @@ test('API Obra cobre create atômico, tenant, RBAC, lifecycle, duplicidade e pag
       assert.ok(meta.httpPilotEntities.includes('Cliente'));
       assert.equal(meta.clienteEmpresa?.frontendHttp, true);
       assert.ok(meta.httpPilotEntities.includes('ClienteEmpresa'));
+      assert.equal(meta.clienteLocal?.frontendHttp, true);
+      assert.equal(meta.obra?.frontendHttp, true);
     } else {
       assert.equal(meta.tabelaPreco?.frontendHttp, false);
       assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));

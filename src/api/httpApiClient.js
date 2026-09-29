@@ -468,6 +468,106 @@ export function createHttpApiClient(options = {}) {
         },
       };
     })(),
+    // ClienteLocal R06A — nested sob Cliente; exige cliente_id no filter (sem flat list-for-scope).
+    ClienteLocal: (() => {
+      const requireClienteId = (query = {}) => {
+        const clienteId = query.cliente_id || query.clienteId;
+        if (!clienteId || typeof clienteId !== 'string') {
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'cliente_id is required for ClienteLocal HTTP' } });
+        }
+        return clienteId;
+      };
+      return {
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          void limit;
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'ClienteLocal.list requires filter({ cliente_id })' } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          const clienteId = requireClienteId(query);
+          return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/locais`, {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome,
+              ativo: query.ativo ?? true,
+              finalidade: query.finalidade,
+              principal: query.principal,
+              cidade: query.cidade,
+              uf: query.uf,
+              order_by: query.order_by || query.orderBy || 'nome',
+              order_dir: query.order_dir || query.orderDir,
+            },
+            unwrap: false,
+          });
+        },
+        /**
+         * @param {string} id
+         * @param {{ clienteId?: string, cliente_id?: string, signal?: AbortSignal }} [options]
+         */
+        get(id, options = {}) {
+          const clienteId = options.clienteId || options.cliente_id;
+          if (!clienteId) {
+            throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'clienteId is required for ClienteLocal.get' } });
+          }
+          return request(
+            `/api/v1/clientes/${encodeURIComponent(clienteId)}/locais/${encodeURIComponent(id)}`,
+            { signal: options.signal },
+          );
+        },
+      };
+    })(),
+    // Obra R06B — nested sob Cliente; exige cliente_id no filter (seleção operacional no Pedido).
+    Obra: (() => {
+      const requireClienteId = (query = {}) => {
+        const clienteId = query.cliente_id || query.clienteId;
+        if (!clienteId || typeof clienteId !== 'string') {
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'cliente_id is required for Obra HTTP' } });
+        }
+        return clienteId;
+      };
+      return {
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          void limit;
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'Obra.list requires filter({ cliente_id })' } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          const clienteId = requireClienteId(query);
+          return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/obras`, {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.codigo,
+              ativo: query.ativo ?? true,
+              status: query.status,
+              operacional: query.operacional,
+              cidade: query.cidade,
+              uf: query.uf,
+              order_by: query.order_by || query.orderBy || 'nome',
+              order_dir: query.order_dir || query.orderDir,
+            },
+            unwrap: false,
+          });
+        },
+        /**
+         * @param {string} id
+         * @param {{ clienteId?: string, cliente_id?: string, signal?: AbortSignal }} [options]
+         */
+        get(id, options = {}) {
+          const clienteId = options.clienteId || options.cliente_id;
+          if (!clienteId) {
+            throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'clienteId is required for Obra.get' } });
+          }
+          return request(
+            `/api/v1/clientes/${encodeURIComponent(clienteId)}/obras/${encodeURIComponent(id)}`,
+            { signal: options.signal },
+          );
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -932,6 +1032,98 @@ export function createHttpApiClient(options = {}) {
     getEmpresaLink(clienteId, empresaId, { signal } = {}) {
       return request(
         `/api/v1/clientes/${encodeURIComponent(clienteId)}/empresas/${encodeURIComponent(empresaId)}`,
+        { signal },
+      );
+    },
+    /**
+     * Locais do Cliente (R06A) — nested; tenant só nos headers.
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, finalidade?: string, principal?: boolean, cidade?: string, uf?: string, orderBy?: string, orderDir?: string, signal?: AbortSignal }} [options]
+     */
+    listLocais(clienteId, {
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      finalidade,
+      principal,
+      cidade,
+      uf,
+      orderBy = 'nome',
+      orderDir,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/locais`, {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          finalidade,
+          principal,
+          cidade,
+          uf,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /**
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    getLocal(clienteId, localId, { signal } = {}) {
+      return request(
+        `/api/v1/clientes/${encodeURIComponent(clienteId)}/locais/${encodeURIComponent(localId)}`,
+        { signal },
+      );
+    },
+    /**
+     * Obras do Cliente (R06B) — nested; use operacional=true no Pedido (exige empresaId no contexto).
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, status?: string, operacional?: boolean, cidade?: string, uf?: string, orderBy?: string, orderDir?: string, signal?: AbortSignal }} [options]
+     */
+    listObras(clienteId, {
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      status,
+      operacional,
+      cidade,
+      uf,
+      orderBy = 'nome',
+      orderDir,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/obras`, {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo: operacional ? undefined : ativo,
+          status,
+          operacional,
+          cidade,
+          uf,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /**
+     * @param {string} clienteId
+     * @param {string} obraId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    getObra(clienteId, obraId, { signal } = {}) {
+      return request(
+        `/api/v1/clientes/${encodeURIComponent(clienteId)}/obras/${encodeURIComponent(obraId)}`,
         { signal },
       );
     },
