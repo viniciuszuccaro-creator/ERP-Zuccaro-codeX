@@ -1,3 +1,9 @@
+## VIGÍLIA CURSOR — rearm 15min (2026-09-29T21:05Z)
+
+Âncoras estáveis: #48 `ee0dc10a`, #104 `87101b4d`, #151 `6218511a` SUCCESS. #153 tip `12c37e8b` SUCCESS (parecer NÃO APTA permanece amarrado a `fba7f72b`; tip docs-only pós-parecer). Sem merge/VPS. Timer +15min.
+
+---
+
 ## PARECER ÚNICO CURSOR — candidata #153 HEAD `fba7f72b` (2026-09-29T21:03Z)
 
 **Veredito: NÃO APTA a merge em `main` nem a gate VPS/DEV.**  
