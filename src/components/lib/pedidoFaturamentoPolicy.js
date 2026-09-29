@@ -34,7 +34,7 @@ const toMoney = (value) => {
 };
 
 /** @param {PedidoFaturamentoRecord} nota */
-const notaAtiva = (nota = {}) => !/cancel/i.test(String(nota.status || ''));
+const notaAtiva = (nota = {}) => !/(cancel|rejeitad)/i.test(String(nota.status || ''));
 
 /** @param {FaturamentoLeituraOptions} options */
 export const remainingValorFaturar = ({ pedido = {}, notasExistentes = [] } = {}) => {
@@ -44,6 +44,97 @@ export const remainingValorFaturar = ({ pedido = {}, notasExistentes = [] } = {}
     .filter((nota) => pedidoId && String(nota.pedido_id || '') === pedidoId && notaAtiva(nota))
     .reduce((sum, nota) => sum + toMoney(nota.valor_total || nota.valor_produtos), 0);
   return Math.max(0, toMoney(pedidoValor - faturado));
+};
+
+/** Faturamento por etapa sem baixa: somente itens sem produto estocavel. */
+export const avaliarEtapaFaturamento = ({ pedido = {}, etapaId } = {}) => {
+  const etapa = (pedido.etapas_entrega || []).find((item) => String(item.id) === String(etapaId));
+  if (!etapa || etapa.faturada || !Array.isArray(etapa.itens_etapa) || etapa.itens_etapa.length === 0) {
+    return { permitido: false, motivo: 'Etapa inexistente, vazia ou ja faturada' };
+  }
+  for (const item of etapa.itens_etapa) {
+    const origem = String(item?.origem_item || '');
+    if (origem === 'revenda') {
+      const match = /^revenda-(\d+)$/.exec(String(item.item_pedido_id || ''));
+      const original = match ? pedido.itens_revenda?.[Number(match[1])] : null;
+      if (!original) return { permitido: false, motivo: 'Item de revenda da etapa nao encontrado' };
+      if (original.produto_id) {
+        return { permitido: false, motivo: 'Etapa com produto estocavel exige baixa antes da NF' };
+      }
+      if (!original.origem_armado || !original.item_producao_id) {
+        return { permitido: false, motivo: 'Item sem produto e origem nao comprovada' };
+      }
+    } else if (!['armado_padrao', 'corte_dobra'].includes(origem)) {
+      return { permitido: false, motivo: 'Origem da etapa nao reconhecida' };
+    }
+  }
+  return { permitido: true, etapa };
+};
+
+/** Recompõe a NF residual sem repetir itens de etapas já faturadas. */
+export const resolverNotaResidualPedido = ({ pedido = {}, notasExistentes = [] } = {}) => {
+  const notasAtivas = (Array.isArray(notasExistentes) ? notasExistentes : [])
+    .filter((nota) => String(nota.pedido_id || '') === String(pedido.id || '') && notaAtiva(nota));
+  const restante = remainingValorFaturar({ pedido, notasExistentes: notasAtivas });
+  if (restante <= 0) throw new Error('Pedido sem saldo faturavel');
+  const excluidos = new Set();
+  for (const nota of notasAtivas) {
+    if (!nota.etapa_id) throw new Error('NF parcial sem etapa vinculada exige conciliacao antes do pedido inteiro');
+    const etapa = (pedido.etapas_entrega || []).find((item) => String(item.id) === String(nota.etapa_id));
+    if (!etapa || !Array.isArray(etapa.itens_etapa)) {
+      throw new Error('Etapa da NF anterior nao encontrada no pedido');
+    }
+    for (const item of etapa.itens_etapa) {
+      const ref = String(item.item_pedido_id || '');
+      if (!/^(revenda|armado|corte)-\d+$/.test(ref)) {
+        throw new Error('Item de etapa anterior sem vinculo canonico');
+      }
+      excluidos.add(ref);
+    }
+  }
+  const itens = [
+    ...(pedido.itens_revenda || []).filter((_item, index) => !excluidos.has(`revenda-${index}`)),
+    ...(pedido.itens_armado_padrao || []).filter((_item, index) => !excluidos.has(`armado-${index}`)),
+    ...(pedido.itens_corte_dobra || []).filter((_item, index) => !excluidos.has(`corte-${index}`)),
+  ];
+  const todosIds = new Set([
+    ...(pedido.itens_revenda || []).map((_item, index) => `revenda-${index}`),
+    ...(pedido.itens_armado_padrao || []).map((_item, index) => `armado-${index}`),
+    ...(pedido.itens_corte_dobra || []).map((_item, index) => `corte-${index}`),
+  ]);
+  const etapasIncluidas = [];
+  for (const etapa of pedido.etapas_entrega || []) {
+    if (!Array.isArray(etapa.itens_etapa) || etapa.itens_etapa.length === 0) continue;
+    const ids = etapa.itens_etapa.map((item) => String(item.item_pedido_id || ''));
+    if (ids.some((id) => !todosIds.has(id))) throw new Error('Etapa com item sem vinculo ao pedido');
+    if (ids.every((id) => excluidos.has(id) || todosIds.has(id))) etapasIncluidas.push(etapa.id);
+  }
+  if (itens.length === 0) throw new Error('Saldo apenas monetario exige ajuste na ultima NF de etapa ou conciliacao fiscal');
+  return { valor_total: restante, itens, etapasIncluidas };
+};
+
+/** Inclui frete/diferenca na ultima NF de etapa quando todos os itens estao alocados. */
+export const resolverUltimaEtapaMonetaria = ({ pedido = {}, etapaId, notasExistentes = [], valorEtapa = 0 } = {}) => {
+  const etapas = pedido.etapas_entrega || [];
+  const etapa = etapas.find((item) => String(item.id) === String(etapaId));
+  if (!etapa || etapas.some((item) => String(item.id) !== String(etapaId) && !item.faturada)) return null;
+  const ids = new Set(etapas.flatMap((item) => (item.itens_etapa || []).map((linha) => String(linha.item_pedido_id || ''))));
+  const todos = [
+    ...(pedido.itens_revenda || []).map((_item, index) => `revenda-${index}`),
+    ...(pedido.itens_armado_padrao || []).map((_item, index) => `armado-${index}`),
+    ...(pedido.itens_corte_dobra || []).map((_item, index) => `corte-${index}`),
+  ];
+  if (todos.some((id) => !ids.has(id))) return null;
+  const restante = remainingValorFaturar({ pedido, notasExistentes });
+  const acrescimo = toMoney(restante - toMoney(valorEtapa));
+  if (acrescimo < 0) throw new Error('Valor da ultima etapa excede saldo do pedido');
+  const frete = Math.min(acrescimo, toMoney(pedido.valor_frete));
+  return {
+    valor_total: restante,
+    valor_produtos: toMoney(valorEtapa),
+    valor_frete: frete,
+    outras_despesas: toMoney(acrescimo - frete),
+  };
 };
 
 /** @param {FaturamentoOptions} options */
@@ -139,29 +230,112 @@ export const evaluatePedidoCredito = ({
   };
 };
 
-/** Idempotencia: ja existe saida/liberacao de reserva do pedido para o produto. */
-/** @param {MovimentoPedidoOptions} options */
+/** Decide a compensação sem liberar efeitos downstream após reserva parcial. */
+export const avaliarReservaParcial = ({ reservas = [], erros = [] } = {}) => {
+  const bloqueado = Array.isArray(erros) && erros.length > 0;
+  return {
+    bloqueado,
+    compensar: bloqueado
+      ? (Array.isArray(reservas) ? reservas : []).filter((reserva) => reserva?.id && !reserva?.skipped)
+      : [],
+  };
+};
+
+/** Saldo aberto da reserva, restrito ao pedido e produto. Saida fisica consome a reserva. */
+export const saldoReservaPedidoProduto = ({ movimentos = [], pedidoId, produtoId } = {}) => {
+  const pid = String(pedidoId || '');
+  const prod = String(produtoId || '');
+  if (!pid || !prod) return 0;
+  const saldo = (Array.isArray(movimentos) ? movimentos : [])
+    .filter((mov) => String(mov?.origem_documento_id || '') === pid
+      && String(mov?.produto_id || '') === prod)
+    .reduce((total, mov) => {
+      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
+      const quantidade = Number(mov?.quantidade ?? 1);
+      if (!Number.isFinite(quantidade) || quantidade <= 0) return total;
+      if (tipo === 'reserva') return total + quantidade;
+      if (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva' || tipo === 'saida') return total - quantidade;
+      return total;
+    }, 0);
+  return Math.max(0, saldo);
+};
+
+/** Ciclo deterministico: uma compensacao completa abre nova chave para o retry. */
+export const cicloReservaPedidoProduto = ({ movimentos = [], pedidoId, produtoId } = {}) => {
+  const pid = String(pedidoId || '');
+  const prod = String(produtoId || '');
+  if (!pid || !prod) return 0;
+  return (Array.isArray(movimentos) ? movimentos : []).filter((mov) => {
+    const tipo = String(mov?.tipo_movimento || '').toLowerCase();
+    return (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva')
+      && String(mov?.origem_documento_id || '') === pid
+      && String(mov?.produto_id || '') === prod;
+  }).length;
+};
+
+/** Uma liberacao compensatoria nao equivale a baixa fisica. */
 export const pedidoJaTemSaidaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
   const pid = String(pedidoId || '');
   const prod = String(produtoId || '');
   if (!pid || !prod) return false;
   return (Array.isArray(movimentos) ? movimentos : []).some((mov) => {
     const tipo = String(mov?.tipo_movimento || '').toLowerCase();
-    const isSaida = tipo === 'saida' || tipo === 'liberacao_reserva' || tipo === 'liberação_reserva';
-    return isSaida
+    const baixaLegada = (tipo === 'liberacao_reserva' || tipo === 'liberação_reserva')
+      && /baixa por faturamento/i.test(String(mov?.motivo || ''));
+    return (tipo === 'saida' || baixaLegada)
       && String(mov?.origem_documento_id || '') === pid
       && String(mov?.produto_id || '') === prod;
   });
 };
 
-/** @param {MovimentoPedidoOptions} options */
-export const pedidoJaTemReservaEstoque = ({ movimentos = [], pedidoId, produtoId } = {}) => {
-  const pid = String(pedidoId || '');
-  const prod = String(produtoId || '');
-  if (!pid || !prod) return false;
-  return (Array.isArray(movimentos) ? movimentos : []).some((mov) => (
-    String(mov?.tipo_movimento || '').toLowerCase() === 'reserva'
-    && String(mov?.origem_documento_id || '') === pid
-    && String(mov?.produto_id || '') === prod
-  ));
+/** Valida linhas de reserva sem permitir sub-reserva por idempotência. */
+export const validarItensReservaEstoque = (itens = []) => {
+  const porProduto = new Map();
+  const invalidos = [];
+  for (const item of Array.isArray(itens) ? itens : []) {
+    const produtoId = String(item?.produto_id || '');
+    const unidade = String(item?.unidade || item?.unidade_medida || '').trim().toUpperCase();
+    const quantidade = Number(item?.quantidade);
+    if (!produtoId && item?.origem_armado === true && item?.item_producao_id) continue;
+    if (!produtoId || !Number.isFinite(quantidade) || quantidade <= 0) { invalidos.push(item); continue; }
+    const anterior = porProduto.get(produtoId);
+    if (anterior && anterior.unidade !== unidade) { invalidos.push(item); continue; }
+    if (anterior) {
+      anterior.quantidade = Number(anterior.quantidade || 0) + quantidade;
+      anterior.valor_total = Number(anterior.valor_total || 0) + Number(item?.valor_total || 0);
+    } else porProduto.set(produtoId, { ...item, quantidade, unidade });
+  }
+  return { valido: invalidos.length === 0, invalidos, itens: [...porProduto.values()] };
 };
+
+/** Executa a etapa de reserva isoladamente; nenhuma etapa posterior deve rodar se bloqueado. */
+export const executarReservasComCompensacao = async ({ itens = [], reservar, compensar } = {}) => {
+  const validacao = validarItensReservaEstoque(itens);
+  if (!validacao.valido) {
+    return { bloqueado: true, reservas: [], compensadas: [], erros: ['Itens invalidos para reserva'], invalidos: validacao.invalidos };
+  }
+  const reservas = [];
+  const erros = [];
+  for (const item of validacao.itens) {
+    try {
+      reservas.push(await reservar(item));
+    } catch (error) {
+      erros.push(error?.message || 'Falha na reserva de estoque');
+      break;
+    }
+  }
+  const compensadas = [];
+  if (erros.length > 0) {
+    for (const reserva of avaliarReservaParcial({ reservas, erros }).compensar) {
+      try {
+        compensadas.push(await compensar(reserva));
+      } catch (error) {
+        erros.push(error?.message || 'Falha ao compensar reserva');
+      }
+    }
+  }
+  return { bloqueado: erros.length > 0, reservas, compensadas, erros, invalidos: [] };
+};
+
+/** @param {MovimentoPedidoOptions} options */
+export const pedidoJaTemReservaEstoque = (options = {}) => saldoReservaPedidoProduto(options) > 1e-6;
