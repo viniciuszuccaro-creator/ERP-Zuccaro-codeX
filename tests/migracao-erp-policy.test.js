@@ -261,6 +261,7 @@ test('sanitizador legado cobre aliases camelCase, espaços e objetos de prototip
   assert.equal(nested.token, 'SEGREDO');
   class RegistroLegado { constructor() { this.token = 'SEGREDO'; } }
   assert.throws(() => stripSegredosMigracao({ nested: new RegistroLegado() }), /JSON simples/);
+  assert.throws(() => stripSegredosMigracao({ nested: () => 'SEGREDO' }), /JSON simples/);
 });
 
 test('codigo legado permanece mesmo sem conflito interno', () => {

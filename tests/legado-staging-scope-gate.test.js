@@ -92,6 +92,12 @@ test('falha no item seguinte bloqueia lote, isola conflito e nao vaza dados no r
   assert.equal(JSON.stringify(result.relatorio).includes('CR-S1'), false);
 });
 
+test('funcao no segundo registro falha sem devolver lote parcial', () => {
+  const base = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1', assinaturaOrigem: 'a'.repeat(64) };
+  assert.throws(() => prepararLoteStagingLegado([base, { ...base, codigoLegado: 'CLI-S2',
+    assinaturaOrigem: 'b'.repeat(64), dado: () => 'SEGREDO' }], { autorizado: true }), /JSON simples/);
+});
+
 test('codigo empresarial nao numerico e grupo 003 nao viram empresa por normalizacao', () => {
   for (const value of ['abc', '1x', '0001', '003']) {
     const result = avaliarEscopoStagingLegado({ entidade: 'pedido', codigoEmpresaLegado: value,
