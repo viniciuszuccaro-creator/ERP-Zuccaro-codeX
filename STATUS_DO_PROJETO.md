@@ -1,3 +1,17 @@
+## LOTE CURSOR — tip list-failclosed (draft PR BLOCKED) (2026-09-29T17:06Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `3880793b` (`3880793be2e741e2320fd25469d3c59ce3b7063f`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Base | `#135` `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-list-failclosed-392b` |
+
+---
+
 ## LOTE CURSOR — List fail-closed HTTP + update CANCELADO (pós-#135) (2026-09-29T17:05Z)
 
 | Etapa | Estado |
@@ -5,12 +19,12 @@
 | Choice | **A** (+ **C**) — Pedido/Orçamento list empty-state HTTP fail-closed (403/5xx ≠ silent empty); queryKey groupId+empresaId; update bloqueado quando CANCELADO; observacoes sanitizadas no write; sem migration |
 | Implementado | **SIM** — `comercialListHttpUiPolicy`; painéis canônicos; schemas observacoes; meta `listFailClosed` / `updateBlockedWhenCancelled`; note + **Pedido backend HTTP is active** |
 | Testado | **SIM** — comercial-list-http-ui-policy + UI pedido/orc 23/23; runtime09 security+http 10/10; 08c http 6/6; runtime07b 13/13; `server:typecheck` PASS; `git diff --check` PASS |
-| CI | tip TBD |
+| CI | tip `3880793b` |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | `#135` tip `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
 | Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
-| Draft PR | TBD |
+| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** + listFailClosed / updateBlockedWhenCancelled / cancel+convert flags intactos |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
