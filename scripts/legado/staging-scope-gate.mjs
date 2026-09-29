@@ -7,6 +7,16 @@ import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolic
 const MESTRES_GRUPO = new Set(['cliente', 'fornecedor', 'produto_revenda']);
 const OPERACOES = new Set(['pedido', 'estoque', 'conta_receber', 'conta_pagar', 'nota_fiscal']);
 const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
+const TIPOS_EVIDENCIA = new Set(['cnpj', 'documento_fiscal']);
+
+const provaJuridicaRegistrada = (vinculo) => {
+  const evidencia = vinculo?.evidencia;
+  return vinculo?.comprovado === true
+    && TIPOS_EVIDENCIA.has(evidencia?.tipo)
+    && /^[a-f0-9]{64}$/.test(String(evidencia?.sha256 ?? ''))
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(evidencia?.aprovadoPor ?? ''))
+    && Number.isFinite(Date.parse(evidencia?.aprovadoEm ?? ''));
+};
 
 const codigo = (value) => {
   const raw = String(value ?? '').trim();
@@ -23,7 +33,7 @@ export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, grou
     const legado = codigo(codigoEmpresaLegado);
     if (!CODIGOS_EMPRESA.has(legado)) motivos.push('empresa_legada_nao_comprovada');
     const vinculo = vinculosVerificados[legado];
-    if (!vinculo?.empresaId || vinculo.groupId !== groupId || vinculo.empresaId !== empresaId || vinculo.comprovado !== true) {
+    if (!vinculo?.empresaId || vinculo.groupId !== groupId || vinculo.empresaId !== empresaId || !provaJuridicaRegistrada(vinculo)) {
       motivos.push('vinculo_juridico_nao_comprovado');
     }
   }

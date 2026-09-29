@@ -88,3 +88,17 @@ Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
 2. Preencher “Formato/origem observada” na matriz §2.
 3. Propor ETL idempotente real só após inventário + Onda 25.
 4. Staging isolado só com gate Onda 25.
+
+## 7. Atestacao de vinculo para operacoes por Empresa
+
+O preflight `staging-scope-gate.mjs` nao aceita mais `comprovado: true` sozinho.
+Cada codigo de Empresa legado usado por Pedido, estoque, financeiro ou NF
+precisa de vinculo com `groupId` e `empresaId` do destino e de metadados de
+evidencia: `tipo` (`cnpj` ou `documento_fiscal`), `sha256` do documento privado,
+`aprovadoPor` (UUID) e `aprovadoEm` (data). Documento, CNPJ e aprovacao real
+permanecem fora do GitHub. O hash nao prova por si so a identidade juridica:
+esta e uma atestacao a conferir manualmente contra o original antes do gate.
+Falta de qualquer campo, codigo nao reconhecido ou empresa divergente mantem a
+operacao em quarentena. Mestre do Grupo nao ganha empresa proprietaria por esse
+contrato. Testes de CI usam apenas valores sinteticos; nenhuma carga real foi
+autorizada ou executada.
