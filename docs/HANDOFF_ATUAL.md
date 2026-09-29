@@ -1,3 +1,10 @@
+## AUTÔNOMO — #162+#163 tip (2026-09-29T22:28Z)
+
+#161 CI OK. **#162** observações maxLength/contador. **#163** export CSV página atual.
+Sem merge/VPS. Continuando lote seguinte na tip.
+
+---
+
 ## AUTÔNOMO — CI #161 OK + #162 obs limit UX (2026-09-29T22:25Z)
 
 #161 convert-banner CI SUCCESS. Novo: **#162** observações maxLength/contador fail-closed.
