@@ -184,6 +184,9 @@ test('mapper e staging PostgreSQL isolado reconciliam mestres sem entrega parcia
       const completo = verificarLoteMestresParaStaging(lote, { ...opts, contagensEsperadas });
       assert.equal(completo.bloqueado, false);
       assert.equal(completo.privados.length, 3);
+      assert.deepEqual(completo.privados.map((item) => item.entidadeStaging),
+        ['cliente', 'fornecedor', 'produto_revenda']);
+      assert.equal(completo.privados[2].registro.entidade_migracao, 'produto');
       const incompleto = verificarLoteMestresParaStaging({ ...lote,
         produto_revenda: [{ ...produto, tipo_produto: 'fabricacao' }],
       }, { ...opts, contagensEsperadas });

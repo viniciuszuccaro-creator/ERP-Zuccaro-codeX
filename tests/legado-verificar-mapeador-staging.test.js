@@ -43,6 +43,12 @@ test('fornecedor nao aceita empresa implicita, Grupo cruzado nem contagem diverg
   const opts = { ...opcoes, entidade: 'fornecedor' };
   assert.throws(() => verificarMapeadorParaStaging([{ ...row, codigo_empresa: '001' }], opts),
     /vinculo empresarial legado nao comprovado/);
+  for (const alias of ['codigo_empresa_legado', 'Codigo_Empresa_Legado']) {
+    for (const codigo of ['001', '003', '005']) {
+      assert.throws(() => verificarMapeadorParaStaging([{ ...row, [alias]: codigo }], opts),
+        /vinculo empresarial legado nao comprovado/);
+    }
+  }
   assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'outro' }], opts),
     /Grupo da linha diverge/);
   const divergente = verificarMapeadorParaStaging([row], { ...opts,
@@ -92,9 +98,13 @@ test('lote de mestres reconcilia Cliente, Fornecedor e Revenda antes de entregar
     contagensEsperadas: contagensMestres });
   assert.equal(resultado.bloqueado, false);
   assert.equal(resultado.privados.length, 3);
-  assert.deepEqual(resultado.privados.map((item) => item.codigo_legado),
+  assert.deepEqual(resultado.privados.map((item) => item.registro.codigo_legado),
     ['C-ALL-1', 'F-ALL-1', 'P-ALL-1']);
-  assert.ok(resultado.privados.every((item) => item.group_id === 'g-sint' && !item.empresa_id));
+  assert.deepEqual(resultado.privados.map((item) => item.entidadeStaging),
+    ['cliente', 'fornecedor', 'produto_revenda']);
+  assert.equal(resultado.privados[2].registro.entidade_migracao, 'produto');
+  assert.ok(resultado.privados.every((item) => item.registro.group_id === 'g-sint'
+    && !item.registro.empresa_id));
   for (const relatorio of Object.values(resultado.relatorio)) assert.equal(relatorio.aptos, 1);
   assert.equal(JSON.stringify(resultado.relatorio).includes('Privado'), false);
 });
@@ -123,6 +133,43 @@ test('lote de mestres rejeita entidade estranha, contagem extra e escopo empresa
   /vinculo empresarial legado nao comprovado/);
 });
 
+test('lote exige contagens completas e bloqueia codigo empresarial no fornecedor', () => {
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoes),
+    /Contagens esperadas invalidas/);
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres.slice(0, 2) }),
+  /Contagens esperadas incompletas/);
+  assert.throws(() => verificarLoteMestresParaStaging({ ...loteMestres,
+    fornecedor: [{ ...loteMestres.fornecedor[0], codigo_empresa_legado: '001' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres }),
+  /vinculo empresarial legado nao comprovado/);
+});
+
+test('retry e conflito agregados preservam tipo de revenda sem entrega parcial', () => {
+  const primeira = verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres });
+  const cliente = primeira.privados[0].registro;
+  const assinaturaOrigem = createHash('sha256').update(JSON.stringify({
+    codigo: cliente.codigo_legado, nome: cliente.nome, descricao: cliente.descricao,
+    documento: cliente.documento,
+  })).digest('hex');
+  const existentes = [{ entidade: 'cliente', groupId: 'g-sint', empresaId: '',
+    codigoLegado: cliente.codigo_legado, assinaturaOrigem }];
+  const retry = verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres, existentes });
+  assert.equal(retry.bloqueado, false);
+  assert.equal(retry.relatorio.cliente.reusos, 1);
+  assert.deepEqual(retry.privados.map((item) => item.entidadeStaging),
+    ['fornecedor', 'produto_revenda']);
+  const conflito = verificarLoteMestresParaStaging({ ...loteMestres,
+    cliente: [{ ...loteMestres.cliente[0], nome: 'Cliente Alterado Sintetico' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres, existentes });
+  assert.equal(conflito.bloqueado, true);
+  assert.deepEqual(conflito.privados, []);
+  assert.equal(conflito.relatorio.cliente.conflitos, 1);
+  assert.equal(JSON.stringify(conflito.relatorio).includes('Alterado'), false);
+});
+
 test('lote de mestres rejeita getters e proxies antes de ler registros privados', () => {
   let leituras = 0;
   const getter = { cliente: loteMestres.cliente };
@@ -147,6 +194,38 @@ test('lote de mestres rejeita getters e proxies antes de ler registros privados'
     get() { leituras += 1; return contagensMestres; } });
   assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoesGetter),
     /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const prototipo = {};
+  Object.defineProperty(prototipo, 'contagensEsperadas', { enumerable: true,
+    get() { leituras += 1; return contagensMestres; } });
+  const opcoesHerdadas = Object.assign(Object.create(prototipo), opcoes);
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoesHerdadas),
+    /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const contagemProxy = new Proxy(contagensMestres[0], {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: [contagemProxy, ...contagensMestres.slice(1)] }),
+  /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const contagemGetter = { ...contagensMestres[0] };
+  Object.defineProperty(contagemGetter, 'entidade', { enumerable: true,
+    get() { leituras += 1; return 'cliente'; } });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: [contagemGetter, ...contagensMestres.slice(1)] }),
+  /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const existentesProxy = new Proxy([], {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres, existentes: existentesProxy }),
+  /Opcoes do lote de mestres invalidas/);
   assert.equal(leituras, 0);
 });
 

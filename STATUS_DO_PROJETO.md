@@ -11755,3 +11755,9 @@ Checklist inicial:
 
 - A verificacao conjunta rejeita objeto de lotes, arrays e opcoes com getters/setters ou Proxy antes de iterar campos, evitando executar codigo do extrator ou ler registro privado durante o preflight. A checagem individual de tenant e a sanitizacao existentes continuam em vigor.
 - Testes adversariais verificam que nenhum getter e chamado. Nao ha alteracao no mapeador #48, schema, staging persistente ou importacao. CI do novo HEAD permanece obrigatoria.
+
+## Fechamento do parecer Cursor na #137 (2026-09-29)
+
+- O parecer no HEAD 5d8d664c apontou getters herdados/aninhados, `codigo_empresa_legado` aceito, contagens opcionais e perda do tipo de staging da revenda. O adaptador agora valida recursivamente lote e opcoes JSON simples antes de qualquer leitura, veda o alias empresarial e confere a saida do mapper sem inferir Empresa pelo seletor `001`.
+- O lote agregado exige uma contagem por entidade e devolve cada privado como `{ entidadeStaging, registro }`; `produto_revenda` nao e confundido com `entidade_migracao: produto`. Retry e conflito agregados sao testados, com bloqueio integral e relatorio sanitizado.
+- Esta e uma preparacao sintetica em memoria/CI PostgreSQL isolado. Nao houve leitura do backup, staging persistente, importacao no ERP operacional, migration DEV ou VPS. Nova CI e revisao consolidada do HEAD publicado continuam obrigatorias.

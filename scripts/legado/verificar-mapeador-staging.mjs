@@ -6,8 +6,26 @@ import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './stag
 
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', fornecedor: 'fornecedor', produto_revenda: 'produto' });
 const GRUPO_ALIASES = new Set(['groupid', 'grupoid']);
-const EMPRESA_ALIASES = new Set(['codigoempresa', 'codempresa', 'empresacodigo', 'empresaid']);
+const EMPRESA_ALIASES = new Set(['codigoempresa', 'codempresa', 'empresacodigo', 'empresaid', 'codigoempresalegado']);
 const normalizarAlias = (key) => key.toLowerCase().replace(/[\s._-]/g, '');
+
+const exigirDadosSimples = (value, mensagem, visitados = new Set()) => {
+  if (typeof value === 'function') throw new Error(mensagem);
+  if (value === null || typeof value !== 'object') return;
+  if (utilTypes.isProxy(value) || visitados.has(value)) throw new Error(mensagem);
+  visitados.add(value);
+  const prototipo = Object.getPrototypeOf(value);
+  if (prototipo !== null && prototipo !== (Array.isArray(value) ? Array.prototype : Object.prototype)) {
+    throw new Error(mensagem);
+  }
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key === 'symbol') throw new Error(mensagem);
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !('value' in descriptor)) throw new Error(mensagem);
+    exigirDadosSimples(descriptor.value, mensagem, visitados);
+  }
+  visitados.delete(value);
+};
 
 /**
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.
@@ -74,6 +92,10 @@ export function verificarMapeadorParaStaging(rows, {
   if (mapeado.gravados.some((row) => row.group_id !== groupId || row.empresa_id)) {
     throw new Error('Mapeador alterou o escopo validado.');
   }
+  if (mapeado.gravados.some((row) => row.codigo_empresa_legado
+    || row.empresa_legado_papel === 'empresa')) {
+    throw new Error('Mapeador devolveu vinculo empresarial legado nao comprovado.');
+  }
   const itens = mapeado.gravados.map((row) => ({
     entidade,
     groupId,
@@ -125,7 +147,9 @@ export function verificarLoteMestresParaStaging(lotes, opcoes = {}) {
       'get' in descriptor || 'set' in descriptor))) {
     throw new Error('Entidade ou lote de mestres invalido.');
   }
-  if (opcoes.contagensEsperadas !== undefined && !Array.isArray(opcoes.contagensEsperadas)) {
+  exigirDadosSimples(opcoes, 'Opcoes do lote de mestres invalidas.');
+  exigirDadosSimples(lotes, 'Entidade ou lote de mestres invalido.');
+  if (!Array.isArray(opcoes.contagensEsperadas)) {
     throw new Error('Contagens esperadas invalidas.');
   }
   if (opcoes.contagensEsperadas && (utilTypes.isProxy(opcoes.contagensEsperadas)
@@ -136,6 +160,10 @@ export function verificarLoteMestresParaStaging(lotes, opcoes = {}) {
   if (opcoes.contagensEsperadas?.some((item) => !entradas.some(([entidade]) => entidade === item?.entidade))) {
     throw new Error('Contagem esperada sem lote correspondente.');
   }
+  if (opcoes.contagensEsperadas.length !== entradas.length
+    || new Set(opcoes.contagensEsperadas.map((item) => item.entidade)).size !== entradas.length) {
+    throw new Error('Contagens esperadas incompletas para o lote de mestres.');
+  }
   const resultados = entradas.map(([entidade, rows]) => [entidade, verificarMapeadorParaStaging(rows, {
     ...opcoes,
     entidade,
@@ -144,7 +172,8 @@ export function verificarLoteMestresParaStaging(lotes, opcoes = {}) {
   const bloqueado = resultados.some(([, resultado]) => resultado.bloqueado);
   return {
     bloqueado,
-    privados: bloqueado ? [] : resultados.flatMap(([, resultado]) => resultado.privados),
+    privados: bloqueado ? [] : resultados.flatMap(([entidade, resultado]) =>
+      resultado.privados.map((registro) => ({ entidadeStaging: entidade, registro }))),
     relatorio: Object.fromEntries(resultados.map(([entidade, resultado]) => [entidade, resultado.relatorio])),
   };
 }
