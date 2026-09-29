@@ -1,3 +1,17 @@
+## OPINIÃO CURSOR — #126 snapshot CondicaoPagamento (migration 029) (2026-09-29T15:47Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#126** (base #124) — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` @ `2e221def` |
+| Escopo | Snapshot codigo+nome+parcelas JSON em Orçamento/Pedido; `tabela_preco_id` no Orçamento; fail-closed; UI reload |
+| Numeração | **029** (não 025) — evita colisão com #50/#92 (`025`–`028`) |
+| CI | em andamento no tip |
+| Integração | draft; sem merge/VPS |
+| Próximo | Produto frontendHttp **ou** promoção snapshot; sem Codex/#104/#48 |
+
+---
+
 ## LOTE CURSOR — #124 ClienteLocal + Obra frontendHttp (2026-09-29T15:31Z)
 
 PR **#124** tip `7c70de69` CI SUCCESS (base #122). Sem migration.
