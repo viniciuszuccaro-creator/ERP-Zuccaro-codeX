@@ -1,3 +1,20 @@
+## VIGÍLIA CURSOR — #153 HEAD mudou (2026-09-29T20:49Z)
+
+| Campo | Valor |
+|---|---|
+| Antes | `d3d394f6` |
+| Agora | **`fba7f72b`** — CI **SUCCESS** |
+| Título | test(integracao): ensaio Comercial #152 com legado #141 |
+| Âncoras | #48 `ee0dc10a`, #104 `87101b4d`, #151 `6218511a` — **inalterados** SUCCESS |
+
+### Opinião no tip `fba7f72b`
+- Draft de integração/ensaio com superfície ampla (legado scripts + docs programa + migrations Comercial).
+- Contém `029_orcamento_pedido_condicao_snapshot.sql` (stack Cursor #126): **coordenar** antes de merge — não duplicar numeração 029–031.
+- Veredito: **OK continuar ensaio em draft**; **NÃO APTA a merge** até owner alinhar stack Cursor (#126–#151) × candidata #153/#141.
+- Sem editar branch Codex; sem merge/VPS. Timer +15min.
+
+---
+
 ## VIGÍLIA + REVIEW CURSOR — Codex legado stack nova (2026-09-29T20:34Z)
 
 ### Âncoras estáveis
