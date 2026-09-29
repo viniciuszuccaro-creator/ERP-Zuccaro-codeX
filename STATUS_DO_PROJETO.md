@@ -1,3 +1,36 @@
+## PARECER CONSOLIDADO CURSOR — Onda 2/4/5/6 PRs #47/#50/#53/#59–#67 (2026-09-29T21:25Z)
+
+**Branches dos PRs NÃO editadas.** Opinião só nesta branch `cursor/revisao-continua-96-92-93-392b`.  
+Contexto: tip Comercial Cursor **#151 `6218511a`** (CI SUCCESS); candidata **#153** consolida caminho diferente (snapshots 029–031; parecer NÃO APTA em `fba7f72b` / tip docs `12c37e8b`). `main` tip `d02cd012`. Merge-base típico da stack Onda4–6: `f37b8a65` (#43) — **rebase obrigatório** antes de qualquer merge.
+
+### Tabela única
+
+| PR | Tip SHA8 | CI | Migrations | APTA? | Motivo curto | Next |
+|---|---|---|---|---|---|---|
+| **#47** margem CostPort | `a261790d` | SUCCESS | nenhuma | **APTA (já em main)** | Conteúdo CostPort/`comercialMargemAlcadaPolicy` já em `main`; PR GitHub ainda OPEN (órfão). Sem 025–028. | Fechar/ignorar PR; UI margem a partir da stack tip #151 — **não** re-merge |
+| **#50** origem Pedido | `6cea5a88` | SUCCESS | **025** `pedidos_origem_canal_idempotency` | **NÃO APTA** | vs `main` **CONFLICTING/DIRTY**; 025 colide com reserva **#92**; base velha | Rebase `main`+#151; renumerar 025→032+ **ou** alinhar blob idêntico a #92; owner decide gate 025 |
+| **#53** origem Orçamento | `694d262a` | SUCCESS | **025–028** (via stack #50/#51/#52) | **NÃO APTA** | Carrega 025–028 reservados #92; base `#52` em stack antiga | Rebase pós-resolução 025–028; não merge em cadeia atual |
+| **#59** UI Orç versões | `edd62d20` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | UI limpa vs base imediata; stack traz 025–028 + **029–031 anexos/campanha** que **colidem por número** com snapshots #151 (029–031 condição/promo/tabela) | Rebase sobre #151; renumerar anexos/campanha ≥033; sem merge agora |
+| **#60** UI Pedido anexos | `0ecfd9a7` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | Idem #59; delta UI `PedidoCanonicoPanel` | Depende rebase stack Onda4/5 pós-#151 |
+| **#61** mutação anexos Pedido | `323db9c7` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | HTTP/UI mutação DAM; mesma colisão numérica 025–031 | Rebase + renumerar; CI revalidar |
+| **#62** mutação anexos Orç | `7144052a` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | Tip da subcadeia anexos Onda4; herda colisões | Rebase após #59–#61 renumerados |
+| **#63** crédito Pedido | `8ea09c61` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | CreditPort opcional; empilha sobre #62; fora do tip #151 | Rebase Onda6 após Onda4/5 limpa |
+| **#64** UI ValidacaoCredito | `85b82aee` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | UI painel Pedido; CI verde na base antiga | Após #63 rebaseado |
+| **#65** EnviarParaCaixa | `d1ab772f` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | Financeiro fail-closed; depende cadeia #63–#64 | Rebase + reteste multiempresa |
+| **#66** ContaReceber↔Pedido | `5c450e5a` | SUCCESS | 025–031 (herdados) | **NÃO APTA** | Vínculo CR↔Pedido; mesma stack velha | Rebase pós-#65 |
+| **#67** CreditPort real | `41e165cb` | SUCCESS | 025–031 + **032** crédito | **NÃO APTA** | Tip Onda6; 032 ok *se* 025–031 renumerados; **não** está em #151 | Rebase tip #151+#main; 032→próximo livre; owner gate merge |
+
+### Veredito geral
+
+**NÃO APTA a merge em `main` / VPS** a cadeia Onda 4–6 (**#50, #53, #59–#67**) no estado atual. CI verde prova só o HEAD da base antiga — **não** aptidão pós-rebase nem ausência de colisão com #92/#151/#153.
+
+- **#47**: conteúdo já consolidado em `main` → tratar como **feito**; não bloquear polish UI margem na tip #151.
+- **Bloqueio duro**: migrations **025–028** (#50/#53 stack ≡ #92); **029–031** da stack anexos/campanha **≠** 029–031 snapshots da tip #151 / #153.
+- **#151** (`6218511a`) permanece tip Cursor a estender; **#153** continua NÃO APTA (parecer `fba7f72b`) e **não** substitui rebase desta cadeia Onda4–6.
+- Próximo seguro sem tocar PRs acima: lotes na tip #151 **sem** 025–028 (ex.: dirty-abandon, aprovação desconto UI, margem UI). Sem merge/VPS. Branches #47/#50/#53/#59–#67 intocadas.
+
+---
+
 ## MODO AUTÔNOMO CURSOR — Comercial 360 contínuo (2026-09-29T21:19Z)
 
 Owner ausente. Autorização: continuar execução paralela (#105) e programa Comercial 360 até esgotar lotes independentes seguros ou bloqueio real (credencial/VPS/merge/migration destrutiva/#92 025–028).
@@ -11,9 +44,9 @@ Owner ausente. Autorização: continuar execução paralela (#105) e programa Co
 - Atualizar STATUS/HANDOFF a cada lote; timer vigília 15min
 
 ### Fila imediata
-1. Parecer Onda 4–6 (#59–#67, #47 margem)
-2. Lotes Onda 4 faltantes sem colisão: abandono de form dirty, aprovação desconto/crédito UI, PDF só se não duplicar #59–#62
-3. Onda 5/6 gaps não cobertos pela stack tip
+1. ~~Parecer Onda 4–6 (#59–#67, #47 margem)~~ → **feito** (2026-09-29T21:25Z) — tabela no topo
+2. Lotes Onda 4 faltantes sem colisão na tip #151: abandono form dirty, aprovação desconto/crédito UI, margem UI; PDF só se não duplicar #59–#62
+3. Onda 5/6 gaps **só após rebase** (não mergear #50/#53/#59–#67 agora)
 4. Revisão contínua #153 tip vigente vs parecer `fba7f72b`
 
 ---

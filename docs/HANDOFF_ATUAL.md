@@ -1,3 +1,28 @@
+## PARECER CONSOLIDADO CURSOR — #47/#50/#53/#59–#67 (2026-09-29T21:25Z)
+
+**Veredito: Onda 4–6 (#50/#53/#59–#67) NÃO APTA merge/VPS.** #47 CostPort **já em main** (PR órfão OPEN). Tip Cursor **#151 `6218511a`**; #153 consolida outro caminho (NÃO APTA `fba7f72b`). Branches dos PRs **não editadas**.
+
+| PR | Tip | CI | Mig | APTA? | Next |
+|---|---|---|---|---|---|
+| #47 | `a261790d` | OK | — | APTA (já main) | fechar PR; UI margem na #151 |
+| #50 | `6cea5a88` | OK | **025** | NÃO | rebase+gate 025/#92 |
+| #53 | `694d262a` | OK | **025–028** | NÃO | rebase pós-025–028 |
+| #59 | `edd62d20` | OK | 025–031† | NÃO | rebase #151; renumerar ≥033 |
+| #60 | `0ecfd9a7` | OK | 025–031† | NÃO | após #59 |
+| #61 | `323db9c7` | OK | 025–031† | NÃO | rebase+CI |
+| #62 | `7144052a` | OK | 025–031† | NÃO | após #59–#61 |
+| #63 | `8ea09c61` | OK | 025–031† | NÃO | Onda6 pós Onda4/5 |
+| #64 | `85b82aee` | OK | 025–031† | NÃO | após #63 |
+| #65 | `d1ab772f` | OK | 025–031† | NÃO | rebase+reteste |
+| #66 | `5c450e5a` | OK | 025–031† | NÃO | após #65 |
+| #67 | `41e165cb` | OK | +**032** | NÃO | rebase #151; 032→livre |
+
+† 025–028 colidem #92; 029–031 anexos/campanha colidem por nº com snapshots #151. Sem merge/VPS.
+
+Próximo: lotes tip #151 sem 025–028. Detalhe completo em `STATUS_DO_PROJETO.md`.
+
+---
+
 ## MODO AUTÔNOMO CURSOR — Comercial 360 contínuo (2026-09-29T21:19Z)
 
 Owner ausente. Autorização: continuar execução paralela (#105) e programa Comercial 360 até esgotar lotes independentes seguros ou bloqueio real (credencial/VPS/merge/migration destrutiva/#92 025–028).
@@ -11,9 +36,9 @@ Owner ausente. Autorização: continuar execução paralela (#105) e programa Co
 - Atualizar STATUS/HANDOFF a cada lote; timer vigília 15min
 
 ### Fila imediata
-1. Parecer Onda 4–6 (#59–#67, #47 margem)
-2. Lotes Onda 4 faltantes sem colisão: abandono de form dirty, aprovação desconto/crédito UI, PDF só se não duplicar #59–#62
-3. Onda 5/6 gaps não cobertos pela stack tip
+1. ~~Parecer Onda 4–6 (#59–#67, #47 margem)~~ → **feito** (2026-09-29T21:25Z) — tabela no topo
+2. Lotes Onda 4 faltantes sem colisão na tip #151: abandono form dirty, aprovação desconto/crédito UI, margem UI; PDF só se não duplicar #59–#62
+3. Onda 5/6 gaps **só após rebase** (não mergear #50/#53/#59–#67 agora)
 4. Revisão contínua #153 tip vigente vs parecer `fba7f72b`
 
 ---
