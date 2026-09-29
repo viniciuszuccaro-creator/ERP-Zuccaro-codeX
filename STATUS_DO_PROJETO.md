@@ -8,8 +8,9 @@
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#117` `cursor/comercial360-onda2-condicao-http-392b` (tip `9bb3bccc`) |
-| Branch | `cursor/comercial360-onda2-tabela-http-392b` @ `988c6ce3` |
+| Branch | `cursor/comercial360-onda2-tabela-http-392b` @ `d3147801` (feat `988c6ce3`) |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-condicao-http-392b...cursor/comercial360-onda2-tabela-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#117; não editar em Codex/#104/#48)
 
