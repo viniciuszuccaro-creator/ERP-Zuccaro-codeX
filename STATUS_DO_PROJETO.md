@@ -1,3 +1,39 @@
+## Comercial 360 / Onda 2 — resolução condição + parcelas + promoção + simulação (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — resolve fail-closed + schedule parcelas + promo cupom + `POST /api/v1/comercial/simular-venda` |
+| Testado | **SIM** — 13/13 (`comercial-onda2-condicao-promocao-parcelas` + `comercial-onda2-simular-venda-http`) + regressão avista/preço/R08 |
+| CI | **SIM** @ `2ef5ca86` frontend+backend SUCCESS (`36574117990`) |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+
+### Arquivos reservados (Cursor — não editar em frentes Codex #104/#106–#109)
+
+- `server/src/services/comercialCondicaoResolucaoPolicy.ts`
+- `server/src/services/comercialParcelaSchedulePolicy.ts`
+- `server/src/services/comercialPromocaoPolicy.ts`
+- `server/src/services/comercialSimulacaoVendaService.ts`
+- `server/src/services/condicaoPagamentoService.ts`
+- `server/src/api/router.ts` (rotas resolve + simular-venda + meta)
+- `server/src/app.ts` (wire `clienteRepo` + `promocaoConfig` + simulacao)
+- `server/tests/comercial-onda2-condicao-promocao-parcelas.test.ts`
+- `server/tests/comercial-onda2-simular-venda-http.test.ts`
+
+### Escopo
+
+- Reutiliza CondicaoPagamento / TabelaPreco / alçada existentes — **sem** módulo/tabela CRM paralela nem migration.
+- Resolução: ClienteEmpresa específica → padrão Empresa → nenhuma (fail-closed).
+- Parcelas: agenda com resíduo na última; promoção só com `ativa===true` + teto bps + cupom allowlist.
+- Simulação HTTP não persiste; RBAC Comercial visualizar orçamento/pedido; resolve HTTP exige Cadastros.condicao_pagamento.visualizar.
+- Fora do escopo #104 (estoque/expedição/NF) e legado #106–#109 / mapper #48.
+
+### Próximo item independente restante
+
+- Onda 2 residual: persistir snapshot de condição/parcelas no Orçamento/Pedido (migration) **ou** ativar frontend HTTP CondicaoPagamento; Onda 3 follow-up sem tabelas CRM; tip Onda 4/5/6 já empilhada (#50–#67).
+
+---
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
