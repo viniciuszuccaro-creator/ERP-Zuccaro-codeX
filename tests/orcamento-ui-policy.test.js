@@ -8,7 +8,9 @@ import {
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
+  isOrcamentoValidadeExpirada,
   microsToDecimal,
+  orcamentoValidadeHint,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
 const form = () => ({
@@ -79,6 +81,18 @@ test('payload invalido e bloqueado antes da chamada HTTP', () => {
   assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [] }), /item/i);
   assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], quantidade: '0' }] }), /quantidade/i);
   assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], desconto: '99' }] }), /desconto/i);
+  assert.throws(
+    () => buildOrcamentoPayload({ ...form(), validade_em: '2020-01-01' }, { now: new Date('2026-09-29T15:00:00.000Z') }),
+    /Validade expirada/i,
+  );
+});
+
+test('hint e detecção de validade expirada no UI policy', () => {
+  const now = new Date('2026-09-29T15:00:00.000Z');
+  assert.equal(isOrcamentoValidadeExpirada('2020-01-01', now), true);
+  assert.equal(isOrcamentoValidadeExpirada('2027-01-01', now), false);
+  assert.match(orcamentoValidadeHint('2020-01-01', now), /expirada/i);
+  assert.equal(orcamentoValidadeHint('2027-01-01', now), null);
 });
 
 test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por empresa', async () => {
@@ -96,6 +110,9 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /beforeunload/);
   assert.match(tab, /\[groupId, empresaId\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
+  assert.match(tab, /orcamentoValidadeHint|Comercial\.orcamento\.validade-hint/);
+  assert.match(tab, /ORCAMENTO_VALIDADE_EXPIRADA/);
+  assert.match(tab, /isOrcamentoValidadeExpirada/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
   const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });

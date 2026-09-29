@@ -1,3 +1,44 @@
+## LOTE CURSOR — Validade Orçamento fail-closed (pós-#131) (2026-09-29T16:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **B** — `validade_em` fail-closed em create/update/convert (A já sólido em #126/#129/#131) |
+| Implementado | **SIM** — policy `comercialOrcamentoValidadePolicy`; wire Orçamento/Pedido convert; UI hint/badge/bloqueio save+convert; sem migration |
+| Testado | **SIM** — validade 8/8 + UI policy 10/10 + regressões snapshot/HTTP meta 35/35; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `de369c4b` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#131` tip `1682f686` (`cursor/comercial360-onda3-tabela-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-orc-validade-392b` |
+| Draft PR | **#133** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/133 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
+| Tip | `de369c4b` (feat `53aeda8d`) |
+| Meta | note preserva **Pedido backend HTTP is active** + `validadeFailClosed` / `convertValidadeFailClosed` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
+
+### Arquivos (Cursor — lote pós-#131)
+
+- `server/src/services/comercialOrcamentoValidadePolicy.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/orcamentoUiPolicy.js` / `OrcamentosTab.jsx`
+- `server/tests/runtime-onda3-orcamento-validade.test.ts` + meta asserts `runtime07b` / `runtime08c`
+- `tests/orcamento-ui-policy.test.js`
+
+### Escopo
+
+- Fail-closed 422 `ORCAMENTO_VALIDADE_EXPIRADA` quando `validade_em < now` em create/update/convert.
+- UI: hint no formulário, badge Expirado na lista, disable convert/save quando expirado.
+- Multiempresa/RBAC/auditoria preservados; sem migration.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** harden convert snapshots legado (A residual); sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #130 → #131 → **este lote**.
+
+---
+
 ## LOTE CURSOR — TabelaPreço codigo+nome snapshot (pós-#130) (2026-09-29T16:45Z)
 
 | Etapa | Estado |
