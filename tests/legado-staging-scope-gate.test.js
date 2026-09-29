@@ -53,6 +53,16 @@ test('staging sintetico exige permissao, vinculo e assinatura; retry reutiliza s
   assert.equal(JSON.stringify(result.relatorio).includes('PED-S1'), false);
 });
 
+test('registros privados passam pelo sanitizador canonico sem mutar a origem', () => {
+  const item = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1',
+    assinaturaOrigem: 'a'.repeat(64), TOKEN: 'SEGREDO', dados: { senha_hash: 'SEGREDO', nome: 'Sintetico' } };
+  const result = prepararLoteStagingLegado([item], { autorizado: true });
+  assert.equal(result.bloqueado, false);
+  assert.equal(JSON.stringify(result.privados).includes('SEGREDO'), false);
+  assert.equal(result.privados[0].dados.nome, 'Sintetico');
+  assert.equal(item.TOKEN, 'SEGREDO');
+});
+
 test('falha no item seguinte bloqueia lote, isola conflito e nao vaza dados no relatorio', () => {
   const base = { entidade: 'conta_receber', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'CR-S1', assinaturaOrigem: 'b'.repeat(64), documento: 'DOCUMENTO_PRIVADO' };

@@ -3,6 +3,7 @@
  * O codigo do seletor (003 Grupo, 001/002/005 Empresas) nao prova sozinho
  * a pessoa juridica emissora de uma operacao.
  */
+import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolicy.js';
 const MESTRES_GRUPO = new Set(['cliente', 'fornecedor', 'produto_revenda']);
 const OPERACOES = new Set(['pedido', 'estoque', 'conta_receber', 'conta_pagar', 'nota_fiscal']);
 const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
@@ -102,7 +103,7 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
       continue;
     }
     porChave.set(chave, assinatura);
-    privados.push(item);
+    privados.push(stripSegredosMigracao(item));
     relatorio.aptos += 1;
     contar(relatorio.porEntidadeEmpresa, `${entidade}|${legado || 'grupo'}`);
   }
