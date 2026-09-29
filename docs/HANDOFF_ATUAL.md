@@ -5,9 +5,9 @@
 | Implementado | **SIM** — nested HTTP Local/Obra + Pedido delivery fail-closed; sem migration |
 | Testado | **SIM** — 33 frontend + runtime06a/06b/07b 20/20 |
 | Base | `#122` tip `d82c7096` (`cursor/comercial360-onda3-cliente-empresa-http-392b`) |
-| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` |
+| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ `a2c59236` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
-| Draft PR | pendente |
+| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration` |
 | Próximo | snapshot condição/parcelas (migration) |
 
 Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObraHttpUiPolicy, PedidoCanonicoPanel, testes client/policy/runtime06a/06b/07b, docs 06A/06B/05. Sem Codex/#104/#48, sem merge/VPS.
