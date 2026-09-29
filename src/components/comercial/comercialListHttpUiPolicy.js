@@ -288,6 +288,124 @@ export function formatMasterPickerPlaceholder(state, entityLabel = 'itens') {
 }
 
 /**
+ * Mestre elegível para nova seleção (ativo; opcionalmente habilitado / não bloqueado).
+ * Fail-closed: sem id ou inativo → false.
+ * @param {unknown} row
+ * @param {{ requireHabilitadoOperacao?: boolean, rejectBloqueado?: boolean }} [options]
+ */
+export function isComercialMasterRowActive(row, options = {}) {
+  if (!row || typeof row !== 'object' || !row.id) return false;
+  if (row.ativo === false) return false;
+  if (options.requireHabilitadoOperacao === true && row.habilitado_operacao === false) return false;
+  if (options.rejectBloqueado === true && row.bloqueado === true) return false;
+  return true;
+}
+
+/** True quando a opção do picker é a seleção atual preservada (soft-delete / inativo). */
+export function isInactiveMasterSelectionKept(row) {
+  return Boolean(row && (row.ativo === false || row._inactiveSelection === true));
+}
+
+/**
+ * Ghost row para seleção atual ausente da listagem ativa (soft-delete).
+ * Nunca inventa id — só materializa o selectedId informado.
+ * @param {unknown} selectedId
+ * @param {{ codigo?: unknown, nome?: unknown, descricao?: unknown, label?: unknown }} [snapshot]
+ */
+export function buildInactiveMasterSelectionPlaceholder(selectedId, snapshot = {}) {
+  const id = String(selectedId || '').trim();
+  if (!id) return null;
+  const snap = snapshot && typeof snapshot === 'object' ? snapshot : {};
+  const codigo = String(snap.codigo || '').trim();
+  const nome = String(snap.nome || snap.descricao || snap.label || '').trim();
+  const descricao = String(snap.descricao || snap.nome || snap.label || '').trim();
+  return {
+    id,
+    ativo: false,
+    _inactiveSelection: true,
+    codigo: codigo || undefined,
+    nome: nome || undefined,
+    descricao: descricao || undefined,
+  };
+}
+
+/**
+ * Label do SelectItem — marca seleção inativa preservada.
+ * @param {object | null | undefined} row
+ * @param {{ labelFn?: (row: object) => string }} [options]
+ */
+export function formatMasterPickerOptionLabel(row, options = {}) {
+  if (!row || typeof row !== 'object') return '';
+  const labelFn = typeof options.labelFn === 'function' ? options.labelFn : null;
+  let base = '';
+  if (labelFn) {
+    try { base = String(labelFn(row) || '').trim(); } catch { base = ''; }
+  }
+  if (!base) {
+    base = String(row.nome || row.descricao || row.codigo || row.label || row.id || '').trim();
+  }
+  if (!base) base = String(row.id || 'Cadastro');
+  return isInactiveMasterSelectionKept(row) ? `${base} (inativo)` : base;
+}
+
+/**
+ * Hint curto quando a seleção atual é inativa (soft-delete) — fail-closed UX.
+ * @param {unknown} rows
+ * @param {string} [entityLabel]
+ */
+export function inactiveMasterSelectionHint(rows, entityLabel = 'cadastro') {
+  const list = Array.isArray(rows) ? rows : [];
+  const kept = list.find((row) => isInactiveMasterSelectionKept(row));
+  if (!kept) return null;
+  return `${entityLabel} atual está inativo — selecione um ativo para novas operações (seleção atual preservada).`;
+}
+
+/**
+ * Filtra mestres ativos; mantém a seleção atual mesmo se inativa (ghost ou row da lista).
+ * Não inclui outros inativos. Fail-closed: ids vazios ignorados; placeholders só para selectedIds.
+ * @param {unknown} rows
+ * @param {unknown} selectedIds - string | string[] | null/undefined
+ * @param {{
+ *   requireHabilitadoOperacao?: boolean,
+ *   rejectBloqueado?: boolean,
+ *   placeholderById?: Record<string, { codigo?: unknown, nome?: unknown, descricao?: unknown, label?: unknown }>,
+ * }} [options]
+ * @returns {object[]}
+ */
+export function filterActiveMasterRowsKeepingSelection(rows, selectedIds, options = {}) {
+  const list = Array.isArray(rows) ? rows.filter((row) => row && row.id != null && String(row.id).trim()) : [];
+  const selected = [...new Set(
+    (Array.isArray(selectedIds) ? selectedIds : [selectedIds])
+      .map((id) => String(id || '').trim())
+      .filter(Boolean),
+  )];
+  const activeOpts = {
+    requireHabilitadoOperacao: options.requireHabilitadoOperacao === true,
+    rejectBloqueado: options.rejectBloqueado === true,
+  };
+  const active = list.filter((row) => isComercialMasterRowActive(row, activeOpts));
+  /** @type {Map<string, object>} */
+  const byId = new Map(active.map((row) => [String(row.id), row]));
+  const placeholders = options.placeholderById && typeof options.placeholderById === 'object'
+    ? options.placeholderById
+    : {};
+
+  for (const id of selected) {
+    if (byId.has(id)) continue;
+    const fromList = list.find((row) => String(row.id) === id);
+    if (fromList) {
+      byId.set(id, { ...fromList, ativo: false, _inactiveSelection: true });
+      continue;
+    }
+    const snap = placeholders[id];
+    const ghost = buildInactiveMasterSelectionPlaceholder(id, snap || {});
+    if (ghost) byId.set(id, ghost);
+  }
+
+  return Array.from(byId.values());
+}
+
+/**
  * Banner de masters HTTP: reutiliza formatComercialHttpError e deixa explícito
  * que 403/5xx ≠ empty-state dos pickers.
  * @param {unknown} error
