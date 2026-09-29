@@ -5,8 +5,8 @@
 | Choice | **B** Item line validation UX — quantidade/preço >0 fail-closed antes de simular/salvar; mensagens claras; reusa forms Orçamento/Pedido |
 | Branch | `cursor/comercial360-onda3-item-line-validation-392b` |
 | Base | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` tip `0e7111af` (#147) |
-| Tip | (após commit) |
-| Draft PR | pendente — base `#147` |
+| Tip | `6c3587a2` (`6c3587a29d50c8e4598f3b958ecaab183221a58e`) |
+| Draft PR | pendente — base `cursor/comercial360-onda3-pedido-resumo-texto-392b` (#147) |
 | Escopo | `calculateItem` exige preço >0; `collectItemLineIssues`/`evaluateItemLinesGate`; wire `OrcamentosTab`+`PedidoCanonicoPanel` (alertas linha + disable Salvar/Simular); meta note; sem migration |
 | Meta | note + `Pedido backend HTTP is active` |
 | Testes | `orcamento-ui-policy`+`pedido-ui-policy`+simulacao/alcada/list/pedido-frontend **71/71**; `git diff --check` PASS |
