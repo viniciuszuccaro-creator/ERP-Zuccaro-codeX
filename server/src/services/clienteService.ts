@@ -99,6 +99,58 @@ export class ClienteService {
     return row;
   }
 
+  /**
+   * Sugere vínculo por documento no Grupo. Não cria, não mescla e não copia o cliente.
+   * Mescla destrutiva continua fora desta leitura.
+   */
+  async sugerirVinculo(ctx: RequestContext, input: { documento?: unknown } = {}) {
+    this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
+    const raw = String(input.documento ?? '').trim();
+    if (raw.length > 32) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Documento invalido');
+    }
+    const docNorm = normalizeDocumento(raw);
+    const vazio = {
+      sugestao: false,
+      motivo: docNorm ? 'sem_match' : 'documento_ausente',
+      mescla: 'proibida' as const,
+    };
+    if (!docNorm) return vazio;
+
+    const existing = await this.repo.findByDocumento(ctx.groupId, docNorm);
+    if (!existing || existing.ativo === false || existing.group_id !== ctx.groupId) return vazio;
+
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Cliente',
+      entityId: existing.id,
+      action: 'possible_duplicate',
+      beforeData: null,
+      afterData: {
+        documento: maskDocumento(docNorm),
+        cliente_id: existing.id,
+        mescla: 'revisao_humana_obrigatoria',
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    });
+
+    return {
+      sugestao: true,
+      motivo: 'documento_igual_no_grupo',
+      mescla: 'revisao_humana_obrigatoria' as const,
+      cliente_id: existing.id,
+      codigo: existing.codigo,
+      nome: existing.nome || existing.razao_social || null,
+      documento_mascarado: maskDocumento(docNorm),
+      group_id: ctx.groupId,
+    };
+  }
+
   async create(ctx: RequestContext, payload: unknown) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'criar');
