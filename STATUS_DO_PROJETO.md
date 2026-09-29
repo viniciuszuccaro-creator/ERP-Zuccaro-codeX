@@ -5,7 +5,7 @@
 | Choice | **A** Entrega vs Retirada toggle fail-closed — ENTREGA exige Local/Obra com endereço confirmado; incompleto bloqueia Salvar; Retirada não exige |
 | Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
 | Base | `origin/cursor/comercial360-onda4-margem-ui-failclosed-392b` tip `3e668170` (#157) |
-| Tip | `97d51e5f` (feat `aad233b1`) |
+| Tip | feat `aad233b1` · branch HEAD após docs |
 | Draft PR | **pendente** — ManagePullRequest indisponível; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
 | Escopo | `resolveDeliveryAddressUiState` blockSave na ENTREGA sem seleção/incompleto; painel `PedidoCanonicoPanel` visível na Entrega + Alert required; meta `entregaAddressRequiredFailClosed`; **sem migration** |
 | Meta | `entregaAddressRequiredFailClosed` + preserva **Pedido backend HTTP is active** |
