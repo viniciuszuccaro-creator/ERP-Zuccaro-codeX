@@ -5,14 +5,14 @@
 | Choice | **B** — `validade_em` fail-closed em create/update/convert (A já sólido em #126/#129/#131) |
 | Implementado | **SIM** — policy `comercialOrcamentoValidadePolicy`; wire Orçamento/Pedido convert; UI hint/badge/bloqueio save+convert; sem migration |
 | Testado | **SIM** — validade 8/8 + UI policy 10/10 + regressões snapshot/HTTP meta 35/35; `server` typecheck PASS; `git diff --check` PASS |
-| CI | tip `f20d7ad7` |
+| CI | tip `de369c4b` |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | `#131` tip `1682f686` (`cursor/comercial360-onda3-tabela-snapshot-392b`) |
 | Branch | `cursor/comercial360-onda3-orc-validade-392b` |
 | Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
-| Tip | `f20d7ad7` (feat `53aeda8d`) |
+| Tip | `de369c4b` (feat `53aeda8d`) |
 | Meta | note preserva **Pedido backend HTTP is active** + `validadeFailClosed` / `convertValidadeFailClosed` |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
