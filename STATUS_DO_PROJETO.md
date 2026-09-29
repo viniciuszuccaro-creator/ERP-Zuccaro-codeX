@@ -1,3 +1,17 @@
+## AUTÔNOMO — tip Pedido detalhe summary UX (pós-#167 share) (2026-09-29T23:10Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido detalhe summary** (cliente/condição/tabela/totais + snapshot gap banner; espelha Orçamento) |
+| Branch | `cursor/comercial360-onda5-pedido-detail-ux-392b` |
+| Draft PR | **#168** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/168 |
+| Base | tip #167 `cursor/comercial360-onda5-pedido-share-392b` |
+| Escopo | `resolvePedidoDetailSummaryUiState`; painel detalhe; meta `detailSummaryUiFailClosed`; **sem migration** |
+| Colisão | origem/anexo #50–62; CreditPort 032; sem Codex/merge/VPS |
+| Próximo | CostPort BFF real / Onda 6 se 032 / anexo sem colisão |
+
+---
+
 ## AUTÔNOMO — tip Pedido share WhatsApp/e-mail (pós-#166 print) (2026-09-29T23:00Z)
 
 | Campo | Valor |

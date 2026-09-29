@@ -91,6 +91,46 @@ export function evaluatePedidoShareUiGate({ row, groupId, empresaId, canShare } 
   return { blockShare: false, mode: 'ready', hint: null };
 }
 
+
+/**
+ * Resumo do painel de detalhe do Pedido (somente leitura).
+ * Fail-closed: sem row/itens não inventa; avisa snapshot incompleto pós-031.
+ */
+export function resolvePedidoDetailSummaryUiState(row, { clienteNome = '' } = {}) {
+  if (!row || !row.numero) {
+    return { mode: 'missing', hint: 'Pedido indisponível (fail-closed).', fields: null, snapshotGap: null };
+  }
+  if (!Array.isArray(row.itens)) {
+    return { mode: 'invalid', hint: 'Itens do pedido indisponíveis (fail-closed).', fields: null, snapshotGap: null };
+  }
+  const snapshotGap = pedidoDocumentoSnapshotGapHint(row);
+  const condicao = [row.condicao_pagamento_codigo_snapshot, row.condicao_pagamento_nome_snapshot]
+    .filter(Boolean).join(' — ') || null;
+  const tabela = [row.tabela_preco_codigo_snapshot, row.tabela_preco_nome_snapshot]
+    .filter(Boolean).join(' — ') || null;
+  return {
+    mode: snapshotGap ? 'snapshot_gap' : 'ready',
+    hint: snapshotGap || null,
+    snapshotGap,
+    fields: {
+      numero: row.numero,
+      status: row.status,
+      clienteNome: clienteNome || '—',
+      condicao: condicao || '—',
+      tabela: tabela || (row.tabela_preco_id ? String(row.tabela_preco_id) : '—'),
+      tipoOperacao: row.tipo_operacao === 'ENTREGA' ? 'Entrega' : row.tipo_operacao === 'RETIRADA' ? 'Retirada' : (row.tipo_operacao || '—'),
+      dataEntrega: row.data_entrega_solicitada || null,
+      observacoes: row.observacoes || '',
+      subtotal: row.subtotal,
+      desconto: row.desconto,
+      total: row.total,
+      createdAt: row.created_at || null,
+      updatedAt: row.updated_at || null,
+      promocaoAplicada: row.promocao_aplicada === true,
+    },
+  };
+}
+
 export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') {
   if (typeof hasPermission !== 'function') return false;
   if (!hasPermission('Comercial', 'pedido', action)) return false;

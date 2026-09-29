@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText, resolvePedidoDetailSummaryUiState } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
 const nowFixed = new Date('2026-09-29T15:00:00.000Z');
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
@@ -214,4 +214,36 @@ test('painel pedido wire WhatsApp/e-mail share fail-closed', async () => {
   assert.match(panel, /Comercial\.pedido\.compartilhar-whatsapp/);
   assert.match(panel, /shareGate\.blockShare/);
   assert.doesNotMatch(panel, /api\.whatsapp|twilio|wavoip/i);
+});
+
+test('pedido detail summary UI fail-closed e campos canônicos', () => {
+  const completo = {
+    numero: '00000055', status: 'EM_ABERTO', tipo_operacao: 'ENTREGA',
+    data_entrega_solicitada: '2027-04-01T12:00:00.000Z',
+    condicao_pagamento_id: 'cp', condicao_pagamento_codigo_snapshot: 'AV', condicao_pagamento_nome_snapshot: 'À vista',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 0, percentual: '100.000000' }],
+    tabela_preco_id: 'tab', tabela_preco_codigo_snapshot: 'VAREJ', tabela_preco_nome_snapshot: 'Varejo',
+    promocao_aplicada: false, subtotal: '20.000000', desconto: '1.000000', total: '19.000000',
+    observacoes: 'Obs', itens: [{ id: 'i1', descricao: 'X', unidade_sigla: 'UN', quantidade: '1', preco_unitario: '20', desconto: '1', total: '19' }],
+    created_at: '2026-09-01T12:00:00.000Z', updated_at: '2026-09-02T12:00:00.000Z',
+  };
+  const ready = resolvePedidoDetailSummaryUiState(completo, { clienteNome: 'Cliente Y' });
+  assert.equal(ready.mode, 'ready');
+  assert.equal(ready.fields.clienteNome, 'Cliente Y');
+  assert.match(ready.fields.condicao, /AV/);
+  assert.match(ready.fields.tabela, /Varejo/);
+  assert.equal(resolvePedidoDetailSummaryUiState(null).mode, 'missing');
+  assert.equal(resolvePedidoDetailSummaryUiState({ numero: '1' }).mode, 'invalid');
+  const gap = resolvePedidoDetailSummaryUiState({ ...completo, tabela_preco_nome_snapshot: '' });
+  assert.equal(gap.mode, 'snapshot_gap');
+  assert.match(gap.hint || '', /tabela/i);
+});
+
+test('painel pedido wire detalhe summary fail-closed', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /resolvePedidoDetailSummaryUiState/);
+  assert.match(panel, /pedido-detail-summary/);
+  assert.match(panel, /pedido-detail-fields/);
+  assert.match(panel, /Comercial\.pedido\.detail-summary/);
+  assert.match(panel, /pedidoDetailSummary\.mode/);
 });
