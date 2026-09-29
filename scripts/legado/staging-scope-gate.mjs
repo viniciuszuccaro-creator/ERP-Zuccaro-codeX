@@ -144,8 +144,12 @@ export function reconciliarPlanoStagingLegado({
     String(item?.codigoLegado ?? '').trim(),
   ]);
   const conhecidos = new Set([...existentes, ...preparado.privados].map(chave));
+  const novos = new Set(preparado.privados.map(chave));
+  const dependentes = new Map([...novos].map((id) => [id, new Set()]));
+  const graus = new Map([...novos].map((id) => [id, 0]));
   let dependenciasPendentes = 0;
   for (const item of itens) {
+    const itemKey = chave(item);
     const deps = item?.dependencias ?? [];
     if (!Array.isArray(deps)) throw new Error('Dependencias do staging invalidas.');
     for (const dep of deps) {
@@ -153,15 +157,32 @@ export function reconciliarPlanoStagingLegado({
       const codigoLegado = String(dep?.codigoLegado ?? '').trim();
       const escopo = String(dep?.escopo ?? '').trim();
       const empresaId = escopo === 'empresa' ? String(item?.empresaId ?? '').trim() : '';
+      const depKey = JSON.stringify([grupo, empresaId, entidade, codigoLegado]);
       const tipoValido = escopo === 'grupo' ? MESTRES_GRUPO.has(entidade)
         : escopo === 'empresa' && OPERACOES.has(entidade);
       if (!tipoValido || !codigoLegado || (escopo === 'empresa' && !empresaId)
-        || !conhecidos.has(JSON.stringify([grupo, empresaId, entidade, codigoLegado]))) {
+        || !conhecidos.has(depKey)) {
         dependenciasPendentes += 1;
         contar('dependencia_nao_comprovada');
+      } else if (novos.has(itemKey) && novos.has(depKey) && !dependentes.get(depKey).has(itemKey)) {
+        dependentes.get(depKey).add(itemKey);
+        graus.set(itemKey, graus.get(itemKey) + 1);
       }
     }
   }
+  const fila = [...graus].filter(([, grau]) => grau === 0).map(([id]) => id);
+  let ordenados = 0;
+  while (fila.length > 0) {
+    const id = fila.pop();
+    ordenados += 1;
+    for (const dependente of dependentes.get(id)) {
+      const grau = graus.get(dependente) - 1;
+      graus.set(dependente, grau);
+      if (grau === 0) fila.push(dependente);
+    }
+  }
+  const dependenciasCiclicas = novos.size - ordenados;
+  if (dependenciasCiclicas > 0) contar('dependencia_ciclica');
   const observadas = {};
   for (const item of itens) {
     const entidade = String(item.entidade).trim();
@@ -192,11 +213,11 @@ export function reconciliarPlanoStagingLegado({
       contar('contagem_origem_divergente');
     }
   }
-  const bloqueado = dependenciasPendentes > 0 || divergencias > 0;
+  const bloqueado = dependenciasPendentes > 0 || dependenciasCiclicas > 0 || divergencias > 0;
   return {
     privados: bloqueado ? [] : preparado.privados,
     bloqueado,
     relatorio: { ...preparado.relatorio, porMotivo, porEntidadeEmpresaOrigem: observadas,
-      dependenciasPendentes, divergencias },
+      dependenciasPendentes, dependenciasCiclicas, divergencias },
   };
 }

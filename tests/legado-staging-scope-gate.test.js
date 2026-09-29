@@ -197,3 +197,17 @@ test('empresa 002 usa vinculo proprio e nao compartilha operacao com 001', () =>
   assert.equal(result.bloqueado, false);
   assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 1, 'pedido|002': 1 });
 });
+
+test('dependencia circular entre operacoes nao avanca o lote', () => {
+  const pedidoA = { ...pedido, codigoLegado: 'PED-A', dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-B', escopo: 'empresa' }] };
+  const pedidoB = { ...pedido, codigoLegado: 'PED-B', assinaturaOrigem: 'c'.repeat(64), dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-A', escopo: 'empresa' }] };
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedidoA, pedidoB],
+    contagensEsperadas: [planoBase.contagensEsperadas[0],
+      { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.dependenciasCiclicas, 2);
+  assert.equal(result.relatorio.porMotivo.dependencia_ciclica, 1);
+});
