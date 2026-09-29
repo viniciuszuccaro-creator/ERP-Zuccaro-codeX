@@ -1,3 +1,16 @@
+## OPINIÃO CURSOR — #139 CI SUCCESS + #140 masters-banner (2026-09-29T17:34Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #136 | `a1b78672` | SUCCESS | list fail-closed |
+| #138 | `90a76433` | SUCCESS | alçada UI |
+| #139 | `3da72df5` | **SUCCESS** | snapshot reload após save |
+| #140 | `cursor/comercial360-onda3-masters-banner-392b` | pendente | banners pickers mestres fail-closed |
+
+Próximo: margem UI pós-#47 **ou** revisão cruzada #104/#48. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #136/#138 CI SUCCESS + #139 snapshot-reload (2026-09-29T17:27Z)
 
 | PR | Tip | CI | Escopo |
