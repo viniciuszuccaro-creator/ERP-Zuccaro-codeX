@@ -5,7 +5,7 @@
 | Tip | `dcde4cef` (`dcde4ceff12c9e027d57a282b27d5b571c7f07c7`) |
 | Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
 | Base | `#136` `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
-| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#138** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/138 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** |
 | Push | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
