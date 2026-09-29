@@ -1,3 +1,59 @@
+## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `dcde4cef` (`dcde4ceff12c9e027d57a282b27d5b571c7f07c7`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Base | `#136` `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Draft PR | **#138** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/138 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+
+---
+
+## OPINIÃO CURSOR — #136 tip + alçada UI fail-closed (2026-09-29T17:15Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #136 | `2db1a38d` | pendente | List HTTP fail-closed + update CANCELADO |
+| próximo | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` | — | Desconto alçada UI fail-closed + save idempotency |
+
+Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplementar**. Escolha: alçada desconto UI fail-closed (backend #46 já merged; UI só badge de simulação). Sem migration. Sem Codex/#104/#48. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Desconto alçada UI fail-closed (pós-#136) (2026-09-29T17:15Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **Desconto alçada UI fail-closed** (+ trava save anti duplo-clique) — anexos/PDF colidem com #52–#62; margem #47 em stack separada |
+| Implementado | **SIM** — `comercialDescontoAlcadaUiPolicy`; Alert + Salvar disabled; create sem autoaprovação; HTTP `DESCONTO_ALCADA_DENIED` mapeado; meta `descontoAlcadaUiFailClosed` / `saveIdempotency`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — comercial-desconto-alcada-ui-policy 13/13; comercial-list-http-ui-policy 6/6; runtime08c 6/6; runtime09-pedido-http 4/4 (arquivo completo 10/10); `git diff --check` PASS |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#136` tip `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + descontoAlcadaUiFailClosed / saveIdempotency |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 (sem migration neste lote) |
+
+### Arquivos
+
+- `src/components/comercial/comercialDescontoAlcadaUiPolicy.js` (novo — espelho UI da política #46)
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `src/components/comercial/comercialListHttpUiPolicy.js` (map DESCONTO_ALCADA_DENIED)
+- `server/src/api/router.ts` (meta + note)
+- `tests/comercial-desconto-alcada-ui-policy.test.js`
+- `tests/comercial-list-http-ui-policy.test.js`
+- `server/tests/runtime08c-orcamento-http.test.ts` / `runtime09-pedido-http.test.ts` / `runtime07b.test.ts`
+
+### Próximo
+
+Margem preview persistência de exibição (após #47 na stack) **ou** Onda 4 anexos/PDF só se stack #52+ mergear. Sem merge/VPS.
+
+---
+
 ## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
 
 | Campo | Valor |

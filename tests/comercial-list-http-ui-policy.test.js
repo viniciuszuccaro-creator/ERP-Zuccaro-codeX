@@ -29,6 +29,13 @@ test('formatComercialHttpError distingue 403, 5xx e rede sem mascarar como vazio
     formatComercialHttpError({ status: 409 }, { conflictMessage: 'O orçamento foi alterado e não está mais em aberto.' }),
     /não está mais em aberto/i,
   );
+  assert.match(
+    formatComercialHttpError({
+      status: 403,
+      body: { error: { code: 'DESCONTO_ALCADA_DENIED', message: 'exige permissão de aprovar' } },
+    }, { entityLabel: 'Orçamento' }),
+    /alçada/i,
+  );
   assert.doesNotMatch(formatComercialHttpError({ status: 403 }), /nenhum|vazio|encontrado nesta empresa/i);
   assert.doesNotMatch(formatComercialHttpError({ status: 500 }), /nenhum|vazio|encontrado nesta empresa/i);
 });

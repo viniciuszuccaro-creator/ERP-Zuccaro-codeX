@@ -29,12 +29,20 @@ export function sanitizeObservacoesText(value, max = 1000) {
 export function formatComercialHttpError(error, options = {}) {
   const entity = options.entityLabel || 'Registro';
   const status = Number(error?.status);
+  const code = error?.body?.error?.code || error?.code;
+  if (code === 'DESCONTO_ALCADA_DENIED' || (status === 403 && /desconto.*al[cç]ada/i.test(String(error?.body?.error?.message || '')))) {
+    const serverMsg = String(error?.body?.error?.message || '').trim();
+    if (/outro aprovador/i.test(serverMsg)) {
+      return `${entity}: desconto acima da alçada exige outro aprovador.`;
+    }
+    return `${entity}: desconto acima da alçada livre exige permissão de aprovar.`;
+  }
   if (status === 403) return 'Seu perfil não possui permissão para esta ação.';
   if (status === 404) return `${entity} não encontrado neste contexto.`;
   if (status === 409) {
     return options.conflictMessage || 'O estado atual não permite esta ação.';
   }
-  if (status === 422 && error?.body?.error?.code === 'ORCAMENTO_VALIDADE_EXPIRADA') {
+  if (status === 422 && code === 'ORCAMENTO_VALIDADE_EXPIRADA') {
     return 'Validade expirada — altere a data antes de salvar ou converter.';
   }
   if (status === 422) return error?.body?.error?.message || 'Revise os dados informados.';

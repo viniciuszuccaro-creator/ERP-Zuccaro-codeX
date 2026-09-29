@@ -175,8 +175,11 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     convertSnapshotFailClosed: true,
     listFailClosed: true,
     observacoesSanitized: true,
+    descontoAlcadaUiFailClosed: true,
+    saveIdempotency: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
+  assert.match(result.body.note, /UI alçada de desconto fail-closed/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
@@ -187,6 +190,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.cancelByState, true);
   assert.equal(result.body.pedido.listFailClosed, true);
   assert.equal(result.body.pedido.observacoesSanitized, true);
+  assert.equal(result.body.pedido.descontoAlcadaUiFailClosed, true);
+  assert.equal(result.body.pedido.saveIdempotency, true);
   assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
   assert.match(result.body.note, /Pedido cancel fail-closed/);
   assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
