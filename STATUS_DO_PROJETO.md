@@ -5,11 +5,11 @@
 | Choice | **A** Entrega vs Retirada toggle fail-closed — ENTREGA exige Local/Obra com endereço confirmado; incompleto bloqueia Salvar; Retirada não exige |
 | Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
 | Base | `origin/cursor/comercial360-onda4-margem-ui-failclosed-392b` tip `3e668170` (#157) |
-| Tip |  () |
-| Draft PR | **pendente** — ManagePullRequest indisponível;  403. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
+| Tip | `fe92b0f8` (feat `aad233b1`) |
+| Draft PR | **pendente** — ManagePullRequest indisponível; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
 | Escopo | `resolveDeliveryAddressUiState` blockSave na ENTREGA sem seleção/incompleto; painel `PedidoCanonicoPanel` visível na Entrega + Alert required; meta `entregaAddressRequiredFailClosed`; **sem migration** |
 | Meta | `entregaAddressRequiredFailClosed` + preserva **Pedido backend HTTP is active** |
-| Testes | `comercial-cliente-local-obra-http-ui-policy` + `pedido-frontend-integration` + runtime07b/08c/09 meta |
+| Testes | local-obra UI **13/13** + frontend-integration **2/2**; runtime09 **4/4**; runtime08c **6/6**; runtime07b **13/13**; `git diff --check` PASS |
 | Colisão | anexos #59–62; CreditPort/#63–67 mig 032; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
 | Próximo | **B** Data de Entrega do Cliente UI gate (required when Entrega) **ou** multi-select stub fail-closed **ou** CostPort BFF / PDF-anexos sem colidir |
 
