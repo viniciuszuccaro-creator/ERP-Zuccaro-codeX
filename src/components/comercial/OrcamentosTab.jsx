@@ -66,6 +66,7 @@ import {
   buildMastersHttpBannerText,
   buildOrcamentoListRequestParams,
   buildOrcamentoTenantSwitchReset,
+  buildSimularHttpErrorBannerText,
   clearComercialHttpCacheOnTenantSwitch,
   comercialActionAriaLabel,
   filterActiveMasterRowsKeepingSelection,
@@ -75,6 +76,7 @@ import {
   formatMasterPickerPlaceholder,
   hasActiveComercialListFilters,
   inactiveMasterSelectionHint,
+  isComercialRetryableHttpError,
   isMasterPickerBlocked,
   normalizeOrcamentoListFilters,
   resolveHttpListViewState,
@@ -120,6 +122,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [lastSimulation, setLastSimulation] = useState(null);
   const [simulacaoDirty, setSimulacaoDirty] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [simularHttpError, setSimularHttpError] = useState(null);
   const [condicaoSnapshot, setCondicaoSnapshot] = useState(null);
   const [tabelaSnapshot, setTabelaSnapshot] = useState(null);
   const [promocaoSnapshot, setPromocaoSnapshot] = useState(null);
@@ -291,6 +294,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setSimulacaoPreview(reset.simulacaoPreview);
     setLastSimulation(reset.lastSimulation);
     setSimulacaoDirty(reset.simulacaoDirty);
+    setSimularHttpError(reset.simularHttpError);
     setCondicaoSnapshot(reset.condicaoSnapshot);
     setTabelaSnapshot(reset.tabelaSnapshot);
     setPromocaoSnapshot(reset.promocaoSnapshot);
@@ -302,7 +306,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   }, [dirty]);
 
   const resetSimulacaoUi = () => {
-    setSimulacaoPreview(null); setLastSimulation(null); setSimulacaoDirty(false); setPromoBps(''); setPromoCupom('');
+    setSimulacaoPreview(null); setLastSimulation(null); setSimulacaoDirty(false); setSimularHttpError(null); setPromoBps(''); setPromoCupom('');
     setCondicaoSnapshot(null);
     setTabelaSnapshot(null);
     setPromocaoSnapshot(null);
@@ -311,6 +315,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setSimulacaoPreview(null);
     setLastSimulation(null);
     setSimulacaoDirty(true);
+    setSimularHttpError(null);
   };
   const applyPersistedSnapshotsFromRow = (row) => {
     const snaps = collectPersistedCommercialSnapshots(row);
@@ -323,6 +328,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setSimulacaoPreview(null);
     setLastSimulation(null);
     setSimulacaoDirty(false);
+    setSimularHttpError(null);
     return snaps;
   };
   const closeForm = () => {
@@ -465,6 +471,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       return;
     }
     setSimulating(true);
+    setSimularHttpError(null);
     try {
       const requestedPromo = String(promoBps || '').trim() !== '';
       const payload = buildSimularVendaPayload(form, {
@@ -479,11 +486,13 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       setLastSimulation(simulation);
       setSimulacaoPreview(buildSimulacaoPreviewState(simulation));
       setSimulacaoDirty(false);
+      setSimularHttpError(null);
       toast.success('Simulação atualizada com preços e parcelas do servidor.');
     } catch (error) {
       setLastSimulation(null);
       setSimulacaoPreview(null);
       setSimulacaoDirty(true);
+      setSimularHttpError(isComercialRetryableHttpError(error) ? error : null);
       toast.error(error?.message || errorMessage(error));
     } finally {
       setSimulating(false);
@@ -635,7 +644,7 @@ const convertToPedido = async () => {
       {canCreate && <Button onClick={openCreate} disabled={!contextReady} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
     {!contextReady && <Alert {...buildComercialBannerA11yProps('polite')}><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
-    {(mastersQuery.isLoading || mastersQuery.isError) && <Alert {...buildComercialBannerA11yProps(mastersQuery.isError ? 'error' : 'loading')} variant={mastersQuery.isError ? 'destructive' : 'default'} className="mb-3" data-testid="orcamento-masters-error"><AlertCircle className="h-4 w-4" /><AlertDescription className="flex flex-wrap items-center gap-2"><span>{mastersBannerText}</span>{mastersQuery.isError && <Button type="button" size="sm" variant="outline" aria-label={comercialActionAriaLabel('retry')} onClick={() => mastersQuery.refetch()}><RefreshCw className="w-4 h-4 mr-1" />Tentar novamente</Button>}</AlertDescription></Alert>}
+    {(mastersQuery.isLoading || mastersQuery.isError) && <Alert {...buildComercialBannerA11yProps(mastersQuery.isError ? 'error' : 'loading')} variant={mastersQuery.isError ? 'destructive' : 'default'} className="mb-3" data-testid="orcamento-masters-error" data-retryable={mastersQuery.isError && isComercialRetryableHttpError(mastersQuery.error) ? 'true' : 'false'}><AlertCircle className="h-4 w-4" /><AlertDescription className="flex flex-wrap items-center gap-2"><span>{mastersBannerText}</span>{mastersQuery.isError && isComercialRetryableHttpError(mastersQuery.error) && <Button type="button" size="sm" variant="outline" aria-label={comercialActionAriaLabel('retry')} data-testid="orcamento-masters-retry" onClick={() => mastersQuery.refetch()}><RefreshCw className="w-4 h-4 mr-1" />Tentar novamente</Button>}</AlertDescription></Alert>}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(normalizeOrcamentoListFilters(filters)); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
@@ -643,14 +652,14 @@ const convertToPedido = async () => {
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
       <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { ...ORCAMENTO_LIST_FILTER_DEFAULTS }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
     </form>
-    {listView === 'loading' ? <div className="flex-1 flex items-center justify-center" {...buildComercialBannerA11yProps('loading')}>Carregando orçamentos...</div> : listView === 'error' ? <div className="flex-1 flex flex-col items-center justify-center gap-3" data-testid="orcamento-list-error" {...buildComercialBannerA11yProps('error')}><p>{errorMessage(listQuery.error)}</p><Button variant="outline" aria-label={comercialActionAriaLabel('retry')} onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : listView === 'empty' ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500" data-testid="orcamento-list-empty" data-empty-filtered={listHasActiveFilters ? 'true' : 'false'}><FilePlus2 className="w-10 h-10 mb-2" /><p>{listEmptyMessage}</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
+    {listView === 'loading' ? <div className="flex-1 flex items-center justify-center" {...buildComercialBannerA11yProps('loading')}>Carregando orçamentos...</div> : listView === 'error' ? <div className="flex-1 flex flex-col items-center justify-center gap-3" data-testid="orcamento-list-error" data-retryable={isComercialRetryableHttpError(listQuery.error) ? 'true' : 'false'} {...buildComercialBannerA11yProps('error')}><p>{errorMessage(listQuery.error)}</p>{isComercialRetryableHttpError(listQuery.error) && <Button variant="outline" aria-label={comercialActionAriaLabel('retry')} data-testid="orcamento-list-retry" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button>}</div> : listView === 'empty' ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500" data-testid="orcamento-list-empty" data-empty-filtered={listHasActiveFilters ? 'true' : 'false'}><FilePlus2 className="w-10 h-10 mb-2" /><p>{listEmptyMessage}</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell><span className="inline-flex items-center gap-1">{date(row.validade_em)}{isOrcamentoValidadeExpirada(row.validade_em) && <Badge variant="destructive">Expirado</Badge>}</span></TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" aria-label={`Visualizar orçamento ${row.numero}`} onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>{canEdit(row) && <Button size="icon" variant="ghost" title="Editar" aria-label={`Editar orçamento ${row.numero}`} onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" aria-label={comercialActionAriaLabel('cancelar', { entityLabel: 'orçamento', numero: row.numero })} onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}
     <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={listQuery.isFetching} />
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Os totais serão conferidos novamente pelo servidor.</DialogDescription></DialogHeader>
-      {(mastersQuery.isLoading || mastersQuery.isError) && <Alert {...buildComercialBannerA11yProps(mastersQuery.isError ? 'error' : 'loading')} variant={mastersQuery.isError ? 'destructive' : 'default'} className="mb-3" data-testid="orcamento-masters-form-banner"><AlertCircle className="h-4 w-4" /><AlertDescription className="flex flex-wrap items-center gap-2"><span>{mastersBannerText}</span>{mastersQuery.isError && <Button type="button" size="sm" variant="outline" aria-label={comercialActionAriaLabel('retry')} onClick={() => mastersQuery.refetch()}><RefreshCw className="w-4 h-4 mr-1" />Tentar novamente</Button>}</AlertDescription></Alert>}
+      {(mastersQuery.isLoading || mastersQuery.isError) && <Alert {...buildComercialBannerA11yProps(mastersQuery.isError ? 'error' : 'loading')} variant={mastersQuery.isError ? 'destructive' : 'default'} className="mb-3" data-testid="orcamento-masters-form-banner" data-retryable={mastersQuery.isError && isComercialRetryableHttpError(mastersQuery.error) ? 'true' : 'false'}><AlertCircle className="h-4 w-4" /><AlertDescription className="flex flex-wrap items-center gap-2"><span>{mastersBannerText}</span>{mastersQuery.isError && isComercialRetryableHttpError(mastersQuery.error) && <Button type="button" size="sm" variant="outline" aria-label={comercialActionAriaLabel('retry')} data-testid="orcamento-masters-form-retry" onClick={() => mastersQuery.refetch()}><RefreshCw className="w-4 h-4 mr-1" />Tentar novamente</Button>}</AlertDescription></Alert>}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => { void changeClienteEmpresa(v); }} disabled={mastersBlocked || clientePickerState === 'denied'}><SelectTrigger id="orc-cliente" data-testid="orcamento-cliente-picker" data-picker-state={clientePickerState}><SelectValue placeholder={formatMasterPickerPlaceholder(clientePickerState, 'cliente')} /></SelectTrigger><SelectContent>{clientePickerRows.map((item) => <SelectItem key={item.id} value={item.id} data-inactive={item.ativo === false || item._inactiveSelection ? 'true' : 'false'}>{formatMasterPickerOptionLabel(item, { labelFn: (row) => clienteLabel(row.id) })}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)} disabled={mastersBlocked || condicaoPickerState === 'denied' || resolvingCondicao}><SelectTrigger id="orc-condicao" data-testid="orcamento-condicao-picker" data-picker-state={condicaoPickerState}><SelectValue placeholder={resolvingCondicao ? 'Resolvendo...' : formatMasterPickerPlaceholder(condicaoPickerState, 'condição')} /></SelectTrigger><SelectContent>{condicaoPickerRows.map((item) => <SelectItem key={item.id} value={item.id} data-inactive={item.ativo === false || item._inactiveSelection ? 'true' : 'false'}>{formatMasterPickerOptionLabel(item)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} aria-invalid={Boolean(validadeHint && form.validade_em)} /><p className={`text-xs mt-1 ${validadeHint && form.validade_em ? 'text-amber-700' : 'text-slate-500'}`} data-action="Comercial.orcamento.validade-hint">{validadeHint || 'Proposta válida até o meio-dia desta data (servidor bloqueia se expirada).'}</p></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
       {(clienteInactiveHint || condicaoInactiveHint || produtoInactiveHint) && <Alert {...buildComercialBannerA11yProps('polite')} data-testid="orcamento-inactive-master-hint" data-action="Comercial.master-inactive-kept"><AlertCircle className="h-4 w-4" /><AlertDescription>{[clienteInactiveHint, condicaoInactiveHint, produtoInactiveHint].filter(Boolean).join(' ')}</AlertDescription></Alert>}
       {condicaoSnapshot?.parcelas?.length > 0 && <div className="border rounded-md p-3 space-y-2 bg-white" data-action="Comercial.condicao-snapshot-preview" data-testid="orcamento-condicao-snapshot" data-persistido={condicaoSnapshot.persistido ? 'true' : 'false'}><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Resolução: {condicaoSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{condicaoSnapshot.nome || condicaoSnapshot.codigo || condicaoSnapshot.id}</Badge>{condicaoSnapshot.persistido && <Badge variant="secondary">Persistido</Badge>}<span className="text-xs text-slate-500">{condicaoSnapshot.persistido ? 'Snapshot recarregado do servidor após salvar (id+codigo+nome+parcelas).' : 'Pré-visualização — ao salvar, o servidor persiste snapshot id+nome+parcelas (não-retroativo).'}</span></div><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead></TableRow></TableHeader><TableBody>{condicaoSnapshot.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.dias}-${parcela.percentual}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell></TableRow>)}</TableBody></Table>{parcelaScheduleUi.mode === 'template' && <p className="text-xs text-slate-500" data-testid="orcamento-parcela-template-hint">{parcelaScheduleUi.hint}</p>}</div>}
@@ -668,6 +677,7 @@ const convertToPedido = async () => {
           <Button type="button" variant="secondary" onClick={applyLastSimulacao} disabled={!lastSimulation || simulating || submitting}>Aplicar preços da simulação</Button>
         </div>
         <p className="text-xs text-slate-500">A simulação usa preço e parcelas do servidor; ao salvar, o backend reaplica promoção/desconto/total (fail-closed). Totais do formulário são rascunho até a simulação.</p>
+        {simularHttpError && <Alert {...buildComercialBannerA11yProps('error')} variant="destructive" data-testid="orcamento-simular-network-error" data-retryable="true" data-action="Comercial.simular-venda.retry"><AlertCircle className="h-4 w-4" /><AlertDescription className="flex flex-wrap items-center gap-2"><span>{buildSimularHttpErrorBannerText(simularHttpError, { entityLabel: 'Orçamento' })}</span><Button type="button" size="sm" variant="outline" aria-label={comercialActionAriaLabel('retry')} data-testid="orcamento-simular-retry" onClick={() => { void runSimularVenda(); }} disabled={simulating || submitting || itemLinesGate.blockSimular}><RefreshCw className="w-4 h-4 mr-1" />Tentar novamente</Button></AlertDescription></Alert>}
         {simulacaoDirtyGate.dirty && <Alert {...buildComercialBannerA11yProps('error')} variant="destructive" data-testid="orcamento-simulacao-dirty" data-action="Comercial.simular-venda.dirty"><AlertCircle className="h-4 w-4" /><AlertDescription>{simulacaoDirtyGate.hint}</AlertDescription></Alert>}
         {simulacaoPreview && <div className="space-y-2" data-testid="orcamento-parcela-schedule-preview" data-schedule-mode={parcelaScheduleUi.mode}>
           <div className="flex flex-wrap gap-2 text-sm">
