@@ -5,7 +5,7 @@
 | Choice | **B** Offline/network retry — banner + Retry explícito em list/masters/simular (rede/5xx); reusa `formatComercialHttpError`; fail-closed (sem empty silencioso); 4xx sem retry |
 | Branch | `cursor/comercial360-onda3-network-retry-392b` |
 | Base | `origin/cursor/comercial360-onda3-a11y-live-392b` tip `33c3b456` (#150) |
-| Tip | `bc9abbff` (`bc9abbffd08d43f351acbf3eab2eaf1e2a9463a5`) · feat `93bf4b56` |
+| Tip | `050e8eff` (`050e8eff3a8d854995c97ef35e7f1c114c5145e1`) · feat `93bf4b56` |
 | Draft PR | BLOCKED createPullRequest 403 — ManagePullRequest indisponível; abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-a11y-live-392b...cursor/comercial360-onda3-network-retry-392b?expand=1 base `#150` |
 | Escopo | `isComercialRetryableHttpError` + `buildSimularHttpErrorBannerText`; Retry gated em list/masters; banner simular reinvoca `runSimularVenda`; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `retry rede/5xx` + preserva **Pedido backend HTTP is active** |

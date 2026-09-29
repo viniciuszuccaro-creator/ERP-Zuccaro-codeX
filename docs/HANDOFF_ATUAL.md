@@ -5,7 +5,7 @@
 | Choice | **B** Offline/network retry — list/masters/simular rede/5xx + banner Retry |
 | Branch | `cursor/comercial360-onda3-network-retry-392b` |
 | Base | `#150` tip `33c3b456` (`cursor/comercial360-onda3-a11y-live-392b`) |
-| Tip | `bc9abbff` (`bc9abbffd08d43f351acbf3eab2eaf1e2a9463a5`) · feat `93bf4b56` |
+| Tip | `050e8eff` (`050e8eff3a8d854995c97ef35e7f1c114c5145e1`) · feat `93bf4b56` |
 | Draft PR | BLOCKED createPullRequest 403 — ManagePullRequest indisponível; [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-a11y-live-392b...cursor/comercial360-onda3-network-retry-392b?expand=1) base `#150` |
 | Meta | retry rede/5xx + **Pedido backend HTTP is active** |
 | Colisão | margem #47; PDF/anexos #52–62; stack #126–#150 |
