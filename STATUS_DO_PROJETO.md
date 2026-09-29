@@ -5,8 +5,8 @@
 | Choice | **A** Pedido crédito validation UI fail-closed — limite/disponível/bloqueio + Salvar gate |
 | Branch | `cursor/comercial360-onda4-credito-ui-failclosed-392b` |
 | Base | `origin/cursor/comercial360-onda4-dirty-abandon-392b` tip `6ace0c1e` |
-| Tip | *(após push)* |
-| Draft PR | *(após ManagePullRequest / compare)* |
+| Tip | `641d04f8` (`641d04f886e35c422bfd34af528137723b883684`) |
+| Draft PR | ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` — abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-dirty-abandon-392b...cursor/comercial360-onda4-credito-ui-failclosed-392b?expand=1 base dirty-abandon |
 | Escopo | `evaluatePedidoCreditoUiGate` + `resolvePedidoCreditoSnapshot` / `canAprovarCreditoPedido` em `pedidoFaturamentoPolicy`; melhora `ValidacaoCredito`; wire `PedidoCanonicoPanel` (display + disable/guard Salvar); meta note; **sem migration** (não copia 032/#67) |
 | Meta | `UI crédito Pedido fail-closed` + preserva **Pedido backend HTTP is active** |
 | Testes | `pedido-faturamento-policy` + `pedido-frontend-integration` + `pedido-ui-policy` **20/20**; `git diff --check` PASS |
