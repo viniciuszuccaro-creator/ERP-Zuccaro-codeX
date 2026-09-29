@@ -10,6 +10,10 @@ import { isHttpCliente360Enabled } from '@/api/base44Client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  buildClienteDisplayLabel,
+  canOpenCentralCliente360Http,
+} from './comercialClienteHttpUiPolicy';
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
@@ -57,6 +61,7 @@ function BlockCard({ title, icon: Icon, block, renderRow }) {
  * Composição Visual da Central Cliente 360 sobre o DetalhesCliente existente.
  * Opt-in: VITE_ERP_BACKEND=http + VITE_ERP_HTTP_CLIENTE_360=true (só após prova supabase_user).
  * Exige Bearer da sessão autenticada — sem token a query não dispara.
+ * RBAC fail-closed quando hasPermission é fornecido (Cadastros.cliente.visualizar).
  */
 export default function CentralCliente360Panel({
   clienteId,
@@ -65,10 +70,20 @@ export default function CentralCliente360Panel({
   actorId,
   actorEmail,
   token,
+  hasPermission,
 }) {
   const sessionToken = typeof token === 'string' ? token.trim() : '';
-  const enabled = canLoadCentralCliente360({
+  const scopeOk = canLoadCentralCliente360({
     flag: isHttpCliente360Enabled,
+    clienteId,
+    groupId,
+    empresaId,
+    actorId,
+    token: sessionToken,
+  });
+  const enabled = canOpenCentralCliente360Http({
+    flag: isHttpCliente360Enabled,
+    hasPermission,
     clienteId,
     groupId,
     empresaId,
@@ -110,6 +125,17 @@ export default function CentralCliente360Panel({
         <AlertCircle className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800">
           Central 360 exige sessão autenticada (Bearer). Faça login com supabase_user antes de carregar.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (typeof hasPermission === 'function' && scopeOk && !enabled) {
+    return (
+      <Alert className="mb-4 border-amber-200 bg-amber-50" data-permission="Cadastros.cliente.visualizar" data-central360-rbac="denied">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Sem permissão para visualizar Cliente nesta Central 360.
         </AlertDescription>
       </Alert>
     );
@@ -158,6 +184,7 @@ export default function CentralCliente360Panel({
   const identity = payload?.identity;
   const blocks = payload?.blocks || {};
   const meta = payload?.meta || {};
+  const identityTitle = buildClienteDisplayLabel(identity, identity?.codigo || '');
 
   return (
     <div className="mb-6 space-y-3" data-permission="Cadastros.cliente.visualizar" data-central360="true">
@@ -165,6 +192,7 @@ export default function CentralCliente360Panel({
         <div>
           <h3 className="font-semibold text-slate-900">Central Cliente 360</h3>
           <p className="text-xs text-slate-500">
+            {identityTitle ? `${identityTitle} · ` : ''}
             Composição canônica · PII {meta.sensitiveFields === 'revealed' ? 'revelado' : 'mascarado'}
             {meta.requestId ? ` · req ${String(meta.requestId).slice(0, 8)}` : ''}
           </p>
@@ -193,7 +221,11 @@ export default function CentralCliente360Panel({
           renderRow={(row) => (
             <>
               <span className="font-mono text-xs">{String(row.empresa_id).slice(0, 8)}</span>
-              <Badge variant="outline">{row.situacao_comercial}</Badge>
+              <div className="flex items-center gap-1">
+                <Badge variant="outline">{row.situacao_comercial}</Badge>
+                {row.bloqueado === true ? <Badge variant="secondary">bloqueado</Badge> : null}
+                {row.elegivel_operacao === true ? <Badge variant="default">elegível</Badge> : null}
+              </div>
             </>
           )}
         />
@@ -226,7 +258,7 @@ export default function CentralCliente360Panel({
           renderRow={(row) => (
             <>
               <span className="font-mono">{row.numero}</span>
-              <span>{money(row.total)}</span>
+              <span className="font-semibold">{money(row.total)}</span>
             </>
           )}
         />
@@ -237,13 +269,13 @@ export default function CentralCliente360Panel({
           renderRow={(row) => (
             <>
               <span className="font-mono">{row.numero}</span>
-              <span>{money(row.total)}</span>
+              <span className="font-semibold">{money(row.total)}</span>
             </>
           )}
         />
         <BlockCard
           title="CRM"
-          icon={Building2}
+          icon={FileText}
           block={blocks.crm}
           renderRow={() => null}
         />

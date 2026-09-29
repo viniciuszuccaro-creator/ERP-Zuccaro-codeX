@@ -116,7 +116,7 @@ function fixture(overrides: {
     } as any,
     {
       get: async () => overrides.condicao === undefined
-        ? { id: condicaoId, ativo: true }
+        ? { id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }
         : overrides.condicao,
     } as any,
     {
@@ -253,7 +253,7 @@ test('update revalida todas as referencias sem persistir falha', async () => {
         { getEmpresaLinkById: async () => item.overrides.cliente === null ? null : { id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true } } as any,
         { getById: async () => item.overrides.produto === null ? null : { id: produtoId, ativo: true, unidade_medida_id: unidadeId } } as any,
         { getById: async () => item.overrides.unidade === null ? null : { id: unidadeId, ativo: true } } as any,
-        { get: async () => item.overrides.condicao === null ? null : { id: condicaoId, ativo: true } } as any,
+        { get: async () => item.overrides.condicao === null ? null : { id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] } } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
       assert.equal(await code(invalidService.update(ctx, validCreated.id, { ...payload, itens: [{ ...payload.itens[0], quantidade: '9' }] })), item.expected);
@@ -270,7 +270,7 @@ test('update revalida todas as referencias sem persistir falha', async () => {
     { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as any,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: '66666666-6666-4666-8666-666666666666' }) } as any,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,
-    { get: async () => ({ id: condicaoId, ativo: true }) } as any,
+    { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
   assert.equal(await code(invalidService.update(ctx, created.id, payload)), 'ORCAMENTO_UNIDADE_INVALIDA');

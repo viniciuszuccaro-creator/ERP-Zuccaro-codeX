@@ -67,6 +67,8 @@ function fixture(options: {
     service.condicoes = {
       get: async () => ({
         id: condicaoId,
+        codigo: parcelas.every((p) => p.dias === 0) ? 'AVISTA' : 'COND-PRAZO',
+        nome: parcelas.every((p) => p.dias === 0) ? 'À vista' : 'A prazo',
         ativo: true,
         parcelas: parcelas.map((p, i) => ({
           id: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa${i}`,

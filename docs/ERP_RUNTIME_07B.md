@@ -4,7 +4,9 @@
 **Branch:** `cursor/erp-runtime-07b-tabela-preco-392b`  
 **Baseline 06B:** `67686298be2fa125966e714b1cf20759a7991765`  
 **Software/API DEV oficial:** permanece `ERP-RUNTIME-06B` até promoção futura.  
-**Frontend HTTP:** `false`. TabelaPreco **não** entra em `HTTP_PILOT_ENTITIES`.
+**Frontend HTTP:** `true` (piloto Onda 2). TabelaPreco **entra** em `HTTP_PILOT_ENTITIES`
+e `httpEntities`; Orçamento/Pedido consomem listagem/`preco-cliente` via cliente HTTP
+canônico com tenant nos headers e RBAC fail-closed.
 
 Especificação: `docs/ERP_RUNTIME_07A_ESPECIFICACAO_TABELA_PRECO.md` (PR #27).  
 Diagnóstico: `docs/ERP_RUNTIME_07_DIAGNOSTICO.md` (PR #26).  
@@ -62,14 +64,16 @@ Somente `server/migrations/013_tabelas_preco.sql`. Migrations 001–012 imutáve
 
 ### API
 
-Base `/api/v1/tabelas-preco` (+ empresas, padrão, itens, restore).  
+Base `/api/v1/tabelas-preco` (+ empresas, padrão, itens, restore, `preco-cliente`).  
 ClienteEmpresa set/clear `tabela_preco_id` na API existente.  
-Meta: `runtime: ERP-RUNTIME-07B`, `tabelaPreco.frontendHttp: false`.
+Meta: `runtime: ERP-RUNTIME-08B`, `tabelaPreco.frontendHttp: true` (piloto).
 
 ## Fora de escopo
 
 Pedido, Orçamento, Estoque, pagamento, Vendedor, Contato, faixas, reajuste,
-cópia, PriceBrain, Base44 cutover, frontend HTTP, VPS, merge.
+cópia, PriceBrain, Base44 cutover, VPS, merge.
+(Frontend HTTP de TabelaPreco ativado no piloto Onda 2 — listagem + preco-cliente;
+snapshot persistido de preço por item em vendas históricas permanece fora.)
 
 ## Testes
 
