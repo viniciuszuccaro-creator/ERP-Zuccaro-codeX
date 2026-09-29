@@ -1,3 +1,15 @@
+## OPINIÃO CURSOR — #150 CI SUCCESS + #151 network-retry (2026-09-29T19:09Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #149 | `50dc8b5c` | SUCCESS | pickers inativos |
+| #150 | `33c3b456` | **SUCCESS** | a11y aria-live |
+| #151 | `cursor/comercial360-onda3-network-retry-392b` | pendente | retry rede/5xx |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #149 CI SUCCESS + #150 a11y-live (2026-09-29T19:01Z)
 
 | PR | Tip | CI | Escopo |
