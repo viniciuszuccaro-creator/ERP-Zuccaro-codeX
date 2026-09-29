@@ -63,6 +63,35 @@ export function orcamentoValidadeHint(validadeEm, now = new Date()) {
   return null;
 }
 
+/**
+ * Hint quando o Orçamento tem snapshots comerciais incompletos (pós-031).
+ * Legado sem nenhum campo de snapshot → null (servidor ainda resolve condição ao vivo).
+ * Espelha `orcamentoConvertSnapshotGapHint` do backend.
+ */
+export function orcamentoConvertSnapshotHint(row) {
+  if (!row) return null;
+  const condCodigo = String(row.condicao_pagamento_codigo_snapshot || '').trim();
+  const condNome = String(row.condicao_pagamento_nome_snapshot || '').trim();
+  const parcelas = row.condicao_pagamento_parcelas_snapshot;
+  const hasCondicaoField = Boolean(condCodigo || condNome || Array.isArray(parcelas));
+  if (hasCondicaoField && (!condCodigo || !condNome || !Array.isArray(parcelas) || parcelas.length < 1)) {
+    return 'Snapshots de condição incompletos — edite e salve o orçamento antes de converter.';
+  }
+  const tabCodigo = String(row.tabela_preco_codigo_snapshot || '').trim();
+  const tabNome = String(row.tabela_preco_nome_snapshot || '').trim();
+  const tabelaId = String(row.tabela_preco_id || '').trim();
+  if ((tabelaId || tabCodigo || tabNome) && (!tabCodigo || !tabNome)) {
+    return 'Snapshots de tabela de preço incompletos — edite e salve o orçamento antes de converter.';
+  }
+  if (row.promocao_aplicada === true) {
+    const bps = Number(row.promocao_bps);
+    if (!Number.isInteger(bps) || bps <= 0 || bps > 10000) {
+      return 'Snapshot de promoção inconsistente — edite e salve o orçamento antes de converter.';
+    }
+  }
+  return null;
+}
+
 export function buildOrcamentoPayload(form, options = {}) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.validade_em) throw new Error('Preencha cliente, condição e validade.');
   if (isOrcamentoValidadeExpirada(form.validade_em, options.now)) {

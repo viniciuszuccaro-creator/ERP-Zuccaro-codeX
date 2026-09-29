@@ -398,7 +398,10 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.equal(meta.pedido?.tabelaSnapshot, true);
     assert.equal(meta.orcamento?.validadeFailClosed, true);
     assert.equal(meta.pedido?.convertValidadeFailClosed, true);
+    assert.equal(meta.orcamento?.convertSnapshotFailClosed, true);
+    assert.equal(meta.pedido?.convertSnapshotFailClosed, true);
     assert.match(String(meta.note || ''), /validade_em fail-closed/);
+    assert.match(String(meta.note || ''), /conversao Orçamento→Pedido copia\/verifica snapshots fail-closed/);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {
