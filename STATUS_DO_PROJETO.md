@@ -1,3 +1,16 @@
+## LOTE CURSOR — #116 Onda 2 UI simular-venda (2026-09-29T14:19Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#116** (base #114) |
+| Branch | `cursor/comercial360-onda2-simular-ui-392b` |
+| Tip | `00bd7c85` (feat `689bbaee`) |
+| Testes | 12/12 PASS |
+
+Wiring UI Orçamento/Pedido → `simular-venda` + resolve condição; sem migration; sem #104/#48.
+
+---
+
 ## COORDENAÇÃO CURSOR — mapeador #48 canônico `ee0dc10a` (2026-09-29T13:27Z)
 
 | PR | SHA | Situação |

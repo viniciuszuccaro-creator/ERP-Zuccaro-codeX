@@ -1,3 +1,9 @@
+## LOTE CURSOR — #116 Onda 2 UI simular-venda (2026-09-29T14:19Z)
+
+PR **#116** tip `00bd7c85` (base #114). UI canônica Orçamento/Pedido + policy fail-closed. 12/12 testes. CI em andamento.
+
+---
+
 ## COORDENAÇÃO — mapeador #48 canônico `ee0dc10a` (2026-09-29T13:27Z)
 
 **#48** `ee0dc10a` canônico (CI SUCCESS, 17/17). **#110** `5799038e` SUPERSEDED (não mergear). **#114** Onda 2 CI SUCCESS.
