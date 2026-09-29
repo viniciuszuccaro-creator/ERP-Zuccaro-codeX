@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #129 CI SUCCESS + #130 simular-persist (2026-09-29T16:18Z)
+
+| Campo | Valor |
+|---|---|
+| #129 | tip `6f42f061` — CI **SUCCESS** (promoção snapshot 030) |
+| #130 | `cursor/comercial360-onda3-simular-persist-392b` — simular→persist desconto/total; base #129; sem migration |
+| Stack verde | #114→#124→#126→#127→#129 (+#130 CI pendente) |
+| Próximo | TabelaPreço snapshot **031** **ou** Onda 4 sem colisão 025–028 |
+
+---
+
 ## OPINIÃO CURSOR — #126/#127 CI SUCCESS + #129 promoção (2026-09-29T16:08Z)
 
 | Campo | Valor |
