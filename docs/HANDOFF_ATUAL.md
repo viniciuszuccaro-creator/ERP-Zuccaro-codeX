@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Pedido Imprimir/PDF (2026-09-29T22:50Z)
+
+Tip empilhada em #165: Pedido Imprimir/PDF canônico fail-closed (`gerarPDFPedido` + gate).
+#165 validade CI SUCCESS. Sem merge/VPS. Continuando.
+
+---
+
 ## AUTÔNOMO — #165 validade min UX (2026-09-29T22:45Z)
 
 Tip empilhada em #164: Orçamento validade obrigatória + min=hoje fail-closed.

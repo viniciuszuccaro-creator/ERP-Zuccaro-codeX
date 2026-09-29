@@ -593,6 +593,10 @@ export function comercialActionAriaLabel(action, options = {}) {
       return `Cancelar ${entity}${numero}`;
     case 'resumo':
       return `Abrir resumo texto do ${entity}${numero}`;
+    case 'imprimir':
+    case 'print':
+    case 'pdf':
+      return `Imprimir PDF do ${entity}${numero}`;
     case 'converter':
     case 'convert':
       return busy ? 'Convertendo orçamento em pedido' : 'Converter orçamento em pedido';

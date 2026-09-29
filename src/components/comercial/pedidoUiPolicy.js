@@ -35,6 +35,24 @@ export const PEDIDO_STATUS_LABELS = {
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',
 };
 
+
+/** Gate fail-closed para Imprimir/PDF do Pedido canônico (contexto + permissão + documento). */
+export function evaluatePedidoPrintPdfUiGate({ row, groupId, empresaId, canPrint } = {}) {
+  if (!groupId || !empresaId) {
+    return { blockPrint: true, mode: 'context', hint: 'Selecione grupo e empresa antes de imprimir.' };
+  }
+  if (!canPrint) {
+    return { blockPrint: true, mode: 'permission', hint: 'Sem permissão para imprimir pedido.' };
+  }
+  if (!row || !(row.numero || row.numero_pedido)) {
+    return { blockPrint: true, mode: 'missing', hint: 'Pedido indisponível para impressão (fail-closed).' };
+  }
+  if (!Array.isArray(row.itens)) {
+    return { blockPrint: true, mode: 'invalid', hint: 'Itens do pedido indisponíveis (fail-closed).' };
+  }
+  return { blockPrint: false, mode: 'ready', hint: null };
+}
+
 export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') {
   if (typeof hasPermission !== 'function') return false;
   if (!hasPermission('Comercial', 'pedido', action)) return false;

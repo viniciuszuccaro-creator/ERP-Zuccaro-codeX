@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip #166 Pedido Imprimir/PDF canônico (2026-09-29T22:50Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido Imprimir/PDF** canônico (espelha Orçamento `gerarPDFOrcamento`; melhora `gerarPDFPedido` legado) |
+| Branch | `cursor/comercial360-onda5-pedido-print-392b` |
+| Base | tip #165 `50c2da0f` (`cursor/comercial360-onda5-validade-min-ux-392b` CI SUCCESS) |
+| Escopo | `gerarPDFPedido` escape+contrato `numero`/itens; `evaluatePedidoPrintPdfUiGate`; botão Imprimir/PDF no detalhe `PedidoCanonicoPanel`; meta `printPdfUiFailClosed`; **sem migration** / sem jspdf |
+| Colisão | anexos #59–67; CreditPort 032; sem Codex/merge/VPS; sem 025–028 |
+| Próximo | CostPort BFF / WhatsApp-share Pedido / anexo sem colisão |
+
+Diagnóstico: tip #165 verde; canônico tinha só resumo texto; PDF Orçamento já existia; `gerarPDFPedido` legado usava `numero_pedido` e não era chamado.
+
+---
+
 ## AUTÔNOMO — #165 validade min UX (2026-09-29T22:45Z)
 
 Tip empilhada em #164: Orçamento validade obrigatória + min=hoje fail-closed.
