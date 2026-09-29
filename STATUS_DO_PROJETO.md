@@ -11771,4 +11771,10 @@ Checklist inicial:
 
 - O caminho individual do adaptador agora valida opcoes, linhas e indice antes de destruturar campos ou ler `length`; Proxy no array e getter herdado em opcoes sao recusados sem executar armadilhas. O lote agregado conserva a validacao anterior.
 - Teste de regressao direto e suite focada do adaptador: 29/29 PASS; audit baseline, lint, build e `git diff --check` PASS. A suite `legado-*` no Windows ainda inclui quatro testes de inventario dependentes da execucao Bash. O typecheck global continua falhando em erros preexistentes de Base44/JSX fora deste diff; nao foi alterado para mascarar o baseline. A CI Linux do novo HEAD e o parecer integrado permanecem obrigatorios.
-- Nenhum dado do HD foi lido ou transferido; a #141 segue draft sem merge, migration DEV ou mudanca na VPS/3080.
+- Nenhum registro bruto do HD foi lido ou transferido; a #141 segue draft sem merge, migration DEV ou mudanca na VPS/3080.
+
+## Evidencia sanitizada de identidade legada (2026-09-29)
+
+- Consulta somente leitura de resumos privados ja existentes, sem varrer novamente o backup: 3 aliases com mapa aprovado, 3 decisoes confirmadas e 0 pendentes nesse mapa; `importAuthorized=false` e dry-run com 0 escritas. O relatorio SQL de identidade e distinto e ainda aponta 3 vinculos nao resolvidos em 5 linhas.
+- Aprovacao dos aliases nao comprova a empresa proprietaria de cada Pedido, movimento de estoque, titulo ou nota. O adaptador permanece fail-closed; conjunto operacional sem coluna/origem e vinculo juridico comprovados vai para quarentena. Nenhum valor, CNPJ, registro ou arquivo privado foi copiado para o GitHub.
+- Proximo gate: reconciliar os 3 vinculos SQL nao resolvidos e comprovar, por conjunto operacional, origem e Empresa juridica; depois validar staging isolado e plano de reversao antes de solicitar autorizacao de importacao real.
