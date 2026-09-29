@@ -1,10 +1,34 @@
+## LOTE CURSOR — CI fix #126 stub à-vista + snapshot condição (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — fixture `comercial-condicao-avista-http` passa a devolver `codigo`+`nome` (+parcelas) no stub de `condicoes.get`, alinhado aos outros HTTP harnesses; path de produção fail-closed intacto |
+| Causa | create Orçamento exige snapshot CondicaoPagamento (`codigo`+`nome`+parcelas); stub à-vista só tinha `id`+`ativo`+parcelas → 422 `ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO` antes de 403/201/`DESCONTO_INVALIDO` |
+| Testado | **SIM** — `comercial-condicao-avista-http` 4/4 + `comercial-condicao-avista` 7/7 + `runtime-onda3-condicao-snapshot` 7/7 + desconto/margem HTTP 12/12 PASS |
+| CI | tip pós-fix empurrado; aguardar verde em #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Propagação | tip mergeado em `#127` `cursor/comercial360-onda3-produto-http-392b` |
+
+### Arquivos
+
+- `server/tests/comercial-condicao-avista-http.test.ts`
+
+### Próximo
+
+- Aguardar CI #126; empilhar tip no #127; sem merge/VPS.
+
+---
+
 ## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — choice **A**: migration aditiva `029_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
 | Testado | **SIM** — runtime-onda3-condicao-snapshot (+migration) + onda2-preco + 08c orcamento + 09 pedido + runtime01/07b + desconto/margem HTTP + UI policy (94/94 PASS); `server` typecheck PASS; `git diff --check` PASS |
-| CI | em andamento / re-run após renomear 025→029 |
+| CI | **FAIL** tip `2e221def` — 4× à-vista HTTP (stub sem codigo/nome) → corrigido no lote CI fix acima |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
