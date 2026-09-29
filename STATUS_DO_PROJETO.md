@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-parcela-schedule-ui-392b` |
 | Base | `origin/cursor/comercial360-onda3-masters-banner-392b` tip `f5009c7c` (#140) |
 | Tip | `ad927286` (`ad927286f533379abd7c7aa5abe70a2ac4354193`) — docs tip `bc5c4595`+ |
-| Draft PR | **BLOCKED** createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Draft PR | **#142** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/142 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` |
 | Escopo | Agenda read-only do servidor (ordem/dias/%/valor/vencimento) após simular; template #/dias/% pós-condição; fail-closed se agenda ausente/inválida; reusa `comercialParcelaSchedulePolicy` via resposta simular; `OrcamentosTab` + `PedidoCanonicoPanel`; sem migration |
