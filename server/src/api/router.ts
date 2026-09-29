@@ -1243,7 +1243,7 @@ export function createApiRouter(deps: ApiDeps) {
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Produto frontendHttp piloto ativo (list/get Comercial); ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas) e refs de promocao fail-closed; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'Produto frontendHttp piloto ativo (list/get Comercial); ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas), refs de promocao e desconto/total aplicados no servidor (simular-venda); Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1310,6 +1310,7 @@ export function createApiRouter(deps: ApiDeps) {
         precoServidor: true,
         parcelasSchedule: true,
         promocaoFailClosed: true,
+        persistOnWrite: true,
       },
       orcamento: {
         backendHttp: true,
@@ -1322,6 +1323,7 @@ export function createApiRouter(deps: ApiDeps) {
         cancelByState: true,
         condicaoSnapshot: true,
         promocaoSnapshotFailClosed: true,
+        simularPersistFailClosed: true,
       },
       pedido: {
         backendHttp: true,
@@ -1335,6 +1337,7 @@ export function createApiRouter(deps: ApiDeps) {
         statusHistory: true,
         condicaoSnapshot: true,
         promocaoSnapshotFailClosed: true,
+        simularPersistFailClosed: true,
       },
     });
   });

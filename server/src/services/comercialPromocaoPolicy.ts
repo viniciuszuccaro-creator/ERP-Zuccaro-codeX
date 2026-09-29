@@ -140,6 +140,7 @@ export function assertDescontoCompativelComPromocao<T extends PromocaoItem>(
  * Snapshot de refs da promoção para Orçamento/Pedido.
  * Ausência de payload → snapshot vazio (sem promoção).
  * Payload presente → exige config ativa + cupom/bps + desconto de linha compatível.
+ * Preferir `applyPromocaoOnPersist` no create/update (servidor aplica o desconto).
  */
 export function buildPromocaoDocumentoSnapshot(options: {
   promocao?: PromocaoPayloadRef | null;
@@ -157,6 +158,64 @@ export function buildPromocaoDocumentoSnapshot(options: {
     promocao_aplicada: true,
     promocao_bps: authorized.promocaoBps,
     promocao_cupom: authorized.cupom,
+  };
+}
+
+function lineSubtotalMicros(item: PromocaoItem): bigint {
+  return (toMicros(item.quantidade) * toMicros(item.preco_unitario)) / MICROS;
+}
+
+/**
+ * Remove a parcela promocional já embutida no desconto de linha (idempotente com UI pós-simular).
+ * Se o desconto atual for menor que o promo esperado, preserva o valor como desconto manual base.
+ */
+export function stripPromotionalPortionFromItems<T extends PromocaoItem>(
+  items: T[],
+  promocaoBps: number,
+): T[] {
+  const bps = Math.trunc(promocaoBps);
+  if (!Number.isFinite(bps) || bps <= 0) return items;
+  return items.map((item) => {
+    const line = lineSubtotalMicros(item);
+    const promo = (line * BigInt(bps)) / 10000n;
+    const current = toMicros(item.desconto ?? '0');
+    const base = current >= promo ? current - promo : current;
+    return { ...item, desconto: fmtMoney(base) };
+  });
+}
+
+/**
+ * Persistência Orçamento/Pedido: servidor aplica promoção (mesma regra do simular-venda).
+ * Idempotente se a UI já tiver aplicado o desconto via simulação.
+ * Sem payload de promoção → itens intactos + snapshot vazio (desconto manual segue alçada).
+ */
+export function applyPromocaoOnPersist<T extends PromocaoItem>(options: {
+  promocao?: PromocaoPayloadRef | null;
+  config: ComercialPromocaoConfig | null | undefined;
+  items: T[];
+}): { items: T[]; snapshot: PromocaoDocumentoSnapshot } {
+  if (!options.promocao) {
+    return { items: options.items, snapshot: emptyPromocaoDocumentoSnapshot() };
+  }
+  const authorized = assertPromocaoAutorizada({
+    promocaoBps: options.promocao.bps,
+    config: options.config,
+    cupom: options.promocao.cupom,
+  });
+  const baseItems = stripPromotionalPortionFromItems(options.items, authorized.promocaoBps);
+  const applied = aplicarDescontoPromocional({
+    items: baseItems,
+    promocaoBps: authorized.promocaoBps,
+    config: options.config,
+    cupom: authorized.cupom,
+  });
+  return {
+    items: applied.items,
+    snapshot: {
+      promocao_aplicada: true,
+      promocao_bps: applied.promocaoBps,
+      promocao_cupom: authorized.cupom,
+    },
   };
 }
 

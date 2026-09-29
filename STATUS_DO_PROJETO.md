@@ -1,3 +1,46 @@
+## LOTE CURSOR — simular-venda → persist desconto/total (pós-#129) (2026-09-29T16:30Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **B** — servidor aplica promoção/desconto/total no create/update (fail-closed; UI não inventa totais) |
+| Implementado | **SIM** — `applyPromocaoOnPersist` (idempotente com UI pós-simular); wire Orçamento/Pedido; UI `mergeSimulacaoBeforeSave` + `resolveDisplayTotals`; sem migration nova |
+| Testado | **SIM** — promo snapshot 15/15 + runtime08c/simular/condição 19/19 + UI simulação 10/10 + orçamento/pedido UI 12/12 + runtime07b meta PASS; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `eef875b7` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-simular-persist-392b` |
+| Draft PR | **#130** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/130 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
+| Tip | `eef875b7` (feat `f51f021c`) |
+| Meta | note preserva **Pedido backend HTTP is active** + `simularPersistFailClosed` / `persistOnWrite` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe |
+
+### Arquivos reservados (Cursor — lote pós-#129)
+
+- `server/src/services/comercialPromocaoPolicy.ts` (`applyPromocaoOnPersist` / strip idempotente)
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-promocao-snapshot.test.ts` / `runtime08c-orcamento-http.test.ts`
+- `tests/comercial-simulacao-ui-policy.test.js`
+
+### Escopo
+
+- Sem migration: colunas 030 bastam; servidor reaplica promoção no write (mesmo contrato do `simular-venda`).
+- Idempotente: UI que já aplicou simulação não dobra desconto.
+- Totais do formulário: prioriza preview do servidor; payload continua sem `total` inventado.
+- Multiempresa/RBAC/auditoria preservados.
+
+### Próximo item independente restante
+
+- Snapshot código/nome TabelaPreco (**031** aditiva, evitar 025–028) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **este lote**.
+
+---
+
 ## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
 
 | Etapa | Estado |

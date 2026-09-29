@@ -32,8 +32,8 @@ import {
   buildCondicaoPagamentoDocumentoSnapshot,
 } from './comercialCondicaoSnapshot.js';
 import {
+  applyPromocaoOnPersist,
   assertPersistedPromocaoSnapshot,
-  buildPromocaoDocumentoSnapshot,
   type ComercialPromocaoConfigPort,
 } from './comercialPromocaoPolicy.js';
 import { z } from 'zod';
@@ -317,12 +317,12 @@ export class PedidoService {
       })
       : null;
     const { promocao: _ignored, ...rest } = data;
-    const promo = buildPromocaoDocumentoSnapshot({
+    const promo = applyPromocaoOnPersist({
       promocao: data.promocao,
       config: cfg,
       items: data.itens,
     });
-    return { ...rest, ...snapshot, ...promo };
+    return { ...rest, itens: promo.items, ...snapshot, ...promo.snapshot };
   }
 
   private normalizeMoney(value: string): string {
