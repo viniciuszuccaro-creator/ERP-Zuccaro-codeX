@@ -11,6 +11,40 @@ const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
 const TIPOS_EVIDENCIA = new Set(['cnpj', 'documento_fiscal']);
 const TIPOS_EVIDENCIA_OPERACAO = new Set(['coluna_empresa_origem', 'documento_fiscal']);
 
+export const exigirDadosSimples = (value, mensagem, visitados = new Set()) => {
+  if (typeof value === 'function') throw new Error(mensagem);
+  if (value === null || typeof value !== 'object') return;
+  if (utilTypes.isProxy(value) || visitados.has(value)) throw new Error(mensagem);
+  visitados.add(value);
+  const prototipo = Object.getPrototypeOf(value);
+  if (prototipo !== null && prototipo !== (Array.isArray(value) ? Array.prototype : Object.prototype)) {
+    throw new Error(mensagem);
+  }
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key === 'symbol') throw new Error(mensagem);
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !('value' in descriptor)) throw new Error(mensagem);
+    exigirDadosSimples(descriptor.value, mensagem, visitados);
+  }
+  visitados.delete(value);
+};
+
+const exigirOpcoesInertes = (opcoes) => {
+  if (!opcoes || typeof opcoes !== 'object' || Array.isArray(opcoes) || utilTypes.isProxy(opcoes)) {
+    throw new Error('Opcoes do staging dinamicas nao permitidas.');
+  }
+  const prototipo = Object.getPrototypeOf(opcoes);
+  if (prototipo !== Object.prototype && prototipo !== null) {
+    throw new Error('Opcoes do staging dinamicas nao permitidas.');
+  }
+  for (const key of Reflect.ownKeys(opcoes)) {
+    const descriptor = Object.getOwnPropertyDescriptor(opcoes, key);
+    if (typeof key !== 'string' || !descriptor || !('value' in descriptor)) {
+      throw new Error('Opcoes do staging dinamicas nao permitidas.');
+    }
+  }
+};
+
 const dadosInertes = (value, visitados = new WeakSet(), profundidade = 0) => {
   if (!value || typeof value !== 'object' || Array.isArray(value) || utilTypes.isProxy(value)) return false;
   if (profundidade > 4 || visitados.has(value)) return false;
@@ -85,6 +119,7 @@ export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, grou
 }
 
 export function reconciliarEscoposStaging(itens) {
+  exigirDadosSimples(itens, 'Registro legado dinamico nao permitido: exige registros JSON simples.');
   const totais = { origem: 0, aptos: 0, quarentena: 0, porMotivo: {} };
   for (const item of itens) {
     totais.origem += 1;
@@ -104,8 +139,12 @@ export function reconciliarEscoposStaging(itens) {
  * A chave usa tenant, entidade e codigo legado; um retry identico e reuso,
  * enquanto uma divergencia na mesma chave exige conciliacao humana.
  */
-export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosVerificados = {},
-  evidenciasOperacaoVerificadas = {}, existentes = [] } = {}) {
+export function prepararLoteStagingLegado(itens, opcoes = {}) {
+  exigirOpcoesInertes(opcoes);
+  const { autorizado = false, vinculosVerificados = {},
+    evidenciasOperacaoVerificadas = {}, existentes = [] } = opcoes;
+  exigirDadosSimples(itens, 'Registro legado dinamico nao permitido: exige registros JSON simples.');
+  exigirDadosSimples(existentes, 'Indice de staging dinamico nao permitido.');
   if (autorizado !== true) throw new Error('Permissao de preparar staging legado obrigatoria.');
   if (!Array.isArray(itens) || itens.length === 0) throw new Error('Lote legado vazio ou invalido.');
   if (!Array.isArray(existentes)) throw new Error('Indice de staging existente invalido.');
@@ -180,10 +219,16 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
  * retry continua sendo uma linha de origem, mas nao uma nova linha de destino.
  * Dependencias so podem apontar para mestre do Grupo ou operacao da mesma Empresa.
  */
-export function reconciliarPlanoStagingLegado({
-  itens, existentes = [], vinculosVerificados = {}, evidenciasOperacaoVerificadas = {},
-  autorizado = false, groupId, contagensEsperadas = [],
-} = {}) {
+export function reconciliarPlanoStagingLegado(opcoes = {}) {
+  exigirOpcoesInertes(opcoes);
+  const { itens, existentes = [], vinculosVerificados = {}, evidenciasOperacaoVerificadas = {},
+    autorizado = false, groupId, contagensEsperadas = [] } = opcoes;
+  exigirDadosSimples(itens, 'Registro legado dinamico nao permitido: exige registros JSON simples.');
+  exigirDadosSimples(existentes, 'Indice de staging dinamico nao permitido.');
+  exigirDadosSimples(contagensEsperadas, 'Contagens esperadas dinamicas nao permitidas.');
+  if (groupId !== undefined && typeof groupId !== 'string') {
+    throw new Error('Grupo do plano de staging invalido.');
+  }
   const grupo = String(groupId ?? '').trim();
   if (!grupo) throw new Error('Grupo do plano de staging obrigatorio.');
   if (!Array.isArray(itens) || !Array.isArray(existentes) || !Array.isArray(contagensEsperadas)) {

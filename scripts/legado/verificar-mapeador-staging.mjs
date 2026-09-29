@@ -2,30 +2,12 @@ import { createHash } from 'node:crypto';
 import { types as utilTypes } from 'node:util';
 import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolicy.js';
 import { mapLegadoLoteSintetico } from './mapear-registro-sintetico.mjs';
-import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './staging-scope-gate.mjs';
+import { exigirDadosSimples, prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './staging-scope-gate.mjs';
 
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', fornecedor: 'fornecedor', produto_revenda: 'produto' });
 const GRUPO_ALIASES = new Set(['groupid', 'grupoid']);
 const EMPRESA_ALIASES = new Set(['codigoempresa', 'codempresa', 'empresacodigo', 'empresaid', 'codigoempresalegado']);
 const normalizarAlias = (key) => key.toLowerCase().replace(/[\s._-]/g, '');
-
-const exigirDadosSimples = (value, mensagem, visitados = new Set()) => {
-  if (typeof value === 'function') throw new Error(mensagem);
-  if (value === null || typeof value !== 'object') return;
-  if (utilTypes.isProxy(value) || visitados.has(value)) throw new Error(mensagem);
-  visitados.add(value);
-  const prototipo = Object.getPrototypeOf(value);
-  if (prototipo !== null && prototipo !== (Array.isArray(value) ? Array.prototype : Object.prototype)) {
-    throw new Error(mensagem);
-  }
-  for (const key of Reflect.ownKeys(value)) {
-    if (typeof key === 'symbol') throw new Error(mensagem);
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (!descriptor || !('value' in descriptor)) throw new Error(mensagem);
-    exigirDadosSimples(descriptor.value, mensagem, visitados);
-  }
-  visitados.delete(value);
-};
 
 /**
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.

@@ -106,6 +106,49 @@ test('alias dinamico ou herdado nao executa armadilhas nem libera privados', () 
   assert.equal(acessos, 0);
 });
 
+test('entrada direta bloqueia registros e indice dinamicos antes de ler dados privados', () => {
+  const mestre = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-SINT',
+    assinaturaOrigem: 'a'.repeat(64) };
+  let leituras = 0;
+  const getter = { ...mestre };
+  Object.defineProperty(getter, 'codigoLegado', { enumerable: true,
+    get() { leituras += 1; return 'PRIVADO'; } });
+  const herdado = Object.create({ get codigoLegado() { leituras += 1; return 'PRIVADO'; } });
+  Object.assign(herdado, { entidade: 'cliente', groupId: 'g1', assinaturaOrigem: 'a'.repeat(64) });
+  const proxy = new Proxy(mestre, { get(target, key) { leituras += 1; return target[key]; } });
+  for (const item of [getter, herdado, proxy]) {
+    assert.throws(() => prepararLoteStagingLegado([mestre, item], { autorizado: true }), /JSON simples/);
+  }
+  assert.throws(() => prepararLoteStagingLegado([mestre], { autorizado: true,
+    existentes: [getter] }), /Indice de staging dinamico/);
+  assert.throws(() => reconciliarEscoposStaging([mestre, getter]), /JSON simples/);
+  assert.equal(leituras, 0);
+});
+
+test('plano rejeita contagem dinamica aninhada antes de entregar lote', () => {
+  const cliente = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-SINT',
+    assinaturaOrigem: 'a'.repeat(64) };
+  let leituras = 0;
+  const contagem = { entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 1 };
+  Object.defineProperty(contagem, 'quantidade', { enumerable: true,
+    get() { leituras += 1; return 1; } });
+  assert.throws(() => reconciliarPlanoStagingLegado({ autorizado: true, groupId: 'g1',
+    itens: [cliente], contagensEsperadas: [contagem] }), /Contagens esperadas dinamicas/);
+  assert.equal(leituras, 0);
+});
+
+test('opcoes dinamicas nao executam getter antes do bloqueio', () => {
+  let leituras = 0;
+  const opcoes = { autorizado: true };
+  Object.defineProperty(opcoes, 'existentes', { enumerable: true,
+    get() { leituras += 1; return []; } });
+  assert.throws(() => prepararLoteStagingLegado([{
+    entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-SINT', assinaturaOrigem: 'a'.repeat(64),
+  }], opcoes), /Opcoes do staging dinamicas/);
+  assert.throws(() => reconciliarPlanoStagingLegado(opcoes), /Opcoes do staging dinamicas/);
+  assert.equal(leituras, 0);
+});
+
 test('prova circular ou aninhada demais bloqueia lote sem erro de recursao', () => {
   const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'PED-CICLO', assinaturaOrigem: 'f'.repeat(64) };
