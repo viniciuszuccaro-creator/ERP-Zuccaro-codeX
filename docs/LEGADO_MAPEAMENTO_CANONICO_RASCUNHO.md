@@ -36,13 +36,16 @@ somente leitura. Valores abaixo são **candidatos** do ERP canônico atual.
 | Produto / item | `produtos` (+ PIM/DAM na PR #33) | 006–008 (+018–024 na PR) | sem preço no master |
 | Tabela de preço | `tabelas_preco` / itens / empresas | 013 | `codigo_tabela_legado` já existe no legado UI |
 | Condição pagamento | `condicoes_pagamento` | 014–015 | |
-| Orçamento | agregado 016 (PR #33) | 016 | só após Gate E |
-| Pedido / venda | agregado 017 (PR #33) | 017 | snapshot preço/endereço |
+| Orçamento | agregado 016 | 016 | só após Gate E; aliases sintéticos `orcamento` |
+| Pedido / venda | agregado 017 | 017 | snapshot preço/endereço; aliases sintéticos `pedido` |
 | Conta pagar/receber | entidades financeiras existentes | staging + reconciliação | `PENDING_MANUAL_RECONCILIATION` |
 | NF | NotaFiscal + reconciliação fiscal | staging | permissões `Fiscal.Migracao.*` |
 | Código empresa legado `0` | **quarentena** (não propaga) | — | `avaliarQuarentenaLegado` |
 | Vendedor | **não** criar `Vendedor` paralelo | Colaborador/Pessoa | bloqueado até identidade canônica |
 | Contato / telefone | **não** inventar Contato2 | Pessoa canônica futura | PII |
+
+Aliases sintéticos adicionais (sem inventário HD): `tabela_preco`, `orcamento`, `pedido` em
+`LEGADO_FIELD_ALIASES` — só códigos/nomes; **sem** preços, custos ou PII no GitHub.
 
 ---
 
@@ -72,19 +75,82 @@ Reutilizar `stampMigracaoRecord`:
 
 ## 5. Chave idempotente (sintético)
 
-Composição (alinhada ao Gate 18 / `migracaoErpPolicy`):
+Escopo aceito:
 
 ```text
-group_id|empresa_id|origem_migracao|entidade|codigo_legado
+group_id|empresa_id_ou_grupo|origem_migracao|entidade|codigo_legado
 ```
 
-Implementação local (sem HD/import): `buildChaveIdempotenteMigracaoLegado` e
-`mapLegadoLoteSintetico` em `scripts/legado/mapear-registro-sintetico.mjs`.
-Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
+Mestre/cadastro compartilhado usa o segmento `grupo` (não copia a operação por empresa).
+Operação aceita usa o `empresa_id` canônico do vínculo comprovado.
+
+Escopo rejeitado (divergência, payload sem contexto, vínculo ausente) **não** grava
+`group_id`/`empresa_id` canônicos e usa:
+
+```text
+QX|group_id_contexto|group_id_payload|entidade|codigo_legado
+```
+
+`opts.groupId` / `opts.empresaId` são contexto autorizado do lote. Se divergirem da linha
+ou do vínculo, a linha vai para quarentena; o contexto não substitui o payload.
+Payload sozinho (`escopo_somente_payload`) também não autentica.
+
+Implementação: `scripts/legado/resolver-escopo-legado.mjs` (extraído do mapper) e
+`mapLegadoLoteSintetico`. Duplicata na mesma chave, inclusive retry em `indiceStaging`,
+→ reuso. Reconciliação via `buildReconciliacaoMigracao`.
+
+## 5.1 Seletor legado (sem prova jurídica)
+
+| Código | Papel no seletor | Efeito no mapper |
+|---|---|---|
+| `001` | Empresa CPA | Não prova CNPJ. Operação só segue com `vinculosComprovados` |
+| `002` | Empresa 3Z | Idem |
+| `005` | Empresa ZUCCARO | Idem |
+| `003` | Grupo CPA | Nunca é empresa emissora. Operação com só `003` → quarentena |
+| `004` | Ausente no seletor | `codigo_empresa_legado_nao_comprovado`. Ausência não prova inatividade |
+| `0` / `000` | Inválido | `codigo_empresa_legado_0` |
+
+Zeros à esquerda são preservados (`1` normaliza para `001`). `codigo_tipo_nota_legado`
+é coluna própria e nunca vira código de empresa.
+
+Mestres (cliente, fornecedor, produto **somente revenda**) ficam no Grupo, com código
+legado, sem `empresa_id` proprietário. A mesma chave em 001 e 002 não duplica o mestre.
+Pedido, orçamento, estoque, contas a receber/pagar e nota exigem emissor comprovado,
+permanecem na empresa e levam `visivel_consolidado_grupo` sem segunda cópia física.
+Usuário, senha e permissão legados são excluídos e não entram em `gravados`.
 
 ## 6. Próximos passos desta frente
 
-1. Rodar inventário no HD (`BACKUP ERP ANTIGO - CODEX`) — metadados/hashes.
-2. Preencher “Formato/origem observada” na matriz §2.
-3. Propor ETL idempotente real só após inventário + Onda 25.
-4. Staging isolado só com gate Onda 25.
+1. Inventário somente leitura no HD: frente Codex (#106/#107), sem editar o mapper da #48.
+2. Preencher “Formato/origem observada” na matriz §2 somente após esse inventário.
+3. Provar o vínculo jurídico 001/002/005 por registro antes de qualquer carga.
+4. ETL/staging real continua bloqueado pelo gate da Onda 25. Este contrato não importa.
+
+**Sem dados reais no GitHub.** Aliases sintéticos: cliente, fornecedor, produto,
+empresa, obra, condição, tabela, orçamento, pedido, estoque, contas e nota.
+
+## 7. Atestacao de vinculo para operacoes por Empresa
+
+O preflight `staging-scope-gate.mjs` nao aceita mais `comprovado: true` sozinho.
+Cada codigo de Empresa legado usado por Pedido, estoque, financeiro ou NF
+precisa de vinculo com `groupId` e `empresaId` do destino e de metadados de
+evidencia: `tipo` (`cnpj` ou `documento_fiscal`), `sha256` do documento privado,
+`aprovadoPor` (UUID) e `aprovadoEm` (timestamp UTC ISO estrito). Os campos
+devem ser strings; arrays, objetos e datas impossiveis sao recusados. Documento, CNPJ e aprovacao real
+permanecem fora do GitHub. O hash nao prova por si so a identidade juridica:
+esta e uma atestacao de formato a conferir manualmente contra o original antes do gate.
+Falta de qualquer campo, codigo nao reconhecido ou empresa divergente mantem a
+operacao em quarentena. Mestre do Grupo nao ganha empresa proprietaria por esse
+contrato. Testes de CI usam apenas valores sinteticos; nenhuma carga real foi
+autorizada ou executada.
+
+## 8. Prova PostgreSQL sintetica isolada
+
+A CI cria `erp_restore_isolated_legado_ci` no PostgreSQL efemero, passa pelo
+guarda `assert-isolated-database-url.sh` (com `ISOLATED_DATABASE_NAME` e
+`ISOLATED_DATABASE_HOST` declarados explicitamente) e executa o preflight de Pedido com
+atestado sintetico. Uma tabela temporaria dentro de transacao verifica escrita,
+unicidade por Grupo/Empresa, retry a partir do indice relido por SQL sem segunda entrega e bloqueio de outra
+Empresa; a transacao termina em rollback. A prova nao restaura backup, nao
+aplica migrations legadas e nao representa staging com dados reais. O banco
+DEV e a porta 3080 nao participam.

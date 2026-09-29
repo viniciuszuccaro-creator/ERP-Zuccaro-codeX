@@ -1,0 +1,442 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import test from 'node:test';
+import { verificarLoteMestresParaStaging, verificarMapeadorParaStaging } from '../scripts/legado/verificar-mapeador-staging.mjs';
+
+const opcoes = { entidade: 'cliente', groupId: 'g-sint', grupoComprovado: true };
+
+test('cliente mestre sintetico usa apenas Grupo e codigo antigo', () => {
+  const result = verificarMapeadorParaStaging([
+    { cod_cliente: 'C-101', nome: 'Cliente Sintetico', group_id: 'g-sint' },
+  ], opcoes);
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.relatorio.aptos, 1);
+  assert.equal(result.privados[0].codigo_legado, 'C-101');
+  assert.equal(result.privados[0].group_id, 'g-sint');
+  assert.equal(result.privados[0].empresa_id, undefined);
+});
+
+test('produto de revenda reutiliza mapper de Produto e fica no Grupo', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-1', descricao: 'Produto Sintetico', tipo_produto: 'revenda', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda' });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.privados[0].descricao, 'Produto Sintetico');
+});
+
+test('fornecedor sintetico preserva codigo no Grupo e reconcilia contagem', () => {
+  const result = verificarMapeadorParaStaging([
+    { cod_fornecedor: 'F-101', razao_social: 'Fornecedor Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'fornecedor',
+    contagensEsperadas: [{ entidade: 'fornecedor', codigoEmpresaLegado: 'grupo', quantidade: 1 }] });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.relatorio.aptos, 1);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'fornecedor|grupo': 1 });
+  assert.equal(result.privados[0].codigo_legado, 'F-101');
+  assert.equal(result.privados[0].group_id, 'g-sint');
+  assert.equal(result.privados[0].empresa_id, undefined);
+  assert.equal(JSON.stringify(result.relatorio).includes('Fornecedor Sintetico'), false);
+});
+
+test('fornecedor nao aceita empresa implicita, Grupo cruzado nem contagem divergente', () => {
+  const row = { cod_fornecedor: 'F-102', nome: 'Fornecedor Sintetico', group_id: 'g-sint' };
+  const opts = { ...opcoes, entidade: 'fornecedor' };
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, codigo_empresa: '001' }], opts),
+    /vinculo empresarial legado nao comprovado/);
+  for (const alias of ['codigo_empresa_legado', 'Codigo_Empresa_Legado']) {
+    for (const codigo of ['001', '003', '005']) {
+      assert.throws(() => verificarMapeadorParaStaging([{ ...row, [alias]: codigo }], opts),
+        /vinculo empresarial legado nao comprovado/);
+    }
+  }
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'outro' }], opts),
+    /Grupo da linha diverge/);
+  const divergente = verificarMapeadorParaStaging([row], { ...opts,
+    contagensEsperadas: [{ entidade: 'fornecedor', codigoEmpresaLegado: 'grupo', quantidade: 2 }] });
+  assert.equal(divergente.bloqueado, true);
+  assert.deepEqual(divergente.privados, []);
+  assert.equal(divergente.relatorio.divergencias, 1);
+});
+
+test('fornecedor faz retry idempotente e bloqueia alteracao do mesmo codigo sem entrega parcial', () => {
+  const row = { cod_fornecedor: 'F-103', nome: 'Fornecedor Sintetico', group_id: 'g-sint' };
+  const opts = { ...opcoes, entidade: 'fornecedor' };
+  const first = verificarMapeadorParaStaging([row], opts);
+  const mapped = first.privados[0];
+  const assinaturaOrigem = createHash('sha256').update(JSON.stringify({
+    codigo: mapped.codigo_legado, nome: mapped.nome, descricao: mapped.descricao,
+    documento: mapped.documento,
+  })).digest('hex');
+  const existentes = [{ entidade: 'fornecedor', groupId: 'g-sint', empresaId: '',
+    codigoLegado: mapped.codigo_legado, assinaturaOrigem }];
+  const retry = verificarMapeadorParaStaging([row], { ...opts, existentes });
+  assert.equal(retry.bloqueado, false);
+  assert.deepEqual(retry.privados, []);
+  assert.equal(retry.relatorio.reusos, 1);
+  const changed = verificarMapeadorParaStaging([
+    { ...row, nome: 'Fornecedor Alterado Sintetico' },
+    { cod_fornecedor: 'F-104', nome: 'Outro Sintetico', group_id: 'g-sint' },
+  ], { ...opts, existentes });
+  assert.equal(changed.bloqueado, true);
+  assert.deepEqual(changed.privados, []);
+  assert.equal(changed.relatorio.conflitos, 1);
+  assert.equal(JSON.stringify(changed.relatorio).includes('Fornecedor Alterado'), false);
+});
+
+const loteMestres = {
+  cliente: [{ cod_cliente: 'C-ALL-1', nome: 'Cliente Privado Sintetico', group_id: 'g-sint' }],
+  fornecedor: [{ cod_fornecedor: 'F-ALL-1', nome: 'Fornecedor Privado Sintetico', group_id: 'g-sint' }],
+  produto_revenda: [{ sku: 'P-ALL-1', descricao: 'Produto Privado Sintetico',
+    tipo_produto: 'revenda', group_id: 'g-sint' }],
+};
+const contagensMestres = Object.keys(loteMestres).map((entidade) => ({
+  entidade, codigoEmpresaLegado: 'grupo', quantidade: 1,
+}));
+
+test('lote de mestres reconcilia Cliente, Fornecedor e Revenda antes de entregar registros', () => {
+  const resultado = verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres });
+  assert.equal(resultado.bloqueado, false);
+  assert.equal(resultado.privados.length, 3);
+  assert.deepEqual(resultado.privados.map((item) => item.registro.codigo_legado),
+    ['C-ALL-1', 'F-ALL-1', 'P-ALL-1']);
+  assert.deepEqual(resultado.privados.map((item) => item.entidadeStaging),
+    ['cliente', 'fornecedor', 'produto_revenda']);
+  assert.equal(resultado.privados[2].registro.entidade_migracao, 'produto');
+  assert.ok(resultado.privados.every((item) => item.registro.group_id === 'g-sint'
+    && !item.registro.empresa_id));
+  for (const relatorio of Object.values(resultado.relatorio)) assert.equal(relatorio.aptos, 1);
+  assert.equal(JSON.stringify(resultado.relatorio).includes('Privado'), false);
+});
+
+test('falha no ultimo mestre impede entrega dos anteriores e nao vaza dados', () => {
+  const resultado = verificarLoteMestresParaStaging({ ...loteMestres,
+    produto_revenda: [{ ...loteMestres.produto_revenda[0], tipo_produto: 'fabricacao' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres });
+  assert.equal(resultado.bloqueado, true);
+  assert.deepEqual(resultado.privados, []);
+  assert.equal(resultado.relatorio.produto_revenda.excluidos, 1);
+  assert.equal(resultado.relatorio.cliente.aptos, 1);
+  assert.equal(JSON.stringify(resultado.relatorio).includes('Privado'), false);
+});
+
+test('lote de mestres rejeita entidade estranha, contagem extra e escopo empresarial', () => {
+  assert.throws(() => verificarLoteMestresParaStaging({ pedido: [{ codigo: '1' }] }, opcoes),
+    /Entidade ou lote/);
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: [...contagensMestres,
+      { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 1 }] }),
+  /sem lote correspondente/);
+  assert.throws(() => verificarLoteMestresParaStaging({ ...loteMestres,
+    fornecedor: [{ ...loteMestres.fornecedor[0], codigo_empresa: '001' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres }),
+  /vinculo empresarial legado nao comprovado/);
+});
+
+test('lote exige contagens completas e bloqueia codigo empresarial no fornecedor', () => {
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoes),
+    /Contagens esperadas invalidas/);
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres.slice(0, 2) }),
+  /Contagens esperadas incompletas/);
+  assert.throws(() => verificarLoteMestresParaStaging({ ...loteMestres,
+    fornecedor: [{ ...loteMestres.fornecedor[0], codigo_empresa_legado: '001' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres }),
+  /vinculo empresarial legado nao comprovado/);
+});
+
+test('retry e conflito agregados preservam tipo de revenda sem entrega parcial', () => {
+  const primeira = verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres });
+  const cliente = primeira.privados[0].registro;
+  const assinaturaOrigem = createHash('sha256').update(JSON.stringify({
+    codigo: cliente.codigo_legado, nome: cliente.nome, descricao: cliente.descricao,
+    documento: cliente.documento,
+  })).digest('hex');
+  const existentes = [{ entidade: 'cliente', groupId: 'g-sint', empresaId: '',
+    codigoLegado: cliente.codigo_legado, assinaturaOrigem }];
+  const retry = verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres, existentes });
+  assert.equal(retry.bloqueado, false);
+  assert.equal(retry.relatorio.cliente.reusos, 1);
+  assert.deepEqual(retry.privados.map((item) => item.entidadeStaging),
+    ['fornecedor', 'produto_revenda']);
+  const conflito = verificarLoteMestresParaStaging({ ...loteMestres,
+    cliente: [{ ...loteMestres.cliente[0], nome: 'Cliente Alterado Sintetico' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres, existentes });
+  assert.equal(conflito.bloqueado, true);
+  assert.deepEqual(conflito.privados, []);
+  assert.equal(conflito.relatorio.cliente.conflitos, 1);
+  assert.equal(JSON.stringify(conflito.relatorio).includes('Alterado'), false);
+});
+
+test('lote de mestres rejeita getters e proxies antes de ler registros privados', () => {
+  let leituras = 0;
+  const getter = { cliente: loteMestres.cliente };
+  Object.defineProperty(getter, 'fornecedor', { enumerable: true,
+    get() { leituras += 1; return loteMestres.fornecedor; } });
+  assert.throws(() => verificarLoteMestresParaStaging(getter, opcoes), /JSON simples/);
+  assert.equal(leituras, 0);
+
+  const array = [...loteMestres.cliente];
+  Object.defineProperty(array, '0', { enumerable: true, configurable: true,
+    get() { leituras += 1; return loteMestres.cliente[0]; } });
+  assert.throws(() => verificarLoteMestresParaStaging({ cliente: array }, opcoes),
+    /lote de mestres invalido/);
+  assert.equal(leituras, 0);
+
+  const proxy = new Proxy(loteMestres, { get(target, key) { leituras += 1; return target[key]; } });
+  assert.throws(() => verificarLoteMestresParaStaging(proxy, opcoes), /Lotes de mestres invalidos/);
+  assert.equal(leituras, 0);
+
+  const opcoesGetter = { ...opcoes };
+  Object.defineProperty(opcoesGetter, 'contagensEsperadas', { enumerable: true,
+    get() { leituras += 1; return contagensMestres; } });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoesGetter),
+    /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const prototipo = {};
+  Object.defineProperty(prototipo, 'contagensEsperadas', { enumerable: true,
+    get() { leituras += 1; return contagensMestres; } });
+  const opcoesHerdadas = Object.assign(Object.create(prototipo), opcoes);
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, opcoesHerdadas),
+    /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const contagemProxy = new Proxy(contagensMestres[0], {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: [contagemProxy, ...contagensMestres.slice(1)] }),
+  /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const contagemGetter = { ...contagensMestres[0] };
+  Object.defineProperty(contagemGetter, 'entidade', { enumerable: true,
+    get() { leituras += 1; return 'cliente'; } });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: [contagemGetter, ...contagensMestres.slice(1)] }),
+  /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+
+  const existentesProxy = new Proxy([], {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres, existentes: existentesProxy }),
+  /Opcoes do lote de mestres invalidas/);
+  assert.equal(leituras, 0);
+});
+
+test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => {
+  const row = { cod_cliente: 'C-102', nome: 'Teste' };
+  assert.throws(() => verificarMapeadorParaStaging([row], { ...opcoes, grupoComprovado: false }));
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'g-outro' }], opcoes));
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, empresa_id: 'e1' }], opcoes));
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'g-sint', grupo_id: 'g-outro' }], opcoes));
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, groupId: 'g-outro' }], opcoes));
+});
+
+test('codigo de empresa legado e aliases exigem prova antes do mapeador mestre', () => {
+  for (const legado of ['1', '2', '3', '5', '001', '003']) {
+    for (const alias of ['codigo_empresa', 'empresa_codigo', 'empresaCodigo', 'codEmpresa',
+      'empresa-codigo', 'cod-empresa', 'codigo-empresa', 'CODIGO-EMPRESA']) {
+      assert.throws(() => verificarMapeadorParaStaging([{
+        cod_cliente: 'C-200', nome: 'Sintetico', group_id: 'g-sint', [alias]: legado,
+      }], opcoes), /vinculo empresarial legado nao comprovado/);
+    }
+  }
+});
+
+test('alias empresarial na segunda linha bloqueia o lote inteiro', () => {
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-201', nome: 'Primeiro', group_id: 'g-sint' },
+    { cod_cliente: 'C-202', nome: 'Segundo', 'empresa-codigo': '001', group_id: 'g-sint' },
+  ], opcoes), /vinculo empresarial legado nao comprovado/);
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-201', nome: 'Primeiro', 'group-id': 'outro' },
+  ], opcoes), /Grupo da linha diverge/);
+});
+
+test('campos de escopo com espaco ou ponto e estruturas aninhadas bloqueiam antes do mapeador', () => {
+  for (const alias of ['empresa codigo', 'empresa.codigo', 'codigo empresa', 'cod.empresa']) {
+    assert.throws(() => verificarMapeadorParaStaging([{
+      cod_cliente: 'C-203', nome: 'Sintetico', [alias]: '001',
+    }], opcoes), /vinculo empresarial legado nao comprovado/);
+  }
+  assert.throws(() => verificarMapeadorParaStaging([{
+    cod_cliente: 'C-204', nome: 'Sintetico', 'group.id': 'outro',
+  }], opcoes), /Grupo da linha diverge/);
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-205', nome: 'Primeiro' },
+    { cod_cliente: 'C-206', nome: 'Segundo', dados: { 'empresa-codigo': '001' } },
+  ], opcoes), /aninhado nao permitido/);
+});
+
+test('pedido e produto fora de revenda aguardam mapeador validado', () => {
+  for (const entidade of ['pedido', 'produto']) {
+    assert.throws(() => verificarMapeadorParaStaging([{ codigo: '1' }], { ...opcoes, entidade }),
+      /Entidade sem mapeador/);
+  }
+});
+
+test('erro, empresa legada e duplicata bloqueiam lote integral sem entrega parcial', () => {
+  const rows = [
+    { cod_cliente: 'C-1', nome: 'Um', group_id: 'g-sint' },
+    { cod_cliente: 'C-1', nome: 'Duplicado', group_id: 'g-sint' },
+  ];
+  const dup = verificarMapeadorParaStaging(rows, opcoes);
+  assert.equal(dup.bloqueado, true);
+  assert.deepEqual(dup.privados, []);
+  assert.equal(dup.relatorio.reusos, 1);
+  assert.throws(() => verificarMapeadorParaStaging([
+    rows[0], { cod_cliente: 'C-0', nome: 'Zero', codigo_empresa: '0', group_id: 'g-sint' },
+  ], opcoes), /vinculo empresarial legado nao comprovado/);
+  const erro = verificarMapeadorParaStaging([rows[0], { cod_cliente: '', nome: '' }], opcoes);
+  assert.equal(erro.bloqueado, true);
+  assert.deepEqual(erro.privados, []);
+  assert.equal(erro.relatorio.erros, 1);
+});
+
+test('relatorio nao publica nome, documento ou segredo sintetico', () => {
+  const result = verificarMapeadorParaStaging([{
+    cod_cliente: 'C-103', nome: 'NomePrivadoSintetico', documento: 'DocPrivadoSintetico',
+    senha: 'SegredoSintetico', group_id: 'g-sint',
+  }], opcoes);
+  const report = JSON.stringify(result.relatorio);
+  for (const marker of ['NomePrivadoSintetico', 'DocPrivadoSintetico', 'SegredoSintetico', 'C-103']) {
+    assert.equal(report.includes(marker), false);
+  }
+  assert.equal('senha' in result.privados[0], false);
+});
+
+test('getter no segundo item falha antes do mapeador e sem leitura de segredo', () => {
+  let leituras = 0;
+  const adversarial = { cod_cliente: 'C-2', nome: 'Dois' };
+  Object.defineProperty(adversarial, 'group_id', {
+    enumerable: true,
+    get() { leituras += 1; return 'SEGREDO_SINTETICO'; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-1', nome: 'Um', group_id: 'g-sint' },
+    adversarial,
+  ], opcoes), /registros JSON simples/);
+  assert.equal(leituras, 0);
+});
+
+test('Proxy na origem e recusado antes de executar trap', () => {
+  let leituras = 0;
+  const row = new Proxy({ cod_cliente: 'C-3', nome: 'Tres' }, {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging([row], opcoes), /dinamico nao permitido/);
+  assert.equal(leituras, 0);
+});
+
+test('retry entre lotes reutiliza codigo antigo sem reenviar registro ao staging', () => {
+  const row = { cod_cliente: 'C-501', nome: 'Sintetico', group_id: 'g-sint' };
+  const first = verificarMapeadorParaStaging([row], opcoes);
+  const mapped = first.privados[0];
+  const assinaturaOrigem = createHash('sha256').update(JSON.stringify({
+    codigo: mapped.codigo_legado, nome: mapped.nome, descricao: mapped.descricao,
+    documento: mapped.documento,
+  })).digest('hex');
+  const existentes = [{ entidade: 'cliente', groupId: 'g-sint', empresaId: '',
+    codigoLegado: 'C-501', assinaturaOrigem }];
+  const retry = verificarMapeadorParaStaging([row], { ...opcoes, existentes });
+  assert.equal(retry.bloqueado, false);
+  assert.deepEqual(retry.privados, []);
+  assert.equal(retry.relatorio.aptos, 0);
+  assert.equal(retry.relatorio.reusos, 1);
+
+  const next = verificarMapeadorParaStaging([row, {
+    cod_cliente: 'C-502', nome: 'Outro Sintetico', group_id: 'g-sint',
+  }], { ...opcoes, existentes });
+  assert.deepEqual(next.privados.map((item) => item.codigo_legado), ['C-502']);
+  assert.equal(next.relatorio.aptos, 1);
+  assert.equal(next.relatorio.reusos, 1);
+});
+
+test('mudanca no mesmo codigo legado bloqueia lote completo sem vazamento no relatorio', () => {
+  const existentes = [{ entidade: 'cliente', groupId: 'g-sint', empresaId: '',
+    codigoLegado: 'C-501', assinaturaOrigem: 'a'.repeat(64) }];
+  const result = verificarMapeadorParaStaging([
+    { cod_cliente: 'C-501', nome: 'Nome Privado Sintetico', group_id: 'g-sint' },
+    { cod_cliente: 'C-502', nome: 'Outro Privado Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, existentes });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.conflitos, 1);
+  assert.equal(JSON.stringify(result.relatorio).includes('Privado'), false);
+  assert.equal(JSON.stringify(result.relatorio).includes('C-501'), false);
+});
+
+test('cliente mestre percorre mapper e plano de contagens sem copiar empresa', () => {
+  const rows = [
+    { cod_cliente: 'C-601', nome: 'Pessoa Sintetica Um', group_id: 'g-sint' },
+    { cod_cliente: 'C-602', nome: 'Pessoa Sintetica Dois', group_id: 'g-sint' },
+  ];
+  const result = verificarMapeadorParaStaging(rows, { ...opcoes,
+    contagensEsperadas: [{ entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 2 }],
+  });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.privados.length, 2);
+  assert.ok(result.privados.every((item) => item.group_id === 'g-sint' && !item.empresa_id));
+  assert.equal(result.relatorio.divergencias, 0);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 2 });
+  assert.equal(JSON.stringify(result.relatorio).includes('Pessoa Sintetica'), false);
+});
+
+test('contagem divergente bloqueia lote inteiro depois do mapeamento', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-601', descricao: 'Produto Sintetico', tipo_produto: 'revenda', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda',
+    contagensEsperadas: [{ entidade: 'produto_revenda', codigoEmpresaLegado: 'grupo', quantidade: 2 }],
+  });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.divergencias, 1);
+});
+
+test('produto sem classificacao de revenda fica excluido sem erro generico ou entrega parcial', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-SEM-TIPO', descricao: 'Produto Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda' });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.excluidos, 1);
+  assert.equal(JSON.stringify(result.relatorio).includes('SKU-SEM-TIPO'), false);
+});
+
+test('produto excluido no segundo registro bloqueia lote de revenda inteiro', () => {
+  const result = verificarMapeadorParaStaging([
+    { sku: 'SKU-REV', descricao: 'Revenda Sintetica', tipo_produto: 'revenda', group_id: 'g-sint' },
+    { sku: 'SKU-FAB', descricao: 'Fabricacao Sintetica', tipo_produto: 'fabricacao', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'produto_revenda' });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.excluidos, 1);
+  assert.equal(result.relatorio.aptos, 0);
+});
+
+test('indice de outro Grupo nao pode participar do plano de mestres', () => {
+  const rows = [{ cod_cliente: 'C-603', nome: 'Sintetico', group_id: 'g-sint' }];
+  const existentes = [{ entidade: 'cliente', groupId: 'outro', empresaId: '',
+    codigoLegado: 'C-601', assinaturaOrigem: 'a'.repeat(64) }];
+  assert.throws(() => verificarMapeadorParaStaging(rows, { ...opcoes, existentes }), /mistura Grupos/);
+  assert.throws(() => verificarMapeadorParaStaging(rows, { ...opcoes, existentes,
+    contagensEsperadas: [{ entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 1 }],
+  }), /mistura Grupos/);
+});
+
+test('indice dinamico e recusado sem executar getters de tenant', () => {
+  let leituras = 0;
+  const indice = new Proxy({ groupId: 'g-sint' }, {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-604', nome: 'Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, existentes: [indice] }), /dinamico nao permitido/);
+  assert.equal(leituras, 0);
+});

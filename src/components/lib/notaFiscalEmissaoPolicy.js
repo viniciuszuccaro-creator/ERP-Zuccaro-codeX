@@ -292,6 +292,19 @@ export const assertNotaFiscalOnUpdate = ({ before = {}, patch = {} } = {}) => {
     };
   }
 
+  const rejeicaoPendente = statusIncludes(before.status, 'pendente')
+    && statusIncludes(nextStatus, 'rejeitada')
+    && Object.keys(patch).every((field) => ['status', 'empresa_id', 'empresa_faturamento_id', 'group_id', 'grupo_id'].includes(field));
+  if (rejeicaoPendente) {
+    return {
+      reuse: null, emit: false, cancel: false, rejectPending: true,
+      record: { ...patch, status: 'Rejeitada', empresa_id: before.empresa_id,
+        empresa_faturamento_id: before.empresa_faturamento_id || before.empresa_id,
+        group_id: before.group_id || before.grupo_id,
+        grupo_id: before.grupo_id || before.group_id },
+    };
+  }
+
   if (becomingCancelada) {
     return {
       reuse: null,

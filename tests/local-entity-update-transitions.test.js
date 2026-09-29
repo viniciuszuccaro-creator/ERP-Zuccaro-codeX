@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { applyLocalEntityUpdateTransitions } from '../src/api/localEntityUpdateTransitions.js';
+import { prepareLocalEntityUpdate } from '../src/api/localEntityUpdatePreparation.js';
+import { assertNotaFiscalOnUpdate } from '../src/components/lib/notaFiscalEmissaoPolicy.js';
 
 const createDependencies = (overrides = {}) => ({
   getStore: () => [],
@@ -74,4 +76,72 @@ test('nota fiscal preserva empresa emissora e usa permissao de emissao', () => {
   assert.deepEqual(permissions, [['emitir']]);
   assert.equal(result.record?.empresa_id, 'e1');
   assert.equal(result.record?.empresa_faturamento_id, 'e1');
+});
+
+test('emitente pode rejeitar somente NF pendente sem permissao editar/cancelar', () => {
+  const checks = [];
+  const dependencies = createDependencies({
+    notaFiscalEntities: ['NotaFiscal'],
+    assertNotaFiscalOnUpdate,
+    assertPermissionAny: (_entity, actions) => {
+      checks.push(actions);
+      if (!actions.includes('emitir')) throw new Error('emitir obrigatorio');
+    },
+    assertMutationAllowed: () => { throw new Error('editar negado'); },
+  });
+  const before = { id: 'nf-1', status: 'Pendente', empresa_id: 'e1', empresa_faturamento_id: 'e1' };
+  const result = applyLocalEntityUpdateTransitions({
+    db: {}, entityName: 'NotaFiscal', id: 'nf-1', before,
+    payload: { status: 'Rejeitada' }, initialRecord: { status: 'Rejeitada' }, dependencies,
+  });
+  assert.equal(result.record?.status, 'Rejeitada');
+  assert.deepEqual(checks, [['emitir']]);
+  assert.throws(() => applyLocalEntityUpdateTransitions({
+    db: {}, entityName: 'NotaFiscal', id: 'nf-1', before,
+    payload: { status: 'Rejeitada', valor_total: 1 }, initialRecord: { status: 'Rejeitada', valor_total: 1 }, dependencies,
+  }), /editar negado/);
+});
+
+test('rejeição pendente preserva Grupo e Empresa após carimbo de contexto', () => {
+  const before = { id: 'nf-1', status: 'Pendente', group_id: 'g-original', grupo_id: 'g-original',
+    empresa_id: 'e1', empresa_faturamento_id: 'e1' };
+  const data = { status: 'Rejeitada' };
+  const prepared = prepareLocalEntityUpdate({
+    db: {}, entityName: 'NotaFiscal', id: 'nf-1', data, records: [before], before,
+    dependencies: {
+      isTituloFinanceiro: () => false,
+      notaFiscalEntities: ['NotaFiscal'],
+      assertMutationAllowed: () => { throw new Error('editar negado'); },
+      assertLegacyFieldAllowed: () => {},
+      assertSupplierFieldsAllowed: () => {},
+      stampRecordContext: (_entity, patch) => ({ ...patch, empresa_id: 'e1',
+        group_id: 'g-contexto', grupo_id: 'g-contexto' }),
+      getCurrentContext: () => ({ groupId: 'g-contexto' }),
+      getStore: () => [],
+      normalizeFornecedorCadastro: (record) => record,
+      assertFornecedorScope: () => {},
+      findDuplicateMaster: () => null,
+      assertBackupExpire: () => {},
+      assertPermissionAny: () => {},
+      applyPilotoWrite: (_db, _entity, record) => record,
+      applyBackupWrite: (_db, _entity, record) => record,
+      applyLegacyReferenceUpdate: (_db, _entity, _before, patch) => patch,
+    },
+  });
+  const result = applyLocalEntityUpdateTransitions({
+    db: {}, entityName: 'NotaFiscal', id: 'nf-1', before,
+    payload: prepared.payload, initialRecord: prepared.initialRecord,
+    dependencies: createDependencies({
+      notaFiscalEntities: ['NotaFiscal'],
+      assertNotaFiscalOnUpdate,
+      assertPermissionAny: (_entity, actions) => {
+        if (!actions.includes('emitir')) throw new Error('emitir obrigatorio');
+      },
+      assertMutationAllowed: () => { throw new Error('editar negado'); },
+    }),
+  });
+  assert.equal(result.record?.status, 'Rejeitada');
+  assert.equal(result.record?.empresa_id, 'e1');
+  assert.equal(result.record?.group_id, 'g-original');
+  assert.equal(result.record?.grupo_id, 'g-original');
 });

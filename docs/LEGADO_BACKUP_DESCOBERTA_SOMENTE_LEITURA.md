@@ -67,3 +67,16 @@ previstos em `migracaoErpPolicy.js` (`origem_migracao`, `lote_migracao`,
 | HD externo montado no cloud agent | **não detectado** (`/mnt` sem a pasta) |
 | Inventário real | **pendente** (máquina com o HD ou montagem autorizada) |
 | Staging / importação | **bloqueado** (Onda 25) |
+
+### Preparação sem HD (2026-09-26) — autorizada pelo usuário
+
+Enquanto o backup externo estiver indisponível:
+
+| Preparável agora | Bloqueado até HD |
+|---|---|
+| Script de inventário + testes sintéticos | Leitura do backup real |
+| Mapeamento canônico (aliases) em `mapear-registro-sintetico.mjs` | Preencher “Formato/origem observada” |
+| Chave idempotente / quarentena / strip de segredos | ETL / staging com dados reais |
+| Docs e STATUS sem PII | Commit de dumps, CSV reais ou hashes de produção |
+
+**Não** enviar dados reais ao GitHub. Importação real fica para quando o HD for trazido.
