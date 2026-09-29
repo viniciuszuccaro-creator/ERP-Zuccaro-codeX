@@ -5,14 +5,14 @@
 | Choice | **A residual** — harden Orçamento→Pedido copy/verify ALL snapshots fail-closed pós-031 |
 | Implementado | **SIM** — `comercialConvertSnapshotPolicy`; wire convert; UI hint; meta `convertSnapshotFailClosed`; sem migration; validade #133 preservada |
 | Testado | **SIM** — convert-snapshot 8/8 + condição/promo/tabela/validade + 08c/09/onda2 60/60 + UI 11/11 + runtime07b 13/13; `server` typecheck PASS; `git diff --check` PASS |
-| CI | tip pendente push |
+| CI | tip `01521a92` |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | `#133` tip `70576db7` (`cursor/comercial360-onda3-orc-validade-392b`) |
 | Branch | `cursor/comercial360-onda3-convert-snapshot-392b` |
-| Draft PR | pendente — ManagePullRequest indisponível; tentar `gh pr create` |
+| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-orc-validade-392b...cursor/comercial360-onda3-convert-snapshot-392b?expand=1 |
-| Tip | pendente |
+| Tip | `01521a92` |
 | Meta | note preserva **Pedido backend HTTP is active** + `convertSnapshotFailClosed` / validade flags intactos |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028/032 |
 
