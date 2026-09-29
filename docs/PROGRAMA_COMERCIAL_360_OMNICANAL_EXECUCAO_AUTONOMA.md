@@ -601,6 +601,13 @@ Esse contrato ainda nao habilita worker, canal, rede, bucket ou publicacao exter
 
 ---
 
+### Checkpoint de código em 26/09/2026 — frente Codex de canais
+
+- #68 receptor de vendas assinadas; #69 recibos e concorrência PostgreSQL; #70 cliente server-side com retry idempotente. Implementados/testados, CIs verdes dos HEADs publicados; Draft, não mesclados/implantados. Detalhes e limites em COMERCIAL_OMNICANAL_INGRESS.md.
+- Consumidor controlado do outbox Produto em codex/comercial-catalogo-outbox: claim SKIP LOCKED, fencing por versão de lease, retry, dead-letter, reprocessamento/RBAC, auditoria atômica e summary; publisher injetado somente, sem canal real/timer/ativação. Testes/CI do novo HEAD em execução, sem conclusão de onda.
+- RLS/FORCE existem desde 002, sem policy permissiva; policy por Grupo/Empresa do contrato da frente requer migration coordenada. Runtime01/migrations 025–032 estão ocupados nas PRs Cursor; não alterar ou duplicar suas bases. Origem canônica de documentos aguarda #50/#53; mídia/preço/disponibilidade continuam dos módulos proprietários.
+- Nenhuma destas entregas fecha integralmente Ondas 15–19, homologação, acesso real, migração legado ou implantação. HD indisponível: dados exclusivamente sintéticos. Sem VPS/merge nesta tarefa. Prosseguir nos checkpoints independentes sem solicitar próximo.
+
 ## Onda 16 — Site CPA, e-commerce e portal B2B
 
 ### Jornadas
@@ -1013,3 +1020,9 @@ Novos requisitos não devem ser perdidos em chats. Sempre que surgir melhoria:
 6. testar e registrar o resultado.
 
 Este documento é vivo, mas suas alterações também obedecem à Regra-Mãe, revisão e versionamento.
+
+## Checkpoint omnicanal — reconciliação de sinais, 2026-09-26
+
+Ondas 15/16/18: lotes técnicos próprios #68 → #69 → #70 → #71, abertos e sem merge/deploy; CIs dos HEADs publicadas nas PRs. #71 HEAD 8fae1bb329b973b7722b62b14ee3eadae6122098: runtime #984 e PostgreSQL #7 SUCCESS (4 PASS/0 FAIL/0 SKIP). Novo lote codex/comercial-catalogo-reconciliacao reutiliza integration_events e audita comparação dos ACKs, com paginação tenant-scoped, cursor de microssegundos e idempotência concorrente. Backend local 250 PASS/0 FAIL/19 SKIP; detalhes e gates em COMERCIAL_OMNICANAL_INGRESS.md. CI do novo lote pendente de publicação.
+
+Implementado/testado não equivale a aprovado/mesclado/implantado. Nenhuma onda é declarada integralmente concluída por esses contratos. Publicação completa de catálogo requer projeção aprovada (produto_canais ainda só RASCUNHO), policy company-scoped coordenada e providers reais homologados. Acesso do proprietário, legado com HD e implantação continuam gates externos; sem dados reais, merge automático ou acesso VPS nesta frente.

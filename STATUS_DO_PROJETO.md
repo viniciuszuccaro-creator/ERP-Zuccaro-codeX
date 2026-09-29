@@ -12645,6 +12645,39 @@ Checklist inicial:
 - Proximo passo: definir persistencia tenant-scoped de evidencia de scan e revisao comercial separada antes de adicionar transicao de QUARENTENA; gate DEV real continua pendente.
 
 
+## Codex — gate canônico 025 da integração omnicanal (2026-09-27)
+
+- #92 continua candidata cumulativa, sem merge/deploy; incorporada main8fbd94f887a7c9c62624c5563acfd36d3562ef77 preservando alterações de acesso. Nenhuma branch Cursor editada.
+- Nova divisão: Codex implementa, Cursor revisa. #96 acesso HEAD4fea5a639f839c94fc2a5a24dc582b2e0b847662 CI1077/run36319383460 SUCCESS, revisão independente e teste proprietário pendentes; não substituídos por este lote.
+- Auditoria read-only na VPS confirmou migrations001–024;025 ainda não aplicada. Correção na cópia canônica025 da branch Codex elimina catch que ocultava erro de NOT NULL; histórico001–024 intocado, sem migration paralela.
+- Teste executa SQL0252x preservando MANUAL/ORCAMENTO e trigger que derrota backfill: erro23502 aborta transação sem registrar schema_migrations. PGlite1PASS/0FAIL; PostgreSQL real será comprovado na CI isolada.
+- Coordenação na #50; Cursor precisa revisar conteúdo e alinhar candidato de integração. #51/#52/#53, grants/policies operacionais e providers continuam gates; canaisOFF, sem HD/VPS write/deploy.
+
+## Codex — Orçamento omnicanal versionável (2026-09-27)
+
+- Candidato consolidado #92 corrige bloqueios #52/#53 sem editar branches Cursor: migration027 ainda não aplicada no DEV faz backfill físico da raiz e exige NOT NULL; create insere id/raiz na mesma instrução. Histórico001–024 imutável.
+- Repository existente supersede a origem antes do INSERT para liberar índice imediato de número aberto, com transação única até itens/auditoria. Falha no audit restaura versão aberta e não deixa descendente ou logs parciais. Origem/canal/campanha preservados; external_id/idempotency_key pertencem ao documento raiz/recibo da entrada e ficam NULL nos descendentes. Reenvio externo segue retornando o mesmo recibo original, sem criar venda nova; histórico conecta todas as versões à raiz.
+- Testes PGlite e PostgreSQL CI usam serviços/SQL canônicos nos quatro canais SITE/APP/CHATBOT/MARKETPLACE, preço informado999 substituído pelo servidor, versões2/3, histórico completo, retry, recusa entre empresas e rollback de audit. Migration0272x preserva histórico e rejeita raizNULL. InMemory alinhado ao contrato PostgreSQL; mocks de criação atualizados para INSERT com raiz atômica.
+- Focados locais aprovados; backend typecheck/build, lint e audit:baseline PASS. Suíte completa e PostgreSQL real do novo HEAD devem ser registrados na PR antes integração; skips locais de PG não são prova operacional. Revisão independente Cursor continua obrigatória. Sem canal ativado, HD ou deploy neste lote.
+- Suíte backend local:365PASS/1FAIL/37SKIP(403); falha é crash nativo V8/WASM Node24 em runtime08-hardening, sem assert de aplicação falhando. Reexecução desse arquivo e RLS/versionamento:9PASS/0FAIL/4SKIP; frontend build PASS(--configLoader native). CI Linux Node22 deve comprovar o HEAD completo, sem alterar teste ou esconder o crash local.
+- Prioridade acesso: #96 CIverde aguarda parecer Cursor. VPS read-only reconfirmou banco postgres, grupo1/empresas esperadas2, Auth sem perfil ativo1, migrations24; API/SPA200 com imagens anteriores. Autorização contínua cobre integração/deploy controlado após revisão/CI/backup, não substitui esses gates nem confirmação real do proprietário.
+
+## Codex — tipo comercial desconhecido bloqueado (2026-09-27)
+
+- Continuidade na mesma candidata consolidada #92: tipo de Produto legado não reconhecido deixa de virar REVENDA silenciosamente. Policy existente responde422/PEDIDO_TIPO_COMERCIAL_INVALIDO com reason PRODUCT_TYPE_UNKNOWN; hints ARMADO não contornam esse gate. Aliases conhecidos continuam aceitos.
+- PGlite/PG isolado usa entrada real pelo canal, verifica ausência de Pedido/itens/histórico/audit/eventos após recusa e retry com mesma chave/nonce após mapear Produto para tipo canônico. Nenhuma chave consumida ou venda parcial. Local12PASS/0FAIL/5SKIP, backend typecheck PASS; PG real/CI final obrigatórias antes integração.
+- Histórico026 ainda exige estratégia explícita: não deduzir classificação passada usando Produto atual nem rotular todos os históricos como REVENDA. Esse bloqueio #51 permanece, junto aos grants/policies operacionais/providers. Nenhuma decisão comercial, migration adicional ou cadastro inventado; canaisOFF.
+- Recuperação acesso: backup completo restaurado em banco descartável com role administrador da restauração e presença de cadastros/Auth/migrations24 validada; banco descartável removido. Primeira tentativa postgres recusou SET log_min_messages, reteste passou. Banco operacional intacto; logs privados; #96 aguarda revisão Cursor antes grant/deploy.
+
+## Codex — gate de preservação histórica026 (2026-09-27)
+
+- Continuidade na candidata consolidada #92, sem branch ou módulo paralelo. Antes da primeira introdução das colunas de tipo comercial, SQL026 bloqueia com PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED quando há pedidos/itens existentes sem snapshots. Nenhum default REVENDA é gravado nos históricos; nenhuma classificação passada é inferida pelo Produto atual.
+- Lock das tabelas impede entrada concorrente entre preflight e DDL. Reexecução com snapshots explicitamente classificados preserva os valores; NOT NULL valida também colunas preexistentes incompletas. Não há catch que registre migration falha como aplicada.
+- Testes PGlite/PG isolado executam o SQL real: falha aborta antes das colunas e do registro schema_migrations, IDs históricos preservados; mapeamento sintético explícito SERVICO permanece após reexecução2x e NULL é rejeitado. Local5PASS/0FAIL/6SKIP; backend typecheck, lint e audit:baseline aprovados. CI final deve provar PostgreSQL sem skips antes integração.
+- O lote elimina a corrupção silenciosa da migration, mas não fornece um backfill comercial aprovado. Se DEV tiver históricos sem tipo, apenas essa migration deve parar até mapeamento/reconciliação revisados; não apagar registros nem usar defaults para contornar. Histórico001–024 imutável;026 ainda não aplicada na VPS. CanaisOFF.
+- #96 acesso mantém prioridade, HEAD4fea5a6/CISUCCESS mas sem parecer Cursor; nenhuma implantação ou concessão de acesso executada. Autorização contínua preservada, com revisão/CI/backup/rollback como gates.
+- Fechamento local: backend completo370PASS/0FAIL/39SKIP(409), build/typecheck/lint/audit:baseline/diffPASS. PostgreSQL real será comprovado pela CI do novo HEAD; frontend não alterado e validação completa Linux mantida no workflow.
+
 ## Incidente proprietário — candidato Codex 2026-09-27
 
 - Branch `codex/acesso-owner-auditoria-segura`, base main `0acb6ac1ca0267f3e253904c633a5dc46aa2472e`. Codex implementa e Cursor revisa; não aplicar antes de revisão independente e CI do HEAD.
@@ -12665,12 +12698,25 @@ Checklist inicial:
 - Revisão Cursor e CI do novo HEAD obrigatórias; CI anterior1077 não aprova estas mudanças. Após os gates: CI PUSH main, backup fresco, canário/APPLY, SHA/digests e teste real do proprietário. Canais OFF.
 - Validação frontend local: Vite/esbuild bloqueado por ACL de leitura do sandbox Windows (Access is denied ao resolver vite.config.js). Não declarar build/frontend/npm test completo local aprovado; CI Linux do novo HEAD executará frontend e harness Bash integral. Nenhuma configuração de segurança/teste removida para contornar o ambiente.
 
+## Codex — #92 alinhada à main de acesso (2026-09-27)
+
+- Incorporada main56dae6966ae39a11eac3064ca7bb0d67553e7765 na branch própria, preservando Auth/perfil/tenant da #96 e o histórico das duas frentes. requestContext/authSessionService idênticos à main; conflito exclusivamente documental concatenado sem apagar entregas.
+- 025 idêntica ao blob4aab7f6f da #50 atual; 026 continua fail-closed para histórico não mapeado, migration033/canais não ativados. Novos HEADs92/93 requerem CI e revisão independente Cursor. Acesso bloqueado apenas pela revisão do hotfix98 após pg_read_file; não equivale a deploy.
+
 ## Acesso proprietário — falha operacional pg_read_file (2026-09-27)
 
 - #96 mesclada na main 56dae6966ae39a11eac3064ca7bb0d67553e7765 após parecer Cursor sobre 23252cc e CI; CI PUSH main #1135/run36326407270 SUCCESS frontend/backend.
 - VPS atualizada para esse SHA; AUDIT, identidade efetiva do banco, backup custom e canário API/SPA aprovados. APPLY abortou no provisionamento: `permission denied for function pg_read_file`, transação revertida, nenhuma promoção. Oficiais preservados; canário antigo exclusivamente localhost3086 parado reversivelmente com container/imagem preservados. Backups privados preservados.
 - Correção candidata em branch própria: JSON por COPY do cliente psql tanto na concessão quanto no restore seletivo, sem conceder leitura de arquivos do servidor nem elevar o usuário PostgreSQL. Preserva locks, validação de tenant, auditoria, transação e decisões do proprietário. Teste PostgreSQL CI com NOSUPERUSER/NOBYPASSRLS verifica leitura negada e COPY bem-sucedido, inclusive aspas/barra/acentos e comando real do restore.
 - Ainda requer CI do novo HEAD e revisão independente Cursor antes de merge/APPLY. Não declarar acesso/deploy concluído. Login real, duas empresas e Comercial/Configurações continuam pendentes; canais OFF. Nenhuma migration ou dado real publicado.
+
+## Codex — integração main pós-hotfix e marco DEV (2026-09-27)
+
+- Incorporada main9ed1a30e3fd37ec2f14b9c65a36b2c396ea7b74d (#98), preservando COPY cliente do grant/restore e testes PostgreSQL reais, sem reintroduzir pg_read_file. Histórico de status preservado; blocos antigos pendentes são superados por este marco.
+- Cursor aprovou bb7df2dbe59f184600396abb7cdd99ce70bb93dd em #97/docsHandoff15:00Z; CI PUSH main1154/run36338983036 SUCCESS. DEV AUDIT/backup fresco/hash/canário/identidade/grant/auditoria/promote EXIT0. API e SPA têm label SHA completo9ed1a30 e digests iguais aos canários: API79f3ec308530bbc2392e20e881c702c50371de13ae6d4092e1a73a5cbf2bc143; SPA6dd543df7abfef519df3e1e1a573e150bc57f2d5c8454de72f7ba26b250a490f.
+- Pós-check: Auth/perfil proprietário único ativo1, GROUP/admin/RBAC explícito válido, empresas ativas autorizadas2, auditprovision1, migrations24, ready200/200 e identidade fabricada/Bearer inválido401. HTML público coincide com SPA oficial. Backups e rollback06A preservados. Nenhuma senha/novo cadastro/renomeação/migration/canal.
+- Logout sintético pela UI, formulário real pronto; confirmação proprietário de login/duas empresas/Comercial/Configurações solicitada e PENDENTE. Deploy não equivale a experiência validada pelo usuário. Evidências sanitizadas na #98comentário5858407946.
+- #92/93 continuam candidatos não mesclados/implantados, 025 alinhada à #50 e gates histórico026/contratos029–032/grants/papel033/provedores preservados. Canais OFF. CIs e revisão Cursor devem validar estes novos HEADs; selos antigos não se transferem.
 # Incidente P0 — seleção Grupo/Empresa após login proprietário (2026-09-27)
 
 - Base sincronizada: main `3e327ea08cc638f84816b2f7e37c143a705f7f0c`; branch própria `codex/acesso-contexto-grupo`.
@@ -12874,3 +12920,8 @@ Checklist inicial:
 - O Cursor confirmou CI `36614794225` verde e fail-closed em `ab46b70a`, mas reproduziu leitura de Proxy no mapa `vinculosVerificados`. O preflight foi ajustado para recusar mapa dinamico ou alias herdado antes de qualquer acesso; testes focados 54/54 PASS verificam zero leituras de armadilha e `privados=[]`. Lint, build, audit:baseline e diff-check locais PASS. CI do novo HEAD pendente ate a publicacao.
 - `origin/main` segue `d02cd012`, base da candidata; merge-tree sem conflito textual. #104 e #48/#106-#109/#111/#125/#128/#137 estao na ancestralidade da #141, que permanece draft. #92/#132 ficam fora. Nao mesclar ancestrais separadamente depois da candidata.
 - A funcao ainda compara a assinatura recebida, sem recalcular o hash nem autenticar a atestacao privada. Isto impede tratar CI/staging sintetico como prova juridica por registro. Antes de carga real: assinatura da extracao controlada, empresa comprovada por coluna/documento, codigos legados preservados, contagens/conflitos, backup restauravel do destino, rollback e gate humano.
+
+## Marco DEV do acesso e atualização da candidata omnicanal (2026-09-27)
+
+- #101 foi aprovada pelo Cursor, mesclada na main `d02cd012948a597a734573ab0a5a7aed6d604a3b` e validada pela CI push #1209. API e SPA desse SHA foram implantadas em DEV com backup, canário e rollback preservado. O proprietário confirmou que consegue navegar em todo o sistema. Isso não homologa automaticamente fluxos comerciais, fiscais ou integrações externas.
+- #92 incorpora a main `d02cd012948a597a734573ab0a5a7aed6d604a3b`, preservando a correção de acesso e os contratos existentes. Os blobs de migration 025 e 028 permanecem idênticos aos HEADs atuais das PRs #50 e #53. Nenhuma migration 025–033 foi executada em DEV nesta atualização; canais e provedores continuam desligados. Revisão independente e CI do novo HEAD são necessárias antes de integração ou implantação da #92 e da #93 dependente.
