@@ -1,16 +1,16 @@
-## LOTE CURSOR — #121 ClienteEmpresa list-for-scope frontendHttp (2026-09-29T15:20Z)
+## LOTE CURSOR — #121 ClienteEmpresa list-for-scope frontendHttp (2026-09-29T15:35Z)
 
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — `GET /api/v1/cliente-empresas` list-for-scope + get by id; piloto HTTP `ClienteEmpresa`; Orçamento/Pedido seleção via HTTP fail-closed; sem migration |
-| Testado | pendente neste HEAD (rodar client+policy + runtime05/06b/07b) |
+| Testado | **SIM** — client+policy+http-api-client (33/33) + runtime05 3/3 + runtime07b 13/13 + runtime06b 4/4 + runtime08c 6/6 |
 | CI | pendente neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#120` `cursor/comercial360-onda3-cliente-http-392b` (tip `5b444a69`) |
-| Branch | `cursor/comercial360-onda3-cliente-empresa-http-392b` |
+| Branch | `cursor/comercial360-onda3-cliente-empresa-http-392b` @ feat `6e780d73` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-http-392b...cursor/comercial360-onda3-cliente-empresa-http-392b?expand=1 |
-| Draft PR | pendente |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#120; não editar em Codex/#104/#48)
 
