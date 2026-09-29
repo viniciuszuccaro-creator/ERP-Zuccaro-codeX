@@ -5,8 +5,9 @@
 | Choice | **C** tenant switch limpa form/list cache comercial fail-closed |
 | Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
 | Base | `#145` tip `73279042` (`cursor/comercial360-onda3-list-search-392b`) |
-| Tip | *(após commit)* |
-| Draft PR | base=`cursor/comercial360-onda3-list-search-392b` |
+| Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
 | Meta | `tenantCacheFailClosed` + **Pedido backend HTTP is active** |
 | Colisão | A/B fracos; margem #47; anexos/PDF #52–#62; stack #126–#145 |
 
