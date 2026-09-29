@@ -1,3 +1,66 @@
+## PARECER ÚNICO CURSOR — candidata #153 HEAD `fba7f72b` (2026-09-29T21:03Z)
+
+**Veredito: NÃO APTA a merge em `main` nem a gate VPS/DEV.**  
+CI verde (frontend/backend SUCCESS) **não** substitui esta revisão e **não** comprova implantação. Branch Codex **não editada**.
+
+### Escopo revisado
+| Campo | Valor |
+|---|---|
+| PR | **#153** `codex/integracao-comercial-legado-20260929` → `main` (draft) |
+| HEAD pedido | **`fba7f72b`** |
+| Tip atual no momento da revisão | `12c37e8b` (docs pós-`fba7f72b`) — qualquer decisão deve re-fetch |
+| Diff vs `main` (`d02cd012`) | ~134 arquivos; +~18807 / −~614 |
+| Conteúdo | Consolida stack Comercial Cursor até #151 (`6218511a`) + candidata legado #141 (`b8a9f493`) e cadeia ancestral |
+
+### Achados reproduzíveis (comandos)
+
+```bash
+git fetch origin pull/153/head
+git rev-parse fba7f72b
+git merge-base --is-ancestor ee0dc10a fba7f72b   # #48 → OK
+git merge-base --is-ancestor 87101b4d fba7f72b   # #104 → OK
+git merge-base --is-ancestor 6218511a fba7f72b   # #151 tip → OK
+git merge-base --is-ancestor b8a9f493 fba7f72b   # #141 → OK
+git rev-list --count 6218511a..fba7f72b          # 187 commits pós-Comercial
+git ls-tree --name-only fba7f72b server/migrations/ | rg '02[5-9]|03[01]'
+# → só 029/030/031 (Comercial); 025–028/#92 e 034/#132 ausentes
+git show fba7f72b:server/migrations/029_orcamento_pedido_condicao_snapshot.sql | rg 'DROP |TRUNCATE'
+# → sem DROP/TRUNCATE executável nas 029–031
+git show fba7f72b:scripts/legado/resolver-escopo-legado.mjs | rg "LEGADO_CODIGO_GRUPO_SELETOR|comprovadoJuridico"
+# → 003 = grupo; 001/002/005 com comprovadoJuridico: false
+```
+
+### Achados (positivos)
+1. **Ancestralidade coerente**: tips #48 / #104 / #151 / #141 estão no histórico de `fba7f72b`.
+2. **Stack Comercial completa**: 0 paths de `origin/cursor/comercial360-onda3-network-retry-392b` ausentes no diff vs `main` em `fba7f72b`.
+3. **Escopo legado**: `003` como `grupo_seletor`; empresas candidatas `001`/`002`/`005`; quarentena para códigos inválidos — alinhado ao mapper #48.
+4. **Migrations 029–031 aditivas** (snapshot condição/promoção/tabela); sem colisão com 025–028 (#92) neste HEAD.
+5. **Documentação honesta** em `docs/ORDEM_INTEGRACAO_UNICA.md` / `LEGADO_INTEGRACAO_CANDIDATA.md`: CI ≠ merge ≠ VPS; #92/#132 fora; prova operacional separada de alias.
+
+### Achados (bloqueadores / riscos)
+1. **Draft mega-PR**: superfície grande (Comercial + estoque/faturamento/expedição + legado). Unidade de merge exige gate humano explícito — **não** inferir autorização da CI.
+2. **Nenhuma prova de implantação**: migrations 029–031 e schema legado **não** aplicados em VPS/DEV neste parecer; `test:postgres` efêmero ≠ staging persistente ≠ dados reais.
+3. **Identidade jurídica ainda fail-closed**: `comprovadoJuridico: false` em `001`/`002`/`005` — operações reais permanecem em quarentena até evidência privada por conjunto (não só código de seletor).
+4. **Lacuna #92/#132 / migration 034**: Produto com `codigo_legado` **fora** da candidata — promoção de revenda do staging para cadastro operacional **bloqueada** até essa cadeia.
+5. **Atestação de operação**: o próprio handoff admite que o preflight **não recalcula** SHA-256 da linha nem autentica o atestador — atestação sintática ≠ prova jurídica.
+6. **Drift de HEAD**: tip já saiu de `fba7f72b` → `12c37e8b` durante a vigília; parecer amarra **somente** `fba7f72b`. Reabrir revisão no tip vigente antes de qualquer decisão.
+7. **#48 isolada**: historicamente `mergeable=false` vs `main`; o caminho seguro é a candidata consolidada, **não** merge serial das ancestrais depois.
+
+### O que este parecer NÃO autoriza
+- Merge em `main`
+- Push forçado / deploy VPS
+- Aplicar migrations 029–031 (ou quaisquer) fora de CI isolado
+- Importar backup/HD / PII
+- Editar branches Codex (#153/#141/…)
+
+### Próximo passo recomendado
+1. Owner decide se a unidade de review é #153@`fba7f72b` ou tip vigente (`12c37e8b`+).  
+2. Gate separado: evidências privadas de vínculo Empresa + atestação com hash recalculável.  
+3. Plano para #92/#132 (034) **ou** exclusão explícita de promoção de Produto legado.  
+4. Só então checklist humano de merge (backup, rollback, janela) — fora do escopo deste agente.
+
+---
+
 ## VIGÍLIA CURSOR — #153 HEAD mudou (2026-09-29T20:49Z)
 
 | Campo | Valor |
