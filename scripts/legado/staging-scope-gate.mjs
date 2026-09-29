@@ -7,7 +7,10 @@ const MESTRES_GRUPO = new Set(['cliente', 'fornecedor', 'produto_revenda']);
 const OPERACOES = new Set(['pedido', 'estoque', 'conta_receber', 'conta_pagar', 'nota_fiscal']);
 const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
 
-const codigo = (value) => String(value ?? '').trim().padStart(3, '0');
+const codigo = (value) => {
+  const raw = String(value ?? '').trim();
+  return /^\d{1,3}$/.test(raw) ? raw.padStart(3, '0') : '';
+};
 
 export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, groupId, empresaId, vinculosVerificados = {} }) {
   const motivos = [];
@@ -38,4 +41,72 @@ export function reconciliarEscoposStaging(itens) {
     }
   }
   return totais;
+}
+
+/**
+ * Prepara somente em memoria um lote ja extraido para staging isolado.
+ * Nunca persiste nem publica registros: o relatorio contem apenas agregados.
+ * A chave usa tenant, entidade e codigo legado; um retry identico e reuso,
+ * enquanto uma divergencia na mesma chave exige conciliacao humana.
+ */
+export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosVerificados = {}, existentes = [] } = {}) {
+  if (autorizado !== true) throw new Error('Permissao de preparar staging legado obrigatoria.');
+  if (!Array.isArray(itens) || itens.length === 0) throw new Error('Lote legado vazio ou invalido.');
+  if (!Array.isArray(existentes)) throw new Error('Indice de staging existente invalido.');
+  const porChave = new Map();
+  const privados = [];
+  const relatorio = { origem: itens.length, aptos: 0, reusos: 0, conflitos: 0, quarentena: 0, porEntidadeEmpresa: {}, porMotivo: {} };
+  const contar = (objeto, chave) => { objeto[chave] = (objeto[chave] || 0) + 1; };
+  for (const anterior of existentes) {
+    const chave = JSON.stringify([
+      String(anterior?.groupId ?? '').trim(), String(anterior?.empresaId ?? '').trim(),
+      String(anterior?.entidade ?? '').trim(), String(anterior?.codigoLegado ?? '').trim(),
+    ]);
+    const assinatura = String(anterior?.assinaturaOrigem ?? '').trim();
+    if (!anterior?.groupId || !anterior?.entidade || !anterior?.codigoLegado || !/^[a-f0-9]{64}$/.test(assinatura)) {
+      throw new Error('Indice de staging existente sem identidade e assinatura validas.');
+    }
+    if (porChave.has(chave) && porChave.get(chave) !== assinatura) {
+      throw new Error('Indice de staging existente com conflito de origem.');
+    }
+    porChave.set(chave, assinatura);
+  }
+  for (const item of itens) {
+    const entidade = String(item?.entidade ?? '').trim();
+    const groupId = String(item?.groupId ?? '').trim();
+    const empresaId = String(item?.empresaId ?? '').trim();
+    const legado = codigo(item?.codigoEmpresaLegado);
+    const codigoLegado = String(item?.codigoLegado ?? '').trim();
+    const escopo = avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado: legado, groupId, empresaId, vinculosVerificados });
+    const motivos = [...escopo.motivos];
+    if (!codigoLegado) motivos.push('codigo_legado_ausente');
+    if (motivos.length) {
+      relatorio.quarentena += 1;
+      for (const motivo of motivos) contar(relatorio.porMotivo, motivo);
+      continue;
+    }
+    const chave = JSON.stringify([groupId, empresaId, entidade, codigoLegado]);
+    const assinatura = String(item.assinaturaOrigem ?? '').trim();
+    if (!/^[a-f0-9]{64}$/.test(assinatura)) {
+      relatorio.quarentena += 1;
+      contar(relatorio.porMotivo, 'assinatura_origem_ausente');
+      continue;
+    }
+    const anterior = porChave.get(chave);
+    if (anterior) {
+      if (anterior === assinatura) relatorio.reusos += 1;
+      else {
+        relatorio.conflitos += 1;
+        contar(relatorio.porMotivo, 'codigo_legado_conflitante');
+      }
+      continue;
+    }
+    porChave.set(chave, assinatura);
+    privados.push(item);
+    relatorio.aptos += 1;
+    contar(relatorio.porEntidadeEmpresa, `${entidade}|${legado || 'grupo'}`);
+  }
+  const bloqueado = relatorio.conflitos > 0 || relatorio.quarentena > 0;
+  // Nao entregar lote parcial ao consumidor: o relatorio preserva apenas contagens.
+  return { privados: bloqueado ? [] : privados, relatorio, bloqueado };
 }
