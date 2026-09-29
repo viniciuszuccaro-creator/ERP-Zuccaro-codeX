@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
 | Base | `origin/cursor/comercial360-onda3-list-search-392b` tip `73279042` (#145) |
 | Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
-| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-tenant-cache-392b` |
 | Escopo | Policy: `clearComercialHttpCacheOnTenantSwitch` + reset Orçamento/Pedido (descarta dirty/diálogos/snapshots sem prompt); wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `tenantCacheFailClosed`; sem migration |
@@ -663,7 +663,7 @@ Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #
 | Base | empilhada em `#122`/`#121` `cursor/comercial360-onda3-cliente-empresa-http-392b` (tip `d82c7096`) |
 | Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ feat `a2c59236` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
-| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
 ### Arquivos reservados (Cursor — lote pós-#122; não editar em Codex/#104/#48)
 
