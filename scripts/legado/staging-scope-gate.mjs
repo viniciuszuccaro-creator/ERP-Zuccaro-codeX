@@ -7,6 +7,24 @@ import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolic
 const MESTRES_GRUPO = new Set(['cliente', 'fornecedor', 'produto_revenda']);
 const OPERACOES = new Set(['pedido', 'estoque', 'conta_receber', 'conta_pagar', 'nota_fiscal']);
 const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
+const TIPOS_EVIDENCIA = new Set(['cnpj', 'documento_fiscal']);
+
+const atestacaoComFormatoValido = (vinculo) => {
+  const evidencia = vinculo?.evidencia;
+  const data = evidencia?.aprovadoEm;
+  const dataValida = typeof data === 'string'
+    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(data)
+    && Number.isFinite(Date.parse(data))
+    && new Date(data).toISOString() === (data.includes('.') ? data : data.replace('Z', '.000Z'));
+  return vinculo?.comprovado === true
+    && TIPOS_EVIDENCIA.has(evidencia?.tipo)
+    && typeof evidencia?.sha256 === 'string'
+    && /^[a-f0-9]{64}$/.test(evidencia.sha256)
+    && !/^0{64}$/.test(evidencia.sha256)
+    && typeof evidencia?.aprovadoPor === 'string'
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(evidencia.aprovadoPor)
+    && dataValida;
+};
 
 const codigo = (value) => {
   const raw = String(value ?? '').trim();
@@ -23,7 +41,7 @@ export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, grou
     const legado = codigo(codigoEmpresaLegado);
     if (!CODIGOS_EMPRESA.has(legado)) motivos.push('empresa_legada_nao_comprovada');
     const vinculo = vinculosVerificados[legado];
-    if (!vinculo?.empresaId || vinculo.groupId !== groupId || vinculo.empresaId !== empresaId || vinculo.comprovado !== true) {
+    if (!vinculo?.empresaId || vinculo.groupId !== groupId || vinculo.empresaId !== empresaId || !atestacaoComFormatoValido(vinculo)) {
       motivos.push('vinculo_juridico_nao_comprovado');
     }
   }

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { avaliarEscopoStagingLegado, prepararLoteStagingLegado, reconciliarEscoposStaging, reconciliarPlanoStagingLegado } from '../scripts/legado/staging-scope-gate.mjs';
 
-const vinculos = { '001': { groupId: 'g1', empresaId: 'e1', comprovado: true } };
+const evidencia = { tipo: 'cnpj', sha256: 'a'.repeat(64),
+  aprovadoPor: '11111111-1111-4111-8111-111111111111', aprovadoEm: '2026-09-29T12:00:00Z' };
+const vinculos = { '001': { groupId: 'g1', empresaId: 'e1', comprovado: true, evidencia } };
 
 test('mestres compartilhados ficam somente no Grupo', () => {
   for (const entidade of ['cliente', 'fornecedor', 'produto_revenda']) {
@@ -18,6 +20,34 @@ test('operacao exige vinculo juridico explicito no mesmo Grupo e Empresa', () =>
   assert.ok(avaliarEscopoStagingLegado({ ...base, empresaId: 'e2' }).motivos.includes('vinculo_juridico_nao_comprovado'));
   assert.ok(avaliarEscopoStagingLegado({ ...base, groupId: 'g2' }).motivos.includes('vinculo_juridico_nao_comprovado'));
   assert.ok(avaliarEscopoStagingLegado({ ...base, vinculosVerificados: {} }).motivos.includes('vinculo_juridico_nao_comprovado'));
+});
+
+test('booleano comprovado sem evidencia e aprovacao nao libera operacao', () => {
+  const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-S2', assinaturaOrigem: 'b'.repeat(64) };
+  const incompletos = [
+    { groupId: 'g1', empresaId: 'e1', comprovado: true },
+    { ...vinculos['001'], evidencia: { ...evidencia, sha256: 'invalido' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoPor: '' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: 'invalido' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, tipo: 'print' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, sha256: [evidencia.sha256] } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoPor: [evidencia.aprovadoPor] } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: [evidencia.aprovadoEm] } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: new Date(evidencia.aprovadoEm) } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: '2026-02-31T12:00:00Z' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: '2026' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, sha256: '0'.repeat(64) } },
+  ];
+  for (const vinculo of incompletos) {
+    const result = prepararLoteStagingLegado([item], {
+      autorizado: true, vinculosVerificados: { '001': vinculo },
+    });
+    assert.equal(result.bloqueado, true);
+    assert.deepEqual(result.privados, []);
+    assert.equal(result.relatorio.porMotivo.vinculo_juridico_nao_comprovado, 1);
+    assert.equal(JSON.stringify(result.relatorio).includes(item.codigoLegado), false);
+  }
 });
 
 test('grupo seletor 003, codigo zero e desconhecido nao viram empresa juridica', () => {
@@ -192,7 +222,7 @@ test('empresa 002 usa vinculo proprio e nao compartilha operacao com 001', () =>
   const empresa2 = { ...pedido, empresaId: 'e2', codigoEmpresaLegado: '002',
     dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1', escopo: 'grupo' }] };
   const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, empresa2],
-    vinculosVerificados: { ...vinculos, '002': { groupId: 'g1', empresaId: 'e2', comprovado: true } },
+    vinculosVerificados: { ...vinculos, '002': { groupId: 'g1', empresaId: 'e2', comprovado: true, evidencia } },
     contagensEsperadas: [planoBase.contagensEsperadas[0], { entidade: 'pedido', codigoEmpresaLegado: '002', quantidade: 1 }] });
   assert.equal(result.bloqueado, false);
   assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 1, 'pedido|002': 1 });
