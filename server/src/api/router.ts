@@ -1202,11 +1202,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Cliente', 'Orcamento', 'Pedido'],
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'CondicaoPagamento e TabelaPreco frontendHttp ativos no piloto; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1224,7 +1224,7 @@ export function createApiRouter(deps: ApiDeps) {
         documentoUniqueness: true,
         softDeleteRestore: true,
         central360ReadModel: true,
-        frontendHttp: false,
+        frontendHttp: true,
       },
       clienteEmpresa: {
         commercialEligibility: true,

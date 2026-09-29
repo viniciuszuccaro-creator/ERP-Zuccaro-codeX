@@ -33,6 +33,11 @@ import {
   applyResolvedPrecoToItem,
   assertPrecoResolucaoNoContexto,
 } from './comercialTabelaPrecoHttpUiPolicy';
+import {
+  buildClienteDisplayLabel,
+  normalizeClientesListPayload,
+  normalizeUnidadesListPayload,
+} from './comercialClienteHttpUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -86,6 +91,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const comercialApi = http.comercial;
   const condicoesApi = http.condicoesPagamento;
   const tabelasApi = http.tabelasPreco;
+  const clientesApi = http.clientes;
+  const unidadesApi = http.unidadesMedida;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
   const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
   const listQuery = useQuery({
@@ -97,19 +104,19 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const mastersQuery = useQuery({
     queryKey: ['orcamento-masters', groupId, empresaId],
     queryFn: async ({ signal }) => {
-      const [clientesEmpresa, clientes, condicoesPayload, produtos, unidades] = await Promise.all([
+      const [clientesEmpresa, clientesPayload, condicoesPayload, produtos, unidadesPayload] = await Promise.all([
         filterInContext('ClienteEmpresa', { ativo: true, habilitado_operacao: true }, 'codigo', 500),
-        filterInContext('Cliente', { ativo: true }, 'razao_social', 500),
+        clientesApi.list({ ativo: true, limit: 200, orderBy: 'nome', signal }),
         condicoesApi.list({ ativo: true, limit: 200, signal }),
         filterInContext('Produto', { ativo: true }, 'descricao', 500),
-        filterInContext('UnidadeMedida', { ativo: true }, 'sigla', 500),
+        unidadesApi.list({ ativo: true, limit: 200, signal }),
       ]);
       return {
         clientesEmpresa,
-        clientes,
+        clientes: normalizeClientesListPayload(clientesPayload),
         condicoes: normalizeCondicoesListPayload(condicoesPayload),
         produtos,
-        unidades,
+        unidades: normalizeUnidadesListPayload(unidadesPayload),
       };
     },
     enabled: contextReady && canView,
@@ -119,8 +126,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const clientesById = useMemo(() => new Map(masters.clientes.map((item) => [item.id, item])), [masters.clientes]);
   const clienteLabel = (linkId) => {
     const link = masters.clientesEmpresa.find((item) => item.id === linkId);
-    const cliente = clientesById.get(link?.cliente_id);
-    return cliente?.razao_social || cliente?.nome || cliente?.nome_fantasia || link?.codigo || linkId;
+    return buildClienteDisplayLabel(clientesById.get(link?.cliente_id), link?.codigo || linkId);
   };
   const condicaoLabel = (id) => masters.condicoes.find((item) => item.id === id)?.nome || id;
 

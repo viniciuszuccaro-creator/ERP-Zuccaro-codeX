@@ -398,6 +398,44 @@ export function createHttpApiClient(options = {}) {
         },
       };
     })(),
+    // Cliente R04 — piloto HTTP Onda 3 (CRUD + restore + vínculos/Central 360 no namespace `clientes`).
+    Cliente: (() => {
+      const base = createCrudEntity('/api/v1/clientes', {
+        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'codigo', 'documento'],
+        ativoKeys: ['ativo'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/clientes', {
+            query: { limit, ativo: true, order_by: 'nome' },
+          });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/clientes', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.razao_social || query.codigo,
+              documento: query.documento || query.cpf_cnpj,
+              codigo: query.codigo_exato || query.codigoExact,
+              ativo: query.ativo ?? true,
+              order_by: query.order_by || query.orderBy || 'nome',
+              order_dir: query.order_dir || query.orderDir,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        restore(id, { signal } = {}) {
+          return request(`/api/v1/clientes/${encodeURIComponent(id)}/restore`, {
+            method: 'POST',
+            signal,
+          });
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -765,17 +803,117 @@ export function createHttpApiClient(options = {}) {
       });
     },
   };
+  /**
+   * Cliente canônico (R04 + Central 360 + vínculos R05).
+   * Tenant só nos headers; RBAC Cadastros.cliente.* / cliente-empresa.* no BFF.
+   */
   const clientes = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, codigo?: string, documento?: string, orderBy?: string, orderDir?: string, signal?: AbortSignal }} [options]
+     */
+    list({
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      codigo,
+      documento,
+      orderBy = 'nome',
+      orderDir,
+      signal,
+    } = {}) {
+      return request('/api/v1/clientes', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          codigo,
+          documento,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/clientes', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    softDelete(id, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    restore(id, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /**
+     * Vínculos Cliente×Empresa (R05) — nested; ClienteEmpresa permanece fora do piloto flat.
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, ativo?: boolean, bloqueado?: boolean, situacao?: string, empresaId?: string, search?: string, signal?: AbortSignal }} [options]
+     */
+    listEmpresaLinks(clienteId, {
+      limit = 50,
+      offset = 0,
+      ativo = true,
+      bloqueado,
+      situacao,
+      empresaId,
+      search,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/empresas`, {
+        query: {
+          limit,
+          offset,
+          ativo,
+          bloqueado,
+          situacao,
+          empresa_id: empresaId,
+          search,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} clienteId @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    getEmpresaLink(clienteId, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/clientes/${encodeURIComponent(clienteId)}/empresas/${encodeURIComponent(empresaId)}`,
+        { signal },
+      );
+    },
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
      * @param {string} id
-     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, signal?: AbortSignal }} [options]
+     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, empresasLimit?: number, signal?: AbortSignal }} [options]
      */
     central360(id, {
       orcamentosLimit = 10,
       pedidosLimit = 10,
       locaisLimit = 10,
       obrasLimit = 10,
+      empresasLimit = 10,
       signal,
     } = {}) {
       return request(`/api/v1/clientes/${encodeURIComponent(id)}/central-360`, {
@@ -784,7 +922,23 @@ export function createHttpApiClient(options = {}) {
           pedidos_limit: pedidosLimit,
           locais_limit: locaisLimit,
           obras_limit: obrasLimit,
+          empresas_limit: empresasLimit,
         },
+        signal,
+        unwrap: false,
+      });
+    },
+  };
+  /**
+   * UnidadeMedida já no piloto — helper de listagem com envelope para mestres Comercial.
+   */
+  const unidadesMedida = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, signal?: AbortSignal }} [options]
+     */
+    list({ limit = 50, offset = 0, search, ativo = true, signal } = {}) {
+      return request('/api/v1/unidades-medida', {
+        query: { limit, offset, search, ativo },
         signal,
         unwrap: false,
       });
@@ -814,6 +968,7 @@ export function createHttpApiClient(options = {}) {
     condicoesPagamento,
     tabelasPreco,
     clientes,
+    unidadesMedida,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
     async health() {

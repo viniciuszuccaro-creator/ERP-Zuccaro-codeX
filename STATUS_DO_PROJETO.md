@@ -1,3 +1,43 @@
+## LOTE CURSOR — #119 Cliente frontendHttp Onda 3 (RESERVA 2026-09-29T14:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **EM CURSO** |
+| Testado | pendente |
+| CI | pendente |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
+| Branch | `cursor/comercial360-onda3-cliente-http-392b` |
+
+### Arquivos reservados (Cursor — lote pós-#118; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Cliente)
+- `src/api/httpApiClient.js` (entity Cliente + `clientes` CRUD/empresas/central360 + unidadesMedida)
+- `server/src/api/router.ts` (meta `cliente.frontendHttp: true` + pilot)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/CentralCliente360Panel.jsx` / `DetalhesCliente.jsx` (fail-closed RBAC)
+- `tests/comercial-cliente-http-client.test.js`
+- `tests/comercial-cliente-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `tests/central-cliente-360-session.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_04.md`
+
+### Escopo
+
+- Reutiliza API R04/Central 360 já existente (`/api/v1/clientes` + vínculos + central-360); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente.* fail-closed no BFF.
+- Orçamento/Pedido: labels Cliente + UnidadeMedida via HTTP (Unidade já estava no piloto).
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, snapshot parcelas (sem coluna JSON), CRM paralelo, ClienteEmpresa/Local/Obra piloto.
+
+### Diagnóstico A
+
+- Skip A: `orcamentos`/`pedidos` não têm colunas JSON/text de snapshot de condição/parcelas; preço já snapshota em `preco_unitario` do item. Persistência de agenda exige migration autorizada.
+
+---
+
 ## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:55Z)
 
 | Etapa | Estado |
