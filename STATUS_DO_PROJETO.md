@@ -1,3 +1,37 @@
+## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
+
+| PR/Branch | Tip | CI | Escopo |
+|---|---|---|---|
+| #146 | `c1fdf63d` | stack | tenant cache |
+| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `2a76c8cc` | — | resumo texto fail-closed |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Pedido/Orçamento resumo texto fail-closed (pós-#146 tenant-cache) (2026-09-29T18:29Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Resumo texto read-only Pedido (+ Orçamento) a partir da entidade + snapshots; painel/janela texto imprimível; fail-closed se snapshots pós-031 incompletos; sem PDF novo |
+| Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Base | `origin/cursor/comercial360-onda3-tenant-cache-392b` tip `c1fdf63d` (#146) |
+| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
+| Draft PR | **#147** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/147 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Escopo | Policy: `comercialDocumentoSnapshotGapHint` + `buildComercialDocumentoResumoTexto` / `resolveComercialResumoPreviewState` / `openComercialResumoTextoWindow`; wrappers Pedido; wire `PedidoCanonicoPanel` + `OrcamentosTab` (painel + copiar/imprimir texto); meta `textoResumoPreviewFailClosed`; sem migration |
+| Meta | `textoResumoPreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | pedido/orcamento UI policy **21/21**; list/alcada/simulacao **44/44**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | margem #47 OPEN; anexos/PDF #52–#62 (não toca PDF); stack #126–#146; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish Comercial independente fora do stack |
+
+Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, tests orcamento/pedido UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: após #146, maior gap seguro pedido pelo handoff — canônico sem resumo texto imprimível; legado `ImprimirPedido`/PDF Orçamento existem mas tarefa pede texto read-only com snapshots fail-closed, sem módulo PDF.
+
+---
+
 ## LOTE CURSOR — tenant cache fail-closed (pós-#145 list-search) (2026-09-29T18:30Z)
 
 | Campo | Valor |

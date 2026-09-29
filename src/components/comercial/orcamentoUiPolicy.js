@@ -66,32 +66,258 @@ export function orcamentoValidadeHint(validadeEm, now = new Date()) {
 }
 
 /**
- * Hint quando o Orçamento tem snapshots comerciais incompletos (pós-031).
- * Legado sem nenhum campo de snapshot → null (servidor ainda resolve condição ao vivo).
- * Espelha `orcamentoConvertSnapshotGapHint` do backend.
+ * Snapshot gap pós-031 (condição/tabela/promo). Legado sem nenhum campo → null.
+ * @param {object | null | undefined} row
+ * @param {{ purpose?: 'convert' | 'resumo', entityLabel?: string }} [options]
  */
-export function orcamentoConvertSnapshotHint(row) {
+export function comercialDocumentoSnapshotGapHint(row, options = {}) {
   if (!row) return null;
+  const purpose = options.purpose === 'convert' ? 'convert' : 'resumo';
+  const label = String(options.entityLabel || (purpose === 'convert' ? 'orçamento' : 'documento')).trim() || 'documento';
+  const suffix = purpose === 'convert'
+    ? `edite e salve o ${label} antes de converter.`
+    : `edite e salve o ${label} antes de gerar o resumo.`;
   const condCodigo = String(row.condicao_pagamento_codigo_snapshot || '').trim();
   const condNome = String(row.condicao_pagamento_nome_snapshot || '').trim();
   const parcelas = row.condicao_pagamento_parcelas_snapshot;
   const hasCondicaoField = Boolean(condCodigo || condNome || Array.isArray(parcelas));
   if (hasCondicaoField && (!condCodigo || !condNome || !Array.isArray(parcelas) || parcelas.length < 1)) {
-    return 'Snapshots de condição incompletos — edite e salve o orçamento antes de converter.';
+    return `Snapshots de condição incompletos — ${suffix}`;
   }
   const tabCodigo = String(row.tabela_preco_codigo_snapshot || '').trim();
   const tabNome = String(row.tabela_preco_nome_snapshot || '').trim();
   const tabelaId = String(row.tabela_preco_id || '').trim();
   if ((tabelaId || tabCodigo || tabNome) && (!tabCodigo || !tabNome)) {
-    return 'Snapshots de tabela de preço incompletos — edite e salve o orçamento antes de converter.';
+    return `Snapshots de tabela de preço incompletos — ${suffix}`;
   }
   if (row.promocao_aplicada === true) {
     const bps = Number(row.promocao_bps);
     if (!Number.isInteger(bps) || bps <= 0 || bps > 10000) {
-      return 'Snapshot de promoção inconsistente — edite e salve o orçamento antes de converter.';
+      return `Snapshot de promoção inconsistente — ${suffix}`;
     }
   }
   return null;
+}
+
+/**
+ * Hint quando o Orçamento tem snapshots comerciais incompletos (pós-031).
+ * Legado sem nenhum campo de snapshot → null (servidor ainda resolve condição ao vivo).
+ * Espelha `orcamentoConvertSnapshotGapHint` do backend.
+ */
+export function orcamentoConvertSnapshotHint(row) {
+  return comercialDocumentoSnapshotGapHint(row, { purpose: 'convert', entityLabel: 'orçamento' });
+}
+
+function formatResumoMoney(value) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
+}
+
+function formatResumoDate(value) {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return new Intl.DateTimeFormat('pt-BR').format(parsed);
+}
+
+function escapeResumoHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Resumo texto read-only a partir da entidade carregada + snapshots (sem inventar PDF).
+ * @param {object} row
+ * @param {{
+ *   kind?: 'ORCAMENTO' | 'PEDIDO',
+ *   empresaNome?: string,
+ *   clienteNome?: string,
+ *   statusLabel?: string,
+ *   deliverySummaries?: Array<{ kind?: string, title?: string, lines?: string[] }>,
+ * }} [options]
+ */
+export function buildComercialDocumentoResumoTexto(row, options = {}) {
+  if (!row?.numero) throw new Error('Documento inválido para resumo texto.');
+  const kind = options.kind === 'PEDIDO' ? 'PEDIDO' : 'ORCAMENTO';
+  const title = kind === 'PEDIDO' ? 'Pedido' : 'Orçamento';
+  const empresaNome = String(options.empresaNome || 'Empresa').trim() || 'Empresa';
+  const clienteNome = String(options.clienteNome || 'Cliente').trim() || 'Cliente';
+  const statusLabel = String(options.statusLabel
+    || (kind === 'PEDIDO'
+      ? (row.status || '-')
+      : (row.status === 'EM_ABERTO' ? 'Em aberto' : (row.status === 'CANCELADO' ? 'Cancelado' : (row.status || '-'))))).trim();
+  const lines = [
+    `${empresaNome} — ${title} ${row.numero}`,
+    `Status: ${statusLabel}`,
+    `Cliente: ${clienteNome}`,
+  ];
+  if (kind === 'ORCAMENTO') {
+    lines.push(`Validade: ${formatResumoDate(row.validade_em)}`);
+  } else {
+    lines.push(`Operação: ${row.tipo_operacao === 'RETIRADA' ? 'Retirada' : 'Entrega'}`);
+    lines.push(`Entrega solicitada: ${formatResumoDate(row.data_entrega_solicitada)}`);
+  }
+  const condCodigo = String(row.condicao_pagamento_codigo_snapshot || '').trim();
+  const condNome = String(row.condicao_pagamento_nome_snapshot || '').trim();
+  if (condCodigo || condNome) {
+    lines.push(`Condição: ${[condCodigo, condNome].filter(Boolean).join(' — ')}`);
+  } else if (row.condicao_pagamento_id) {
+    lines.push('Condição: (sem snapshot — legado)');
+  }
+  const parcelas = Array.isArray(row.condicao_pagamento_parcelas_snapshot)
+    ? row.condicao_pagamento_parcelas_snapshot
+    : [];
+  if (parcelas.length > 0) {
+    lines.push('Parcelas (snapshot):');
+    for (const parcela of parcelas) {
+      const ordem = parcela?.ordem ?? '-';
+      const dias = parcela?.dias ?? '-';
+      const percentual = parcela?.percentual != null ? String(parcela.percentual) : '-';
+      lines.push(`  #${ordem} · ${dias} dias · ${percentual}%`);
+    }
+  }
+  const tabCodigo = String(row.tabela_preco_codigo_snapshot || '').trim();
+  const tabNome = String(row.tabela_preco_nome_snapshot || '').trim();
+  if (tabCodigo || tabNome) {
+    lines.push(`Tabela de preço: ${[tabCodigo, tabNome].filter(Boolean).join(' — ')}`);
+  } else if (row.tabela_preco_id) {
+    lines.push('Tabela de preço: (sem snapshot — legado)');
+  }
+  if (row.promocao_aplicada === true) {
+    const cupom = String(row.promocao_cupom || '').trim();
+    lines.push(`Promoção: ${row.promocao_bps} bps${cupom ? ` · cupom ${cupom}` : ''}`);
+  } else if (row.promocao_aplicada === false) {
+    lines.push('Promoção: não aplicada');
+  }
+  const deliveries = Array.isArray(options.deliverySummaries) ? options.deliverySummaries : [];
+  if (deliveries.length > 0) {
+    lines.push('Endereço de entrega:');
+    for (const summary of deliveries) {
+      const kindLabel = summary?.kind === 'obra' ? 'Obra' : 'Local';
+      lines.push(`  ${kindLabel}: ${String(summary?.title || '').trim() || '-'}`);
+      const addressLines = Array.isArray(summary?.lines) ? summary.lines : [];
+      for (const addressLine of addressLines) {
+        if (String(addressLine || '').trim()) lines.push(`    ${String(addressLine).trim()}`);
+      }
+    }
+  } else if (kind === 'PEDIDO' && (row.cliente_local_id || row.obra_id)) {
+    lines.push('Endereço: Local/Obra referenciados — confira o endereço do servidor na edição.');
+  }
+  lines.push('Itens:');
+  const itens = Array.isArray(row.itens) ? row.itens : [];
+  if (itens.length === 0) {
+    lines.push('  (sem itens)');
+  } else {
+    itens.forEach((item, index) => {
+      const desc = String(item?.descricao || '').trim() || '-';
+      const un = String(item?.unidade_sigla || '').trim() || '-';
+      const qtd = item?.quantidade != null ? String(item.quantidade) : '-';
+      const preco = formatResumoMoney(item?.preco_unitario);
+      const descItem = formatResumoMoney(item?.desconto);
+      const totalItem = formatResumoMoney(item?.total);
+      lines.push(`  ${index + 1}. ${desc} · ${qtd} ${un} · unit ${preco} · desc ${descItem} · ${totalItem}`);
+    });
+  }
+  lines.push(`Subtotal: ${formatResumoMoney(row.subtotal)}`);
+  lines.push(`Desconto: ${formatResumoMoney(row.desconto)}`);
+  lines.push(`Total: ${formatResumoMoney(row.total)}`);
+  const observacoes = String(row.observacoes || '').trim();
+  if (observacoes) {
+    lines.push('Observações:');
+    lines.push(observacoes);
+  }
+  lines.push('Resumo texto gerado no ERP — conferir no sistema antes de uso externo.');
+  return lines.join('\n');
+}
+
+/**
+ * Estado UI do painel/janela de resumo texto (fail-closed se snapshots pós-031 incompletos).
+ * @param {object | null | undefined} row
+ * @param {{
+ *   kind?: 'ORCAMENTO' | 'PEDIDO',
+ *   empresaNome?: string,
+ *   clienteNome?: string,
+ *   statusLabel?: string,
+ *   deliverySummaries?: Array<{ kind?: string, title?: string, lines?: string[] }>,
+ *   entityLabel?: string,
+ * }} [options]
+ */
+export function resolveComercialResumoPreviewState(row, options = {}) {
+  if (!row || typeof row !== 'object' || !row.numero) {
+    return {
+      mode: 'invalid',
+      text: null,
+      hint: 'Documento inválido para resumo texto.',
+      canPrint: false,
+      canCopy: false,
+    };
+  }
+  const kind = options.kind === 'PEDIDO' ? 'PEDIDO' : 'ORCAMENTO';
+  const entityLabel = options.entityLabel || (kind === 'PEDIDO' ? 'pedido' : 'orçamento');
+  const gap = comercialDocumentoSnapshotGapHint(row, { purpose: 'resumo', entityLabel });
+  if (gap) {
+    return {
+      mode: 'blocked',
+      text: null,
+      hint: gap,
+      canPrint: false,
+      canCopy: false,
+    };
+  }
+  try {
+    const text = buildComercialDocumentoResumoTexto(row, { ...options, kind });
+    return {
+      mode: 'ready',
+      text,
+      hint: null,
+      canPrint: true,
+      canCopy: true,
+    };
+  } catch (error) {
+    return {
+      mode: 'invalid',
+      text: null,
+      hint: error?.message || 'Falha ao montar resumo texto.',
+      canPrint: false,
+      canCopy: false,
+    };
+  }
+}
+
+/**
+ * Abre janela de texto puro (não PDF) para impressão/revisão.
+ * @param {string} text
+ * @param {{ title?: string }} [options]
+ * @returns {boolean}
+ */
+export function openComercialResumoTextoWindow(text, options = {}) {
+  const body = String(text || '').trim();
+  if (!body) return false;
+  const title = String(options.title || 'Resumo comercial').trim() || 'Resumo comercial';
+  const printWindow = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+  if (!printWindow) return false;
+  printWindow.opener = null;
+  printWindow.document.write(`<!doctype html><html><head><meta charset="UTF-8"><title>${escapeResumoHtml(title)}</title>
+<style>body{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:1.5rem;white-space:pre-wrap;line-height:1.45;font-size:13px;color:#111}
+@media print{@page{margin:1.5cm}}</style></head>
+<body><pre>${escapeResumoHtml(body)}</pre></body></html>`);
+  printWindow.document.close();
+  printWindow.onload = () => setTimeout(() => {
+    try { printWindow.print(); } catch { /* janela pode ter sido fechada */ }
+  }, 200);
+  return true;
+}
+
+/** Atalho Orçamento → resumo texto completo (snapshots + itens). */
+export function buildOrcamentoResumoTexto(row, options = {}) {
+  return buildComercialDocumentoResumoTexto(row, { ...options, kind: 'ORCAMENTO' });
+}
+
+export function resolveOrcamentoResumoPreviewState(row, options = {}) {
+  return resolveComercialResumoPreviewState(row, { ...options, kind: 'ORCAMENTO', entityLabel: 'orçamento' });
 }
 
 export function buildOrcamentoPayload(form, options = {}) {

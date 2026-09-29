@@ -1,3 +1,31 @@
+## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
+
+| PR/Branch | Tip | CI | Escopo |
+|---|---|---|---|
+| #146 | `c1fdf63d` | stack | tenant cache |
+| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `2a76c8cc` | — | resumo texto fail-closed |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Pedido/Orçamento resumo texto fail-closed (pós-#146) (2026-09-29T18:29Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** resumo texto Pedido/Orçamento + snapshots fail-closed (painel/janela; sem PDF novo) |
+| Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Base | `#146` tip `c1fdf63d` (`cursor/comercial360-onda3-tenant-cache-392b`) |
+| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
+| Draft PR | **#147** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/147 createPullRequest — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1) base `#146` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
+| Meta | `textoResumoPreviewFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | margem #47; anexos/PDF #52–#62; stack #126–#146 |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## LOTE CURSOR — tenant cache fail-closed (pós-#145) (2026-09-29T18:30Z)
 
 | Campo | Valor |

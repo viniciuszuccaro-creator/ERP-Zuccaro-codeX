@@ -4,15 +4,18 @@ import test from 'node:test';
 
 import {
   buildOrcamentoPayload,
+  buildOrcamentoResumoTexto,
   buildOrcamentoShareText,
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
+  comercialDocumentoSnapshotGapHint,
   isOrcamentoValidadeExpirada,
   mapOrcamentoRowToForm,
   microsToDecimal,
   orcamentoConvertSnapshotHint,
   orcamentoValidadeHint,
+  resolveOrcamentoResumoPreviewState,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
 const form = () => ({
@@ -155,6 +158,63 @@ test('preparacao de compartilhamento usa somente resumo comercial revisavel', ()
   assert.match(text, /Cliente Sintetico/);
   assert.match(text, /R\$\s*125,50/);
   assert.doesNotMatch(text, /groupId|empresaId|actorId|token/i);
+});
+
+test('resumo texto orçamento inclui snapshots e bloqueia incompletos pós-031', () => {
+  const completo = {
+    numero: '00000077',
+    status: 'EM_ABERTO',
+    validade_em: '2027-03-01T12:00:00.000Z',
+    condicao_pagamento_id: 'cp1',
+    condicao_pagamento_codigo_snapshot: '28D',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
+    tabela_preco_id: 'tab1',
+    tabela_preco_codigo_snapshot: 'ATAC',
+    tabela_preco_nome_snapshot: 'Atacado',
+    promocao_aplicada: true,
+    promocao_bps: 250,
+    promocao_cupom: 'CPA',
+    subtotal: '100.000000',
+    desconto: '2.500000',
+    total: '97.500000',
+    itens: [{ descricao: 'Barra', unidade_sigla: 'UN', quantidade: '1.000000', preco_unitario: '100.000000', desconto: '2.500000', total: '97.500000' }],
+  };
+  const text = buildOrcamentoResumoTexto(completo, { empresaNome: 'Zuccaro', clienteNome: 'Cliente A' });
+  assert.match(text, /Orçamento 00000077/);
+  assert.match(text, /28D — 28 dias/);
+  assert.match(text, /#1 · 28 dias · 100\.000000%/);
+  assert.match(text, /ATAC — Atacado/);
+  assert.match(text, /Promoção: 250 bps · cupom CPA/);
+  assert.match(text, /Barra/);
+  assert.doesNotMatch(text, /groupId|empresaId|token/i);
+  const ready = resolveOrcamentoResumoPreviewState(completo, { clienteNome: 'Cliente A' });
+  assert.equal(ready.mode, 'ready');
+  assert.equal(ready.canPrint, true);
+  const incompleto = {
+    ...completo,
+    condicao_pagamento_nome_snapshot: '',
+    condicao_pagamento_parcelas_snapshot: [],
+  };
+  const blocked = resolveOrcamentoResumoPreviewState(incompleto);
+  assert.equal(blocked.mode, 'blocked');
+  assert.equal(blocked.canPrint, false);
+  assert.match(blocked.hint || '', /Snapshots de condição incompletos/);
+  assert.equal(comercialDocumentoSnapshotGapHint(incompleto, { purpose: 'resumo', entityLabel: 'orçamento' }), blocked.hint);
+  assert.match(orcamentoConvertSnapshotHint(incompleto) || '', /antes de converter/);
+  const legado = { numero: '00000001', status: 'EM_ABERTO', validade_em: '2027-01-01', total: '10', itens: [] };
+  assert.equal(comercialDocumentoSnapshotGapHint(legado), null);
+  assert.equal(resolveOrcamentoResumoPreviewState(legado).mode, 'ready');
+});
+
+test('painel orçamento wire resumo texto sem PDF novo', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /resolveOrcamentoResumoPreviewState/);
+  assert.match(tab, /openComercialResumoTextoWindow/);
+  assert.match(tab, /orcamento-resumo-texto-dialog/);
+  assert.match(tab, /Comercial\.orcamento\.resumo-texto/);
+  assert.match(tab, /Resumo texto/);
+  assert.doesNotMatch(tab, /jspdf|pdfkit|html2pdf/i);
 });
 
 test('impressao de orcamento escapa campos livres e nao depende de credencial externa', async () => {

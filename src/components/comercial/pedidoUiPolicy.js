@@ -1,5 +1,32 @@
-import { calculateItem, calculateTotals, decimalToMicros, microsToDecimal, resolvePromocaoPayloadRef } from './orcamentoUiPolicy.js';
+import {
+  buildComercialDocumentoResumoTexto,
+  calculateItem,
+  calculateTotals,
+  comercialDocumentoSnapshotGapHint,
+  decimalToMicros,
+  microsToDecimal,
+  openComercialResumoTextoWindow,
+  resolveComercialResumoPreviewState,
+  resolvePromocaoPayloadRef,
+} from './orcamentoUiPolicy.js';
 import { sanitizeObservacoesText } from './comercialListHttpUiPolicy.js';
+
+export { openComercialResumoTextoWindow };
+
+/** Snapshot gap pós-031 no Pedido (mesmo contrato do Orçamento). */
+export function pedidoDocumentoSnapshotGapHint(row) {
+  return comercialDocumentoSnapshotGapHint(row, { purpose: 'resumo', entityLabel: 'pedido' });
+}
+
+/** Resumo texto read-only do Pedido carregado + snapshots. */
+export function buildPedidoResumoTexto(row, options = {}) {
+  return buildComercialDocumentoResumoTexto(row, { ...options, kind: 'PEDIDO' });
+}
+
+/** Estado do painel/janela de resumo texto do Pedido (fail-closed). */
+export function resolvePedidoResumoPreviewState(row, options = {}) {
+  return resolveComercialResumoPreviewState(row, { ...options, kind: 'PEDIDO', entityLabel: 'pedido' });
+}
 
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
