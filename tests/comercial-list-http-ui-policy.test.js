@@ -28,6 +28,9 @@ import {
   isMasterPickerBlocked,
   sanitizeListSearchText,
   sanitizeObservacoesText,
+  COMERCIAL_OBSERVACOES_MAX_LENGTH,
+  evaluateObservacoesUiGate,
+  clampObservacoesInput,
   COMERCIAL_HTTP_CACHE_PREFIXES,
   isComercialMasterRowActive,
   isInactiveMasterSelectionKept,
@@ -189,6 +192,46 @@ test('sanitizeObservacoesText remove markup perigoso', () => {
   assert.equal(sanitizeObservacoesText('<script>alert(1)</script>nota'), 'scriptalert(1)/scriptnota');
   assert.equal(sanitizeObservacoesText('javascript:alert(1)'), 'alert(1)');
   assert.equal(sanitizeObservacoesText(''), '');
+});
+
+test('evaluateObservacoesUiGate fail-closed no limite canônico 1000', () => {
+  assert.equal(COMERCIAL_OBSERVACOES_MAX_LENGTH, 1000);
+  const ok = evaluateObservacoesUiGate('nota curta');
+  assert.equal(ok.blockSave, false);
+  assert.equal(ok.overLimit, false);
+  assert.equal(ok.max, 1000);
+  assert.equal(ok.counterLabel, '10/1000');
+  assert.equal(ok.hint, null);
+
+  const atLimit = evaluateObservacoesUiGate('x'.repeat(1000));
+  assert.equal(atLimit.blockSave, false);
+  assert.equal(atLimit.length, 1000);
+  assert.equal(atLimit.nearLimit, true);
+  assert.equal(atLimit.counterLabel, '1000/1000');
+
+  const over = evaluateObservacoesUiGate('x'.repeat(1001));
+  assert.equal(over.blockSave, true);
+  assert.equal(over.overLimit, true);
+  assert.match(over.hint, /1000/);
+  assert.equal(over.counterLabel, '1001/1000');
+
+  assert.equal(clampObservacoesInput('x'.repeat(1500)).length, 1000);
+  assert.equal(clampObservacoesInput('abc', 2), 'ab');
+});
+
+test('painéis Pedido/Orçamento aplicam gate UX de observações (maxLength + contador)', async () => {
+  const pedido = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const orcamento = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  for (const source of [pedido, orcamento]) {
+    assert.match(source, /evaluateObservacoesUiGate/);
+    assert.match(source, /clampObservacoesInput/);
+    assert.match(source, /COMERCIAL_OBSERVACOES_MAX_LENGTH|observacoesUi\.max/);
+    assert.match(source, /observacoes-counter/);
+    assert.match(source, /observacoesUi\.blockSave/);
+    assert.match(source, /maxLength=\{observacoesUi\.max\}/);
+  }
+  assert.match(pedido, /pedido-observacoes/);
+  assert.match(orcamento, /orcamento-observacoes/);
 });
 
 test('payload Orçamento/Pedido sanitiza observacoes no save', () => {

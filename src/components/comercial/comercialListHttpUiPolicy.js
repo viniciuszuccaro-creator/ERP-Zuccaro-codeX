@@ -31,15 +31,60 @@ function stripControlChars(raw) {
   return out;
 }
 
+/** Limite canônico alinhado a Zod/migration (Pedido/Orçamento ≤ 1000). */
+export const COMERCIAL_OBSERVACOES_MAX_LENGTH = 1000;
+
 /** Sanitiza observações livres (XSS/controle) antes do payload HTTP. */
-export function sanitizeObservacoesText(value, max = 1000) {
+export function sanitizeObservacoesText(value, max = COMERCIAL_OBSERVACOES_MAX_LENGTH) {
+  const limit = Number.isFinite(max) && max > 0 ? max : COMERCIAL_OBSERVACOES_MAX_LENGTH;
   const cleaned = stripControlChars(String(value ?? ''))
     .replace(/[<>]/g, '')
     .replace(/javascript:\s*/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (!cleaned) return '';
-  return cleaned.slice(0, max);
+  return cleaned.slice(0, limit);
+}
+
+/**
+ * Gate UX fail-closed do campo Observações (contador + bloqueio se > max).
+ * Alinha Textarea/maxLength ao contrato backend (trim().max(1000)).
+ * @param {unknown} value
+ * @param {number} [max]
+ * @returns {{
+ *   max: number,
+ *   length: number,
+ *   remaining: number,
+ *   overLimit: boolean,
+ *   blockSave: boolean,
+ *   nearLimit: boolean,
+ *   counterLabel: string,
+ *   hint: string | null,
+ * }}
+ */
+export function evaluateObservacoesUiGate(value, max = COMERCIAL_OBSERVACOES_MAX_LENGTH) {
+  const limit = Number.isFinite(max) && max > 0 ? max : COMERCIAL_OBSERVACOES_MAX_LENGTH;
+  const length = String(value ?? '').length;
+  const overLimit = length > limit;
+  const remaining = Math.max(0, limit - length);
+  return {
+    max: limit,
+    length,
+    remaining,
+    overLimit,
+    blockSave: overLimit,
+    nearLimit: length >= Math.floor(limit * 0.9),
+    counterLabel: `${length}/${limit}`,
+    hint: overLimit
+      ? `Observações excedem o limite de ${limit} caracteres. Reduza o texto antes de salvar.`
+      : null,
+  };
+}
+
+/** Clamp defensivo no onChange (além de maxLength HTML). */
+export function clampObservacoesInput(value, max = COMERCIAL_OBSERVACOES_MAX_LENGTH) {
+  const limit = Number.isFinite(max) && max > 0 ? max : COMERCIAL_OBSERVACOES_MAX_LENGTH;
+  return String(value ?? '').slice(0, limit);
 }
 
 /**

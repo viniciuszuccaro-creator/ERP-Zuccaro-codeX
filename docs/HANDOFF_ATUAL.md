@@ -1,3 +1,10 @@
+## AUTÔNOMO — #162 observações limit UX (2026-09-29T22:25Z approx → 2026-09-29T22:23Z)
+
+Tip empilhada em #161: gate fail-closed Observações (max 1000 + contador) Orçamento/Pedido.
+Sem migration. Sem merge/VPS. Continuando Comercial 360.
+
+---
+
 ## LOTE CURSOR — Orçamento convert banner consolidado (pós multi-select) (2026-09-29T22:20Z)
 
 | Campo | Valor |
