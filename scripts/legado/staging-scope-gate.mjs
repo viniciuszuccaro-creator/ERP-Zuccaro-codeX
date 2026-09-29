@@ -117,3 +117,86 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
   // Nao entregar lote parcial ao consumidor: o relatorio preserva apenas contagens.
   return { privados: bloqueado ? [] : privados, relatorio, bloqueado };
 }
+
+/**
+ * Reconcilia um lote sintetico em um unico Grupo antes de entregar qualquer
+ * registro privado ao staging. Contagens sao independentes da deduplicacao:
+ * retry continua sendo uma linha de origem, mas nao uma nova linha de destino.
+ * Dependencias so podem apontar para mestre do Grupo ou operacao da mesma Empresa.
+ */
+export function reconciliarPlanoStagingLegado({
+  itens, existentes = [], vinculosVerificados = {}, autorizado = false, groupId, contagensEsperadas = [],
+} = {}) {
+  const grupo = String(groupId ?? '').trim();
+  if (!grupo) throw new Error('Grupo do plano de staging obrigatorio.');
+  if (!Array.isArray(itens) || !Array.isArray(existentes) || !Array.isArray(contagensEsperadas)) {
+    throw new Error('Plano de staging exige listas validas.');
+  }
+  if ([...itens, ...existentes].some((item) => String(item?.groupId ?? '').trim() !== grupo)) {
+    throw new Error('Plano de staging mistura Grupos.');
+  }
+  const preparado = prepararLoteStagingLegado(itens, { autorizado, vinculosVerificados, existentes });
+  if (preparado.bloqueado) return preparado;
+  const porMotivo = { ...preparado.relatorio.porMotivo };
+  const contar = (motivo) => { porMotivo[motivo] = (porMotivo[motivo] || 0) + 1; };
+  const chave = (item) => JSON.stringify([
+    grupo, String(item?.empresaId ?? '').trim(), String(item?.entidade ?? '').trim(),
+    String(item?.codigoLegado ?? '').trim(),
+  ]);
+  const conhecidos = new Set([...existentes, ...preparado.privados].map(chave));
+  let dependenciasPendentes = 0;
+  for (const item of itens) {
+    const deps = item?.dependencias ?? [];
+    if (!Array.isArray(deps)) throw new Error('Dependencias do staging invalidas.');
+    for (const dep of deps) {
+      const entidade = String(dep?.entidade ?? '').trim();
+      const codigoLegado = String(dep?.codigoLegado ?? '').trim();
+      const escopo = String(dep?.escopo ?? '').trim();
+      const empresaId = escopo === 'empresa' ? String(item?.empresaId ?? '').trim() : '';
+      const tipoValido = escopo === 'grupo' ? MESTRES_GRUPO.has(entidade)
+        : escopo === 'empresa' && OPERACOES.has(entidade);
+      if (!tipoValido || !codigoLegado || (escopo === 'empresa' && !empresaId)
+        || !conhecidos.has(JSON.stringify([grupo, empresaId, entidade, codigoLegado]))) {
+        dependenciasPendentes += 1;
+        contar('dependencia_nao_comprovada');
+      }
+    }
+  }
+  const observadas = {};
+  for (const item of itens) {
+    const entidade = String(item.entidade).trim();
+    const empresa = String(item.empresaId ?? '').trim() ? codigo(item.codigoEmpresaLegado) : 'grupo';
+    const categoria = `${entidade}|${empresa}`;
+    observadas[categoria] = (observadas[categoria] || 0) + 1;
+  }
+  const esperadas = {};
+  for (const entrada of contagensEsperadas) {
+    const entidade = String(entrada?.entidade ?? '').trim();
+    const empresa = String(entrada?.codigoEmpresaLegado ?? '').trim();
+    const quantidade = entrada?.quantidade;
+    const categoria = `${entidade}|${empresa}`;
+    if ((!MESTRES_GRUPO.has(entidade) && !OPERACOES.has(entidade))
+      || (MESTRES_GRUPO.has(entidade) && empresa !== 'grupo')
+      || (OPERACOES.has(entidade) && !CODIGOS_EMPRESA.has(empresa))
+      || typeof quantidade !== 'number' || !Number.isSafeInteger(quantidade)
+      || quantidade < 0 || categoria in esperadas) {
+      throw new Error('Contagens esperadas do staging invalidas.');
+    }
+    esperadas[categoria] = quantidade;
+  }
+  const categorias = new Set([...Object.keys(observadas), ...Object.keys(esperadas)]);
+  let divergencias = 0;
+  for (const categoria of categorias) {
+    if ((observadas[categoria] || 0) !== (esperadas[categoria] || 0)) {
+      divergencias += 1;
+      contar('contagem_origem_divergente');
+    }
+  }
+  const bloqueado = dependenciasPendentes > 0 || divergencias > 0;
+  return {
+    privados: bloqueado ? [] : preparado.privados,
+    bloqueado,
+    relatorio: { ...preparado.relatorio, porMotivo, porEntidadeEmpresaOrigem: observadas,
+      dependenciasPendentes, divergencias },
+  };
+}
