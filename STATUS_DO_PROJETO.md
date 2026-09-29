@@ -1,3 +1,32 @@
+## LOTE CURSOR — snapshot reload pós-save (pós-#138) (2026-09-29T17:25Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Pedido/Orçamento reload after save prova snapshots (condição/promo/tabela) — A colide com #47 margem/CostPort aberto |
+| Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
+| Base | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` tip `90a76433` (#138) |
+| Tip | _(após commit)_ |
+| Escopo | Após create/update, formulário permanece aberto e recarrega snapshots persistidos (condição+tabela+promo); badges Persistido; sem migration |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Testes | `node --test` policies simulacao/orcamento/pedido/condicao/tabela — **45/45 PASS** |
+| Colisão | A) margem UI → #47 OPEN CostPort; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** masters loading/error banner (C) **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialSimulacaoUiPolicy.js`, `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, tests simulacao/orcamento/pedido.
+
+---
+
+## OPINIÃO CURSOR — #138 tip + escolha B snapshot-reload (2026-09-29T17:25Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #138 | `90a76433` | pendente | alçada desconto UI fail-closed |
+| próximo | `cursor/comercial360-onda3-snapshot-reload-392b` | — | Reload pós-save prova snapshots round-trip |
+
+Diagnóstico: #47 (margem CostPort) ainda OPEN — UI margem adiada. Reload após save era gap: form fechava e não mostrava snapshots persistidos. Sem migration. EXECUCAO_PARALELA + Regra-Mãe.
+
+---
+
 ## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
 
 | Campo | Valor |

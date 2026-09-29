@@ -1,3 +1,16 @@
+## LOTE CURSOR — snapshot reload pós-save (pós-#138) (2026-09-29T17:25Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** reload after save prova snapshots condição/promo/tabela |
+| Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
+| Base | `#138` tip `90a76433` (`cursor/comercial360-onda3-alcada-ui-failclosed-392b`) |
+| Escopo | Form permanece aberto pós-save; snapshots persistidos na UI; sem migration |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Colisão | Margem UI adiada (#47 OPEN); anexos/PDF #52–#62 |
+
+---
+
 ## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
 
 | Campo | Valor |
