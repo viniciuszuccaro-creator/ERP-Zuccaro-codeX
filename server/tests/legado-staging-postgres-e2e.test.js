@@ -175,6 +175,28 @@ test('mapper e staging PostgreSQL isolado reconciliam mestres sem entrega parcia
       const revenda = verificarMapeadorParaStaging([produto], { ...opts, entidade: 'produto_revenda' });
       assert.equal(revenda.bloqueado, false);
       await insert(revenda.privados[0], 'produto_revenda');
+      const fornecedor = { cod_fornecedor: 'FOR-MAP-SINT-1', nome: 'Fornecedor Sintetico',
+        group_id: groupId };
+      const mappedFornecedor = verificarMapeadorParaStaging([fornecedor], { ...opts,
+        entidade: 'fornecedor', contagensEsperadas: [
+          { entidade: 'fornecedor', codigoEmpresaLegado: 'grupo', quantidade: 1 },
+        ] });
+      assert.equal(mappedFornecedor.bloqueado, false);
+      assert.equal(mappedFornecedor.privados[0].empresa_id, undefined);
+      await insert(mappedFornecedor.privados[0], 'fornecedor');
+      const storedFornecedor = await client.query(`SELECT group_id, empresa_id, entidade, codigo_legado, assinatura
+        FROM legado_staging_sintetico WHERE group_id=$1 AND entidade='fornecedor'`, [groupId]);
+      assert.equal(storedFornecedor.rowCount, 1);
+      const retryFornecedor = verificarMapeadorParaStaging([fornecedor], { ...opts, entidade: 'fornecedor',
+        existentes: storedFornecedor.rows.map((row) => ({ groupId: row.group_id,
+          empresaId: row.empresa_id, entidade: row.entidade, codigoLegado: row.codigo_legado,
+          assinaturaOrigem: row.assinatura })) });
+      assert.equal(retryFornecedor.bloqueado, false);
+      assert.equal(retryFornecedor.relatorio.reusos, 1);
+      assert.deepEqual(retryFornecedor.privados, []);
+      assert.throws(() => verificarMapeadorParaStaging([
+        { ...fornecedor, codigo_empresa: '001' },
+      ], { ...opts, entidade: 'fornecedor' }), /vinculo empresarial legado nao comprovado/);
       assert.throws(() => verificarMapeadorParaStaging([{ ...cliente, group_id: empresaId }],
         { ...opts, entidade: 'cliente' }), /Grupo da linha diverge/);
       const mixed = verificarMapeadorParaStaging([produto, {
@@ -185,7 +207,7 @@ test('mapper e staging PostgreSQL isolado reconciliam mestres sem entrega parcia
       assert.equal(mixed.relatorio.excluidos, 1);
       assert.deepEqual(mixed.privados, []);
       const count = await client.query('SELECT count(*)::int AS total FROM legado_staging_sintetico');
-      assert.equal(count.rows[0].total, 2);
+      assert.equal(count.rows[0].total, 3);
       await client.query('SAVEPOINT duplicate_mapped_master');
       await assert.rejects(insert(mapped.privados[0], 'cliente'), (error) => error.code === '23505');
       await client.query('ROLLBACK TO SAVEPOINT duplicate_mapped_master');

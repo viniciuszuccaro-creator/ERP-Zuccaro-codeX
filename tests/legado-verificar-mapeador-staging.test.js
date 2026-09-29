@@ -24,6 +24,59 @@ test('produto de revenda reutiliza mapper de Produto e fica no Grupo', () => {
   assert.equal(result.privados[0].descricao, 'Produto Sintetico');
 });
 
+test('fornecedor sintetico preserva codigo no Grupo e reconcilia contagem', () => {
+  const result = verificarMapeadorParaStaging([
+    { cod_fornecedor: 'F-101', razao_social: 'Fornecedor Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, entidade: 'fornecedor',
+    contagensEsperadas: [{ entidade: 'fornecedor', codigoEmpresaLegado: 'grupo', quantidade: 1 }] });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.relatorio.aptos, 1);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'fornecedor|grupo': 1 });
+  assert.equal(result.privados[0].codigo_legado, 'F-101');
+  assert.equal(result.privados[0].group_id, 'g-sint');
+  assert.equal(result.privados[0].empresa_id, undefined);
+  assert.equal(JSON.stringify(result.relatorio).includes('Fornecedor Sintetico'), false);
+});
+
+test('fornecedor nao aceita empresa implicita, Grupo cruzado nem contagem divergente', () => {
+  const row = { cod_fornecedor: 'F-102', nome: 'Fornecedor Sintetico', group_id: 'g-sint' };
+  const opts = { ...opcoes, entidade: 'fornecedor' };
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, codigo_empresa: '001' }], opts),
+    /vinculo empresarial legado nao comprovado/);
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'outro' }], opts),
+    /Grupo da linha diverge/);
+  const divergente = verificarMapeadorParaStaging([row], { ...opts,
+    contagensEsperadas: [{ entidade: 'fornecedor', codigoEmpresaLegado: 'grupo', quantidade: 2 }] });
+  assert.equal(divergente.bloqueado, true);
+  assert.deepEqual(divergente.privados, []);
+  assert.equal(divergente.relatorio.divergencias, 1);
+});
+
+test('fornecedor faz retry idempotente e bloqueia alteracao do mesmo codigo sem entrega parcial', () => {
+  const row = { cod_fornecedor: 'F-103', nome: 'Fornecedor Sintetico', group_id: 'g-sint' };
+  const opts = { ...opcoes, entidade: 'fornecedor' };
+  const first = verificarMapeadorParaStaging([row], opts);
+  const mapped = first.privados[0];
+  const assinaturaOrigem = createHash('sha256').update(JSON.stringify({
+    codigo: mapped.codigo_legado, nome: mapped.nome, descricao: mapped.descricao,
+    documento: mapped.documento,
+  })).digest('hex');
+  const existentes = [{ entidade: 'fornecedor', groupId: 'g-sint', empresaId: '',
+    codigoLegado: mapped.codigo_legado, assinaturaOrigem }];
+  const retry = verificarMapeadorParaStaging([row], { ...opts, existentes });
+  assert.equal(retry.bloqueado, false);
+  assert.deepEqual(retry.privados, []);
+  assert.equal(retry.relatorio.reusos, 1);
+  const changed = verificarMapeadorParaStaging([
+    { ...row, nome: 'Fornecedor Alterado Sintetico' },
+    { cod_fornecedor: 'F-104', nome: 'Outro Sintetico', group_id: 'g-sint' },
+  ], { ...opts, existentes });
+  assert.equal(changed.bloqueado, true);
+  assert.deepEqual(changed.privados, []);
+  assert.equal(changed.relatorio.conflitos, 1);
+  assert.equal(JSON.stringify(changed.relatorio).includes('Fornecedor Alterado'), false);
+});
+
 test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => {
   const row = { cod_cliente: 'C-102', nome: 'Teste' };
   assert.throws(() => verificarMapeadorParaStaging([row], { ...opcoes, grupoComprovado: false }));
@@ -69,8 +122,8 @@ test('campos de escopo com espaco ou ponto e estruturas aninhadas bloqueiam ante
   ], opcoes), /aninhado nao permitido/);
 });
 
-test('pedido, fornecedor e produto fora de revenda aguardam mapeador validado', () => {
-  for (const entidade of ['pedido', 'fornecedor', 'produto']) {
+test('pedido e produto fora de revenda aguardam mapeador validado', () => {
+  for (const entidade of ['pedido', 'produto']) {
     assert.throws(() => verificarMapeadorParaStaging([{ codigo: '1' }], { ...opcoes, entidade }),
       /Entidade sem mapeador/);
   }

@@ -4,7 +4,7 @@ import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolic
 import { mapLegadoLoteSintetico } from './mapear-registro-sintetico.mjs';
 import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './staging-scope-gate.mjs';
 
-const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', produto_revenda: 'produto' });
+const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', fornecedor: 'fornecedor', produto_revenda: 'produto' });
 const GRUPO_ALIASES = new Set(['groupid', 'grupoid']);
 const EMPRESA_ALIASES = new Set(['codigoempresa', 'codempresa', 'empresacodigo', 'empresaid']);
 const normalizarAlias = (key) => key.toLowerCase().replace(/[\s._-]/g, '');

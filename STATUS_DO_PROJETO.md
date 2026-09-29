@@ -11737,3 +11737,10 @@ Checklist inicial:
 - O E2E efemero agora exercita o mapper #48 atraves do adaptador Codex: Cliente mestre e Produto explicitamente de revenda entram em tabela temporaria com codigo legado preservado e `empresa_id` nulo. O indice do Cliente e relido por SQL para comprovar retry sem segunda entrega.
 - Grupo divergente falha antes do SQL; lote misto com Produto nao-revenda devolve zero registros e contagem sanitizada de exclusoes. A constraint PostgreSQL rejeita duplicata do mestre e toda a transacao termina em rollback.
 - Esta prova nao representa extracao do HD, vinculo juridico real, staging persistente nem importacao operacional. CI PostgreSQL do novo HEAD e obrigatoria antes de aprovar o ensaio.
+
+## Fornecedor legado no contrato de staging isolado (2026-09-29)
+
+- O adaptador existente da #128 agora reutiliza o mapeador de Fornecedor da #48 como mestre compartilhado do Grupo, preservando `codigo_legado`; nao atribui Empresa por codigo do seletor, nome de pasta ou hipotese. Cliente e Produto de revenda mantem seus contratos.
+- Testes sinteticos cobrem contagem por entidade/Grupo, retry idempotente, conflito de conteudo no mesmo codigo, Grupo divergente, vinculo empresarial nao comprovado e ausencia de entrega parcial. O E2E PostgreSQL usa tabela temporaria em banco isolado, valida linha e retry por SQL e termina em rollback.
+- Validacao local: 43 testes focados PASS, audit baseline/lint/build PASS. `npm test` no Windows inclui testes de scripts VPS que exigem Bash e falham com `spawnSync.status=null`; `npm run typecheck` global falha em erros existentes de Base44/JSX fora dos arquivos alterados. CI Linux do HEAD publicado deve confirmar a suite completa e o PostgreSQL sintetico antes da revisao.
+- Nao houve leitura do HD, staging persistente, importacao, migration, VPS ou mudanca da porta 3080. O vinculo juridico para operacoes e a carga real continuam sujeitos a prova e gate proprios.
