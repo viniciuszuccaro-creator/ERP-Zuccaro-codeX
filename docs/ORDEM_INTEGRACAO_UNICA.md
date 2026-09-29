@@ -20,7 +20,7 @@ Ancestralidade verificada com `git merge-base --is-ancestor`:
 - #132 não é ancestral da #141.
 - A cadeia Comercial e a #141 divergem em `main` (`d02cd012`). Nenhuma contém a outra.
 
-A candidata revisável contra `main` é a branch `cursor/comercial360-candidata-main-53c4`. O código de runtime dela é exatamente `6218511a`. O commit posterior a esse SHA é só este registro. A pilha draft #114–#151 permanece como está; a CI isolada de cada degrau continua válida só para o seu delta, e a CI desta candidata é a do conjunto contra `main`.
+A candidata revisável contra `main` é a PR **#152** (`cursor/comercial360-candidata-main-53c4`). O código de runtime dela é exatamente `6218511a`. O commit posterior a esse SHA é só este registro. A pilha draft #114–#151 permanece como está; a CI isolada de cada degrau continua válida só para o seu delta, e a CI desta candidata é a do conjunto contra `main`.
 
 ## Cadeia Comercial (ancestral linear até `6218511a`)
 
