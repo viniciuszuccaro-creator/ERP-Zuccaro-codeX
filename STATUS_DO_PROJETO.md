@@ -11554,3 +11554,11 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## Onda 9 — Gate de upload técnico nas telas existentes (2026-09-29)
+
+- Branch `codex/onda9-upload-tecnico-gates`, independente da candidata Comercial #155. Arquivos: `ArquivosProjetosTab`, `CorteDobraIATab`, `UploadProjetos`, política compartilhada e teste sintético.
+- Upload legado bloqueado no modo HTTP até existir armazenamento canônico de Projeto. No sandbox legado, apenas PDF/JPG/PNG até 10 MB com extensão, MIME e assinatura coerentes; CAD aguarda antivírus e política de download. Nenhum anexo ou Pedido pode ser confirmado por URL `local://`, sem HTTPS, com credenciais ou query de assinatura.
+- Reutiliza telas e fluxo existentes; não adiciona entidade, migration, importador, credencial ou integração externa. Esta validação frontend não substitui a validação backend, RBAC/tenant, auditoria, StoragePort ou revisão técnica humana da Onda 9. Não libera IA para produção.
+- Focados: 5 PASS/0 FAIL; lint, build, audit baseline e `git diff --check` PASS. O teste frontend completo no Windows ainda falha em scripts Bash/VPS; typecheck global mantém diagnósticos anteriores sem relação com esta alteração. CI Linux ainda exigida. Nenhum upload real, VPS ou porta 3080 alterados.
+- Próximo gate: backend Projeto/Revisão e storage privado com antivírus comprovado, escopo Grupo/Empresa, auditoria e revisão humana antes de habilitar upload no modo HTTP.

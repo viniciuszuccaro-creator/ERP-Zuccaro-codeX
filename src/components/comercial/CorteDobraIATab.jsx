@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Plus, Trash2, Eye, Download, Bot, Layers, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import VisualizadorPeca from './VisualizadorPeca';
+import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * V21.1 - Aba 4: Corte e Dobra (IA)
@@ -54,11 +55,12 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     const file = event.target.files[0];
     if (!file) return;
 
-    setProcessandoIA(true);
-    toast.success('🤖 Processando arquivo com IA...');
-
     try {
+      const tipoArquivo = await assertTechnicalUploadAllowed(file);
+      setProcessandoIA(true);
+      toast.info('Processando arquivo com IA...');
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const confirmedUrl = assertConfirmedTechnicalUploadUrl(file_url);
 
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise este projeto de estrutura metálica e extraia TODAS as posições de corte e dobra.
@@ -72,7 +74,7 @@ Para cada posição, retorne:
 - etapa: Fase da obra (fundacao, estrutura, cobertura) se identificável
 
 Retorne APENAS posições claramente identificadas.`,
-        file_urls: [file_url],
+        file_urls: [confirmedUrl],
         response_json_schema: {
           type: 'object',
           properties: {
@@ -123,9 +125,9 @@ Retorne APENAS posições claramente identificadas.`,
           projetos_ia: [
             ...(prev?.projetos_ia || []),
             {
-              arquivo_url: file_url,
+              arquivo_url: confirmedUrl,
               arquivo_nome: file.name,
-              tipo_arquivo: file.name.endsWith('.pdf') ? 'PDF' : 'DWG',
+              tipo_arquivo: tipoArquivo,
               processado_ia: true,
               data_processamento: new Date().toISOString(),
               pecas_detectadas: resultado.posicoes.length,
@@ -251,7 +253,7 @@ Retorne APENAS posições claramente identificadas.`,
           <CardContent>
             <input
               type="file"
-              accept=".pdf,.dwg,.dxf"
+              accept={TECHNICAL_UPLOAD_ACCEPT}
               onChange={handleUploadIA}
               className="hidden"
               id="upload-ia"
@@ -268,7 +270,7 @@ Retorne APENAS posições claramente identificadas.`,
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      Selecionar Arquivo (IA Automática)
+                      Selecionar PDF ou imagem para análise
                     </>
                   )}
                 </span>
