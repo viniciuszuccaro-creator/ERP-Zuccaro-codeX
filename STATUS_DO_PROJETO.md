@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-inactive-master-picker-392b` |
 | Base | `origin/cursor/comercial360-onda3-item-line-validation-392b` tip `c38a768d` (#148 CI SUCCESS) |
 | Tip | `8729e1c8` (`8729e1c86f73ea34c6f44d9f3ff474c51d7bef36`) · feat `b08dcb10` |
-| Draft PR | **BLOCKED** createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-item-line-validation-392b...cursor/comercial360-onda3-inactive-master-picker-392b?expand=1) base `#148` |
+| Draft PR | **#149** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/149 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-item-line-validation-392b...cursor/comercial360-onda3-inactive-master-picker-392b?expand=1) base `#148` |
 | Escopo | `filterActiveMasterRowsKeepingSelection` + labels `(inativo)` + hint UI; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `inactiveMasterPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **15/15**; `git diff --check` PASS |

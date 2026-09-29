@@ -17,7 +17,7 @@ Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 | Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
 | Base | `#146` tip `c1fdf63d` (`cursor/comercial360-onda3-tenant-cache-392b`) |
 | Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
-| Draft PR | **#147** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/147 createPullRequest — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1) base `#146` |
+| Draft PR | **#149** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/149 |
 | Draft PR | **#148** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/148 |
 | Meta | `textoResumoPreviewFailClosed` + **Pedido backend HTTP is active** |
 | Colisão | margem #47; anexos/PDF #52–#62; stack #126–#146 |
