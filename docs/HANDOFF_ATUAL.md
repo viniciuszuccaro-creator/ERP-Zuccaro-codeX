@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #147 CI SUCCESS + #148 item-line validation (2026-09-29T18:39Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #147 | `0e7111af` | **SUCCESS** | resumo texto Pedido/Orçamento |
+| #148 | `cursor/comercial360-onda3-item-line-validation-392b` | pendente | validação qtd/preço linhas fail-closed |
+
+Próximo: margem UI pós-#47 **ou** a11y polish **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #146 CI SUCCESS + #147 resumo texto (2026-09-29T18:31Z)
 
 | PR | Tip | CI | Escopo |
