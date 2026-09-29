@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #135 CI SUCCESS + #136 list-failclosed (2026-09-29T17:06Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #135 | `5b559c9a` | **SUCCESS** | Pedido cancel fail-closed |
+| #136 | `cursor/comercial360-onda3-list-failclosed-392b` | pendente | List HTTP fail-closed + update bloqueado CANCELADO |
+
+Próximo: Onda 4 slice sem 025–028 (anexos/PDF se sem colisão) **ou** revisão cruzada #104/#48. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #134 CI SUCCESS + #135 Pedido cancel (2026-09-29T16:57Z)
 
 | PR | Tip | CI | Escopo |
