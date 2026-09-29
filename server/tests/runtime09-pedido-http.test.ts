@@ -132,6 +132,10 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.listMultiSelectStubFailClosed, true);
   assert.equal(meta.body.orcamento?.listMultiSelectStubFailClosed, true);
   assert.equal(meta.body.orcamento?.convertDisabledReasonsBannerFailClosed, true);
+  assert.equal(meta.body.orcamento?.observacoesMaxLengthUiFailClosed, true);
+  assert.equal(meta.body.orcamento?.listPageCsvExportFailClosed, true);
+  assert.equal(meta.body.pedido.observacoesMaxLengthUiFailClosed, true);
+  assert.equal(meta.body.pedido.listPageCsvExportFailClosed, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido Entrega vs Retirada fail-closed/);
   assert.match(String(meta.body.note || ''), /data_entrega_solicitada fail-closed/);

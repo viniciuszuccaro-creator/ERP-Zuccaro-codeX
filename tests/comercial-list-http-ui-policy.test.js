@@ -50,6 +50,15 @@ import {
   createComercialFormBeforeUnloadHandler,
   bindComercialFormBeforeUnload,
   COMERCIAL_LIST_BULK_STUB_REASON,
+  COMERCIAL_LIST_PAGE_EXPORT_SCOPE,
+  ORCAMENTO_LIST_CSV_COLUMNS,
+  PEDIDO_LIST_CSV_COLUMNS,
+  escapeComercialCsvCell,
+  buildComercialListCsv,
+  resolveComercialListPageExportUi,
+  downloadComercialCsvText,
+  mapOrcamentoRowsForCsv,
+  mapPedidoRowsForCsv,
   normalizeComercialListSelectedIds,
   isComercialListRowSelected,
   toggleComercialListRowSelection,
@@ -782,4 +791,61 @@ test('painéis Orçamento/Pedido: multi-select UI stub fail-closed (sem API bulk
   assert.match(meta, /multi-select stub fail-closed/);
   assert.match(meta, /em breve \/ sem endpoint/);
   assert.match(meta, /Pedido backend HTTP is active/);
+});
+
+test('Export CSV página: escape/build/gate fail-closed', () => {
+  assert.equal(escapeComercialCsvCell('a,b'), '"a,b"');
+  assert.equal(escapeComercialCsvCell('diz "oi"'), '"diz ""oi"""');
+  assert.equal(COMERCIAL_LIST_PAGE_EXPORT_SCOPE, 'pagina-atual');
+  const csv = buildComercialListCsv(
+    [{ numero: '00000001', total: '10.00', status: 'EM_ABERTO' }],
+    [{ key: 'numero', header: 'Numero' }, { key: 'total', header: 'Total' }, { key: 'status', header: 'Status' }],
+  );
+  assert.equal(csv, 'Numero,Total,Status\n00000001,10.00,EM_ABERTO');
+  assert.equal(resolveComercialListPageExportUi({ listView: 'ready', rowCount: 2, canView: true }).canExport, true);
+  assert.equal(resolveComercialListPageExportUi({ listView: 'empty', rowCount: 0, canView: true }).blockExport, true);
+  assert.equal(resolveComercialListPageExportUi({ listView: 'error', rowCount: 3, canView: true }).blockExport, true);
+  assert.equal(resolveComercialListPageExportUi({ listView: 'ready', rowCount: 1, canView: false }).blockExport, true);
+  const mappedOrc = mapOrcamentoRowsForCsv([{ id: '1', numero: '1', cliente_empresa_id: 'c', itens: [1], status: 'EM_ABERTO' }], () => 'Cliente X');
+  assert.equal(mappedOrc[0].cliente_label, 'Cliente X');
+  assert.equal(mappedOrc[0].itens_count, 1);
+  const mappedPed = mapPedidoRowsForCsv([{ numero: '2', cliente_empresa_id: 'c', tipo_operacao: 'ENTREGA', total: '1' }], () => 'Y');
+  assert.equal(mappedPed[0].cliente_label, 'Y');
+  assert.ok(ORCAMENTO_LIST_CSV_COLUMNS.length >= 5);
+  assert.ok(PEDIDO_LIST_CSV_COLUMNS.length >= 4);
+  const clicks = [];
+  const result = downloadComercialCsvText('t.csv', 'a,b\n1,2', {
+    createObjectURL: () => 'blob:test',
+    revokeObjectURL: () => {},
+    document: {
+      createElement: () => ({
+        click() { clicks.push('click'); },
+        remove() {},
+        set href(_v) {},
+        get href() { return ''; },
+        set download(_v) {},
+        get download() { return ''; },
+        set rel(_v) {},
+      }),
+      body: { appendChild() {}, removeChild() {} },
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(clicks, ['click']);
+  assert.equal(downloadComercialCsvText('t.csv', '').ok, false);
+});
+
+test('painéis Orçamento/Pedido: CSV página atual (fail-closed gate)', async () => {
+  const pedido = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const orcamento = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  for (const source of [pedido, orcamento]) {
+    assert.match(source, /resolveComercialListPageExportUi/);
+    assert.match(source, /buildComercialListCsv/);
+    assert.match(source, /downloadComercialCsvText/);
+    assert.match(source, /list-export-csv/);
+    assert.match(source, /export-csv-pagina/);
+    assert.match(source, /listPageExportUi\.blockExport/);
+  }
+  assert.match(orcamento, /mapOrcamentoRowsForCsv/);
+  assert.match(pedido, /mapPedidoRowsForCsv/);
 });

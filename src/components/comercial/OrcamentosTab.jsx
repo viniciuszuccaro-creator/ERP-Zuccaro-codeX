@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Eye, FilePlus2, FileText, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, Download, Eye, FilePlus2, FileText, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -61,9 +61,11 @@ import {
 } from './comercialProdutoHttpUiPolicy';
 import {
   ORCAMENTO_LIST_FILTER_DEFAULTS,
+  ORCAMENTO_LIST_CSV_COLUMNS,
   COMERCIAL_OBSERVACOES_MAX_LENGTH,
   bindComercialFormBeforeUnload,
   buildComercialBannerA11yProps,
+  buildComercialListCsv,
   buildHttpListQueryKey,
   buildItemLineFieldA11y,
   buildItemLineHintId,
@@ -75,6 +77,7 @@ import {
   clampObservacoesInput,
   comercialActionAriaLabel,
   confirmComercialFormAbandon,
+  downloadComercialCsvText,
   evaluateObservacoesUiGate,
   filterActiveMasterRowsKeepingSelection,
   formatComercialHttpError,
@@ -85,8 +88,10 @@ import {
   inactiveMasterSelectionHint,
   isComercialRetryableHttpError,
   isMasterPickerBlocked,
+  mapOrcamentoRowsForCsv,
   normalizeOrcamentoListFilters,
   resolveComercialFormDialogOpenChange,
+  resolveComercialListPageExportUi,
   resolveHttpListViewState,
   resolveHttpMasterPickerState,
   resolveComercialListBulkUiState,
@@ -722,6 +727,21 @@ const convertToPedido = async () => {
     hasActiveFilters: listHasActiveFilters,
   });
   const listView = resolveHttpListViewState({ isLoading: listQuery.isLoading, isError: listQuery.isError, rowCount: rows.length });
+
+  const listPageExportUi = resolveComercialListPageExportUi({ listView, rowCount: rows.length, canView });
+  const exportListPageCsv = () => {
+    if (listPageExportUi.blockExport) {
+      toast.error(listPageExportUi.hint || listPageExportUi.title || 'Exportação bloqueada.');
+      return;
+    }
+    const csv = buildComercialListCsv(mapOrcamentoRowsForCsv(rows, clienteLabel), ORCAMENTO_LIST_CSV_COLUMNS);
+    const result = downloadComercialCsvText(`orcamentos-pagina-${page}.csv`, csv);
+    if (!result.ok) {
+      toast.error(result.reason || 'Falha ao exportar CSV.');
+      return;
+    }
+    toast.success(`CSV da página (${rows.length} registro(s)) gerado.`);
+  };
   const meta = listQuery.data?.meta || { total: 0 };
   return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar">
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -735,7 +755,7 @@ const convertToPedido = async () => {
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
       <Select value={filters.clienteEmpresaId} onValueChange={(value) => setFilters((current) => ({ ...current, clienteEmpresaId: value }))} disabled={mastersBlocked || clientePickerState === 'denied'}><SelectTrigger aria-label="Filtrar cliente"><SelectValue placeholder={formatMasterPickerPlaceholder(clientePickerState, 'cliente')} /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select>
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
-      <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { ...ORCAMENTO_LIST_FILTER_DEFAULTS }; setFilters(clean); setAppliedFilters(clean); setPage(1); setSelectedIds([]); }}><RefreshCw className="w-4 h-4" /></Button></div>
+      <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { ...ORCAMENTO_LIST_FILTER_DEFAULTS }; setFilters(clean); setAppliedFilters(clean); setPage(1); setSelectedIds([]); }}><RefreshCw className="w-4 h-4" /></Button><Button type="button" size="sm" variant="outline" data-testid="orcamento-list-export-csv" data-action="Comercial.orcamento.export-csv-pagina" data-export-scope={listPageExportUi.scope} aria-label={listPageExportUi.title} title={listPageExportUi.title} disabled={listPageExportUi.blockExport} onClick={exportListPageCsv}><Download className="w-4 h-4 mr-1" />CSV</Button></div>
     </form>
     {listBulkUi.selectedCount > 0 && <div className="flex flex-wrap items-center gap-2 mb-2" data-testid="orcamento-list-bulk-bar" data-bulk-enabled="false" data-action="Comercial.orcamento.bulk-stub"><span className="text-sm text-slate-600">{listBulkUi.selectedCount} selecionado(s)</span><Button type="button" size="sm" variant="outline" disabled title={listBulkUi.cancelTitle} data-testid="orcamento-list-bulk-cancel" aria-label={listBulkUi.cancelTitle} data-bulk-reason={listBulkUi.bulkReason}>Cancelar em lote</Button><Button type="button" size="sm" variant="outline" disabled title={listBulkUi.exportTitle} data-testid="orcamento-list-bulk-export" aria-label={listBulkUi.exportTitle} data-bulk-reason={listBulkUi.bulkReason}>Exportar</Button><Button type="button" size="sm" variant="ghost" data-testid="orcamento-list-bulk-clear" onClick={() => setSelectedIds([])}>Limpar seleção</Button></div>}
     {listView === 'loading' ? <div className="flex-1 flex items-center justify-center" {...buildComercialBannerA11yProps('loading')}>Carregando orçamentos...</div> : listView === 'error' ? <div className="flex-1 flex flex-col items-center justify-center gap-3" data-testid="orcamento-list-error" data-retryable={isComercialRetryableHttpError(listQuery.error) ? 'true' : 'false'} {...buildComercialBannerA11yProps('error')}><p>{errorMessage(listQuery.error)}</p>{isComercialRetryableHttpError(listQuery.error) && <Button variant="outline" aria-label={comercialActionAriaLabel('retry')} data-testid="orcamento-list-retry" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button>}</div> : listView === 'empty' ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500" data-testid="orcamento-list-empty" data-empty-filtered={listHasActiveFilters ? 'true' : 'false'}><FilePlus2 className="w-10 h-10 mb-2" /><p>{listEmptyMessage}</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">

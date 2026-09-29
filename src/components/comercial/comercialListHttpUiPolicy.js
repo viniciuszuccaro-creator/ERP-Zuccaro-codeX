@@ -740,6 +740,213 @@ export function buildPedidoTenantSwitchReset(options = {}) {
 /** Motivo canônico: bulk UI visível mas nunca executa (sem endpoint). */
 export const COMERCIAL_LIST_BULK_STUB_REASON = 'em breve / sem endpoint';
 
+/** Export CSV da página atual (dados já carregados no tenant) — não substitui export server-side. */
+export const COMERCIAL_LIST_PAGE_EXPORT_SCOPE = 'pagina-atual';
+
+/**
+ * Escapa célula CSV (RFC-ish): aspas duplas e quebras.
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function escapeComercialCsvCell(value) {
+  const text = String(value ?? '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+/**
+ * Monta CSV (header + linhas) a partir de colunas `{ key, header, format? }`.
+ * @param {unknown[]} rows
+ * @param {Array<{ key: string, header: string, format?: (row: object) => string }>} columns
+ * @returns {string}
+ */
+export function buildComercialListCsv(rows, columns) {
+  const cols = Array.isArray(columns) ? columns.filter((c) => c && c.key && c.header) : [];
+  const list = Array.isArray(rows) ? rows : [];
+  if (cols.length === 0) return '';
+  const header = cols.map((c) => escapeComercialCsvCell(c.header)).join(',');
+  const lines = list.map((row) => {
+    const safe = row && typeof row === 'object' ? row : {};
+    return cols.map((c) => {
+      const raw = typeof c.format === 'function' ? c.format(safe) : safe[c.key];
+      return escapeComercialCsvCell(raw);
+    }).join(',');
+  });
+  return [header, ...lines].join('\n');
+}
+
+/**
+ * Gate UX do botão Exportar CSV (página atual).
+ * Fail-closed: sem visualizar, lista vazia/erro/loading → bloqueia.
+ * @param {{
+ *   listView?: string,
+ *   rowCount?: number,
+ *   canView?: boolean,
+ * }} [input]
+ */
+export function resolveComercialListPageExportUi(input = {}) {
+  const listView = String(input.listView || '');
+  const rowCount = Number(input.rowCount) || 0;
+  const canView = input.canView !== false;
+  if (!canView) {
+    return {
+      canExport: false,
+      blockExport: true,
+      scope: COMERCIAL_LIST_PAGE_EXPORT_SCOPE,
+      title: 'Sem permissão para exportar a listagem.',
+      hint: 'Sem permissão para exportar a listagem.',
+    };
+  }
+  if (listView === 'error') {
+    return {
+      canExport: false,
+      blockExport: true,
+      scope: COMERCIAL_LIST_PAGE_EXPORT_SCOPE,
+      title: 'Corrija o erro da listagem antes de exportar.',
+      hint: 'Corrija o erro da listagem antes de exportar.',
+    };
+  }
+  if (listView === 'loading' || listView === '') {
+    return {
+      canExport: false,
+      blockExport: true,
+      scope: COMERCIAL_LIST_PAGE_EXPORT_SCOPE,
+      title: 'Aguarde o carregamento da listagem.',
+      hint: 'Aguarde o carregamento da listagem.',
+    };
+  }
+  if (listView === 'empty' || rowCount <= 0) {
+    return {
+      canExport: false,
+      blockExport: true,
+      scope: COMERCIAL_LIST_PAGE_EXPORT_SCOPE,
+      title: 'Nenhum registro na página para exportar.',
+      hint: 'Nenhum registro na página para exportar.',
+    };
+  }
+  return {
+    canExport: true,
+    blockExport: false,
+    scope: COMERCIAL_LIST_PAGE_EXPORT_SCOPE,
+    title: 'Exportar CSV da página atual (não é exportação completa do filtro).',
+    hint: null,
+  };
+}
+
+/**
+ * Dispara download de texto CSV no browser (testável via deps).
+ * @param {string} filename
+ * @param {string} csvText
+ * @param {{
+ *   createObjectURL?: (blob: Blob) => string,
+ *   revokeObjectURL?: (url: string) => void,
+ *   document?: Document,
+ * }} [deps]
+ * @returns {{ ok: boolean, reason?: string }}
+ */
+export function downloadComercialCsvText(filename, csvText, deps = {}) {
+  const name = String(filename || '').trim() || 'comercial-lista.csv';
+  const body = String(csvText ?? '');
+  if (!body) return { ok: false, reason: 'CSV vazio.' };
+  const doc = deps.document
+    || (typeof globalThis !== 'undefined' && globalThis.document ? globalThis.document : null);
+  const createObjectURL = deps.createObjectURL
+    || (typeof globalThis !== 'undefined' && globalThis.URL && typeof globalThis.URL.createObjectURL === 'function'
+      ? globalThis.URL.createObjectURL.bind(globalThis.URL)
+      : null);
+  const revokeObjectURL = deps.revokeObjectURL
+    || (typeof globalThis !== 'undefined' && globalThis.URL && typeof globalThis.URL.revokeObjectURL === 'function'
+      ? globalThis.URL.revokeObjectURL.bind(globalThis.URL)
+      : null);
+  if (!doc || typeof doc.createElement !== 'function' || typeof createObjectURL !== 'function') {
+    return { ok: false, reason: 'Download indisponível neste ambiente.' };
+  }
+  const blob = new Blob([`\uFEFF${body}`], { type: 'text/csv;charset=utf-8' });
+  const url = createObjectURL(blob);
+  const anchor = doc.createElement('a');
+  anchor.href = url;
+  anchor.download = name;
+  anchor.rel = 'noopener';
+  if (typeof doc.body?.appendChild === 'function') doc.body.appendChild(anchor);
+  if (typeof anchor.click === 'function') anchor.click();
+  if (typeof anchor.remove === 'function') anchor.remove();
+  else if (typeof doc.body?.removeChild === 'function' && anchor.parentNode === doc.body) {
+    doc.body.removeChild(anchor);
+  }
+  if (typeof revokeObjectURL === 'function') revokeObjectURL(url);
+  return { ok: true };
+}
+
+/** Colunas CSV Orçamento (página) — espelham a tabela, sem observações. */
+export const ORCAMENTO_LIST_CSV_COLUMNS = Object.freeze([
+  { key: 'numero', header: 'Numero' },
+  { key: 'cliente_label', header: 'Cliente' },
+  { key: 'created_at', header: 'Criado' },
+  { key: 'validade_em', header: 'Validade' },
+  { key: 'itens_count', header: 'Itens' },
+  { key: 'subtotal', header: 'Subtotal' },
+  { key: 'desconto', header: 'Desconto' },
+  { key: 'total', header: 'Total' },
+  { key: 'status', header: 'Status' },
+]);
+
+/** Colunas CSV Pedido (página) — espelham a tabela, sem observações. */
+export const PEDIDO_LIST_CSV_COLUMNS = Object.freeze([
+  { key: 'numero', header: 'Numero' },
+  { key: 'cliente_label', header: 'Cliente' },
+  { key: 'tipo_operacao', header: 'Operacao' },
+  { key: 'data_entrega_solicitada', header: 'Entrega_solicitada' },
+  { key: 'status', header: 'Status' },
+  { key: 'total', header: 'Total' },
+]);
+
+/**
+ * Mapeia linhas Orçamento → shape CSV (labels já resolvidos pelo caller).
+ * @param {unknown[]} rows
+ * @param {(clienteEmpresaId: string) => string} clienteLabelFn
+ */
+export function mapOrcamentoRowsForCsv(rows, clienteLabelFn) {
+  const labelFn = typeof clienteLabelFn === 'function' ? clienteLabelFn : () => '';
+  return (Array.isArray(rows) ? rows : []).map((row) => {
+    const r = row && typeof row === 'object' ? row : {};
+    return {
+      numero: r.numero ?? '',
+      cliente_label: labelFn(r.cliente_empresa_id),
+      created_at: r.created_at ?? '',
+      validade_em: r.validade_em ?? '',
+      itens_count: Array.isArray(r.itens) ? r.itens.length : 0,
+      subtotal: r.subtotal ?? '',
+      desconto: r.desconto ?? '',
+      total: r.total ?? '',
+      status: r.status ?? '',
+    };
+  });
+}
+
+/**
+ * Mapeia linhas Pedido → shape CSV.
+ * @param {unknown[]} rows
+ * @param {(clienteEmpresaId: string) => string} clienteLabelFn
+ */
+export function mapPedidoRowsForCsv(rows, clienteLabelFn) {
+  const labelFn = typeof clienteLabelFn === 'function' ? clienteLabelFn : () => '';
+  return (Array.isArray(rows) ? rows : []).map((row) => {
+    const r = row && typeof row === 'object' ? row : {};
+    return {
+      numero: r.numero ?? '',
+      cliente_label: labelFn(r.cliente_empresa_id),
+      tipo_operacao: r.tipo_operacao ?? '',
+      data_entrega_solicitada: r.data_entrega_solicitada ?? '',
+      status: r.status ?? '',
+      total: r.total ?? '',
+    };
+  });
+}
+
 /**
  * Normaliza ids selecionados da listagem (dedupe, trim, sem vazios).
  * @param {unknown} selectedIds
