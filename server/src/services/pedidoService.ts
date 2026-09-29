@@ -12,7 +12,7 @@ import type { ObraRepository } from '../repositories/inMemoryObraRepository.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
-import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus } from '../repositories/pedidoTypes.js';
+import { PEDIDO_STATUS, pedidoCreateSchema, type Pedido, type PedidoCreate, type PedidoRepository, type PedidoScope, type PedidoStatus, type PedidoWrite } from '../repositories/pedidoTypes.js';
 import type { TenantEntityRepository } from './tenantCrudService.js';
 import {
   assertDescontoDentroDaAlcadaOuAprovar,
@@ -27,6 +27,17 @@ import {
   deveLiberarDescontoSemAprovarPorAvista,
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
+import { buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
+import { resolveOrcamentoConvertSnapshots } from './comercialConvertSnapshotPolicy.js';
+import {
+  applyPromocaoOnPersist,
+  type ComercialPromocaoConfigPort,
+} from './comercialPromocaoPolicy.js';
+import {
+  buildTabelaPrecoDocumentoSnapshot,
+  emptyTabelaPrecoDocumentoSnapshot,
+} from './comercialTabelaSnapshot.js';
+import { assertOrcamentoValidadeVigente } from './comercialOrcamentoValidadePolicy.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -35,7 +46,15 @@ const conversionSchema = z.object({
   cliente_local_id: z.string().uuid().nullable().optional(),
   obra_id: z.string().uuid().nullable().optional(),
   tabela_preco_id: z.string().uuid().nullable().optional(),
-  observacoes: z.string().trim().max(1000).optional(),
+  observacoes: z.string().trim().max(1000).transform((value) => {
+    const cleaned = value
+      .replace(/[\u0000-\u001F\u007F]/g, ' ')
+      .replace(/[<>]/g, '')
+      .replace(/javascript:\s*/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned || undefined;
+  }).optional(),
 }).strict();
 
 /** Porta mínima para snapshot de preço na venda direta (não usada na conversão de Orçamento). */
@@ -43,13 +62,35 @@ export type PedidoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
-  ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
+  ): Promise<{
+    preco: string;
+    tabela_preco_id?: string;
+    tabela_preco_codigo?: string;
+    tabela_preco_nome?: string;
+  } | null>;
 };
 
-export type { ComercialCostPort, ComercialAlcadaConfigPort };
+export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
-  return sanitizeAuditSnapshot({ id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status, cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id, tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id, orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao, data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length, requer_producao: row.itens.some((item) => item.requer_producao) });
+  return sanitizeAuditSnapshot({
+    id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status,
+    cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id,
+    tabela_preco_id: row.tabela_preco_id,
+    tabela_preco_codigo_snapshot: row.tabela_preco_codigo_snapshot,
+    tabela_preco_nome_snapshot: row.tabela_preco_nome_snapshot,
+    condicao_pagamento_id: row.condicao_pagamento_id,
+    condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot,
+    condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
+    condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
+    promocao_aplicada: row.promocao_aplicada,
+    promocao_bps: row.promocao_bps,
+    promocao_cupom: row.promocao_cupom,
+    orcamento_id: row.orcamento_id, vendedor_id: row.vendedor_id, tipo_operacao: row.tipo_operacao,
+    data_entrega_solicitada: row.data_entrega_solicitada, subtotal: row.subtotal, desconto: row.desconto,
+    total: row.total, ativo: row.ativo, quantidade_itens: row.itens.length,
+    requer_producao: row.itens.some((item) => item.requer_producao),
+  });
 }
 
 export class PedidoService {
@@ -71,6 +112,8 @@ export class PedidoService {
     private readonly costs: ComercialCostPort | null = null,
     /** Opcional: config de alçada (à vista); ausente = fail-closed (não libera). */
     private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
+    /** Opcional: config de promoção; ausente = fail-closed se payload pedir promoção. */
+    private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -80,10 +123,11 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const write = await this.applyCondicaoSnapshot(scope, priced, executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
-      await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+      await this.assertDescontoAlcada(ctx, scope, write, ctx.actorId!, executor);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const created = await this.repo.create(scope, write, ctx.actorId!, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -101,12 +145,14 @@ export class PedidoService {
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
-        // Não-retroatividade: preserva preco_unitario já snapshotado no Orçamento.
+        assertOrcamentoValidadeVigente(quote.validade_em);
+        // Não-retroatividade: preserva preco_unitario e snapshots já gravados no Orçamento.
         const draft = {
           ...parsed.data,
           orcamento_id: quote.id,
           cliente_empresa_id: quote.cliente_empresa_id,
           condicao_pagamento_id: quote.condicao_pagamento_id,
+          tabela_preco_id: parsed.data.tabela_preco_id ?? quote.tabela_preco_id ?? null,
           observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
           itens: quote.itens.map((item) => ({
             produto_id: item.produto_id,
@@ -123,11 +169,18 @@ export class PedidoService {
         if (!dataParsed.success) this.validation(dataParsed.error.flatten());
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
+        // Não-retroatividade: copia snapshots do Orçamento; pós-031 fail-closed se incompletos.
+        // Legado pré-029 sem nenhum campo de condição ainda resolve condição ao vivo.
+        const convertSnaps = await resolveOrcamentoConvertSnapshots(quote, {
+          resolveLegacyCondicao: async () => this.condicoes.get(scope, data.condicao_pagamento_id, executor),
+        });
+        const { promocao: _ignored, ...rest } = data;
+        const write: PedidoWrite = { ...rest, ...convertSnaps };
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
-        const alcada = await this.assertDescontoAlcada(ctx, scope, data, criadorOrcamento, executor);
-        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
-        const created = await this.repo.create(scope, data, ctx.actorId!, executor);
+        const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+        const created = await this.repo.create(scope, write, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         if (alcada.aprovadaPorOutro) {
@@ -175,15 +228,17 @@ export class PedidoService {
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
-      if (before.status !== 'EM_ABERTO') this.stateConflict();
+      this.requireOpen(before);
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
+      // Documento aberto: re-snapshot da condição atual; conversão já copiou o snapshot do Orçamento.
+      const write = await this.applyCondicaoSnapshot(scope, priced, executor);
       const criador = await this.resolveCriadorActorId('Pedido', id);
-      const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
-      const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
+      const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const after = await this.repo.update(scope, id, write, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -221,12 +276,20 @@ export class PedidoService {
     });
   }
 
+  /**
+   * Cancel fail-closed (simetria Orçamento): RBAC `cancelar` após tenant,
+   * somente EM_ABERTO, auditoria before/after na mesma transação, repetição → 409.
+   * Não apaga itens/histórico; motivo opcional vai ao histórico (não à auditoria sanitizada).
+   */
   async cancel(ctx: RequestContext, id: string, motivo?: unknown) {
-    const scope = await this.prepare(ctx, 'cancelar'); this.assertId(id, 'pedidoId');
-    if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) this.validation({ motivo: 'invalid' });
+    const scope = await this.prepare(ctx, 'cancelar');
+    this.assertId(id, 'pedidoId');
+    if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) {
+      this.validation({ motivo: 'invalid' });
+    }
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
-      if (before.status !== 'EM_ABERTO') this.stateConflict();
+      this.requireOpen(before);
       const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
@@ -244,9 +307,14 @@ export class PedidoService {
 
   private parse(payload: unknown) { const parsed = pedidoCreateSchema.safeParse(payload); if (!parsed.success) this.validation(parsed.error.flatten()); return parsed.data; }
 
-  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate): Promise<PedidoCreate> {
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate): Promise<PedidoCreate & {
+    tabela_preco_codigo_snapshot?: string | null;
+    tabela_preco_nome_snapshot?: string | null;
+  }> {
     const itens = [];
     let tabelaId: string | null | undefined = data.tabela_preco_id;
+    let tabelaCodigo: string | null | undefined;
+    let tabelaNome: string | null | undefined;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -260,9 +328,71 @@ export class PedidoService {
         });
       }
       if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
+      if (resolved.tabela_preco_id && resolved.tabela_preco_id === tabelaId) {
+        if (resolved.tabela_preco_codigo) tabelaCodigo = resolved.tabela_preco_codigo;
+        if (resolved.tabela_preco_nome) tabelaNome = resolved.tabela_preco_nome;
+      }
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
-    return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
+    let tabelaSnap = emptyTabelaPrecoDocumentoSnapshot();
+    if (tabelaId) {
+      if (tabelaCodigo && tabelaNome) {
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(
+          { id: tabelaId, codigo: tabelaCodigo, nome: tabelaNome, ativo: true },
+          'PEDIDO',
+        );
+      } else {
+        const tabela = await this.tabelas.get({ groupId: ctx.groupId, empresaId: ctx.empresaId }, tabelaId);
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(tabela, 'PEDIDO');
+      }
+    }
+    return {
+      ...data,
+      tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null,
+      ...tabelaSnap,
+      itens,
+    };
+  }
+
+  private async applyCondicaoSnapshot(
+    scope: PedidoScope,
+    data: PedidoCreate & {
+      tabela_preco_codigo_snapshot?: string | null;
+      tabela_preco_nome_snapshot?: string | null;
+    },
+    executor?: DbQueryExecutor,
+  ): Promise<PedidoWrite> {
+    const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
+    const snapshot = buildCondicaoPagamentoDocumentoSnapshot(condicao, 'PEDIDO');
+    const cfg = this.promocaoConfig
+      ? await this.promocaoConfig.getPromocaoConfig({
+        groupId: scope.groupId,
+        empresaId: scope.empresaId,
+      })
+      : null;
+    const { promocao: _ignored, ...rest } = data;
+    const promo = applyPromocaoOnPersist({
+      promocao: data.promocao,
+      config: cfg,
+      items: data.itens,
+    });
+    let tabelaSnap = emptyTabelaPrecoDocumentoSnapshot();
+    if (data.tabela_preco_id) {
+      if (data.tabela_preco_codigo_snapshot && data.tabela_preco_nome_snapshot) {
+        tabelaSnap = {
+          tabela_preco_codigo_snapshot: data.tabela_preco_codigo_snapshot,
+          tabela_preco_nome_snapshot: data.tabela_preco_nome_snapshot,
+        };
+      } else {
+        const tabela = await this.tabelas.get(
+          { groupId: scope.groupId, empresaId: scope.empresaId },
+          data.tabela_preco_id,
+          executor,
+        );
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(tabela, 'PEDIDO');
+      }
+    }
+    return { ...rest, itens: promo.items, ...snapshot, ...tabelaSnap, ...promo.snapshot };
   }
 
   private normalizeMoney(value: string): string {
@@ -393,6 +523,9 @@ export class PedidoService {
   }
 
   private async requirePedido(scope: PedidoScope, id: string, executor?: DbQueryExecutor) { const row = await this.repo.get(scope, id, executor); if (!row) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found'); return row; }
+  private requireOpen(row: Pedido) {
+    if (row.status !== 'EM_ABERTO') this.stateConflict();
+  }
   private async auditRow(ctx: RequestContext, action: AuditAction, before: Pedido | null, after: Pedido, executor?: DbQueryExecutor) { await this.audit.append({ groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId, actorEmail: ctx.actorEmail, entity: 'Pedido', entityId: after.id, action, beforeData: before ? pedidoAuditSnapshot(before) : undefined, afterData: pedidoAuditSnapshot(after), requestId: ctx.requestId, ipAddress: ctx.ipAddress }, executor); }
   private assertId(id: string, field: string) { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${field}`); }
   private validation(details: unknown): never { throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Pedido payload', details); }

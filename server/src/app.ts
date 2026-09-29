@@ -63,6 +63,8 @@ import { PostgresPedidoRepository } from './repositories/postgresPedidoRepositor
 import { PedidoService } from './services/pedidoService.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
+import type { ComercialPromocaoConfigPort } from './services/comercialPromocaoPolicy.js';
+import { ComercialSimulacaoVendaService } from './services/comercialSimulacaoVendaService.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
@@ -82,6 +84,8 @@ export type CreateAppOptions = {
   costPort?: ComercialCostPort | null;
   /** Config de alçada (à vista). Null/omitido = fail-closed (não libera desconto). */
   alcadaConfig?: ComercialAlcadaConfigPort | null;
+  /** Config de promoção comercial (Onda 2). Null/omitido = fail-closed (promoção inativa). */
+  promocaoConfig?: ComercialPromocaoConfigPort | null;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -165,14 +169,19 @@ export function createApp(options: CreateAppOptions) {
     rbacGuard,
     clienteRepo,
   );
-  const condicaoPagamentoService = new CondicaoPagamentoService(condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard);
+  const condicaoPagamentoService = new CondicaoPagamentoService(
+    condicaoPagamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo,
+  );
   const costPort = options.costPort ?? null;
   const alcadaConfig = options.alcadaConfig ?? null;
+  const promocaoConfig = options.promocaoConfig ?? null;
   const orcamentoService = new OrcamentoService(
     orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+    promocaoConfig,
+    tabelaPrecoRepo,
   );
   const pedidoService = new PedidoService(
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,
@@ -180,6 +189,14 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+    promocaoConfig,
+  );
+  const comercialSimulacaoVendaService = new ComercialSimulacaoVendaService(
+    tenantGuard,
+    rbacGuard,
+    tabelaPrecoService,
+    condicaoPagamentoService,
+    promocaoConfig,
   );
   const obraService = new ObraService(
     obraRepo,
@@ -259,6 +276,7 @@ export function createApp(options: CreateAppOptions) {
     obraService,
     tabelaPrecoService,
     condicaoPagamentoService,
+    comercialSimulacaoVendaService,
     orcamentoService,
     pedidoService,
   }));
@@ -278,6 +296,7 @@ export function createApp(options: CreateAppOptions) {
     obraService,
     tabelaPrecoService,
     condicaoPagamentoService,
+    comercialSimulacaoVendaService,
     orcamentoService,
     pedidoService,
     auditRepo,

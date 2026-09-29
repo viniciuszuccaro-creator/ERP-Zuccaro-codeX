@@ -85,7 +85,7 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
       { getEmpresaLinkById: async () => ({ id: input.cliente_empresa_id, ativo: true, bloqueado: false, habilitado_operacao: true }) } as any,
       { getById: async () => ({ id: SEED_IDS.produtoA, ativo: true, unidade_medida_id: SEED_IDS.unidadeA }) } as any,
       { getById: async () => ({ id: SEED_IDS.unidadeA, ativo: true }) } as any,
-      { get: async () => ({ id: SEED_IDS.condicaoPagamentoA, ativo: true }) } as any,
+      { get: async () => ({ id: SEED_IDS.condicaoPagamentoA, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
   );
     const ctx = {

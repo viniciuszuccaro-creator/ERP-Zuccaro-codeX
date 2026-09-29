@@ -1,3 +1,369 @@
+## Orientação consolidada e próximo lote (2026-09-29)
+
+Regras vigentes: `AGENTS.md` (segurança, Git em branch própria, gates) → `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md` (escopo/fila) → `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` (ownership/revisão) → este handoff (checkpoint factual). As instruções anteriores de push direto em `main`, espera de revisão a cada commit e retomada pela PR #33/Gate C foram substituídas. Documentos de 23-24/09 abaixo permanecem como histórico, não como autorização vigente.
+
+Na conferência deste checkpoint, `main` remota = `d02cd012`; a #153 estava em `fba7f72bd80cbcc48d6965711f25802f05f8d42f`, draft, contendo #152 + #141 e a orientação da #105. CI [36627716644](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36627716644) SUCCESS nesse HEAD. #92 e #132 permanecem fora; um merge experimental `-X ours` da #92 falhou no typecheck e foi abortado sem commit. Próximo lote: reconciliar os contratos de Pedido/Orçamento em branch isolada, preservar snapshots e origem/versões/idempotência, depois testar o PostgreSQL e incluir #132. Confirmar novamente os SHAs antes de executar.
+
+O termo `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` registra Gate E/D/F **executados historicamente** para `894b0db8` na 3080. Isso substitui as afirmações antigas de que Gate C era o gate atual ou de que a 3080 ainda era R07B; não é verificação ao vivo da VPS em 29/09. Nenhuma autorização desse termo cobre #153, migrations 025-034, novo canário, promoção ou importação real. Backup legado permanece fora do GitHub; staging real e carga operacional exigem seus gates próprios.
+
+---
+
+## Checkpoint de integração Codex (2026-09-29, histórico anterior)
+
+Fonte canônica: `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` (orientação da #105, agora incorporada à candidata draft #153). Confirmar HEADs remotos novamente antes de agir: os SHAs abaixo são evidência deste checkpoint, não valores permanentes.
+
+- `main` remota: `d02cd012948a597a734573ab0a5a7aed6d604a3b` na conferência deste checkpoint. Nada da #153 foi mesclado.
+- #153: `d3d394f640dfda495caa07bee725f346056e0c61` antes de incorporar #105. Integra #152 (`2b34338e`) e #141 (`b8a9f493`) em branch isolada; CI 36625784748 passou com frontend, backend, PostgreSQL efêmero e staging sintético. Isso não comprova #92/#132, implantação ou importação real.
+- #92 (`8d9ce6e5`) e #132 (`29211815`) continuam fora. O ensaio de merge da #92 foi abortado sem commit por conflitos de contrato em Pedido/Orçamento. A migration 026 exige classificação histórica comprovada antes de um banco com Pedidos; não inferir tipo comercial pelo Produto atual. Detalhes e testes exigidos em `docs/ORDEM_INTEGRACAO_UNICA.md`.
+- Próximo lote de código: reconciliar origem, idempotência e versões da #92 com snapshots de condição/promoção/tabela da #152; só então incluir #132 e solicitar revisão independente do HEAD integrado. Nenhum merge, migration VPS, canário, carga real ou ativação de canal foi autorizado por esta candidata.
+
+---
+
+## ORDEM ÚNICA — candidata Comercial × #141 × #92/#132 (2026-09-29T19:20Z)
+
+HEAD funcional Comercial congelado: `6218511a` (#151). Candidata revisável contra `main`: draft **#152** (`cursor/comercial360-candidata-main-53c4`, só registro em cima desse SHA). CI do conjunto SUCCESS em `11a5914a` ([36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250)). #92 `8d9ce6e5` e #132 `29211815` estão fora da #141. #141 permanece `b8a9f493` (CI 36617354170 SUCCESS); branch não editada e sem merge. Conflito Comercial×#141: somente `STATUS_DO_PROJETO.md`. Migrations: 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 vazia. Detalhe e ordem 1→4 em `docs/ORDEM_INTEGRACAO_UNICA.md`. Sem merge e sem gate VPS.
+
+---
+
+## LOTE CURSOR — offline/network retry Comercial 360 (pós-#150) (2026-09-29T19:06Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** Offline/network retry — list/masters/simular rede/5xx + banner Retry |
+| Branch | `cursor/comercial360-onda3-network-retry-392b` |
+| Base | `#150` tip `33c3b456` (`cursor/comercial360-onda3-a11y-live-392b`) |
+| Tip | `050e8eff` (`050e8eff3a8d854995c97ef35e7f1c114c5145e1`) · feat `93bf4b56` |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 |
+| Meta | retry rede/5xx + **Pedido backend HTTP is active** |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#150 |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — a11y aria-live Comercial 360 (pós-#149) (2026-09-29T18:57Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** a11y aria-live / aria-invalid+describedby / action labels |
+| Branch | `cursor/comercial360-onda3-a11y-live-392b` |
+| Base | `#149` tip `50dc8b5c` (`cursor/comercial360-onda3-inactive-master-picker-392b`) |
+| Tip | `291164d5` (`291164d53711245f67f311f0d80daf059b22d21c`) · feat `aaa96026` |
+| Draft PR | **#150** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/150 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
+| Meta | a11y + **Pedido backend HTTP is active** |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#149 |
+
+Próximo: offline retry polish **ou** margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
+
+| PR/Branch | Tip | CI | Escopo |
+|---|---|---|---|
+| #146 | `c1fdf63d` | stack | tenant cache |
+| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `2a76c8cc` | — | resumo texto fail-closed |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — Pedido/Orçamento resumo texto fail-closed (pós-#146) (2026-09-29T18:29Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** resumo texto Pedido/Orçamento + snapshots fail-closed (painel/janela; sem PDF novo) |
+| Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Base | `#146` tip `c1fdf63d` (`cursor/comercial360-onda3-tenant-cache-392b`) |
+| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
+| Draft PR | **#149** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/149 |
+| Draft PR | **#148** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/148 |
+| Meta | `textoResumoPreviewFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | margem #47; anexos/PDF #52–#62; stack #126–#146 |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — tenant cache fail-closed (pós-#145) (2026-09-29T18:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** tenant switch limpa form/list cache comercial fail-closed |
+| Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
+| Base | `#145` tip `73279042` (`cursor/comercial360-onda3-list-search-392b`) |
+| Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Meta | `tenantCacheFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | A/B fracos; margem #47; anexos/PDF #52–#62; stack #126–#145 |
+
+---
+
+## LOTE CURSOR — list search/filter fail-closed (pós-#144) (2026-09-29T18:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** list search/filter: empty busca ≠ erro; queryKey tenant+filters; sanitize na policy |
+| Branch | `cursor/comercial360-onda3-list-search-392b` |
+| Base | `#144` tip `01ee61de` (`cursor/comercial360-onda3-simular-dirty-392b`) |
+| Tip | `dbe72104` (`dbe7210426534a2f6571b2a1dfaf25d68d712648`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Meta | `listSearchFilterFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | #136 base; dirty #144; margem #47; anexos/PDF #52–#62 |
+
+---
+
+## LOTE CURSOR — simular-venda dirty-state fail-closed (pós-#143) (2026-09-29T18:05Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** dirty-state simular-venda: limpa preview + exige re-simular antes de salvar |
+| Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
+| Base | `#143` tip `4777b4fb` (`cursor/comercial360-onda3-delivery-address-392b`) |
+| Tip | `9d5235bf` feat / docs tip `1eee761b` |
+| Draft PR | **#144** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/144 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Meta | `simulacaoDirtyFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | B/C já no stack; margem #47; anexos/PDF #52–#62 |
+
+---
+
+## LOTE CURSOR — delivery Local/Obra address summary fail-closed (pós-#142) (2026-09-29T17:55Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** resumo endereço Local/Obra pós-seleção; fail-closed se HTTP get falhar |
+| Branch | `cursor/comercial360-onda3-delivery-address-392b` |
+| Base | `#142` tip `d7871c23` (`cursor/comercial360-onda3-parcela-schedule-ui-392b`) |
+| Tip | `d65d9618` feat / docs tip `207c26cc`+ |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Meta | `deliveryAddressSummaryFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | A/C já cobertos no stack; margem #47; anexos/PDF #52–#62 |
+
+---
+
+## LOTE CURSOR — parcela schedule preview fail-closed (pós-#140) (2026-09-29T17:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** agenda parcelas read-only pós simular/condição; fail-closed se ausente |
+| Branch | `cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Base | `#140` tip `f5009c7c` (`cursor/comercial360-onda3-masters-banner-392b`) |
+| Tip | `ad927286f533379abd7c7aa5abe70a2ac4354193` |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Meta | `parcelaSchedulePreviewFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | Convert UX já #133/#134; margem #47; anexos/PDF #52–#62 |
+
+---
+
+## LOTE CURSOR — snapshot reload pós-save (pós-#138) (2026-09-29T17:25Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** reload after save prova snapshots condição/promo/tabela |
+| Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
+| Base | `#138` tip `90a76433` (`cursor/comercial360-onda3-alcada-ui-failclosed-392b`) |
+| Tip | `953ca272e365dbd22aff22d823065c67425e9b67` (feat `0acbec43`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Colisão | Margem UI adiada (#47 OPEN); anexos/PDF #52–#62 |
+
+---
+
+## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `dcde4ceff12c9e027d57a282b27d5b571c7f07c7` |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Base | `#136` tip `2db1a38d` |
+| Draft PR | **#138** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/138 — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Escopo | Desconto alçada UI fail-closed + save idempotency; sem migration |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Colisão | Anexos/PDF #52–#62 — não duplicar |
+
+---
+
+## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `3880793b` (`3880793be2e741e2320fd25469d3c59ce3b7063f`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Base | `#135` `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Draft PR | **#136** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/136 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-list-failclosed-392b` |
+
+---
+
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
+
+## OPINIÃO CURSOR — #135 tip + list fail-closed A+C (pós-#135) (2026-09-29T17:05Z)
+
+| PR | Tip / Branch | CI | Escopo |
+| --- | --- | --- | --- |
+| #134 | `fa362ff0` | **SUCCESS** | Convert snapshots fail-closed |
+| #135 | `5b559c9a` | pendente | Pedido cancel fail-closed |
+| este | `cursor/comercial360-onda3-list-failclosed-392b` | pendente | List HTTP fail-closed + update CANCELADO |
+
+Próximo após este: Onda 4 slice **sem** 025–028. Sem merge/VPS. Sem Codex/#104/#48.
+
+---
+
+## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido cancel** — simetria fail-closed com Orçamento cancel |
+| Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
+| Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
+| Escopo | sem migration; RBAC+estado+audit; UI disable; meta `cancelByState`; note preserva `Pedido backend HTTP is active` |
+| Testes | 09 security/http/service 13/13 + 08c 12/12 + convert/preco 13/13 + UI 15/15 + typecheck PASS |
+| Tip | `c2bfb17c` (feat) |
+| Draft PR | **#135** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/135 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 sem colisão 025–028 **ou** list empty-state HTTP Pedido |
+
+---
+
+## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A residual** — convert Orçamento→Pedido copy/verify ALL snapshots fail-closed pós-031 |
+| Branch | `cursor/comercial360-onda3-convert-snapshot-392b` |
+| Base | `#133` tip `70576db7` (`cursor/comercial360-onda3-orc-validade-392b`) |
+| Escopo | sem migration; policy convert; UI hint; meta `convertSnapshotFailClosed`; note preserva `Pedido backend HTTP is active`; validade #133 intacta |
+| Testes | convert-snapshot 8/8 + regressões 60/60 + UI 11/11 + 07b 13/13; typecheck PASS |
+| Tip | `01521a92` (feat) |
+| Draft PR | **#134** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/134 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-orc-validade-392b...cursor/comercial360-onda3-convert-snapshot-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 sem colisão 025–028 **ou** Pedido cancel fail-closed / list empty-state HTTP |
+
+---
+
+## LOTE CURSOR — Validade Orçamento fail-closed (pós-#131) (2026-09-29T16:50Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** — validade_em fail-closed create/update/convert |
+| Branch | `cursor/comercial360-onda3-orc-validade-392b` |
+| Base | `#131` tip `1682f686` (`cursor/comercial360-onda3-tabela-snapshot-392b`) |
+| Escopo | sem migration; policy + UI hint; meta `validadeFailClosed`; note preserva `Pedido backend HTTP is active` |
+| Testes | validade 8/8 + UI 10/10 + regressões 35/35; typecheck PASS |
+| Tip | `de369c4b` (feat `53aeda8d`) |
+| Draft PR | **#133** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/133 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 sem colisão 025–028 **ou** harden convert snapshot legado |
+
+---
+
+## LOTE CURSOR — TabelaPreço snapshot codigo+nome (pós-#130) (2026-09-29T16:45Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
+| Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
+| Escopo | migration **031** + wire create/update/get/convert + UI reload; espelha condição 029 |
+| Meta | note preserva `Pedido backend HTTP is active` + `tabelaSnapshot` |
+| Tip | `07561d2d` |
+| Draft PR | **#131** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/131 — `gh pr create` createPullRequest 403; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 slice sem colisão 025–028 |
+
+---
+
+## LOTE CURSOR — simular→persist desconto/total (pós-#129) (2026-09-29T16:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **B** — applyPromocaoOnPersist no create/update |
+| Branch | `cursor/comercial360-onda3-simular-persist-392b` |
+| Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
+| Escopo | sem migration; servidor aplica promo/desconto/total; UI merge+preview servidor; meta preserva `Pedido backend HTTP is active` |
+| Tip | `eef875b7` (feat `f51f021c`) |
+| Draft PR | **#130** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/130 — `gh pr create` → `Resource not accessible by integration`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | tabela preço code/nome snapshot (**031**) **ou** Onda 4 sem colisão 025–028 |
+
+---
+
+## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** — persist refs promoção fail-closed |
+| Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
+| Base | `#127` tip `8fba0782` (`cursor/comercial360-onda3-produto-http-392b`) |
+| Escopo | migration **030** + wire create/update/get/convert + UI save refs; reusa `comercialPromocaoPolicy` |
+| Meta | note preserva `Pedido backend HTTP is active` |
+| Tip | `7dbfe5cf` |
+| Draft PR | **#129** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/129 — `gh pr create` → `Resource not accessible by integration`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | choice B (simular→persist desconto) **ou** Onda 4 sem colisão #50/#92 |
+
+---
+
+## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP Produto + picker Orçamento/Pedido fail-closed; sem migration |
+| Testado | **SIM** — client/policy + http-api-client + runtime03/04/07b PASS; typecheck PASS |
+| Base | `#126` tip `2e221def` (`cursor/comercial360-onda3-condicao-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 — `gh pr create` → `Resource not accessible by integration` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-condicao-snapshot-392b...cursor/comercial360-onda3-produto-http-392b?expand=1 |
+| Próximo | promoção snapshot **ou** pickers legados; sem Codex/#104/#48 |
+
+Reservados: runtimeBackend, httpApiClient (`produtos`), router meta (Pedido backend HTTP is active), comercialProdutoHttpUiPolicy, OrcamentosTab, PedidoCanonicoPanel, testes client/policy/runtime03/07b, docs R03. Sem merge/VPS.
+
+---
+
+## LOTE CURSOR — snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice A: migration `029` aditiva + wire create/update/get/convert + UI reload |
+| Testado | **SIM** — 94/94 focados PASS; typecheck PASS |
+| Base | `#124` tip `7c70de69` (`cursor/comercial360-onda3-cliente-local-obra-http-392b`) |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Coordenação | Renumerado **025→029** (colisão com #50/#92 025–028) |
+| Próximo | Produto frontendHttp piloto **ou** promoção snapshot; sem CRM paralelo |
+
+Reservados: migration 029, comercialCondicaoSnapshot, orcamento/pedido services+repos+types, router meta, comercialCondicaoHttpUiPolicy, OrcamentosTab, PedidoCanonicoPanel, testes snapshot/UI/stubs. Sem Codex/#104/#48, sem merge/VPS. Meta preserva Pedido backend HTTP is active.
+
+---
+
+## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — nested HTTP Local/Obra + Pedido delivery fail-closed; sem migration |
+| Testado | **SIM** — 33 frontend + runtime06a/06b/07b 20/20 |
+| Base | `#122` tip `d82c7096` (`cursor/comercial360-onda3-cliente-empresa-http-392b`) |
+| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ `a2c59236` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
+| Draft PR | **#139** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/139 — `gh pr create` → `Resource not accessible by integration` |
+| Próximo | snapshot condição/parcelas (migration) |
+
+Reservados: runtimeBackend, httpApiClient, router meta, comercialClienteLocalObraHttpUiPolicy, PedidoCanonicoPanel, testes client/policy/runtime06a/06b/07b, docs 06A/06B/05. Sem Codex/#104/#48, sem merge/VPS.
+
+---
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

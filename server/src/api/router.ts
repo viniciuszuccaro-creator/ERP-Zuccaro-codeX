@@ -12,6 +12,7 @@ import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
+import type { ComercialSimulacaoVendaService } from '../services/comercialSimulacaoVendaService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
@@ -41,6 +42,7 @@ export type ApiDeps = {
   obraService: ObraService;
   tabelaPrecoService: TabelaPrecoService;
   condicaoPagamentoService: CondicaoPagamentoService;
+  comercialSimulacaoVendaService: ComercialSimulacaoVendaService;
   orcamentoService: OrcamentoService;
   pedidoService: PedidoService;
 };
@@ -434,6 +436,43 @@ function mountClienteRoutes(
       const row = await service.restoreEmpresaLink(
         ctxFromReq(req), req.params.clienteId, req.params.empresaId,
       );
+      res.json({ data: row });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Flat list-for-scope (Onda 3): vínculos da Empresa do contexto — seleção Comercial.
+  router.get('/api/v1/cliente-empresas', requireTenantScope, async (req, res, next) => {
+    try {
+      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
+      const orderBy = ['empresa', 'situacao', 'created_at'].includes(orderByRaw ?? '')
+        ? orderByRaw as 'empresa' | 'situacao' | 'created_at'
+        : undefined;
+      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
+      const orderDir = orderDirRaw === 'asc' || orderDirRaw === 'desc' ? orderDirRaw : undefined;
+      const page = await service.listEmpresaLinksForScope(ctxFromReq(req), {
+        ativo: parseAtivoQuery(req.query.ativo),
+        bloqueado: req.query.bloqueado == null ? undefined : parseAtivoQuery(req.query.bloqueado),
+        habilitadoOperacao: req.query.habilitado_operacao == null
+          ? undefined
+          : parseAtivoQuery(req.query.habilitado_operacao),
+        situacaoComercial: req.query.situacao ? String(req.query.situacao) : undefined,
+        search: req.query.search ? String(req.query.search) : undefined,
+        orderBy,
+        orderDir,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+      });
+      res.json(page);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/api/v1/cliente-empresas/:id', requireTenantScope, async (req, res, next) => {
+    try {
+      const row = await service.getEmpresaLinkById(ctxFromReq(req), req.params.id);
       res.json({ data: row });
     } catch (error) {
       next(error);
@@ -989,6 +1028,12 @@ function mountTabelaPrecoRoutes(router: Router, service: TabelaPrecoService) {
 
 function mountCondicaoPagamentoRoutes(router: Router, service: CondicaoPagamentoService) {
   const base = '/api/v1/condicoes-pagamento';
+  router.get(`${base}/resolve`, requireTenantScope, async (req, res, next) => {
+    try {
+      const clienteEmpresaId = typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : '';
+      res.json({ data: await service.resolveForClienteEmpresaHttp(ctxFromReq(req), clienteEmpresaId) });
+    } catch (e) { next(e); }
+  });
   router.get(base, requireTenantScope, async (req,res,next)=>{try { res.json(await service.list(ctxFromReq(req),{ativo:parseAtivoQuery(req.query.ativo),ehPadrao:parseAtivoQuery(req.query.eh_padrao),search:req.query.search?String(req.query.search):undefined,limit:req.query.limit?Number(req.query.limit):undefined,offset:req.query.offset?Number(req.query.offset):undefined})); } catch(e){next(e);} });
   router.post(base, requireTenantScope, async (req,res,next)=>{try{res.status(201).json({data:await service.create(ctxFromReq(req),req.body)});}catch(e){next(e);}});
   router.get(`${base}/:id`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.get(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
@@ -1000,6 +1045,16 @@ function mountCondicaoPagamentoRoutes(router: Router, service: CondicaoPagamento
   router.delete(`${base}/:id/empresas/:empresaId`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.unlinkEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
   router.post(`${base}/:id/empresas/:empresaId/restore`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.restoreEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
   router.post(`${base}/:id/padrao`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.setPadrao(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
+}
+
+function mountComercialSimulacaoRoutes(router: Router, service: ComercialSimulacaoVendaService) {
+  router.post('/api/v1/comercial/simular-venda', requireTenantScope, async (req, res, next) => {
+    try {
+      res.json({ data: await service.simular(ctxFromReq(req), req.body) });
+    } catch (error) {
+      next(error);
+    }
+  });
 }
 
 function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
@@ -1184,11 +1239,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento', 'Pedido'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'CondicaoPagamento', 'TabelaPreco', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'Produto', 'Orcamento', 'Pedido'],
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'Produto frontendHttp piloto ativo (list/get Comercial); ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas), snapshot de TabelaPreco (codigo+nome), refs de promocao e desconto/total aplicados no servidor (simular-venda); Orcamento validade_em fail-closed em create/update/convert; conversao Orçamento→Pedido copia/verifica snapshots fail-closed (pós-031); Pedido cancel fail-closed (RBAC cancelar + estado EM_ABERTO + auditoria before/after); listagem Orçamento/Pedido HTTP fail-closed (403/5xx ≠ empty-state; queryKey groupId+empresaId+filters; busca vazia ≠ erro HTTP); troca de tenant limpa form/list cache comercial fail-closed (removeQueries outro groupId/empresaId + descarta rascunho); observacoes sanitizadas no write; Pedido update bloqueado quando CANCELADO; UI alçada de desconto fail-closed (exibe bloqueio + desabilita Salvar; sem autoaprovação; trava anti duplo-clique); pickers mestres Cliente/Condição/Produto/Tabela fail-closed (loading+erro 403/5xx com banner, nunca empty silencioso); agenda de parcelas read-only pós simular-venda/condição (fail-closed se ausente); Pedido resumo de endereço Local/Obra pós-seleção via get HTTP fail-closed; UI simular-venda dirty-state fail-closed (limpa preview/agenda ao mudar condição/itens/promo e exige re-simular antes de salvar); resumo texto read-only Orçamento/Pedido a partir da entidade + snapshots (fail-closed se incompletos pós-031; painel/janela texto, sem PDF novo); UI itens fail-closed quantidade/preço >0 antes de simular/salvar (mensagens por linha + gate Salvar/Simular); pickers mestres ocultam Condicao/Tabela/Produto/ClienteEmpresa inativos exceto seleção atual (ghost+snapshot; fail-closed); a11y Comercial HTTP: aria-live assertive em banners/list errors e polite em loading/hints; aria-invalid+aria-describedby em linhas de item; nomes acessíveis Simular/Salvar/Cancelar/Resumo/Converter; retry rede/5xx em list/masters/simular com banner Tentar novamente (fail-closed; formatComercialHttpError; 4xx sem retry silencioso); Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1197,7 +1252,7 @@ export function createApiRouter(deps: ApiDeps) {
         masterData: true,
         pagination: true,
         tenantFkIntegrity: true,
-        frontendHttp: false,
+        frontendHttp: true,
       },
       cliente: {
         masterData: true,
@@ -1206,7 +1261,7 @@ export function createApiRouter(deps: ApiDeps) {
         documentoUniqueness: true,
         softDeleteRestore: true,
         central360ReadModel: true,
-        frontendHttp: false,
+        frontendHttp: true,
       },
       clienteEmpresa: {
         commercialEligibility: true,
@@ -1214,14 +1269,15 @@ export function createApiRouter(deps: ApiDeps) {
         tenantIntegrity: true,
         softDeleteRestore: true,
         tabelaPrecoLink: true,
-        frontendHttp: false,
+        listForScope: true,
+        frontendHttp: true,
       },
       clienteLocal: {
         canonicalAddress: true,
         multiPurpose: true,
         pagination: true,
         transactionalAudit: true,
-        frontendHttp: false,
+        frontendHttp: true,
       },
       obra: {
         canonicalBusinessContext: true,
@@ -1230,7 +1286,7 @@ export function createApiRouter(deps: ApiDeps) {
         sequentialCodigo: true,
         pagination: true,
         transactionalAudit: true,
-        frontendHttp: false,
+        frontendHttp: true,
         optionalOnPedido: true,
       },
       tabelaPreco: {
@@ -1240,9 +1296,22 @@ export function createApiRouter(deps: ApiDeps) {
         sequentialCodigo: true,
         pagination: true,
         transactionalAudit: true,
-        frontendHttp: false,
+        frontendHttp: true,
       },
-      condicaoPagamento: { masterData: true, companyAuthorization: true, parcelasAtomicas: true, frontendHttp: false },
+      condicaoPagamento: {
+        masterData: true,
+        companyAuthorization: true,
+        parcelasAtomicas: true,
+        resolucaoClienteEmpresa: true,
+        frontendHttp: true,
+      },
+      comercialSimulacao: {
+        vendaHttp: true,
+        precoServidor: true,
+        parcelasSchedule: true,
+        promocaoFailClosed: true,
+        persistOnWrite: true,
+      },
       orcamento: {
         backendHttp: true,
         frontendHttp: true,
@@ -1252,6 +1321,22 @@ export function createApiRouter(deps: ApiDeps) {
         transactionalAudit: true,
         rbacFailClosed: true,
         cancelByState: true,
+        condicaoSnapshot: true,
+        tabelaSnapshot: true,
+        promocaoSnapshotFailClosed: true,
+        simularPersistFailClosed: true,
+        validadeFailClosed: true,
+        convertSnapshotFailClosed: true,
+        listFailClosed: true,
+        listSearchFilterFailClosed: true,
+        tenantCacheFailClosed: true,
+        observacoesSanitized: true,
+        descontoAlcadaUiFailClosed: true,
+        saveIdempotency: true,
+        mastersPickerFailClosed: true,
+        parcelaSchedulePreviewFailClosed: true,
+        simulacaoDirtyFailClosed: true,
+        textoResumoPreviewFailClosed: true,
       },
       pedido: {
         backendHttp: true,
@@ -1261,8 +1346,27 @@ export function createApiRouter(deps: ApiDeps) {
         sequentialNumero: true,
         transactionalAudit: true,
         rbacFailClosed: true,
+        cancelByState: true,
         idempotentConversion: true,
         statusHistory: true,
+        condicaoSnapshot: true,
+        tabelaSnapshot: true,
+        promocaoSnapshotFailClosed: true,
+        simularPersistFailClosed: true,
+        convertValidadeFailClosed: true,
+        convertSnapshotFailClosed: true,
+        listFailClosed: true,
+        listSearchFilterFailClosed: true,
+        tenantCacheFailClosed: true,
+        observacoesSanitized: true,
+        updateBlockedWhenCancelled: true,
+        descontoAlcadaUiFailClosed: true,
+        saveIdempotency: true,
+        mastersPickerFailClosed: true,
+        parcelaSchedulePreviewFailClosed: true,
+        deliveryAddressSummaryFailClosed: true,
+        simulacaoDirtyFailClosed: true,
+        textoResumoPreviewFailClosed: true,
       },
     });
   });
@@ -1277,6 +1381,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountObraRoutes(router, deps.obraService);
   mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
+  mountComercialSimulacaoRoutes(router, deps.comercialSimulacaoVendaService);
   mountOrcamentoRoutes(router, deps.orcamentoService);
   mountPedidoRoutes(router, deps.pedidoService);
 
