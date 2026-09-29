@@ -1,3 +1,17 @@
+## LOTE CURSOR — #120 Onda 3 Cliente frontendHttp (2026-09-29T15:04Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#120** (base #118) |
+| Tip | `5b444a69` (feat `daadbdfe` + fix runtime04) |
+| CI | **SUCCESS** |
+
+Cliente piloto HTTP + Central 360 fail-closed; Orçamento/Pedido masters via HTTP; sem migration.
+
+Pilha: #114 → #116 → #117 → #118 → **#120**.
+
+---
+
 ## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:48Z)
 
 | Campo | Valor |

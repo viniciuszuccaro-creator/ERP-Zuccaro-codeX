@@ -1,3 +1,9 @@
+## LOTE CURSOR — #120 Onda 3 Cliente frontendHttp (2026-09-29T15:04Z)
+
+PR **#120** tip `5b444a69` CI SUCCESS (base #118). Sem migration.
+
+---
+
 ## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:48Z)
 
 PR **#118** tip `8cea7778` CI SUCCESS (base #117). Sem migration.
