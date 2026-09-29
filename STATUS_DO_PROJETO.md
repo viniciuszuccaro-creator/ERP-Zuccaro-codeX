@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-a11y-live-392b` |
 | Base | `origin/cursor/comercial360-onda3-inactive-master-picker-392b` tip `50dc8b5c` (#149) |
 | Tip | `291164d5` (`291164d53711245f67f311f0d80daf059b22d21c`) · feat `aaa96026` |
-| Draft PR | **BLOCKED** createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
+| Draft PR | **#150** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/150 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
 | Escopo | helpers a11y + wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration; sem lib a11y nova |
 | Meta | a11y note + preserva **Pedido backend HTTP is active** |
 | Testes | `comercial-list-http-ui-policy` **19/19**; `orcamento-ui-policy`+`pedido-ui-policy` **25/25**; `git diff --check` PASS |
