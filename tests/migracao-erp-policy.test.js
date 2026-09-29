@@ -249,6 +249,29 @@ test('segredos aninhados e chaves legadas em maiusculas nao chegam ao staging', 
   assert.equal(staging.destino_migracao, 'staging');
 });
 
+test('sanitizador legado cobre aliases camelCase, espaços e objetos de prototipo nulo', () => {
+  const nested = Object.assign(Object.create(null), { token: 'SEGREDO', nome: 'Sintetico' });
+  const origem = { apiKey: 'SEGREDO', APIKEY: 'SEGREDO', senhaHash: 'SEGREDO', access_token: 'SEGREDO',
+    client_secret: 'SEGREDO', 'token ': 'SEGREDO', nested };
+  const filtrado = stripSegredosMigracao(origem);
+  assert.equal(JSON.stringify(filtrado).includes('SEGREDO'), false);
+  assert.equal(filtrado.nested.nome, 'Sintetico');
+  assert.notEqual(filtrado.nested, nested);
+  assert.equal(origem.apiKey, 'SEGREDO');
+  assert.equal(nested.token, 'SEGREDO');
+  class RegistroLegado { constructor() { this.token = 'SEGREDO'; } }
+  assert.throws(() => stripSegredosMigracao({ nested: new RegistroLegado() }), /JSON simples/);
+  assert.throws(() => stripSegredosMigracao({ nested: () => 'SEGREDO' }), /JSON simples/);
+  let lido = false;
+  const comGetter = Object.defineProperty({}, 'dado', { enumerable: true, get() { lido = true; return 'SEGREDO'; } });
+  assert.throws(() => stripSegredosMigracao({ nested: comGetter }), /JSON simples/);
+  assert.equal(lido, false);
+  const arrayComGetter = [];
+  Object.defineProperty(arrayComGetter, '0', { enumerable: true, get() { lido = true; return 'SEGREDO'; } });
+  assert.throws(() => stripSegredosMigracao({ nested: arrayComGetter }), /JSON simples/);
+  assert.equal(lido, false);
+});
+
 test('codigo legado permanece mesmo sem conflito interno', () => {
   const record = applyCodigoOnCreate({
     entityName: 'Produto',

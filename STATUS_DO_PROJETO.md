@@ -1,3 +1,12 @@
+## Onda 25 - preflight atomico de staging legado sintetico (2026-09-29)
+
+- Branch isolada baseada no HEAD `95fef57a` da #106; #104 congelada e mapeador/aliases da #48 intactos.
+- Objetivo: impedir que um lote parcialmente valido avance para staging quando um item posterior carece de vinculo juridico, codigo legado, assinatura de origem ou conflita com codigo anterior.
+- Reuso: `staging-scope-gate.mjs` da #106 e `stripSegredosMigracao` canonico. Validacao fail-closed de autorizacao, Grupo/Empresa comprovados e codigo 001/002/005; grupo seletor 003 nao vira emissor. Retry no lote ou contra indice de staging existente conta reuso; assinatura divergente fica em conflito. Lote bloqueado devolve zero registros; lote apto devolve registros privados sanitizados, alem de relatorio agregado por entidade/codigo empresarial e motivo sem PII.
+- Sem leitura de registros reais, persistencia, importacao, migration, VPS ou mudanca nas branches #104/#106/#48. Assinatura SHA-256 fornecida pelo extrator e apenas chave de comparacao, nao prova de autenticidade; extracao/verificacao real ainda exige gate e ambiente isolado.
+- Revisao Cursor dos SHAs iniciais encontrou defeitos no agregado de mestre, indice de retry e aliases de segredo. Corrigidos: agregado usa `grupo` sem empresa proprietaria; indice exige IDs nao vazios apos trim e Empresa para operacoes; sanitizador canonico cobre camelCase, espacos, `access_token`/`client_secret` e objetos JSON de prototipo nulo, sem mutar origem. Objeto de classe, funcao ou accessor nao JSON, que antes podia passar segredo, agora falha fechado antes da leitura do getter.
+- Testes: 11 testes sinteticos de escopo/staging e 26 da politica (37/37), incluindo falha apos item apto, retry entre lotes, funcao aninhada, ausencia de dados no relatorio e achados da revisao. `audit:baseline`, lint, build e diff-check passaram nos commits anteriores; `npm test` global falha em scripts Unix/VPS no Windows e typecheck global mantem milhares de erros preexistentes fora do diff. CI Linux do SHA final e gate. Proximo: integrar ao mapeador apos coordenacao/merge da #48, obter vinculos juridicos comprovados e plano de backup/rollback antes de qualquer carga real.
+
 ## Gate 18 - sanitizacao do staging legado (2026-09-28)
 
 - Tarefa: endurecer o contrato existente `migracaoErpPolicy` sem duplicar o mapeador sintetico da PR #48.

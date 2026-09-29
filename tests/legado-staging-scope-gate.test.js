@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { avaliarEscopoStagingLegado, reconciliarEscoposStaging } from '../scripts/legado/staging-scope-gate.mjs';
+import { avaliarEscopoStagingLegado, prepararLoteStagingLegado, reconciliarEscoposStaging } from '../scripts/legado/staging-scope-gate.mjs';
 
 const vinculos = { '001': { groupId: 'g1', empresaId: 'e1', comprovado: true } };
 
@@ -38,4 +38,95 @@ test('reconciliacao publica somente totais e motivos, sem registros', () => {
   assert.equal(result.aptos, 2);
   assert.equal(result.quarentena, 1);
   assert.equal(JSON.stringify(result).includes('Pessoa Sintetica'), false);
+});
+
+test('staging sintetico exige permissao, vinculo e assinatura; retry reutiliza sem efeito posterior', () => {
+  const base = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-S1', assinaturaOrigem: 'a'.repeat(64), nome: 'Pessoa Sintetica' };
+  assert.throws(() => prepararLoteStagingLegado([base]), /Permissao/);
+  const result = prepararLoteStagingLegado([base, { ...base }], { autorizado: true, vinculosVerificados: vinculos });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.privados.length, 1);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresa, { 'pedido|001': 1 });
+  assert.equal(result.relatorio.reusos, 1);
+  assert.equal(JSON.stringify(result.relatorio).includes('Pessoa Sintetica'), false);
+  assert.equal(JSON.stringify(result.relatorio).includes('PED-S1'), false);
+});
+
+test('registros privados passam pelo sanitizador canonico sem mutar a origem', () => {
+  const item = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1',
+    assinaturaOrigem: 'a'.repeat(64), TOKEN: 'SEGREDO', apiKey: 'SEGREDO',
+    dados: { senha_hash: 'SEGREDO', 'token ': 'SEGREDO', nome: 'Sintetico' } };
+  const result = prepararLoteStagingLegado([item], { autorizado: true });
+  assert.equal(result.bloqueado, false);
+  assert.equal(JSON.stringify(result.privados).includes('SEGREDO'), false);
+  assert.equal(result.privados[0].dados.nome, 'Sintetico');
+  assert.equal(item.TOKEN, 'SEGREDO');
+});
+
+test('mestre compartilhado conta apenas no Grupo mesmo com seletor legado', () => {
+  for (const [entidade, codigoEmpresaLegado] of [['cliente', '003'], ['fornecedor', '001']]) {
+    const result = prepararLoteStagingLegado([{ entidade, codigoEmpresaLegado, groupId: 'g1',
+      codigoLegado: 'S-1', assinaturaOrigem: 'a'.repeat(64) }], { autorizado: true });
+    assert.equal(result.bloqueado, false);
+    assert.deepEqual(result.relatorio.porEntidadeEmpresa, { [`${entidade}|grupo`]: 1 });
+  }
+});
+
+test('falha no item seguinte bloqueia lote, isola conflito e nao vaza dados no relatorio', () => {
+  const base = { entidade: 'conta_receber', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'CR-S1', assinaturaOrigem: 'b'.repeat(64), documento: 'DOCUMENTO_PRIVADO' };
+  const result = prepararLoteStagingLegado([
+    base,
+    { ...base, assinaturaOrigem: 'c'.repeat(64) },
+    { ...base, codigoLegado: 'CR-S2', codigoEmpresaLegado: '003' },
+  ], { autorizado: true, vinculosVerificados: vinculos });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.aptos, 1);
+  assert.equal(result.relatorio.conflitos, 1);
+  assert.equal(result.relatorio.quarentena, 1);
+  assert.equal(result.relatorio.porMotivo.codigo_legado_conflitante, 1);
+  assert.equal(result.relatorio.porMotivo.empresa_legada_nao_comprovada, 1);
+  assert.equal(JSON.stringify(result.relatorio).includes('DOCUMENTO_PRIVADO'), false);
+  assert.equal(JSON.stringify(result.relatorio).includes('CR-S1'), false);
+});
+
+test('funcao no segundo registro falha sem devolver lote parcial', () => {
+  const base = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1', assinaturaOrigem: 'a'.repeat(64) };
+  assert.throws(() => prepararLoteStagingLegado([base, { ...base, codigoLegado: 'CLI-S2',
+    assinaturaOrigem: 'b'.repeat(64), dado: () => 'SEGREDO' }], { autorizado: true }), /JSON simples/);
+});
+
+test('codigo empresarial nao numerico e grupo 003 nao viram empresa por normalizacao', () => {
+  for (const value of ['abc', '1x', '0001', '003']) {
+    const result = avaliarEscopoStagingLegado({ entidade: 'pedido', codigoEmpresaLegado: value,
+      groupId: 'g1', empresaId: 'e1', vinculosVerificados: vinculos });
+    assert.equal(result.aptoParaStaging, false);
+  }
+});
+
+test('retry entre lotes reutiliza staging existente sem nova linha nem misturar empresa', () => {
+  const base = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-S1', assinaturaOrigem: 'd'.repeat(64) };
+  const opts = { autorizado: true, vinculosVerificados: vinculos };
+  const first = prepararLoteStagingLegado([base], opts);
+  assert.equal(first.privados.length, 1);
+  const retry = prepararLoteStagingLegado([base], { ...opts, existentes: [base] });
+  assert.equal(retry.privados.length, 0);
+  assert.equal(retry.relatorio.reusos, 1);
+  assert.equal(retry.bloqueado, false);
+  const altered = prepararLoteStagingLegado([{ ...base, assinaturaOrigem: 'e'.repeat(64) }],
+    { ...opts, existentes: [base] });
+  assert.equal(altered.bloqueado, true);
+  assert.equal(altered.relatorio.conflitos, 1);
+  assert.deepEqual(altered.privados, []);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, assinaturaOrigem: '' }] }),
+    /Indice de staging existente/);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, groupId: '   ' }] }),
+    /Indice de staging existente/);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, codigoLegado: '   ' }] }),
+    /Indice de staging existente/);
+  assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, empresaId: '   ' }] }),
+    /Indice de staging existente/);
 });

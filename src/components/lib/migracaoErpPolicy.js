@@ -53,6 +53,8 @@ export const SECRET_MIGRACAO_KEYS = [
   'token',
   'refresh_token',
   'api_key',
+  'access_token',
+  'client_secret',
   'secret',
 ];
 
@@ -114,11 +116,27 @@ export const isMigracaoRecord = (record = {}) => Boolean(
  */
 export const stripSegredosMigracao = (record = {}) => {
   const secretKeys = new Set(SECRET_MIGRACAO_KEYS);
+  const compactSecretKeys = new Set(SECRET_MIGRACAO_KEYS.map((key) => key.replaceAll('_', '')));
+  const normalizeKey = (key) => String(key).trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_').toLowerCase();
   const sanitize = (value) => {
+    if (typeof value === 'function') {
+      throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
+    }
+    if (value === null || typeof value !== 'object') return value;
+    if (Object.values(Object.getOwnPropertyDescriptors(value)).some((descriptor) => 'get' in descriptor || 'set' in descriptor)) {
+      throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
+    }
     if (Array.isArray(value)) return value.map(sanitize);
-    if (!value || Object.getPrototypeOf(value) !== Object.prototype) return value;
+    if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+      throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
+    }
     return Object.fromEntries(Object.entries(value)
-      .filter(([key]) => !secretKeys.has(key.toLowerCase()))
+      .filter(([key]) => {
+        const normalized = normalizeKey(key);
+        return !secretKeys.has(normalized) && !compactSecretKeys.has(normalized.replaceAll('_', ''));
+      })
       .map(([key, item]) => [key, sanitize(item)]));
   };
   return sanitize(record);
