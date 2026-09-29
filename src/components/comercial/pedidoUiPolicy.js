@@ -216,6 +216,42 @@ export function evaluatePedidoStatusTransitionUiGate({ row, groupId, empresaId, 
 }
 
 /**
+ * Estado UI do Histórico do Pedido (empty ≠ erro; loading/error fail-closed).
+ * @param {{ events?: unknown, isLoading?: boolean, isError?: boolean, errorMessage?: string | null }} [input]
+ */
+export function resolvePedidoHistoryUiState({ events, isLoading, isError, errorMessage } = {}) {
+  if (isLoading) {
+    return { mode: 'loading', hint: 'Carregando histórico...', events: [], canRetry: false };
+  }
+  if (isError) {
+    return {
+      mode: 'error',
+      hint: errorMessage || 'Não foi possível carregar o histórico (fail-closed). Não trate como lista vazia.',
+      events: [],
+      canRetry: true,
+    };
+  }
+  const list = Array.isArray(events) ? events : null;
+  if (!list) {
+    return {
+      mode: 'invalid',
+      hint: 'Histórico indisponível (fail-closed).',
+      events: [],
+      canRetry: true,
+    };
+  }
+  if (list.length === 0) {
+    return {
+      mode: 'empty',
+      hint: 'Nenhum evento de status registrado para este pedido nesta empresa.',
+      events: [],
+      canRetry: false,
+    };
+  }
+  return { mode: 'ready', hint: null, events: list, canRetry: false };
+}
+
+/**
  * Dia civil YYYY-MM-DD a partir de date-only ou ISO (UTC calendar day).
  * @param {unknown} value
  * @returns {string | null}

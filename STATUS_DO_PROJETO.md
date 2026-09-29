@@ -1,3 +1,17 @@
+## AUTÔNOMO — tip Pedido histórico UI fail-closed (pós-#173) (2026-09-30T00:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido histórico loading/empty/error** fail-closed (empty ≠ erro; retry) |
+| Branch | `cursor/comercial360-onda5-pedido-history-ux-392b` |
+| Base | tip #173 status confirm |
+| Escopo | `resolvePedidoHistoryUiState`; loadHistory separado do get; meta `historyUiFailClosed` |
+| Testes | pedido-ui + runtime09/08c/07b |
+| Colisão | CostPort invent BLOCKED; CreditPort 032; anexos; sem Codex/merge/VPS |
+| Próximo | Onda 5 polish esgotado → **BLOCKED** até 032/CostPort real/anexo pós-Codex |
+
+---
+
 ## AUTÔNOMO — tip Pedido status confirm+motivo (pós-#172) (2026-09-30T00:10Z)
 
 | Campo | Valor |
