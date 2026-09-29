@@ -1,3 +1,16 @@
+## OPINIÃO CURSOR — #140 CI SUCCESS + #142 parcelas + review #104/#48 (2026-09-29T17:46Z)
+
+| PR | Tip | CI/Veredito | Escopo |
+|---|---|---|---|
+| #140 | `f5009c7c` | **SUCCESS** | banners pickers mestres |
+| #142 | `cursor/comercial360-onda3-parcela-schedule-ui-392b` | pendente | preview cronograma parcelas |
+| #104 | `87101b4d` | **APTA** (CI SUCCESS; fora stack Comercial) | estoque reserva parcial |
+| #48 | `ee0dc10a` | **APTA** (prep/quarentena; sem HD) | legado mapper/prep |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — revisão cruzada #104 + #48 (2026-09-29T17:50Z)
 
 | PR | Tip | CI | Veredito |
