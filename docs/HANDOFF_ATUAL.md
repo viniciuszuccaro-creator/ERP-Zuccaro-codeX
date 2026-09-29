@@ -1,3 +1,9 @@
+## AUTÔNOMO — tip #160 multi-select (2026-09-29T22:08Z)
+
+Empilhado: #154→#156→#157→#158→#159→**#160** (multi-select stub). Continuando Comercial 360. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO ATIVO — owner ausente (2026-09-29T22:02Z)
 
 Continuando Comercial 360 sem merge/VPS.
