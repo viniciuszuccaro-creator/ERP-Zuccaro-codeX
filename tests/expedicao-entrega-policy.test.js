@@ -7,10 +7,16 @@ import {
   assertEntregaOnDelete,
   assertEntregaOnUpdate,
   assertRomaneioOnCreate,
+  assertSeparacaoOnCreate,
+  conferirQuantidadesPedido,
+  avaliarScanConferencia,
+  validarRespostaConferenciaIA,
+  selecionarEntregaConferencia,
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
   hasProvaEntrega,
+  findDuplicateSeparacao,
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
 import {
   resolveEntregaContext,
@@ -18,6 +24,127 @@ import {
   summarizeGeolocationAudit,
   summarizePredictionAudit,
 } from '../src/components/expedicao/formulario-entrega/entregaFormPolicy.js';
+
+test('separacao recalcula divergencia por quantidade antes de liberar pedido', async () => {
+  const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(separacao, /i\.divergencia \|\| Number\(i\.quantidade_separada \|\| 0\) !== Number\(i\.quantidade_pedida \|\| 0\)/);
+});
+
+test('conferencia manual reusa registro antes de atualizar pedido e bloqueia lista vazia', async () => {
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  const mutation = source.slice(source.indexOf('const criarSeparacaoMutation'));
+  assert.ok(mutation.indexOf('if (existente) return { ...existente, _reused: true }')
+    < mutation.indexOf('createInContext("SeparacaoConferencia"'));
+  assert.ok(mutation.indexOf('if (existente) return { ...existente, _reused: true }')
+    < mutation.indexOf('updateInContext("Pedido"'));
+  assert.match(source, /itens.length > 0 && itens.every/);
+  assert.match(source, /conferirQuantidadesPedido\(/);
+  assert.match(source, /pedidoOperacao\?\.id/);
+  assert.match(source, /pedido-da-entrega/);
+});
+
+test('consulta de entrega rejeita ID ou tenant diferente mesmo em cache', async () => {
+  const rows = [
+    { id: 'outra', group_id: 'g1', empresa_id: 'e1' },
+    { id: 'ent1', group_id: 'g1', empresa_id: 'e2' },
+    { id: 'ent1', group_id: 'g1', empresa_id: 'e1' },
+  ];
+  assert.deepEqual(selecionarEntregaConferencia(rows, {
+    id: 'ent1', groupId: 'g1', empresaId: 'e1',
+  }), rows[2]);
+  assert.equal(selecionarEntregaConferencia(rows, {
+    id: 'ent1', groupId: 'g2', empresaId: 'e1',
+  }), null);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(source, /queryKey: \['entrega', entregaId, baseGroupId, baseEmpresaId\]/);
+  assert.match(source, /selecionarEntregaConferencia\(entregas/);
+});
+
+test('conferencia de entrega guarda IDs distintos e reusa somente a mesma origem', async () => {
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(source, /filterInContext\("Entrega", \{ id: entregaId \}, undefined, 1\)/);
+  assert.match(source, /pedido_id: pedido\\?\\.id \\|\\| entrega\\?\\.pedido_id \\|\\| null/);
+  assert.match(source, /entrega_id: entrega\\?\\.id \\|\\| null/);
+  const existing = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
+  assert.equal(assertSeparacaoOnCreate({
+    record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia' },
+    separacoes: [existing],
+  }).reuse?.id, 's1');
+  assert.equal(assertSeparacaoOnCreate({
+    record: { empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia' },
+    separacoes: [existing],
+  }).reuse, null);
+});
+
+test('scanner valida resposta IA antes de auditar sucesso ou incluir item', async () => {
+  assert.throws(() => validarRespostaConferenciaIA(null), /incompleta/);
+  assert.throws(() => validarRespostaConferenciaIA({ divergencia_quantidade: false }), /incompleta/);
+  assert.deepEqual(validarRespostaConferenciaIA({
+    divergencia_quantidade: false, divergencia_peso: false,
+  }), { divergencia_quantidade: false, divergencia_peso: false });
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  const mutation = source.slice(source.indexOf('const validarIAMutation'), source.indexOf('const otimizarRotaMutation'));
+  assert.ok(mutation.indexOf('return validarRespostaConferenciaIA(resultado)') < mutation.indexOf('onSuccess:'));
+  assert.ok(mutation.indexOf('onError:') < mutation.indexOf('validacao_erro'));
+  assert.ok(source.indexOf('validacao = await validarIAMutation.mutateAsync(novoItem)')
+    < source.indexOf('itens_separados: [...prev.itens_separados, novoItem]'));
+  assert.ok(source.includes('peso_total_kg: Number(produto.peso_liquido_kg || 0) * quantidadeScan'));
+  assert.match(source, /peso_conferido: null/);
+});
+
+test('scanner soma unidades fracionadas por produto e bloqueia codigo de outro ID', async () => {
+  const itensPedido = [{ produto_id: 'p1', codigo: 'COD-A', quantidade: 2.5 }];
+  const item = { produto_id: 'p1', quantidade_separada: 1 };
+  assert.equal(avaliarScanConferencia({ itensPedido, itensSeparados: [], produtoId: 'p1' }).quantidade, 1);
+  assert.equal(avaliarScanConferencia({ itensPedido, itensSeparados: [item], produtoId: 'p1' }).quantidade, 1);
+  assert.equal(avaliarScanConferencia({ itensPedido, itensSeparados: [item, item], produtoId: 'p1' }).quantidade, 0.5);
+  assert.equal(avaliarScanConferencia({
+    itensPedido, itensSeparados: [item, item, { produto_id: 'p1', quantidade_separada: 0.5 }], produtoId: 'p1',
+  }).permitido, false);
+  assert.equal(avaliarScanConferencia({
+    itensPedido, itensSeparados: [], produtoId: 'p2', codigo: 'COD-A',
+  }).motivo, 'produto_fora_pedido');
+  assert.deepEqual(conferirQuantidadesPedido(itensPedido, [
+    item, item, { produto_id: 'p1', quantidade_separada: 0.5 },
+  ]), { conforme: true, divergencias: [] });
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.match(source, /quantidade_pedida: quantidadeScan/);
+  assert.ok(source.includes('find(i => i.produto_id === produto.id)'));
+});
+
+test('conferencia IA bloqueia pedido incompleto mesmo quando IA nao detecta divergencia', async () => {
+  const pedido = [
+    { produto_id: 'p1', quantidade: 2 },
+    { produto_id: 'p1', quantidade: 1 },
+    { produto_id: 'p2', quantidade: 1 },
+  ];
+  assert.deepEqual(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 1 },
+    { produto_id: 'p1', quantidade_separada: 1 },
+  ]), { conforme: false, divergencias: ['p1', 'p2'] });
+  assert.deepEqual(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 1 },
+    { produto_id: 'p1', quantidade_separada: 2 },
+    { produto_id: 'p2', quantidade_separada: 1 },
+  ]), { conforme: true, divergencias: [] });
+  assert.equal(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 3 },
+    { produto_id: 'p2', quantidade_separada: 2 },
+  ]).conforme, false);
+  assert.equal(conferirQuantidadesPedido(pedido, [
+    { produto_id: 'p1', quantidade_separada: 'abc' },
+  ]).conforme, false);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.match(source, /const temDivergencia = separacao.divergencias.length > 0 \\|\\| !conferenciaQuantidades.conforme/);
+});
+
+test('separacao IA exige grupo e empresa antes de consultar ou gravar', async () => {
+  const separacaoIA = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.match(separacaoIA, /const contextoBaseValido = Boolean\(baseGroupId && baseEmpresaId\)/);
+  assert.match(separacaoIA, /const contextoValido = Boolean\(effectiveGroupId && effectiveEmpresaId\)/);
+  assert.doesNotMatch(separacaoIA, /Boolean\(baseGroupId \|\| baseEmpresaId\)/);
+  assert.doesNotMatch(separacaoIA, /Boolean\(effectiveGroupId \|\| effectiveEmpresaId\)/);
+});
 
 test('formulario exige Grupo e empresa autorizada no contexto', () => {
   assert.deepEqual(resolveEntregaContext({ grupoAtual: { id: 'g1' }, estaNoGrupo: true }), {
@@ -103,6 +230,54 @@ test('retry do mesmo pedido reusa a entrega', () => {
     entregas: [existing],
   });
   assert.equal(decision.reuse.id, 'ent-1');
+});
+
+test('conferencia manual e IA do mesmo pedido reutilizam a origem', () => {
+  const manual = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia_ia',
+  }, [manual])?.id, 's1');
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia',
+  }, [manual]), null);
+});
+
+test('duas entregas do pedido permanecem independentes na conferencia IA', async () => {
+  const primeira = { id: 's1', empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent1', tipo: 'conferencia', status: 'concluido' };
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', entrega_id: 'ent2', tipo: 'conferencia_ia',
+  }, [primeira]), null);
+  assert.equal(findDuplicateSeparacao({
+    empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia_ia',
+  }, [primeira]), null);
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.ok(source.includes('entrega_id: entregaAtiva?.id || null'));
+  assert.ok(source.includes('entregas.length > 1 && !entregaAtiva'));
+  assert.ok(source.includes('value={entregaSelecionadaId}'));
+});
+
+test('reconferencia da mesma entrega atualiza registro divergente com auditoria', async () => {
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferenciaIA.jsx', import.meta.url), 'utf8');
+  assert.ok(source.includes('await updateInContext("SeparacaoConferencia", existente.id, payloadConferencia)'));
+  assert.ok(source.includes('dadosAnteriores: existente || pedido'));
+  assert.ok(source.includes('if (entregas.length > 100)'));
+  assert.ok(source.includes('undefined, 101'));
+  assert.ok(source.includes('entregas.length > 1 && legadoSemEntrega'));
+});
+
+test('separacao cancelada nao bloqueia nova conferencia, mas concluida e reutilizada', () => {
+  const record = { empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia' };
+  const cancelada = assertSeparacaoOnCreate({
+    record,
+    separacoes: [{ id: 's-cancelada', empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia', status: 'Cancelada' }],
+  });
+  assert.equal(cancelada.reuse, null);
+
+  const concluida = assertSeparacaoOnCreate({
+    record,
+    separacoes: [{ id: 's-concluida', empresa_id: 'e1', pedido_id: 'p1', tipo: 'conferencia', status: 'concluido' }],
+  });
+  assert.equal(concluida.reuse.id, 's-concluida');
 });
 
 test('romaneio exige motorista, veiculo e empresa', () => {
