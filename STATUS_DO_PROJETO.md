@@ -1,3 +1,15 @@
+## OPINIÃO CURSOR — #136/#138 CI SUCCESS + #139 snapshot-reload (2026-09-29T17:27Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #136 | `a1b78672` | **SUCCESS** | list fail-closed (+ eslint fix) |
+| #138 | `90a76433` | **SUCCESS** | alçada UI fail-closed |
+| #139 | `cursor/comercial360-onda3-snapshot-reload-392b` | pendente | reload snapshots após save |
+
+Próximo: masters loading/error banner (C) **ou** margem UI pós-#47. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #136 lint fix + #138 alçada UI (2026-09-29T17:18Z)
 
 | PR | Tip | CI | Escopo |
