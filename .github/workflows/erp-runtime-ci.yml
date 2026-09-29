@@ -45,6 +45,18 @@ jobs:
       - run: psql postgresql://erp_test:erp_test@localhost:5432/erp_test -f scripts/seed-dev-synthetic.sql
       - run: npm run test:postgres
         env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - name: Prove synthetic legacy staging on isolated PostgreSQL
+        working-directory: .
+        env:
+          DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_restore_isolated_legado_ci
+          ISOLATED_DATABASE_NAME: erp_restore_isolated_legado_ci
+          ALLOW_DROP_SCHEMA_PUBLIC: ISOLATED_ONLY
+          LEGACY_STAGING_SYNTHETIC: '1'
+        run: |
+          set -euo pipefail
+          psql postgresql://erp_test:erp_test@localhost:5432/postgres -c 'CREATE DATABASE erp_restore_isolated_legado_ci;'
+          bash scripts/vps/assert-isolated-database-url.sh
+          node --test server/tests/legado-staging-postgres-e2e.test.js
       - name: Prove isolated DB guard (blocks DEV / requires allowlist)
         working-directory: .
         run: bash scripts/vps/assert-isolated-database-url.sh --self-test
