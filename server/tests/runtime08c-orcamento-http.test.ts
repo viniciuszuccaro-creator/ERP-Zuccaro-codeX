@@ -105,7 +105,9 @@ test('HTTP Orcamento executa create list get update cancel e auditoria transacio
   assert.equal(updated.body.data.numero, created.body.data.numero);
   assert.equal(updated.body.data.total, '30.000000');
 
-  const cancelled = await request(runtime.app, `/api/v1/orcamentos/${id}/cancelar`, { method: 'POST', headers: headers() });
+  const badMotivo = await request(runtime.app, `/api/v1/orcamentos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'ab' }) });
+  assert.equal(badMotivo.status, 422);
+  const cancelled = await request(runtime.app, `/api/v1/orcamentos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Cliente desistiu' }) });
   assert.equal(cancelled.status, 200);
   assert.equal(cancelled.body.data.status, 'CANCELADO');
   assert.equal(cancelled.body.data.itens.length, 1);
@@ -192,6 +194,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     printPdfUiFailClosed: true,
     shareTextUiFailClosed: true,
     detailSummaryUiFailClosed: true,
+    cancelMotivoUiFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.match(result.body.note, /UI alçada de desconto fail-closed/);
@@ -214,6 +217,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /Pedido detalhe summary UI fail-closed|resolvePedidoDetailSummaryUiState/);
   assert.match(result.body.note, /Orçamento Imprimir\/PDF e compartilhar texto fail-closed|evaluateOrcamentoPrintPdfUiGate/);
   assert.match(result.body.note, /Orçamento detalhe summary UI fail-closed|resolveOrcamentoDetailSummaryUiState/);
+  assert.match(result.body.note, /Orçamento cancel exige motivo UI fail-closed|evaluateOrcamentoCancelMotivoUiGate/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);

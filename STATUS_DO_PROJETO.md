@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip Orçamento cancel motivo (pós-#170) (2026-09-29T23:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Orçamento cancel motivo UI+API** fail-closed (paridade Pedido #164; motivo na auditoria; sem migration) |
+| Branch | `cursor/comercial360-onda5-orcamento-cancel-motivo-392b` |
+| Draft PR | **#171** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/171 |
+| Base | tip #170 CI SUCCESS |
+| Escopo | gate compartilhado `evaluateComercialCancelMotivoUiGate`; dialog motivo; `cancel(id,motivo)`; audit `cancel_motivo`; meta `cancelMotivoUiFailClosed` |
+| Testes | `orcamento-ui`+`pedido-ui` 44/44; runtime07b/08c/09 23/23; `git diff --check` OK |
+| Colisão | CostPort invent BLOCKED; CreditPort 032; anexos; sem Codex/merge/VPS |
+| Próximo | Onda 5 residual só com migration/origem/anexo **ou** Onda 6 se 032 |
+
+---
+
 ## AUTÔNOMO — tip Orçamento detalhe snapshot gap (pós-#169) (2026-09-29T23:30Z)
 
 | Campo | Valor |

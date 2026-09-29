@@ -678,8 +678,8 @@ export function createHttpApiClient(options = {}) {
       return request(`/api/v1/orcamentos/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, signal });
     },
     /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
-    cancel(id, { signal } = {}) {
-      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/cancelar`, { method: 'POST', signal });
+    cancel(id, motivo, { signal } = {}) {
+      return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/cancelar`, { method: 'POST', body: motivo ? { motivo } : {}, signal });
     },
   };
   const pedidos = {

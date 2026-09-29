@@ -11,7 +11,7 @@ import {
   resolveComercialResumoPreviewState,
   resolvePromocaoPayloadRef,
 } from './orcamentoUiPolicy.js';
-import { sanitizeObservacoesText } from './comercialListHttpUiPolicy.js';
+import { sanitizeObservacoesText, evaluateComercialCancelMotivoUiGate, clampComercialCancelMotivo, COMERCIAL_CANCEL_MOTIVO_MAX, COMERCIAL_CANCEL_MOTIVO_MIN } from './comercialListHttpUiPolicy.js';
 
 export { collectItemLineIssues, evaluateItemLinesGate, openComercialResumoTextoWindow };
 
@@ -143,63 +143,20 @@ export function isPedidoCancelDisabled(hasPermission, status) {
 }
 
 /** Limite alinhado ao pedidoService.cancel (3–500). */
-export const PEDIDO_CANCEL_MOTIVO_MIN = 3;
-export const PEDIDO_CANCEL_MOTIVO_MAX = 500;
+export const PEDIDO_CANCEL_MOTIVO_MIN = COMERCIAL_CANCEL_MOTIVO_MIN;
+export const PEDIDO_CANCEL_MOTIVO_MAX = COMERCIAL_CANCEL_MOTIVO_MAX;
 
 /**
  * Motivo de cancelamento Pedido — fail-closed (Onda 5: cancelamento exige motivo).
  * @param {unknown} motivo
- * @returns {{
- *   motivo: string,
- *   length: number,
- *   blockConfirm: boolean,
- *   hint: string | null,
- *   counterLabel: string,
- * }}
  */
 export function evaluatePedidoCancelMotivoUiGate(motivo) {
-  const raw = String(motivo ?? '');
-  const trimmed = raw.trim();
-  const length = raw.length;
-  if (!trimmed) {
-    return {
-      motivo: '',
-      length,
-      blockConfirm: true,
-      hint: 'Informe o motivo do cancelamento (mínimo 3 caracteres).',
-      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
-    };
-  }
-  if (trimmed.length < PEDIDO_CANCEL_MOTIVO_MIN) {
-    return {
-      motivo: trimmed,
-      length,
-      blockConfirm: true,
-      hint: `Motivo muito curto (mínimo ${PEDIDO_CANCEL_MOTIVO_MIN} caracteres).`,
-      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
-    };
-  }
-  if (length > PEDIDO_CANCEL_MOTIVO_MAX) {
-    return {
-      motivo: trimmed.slice(0, PEDIDO_CANCEL_MOTIVO_MAX),
-      length,
-      blockConfirm: true,
-      hint: `Motivo excede ${PEDIDO_CANCEL_MOTIVO_MAX} caracteres.`,
-      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
-    };
-  }
-  return {
-    motivo: trimmed.slice(0, PEDIDO_CANCEL_MOTIVO_MAX),
-    length,
-    blockConfirm: false,
-    hint: null,
-    counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
-  };
+  return evaluateComercialCancelMotivoUiGate(motivo);
 }
 
 /** Clamp do textarea de motivo. */
 export function clampPedidoCancelMotivo(value) {
-  return String(value ?? '').slice(0, PEDIDO_CANCEL_MOTIVO_MAX);
+  return clampComercialCancelMotivo(value);
 }
 
 export function nextPedidoStatus(row) {

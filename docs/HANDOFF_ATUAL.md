@@ -1,3 +1,11 @@
+## AUTÔNOMO — tip Orçamento cancel motivo (2026-09-29T23:45Z)
+
+Draft PR **#171** empilhada em #170 (`cursor/comercial360-onda5-orcamento-cancel-motivo-392b`):
+Orçamento cancel exige motivo 3–500 fail-closed (paridade Pedido #164).
+Testes UI 44/44 + runtime HTTP 23/23. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Orçamento detalhe snapshot (2026-09-29T23:30Z)
 
 Draft PR **#170** empilhada em #169: Orçamento detalhe snapshot gap fail-closed.

@@ -24,6 +24,8 @@ import {
   evaluateOrcamentoPrintPdfUiGate,
   evaluateOrcamentoShareUiGate,
   resolveOrcamentoDetailSummaryUiState,
+  evaluateOrcamentoCancelMotivoUiGate,
+  ORCAMENTO_CANCEL_MOTIVO_MAX,
   todayOrcamentoValidadeCalendarDay,
   resolveOrcamentoResumoPreviewState,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
@@ -299,7 +301,7 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /Tentar novamente/);
   assert.match(tab, /showDetail/);
   assert.match(tab, /openEdit/);
-  assert.match(tab, /Cancelar orçamento\?/);
+  assert.match(tab, /Cancelar orçamento \{pendingCancel\?\.numero\}\?/);
   assert.match(tab, /bindComercialFormBeforeUnload/);
   assert.match(tab, /\[groupId, empresaId, queryClient\]/);
   assert.match(tab, /clearComercialHttpCacheOnTenantSwitch/);
@@ -467,4 +469,21 @@ test('painel orçamento wire detalhe summary snapshot gap', async () => {
   assert.match(tab, /orcamento-detail-summary/);
   assert.match(tab, /orcamento-detail-snapshot-gap/);
   assert.match(tab, /Comercial\.orcamento\.detail-summary/);
+});
+
+test('orcamento cancel motivo gate fail-closed (paridade Pedido)', () => {
+  assert.equal(evaluateOrcamentoCancelMotivoUiGate('').blockConfirm, true);
+  assert.equal(evaluateOrcamentoCancelMotivoUiGate('ab').blockConfirm, true);
+  assert.equal(evaluateOrcamentoCancelMotivoUiGate('abc').blockConfirm, false);
+  assert.equal(ORCAMENTO_CANCEL_MOTIVO_MAX, 500);
+});
+
+test('painel orçamento wire cancel motivo fail-closed', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /evaluateOrcamentoCancelMotivoUiGate/);
+  assert.match(tab, /orcamento-cancel-dialog/);
+  assert.match(tab, /orcamento-cancel-motivo/);
+  assert.match(tab, /cancelMotivoUi\.blockConfirm/);
+  assert.match(tab, /api\.cancel\(row\.id, gate\.motivo\)/);
+  assert.doesNotMatch(tab, /ConfirmDialog/);
 });
