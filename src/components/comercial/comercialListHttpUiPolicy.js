@@ -787,6 +787,7 @@ export function buildPedidoTenantSwitchReset(options = {}) {
     dirty: false,
     history: [],
     pendingCancel: null,
+    pendingTransition: null,
     filters: { ...PEDIDO_LIST_FILTER_DEFAULTS },
     applied: { ...PEDIDO_LIST_FILTER_DEFAULTS },
     promoBps: '',

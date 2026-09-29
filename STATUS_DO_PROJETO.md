@@ -1,3 +1,17 @@
+## AUTÔNOMO — tip Pedido status confirm+motivo (pós-#172) (2026-09-30T00:10Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido avanço de status com confirmação** fail-closed (dialog + motivo opcional ≤500; sem one-click) |
+| Branch | `cursor/comercial360-onda5-pedido-status-confirm-392b` |
+| Base | tip #172 filtro data entrega |
+| Escopo | `evaluatePedidoStatusTransitionUiGate` + `evaluatePedidoStatusMotivoUiGate`; dialog; meta `statusTransitionConfirmFailClosed` |
+| Testes | pedido-ui + comercial-list + runtime09/08c/07b |
+| Colisão | CostPort invent BLOCKED; CreditPort 032; anexos; sem Codex/merge/VPS |
+| Próximo | Histórico Pedido empty/error **ou** BLOCKED até 032/CostPort/anexo |
+
+---
+
 ## AUTÔNOMO — tip Pedido filtro data entrega De/Até (pós-#171) (2026-09-29T23:55Z)
 
 | Campo | Valor |

@@ -169,6 +169,53 @@ export function nextPedidoStatus(row) {
 }
 
 /**
+ * Motivo opcional na transição de status Pedido (API aceita ausente; max 500).
+ * Vazio não bloqueia; excedente bloqueia confirm.
+ * @param {unknown} motivo
+ */
+export function evaluatePedidoStatusMotivoUiGate(motivo) {
+  const raw = String(motivo ?? '');
+  const trimmed = raw.trim();
+  const length = raw.length;
+  if (length > PEDIDO_CANCEL_MOTIVO_MAX) {
+    return {
+      motivo: trimmed.slice(0, PEDIDO_CANCEL_MOTIVO_MAX),
+      length,
+      blockConfirm: true,
+      required: false,
+      hint: `Motivo excede ${PEDIDO_CANCEL_MOTIVO_MAX} caracteres.`,
+      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  return {
+    motivo: trimmed,
+    length,
+    blockConfirm: false,
+    required: false,
+    hint: null,
+    counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
+  };
+}
+
+/**
+ * Gate fail-closed para abrir/confirmar avanço de status.
+ * @param {{ row?: object, groupId?: string, empresaId?: string, canTransition?: boolean }} [input]
+ */
+export function evaluatePedidoStatusTransitionUiGate({ row, groupId, empresaId, canTransition } = {}) {
+  if (!groupId || !empresaId) {
+    return { blockTransition: true, mode: 'context', target: null, hint: 'Selecione grupo e empresa antes de alterar o status.' };
+  }
+  if (!canTransition) {
+    return { blockTransition: true, mode: 'permission', target: null, hint: 'Sem permissão para alterar status do pedido.' };
+  }
+  const target = nextPedidoStatus(row);
+  if (!row || !target) {
+    return { blockTransition: true, mode: 'unavailable', target: null, hint: 'Não há próximo status disponível para este pedido.' };
+  }
+  return { blockTransition: false, mode: 'ready', target, hint: null };
+}
+
+/**
  * Dia civil YYYY-MM-DD a partir de date-only ou ISO (UTC calendar day).
  * @param {unknown} value
  * @returns {string | null}
