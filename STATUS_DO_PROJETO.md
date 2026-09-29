@@ -1,3 +1,18 @@
+## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:37Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#117** (base #116) |
+| Tip | `9bb3bccc` (feat `b4d34ead`) |
+| CI | **SUCCESS** (nota meta corrigida no tip) |
+| Testes | policy+HTTP Condicao 13/13; meta Orçamento OK |
+
+Piloto HTTP CondicaoPagamento + resolve no Orçamento/Pedido; preview parcelas em memória; sem migration.
+
+Pilha Onda 2 Cursor: #114 → #116 → **#117**.
+
+---
+
 ## LOTE CURSOR — #116 Onda 2 UI simular-venda (2026-09-29T14:19Z)
 
 | Campo | Valor |

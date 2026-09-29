@@ -1,3 +1,9 @@
+## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:37Z)
+
+PR **#117** tip `9bb3bccc` CI SUCCESS (base #116). Piloto HTTP + resolve. Sem migration.
+
+---
+
 ## LOTE CURSOR — #116 Onda 2 UI simular-venda (2026-09-29T14:19Z)
 
 PR **#116** tip `00bd7c85` (base #114). UI canônica Orçamento/Pedido + policy fail-closed. 12/12 testes. CI em andamento.
