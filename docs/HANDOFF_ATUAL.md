@@ -5,8 +5,8 @@
 | Choice | **B** reload after save prova snapshots condição/promo/tabela |
 | Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
 | Base | `#138` tip `90a76433` (`cursor/comercial360-onda3-alcada-ui-failclosed-392b`) |
-| Tip | `0acbec438645d1d9f78bf53bb40424593d7aa76e` |
-| Draft PR | compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
+| Tip | `b0ce1a77f4bc39803fc179c56da5661316ac1621` (feat `0acbec43`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
 | Meta | note preserva **Pedido backend HTTP is active** |
 | Colisão | Margem UI adiada (#47 OPEN); anexos/PDF #52–#62 |
 
