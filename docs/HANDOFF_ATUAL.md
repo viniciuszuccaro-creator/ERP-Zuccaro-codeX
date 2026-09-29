@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #126/#127 CI SUCCESS + #129 promoção (2026-09-29T16:08Z)
+
+| Campo | Valor |
+|---|---|
+| #126 | tip `45195749` — CI **SUCCESS** (snapshot condição migration 029) |
+| #127 | tip `8fba0782` — CI **SUCCESS** (Produto frontendHttp) |
+| #129 | `cursor/comercial360-onda3-promocao-snapshot-392b` — migration **030** promoção; base #127 |
+| Próximo | simular-venda → persist desconto/total **ou** Onda 4 sem colisão 025–028 |
+
+---
+
 ## OPINIÃO CURSOR — #126 CI fix + #127 empilhada (2026-09-29T15:59Z)
 
 | Campo | Valor |
