@@ -1,12 +1,13 @@
-## LOTE CURSOR — dirty form abandon fail-closed (pós-#151) (2026-09-29T21:30Z)
+## LOTE CURSOR — dirty form abandon fail-closed (pós-#151) (2026-09-29T21:40Z)
 
 | Campo | Valor |
 |---|---|
 | Choice | **Onda 4** Dirty form abandon — beforeunload + confirm dialog/navegar |
 | Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
 | Base | `#151` tip `6218511a` (`cursor/comercial360-onda3-network-retry-392b`) |
-| Tip | *(pendente commit — shell ENOENT)* |
+| Tip | *(commit em seguida)* |
 | Meta | form dirty abandon fail-closed + **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **25/25** |
 | Colisão | #138 alçada já completa; margem #47; PDF/anexos #52–62; sem merge/VPS |
 
 Próximo Onda 4: PDF/anexos só se não duplicar #59–#62 **ou** crédito UI. Sem merge/VPS.
