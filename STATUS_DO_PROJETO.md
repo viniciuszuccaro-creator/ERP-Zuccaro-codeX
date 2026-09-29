@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **Pedido histórico loading/empty/error** fail-closed (empty ≠ erro; retry) |
 | Branch | `cursor/comercial360-onda5-pedido-history-ux-392b` |
+| Draft PR | **#174** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/174 |
 | Base | tip #173 status confirm |
 | Escopo | `resolvePedidoHistoryUiState`; loadHistory separado do get; meta `historyUiFailClosed` |
 | Testes | pedido-ui + runtime09/08c/07b |
