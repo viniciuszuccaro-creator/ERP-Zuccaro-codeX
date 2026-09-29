@@ -1,3 +1,39 @@
+## Onda 25 - preflight atomico de staging legado sintetico (2026-09-29)
+
+- Branch isolada baseada no HEAD `95fef57a` da #106; #104 congelada e mapeador/aliases da #48 intactos.
+- Objetivo: impedir que um lote parcialmente valido avance para staging quando um item posterior carece de vinculo juridico, codigo legado, assinatura de origem ou conflita com codigo anterior.
+- Reuso: `staging-scope-gate.mjs` da #106 e `stripSegredosMigracao` canonico. Validacao fail-closed de autorizacao, Grupo/Empresa comprovados e codigo 001/002/005; grupo seletor 003 nao vira emissor. Retry no lote ou contra indice de staging existente conta reuso; assinatura divergente fica em conflito. Lote bloqueado devolve zero registros; lote apto devolve registros privados sanitizados, alem de relatorio agregado por entidade/codigo empresarial e motivo sem PII.
+- Sem leitura de registros reais, persistencia, importacao, migration, VPS ou mudanca nas branches #104/#106/#48. Assinatura SHA-256 fornecida pelo extrator e apenas chave de comparacao, nao prova de autenticidade; extracao/verificacao real ainda exige gate e ambiente isolado.
+- Revisao Cursor dos SHAs iniciais encontrou defeitos no agregado de mestre, indice de retry e aliases de segredo. Corrigidos: agregado usa `grupo` sem empresa proprietaria; indice exige IDs nao vazios apos trim e Empresa para operacoes; sanitizador canonico cobre camelCase, espacos, `access_token`/`client_secret` e objetos JSON de prototipo nulo, sem mutar origem. Objeto de classe, funcao ou accessor nao JSON, que antes podia passar segredo, agora falha fechado antes da leitura do getter.
+- Testes: 11 testes sinteticos de escopo/staging e 26 da politica (37/37), incluindo falha apos item apto, retry entre lotes, funcao aninhada, ausencia de dados no relatorio e achados da revisao. `audit:baseline`, lint, build e diff-check passaram nos commits anteriores; `npm test` global falha em scripts Unix/VPS no Windows e typecheck global mantem milhares de erros preexistentes fora do diff. CI Linux do SHA final e gate. Proximo: integrar ao mapeador apos coordenacao/merge da #48, obter vinculos juridicos comprovados e plano de backup/rollback antes de qualquer carga real.
+
+## Gate 18 - sanitizacao do staging legado (2026-09-28)
+
+- Tarefa: endurecer o contrato existente `migracaoErpPolicy` sem duplicar o mapeador sintetico da PR #48.
+- Causa: `stripSegredosMigracao` removia apenas chaves exatas no nivel superior; segredos em payloads aninhados ou chaves maiusculas podiam seguir para staging.
+- Mudanca: filtragem recursiva de objetos/arrays JSON, case-insensitive para as chaves secretas ja reconhecidas, preservando codigo legado e sem mutar a origem.
+- Testes sinteticos direcionados: 25 PASS, 0 FAIL; incluem stamp de Cliente e staging financeiro de ContaReceber sem senha/token/chave aninhados. `audit:baseline`, lint, build e diff-check passaram. Typecheck global continua falhando em mais de 2 mil diagnosticos preexistentes de arquivos nao alterados. Nenhum dado real ou credencial foi usado.
+- Limite: nao foi feita extracao, transformacao de registros reais, vinculacao empresarial comprovada ou carga. O proximo lote deve reutilizar o mapper da #48 e validar Grupo/Empresa em staging isolado, com reconciliacao e gate antes de importar.
+
+## Gate 18 - inventario agregado seguro do legado (2026-09-28)
+
+- Frente isolada `codex/legado-inventario-20260928`, sem editar a branch da PR #48 do Cursor.
+- O inventario existente passou a emitir somente agregados no terminal. Manifesto com nomes/hashes individuais e privado, rejeitado se o destino estiver dentro do backup ou do repositorio; `--root` restringe a busca ao caminho informado. Python local configuravel, padrao CI preservado.
+- Pasta identificada por nome em leitura de metadados: 2.785 arquivos, 41.303.077.763 bytes, 18 MDF, 18 LDF e 595 TPS. Esses totais abrangem copias preservadas/de trabalho; nao representam arquivos originais distintos.
+- Testes sinteticos dirigidos: 5 PASS, 0 FAIL. `git diff --check` aprovado. Nenhum registro, nome de arquivo, documento, hash individual, segredo ou dado comercial real foi publicado.
+- Nenhum original foi alterado, nenhum banco foi anexado, nenhum arquivo foi importado e nenhuma migration foi aplicada. Staging real permanece bloqueado ate mapa Grupo/Empresa comprovado, reconciliacao, backup restauravel do destino e gate humano.
+- Proximo lote: validar o esquema/contrato de transformacao em staging sintetico reutilizando `migracaoErpPolicy` e coordenando o mapeador da PR #48; resolver alias empresarial sem inferir vinculo pelo nome da pasta.
+## Onda 7 Comercial 360 — conferência e expedição (#104, 2026-09-28)
+
+- Objetivo: impedir liberação de pedido com conferência incompleta e corrigir o vínculo entre entrega e pedido.
+- Causa: a conferência IA usava apenas divergências declaradas pela IA; a conferência comum gravava o ID da entrega como pedido e consultava somente 500 entregas.
+- Estruturas reutilizadas: SeparacaoConferencia, SeparacaoConferenciaIA, expedicaoEntregaPolicy, filterInContext e RBAC/contexto existentes.
+- Mudança: origem separada em entrega_id e pedido_id; consulta direta por ID; reconciliação de quantidade por produto antes de marcar pronto para faturar; scanner limita leituras ao pedido e registra item após validação IA.
+- Multiempresa/RBAC/auditoria: mantidos Grupo, Empresa e alçadas existentes. Sem VPS, migrations, dados reais ou alterações na #48.
+- Validação: 43 testes focados aprovados; git diff --check aprovado. Suite completa falha em testes Bash sem Bash no Windows; eslint, tsc e vite ausentes localmente. CI da #104 será verificada por SHA.
+- Commits funcionais: cacea93, a666b88, ceb4b82, e87ebb3, a3d3583, f71527e, f8d7be9, 16cf308, 4a33428, 6be38bf, f0a349d.
+- Próximo passo: revisão independente do HEAD final da #104; sem retomada automática sem automação configurada.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
@@ -513,6 +549,32 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Colar VPS: grant profile + rebuild **api e web** + logout/login.
 
 
+## Legado #48 — contrato de escopo sintético (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — contexto do lote não substitui a linha; `003` é grupo; operação exige vínculo comprovado |
+| Testado | **SIM** — 17/17 `tests/legado-mapear-sintetico.test.js` |
+| CI | pendente neste push |
+| Mesclado | **NÃO** |
+| Importação / VPS / migration | **NÃO** |
+
+Arquivos desta frente: `scripts/legado/mapear-registro-sintetico.mjs`, `scripts/legado/resolver-escopo-legado.mjs` (extração do contrato), `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`, `tests/legado-mapear-sintetico.test.js`.
+Codex permanece dono do inventário/staging (#106/#107). Sem dados reais.
+
+## Legado prep sintético (sem HD) — STATUS REAL (2026-09-26T17:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — aliases `tabela_preco`/`orcamento`/`pedido` no mapper existente + docs HD indisponível |
+| Testado | **SIM** — 14/14 `legado-mapear` + `legado-inventario` |
+| CI | **PENDENTE** (primeiro push) |
+| Mesclado | **NÃO** |
+| Implantado / importação real | **NÃO** — HD externo indisponível; Onda 25 BLOCKED |
+
+- Reutilizado: `scripts/legado/mapear-registro-sintetico.mjs`, `migracaoErpPolicy`, docs LEGADO_* (sem módulo paralelo).
+- Sem dados reais, PII ou preços no GitHub.
+- Paralelismo Comercial 360: #45 acesso (VPS humano), #46 desconto (CI OK / merge pendente), #47 margem (CostPort).
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
@@ -11554,3 +11616,178 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## Migração legada #106 — preflight de escopo para staging (2026-09-28)
+
+### Contrato sintetico mapeador → staging (2026-09-29)
+
+- Branch propria baseada no HEAD da #107; mapeador da #48 intocado. Composicao somente em memoria usa o mapeador existente e o preflight de staging, com codigo legado preservado e relatorio agregado.
+- Cliente e Produto de revenda sao mestres do Grupo somente com destino explicitamente comprovado. Divergencia de Grupo, empresa proprietaria, duplicata, erro e quarentena bloqueiam entrega parcial. Fornecedor e operacoes seguem sem mapeador homologado e nao sao liberados.
+- Assinatura SHA-256 em memoria auxilia apenas a idempotencia sintetica; nao substitui manifesto de origem ou prova juridica. O lote inteiro passa pelo sanitizador canonico antes da leitura de aliases; getter e Proxy sao recusados sem executar leitura dinamica. Revisao Cursor de 7771b3b8 encontrou codigo empresarial legado 1/2/3/5 atravessando o mapper: qualquer alias empresarial preenchido agora e recusado antes de mapear, assim como aliases de Grupo conflitantes. Sem HD, dados reais, banco operacional, migration ou VPS. Testes direcionados: 56 PASS/0 FAIL.
+- Checks locais: audit baseline, lint e build PASS; `npm test` global falha em testes de scripts Bash/PATH temporarios no Windows e `npm run typecheck` global mantem diagnosticos antigos fora do diff. CI Linux do novo HEAD obrigatoria para aprovar o checkpoint; nenhuma dessas falhas foi ocultada ou teve teste alterado.
+- Proximo: corrigir o override do escopo no mapeador da #48, provar Grupo/Empresa por registro e testar staging fisicamente isolado com contagens, conflitos e plano de reversao antes de pedir gate de carga real.
+
+- Objetivo: impedir que o mapeador sintético da #48 receba `groupId`/`empresaId` assumidos para operações. O seletor legado comprova 003 como Grupo CPA e 001/002/005 como opções de Empresas, mas nao comprova sozinho CNPJ ou empresa juridica de cada pedido, estoque, titulo ou nota.
+- `scripts/legado/staging-scope-gate.mjs` valida, antes do staging isolado, mestres compartilhados no Grupo e operacoes somente com vinculo juridico explicitamente verificado para o mesmo Grupo/Empresa. Codigos 0, 003, 004 e desconhecidos permanecem em quarentena; o relatorio resume apenas totais e motivos.
+- Nao altera o mapeador da PR #48, nao le o HD, nao grava staging nem importa dados reais. O vinculo 001/002/005 com as empresas juridicas do ERP novo segue pendente de prova documental/CNPJ e correção do override de escopo na #48 antes de carga real.
+- Testes sintéticos direcionados: 39 PASS/0 FAIL. Proximo: compatibilizar o preflight com a #48 corrigida, preparar staging fisicamente isolado e reconciliar contagens por entidade/empresa; somente depois solicitar gate de importacao real, backup do destino e rollback.
+- Validacao do lote: `npm run audit:baseline`, `npm run lint` e `npm run build` PASS. `npm test` global falha em scripts Bash/PATH e arquivos temporarios ausentes no Windows, fora deste lote; WSL nao instalado. `npm run typecheck` global continua com diagnosticos preexistentes em arquivos nao alterados. A CI Linux do novo HEAD e obrigatoria antes de considerar o checkpoint aprovado.
+## Legado - retry entre lotes de staging sintetico (2026-09-29)
+
+- Branch isolada `codex/legado-staging-persistencia`, baseada no contrato aprovado da #108. #104 congelada; #48, #106, #107 e #108 nao foram editadas.
+- `verificarMapeadorParaStaging` agora recebe o indice `existentes` do preflight canonico: retry identico nao reenvia registro, novo codigo segue apto, e assinatura divergente bloqueia o lote inteiro. Relatorio permanece agregado e sem dados pessoais.
+- Testes sinteticos direcionados: 58 pass, 0 fail. `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais falham neste ambiente Windows em testes/diagnosticos fora deste diff; a CI Linux do HEAD-base #108 estava verde. O novo HEAD ainda requer CI propria antes de revisao.
+- Nao houve leitura do backup, persistencia real, carga, migration, VPS ou alteracao de 3080. Staging em banco isolado e vinculo juridico Grupo/Empresa continuam pendentes de prova e gate.
+
+## Legado - plano de mestres integrado ao mapeador sintetico (2026-09-29)
+
+- Branch `codex/legado-plano-mestres` integra os contratos #109 e #111 sem alterar suas branches nem o mapeador Cursor da #48.
+- Cliente e Produto de revenda mestre do Grupo podem passar por mapeamento, indice de retry, contagens esperadas e verificacao de Grupo em um unico preflight em memoria. Contagem divergente ou indice de outro Grupo bloqueia o lote; nenhum registro parcial e entregue.
+- 44 testes direcionados passaram; `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais permanecem falhando neste Windows em arquivos fora do diff; CI Linux do novo HEAD deve ser observada antes de revisao.
+- Somente fixtures sinteticas. Nao houve leitura do backup, staging real, importacao, migration, merge ou VPS. Vínculos juridicos por operacao e aprovacao do mapeador #48 continuam gates separados.
+- Revisao Cursor do HEAD inicial apontou indice de outro Grupo aceito no caminho sem contagens e aliases empresariais camelCase nao reconhecidos. Corrigidos ambos no integrador, sem tocar no mapeador #48: `empresaCodigo`/`codEmpresa` falham fechado, e o indice existente exige o mesmo Grupo antes dos dois caminhos de preflight. `aptos` e contagem diagnostica anterior ao bloqueio; somente `bloqueado=false` com `privados` nao vazio autoriza entrega ao staging. Testes focados: 45 pass, 0 fail; lint, audit baseline e build passaram. CI do novo HEAD ainda obrigatoria.
+- Revisao subsequente confirmou esses bloqueios e mostrou aliases com hifen ainda aceitos. O filtro agora normaliza somente maiusculas, `_` e `-` nos nomes de campos de Grupo/Empresa; aliases empresariais com hifen, inclusive na segunda linha, bloqueiam o lote inteiro. 46 testes focados passaram, alem de lint, audit baseline e build. Nenhum dado real foi lido ou persistido.
+- Revisao do HEAD 49718d12 confirmou o hifen e apontou espaco, ponto e objeto aninhado. O preflight agora reconhece esses separadores em aliases de escopo e recusa qualquer valor aninhado antes de mapear linhas planas; o lote inteiro falha fechado. Testes sinteticos novos cobrem empresa com espaco/ponto, Grupo divergente com ponto e empresa aninhada na segunda linha. Sem leitura do backup ou staging real; prova juridica e revisao do novo HEAD seguem pendentes.
+
+## Legado - atestacao obrigatoria do vinculo empresarial (2026-09-29)
+
+- Branch isolada sobre a #115; #48 e as branches do Cursor nao foram editadas. Operacoes por Empresa no preflight agora exigem, alem de Grupo/Empresa iguais ao destino, evidencia tipada, hash SHA-256 e aprovacao identificada/datada. `comprovado: true` isolado nao libera staging.
+- Casos sintéticos de evidencia ausente/invalida bloqueiam o lote inteiro, devolvem `privados: []` e preservam relatorio apenas agregado. Essa verificacao de formato nao substitui prova documental, revisao humana, staging real ou gate de importacao.
+- Nenhum documento, CNPJ, backup, registro real ou credencial foi lido ou enviado. Proximo: conferir juridicamente 001/002/005 em canal privado, revisar o mapeador #48 e provar staging em banco isolado antes de solicitar qualquer carga operacional.
+- Validacao local: 38 testes sinteticos integrados, audit baseline, lint, build e diff-check PASS. `npm test` global neste Windows falha em `vps-owner-provision-guard.test.js` (execucao Bash/PATH sem codigo de saida); typecheck global acusa diagnosticos preexistentes fora deste diff em `entityGuardPolicy/entry.ts` e `erpHttpSession.js`. CI Linux do novo HEAD e obrigatoria antes de considerar o lote validado.
+- Revisao Cursor do HEAD inicial apontou coercoes de arrays e datas impossiveis. O validador agora exige strings e timestamp UTC ISO com roundtrip de calendario, rejeita hash trivial de zeros e tem nome que descreve validacao de formato, nao prova juridica. Testes sintéticos ampliados; novo HEAD requer CI e revisao final.
+
+## Legado - prova sintetica PostgreSQL isolada (2026-09-29)
+
+- Branch empilhada sobre a #119, sem editar mapeador #48 nem Produto/Fornecedor. CI provisiona banco efemero nomeado, aplica guarda de URL isolada e usa somente tabela temporaria/transacao para testar preflight, insercao, unicidade, retry e escopo de Empresa.
+- A prova cobre mecanica de staging em PostgreSQL sintetico, nao origem real, identidade juridica, restauracao do backup nem importacao operacional. Nenhum dump, CNPJ ou registro real entra na CI/GitHub. Revisao, testes e CI do HEAD deste lote ainda obrigatorios.
+- Revisao interna do primeiro HEAD encontrou retry usando indice apenas em memoria. O E2E agora insere o item do preflight, rele a linha por SQL para compor o indice de retry e confere por SQL que Empresa negada nao mudou a contagem. Novo HEAD requer CI e revisao.
+## Onda 7 #104 — saldo de reserva, faturamento e reconferência (2026-09-28)
+
+- Objetivo/causa: distinguir compensação de saída física; o histórico de reservas fazia faturamento pular a baixa e cancelamento liberar além do saldo do pedido.
+- Mudança: saldo aberto por pedido/produto; saída física `saida`; cancelamento limitado ao saldo vigente; peças de armado sem produto não entram na reserva; reconferência divergente atualiza registro existente com auditoria, preservando vínculo de entrega.
+- Reuso/escopo: `useFluxoPedido`, `pedidoFaturamentoPolicy`, `SeparacaoConferenciaIA` e políticas existentes; Grupo/Empresa/RBAC mantidos. Sem VPS, dados reais ou importação.
+- Validação: 46 testes focados aprovados, incluindo execução isolada das funções reais de baixa e cancelamento; `git diff --check` aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: a556787, 7f163b8, 01109e5, ef70dfd, 3553d67, f0cfefb. Próximo passo: confirmar CI e novo parecer do Cursor na #104.
+
+## Onda 7 #104 — retry idempotente e bloqueio de expedição (2026-09-28)
+
+- Causa: a chave legada de reserva reutilizava movimento já compensado quando a quantidade do retry era igual; a falha de baixa não impedia criação de Entrega/status.
+- Mudança: chave por ciclo de compensação, tenant, pedido e produto; conferência do movimento e saldo persistidos antes de auditar; faturamento retorna antes de Entrega/status se qualquer baixa falhar. Reutilizadas as políticas de estoque e o fluxo existente.
+- Segurança/auditoria: contexto Grupo/Empresa mantido, falha é explícita e bloqueia efeitos posteriores. Sem VPS, dados reais ou alterações na frente legada.
+- Validação: 48 testes focados aprovados, incluindo dedup real de compensação 10 → retry 10 → saída física única, falha de baixa sem Entrega/status e cancelamento 10 → 4. Diff-check aprovado. CI e revisão Cursor pendentes do HEAD final.
+- Commits funcionais: 6d17dc5, d1fb7ac, 4ee099e, b8326ca. Próximo passo: confirmar CI e parecer do Cursor.
+
+## Onda 7 #104 — segundo fechamento e NF pendente (2026-09-28)
+
+- Causa: segundo fechamento podia reservar produto já baixado; a tela gravava NF e status antes da baixa, deixando faturamento aparente após erro.
+- Mudança: reserva e fechamento bloqueados após saída física/faturamento; tela atualiza Pedido só após baixa sem erros e marca NF ainda pendente como Rejeitada quando a baixa falha, com auditoria e alerta se a reversão falhar. NF rejeitada não consome saldo faturável.
+- Reuso/segurança: fluxo, política de faturamento e handler existentes; Grupo/Empresa e RBAC mantidos. Sem cancelamento fiscal automático, VPS, dados reais ou #106.
+- Validação: 52 testes focados aprovados, incluindo segundo fechamento pós-saída e execução isolada do handler real de NF com falha de baixa ou atualização do Pedido; diff-check aprovado. CI/revisão Cursor exigidas no HEAD final.
+- Se a baixa concluiu mas falhou a atualização posterior do Pedido, a NF não é rejeitada: o caso é auditado e exige conciliação manual. Sem cancelamento fiscal automático.
+- Commits funcionais: aa3051a, e2b139b, b02eba6, 741e912, 35aebc5, a47e0fd, 10ae485, 88c4f7c, e537fe3, 5a261cf. Próximo passo: CI e parecer do Cursor.
+
+## Onda 7 #104 — etapa fiscal e rejeição da NF pendente (2026-09-28)
+
+- Causa: etapa específica marcava Pedido faturado sem baixa; emissor sem editar não conseguia rejeitar a NF pendente após falha.
+- Mudança: etapa sem estoque mantém status operacional e grava a etapa; etapa com revenda estocável falha antes de criar NF até existir fluxo de baixa por etapa. Transição restrita Pendente → Rejeitada aceita permissão emitir/enviar sem autorizar alteração de valor nem cancelamento fiscal.
+- Estruturas reutilizadas: handler de FechamentoFinanceiroTab, pedidoFaturamentoPolicy, notaFiscalEmissaoPolicy e guarda local de RBAC. Grupo/Empresa e auditoria preservados; sem VPS, dados reais ou #106.
+- Validação: 57 testes focados aprovados, incluindo execução do handler de etapa e transição real de NotaFiscal com perfil somente emitente; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: e5fb805, e8dc5d4, 68e2541, 56b92e0, c7816e0, 8c11ae0, f6eb010. Próximo passo: CI, revisão e fluxo seguro de baixa por etapa estocável.
+
+## Onda 7 #104 — NF residual e tenant fiscal imutável (2026-09-28)
+
+- Causa: NF de etapa sem estoque consumia parte do valor, mas pedido inteiro tentava emitir o valor total; rejeição pendente aceitava Grupo carimbado pelo contexto da tela.
+- Mudança: pedido inteiro após etapa emite apenas saldo e itens não faturados, preservando a baixa real da revenda aberta; NFs parciais sem etapa/vínculo canônico bloqueiam para conciliação. Transição de NotaFiscal fixa Grupo/Empresa do registro original.
+- Reuso/segurança: `remainingValorFaturar`, handler fiscal e políticas de transição existentes; RBAC do emitente e auditoria mantidos. Sem VPS, dados reais ou #106.
+- Validação: 59 testes focados aprovados, incluindo handler real de etapa → NF residual → `baixarEstoqueItem` real e carimbo de Grupo pela preparação local real; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: cfe9b46, c38160b, 12a6bf1, d0bdeb6, 75ea4ea, d071caa, fa9e6a6. Próximo passo: CI e novo parecer do Cursor.
+
+## Onda 7 #104 — etapas residuais e frete final (2026-09-28)
+
+- Causa: NF residual incluía item de etapa ainda aberta sem marcar a etapa faturada; saldo só monetário de frete/diferença ficava sem NF.
+- Mudança: NF residual marca etapas cujos itens foram absorvidos e bloqueia vínculo inválido; a última NF de etapa, quando cobre todos os itens, incorpora frete/diferença nos campos fiscais existentes. Saldo antigo sem item e sem última etapa verificável exige conciliação fiscal, sem NF vazia automática.
+- Reuso/segurança: políticas de faturamento e handler fiscal existentes, sem alterar Grupo/Empresa, RBAC ou auditoria. Sem VPS, dados reais ou #106.
+- Validação: 61 testes focados aprovados, incluindo handler de duas etapas, frete na última etapa e handler → `faturarPedidoCompleto` real → baixa/Entrega; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: 527a2e4, 8b1459e, 4f411c3 e teste adicional. Próximo passo: CI e parecer independente.
+
+## Ensaio de integracao #104 + cadeia legada (2026-09-29)
+
+- Branch de ensaio baseada em `main`, sem merge de PR na `main`: preserva integralmente os checkpoints da Onda 7 e da frente legada que colidiram neste arquivo.
+- Nenhuma migration foi aplicada na VPS, nenhum dado do backup foi importado e a porta 3080 nao foi alterada. CI do HEAD combinado e revisao da resolucao sao necessarias antes de qualquer decisao de integracao.
+## Onda 25 - unicidade do mestre no staging PostgreSQL sintetico (2026-09-29)
+
+- A prova isolada da #121 usava `UNIQUE (group_id, empresa_id, entidade, codigo_legado)`; PostgreSQL permite chaves repetidas quando `empresa_id` e `NULL`, que e o escopo dos mestres compartilhados do Grupo.
+- O E2E sintetico passa a usar `UNIQUE NULLS NOT DISTINCT` e comprova retry do cliente mestre sem segunda linha, rejeicao `23505` da duplicata e independencia do mesmo codigo de pedido em empresas distintas. O teste ocorre somente no banco efemero isolado, com rollback; nao cria migration nem tabela no DEV.
+- Codigo operacional de staging real, comprovacao juridica Grupo/Empresa, reconciliacao do backup e importacao continuam pendentes dos gates proprios. Nenhum dado real foi lido ou publicado neste lote.
+
+## Gate de banco isolado - host explicito (2026-09-29)
+
+- A guarda anterior comparava apenas o nome do banco; uma URL remota com o mesmo nome podia passar antes do `DROP SCHEMA` do ensaio R07B. Agora exige `ISOLATED_DATABASE_HOST` igual ao host da URL e bloqueia parametros de URL que possam trocar o destino. A CI declara `localhost` explicitamente nos dois ensaios isolados e o E2E legado rejeita host remoto e override de `dbname`.
+- Mudanca fail-closed: qualquer execucao externa do ensaio R07B precisa declarar o host isolado esperado e validar novamente seu destino antes de usar a guarda. Nenhuma URL, credencial, banco DEV ou VPS foi acessado neste lote.
+
+## Ensaio de integracao do mapeador #48 com staging legado (2026-09-29)
+
+- Branch separada, baseada na #123; o mapper do Cursor foi incorporado por merge sem editar a branch #48. Conflitos textuais em status e contrato foram resolvidos preservando os dois historicos.
+- Testes combinados expuseram contrato divergente: o mapper atualizado omite `empresa_id` do mestre de Grupo, exige classificacao explicita de Produto de revenda e pode excluir todo o lote. O adaptador Codex agora bloqueia entrega parcial quando houver exclusoes, reporta apenas a contagem e nao chama o preflight com lista vazia. Fixtures de Produto declaram `revenda`; nenhum Produto sem classificacao e promovido por hipotese.
+- Testes sinteticos de mapper, preflight e adaptador: 57/57 PASS. CI Linux do HEAD final ainda obrigatoria. Nao houve leitura do backup, importacao, migration, VPS ou merge na main; vinculo juridico e destino real continuam pendentes dos gates proprios.
+
+## Ensaio E2E mapper → staging PostgreSQL isolado (2026-09-29)
+
+- O E2E efemero agora exercita o mapper #48 atraves do adaptador Codex: Cliente mestre e Produto explicitamente de revenda entram em tabela temporaria com codigo legado preservado e `empresa_id` nulo. O indice do Cliente e relido por SQL para comprovar retry sem segunda entrega.
+- Grupo divergente falha antes do SQL; lote misto com Produto nao-revenda devolve zero registros e contagem sanitizada de exclusoes. A constraint PostgreSQL rejeita duplicata do mestre e toda a transacao termina em rollback.
+- Esta prova nao representa extracao do HD, vinculo juridico real, staging persistente nem importacao operacional. CI PostgreSQL do novo HEAD e obrigatoria antes de aprovar o ensaio.
+
+## Fornecedor legado no contrato de staging isolado (2026-09-29)
+
+- O adaptador existente da #128 agora reutiliza o mapeador de Fornecedor da #48 como mestre compartilhado do Grupo, preservando `codigo_legado`; nao atribui Empresa por codigo do seletor, nome de pasta ou hipotese. Cliente e Produto de revenda mantem seus contratos.
+- Testes sinteticos cobrem contagem por entidade/Grupo, retry idempotente, conflito de conteudo no mesmo codigo, Grupo divergente, vinculo empresarial nao comprovado e ausencia de entrega parcial. O E2E PostgreSQL usa tabela temporaria em banco isolado, valida linha e retry por SQL e termina em rollback.
+- Validacao local: 43 testes focados PASS, audit baseline/lint/build PASS. `npm test` no Windows inclui testes de scripts VPS que exigem Bash e falham com `spawnSync.status=null`; `npm run typecheck` global falha em erros existentes de Base44/JSX fora dos arquivos alterados. CI Linux do HEAD publicado deve confirmar a suite completa e o PostgreSQL sintetico antes da revisao.
+- Nao houve leitura do HD, staging persistente, importacao, migration, VPS ou mudanca da porta 3080. O vinculo juridico para operacoes e a carga real continuam sujeitos a prova e gate proprios.
+
+## Lote unico de mestres legados antes do staging (2026-09-29)
+
+- O mesmo adaptador oferece verificacao conjunta de Cliente, Fornecedor e Produto de revenda. Contagens esperadas sao conferidas por entidade; falha, exclusao ou divergencia em qualquer parte zera a entrega privada do lote inteiro, sem misturar Grupo/Empresa nem publicar PII no relatorio.
+- Testes sintéticos cobrem sucesso, falha no ultimo mestre, entidade estranha, contagem sem lote e empresa sem prova. O E2E PostgreSQL efemero verifica o lote completo e o bloqueado junto da tabela temporaria transacional; nao representa gravacao persistente nem acesso ao backup.
+- Validacao local focada: 46/46 PASS, backend typecheck/build e diff-check PASS. Na suite backend concorrente Windows, `runtime07b.test.ts` falhou como arquivo (272 PASS, 1 FAIL, 16 SKIP); o mesmo arquivo isolado passou 13/13. A suite Linux e a prova PostgreSQL do novo HEAD continuam obrigatorias para aprovar este incremento. Nenhuma importacao real/VPS foi executada.
+
+## Hardening da entrada do lote mestre (2026-09-29)
+
+- A verificacao conjunta rejeita objeto de lotes, arrays e opcoes com getters/setters ou Proxy antes de iterar campos, evitando executar codigo do extrator ou ler registro privado durante o preflight. A checagem individual de tenant e a sanitizacao existentes continuam em vigor.
+- Testes adversariais verificam que nenhum getter e chamado. Nao ha alteracao no mapeador #48, schema, staging persistente ou importacao. CI do novo HEAD permanece obrigatoria.
+
+## Fechamento do parecer Cursor na #137 (2026-09-29)
+
+- O parecer no HEAD 5d8d664c apontou getters herdados/aninhados, `codigo_empresa_legado` aceito, contagens opcionais e perda do tipo de staging da revenda. O adaptador agora valida recursivamente lote e opcoes JSON simples antes de qualquer leitura, veda o alias empresarial e confere a saida do mapper sem inferir Empresa pelo seletor `001`.
+- O lote agregado exige uma contagem por entidade e devolve cada privado como `{ entidadeStaging, registro }`; `produto_revenda` nao e confundido com `entidade_migracao: produto`. Retry e conflito agregados sao testados, com bloqueio integral e relatorio sanitizado.
+- Esta e uma preparacao sintetica em memoria/CI PostgreSQL isolado. Nao houve leitura do backup, staging persistente, importacao no ERP operacional, migration DEV ou VPS. Nova CI e revisao consolidada do HEAD publicado continuam obrigatorias.
+
+## Candidata integrada #104 + cadeia legada (2026-09-29)
+
+- Branch separada baseada na `main` d02cd012; merge de ensaio do HEAD ae4c5a1c da #137 sem conflito textual. A ancestralidade inclui #104, #106-#109, #111, #48, #125 e #128. A ordem, o escopo de cada PR, a dependencia separada #92/#132 e os gates pendentes estao em `docs/LEGADO_INTEGRACAO_CANDIDATA.md`.
+- Esta candidata sera validada em CI como conjunto. Nao houve merge na main, acesso ao HD, staging persistente, importacao real, migration DEV ou alteracao da VPS/3080.
+
+## Entrada direta do staging legado (2026-09-29)
+
+- O caminho individual do adaptador agora valida opcoes, linhas e indice antes de destruturar campos ou ler `length`; Proxy no array e getter herdado em opcoes sao recusados sem executar armadilhas. O lote agregado conserva a validacao anterior.
+- Teste de regressao direto e suite focada do adaptador: 29/29 PASS; audit baseline, lint, build e `git diff --check` PASS. A suite `legado-*` no Windows ainda inclui quatro testes de inventario dependentes da execucao Bash. O typecheck global continua falhando em erros preexistentes de Base44/JSX fora deste diff; nao foi alterado para mascarar o baseline. A CI Linux do novo HEAD e o parecer integrado permanecem obrigatorios.
+- Nenhum registro bruto do HD foi lido ou transferido; a #141 segue draft sem merge, migration DEV ou mudanca na VPS/3080.
+
+## Evidencia sanitizada de identidade legada (2026-09-29)
+
+- Consulta somente leitura em 2026-09-29 de resumos privados gerados em 2026-09-10, sem varrer novamente o backup: o relatorio SQL gerado as 15:31 apontava 3 vinculos nao resolvidos em 5 linhas; a validacao humana posterior, gerada as 15:49, confirmou 3 decisoes, 0 pendentes e mapa de 3 aliases aprovado. O dry-run gerado as 17:34 fez 0 escritas; `importAuthorized=false`. Os horarios sao dos relatorios, nao dos commits Git. Nao apresentar o diagnostico anterior como pendencia atual do mapa de aliases.
+- Aprovacao dos aliases nao comprova a empresa proprietaria de cada Pedido, movimento de estoque, titulo ou nota. O adaptador permanece fail-closed; conjunto operacional sem coluna/origem e vinculo juridico comprovados vai para quarentena. Nenhum valor, CNPJ, registro ou arquivo privado foi copiado para o GitHub.
+- Proximo gate: comprovar, por conjunto operacional, origem e Empresa juridica sem extrapolar a aprovacao do mapa de aliases; depois validar staging isolado e plano de reversao antes de solicitar autorizacao de importacao real.
+
+## Prova de propriedade por operacao no preflight legado (2026-09-29)
+
+- Causa: a atestacao aprovada do codigo de empresa era suficiente para permitir Pedido/estoque/financeiro/nota no staging sintetico, embora nao comprovasse a empresa proprietaria da linha. O guarda canonico agora exige tambem atestacao separada vinculada a Grupo, Empresa, entidade, codigo e assinatura da origem; ausencia ou divergencia bloqueia todo o lote com motivo sanitizado.
+- O mapeador da #48, mestres do Grupo e a API operacional nao mudam. O E2E PostgreSQL usa somente prova sintetica e confere que alias sem prova nao grava na tabela temporaria. O mapa de atestacoes reais permanece privado e precisa nascer de conferência documental independente, nunca do payload nem do codigo do seletor.
+- Testes focados: 52/52 PASS, inclusive bloqueio de getters/Proxy na prova. Backend: 281 PASS, 0 FAIL, 16 SKIP por integracoes sem `DATABASE_URL` local; typecheck/build PASS. Frontend lint/build e audit:baseline PASS; diff-check PASS. `npm test` frontend completo no Windows falhou em testes Bash/VPS (spawn sem executavel Bash e arquivo temporario ausente), fora dos arquivos deste lote; CI Linux e PostgreSQL do novo HEAD ainda sao gates pendentes. Sem backup bruto publicado, importacao operacional, migration DEV, merge ou mudanca na VPS/3080.
+- Hardening complementar: evidencia circular ou aninhada demais agora falha fechada sem recursao ilimitada. Testes focados 53/53 PASS; CI Linux do HEAD anterior `614bf39b` passou frontend/backend/PostgreSQL sintetico. O novo HEAD exige CI e revisao proprias.
+
+## Integracao #141 apos revisao consolidada (2026-09-29)
+
+- O Cursor confirmou CI `36614794225` verde e fail-closed em `ab46b70a`, mas reproduziu leitura de Proxy no mapa `vinculosVerificados`. O preflight foi ajustado para recusar mapa dinamico ou alias herdado antes de qualquer acesso; testes focados 54/54 PASS verificam zero leituras de armadilha e `privados=[]`. Lint, build, audit:baseline e diff-check locais PASS. CI do novo HEAD pendente ate a publicacao.
+- `origin/main` segue `d02cd012`, base da candidata; merge-tree sem conflito textual. #104 e #48/#106-#109/#111/#125/#128/#137 estao na ancestralidade da #141, que permanece draft. #92/#132 ficam fora. Nao mesclar ancestrais separadamente depois da candidata.
+- A funcao ainda compara a assinatura recebida, sem recalcular o hash nem autenticar a atestacao privada. Isto impede tratar CI/staging sintetico como prova juridica por registro. Antes de carga real: assinatura da extracao controlada, empresa comprovada por coluna/documento, codigos legados preservados, contagens/conflitos, backup restauravel do destino, rollback e gate humano.
