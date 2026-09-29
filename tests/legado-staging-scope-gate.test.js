@@ -85,6 +85,27 @@ test('prova dinamica nao executa getter ou Proxy nem libera registros privados',
   assert.equal(acessos, 0);
 });
 
+test('alias dinamico ou herdado nao executa armadilhas nem libera privados', () => {
+  const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
+    codigoLegado: 'PED-ALIAS', assinaturaOrigem: 'f'.repeat(64) };
+  let acessos = 0;
+  const comGetter = Object.defineProperty({}, '001', {
+    enumerable: true, get() { acessos += 1; return vinculos['001']; },
+  });
+  const comProxy = new Proxy(vinculos, {
+    get(target, property) { acessos += 1; return target[property]; },
+  });
+  const herdado = Object.create(vinculos);
+  for (const vinculosVerificados of [comGetter, comProxy, herdado]) {
+    const result = prepararLoteStagingLegado([item], { autorizado: true, vinculosVerificados,
+      evidenciasOperacaoVerificadas: provas(item) });
+    assert.equal(result.bloqueado, true);
+    assert.deepEqual(result.privados, []);
+    assert.equal(result.relatorio.porMotivo.vinculo_juridico_nao_comprovado, 1);
+  }
+  assert.equal(acessos, 0);
+});
+
 test('prova circular ou aninhada demais bloqueia lote sem erro de recursao', () => {
   const item = { entidade: 'pedido', codigoEmpresaLegado: '001', groupId: 'g1', empresaId: 'e1',
     codigoLegado: 'PED-CICLO', assinaturaOrigem: 'f'.repeat(64) };

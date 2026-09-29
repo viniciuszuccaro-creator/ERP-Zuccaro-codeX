@@ -62,7 +62,9 @@ export function avaliarEscopoStagingLegado({ entidade, codigoEmpresaLegado, grou
   } else if (OPERACOES.has(entidade)) {
     const legado = codigo(codigoEmpresaLegado);
     if (!CODIGOS_EMPRESA.has(legado)) motivos.push('empresa_legada_nao_comprovada');
-    const vinculo = vinculosVerificados[legado];
+    const vinculosValidos = dadosInertes(vinculosVerificados);
+    const vinculo = vinculosValidos && Object.hasOwn(vinculosVerificados, legado)
+      ? vinculosVerificados[legado] : undefined;
     if (!vinculo?.empresaId || vinculo.groupId !== groupId || vinculo.empresaId !== empresaId || !atestacaoComFormatoValido(vinculo)) {
       motivos.push('vinculo_juridico_nao_comprovado');
     }
