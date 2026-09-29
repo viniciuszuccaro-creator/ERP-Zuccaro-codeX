@@ -5,7 +5,9 @@
 | Choice | **A** a11y aria-live / aria-invalid+describedby / action labels |
 | Branch | `cursor/comercial360-onda3-a11y-live-392b` |
 | Base | `#149` tip `50dc8b5c` (`cursor/comercial360-onda3-inactive-master-picker-392b`) |
-| Tip | `aaa96026` (`aaa96026afa04230b250efe08e2841c89374d13c`) |
+| Tip | `f3a02dfe` (`f3a02dfe439ab640b3ac2becbf38a11d16855364`) · feat `aaa96026` |
+| Draft PR | **BLOCKED** createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
+| Meta | a11y + **Pedido backend HTTP is active** |
 | Colisão | margem #47; PDF/anexos #52–62; stack #126–#149 |
 
 Próximo: offline retry polish **ou** margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
