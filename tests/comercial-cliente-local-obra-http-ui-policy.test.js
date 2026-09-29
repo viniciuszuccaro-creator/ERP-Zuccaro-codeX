@@ -195,7 +195,13 @@ test('buildObraAddressSummary prefere local enriquecido; senão local_principal'
 test('resolveDeliveryAddressUiState fail-closed em erro HTTP get e loading', () => {
   const none = resolveDeliveryAddressUiState({ tipoOperacao: 'ENTREGA' });
   assert.equal(none.mode, 'none');
-  assert.equal(none.blockSave, false);
+  assert.equal(none.blockSave, true);
+  assert.match(none.hint, /Entrega exige Local/);
+
+  const retiradaNone = resolveDeliveryAddressUiState({ tipoOperacao: 'RETIRADA' });
+  assert.equal(retiradaNone.mode, 'none');
+  assert.equal(retiradaNone.blockSave, false);
+  assert.equal(retiradaNone.hint, null);
 
   const loading = resolveDeliveryAddressUiState({
     clienteLocalId: LOCAL,
@@ -254,6 +260,34 @@ test('resolveDeliveryAddressUiState fail-closed em erro HTTP get e loading', () 
   });
   assert.equal(cross.mode, 'error');
   assert.equal(cross.blockSave, true);
+});
+
+test('resolveDeliveryAddressUiState ENTREGA bloqueia endereço incompleto; RETIRADA não', () => {
+  const incompleteLocal = {
+    id: LOCAL,
+    group_id: GROUP,
+    cliente_id: CLIENTE,
+    nome: 'Sem cidade',
+    logradouro: 'Rua X',
+  };
+  const entregaIncomplete = resolveDeliveryAddressUiState({
+    tipoOperacao: 'ENTREGA',
+    clienteLocalId: LOCAL,
+    localRow: incompleteLocal,
+    scope: { groupId: GROUP, clienteId: CLIENTE },
+  });
+  assert.equal(entregaIncomplete.mode, 'incomplete');
+  assert.equal(entregaIncomplete.blockSave, true);
+  assert.match(entregaIncomplete.hint, /fail-closed/);
+
+  const retiradaIncomplete = resolveDeliveryAddressUiState({
+    tipoOperacao: 'RETIRADA',
+    clienteLocalId: LOCAL,
+    localRow: incompleteLocal,
+    scope: { groupId: GROUP, clienteId: CLIENTE },
+  });
+  assert.equal(retiradaIncomplete.mode, 'incomplete');
+  assert.equal(retiradaIncomplete.blockSave, false);
 });
 
 test('resolveDeliveryAddressUiState obra usa getLocal do principal', () => {

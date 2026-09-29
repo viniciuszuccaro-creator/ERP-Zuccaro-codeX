@@ -1,3 +1,24 @@
+## LOTE CURSOR — Pedido Entrega endereço fail-closed (pós margem UI) (2026-09-29T22:15Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Entrega vs Retirada toggle fail-closed — ENTREGA exige Local/Obra com endereço confirmado; incompleto bloqueia Salvar; Retirada não exige |
+| Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
+| Base | `origin/cursor/comercial360-onda4-margem-ui-failclosed-392b` tip `3e668170` (#157) |
+| Tip | _(após commit)_ |
+| Draft PR | _(após ManagePullRequest / gh)_ |
+| Escopo | `resolveDeliveryAddressUiState` blockSave na ENTREGA sem seleção/incompleto; painel `PedidoCanonicoPanel` visível na Entrega + Alert required; meta `entregaAddressRequiredFailClosed`; **sem migration** |
+| Meta | `entregaAddressRequiredFailClosed` + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-cliente-local-obra-http-ui-policy` + `pedido-frontend-integration` + runtime07b/08c/09 meta |
+| Colisão | anexos #59–62; CreditPort/#63–67 mig 032; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | **B** Data de Entrega do Cliente UI gate (required when Entrega) **ou** multi-select stub fail-closed **ou** CostPort BFF / PDF-anexos sem colidir |
+
+Arquivos: `comercialClienteLocalObraHttpUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-cliente-local-obra-http-ui-policy.test.js`, `tests/pedido-frontend-integration.test.js`, `server/tests/runtime07b.test.ts`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: tip já tinha resumo de endereço pós-seleção, mas ENTREGA sem Local/Obra não bloqueava Salvar (`blockSave:false`) e o painel só aparecia após seleção — gap Onda 5 “endereço confirmado para Entrega”.
+
+---
+
 ## LOTE CURSOR — margem mínima UI fail-closed (pós crédito UI) (2026-09-29T22:00Z)
 
 | Campo | Valor |

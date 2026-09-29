@@ -1,3 +1,20 @@
+## LOTE CURSOR — Pedido Entrega endereço fail-closed (pós #157 margem) (2026-09-29T22:15Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Entrega vs Retirada — endereço obrigatório na Entrega (fail-closed) |
+| Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
+| Base | `#157` tip `3e668170` (`cursor/comercial360-onda4-margem-ui-failclosed-392b`) |
+| Tip | _(após commit)_ |
+| Draft PR | _(após PR)_ |
+| Meta | `entregaAddressRequiredFailClosed` + **Pedido backend HTTP is active** |
+| Testes | local-obra UI policy + frontend-integration + runtime meta |
+| Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
+
+Próximo: Data entrega UI gate (B) **ou** multi-select stub (C) **ou** CostPort/PDF sem colidir.
+
+---
+
 ## LOTE CURSOR — margem mínima UI fail-closed (pós #156 crédito) (2026-09-29T22:00Z)
 
 | Campo | Valor |
