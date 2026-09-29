@@ -1,3 +1,16 @@
+## AUTÔNOMO — tip Pedido share WhatsApp/e-mail (pós-#166 print) (2026-09-29T23:00Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido compartilhar texto** (WhatsApp/e-mail clipboard; espelha Orçamento) |
+| Branch | `cursor/comercial360-onda5-pedido-share-392b` |
+| Base | tip #166 `cursor/comercial360-onda5-pedido-print-392b` |
+| Escopo | `buildPedidoShareText` + `evaluatePedidoShareUiGate`; botões no detalhe; meta `shareTextUiFailClosed`; **sem envio externo / sem migration** |
+| Colisão | anexos #59–67; CreditPort 032; sem Codex/merge/VPS |
+| Próximo | CostPort BFF / anexo sem colisão / Onda 6 crédito se 032 |
+
+---
+
 ## RE-REVISÃO CURSOR — #153 HEAD `12c37e8b` (2026-09-29T22:55Z)
 
 | Campo | Valor |

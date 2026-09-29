@@ -53,6 +53,44 @@ export function evaluatePedidoPrintPdfUiGate({ row, groupId, empresaId, canPrint
   return { blockPrint: false, mode: 'ready', hint: null };
 }
 
+
+/** Texto revisável para WhatsApp/e-mail (sem envio externo; clipboard only). */
+export function buildPedidoShareText(pedido, { empresaNome = 'Empresa', clienteNome = 'Cliente', statusLabel = '' } = {}) {
+  if (!pedido?.numero) throw new Error('Pedido inválido para compartilhamento');
+  const status = statusLabel
+    || (PEDIDO_STATUS_LABELS[pedido.status] || pedido.status || '—');
+  const total = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(pedido.total || 0));
+  const operacao = pedido.tipo_operacao === 'ENTREGA' ? 'Entrega'
+    : pedido.tipo_operacao === 'RETIRADA' ? 'Retirada'
+    : (pedido.tipo_operacao || '—');
+  const dataEntrega = pedido.data_entrega_solicitada
+    ? new Intl.DateTimeFormat('pt-BR').format(new Date(pedido.data_entrega_solicitada))
+    : '—';
+  return [
+    `${empresaNome} - Pedido ${pedido.numero}`,
+    `Cliente: ${clienteNome}`,
+    `Status: ${status}`,
+    `Operação: ${operacao}`,
+    `Data solicitada: ${dataEntrega}`,
+    `Total: ${total}`,
+    'O documento completo deve ser conferido no ERP antes do envio.',
+  ].join('\n');
+}
+
+/** Gate fail-closed para compartilhar texto do Pedido (contexto + permissão + documento). */
+export function evaluatePedidoShareUiGate({ row, groupId, empresaId, canShare } = {}) {
+  if (!groupId || !empresaId) {
+    return { blockShare: true, mode: 'context', hint: 'Selecione grupo e empresa antes de compartilhar.' };
+  }
+  if (!canShare) {
+    return { blockShare: true, mode: 'permission', hint: 'Sem permissão para compartilhar pedido.' };
+  }
+  if (!row || !row.numero) {
+    return { blockShare: true, mode: 'missing', hint: 'Pedido indisponível para compartilhamento (fail-closed).' };
+  }
+  return { blockShare: false, mode: 'ready', hint: null };
+}
+
 export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') {
   if (typeof hasPermission !== 'function') return false;
   if (!hasPermission('Comercial', 'pedido', action)) return false;
