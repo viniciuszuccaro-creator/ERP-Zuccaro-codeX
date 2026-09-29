@@ -6,8 +6,8 @@
 | Branch | `cursor/comercial360-onda3-simular-persist-392b` |
 | Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
 | Escopo | sem migration; servidor aplica promo/desconto/total; UI merge+preview servidor; meta preserva `Pedido backend HTTP is active` |
-| Tip | `102da085` |
-| Draft PR | a abrir — base promoção-snapshot |
+| Tip | `eef875b7` (feat `f51f021c`) |
+| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration`; ManagePullRequest indisponível |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
 | Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
 | Próximo | tabela preço code/nome snapshot (**031**) **ou** Onda 4 sem colisão 025–028 |
