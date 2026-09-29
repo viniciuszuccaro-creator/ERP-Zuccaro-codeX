@@ -5,11 +5,13 @@
 | Choice | **C** Condicao/Tabela/Produto (+Cliente) HTTP picker loading + error banner fail-closed |
 | Branch | `cursor/comercial360-onda3-masters-banner-392b` |
 | Base | `origin/cursor/comercial360-onda3-snapshot-reload-392b` tip `3da72df5` (#139) |
-| Tip | _(após push)_ |
-| Draft PR | base=`cursor/comercial360-onda3-snapshot-reload-392b` |
+| Tip | `ec9dcb21` (`ec9dcb210e3adafb6b2929b68122ae7eb2f0c605`) |
+| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-snapshot-reload-392b...cursor/comercial360-onda3-masters-banner-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-masters-banner-392b` |
 | Escopo | Pickers Cliente/Condição/Produto/Tabela nunca empty silencioso em 403/5xx; loading placeholder; banner + retry na lista e no formulário; Salvar bloqueado enquanto masters loading/erro; sem migration |
 | Meta | `mastersPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
-| Testes | comercial-list-http-ui-policy + condicao/tabela/produto/orcamento/pedido UI — **46/46 PASS**; runtime07b+08c+09 meta — **23/23 PASS**; `git diff --check` |
+| Testes | comercial-list-http-ui-policy + condicao/tabela/produto/orcamento/pedido UI — **46/46 PASS**; runtime07b+08c+09 meta — **23/23 PASS**; `git diff --check` PASS |
 | Colisão | Sem Codex/#104/#48; sem merge/VPS; sem 025–028; EXECUCAO_PARALELA + Regra-Mãe |
 | Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
 
