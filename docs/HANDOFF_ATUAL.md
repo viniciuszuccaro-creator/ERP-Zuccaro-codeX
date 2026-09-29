@@ -1,3 +1,23 @@
+## MODO AUTÔNOMO CURSOR — Comercial 360 contínuo (2026-09-29T21:19Z)
+
+Owner ausente. Autorização: continuar execução paralela (#105) e programa Comercial 360 até esgotar lotes independentes seguros ou bloqueio real (credencial/VPS/merge/migration destrutiva/#92 025–028).
+
+### Política nesta sessão
+- Implementar lotes grandes na stack tip `#151` (`6218511a`) e seguintes
+- Revisar HEADs Onda 4–7 / legado sem editar Codex
+- **Não** merge `main`, **não** VPS, **não** HD/PII
+- Evitar migrations 025–028 (#50/#92); aditivas 032+ só se indispensável
+- Meta sempre preservar `Pedido backend HTTP is active`
+- Atualizar STATUS/HANDOFF a cada lote; timer vigília 15min
+
+### Fila imediata
+1. Parecer Onda 4–6 (#59–#67, #47 margem)
+2. Lotes Onda 4 faltantes sem colisão: abandono de form dirty, aprovação desconto/crédito UI, PDF só se não duplicar #59–#62
+3. Onda 5/6 gaps não cobertos pela stack tip
+4. Revisão contínua #153 tip vigente vs parecer `fba7f72b`
+
+---
+
 ## VIGÍLIA CURSOR — rearm 15min (2026-09-29T21:05Z)
 
 Âncoras estáveis: #48 `ee0dc10a`, #104 `87101b4d`, #151 `6218511a` SUCCESS. #153 tip `12c37e8b` SUCCESS (parecer NÃO APTA permanece amarrado a `fba7f72b`; tip docs-only pós-parecer). Sem merge/VPS. Timer +15min.
