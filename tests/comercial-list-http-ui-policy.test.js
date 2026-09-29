@@ -125,10 +125,19 @@ test('sanitizeListSearchText e normalize filtros Orçamento/Pedido', () => {
     status: 'FATURADO',
     clienteEmpresaId: 'TODOS',
     tipoOperacao: 'ENTREGA',
+    dataEntregaDe: '',
+    dataEntregaAte: '',
   });
+  const pedDates = normalizePedidoListFilters({
+    dataEntregaDe: '2027-03-01',
+    dataEntregaAte: 'bad',
+  });
+  assert.equal(pedDates.dataEntregaDe, '2027-03-01');
+  assert.equal(pedDates.dataEntregaAte, '');
   assert.equal(hasActiveComercialListFilters(orc, ORCAMENTO_LIST_FILTER_DEFAULTS), true);
   assert.equal(hasActiveComercialListFilters(ORCAMENTO_LIST_FILTER_DEFAULTS, ORCAMENTO_LIST_FILTER_DEFAULTS), false);
   assert.equal(hasActiveComercialListFilters(PEDIDO_LIST_FILTER_DEFAULTS, PEDIDO_LIST_FILTER_DEFAULTS), false);
+  assert.equal(hasActiveComercialListFilters(pedDates, PEDIDO_LIST_FILTER_DEFAULTS), true);
 });
 
 test('build list request params omite TODOS e inclui search sanitizado', () => {
@@ -142,12 +151,14 @@ test('build list request params omite TODOS e inclui search sanitizado', () => {
   assert.equal(orcParams.clienteEmpresaId, 'ce');
   assert.equal(orcParams.status, undefined);
   const pedParams = buildPedidoListRequestParams(
-    normalizePedidoListFilters({ search: '', status: 'EM_ABERTO', tipoOperacao: 'RETIRADA' }),
+    normalizePedidoListFilters({ search: '', status: 'EM_ABERTO', tipoOperacao: 'RETIRADA', dataEntregaDe: '2027-03-01', dataEntregaAte: '2027-03-31' }),
     { page: 1, pageSize: 20 },
   );
   assert.equal(pedParams.search, undefined);
   assert.equal(pedParams.status, 'EM_ABERTO');
   assert.equal(pedParams.tipoOperacao, 'RETIRADA');
+  assert.equal(pedParams.dataEntregaDe, '2027-03-01');
+  assert.equal(pedParams.dataEntregaAte, '2027-03-31');
   assert.equal(pedParams.offset, 0);
 });
 
@@ -297,6 +308,9 @@ test('painéis Pedido/Orçamento usam list search/filter fail-closed e queryKey 
   assert.match(pedido, /buildPedidoListRequestParams/);
   assert.match(pedido, /PEDIDO_LIST_FILTER_DEFAULTS/);
   assert.match(pedido, /buildPedidoTenantSwitchReset/);
+  assert.match(pedido, /pedido-list-data-entrega-de|dataEntregaDe/);
+  assert.match(pedido, /pedido-list-data-entrega-ate|dataEntregaAte/);
+  assert.match(pedido, /Comercial\.pedido\.list-data-entrega-filter/);
   assert.match(orcamento, /normalizeOrcamentoListFilters/);
   assert.match(orcamento, /buildOrcamentoListRequestParams/);
   assert.match(orcamento, /ORCAMENTO_LIST_FILTER_DEFAULTS/);

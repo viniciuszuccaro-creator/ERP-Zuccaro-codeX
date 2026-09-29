@@ -683,8 +683,8 @@ export function createHttpApiClient(options = {}) {
     },
   };
   const pedidos = {
-    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {
-      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });
+    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, dataEntregaDe, dataEntregaAte, signal } = {}) {
+      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao, dataEntregaDe, dataEntregaAte }, signal, unwrap: false });
     },
     get(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}`, { signal }); },
     create(payload, { signal } = {}) { return request('/api/v1/pedidos', { method: 'POST', body: payload, signal }); },

@@ -145,8 +145,10 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.printPdfUiFailClosed, true);
   assert.equal(meta.body.pedido.shareTextUiFailClosed, true);
   assert.equal(meta.body.pedido.detailSummaryUiFailClosed, true);
+  assert.equal(meta.body.pedido.listDataEntregaFilterFailClosed, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido Entrega vs Retirada fail-closed/);
+  assert.match(String(meta.body.note || ''), /listagem filtra data_entrega_solicitada De\/Até|listDataEntregaFilterFailClosed|dataEntregaDe/);
   assert.match(String(meta.body.note || ''), /data_entrega_solicitada fail-closed/);
   assert.match(String(meta.body.note || ''), /Pedido cancel fail-closed/);
   assert.match(String(meta.body.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
@@ -166,4 +168,19 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.match(String(meta.body.note || ''), /Orçamento Imprimir\/PDF e compartilhar texto fail-closed|evaluateOrcamentoPrintPdfUiGate/);
   assert.match(String(meta.body.note || ''), /Orçamento detalhe summary UI fail-closed|resolveOrcamentoDetailSummaryUiState/);
   assert.match(String(meta.body.note || ''), /Orçamento cancel exige motivo UI fail-closed|evaluateOrcamentoCancelMotivoUiGate/);
+});
+
+test('HTTP Pedido filtra data_entrega_solicitada De/Até fail-closed', async () => {
+  const runtime = fixture();
+  const created = await request(runtime.app, '/api/v1/pedidos', { method: 'POST', headers: headers(), body: JSON.stringify(pedidoPayload) });
+  assert.equal(created.status, 201);
+  const inRange = await request(runtime.app, '/api/v1/pedidos?dataEntregaDe=2027-03-01&dataEntregaAte=2027-03-31', { headers: headers() });
+  assert.equal(inRange.status, 200);
+  assert.equal(inRange.body.meta.total, 1);
+  assert.equal(inRange.body.data[0].id, created.body.data.id);
+  const outOfRange = await request(runtime.app, '/api/v1/pedidos?dataEntregaDe=2027-04-01&dataEntregaAte=2027-04-30', { headers: headers() });
+  assert.equal(outOfRange.status, 200);
+  assert.equal(outOfRange.body.meta.total, 0);
+  assert.equal((await request(runtime.app, '/api/v1/pedidos?dataEntregaDe=invalida', { headers: headers() })).status, 422);
+  assert.equal((await request(runtime.app, '/api/v1/pedidos?dataEntregaDe=2027-04-01&dataEntregaAte=2027-03-01', { headers: headers() })).status, 422);
 });

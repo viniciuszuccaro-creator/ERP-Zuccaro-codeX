@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Pedido filtro data entrega (2026-09-29T23:55Z)
+
+Branch `cursor/comercial360-onda5-pedido-entrega-filter-392b` empilhada em #171:
+listagem Pedido filtra `data_entrega_solicitada` De/Até fail-closed. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Orçamento cancel motivo (2026-09-29T23:45Z)
 
 Draft PR **#171** empilhada em #170 (`cursor/comercial360-onda5-orcamento-cancel-motivo-392b`):
