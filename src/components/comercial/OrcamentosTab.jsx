@@ -38,6 +38,10 @@ import {
   normalizeClientesListPayload,
   normalizeUnidadesListPayload,
 } from './comercialClienteHttpUiPolicy';
+import {
+  canLoadClienteEmpresasHttp,
+  normalizeClienteEmpresasListPayload,
+} from './comercialClienteEmpresaHttpUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -92,6 +96,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const condicoesApi = http.condicoesPagamento;
   const tabelasApi = http.tabelasPreco;
   const clientesApi = http.clientes;
+  const clienteEmpresasApi = http.clienteEmpresas;
   const unidadesApi = http.unidadesMedida;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
   const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
@@ -104,15 +109,18 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const mastersQuery = useQuery({
     queryKey: ['orcamento-masters', groupId, empresaId],
     queryFn: async ({ signal }) => {
-      const [clientesEmpresa, clientesPayload, condicoesPayload, produtos, unidadesPayload] = await Promise.all([
-        filterInContext('ClienteEmpresa', { ativo: true, habilitado_operacao: true }, 'codigo', 500),
+      const canLinks = canLoadClienteEmpresasHttp(hasPermission);
+      const [clientesEmpresaPayload, clientesPayload, condicoesPayload, produtos, unidadesPayload] = await Promise.all([
+        canLinks
+          ? clienteEmpresasApi.list({ ativo: true, habilitadoOperacao: true, limit: 200, signal })
+          : Promise.resolve({ data: [] }),
         clientesApi.list({ ativo: true, limit: 200, orderBy: 'nome', signal }),
         condicoesApi.list({ ativo: true, limit: 200, signal }),
         filterInContext('Produto', { ativo: true }, 'descricao', 500),
         unidadesApi.list({ ativo: true, limit: 200, signal }),
       ]);
       return {
-        clientesEmpresa,
+        clientesEmpresa: normalizeClienteEmpresasListPayload(clientesEmpresaPayload),
         clientes: normalizeClientesListPayload(clientesPayload),
         condicoes: normalizeCondicoesListPayload(condicoesPayload),
         produtos,

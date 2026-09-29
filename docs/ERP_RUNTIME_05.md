@@ -24,7 +24,9 @@ Não cria Cliente paralelo e não implementa Cliente/Comercial 360º.
 - Cliente MASTER preservado como identidade única do Grupo;
 - ClienteEmpresa, elegibilidade, multiempresa, RBAC, RLS, unicidade,
   lifecycle, auditoria, atomicidade e PII: aprovados;
-- frontend HTTP não ativado.
+- frontend HTTP: **piloto Onda 3** — `ClienteEmpresa` em `HTTP_PILOT_ENTITIES`
+  com `GET /api/v1/cliente-empresas` list-for-scope (seleção Comercial);
+  mutações permanecem nested em `/api/v1/clientes/:id/empresas`.
 
 ## Modelo
 
@@ -181,13 +183,13 @@ Conclusão: auditoria sem PII do Cliente.
 ## Compatibilidade e dependências futuras
 
 Campos comerciais incorporados no Cliente Base44 permanecem inalterados. Não
-há dual-write nem ativação HTTP no frontend.
+há dual-write. Piloto HTTP Onda 3 ativa list-for-scope read-only flat;
+mutações ClienteEmpresa continuam nested sob Cliente.
 
-Ficam fora até suas fontes PostgreSQL canônicas:
+Ficam fora até suas fontes PostgreSQL canônicas no piloto flat:
 
+- ClienteLocal / Obra frontendHttp;
 - vendedor/Colaborador/Representante;
-- TabelaPreco;
-- Forma/CondiçãoPagamento;
 - crédito e títulos do Financeiro.
 
 ## Validação local
@@ -216,5 +218,6 @@ Resultados:
 
 - `erp-api-dev-runtime04-backup` e `erp-api-dev-runtime03-backup` permanecem
   preservados temporariamente;
-- ClienteEmpresa permanece fora de `HTTP_PILOT_ENTITIES`;
+- ClienteEmpresa **entra** em `HTTP_PILOT_ENTITIES` no piloto Onda 3
+  (`GET /api/v1/cliente-empresas` list-for-scope); Local/Obra permanecem fora;
 - planejamento, sem implementação: RUNTIME-06 — Locais/Endereços/Obras.

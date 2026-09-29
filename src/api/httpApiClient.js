@@ -436,6 +436,38 @@ export function createHttpApiClient(options = {}) {
         },
       };
     })(),
+    // ClienteEmpresa R05 — piloto HTTP list-for-scope (seleção Comercial); mutações permanecem nested.
+    ClienteEmpresa: (() => {
+      return {
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/cliente-empresas', {
+            query: { limit, ativo: true, habilitado_operacao: true },
+          });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          const habilitado = query.habilitado_operacao ?? query.habilitadoOperacao;
+          return request('/api/v1/cliente-empresas', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.codigo,
+              ativo: query.ativo ?? true,
+              bloqueado: query.bloqueado,
+              habilitado_operacao: habilitado === undefined ? true : habilitado,
+              situacao: query.situacao || query.situacao_comercial || query.situacaoComercial,
+              order_by: query.order_by || query.orderBy || 'created_at',
+              order_dir: query.order_dir || query.orderDir,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        get(id, { signal } = {}) {
+          return request(`/api/v1/cliente-empresas/${encodeURIComponent(id)}`, { signal });
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -868,7 +900,7 @@ export function createHttpApiClient(options = {}) {
       });
     },
     /**
-     * Vínculos Cliente×Empresa (R05) — nested; ClienteEmpresa permanece fora do piloto flat.
+     * Vínculos Cliente×Empresa (R05) — nested sob Cliente; list-for-scope flat em `clienteEmpresas`.
      * @param {string} clienteId
      * @param {{ limit?: number, offset?: number, ativo?: boolean, bloqueado?: boolean, situacao?: string, empresaId?: string, search?: string, signal?: AbortSignal }} [options]
      */
@@ -944,6 +976,59 @@ export function createHttpApiClient(options = {}) {
       });
     },
   };
+  /**
+   * ClienteEmpresa list-for-scope (R05) — seleção Comercial Orçamento/Pedido.
+   * Tenant só nos headers; RBAC Cadastros.cliente_empresa.visualizar no BFF.
+   * Mutações continuam nested em `clientes.*EmpresaLink`.
+   */
+  const clienteEmpresas = {
+    /**
+     * @param {{
+     *   limit?: number,
+     *   offset?: number,
+     *   search?: string,
+     *   ativo?: boolean,
+     *   bloqueado?: boolean,
+     *   habilitadoOperacao?: boolean,
+     *   situacao?: string,
+     *   orderBy?: string,
+     *   orderDir?: string,
+     *   signal?: AbortSignal,
+     * }} [options]
+     */
+    list({
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      bloqueado,
+      habilitadoOperacao = true,
+      situacao,
+      orderBy = 'created_at',
+      orderDir,
+      signal,
+    } = {}) {
+      return request('/api/v1/cliente-empresas', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          bloqueado,
+          habilitado_operacao: habilitadoOperacao,
+          situacao,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/cliente-empresas/${encodeURIComponent(id)}`, { signal });
+    },
+  };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
@@ -968,6 +1053,7 @@ export function createHttpApiClient(options = {}) {
     condicoesPagamento,
     tabelasPreco,
     clientes,
+    clienteEmpresas,
     unidadesMedida,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,

@@ -365,6 +365,31 @@ test('API ClienteEmpresa: tenant, lifecycle, paginação, concorrência e audito
   });
   assert.equal(privateA2.statusCode, 403);
 
+  // Flat list-for-scope: Empresa do contexto; fail-closed sem empresaId; isolamento A/B.
+  const scopeList = await fetchOk(app, '/api/v1/cliente-empresas?habilitado_operacao=true&limit=50', {
+    headers: companyHeaders,
+  });
+  assert.ok(scopeList.data.some((row: { id: string }) => row.id === linkedA.data.id));
+  assert.equal(scopeList.data.every((row: { empresa_id: string }) => row.empresa_id === EMPRESA_A), true);
+  const scopeGet = await fetchOk(app, `/api/v1/cliente-empresas/${linkedA.data.id}`, {
+    headers: companyHeaders,
+  });
+  assert.equal(scopeGet.data.id, linkedA.data.id);
+  const scopeWithoutEmpresa = await fetchStatus(app, '/api/v1/cliente-empresas', {
+    headers: groupHeaders(),
+  });
+  assert.equal(scopeWithoutEmpresa.statusCode, 400);
+  assert.equal(scopeWithoutEmpresa.body.error?.code, 'EMPRESA_ID_REQUIRED');
+  const scopeCross = await fetchStatus(app, '/api/v1/cliente-empresas', {
+    headers: {
+      'x-group-id': GROUP_B,
+      'x-empresa-id': EMPRESA_B,
+      'x-actor-id': ACTOR_GROUP_B,
+    },
+  });
+  assert.equal(scopeCross.statusCode, 200);
+  assert.equal(scopeCross.body.data.some((row: { id: string }) => row.id === linkedA.data.id), false);
+
   // Actor B autorizado no Grupo B continua sem acesso ao Cliente A.
   const crossTenant = await fetchStatus(app, `${base}/${EMPRESA_B}`, {
     headers: {
@@ -402,8 +427,8 @@ test('API ClienteEmpresa: tenant, lifecycle, paginação, concorrência e audito
 
   const meta = await fetchOk(app, '/api/v1/meta');
   assert.ok(['ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B', 'ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime));
-  assert.equal(meta.clienteEmpresa.frontendHttp, false);
-  assert.ok(!meta.httpPilotEntities.includes('ClienteEmpresa'));
+  assert.equal(meta.clienteEmpresa.frontendHttp, true);
+  assert.ok(meta.httpPilotEntities.includes('ClienteEmpresa'));
 });
 
 test('RBAC ClienteEmpresa separa visualizar, criar, editar, bloquear e lifecycle', async () => {
