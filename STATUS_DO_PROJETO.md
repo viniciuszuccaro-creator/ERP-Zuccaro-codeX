@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **Pedido avanço de status com confirmação** fail-closed (dialog + motivo opcional ≤500; sem one-click) |
 | Branch | `cursor/comercial360-onda5-pedido-status-confirm-392b` |
+| Draft PR | **#173** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/173 |
 | Base | tip #172 filtro data entrega |
 | Escopo | `evaluatePedidoStatusTransitionUiGate` + `evaluatePedidoStatusMotivoUiGate`; dialog; meta `statusTransitionConfirmFailClosed` |
 | Testes | pedido-ui + comercial-list + runtime09/08c/07b |

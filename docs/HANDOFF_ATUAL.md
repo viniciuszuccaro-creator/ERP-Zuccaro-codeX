@@ -1,6 +1,6 @@
 ## AUTÔNOMO — tip Pedido status confirm (2026-09-30T00:10Z)
 
-Branch `cursor/comercial360-onda5-pedido-status-confirm-392b` empilhada em #172:
+Draft PR **#173** empilhada em #172 (`cursor/comercial360-onda5-pedido-status-confirm-392b`):
 avanço de status com confirmação + motivo opcional fail-closed. Sem merge/VPS.
 
 ---
