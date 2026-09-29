@@ -336,7 +336,7 @@ export default function ProdutosTab(props) {
         nomeEntidade="Produto"
         tituloDisplay="Produto"
         icone={Package}
-        camposPrincipais={['codigo', 'descricao', 'tipo_item', 'unidade_medida', 'estoque_atual', 'preco_venda']}
+        camposPrincipais={['codigo', 'codigo_legado', 'descricao', 'tipo_item', 'unidade_medida', 'estoque_atual', 'preco_venda']}
         componenteEdicao={ProdutoFormV22_Completo}
         queryKey={['produtos']}
         filtroAdicional={filtroEstoqueBaixo ? (produto) => {
