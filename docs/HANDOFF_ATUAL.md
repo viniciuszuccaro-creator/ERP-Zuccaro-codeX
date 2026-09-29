@@ -5,6 +5,8 @@
 | Choice | **C** Convert disabled reasons — banner único (validade+snapshot+dirty+simular) |
 | Branch | `cursor/comercial360-onda5-convert-banner-392b` |
 | Base | tip `84e17c88` (`cursor/comercial360-onda5-multiselect-stub-392b` #160) |
+| Tip | feat `cc74f381` |
+| Compare | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-multiselect-stub-392b...cursor/comercial360-onda5-convert-banner-392b?expand=1 |
 | Meta | `convertDisabledReasonsBannerFailClosed` + **Pedido backend HTTP is active** |
 | Testes | orcamento-ui-policy 18 + integration 2 + runtime07b/08c/09 23 **PASS** |
 | Colisão | sem mig; sem anexos #59–67; sem CreditPort 032; sem merge/VPS |
