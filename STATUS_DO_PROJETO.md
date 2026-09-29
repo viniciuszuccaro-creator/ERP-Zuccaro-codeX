@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 3 — sugestão de vínculo (2026-09-29)
+
+- Leitura `GET /api/v1/clientes/sugestao-vinculo` no `ClienteService` existente. Não cria cliente, não mescla e não abre CRM HTTP.
+- Grupo compartilha o mestre; outro grupo e cliente inativo devolvem `sem_match`. Sem `visualizar`, 403. Duplicata no create continua 409.
+- Auditoria `possible_duplicate` com documento mascarado. Teste `runtime-onda3-cliente-sugestao-vinculo.test.ts` PASS; regressão Central 360 4/4 PASS.
+- CRM canônico permanece BLOCKED. Sem migration, merge ou VPS.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
