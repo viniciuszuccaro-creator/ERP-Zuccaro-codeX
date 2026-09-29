@@ -10,7 +10,7 @@ export const pedidoItemSchema = orcamentoItemSchema.extend({
   requer_producao: z.boolean().optional().default(false),
 }).strict();
 
-/** Payload do cliente — snapshots de condição/promoção são autoridade do servidor. */
+/** Payload do cliente — snapshots de condição/promoção/tabela são autoridade do servidor. */
 export const pedidoPromocaoSchema = z.object({
   bps: z.number().int().positive().max(10000),
   cupom: z.string().trim().max(64).optional(),
@@ -35,6 +35,8 @@ export type PedidoWrite = Omit<PedidoCreate, 'promocao'> & {
   condicao_pagamento_codigo_snapshot: string;
   condicao_pagamento_nome_snapshot: string;
   condicao_pagamento_parcelas_snapshot: CondicaoPagamentoParcelaSnapshot[];
+  tabela_preco_codigo_snapshot: string | null;
+  tabela_preco_nome_snapshot: string | null;
   promocao_aplicada: boolean;
   promocao_bps: number | null;
   promocao_cupom: string | null;
@@ -62,6 +64,8 @@ export type Pedido = {
   cliente_local_id: string | null;
   obra_id: string | null;
   tabela_preco_id: string | null;
+  tabela_preco_codigo_snapshot: string | null;
+  tabela_preco_nome_snapshot: string | null;
   condicao_pagamento_id: string;
   condicao_pagamento_codigo_snapshot: string | null;
   condicao_pagamento_nome_snapshot: string | null;

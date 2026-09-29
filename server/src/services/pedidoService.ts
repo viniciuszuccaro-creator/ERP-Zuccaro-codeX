@@ -36,6 +36,11 @@ import {
   assertPersistedPromocaoSnapshot,
   type ComercialPromocaoConfigPort,
 } from './comercialPromocaoPolicy.js';
+import {
+  assertPersistedTabelaSnapshot,
+  buildTabelaPrecoDocumentoSnapshot,
+  emptyTabelaPrecoDocumentoSnapshot,
+} from './comercialTabelaSnapshot.js';
 import { z } from 'zod';
 
 const conversionSchema = z.object({
@@ -52,7 +57,12 @@ export type PedidoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
-  ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
+  ): Promise<{
+    preco: string;
+    tabela_preco_id?: string;
+    tabela_preco_codigo?: string;
+    tabela_preco_nome?: string;
+  } | null>;
 };
 
 export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort };
@@ -61,7 +71,10 @@ export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({
     id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero, status: row.status,
     cliente_empresa_id: row.cliente_empresa_id, cliente_local_id: row.cliente_local_id, obra_id: row.obra_id,
-    tabela_preco_id: row.tabela_preco_id, condicao_pagamento_id: row.condicao_pagamento_id,
+    tabela_preco_id: row.tabela_preco_id,
+    tabela_preco_codigo_snapshot: row.tabela_preco_codigo_snapshot,
+    tabela_preco_nome_snapshot: row.tabela_preco_nome_snapshot,
+    condicao_pagamento_id: row.condicao_pagamento_id,
     condicao_pagamento_codigo_snapshot: row.condicao_pagamento_codigo_snapshot,
     condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
     condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
@@ -127,12 +140,13 @@ export class PedidoService {
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
-        // Não-retroatividade: preserva preco_unitario e snapshot de condição já gravados no Orçamento.
+        // Não-retroatividade: preserva preco_unitario e snapshots já gravados no Orçamento.
         const draft = {
           ...parsed.data,
           orcamento_id: quote.id,
           cliente_empresa_id: quote.cliente_empresa_id,
           condicao_pagamento_id: quote.condicao_pagamento_id,
+          tabela_preco_id: parsed.data.tabela_preco_id ?? quote.tabela_preco_id ?? null,
           observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
           itens: quote.itens.map((item) => ({
             produto_id: item.produto_id,
@@ -157,8 +171,16 @@ export class PedidoService {
             'PEDIDO',
           );
         const promocaoSnapshot = assertPersistedPromocaoSnapshot(quote);
+        const tabelaSnapshot = quote.tabela_preco_codigo_snapshot || quote.tabela_preco_nome_snapshot
+          ? assertPersistedTabelaSnapshot(quote, 'ORCAMENTO')
+          : data.tabela_preco_id
+            ? buildTabelaPrecoDocumentoSnapshot(
+              await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor),
+              'PEDIDO',
+            )
+            : emptyTabelaPrecoDocumentoSnapshot();
         const { promocao: _ignored, ...rest } = data;
-        const write: PedidoWrite = { ...rest, ...condicaoSnapshot, ...promocaoSnapshot };
+        const write: PedidoWrite = { ...rest, ...condicaoSnapshot, ...tabelaSnapshot, ...promocaoSnapshot };
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
@@ -282,9 +304,14 @@ export class PedidoService {
 
   private parse(payload: unknown) { const parsed = pedidoCreateSchema.safeParse(payload); if (!parsed.success) this.validation(parsed.error.flatten()); return parsed.data; }
 
-  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate): Promise<PedidoCreate> {
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate): Promise<PedidoCreate & {
+    tabela_preco_codigo_snapshot?: string | null;
+    tabela_preco_nome_snapshot?: string | null;
+  }> {
     const itens = [];
     let tabelaId: string | null | undefined = data.tabela_preco_id;
+    let tabelaCodigo: string | null | undefined;
+    let tabelaNome: string | null | undefined;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -298,14 +325,38 @@ export class PedidoService {
         });
       }
       if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
+      if (resolved.tabela_preco_id && resolved.tabela_preco_id === tabelaId) {
+        if (resolved.tabela_preco_codigo) tabelaCodigo = resolved.tabela_preco_codigo;
+        if (resolved.tabela_preco_nome) tabelaNome = resolved.tabela_preco_nome;
+      }
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
-    return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
+    let tabelaSnap = emptyTabelaPrecoDocumentoSnapshot();
+    if (tabelaId) {
+      if (tabelaCodigo && tabelaNome) {
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(
+          { id: tabelaId, codigo: tabelaCodigo, nome: tabelaNome, ativo: true },
+          'PEDIDO',
+        );
+      } else {
+        const tabela = await this.tabelas.get({ groupId: ctx.groupId, empresaId: ctx.empresaId }, tabelaId);
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(tabela, 'PEDIDO');
+      }
+    }
+    return {
+      ...data,
+      tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null,
+      ...tabelaSnap,
+      itens,
+    };
   }
 
   private async applyCondicaoSnapshot(
     scope: PedidoScope,
-    data: PedidoCreate,
+    data: PedidoCreate & {
+      tabela_preco_codigo_snapshot?: string | null;
+      tabela_preco_nome_snapshot?: string | null;
+    },
     executor?: DbQueryExecutor,
   ): Promise<PedidoWrite> {
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
@@ -322,7 +373,23 @@ export class PedidoService {
       config: cfg,
       items: data.itens,
     });
-    return { ...rest, itens: promo.items, ...snapshot, ...promo.snapshot };
+    let tabelaSnap = emptyTabelaPrecoDocumentoSnapshot();
+    if (data.tabela_preco_id) {
+      if (data.tabela_preco_codigo_snapshot && data.tabela_preco_nome_snapshot) {
+        tabelaSnap = {
+          tabela_preco_codigo_snapshot: data.tabela_preco_codigo_snapshot,
+          tabela_preco_nome_snapshot: data.tabela_preco_nome_snapshot,
+        };
+      } else {
+        const tabela = await this.tabelas.get(
+          { groupId: scope.groupId, empresaId: scope.empresaId },
+          data.tabela_preco_id,
+          executor,
+        );
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(tabela, 'PEDIDO');
+      }
+    }
+    return { ...rest, itens: promo.items, ...snapshot, ...tabelaSnap, ...promo.snapshot };
   }
 
   private normalizeMoney(value: string): string {

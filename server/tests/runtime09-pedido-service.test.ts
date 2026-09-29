@@ -27,8 +27,8 @@ function fixture() {
     {get:async()=>({id:condicaoId,codigo:'COND-28',nome:'28 dias',ativo:true,parcelas:[{id:'p1',ordem:1,dias:28,percentual:'100.000000',ativo:true}]} as never)},
     {get:async()=>({id:'local',ativo:true} as never)},
     {get:async()=>({id:'obra',ativo:true} as never)},
-    {get:async()=>({id:'tabela',ativo:true} as never)},
-    {resolveSalePrice:async()=>({preco:'10.000000',tabela_preco_id:'tabela'})},
+    {get:async()=>({id:'tabela',codigo:'TAB',nome:'Tabela',ativo:true} as never)},
+    {resolveSalePrice:async()=>({preco:'10.000000',tabela_preco_id:'tabela',tabela_preco_codigo:'TAB',tabela_preco_nome:'Tabela'})},
   );
   return {service,repo,orcamentos,audit,rbac};
 }

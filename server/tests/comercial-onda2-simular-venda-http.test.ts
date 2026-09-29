@@ -63,10 +63,10 @@ function fixture(options: {
 
   // Stub preço de venda (sem seed TabelaPreco completo neste lote).
   (runtime.orcamentoService as any).prices = {
-    resolveSalePrice: async () => ({ preco: '100.000000', tabela_preco_id: '55555555-5555-4555-8555-555555555555' }),
+    resolveSalePrice: async () => ({ preco: '100.000000', tabela_preco_id: '55555555-5555-4555-8555-555555555555', tabela_preco_codigo: 'TAB-01', tabela_preco_nome: 'Tabela sintetica' }),
   };
   (runtime.comercialSimulacaoVendaService as any).prices = {
-    resolveSalePrice: async () => ({ preco: '100.000000', tabela_preco_id: '55555555-5555-4555-8555-555555555555' }),
+    resolveSalePrice: async () => ({ preco: '100.000000', tabela_preco_id: '55555555-5555-4555-8555-555555555555', tabela_preco_codigo: 'TAB-01', tabela_preco_nome: 'Tabela sintetica' }),
   };
   (runtime.condicaoPagamentoService as any).clientes = {
     getEmpresaLinkById: async (_scope: unknown, id: string) => {

@@ -1,7 +1,8 @@
 /**
- * Política UI TabelaPreco HTTP (Onda 2) — lista/resolve nas telas canônicas.
- * Persistência canônica: `tabela_preco_id` no Pedido; preço de item no servidor.
- * Preview de preço no formulário é só em memória (sem migration de snapshot).
+ * Política UI TabelaPreco HTTP (Onda 2/3) — lista/resolve nas telas canônicas.
+ * Snapshot id+codigo+nome é persistido pelo servidor no Orçamento/Pedido (migration 031).
+ * Persistência canônica: `tabela_preco_id` + snapshots; preço de item no servidor.
+ * Preview de preço no formulário pré-save continua em memória.
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -74,6 +75,39 @@ export function applyResolvedTabelaToForm(form, resolved) {
     form: { ...base, tabela_preco_id: resolved.tabela_preco_id },
     applied: true,
   };
+}
+
+/**
+ * Preview local da tabela resolvida (pré-save) ou recarregada do documento.
+ * @param {object | null | undefined} snapshot
+ */
+export function buildTabelaSnapshotPreview(snapshot) {
+  if (!snapshot?.id && !snapshot?.tabela_preco_id) return null;
+  return {
+    id: snapshot.id || snapshot.tabela_preco_id || null,
+    codigo: snapshot.codigo || snapshot.tabela_preco_codigo_snapshot || snapshot.tabela_preco_codigo || null,
+    nome: snapshot.nome || snapshot.tabela_preco_nome_snapshot || snapshot.tabela_preco_nome || null,
+    fonte: snapshot.fonte || (snapshot.tabela_preco_codigo_snapshot || snapshot.tabela_preco_nome_snapshot ? 'persistido' : null),
+    persistido: Boolean(snapshot.tabela_preco_codigo_snapshot || snapshot.tabela_preco_nome_snapshot || snapshot.persistido),
+  };
+}
+
+/**
+ * Monta preview a partir do documento Orçamento/Pedido já gravado (reload).
+ * @param {object | null | undefined} row
+ */
+export function buildPersistedTabelaSnapshotFromRow(row) {
+  if (!row?.tabela_preco_id) return null;
+  if (!row.tabela_preco_codigo_snapshot && !row.tabela_preco_nome_snapshot) {
+    return null;
+  }
+  return buildTabelaSnapshotPreview({
+    tabela_preco_id: row.tabela_preco_id,
+    tabela_preco_codigo_snapshot: row.tabela_preco_codigo_snapshot,
+    tabela_preco_nome_snapshot: row.tabela_preco_nome_snapshot,
+    persistido: true,
+    fonte: 'persistido',
+  });
 }
 
 /**

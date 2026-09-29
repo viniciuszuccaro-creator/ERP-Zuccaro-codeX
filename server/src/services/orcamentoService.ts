@@ -28,6 +28,11 @@ import {
   applyPromocaoOnPersist,
   type ComercialPromocaoConfigPort,
 } from './comercialPromocaoPolicy.js';
+import {
+  buildTabelaPrecoDocumentoSnapshot,
+  emptyTabelaPrecoDocumentoSnapshot,
+} from './comercialTabelaSnapshot.js';
+import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -37,7 +42,12 @@ export type OrcamentoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
-  ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
+  ): Promise<{
+    preco: string;
+    tabela_preco_id?: string;
+    tabela_preco_codigo?: string;
+    tabela_preco_nome?: string;
+  } | null>;
 };
 
 export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort };
@@ -51,6 +61,8 @@ export function orcamentoAuditSnapshot(row: Orcamento) {
     condicao_pagamento_nome_snapshot: row.condicao_pagamento_nome_snapshot,
     condicao_pagamento_parcelas_snapshot: row.condicao_pagamento_parcelas_snapshot,
     tabela_preco_id: row.tabela_preco_id,
+    tabela_preco_codigo_snapshot: row.tabela_preco_codigo_snapshot,
+    tabela_preco_nome_snapshot: row.tabela_preco_nome_snapshot,
     promocao_aplicada: row.promocao_aplicada,
     promocao_bps: row.promocao_bps,
     promocao_cupom: row.promocao_cupom,
@@ -77,6 +89,8 @@ export class OrcamentoService {
     private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
     /** Opcional: config de promoção; ausente = fail-closed se payload pedir promoção. */
     private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
+    /** Lookup TabelaPreco para snapshot codigo+nome quando o price port não ecoar. */
+    private readonly tabelas: Pick<TabelaPrecoRepository, 'get'> | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -185,9 +199,15 @@ export class OrcamentoService {
    * Política Onda 2: preço unitário vem do servidor (ClienteEmpresa → tabela).
    * Payload do cliente não é autoridade; cancelados não passam por aqui (requireOpen).
    */
-  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate & { tabela_preco_id?: string | null }> {
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate & {
+    tabela_preco_id?: string | null;
+    tabela_preco_codigo_snapshot?: string | null;
+    tabela_preco_nome_snapshot?: string | null;
+  }> {
     const itens = [];
     let tabelaId: string | null | undefined;
+    let tabelaCodigo: string | null | undefined;
+    let tabelaNome: string | null | undefined;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -200,19 +220,51 @@ export class OrcamentoService {
           unidade_id: item.unidade_id,
         });
       }
-      if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
+      if (!tabelaId && resolved.tabela_preco_id) {
+        tabelaId = resolved.tabela_preco_id;
+        tabelaCodigo = resolved.tabela_preco_codigo ?? null;
+        tabelaNome = resolved.tabela_preco_nome ?? null;
+      }
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
-    return { ...data, tabela_preco_id: tabelaId ?? null, itens };
+    const fromPrice = tabelaId
+      ? (
+        tabelaCodigo && tabelaNome
+          ? buildTabelaPrecoDocumentoSnapshot(
+            { id: tabelaId, codigo: tabelaCodigo, nome: tabelaNome, ativo: true },
+            'ORCAMENTO',
+          )
+          : null
+      )
+      : emptyTabelaPrecoDocumentoSnapshot();
+    // Se o price port não ecoou codigo/nome, tenta lookup (fail-closed se ainda faltar).
+    let tabelaSnap = fromPrice;
+    if (tabelaId && !tabelaSnap) {
+      if (!this.tabelas) {
+        throw new AppError(422, 'ORCAMENTO_TABELA_SNAPSHOT_INVALIDO', 'TabelaPreco missing codigo/nome for snapshot');
+      }
+      const tabela = await this.tabelas.get({ groupId: ctx.groupId, empresaId: ctx.empresaId }, tabelaId);
+      tabelaSnap = buildTabelaPrecoDocumentoSnapshot(tabela, 'ORCAMENTO');
+    }
+    return {
+      ...data,
+      tabela_preco_id: tabelaId ?? null,
+      ...(tabelaSnap ?? emptyTabelaPrecoDocumentoSnapshot()),
+      itens,
+    };
   }
 
   /**
-   * Snapshot de condição (id+codigo+nome+parcelas) + promoção aplicada no servidor.
+   * Snapshot de condição (id+codigo+nome+parcelas) + tabela (codigo+nome) + promoção no servidor.
    * Payload `promocao` declara intenção; desconto/total vêm de applyPromocaoOnPersist (idempotente com UI pós-simular).
    */
   private async applyCondicaoSnapshot(
     scope: OrcamentoScope,
-    data: OrcamentoCreate & { tabela_preco_id?: string | null },
+    data: OrcamentoCreate & {
+      tabela_preco_id?: string | null;
+      tabela_preco_codigo_snapshot?: string | null;
+      tabela_preco_nome_snapshot?: string | null;
+    },
     executor?: DbQueryExecutor,
   ): Promise<OrcamentoWrite> {
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
@@ -229,11 +281,26 @@ export class OrcamentoService {
       config: cfg,
       items: data.itens,
     });
+    let tabelaSnap = emptyTabelaPrecoDocumentoSnapshot();
+    if (data.tabela_preco_id) {
+      if (data.tabela_preco_codigo_snapshot && data.tabela_preco_nome_snapshot) {
+        tabelaSnap = {
+          tabela_preco_codigo_snapshot: data.tabela_preco_codigo_snapshot,
+          tabela_preco_nome_snapshot: data.tabela_preco_nome_snapshot,
+        };
+      } else if (this.tabelas) {
+        const tabela = await this.tabelas.get(scope, data.tabela_preco_id, executor);
+        tabelaSnap = buildTabelaPrecoDocumentoSnapshot(tabela, 'ORCAMENTO');
+      } else {
+        throw new AppError(422, 'ORCAMENTO_TABELA_SNAPSHOT_INVALIDO', 'TabelaPreco missing codigo/nome for snapshot');
+      }
+    }
     return {
       ...rest,
       itens: promo.items,
       tabela_preco_id: data.tabela_preco_id ?? null,
       ...snapshot,
+      ...tabelaSnap,
       ...promo.snapshot,
     };
   }

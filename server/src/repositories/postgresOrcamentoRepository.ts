@@ -16,6 +16,8 @@ const map = (r: Row): Orcamento => ({
   total: String(r.total),
   observacoes: r.observacoes == null ? null : String(r.observacoes),
   tabela_preco_id: r.tabela_preco_id == null ? null : String(r.tabela_preco_id),
+  tabela_preco_codigo_snapshot: r.tabela_preco_codigo_snapshot == null ? null : String(r.tabela_preco_codigo_snapshot),
+  tabela_preco_nome_snapshot: r.tabela_preco_nome_snapshot == null ? null : String(r.tabela_preco_nome_snapshot),
   condicao_pagamento_codigo_snapshot: r.condicao_pagamento_codigo_snapshot == null ? null : String(r.condicao_pagamento_codigo_snapshot),
   condicao_pagamento_nome_snapshot: r.condicao_pagamento_nome_snapshot == null ? null : String(r.condicao_pagamento_nome_snapshot),
   condicao_pagamento_parcelas_snapshot: mapParcelasSnapshotFromJson(r.condicao_pagamento_parcelas_snapshot),
@@ -75,13 +77,15 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
         `INSERT INTO orcamentos(
           group_id,empresa_id,numero,cliente_empresa_id,condicao_pagamento_id,
           condicao_pagamento_codigo_snapshot,condicao_pagamento_nome_snapshot,condicao_pagamento_parcelas_snapshot,
-          tabela_preco_id,promocao_aplicada,promocao_bps,promocao_cupom,validade_em,observacoes,subtotal,desconto,total
-        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
+          tabela_preco_id,tabela_preco_codigo_snapshot,tabela_preco_nome_snapshot,
+          promocao_aplicada,promocao_bps,promocao_cupom,validade_em,observacoes,subtotal,desconto,total
+        ) VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING id`,
         [
           s.groupId, s.empresaId, numero, d.cliente_empresa_id, d.condicao_pagamento_id,
           d.condicao_pagamento_codigo_snapshot, d.condicao_pagamento_nome_snapshot,
           JSON.stringify(d.condicao_pagamento_parcelas_snapshot),
-          d.tabela_preco_id ?? null, Boolean(d.promocao_aplicada), d.promocao_bps ?? null, d.promocao_cupom ?? null,
+          d.tabela_preco_id ?? null, d.tabela_preco_codigo_snapshot ?? null, d.tabela_preco_nome_snapshot ?? null,
+          Boolean(d.promocao_aplicada), d.promocao_bps ?? null, d.promocao_cupom ?? null,
           d.validade_em, d.observacoes ?? null, t.subtotal, t.desconto, t.total,
         ],
       );
@@ -99,14 +103,16 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
         `UPDATE orcamentos SET
           cliente_empresa_id=$4,condicao_pagamento_id=$5,
           condicao_pagamento_codigo_snapshot=$6,condicao_pagamento_nome_snapshot=$7,condicao_pagamento_parcelas_snapshot=$8::jsonb,
-          tabela_preco_id=$9,promocao_aplicada=$10,promocao_bps=$11,promocao_cupom=$12,
-          validade_em=$13,observacoes=$14,subtotal=$15,desconto=$16,total=$17
+          tabela_preco_id=$9,tabela_preco_codigo_snapshot=$10,tabela_preco_nome_snapshot=$11,
+          promocao_aplicada=$12,promocao_bps=$13,promocao_cupom=$14,
+          validade_em=$15,observacoes=$16,subtotal=$17,desconto=$18,total=$19
          WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
         [
           id, s.groupId, s.empresaId, d.cliente_empresa_id, d.condicao_pagamento_id,
           d.condicao_pagamento_codigo_snapshot, d.condicao_pagamento_nome_snapshot,
           JSON.stringify(d.condicao_pagamento_parcelas_snapshot),
-          d.tabela_preco_id ?? null, Boolean(d.promocao_aplicada), d.promocao_bps ?? null, d.promocao_cupom ?? null,
+          d.tabela_preco_id ?? null, d.tabela_preco_codigo_snapshot ?? null, d.tabela_preco_nome_snapshot ?? null,
+          Boolean(d.promocao_aplicada), d.promocao_bps ?? null, d.promocao_cupom ?? null,
           d.validade_em, d.observacoes ?? null, t.subtotal, t.desconto, t.total,
         ],
       );

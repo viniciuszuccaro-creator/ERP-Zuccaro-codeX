@@ -4,7 +4,7 @@ import type { CondicaoPagamentoParcelaSnapshot } from '../services/comercialCond
 
 const money=z.string().regex(/^\d+(\.\d{1,6})?$/).transform(v=>v.includes('.')?`${v.split('.')[0]}.${(v.split('.')[1]+'000000').slice(0,6)}`:`${v}.000000`);
 export const orcamentoItemSchema=z.object({produto_id:z.string().uuid(),unidade_id:z.string().uuid(),descricao:z.string().trim().min(1).max(240),unidade_sigla:z.string().trim().min(1).max(12),quantidade:money,preco_unitario:money,desconto:money.optional()}).strict();
-/** Payload do cliente — snapshots de condição/promoção são autoridade do servidor. */
+/** Payload do cliente — snapshots de condição/promoção/tabela são autoridade do servidor. */
 export const orcamentoPromocaoSchema=z.object({bps:z.number().int().positive().max(10000),cupom:z.string().trim().max(64).optional()}).strict();
 export const orcamentoCreateSchema=z.object({cliente_empresa_id:z.string().uuid(),condicao_pagamento_id:z.string().uuid(),validade_em:z.string().datetime(),observacoes:z.string().trim().max(1000).optional(),promocao:orcamentoPromocaoSchema.optional(),itens:z.array(orcamentoItemSchema).min(1).max(1000)}).strict();
 export type OrcamentoCreate=z.infer<typeof orcamentoCreateSchema>;
@@ -14,6 +14,8 @@ export type OrcamentoWrite = Omit<OrcamentoCreate, 'promocao'> & {
   condicao_pagamento_nome_snapshot: string;
   condicao_pagamento_parcelas_snapshot: CondicaoPagamentoParcelaSnapshot[];
   tabela_preco_id?: string | null;
+  tabela_preco_codigo_snapshot: string | null;
+  tabela_preco_nome_snapshot: string | null;
   promocao_aplicada: boolean;
   promocao_bps: number | null;
   promocao_cupom: string | null;
@@ -30,6 +32,8 @@ export type Orcamento={
   condicao_pagamento_nome_snapshot:string|null;
   condicao_pagamento_parcelas_snapshot:CondicaoPagamentoParcelaSnapshot[]|null;
   tabela_preco_id:string|null;
+  tabela_preco_codigo_snapshot:string|null;
+  tabela_preco_nome_snapshot:string|null;
   promocao_aplicada:boolean;
   promocao_bps:number|null;
   promocao_cupom:string|null;

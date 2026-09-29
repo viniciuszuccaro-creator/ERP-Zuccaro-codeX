@@ -7,6 +7,8 @@ import {
   assertPrecoResolucaoNoContexto,
   canLoadTabelasPrecoHttp,
   normalizeTabelasListPayload,
+  buildPersistedTabelaSnapshotFromRow,
+  buildTabelaSnapshotPreview,
 } from '../src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js';
 
 const GROUP = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -100,4 +102,26 @@ test('assertPrecoResolucaoNoContexto bloqueia cross-group e aceita null', () => 
     { groupId: GROUP, empresaId: EMPRESA },
   );
   assert.equal(ok.tabela_preco_id, TABELA);
+});
+
+test('buildPersistedTabelaSnapshotFromRow recarrega codigo+nome do documento', () => {
+  assert.equal(buildPersistedTabelaSnapshotFromRow(null), null);
+  assert.equal(buildPersistedTabelaSnapshotFromRow({ tabela_preco_id: TABELA }), null);
+  const preview = buildPersistedTabelaSnapshotFromRow({
+    tabela_preco_id: TABELA,
+    tabela_preco_codigo_snapshot: '000010',
+    tabela_preco_nome_snapshot: 'Atacado',
+  });
+  assert.equal(preview.id, TABELA);
+  assert.equal(preview.codigo, '000010');
+  assert.equal(preview.nome, 'Atacado');
+  assert.equal(preview.persistido, true);
+  assert.equal(
+    buildTabelaSnapshotPreview({
+      tabela_preco_id: TABELA,
+      tabela_preco_codigo: 'X',
+      tabela_preco_nome: 'Y',
+    }).codigo,
+    'X',
+  );
 });
