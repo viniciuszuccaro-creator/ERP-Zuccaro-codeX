@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { avaliarEscopoStagingLegado, prepararLoteStagingLegado, reconciliarEscoposStaging } from '../scripts/legado/staging-scope-gate.mjs';
+import { avaliarEscopoStagingLegado, prepararLoteStagingLegado, reconciliarEscoposStaging, reconciliarPlanoStagingLegado } from '../scripts/legado/staging-scope-gate.mjs';
 
 const vinculos = { '001': { groupId: 'g1', empresaId: 'e1', comprovado: true } };
 
@@ -129,4 +129,117 @@ test('retry entre lotes reutiliza staging existente sem nova linha nem misturar 
     /Indice de staging existente/);
   assert.throws(() => prepararLoteStagingLegado([base], { ...opts, existentes: [{ ...base, empresaId: '   ' }] }),
     /Indice de staging existente/);
+});
+
+const planoBase = {
+  groupId: 'g1', autorizado: true, vinculosVerificados: vinculos,
+  contagensEsperadas: [
+    { entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 1 },
+    { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 1 },
+  ],
+};
+const cliente = { entidade: 'cliente', groupId: 'g1', codigoLegado: 'CLI-S1', assinaturaOrigem: 'a'.repeat(64) };
+const pedido = { entidade: 'pedido', groupId: 'g1', empresaId: 'e1', codigoEmpresaLegado: '001',
+  codigoLegado: 'PED-S1', assinaturaOrigem: 'b'.repeat(64),
+  dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1', escopo: 'grupo' }] };
+
+test('plano reconcilia mestre do Grupo e pedido da Empresa sem copiar operacao ao Grupo', () => {
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedido] });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.privados.length, 2);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 1, 'pedido|001': 1 });
+  assert.equal(result.relatorio.dependenciasPendentes, 0);
+  assert.equal(result.relatorio.divergencias, 0);
+});
+
+test('plano bloqueia dependencia ausente, cross-empresa e divergencia sem entregar lote parcial', () => {
+  const missing = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente,
+    { ...pedido, dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-OUTRO', escopo: 'grupo' }] }] });
+  assert.equal(missing.bloqueado, true);
+  assert.deepEqual(missing.privados, []);
+  assert.equal(missing.relatorio.dependenciasPendentes, 1);
+  const cross = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente,
+    { ...pedido, dependencias: [{ entidade: 'pedido', codigoLegado: 'PED-E2', escopo: 'empresa' }] }],
+  existentes: [{ entidade: 'pedido', groupId: 'g1', empresaId: 'e2', codigoLegado: 'PED-E2', assinaturaOrigem: 'c'.repeat(64) }] });
+  assert.equal(cross.bloqueado, true);
+  assert.equal(cross.relatorio.dependenciasPendentes, 1);
+  const diverge = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedido],
+    contagensEsperadas: [{ entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
+  assert.equal(diverge.bloqueado, true);
+  assert.deepEqual(diverge.privados, []);
+  assert.equal(diverge.relatorio.divergencias, 2);
+});
+
+test('plano rejeita grupo misturado e contagem duplicada antes de reportar dados', () => {
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase,
+    itens: [cliente, { ...pedido, groupId: 'g2' }] }), /mistura Grupos/);
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedido],
+    contagensEsperadas: [...planoBase.contagensEsperadas, planoBase.contagensEsperadas[0]] }), /Contagens esperadas/);
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedido],
+    contagensEsperadas: [{ entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: '1' }] }), /Contagens esperadas/);
+});
+
+test('retry do mestre em staging existente nao cria segundo registro e mantem dependencia', () => {
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedido], existentes: [cliente] });
+  assert.equal(result.bloqueado, false);
+  assert.equal(result.relatorio.reusos, 1);
+  assert.equal(result.relatorio.aptos, 1);
+  assert.equal(result.privados.length, 1);
+  assert.equal(result.privados[0].entidade, 'pedido');
+});
+
+test('empresa 002 usa vinculo proprio e nao compartilha operacao com 001', () => {
+  const empresa2 = { ...pedido, empresaId: 'e2', codigoEmpresaLegado: '002',
+    dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1', escopo: 'grupo' }] };
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, empresa2],
+    vinculosVerificados: { ...vinculos, '002': { groupId: 'g1', empresaId: 'e2', comprovado: true } },
+    contagensEsperadas: [planoBase.contagensEsperadas[0], { entidade: 'pedido', codigoEmpresaLegado: '002', quantidade: 1 }] });
+  assert.equal(result.bloqueado, false);
+  assert.deepEqual(result.relatorio.porEntidadeEmpresaOrigem, { 'cliente|grupo': 1, 'pedido|002': 1 });
+});
+
+test('dependencia circular entre operacoes nao avanca o lote', () => {
+  const pedidoA = { ...pedido, codigoLegado: 'PED-A', dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-B', escopo: 'empresa' }] };
+  const pedidoB = { ...pedido, codigoLegado: 'PED-B', assinaturaOrigem: 'c'.repeat(64), dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-A', escopo: 'empresa' }] };
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, pedidoA, pedidoB],
+    contagensEsperadas: [planoBase.contagensEsperadas[0],
+      { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.dependenciasCiclicas, 2);
+  assert.equal(result.relatorio.porMotivo.dependencia_ciclica, 1);
+});
+
+test('ciclo entre novo pedido e retry do indice bloqueia o lote', () => {
+  const novo = { ...pedido, codigoLegado: 'PED-A', dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-B', escopo: 'empresa' }] };
+  const retry = { ...pedido, codigoLegado: 'PED-B', assinaturaOrigem: 'c'.repeat(64), dependencias: [
+    { entidade: 'pedido', codigoLegado: 'PED-A', escopo: 'empresa' }] };
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, novo, retry],
+    existentes: [retry], contagensEsperadas: [planoBase.contagensEsperadas[0],
+      { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 2 }] });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.dependenciasCiclicas, 2);
+});
+
+test('getter no retry nao pode contaminar contagem agregada', () => {
+  let lido = false;
+  const retry = { ...cliente };
+  Object.defineProperty(retry, 'entidade', { enumerable: true, get() { lido = true; return 'DOC-PRIVADO'; } });
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, retry, pedido],
+    contagensEsperadas: [
+      { entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 2 },
+      planoBase.contagensEsperadas[1],
+    ] }), /JSON simples/);
+  assert.equal(lido, false);
+});
+
+test('dependencia com empresa contraditoria ou campo privado e recusada antes da entrega', () => {
+  const contraditorio = { ...pedido, dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1',
+    escopo: 'grupo', empresaId: 'e2', documento: 'DOC-PRIVADO' }] };
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente, contraditorio] }),
+    /campos nao permitidos/);
 });
