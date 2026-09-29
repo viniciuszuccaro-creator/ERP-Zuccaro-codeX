@@ -1,3 +1,20 @@
+## LOTE CURSOR — Pedido/Orçamento resumo texto fail-closed (pós-#146) (2026-09-29T18:29Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** resumo texto Pedido/Orçamento + snapshots fail-closed (painel/janela; sem PDF novo) |
+| Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Base | `#146` tip `c1fdf63d` (`cursor/comercial360-onda3-tenant-cache-392b`) |
+| Tip | _(pendente commit)_ |
+| Draft PR | _(pendente)_ |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
+| Meta | `textoResumoPreviewFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | margem #47; anexos/PDF #52–#62; stack #126–#146 |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## LOTE CURSOR — tenant cache fail-closed (pós-#145) (2026-09-29T18:30Z)
 
 | Campo | Valor |
