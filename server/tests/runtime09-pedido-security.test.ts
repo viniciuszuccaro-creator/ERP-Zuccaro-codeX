@@ -177,6 +177,17 @@ test('Pedido cancel bloqueia ja cancelado e repeticao nao muda estado', async ()
   assert.equal((await service.get(ctx, created.id)).status, 'CANCELADO');
 });
 
+test('Pedido update bloqueado quando CANCELADO (simetria cancel)', async () => {
+  const { service } = serviceFor();
+  const created = await service.create(ctx, payload);
+  await service.cancel(ctx, created.id, 'Cancela antes do update');
+  await assert.rejects(service.update(ctx, created.id, payload), (error: any) =>
+    error.statusCode === 409 && error.code === 'PEDIDO_STATE_CONFLICT');
+  const persisted = await service.get(ctx, created.id);
+  assert.equal(persisted.status, 'CANCELADO');
+  assert.equal(persisted.total, created.total);
+});
+
 test('RBAC separa editar e cancelar Pedido e nao aceita wildcard global', async () => {
   const repo = new TrackingRepo();
   const created = await repo.create({ groupId, empresaId }, {

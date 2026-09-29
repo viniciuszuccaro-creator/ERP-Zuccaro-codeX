@@ -1,3 +1,60 @@
+## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `3880793b` (`3880793be2e741e2320fd25469d3c59ce3b7063f`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Base | `#135` `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Draft PR | **#136** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/136 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-list-failclosed-392b` |
+
+---
+
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
+
+## LOTE CURSOR — List fail-closed HTTP + update CANCELADO (pós-#135) (2026-09-29T17:05Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **A** (+ **C**) — Pedido/Orçamento list empty-state HTTP fail-closed (403/5xx ≠ silent empty); queryKey groupId+empresaId; update bloqueado quando CANCELADO; observacoes sanitizadas no write; sem migration |
+| Implementado | **SIM** — `comercialListHttpUiPolicy`; painéis canônicos; schemas observacoes; meta `listFailClosed` / `updateBlockedWhenCancelled`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — comercial-list-http-ui-policy + UI pedido/orc 23/23; runtime09 security+http 10/10; 08c http 6/6; runtime07b 13/13; `server:typecheck` PASS; `git diff --check` PASS |
+| CI | tip `3880793b` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#135` tip `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Draft PR | **BLOCKED** — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + listFailClosed / updateBlockedWhenCancelled / cancel+convert flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
+
+### Arquivos (Cursor — lote pós-#135)
+
+- `src/components/comercial/comercialListHttpUiPolicy.js` (extração: resolveHttpListViewState / formatComercialHttpError / sanitizeObservacoesText)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` / `OrcamentosTab.jsx`
+- `src/components/comercial/pedidoUiPolicy.js` / `orcamentoUiPolicy.js`
+- `server/src/repositories/pedidoTypes.ts` / `orcamentoTypes.ts` / `pedidoService.ts` (conversion observacoes)
+- `server/src/api/router.ts` (meta + note)
+- `tests/comercial-list-http-ui-policy.test.js` + ajustes UI policy
+- `server/tests/runtime09-pedido-security.test.ts` / `runtime09-pedido-http.test.ts` / `runtime08c-orcamento-http.test.ts` / `runtime07b.test.ts`
+
+### Escopo
+
+- Listagem HTTP: `isError` → erro + retry; nunca empty em 403/5xx/rede; masters.isError banner; queryKey com groupId+empresaId.
+- Pedido update após CANCELADO → 409 `PEDIDO_STATE_CONFLICT` (simetria cancel).
+- Observações: strip controles/`<>`/javascript no payload UI e Zod write.
+- Sem migration; sem Codex/#104/#48; sem merge/VPS.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 (anexos/PDF/versão se 032+ ou sem migration); sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #134 → #135 → **este lote**.
+
+---
+
 ## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
 
 | Etapa | Estado |

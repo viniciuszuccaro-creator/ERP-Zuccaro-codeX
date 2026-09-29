@@ -173,6 +173,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     simularPersistFailClosed: true,
     validadeFailClosed: true,
     convertSnapshotFailClosed: true,
+    listFailClosed: true,
+    observacoesSanitized: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.equal(result.body.pedido.backendHttp, true);
@@ -183,7 +185,11 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.convertValidadeFailClosed, true);
   assert.equal(result.body.pedido.convertSnapshotFailClosed, true);
   assert.equal(result.body.pedido.cancelByState, true);
+  assert.equal(result.body.pedido.listFailClosed, true);
+  assert.equal(result.body.pedido.observacoesSanitized, true);
+  assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
   assert.match(result.body.note, /Pedido cancel fail-closed/);
+  assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
   assert.equal(result.body.comercialSimulacao.persistOnWrite, true);
   assert.match(result.body.note, /desconto\/total aplicados no servidor \(simular-venda\)/);
   assert.match(result.body.note, /snapshot de TabelaPreco/);

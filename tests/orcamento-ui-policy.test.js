@@ -124,6 +124,7 @@ test('hint de convert snapshot incompleto (pós-031) no UI policy', () => {
 
 test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por empresa', async () => {
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const listPolicy = await readFile(new URL('../src/components/comercial/comercialListHttpUiPolicy.js', import.meta.url), 'utf8');
   assert.match(tab, /Carregando orçamentos/);
   assert.match(tab, /Nenhum orçamento encontrado para os filtros desta empresa/);
   assert.match(tab, /Pesquisar número/);
@@ -138,7 +139,8 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /\[groupId, empresaId\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
   assert.match(tab, /orcamentoValidadeHint|Comercial\.orcamento\.validade-hint/);
-  assert.match(tab, /ORCAMENTO_VALIDADE_EXPIRADA/);
+  assert.match(listPolicy, /ORCAMENTO_VALIDADE_EXPIRADA/);
+  assert.match(tab, /formatComercialHttpError|resolveHttpListViewState/);
   assert.match(tab, /isOrcamentoValidadeExpirada/);
   assert.match(tab, /orcamentoConvertSnapshotHint|Comercial\.orcamento\.convert-snapshot-hint/);
 });

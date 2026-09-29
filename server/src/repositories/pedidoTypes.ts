@@ -16,6 +16,18 @@ export const pedidoPromocaoSchema = z.object({
   cupom: z.string().trim().max(64).optional(),
 }).strict();
 
+/** Observações livres: remove controles/markup perigoso (paridade Orçamento). */
+const cleanObservacoes = (value: string) => value
+  .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  .replace(/[<>]/g, '')
+  .replace(/javascript:\s*/gi, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+const observacoesField = z.string().trim().max(1000).transform((value) => {
+  const cleaned = cleanObservacoes(value);
+  return cleaned || undefined;
+}).optional();
+
 export const pedidoCreateSchema = z.object({
   cliente_empresa_id: z.string().uuid(),
   cliente_local_id: z.string().uuid().nullable().optional(),
@@ -25,7 +37,7 @@ export const pedidoCreateSchema = z.object({
   orcamento_id: z.string().uuid().nullable().optional(),
   tipo_operacao: z.enum(PEDIDO_TIPOS_OPERACAO),
   data_entrega_solicitada: z.string().datetime(),
-  observacoes: z.string().trim().max(1000).optional(),
+  observacoes: observacoesField,
   promocao: pedidoPromocaoSchema.optional(),
   itens: z.array(pedidoItemSchema).min(1).max(1000),
 }).strict();

@@ -1,3 +1,5 @@
+import { sanitizeObservacoesText } from './comercialListHttpUiPolicy.js';
+
 const MICROS = 1_000_000n;
 
 export function decimalToMicros(value) {
@@ -99,12 +101,13 @@ export function buildOrcamentoPayload(form, options = {}) {
   }
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
+  const observacoes = sanitizeObservacoesText(form.observacoes);
   /** @type {Record<string, unknown>} */
   const payload = {
     cliente_empresa_id: form.cliente_empresa_id,
     condicao_pagamento_id: form.condicao_pagamento_id,
     validade_em: new Date(`${form.validade_em}T12:00:00`).toISOString(),
-    observacoes: String(form.observacoes || '').trim() || undefined,
+    observacoes: observacoes || undefined,
     itens: form.itens.map((item) => ({
       produto_id: item.produto_id,
       unidade_id: item.unidade_id,

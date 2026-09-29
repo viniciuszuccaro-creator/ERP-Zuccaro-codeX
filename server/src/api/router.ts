@@ -1243,7 +1243,7 @@ export function createApiRouter(deps: ApiDeps) {
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Produto frontendHttp piloto ativo (list/get Comercial); ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas), snapshot de TabelaPreco (codigo+nome), refs de promocao e desconto/total aplicados no servidor (simular-venda); Orcamento validade_em fail-closed em create/update/convert; conversao Orçamento→Pedido copia/verifica snapshots fail-closed (pós-031); Pedido cancel fail-closed (RBAC cancelar + estado EM_ABERTO + auditoria before/after); Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'Produto frontendHttp piloto ativo (list/get Comercial); ClienteLocal e Obra frontendHttp nested ativos; ClienteEmpresa frontendHttp list-for-scope ativo; Cliente frontendHttp ativo no piloto Onda 3; CondicaoPagamento e TabelaPreco frontendHttp ativos; Orcamento/Pedido persistem snapshot de CondicaoPagamento (codigo+nome+parcelas), snapshot de TabelaPreco (codigo+nome), refs de promocao e desconto/total aplicados no servidor (simular-venda); Orcamento validade_em fail-closed em create/update/convert; conversao Orçamento→Pedido copia/verifica snapshots fail-closed (pós-031); Pedido cancel fail-closed (RBAC cancelar + estado EM_ABERTO + auditoria before/after); listagem Orçamento/Pedido HTTP fail-closed (403/5xx ≠ empty-state; queryKey groupId+empresaId); observacoes sanitizadas no write; Pedido update bloqueado quando CANCELADO; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1327,6 +1327,8 @@ export function createApiRouter(deps: ApiDeps) {
         simularPersistFailClosed: true,
         validadeFailClosed: true,
         convertSnapshotFailClosed: true,
+        listFailClosed: true,
+        observacoesSanitized: true,
       },
       pedido: {
         backendHttp: true,
@@ -1345,6 +1347,9 @@ export function createApiRouter(deps: ApiDeps) {
         simularPersistFailClosed: true,
         convertValidadeFailClosed: true,
         convertSnapshotFailClosed: true,
+        listFailClosed: true,
+        observacoesSanitized: true,
+        updateBlockedWhenCancelled: true,
       },
     });
   });

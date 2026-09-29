@@ -1,3 +1,31 @@
+## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | `3880793b` (`3880793be2e741e2320fd25469d3c59ce3b7063f`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Base | `#135` `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Draft PR | **#136** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/136 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-list-failclosed-392b` |
+
+---
+
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
+
+## OPINIÃO CURSOR — #135 tip + list fail-closed A+C (pós-#135) (2026-09-29T17:05Z)
+
+| PR | Tip / Branch | CI | Escopo |
+| --- | --- | --- | --- |
+| #134 | `fa362ff0` | **SUCCESS** | Convert snapshots fail-closed |
+| #135 | `5b559c9a` | pendente | Pedido cancel fail-closed |
+| este | `cursor/comercial360-onda3-list-failclosed-392b` | pendente | List HTTP fail-closed + update CANCELADO |
+
+Próximo após este: Onda 4 slice **sem** 025–028. Sem merge/VPS. Sem Codex/#104/#48.
+
+---
+
 ## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
 
 | Campo | Valor |
