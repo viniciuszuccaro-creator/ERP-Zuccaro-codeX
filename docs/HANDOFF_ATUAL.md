@@ -7,8 +7,8 @@
 | Base | `#131` tip `1682f686` (`cursor/comercial360-onda3-tabela-snapshot-392b`) |
 | Escopo | sem migration; policy + UI hint; meta `validadeFailClosed`; note preserva `Pedido backend HTTP is active` |
 | Testes | validade 8/8 + UI 10/10 + regressões 35/35; typecheck PASS |
-| Tip | `53aeda8d` |
-| Draft PR | ManagePullRequest indisponível; `gh` createPullRequest tipicamente 403 |
+| Tip | `f20d7ad7` (feat `53aeda8d`) |
+| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
 | Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
 | Próximo | Onda 4 sem colisão 025–028 **ou** harden convert snapshot legado |
