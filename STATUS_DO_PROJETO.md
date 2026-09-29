@@ -4,7 +4,7 @@
 | --- | --- |
 | Implementado | **SIM** — resolve fail-closed + schedule parcelas + promo cupom + `POST /api/v1/comercial/simular-venda` |
 | Testado | **SIM** — 13/13 (`comercial-onda2-condicao-promocao-parcelas` + `comercial-onda2-simular-venda-http`) + regressão avista/preço/R08 |
-| CI | pendente no HEAD desta PR |
+| CI | **SIM** @ `2ef5ca86` frontend+backend SUCCESS (`36574117990`) |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 
