@@ -4,14 +4,17 @@ import test from 'node:test';
 
 import {
   applySimulacaoToForm,
+  assertParcelaScheduleFromSimulacao,
   assertPromocaoAplicadaOuFalhar,
   assertSimulacaoNoContexto,
+  buildCondicaoParcelaTemplatePreview,
   buildSimularVendaPayload,
   buildSimulacaoPreviewState,
   canSimularVenda,
   formatParcelasSchedule,
   mergeSimulacaoBeforeSave,
   resolveDisplayTotals,
+  resolveParcelaScheduleUiState,
 } from '../src/components/comercial/comercialSimulacaoUiPolicy.js';
 
 const GROUP_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -147,6 +150,58 @@ test('agenda de parcelas e preview UI', () => {
   assert.equal(preview.parcelas.length, 1);
   assert.match(preview.parcelas[0].label, /30d/);
   assert.deepEqual(formatParcelasSchedule([]), []);
+});
+
+test('parcela schedule fail-closed: simulação sem agenda completa rejeita', () => {
+  assert.throws(() => assertParcelaScheduleFromSimulacao(simulationA({ parcelas: [] })), /ausente/i);
+  assert.throws(() => assertParcelaScheduleFromSimulacao(simulationA({ parcelas: null })), /ausente|sem agenda/i);
+  assert.throws(
+    () => assertParcelaScheduleFromSimulacao(simulationA({
+      parcelas: [{ ordem: 1, dias: 30, percentual: '100.000000', valor: '195.000000', vencimento: '14/11/2026' }],
+    })),
+    /vencimento/i,
+  );
+  assert.throws(() => buildSimulacaoPreviewState(simulationA({ parcelas: [] })), /ausente/i);
+  const ok = assertParcelaScheduleFromSimulacao(simulationA());
+  assert.equal(ok[0].valor, '195.000000');
+});
+
+test('resolveParcelaScheduleUiState: server > template > missing', () => {
+  const serverPreview = buildSimulacaoPreviewState(simulationA());
+  const serverState = resolveParcelaScheduleUiState({ simulacaoPreview: serverPreview, condicaoSnapshot: null });
+  assert.equal(serverState.mode, 'server');
+  assert.equal(serverState.parcelas.length, 1);
+
+  const missing = resolveParcelaScheduleUiState({
+    simulacaoPreview: { ...serverPreview, parcelas: [] },
+    condicaoSnapshot: { parcelas: [{ ordem: 1, dias: 0, percentual: '100' }] },
+  });
+  assert.equal(missing.mode, 'missing');
+
+  const template = buildCondicaoParcelaTemplatePreview({
+    parcelas: [{ ordem: 1, dias: 30, percentual: '100.000000' }],
+  });
+  assert.equal(template.mode, 'template');
+  assert.match(template.hint, /Simular venda/i);
+  const templateState = resolveParcelaScheduleUiState({
+    simulacaoPreview: null,
+    condicaoSnapshot: { parcelas: [{ ordem: 1, dias: 30, percentual: '100.000000' }] },
+  });
+  assert.equal(templateState.mode, 'template');
+  assert.equal(resolveParcelaScheduleUiState({}).mode, 'none');
+});
+
+test('Orçamento e Pedido exibem agenda fail-closed e template pós-condição', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(orc, /assertParcelaScheduleFromSimulacao/);
+  assert.match(orc, /resolveParcelaScheduleUiState/);
+  assert.match(orc, /orcamento-parcela-schedule-preview/);
+  assert.match(orc, /orcamento-parcela-template-hint/);
+  assert.match(ped, /assertParcelaScheduleFromSimulacao/);
+  assert.match(ped, /resolveParcelaScheduleUiState/);
+  assert.match(ped, /pedido-parcela-schedule-preview/);
+  assert.match(ped, /pedido-parcela-template-hint/);
 });
 
 test('totais: prioriza preview do servidor; rascunho local sem inventar persistência', () => {

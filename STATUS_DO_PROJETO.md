@@ -1,3 +1,24 @@
+## LOTE CURSOR — parcela schedule preview fail-closed (pós-#140) (2026-09-29T17:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Parcela schedule preview UI após simular-venda / resolução de condição |
+| Branch | `cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Base | `origin/cursor/comercial360-onda3-masters-banner-392b` tip `f5009c7c` (#140) |
+| Tip | `ad927286` (`ad927286f533379abd7c7aa5abe70a2ac4354193`) — docs tip `bc5c4595`+ |
+| Draft PR | **#142** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/142 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Escopo | Agenda read-only do servidor (ordem/dias/%/valor/vencimento) após simular; template #/dias/% pós-condição; fail-closed se agenda ausente/inválida; reusa `comercialParcelaSchedulePolicy` via resposta simular; `OrcamentosTab` + `PedidoCanonicoPanel`; sem migration |
+| Meta | `parcelaSchedulePreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-simulacao-ui-policy 15/15; orcamento+pedido UI 32/32; list-http-ui 8/8; runtime07b 13/13; runtime08c+09 10/10; `git diff --check` PASS |
+| Colisão | B convert UX já em #133/#134; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
+
+Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`.
+
+---
+
 ## LOTE CURSOR — masters picker loading/error banner fail-closed (pós-#139) (2026-09-29T17:35Z)
 
 | Campo | Valor |
