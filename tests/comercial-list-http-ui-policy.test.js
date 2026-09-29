@@ -40,6 +40,12 @@ import {
   buildItemLineHintId,
   buildItemLineFieldA11y,
   comercialActionAriaLabel,
+  isComercialFormDirtyForAbandon,
+  comercialFormAbandonMessage,
+  confirmComercialFormAbandon,
+  resolveComercialFormDialogOpenChange,
+  createComercialFormBeforeUnloadHandler,
+  bindComercialFormBeforeUnload,
 } from '../src/components/comercial/comercialListHttpUiPolicy.js';
 import { buildOrcamentoPayload } from '../src/components/comercial/orcamentoUiPolicy.js';
 import { buildPedidoPayload } from '../src/components/comercial/pedidoUiPolicy.js';
@@ -573,4 +579,87 @@ test('painéis Orçamento/Pedido: retry rede/5xx list/masters/simular fail-close
   // Fail-closed: erro de list ainda resolve via resolveHttpListViewState (nunca empty silencioso)
   assert.match(orc, /resolveHttpListViewState/);
   assert.match(ped, /resolveHttpListViewState/);
+});
+
+test('dirty form abandon: dirty OU simulacaoDirty exigem confirm; fail-closed sem confirm', () => {
+  assert.equal(isComercialFormDirtyForAbandon({}), false);
+  assert.equal(isComercialFormDirtyForAbandon({ dirty: false, simulacaoDirty: false }), false);
+  assert.equal(isComercialFormDirtyForAbandon({ dirty: true }), true);
+  assert.equal(isComercialFormDirtyForAbandon({ simulacaoDirty: true }), true);
+  assert.equal(isComercialFormDirtyForAbandon({ dirty: true, simulacaoDirty: true }), true);
+  assert.match(comercialFormAbandonMessage('orcamento'), /orçamento/);
+  assert.match(comercialFormAbandonMessage('pedido'), /pedido/);
+  assert.equal(confirmComercialFormAbandon({ dirty: false }), true);
+  assert.equal(confirmComercialFormAbandon({ dirty: true, confirmFn: () => true }), true);
+  assert.equal(confirmComercialFormAbandon({ dirty: true, confirmFn: () => false }), false);
+  assert.equal(confirmComercialFormAbandon({ simulacaoDirty: true, confirmFn: () => false }), false);
+  // Sem confirmFn e sem global confirm → fail-closed (não abandona)
+  assert.equal(confirmComercialFormAbandon({ dirty: true, confirmFn: null }), false);
+  const kept = resolveComercialFormDialogOpenChange({
+    nextOpen: false,
+    dirty: true,
+    confirmFn: () => false,
+  });
+  assert.deepEqual(kept, { formOpen: true, abandoned: false });
+  const discarded = resolveComercialFormDialogOpenChange({
+    nextOpen: false,
+    dirty: true,
+    entity: 'pedido',
+    confirmFn: (msg) => {
+      assert.match(msg, /pedido/);
+      return true;
+    },
+  });
+  assert.deepEqual(discarded, { formOpen: false, abandoned: true });
+  assert.deepEqual(resolveComercialFormDialogOpenChange({ nextOpen: true, dirty: true }), {
+    formOpen: true,
+    abandoned: false,
+  });
+});
+
+test('beforeunload handler só dispara com dirty; bind retorna cleanup', () => {
+  const calls = [];
+  const handler = createComercialFormBeforeUnloadHandler(() => true);
+  const event = { preventDefault: () => calls.push('prevent'), returnValue: undefined };
+  handler(event);
+  assert.deepEqual(calls, ['prevent']);
+  assert.equal(event.returnValue, '');
+  const cleanHandler = createComercialFormBeforeUnloadHandler(false);
+  const event2 = { preventDefault: () => calls.push('bad'), returnValue: undefined };
+  cleanHandler(event2);
+  assert.deepEqual(calls, ['prevent']);
+  assert.equal(event2.returnValue, undefined);
+
+  const listeners = [];
+  const fakeWindow = {
+    addEventListener: (type, fn) => listeners.push([type, fn]),
+    removeEventListener: (type, fn) => {
+      const idx = listeners.findIndex((row) => row[0] === type && row[1] === fn);
+      if (idx >= 0) listeners.splice(idx, 1);
+    },
+  };
+  const unbind = bindComercialFormBeforeUnload(fakeWindow, true);
+  assert.equal(listeners.length, 1);
+  assert.equal(listeners[0][0], 'beforeunload');
+  unbind();
+  assert.equal(listeners.length, 0);
+  assert.equal(typeof bindComercialFormBeforeUnload(null, true), 'function');
+});
+
+test('painéis Orçamento/Pedido: dirty abandon fail-closed (beforeunload + dialog confirm)', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const meta = await readFile(new URL('../server/src/api/router.ts', import.meta.url), 'utf8');
+  for (const src of [orc, ped]) {
+    assert.match(src, /bindComercialFormBeforeUnload/);
+    assert.match(src, /confirmComercialFormAbandon/);
+    assert.match(src, /resolveComercialFormDialogOpenChange/);
+    assert.match(src, /handleFormDialogOpenChange/);
+    assert.match(src, /dirty \|\| simulacaoDirty|dirty\|\|simulacaoDirty/);
+    assert.match(src, /data-testid="(?:orcamento|pedido)-form-dialog"/);
+    assert.match(src, /data-dirty=/);
+    assert.doesNotMatch(src, /window\.confirm\('Descartar/);
+  }
+  assert.match(meta, /form dirty abandon fail-closed/);
+  assert.match(meta, /Pedido backend HTTP is active/);
 });
