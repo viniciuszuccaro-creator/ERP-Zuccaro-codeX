@@ -5,7 +5,7 @@
 | Choice | **C** Soft-delete/inactive master picker — esconde Condicao/Tabela/Produto/ClienteEmpresa inativos exceto seleção atual (ghost+snapshot); fail-closed |
 | Branch | `cursor/comercial360-onda3-inactive-master-picker-392b` |
 | Base | `origin/cursor/comercial360-onda3-item-line-validation-392b` tip `c38a768d` (#148 CI SUCCESS) |
-| Tip | `e45f7a8b` (`e45f7a8b364555566054ee06bd0110f5f050e3cf`) · feat `b08dcb10` |
+| Tip | `8729e1c8` (`8729e1c86f73ea34c6f44d9f3ff474c51d7bef36`) · feat `b08dcb10` |
 | Draft PR | **BLOCKED** createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-item-line-validation-392b...cursor/comercial360-onda3-inactive-master-picker-392b?expand=1) base `#148` |
 | Escopo | `filterActiveMasterRowsKeepingSelection` + labels `(inativo)` + hint UI; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
 | Meta | `inactiveMasterPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
