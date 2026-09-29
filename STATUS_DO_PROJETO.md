@@ -1,3 +1,23 @@
+## ORDEM ÚNICA — congelar HEAD Comercial e candidata contra `main` (2026-09-29T19:20Z)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Congelar o conjunto #114–#151 e registrar a ordem única antes de merge ou gate VPS |
+| HEAD funcional | `6218511a19b43f7ca87ed32b89d48dcfbd4ee195` (tip da #151; 116 commits / 101 arquivos à frente de `main` `d02cd012`) |
+| Candidata | `cursor/comercial360-candidata-main-53c4` contra `main` — CI do conjunto; commit extra só de registro |
+| #141 | `b8a9f493` em `codex/legado-integracao-candidata`; CI [36617354170](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36617354170) SUCCESS; branch não editada |
+| #92 / #132 | `8d9ce6e5` / `29211815` — fora da #141 (`merge-base --is-ancestor` = não) |
+| Migrations | 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 inexistente; #141 e `main` param em 024 |
+| Conflito × #141 | somente `STATUS_DO_PROJETO.md` (`git merge-tree --write-tree`, exit 1). Código mergeia limpo |
+| Conflito × #92/#132 | 9 arquivos de Orçamento/Pedido + `runtime01.test.ts`; #132 herda os mesmos 9 |
+| Ordem | 1 Comercial consolidada → 2 #141 (STATUS no commit de integração) → 3 #92 → 4 #132 |
+| Runtime | inalterado neste registro |
+| Pendência | revisão humana da ordem; sem merge; sem VPS |
+
+Fonte: `docs/ORDEM_INTEGRACAO_UNICA.md`.
+
+---
+
 ## LOTE CURSOR — offline/network retry list/masters/simular (pós-#150 a11y-live) (2026-09-29T19:06Z)
 
 | Campo | Valor |
