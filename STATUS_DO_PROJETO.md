@@ -5,8 +5,10 @@
 | Choice | **C** Troca de tenant limpa form/list cache comercial fail-closed |
 | Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
 | Base | `origin/cursor/comercial360-onda3-list-search-392b` tip `73279042` (#145) |
-| Tip | *(após commit)* |
-| Draft PR | base=`cursor/comercial360-onda3-list-search-392b` |
+| Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-tenant-cache-392b` |
 | Escopo | Policy: `clearComercialHttpCacheOnTenantSwitch` + reset Orçamento/Pedido (descarta dirty/diálogos/snapshots sem prompt); wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `tenantCacheFailClosed`; sem migration |
 | Meta | `tenantCacheFailClosed` + note preserva **Pedido backend HTTP is active** |
 | Testes | comercial-list-http-ui-policy **14/14**; orcamento/alcada/simulacao/pedido UI **61/61**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
