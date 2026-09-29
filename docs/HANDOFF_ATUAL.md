@@ -5,10 +5,10 @@
 | Choice | **A** Entrega vs Retirada — endereço obrigatório na Entrega (fail-closed) |
 | Branch | `cursor/comercial360-onda5-entrega-address-failclosed-392b` |
 | Base | `#157` tip `3e668170` (`cursor/comercial360-onda4-margem-ui-failclosed-392b`) |
-| Tip | _(após commit)_ |
-| Draft PR | _(após PR)_ |
+| Tip |  () |
+| Draft PR | **pendente** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-margem-ui-failclosed-392b...cursor/comercial360-onda5-entrega-address-failclosed-392b?expand=1 |
 | Meta | `entregaAddressRequiredFailClosed` + **Pedido backend HTTP is active** |
-| Testes | local-obra UI policy + frontend-integration + runtime meta |
+| Testes | local-obra + integration + runtime07b/08c/09 **PASS** |
 | Colisão | sem mig; sem anexos #59–62; sem merge/VPS |
 
 Próximo: Data entrega UI gate (B) **ou** multi-select stub (C) **ou** CostPort/PDF sem colidir.
