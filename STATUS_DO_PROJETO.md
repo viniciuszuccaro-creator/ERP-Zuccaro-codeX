@@ -17,7 +17,7 @@ Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 | Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
 | Base | `origin/cursor/comercial360-onda3-tenant-cache-392b` tip `c1fdf63d` (#146) |
 | Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
-| Draft PR | **BLOCKED** createPullRequest — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1) base `#146` |
+| Draft PR | **#147** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/147 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` |
 | Escopo | Policy: `comercialDocumentoSnapshotGapHint` + `buildComercialDocumentoResumoTexto` / `resolveComercialResumoPreviewState` / `openComercialResumoTextoWindow`; wrappers Pedido; wire `PedidoCanonicoPanel` + `OrcamentosTab` (painel + copiar/imprimir texto); meta `textoResumoPreviewFailClosed`; sem migration |
