@@ -1,3 +1,22 @@
+## OPINIÃO CURSOR — revisão cruzada #104 + #48 (HEADs finais) (2026-09-29T17:50Z)
+
+| PR | Tip | CI | Veredito | Motivo curto |
+|---|---|---|---|---|
+| **#104** | `87101b4d` (`codex/estoque-reserva-atomica`) | **SUCCESS** (frontend+backend) | **APTA** | Reserva parcial fail-closed + compensação/idempotência + conferência/expedição alinhadas; tip cobre NF residual/frete; sem migrations 025–028 no diff vs main. Superfície grande (Onda 7 cumulativa) — merge sequenciar fora do stack Comercial #126–#140. |
+| **#48** | `ee0dc10a` (`cursor/comercial360-legado-prep-sintetico-392b`) | **SUCCESS** (frontend+backend) | **APTA** | Mapper sintético com quarentena de escopo: `003`=grupo; operação exige vínculo comprovado; mestre não duplica entre empresas; sem HD/import real. Prep OK — **não** autoriza importação produção. |
+
+Comentários GitHub: **não postados** (403 / ManagePullRequest indisponível). Achados só neste STATUS + HANDOFF. Sem editar branches #104/#48. Sem merge/VPS.
+
+### Comercial paralelo (mesmo run)
+
+| Choice | Branch | Tip feat | Draft PR |
+|---|---|---|---|
+| **A** parcela schedule preview fail-closed | `cursor/comercial360-onda3-parcela-schedule-ui-392b` | `ad927286` | **BLOCKED** createPullRequest — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1) base `#140` |
+
+Próximo: abrir draft PR do lote A via compare **ou** margem UI pós-#47 **ou** Onda 4 slice sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #139 CI SUCCESS + #140 masters-banner (2026-09-29T17:34Z)
 
 | PR | Tip | CI | Escopo |

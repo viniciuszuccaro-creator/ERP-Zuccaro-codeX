@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — revisão cruzada #104 + #48 (2026-09-29T17:50Z)
+
+| PR | Tip | CI | Veredito |
+|---|---|---|---|
+| #104 | `87101b4d` | SUCCESS | **APTA** — reserva parcial + compensação + Onda 7; merge fora do stack Comercial |
+| #48 | `ee0dc10a` | SUCCESS | **APTA** — prep mapper sintético/quarentena escopo; sem import HD |
+
+Comercial A (mesmo run): `cursor/comercial360-onda3-parcela-schedule-ui-392b` tip `ad927286` — draft PR BLOCKED; compare base #140. Sem merge/VPS. Sem editar #104/#48.
+
+---
+
 ## OPINIÃO CURSOR — #139 CI SUCCESS + #140 masters-banner (2026-09-29T17:34Z)
 
 | PR | Tip | CI | Escopo |
