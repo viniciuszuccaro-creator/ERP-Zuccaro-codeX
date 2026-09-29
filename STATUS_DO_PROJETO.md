@@ -11689,3 +11689,8 @@ Checklist inicial:
 
 - Branch de ensaio baseada em `main`, sem merge de PR na `main`: preserva integralmente os checkpoints da Onda 7 e da frente legada que colidiram neste arquivo.
 - Nenhuma migration foi aplicada na VPS, nenhum dado do backup foi importado e a porta 3080 nao foi alterada. CI do HEAD combinado e revisao da resolucao sao necessarias antes de qualquer decisao de integracao.
+## Onda 25 - unicidade do mestre no staging PostgreSQL sintetico (2026-09-29)
+
+- A prova isolada da #121 usava `UNIQUE (group_id, empresa_id, entidade, codigo_legado)`; PostgreSQL permite chaves repetidas quando `empresa_id` e `NULL`, que e o escopo dos mestres compartilhados do Grupo.
+- O E2E sintetico passa a usar `UNIQUE NULLS NOT DISTINCT` e comprova retry do cliente mestre sem segunda linha, rejeicao `23505` da duplicata e independencia do mesmo codigo de pedido em empresas distintas. O teste ocorre somente no banco efemero isolado, com rollback; nao cria migration nem tabela no DEV.
+- Codigo operacional de staging real, comprovacao juridica Grupo/Empresa, reconciliacao do backup e importacao continuam pendentes dos gates proprios. Nenhum dado real foi lido ou publicado neste lote.
