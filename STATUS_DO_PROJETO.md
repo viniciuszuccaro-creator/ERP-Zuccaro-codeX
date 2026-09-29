@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **Orçamento cancel motivo UI+API** fail-closed (paridade Pedido #164; motivo na auditoria; sem migration) |
 | Branch | `cursor/comercial360-onda5-orcamento-cancel-motivo-392b` |
+| Draft PR | **#171** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/171 |
 | Base | tip #170 CI SUCCESS |
 | Escopo | gate compartilhado `evaluateComercialCancelMotivoUiGate`; dialog motivo; `cancel(id,motivo)`; audit `cancel_motivo`; meta `cancelMotivoUiFailClosed` |
 | Testes | `orcamento-ui`+`pedido-ui` 44/44; runtime07b/08c/09 23/23; `git diff --check` OK |
