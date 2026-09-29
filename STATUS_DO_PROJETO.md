@@ -11744,3 +11744,9 @@ Checklist inicial:
 - Testes sinteticos cobrem contagem por entidade/Grupo, retry idempotente, conflito de conteudo no mesmo codigo, Grupo divergente, vinculo empresarial nao comprovado e ausencia de entrega parcial. O E2E PostgreSQL usa tabela temporaria em banco isolado, valida linha e retry por SQL e termina em rollback.
 - Validacao local: 43 testes focados PASS, audit baseline/lint/build PASS. `npm test` no Windows inclui testes de scripts VPS que exigem Bash e falham com `spawnSync.status=null`; `npm run typecheck` global falha em erros existentes de Base44/JSX fora dos arquivos alterados. CI Linux do HEAD publicado deve confirmar a suite completa e o PostgreSQL sintetico antes da revisao.
 - Nao houve leitura do HD, staging persistente, importacao, migration, VPS ou mudanca da porta 3080. O vinculo juridico para operacoes e a carga real continuam sujeitos a prova e gate proprios.
+
+## Lote unico de mestres legados antes do staging (2026-09-29)
+
+- O mesmo adaptador oferece verificacao conjunta de Cliente, Fornecedor e Produto de revenda. Contagens esperadas sao conferidas por entidade; falha, exclusao ou divergencia em qualquer parte zera a entrega privada do lote inteiro, sem misturar Grupo/Empresa nem publicar PII no relatorio.
+- Testes sintéticos cobrem sucesso, falha no ultimo mestre, entidade estranha, contagem sem lote e empresa sem prova. O E2E PostgreSQL efemero verifica o lote completo e o bloqueado junto da tabela temporaria transacional; nao representa gravacao persistente nem acesso ao backup.
+- Validacao local focada: 46/46 PASS, backend typecheck/build e diff-check PASS. Na suite backend concorrente Windows, `runtime07b.test.ts` falhou como arquivo (272 PASS, 1 FAIL, 16 SKIP); o mesmo arquivo isolado passou 13/13. A suite Linux e a prova PostgreSQL do novo HEAD continuam obrigatorias para aprovar este incremento. Nenhuma importacao real/VPS foi executada.

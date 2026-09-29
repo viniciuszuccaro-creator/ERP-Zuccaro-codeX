@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import pg from 'pg';
 import { prepararLoteStagingLegado } from '../../scripts/legado/staging-scope-gate.mjs';
-import { verificarMapeadorParaStaging } from '../../scripts/legado/verificar-mapeador-staging.mjs';
+import { verificarLoteMestresParaStaging, verificarMapeadorParaStaging } from '../../scripts/legado/verificar-mapeador-staging.mjs';
 
 const DB_NAME = 'erp_restore_isolated_legado_ci';
 const groupId = '11111111-1111-4111-8111-111111111111';
@@ -177,6 +177,18 @@ test('mapper e staging PostgreSQL isolado reconciliam mestres sem entrega parcia
       await insert(revenda.privados[0], 'produto_revenda');
       const fornecedor = { cod_fornecedor: 'FOR-MAP-SINT-1', nome: 'Fornecedor Sintetico',
         group_id: groupId };
+      const lote = { cliente: [cliente], fornecedor: [fornecedor], produto_revenda: [produto] };
+      const contagensEsperadas = Object.keys(lote).map((entidade) => ({
+        entidade, codigoEmpresaLegado: 'grupo', quantidade: 1,
+      }));
+      const completo = verificarLoteMestresParaStaging(lote, { ...opts, contagensEsperadas });
+      assert.equal(completo.bloqueado, false);
+      assert.equal(completo.privados.length, 3);
+      const incompleto = verificarLoteMestresParaStaging({ ...lote,
+        produto_revenda: [{ ...produto, tipo_produto: 'fabricacao' }],
+      }, { ...opts, contagensEsperadas });
+      assert.equal(incompleto.bloqueado, true);
+      assert.deepEqual(incompleto.privados, []);
       const mappedFornecedor = verificarMapeadorParaStaging([fornecedor], { ...opts,
         entidade: 'fornecedor', contagensEsperadas: [
           { entidade: 'fornecedor', codigoEmpresaLegado: 'grupo', quantidade: 1 },

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
-import { verificarMapeadorParaStaging } from '../scripts/legado/verificar-mapeador-staging.mjs';
+import { verificarLoteMestresParaStaging, verificarMapeadorParaStaging } from '../scripts/legado/verificar-mapeador-staging.mjs';
 
 const opcoes = { entidade: 'cliente', groupId: 'g-sint', grupoComprovado: true };
 
@@ -75,6 +75,52 @@ test('fornecedor faz retry idempotente e bloqueia alteracao do mesmo codigo sem 
   assert.deepEqual(changed.privados, []);
   assert.equal(changed.relatorio.conflitos, 1);
   assert.equal(JSON.stringify(changed.relatorio).includes('Fornecedor Alterado'), false);
+});
+
+const loteMestres = {
+  cliente: [{ cod_cliente: 'C-ALL-1', nome: 'Cliente Privado Sintetico', group_id: 'g-sint' }],
+  fornecedor: [{ cod_fornecedor: 'F-ALL-1', nome: 'Fornecedor Privado Sintetico', group_id: 'g-sint' }],
+  produto_revenda: [{ sku: 'P-ALL-1', descricao: 'Produto Privado Sintetico',
+    tipo_produto: 'revenda', group_id: 'g-sint' }],
+};
+const contagensMestres = Object.keys(loteMestres).map((entidade) => ({
+  entidade, codigoEmpresaLegado: 'grupo', quantidade: 1,
+}));
+
+test('lote de mestres reconcilia Cliente, Fornecedor e Revenda antes de entregar registros', () => {
+  const resultado = verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: contagensMestres });
+  assert.equal(resultado.bloqueado, false);
+  assert.equal(resultado.privados.length, 3);
+  assert.deepEqual(resultado.privados.map((item) => item.codigo_legado),
+    ['C-ALL-1', 'F-ALL-1', 'P-ALL-1']);
+  assert.ok(resultado.privados.every((item) => item.group_id === 'g-sint' && !item.empresa_id));
+  for (const relatorio of Object.values(resultado.relatorio)) assert.equal(relatorio.aptos, 1);
+  assert.equal(JSON.stringify(resultado.relatorio).includes('Privado'), false);
+});
+
+test('falha no ultimo mestre impede entrega dos anteriores e nao vaza dados', () => {
+  const resultado = verificarLoteMestresParaStaging({ ...loteMestres,
+    produto_revenda: [{ ...loteMestres.produto_revenda[0], tipo_produto: 'fabricacao' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres });
+  assert.equal(resultado.bloqueado, true);
+  assert.deepEqual(resultado.privados, []);
+  assert.equal(resultado.relatorio.produto_revenda.excluidos, 1);
+  assert.equal(resultado.relatorio.cliente.aptos, 1);
+  assert.equal(JSON.stringify(resultado.relatorio).includes('Privado'), false);
+});
+
+test('lote de mestres rejeita entidade estranha, contagem extra e escopo empresarial', () => {
+  assert.throws(() => verificarLoteMestresParaStaging({ pedido: [{ codigo: '1' }] }, opcoes),
+    /Entidade ou lote/);
+  assert.throws(() => verificarLoteMestresParaStaging(loteMestres, { ...opcoes,
+    contagensEsperadas: [...contagensMestres,
+      { entidade: 'pedido', codigoEmpresaLegado: '001', quantidade: 1 }] }),
+  /sem lote correspondente/);
+  assert.throws(() => verificarLoteMestresParaStaging({ ...loteMestres,
+    fornecedor: [{ ...loteMestres.fornecedor[0], codigo_empresa: '001' }],
+  }, { ...opcoes, contagensEsperadas: contagensMestres }),
+  /vinculo empresarial legado nao comprovado/);
 });
 
 test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => {

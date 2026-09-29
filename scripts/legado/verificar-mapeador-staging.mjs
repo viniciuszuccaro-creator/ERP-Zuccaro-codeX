@@ -100,3 +100,35 @@ export function verificarMapeadorParaStaging(rows, {
         porEntidadeEmpresaOrigem: preparados.relatorio.porEntidadeEmpresaOrigem,
       }) } };
 }
+
+/**
+ * Prepara os mestres do Grupo como uma unica unidade de reconciliacao.
+ * Nenhum registro privado sai se qualquer entidade falhar ou divergir.
+ */
+export function verificarLoteMestresParaStaging(lotes, opcoes = {}) {
+  if (!lotes || typeof lotes !== 'object' || Array.isArray(lotes) || utilTypes.isProxy(lotes)) {
+    throw new Error('Lotes de mestres invalidos.');
+  }
+  const entradas = Object.entries(lotes);
+  if (entradas.length === 0 || entradas.some(([entidade, rows]) =>
+    !ENTIDADES_MESTRE[entidade] || !Array.isArray(rows) || rows.length === 0)) {
+    throw new Error('Entidade ou lote de mestres invalido.');
+  }
+  if (opcoes.contagensEsperadas !== undefined && !Array.isArray(opcoes.contagensEsperadas)) {
+    throw new Error('Contagens esperadas invalidas.');
+  }
+  if (opcoes.contagensEsperadas?.some((item) => !entradas.some(([entidade]) => entidade === item?.entidade))) {
+    throw new Error('Contagem esperada sem lote correspondente.');
+  }
+  const resultados = entradas.map(([entidade, rows]) => [entidade, verificarMapeadorParaStaging(rows, {
+    ...opcoes,
+    entidade,
+    contagensEsperadas: opcoes.contagensEsperadas?.filter((item) => item?.entidade === entidade),
+  })]);
+  const bloqueado = resultados.some(([, resultado]) => resultado.bloqueado);
+  return {
+    bloqueado,
+    privados: bloqueado ? [] : resultados.flatMap(([, resultado]) => resultado.privados),
+    relatorio: Object.fromEntries(resultados.map(([entidade, resultado]) => [entidade, resultado.relatorio])),
+  };
+}
