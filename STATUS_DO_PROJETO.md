@@ -1,3 +1,10 @@
+## AUTÔNOMO — #163 export CSV página (2026-09-29T22:30Z)
+
+Tip empilhada em #162: CSV da página atual Orçamento/Pedido (fail-closed; não é export server-side).
+#162 observações limit CI SUCCESS. Sem merge/VPS. Continuando.
+
+---
+
 ## AUTÔNOMO — tip #162 observações limit (2026-09-29T22:25Z)
 
 Draft PR **#162** empilhada em #161. Contador/maxLength 1000 Observações. CI em curso.
