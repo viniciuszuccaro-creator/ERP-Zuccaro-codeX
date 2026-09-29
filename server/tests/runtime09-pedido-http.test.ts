@@ -116,7 +116,10 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.cancelByState, true);
   assert.equal(meta.body.pedido.listFailClosed, true);
   assert.equal(meta.body.pedido.updateBlockedWhenCancelled, true);
+  assert.equal(meta.body.pedido.descontoAlcadaUiFailClosed, true);
+  assert.equal(meta.body.pedido.saveIdempotency, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido cancel fail-closed/);
   assert.match(String(meta.body.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
+  assert.match(String(meta.body.note || ''), /UI alçada de desconto fail-closed/);
 });

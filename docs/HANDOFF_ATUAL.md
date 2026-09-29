@@ -1,3 +1,15 @@
+## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:15Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Base | `#136` tip `2db1a38d` |
+| Escopo | Desconto alçada UI fail-closed + save idempotency; sem migration |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Colisão | Anexos/PDF #52–#62 — não duplicar |
+
+---
+
 ## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
 
 | Campo | Valor |

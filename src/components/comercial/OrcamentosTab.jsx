@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
@@ -55,6 +55,11 @@ import {
   formatComercialHttpError,
   resolveHttpListViewState,
 } from './comercialListHttpUiPolicy';
+import {
+  beginSaveOnce,
+  endSaveOnce,
+  evaluateDescontoAlcadaUi,
+} from './comercialDescontoAlcadaUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -92,6 +97,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [tabelaSnapshot, setTabelaSnapshot] = useState(null);
   const [resolvingCondicao, setResolvingCondicao] = useState(false);
   const [resolvingPreco, setResolvingPreco] = useState(false);
+  const saveInFlightRef = useRef(false);
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
@@ -286,6 +292,19 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     () => resolveDisplayTotals(simulacaoPreview, localTotals),
     [simulacaoPreview, localTotals],
   );
+  const descontoAlcada = useMemo(
+    () => evaluateDescontoAlcadaUi({
+      items: form.itens,
+      hasPermission,
+      entity: 'orcamento',
+      mode: editing ? 'update' : 'create',
+      actorId,
+      // Create: criador = actor (sem autoaprovação). Update: criador desconhecido na UI —
+      // com `aprovar` permite tentativa; backend segrega via audit. Sem `aprovar` bloqueia.
+      criadorActorId: editing ? null : actorId,
+    }),
+    [form.itens, hasPermission, editing, actorId],
+  );
   const runSimularVenda = async () => {
     if (!canSimular || simulating || submitting) return;
     setSimulating(true);
@@ -323,7 +342,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     }
   };
   const save = async () => {
-    if (submitting) return;
+    if (submitting || !beginSaveOnce(saveInFlightRef)) return;
+    if (!descontoAlcada.canSave) {
+      endSaveOnce(saveInFlightRef);
+      toast.error(descontoAlcada.hint || 'Desconto acima da alçada — salvar bloqueado.');
+      return;
+    }
     setSubmitting(true);
     try {
       const formToSave = mergeSimulacaoBeforeSave(form, lastSimulation, { groupId, empresaId });
@@ -338,7 +362,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       setDirty(false); setFormOpen(false); setEditing(null); setSelected(saved); resetSimulacaoUi();
       await queryClient.invalidateQueries({ queryKey: ['orcamentos-http', groupId, empresaId] });
     } catch (error) { toast.error(errorMessage(error)); }
-    finally { setSubmitting(false); }
+    finally { setSubmitting(false); endSaveOnce(saveInFlightRef); }
   };
   const showDetail = async (row) => {
     try { const detail = await api.get(row.id); setSelected(detail); setDetailOpen(true); }
@@ -422,6 +446,7 @@ const convertToPedido = async () => {
       {tabelaSnapshot?.id && <div className="border rounded-md p-3 bg-white" data-action="Comercial.tabela-snapshot-preview"><div className="flex flex-wrap gap-2 text-sm"><Badge variant="outline">Tabela: {tabelaSnapshot.fonte || 'manual'}</Badge><Badge variant="outline">{tabelaSnapshot.nome || tabelaSnapshot.codigo || tabelaSnapshot.id}</Badge><span className="text-xs text-slate-500">Snapshot codigo+nome persistido pelo servidor (não-retroativo).</span></div></div>}
       <div className="space-y-2"><div className="flex justify-between"><h3 className="font-semibold">Itens</h3><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => { void selectProduct(index, v); }} disabled={resolvingPreco}><SelectTrigger><SelectValue placeholder={resolvingPreco ? 'Resolvendo preço...' : 'Selecione'} /></SelectTrigger><SelectContent>{masters.produtos.filter((p) => p.ativo !== false).map((p) => <SelectItem key={p.id} value={p.id}>{produtoLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
+      {descontoAlcada.excedeu && <Alert variant={descontoAlcada.canSave ? 'default' : 'destructive'} className="border-amber-300" data-action="Comercial.orcamento.desconto-alcada" data-testid="orcamento-desconto-alcada-alert"><AlertCircle className="h-4 w-4" /><AlertDescription>{descontoAlcada.hint}{descontoAlcada.descontoBps > 0 ? ` (${descontoAlcada.descontoBps} bps).` : ''}</AlertDescription></Alert>}
       {canSimular && <div className="border rounded-md p-3 space-y-3 bg-slate-50" data-permission="Comercial.orcamento.visualizar" data-action="Comercial.simular-venda">
         <div className="flex flex-wrap items-end gap-3">
           <div><Label htmlFor="orc-promo-bps">Promoção (bps)</Label><Input id="orc-promo-bps" inputMode="numeric" value={promoBps} placeholder="opcional" onChange={(e) => { setPromoBps(e.target.value); setSimulacaoPreview(null); setLastSimulation(null); }} /></div>
@@ -435,12 +460,12 @@ const convertToPedido = async () => {
             <Badge variant="outline">Condição: {simulacaoPreview.condicaoNome || simulacaoPreview.condicaoCodigo || simulacaoPreview.condicaoId}</Badge>
             <Badge variant="outline">Total simulado: {money(simulacaoPreview.total)}</Badge>
             {simulacaoPreview.promocao?.aplicada && <Badge>Promo {simulacaoPreview.promocao.bps} bps</Badge>}
-            {simulacaoPreview.aprovacaoDescontoExigida && <Badge variant="secondary">Exige aprovação de desconto</Badge>}
+            {(simulacaoPreview.aprovacaoDescontoExigida || descontoAlcada.aprovacaoExigida) && <Badge variant="secondary" data-testid="orcamento-desconto-alcada-badge">Exige aprovação de desconto</Badge>}
           </div>
           {simulacaoPreview.parcelas?.length > 0 && <Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead><TableHead>Vencimento</TableHead><TableHead className="text-right">Valor</TableHead></TableRow></TableHeader><TableBody>{simulacaoPreview.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.vencimento}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell><TableCell>{parcela.vencimento}</TableCell><TableCell className="text-right">{money(parcela.valor)}</TableCell></TableRow>)}</TableBody></Table>}
         </div>}
       </div>}
-      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading || Boolean(validadeHint && form.validade_em)}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading || Boolean(validadeHint && form.validade_em) || !descontoAlcada.canSave} title={!descontoAlcada.canSave ? (descontoAlcada.hint || undefined) : undefined} data-action="Comercial.orcamento.salvar" data-permission={descontoAlcada.aprovacaoExigida ? 'Comercial.orcamento.aprovar' : 'Comercial.orcamento.criar'}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
     <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}{selectedExpired ? ' · expirado' : ''}</DialogDescription></DialogHeader>{selected && <div className="space-y-4">{selectedExpired && <Alert data-action="Comercial.orcamento.validade-hint"><AlertCircle className="h-4 w-4" /><AlertDescription>Validade expirada — edite a data antes de converter em pedido.</AlertDescription></Alert>}{selectedSnapshotHint && <Alert data-action="Comercial.orcamento.convert-snapshot-hint"><AlertCircle className="h-4 w-4" /><AlertDescription>{selectedSnapshotHint}</AlertDescription></Alert>}<div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{selected.condicao_pagamento_nome_snapshot || condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Tabela</span><p>{selected.tabela_preco_nome_snapshot || selected.tabela_preco_id || '—'}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }} disabled={selectedExpired || Boolean(selectedSnapshotHint)} title={selectedExpired ? 'Validade expirada' : (selectedSnapshotHint || undefined)}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
