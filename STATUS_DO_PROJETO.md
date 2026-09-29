@@ -11631,3 +11631,8 @@ Checklist inicial:
 - A prova isolada da #121 usava `UNIQUE (group_id, empresa_id, entidade, codigo_legado)`; PostgreSQL permite chaves repetidas quando `empresa_id` e `NULL`, que e o escopo dos mestres compartilhados do Grupo.
 - O E2E sintetico passa a usar `UNIQUE NULLS NOT DISTINCT` e comprova retry do cliente mestre sem segunda linha, rejeicao `23505` da duplicata e independencia do mesmo codigo de pedido em empresas distintas. O teste ocorre somente no banco efemero isolado, com rollback; nao cria migration nem tabela no DEV.
 - Codigo operacional de staging real, comprovacao juridica Grupo/Empresa, reconciliacao do backup e importacao continuam pendentes dos gates proprios. Nenhum dado real foi lido ou publicado neste lote.
+
+## Gate de banco isolado - host explicito (2026-09-29)
+
+- A guarda anterior comparava apenas o nome do banco; uma URL remota com o mesmo nome podia passar antes do `DROP SCHEMA` do ensaio R07B. Agora exige `ISOLATED_DATABASE_HOST` igual ao host da URL e bloqueia parametros de URL que possam trocar o destino. A CI declara `localhost` explicitamente nos dois ensaios isolados e o E2E legado rejeita host remoto e override de `dbname`.
+- Mudanca fail-closed: qualquer execucao externa do ensaio R07B precisa declarar o host isolado esperado e validar novamente seu destino antes de usar a guarda. Nenhuma URL, credencial, banco DEV ou VPS foi acessado neste lote.

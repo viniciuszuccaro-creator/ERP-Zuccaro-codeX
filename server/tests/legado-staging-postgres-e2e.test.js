@@ -14,6 +14,11 @@ function assertIsolatedTarget(connectionString, isolatedName, enabled) {
   assert.equal(isolatedName, DB_NAME);
   assert.equal(enabled, '1');
   const url = new URL(connectionString ?? 'postgresql://invalid/');
+  assert.ok(['postgres', 'postgresql'].includes(url.protocol.slice(0, -1)));
+  assert.equal(url.hostname, 'localhost');
+  assert.equal(url.port, '5432');
+  assert.equal(url.search, '');
+  assert.equal(url.hash, '');
   assert.equal(url.pathname.slice(1), DB_NAME);
 }
 
@@ -21,6 +26,8 @@ test('staging sintetico recusa URL do banco oficial antes de conectar', () => {
   assert.throws(() => assertIsolatedTarget('postgresql://synthetic@localhost/postgres', DB_NAME, '1'));
   assert.throws(() => assertIsolatedTarget('postgresql://synthetic@localhost/erp_test', DB_NAME, '1'));
   assert.throws(() => assertIsolatedTarget('postgresql://synthetic@localhost/' + DB_NAME, '', '1'));
+  assert.throws(() => assertIsolatedTarget('postgresql://synthetic@remote.example:5432/' + DB_NAME, DB_NAME, '1'));
+  assert.throws(() => assertIsolatedTarget('postgresql://synthetic@localhost:5432/' + DB_NAME + '?dbname=postgres', DB_NAME, '1'));
 });
 
 test('staging PostgreSQL sintetico usa apenas banco isolado, transacao e retry', async () => {
