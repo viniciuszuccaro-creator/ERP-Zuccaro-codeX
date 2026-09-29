@@ -119,6 +119,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.tenantCacheFailClosed, true);
   assert.equal(meta.body.pedido.updateBlockedWhenCancelled, true);
   assert.equal(meta.body.pedido.descontoAlcadaUiFailClosed, true);
+  assert.equal(meta.body.pedido.margemAlcadaUiFailClosed, true);
   assert.equal(meta.body.pedido.saveIdempotency, true);
   assert.equal(meta.body.pedido.mastersPickerFailClosed, true);
   assert.equal(meta.body.pedido.parcelaSchedulePreviewFailClosed, true);

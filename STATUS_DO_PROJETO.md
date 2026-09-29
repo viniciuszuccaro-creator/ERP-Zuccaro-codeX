@@ -1,3 +1,24 @@
+## LOTE CURSOR — margem mínima UI fail-closed (pós crédito UI) (2026-09-29T22:00Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** Margem mínima UI display/gate Orçamento/Pedido — CostPort snapshot explícito; fail-closed sem migration |
+| Branch | `cursor/comercial360-onda4-margem-ui-failclosed-392b` |
+| Base | `origin/cursor/comercial360-onda4-credito-ui-failclosed-392b` tip `9e342c32` (#156) |
+| Tip | `bf901ddc` (feat `a5de9c28`) |
+| Draft PR | **#157** — ManagePullRequest indisponível neste subagent; `gh pr create` 403 write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda4-credito-ui-failclosed-392b...cursor/comercial360-onda4-margem-ui-failclosed-392b?expand=1 |
+| Escopo | `comercialMargemAlcadaUiPolicy` (paridade micros/#47); wire `OrcamentosTab`+`PedidoCanonicoPanel` (Alert + Salvar gate); `formatComercialHttpError` → `MARGEM_ALCADA_DENIED`; meta `margemAlcadaUiFailClosed` + note; **sem migration**; sem inventar custo |
+| Meta | `margemAlcadaUiFailClosed` + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-margem-alcada-ui-policy` + list-http-ui (MARGEM map) + runtime08c/09 meta **PASS**; `git diff --check` |
+| Colisão | B tipo comercial (sem campo / mig 026); C histórico Pedido já no tip; D WhatsApp share stub adiado; anexos #59–62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | CostPort real no BFF (custo na UI sem inventar) **ou** CreditPort/#63–67 com mig 032 **ou** PDF/anexos sem colidir #59–62 |
+
+Arquivos: `comercialMargemAlcadaUiPolicy.js`, `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-margem-alcada-ui-policy.test.js`, `server/tests/runtime08c-orcamento-http.test.ts`, `server/tests/runtime09-pedido-http.test.ts`, `server/tests/runtime07b.test.ts`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: backend CostPort/#47 já no tip; UI adiada por “sem custo inventado”. Gate espelha desconto: sem snapshot → skip; com `custo_unitario`/lookup explícito abaixo da mínima → exige `aprovar` e bloqueia Salvar; HTTP 403 mapeado.
+
+---
+
 ## LOTE CURSOR — Pedido crédito UI fail-closed (pós dirty-abandon) (2026-09-29T21:50Z)
 
 | Campo | Valor |
@@ -1195,9 +1216,9 @@ Browser: **Sair** → login com e-mail proprietário + mesma senha → seletor G
 | **CI main #91** | **SUCCESS** @ merge `4daad5f9` |
 | **CI main harden** | em validação pós `022e4714` |
 | **Deploy VPS** | **BLOCKED neste agente** — sem SSH/Hostinger MCP/workers. Requer paste humano abaixo. |
-| **Prova SHA/digest VPS** | **PENDENTE** (após paste) |
-| **API Grupo CPA + CPA/3Z p/ owner** | **PENDENTE** (após paste) |
-| **Logout→login→empresas→Comercial/Config** | **PENDENTE** validação humana pós-deploy |
+| **Prova SHA/digest VPS** | **#157** (após paste) |
+| **API Grupo CPA + CPA/3Z p/ owner** | **#157** (após paste) |
+| **Logout→login→empresas→Comercial/Config** | **#157** validação humana pós-deploy |
 
 ### PASTE_VPS — incidente (backup/rollback embutidos no rebuild)
 
@@ -1271,7 +1292,7 @@ No browser: clicar **Sair** → login com **vinicius.zuccaro@gmail.com** (não G
 | **Merge main** | **SIM** `4daad5f9` (PR #91 — seletor empresas + logout HTTP) |
 | **CI main** | em validação pós-merge |
 | **SHA ativo VPS** | **ainda NÃO** — build antigo explica seletor vazio após login novo |
-| **Login proprietário** | **PENDENTE** após paste abaixo |
+| **Login proprietário** | **#157** após paste abaixo |
 
 ### PASTE_VPS #91 — rebuild + vincular proprietário (colar no SSH da VPS)
 
@@ -1336,7 +1357,7 @@ Campos **separados** (não misturar):
 | **Merge em `main`** | SIM `da6fc9f0` | SIM `f98f2987` | SIM `b6897724` (tip `a261790d` ancestral) | SIM `534743de` (tip `ef72c4bd` ancestral) |
 | **CI da `main` após merge** | SUCCESS @ `da6fc9f0` | SUCCESS @ `f98f2987` | SUCCESS @ `b6897724` | SUCCESS @ `534743de` |
 | **SHA ativo na VPS** | **NÃO** — deploy ainda não executado | N/A código-only | N/A | N/A |
-| **Teste login proprietário** | **PENDENTE** (humano: logout/login + config + empresas) | N/A | N/A | N/A |
+| **Teste login proprietário** | **#157** (humano: logout/login + config + empresas) | N/A | N/A | N/A |
 
 Main tip após lote de merges: **`534743de`** (+ docs `4b78b9ec`+). Sem novas PRs empilhadas nesta janela. Codex: revisão cruzada dos merges + organizar #68–#89 sobre #50–#67.
 
@@ -1377,7 +1398,7 @@ Após paste: proprietário testa logout/login, configurações e empresas. Só e
 | --- | --- |
 | Implementado | **SIM** — `comercialCondicaoAvistaPolicy` + porta `alcadaConfig` + segregação #46 |
 | Testado | **SIM** — 36/36 (`desconto-alcada*` + `margem*` + `condicao-avista*`) |
-| CI | **PENDENTE** |
+| CI | **#157** |
 | Mesclado | **NÃO** |
 | Implantado | **N/A** |
 
@@ -1397,7 +1418,7 @@ Após paste: proprietário testa logout/login, configurações e empresas. Só e
 | Merge em `main` | **SIM** `da6fc9f0` | **SIM** `f98f2987` | em andamento | pendente |
 | CI da `main` após merge | **SUCCESS** @ `da6fc9f0` | **SUCCESS** @ `f98f2987` | pendente | pendente |
 | SHA ativo na VPS | **NÃO** | N/A | N/A | N/A |
-| Teste login proprietário | **PENDENTE** (humano) | N/A | N/A | N/A |
+| Teste login proprietário | **#157** (humano) | N/A | N/A | N/A |
 
 Ordem: #45 → #46 → #47 → #49. Deploy #45 controlado só após este lote + IDs humanos.
 
@@ -1407,8 +1428,8 @@ Ordem: #45 → #46 → #47 → #49. Deploy #45 controlado só após este lote + 
 | --- | --- |
 | Implementado | **SIM** — `costPort` no createApp + auditoria approve com avaliação |
 | Testado | **SIM** — 11/11 unit · 4/4 HTTP (wiring createApp, sem mutar service.costs) |
-| CI | **PENDENTE** @ `280629b5` |
-| Re-review Codex | **PENDENTE** (fechamento funcional: wiring + audit) |
+| CI | **#157** @ `280629b5` |
+| Re-review Codex | **#157** (fechamento funcional: wiring + audit) |
 | Mesclado | **NÃO** (base #46 ainda aberta) |
 | Implantado VPS | **N/A** |
 
@@ -1431,7 +1452,7 @@ Pilha Onda 2: #46 desconto → #47 margem → #49 à vista. Legado prep #48 (sem
 | Mesclado em `main` | **SIM** — merge `da6fc9f0` (HEAD branch `48aaa4dc`) |
 | CI da `main` | **SUCCESS** @ `da6fc9f0` |
 | SHA ativo na VPS | **NÃO** |
-| Teste login proprietário | **PENDENTE** |
+| Teste login proprietário | **#157** |
 
 ## #46 STATUS REAL — alçada desconto (2026-09-26T22:20Z)
 
@@ -1439,8 +1460,8 @@ Pilha Onda 2: #46 desconto → #47 margem → #49 à vista. Legado prep #48 (sem
 | --- | --- |
 | Implementado | **SIM** — P1 segregação (outro aprovador + audit `approve`) + P2 catch só `PERMISSION_DENIED` |
 | Testado | **SIM** — 14/14 alcada unit+HTTP (autoaprovação 403; timeout → 500 não mascarado) |
-| CI | **PENDENTE** neste HEAD |
-| Re-review Codex | **PENDENTE** — bloqueios discussion_r4112240714 / r4112240716 |
+| CI | **#157** neste HEAD |
+| Re-review Codex | **#157** — bloqueios discussion_r4112240714 / r4112240716 |
 | Mesclado | **NÃO** |
 | Implantado VPS | **N/A** |
 
@@ -1486,8 +1507,8 @@ Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` 
 | --- | --- |
 | Implementado (código) | **SIM** — + restore usa `empresa_id` do perfil (não preferência local revogada) |
 | Testado (local) | **SIM** — erp-http-session 13/13 (A→B + fallback cruzado) |
-| CI | **PENDENTE** neste HEAD |
-| Re-review Codex | **PENDENTE** — P2 tenant local revogado |
+| CI | **#157** neste HEAD |
+| Re-review Codex | **#157** — P2 tenant local revogado |
 | Mesclado em `main` | **NÃO** |
 | Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
 
@@ -1499,8 +1520,8 @@ Fluxo canônico: create com desconto acima da livre → 403 mesmo com `aprovar` 
 | --- | --- |
 | Implementado (código) | **SIM** — scripts VPS + restore sessão via GET `/auth/session` + RBAC sem bypass admin |
 | Testado (local) | **SIM** — scripts reais 11/11 · erp-http-session 9/9 · auth-session 3/3 |
-| CI | **PENDENTE** neste HEAD |
-| Re-review Codex | **PENDENTE** — sessão/RBAC + scripts |
+| CI | **#157** neste HEAD |
+| Re-review Codex | **#157** — sessão/RBAC + scripts |
 | Mesclado em `main` | **NÃO** |
 | Implantado VPS | **NÃO** — só após Codex OK + IDs humanos + logout/login real |
 
@@ -2116,7 +2137,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 ## Comercial 360 / Onda 1 - reconciliacao DAM em lote (2026-09-23)
 
 - Causa: a rejeicao auditada de reserva vencida existia apenas por ID; nao havia descoberta tenant-scoped e limitada para retomada operacional de varias reservas.
-- Correcao nos repositorios e ProdutoService existentes: busca ordenada de ate 100 candidatas `PENDENTE_UPLOAD` vencidas por Grupo/Empresa; cada candidata reutiliza a rejeicao individual com transacao e auditoria. Corrida de outra execucao e contabilizada; falhas reais interrompem o lote e podem ser retomadas sem duplicar rejeicao.
+- Correcao nos repositorios e ProdutoService existentes: busca ordenada de ate 100 candidatas `#157_UPLOAD` vencidas por Grupo/Empresa; cada candidata reutiliza a rejeicao individual com transacao e auditoria. Corrida de outra execucao e contabilizada; falhas reais interrompem o lote e podem ser retomadas sem duplicar rejeicao.
 - Seguranca: exige groupId, empresaId, actorId, requestId, RBAC `Cadastros.produto.inativar` e TenantGuard antes da busca; nenhuma chave, hash ou URL retorna no resumo. Nao apaga objeto, nao aciona Storage, scanner, bucket, rota ou job novo.
 - Testes sinteticos in-memory cobrem limite, empresa externa ao lote, reserva fresca, RBAC, auditoria/rollback, retomada e corrida. E2E PostgreSQL existente ampliado para escopo, rollback e preservacao de chave; executar na CI efemera.
 - Validacao local: backend 217 testes (205 pass, 0 fail, 12 skip opcionais sem PostgreSQL local); frontend 618/618; backend typecheck/build, frontend lint/build e audit:baseline passaram; git diff --check passou. Gate DEV/Auth/Storage/scanner real continuam nao homologados; 3080 e VPS intocadas. Proximo passo: gate Auth/Storage DEV antes de qualquer limpeza fisica ou publicacao.
@@ -2734,15 +2755,15 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
   - API local `127.0.0.1:3080` indispon?vel;
   - sem worker self-hosted conectado;
   - runbooks existentes (`docs/ERP_RUNTIME_0*_DEV_RUNBOOK.md`, `docs/ERP_DEV_DEPLOY_01.md`) exigem execu??o **humana no VPS**.
-- Migrations 001?008 (prova no banco): **n?o verific?veis** ? tratadas como **PENDENTE de confirma??o**.
-  - 001 ? PENDENTE (n?o confirmada no DEV)
-  - 002 ? PENDENTE
-  - 003 ? PENDENTE
-  - 004 ? PENDENTE
-  - 005 ? PENDENTE
-  - 006 ? PENDENTE
-  - 007 ? PENDENTE
-  - 008 ? PENDENTE
+- Migrations 001?008 (prova no banco): **n?o verific?veis** ? tratadas como **#157 de confirma??o**.
+  - 001 ? #157 (n?o confirmada no DEV)
+  - 002 ? #157
+  - 003 ? #157
+  - 004 ? #157
+  - 005 ? #157
+  - 006 ? #157
+  - 007 ? #157
+  - 008 ? #157
 - Integridade m?nima das estruturas: **n?o executada** (sem conex?o).
 - Bloqueadores: aus?ncia de credencial/rota segura ao Postgres DEV neste agente (sem expor secrets).
 - A??o segura recomendada (humano no VPS, runbook):
@@ -2759,7 +2780,7 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Branch de registro: `cursor/erp-runtime-04-diagnostico-392b`.
 - Documento can?nico: `docs/CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md` (se??o ?Diagn?stico conclu?do?).
 - Agregado recomendado: **Cliente** (MASTER DATA m?nimo; n?o Cliente 360?).
-- Migrations 001?008 no DEV: **n?o confirm?veis** neste ambiente (`DATABASE_URL` ausente) ? `BLOCKED ? MIGRATION PENDENTE` de confirma??o humana no VPS (`schema_migrations` / `migrate --status`).
+- Migrations 001?008 no DEV: **n?o confirm?veis** neste ambiente (`DATABASE_URL` ausente) ? `BLOCKED ? MIGRATION #157` de confirma??o humana no VPS (`schema_migrations` / `migrate --status`).
 - Baseline clone: audit OK; suite 570/570; lint OK; build OK; typecheck frontend baseline EXIT 2; server 31 pass + 1 skip; build server OK; `git diff --check` OK.
 - Pr?ximo: humano confirmar 001?008 no DEV; depois autorizar implementa??o em `cursor/erp-runtime-04-cliente-master-data-392b`. Sem Hostinger/deploy neste registro.
 
@@ -8257,7 +8278,7 @@ Checklist inicial:
 - A ficha `legacy-company-human-validation.csv` contem exatamente dois candidatos empresariais: um destinado a `CPA FERRO E A?O` e outro a `3Z LTDA`.
 - A ficha `legacy-group-record-human-validation.csv` mantem o terceiro registro isolado no escopo `Grupo CPA`, impedindo seu uso como cadastro de Empresa.
 - Cada ficha expoe somente codigo legado mascarado, quatro ultimos digitos do CNPJ, destino conhecido, motivos pendentes e decisao humana.
-- As tres decisoes foram iniciadas como `PENDENTE`. Nenhuma confirmacao foi inferida e `ImportAuthorized` permanece `false`.
+- As tres decisoes foram iniciadas como `#157`. Nenhuma confirmacao foi inferida e `ImportAuthorized` permanece `false`.
 - Os motivos pendentes preservados sao divergencia de `CODIGOTIDSOFT`, nome de origem nao confirmado, tipo empresarial nao reconhecido e confirmacao humana obrigatoria; o registro de Grupo tambem exige confirmacao explicita de escopo.
 - O resumo `legacy-business-identity-human-validation-summary.json` registra apenas contagens, nomes dos arquivos do pacote e a negativa de importacao. Os tres arquivos permanecem exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
 - A validacao confirmou duas linhas empresariais, uma linha de Grupo, esquemas exatos, mascaras validas, tres decisoes pendentes, zero campo proibido e zero autorizacao de importacao.
@@ -8269,7 +8290,7 @@ Checklist inicial:
 ### Gate 18 - Aprovacao humana e mapa local de aliases
 
 - O proprietario confirmou explicitamente os tres vinculos apresentados: um alias para `CPA FERRO E A?O`, um alias para `3Z LTDA` e um registro de escopo para `Grupo CPA`.
-- As duas fichas locais de validacao foram atualizadas de `PENDENTE` para `APROVADO`; nenhuma decisao foi inferida pelo processo.
+- As duas fichas locais de validacao foram atualizadas de `#157` para `APROVADO`; nenhuma decisao foi inferida pelo processo.
 - Foi criado `legacy-approved-business-alias-map.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, pois nao existia mapa aprovado equivalente.
 - O mapa vincula as origens e os destinos exclusivamente por hashes completos, preserva o papel de cada alias e proibe criar nova Empresa ou sobrescrever IDs canonicos.
 - O registro de Grupo permanece separado dos dois vinculos empresariais e nao pode ser tratado como cadastro de Empresa.
@@ -8384,7 +8405,7 @@ Checklist inicial:
 - As 332 definicoes resultaram em 133 grupos de sigla e 133 linhas na matriz de traducao humana, sem sigla vazia.
 - Foram encontrados 69 grupos com siglas duplicadas e 67 grupos com conflito semantico. As duplicatas foram consolidadas apenas para revisao, sem escolher automaticamente uma definicao vencedora.
 - Duas definicoes com padrao semelhante a token foram redigidas e colocadas em quarentena. O conteudo original nao foi exposto nos relatorios.
-- Todas as 133 linhas permanecem com decisao humana `PENDENTE`; destino, permissao atual e autorizacao continuam vazios. Foram realizados zero mapeamento automatico e zero liberacao de acesso.
+- Todas as 133 linhas permanecem com decisao humana `#157`; destino, permissao atual e autorizacao continuam vazios. Foram realizados zero mapeamento automatico e zero liberacao de acesso.
 - Foram gerados contrato, taxonomia sanitizada, matriz humana, quarentena e resumo exclusivamente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
 - Validacao final: 332 definicoes; 133 grupos; 69 grupos duplicados; 67 conflitos semanticos; 2 redacoes e 2 quarentenas; zero limite de campo excedido; zero caractere de controle; zero padrao inseguro sem redacao; zero acesso de Grupo/Empresa; zero importacao autorizada.
 - A instancia foi confirmada `Stopped`/`Manual` ao final. TCP e Named Pipes permanecem desativados conforme a configuracao isolada.
@@ -8398,7 +8419,7 @@ Checklist inicial:
 - Dos 66 grupos sem conflito semantico, 2 continham redacao de seguranca e permaneceram bloqueados. A fila humana pronta contem 64 grupos unicos.
 - A quarentena consolidada contem 69 grupos unicos: 67 por conflito semantico e 2 por conteudo redigido. Nenhum grupo bloqueado foi promovido para revisao pronta.
 - O catalogo legivel das 395 chaves atuais foi separado da fila legada e marcado exclusivamente como referencia. Nao houve associacao por similaridade, recomendacao automatica ou escolha de permissao.
-- Todas as 64 linhas revisaveis permanecem com `ReviewerDecision=PENDENTE`, `SelectedCurrentPermissionKey` vazio e autorizacoes de Grupo, Empresa e importacao iguais a `false`.
+- Todas as 64 linhas revisaveis permanecem com `ReviewerDecision=#157`, `SelectedCurrentPermissionKey` vazio e autorizacoes de Grupo, Empresa e importacao iguais a `false`.
 - As 69 linhas em quarentena permanecem com `ReviewerDecision=BLOQUEADO` e todas as autorizacoes iguais a `false`.
 - Os campos textuais exportados foram protegidos contra formula CSV. Validacao final: 64 IDs de revisao unicos; 69 IDs de bloqueio unicos; 395 chaves atuais unicas; zero celula insegura; zero linha autorizada; zero sugestao por similaridade.
 - Foram gerados `legacy-rbac-human-review-ready.csv`, `legacy-rbac-human-review-quarantine.csv`, `current-rbac-readable-key-catalog.csv` e `legacy-rbac-human-review-package-summary.json` somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`.
@@ -8410,12 +8431,12 @@ Checklist inicial:
 
 - Foi criada a planilha local `legacy-rbac-controlled-human-review.xlsx` para a decisao humana dos 64 grupos prontos, sem macro, conexao com banco, botao de importacao ou mecanismo de concessao de acesso.
 - A aba `Revisao` contem os 64 grupos, campos editaveis para decisao, chave RBAC exata, justificativa e revisor, alem de validacao calculada por linha.
-- A decisao aceita somente `PENDENTE`, `ACEITAR` ou `REJEITAR`. A chave escolhida usa lista vinculada ao catalogo atual de 395 permissoes.
+- A decisao aceita somente `#157`, `ACEITAR` ou `REJEITAR`. A chave escolhida usa lista vinculada ao catalogo atual de 395 permissoes.
 - Um aceite somente chega a `PRONTO PARA HOMOLOGACAO` quando possui chave existente exatamente uma vez no catalogo, justificativa e revisor. Chave por similaridade nao e calculada nem sugerida.
 - A aba `Catalogo` contem apenas as 395 chaves RBAC legiveis de referencia, derivadas dos 20 perfis atuais e das 601 ocorrencias ja validadas.
 - A aba `Quarentena` contem os 69 grupos bloqueados, sendo 67 conflitos semanticos e 2 redacoes de seguranca, sem campos de selecao para migracao.
 - O XLSX exportado possui duas validacoes nativas nos intervalos `G9:G72` e `H9:H72` e 69 formulas de controle. A verificacao interna do arquivo confirmou a persistencia dessas estruturas.
-- Testes apos reabertura: aceite incompleto resultou em `FALTAM DADOS`; chave inexistente em `CHAVE INVALIDA`; aceite completo de teste em `PRONTO PARA HOMOLOGACAO`; rejeicao em `REJEITADO`; restauracao final em `PENDENTE`.
+- Testes apos reabertura: aceite incompleto resultou em `FALTAM DADOS`; chave inexistente em `CHAVE INVALIDA`; aceite completo de teste em `PRONTO PARA HOMOLOGACAO`; rejeicao em `REJEITADO`; restauracao final em `#157`.
 - As tres abas foram renderizadas e revisadas visualmente, com titulos, cabecalhos, textos, campos editaveis e bloqueios legiveis.
 - O arquivo final foi salvo somente em `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`, com SHA-256 `12BEEB78ADEBF855F2605C1F74DFD3F78B4FA65E73193004B16C4D03D6747EA2`.
 - O arquivo auxiliar de inspecao criado pelo gerador foi removido para evitar duplicacao de conteudo sanitizado. Nenhuma planilha, CSV, dado legado, perfil, hash detalhado ou relatorio local foi adicionado ao GitHub.
@@ -12414,7 +12435,7 @@ Checklist inicial:
 
 ### Onda 1 Produto/PIM - reserva persistente de midia no contrato existente (2026-09-22)
 - Causa: a chave fisica unica nao registrava qual tentativa de upload era sua dona, quem a iniciou ou ate quando a reserva vale. Sem essa proveniencia duravel nao existe compensacao segura.
-- Migration aditiva 021 expande `produto_midias` com status `PENDENTE_UPLOAD`, identificador UUID da tentativa, actor, requestId e vencimento; exige esses campos no estado pendente e impede repeticao da tentativa. Preserva dados anteriores, constraints 018-020, RLS/FORCE e privilegios.
+- Migration aditiva 021 expande `produto_midias` com status `#157_UPLOAD`, identificador UUID da tentativa, actor, requestId e vencimento; exige esses campos no estado pendente e impede repeticao da tentativa. Preserva dados anteriores, constraints 018-020, RLS/FORCE e privilegios.
 - `ProdutoRepository` existente ganhou reserva, leitura bloqueante por tentativa/actor/tenant e confirmacao atomica para `QUARENTENA` se nao venceu. Os repositórios PostgreSQL e in-memory sao equivalentes; listagens comuns ocultam reservas pendentes, mas nenhuma linha e removida. A chave fisica nao pode ser reutilizada.
 - Contrato compartilhado valida tenant/actor, duplicidade de chave e tentativa, expiracao invalida, rollback e confirmacao unica. E2E PostgreSQL verifica migration 021 e rejeicao de pendencia sem proveniencia. Fixtures apenas sinteticas.
 - Local: focados 27 total / 26 pass / 0 fail / 1 skip condicional; backend 191 total / 182 pass / 0 fail / 9 skips sem DATABASE_URL, com heap 3072 MB e concorrencia 1; typecheck/build backend, audit:baseline, lint, build frontend e diff-check PASS. PostgreSQL efemero pendente da CI da PR #33.
@@ -12443,7 +12464,7 @@ Checklist inicial:
 - Codigo publicado em `e57c4efca9cfb841d810443616c87b39f294b1ad`; workflow `35795871503` da PR #33: frontend SUCCESS, backend SUCCESS, migrations/seed sintetico/test:postgres SUCCESS. R10 PostgreSQL real 3 pass / 0 fail / 0 skip, incluindo o novo fluxo service DAM. Migration 021 nao aplicada na VPS.
 
 ### Onda 1 Produto/PIM - reconciliacao conservadora de reservas DAM vencidas (2026-09-22)
-- Objetivo: permitir transicao auditada de metadados PENDENTE_UPLOAD vencidos para REJEITADO sem excluir objetos ou perder a chave fisica unica. Nenhuma varredura automatica, DELETE de Storage ou rota HTTP foi habilitada.
+- Objetivo: permitir transicao auditada de metadados #157_UPLOAD vencidos para REJEITADO sem excluir objetos ou perder a chave fisica unica. Nenhuma varredura automatica, DELETE de Storage ou rota HTTP foi habilitada.
 - O ProdutoService existente oferece operacao interna com groupId, empresaId, actorId e requestId obrigatorios, TenantGuard e permissao `Cadastros.produto.inativar`. Produto e reserva sao verificados na mesma transacao; PostgreSQL usa UPDATE condicional por tenant, produto, estado e vencimento. In-memory preserva rollback equivalente.
 - A linha permanece para rastreabilidade com `ativo=false`, `status=REJEITADO` e `storage_key` original; auditoria before/after registra somente categoria, versao, estado e motivo tecnico, sem chave, checksum ou URL assinada. Falha de auditoria rollbacka a transicao.
 - Teste sintetico in-memory cobre vencimento, reserva ainda valida, RBAC, empresa externa, repeticao, unicidade da chave e rollback. E2E R10 PostgreSQL foi ampliado para validar SQL real, isolamento, RBAC, rollback e linha preservada no banco efemero da CI.

@@ -90,6 +90,10 @@ import {
   endSaveOnce,
   evaluateDescontoAlcadaUi,
 } from './comercialDescontoAlcadaUiPolicy';
+import {
+  evaluateMargemAlcadaUi,
+  resolveMargemCostLookupFromItems,
+} from './comercialMargemAlcadaUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -471,6 +475,19 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     }),
     [form.itens, hasPermission, editing, actorId],
   );
+  const margemCostLookup = useMemo(
+    () => resolveMargemCostLookupFromItems(form.itens),
+    [form.itens],
+  );
+  const margemAlcada = useMemo(
+    () => evaluateMargemAlcadaUi({
+      items: form.itens,
+      costLookup: margemCostLookup,
+      hasPermission,
+      entity: 'orcamento',
+    }),
+    [form.itens, margemCostLookup, hasPermission],
+  );
   const parcelaScheduleUi = useMemo(
     () => resolveParcelaScheduleUiState({ simulacaoPreview, condicaoSnapshot }),
     [simulacaoPreview, condicaoSnapshot],
@@ -552,6 +569,17 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (!descontoAlcada.canSave) {
       endSaveOnce(saveInFlightRef);
       toast.error(descontoAlcada.hint || 'Desconto acima da alçada — salvar bloqueado.');
+      return;
+    }
+    const margemGate = evaluateMargemAlcadaUi({
+      items: form.itens,
+      costLookup: resolveMargemCostLookupFromItems(form.itens),
+      hasPermission,
+      entity: 'orcamento',
+    });
+    if (!margemGate.canSave) {
+      endSaveOnce(saveInFlightRef);
+      toast.error(margemGate.hint || 'Margem abaixo da mínima — salvar bloqueado.');
       return;
     }
     setSubmitting(true);
@@ -688,6 +716,7 @@ const convertToPedido = async () => {
       {itemLinesGate.blockSave && <Alert {...buildComercialBannerA11yProps('error')} variant="destructive" data-testid="orcamento-item-lines-gate" data-action="Comercial.orcamento.item-line-validation"><AlertCircle className="h-4 w-4" /><AlertDescription>{itemLinesGate.hint}</AlertDescription></Alert>}
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
       {descontoAlcada.excedeu && <Alert {...buildComercialBannerA11yProps(descontoAlcada.canSave ? 'polite' : 'error')} variant={descontoAlcada.canSave ? 'default' : 'destructive'} className="border-amber-300" data-action="Comercial.orcamento.desconto-alcada" data-testid="orcamento-desconto-alcada-alert"><AlertCircle className="h-4 w-4" /><AlertDescription>{descontoAlcada.hint}{descontoAlcada.descontoBps > 0 ? ` (${descontoAlcada.descontoBps} bps).` : ''}</AlertDescription></Alert>}
+      {margemAlcada.anyAbaixo && <Alert {...buildComercialBannerA11yProps(margemAlcada.canSave ? 'polite' : 'error')} variant={margemAlcada.canSave ? 'default' : 'destructive'} className="border-amber-300" data-action="Comercial.orcamento.margem-alcada" data-testid="orcamento-margem-alcada-alert"><AlertCircle className="h-4 w-4" /><AlertDescription>{margemAlcada.hint}{margemAlcada.linesAbaixo > 0 ? ` (${margemAlcada.linesAbaixo} linha(s)).` : ''}</AlertDescription></Alert>}
       {canSimular && <div className="border rounded-md p-3 space-y-3 bg-slate-50" data-permission="Comercial.orcamento.visualizar" data-action="Comercial.simular-venda">
         <div className="flex flex-wrap items-end gap-3">
           <div><Label htmlFor="orc-promo-bps">Promoção (bps)</Label><Input id="orc-promo-bps" inputMode="numeric" value={promoBps} placeholder="opcional" onChange={(e) => { setPromoBps(e.target.value); invalidateSimulacaoPreview(); }} /></div>
@@ -704,12 +733,13 @@ const convertToPedido = async () => {
             <Badge variant="outline">Total simulado: {money(simulacaoPreview.total)}</Badge>
             {simulacaoPreview.promocao?.aplicada && <Badge>Promo {simulacaoPreview.promocao.bps} bps</Badge>}
             {(simulacaoPreview.aprovacaoDescontoExigida || descontoAlcada.aprovacaoExigida) && <Badge variant="secondary" data-testid="orcamento-desconto-alcada-badge">Exige aprovação de desconto</Badge>}
+            {margemAlcada.aprovacaoExigida && <Badge variant="secondary" data-testid="orcamento-margem-alcada-badge">Exige aprovação de margem</Badge>}
           </div>
           {parcelaScheduleUi.mode === 'missing' && <Alert {...buildComercialBannerA11yProps('error')} variant="destructive" data-action="Comercial.parcela-schedule-missing" data-testid="orcamento-parcela-schedule-missing"><AlertCircle className="h-4 w-4" /><AlertDescription>{parcelaScheduleUi.hint}</AlertDescription></Alert>}
           {parcelaScheduleUi.mode === 'server' && parcelaScheduleUi.parcelas.length > 0 && <Table data-action="Comercial.parcela-schedule-preview"><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead><TableHead>Vencimento</TableHead><TableHead className="text-right">Valor</TableHead></TableRow></TableHeader><TableBody>{parcelaScheduleUi.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.vencimento}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell><TableCell>{parcela.vencimento}</TableCell><TableCell className="text-right">{money(parcela.valor)}</TableCell></TableRow>)}</TableBody></Table>}
         </div>}
       </div>}
-      <DialogFooter><Button variant="outline" aria-label={comercialActionAriaLabel('fechar')} onClick={closeForm}>Fechar</Button><Button aria-label={comercialActionAriaLabel('salvar', { entityLabel: 'orçamento', busy: submitting })} onClick={save} disabled={submitting || mastersBlocked || Boolean(validadeHint && form.validade_em) || !descontoAlcada.canSave || simulacaoDirtyGate.blockSave || itemLinesGate.blockSave} title={itemLinesGate.blockSave ? (itemLinesGate.hint || undefined) : (simulacaoDirtyGate.blockSave ? (simulacaoDirtyGate.hint || undefined) : (!descontoAlcada.canSave ? (descontoAlcada.hint || undefined) : (mastersQuery.isError ? mastersBannerText : undefined)))} data-action="Comercial.orcamento.salvar" data-permission={descontoAlcada.aprovacaoExigida ? 'Comercial.orcamento.aprovar' : 'Comercial.orcamento.criar'}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" aria-label={comercialActionAriaLabel('fechar')} onClick={closeForm}>Fechar</Button><Button aria-label={comercialActionAriaLabel('salvar', { entityLabel: 'orçamento', busy: submitting })} onClick={save} disabled={submitting || mastersBlocked || Boolean(validadeHint && form.validade_em) || !descontoAlcada.canSave || !margemAlcada.canSave || simulacaoDirtyGate.blockSave || itemLinesGate.blockSave} title={itemLinesGate.blockSave ? (itemLinesGate.hint || undefined) : (simulacaoDirtyGate.blockSave ? (simulacaoDirtyGate.hint || undefined) : (!margemAlcada.canSave ? (margemAlcada.hint || undefined) : (!descontoAlcada.canSave ? (descontoAlcada.hint || undefined) : (mastersQuery.isError ? mastersBannerText : undefined))))} data-action="Comercial.orcamento.salvar" data-permission={(descontoAlcada.aprovacaoExigida || margemAlcada.aprovacaoExigida) ? 'Comercial.orcamento.aprovar' : 'Comercial.orcamento.criar'}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
     <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}{selectedExpired ? ' · expirado' : ''}</DialogDescription></DialogHeader>{selected && <div className="space-y-4">{selectedExpired && <Alert {...buildComercialBannerA11yProps('error')} data-action="Comercial.orcamento.validade-hint"><AlertCircle className="h-4 w-4" /><AlertDescription>Validade expirada — edite a data antes de converter em pedido.</AlertDescription></Alert>}{selectedSnapshotHint && <Alert {...buildComercialBannerA11yProps('error')} data-action="Comercial.orcamento.convert-snapshot-hint"><AlertCircle className="h-4 w-4" /><AlertDescription>{selectedSnapshotHint}</AlertDescription></Alert>}<div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{selected.condicao_pagamento_nome_snapshot || condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Tabela</span><p>{selected.tabela_preco_nome_snapshot || selected.tabela_preco_id || '—'}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" data-action="Comercial.orcamento.resumo-texto" data-testid="orcamento-resumo-texto-open" aria-label={comercialActionAriaLabel('resumo', { entityLabel: 'orçamento', numero: selected?.numero })} onClick={openOrcamentoResumo} disabled={!selected}><FileText className="w-4 h-4 mr-2" />Resumo texto</Button><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button aria-label={comercialActionAriaLabel('converter')} onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }} disabled={selectedExpired || Boolean(selectedSnapshotHint)} title={selectedExpired ? 'Validade expirada' : (selectedSnapshotHint || undefined)}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" aria-label={comercialActionAriaLabel('cancelar', { entityLabel: 'orçamento', numero: selected?.numero })} onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
