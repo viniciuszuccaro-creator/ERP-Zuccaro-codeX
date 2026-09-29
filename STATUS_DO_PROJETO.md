@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda5-convert-banner-392b` |
 | Base | `origin/cursor/comercial360-onda5-multiselect-stub-392b` tip `84e17c88` (#160 CI SUCCESS) |
 | Tip | feat `cc74f381` · branch HEAD `61fb0fba` (docs) |
-| Draft PR | ManagePullRequest/`gh pr create` **403** write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-multiselect-stub-392b...cursor/comercial360-onda5-convert-banner-392b?expand=1 |
+| Draft PR | **#161** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/161 |
 | Escopo | `evaluateOrcamentoConvertUiGate` consolida motivos; um Alert fail-closed no detalhe + diálogo Converter; dirty/simular só no mesmo `editingId`; meta `convertDisabledReasonsBannerFailClosed`; **sem migration** |
 | Meta | `convertDisabledReasonsBannerFailClosed` + preserva **Pedido backend HTTP is active** |
 | Testes | orcamento-ui-policy **18/18** + frontend-integration **2/2**; runtime07b/08c/09 **23/23**; `git diff --check` PASS |
