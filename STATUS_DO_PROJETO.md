@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #149 CI SUCCESS + #150 a11y-live (2026-09-29T19:01Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #149 | `50dc8b5c` | **SUCCESS** | pickers ocultam inativos |
+| #150 | `cursor/comercial360-onda3-a11y-live-392b` | pendente | aria-live / aria-invalid / labels |
+
+Próximo: offline/network retry **ou** margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #148 CI SUCCESS + #149 inactive masters (2026-09-29T18:49Z)
 
 | PR | Tip | CI | Escopo |
