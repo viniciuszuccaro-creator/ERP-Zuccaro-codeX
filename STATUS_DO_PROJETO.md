@@ -11596,3 +11596,9 @@ Checklist inicial:
 - Nao altera o mapeador da PR #48, nao le o HD, nao grava staging nem importa dados reais. O vinculo 001/002/005 com as empresas juridicas do ERP novo segue pendente de prova documental/CNPJ e correção do override de escopo na #48 antes de carga real.
 - Testes sintéticos direcionados: 39 PASS/0 FAIL. Proximo: compatibilizar o preflight com a #48 corrigida, preparar staging fisicamente isolado e reconciliar contagens por entidade/empresa; somente depois solicitar gate de importacao real, backup do destino e rollback.
 - Validacao do lote: `npm run audit:baseline`, `npm run lint` e `npm run build` PASS. `npm test` global falha em scripts Bash/PATH e arquivos temporarios ausentes no Windows, fora deste lote; WSL nao instalado. `npm run typecheck` global continua com diagnosticos preexistentes em arquivos nao alterados. A CI Linux do novo HEAD e obrigatoria antes de considerar o checkpoint aprovado.
+## Legado - retry entre lotes de staging sintetico (2026-09-29)
+
+- Branch isolada `codex/legado-staging-persistencia`, baseada no contrato aprovado da #108. #104 congelada; #48, #106, #107 e #108 nao foram editadas.
+- `verificarMapeadorParaStaging` agora recebe o indice `existentes` do preflight canonico: retry identico nao reenvia registro, novo codigo segue apto, e assinatura divergente bloqueia o lote inteiro. Relatorio permanece agregado e sem dados pessoais.
+- Testes sinteticos direcionados: 58 pass, 0 fail. `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais falham neste ambiente Windows em testes/diagnosticos fora deste diff; a CI Linux do HEAD-base #108 estava verde. O novo HEAD ainda requer CI propria antes de revisao.
+- Nao houve leitura do backup, persistencia real, carga, migration, VPS ou alteracao de 3080. Staging em banco isolado e vinculo juridico Grupo/Empresa continuam pendentes de prova e gate.

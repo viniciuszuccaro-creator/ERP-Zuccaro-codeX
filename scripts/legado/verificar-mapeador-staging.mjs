@@ -17,6 +17,7 @@ export function verificarMapeadorParaStaging(rows, {
   groupId,
   grupoComprovado = false,
   arquivoNome = 'sintetico.csv',
+  existentes = [],
 } = {}) {
   if (grupoComprovado !== true || !groupId) throw new Error('Grupo de destino nao comprovado.');
   const tipoMapeador = ENTIDADES_MESTRE[entidade];
@@ -68,9 +69,12 @@ export function verificarMapeadorParaStaging(rows, {
       descricao: row.descricao,
       documento: row.documento,
     })).digest('hex'),
-  })), { autorizado: true });
-  return { bloqueado: preparados.bloqueado, privados: preparados.bloqueado ? [] : mapeado.gravados,
+  })), { autorizado: true, existentes });
+  const novosCodigos = new Set(preparados.privados.map((row) => row.codigoLegado));
+  return { bloqueado: preparados.bloqueado,
+    privados: preparados.bloqueado ? [] : mapeado.gravados.filter((row) => novosCodigos.has(row.codigo_legado)),
     relatorio: { origem: rows.length, aptos: preparados.relatorio.aptos,
       reusos: preparados.relatorio.reusos, erros: 0,
+      conflitos: preparados.relatorio.conflitos,
       quarentena: preparados.relatorio.quarentena } };
 }

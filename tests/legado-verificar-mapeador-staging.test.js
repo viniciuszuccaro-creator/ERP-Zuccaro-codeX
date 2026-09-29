@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { verificarMapeadorParaStaging } from '../scripts/legado/verificar-mapeador-staging.mjs';
 
@@ -100,4 +101,42 @@ test('Proxy na origem e recusado antes de executar trap', () => {
   });
   assert.throws(() => verificarMapeadorParaStaging([row], opcoes), /dinamico nao permitido/);
   assert.equal(leituras, 0);
+});
+
+test('retry entre lotes reutiliza codigo antigo sem reenviar registro ao staging', () => {
+  const row = { cod_cliente: 'C-501', nome: 'Sintetico', group_id: 'g-sint' };
+  const first = verificarMapeadorParaStaging([row], opcoes);
+  const mapped = first.privados[0];
+  const assinaturaOrigem = createHash('sha256').update(JSON.stringify({
+    codigo: mapped.codigo_legado, nome: mapped.nome, descricao: mapped.descricao,
+    documento: mapped.documento,
+  })).digest('hex');
+  const existentes = [{ entidade: 'cliente', groupId: 'g-sint', empresaId: '',
+    codigoLegado: 'C-501', assinaturaOrigem }];
+  const retry = verificarMapeadorParaStaging([row], { ...opcoes, existentes });
+  assert.equal(retry.bloqueado, false);
+  assert.deepEqual(retry.privados, []);
+  assert.equal(retry.relatorio.aptos, 0);
+  assert.equal(retry.relatorio.reusos, 1);
+
+  const next = verificarMapeadorParaStaging([row, {
+    cod_cliente: 'C-502', nome: 'Outro Sintetico', group_id: 'g-sint',
+  }], { ...opcoes, existentes });
+  assert.deepEqual(next.privados.map((item) => item.codigo_legado), ['C-502']);
+  assert.equal(next.relatorio.aptos, 1);
+  assert.equal(next.relatorio.reusos, 1);
+});
+
+test('mudanca no mesmo codigo legado bloqueia lote completo sem vazamento no relatorio', () => {
+  const existentes = [{ entidade: 'cliente', groupId: 'g-sint', empresaId: '',
+    codigoLegado: 'C-501', assinaturaOrigem: 'a'.repeat(64) }];
+  const result = verificarMapeadorParaStaging([
+    { cod_cliente: 'C-501', nome: 'Nome Privado Sintetico', group_id: 'g-sint' },
+    { cod_cliente: 'C-502', nome: 'Outro Privado Sintetico', group_id: 'g-sint' },
+  ], { ...opcoes, existentes });
+  assert.equal(result.bloqueado, true);
+  assert.deepEqual(result.privados, []);
+  assert.equal(result.relatorio.conflitos, 1);
+  assert.equal(JSON.stringify(result.relatorio).includes('Privado'), false);
+  assert.equal(JSON.stringify(result.relatorio).includes('C-501'), false);
 });
