@@ -1,3 +1,16 @@
+## LOTE CURSOR — parcela schedule preview fail-closed (pós-#140) (2026-09-29T17:45Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **A** agenda parcelas read-only pós simular/condição; fail-closed se ausente |
+| Branch | `cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Base | `#140` tip `f5009c7c` (`cursor/comercial360-onda3-masters-banner-392b`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Meta | `parcelaSchedulePreviewFailClosed` + **Pedido backend HTTP is active** |
+| Colisão | Convert UX já #133/#134; margem #47; anexos/PDF #52–#62 |
+
+---
+
 ## LOTE CURSOR — snapshot reload pós-save (pós-#138) (2026-09-29T17:25Z)
 
 | Campo | Valor |
