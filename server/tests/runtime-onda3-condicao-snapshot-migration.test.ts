@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
-test('migration 025 é aditiva: snapshot condição Orçamento/Pedido + tabela_preco no Orçamento', async () => {
-  const source = await readFile(new URL('../migrations/025_orcamento_pedido_condicao_snapshot.sql', import.meta.url), 'utf8');
+test('migration 029 é aditiva: snapshot condição Orçamento/Pedido + tabela_preco no Orçamento', async () => {
+  const source = await readFile(new URL('../migrations/029_orcamento_pedido_condicao_snapshot.sql', import.meta.url), 'utf8');
   for (const token of [
     'ADD COLUMN IF NOT EXISTS condicao_pagamento_codigo_snapshot',
     'ADD COLUMN IF NOT EXISTS condicao_pagamento_nome_snapshot',

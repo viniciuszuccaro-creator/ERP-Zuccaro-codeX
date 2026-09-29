@@ -1,6 +1,6 @@
 /**
  * Política UI CondicaoPagamento HTTP (Onda 2/3) — lista/resolve nas telas canônicas.
- * Snapshot id+codigo+nome+parcelas é persistido pelo servidor no Orçamento/Pedido (migration 025).
+ * Snapshot id+codigo+nome+parcelas é persistido pelo servidor no Orçamento/Pedido (migration 029).
  * Payload de save continua só com `condicao_pagamento_id`; snapshot é autoridade do backend.
  */
 

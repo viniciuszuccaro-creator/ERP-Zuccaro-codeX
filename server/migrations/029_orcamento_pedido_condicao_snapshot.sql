@@ -1,5 +1,6 @@
 -- ERP-COMERCIAL-360: snapshot imutavel de CondicaoPagamento em Orcamento/Pedido.
 -- Aditiva; sem DROP/TRUNCATE. Executar somente em CI ate gate de VPS proprio.
+-- Numeracao 029: evita colisao com #50/#92 (025-028 origem/canal/versao/tipo).
 -- Snapshot: id (FK ja existente) + codigo + nome + parcelas JSON no momento da gravacao.
 
 ALTER TABLE orcamentos

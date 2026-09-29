@@ -1,20 +1,20 @@
-## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:42Z)
+## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
 
 | Etapa | Estado |
 | --- | --- |
-| Implementado | **SIM** — choice **A**: migration aditiva `025_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
+| Implementado | **SIM** — choice **A**: migration aditiva `029_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
 | Testado | **SIM** — runtime-onda3-condicao-snapshot (+migration) + onda2-preco + 08c orcamento + 09 pedido + runtime01/07b + desconto/margem HTTP + UI policy (94/94 PASS); `server` typecheck PASS; `git diff --check` PASS |
-| CI | pendente neste HEAD |
+| CI | em andamento / re-run após renomear 025→029 |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
-| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` @ feat `4495d5a4` |
-| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-local-obra-http-392b...cursor/comercial360-onda3-condicao-snapshot-392b?expand=1 |
-| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Coordenação | **025 renumerado para 029** — evita colisão com #50/#92 (`025_pedidos_origem_canal_idempotency` … `028`) |
 
 ### Arquivos reservados (Cursor — lote pós-#124; não editar em Codex/#104/#48)
 
-- `server/migrations/025_orcamento_pedido_condicao_snapshot.sql`
+- `server/migrations/029_orcamento_pedido_condicao_snapshot.sql`
 - `server/src/services/comercialCondicaoSnapshot.ts`
 - `server/src/services/orcamentoService.ts` / `pedidoService.ts`
 - `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts`
