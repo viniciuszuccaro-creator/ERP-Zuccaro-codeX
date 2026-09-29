@@ -20,6 +20,8 @@ import {
   ORCAMENTO_CONVERT_SIMULAR_DIRTY_HINT,
   orcamentoConvertSnapshotHint,
   orcamentoValidadeHint,
+  evaluateOrcamentoValidadeUiGate,
+  todayOrcamentoValidadeCalendarDay,
   resolveOrcamentoResumoPreviewState,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
@@ -136,6 +138,17 @@ test('hint e detecção de validade expirada no UI policy', () => {
   assert.equal(isOrcamentoValidadeExpirada('2027-01-01', now), false);
   assert.match(orcamentoValidadeHint('2020-01-01', now), /expirada/i);
   assert.equal(orcamentoValidadeHint('2027-01-01', now), null);
+  const emptyGate=evaluateOrcamentoValidadeUiGate('', now);
+  assert.equal(emptyGate.blockSave, true);
+  assert.equal(emptyGate.mode, 'required');
+  const expiredGate=evaluateOrcamentoValidadeUiGate('2020-01-01', now);
+  assert.equal(expiredGate.blockSave, true);
+  assert.equal(expiredGate.mode, 'expired');
+  const okGate=evaluateOrcamentoValidadeUiGate('2027-01-01', now);
+  assert.equal(okGate.blockSave, false);
+  assert.equal(okGate.mode, 'ready');
+  assert.match(okGate.minDay, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(todayOrcamentoValidadeCalendarDay(now), okGate.minDay);
 });
 
 test('hint de convert snapshot incompleto (pós-031) no UI policy', () => {
@@ -289,6 +302,10 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /clearComercialHttpCacheOnTenantSwitch/);
   assert.match(tab, /buildOrcamentoTenantSwitchReset/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
+  assert.match(tab, /evaluateOrcamentoValidadeUiGate/);
+  assert.match(tab, /orcamento-validade-gate/);
+  assert.match(tab, /validadeUi\.blockSave/);
+  assert.match(tab, /min=\{validadeUi\.minDay\}/);
   assert.match(tab, /orcamentoValidadeHint|Comercial\.orcamento\.validade-hint/);
   assert.match(listPolicy, /ORCAMENTO_VALIDADE_EXPIRADA/);
   assert.match(tab, /formatComercialHttpError|resolveHttpListViewState/);

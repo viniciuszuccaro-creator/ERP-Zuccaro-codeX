@@ -134,6 +134,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.orcamento?.convertDisabledReasonsBannerFailClosed, true);
   assert.equal(meta.body.orcamento?.observacoesMaxLengthUiFailClosed, true);
   assert.equal(meta.body.orcamento?.listPageCsvExportFailClosed, true);
+  assert.equal(meta.body.orcamento?.validadeUiFailClosed, true);
   assert.equal(meta.body.pedido.observacoesMaxLengthUiFailClosed, true);
   assert.equal(meta.body.pedido.listPageCsvExportFailClosed, true);
   assert.equal(meta.body.pedido.cancelMotivoUiFailClosed, true);

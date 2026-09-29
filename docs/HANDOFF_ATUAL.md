@@ -1,3 +1,10 @@
+## AUTÔNOMO — #165 validade min UX (2026-09-29T22:45Z)
+
+Tip empilhada em #164: Orçamento validade obrigatória + min=hoje fail-closed.
+#163/#164 CI SUCCESS. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — #164 cancel motivo Pedido (2026-09-29T22:35Z)
 
 Tip empilhada em #163: cancel Pedido exige motivo UI fail-closed (3–500).

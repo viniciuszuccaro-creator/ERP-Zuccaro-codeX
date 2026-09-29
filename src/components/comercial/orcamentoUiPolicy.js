@@ -181,6 +181,48 @@ export function orcamentoValidadeHint(validadeEm, now = new Date()) {
   return null;
 }
 
+/** Hoje civil YYYY-MM-DD (local) para min= do input date. */
+export function todayOrcamentoValidadeCalendarDay(now = new Date()) {
+  const d = now instanceof Date ? now : new Date(now);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Gate UX fail-closed da validade (obrigatória + não expirada).
+ * @param {unknown} validadeEm
+ * @param {Date | number} [now]
+ * @returns {{
+ *   blockSave: boolean,
+ *   hint: string | null,
+ *   mode: 'required' | 'expired' | 'ready',
+ *   minDay: string,
+ * }}
+ */
+export function evaluateOrcamentoValidadeUiGate(validadeEm, now = new Date()) {
+  const minDay = todayOrcamentoValidadeCalendarDay(now);
+  const text = String(validadeEm ?? '').trim();
+  if (!text) {
+    return {
+      blockSave: true,
+      hint: 'Informe a validade da proposta.',
+      mode: 'required',
+      minDay,
+    };
+  }
+  if (isOrcamentoValidadeExpirada(text, now)) {
+    return {
+      blockSave: true,
+      hint: 'Validade expirada — altere a data antes de salvar ou converter.',
+      mode: 'expired',
+      minDay,
+    };
+  }
+  return { blockSave: false, hint: null, mode: 'ready', minDay };
+}
+
 /**
  * Snapshot gap pós-031 (condição/tabela/promo). Legado sem nenhum campo → null.
  * @param {object | null | undefined} row
