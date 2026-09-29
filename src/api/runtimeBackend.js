@@ -52,8 +52,8 @@ export function resolveErpApiBaseUrl(env = import.meta.env) {
  * Entidades piloto roteadas ao BFF quando mode=http.
  * Demais entidades permanecem no fallback local durante a migracao incremental.
  *
- * Produto: API/schema MASTER DATA prontos no BFF (RUNTIME-03), mas NAO entram
- * no piloto HTTP ainda — ativacao so apos E2E + tenant FK + auditoria aprovados.
+ * Produto: MASTER DATA R03 no piloto HTTP (Onda 3) — list/get Comercial fail-closed.
+ * Formulario V22 continua com opt-in `VITE_ERP_HTTP_PRODUTO` via preparedEntities.
  */
 export const HTTP_PILOT_ENTITIES = Object.freeze([
   'Marca',
@@ -66,9 +66,10 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
   'ClienteEmpresa',
   'ClienteLocal',
   'Obra',
+  'Produto',
 ]);
 
-/** Produto HTTP e explicito no formulario; consumidores legados mantem sua fonte. */
+/** Piloto HTTP canônico; env reservado para compat (não remove Produto do piloto). */
 export function resolveHttpPilotEntities(env = import.meta.env) {
   void env;
   return [...HTTP_PILOT_ENTITIES];

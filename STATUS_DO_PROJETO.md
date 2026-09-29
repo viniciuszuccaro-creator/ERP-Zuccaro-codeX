@@ -1,3 +1,60 @@
+## LOTE CURSOR — #127 merge tip #126 CI fix stub à-vista (2026-09-29T16:00Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — merge de `45195749` (#126) em `cursor/comercial360-onda3-produto-http-392b` para herdar stub `codigo`+`nome` no harness à-vista |
+| Testado | **SIM** no #126 — avista-http 4/4 + snapshot 7/7 + avista unit 7/7 + desconto/margem HTTP 12/12; revalidar CI #127 |
+| CI | tip pós-merge empurrado; aguardar verde em #127 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 |
+| Base | `#126` @ `45195749` |
+
+---
+
+## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `Produto` em `HTTP_PILOT_ENTITIES`; `http.produtos.list/get`; meta `produto.frontendHttp=true`; Orçamento/Pedido carregam itens via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy Produto + http-api-client/cliente/tabela/condicao/local-obra (52+27) + runtime03/04/07b (43/43 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip atualizado após merge do CI fix #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#126` `cursor/comercial360-onda3-condicao-snapshot-392b` (tip `45195749`) |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` @ feat `68f78585` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-condicao-snapshot-392b...cursor/comercial360-onda3-produto-http-392b?expand=1 |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; sem CRM paralelo |
+
+### Arquivos reservados (Cursor — lote pós-#126; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Produto)
+- `src/api/httpApiClient.js` (`produtos` list/get + entity piloto)
+- `server/src/api/router.ts` (meta `produto.frontendHttp` + pilot; note preserva **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialProdutoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx` (picker HTTP)
+- `tests/comercial-produto-http-client.test.js` / `comercial-produto-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime03.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_03.md`
+
+### Escopo
+
+- Reutiliza API R03 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; assert cross-tenant na UI policy.
+- RBAC Cadastros.produto / Comercial.orcamento|pedido.visualizar fail-closed no seletor.
+- Form V22 permanece com opt-in `VITE_ERP_HTTP_PRODUTO` via `preparedEntities` (DAM/workflow).
+
+### Próximo item independente restante
+
+- Snapshot de promoção / refs persistidas **ou** cutover restante de pickers legados; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → **este lote**.
+
+---
+
 ## LOTE CURSOR — CI fix #126 stub à-vista + snapshot condição (2026-09-29T15:55Z)
 
 | Etapa | Estado |
@@ -5,7 +62,7 @@
 | Implementado | **SIM** — fixture `comercial-condicao-avista-http` passa a devolver `codigo`+`nome` (+parcelas) no stub de `condicoes.get`, alinhado aos outros HTTP harnesses; path de produção fail-closed intacto |
 | Causa | create Orçamento exige snapshot CondicaoPagamento (`codigo`+`nome`+parcelas); stub à-vista só tinha `id`+`ativo`+parcelas → 422 `ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO` antes de 403/201/`DESCONTO_INVALIDO` |
 | Testado | **SIM** — `comercial-condicao-avista-http` 4/4 + `comercial-condicao-avista` 7/7 + `runtime-onda3-condicao-snapshot` 7/7 + desconto/margem HTTP 12/12 PASS |
-| CI | tip pós-fix empurrado; aguardar verde em #126 |
+| CI | tip `45195749` empurrado; aguardar verde em #126 |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
@@ -18,7 +75,7 @@
 
 ### Próximo
 
-- Aguardar CI #126; empilhar tip no #127; sem merge/VPS.
+- Aguardar CI #126/#127; sem merge/VPS.
 
 ---
 

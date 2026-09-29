@@ -63,7 +63,7 @@ test('HttpApiClient supports relative same-origin URLs', async () => {
   assert.equal(urls[0].startsWith('/api/v1/marcas'), true);
 });
 
-test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + TabelaPreco + Cliente + ClienteEmpresa + ClienteLocal + Obra sem Produto', () => {
+test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + TabelaPreco + Cliente + ClienteEmpresa + ClienteLocal + Obra + Produto', () => {
   assert.deepEqual([...HTTP_PILOT_ENTITIES], [
     'Marca',
     'UnidadeMedida',
@@ -75,8 +75,9 @@ test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + Ta
     'ClienteEmpresa',
     'ClienteLocal',
     'Obra',
+    'Produto',
   ]);
-  assert.equal(HTTP_PILOT_ENTITIES.includes('Produto'), false);
+  assert.equal(HTTP_PILOT_ENTITIES.includes('Produto'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('Cliente'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteEmpresa'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('ClienteLocal'), true);
@@ -84,12 +85,12 @@ test('HTTP_PILOT_ENTITIES includes RUNTIME-02 cadastros + CondicaoPagamento + Ta
   assert.equal(HTTP_PILOT_ENTITIES.includes('CondicaoPagamento'), true);
   assert.equal(HTTP_PILOT_ENTITIES.includes('TabelaPreco'), true);
 });
-test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do formulario', () => {
-  assert.equal(resolveHttpPilotEntities({}).includes('Produto'), false);
-  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'false' }).includes('Produto'), false);
+test('Produto permanece no piloto HTTP independente do opt-in VITE_ERP_HTTP_PRODUTO do formulario', () => {
+  assert.equal(resolveHttpPilotEntities({}).includes('Produto'), true);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'false' }).includes('Produto'), true);
   const enabled = resolveHttpPilotEntities({ VITE_ERP_HTTP_PRODUTO: 'true' });
-  assert.equal(enabled.includes('Produto'), false);
-  assert.deepEqual(enabled.filter((name) => name === 'Produto'), []);
+  assert.equal(enabled.includes('Produto'), true);
+  assert.ok(enabled.filter((name) => name === 'Produto').length >= 1);
 });
 
 
@@ -156,7 +157,7 @@ test('HttpApiClient maps UnidadeMedida/GrupoProduto/SetorAtividade routes', asyn
   assert.match(urls[2], /\/api\/v1\/setores-atividade\/s1/);
 });
 
-test('Produto route exists in preparedEntities but not in pilot entities', async () => {
+test('Produto route exists in pilot entities and preparedEntities', async () => {
   /** @type {string[]} */
   const urls = [];
   const fetchImpl = async (url) => {
@@ -167,12 +168,13 @@ test('Produto route exists in preparedEntities but not in pilot entities', async
     });
   };
   const client = createHttpApiClient({ baseUrl: 'http://localhost:3080', fetchImpl });
-  assert.equal(client.entities.Produto, undefined);
+  assert.ok(client.entities.Produto);
+  assert.ok(client.produtos);
   await client.preparedEntities.Produto.get('p1');
   assert.match(urls[0], /\/api\/v1\/produtos\/p1/);
 });
 
-test('Produto preparado lista somente metadados DAM no BFF sem ativar piloto', async () => {
+test('Produto piloto lista somente metadados DAM no BFF com entities ativos', async () => {
   const calls = [];
   const controller = new AbortController();
   const client = createHttpApiClient({
@@ -185,7 +187,7 @@ test('Produto preparado lista somente metadados DAM no BFF sem ativar piloto', a
       });
     },
   });
-  assert.equal(client.entities.Produto, undefined);
+  assert.ok(client.entities.Produto);
   const rows = await client.preparedEntities.Produto.midias.list('produto/1', { limit: 10, offset: 5, signal: controller.signal });
   assert.deepEqual(rows, [{ id: 'midia-sintetica', status: 'QUARENTENA' }]);
   assert.equal(new URL(calls[0].url).pathname, '/api/v1/produtos/produto%2F1/midias');
@@ -199,7 +201,7 @@ test('Produto preparado lista somente metadados DAM no BFF sem ativar piloto', a
   assert.equal(calls[0].headers['X-Actor-Id'], 'ator-sintetico');
 });
 
-test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no body', async () => {
+test('Produto HTTP piloto cobre workflow e reserva/confirmacao sem tenant no body', async () => {
   const calls = [];
   const client = createHttpApiClient({
     baseUrl: 'https://erp.invalid',
@@ -227,7 +229,7 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
 });
 
-test('Produto preparado expõe oito chamadas de relações sem ativar cadastro piloto', async () => {
+test('Produto piloto expõe oito chamadas de relações além do cadastro piloto', async () => {
   const calls = [];
   const client = createHttpApiClient({
     baseUrl: 'https://erp.invalid',
@@ -240,7 +242,7 @@ test('Produto preparado expõe oito chamadas de relações sem ativar cadastro p
       });
     },
   });
-  assert.equal(client.entities.Produto, undefined);
+  assert.ok(client.entities.Produto);
   const produto = client.preparedEntities.Produto;
   await produto.variantes.list('produto/1');
   await produto.variantes.create('produto/1', { sku: 'SKU-SINTETICO' });

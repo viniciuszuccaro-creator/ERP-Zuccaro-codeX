@@ -568,10 +568,11 @@ export function createHttpApiClient(options = {}) {
         },
       };
     })(),
-    // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
+    // Produto R03 — piloto HTTP Onda 3 (list/get Comercial + CRUD/relações prepared).
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
         searchKeys: ['descricao', 'codigo', 'nome', 'codigo_barras', 'search'],
+        ativoKeys: ['ativo'],
       });
       const listeners = new Set();
       const notify = () => {
@@ -640,7 +641,7 @@ export function createHttpApiClient(options = {}) {
         },
         async list(orderBy, limit = 50, offset = 0) {
           void orderBy;
-          return request('/api/v1/produtos', { query: { limit, offset } });
+          return request('/api/v1/produtos', { query: { limit, offset, ativo: true } });
         },
         async filter(query = {}, orderBy, limit = 50) {
           void orderBy;
@@ -650,8 +651,8 @@ export function createHttpApiClient(options = {}) {
               offset: query.offset,
               search: query.descricao || query.search || query.nome,
               codigo: query.codigo,
-              codigo_barras: query.codigo_barras,
-              ativo: query.ativo ?? query.ativa,
+              codigo_barras: query.codigo_barras || query.codigoBarras,
+              ativo: query.ativo ?? query.ativa ?? true,
             },
           });
         },
@@ -1221,6 +1222,50 @@ export function createHttpApiClient(options = {}) {
       return request(`/api/v1/cliente-empresas/${encodeURIComponent(id)}`, { signal });
     },
   };
+  /**
+   * Produto canônico (R03 + Onda 3 piloto). Tenant só nos headers; RBAC Cadastros.produto.* no BFF.
+   * Envelope `{ data, meta }` para seletores Comercial (espelha clientes/condicoes/tabelas).
+   */
+  const produtos = {
+    /**
+     * @param {{
+     *   limit?: number,
+     *   offset?: number,
+     *   search?: string,
+     *   codigo?: string,
+     *   codigoBarras?: string,
+     *   ativo?: boolean,
+     *   signal?: AbortSignal,
+     * }} [options]
+     */
+    list({
+      limit = 50,
+      offset = 0,
+      search,
+      codigo,
+      codigoBarras,
+      ativo = true,
+      signal,
+    } = {}) {
+      return request('/api/v1/produtos', {
+        query: {
+          limit,
+          offset,
+          search,
+          codigo,
+          codigo_barras: codigoBarras,
+          ativo,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/produtos/${encodeURIComponent(id)}`, { signal });
+    },
+  };
+
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
@@ -1247,7 +1292,8 @@ export function createHttpApiClient(options = {}) {
     clientes,
     clienteEmpresas,
     unidadesMedida,
-    /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
+    produtos,
+    /** Acesso direto a rotas preparadas (relações/DAM/workflow) além do piloto de entidades. */
     preparedEntities: entityRoutes,
     async health() {
       return request('/health');
