@@ -95,9 +95,10 @@ O preflight `staging-scope-gate.mjs` nao aceita mais `comprovado: true` sozinho.
 Cada codigo de Empresa legado usado por Pedido, estoque, financeiro ou NF
 precisa de vinculo com `groupId` e `empresaId` do destino e de metadados de
 evidencia: `tipo` (`cnpj` ou `documento_fiscal`), `sha256` do documento privado,
-`aprovadoPor` (UUID) e `aprovadoEm` (data). Documento, CNPJ e aprovacao real
+`aprovadoPor` (UUID) e `aprovadoEm` (timestamp UTC ISO estrito). Os campos
+devem ser strings; arrays, objetos e datas impossiveis sao recusados. Documento, CNPJ e aprovacao real
 permanecem fora do GitHub. O hash nao prova por si so a identidade juridica:
-esta e uma atestacao a conferir manualmente contra o original antes do gate.
+esta e uma atestacao de formato a conferir manualmente contra o original antes do gate.
 Falta de qualquer campo, codigo nao reconhecido ou empresa divergente mantem a
 operacao em quarentena. Mestre do Grupo nao ganha empresa proprietaria por esse
 contrato. Testes de CI usam apenas valores sinteticos; nenhuma carga real foi

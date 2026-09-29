@@ -31,6 +31,13 @@ test('booleano comprovado sem evidencia e aprovacao nao libera operacao', () => 
     { ...vinculos['001'], evidencia: { ...evidencia, aprovadoPor: '' } },
     { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: 'invalido' } },
     { ...vinculos['001'], evidencia: { ...evidencia, tipo: 'print' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, sha256: [evidencia.sha256] } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoPor: [evidencia.aprovadoPor] } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: [evidencia.aprovadoEm] } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: new Date(evidencia.aprovadoEm) } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: '2026-02-31T12:00:00Z' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, aprovadoEm: '2026' } },
+    { ...vinculos['001'], evidencia: { ...evidencia, sha256: '0'.repeat(64) } },
   ];
   for (const vinculo of incompletos) {
     const result = prepararLoteStagingLegado([item], {
