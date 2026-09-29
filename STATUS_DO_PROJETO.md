@@ -3,12 +3,12 @@
 | Etapa | Estado |
 | --- | --- |
 | Implementado | **SIM** — piloto HTTP `TabelaPreco` + CRUD/vínculo/padrão/itens/`preco-cliente` no cliente; Pedido lista tabelas via HTTP; Orçamento/Pedido resolvem preço ao selecionar produto; sem migration |
-| Testado | pendente neste HEAD (focado a seguir) |
-| CI | pendente |
+| Testado | **SIM** — 13 novos (client+policy) + http-api-client/condicao regressão (42/42) + runtime07b 13/13 + runtime08c 6/6 (note Pedido backend HTTP) |
+| CI | pendente neste HEAD |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | empilhada em `#117` `cursor/comercial360-onda2-condicao-http-392b` (tip `9bb3bccc`) |
-| Branch | `cursor/comercial360-onda2-tabela-http-392b` |
+| Branch | `cursor/comercial360-onda2-tabela-http-392b` @ `988c6ce3` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-condicao-http-392b...cursor/comercial360-onda2-tabela-http-392b?expand=1 |
 
 ### Arquivos reservados (Cursor — lote pós-#117; não editar em Codex/#104/#48)
