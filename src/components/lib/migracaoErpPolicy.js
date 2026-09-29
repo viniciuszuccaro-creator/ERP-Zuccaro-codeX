@@ -121,8 +121,11 @@ export const stripSegredosMigracao = (record = {}) => {
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .replace(/[\s-]+/g, '_').toLowerCase();
   const sanitize = (value) => {
+    if (value === null || typeof value !== 'object') return value;
     if (Array.isArray(value)) return value.map(sanitize);
-    if (!value || (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)) return value;
+    if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+      throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
+    }
     return Object.fromEntries(Object.entries(value)
       .filter(([key]) => {
         const normalized = normalizeKey(key);
