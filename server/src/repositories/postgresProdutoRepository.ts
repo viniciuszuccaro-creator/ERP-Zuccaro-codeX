@@ -139,6 +139,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       where.push(
         `(strpos(lower(descricao), $${params.length}) > 0`
         + ` OR strpos(lower(coalesce(codigo,'')), $${params.length}) > 0`
+        + ` OR strpos(lower(coalesce(codigo_legado,'')), $${params.length}) > 0`
         + ` OR strpos(lower(coalesce(nome,'')), $${params.length}) > 0`
         + ` OR strpos(lower(coalesce(codigo_barras,'')), $${params.length}) > 0`
         + ` OR strpos(lower(coalesce(material,'')), $${params.length}) > 0`

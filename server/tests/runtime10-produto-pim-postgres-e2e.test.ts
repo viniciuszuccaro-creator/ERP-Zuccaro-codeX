@@ -33,6 +33,9 @@ test('R10 PostgreSQL real: codigo legado de Produto preservado sem renumerar o c
       createdId = created.id;
       assert.equal(created.codigo_legado, '000123');
       assert.equal((await repo.getById(scope, created.id, tx))?.codigo_legado, '000123');
+      assert.equal((await repo.listPage({ ...scope, search: '00123' }, tx)).total, 1);
+      assert.equal((await repo.listPage({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2,
+        search: '00123' }, tx)).total, 0);
       assert.equal(await repo.getById({ groupId: scope.groupId, empresaId: SEED_IDS.empresaA2 }, created.id, tx), null);
       const updated = await repo.update(scope, created.id, { descricao: 'Revenda revisada' }, tx);
       assert.equal(updated?.codigo, created.codigo);

@@ -100,6 +100,19 @@ test('V22 projeta material, liga e norma tecnica sem tenant no body', () => {
     liga: 'SAE 1020', norma_tecnica: 'ASTM A36' });
 });
 
+test('V22 preserva codigo legado no formulario e no HTTP sem enviar tenant ou dados operacionais', async () => {
+  const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(form, /codigo_legado: produto\.codigo_legado \|\| ''/);
+  assert.match(form, /data-action="editar-codigo-legado-produto"/);
+  assert.match(form, /disabled=\{!contextoValido \|\| \(produto\?\.id \? !podeEditar : !podeCriar\)\}/);
+  assert.deepEqual(toProdutoHttpPayload({ descricao: 'Revenda sintetica', codigo_legado: ' 000123 ',
+    groupId: 'forjado', empresaId: 'forjada', estoque_atual: 10, preco_venda: 20 }),
+  { descricao: 'Revenda sintetica', codigo_legado: '000123' });
+  assert.deepEqual(toProdutoHttpPayload({ codigo_legado: '' }, { update: true }), { codigo_legado: null });
+  assert.throws(() => toProdutoHttpPayload({ descricao: 'Invalido', codigo_legado: 'x'.repeat(81) }), /Codigo legado invalido/);
+  assert.throws(() => toProdutoHttpPayload({ descricao: 'Invalido', codigo_legado: 123 }), /Codigo legado invalido/);
+});
+
 test('V22 envia null ao limpar campos PIM no update HTTP, sem alterar o create ou outros dominios', () => {
   const cleared = {
     descricao: 'Chapa sintetica', material: '', liga: '', norma_tecnica: '',

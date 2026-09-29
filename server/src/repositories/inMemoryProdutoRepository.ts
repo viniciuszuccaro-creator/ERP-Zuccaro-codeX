@@ -177,7 +177,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     }
     if (filter.search) {
       const term = filter.search.toLowerCase();
-      const fields = [r.descricao, r.codigo, r.nome, r.codigo_barras,
+      const fields = [r.descricao, r.codigo, r.codigo_legado, r.nome, r.codigo_barras,
         r.material, r.liga, r.norma_tecnica];
       if (!fields.some((value) => String(value ?? '').toLowerCase().includes(term))) return false;
     }

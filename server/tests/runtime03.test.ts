@@ -150,6 +150,8 @@ test('Produto preserva codigo legado sem alterar codigo canonico e isola empresa
   assert.equal(created.codigo, 'ERP-100');
   assert.equal(created.codigo_legado, '000123');
   assert.equal((await repo.getById(scope, created.id))?.codigo_legado, '000123');
+  assert.equal((await repo.listPage({ ...scope, search: '00123' })).total, 1);
+  assert.equal((await repo.listPage({ groupId: GROUP_A, empresaId: EMPRESA_B, search: '00123' })).total, 0);
   assert.equal(await repo.getById({ groupId: GROUP_A, empresaId: EMPRESA_B }, created.id), null);
   const updated = await repo.update(scope, created.id, produtoUpdateSchema.parse({ descricao: 'Revenda revisada' }));
   assert.equal(updated?.codigo, 'ERP-100');
