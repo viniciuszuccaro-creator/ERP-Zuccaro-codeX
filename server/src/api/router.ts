@@ -546,6 +546,16 @@ function mountClienteRoutes(
     }
   });
 
+  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.sugerirVinculo(ctxFromReq(req), { documento: req.query.documento });
+      res.set('cache-control', 'no-store');
+      res.json({ data });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/api/v1/clientes/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);

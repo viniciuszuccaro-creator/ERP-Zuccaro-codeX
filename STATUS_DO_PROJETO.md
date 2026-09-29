@@ -1,3 +1,20 @@
+## CURSOR — Onda 3 sugestão vínculo #113 (2026-10-08)
+
+| Item | Valor |
+|---|---|
+| Branch | `cursor/comercial360-onda3-sugestao-vinculo-4a49` |
+| Base | main `64301fdb` (#246+#245 integrados) |
+| Escopo | `GET /api/v1/clientes/sugestao-vinculo` — documento no Grupo; sem mescla; sem CRM HTTP |
+| Testes | `runtime-onda3-cliente-sugestao-vinculo` |
+| ≠ | outbox · Legado · top-produtos · CRM canônico |
+
+## Comercial 360 / Onda 3 — sugestão de vínculo (2026-09-29)
+
+- Leitura `GET /api/v1/clientes/sugestao-vinculo` no `ClienteService` existente. Não cria cliente, não mescla e não abre CRM HTTP.
+- Grupo compartilha o mestre; outro grupo e cliente inativo devolvem `sem_match`. Sem `visualizar`, 403. Duplicata no create continua 409.
+- Auditoria `possible_duplicate` com documento mascarado. Teste `runtime-onda3-cliente-sugestao-vinculo.test.ts` PASS; regressão Central 360 4/4 PASS.
+- CRM canônico permanece BLOCKED. Sem migration, merge ou VPS.
+
 ## CURSOR — #246 Financeiro scope + stale cancel (2026-10-08)
 
 | Fase | Estado |
@@ -35,6 +52,7 @@ Agente: lote pós-deploy independente (≠ outbox / legado / #245 snapshots).
 | Testes | financeiro-empresa-switch-ux + launchpad + snapshot-guard → **18/18** focados |
 | PR | a publicar neste push |
 | Deploy VPS | **não** (código UX); runtime VPS = `542be525` (#245 nginx) |
+
 
 ## CURSOR — deploy erp-dev `542be525` nginx 404-all (2026-10-08)
 
@@ -403,6 +421,7 @@ Helper `canViewFinanceLaunchpadModule` + ModuleTabs Financeiro. 15 submódulos. 
 - HTTP prepared: `POST /api/v1/produtos/outbox/claim|.../confirm|.../fail`; meta `produto.outboxClaimLease`. Sem publicacao externa, sem VPS.
 - Testes: runtime10-produto-outbox-claim + pim 36/36.
 - Branch `cursor/comercial360-onda15-outbox-claim-392b`.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
