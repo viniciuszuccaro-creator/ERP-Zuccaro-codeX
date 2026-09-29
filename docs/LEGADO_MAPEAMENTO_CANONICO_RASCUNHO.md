@@ -2,11 +2,25 @@
 
 **Status:** `RASCUNHO / SEM DADOS REAIS`
 **Onda:** 25 (bloqueada)
+**PR Cursor:** mapeador #48 — branch `cursor/legado-mapper-48-grupo003-392b`
 **Política existente (não duplicar):** `src/components/lib/migracaoErpPolicy.js`
-**Inventário:** `scripts/legado/inventario-backup-erp-antigo.sh`
+**Inventário:** `scripts/legado/inventario-backup-erp-antigo.sh` (Codex / HD)
+**Staging-scope:** `scripts/legado/staging-scope-gate.mjs` (Codex #106/#107 — Cursor não edita)
 
 Este documento **não** autoriza importação. Serve para alinhar Cursor ↔ Codex
-quando o inventário do HD externo existir.
+conforme `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`.
+
+---
+
+## 0. Exclusividade Cursor (arquivos reservados)
+
+| Arquivo | Dono |
+|---|---|
+| `scripts/legado/mapear-registro-sintetico.mjs` | **Cursor** |
+| `tests/legado-mapear-sintetico.test.js` | **Cursor** |
+| `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md` | **Cursor** |
+
+Codex consome o mapeador no HEAD final (#108 `verificar-mapeador-staging` etc.) **sem** editar estes arquivos. Sem dados reais / PII no GitHub.
 
 ---
 
@@ -18,6 +32,10 @@ quando o inventário do HD externo existir.
 4. Conflito → reservar código interno novo + mapeamento; nunca sobrescrita silenciosa.
 5. Strip de segredos via `stripSegredosMigracao` / `SECRET_MIGRACAO_KEYS`.
 6. Dados reais fora do GitHub; testes só sintéticos.
+7. **Grupo legado `003` / `3` não prova empresa emissora** — quarentena `codigo_empresa_legado_grupo_seletor`.
+8. Empresas jurídicas candidatas: `001`/`1`, `002`/`2`, `005`/`5` — vínculo comprovado por registro (Codex/staging).
+9. Mestres (`cliente`, `fornecedor`, `produto`, `condicao_pagamento`, `tabela_preco`) ficam no **Grupo** (`empresa_id` vazio → chave `…|grupo|…`).
+10. Operações (`pedido`, `orcamento`, `obra`, …) pertencem à empresa comprovada e consolidam no Grupo.
 
 ---
 
@@ -28,19 +46,22 @@ somente leitura. Valores abaixo são **candidatos** do ERP canônico atual.
 
 | Domínio legado (rótulo) | Destino canônico | Pré-requisito PG | Notas |
 |---|---|---|---|
-| Empresa / filial | `empresas` + `groups` | 001 | tenant raiz = group |
+| Empresa / filial | `empresas` + `groups` | 001 | tenant raiz = group; PJ só 001/002/005 |
 | Cliente / pessoa | `clientes` | 009 | documento único no grupo |
 | Cliente×empresa | `cliente_empresas` | 009–010 | elegibilidade; sem crédito/preço improvisado |
 | Endereço / local | `cliente_locais` + finalidades | 011 | sem finalidade OBRA |
 | Obra / obra cliente | `obras` + `obra_empresas` + `obra_locais` | 012 | sem endereço duplicado |
 | Produto / item | `produtos` (+ PIM/DAM na PR #33) | 006–008 (+018–024 na PR) | sem preço no master |
-| Tabela de preço | `tabelas_preco` / itens / empresas | 013 | `codigo_tabela_legado` já existe no legado UI |
+| Fornecedor | cadastro mestre Grupo | — | aliases sintéticos |
+| Tabela de preço | `tabelas_preco` / itens / empresas | 013 | aliases sintéticos; sem preços reais |
 | Condição pagamento | `condicoes_pagamento` | 014–015 | |
-| Orçamento | agregado 016 (PR #33) | 016 | só após Gate E |
-| Pedido / venda | agregado 017 (PR #33) | 017 | snapshot preço/endereço |
+| Orçamento | agregado 016 | 016 | aliases sintéticos `orcamento` |
+| Pedido / venda | agregado 017 | 017 | aliases sintéticos `pedido` |
 | Conta pagar/receber | entidades financeiras existentes | staging + reconciliação | `PENDING_MANUAL_RECONCILIATION` |
 | NF | NotaFiscal + reconciliação fiscal | staging | permissões `Fiscal.Migracao.*` |
-| Código empresa legado `0` | **quarentena** (não propaga) | — | `avaliarQuarentenaLegado` |
+| Código `0` / `000` | **quarentena** | — | `codigo_empresa_legado_0` |
+| Código `3` / `003` | **quarentena (Grupo seletor)** | — | `codigo_empresa_legado_grupo_seletor` |
+| Código `4` / `004` | **quarentena (inativa)** | — | `codigo_empresa_legado_inativa` |
 | Vendedor | **não** criar `Vendedor` paralelo | Colaborador/Pessoa | bloqueado até identidade canônica |
 | Contato / telefone | **não** inventar Contato2 | Pessoa canônica futura | PII |
 
@@ -67,6 +88,7 @@ Reutilizar `stampMigracaoRecord`:
 - `codigo_legado`
 - `destino_migracao` = `staging` até homologação
 - `status_migracao` = `PENDING_MANUAL_RECONCILIATION` quando exigir conciliação
+- `codigo_empresa_legado` / `empresa_legado_tipo` / `empresa_legado_apto` (quando houver seletor)
 
 ---
 
@@ -78,13 +100,15 @@ Composição (alinhada ao Gate 18 / `migracaoErpPolicy`):
 group_id|empresa_id|origem_migracao|entidade|codigo_legado
 ```
 
-Implementação local (sem HD/import): `buildChaveIdempotenteMigracaoLegado` e
-`mapLegadoLoteSintetico` em `scripts/legado/mapear-registro-sintetico.mjs`.
+Mestre sem empresa → `empresa_id` token `grupo`.
+
+Implementação: `buildChaveIdempotenteMigracaoLegado` e `mapLegadoLoteSintetico` em
+`scripts/legado/mapear-registro-sintetico.mjs`.
 Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
 
 ## 6. Próximos passos desta frente
 
-1. Rodar inventário no HD (`BACKUP ERP ANTIGO - CODEX`) — metadados/hashes.
-2. Preencher “Formato/origem observada” na matriz §2.
-3. Propor ETL idempotente real só após inventário + Onda 25.
-4. Staging isolado só com gate Onda 25.
+1. ~~Rodar inventário no HD~~ → **BLOCKED** até HD + somente leitura (Codex).
+2. Preencher “Formato/origem observada” na matriz §2 **somente** após inventário.
+3. Codex: staging/reconciliação (#106/#107/#108/#109) consome este mapeador sem editar #48.
+4. Staging real / importação: Onda 25 + gate humano + vínculo jurídico por registro.
