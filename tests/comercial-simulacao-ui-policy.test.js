@@ -6,15 +6,20 @@ import {
   applySimulacaoToForm,
   assertParcelaScheduleFromSimulacao,
   assertPromocaoAplicadaOuFalhar,
+  assertSimulacaoFreshForSave,
   assertSimulacaoNoContexto,
   buildCondicaoParcelaTemplatePreview,
   buildSimularVendaPayload,
   buildSimulacaoPreviewState,
   canSimularVenda,
+  evaluateSimulacaoDirtySaveGate,
   formatParcelasSchedule,
+  markSimulacaoDirtyAfterPricingChange,
   mergeSimulacaoBeforeSave,
   resolveDisplayTotals,
   resolveParcelaScheduleUiState,
+  shouldInvalidateSimulacaoOnFormKey,
+  SIMULACAO_DIRTY_HINT,
 } from '../src/components/comercial/comercialSimulacaoUiPolicy.js';
 
 const GROUP_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -312,4 +317,58 @@ test('Orçamento/Pedido mantêm formulário aberto e recarregam snapshots após 
   assert.match(ped, /data-testid="pedido-tabela-snapshot"/);
   assert.match(ped, /data-testid="pedido-promocao-snapshot"/);
   assert.doesNotMatch(orc, /setFormOpen\(false\);\s*setEditing\(null\);\s*setSelected\(saved\);\s*resetSimulacaoUi/);
+});
+
+test('dirty-state: mudança de condição/itens/promo limpa preview e bloqueia save até re-simular', () => {
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('condicao_pagamento_id'), true);
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('itens'), true);
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('validade_em'), true);
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('data_entrega_solicitada'), true);
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('observacoes'), false);
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('cliente_local_id'), false);
+  assert.equal(shouldInvalidateSimulacaoOnFormKey('tipo_operacao'), false);
+
+  const marked = markSimulacaoDirtyAfterPricingChange();
+  assert.equal(marked.simulacaoDirty, true);
+  assert.equal(marked.simulacaoPreview, null);
+  assert.equal(marked.lastSimulation, null);
+
+  const blocked = evaluateSimulacaoDirtySaveGate({ simulacaoDirty: true, canSimular: true });
+  assert.equal(blocked.blockSave, true);
+  assert.equal(blocked.dirty, true);
+  assert.equal(blocked.hint, SIMULACAO_DIRTY_HINT);
+  assert.throws(
+    () => assertSimulacaoFreshForSave({ simulacaoDirty: true, canSimular: true }),
+    /simule novamente/i,
+  );
+
+  const clean = evaluateSimulacaoDirtySaveGate({ simulacaoDirty: false, canSimular: true });
+  assert.equal(clean.blockSave, false);
+  assert.equal(assertSimulacaoFreshForSave({ simulacaoDirty: false, canSimular: true }).blockSave, false);
+
+  // Sem permissão de simular: não soft-locka o Salvar (backend segue autoridade).
+  const noSim = evaluateSimulacaoDirtySaveGate({ simulacaoDirty: true, canSimular: false });
+  assert.equal(noSim.blockSave, false);
+  assert.equal(noSim.dirty, true);
+});
+
+test('Orçamento/Pedido ligam dirty-state fail-closed (banner + Salvar bloqueado)', async () => {
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  assert.match(orc, /evaluateSimulacaoDirtySaveGate/);
+  assert.match(orc, /assertSimulacaoFreshForSave/);
+  assert.match(orc, /shouldInvalidateSimulacaoOnFormKey/);
+  assert.match(orc, /invalidateSimulacaoPreview/);
+  assert.match(orc, /data-testid="orcamento-simulacao-dirty"/);
+  assert.match(orc, /simulacaoDirtyGate\.blockSave/);
+  assert.match(orc, /setSimulacaoDirty\(false\)/);
+  assert.match(orc, /setSimulacaoDirty\(true\)/);
+  assert.match(ped, /evaluateSimulacaoDirtySaveGate/);
+  assert.match(ped, /assertSimulacaoFreshForSave/);
+  assert.match(ped, /shouldInvalidateSimulacaoOnFormKey/);
+  assert.match(ped, /invalidateSimulacaoPreview/);
+  assert.match(ped, /data-testid="pedido-simulacao-dirty"/);
+  assert.match(ped, /simulacaoDirtyGate\.blockSave/);
+  assert.match(ped, /setSimulacaoDirty\(false\)/);
+  assert.match(ped, /setSimulacaoDirty\(true\)/);
 });

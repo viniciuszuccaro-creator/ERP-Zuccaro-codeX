@@ -179,11 +179,13 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     saveIdempotency: true,
     mastersPickerFailClosed: true,
     parcelaSchedulePreviewFailClosed: true,
+    simulacaoDirtyFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.match(result.body.note, /UI alçada de desconto fail-closed/);
   assert.match(result.body.note, /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
   assert.match(result.body.note, /agenda de parcelas read-only/);
+  assert.match(result.body.note, /simular-venda dirty-state fail-closed/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
@@ -199,6 +201,7 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.mastersPickerFailClosed, true);
   assert.equal(result.body.pedido.parcelaSchedulePreviewFailClosed, true);
   assert.equal(result.body.pedido.deliveryAddressSummaryFailClosed, true);
+  assert.equal(result.body.pedido.simulacaoDirtyFailClosed, true);
   assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
   assert.match(result.body.note, /Pedido cancel fail-closed/);
   assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
