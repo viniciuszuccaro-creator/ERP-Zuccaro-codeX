@@ -11737,3 +11737,27 @@ Checklist inicial:
 - O E2E efemero agora exercita o mapper #48 atraves do adaptador Codex: Cliente mestre e Produto explicitamente de revenda entram em tabela temporaria com codigo legado preservado e `empresa_id` nulo. O indice do Cliente e relido por SQL para comprovar retry sem segunda entrega.
 - Grupo divergente falha antes do SQL; lote misto com Produto nao-revenda devolve zero registros e contagem sanitizada de exclusoes. A constraint PostgreSQL rejeita duplicata do mestre e toda a transacao termina em rollback.
 - Esta prova nao representa extracao do HD, vinculo juridico real, staging persistente nem importacao operacional. CI PostgreSQL do novo HEAD e obrigatoria antes de aprovar o ensaio.
+
+## Fornecedor legado no contrato de staging isolado (2026-09-29)
+
+- O adaptador existente da #128 agora reutiliza o mapeador de Fornecedor da #48 como mestre compartilhado do Grupo, preservando `codigo_legado`; nao atribui Empresa por codigo do seletor, nome de pasta ou hipotese. Cliente e Produto de revenda mantem seus contratos.
+- Testes sinteticos cobrem contagem por entidade/Grupo, retry idempotente, conflito de conteudo no mesmo codigo, Grupo divergente, vinculo empresarial nao comprovado e ausencia de entrega parcial. O E2E PostgreSQL usa tabela temporaria em banco isolado, valida linha e retry por SQL e termina em rollback.
+- Validacao local: 43 testes focados PASS, audit baseline/lint/build PASS. `npm test` no Windows inclui testes de scripts VPS que exigem Bash e falham com `spawnSync.status=null`; `npm run typecheck` global falha em erros existentes de Base44/JSX fora dos arquivos alterados. CI Linux do HEAD publicado deve confirmar a suite completa e o PostgreSQL sintetico antes da revisao.
+- Nao houve leitura do HD, staging persistente, importacao, migration, VPS ou mudanca da porta 3080. O vinculo juridico para operacoes e a carga real continuam sujeitos a prova e gate proprios.
+
+## Lote unico de mestres legados antes do staging (2026-09-29)
+
+- O mesmo adaptador oferece verificacao conjunta de Cliente, Fornecedor e Produto de revenda. Contagens esperadas sao conferidas por entidade; falha, exclusao ou divergencia em qualquer parte zera a entrega privada do lote inteiro, sem misturar Grupo/Empresa nem publicar PII no relatorio.
+- Testes sintéticos cobrem sucesso, falha no ultimo mestre, entidade estranha, contagem sem lote e empresa sem prova. O E2E PostgreSQL efemero verifica o lote completo e o bloqueado junto da tabela temporaria transacional; nao representa gravacao persistente nem acesso ao backup.
+- Validacao local focada: 46/46 PASS, backend typecheck/build e diff-check PASS. Na suite backend concorrente Windows, `runtime07b.test.ts` falhou como arquivo (272 PASS, 1 FAIL, 16 SKIP); o mesmo arquivo isolado passou 13/13. A suite Linux e a prova PostgreSQL do novo HEAD continuam obrigatorias para aprovar este incremento. Nenhuma importacao real/VPS foi executada.
+
+## Hardening da entrada do lote mestre (2026-09-29)
+
+- A verificacao conjunta rejeita objeto de lotes, arrays e opcoes com getters/setters ou Proxy antes de iterar campos, evitando executar codigo do extrator ou ler registro privado durante o preflight. A checagem individual de tenant e a sanitizacao existentes continuam em vigor.
+- Testes adversariais verificam que nenhum getter e chamado. Nao ha alteracao no mapeador #48, schema, staging persistente ou importacao. CI do novo HEAD permanece obrigatoria.
+
+## Fechamento do parecer Cursor na #137 (2026-09-29)
+
+- O parecer no HEAD 5d8d664c apontou getters herdados/aninhados, `codigo_empresa_legado` aceito, contagens opcionais e perda do tipo de staging da revenda. O adaptador agora valida recursivamente lote e opcoes JSON simples antes de qualquer leitura, veda o alias empresarial e confere a saida do mapper sem inferir Empresa pelo seletor `001`.
+- O lote agregado exige uma contagem por entidade e devolve cada privado como `{ entidadeStaging, registro }`; `produto_revenda` nao e confundido com `entidade_migracao: produto`. Retry e conflito agregados sao testados, com bloqueio integral e relatorio sanitizado.
+- Esta e uma preparacao sintetica em memoria/CI PostgreSQL isolado. Nao houve leitura do backup, staging persistente, importacao no ERP operacional, migration DEV ou VPS. Nova CI e revisao consolidada do HEAD publicado continuam obrigatorias.
