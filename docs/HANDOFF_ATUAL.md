@@ -1,3 +1,22 @@
+## LOTE CURSOR — Orçamento convert banner consolidado (pós multi-select) (2026-09-29T22:20Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **C** Convert disabled reasons — banner único (validade+snapshot+dirty+simular) |
+| Branch | `cursor/comercial360-onda5-convert-banner-392b` |
+| Base | tip `84e17c88` (`cursor/comercial360-onda5-multiselect-stub-392b` #160) |
+| Meta | `convertDisabledReasonsBannerFailClosed` + **Pedido backend HTTP is active** |
+| Testes | orcamento-ui-policy 18 + integration 2 + runtime07b/08c/09 23 **PASS** |
+| Colisão | sem mig; sem anexos #59–67; sem CreditPort 032; sem merge/VPS |
+
+Próximo: Observações counter **ou** export CSV stub toolbar **ou** CostPort BFF / PDF-anexos.
+
+---
+
+## AUTÔNOMO — tip #160 multi-select → convert banner (2026-09-29T22:20Z)
+
+Empilhado: #154→#156→#157→#158→#159→#160→**(este) convert banner**. Continuando Comercial 360. Sem merge/VPS.
+
 ## LOTE CURSOR — multi-select stub fail-closed (pós data-entrega) (2026-09-29T22:07Z)
 
 | Campo | Valor |

@@ -12,9 +12,12 @@ import {
   collectItemLineIssues,
   comercialDocumentoSnapshotGapHint,
   evaluateItemLinesGate,
+  evaluateOrcamentoConvertUiGate,
   isOrcamentoValidadeExpirada,
   mapOrcamentoRowToForm,
   microsToDecimal,
+  ORCAMENTO_CONVERT_DIRTY_HINT,
+  ORCAMENTO_CONVERT_SIMULAR_DIRTY_HINT,
   orcamentoConvertSnapshotHint,
   orcamentoValidadeHint,
   resolveOrcamentoResumoPreviewState,
@@ -161,6 +164,111 @@ test('hint de convert snapshot incompleto (pós-031) no UI policy', () => {
   assert.equal(orcamentoConvertSnapshotHint({ condicao_pagamento_id: 'x' }), null);
 });
 
+test('evaluateOrcamentoConvertUiGate consolida validade+snapshot+dirty+simular', () => {
+  const now = new Date('2026-09-29T15:00:00.000Z');
+  const okRow = {
+    id: 'orc-1',
+    status: 'EM_ABERTO',
+    validade_em: '2027-01-01',
+    condicao_pagamento_codigo_snapshot: 'SNAP-28',
+    condicao_pagamento_nome_snapshot: '28 dias',
+    condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
+  };
+  const ready = evaluateOrcamentoConvertUiGate({ row: okRow, now });
+  assert.equal(ready.blockConvert, false);
+  assert.equal(ready.bannerText, null);
+  assert.deepEqual(ready.reasons, []);
+
+  const expired = evaluateOrcamentoConvertUiGate({
+    row: { ...okRow, validade_em: '2020-01-01' },
+    now,
+  });
+  assert.equal(expired.blockConvert, true);
+  assert.equal(expired.validade, true);
+  assert.match(String(expired.bannerText), /Conversão bloqueada/);
+  assert.match(String(expired.bannerText), /expirada/i);
+
+  const snap = evaluateOrcamentoConvertUiGate({
+    row: {
+      ...okRow,
+      tabela_preco_id: '55555555-5555-4555-8555-555555555555',
+      tabela_preco_codigo_snapshot: '',
+    },
+    now,
+  });
+  assert.equal(snap.blockConvert, true);
+  assert.equal(snap.snapshot, true);
+  assert.match(String(snap.bannerText), /tabela/i);
+
+  const dirtyOnlyOther = evaluateOrcamentoConvertUiGate({
+    row: okRow,
+    dirty: true,
+    simulacaoDirty: true,
+    editingId: 'outro',
+    now,
+  });
+  assert.equal(dirtyOnlyOther.blockConvert, false);
+
+  const dirtySame = evaluateOrcamentoConvertUiGate({
+    row: okRow,
+    dirty: true,
+    editingId: 'orc-1',
+    now,
+  });
+  assert.equal(dirtySame.blockConvert, true);
+  assert.equal(dirtySame.dirty, true);
+  assert.match(String(dirtySame.bannerText), /não salvas/i);
+  assert.equal(dirtySame.title, ORCAMENTO_CONVERT_DIRTY_HINT);
+
+  const simDirty = evaluateOrcamentoConvertUiGate({
+    row: okRow,
+    simulacaoDirty: true,
+    editingId: 'orc-1',
+    now,
+  });
+  assert.equal(simDirty.blockConvert, true);
+  assert.equal(simDirty.simularDirty, true);
+  assert.equal(simDirty.title, ORCAMENTO_CONVERT_SIMULAR_DIRTY_HINT);
+
+  const all = evaluateOrcamentoConvertUiGate({
+    row: {
+      ...okRow,
+      validade_em: '2020-01-01',
+      tabela_preco_id: '55555555-5555-4555-8555-555555555555',
+    },
+    dirty: true,
+    simulacaoDirty: true,
+    editingId: 'orc-1',
+    now,
+  });
+  assert.equal(all.blockConvert, true);
+  assert.equal(all.validade, true);
+  assert.equal(all.snapshot, true);
+  assert.equal(all.dirty, true);
+  assert.equal(all.simularDirty, true);
+  assert.equal(all.reasons.length, 4);
+  assert.match(String(all.bannerText), / · /);
+});
+
+test('tela Orçamento: convert banner consolidado (validade+snapshot+dirty+simular)', async () => {
+  const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const meta = await readFile(new URL('../server/src/api/router.ts', import.meta.url), 'utf8');
+  assert.match(tab, /evaluateOrcamentoConvertUiGate/);
+  assert.match(tab, /selectedConvertGate/);
+  assert.match(tab, /pendingConvertGate/);
+  assert.match(tab, /orcamento-convert-blocked-banner/);
+  assert.match(tab, /orcamento-convert-dialog-blocked-banner/);
+  assert.match(tab, /data-convert-validade/);
+  assert.match(tab, /data-convert-snapshot/);
+  assert.match(tab, /data-convert-dirty/);
+  assert.match(tab, /data-convert-simular/);
+  assert.match(tab, /Comercial\.orcamento\.convert-blocked/);
+  assert.doesNotMatch(tab, /selectedExpired|selectedSnapshotHint|pendingExpired|pendingSnapshotHint/);
+  assert.match(meta, /convertDisabledReasonsBannerFailClosed: true/);
+  assert.match(meta, /evaluateOrcamentoConvertUiGate/);
+  assert.match(meta, /Pedido backend HTTP is active/);
+});
+
 test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por empresa', async () => {
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   const listPolicy = await readFile(new URL('../src/components/comercial/comercialListHttpUiPolicy.js', import.meta.url), 'utf8');
@@ -185,7 +293,7 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(listPolicy, /ORCAMENTO_VALIDADE_EXPIRADA/);
   assert.match(tab, /formatComercialHttpError|resolveHttpListViewState/);
   assert.match(tab, /isOrcamentoValidadeExpirada/);
-  assert.match(tab, /orcamentoConvertSnapshotHint|Comercial\.orcamento\.convert-snapshot-hint/);
+  assert.match(tab, /evaluateOrcamentoConvertUiGate|Comercial\.orcamento\.convert-blocked/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
   const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });

@@ -131,6 +131,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.orcamento?.textoResumoPreviewFailClosed, true);
   assert.equal(meta.body.pedido.listMultiSelectStubFailClosed, true);
   assert.equal(meta.body.orcamento?.listMultiSelectStubFailClosed, true);
+  assert.equal(meta.body.orcamento?.convertDisabledReasonsBannerFailClosed, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido Entrega vs Retirada fail-closed/);
   assert.match(String(meta.body.note || ''), /data_entrega_solicitada fail-closed/);
@@ -142,6 +143,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.match(String(meta.body.note || ''), /UI alçada de desconto fail-closed/);
   assert.match(String(meta.body.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
   assert.match(String(meta.body.note || ''), /agenda de parcelas read-only/);
+  assert.match(String(meta.body.note || ''), /Converter disabled reasons consolidados|evaluateOrcamentoConvertUiGate/);
   assert.match(String(meta.body.note || ''), /simular-venda dirty-state fail-closed/);
   assert.match(String(meta.body.note || ''), /resumo texto read-only Orçamento\/Pedido/);
   assert.match(String(meta.body.note || ''), /multi-select stub fail-closed/);
