@@ -22,10 +22,12 @@ export type ClienteListFilter = Scope & ListOptions & {
 };
 
 export type ClienteEmpresaListFilter = Scope & ListOptions & {
-  clienteId: string;
+  /** Ausente = list-for-scope (todas as vínculos do Grupo/Empresa). */
+  clienteId?: string;
   empresaId?: string;
   situacaoComercial?: string;
   bloqueado?: boolean;
+  habilitadoOperacao?: boolean;
   offset?: number;
   orderBy?: 'empresa' | 'situacao' | 'created_at';
   orderDir?: 'asc' | 'desc';
@@ -307,13 +309,16 @@ export class InMemoryClienteRepository implements ClienteRepository {
     const q = String(filter.search ?? '').trim().toLowerCase();
     let rows = [...this.empresaLinks.values()].filter((row) => (
       row.group_id === filter.groupId
-      && row.cliente_id === filter.clienteId
+      && (!filter.clienteId || row.cliente_id === filter.clienteId)
       && row.ativo === ativo
       && (!filter.empresaId || row.empresa_id === filter.empresaId)
       && (!filter.situacaoComercial || row.situacao_comercial === filter.situacaoComercial)
       && (typeof filter.bloqueado !== 'boolean' || row.bloqueado === filter.bloqueado)
+      && (typeof filter.habilitadoOperacao !== 'boolean'
+        || row.habilitado_operacao === filter.habilitadoOperacao)
       && (!q || [
         row.empresa_id,
+        row.cliente_id,
         row.situacao_comercial,
         row.observacao_comercial,
         row.legacy_id,

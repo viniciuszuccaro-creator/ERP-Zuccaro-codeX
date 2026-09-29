@@ -111,13 +111,15 @@ function fixture() {
   });
   const produtos = { getById: async () => ({ id: PRODUTO_ID, ativo: true, unidade_medida_id: UNIDADE_ID }) };
   const unidades = { getById: async () => ({ id: UNIDADE_ID, ativo: true }) };
-  const condicoes = { get: async () => ({ id: CONDICAO_ID, ativo: true }) };
+  const condicoes = { get: async () => ({ id: CONDICAO_ID, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
   const clientes = { getEmpresaLinkById: resolveCliente };
   // Onda 2 na main: create Orçamento/Pedido exige resolveSalePrice (TabelaPreco vazia em memória).
   const prices = {
     resolveSalePrice: async () => ({
       preco: '10.000000',
       tabela_preco_id: '99999999-9999-4999-8999-999999999999',
+      tabela_preco_codigo: 'TAB-99',
+      tabela_preco_nome: 'Tabela HTTP',
     }),
   };
   Object.assign(refs, { clientes, produtos, unidades, condicoes, prices });
@@ -128,7 +130,7 @@ function fixture() {
     condicoes,
     locais: { get: async () => null },
     obras: { get: async () => null },
-    tabelas: { get: async () => null },
+    tabelas: { get: async () => ({ id: '99999999-9999-4999-8999-999999999999', codigo: 'TAB-99', nome: 'Tabela HTTP', ativo: true }) },
     prices,
   });
   return runtime;

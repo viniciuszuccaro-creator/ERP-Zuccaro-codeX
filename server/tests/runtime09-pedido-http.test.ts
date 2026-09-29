@@ -47,9 +47,9 @@ function fixture() {
   const clientes = { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
   const produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   const unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
-  const condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
-  const prices = { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: '99999999-9999-4999-8999-999999999999' }) };
-  Object.assign(pedidoRefs, { clientes, produtos, unidades, condicoes, locais: { get: async () => null }, obras: { get: async () => null }, tabelas: { get: async () => null }, prices });
+  const condicoes = { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
+  const prices = { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: '99999999-9999-4999-8999-999999999999', tabela_preco_codigo: 'TAB-99', tabela_preco_nome: 'Tabela HTTP' }) };
+  Object.assign(pedidoRefs, { clientes, produtos, unidades, condicoes, locais: { get: async () => null }, obras: { get: async () => null }, tabelas: { get: async () => ({ id: '99999999-9999-4999-8999-999999999999', codigo: 'TAB-99', nome: 'Tabela HTTP', ativo: true }) }, prices });
   Object.assign(orcamentoRefs, { clientes, produtos, unidades, condicoes, prices });
   return runtime;
 }
@@ -80,7 +80,21 @@ test('HTTP Pedido cancela sem exclusao e bloqueia repeticao', async () => {
   const runtime = fixture(); const created = await request(runtime.app, '/api/v1/pedidos', { method: 'POST', headers: headers(), body: JSON.stringify(pedidoPayload) }); const id = created.body.data.id;
   const cancelled = await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) });
   assert.equal(cancelled.status, 200); assert.equal(cancelled.body.data.status, 'CANCELADO'); assert.equal(cancelled.body.data.itens.length, 1);
+  assert.equal(cancelled.body.data.ativo, false);
+  const audit = await runtime.auditRepo.listByEntity('Pedido', id);
+  assert.deepEqual(audit.map((entry) => entry.action), ['create', 'change_status']);
+  assert.equal((audit[1].beforeData as { status: string }).status, 'EM_ABERTO');
+  assert.equal((audit[1].afterData as { status: string }).status, 'CANCELADO');
   assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 409);
+  assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers({ 'x-actor-id': deniedActorId }), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 403);
+  assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers({ 'x-empresa-id': otherEmpresaId }), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 404);
+  const updateBlocked = await request(runtime.app, `/api/v1/pedidos/${id}`, {
+    method: 'PATCH',
+    headers: headers(),
+    body: JSON.stringify({ ...pedidoPayload, itens: [{ ...pedidoPayload.itens[0], quantidade: '9' }] }),
+  });
+  assert.equal(updateBlocked.status, 409);
+  assert.equal(updateBlocked.body.error.code, 'PEDIDO_STATE_CONFLICT');
 });
 
 test('HTTP converte Orcamento em Pedido uma unica vez', async () => {
@@ -99,4 +113,28 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   const cross = await request(runtime.app, `/api/v1/pedidos/${created.body.data.id}`, { headers: headers({ 'x-empresa-id': otherEmpresaId }) });
   assert.equal(cross.status, 404); assert.equal(cross.body.error.code, 'PEDIDO_NOT_FOUND');
   const meta = await request(runtime.app, '/api/v1/meta'); assert.equal(meta.body.pedido.backendHttp, true); assert.equal(meta.body.pedido.frontendHttp, true);
+  assert.equal(meta.body.pedido.cancelByState, true);
+  assert.equal(meta.body.pedido.listFailClosed, true);
+  assert.equal(meta.body.pedido.listSearchFilterFailClosed, true);
+  assert.equal(meta.body.pedido.tenantCacheFailClosed, true);
+  assert.equal(meta.body.pedido.updateBlockedWhenCancelled, true);
+  assert.equal(meta.body.pedido.descontoAlcadaUiFailClosed, true);
+  assert.equal(meta.body.pedido.saveIdempotency, true);
+  assert.equal(meta.body.pedido.mastersPickerFailClosed, true);
+  assert.equal(meta.body.pedido.parcelaSchedulePreviewFailClosed, true);
+  assert.equal(meta.body.pedido.deliveryAddressSummaryFailClosed, true);
+  assert.equal(meta.body.pedido.simulacaoDirtyFailClosed, true);
+  assert.equal(meta.body.pedido.textoResumoPreviewFailClosed, true);
+  assert.equal(meta.body.orcamento?.textoResumoPreviewFailClosed, true);
+  assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
+  assert.match(String(meta.body.note || ''), /Pedido cancel fail-closed/);
+  assert.match(String(meta.body.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
+  assert.match(String(meta.body.note || ''), /queryKey groupId\+empresaId\+filters/);
+  assert.match(String(meta.body.note || ''), /busca vazia ≠ erro HTTP/);
+  assert.match(String(meta.body.note || ''), /troca de tenant limpa form\/list cache comercial fail-closed/);
+  assert.match(String(meta.body.note || ''), /UI alçada de desconto fail-closed/);
+  assert.match(String(meta.body.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
+  assert.match(String(meta.body.note || ''), /agenda de parcelas read-only/);
+  assert.match(String(meta.body.note || ''), /simular-venda dirty-state fail-closed/);
+  assert.match(String(meta.body.note || ''), /resumo texto read-only Orçamento\/Pedido/);
 });

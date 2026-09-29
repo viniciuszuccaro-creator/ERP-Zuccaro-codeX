@@ -309,6 +309,14 @@ export class ClienteService {
     return this.empresaOperations.list(ctx, clienteId, options);
   }
 
+  async listEmpresaLinksForScope(ctx: RequestContext, options: ClienteEmpresaListOptions = {}) {
+    return this.empresaOperations.listForScope(ctx, options);
+  }
+
+  async getEmpresaLinkById(ctx: RequestContext, linkId: string) {
+    return this.empresaOperations.getById(ctx, linkId);
+  }
+
   async getEmpresaLink(ctx: RequestContext, clienteId: string, empresaId: string) {
     return this.empresaOperations.get(ctx, clienteId, empresaId);
   }

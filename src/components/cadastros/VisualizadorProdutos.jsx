@@ -102,7 +102,7 @@ export default function VisualizadorProdutos(props) {
     nomeEntidade: 'Produto',
     tituloDisplay: 'Produtos',
     icone: Package,
-    camposPrincipais: ['descricao', 'codigo', 'tipo_item', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda'],
+    camposPrincipais: ['descricao', 'codigo', 'codigo_legado', 'tipo_item', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda'],
     componenteEdicao: ProdutoFormV22_Completo,
     windowMode: false,
   };
