@@ -84,7 +84,7 @@ function condicaoStub(overrides: Record<string, unknown> = {}) {
 
 function pricePort(preco = '100.000000') {
   return {
-    resolveSalePrice: async () => ({ preco, tabela_preco_id: tabelaId }),
+    resolveSalePrice: async () => ({ preco, tabela_preco_id: tabelaId, tabela_preco_codigo: 'TAB-01', tabela_preco_nome: 'Tabela sintetica' }),
   };
 }
 
@@ -158,7 +158,7 @@ function pedidoFixture(options: {
     { get: async () => condicaoStub() } as never,
     { get: async () => ({ id: 'local', ativo: true }) } as never,
     { get: async () => ({ id: 'obra', ativo: true }) } as never,
-    { get: async () => ({ id: tabelaId, ativo: true }) } as never,
+    { get: async () => ({ id: tabelaId, codigo: 'TAB-01', nome: 'Tabela sintetica', ativo: true }) } as never,
     pricePort(),
     null,
     avistaAlcada,

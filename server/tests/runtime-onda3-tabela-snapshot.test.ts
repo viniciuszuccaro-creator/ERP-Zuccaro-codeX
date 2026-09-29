@@ -9,9 +9,9 @@ import { InMemoryPedidoRepository } from '../src/repositories/inMemoryPedidoRepo
 import type { OrcamentoCreate } from '../src/repositories/orcamentoTypes.js';
 import type { PedidoCreate } from '../src/repositories/pedidoTypes.js';
 import {
-  assertPersistedCondicaoSnapshot,
-  buildCondicaoPagamentoDocumentoSnapshot,
-} from '../src/services/comercialCondicaoSnapshot.js';
+  assertPersistedTabelaSnapshot,
+  buildTabelaPrecoDocumentoSnapshot,
+} from '../src/services/comercialTabelaSnapshot.js';
 import { OrcamentoService } from '../src/services/orcamentoService.js';
 import { PedidoService } from '../src/services/pedidoService.js';
 
@@ -27,7 +27,7 @@ const unidadeId = '44444444-4444-4444-8444-444444444444';
 const tabelaId = '55555555-5555-4555-8555-555555555555';
 
 const ctx: RequestContext = {
-  requestId: 'req-condicao-snapshot',
+  requestId: 'req-tabela-snapshot',
   actorId,
   actorEmail: 'synth@example.invalid',
   groupId,
@@ -66,26 +66,42 @@ const pedidoPayload: PedidoCreate = {
   }],
 };
 
-function condicaoStub(overrides: Record<string, unknown> = {}) {
+function condicaoStub() {
   return {
     id: condicaoId,
     codigo: 'COND-28',
     nome: '28 dias',
     ativo: true,
-    parcelas: [
-      { id: 'p1', orderm: 1, ordem: 1, dias: 28, percentual: '100.000000', ativo: true },
-    ],
+    parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }],
+  };
+}
+
+function tabelaStub(overrides: Record<string, unknown> = {}) {
+  return {
+    id: tabelaId,
+    codigo: 'TAB-01',
+    nome: 'Tabela sintetica',
+    ativo: true,
     ...overrides,
   };
 }
 
-function pricePort(preco = '25.500000') {
+function pricePort(overrides: Record<string, unknown> = {}) {
   return {
-    resolveSalePrice: async () => ({ preco, tabela_preco_id: tabelaId, tabela_preco_codigo: 'TAB-01', tabela_preco_nome: 'Tabela sintetica' }),
+    resolveSalePrice: async () => ({
+      preco: '25.500000',
+      tabela_preco_id: tabelaId,
+      tabela_preco_codigo: 'TAB-01',
+      tabela_preco_nome: 'Tabela sintetica',
+      ...overrides,
+    }),
   };
 }
 
-function orcamentoFixture(options: { condicao?: Record<string, unknown> | null } = {}) {
+function orcamentoFixture(options: {
+  price?: Record<string, unknown>;
+  tabela?: Record<string, unknown> | null;
+} = {}) {
   const repo = new InMemoryOrcamentoRepository();
   const audit = new InMemoryAuditRepository();
   const rbac = new InMemoryRbacGuard();
@@ -94,9 +110,7 @@ function orcamentoFixture(options: { condicao?: Record<string, unknown> | null }
     groupId,
     permissions: { Comercial: { orcamento: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar'] } },
   });
-  const condicao = options.condicao === null
-    ? null
-    : condicaoStub(options.condicao);
+  const tabela = options.tabela === null ? null : tabelaStub(options.tabela);
   const service = new OrcamentoService(
     repo,
     audit,
@@ -105,13 +119,20 @@ function orcamentoFixture(options: { condicao?: Record<string, unknown> | null }
     { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as never,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as never,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
-    { get: async () => condicao } as never,
-    pricePort(),
+    { get: async () => condicaoStub() } as never,
+    pricePort(options.price),
+    null,
+    null,
+    null,
+    { get: async () => tabela } as never,
   );
   return { service, repo, audit };
 }
 
-function pedidoFixture(options: { condicao?: Record<string, unknown> | null } = {}) {
+function pedidoFixture(options: {
+  price?: Record<string, unknown>;
+  tabela?: Record<string, unknown> | null;
+} = {}) {
   const repo = new InMemoryPedidoRepository();
   const orcamentos = new InMemoryOrcamentoRepository();
   const audit = new InMemoryAuditRepository();
@@ -125,9 +146,7 @@ function pedidoFixture(options: { condicao?: Record<string, unknown> | null } = 
       },
     },
   });
-  const condicao = options.condicao === null
-    ? null
-    : condicaoStub(options.condicao);
+  const tabela = options.tabela === null ? null : tabelaStub(options.tabela);
   const service = new PedidoService(
     repo,
     orcamentos,
@@ -137,76 +156,68 @@ function pedidoFixture(options: { condicao?: Record<string, unknown> | null } = 
     { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as never,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as never,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
-    { get: async () => condicao } as never,
+    { get: async () => condicaoStub() } as never,
     { get: async () => ({ id: 'local', ativo: true }) } as never,
     { get: async () => ({ id: 'obra', ativo: true }) } as never,
-    { get: async () => ({ id: tabelaId, codigo: 'TAB-01', nome: 'Tabela sintetica', ativo: true }) } as never,
-    pricePort(),
+    { get: async () => tabela } as never,
+    pricePort(options.price),
   );
   return { service, repo, orcamentos, audit };
 }
 
-test('helper: buildCondicaoPagamentoDocumentoSnapshot fail-closed sem parcelas', () => {
+test('helper: buildTabelaPrecoDocumentoSnapshot fail-closed sem codigo/nome', () => {
   assert.throws(
-    () => buildCondicaoPagamentoDocumentoSnapshot(condicaoStub({ parcelas: [] }) as never, 'ORCAMENTO'),
-    (error: AppError) => error.statusCode === 422 && error.code === 'ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO',
+    () => buildTabelaPrecoDocumentoSnapshot(tabelaStub({ codigo: '', nome: '' }) as never, 'ORCAMENTO'),
+    (error: AppError) => error.statusCode === 422 && error.code === 'ORCAMENTO_TABELA_SNAPSHOT_INVALIDO',
   );
 });
 
-test('helper: assertPersistedCondicaoSnapshot exige nome+parcelas', () => {
+test('helper: assertPersistedTabelaSnapshot exige nome', () => {
   assert.throws(
-    () => assertPersistedCondicaoSnapshot({
-      condicao_pagamento_codigo_snapshot: 'X',
-      condicao_pagamento_nome_snapshot: null,
-      condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 0, percentual: '100.000000' }],
+    () => assertPersistedTabelaSnapshot({
+      tabela_preco_codigo_snapshot: 'X',
+      tabela_preco_nome_snapshot: null,
     }, 'PEDIDO'),
-    (error: AppError) => error.code === 'PEDIDO_CONDICAO_SNAPSHOT_AUSENTE',
+    (error: AppError) => error.code === 'PEDIDO_TABELA_SNAPSHOT_AUSENTE',
   );
 });
 
-test('Onda3: Orçamento create persiste snapshot condição + tabela_preco_id e audita', async () => {
+test('Onda3: Orçamento create persiste snapshot tabela + audita e recarrega', async () => {
   const { service, audit } = orcamentoFixture();
   const row = await service.create(ctx, quotePayload);
-  assert.equal(row.condicao_pagamento_id, condicaoId);
-  assert.equal(row.condicao_pagamento_codigo_snapshot, 'COND-28');
-  assert.equal(row.condicao_pagamento_nome_snapshot, '28 dias');
-  assert.deepEqual(row.condicao_pagamento_parcelas_snapshot, [
-    { ordem: 1, dias: 28, percentual: '100.000000' },
-  ]);
   assert.equal(row.tabela_preco_id, tabelaId);
+  assert.equal(row.tabela_preco_codigo_snapshot, 'TAB-01');
+  assert.equal(row.tabela_preco_nome_snapshot, 'Tabela sintetica');
   const reloaded = await service.get(ctx, row.id);
-  assert.equal(reloaded.condicao_pagamento_nome_snapshot, '28 dias');
-  assert.equal(reloaded.condicao_pagamento_parcelas_snapshot?.[0]?.dias, 28);
+  assert.equal(reloaded.tabela_preco_codigo_snapshot, 'TAB-01');
+  assert.equal(reloaded.tabela_preco_nome_snapshot, 'Tabela sintetica');
   const created = (await audit.listByEntity('Orcamento', row.id)).find((e) => e.action === 'create');
-  assert.equal((created?.afterData as { condicao_pagamento_nome_snapshot?: string })?.condicao_pagamento_nome_snapshot, '28 dias');
+  assert.equal((created?.afterData as { tabela_preco_nome_snapshot?: string })?.tabela_preco_nome_snapshot, 'Tabela sintetica');
 });
 
-test('Onda3: Orçamento create fail-closed sem parcelas na condição', async () => {
-  const { service } = orcamentoFixture({ condicao: { parcelas: [] } });
+test('Onda3: Orçamento create fail-closed quando price port omite codigo/nome e tabela inválida', async () => {
+  const { service } = orcamentoFixture({
+    price: { tabela_preco_codigo: undefined, tabela_preco_nome: undefined },
+    tabela: { codigo: '', nome: '' },
+  });
   await assert.rejects(
     service.create(ctx, quotePayload),
-    (error: AppError) => error.statusCode === 422 && error.code === 'ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO',
+    (error: AppError) => error.statusCode === 422 && error.code === 'ORCAMENTO_TABELA_SNAPSHOT_INVALIDO',
   );
 });
 
-test('Onda3: Pedido create persiste e recarrega snapshot', async () => {
+test('Onda3: Pedido create persiste e recarrega snapshot tabela', async () => {
   const { service } = pedidoFixture();
   const row = await service.create(ctx, pedidoPayload);
-  assert.equal(row.condicao_pagamento_nome_snapshot, '28 dias');
-  assert.deepEqual(row.condicao_pagamento_parcelas_snapshot, [
-    { ordem: 1, dias: 28, percentual: '100.000000' },
-  ]);
+  assert.equal(row.tabela_preco_codigo_snapshot, 'TAB-01');
+  assert.equal(row.tabela_preco_nome_snapshot, 'Tabela sintetica');
   const reloaded = await service.get(ctx, row.id);
-  assert.equal(reloaded.condicao_pagamento_codigo_snapshot, 'COND-28');
+  assert.equal(reloaded.tabela_preco_nome_snapshot, 'Tabela sintetica');
 });
 
-test('Onda3: conversão copia snapshot do Orçamento (não-retroatividade)', async () => {
+test('Onda3: conversão copia snapshot da tabela do Orçamento (não-retroatividade)', async () => {
   const { service, orcamentos } = pedidoFixture({
-    condicao: {
-      codigo: 'LIVE-99',
-      nome: 'Condição atual alterada',
-      parcelas: [{ id: 'p2', ordem: 1, dias: 99, percentual: '100.000000', ativo: true }],
-    },
+    tabela: { codigo: 'LIVE-99', nome: 'Tabela atual alterada' },
   });
   const quote = await orcamentos.create({ groupId, empresaId }, {
     ...quotePayload,
@@ -215,6 +226,8 @@ test('Onda3: conversão copia snapshot do Orçamento (não-retroatividade)', asy
     condicao_pagamento_nome_snapshot: 'Snapshot original',
     condicao_pagamento_parcelas_snapshot: [{ ordem: 1, dias: 28, percentual: '100.000000' }],
     tabela_preco_id: tabelaId,
+    tabela_preco_codigo_snapshot: 'SNAP-TAB',
+    tabela_preco_nome_snapshot: 'Tabela snapshot original',
     promocao_aplicada: false,
     promocao_bps: null,
     promocao_cupom: null,
@@ -223,14 +236,14 @@ test('Onda3: conversão copia snapshot do Orçamento (não-retroatividade)', asy
     tipo_operacao: 'RETIRADA',
     data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
   });
-  assert.equal(order.condicao_pagamento_codigo_snapshot, 'SNAP-28');
-  assert.equal(order.condicao_pagamento_nome_snapshot, 'Snapshot original');
-  assert.equal(order.condicao_pagamento_parcelas_snapshot?.[0]?.dias, 28);
-  assert.notEqual(order.condicao_pagamento_nome_snapshot, 'Condição atual alterada');
+  assert.equal(order.tabela_preco_id, tabelaId);
+  assert.equal(order.tabela_preco_codigo_snapshot, 'SNAP-TAB');
+  assert.equal(order.tabela_preco_nome_snapshot, 'Tabela snapshot original');
+  assert.notEqual(order.tabela_preco_nome_snapshot, 'Tabela atual alterada');
 });
 
-test('Onda3: Pedido update regrava snapshot da condição atual', async () => {
-  let live = condicaoStub();
+test('Onda3: Pedido update regrava snapshot da tabela atual', async () => {
+  let live = tabelaStub();
   const repo = new InMemoryPedidoRepository();
   const orcamentos = new InMemoryOrcamentoRepository();
   const audit = new InMemoryAuditRepository();
@@ -253,21 +266,23 @@ test('Onda3: Pedido update regrava snapshot da condição atual', async () => {
     { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as never,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as never,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
-    { get: async () => live } as never,
+    { get: async () => condicaoStub() } as never,
     { get: async () => ({ id: 'local', ativo: true }) } as never,
     { get: async () => ({ id: 'obra', ativo: true }) } as never,
-    { get: async () => ({ id: tabelaId, codigo: 'TAB-01', nome: 'Tabela sintetica', ativo: true }) } as never,
-    pricePort('10.000000'),
+    { get: async () => live } as never,
+    {
+      resolveSalePrice: async () => ({
+        preco: '10.000000',
+        tabela_preco_id: tabelaId,
+        tabela_preco_codigo: live.codigo,
+        tabela_preco_nome: live.nome,
+      }),
+    },
   );
   const created = await service.create(ctx, pedidoPayload);
-  assert.equal(created.condicao_pagamento_nome_snapshot, '28 dias');
-  live = condicaoStub({
-    codigo: 'AVISTA',
-    nome: 'À vista',
-    parcelas: [{ id: 'p3', ordem: 1, dias: 0, percentual: '100.000000', ativo: true }],
-  });
+  assert.equal(created.tabela_preco_nome_snapshot, 'Tabela sintetica');
+  live = tabelaStub({ codigo: 'TAB-VIP', nome: 'Tabela VIP' });
   const updated = await service.update(ctx, created.id, pedidoPayload);
-  assert.equal(updated.condicao_pagamento_codigo_snapshot, 'AVISTA');
-  assert.equal(updated.condicao_pagamento_nome_snapshot, 'À vista');
-  assert.equal(updated.condicao_pagamento_parcelas_snapshot?.[0]?.dias, 0);
+  assert.equal(updated.tabela_preco_codigo_snapshot, 'TAB-VIP');
+  assert.equal(updated.tabela_preco_nome_snapshot, 'Tabela VIP');
 });

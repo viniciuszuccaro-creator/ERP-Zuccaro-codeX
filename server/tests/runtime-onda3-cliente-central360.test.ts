@@ -118,6 +118,8 @@ function fixture() {
     resolveSalePrice: async () => ({
       preco: '10.000000',
       tabela_preco_id: '99999999-9999-4999-8999-999999999999',
+      tabela_preco_codigo: 'TAB-99',
+      tabela_preco_nome: 'Tabela HTTP',
     }),
   };
   Object.assign(refs, { clientes, produtos, unidades, condicoes, prices });
@@ -128,7 +130,7 @@ function fixture() {
     condicoes,
     locais: { get: async () => null },
     obras: { get: async () => null },
-    tabelas: { get: async () => null },
+    tabelas: { get: async () => ({ id: '99999999-9999-4999-8999-999999999999', codigo: 'TAB-99', nome: 'Tabela HTTP', ativo: true }) },
     prices,
   });
   return runtime;

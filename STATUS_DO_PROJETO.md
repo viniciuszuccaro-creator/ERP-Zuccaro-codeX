@@ -1,3 +1,45 @@
+## LOTE CURSOR — TabelaPreço codigo+nome snapshot (pós-#130) (2026-09-29T16:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration aditiva `031_orcamento_pedido_tabela_snapshot.sql` (codigo+nome); create/update/get/convert fail-closed via `comercialTabelaSnapshot`; UI reload; harness stubs com codigo/nome |
+| Testado | **SIM** — tabela snapshot 8/8 + migration 1/1 + condição/promo/onda2/pedido/runtime01/07b/08c 72/72 + UI policy 8/8; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `07561d2d` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
+| Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
+| Draft PR | **#131** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/131 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
+| Tip | `07561d2d` |
+| Meta | note preserva **Pedido backend HTTP is active** + `tabelaSnapshot` / snapshot TabelaPreco |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; numeração **031** (evita 025–028) |
+
+### Arquivos reservados (Cursor — lote pós-#130)
+
+- `server/migrations/031_orcamento_pedido_tabela_snapshot.sql`
+- `server/src/services/comercialTabelaSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts` + inMemory/postgres repos
+- `server/src/app.ts` / `server/src/api/router.ts` (meta note + `tabelaSnapshot`)
+- `src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-tabela-snapshot*.test.ts` + stubs/harness
+
+### Escopo
+
+- Snapshot imutável codigo+nome TabelaPreco em Orçamento/Pedido (espelha padrão condição 029).
+- Fail-closed: tabela_preco_id sem codigo/nome → 422; conversão copia snapshot do Orçamento (não-retroatividade).
+- Multiempresa/RBAC/auditoria preservados; auditoria inclui `tabela_preco_*_snapshot`.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** próximo item P0/Comercial 360 autorizado; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → #130 → **este lote**.
+
+---
+
 ## LOTE CURSOR — simular-venda → persist desconto/total (pós-#129) (2026-09-29T16:30Z)
 
 | Etapa | Estado |
@@ -35,9 +77,9 @@
 
 ### Próximo item independente restante
 
-- Snapshot código/nome TabelaPreco (**031** aditiva, evitar 025–028) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
+- ~~Snapshot código/nome TabelaPreco (**031**)~~ → lote seguinte nesta pilha.
 
-Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **este lote**.
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **#130**.
 
 ---
 

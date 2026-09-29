@@ -1,3 +1,19 @@
+## LOTE CURSOR — TabelaPreço snapshot codigo+nome (pós-#130) (2026-09-29T16:45Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
+| Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
+| Escopo | migration **031** + wire create/update/get/convert + UI reload; espelha condição 029 |
+| Meta | note preserva `Pedido backend HTTP is active` + `tabelaSnapshot` |
+| Tip | `07561d2d` |
+| Draft PR | **#131** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/131 — `gh pr create` createPullRequest 403; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 slice sem colisão 025–028 |
+
+---
+
 ## LOTE CURSOR — simular→persist desconto/total (pós-#129) (2026-09-29T16:30Z)
 
 | Campo | Valor |

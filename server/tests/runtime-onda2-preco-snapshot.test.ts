@@ -66,7 +66,7 @@ function pricePort(preco = '25.500000', calls?: Array<unknown>) {
   return {
     resolveSalePrice: async (_ctx: RequestContext, input: unknown) => {
       calls?.push(input);
-      return { preco, tabela_preco_id: tabelaId };
+      return { preco, tabela_preco_id: tabelaId, tabela_preco_codigo: 'TAB-01', tabela_preco_nome: 'Tabela sintetica' };
     },
   };
 }
@@ -126,7 +126,7 @@ function pedidoFixture(options: { preco?: string | null; calls?: Array<unknown> 
     { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as never,
     { get: async () => ({ id: 'local', ativo: true }) } as never,
     { get: async () => ({ id: 'obra', ativo: true }) } as never,
-    { get: async () => ({ id: tabelaId, ativo: true }) } as never,
+    { get: async () => ({ id: tabelaId, codigo: 'TAB-01', nome: 'Tabela sintetica', ativo: true }) } as never,
     prices,
   );
   return { service, repo, orcamentos, calls: options.calls };
