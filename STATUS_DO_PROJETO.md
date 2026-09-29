@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #146 CI SUCCESS + #147 resumo texto (2026-09-29T18:31Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #146 | `c1fdf63d` | **SUCCESS** | limpar cache/form ao trocar tenant |
+| #147 | `cursor/comercial360-onda3-pedido-resumo-texto-392b` | pendente | resumo texto Pedido/Orçamento fail-closed |
+
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #145 CI SUCCESS + #146 tenant-cache (2026-09-29T18:22Z)
 
 | PR | Tip | CI | Escopo |
