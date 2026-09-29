@@ -442,6 +442,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.equal(meta.pedido?.shareTextUiFailClosed, true);
     assert.equal(meta.pedido?.detailSummaryUiFailClosed, true);
     assert.equal(meta.pedido?.listDataEntregaFilterFailClosed, true);
+    assert.equal(meta.pedido?.statusTransitionConfirmFailClosed, true);
     assert.match(String(meta.note || ''), /Pedido cancel fail-closed/);
     assert.match(String(meta.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
     assert.match(String(meta.note || ''), /queryKey groupId\+empresaId\+filters/);
@@ -449,6 +450,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.match(String(meta.note || ''), /troca de tenant limpa form\/list cache comercial fail-closed/);
     assert.match(String(meta.note || ''), /UI alçada de desconto fail-closed/);
     assert.match(String(meta.note || ''), /listagem filtra data_entrega_solicitada De\/Até/);
+    assert.match(String(meta.note || ''), /Pedido avanço de status exige confirmação UI fail-closed/);
     assert.match(String(meta.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
     assert.match(String(meta.note || ''), /agenda de parcelas read-only/);
     assert.match(String(meta.note || ''), /resumo de endereço Local\/Obra/);

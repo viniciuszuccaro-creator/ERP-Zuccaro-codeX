@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Pedido status confirm (2026-09-30T00:10Z)
+
+Draft PR **#173** empilhada em #172 (`cursor/comercial360-onda5-pedido-status-confirm-392b`):
+avanço de status com confirmação + motivo opcional fail-closed. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Pedido filtro data entrega (2026-09-29T23:55Z)
 
 Draft PR **#172** empilhada em #171 (`cursor/comercial360-onda5-pedido-entrega-filter-392b`):

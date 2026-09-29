@@ -427,6 +427,7 @@ test('tenant switch: reset Orçamento/Pedido descarta form dirty e diálogos', (
   assert.deepEqual(ped.selectedIds, []);
   assert.deepEqual(ped.history, []);
   assert.equal(ped.pendingCancel, null);
+  assert.equal(ped.pendingTransition, null);
   assert.deepEqual(ped.filters, PEDIDO_LIST_FILTER_DEFAULTS);
   assert.deepEqual(ped.applied, PEDIDO_LIST_FILTER_DEFAULTS);
   assert.equal(ped.promocaoSnapshot, null);

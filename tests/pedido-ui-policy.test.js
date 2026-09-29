@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText, resolvePedidoDetailSummaryUiState } from '../src/components/comercial/pedidoUiPolicy.js';
+import { buildPedidoPayload, buildPedidoResumoTexto, calculatePedidoTotals, canUsePedidoAction, clampPedidoCancelMotivo, evaluatePedidoCancelMotivoUiGate, evaluatePedidoDataEntregaUiGate, evaluatePedidoStatusMotivoUiGate, evaluatePedidoStatusTransitionUiGate, isPedidoCancelDisabled, isPedidoDataEntregaPassada, mapPedidoRowToForm, nextPedidoStatus, PEDIDO_CANCEL_MOTIVO_MAX, PEDIDO_CANCEL_MOTIVO_MIN, pedidoDocumentoSnapshotGapHint, resolvePedidoResumoPreviewState, evaluatePedidoPrintPdfUiGate, evaluatePedidoShareUiGate, buildPedidoShareText, resolvePedidoDetailSummaryUiState } from '../src/components/comercial/pedidoUiPolicy.js';
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
 const nowFixed = new Date('2026-09-29T15:00:00.000Z');
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'},{now:nowFixed});assert.equal(calculatePedidoTotals([item]).total,'19.000000');assert.equal(payload.total,undefined);assert.equal(payload.groupId,undefined);assert.equal(payload.itens[0].requer_producao,true);});
@@ -42,6 +42,29 @@ test('painel Pedido: dialog cancel com motivo obrigatório', async ()=>{
   assert.match(source,/api\.cancel\(row\.id,\s*gate\.motivo\)/);
   assert.doesNotMatch(source,/Cancelamento confirmado pelo usuário/);
   assert.doesNotMatch(source,/ConfirmDialog/);
+});
+test('pedido status motivo opcional fail-closed (max 500)',()=>{
+  assert.equal(evaluatePedidoStatusMotivoUiGate('').blockConfirm,false);
+  assert.equal(evaluatePedidoStatusMotivoUiGate('').motivo,'');
+  assert.equal(evaluatePedidoStatusMotivoUiGate('ok').blockConfirm,false);
+  assert.equal(evaluatePedidoStatusMotivoUiGate('x'.repeat(501)).blockConfirm,true);
+});
+test('pedido status transition gate fail-closed',()=>{
+  const row={status:'EM_ABERTO',tipo_operacao:'ENTREGA',itens:[item]};
+  assert.equal(evaluatePedidoStatusTransitionUiGate({row,groupId:'g',empresaId:'e',canTransition:true}).target,'EM_PRODUCAO');
+  assert.equal(evaluatePedidoStatusTransitionUiGate({row,groupId:'g',empresaId:'e',canTransition:false}).blockTransition,true);
+  assert.equal(evaluatePedidoStatusTransitionUiGate({row,groupId:'',empresaId:'e',canTransition:true}).mode,'context');
+  assert.equal(evaluatePedidoStatusTransitionUiGate({row:{status:'FINALIZADO',tipo_operacao:'ENTREGA',itens:[]},groupId:'g',empresaId:'e',canTransition:true}).mode,'unavailable');
+});
+test('painel Pedido: dialog avanço status com confirmação e motivo opcional', async ()=>{
+  const source=await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url),'utf8');
+  assert.match(source,/evaluatePedidoStatusTransitionUiGate/);
+  assert.match(source,/evaluatePedidoStatusMotivoUiGate/);
+  assert.match(source,/pedido-status-dialog/);
+  assert.match(source,/pedido-status-motivo/);
+  assert.match(source,/requestTransition/);
+  assert.match(source,/api\.transition\(row\.id,target,motivoGate\.motivo/);
+  assert.doesNotMatch(source,/onClick=\{\(\)=>transition\(selected\)\}/);
 });
 test('mapPedidoRowToForm recarrega campos canônicos pós-save sem inventar snapshots',()=>{
   const mapped=mapPedidoRowToForm({

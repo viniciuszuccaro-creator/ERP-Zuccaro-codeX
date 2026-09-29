@@ -146,6 +146,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.shareTextUiFailClosed, true);
   assert.equal(meta.body.pedido.detailSummaryUiFailClosed, true);
   assert.equal(meta.body.pedido.listDataEntregaFilterFailClosed, true);
+  assert.equal(meta.body.pedido.statusTransitionConfirmFailClosed, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido Entrega vs Retirada fail-closed/);
   assert.match(String(meta.body.note || ''), /listagem filtra data_entrega_solicitada De\/Até|listDataEntregaFilterFailClosed|dataEntregaDe/);
@@ -168,6 +169,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.match(String(meta.body.note || ''), /Orçamento Imprimir\/PDF e compartilhar texto fail-closed|evaluateOrcamentoPrintPdfUiGate/);
   assert.match(String(meta.body.note || ''), /Orçamento detalhe summary UI fail-closed|resolveOrcamentoDetailSummaryUiState/);
   assert.match(String(meta.body.note || ''), /Orçamento cancel exige motivo UI fail-closed|evaluateOrcamentoCancelMotivoUiGate/);
+  assert.match(String(meta.body.note || ''), /Pedido avanço de status exige confirmação UI fail-closed|evaluatePedidoStatusTransitionUiGate/);
 });
 
 test('HTTP Pedido filtra data_entrega_solicitada De/Até fail-closed', async () => {
