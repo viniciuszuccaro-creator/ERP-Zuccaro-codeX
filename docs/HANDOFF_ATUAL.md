@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip Pedido share (2026-09-29T23:00Z)
 
-Tip empilhada em #166: Pedido WhatsApp/e-mail texto revisável fail-closed.
-CI #166 em curso. Sem merge/VPS.
+Draft PR **#167** empilhada em #166: Pedido WhatsApp/e-mail texto revisável fail-closed.
+CI #166/#167 em curso. Sem merge/VPS.
 
 ---
 

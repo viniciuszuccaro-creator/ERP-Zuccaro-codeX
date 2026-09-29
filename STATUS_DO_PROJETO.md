@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **Pedido compartilhar texto** (WhatsApp/e-mail clipboard; espelha Orçamento) |
 | Branch | `cursor/comercial360-onda5-pedido-share-392b` |
+| Draft PR | **#167** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/167 |
 | Base | tip #166 `cursor/comercial360-onda5-pedido-print-392b` |
 | Escopo | `buildPedidoShareText` + `evaluatePedidoShareUiGate`; botões no detalhe; meta `shareTextUiFailClosed`; **sem envio externo / sem migration** |
 | Colisão | anexos #59–67; CreditPort 032; sem Codex/merge/VPS |
