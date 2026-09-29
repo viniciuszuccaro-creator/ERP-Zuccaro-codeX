@@ -3,7 +3,7 @@
 | PR/Branch | Tip | CI | Escopo |
 |---|---|---|---|
 | #146 | `c1fdf63d` | stack | tenant cache |
-| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `f86756f2` | — | resumo texto fail-closed |
+| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `2a76c8cc` | — | resumo texto fail-closed |
 
 Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 
@@ -16,7 +16,7 @@ Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 | Choice | **A** Resumo texto read-only Pedido (+ Orçamento) a partir da entidade + snapshots; painel/janela texto imprimível; fail-closed se snapshots pós-031 incompletos; sem PDF novo |
 | Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
 | Base | `origin/cursor/comercial360-onda3-tenant-cache-392b` tip `c1fdf63d` (#146) |
-| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `f86756f2` |
+| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
 | Draft PR | **BLOCKED** createPullRequest — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1) base `#146` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
 | Push | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` |
