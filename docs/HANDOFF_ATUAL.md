@@ -1,3 +1,10 @@
+## AUTÔNOMO — tip Pedido detalhe summary (2026-09-29T23:10Z)
+
+Tip empilhada em #167: detalhe Pedido com summary canônico fail-closed.
+CI #166/#167 em curso. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip Pedido share (2026-09-29T23:00Z)
 
 Draft PR **#167** empilhada em #166: Pedido WhatsApp/e-mail texto revisável fail-closed.

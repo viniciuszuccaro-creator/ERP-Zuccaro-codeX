@@ -140,6 +140,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(meta.body.pedido.cancelMotivoUiFailClosed, true);
   assert.equal(meta.body.pedido.printPdfUiFailClosed, true);
   assert.equal(meta.body.pedido.shareTextUiFailClosed, true);
+  assert.equal(meta.body.pedido.detailSummaryUiFailClosed, true);
   assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
   assert.match(String(meta.body.note || ''), /Pedido Entrega vs Retirada fail-closed/);
   assert.match(String(meta.body.note || ''), /data_entrega_solicitada fail-closed/);
@@ -157,4 +158,5 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.match(String(meta.body.note || ''), /multi-select stub fail-closed/);
   assert.match(String(meta.body.note || ''), /Pedido Imprimir\/PDF canônico fail-closed|evaluatePedidoPrintPdfUiGate/);
   assert.match(String(meta.body.note || ''), /Pedido compartilhar texto WhatsApp|evaluatePedidoShareUiGate/);
+  assert.match(String(meta.body.note || ''), /Pedido detalhe summary UI fail-closed|resolvePedidoDetailSummaryUiState/);
 });
