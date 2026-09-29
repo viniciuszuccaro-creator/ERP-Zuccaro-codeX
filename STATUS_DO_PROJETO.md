@@ -1,3 +1,47 @@
+## LOTE CURSOR — #119 Cliente frontendHttp Onda 3 (2026-09-29T15:10Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `Cliente` + CRUD/restore/vínculos/Central 360; Orçamento/Pedido labels Cliente + UnidadeMedida via HTTP; Central 360 RBAC fail-closed; sem migration |
+| Testado | **SIM** — client+policy novos + http-api-client/condicao/tabela/central360 (52/52) + runtime07b 13/13 + runtime06b meta PASS |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
+| Branch | `cursor/comercial360-onda3-cliente-http-392b` @ `6ffafb6f` (feat `daadbdfe`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-tabela-http-392b...cursor/comercial360-onda3-cliente-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+
+### Arquivos reservados (Cursor — lote pós-#118; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Cliente)
+- `src/api/httpApiClient.js` (entity Cliente + `clientes` CRUD/empresas/central360 + `unidadesMedida`)
+- `server/src/api/router.ts` (meta `cliente.frontendHttp: true` + pilot; note preserva Pedido backend HTTP)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/CentralCliente360Panel.jsx` / `DetalhesCliente.jsx` (fail-closed RBAC)
+- `tests/comercial-cliente-http-client.test.js`
+- `tests/comercial-cliente-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `tests/central-cliente-360-session.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_04.md`
+
+### Escopo
+
+- Reutiliza API R04/Central 360 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente.* fail-closed no BFF.
+- Persistência canônica inalterada; ClienteEmpresa/Local/Obra continuam fora do piloto flat.
+- Skip A: sem colunas JSON/text de snapshot condição/parcelas (preço já em `preco_unitario` do item).
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteEmpresa list-for-scope HTTP (sem CRM paralelo); Local/Obra frontendHttp depois.
+
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
+
+---
+
 ## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:55Z)
 
 | Etapa | Estado |

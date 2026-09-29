@@ -62,6 +62,7 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
   'SetorAtividade',
   'CondicaoPagamento',
   'TabelaPreco',
+  'Cliente',
 ]);
 
 /** Produto HTTP e explicito no formulario; consumidores legados mantem sua fonte. */
