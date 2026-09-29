@@ -4,12 +4,14 @@
 | --- | --- |
 | Implementado | **SIM** — migration aditiva `031_orcamento_pedido_tabela_snapshot.sql` (codigo+nome); create/update/get/convert fail-closed via `comercialTabelaSnapshot`; UI reload; harness stubs com codigo/nome |
 | Testado | **SIM** — tabela snapshot 8/8 + migration 1/1 + condição/promo/onda2/pedido/runtime01/07b/08c 72/72 + UI policy 8/8; `server` typecheck PASS; `git diff --check` PASS |
-| CI | tip a empurrar |
+| CI | tip `07561d2d` |
 | Mesclado | **NÃO** |
 | Implantado VPS | **NÃO** |
 | Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
 | Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
-| Draft PR | a abrir base=`cursor/comercial360-onda3-simular-persist-392b` |
+| Draft PR | **BLOCKED** — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
+| Tip | `07561d2d` |
 | Meta | note preserva **Pedido backend HTTP is active** + `tabelaSnapshot` / snapshot TabelaPreco |
 | Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; numeração **031** (evita 025–028) |
 

@@ -6,8 +6,9 @@
 | Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
 | Escopo | migration **031** + wire create/update/get/convert + UI reload; espelha condição 029 |
 | Meta | note preserva `Pedido backend HTTP is active` + `tabelaSnapshot` |
-| Tip | a empurrar |
-| Draft PR | base=`cursor/comercial360-onda3-simular-persist-392b` |
+| Tip | `07561d2d` |
+| Draft PR | **BLOCKED** — `gh pr create` createPullRequest 403; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
 | Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
 | Próximo | Onda 4 slice sem colisão 025–028 |
 
