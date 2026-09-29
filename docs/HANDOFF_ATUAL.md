@@ -1,3 +1,10 @@
+## AUTÔNOMO — #164 cancel motivo Pedido (2026-09-29T22:35Z)
+
+Tip empilhada em #163: cancel Pedido exige motivo UI fail-closed (3–500).
+Sem merge/VPS. Continuando.
+
+---
+
 ## AUTÔNOMO — #163 export CSV página (2026-09-29T22:30Z)
 
 Tip empilhada em #162: CSV da página atual Orçamento/Pedido (fail-closed; não é export server-side).

@@ -41,9 +41,69 @@ export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') 
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
 }
 
-/** Cancel UI: disable when unauthorized or not EM_ABERTO (incl. already CANCELADO). */
+/** Cancel disable when unauthorized or not EM_ABERTO (incl. already CANCELADO). */
 export function isPedidoCancelDisabled(hasPermission, status) {
   return !canUsePedidoAction(hasPermission, 'cancelar', status);
+}
+
+/** Limite alinhado ao pedidoService.cancel (3–500). */
+export const PEDIDO_CANCEL_MOTIVO_MIN = 3;
+export const PEDIDO_CANCEL_MOTIVO_MAX = 500;
+
+/**
+ * Motivo de cancelamento Pedido — fail-closed (Onda 5: cancelamento exige motivo).
+ * @param {unknown} motivo
+ * @returns {{
+ *   motivo: string,
+ *   length: number,
+ *   blockConfirm: boolean,
+ *   hint: string | null,
+ *   counterLabel: string,
+ * }}
+ */
+export function evaluatePedidoCancelMotivoUiGate(motivo) {
+  const raw = String(motivo ?? '');
+  const trimmed = raw.trim();
+  const length = raw.length;
+  if (!trimmed) {
+    return {
+      motivo: '',
+      length,
+      blockConfirm: true,
+      hint: 'Informe o motivo do cancelamento (mínimo 3 caracteres).',
+      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  if (trimmed.length < PEDIDO_CANCEL_MOTIVO_MIN) {
+    return {
+      motivo: trimmed,
+      length,
+      blockConfirm: true,
+      hint: `Motivo muito curto (mínimo ${PEDIDO_CANCEL_MOTIVO_MIN} caracteres).`,
+      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  if (length > PEDIDO_CANCEL_MOTIVO_MAX) {
+    return {
+      motivo: trimmed.slice(0, PEDIDO_CANCEL_MOTIVO_MAX),
+      length,
+      blockConfirm: true,
+      hint: `Motivo excede ${PEDIDO_CANCEL_MOTIVO_MAX} caracteres.`,
+      counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
+    };
+  }
+  return {
+    motivo: trimmed.slice(0, PEDIDO_CANCEL_MOTIVO_MAX),
+    length,
+    blockConfirm: false,
+    hint: null,
+    counterLabel: `${length}/${PEDIDO_CANCEL_MOTIVO_MAX}`,
+  };
+}
+
+/** Clamp do textarea de motivo. */
+export function clampPedidoCancelMotivo(value) {
+  return String(value ?? '').slice(0, PEDIDO_CANCEL_MOTIVO_MAX);
 }
 
 export function nextPedidoStatus(row) {
