@@ -1,3 +1,15 @@
+## OPINIÃO CURSOR — #136 lint fix + #138 alçada UI (2026-09-29T17:18Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #135 | `5b559c9a` | SUCCESS | Pedido cancel |
+| #136 | `a1b78672` | re-run | list fail-closed; fix eslint `no-control-regex` |
+| #138 | `b11ac82d`+ | pendente | alçada desconto UI fail-closed + anti duplo-clique |
+
+Próximo após CI verde: margem UI pós-#47 **ou** revisão #104/#48. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — #135 CI SUCCESS + #136 list-failclosed (2026-09-29T17:06Z)
 
 | PR | Tip | CI | Escopo |
