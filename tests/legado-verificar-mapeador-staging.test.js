@@ -54,6 +54,21 @@ test('alias empresarial na segunda linha bloqueia o lote inteiro', () => {
   ], opcoes), /Grupo da linha diverge/);
 });
 
+test('campos de escopo com espaco ou ponto e estruturas aninhadas bloqueiam antes do mapeador', () => {
+  for (const alias of ['empresa codigo', 'empresa.codigo', 'codigo empresa', 'cod.empresa']) {
+    assert.throws(() => verificarMapeadorParaStaging([{
+      cod_cliente: 'C-203', nome: 'Sintetico', [alias]: '001',
+    }], opcoes), /vinculo empresarial legado nao comprovado/);
+  }
+  assert.throws(() => verificarMapeadorParaStaging([{
+    cod_cliente: 'C-204', nome: 'Sintetico', 'group.id': 'outro',
+  }], opcoes), /Grupo da linha diverge/);
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-205', nome: 'Primeiro' },
+    { cod_cliente: 'C-206', nome: 'Segundo', dados: { 'empresa-codigo': '001' } },
+  ], opcoes), /aninhado nao permitido/);
+});
+
 test('pedido, fornecedor e produto fora de revenda aguardam mapeador validado', () => {
   for (const entidade of ['pedido', 'fornecedor', 'produto']) {
     assert.throws(() => verificarMapeadorParaStaging([{ codigo: '1' }], { ...opcoes, entidade }),

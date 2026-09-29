@@ -7,7 +7,7 @@ import { prepararLoteStagingLegado, reconciliarPlanoStagingLegado } from './stag
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', produto_revenda: 'produto' });
 const GRUPO_ALIASES = new Set(['groupid', 'grupoid']);
 const EMPRESA_ALIASES = new Set(['codigoempresa', 'codempresa', 'empresacodigo', 'empresaid']);
-const normalizarAlias = (key) => key.toLowerCase().replace(/[-_]/g, '');
+const normalizarAlias = (key) => key.toLowerCase().replace(/[\s._-]/g, '');
 
 /**
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.
@@ -45,6 +45,9 @@ export function verificarMapeadorParaStaging(rows, {
   for (const row of seguros) {
     if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Registro legado invalido.');
     for (const [key, value] of Object.entries(row)) {
+      if (value !== null && typeof value === 'object') {
+        throw new Error('Registro legado aninhado nao permitido.');
+      }
       const alias = normalizarAlias(key);
       const valor = String(value ?? '').trim();
       if (GRUPO_ALIASES.has(alias) && valor && valor !== groupId) {
