@@ -6,7 +6,7 @@
 | Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
 | Base | `#143` tip `4777b4fb` (`cursor/comercial360-onda3-delivery-address-392b`) |
 | Tip | `9d5235bf` feat / docs tip `1eee761b` |
-| Draft PR | **BLOCKED** createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Draft PR | **#144** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/144 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
 | Meta | `simulacaoDirtyFailClosed` + **Pedido backend HTTP is active** |
 | Colisão | B/C já no stack; margem #47; anexos/PDF #52–#62 |
