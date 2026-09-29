@@ -1,3 +1,18 @@
+## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:48Z)
+
+| Campo | Valor |
+|---|---|
+| PR | **#118** (base #117) |
+| Tip | `8cea7778` (feat `988c6ce3`) |
+| CI | **SUCCESS** |
+| Testes | TabelaPreco HTTP 13/13 + regressões |
+
+Piloto HTTP TabelaPreco + resolve preço Orçamento/Pedido; sem migration.
+
+Pilha Onda 2: #114 → #116 → #117 → **#118**.
+
+---
+
 ## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:37Z)
 
 | Campo | Valor |

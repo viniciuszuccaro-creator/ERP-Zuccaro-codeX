@@ -1,3 +1,9 @@
+## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:48Z)
+
+PR **#118** tip `8cea7778` CI SUCCESS (base #117). Sem migration.
+
+---
+
 ## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:37Z)
 
 PR **#117** tip `9bb3bccc` CI SUCCESS (base #116). Piloto HTTP + resolve. Sem migration.
