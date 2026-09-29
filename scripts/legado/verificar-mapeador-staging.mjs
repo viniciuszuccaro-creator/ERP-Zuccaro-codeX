@@ -1,9 +1,12 @@
 import { createHash } from 'node:crypto';
+import { types as utilTypes } from 'node:util';
 import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolicy.js';
 import { mapLegadoLoteSintetico } from './mapear-registro-sintetico.mjs';
 import { prepararLoteStagingLegado } from './staging-scope-gate.mjs';
 
 const ENTIDADES_MESTRE = Object.freeze({ cliente: 'cliente', produto_revenda: 'produto' });
+const GRUPO_ALIASES = new Set(['group_id', 'grupo_id', 'groupid', 'grupoid']);
+const EMPRESA_ALIASES = new Set(['codigo_empresa', 'codigoempresa', 'cod_empresa', 'empresa_codigo', 'empresa_id', 'empresaid']);
 
 /**
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.
@@ -21,15 +24,23 @@ export function verificarMapeadorParaStaging(rows, {
   if (!Array.isArray(rows) || rows.length === 0) throw new Error('Lote vazio ou invalido.');
 
   // Valida o lote inteiro antes de permitir que o mapeador leia aliases.
-  const seguros = rows.map((row) => stripSegredosMigracao(row));
+  const seguros = rows.map((row) => {
+    if (utilTypes.isProxy(row)) throw new Error('Registro legado dinamico nao permitido.');
+    return stripSegredosMigracao(row);
+  });
 
   // Escopo canônico vindo de linha/arquivo nao pode suplantar o destino validado.
   for (const row of seguros) {
     if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Registro legado invalido.');
-    const grupoLinha = String(row.group_id ?? row.grupo_id ?? '').trim();
-    if (grupoLinha && grupoLinha !== groupId) throw new Error('Grupo da linha diverge do destino validado.');
-    if (row.empresa_id != null && String(row.empresa_id).trim()) {
-      throw new Error('Mestre do Grupo nao pode receber empresa proprietaria.');
+    for (const [key, value] of Object.entries(row)) {
+      const alias = key.toLowerCase();
+      const valor = String(value ?? '').trim();
+      if (GRUPO_ALIASES.has(alias) && valor && valor !== groupId) {
+        throw new Error('Grupo da linha diverge do destino validado.');
+      }
+      if (EMPRESA_ALIASES.has(alias) && valor) {
+        throw new Error('Mestre do Grupo com vinculo empresarial legado nao comprovado.');
+      }
     }
   }
 

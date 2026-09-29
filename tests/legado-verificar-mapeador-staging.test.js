@@ -28,6 +28,18 @@ test('Grupo sem prova, outro Grupo e empresa proprietaria sao recusados', () => 
   assert.throws(() => verificarMapeadorParaStaging([row], { ...opcoes, grupoComprovado: false }));
   assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'g-outro' }], opcoes));
   assert.throws(() => verificarMapeadorParaStaging([{ ...row, empresa_id: 'e1' }], opcoes));
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, group_id: 'g-sint', grupo_id: 'g-outro' }], opcoes));
+  assert.throws(() => verificarMapeadorParaStaging([{ ...row, groupId: 'g-outro' }], opcoes));
+});
+
+test('codigo de empresa legado e aliases exigem prova antes do mapeador mestre', () => {
+  for (const legado of ['1', '2', '3', '5', '001', '003']) {
+    for (const alias of ['codigo_empresa', 'empresa_codigo']) {
+      assert.throws(() => verificarMapeadorParaStaging([{
+        cod_cliente: 'C-200', nome: 'Sintetico', group_id: 'g-sint', [alias]: legado,
+      }], opcoes), /vinculo empresarial legado nao comprovado/);
+    }
+  }
 });
 
 test('pedido, fornecedor e produto fora de revenda aguardam mapeador validado', () => {
@@ -37,7 +49,7 @@ test('pedido, fornecedor e produto fora de revenda aguardam mapeador validado', 
   }
 });
 
-test('erro, quarentena ou duplicata bloqueiam lote integral sem entrega parcial', () => {
+test('erro, empresa legada e duplicata bloqueiam lote integral sem entrega parcial', () => {
   const rows = [
     { cod_cliente: 'C-1', nome: 'Um', group_id: 'g-sint' },
     { cod_cliente: 'C-1', nome: 'Duplicado', group_id: 'g-sint' },
@@ -46,12 +58,13 @@ test('erro, quarentena ou duplicata bloqueiam lote integral sem entrega parcial'
   assert.equal(dup.bloqueado, true);
   assert.deepEqual(dup.privados, []);
   assert.equal(dup.relatorio.reusos, 1);
-  const quarentena = verificarMapeadorParaStaging([
+  assert.throws(() => verificarMapeadorParaStaging([
     rows[0], { cod_cliente: 'C-0', nome: 'Zero', codigo_empresa: '0', group_id: 'g-sint' },
-  ], opcoes);
-  assert.equal(quarentena.bloqueado, true);
-  assert.deepEqual(quarentena.privados, []);
-  assert.equal(quarentena.relatorio.quarentena, 1);
+  ], opcoes), /vinculo empresarial legado nao comprovado/);
+  const erro = verificarMapeadorParaStaging([rows[0], { cod_cliente: '', nome: '' }], opcoes);
+  assert.equal(erro.bloqueado, true);
+  assert.deepEqual(erro.privados, []);
+  assert.equal(erro.relatorio.erros, 1);
 });
 
 test('relatorio nao publica nome, documento ou segredo sintetico', () => {
@@ -77,5 +90,14 @@ test('getter no segundo item falha antes do mapeador e sem leitura de segredo', 
     { cod_cliente: 'C-1', nome: 'Um', group_id: 'g-sint' },
     adversarial,
   ], opcoes), /registros JSON simples/);
+  assert.equal(leituras, 0);
+});
+
+test('Proxy na origem e recusado antes de executar trap', () => {
+  let leituras = 0;
+  const row = new Proxy({ cod_cliente: 'C-3', nome: 'Tres' }, {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging([row], opcoes), /dinamico nao permitido/);
   assert.equal(leituras, 0);
 });
