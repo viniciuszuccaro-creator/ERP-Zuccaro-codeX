@@ -1,3 +1,14 @@
+## OPINIÃO CURSOR — #131 CI SUCCESS + #133 validade (2026-09-29T16:39Z)
+
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #131 | `1682f686` | **SUCCESS** | TabelaPreço snapshot **031** |
+| #133 | `cursor/comercial360-onda3-orc-validade-392b` | pendente | Validade Orçamento fail-closed; sem migration |
+
+Stack verde até #131. Próximo: convert-snapshot harden residual **ou** Onda 4 sem 025–028. Sem merge/VPS.
+
+---
+
 ## OPINIÃO CURSOR — stack #126–#131 Comercial 360 (2026-09-29T16:29Z)
 
 | PR | Tip | CI | Escopo |
