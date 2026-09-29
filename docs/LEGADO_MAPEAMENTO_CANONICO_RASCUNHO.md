@@ -75,22 +75,56 @@ Reutilizar `stampMigracaoRecord`:
 
 ## 5. Chave idempotente (sintético)
 
-Composição (alinhada ao Gate 18 / `migracaoErpPolicy`):
+Escopo aceito:
 
 ```text
-group_id|empresa_id|origem_migracao|entidade|codigo_legado
+group_id|empresa_id_ou_grupo|origem_migracao|entidade|codigo_legado
 ```
 
-Implementação local (sem HD/import): `buildChaveIdempotenteMigracaoLegado` e
-`mapLegadoLoteSintetico` em `scripts/legado/mapear-registro-sintetico.mjs`.
-Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
+Mestre/cadastro compartilhado usa o segmento `grupo` (não copia a operação por empresa).
+Operação aceita usa o `empresa_id` canônico do vínculo comprovado.
+
+Escopo rejeitado (divergência, payload sem contexto, vínculo ausente) **não** grava
+`group_id`/`empresa_id` canônicos e usa:
+
+```text
+QX|group_id_contexto|group_id_payload|entidade|codigo_legado
+```
+
+`opts.groupId` / `opts.empresaId` são contexto autorizado do lote. Se divergirem da linha
+ou do vínculo, a linha vai para quarentena; o contexto não substitui o payload.
+Payload sozinho (`escopo_somente_payload`) também não autentica.
+
+Implementação: `scripts/legado/resolver-escopo-legado.mjs` (extraído do mapper) e
+`mapLegadoLoteSintetico`. Duplicata na mesma chave, inclusive retry em `indiceStaging`,
+→ reuso. Reconciliação via `buildReconciliacaoMigracao`.
+
+## 5.1 Seletor legado (sem prova jurídica)
+
+| Código | Papel no seletor | Efeito no mapper |
+|---|---|---|
+| `001` | Empresa CPA | Não prova CNPJ. Operação só segue com `vinculosComprovados` |
+| `002` | Empresa 3Z | Idem |
+| `005` | Empresa ZUCCARO | Idem |
+| `003` | Grupo CPA | Nunca é empresa emissora. Operação com só `003` → quarentena |
+| `004` | Ausente no seletor | `codigo_empresa_legado_nao_comprovado`. Ausência não prova inatividade |
+| `0` / `000` | Inválido | `codigo_empresa_legado_0` |
+
+Zeros à esquerda são preservados (`1` normaliza para `001`). `codigo_tipo_nota_legado`
+é coluna própria e nunca vira código de empresa.
+
+Mestres (cliente, fornecedor, produto **somente revenda**) ficam no Grupo, com código
+legado, sem `empresa_id` proprietário. A mesma chave em 001 e 002 não duplica o mestre.
+Pedido, orçamento, estoque, contas a receber/pagar e nota exigem emissor comprovado,
+permanecem na empresa e levam `visivel_consolidado_grupo` sem segunda cópia física.
+Usuário, senha e permissão legados são excluídos e não entram em `gravados`.
 
 ## 6. Próximos passos desta frente
 
-1. ~~Rodar inventário no HD~~ → **BLOCKED** até HD externo disponível (prep sintético OK).
-2. Preencher “Formato/origem observada” na matriz §2 **somente** após inventário somente leitura.
-3. Propor ETL idempotente real só após inventário + Onda 25.
-4. Staging isolado só com gate Onda 25.
+1. Inventário somente leitura no HD: frente Codex (#106/#107), sem editar este mapper.
+2. Preencher “Formato/origem observada” na matriz §2 **somente** após esse inventário.
+3. Provar o vínculo jurídico 001/002/005 por registro antes de qualquer carga.
+4. ETL/staging real continua **BLOCKED** (Onda 25). Este contrato não importa.
 
-**HD indisponível (2026-09-26):** continuar Comercial 360 com dados sintéticos; não ler backup;
-não commitár dados reais. Aliases `tabela_preco` / `orcamento` / `pedido` já no mapper sintético.
+**Sem dados reais no GitHub.** Aliases sintéticos: cliente, fornecedor, produto,
+empresa, obra, condição, tabela, orçamento, pedido, estoque, contas e nota.

@@ -1,3 +1,16 @@
+## Legado #48 — contrato de escopo sintético (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — contexto do lote não substitui a linha; `003` é grupo; operação exige vínculo comprovado |
+| Testado | **SIM** — 17/17 `tests/legado-mapear-sintetico.test.js` |
+| CI | pendente neste push |
+| Mesclado | **NÃO** |
+| Importação / VPS / migration | **NÃO** |
+
+Arquivos desta frente: `scripts/legado/mapear-registro-sintetico.mjs`, `scripts/legado/resolver-escopo-legado.mjs` (extração do contrato), `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`, `tests/legado-mapear-sintetico.test.js`.
+Codex permanece dono do inventário/staging (#106/#107). Sem dados reais.
+
 ## Legado prep sintético (sem HD) — STATUS REAL (2026-09-26T17:50Z)
 
 | Etapa | Estado |
