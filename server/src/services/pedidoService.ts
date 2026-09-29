@@ -220,7 +220,7 @@ export class PedidoService {
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
-      if (before.status !== 'EM_ABERTO') this.stateConflict();
+      this.requireOpen(before);
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
@@ -268,12 +268,20 @@ export class PedidoService {
     });
   }
 
+  /**
+   * Cancel fail-closed (simetria Orçamento): RBAC `cancelar` após tenant,
+   * somente EM_ABERTO, auditoria before/after na mesma transação, repetição → 409.
+   * Não apaga itens/histórico; motivo opcional vai ao histórico (não à auditoria sanitizada).
+   */
   async cancel(ctx: RequestContext, id: string, motivo?: unknown) {
-    const scope = await this.prepare(ctx, 'cancelar'); this.assertId(id, 'pedidoId');
-    if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) this.validation({ motivo: 'invalid' });
+    const scope = await this.prepare(ctx, 'cancelar');
+    this.assertId(id, 'pedidoId');
+    if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) {
+      this.validation({ motivo: 'invalid' });
+    }
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
-      if (before.status !== 'EM_ABERTO') this.stateConflict();
+      this.requireOpen(before);
       const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
@@ -507,6 +515,9 @@ export class PedidoService {
   }
 
   private async requirePedido(scope: PedidoScope, id: string, executor?: DbQueryExecutor) { const row = await this.repo.get(scope, id, executor); if (!row) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found'); return row; }
+  private requireOpen(row: Pedido) {
+    if (row.status !== 'EM_ABERTO') this.stateConflict();
+  }
   private async auditRow(ctx: RequestContext, action: AuditAction, before: Pedido | null, after: Pedido, executor?: DbQueryExecutor) { await this.audit.append({ groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId, actorEmail: ctx.actorEmail, entity: 'Pedido', entityId: after.id, action, beforeData: before ? pedidoAuditSnapshot(before) : undefined, afterData: pedidoAuditSnapshot(after), requestId: ctx.requestId, ipAddress: ctx.ipAddress }, executor); }
   private assertId(id: string, field: string) { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new AppError(400, 'VALIDATION_ERROR', `Invalid ${field}`); }
   private validation(details: unknown): never { throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Pedido payload', details); }
