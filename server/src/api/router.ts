@@ -12,6 +12,7 @@ import type { ClienteLocalService } from '../services/clienteLocalService.js';
 import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
+import type { ComercialSimulacaoVendaService } from '../services/comercialSimulacaoVendaService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
@@ -41,6 +42,7 @@ export type ApiDeps = {
   obraService: ObraService;
   tabelaPrecoService: TabelaPrecoService;
   condicaoPagamentoService: CondicaoPagamentoService;
+  comercialSimulacaoVendaService: ComercialSimulacaoVendaService;
   orcamentoService: OrcamentoService;
   pedidoService: PedidoService;
 };
@@ -989,6 +991,12 @@ function mountTabelaPrecoRoutes(router: Router, service: TabelaPrecoService) {
 
 function mountCondicaoPagamentoRoutes(router: Router, service: CondicaoPagamentoService) {
   const base = '/api/v1/condicoes-pagamento';
+  router.get(`${base}/resolve`, requireTenantScope, async (req, res, next) => {
+    try {
+      const clienteEmpresaId = typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : '';
+      res.json({ data: await service.resolveForClienteEmpresaHttp(ctxFromReq(req), clienteEmpresaId) });
+    } catch (e) { next(e); }
+  });
   router.get(base, requireTenantScope, async (req,res,next)=>{try { res.json(await service.list(ctxFromReq(req),{ativo:parseAtivoQuery(req.query.ativo),ehPadrao:parseAtivoQuery(req.query.eh_padrao),search:req.query.search?String(req.query.search):undefined,limit:req.query.limit?Number(req.query.limit):undefined,offset:req.query.offset?Number(req.query.offset):undefined})); } catch(e){next(e);} });
   router.post(base, requireTenantScope, async (req,res,next)=>{try{res.status(201).json({data:await service.create(ctxFromReq(req),req.body)});}catch(e){next(e);}});
   router.get(`${base}/:id`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.get(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
@@ -1000,6 +1008,16 @@ function mountCondicaoPagamentoRoutes(router: Router, service: CondicaoPagamento
   router.delete(`${base}/:id/empresas/:empresaId`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.unlinkEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
   router.post(`${base}/:id/empresas/:empresaId/restore`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.restoreEmpresa(ctxFromReq(req),req.params.id,req.params.empresaId)});}catch(e){next(e);}});
   router.post(`${base}/:id/padrao`, requireTenantScope, async(req,res,next)=>{try{res.json({data:await service.setPadrao(ctxFromReq(req),req.params.id)});}catch(e){next(e);}});
+}
+
+function mountComercialSimulacaoRoutes(router: Router, service: ComercialSimulacaoVendaService) {
+  router.post('/api/v1/comercial/simular-venda', requireTenantScope, async (req, res, next) => {
+    try {
+      res.json({ data: await service.simular(ctxFromReq(req), req.body) });
+    } catch (error) {
+      next(error);
+    }
+  });
 }
 
 function mountOrcamentoRoutes(router: Router, service: OrcamentoService) {
@@ -1242,7 +1260,19 @@ export function createApiRouter(deps: ApiDeps) {
         transactionalAudit: true,
         frontendHttp: false,
       },
-      condicaoPagamento: { masterData: true, companyAuthorization: true, parcelasAtomicas: true, frontendHttp: false },
+      condicaoPagamento: {
+        masterData: true,
+        companyAuthorization: true,
+        parcelasAtomicas: true,
+        resolucaoClienteEmpresa: true,
+        frontendHttp: false,
+      },
+      comercialSimulacao: {
+        vendaHttp: true,
+        precoServidor: true,
+        parcelasSchedule: true,
+        promocaoFailClosed: true,
+      },
       orcamento: {
         backendHttp: true,
         frontendHttp: true,
@@ -1277,6 +1307,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountObraRoutes(router, deps.obraService);
   mountTabelaPrecoRoutes(router, deps.tabelaPrecoService);
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
+  mountComercialSimulacaoRoutes(router, deps.comercialSimulacaoVendaService);
   mountOrcamentoRoutes(router, deps.orcamentoService);
   mountPedidoRoutes(router, deps.pedidoService);
 
