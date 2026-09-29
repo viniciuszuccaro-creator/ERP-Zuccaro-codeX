@@ -9,6 +9,7 @@ import { InMemoryPedidoRepository } from '../src/repositories/inMemoryPedidoRepo
 import type { OrcamentoCreate } from '../src/repositories/orcamentoTypes.js';
 import type { PedidoCreate } from '../src/repositories/pedidoTypes.js';
 import {
+  applyPromocaoOnPersist,
   assertDescontoCompativelComPromocao,
   assertPersistedPromocaoSnapshot,
   buildPromocaoDocumentoSnapshot,
@@ -210,6 +211,41 @@ test('helper: assertPersistedPromocaoSnapshot fail-closed bps inválido', () => 
   );
 });
 
+test('helper: applyPromocaoOnPersist aplica desconto no servidor (desconto 0)', () => {
+  const result = applyPromocaoOnPersist({
+    promocao: { bps: 500 },
+    config: { ativa: true, maxBps: 1000 },
+    items: [{
+      quantidade: '2',
+      preco_unitario: '100.000000',
+      desconto: '0.000000',
+    }],
+  });
+  assert.equal(result.snapshot.promocao_aplicada, true);
+  assert.equal(result.snapshot.promocao_bps, 500);
+  assert.equal(result.items[0].desconto, '10.000000');
+});
+
+test('helper: applyPromocaoOnPersist é idempotente com UI pós-simular', () => {
+  const once = applyPromocaoOnPersist({
+    promocao: { bps: 500, cupom: 'CPA10' },
+    config: { ativa: true, maxBps: 1000, cuponsPermitidos: ['CPA10'] },
+    items: [{
+      quantidade: '2',
+      preco_unitario: '100.000000',
+      desconto: '10.000000',
+    }],
+  });
+  const twice = applyPromocaoOnPersist({
+    promocao: { bps: 500, cupom: 'CPA10' },
+    config: { ativa: true, maxBps: 1000, cuponsPermitidos: ['CPA10'] },
+    items: once.items,
+  });
+  assert.equal(once.items[0].desconto, '10.000000');
+  assert.equal(twice.items[0].desconto, '10.000000');
+  assert.equal(twice.snapshot.promocao_cupom, 'CPA10');
+});
+
 test('Onda3: Orçamento create sem promoção persiste refs vazias', async () => {
   const { service } = orcamentoFixture();
   const row = await service.create(ctx, quotePayload);
@@ -262,16 +298,30 @@ test('Onda3: Orçamento create promoção fail-closed cupom negado', async () =>
   );
 });
 
-test('Onda3: Orçamento create promoção fail-closed desconto inconsistente', async () => {
+test('Onda3: Orçamento create com promoção aplica desconto no servidor (UI sem inventar)', async () => {
   const { service } = orcamentoFixture();
-  await assert.rejects(
-    service.create(ctx, {
-      ...quotePayload,
-      promocao: { bps: 500 },
-      itens: [{ ...quotePayload.itens[0], desconto: '1.000000' }],
-    }),
-    (error: AppError) => error.code === 'PROMOCAO_DESCONTO_INCONSISTENTE',
-  );
+  // Desconto 0 no payload — servidor aplica 5% sobre 2*100 = 10.
+  const row = await service.create(ctx, {
+    ...quotePayload,
+    promocao: { bps: 500 },
+    itens: [{ ...quotePayload.itens[0], desconto: '0.000000' }],
+  });
+  assert.equal(row.promocao_aplicada, true);
+  assert.equal(row.promocao_bps, 500);
+  assert.equal(row.desconto, '10.000000');
+  assert.equal(row.total, '190.000000');
+  assert.equal(row.itens[0].desconto, '10.000000');
+});
+
+test('Onda3: Orçamento create promoção idempotente se UI já aplicou simulação', async () => {
+  const { service } = orcamentoFixture();
+  const row = await service.create(ctx, {
+    ...quotePayload,
+    promocao: { bps: 500 },
+    itens: [{ ...quotePayload.itens[0], desconto: '10.000000' }],
+  });
+  assert.equal(row.desconto, '10.000000');
+  assert.equal(row.total, '190.000000');
 });
 
 test('Onda3: Pedido create persiste e recarrega promoção', async () => {
@@ -279,11 +329,12 @@ test('Onda3: Pedido create persiste e recarrega promoção', async () => {
   const row = await service.create(ctx, {
     ...pedidoPayload,
     promocao: { bps: 500, cupom: 'vip5' },
-    itens: [{ ...pedidoPayload.itens[0], desconto: '10.000000' }],
+    itens: [{ ...pedidoPayload.itens[0], desconto: '0.000000' }],
   });
   assert.equal(row.promocao_aplicada, true);
   assert.equal(row.promocao_bps, 500);
   assert.equal(row.promocao_cupom, 'VIP5');
+  assert.equal(row.desconto, '10.000000');
   const reloaded = await service.get(ctx, row.id);
   assert.equal(reloaded.promocao_aplicada, true);
   assert.equal(reloaded.promocao_bps, 500);

@@ -25,7 +25,7 @@ import {
 } from './comercialCondicaoAvistaPolicy.js';
 import { buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
 import {
-  buildPromocaoDocumentoSnapshot,
+  applyPromocaoOnPersist,
   type ComercialPromocaoConfigPort,
 } from './comercialPromocaoPolicy.js';
 
@@ -207,8 +207,8 @@ export class OrcamentoService {
   }
 
   /**
-   * Snapshot de condição (id+codigo+nome+parcelas) + refs de promoção fail-closed.
-   * Servidor é autoridade; payload `promocao` só declara intenção — config/cupom/bps validados.
+   * Snapshot de condição (id+codigo+nome+parcelas) + promoção aplicada no servidor.
+   * Payload `promocao` declara intenção; desconto/total vêm de applyPromocaoOnPersist (idempotente com UI pós-simular).
    */
   private async applyCondicaoSnapshot(
     scope: OrcamentoScope,
@@ -224,16 +224,17 @@ export class OrcamentoService {
       })
       : null;
     const { promocao: _ignored, ...rest } = data;
-    const promo = buildPromocaoDocumentoSnapshot({
+    const promo = applyPromocaoOnPersist({
       promocao: data.promocao,
       config: cfg,
       items: data.itens,
     });
     return {
       ...rest,
+      itens: promo.items,
       tabela_preco_id: data.tabela_preco_id ?? null,
       ...snapshot,
-      ...promo,
+      ...promo.snapshot,
     };
   }
 

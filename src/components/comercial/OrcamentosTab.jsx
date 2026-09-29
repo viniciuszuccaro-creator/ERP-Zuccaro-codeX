@@ -22,6 +22,8 @@ import {
   buildSimularVendaPayload,
   buildSimulacaoPreviewState,
   canSimularVenda,
+  mergeSimulacaoBeforeSave,
+  resolveDisplayTotals,
 } from './comercialSimulacaoUiPolicy';
 import {
   applyResolvedCondicaoToForm,
@@ -266,10 +268,14 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       setResolvingPreco(false);
     }
   };
-  const totals = useMemo(() => {
+  const localTotals = useMemo(() => {
     try { const total = calculateTotals(form.itens); return { subtotal: microsToDecimal(total.subtotal), desconto: microsToDecimal(total.desconto), total: microsToDecimal(total.total) }; }
     catch { return { subtotal: '0', desconto: '0', total: '0' }; }
   }, [form.itens]);
+  const totals = useMemo(
+    () => resolveDisplayTotals(simulacaoPreview, localTotals),
+    [simulacaoPreview, localTotals],
+  );
   const runSimularVenda = async () => {
     if (!canSimular || simulating || submitting) return;
     setSimulating(true);
@@ -310,7 +316,9 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (submitting) return;
     setSubmitting(true);
     try {
-      const payload = buildOrcamentoPayload(form, {
+      const formToSave = mergeSimulacaoBeforeSave(form, lastSimulation, { groupId, empresaId });
+      if (formToSave !== form) setForm(formToSave);
+      const payload = buildOrcamentoPayload(formToSave, {
         promocao: simulacaoPreview?.promocao?.aplicada
           ? { aplicada: true, bps: simulacaoPreview.promocao.bps, cupom: promoCupom }
           : undefined,
@@ -399,7 +407,7 @@ const convertToPedido = async () => {
           <Button type="button" variant="outline" onClick={runSimularVenda} disabled={simulating || submitting || !contextReady}>{simulating ? 'Simulando...' : 'Simular venda'}</Button>
           <Button type="button" variant="secondary" onClick={applyLastSimulacao} disabled={!lastSimulation || simulating || submitting}>Aplicar preços da simulação</Button>
         </div>
-        <p className="text-xs text-slate-500">A simulação usa preço e parcelas do servidor; promoção só aplica se o backend confirmar (fail-closed). Nada é gravado até Salvar.</p>
+        <p className="text-xs text-slate-500">A simulação usa preço e parcelas do servidor; ao salvar, o backend reaplica promoção/desconto/total (fail-closed). Totais do formulário são rascunho até a simulação.</p>
         {simulacaoPreview && <div className="space-y-2">
           <div className="flex flex-wrap gap-2 text-sm">
             <Badge variant="outline">Condição: {simulacaoPreview.condicaoNome || simulacaoPreview.condicaoCodigo || simulacaoPreview.condicaoId}</Badge>

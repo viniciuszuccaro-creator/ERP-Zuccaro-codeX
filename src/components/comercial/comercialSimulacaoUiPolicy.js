@@ -1,7 +1,7 @@
 /**
- * Política UI da simulação de venda (Onda 2) — Orçamento/Pedido existentes.
- * Aplica preço/desconto/condição no formulário; refs de promoção vão no create/update
- * (migration 030) via buildOrcamentoPayload/buildPedidoPayload.
+ * Política UI da simulação de venda (Onda 2/3) — Orçamento/Pedido existentes.
+ * Preview usa totais do servidor; create/update reaplica promoção no backend
+ * via applyPromocaoOnPersist (UI não inventa total persistido).
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -133,6 +133,7 @@ export function assertPromocaoAplicadaOuFalhar(simulation, requestedPromocao) {
 /**
  * Aplica preço/desconto/condição resolvidos no formulário existente (sem campos novos persistidos).
  * Preserva campos locais (validade, tipo_operacao, requer_producao, etc.).
+ * Totais do cabeçalho NÃO são gravados no form — o backend recalcula no create/update.
  */
 export function applySimulacaoToForm(form, simulation) {
   if (!form || !simulation) throw new Error('Formulário ou simulação ausente.');
@@ -166,6 +167,39 @@ export function applySimulacaoToForm(form, simulation) {
     condicao_pagamento_id: simulation.condicao.id,
     itens,
   };
+}
+
+/**
+ * Antes do save: se houver última simulação no mesmo contexto, aplica no form.
+ * Evita gravar preços/descontos inventados localmente quando o usuário já simulou.
+ */
+export function mergeSimulacaoBeforeSave(form, lastSimulation, scope) {
+  if (!lastSimulation) return form;
+  const simulation = assertSimulacaoNoContexto(lastSimulation, scope);
+  return applySimulacaoToForm(form, simulation);
+}
+
+/**
+ * Totais exibidos: prioriza preview do servidor; senão rascunho local (não persistido).
+ */
+export function resolveDisplayTotals(simulacaoPreview, localTotals) {
+  if (simulacaoPreview?.subtotal != null && simulacaoPreview?.desconto != null && simulacaoPreview?.total != null) {
+    return {
+      subtotal: String(simulacaoPreview.subtotal),
+      desconto: String(simulacaoPreview.desconto),
+      total: String(simulacaoPreview.total),
+      source: 'server',
+    };
+  }
+  if (localTotals?.subtotal != null && localTotals?.desconto != null && localTotals?.total != null) {
+    return {
+      subtotal: String(localTotals.subtotal),
+      desconto: String(localTotals.desconto),
+      total: String(localTotals.total),
+      source: 'local-draft',
+    };
+  }
+  return { subtotal: '0', desconto: '0', total: '0', source: 'empty' };
 }
 
 /**

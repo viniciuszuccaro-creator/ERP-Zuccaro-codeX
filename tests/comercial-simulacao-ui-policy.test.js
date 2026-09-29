@@ -10,6 +10,8 @@ import {
   buildSimulacaoPreviewState,
   canSimularVenda,
   formatParcelasSchedule,
+  mergeSimulacaoBeforeSave,
+  resolveDisplayTotals,
 } from '../src/components/comercial/comercialSimulacaoUiPolicy.js';
 
 const GROUP_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -147,14 +149,39 @@ test('agenda de parcelas e preview UI', () => {
   assert.deepEqual(formatParcelasSchedule([]), []);
 });
 
+test('totais: prioriza preview do servidor; rascunho local sem inventar persistência', () => {
+  const preview = buildSimulacaoPreviewState(simulationA());
+  const display = resolveDisplayTotals(preview, { subtotal: '999', desconto: '1', total: '998' });
+  assert.equal(display.source, 'server');
+  assert.equal(display.total, '195.000000');
+  const draft = resolveDisplayTotals(null, { subtotal: '10', desconto: '1', total: '9' });
+  assert.equal(draft.source, 'local-draft');
+  assert.equal(draft.total, '9');
+});
+
+test('mergeSimulacaoBeforeSave aplica última simulação no contexto', () => {
+  const merged = mergeSimulacaoBeforeSave(formBase(), simulationA(), { groupId: GROUP_A, empresaId: EMPRESA_A });
+  assert.equal(merged.itens[0].preco_unitario, '100.000000');
+  assert.equal(merged.itens[0].desconto, '5.000000');
+  assert.equal(mergeSimulacaoBeforeSave(formBase(), null, { groupId: GROUP_A, empresaId: EMPRESA_A }).itens[0].preco_unitario, '50.000000');
+  assert.throws(
+    () => mergeSimulacaoBeforeSave(formBase(), simulationA(), { groupId: GROUP_A, empresaId: EMPRESA_B }),
+    /fora do contexto/i,
+  );
+});
+
 test('Orçamento e Pedido canônicos ligam simular-venda sem módulo paralelo', async () => {
   const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   const ped = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
   const client = await readFile(new URL('../src/api/httpApiClient.js', import.meta.url), 'utf8');
   assert.match(orc, /comercialApi\.simularVenda/);
+  assert.match(orc, /mergeSimulacaoBeforeSave/);
+  assert.match(orc, /resolveDisplayTotals/);
   assert.match(orc, /Aplicar preços da simulação/);
   assert.match(orc, /canSimularVenda/);
   assert.match(ped, /comercialApi\.simularVenda/);
+  assert.match(ped, /mergeSimulacaoBeforeSave/);
+  assert.match(ped, /resolveDisplayTotals/);
   assert.match(ped, /data-action="Comercial\.simular-venda"/);
   assert.match(client, /\/api\/v1\/comercial\/simular-venda/);
   assert.match(client, /\/api\/v1\/condicoes-pagamento\/resolve/);
