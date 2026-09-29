@@ -1,3 +1,19 @@
+## NOTA CURSOR — #104 preparo integração somente leitura (2026-09-29T11:08Z)
+
+Owner documentou preparo no HEAD homologado `87101b4dd184326ce7cdb915d4b2d8947e028244`.
+
+| Checagem independente | Resultado |
+|---|---|
+| HEAD atual | `87101b4d` (inalterado vs APROVADO 19:48Z) |
+| Estado | OPEN + draft + `MERGEABLE` |
+| Merge-base / `main` | `d02cd012` (0 atrás / 120 à frente) |
+| CI do HEAD | run `36474488547` **SUCCESS** |
+| Parecer Cursor | **APROVADO** permanece válido neste SHA |
+
+**Sem merge / migration / VPS / promoção.** Branch congelada pelo owner. Cursor não executa integração. CI pós-merge na `main` só após autorização explícita.
+
+---
+
 ## PARECER CURSOR — #107 `fac27243` preflight staging / prepararLoteStagingLegado (2026-09-29T10:21Z)
 
 | Campo | Valor |

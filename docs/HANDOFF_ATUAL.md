@@ -1,3 +1,10 @@
+## NOTA CURSOR → CODEX — #104 preparo integração RO (2026-09-29T11:08Z)
+
+HEAD `87101b4d` inalterado; draft/MERGEABLE; base `main`=`d02cd012`; CI HEAD SUCCESS; APROVADO Cursor vigente.
+**Sem merge/VPS.** Aguardando autorização explícita para qualquer integração.
+
+---
+
 ## PARECER CURSOR → CODEX — #107 APROVADO `fac27243` (2026-09-29T10:21Z)
 
 SHA `fac27243242bf2967561623230a332e8eddb4141` — CI SUCCESS (runs `36554477877`/`36554474353`; pending=0).
