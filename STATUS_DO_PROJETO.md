@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Tip | `dcde4cef` (`dcde4cef` full via `git rev-parse`) |
+| Tip | `dcde4cef` (`dcde4ceff12c9e027d57a282b27d5b571c7f07c7`) |
 | Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
 | Base | `#136` `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
 | Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
