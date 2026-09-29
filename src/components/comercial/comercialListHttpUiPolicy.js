@@ -80,3 +80,55 @@ export function isHttpListQueryKeyScoped(queryKey, scope = {}) {
   if (scope.empresaId != null && queryKey[2] !== scope.empresaId) return false;
   return Boolean(groupId) && Boolean(empresaId);
 }
+
+/**
+ * Estado do picker de mestre HTTP (Cliente/Condição/Tabela/Produto).
+ * 403/5xx → 'error' (nunca colapsa em empty silencioso).
+ * Sem permissão de carregar → 'denied' (fail-closed explícito).
+ * @returns {'denied'|'loading'|'error'|'empty'|'ready'}
+ */
+export function resolveHttpMasterPickerState({
+  isLoading,
+  isError,
+  rowCount,
+  allowed = true,
+} = {}) {
+  if (allowed === false) return 'denied';
+  if (isLoading) return 'loading';
+  if (isError) return 'error';
+  const count = Number(rowCount);
+  if (!Number.isFinite(count) || count < 1) return 'empty';
+  return 'ready';
+}
+
+/**
+ * Placeholder do Select mestre — nunca sugere “lista vazia” em erro/loading.
+ * @param {'denied'|'loading'|'error'|'empty'|'ready'|string} state
+ * @param {string} [entityLabel]
+ */
+export function formatMasterPickerPlaceholder(state, entityLabel = 'itens') {
+  if (state === 'loading') return 'Carregando...';
+  if (state === 'error') return 'Falha ao carregar';
+  if (state === 'denied') return 'Sem permissão';
+  if (state === 'empty') return `Nenhum ${entityLabel}`;
+  return 'Selecione';
+}
+
+/**
+ * Banner de masters HTTP: reutiliza formatComercialHttpError e deixa explícito
+ * que 403/5xx ≠ empty-state dos pickers.
+ * @param {unknown} error
+ * @param {{ entityLabel?: string }} [options]
+ */
+export function buildMastersHttpBannerText(error, options = {}) {
+  const formatted = formatComercialHttpError(error, options);
+  return `${formatted} Cadastros mestres (cliente/condição/produto/tabela) não carregados — não trate como lista vazia.`;
+}
+
+/**
+ * Pickers mestres devem bloquear interação enquanto loading/erro.
+ * @param {{ isLoading?: boolean, isError?: boolean }} [query]
+ */
+export function isMasterPickerBlocked(query = {}) {
+  return Boolean(query.isLoading) || Boolean(query.isError);
+}
