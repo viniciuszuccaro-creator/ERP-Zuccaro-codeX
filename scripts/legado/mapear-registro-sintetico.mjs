@@ -23,6 +23,11 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     codigo: ['codigo', 'cod_produto', 'sku', 'codigo_legado'],
     descricao: ['descricao', 'nome', 'produto'],
   },
+  fornecedor: {
+    codigo: ['codigo', 'cod_fornecedor', 'codigo_fornecedor', 'id_fornecedor', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'nome_fornecedor', 'descricao'],
+    documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
+  },
   empresa: {
     codigo: ['codigo', 'cod_empresa', 'codigo_empresa', 'codigoempresa', 'codigo_legado'],
     nome: ['nome', 'razao_social', 'nome_empresa', 'descricao'],
@@ -36,34 +41,102 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     codigo: ['codigo', 'cod_condicao', 'codigo_condicao', 'condicao_id', 'codigo_legado'],
     nome: ['nome', 'descricao', 'condicao', 'titulo'],
   },
+  /** Hipótese até inventário HD — sem preços/custos reais no GitHub. */
+  tabela_preco: {
+    codigo: ['codigo', 'cod_tabela', 'codigo_tabela', 'codigo_tabela_legado', 'tabela_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'tabela', 'titulo', 'nome_tabela'],
+  },
+  /** Hipótese até inventário HD — destino agregado Orçamento (016). */
+  orcamento: {
+    codigo: ['codigo', 'cod_orcamento', 'numero_orcamento', 'numero', 'orcamento_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'referencia', 'titulo'],
+  },
+  /** Hipótese até inventário HD — destino agregado Pedido (017). */
+  pedido: {
+    codigo: ['codigo', 'cod_pedido', 'numero_pedido', 'numero', 'pedido_id', 'codigo_legado'],
+    nome: ['nome', 'descricao', 'referencia', 'titulo'],
+  },
 });
 
-/** Códigos empresariais legados válidos conhecidos (Gate 18); `0` = quarentena. */
-export const LEGADO_EMPRESA_CODIGOS_VALIDOS = Object.freeze(['1', '2', '3', '4', '5']);
+/**
+ * Cadastros mestres compartilhados no Grupo (sem empresaId obrigatório).
+ * Alinha ao staging-scope-gate (#106/#107); seletor legado 003 não vira empresa.
+ */
+export const LEGADO_MESTRES_GRUPO = Object.freeze(new Set([
+  'cliente', 'fornecedor', 'produto', 'produto_revenda', 'condicao_pagamento', 'tabela_preco',
+]));
+
+/** Operações que exigem vínculo jurídico comprovado (001/002/005). */
+export const LEGADO_OPERACOES_EMPRESA = Object.freeze(new Set([
+  'pedido', 'orcamento', 'obra', 'nota_fiscal', 'conta_receber', 'conta_pagar',
+]));
 
 /**
- * Rótulos públicos já documentados no STATUS (Gate 18) — sem CNPJ/PII.
- * Uso: staging sintético / conciliação; não autoriza importação.
+ * Normaliza código empresarial legado para 3 dígitos quando for 1–3 dígitos numéricos.
+ * `abc`/`1x`/`0001` → string trimada sem pad (não vira empresa por normalização).
+ */
+export const normalizarCodigoEmpresaLegado = (value) => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (/^\d{1,3}$/.test(raw)) return raw.padStart(3, '0');
+  return raw;
+};
+
+/**
+ * Códigos que podem provar empresa jurídica após vínculo por registro.
+ * `003`/`3` = seletor de Grupo (não emissora). `000`/`0` e `004`/`4` = quarentena.
+ */
+export const LEGADO_EMPRESA_CODIGOS_JURIDICOS = Object.freeze(['001', '002', '005']);
+
+/** @deprecated use LEGADO_EMPRESA_CODIGOS_JURIDICOS + normalizarCodigoEmpresaLegado */
+export const LEGADO_EMPRESA_CODIGOS_VALIDOS = Object.freeze(['1', '2', '5', '001', '002', '005']);
+
+/**
+ * Rótulos públicos (Gate 18 / evidência owner) — sem CNPJ/PII.
+ * Chaves sempre normalizadas em 3 dígitos. `003` não é empresa emissora.
  */
 export const LEGADO_EMPRESA_CODIGO_MAP = Object.freeze({
-  1: { label: 'CPA_Central_Paulista', ativo: true },
-  2: { label: '3Z_Armacao', ativo: true },
-  3: { label: 'Grupo_CPA', ativo: true },
-  4: { label: 'Belgo_Cercas', ativo: false },
-  5: { label: 'Zuccaro_Comercio_Ferragens', ativo: true },
+  '001': { label: 'CPA_Central_Paulista', ativo: true, tipo: 'empresa' },
+  '002': { label: '3Z_Armacao', ativo: true, tipo: 'empresa' },
+  '003': { label: 'Grupo_CPA', ativo: false, tipo: 'grupo_seletor' },
+  '004': { label: 'Belgo_Cercas', ativo: false, tipo: 'empresa_inativa' },
+  '005': { label: 'Zuccaro_Comercio_Ferragens', ativo: true, tipo: 'empresa' },
+  '000': { label: 'Codigo_Zero', ativo: false, tipo: 'quarentena' },
 });
 
 /**
  * @param {unknown} codigo
- * @returns {{ codigo: string, label?: string, ativo?: boolean, conhecido: boolean } | { codigo: string, conhecido: false, quarentena: true }}
+ * @returns {{
+ *   codigo: string,
+ *   label?: string,
+ *   ativo?: boolean,
+ *   tipo?: string,
+ *   conhecido: boolean,
+ *   quarentena?: boolean,
+ *   aptoComoEmpresa?: boolean,
+ * }}
  */
 export const resolverEmpresaLegadoCodigo = (codigo) => {
-  const c = String(codigo ?? '').trim();
-  if (!c) return { codigo: '', conhecido: false };
-  if (c === '0') return { codigo: '0', conhecido: false, quarentena: true };
+  const c = normalizarCodigoEmpresaLegado(codigo);
+  if (!c) return { codigo: '', conhecido: false, aptoComoEmpresa: false };
+  if (c === '000' || String(codigo ?? '').trim() === '0') {
+    return { codigo: '000', conhecido: false, quarentena: true, aptoComoEmpresa: false, tipo: 'quarentena' };
+  }
   const hit = LEGADO_EMPRESA_CODIGO_MAP[c];
-  if (!hit) return { codigo: c, conhecido: false };
-  return { codigo: c, label: hit.label, ativo: hit.ativo, conhecido: true };
+  if (!hit) {
+    return { codigo: c, conhecido: false, aptoComoEmpresa: false, quarentena: true };
+  }
+  const aptoComoEmpresa = hit.tipo === 'empresa' && hit.ativo === true
+    && LEGADO_EMPRESA_CODIGOS_JURIDICOS.includes(c);
+  return {
+    codigo: c,
+    label: hit.label,
+    ativo: hit.ativo,
+    tipo: hit.tipo,
+    conhecido: true,
+    aptoComoEmpresa,
+    quarentena: !aptoComoEmpresa,
+  };
 };
 const first = (...vals) => {
   for (const v of vals) {
@@ -104,7 +177,7 @@ export const buildChaveIdempotenteMigracaoLegado = (record = {}, opts = {}) => {
 };
 
 /**
- * Avalia quarentena sem importar (código empresa 0, entidade sem nome, etc.).
+ * Avalia quarentena sem importar (código 0, Grupo 003, inativa 004, desconhecido, etc.).
  * @param {Record<string, unknown>} row
  * @param {{ entidade?: string }} opts
  * @returns {{ quarentena: boolean, motivos: string[] }}
@@ -112,20 +185,24 @@ export const buildChaveIdempotenteMigracaoLegado = (record = {}, opts = {}) => {
 export const avaliarQuarentenaLegado = (row = {}, opts = {}) => {
   const motivos = [];
   const entidade = opts.entidade || 'cliente';
-  const codigoEmpresa = first(
+  const codigoEmpresaRaw = first(
     row.codigo_empresa,
     row.codigoempresa,
     row.cod_empresa,
     row.empresa_codigo,
   );
-  if (codigoEmpresa === '0') {
-    motivos.push('codigo_empresa_legado_0');
-  }
-  if (codigoEmpresa && !LEGADO_EMPRESA_CODIGOS_VALIDOS.includes(codigoEmpresa) && codigoEmpresa !== '0') {
-    motivos.push('codigo_empresa_legado_desconhecido');
-  }
-  if (codigoEmpresa && LEGADO_EMPRESA_CODIGO_MAP[codigoEmpresa]?.ativo === false) {
-    motivos.push('codigo_empresa_legado_inativa');
+  if (codigoEmpresaRaw) {
+    const resolvido = resolverEmpresaLegadoCodigo(codigoEmpresaRaw);
+    const rawTrim = String(codigoEmpresaRaw).trim();
+    if (rawTrim === '0' || resolvido.codigo === '000') {
+      motivos.push('codigo_empresa_legado_0');
+    } else if (resolvido.tipo === 'grupo_seletor') {
+      motivos.push('codigo_empresa_legado_grupo_seletor');
+    } else if (resolvido.tipo === 'empresa_inativa' || resolvido.ativo === false) {
+      motivos.push('codigo_empresa_legado_inativa');
+    } else if (!resolvido.conhecido || !resolvido.aptoComoEmpresa) {
+      motivos.push('codigo_empresa_legado_desconhecido');
+    }
   }
   if (entidade === 'empresa') {
     const aliases = LEGADO_FIELD_ALIASES.empresa;
@@ -137,7 +214,7 @@ export const avaliarQuarentenaLegado = (row = {}, opts = {}) => {
 
 /**
  * @param {Record<string, unknown>} row
- * @param {{ entidade?: keyof typeof LEGADO_FIELD_ALIASES, groupId?: string, empresaId?: string, arquivoNome?: string }} opts
+ * @param {{ entidade?: keyof typeof LEGADO_FIELD_ALIASES, groupId?: string, empresaId?: string, arquivoNome?: string, escopoMestreGrupo?: boolean }} opts
  */
 export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const entidade = opts.entidade || 'cliente';
@@ -150,7 +227,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const nomeOuDesc = entidade === 'produto'
     ? pickAlias(row, aliases.descricao)
     : pickAlias(row, aliases.nome);
-  const documento = (entidade === 'cliente' || entidade === 'empresa')
+  const documento = (entidade === 'cliente' || entidade === 'empresa' || entidade === 'fornecedor')
     ? pickAlias(row, aliases.documento)
     : '';
 
@@ -169,9 +246,15 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     ? resolverEmpresaLegadoCodigo(codigoEmpresaLegado)
     : null;
 
+  const mestreGrupo = opts.escopoMestreGrupo === true
+    || (LEGADO_MESTRES_GRUPO.has(entidade) && !first(opts.empresaId, row.empresa_id));
+  const empresaId = mestreGrupo
+    ? ''
+    : first(opts.empresaId, row.empresa_id);
+
   const base = stripSegredosMigracao({
     group_id: first(opts.groupId, row.group_id, row.grupo_id),
-    empresa_id: first(opts.empresaId, row.empresa_id),
+    empresa_id: empresaId,
     codigo_legado: codigo,
     id_antigo: codigo,
     ...(empresaLegado
@@ -179,6 +262,8 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
         codigo_empresa_legado: empresaLegado.codigo,
         empresa_legado_label: empresaLegado.label,
         empresa_legado_conhecida: empresaLegado.conhecido === true,
+        empresa_legado_tipo: empresaLegado.tipo || '',
+        empresa_legado_apto: empresaLegado.aptoComoEmpresa === true,
       }
       : {}),
     ...(entidade === 'produto'
