@@ -262,6 +262,14 @@ test('sanitizador legado cobre aliases camelCase, espaços e objetos de prototip
   class RegistroLegado { constructor() { this.token = 'SEGREDO'; } }
   assert.throws(() => stripSegredosMigracao({ nested: new RegistroLegado() }), /JSON simples/);
   assert.throws(() => stripSegredosMigracao({ nested: () => 'SEGREDO' }), /JSON simples/);
+  let lido = false;
+  const comGetter = Object.defineProperty({}, 'dado', { enumerable: true, get() { lido = true; return 'SEGREDO'; } });
+  assert.throws(() => stripSegredosMigracao({ nested: comGetter }), /JSON simples/);
+  assert.equal(lido, false);
+  const arrayComGetter = [];
+  Object.defineProperty(arrayComGetter, '0', { enumerable: true, get() { lido = true; return 'SEGREDO'; } });
+  assert.throws(() => stripSegredosMigracao({ nested: arrayComGetter }), /JSON simples/);
+  assert.equal(lido, false);
 });
 
 test('codigo legado permanece mesmo sem conflito interno', () => {

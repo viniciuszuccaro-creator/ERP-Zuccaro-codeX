@@ -125,6 +125,9 @@ export const stripSegredosMigracao = (record = {}) => {
       throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
     }
     if (value === null || typeof value !== 'object') return value;
+    if (Object.values(Object.getOwnPropertyDescriptors(value)).some((descriptor) => 'get' in descriptor || 'set' in descriptor)) {
+      throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
+    }
     if (Array.isArray(value)) return value.map(sanitize);
     if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
       throw new Error('Migracao aceita somente registros JSON simples para sanitizacao.');
