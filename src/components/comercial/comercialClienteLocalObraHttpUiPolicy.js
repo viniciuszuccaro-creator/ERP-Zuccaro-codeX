@@ -273,13 +273,15 @@ export function resolveDeliveryAddressUiState(input = {}) {
   const tipo = trimText(input.tipoOperacao).toUpperCase();
 
   if (!hasSelection) {
+    const entrega = tipo === 'ENTREGA';
     return {
       mode: 'none',
       summaries: [],
-      hint: tipo === 'ENTREGA'
-        ? 'Selecione Local e/ou Obra para conferir o endereço de entrega.'
+      hint: entrega
+        ? 'Entrega exige Local e/ou Obra com endereço confirmado antes de salvar (fail-closed).'
         : null,
-      blockSave: false,
+      // Onda 5: Entrega sem endereço não salva; Retirada não exige Local/Obra.
+      blockSave: entrega,
     };
   }
 
@@ -384,12 +386,16 @@ export function resolveDeliveryAddressUiState(input = {}) {
   }
 
   const incomplete = summaries.some((row) => row.incomplete);
+  const entrega = tipo === 'ENTREGA';
   return {
     mode: incomplete ? 'incomplete' : 'ready',
     summaries,
     hint: incomplete
-      ? 'Endereço incompleto no cadastro — revise Local/Obra antes de confirmar a entrega.'
+      ? (entrega
+        ? 'Endereço incompleto no cadastro — revise Local/Obra antes de salvar a Entrega (fail-closed).'
+        : 'Endereço incompleto no cadastro — revise Local/Obra se for usar na entrega.')
       : null,
-    blockSave: false,
+    // Entrega exige endereço completo; Retirada pode manter Local/Obra opcional mesmo incompleto.
+    blockSave: Boolean(incomplete && entrega),
   };
 }

@@ -419,6 +419,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.equal(meta.orcamento?.parcelaSchedulePreviewFailClosed, true);
     assert.equal(meta.pedido?.parcelaSchedulePreviewFailClosed, true);
     assert.equal(meta.pedido?.deliveryAddressSummaryFailClosed, true);
+    assert.equal(meta.pedido?.entregaAddressRequiredFailClosed, true);
     assert.equal(meta.orcamento?.simulacaoDirtyFailClosed, true);
     assert.equal(meta.pedido?.simulacaoDirtyFailClosed, true);
     assert.equal(meta.orcamento?.textoResumoPreviewFailClosed, true);
@@ -432,6 +433,7 @@ test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no pilo
     assert.match(String(meta.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
     assert.match(String(meta.note || ''), /agenda de parcelas read-only/);
     assert.match(String(meta.note || ''), /resumo de endereço Local\/Obra/);
+    assert.match(String(meta.note || ''), /Pedido Entrega vs Retirada fail-closed/);
     assert.match(String(meta.note || ''), /simular-venda dirty-state fail-closed/);
     assert.match(String(meta.note || ''), /resumo texto read-only Orçamento\/Pedido/);
     assert.match(String(meta.note || ''), /validade_em fail-closed/);
