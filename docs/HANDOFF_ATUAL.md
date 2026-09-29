@@ -8,7 +8,7 @@
 | Escopo | sem migration; policy + UI hint; meta `validadeFailClosed`; note preserva `Pedido backend HTTP is active` |
 | Testes | validade 8/8 + UI 10/10 + regressões 35/35; typecheck PASS |
 | Tip | `de369c4b` (feat `53aeda8d`) |
-| Draft PR | **BLOCKED** — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Draft PR | **#133** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/133 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 | Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
 | Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
 | Próximo | Onda 4 sem colisão 025–028 **ou** harden convert snapshot legado |
