@@ -113,6 +113,16 @@ test('V22 preserva codigo legado no formulario e no HTTP sem enviar tenant ou da
   assert.throws(() => toProdutoHttpPayload({ descricao: 'Invalido', codigo_legado: 123 }), /Codigo legado invalido/);
 });
 
+test('visualizadores Produto exibem codigo legado e busca local o inclui apos escopo', async () => {
+  const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorProdutos.jsx', import.meta.url), 'utf8');
+  const stock = await readFile(new URL('../src/components/estoque/ProdutosTab.jsx', import.meta.url), 'utf8');
+  const search = await readFile(new URL('../base44/functions/entityListSorted/entry.ts', import.meta.url), 'utf8');
+  assert.match(viewer, /camposPrincipais: \['descricao', 'codigo', 'codigo_legado'/);
+  assert.match(stock, /camposPrincipais=\{\['codigo', 'codigo_legado'/);
+  assert.match(search, /Produto: \['descricao', 'codigo', 'codigo_legado'/);
+  assert.match(search, /finalFilter = hasScope \? \{ \$and: \[finalFilter, \{ \$or: orConds \}\] \}/);
+});
+
 test('V22 envia null ao limpar campos PIM no update HTTP, sem alterar o create ou outros dominios', () => {
   const cleared = {
     descricao: 'Chapa sintetica', material: '', liga: '', norma_tecnica: '',

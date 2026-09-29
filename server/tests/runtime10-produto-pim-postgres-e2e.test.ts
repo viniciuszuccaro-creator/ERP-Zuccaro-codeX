@@ -40,6 +40,9 @@ test('R10 PostgreSQL real: codigo legado de Produto preservado sem renumerar o c
       const updated = await repo.update(scope, created.id, { descricao: 'Revenda revisada' }, tx);
       assert.equal(updated?.codigo, created.codigo);
       assert.equal(updated?.codigo_legado, '000123');
+      const corrected = await repo.update(scope, created.id, { codigo_legado: '000124' }, tx);
+      assert.equal(corrected?.codigo_legado, '000124');
+      assert.equal(corrected?.codigo, created.codigo);
       await assert.rejects(tx.query('UPDATE produtos SET codigo_legado=$1 WHERE id=$2', ['', created.id]), /check constraint/i);
       throw new Error('ROLLBACK_CODIGO_LEGADO_SYNTHETIC');
     }), /ROLLBACK_CODIGO_LEGADO_SYNTHETIC/);
