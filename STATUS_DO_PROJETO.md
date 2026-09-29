@@ -1,3 +1,9 @@
+## VIGÍLIA CURSOR — rearm 15min (2026-09-29T19:46Z)
+
+Sem mudança: #48 `ee0dc10a`, #104 `87101b4d`, #106/#107/#105/#112, Cursor #126–#151 CI SUCCESS. Sem merge/VPS. Timer +15min.
+
+---
+
 ## VIGÍLIA CURSOR — rearm 15min (2026-09-29T19:14Z)
 
 HEADs estáveis CI SUCCESS: #48 `ee0dc10a`, #104 `87101b4d`, #105 `485bbe24`, #106 `95fef57a`, #107 `fac27243`, #114–#124 stack, #126 `45195749`, #151 `6218511a`. Sem mudança de HEAD final → sem nova revisão. Sem merge/VPS. Timer rearmado 15min.
