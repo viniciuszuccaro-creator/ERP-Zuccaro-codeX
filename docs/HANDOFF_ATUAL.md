@@ -1,4 +1,14 @@
-## Checkpoint de integração Codex (2026-09-29)
+## Orientação consolidada e próximo lote (2026-09-29)
+
+Regras vigentes: `AGENTS.md` (segurança, Git em branch própria, gates) → `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md` (escopo/fila) → `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` (ownership/revisão) → este handoff (checkpoint factual). As instruções anteriores de push direto em `main`, espera de revisão a cada commit e retomada pela PR #33/Gate C foram substituídas. Documentos de 23-24/09 abaixo permanecem como histórico, não como autorização vigente.
+
+Na conferência deste checkpoint, `main` remota = `d02cd012`; a #153 estava em `fba7f72bd80cbcc48d6965711f25802f05f8d42f`, draft, contendo #152 + #141 e a orientação da #105. CI [36627716644](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36627716644) SUCCESS nesse HEAD. #92 e #132 permanecem fora; um merge experimental `-X ours` da #92 falhou no typecheck e foi abortado sem commit. Próximo lote: reconciliar os contratos de Pedido/Orçamento em branch isolada, preservar snapshots e origem/versões/idempotência, depois testar o PostgreSQL e incluir #132. Confirmar novamente os SHAs antes de executar.
+
+O termo `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md` registra Gate E/D/F **executados historicamente** para `894b0db8` na 3080. Isso substitui as afirmações antigas de que Gate C era o gate atual ou de que a 3080 ainda era R07B; não é verificação ao vivo da VPS em 29/09. Nenhuma autorização desse termo cobre #153, migrations 025-034, novo canário, promoção ou importação real. Backup legado permanece fora do GitHub; staging real e carga operacional exigem seus gates próprios.
+
+---
+
+## Checkpoint de integração Codex (2026-09-29, histórico anterior)
 
 Fonte canônica: `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` (orientação da #105, agora incorporada à candidata draft #153). Confirmar HEADs remotos novamente antes de agir: os SHAs abaixo são evidência deste checkpoint, não valores permanentes.
 

@@ -2,6 +2,8 @@
 
 > Diretriz operacional do proprietário em 29/09/2026. Complementa `AGENTS.md` e `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md`. Antes de trabalhar, confirme os HEADs atuais no GitHub; os números abaixo são checkpoints, não instruções para usar SHA antigo.
 
+**Vigência:** `AGENTS.md` governa segurança/Git; este documento coordena ownership e revisão; `docs/HANDOFF_ATUAL.md` registra o último checkpoint. A tabela original de #104/#106 abaixo é histórica, substituída pela divisão vigente a seguir. Nenhuma divisão de trabalho concede acesso operacional ou autorização de gate.
+
 ## Objetivo
 
 Codex e Cursor implementam frentes independentes em paralelo, com lotes funcionais grandes e completos. A revisão cruzada ocorre no HEAD final de cada PR pronta para integração, não depois de cada commit. Nenhum agente fica reduzido a monitor de PR, e nenhum aguarda a palavra “próximo” dentro da execução ativa se houver item autorizado e independente disponível.
@@ -9,6 +11,18 @@ Codex e Cursor implementam frentes independentes em paralelo, com lotes funciona
 Esta diretriz não mantém uma sessão de IA viva depois que ela termina. Uma tarefa agendada só produz código se tiver workspace gravável, dependências, ferramentas de teste, GitHub e instrução explícita de implementar naquela execução. Verificar HEADs por segundos e responder “sem mudanças” não é implementação.
 
 ## Responsabilidades e arquivos
+
+### Divisão vigente após a candidata #153
+
+| Frente | Implementa | Revisão | Limite |
+| --- | --- | --- | --- |
+| Integração #152 + #141 + #92 + #132 | Codex em branch própria derivada da candidata draft #153 | Cursor no HEAD final com CI do conjunto | Preservar as branches das PRs originais; #92 exige composição de Pedido/Orçamento, #132 depende da #92. Não usar resolução cega `ours/theirs`. |
+| Comercial 360 independente | Cursor em branch/PR própria, após combinar arquivos compartilhados | Codex no HEAD final | Não editar simultaneamente os agregados de Pedido/Orçamento reservados para a integração. |
+| Legado e staging isolado | Codex em branch separada; Cursor mantém o mapeador da #48 | Revisão cruzada no HEAD final | Backup original somente leitura quando autorizado; sem registros reais no Git e sem carga operacional sem gate. |
+
+Reservas de arquivos são verificadas novamente antes de cada lote; não constituem propriedade permanente. A PR #153 prova apenas #152 + #141 em código/CI. A próxima versão integrada e a VPS são estados distintos.
+
+### Registro histórico da divisão inicial (substituído acima)
 
 | Frente | Implementador | Revisão cruzada | Contrato de exclusividade |
 | --- | --- | --- | --- |
@@ -29,6 +43,8 @@ Se uma frente estiver bloqueada por arquivo ocupado, permissão ou CI, o agente 
 6. Entregar no chat principal links de PR, SHAs, CI, testes, estado de merge/implantação, próximo conjunto e bloqueios reproduzíveis. “Tarefa ativa” ou “PR sem mudanças” não contam como entrega.
 
 ## Próximos conjuntos concretos
+
+Os itens abaixo registram o ponto de partida de 29/09, não uma fila vigente. A fila atual está em `docs/HANDOFF_ATUAL.md` e `docs/ORDEM_INTEGRACAO_UNICA.md`; confirmar os HEADs no GitHub.
 
 - #104: Cursor homologou `87101b4dd184326ce7cdb915d4b2d8947e028244` com CI verde. Codex congela essa branch e prepara integração verificável contra a main atual; merge e deploy obedecem gates próprios.
 - #106 → #107: inventário seguro e preflight/staging sintético com revisão/CI. Codex avança reconciliação e contrato de empresa proprietária sem repetir varredura do backup e sem alterar #48.

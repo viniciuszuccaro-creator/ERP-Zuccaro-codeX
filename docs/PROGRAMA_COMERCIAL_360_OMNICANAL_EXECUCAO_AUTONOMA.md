@@ -2,7 +2,7 @@
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 
-> **Checkpoint de integração em 29/09/2026 (prevalece para retomada; confirmar HEAD remoto antes de executar):** `main` estava em `d02cd012`; candidata draft #153 integra #152 (Comercial) e #141 (Onda 7/legado) com CI 36625784748 verde, incluindo PostgreSQL efêmero. #92 (origem/idempotência/tipo/versões; migrations 025-028/033) e #132 (proveniência de Produto; migration 034) ainda não entraram na candidata; há conflitos semânticos em Pedido e Orçamento. Migration 032 não existe nesta sequência. A orientação contínua está em `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; ordem, conflitos e gates estão em `docs/ORDEM_INTEGRACAO_UNICA.md`, com retomada em `docs/HANDOFF_ATUAL.md`. Este checkpoint não comprova versão na VPS, Auth, canais ativos ou importação real. O baseline abaixo é histórico, não o HEAD atual.
+> **Checkpoint de integração em 29/09/2026 (confirmar HEAD remoto antes de executar):** `main` estava em `d02cd012`; candidata draft #153 integra #152 (Comercial) e #141 (Onda 7/legado), mas não #92 (origem/idempotência/tipo/versões; migrations 025-028/033) nem #132 (proveniência de Produto; migration 034). Há conflitos semânticos em Pedido e Orçamento; migration 032 não existe nesta sequência. A orientação vigente está em `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; ordem e retomada em `docs/ORDEM_INTEGRACAO_UNICA.md` e `docs/HANDOFF_ATUAL.md`. O Gate E/D/F histórico executado para a imagem `894b0db8` está registrado em `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md`. Esse termo **não** autoriza implantar a candidata #153 nem migrations 025-034. A versão atual da VPS requer nova verificação operacional; CI não comprova implantação ou importação real. Todo baseline abaixo datado de 23-24/09 é histórico.
 > Baseline verificado em 24/09/2026: PR #33 draft, branch `codex/comercial-360`,
 > Checkpoint funcional anterior `c09d69654259eafffd8ad8d2df5362f098308a53` (fundacao dos rascunhos por canal); consultar o HEAD atual da PR #33 no GitHub. Gate C operacional ainda parcial.
 > Migrations 001-024 presentes no repositorio; 023 material/liga/norma foi validada em codigo/CI e nao aplicada na VPS; 024 prepara apenas rascunhos por canal, validada na CI efemera e nao aplicada na VPS.
@@ -179,7 +179,7 @@ Nenhuma trilha pode inventar contratos duplicados. APIs, eventos e schemas compa
 
 ## 6.1 Referências canônicas e precedência
 
-Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_360.md`, `COMERCIAL_360_V1_EXECUCAO_AUTONOMA.md`, `COMERCIAL_360_V1_DEPLOY.md`, `CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md`, `OPERACAO_DEV_VPS.md`, `HANDOFF_ATUAL.md`, `PLANO_GO_LIVE.md` e `STATUS_DO_PROJETO.md`. Em divergência, prevalecem segurança/integridade, Regra-Mãe, código e migrations comprovados, CI e handoff operacional mais recente.
+Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_360.md`, `COMERCIAL_360_V1_EXECUCAO_AUTONOMA.md`, `COMERCIAL_360_V1_DEPLOY.md`, `CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md`, `OPERACAO_DEV_VPS.md`, `HANDOFF_ATUAL.md`, `PLANO_GO_LIVE.md` e `STATUS_DO_PROJETO.md`. Em divergência, prevalecem segurança/integridade, Regra-Mãe e o gate/autorização específicos para a versão e operação pretendidas. Código, migrations, CI e handoff comprovam somente seus respectivos estados; nenhum deles amplia autorização operacional anterior.
 
 ## 6.2 Baseline comprovado reutilizável
 
@@ -986,6 +986,10 @@ PRÓXIMO GATE ................. <gate e ação exata>
 ---
 
 ## 11. Ordem imediata de execução
+
+**Fila vigente após 29/09/2026:** (1) confirmar HEADs e revisão independente da #152; (2) compor #92 sobre #153 sem perder snapshots de Pedido/Orçamento, testar migrations e fluxo completo; (3) incorporar #132 após #92, CI PostgreSQL do resultado e revisão do HEAD final; (4) preparar gate específico de implantação da nova versão e staging legado isolado. Em paralelo, continuar ondas independentes conforme ownership em `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`. Não mesclar, aplicar migration, ativar canal, importar ou alterar a VPS apenas por esta fila. O Gate F anterior de `894b0db8` não se estende a novos SHAs.
+
+### Ordem histórica de 24/09/2026 — substituída pela fila acima
 
 1. Preservar PR #33 draft, confirmar branch/HEAD/CI e corrigir baselines documentais sem declarar implantação.
 2. Gate C: obter evidência sanitizada da VPS por ferramenta MCP VPS read-only ou Web Console; não usar SSH nem inferir estado da 3080.

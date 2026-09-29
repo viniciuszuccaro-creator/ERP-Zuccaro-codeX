@@ -1,4 +1,8 @@
-## Checkpoint de orientação e integração (2026-09-29)
+## Consolidação das instruções (2026-09-29)
+
+Foram conciliados `AGENTS.md`, programa mestre, divisão Codex/Cursor e handoff sem criar novo documento de regras. Push direto em `main` foi substituído por branch/PR; revisão cruzada ocorre no HEAD final, não entre commits; a fila da PR #33/Gate C foi marcada histórica. O termo E/D/F comprova execução anterior para `894b0db8`, não autorização nem verificação operacional para #153. Regras de Regra-Mãe, Grupo/Empresa, RBAC, auditoria e dados reais fora do GitHub continuam obrigatórias. Próximo lote: integrar #92/#132 com testes comportamentais e PostgreSQL em branch separada; depois revisão independente e decisão explícita de merge/deploy. Não houve migration, VPS ou carga real neste checkpoint.
+
+## Checkpoint de orientação e integração (2026-09-29, anterior)
 
 Na candidata draft #153, a orientação da #105 foi incorporada sem criar política paralela: `AGENTS.md` aponta para `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; handoff e programa mestre distinguem o baseline histórico da situação atual. #152 + #141 estão integradas somente na branch da #153 e tiveram CI verde no HEAD anterior `d3d394f6`. #92 + #132 continuam pendentes de reconciliação semântica e CI do conjunto. Nenhuma dessas entregas foi mesclada na `main`, implantada na VPS ou usada para importação real. Próximo passo: compor Pedido/Orçamento da #92 com snapshots da #152, testar migrations e fluxos integrados, incluir #132 e pedir revisão do HEAD final.
 
