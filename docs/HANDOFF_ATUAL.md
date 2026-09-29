@@ -5,7 +5,7 @@
 | Choice | **A** a11y aria-live / aria-invalid+describedby / action labels |
 | Branch | `cursor/comercial360-onda3-a11y-live-392b` |
 | Base | `#149` tip `50dc8b5c` (`cursor/comercial360-onda3-inactive-master-picker-392b`) |
-| Meta | a11y + **Pedido backend HTTP is active** |
+| Tip | `aaa96026` (`aaa96026afa04230b250efe08e2841c89374d13c`) |
 | Colisão | margem #47; PDF/anexos #52–62; stack #126–#149 |
 
 Próximo: offline retry polish **ou** margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
