@@ -1,9 +1,14 @@
 import { base44 } from "@/api/base44Client";
 import {
   assertFaturamentoDentroDoPedido,
+  avaliarReservaParcial,
+  executarReservasComCompensacao,
+  cicloReservaPedidoProduto,
   evaluatePedidoCredito,
   pedidoJaTemReservaEstoque,
   pedidoJaTemSaidaEstoque,
+  saldoReservaPedidoProduto,
+  validarItensReservaEstoque,
 } from "@/components/lib/pedidoFaturamentoPolicy";
 
 // Auditoria helpers
@@ -115,6 +120,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
   const resultados = {
     validacaoCredito: null,
     reservasEstoque: [],
+    reservasCompensadas: [],
     opsGeradas: [],
     contasReceber: [],
     erros: []
@@ -132,8 +138,15 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
     }
 
     const baixasEstoque = [];
-    if (pedido.itens_revenda?.length > 0) {
-      for (const item of pedido.itens_revenda) {
+    const itensRevenda = pedido.itens_revenda || [];
+    const validacaoItensReserva = validarItensReservaEstoque(itensRevenda);
+    if (!validacaoItensReserva.valido) {
+      for (const item of validacaoItensReserva.invalidos) {
+        resultados.erros.push(`Item de revenda duplicado ou sem produto para reserva: ${item?.descricao || item?.produto_id || 'sem identificador'}`);
+      }
+    }
+    if (resultados.erros.length === 0 && validacaoItensReserva.itens.length > 0) {
+      for (const item of validacaoItensReserva.itens) {
         try {
           // Aprovacao apenas RESERVA; saida fisica ocorre no faturamento
           const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
@@ -144,6 +157,24 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       }
     }
     resultados.reservasEstoque = baixasEstoque;
+
+    // Aprovacao fail-closed: nenhuma etapa comercial pode continuar quando a
+    // reserva de algum item falhar. O legado persiste movimentos por item, por
+    // isso compensamos exclusivamente as reservas criadas nesta tentativa.
+    const decisaoReserva = avaliarReservaParcial({ reservas: baixasEstoque, erros: resultados.erros });
+    if (decisaoReserva.bloqueado) {
+      for (const reserva of decisaoReserva.compensar) {
+        if (reserva?.skipped || !reserva?.id) continue;
+        try {
+          const compensacao = await liberarReservaEstoque(reserva, contextoOperacao.empresaId);
+          if (compensacao) resultados.reservasCompensadas.push(compensacao);
+        } catch (error) {
+          resultados.erros.push(`Erro ao compensar reserva de estoque: ${error.message}`);
+        }
+      }
+      resultados.reservaEstoqueBloqueada = true;
+      return resultados;
+    }
 
     if (pedido.itens_producao?.length > 0) {
       try {
@@ -223,8 +254,11 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
   }, contextoOperacao);
+  if (pedidoJaTemSaidaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
+    throw new Error('Pedido ja possui saida fisica deste produto; nova reserva bloqueada');
+  }
   if (pedidoJaTemReservaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
-    return movimentosExistentes.find((mov) => String(mov.tipo_movimento || '').toLowerCase() === 'reserva') || { skipped: true, produto_id: item.produto_id };
+    return { skipped: true, produto_id: item.produto_id };
   }
 
   const estoqueAtual = Number(produto.estoque_atual || 0);
@@ -240,11 +274,14 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
   }
 
   const novoReservado = reservadoAtual + qtd;
+  const ciclo = cicloReservaPedidoProduto({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id });
+  const chaveReserva = [contextoOperacao.groupId, contextoOperacao.empresaId, pedido.id, item.produto_id, 'reserva', ciclo].join('|');
   const user = await getUsuarioAtual();
   const movimentacao = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
     tipo_movimento: 'reserva',
+    idempotency_key: chaveReserva,
     origem_movimento: 'pedido',
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
@@ -268,11 +305,17 @@ async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
     aprovado: true
   }, contextoOperacao);
 
-  const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, {
-    estoque_reservado: novoReservado,
-  }, contextoOperacao);
+  if (String(movimentacao?.idempotency_key || '') !== chaveReserva) {
+    throw new Error('Reserva reutilizada fora do ciclo ativo; estoque nao atualizado');
+  }
+  const produtosApos = await filterScoped('Produto', { id: item.produto_id }, contextoOperacao);
+  if (Number(produtosApos[0]?.estoque_reservado || 0) !== novoReservado) {
+    const { before: produtoAntes, updated: produtoAtualizado } = await updateScoped('Produto', item.produto_id, {
+      estoque_reservado: novoReservado,
+    }, contextoOperacao);
+    await auditar('Estoque', 'Produto', 'update', item.produto_id, `Reserva atualizada por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
+  }
   await auditar('Estoque', 'MovimentacaoEstoque', 'create', movimentacao.id, `Reserva por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, null, movimentacao, contextoOperacao.groupId);
-  await auditar('Estoque', 'Produto', 'update', item.produto_id, `Reserva atualizada por aprovacao - Pedido ${pedido.numero_pedido}`, contextoOperacao.empresaId, produtoAntes, produtoAtualizado, contextoOperacao.groupId);
   return movimentacao;
 }
 
@@ -387,8 +430,10 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
 
   try {
 
-    if (pedido.itens_revenda?.length > 0) {
-      for (const item of pedido.itens_revenda) {
+    const itensFaturar = validarItensReservaEstoque(pedido.itens_revenda || []);
+    if (!itensFaturar.valido) throw new Error('Itens de revenda invalidos para baixa fisica');
+    if (itensFaturar.itens.length > 0) {
+      for (const item of itensFaturar.itens) {
         try {
           const baixa = await baixarEstoqueItem(item, pedido, contextoOperacao.empresaId);
           resultados.baixasEstoque.push(baixa);
@@ -398,6 +443,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       }
     }
 
+    if (resultados.erros.length > 0) return resultados;
     const user = await getUsuarioAtual();
     const entrega = await createScoped('Entrega', {
       empresa_id: contextoOperacao.empresaId,
@@ -462,14 +508,14 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
     produto_id: item.produto_id,
   }, contextoOperacao);
   if (pedidoJaTemSaidaEstoque({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id })) {
-    return movimentosExistentes.find((mov) => {
-      const tipo = String(mov?.tipo_movimento || '').toLowerCase();
-      return tipo === 'saida' || tipo.includes('liberacao');
-    }) || { skipped: true, produto_id: item.produto_id };
+    return { skipped: true, produto_id: item.produto_id };
   }
 
-  const novoReservado = Math.max(0, (produto.estoque_reservado || 0) - item.quantidade);
-  const novoEstoque = (produto.estoque_atual || 0) - item.quantidade;
+  const saldoPedido = saldoReservaPedidoProduto({ movimentos: movimentosExistentes, pedidoId: pedido.id, produtoId: item.produto_id });
+  if (saldoPedido + 1e-6 < Number(item.quantidade)) throw new Error('Reserva insuficiente para baixa fisica');
+  if (Number(produto.estoque_reservado || 0) + 1e-6 < Number(item.quantidade)) throw new Error('Saldo reservado do produto insuficiente');
+  const novoReservado = Number(produto.estoque_reservado || 0) - Number(item.quantidade);
+  const novoEstoque = Number(produto.estoque_atual || 0) - Number(item.quantidade);
 
   if (novoEstoque < 0) {
     throw new Error(`Estoque insuficiente para ${produto.descricao}`);
@@ -479,7 +525,7 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
   const movimentacao = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
-    tipo_movimento: 'liberacao_reserva',
+    tipo_movimento: 'saida',
     origem_movimento: 'pedido',
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
@@ -623,18 +669,26 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
   try {
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
     const movimentacoes = await filterScoped('MovimentacaoEstoque', {
-      origem_documento_id: pedido.id,
-      tipo_movimento: 'reserva'
+      origem_documento_id: pedido.id
     }, contextoOperacao);
+    const produtosReservados = [...new Set(movimentacoes
+      .filter((mov) => String(mov.tipo_movimento || '').toLowerCase() === 'reserva')
+      .map((mov) => String(mov.produto_id || '')).filter(Boolean))];
 
-    for (const mov of movimentacoes) {
+    for (const produtoId of produtosReservados) {
+      const saldo = saldoReservaPedidoProduto({ movimentos: movimentacoes, pedidoId: pedido.id, produtoId });
+      if (saldo <= 1e-6) continue;
       try {
-        const reservaLiberada = await liberarReservaEstoque(mov, contextoOperacao.empresaId);
-        resultados.reservasLiberadas.push(reservaLiberada || mov);
+        const reservaLiberada = await liberarReservaEstoque({
+          origem_documento_id: pedido.id, produto_id: produtoId, quantidade: saldo, documento: pedido.numero_pedido,
+          empresa_id: contextoOperacao.empresaId, group_id: contextoOperacao.groupId
+        }, contextoOperacao.empresaId);
+        if (reservaLiberada && !reservaLiberada.skipped) resultados.reservasLiberadas.push(reservaLiberada);
       } catch (error) {
         resultados.erros.push(`Erro ao liberar reserva: ${error.message}`);
       }
     }
+    if (resultados.erros.length > 0) return resultados;
 
     const contas = await filterScoped('ContaReceber', {
       pedido_id: pedido.id,
@@ -675,18 +729,34 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
   const produto = produtos[0];
   if (!produto) return null;
 
-  const reservadoAtual = Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade);
+  const movimentosExistentes = await filterScoped('MovimentacaoEstoque', {
+    origem_documento_id: movimentacaoReserva.origem_documento_id,
+    produto_id: movimentacaoReserva.produto_id,
+  }, contextoOperacao);
+  const saldo = saldoReservaPedidoProduto({
+    movimentos: movimentosExistentes,
+    pedidoId: movimentacaoReserva.origem_documento_id,
+    produtoId: movimentacaoReserva.produto_id,
+  });
+  if (saldo <= 1e-6) return { skipped: true, produto_id: movimentacaoReserva.produto_id };
+  const quantidadeLiberar = Math.min(saldo, Number(movimentacaoReserva.quantidade));
+  const ciclo = cicloReservaPedidoProduto({ movimentos: movimentosExistentes, pedidoId: movimentacaoReserva.origem_documento_id, produtoId: movimentacaoReserva.produto_id });
+  const chaveLiberacao = [contextoOperacao.groupId, contextoOperacao.empresaId, movimentacaoReserva.origem_documento_id, movimentacaoReserva.produto_id, 'liberacao_reserva', ciclo].join('|');
+  if (!Number.isFinite(quantidadeLiberar) || quantidadeLiberar <= 0) throw new Error('Quantidade de liberacao invalida');
+  if (Number(produto.estoque_reservado || 0) + 1e-6 < quantidadeLiberar) throw new Error('Saldo reservado do produto insuficiente');
+  const reservadoAtual = Number(produto.estoque_reservado || 0) - quantidadeLiberar;
   const user = await getUsuarioAtual();
   const mov = await createScoped('MovimentacaoEstoque', {
     empresa_id: contextoOperacao.empresaId,
     group_id: contextoOperacao.groupId,
     tipo_movimento: 'liberacao_reserva',
+    idempotency_key: chaveLiberacao,
     origem_movimento: 'pedido',
     origem_documento_id: movimentacaoReserva.origem_documento_id,
     produto_id: produto.id,
     produto_descricao: produto.descricao,
     codigo_produto: produto.codigo,
-    quantidade: movimentacaoReserva.quantidade,
+    quantidade: quantidadeLiberar,
     unidade_medida: produto.unidade_medida,
     estoque_anterior: produto.estoque_atual,
     estoque_atual: produto.estoque_atual,
@@ -729,37 +799,33 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
 
   try {
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+    const pedidosAtuais = await filterScoped('Pedido', { id: pedido.id }, contextoOperacao);
+    const pedidoAtual = pedidosAtuais.find((item) => String(item.id) === String(pedido.id));
+    if (!pedidoAtual || ['Faturado', 'Faturado Parcial', 'Cancelado'].includes(String(pedidoAtual.status || ''))) {
+      throw new Error('Pedido inexistente ou ja faturado/cancelado; fechamento bloqueado');
+    }
     onLog('🚀 Iniciando fechamento automático...', 'info');
     onProgresso(0);
 
     // ETAPA 1: Reservar estoque (saida fisica somente no faturamento)
     onLog('📦 Processando reserva de estoque...', 'info');
-    try {
-      const itens = [
-        ...(pedido.itens_revenda || []),
-        ...(pedido.itens_armado_padrao || []),
-        ...(pedido.itens_corte_dobra || [])
-      ];
-
-      for (const item of itens) {
-        if (item.produto_id) {
-          try {
-            const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
-            resultados.estoque.itens.push(baixa);
-            onLog(`✅ ${item.descricao}: ${item.quantidade} ${item.unidade} reservado(s)`, 'success');
-          } catch (error) {
-            resultados.estoque.erros.push(error.message);
-            onLog(`⚠️ ${item.descricao}: ${error.message}`, 'warning');
-          }
-        }
-      }
-      
-      resultados.estoque.sucesso = resultados.estoque.erros.length === 0;
-      onEtapaConcluida('estoque', resultados.estoque.sucesso);
-      onProgresso(25);
-    } catch (error) {
-      resultados.estoque.erros.push(error.message);
-      onLog(`❌ Erro na reserva de estoque: ${error.message}`, 'error');
+    const itens = pedido.itens_revenda || [];
+    const reserva = await executarReservasComCompensacao({
+      itens,
+      reservar: (item) => reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId),
+      compensar: (movimento) => liberarReservaEstoque(movimento, contextoOperacao.empresaId)
+    });
+    resultados.estoque.itens = reserva.reservas;
+    resultados.estoque.compensadas = reserva.compensadas;
+    resultados.estoque.erros.push(...reserva.erros);
+    resultados.estoque.sucesso = !reserva.bloqueado;
+    onEtapaConcluida('estoque', resultados.estoque.sucesso);
+    onProgresso(25);
+    if (reserva.bloqueado) {
+      const erro = new Error('Reserva de estoque incompleta; fechamento bloqueado antes do financeiro e da logistica.');
+      onLog(erro.message, 'error');
+      onError(erro);
+      return resultados;
     }
 
     // ETAPA 2: Gerar Financeiro

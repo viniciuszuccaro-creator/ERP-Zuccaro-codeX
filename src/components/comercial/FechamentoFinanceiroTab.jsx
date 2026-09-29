@@ -14,7 +14,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
-import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
+import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento, resolverNotaResidualPedido, resolverUltimaEtapaMonetaria } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
@@ -424,12 +424,28 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             toast.error('Selecione a empresa faturadora.');
             throw new Error('Empresa obrigatoria para emitir NF-e.');
           }
+          if (dadosNFe.escopo === 'etapa_especifica') {
+            const etapa = avaliarEtapaFaturamento({ pedido: formData, etapaId: dadosNFe.etapa_id });
+            if (!etapa.permitido) throw new Error(etapa.motivo);
+          }
           const notas = await filterInContext('NotaFiscal', { pedido_id: formData.id }, '-created_date', 200);
+          if (notas.length >= 200) throw new Error('Limite de NFs consultadas; concilie o pedido antes de faturar');
           const pedidoValorado = { ...formData, valor_total: valorTotal };
+          const temNotaAnteriorAtiva = notas.some((nota) =>
+            String(nota.pedido_id) === String(formData.id) && !/(cancel|rejeitad)/i.test(String(nota.status || '')));
+          const complementoEtapa = dadosNFe.escopo === 'etapa_especifica'
+            ? resolverUltimaEtapaMonetaria({
+              pedido: pedidoValorado, etapaId: dadosNFe.etapa_id,
+              notasExistentes: notas, valorEtapa: dadosNFe.valor_total
+            })
+            : null;
+          const dadosNota = dadosNFe.escopo === 'pedido_inteiro' && temNotaAnteriorAtiva
+            ? { ...dadosNFe, ...resolverNotaResidualPedido({ pedido: pedidoValorado, notasExistentes: notas }) }
+            : { ...dadosNFe, ...(complementoEtapa || {}) };
           const { status } = assertFaturamentoDentroDoPedido({
             pedido: pedidoValorado,
             notasExistentes: notas,
-            notaNova: dadosNFe,
+            notaNova: dadosNota,
           });
           const nota = await createInContext('NotaFiscal', {
             tipo: 'NF-e (Saida)',
@@ -437,32 +453,56 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             numero_pedido: dadosNFe.numero_pedido,
             cliente_id: dadosNFe.cliente_id,
             cliente_fornecedor: dadosNFe.cliente_nome,
-            valor_produtos: dadosNFe.valor_total,
-            valor_total: dadosNFe.valor_total,
+            valor_produtos: dadosNota.valor_produtos ?? dadosNota.valor_total,
+            valor_total: dadosNota.valor_total,
+            valor_frete: dadosNota.valor_frete || 0,
+            outras_despesas: dadosNota.outras_despesas || 0,
             status: 'Pendente',
             empresa_id: empresaId,
             empresa_faturamento_id: empresaId,
             group_id: groupId,
             grupo_id: groupId,
             etapa_id: dadosNFe.etapa_id || null,
-            itens: dadosNFe.itens || [],
+            itens: dadosNota.itens || [],
             cfop: dadosNFe.cfop || formData.cfop_pedido || '5102',
             ambiente: 'Homologacao',
             observacoes: dadosNFe.observacoes_nfe || '',
           }, 'empresa_faturamento_id');
           const etapasAtualizadas = (formData.etapas_entrega || []).map((etapa) => (
-            etapa.id === dadosNFe.etapa_id ? { ...etapa, faturada: true } : etapa
+            etapa.id === dadosNFe.etapa_id || dadosNota.etapasIncluidas?.includes(etapa.id)
+              ? { ...etapa, faturada: true } : etapa
           ));
-          await updateInContext('Pedido', formData.id, {
-            status,
-            etapas_entrega: etapasAtualizadas,
-          });
-          setFormData((prev) => ({ ...prev, status, etapas_entrega: etapasAtualizadas }));
-          if (dadosNFe.escopo === 'pedido_inteiro') {
-            const resultado = await faturarPedidoCompleto({ ...pedidoValorado, status }, nota, empresaId);
-            if (resultado?.erros?.length) {
-              throw new Error(resultado.erros[0]);
+          let baixaConcluida = false;
+          try {
+            if (dadosNFe.escopo === 'pedido_inteiro') {
+              const resultado = await faturarPedidoCompleto(pedidoValorado, nota, empresaId);
+              if (resultado?.erros?.length) throw new Error(resultado.erros.join('; '));
+              baixaConcluida = true;
             }
+            const patchPedido = dadosNFe.escopo === 'pedido_inteiro'
+              ? { status, etapas_entrega: etapasAtualizadas }
+              : { etapas_entrega: etapasAtualizadas };
+            await updateInContext('Pedido', formData.id, patchPedido);
+            setFormData((prev) => ({ ...prev, ...patchPedido }));
+          } catch (error) {
+            if (baixaConcluida) {
+              await auditFechamento('nfe_fechamento_atualizacao_pedido_falhou', {
+                entidade: 'Pedido', nota_id: nota.id, motivo: error?.message || 'erro_atualizacao'
+              }, false);
+              throw new Error('Baixa concluida, mas a atualizacao do Pedido falhou; conciliacao manual obrigatoria.');
+            }
+            try {
+              await updateInContext('NotaFiscal', nota.id, { status: 'Rejeitada' });
+              await auditFechamento('nfe_fechamento_revertida', {
+                entidade: 'NotaFiscal', nota_id: nota.id, motivo: error?.message || 'falha_faturamento'
+              }, false);
+            } catch (rollbackError) {
+              await auditFechamento('nfe_fechamento_reversao_falhou', {
+                entidade: 'NotaFiscal', nota_id: nota.id, motivo: rollbackError?.message || 'erro_reversao'
+              }, false);
+              throw new Error('Faturamento falhou e a NF pendente nao foi rejeitada; conciliacao manual obrigatoria.');
+            }
+            throw error;
           }
           await auditFechamento('nfe_fechamento_emitida', { entidade: 'NotaFiscal', escopo: dadosNFe?.escopo, etapa_id: dadosNFe?.etapa_id, nota_id: nota.id }, true);
           setModalNFeOpen(false);
