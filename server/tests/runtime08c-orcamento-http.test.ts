@@ -186,6 +186,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     textoResumoPreviewFailClosed: true,
     listMultiSelectStubFailClosed: true,
     convertDisabledReasonsBannerFailClosed: true,
+    observacoesMaxLengthUiFailClosed: true,
+    listPageCsvExportFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
   assert.match(result.body.note, /UI alçada de desconto fail-closed/);
@@ -199,6 +201,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.match(result.body.note, /troca de tenant limpa form\/list cache comercial fail-closed/);
   assert.match(result.body.note, /multi-select stub fail-closed/);
   assert.match(result.body.note, /Converter disabled reasons consolidados|evaluateOrcamentoConvertUiGate/);
+  assert.match(result.body.note, /Observações UI maxLength 1000|evaluateObservacoesUiGate/);
+  assert.match(result.body.note, /export CSV da página atual|buildComercialListCsv/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
   assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
@@ -222,6 +226,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.simulacaoDirtyFailClosed, true);
   assert.equal(result.body.pedido.textoResumoPreviewFailClosed, true);
   assert.equal(result.body.pedido.listMultiSelectStubFailClosed, true);
+  assert.equal(result.body.pedido.observacoesMaxLengthUiFailClosed, true);
+  assert.equal(result.body.pedido.listPageCsvExportFailClosed, true);
   assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
   assert.match(result.body.note, /Pedido cancel fail-closed/);
   assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
