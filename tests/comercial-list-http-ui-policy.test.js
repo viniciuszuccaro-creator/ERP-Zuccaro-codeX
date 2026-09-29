@@ -6,6 +6,10 @@ import {
   formatComercialHttpError,
   isHttpListQueryKeyScoped,
   resolveHttpListViewState,
+  resolveHttpMasterPickerState,
+  formatMasterPickerPlaceholder,
+  buildMastersHttpBannerText,
+  isMasterPickerBlocked,
   sanitizeObservacoesText,
 } from '../src/components/comercial/comercialListHttpUiPolicy.js';
 import { buildOrcamentoPayload } from '../src/components/comercial/orcamentoUiPolicy.js';
@@ -91,7 +95,12 @@ test('painéis Pedido/Orçamento usam list fail-closed e queryKey tenant', async
     assert.match(source, /resolveHttpListViewState/);
     assert.match(source, /formatComercialHttpError/);
     assert.match(source, /Tentar novamente/);
-    assert.match(source, /masters-error|Masters não carregados/);
+    assert.match(source, /masters-error|Masters não carregados|não trate como lista vazia/);
+    assert.match(source, /resolveHttpMasterPickerState/);
+    assert.match(source, /formatMasterPickerPlaceholder/);
+    assert.match(source, /buildMastersHttpBannerText/);
+    assert.match(source, /isMasterPickerBlocked/);
+    assert.match(source, /masters-form-banner/);
   }
   assert.match(pedido, /\['pedidos-http',\s*groupId,\s*empresaId/);
   assert.match(orcamento, /\['orcamentos-http',\s*groupId,\s*empresaId/);
@@ -99,7 +108,40 @@ test('painéis Pedido/Orçamento usam list fail-closed e queryKey tenant', async
   assert.match(orcamento, /orcamento-list-error/);
   assert.match(pedido, /listView\s*===\s*'error'|listView==='error'/);
   assert.match(orcamento, /listView === 'error'/);
+  assert.match(pedido, /pedido-condicao-picker/);
+  assert.match(pedido, /pedido-tabela-picker/);
+  assert.match(pedido, /pedido-produto-picker/);
+  assert.match(pedido, /pedido-cliente-picker/);
+  assert.match(orcamento, /orcamento-condicao-picker/);
+  assert.match(orcamento, /orcamento-produto-picker/);
+  assert.match(orcamento, /orcamento-cliente-picker/);
+  assert.match(pedido, /canLoadTabelasPrecoHttp/);
+  assert.match(orcamento, /canLoadCondicoesPagamentoHttp/);
   // erro não colapsa no empty state
   assert.doesNotMatch(pedido, /list\.isError\s*\?\s*rows\.length/);
   assert.doesNotMatch(orcamento, /listQuery\.isError\s*\?\s*rows\.length/);
+});
+
+test('resolveHttpMasterPickerState: 403/5xx e denied nunca viram empty silencioso', () => {
+  assert.equal(resolveHttpMasterPickerState({ isLoading: true, isError: false, rowCount: 0 }), 'loading');
+  assert.equal(resolveHttpMasterPickerState({ isLoading: false, isError: true, rowCount: 0 }), 'error');
+  assert.equal(resolveHttpMasterPickerState({ isLoading: false, isError: true, rowCount: 5 }), 'error');
+  assert.equal(resolveHttpMasterPickerState({ isLoading: false, isError: false, rowCount: 0, allowed: false }), 'denied');
+  assert.equal(resolveHttpMasterPickerState({ isLoading: false, isError: false, rowCount: 0 }), 'empty');
+  assert.equal(resolveHttpMasterPickerState({ isLoading: false, isError: false, rowCount: 2 }), 'ready');
+});
+
+test('formatMasterPickerPlaceholder e banner masters não mascaram erro como vazio', () => {
+  assert.equal(formatMasterPickerPlaceholder('loading'), 'Carregando...');
+  assert.equal(formatMasterPickerPlaceholder('error'), 'Falha ao carregar');
+  assert.equal(formatMasterPickerPlaceholder('denied'), 'Sem permissão');
+  assert.match(formatMasterPickerPlaceholder('empty', 'produto'), /Nenhum produto/);
+  assert.equal(formatMasterPickerPlaceholder('ready'), 'Selecione');
+  assert.match(buildMastersHttpBannerText({ status: 403 }), /permissão/i);
+  assert.match(buildMastersHttpBannerText({ status: 403 }), /não trate como lista vazia/i);
+  assert.match(buildMastersHttpBannerText({ status: 500 }), /servidor/i);
+  assert.doesNotMatch(buildMastersHttpBannerText({ status: 403 }), /nenhum encontrado nesta empresa/i);
+  assert.equal(isMasterPickerBlocked({ isLoading: true, isError: false }), true);
+  assert.equal(isMasterPickerBlocked({ isLoading: false, isError: true }), true);
+  assert.equal(isMasterPickerBlocked({ isLoading: false, isError: false }), false);
 });
