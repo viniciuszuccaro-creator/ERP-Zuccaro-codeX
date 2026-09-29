@@ -5,7 +5,7 @@
 | Choice | **C** Orçamento convert disabled reasons — banner único (validade+snapshot+dirty+simular) |
 | Branch | `cursor/comercial360-onda5-convert-banner-392b` |
 | Base | `origin/cursor/comercial360-onda5-multiselect-stub-392b` tip `84e17c88` (#160 CI SUCCESS) |
-| Tip | feat `cc74f381` · `cc74f381af50b8abbcc1dd4593bad615c42b7e0b` |
+| Tip | feat `cc74f381` · branch HEAD `61fb0fba` (docs) |
 | Draft PR | ManagePullRequest/`gh pr create` **403** write. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda5-multiselect-stub-392b...cursor/comercial360-onda5-convert-banner-392b?expand=1 |
 | Escopo | `evaluateOrcamentoConvertUiGate` consolida motivos; um Alert fail-closed no detalhe + diálogo Converter; dirty/simular só no mesmo `editingId`; meta `convertDisabledReasonsBannerFailClosed`; **sem migration** |
 | Meta | `convertDisabledReasonsBannerFailClosed` + preserva **Pedido backend HTTP is active** |
