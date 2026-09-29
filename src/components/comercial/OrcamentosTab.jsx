@@ -15,6 +15,14 @@ import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, microsToDecimal } from './orcamentoUiPolicy';
+import {
+  applySimulacaoToForm,
+  assertPromocaoAplicadaOuFalhar,
+  assertSimulacaoNoContexto,
+  buildSimularVendaPayload,
+  buildSimulacaoPreviewState,
+  canSimularVenda,
+} from './comercialSimulacaoUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -46,16 +54,23 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [conversion, setConversion] = useState({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
   const [filters, setFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
   const [appliedFilters, setAppliedFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
+  const [promoBps, setPromoBps] = useState('');
+  const [promoCupom, setPromoCupom] = useState('');
+  const [simulacaoPreview, setSimulacaoPreview] = useState(null);
+  const [lastSimulation, setLastSimulation] = useState(null);
+  const [simulating, setSimulating] = useState(false);
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
+  const canSimular = canSimularVenda(hasPermission);
   const contextReady = Boolean(groupId && empresaId && actorId);
   const http = useMemo(() => createHttpApiClient({
     getScope: () => ({ groupId, empresaId, actorId, actorEmail }),
   }), [groupId, empresaId, actorId, actorEmail]);
   const api = http.orcamentos;
   const pedidosApi = http.pedidos;
+  const comercialApi = http.comercial;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
   const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
   const listQuery = useQuery({
@@ -95,11 +110,14 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
+  const resetSimulacaoUi = () => {
+    setSimulacaoPreview(null); setLastSimulation(null); setPromoBps(''); setPromoCupom('');
+  };
   const closeForm = () => {
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
-    setFormOpen(false); setDirty(false); setEditing(null);
+    setFormOpen(false); setDirty(false); setEditing(null); resetSimulacaoUi();
   };
-  const openCreate = () => { setEditing(null); setForm(emptyForm()); setDirty(false); setFormOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(emptyForm()); setDirty(false); resetSimulacaoUi(); setFormOpen(true); };
   const openEdit = (row) => {
     if (!canEdit(row)) return;
     setEditing(row);
@@ -110,12 +128,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       observacoes: row.observacoes || '',
       itens: row.itens.map((item) => ({ produto_id: item.produto_id, unidade_id: item.unidade_id, descricao: item.descricao, unidade_sigla: item.unidade_sigla, quantidade: item.quantidade, preco_unitario: item.preco_unitario, desconto: item.desconto })),
     });
-    setDirty(false); setDetailOpen(false); setFormOpen(true);
+    setDirty(false); setDetailOpen(false); resetSimulacaoUi(); setFormOpen(true);
   };
-  const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); };
+  const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); setSimulacaoPreview(null); setLastSimulation(null); };
   const changeItem = (index, key, value) => {
     setForm((current) => ({ ...current, itens: current.itens.map((item, i) => i === index ? { ...item, [key]: value } : item) }));
-    setDirty(true);
+    setDirty(true); setSimulacaoPreview(null); setLastSimulation(null);
   };
   const selectProduct = (index, produtoId) => {
     const produto = masters.produtos.find((item) => item.id === produtoId);
@@ -123,12 +141,48 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setForm((current) => ({ ...current, itens: current.itens.map((item, i) => i === index ? {
       ...item, produto_id: produtoId, unidade_id: produto?.unidade_medida_id || '', descricao: produto?.descricao || produto?.nome || '', unidade_sigla: unidade?.sigla || '',
     } : item) }));
-    setDirty(true);
+    setDirty(true); setSimulacaoPreview(null); setLastSimulation(null);
   };
   const totals = useMemo(() => {
     try { const total = calculateTotals(form.itens); return { subtotal: microsToDecimal(total.subtotal), desconto: microsToDecimal(total.desconto), total: microsToDecimal(total.total) }; }
     catch { return { subtotal: '0', desconto: '0', total: '0' }; }
   }, [form.itens]);
+  const runSimularVenda = async () => {
+    if (!canSimular || simulating || submitting) return;
+    setSimulating(true);
+    try {
+      const requestedPromo = String(promoBps || '').trim() !== '';
+      const payload = buildSimularVendaPayload(form, {
+        baseDate: form.validade_em || undefined,
+        promocaoBps: requestedPromo ? promoBps : undefined,
+        cupom: promoCupom,
+      });
+      const raw = await comercialApi.simularVenda(payload);
+      const simulation = assertSimulacaoNoContexto(raw, { groupId, empresaId });
+      assertPromocaoAplicadaOuFalhar(simulation, requestedPromo);
+      setLastSimulation(simulation);
+      setSimulacaoPreview(buildSimulacaoPreviewState(simulation));
+      toast.success('Simulação atualizada com preços e parcelas do servidor.');
+    } catch (error) {
+      setLastSimulation(null);
+      setSimulacaoPreview(null);
+      toast.error(error?.message || errorMessage(error));
+    } finally {
+      setSimulating(false);
+    }
+  };
+  const applyLastSimulacao = () => {
+    if (!lastSimulation || !canSimular) return;
+    try {
+      const next = applySimulacaoToForm(form, lastSimulation);
+      setForm(next);
+      setDirty(true);
+      setSimulacaoPreview(buildSimulacaoPreviewState(lastSimulation));
+      toast.success('Preços, descontos e condição da simulação aplicados ao formulário.');
+    } catch (error) {
+      toast.error(error?.message || errorMessage(error));
+    }
+  };
   const save = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -136,7 +190,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       const payload = buildOrcamentoPayload(form);
       const saved = editing ? await api.update(editing.id, payload) : await api.create(payload);
       toast.success(editing ? 'Orçamento atualizado.' : 'Orçamento criado.');
-      setDirty(false); setFormOpen(false); setEditing(null); setSelected(saved);
+      setDirty(false); setFormOpen(false); setEditing(null); setSelected(saved); resetSimulacaoUi();
       await queryClient.invalidateQueries({ queryKey: ['orcamentos-http', groupId, empresaId] });
     } catch (error) { toast.error(errorMessage(error)); }
     finally { setSubmitting(false); }
@@ -210,6 +264,24 @@ const convertToPedido = async () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => changeForm('cliente_empresa_id', v)}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.clientesEmpresa.filter((item) => item.ativo !== false && item.habilitado_operacao !== false && item.bloqueado !== true).map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)}><SelectTrigger id="orc-condicao"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
       <div className="space-y-2"><div className="flex justify-between"><h3 className="font-semibold">Itens</h3><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => selectProduct(index, v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.produtos.filter((p) => p.ativo !== false).map((p) => <SelectItem key={p.id} value={p.id}>{p.codigo ? `${p.codigo} - ` : ''}{p.descricao || p.nome}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
+      {canSimular && <div className="border rounded-md p-3 space-y-3 bg-slate-50" data-permission="Comercial.orcamento.visualizar" data-action="Comercial.simular-venda">
+        <div className="flex flex-wrap items-end gap-3">
+          <div><Label htmlFor="orc-promo-bps">Promoção (bps)</Label><Input id="orc-promo-bps" inputMode="numeric" value={promoBps} placeholder="opcional" onChange={(e) => { setPromoBps(e.target.value); setSimulacaoPreview(null); setLastSimulation(null); }} /></div>
+          <div><Label htmlFor="orc-promo-cupom">Cupom</Label><Input id="orc-promo-cupom" value={promoCupom} maxLength={64} placeholder="opcional" onChange={(e) => { setPromoCupom(e.target.value); setSimulacaoPreview(null); setLastSimulation(null); }} /></div>
+          <Button type="button" variant="outline" onClick={runSimularVenda} disabled={simulating || submitting || !contextReady}>{simulating ? 'Simulando...' : 'Simular venda'}</Button>
+          <Button type="button" variant="secondary" onClick={applyLastSimulacao} disabled={!lastSimulation || simulating || submitting}>Aplicar preços da simulação</Button>
+        </div>
+        <p className="text-xs text-slate-500">A simulação usa preço e parcelas do servidor; promoção só aplica se o backend confirmar (fail-closed). Nada é gravado até Salvar.</p>
+        {simulacaoPreview && <div className="space-y-2">
+          <div className="flex flex-wrap gap-2 text-sm">
+            <Badge variant="outline">Condição: {simulacaoPreview.condicaoNome || simulacaoPreview.condicaoCodigo || simulacaoPreview.condicaoId}</Badge>
+            <Badge variant="outline">Total simulado: {money(simulacaoPreview.total)}</Badge>
+            {simulacaoPreview.promocao?.aplicada && <Badge>Promo {simulacaoPreview.promocao.bps} bps</Badge>}
+            {simulacaoPreview.aprovacaoDescontoExigida && <Badge variant="secondary">Exige aprovação de desconto</Badge>}
+          </div>
+          {simulacaoPreview.parcelas?.length > 0 && <Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Dias</TableHead><TableHead>%</TableHead><TableHead>Vencimento</TableHead><TableHead className="text-right">Valor</TableHead></TableRow></TableHeader><TableBody>{simulacaoPreview.parcelas.map((parcela) => <TableRow key={`${parcela.ordem}-${parcela.vencimento}`}><TableCell>{parcela.ordem}</TableCell><TableCell>{parcela.dias}</TableCell><TableCell>{parcela.percentual}</TableCell><TableCell>{parcela.vencimento}</TableCell><TableCell className="text-right">{money(parcela.valor)}</TableCell></TableRow>)}</TableBody></Table>}
+        </div>}
+      </div>}
       <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 

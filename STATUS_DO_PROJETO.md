@@ -1,3 +1,37 @@
+## Comercial 360 / Onda 2 — UI simular-venda + preview parcelas/promo (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — Orçamento/Pedido canônicos chamam `POST /api/v1/comercial/simular-venda`; agenda de parcelas + promoção fail-closed na UI; aplica preço/desconto/condição no formulário **sem migration** |
+| Testado | **SIM** — 12 novos (`comercial-simulacao-ui-policy` + `comercial-simulacao-http-client`) + regressão orcamento/pedido UI/HTTP (27/27 no lote focado) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#114` `cursor/comercial360-onda2-promocoes-parcelas-392b` |
+
+### Arquivos reservados (Cursor — lote UI pós-#114)
+
+- `src/components/comercial/comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (bloco simular + aplicar)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (bloco simular + aplicar)
+- `src/api/httpApiClient.js` (`comercial.simularVenda` + `condicoesPagamento.resolve`)
+- `tests/comercial-simulacao-ui-policy.test.js`
+- `tests/comercial-simulacao-http-client.test.js`
+
+### Escopo
+
+- Diagnóstico: Orçamento/Pedido já têm `condicao_pagamento_id`; **não** há colunas de snapshot parcelas/promo — sem migration neste lote.
+- UI reutiliza telas canônicas; simulação não persiste; Salvar continua no contrato create/update existente.
+- RBAC: botão só com `Comercial.orcamento|pedido.visualizar`; backend continua fail-closed.
+- Promoção: payload só se bps>0; aplicar no form exige `promocao.aplicada===true` do servidor.
+- Fora: #104, mapper #48, Codex #106–#109, migration de snapshot.
+
+### Próximo item independente restante
+
+- Persistir snapshot condição/parcelas no Orçamento/Pedido (**com migration** autorizada) **ou** ativar frontend HTTP completo de CondicaoPagamento (`frontendHttp`); Onda 3 follow-up sem tabelas CRM.
+
+---
+
 ## Comercial 360 / Onda 2 — resolução condição + parcelas + promoção + simulação (2026-09-29)
 
 | Etapa | Estado |
@@ -30,7 +64,7 @@
 
 ### Próximo item independente restante
 
-- Onda 2 residual: persistir snapshot de condição/parcelas no Orçamento/Pedido (migration) **ou** ativar frontend HTTP CondicaoPagamento; Onda 3 follow-up sem tabelas CRM; tip Onda 4/5/6 já empilhada (#50–#67).
+- **Feito neste empilhamento:** UI Orçamento/Pedido + cliente HTTP simular-venda (branch `cursor/comercial360-onda2-simular-ui-392b`). Residual: snapshot persistido (migration) ou CondicaoPagamento frontendHttp.
 
 ---
 
