@@ -1,3 +1,43 @@
+## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:45Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `CondicaoPagamento` + CRUD/parcelas/vínculo/padrão/resolve no cliente; Orçamento/Pedido listam via HTTP e resolvem condição ao trocar cliente; snapshot parcelas **só em memória** |
+| Testado | pendente neste HEAD (focado a seguir) |
+| CI | pendente |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#116` `cursor/comercial360-onda2-simular-ui-392b` (tip `00bd7c85`, que já empilha `#114`) |
+| Branch | `cursor/comercial360-onda2-condicao-http-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-simular-ui-392b...cursor/comercial360-onda2-condicao-http-392b?expand=1 |
+
+### Arquivos reservados (Cursor — lote pós-#116; não editar em Codex/#104/#48)
+
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + CondicaoPagamento)
+- `src/api/httpApiClient.js` (entity + `condicoesPagamento` CRUD completo)
+- `server/src/api/router.ts` (meta `frontendHttp: true` + pilot/httpEntities)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (masters HTTP + resolve)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (masters HTTP + resolve)
+- `tests/comercial-condicao-pagamento-http-client.test.js`
+- `tests/comercial-condicao-http-ui-policy.test.js`
+- `tests/http-api-client.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_08B.md`
+
+### Escopo
+
+- Reutiliza API R08B/Onda 2 já existente (`/api/v1/condicoes-pagamento` + resolve); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.condicao_pagamento.* fail-closed no BFF.
+- Persistência canônica: `condicao_pagamento_id`. Snapshot de parcelas no form é preview local — persistir agenda exige migration futura autorizada.
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, TabelaPreco frontendHttp.
+
+### Próximo item independente restante
+
+- Snapshot persistido condição/parcelas em Orçamento/Pedido (**migration** autorizada) **ou** TabelaPreco frontendHttp; Onda 3 follow-up sem CRM paralelo.
+
+---
+
 ## Comercial 360 / Onda 2 — UI simular-venda + preview parcelas/promo (2026-09-29)
 
 | Etapa | Estado |
@@ -30,7 +70,7 @@
 
 ### Próximo item independente restante
 
-- Persistir snapshot condição/parcelas no Orçamento/Pedido (**com migration** autorizada) **ou** ativar frontend HTTP completo de CondicaoPagamento (`frontendHttp`); Onda 3 follow-up sem tabelas CRM.
+- **Feito neste empilhamento:** CondicaoPagamento frontendHttp (`cursor/comercial360-onda2-condicao-http-392b`). Residual: snapshot persistido (migration) ou TabelaPreco frontendHttp.
 
 ---
 
