@@ -1,3 +1,24 @@
+## LOTE CURSOR — dirty form abandon fail-closed (pós-#151 network-retry) (2026-09-29T21:30Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Onda 4** Dirty form abandon — beforeunload + confirm ao fechar dialog/navegar; dirty\|simulacaoDirty; fail-closed (sem perda silenciosa) |
+| Branch | `cursor/comercial360-onda4-dirty-abandon-392b` |
+| Base | `origin/cursor/comercial360-onda3-network-retry-392b` tip `6218511a` (#151) |
+| Tip | *(pendente commit — shell ENOENT em recuperação)* |
+| Draft PR | *(pendente push base=#151)* |
+| Escopo | Helpers em `comercialListHttpUiPolicy` (`isComercialFormDirtyForAbandon`, `confirmComercialFormAbandon`, `resolveComercialFormDialogOpenChange`, `bindComercialFormBeforeUnload`); wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `form dirty abandon fail-closed` + preserva **Pedido backend HTTP is active** |
+| Testes | *(pendente)* `comercial-list-http-ui-policy` dirty-abandon + wire; `git diff --check` |
+| Colisão | alçada #138 já completa; margem #47; PDF/anexos #52–62; stack #126–#151; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Onda 4 restante: PDF/anexos só se não duplicar #59–#62 **ou** crédito UI **ou** margem pós-#47 |
+
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
+
+Diagnóstico: beforeunload+confirm existiam só com `dirty` form e `window.confirm` inline; Escape/overlay e `simulacaoDirty` podiam perder rascunho. Extraído policy fail-closed compartilhada e Dialog onOpenChange controlado.
+
+---
+
 ## LOTE CURSOR — offline/network retry list/masters/simular (pós-#150 a11y-live) (2026-09-29T19:06Z)
 
 | Campo | Valor |

@@ -59,6 +59,7 @@ import {
 } from './comercialProdutoHttpUiPolicy';
 import {
   ORCAMENTO_LIST_FILTER_DEFAULTS,
+  bindComercialFormBeforeUnload,
   buildComercialBannerA11yProps,
   buildHttpListQueryKey,
   buildItemLineFieldA11y,
@@ -69,6 +70,7 @@ import {
   buildSimularHttpErrorBannerText,
   clearComercialHttpCacheOnTenantSwitch,
   comercialActionAriaLabel,
+  confirmComercialFormAbandon,
   filterActiveMasterRowsKeepingSelection,
   formatComercialHttpError,
   formatHttpListEmptyMessage,
@@ -79,6 +81,7 @@ import {
   isComercialRetryableHttpError,
   isMasterPickerBlocked,
   normalizeOrcamentoListFilters,
+  resolveComercialFormDialogOpenChange,
   resolveHttpListViewState,
   resolveHttpMasterPickerState,
 } from './comercialListHttpUiPolicy';
@@ -299,11 +302,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setTabelaSnapshot(reset.tabelaSnapshot);
     setPromocaoSnapshot(reset.promocaoSnapshot);
   }, [groupId, empresaId, queryClient]);
-  useEffect(() => {
-    const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+  useEffect(() => bindComercialFormBeforeUnload(typeof window !== 'undefined' ? window : null, () => dirty || simulacaoDirty), [dirty, simulacaoDirty]);
 
   const resetSimulacaoUi = () => {
     setSimulacaoPreview(null); setLastSimulation(null); setSimulacaoDirty(false); setSimularHttpError(null); setPromoBps(''); setPromoCupom('');
@@ -331,13 +330,33 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setSimularHttpError(null);
     return snaps;
   };
-  const closeForm = () => {
-    if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
+  const discardFormState = () => {
     setFormOpen(false); setDirty(false); setEditing(null); resetSimulacaoUi();
   };
-  const openCreate = () => { setEditing(null); setForm(emptyForm()); setDirty(false); resetSimulacaoUi(); setFormOpen(true); };
+  const closeForm = () => {
+    if (!confirmComercialFormAbandon({ dirty, simulacaoDirty, entity: 'orcamento' })) return;
+    discardFormState();
+  };
+  const handleFormDialogOpenChange = (nextOpen) => {
+    const decision = resolveComercialFormDialogOpenChange({
+      nextOpen,
+      dirty,
+      simulacaoDirty,
+      entity: 'orcamento',
+    });
+    if (decision.abandoned) {
+      discardFormState();
+      return;
+    }
+    if (decision.formOpen) setFormOpen(true);
+  };
+  const openCreate = () => {
+    if (formOpen && !confirmComercialFormAbandon({ dirty, simulacaoDirty, entity: 'orcamento' })) return;
+    setEditing(null); setForm(emptyForm()); setDirty(false); resetSimulacaoUi(); setFormOpen(true);
+  };
   const openEdit = (row) => {
     if (!canEdit(row)) return;
+    if (formOpen && !confirmComercialFormAbandon({ dirty, simulacaoDirty, entity: 'orcamento' })) return;
     setEditing(row);
     setForm(mapOrcamentoRowToForm(row));
     setDirty(false); setDetailOpen(false);
@@ -658,7 +677,7 @@ const convertToPedido = async () => {
     </div>}
     <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={listQuery.isFetching} />
 
-    <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Os totais serão conferidos novamente pelo servidor.</DialogDescription></DialogHeader>
+    <Dialog open={formOpen} onOpenChange={handleFormDialogOpenChange} data-testid="orcamento-form-dialog" data-dirty={dirty || simulacaoDirty ? 'true' : 'false'}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Os totais serão conferidos novamente pelo servidor.</DialogDescription></DialogHeader>
       {(mastersQuery.isLoading || mastersQuery.isError) && <Alert {...buildComercialBannerA11yProps(mastersQuery.isError ? 'error' : 'loading')} variant={mastersQuery.isError ? 'destructive' : 'default'} className="mb-3" data-testid="orcamento-masters-form-banner" data-retryable={mastersQuery.isError && isComercialRetryableHttpError(mastersQuery.error) ? 'true' : 'false'}><AlertCircle className="h-4 w-4" /><AlertDescription className="flex flex-wrap items-center gap-2"><span>{mastersBannerText}</span>{mastersQuery.isError && isComercialRetryableHttpError(mastersQuery.error) && <Button type="button" size="sm" variant="outline" aria-label={comercialActionAriaLabel('retry')} data-testid="orcamento-masters-form-retry" onClick={() => mastersQuery.refetch()}><RefreshCw className="w-4 h-4 mr-1" />Tentar novamente</Button>}</AlertDescription></Alert>}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2"><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => { void changeClienteEmpresa(v); }} disabled={mastersBlocked || clientePickerState === 'denied'}><SelectTrigger id="orc-cliente" data-testid="orcamento-cliente-picker" data-picker-state={clientePickerState}><SelectValue placeholder={formatMasterPickerPlaceholder(clientePickerState, 'cliente')} /></SelectTrigger><SelectContent>{clientePickerRows.map((item) => <SelectItem key={item.id} value={item.id} data-inactive={item.ativo === false || item._inactiveSelection ? 'true' : 'false'}>{formatMasterPickerOptionLabel(item, { labelFn: (row) => clienteLabel(row.id) })}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)} disabled={mastersBlocked || condicaoPickerState === 'denied' || resolvingCondicao}><SelectTrigger id="orc-condicao" data-testid="orcamento-condicao-picker" data-picker-state={condicaoPickerState}><SelectValue placeholder={resolvingCondicao ? 'Resolvendo...' : formatMasterPickerPlaceholder(condicaoPickerState, 'condição')} /></SelectTrigger><SelectContent>{condicaoPickerRows.map((item) => <SelectItem key={item.id} value={item.id} data-inactive={item.ativo === false || item._inactiveSelection ? 'true' : 'false'}>{formatMasterPickerOptionLabel(item)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} aria-invalid={Boolean(validadeHint && form.validade_em)} /><p className={`text-xs mt-1 ${validadeHint && form.validade_em ? 'text-amber-700' : 'text-slate-500'}`} data-action="Comercial.orcamento.validade-hint">{validadeHint || 'Proposta válida até o meio-dia desta data (servidor bloqueia se expirada).'}</p></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
       {(clienteInactiveHint || condicaoInactiveHint || produtoInactiveHint) && <Alert {...buildComercialBannerA11yProps('polite')} data-testid="orcamento-inactive-master-hint" data-action="Comercial.master-inactive-kept"><AlertCircle className="h-4 w-4" /><AlertDescription>{[clienteInactiveHint, condicaoInactiveHint, produtoInactiveHint].filter(Boolean).join(' ')}</AlertDescription></Alert>}

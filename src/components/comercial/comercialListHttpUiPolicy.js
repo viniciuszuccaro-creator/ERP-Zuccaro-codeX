@@ -686,3 +686,94 @@ export function buildPedidoTenantSwitchReset(options = {}) {
     promocaoSnapshot: null,
   };
 }
+
+/**
+ * Dirty form abandon — fail-closed: form dirty OU simulação dirty exigem confirmação.
+ * Troca de tenant continua sem prompt (build*TenantSwitchReset).
+ * @param {{ dirty?: boolean, simulacaoDirty?: boolean }} [flags]
+ */
+export function isComercialFormDirtyForAbandon(flags = {}) {
+  return Boolean(flags.dirty) || Boolean(flags.simulacaoDirty);
+}
+
+/**
+ * @param {'orcamento' | 'pedido'} [entity]
+ */
+export function comercialFormAbandonMessage(entity = 'orcamento') {
+  const label = entity === 'pedido' ? 'pedido' : 'orçamento';
+  return `Descartar as alterações deste ${label}?`;
+}
+
+/**
+ * Confirma abandono. Sem confirm disponível → bloqueia (fail-closed).
+ * @param {{
+ *   dirty?: boolean,
+ *   simulacaoDirty?: boolean,
+ *   entity?: 'orcamento' | 'pedido',
+ *   confirmFn?: (message: string) => boolean,
+ * }} [input]
+ * @returns {boolean} true se pode descartar
+ */
+export function confirmComercialFormAbandon(input = {}) {
+  if (!isComercialFormDirtyForAbandon(input)) return true;
+  const message = comercialFormAbandonMessage(input.entity);
+  const confirmFn = typeof input.confirmFn === 'function'
+    ? input.confirmFn
+    : (typeof globalThis !== 'undefined' && typeof globalThis.confirm === 'function'
+      ? globalThis.confirm.bind(globalThis)
+      : null);
+  if (typeof confirmFn !== 'function') return false;
+  return confirmFn(message) === true;
+}
+
+/**
+ * Controlled Dialog onOpenChange — recusar confirm mantém formOpen.
+ * @param {{
+ *   nextOpen: boolean,
+ *   dirty?: boolean,
+ *   simulacaoDirty?: boolean,
+ *   entity?: 'orcamento' | 'pedido',
+ *   confirmFn?: (message: string) => boolean,
+ * }} input
+ * @returns {{ formOpen: boolean, abandoned: boolean }}
+ */
+export function resolveComercialFormDialogOpenChange(input = {}) {
+  if (input.nextOpen) return { formOpen: true, abandoned: false };
+  if (!confirmComercialFormAbandon(input)) {
+    return { formOpen: true, abandoned: false };
+  }
+  return { formOpen: false, abandoned: true };
+}
+
+/**
+ * Handler beforeunload — só dispara quando há alterações não salvas.
+ * @param {boolean | (() => boolean)} isDirty
+ * @returns {(event: BeforeUnloadEvent) => void}
+ */
+export function createComercialFormBeforeUnloadHandler(isDirty) {
+  return (event) => {
+    const dirty = typeof isDirty === 'function' ? Boolean(isDirty()) : Boolean(isDirty);
+    if (!dirty) return;
+    event.preventDefault();
+    event.returnValue = '';
+  };
+}
+
+/**
+ * Liga beforeunload; retorna cleanup.
+ * @param {Window | null | undefined} targetWindow
+ * @param {boolean | (() => boolean)} isDirty
+ * @returns {() => void}
+ */
+export function bindComercialFormBeforeUnload(targetWindow, isDirty) {
+  const win = targetWindow
+    || (typeof globalThis !== 'undefined' && globalThis.window ? globalThis.window : null);
+  if (!win || typeof win.addEventListener !== 'function') return () => {};
+  const handler = createComercialFormBeforeUnloadHandler(isDirty);
+  win.addEventListener('beforeunload', handler);
+  return () => {
+    if (typeof win.removeEventListener === 'function') {
+      win.removeEventListener('beforeunload', handler);
+    }
+  };
+}
