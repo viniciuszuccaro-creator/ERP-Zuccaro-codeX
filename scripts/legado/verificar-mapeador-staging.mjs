@@ -31,14 +31,18 @@ const exigirDadosSimples = (value, mensagem, visitados = new Set()) => {
  * Contrato de integracao somente em memoria. Nenhum registro e persistido.
  * A aprovacao de staging real depende de prova externa do Grupo e da revisao da #48.
  */
-export function verificarMapeadorParaStaging(rows, {
-  entidade,
-  groupId,
-  grupoComprovado = false,
-  arquivoNome = 'sintetico.csv',
-  existentes = [],
-  contagensEsperadas,
-} = {}) {
+export function verificarMapeadorParaStaging(rows, opcoes = {}) {
+  exigirDadosSimples(opcoes, 'Opcoes do staging invalidas: indice dinamico nao permitido.');
+  exigirDadosSimples(rows, 'Registro legado dinamico nao permitido: exige registros JSON simples.');
+  const {
+    entidade,
+    groupId,
+    grupoComprovado = false,
+    arquivoNome = 'sintetico.csv',
+    existentes = [],
+    contagensEsperadas,
+  } = opcoes;
+  exigirDadosSimples(existentes, 'Indice de staging dinamico nao permitido.');
   if (grupoComprovado !== true || !groupId) throw new Error('Grupo de destino nao comprovado.');
   const tipoMapeador = ENTIDADES_MESTRE[entidade];
   if (!tipoMapeador) throw new Error('Entidade sem mapeador mestre homologado para staging.');

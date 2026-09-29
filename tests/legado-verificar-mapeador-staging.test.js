@@ -334,6 +334,24 @@ test('Proxy na origem e recusado antes de executar trap', () => {
   assert.equal(leituras, 0);
 });
 
+test('entrada direta recusa Proxy no array e getter nas opcoes sem executar armadilhas', () => {
+  let leituras = 0;
+  const rows = new Proxy([{ cod_cliente: 'C-3', nome: 'Tres' }], {
+    get(target, key) { leituras += 1; return target[key]; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging(rows, opcoes), /dinamico nao permitido/);
+  assert.equal(leituras, 0);
+
+  const opcoesGetter = Object.create(opcoes);
+  Object.defineProperty(opcoesGetter, 'groupId', {
+    get() { leituras += 1; return 'g-sint'; },
+  });
+  assert.throws(() => verificarMapeadorParaStaging([
+    { cod_cliente: 'C-3', nome: 'Tres' },
+  ], opcoesGetter), /Opcoes do staging invalidas/);
+  assert.equal(leituras, 0);
+});
+
 test('retry entre lotes reutiliza codigo antigo sem reenviar registro ao staging', () => {
   const row = { cod_cliente: 'C-501', nome: 'Sintetico', group_id: 'g-sint' };
   const first = verificarMapeadorParaStaging([row], opcoes);

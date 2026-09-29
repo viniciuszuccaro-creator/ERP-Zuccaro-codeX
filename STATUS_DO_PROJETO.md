@@ -11766,3 +11766,9 @@ Checklist inicial:
 
 - Branch separada baseada na `main` d02cd012; merge de ensaio do HEAD ae4c5a1c da #137 sem conflito textual. A ancestralidade inclui #104, #106-#109, #111, #48, #125 e #128. A ordem, o escopo de cada PR, a dependencia separada #92/#132 e os gates pendentes estao em `docs/LEGADO_INTEGRACAO_CANDIDATA.md`.
 - Esta candidata sera validada em CI como conjunto. Nao houve merge na main, acesso ao HD, staging persistente, importacao real, migration DEV ou alteracao da VPS/3080.
+
+## Entrada direta do staging legado (2026-09-29)
+
+- O caminho individual do adaptador agora valida opcoes, linhas e indice antes de destruturar campos ou ler `length`; Proxy no array e getter herdado em opcoes sao recusados sem executar armadilhas. O lote agregado conserva a validacao anterior.
+- Teste de regressao direto e suite focada do adaptador: 29/29 PASS; audit baseline, lint, build e `git diff --check` PASS. A suite `legado-*` no Windows ainda inclui quatro testes de inventario dependentes da execucao Bash. O typecheck global continua falhando em erros preexistentes de Base44/JSX fora deste diff; nao foi alterado para mascarar o baseline. A CI Linux do novo HEAD e o parecer integrado permanecem obrigatorios.
+- Nenhum dado do HD foi lido ou transferido; a #141 segue draft sem merge, migration DEV ou mudanca na VPS/3080.
