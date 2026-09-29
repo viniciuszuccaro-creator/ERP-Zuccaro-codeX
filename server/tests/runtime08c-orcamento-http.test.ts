@@ -182,6 +182,8 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
   assert.equal(result.body.pedido.tabelaSnapshot, true);
   assert.equal(result.body.pedido.convertValidadeFailClosed, true);
   assert.equal(result.body.pedido.convertSnapshotFailClosed, true);
+  assert.equal(result.body.pedido.cancelByState, true);
+  assert.match(result.body.note, /Pedido cancel fail-closed/);
   assert.equal(result.body.comercialSimulacao.persistOnWrite, true);
   assert.match(result.body.note, /desconto\/total aplicados no servidor \(simular-venda\)/);
   assert.match(result.body.note, /snapshot de TabelaPreco/);

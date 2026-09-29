@@ -6,8 +6,14 @@ export const PEDIDO_STATUS_LABELS = {
 };
 
 export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') {
+  if (typeof hasPermission !== 'function') return false;
   if (!hasPermission('Comercial', 'pedido', action)) return false;
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
+}
+
+/** Cancel UI: disable when unauthorized or not EM_ABERTO (incl. already CANCELADO). */
+export function isPedidoCancelDisabled(hasPermission, status) {
+  return !canUsePedidoAction(hasPermission, 'cancelar', status);
 }
 
 export function nextPedidoStatus(row) {

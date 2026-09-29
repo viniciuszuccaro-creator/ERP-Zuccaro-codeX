@@ -1,3 +1,43 @@
+## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Choice | **Pedido cancel** — simetria fail-closed com Orçamento cancel (sem migration) |
+| Implementado | **SIM** — `requireOpen` + cancel RBAC/audit; UI disable unauthorized/cancelled; meta `cancelByState`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — runtime09 security+http+service 13/13; 08c http/security 12/12; convert-snapshot+preco 13/13; UI pedido/orc 15/15; runtime07b meta; `server:typecheck` PASS; `git diff --check` PASS |
+| CI | tip pendente push |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
+| Draft PR | pendente — ManagePullRequest indisponível; tentar `gh pr create` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + `cancelByState` / convert+validade flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
+
+### Arquivos (Cursor — lote pós-#134)
+
+- `server/src/services/pedidoService.ts` (`requireOpen`, cancel fail-closed documentado)
+- `server/src/api/router.ts` (meta `pedido.cancelByState` + note cancel fail-closed)
+- `src/components/comercial/pedidoUiPolicy.js` / `PedidoCanonicoPanel.jsx` (disable + guard)
+- `server/tests/runtime09-pedido-security.test.ts` (novo, simetria 08c)
+- `server/tests/runtime09-pedido-http.test.ts` / `runtime08c-orcamento-http.test.ts` / `runtime07b.test.ts`
+- `tests/pedido-ui-policy.test.js`
+
+### Escopo
+
+- Cancel Pedido: permissão `cancelar` após tenant; só `EM_ABERTO`; auditoria before/after na transação; repetição/já cancelado → 409; isolamento tenant → 404; RBAC deny → 403.
+- UI: botão cancel sempre visível no painel canônico, **disabled** sem permissão ou status ≠ EM_ABERTO; `data-permission="Comercial.pedido.cancelar"`.
+- Sem migration; sem módulo paralelo; convert-snapshot #134 preservado.
+
+### Próximo item independente restante
+
+- Onda 4 slice sem colisão 025–028 **ou** list empty-state HTTP Pedido; sem Codex/#104/#48; sem merge/VPS.
+
+Pilha: #114 → … → #133 → #134 → **este lote**.
+
+---
+
 ## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
 
 | Etapa | Estado |

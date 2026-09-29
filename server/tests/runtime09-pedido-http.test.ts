@@ -80,7 +80,14 @@ test('HTTP Pedido cancela sem exclusao e bloqueia repeticao', async () => {
   const runtime = fixture(); const created = await request(runtime.app, '/api/v1/pedidos', { method: 'POST', headers: headers(), body: JSON.stringify(pedidoPayload) }); const id = created.body.data.id;
   const cancelled = await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) });
   assert.equal(cancelled.status, 200); assert.equal(cancelled.body.data.status, 'CANCELADO'); assert.equal(cancelled.body.data.itens.length, 1);
+  assert.equal(cancelled.body.data.ativo, false);
+  const audit = await runtime.auditRepo.listByEntity('Pedido', id);
+  assert.deepEqual(audit.map((entry) => entry.action), ['create', 'change_status']);
+  assert.equal((audit[1].beforeData as { status: string }).status, 'EM_ABERTO');
+  assert.equal((audit[1].afterData as { status: string }).status, 'CANCELADO');
   assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 409);
+  assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers({ 'x-actor-id': deniedActorId }), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 403);
+  assert.equal((await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers({ 'x-empresa-id': otherEmpresaId }), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) })).status, 404);
 });
 
 test('HTTP converte Orcamento em Pedido uma unica vez', async () => {
@@ -99,4 +106,7 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   const cross = await request(runtime.app, `/api/v1/pedidos/${created.body.data.id}`, { headers: headers({ 'x-empresa-id': otherEmpresaId }) });
   assert.equal(cross.status, 404); assert.equal(cross.body.error.code, 'PEDIDO_NOT_FOUND');
   const meta = await request(runtime.app, '/api/v1/meta'); assert.equal(meta.body.pedido.backendHttp, true); assert.equal(meta.body.pedido.frontendHttp, true);
+  assert.equal(meta.body.pedido.cancelByState, true);
+  assert.match(String(meta.body.note || ''), /Pedido backend HTTP is active/);
+  assert.match(String(meta.body.note || ''), /Pedido cancel fail-closed/);
 });

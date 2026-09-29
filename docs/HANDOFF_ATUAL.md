@@ -1,3 +1,20 @@
+## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **Pedido cancel** — simetria fail-closed com Orçamento cancel |
+| Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
+| Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
+| Escopo | sem migration; RBAC+estado+audit; UI disable; meta `cancelByState`; note preserva `Pedido backend HTTP is active` |
+| Testes | 09 security/http/service 13/13 + 08c 12/12 + convert/preco 13/13 + UI 15/15 + typecheck PASS |
+| Tip | pendente push |
+| Draft PR | pendente — ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
+| Integração | draft; sem merge/VPS; sem Codex/#104/#48 |
+| Próximo | Onda 4 sem colisão 025–028 **ou** list empty-state HTTP Pedido |
+
+---
+
 ## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
 
 | Campo | Valor |
