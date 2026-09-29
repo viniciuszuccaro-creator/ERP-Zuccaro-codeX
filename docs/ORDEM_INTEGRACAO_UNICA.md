@@ -20,7 +20,9 @@ Ancestralidade verificada com `git merge-base --is-ancestor`:
 - #132 não é ancestral da #141.
 - A cadeia Comercial e a #141 divergem em `main` (`d02cd012`). Nenhuma contém a outra.
 
-A candidata revisável contra `main` é a PR **#152** (`cursor/comercial360-candidata-main-53c4`). O código de runtime dela é exatamente `6218511a`. O commit posterior a esse SHA é só este registro. A pilha draft #114–#151 permanece como está; a CI isolada de cada degrau continua válida só para o seu delta, e a CI desta candidata é a do conjunto contra `main`.
+A candidata revisável contra `main` é a PR **#152** (`cursor/comercial360-candidata-main-53c4`). O código de runtime dela é exatamente `6218511a`. Os commits posteriores a esse SHA são só este registro. A pilha draft #114–#151 permanece como está; a CI isolada de cada degrau continua válida só para o seu delta.
+
+CI do conjunto em `11a5914a`: SUCCESS. [pull_request 36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250) (frontend e backend) e [push 36618410386](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618410386) (frontend e backend). Esse resultado não autoriza merge.
 
 ## Cadeia Comercial (ancestral linear até `6218511a`)
 
@@ -123,7 +125,7 @@ Os conflitos de código são os mesmos 9 herdados da #92. O delta da #132 não a
 
 Executar só depois de revisão humana desta ordem. Este registro não executa nenhum passo.
 
-1. **Candidata Comercial contra `main`.** Revisar o conjunto cujo código é `6218511a` (PR da branch `cursor/comercial360-candidata-main-53c4`). A CI desse PR é a CI do conjunto #114–#151, no lugar da CI isolada de cada draft. Migrations que entram: 029, 030, 031. Sem 025–028, sem 033, sem 034.
+1. **Candidata Comercial contra `main`.** Revisar o conjunto cujo código é `6218511a` (draft #152). A CI do conjunto já está SUCCESS em `11a5914a` ([36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250)). Migrations que entram: 029, 030, 031. Sem 025–028, sem 033, sem 034. O passo continua sem merge até revisão humana.
 2. **#141 (`b8a9f493`) em seguida.** Sem editar `codex/legado-integracao-candidata`. Sem reaplicar o fix `b8a9f493`. O único arquivo a resolver na integração é `STATUS_DO_PROJETO.md`. Schema da #141 continua em 024; 029–031 já estarão em `main` se o passo 1 tiver sido aceito.
 3. **#92 (`8d9ce6e5`) num lote próprio, depois dos passos 1 e 2.** Fora da #141 e fora da candidata Comercial. O lote resolve os 9 conflitos de Orçamento/Pedido e relê o auto-merge de `router.ts` e do teste `runtime08c`. Migrations 025–028 e 033 entram nesse lote, depois de 029–031.
 4. **#132 (`29211815`) somente depois da #92.** Fora da #141. Migration 034 entra nesse lote. Código legado de produto permanece não único, para reconciliação explícita.

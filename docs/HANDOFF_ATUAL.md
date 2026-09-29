@@ -1,6 +1,6 @@
 ## ORDEM ÚNICA — candidata Comercial × #141 × #92/#132 (2026-09-29T19:20Z)
 
-HEAD funcional Comercial congelado: `6218511a` (#151). Candidata revisável contra `main`: draft **#152** (`cursor/comercial360-candidata-main-53c4`, só registro em cima desse SHA). #92 `8d9ce6e5` e #132 `29211815` estão fora da #141. #141 permanece `b8a9f493` (CI 36617354170 SUCCESS); branch não editada e sem merge. Conflito Comercial×#141: somente `STATUS_DO_PROJETO.md`. Migrations: 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 vazia. Detalhe e ordem 1→4 em `docs/ORDEM_INTEGRACAO_UNICA.md`. Sem merge e sem gate VPS.
+HEAD funcional Comercial congelado: `6218511a` (#151). Candidata revisável contra `main`: draft **#152** (`cursor/comercial360-candidata-main-53c4`, só registro em cima desse SHA). CI do conjunto SUCCESS em `11a5914a` ([36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250)). #92 `8d9ce6e5` e #132 `29211815` estão fora da #141. #141 permanece `b8a9f493` (CI 36617354170 SUCCESS); branch não editada e sem merge. Conflito Comercial×#141: somente `STATUS_DO_PROJETO.md`. Migrations: 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 vazia. Detalhe e ordem 1→4 em `docs/ORDEM_INTEGRACAO_UNICA.md`. Sem merge e sem gate VPS.
 
 ---
 
