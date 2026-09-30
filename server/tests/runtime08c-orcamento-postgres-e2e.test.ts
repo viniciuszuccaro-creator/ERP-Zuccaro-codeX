@@ -4,6 +4,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { PostgresOrcamentoRepository } from '../src/repositories/postgresOrcamentoRepository.ts';
+import { PostgresPedidoRepository } from '../src/repositories/postgresPedidoRepository.ts';
 import { OrcamentoService } from '../src/services/orcamentoService.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
@@ -107,6 +108,7 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
       { getById: async () => ({ id: SEED_IDS.unidadeA, ativo: true }) } as any,
       { get: async () => ({ id: SEED_IDS.condicaoPagamentoA, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new PostgresPedidoRepository(db),
   );
     const ctx = {
       requestId: 'r08c-audit-rollback',
