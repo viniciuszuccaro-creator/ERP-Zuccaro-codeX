@@ -1,3 +1,10 @@
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T15:32Z)
+
+#191 ok. #153=`12c37e8b`. #178 Codex `90533c2c` (mig 035) — **sem** tip-port.
+Sem CostPort/anexos/provedor → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T15:17Z)
 
 #191 ok. #153=`12c37e8b`. Sem desbloqueio → **BLOCKED**. Sem merge/VPS. Vigília 15min.
