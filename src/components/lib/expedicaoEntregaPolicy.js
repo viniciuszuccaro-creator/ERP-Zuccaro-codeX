@@ -300,3 +300,145 @@ export const syncEntregaNumero = (entityName, record = {}) => {
     numero_entrega: firstText(record.numero_entrega) || code,
   };
 };
+
+/** @param {unknown} value */
+export const calendarDayFromValue = (value) => {
+  const raw = firstText(value);
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const d = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/** @param {Date} [now] */
+export const todayCalendarDay = (now = new Date()) => calendarDayFromValue(now.toISOString());
+
+/**
+ * Data de entrega do cliente na Expedição: solicitada → previsão → data_entrega.
+ * @param {ExpedicaoRecord} entrega
+ */
+export const resolveEntregaClienteCalendarDay = (entrega = {}) => (
+  calendarDayFromValue(entrega.data_entrega_cliente)
+  || calendarDayFromValue(entrega.data_entrega_solicitada)
+  || calendarDayFromValue(entrega.data_previsao)
+  || calendarDayFromValue(entrega.data_entrega)
+);
+
+/**
+ * @param {ExpedicaoRecord} entrega
+ * @param {Date} [now]
+ */
+export const isEntregaFutura = (entrega = {}, now = new Date()) => {
+  const status = normalizeEntregaStatus(entrega.status);
+  if (status.includes('entregue') || status.includes('cancel') || status.includes('frustr') || status.includes('devolv')) {
+    return false;
+  }
+  const day = resolveEntregaClienteCalendarDay(entrega);
+  if (!day) return false;
+  return day >= todayCalendarDay(now);
+};
+
+/**
+ * @param {Record<string, unknown>} input
+ */
+export const normalizeEntregaListFilters = (input = {}) => {
+  const status = firstText(input.status) || 'todos';
+  const empresaId = firstText(input.empresaId, input.empresa_id);
+  const cidade = firstText(input.cidade).toLowerCase();
+  const dataDe = calendarDayFromValue(input.dataDe || input.data_de);
+  const dataAte = calendarDayFromValue(input.dataAte || input.data_ate);
+  const soFuturas = input.soFuturas === true || input.so_futuras === true || input.soFuturas === 'true';
+  const busca = firstText(input.busca, input.q, input.search).toLowerCase();
+  const rangeInvalid = Boolean(dataDe && dataAte && dataDe > dataAte);
+  return {
+    status: status || 'todos',
+    empresaId,
+    cidade,
+    dataDe,
+    dataAte,
+    soFuturas,
+    busca,
+    rangeInvalid,
+  };
+};
+
+/**
+ * @param {ExpedicaoRecord} entrega
+ * @param {ReturnType<typeof normalizeEntregaListFilters>} filters
+ * @param {{ now?: Date }} [options]
+ */
+export const matchEntregaListFilters = (entrega = {}, filters = normalizeEntregaListFilters({}), options = {}) => {
+  if (filters.rangeInvalid) return false;
+  const now = options.now || new Date();
+
+  if (filters.empresaId) {
+    const empresa = firstText(entrega.empresa_id, entrega.empresa_responsavel_id);
+    if (empresa !== filters.empresaId) return false;
+  }
+
+  if (filters.cidade) {
+    const cidade = firstText(entrega.endereco_entrega_completo?.cidade, entrega.cidade).toLowerCase();
+    if (!cidade.includes(filters.cidade)) return false;
+  }
+
+  if (filters.status && filters.status !== 'todos') {
+    if (firstText(entrega.status) !== filters.status) return false;
+  }
+
+  const day = resolveEntregaClienteCalendarDay(entrega);
+  if (filters.dataDe) {
+    if (!day || day < filters.dataDe) return false;
+  }
+  if (filters.dataAte) {
+    if (!day || day > filters.dataAte) return false;
+  }
+  if (filters.soFuturas && !isEntregaFutura(entrega, now)) return false;
+
+  if (filters.busca) {
+    const hay = [
+      entrega.numero_pedido,
+      entrega.cliente_nome,
+      entrega.codigo_rastreamento,
+      entrega.qr_code,
+      entrega.motorista,
+      entrega.transportadora,
+      entrega.regiao_entrega_nome,
+      entrega.status,
+      entrega.endereco_entrega_completo?.cidade,
+      entrega.endereco_entrega_completo?.bairro,
+      entrega.endereco_entrega_completo?.logradouro,
+      entrega.contato_entrega?.nome,
+      entrega.contato_entrega?.telefone,
+    ].map((v) => firstText(v).toLowerCase()).join(' ');
+    if (!hay.includes(filters.busca)) return false;
+  }
+
+  return true;
+};
+
+/**
+ * @param {ExpedicaoRecord[]} entregas
+ * @param {Record<string, unknown>} rawFilters
+ * @param {{ now?: Date }} [options]
+ */
+export const filterEntregasList = (entregas = [], rawFilters = {}, options = {}) => {
+  const filters = normalizeEntregaListFilters(rawFilters);
+  if (filters.rangeInvalid) return [];
+  return (Array.isArray(entregas) ? entregas : []).filter((row) => matchEntregaListFilters(row, filters, options));
+};
+
+/**
+ * @param {ExpedicaoRecord[]} entregas
+ */
+export const listCidadesFromEntregas = (entregas = []) => {
+  const set = new Set();
+  for (const row of Array.isArray(entregas) ? entregas : []) {
+    const cidade = firstText(row?.endereco_entrega_completo?.cidade, row?.cidade);
+    if (cidade) set.add(cidade);
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+};

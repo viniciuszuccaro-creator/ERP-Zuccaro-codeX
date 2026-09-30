@@ -16,6 +16,8 @@ import { FileText, Truck, CheckCircle, MapPin } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { filterEntregasList, listCidadesFromEntregas } from "@/components/lib/expedicaoEntregaPolicy";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /**
  * Formulário para Geração de Romaneio
@@ -47,6 +49,8 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     instrucoes_motorista: "",
     entregas_selecionadas: []
   });
+  const [cidadeFiltro, setCidadeFiltro] = useState("todas");
+  const [soFuturasRomaneio, setSoFuturasRomaneio] = useState(false);
 
   const [checklist, setChecklist] = useState({
     documentos_ok: false,
@@ -272,7 +276,12 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
 
     gerarRomaneioMutation.mutate();
   }, [auditRomaneio, canGerarRomaneio, contextoValido, formData.entregas_selecionadas.length, gerarRomaneioMutation, toast]);
-  const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
+  const cidadesRomaneio = listCidadesFromEntregas(entregas);
+  const entregasFiltradas = filterEntregasList(entregas, {
+    cidade: cidadeFiltro !== "todas" ? cidadeFiltro : "",
+    soFuturas: soFuturasRomaneio,
+  });
+  const entregasSelecionadas = entregasFiltradas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
   const content = (
     <div className={containerClass} data-permission="Expedicao.Romaneios.criar" data-context-required="true">
@@ -364,20 +373,40 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                 Selecionar Entregas ({formData.entregas_selecionadas.length} selecionadas)
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-3 space-y-3" data-testid="romaneio-entregas-filtros" data-action="Expedicao.romaneio.filtro-entregas">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select value={cidadeFiltro} onValueChange={setCidadeFiltro}>
+                  <SelectTrigger className="h-8" data-testid="romaneio-filtro-cidade">
+                    <SelectValue placeholder="Cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as cidades</SelectItem>
+                    {cidadesRomaneio.map((cidade) => (
+                      <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <label className="flex items-center gap-2 text-xs text-slate-700 h-8 px-1" data-testid="romaneio-filtro-futuras">
+                  <Checkbox
+                    checked={soFuturasRomaneio}
+                    onCheckedChange={(checked) => setSoFuturasRomaneio(checked === true)}
+                  />
+                  Só entregas futuras
+                </label>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
                     <TableHead className="w-12">
                       <Checkbox
-                        checked={entregas.length > 0 && formData.entregas_selecionadas.length === entregas.length}
+                        checked={entregasFiltradas.length > 0 && formData.entregas_selecionadas.length === entregasFiltradas.length}
                         disabled={!contextoValido || !canGerarRomaneio}
                         data-permission="Expedicao.Romaneios.criar"
                         data-context-required="true"
                         onCheckedChange={(checked) => {
                           setFormData({
                             ...formData,
-                            entregas_selecionadas: checked ? entregas.map(e => e.id) : []
+                            entregas_selecionadas: checked ? entregasFiltradas.map(e => e.id) : []
                           });
                         }}
                       />
@@ -391,7 +420,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entregas.map(entrega => (
+                  {entregasFiltradas.map(entrega => (
                     <TableRow key={entrega.id}>
                       <TableCell>
                         <Checkbox
@@ -430,6 +459,11 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                 <div className="text-center py-12 text-slate-500">
                   <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
                   <p>Nenhuma entrega pronta para romaneio</p>
+                </div>
+              )}
+              {entregas.length > 0 && entregasFiltradas.length === 0 && (
+                <div className="text-center py-8 text-slate-500 text-sm" data-testid="romaneio-entregas-filtro-vazio">
+                  Nenhuma entrega corresponde aos filtros de cidade/futuras.
                 </div>
               )}
             </CardContent>
