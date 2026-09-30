@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   assertConfirmedTechnicalUploadUrl,
   assertTechnicalUploadAllowed,
+  uploadConfirmedTechnicalFiles,
   TECHNICAL_UPLOAD_MAX_BYTES,
 } from '../src/lib/technicalUploadPolicy.js';
 
@@ -21,33 +22,48 @@ function file(name, type, signature, size = signature.length) {
 }
 
 test('upload tecnico aceita PDF, PNG e JPEG somente com MIME e assinatura coerentes', async () => {
-  assert.equal(await assertTechnicalUploadAllowed(file('projeto.pdf', 'application/pdf', pdf), 'remote'), 'PDF');
+  assert.equal(await assertTechnicalUploadAllowed(file('projeto.pdf', 'application/pdf', pdf), 'local'), 'PDF');
   assert.equal(await assertTechnicalUploadAllowed(file('planta.png', 'image/png', png), 'local'), 'PNG');
-  assert.equal(await assertTechnicalUploadAllowed(file('vista.JPEG', 'image/jpeg', jpeg), 'remote'), 'JPG');
+  assert.equal(await assertTechnicalUploadAllowed(file('vista.JPEG', 'image/jpeg', jpeg), 'local'), 'JPG');
 });
 
-test('modo HTTP bloqueia antes de ler arquivo ou acionar storage legado', async () => {
+test('modos HTTP/remote bloqueiam antes de ler arquivo ou acionar storage legado', async () => {
   const forbidden = { get name() { throw new Error('arquivo foi lido'); } };
   await assert.rejects(assertTechnicalUploadAllowed(forbidden, 'http'), /armazenamento canônico/);
+  await assert.rejects(assertTechnicalUploadAllowed(forbidden, 'remote'), /armazenamento canônico/);
 });
 
 test('CAD, executável, nome inseguro, MIME divergente e assinatura falsa falham fechado', async () => {
   for (const extension of ['dwg', 'dxf', 'step', 'stp', 'iges', 'igs']) {
-    await assert.rejects(assertTechnicalUploadAllowed(file(`peca.${extension}`, 'application/octet-stream', pdf), 'remote'), /CAD aguarda/);
+    await assert.rejects(assertTechnicalUploadAllowed(file(`peca.${extension}`, 'application/octet-stream', pdf), 'local'), /CAD aguarda/);
   }
-  await assert.rejects(assertTechnicalUploadAllowed(file('peca.exe', 'application/octet-stream', pdf), 'remote'), /não autorizado/);
-  await assert.rejects(assertTechnicalUploadAllowed(file('../peca.pdf', 'application/pdf', pdf), 'remote'), /Nome de arquivo inválido/);
-  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'image/png', pdf), 'remote'), /Tipo do arquivo/);
-  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'application/pdf', png), 'remote'), /Assinatura/);
-  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'application/pdf', pdf, 0), 'remote'), /vazio/);
-  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'application/pdf', pdf, TECHNICAL_UPLOAD_MAX_BYTES + 1), 'remote'), /10 MB/);
+  await assert.rejects(assertTechnicalUploadAllowed(file('peca.exe', 'application/octet-stream', pdf), 'local'), /não autorizado/);
+  await assert.rejects(assertTechnicalUploadAllowed(file('../peca.pdf', 'application/pdf', pdf), 'local'), /Nome de arquivo inválido/);
+  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'image/png', pdf), 'local'), /Tipo do arquivo/);
+  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'application/pdf', png), 'local'), /Assinatura/);
+  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'application/pdf', pdf, 0), 'local'), /vazio/);
+  await assert.rejects(assertTechnicalUploadAllowed(file('peca.pdf', 'application/pdf', pdf, TECHNICAL_UPLOAD_MAX_BYTES + 1), 'local'), /10 MB/);
 });
 
 test('upload só confirma URL HTTPS externa, sem credencial ou placeholder local', () => {
   assert.equal(assertConfirmedTechnicalUploadUrl('https://storage.example.test/projects/p.pdf'), 'https://storage.example.test/projects/p.pdf');
-  for (const value of [undefined, '', 'local://projects/p.pdf', 'http://storage.example.test/p.pdf', 'https://user:secret@storage.example.test/p.pdf', 'https://localhost/p.pdf', 'https://127.0.0.1/p.pdf', 'https://storage.example.test/p.pdf?token=temporary']) {
+  for (const value of [undefined, '', 'local://projects/p.pdf', 'http://storage.example.test/p.pdf', 'https://user:secret@storage.example.test/p.pdf', 'https://localhost/p.pdf', 'https://127.0.0.1/p.pdf', 'https://172.16.0.5/p.pdf', 'https://[::1]/p.pdf', 'https://[::ffff:127.0.0.1]/p.pdf', 'https://[fd00::1]/p.pdf', 'https://0.0.0.0/p.pdf', 'https://metadata.google.internal/p.pdf', 'https://storage.example.test/signed/token/p.pdf', 'https://storage.example.test/p.pdf?token=temporary']) {
     assert.throws(() => assertConfirmedTechnicalUploadUrl(value), /Upload sem confirmação/);
   }
+});
+
+test('Portal Solicitar valida lote antes do storage e não confirma sucesso parcial', async () => {
+  let calls = 0;
+  const upload = async () => { calls++; return { file_url: 'local://uploads/projeto.pdf' }; };
+  await assert.rejects(
+    uploadConfirmedTechnicalFiles([file('ok.pdf', 'application/pdf', pdf), file('cad.dwg', 'application/octet-stream', pdf)], upload, 'local'),
+    /CAD aguarda/,
+  );
+  assert.equal(calls, 0);
+  await assert.rejects(uploadConfirmedTechnicalFiles([file('ok.pdf', 'application/pdf', pdf)], upload, 'http'), /armazenamento canônico/);
+  assert.equal(calls, 0);
+  await assert.rejects(uploadConfirmedTechnicalFiles([file('ok.pdf', 'application/pdf', pdf)], upload, 'local'), /Upload sem confirmação/);
+  assert.equal(calls, 1);
 });
 
 test('Pedido, Corte e Dobra e Portal usam a mesma validação antes de confirmar anexo', () => {
@@ -62,4 +78,6 @@ test('Pedido, Corte e Dobra e Portal usam a mesma validação antes de confirmar
   }
   const corte = readFileSync(new URL('../src/components/comercial/CorteDobraIATab.jsx', import.meta.url), 'utf8');
   assert.match(corte, /tipo_arquivo: tipoArquivo/);
+  const solicitar = readFileSync(new URL('../src/components/portal/SolicitarOrcamento.jsx', import.meta.url), 'utf8');
+  assert.match(solicitar, /uploadConfirmedTechnicalFiles\(/);
 });

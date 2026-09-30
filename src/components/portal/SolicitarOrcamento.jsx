@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { FileUp, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { sanitizeOnWrite } from '@/components/lib/sanitizeOnWrite';
+import { uploadConfirmedTechnicalFiles, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * V21.5 - Solicitar Orçamento COMPLETO
@@ -42,6 +43,7 @@ export default function SolicitarOrcamento() {
       try {
         const c = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, undefined, 1);
         if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
+        if (!empresaId || !groupId) throw new Error('Contexto do cliente incompleto.');
       } catch (error) {
         console.error('[SolicitarOrcamento] Falha ao resolver contexto do cliente', error);
         throw new Error('Contexto do cliente indisponivel para solicitar orcamento.');
@@ -90,16 +92,15 @@ export default function SolicitarOrcamento() {
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
+    if (files.length === 0) return;
     setUploadingFiles(true);
 
     try {
-      const uploadPromises = files.map(async (file) => {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        return { name: file.name, url: file_url };
-      });
-
-      const uploaded = await Promise.all(uploadPromises);
-      setArquivos([...arquivos, ...uploaded]);
+      const uploaded = await uploadConfirmedTechnicalFiles(
+        files,
+        (file) => base44.integrations.Core.UploadFile({ file }),
+      );
+      setArquivos((current) => [...current, ...uploaded]);
       toast.success(`${files.length} arquivo(s) enviado(s)`);
     } catch (error) {
       toast.error('Erro ao enviar arquivos');
@@ -214,6 +215,7 @@ export default function SolicitarOrcamento() {
               <input
                 type="file"
                 multiple
+                accept={TECHNICAL_UPLOAD_ACCEPT}
                 onChange={handleFileUpload}
                 className="hidden"
                 id="file-upload"
@@ -225,7 +227,7 @@ export default function SolicitarOrcamento() {
                   {uploadingFiles ? 'Enviando arquivos...' : 'Clique para selecionar arquivos'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  PDF, DWG, PNG, JPG até 10MB cada
+                  PDF, PNG, JPG até 10MB cada; CAD ainda indisponível
                 </p>
               </label>
             </div>

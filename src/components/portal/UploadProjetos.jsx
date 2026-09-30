@@ -21,7 +21,7 @@ import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, TECHNI
  * ✅ Geração automática de orçamento
  * ✅ 100% Responsivo w-full h-full
  */
-export default function UploadProjetos({ clienteId, clienteNome }) {
+export default function UploadProjetos({ clienteId, clienteNome, groupId, empresaId }) {
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
   const [descricaoProjeto, setDescricaoProjeto] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -57,6 +57,7 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
   const uploadProjetoMutation = useMutation({
     mutationFn: async (file) => {
       setUploading(true);
+      if (!clienteId || !groupId || !empresaId) throw new Error('Contexto do cliente indisponível para upload técnico.');
       await assertTechnicalUploadAllowed(file);
       // Upload do arquivo
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -66,6 +67,8 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
       const pedido = await base44.entities.Pedido.create({
         numero_pedido: `PROJ-${Date.now()}`,
         cliente_id: clienteId,
+        group_id: groupId,
+        empresa_id: empresaId,
         cliente_nome: clienteNome,
         data_pedido: new Date().toISOString().split('T')[0],
         tipo: 'Orçamento',
