@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip audit crédito override (2026-09-30T12:55Z)
 
-#189 CI SUCCESS. Branch `cursor/comercial360-credito-audit-override-tip-392b` empilhada em #189:
-Audit `credito_alcada_override` no Pedido (paridade margem). Sem merge/VPS. CI em curso.
+#189 CI SUCCESS. Draft PR **#190** — audit `credito_alcada_override` (paridade margem).
+Testes crédito 9/9. Sem merge/VPS. CI em curso.
 
 ---
 

@@ -5,7 +5,7 @@
 | Tip anterior | **#189** print/share snapshot CI SUCCESS |
 | Choice | Fechar ressalva revisão: audit `credito_alcada_override` (paridade margem) |
 | Branch | `cursor/comercial360-credito-audit-override-tip-392b` |
-| Draft PR | (criar) base tip #189 |
+| Draft PR | **#190** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/190 |
 | Escopo | `CreditoAvaliacao.overridden` + `auditCreditoOverride` em create/convert/update |
 | Testes | comercial-onda6-credito-pedido 9/9 |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
