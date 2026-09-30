@@ -27,15 +27,17 @@ function fixture(overrides = {}) {
     };
     const header = Object.keys(row);
     const candidateContent = `${header.join(',')}\n${Object.values(row).join(',')}\n`;
-    const quarantineContent = `${header.join(',')}\n`;
+    const quarantineRow = overrides.quarantine?.[entity];
+    const quarantineContent = `${header.join(',')}\n${quarantineRow ? `${header.map((key) => quarantineRow[key] ?? row[key]).join(',')}\n` : ''}`;
+    const quarantineCount = quarantineRow ? 1 : 0;
     write(candidate, candidateContent);
     write(quarantine, quarantineContent);
     const hash = (content) => createHash('sha256').update(content).digest('hex');
     const counts = entity === 'clientes'
-      ? { sourceRows: 1, acceptedCandidates: 1, quarantinedRows: 0 }
+      ? { sourceRows: 1 + quarantineCount, acceptedCandidates: 1, quarantinedRows: quarantineCount }
       : entity === 'fornecedores'
-        ? { totals: { source_rows: 1, candidates: 1, quarantine: 0 } }
-        : { source_rows: 1, candidate_rows: 1, quarantine_rows: 0 };
+        ? { totals: { source_rows: 1 + quarantineCount, candidates: 1, quarantine: quarantineCount } }
+        : { source_rows: 1 + quarantineCount, candidate_rows: 1, quarantine_rows: quarantineCount };
     const integrity = entity === 'produtos_revenda'
       ? { candidate_sha256: hash(candidateContent), quarantine_sha256: hash(quarantineContent) }
       : entity === 'clientes'
@@ -92,4 +94,15 @@ test('rejects missing legacy code and cross-group masters', () => {
     try { assert.throws(() => reconcilePrivateCandidates(data.root), /LEGACY_(CODE|SCOPE)_INVALID:fornecedores/); }
     finally { data.cleanup(); }
   }
+});
+
+test('counts quarantined overlap and foreign scope without releasing values', () => {
+  const data = fixture({ quarantine: { clientes: { group_id: 'foreign-group', empresa_id: 'foreign-company' } } });
+  try {
+    const report = reconcilePrivateCandidates(data.root);
+    assert.equal(report.entities.clientes.candidateQuarantineCodeOverlap, 1);
+    assert.equal(report.entities.clientes.quarantineCompanyRows, 1);
+    assert.equal(report.entities.clientes.quarantineOtherGroupRows, 1);
+    assert.doesNotMatch(JSON.stringify(report), /foreign-group|foreign-company/);
+  } finally { data.cleanup(); }
 });

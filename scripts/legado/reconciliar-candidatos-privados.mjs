@@ -79,11 +79,25 @@ export function reconcilePrivateCandidates(root) {
       if (document && entity === 'clientes') clientDocuments.add(document);
       if (document && entity === 'fornecedores') supplierDocuments.add(document);
     }
+    let candidateQuarantineCodeOverlap = 0;
+    let quarantineCompanyRows = 0;
+    let quarantineOtherGroupRows = 0;
+    for (const row of quarantined) {
+      if (codes.has(String(row.codigo_legado || '').trim())) candidateQuarantineCodeOverlap++;
+      if (String(row.empresa_id || '').trim()) quarantineCompanyRows++;
+      if (String(row.group_id || '').trim() !== sharedGroup) quarantineOtherGroupRows++;
+    }
     report.entities[entity] = {
       sourceRows: sourceCount, candidates: candidates.length, quarantine: quarantined.length,
       difference: sourceCount - candidates.length - quarantined.length,
       reconciled: true, fileHashesVerified: true, uniqueLegacyCodes: codes.size,
       scope: 'GROUP_MASTER', companyScopedRows: 0,
+      candidateQuarantineCodeOverlap, quarantineCompanyRows, quarantineOtherGroupRows,
+      duplicateDocumentSignal: entity === 'clientes'
+        ? { unit: 'reason_occurrences', count: Number.isSafeInteger(summary.quarantineReasonCounts?.DOCUMENTO_DUPLICADO_LEGADO) ? summary.quarantineReasonCounts.DOCUMENTO_DUPLICADO_LEGADO : null }
+        : entity === 'fornecedores'
+          ? { unit: 'groups', count: Number.isSafeInteger(summary.totals.duplicate_document_groups) ? summary.totals.duplicate_document_groups : null }
+          : null,
     };
   }
   for (const document of clientDocuments) if (supplierDocuments.has(document)) report.crossRoleDocumentOverlap++;
