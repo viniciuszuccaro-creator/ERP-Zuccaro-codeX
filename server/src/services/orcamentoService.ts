@@ -174,12 +174,7 @@ export class OrcamentoService {
       await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
       const locked = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(locked);
-      if (!this.convertedPedidos) throw new AppError(503, 'ORCAMENTO_CONVERSION_GUARD_UNAVAILABLE', 'Conversion guard unavailable');
-      for (const version of await this.repo.listVersions(scope, locked.orcamento_raiz_id, executor)) {
-        if (await this.convertedPedidos.getByOrcamento(scope, version.id, executor)) {
-          throw new AppError(409, 'ORCAMENTO_ALREADY_CONVERTED', 'Quotation chain already converted');
-        }
-      }
+      await this.assertChainNotConverted(scope, locked.orcamento_raiz_id, executor);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       const write = await this.applyCondicaoSnapshot(scope, priced, executor);
@@ -210,12 +205,7 @@ export class OrcamentoService {
       await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
       const locked = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(locked);
-      if (!this.convertedPedidos) throw new AppError(503, 'ORCAMENTO_CONVERSION_GUARD_UNAVAILABLE', 'Conversion guard unavailable');
-      for (const version of await this.repo.listVersions(scope, locked.orcamento_raiz_id, executor)) {
-        if (await this.convertedPedidos.getByOrcamento(scope, version.id, executor)) {
-          throw new AppError(409, 'ORCAMENTO_ALREADY_CONVERTED', 'Quotation chain already converted');
-        }
-      }
+      await this.assertChainNotConverted(scope, locked.orcamento_raiz_id, executor);
       if (data.origem !== undefined && data.origem !== before.origem) {
         throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { origem: 'immutable' });
       }
@@ -267,11 +257,24 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
+      const locked = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(locked);
+      await this.assertChainNotConverted(scope, locked.orcamento_raiz_id, executor);
       const after = await this.repo.cancel(scope, id, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
       return after;
     });
+  }
+
+  private async assertChainNotConverted(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<void> {
+    if (!this.convertedPedidos) throw new AppError(503, 'ORCAMENTO_CONVERSION_GUARD_UNAVAILABLE', 'Conversion guard unavailable');
+    for (const version of await this.repo.listVersions(scope, raizId, executor)) {
+      if (await this.convertedPedidos.getByOrcamento(scope, version.id, executor)) {
+        throw new AppError(409, 'ORCAMENTO_ALREADY_CONVERTED', 'Quotation chain already converted');
+      }
+    }
   }
 
   private parse(payload: unknown): OrcamentoCreate {
