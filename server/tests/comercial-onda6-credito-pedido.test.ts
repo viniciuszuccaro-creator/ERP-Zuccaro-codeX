@@ -127,6 +127,7 @@ test('assertCredito: sem porta ou snapshot null nao inventa; porta insuficiente 
     groupId, empresaId, clienteEmpresaId: clienteId, items, credit: port, canAprovarCredito: true,
   });
   assert.equal(overridden?.aprovado, true);
+  assert.equal(overridden?.overridden, true);
   assert.match(String(overridden?.motivo), /aprovar-credito/);
 });
 
@@ -143,11 +144,12 @@ function fixture(options: { credit?: ComercialCreditPort | null; permissions?: s
       },
     },
   });
+  const audit = new InMemoryAuditRepository();
   // Tip: cost/alcada/promo antes de credit (4º opcional). Condicao com codigo/nome/parcelas (snapshot pós-029).
   const service = new PedidoService(
     new InMemoryPedidoRepository(),
     new InMemoryOrcamentoRepository(),
-    new InMemoryAuditRepository(),
+    audit,
     tenant,
     rbac,
     { getEmpresaLinkById: async () => ({ id: clienteId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true } as never) },
@@ -171,7 +173,7 @@ function fixture(options: { credit?: ComercialCreditPort | null; permissions?: s
     null,
     options.credit === undefined ? null : options.credit,
   );
-  return { service };
+  return { service, audit };
 }
 
 const basePayload = {
@@ -207,12 +209,22 @@ test('PedidoService com porta insuficiente libera com aprovar-credito', async ()
       return { limite_credito: '20.000000', limite_utilizado: '0' };
     },
   };
-  const { service } = fixture({
+  const { service, audit } = fixture({
     credit,
     permissions: ['visualizar', 'criar', 'editar', 'aprovar-credito'],
   });
   const created = await service.create(ctx, basePayload);
   assert.equal(created.total, '100.000000');
+  const audits = await audit.listByEntity('Pedido', created.id);
+  const approve = audits.filter((a) => a.action === 'approve');
+  assert.equal(approve.length, 1);
+  const after = approve[0].afterData as {
+    credito_alcada_override?: boolean;
+    credito_avaliacao?: { valor_pedido?: string; motivo?: string };
+  };
+  assert.equal(after.credito_alcada_override, true);
+  assert.equal(after.credito_avaliacao?.valor_pedido, '100.000000');
+  assert.match(String(after.credito_avaliacao?.motivo), /aprovar-credito/);
 });
 
 test('PedidoService com credito suficiente cria normalmente', async () => {

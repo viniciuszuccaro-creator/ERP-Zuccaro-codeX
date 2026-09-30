@@ -1,7 +1,13 @@
+## AUTÔNOMO — tip audit crédito override (2026-09-30T12:55Z)
+
+#189 CI SUCCESS. Draft PR **#190** — audit `credito_alcada_override` (paridade margem).
+Testes crédito 9/9. Sem merge/VPS. CI em curso.
+
+---
+
 ## AUTÔNOMO — tip print/share snapshot_gap (2026-09-30T12:48Z)
 
-#188 CI SUCCESS. Draft PR **#189** — print/share Pedido+Orçamento bloqueiam em snapshot_gap.
-Testes ui-policy 49/49. Sem merge/VPS. CI em curso.
+Draft PR **#189** CI SUCCESS — print/share bloqueiam snapshot_gap.
 
 ---
 
