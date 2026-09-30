@@ -1,3 +1,19 @@
+## AUTÔNOMO — tip ContaReceber↔Pedido fail-closed (pós-#181) (2026-09-30T11:25Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#181** EnviarParaCaixa CI SUCCESS |
+| Choice | **ContaReceber↔Pedido** vínculo multiempresa fail-closed (Onda 6) |
+| Branch | `cursor/comercial360-onda6-cr-pedido-tip-392b` |
+| Base | tip #181 caixa envio |
+| Escopo | `assertPedidoVinculoTitulo` / `filterPedidosParaTitulo` / `applyPedidoVinculoAoForm`; form+vinculos+local create; limpa pedido ao trocar empresa |
+| Reuso | Patterns #66 (não edita branch antiga) |
+| Testes | financeiro-titulo-policy 13/13 |
+| Colisão | CostPort invent BLOCKED; anexos #59–62; sem Codex/merge/VPS |
+| Próximo | CostPort real **ou** anexos pós-Codex **ou** vigília Onda 6 residual |
+
+---
+
 ## AUTÔNOMO — tip #180 CI SUCCESS + EnviarParaCaixa fail-closed (2026-09-30T11:20Z)
 
 | Campo | Valor |
