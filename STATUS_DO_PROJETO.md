@@ -5,7 +5,7 @@
 | Tip anterior | **#184** margem/custo CI SUCCESS |
 | Choice | Harden `comercialCreditoPolicy.toMicros` ≤6 casas (paridade tip #184; achado na revisão) |
 | Branch | `cursor/comercial360-credito-precisao-tip-392b` |
-| Draft PR | (criar) base tip #184 |
+| Draft PR | **#186** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/186 |
 | Escopo | CreditPort: rejeita precisão >6 em item/limite (`VALIDATION_ERROR`); sem inventar crédito |
 | Testes | comercial-onda6-credito-pedido (focado) |
 | Colisão | Sem CostPort; sem #178; sem Codex/merge/VPS |

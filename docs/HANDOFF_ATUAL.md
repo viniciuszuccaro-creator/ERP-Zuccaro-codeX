@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip crédito precisão + revisão implantações (2026-09-30T12:30Z)
 
 Revisão tip #154–#184: **APTA_TIP** (Onda 4/5 polish + Onda 6 #180–#184). Ressalvas: CostPort null ok; #178 não tip-port; anexos colisão; sem merge/VPS.
-Lote tip: `cursor/comercial360-credito-precisao-tip-392b` — CreditPort `toMicros` ≤6 (paridade #184). Base tip #184.
+Draft PR **#186** — CreditPort `toMicros` ≤6 (paridade #184). Base tip #184. Testes crédito 9/9.
 #153 HEAD=`12c37e8b`. CI em curso.
 
 ---
