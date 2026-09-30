@@ -4,6 +4,7 @@ import test from 'node:test';
 import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { PostgresProdutoOutboxRepository } from '../src/repositories/postgresProdutoOutboxRepository.ts';
+import type { AuditRepository } from '../src/audit/types.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -13,7 +14,7 @@ test('R15 PostgreSQL: claim concorrente, tenant e lease impedem resposta atrasad
     const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
     const repo = new PostgresProdutoOutboxRepository(db);
     const id = randomUUID();
-    const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+    const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA, actorId: randomUUID(), requestId: `r15-${id}` };
     try {
       await db.query(
         `INSERT INTO integration_events (id,group_id,empresa_id,source,event_type,idempotency_key,payload,status,max_attempts)
@@ -44,6 +45,7 @@ test('R15 PostgreSQL: claim concorrente, tenant e lease impedem resposta atrasad
       assert.equal(state.rows[0]?.attempts, 2);
       assert.ok(state.rows[0]?.dead_letter_at);
     } finally {
+      await db.query("DELETE FROM audit_logs WHERE entity='IntegrationEvent' AND entity_id=$1 AND group_id=$2 AND empresa_id=$3", [id, scope.groupId, scope.empresaId]);
       await db.query('DELETE FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
       await db.end();
     }
@@ -54,7 +56,7 @@ test('R15 PostgreSQL: lease expirado pode ser recuperado, publicacao exige token
     const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
     const repo = new PostgresProdutoOutboxRepository(db);
     const id = randomUUID();
-    const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+    const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA, actorId: randomUUID(), requestId: `r15-${id}` };
     try {
       await db.query(
         `INSERT INTO integration_events (id,group_id,empresa_id,source,event_type,idempotency_key,payload,status,max_attempts)
@@ -77,6 +79,53 @@ test('R15 PostgreSQL: lease expirado pode ser recuperado, publicacao exige token
       assert.equal(state.rows[0]?.status, 'published');
       assert.ok(state.rows[0]?.published_at);
     } finally {
+      await db.query("DELETE FROM audit_logs WHERE entity='IntegrationEvent' AND entity_id=$1 AND group_id=$2 AND empresa_id=$3", [id, scope.groupId, scope.empresaId]);
+      await db.query('DELETE FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+      await db.end();
+    }
+  });
+
+test('R15 PostgreSQL: falha de auditoria rollbacka claim, retry e confirmacao',
+  { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+    const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+    const repo = new PostgresProdutoOutboxRepository(db);
+    const failedAudit: AuditRepository = {
+      async append() { throw new Error('AUDIT_SYNTHETIC_FAILURE'); },
+      async listByEntity() { return []; },
+    };
+    const failing = new PostgresProdutoOutboxRepository(db, failedAudit);
+    const id = randomUUID();
+    const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA, actorId: randomUUID(), requestId: `r15-${id}` };
+    try {
+      await db.query(
+        `INSERT INTO integration_events (id,group_id,empresa_id,source,event_type,idempotency_key,payload,status)
+         VALUES ($1,$2,$3,'ERP','produto.publicado',$4,'{}'::jsonb,'pending')`,
+        [id, scope.groupId, scope.empresaId, `r15-${id}`],
+      );
+      await assert.rejects(failing.claim(scope), /AUDIT_SYNTHETIC_FAILURE/);
+      const pending = await db.query<{ status: string; attempts: number }>(
+        'SELECT status,attempts FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+        [id, scope.groupId, scope.empresaId],
+      );
+      assert.deepEqual(pending.rows[0], { status: 'pending', attempts: 0 });
+      const lease = (await repo.claim(scope))[0];
+      assert.equal(lease?.id, id);
+      await assert.rejects(failing.fail(scope, lease, 1), /AUDIT_SYNTHETIC_FAILURE/);
+      await assert.rejects(failing.complete(scope, lease), /AUDIT_SYNTHETIC_FAILURE/);
+      const processing = await db.query<{ status: string; attempts: number }>(
+        'SELECT status,attempts FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+        [id, scope.groupId, scope.empresaId],
+      );
+      assert.deepEqual(processing.rows[0], { status: 'processing', attempts: 1 });
+      assert.equal(await repo.complete(scope, lease), true);
+      const logs = await db.query<{ after_data: { status: string }; actor_id: string; request_id: string }>(
+        "SELECT after_data,actor_id,request_id FROM audit_logs WHERE entity='IntegrationEvent' AND entity_id=$1 AND group_id=$2 AND empresa_id=$3 ORDER BY created_at",
+        [id, scope.groupId, scope.empresaId],
+      );
+      assert.deepEqual(logs.rows.map((row) => row.after_data.status), ['processing', 'published']);
+      assert.ok(logs.rows.every((row) => row.actor_id === scope.actorId && row.request_id === scope.requestId));
+    } finally {
+      await db.query("DELETE FROM audit_logs WHERE entity='IntegrationEvent' AND entity_id=$1 AND group_id=$2 AND empresa_id=$3", [id, scope.groupId, scope.empresaId]);
       await db.query('DELETE FROM integration_events WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
       await db.end();
     }
