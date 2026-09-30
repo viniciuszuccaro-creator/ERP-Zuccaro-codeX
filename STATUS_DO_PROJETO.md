@@ -1,3 +1,15 @@
+## CURSOR — Expedição filtros #192 CI SUCCESS (2026-09-30T15:53Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#192** CI SUCCESS — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/192 |
+| HEAD | `caf1ff43` |
+| Testes | expedicao-entrega-policy 16/16 |
+| Codex #178 | HEAD `90533c2c` CI SUCCESS — **ainda não** declarado candidato final; sem tip-port |
+| Próximo | Harden detalhe/separação/acompanhamento fail-closed (fora reserva Codex) |
+
+---
+
 ## CURSOR — Expedição listagem filtros (2026-09-30T15:45Z)
 
 | Campo | Valor |
