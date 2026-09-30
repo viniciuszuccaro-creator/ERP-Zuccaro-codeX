@@ -1,8 +1,8 @@
 ## AUTÔNOMO — tip wire caixa tabs CR/CP (2026-09-30T12:35Z)
 
 #186 CI SUCCESS. Branch `cursor/comercial360-onda6-caixa-tabs-wire-tip-392b` empilhada em #186:
-Tabs ContasReceber/Pagar usam `assertTitulosProntosParaCaixa` + `groupId&&empresaId`; vínculo exige `pedido.group_id`.
-Revisão exploradores: Onda4/5 COM_RESSALVA; #181 ressalva fechando. Sem merge/VPS. CI em curso.
+Draft PR **#187** — tabs CR/CP + `assertTitulosProntosParaCaixa` + `groupId&&empresaId`; vínculo exige `pedido.group_id`.
+Revisão: [Onda6](bc-fae4c456-1c96-5a07-9431-a8f8d0f217f3) · [Onda4-5](bc-2b47b46d-a810-5eed-87a4-557c40ec6f36). Sem merge/VPS. CI em curso.
 
 ---
 

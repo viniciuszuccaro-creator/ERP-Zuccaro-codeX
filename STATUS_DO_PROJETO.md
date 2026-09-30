@@ -5,7 +5,7 @@
 | Tip anterior | **#186** CreditPort precisão CI SUCCESS |
 | Choice | Fechar ressalva #181: tabs CR/CP usam `assertTitulosProntosParaCaixa` + `groupId&&empresaId`; vínculo exige `pedido.group_id` |
 | Branch | `cursor/comercial360-onda6-caixa-tabs-wire-tip-392b` |
-| Draft PR | (criar) base tip #186 |
+| Draft PR | **#187** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/187 |
 | Escopo | ContasReceberTab/ContasPagarTab; `PEDIDO_VINCULO_SEM_GRUPO`; source-match testes |
 | Testes | financeiro-titulo-policy 13/13 |
 | Colisão | Sem CostPort; sem #178; sem Codex/merge/VPS |
