@@ -1,7 +1,15 @@
+## AUTÔNOMO — tip margem/custo contrato fail-closed (2026-09-30T12:10Z)
+
+Branch `cursor/comercial360-margem-custo-contrato-tip-392b` empilhada em #183:
+Port tip #177 — `toMicros` ≤6 casas; `validateMinimaBps` → COST_POLICY_INVALID; sem inventar CostPort.
+Testes margem 14/14. Sem merge/VPS. CI em curso.
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #183 (2026-09-30T11:32Z)
 
 Tip **#183** CI SUCCESS. Stack Onda 6 tip #180→#183.
-BLOCKED: CostPort real / anexos pós-Codex / provedor pagamento.
+BLOCKED: CostPort real / anexos pós-Codex / provedor pagamento (desbloqueado por port #177 margem).
 Sem merge/VPS. Vigília ativa. #153 HEAD=12c37e8b.
 
 ---

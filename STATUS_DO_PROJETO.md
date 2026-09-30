@@ -1,10 +1,26 @@
+## AUTÔNOMO — tip margem/custo contrato fail-closed (port #177) (2026-09-30T12:10Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#183** LiquidarReceberPagar CI SUCCESS |
+| Choice | Port tip do endurecimento **#177** (Codex) — validar custo/alçada sem inventar CostPort |
+| Branch | `cursor/comercial360-margem-custo-contrato-tip-392b` |
+| Draft PR | (criar) base tip #183 |
+| Base | tip #183 `cursor/comercial360-onda6-caixa-liquidar-tip-392b` |
+| Escopo | `toMicros` precisão ≤6; `validateMinimaBps` 0–10000 int → `COST_POLICY_INVALID`; fail porta propaga; retry reavalia |
+| Testes | comercial-margem-alcada 14/14 (unit+http) |
+| Colisão | Sem CostPort invent; sem editar #177 Codex; sem merge/VPS |
+| Próximo | CI tip; depois BLOCKED residual (CostPort real / anexos / provedor) |
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #183 CI SUCCESS (2026-09-30T11:32Z)
 
 | Campo | Valor |
 |---|---|
 | Tip | **#183** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/183 CI SUCCESS |
 | Stack Onda 6 tip | #180 CreditPort+032 → #181 EnviarParaCaixa → #182 CR↔Pedido → #183 LiquidarReceberPagar |
-| Parecer | **BLOCKED** — lotes tip-seguros Onda 6 sem CostPort/anexo **esgotados** |
+| Parecer | **BLOCKED** — lotes tip-seguros Onda 6 sem CostPort/anexo **esgotados** (desbloqueado por port #177 margem) |
 | Motivos | (1) CostPort BFF sem fonte de custo — inventar = BLOCKED; (2) anexos/origem/campanha colidem com Codex #50/#59–#62; (3) PIX/boleto/webhook/cobrança exigem provedor externo |
 | Ação | Vigília CI/#153 HEAD; sem merge/main/VPS; sem inventar porta |
 | Desbloqueio | CostPort real **ou** anexos pós-coordenação Codex **ou** provedor pagamento autorizado |
