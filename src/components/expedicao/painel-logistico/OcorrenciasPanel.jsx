@@ -27,7 +27,7 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
 
   const effectiveEmpresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = entrega?.group_id || entrega?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(entrega?.id && (effectiveEmpresaId || effectiveGroupId));
+  const contextoValido = Boolean(entrega?.id && effectiveEmpresaId && effectiveGroupId);
   const canCreateOccurrence = hasPermission("Expedicao", "Ocorrencias", "criar")
     || hasPermission("Expedicao", "Painel Logistico", "editar")
     || hasPermission("Expedicao", "Entregas", "editar");

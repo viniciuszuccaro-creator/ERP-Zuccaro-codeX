@@ -34,7 +34,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
-  const contextoBaseValido = Boolean(grupoAtual?.id || empresaAtual?.id || empresaId);
+  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const baseEmpresaId = empresaId || empresaAtual?.id || null;
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canConcluirSeparacao = hasPermission("Expedicao", "Separacao", "conferir") ||
     hasPermission("Expedicao", "Entrega", "conferir") ||
     hasPermission("Expedicao", "Separacao", "criar") ||

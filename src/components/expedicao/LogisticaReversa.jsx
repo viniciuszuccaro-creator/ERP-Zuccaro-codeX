@@ -33,7 +33,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
 
   const effectiveEmpresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = entrega?.group_id || entrega?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(entrega?.id && (effectiveEmpresaId || effectiveGroupId));
+  const contextoValido = Boolean(entrega?.id && effectiveEmpresaId && effectiveGroupId);
   const canProcess = hasPermission("Expedicao", "Logistica Reversa", "editar")
     || hasPermission("Expedicao", "Entregas", "editar")
     || hasPermission("Expedicao", "Painel Logistico", "editar");

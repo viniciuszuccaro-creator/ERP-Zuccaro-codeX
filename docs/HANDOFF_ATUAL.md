@@ -1,3 +1,15 @@
+## CURSOR — #197 CI SUCCESS + soft∨ + vigília #178 (2026-09-30T18:55Z)
+
+#197 CI SUCCESS. Soft∨→∧ em ocorrência/comprovante/notificador/reversa/chat.
+#178 HEAD `9df73886` ainda candidato (delta transição). Sem tip-port. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo operacional integrado + IntegracaoRomaneio canônica + soft∨ caminho crítico
+- **Falta:** #178 FINAL; soft∨ residual só em dashboard/config leitura
+- **Bloqueios:** tip Comercial; merge/VPS; import Empresas (frente legado)
+
+---
+
 ## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
 
 `IntegracaoRomaneio` conectado à policy canônica (Pedidos→Entrega create/reuse→romaneio→despacho+rollback→legado descritivo).

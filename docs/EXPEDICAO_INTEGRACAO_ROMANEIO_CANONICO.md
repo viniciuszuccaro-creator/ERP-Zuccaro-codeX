@@ -26,6 +26,11 @@ Export Empresas / reconciliação legado — frente do chat principal (não dupl
 6. Retry com mesmas entregas → reusa Romaneio (`Romaneio.integracao.retry`).
 7. Falha de update no meio → rollback + auditoria `Romaneio.integracao.rollback`.
 8. Pedido legado atualizado para Em Trânsito (coordenação Codex).
+9. Soft∨→∧ no caminho ocorrência/comprovante/notificador/reversa/chat (grupo∧empresa).
+
+## Soft∨ residual (fora do caminho crítico)
+
+Dashboards/config/financeiro com visão consolidada de grupo ainda usam `group ∨ empresa` de forma deliberada em alguns gates de leitura; mutações sensíveis do fluxo operacional já exigem ∧.
 
 ## Rollback de código
 

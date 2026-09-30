@@ -39,7 +39,7 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
 
   const effectiveEmpresaId = pedido?.empresa_id || entrega?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = pedido?.group_id || pedido?.grupo_id || entrega?.group_id || entrega?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(pedido?.id && (effectiveEmpresaId || effectiveGroupId));
+  const contextoValido = Boolean(pedido?.id && effectiveEmpresaId && effectiveGroupId);
   const canConfirmDelivery = hasPermission("Expedicao", "Comprovante Digital", "criar")
     || hasPermission("Expedicao", "Entregas", "editar")
     || hasPermission("Expedicao", "Estoque", "baixar")

@@ -1,3 +1,28 @@
+## CURSOR — #197 CI SUCCESS + soft∨ fluxo + vigília #178 (2026-09-30T18:55Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#197** | CI SUCCESS HEAD `d5b1e199` (+ soft∨ satélites em commit seguinte) |
+| Soft∨→∧ | SeparacaoConferencia base; Ocorrência; Comprovante×2; Notificador; Reversa; Chat; EnvioMsg |
+| Codex #178 | HEAD `9df73886` (delta: vincula transição ao status do serviço) — ainda “Correção candidata” |
+| CI #178 | frontend/concurrency SUCCESS; backend em curso |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Reservados | Pedido/Orçamento/026–035 intactos |
+| Próximo | Push soft∨; CI recheck; vigília FINAL #178 |
+
+### Quadro objetivo
+
+| Item | Status |
+|---|---|
+| Fluxo select→separar→romaneio→despacho→parcial/ocorrência→pendências | **Pronto** (#192–#197) |
+| Isolamento∧ / RBAC / unidades / idempotência / rollback | **Pronto** |
+| Soft∨ no caminho ocorrência/comprovante | **Pronto** (este lote) |
+| Soft∨ dashboards/config/financeiro leitura grupo | Residual deliberado |
+| #178 FINAL / tip Comercial | **Bloqueado** |
+| Merge/VPS/migration/import Empresas | **Bloqueado** |
+
+---
+
 ## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
 
 | Campo | Valor |
