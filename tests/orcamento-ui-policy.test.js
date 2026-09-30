@@ -28,6 +28,8 @@ import {
   ORCAMENTO_CANCEL_MOTIVO_MAX,
   todayOrcamentoValidadeCalendarDay,
   resolveOrcamentoResumoPreviewState,
+  resolveOrcamentoPrintPermission,
+  resolveOrcamentoSharePermission,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
 const form = () => ({
@@ -423,6 +425,18 @@ test('mapOrcamentoRowToForm recarrega campos canônicos sem inventar snapshots',
   assert.equal('numero' in mapped, false);
 });
 
+test('orcamento print/share RBAC sem fallback visualizar', () => {
+  const onlyView = (_m, _r, a) => a === 'visualizar';
+  assert.equal(resolveOrcamentoPrintPermission(onlyView), false);
+  assert.equal(resolveOrcamentoSharePermission(onlyView), false);
+  const printer = (_m, _r, a) => a === 'imprimir' || a === 'exportar';
+  assert.equal(resolveOrcamentoPrintPermission(printer), true);
+  assert.equal(resolveOrcamentoSharePermission(printer), false);
+  const sharer = (_m, _r, a) => a === 'compartilhar' || a === 'notificar';
+  assert.equal(resolveOrcamentoPrintPermission(sharer), false);
+  assert.equal(resolveOrcamentoSharePermission(sharer), true);
+});
+
 test('orcamento print/share gates fail-closed', () => {
   assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: '', empresaId: 'e', canPrint: true }).mode, 'context');
   assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: false }).mode, 'permission');
@@ -449,6 +463,12 @@ test('orcamento print/share gates fail-closed', () => {
 
 test('painel orçamento wire Imprimir/PDF e share fail-closed', async () => {
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(tab, /resolveOrcamentoPrintPermission/);
+  assert.match(tab, /resolveOrcamentoSharePermission/);
+  assert.match(tab, /const canPrint = resolveOrcamentoPrintPermission\(hasPermission\)/);
+  assert.match(tab, /const canShare = resolveOrcamentoSharePermission\(hasPermission\)/);
+  assert.doesNotMatch(tab, /canPrint = .* \|\| canView/);
+  assert.doesNotMatch(tab, /canShare = .* \|\| canPrint/);
   assert.match(tab, /evaluateOrcamentoPrintPdfUiGate/);
   assert.match(tab, /evaluateOrcamentoShareUiGate/);
   assert.match(tab, /orcamento-print-pdf/);

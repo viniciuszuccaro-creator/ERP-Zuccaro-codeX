@@ -1,7 +1,86 @@
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T15:32Z)
+
+#191 ok. #153=`12c37e8b`. #178 Codex `90533c2c` (mig 035) — **sem** tip-port.
+Sem CostPort/anexos/provedor → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T15:17Z)
+
+#191 ok. #153=`12c37e8b`. Sem desbloqueio → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T15:01Z)
+
+#191 ok. #153=`12c37e8b`. Sem desbloqueio → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T14:45Z)
+
+#191 ok. #153=`12c37e8b`. Sem desbloqueio → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T14:29Z)
+
+#191 ok. #153=`12c37e8b`. Sem desbloqueio → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T14:14Z)
+
+#191 ok. #153=`12c37e8b`. Sem desbloqueio → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:58Z)
+
+#191 ok. #153=`12c37e8b`. Sem CostPort/anexos/#178/provedor → **BLOCKED**.
+Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — PROXIMO = BLOCKED (2026-09-30T13:41Z)
+
+Pedido **PROXIMO**: tip-seguros esgotados pós-#191. Sem CostPort/anexos/#178/provedor.
+#153=`12c37e8b`. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:38Z)
+
+#191 ok. #153=`12c37e8b`. #178 Codex avançou (`1243190f`) — **sem** tip-port.
+Sem CostPort/anexos/provedor → **BLOCKED**. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:23Z)
+
+#191 CI ok. #153=`12c37e8b`. Sem CostPort/anexos/#178/provedor → **BLOCKED** mantido.
+Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — BLOCKED tip #191 (2026-09-30T13:06Z)
+
+#191 CI SUCCESS — RBAC print/share sem soft→canView. Stack tip #180→#191.
+**BLOCKED:** CostPort real / anexos pós-Codex / provedor / tip-port #178.
+#153 HEAD=`12c37e8b`. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — tip RBAC print/share sem canView (2026-09-30T13:05Z)
+
+#190 CI SUCCESS. Draft PR **#191** CI SUCCESS — print/share sem soft→canView.
+Pedido+Orçamento helpers + wire painéis. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip audit crédito override (2026-09-30T12:55Z)
 
-#189 CI SUCCESS. Draft PR **#190** — audit `credito_alcada_override` (paridade margem).
-Testes crédito 9/9. Sem merge/VPS. CI em curso.
+#189 CI SUCCESS. Draft PR **#190** CI SUCCESS — audit `credito_alcada_override`.
 
 ---
 

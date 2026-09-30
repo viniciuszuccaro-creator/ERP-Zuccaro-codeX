@@ -171,6 +171,18 @@ export function canUseOrcamentoAction(hasPermission, action, status = 'EM_ABERTO
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
 }
 
+/** Imprimir/PDF: só imprimir|exportar — sem fallback visualizar (fail-closed RBAC). */
+export function resolveOrcamentoPrintPermission(hasPermission) {
+  return canUseOrcamentoAction(hasPermission, 'imprimir')
+    || canUseOrcamentoAction(hasPermission, 'exportar');
+}
+
+/** Compartilhar: só compartilhar|notificar — sem cascata de visualizar/imprimir. */
+export function resolveOrcamentoSharePermission(hasPermission) {
+  return canUseOrcamentoAction(hasPermission, 'compartilhar')
+    || canUseOrcamentoAction(hasPermission, 'notificar');
+}
+
 /**
  * Validade vigente: validade_em (date YYYY-MM-DD ou ISO) ainda não passou.
  * Compara o fim do dia civil local da data informada quando só há YYYY-MM-DD

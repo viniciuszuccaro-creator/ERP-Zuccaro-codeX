@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, evaluateItemLinesGate, evaluateOrcamentoConvertUiGate, evaluateOrcamentoPrintPdfUiGate, evaluateOrcamentoShareUiGate, evaluateOrcamentoValidadeUiGate, resolveOrcamentoDetailSummaryUiState, evaluateOrcamentoCancelMotivoUiGate, clampOrcamentoCancelMotivo, ORCAMENTO_CANCEL_MOTIVO_MAX, isOrcamentoValidadeExpirada, mapOrcamentoRowToForm, microsToDecimal, openComercialResumoTextoWindow, orcamentoValidadeHint, resolveOrcamentoResumoPreviewState } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, resolveOrcamentoPrintPermission, resolveOrcamentoSharePermission, evaluateItemLinesGate, evaluateOrcamentoConvertUiGate, evaluateOrcamentoPrintPdfUiGate, evaluateOrcamentoShareUiGate, evaluateOrcamentoValidadeUiGate, resolveOrcamentoDetailSummaryUiState, evaluateOrcamentoCancelMotivoUiGate, clampOrcamentoCancelMotivo, ORCAMENTO_CANCEL_MOTIVO_MAX, isOrcamentoValidadeExpirada, mapOrcamentoRowToForm, microsToDecimal, openComercialResumoTextoWindow, orcamentoValidadeHint, resolveOrcamentoResumoPreviewState } from './orcamentoUiPolicy';
 import { evaluatePedidoDataEntregaUiGate } from './pedidoUiPolicy';
 import {
   applySimulacaoToForm,
@@ -155,8 +155,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
   const canSimular = canSimularVenda(hasPermission);
-  const canPrint = canUseOrcamentoAction(hasPermission, 'imprimir') || canUseOrcamentoAction(hasPermission, 'exportar') || canView;
-  const canShare = canUseOrcamentoAction(hasPermission, 'compartilhar') || canUseOrcamentoAction(hasPermission, 'notificar') || canPrint;
+  const canPrint = resolveOrcamentoPrintPermission(hasPermission);
+  const canShare = resolveOrcamentoSharePermission(hasPermission);
   const contextReady = Boolean(groupId && empresaId && actorId);
   const http = useMemo(() => createHttpApiClient({
     getScope: () => ({ groupId, empresaId, actorId, actorEmail }),
