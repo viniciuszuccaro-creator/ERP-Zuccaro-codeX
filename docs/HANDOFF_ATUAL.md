@@ -1,3 +1,10 @@
+## CURSOR — Expedição #194 CI + vigília #178 (2026-09-30T16:13Z)
+
+Stack **#192–#194** CI SUCCESS. #178 `03fd92d2` ainda candidato (não final) — sem tip-port.
+Soft contexto expedicao/logistica esgotado no inventário. Sem merge/VPS. Vigília 15min.
+
+---
+
 ## CURSOR — Expedição roteirização fail-closed (2026-09-30T16:02Z)
 
 #193 CI SUCCESS. Draft PR **#194** — mapa contexto∧ + filtros.

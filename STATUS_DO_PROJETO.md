@@ -1,3 +1,16 @@
+## CURSOR — Expedição #194 CI SUCCESS + vigília #178 (2026-09-30T16:13Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#194** CI SUCCESS — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/194 |
+| HEAD tip | `4656b215` |
+| Stack | **#192→#193→#194** (filtros → detalhe/separação → roteirização) |
+| Codex #178 | HEAD `03fd92d2` CI SUCCESS — body ainda “Correção candidata” (**não** final); commit preflight histórico pedidos; **sem** tip-port / sem revisão consolidada |
+| Soft `group\|\|empresa` em expedicao/logistica jsx | **esgotado** neste inventário |
+| Próximo | Vigília candidato final #178; residual Expedição só se gap novo fora reserva |
+
+---
+
 ## CURSOR — Expedição roteirização contexto+filtros (pós-#193) (2026-09-30T16:02Z)
 
 | Campo | Valor |
