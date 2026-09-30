@@ -5,6 +5,7 @@
 | Tip anterior | **#181** EnviarParaCaixa CI SUCCESS |
 | Choice | **ContaReceber↔Pedido** vínculo multiempresa fail-closed (Onda 6) |
 | Branch | `cursor/comercial360-onda6-cr-pedido-tip-392b` |
+| Draft PR | **#182** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/182 |
 | Base | tip #181 caixa envio |
 | Escopo | `assertPedidoVinculoTitulo` / `filterPedidosParaTitulo` / `applyPedidoVinculoAoForm`; form+vinculos+local create; limpa pedido ao trocar empresa |
 | Reuso | Patterns #66 (não edita branch antiga) |

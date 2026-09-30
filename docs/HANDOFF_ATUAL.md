@@ -1,8 +1,8 @@
 ## AUTÔNOMO — tip ContaReceber↔Pedido (2026-09-30T11:25Z)
 
 Branch `cursor/comercial360-onda6-cr-pedido-tip-392b` empilhada em #181:
-vínculo Pedido no ContaReceber fail-closed (mesmo group/empresa). Patterns #66.
-Sem merge/VPS.
+Draft PR **#182** — vínculo Pedido no ContaReceber fail-closed (mesmo group/empresa). Patterns #66.
+Sem merge/VPS. CI em curso.
 
 ---
 
