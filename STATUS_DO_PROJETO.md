@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip audit override aprovar-credito (pós-#189) (2026-09-30T12:55Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#189** print/share snapshot CI SUCCESS |
+| Choice | Fechar ressalva revisão: audit `credito_alcada_override` (paridade margem) |
+| Branch | `cursor/comercial360-credito-audit-override-tip-392b` |
+| Draft PR | (criar) base tip #189 |
+| Escopo | `CreditoAvaliacao.overridden` + `auditCreditoOverride` em create/convert/update |
+| Testes | comercial-onda6-credito-pedido 9/9 |
+| Colisão | Sem CostPort; sem anexos; sem merge/VPS |
+| Próximo | CI; residual RBAC print soft ou BLOCKED |
+
+---
+
 ## AUTÔNOMO — tip print/share bloqueia snapshot_gap (pós-#188) (2026-09-30T12:48Z)
 
 | Campo | Valor |
@@ -7,9 +22,9 @@
 | Branch | `cursor/comercial360-print-share-snapshot-tip-392b` |
 | Draft PR | **#189** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/189 |
 | Escopo | `evaluatePedido/Orcamento PrintPdf+Share` + purpose `print` no gap hint |
-| Testes | pedido+orcamento ui-policy 49/49 |
+| Testes | pedido+orcamento ui-policy 49/49; CI SUCCESS |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
-| Próximo | CI; residual audit `aprovar-credito` ou BLOCKED |
+| Próximo | audit aprovar-credito |
 
 ---
 
