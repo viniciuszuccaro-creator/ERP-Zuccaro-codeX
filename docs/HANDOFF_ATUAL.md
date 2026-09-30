@@ -1,7 +1,23 @@
+## AUTÔNOMO — BLOCKED tip #184 (2026-09-30T12:14Z)
+
+Tip **#184** CI SUCCESS (port #177 margem). Stack #180→#184.
+BLOCKED: CostPort real / anexos pós-Codex / provedor / tip-port #178 autorizado.
+#153 HEAD=`12c37e8b`. Sem merge/VPS. Vigília 15min.
+
+---
+
+## AUTÔNOMO — tip margem/custo contrato fail-closed (2026-09-30T12:10Z)
+
+Branch `cursor/comercial360-margem-custo-contrato-tip-392b` empilhada em #183:
+Draft PR **#184** — port tip #177 (`toMicros` ≤6; `validateMinimaBps` → COST_POLICY_INVALID; sem inventar CostPort).
+Testes margem 14/14. CI SUCCESS. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #183 (2026-09-30T11:32Z)
 
 Tip **#183** CI SUCCESS. Stack Onda 6 tip #180→#183.
-BLOCKED: CostPort real / anexos pós-Codex / provedor pagamento.
+BLOCKED: CostPort real / anexos pós-Codex / provedor pagamento (desbloqueado por port #177 margem).
 Sem merge/VPS. Vigília ativa. #153 HEAD=12c37e8b.
 
 ---
