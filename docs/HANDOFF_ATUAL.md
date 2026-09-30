@@ -1,6 +1,6 @@
 ## CURSOR — Expedição detalhe/separação fail-closed (2026-09-30T15:55Z)
 
-#192 CI SUCCESS. Branch `cursor/expedicao-detalhe-separacao-failclosed-392b` — detalhe∧ + assert update/prova; separação assertSeparacaoOnCreate.
+#192 CI SUCCESS. Draft PR **#193** — detalhe∧ + assert update/prova; separação assertSeparacaoOnCreate.
 Reservados Codex #178 intactos. Sem merge/VPS. CI em curso.
 
 ---
