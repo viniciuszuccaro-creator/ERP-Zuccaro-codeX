@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip print/share bloqueia snapshot_gap (pós-#188) (2026-09-30T12:48Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#188** data entrega CI SUCCESS |
+| Choice | Fechar ressalva Onda4/5: print/share fail-closed em `snapshot_gap` (paridade resumo) |
+| Branch | `cursor/comercial360-print-share-snapshot-tip-392b` |
+| Draft PR | (criar) base tip #188 |
+| Escopo | `evaluatePedido/Orcamento PrintPdf+Share` + purpose `print` no gap hint |
+| Testes | pedido+orcamento ui-policy 49/49 |
+| Colisão | Sem CostPort; sem anexos; sem merge/VPS |
+| Próximo | CI; residual audit `aprovar-credito` ou BLOCKED |
+
+---
+
 ## AUTÔNOMO — tip Pedido data entrega local+RETIRADA (pós-#187) (2026-09-30T12:42Z)
 
 | Campo | Valor |
@@ -7,9 +22,9 @@
 | Branch | `cursor/comercial360-pedido-entrega-local-tip-392b` |
 | Draft PR | **#188** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/188 |
 | Escopo | `pedidoUiPolicy` + `PedidoCanonicoPanel`; `buildPedidoPayload` alinhado ao gate |
-| Testes | pedido-ui-policy 25/25 |
+| Testes | pedido-ui-policy 25/25; CI SUCCESS |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
-| Próximo | CI; depois print/share+snapshot_gap ou audit crédito |
+| Próximo | print/share+snapshot_gap |
 
 ---
 
