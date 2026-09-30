@@ -9,7 +9,7 @@ const MICROS = 1_000_000n;
 
 function toMicros(value: string): bigint {
   const raw = String(value ?? '0').trim();
-  if (!/^-?\d+(\.\d+)?$/.test(raw)) {
+  if (!/^-?\d+(\.\d{1,6})?$/.test(raw)) {
     throw new AppError(422, 'VALIDATION_ERROR', 'Invalid money amount');
   }
   const neg = raw.startsWith('-');
@@ -61,12 +61,19 @@ export function lineAbaixoDaMargemMinima(
   if (costMicros < 0n) {
     throw new AppError(422, 'VALIDATION_ERROR', 'Invalid unit cost');
   }
-  const lim = Number.isFinite(minimaBps) ? Math.max(0, Math.trunc(minimaBps)) : 0;
+  const lim = validateMinimaBps(minimaBps);
   if (netMicros <= 0n) {
     // Líquido zerado/negativo com custo conhecido → abaixo da mínima.
     return costMicros > 0n || lim > 0;
   }
   return (netMicros - costMicros) * 10000n < netMicros * BigInt(lim);
+}
+
+function validateMinimaBps(value: number): number {
+  if (!Number.isInteger(value) || value < 0 || value > 10000) {
+    throw new AppError(422, 'COST_POLICY_INVALID', 'Invalid minimum margin policy');
+  }
+  return value;
 }
 
 export function computeMargemBps(netMicros: bigint, costMicros: bigint): number | null {
@@ -81,7 +88,7 @@ export async function evaluateMargemAlcada(options: {
   costs: ComercialCostPort;
   defaultMinimaBps?: number;
 }): Promise<{ evaluated: MargemLineResult[]; anyAbaixo: boolean }> {
-  const defaultMin = options.defaultMinimaBps ?? MARGEM_MINIMA_BPS_DEFAULT;
+  const defaultMin = validateMinimaBps(options.defaultMinimaBps ?? MARGEM_MINIMA_BPS_DEFAULT);
   const evaluated: MargemLineResult[] = [];
   let anyAbaixo = false;
 
@@ -107,7 +114,7 @@ export async function evaluateMargemAlcada(options: {
       throw new AppError(422, 'VALIDATION_ERROR', 'Invalid unit cost');
     }
     const costMicros = (qty * unitCost) / MICROS;
-    const minimaBps = costRow.margem_minima_bps ?? defaultMin;
+    const minimaBps = validateMinimaBps(costRow.margem_minima_bps ?? defaultMin);
     const abaixo = lineAbaixoDaMargemMinima(net, costMicros, minimaBps);
     if (abaixo) anyAbaixo = true;
     evaluated.push({
@@ -116,7 +123,7 @@ export async function evaluateMargemAlcada(options: {
       costMicros,
       margemBps: computeMargemBps(net, costMicros),
       abaixoDaMinima: abaixo,
-      minimaBps: Number.isFinite(minimaBps) ? Math.max(0, Math.trunc(minimaBps)) : 0,
+      minimaBps,
     });
   }
 

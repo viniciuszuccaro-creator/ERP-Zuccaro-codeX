@@ -54,6 +54,33 @@ test('custo null para o item → skip da linha', async () => {
   }));
 });
 
+test('custo com precisão excessiva ou política inválida bloqueia sem rebaixar alçada', async () => {
+  const item = { produto_id: produtoId, unidade_id: unidadeId, quantidade: '1', preco_unitario: '10', desconto: '0' };
+  for (const costs of [stubCost('10.0000009'), stubCost('9', -1), stubCost('9', 0.5), stubCost('9', Number.NaN), stubCost('9', 10001)]) {
+    await assert.rejects(
+      () => assertMargemDentroDaAlcadaOuAprovar({ groupId, empresaId, items: [item], costs, canAprovar: true }),
+      (err: any) => err?.statusCode === 422,
+    );
+  }
+});
+
+test('falha da porta de custo bloqueia e retentativa reavalia no escopo exato', async () => {
+  const item = { produto_id: produtoId, unidade_id: unidadeId, quantidade: '1', preco_unitario: '10', desconto: '0' };
+  let attempts = 0;
+  const costs: ComercialCostPort = {
+    getUnitCost: async (scope) => {
+      assert.deepEqual(scope, { groupId, empresaId, produtoId, unidadeMedidaId: unidadeId });
+      attempts++;
+      if (attempts === 1) throw new Error('custo indisponivel');
+      return { custo_unitario: '11', margem_minima_bps: 0 };
+    },
+  };
+  const options = { groupId, empresaId, items: [item], costs, canAprovar: false };
+  await assert.rejects(() => assertMargemDentroDaAlcadaOuAprovar(options), /custo indisponivel/);
+  await assert.rejects(() => assertMargemDentroDaAlcadaOuAprovar(options), (err: any) => err?.code === 'MARGEM_ALCADA_DENIED');
+  assert.equal(attempts, 2);
+});
+
 test('preço >= custo com mínima 0 → ok sem aprovar', async () => {
   await assert.doesNotReject(() => assertMargemDentroDaAlcadaOuAprovar({
     groupId, empresaId,
