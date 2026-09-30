@@ -1,3 +1,17 @@
+## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#195** | CI SUCCESS HEAD `2db2ca6b` (frontend+backend) |
+| Stack Expedição | **#192→#195** consolidada (filtros→detalhe/separação→roteirização→fluxo) |
+| Codex #178 | HEAD `98820d20` CI SUCCESS — body ainda “Correção candidata” (**não** final); commit preserva itens pedido convertido; **sem** tip-port / sem revisão consolidada |
+| Homologação | `docs/EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md` |
+| Pedido legado | `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — coordenação Codex |
+| Colisão | Sem merge/VPS |
+| Próximo | Vigília FINAL #178; residual Expedição só se gap novo fora reserva |
+
+---
+
 ## CURSOR — Expedição #195 CI fix sequencia_rota (2026-09-30T17:00Z)
 
 | Campo | Valor |

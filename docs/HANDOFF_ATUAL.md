@@ -1,3 +1,10 @@
+## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
+
+Draft PR **#195** CI SUCCESS (`2db2ca6b`). Stack Expedição #192–#195 ok.
+#178 `98820d20` ainda candidato (não final) — sem tip-port. Sem merge/VPS. Vigília 15min.
+
+---
+
 ## CURSOR — Expedição fluxo consolidado (2026-09-30T17:00Z)
 
 Draft PR **#195**. Candidata `cursor/expedicao-fluxo-consolidado-392b` sobre tip #194.
