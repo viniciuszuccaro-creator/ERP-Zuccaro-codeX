@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T20:28Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
 ## CURSOR — vigília #178 + CI #197 (2026-09-30T20:23Z)
 
 #178 `790e4be1` ainda candidato (CI OK). Sem tip-port. #197 `7d4f445e` CI SUCCESS (persistência fail-closed). Homologação SPA pendente. Merge/VPS bloqueado. Vigília 15min.
