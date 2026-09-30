@@ -65,6 +65,38 @@ test('politica pura: total em micros e avaliacao fail-closed', () => {
   assert.match(none.motivo, /sem limite/i);
 });
 
+test('crédito: precisão >6 casas em item/limite bloqueia sem truncar (paridade #184)', () => {
+  assert.throws(
+    () => computePedidoTotalMicros([{ ...items[0], preco_unitario: '50.0000001' }]),
+    (err: any) => err?.statusCode === 422 && err?.code === 'VALIDATION_ERROR',
+  );
+  assert.throws(
+    () => evaluatePedidoCreditoSnapshot({
+      items,
+      limite_credito: '200.0000009',
+      limite_utilizado: '0',
+    }),
+    (err: any) => err?.statusCode === 422 && err?.code === 'VALIDATION_ERROR',
+  );
+  assert.throws(
+    () => evaluatePedidoCreditoSnapshot({
+      items,
+      limite_credito: '200.000000',
+      limite_utilizado: '1.1234567',
+    }),
+    (err: any) => err?.statusCode === 422 && err?.code === 'VALIDATION_ERROR',
+  );
+  // 6 casas continua válido
+  assert.equal(
+    evaluatePedidoCreditoSnapshot({
+      items,
+      limite_credito: '200.000000',
+      limite_utilizado: '1.123456',
+    }).aprovado,
+    true,
+  );
+});
+
 test('assertCredito: sem porta ou snapshot null nao inventa; porta insuficiente exige alçada', async () => {
   const skipped = await assertCreditoSuficienteOuAprovar({
     groupId, empresaId, clienteEmpresaId: clienteId, items, credit: null, canAprovarCredito: false,

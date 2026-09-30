@@ -1,10 +1,50 @@
+## AUTÔNOMO — tip crédito precisão fail-closed (paridade #184) (2026-09-30T12:30Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#184** margem/custo CI SUCCESS |
+| Choice | Harden `comercialCreditoPolicy.toMicros` ≤6 casas (paridade tip #184; achado na revisão) |
+| Branch | `cursor/comercial360-credito-precisao-tip-392b` |
+| Draft PR | **#186** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/186 |
+| Escopo | CreditPort: rejeita precisão >6 em item/limite (`VALIDATION_ERROR`); sem inventar crédito |
+| Testes | comercial-onda6-credito-pedido (focado) |
+| Colisão | Sem CostPort; sem #178; sem Codex/merge/VPS |
+| Próximo | CI tip; residual ainda CostPort real / anexos / provedor / #178 |
+
+---
+
+## REVISÃO IMPLANTAÇÕES — tip Cursor Comercial 360 (2026-09-30T12:30Z)
+
+| Faixa | PRs tip | CI | Parecer |
+|---|---|---|---|
+| Onda 4/5 polish UX | #154–#174 | SUCCESS (stack) | **APTA_TIP** — fail-closed UI (crédito/margem/dirty/entrega/convert/CSV/cancel/validade/print/share/detail/status/history); sem CostPort invent |
+| Onda 6 CreditPort | **#180** + mig 032 | SUCCESS | **APTA_TIP** — `createClienteEmpresaCreditPort` + `assertCredito` create/convert/update; null não inventa; RBAC `aprovar-credito`; testes 8/8 |
+| Onda 6 caixa envio | **#181** | SUCCESS | **APTA_TIP** — `assertTitulosProntosParaCaixa` group∧empresa; bloqueia liquidado/cross-tenant |
+| Onda 6 CR↔Pedido | **#182** | SUCCESS | **APTA_TIP** — `assertPedidoVinculoTitulo` mesmo group/empresa; form helper |
+| Onda 6 liquidar | **#183** | SUCCESS | **APTA_TIP** — LiquidarReceberPagar reusa política caixa; queryKey tenant |
+| Onda 6 margem port | **#184** | SUCCESS | **APTA_TIP** — tip-port #177; `toMicros`≤6; `validateMinimaBps`; sem inventar CostPort |
+| Mapper #48/#110 | #110 | SUCCESS | **APTA_TIP** (legado sintético) — fora do tip Comercial runtime |
+
+### Ressalvas (não bloqueiam tip)
+1. CreditPort `toMicros` estava mais permissivo que margem → **lote tip em curso** (paridade #184).
+2. CostPort BFF **ainda null** no wire — correto (não inventa); bloqueia Onda 7/ATP até fonte real.
+3. #178 (conversão/snapshots Codex) **não tip-port** — invasivo na stack Codex; exige autorização explícita.
+4. Anexos/origem #50/#59–#62 — colisão; não reimplementar.
+5. Pilha draft empilhada — **não merge/main/VPS** neste agente.
+6. #153 HEAD=`12c37e8b` — NÃO_APTA merge (ensaio); sem re-revisão enquanto HEAD estável.
+
+### Desbloqueios futuros
+CostPort real · anexos pós-coordenação · provedor pagamento · autorização tip-port #178 · apply mig 032 em ambiente autorizado.
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #184 CI SUCCESS (2026-09-30T12:14Z)
 
 | Campo | Valor |
 |---|---|
 | Tip | **#184** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/184 CI SUCCESS |
 | Stack tip | Onda 6 #180→#183 + margem tip-port #184 (#177) |
-| Parecer | **BLOCKED** — lotes tip-seguros Comercial 360 **esgotados** |
+| Parecer | **BLOCKED** — lotes tip-seguros Comercial 360 **esgotados** (desbloqueado por revisão → crédito precisão) |
 | Motivos | (1) CostPort BFF sem fonte — inventar = BLOCKED; (2) anexos/origem/campanha colidem Codex #50/#59–#62; (3) PIX/boleto/webhook exigem provedor; (4) #178 conversão/snapshots invasivo na stack Codex (não tip-port seguro); (5) mapper #110/#48 já CI SUCCESS |
 | Ação | Vigília CI/#153 HEAD; sem merge/main/VPS; sem inventar porta |
 | Desbloqueio | CostPort real **ou** anexos pós-Codex **ou** provedor pagamento **ou** autorização tip-port #178 |

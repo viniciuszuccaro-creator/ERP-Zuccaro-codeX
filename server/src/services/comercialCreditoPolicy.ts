@@ -10,7 +10,8 @@ const MICROS = 1_000_000n;
 
 function toMicros(value: string): bigint {
   const raw = String(value ?? '0').trim();
-  if (!/^-?\d+(\.\d+)?$/.test(raw)) {
+  // Paridade tip #184 / margem: precisão >6 casas não trunca — bloqueia.
+  if (!/^-?\d+(\.\d{1,6})?$/.test(raw)) {
     throw new AppError(422, 'VALIDATION_ERROR', 'Invalid money amount');
   }
   const neg = raw.startsWith('-');
