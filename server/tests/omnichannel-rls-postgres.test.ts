@@ -57,6 +57,18 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.equal(transition,null);
       assert.equal((await repo.get(scope,secondId))?.status,'CANCELADO');
       assert.equal((await repo.history(scope,secondId)).length,priorHistory);
+      const third=await f.send({...f.envelope,idempotencyKey:randomUUID()},{nonce:randomUUID()});
+      assert.equal(third.status,201);
+      const thirdId=third.body.data.id;
+      const checked=await repo.get(scope,thirdId);
+      assert.ok(checked);
+      assert.equal(checked.status,'EM_ABERTO');
+      await f.pg.query("UPDATE pedidos SET status='PRONTO_RETIRADA' WHERE id=$1",[thirdId]);
+      const thirdHistory=(await repo.history(scope,thirdId)).length;
+      const staleCancel=await repo.changeStatus(scope,thirdId,'CANCELADO',identity.actorId,undefined,f.pg as never,checked.status);
+      assert.equal(staleCancel,null);
+      assert.equal((await repo.get(scope,thirdId))?.status,'PRONTO_RETIRADA');
+      assert.equal((await repo.history(scope,thirdId)).length,thirdHistory);
     } finally { await f.close(); }
   });
 

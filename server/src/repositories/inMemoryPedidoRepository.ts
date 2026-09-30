@@ -149,9 +149,9 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     return clone(updated);
   }
 
-  async changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, _executor?: DbQueryExecutor, expectedStatus?: PedidoStatus): Promise<Pedido | null> {
     const current = await this.get(scope, id);
-    if (!current) return null;
+    if (!current || (expectedStatus !== undefined && current.status !== expectedStatus)) return null;
     const now = new Date().toISOString();
     const updated = { ...current, status, ativo: status !== 'CANCELADO', updated_at: now };
     this.rows.set(id, updated);

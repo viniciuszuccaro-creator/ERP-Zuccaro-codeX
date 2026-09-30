@@ -171,13 +171,14 @@ export class PostgresPedidoRepository implements PedidoRepository {
     });
   }
 
-  async changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor, expectedStatus?: PedidoStatus): Promise<Pedido | null> {
     return this.run(executor, async (query) => {
       const current = await this.get(scope, id, query);
       if (!current) return null;
+      if (expectedStatus !== undefined && current.status !== expectedStatus) return null;
       const updated = await query.query<{ id: string }>(
         'UPDATE pedidos SET status=$4,ativo=$5,updated_by=$6 WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status=$7 RETURNING id',
-        [id, scope.groupId, scope.empresaId, status, status !== 'CANCELADO', actorId, current.status],
+        [id, scope.groupId, scope.empresaId, status, status !== 'CANCELADO', actorId, expectedStatus ?? current.status],
       );
       if (updated.rows.length !== 1) return null;
       await query.query('INSERT INTO pedido_historico(group_id,empresa_id,pedido_id,status_anterior,status_novo,actor_id,motivo) VALUES($1,$2,$3,$4,$5,$6,$7)', [scope.groupId, scope.empresaId, id, current.status, status, actorId, motivo ?? null]);

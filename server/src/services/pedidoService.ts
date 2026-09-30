@@ -365,7 +365,7 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
       if (!this.allowedTransition(before, target as PedidoStatus)) this.stateConflict();
-      const after = await this.repo.changeStatus(scope, id, target as PedidoStatus, ctx.actorId!, motivo as string | undefined, executor);
+      const after = await this.repo.changeStatus(scope, id, target as PedidoStatus, ctx.actorId!, motivo as string | undefined, executor, before.status);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
       return after;
@@ -386,7 +386,7 @@ export class PedidoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requirePedido(scope, id, executor);
       this.requireOpen(before);
-      const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor);
+      const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor, before.status);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
       return after;
