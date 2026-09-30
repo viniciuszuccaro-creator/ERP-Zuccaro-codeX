@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T19:27Z)
+
+#178 HEAD `0596a763` (delta: histórico pré-025/026) — ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T19:21Z)
 
 #178 HEAD `49ec5d97` (delta preflight 026) — ainda candidato. Sem tip-port. #197 OK. Vigília 15min.
