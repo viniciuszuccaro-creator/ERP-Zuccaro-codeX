@@ -186,6 +186,49 @@ export const resolveSeparacaoConclusion = ({
 };
 
 /**
+ * Quantidades pendentes após entrega parcial/total (acompanhamento operacional).
+ * @param {ExpedicaoRecord} entrega
+ */
+export const resolveQuantidadesPendentesEntrega = (entrega = {}) => {
+  const parcial = entrega.entrega_parcial && typeof entrega.entrega_parcial === 'object'
+    ? entrega.entrega_parcial
+    : {};
+  const quantidadePedida = Number(
+    parcial.quantidade_pedida
+    || entrega.quantidade_total
+    || entrega.volumes
+    || 0,
+  );
+  const st = normalizeEntregaStatus(entrega.status);
+  const entregueTotal = st.includes('entregue') && !st.includes('parcial') && !st.includes('frustr');
+  const quantidadeEntregue = entregueTotal
+    ? (quantidadePedida > 0 ? quantidadePedida : Number(parcial.quantidade_entregue) || 0)
+    : Number(parcial.quantidade_entregue) || 0;
+  const pedidaSafe = Number.isFinite(quantidadePedida) && quantidadePedida > 0 ? quantidadePedida : 0;
+  const entregueSafe = Number.isFinite(quantidadeEntregue) && quantidadeEntregue > 0 ? quantidadeEntregue : 0;
+  const pendente = pedidaSafe > 0 ? Math.max(0, pedidaSafe - entregueSafe) : (st.includes('parcial') ? null : 0);
+  return {
+    quantidade_pedida: pedidaSafe || null,
+    quantidade_entregue: entregueSafe,
+    quantidade_pendente: pendente,
+    parcial: Boolean(st.includes('parcial') || parcial.ativada),
+  };
+};
+
+/**
+ * Persistência multi-etapa: compensação (rollback) ≠ transação atômica única.
+ * Despacho de N entregas = N updates; falha no meio exige compensação explícita.
+ */
+export const PERSISTENCIA_EXPEDICAO = Object.freeze({
+  romaneioCreate: 'atomico_policy', // assertRomaneioOnCreate decide create|reuse numa decisão
+  entregaCreate: 'atomico_policy',
+  despachoPatches: 'compensacao', // applyDespachoPatchesWithRollback
+  integracaoRomaneio: 'compensacao', // create Entregas + Romaneio + patches + Pedido legado
+  logisticaReversa: 'compensacao', // Entrega + ContaReceber + estoque + notificação (sem TX única)
+  registroFinal: 'atomico_policy', // resolveRegistroEntregaFinal + um update
+});
+
+/**
  * Seleciona entregas elegíveis para romaneio no contexto da empresa (fail-closed cruzado).
  * @param {ExpedicaoRecord[]} entregas
  * @param {{
@@ -420,6 +463,12 @@ export const resolveRegistroEntregaFinal = ({
       throw new Error('Quantidade entregue obrigatoria na entrega parcial.');
     }
     status = 'Entrega Parcial';
+    const quantidadePedida = toQty(
+      before.entrega_parcial?.quantidade_pedida
+      || before.quantidade_total
+      || before.volumes
+      || 0,
+    );
     patch = {
       ...patch,
       status,
@@ -431,6 +480,7 @@ export const resolveRegistroEntregaFinal = ({
       entrega_parcial: {
         ativada: true,
         quantidade_entregue: toQty(quantidade_entregue),
+        ...(quantidadePedida > 0 ? { quantidade_pedida: quantidadePedida } : {}),
       },
     };
   } else {
@@ -528,7 +578,8 @@ export const filterEntregasPendencias = (entregas = [], {
     })
     .map((row) => {
       const pendencia = classifyEntregaPendencia(row, now);
-      return { ...row, pendencia };
+      const quantidades = resolveQuantidadesPendentesEntrega(row);
+      return { ...row, pendencia, quantidades };
     })
     .filter((row) => row.pendencia?.tipo)
     .filter((row) => !tipoSet || tipoSet.has(row.pendencia.tipo))

@@ -1,3 +1,25 @@
+## CURSOR — pacote Expedição fechado no tip #197 (2026-09-30T19:55Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#197** — pacote grande conclusão fluxo |
+| Doc | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
+| Lacunas | filtro cliente coerente listagem/mapa/romaneio; devolução assert; qtd pendentes; compensação≠atômico |
+| Testes | expedicao-fluxo + entrega-policy **32/32** |
+| Codex #178 | ainda candidata `0596a763` — sem tip-port |
+| Homologação SPA | **Pendente** |
+| Externas | WhatsApp/roteirizador/assinatura serviço — **pendentes explícitas** |
+| Merge/VPS | **Bloqueado** |
+
+### Quadro
+
+| Pronto p/ integração | Falta | Bloqueios |
+|---|---|---|
+| Fluxo 1–6 + filtros coerentes + testes | Homologação humana | #178 FINAL |
+| Compensação documentada | Tip Comercial | Merge/VPS/import Empresas |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T19:52Z)
 
 | Campo | Valor |

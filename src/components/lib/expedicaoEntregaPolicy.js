@@ -348,6 +348,7 @@ export const isEntregaFutura = (entrega = {}, now = new Date()) => {
 export const normalizeEntregaListFilters = (input = {}) => {
   const status = firstText(input.status) || 'todos';
   const empresaId = firstText(input.empresaId, input.empresa_id);
+  const clienteId = firstText(input.clienteId, input.cliente_id);
   const cidade = firstText(input.cidade).toLowerCase();
   const dataDe = calendarDayFromValue(input.dataDe || input.data_de);
   const dataAte = calendarDayFromValue(input.dataAte || input.data_ate);
@@ -357,6 +358,7 @@ export const normalizeEntregaListFilters = (input = {}) => {
   return {
     status: status || 'todos',
     empresaId,
+    clienteId,
     cidade,
     dataDe,
     dataAte,
@@ -378,6 +380,10 @@ export const matchEntregaListFilters = (entrega = {}, filters = normalizeEntrega
   if (filters.empresaId) {
     const empresa = firstText(entrega.empresa_id, entrega.empresa_responsavel_id);
     if (empresa !== filters.empresaId) return false;
+  }
+
+  if (filters.clienteId) {
+    if (firstText(entrega.cliente_id) !== filters.clienteId) return false;
   }
 
   if (filters.cidade) {

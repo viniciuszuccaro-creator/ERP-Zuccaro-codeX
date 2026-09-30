@@ -11,6 +11,8 @@ import { RotateCcw, AlertTriangle } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+import { PERSISTENCIA_EXPEDICAO } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -78,7 +80,8 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         throw new Error("Processamento cancelado pelo usuario.");
       }
 
-      await updateInContext("Entrega", entrega.id, {
+      // Compensação multi-etapa (não TX atômica): Entrega → ContaReceber → estoque → notificação.
+      const entregaPatch = {
         status: "Devolvido",
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
@@ -86,8 +89,10 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         entrega_frustrada: {
           motivo: motivoLimpo,
           detalhes: detalhesLimpos,
-          tentativa_numero: 1,
-          reagendamento: null
+          tentativa_numero: Number(entrega.entrega_frustrada?.tentativa_numero || 0) + 1,
+          reagendamento: null,
+          acao_reversa: acao,
+          persistencia: PERSISTENCIA_EXPEDICAO.logisticaReversa,
         },
         historico_status: [
           ...(entrega.historico_status || []),
@@ -95,10 +100,12 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
             status: "Devolvido",
             data_hora: new Date().toISOString(),
             usuario: user?.full_name || user?.email || "Sistema",
-            observacao: `Logistica reversa processada. Motivo: ${motivoLimpo}. Acao: ${acao}`
-          }
-        ]
-      });
+            observacao: `Logistica reversa processada. Motivo: ${motivoLimpo}. Acao: ${acao}`,
+          },
+        ],
+      };
+      assertEntregaOnUpdate({ before: entrega, patch: entregaPatch });
+      await updateInContext("Entrega", entrega.id, entregaPatch);
 
       let ped = null;
       if (entrega.pedido_id) {

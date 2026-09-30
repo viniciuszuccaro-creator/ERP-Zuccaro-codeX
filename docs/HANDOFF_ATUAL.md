@@ -1,3 +1,16 @@
+## CURSOR — pacote Expedição #197 (2026-09-30T19:55Z)
+
+Pacote fechado: filtros cliente coerentes, devolução assert, qtd pendentes, compensação≠atômico.
+Doc: `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`. Testes 32/32.
+#178 ainda candidato. Homologação SPA pendente. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo operacional completo + candidata documentada
+- **Falta:** homologação SPA; WhatsApp/roteirizador/assinatura como serviço
+- **Bloqueios:** #178 FINAL; merge/VPS; import Empresas
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T19:52Z)
 
 #178 `0596a763` ainda candidato. Sem tip-port. Homologação SPA pendente. Vigília 15min.

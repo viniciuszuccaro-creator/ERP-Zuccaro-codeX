@@ -25,6 +25,8 @@ import {
   selectPedidosParaRomaneio,
   selectPedidosParaSeparacao,
   applyDespachoPatchesWithRollback,
+  resolveQuantidadesPendentesEntrega,
+  PERSISTENCIA_EXPEDICAO,
 } from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
 const checklistOk = {
@@ -980,4 +982,73 @@ test('candidata #192–#197: Pedido→separação→romaneio→despacho→parcia
   // Falha de auditoria sobe
   store.state.failAudit = true;
   assert.throws(() => store.audit({ acao: 'probe' }), /auditar/);
+});
+
+test('quantidades pendentes e compensação≠atômico no despacho/reversa', () => {
+  assert.equal(PERSISTENCIA_EXPEDICAO.despachoPatches, 'compensacao');
+  assert.equal(PERSISTENCIA_EXPEDICAO.registroFinal, 'atomico_policy');
+  assert.equal(PERSISTENCIA_EXPEDICAO.logisticaReversa, 'compensacao');
+  assert.equal(PERSISTENCIA_EXPEDICAO.romaneioCreate, 'atomico_policy');
+
+  const parcial = resolveQuantidadesPendentesEntrega({
+    status: 'Entrega Parcial',
+    volumes: 10,
+    entrega_parcial: { ativada: true, quantidade_entregue: 4, quantidade_pedida: 10 },
+  });
+  assert.equal(parcial.quantidade_pedida, 10);
+  assert.equal(parcial.quantidade_entregue, 4);
+  assert.equal(parcial.quantidade_pendente, 6);
+  assert.equal(parcial.parcial, true);
+
+  const total = resolveQuantidadesPendentesEntrega({
+    status: 'Entregue',
+    quantidade_total: 5,
+    entrega_parcial: { quantidade_entregue: 5 },
+  });
+  assert.equal(total.quantidade_pendente, 0);
+
+  // Compensação: falha no 2º patch reverte o 1º (não é TX atômica única)
+  const map = new Map([
+    ['e1', { id: 'e1', empresa_id: 'emp-a', group_id: 'g1', status: 'Pronto para Expedir', historico_status: [] }],
+    ['e2', { id: 'e2', empresa_id: 'emp-a', group_id: 'g1', status: 'Pronto para Expedir', historico_status: [] }],
+  ]);
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: [...map.values()],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Ana',
+    placa: 'ABC1D23',
+    veiculo: 'Truck',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+  });
+  const compensated = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: map,
+    failAtIndex: 1,
+  });
+  assert.equal(compensated.ok, false);
+  assert.deepEqual(compensated.rolledBackIds, ['e1']);
+  assert.equal(map.get('e1').status, 'Pronto para Expedir');
+  assert.equal(map.get('e2').status, 'Pronto para Expedir');
+
+  // Atômico de policy: reuse romaneio sem aplicar patches
+  const romaneio = { id: 'r-atom', ...fluxo.romaneioRecord };
+  const retry = resolveRomaneioDespacho({
+    entregasSelecionadas: [...map.values()],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Ana',
+    placa: 'ABC1D23',
+    veiculo: 'Truck',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+    romaneiosExistentes: [romaneio],
+  });
+  assert.equal(retry.action, 'retry');
+  assert.equal(retry.despachoPatches.length, 0);
 });

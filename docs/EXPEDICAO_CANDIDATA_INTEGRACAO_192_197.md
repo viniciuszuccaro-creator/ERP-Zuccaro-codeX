@@ -1,4 +1,4 @@
-# Expedição/Logística — candidata de integração #192–#197
+# Expedição/Logística — candidata consolidada de integração (#192–#197)
 
 ## Identidade
 
@@ -6,86 +6,85 @@
 |---|---|
 | Candidata | Stack draft **#192 → #197** (tip = #197) |
 | Branch tip | `cursor/expedicao-integracao-romaneio-canonico-392b` |
-| Base tip | tip #196 (`cursor/expedicao-fluxo-integrado-pedido-392b`) |
-| Escopo | Seleção → separação/conferência → Entrega → romaneio → despacho → parcial/total → ocorrências → pendências |
-| Estado | **Candidata de integração** — CI verde no tip ≠ homologação SPA/VPS |
+| Estado | **Candidata de integração** — pacote funcional fechado em código/testes |
+| CI tip | frontend+backend SUCCESS no HEAD do tip (**≠** homologação SPA/VPS) |
 
-## Cadeia de PRs
+## Cadeia
 
-| PR | Branch | Entrega |
+| PR | Entrega |
+|---|---|
+| #192 | Filtros listagem/romaneio (empresa/cidade/data/futuras) |
+| #193 | Detalhe + separação fail-closed |
+| #194 | Roteirização fail-closed |
+| #195 | Fluxo operacional consolidado + testes |
+| #196 | Pedidos→separação, unidades, rollback despacho |
+| #197 | IntegracaoRomaneio + soft∨ crítico + comprovante/ocorrência/IA + **cliente** coerente listagem/mapa/romaneio + devolução assert + quantidades pendentes + compensação≠atômico |
+
+## Escopo coberto (pacote)
+
+1. Seleção Pedidos elegíveis; separação/conferência integral/parcial; bloqueio por qtd/unidade/estado  
+2. Create/reuse Entrega; romaneio; despacho; idempotência; recuperação de falha (compensação)  
+3. Parcial/total + prova; ocorrências; logística reversa (assert); quantidades pendentes  
+4. Filtros empresa, cidade, **cliente**, data cliente, futuras — coerentes em listagem, mapa e romaneio  
+5. RBAC + grupo∧empresa + auditoria nas ações sensíveis  
+6. Testes comportamentais: persistência simulada, concorrência/retry, rollback compensatório vs decisão atômica de policy  
+7. Esta candidata documentada (deps comerciais, homologação, rollback)
+
+## Dependências comerciais (Codex)
+
+| Item | Status |
+|---|---|
+| Side-effect `Pedido` (`updateInContext`) | Descritivo; tip-port **só após #178 FINAL** |
+| Orçamento / mig 026–035 / mapper legado / Armado-Corte-Dobra | Reserva — intocado |
+| Export Empresas / reconciliação | Frente legado chat principal — não duplicar |
+
+## Persistência: compensação × atômico
+
+| Operação | Modelo | Mecanismo |
 |---|---|---|
-| #192 | `cursor/expedicao-entregas-filtros-392b` | Filtros listagem/romaneio (empresa/cidade/data/futuras) |
-| #193 | `cursor/expedicao-detalhe-separacao-failclosed-392b` | Detalhe + separação fail-closed (policy) |
-| #194 | `cursor/expedicao-roteirizacao-contexto-392b` | Roteirização fail-closed |
-| #195 | `cursor/expedicao-fluxo-consolidado-392b` | Fluxo operacional consolidado + testes comportamentais |
-| #196 | `cursor/expedicao-fluxo-integrado-pedido-392b` | Pedidos→separação, unidades, rollback despacho |
-| #197 | `cursor/expedicao-integracao-romaneio-canonico-392b` | IntegracaoRomaneio canônica + soft∨ caminho crítico + comprovante/ocorrência/IA |
+| `assertRomaneioOnCreate` / `assertEntregaOnCreate` / `resolveRegistroEntregaFinal` | **Atômico de policy** | Uma decisão create\|reuse\|patch validado |
+| `applyDespachoPatchesWithRollback` | **Compensação** | N updates de Entrega; falha no meio reverte já aplicados |
+| `IntegracaoRomaneio` | **Compensação** | Creates + romaneio + patches + Pedido legado |
+| `LogisticaReversa` | **Compensação** | Entrega → ContaReceber → estoque → notificação (**sem** TX única) |
 
-Merge somente na ordem da pilha, com autorização explícita. Sem merge/VPS neste documento.
+Constante: `PERSISTENCIA_EXPEDICAO` em `expedicaoFluxoOperacionalPolicy.js`.
 
-## Dependências
+## Integrações externas (explicitamente pendentes)
 
-| Dependência | Tipo | Notas |
-|---|---|---|
-| Policy `expedicaoEntregaPolicy` + `expedicaoFluxoOperacionalPolicy` | Código | Asserts, seleção, romaneio, registro final, pendências, rollback |
-| Telas existentes Expedição/Logística | Código | Sem módulo paralelo |
-| Side-effect `Pedido` (`updateInContext`) | **Contrato Codex** | Documentado; mutação descritiva; tip-port só após #178 FINAL |
-| Orçamento / mig 026–035 / legado mapper / Armado-Corte-Dobra | Reserva Codex | Intocados |
-| Export Empresas / reconciliação legado | Frente chat principal | Não duplicar |
+| Integração | Estado |
+|---|---|
+| WhatsApp / mensageria real | Pendente — mocks/simuladores **não** homologados |
+| Roteirizador avançado / provedor externo | Pendente — otimização local ≠ serviço homologado |
+| Assinatura digital como serviço | Pendente — prova local (foto/assinatura base64) na Entrega |
 
-## Cobertura de testes (comportamental)
-
-Arquivo: `tests/expedicao-fluxo-operacional.test.js` (+ `expedicao-entrega-policy`).
-
-- Isolamento grupo∧empresa (seleção cruzada bloqueia)
-- RBAC/confirmação/checklist fail-closed
-- Unidades na conferência
-- Concorrência/idempotência (reuse Separação/Romaneio/Entrega)
-- Rollback de despacho parcial
-- Parcial / ocorrência / pendências
-- IntegracaoRomaneio Pedidos→Entrega→romaneio
-- Candidata E2E: Pedido→…→pendências + auditoria/falha
+## Testes
 
 ```bash
 node --test tests/expedicao-entrega-policy.test.js tests/expedicao-fluxo-operacional.test.js
 ```
 
-CI tip (#197): `erp-runtime-ci` frontend + backend SUCCESS. **CI verde não substitui homologação manual do fluxo.**
+Inclui filtro cliente, E2E Pedido→pendências, quantidades pendentes, compensação≠atômico.
 
-## Homologação manual (obrigatória antes de merge)
+## Homologação SPA (obrigatória antes de merge)
 
-Pré-condições: grupo∧empresa, permissões Separação/Romaneio/Entrega/Ocorrência.
-
-1. Pedido elegível (não retirada) → Separação (manual ou IA) → Entrega `Pronto para Expedir`
-2. IntegracaoRomaneio ou RomaneioForm: checklist + confirm → despacho `Saiu para Entrega`
-3. Comprovante digital / Detalhes: total com prova; parcial com qtd; ocorrência com motivo
-4. Pendências em listagem + QueuesLogistica
-5. Troca de empresa: seleção cruzada some; retry não duplica Entrega/Romaneio
-6. Simular falha de update no meio do despacho → rollback + auditoria
-7. Pedido legado: status muda conforme side-effect — validar com Codex no #178 FINAL
-
-## Riscos
-
-| Risco | Mitigação |
-|---|---|
-| Contrato Pedido/Orçamento muda no #178 | Sem tip-port até FINAL; side-effect só descritivo |
-| Soft∨ residual em dashboard/config/financeiro | Leitura consolidada de grupo deliberada; mutações do fluxo já ∧ |
-| Homologação SPA não executada | Checklist acima; bloqueio de merge/VPS |
-| Stack longa (#192–#197) | Merge ordenado; rollback = fechar drafts / revert tip |
+1. Grupo∧empresa + permissões Separação/Romaneio/Entrega/Ocorrência/Reversa  
+2. Pedido elegível → separação (manual/IA) → Entrega pronta  
+3. Filtros listagem/mapa/romaneio alinhados (empresa, cidade, cliente, data, futuras)  
+4. Romaneio + despacho; simular falha parcial → status revertido + auditoria  
+5. Comprovante total/parcial; ocorrência; devolução; pendências com qtd  
+6. Retry não duplica Entrega/Romaneio  
+7. Pedido legado: validar com Codex no #178 FINAL  
 
 ## Rollback
 
-1. **Sem merge:** abandonar/fechar drafts na ordem inversa (#197→#192); tip anterior permanece.
-2. **Pós-merge (só autorizado):** `git revert` do merge da candidata; **não** reverter mig 026–035; **não** tocar Pedido/Orçamento Codex.
-3. **VPS:** este lote **não** autoriza deploy. Rollback futuro = imagem anterior (gates vigentes).
+1. Sem merge: fechar drafts #197→#192  
+2. Pós-merge autorizado: revert do merge; **não** reverter 026–035; **não** tocar Pedido Codex  
+3. VPS: **não** autorizado neste lote  
 
-## Quadro objetivo (tip #197)
+## Quadro objetivo
 
-| Item | Status |
-|---|---|
-| Fluxo Pedido→…→pendências (policy + UI existentes) | **Pronto para integração** (falta homologação humana) |
-| Isolamento∧ / RBAC / unidades / idempotência / rollback / auditoria | **Pronto** (testes) |
-| IntegracaoRomaneio / Comprovante / Ocorrência / Separação IA canônicos | **Pronto** |
-| Soft∨ dashboard/config/financeiro leitura | Residual deliberado |
-| #178 FINAL / tip Comercial | **Bloqueado** |
-| Merge / VPS / migration / import Empresas | **Bloqueado** por política |
+| Pronto p/ integração | Falta | Bloqueios reais |
+|---|---|---|
+| Fluxo operacional completo no tip #197 | Homologação humana SPA | #178 FINAL |
+| Isolamento∧, RBAC, filtros coerentes, testes | WhatsApp/roteirizador/assinatura como serviço | Merge/VPS/import Empresas |
+| Compensação documentada e testada | Tip Comercial 360 | Autorização merge ordenado |

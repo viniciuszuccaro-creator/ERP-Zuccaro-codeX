@@ -209,6 +209,12 @@ test('filtros listagem entrega: empresa, cidade, data cliente e futuras', () => 
   const range = filterEntregasList(rows, { dataDe: '2026-10-01', dataAte: '2026-10-31' }, { now });
   assert.deepEqual(range.map((r) => r.id), ['a', 'c']);
 
+  rows[0].cliente_id = 'cli-a';
+  rows[1].cliente_id = 'cli-b';
+  rows[2].cliente_id = 'cli-a';
+  const byCliente = filterEntregasList(rows, { clienteId: 'cli-a' }, { now });
+  assert.deepEqual(byCliente.map((r) => r.id), ['a', 'c']);
+
   const invalid = normalizeEntregaListFilters({ dataDe: '2026-10-10', dataAte: '2026-10-01' });
   assert.equal(invalid.rangeInvalid, true);
   assert.equal(filterEntregasList(rows, invalid, { now }).length, 0);

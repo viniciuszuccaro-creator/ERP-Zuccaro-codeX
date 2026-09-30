@@ -44,6 +44,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
   const [soFuturas, setSoFuturas] = useState(false);
+  const [selectedClienteId, setSelectedClienteId] = useState("todos");
   const [selectedEntregas, setSelectedEntregas] = useState([]);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
@@ -88,6 +89,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const listFilters = normalizeEntregaListFilters({
     status: selectedStatus,
     empresaId: estaNoGrupo && selectedEmpresaId !== 'todas' ? selectedEmpresaId : (effectiveEmpresaId || ''),
+    clienteId: selectedClienteId !== 'todos' ? selectedClienteId : '',
     cidade: selectedCidade !== 'todas' ? selectedCidade : '',
     dataDe,
     dataAte,
@@ -265,7 +267,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
               </Button>
             )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" data-testid="entrega-list-filtros-estruturados" data-action="Expedicao.entrega.filtros">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3" data-testid="entrega-list-filtros-estruturados" data-action="Expedicao.entrega.filtros">
               {estaNoGrupo && (
                 <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
                   <SelectTrigger className="h-8" data-testid="entrega-list-empresa">
@@ -281,6 +283,19 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                   </SelectContent>
                 </Select>
               )}
+              <Select value={selectedClienteId} onValueChange={setSelectedClienteId}>
+                <SelectTrigger className="h-8" data-testid="entrega-list-cliente">
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os clientes</SelectItem>
+                  {(clientes || []).map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id}>
+                      {cliente.nome || cliente.razao_social || cliente.nome_fantasia || cliente.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={selectedCidade} onValueChange={setSelectedCidade}>
                 <SelectTrigger className="h-8" data-testid="entrega-list-cidade">
                   <SelectValue placeholder="Cidade" />
