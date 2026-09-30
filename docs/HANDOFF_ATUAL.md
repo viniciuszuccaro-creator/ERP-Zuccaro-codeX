@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T19:10Z)
+
+#178 `9df73886` ainda candidato. #197 CI SUCCESS `0ac5af04`. Sem tip-port. Vigília 15min.
+
+---
+
 ## CURSOR — comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
 
 `ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica` usam `resolveRegistroEntregaFinal`/asserts.

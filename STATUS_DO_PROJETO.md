@@ -1,3 +1,14 @@
+## CURSOR — vigília #178 (2026-09-30T19:10Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `9df73886` — ainda candidata; CI SUCCESS |
+| Expedição #197 | CI SUCCESS HEAD `0ac5af04` |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
 ## CURSOR — #197 wire comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
 
 | Campo | Valor |
