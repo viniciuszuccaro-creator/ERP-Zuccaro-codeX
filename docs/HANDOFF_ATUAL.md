@@ -1,3 +1,10 @@
+## CURSOR — Expedição fluxo integrado Pedido (2026-09-30T18:01Z)
+
+Branch `cursor/expedicao-fluxo-integrado-pedido-392b`. Lacunas pós-#195: Pedidos→separação, unidades, rollback.
+Reservados Codex intactos. Sem merge/VPS. CI em curso.
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T17:51Z)
 
 #178 `98820d20` ainda candidato. Sem tip-port. Vigília 15min.

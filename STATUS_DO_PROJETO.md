@@ -1,3 +1,18 @@
+## CURSOR — Expedição fluxo integrado Pedido (lacunas pós-#195) (2026-09-30T18:01Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-fluxo-integrado-pedido-392b` (base tip #195) |
+| Lacunas | seleção Pedidos; unidades; rollback despacho; soft∨→∧; atalho Separação |
+| Docs | `docs/EXPEDICAO_FLUXO_INTEGRADO_PEDIDO.md` |
+| Testes | expedicao-fluxo-operacional + policy + motorista (31/31 locais) |
+| Codex #178 | ainda candidato `98820d20` — sem tip-port |
+| Reservados | Pedido/Orçamento/026–035/legado intactos |
+| Colisão | Sem merge/VPS |
+| Próximo | CI da PR; vigília FINAL #178 |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T17:51Z)
 
 | Campo | Valor |
