@@ -1,3 +1,14 @@
+## CURSOR — vigília #178 (2026-09-30T18:18Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e84315e6` — ainda “Correção candidata” (**não** final) |
+| CI | SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
 ## CURSOR — vigília #178 delta HEAD (2026-09-30T18:13Z)
 
 | Campo | Valor |
