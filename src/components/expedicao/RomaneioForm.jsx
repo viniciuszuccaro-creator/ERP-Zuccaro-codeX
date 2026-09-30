@@ -225,6 +225,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         await updateInContext("Entrega", item.entregaId, {
           ...item.patch,
           romaneio_id: romaneio.id,
+          sequencia_rota: item.patch.sequencia_rota,
           motorista_email: motoristaEmail,
           motorista_telefone: motoristaTelefone,
           motorista_usuario_id: motoristaCadastro?.usuario_id || null,
