@@ -1,3 +1,17 @@
+## AUTÔNOMO — PROXIMO pós-#191 = BLOCKED (2026-09-30T13:41Z)
+
+| Campo | Valor |
+|---|---|
+| Pedido | **PROXIMO** (humano) |
+| Diagnóstico | Residuais tip-seguros da revisão **esgotados** (#186–#191 CI SUCCESS) |
+| #153 | HEAD=`12c37e8b` (sem re-revisão) |
+| Candidatos fora do tip-seguro | Comissões soft→canView (fora escopo Onda4/5 tip); tip-port #178 Codex; CostPort invent |
+| Desbloqueio | CostPort real · anexos pós-Codex (#50/#59–62) · provedor · #178 autorizado |
+| Ação | **BLOCKED** — sem lote; sem merge/VPS |
+| Próximo | Vigília 15min |
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:38Z)
 
 | Campo | Valor |
