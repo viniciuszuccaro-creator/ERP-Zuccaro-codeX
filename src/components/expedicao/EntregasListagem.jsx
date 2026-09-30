@@ -26,6 +26,10 @@ import {
   listCidadesFromEntregas,
   normalizeEntregaListFilters,
 } from '@/components/lib/expedicaoEntregaPolicy';
+import {
+  filterEntregasPendencias,
+  revalidarSelecaoAposTrocaEmpresa,
+} from '@/components/lib/expedicaoFluxoOperacionalPolicy';
 
 export default function EntregasListagem({ entregas, clientes, pedidos, empresasDoGrupo, estaNoGrupo, windowMode = false }) {
   const [page, setPage] = React.useState(1);
@@ -93,6 +97,33 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const filteredEntregas = (!contextoValido || !canViewEntrega)
     ? []
     : filterEntregasList(entregasContextuais, listFilters);
+
+  const pendencias = (!contextoValido || !canViewEntrega)
+    ? []
+    : filterEntregasPendencias(entregasContextuais, {
+      empresaId: listFilters.empresaId || null,
+      groupId: effectiveGroupId,
+    });
+
+  const empresaFiltroSelecaoRef = React.useRef(selectedEmpresaId);
+  React.useEffect(() => {
+    if (!estaNoGrupo) return;
+    const anterior = empresaFiltroSelecaoRef.current;
+    empresaFiltroSelecaoRef.current = selectedEmpresaId;
+    if (anterior === selectedEmpresaId) return;
+    if (selectedEmpresaId === 'todas' || selectedEntregas.length === 0) return;
+    const result = revalidarSelecaoAposTrocaEmpresa({
+      selectedIds: selectedEntregas,
+      entregas: entregasContextuais,
+      empresaIdAnterior: anterior === 'todas' ? null : anterior,
+      empresaIdNovo: selectedEmpresaId,
+      groupId: effectiveGroupId,
+    });
+    if (result.removidos.length > 0) {
+      setSelectedEntregas(result.selectedIds);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- só reage à troca de empresa do filtro
+  }, [selectedEmpresaId, estaNoGrupo, effectiveGroupId]);
 
   const statusColors = {
     'Aguardando Separacao': 'bg-yellow-100 text-yellow-700',
@@ -175,6 +206,17 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {!contextoValido ? "Selecione grupo/empresa para visualizar entregas." : "Seu perfil nao tem permissao para visualizar entregas."}
+          </AlertDescription>
+        </Alert>
+      )}
+      {contextoValido && canViewEntrega && pendencias.length > 0 && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-950" data-testid="entrega-list-pendencias">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <span className="font-semibold">{pendencias.length} pendência(s)</span>
+            {' — '}
+            {[...new Set(pendencias.slice(0, 8).map((p) => p.pendencia?.label).filter(Boolean))].join(' · ')}
+            {pendencias.length > 8 ? ` · +${pendencias.length - 8}` : ''}
           </AlertDescription>
         </Alert>
       )}

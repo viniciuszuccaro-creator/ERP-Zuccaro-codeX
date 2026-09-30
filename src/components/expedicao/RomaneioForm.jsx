@@ -17,6 +17,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import { filterEntregasList, listCidadesFromEntregas } from "@/components/lib/expedicaoEntregaPolicy";
+import {
+  resolveRomaneioDespacho,
+  selectEntregasParaRomaneio,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /**
@@ -134,27 +138,22 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         throw new Error("Conclua o checklist de saida antes de gerar o romaneio.");
       }
 
-      const entregasSelecionadas = entregas.filter(e =>
-        formData.entregas_selecionadas.includes(e.id)
-      );
-
-      if (entregasSelecionadas.length === 0) {
-        throw new Error("Selecione pelo menos uma entrega");
-      }
-
-      const entregaForaDoContexto = entregasSelecionadas.find(e =>
-        (effectiveEmpresaId && e.empresa_id !== effectiveEmpresaId) ||
-        (effectiveGroupId && e.group_id && e.group_id !== effectiveGroupId)
-      );
-
-      if (entregaForaDoContexto) {
+      let entregasSelecionadas;
+      try {
+        entregasSelecionadas = selectEntregasParaRomaneio(entregas, {
+          empresaId: effectiveEmpresaId,
+          groupId: effectiveGroupId,
+          selectedIds: formData.entregas_selecionadas,
+          exigirSelecao: true,
+        });
+      } catch (selectionError) {
         await auditRomaneio({
           acao: "Romaneio.gerar.bloqueado",
           sucesso: false,
-          motivo: "entrega_fora_do_contexto",
-          dadosNovos: { entrega_id: entregaForaDoContexto.id }
+          motivo: "selecao_invalida",
+          dadosNovos: { message: String(selectionError?.message || selectionError) },
         });
-        throw new Error("A entrega selecionada nao pertence ao contexto ativo.");
+        throw selectionError;
       }
 
       if (!String(formData.motorista_id || '').trim() && !String(formData.motorista || '').trim()) {
@@ -176,58 +175,60 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
       const motoristaEmail = motoristaCadastro?.email || formData.motorista_email || '';
       const motoristaTelefone = motoristaCadastro?.whatsapp || motoristaCadastro?.telefone || formData.motorista_telefone;
 
-      const romaneio = await createInContext("Romaneio", {
-        group_id: groupId,
-        grupo_id: groupId,
-        empresa_id: selectedEmpresaId,
-        data_romaneio: now.split('T')[0],
-        data_saida: now,
+      const fluxo = resolveRomaneioDespacho({
+        entregasSelecionadas,
+        empresaId: selectedEmpresaId,
+        groupId,
         motorista_id: formData.motorista_id || motoristaCadastro?.id || null,
+        motorista_nome: motoristaNome,
         motorista: motoristaNome,
-        motorista_email: motoristaEmail,
-        motorista_telefone: motoristaTelefone,
         veiculo: formData.veiculo,
         placa: formData.placa,
         tipo_veiculo: formData.tipo_veiculo,
-        entregas_ids: formData.entregas_selecionadas,
-        quantidade_entregas: entregasSelecionadas.length,
+        instrucoes_motorista: formData.instrucoes_motorista,
+        checklist_saida: checklist,
+        confirmed: true,
+        now,
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || user?.email || null,
+        romaneiosExistentes: [],
+      });
+
+      if (fluxo.reuse) {
+        await auditRomaneio({
+          acao: "Romaneio.gerar.retry",
+          sucesso: true,
+          dadosNovos: { reuse_id: fluxo.reuse.id },
+        });
+        return fluxo.reuse;
+      }
+
+      const romaneio = await createInContext("Romaneio", {
+        ...fluxo.romaneioRecord,
+        motorista_email: motoristaEmail,
+        motorista_telefone: motoristaTelefone,
         quantidade_volumes: volumesTotal,
         peso_total_kg: pesoTotal,
         valor_total_mercadoria: valorTotal,
-        status: "Aprovado",
-        instrucoes_motorista: formData.instrucoes_motorista,
-        checklist_saida: checklist,
         entregas_realizadas: 0,
         entregas_frustradas: 0
       });
 
-      for (let idx = 0; idx < entregasSelecionadas.length; idx += 1) {
-        const entrega = entregasSelecionadas[idx];
-        await updateInContext("Entrega", entrega.id, {
-          group_id: groupId,
-          grupo_id: groupId,
-          empresa_id: selectedEmpresaId,
+      for (const item of fluxo.despachoPatches) {
+        const historico = Array.isArray(item.patch.historico_status) ? [...item.patch.historico_status] : [];
+        if (historico.length > 0) {
+          historico[historico.length - 1] = {
+            ...historico[historico.length - 1],
+            observacao: "Incluido no romaneio " + (romaneio.numero_romaneio || romaneio.id),
+          };
+        }
+        await updateInContext("Entrega", item.entregaId, {
+          ...item.patch,
           romaneio_id: romaneio.id,
-          motorista_id: formData.motorista_id || motoristaCadastro?.id || null,
-          motorista: motoristaNome,
           motorista_email: motoristaEmail,
           motorista_telefone: motoristaTelefone,
           motorista_usuario_id: motoristaCadastro?.usuario_id || null,
-          veiculo: formData.veiculo,
-          placa: formData.placa,
-          sequencia_rota: idx + 1,
-          status: "Saiu para Entrega",
-          data_saida: now,
-          historico_status: [
-            ...(entrega.historico_status || []),
-            {
-              status: "Saiu para Entrega",
-              data_hora: now,
-              usuario: user?.full_name || user?.email || "Sistema",
-              usuario_id: user?.id || user?.email || null,
-              observacao: "Incluido no romaneio " + (romaneio.numero_romaneio || romaneio.id)
-            }
-          ]
+          historico_status: historico,
         });
       }
 
