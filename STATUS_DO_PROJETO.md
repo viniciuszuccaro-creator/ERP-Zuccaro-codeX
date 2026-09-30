@@ -1,3 +1,15 @@
+## CURSOR — vigília #178 (2026-09-30T19:27Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` (antes `49ec5d97`) — ainda candidata; CI SUCCESS |
+| Delta | `Bloqueia histórico antes da migration 025 e da 026` |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #197 tip OK (candidata #192–#197) |
+| Próximo | Vigília FINAL 15min |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T19:21Z)
 
 | Campo | Valor |
