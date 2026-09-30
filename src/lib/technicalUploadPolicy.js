@@ -11,7 +11,7 @@ const formats = {
 };
 
 export async function assertTechnicalUploadAllowed(file, mode = resolveErpBackendMode()) {
-  if (mode === 'http') throw new Error('Upload técnico indisponível até ativar o armazenamento canônico.');
+  if (mode !== 'local') throw new Error('Upload técnico indisponível até ativar o armazenamento canônico.');
   const name = file?.name;
   if (typeof name !== 'string' || !name || /[\\/\x00-\x1f\x7f]/.test(name)) {
     throw new Error('Nome de arquivo inválido.');
@@ -38,9 +38,29 @@ export async function assertTechnicalUploadAllowed(file, mode = resolveErpBacken
 export function assertConfirmedTechnicalUploadUrl(value) {
   let url;
   try { url = new URL(value); } catch { throw new Error('Upload sem confirmação do armazenamento.'); }
-  if (url.protocol !== 'https:' || !url.hostname || url.username || url.password || url.search || url.hash ||
-    /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(url.hostname) || url.hostname.endsWith('.local')) {
+  const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
+  let path;
+  try { path = decodeURIComponent(url.pathname).toLowerCase(); } catch { throw new Error('Upload sem confirmação do armazenamento.'); }
+  // Sem Storage/DAM canônico não aceitar IP literal, host interno ou assinatura embutida no path.
+  const internalHost = hostname === 'localhost' || hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local') || hostname.endsWith('.internal') ||
+    hostname.startsWith('[') || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
+  const temporaryPath = /(?:^|\/)(?:signed|signature|token|sig|expires?|auth|private|temp(?:orary)?)(?:\/|$)/.test(path);
+  if (url.protocol !== 'https:' || !hostname || url.username || url.password || url.search || url.hash || url.port ||
+    internalHost || temporaryPath) {
     throw new Error('Upload sem confirmação do armazenamento.');
   }
   return url.toString();
+}
+
+/** Portal: valida o lote antes de iniciar uploads e só devolve URLs confirmadas. */
+export async function uploadConfirmedTechnicalFiles(files, uploadFile, mode = resolveErpBackendMode()) {
+  const batch = Array.from(files || []);
+  await Promise.all(batch.map((file) => assertTechnicalUploadAllowed(file, mode)));
+  const confirmed = [];
+  for (const file of batch) {
+    const { file_url } = await uploadFile(file);
+    confirmed.push({ name: file.name, url: assertConfirmedTechnicalUploadUrl(file_url) });
+  }
+  return confirmed;
 }
