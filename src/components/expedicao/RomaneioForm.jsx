@@ -214,7 +214,8 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         entregas_frustradas: 0
       });
 
-      for (const item of fluxo.despachoPatches) {
+      const entregasById = new Map(entregasSelecionadas.map((e) => [String(e.id), { ...e }]));
+      const patchesComRomaneio = fluxo.despachoPatches.map((item) => {
         const historico = Array.isArray(item.patch.historico_status) ? [...item.patch.historico_status] : [];
         if (historico.length > 0) {
           historico[historico.length - 1] = {
@@ -222,15 +223,58 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
             observacao: "Incluido no romaneio " + (romaneio.numero_romaneio || romaneio.id),
           };
         }
-        await updateInContext("Entrega", item.entregaId, {
-          ...item.patch,
-          romaneio_id: romaneio.id,
-          sequencia_rota: item.patch.sequencia_rota,
-          motorista_email: motoristaEmail,
-          motorista_telefone: motoristaTelefone,
-          motorista_usuario_id: motoristaCadastro?.usuario_id || null,
-          historico_status: historico,
+        return {
+          entregaId: item.entregaId,
+          patch: {
+            ...item.patch,
+            romaneio_id: romaneio.id,
+            sequencia_rota: item.patch.sequencia_rota,
+            motorista_email: motoristaEmail,
+            motorista_telefone: motoristaTelefone,
+            motorista_usuario_id: motoristaCadastro?.usuario_id || null,
+            historico_status: historico,
+          },
+        };
+      });
+
+      const applied = [];
+      try {
+        for (const item of patchesComRomaneio) {
+          const before = entregasById.get(String(item.entregaId));
+          applied.push({ id: item.entregaId, before });
+          await updateInContext("Entrega", item.entregaId, item.patch);
+        }
+      } catch (persistError) {
+        for (let i = applied.length - 1; i >= 0; i -= 1) {
+          const snap = applied[i];
+          try {
+            await updateInContext("Entrega", snap.id, {
+              status: snap.before.status,
+              romaneio_id: snap.before.romaneio_id || null,
+              sequencia_rota: snap.before.sequencia_rota || null,
+              motorista_id: snap.before.motorista_id || null,
+              motorista: snap.before.motorista || null,
+              data_saida: snap.before.data_saida || null,
+              historico_status: snap.before.historico_status || [],
+              group_id: snap.before.group_id || groupId,
+              grupo_id: snap.before.grupo_id || groupId,
+              empresa_id: snap.before.empresa_id || selectedEmpresaId,
+            });
+          } catch (rollbackError) {
+            console.error("Falha no rollback de despacho", rollbackError);
+          }
+        }
+        await auditRomaneio({
+          acao: "Romaneio.gerar.rollback",
+          sucesso: false,
+          motivo: "persistencia_parcial",
+          dadosNovos: {
+            romaneio_id: romaneio.id,
+            erro: String(persistError?.message || persistError),
+            rolled_back: applied.map((a) => a.id),
+          },
         });
+        throw persistError;
       }
 
       await auditRomaneio({

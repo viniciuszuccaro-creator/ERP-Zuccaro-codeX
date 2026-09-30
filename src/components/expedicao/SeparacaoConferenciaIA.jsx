@@ -18,6 +18,12 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import {
+  assertSeparacaoQuantidades,
+  selectPedidosParaSeparacao,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
 
@@ -35,8 +41,10 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   const [codigoBarras, setCodigoBarras] = useState("");
   const [cronometro, setCronometro] = useState({ ativo: true, segundos: 0 });
   const [desempenho, setDesempenho] = useState({ itensPorHora: 0, acuracia: 100 });
+  const [pedidoSelecionadoId, setPedidoSelecionadoId] = useState(pedidoId || "");
+  const activePedidoId = pedidoId || pedidoSelecionadoId || null;
   const [separacao, setSeparacao] = useState({
-    pedido_id: pedidoId,
+    pedido_id: pedidoId || "",
     separador_id: user?.id || "",
     separador_nome: user?.full_name || user?.email || "",
     data_inicio: new Date().toISOString(),
@@ -52,25 +60,44 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
     observacoes: ""
   });
 
+  useEffect(() => {
+    if (activePedidoId) {
+      setSeparacao((prev) => ({ ...prev, pedido_id: activePedidoId }));
+    }
+  }, [activePedidoId]);
+
   const baseEmpresaId = empresaAtual?.id || null;
   const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoBaseValido = Boolean(baseGroupId || baseEmpresaId);
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canUseSeparacaoIA = hasPermission("Expedicao", "Separacao", "editar") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
+    hasPermission("Expedicao", "Separacao", "conferir") ||
     hasPermission("Expedicao", "Entregas", "editar");
 
-  const { data: pedido } = useQuery({
-    queryKey: ["pedido-separacao-ia", pedidoId, baseGroupId, baseEmpresaId],
+  const { data: pedidosElegiveis = [] } = useQuery({
+    queryKey: ["pedidos-elegiveis-separacao", baseGroupId, baseEmpresaId],
     queryFn: async () => {
-      const rows = await filterInContext("Pedido", { id: pedidoId }, undefined, 1);
+      const rows = await filterInContext("Pedido", {}, "-created_date", 500);
+      return selectPedidosParaSeparacao(rows, {
+        empresaId: baseEmpresaId,
+        groupId: baseGroupId,
+      });
+    },
+    enabled: Boolean(!pedidoId && contextoBaseValido && canUseSeparacaoIA),
+  });
+
+  const { data: pedido } = useQuery({
+    queryKey: ["pedido-separacao-ia", activePedidoId, baseGroupId, baseEmpresaId],
+    queryFn: async () => {
+      const rows = await filterInContext("Pedido", { id: activePedidoId }, undefined, 1);
       return rows[0] || null;
     },
-    enabled: Boolean(pedidoId && contextoBaseValido && canUseSeparacaoIA)
+    enabled: Boolean(activePedidoId && contextoBaseValido && canUseSeparacaoIA)
   });
 
   const effectiveEmpresaId = pedido?.empresa_id || baseEmpresaId;
   const effectiveGroupId = pedido?.group_id || pedido?.grupo_id || baseGroupId;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ["produtos-separacao-ia", effectiveGroupId, effectiveEmpresaId],
@@ -93,7 +120,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
         modulo: "Expedicao",
         tipo_auditoria: sucesso ? "operacional" : "seguranca",
         entidade: "SeparacaoConferencia",
-        registro_id: registroId || pedidoId,
+        registro_id: registroId || activePedidoId,
         descricao,
         empresa_id: effectiveEmpresaId,
         group_id: effectiveGroupId,
@@ -246,7 +273,16 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       }
 
       const tempoTotalMinutos = Math.floor(cronometro.segundos / 60);
-      const temDivergencia = separacao.divergencias.length > 0;
+      const qty = assertSeparacaoQuantidades({
+        itens: (separacao.itens_separados || []).map((item) => ({
+          ...item,
+          quantidade_pedida: item.quantidade_pedida,
+          quantidade_separada: item.quantidade_separada,
+          unidade: item.unidade || item.unidade_medida,
+          unidade_separada: item.unidade_separada || item.unidade || item.unidade_medida,
+        })),
+      });
+      const temDivergencia = qty.temDivergencia || separacao.divergencias.length > 0;
       const registro = await createInContext("SeparacaoConferencia", {
         ...separacao,
         group_id: effectiveGroupId,
@@ -264,8 +300,8 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
         tempo_separacao_min: tempoTotalMinutos,
         status: temDivergencia ? "com_divergencia" : "concluido",
         tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia ? `${separacao.divergencias.length} divergencia(s) detectada(s) pela IA.` : "",
-        itens: separacao.itens_separados,
+        divergencias_resumo: temDivergencia ? `${Math.max(qty.divergencias.length, separacao.divergencias.length)} divergencia(s) detectada(s).` : "",
+        itens: qty.itens,
         observacoes: sanitizeText(separacao.observacoes)
       });
 
@@ -360,6 +396,8 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           descricao: sanitizeText(produto.descricao || itemPedido.produto_descricao),
           quantidade_pedida: Number(itemPedido.quantidade || 0),
           quantidade_separada: 1,
+          unidade: itemPedido.unidade || itemPedido.unidade_medida || produto.unidade_medida || "",
+          unidade_separada: itemPedido.unidade || itemPedido.unidade_medida || produto.unidade_medida || "",
           peso_conferido: Number(produto.peso_liquido_kg || 0),
           localizacao: sanitizeText(produto.localizacao || "N/A"),
           data_hora_separacao: new Date().toISOString()
@@ -470,6 +508,52 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
             </div>
           </CardHeader>
         </Card>
+
+        {!pedidoId && (
+          <Card data-testid="separacao-ia-selecao-pedido">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Selecionar Pedido para separação</CardTitle>
+              <CardDescription>Somente pedidos elegíveis da empresa ativa.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label htmlFor="separacao-ia-pedido">Pedido</Label>
+              <Select
+                value={pedidoSelecionadoId || undefined}
+                onValueChange={(value) => {
+                  setPedidoSelecionadoId(value);
+                  setSeparacao((prev) => ({
+                    ...prev,
+                    pedido_id: value,
+                    itens_separados: [],
+                    divergencias: [],
+                  }));
+                }}
+              >
+                <SelectTrigger id="separacao-ia-pedido" data-testid="separacao-ia-pedido-select">
+                  <SelectValue placeholder="Escolha um pedido elegível..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {pedidosElegiveis.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.numero_pedido || p.id} — {p.cliente_nome || "Cliente"} ({p.status || "-"})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {pedidosElegiveis.length === 0 && (
+                <p className="text-xs text-slate-500">Nenhum pedido elegível no contexto atual.</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {!activePedidoId && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="p-4 text-sm text-amber-900">
+              Selecione um pedido elegível para iniciar a separação/conferência.
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
