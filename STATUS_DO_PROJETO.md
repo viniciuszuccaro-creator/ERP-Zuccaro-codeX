@@ -1,3 +1,14 @@
+## CURSOR — vigília #178 (2026-09-30T18:57Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `9df73886` — ainda “Correção candidata” (**não** final); CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição | #197 CI SUCCESS `09ada19d` |
+| Próximo | Vigília 15min |
+
+---
+
 ## CURSOR — #197 CI SUCCESS HEAD soft∨ (2026-09-30T18:56Z)
 
 | Campo | Valor |
