@@ -21,6 +21,7 @@ import {
   AlertCircle,
   CheckCircle2
 } from "lucide-react";
+import { assertTitulosProntosParaCaixa } from "@/components/lib/financeiroTituloPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -42,8 +43,9 @@ export default function LiquidarReceberPagar() {
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = [groupId, empresaId].filter(Boolean).join(":") || "sem-contexto";
+  // Fail-closed Onda 6: exige grupo E empresa (paridade assertTitulosProntosParaCaixa).
+  const contextoValido = Boolean(groupId && empresaId);
   const podeEnviarCaixa = canCreate("Financeiro", "Caixa")
     || canCreate("Financeiro", "Caixa Central")
     || canCreate("Financeiro", "CaixaOrdemLiquidacao")
@@ -51,7 +53,7 @@ export default function LiquidarReceberPagar() {
     || hasPermission("Financeiro", "ContaReceber", "baixar")
     || hasPermission("Financeiro", "ContaPagar", "pagar")
     || hasPermission("Financeiro", "ContaPagar", "baixar");
-  const bloqueado = !contextoValido || !empresaId || !podeEnviarCaixa;
+  const bloqueado = !contextoValido || !podeEnviarCaixa;
 
   const withContext = (payload = {}) => ({
     ...payload,
@@ -87,18 +89,26 @@ export default function LiquidarReceberPagar() {
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async ({ titulos, tipo }) => {
       const lista = Array.isArray(titulos) ? titulos.filter(Boolean) : [];
-      if (!contextoValido || !empresaId) {
-        await auditLiquidacao("bloqueado_sem_contexto", false, { tipo, quantidade: lista.length });
-        throw new Error("Selecione uma empresa do grupo antes de enviar ao caixa.");
-      }
       if (!podeEnviarCaixa) {
         await auditLiquidacao("bloqueado_sem_permissao", false, { tipo, quantidade: lista.length });
         throw new Error("Sem permissao para enviar titulos ao caixa.");
       }
-      if (!lista.length) {
-        throw new Error("Selecione pelo menos um titulo.");
+      let scope;
+      try {
+        scope = assertTitulosProntosParaCaixa({
+          titulos: lista,
+          groupId,
+          empresaId,
+        });
+      } catch (error) {
+        await auditLiquidacao("bloqueado_politica_caixa", false, {
+          tipo,
+          quantidade: lista.length,
+          code: error?.code || null,
+        });
+        throw error;
       }
-      const total = lista.reduce((sum, titulo) => sum + Number(titulo.valor || 0), 0);
+      const total = scope.total;
       if (total <= 0) {
         await auditLiquidacao("bloqueado_valor_invalido", false, { tipo, total });
         throw new Error("Os titulos selecionados nao possuem valor valido.");
@@ -118,14 +128,16 @@ export default function LiquidarReceberPagar() {
           valor_total: valor,
           forma_pagamento_pretendida: tipo === "receber" ? "PIX" : "Transferencia",
           status: "Pendente",
+          pedido_id: titulo.pedido_id || null,
           titulos_vinculados: [{
             titulo_id: titulo.id,
             tipo_titulo: tipo === "receber" ? "ContaReceber" : "ContaPagar",
             numero_titulo: sanitizeText(titulo.numero_documento || titulo.descricao),
             cliente_fornecedor_nome: sanitizeText(tipo === "receber" ? titulo.cliente : titulo.fornecedor),
             valor_titulo: valor,
-            group_id: groupId,
-            empresa_id: empresaId
+            pedido_id: titulo.pedido_id || null,
+            group_id: scope.groupId,
+            empresa_id: scope.empresaId
           }],
           data_ordem: new Date().toISOString(),
           usuario_solicitante_id: user?.id || null,
@@ -144,8 +156,8 @@ export default function LiquidarReceberPagar() {
       return ordensValidas;
     },
     onSuccess: (ordens) => {
-      queryClient.invalidateQueries({ queryKey: ["caixa-ordens-liquidacao"] });
-      queryClient.invalidateQueries({ queryKey: ["ordens-liquidacao"] });
+      queryClient.invalidateQueries({ queryKey: ["caixa-ordens-liquidacao", groupId, empresaId] });
+      queryClient.invalidateQueries({ queryKey: ["ordens-liquidacao", groupId, empresaId] });
       toast({ title: `${ordens.length} titulo(s) enviado(s) para Caixa!` });
       setTitulosSelecionadosReceber([]);
       setTitulosSelecionadosPagar([]);

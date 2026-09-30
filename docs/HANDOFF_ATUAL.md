@@ -1,3 +1,11 @@
+## AUTÔNOMO — tip LiquidarReceberPagar caixa policy (2026-09-30T11:30Z)
+
+Branch `cursor/comercial360-onda6-caixa-liquidar-tip-392b` empilhada em #182:
+LiquidarReceberPagar exige group+empresa via assertTitulosProntosParaCaixa.
+Sem merge/VPS. Após CI: Onda 6 tip-seguro esgotado (CostPort/anexos BLOCKED).
+
+---
+
 ## AUTÔNOMO — tip ContaReceber↔Pedido (2026-09-30T11:25Z)
 
 Branch `cursor/comercial360-onda6-cr-pedido-tip-392b` empilhada em #181:

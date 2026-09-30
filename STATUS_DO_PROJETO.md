@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip LiquidarReceberPagar + assertTitulosProntosParaCaixa (pós-#182) (2026-09-30T11:30Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#182** ContaReceber↔Pedido CI SUCCESS |
+| Choice | **LiquidarReceberPagar** usa política caixa fail-closed (group+empresa) |
+| Branch | `cursor/comercial360-onda6-caixa-liquidar-tip-392b` |
+| Base | tip #182 CR↔Pedido |
+| Escopo | `assertTitulosProntosParaCaixa` no mutate; contexto exige groupId∧empresaId; queryKey tenant; `pedido_id` |
+| Testes | financeiro-titulo-policy 13/13 |
+| Colisão | CostPort invent BLOCKED; anexos #59–62; sem Codex/merge/VPS |
+| Próximo | **BLOCKED** tip-seguro Onda 6 residual até CostPort real / anexos pós-Codex |
+
+---
+
 ## AUTÔNOMO — tip ContaReceber↔Pedido fail-closed (pós-#181) (2026-09-30T11:25Z)
 
 | Campo | Valor |
