@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T17:12Z)
+
+#178 `98820d20` estável — ainda candidato. Sem tip-port. #195 CI OK. Vigília 15min.
+
+---
+
 ## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
 
 Draft PR **#195** CI SUCCESS (`2db2ca6b`). Stack Expedição #192–#195 ok.

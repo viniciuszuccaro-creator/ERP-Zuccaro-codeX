@@ -1,3 +1,14 @@
+## CURSOR — vigília #178 (2026-09-30T17:12Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` estável — ainda “Correção candidata” (**não** final) |
+| #195 | CI SUCCESS — stack Expedição ok |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Próximo | Vigília 15min |
+
+---
+
 ## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
 
 | Campo | Valor |
