@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
 
@@ -105,19 +107,40 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
         responsavel: user?.full_name || user?.email || "Sistema",
         responsavel_id: user?.id,
         resolucao: sanitizeText(resolucao) || "Em analise",
-        foto_url: fotoUrl
+        foto_url: fotoUrl,
       };
 
+      const motivoFrustrada = sanitizeText(descricao) || sanitizeText(tipoOcorrencia) || "Ocorrencia logistica";
       let entregaAtualizada = null;
-      if (entrega?.id) {
-        entregaAtualizada = await updateInContext("Entrega", entrega.id, {
+
+      if (entrega?.id && tipoOcorrencia === "Entrega Frustrada") {
+        const resolved = resolveRegistroEntregaFinal({
+          before: entrega,
+          modo: "ocorrencia",
+          motivo: motivoFrustrada,
+          groupId: effectiveGroupId,
+          empresaId: effectiveEmpresaId,
+          confirmed: true,
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+        });
+        const patch = {
+          ...resolved.patch,
+          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia],
+        };
+        assertEntregaOnUpdate({ before: entrega, patch });
+        entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
+      } else if (entrega?.id) {
+        const patch = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: effectiveEmpresaId,
-          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia]
-        });
+          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia],
+        };
+        assertEntregaOnUpdate({ before: entrega, patch });
+        entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
       } else {
-        entregaAtualizada = await createInContext("Entrega", {
+        const seed = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: effectiveEmpresaId,
@@ -126,12 +149,18 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
           cliente_id: pedido.cliente_id,
           cliente_nome: pedido.cliente_nome,
           endereco_entrega_completo: pedido.endereco_entrega_principal,
-          status: "Em Transito",
-          ocorrencias: [novaOcorrencia]
-        });
+          status: tipoOcorrencia === "Entrega Frustrada" ? "Entrega Frustrada" : "Em Transito",
+          ocorrencias: [novaOcorrencia],
+        };
+        if (tipoOcorrencia === "Entrega Frustrada") {
+          seed.entrega_frustrada = { motivo: motivoFrustrada, tentativa_numero: 1 };
+        }
+        assertEntregaOnCreate({ record: seed, entregas: [] });
+        entregaAtualizada = await createInContext("Entrega", seed);
       }
 
       if (tipoOcorrencia === "Entrega Frustrada") {
+        // Side-effect legado Pedido (contrato Codex).
         await updateInContext("Pedido", pedido.id, {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
@@ -144,9 +173,9 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
               data_hora: new Date().toISOString(),
               usuario: user?.full_name || user?.email || "Sistema",
               usuario_id: user?.id,
-              observacao: "Entrega frustrada registrada para nova tentativa."
-            }
-          ]
+              observacao: "Entrega frustrada registrada para nova tentativa.",
+            },
+          ],
         });
       }
 

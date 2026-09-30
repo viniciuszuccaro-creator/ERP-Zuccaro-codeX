@@ -1,3 +1,15 @@
+## CURSOR — comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
+
+`ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica` usam `resolveRegistroEntregaFinal`/asserts.
+#178 `9df73886` ainda candidato. #197 em recheck. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo integrado + IntegracaoRomaneio + soft∨ crítico + comprovante/ocorrência policy
+- **Falta:** soft∨ residual dashboard/config; #178 FINAL
+- **Bloqueios:** tip Comercial; merge/VPS; import Empresas
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:57Z)
 
 #178 `9df73886` ainda candidato; CI SUCCESS. Sem tip-port. #197 OK. Vigília 15min.

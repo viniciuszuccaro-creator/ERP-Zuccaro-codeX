@@ -27,6 +27,7 @@ Export Empresas / reconciliação legado — frente do chat principal (não dupl
 7. Falha de update no meio → rollback + auditoria `Romaneio.integracao.rollback`.
 8. Pedido legado atualizado para Em Trânsito (coordenação Codex).
 9. Soft∨→∧ no caminho ocorrência/comprovante/notificador/reversa/chat (grupo∧empresa).
+10. `ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica` usam `resolveRegistroEntregaFinal` + asserts (mesmo contrato de `DetalhesEntregaView`).
 
 ## Soft∨ residual (fora do caminho crítico)
 

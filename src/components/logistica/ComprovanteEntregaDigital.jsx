@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -209,46 +211,64 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         data_hora_recebimento: agora,
         latitude_entrega: geolocalizacao?.latitude || null,
         longitude_entrega: geolocalizacao?.longitude || null,
-        observacoes_recebimento: sanitizeText(observacoes)
-      };
-
-      const entregaPayload = {
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        status: "Entregue",
-        data_entrega: agora,
-        comprovante_entrega: comprovanteData,
-        historico_status: [
-          ...(entrega?.historico_status || []),
-          {
-            status: "Entregue",
-            data_hora: agora,
-            usuario: user?.full_name || user?.email || "Sistema",
-            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
-            localizacao: geolocalizacao || null
-          }
-        ]
+        observacoes_recebimento: sanitizeText(observacoes),
       };
 
       if (entrega?.id) {
-        await updateInContext("Entrega", entrega.id, entregaPayload);
+        const resolved = resolveRegistroEntregaFinal({
+          before: entrega,
+          modo: "total",
+          comprovante: comprovanteData,
+          groupId: effectiveGroupId,
+          empresaId: effectiveEmpresaId,
+          confirmed: true,
+          now: agora,
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+        });
+        const historico = Array.isArray(resolved.patch.historico_status) ? [...resolved.patch.historico_status] : [];
+        if (historico.length > 0) {
+          historico[historico.length - 1] = {
+            ...historico[historico.length - 1],
+            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
+            localizacao: geolocalizacao || null,
+          };
+        }
+        await updateInContext("Entrega", entrega.id, {
+          ...resolved.patch,
+          historico_status: historico,
+        });
       } else {
-        await createInContext("Entrega", {
-          ...entregaPayload,
+        const seed = {
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
           pedido_id: pedido.id,
           numero_pedido: sanitizeText(pedido.numero_pedido),
           cliente_id: pedido.cliente_id,
           cliente_nome: sanitizeText(pedido.cliente_nome),
-          endereco_entrega_completo: pedido.endereco_entrega_principal || pedido.endereco_entrega_completo || null
-        });
+          endereco_entrega_completo: pedido.endereco_entrega_principal || pedido.endereco_entrega_completo || null,
+          status: "Entregue",
+          data_entrega: agora,
+          comprovante_entrega: comprovanteData,
+          historico_status: [{
+            status: "Entregue",
+            data_hora: agora,
+            usuario: user?.full_name || user?.email || "Sistema",
+            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
+            localizacao: geolocalizacao || null,
+          }],
+        };
+        assertEntregaOnCreate({ record: seed, entregas: [] });
+        await createInContext("Entrega", seed);
       }
 
+      // Side-effect legado Pedido → Entregue (contrato Codex).
       await updateInContext("Pedido", pedido.id, {
         status: "Entregue",
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId
+        empresa_id: effectiveEmpresaId,
       });
 
       await auditComprovante({ acao: "Entrega.comprovante.confirmar", detalhes: { possui_foto: Boolean(fotoComprovante), possui_gps: Boolean(geolocalizacao), itens_baixados: pedido?.itens_revenda?.length || 0 } });

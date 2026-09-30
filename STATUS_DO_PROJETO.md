@@ -1,3 +1,23 @@
+## CURSOR — #197 wire comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
+
+| Campo | Valor |
+|---|---|
+| Lacuna | `ComprovanteEntregaDigital` / `RegistroOcorrenciaLogistica` sem policy canônica |
+| Mudança | `resolveRegistroEntregaFinal` + asserts create/update nos existentes |
+| Codex #178 | HEAD `9df73886` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port; push + CI |
+| Reservados | Pedido legado só side-effect descritivo |
+| Próximo | CI #197; vigília FINAL #178 |
+
+### Quadro
+
+| Pronto | Falta | Bloqueios |
+|---|---|---|
+| Fluxo ponta a ponta + IntegracaoRomaneio + soft∨ crítico | Soft∨ dashboard/config leitura | #178 FINAL |
+| Comprovante/ocorrência na policy (Detalhes + Logística) | Homologação VPS | Merge/VPS/import Empresas |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:57Z)
 
 | Campo | Valor |
