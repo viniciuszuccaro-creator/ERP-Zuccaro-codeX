@@ -1,3 +1,15 @@
+## CURSOR — Expedição #195 CI fix sequencia_rota (2026-09-30T17:00Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#195** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/195 |
+| Falha CI | frontend: `app motorista usa policy` — `sequencia_rota` sumiu do `RomaneioForm` após extração |
+| Correção | despacho reafirma `sequencia_rota`; teste também cobre `expedicaoFluxoOperacionalPolicy` |
+| Testes locais | app-motorista + expedicao-fluxo + expedicao-entrega-policy 27/27 |
+| Próximo | CI HEAD `0ca75564` |
+
+---
+
 ## CURSOR — Expedição fluxo consolidado #192–#194 (2026-09-30T17:00Z)
 
 | Campo | Valor |
