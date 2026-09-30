@@ -1,8 +1,15 @@
+## CURSOR — Expedição detalhe/separação fail-closed (2026-09-30T15:55Z)
+
+#192 CI SUCCESS. Branch `cursor/expedicao-detalhe-separacao-failclosed-392b` — detalhe∧ + assert update/prova; separação assertSeparacaoOnCreate.
+Reservados Codex #178 intactos. Sem merge/VPS. CI em curso.
+
+---
+
 ## CURSOR — Expedição filtros listagem/romaneio (2026-09-30T15:45Z)
 
-Draft PR **#192**. Filtros empresa/cidade/data cliente/futuras na listagem + romaneio.
-**Reservados Codex #178:** pedido/orcamento services+types+repos, saleIngress, app.ts, mig 035, ORDEM_INTEGRACAO. Sem tip-port. Vigília candidato final #178.
-Sem merge/VPS. CI em curso.
+Draft PR **#192** CI SUCCESS. Filtros empresa/cidade/data/futuras.
+**Reservados Codex #178** intactos. Próximo: detalhe/separação fail-closed.
+Sem merge/VPS.
 
 ---
 

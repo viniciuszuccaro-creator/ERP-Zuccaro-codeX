@@ -231,6 +231,19 @@ test('painel entregas e romaneio wire filtros estruturados', async () => {
   assert.match(romaneio, /effectiveGroupId && effectiveEmpresaId/);
 });
 
+test('detalhe e separação wire policy fail-closed', async () => {
+  const detalhe = await readFile(new URL('../src/components/expedicao/DetalhesEntregaView.jsx', import.meta.url), 'utf8');
+  const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(detalhe, /assertEntregaOnUpdate/);
+  assert.match(detalhe, /hasProvaEntrega/);
+  assert.match(detalhe, /resolveEntregaClienteCalendarDay/);
+  assert.match(detalhe, /groupId && empresaId/);
+  assert.match(detalhe, /entrega-detalhe-data-cliente/);
+  assert.doesNotMatch(detalhe, /Boolean\(groupId \|\| empresaId\)/);
+  assert.match(separacao, /assertSeparacaoOnCreate/);
+  assert.match(separacao, /SeparacaoConferencia\.retry/);
+});
+
 test('expedicao existente reserva numero e o app nao lista todas as entregas', async () => {
   const cadastro = await readFile(new URL('../src/api/localCadastroMasterPolicy.js', import.meta.url), 'utf8');
   const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
