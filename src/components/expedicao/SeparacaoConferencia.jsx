@@ -15,6 +15,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertSeparacaoOnCreate } from "@/components/lib/expedicaoEntregaPolicy";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
 
@@ -134,11 +135,12 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       }
 
       const temDivergencia = itens.some(i => i.divergencia);
-      
-      const separacao = await createInContext("SeparacaoConferencia", {
+
+      const separacaoRecord = {
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
+        entrega_id: entrega?.id || entregaId || null,
         pedido_id: dadosParaSeparacao.id,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
         cliente_id: dadosParaSeparacao.cliente_id,
@@ -150,12 +152,24 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         itens: itens,
         status: temDivergencia ? "com_divergencia" : "concluido",
         tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia 
+        divergencias_resumo: temDivergencia
           ? `${itens.filter(i => i.divergencia).length} item(ns) com divergência`
           : "",
         checklist: checklist,
         tempo_separacao_min: 0
-      });
+      };
+
+      const decision = assertSeparacaoOnCreate({ record: separacaoRecord, separacoes: [] });
+      if (decision.reuse) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.retry",
+          descricao: "Separacao reusada por idempotencia (mesmo pedido/empresa/tipo).",
+          dadosNovos: { reuse_id: decision.reuse.id },
+        });
+        return decision.reuse;
+      }
+
+      const separacao = await createInContext("SeparacaoConferencia", separacaoRecord);
 
       // Se não tem divergência, atualizar status do pedido
       if (!temDivergencia && dadosParaSeparacao) {

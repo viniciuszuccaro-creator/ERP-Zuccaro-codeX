@@ -13,6 +13,11 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import EnvioMensagemAutomatica from "./EnvioMensagemAutomatica";
 import AssinaturaDigitalEntrega from "./AssinaturaDigitalEntrega";
+import {
+  assertEntregaOnUpdate,
+  hasProvaEntrega,
+  resolveEntregaClienteCalendarDay,
+} from "@/components/lib/expedicaoEntregaPolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -34,7 +39,8 @@ export default function DetalhesEntregaView({
   const { user } = useUser();
   const groupId = entrega?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = entrega?.empresa_id || empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
+  const dataEntregaCliente = resolveEntregaClienteCalendarDay(entrega);
   const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Painel Logistico", "editar");
   const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");
   const canOcorrencia = hasPermission("Expedicao", "Entrega", "ocorrencia") || hasPermission("Expedicao", "Ocorrencias", "criar") || canUpdateEntrega;
@@ -136,6 +142,19 @@ export default function DetalhesEntregaView({
       ]
     };
 
+    try {
+      assertEntregaOnUpdate({ before: entrega, patch: payload });
+    } catch (policyError) {
+      await auditarEntrega({
+        acao: "DetalhesEntrega.status_bloqueado",
+        descricao: String(policyError?.message || policyError),
+        sucesso: false,
+        dadosNovos: { status_novo: novoStatus, motivo: "policy_fail_closed" },
+      });
+      toast.error(String(policyError?.message || policyError));
+      return;
+    }
+
     const atualizada = await updateInContext("Entrega", entrega.id, payload);
     await auditarEntrega({
       acao: "DetalhesEntrega.alterar_status",
@@ -166,7 +185,7 @@ export default function DetalhesEntregaView({
       }
       const nomeRecebedor = String(dadosAssinatura.nome_recebedor || "").replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "").replace(/javascript:\s*/gi, "").trim();
       const documentoRecebedor = String(dadosAssinatura.documento_recebedor || "").replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "").replace(/javascript:\s*/gi, "").trim();
-      const atualizada = await updateInContext("Entrega", entrega.id, {
+      const patch = {
         status: "Entregue",
         data_entrega: new Date().toISOString(),
         group_id: groupId,
@@ -190,7 +209,12 @@ export default function DetalhesEntregaView({
             observacao: `Entrega confirmada com assinatura digital. Recebido por: ${nomeRecebedor}`
           }
         ]
-      });
+      };
+      assertEntregaOnUpdate({ before: entrega, patch });
+      if (!hasProvaEntrega({ ...entrega, ...patch })) {
+        throw new Error("Entrega exige comprovante (recebedor e prova).");
+      }
+      const atualizada = await updateInContext("Entrega", entrega.id, patch);
       await auditarEntrega({
         acao: "DetalhesEntrega.confirmar_entrega",
         descricao: "Entrega confirmada com assinatura digital.",
@@ -256,6 +280,15 @@ export default function DetalhesEntregaView({
               </div>
             </div>
           )}
+
+          <div data-testid="entrega-detalhe-data-cliente" data-action="Expedicao.entrega.acompanhamento-data-cliente">
+            <Label className="text-slate-600">Data de entrega do cliente</Label>
+            <p className="font-medium">
+              {dataEntregaCliente
+                ? new Date(`${dataEntregaCliente}T12:00:00`).toLocaleDateString('pt-BR')
+                : '—'}
+            </p>
+          </div>
 
           <div>
             <Label className="text-slate-600">Endereco de Entrega</Label>

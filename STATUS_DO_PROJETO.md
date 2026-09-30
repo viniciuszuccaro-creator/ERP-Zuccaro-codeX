@@ -1,3 +1,29 @@
+## CURSOR — Expedição #193 CI SUCCESS (2026-09-30T16:00Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#193** CI SUCCESS |
+| HEAD | `29ef05b8` |
+| Codex #178 | `90533c2c` — candidato, **não** final declarado |
+| Próximo | Harden `RoteirizacaoMapa` contexto fail-closed + filas acompanhamento |
+
+---
+
+## CURSOR — Expedição detalhe/separação fail-closed (pós-#192) (2026-09-30T15:55Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#192** filtros CI SUCCESS |
+| Branch | `cursor/expedicao-detalhe-separacao-failclosed-392b` |
+| Draft PR | **#193** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/193 |
+| Escopo | `DetalhesEntregaView` contexto∧ + `assertEntregaOnUpdate`/`hasProvaEntrega` + data cliente; `SeparacaoConferencia` + `assertSeparacaoOnCreate` |
+| Não tocado | Pedido/Orçamento services Codex; mig 026/035; Armado/Corte |
+| Testes | expedicao-entrega-policy 17/17 |
+| Colisão | Sem tip-port #178; sem merge/VPS |
+| Próximo | CI; vigília candidato final #178 |
+
+---
+
 ## CURSOR — Expedição filtros #192 CI SUCCESS (2026-09-30T15:53Z)
 
 | Campo | Valor |
