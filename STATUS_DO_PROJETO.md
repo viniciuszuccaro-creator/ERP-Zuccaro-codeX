@@ -1,3 +1,14 @@
+## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#196** | CI SUCCESS HEAD `ef0a583d` |
+| Stack Expedição | **#192→#196** (consolidado + integrado Pedido) |
+| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final); sem tip-port |
+| Próximo | Vigília FINAL #178; residual Expedição só se gap novo fora reserva |
+
+---
+
 ## CURSOR — Expedição fluxo integrado Pedido (lacunas pós-#195) (2026-09-30T18:01Z)
 
 | Campo | Valor |

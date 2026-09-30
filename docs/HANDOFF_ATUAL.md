@@ -1,3 +1,10 @@
+## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
+
+#196 CI SUCCESS (`ef0a583d`). Stack Expedição #192–#196 ok.
+#178 `98820d20` ainda candidato — sem tip-port. Sem merge/VPS. Vigília 15min.
+
+---
+
 ## CURSOR — Expedição fluxo integrado Pedido (2026-09-30T18:01Z)
 
 Draft PR **#196**. Branch `cursor/expedicao-fluxo-integrado-pedido-392b`. Lacunas pós-#195: Pedidos→separação, unidades, rollback.
