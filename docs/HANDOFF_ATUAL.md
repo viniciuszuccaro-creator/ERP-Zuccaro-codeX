@@ -1,3 +1,10 @@
+## CURSOR — Expedição roteirização fail-closed (2026-09-30T16:02Z)
+
+#193 CI SUCCESS. Branch `cursor/expedicao-roteirizacao-contexto-392b` — mapa contexto∧ + filtros.
+Reservados Codex #178 intactos. Sem merge/VPS.
+
+---
+
 ## CURSOR — Expedição detalhe/separação fail-closed (2026-09-30T15:55Z)
 
 #192 CI SUCCESS. Draft PR **#193** — detalhe∧ + assert update/prova; separação assertSeparacaoOnCreate.

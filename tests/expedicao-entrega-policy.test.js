@@ -244,6 +244,16 @@ test('detalhe e separação wire policy fail-closed', async () => {
   assert.match(separacao, /SeparacaoConferencia\.retry/);
 });
 
+test('roteirização mapa wire contexto e filtros fail-closed', async () => {
+  const mapa = await readFile(new URL('../src/components/expedicao/RoteirizacaoMapa.jsx', import.meta.url), 'utf8');
+  assert.match(mapa, /filterEntregasList/);
+  assert.match(mapa, /roteirizacao-filtros-estruturados/);
+  assert.match(mapa, /roteirizacao-filtro-cidade/);
+  assert.match(mapa, /roteirizacao-so-futuras/);
+  assert.match(mapa, /groupId && empresaId/);
+  assert.doesNotMatch(mapa, /Boolean\(groupId \|\| empresaId\)/);
+});
+
 test('expedicao existente reserva numero e o app nao lista todas as entregas', async () => {
   const cadastro = await readFile(new URL('../src/api/localCadastroMasterPolicy.js', import.meta.url), 'utf8');
   const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
