@@ -1,3 +1,9 @@
+## CURSOR — #197 CI SUCCESS HEAD soft∨ (2026-09-30T18:56Z)
+
+#197 CI SUCCESS `09ada19d`. Soft∨ caminho crítico ok. #178 ainda candidata. Sem merge/VPS.
+
+---
+
 ## CURSOR — #197 CI SUCCESS + soft∨ + vigília #178 (2026-09-30T18:55Z)
 
 #197 CI SUCCESS. Soft∨→∧ em ocorrência/comprovante/notificador/reversa/chat.

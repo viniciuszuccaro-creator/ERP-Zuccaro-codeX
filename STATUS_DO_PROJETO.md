@@ -1,3 +1,14 @@
+## CURSOR — #197 CI SUCCESS HEAD soft∨ (2026-09-30T18:56Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#197** | CI SUCCESS HEAD `09ada19d` (IntegracaoRomaneio + soft∨ caminho crítico) |
+| Stack | #192→#197 |
+| Codex #178 | ainda candidata `9df73886` — sem tip-port |
+| Próximo | Vigília FINAL #178; residual só dashboard/config leitura |
+
+---
+
 ## CURSOR — #197 CI SUCCESS + soft∨ fluxo + vigília #178 (2026-09-30T18:55Z)
 
 | Campo | Valor |
