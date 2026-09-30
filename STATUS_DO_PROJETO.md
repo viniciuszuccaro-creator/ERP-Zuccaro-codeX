@@ -4,6 +4,7 @@
 |---|---|
 | Choice | **CreditPort Pedido** fail-closed via ClienteEmpresa.limite_* (mig **032** tip-owned) |
 | Branch | `cursor/comercial360-onda6-credit-port-tip-392b` |
+| Draft PR | **#180** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/180 |
 | Base | tip #174 histórico UX |
 | Escopo | `032_cliente_empresas_credito.sql`; `comercialCreditoPolicy` + `createClienteEmpresaCreditPort`; Pedido create/convert/update; RBAC `aprovar-credito`; meta `creditPortFailClosed` |
 | Reuso | Patterns #67 (não edita branch Codex); tip ctor com cost/alcada/promo + credit 4º opcional |

@@ -1,9 +1,9 @@
 ## AUTÔNOMO — tip CreditPort + mig 032 (2026-09-30T11:05Z)
 
 Branch `cursor/comercial360-onda6-credit-port-tip-392b` empilhada em #174:
-CreditPort Pedido fail-closed (ClienteEmpresa.limite_*; mig 032 tip; create/convert/update;
+Draft PR **#180** — CreditPort Pedido fail-closed (ClienteEmpresa.limite_*; mig 032 tip; create/convert/update;
 CREDITO_ALCADA_DENIED; RBAC aprovar-credito). Patterns #67 sem editar Codex.
-Sem merge/VPS. CostPort invent ainda BLOCKED.
+Sem merge/VPS. CostPort invent ainda BLOCKED. CI em curso.
 
 ---
 
