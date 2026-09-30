@@ -1,3 +1,17 @@
+## CURSOR — Expedição detalhe/separação fail-closed (pós-#192) (2026-09-30T15:55Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#192** filtros CI SUCCESS |
+| Branch | `cursor/expedicao-detalhe-separacao-failclosed-392b` |
+| Escopo | `DetalhesEntregaView` contexto∧ + `assertEntregaOnUpdate`/`hasProvaEntrega` + data cliente; `SeparacaoConferencia` + `assertSeparacaoOnCreate` |
+| Não tocado | Pedido/Orçamento services Codex; mig 026/035; Armado/Corte |
+| Testes | expedicao-entrega-policy 17/17 |
+| Colisão | Sem tip-port #178; sem merge/VPS |
+| Próximo | CI; vigília candidato final #178 |
+
+---
+
 ## CURSOR — Expedição filtros #192 CI SUCCESS (2026-09-30T15:53Z)
 
 | Campo | Valor |
