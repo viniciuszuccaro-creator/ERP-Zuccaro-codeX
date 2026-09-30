@@ -150,9 +150,11 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
         try {
           // Aprovacao apenas RESERVA; saida fisica ocorre no faturamento
           const baixa = await reservarEstoqueItemAprovacao(item, pedido, contextoOperacao.empresaId);
+          if (!baixa?.id && baixa?.skipped !== true) throw new Error('Reserva sem confirmacao verificavel');
           baixasEstoque.push(baixa);
         } catch (error) {
           resultados.erros.push(`Erro ao reservar estoque ${item.descricao}: ${error.message}`);
+          break;
         }
       }
     }

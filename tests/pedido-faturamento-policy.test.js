@@ -651,6 +651,54 @@ test('fechamento compensa reserva parcial e nao entra em financeiro ou logistica
   assert.match(fechamento, /return resultados;[\s\S]*?\/\/ ETAPA 2: Gerar Financeiro/);
 });
 
+test('reserva sem confirmacao compensa a anterior e bloqueia efeitos posteriores', async () => {
+  const efeitos = [];
+  const resultado = await executarReservasComCompensacao({
+    itens: [{ produto_id: 'p1', quantidade: 2, unidade: 'UN' }, { produto_id: 'p2', quantidade: 1, unidade: 'UN' }],
+    reservar: async (item) => {
+      efeitos.push(`reservar:${item.produto_id}`);
+      return item.produto_id === 'p1' ? { id: 'r1', produto_id: 'p1' } : undefined;
+    },
+    compensar: async (reserva) => { efeitos.push(`compensar:${reserva.id}`); return { id: 'c1' }; },
+  });
+  if (!resultado.bloqueado) efeitos.push('financeiro', 'expedicao', 'status');
+  assert.deepEqual(efeitos, ['reservar:p1', 'reservar:p2', 'compensar:r1']);
+  assert.equal(resultado.bloqueado, true);
+  assert.deepEqual(resultado.compensadas, [{ id: 'c1' }]);
+  assert.match(resultado.erros[0], /sem confirmacao/);
+});
+
+test('aprovacao real para no item sem recibo, compensa e nao aciona producao ou financeiro', async () => {
+  const source = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  const start = source.indexOf('export async function aprovarPedidoCompleto');
+  const end = source.indexOf('export async function validarLimiteCredito', start);
+  const approvalSource = source.slice(start, end).replace(/^export /, '');
+  const efeitos = [];
+  const approve = runInNewContext(`(${approvalSource})`, {
+    normalizarContextoOperacao: () => ({ groupId: 'g1', empresaId: 'e1' }),
+    validarLimiteCredito: async () => ({ aprovado: true }),
+    validarItensReservaEstoque,
+    reservarEstoqueItemAprovacao: async (item) => {
+      efeitos.push(`reserva:${item.produto_id}`);
+      return item.produto_id === 'p1' ? { id: 'r1', produto_id: 'p1' } : undefined;
+    },
+    avaliarReservaParcial,
+    liberarReservaEstoque: async (reserva) => { efeitos.push(`compensa:${reserva.id}`); return { id: 'c1' }; },
+    gerarOPAutomatica: async () => { efeitos.push('producao'); },
+    gerarContaReceber: async () => { efeitos.push('financeiro'); },
+    updateScoped: async () => { efeitos.push('status'); },
+  });
+  const result = await approve({ id: 'ped-1', itens_revenda: [
+    { produto_id: 'p1', unidade: 'UN', quantidade: 2 },
+    { produto_id: 'p2', unidade: 'UN', quantidade: 1 },
+    { produto_id: 'p3', unidade: 'UN', quantidade: 1 },
+  ], itens_producao: [{}], forma_pagamento: 'PIX', parcelas: [{}] }, 'e1');
+  assert.deepEqual(efeitos, ['reserva:p1', 'reserva:p2', 'compensa:r1']);
+  assert.equal(result.reservaEstoqueBloqueada, true);
+  assert.equal(result.reservasCompensadas.length, 1);
+  assert.equal(result.erros.length, 1);
+});
+
 test('stock reservation rejects duplicate or missing product lines before persistence', () => {
   const valid = validarItensReservaEstoque([{ produto_id: 'p1', unidade: 'UN', quantidade: 2 }, { produto_id: 'p1', unidade: 'UN', quantidade: 3 }]);
   assert.equal(valid.valido, true);
