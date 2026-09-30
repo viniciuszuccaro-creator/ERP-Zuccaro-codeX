@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { reconcilePrivateCandidates } from '../scripts/legado/reconciliar-candidatos-privados.mjs';
 
@@ -25,14 +26,22 @@ function fixture(overrides = {}) {
       ...overrides[entity],
     };
     const header = Object.keys(row);
-    write(candidate, `${header.join(',')}\n${Object.values(row).join(',')}\n`);
-    write(quarantine, `${header.join(',')}\n`);
+    const candidateContent = `${header.join(',')}\n${Object.values(row).join(',')}\n`;
+    const quarantineContent = `${header.join(',')}\n`;
+    write(candidate, candidateContent);
+    write(quarantine, quarantineContent);
+    const hash = (content) => createHash('sha256').update(content).digest('hex');
     const counts = entity === 'clientes'
       ? { sourceRows: 1, acceptedCandidates: 1, quarantinedRows: 0 }
       : entity === 'fornecedores'
         ? { totals: { source_rows: 1, candidates: 1, quarantine: 0 } }
         : { source_rows: 1, candidate_rows: 1, quarantine_rows: 0 };
-    write(summary, `${entity === 'produtos_revenda' ? '\uFEFF' : ''}${JSON.stringify({ ...counts, ...overrides.summary })}`);
+    const integrity = entity === 'produtos_revenda'
+      ? { candidate_sha256: hash(candidateContent), quarantine_sha256: hash(quarantineContent) }
+      : entity === 'clientes'
+        ? { files: [{ name: candidate.split('/').at(-1), sha256: hash(candidateContent) }, { name: quarantine.split('/').at(-1), sha256: hash(quarantineContent) }] }
+        : { artifacts: [{ relative_path: candidate, sha256: hash(candidateContent) }, { relative_path: quarantine, sha256: hash(quarantineContent) }] };
+    write(summary, `${entity === 'produtos_revenda' ? '\uFEFF' : ''}${JSON.stringify({ ...counts, ...integrity, ...overrides.summary })}`);
   }
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
@@ -42,6 +51,8 @@ test('reconciles synthetic master extracts without returning identifiers', () =>
   try {
     const report = reconcilePrivateCandidates(data.root);
     assert.equal(report.entities.clientes.candidates, 1);
+    assert.equal(report.entities.clientes.fileHashesVerified, true);
+    assert.equal(report.entities.clientes.companyScopedRows, 0);
     assert.equal(report.crossRoleDocumentOverlap, 1);
     assert.equal(report.crossRoleOverlapIsTentative, true);
     assert.equal(report.operationalImportAuthorized, false);
@@ -65,6 +76,14 @@ test('rejects company-scoped master and import authorization', () => {
 
 test('rejects unreadable input with sanitized error', () => {
   assert.throws(() => reconcilePrivateCandidates('missing-private-root'), { message: 'LEGACY_INPUT_UNREADABLE:clientes' });
+});
+
+test('rejects a changed private CSV before considering its rows', () => {
+  const data = fixture();
+  try {
+    writeFileSync(join(data.root, paths.clientes[0]), 'group_id,codigo_legado\nchanged,private\n');
+    assert.throws(() => reconcilePrivateCandidates(data.root), { message: 'LEGACY_HASH_MISMATCH:clientes' });
+  } finally { data.cleanup(); }
 });
 
 test('rejects missing legacy code and cross-group masters', () => {

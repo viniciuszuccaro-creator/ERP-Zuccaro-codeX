@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { basename } from 'node:path';
 import { parse } from 'csv-parse/sync';
 
 const ENTITIES = {
@@ -15,6 +17,20 @@ function expected(summary, entity) {
   if (entity === 'clientes') return [summary.sourceRows, summary.acceptedCandidates, summary.quarantinedRows];
   if (entity === 'fornecedores') return [summary.totals.source_rows, summary.totals.candidates, summary.totals.quarantine];
   return [summary.source_rows, summary.candidate_rows, summary.quarantine_rows];
+}
+
+function expectedHash(summary, entity, file, kind) {
+  if (entity === 'produtos_revenda') return summary[`${kind}_sha256`];
+  const artifacts = entity === 'clientes' ? summary.files : summary.artifacts;
+  const item = artifacts?.find((artifact) =>
+    (artifact.name || basename(artifact.relative_path || '')) === basename(file));
+  return item?.sha256;
+}
+
+function verifyHash(path, expected, entity) {
+  if (!/^[a-f0-9]{64}$/i.test(expected || '')) throw new Error(`LEGACY_HASH_MISSING:${entity}`);
+  const actual = createHash('sha256').update(readFileSync(path)).digest('hex');
+  if (actual.toLowerCase() !== expected.toLowerCase()) throw new Error(`LEGACY_HASH_MISMATCH:${entity}`);
 }
 
 function documentOf(row, entity) {
@@ -39,6 +55,8 @@ export function reconcilePrivateCandidates(root) {
       throw new Error(`LEGACY_INPUT_UNREADABLE:${entity}`);
     }
     const [sourceCount, candidateCount, quarantineCount] = expected(summary, entity);
+    verifyHash(path(files.candidate), expectedHash(summary, entity, files.candidate, 'candidate'), entity);
+    verifyHash(path(files.quarantine), expectedHash(summary, entity, files.quarantine, 'quarantine'), entity);
     if (![sourceCount, candidateCount, quarantineCount].every(Number.isSafeInteger)
       || sourceCount !== candidates.length + quarantined.length
       || candidateCount !== candidates.length || quarantineCount !== quarantined.length) {
@@ -61,7 +79,12 @@ export function reconcilePrivateCandidates(root) {
       if (document && entity === 'clientes') clientDocuments.add(document);
       if (document && entity === 'fornecedores') supplierDocuments.add(document);
     }
-    report.entities[entity] = { sourceRows: sourceCount, candidates: candidates.length, quarantine: quarantined.length, reconciled: true, uniqueLegacyCodes: codes.size };
+    report.entities[entity] = {
+      sourceRows: sourceCount, candidates: candidates.length, quarantine: quarantined.length,
+      difference: sourceCount - candidates.length - quarantined.length,
+      reconciled: true, fileHashesVerified: true, uniqueLegacyCodes: codes.size,
+      scope: 'GROUP_MASTER', companyScopedRows: 0,
+    };
   }
   for (const document of clientDocuments) if (supplierDocuments.has(document)) report.crossRoleDocumentOverlap++;
   return report;
