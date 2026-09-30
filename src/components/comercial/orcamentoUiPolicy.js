@@ -246,11 +246,17 @@ export function evaluateOrcamentoValidadeUiGate(validadeEm, now = new Date()) {
  */
 export function comercialDocumentoSnapshotGapHint(row, options = {}) {
   if (!row) return null;
-  const purpose = options.purpose === 'convert' ? 'convert' : 'resumo';
+  const purpose = options.purpose === 'convert'
+    ? 'convert'
+    : options.purpose === 'print'
+      ? 'print'
+      : 'resumo';
   const label = String(options.entityLabel || (purpose === 'convert' ? 'orçamento' : 'documento')).trim() || 'documento';
   const suffix = purpose === 'convert'
     ? `edite e salve o ${label} antes de converter.`
-    : `edite e salve o ${label} antes de gerar o resumo.`;
+    : purpose === 'print'
+      ? `edite e salve o ${label} antes de imprimir ou compartilhar.`
+      : `edite e salve o ${label} antes de gerar o resumo.`;
   const condCodigo = String(row.condicao_pagamento_codigo_snapshot || '').trim();
   const condNome = String(row.condicao_pagamento_nome_snapshot || '').trim();
   const parcelas = row.condicao_pagamento_parcelas_snapshot;
@@ -639,6 +645,10 @@ export function evaluateOrcamentoPrintPdfUiGate({ row, groupId, empresaId, canPr
   if (!Array.isArray(row.itens)) {
     return { blockPrint: true, mode: 'invalid', hint: 'Itens do orçamento indisponíveis (fail-closed).' };
   }
+  const snapshotGap = comercialDocumentoSnapshotGapHint(row, { purpose: 'print', entityLabel: 'orçamento' });
+  if (snapshotGap) {
+    return { blockPrint: true, mode: 'snapshot_gap', hint: snapshotGap };
+  }
   return { blockPrint: false, mode: 'ready', hint: null };
 }
 
@@ -652,6 +662,10 @@ export function evaluateOrcamentoShareUiGate({ row, groupId, empresaId, canShare
   }
   if (!row || !row.numero) {
     return { blockShare: true, mode: 'missing', hint: 'Orçamento indisponível para compartilhamento (fail-closed).' };
+  }
+  const snapshotGap = comercialDocumentoSnapshotGapHint(row, { purpose: 'print', entityLabel: 'orçamento' });
+  if (snapshotGap) {
+    return { blockShare: true, mode: 'snapshot_gap', hint: snapshotGap };
   }
   return { blockShare: false, mode: 'ready', hint: null };
 }

@@ -431,6 +431,20 @@ test('orcamento print/share gates fail-closed', () => {
   assert.equal(evaluateOrcamentoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: true }).blockPrint, false);
   assert.equal(evaluateOrcamentoShareUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canShare: false }).mode, 'permission');
   assert.equal(evaluateOrcamentoShareUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canShare: true }).blockShare, false);
+  const gapRow = {
+    numero: '1',
+    itens: [],
+    tabela_preco_id: 't1',
+    tabela_preco_codigo_snapshot: 'T1',
+    tabela_preco_nome_snapshot: '',
+  };
+  const gapPrint = evaluateOrcamentoPrintPdfUiGate({ row: gapRow, groupId: 'g', empresaId: 'e', canPrint: true });
+  assert.equal(gapPrint.mode, 'snapshot_gap');
+  assert.equal(gapPrint.blockPrint, true);
+  assert.match(gapPrint.hint, /imprimir ou compartilhar/i);
+  const gapShare = evaluateOrcamentoShareUiGate({ row: gapRow, groupId: 'g', empresaId: 'e', canShare: true });
+  assert.equal(gapShare.mode, 'snapshot_gap');
+  assert.equal(gapShare.blockShare, true);
 });
 
 test('painel orçamento wire Imprimir/PDF e share fail-closed', async () => {

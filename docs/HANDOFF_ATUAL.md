@@ -1,8 +1,13 @@
+## AUTÔNOMO — tip print/share snapshot_gap (2026-09-30T12:48Z)
+
+#188 CI SUCCESS. Draft PR **#189** — print/share Pedido+Orçamento bloqueiam em snapshot_gap.
+Testes ui-policy 49/49. Sem merge/VPS. CI em curso.
+
+---
+
 ## AUTÔNOMO — tip Pedido data entrega local+RETIRADA (2026-09-30T12:42Z)
 
-#187 CI SUCCESS. Branch `cursor/comercial360-pedido-entrega-local-tip-392b` empilhada em #187:
-Draft PR **#188** — calendário local + `min=` ENTREGA; RETIRADA exige data (schema/payload). Testes 25/25.
-Sem merge/VPS. CI em curso.
+Draft PR **#188** CI SUCCESS — calendário local + RETIRADA presença.
 
 ---
 
