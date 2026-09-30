@@ -5,6 +5,7 @@
 | Tip anterior | **#182** ContaReceber↔Pedido CI SUCCESS |
 | Choice | **LiquidarReceberPagar** usa política caixa fail-closed (group+empresa) |
 | Branch | `cursor/comercial360-onda6-caixa-liquidar-tip-392b` |
+| Draft PR | **#183** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/183 |
 | Base | tip #182 CR↔Pedido |
 | Escopo | `assertTitulosProntosParaCaixa` no mutate; contexto exige groupId∧empresaId; queryKey tenant; `pedido_id` |
 | Testes | financeiro-titulo-policy 13/13 |
