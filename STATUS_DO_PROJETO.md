@@ -4,6 +4,7 @@
 |---|---|
 | Tip anterior | **#193** detalhe/separação CI SUCCESS |
 | Branch | `cursor/expedicao-roteirizacao-contexto-392b` |
+| Draft PR | **#194** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/194 |
 | Escopo | `RoteirizacaoMapa` contexto `group∧empresa` + filtros cidade/data/futuras via policy |
 | Não tocado | Codex #178 reservas |
 | Testes | expedicao-entrega-policy 18/18 |
