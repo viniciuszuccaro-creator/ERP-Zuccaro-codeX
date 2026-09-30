@@ -1,3 +1,10 @@
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:58Z)
+
+#191 ok. #153=`12c37e8b`. Sem CostPort/anexos/#178/provedor → **BLOCKED**.
+Sem merge/VPS. Vigília 15min.
+
+---
+
 ## AUTÔNOMO — PROXIMO = BLOCKED (2026-09-30T13:41Z)
 
 Pedido **PROXIMO**: tip-seguros esgotados pós-#191. Sem CostPort/anexos/#178/provedor.
