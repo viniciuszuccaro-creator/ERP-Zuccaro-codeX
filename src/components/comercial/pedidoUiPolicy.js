@@ -145,6 +145,18 @@ export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') 
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
 }
 
+/** Imprimir/PDF: só imprimir|exportar — sem fallback visualizar (fail-closed RBAC). */
+export function resolvePedidoPrintPermission(hasPermission) {
+  return canUsePedidoAction(hasPermission, 'imprimir')
+    || canUsePedidoAction(hasPermission, 'exportar');
+}
+
+/** Compartilhar: só compartilhar|notificar — sem cascata de visualizar/imprimir. */
+export function resolvePedidoSharePermission(hasPermission) {
+  return canUsePedidoAction(hasPermission, 'compartilhar')
+    || canUsePedidoAction(hasPermission, 'notificar');
+}
+
 /** Cancel disable when unauthorized or not EM_ABERTO (incl. already CANCELADO). */
 export function isPedidoCancelDisabled(hasPermission, status) {
   return !canUsePedidoAction(hasPermission, 'cancelar', status);

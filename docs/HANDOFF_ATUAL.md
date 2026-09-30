@@ -1,7 +1,13 @@
+## AUTÔNOMO — tip RBAC print/share sem canView (2026-09-30T13:05Z)
+
+#190 CI SUCCESS. Branch `cursor/comercial360-print-share-rbac-tip-392b` — print/share sem soft→canView.
+Pedido+Orçamento helpers + wire painéis. Sem merge/VPS. CI em curso.
+
+---
+
 ## AUTÔNOMO — tip audit crédito override (2026-09-30T12:55Z)
 
-#189 CI SUCCESS. Draft PR **#190** — audit `credito_alcada_override` (paridade margem).
-Testes crédito 9/9. Sem merge/VPS. CI em curso.
+#189 CI SUCCESS. Draft PR **#190** CI SUCCESS — audit `credito_alcada_override`.
 
 ---
 

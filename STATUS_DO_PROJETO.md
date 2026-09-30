@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip RBAC print/share sem fallback canView (pós-#190) (2026-09-30T13:05Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#190** audit crédito override CI SUCCESS |
+| Choice | Fechar ressalva Onda4/5: print/share **sem** soft→`canView`/`canPrint` |
+| Branch | `cursor/comercial360-print-share-rbac-tip-392b` |
+| Draft PR | (em criação) |
+| Escopo | `resolvePedido/OrcamentoPrint|SharePermission`; wire `PedidoCanonicoPanel` + `OrcamentosTab` |
+| Testes | pedido-ui-policy 26 + orcamento-ui-policy 26 (RBAC + source-match) |
+| Colisão | Sem CostPort; sem anexos; sem merge/VPS |
+| Próximo | CI; residual tip-seguro ou BLOCKED CostPort/#178 |
+
+---
+
 ## AUTÔNOMO — tip audit override aprovar-credito (pós-#189) (2026-09-30T12:55Z)
 
 | Campo | Valor |
@@ -7,9 +22,9 @@
 | Branch | `cursor/comercial360-credito-audit-override-tip-392b` |
 | Draft PR | **#190** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/190 |
 | Escopo | `CreditoAvaliacao.overridden` + `auditCreditoOverride` em create/convert/update |
-| Testes | comercial-onda6-credito-pedido 9/9 |
+| Testes | comercial-onda6-credito-pedido 9/9; CI SUCCESS |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
-| Próximo | CI; residual RBAC print soft ou BLOCKED |
+| Próximo | RBAC print soft |
 
 ---
 
@@ -64,15 +79,15 @@ Fontes: [Revisar tip Onda6 #180-184](bc-fae4c456-1c96-5a07-9431-a8f8d0f217f3) ·
 
 | Faixa | Parecer | Notas |
 |---|---|---|
-| Onda 4/5 polish #154–#174 | **COM_RESSALVA** | Gaps: RETIRADA×data entrega; calendário UTC vs local; print/share sem snapshot_gap; RBAC print soft→canView |
+| Onda 4/5 polish #154–#174 | **APTA_TIP** (ressalvas tip fechadas #188–#191) | Data entrega local+RETIRADA; snapshot_gap print; RBAC print sem canView |
 | #180 CreditPort+032 | **APTA_TIP** | Precisão ≤6 fechada em **#186** |
-| #181 EnviarParaCaixa | **COM_RESSALVA→fechando** | Componente tip ok; tabs CR/CP sem policy → lote tip atual |
+| #181 EnviarParaCaixa | **APTA_TIP** | tabs CR/CP + assertTitulos em **#187** |
 | #182 CR↔Pedido | **APTA_TIP** | `group_id` soft → endurecido no lote atual |
 | #183 Liquidar | **APTA_TIP** | — |
 | #184 margem port | **APTA_TIP** | — |
-| #186 crédito precisão | **APTA_TIP** | CI SUCCESS |
+| #186–#190 | **APTA_TIP** | precisão; caixa tabs; entrega; snapshot; audit crédito |
 
-**Próximos tip-seguros residuais:** data entrega Pedido local+RETIRADA; print/share+snapshot_gap; audit `aprovar-credito`.  
+**Próximos tip-seguros residuais:** esgotados no escopo revisão tip; só BLOCKED.  
 **BLOCKED:** CostPort real · anexos #50/#59–62 · provedor · tip-port #178.
 
 ---
