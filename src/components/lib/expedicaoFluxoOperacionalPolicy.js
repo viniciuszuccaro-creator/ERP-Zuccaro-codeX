@@ -5,6 +5,7 @@
  */
 
 import {
+  assertEntregaOnCreate,
   assertEntregaOnUpdate,
   assertRomaneioOnCreate,
   resolveEntregaClienteCalendarDay,
@@ -274,6 +275,7 @@ export const resolveRomaneioDespacho = ({
   usuario = 'Sistema',
   usuario_id = null,
   romaneiosExistentes = [],
+  exigirChecklist = true,
 } = {}) => {
   if (!firstText(groupId) || !firstText(empresaId)) {
     throw new Error('Contexto multiempresa obrigatorio para gerar romaneio.');
@@ -282,7 +284,7 @@ export const resolveRomaneioDespacho = ({
 
   const checklistOk = ['documentos_ok', 'veiculo_ok', 'carga_conferida', 'combustivel_ok']
     .every((key) => checklist_saida[key] === true);
-  if (!checklistOk) {
+  if (exigirChecklist && !checklistOk) {
     throw new Error('Conclua o checklist de saida antes de gerar o romaneio.');
   }
 
@@ -658,6 +660,193 @@ export const selectPedidosParaSeparacao = (pedidos = [], {
     throw new Error('Selecione pelo menos um pedido elegivel da empresa.');
   }
   return elegiveis;
+};
+
+/** Status de Pedido elegíveis para montar romaneio (frente logística). */
+export const PEDIDOS_STATUS_ELEGIVEIS_ROMANEIO = Object.freeze([
+  'faturado',
+  'pronto para faturar',
+  'em expedicao',
+  'em expedição',
+  'pronto para expedir',
+  'em separacao',
+  'em separação',
+]);
+
+/**
+ * Seleciona Pedidos elegíveis para romaneio no contexto da empresa.
+ * @param {ExpedicaoRecord[]} pedidos
+ * @param {{
+ *   empresaId?: unknown,
+ *   groupId?: unknown,
+ *   selectedIds?: unknown[],
+ *   exigirSelecao?: boolean,
+ *   permitirRetirada?: boolean,
+ * }} options
+ */
+export const selectPedidosParaRomaneio = (pedidos = [], {
+  empresaId = null,
+  groupId = null,
+  selectedIds = null,
+  exigirSelecao = false,
+  permitirRetirada = false,
+} = {}) => {
+  if (!firstText(empresaId)) {
+    throw new Error('Empresa obrigatoria para selecionar pedidos do romaneio.');
+  }
+  const selectedSet = Array.isArray(selectedIds)
+    ? new Set(selectedIds.map((id) => String(id)).filter(Boolean))
+    : null;
+
+  const foraDoContexto = (Array.isArray(selectedIds) ? selectedIds : [])
+    .map((id) => (Array.isArray(pedidos) ? pedidos : []).find((row) => String(row.id) === String(id)))
+    .filter(Boolean)
+    .filter((row) => firstText(row.empresa_id) !== firstText(empresaId)
+      || (firstText(groupId) && firstText(row.group_id, row.grupo_id)
+        && firstText(row.group_id, row.grupo_id) !== firstText(groupId)));
+  if (foraDoContexto.length > 0) {
+    throw new Error('O pedido selecionado nao pertence ao contexto ativo.');
+  }
+
+  const elegiveis = (Array.isArray(pedidos) ? pedidos : []).filter((row) => {
+    if (firstText(row.empresa_id) !== firstText(empresaId)) return false;
+    const rowGroup = firstText(row.group_id, row.grupo_id);
+    if (firstText(groupId) && rowGroup && rowGroup !== firstText(groupId)) return false;
+    if (!permitirRetirada && String(row.tipo_frete || '').toLowerCase().includes('retir')) return false;
+    const st = normalizePedidoStatus(row.status);
+    if (st.includes('cancel') || st.includes('entregue') || st.includes('rejeit') || st.includes('frustr')) {
+      return false;
+    }
+    const okStatus = PEDIDOS_STATUS_ELEGIVEIS_ROMANEIO.some((allowed) => {
+      const a = normalizePedidoStatus(allowed);
+      return st === a || st.includes(a) || a.includes(st);
+    });
+    if (!okStatus) return false;
+    if (selectedSet && !selectedSet.has(String(row.id))) return false;
+    return true;
+  });
+
+  if (exigirSelecao && elegiveis.length === 0) {
+    throw new Error('Selecione pelo menos um pedido elegivel da empresa para o romaneio.');
+  }
+  return elegiveis;
+};
+
+/**
+ * Monta seed de Entrega a partir de Pedido (sem persistir).
+ * @param {ExpedicaoRecord} pedido
+ * @param {{ groupId?: unknown, empresaId?: unknown }} options
+ */
+export const buildEntregaSeedFromPedido = (pedido = {}, { groupId = null, empresaId = null } = {}) => {
+  const eId = firstText(empresaId, pedido.empresa_id);
+  const gId = firstText(groupId, pedido.group_id, pedido.grupo_id);
+  if (!eId || !gId) {
+    throw new Error('Contexto multiempresa obrigatorio para gerar entrega a partir do pedido.');
+  }
+  if (!firstText(pedido.id)) {
+    throw new Error('Pedido obrigatorio para gerar entrega.');
+  }
+  return {
+    group_id: gId,
+    grupo_id: gId,
+    empresa_id: eId,
+    pedido_id: firstText(pedido.id),
+    numero_pedido: firstText(pedido.numero_pedido),
+    cliente_id: pedido.cliente_id || null,
+    cliente_nome: firstText(pedido.cliente_nome),
+    endereco_entrega_completo: pedido.endereco_entrega_completo || pedido.endereco_entrega_principal || null,
+    status: 'Pronto para Expedir',
+    peso_total_kg: Number(pedido.peso_total_kg) || 0,
+    valor_mercadoria: Number(pedido.valor_total) || 0,
+    tipo_frete: pedido.tipo_frete || null,
+    data_entrega_solicitada: pedido.data_entrega_solicitada || pedido.data_previsao || null,
+    data_previsao: pedido.data_previsao || pedido.data_entrega_solicitada || null,
+  };
+};
+
+/**
+ * Planeja entregas (create/reuse) a partir de Pedidos para ingressar no romaneio canônico.
+ * Idempotente via assertEntregaOnCreate / findDuplicate.
+ * @param {{
+ *   pedidos?: ExpedicaoRecord[],
+ *   entregasExistentes?: ExpedicaoRecord[],
+ *   empresaId?: unknown,
+ *   groupId?: unknown,
+ *   selectedIds?: unknown[],
+ * }} options
+ */
+export const planEntregasFromPedidosParaRomaneio = ({
+  pedidos = [],
+  entregasExistentes = [],
+  empresaId = null,
+  groupId = null,
+  selectedIds = null,
+} = {}) => {
+  const selecionados = selectPedidosParaRomaneio(pedidos, {
+    empresaId,
+    groupId,
+    selectedIds,
+    exigirSelecao: true,
+  });
+  const creates = [];
+  const reuses = [];
+  const working = [...(Array.isArray(entregasExistentes) ? entregasExistentes : [])];
+
+  for (const pedido of selecionados) {
+    const seed = buildEntregaSeedFromPedido(pedido, { groupId, empresaId });
+    const decision = assertEntregaOnCreate({ record: seed, entregas: working });
+    if (decision.reuse) {
+      reuses.push(decision.reuse);
+    } else {
+      creates.push(decision.record);
+      // evita duplicar no mesmo lote in-memory
+      working.push({ ...decision.record, id: `pending-${pedido.id}` });
+    }
+  }
+
+  return {
+    pedidos: selecionados,
+    creates,
+    reuses,
+    action: creates.length === 0 && reuses.length > 0 ? 'retry' : 'criar',
+  };
+};
+
+/**
+ * Side-effect legado descritivo: Pedido → Em Trânsito após romaneio (IntegracaoRomaneio).
+ * Contrato canônico permanece com Codex — não muta Pedido aqui.
+ */
+export const INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT = Object.freeze({
+  entity: 'Pedido',
+  via: 'updateInContext',
+  statusAlvo: 'Em Trânsito',
+  coordenacao: 'codex-pedido-contrato',
+  reservado: true,
+});
+
+/**
+ * Patch descritivo de Pedido após romaneio bem-sucedido (legado).
+ * @param {{ pedidoId?: unknown, groupId?: unknown, empresaId?: unknown, romaneioId?: unknown }} options
+ */
+export const resolvePedidoLegadoAposRomaneio = ({
+  pedidoId = null,
+  groupId = null,
+  empresaId = null,
+  romaneioId = null,
+} = {}) => {
+  if (!firstText(pedidoId) || !firstText(groupId) || !firstText(empresaId)) {
+    return null;
+  }
+  return {
+    status: INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT.statusAlvo,
+    group_id: firstText(groupId),
+    grupo_id: firstText(groupId),
+    empresa_id: firstText(empresaId),
+    _legado_side_effect: {
+      ...INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT,
+      romaneio_id: firstText(romaneioId) || null,
+    },
+  };
 };
 
 /**

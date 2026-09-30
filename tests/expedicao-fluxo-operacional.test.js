@@ -9,15 +9,20 @@ import {
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
 import {
   SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
+  INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT,
   assertConfirmacaoDupla,
   assertSeparacaoChecklist,
   assertSeparacaoQuantidades,
+  buildEntregaSeedFromPedido,
   filterEntregasPendencias,
+  planEntregasFromPedidosParaRomaneio,
+  resolvePedidoLegadoAposRomaneio,
   resolveRegistroEntregaFinal,
   resolveRomaneioDespacho,
   resolveSeparacaoConclusion,
   revalidarSelecaoAposTrocaEmpresa,
   selectEntregasParaRomaneio,
+  selectPedidosParaRomaneio,
   selectPedidosParaSeparacao,
   applyDespachoPatchesWithRollback,
 } from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
@@ -559,4 +564,276 @@ test('fluxo integrado: pedido elegível → separação → romaneio → despach
   });
   const pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
   assert.ok(pendencias.some((p) => p.pendencia.tipo === 'ocorrencia'));
+});
+
+test('selectPedidosParaRomaneio: isolamento grupo∧empresa e exclusão de retirada', () => {
+  const pedidos = [
+    { id: 'p1', empresa_id: 'emp-a', group_id: 'g1', status: 'Faturado', tipo_frete: 'CIF' },
+    { id: 'p2', empresa_id: 'emp-b', group_id: 'g1', status: 'Faturado', tipo_frete: 'CIF' },
+    { id: 'p3', empresa_id: 'emp-a', group_id: 'g2', status: 'Em Expedição', tipo_frete: 'FOB' },
+    { id: 'p4', empresa_id: 'emp-a', group_id: 'g1', status: 'Faturado', tipo_frete: 'Retirada' },
+    { id: 'p5', empresa_id: 'emp-a', group_id: 'g1', status: 'Cancelado', tipo_frete: 'CIF' },
+  ];
+  const elegiveis = selectPedidosParaRomaneio(pedidos, { empresaId: 'emp-a', groupId: 'g1' });
+  assert.deepEqual(elegiveis.map((p) => p.id), ['p1']);
+
+  assert.throws(
+    () => selectPedidosParaRomaneio(pedidos, {
+      empresaId: 'emp-a', groupId: 'g1', selectedIds: ['p2'], exigirSelecao: true,
+    }),
+    /nao pertence ao contexto/,
+  );
+  assert.throws(
+    () => selectPedidosParaRomaneio(pedidos, { empresaId: null }),
+    /Empresa obrigatoria/,
+  );
+});
+
+test('planEntregasFromPedidosParaRomaneio: create + reuse idempotente', () => {
+  const pedidos = [
+    {
+      id: 'ped-a',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Faturado',
+      numero_pedido: 'N-1',
+      cliente_nome: 'Cliente A',
+      peso_total_kg: 10,
+      valor_total: 100,
+    },
+    {
+      id: 'ped-b',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Pronto para Faturar',
+      numero_pedido: 'N-2',
+      cliente_nome: 'Cliente B',
+      peso_total_kg: 5,
+      valor_total: 50,
+    },
+  ];
+  const existentes = [{
+    id: 'e-exist',
+    pedido_id: 'ped-a',
+    empresa_id: 'emp-a',
+    group_id: 'g1',
+    status: 'Pronto para Expedir',
+  }];
+
+  const plano = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: existentes,
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-a', 'ped-b'],
+  });
+  assert.equal(plano.reuses.length, 1);
+  assert.equal(plano.reuses[0].id, 'e-exist');
+  assert.equal(plano.creates.length, 1);
+  assert.equal(plano.creates[0].pedido_id, 'ped-b');
+  assert.equal(plano.creates[0].status, 'Pronto para Expedir');
+  assert.equal(plano.action, 'criar');
+
+  const retry = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: [
+      ...existentes,
+      { id: 'e-b', pedido_id: 'ped-b', empresa_id: 'emp-a', group_id: 'g1', status: 'Pronto para Expedir' },
+    ],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-a', 'ped-b'],
+  });
+  assert.equal(retry.creates.length, 0);
+  assert.equal(retry.reuses.length, 2);
+  assert.equal(retry.action, 'retry');
+});
+
+test('buildEntregaSeedFromPedido e resolvePedidoLegadoAposRomaneio: contexto obrigatório', () => {
+  assert.throws(
+    () => buildEntregaSeedFromPedido({ id: 'p1' }, { empresaId: 'emp-a' }),
+    /Contexto multiempresa/,
+  );
+  const seed = buildEntregaSeedFromPedido(
+    { id: 'p1', empresa_id: 'emp-a', group_id: 'g1', numero_pedido: 'X', valor_total: 9 },
+    { groupId: 'g1', empresaId: 'emp-a' },
+  );
+  assert.equal(seed.pedido_id, 'p1');
+  assert.equal(seed.valor_mercadoria, 9);
+
+  assert.equal(resolvePedidoLegadoAposRomaneio({ pedidoId: 'p1' }), null);
+  const patch = resolvePedidoLegadoAposRomaneio({
+    pedidoId: 'p1', groupId: 'g1', empresaId: 'emp-a', romaneioId: 'r1',
+  });
+  assert.equal(patch.status, INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT.statusAlvo);
+  assert.equal(patch._legado_side_effect.reservado, true);
+  assert.equal(patch._legado_side_effect.romaneio_id, 'r1');
+});
+
+test('IntegracaoRomaneio canônico: pedidos → entregas → romaneio → despacho → legado + rollback', async () => {
+  const store = createFluxoStore();
+  const pedidosState = new Map();
+  const pedidos = [
+    {
+      id: 'ped-rom-1',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Faturado',
+      numero_pedido: 'R-1',
+      cliente_nome: 'Acme',
+      peso_total_kg: 12,
+      valor_total: 200,
+      historico_status: [],
+    },
+    {
+      id: 'ped-rom-2',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Em Expedicao',
+      numero_pedido: 'R-2',
+      cliente_nome: 'Beta',
+      peso_total_kg: 8,
+      valor_total: 80,
+      historico_status: [],
+    },
+  ];
+  for (const p of pedidos) pedidosState.set(p.id, { ...p });
+
+  const plano = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: store.listEntregas(),
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-rom-1', 'ped-rom-2'],
+  });
+  assert.equal(plano.creates.length, 2);
+
+  const entregasCriadas = plano.creates.map((seed, idx) => {
+    const id = `e-rom-${idx + 1}`;
+    return store.seedEntrega({ ...seed, id });
+  });
+
+  const checklist = {
+    documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+  };
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: entregasCriadas,
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Joao',
+    veiculo: 'HR',
+    placa: 'ABC1D23',
+    checklist_saida: checklist,
+    confirmed: true,
+    usuario: 'tester',
+  });
+  assert.equal(fluxo.action, 'criar');
+  assert.equal(fluxo.despachoPatches.length, 2);
+  assert.equal(fluxo.despachoPatches[0].patch.sequencia_rota, 1);
+  assert.equal(fluxo.despachoPatches[1].patch.sequencia_rota, 2);
+
+  // Concorrência/idempotência: mesmo conjunto de entregas → reuse
+  const romaneio = {
+    id: 'rom-1',
+    ...fluxo.romaneioRecord,
+  };
+  store.state.romaneios.set(romaneio.id, romaneio);
+  const retryFluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: entregasCriadas,
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Joao',
+    veiculo: 'HR',
+    placa: 'ABC1D23',
+    checklist_saida: checklist,
+    confirmed: true,
+    romaneiosExistentes: [romaneio],
+  });
+  assert.equal(retryFluxo.action, 'retry');
+  assert.equal(retryFluxo.reuse.id, 'rom-1');
+
+  // Rollback se falhar no meio do despacho
+  const mapRollback = new Map(entregasCriadas.map((e) => [String(e.id), { ...e }]));
+  const rolled = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: mapRollback,
+    failAtIndex: 1,
+  });
+  assert.equal(rolled.ok, false);
+  assert.equal(mapRollback.get('e-rom-1').status, 'Pronto para Expedir');
+
+  // Despacho ok + side-effect legado Pedido
+  const mapOk = new Map(entregasCriadas.map((e) => [String(e.id), { ...e }]));
+  const ok = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches.map((item) => ({
+      entregaId: item.entregaId,
+      patch: { ...item.patch, romaneio_id: romaneio.id },
+    })),
+    entregasById: mapOk,
+  });
+  assert.equal(ok.ok, true);
+  assert.equal(mapOk.get('e-rom-1').status, 'Saiu para Entrega');
+  assert.equal(mapOk.get('e-rom-2').romaneio_id, 'rom-1');
+
+  for (const pedido of plano.pedidos) {
+    const legado = resolvePedidoLegadoAposRomaneio({
+      pedidoId: pedido.id,
+      groupId: 'g1',
+      empresaId: 'emp-a',
+      romaneioId: romaneio.id,
+    });
+    const before = pedidosState.get(pedido.id);
+    pedidosState.set(pedido.id, {
+      ...before,
+      status: legado.status,
+      historico_status: [
+        ...(before.historico_status || []),
+        { status: legado.status, observacao: `Romaneio ${romaneio.id}` },
+      ],
+    });
+  }
+  assert.equal(pedidosState.get('ped-rom-1').status, 'Em Trânsito');
+  assert.equal(pedidosState.get('ped-rom-2').status, 'Em Trânsito');
+
+  // RBAC/contexto fail-closed na policy
+  assert.throws(
+    () => resolveRomaneioDespacho({
+      entregasSelecionadas: entregasCriadas,
+      empresaId: 'emp-a',
+      groupId: null,
+      motorista: 'Joao',
+      placa: 'ABC1D23',
+      veiculo: 'HR',
+      checklist_saida: checklist,
+      confirmed: true,
+    }),
+    /Contexto multiempresa/,
+  );
+  assert.throws(
+    () => resolveRomaneioDespacho({
+      entregasSelecionadas: entregasCriadas,
+      empresaId: 'emp-a',
+      groupId: 'g1',
+      motorista: 'Joao',
+      placa: 'ABC1D23',
+      veiculo: 'HR',
+      checklist_saida: checklist,
+      confirmed: false,
+    }),
+    /Confirmacao/,
+  );
+  assert.throws(
+    () => resolveRomaneioDespacho({
+      entregasSelecionadas: entregasCriadas,
+      empresaId: 'emp-a',
+      groupId: 'g1',
+      motorista: 'Joao',
+      placa: 'ABC1D23',
+      veiculo: 'HR',
+      checklist_saida: { documentos_ok: true },
+      confirmed: true,
+      exigirChecklist: true,
+    }),
+    /checklist/,
+  );
 });

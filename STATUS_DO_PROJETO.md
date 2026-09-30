@@ -1,3 +1,32 @@
+## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-integracao-romaneio-canonico-392b` (base tip #196) |
+| Lacuna fechada | `IntegracaoRomaneio` → policy canônica (Pedidos→Entrega→romaneio→despacho→legado) |
+| Docs | `docs/EXPEDICAO_INTEGRACAO_ROMANEIO_CANONICO.md` |
+| Testes | expedicao-fluxo-operacional (+ select/plan/legado/rollback IntegracaoRomaneio) |
+| Stack | #192→#196 + este lote |
+| Codex #178 | ainda candidato — sem tip-port |
+| Reservados | Pedido/Orçamento/026–035/legado intactos; export Empresas não duplicado |
+| Colisão | Sem merge/VPS |
+| Próximo | Draft PR + CI; vigília FINAL #178 |
+
+### Quadro objetivo (integração)
+
+| Item | Status |
+|---|---|
+| Seleção Pedidos/Entregas fail-closed | Pronto (#195/#196 + IntegracaoRomaneio) |
+| Separação/conferência + unidades | Pronto (#196) |
+| Romaneio + despacho + rollback | Pronto (RomaneioForm + IntegracaoRomaneio) |
+| Entrega parcial/total/ocorrência → pendências | Pronto (#195) |
+| Idempotência create/reuse Entrega+Romaneio | Pronto (este lote) |
+| Side-effect Pedido legado | Documentado; mutação UI descritiva; contrato Codex |
+| Tip Comercial 360 / #178 FINAL | **Bloqueado** (aguarda FINAL Codex) |
+| Merge/VPS/migration/import Empresas | **Bloqueado** por política |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:38Z)
 
 | Campo | Valor |

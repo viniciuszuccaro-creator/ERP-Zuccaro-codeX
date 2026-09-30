@@ -1,3 +1,15 @@
+## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
+
+`IntegracaoRomaneio` conectado à policy canônica (Pedidos→Entrega create/reuse→romaneio→despacho+rollback→legado descritivo).
+Docs: `docs/EXPEDICAO_INTEGRACAO_ROMANEIO_CANONICO.md`. Sem merge/VPS. #178 ainda candidato.
+
+### Quadro: pronto | falta | bloqueios
+- **Pronto:** seleção→separação→romaneio→despacho→parcial/ocorrência→pendências; Isolamento∧; RBAC; unidades; concurrency/idempotência/rollback.
+- **Falta:** tip-port Comercial só após #178 FINAL; homologação humana VPS (autorizada).
+- **Bloqueios:** #178 não-final; merge/VPS/migration/import Empresas (frente legado chat principal).
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:38Z)
 
 #178 `e5eef59d` ainda candidato. Sem tip-port. Vigília 15min.
