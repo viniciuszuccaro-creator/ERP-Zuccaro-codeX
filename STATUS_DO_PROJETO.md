@@ -1,3 +1,17 @@
+## AUTÔNOMO — BLOCKED tip #184 CI SUCCESS (2026-09-30T12:14Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#184** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/184 CI SUCCESS |
+| Stack tip | Onda 6 #180→#183 + margem tip-port #184 (#177) |
+| Parecer | **BLOCKED** — lotes tip-seguros Comercial 360 **esgotados** |
+| Motivos | (1) CostPort BFF sem fonte — inventar = BLOCKED; (2) anexos/origem/campanha colidem Codex #50/#59–#62; (3) PIX/boleto/webhook exigem provedor; (4) #178 conversão/snapshots invasivo na stack Codex (não tip-port seguro); (5) mapper #110/#48 já CI SUCCESS |
+| Ação | Vigília CI/#153 HEAD; sem merge/main/VPS; sem inventar porta |
+| Desbloqueio | CostPort real **ou** anexos pós-Codex **ou** provedor pagamento **ou** autorização tip-port #178 |
+| #153 | HEAD `12c37e8b` — sem re-revisão |
+
+---
+
 ## AUTÔNOMO — tip margem/custo contrato fail-closed (port #177) (2026-09-30T12:10Z)
 
 | Campo | Valor |
@@ -8,9 +22,9 @@
 | Draft PR | **#184** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/184 |
 | Base | tip #183 `cursor/comercial360-onda6-caixa-liquidar-tip-392b` |
 | Escopo | `toMicros` precisão ≤6; `validateMinimaBps` 0–10000 int → `COST_POLICY_INVALID`; fail porta propaga; retry reavalia |
-| Testes | comercial-margem-alcada 14/14 (unit+http) |
+| Testes | comercial-margem-alcada 14/14 (unit+http); CI tip SUCCESS |
 | Colisão | Sem CostPort invent; sem editar #177 Codex; sem merge/VPS |
-| Próximo | CI tip; depois BLOCKED residual (CostPort real / anexos / provedor) |
+| Próximo | **BLOCKED** residual (CostPort real / anexos / provedor / #178 autorizado) |
 
 ---
 
