@@ -22,6 +22,7 @@ import TabelaPagar from "./contas-pagar/TabelaPagar";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
+import { assertTitulosProntosParaCaixa } from "@/components/lib/financeiroTituloPolicy";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
@@ -29,7 +30,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const { hasPermission } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  // Onda 6 tip: paridade assertTitulosProntosParaCaixa / LiquidarReceberPagar — exige grupo E empresa.
+  const contextoValido = Boolean(groupId && empresaId);
   const podeVisualizarPagar = hasPermission('Financeiro','ContaPagar','visualizar') || hasPermission('Financeiro', null, 'visualizar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaPagar', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
@@ -96,40 +98,40 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
       if (!podeEnviarCaixaPagar) throw new Error('Sem permissao para enviar titulos ao Caixa.');
-      if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
-      const total = titulos.reduce((sum, titulo) => sum + Number(titulo.valor || 0), 0);
-      if (total <= 0) throw new Error('Valor total invalido para enviar ao Caixa.');
-      if (!window.confirm(`Enviar ${titulos.length} titulo(s) a pagar para o Caixa no total de R$ ${total.toFixed(2)}?`)) {
+      const scope = assertTitulosProntosParaCaixa({ titulos, groupId, empresaId });
+      if (scope.total <= 0) throw new Error('Valor total invalido para enviar ao Caixa.');
+      if (!window.confirm(`Enviar ${scope.quantidade} titulo(s) a pagar para o Caixa no total de R$ ${scope.total.toFixed(2)}?`)) {
         await auditarFinanceiro({
           acao: 'Cancelamento',
           entidade: 'CaixaOrdemLiquidacao',
           descricao: 'Envio de contas a pagar ao Caixa cancelado pelo usuario',
-          dadosNovos: { quantidade: titulos.length, valor_total: total },
+          dadosNovos: { quantidade: scope.quantidade, valor_total: scope.total },
           sucesso: false
         });
         throw new Error('Envio ao Caixa cancelado pelo usuario.');
       }
       const ordens = await Promise.all(titulos.map(async (titulo) => {
         return await createInContext('CaixaOrdemLiquidacao', {
-          group_id: titulo.group_id || groupId,
-          grupo_id: titulo.grupo_id || titulo.group_id || groupId,
-          empresa_id: titulo.empresa_id || empresaId,
+          group_id: scope.groupId,
+          grupo_id: scope.groupId,
+          empresa_id: scope.empresaId,
           tipo_operacao: 'Pagamento',
           origem: 'Contas a Pagar',
           valor_total: Number(titulo.valor || 0),
           forma_pagamento_pretendida: 'Transferencia',
           status: 'Pendente',
+          pedido_id: titulo.pedido_id || null,
           titulos_vinculados: [{
             titulo_id: titulo.id,
             tipo_titulo: 'ContaPagar',
             numero_titulo: sanitizeText(titulo.numero_documento || titulo.descricao),
             cliente_fornecedor_nome: sanitizeText(titulo.fornecedor),
             valor_titulo: Number(titulo.valor || 0),
-            group_id: titulo.group_id || groupId,
-            grupo_id: titulo.grupo_id || titulo.group_id || groupId,
-            empresa_id: titulo.empresa_id || empresaId
+            group_id: scope.groupId,
+            grupo_id: scope.groupId,
+            empresa_id: scope.empresaId,
+            pedido_id: titulo.pedido_id || null,
           }],
           data_ordem: new Date().toISOString(),
           criado_por: authUser?.full_name || authUser?.email,
@@ -139,8 +141,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       return ordens;
     },
     onSuccess: async (ordens) => {
-      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-liquidacao'] });
+      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao', groupId, empresaId] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-liquidacao', groupId, empresaId] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       await auditarFinanceiro({
         acao: 'Criacao',
@@ -157,7 +159,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de pagar titulo.');
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes de pagar titulo.');
       if (!podeBaixarPagar) throw new Error('Sem permissao para pagar titulo.');
       const conta = contasList.find(c => c.id === id);
       if (!conta) throw new Error('Titulo nao encontrado para pagamento.');
@@ -229,7 +231,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes do pagamento multiplo.');
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes do pagamento multiplo.');
       if (!podeBaixarPagar) throw new Error('Sem permissao para pagamento multiplo.');
       if (contasSelecionadas.length === 0) throw new Error('Selecione ao menos um titulo para pagamento multiplo.');
       await Promise.all(contasSelecionadas.map(async (contaId) => {
@@ -257,7 +259,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const aprovarPagamentoMutation = useMutation({
     mutationFn: async (contaId) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de aprovar pagamento.');
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes de aprovar pagamento.');
       if (!podeAprovarPagar) throw new Error('Sem permissao para aprovar pagamento.');
       const conta = contasList.find(c => c.id === contaId);
       if (!conta) throw new Error('Titulo nao encontrado para aprovacao.');
@@ -325,7 +327,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const handleBaixar = (conta) => {
     if (!contextoValido) {
-      toast({ title: 'Selecione grupo ou empresa para pagar titulo', variant: 'destructive' });
+      toast({ title: 'Selecione grupo e empresa para pagar titulo', variant: 'destructive' });
       return;
     }
     if (!podeBaixarPagar) {
@@ -347,7 +349,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const handleBaixarMultipla = () => {
     if (!contextoValido) {
-      toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
+      toast({ title: 'Selecione grupo e empresa para baixa multipla', variant: 'destructive' });
       return;
     }
     if (!podeBaixarPagar) {
@@ -374,7 +376,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
     if (!contextoValido) {
-      toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo ou empresa antes de confirmar o pagamento.', variant: 'destructive' });
+      toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo e empresa antes de confirmar o pagamento.', variant: 'destructive' });
       return;
     }
     const totalTitulos = contaAtual ? 1 : contasSelecionadas.length;
@@ -409,7 +411,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         totalSelecionado={totalSelecionado}
         onExportar={() => {
           if (!podeExportarPagar) { toast({ title: '⛔ Sem permissão para exportar', variant: 'destructive' }); return; }
-          if (!contextoValido) { toast({ title: 'Selecione grupo ou empresa para exportar', variant: 'destructive' }); return; }
+          if (!contextoValido) { toast({ title: 'Selecione grupo e empresa para exportar', variant: 'destructive' }); return; }
           const itens = contasSelecionadas.length > 0
             ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : contasFiltradas;
@@ -470,7 +472,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600 })}}
         onAprovar={(contaId) => {
           if (!podeAprovarPagar) { toast({ title: '⛔ Sem permissão para aprovar', variant: 'destructive' }); return; }
-          if (!contextoValido) { toast({ title: 'Selecione grupo ou empresa para aprovar pagamento', variant: 'destructive' }); return; }
+          if (!contextoValido) { toast({ title: 'Selecione grupo e empresa para aprovar pagamento', variant: 'destructive' }); return; }
           const conta = contasList.find(c => c.id === contaId);
           if (!window.confirm(`Aprovar pagamento ${conta?.numero_documento || conta?.descricao || contaId}?`)) {
             auditarFinanceiro({ acao: 'Cancelamento', entidade: 'ContaPagar', registroId: contaId, descricao: 'Aprovacao de pagamento cancelada pelo usuario', dadosAnteriores: conta, sucesso: false });

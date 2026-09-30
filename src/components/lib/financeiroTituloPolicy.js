@@ -213,12 +213,17 @@ export const assertPedidoVinculoTitulo = ({ record = {}, pedido = null, groupId,
     error.code = 'PEDIDO_VINCULO_SEM_EMPRESA';
     throw error;
   }
+  if (!pedidoGroup) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Pedido sem grupo nao pode vincular titulo.'));
+    error.code = 'PEDIDO_VINCULO_SEM_GRUPO';
+    throw error;
+  }
   if (pedidoEmpresa !== empresa) {
     const error = /** @type {TituloPolicyError} */ (new Error('Pedido de outra empresa bloqueado no titulo.'));
     error.code = 'PEDIDO_VINCULO_EMPRESA';
     throw error;
   }
-  if (pedidoGroup && pedidoGroup !== group) {
+  if (pedidoGroup !== group) {
     const error = /** @type {TituloPolicyError} */ (new Error('Pedido de outro grupo bloqueado no titulo.'));
     error.code = 'PEDIDO_VINCULO_GRUPO';
     throw error;
