@@ -14,7 +14,7 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
   test(`${engine}: converter v1 impede versionar e segundo Pedido na mesma raiz`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
     try {
-      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\",\"versionar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"editar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\",\"editar\",\"versionar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"editar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
       const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...quote}=f.envelope.documento;
       const created=await f.send({...f.envelope,tipo:'Orcamento',documento:{...quote,validade_em:'2027-03-01T00:00:00.000Z'}});
       assert.equal(created.status,201);
@@ -37,6 +37,9 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
           unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,
           quantidade:item.quantidade,preco_unitario:item.preco_unitario,desconto:item.desconto}))};
       await assert.rejects(()=>f.runtime.orcamentoService.createVersion(ctx,source.id,versionPayload),(error:any)=>error.code==='ORCAMENTO_ALREADY_CONVERTED');
+      const priorEvents=(await f.runtime.auditRepo.listByEntity('Orcamento',source.id)).length;
+      await assert.rejects(()=>f.runtime.orcamentoService.update(ctx,source.id,versionPayload),(error:any)=>error.code==='ORCAMENTO_ALREADY_CONVERTED');
+      assert.equal((await f.runtime.auditRepo.listByEntity('Orcamento',source.id)).length,priorEvents);
       assert.equal((await f.pg.query('SELECT id FROM pedidos WHERE group_id=$1 AND empresa_id=$2',[identity.groupId,identity.empresaId])).rows.length,1);
       assert.equal((await f.runtime.orcamentoService.get(ctx,source.id)).status,'EM_ABERTO');
       assert.equal((await f.runtime.pedidoService.get(ctx,order.id)).orcamento_id,source.id);

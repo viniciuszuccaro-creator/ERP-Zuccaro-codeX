@@ -207,6 +207,15 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
+      const locked = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(locked);
+      if (!this.convertedPedidos) throw new AppError(503, 'ORCAMENTO_CONVERSION_GUARD_UNAVAILABLE', 'Conversion guard unavailable');
+      for (const version of await this.repo.listVersions(scope, locked.orcamento_raiz_id, executor)) {
+        if (await this.convertedPedidos.getByOrcamento(scope, version.id, executor)) {
+          throw new AppError(409, 'ORCAMENTO_ALREADY_CONVERTED', 'Quotation chain already converted');
+        }
+      }
       if (data.origem !== undefined && data.origem !== before.origem) {
         throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { origem: 'immutable' });
       }

@@ -97,6 +97,7 @@ function orcamentoFixture() {
     null,
     null,
     { get: async () => ({ id: tabelaId, codigo: 'TAB-01', nome: 'Tabela sintetica', ativo: true }) } as never,
+    new InMemoryPedidoRepository(),
   );
   return { service, repo, audit };
 }
