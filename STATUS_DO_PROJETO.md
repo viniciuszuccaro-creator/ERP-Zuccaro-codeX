@@ -3,6 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Branch | `cursor/expedicao-fluxo-consolidado-392b` (base tip `#194`) |
+| Draft PR | **#195** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/195 |
 | Objetivo | Consolidar filtros/detalhe/separação/roteirização e avançar fluxo ponta a ponta |
 | Fluxo | selecionar → separar/conferir → romaneio → despachar → parcial/total/ocorrência → pendências |
 | Policy | `expedicaoFluxoOperacionalPolicy.js` (extração); asserts em `expedicaoEntregaPolicy.js` |

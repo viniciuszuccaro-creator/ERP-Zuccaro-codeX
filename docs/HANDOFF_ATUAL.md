@@ -1,6 +1,6 @@
 ## CURSOR — Expedição fluxo consolidado (2026-09-30T17:00Z)
 
-Candidata `cursor/expedicao-fluxo-consolidado-392b` sobre tip #194.
+Draft PR **#195**. Candidata `cursor/expedicao-fluxo-consolidado-392b` sobre tip #194.
 Fluxo: selecionar→separar→romaneio→despachar→parcial/total/ocorrência→pendências.
 Docs: `EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md`, `EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md`.
 Reservados Codex #178 intactos. Sem merge/VPS. CI em curso.
