@@ -11,6 +11,39 @@ import { boot, identity } from './omnichannelFixture.js';
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 
 for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: intenção ARMADO/CORTE_DOBRA é persistida no Orçamento e copiada sem inferência viva`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
+    try {
+      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+      const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...base}=f.envelope.documento;
+      const ctx={groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa' as const,requestId:'synthetic-special'};
+      for (const tipo of ['ARMADO','CORTE_DOBRA'] as const) {
+        const documento={...base,validade_em:'2027-03-01T00:00:00.000Z',itens:base.itens.map(item=>({...item,requer_producao:true,tipo_comercial:tipo}))};
+        const invalid=await f.send({...f.envelope,idempotencyKey:randomUUID(),tipo:'Orcamento',documento:{...documento,itens:documento.itens.map(item=>({...item,requer_producao:false}))}},{nonce:randomUUID()});
+        assert.equal(invalid.status,422);
+        const created=await f.send({...f.envelope,idempotencyKey:randomUUID(),tipo:'Orcamento',documento},{nonce:randomUUID()});
+        assert.equal(created.status,201);
+        const quote=await f.runtime.orcamentoService.get(ctx,created.body.data.id);
+        assert.equal(quote.itens[0]?.tipo_comercial,tipo);
+        assert.equal(quote.itens[0]?.requer_producao,true);
+        const audit=await f.runtime.auditRepo.listByEntity('Orcamento',quote.id);
+        assert.ok(audit.some(event=>(event.afterData as {tipos_especiais_itens?:string[]})?.tipos_especiais_itens?.[0]===tipo));
+        const order=await f.runtime.pedidoService.convert(ctx,quote.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z'});
+        assert.equal(order.itens[0]?.tipo_comercial_snapshot,tipo);
+        assert.equal(order.itens[0]?.requer_producao,true);
+      }
+      const migration=readFileSync(new URL('../migrations/035_orcamento_tipo_especial_snapshot.sql',import.meta.url),'utf8');
+      const historical=await f.pg.query<{id:string}>('SELECT id FROM orcamento_itens ORDER BY created_at,id LIMIT 1');
+      assert.ok(historical.rows[0]?.id);
+      await f.pg.query('UPDATE orcamento_itens SET tipo_comercial=NULL,requer_producao=NULL WHERE id=$1',[historical.rows[0].id]);
+      await f.pg.exec(migration);
+      await f.pg.exec(migration);
+      const unmapped=await f.pg.query<{tipo_comercial:string|null;requer_producao:boolean|null}>('SELECT tipo_comercial,requer_producao FROM orcamento_itens WHERE id=$1',[historical.rows[0].id]);
+      assert.equal(unmapped.rows[0]?.tipo_comercial,null);
+      assert.equal(unmapped.rows[0]?.requer_producao,null);
+    } finally { await f.close(); }
+  });
+
   test(`${engine}: converter v1 impede versionar e segundo Pedido na mesma raiz`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
     try {
@@ -36,6 +69,7 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
         promocao:{bps:500}}),(error:any)=>error.statusCode===422);
       await f.pg.query('UPDATE condicoes_pagamento SET nome=$1 WHERE id=$2',['Condicao viva alterada',order.condicao_pagamento_id]);
       await f.pg.query('UPDATE pedidos SET promocao_aplicada=true,promocao_bps=500,promocao_cupom=$1 WHERE id=$2',['SINTETICO',order.id]);
+      await f.pg.query('UPDATE pedidos SET cliente_local_id=$1,obra_id=$2 WHERE id=$3',[S.clienteLocalA,S.obraA,order.id]);
       const updated=await f.runtime.pedidoService.update(ctx,order.id,updatePayload);
       assert.equal(updated.itens[0]?.preco_unitario,order.itens[0]?.preco_unitario);
       assert.equal(updated.tabela_preco_codigo_snapshot,order.tabela_preco_codigo_snapshot);
@@ -44,6 +78,8 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.equal(updated.promocao_aplicada,true);
       assert.equal(updated.promocao_bps,500);
       assert.equal(updated.promocao_cupom,'SINTETICO');
+      assert.equal(updated.cliente_local_id,S.clienteLocalA);
+      assert.equal(updated.obra_id,S.obraA);
       const versionPayload={cliente_empresa_id:source.cliente_empresa_id,condicao_pagamento_id:source.condicao_pagamento_id,
         validade_em:'2027-04-01T00:00:00.000Z',itens:source.itens.map(item=>({produto_id:item.produto_id,
           unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,

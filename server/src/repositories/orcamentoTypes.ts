@@ -32,6 +32,8 @@ export const orcamentoItemSchema = z.object({
   quantidade: money,
   preco_unitario: money,
   desconto: money.optional(),
+  requer_producao: z.boolean().optional(),
+  tipo_comercial: z.enum(['ARMADO', 'CORTE_DOBRA']).optional(),
 }).strict();
 
 export const orcamentoPromocaoSchema = z.object({

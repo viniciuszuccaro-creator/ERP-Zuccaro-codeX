@@ -70,7 +70,7 @@ test('config load and public view never expose secrets', () => {
   assert.doesNotMatch(serialized, /postgresql:\/\//);
 });
 
-test('migrations include foundation through 028 in canonical order', () => {
+test('migrations include foundation through 035 in canonical order', () => {
   const files = listMigrationFiles();
   const requiredThrough012 = [
     '001_foundation.sql',
@@ -137,7 +137,9 @@ test('migrations include foundation through 028 in canonical order', () => {
   assert.ok(files.indexOf('031_orcamento_pedido_tabela_snapshot.sql') < files.indexOf('033_integration_events_company_rls.sql'));
   assert.ok(files.includes('034_produtos_codigo_legado.sql'));
   assert.ok(files.indexOf('033_integration_events_company_rls.sql') < files.indexOf('034_produtos_codigo_legado.sql'));
-  assert.equal(files.at(-1), '034_produtos_codigo_legado.sql');
+  assert.ok(files.includes('035_orcamento_tipo_especial_snapshot.sql'));
+  assert.ok(files.indexOf('034_produtos_codigo_legado.sql') < files.indexOf('035_orcamento_tipo_especial_snapshot.sql'));
+  assert.equal(files.at(-1), '035_orcamento_tipo_especial_snapshot.sql');
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {

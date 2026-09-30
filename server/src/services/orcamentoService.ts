@@ -73,6 +73,8 @@ export function orcamentoAuditSnapshot(row: Orcamento) {
     campanha: row.campanha,
     subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length,
+    tipos_especiais_itens: row.itens.map((item) => item.tipo_comercial ?? null),
+    requer_producao_itens: row.itens.map((item) => item.requer_producao === true),
   });
 }
 
@@ -538,6 +540,9 @@ export class OrcamentoService {
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
     if (!condicao || !condicao.ativo) throw new AppError(422, 'ORCAMENTO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {
+      if (Boolean(item.tipo_comercial) !== (item.requer_producao === true)) {
+        throw new AppError(422, 'ORCAMENTO_TIPO_ESPECIAL_INVALIDO', 'Special commercial type requires explicit production flag');
+      }
       const produto = await this.produtos.getById(scope, item.produto_id);
       if (!produto || !produto.ativo) throw new AppError(422, 'ORCAMENTO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
       if (produto.unidade_medida_id !== item.unidade_id) throw new AppError(422, 'ORCAMENTO_UNIDADE_INVALIDA', 'Unidade is not the principal product unit');

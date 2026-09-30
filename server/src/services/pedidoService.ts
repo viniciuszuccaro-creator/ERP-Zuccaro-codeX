@@ -189,7 +189,8 @@ export class PedidoService {
             quantidade: item.quantidade,
             preco_unitario: item.preco_unitario,
             desconto: item.desconto ?? '0',
-            requer_producao: false,
+            requer_producao: item.requer_producao === true,
+            tipo_comercial: item.tipo_comercial,
           })),
         };
         const dataParsed = pedidoCreateSchema.safeParse(draft);
@@ -303,6 +304,8 @@ export class PedidoService {
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? {
         ...data,
+        cliente_local_id: data.cliente_local_id === undefined ? before.cliente_local_id : data.cliente_local_id,
+        obra_id: data.obra_id === undefined ? before.obra_id : data.obra_id,
         tabela_preco_id: before.tabela_preco_id,
         tabela_preco_codigo_snapshot: before.tabela_preco_codigo_snapshot,
         tabela_preco_nome_snapshot: before.tabela_preco_nome_snapshot,

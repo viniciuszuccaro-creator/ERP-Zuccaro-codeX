@@ -162,7 +162,7 @@ export type PedidoPage = { rows: Pedido[]; total: number };
 export function calculatePedido(
   items: Array<z.infer<typeof pedidoItemSchema> & { tipo_comercial_snapshot?: PedidoTipoComercialItem }>,
 ): Pick<Pedido, 'itens' | 'subtotal' | 'desconto' | 'total'> {
-  const calculated = calculateOrcamento(items);
+  const calculated = calculateOrcamento(items.map(({ tipo_comercial: _hint, ...item }) => item));
   return {
     ...calculated,
     itens: calculated.itens.map((item, index) => {
