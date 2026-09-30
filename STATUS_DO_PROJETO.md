@@ -1,3 +1,111 @@
+## CURSOR — vigília #178 (2026-09-30T17:51Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:43Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:36Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:27Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:20Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` estável — ainda “Correção candidata” (**não** final) |
+| CI | frontend/backend/concurrency SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:12Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `98820d20` estável — ainda “Correção candidata” (**não** final) |
+| #195 | CI SUCCESS — stack Expedição ok |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#195** | CI SUCCESS HEAD `2db2ca6b` (frontend+backend) |
+| Stack Expedição | **#192→#195** consolidada (filtros→detalhe/separação→roteirização→fluxo) |
+| Codex #178 | HEAD `98820d20` CI SUCCESS — body ainda “Correção candidata” (**não** final); commit preserva itens pedido convertido; **sem** tip-port / sem revisão consolidada |
+| Homologação | `docs/EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md` |
+| Pedido legado | `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — coordenação Codex |
+| Colisão | Sem merge/VPS |
+| Próximo | Vigília FINAL #178; residual Expedição só se gap novo fora reserva |
+
+---
+
+## CURSOR — Expedição #195 CI fix sequencia_rota (2026-09-30T17:00Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#195** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/195 |
+| Falha CI | frontend: `app motorista usa policy` — `sequencia_rota` sumiu do `RomaneioForm` após extração |
+| Correção | despacho reafirma `sequencia_rota`; teste também cobre `expedicaoFluxoOperacionalPolicy` |
+| Testes locais | app-motorista + expedicao-fluxo + expedicao-entrega-policy 27/27 |
+| Próximo | CI HEAD `0ca75564` |
+
+---
+
+## CURSOR — Expedição fluxo consolidado #192–#194 (2026-09-30T17:00Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-fluxo-consolidado-392b` (base tip `#194`) |
+| Draft PR | **#195** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/195 |
+| Objetivo | Consolidar filtros/detalhe/separação/roteirização e avançar fluxo ponta a ponta |
+| Fluxo | selecionar → separar/conferir → romaneio → despachar → parcial/total/ocorrência → pendências |
+| Policy | `expedicaoFluxoOperacionalPolicy.js` (extração); asserts em `expedicaoEntregaPolicy.js` |
+| UI | SeparacaoConferencia, RomaneioForm, DetalhesEntregaView, EntregasListagem, QueuesLogistica |
+| Pedido legado | Documentado em `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — sem sobrescrever Codex #178 |
+| Homologação/rollback | `docs/EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md` |
+| Testes | expedicao-fluxo-operacional + expedicao-entrega-policy (comportamentais; sem prova por texto-fonte) |
+| Reservados Codex | Intactos (Pedido/Orçamento, mig 026–035, Armado/Corte/Dobra) |
+| Colisão | Sem merge/VPS; sem simular roteirizador/WhatsApp |
+| Codex #178 | HEAD `e4d3d904` ainda candidato — sem tip-port |
+| Próximo | CI da candidata consolidada; vigília FINAL #178 |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T16:29Z)
 
 | Campo | Valor |

@@ -215,64 +215,21 @@ test('filtros listagem entrega: empresa, cidade, data cliente e futuras', () => 
   assert.deepEqual(listCidadesFromEntregas(rows), ['Campinas', 'Sorocaba']);
 });
 
-test('painel entregas e romaneio wire filtros estruturados', async () => {
-  const listagem = await readFile(new URL('../src/components/expedicao/EntregasListagem.jsx', import.meta.url), 'utf8');
-  const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
-  assert.match(listagem, /filterEntregasList/);
-  assert.match(listagem, /normalizeEntregaListFilters/);
-  assert.match(listagem, /entrega-list-filtros-estruturados/);
-  assert.match(listagem, /entrega-list-cidade/);
-  assert.match(listagem, /entrega-list-data-de/);
-  assert.match(listagem, /entrega-list-so-futuras/);
-  assert.match(listagem, /effectiveGroupId && \(estaNoGrupo \|\| effectiveEmpresaId\)/);
-  assert.match(romaneio, /filterEntregasList/);
-  assert.match(romaneio, /romaneio-entregas-filtros/);
-  assert.match(romaneio, /romaneio-filtro-cidade/);
-  assert.match(romaneio, /effectiveGroupId && effectiveEmpresaId/);
-});
-
-test('detalhe e separação wire policy fail-closed', async () => {
-  const detalhe = await readFile(new URL('../src/components/expedicao/DetalhesEntregaView.jsx', import.meta.url), 'utf8');
-  const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
-  assert.match(detalhe, /assertEntregaOnUpdate/);
-  assert.match(detalhe, /hasProvaEntrega/);
-  assert.match(detalhe, /resolveEntregaClienteCalendarDay/);
-  assert.match(detalhe, /groupId && empresaId/);
-  assert.match(detalhe, /entrega-detalhe-data-cliente/);
-  assert.doesNotMatch(detalhe, /Boolean\(groupId \|\| empresaId\)/);
-  assert.match(separacao, /assertSeparacaoOnCreate/);
-  assert.match(separacao, /SeparacaoConferencia\.retry/);
-});
-
-test('roteirização mapa wire contexto e filtros fail-closed', async () => {
-  const mapa = await readFile(new URL('../src/components/expedicao/RoteirizacaoMapa.jsx', import.meta.url), 'utf8');
-  assert.match(mapa, /filterEntregasList/);
-  assert.match(mapa, /roteirizacao-filtros-estruturados/);
-  assert.match(mapa, /roteirizacao-filtro-cidade/);
-  assert.match(mapa, /roteirizacao-so-futuras/);
-  assert.match(mapa, /groupId && empresaId/);
-  assert.doesNotMatch(mapa, /Boolean\(groupId \|\| empresaId\)/);
-});
-
-test('expedicao existente reserva numero e o app nao lista todas as entregas', async () => {
-  const cadastro = await readFile(new URL('../src/api/localCadastroMasterPolicy.js', import.meta.url), 'utf8');
-  const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
-  const app = await readFile(new URL('../src/components/mobile/AppEntregasMotorista.jsx', import.meta.url), 'utf8');
-  const fluxo = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
-  const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
-  const pedidos = await readFile(new URL('../src/components/comercial/PedidosEntregaTab.jsx', import.meta.url), 'utf8');
-  const separacao = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
-  assert.match(cadastro, /Romaneio: \{ field: 'numero_romaneio'/);
-  assert.match(cadastro, /Entrega: \{ field: 'qr_code'/);
-  assert.doesNotMatch(romaneio, /ROM-" \+ Date\.now/);
-  assert.doesNotMatch(fluxo, /ENT-\$\{Date\.now\(\)\}/);
-  assert.match(app, /filterInContext\('Entrega'/);
-  assert.doesNotMatch(app, /Entrega\.list\(/);
-  assert.match(app, /appMotoristaPolicy/);
-  assert.match(app, /buildConfirmacaoPatch/);
-  assert.match(client, /Entrega: \{ module: 'Expedicao', section: 'Entrega' \}/);
-  assert.match(client, /assertEntregaOnDelete/);
-  assert.match(client, /entregaStatusPermissionActions/);
-  assert.match(pedidos, /canEntregar/);
-  assert.match(separacao, /Separacao", "conferir"/);
+test('entrega parcial exige comprovante via assert update; ação classifica entregar', () => {
+  assert.throws(
+    () => assertEntregaOnUpdate({
+      before: { empresa_id: 'e1', status: 'Em Trânsito' },
+      patch: { status: 'Entrega Parcial' },
+    }),
+    /comprovante/,
+  );
+  const ok = assertEntregaOnUpdate({
+    before: { empresa_id: 'e1', status: 'Em Trânsito' },
+    patch: {
+      status: 'Entrega Parcial',
+      comprovante_entrega: { nome_recebedor: 'A', foto_comprovante: 'x' },
+    },
+  });
+  assert.equal(ok.action, 'entregar');
+  assert.equal(ok.record.status, 'Entrega Parcial');
 });

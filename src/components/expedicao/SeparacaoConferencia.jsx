@@ -16,6 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { assertSeparacaoOnCreate } from "@/components/lib/expedicaoEntregaPolicy";
+import {
+  assertSeparacaoChecklist,
+  assertSeparacaoQuantidades,
+  resolveSeparacaoConclusion,
+  SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
 
@@ -134,29 +140,26 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         throw new Error("Sem permissao para concluir separacao/conferencia.");
       }
 
-      const temDivergencia = itens.some(i => i.divergencia);
+      const conclusion = resolveSeparacaoConclusion({
+        itens,
+        checklist,
+        groupId: effectiveGroupId,
+        empresaId: effectiveEmpresaId,
+        entregaId: entrega?.id || entregaId || null,
+        pedidoId: pedido?.id || null,
+        confirmed: true,
+      });
 
       const separacaoRecord = {
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        entrega_id: entrega?.id || entregaId || null,
+        ...conclusion.separacaoRecord,
         pedido_id: dadosParaSeparacao.id,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
         cliente_id: dadosParaSeparacao.cliente_id,
         cliente_nome: dadosParaSeparacao.cliente_nome,
-        tipo: "conferencia",
         data_inicio: new Date().toISOString(),
         data_conclusao: new Date().toISOString(),
         responsavel_nome: (user?.full_name || user?.email || "Conferente"),
-        itens: itens,
-        status: temDivergencia ? "com_divergencia" : "concluido",
-        tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia
-          ? `${itens.filter(i => i.divergencia).length} item(ns) com divergência`
-          : "",
-        checklist: checklist,
-        tempo_separacao_min: 0
+        tempo_separacao_min: 0,
       };
 
       const decision = assertSeparacaoOnCreate({ record: separacaoRecord, separacoes: [] });
@@ -171,37 +174,35 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
       const separacao = await createInContext("SeparacaoConferencia", separacaoRecord);
 
-      // Se não tem divergência, atualizar status do pedido
-      if (!temDivergencia && dadosParaSeparacao) {
-        if (entrega?.id) {
-          await updateInContext("Entrega", entrega.id, {
-            status: "Pronto para Expedir",
-            group_id: effectiveGroupId,
-            grupo_id: effectiveGroupId,
-            empresa_id: effectiveEmpresaId,
-            historico_status: [
-              ...(entrega.historico_status || []),
-              {
-                status: "Pronto para Expedir",
-                data_hora: new Date().toISOString(),
-                usuario: user?.full_name || user?.email || "Sistema",
-                usuario_id: user?.id,
-                observacao: "Separacao e conferencia concluida sem divergencia."
-              }
-            ]
-          });
-        }
-        
-        if (pedido?.id) {
-          await updateInContext("Pedido", pedido.id, {
-            status: "Pronto para Faturar",
-            group_id: effectiveGroupId,
-            grupo_id: effectiveGroupId,
-            empresa_id: effectiveEmpresaId
-          });
-        }
+      if (conclusion.nextEntregaStatus && entrega?.id) {
+        await updateInContext("Entrega", entrega.id, {
+          status: conclusion.nextEntregaStatus,
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+          historico_status: [
+            ...(entrega.historico_status || []),
+            {
+              status: conclusion.nextEntregaStatus,
+              data_hora: new Date().toISOString(),
+              usuario: user?.full_name || user?.email || "Sistema",
+              usuario_id: user?.id,
+              observacao: "Separacao e conferencia concluida sem divergencia."
+            }
+          ]
+        });
+      }
 
-        // Registrar histórico
+      // LEGADO COORDENADO COM CODEX: updateInContext("Pedido") — não altera contrato canônico.
+      // Ver docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md e SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT.
+      if (conclusion.shouldUpdatePedidoLegado && pedido?.id && conclusion.pedidoLegadoPatch) {
+        const { _legado_side_effect: _ignored, ...pedidoPatch } = conclusion.pedidoLegadoPatch;
+        void _ignored;
+        void SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT;
+        await updateInContext("Pedido", pedido.id, pedidoPatch);
+      }
+
+      if (!conclusion.qty.temDivergencia && dadosParaSeparacao) {
         await createInContext("HistoricoCliente", {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
@@ -216,7 +217,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
           descricao_detalhada: `Separação conferida e liberada para expedição.`,
           usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
           data_evento: new Date().toISOString(),
-          status_relacionado: "Pronto para Expedir"
+          status_relacionado: conclusion.nextEntregaStatus || "Pronto para Expedir"
         });
       }
 
@@ -334,22 +335,13 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       return;
     }
 
-    const todosConferidos = itens.every(i => i.quantidade_separada === i.quantidade_pedida); // Check exact match
-    const todosSeparadosMinimo = itens.every(i => i.quantidade_separada > 0); // Check if at least some quantity separated
-
-    if (!todosSeparadosMinimo) {
+    try {
+      assertSeparacaoQuantidades({ itens });
+      assertSeparacaoChecklist(checklist);
+    } catch (policyError) {
       toast({
-        title: "Itens não conferidos",
-        description: "Pelo menos um item não teve sua quantidade separada informada ou é zero.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!checklist.conferiu_quantidade || !checklist.conferiu_qualidade || !checklist.conferiu_embalagem || !checklist.conferiu_etiquetas || !checklist.conferiu_documentos) {
-      toast({
-        title: "Checklist incompleto",
-        description: "Por favor, marque todos os itens do checklist de conferência.",
+        title: "Validacao de separacao",
+        description: String(policyError?.message || policyError),
         variant: "destructive"
       });
       return;

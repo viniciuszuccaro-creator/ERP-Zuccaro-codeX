@@ -1,3 +1,55 @@
+## CURSOR — vigília #178 (2026-09-30T17:51Z)
+
+#178 `98820d20` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:43Z)
+
+#178 `98820d20` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:36Z)
+
+#178 `98820d20` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:27Z)
+
+#178 `98820d20` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:20Z)
+
+#178 `98820d20` estável — ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T17:12Z)
+
+#178 `98820d20` estável — ainda candidato. Sem tip-port. #195 CI OK. Vigília 15min.
+
+---
+
+## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
+
+Draft PR **#195** CI SUCCESS (`2db2ca6b`). Stack Expedição #192–#195 ok.
+#178 `98820d20` ainda candidato (não final) — sem tip-port. Sem merge/VPS. Vigília 15min.
+
+---
+
+## CURSOR — Expedição fluxo consolidado (2026-09-30T17:00Z)
+
+Draft PR **#195**. Candidata `cursor/expedicao-fluxo-consolidado-392b` sobre tip #194.
+Fluxo: selecionar→separar→romaneio→despachar→parcial/total/ocorrência→pendências.
+Docs: `EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md`, `EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md`.
+Reservados Codex #178 intactos. Sem merge/VPS. CI em curso.
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T16:45Z)
 
 #178 `e4d3d904` estável — ainda candidato. Sem tip-port. Vigília 15min.

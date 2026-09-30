@@ -18,6 +18,7 @@ import {
   hasProvaEntrega,
   resolveEntregaClienteCalendarDay,
 } from "@/components/lib/expedicaoEntregaPolicy";
+import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -91,6 +92,7 @@ export default function DetalhesEntregaView({
     }
 
     let motivoOcorrencia = '';
+    let quantidadeParcial = null;
     if (precisaOcorrencia) {
       if (!canOcorrencia) {
         toast.error("Sem permissao para registrar ocorrencia.");
@@ -99,6 +101,14 @@ export default function DetalhesEntregaView({
       motivoOcorrencia = window.prompt("Informe o motivo da entrega frustrada:");
       if (!String(motivoOcorrencia || '').trim()) {
         toast.error("Ocorrencia exige motivo.");
+        return;
+      }
+    }
+    if (statusNorm.includes('parcial')) {
+      const rawQty = window.prompt("Informe a quantidade entregue (parcial):");
+      quantidadeParcial = Number(rawQty);
+      if (!(quantidadeParcial > 0)) {
+        toast.error("Quantidade entregue obrigatoria na entrega parcial.");
         return;
       }
     }
@@ -124,12 +134,53 @@ export default function DetalhesEntregaView({
       return;
     }
 
+    if (precisaOcorrencia || statusNorm.includes('parcial') || (statusNorm.includes('entregue') && !statusNorm.includes('parcial'))) {
+      try {
+        const modo = precisaOcorrencia ? 'ocorrencia' : (statusNorm.includes('parcial') ? 'parcial' : 'total');
+        const resolved = resolveRegistroEntregaFinal({
+          before: entrega,
+          modo,
+          comprovante: entrega.comprovante_entrega || {},
+          quantidade_entregue: quantidadeParcial,
+          motivo: motivoOcorrencia,
+          groupId,
+          empresaId,
+          confirmed: true,
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+        });
+        if (modo === 'total' || modo === 'parcial') {
+          if (!hasProvaEntrega(resolved.record)) {
+            toast.error("Entrega exige comprovante (recebedor e prova). Use Confirmar Entrega com assinatura.");
+            return;
+          }
+        }
+        const atualizada = await updateInContext("Entrega", entrega.id, resolved.patch);
+        await auditarEntrega({
+          acao: "DetalhesEntrega.alterar_status",
+          descricao: `Status da entrega alterado para ${resolved.patch.status}.`,
+          dadosNovos: atualizada || resolved.patch,
+        });
+        queryClient.invalidateQueries({ queryKey: ["entregas"] });
+        toast.success(`Status alterado para ${resolved.patch.status}.`);
+        return;
+      } catch (policyError) {
+        await auditarEntrega({
+          acao: "DetalhesEntrega.status_bloqueado",
+          descricao: String(policyError?.message || policyError),
+          sucesso: false,
+          dadosNovos: { status_novo: novoStatus, motivo: "policy_fail_closed" },
+        });
+        toast.error(String(policyError?.message || policyError));
+        return;
+      }
+    }
+
     const payload = {
       status: novoStatus,
       group_id: groupId,
       grupo_id: groupId,
       empresa_id: empresaId,
-      ...(motivoOcorrencia ? { entrega_frustrada: { ...(entrega.entrega_frustrada || {}), motivo: motivoOcorrencia } } : {}),
       historico_status: [
         ...(entrega.historico_status || []),
         {
@@ -137,7 +188,7 @@ export default function DetalhesEntregaView({
           data_hora: new Date().toISOString(),
           usuario: user?.full_name || user?.email || "Sistema",
           usuario_id: user?.id,
-          observacao: motivoOcorrencia || `Status alterado pela tela de detalhes para ${novoStatus}.`,
+          observacao: `Status alterado pela tela de detalhes para ${novoStatus}.`,
         }
       ]
     };
@@ -393,6 +444,17 @@ export default function DetalhesEntregaView({
                 data-action="confirmar-entrega"
               >
                 Confirmar Entrega
+              </Button>
+              <Button
+                onClick={() => handleStatusChangeLocal("Entrega Parcial")}
+                disabled={!contextoValido || !canEntregar || !["Saiu para Entrega", "Em Transito", "Chegada no Cliente"].includes(entrega.status)}
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700"
+                data-permission="Expedicao.Entrega.entregar" data-context-required="true" data-sensitive
+                data-action="entrega-parcial"
+                data-testid="entrega-detalhe-parcial"
+              >
+                Entrega Parcial
               </Button>
               <Button
                 onClick={() => handleStatusChangeLocal("Entrega Frustrada")}
