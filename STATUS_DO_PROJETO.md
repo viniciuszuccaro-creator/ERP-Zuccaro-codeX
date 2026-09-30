@@ -1,3 +1,33 @@
+## CURSOR — Expedição filtros #192 CI SUCCESS (2026-09-30T15:53Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#192** CI SUCCESS — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/192 |
+| HEAD | `caf1ff43` |
+| Testes | expedicao-entrega-policy 16/16 |
+| Codex #178 | HEAD `90533c2c` CI SUCCESS — **ainda não** declarado candidato final; sem tip-port |
+| Próximo | Harden detalhe/separação/acompanhamento fail-closed (fora reserva Codex) |
+
+---
+
+## CURSOR — Expedição listagem filtros (2026-09-30T15:45Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-entregas-filtros-392b` (base `main`) |
+| Draft PR | **#192** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/192 |
+| Inventário | `EntregasListagem` já tinha busca livre+status; faltavam filtros estruturados empresa/cidade/data/futuras. Separação/acompanhamento/romaneio base já existem (Gate 11). |
+| Escopo | Policy `filterEntregasList` + wire `EntregasListagem` + filtros cidade/futuras em `RomaneioForm` |
+| Não tocado (Codex #178) | `pedidoService`/`orcamentoService`/`pedidoTypes`/`orcamentoTypes`/repos orçamento/`saleIngressContract`/`app.ts`/mig 026–035/`STATUS` tip Codex |
+| Testes | expedicao-entrega-policy 16/16 |
+| Colisão | Sem Pedido/Orçamento contratos; sem Armado/Corte; sem merge/VPS |
+| Próximo | CI; vigília candidato final #178; lote seguinte separação/acompanhamento residual se gaps |
+
+**Arquivos reservados Codex (#178 HEAD `90533c2c`, CI SUCCESS — aguarda candidato final declarado):**  
+`server/src/services/pedidoService.ts`, `orcamentoService.ts`, `orcamentoTypes.ts`, `pedidoTypes.ts`, repos orçamento, `saleIngressContract.ts`, `app.ts`, mig `035_*`, testes orçamento/recibo/runtime08c, `docs/ORDEM_INTEGRACAO_UNICA.md`. Cursor **não tip-porta** nem edita esses arquivos neste lote.
+
+---
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

@@ -10,7 +10,12 @@ import {
   classifyEntregaStatusTransition,
   entregaAtribuidaAoMotorista,
   entregaStatusPermissionActions,
+  filterEntregasList,
   hasProvaEntrega,
+  isEntregaFutura,
+  listCidadesFromEntregas,
+  normalizeEntregaListFilters,
+  resolveEntregaClienteCalendarDay,
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
 import {
   resolveEntregaContext,
@@ -169,6 +174,61 @@ test('motorista so ve entrega atribuida', () => {
   assert.equal(entregaAtribuidaAoMotorista({ id: '1', motorista_id: 'u1' }, user), true);
   assert.equal(entregaAtribuidaAoMotorista({ id: '2', motorista: 'Carlos Motorista' }, user), true);
   assert.equal(entregaAtribuidaAoMotorista({ id: '3', motorista_id: 'outro' }, user), false);
+});
+
+test('filtros listagem entrega: empresa, cidade, data cliente e futuras', () => {
+  const now = new Date('2026-09-30T15:00:00.000Z');
+  const rows = [
+    {
+      id: 'a', empresa_id: 'e1', status: 'Pronto para Expedir',
+      data_previsao: '2026-10-05', endereco_entrega_completo: { cidade: 'Campinas' }, cliente_nome: 'Alpha',
+    },
+    {
+      id: 'b', empresa_id: 'e2', status: 'Em Transito',
+      data_entrega_solicitada: '2026-09-20', endereco_entrega_completo: { cidade: 'Sorocaba' }, cliente_nome: 'Beta',
+    },
+    {
+      id: 'c', empresa_id: 'e1', status: 'Entregue',
+      data_previsao: '2026-10-10', endereco_entrega_completo: { cidade: 'Campinas' }, cliente_nome: 'Gamma',
+    },
+  ];
+  assert.equal(resolveEntregaClienteCalendarDay(rows[1]), '2026-09-20');
+  assert.equal(isEntregaFutura(rows[0], now), true);
+  assert.equal(isEntregaFutura(rows[1], now), false);
+  assert.equal(isEntregaFutura(rows[2], now), false);
+
+  const onlyCampinas = filterEntregasList(rows, { cidade: 'Campinas' }, { now });
+  assert.deepEqual(onlyCampinas.map((r) => r.id), ['a', 'c']);
+
+  const empresaE1 = filterEntregasList(rows, { empresaId: 'e1' }, { now });
+  assert.deepEqual(empresaE1.map((r) => r.id), ['a', 'c']);
+
+  const futuras = filterEntregasList(rows, { soFuturas: true }, { now });
+  assert.deepEqual(futuras.map((r) => r.id), ['a']);
+
+  const range = filterEntregasList(rows, { dataDe: '2026-10-01', dataAte: '2026-10-31' }, { now });
+  assert.deepEqual(range.map((r) => r.id), ['a', 'c']);
+
+  const invalid = normalizeEntregaListFilters({ dataDe: '2026-10-10', dataAte: '2026-10-01' });
+  assert.equal(invalid.rangeInvalid, true);
+  assert.equal(filterEntregasList(rows, invalid, { now }).length, 0);
+  assert.deepEqual(listCidadesFromEntregas(rows), ['Campinas', 'Sorocaba']);
+});
+
+test('painel entregas e romaneio wire filtros estruturados', async () => {
+  const listagem = await readFile(new URL('../src/components/expedicao/EntregasListagem.jsx', import.meta.url), 'utf8');
+  const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
+  assert.match(listagem, /filterEntregasList/);
+  assert.match(listagem, /normalizeEntregaListFilters/);
+  assert.match(listagem, /entrega-list-filtros-estruturados/);
+  assert.match(listagem, /entrega-list-cidade/);
+  assert.match(listagem, /entrega-list-data-de/);
+  assert.match(listagem, /entrega-list-so-futuras/);
+  assert.match(listagem, /effectiveGroupId && \(estaNoGrupo \|\| effectiveEmpresaId\)/);
+  assert.match(romaneio, /filterEntregasList/);
+  assert.match(romaneio, /romaneio-entregas-filtros/);
+  assert.match(romaneio, /romaneio-filtro-cidade/);
+  assert.match(romaneio, /effectiveGroupId && effectiveEmpresaId/);
 });
 
 test('expedicao existente reserva numero e o app nao lista todas as entregas', async () => {

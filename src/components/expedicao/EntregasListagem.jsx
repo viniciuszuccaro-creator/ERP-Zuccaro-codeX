@@ -21,6 +21,11 @@ const EXIBIR_TABELA_LEGADA = false;
 import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
 import DetalhesEntregaView from './DetalhesEntregaView';
+import {
+  filterEntregasList,
+  listCidadesFromEntregas,
+  normalizeEntregaListFilters,
+} from '@/components/lib/expedicaoEntregaPolicy';
 
 export default function EntregasListagem({ entregas, clientes, pedidos, empresasDoGrupo, estaNoGrupo, windowMode = false }) {
   const [page, setPage] = React.useState(1);
@@ -29,6 +34,11 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const [sortDirection, setSortDirection] = React.useState('desc');
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState("todas");
+  const [selectedCidade, setSelectedCidade] = useState("todas");
+  const [dataDe, setDataDe] = useState("");
+  const [dataAte, setDataAte] = useState("");
+  const [soFuturas, setSoFuturas] = useState(false);
   const [selectedEntregas, setSelectedEntregas] = useState([]);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
@@ -36,7 +46,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const { user } = useUser();
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const effectiveEmpresaId = estaNoGrupo ? null : (empresaAtual?.id || null);
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && (estaNoGrupo || effectiveEmpresaId));
   const canViewEntrega = hasPermission('Expedicao', 'Entrega', 'visualizar') || hasPermission('Expedicao', 'Entregas', 'visualizar') || hasPermission('Expedicao', 'Entrega', 'ver');
   const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
   const canExportEntrega = hasPermission('Expedicao', 'Entrega', 'exportar') || hasPermission('Expedicao', 'Entregas', 'exportar') || hasPermission('Expedicao', 'Relatorios', 'exportar');
@@ -69,24 +79,20 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
     return true;
   });
 
-  const filteredEntregas = entregasContextuais.filter(e => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchSearch = e.numero_pedido?.toLowerCase().includes(searchLower) ||
-                       e.cliente_nome?.toLowerCase().includes(searchLower) ||
-                       e.codigo_rastreamento?.toLowerCase().includes(searchLower) ||
-                       e.qr_code?.toLowerCase().includes(searchLower) ||
-                       e.motorista?.toLowerCase().includes(searchLower) ||
-                       e.transportadora?.toLowerCase().includes(searchLower) ||
-                       e.regiao_entrega_nome?.toLowerCase().includes(searchLower) ||
-                       e.status?.toLowerCase().includes(searchLower) ||
-                       e.endereco_entrega_completo?.cidade?.toLowerCase().includes(searchLower) ||
-                       e.endereco_entrega_completo?.bairro?.toLowerCase().includes(searchLower) ||
-                       e.endereco_entrega_completo?.logradouro?.toLowerCase().includes(searchLower) ||
-                       e.contato_entrega?.nome?.toLowerCase().includes(searchLower) ||
-                       e.contato_entrega?.telefone?.includes(searchLower);
-    const matchStatus = selectedStatus === "todos" || e.status === selectedStatus;
-    return matchSearch && matchStatus;
+  const listFilters = normalizeEntregaListFilters({
+    status: selectedStatus,
+    empresaId: estaNoGrupo && selectedEmpresaId !== 'todas' ? selectedEmpresaId : (effectiveEmpresaId || ''),
+    cidade: selectedCidade !== 'todas' ? selectedCidade : '',
+    dataDe,
+    dataAte,
+    soFuturas,
+    busca: searchTerm,
   });
+
+  const cidadesDisponiveis = listCidadesFromEntregas(entregasContextuais);
+  const filteredEntregas = (!contextoValido || !canViewEntrega)
+    ? []
+    : filterEntregasList(entregasContextuais, listFilters);
 
   const statusColors = {
     'Aguardando Separacao': 'bg-yellow-100 text-yellow-700',
@@ -145,7 +151,21 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    await auditListagem({ acao: 'Entrega.exportar_csv', detalhes: { quantidade: selecionadas.length, filtros: { status: selectedStatus, busca: searchTerm } } });
+    await auditListagem({
+      acao: 'Entrega.exportar_csv',
+      detalhes: {
+        quantidade: selecionadas.length,
+        filtros: {
+          status: selectedStatus,
+          busca: searchTerm,
+          empresa_id: listFilters.empresaId || null,
+          cidade: listFilters.cidade || null,
+          data_de: listFilters.dataDe || null,
+          data_ate: listFilters.dataAte || null,
+          so_futuras: listFilters.soFuturas,
+        },
+      },
+    });
   };
 
   const content = (
@@ -160,7 +180,8 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
       )}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-3">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_12rem_auto] gap-3">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_12rem_auto] gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
@@ -168,10 +189,12 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 h-8"
+                data-testid="entrega-list-busca"
+                data-action="Expedicao.entrega.filtro-busca"
               />
             </div>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-48 h-8">
+              <SelectTrigger className="w-48 h-8" data-testid="entrega-list-status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -196,6 +219,65 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
               >
                 <Download className="w-3 h-3 mr-1" /> CSV ({selectedEntregas.length})
               </Button>
+            )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" data-testid="entrega-list-filtros-estruturados" data-action="Expedicao.entrega.filtros">
+              {estaNoGrupo && (
+                <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+                  <SelectTrigger className="h-8" data-testid="entrega-list-empresa">
+                    <SelectValue placeholder="Empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as empresas</SelectItem>
+                    {(empresasDoGrupo || []).map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nome_fantasia || empresa.razao_social || empresa.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={selectedCidade} onValueChange={setSelectedCidade}>
+                <SelectTrigger className="h-8" data-testid="entrega-list-cidade">
+                  <SelectValue placeholder="Cidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as cidades</SelectItem>
+                  {cidadesDisponiveis.map((cidade) => (
+                    <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="date"
+                value={dataDe}
+                onChange={(e) => setDataDe(e.target.value)}
+                className="h-8"
+                data-testid="entrega-list-data-de"
+                aria-label="Data entrega do cliente de"
+              />
+              <Input
+                type="date"
+                value={dataAte}
+                onChange={(e) => setDataAte(e.target.value)}
+                className="h-8"
+                data-testid="entrega-list-data-ate"
+                aria-label="Data entrega do cliente até"
+              />
+              <label className="flex items-center gap-2 text-xs text-slate-700 h-8 px-1" data-testid="entrega-list-so-futuras">
+                <Checkbox
+                  checked={soFuturas}
+                  onCheckedChange={(checked) => setSoFuturas(checked === true)}
+                  data-action="Expedicao.entrega.filtro-futuras"
+                />
+                Só entregas futuras
+              </label>
+            </div>
+            {listFilters.rangeInvalid && (
+              <Alert className="border-amber-300 bg-amber-50 text-amber-900" data-testid="entrega-list-range-invalid">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>Intervalo de datas inválido: a data inicial não pode ser maior que a final.</AlertDescription>
+              </Alert>
             )}
           </div>
         </CardContent>
