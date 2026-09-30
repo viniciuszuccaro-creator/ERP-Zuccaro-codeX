@@ -142,7 +142,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
       const current = await this.get(scope, id, query);
       if (!current || current.status !== 'EM_ABERTO') return null;
       const totals = calculatePedido(data.itens);
-      await query.query(
+      const updated = await query.query<{ id: string }>(
         `UPDATE pedidos SET
           cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,
           tabela_preco_codigo_snapshot=$8,tabela_preco_nome_snapshot=$9,
@@ -151,7 +151,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
           promocao_aplicada=$14,promocao_bps=$15,promocao_cupom=$16,
           tipo_operacao=$17,data_entrega_solicitada=$18,observacoes=$19,subtotal=$20,desconto=$21,total=$22,
           tipo_comercial=$23,updated_by=$24
-         WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+         WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO' RETURNING id`,
         [
           id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null,
           data.tabela_preco_codigo_snapshot ?? null, data.tabela_preco_nome_snapshot ?? null,
@@ -162,6 +162,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
           totals.subtotal, totals.desconto, totals.total, data.tipo_comercial, actorId,
         ],
       );
+      if (updated.rows.length !== 1) return null;
       if (!preserveItems) {
         await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
         await this.insertItems(query, scope, id, data, actorId);

@@ -4,6 +4,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { pedidoHistorico026Preflight } from '../src/db/migrate.js';
+import { PostgresPedidoRepository } from '../src/repositories/postgresPedidoRepository.js';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
@@ -12,6 +13,35 @@ import { boot, identity } from './omnichannelFixture.js';
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 
 for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: cancelamento entre leitura e update impede escrita e preserva itens`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
+    try {
+      const created=await f.send({...f.envelope,idempotencyKey:randomUUID()},{nonce:randomUUID()});
+      assert.equal(created.status,201);
+      const id=created.body.data.id;
+      const repo=new PostgresPedidoRepository(f.pg as never);
+      const scope={groupId:identity.groupId,empresaId:identity.empresaId};
+      const before=await repo.get(scope,id);
+      assert.ok(before);
+      let switched=false;
+      const racingExecutor={query:async (sql:string,params?:unknown[])=>{
+        const result=await f.pg.query(sql,params);
+        if (!switched && sql.includes('SELECT p.*')) {
+          switched=true;
+          await f.pg.query("UPDATE pedidos SET status='CANCELADO',ativo=false WHERE id=$1",[id]);
+        }
+        return result;
+      }};
+      const after=await repo.update(scope,id,{...before,observacoes:'MUTACAO_TARDIA'},identity.actorId,racingExecutor as never,true);
+      assert.equal(switched,true);
+      assert.equal(after,null);
+      const stored=await repo.get(scope,id);
+      assert.equal(stored?.status,'CANCELADO');
+      assert.equal(stored?.observacoes,before.observacoes);
+      assert.deepEqual(stored?.itens.map(item=>item.id),before.itens.map(item=>item.id));
+    } finally { await f.close(); }
+  });
+
   test(`${engine}: intenção ARMADO/CORTE_DOBRA é persistida no Orçamento e copiada sem inferência viva`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
     try {
