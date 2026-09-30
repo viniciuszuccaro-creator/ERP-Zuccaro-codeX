@@ -1,8 +1,8 @@
 ## CURSOR — Expedição filtros listagem/romaneio (2026-09-30T15:45Z)
 
-Branch `cursor/expedicao-entregas-filtros-392b` (base main). Filtros empresa/cidade/data cliente/futuras na listagem + romaneio.
+Draft PR **#192**. Filtros empresa/cidade/data cliente/futuras na listagem + romaneio.
 **Reservados Codex #178:** pedido/orcamento services+types+repos, saleIngress, app.ts, mig 035, ORDEM_INTEGRACAO. Sem tip-port. Vigília candidato final #178.
-Sem merge/VPS.
+Sem merge/VPS. CI em curso.
 
 ---
 
