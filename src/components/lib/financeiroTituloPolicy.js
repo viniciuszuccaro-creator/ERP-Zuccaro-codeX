@@ -260,3 +260,48 @@ export const assertTituloOnDelete = (record = {}) => {
     throw error;
   }
 };
+
+/**
+ * Onda 6 — envio ao caixa: mesmo grupo/empresa, títulos com contexto e não liquidados.
+ * @param {{ titulos?: FinanceRecord[], groupId?: unknown, empresaId?: unknown }} options
+ */
+export const assertTitulosProntosParaCaixa = ({ titulos = [], groupId, empresaId } = {}) => {
+  const group = firstText(groupId);
+  const empresa = firstText(empresaId);
+  if (!group || !empresa) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Contexto de grupo e empresa obrigatorio para enviar ao caixa.'));
+    error.code = 'CAIXA_CONTEXTO_OBRIGATORIO';
+    throw error;
+  }
+  const rows = Array.isArray(titulos) ? titulos : [];
+  if (rows.length === 0) {
+    const error = /** @type {TituloPolicyError} */ (new Error('Selecione ao menos um titulo para o caixa.'));
+    error.code = 'CAIXA_SEM_TITULOS';
+    throw error;
+  }
+  for (const titulo of rows) {
+    const tituloGroup = firstText(titulo.group_id, titulo.grupo_id);
+    const tituloEmpresa = firstText(titulo.empresa_id);
+    if (!tituloGroup || !tituloEmpresa) {
+      const error = /** @type {TituloPolicyError} */ (new Error('Titulo sem group_id/empresa_id nao pode ir ao caixa.'));
+      error.code = 'CAIXA_TITULO_SEM_CONTEXTO';
+      throw error;
+    }
+    if (tituloGroup !== group || tituloEmpresa !== empresa) {
+      const error = /** @type {TituloPolicyError} */ (new Error('Titulos de outro grupo/empresa bloqueados no envio ao caixa.'));
+      error.code = 'CAIXA_CONTEXTO_DIVERGENTE';
+      throw error;
+    }
+    if (isTituloLiquidado(titulo) || isTituloEstorno(titulo) || isTituloConciliado(titulo)) {
+      const error = /** @type {TituloPolicyError} */ (new Error('Titulo ja liquidado/conciliado nao pode ser reenviado ao caixa.'));
+      error.code = 'CAIXA_TITULO_JA_LIQUIDADO';
+      throw error;
+    }
+  }
+  return {
+    groupId: group,
+    empresaId: empresa,
+    total: rows.reduce((sum, titulo) => sum + toMoney(titulo.valor || titulo.valor_total), 0),
+    quantidade: rows.length,
+  };
+};
