@@ -1,3 +1,10 @@
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:23Z)
+
+#191 CI ok. #153=`12c37e8b`. Sem CostPort/anexos/#178/provedor → **BLOCKED** mantido.
+Sem merge/VPS. Vigília 15min.
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #191 (2026-09-30T13:06Z)
 
 #191 CI SUCCESS — RBAC print/share sem soft→canView. Stack tip #180→#191.

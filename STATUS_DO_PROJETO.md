@@ -1,3 +1,16 @@
+## AUTÔNOMO — BLOCKED tip #191 vigília (2026-09-30T13:23Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#191** CI SUCCESS; HEAD tip `188b0b02` |
+| #153 | HEAD=`12c37e8b` (sem mudança — sem re-revisão) |
+| Desbloqueios | CostPort real: **não** · anexos #50/#59: ainda OPEN · #178: OPEN sem tip-port · provedor: **não** |
+| Parecer | **BLOCKED** mantido — sem lote tip-seguro |
+| Colisão | Sem inventar CostPort; sem merge/VPS |
+| Próximo | Vigília 15min |
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #191 CI SUCCESS (2026-09-30T13:06Z)
 
 | Campo | Valor |
