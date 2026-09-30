@@ -26,8 +26,8 @@ test('R15 PostgreSQL: claim concorrente, tenant e lease impedem resposta atrasad
       const lease = first[0] ?? second[0];
       assert.equal(lease?.id, id);
       assert.equal(lease?.attempts, 1);
-      assert.deepEqual(await repo.claim({ groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB }), []);
-      assert.equal(await repo.complete({ groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 }, lease), false);
+      assert.deepEqual(await repo.claim({ ...scope, groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB }), []);
+      assert.equal(await repo.complete({ ...scope, empresaId: SEED_IDS.empresaA2 }, lease), false);
       assert.equal(await repo.complete(scope, { ...lease, attempts: 0 }), false);
       assert.equal(await repo.fail(scope, lease, 1), 'retry');
       assert.equal(await repo.complete(scope, lease), false);
