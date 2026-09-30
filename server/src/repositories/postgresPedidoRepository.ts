@@ -137,7 +137,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }
 
-  async update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor, preserveItems = false): Promise<Pedido | null> {
     return this.run(executor, async (query) => {
       const current = await this.get(scope, id, query);
       if (!current || current.status !== 'EM_ABERTO') return null;
@@ -162,8 +162,10 @@ export class PostgresPedidoRepository implements PedidoRepository {
           totals.subtotal, totals.desconto, totals.total, data.tipo_comercial, actorId,
         ],
       );
-      await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
-      await this.insertItems(query, scope, id, data, actorId);
+      if (!preserveItems) {
+        await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+        await this.insertItems(query, scope, id, data, actorId);
+      }
       return this.get(scope, id, query);
     });
   }

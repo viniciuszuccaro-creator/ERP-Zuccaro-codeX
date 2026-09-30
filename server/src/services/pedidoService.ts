@@ -300,7 +300,7 @@ export class PedidoService {
           throw new AppError(409, 'PEDIDO_TABELA_SNAPSHOT_REQUIRED', 'Converted order is missing its table snapshot');
         }
       }
-      await this.validateReferences(scope, data, executor, !before.orcamento_id, !before.orcamento_id);
+      await this.validateReferences(scope, data, executor, !before.orcamento_id, !before.orcamento_id, !before.orcamento_id);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? {
         ...data,
@@ -334,7 +334,7 @@ export class PedidoService {
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
-      const after = await this.repo.update(scope, id, write, ctx.actorId!, executor);
+      const after = await this.repo.update(scope, id, write, ctx.actorId!, executor, Boolean(before.orcamento_id));
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
@@ -506,13 +506,14 @@ export class PedidoService {
     return `${i}.${(f + '000000').slice(0, 6)}`;
   }
 
-  private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor, validateTabela = true, validateCondicao = true) {
+  private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor, validateTabela = true, validateCondicao = true, validateProducts = true) {
     const link = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!link || !link.ativo || link.bloqueado || !link.habilitado_operacao) throw new AppError(422, 'PEDIDO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');
     if (data.cliente_local_id && !(await this.locais.get({ groupId: scope.groupId, clienteId: link.cliente_id }, data.cliente_local_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_LOCAL_INVALIDO', 'ClienteLocal unavailable in tenant scope');
     if (data.obra_id && !(await this.obras.get({ groupId: scope.groupId, clienteId: link.cliente_id, empresaId: scope.empresaId }, data.obra_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_OBRA_INVALIDA', 'Obra unavailable in tenant scope');
     if (validateTabela && data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
     if (validateCondicao && !(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
+    if (!validateProducts) return;
     for (const item of data.itens) {
       const product = await this.produtos.getById(scope, item.produto_id);
       if (!product?.ativo) throw new AppError(422, 'PEDIDO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');

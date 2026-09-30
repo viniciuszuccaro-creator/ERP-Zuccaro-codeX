@@ -115,13 +115,14 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
   }
 
-  async update(scope: PedidoScope, id: string, data: PedidoWrite, _actorId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async update(scope: PedidoScope, id: string, data: PedidoWrite, _actorId: string, _executor?: DbQueryExecutor, preserveItems = false): Promise<Pedido | null> {
     const current = await this.get(scope, id);
     if (!current || current.status !== 'EM_ABERTO') return null;
     const totals = calculatePedido(data.itens);
+    const { itens: _writeItems, ...restData } = data;
     const updated: Pedido = {
       ...current,
-      ...data,
+      ...restData,
       cliente_local_id: data.cliente_local_id ?? null,
       obra_id: data.obra_id ?? null,
       tabela_preco_id: data.tabela_preco_id ?? null,
@@ -141,6 +142,7 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       tipo_comercial: data.tipo_comercial,
       observacoes: data.observacoes ?? null,
       ...totals,
+      itens: preserveItems ? current.itens : totals.itens,
       updated_at: new Date().toISOString(),
     };
     this.rows.set(id, updated);

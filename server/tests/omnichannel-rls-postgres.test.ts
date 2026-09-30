@@ -15,7 +15,7 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
   test(`${engine}: intenção ARMADO/CORTE_DOBRA é persistida no Orçamento e copiada sem inferência viva`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
     try {
-      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"editar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
       const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...base}=f.envelope.documento;
       const ctx={groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa' as const,requestId:'synthetic-special'};
       for (const tipo of ['ARMADO','CORTE_DOBRA'] as const) {
@@ -32,6 +32,20 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
         const order=await f.runtime.pedidoService.convert(ctx,quote.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z'});
         assert.equal(order.itens[0]?.tipo_comercial_snapshot,tipo);
         assert.equal(order.itens[0]?.requer_producao,true);
+        if (tipo==='CORTE_DOBRA') {
+          await f.pg.query('UPDATE produtos SET ativo=false,tipo_item=$1 WHERE id=$2',['REVENDA',order.itens[0]!.produto_id]);
+          const operational={cliente_empresa_id:order.cliente_empresa_id,condicao_pagamento_id:order.condicao_pagamento_id,
+            orcamento_id:quote.id,tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-11T00:00:00.000Z',
+            itens:order.itens.map(item=>({produto_id:item.produto_id,unidade_id:item.unidade_id,
+              descricao:item.descricao,unidade_sigla:item.unidade_sigla,quantidade:item.quantidade,
+              preco_unitario:item.preco_unitario,desconto:item.desconto,requer_producao:item.requer_producao}))};
+          const amended=await f.runtime.pedidoService.update(ctx,order.id,operational);
+          assert.equal(amended.itens[0]?.id,order.itens[0]?.id);
+          assert.equal(amended.itens[0]?.tipo_comercial_snapshot,'CORTE_DOBRA');
+          assert.equal(amended.itens[0]?.requer_producao,true);
+          assert.ok((await f.runtime.auditRepo.listByEntity('Pedido',order.id)).some(event=>event.action==='update'));
+          await f.pg.query('UPDATE produtos SET ativo=true WHERE id=$1',[order.itens[0]!.produto_id]);
+        }
       }
       const report=await pedidoHistorico026Preflight(f.pg as never);
       assert.equal(report.porEmpresa.find(row=>row.empresaId===identity.empresaId)?.pedidos,2);
