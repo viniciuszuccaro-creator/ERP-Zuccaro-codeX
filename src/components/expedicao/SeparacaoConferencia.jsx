@@ -92,6 +92,8 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         ...i,
         quantidade_pedida: i.quantidade,
         quantidade_separada: 0,
+        unidade: i.unidade || i.unidade_medida || "",
+        unidade_separada: i.unidade || i.unidade_medida || "",
         status_item: "aguardando",
         divergencia: false,
         observacao_item: "",

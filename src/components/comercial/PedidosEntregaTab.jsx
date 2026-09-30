@@ -73,7 +73,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
   const effectiveEmpresaId = empresaAtual?.id || null;
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
   const canView = hasPermission("Comercial", "Pedido", "visualizar") || hasPermission("Expedicao", "Entregas", "visualizar") || hasPermission("Expedicao", "Painel Logistico", "visualizar");
   const canEdit = hasPermission("Comercial", "Pedido", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Entrega", "editar");
   const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");

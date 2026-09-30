@@ -1,3 +1,98 @@
+## CURSOR — vigília #178 (2026-09-30T18:38Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e5eef59d` — ainda “Correção candidata” (**não** final) |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:33Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e5eef59d` — ainda “Correção candidata” (**não** final) |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:29Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e5eef59d` estável — ainda “Correção candidata” (**não** final) |
+| CI | frontend/backend/concurrency SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 delta HEAD (2026-09-30T18:22Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e5eef59d` (antes `e84315e6`) — ainda “Correção candidata” (**não** final) |
+| Delta | `Impede transição de pedido com status alterado` — repo Pedido + teste RLS |
+| CI | frontend/concurrency SUCCESS; backend em curso no instante da vigília |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #196 CI SUCCESS |
+| Próximo | Vigília FINAL #178 |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:18Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e84315e6` — ainda “Correção candidata” (**não** final) |
+| CI | SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 delta HEAD (2026-09-30T18:13Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e84315e6` (antes `98820d20`) — ainda “Correção candidata” (**não** final) |
+| Delta | `Bloqueia edição de pedido cancelado em corrida` — `postgresPedidoRepository.ts` + teste RLS; STATUS Codex |
+| CI | frontend/backend/concurrency SUCCESS |
+| Ação | Sem tip-port; sem revisão consolidada (aguarda FINAL) |
+| Expedição | #196 CI SUCCESS — stack #192–#196 |
+| Próximo | Vigília FINAL #178 |
+
+---
+
+## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#196** | CI SUCCESS HEAD `ef0a583d` |
+| Stack Expedição | **#192→#196** (consolidado + integrado Pedido) |
+| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final); sem tip-port |
+| Próximo | Vigília FINAL #178; residual Expedição só se gap novo fora reserva |
+
+---
+
+## CURSOR — Expedição fluxo integrado Pedido (lacunas pós-#195) (2026-09-30T18:01Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-fluxo-integrado-pedido-392b` (base tip #195) |
+| Draft PR | **#196** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/196 |
+| Lacunas | seleção Pedidos; unidades; rollback despacho; soft∨→∧; atalho Separação |
+| Docs | `docs/EXPEDICAO_FLUXO_INTEGRADO_PEDIDO.md` |
+| Testes | expedicao-fluxo-operacional + policy + motorista (31/31 locais) |
+| Codex #178 | ainda candidato `98820d20` — sem tip-port |
+| Reservados | Pedido/Orçamento/026–035/legado intactos |
+| Colisão | Sem merge/VPS |
+| Próximo | CI da PR; vigília FINAL #178 |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T17:51Z)
 
 | Campo | Valor |

@@ -34,7 +34,7 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
   const effectiveEmpresaId = pedidosSelecionados.find(p => p?.empresa_id)?.empresa_id || empresaAtual?.id || null;
   const pedidoComGrupo = pedidosSelecionados.find(p => p?.group_id || p?.grupo_id);
   const effectiveGroupId = pedidoComGrupo?.group_id || pedidoComGrupo?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
   const canCreateRomaneio = hasPermission("Expedicao", "Romaneio", "criar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Comercial", "Pedido", "editar");
   const withContextData = (payload = {}) => ({
     ...payload,

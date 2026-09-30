@@ -1,3 +1,53 @@
+## CURSOR — vigília #178 (2026-09-30T18:38Z)
+
+#178 `e5eef59d` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:33Z)
+
+#178 `e5eef59d` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:29Z)
+
+#178 `e5eef59d` estável — ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:22Z)
+
+#178 HEAD `e5eef59d` (delta: impede transição com status alterado). Ainda candidato — sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:18Z)
+
+#178 `e84315e6` ainda candidato. Sem tip-port. #196 OK. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:13Z)
+
+#178 HEAD `e84315e6` (delta: bloqueio edição pedido cancelado em corrida). Ainda candidato — sem tip-port. #196 OK. Vigília 15min.
+
+---
+
+## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
+
+#196 CI SUCCESS (`ef0a583d`). Stack Expedição #192–#196 ok.
+#178 `98820d20` ainda candidato — sem tip-port. Sem merge/VPS. Vigília 15min.
+
+---
+
+## CURSOR — Expedição fluxo integrado Pedido (2026-09-30T18:01Z)
+
+Draft PR **#196**. Branch `cursor/expedicao-fluxo-integrado-pedido-392b`. Lacunas pós-#195: Pedidos→separação, unidades, rollback.
+Reservados Codex intactos. Sem merge/VPS. CI em curso.
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T17:51Z)
 
 #178 `98820d20` ainda candidato. Sem tip-port. Vigília 15min.

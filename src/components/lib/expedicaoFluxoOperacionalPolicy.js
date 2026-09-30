@@ -37,6 +37,8 @@ const toQty = (value) => {
 export const normalizeSeparacaoItem = (item = {}) => {
   const quantidade_pedida = toQty(item.quantidade_pedida ?? item.quantidade);
   const quantidade_separada = toQty(item.quantidade_separada);
+  const unidade = firstText(item.unidade, item.unidade_medida, item.unidade_pedida) || '';
+  const unidade_separada = firstText(item.unidade_separada, item.unidade, item.unidade_medida) || unidade;
   const divergencia = quantidade_separada !== quantidade_pedida;
   let status_item = 'aguardando';
   if (quantidade_separada > 0 && !divergencia) status_item = 'ok';
@@ -45,6 +47,8 @@ export const normalizeSeparacaoItem = (item = {}) => {
     ...item,
     quantidade_pedida,
     quantidade_separada,
+    unidade,
+    unidade_separada,
     divergencia,
     status_item,
   };
@@ -66,6 +70,14 @@ export const assertSeparacaoQuantidades = ({ itens = [] } = {}) => {
   const negativos = list.filter((item) => item.quantidade_separada < 0 || item.quantidade_pedida < 0);
   if (negativos.length > 0) {
     throw new Error('Quantidades nao podem ser negativas.');
+  }
+  const unidadeInvalida = list.filter((item) => {
+    if (!item.unidade && !item.unidade_separada) return false;
+    if (!item.unidade || !item.unidade_separada) return true;
+    return String(item.unidade).toLowerCase() !== String(item.unidade_separada).toLowerCase();
+  });
+  if (unidadeInvalida.length > 0) {
+    throw new Error('Unidade separada diverge da unidade pedida.');
   }
   const divergencias = list.filter((item) => item.divergencia);
   return {
@@ -560,4 +572,138 @@ export const revalidarSelecaoAposTrocaEmpresa = ({
     else removidos.push(id);
   }
   return { selectedIds: mantidos, removidos, motivo: removidos.length ? 'troca_empresa' : null };
+};
+
+/** Status de Pedido elegíveis para iniciar separação/conferência. */
+export const PEDIDOS_STATUS_ELEGIVEIS_SEPARACAO = Object.freeze([
+  'aprovado',
+  'faturado',
+  'pronto para faturar',
+  'em expedicao',
+  'em expedição',
+  'aguardando separacao',
+  'aguardando separação',
+  'em separacao',
+  'em separação',
+]);
+
+/**
+ * @param {unknown} status
+ */
+const normalizePedidoStatus = (status) => String(status || '')
+  .trim()
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+
+/**
+ * Seleciona Pedidos elegíveis para separação no contexto da empresa (fail-closed cruzado).
+ * Não altera contratos canônicos de Pedido — apenas filtra registros já carregados.
+ * @param {ExpedicaoRecord[]} pedidos
+ * @param {{
+ *   empresaId?: unknown,
+ *   groupId?: unknown,
+ *   selectedIds?: unknown[],
+ *   soFuturas?: boolean,
+ *   now?: Date,
+ *   exigirSelecao?: boolean,
+ * }} options
+ */
+export const selectPedidosParaSeparacao = (pedidos = [], {
+  empresaId = null,
+  groupId = null,
+  selectedIds = null,
+  soFuturas = false,
+  now = new Date(),
+  exigirSelecao = false,
+} = {}) => {
+  if (!firstText(empresaId)) {
+    throw new Error('Empresa obrigatoria para selecionar pedidos da separacao.');
+  }
+  const selectedSet = Array.isArray(selectedIds)
+    ? new Set(selectedIds.map((id) => String(id)).filter(Boolean))
+    : null;
+
+  const foraDoContexto = (Array.isArray(selectedIds) ? selectedIds : [])
+    .map((id) => (Array.isArray(pedidos) ? pedidos : []).find((row) => String(row.id) === String(id)))
+    .filter(Boolean)
+    .filter((row) => firstText(row.empresa_id) !== firstText(empresaId)
+      || (firstText(groupId) && firstText(row.group_id, row.grupo_id)
+        && firstText(row.group_id, row.grupo_id) !== firstText(groupId)));
+
+  if (foraDoContexto.length > 0) {
+    throw new Error('O pedido selecionado nao pertence ao contexto ativo.');
+  }
+
+  const elegiveis = (Array.isArray(pedidos) ? pedidos : []).filter((row) => {
+    if (firstText(row.empresa_id) !== firstText(empresaId)) return false;
+    const rowGroup = firstText(row.group_id, row.grupo_id);
+    if (firstText(groupId) && rowGroup && rowGroup !== firstText(groupId)) return false;
+    const st = normalizePedidoStatus(row.status);
+    if (st.includes('cancel') || st.includes('entregue') || st.includes('rejeit')) return false;
+    const elegivelStatus = PEDIDOS_STATUS_ELEGIVEIS_SEPARACAO.some((allowed) => {
+      const a = normalizePedidoStatus(allowed);
+      return st === a || st.includes(a) || a.includes(st);
+    });
+    if (!elegivelStatus) return false;
+    if (soFuturas) {
+      const day = resolveEntregaClienteCalendarDay(row);
+      if (!day || day < todayCalendarDay(now)) return false;
+    }
+    if (selectedSet && !selectedSet.has(String(row.id))) return false;
+    return true;
+  });
+
+  if (exigirSelecao && elegiveis.length === 0) {
+    throw new Error('Selecione pelo menos um pedido elegivel da empresa.');
+  }
+  return elegiveis;
+};
+
+/**
+ * Aplica patches de despacho com rollback se a persistência falhar no meio.
+ * @param {{
+ *   despachoPatches?: Array<{ entregaId: unknown, patch: ExpedicaoRecord }>,
+ *   entregasById?: Map<string, ExpedicaoRecord>,
+ *   failAtIndex?: number | null,
+ * }} options
+ */
+export const applyDespachoPatchesWithRollback = ({
+  despachoPatches = [],
+  entregasById = new Map(),
+  failAtIndex = null,
+} = {}) => {
+  const snapshots = [];
+  try {
+    for (let idx = 0; idx < despachoPatches.length; idx += 1) {
+      const item = despachoPatches[idx];
+      const id = String(item.entregaId || '');
+      if (!id || !entregasById.has(id)) {
+        throw new Error('Entrega ausente para despacho.');
+      }
+      if (failAtIndex !== null && failAtIndex !== undefined && Number(failAtIndex) === idx) {
+        throw new Error('Falha de persistencia no despacho.');
+      }
+      const before = { ...entregasById.get(id) };
+      snapshots.push(before);
+      assertEntregaOnUpdate({ before, patch: item.patch || {} });
+      entregasById.set(id, { ...before, ...(item.patch || {}) });
+    }
+    return {
+      ok: true,
+      appliedIds: snapshots.map((row) => row.id),
+      rolledBackIds: [],
+    };
+  } catch (error) {
+    for (let i = snapshots.length - 1; i >= 0; i -= 1) {
+      const snap = snapshots[i];
+      entregasById.set(String(snap.id), snap);
+    }
+    return {
+      ok: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+      appliedIds: [],
+      rolledBackIds: snapshots.map((row) => row.id),
+    };
+  }
 };

@@ -21,6 +21,7 @@ const EXIBIR_TABELA_LEGADA = false;
 import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
 import DetalhesEntregaView from './DetalhesEntregaView';
+import SeparacaoConferencia from './SeparacaoConferencia';
 import {
   filterEntregasList,
   listCidadesFromEntregas,
@@ -53,6 +54,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const contextoValido = Boolean(effectiveGroupId && (estaNoGrupo || effectiveEmpresaId));
   const canViewEntrega = hasPermission('Expedicao', 'Entrega', 'visualizar') || hasPermission('Expedicao', 'Entregas', 'visualizar') || hasPermission('Expedicao', 'Entrega', 'ver');
   const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
+  const canSeparar = hasPermission('Expedicao', 'Separacao', 'conferir') || hasPermission('Expedicao', 'Separacao', 'criar') || hasPermission('Expedicao', 'Entrega', 'conferir') || canEditEntrega;
   const canExportEntrega = hasPermission('Expedicao', 'Entrega', 'exportar') || hasPermission('Expedicao', 'Entregas', 'exportar') || hasPermission('Expedicao', 'Relatorios', 'exportar');
 
   const auditListagem = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
@@ -364,6 +366,30 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                       data-action="Entrega.editar"
                     >
                       <Edit className="w-3 h-3" />
+                    </Button>
+                  )}
+                  {canSeparar && ['Aguardando Separacao', 'Aguardando Separação', 'Em Separacao', 'Em Separação'].includes(e.status) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={async () => {
+                        await auditListagem({ acao: 'Entrega.separacao.abrir', detalhes: { entrega_id: e.id, numero_pedido: e.numero_pedido } });
+                        const pedidoRelacionado = (pedidos || []).find((p) => p.id === e.pedido_id) || null;
+                        openWindow(
+                          SeparacaoConferencia,
+                          { entregaId: e.id, pedido: pedidoRelacionado, empresaId: e.empresa_id, windowMode: true },
+                          { title: `Separação ${e.numero_pedido || e.id}`, width: 1200, height: 800 },
+                        );
+                      }}
+                      className="h-7 w-7"
+                      data-permission="Expedicao.Separacao.conferir"
+                      data-context-required="true"
+                      data-sensitive="true"
+                      data-action="Entrega.separacao"
+                      data-testid="entrega-list-abrir-separacao"
+                      title="Abrir separação/conferência"
+                    >
+                      <Package className="w-3 h-3" />
                     </Button>
                   )}
                 </div>
