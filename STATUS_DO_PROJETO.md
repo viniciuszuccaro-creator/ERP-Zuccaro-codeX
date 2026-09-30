@@ -1,3 +1,32 @@
+## AUTÔNOMO — BLOCKED tip #183 CI SUCCESS (2026-09-30T11:32Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#183** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/183 CI SUCCESS |
+| Stack Onda 6 tip | #180 CreditPort+032 → #181 EnviarParaCaixa → #182 CR↔Pedido → #183 LiquidarReceberPagar |
+| Parecer | **BLOCKED** — lotes tip-seguros Onda 6 sem CostPort/anexo **esgotados** |
+| Motivos | (1) CostPort BFF sem fonte de custo — inventar = BLOCKED; (2) anexos/origem/campanha colidem com Codex #50/#59–#62; (3) PIX/boleto/webhook/cobrança exigem provedor externo |
+| Ação | Vigília CI/#153 HEAD; sem merge/main/VPS; sem inventar porta |
+| Desbloqueio | CostPort real **ou** anexos pós-coordenação Codex **ou** provedor pagamento autorizado |
+
+---
+
+## AUTÔNOMO — tip LiquidarReceberPagar + assertTitulosProntosParaCaixa (pós-#182) (2026-09-30T11:30Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#182** ContaReceber↔Pedido CI SUCCESS |
+| Choice | **LiquidarReceberPagar** usa política caixa fail-closed (group+empresa) |
+| Branch | `cursor/comercial360-onda6-caixa-liquidar-tip-392b` |
+| Draft PR | **#183** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/183 |
+| Base | tip #182 CR↔Pedido |
+| Escopo | `assertTitulosProntosParaCaixa` no mutate; contexto exige groupId∧empresaId; queryKey tenant; `pedido_id` |
+| Testes | financeiro-titulo-policy 13/13 |
+| Colisão | CostPort invent BLOCKED; anexos #59–62; sem Codex/merge/VPS |
+| Próximo | **BLOCKED** tip-seguro Onda 6 residual até CostPort real / anexos pós-Codex |
+
+---
+
 ## AUTÔNOMO — tip ContaReceber↔Pedido fail-closed (pós-#181) (2026-09-30T11:25Z)
 
 | Campo | Valor |

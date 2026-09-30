@@ -1,3 +1,19 @@
+## AUTÔNOMO — BLOCKED tip #183 (2026-09-30T11:32Z)
+
+Tip **#183** CI SUCCESS. Stack Onda 6 tip #180→#183.
+BLOCKED: CostPort real / anexos pós-Codex / provedor pagamento.
+Sem merge/VPS. Vigília ativa. #153 HEAD=12c37e8b.
+
+---
+
+## AUTÔNOMO — tip LiquidarReceberPagar caixa policy (2026-09-30T11:30Z)
+
+Branch `cursor/comercial360-onda6-caixa-liquidar-tip-392b` empilhada em #182:
+Draft PR **#183** — LiquidarReceberPagar exige group+empresa via assertTitulosProntosParaCaixa.
+Sem merge/VPS. Após CI: Onda 6 tip-seguro esgotado (CostPort/anexos BLOCKED). CI em curso.
+
+---
+
 ## AUTÔNOMO — tip ContaReceber↔Pedido (2026-09-30T11:25Z)
 
 Branch `cursor/comercial360-onda6-cr-pedido-tip-392b` empilhada em #181:

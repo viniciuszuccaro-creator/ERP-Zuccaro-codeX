@@ -267,6 +267,8 @@ test('finance persistence blocks delete of settled titles and closes caixa/conci
   assert.match(enviarCaixa, /assertTitulosProntosParaCaixa/);
   assert.match(enviarCaixa, /data-action="enviar-para-caixa"/);
   assert.match(enviarCaixa, /pedido_id/);
+  assert.match(liquidar, /assertTitulosProntosParaCaixa/);
+  assert.match(liquidar, /groupId && empresaId/);
   const vinculos = await readFile(new URL('../src/components/financeiro/ContaReceberVinculosSection.jsx', import.meta.url), 'utf8');
   const form = await readFile(new URL('../src/components/financeiro/ContaReceberForm.jsx', import.meta.url), 'utf8');
   assert.match(vinculos, /filterPedidosParaTitulo/);
