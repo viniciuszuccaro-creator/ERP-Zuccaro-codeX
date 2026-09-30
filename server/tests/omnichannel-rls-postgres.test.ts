@@ -39,6 +39,24 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.equal(stored?.status,'CANCELADO');
       assert.equal(stored?.observacoes,before.observacoes);
       assert.deepEqual(stored?.itens.map(item=>item.id),before.itens.map(item=>item.id));
+      const second=await f.send({...f.envelope,idempotencyKey:randomUUID()},{nonce:randomUUID()});
+      assert.equal(second.status,201);
+      const secondId=second.body.data.id;
+      const priorHistory=(await repo.history(scope,secondId)).length;
+      let statusSwitched=false;
+      const statusExecutor={query:async (sql:string,params?:unknown[])=>{
+        const result=await f.pg.query(sql,params);
+        if (!statusSwitched && sql.includes('SELECT p.*')) {
+          statusSwitched=true;
+          await f.pg.query("UPDATE pedidos SET status='CANCELADO',ativo=false WHERE id=$1",[secondId]);
+        }
+        return result;
+      }};
+      const transition=await repo.changeStatus(scope,secondId,'PRONTO_RETIRADA',identity.actorId,undefined,statusExecutor as never);
+      assert.equal(statusSwitched,true);
+      assert.equal(transition,null);
+      assert.equal((await repo.get(scope,secondId))?.status,'CANCELADO');
+      assert.equal((await repo.history(scope,secondId)).length,priorHistory);
     } finally { await f.close(); }
   });
 
