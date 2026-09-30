@@ -837,3 +837,147 @@ test('IntegracaoRomaneio canônico: pedidos → entregas → romaneio → despac
     /checklist/,
   );
 });
+
+test('candidata #192–#197: Pedido→separação→romaneio→despacho→parcial→ocorrência→pendências + auditoria/falha', async () => {
+  const store = createFluxoStore();
+  const pedidos = [
+    {
+      id: 'ped-cand',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Faturado',
+      numero_pedido: 'C-197',
+      cliente_nome: 'Cand',
+      peso_total_kg: 20,
+      valor_total: 400,
+      itens_revenda: [{ id: 'i1', quantidade: 6, unidade: 'UN' }],
+    },
+  ];
+
+  // 1) Pedido elegível → Entrega (create)
+  const plano = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: [],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-cand'],
+  });
+  assert.equal(plano.creates.length, 1);
+  const entrega = store.seedEntrega({ ...plano.creates[0], id: 'e-cand', status: 'Em Separacao' });
+
+  // 2) Separação/conferência
+  const sep = await store.concluirSeparacao({
+    entregaId: entrega.id,
+    pedidoId: 'ped-cand',
+    itens: [{
+      id: 'i1',
+      quantidade_pedida: 6,
+      quantidade_separada: 6,
+      unidade: 'UN',
+      unidade_separada: 'UN',
+    }],
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.equal(sep.conclusion.nextEntregaStatus, 'Pronto para Expedir');
+  assert.equal(store.state.entregas.get('e-cand').status, 'Pronto para Expedir');
+  assert.ok(store.state.audit.some((a) => a.acao === 'SeparacaoConferencia.concluir' && a.sucesso));
+
+  // 3–4) Romaneio + despacho com falha parcial → recuperação
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: [store.state.entregas.get('e-cand')],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'CandMotorista',
+    veiculo: 'Truck',
+    placa: 'CAND123',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+  });
+  const mapFail = new Map([['e-cand', { ...store.state.entregas.get('e-cand') }]]);
+  // simula falha no patch (único item) via failAtIndex 0
+  const failed = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: mapFail,
+    failAtIndex: 0,
+  });
+  assert.equal(failed.ok, false);
+  assert.equal(mapFail.get('e-cand').status, 'Pronto para Expedir');
+
+  const rom = await store.gerarRomaneioEDespachar({
+    selectedIds: ['e-cand'],
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.ok(rom.romaneio.id);
+  assert.equal(store.state.entregas.get('e-cand').status, 'Saiu para Entrega');
+  assert.ok(store.state.audit.some((a) => a.acao === 'Romaneio.gerar'));
+
+  // Idempotência: mesmo conjunto de entregas reusa romaneio (não re-seleciona pós-despacho)
+  const duplicate = assertRomaneioOnCreate({
+    record: {
+      empresa_id: 'emp-a',
+      motorista: 'Ana',
+      placa: 'ABC1D23',
+      entregas_ids: ['e-cand'],
+    },
+    romaneios: [rom.romaneio],
+  });
+  assert.equal(duplicate.reuse.id, rom.romaneio.id);
+
+  // 5) Entrega parcial → pendência
+  await store.registrarFinal({
+    entregaId: 'e-cand',
+    modo: 'parcial',
+    quantidade_entregue: 3,
+    comprovante: { nome_recebedor: 'Recebedor', foto_comprovante: 'foto://x' },
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.equal(store.state.entregas.get('e-cand').status, 'Entrega Parcial');
+  let pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
+  assert.ok(pendencias.some((p) => p.pendencia.tipo === 'parcial' || p.id === 'e-cand'));
+
+  // 6) Ocorrência no retry (nova tentativa frustrada) — exige motivo
+  store.state.entregas.set('e-cand', {
+    ...store.state.entregas.get('e-cand'),
+    status: 'Saiu para Entrega',
+    comprovante_entrega: null,
+    entrega_parcial: null,
+  });
+  assert.throws(
+    () => resolveRegistroEntregaFinal({
+      before: store.state.entregas.get('e-cand'),
+      modo: 'ocorrencia',
+      groupId: 'g1',
+      empresaId: 'emp-a',
+      confirmed: true,
+      motivo: '',
+    }),
+    /motivo/,
+  );
+  await store.registrarFinal({
+    entregaId: 'e-cand',
+    modo: 'ocorrencia',
+    motivo: 'Cliente ausente',
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
+  assert.ok(pendencias.some((p) => p.pendencia.tipo === 'ocorrencia'));
+  assert.ok(store.state.audit.some((a) => a.acao === 'Entrega.registro_ocorrencia'));
+
+  // Isolamento: empresa B não vê pendência
+  const cruzadas = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-b', groupId: 'g1' });
+  assert.equal(cruzadas.length, 0);
+
+  // Falha de auditoria sobe
+  store.state.failAudit = true;
+  assert.throws(() => store.audit({ acao: 'probe' }), /auditar/);
+});

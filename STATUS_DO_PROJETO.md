@@ -1,3 +1,25 @@
+## CURSOR — candidata #192–#197 fechada no tip (2026-09-30T19:20Z)
+
+| Campo | Valor |
+|---|---|
+| Tip PR | **#197** HEAD em push deste lote |
+| Doc candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
+| Lacunas fechadas | ComprovanteDigital + OcorrenciasPanel + SeparacaoConferenciaIA na policy; Config exige groupId; teste E2E candidata |
+| Testes | expedicao-fluxo-operacional 16/16 |
+| Codex #178 | ainda candidata `9df73886` — sem tip-port |
+| Homologação SPA | **Pendente** (CI ≠ homologação) |
+| Merge/VPS | **Bloqueado** |
+
+### Quadro objetivo
+
+| Pronto p/ integração | Falta | Bloqueios reais |
+|---|---|---|
+| Fluxo Pedido→…→pendências (policy+UI) | Homologação humana SPA | #178 FINAL |
+| Isolamento∧, RBAC, unidades, idempotência, rollback, auditoria | Soft∨ residual dashboard/financeiro leitura | Merge/VPS/import Empresas |
+| Stack #192–#197 documentada | Tip Comercial 360 | Autorização merge ordenado |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T19:10Z)
 
 | Campo | Valor |

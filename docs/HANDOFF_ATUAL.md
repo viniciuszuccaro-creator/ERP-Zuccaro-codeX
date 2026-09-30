@@ -1,3 +1,16 @@
+## CURSOR — candidata #192–#197 (2026-09-30T19:20Z)
+
+Candidata documentada em `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
+Tip #197: IntegracaoRomaneio + soft∨ crítico + comprovante/ocorrência/IA canônicos + teste E2E.
+#178 ainda candidata. Homologação SPA pendente. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo integrado completo no tip #197 (testes 16/16)
+- **Falta:** homologação humana; soft∨ residual dashboard/financeiro
+- **Bloqueios:** #178 FINAL; merge/VPS; import Empresas
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T19:10Z)
 
 #178 `9df73886` ainda candidato. #197 CI SUCCESS `0ac5af04`. Sem tip-port. Vigília 15min.

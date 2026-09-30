@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
 
 const TIPOS = ["Atraso", "Avaria", "Extravio", "Devolucao Parcial", "Problema Veiculo", "Outros"];
 
@@ -101,12 +102,14 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
         foto_url: fotoUrl || undefined,
       };
       const ocorrencias = Array.isArray(entrega?.ocorrencias) ? [...entrega.ocorrencias, nova] : [nova];
-      const res = await updateInContext("Entrega", entrega.id, {
+      const patch = {
         ocorrencias,
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId
-      });
+        empresa_id: effectiveEmpresaId,
+      };
+      assertEntregaOnUpdate({ before: entrega, patch });
+      const res = await updateInContext("Entrega", entrega.id, patch);
       await auditOcorrencia({ acao: "Entrega.ocorrencia.criar", detalhes: { tipo, possui_foto: Boolean(fotoUrl) } });
       return res;
     },
