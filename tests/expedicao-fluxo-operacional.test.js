@@ -18,6 +18,8 @@ import {
   resolveSeparacaoConclusion,
   revalidarSelecaoAposTrocaEmpresa,
   selectEntregasParaRomaneio,
+  selectPedidosParaSeparacao,
+  applyDespachoPatchesWithRollback,
 } from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
 const checklistOk = {
@@ -417,4 +419,144 @@ test('dependência legada Pedido permanece descritiva e reservada ao Codex', () 
   assert.equal(SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT.statusAlvo, 'Pronto para Faturar');
   assert.equal(SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT.reservado, true);
   assert.equal(SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT.coordenacao, 'codex-pedido-contrato');
+});
+
+test('seleção de Pedidos para separação: empresa, status e futuras', () => {
+  const now = new Date('2026-09-30T15:00:00.000Z');
+  const pedidos = [
+    { id: 'p1', empresa_id: 'emp-a', group_id: 'g1', status: 'Aprovado', data_entrega_solicitada: '2026-10-05' },
+    { id: 'p2', empresa_id: 'emp-b', group_id: 'g1', status: 'Aprovado', data_entrega_solicitada: '2026-10-05' },
+    { id: 'p3', empresa_id: 'emp-a', group_id: 'g1', status: 'Cancelado', data_entrega_solicitada: '2026-10-05' },
+    { id: 'p4', empresa_id: 'emp-a', group_id: 'g1', status: 'Em Separacao', data_previsao: '2026-09-20' },
+  ];
+  const elegiveis = selectPedidosParaSeparacao(pedidos, { empresaId: 'emp-a', groupId: 'g1', now });
+  assert.deepEqual(elegiveis.map((p) => p.id).sort(), ['p1', 'p4']);
+
+  const futuras = selectPedidosParaSeparacao(pedidos, {
+    empresaId: 'emp-a', groupId: 'g1', soFuturas: true, now,
+  });
+  assert.deepEqual(futuras.map((p) => p.id), ['p1']);
+
+  assert.throws(
+    () => selectPedidosParaSeparacao(pedidos, {
+      empresaId: 'emp-a', groupId: 'g1', selectedIds: ['p2'], exigirSelecao: true,
+    }),
+    /nao pertence ao contexto/,
+  );
+});
+
+test('unidades: separação rejeita unidade divergente e aceita unidade coerente', () => {
+  assert.throws(
+    () => assertSeparacaoQuantidades({
+      itens: [{
+        quantidade_pedida: 10,
+        quantidade_separada: 10,
+        unidade: 'UN',
+        unidade_separada: 'KG',
+      }],
+    }),
+    /Unidade/,
+  );
+  const ok = assertSeparacaoQuantidades({
+    itens: [{
+      quantidade_pedida: 10,
+      quantidade_separada: 10,
+      unidade: 'UN',
+      unidade_separada: 'un',
+    }],
+  });
+  assert.equal(ok.todosConferidos, true);
+  assert.equal(ok.itens[0].unidade, 'UN');
+});
+
+test('despacho com falha parcial faz rollback das entregas já aplicadas', () => {
+  const map = new Map([
+    ['e1', { id: 'e1', empresa_id: 'emp-a', status: 'Pronto para Expedir', historico_status: [] }],
+    ['e2', { id: 'e2', empresa_id: 'emp-a', status: 'Pronto para Expedir', historico_status: [] }],
+  ]);
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: [...map.values()],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Ana',
+    placa: 'ABC1D23',
+    veiculo: 'Truck',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+  });
+  const result = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: map,
+    failAtIndex: 1,
+  });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.rolledBackIds, ['e1']);
+  assert.equal(map.get('e1').status, 'Pronto para Expedir');
+  assert.equal(map.get('e2').status, 'Pronto para Expedir');
+  assert.match(String(result.error?.message || ''), /persistencia/);
+});
+
+test('fluxo integrado: pedido elegível → separação → romaneio → despacho → ocorrência → pendência', async () => {
+  const store = createFluxoStore();
+  const pedidos = [
+    {
+      id: 'ped-int',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Aprovado',
+      data_entrega_solicitada: '2026-10-02',
+      itens_revenda: [{ id: 'i1', quantidade: 4, unidade: 'PC' }],
+    },
+  ];
+  const escolhidos = selectPedidosParaSeparacao(pedidos, {
+    empresaId: 'emp-a', groupId: 'g1', selectedIds: ['ped-int'], exigirSelecao: true,
+  });
+  assert.equal(escolhidos.length, 1);
+
+  store.seedEntrega({
+    id: 'e-int',
+    group_id: 'g1',
+    empresa_id: 'emp-a',
+    status: 'Em Separacao',
+    pedido_id: 'ped-int',
+    data_previsao: '2026-10-02',
+  });
+
+  const sep = await store.concluirSeparacao({
+    entregaId: 'e-int',
+    pedidoId: 'ped-int',
+    itens: [{
+      id: 'i1',
+      quantidade_pedida: 4,
+      quantidade_separada: 4,
+      unidade: 'PC',
+      unidade_separada: 'PC',
+    }],
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.equal(sep.conclusion.nextEntregaStatus, 'Pronto para Expedir');
+
+  const rom = await store.gerarRomaneioEDespachar({
+    selectedIds: ['e-int'],
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.ok(rom.romaneio.id);
+  assert.equal(store.state.entregas.get('e-int').status, 'Saiu para Entrega');
+
+  await store.registrarFinal({
+    entregaId: 'e-int',
+    modo: 'ocorrencia',
+    motivo: 'Endereco inacessivel',
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  const pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
+  assert.ok(pendencias.some((p) => p.pendencia.tipo === 'ocorrencia'));
 });
