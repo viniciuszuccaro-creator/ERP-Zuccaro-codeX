@@ -1,7 +1,8 @@
 ## AUTÔNOMO — tip Pedido data entrega local+RETIRADA (2026-09-30T12:42Z)
 
 #187 CI SUCCESS. Branch `cursor/comercial360-pedido-entrega-local-tip-392b` empilhada em #187:
-Calendário local + `min=` ENTREGA; RETIRADA exige data (paridade schema/payload). Sem merge/VPS. CI em curso.
+Draft PR **#188** — calendário local + `min=` ENTREGA; RETIRADA exige data (schema/payload). Testes 25/25.
+Sem merge/VPS. CI em curso.
 
 ---
 

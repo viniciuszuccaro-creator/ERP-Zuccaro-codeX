@@ -5,7 +5,7 @@
 | Tip anterior | **#187** wire caixa tabs CI SUCCESS |
 | Choice | Fechar ressalva Onda4/5: calendário **local** + `min=` ENTREGA; RETIRADA exige presença (schema) |
 | Branch | `cursor/comercial360-pedido-entrega-local-tip-392b` |
-| Draft PR | (criar) base tip #187 |
+| Draft PR | **#188** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/188 |
 | Escopo | `pedidoUiPolicy` + `PedidoCanonicoPanel`; `buildPedidoPayload` alinhado ao gate |
 | Testes | pedido-ui-policy 25/25 |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
