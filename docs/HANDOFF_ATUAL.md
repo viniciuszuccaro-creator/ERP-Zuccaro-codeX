@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip print/share snapshot_gap (2026-09-30T12:48Z)
 
-#188 CI SUCCESS. Branch `cursor/comercial360-print-share-snapshot-tip-392b` empilhada em #188:
-Print/share Pedido+Orçamento bloqueiam em snapshot_gap (paridade resumo). Sem merge/VPS. CI em curso.
+#188 CI SUCCESS. Draft PR **#189** — print/share Pedido+Orçamento bloqueiam em snapshot_gap.
+Testes ui-policy 49/49. Sem merge/VPS. CI em curso.
 
 ---
 

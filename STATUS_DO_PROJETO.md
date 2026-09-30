@@ -5,7 +5,7 @@
 | Tip anterior | **#188** data entrega CI SUCCESS |
 | Choice | Fechar ressalva Onda4/5: print/share fail-closed em `snapshot_gap` (paridade resumo) |
 | Branch | `cursor/comercial360-print-share-snapshot-tip-392b` |
-| Draft PR | (criar) base tip #188 |
+| Draft PR | **#189** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/189 |
 | Escopo | `evaluatePedido/Orcamento PrintPdf+Share` + purpose `print` no gap hint |
 | Testes | pedido+orcamento ui-policy 49/49 |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
