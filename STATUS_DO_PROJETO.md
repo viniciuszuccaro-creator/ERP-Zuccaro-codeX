@@ -1,3 +1,15 @@
+## CURSOR — vigília #178 (2026-09-30T19:58Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` (antes `0596a763`) — ainda candidata |
+| Delta | `Bloqueia aprovação sem confirmação da reserva` |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #197 tip `aa887013` CI SUCCESS (pacote fechado) |
+| Próximo | Vigília FINAL 15min |
+
+---
+
 ## CURSOR — pacote Expedição fechado no tip #197 (2026-09-30T19:55Z)
 
 | Campo | Valor |

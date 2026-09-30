@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T19:58Z)
+
+#178 HEAD `790e4be1` (delta: aprovação sem confirmação da reserva) — ainda candidato. Sem tip-port. #197 OK. Vigília 15min.
+
+---
+
 ## CURSOR — pacote Expedição #197 (2026-09-30T19:55Z)
 
 Pacote fechado: filtros cliente coerentes, devolução assert, qtd pendentes, compensação≠atômico.
