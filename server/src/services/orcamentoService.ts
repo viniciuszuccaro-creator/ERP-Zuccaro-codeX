@@ -34,6 +34,7 @@ import {
 } from './comercialTabelaSnapshot.js';
 import { assertOrcamentoValidadeVigente } from './comercialOrcamentoValidadePolicy.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
+import type { PedidoRepository } from '../repositories/pedidoTypes.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -94,6 +95,7 @@ export class OrcamentoService {
     private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
     /** Lookup TabelaPreco para snapshot codigo+nome quando o price port não ecoar. */
     private readonly tabelas: Pick<TabelaPrecoRepository, 'get'> | null = null,
+    private readonly convertedPedidos: Pick<PedidoRepository, 'getByOrcamento'> | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -169,6 +171,15 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
+      const locked = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(locked);
+      if (!this.convertedPedidos) throw new AppError(503, 'ORCAMENTO_CONVERSION_GUARD_UNAVAILABLE', 'Conversion guard unavailable');
+      for (const version of await this.repo.listVersions(scope, locked.orcamento_raiz_id, executor)) {
+        if (await this.convertedPedidos.getByOrcamento(scope, version.id, executor)) {
+          throw new AppError(409, 'ORCAMENTO_ALREADY_CONVERTED', 'Quotation chain already converted');
+        }
+      }
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       const write = await this.applyCondicaoSnapshot(scope, priced, executor);

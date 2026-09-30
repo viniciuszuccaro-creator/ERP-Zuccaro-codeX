@@ -6,11 +6,67 @@ import { PGlite } from '@electric-sql/pglite';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
-import { boot } from './omnichannelFixture.js';
+import { boot, identity } from './omnichannelFixture.js';
 
 const url = process.env.OMNICHANNEL_POSTGRES_URL;
 
 for (const engine of ['PGlite', 'PostgreSQL real']) {
+  test(`${engine}: converter v1 impede versionar e segundo Pedido na mesma raiz`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
+    try {
+      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\",\"versionar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"editar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+      const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...quote}=f.envelope.documento;
+      const created=await f.send({...f.envelope,tipo:'Orcamento',documento:{...quote,validade_em:'2027-03-01T00:00:00.000Z'}});
+      assert.equal(created.status,201);
+      const ctx={groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa' as const,requestId:'synthetic-chain'};
+      const source=await f.runtime.orcamentoService.get(ctx,created.body.data.id);
+      const order=await f.runtime.pedidoService.convert(ctx,source.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z'});
+      const updatePayload={cliente_empresa_id:order.cliente_empresa_id,condicao_pagamento_id:order.condicao_pagamento_id,
+        orcamento_id:source.id,tipo_operacao:'RETIRADA' as const,data_entrega_solicitada:'2027-03-11T00:00:00.000Z',
+        itens:order.itens.map(item=>({produto_id:item.produto_id,unidade_id:item.unidade_id,
+          descricao:item.descricao,unidade_sigla:item.unidade_sigla,quantidade:item.quantidade,
+          preco_unitario:item.preco_unitario,desconto:item.desconto,requer_producao:item.requer_producao}))};
+      await assert.rejects(()=>f.runtime.pedidoService.update(ctx,order.id,{...updatePayload,
+        itens:[{...updatePayload.itens[0],preco_unitario:'1.000000'}]}),(error:any)=>error.statusCode===422);
+      const updated=await f.runtime.pedidoService.update(ctx,order.id,updatePayload);
+      assert.equal(updated.itens[0]?.preco_unitario,order.itens[0]?.preco_unitario);
+      assert.equal(updated.tabela_preco_codigo_snapshot,order.tabela_preco_codigo_snapshot);
+      assert.equal(updated.tabela_preco_nome_snapshot,order.tabela_preco_nome_snapshot);
+      const versionPayload={cliente_empresa_id:source.cliente_empresa_id,condicao_pagamento_id:source.condicao_pagamento_id,
+        validade_em:'2027-04-01T00:00:00.000Z',itens:source.itens.map(item=>({produto_id:item.produto_id,
+          unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,
+          quantidade:item.quantidade,preco_unitario:item.preco_unitario,desconto:item.desconto}))};
+      await assert.rejects(()=>f.runtime.orcamentoService.createVersion(ctx,source.id,versionPayload),(error:any)=>error.code==='ORCAMENTO_ALREADY_CONVERTED');
+      assert.equal((await f.pg.query('SELECT id FROM pedidos WHERE group_id=$1 AND empresa_id=$2',[identity.groupId,identity.empresaId])).rows.length,1);
+      assert.equal((await f.runtime.orcamentoService.get(ctx,source.id)).status,'EM_ABERTO');
+      assert.equal((await f.runtime.pedidoService.get(ctx,order.id)).orcamento_id,source.id);
+    } finally { await f.close(); }
+  });
+
+  test(`${engine}: conversão e versionamento concorrentes não confirmam dois caminhos da cadeia`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
+    try {
+      await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\",\"versionar\"]'::jsonb),'{Comercial,pedido}', '[\"criar\",\"visualizar\",\"converter-pedido\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+      const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...quote}=f.envelope.documento;
+      const created=await f.send({...f.envelope,tipo:'Orcamento',documento:{...quote,validade_em:'2027-03-01T00:00:00.000Z'}});
+      assert.equal(created.status,201);
+      const ctx={groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa' as const,requestId:'synthetic-chain-race'};
+      const source=await f.runtime.orcamentoService.get(ctx,created.body.data.id);
+      const versionPayload={cliente_empresa_id:source.cliente_empresa_id,condicao_pagamento_id:source.condicao_pagamento_id,
+        validade_em:'2027-04-01T00:00:00.000Z',itens:source.itens.map(item=>({produto_id:item.produto_id,
+          unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,
+          quantidade:item.quantidade,preco_unitario:item.preco_unitario,desconto:item.desconto}))};
+      const outcomes=await Promise.allSettled([
+        f.runtime.pedidoService.convert(ctx,source.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z'}),
+        f.runtime.orcamentoService.createVersion(ctx,source.id,versionPayload),
+      ]);
+      assert.equal(outcomes.filter(outcome=>outcome.status==='fulfilled').length,1);
+      const pedidos=await f.pg.query('SELECT id FROM pedidos WHERE group_id=$1 AND empresa_id=$2',[identity.groupId,identity.empresaId]);
+      const versions=await f.runtime.orcamentoService.listVersions(ctx,source.id);
+      assert.ok((pedidos.rows.length===1&&versions.length===1)||(pedidos.rows.length===0&&versions.length===2));
+    } finally { await f.close(); }
+  });
+
   test(`${engine}: 026 blocks unclassified history before DDL and preserves classified snapshots on repeat`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const db=engine==='PGlite'?new PGlite():await isolatedPostgres(url!);
     try {

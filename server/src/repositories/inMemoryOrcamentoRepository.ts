@@ -16,6 +16,10 @@ export class InMemoryOrcamentoRepository implements OrcamentoRepository {
   private rows = new Map<string, Orcamento>();
   private next = new Map<string, number>();
 
+  async lockConversionChain(_scope: OrcamentoScope, _raizId: string, _executor?: DbQueryExecutor): Promise<void> {
+    // O runner em memória é isolado; PostgreSQL serializa esta cadeia por transação.
+  }
+
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const rows = clone(this.rows);
     const next = new Map(this.next);

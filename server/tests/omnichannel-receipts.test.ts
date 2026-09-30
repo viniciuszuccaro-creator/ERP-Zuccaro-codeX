@@ -74,6 +74,29 @@ test('cancelled quote state uses canonical service and returns no quote details'
   }finally{await f.close();}
 });
 
+test('superseded channel quote remains readable by its original signed receipt',async()=>{
+  const f=await boot();
+  try{
+    const client=new ChannelSalesClient({endpoint:f.endpoint,id:'synthetic-CHATBOT',secret:identity.secret,allowInsecureLoopback:true},fetch,()=>now);
+    const {tipo_operacao:_operation,data_entrega_solicitada:_delivery,...quote}=f.envelope.documento;
+    const payload={...quote,validade_em:'2027-03-01T00:00:00.000Z'};
+    const created=await client.create(saleEnvelopeSchema.parse({...f.envelope,tipo:'Orcamento',documento:payload}));
+    await f.pg.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,orcamento}', '[\"criar\",\"visualizar\",\"versionar\"]'::jsonb) WHERE id=$1",[identity.actorId]);
+    const ctx={groupId:identity.groupId,empresaId:identity.empresaId,actorId:identity.actorId,scopeType:'empresa' as const,requestId:'synthetic-version'};
+    const source=await f.runtime.orcamentoService.get(ctx,created.data.id);
+    await f.runtime.orcamentoService.createVersion(ctx,created.data.id,{
+      cliente_empresa_id:source.cliente_empresa_id,condicao_pagamento_id:source.condicao_pagamento_id,
+      validade_em:'2027-04-01T00:00:00.000Z',
+      itens:source.itens.map(item=>({produto_id:item.produto_id,unidade_id:item.unidade_id,
+        descricao:item.descricao,unidade_sigla:item.unidade_sigla,quantidade:item.quantidade,
+        preco_unitario:item.preco_unitario,desconto:item.desconto})),
+    });
+    const state=(await client.receipt({version:1,operation:'receipt-state',tipo:'Orcamento',idempotencyKey:f.envelope.idempotencyKey})).data;
+    assert.equal(state.status,'SUPERSEDIDO');assert.equal(state.id,created.data.id);
+    assert.deepEqual(Object.keys(state).sort(),['id','status','tipo','updatedAt']);
+  }finally{await f.close();}
+});
+
 test('receipt query returns only ingestion reference for owning identity and audits every successful read', async () => {
   const f = await boot();
   try {

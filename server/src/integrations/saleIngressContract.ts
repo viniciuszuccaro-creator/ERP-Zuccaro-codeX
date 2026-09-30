@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { AppError } from '../api/errors.js';
-import { orcamentoCreateSchema, orcamentoItemSchema } from '../repositories/orcamentoTypes.js';
+import { orcamentoCreateSchema, orcamentoItemSchema, ORCAMENTO_STATUS } from '../repositories/orcamentoTypes.js';
 import { pedidoCreateSchema } from '../repositories/pedidoTypes.js';
 import { PEDIDO_STATUS } from '../repositories/pedidoTypes.js';
 
@@ -47,7 +47,7 @@ export const receiptStateQuerySchema = receiptQuerySchema.extend({operation:z.li
 export type ReceiptStateQuery = z.infer<typeof receiptStateQuerySchema>;
 export const saleStateSchema = z.discriminatedUnion('tipo',[
   z.object({id:z.string().uuid(),tipo:z.literal('Pedido'),status:z.enum(PEDIDO_STATUS),updatedAt:z.string().datetime()}).strict(),
-  z.object({id:z.string().uuid(),tipo:z.literal('Orcamento'),status:z.enum(['EM_ABERTO','CANCELADO']),updatedAt:z.string().datetime()}).strict(),
+  z.object({id:z.string().uuid(),tipo:z.literal('Orcamento'),status:z.enum(ORCAMENTO_STATUS),updatedAt:z.string().datetime()}).strict(),
 ]);
 export type SaleState = z.infer<typeof saleStateSchema>;
 const receiptCursor = z.object({ id:z.string().uuid(),createdAt:z.string().datetime() }).strict();

@@ -64,6 +64,11 @@ const SELECT = `SELECT o.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.i
 export class PostgresOrcamentoRepository implements OrcamentoRepository {
   constructor(private readonly db: DbClient) {}
 
+  async lockConversionChain(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<void> {
+    if (!executor) throw new Error('ORCAMENTO_CHAIN_TRANSACTION_REQUIRED');
+    await executor.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`orcamento-chain:${scope.groupId}:${scope.empresaId}:${raizId}`]);
+  }
+
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     return this.db.withTransaction(fn);
   }

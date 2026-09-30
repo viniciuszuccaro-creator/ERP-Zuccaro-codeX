@@ -158,9 +158,18 @@ export class PedidoService {
     try {
       return await this.repo.withTransaction(async (executor) => {
         if (await this.repo.getByOrcamento(scope, orcamentoId, executor)) this.convertedConflict();
-        const quote = await this.orcamentos.get(scope, orcamentoId, executor);
+        let quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
+        await this.orcamentos.lockConversionChain(scope, quote.orcamento_raiz_id, executor);
+        quote = await this.orcamentos.get(scope, orcamentoId, executor);
+        if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
+        for (const version of await this.orcamentos.listVersions(scope, quote.orcamento_raiz_id, executor)) {
+          if (await this.repo.getByOrcamento(scope, version.id, executor)) this.convertedConflict();
+        }
         if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+        if (parsed.data.tabela_preco_id !== undefined && parsed.data.tabela_preco_id !== quote.tabela_preco_id) {
+          this.validation({ tabela_preco_id: 'immutable_from_quotation' });
+        }
         assertOrcamentoValidadeVigente(quote.validade_em);
         // Não-retroatividade: preserva preco_unitario e snapshots já gravados no Orçamento.
         const draft = {
@@ -169,7 +178,7 @@ export class PedidoService {
           orcamento_id: quote.id,
           cliente_empresa_id: quote.cliente_empresa_id,
           condicao_pagamento_id: quote.condicao_pagamento_id,
-          tabela_preco_id: parsed.data.tabela_preco_id ?? quote.tabela_preco_id ?? null,
+          tabela_preco_id: quote.tabela_preco_id ?? null,
           observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
           itens: quote.itens.map((item) => ({
             produto_id: item.produto_id,
@@ -270,11 +279,37 @@ export class PedidoService {
       if (data.idempotency_key !== undefined && (data.idempotency_key ?? null) !== before.idempotency_key) {
         this.validation({ idempotency_key: 'immutable' });
       }
-      await this.validateReferences(scope, data, executor);
+      if (before.orcamento_id) {
+        if (data.tabela_preco_id !== undefined && data.tabela_preco_id !== before.tabela_preco_id) this.validation({ tabela_preco_id: 'immutable_after_conversion' });
+        if (data.itens.length !== before.itens.length || data.itens.some((item, index) => {
+          const original = before.itens[index];
+          return !original || item.produto_id !== original.produto_id || item.unidade_id !== original.unidade_id
+            || this.normalizeMoney(item.preco_unitario) !== this.normalizeMoney(original.preco_unitario)
+            || item.requer_producao !== original.requer_producao;
+        })) this.validation({ itens: 'converted_price_and_identity_immutable' });
+        if (before.tabela_preco_id && (!before.tabela_preco_codigo_snapshot || !before.tabela_preco_nome_snapshot)) {
+          throw new AppError(409, 'PEDIDO_TABELA_SNAPSHOT_REQUIRED', 'Converted order is missing its table snapshot');
+        }
+      }
+      await this.validateReferences(scope, data, executor, !before.orcamento_id);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
-      const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
+      const priced = before.orcamento_id ? {
+        ...data,
+        tabela_preco_id: before.tabela_preco_id,
+        tabela_preco_codigo_snapshot: before.tabela_preco_codigo_snapshot,
+        tabela_preco_nome_snapshot: before.tabela_preco_nome_snapshot,
+      } : await this.applyServerPriceSnapshots(ctx, data);
       // Documento aberto: re-snapshot da condição atual; conversão já copiou o snapshot do Orçamento.
-      const resolved = await this.applyTipoComercialSnapshots(scope, priced, executor);
+      const resolved: PedidoCreateResolved = before.orcamento_id ? {
+        ...priced,
+        tipo_comercial: before.tipo_comercial,
+        itens: priced.itens.map((item, index) => ({
+          ...item,
+          preco_unitario: before.itens[index]!.preco_unitario,
+          requer_producao: before.itens[index]!.requer_producao,
+          tipo_comercial_snapshot: before.itens[index]!.tipo_comercial_snapshot,
+        })),
+      } : await this.applyTipoComercialSnapshots(scope, priced, executor);
       const write = await this.applyCondicaoSnapshot(scope, resolved, executor);
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
@@ -451,12 +486,12 @@ export class PedidoService {
     return `${i}.${(f + '000000').slice(0, 6)}`;
   }
 
-  private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor) {
+  private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor, validateTabela = true) {
     const link = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!link || !link.ativo || link.bloqueado || !link.habilitado_operacao) throw new AppError(422, 'PEDIDO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');
     if (data.cliente_local_id && !(await this.locais.get({ groupId: scope.groupId, clienteId: link.cliente_id }, data.cliente_local_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_LOCAL_INVALIDO', 'ClienteLocal unavailable in tenant scope');
     if (data.obra_id && !(await this.obras.get({ groupId: scope.groupId, clienteId: link.cliente_id, empresaId: scope.empresaId }, data.obra_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_OBRA_INVALIDA', 'Obra unavailable in tenant scope');
-    if (data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
+    if (validateTabela && data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
     if (!(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {
       const product = await this.produtos.getById(scope, item.produto_id);

@@ -6,6 +6,7 @@ import type { RequestContext } from '../src/audit/types.js';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.js';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.js';
 import { InMemoryOrcamentoRepository } from '../src/repositories/inMemoryOrcamentoRepository.js';
+import { InMemoryPedidoRepository } from '../src/repositories/inMemoryPedidoRepository.js';
 import { OrcamentoService } from '../src/services/orcamentoService.js';
 
 const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -38,6 +39,7 @@ function fixture(permissions: string[] = ['visualizar', 'criar', 'editar', 'canc
     { getById: async () => ({ id: unidadeId, ativo: true } as never) },
     { get: async () => ({ id: condicaoId, codigo: 'C001', nome: 'A vista', ativo: true, parcelas: [{ ordem: 1, dias: 0, percentual: '100.000000', ativo: true }] } as never) },
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
   return { service, repo, audit };
 }
