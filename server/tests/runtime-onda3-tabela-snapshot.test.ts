@@ -272,6 +272,7 @@ test('Onda3: conversão copia snapshot da tabela do Orçamento (não-retroativid
 
   const updatePayload = {
     ...pedidoPayload,
+    tipo_operacao: order.tipo_operacao,
     orcamento_id: quote.id,
     itens: [{ ...pedidoPayload.itens[0], preco_unitario: '12.340000' }],
   };

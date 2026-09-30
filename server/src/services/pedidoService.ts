@@ -28,10 +28,11 @@ import {
   deveLiberarDescontoSemAprovarPorAvista,
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
-import { buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
+import { assertPersistedCondicaoSnapshot, buildCondicaoPagamentoDocumentoSnapshot } from './comercialCondicaoSnapshot.js';
 import { resolveOrcamentoConvertSnapshots } from './comercialConvertSnapshotPolicy.js';
 import {
   applyPromocaoOnPersist,
+  assertPersistedPromocaoSnapshot,
   type ComercialPromocaoConfigPort,
 } from './comercialPromocaoPolicy.js';
 import {
@@ -280,18 +281,25 @@ export class PedidoService {
         this.validation({ idempotency_key: 'immutable' });
       }
       if (before.orcamento_id) {
+        if (data.cliente_empresa_id !== before.cliente_empresa_id || data.condicao_pagamento_id !== before.condicao_pagamento_id
+          || data.tipo_operacao !== before.tipo_operacao || data.promocao !== undefined) {
+          this.validation({ origem: 'converted_commercial_terms_immutable' });
+        }
         if (data.tabela_preco_id !== undefined && data.tabela_preco_id !== before.tabela_preco_id) this.validation({ tabela_preco_id: 'immutable_after_conversion' });
         if (data.itens.length !== before.itens.length || data.itens.some((item, index) => {
           const original = before.itens[index];
           return !original || item.produto_id !== original.produto_id || item.unidade_id !== original.unidade_id
             || this.normalizeMoney(item.preco_unitario) !== this.normalizeMoney(original.preco_unitario)
-            || item.requer_producao !== original.requer_producao;
+            || item.requer_producao !== original.requer_producao
+            || this.normalizeMoney(item.quantidade ?? '') !== this.normalizeMoney(original.quantidade)
+            || this.normalizeMoney(item.desconto ?? '0') !== this.normalizeMoney(original.desconto ?? '0')
+            || item.descricao !== original.descricao || item.unidade_sigla !== original.unidade_sigla;
         })) this.validation({ itens: 'converted_price_and_identity_immutable' });
         if (before.tabela_preco_id && (!before.tabela_preco_codigo_snapshot || !before.tabela_preco_nome_snapshot)) {
           throw new AppError(409, 'PEDIDO_TABELA_SNAPSHOT_REQUIRED', 'Converted order is missing its table snapshot');
         }
       }
-      await this.validateReferences(scope, data, executor, !before.orcamento_id);
+      await this.validateReferences(scope, data, executor, !before.orcamento_id, !before.orcamento_id);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? {
         ...data,
@@ -299,7 +307,7 @@ export class PedidoService {
         tabela_preco_codigo_snapshot: before.tabela_preco_codigo_snapshot,
         tabela_preco_nome_snapshot: before.tabela_preco_nome_snapshot,
       } : await this.applyServerPriceSnapshots(ctx, data);
-      // Documento aberto: re-snapshot da condição atual; conversão já copiou o snapshot do Orçamento.
+      // Documento convertido preserva os termos comerciais do Orçamento; não reconsulta mestres mutáveis.
       const resolved: PedidoCreateResolved = before.orcamento_id ? {
         ...priced,
         tipo_comercial: before.tipo_comercial,
@@ -310,7 +318,16 @@ export class PedidoService {
           tipo_comercial_snapshot: before.itens[index]!.tipo_comercial_snapshot,
         })),
       } : await this.applyTipoComercialSnapshots(scope, priced, executor);
-      const write = await this.applyCondicaoSnapshot(scope, resolved, executor);
+      const write: PedidoWrite = before.orcamento_id ? (() => {
+        const { promocao: _ignored, ...rest } = resolved;
+        return {
+          ...rest,
+          ...assertPersistedCondicaoSnapshot(before, 'PEDIDO'),
+          ...assertPersistedPromocaoSnapshot(before),
+          tabela_preco_codigo_snapshot: before.tabela_preco_codigo_snapshot,
+          tabela_preco_nome_snapshot: before.tabela_preco_nome_snapshot,
+        };
+      })() : await this.applyCondicaoSnapshot(scope, resolved, executor);
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
@@ -486,13 +503,13 @@ export class PedidoService {
     return `${i}.${(f + '000000').slice(0, 6)}`;
   }
 
-  private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor, validateTabela = true) {
+  private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor, validateTabela = true, validateCondicao = true) {
     const link = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!link || !link.ativo || link.bloqueado || !link.habilitado_operacao) throw new AppError(422, 'PEDIDO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');
     if (data.cliente_local_id && !(await this.locais.get({ groupId: scope.groupId, clienteId: link.cliente_id }, data.cliente_local_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_LOCAL_INVALIDO', 'ClienteLocal unavailable in tenant scope');
     if (data.obra_id && !(await this.obras.get({ groupId: scope.groupId, clienteId: link.cliente_id, empresaId: scope.empresaId }, data.obra_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_OBRA_INVALIDA', 'Obra unavailable in tenant scope');
     if (validateTabela && data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
-    if (!(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
+    if (validateCondicao && !(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {
       const product = await this.produtos.getById(scope, item.produto_id);
       if (!product?.ativo) throw new AppError(422, 'PEDIDO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');

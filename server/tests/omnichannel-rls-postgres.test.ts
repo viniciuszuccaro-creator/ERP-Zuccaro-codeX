@@ -28,10 +28,22 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
           preco_unitario:item.preco_unitario,desconto:item.desconto,requer_producao:item.requer_producao}))};
       await assert.rejects(()=>f.runtime.pedidoService.update(ctx,order.id,{...updatePayload,
         itens:[{...updatePayload.itens[0],preco_unitario:'1.000000'}]}),(error:any)=>error.statusCode===422);
+      await assert.rejects(()=>f.runtime.pedidoService.update(ctx,order.id,{...updatePayload,
+        itens:[{...updatePayload.itens[0],quantidade:'999.000000'}]}),(error:any)=>error.statusCode===422);
+      await assert.rejects(()=>f.runtime.pedidoService.update(ctx,order.id,{...updatePayload,
+        condicao_pagamento_id:randomUUID()}),(error:any)=>error.statusCode===422);
+      await assert.rejects(()=>f.runtime.pedidoService.update(ctx,order.id,{...updatePayload,
+        promocao:{bps:500}}),(error:any)=>error.statusCode===422);
+      await f.pg.query('UPDATE condicoes_pagamento SET nome=$1 WHERE id=$2',['Condicao viva alterada',order.condicao_pagamento_id]);
+      await f.pg.query('UPDATE pedidos SET promocao_aplicada=true,promocao_bps=500,promocao_cupom=$1 WHERE id=$2',['SINTETICO',order.id]);
       const updated=await f.runtime.pedidoService.update(ctx,order.id,updatePayload);
       assert.equal(updated.itens[0]?.preco_unitario,order.itens[0]?.preco_unitario);
       assert.equal(updated.tabela_preco_codigo_snapshot,order.tabela_preco_codigo_snapshot);
       assert.equal(updated.tabela_preco_nome_snapshot,order.tabela_preco_nome_snapshot);
+      assert.equal(updated.condicao_pagamento_nome_snapshot,order.condicao_pagamento_nome_snapshot);
+      assert.equal(updated.promocao_aplicada,true);
+      assert.equal(updated.promocao_bps,500);
+      assert.equal(updated.promocao_cupom,'SINTETICO');
       const versionPayload={cliente_empresa_id:source.cliente_empresa_id,condicao_pagamento_id:source.condicao_pagamento_id,
         validade_em:'2027-04-01T00:00:00.000Z',itens:source.itens.map(item=>({produto_id:item.produto_id,
           unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,
