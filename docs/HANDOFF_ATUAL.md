@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T18:22Z)
+
+#178 HEAD `e5eef59d` (delta: impede transição com status alterado). Ainda candidato — sem tip-port. Vigília 15min.
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:18Z)
 
 #178 `e84315e6` ainda candidato. Sem tip-port. #196 OK. Vigília 15min.

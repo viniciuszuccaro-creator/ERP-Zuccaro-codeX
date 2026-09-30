@@ -1,3 +1,16 @@
+## CURSOR — vigília #178 delta HEAD (2026-09-30T18:22Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e5eef59d` (antes `e84315e6`) — ainda “Correção candidata” (**não** final) |
+| Delta | `Impede transição de pedido com status alterado` — repo Pedido + teste RLS |
+| CI | frontend/concurrency SUCCESS; backend em curso no instante da vigília |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #196 CI SUCCESS |
+| Próximo | Vigília FINAL #178 |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:18Z)
 
 | Campo | Valor |
