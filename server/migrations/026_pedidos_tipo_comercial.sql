@@ -2,19 +2,12 @@
 -- Derivado do Produto/snapshots; MISTO quando itens divergem. Sem módulo paralelo.
 
 -- Não existe evidência histórica suficiente para inferir tipo pelo Produto atual.
--- Impedir defaults falsos antes de qualquer DDL; backfill exige lote aprovado.
+-- Coluna preexistente não comprova proveniência: qualquer histórico exige lote
+-- de classificação aprovado antes de uma migration própria, nunca este default.
 DO $$
 BEGIN
   LOCK TABLE pedidos, pedido_itens IN SHARE ROW EXCLUSIVE MODE;
-  IF (
-    NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid='pedidos'::regclass
-      AND attname='tipo_comercial' AND NOT attisdropped)
-    AND EXISTS (SELECT 1 FROM pedidos)
-  ) OR (
-    NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass
-      AND attname='tipo_comercial_snapshot' AND NOT attisdropped)
-    AND EXISTS (SELECT 1 FROM pedido_itens)
-  ) THEN
+  IF EXISTS (SELECT 1 FROM pedidos) OR EXISTS (SELECT 1 FROM pedido_itens) THEN
     RAISE EXCEPTION 'PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED'
       USING ERRCODE='P0001';
   END IF;

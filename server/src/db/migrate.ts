@@ -27,6 +27,9 @@ export async function applyMigrations(databaseUrl?: string) {
     throw new Error('DATABASE_URL required to apply migrations');
   }
 
+  try { await assertPedido026ReadyBeforeMigrations(db); }
+  catch (error) { await db.end(); throw error; }
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id TEXT PRIMARY KEY,
@@ -51,6 +54,17 @@ export async function applyMigrations(databaseUrl?: string) {
 
   await db.end();
   return { applied: [...appliedSet], executed, pending: files.filter((f) => !appliedSet.has(f) && !executed.includes(f)) };
+}
+
+/** Checks an existing Pedido schema before migration 025 or schema_migrations can be written. */
+export async function assertPedido026ReadyBeforeMigrations(db: DbQueryExecutor) {
+  const tables = await db.query<{ pedidos: boolean; itens: boolean }>(
+    "SELECT to_regclass('pedidos') IS NOT NULL pedidos,to_regclass('pedido_itens') IS NOT NULL itens",
+  );
+  if (!tables.rows[0]?.pedidos && !tables.rows[0]?.itens) return;
+  const report = await pedidoHistorico026Preflight(db);
+  if ('migrationApplied' in report && report.migrationApplied === true) return;
+  if (report.blocked) throw new Error(`PEDIDO_026_PREFLIGHT_BLOCKED: ${report.reasons.join(',')}`);
 }
 
 export async function migrationStatus(databaseUrl?: string) {

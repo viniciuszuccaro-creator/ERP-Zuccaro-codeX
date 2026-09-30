@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-import { pedidoHistorico026Preflight } from '../src/db/migrate.js';
+import { assertPedido026ReadyBeforeMigrations, pedidoHistorico026Preflight } from '../src/db/migrate.js';
 import { PostgresPedidoRepository } from '../src/repositories/postgresPedidoRepository.js';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
@@ -202,7 +202,7 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
     } finally { await f.close(); }
   });
 
-  test(`${engine}: 026 blocks unclassified history before DDL and preserves classified snapshots on repeat`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+  test(`${engine}: 026 blocks history even with preexisting type columns; empty replay stays additive`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const db=engine==='PGlite'?new PGlite():await isolatedPostgres(url!);
     try {
       await db.exec('CREATE TABLE pedidos(id uuid PRIMARY KEY,group_id uuid,empresa_id uuid,numero bigint); CREATE TABLE pedido_itens(id uuid PRIMARY KEY); CREATE TABLE schema_migrations(id text PRIMARY KEY);');
@@ -224,20 +224,28 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.equal((await db.query('SELECT id FROM schema_migrations')).rows.length,0);
       assert.equal((await db.query('SELECT id FROM pedidos')).rows[0].id,header);
       assert.equal((await db.query('SELECT id FROM pedido_itens')).rows[0].id,item);
-      // Explicit synthetic mapping simulates the separately approved historical lot.
+      // Valores explícitos não comprovam origem histórica; o SQL não pode aceitar
+      // colunas já existentes nem um default REVENDA como autorização implícita.
       await db.exec('ALTER TABLE pedidos ADD COLUMN tipo_comercial text;');
       const partial=await pedidoHistorico026Preflight(db as never);
       assert.equal(partial.blocked,true);
       assert.ok(partial.reasons.includes('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED'));
       await db.exec('ALTER TABLE pedido_itens ADD COLUMN tipo_comercial_snapshot text;');
+      await db.query("UPDATE pedidos SET tipo_comercial='REVENDA' WHERE id=$1",[header]);
+      await db.query("UPDATE pedido_itens SET tipo_comercial_snapshot='REVENDA' WHERE id=$1",[item]);
+      await assert.rejects(()=>db.exec(migration),/PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED/);
       await db.query("UPDATE pedidos SET tipo_comercial='SERVICO' WHERE id=$1",[header]);
       await db.query("UPDATE pedido_itens SET tipo_comercial_snapshot='SERVICO' WHERE id=$1",[item]);
-      await db.exec(migration);await db.exec(migration);
+      await assert.rejects(()=>db.exec(migration),/PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED/);
       const classified=await pedidoHistorico026Preflight(db as never);
       assert.equal(classified.blocked,true);
       assert.deepEqual(classified.reasons,['HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED']);
       assert.equal((await db.query('SELECT tipo_comercial FROM pedidos')).rows[0].tipo_comercial,'SERVICO');
       assert.equal((await db.query('SELECT tipo_comercial_snapshot FROM pedido_itens')).rows[0].tipo_comercial_snapshot,'SERVICO');
+      await db.exec('DELETE FROM pedido_itens; DELETE FROM pedidos;');
+      await assertPedido026ReadyBeforeMigrations(db as never);
+      await db.exec(migration);await db.exec(migration);
+      await db.query('INSERT INTO pedidos VALUES($1,$2,$3,2,$4)',[randomUUID(),S.groupA,S.empresaA,'SERVICO']);
       await assert.rejects(()=>db.query('UPDATE pedidos SET tipo_comercial=NULL'),(e:unknown)=>(e as {code:string}).code==='23502');
     } finally { await db.close(); }
   });
@@ -261,6 +269,8 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.ok(report.reasons.includes('PEDIDO_ITEM_TYPE_INVALID_OR_MISSING'));
       assert.ok(report.reasons.includes('PEDIDO_ITEM_OWNER_MISMATCH'));
       assert.ok(report.reasons.includes('PEDIDO_HEADER_ITEM_TYPE_MISMATCH'));
+      await assert.rejects(()=>assertPedido026ReadyBeforeMigrations(db as never),/PEDIDO_026_PREFLIGHT_BLOCKED/);
+      assert.equal((await db.query("SELECT to_regclass('schema_migrations') present")).rows[0]?.present,null);
       const published=JSON.stringify(report);
       for (const id of [headerA,headerB,itemA,itemB,orphan,orphanPedido]) assert.equal(published.includes(id),false);
     } finally { await db.close(); }
