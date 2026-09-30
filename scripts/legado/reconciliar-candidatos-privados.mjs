@@ -55,6 +55,11 @@ export function reconcilePrivateCandidates(root) {
       throw new Error(`LEGACY_INPUT_UNREADABLE:${entity}`);
     }
     const [sourceCount, candidateCount, quarantineCount] = expected(summary, entity);
+    const importAuthorized = entity === 'clientes' ? summary.importAuthorized : summary.import_authorized;
+    const directImportPerformed = entity === 'clientes' ? summary.directImportPerformed : summary.direct_import_performed;
+    if (importAuthorized !== false || directImportPerformed !== false) {
+      throw new Error(`LEGACY_SUMMARY_IMPORT_STATE_INVALID:${entity}`);
+    }
     verifyHash(path(files.candidate), expectedHash(summary, entity, files.candidate, 'candidate'), entity);
     verifyHash(path(files.quarantine), expectedHash(summary, entity, files.quarantine, 'quarantine'), entity);
     if (![sourceCount, candidateCount, quarantineCount].every(Number.isSafeInteger)
@@ -83,6 +88,9 @@ export function reconcilePrivateCandidates(root) {
     let quarantineCompanyRows = 0;
     let quarantineOtherGroupRows = 0;
     for (const row of quarantined) {
+      if (String(row.import_authorized || '').trim().toLowerCase() !== 'false') {
+        throw new Error(`LEGACY_QUARANTINE_IMPORT_FLAG_INVALID:${entity}`);
+      }
       if (codes.has(String(row.codigo_legado || '').trim())) candidateQuarantineCodeOverlap++;
       if (String(row.empresa_id || '').trim()) quarantineCompanyRows++;
       if (String(row.group_id || '').trim() !== sharedGroup) quarantineOtherGroupRows++;

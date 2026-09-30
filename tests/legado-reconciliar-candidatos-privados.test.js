@@ -43,7 +43,10 @@ function fixture(overrides = {}) {
       : entity === 'clientes'
         ? { files: [{ name: candidate.split('/').at(-1), sha256: hash(candidateContent) }, { name: quarantine.split('/').at(-1), sha256: hash(quarantineContent) }] }
         : { artifacts: [{ relative_path: candidate, sha256: hash(candidateContent) }, { relative_path: quarantine, sha256: hash(quarantineContent) }] };
-    write(summary, `${entity === 'produtos_revenda' ? '\uFEFF' : ''}${JSON.stringify({ ...counts, ...integrity, ...overrides.summary })}`);
+    const importState = entity === 'clientes'
+      ? { importAuthorized: false, directImportPerformed: false }
+      : { import_authorized: false, direct_import_performed: false };
+    write(summary, `${entity === 'produtos_revenda' ? '\uFEFF' : ''}${JSON.stringify({ ...counts, ...integrity, ...importState, ...overrides.summary })}`);
   }
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
@@ -105,4 +108,13 @@ test('counts quarantined overlap and foreign scope without releasing values', ()
     assert.equal(report.entities.clientes.quarantineOtherGroupRows, 1);
     assert.doesNotMatch(JSON.stringify(report), /foreign-group|foreign-company/);
   } finally { data.cleanup(); }
+});
+
+test('rejects import authorization in summary or quarantine', () => {
+  const summary = fixture({ summary: { importAuthorized: true } });
+  try { assert.throws(() => reconcilePrivateCandidates(summary.root), { message: 'LEGACY_SUMMARY_IMPORT_STATE_INVALID:clientes' }); }
+  finally { summary.cleanup(); }
+  const quarantine = fixture({ quarantine: { clientes: { import_authorized: 'true' } } });
+  try { assert.throws(() => reconcilePrivateCandidates(quarantine.root), { message: 'LEGACY_QUARANTINE_IMPORT_FLAG_INVALID:clientes' }); }
+  finally { quarantine.cleanup(); }
 });
