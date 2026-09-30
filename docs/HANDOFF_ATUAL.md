@@ -1,8 +1,16 @@
+## AUTÔNOMO — tip crédito precisão + revisão implantações (2026-09-30T12:30Z)
+
+Revisão tip #154–#184: **APTA_TIP** (Onda 4/5 polish + Onda 6 #180–#184). Ressalvas: CostPort null ok; #178 não tip-port; anexos colisão; sem merge/VPS.
+Lote tip: `cursor/comercial360-credito-precisao-tip-392b` — CreditPort `toMicros` ≤6 (paridade #184). Base tip #184.
+#153 HEAD=`12c37e8b`. CI em curso.
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #184 (2026-09-30T12:14Z)
 
 Tip **#184** CI SUCCESS (port #177 margem). Stack #180→#184.
-BLOCKED: CostPort real / anexos pós-Codex / provedor / tip-port #178 autorizado.
-#153 HEAD=`12c37e8b`. Sem merge/VPS. Vigília 15min.
+BLOCKED: CostPort real / anexos pós-Codex / provedor / tip-port #178 autorizado (parcialmente desbloqueado por crédito precisão na revisão).
+#153 HEAD=`12c37e8b`. Sem merge/VPS.
 
 ---
 
