@@ -1,3 +1,15 @@
+## CURSOR — vigília #178 (2026-09-30T19:21Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `49ec5d97` (antes `9df73886`) — ainda candidata; CI SUCCESS |
+| Delta | `Amplia reconciliação agregada do preflight 026` |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #197 CI SUCCESS tip `7e2fe275` (candidata #192–#197) |
+| Próximo | Vigília FINAL 15min |
+
+---
+
 ## CURSOR — candidata #192–#197 fechada no tip (2026-09-30T19:20Z)
 
 | Campo | Valor |

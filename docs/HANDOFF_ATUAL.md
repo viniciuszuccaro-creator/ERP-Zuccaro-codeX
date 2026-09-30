@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T19:21Z)
+
+#178 HEAD `49ec5d97` (delta preflight 026) — ainda candidato. Sem tip-port. #197 OK. Vigília 15min.
+
+---
+
 ## CURSOR — candidata #192–#197 (2026-09-30T19:20Z)
 
 Candidata documentada em `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
