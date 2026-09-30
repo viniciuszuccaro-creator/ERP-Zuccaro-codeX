@@ -3,6 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Branch | `cursor/expedicao-entregas-filtros-392b` (base `main`) |
+| Draft PR | **#192** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/192 |
 | Inventário | `EntregasListagem` já tinha busca livre+status; faltavam filtros estruturados empresa/cidade/data/futuras. Separação/acompanhamento/romaneio base já existem (Gate 11). |
 | Escopo | Policy `filterEntregasList` + wire `EntregasListagem` + filtros cidade/futuras em `RomaneioForm` |
 | Não tocado (Codex #178) | `pedidoService`/`orcamentoService`/`pedidoTypes`/`orcamentoTypes`/repos orçamento/`saleIngressContract`/`app.ts`/mig 026–035/`STATUS` tip Codex |
