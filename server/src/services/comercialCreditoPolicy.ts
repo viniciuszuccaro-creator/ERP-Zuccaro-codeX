@@ -50,6 +50,8 @@ export type CreditoAvaliacao = {
   limite_disponivel: string;
   valor_pedido: string;
   motivo: string;
+  /** true quando liberado via RBAC aprovar-credito (paridade margem overridden). */
+  overridden?: boolean;
 };
 
 export function computePedidoTotalMicros(items: CreditoItem[]): bigint {
@@ -146,7 +148,14 @@ export async function assertCreditoSuficienteOuAprovar(options: {
     limite_utilizado: snap.limite_utilizado,
   });
   if (evaluation.aprovado) return evaluation;
-  if (options.canAprovarCredito) return { ...evaluation, aprovado: true, motivo: `${evaluation.motivo}; override aprovar-credito` };
+  if (options.canAprovarCredito) {
+    return {
+      ...evaluation,
+      aprovado: true,
+      overridden: true,
+      motivo: `${evaluation.motivo}; override aprovar-credito`,
+    };
+  }
   throw new AppError(
     403,
     'CREDITO_ALCADA_DENIED',

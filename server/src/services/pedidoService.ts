@@ -135,9 +135,10 @@ export class PedidoService {
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, write, ctx.actorId!, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
-      await this.assertCreditoAlcada(ctx, scope, write);
+      const creditoDecision = await this.assertCreditoAlcada(ctx, scope, write);
       const created = await this.repo.create(scope, write, ctx.actorId!, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
+      await this.auditCreditoOverride(ctx, created.id, creditoDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
     });
@@ -190,9 +191,10 @@ export class PedidoService {
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
         const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
-        await this.assertCreditoAlcada(ctx, scope, write);
+        const creditoDecision = await this.assertCreditoAlcada(ctx, scope, write);
         const created = await this.repo.create(scope, write, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
+        await this.auditCreditoOverride(ctx, created.id, creditoDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
         if (alcada.aprovadaPorOutro) {
           await this.audit.append({
@@ -260,10 +262,11 @@ export class PedidoService {
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
-      await this.assertCreditoAlcada(ctx, scope, write);
+      const creditoDecision = await this.assertCreditoAlcada(ctx, scope, write);
       const after = await this.repo.update(scope, id, write, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
+      await this.auditCreditoOverride(ctx, after.id, creditoDecision, executor);
       await this.auditRow(ctx, 'update', before, after, executor);
       if (alcada.aprovadaPorOutro) {
         await this.audit.append({
@@ -537,7 +540,7 @@ export class PedidoService {
         throw error;
       }
     }
-    await assertCreditoSuficienteOuAprovar({
+    return assertCreditoSuficienteOuAprovar({
       groupId: scope.groupId,
       empresaId: scope.empresaId,
       clienteEmpresaId: data.cliente_empresa_id,
@@ -546,6 +549,36 @@ export class PedidoService {
       canAprovarCredito,
       entityLabel: 'Pedido',
     });
+  }
+
+  private async auditCreditoOverride(
+    ctx: RequestContext,
+    entityId: string,
+    decision: Awaited<ReturnType<typeof assertCreditoSuficienteOuAprovar>>,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!decision?.overridden) return;
+    await this.audit.append({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail,
+      entity: 'Pedido',
+      entityId,
+      action: 'approve',
+      afterData: {
+        credito_alcada_override: true,
+        credito_avaliacao: {
+          limite_total: decision.limite_total,
+          limite_utilizado: decision.limite_utilizado,
+          limite_disponivel: decision.limite_disponivel,
+          valor_pedido: decision.valor_pedido,
+          motivo: decision.motivo,
+        },
+      },
+      requestId: ctx.requestId,
+      ipAddress: ctx.ipAddress,
+    }, executor);
   }
 
   private async auditMargemOverride(
