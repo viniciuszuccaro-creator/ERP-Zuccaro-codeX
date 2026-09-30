@@ -5,9 +5,9 @@
 | Tip anterior | **#190** audit crédito override CI SUCCESS |
 | Choice | Fechar ressalva Onda4/5: print/share **sem** soft→`canView`/`canPrint` |
 | Branch | `cursor/comercial360-print-share-rbac-tip-392b` |
-| Draft PR | (em criação) |
+| Draft PR | **#191** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/191 |
 | Escopo | `resolvePedido/OrcamentoPrint|SharePermission`; wire `PedidoCanonicoPanel` + `OrcamentosTab` |
-| Testes | pedido-ui-policy 26 + orcamento-ui-policy 26 (RBAC + source-match) |
+| Testes | pedido-ui-policy 26/26 + orcamento-ui-policy 25/25 (RBAC + source-match) |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
 | Próximo | CI; residual tip-seguro ou BLOCKED CostPort/#178 |
 

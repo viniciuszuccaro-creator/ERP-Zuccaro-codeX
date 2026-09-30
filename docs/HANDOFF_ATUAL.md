@@ -1,6 +1,6 @@
 ## AUTÔNOMO — tip RBAC print/share sem canView (2026-09-30T13:05Z)
 
-#190 CI SUCCESS. Branch `cursor/comercial360-print-share-rbac-tip-392b` — print/share sem soft→canView.
+#190 CI SUCCESS. Draft PR **#191** — print/share sem soft→canView.
 Pedido+Orçamento helpers + wire painéis. Sem merge/VPS. CI em curso.
 
 ---
