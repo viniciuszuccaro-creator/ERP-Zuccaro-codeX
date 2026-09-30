@@ -1,3 +1,22 @@
+## CURSOR — Expedição fluxo consolidado #192–#194 (2026-09-30T17:00Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-fluxo-consolidado-392b` (base tip `#194`) |
+| Objetivo | Consolidar filtros/detalhe/separação/roteirização e avançar fluxo ponta a ponta |
+| Fluxo | selecionar → separar/conferir → romaneio → despachar → parcial/total/ocorrência → pendências |
+| Policy | `expedicaoFluxoOperacionalPolicy.js` (extração); asserts em `expedicaoEntregaPolicy.js` |
+| UI | SeparacaoConferencia, RomaneioForm, DetalhesEntregaView, EntregasListagem, QueuesLogistica |
+| Pedido legado | Documentado em `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — sem sobrescrever Codex #178 |
+| Homologação/rollback | `docs/EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md` |
+| Testes | expedicao-fluxo-operacional + expedicao-entrega-policy (comportamentais; sem prova por texto-fonte) |
+| Reservados Codex | Intactos (Pedido/Orçamento, mig 026–035, Armado/Corte/Dobra) |
+| Colisão | Sem merge/VPS; sem simular roteirizador/WhatsApp |
+| Codex #178 | HEAD `e4d3d904` ainda candidato — sem tip-port |
+| Próximo | CI da candidata consolidada; vigília FINAL #178 |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T16:29Z)
 
 | Campo | Valor |
