@@ -242,6 +242,30 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
     } finally { await db.close(); }
   });
 
+  test(`${engine}: preflight 026 reconcilia tipos, órfãos e divergências só por contagem`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
+    const db=engine==='PGlite'?new PGlite():await isolatedPostgres(url!);
+    try {
+      await db.exec('CREATE TABLE pedidos(id uuid PRIMARY KEY,group_id uuid,empresa_id uuid,tipo_comercial text); CREATE TABLE pedido_itens(id uuid PRIMARY KEY,pedido_id uuid,group_id uuid,empresa_id uuid,tipo_comercial_snapshot text);');
+      const headerA=randomUUID(),headerB=randomUUID(),itemA=randomUUID(),itemB=randomUUID(),orphan=randomUUID(),orphanPedido=randomUUID();
+      await db.query('INSERT INTO pedidos VALUES($1,$2,$3,$4),($5,$2,$3,$6)',[headerA,S.groupA,S.empresaA,'REVENDA',headerB,'MISTO']);
+      await db.query('INSERT INTO pedido_itens VALUES($1,$2,$3,$4,$5),($6,$7,$3,$4,NULL),($8,$10,$3,$4,$9)',
+        [itemA,headerA,S.groupA,S.empresaA,'SERVICO',itemB,headerB,orphan,'ARMADO',orphanPedido]);
+      const report=await pedidoHistorico026Preflight(db as never);
+      assert.equal(report.blocked,true);
+      assert.equal(report.pedidos,2);
+      assert.equal(report.itens,3);
+      assert.deepEqual(report.reconciliacao,{
+        cabecalhosSemTipoValido:0,itensSemTipoValido:1,itensSemPedidoNoEscopo:1,cabecalhosDivergentesDosItens:1,
+      });
+      assert.ok(report.reasons.includes('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED'));
+      assert.ok(report.reasons.includes('PEDIDO_ITEM_TYPE_INVALID_OR_MISSING'));
+      assert.ok(report.reasons.includes('PEDIDO_ITEM_OWNER_MISMATCH'));
+      assert.ok(report.reasons.includes('PEDIDO_HEADER_ITEM_TYPE_MISMATCH'));
+      const published=JSON.stringify(report);
+      for (const id of [headerA,headerB,itemA,itemB,orphan,orphanPedido]) assert.equal(published.includes(id),false);
+    } finally { await db.close(); }
+  });
+
   test(`${engine}: unknown product type rejects channel sale without documents or consumed retry key`, { skip: engine === 'PostgreSQL real' && !url }, async () => {
     const f=await boot(engine==='PGlite'?new PGlite():await isolatedPostgres(url!));
     try {

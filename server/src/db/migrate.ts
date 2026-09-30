@@ -122,11 +122,38 @@ export async function pedidoHistorico026Preflight(db: DbQueryExecutor) {
   }
   const cabecalho = columns.rows[0]?.cabecalho === true;
   const item = columns.rows[0]?.item === true;
+  const itemLink = await db.query<{ linked: boolean }>(
+    "SELECT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass AND attname='pedido_id' AND NOT attisdropped) linked",
+  );
+  const headerInvalid = cabecalho
+    ? await db.query<{ total: number }>("SELECT count(*)::int total FROM pedidos WHERE tipo_comercial IS NULL OR tipo_comercial NOT IN ('REVENDA','ARMADO','CORTE_DOBRA','FABRICADO','KIT','SERVICO','MISTO')")
+    : null;
+  const itemInvalid = item
+    ? await db.query<{ total: number }>("SELECT count(*)::int total FROM pedido_itens WHERE tipo_comercial_snapshot IS NULL OR tipo_comercial_snapshot NOT IN ('REVENDA','ARMADO','CORTE_DOBRA','FABRICADO','KIT','SERVICO')")
+    : null;
+  const canReconcile = cabecalho && item && itemScope.rows[0]?.scoped === true && itemLink.rows[0]?.linked === true;
+  const orphanItems = canReconcile
+    ? await db.query<{ total: number }>('SELECT count(*)::int total FROM pedido_itens i WHERE NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.id=i.pedido_id AND p.group_id=i.group_id AND p.empresa_id=i.empresa_id)')
+    : null;
+  const mismatchedHeaders = canReconcile
+    ? await db.query<{ total: number }>(`WITH expected AS (
+        SELECT p.id,p.tipo_comercial,
+          CASE WHEN count(i.id)=0 OR count(i.id)<>count(i.tipo_comercial_snapshot) THEN NULL
+            WHEN count(DISTINCT i.tipo_comercial_snapshot)=1 THEN min(i.tipo_comercial_snapshot)
+            ELSE 'MISTO' END AS item_type
+        FROM pedidos p LEFT JOIN pedido_itens i ON i.pedido_id=p.id AND i.group_id=p.group_id AND i.empresa_id=p.empresa_id
+        GROUP BY p.id,p.tipo_comercial
+      ) SELECT count(*)::int total FROM expected WHERE item_type IS NOT NULL AND item_type<>tipo_comercial`)
+    : null;
   const reasons: string[] = [];
   if (!trusted) reasons.push('UNTRUSTED_RLS_VISIBILITY');
   if (pedidos > 0 && !cabecalho) reasons.push('PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED');
   if (itens > 0 && !item) reasons.push('PEDIDO_ITEM_HISTORICAL_TYPE_MAPPING_REQUIRED');
   if ((pedidos > 0 || itens > 0) && (cabecalho || item)) reasons.push('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED');
+  if (Number(headerInvalid?.rows[0]?.total ?? 0) > 0) reasons.push('PEDIDO_TYPE_INVALID_OR_MISSING');
+  if (Number(itemInvalid?.rows[0]?.total ?? 0) > 0) reasons.push('PEDIDO_ITEM_TYPE_INVALID_OR_MISSING');
+  if (Number(orphanItems?.rows[0]?.total ?? 0) > 0) reasons.push('PEDIDO_ITEM_OWNER_MISMATCH');
+  if (Number(mismatchedHeaders?.rows[0]?.total ?? 0) > 0) reasons.push('PEDIDO_HEADER_ITEM_TYPE_MISMATCH');
   const applied = available.migrations
     ? await db.query<{ present: boolean }>("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE id='026_pedidos_tipo_comercial.sql') present")
     : null;
@@ -134,6 +161,12 @@ export async function pedidoHistorico026Preflight(db: DbQueryExecutor) {
     gate: 'PEDIDO_026', blocked: reasons.length > 0, reasons,
     migrationApplied: applied?.rows[0]?.present === true,
     columns: { cabecalho, item }, pedidos, itens,
+    reconciliacao: {
+      cabecalhosSemTipoValido: headerInvalid ? Number(headerInvalid.rows[0]?.total ?? 0) : null,
+      itensSemTipoValido: itemInvalid ? Number(itemInvalid.rows[0]?.total ?? 0) : null,
+      itensSemPedidoNoEscopo: orphanItems ? Number(orphanItems.rows[0]?.total ?? 0) : null,
+      cabecalhosDivergentesDosItens: mismatchedHeaders ? Number(mismatchedHeaders.rows[0]?.total ?? 0) : null,
+    },
     porEmpresa: [...companies.values()].sort((a, b) => `${a.groupId}:${a.empresaId}`.localeCompare(`${b.groupId}:${b.empresaId}`)),
   };
 }
