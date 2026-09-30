@@ -140,6 +140,7 @@ test('app motorista usa policy, fila e proxima parada', async () => {
   const romaneio = await readFile(new URL('../src/components/expedicao/RomaneioForm.jsx', import.meta.url), 'utf8');
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   const expedicao = await readFile(new URL('../src/components/lib/expedicaoEntregaPolicy.js', import.meta.url), 'utf8');
+  const fluxo = await readFile(new URL('../src/components/lib/expedicaoFluxoOperacionalPolicy.js', import.meta.url), 'utf8');
   assert.match(app, /appMotoristaPolicy/);
   assert.match(app, /proximaParada/);
   assert.match(app, /enqueueMotoristaAction/);
@@ -149,6 +150,7 @@ test('app motorista usa policy, fila e proxima parada', async () => {
   assert.match(app, /Entrega parcial/);
   assert.match(romaneio, /motorista_id/);
   assert.match(romaneio, /sequencia_rota/);
+  assert.match(fluxo, /sequencia_rota/);
   assert.match(client, /assertEntregaMotoristaOnUpdate/);
   assert.match(expedicao, /Entrega parcial exige comprovante/);
   assert.match(expedicao, /Devolucao exige motivo/);
