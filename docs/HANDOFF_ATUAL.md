@@ -1,3 +1,29 @@
+## CURSOR — vigília #178 (2026-09-30T16:45Z)
+
+#178 `e4d3d904` estável — ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T16:29Z)
+
+#178 `e4d3d904` CI OK — ainda candidato (não final). Sem tip-port. Stack Expedição #192–#194 ok. Vigília 15min.
+
+---
+
+## CURSOR — Expedição #194 CI + vigília #178 (2026-09-30T16:13Z)
+
+Stack **#192–#194** CI SUCCESS. #178 `03fd92d2` ainda candidato (não final) — sem tip-port.
+Soft contexto expedicao/logistica esgotado no inventário. Sem merge/VPS. Vigília 15min.
+
+---
+
+## CURSOR — Expedição roteirização fail-closed (2026-09-30T16:02Z)
+
+#193 CI SUCCESS. Draft PR **#194** — mapa contexto∧ + filtros.
+Reservados Codex #178 intactos. Sem merge/VPS. CI em curso.
+
+---
+
 ## CURSOR — Expedição detalhe/separação fail-closed (2026-09-30T15:55Z)
 
 #192 CI SUCCESS. Draft PR **#193** — detalhe∧ + assert update/prova; separação assertSeparacaoOnCreate.

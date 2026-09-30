@@ -1,3 +1,42 @@
+## CURSOR — vigília #178 (2026-09-30T16:29Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e4d3d904` CI SUCCESS — body ainda “Correção candidata” (**não** final) |
+| Ação | Sem revisão consolidada; sem tip-port |
+| Stack Expedição | **#192–#194** CI SUCCESS |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — Expedição #194 CI SUCCESS + vigília #178 (2026-09-30T16:13Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#194** CI SUCCESS — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/194 |
+| HEAD tip | `4656b215` |
+| Stack | **#192→#193→#194** (filtros → detalhe/separação → roteirização) |
+| Codex #178 | HEAD `03fd92d2` CI SUCCESS — body ainda “Correção candidata” (**não** final); commit preflight histórico pedidos; **sem** tip-port / sem revisão consolidada |
+| Soft `group\|\|empresa` em expedicao/logistica jsx | **esgotado** neste inventário |
+| Próximo | Vigília candidato final #178; residual Expedição só se gap novo fora reserva |
+
+---
+
+## CURSOR — Expedição roteirização contexto+filtros (pós-#193) (2026-09-30T16:02Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#193** detalhe/separação CI SUCCESS |
+| Branch | `cursor/expedicao-roteirizacao-contexto-392b` |
+| Draft PR | **#194** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/194 |
+| Escopo | `RoteirizacaoMapa` contexto `group∧empresa` + filtros cidade/data/futuras via policy |
+| Não tocado | Codex #178 reservas |
+| Testes | expedicao-entrega-policy 18/18 |
+| Colisão | Sem merge/VPS |
+| Próximo | CI; vigília candidato final #178 |
+
+---
+
 ## CURSOR — Expedição #193 CI SUCCESS (2026-09-30T16:00Z)
 
 | Campo | Valor |
