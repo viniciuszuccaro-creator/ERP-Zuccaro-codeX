@@ -1,3 +1,19 @@
+## AUTÔNOMO — tip #180 CI SUCCESS + EnviarParaCaixa fail-closed (2026-09-30T11:20Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#180** CreditPort CI SUCCESS |
+| Choice | **EnviarParaCaixa** fail-closed multiempresa (Onda 6) |
+| Branch | `cursor/comercial360-onda6-caixa-envio-tip-392b` |
+| Base | tip #180 CreditPort |
+| Escopo | `assertTitulosProntosParaCaixa`; EnviarParaCaixa exige groupId/empresaId; bloqueia liquidado/cross-tenant; queryKey tenant; `pedido_id` na ordem |
+| Reuso | Patterns #65 (não edita branch antiga) |
+| Testes | financeiro-titulo-policy 11/11 |
+| Colisão | CostPort invent BLOCKED; anexos #59–62; CR↔Pedido #66 (próximo tip); sem Codex/merge/VPS |
+| Próximo | ContaReceber↔Pedido tip **ou** CostPort real **ou** anexos pós-Codex |
+
+---
+
 ## AUTÔNOMO — tip Onda 6 CreditPort + mig 032 (pós-#174) (2026-09-30T11:05Z)
 
 | Campo | Valor |

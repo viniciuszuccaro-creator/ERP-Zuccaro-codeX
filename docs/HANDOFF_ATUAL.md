@@ -1,3 +1,11 @@
+## AUTÔNOMO — tip EnviarParaCaixa fail-closed (2026-09-30T11:20Z)
+
+Branch `cursor/comercial360-onda6-caixa-envio-tip-392b` empilhada em #180:
+EnviarParaCaixa exige groupId/empresaId; bloqueia título liquidado/cross-tenant.
+Patterns #65 sem editar branch antiga. Sem merge/VPS.
+
+---
+
 ## AUTÔNOMO — tip CreditPort + mig 032 (2026-09-30T11:05Z)
 
 Branch `cursor/comercial360-onda6-credit-port-tip-392b` empilhada em #174:
