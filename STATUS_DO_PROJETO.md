@@ -5,7 +5,7 @@
 | Tip anterior | **#183** LiquidarReceberPagar CI SUCCESS |
 | Choice | Port tip do endurecimento **#177** (Codex) — validar custo/alçada sem inventar CostPort |
 | Branch | `cursor/comercial360-margem-custo-contrato-tip-392b` |
-| Draft PR | (criar) base tip #183 |
+| Draft PR | **#184** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/184 |
 | Base | tip #183 `cursor/comercial360-onda6-caixa-liquidar-tip-392b` |
 | Escopo | `toMicros` precisão ≤6; `validateMinimaBps` 0–10000 int → `COST_POLICY_INVALID`; fail porta propaga; retry reavalia |
 | Testes | comercial-margem-alcada 14/14 (unit+http) |

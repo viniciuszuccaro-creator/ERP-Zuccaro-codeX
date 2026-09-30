@@ -1,7 +1,7 @@
 ## AUTÔNOMO — tip margem/custo contrato fail-closed (2026-09-30T12:10Z)
 
 Branch `cursor/comercial360-margem-custo-contrato-tip-392b` empilhada em #183:
-Port tip #177 — `toMicros` ≤6 casas; `validateMinimaBps` → COST_POLICY_INVALID; sem inventar CostPort.
+Draft PR **#184** — port tip #177 (`toMicros` ≤6; `validateMinimaBps` → COST_POLICY_INVALID; sem inventar CostPort).
 Testes margem 14/14. Sem merge/VPS. CI em curso.
 
 ---
