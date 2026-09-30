@@ -1,3 +1,17 @@
+## CURSOR — Expedição roteirização contexto+filtros (pós-#193) (2026-09-30T16:02Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#193** detalhe/separação CI SUCCESS |
+| Branch | `cursor/expedicao-roteirizacao-contexto-392b` |
+| Escopo | `RoteirizacaoMapa` contexto `group∧empresa` + filtros cidade/data/futuras via policy |
+| Não tocado | Codex #178 reservas |
+| Testes | expedicao-entrega-policy 18/18 |
+| Colisão | Sem merge/VPS |
+| Próximo | CI; vigília candidato final #178 |
+
+---
+
 ## CURSOR — Expedição #193 CI SUCCESS (2026-09-30T16:00Z)
 
 | Campo | Valor |
