@@ -1,3 +1,14 @@
+## CURSOR — Expedição #193 CI SUCCESS (2026-09-30T16:00Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR | **#193** CI SUCCESS |
+| HEAD | `29ef05b8` |
+| Codex #178 | `90533c2c` — candidato, **não** final declarado |
+| Próximo | Harden `RoteirizacaoMapa` contexto fail-closed + filas acompanhamento |
+
+---
+
 ## CURSOR — Expedição detalhe/separação fail-closed (pós-#192) (2026-09-30T15:55Z)
 
 | Campo | Valor |
