@@ -1,3 +1,17 @@
+## AUTÔNOMO — BLOCKED tip #191 CI SUCCESS (2026-09-30T13:06Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#191** RBAC print/share CI SUCCESS |
+| Parecer | **BLOCKED** — residuais tip-seguros da revisão das implantações **esgotados** |
+| Stack tip | #180→#191 (CreditPort→caixa→entrega→snapshot→audit crédito→RBAC print) |
+| Motivos | (1) CostPort BFF sem fonte — inventar = BLOCKED; (2) anexos/origem/campanha colidem Codex #50/#59–#62; (3) PIX/boleto/webhook exigem provedor; (4) tip-port #178 invasivo sem autorização; (5) #153 HEAD=`12c37e8b` estável |
+| Draft PRs tip | **#186–#191** CI SUCCESS |
+| Colisão | Sem CostPort; sem anexos; sem merge/VPS |
+| Próximo | Vigília 15min; desbloqueio só com CostPort real / anexos pós-Codex / provedor / #178 autorizado |
+
+---
+
 ## AUTÔNOMO — tip RBAC print/share sem fallback canView (pós-#190) (2026-09-30T13:05Z)
 
 | Campo | Valor |
@@ -7,9 +21,9 @@
 | Branch | `cursor/comercial360-print-share-rbac-tip-392b` |
 | Draft PR | **#191** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/191 |
 | Escopo | `resolvePedido/OrcamentoPrint|SharePermission`; wire `PedidoCanonicoPanel` + `OrcamentosTab` |
-| Testes | pedido-ui-policy 26/26 + orcamento-ui-policy 25/25 (RBAC + source-match) |
+| Testes | pedido-ui-policy 26/26 + orcamento-ui-policy 25/25; CI SUCCESS |
 | Colisão | Sem CostPort; sem anexos; sem merge/VPS |
-| Próximo | CI; residual tip-seguro ou BLOCKED CostPort/#178 |
+| Próximo | **BLOCKED** |
 
 ---
 

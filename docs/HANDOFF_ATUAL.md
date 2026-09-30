@@ -1,7 +1,15 @@
+## AUTÔNOMO — BLOCKED tip #191 (2026-09-30T13:06Z)
+
+#191 CI SUCCESS — RBAC print/share sem soft→canView. Stack tip #180→#191.
+**BLOCKED:** CostPort real / anexos pós-Codex / provedor / tip-port #178.
+#153 HEAD=`12c37e8b`. Sem merge/VPS. Vigília 15min.
+
+---
+
 ## AUTÔNOMO — tip RBAC print/share sem canView (2026-09-30T13:05Z)
 
-#190 CI SUCCESS. Draft PR **#191** — print/share sem soft→canView.
-Pedido+Orçamento helpers + wire painéis. Sem merge/VPS. CI em curso.
+#190 CI SUCCESS. Draft PR **#191** CI SUCCESS — print/share sem soft→canView.
+Pedido+Orçamento helpers + wire painéis. Sem merge/VPS.
 
 ---
 
