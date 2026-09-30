@@ -6,7 +6,7 @@ export type ProdutoOutboxLease = {
   groupId: string;
   empresaId: string;
   attempts: number;
-  lockedUntil: Date;
+  lockedUntil: string;
   payload: Record<string, unknown>;
 };
 
@@ -27,7 +27,7 @@ export class PostgresProdutoOutboxRepository {
       );
       const result = await tx.query<{
         id: string; group_id: string; empresa_id: string; attempts: number;
-        locked_until: Date; created_at: Date; payload: Record<string, unknown>;
+        locked_until: string; created_at: Date; payload: Record<string, unknown>;
       }>(
         `WITH candidates AS (
            SELECT id FROM integration_events
@@ -41,7 +41,7 @@ export class PostgresProdutoOutboxRepository {
          UPDATE integration_events AS event SET status='processing', attempts=event.attempts+1,
            locked_until=clock_timestamp()+($4::int * interval '1 second'), error_message=NULL
          FROM candidates WHERE event.id=candidates.id
-         RETURNING event.id,event.group_id,event.empresa_id,event.attempts,event.locked_until,event.created_at,event.payload`,
+         RETURNING event.id,event.group_id,event.empresa_id,event.attempts,event.locked_until::text AS locked_until,event.created_at,event.payload`,
         [scope.groupId, scope.empresaId, limit, leaseSeconds],
       );
       return result.rows.sort((a, b) => a.created_at.getTime() - b.created_at.getTime() || a.id.localeCompare(b.id)).map((row) => ({
