@@ -50,6 +50,10 @@ export function evaluatePedidoPrintPdfUiGate({ row, groupId, empresaId, canPrint
   if (!Array.isArray(row.itens)) {
     return { blockPrint: true, mode: 'invalid', hint: 'Itens do pedido indisponíveis (fail-closed).' };
   }
+  const snapshotGap = comercialDocumentoSnapshotGapHint(row, { purpose: 'print', entityLabel: 'pedido' });
+  if (snapshotGap) {
+    return { blockPrint: true, mode: 'snapshot_gap', hint: snapshotGap };
+  }
   return { blockPrint: false, mode: 'ready', hint: null };
 }
 
@@ -87,6 +91,10 @@ export function evaluatePedidoShareUiGate({ row, groupId, empresaId, canShare } 
   }
   if (!row || !row.numero) {
     return { blockShare: true, mode: 'missing', hint: 'Pedido indisponível para compartilhamento (fail-closed).' };
+  }
+  const snapshotGap = comercialDocumentoSnapshotGapHint(row, { purpose: 'print', entityLabel: 'pedido' });
+  if (snapshotGap) {
+    return { blockShare: true, mode: 'snapshot_gap', hint: snapshotGap };
   }
   return { blockShare: false, mode: 'ready', hint: null };
 }

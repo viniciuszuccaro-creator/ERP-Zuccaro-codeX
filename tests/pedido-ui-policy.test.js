@@ -226,6 +226,20 @@ test('pedido print PDF gate fail-closed sem contexto/permissão/itens', () => {
   assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1' }, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'invalid');
   assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: true }).mode, 'ready');
   assert.equal(evaluatePedidoPrintPdfUiGate({ row: { numero: '1', itens: [] }, groupId: 'g', empresaId: 'e', canPrint: true }).blockPrint, false);
+  const gapRow = {
+    numero: '1',
+    itens: [],
+    condicao_pagamento_codigo_snapshot: '01',
+    condicao_pagamento_nome_snapshot: '',
+    condicao_pagamento_parcelas_snapshot: [],
+  };
+  const gapPrint = evaluatePedidoPrintPdfUiGate({ row: gapRow, groupId: 'g', empresaId: 'e', canPrint: true });
+  assert.equal(gapPrint.mode, 'snapshot_gap');
+  assert.equal(gapPrint.blockPrint, true);
+  assert.match(gapPrint.hint, /imprimir ou compartilhar/i);
+  const gapShare = evaluatePedidoShareUiGate({ row: { ...gapRow, numero: '1' }, groupId: 'g', empresaId: 'e', canShare: true });
+  assert.equal(gapShare.mode, 'snapshot_gap');
+  assert.equal(gapShare.blockShare, true);
 });
 
 test('painel pedido wire Imprimir/PDF canônico fail-closed', async () => {
