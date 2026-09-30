@@ -4,6 +4,7 @@
 |---|---|
 | Tip anterior | **#192** filtros CI SUCCESS |
 | Branch | `cursor/expedicao-detalhe-separacao-failclosed-392b` |
+| Draft PR | **#193** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/193 |
 | Escopo | `DetalhesEntregaView` contexto∧ + `assertEntregaOnUpdate`/`hasProvaEntrega` + data cliente; `SeparacaoConferencia` + `assertSeparacaoOnCreate` |
 | Não tocado | Pedido/Orçamento services Codex; mig 026/035; Armado/Corte |
 | Testes | expedicao-entrega-policy 17/17 |
