@@ -1,3 +1,11 @@
+## AUTÔNOMO — tip ContaReceber↔Pedido (2026-09-30T11:25Z)
+
+Branch `cursor/comercial360-onda6-cr-pedido-tip-392b` empilhada em #181:
+Draft PR **#182** — vínculo Pedido no ContaReceber fail-closed (mesmo group/empresa). Patterns #66.
+Sem merge/VPS. CI em curso.
+
+---
+
 ## AUTÔNOMO — tip EnviarParaCaixa fail-closed (2026-09-30T11:20Z)
 
 Branch `cursor/comercial360-onda6-caixa-envio-tip-392b` empilhada em #180:
