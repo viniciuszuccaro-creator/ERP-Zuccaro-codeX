@@ -1,3 +1,16 @@
+## CURSOR — vigília #178 delta HEAD (2026-09-30T18:13Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `e84315e6` (antes `98820d20`) — ainda “Correção candidata” (**não** final) |
+| Delta | `Bloqueia edição de pedido cancelado em corrida` — `postgresPedidoRepository.ts` + teste RLS; STATUS Codex |
+| CI | frontend/backend/concurrency SUCCESS |
+| Ação | Sem tip-port; sem revisão consolidada (aguarda FINAL) |
+| Expedição | #196 CI SUCCESS — stack #192–#196 |
+| Próximo | Vigília FINAL #178 |
+
+---
+
 ## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
 
 | Campo | Valor |

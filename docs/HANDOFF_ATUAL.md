@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T18:13Z)
+
+#178 HEAD `e84315e6` (delta: bloqueio edição pedido cancelado em corrida). Ainda candidato — sem tip-port. #196 OK. Vigília 15min.
+
+---
+
 ## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
 
 #196 CI SUCCESS (`ef0a583d`). Stack Expedição #192–#196 ok.
