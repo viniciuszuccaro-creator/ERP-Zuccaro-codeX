@@ -79,12 +79,16 @@ export async function migrationStatus(databaseUrl?: string) {
 
 /** Read-only, aggregate-only gate. No classification can be inferred from current Produto. */
 export async function pedidoHistorico026Preflight(db: DbQueryExecutor) {
+  const role = await db.query<{ trusted: boolean }>(
+    'SELECT COALESCE(rolsuper OR rolbypassrls,false) trusted FROM pg_roles WHERE rolname=current_user',
+  );
+  const trusted = role.rows[0]?.trusted === true;
   const tables = await db.query<{ pedidos: boolean; itens: boolean; migrations: boolean }>(
     "SELECT to_regclass('pedidos') IS NOT NULL pedidos,to_regclass('pedido_itens') IS NOT NULL itens,to_regclass('schema_migrations') IS NOT NULL migrations",
   );
   const available = tables.rows[0];
   if (!available?.pedidos || !available.itens) {
-    return { gate: 'PEDIDO_026', blocked: true, reasons: ['PEDIDO_TABLES_MISSING'], pedidos: 0, itens: 0, porEmpresa: [] };
+    return { gate: 'PEDIDO_026', blocked: true, reasons: ['PEDIDO_TABLES_MISSING', ...(!trusted ? ['UNTRUSTED_RLS_VISIBILITY'] : [])], pedidos: 0, itens: 0, porEmpresa: [] };
   }
   const columns = await db.query<{ cabecalho: boolean; item: boolean }>(
     "SELECT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedidos'::regclass AND attname='tipo_comercial' AND NOT attisdropped) cabecalho,EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass AND attname='tipo_comercial_snapshot' AND NOT attisdropped) item",
@@ -119,9 +123,10 @@ export async function pedidoHistorico026Preflight(db: DbQueryExecutor) {
   const cabecalho = columns.rows[0]?.cabecalho === true;
   const item = columns.rows[0]?.item === true;
   const reasons: string[] = [];
+  if (!trusted) reasons.push('UNTRUSTED_RLS_VISIBILITY');
   if (pedidos > 0 && !cabecalho) reasons.push('PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED');
   if (itens > 0 && !item) reasons.push('PEDIDO_ITEM_HISTORICAL_TYPE_MAPPING_REQUIRED');
-  if ((pedidos > 0 || itens > 0) && cabecalho && item) reasons.push('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED');
+  if ((pedidos > 0 || itens > 0) && (cabecalho || item)) reasons.push('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED');
   const applied = available.migrations
     ? await db.query<{ present: boolean }>("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE id='026_pedidos_tipo_comercial.sql') present")
     : null;

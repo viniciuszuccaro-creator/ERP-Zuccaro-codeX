@@ -37,6 +37,10 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.equal(report.porEmpresa.find(row=>row.empresaId===identity.empresaId)?.pedidos,2);
       assert.equal(report.porEmpresa.find(row=>row.empresaId===identity.empresaId)?.itens,2);
       assert.ok(report.reasons.includes('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED'));
+      const scoped=await pedidoHistorico026Preflight(f.integrationDb as never);
+      assert.equal(scoped.blocked,true);
+      assert.equal(scoped.pedidos,0);
+      assert.ok(scoped.reasons.includes('UNTRUSTED_RLS_VISIBILITY'));
       const migration=readFileSync(new URL('../migrations/035_orcamento_tipo_especial_snapshot.sql',import.meta.url),'utf8');
       const historical=await f.pg.query<{id:string}>('SELECT id FROM orcamento_itens ORDER BY created_at,id LIMIT 1');
       assert.ok(historical.rows[0]?.id);
@@ -147,7 +151,11 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       assert.equal((await db.query('SELECT id FROM pedidos')).rows[0].id,header);
       assert.equal((await db.query('SELECT id FROM pedido_itens')).rows[0].id,item);
       // Explicit synthetic mapping simulates the separately approved historical lot.
-      await db.exec("ALTER TABLE pedidos ADD COLUMN tipo_comercial text; ALTER TABLE pedido_itens ADD COLUMN tipo_comercial_snapshot text;");
+      await db.exec('ALTER TABLE pedidos ADD COLUMN tipo_comercial text;');
+      const partial=await pedidoHistorico026Preflight(db as never);
+      assert.equal(partial.blocked,true);
+      assert.ok(partial.reasons.includes('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED'));
+      await db.exec('ALTER TABLE pedido_itens ADD COLUMN tipo_comercial_snapshot text;');
       await db.query("UPDATE pedidos SET tipo_comercial='SERVICO' WHERE id=$1",[header]);
       await db.query("UPDATE pedido_itens SET tipo_comercial_snapshot='SERVICO' WHERE id=$1",[item]);
       await db.exec(migration);await db.exec(migration);
