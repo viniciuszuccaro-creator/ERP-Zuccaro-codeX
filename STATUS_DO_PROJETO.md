@@ -1,3 +1,18 @@
+## AUTÔNOMO — tip Pedido data entrega local+RETIRADA (pós-#187) (2026-09-30T12:42Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#187** wire caixa tabs CI SUCCESS |
+| Choice | Fechar ressalva Onda4/5: calendário **local** + `min=` ENTREGA; RETIRADA exige presença (schema) |
+| Branch | `cursor/comercial360-pedido-entrega-local-tip-392b` |
+| Draft PR | (criar) base tip #187 |
+| Escopo | `pedidoUiPolicy` + `PedidoCanonicoPanel`; `buildPedidoPayload` alinhado ao gate |
+| Testes | pedido-ui-policy 25/25 |
+| Colisão | Sem CostPort; sem anexos; sem merge/VPS |
+| Próximo | CI; depois print/share+snapshot_gap ou audit crédito |
+
+---
+
 ## AUTÔNOMO — tip #186 CI SUCCESS + wire caixa tabs CR/CP (2026-09-30T12:35Z)
 
 | Campo | Valor |
@@ -7,9 +22,9 @@
 | Branch | `cursor/comercial360-onda6-caixa-tabs-wire-tip-392b` |
 | Draft PR | **#187** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/187 |
 | Escopo | ContasReceberTab/ContasPagarTab; `PEDIDO_VINCULO_SEM_GRUPO`; source-match testes |
-| Testes | financeiro-titulo-policy 13/13 |
+| Testes | financeiro-titulo-policy 13/13; CI SUCCESS |
 | Colisão | Sem CostPort; sem #178; sem Codex/merge/VPS |
-| Próximo | CI; depois polish data-entrega/print-snapshot ou BLOCKED residual |
+| Próximo | Data entrega Pedido local+RETIRADA (Onda4/5 ressalva) |
 
 ---
 
