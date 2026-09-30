@@ -143,6 +143,15 @@ test('vinculo pedido no titulo exige mesmo grupo/empresa', () => {
     }),
     /nao encontrado/,
   );
+  assert.throws(
+    () => assertPedidoVinculoTitulo({
+      record: { pedido_id: 'ped-1', empresa_id: 'e1', group_id: 'g1' },
+      pedido: { id: 'ped-1', empresa_id: 'e1' },
+      groupId: 'g1',
+      empresaId: 'e1',
+    }),
+    (err) => err?.code === 'PEDIDO_VINCULO_SEM_GRUPO',
+  );
   const ok = assertPedidoVinculoTitulo({
     record: { pedido_id: 'ped-1', empresa_id: 'e1', group_id: 'g1', valor: 10 },
     pedido: { id: 'ped-1', empresa_id: 'e1', group_id: 'g1' },
@@ -269,6 +278,14 @@ test('finance persistence blocks delete of settled titles and closes caixa/conci
   assert.match(enviarCaixa, /pedido_id/);
   assert.match(liquidar, /assertTitulosProntosParaCaixa/);
   assert.match(liquidar, /groupId && empresaId/);
+  const receberTab = await readFile(new URL('../src/components/financeiro/ContasReceberTab.jsx', import.meta.url), 'utf8');
+  const pagarTab = await readFile(new URL('../src/components/financeiro/ContasPagarTab.jsx', import.meta.url), 'utf8');
+  assert.match(receberTab, /assertTitulosProntosParaCaixa/);
+  assert.match(receberTab, /groupId && empresaId/);
+  assert.match(pagarTab, /assertTitulosProntosParaCaixa/);
+  assert.match(pagarTab, /groupId && empresaId/);
+  assert.doesNotMatch(receberTab, /groupId \|\| empresaId/);
+  assert.doesNotMatch(pagarTab, /groupId \|\| empresaId/);
   const vinculos = await readFile(new URL('../src/components/financeiro/ContaReceberVinculosSection.jsx', import.meta.url), 'utf8');
   const form = await readFile(new URL('../src/components/financeiro/ContaReceberForm.jsx', import.meta.url), 'utf8');
   assert.match(vinculos, /filterPedidosParaTitulo/);

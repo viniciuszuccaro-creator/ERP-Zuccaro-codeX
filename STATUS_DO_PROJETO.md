@@ -1,3 +1,37 @@
+## AUTÔNOMO — tip #186 CI SUCCESS + wire caixa tabs CR/CP (2026-09-30T12:35Z)
+
+| Campo | Valor |
+|---|---|
+| Tip anterior | **#186** CreditPort precisão CI SUCCESS |
+| Choice | Fechar ressalva #181: tabs CR/CP usam `assertTitulosProntosParaCaixa` + `groupId&&empresaId`; vínculo exige `pedido.group_id` |
+| Branch | `cursor/comercial360-onda6-caixa-tabs-wire-tip-392b` |
+| Draft PR | (criar) base tip #186 |
+| Escopo | ContasReceberTab/ContasPagarTab; `PEDIDO_VINCULO_SEM_GRUPO`; source-match testes |
+| Testes | financeiro-titulo-policy 13/13 |
+| Colisão | Sem CostPort; sem #178; sem Codex/merge/VPS |
+| Próximo | CI; depois polish data-entrega/print-snapshot ou BLOCKED residual |
+
+---
+
+## REVISÃO IMPLANTAÇÕES — tip Cursor (atualizada pós-exploradores) (2026-09-30T12:35Z)
+
+Fontes: [Revisar tip Onda6 #180-184](bc-fae4c456-1c96-5a07-9431-a8f8d0f217f3) · [Revisar tip Onda4-5 UX](bc-2b47b46d-a810-5eed-87a4-557c40ec6f36)
+
+| Faixa | Parecer | Notas |
+|---|---|---|
+| Onda 4/5 polish #154–#174 | **COM_RESSALVA** | Gaps: RETIRADA×data entrega; calendário UTC vs local; print/share sem snapshot_gap; RBAC print soft→canView |
+| #180 CreditPort+032 | **APTA_TIP** | Precisão ≤6 fechada em **#186** |
+| #181 EnviarParaCaixa | **COM_RESSALVA→fechando** | Componente tip ok; tabs CR/CP sem policy → lote tip atual |
+| #182 CR↔Pedido | **APTA_TIP** | `group_id` soft → endurecido no lote atual |
+| #183 Liquidar | **APTA_TIP** | — |
+| #184 margem port | **APTA_TIP** | — |
+| #186 crédito precisão | **APTA_TIP** | CI SUCCESS |
+
+**Próximos tip-seguros residuais:** data entrega Pedido local+RETIRADA; print/share+snapshot_gap; audit `aprovar-credito`.  
+**BLOCKED:** CostPort real · anexos #50/#59–62 · provedor · tip-port #178.
+
+---
+
 ## AUTÔNOMO — tip crédito precisão fail-closed (paridade #184) (2026-09-30T12:30Z)
 
 | Campo | Valor |
@@ -7,34 +41,9 @@
 | Branch | `cursor/comercial360-credito-precisao-tip-392b` |
 | Draft PR | **#186** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/186 |
 | Escopo | CreditPort: rejeita precisão >6 em item/limite (`VALIDATION_ERROR`); sem inventar crédito |
-| Testes | comercial-onda6-credito-pedido (focado) |
+| Testes | comercial-onda6-credito-pedido 9/9; CI SUCCESS |
 | Colisão | Sem CostPort; sem #178; sem Codex/merge/VPS |
-| Próximo | CI tip; residual ainda CostPort real / anexos / provedor / #178 |
-
----
-
-## REVISÃO IMPLANTAÇÕES — tip Cursor Comercial 360 (2026-09-30T12:30Z)
-
-| Faixa | PRs tip | CI | Parecer |
-|---|---|---|---|
-| Onda 4/5 polish UX | #154–#174 | SUCCESS (stack) | **APTA_TIP** — fail-closed UI (crédito/margem/dirty/entrega/convert/CSV/cancel/validade/print/share/detail/status/history); sem CostPort invent |
-| Onda 6 CreditPort | **#180** + mig 032 | SUCCESS | **APTA_TIP** — `createClienteEmpresaCreditPort` + `assertCredito` create/convert/update; null não inventa; RBAC `aprovar-credito`; testes 8/8 |
-| Onda 6 caixa envio | **#181** | SUCCESS | **APTA_TIP** — `assertTitulosProntosParaCaixa` group∧empresa; bloqueia liquidado/cross-tenant |
-| Onda 6 CR↔Pedido | **#182** | SUCCESS | **APTA_TIP** — `assertPedidoVinculoTitulo` mesmo group/empresa; form helper |
-| Onda 6 liquidar | **#183** | SUCCESS | **APTA_TIP** — LiquidarReceberPagar reusa política caixa; queryKey tenant |
-| Onda 6 margem port | **#184** | SUCCESS | **APTA_TIP** — tip-port #177; `toMicros`≤6; `validateMinimaBps`; sem inventar CostPort |
-| Mapper #48/#110 | #110 | SUCCESS | **APTA_TIP** (legado sintético) — fora do tip Comercial runtime |
-
-### Ressalvas (não bloqueiam tip)
-1. CreditPort `toMicros` estava mais permissivo que margem → **lote tip em curso** (paridade #184).
-2. CostPort BFF **ainda null** no wire — correto (não inventa); bloqueia Onda 7/ATP até fonte real.
-3. #178 (conversão/snapshots Codex) **não tip-port** — invasivo na stack Codex; exige autorização explícita.
-4. Anexos/origem #50/#59–#62 — colisão; não reimplementar.
-5. Pilha draft empilhada — **não merge/main/VPS** neste agente.
-6. #153 HEAD=`12c37e8b` — NÃO_APTA merge (ensaio); sem re-revisão enquanto HEAD estável.
-
-### Desbloqueios futuros
-CostPort real · anexos pós-coordenação · provedor pagamento · autorização tip-port #178 · apply mig 032 em ambiente autorizado.
+| Próximo | Wire tabs CR/CP caixa (fechando #181) |
 
 ---
 

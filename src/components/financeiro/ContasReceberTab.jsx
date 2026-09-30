@@ -25,6 +25,7 @@ import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
+import { assertTitulosProntosParaCaixa } from "@/components/lib/financeiroTituloPolicy";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
@@ -32,7 +33,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const { hasPermission } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  // Onda 6 tip: paridade assertTitulosProntosParaCaixa / LiquidarReceberPagar — exige grupo E empresa.
+  const contextoValido = Boolean(groupId && empresaId);
   const podeVisualizarReceber = hasPermission('Financeiro','ContaReceber','visualizar') || hasPermission('Financeiro', null, 'visualizar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaReceber', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
@@ -119,40 +121,40 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
       if (!podeEnviarCaixaReceber) throw new Error('Sem permissao para enviar titulos ao Caixa.');
-      if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
-      const total = titulos.reduce((sum, titulo) => sum + Number(titulo.valor || 0), 0);
-      if (total <= 0) throw new Error('Valor total invalido para enviar ao Caixa.');
-      if (!window.confirm(`Enviar ${titulos.length} titulo(s) a receber para o Caixa no total de R$ ${total.toFixed(2)}?`)) {
+      const scope = assertTitulosProntosParaCaixa({ titulos, groupId, empresaId });
+      if (scope.total <= 0) throw new Error('Valor total invalido para enviar ao Caixa.');
+      if (!window.confirm(`Enviar ${scope.quantidade} titulo(s) a receber para o Caixa no total de R$ ${scope.total.toFixed(2)}?`)) {
         await auditarFinanceiro({
           acao: 'Cancelamento',
           entidade: 'CaixaOrdemLiquidacao',
           descricao: 'Envio de contas a receber ao Caixa cancelado pelo usuario',
-          dadosNovos: { quantidade: titulos.length, valor_total: total },
+          dadosNovos: { quantidade: scope.quantidade, valor_total: scope.total },
           sucesso: false
         });
         throw new Error('Envio ao Caixa cancelado pelo usuario.');
       }
       const ordens = await Promise.all(titulos.map(async (titulo) => {
         return await createInContext('CaixaOrdemLiquidacao', {
-          group_id: titulo.group_id || groupId,
-          grupo_id: titulo.grupo_id || titulo.group_id || groupId,
-          empresa_id: titulo.empresa_id || empresaId,
+          group_id: scope.groupId,
+          grupo_id: scope.groupId,
+          empresa_id: scope.empresaId,
           tipo_operacao: 'Recebimento',
           origem: 'Contas a Receber',
           valor_total: Number(titulo.valor || 0),
           forma_pagamento_pretendida: 'PIX',
           status: 'Pendente',
+          pedido_id: titulo.pedido_id || null,
           titulos_vinculados: [{
             titulo_id: titulo.id,
             tipo_titulo: 'ContaReceber',
             numero_titulo: sanitizeText(titulo.numero_documento || titulo.descricao),
             cliente_fornecedor_nome: sanitizeText(titulo.cliente),
             valor_titulo: Number(titulo.valor || 0),
-            group_id: titulo.group_id || groupId,
-            grupo_id: titulo.grupo_id || titulo.group_id || groupId,
-            empresa_id: titulo.empresa_id || empresaId
+            group_id: scope.groupId,
+            grupo_id: scope.groupId,
+            empresa_id: scope.empresaId,
+            pedido_id: titulo.pedido_id || null,
           }],
           data_ordem: new Date().toISOString(),
           criado_por: authUser?.full_name || authUser?.email,
@@ -168,8 +170,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         descricao: `${ordens.length} titulo(s) a receber enviados para o Caixa`,
         dadosNovos: { quantidade: ordens.length, ordens_ids: ordens.map(ordem => ordem?.id).filter(Boolean) }
       });
-      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
-      queryClient.invalidateQueries({ queryKey: ['ordens-liquidacao'] });
+      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao', groupId, empresaId] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-liquidacao', groupId, empresaId] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       setContasSelecionadas([]);
     },
@@ -180,7 +182,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de baixar titulo.');
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes de baixar titulo.');
       if (!podeBaixarReceber) throw new Error('Sem permissao para baixar titulo.');
       const conta = contasList.find(c => c.id === id);
       if (!conta) throw new Error('Titulo nao encontrado para baixa.');
@@ -251,7 +253,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
-      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes da baixa multipla.');
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes da baixa multipla.');
       if (!podeBaixarReceber) throw new Error('Sem permissao para baixa multipla.');
       if (contasSelecionadas.length === 0) throw new Error('Selecione ao menos um titulo para baixa multipla.');
       await Promise.all(contasSelecionadas.map(async (contaId) => {
@@ -333,7 +335,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const handleBaixar = (conta) => {
     if (!contextoValido) {
-      toast({ title: 'Selecione grupo ou empresa para baixar titulo', variant: 'destructive' });
+      toast({ title: 'Selecione grupo e empresa para baixar titulo', variant: 'destructive' });
       return;
     }
     if (!podeBaixarReceber) {
@@ -355,7 +357,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const handleBaixarMultipla = () => {
     if (!contextoValido) {
-      toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
+      toast({ title: 'Selecione grupo e empresa para baixa multipla', variant: 'destructive' });
       return;
     }
     if (!podeBaixarReceber) {
@@ -382,7 +384,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
     if (!contextoValido) {
-      toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo ou empresa antes de confirmar a baixa.', variant: 'destructive' });
+      toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo e empresa antes de confirmar a baixa.', variant: 'destructive' });
       return;
     }
     const totalTitulos = contaAtual ? 1 : contasSelecionadas.length;
@@ -417,7 +419,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         totalSelecionado={totalSelecionado}
         onExportar={() => {
           if (!podeExportarReceber) { toast({ title: '⛔ Sem permissão para exportar', variant: 'destructive' }); return; }
-          if (!contextoValido) { toast({ title: 'Selecione grupo ou empresa para exportar', variant: 'destructive' }); return; }
+          if (!contextoValido) { toast({ title: 'Selecione grupo e empresa para exportar', variant: 'destructive' }); return; }
           const itens = contasSelecionadas.length > 0
             ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : filteredContas;
