@@ -181,7 +181,11 @@ test('pedido payload bloqueia preço unitário zero', () => {
 test('pedido data entrega UI gate: ENTREGA exige hoje+ e bloqueia passado/ausente', () => {
   assert.equal(isPedidoDataEntregaPassada('2026-09-28', nowFixed), true);
   assert.equal(isPedidoDataEntregaPassada('2026-09-29', nowFixed), false);
-  assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'RETIRADA', dataEntregaSolicitada: '', now: nowFixed }).blockSave, false);
+  const retiradaEmpty = evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'RETIRADA', dataEntregaSolicitada: '', now: nowFixed });
+  assert.equal(retiradaEmpty.blockSave, true);
+  assert.equal(retiradaEmpty.mode, 'missing');
+  assert.match(retiradaEmpty.minDay, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'RETIRADA', dataEntregaSolicitada: '2020-01-01', now: nowFixed }).blockSave, false);
   assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'ENTREGA', dataEntregaSolicitada: '', now: nowFixed }).mode, 'missing');
   assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'ENTREGA', dataEntregaSolicitada: '2026-09-28', now: nowFixed }).mode, 'past');
   assert.equal(evaluatePedidoDataEntregaUiGate({ tipoOperacao: 'ENTREGA', dataEntregaSolicitada: '2026-09-29', now: nowFixed }).mode, 'ready');
@@ -192,6 +196,17 @@ test('pedido data entrega UI gate: ENTREGA exige hoje+ e bloqueia passado/ausent
     }, { now: nowFixed }),
     /passado/i,
   );
+  assert.throws(
+    () => buildPedidoPayload({
+      cliente_empresa_id: 'c', condicao_pagamento_id: 'f', tipo_operacao: 'RETIRADA',
+      data_entrega_solicitada: '', itens: [item],
+    }, { now: nowFixed }),
+    /schema|data solicitada/i,
+  );
+  assert.doesNotThrow(() => buildPedidoPayload({
+    cliente_empresa_id: 'c', condicao_pagamento_id: 'f', tipo_operacao: 'RETIRADA',
+    data_entrega_solicitada: '2020-01-01', itens: [item],
+  }, { now: nowFixed }));
 });
 
 test('painel pedido wire data entrega fail-closed', async () => {
@@ -201,6 +216,7 @@ test('painel pedido wire data entrega fail-closed', async () => {
   assert.match(panel, /dataEntregaUi\.blockSave/);
   assert.match(panel, /Comercial\.pedido\.data-entrega/);
   assert.match(panel, /pedido-data-entrega/);
+  assert.match(panel, /min=\{form\.tipo_operacao==='ENTREGA'\?dataEntregaUi\.minDay:undefined\}/);
 });
 
 test('pedido print PDF gate fail-closed sem contexto/permissão/itens', () => {
