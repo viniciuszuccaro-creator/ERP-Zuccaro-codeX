@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-09-30T16:29Z)
+
+#178 `e4d3d904` CI OK — ainda candidato (não final). Sem tip-port. Stack Expedição #192–#194 ok. Vigília 15min.
+
+---
+
 ## CURSOR — Expedição #194 CI + vigília #178 (2026-09-30T16:13Z)
 
 Stack **#192–#194** CI SUCCESS. #178 `03fd92d2` ainda candidato (não final) — sem tip-port.
