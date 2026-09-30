@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
+import { pedidoHistorico026Preflight } from '../src/db/migrate.js';
 import { outboxFixture } from './omnichannelOutboxFixture.js';
 import { isolatedPostgres } from './omnichannelPostgresFixture.js';
 import { SEED_IDS as S } from '../scripts/seedDevIds.js';
@@ -32,6 +33,10 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
         assert.equal(order.itens[0]?.tipo_comercial_snapshot,tipo);
         assert.equal(order.itens[0]?.requer_producao,true);
       }
+      const report=await pedidoHistorico026Preflight(f.pg as never);
+      assert.equal(report.porEmpresa.find(row=>row.empresaId===identity.empresaId)?.pedidos,2);
+      assert.equal(report.porEmpresa.find(row=>row.empresaId===identity.empresaId)?.itens,2);
+      assert.ok(report.reasons.includes('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED'));
       const migration=readFileSync(new URL('../migrations/035_orcamento_tipo_especial_snapshot.sql',import.meta.url),'utf8');
       const historical=await f.pg.query<{id:string}>('SELECT id FROM orcamento_itens ORDER BY created_at,id LIMIT 1');
       assert.ok(historical.rows[0]?.id);
@@ -126,6 +131,12 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       const header=randomUUID(),item=randomUUID();
       await db.query('INSERT INTO pedidos VALUES($1,$2,$3,1)',[header,S.groupA,S.empresaA]);
       await db.query('INSERT INTO pedido_itens VALUES($1)',[item]);
+      const before=await pedidoHistorico026Preflight(db as never);
+      assert.equal(before.blocked,true);
+      assert.equal(before.pedidos,1);
+      assert.equal(before.itens,1);
+      assert.equal(before.porEmpresa[0]?.empresaId,S.empresaA);
+      assert.ok(before.reasons.includes('PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED'));
       const migration=readFileSync(new URL('../migrations/026_pedidos_tipo_comercial.sql',import.meta.url),'utf8');
       await assert.rejects(()=>db.transaction(async tx=>{
         await tx.exec(migration);
@@ -140,6 +151,9 @@ for (const engine of ['PGlite', 'PostgreSQL real']) {
       await db.query("UPDATE pedidos SET tipo_comercial='SERVICO' WHERE id=$1",[header]);
       await db.query("UPDATE pedido_itens SET tipo_comercial_snapshot='SERVICO' WHERE id=$1",[item]);
       await db.exec(migration);await db.exec(migration);
+      const classified=await pedidoHistorico026Preflight(db as never);
+      assert.equal(classified.blocked,true);
+      assert.deepEqual(classified.reasons,['HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED']);
       assert.equal((await db.query('SELECT tipo_comercial FROM pedidos')).rows[0].tipo_comercial,'SERVICO');
       assert.equal((await db.query('SELECT tipo_comercial_snapshot FROM pedido_itens')).rows[0].tipo_comercial_snapshot,'SERVICO');
       await assert.rejects(()=>db.query('UPDATE pedidos SET tipo_comercial=NULL'),(e:unknown)=>(e as {code:string}).code==='23502');

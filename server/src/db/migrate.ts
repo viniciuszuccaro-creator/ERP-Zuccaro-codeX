@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../config/env.js';
 import { createDbClient } from './client.js';
+import type { DbQueryExecutor } from './client.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../migrations');
@@ -76,7 +77,76 @@ export async function migrationStatus(databaseUrl?: string) {
   };
 }
 
+/** Read-only, aggregate-only gate. No classification can be inferred from current Produto. */
+export async function pedidoHistorico026Preflight(db: DbQueryExecutor) {
+  const tables = await db.query<{ pedidos: boolean; itens: boolean; migrations: boolean }>(
+    "SELECT to_regclass('pedidos') IS NOT NULL pedidos,to_regclass('pedido_itens') IS NOT NULL itens,to_regclass('schema_migrations') IS NOT NULL migrations",
+  );
+  const available = tables.rows[0];
+  if (!available?.pedidos || !available.itens) {
+    return { gate: 'PEDIDO_026', blocked: true, reasons: ['PEDIDO_TABLES_MISSING'], pedidos: 0, itens: 0, porEmpresa: [] };
+  }
+  const columns = await db.query<{ cabecalho: boolean; item: boolean }>(
+    "SELECT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedidos'::regclass AND attname='tipo_comercial' AND NOT attisdropped) cabecalho,EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass AND attname='tipo_comercial_snapshot' AND NOT attisdropped) item",
+  );
+  const [pedidoRows, itemRows, porEmpresaRows] = await Promise.all([
+    db.query<{ total: number }>('SELECT count(*)::int total FROM pedidos'),
+    db.query<{ total: number }>('SELECT count(*)::int total FROM pedido_itens'),
+    db.query<{ group_id: string; empresa_id: string; pedidos: number }>(
+      'SELECT group_id::text,empresa_id::text,count(*)::int pedidos FROM pedidos GROUP BY group_id,empresa_id ORDER BY group_id,empresa_id',
+    ),
+  ]);
+  const pedidos = Number(pedidoRows.rows[0]?.total ?? 0);
+  const itens = Number(itemRows.rows[0]?.total ?? 0);
+  const itemScope = await db.query<{ scoped: boolean }>(
+    "SELECT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass AND attname='group_id' AND NOT attisdropped) AND EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='pedido_itens'::regclass AND attname='empresa_id' AND NOT attisdropped) scoped",
+  );
+  const itemGroups = itemScope.rows[0]?.scoped
+    ? await db.query<{ group_id: string; empresa_id: string; itens: number }>(
+      'SELECT group_id::text,empresa_id::text,count(*)::int itens FROM pedido_itens GROUP BY group_id,empresa_id ORDER BY group_id,empresa_id',
+    )
+    : null;
+  const companies = new Map<string, { groupId: string; empresaId: string; pedidos: number; itens: number | null }>();
+  for (const row of porEmpresaRows.rows) {
+    companies.set(`${row.group_id}:${row.empresa_id}`, { groupId: row.group_id, empresaId: row.empresa_id, pedidos: Number(row.pedidos), itens: itemGroups ? 0 : null });
+  }
+  for (const row of itemGroups?.rows ?? []) {
+    const key = `${row.group_id}:${row.empresa_id}`;
+    const summary = companies.get(key) ?? { groupId: row.group_id, empresaId: row.empresa_id, pedidos: 0, itens: 0 };
+    summary.itens = Number(row.itens);
+    companies.set(key, summary);
+  }
+  const cabecalho = columns.rows[0]?.cabecalho === true;
+  const item = columns.rows[0]?.item === true;
+  const reasons: string[] = [];
+  if (pedidos > 0 && !cabecalho) reasons.push('PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED');
+  if (itens > 0 && !item) reasons.push('PEDIDO_ITEM_HISTORICAL_TYPE_MAPPING_REQUIRED');
+  if ((pedidos > 0 || itens > 0) && cabecalho && item) reasons.push('HISTORICAL_CLASSIFICATION_PROVENANCE_REQUIRED');
+  const applied = available.migrations
+    ? await db.query<{ present: boolean }>("SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE id='026_pedidos_tipo_comercial.sql') present")
+    : null;
+  return {
+    gate: 'PEDIDO_026', blocked: reasons.length > 0, reasons,
+    migrationApplied: applied?.rows[0]?.present === true,
+    columns: { cabecalho, item }, pedidos, itens,
+    porEmpresa: [...companies.values()].sort((a, b) => `${a.groupId}:${a.empresaId}`.localeCompare(`${b.groupId}:${b.empresaId}`)),
+  };
+}
+
+export async function pedidoHistorico026PreflightFromUrl(databaseUrl?: string) {
+  const config = loadConfig({ ...process.env, ...(databaseUrl ? { DATABASE_URL: databaseUrl } : {}), REQUIRE_DATABASE: 'true' });
+  const db = createDbClient(config);
+  try { return await pedidoHistorico026Preflight(db); }
+  finally { await db.end(); }
+}
+
 async function main() {
+  if (process.argv.includes('--preflight-pedido-026')) {
+    const report = await pedidoHistorico026PreflightFromUrl();
+    console.log(JSON.stringify(report, null, 2));
+    if (report.blocked) process.exitCode = 2;
+    return;
+  }
   const statusOnly = process.argv.includes('--status');
   if (statusOnly) {
     const status = await migrationStatus();
