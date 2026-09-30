@@ -5,6 +5,7 @@
 | Tip anterior | **#180** CreditPort CI SUCCESS |
 | Choice | **EnviarParaCaixa** fail-closed multiempresa (Onda 6) |
 | Branch | `cursor/comercial360-onda6-caixa-envio-tip-392b` |
+| Draft PR | **#181** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/181 |
 | Base | tip #180 CreditPort |
 | Escopo | `assertTitulosProntosParaCaixa`; EnviarParaCaixa exige groupId/empresaId; bloqueia liquidado/cross-tenant; queryKey tenant; `pedido_id` na ordem |
 | Reuso | Patterns #65 (não edita branch antiga) |
