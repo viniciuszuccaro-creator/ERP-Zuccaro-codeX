@@ -1,10 +1,26 @@
+## AUTÔNOMO — tip Onda 6 CreditPort + mig 032 (pós-#174) (2026-09-30T11:05Z)
+
+| Campo | Valor |
+|---|---|
+| Choice | **CreditPort Pedido** fail-closed via ClienteEmpresa.limite_* (mig **032** tip-owned) |
+| Branch | `cursor/comercial360-onda6-credit-port-tip-392b` |
+| Draft PR | **#180** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/180 |
+| Base | tip #174 histórico UX |
+| Escopo | `032_cliente_empresas_credito.sql`; `comercialCreditoPolicy` + `createClienteEmpresaCreditPort`; Pedido create/convert/update; RBAC `aprovar-credito`; meta `creditPortFailClosed` |
+| Reuso | Patterns #67 (não edita branch Codex); tip ctor com cost/alcada/promo + credit 4º opcional |
+| Testes | comercial-onda6-credito 8/8; runtime01/07b/08c/09; typecheck OK |
+| Colisão | CostPort invent BLOCKED; anexos #59–62; sem Codex/merge/VPS; sem editar #67 |
+| Próximo | Aguardar CI tip; CostPort real **ou** anexos pós-Codex **ou** vigília |
+
+---
+
 ## AUTÔNOMO — BLOCKED tip #174 CI SUCCESS (2026-09-30T00:25Z)
 
 | Campo | Valor |
 |---|---|
 | Tip | **#174** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/174 CI SUCCESS |
 | Stack | #154→#174 Onda 4/5 polish tip Cursor (sem merge/VPS) |
-| Parecer | **BLOCKED** — polish Onda 4/5 seguro sem migration **esgotado** |
+| Parecer | **BLOCKED** — polish Onda 4/5 seguro sem migration **esgotado** (desbloqueado por CreditPort tip 032) |
 | Motivos | (1) CostPort BFF sem fonte de custo — inventar = BLOCKED; (2) CreditPort/Onda 6 exige mig **032**; (3) anexos/origem/campanha/versões colidem com Codex #50/#59–#67; (4) bulk stub deliberado (sem endpoint) |
 | Ação | Vigília CI/#153 HEAD; sem merge/main/VPS; sem inventar porta |
 | Desbloqueio | CostPort real **ou** 032+CreditPort **ou** anexos pós-coordenação Codex |

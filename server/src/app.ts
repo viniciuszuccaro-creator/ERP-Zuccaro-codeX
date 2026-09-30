@@ -61,6 +61,7 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import { createClienteEmpresaCreditPort } from './services/comercialCreditoPolicy.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { ComercialPromocaoConfigPort } from './services/comercialPromocaoPolicy.js';
@@ -175,6 +176,7 @@ export function createApp(options: CreateAppOptions) {
   const costPort = options.costPort ?? null;
   const alcadaConfig = options.alcadaConfig ?? null;
   const promocaoConfig = options.promocaoConfig ?? null;
+  const creditPort = createClienteEmpresaCreditPort(clienteRepo);
   const orcamentoService = new OrcamentoService(
     orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo, unidadeRepo, condicaoPagamentoRepo,
     tabelaPrecoService,
@@ -190,6 +192,7 @@ export function createApp(options: CreateAppOptions) {
     costPort,
     alcadaConfig,
     promocaoConfig,
+    creditPort,
   );
   const comercialSimulacaoVendaService = new ComercialSimulacaoVendaService(
     tenantGuard,

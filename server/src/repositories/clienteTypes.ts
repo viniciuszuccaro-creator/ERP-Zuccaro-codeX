@@ -142,6 +142,21 @@ const clienteEmpresaEditableFields = {
   observacao_comercial: z.string().trim().max(2000).optional().nullable(),
   tabela_preco_id: z.string().uuid().nullable().optional(),
   condicao_pagamento_id: z.string().uuid().nullable().optional(),
+  limite_credito: z
+    .union([z.string().regex(/^\d+(\.\d{1,6})?$/), z.number().nonnegative(), z.null()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined) return undefined;
+      if (v === null) return null;
+      return typeof v === 'number' ? v.toFixed(6) : Number(v).toFixed(6);
+    }),
+  limite_utilizado: z
+    .union([z.string().regex(/^\d+(\.\d{1,6})?$/), z.number().nonnegative()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined) return undefined;
+      return typeof v === 'number' ? v.toFixed(6) : Number(v).toFixed(6);
+    }),
   origem: z.enum(CLIENTE_ORIGENS).optional(),
   legacy_id: z.string().trim().max(120).optional().nullable(),
   legacy_code: z.string().trim().max(80).optional().nullable(),
@@ -181,6 +196,9 @@ export type ClienteEmpresa = {
   observacao_comercial: string | null;
   tabela_preco_id: string | null;
   condicao_pagamento_id: string | null;
+  /** NULL = crédito não configurado (CreditPort não inventa). */
+  limite_credito: string | null;
+  limite_utilizado: string;
   origem: typeof CLIENTE_ORIGENS[number];
   legacy_id: string | null;
   legacy_code: string | null;

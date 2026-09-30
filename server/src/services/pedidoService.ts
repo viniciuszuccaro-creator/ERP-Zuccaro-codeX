@@ -24,6 +24,10 @@ import {
   type ComercialCostPort,
 } from './comercialMargemAlcadaPolicy.js';
 import {
+  assertCreditoSuficienteOuAprovar,
+  type ComercialCreditPort,
+} from './comercialCreditoPolicy.js';
+import {
   deveLiberarDescontoSemAprovarPorAvista,
   type ComercialAlcadaConfigPort,
 } from './comercialCondicaoAvistaPolicy.js';
@@ -71,7 +75,7 @@ export type PedidoSalePricePort = {
   } | null>;
 };
 
-export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort };
+export type { ComercialCostPort, ComercialAlcadaConfigPort, ComercialPromocaoConfigPort, ComercialCreditPort };
 
 export function pedidoAuditSnapshot(row: Pedido) {
   return sanitizeAuditSnapshot({
@@ -115,6 +119,8 @@ export class PedidoService {
     private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
     /** Opcional: config de promoção; ausente = fail-closed se payload pedir promoção. */
     private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
+    /** Opcional: CreditPort (ClienteEmpresa); ausente/null = não inventa crédito. */
+    private readonly credit: ComercialCreditPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -129,6 +135,7 @@ export class PedidoService {
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, write, ctx.actorId!, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      await this.assertCreditoAlcada(ctx, scope, write);
       const created = await this.repo.create(scope, write, ctx.actorId!, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
@@ -183,6 +190,7 @@ export class PedidoService {
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
         const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+        await this.assertCreditoAlcada(ctx, scope, write);
         const created = await this.repo.create(scope, write, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
@@ -252,6 +260,7 @@ export class PedidoService {
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      await this.assertCreditoAlcada(ctx, scope, write);
       const after = await this.repo.update(scope, id, write, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
@@ -508,6 +517,33 @@ export class PedidoService {
       items: itens,
       costs: this.costs,
       canAprovar: await this.canAprovarComercial(ctx),
+      entityLabel: 'Pedido',
+    });
+  }
+
+  private async assertCreditoAlcada(
+    ctx: RequestContext,
+    scope: PedidoScope,
+    data: Pick<PedidoCreate, 'cliente_empresa_id' | 'itens'>,
+  ) {
+    let canAprovarCredito = false;
+    try {
+      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar-credito', { allowGlobalWildcard: false });
+      canAprovarCredito = true;
+    } catch (error) {
+      if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
+        canAprovarCredito = false;
+      } else {
+        throw error;
+      }
+    }
+    await assertCreditoSuficienteOuAprovar({
+      groupId: scope.groupId,
+      empresaId: scope.empresaId,
+      clienteEmpresaId: data.cliente_empresa_id,
+      items: data.itens,
+      credit: this.credit,
+      canAprovarCredito,
       entityLabel: 'Pedido',
     });
   }
