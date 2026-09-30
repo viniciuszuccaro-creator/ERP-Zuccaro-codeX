@@ -63,6 +63,7 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
     detalhes = {},
     dadosNovos = null,
     dadosAnteriores = null,
+    failClosed = false,
   }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -84,6 +85,9 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
         data_hora: new Date().toISOString(),
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar romaneio: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar romaneio", error);
     }
   };
@@ -311,33 +315,53 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
       }
 
       // Side-effect legado Pedido → Em Trânsito (contrato Codex; patch descritivo).
-      for (const pedido of plano.pedidos) {
-        const legadoPatch = resolvePedidoLegadoAposRomaneio({
-          pedidoId: pedido.id,
-          groupId: effectiveGroupId,
-          empresaId: pedido.empresa_id || effectiveEmpresaId,
-          romaneioId: romaneio.id,
+      const pedidosLegadoAplicados = [];
+      try {
+        for (const pedido of plano.pedidos) {
+          const legadoPatch = resolvePedidoLegadoAposRomaneio({
+            pedidoId: pedido.id,
+            groupId: effectiveGroupId,
+            empresaId: pedido.empresa_id || effectiveEmpresaId,
+            romaneioId: romaneio.id,
+          });
+          if (!legadoPatch) continue;
+          const { _legado_side_effect, ...patch } = legadoPatch;
+          await updateInContext("Pedido", pedido.id, {
+            ...patch,
+            historico_status: [
+              ...(pedido.historico_status || []),
+              {
+                status: patch.status,
+                data_hora: now,
+                usuario: user?.full_name || user?.email || "Sistema",
+                usuario_id: user?.id,
+                observacao: `Romaneio ${romaneio.id} criado para entrega.`,
+                _legado_side_effect,
+              },
+            ],
+          });
+          pedidosLegadoAplicados.push(pedido.id);
+        }
+      } catch (legadoError) {
+        await auditRomaneio({
+          acao: "Romaneio.integracao.parcial",
+          sucesso: false,
+          motivo: "pedido_legado_parcial",
+          failClosed: false,
+          dadosNovos: {
+            romaneio_id: romaneio.id,
+            pedidos_ok: pedidosLegadoAplicados,
+            erro: String(legadoError?.message || legadoError),
+          },
         });
-        if (!legadoPatch) continue;
-        const { _legado_side_effect, ...patch } = legadoPatch;
-        await updateInContext("Pedido", pedido.id, {
-          ...patch,
-          historico_status: [
-            ...(pedido.historico_status || []),
-            {
-              status: patch.status,
-              data_hora: now,
-              usuario: user?.full_name || user?.email || "Sistema",
-              usuario_id: user?.id,
-              observacao: `Romaneio ${romaneio.id} criado para entrega.`,
-              _legado_side_effect,
-            },
-          ],
-        });
+        throw new Error(
+          `Estado parcial: romaneio/despacho persistido, mas Pedido legado incompleto (${pedidosLegadoAplicados.length}/${plano.pedidos.length}). ${legadoError?.message || legadoError}`,
+        );
       }
 
       await auditRomaneio({
         acao: "Romaneio.integracao",
+        failClosed: true,
         detalhes: {
           romaneio_id: romaneio.id,
           entregas: entregasParaDespacho.length,

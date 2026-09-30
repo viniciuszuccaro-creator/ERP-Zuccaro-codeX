@@ -47,7 +47,7 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
     || hasPermission("Expedicao", "Estoque", "baixar")
     || hasPermission("Comercial", "Pedido", "editar");
 
-  const auditComprovante = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+  const auditComprovante = async ({ acao, sucesso = true, motivo = null, detalhes = {}, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao,
@@ -70,6 +70,9 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar comprovante de entrega: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar comprovante de entrega", error);
     }
   };
@@ -200,8 +203,8 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         throw new Error("Confirmacao cancelada pelo usuario.");
       }
 
-      await baixarEstoqueItens();
-
+      // Compensação multi-etapa: Entrega/Pedido primeiro; estoque depois (não TX atômica).
+      // UI NÃO declara sucesso se qualquer etapa posterior falhar após persistência parcial.
       const agora = new Date().toISOString();
       const comprovanteData = {
         foto_comprovante: fotoComprovante,
@@ -214,6 +217,7 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         observacoes_recebimento: sanitizeText(observacoes),
       };
 
+      let entregaPersistidaId = entrega?.id || null;
       if (entrega?.id) {
         const resolved = resolveRegistroEntregaFinal({
           before: entrega,
@@ -260,18 +264,54 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
           }],
         };
         assertEntregaOnCreate({ record: seed, entregas: [] });
-        await createInContext("Entrega", seed);
+        const criada = await createInContext("Entrega", seed);
+        entregaPersistidaId = criada?.id || null;
       }
 
       // Side-effect legado Pedido → Entregue (contrato Codex).
-      await updateInContext("Pedido", pedido.id, {
-        status: "Entregue",
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-      });
+      try {
+        await updateInContext("Pedido", pedido.id, {
+          status: "Entregue",
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+        });
+      } catch (pedidoError) {
+        await auditComprovante({
+          acao: "Entrega.comprovante.confirmar.parcial",
+          sucesso: false,
+          motivo: "pedido_legado_parcial",
+          detalhes: { entrega_id: entregaPersistidaId, erro: String(pedidoError?.message || pedidoError) },
+        });
+        throw new Error(
+          `Estado parcial: entrega persistida, mas Pedido legado incompleto. ${pedidoError?.message || pedidoError}`,
+        );
+      }
 
-      await auditComprovante({ acao: "Entrega.comprovante.confirmar", detalhes: { possui_foto: Boolean(fotoComprovante), possui_gps: Boolean(geolocalizacao), itens_baixados: pedido?.itens_revenda?.length || 0 } });
+      try {
+        await baixarEstoqueItens();
+      } catch (estoqueError) {
+        await auditComprovante({
+          acao: "Entrega.comprovante.confirmar.parcial",
+          sucesso: false,
+          motivo: "estoque_parcial",
+          detalhes: { entrega_id: entregaPersistidaId, erro: String(estoqueError?.message || estoqueError) },
+        });
+        throw new Error(
+          `Estado parcial: entrega/Pedido persistidos, mas baixa de estoque incompleta. ${estoqueError?.message || estoqueError}`,
+        );
+      }
+
+      await auditComprovante({
+        acao: "Entrega.comprovante.confirmar",
+        failClosed: true,
+        detalhes: {
+          possui_foto: Boolean(fotoComprovante),
+          possui_gps: Boolean(geolocalizacao),
+          itens_baixados: pedido?.itens_revenda?.length || 0,
+          entrega_id: entregaPersistidaId,
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });

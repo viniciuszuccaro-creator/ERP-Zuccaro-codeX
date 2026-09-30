@@ -225,6 +225,7 @@ export const PERSISTENCIA_EXPEDICAO = Object.freeze({
   despachoPatches: 'compensacao', // applyDespachoPatchesWithRollback
   integracaoRomaneio: 'compensacao', // create Entregas + Romaneio + patches + Pedido legado
   logisticaReversa: 'compensacao', // Entrega + ContaReceber + estoque + notificação (sem TX única)
+  comprovanteEntrega: 'compensacao', // Entrega/Pedido primeiro; estoque depois (sem TX única)
   registroFinal: 'atomico_policy', // resolveRegistroEntregaFinal + um update
 });
 
@@ -462,6 +463,32 @@ export const resolveRegistroEntregaFinal = ({
     if (!(toQty(quantidade_entregue) > 0)) {
       throw new Error('Quantidade entregue obrigatoria na entrega parcial.');
     }
+    const stBefore = normalizeEntregaStatus(before.status);
+    if (stBefore.includes('entregue') && !stBefore.includes('parcial') && !stBefore.includes('frustr')) {
+      throw new Error('Entrega ja finalizada; registro parcial nao permitido.');
+    }
+    const prevQty = toQty(before.entrega_parcial?.quantidade_entregue);
+    const nextQty = toQty(quantidade_entregue);
+    if (stBefore.includes('parcial') && prevQty > 0 && nextQty === prevQty) {
+      // Retry idempotente: mesma quantidade já persistida.
+      return {
+        reuse: before,
+        record: before,
+        action: 'retry',
+        modo,
+        patch: {
+          group_id: gId,
+          grupo_id: gId,
+          empresa_id: eId,
+          status: before.status,
+          entrega_parcial: before.entrega_parcial,
+          comprovante_entrega: before.comprovante_entrega,
+        },
+      };
+    }
+    if (stBefore.includes('parcial') && prevQty > 0 && nextQty < prevQty) {
+      throw new Error('Quantidade parcial nao pode ser reduzida sem estorno.');
+    }
     status = 'Entrega Parcial';
     const quantidadePedida = toQty(
       before.entrega_parcial?.quantidade_pedida
@@ -479,7 +506,7 @@ export const resolveRegistroEntregaFinal = ({
       },
       entrega_parcial: {
         ativada: true,
-        quantidade_entregue: toQty(quantidade_entregue),
+        quantidade_entregue: nextQty,
         ...(quantidadePedida > 0 ? { quantidade_pedida: quantidadePedida } : {}),
       },
     };

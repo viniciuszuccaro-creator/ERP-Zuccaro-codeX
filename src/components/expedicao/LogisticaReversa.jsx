@@ -40,7 +40,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
     || hasPermission("Expedicao", "Entregas", "editar")
     || hasPermission("Expedicao", "Painel Logistico", "editar");
 
-  const auditReversa = async ({ acao: acaoAudit, sucesso = true, motivo: motivoAudit = null, detalhes: detalhesAudit = {} }) => {
+  const auditReversa = async ({ acao: acaoAudit, sucesso = true, motivo: motivoAudit = null, detalhes: detalhesAudit = {}, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao: acaoAudit,
@@ -59,6 +59,9 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar logistica reversa: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar logistica reversa", error);
     }
   };
@@ -81,11 +84,25 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
       }
 
       // Compensação multi-etapa (não TX atômica): Entrega → ContaReceber → estoque → notificação.
+      // UI NÃO declara sucesso se etapa posterior falhar após Entrega já persistida.
+      const etapasOk = { entrega: false, financeiro: false, estoque: false, notificacao: false };
+      const quantidadeDevolvida = Number(
+        (entrega.pedido_id && (await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1))?.[0]
+          ?.itens_revenda || [])
+          .reduce((sum, item) => sum + Number(item.quantidade || 0), 0),
+      ) || Number(entrega.volumes || entrega.quantidade_total || 1);
       const entregaPatch = {
         status: "Devolvido",
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
+        logistica_reversa: {
+          motivo: motivoLimpo,
+          detalhes: detalhesLimpos,
+          acao: acao,
+          quantidade_devolvida: quantidadeDevolvida > 0 ? quantidadeDevolvida : 1,
+          persistencia: PERSISTENCIA_EXPEDICAO.logisticaReversa,
+        },
         entrega_frustrada: {
           motivo: motivoLimpo,
           detalhes: detalhesLimpos,
@@ -106,62 +123,85 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
       };
       assertEntregaOnUpdate({ before: entrega, patch: entregaPatch });
       await updateInContext("Entrega", entrega.id, entregaPatch);
+      etapasOk.entrega = true;
 
       let ped = null;
-      if (entrega.pedido_id) {
-        const pedido = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
-        ped = pedido[0] || null;
-        if (ped?.contas_receber_ids?.length > 0) {
-          for (const contaId of ped.contas_receber_ids) {
-            await updateInContext("ContaReceber", contaId, {
-              status: "Cancelado",
-              group_id: effectiveGroupId,
-              grupo_id: effectiveGroupId,
-              empresa_id: effectiveEmpresaId,
-              observacoes: `Cancelado automaticamente - Devolução total. Motivo: ${motivoLimpo}`
-            });
+      try {
+        if (entrega.pedido_id) {
+          const pedido = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
+          ped = pedido[0] || null;
+          if (ped?.contas_receber_ids?.length > 0) {
+            for (const contaId of ped.contas_receber_ids) {
+              await updateInContext("ContaReceber", contaId, {
+                status: "Cancelado",
+                group_id: effectiveGroupId,
+                grupo_id: effectiveGroupId,
+                empresa_id: effectiveEmpresaId,
+                observacoes: `Cancelado automaticamente - Devolução total. Motivo: ${motivoLimpo}`
+              });
+            }
           }
         }
-      }
+        etapasOk.financeiro = true;
 
-      if (acao === "devolver_estoque" && entrega.pedido_id) {
-        const pedidoRef = ped || (await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1))[0];
-        if (pedidoRef) {
-          for (const item of (pedidoRef.itens_revenda || [])) {
-            await createInContext("MovimentacaoEstoque", {
-              empresa_id: effectiveEmpresaId,
-              group_id: effectiveGroupId,
-              grupo_id: effectiveGroupId,
-              origem_movimento: "devolucao",
-              origem_documento_id: entrega.id,
-              tipo_movimento: "entrada",
-              produto_id: item.produto_id,
-              produto_descricao: item.descricao,
-              quantidade: item.quantidade,
-              unidade_medida: item.unidade,
-              data_movimentacao: new Date().toISOString(),
-              documento: entrega.numero_pedido,
-              motivo: `Devolução - ${motivoLimpo}`,
-              responsavel: user?.full_name || user?.email || "Sistema Automático"
-            });
+        if (acao === "devolver_estoque" && entrega.pedido_id) {
+          const pedidoRef = ped || (await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1))[0];
+          if (pedidoRef) {
+            for (const item of (pedidoRef.itens_revenda || [])) {
+              await createInContext("MovimentacaoEstoque", {
+                empresa_id: effectiveEmpresaId,
+                group_id: effectiveGroupId,
+                grupo_id: effectiveGroupId,
+                origem_movimento: "devolucao",
+                origem_documento_id: entrega.id,
+                tipo_movimento: "entrada",
+                produto_id: item.produto_id,
+                produto_descricao: item.descricao,
+                quantidade: item.quantidade,
+                unidade_medida: item.unidade,
+                data_movimentacao: new Date().toISOString(),
+                documento: entrega.numero_pedido,
+                motivo: `Devolução - ${motivoLimpo}`,
+                responsavel: user?.full_name || user?.email || "Sistema Automático"
+              });
+            }
           }
         }
+        etapasOk.estoque = true;
+
+        const destinatario = ped?.vendedor_id || null;
+        await createInContext("Notificacao", {
+          destinatario_id: destinatario,
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+          tipo: "urgente",
+          categoria: "Comercial",
+          titulo: `Devolução Total - Pedido ${entrega.numero_pedido}`,
+          mensagem: `Cliente ${entrega.cliente_nome} recusou a entrega. Motivo: ${motivoLimpo}. Ação tomada: ${acao}.`,
+          link_acao: `/expedicao?ver=entrega&id=${entrega.id}`
+        });
+        etapasOk.notificacao = true;
+      } catch (secundarioError) {
+        await auditReversa({
+          acao: "Entrega.logisticaReversa.processar.parcial",
+          sucesso: false,
+          motivo: "compensacao_parcial",
+          detalhes: {
+            etapas_ok: etapasOk,
+            erro: String(secundarioError?.message || secundarioError),
+          },
+        });
+        throw new Error(
+          `Estado parcial: entrega marcada Devolvido, mas etapas posteriores incompletas (${JSON.stringify(etapasOk)}). ${secundarioError?.message || secundarioError}`,
+        );
       }
 
-      const destinatario = ped?.vendedor_id || null;
-      await createInContext("Notificacao", {
-        destinatario_id: destinatario,
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        tipo: "urgente",
-        categoria: "Comercial",
-        titulo: `Devolução Total - Pedido ${entrega.numero_pedido}`,
-        mensagem: `Cliente ${entrega.cliente_nome} recusou a entrega. Motivo: ${motivoLimpo}. Ação tomada: ${acao}.`,
-        link_acao: `/expedicao?ver=entrega&id=${entrega.id}`
+      await auditReversa({
+        acao: "Entrega.logisticaReversa.processar",
+        failClosed: true,
+        detalhes: { motivo: motivoLimpo, acao, pedido_id: entrega.pedido_id || null, etapas_ok: etapasOk },
       });
-
-      await auditReversa({ acao: "Entrega.logisticaReversa.processar", detalhes: { motivo: motivoLimpo, acao, pedido_id: entrega.pedido_id || null } });
       return true;
     },
     onSuccess: () => {

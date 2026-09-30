@@ -1,3 +1,25 @@
+## CURSOR — #197 persistência/recuperação + integração telas (2026-09-30T20:20Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#197** `cursor/expedicao-integracao-romaneio-canonico-392b` |
+| Objetivo | Provar persistência/recuperação Pedido→separação→romaneio→despacho→parcial/total; UI sem sucesso parcial |
+| Mudança | Comprovante (Entrega→Pedido→estoque); RomaneioForm/Integracao/Ocorrência/Reversa audit fail-closed; `logistica_reversa` na devolução; parcial idempotente; testes `expedicao-integracao-telas` |
+| Testes | policy+fluxo+integração telas **41/41** |
+| Doc | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` (cenários recuperação + homologação) |
+| Codex #178 | HEAD `790e4be1` ainda “Correção candidata” — **sem tip-port** |
+| Homologação SPA | Pendente (roteiro na doc) |
+| Merge/VPS | **Bloqueado** |
+
+### Quadro
+
+| Pronto p/ integração | Falta | Bloqueios |
+|---|---|---|
+| Persistência multi-etapa fail-closed + testes telas | Homologação humana | #178 FINAL |
+| Compensação documentada | Tip Comercial / externas | Merge/VPS |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T20:08Z)
 
 | Campo | Valor |

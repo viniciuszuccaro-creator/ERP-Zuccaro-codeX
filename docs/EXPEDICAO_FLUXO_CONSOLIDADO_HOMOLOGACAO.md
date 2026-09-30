@@ -48,10 +48,19 @@ Pré-condições: contexto grupo∧empresa, perfil com `Expedicao.Separacao.conf
 1. **Troca de empresa:** na listagem em visão de grupo, selecionar entregas da empresa A; filtrar empresa B → seleção de A some; romaneio não aceita ID de outra empresa.
 2. **RBAC:** perfil sem conferir/criar romaneio → botões/ações bloqueados; tentativa audita bloqueio.
 3. **Separação:** informar quantidades; checklist incompleto bloqueia; confirmação cancelada não grava; quantidades zeradas bloqueiam; divergência grava separação sem liberar “Pronto para Expedir”.
-4. **Romaneio/despacho:** só entregas “Pronto para Expedir” da empresa; checklist de saída; confirmação; após gerar, entregas em “Saiu para Entrega” com `romaneio_id`.
-5. **Parcial/total/ocorrência:** parcial exige quantidade > 0 e prova; total exige prova (assinatura); ocorrência exige motivo; confirmação dupla.
-6. **Pendências:** banner na listagem e resumo em `QueuesLogistica` refletem parcial/ocorrência/atraso/separação.
-7. **Pedido legado:** ver `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — não validar contrato canônico Codex neste gate.
+4. **Romaneio/despacho:** só entregas “Pronto para Expedir” da empresa; checklist de saída; confirmação; após gerar, entregas em “Saiu para Entrega” com `romaneio_id`. Falha no meio do despacho → rollback + **sem toast de sucesso**.
+5. **Parcial/total/ocorrência:** parcial exige quantidade > 0 e prova; retry mesma qtd é idempotente; redução bloqueada; total exige prova; ocorrência exige motivo; confirmação dupla. Comprovante: Entrega antes do estoque; falha de estoque → `Estado parcial` (sem sucesso).
+6. **Devolução:** `logistica_reversa` com motivo+quantidade; falha em financeiro/estoque/notificação após Entrega `Devolvido` → `Estado parcial` (sem sucesso).
+7. **Pendências:** banner na listagem e resumo em `QueuesLogistica` refletem parcial/ocorrência/atraso/separação.
+8. **Pedido legado:** ver `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — não validar contrato canônico Codex neste gate.
+
+## Testes de integração (telas)
+
+```bash
+node --test tests/expedicao-integracao-telas.test.js
+```
+
+Cobre concorrência, despacho repetido, falha parcial, auditoria fail-closed, parcial repetida e devolução — espelhando orquestração de IntegracaoRomaneio / RomaneioForm / Comprovante / LogisticaReversa.
 
 ## Rollback
 

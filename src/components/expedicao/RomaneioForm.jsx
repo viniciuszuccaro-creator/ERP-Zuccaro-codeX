@@ -87,7 +87,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     enabled: (isOpen || windowMode) && contextoValido && canGerarRomaneio,
   });
 
-  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null }) => {
+  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao,
@@ -106,6 +106,9 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar romaneio: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar romaneio", error);
     }
   };
@@ -283,6 +286,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
       await auditRomaneio({
         acao: "Romaneio.gerar",
         sucesso: true,
+        failClosed: true,
         dadosAnteriores: { entregas: entregasSelecionadas.map(e => ({ id: e.id, status: e.status, romaneio_id: e.romaneio_id || null })) },
         dadosNovos: { romaneio_id: romaneio.id, numero_romaneio: romaneio.numero_romaneio, entregas_ids: formData.entregas_selecionadas }
       });
