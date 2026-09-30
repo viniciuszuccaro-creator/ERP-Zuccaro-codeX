@@ -1,3 +1,16 @@
+## CURSOR — vigília #178 + CI #197 (2026-09-30T20:23Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port; sem revisão consolidada FINAL |
+| Expedição #197 | HEAD `7d4f445e` — CI frontend+backend **SUCCESS** (persistência fail-closed) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
 ## CURSOR — #197 persistência/recuperação + integração telas (2026-09-30T20:20Z)
 
 | Campo | Valor |
