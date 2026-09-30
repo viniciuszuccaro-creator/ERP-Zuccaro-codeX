@@ -3,6 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Branch | `cursor/expedicao-fluxo-integrado-pedido-392b` (base tip #195) |
+| Draft PR | **#196** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/196 |
 | Lacunas | seleção Pedidos; unidades; rollback despacho; soft∨→∧; atalho Separação |
 | Docs | `docs/EXPEDICAO_FLUXO_INTEGRADO_PEDIDO.md` |
 | Testes | expedicao-fluxo-operacional + policy + motorista (31/31 locais) |

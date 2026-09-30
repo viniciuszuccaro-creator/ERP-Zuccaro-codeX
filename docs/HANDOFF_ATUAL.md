@@ -1,6 +1,6 @@
 ## CURSOR — Expedição fluxo integrado Pedido (2026-09-30T18:01Z)
 
-Branch `cursor/expedicao-fluxo-integrado-pedido-392b`. Lacunas pós-#195: Pedidos→separação, unidades, rollback.
+Draft PR **#196**. Branch `cursor/expedicao-fluxo-integrado-pedido-392b`. Lacunas pós-#195: Pedidos→separação, unidades, rollback.
 Reservados Codex intactos. Sem merge/VPS. CI em curso.
 
 ---
