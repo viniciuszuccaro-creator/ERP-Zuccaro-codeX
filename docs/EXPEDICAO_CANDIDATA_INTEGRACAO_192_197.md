@@ -171,6 +171,7 @@ node --test tests/expedicao-spa-launchpad.playwright.test.mjs tests/expedicao-la
 | SHA #178 | `4f8c6593` mesclado sobre tip Expedição |
 | Tip-port Comercial | **Não** — Codex #178 preservada |
 | Achado | Contratos fonte Separacao divergem (#178 inline vs tip #197 `expedicaoFluxoOperacionalPolicy`); testes adaptados para aceitar ambas |
+| CI flaky herdado #178 | `orcamento-ui-policy`: validade YYYY-MM-DD vs T12:00 local falha após meio-dia no dia da fixture — estabilizado com `now` fixo **só** na branch compat |
 | Aprovação/deploy | **Bloqueados** (ambas candidatas) |
 
 ## Rollback

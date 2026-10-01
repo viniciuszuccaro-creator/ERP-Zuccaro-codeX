@@ -20,6 +20,9 @@ import {
   resolveOrcamentoResumoPreviewState,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
 
+/** Relógio fixo: validade YYYY-MM-DD vira T12:00 local; após o meio-dia do dia civil o fixture flakava no CI. */
+const NOW = new Date('2026-09-29T15:00:00.000Z');
+
 const form = () => ({
   cliente_empresa_id: 'cliente-empresa-1',
   condicao_pagamento_id: 'condicao-1',
@@ -41,7 +44,7 @@ test('calculo de orcamento usa inteiros decimais e nao float', () => {
 });
 
 test('payload permite somente campos comerciais e ignora tenant, status, numero e totais', () => {
-  const payload = buildOrcamentoPayload(form());
+  const payload = buildOrcamentoPayload(form(), { now: NOW });
   assert.equal(payload.observacoes, 'proposta sintética');
   assert.deepEqual(Object.keys(payload).sort(), ['cliente_empresa_id', 'condicao_pagamento_id', 'itens', 'observacoes', 'validade_em']);
   assert.equal(payload.itens[0].quantidade, '2.500000');
@@ -51,6 +54,7 @@ test('payload permite somente campos comerciais e ignora tenant, status, numero 
 
 test('payload inclui refs de promoção quando a simulação aplicada confirma', () => {
   const payload = buildOrcamentoPayload(form(), {
+    now: NOW,
     promocao: { aplicada: true, bps: 500, cupom: 'CPA10' },
   });
   assert.deepEqual(payload.promocao, { bps: 500, cupom: 'CPA10' });
@@ -59,9 +63,9 @@ test('payload inclui refs de promoção quando a simulação aplicada confirma',
     promocao_aplicada: true,
     promocao_bps: 250,
     promocao_cupom: 'VIP5',
-  });
+  }, { now: NOW });
   assert.deepEqual(fromPersisted.promocao, { bps: 250, cupom: 'VIP5' });
-  assert.equal('promocao' in buildOrcamentoPayload(form()), false);
+  assert.equal('promocao' in buildOrcamentoPayload(form(), { now: NOW }), false);
 });
 
 test('politica visual exige permissao exata e estado editavel', () => {
@@ -84,13 +88,13 @@ test('Comercial integra orcamentos sem persistencia Base44 paralela', async () =
 });
 
 test('payload invalido e bloqueado antes da chamada HTTP', () => {
-  assert.throws(() => buildOrcamentoPayload({ ...form(), cliente_empresa_id: '' }), /cliente/i);
-  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [] }), /item/i);
-  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], quantidade: '0' }] }), /quantidade/i);
-  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], preco_unitario: '0' }] }), /preço unitário/i);
-  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], desconto: '99' }] }), /desconto/i);
+  assert.throws(() => buildOrcamentoPayload({ ...form(), cliente_empresa_id: '' }, { now: NOW }), /cliente/i);
+  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [] }, { now: NOW }), /item/i);
+  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], quantidade: '0' }] }, { now: NOW }), /quantidade/i);
+  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], preco_unitario: '0' }] }, { now: NOW }), /preço unitário/i);
+  assert.throws(() => buildOrcamentoPayload({ ...form(), itens: [{ ...form().itens[0], desconto: '99' }] }, { now: NOW }), /desconto/i);
   assert.throws(
-    () => buildOrcamentoPayload({ ...form(), validade_em: '2020-01-01' }, { now: new Date('2026-09-29T15:00:00.000Z') }),
+    () => buildOrcamentoPayload({ ...form(), validade_em: '2020-01-01' }, { now: NOW }),
     /Validade expirada/i,
   );
 });

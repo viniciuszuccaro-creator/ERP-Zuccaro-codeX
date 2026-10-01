@@ -1,3 +1,15 @@
+## CURSOR — CI compat #178×#197 flaky validade (2026-10-01T13:12Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-compat-178-sim-392b` (isolada) |
+| Causa | `orcamento-ui-policy`: `validade_em=2026-10-01` + comparação T12:00 após meio-dia UTC → `Validade expirada` nos payloads OK |
+| Correção | Relógio fixo `NOW=2026-09-29T15:00Z` em `buildOrcamentoPayload` dos testes — **sem** tip-port #178 |
+| Tip #197 | Intacta; Codex #178 `4f8c6593` intacta |
+| Merge/VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — simulação compat #178×#197 (branch isolada)
 
 Merge `4f8c6593` (#178 candidata) em `cursor/expedicao-compat-178-sim-392b` sobre tip Expedição.
