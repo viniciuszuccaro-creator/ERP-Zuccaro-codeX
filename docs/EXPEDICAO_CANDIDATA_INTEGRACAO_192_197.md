@@ -7,7 +7,7 @@
 | Candidata | Stack draft **#192 → #197** (tip = #197) |
 | Branch tip | `cursor/expedicao-integracao-romaneio-canonico-392b` |
 | HEAD tip (código pacote) | `7d4f445e` (persistência fail-closed) |
-| HEAD tip (atual) | tip pós-Playwright/navegação (pacote código `7d4f445e`) |
+| HEAD tip (atual) | `330c4bc0` pós-Playwright/navegação (pacote código `7d4f445e`) |
 | Estado | **Candidata de integração** — SPA local Playwright avançou A–D+E+I; ≠ API/PG/VPS |
 | CI tip | frontend+backend no HEAD do tip (**≠** homologação SPA/VPS) |
 | Codex Comercial #178 | `4f8c6593` ainda **candidata** (R08C fixture); sem tip-port; CI SUCCESS |
@@ -156,7 +156,7 @@ node --test tests/expedicao-spa-launchpad.playwright.test.mjs tests/expedicao-la
 | Item | Conteúdo |
 |---|---|
 | Dependências de merge | Stack draft **#192→#197** em ordem; **não** mesclar tip Expedição antes de revisão humana; tip Comercial **só após #178 FINAL** |
-| Artefato código | Branch `cursor/expedicao-integracao-romaneio-canonico-392b` @ `b8497171` |
+| Artefato código | Branch `cursor/expedicao-integracao-romaneio-canonico-392b` @ `330c4bc0` |
 | Validações pré-merge | `node --test tests/expedicao-*.test.js` (41); CI `erp-runtime-ci`; `git diff --check` |
 | Runtime | Sem promoção VPS; sem migration nova nesta candidata |
 | Rollback | Fechar drafts #197→#192; pós-merge autorizado: revert do merge; **não** reverter 026–035; **não** tocar Pedido Codex |
