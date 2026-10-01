@@ -14,6 +14,7 @@ import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import type { PedidoService } from '../services/pedidoService.js';
+import type { ExpedicaoService } from '../services/expedicaoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
 import type { TenantCrudService } from '../services/tenantCrudService.js';
@@ -43,6 +44,7 @@ export type ApiDeps = {
   condicaoPagamentoService: CondicaoPagamentoService;
   orcamentoService: OrcamentoService;
   pedidoService: PedidoService;
+  expedicaoService: ExpedicaoService;
 };
 
 function ctxFromReq(req: Request) {
@@ -1078,6 +1080,70 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
     catch (error) { next(error); }
   });
 }
+
+function mountExpedicaoRoutes(router: Router, service: ExpedicaoService) {
+  const entregas = '/api/v1/entregas';
+  const romaneios = '/api/v1/romaneios';
+
+  router.get(entregas, requireTenantScope, async (req, res, next) => {
+    try {
+      res.json(await service.listEntregas(ctxFromReq(req), {
+        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
+        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        pedidoId: typeof req.query.pedidoId === 'string' ? req.query.pedidoId : undefined,
+        cidade: typeof req.query.cidade === 'string' ? req.query.cidade : undefined,
+        clienteId: typeof req.query.clienteId === 'string' ? req.query.clienteId : undefined,
+      }));
+    } catch (error) { next(error); }
+  });
+  router.post(entregas, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.createEntrega(ctxFromReq(req), req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${entregas}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.getEntrega(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.patch(`${entregas}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.applyEntregaPatch(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${entregas}/:id/historico`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.historyEntrega(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${entregas}/:id/separacao`, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.concluirSeparacao(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${entregas}/:id/registrar`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.registrarFinal(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.post(`${entregas}/:id/devolucao`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.devolucao(ctxFromReq(req), req.params.id, req.body) }); }
+    catch (error) { next(error); }
+  });
+
+  router.get(romaneios, requireTenantScope, async (req, res, next) => {
+    try {
+      res.json(await service.listRomaneios(ctxFromReq(req), {
+        limit: req.query.limit === undefined ? undefined : Number(req.query.limit),
+        offset: req.query.offset === undefined ? undefined : Number(req.query.offset),
+      }));
+    } catch (error) { next(error); }
+  });
+  router.post(romaneios, requireTenantScope, async (req, res, next) => {
+    try { res.status(201).json({ data: await service.criarRomaneioDespacho(ctxFromReq(req), req.body) }); }
+    catch (error) { next(error); }
+  });
+  router.get(`${romaneios}/:id`, requireTenantScope, async (req, res, next) => {
+    try { res.json({ data: await service.getRomaneio(ctxFromReq(req), req.params.id) }); }
+    catch (error) { next(error); }
+  });
+}
 export function createApiRouter(deps: ApiDeps) {
   const router = Router();
 
@@ -1184,11 +1250,11 @@ export function createApiRouter(deps: ApiDeps) {
       runtime: 'ERP-RUNTIME-08B',
       auth: getAuthFoundation(deps.config.authMode),
       config: publicConfigView(deps.config),
-      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento', 'Pedido'],
-      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido'],
-      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido'],
+      httpPilotEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio'],
+      preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio', 'SeparacaoConferencia'],
+      httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento/Pedido/Expedicao use the canonical frontend HTTP client; Expedicao Pedido/estoque side-effects remain reserved until Codex tip-port',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
@@ -1264,6 +1330,21 @@ export function createApiRouter(deps: ApiDeps) {
         idempotentConversion: true,
         statusHistory: true,
       },
+      expedicao: {
+        backendHttp: true,
+        frontendHttp: true,
+        entities: ['Entrega', 'Romaneio', 'SeparacaoConferencia'],
+        pagination: true,
+        tenantIntegrity: true,
+        sequentialNumero: true,
+        transactionalAudit: true,
+        rbacFailClosed: true,
+        idempotency: true,
+        statusHistory: true,
+        pedidoEstoqueSideEffects: 'reserved',
+        migration: '025_expedicao_entregas_romaneios.sql',
+        migrationAppliedOperationally: false,
+      },
     });
   });
 
@@ -1279,6 +1360,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
   mountOrcamentoRoutes(router, deps.orcamentoService);
   mountPedidoRoutes(router, deps.pedidoService);
+  mountExpedicaoRoutes(router, deps.expedicaoService);
 
   return router;
 }

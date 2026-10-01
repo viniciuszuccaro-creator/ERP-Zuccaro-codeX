@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -274,6 +275,40 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
           dadosNovos: { reuse_id: fluxo.reuse.id },
         });
         return fluxo.reuse;
+      }
+
+      if (isHttpExpedicaoMode) {
+        const result = await httpApiClient.expedicao.criarRomaneio({
+          confirmed: true,
+          motorista_nome: motoristaSanitizado,
+          veiculo: veiculoSanitizado,
+          placa: placaSanitizada,
+          checklist_saida: checklist,
+          entregas_ids: entregasParaDespacho.map((e) => e.id),
+          despachar: true,
+          idempotency_key: `rom:${effectiveEmpresaId}:${entregasParaDespacho.map((e) => e.id).sort().join(",")}`,
+        });
+        const romaneioHttp = result?.romaneio || result;
+        // Pedido legado / estoque: reserved no BFF (coordenação Codex) — sem tip-port.
+        if (result?.reused) {
+          await auditRomaneio({
+            acao: "Romaneio.integracao.retry",
+            sucesso: true,
+            dadosNovos: { reuse_id: romaneioHttp?.id, persistencia: "http_canonica" },
+          });
+        } else {
+          await auditRomaneio({
+            acao: "Romaneio.integracao",
+            sucesso: true,
+            dadosNovos: {
+              romaneio_id: romaneioHttp?.id,
+              persistencia: "http_canonica",
+              pedido_side_effect: result?.pedidoSideEffect || "reserved",
+              estoque_side_effect: result?.estoqueSideEffect || "reserved",
+            },
+          });
+        }
+        return romaneioHttp;
       }
 
       const romaneio = await createInContext("Romaneio", {

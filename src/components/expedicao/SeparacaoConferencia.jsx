@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -177,6 +178,32 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
           dadosNovos: { reuse_id: decision.reuse.id },
         });
         return decision.reuse;
+      }
+
+      // Persistência canônica HTTP (BFF+PG) quando flag ativa — SPA local não é prova PG.
+      if (isHttpExpedicaoMode && (entrega?.id || entregaId)) {
+        const targetEntregaId = entrega?.id || entregaId;
+        const result = await httpApiClient.expedicao.separacao(targetEntregaId, {
+          confirmed: true,
+          checklist: {
+            conferiu_quantidade: checklist.conferiu_quantidade === true,
+            conferiu_qualidade: checklist.conferiu_qualidade === true,
+            conferiu_embalagem: checklist.conferiu_embalagem === true,
+            conferiu_etiquetas: checklist.conferiu_etiquetas === true,
+            conferiu_documentos: checklist.conferiu_documentos === true,
+          },
+          itens: itens.map((item) => ({
+            produto_id: item.produto_id || null,
+            descricao: item.descricao || item.produto_descricao || "Item",
+            unidade_sigla: item.unidade_separada || item.unidade || "UN",
+            quantidade_pedida: item.quantidade_pedida ?? item.quantidade ?? 0,
+            quantidade_separada: item.quantidade_separada ?? 0,
+          })),
+          idempotency_key: `sep:${targetEntregaId}:${effectiveEmpresaId}`,
+        });
+        // Pedido/estoque side-effect permanece reserved no BFF (coordenação Codex).
+        void SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT;
+        return result?.separacao || result;
       }
 
       const separacao = await createInContext("SeparacaoConferencia", separacaoRecord);

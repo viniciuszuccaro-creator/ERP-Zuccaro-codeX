@@ -1,3 +1,20 @@
+## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-persistencia-canonica-392b` |
+| Inventário | Sem Entrega/Romaneio no server até 024; SPA/policies/telas existentes reutilizadas |
+| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) |
+| Multiempresa/RBAC/auditoria | `groupId∧empresaId`; actions `conferir/expedir/entregar/ocorrencia`; audit create/change_status |
+| Pedido/estoque | Portas **reserved** (coordenação Codex; sem tip-port) |
+| UI | Flag `VITE_ERP_HTTP_EXPEDICAO`; Separacao/Romaneio/Detalhes/Reversa/Integracao → API canônica |
+| Testes | `runtime11-expedicao-*` HTTP+migration+bridge PASS; PG e2e gated por `DATABASE_URL` |
+| SPA local | **≠** persistência real (base UX apenas) |
+| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
+| Merge/VPS | **Bloqueado** até gate; migration sem aplicação operacional |
+
+---
+
 ## CURSOR — pacote #197 integrado: LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
 
 | Campo | Valor |

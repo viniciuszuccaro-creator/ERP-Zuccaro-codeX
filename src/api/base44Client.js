@@ -8,6 +8,7 @@ import {
 import { createHttpApiClient } from './httpApiClient.js';
 import {
   HTTP_PILOT_ENTITIES,
+  isHttpExpedicaoEnabled,
   resolveErpApiBaseUrl,
   resolveErpBackendMode,
   resolveHttpPilotEntities,
@@ -25,6 +26,7 @@ export const isLocalOnlyMode = erpBackendMode === 'local'
   || (erpBackendMode !== 'http' && erpBackendMode !== 'remote' && !hasRemoteBase44Config);
 
 export const isHttpBackendMode = erpBackendMode === 'http';
+export const isHttpExpedicaoMode = isHttpExpedicaoEnabled(import.meta.env);
 export const isApiKeyMode = isLocalOnlyMode || isHttpBackendMode || !!apiKey;
 
 export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';

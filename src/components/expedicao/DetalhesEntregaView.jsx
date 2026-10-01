@@ -1,5 +1,6 @@
 ﻿import React from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -168,7 +169,20 @@ export default function DetalhesEntregaView({
             return;
           }
         }
-        const atualizada = await updateInContext("Entrega", entrega.id, resolved.patch);
+        let atualizada;
+        if (isHttpExpedicaoMode) {
+          const result = await httpApiClient.expedicao.registrar(entrega.id, {
+            confirmed: true,
+            modo,
+            comprovante: entrega.comprovante_entrega || {},
+            quantidade_entregue: quantidadeParcial,
+            motivo: motivoOcorrencia,
+            idempotency_key: `reg:${entrega.id}:${modo}:${quantidadeParcial || motivoOcorrencia || 'total'}`,
+          });
+          atualizada = result?.entrega || result;
+        } else {
+          atualizada = await updateInContext("Entrega", entrega.id, resolved.patch);
+        }
         await auditarEntrega({
           acao: "DetalhesEntrega.alterar_status",
           descricao: `Status da entrega alterado para ${resolved.patch.status}.`,
