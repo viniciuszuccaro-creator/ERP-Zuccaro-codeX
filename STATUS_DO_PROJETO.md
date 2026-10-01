@@ -1,3 +1,16 @@
+## CURSOR — vigília #178 (2026-10-01T00:31Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `8256f029` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
 ## CURSOR — vigília #178 (2026-10-01T00:15Z)
 
 | Campo | Valor |
