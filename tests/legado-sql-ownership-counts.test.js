@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { inspectLegacySql, ownershipCountQuery, parseOwnershipCounts, sqlcmdArguments } from '../scripts/legado/sql-ownership-counts.mjs';
+import { financialLinkQuery, inspectLegacySql, ownershipCountQuery, parseFinancialLinks, parseOwnershipCounts, sqlcmdArguments } from '../scripts/legado/sql-ownership-counts.mjs';
 
 test('uses only allowlisted read-only SQL sources and requires every copy online/read-only', () => {
   const sql = ownershipCountQuery();
@@ -56,4 +56,35 @@ test('rejects malformed and unallowlisted SQL output without echoing it', () => 
   for (const raw of invalid) {
     assert.throws(() => parseOwnershipCounts(raw), { message: 'LEGACY_SQL_RESULT_INVALID' });
   }
+});
+
+test('financial link probe counts only candidate relations and keeps ownership blocked', () => {
+  const sql = financialLinkQuery();
+  assert.match(sql, /LEGACY_SQL_READ_ONLY_GATE/);
+  assert.match(sql, /is_read_only = 1/);
+  assert.match(sql, /\[ContaCorrenteClientes\]/);
+  assert.match(sql, /\[PedidoVenda\]/);
+  assert.match(sql, /v\.NRPEDIDO = c\.NRPEDIDOVENDA AND v\.CODIGOCLIENTE = c\.CODIGOCLIENTE/);
+  assert.doesNotMatch(sql, /\b(?:INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|EXEC)\b/i);
+  const result = parseFinancialLinks(JSON.stringify([
+    { categoria: 'semPedido', quantidade: 3 },
+    { categoria: 'semCorrespondencia', quantidade: 2 },
+    { categoria: 'pedidoAmbiguo', quantidade: 1 },
+    { categoria: 'pedidoCandidatoUnico', quantidade: 4 },
+  ]));
+  assert.equal(result.total, 10);
+  assert.equal(result.pedidoCandidatoUnico, 4);
+  assert.equal(result.ownershipProven, false);
+  assert.equal(result.importAuthorized, false);
+  assert.doesNotMatch(JSON.stringify(result), /clienteId|pedidoId|cnpj|codigoEmpresa/);
+});
+
+test('financial link parser fails closed on private or duplicated SQL categories', () => {
+  for (const value of [
+    'private-row', '{}',
+    JSON.stringify([{ categoria: 'cliente', quantidade: 1 }]),
+    JSON.stringify([{ categoria: 'semPedido', quantidade: 1.2 }]),
+    JSON.stringify([{ categoria: 'semPedido', quantidade: 1 }, { categoria: 'semPedido', quantidade: 2 }]),
+  ]) assert.throws(() => parseFinancialLinks(value), { message: 'LEGACY_SQL_RESULT_INVALID' });
+  assert.equal(parseFinancialLinks('[]').total, 0);
 });

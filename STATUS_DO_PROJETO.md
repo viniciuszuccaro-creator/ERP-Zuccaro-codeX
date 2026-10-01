@@ -1,3 +1,7 @@
+## Legado: vinculo financeiro agregado somente leitura (2026-10-01)
+
+O inspetor SQL legado ganhou um modo opcional `--financial-links`: conta em EMP03 a correspondencia candidata entre ContaCorrenteClientes e PedidoVenda por numero do pedido e codigo do cliente, separando referencias ausentes, ambiguas e pedido sem codigo empresarial. O resultado e agregado, nao emite linhas privadas e mantem `ownershipProven=false` e `importAuthorized=false`; correspondencia candidata nao identifica juridicamente a empresa. Nenhuma consulta real nova, carga em staging de banco ou importacao operacional foi executada neste lote. Seis testes focados, `audit:baseline`, lint, build e `git diff --check` passaram no Windows; a suite geral e o typecheck ainda exibem falhas de baseline fora destes arquivos. Proximo passo: executar o modo somente leitura na copia SQL isolada e confrontar as contagens com o relatorio privado, mantendo os registros sem prova em quarentena.
+
 ## Legado: reconciliação privada somente leitura (2026-09-30)
 
 Hardening seguinte no mesmo verificador: o resumo de cada extração e todas as linhas de quarentena devem declarar explicitamente que importação não foi autorizada nem executada. Valor ausente ou divergente bloqueia o relatório antes de qualquer uso posterior. Os seis CSVs privados atuais continuam conciliados, com zero violações de flag; oito testes sintéticos dirigidos passaram. Isto não comprova origem empresarial de estoque/financeiro nem equivale a carga em staging de banco.
