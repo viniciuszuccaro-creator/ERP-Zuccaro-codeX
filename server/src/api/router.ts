@@ -1342,8 +1342,9 @@ export function createApiRouter(deps: ApiDeps) {
         idempotency: true,
         statusHistory: true,
         pedidoEstoqueSideEffects: 'reserved',
-        migration: '025_expedicao_entregas_romaneios.sql',
+        migration: '036_expedicao_entregas_romaneios.sql',
         migrationAppliedOperationally: false,
+        migrationNumberingNote: '036 evita conflito com reserva comercial Codex 025-035',
       },
     });
   });

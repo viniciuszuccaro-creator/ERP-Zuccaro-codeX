@@ -1,7 +1,8 @@
 -- ERP-EXPEDICAO V1. Persistencia canonica Entrega/Romaneio/Separacao.
--- Aditiva; executar somente em CI ate gate de VPS proprio. Sem aplicacao operacional.
+-- Numeracao 036: evita conflito com candidata comercial Codex (#178) que reserva 025–035
+-- (025_pedidos_origem… … 035_orcamento_tipo_especial…). Aditiva; CI only ate gate VPS.
+-- Sem aplicacao operacional. Rollback somente com backup/gate.
 -- Side-effects Pedido/estoque reservados (coordenacao Codex Comercial) — sem tip-port.
-
 CREATE TABLE IF NOT EXISTS entregas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES groups(id),

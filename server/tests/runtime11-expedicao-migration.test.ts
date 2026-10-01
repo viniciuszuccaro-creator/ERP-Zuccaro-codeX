@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('migration 025 preserva tenant RLS historico romaneio e side-effects reservados', async () => {
-  const source = await readFile(new URL('../migrations/025_expedicao_entregas_romaneios.sql', import.meta.url), 'utf8');
+test('migration 036 preserva tenant RLS historico romaneio e evita conflito 025-035 comercial', async () => {
+  const source = await readFile(new URL('../migrations/036_expedicao_entregas_romaneios.sql', import.meta.url), 'utf8');
   for (const required of [
     'assert_entrega_same_tenant',
     'assert_entrega_item_same_tenant',
@@ -23,6 +23,8 @@ test('migration 025 preserva tenant RLS historico romaneio e side-effects reserv
     'Pedido soft/nullable',
     'Rollback somente com backup/gate',
     'Sem aplicacao operacional',
+    'Numeracao 036',
+    '025–035',
   ]) assert.ok(source.includes(required), required);
   assert.doesNotMatch(source, /count\s*\(\s*\*\s*\)\s*\+\s*1/i);
 });

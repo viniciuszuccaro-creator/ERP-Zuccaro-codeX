@@ -1,10 +1,26 @@
+## CURSOR — #199 Expedição persistência canônica (2026-10-01T18:00Z)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| Migration | **`036_expedicao_entregas_romaneios.sql`** (renumerada; comercial Codex #178 reserva **025–035**) |
+| Implementado | repos in-memory+PG, `ExpedicaoService`, HTTP `/entregas\|romaneios`, auditoria TX, telas → API (`VITE_ERP_HTTP_EXPEDICAO`) |
+| Portas Pedido/estoque | Contrato em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` — default `reserved`; **sem tip-port** na branch Codex |
+| Testes PG | `runtime11-expedicao-pglite` — tenant/RBAC/concorrência/rollback/despacho repetido/parcial/devolução |
+| Navegador | `tests/expedicao-api-pg.playwright.test.mjs` — **API_HTTP_PGLITE** (≠ SPA_LOCAL / ≠ mock) |
+| Mocks identificados | `runtime11-expedicao-http*` = in-memory |
+| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
+| Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
+
+---
+
 ## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
 
 | Campo | Valor |
 |---|---|
 | Branch | `cursor/expedicao-persistencia-canonica-392b` |
 | Inventário | Sem Entrega/Romaneio no server até 024; SPA/policies/telas existentes reutilizadas |
-| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) |
+| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) → **superseded by 036** |
 | Multiempresa/RBAC/auditoria | `groupId∧empresaId`; actions `conferir/expedir/entregar/ocorrencia`; audit create/change_status |
 | Pedido/estoque | Portas **reserved** (coordenação Codex; sem tip-port) |
 | UI | Flag `VITE_ERP_HTTP_EXPEDICAO`; Separacao/Romaneio/Detalhes/Reversa/Integracao → API canônica |
