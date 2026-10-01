@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
 import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -230,19 +232,32 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
           usuario: user?.full_name || user?.email || "Sistema",
           usuario_id: user?.id,
         });
-        const historico = Array.isArray(resolved.patch.historico_status) ? [...resolved.patch.historico_status] : [];
-        if (historico.length > 0) {
-          historico[historico.length - 1] = {
-            ...historico[historico.length - 1],
-            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
-            localizacao: geolocalizacao || null,
-          };
+        if (isHttpExpedicaoMode) {
+          const result = await httpApiClient.expedicao.registrar(entrega.id, {
+            confirmed: true,
+            modo: "total",
+            comprovante: comprovanteData,
+            idempotency_key: `comp:${entrega.id}:${agora}`,
+          });
+          entregaPersistidaId = result?.entrega?.id || entrega.id;
+        } else {
+          const historico = Array.isArray(resolved.patch.historico_status) ? [...resolved.patch.historico_status] : [];
+          if (historico.length > 0) {
+            historico[historico.length - 1] = {
+              ...historico[historico.length - 1],
+              observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
+              localizacao: geolocalizacao || null,
+            };
+          }
+          await updateInContext("Entrega", entrega.id, {
+            ...resolved.patch,
+            historico_status: historico,
+          });
         }
-        await updateInContext("Entrega", entrega.id, {
-          ...resolved.patch,
-          historico_status: historico,
-        });
       } else {
+        if (isHttpExpedicaoMode) {
+          throw new Error("No modo HTTP e necessario uma Entrega existente para confirmar comprovante.");
+        }
         const seed = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
@@ -268,38 +283,40 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         entregaPersistidaId = criada?.id || null;
       }
 
-      // Side-effect legado Pedido → Entregue (contrato Codex).
-      try {
-        await updateInContext("Pedido", pedido.id, {
-          status: "Entregue",
-          group_id: effectiveGroupId,
-          grupo_id: effectiveGroupId,
-          empresa_id: effectiveEmpresaId,
-        });
-      } catch (pedidoError) {
-        await auditComprovante({
-          acao: "Entrega.comprovante.confirmar.parcial",
-          sucesso: false,
-          motivo: "pedido_legado_parcial",
-          detalhes: { entrega_id: entregaPersistidaId, erro: String(pedidoError?.message || pedidoError) },
-        });
-        throw new Error(
-          `Estado parcial: entrega persistida, mas Pedido legado incompleto. ${pedidoError?.message || pedidoError}`,
-        );
-      }
+      if (!isHttpExpedicaoMode) {
+        // Side-effect legado Pedido → Entregue (contrato Codex) — fora do caminho HTTP canônico.
+        try {
+          await updateInContext("Pedido", pedido.id, {
+            status: "Entregue",
+            group_id: effectiveGroupId,
+            grupo_id: effectiveGroupId,
+            empresa_id: effectiveEmpresaId,
+          });
+        } catch (pedidoError) {
+          await auditComprovante({
+            acao: "Entrega.comprovante.confirmar.parcial",
+            sucesso: false,
+            motivo: "pedido_legado_parcial",
+            detalhes: { entrega_id: entregaPersistidaId, erro: String(pedidoError?.message || pedidoError) },
+          });
+          throw new Error(
+            `Estado parcial: entrega persistida, mas Pedido legado incompleto. ${pedidoError?.message || pedidoError}`,
+          );
+        }
 
-      try {
-        await baixarEstoqueItens();
-      } catch (estoqueError) {
-        await auditComprovante({
-          acao: "Entrega.comprovante.confirmar.parcial",
-          sucesso: false,
-          motivo: "estoque_parcial",
-          detalhes: { entrega_id: entregaPersistidaId, erro: String(estoqueError?.message || estoqueError) },
-        });
-        throw new Error(
-          `Estado parcial: entrega/Pedido persistidos, mas baixa de estoque incompleta. ${estoqueError?.message || estoqueError}`,
-        );
+        try {
+          await baixarEstoqueItens();
+        } catch (estoqueError) {
+          await auditComprovante({
+            acao: "Entrega.comprovante.confirmar.parcial",
+            sucesso: false,
+            motivo: "estoque_parcial",
+            detalhes: { entrega_id: entregaPersistidaId, erro: String(estoqueError?.message || estoqueError) },
+          });
+          throw new Error(
+            `Estado parcial: entrega/Pedido persistidos, mas baixa de estoque incompleta. ${estoqueError?.message || estoqueError}`,
+          );
+        }
       }
 
       await auditComprovante({
@@ -308,8 +325,9 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         detalhes: {
           possui_foto: Boolean(fotoComprovante),
           possui_gps: Boolean(geolocalizacao),
-          itens_baixados: pedido?.itens_revenda?.length || 0,
+          itens_baixados: isHttpExpedicaoMode ? 0 : (pedido?.itens_revenda?.length || 0),
           entrega_id: entregaPersistidaId,
+          persistencia: isHttpExpedicaoMode ? "http_canonica" : "spa_local",
         },
       });
     },
@@ -317,12 +335,14 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       queryClient.invalidateQueries({ queryKey: ["entregas"] });
       queryClient.invalidateQueries({ queryKey: ["produtos"] });
-      toast.success("Entrega confirmada e estoque baixado.");
+      toast.success(isHttpExpedicaoMode
+        ? "Entrega confirmada via API canônica."
+        : "Entrega confirmada e estoque baixado.");
       if (onSuccess) onSuccess();
     },
     onError: (error) => {
       if (error?.message !== "Confirmacao cancelada pelo usuario.") {
-        toast.error(error?.message || "Erro ao confirmar entrega.");
+        toast.error(formatExpedicaoHttpError(error));
       }
     }
   });

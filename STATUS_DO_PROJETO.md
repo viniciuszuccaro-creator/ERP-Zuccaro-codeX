@@ -1,3 +1,17 @@
+## CURSOR — #199 complementar UI BFF + composição Comercial (2026-10-01T19:50Z)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| UI BFF | FormularioEntrega create; Separacao; Romaneio; Detalhes parcial/total/assinatura; Ocorrencia frustrada; Comprovante; Devolucao |
+| Erros | `formatExpedicaoHttpError` nas telas HTTP |
+| Provas | Playwright reload + RBAC + isolamento + erro 404; PGlite compose 025–035+036 |
+| Coordenação | `docs/EXPEDICAO_COORDENACAO_CODEX.md` |
+| Parecer Codex | SHA **`4f8c6593506f681689e021226ab024f57c7aede9`** — `docs/PARECER_CODEX_178_SHA_4f8c6593.md` |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — #199 Expedição persistência canônica (2026-10-01T18:00Z)
 
 | Campo | Valor |

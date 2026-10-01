@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
 import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
 
@@ -127,13 +129,28 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
           usuario: user?.full_name || user?.email || "Sistema",
           usuario_id: user?.id,
         });
-        const patch = {
-          ...resolved.patch,
-          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia],
-        };
-        assertEntregaOnUpdate({ before: entrega, patch });
-        entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
+        if (isHttpExpedicaoMode) {
+          const result = await httpApiClient.expedicao.registrar(entrega.id, {
+            confirmed: true,
+            modo: "ocorrencia",
+            motivo: motivoFrustrada,
+            idempotency_key: `ocor:${entrega.id}:${Date.now()}`,
+          });
+          entregaAtualizada = result?.entrega || result;
+        } else {
+          const patch = {
+            ...resolved.patch,
+            ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia],
+          };
+          assertEntregaOnUpdate({ before: entrega, patch });
+          entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
+        }
       } else if (entrega?.id) {
+        if (isHttpExpedicaoMode) {
+          // Anotacao nao-frustrada: BFF canônico so muta estado via registrar/ocorrencia.
+          // Mantem fail-closed — nao mascara como sucesso local.
+          throw new Error("No modo HTTP, registre ocorrencia do tipo Entrega Frustrada ou use o detalhe da entrega.");
+        }
         const patch = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
@@ -143,6 +160,9 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
         assertEntregaOnUpdate({ before: entrega, patch });
         entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
       } else {
+        if (isHttpExpedicaoMode) {
+          throw new Error("No modo HTTP e necessario uma Entrega existente para registrar ocorrencia.");
+        }
         const seed = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
@@ -162,8 +182,8 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
         entregaAtualizada = await createInContext("Entrega", seed);
       }
 
-      if (tipoOcorrencia === "Entrega Frustrada") {
-        // Side-effect legado Pedido (contrato Codex).
+      if (tipoOcorrencia === "Entrega Frustrada" && !isHttpExpedicaoMode) {
+        // Side-effect legado Pedido (contrato Codex) — fora do caminho HTTP canônico.
         try {
           await updateInContext("Pedido", pedido.id, {
             group_id: effectiveGroupId,
@@ -216,7 +236,7 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
       onClose?.();
     },
     onError: (error) => {
-      if (error?.message !== "Registro cancelado pelo usuario.") toast.error(error?.message || "Erro ao registrar ocorrencia.");
+      if (error?.message !== "Registro cancelado pelo usuario.") toast.error(formatExpedicaoHttpError(error));
     }
   });
 

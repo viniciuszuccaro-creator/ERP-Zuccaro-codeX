@@ -1,3 +1,9 @@
+## CURSOR — pacote complementar #199 UI BFF + composição (2026-10-01T19:50Z)
+
+Wire completo separação/expedição/parcial/total/ocorrência/devolução via BFF canônico (estados suportados). Prova Playwright: reload, RBAC 403, isolamento empresa 404, erro com code. Composição mig comercial 025–035 + 036 PGlite. Parecer Codex SHA `4f8c6593` em `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (canal documental). Sem tip-port. Merge/VPS bloqueado.
+
+---
+
 ## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
 
 Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.
