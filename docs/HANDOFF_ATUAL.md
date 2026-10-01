@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-10-01T12:14Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 `01d5c16e` CI OK. Homologação SPA parcial (A–J BLOCKED agente). Vigília 15min.
+
+---
+
 ## CURSOR — homologação SPA Expedição #197 (2026-10-01T12:05Z)
 
 #197: bootstrap sessão + redirect `/Expedicao/*`→launchpad. Seed+KPIs OK. A–J **BLOCKED** no agente (`openWindow`/cards). Requisito: operar cards do launchpad. #178 `4f8c6593` sem tip-port. Merge/VPS bloqueado. Doc canônica candidata atualizada.
