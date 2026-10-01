@@ -44,7 +44,7 @@ A branch tip #199 já inclui a cadeia #192–#197 via base. Não tip-port Comerc
 
 ## Coordenação Comercial
 
-Pedido/estoque: portas reserved até tip-port Codex. Contrato mínimo: `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`.  
+Pedido/estoque: portas reserved até tip-port Codex. Contrato mínimo: `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`.
 Migration Expedição = **036** — não reutilizar 025–035.
 
 ## Merge/VPS
@@ -52,13 +52,13 @@ Migration Expedição = **036** — não reutilizar 025–035.
 **Bloqueado.** Migration 036 só no repositório/CI até gate operacional + backup.
 ## Escopo coberto (pacote)
 
-1. Seleção Pedidos elegíveis; separação/conferência integral/parcial; bloqueio por qtd/unidade/estado  
-2. Create/reuse Entrega; romaneio; despacho; idempotência; recuperação de falha (compensação)  
-3. Parcial/total + prova; ocorrências; logística reversa (assert + `logistica_reversa`); quantidades pendentes  
-4. Filtros empresa, cidade, **cliente**, data cliente, futuras — coerentes em listagem, mapa e romaneio  
-5. RBAC + grupo∧empresa + auditoria fail-closed nas ações sensíveis  
-6. **UI não declara sucesso com estado parcialmente persistido** (IntegracaoRomaneio, RomaneioForm, Comprovante, Ocorrência, LogisticaReversa)  
-7. Testes de policy **e** integração das telas (concorrência, despacho repetido, falha parcial, auditoria, parcial repetida, devolução)  
+1. Seleção Pedidos elegíveis; separação/conferência integral/parcial; bloqueio por qtd/unidade/estado
+2. Create/reuse Entrega; romaneio; despacho; idempotência; recuperação de falha (compensação)
+3. Parcial/total + prova; ocorrências; logística reversa (assert + `logistica_reversa`); quantidades pendentes
+4. Filtros empresa, cidade, **cliente**, data cliente, futuras — coerentes em listagem, mapa e romaneio
+5. RBAC + grupo∧empresa + auditoria fail-closed nas ações sensíveis
+6. **UI não declara sucesso com estado parcialmente persistido** (IntegracaoRomaneio, RomaneioForm, Comprovante, Ocorrência, LogisticaReversa)
+7. Testes de policy **e** integração das telas (concorrência, despacho repetido, falha parcial, auditoria, parcial repetida, devolução)
 8. Esta candidata documentada (deps comerciais, homologação, rollback)
 
 ## Dependências comerciais (Codex)
@@ -127,14 +127,14 @@ Identidade sintética local (não Auth HTTP / não VPS):
 
 Checklist (navegador — **não** substituível por testes de policy):
 
-1. Grupo∧empresa + permissões Separação/Romaneio/Entrega/Ocorrência/Reversa  
-2. Pedido elegível → separação (manual/IA) → Entrega pronta  
-3. Filtros listagem/mapa/romaneio alinhados (empresa, cidade, cliente, data, futuras)  
-4. Romaneio + despacho; simular falha parcial → status revertido + auditoria; **UI não toast success**  
-5. Comprovante: Entrega antes do estoque; falha de estoque → mensagem `Estado parcial` (sem sucesso)  
-6. Parcial repetida (retry / aumento / bloqueio de redução); ocorrência; devolução; pendências com qtd  
-7. Retry não duplica Entrega/Romaneio  
-8. Pedido legado: validar com Codex no #178 FINAL  
+1. Grupo∧empresa + permissões Separação/Romaneio/Entrega/Ocorrência/Reversa
+2. Pedido elegível → separação (manual/IA) → Entrega pronta
+3. Filtros listagem/mapa/romaneio alinhados (empresa, cidade, cliente, data, futuras)
+4. Romaneio + despacho; simular falha parcial → status revertido + auditoria; **UI não toast success**
+5. Comprovante: Entrega antes do estoque; falha de estoque → mensagem `Estado parcial` (sem sucesso)
+6. Parcial repetida (retry / aumento / bloqueio de redução); ocorrência; devolução; pendências com qtd
+7. Retry não duplica Entrega/Romaneio
+8. Pedido legado: validar com Codex no #178 FINAL
 
 ### Estado da homologação SPA (2026-10-01T15:00Z)
 
@@ -202,9 +202,9 @@ Resposta esperada: parecer em comentário do #178/#199 ou handoff — **sem merg
 
 ## Rollback
 
-1. Sem merge: fechar drafts #199→#192  
-2. Pós-merge autorizado: revert do merge; **não** reverter 025–035; **não** tocar Pedido Codex  
-3. VPS: **não** autorizado neste lote  
+1. Sem merge: fechar drafts #199→#192
+2. Pós-merge autorizado: revert do merge; **não** reverter 025–035; **não** tocar Pedido Codex
+3. VPS: **não** autorizado neste lote
 
 ## Quadro objetivo
 
