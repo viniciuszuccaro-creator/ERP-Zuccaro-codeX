@@ -23,6 +23,7 @@ const SOURCES = [
 
 const bucketNames = ['semCodigo', 'codigo000', 'codigo001', 'codigo002', 'codigo003', 'codigo004', 'codigo005', 'outroCodigo'];
 const financialLinkBuckets = ['semPedido', 'semCliente', 'semCorrespondencia', 'pedidoAmbiguo', 'pedidoSemCodigo', 'pedidoCandidatoUnico'];
+const financialUnmatchedBuckets = ['numeroComOutroCliente', 'numeroNaoEncontrado'];
 
 function readOnlyGate() {
   const databaseList = DATABASES.map((name) => `'${name}'`).join(', ');
@@ -67,21 +68,49 @@ SELECT categoria, COUNT_BIG(*) AS quantidade FROM candidatos
 GROUP BY categoria FOR JSON PATH;`;
 }
 
-export function parseFinancialLinks(raw) {
+export function financialUnmatchedQuery() {
+  return `${readOnlyGate()}
+WITH divergentes AS (
+  SELECT CASE WHEN EXISTS (
+    SELECT 1 FROM [LEGACY_TID_EMP03].[dbo].[PedidoVenda] v
+    WHERE v.NRPEDIDO = c.NRPEDIDOVENDA
+  ) THEN 'numeroComOutroCliente' ELSE 'numeroNaoEncontrado' END AS categoria
+  FROM [LEGACY_TID_EMP03].[dbo].[ContaCorrenteClientes] c
+  WHERE c.NRPEDIDOVENDA > 0 AND c.CODIGOCLIENTE IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM [LEGACY_TID_EMP03].[dbo].[PedidoVenda] v
+      WHERE v.NRPEDIDO = c.NRPEDIDOVENDA AND v.CODIGOCLIENTE = c.CODIGOCLIENTE
+    )
+)
+SELECT categoria, COUNT_BIG(*) AS quantidade FROM divergentes
+GROUP BY categoria FOR JSON PATH;`;
+}
+
+function parseFinancialBuckets(raw, names) {
   let rows;
   try { rows = JSON.parse(String(raw).replace(/\r?\n/g, '').trim()); } catch { throw new Error('LEGACY_SQL_RESULT_INVALID'); }
   if (!Array.isArray(rows)) throw new Error('LEGACY_SQL_RESULT_INVALID');
-  const counts = Object.fromEntries(financialLinkBuckets.map((name) => [name, 0]));
+  const counts = Object.fromEntries(names.map((name) => [name, 0]));
   for (const row of rows) {
-    if (!row || !financialLinkBuckets.includes(row.categoria)
+    if (!row || !names.includes(row.categoria)
       || !Number.isSafeInteger(row.quantidade) || row.quantidade <= 0
       || counts[row.categoria] !== 0) throw new Error('LEGACY_SQL_RESULT_INVALID');
     counts[row.categoria] = row.quantidade;
   }
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
   if (!Number.isSafeInteger(total)) throw new Error('LEGACY_SQL_RESULT_INVALID');
+  return { total, ...counts };
+}
+
+export function parseFinancialLinks(raw) {
   return { mode: 'READ_ONLY_AGGREGATE', source: 'EMP03', entity: 'ContaCorrenteClientes',
-    total, ...counts, ownershipProven: false, importAuthorized: false };
+    ...parseFinancialBuckets(raw, financialLinkBuckets), ownershipProven: false, importAuthorized: false };
+}
+
+export function parseFinancialUnmatched(raw) {
+  return { mode: 'READ_ONLY_AGGREGATE', source: 'EMP03', entity: 'ContaCorrenteClientes',
+    subset: 'semCorrespondencia', ...parseFinancialBuckets(raw, financialUnmatchedBuckets),
+    ownershipProven: false, importAuthorized: false };
 }
 
 export function parseOwnershipCounts(raw) {
@@ -118,13 +147,16 @@ export function sqlcmdArguments(query) {
 if (process.argv[1]?.endsWith('sql-ownership-counts.mjs')) {
   const sqlcmd = 'C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\180\\Tools\\Binn\\SQLCMD.EXE';
   try {
-    if (process.argv.length > 3 || (process.argv[2] && process.argv[2] !== '--financial-links')) {
+    if (process.argv.length > 3 || (process.argv[2]
+      && !['--financial-links', '--financial-unmatched'].includes(process.argv[2]))) {
       throw new Error('LEGACY_SQL_MODE_INVALID');
     }
-    const query = process.argv[2] === '--financial-links' ? financialLinkQuery() : ownershipCountQuery();
+    const query = process.argv[2] === '--financial-links' ? financialLinkQuery()
+      : process.argv[2] === '--financial-unmatched' ? financialUnmatchedQuery() : ownershipCountQuery();
     const raw = execFileSync(sqlcmd, sqlcmdArguments(query),
       { encoding: 'utf8', maxBuffer: 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
-    const report = process.argv[2] === '--financial-links' ? parseFinancialLinks(raw) : parseOwnershipCounts(raw);
+    const report = process.argv[2] === '--financial-links' ? parseFinancialLinks(raw)
+      : process.argv[2] === '--financial-unmatched' ? parseFinancialUnmatched(raw) : parseOwnershipCounts(raw);
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } catch {
     process.stderr.write('LEGACY_SQL_INSPECTION_FAILED\n');

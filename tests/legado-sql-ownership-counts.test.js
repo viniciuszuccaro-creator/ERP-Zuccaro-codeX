@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { financialLinkQuery, inspectLegacySql, ownershipCountQuery, parseFinancialLinks, parseOwnershipCounts, sqlcmdArguments } from '../scripts/legado/sql-ownership-counts.mjs';
+import { financialLinkQuery, financialUnmatchedQuery, inspectLegacySql, ownershipCountQuery, parseFinancialLinks, parseFinancialUnmatched, parseOwnershipCounts, sqlcmdArguments } from '../scripts/legado/sql-ownership-counts.mjs';
 
 test('uses only allowlisted read-only SQL sources and requires every copy online/read-only', () => {
   const sql = ownershipCountQuery();
@@ -87,4 +87,33 @@ test('financial link parser fails closed on private or duplicated SQL categories
     JSON.stringify([{ categoria: 'semPedido', quantidade: 1 }, { categoria: 'semPedido', quantidade: 2 }]),
   ]) assert.throws(() => parseFinancialLinks(value), { message: 'LEGACY_SQL_RESULT_INVALID' });
   assert.equal(parseFinancialLinks('[]').total, 0);
+});
+
+test('unmatched financial probe separates missing order number from client mismatch without returning rows', () => {
+  const sql = financialUnmatchedQuery();
+  assert.match(sql, /LEGACY_SQL_READ_ONLY_GATE/);
+  assert.match(sql, /is_read_only = 1/);
+  assert.match(sql, /v\.NRPEDIDO = c\.NRPEDIDOVENDA AND v\.CODIGOCLIENTE = c\.CODIGOCLIENTE/);
+  assert.match(sql, /NOT EXISTS/);
+  assert.match(sql, /GROUP BY categoria FOR JSON PATH/);
+  assert.doesNotMatch(sql, /\b(?:INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|EXEC)\b/i);
+  const result = parseFinancialUnmatched(JSON.stringify([
+    { categoria: 'numeroComOutroCliente', quantidade: 3 },
+    { categoria: 'numeroNaoEncontrado', quantidade: 7 },
+  ]));
+  assert.equal(result.total, 10);
+  assert.equal(result.subset, 'semCorrespondencia');
+  assert.equal(result.ownershipProven, false);
+  assert.equal(result.importAuthorized, false);
+  assert.doesNotMatch(JSON.stringify(result), /clienteId|pedidoId|cnpj|codigoEmpresa/);
+});
+
+test('unmatched financial parser rejects private, duplicate, and invalid buckets', () => {
+  for (const value of [
+    'private-row', '{}',
+    JSON.stringify([{ categoria: 'semCorrespondencia', quantidade: 1 }]),
+    JSON.stringify([{ categoria: 'numeroNaoEncontrado', quantidade: 1.2 }]),
+    JSON.stringify([{ categoria: 'numeroNaoEncontrado', quantidade: 1 }, { categoria: 'numeroNaoEncontrado', quantidade: 2 }]),
+  ]) assert.throws(() => parseFinancialUnmatched(value), { message: 'LEGACY_SQL_RESULT_INVALID' });
+  assert.equal(parseFinancialUnmatched('[]').total, 0);
 });
