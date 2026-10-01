@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
-import { reconcilePrivateCandidates, reconcilePrivateProductsWithTarget } from '../scripts/legado/reconciliar-candidatos-privados.mjs';
+import { reconcilePrivateCandidates, reconcilePrivateProductsWithTarget, reconcilePrivatePurchaseFinance } from '../scripts/legado/reconciliar-candidatos-privados.mjs';
 
 const paths = {
   clientes: ['03_EXPORT_STAGING/CLIENTES/CLIENTES-LEGACY-TID-001/clientes-candidatos.csv', '05_QUARANTINE/CLIENTES/CLIENTES-LEGACY-TID-001/clientes-quarentena.csv', '04_REPORTS/legacy-client-nominal-staging-summary.json'],
@@ -50,6 +50,43 @@ function fixture(overrides = {}) {
   }
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
+
+function purchaseFixture({ authorization = 'False', paid = '1' } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'legacy-purchase-reconcile-'));
+  const folder = join(root, '04_REPORTS');
+  mkdirSync(folder);
+  writeFileSync(join(folder, 'legacy-purchase-company-code-reconciliation.csv'),
+    `EmpresaPedido,EmpresaFiscal,Classificacao,ImportacaoAutorizada\nEMP-SINT,EMP-SINT,MESMO_CADASTRO_LEGADO,${authorization}\n`);
+  writeFileSync(join(folder, 'legacy-purchase-candidate-fiscal-title-total-reconciliation.csv'),
+    `Composicao,QuantidadeDocumentos,QuantidadeTitulos,TitulosAbertos,TitulosBaixados\nABERTOS_E_BAIXADOS,1,2,1,${paid}\n`);
+  return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
+
+test('purchase report reconciliation exposes only counts and never authorizes import', () => {
+  const data = purchaseFixture();
+  try {
+    const report = reconcilePrivatePurchaseFinance(data.root);
+    assert.equal(report.companyComparisons, 1);
+    assert.equal(report.titles, 2);
+    assert.equal(report.openTitles + report.paidTitles, report.titles);
+    assert.equal(report.fiscalCompanyProven, false);
+    assert.equal(report.reportIntegrityVerified, false);
+    assert.equal(report.operationalImportAuthorized, false);
+    assert.doesNotMatch(JSON.stringify(report), /EMP-SINT|MESMO_CADASTRO_LEGADO/);
+  } finally { data.cleanup(); }
+});
+
+test('purchase report gate rejects changed authorization and unmatched title totals', () => {
+  for (const [options, expected] of [
+    [{ authorization: 'True' }, 'LEGACY_PURCHASE_SCOPE_UNPROVEN'],
+    [{ paid: '2' }, 'LEGACY_PURCHASE_COUNTS_MISMATCH'],
+    [{ paid: 'private' }, 'LEGACY_PURCHASE_COUNTS_INVALID'],
+  ]) {
+    const data = purchaseFixture(options);
+    try { assert.throws(() => reconcilePrivatePurchaseFinance(data.root), { message: expected }); }
+    finally { data.cleanup(); }
+  }
+});
 
 test('reconciles synthetic master extracts without returning identifiers', () => {
   const data = fixture();

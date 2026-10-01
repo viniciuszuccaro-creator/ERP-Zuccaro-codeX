@@ -176,11 +176,58 @@ export function reconcilePrivateProductsWithTarget(root, inventoryPath) {
   return report;
 }
 
+export function reconcilePrivatePurchaseFinance(root) {
+  let companies, titles;
+  try {
+    companies = rows(`${root}/04_REPORTS/legacy-purchase-company-code-reconciliation.csv`);
+    titles = rows(`${root}/04_REPORTS/legacy-purchase-candidate-fiscal-title-total-reconciliation.csv`);
+  } catch { throw new Error('LEGACY_PURCHASE_REPORT_UNREADABLE'); }
+  if (!companies.length || !titles.length
+    || companies.some((row) => row.ImportacaoAutorizada !== 'False'
+      || !row.Classificacao || !row.EmpresaPedido || !row.EmpresaFiscal)) {
+    throw new Error('LEGACY_PURCHASE_SCOPE_UNPROVEN');
+  }
+  const integer = (value) => {
+    if (typeof value !== 'string' || !/^(?:0|[1-9]\d*)$/.test(value)) {
+      throw new Error('LEGACY_PURCHASE_COUNTS_INVALID');
+    }
+    const number = Number(value);
+    if (!Number.isSafeInteger(number)) throw new Error('LEGACY_PURCHASE_COUNTS_INVALID');
+    return number;
+  };
+  const report = { mode: 'READ_ONLY_NO_IMPORT', companyComparisons: companies.length,
+    blockedCompanyComparisons: companies.length, documentGroups: titles.length,
+    documents: 0, titles: 0, openTitles: 0, paidTitles: 0,
+    fiscalCompanyProven: false, reportIntegrityVerified: false,
+    operationalImportAuthorized: false };
+  const compositions = new Set();
+  for (const row of titles) {
+    if (!row.Composicao || compositions.has(row.Composicao)) {
+      throw new Error('LEGACY_PURCHASE_COUNTS_INVALID');
+    }
+    compositions.add(row.Composicao);
+    const documents = integer(row.QuantidadeDocumentos);
+    const count = integer(row.QuantidadeTitulos);
+    const open = integer(row.TitulosAbertos);
+    const paid = integer(row.TitulosBaixados);
+    if (open + paid !== count) throw new Error('LEGACY_PURCHASE_COUNTS_MISMATCH');
+    report.documents += documents;
+    report.titles += count;
+    report.openTitles += open;
+    report.paidTitles += paid;
+  }
+  if (![report.documents, report.titles, report.openTitles, report.paidTitles]
+    .every(Number.isSafeInteger)) throw new Error('LEGACY_PURCHASE_COUNTS_INVALID');
+  return report;
+}
+
 if (process.argv[1]?.endsWith('reconciliar-candidatos-privados.mjs')) {
   try {
     if (!process.argv[2]) throw new Error('LEGACY_ROOT_REQUIRED');
     if (process.argv.length > 4) throw new Error('LEGACY_MODE_INVALID');
-    const report = process.argv[3]
+    const report = process.argv[3] === '--purchase-financial'
+      ? reconcilePrivatePurchaseFinance(process.argv[2])
+      : process.argv[3]
       ? reconcilePrivateProductsWithTarget(process.argv[2], process.argv[3])
       : reconcilePrivateCandidates(process.argv[2]);
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
