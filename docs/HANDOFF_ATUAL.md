@@ -1,3 +1,9 @@
+## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
+
+Cards: limitação computerUse; Playwright OK. Correções: hydrate/contexto, topologia Empresa, empresa operacional, pedidosBase romaneio. Prova SPA local (≠ PG). A–D+E+I PASS; H LogisticaReversa não ligada. #178 `4f8c6593` sem tip-port; sim compat isolada. Merge/VPS bloqueado.
+
+---
+
 ## CURSOR — vigília #178 (2026-10-01T12:14Z)
 
 #178 `4f8c6593` ainda candidato. Sem tip-port. #197 `01d5c16e` CI OK. Homologação SPA parcial (A–J BLOCKED agente). Vigília 15min.

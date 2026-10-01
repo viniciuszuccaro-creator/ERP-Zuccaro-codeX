@@ -7,8 +7,8 @@
 | Candidata | Stack draft **#192 → #197** (tip = #197) |
 | Branch tip | `cursor/expedicao-integracao-romaneio-canonico-392b` |
 | HEAD tip (código pacote) | `7d4f445e` (persistência fail-closed) |
-| HEAD tip (atual) | `b8497171` — vigílias #178; CI tip SUCCESS |
-| Estado | **Candidata de integração** — pacote código fechado; homologação SPA local em curso |
+| HEAD tip (atual) | tip pós-Playwright/navegação (pacote código `7d4f445e`) |
+| Estado | **Candidata de integração** — SPA local Playwright avançou A–D+E+I; ≠ API/PG/VPS |
 | CI tip | frontend+backend no HEAD do tip (**≠** homologação SPA/VPS) |
 | Codex Comercial #178 | `4f8c6593` ainda **candidata** (R08C fixture); sem tip-port; CI SUCCESS |
 
@@ -113,12 +113,26 @@ Checklist (navegador — **não** substituível por testes de policy):
 
 | Item | Status |
 |---|---|
-| Pacote tip #197 `b8497171` (código `7d4f445e`) + CI | OK |
-| Correção bootstrap sessão mestre local | Aplicada (`recoverMasterLocalAccess`) |
-| SPA isolada Vite | Sobe; Chrome no agente forçava HTTPS → TLS local autoassinado para teste |
-| Fluxo A–J no navegador | **Parcial** — HTTPS local + seed + KPIs (1 aguardando / 1 pronto) + launchpad `/Expedicao`; subpath `/Expedicao/Entregas` → redirect canônico. **BLOCKED** no agente: clique nos cards não abre `openWindow` (janela interna). Evidências: `/opt/cursor/artifacts/screenshots/hml-exp-*.webp` |
-| Requisito exato p/ fechar A–J | Operador (ou automação com WindowProvider) abrir cards **Entregas** / **Romaneios** / **Separação** no launchpad `/Expedicao` com seed HML no tenant snapshot; percorrer parcial/total/ocorrência/devolução e injetar falha de estoque → `Estado parcial` |
-| Prova falha≠sucesso + retry sem duplicar | Coberta em `tests/expedicao-integracao-telas.test.js` (41/41); **não fecha** o gate de navegador |
+| Pacote tip #197 (código `7d4f445e`) + correções navegação | OK |
+| Diagnóstico cards não abrem (computerUse) | **Limitação da ferramenta** — não defeito do `openWindow`; Playwright prova clique→janela |
+| Correções app no tip | Hydrate parcial preserva tenant; topologia `Empresa` sem escopo `empresa_id` fantasma; `resolveEmpresaOperacionalExpedicao`; merge `pedidosBase` no Romaneio; clamp viewport; `data-testid=erp-window` |
+| Camada | `SPA_LOCAL_BASE44` / IndexedDB — **não** substitui API HTTP nem PostgreSQL real nem VPS |
+| Playwright roteiro | `tests/expedicao-spa-hml-flow.mjs` + `expedicao-spa-launchpad.playwright.test.mjs` |
+| A seleção/listagem | PASS |
+| B separação | PASS_attempted (UI SeparacaoConferencia) |
+| C romaneio+despacho | PASS (1 Romaneio persistido) |
+| D retry | PASS (sem duplicar Entrega/Romaneio) |
+| E parcial | PASS_attempted (DetalhesEntregaView) |
+| I falha estoque | PASS_sem_falso_sucesso (status permanece; sem marcar Entregue) |
+| G ocorrência | PASS_attempted / reabrir detalhe |
+| H devolução | **BLOCKED** — `LogisticaReversa` não ligada na listagem (gap existente; coberto em integração telas) |
+| #178 compat | Branch isolada de simulação; tip-port **não** autorizado enquanto candidata |
+
+```bash
+# SPA HTTPS local (VITE_ERP_BACKEND=local) + Playwright
+HML_REQUIRE_SPA=1 node tests/expedicao-spa-hml-flow.mjs
+node --test tests/expedicao-spa-launchpad.playwright.test.mjs tests/expedicao-launchpad-openwindow-contract.test.js
+```
 
 ### Recuperação executável (estado parcial)
 

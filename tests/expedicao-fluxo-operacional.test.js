@@ -26,6 +26,8 @@ import {
   selectPedidosParaSeparacao,
   applyDespachoPatchesWithRollback,
   resolveQuantidadesPendentesEntrega,
+  resolveEmpresaOperacionalExpedicao,
+  isPedidoStatusElegivelRomaneio,
   PERSISTENCIA_EXPEDICAO,
 } from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
@@ -589,6 +591,34 @@ test('selectPedidosParaRomaneio: isolamento grupo∧empresa e exclusão de retir
     () => selectPedidosParaRomaneio(pedidos, { empresaId: null }),
     /Empresa obrigatoria/,
   );
+});
+
+test('resolveEmpresaOperacionalExpedicao: prioriza pedido com empresa; ignora órfão; fallback storage', () => {
+  assert.equal(
+    resolveEmpresaOperacionalExpedicao({
+      pedidosSelecionados: [{ id: 'x', empresa_id: null, group_id: 'g1' }],
+      empresaAtualId: null,
+      storedEmpresaId: 'emp-stored',
+    }),
+    'emp-stored',
+  );
+  assert.equal(
+    resolveEmpresaOperacionalExpedicao({
+      pedidosSelecionados: [
+        { id: 'orfao', group_id: 'g1' },
+        { id: 'ok', empresa_id: 'emp-a', group_id: 'g1' },
+      ],
+      empresaAtualId: 'emp-b',
+    }),
+    'emp-a',
+  );
+  assert.equal(
+    resolveEmpresaOperacionalExpedicao({ pedidosSelecionados: [], empresaAtualId: null }),
+    null,
+  );
+  assert.equal(isPedidoStatusElegivelRomaneio('Pronto para Expedir'), true);
+  assert.equal(isPedidoStatusElegivelRomaneio('Em Separação'), true);
+  assert.equal(isPedidoStatusElegivelRomaneio('Cancelado'), false);
 });
 
 test('planEntregasFromPedidosParaRomaneio: create + reuse idempotente', () => {

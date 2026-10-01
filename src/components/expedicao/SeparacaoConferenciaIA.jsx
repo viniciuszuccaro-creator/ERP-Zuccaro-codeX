@@ -20,6 +20,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import {
   assertSeparacaoQuantidades,
+  resolveEmpresaOperacionalExpedicao,
   resolveSeparacaoConclusion,
   selectPedidosParaSeparacao,
   SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
@@ -69,8 +70,15 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
     }
   }, [activePedidoId]);
 
-  const baseEmpresaId = empresaAtual?.id || null;
-  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const baseEmpresaId = resolveEmpresaOperacionalExpedicao({
+    empresaAtualId: empresaAtual?.id,
+    userEmpresaAtualId: user?.empresa_atual_id,
+    userEmpresaPadraoId: user?.empresa_padrao_id,
+    storedEmpresaId: (() => { try { return localStorage.getItem("empresa_atual_id"); } catch { return null; } })(),
+  });
+  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || (() => {
+    try { return localStorage.getItem("group_atual_id"); } catch { return null; }
+  })() || null;
   const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canUseSeparacaoIA = hasPermission("Expedicao", "Separacao", "editar") ||
     hasPermission("Expedicao", "Separacao", "criar") ||

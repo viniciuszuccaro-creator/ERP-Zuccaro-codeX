@@ -1229,9 +1229,14 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
 
   const { contexto, groupId: ctxGroupId, empresaId: ctxEmpresaId } = getCurrentContext();
   const hasEmpresaKey = Object.prototype.hasOwnProperty.call(filter, 'empresa_id');
-  const empresaId = hasEmpresaKey
-    ? filter.empresa_id
-    : (contexto === 'empresa' ? ctxEmpresaId : null);
+  // Topologia (Empresa/Grupo) nao carrega empresa_id operacional — aplicar escopo
+  // por empresa_id quebrava Empresa.filter({ id }) no bootstrap (empresaAtual=null).
+  const isTopologyEntity = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
+  const empresaId = isTopologyEntity
+    ? null
+    : (hasEmpresaKey
+      ? filter.empresa_id
+      : (contexto === 'empresa' ? ctxEmpresaId : null));
   const explicitGroupId = filter.group_id || filter.grupo_id || filter.grupo_empresarial_id;
   const groupId = explicitGroupId || ctxGroupId || null;
 
@@ -2100,14 +2105,41 @@ export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAud
     ...selectImportedTopology(db),
     ...snapshotTopology,
   };
+
+  // Importação parcial (ex.: PESSOAS_PARCEIROS force a cada boot) NÃO pode resetar
+  // contexto operacional empresa↔grupo — isso bloqueava Romaneio (empresaAtual=null).
+  if (allowedEntities) {
+    saveDb(ensureLocalTopology(db));
+    safeStorage.setItem(importKey, snapshotId);
+    return { imported: true, snapshotId, summary, preservedTenantContext: true };
+  }
+
   const currentStoredUser = readUser();
+  const preserveContexto = (() => {
+    try {
+      const fromLs = safeStorage.getItem('contexto_atual');
+      const fromUser = currentStoredUser?.contexto_atual;
+      if (fromLs === 'empresa' || fromLs === 'grupo') return fromLs;
+      if (fromUser === 'empresa' || fromUser === 'grupo') return fromUser;
+    } catch { /* storage indisponível */ }
+    return 'grupo';
+  })();
+  const preserveEmpresaId = (() => {
+    try {
+      return currentStoredUser?.empresa_atual_id
+        || safeStorage.getItem('empresa_atual_id')
+        || topology.empresaId;
+    } catch {
+      return topology.empresaId;
+    }
+  })();
   const currentUser = normalizeLocalUser({
     ...currentStoredUser,
-    contexto_atual: 'grupo',
+    contexto_atual: preserveContexto,
     grupo_atual_id: topology.groupId,
     grupo_padrao_id: topology.groupId,
-    empresa_atual_id: topology.empresaId,
-    empresa_padrao_id: topology.empresaId,
+    empresa_atual_id: preserveEmpresaId,
+    empresa_padrao_id: currentStoredUser?.empresa_padrao_id || topology.empresaId,
     empresas_vinculadas: [
       ...(currentStoredUser?.empresas_vinculadas || []),
       ...topology.empresaIds.map((empresa_id) => ({ empresa_id, ativo: true, nivel_acesso: 'Administrador' })),
@@ -2121,8 +2153,8 @@ export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAud
   saveDb(ensureLocalTopology(db));
 
   safeStorage.setItem(USER_KEY, JSON.stringify(currentUser));
-  safeStorage.setItem('contexto_atual', 'grupo');
-  safeStorage.setItem('empresa_atual_id', topology.empresaId);
+  safeStorage.setItem('contexto_atual', preserveContexto);
+  if (preserveEmpresaId) safeStorage.setItem('empresa_atual_id', preserveEmpresaId);
   safeStorage.setItem('group_atual_id', topology.groupId);
   safeStorage.setItem(importKey, snapshotId);
 

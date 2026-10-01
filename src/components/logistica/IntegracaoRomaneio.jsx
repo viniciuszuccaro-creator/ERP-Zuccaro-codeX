@@ -14,6 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import {
   planEntregasFromPedidosParaRomaneio,
+  resolveEmpresaOperacionalExpedicao,
   resolvePedidoLegadoAposRomaneio,
   resolveRomaneioDespacho,
   selectPedidosParaRomaneio,
@@ -30,7 +31,11 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
   const [motorista, setMotorista] = useState("");
   const [veiculo, setVeiculo] = useState("");
   const [placa, setPlaca] = useState("");
-  const [pedidosSelecionadosIds, setPedidosSelecionadosIds] = useState(pedidosSelecionados.map((p) => p.id));
+  const [pedidosSelecionadosIds, setPedidosSelecionadosIds] = useState(
+    (Array.isArray(pedidosSelecionados) ? pedidosSelecionados : [])
+      .filter((p) => p?.id && p?.empresa_id)
+      .map((p) => p.id),
+  );
   const [checklist, setChecklist] = useState({
     documentos_ok: false,
     veiculo_ok: false,
@@ -43,9 +48,24 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
   const { hasPermission } = usePermissions();
   const { user } = useUser();
 
-  const effectiveEmpresaId = pedidosSelecionados.find((p) => p?.empresa_id)?.empresa_id || empresaAtual?.id || null;
-  const pedidoComGrupo = pedidosSelecionados.find((p) => p?.group_id || p?.grupo_id);
-  const effectiveGroupId = pedidoComGrupo?.group_id || pedidoComGrupo?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const storedEmpresaId = (() => {
+    try { return localStorage.getItem("empresa_atual_id"); } catch { return null; }
+  })();
+  // Pedidos sem empresa_id (órfãos de snapshot) não definem empresa — evita falso contexto.
+  const pedidosComEmpresa = (Array.isArray(pedidosSelecionados) ? pedidosSelecionados : [])
+    .filter((p) => p?.empresa_id);
+  const effectiveEmpresaId = resolveEmpresaOperacionalExpedicao({
+    pedidosSelecionados: pedidosComEmpresa,
+    empresaAtualId: empresaAtual?.id,
+    userEmpresaAtualId: user?.empresa_atual_id,
+    userEmpresaPadraoId: user?.empresa_padrao_id,
+    storedEmpresaId,
+  });
+  const pedidoComGrupo = pedidosComEmpresa.find((p) => p?.group_id || p?.grupo_id)
+    || pedidosSelecionados.find((p) => p?.group_id || p?.grupo_id);
+  const effectiveGroupId = pedidoComGrupo?.group_id || pedidoComGrupo?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || (() => {
+    try { return localStorage.getItem("group_atual_id"); } catch { return null; }
+  })() || null;
   const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
   const canCreateRomaneio =
     hasPermission("Expedicao", "Romaneio", "criar") ||
@@ -98,6 +118,16 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
     enabled: contextoValido && canCreateRomaneio,
   });
 
+  // Props do launchpad podem trazer pedidos já elegíveis enquanto a query ainda
+  // carrega ou falha silenciosamente — unir fontes para não bloquear com seleção fantasma.
+  const pedidosBase = useMemo(() => {
+    const map = new Map();
+    for (const row of [...(Array.isArray(pedidos) ? pedidos : []), ...(Array.isArray(pedidosSelecionados) ? pedidosSelecionados : [])]) {
+      if (row?.id) map.set(String(row.id), row);
+    }
+    return [...map.values()];
+  }, [pedidos, pedidosSelecionados]);
+
   const { data: entregasExistentes = [] } = useQuery({
     queryKey: ["entregas-romaneio-integracao", effectiveGroupId, effectiveEmpresaId],
     queryFn: () => filterInContext("Entrega", {}, "-created_date", 1000),
@@ -125,14 +155,14 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
   const pedidosElegiveis = useMemo(() => {
     if (!contextoValido) return [];
     try {
-      return selectPedidosParaRomaneio(pedidos, {
+      return selectPedidosParaRomaneio(pedidosBase, {
         empresaId: effectiveEmpresaId,
         groupId: effectiveGroupId,
       });
     } catch {
       return [];
     }
-  }, [pedidos, contextoValido, effectiveEmpresaId, effectiveGroupId]);
+  }, [pedidosBase, contextoValido, effectiveEmpresaId, effectiveGroupId]);
 
   const criarRomaneioMutation = useMutation({
     mutationFn: async () => {
@@ -176,7 +206,7 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
       let plano;
       try {
         plano = planEntregasFromPedidosParaRomaneio({
-          pedidos,
+          pedidos: pedidosBase,
           entregasExistentes,
           empresaId: effectiveEmpresaId,
           groupId: effectiveGroupId,
@@ -413,7 +443,9 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, 
         {(!contextoValido || !canCreateRomaneio) && (
           <Card className="border-yellow-200 bg-yellow-50">
             <CardContent className="p-4 text-sm text-yellow-800">
-              Selecione contexto grupo/empresa e confirme permissao para criar romaneio.
+              {!contextoValido
+                ? "Contexto incompleto: informe grupo e empresa operacional (pedido com empresa_id ou selecao de empresa) para criar romaneio."
+                : "Seu perfil nao tem permissao para criar romaneio."}
             </CardContent>
           </Card>
         )}

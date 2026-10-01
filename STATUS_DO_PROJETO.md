@@ -1,3 +1,16 @@
+## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
+
+| Campo | Valor |
+|---|---|
+| Diagnóstico cards | **Limitação computerUse** — cadeia `LaunchpadCard→handleModuleClick→openWindow→WindowRenderer` íntegra; Playwright abre cards |
+| Correções app | Hydrate parcial não reseta contexto; `Empresa.filter` topologia sem `empresa_id`; `resolveEmpresaOperacionalExpedicao`; `pedidosBase` no Romaneio; clamp janela; `data-testid=erp-window` |
+| Camada prova | **SPA_LOCAL_BASE44** — ≠ API/PostgreSQL/VPS |
+| Roteiro Playwright | A listagem PASS; B sep PASS_attempted; C romaneio PASS; D retry PASS (1 romaneio); E parcial PASS_attempted; I falha estoque PASS_sem_falso_sucesso; G/H gaps UI |
+| #178 | `4f8c6593` candidata; sim compat em branch isolada; **sem tip-port** |
+| Merge/VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — vigília #178 (2026-10-01T12:14Z)
 
 | Campo | Valor |

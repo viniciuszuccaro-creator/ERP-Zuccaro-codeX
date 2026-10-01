@@ -121,6 +121,10 @@ export default function WindowModal({ window, children }) {
       } ${
         !isDragging && !isResizing ? 'transition-all duration-200' : ''
       }`}
+      data-testid="erp-window"
+      data-window-id={window.id}
+      data-window-title={window.title || ''}
+      data-unique-key={window.uniqueKey || ''}
       onMouseDown={(e) => {
         // Só ativar janela se não clicar em input/textarea/select/button
         const isInteractiveElement = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName);

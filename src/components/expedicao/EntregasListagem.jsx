@@ -481,11 +481,28 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                     <TableCell><Badge className={statusColors[entrega.status]} style={{ fontSize: '10px' }}>{entrega.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${entrega.numero_pedido}`, width: 1000, height: 700 })} className="h-7 w-7">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${entrega.numero_pedido}`, width: 1000, height: 700 })}
+                          className="h-7 w-7"
+                          data-action="Entrega.visualizar"
+                          data-permission="Expedicao.Entrega.visualizar"
+                          data-context-required="true"
+                          data-testid="entrega-list-abrir-detalhe"
+                        >
                           <Eye className="w-3 h-3" />
                         </Button>
                         {canEditEntrega && (
-                          <Button variant="ghost" size="icon" onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `Editar ${entrega.numero_pedido}`, width: 1100, height: 650 })} className="h-7 w-7">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `Editar ${entrega.numero_pedido}`, width: 1100, height: 650 })}
+                            className="h-7 w-7"
+                            data-action="Entrega.editar"
+                            data-permission="Expedicao.Entrega.editar"
+                            data-context-required="true"
+                          >
                             <Edit className="w-3 h-3" />
                           </Button>
                         )}

@@ -751,6 +751,45 @@ export const PEDIDOS_STATUS_ELEGIVEIS_ROMANEIO = Object.freeze([
   'em separação',
 ]);
 
+/** @param {unknown} status */
+export const isPedidoStatusElegivelRomaneio = (status) => {
+  const st = normalizePedidoStatus(status);
+  return PEDIDOS_STATUS_ELEGIVEIS_ROMANEIO.some((allowed) => {
+    const a = normalizePedidoStatus(allowed);
+    return st === a || st.includes(a) || a.includes(st);
+  });
+};
+
+/**
+ * Resolve empresa operacional para escrita (romaneio/despacho) sem bypass de RBAC.
+ * Em visão de grupo, empresaAtual pode ser null — usa pedido/usuário/storage já autorizado.
+ * @param {{
+ *   pedidosSelecionados?: ExpedicaoRecord[],
+ *   empresaAtualId?: unknown,
+ *   userEmpresaAtualId?: unknown,
+ *   userEmpresaPadraoId?: unknown,
+ *   storedEmpresaId?: unknown,
+ * }} args
+ */
+export const resolveEmpresaOperacionalExpedicao = ({
+  pedidosSelecionados = [],
+  empresaAtualId = null,
+  userEmpresaAtualId = null,
+  userEmpresaPadraoId = null,
+  storedEmpresaId = null,
+} = {}) => {
+  const fromPedido = (Array.isArray(pedidosSelecionados) ? pedidosSelecionados : [])
+    .map((row) => row?.empresa_id)
+    .find((id) => firstText(id));
+  return firstText(
+    fromPedido,
+    empresaAtualId,
+    userEmpresaAtualId,
+    userEmpresaPadraoId,
+    storedEmpresaId,
+  ) || null;
+};
+
 /**
  * Seleciona Pedidos elegíveis para romaneio no contexto da empresa.
  * @param {ExpedicaoRecord[]} pedidos
