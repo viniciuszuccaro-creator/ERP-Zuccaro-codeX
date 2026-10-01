@@ -11,6 +11,7 @@
 | Mocks identificados | `runtime11-expedicao-http*` = in-memory |
 | Candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` atualizada #192–#199 |
 | Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
+| HEAD / CI | `a48e57fe` — `erp-runtime-ci` frontend+backend **SUCCESS** |
 | Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
 
 ---
