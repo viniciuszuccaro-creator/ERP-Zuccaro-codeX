@@ -1,3 +1,11 @@
+## CURSOR — simulação compat #178×#197 (branch isolada)
+
+Merge `4f8c6593` (#178 candidata) em `cursor/expedicao-compat-178-sim-392b` sobre tip Expedição.
+**Não** tip-porta Comercial; branch Codex #178 preservada. Conflitos Separacao: mantém tip #197.
+Merge/VPS/aprovação: **bloqueados** (ambas candidatas).
+
+---
+
 ## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
 
 Cards: limitação computerUse; Playwright OK. Correções: hydrate/contexto, topologia Empresa, empresa operacional, pedidosBase romaneio. Prova SPA local (≠ PG). A–D+E+I PASS; H LogisticaReversa não ligada. #178 `4f8c6593` sem tip-port; sim compat isolada. Merge/VPS bloqueado.
@@ -620,6 +628,7 @@ Reservados Codex #178 intactos. Sem merge/VPS. CI em curso.
 Draft PR **#192** CI SUCCESS. Filtros empresa/cidade/data/futuras.
 **Reservados Codex #178** intactos. Próximo: detalhe/separação fail-closed.
 Sem merge/VPS.
+
 
 ---
 

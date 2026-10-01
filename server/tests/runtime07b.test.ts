@@ -321,7 +321,7 @@ test('audit rollback no CREATE de TabelaPreco', async () => {
   }
 });
 
-test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', async () => {
+test('meta ERP-RUNTIME-08B ativa CondicaoPagamento TabelaPreco e Cliente no piloto frontend HTTP', async () => {
   assert.ok(CLIENTE_FORBIDDEN_FIELDS.includes('tabela_preco_id'));
   const config = loadConfig({
     NODE_ENV: 'test',
@@ -344,27 +344,96 @@ test('meta ERP-RUNTIME-08B prepara CondicaoPagamento sem ativar frontend HTTP', 
     assert.equal(response.status, 200);
     const meta = await response.json() as {
       runtime: string;
+      cliente: { frontendHttp: boolean; central360ReadModel: boolean };
       tabelaPreco: { frontendHttp: boolean };
       condicaoPagamento: { masterData: boolean; parcelasAtomicas: boolean; frontendHttp: boolean };
       pedido: { backendHttp: boolean; frontendHttp: boolean };
       preparedEntities: string[];
       httpPilotEntities: string[];
       httpEntities: string[];
+      note?: string;
     };
     assert.equal(meta.runtime, 'ERP-RUNTIME-08B');
-    assert.equal(meta.tabelaPreco.frontendHttp, false);
+    assert.equal(meta.tabelaPreco.frontendHttp, true);
     assert.ok(meta.preparedEntities.includes('TabelaPreco'));
-    assert.ok(!meta.httpPilotEntities.includes('TabelaPreco'));
+    assert.ok(meta.httpPilotEntities.includes('TabelaPreco'));
+    assert.ok(meta.httpEntities.includes('TabelaPreco'));
     assert.ok(meta.preparedEntities.includes('CondicaoPagamento'));
     assert.equal(meta.condicaoPagamento.masterData, true);
     assert.equal(meta.condicaoPagamento.parcelasAtomicas, true);
-    assert.equal(meta.condicaoPagamento.frontendHttp, false);
-    assert.ok(!meta.httpPilotEntities.includes('CondicaoPagamento'));
-    assert.ok(!meta.httpEntities.includes('CondicaoPagamento'));
+    assert.equal(meta.condicaoPagamento.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('CondicaoPagamento'));
+    assert.ok(meta.httpEntities.includes('CondicaoPagamento'));
+    assert.equal(meta.cliente.frontendHttp, true);
+    assert.equal(meta.cliente.central360ReadModel, true);
+    assert.ok(meta.httpPilotEntities.includes('Cliente'));
+    assert.ok(meta.preparedEntities.includes('Cliente'));
+    assert.ok(meta.httpEntities.includes('Cliente'));
+    assert.equal((meta as { clienteEmpresa?: { frontendHttp: boolean } }).clienteEmpresa?.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('ClienteEmpresa'));
+    assert.ok(meta.preparedEntities.includes('ClienteEmpresa'));
+    assert.ok(meta.httpEntities.includes('ClienteEmpresa'));
+    assert.equal((meta as { clienteLocal?: { frontendHttp: boolean } }).clienteLocal?.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('ClienteLocal'));
+    assert.ok(meta.httpEntities.includes('ClienteLocal'));
+    assert.equal((meta as { obra?: { frontendHttp: boolean } }).obra?.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('Obra'));
+    assert.ok(meta.httpEntities.includes('Obra'));
+    assert.equal((meta as { produto?: { frontendHttp: boolean } }).produto?.frontendHttp, true);
+    assert.ok(meta.httpPilotEntities.includes('Produto'));
+    assert.ok(meta.preparedEntities.includes('Produto'));
+    assert.ok(meta.httpEntities.includes('Produto'));
     assert.ok(meta.preparedEntities.includes('Pedido'));
     assert.ok(meta.httpEntities.includes('Pedido'));
     assert.equal(meta.pedido.backendHttp, true);
     assert.equal(meta.pedido.frontendHttp, true);
+    assert.match(String(meta.note || ''), /Pedido backend HTTP is active/);
+    assert.match(String(meta.note || ''), /Produto frontendHttp/);
+    assert.match(String(meta.note || ''), /Cliente frontendHttp/);
+    assert.match(String(meta.note || ''), /ClienteEmpresa frontendHttp/);
+    assert.match(String(meta.note || ''), /ClienteLocal e Obra frontendHttp/);
+    assert.match(String(meta.note || ''), /snapshot de CondicaoPagamento/);
+    assert.match(String(meta.note || ''), /snapshot de TabelaPreco/);
+    assert.equal(meta.orcamento?.tabelaSnapshot, true);
+    assert.equal(meta.pedido?.tabelaSnapshot, true);
+    assert.equal(meta.orcamento?.validadeFailClosed, true);
+    assert.equal(meta.pedido?.convertValidadeFailClosed, true);
+    assert.equal(meta.orcamento?.convertSnapshotFailClosed, true);
+    assert.equal(meta.pedido?.convertSnapshotFailClosed, true);
+    assert.equal(meta.pedido?.cancelByState, true);
+    assert.equal(meta.orcamento?.listFailClosed, true);
+    assert.equal(meta.pedido?.listFailClosed, true);
+    assert.equal(meta.orcamento?.listSearchFilterFailClosed, true);
+    assert.equal(meta.pedido?.listSearchFilterFailClosed, true);
+    assert.equal(meta.orcamento?.tenantCacheFailClosed, true);
+    assert.equal(meta.pedido?.tenantCacheFailClosed, true);
+    assert.equal(meta.pedido?.updateBlockedWhenCancelled, true);
+    assert.equal(meta.orcamento?.descontoAlcadaUiFailClosed, true);
+    assert.equal(meta.pedido?.descontoAlcadaUiFailClosed, true);
+    assert.equal(meta.orcamento?.saveIdempotency, true);
+    assert.equal(meta.pedido?.saveIdempotency, true);
+    assert.equal(meta.orcamento?.mastersPickerFailClosed, true);
+    assert.equal(meta.pedido?.mastersPickerFailClosed, true);
+    assert.equal(meta.orcamento?.parcelaSchedulePreviewFailClosed, true);
+    assert.equal(meta.pedido?.parcelaSchedulePreviewFailClosed, true);
+    assert.equal(meta.pedido?.deliveryAddressSummaryFailClosed, true);
+    assert.equal(meta.orcamento?.simulacaoDirtyFailClosed, true);
+    assert.equal(meta.pedido?.simulacaoDirtyFailClosed, true);
+    assert.equal(meta.orcamento?.textoResumoPreviewFailClosed, true);
+    assert.equal(meta.pedido?.textoResumoPreviewFailClosed, true);
+    assert.match(String(meta.note || ''), /Pedido cancel fail-closed/);
+    assert.match(String(meta.note || ''), /listagem Orçamento\/Pedido HTTP fail-closed/);
+    assert.match(String(meta.note || ''), /queryKey groupId\+empresaId\+filters/);
+    assert.match(String(meta.note || ''), /busca vazia ≠ erro HTTP/);
+    assert.match(String(meta.note || ''), /troca de tenant limpa form\/list cache comercial fail-closed/);
+    assert.match(String(meta.note || ''), /UI alçada de desconto fail-closed/);
+    assert.match(String(meta.note || ''), /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
+    assert.match(String(meta.note || ''), /agenda de parcelas read-only/);
+    assert.match(String(meta.note || ''), /resumo de endereço Local\/Obra/);
+    assert.match(String(meta.note || ''), /simular-venda dirty-state fail-closed/);
+    assert.match(String(meta.note || ''), /resumo texto read-only Orçamento\/Pedido/);
+    assert.match(String(meta.note || ''), /validade_em fail-closed/);
+    assert.match(String(meta.note || ''), /conversao Orçamento→Pedido copia\/verifica snapshots fail-closed/);
     assert.ok(!meta.preparedEntities.includes('Orçamento'));
   } finally {
     await new Promise<void>((resolve, reject) => {

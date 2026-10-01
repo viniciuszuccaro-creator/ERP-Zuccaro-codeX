@@ -326,8 +326,12 @@ export class PostgresClienteRepository implements ClienteRepository {
   ): Promise<{ rows: ClienteEmpresa[]; total: number }> {
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
-    const params: unknown[] = [filter.groupId, filter.clienteId];
-    const where = ['ce.group_id = $1', 'ce.cliente_id = $2'];
+    const params: unknown[] = [filter.groupId];
+    const where = ['ce.group_id = $1'];
+    if (filter.clienteId) {
+      params.push(filter.clienteId);
+      where.push(`ce.cliente_id = $${params.length}`);
+    }
     params.push(typeof filter.ativo === 'boolean' ? filter.ativo : true);
     where.push(`ce.ativo = $${params.length}`);
     if (filter.empresaId) {
@@ -342,10 +346,15 @@ export class PostgresClienteRepository implements ClienteRepository {
       params.push(filter.bloqueado);
       where.push(`ce.bloqueado = $${params.length}`);
     }
+    if (typeof filter.habilitadoOperacao === 'boolean') {
+      params.push(filter.habilitadoOperacao);
+      where.push(`ce.habilitado_operacao = $${params.length}`);
+    }
     if (filter.search) {
       params.push(`%${filter.search.toLowerCase()}%`);
       where.push(`(
         lower(ce.empresa_id::text) LIKE $${params.length}
+        OR lower(ce.cliente_id::text) LIKE $${params.length}
         OR lower(ce.situacao_comercial) LIKE $${params.length}
         OR lower(coalesce(ce.observacao_comercial, '')) LIKE $${params.length}
         OR lower(coalesce(ce.legacy_id, '')) LIKE $${params.length}

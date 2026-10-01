@@ -17,7 +17,7 @@ acessar VPS. **NÃO** promover API.
 3. Rodar `seed-dev-synthetic.sql` (idempotente) se ambiente sintético.
 4. Gate PostgreSQL real: RLS/FORCE, FK/triggers, concorrência, IDOR, RBAC.
 5. Atualizar meta runtime DEV para `ERP-RUNTIME-07B` somente após gate verde.
-6. Manter `frontendHttp=false` e `HTTP_PILOT_ENTITIES` sem TabelaPreco.
+6. Manter `frontendHttp=true` e `TabelaPreco` em `HTTP_PILOT_ENTITIES` após o lote Onda 2.
 
 ## Rollback conceitual
 
@@ -30,6 +30,6 @@ acessar VPS. **NÃO** promover API.
 - [ ] Review PR de código
 - [ ] Gate PG real verde
 - [ ] Seed 2× convergente no DEV
-- [ ] Meta `frontendHttp=false` confirmada
+- [ ] Meta `frontendHttp=true` confirmada (piloto Onda 2)
 - [ ] Sem dual-write Base44
 - [ ] Sem merge automático deste runbook

@@ -9,6 +9,7 @@
  *   conciliation?: boolean,
  *   emit?: boolean,
  *   cancel?: boolean,
+ *   rejectPending?: boolean,
  * }} UpdateDecision
  */
 /**
@@ -139,12 +140,16 @@ export const applyLocalEntityUpdateTransitions = ({
       );
       return { reuse: decision.reuse };
     }
-    if (decision.emit) dependencies.assertPermissionAny(entityName, dependencies.nfeEmitActions(), id);
+    if (decision.emit || decision.rejectPending) dependencies.assertPermissionAny(entityName, dependencies.nfeEmitActions(), id);
     else if (decision.cancel) dependencies.assertPermissionAny(entityName, dependencies.nfeCancelActions(), id);
     else dependencies.assertMutationAllowed(entityName, 'editar', id);
     nextRecord = decision.record;
     if (before.empresa_id) nextRecord.empresa_id = before.empresa_id;
     if (before.empresa_faturamento_id) nextRecord.empresa_faturamento_id = before.empresa_faturamento_id;
+    if (before.group_id || before.grupo_id) {
+      nextRecord.group_id = before.group_id || before.grupo_id;
+      nextRecord.grupo_id = before.grupo_id || before.group_id;
+    }
   }
 
   if (entityName === 'OrdemProducao') {

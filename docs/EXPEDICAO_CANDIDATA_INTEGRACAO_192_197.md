@@ -162,6 +162,17 @@ node --test tests/expedicao-spa-launchpad.playwright.test.mjs tests/expedicao-la
 | Rollback | Fechar drafts #197→#192; pós-merge autorizado: revert do merge; **não** reverter 026–035; **não** tocar Pedido Codex |
 | Segredos | Nenhum no pacote; evidências SPA sem tokens/PII |
 
+
+## Simulação compat #178 (branch isolada)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-compat-178-sim-392b` |
+| SHA #178 | `4f8c6593` mesclado sobre tip Expedição |
+| Tip-port Comercial | **Não** — Codex #178 preservada |
+| Achado | Contratos fonte Separacao divergem (#178 inline vs tip #197 `expedicaoFluxoOperacionalPolicy`); testes adaptados para aceitar ambas |
+| Aprovação/deploy | **Bloqueados** (ambas candidatas) |
+
 ## Rollback
 
 1. Sem merge: fechar drafts #197→#192  

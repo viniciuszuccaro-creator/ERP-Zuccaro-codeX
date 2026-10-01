@@ -22,7 +22,7 @@ saldo · movimentação · custo médio · preço · ICMS/PIS/COFINS · pedido �
 | ProdutoService | tenant + FK same-group + reject operacional + paginação + busca |
 | API | LIST com `meta{limit,offset,total,hasMore}`, GET/POST/PATCH/DELETE soft |
 | Auditoria | `sanitizeAuditSnapshot` completo |
-| HttpApiClient | `preparedEntities.Produto` expandido; **fora** de `HTTP_PILOT_ENTITIES` |
+| HttpApiClient | `entities.Produto` + `produtos.list/get` no piloto HTTP (Onda 3); `preparedEntities` para DAM/workflow |
 | Seed | PRODUTO DEV SINTETICO A/B com Marca B REAL tenant-scoped |
 
 ## Tenant FK
@@ -65,4 +65,4 @@ Filtro `ativo` combina com `group_id` (tenant). Sem `includeDeleted` neste lote.
 
 ## Proibições
 
-Sem Hostinger/SSH/migrate remoto · sem merge main · sem DNS/HTTPS · sem ativar Produto no frontend · sem Base44 removal
+Sem Hostinger/SSH/migrate remoto · sem merge main · sem DNS/HTTPS · sem Base44 removal · Produto frontendHttp piloto Onda 3 (Comercial list/get)

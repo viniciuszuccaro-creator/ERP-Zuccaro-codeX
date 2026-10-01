@@ -1,10 +1,231 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
-import { calculateOrcamento, type Orcamento, type OrcamentoCreate, type OrcamentoListFilters, type OrcamentoRepository, type OrcamentoScope } from './orcamentoTypes.js';
-export class InMemoryOrcamentoRepository implements OrcamentoRepository { private rows=new Map<string,Orcamento>(); private next=new Map<string,number>();
- async withTransaction<T>(fn:(executor?:DbQueryExecutor)=>Promise<T>){const rows=structuredClone(this.rows),next=new Map(this.next);try{return await fn();}catch(e){this.rows=rows;this.next=next;throw e;}}
- async create(s:OrcamentoScope,d:OrcamentoCreate,_executor?:DbQueryExecutor){const now=new Date().toISOString(),id=randomUUID(),n=this.next.get(s.empresaId)??1,t=calculateOrcamento(d.itens),r:Orcamento={id,group_id:s.groupId,empresa_id:s.empresaId,numero:String(n).padStart(8,'0'),status:'EM_ABERTO',cliente_empresa_id:d.cliente_empresa_id,condicao_pagamento_id:d.condicao_pagamento_id,validade_em:d.validade_em,observacoes:d.observacoes??null,desconto:t.desconto,subtotal:t.subtotal,total:t.total,ativo:true,itens:t.itens,created_at:now,updated_at:now};this.next.set(s.empresaId,n+1);this.rows.set(id,r);return structuredClone(r)}
- async get(s:OrcamentoScope,id:string,_executor?:DbQueryExecutor){const r=this.rows.get(id);return r&&r.group_id===s.groupId&&r.empresa_id===s.empresaId?structuredClone(r):null}
- async list(s:OrcamentoScope,l=50,o=0,_executor?:DbQueryExecutor,filters:OrcamentoListFilters={}){const limit=Math.min(200,Math.max(1,Math.trunc(l))),offset=Math.max(0,Math.trunc(o)),search=filters.search?.toLocaleLowerCase('pt-BR');const r=[...this.rows.values()].filter(x=>x.group_id===s.groupId&&x.empresa_id===s.empresaId&&(!search||x.numero.toLocaleLowerCase('pt-BR').includes(search))&&(!filters.status||x.status===filters.status)&&(!filters.clienteEmpresaId||x.cliente_empresa_id===filters.clienteEmpresaId)&&(!filters.validadeDe||x.validade_em>=filters.validadeDe)&&(!filters.validadeAte||x.validade_em<=filters.validadeAte)).sort((a,b)=>b.numero.localeCompare(a.numero)||b.id.localeCompare(a.id));return{rows:structuredClone(r.slice(offset,offset+limit)),total:r.length}}
- async update(s:OrcamentoScope,id:string,d:OrcamentoCreate,_executor?:DbQueryExecutor){const r=await this.get(s,id);if(!r||r.status!=='EM_ABERTO')return null;const t=calculateOrcamento(d.itens),n={...r,...d,observacoes:d.observacoes??null,itens:t.itens,subtotal:t.subtotal,desconto:t.desconto,total:t.total,updated_at:new Date().toISOString()};this.rows.set(id,n);return structuredClone(n)}
- async cancel(s:OrcamentoScope,id:string,_executor?:DbQueryExecutor){const r=await this.get(s,id);if(!r||r.status!=='EM_ABERTO')return null;const n={...r,status:'CANCELADO' as const,ativo:false,updated_at:new Date().toISOString()};this.rows.set(id,n);return structuredClone(n)} }
+import {
+  calculateOrcamento,
+  type Orcamento,
+  type OrcamentoWrite,
+  type OrcamentoListFilters,
+  type OrcamentoOrigem,
+  type OrcamentoRepository,
+  type OrcamentoScope,
+} from './orcamentoTypes.js';
+
+const clone = <T>(value: T): T => structuredClone(value);
+
+export class InMemoryOrcamentoRepository implements OrcamentoRepository {
+  private rows = new Map<string, Orcamento>();
+  private next = new Map<string, number>();
+
+  async lockConversionChain(_scope: OrcamentoScope, _raizId: string, _executor?: DbQueryExecutor): Promise<void> {
+    // O runner em memória é isolado; PostgreSQL serializa esta cadeia por transação.
+  }
+
+  async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    const rows = clone(this.rows);
+    const next = new Map(this.next);
+    try { return await fn(); }
+    catch (error) { this.rows = rows; this.next = next; throw error; }
+  }
+
+  async create(scope: OrcamentoScope, data: OrcamentoWrite, _executor?: DbQueryExecutor): Promise<Orcamento> {
+    const origem = data.origem ?? 'MANUAL';
+    if (data.idempotency_key && await this.getByIdempotencyKey(scope, origem, data.idempotency_key)) {
+      throw new Error('ORCAMENTO_IDEMPOTENCY_CONFLICT');
+    }
+    if (data.external_id && await this.getByExternalId(scope, origem, data.external_id)) {
+      throw new Error('ORCAMENTO_EXTERNAL_ID_CONFLICT');
+    }
+    const now = new Date().toISOString();
+    const id = randomUUID();
+    const number = this.next.get(scope.empresaId) ?? 1;
+    const totals = calculateOrcamento(data.itens);
+    const row: Orcamento = {
+      id,
+      group_id: scope.groupId,
+      empresa_id: scope.empresaId,
+      numero: String(number).padStart(8, '0'),
+      versao: 1,
+      orcamento_raiz_id: id,
+      supersedido_por_id: null,
+      status: 'EM_ABERTO',
+      cliente_empresa_id: data.cliente_empresa_id,
+      condicao_pagamento_id: data.condicao_pagamento_id,
+      condicao_pagamento_codigo_snapshot: data.condicao_pagamento_codigo_snapshot,
+      condicao_pagamento_nome_snapshot: data.condicao_pagamento_nome_snapshot,
+      condicao_pagamento_parcelas_snapshot: clone(data.condicao_pagamento_parcelas_snapshot),
+      tabela_preco_id: data.tabela_preco_id ?? null,
+      tabela_preco_codigo_snapshot: data.tabela_preco_codigo_snapshot,
+      tabela_preco_nome_snapshot: data.tabela_preco_nome_snapshot,
+      promocao_aplicada: data.promocao_aplicada,
+      promocao_bps: data.promocao_bps,
+      promocao_cupom: data.promocao_cupom,
+      validade_em: data.validade_em,
+      observacoes: data.observacoes ?? null,
+      origem,
+      canal: data.canal ?? null,
+      external_id: data.external_id ?? null,
+      idempotency_key: data.idempotency_key ?? null,
+      campanha: data.campanha ?? null,
+      desconto: totals.desconto,
+      subtotal: totals.subtotal,
+      total: totals.total,
+      ativo: true,
+      itens: totals.itens,
+      created_at: now,
+      updated_at: now,
+    };
+    this.next.set(scope.empresaId, number + 1);
+    this.rows.set(id, row);
+    return clone(row);
+  }
+
+  async get(scope: OrcamentoScope, id: string, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const row = this.rows.get(id);
+    return row && row.group_id === scope.groupId && row.empresa_id === scope.empresaId ? clone(row) : null;
+  }
+
+  async getByIdempotencyKey(scope: OrcamentoScope, origem: OrcamentoOrigem, idempotencyKey: string, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const row = [...this.rows.values()].find((item) =>
+      item.group_id === scope.groupId
+      && item.empresa_id === scope.empresaId
+      && item.origem === origem
+      && item.idempotency_key === idempotencyKey);
+    return row ? clone(row) : null;
+  }
+
+  async getByExternalId(scope: OrcamentoScope, origem: OrcamentoOrigem, externalId: string, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const row = [...this.rows.values()].find((item) =>
+      item.group_id === scope.groupId
+      && item.empresa_id === scope.empresaId
+      && item.origem === origem
+      && item.external_id === externalId);
+    return row ? clone(row) : null;
+  }
+
+  async list(
+    scope: OrcamentoScope,
+    limit = 50,
+    offset = 0,
+    _executor?: DbQueryExecutor,
+    filters: OrcamentoListFilters = {},
+  ): Promise<{ rows: Orcamento[]; total: number }> {
+    const safeLimit = Math.min(200, Math.max(1, Math.trunc(limit)));
+    const safeOffset = Math.max(0, Math.trunc(offset));
+    const search = filters.search?.toLocaleLowerCase('pt-BR');
+    const rows = [...this.rows.values()].filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+      && (!search || row.numero.toLocaleLowerCase('pt-BR').includes(search))
+      && (!filters.status || row.status === filters.status)
+      && (!filters.clienteEmpresaId || row.cliente_empresa_id === filters.clienteEmpresaId)
+      && (!filters.validadeDe || row.validade_em >= filters.validadeDe)
+      && (!filters.validadeAte || row.validade_em <= filters.validadeAte)
+      && (!filters.origem || row.origem === filters.origem))
+      .sort((a, b) => b.numero.localeCompare(a.numero) || b.versao - a.versao || b.id.localeCompare(a.id));
+    return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
+  }
+
+  async listVersions(scope: OrcamentoScope, raizId: string, _executor?: DbQueryExecutor): Promise<Orcamento[]> {
+    const rows = [...this.rows.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId && row.orcamento_raiz_id === raizId)
+      .sort((a, b) => b.versao - a.versao || b.id.localeCompare(a.id));
+    return clone(rows);
+  }
+
+  async update(scope: OrcamentoScope, id: string, data: OrcamentoWrite, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const current = await this.get(scope, id);
+    if (!current || current.status !== 'EM_ABERTO') return null;
+    const totals = calculateOrcamento(data.itens);
+    const updated: Orcamento = {
+      ...current,
+      cliente_empresa_id: data.cliente_empresa_id,
+      condicao_pagamento_id: data.condicao_pagamento_id,
+      condicao_pagamento_codigo_snapshot: data.condicao_pagamento_codigo_snapshot,
+      condicao_pagamento_nome_snapshot: data.condicao_pagamento_nome_snapshot,
+      condicao_pagamento_parcelas_snapshot: clone(data.condicao_pagamento_parcelas_snapshot),
+      tabela_preco_id: data.tabela_preco_id ?? null,
+      tabela_preco_codigo_snapshot: data.tabela_preco_codigo_snapshot,
+      tabela_preco_nome_snapshot: data.tabela_preco_nome_snapshot,
+      promocao_aplicada: data.promocao_aplicada,
+      promocao_bps: data.promocao_bps,
+      promocao_cupom: data.promocao_cupom,
+      validade_em: data.validade_em,
+      observacoes: data.observacoes ?? null,
+      origem: current.origem,
+      canal: current.canal,
+      external_id: current.external_id,
+      idempotency_key: current.idempotency_key,
+      campanha: current.campanha,
+      itens: totals.itens,
+      subtotal: totals.subtotal,
+      desconto: totals.desconto,
+      total: totals.total,
+      updated_at: new Date().toISOString(),
+    };
+    this.rows.set(id, updated);
+    return clone(updated);
+  }
+
+  async cancel(scope: OrcamentoScope, id: string, _executor?: DbQueryExecutor): Promise<Orcamento | null> {
+    const current = await this.get(scope, id);
+    if (!current || current.status !== 'EM_ABERTO') return null;
+    const updated = { ...current, status: 'CANCELADO' as const, ativo: false, updated_at: new Date().toISOString() };
+    this.rows.set(id, updated);
+    return clone(updated);
+  }
+
+  async createVersion(
+    scope: OrcamentoScope,
+    sourceId: string,
+    data: OrcamentoWrite,
+    _executor?: DbQueryExecutor,
+  ): Promise<{ previous: Orcamento; current: Orcamento }> {
+    const source = await this.get(scope, sourceId);
+    if (!source || source.status !== 'EM_ABERTO') throw new Error('ORCAMENTO_STATE_CONFLICT');
+    const now = new Date().toISOString();
+    const newId = randomUUID();
+    const totals = calculateOrcamento(data.itens);
+    const current: Orcamento = {
+      id: newId,
+      group_id: scope.groupId,
+      empresa_id: scope.empresaId,
+      numero: source.numero,
+      versao: source.versao + 1,
+      orcamento_raiz_id: source.orcamento_raiz_id,
+      supersedido_por_id: null,
+      status: 'EM_ABERTO',
+      cliente_empresa_id: data.cliente_empresa_id,
+      condicao_pagamento_id: data.condicao_pagamento_id,
+      condicao_pagamento_codigo_snapshot: data.condicao_pagamento_codigo_snapshot,
+      condicao_pagamento_nome_snapshot: data.condicao_pagamento_nome_snapshot,
+      condicao_pagamento_parcelas_snapshot: clone(data.condicao_pagamento_parcelas_snapshot),
+      tabela_preco_id: data.tabela_preco_id ?? null,
+      tabela_preco_codigo_snapshot: data.tabela_preco_codigo_snapshot,
+      tabela_preco_nome_snapshot: data.tabela_preco_nome_snapshot,
+      promocao_aplicada: data.promocao_aplicada,
+      promocao_bps: data.promocao_bps,
+      promocao_cupom: data.promocao_cupom,
+      validade_em: data.validade_em,
+      observacoes: data.observacoes ?? null,
+      origem: source.origem,
+      canal: source.canal,
+      external_id: null,
+      idempotency_key: null,
+      campanha: source.campanha,
+      subtotal: totals.subtotal,
+      desconto: totals.desconto,
+      total: totals.total,
+      ativo: true,
+      itens: totals.itens,
+      created_at: now,
+      updated_at: now,
+    };
+    const previous: Orcamento = {
+      ...source,
+      status: 'SUPERSEDIDO',
+      supersedido_por_id: newId,
+      updated_at: now,
+    };
+    this.rows.set(sourceId, previous);
+    this.rows.set(newId, current);
+    return { previous: clone(previous), current: clone(current) };
+  }
+}
