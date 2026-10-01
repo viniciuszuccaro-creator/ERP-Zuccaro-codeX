@@ -1,3 +1,9 @@
+## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
+
+Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.
+
+---
+
 ## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
 
 Cards: limitação computerUse; Playwright OK. Correções: hydrate/contexto, topologia Empresa, empresa operacional, pedidosBase romaneio. Prova SPA local (≠ PG). A–D+E+I PASS; H LogisticaReversa não ligada. #178 `4f8c6593` sem tip-port; sim compat isolada. Merge/VPS bloqueado.

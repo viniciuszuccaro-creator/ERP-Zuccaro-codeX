@@ -218,7 +218,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
   });
 
   return (
-    <Card className="border-orange-300 bg-orange-50" data-permission="Expedicao.LogisticaReversa.visualizar" data-context-required="true">
+    <Card className="border-orange-300 bg-orange-50" data-permission="Expedicao.LogisticaReversa.visualizar" data-context-required="true" data-testid="logistica-reversa-panel">
       <CardHeader className="border-b bg-white">
         <CardTitle className="text-base flex items-center gap-2">
           <RotateCcw className="w-5 h-5 text-orange-600" />
@@ -234,7 +234,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         <div>
           <Label>Motivo da Recusa</Label>
           <Select value={motivo} onValueChange={setMotivo} disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending}>
-            <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione o motivo..." /></SelectTrigger>
+            <SelectTrigger className="mt-1" data-testid="logistica-reversa-motivo" data-action="Entrega.logisticaReversa.motivo"><SelectValue placeholder="Selecione o motivo..." /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Recusa de Recebimento">Recusa de Recebimento</SelectItem>
               <SelectItem value="Produto Danificado">Produto Danificado</SelectItem>
@@ -247,13 +247,13 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
 
         <div>
           <Label>Detalhes</Label>
-          <Textarea value={detalhes} onChange={(e) => setDetalhes(e.target.value)} placeholder="Descreva o que aconteceu..." rows={3} className="mt-1" disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending} />
+          <Textarea value={detalhes} onChange={(e) => setDetalhes(e.target.value)} placeholder="Descreva o que aconteceu..." rows={3} className="mt-1" disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending} data-testid="logistica-reversa-detalhes" />
         </div>
 
         <div>
           <Label>Ação a Tomar</Label>
           <Select value={acao} onValueChange={setAcao} disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending}>
-            <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a ação..." /></SelectTrigger>
+            <SelectTrigger className="mt-1" data-testid="logistica-reversa-acao" data-action="Entrega.logisticaReversa.acao"><SelectValue placeholder="Selecione a ação..." /></SelectTrigger>
             <SelectContent>
               <SelectItem value="devolver_estoque">Devolver ao Estoque</SelectItem>
               <SelectItem value="descartar">Descartar (Refugo)</SelectItem>

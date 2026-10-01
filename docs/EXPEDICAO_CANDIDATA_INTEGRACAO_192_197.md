@@ -7,10 +7,10 @@
 | Candidata | Stack draft **#192 → #197** (tip = #197) |
 | Branch tip | `cursor/expedicao-integracao-romaneio-canonico-392b` |
 | HEAD tip (código pacote) | `7d4f445e` (persistência fail-closed) |
-| HEAD tip (atual) | `330c4bc0` pós-Playwright/navegação (pacote código `7d4f445e`) |
-| Estado | **Candidata de integração** — SPA local Playwright avançou A–D+E+I; ≠ API/PG/VPS |
+| HEAD tip (atual) | tip pós LogisticaReversa+Playwright objetivo (ver STATUS) |
+| Estado | **Candidata de integração** — SPA Playwright A–H+I+J PASS objetivos; ≠ API/PG/VPS |
 | CI tip | frontend+backend no HEAD do tip (**≠** homologação SPA/VPS) |
-| Codex Comercial #178 | `4f8c6593` ainda **candidata** (R08C fixture); sem tip-port; CI SUCCESS |
+| Codex Comercial #178 | `4f8c6593` ainda **candidata**; sem tip-port; **revisão Codex solicitada** do pacote Expedição |
 
 ## Cadeia
 
@@ -109,30 +109,41 @@ Checklist (navegador — **não** substituível por testes de policy):
 7. Retry não duplica Entrega/Romaneio  
 8. Pedido legado: validar com Codex no #178 FINAL  
 
-### Estado da homologação SPA (2026-10-01)
+### Estado da homologação SPA (2026-10-01T15:00Z)
 
 | Item | Status |
 |---|---|
-| Pacote tip #197 (código `7d4f445e`) + correções navegação | OK |
-| Diagnóstico cards não abrem (computerUse) | **Limitação da ferramenta** — não defeito do `openWindow`; Playwright prova clique→janela |
-| Correções app no tip | Hydrate parcial preserva tenant; topologia `Empresa` sem escopo `empresa_id` fantasma; `resolveEmpresaOperacionalExpedicao`; merge `pedidosBase` no Romaneio; clamp viewport; `data-testid=erp-window` |
-| Camada | `SPA_LOCAL_BASE44` / IndexedDB — **não** substitui API HTTP nem PostgreSQL real nem VPS |
-| Playwright roteiro | `tests/expedicao-spa-hml-flow.mjs` + `expedicao-spa-launchpad.playwright.test.mjs` |
-| A seleção/listagem | PASS |
-| B separação | PASS_attempted (UI SeparacaoConferencia) |
-| C romaneio+despacho | PASS (1 Romaneio persistido) |
-| D retry | PASS (sem duplicar Entrega/Romaneio) |
-| E parcial | PASS_attempted (DetalhesEntregaView) |
-| I falha estoque | PASS_sem_falso_sucesso (status permanece; sem marcar Entregue) |
-| G ocorrência | PASS_attempted / reabrir detalhe |
-| H devolução | **BLOCKED** — `LogisticaReversa` não ligada na listagem (gap existente; coberto em integração telas) |
-| #178 compat | Branch isolada de simulação; tip-port **não** autorizado enquanto candidata |
+| Pacote tip #197 + LogisticaReversa na listagem/detalhe | OK (RBAC + Grupo/Empresa; sem módulo paralelo) |
+| Diagnóstico cards | **Limitação computerUse** — Playwright prova clique→janela |
+| Camada SPA | `SPA_LOCAL_BASE44` — **não** substitui API HTTP / PostgreSQL / VPS |
+| API/PG Entrega/Romaneio | **Sem contrato HTTP** no `server` router — prova PG integrada **pendente de backend** |
+| Prova policy/telas (mocks) | `expedicao-fluxo-operacional` + `expedicao-integracao-telas` PASS |
+| A seleção/listagem | **PASS** (ação + UI) |
+| B separação | **PASS** (status Pronto para Expedir + reload) |
+| C romaneio+despacho | **PASS** (1 Romaneio + reload) |
+| D retry | **PASS** (sem duplicar) |
+| E parcial | **PASS** (Entrega Parcial qty=3 + reload) |
+| I falha intermediária | **PASS** (Devolvido sem toast de sucesso; ContaReceber inexistente) |
+| G ocorrência | **PASS** (Entrega Frustrada + reload) |
+| H devolução | **PASS** (LogisticaReversa via listagem → Devolvido + reload) |
+| Pedido revisão Codex | Pacote #192–#197 consolidado — **sem tip-port #178** |
+| #178 compat | Branch isolada; tip-port **não** autorizado enquanto candidata |
 
 ```bash
 # SPA HTTPS local (VITE_ERP_BACKEND=local) + Playwright
-HML_REQUIRE_SPA=1 node tests/expedicao-spa-hml-flow.mjs
-node --test tests/expedicao-spa-launchpad.playwright.test.mjs tests/expedicao-launchpad-openwindow-contract.test.js
+HML_ART=/tmp/hml-art HML_REQUIRE_SPA=1 node tests/expedicao-spa-hml-flow.mjs
+node --test tests/expedicao-fluxo-operacional.test.js tests/expedicao-integracao-telas.test.js
 ```
+
+### Solicitação de revisão Codex (pacote Expedição)
+
+Pedido ao Codex: revisar o pacote consolidado **#192–#197** (tip `cursor/expedicao-integracao-romaneio-canonico-392b`) quanto a:
+1. Side-effect legado Pedido após separação/romaneio (coordenação com #178)
+2. Contratos de ocorrência/devolução vs Comercial 360
+3. Ausência de endpoints HTTP Entrega/Romaneio (bloqueio explícito de prova PG)
+4. Simulação compat #198 (branch isolada; sem tip-port)
+
+Resposta esperada: parecer em comentário do #178/#197 ou handoff — **sem merge/VPS**.
 
 ### Recuperação executável (estado parcial)
 

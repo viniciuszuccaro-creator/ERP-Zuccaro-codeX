@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, Edit, CheckCircle2, AlertCircle, MessageCircle, Camera, Download, Search, Building2, Package } from 'lucide-react';
+import { Eye, Edit, CheckCircle2, AlertCircle, MessageCircle, Camera, Download, Search, Building2, Package, RotateCcw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
@@ -22,6 +22,7 @@ import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
 import DetalhesEntregaView from './DetalhesEntregaView';
 import SeparacaoConferencia from './SeparacaoConferencia';
+import LogisticaReversa from './LogisticaReversa';
 import {
   filterEntregasList,
   listCidadesFromEntregas,
@@ -29,6 +30,7 @@ import {
 } from '@/components/lib/expedicaoEntregaPolicy';
 import {
   filterEntregasPendencias,
+  isEntregaElegivelLogisticaReversa,
   revalidarSelecaoAposTrocaEmpresa,
 } from '@/components/lib/expedicaoFluxoOperacionalPolicy';
 
@@ -56,7 +58,46 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const canViewEntrega = hasPermission('Expedicao', 'Entrega', 'visualizar') || hasPermission('Expedicao', 'Entregas', 'visualizar') || hasPermission('Expedicao', 'Entrega', 'ver');
   const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
   const canSeparar = hasPermission('Expedicao', 'Separacao', 'conferir') || hasPermission('Expedicao', 'Separacao', 'criar') || hasPermission('Expedicao', 'Entrega', 'conferir') || canEditEntrega;
+  const canLogisticaReversa = hasPermission('Expedicao', 'Logistica Reversa', 'editar')
+    || hasPermission('Expedicao', 'LogisticaReversa', 'editar')
+    || hasPermission('Expedicao', 'Entregas', 'editar')
+    || hasPermission('Expedicao', 'Painel Logistico', 'editar')
+    || canEditEntrega;
   const canExportEntrega = hasPermission('Expedicao', 'Entrega', 'exportar') || hasPermission('Expedicao', 'Entregas', 'exportar') || hasPermission('Expedicao', 'Relatorios', 'exportar');
+
+  const abrirLogisticaReversa = async (entrega) => {
+    if (!contextoValido || !canLogisticaReversa) {
+      await auditListagem({
+        acao: 'Entrega.logisticaReversa.abrir.bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        detalhes: { entrega_id: entrega?.id, numero_pedido: entrega?.numero_pedido },
+      });
+      return;
+    }
+    if (!isEntregaElegivelLogisticaReversa(entrega?.status)) {
+      await auditListagem({
+        acao: 'Entrega.logisticaReversa.abrir.bloqueado',
+        sucesso: false,
+        motivo: 'status_inelegivel',
+        detalhes: { entrega_id: entrega?.id, status: entrega?.status },
+      });
+      return;
+    }
+    await auditListagem({
+      acao: 'Entrega.logisticaReversa.abrir',
+      detalhes: { entrega_id: entrega.id, numero_pedido: entrega.numero_pedido, status: entrega.status },
+    });
+    openWindow(
+      LogisticaReversa,
+      {
+        entrega,
+        windowMode: true,
+        onConcluido: () => {},
+      },
+      { title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`, width: 720, height: 680 },
+    );
+  };
 
   const auditListagem = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
     try {
@@ -368,6 +409,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                     className="h-7 w-7"
                     data-permission="Expedicao.Entrega.visualizar" data-context-required="true"
                     data-action="Entrega.visualizar"
+                    data-testid="entrega-list-abrir-detalhe"
                   >
                     <Eye className="w-3 h-3" />
                   </Button>
@@ -405,6 +447,22 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                       title="Abrir separação/conferência"
                     >
                       <Package className="w-3 h-3" />
+                    </Button>
+                  )}
+                  {canLogisticaReversa && isEntregaElegivelLogisticaReversa(e.status) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => abrirLogisticaReversa(e)}
+                      className="h-7 w-7 text-orange-700"
+                      data-permission="Expedicao.LogisticaReversa.editar"
+                      data-context-required="true"
+                      data-sensitive="true"
+                      data-action="Entrega.logisticaReversa.abrir"
+                      data-testid="entrega-list-abrir-logistica-reversa"
+                      title="Processar logística reversa / devolução"
+                    >
+                      <RotateCcw className="w-3 h-3" />
                     </Button>
                   )}
                 </div>
@@ -504,6 +562,21 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                             data-context-required="true"
                           >
                             <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
+                        {canLogisticaReversa && isEntregaElegivelLogisticaReversa(entrega.status) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => abrirLogisticaReversa(entrega)}
+                            className="h-7 w-7 text-orange-700"
+                            data-action="Entrega.logisticaReversa.abrir"
+                            data-permission="Expedicao.LogisticaReversa.editar"
+                            data-context-required="true"
+                            data-testid="entrega-list-abrir-logistica-reversa"
+                            title="Processar logística reversa / devolução"
+                          >
+                            <RotateCcw className="w-3 h-3" />
                           </Button>
                         )}
                       </div>

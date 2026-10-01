@@ -761,6 +761,31 @@ export const isPedidoStatusElegivelRomaneio = (status) => {
 };
 
 /**
+ * Status de Entrega elegíveis para Logística Reversa (devolução/recusa) na listagem/detalhe.
+ * Reutiliza o componente LogisticaReversa existente — sem módulo paralelo.
+ */
+export const ENTREGA_STATUS_ELEGIVEIS_LOGISTICA_REVERSA = Object.freeze([
+  'saiu para entrega',
+  'em transito',
+  'em trânsito',
+  'chegada no cliente',
+  'entrega parcial',
+  'entrega frustrada',
+  'frustrada',
+  'entregue',
+]);
+
+/** @param {unknown} status */
+export const isEntregaElegivelLogisticaReversa = (status) => {
+  const st = normalizeEntregaStatus(status);
+  if (!st || st.includes('cancel') || st.includes('devolvido')) return false;
+  return ENTREGA_STATUS_ELEGIVEIS_LOGISTICA_REVERSA.some((allowed) => {
+    const a = normalizeEntregaStatus(allowed);
+    return st === a || st.includes(a) || a.includes(st);
+  });
+};
+
+/**
  * Resolve empresa operacional para escrita (romaneio/despacho) sem bypass de RBAC.
  * Em visão de grupo, empresaAtual pode ser null — usa pedido/usuário/storage já autorizado.
  * @param {{

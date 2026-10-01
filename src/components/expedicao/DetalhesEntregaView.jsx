@@ -6,19 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Truck, Building2, Pen } from "lucide-react";
+import { Truck, Building2, Pen, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import EnvioMensagemAutomatica from "./EnvioMensagemAutomatica";
 import AssinaturaDigitalEntrega from "./AssinaturaDigitalEntrega";
+import LogisticaReversa from "./LogisticaReversa";
 import {
   assertEntregaOnUpdate,
   hasProvaEntrega,
   resolveEntregaClienteCalendarDay,
 } from "@/components/lib/expedicaoEntregaPolicy";
-import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import {
+  isEntregaElegivelLogisticaReversa,
+  resolveRegistroEntregaFinal,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -35,9 +40,11 @@ export default function DetalhesEntregaView({
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "";
   const queryClient = useQueryClient();
   const [showAssinatura, setShowAssinatura] = React.useState(false);
+  const [showLogisticaReversa, setShowLogisticaReversa] = React.useState(false);
   const { empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
+  const { openWindow } = useWindow();
   const groupId = entrega?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const contextoValido = Boolean(groupId && empresaId);
@@ -45,6 +52,12 @@ export default function DetalhesEntregaView({
   const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Painel Logistico", "editar");
   const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");
   const canOcorrencia = hasPermission("Expedicao", "Entrega", "ocorrencia") || hasPermission("Expedicao", "Ocorrencias", "criar") || canUpdateEntrega;
+  const canLogisticaReversa = hasPermission("Expedicao", "Logistica Reversa", "editar")
+    || hasPermission("Expedicao", "LogisticaReversa", "editar")
+    || hasPermission("Expedicao", "Entregas", "editar")
+    || hasPermission("Expedicao", "Painel Logistico", "editar")
+    || canUpdateEntrega;
+  const elegivelReversa = isEntregaElegivelLogisticaReversa(entrega?.status);
 
   const auditarEntrega = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = entrega }) => {
     try {
@@ -403,7 +416,7 @@ export default function DetalhesEntregaView({
             </div>
           )}
 
-          {!showAssinatura ? (
+          {!showAssinatura && !showLogisticaReversa ? (
             <div className="flex flex-wrap gap-2 pt-4 border-t">
               <Button
                 onClick={() => handleStatusChangeLocal("Em Separacao")}
@@ -458,13 +471,65 @@ export default function DetalhesEntregaView({
               </Button>
               <Button
                 onClick={() => handleStatusChangeLocal("Entrega Frustrada")}
-                disabled={!contextoValido || !canUpdateEntrega || ["Entregue", "Cancelado", "Aguardando Separacao"].includes(entrega.status)}
+                disabled={!contextoValido || !canOcorrencia || ["Entregue", "Cancelado", "Aguardando Separacao", "Devolvido"].includes(entrega.status)}
                 size="sm"
                 variant="destructive"
-                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
+                data-permission="Expedicao.Entrega.ocorrencia" data-context-required="true" data-sensitive
                 data-action="marcar-entrega-frustrada"
+                data-testid="entrega-detalhe-ocorrencia"
               >
                 Marcar como Frustrada
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!contextoValido || !canLogisticaReversa || !elegivelReversa) {
+                    toast.error(!contextoValido
+                      ? "Selecione contexto grupo/empresa para logística reversa."
+                      : !canLogisticaReversa
+                        ? "Sem permissão para logística reversa."
+                        : "Status da entrega não permite logística reversa.");
+                    return;
+                  }
+                  if (windowMode) {
+                    setShowLogisticaReversa(true);
+                    return;
+                  }
+                  openWindow(
+                    LogisticaReversa,
+                    { entrega, windowMode: true, onConcluido: () => {} },
+                    { title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`, width: 720, height: 680 },
+                  );
+                }}
+                disabled={!contextoValido || !canLogisticaReversa || !elegivelReversa}
+                size="sm"
+                className="bg-orange-700 hover:bg-orange-800"
+                data-permission="Expedicao.LogisticaReversa.editar"
+                data-context-required="true"
+                data-sensitive
+                data-action="Entrega.logisticaReversa.abrir"
+                data-testid="entrega-detalhe-logistica-reversa"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Logística Reversa
+              </Button>
+            </div>
+          ) : showLogisticaReversa ? (
+            <div className="pt-4 border-t" data-testid="entrega-detalhe-painel-reversa">
+              <LogisticaReversa
+                entrega={entrega}
+                onConcluido={() => {
+                  setShowLogisticaReversa(false);
+                  queryClient.invalidateQueries({ queryKey: ["entregas"] });
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => setShowLogisticaReversa(false)}
+                data-action="Entrega.logisticaReversa.fechar-painel"
+              >
+                Voltar ao detalhe
               </Button>
             </div>
           ) : (

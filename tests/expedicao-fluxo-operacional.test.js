@@ -28,6 +28,7 @@ import {
   resolveQuantidadesPendentesEntrega,
   resolveEmpresaOperacionalExpedicao,
   isPedidoStatusElegivelRomaneio,
+  isEntregaElegivelLogisticaReversa,
   PERSISTENCIA_EXPEDICAO,
 } from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
@@ -619,6 +620,12 @@ test('resolveEmpresaOperacionalExpedicao: prioriza pedido com empresa; ignora ó
   assert.equal(isPedidoStatusElegivelRomaneio('Pronto para Expedir'), true);
   assert.equal(isPedidoStatusElegivelRomaneio('Em Separação'), true);
   assert.equal(isPedidoStatusElegivelRomaneio('Cancelado'), false);
+  assert.equal(isEntregaElegivelLogisticaReversa('Saiu para Entrega'), true);
+  assert.equal(isEntregaElegivelLogisticaReversa('Entrega Frustrada'), true);
+  assert.equal(isEntregaElegivelLogisticaReversa('Entrega Parcial'), true);
+  assert.equal(isEntregaElegivelLogisticaReversa('Aguardando Separação'), false);
+  assert.equal(isEntregaElegivelLogisticaReversa('Devolvido'), false);
+  assert.equal(isEntregaElegivelLogisticaReversa('Cancelado'), false);
 });
 
 test('planEntregasFromPedidosParaRomaneio: create + reuse idempotente', () => {
@@ -1081,4 +1088,19 @@ test('quantidades pendentes e compensação≠atômico no despacho/reversa', () 
   });
   assert.equal(retry.action, 'retry');
   assert.equal(retry.despachoPatches.length, 0);
+});
+
+test('listagem Entregas liga LogisticaReversa existente com RBAC/contexto (sem módulo paralelo)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const listagem = await readFile(new URL('../src/components/expedicao/EntregasListagem.jsx', import.meta.url), 'utf8');
+  const detalhe = await readFile(new URL('../src/components/expedicao/DetalhesEntregaView.jsx', import.meta.url), 'utf8');
+  assert.match(listagem, /import LogisticaReversa from '\.\/LogisticaReversa'/);
+  assert.match(listagem, /isEntregaElegivelLogisticaReversa/);
+  assert.match(listagem, /data-action="Entrega\.logisticaReversa\.abrir"/);
+  assert.match(listagem, /data-testid="entrega-list-abrir-logistica-reversa"/);
+  assert.match(listagem, /Logistica Reversa.*editar|LogisticaReversa.*editar/);
+  assert.match(detalhe, /import LogisticaReversa from "\.\/LogisticaReversa"/);
+  assert.match(detalhe, /data-testid="entrega-detalhe-logistica-reversa"/);
+  assert.match(detalhe, /data-testid="entrega-detalhe-ocorrencia"/);
+  assert.doesNotMatch(listagem, /LogisticaReversaNovo|DevolucaoV2|ReversaParallel/);
 });
