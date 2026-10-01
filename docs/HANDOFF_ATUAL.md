@@ -1,3 +1,9 @@
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T12:05Z)
+
+#197: bootstrap sessão + redirect `/Expedicao/*`→launchpad. Seed+KPIs OK. A–J **BLOCKED** no agente (`openWindow`/cards). Requisito: operar cards do launchpad. #178 `4f8c6593` sem tip-port. Merge/VPS bloqueado. Doc canônica candidata atualizada.
+
+---
+
 ## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
 
 #197 `b8497171` CI OK. Bootstrap sessão mestre local corrigido. SPA isolada + seed HML no tenant snapshot. Homologação navegador A–J parcial (launchpad). #178 `4f8c6593` ainda candidato — sem tip-port. Merge/VPS bloqueado. Doc: `EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.

@@ -1,3 +1,19 @@
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T12:05Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | HEAD tip + correções: `recoverMasterLocalAccess`, redirect subpath `PageNotFound` |
+| SPA | HTTPS local; seed HML no tenant snapshot; KPIs 1 aguardando / 1 pronto |
+| Launchpad `/Expedicao` | OK (13 cards) |
+| A–J navegador | **BLOCKED no agente**: cards não abrem `openWindow` sob clique automatizado |
+| Requisito exato | Abrir cards Entregas/Romaneios/Separação no launchpad e percorrer fluxo + falha estoque→`Estado parcial` |
+| Prova policy/telas | 41/41 integração — ≠ gate navegador |
+| #178 | `4f8c6593` candidata; sem tip-port |
+| Pacote implantação | Em `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
+| Merge/VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
 
 | Campo | Valor |
