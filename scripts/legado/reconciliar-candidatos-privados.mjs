@@ -112,10 +112,75 @@ export function reconcilePrivateCandidates(root) {
   return report;
 }
 
+export function reconcilePrivateProductsWithTarget(root, inventoryPath) {
+  const verified = reconcilePrivateCandidates(root);
+  let inventory;
+  try { inventory = JSON.parse(readFileSync(inventoryPath, 'utf8').replace(/^\uFEFF/, '')); }
+  catch { throw new Error('LEGACY_TARGET_INVENTORY_UNREADABLE'); }
+  const target = inventory?.produtos;
+  if (inventory?.mode !== 'READ_ONLY' || typeof inventory?.codigo_legado_column_present !== 'boolean'
+    || inventory?.database !== 'postgres' || !Number.isFinite(Date.parse(inventory?.exported_at))
+    || !Array.isArray(target) || !Number.isSafeInteger(inventory?.row_count)
+    || inventory.row_count !== target.length) throw new Error('LEGACY_TARGET_INVENTORY_INVALID');
+  const candidates = rows(`${root}/${ENTITIES.produtos_revenda.candidate}`);
+  const groupId = candidates[0]?.group_id;
+  if (!groupId || candidates.length !== verified.entities.produtos_revenda.candidates) {
+    throw new Error('LEGACY_PRODUCT_SOURCE_INVALID');
+  }
+  const code = (value) => String(value ?? '').trim().toUpperCase();
+  const name = (value) => String(value ?? '').trim().replace(/\s+/g, ' ').toUpperCase();
+  const seenIds = new Set();
+  const sameGroup = new Map();
+  const otherGroup = new Set();
+  for (const row of target) {
+    if (!row || typeof row.id !== 'string' || !row.id || seenIds.has(row.id)
+      || typeof row.group_id !== 'string' || !row.group_id
+      || typeof row.codigo !== 'string' && row.codigo !== null
+      || typeof row.codigo_legado !== 'string' && row.codigo_legado !== null
+      || !inventory.codigo_legado_column_present && row.codigo_legado !== null
+      || typeof row.descricao !== 'string' || !row.descricao.trim()) {
+      throw new Error('LEGACY_TARGET_INVENTORY_INVALID');
+    }
+    seenIds.add(row.id);
+    const index = row.group_id === groupId ? sameGroup : otherGroup;
+    for (const key of new Set([code(row.codigo), code(row.codigo_legado)].filter(Boolean))) {
+      if (index === otherGroup) { otherGroup.add(key); continue; }
+      const matches = sameGroup.get(key) || [];
+      matches.push(row);
+      sameGroup.set(key, matches);
+    }
+  }
+  const report = { mode: 'READ_ONLY_NO_IMPORT', sourceCandidates: candidates.length,
+    targetRows: target.length, targetGroupRows: target.filter((row) => row.group_id === groupId).length,
+    existing: 0, absent: 0, conflicts: 0, otherGroupCodeOnly: 0,
+    legacyCodeColumnPresent: inventory.codigo_legado_column_present,
+    legacyCodeStorageAvailable: inventory.codigo_legado_column_present,
+    operationalImportAuthorized: false };
+  for (const row of candidates) {
+    const key = code(row.codigo_legado);
+    const matches = [...new Map((sameGroup.get(key) || []).map((item) => [item.id, item])).values()];
+    if (!matches.length) {
+      report.absent++;
+      if (otherGroup.has(key)) report.otherGroupCodeOnly++;
+      continue;
+    }
+    const targetRow = matches[0];
+    const legacyCode = code(targetRow.codigo_legado);
+    if (matches.length !== 1 || (legacyCode && legacyCode !== key)
+      || name(row.descricao) !== name(targetRow.descricao)) report.conflicts++;
+    else report.existing++;
+  }
+  return report;
+}
+
 if (process.argv[1]?.endsWith('reconciliar-candidatos-privados.mjs')) {
   try {
     if (!process.argv[2]) throw new Error('LEGACY_ROOT_REQUIRED');
-    process.stdout.write(`${JSON.stringify(reconcilePrivateCandidates(process.argv[2]), null, 2)}\n`);
+    if (process.argv.length > 4) throw new Error('LEGACY_MODE_INVALID');
+    const report = process.argv[3]
+      ? reconcilePrivateProductsWithTarget(process.argv[2], process.argv[3])
+      : reconcilePrivateCandidates(process.argv[2]);
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } catch (error) {
     process.stderr.write(`${error.message.startsWith('LEGACY_') ? error.message : 'LEGACY_RECONCILIATION_FAILED'}\n`);
     process.exitCode = 1;

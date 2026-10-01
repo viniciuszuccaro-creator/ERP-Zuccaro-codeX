@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
-import { reconcilePrivateCandidates } from '../scripts/legado/reconciliar-candidatos-privados.mjs';
+import { reconcilePrivateCandidates, reconcilePrivateProductsWithTarget } from '../scripts/legado/reconciliar-candidatos-privados.mjs';
 
 const paths = {
   clientes: ['03_EXPORT_STAGING/CLIENTES/CLIENTES-LEGACY-TID-001/clientes-candidatos.csv', '05_QUARANTINE/CLIENTES/CLIENTES-LEGACY-TID-001/clientes-quarentena.csv', '04_REPORTS/legacy-client-nominal-staging-summary.json'],
@@ -117,4 +117,76 @@ test('rejects import authorization in summary or quarantine', () => {
   const quarantine = fixture({ quarantine: { clientes: { import_authorized: 'true' } } });
   try { assert.throws(() => reconcilePrivateCandidates(quarantine.root), { message: 'LEGACY_QUARANTINE_IMPORT_FLAG_INVALID:clientes' }); }
   finally { quarantine.cleanup(); }
+});
+
+test('classifies target product codes within the source group without releasing rows', () => {
+  const data = fixture({ produtos_revenda: { descricao: 'Produto sintetico' } });
+  try {
+    const file = join(data.root, 'target-products.json');
+    writeFileSync(file, JSON.stringify({ mode: 'READ_ONLY', database: 'postgres',
+      exported_at: '2026-10-01T00:00:00Z', codigo_legado_column_present: true, row_count: 2,
+      produtos: [
+        { id: 'p1', group_id: 'synthetic-group', codigo: 'ERP-1', codigo_legado: 'synthetic-produtos_revenda', descricao: ' produto  SINTETICO ' },
+        { id: 'p2', group_id: 'other-group', codigo: 'synthetic-produtos_revenda', codigo_legado: null, descricao: 'Outro produto' },
+      ] }));
+    const report = reconcilePrivateProductsWithTarget(data.root, file);
+    assert.equal(report.existing, 1);
+    assert.equal(report.absent, 0);
+    assert.equal(report.conflicts, 0);
+    assert.equal(report.targetGroupRows, 1);
+    assert.equal(report.operationalImportAuthorized, false);
+    assert.doesNotMatch(JSON.stringify(report), /synthetic-group|ERP-1|produto SINTETICO|p1/);
+  } finally { data.cleanup(); }
+});
+
+test('keeps target collisions and different descriptions out of automatic existing matches', () => {
+  const data = fixture({ produtos_revenda: { descricao: 'Produto fonte' } });
+  try {
+    const file = join(data.root, 'target-products.json');
+    const inventory = { mode: 'READ_ONLY', database: 'postgres',
+      exported_at: '2026-10-01T00:00:00Z', codigo_legado_column_present: true, row_count: 1,
+      produtos: [{ id: 'p1', group_id: 'synthetic-group', codigo: 'synthetic-produtos_revenda',
+        codigo_legado: null, descricao: 'Produto diferente' }] };
+    writeFileSync(file, JSON.stringify(inventory));
+    assert.equal(reconcilePrivateProductsWithTarget(data.root, file).conflicts, 1);
+    inventory.produtos[0].codigo = 'novo';
+    inventory.produtos[0].group_id = 'other-group';
+    writeFileSync(file, JSON.stringify(inventory));
+    const report = reconcilePrivateProductsWithTarget(data.root, file);
+    assert.equal(report.absent, 1);
+    assert.equal(report.otherGroupCodeOnly, 0);
+    inventory.produtos[0].codigo = 'synthetic-produtos_revenda';
+    writeFileSync(file, JSON.stringify(inventory));
+    assert.equal(reconcilePrivateProductsWithTarget(data.root, file).otherGroupCodeOnly, 1);
+  } finally { data.cleanup(); }
+});
+
+test('rejects incomplete or unproven target inventories before comparing', () => {
+  const data = fixture();
+  try {
+    const file = join(data.root, 'target-products.json');
+    for (const inventory of [
+      { mode: 'READ_ONLY', database: 'postgres', exported_at: '2026-10-01T00:00:00Z', row_count: 0, produtos: [] },
+      { mode: 'READ_ONLY', database: 'postgres', exported_at: '2026-10-01T00:00:00Z', codigo_legado_column_present: true, row_count: 2, produtos: [] },
+      { mode: 'READ_ONLY', database: 'postgres', exported_at: '2026-10-01T00:00:00Z', codigo_legado_column_present: true, row_count: 2, produtos: [{ id: 'p1', group_id: 'synthetic-group', codigo: 'A', codigo_legado: null, descricao: 'A' }, { id: 'p1', group_id: 'synthetic-group', codigo: 'B', codigo_legado: null, descricao: 'B' }] },
+    ]) {
+      writeFileSync(file, JSON.stringify(inventory));
+      assert.throws(() => reconcilePrivateProductsWithTarget(data.root, file), /LEGACY_TARGET_INVENTORY_INVALID/);
+    }
+  } finally { data.cleanup(); }
+});
+
+test('allows read-only comparison without migration 034 but blocks import readiness', () => {
+  const data = fixture({ produtos_revenda: { descricao: 'Produto sintetico' } });
+  try {
+    const file = join(data.root, 'target-products.json');
+    writeFileSync(file, JSON.stringify({ mode: 'READ_ONLY', database: 'postgres',
+      exported_at: '2026-10-01T00:00:00Z', codigo_legado_column_present: false, row_count: 1,
+      produtos: [{ id: 'p1', group_id: 'synthetic-group', codigo: 'synthetic-produtos_revenda',
+        codigo_legado: null, descricao: 'Produto sintetico' }] }));
+    const report = reconcilePrivateProductsWithTarget(data.root, file);
+    assert.equal(report.existing, 1);
+    assert.equal(report.legacyCodeStorageAvailable, false);
+    assert.equal(report.operationalImportAuthorized, false);
+  } finally { data.cleanup(); }
 });
