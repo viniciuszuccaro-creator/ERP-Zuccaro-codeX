@@ -190,6 +190,23 @@ export function reconciliarPlanoStagingLegado({
   if (!Array.isArray(itens) || !Array.isArray(existentes) || !Array.isArray(contagensEsperadas)) {
     throw new Error('Plano de staging exige listas validas.');
   }
+  if (saldosEsperados !== undefined) {
+    if (!Array.isArray(saldosEsperados) || utilTypes.isProxy(saldosEsperados)
+      || Object.getPrototypeOf(saldosEsperados) !== Array.prototype
+      || Reflect.ownKeys(saldosEsperados).some((key) => key !== 'length'
+        && (typeof key !== 'string' || !/^(?:0|[1-9]\d*)$/.test(key)
+          || !Object.hasOwn(Object.getOwnPropertyDescriptor(saldosEsperados, key), 'value')))) {
+      throw new Error('Saldos financeiros esperados invalidos.');
+    }
+    for (let indice = 0; indice < saldosEsperados.length; indice += 1) {
+      const entrada = Object.getOwnPropertyDescriptor(saldosEsperados, String(indice));
+      if (!entrada || !Object.hasOwn(entrada, 'value') || !dadosInertes(entrada.value)
+        || Reflect.ownKeys(entrada.value).some((key) =>
+          !['entidade', 'codigoEmpresaLegado', 'valorCentavos'].includes(key))) {
+        throw new Error('Saldos financeiros esperados invalidos.');
+      }
+    }
+  }
   // Valida estruturas JSON antes de qualquer leitura de campos usada no relatorio.
   const linhas = itens.map((item) => stripSegredosMigracao(item));
   const indice = existentes.map((item) => stripSegredosMigracao(item));
@@ -295,9 +312,6 @@ export function reconciliarPlanoStagingLegado({
   }
   if (observadosFinanceiros.size > 0 && !Array.isArray(saldosEsperados)) {
     throw new Error('Saldos financeiros esperados obrigatorios.');
-  }
-  if (saldosEsperados !== undefined && !Array.isArray(saldosEsperados)) {
-    throw new Error('Saldos financeiros esperados invalidos.');
   }
   const esperadosFinanceiros = new Map();
   for (const entrada of saldosEsperados || []) {

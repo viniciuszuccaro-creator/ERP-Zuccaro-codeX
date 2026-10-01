@@ -338,6 +338,18 @@ test('plano financeiro exige soma exata em centavos sem divulgar valores', () =>
   assert.equal(empresaErrada.bloqueado, true);
   assert.deepEqual(empresaErrada.privados, []);
   assert.equal(empresaErrada.relatorio.divergenciasSaldos, 2);
+  let leituras = 0;
+  const getter = Object.defineProperty({ entidade: 'conta_receber', codigoEmpresaLegado: '001' },
+    'valorCentavos', { enumerable: true, get() { leituras += 1; return '1250'; } });
+  for (const saldosEsperados of [
+    [getter],
+    new Proxy(esperado, { get(target, key) { leituras += 1; return target[key]; } }),
+    [{ ...esperado[0], identificadorPrivado: 'nao-publicar' }],
+  ]) {
+    assert.throws(() => reconciliarPlanoStagingLegado({ ...base, saldosEsperados }),
+      /Saldos financeiros esperados invalidos/);
+  }
+  assert.equal(leituras, 0);
 });
 
 test('plano bloqueia dependencia ausente, cross-empresa e divergencia sem entregar lote parcial', () => {
