@@ -4,11 +4,12 @@
 |---|---|
 | Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
 | Migration | **`036_expedicao_entregas_romaneios.sql`** (renumerada; comercial Codex #178 reserva **025–035**) |
-| Implementado | repos in-memory+PG, `ExpedicaoService`, HTTP `/entregas\|romaneios`, auditoria TX, telas → API (`VITE_ERP_HTTP_EXPEDICAO`) |
+| Implementado | repos in-memory+PG, `ExpedicaoService`, HTTP `/entregas\|romaneios`, auditoria TX, telas → API (`VITE_ERP_HTTP_EXPEDICAO`); bridge `entities.Entrega` no hybrid |
 | Portas Pedido/estoque | Contrato em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` — default `reserved`; **sem tip-port** na branch Codex |
-| Testes PG | `runtime11-expedicao-pglite` — tenant/RBAC/concorrência/rollback/despacho repetido/parcial/devolução |
-| Navegador | `tests/expedicao-api-pg.playwright.test.mjs` — **API_HTTP_PGLITE** (≠ SPA_LOCAL / ≠ mock) |
+| Testes PG | `runtime11-expedicao-pglite` — tenant/RBAC/concorrência/rollback/despacho repetido/parcial/devolução **PASS** |
+| Navegador | `tests/expedicao-api-pg.playwright.test.mjs` — **API_HTTP_PGLITE PASS** (≠ SPA_LOCAL / ≠ mock) |
 | Mocks identificados | `runtime11-expedicao-http*` = in-memory |
+| Candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` atualizada #192–#199 |
 | Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
 | Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
 

@@ -1,16 +1,16 @@
-# Expedição/Logística — candidata consolidada de integração (#192–#197)
+# Expedição/Logística — candidata consolidada de integração (#192–#199)
 
 ## Identidade
 
 | Campo | Valor |
 |---|---|
-| Candidata | Stack draft **#192 → #197** (tip = #197) |
-| Branch tip | `cursor/expedicao-integracao-romaneio-canonico-392b` |
-| HEAD tip (código pacote) | `7d4f445e` (persistência fail-closed) |
-| HEAD tip (atual) | tip pós LogisticaReversa+Playwright objetivo (ver STATUS) |
-| Estado | **Candidata de integração** — SPA Playwright A–H+I+J PASS objetivos; ≠ API/PG/VPS |
-| CI tip | frontend+backend no HEAD do tip (**≠** homologação SPA/VPS) |
-| Codex Comercial #178 | `4f8c6593` ainda **candidata**; sem tip-port; **revisão Codex solicitada** do pacote Expedição |
+| Candidata | Stack draft **#192 → #199** (tip = #199 persistência canônica) |
+| Branch tip | `cursor/expedicao-persistencia-canonica-392b` |
+| Base tip anterior | `cursor/expedicao-integracao-romaneio-canonico-392b` (#197) |
+| Migration | **`036_expedicao_entregas_romaneios.sql`** (evita 025–035 comercial Codex) |
+| Estado | **Candidata de integração** — BFF+PG+HTTP+auditoria+telas API; SPA local ≠ persistência real |
+| CI tip | frontend+backend no HEAD do tip (**≠** VPS/HML operacional) |
+| Codex Comercial #178 | ainda **candidata**; **sem tip-port**; contrato portas em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` |
 
 ## Cadeia
 
@@ -22,7 +22,34 @@
 | #195 | Fluxo operacional consolidado + testes |
 | #196 | Pedidos→separação, unidades, rollback despacho |
 | #197 | IntegracaoRomaneio canônica + soft∨ crítico + comprovante/ocorrência/IA + filtros cliente + devolução assert + **persistência multi-etapa fail-closed (sem toast de sucesso parcial)** |
+| #199 | **Persistência canônica** Entrega/Romaneio: migration 036, repos PG, `ExpedicaoService`, HTTP, auditoria TX, UI→API (`VITE_ERP_HTTP_EXPEDICAO`), portas reserved, PGlite+Playwright API |
 
+## HEADs compostos (tip)
+
+A branch tip #199 já inclui a cadeia #192–#197 via base. Não tip-port Comercial.
+
+| Frente | Branch | Papel |
+|---|---|---|
+| Expedição tip | `cursor/expedicao-persistencia-canonica-392b` | Candidata integração #192–#199 |
+| Comercial #178 | `codex/comercial-corrige-parecer-155` (e tip Cursor comercial) | Reserva mig 025–035; portas Pedido/estoque |
+
+## Testes (camadas)
+
+| Suíte | Camada |
+|---|---|
+| `runtime11-expedicao-http*` | Mock in-memory |
+| `runtime11-expedicao-pglite` | PostgreSQL isolado (PGlite) |
+| `expedicao-api-pg.playwright` | Navegador × API+PGlite |
+| `expedicao-spa-launchpad.playwright` | SPA_LOCAL_BASE44 ≠ API/PG |
+
+## Coordenação Comercial
+
+Pedido/estoque: portas reserved até tip-port Codex. Contrato mínimo: `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`.  
+Migration Expedição = **036** — não reutilizar 025–035.
+
+## Merge/VPS
+
+**Bloqueado.** Migration 036 só no repositório/CI até gate operacional + backup.
 ## Escopo coberto (pacote)
 
 1. Seleção Pedidos elegíveis; separação/conferência integral/parcial; bloqueio por qtd/unidade/estado  
@@ -116,7 +143,7 @@ Checklist (navegador — **não** substituível por testes de policy):
 | Pacote tip #197 + LogisticaReversa na listagem/detalhe | OK (RBAC + Grupo/Empresa; sem módulo paralelo) |
 | Diagnóstico cards | **Limitação computerUse** — Playwright prova clique→janela |
 | Camada SPA | `SPA_LOCAL_BASE44` — **não** substitui API HTTP / PostgreSQL / VPS |
-| API/PG Entrega/Romaneio | **Sem contrato HTTP** no `server` router — prova PG integrada **pendente de backend** |
+| API/PG Entrega/Romaneio | **#199** — HTTP `/api/v1/entregas|romaneios` + mig 036 + PGlite/Playwright API; SPA local permanece ≠ PG |
 | Prova policy/telas (mocks) | `expedicao-fluxo-operacional` + `expedicao-integracao-telas` PASS |
 | A seleção/listagem | **PASS** (ação + UI) |
 | B separação | **PASS** (status Pronto para Expedir + reload) |
@@ -137,13 +164,13 @@ node --test tests/expedicao-fluxo-operacional.test.js tests/expedicao-integracao
 
 ### Solicitação de revisão Codex (pacote Expedição)
 
-Pedido ao Codex: revisar o pacote consolidado **#192–#197** (tip `cursor/expedicao-integracao-romaneio-canonico-392b`) quanto a:
-1. Side-effect legado Pedido após separação/romaneio (coordenação com #178)
+Pedido ao Codex: revisar o pacote consolidado **#192–#199** (tip `cursor/expedicao-persistencia-canonica-392b`) quanto a:
+1. Side-effect Pedido/estoque via portas (`docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`) — tip-port no Comercial
 2. Contratos de ocorrência/devolução vs Comercial 360
-3. Ausência de endpoints HTTP Entrega/Romaneio (bloqueio explícito de prova PG)
+3. Coexistência mig **036** Expedição com reserva comercial **025–035**
 4. Simulação compat #198 (branch isolada; sem tip-port)
 
-Resposta esperada: parecer em comentário do #178/#197 ou handoff — **sem merge/VPS**.
+Resposta esperada: parecer em comentário do #178/#199 ou handoff — **sem merge/VPS**.
 
 ### Recuperação executável (estado parcial)
 
@@ -154,35 +181,35 @@ Resposta esperada: parecer em comentário do #178/#197 ou handoff — **sem merg
 | `Estado parcial` pós-devolução | Completar financeiro/estoque/notificação faltantes; Entrega permanece `Devolvido`; sem segundo `logistica_reversa` criado |
 | `session_access_changed` na SPA local | `/?reset-local=1` ou reload — mestre local reidrata `local_perfil_admin` e nova sessão |
 
-## Coordenação Comercial (#178) × Expedição (#197)
+## Coordenação Comercial (#178) × Expedição (#199)
 
 | Frente | HEAD | CI | Contrato cruzado | Tip-port |
 |---|---|---|---|---|
-| #178 Comercial 360 | `4f8c6593` (R08C validade fixture) | frontend+backend+concurrency SUCCESS | Pedido/Orçamento/mig 026–035 / `saleIngress` — **reserva Codex** | **Não** até FINAL |
-| #197 Expedição tip | `b8497171` | frontend+backend SUCCESS | Side-effect legado `Pedido` só descritivo (`INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT` / separação) | Aguarda #178 FINAL |
-| Integrada Comercial+Expedição | — | — | Contratos HTTP Pedido + Entrega/Romaneio no mesmo tenant | Bloqueada |
+| #178 Comercial 360 | tip Codex (mig 025–035) | frontend+backend SUCCESS | Pedido/Orçamento — **reserva Codex** | **Não** até FINAL |
+| #199 Expedição tip | tip desta PR | frontend+backend | HTTP Entrega/Romaneio + portas reserved; mig **036** | Aguarda #178 FINAL p/ adapters |
+| Integrada Comercial+Expedição | — | — | Portas Pedido/estoque `applied` no mesmo tenant | Bloqueada |
 
 ## Pacote de implantação (gates vigentes — sem VPS neste lote)
 
 | Item | Conteúdo |
 |---|---|
-| Dependências de merge | Stack draft **#192→#197** em ordem; **não** mesclar tip Expedição antes de revisão humana; tip Comercial **só após #178 FINAL** |
-| Artefato código | Branch `cursor/expedicao-integracao-romaneio-canonico-392b` @ `330c4bc0` |
-| Validações pré-merge | `node --test tests/expedicao-*.test.js` (41); CI `erp-runtime-ci`; `git diff --check` |
-| Runtime | Sem promoção VPS; sem migration nova nesta candidata |
-| Rollback | Fechar drafts #197→#192; pós-merge autorizado: revert do merge; **não** reverter 026–035; **não** tocar Pedido Codex |
+| Dependências de merge | Stack draft **#192→#199** em ordem; **não** mesclar tip Expedição antes de revisão humana; tip Comercial **só após #178 FINAL** |
+| Artefato código | Branch `cursor/expedicao-persistencia-canonica-392b` |
+| Validações pré-merge | `runtime11-expedicao-*` + PGlite + Playwright API; CI `erp-runtime-ci`; `git diff --check` |
+| Runtime | Sem promoção VPS; mig 036 **só** no repositório/CI |
+| Rollback | Fechar draft #199→#192; **não** reverter 025–035; **não** tocar Pedido Codex |
 | Segredos | Nenhum no pacote; evidências SPA sem tokens/PII |
 
 ## Rollback
 
-1. Sem merge: fechar drafts #197→#192  
-2. Pós-merge autorizado: revert do merge; **não** reverter 026–035; **não** tocar Pedido Codex  
+1. Sem merge: fechar drafts #199→#192  
+2. Pós-merge autorizado: revert do merge; **não** reverter 025–035; **não** tocar Pedido Codex  
 3. VPS: **não** autorizado neste lote  
 
 ## Quadro objetivo
 
 | Pronto p/ integração | Falta | Bloqueios reais |
 |---|---|---|
-| Fluxo operacional + persistência fail-closed no tip #197 (`b8497171`) | Homologação navegador A–J completa no ambiente do agente | #178 FINAL |
-| Isolamento∧, RBAC, filtros, testes policy+telas 41/41 | WhatsApp/roteirizador/assinatura como serviço | Merge/VPS/import Empresas |
-| Compensação≠atômico + recuperação documentada | Tip Comercial 360 + candidata integrada | Autorização merge ordenado |
+| Fluxo operacional + persistência canônica BFF+PG no tip #199 | Homologação HML com mig 036 aplicada | #178 FINAL (portas) |
+| Isolamento∧, RBAC, HTTP, auditoria TX, PGlite+Playwright API | WhatsApp/roteirizador/assinatura como serviço | Merge/VPS/import Empresas |
+| Contrato portas Pedido/estoque documentado | Tip-port Comercial adapters | Autorização merge ordenado |
