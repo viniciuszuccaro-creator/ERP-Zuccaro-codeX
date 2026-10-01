@@ -237,17 +237,17 @@ export function reconciliarPlanoStagingLegado({
     }
   }
   const fila = [...graus].filter(([, grau]) => grau === 0).map(([id]) => id);
-  let ordenados = 0;
-  while (fila.length > 0) {
-    const id = fila.pop();
-    ordenados += 1;
+  const ordem = [];
+  for (let indice = 0; indice < fila.length; indice += 1) {
+    const id = fila[indice];
+    ordem.push(id);
     for (const dependente of dependentes.get(id)) {
       const grau = graus.get(dependente) - 1;
       graus.set(dependente, grau);
       if (grau === 0) fila.push(dependente);
     }
   }
-  const dependenciasCiclicas = idsLote.size - ordenados;
+  const dependenciasCiclicas = idsLote.size - ordem.length;
   if (dependenciasCiclicas > 0) contar('dependencia_ciclica');
   const observadas = {};
   for (const item of linhas) {
@@ -280,8 +280,9 @@ export function reconciliarPlanoStagingLegado({
     }
   }
   const bloqueado = dependenciasPendentes > 0 || dependenciasCiclicas > 0 || divergencias > 0;
+  const posicao = new Map(ordem.map((id, indice) => [id, indice]));
   return {
-    privados: bloqueado ? [] : preparado.privados,
+    privados: bloqueado ? [] : [...preparado.privados].sort((a, b) => posicao.get(chave(a)) - posicao.get(chave(b))),
     bloqueado,
     relatorio: { ...preparado.relatorio, porMotivo, porEntidadeEmpresaOrigem: observadas,
       dependenciasPendentes, dependenciasCiclicas, divergencias },

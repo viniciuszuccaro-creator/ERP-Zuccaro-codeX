@@ -293,6 +293,17 @@ test('plano reconcilia mestre do Grupo e pedido da Empresa sem copiar operacao a
   assert.equal(result.relatorio.divergencias, 0);
 });
 
+test('plano entrega mestres antes das operacoes mesmo com origem em ordem inversa', () => {
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [pedido, cliente] });
+  assert.equal(result.bloqueado, false);
+  assert.deepEqual(result.privados.map((item) => item.entidade), ['cliente', 'pedido']);
+  const repetido = reconciliarPlanoStagingLegado({ ...planoBase, itens: [pedido, cliente],
+    existentes: [cliente] });
+  assert.equal(repetido.bloqueado, false);
+  assert.deepEqual(repetido.privados.map((item) => item.entidade), ['pedido']);
+  assert.equal(repetido.relatorio.reusos, 1);
+});
+
 test('plano bloqueia dependencia ausente, cross-empresa e divergencia sem entregar lote parcial', () => {
   const missing = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente,
     { ...pedido, dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-OUTRO', escopo: 'grupo' }] }] });
