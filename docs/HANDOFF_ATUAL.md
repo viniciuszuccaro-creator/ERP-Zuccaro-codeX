@@ -1,14 +1,14 @@
-<<<<<<< HEAD
+## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
+
+Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.
+
+---
+
 ## CURSOR — simulação compat #178×#197 (branch isolada)
 
 Merge `4f8c6593` (#178 candidata) em `cursor/expedicao-compat-178-sim-392b` sobre tip Expedição.
 **Não** tip-porta Comercial; branch Codex #178 preservada. Conflitos Separacao: mantém tip #197.
 Merge/VPS/aprovação: **bloqueados** (ambas candidatas).
-=======
-## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
-
-Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.
->>>>>>> origin/cursor/expedicao-integracao-romaneio-canonico-392b
 
 ---
 
