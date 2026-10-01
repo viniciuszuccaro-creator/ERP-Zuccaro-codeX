@@ -400,19 +400,19 @@ export class ExpedicaoService {
       }
 
       const pedidoIds = selecionadas.map((s) => s.pedido_id).filter(Boolean) as string[];
-      const pedidoSideEffect = await this.pedidoPort.onDespacho({
-        groupId: scope.groupId,
-        empresaId: scope.empresaId,
-        pedidoIds,
-        romaneioId: romaneio.id,
-      });
-      const estoqueSideEffect = await this.estoquePort.onDespacho({
-        groupId: scope.groupId,
-        empresaId: scope.empresaId,
+      const pedidoSideEffect = data.despachar ? await this.pedidoPort.onDespacho({
+        groupId: scope.groupId, empresaId: scope.empresaId, pedidoIds, romaneioId: romaneio.id,
+      }) : 'reserved';
+      const estoqueSideEffect = data.despachar ? await this.estoquePort.onDespacho({
+        groupId: scope.groupId, empresaId: scope.empresaId,
         entregaIds: selecionadas.map((s) => s.id),
-      });
+      }) : 'reserved';
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
+      }
+      if (data.despachar && pedidoIds.length > 0
+        && (pedidoSideEffect !== 'applied' || estoqueSideEffect !== 'applied')) {
+        throw new AppError(503, 'PEDIDO_ESTOQUE_CONTRACT_UNAVAILABLE', 'Linked Pedido requires applied side-effects');
       }
 
       const finalRomaneio = (await this.repo.getRomaneio(scope, romaneio.id, executor))!;
@@ -596,6 +596,9 @@ export class ExpedicaoService {
       });
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
+      }
+      if (before.pedido_id && estoqueSideEffect !== 'applied') {
+        throw new AppError(503, 'PEDIDO_ESTOQUE_CONTRACT_UNAVAILABLE', 'Linked Pedido return requires applied stock effect');
       }
 
       await this.auditRow(ctx, 'Entrega', 'change_status', before, updated, executor);

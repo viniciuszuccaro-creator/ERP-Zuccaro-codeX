@@ -6,6 +6,7 @@
 - Número, cliente, local, data e itens/quantidades do Pedido são confrontados; os snapshots persistidos vêm do Pedido, não da descrição enviada pela interface. Repetição da mesma chave para outro Pedido falha com conflito.
 - Parcial deve ser menor que o total; devolução deve ter quantidade positiva e não exceder o total. Itens de devolução informados devem pertencer à Entrega, sem duplicatas, e fechar a quantidade agregada.
 - `PATCH` comum de estado/edição e auditoria compartilham a transação do repositório. Cancelamento ou despacho direto de Entrega ligada a Pedido é bloqueado até o contrato de compensação de Pedido/estoque ser integrado.
+- Romaneio sem despacho não chama portas de despacho. Quando `despachar: true` e existe Pedido vinculado, respostas `reserved` bloqueiam e revertem a transação; devolução vinculada também exige efeito de estoque `applied`. Isso evita declarar saída/devolução com estoque inalterado, mas não prova atomicidade de adapter externo.
 - **Ainda não implantável:** as portas de efeitos Pedido/estoque continuam `reserved`; elas não recebem executor transacional e não provam rollback de efeito externo. O fluxo vinculado não deve ser promovido antes de tip-port transacional ou compensação persistente com testes de falha/retry.
 - A base #199 renumerou a migration de Expedição para `036_expedicao_entregas_romaneios.sql`, eliminando a colisão de número com a `025` comercial. A ordem final 025–036 ainda precisa de CI integrada; a migration 026 comercial permanece bloqueada pela prova histórica.
 

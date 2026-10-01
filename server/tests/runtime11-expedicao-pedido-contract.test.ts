@@ -21,7 +21,9 @@ function fixture(status: Pedido['status'] = 'PRONTO_ENTREGA') {
   tenant.link(empresaId, groupId);
   tenant.link(otherEmpresaId, groupId);
   const rbac = new InMemoryRbacGuard();
-  rbac.link({ actorId, groupId, permissions: { Expedicao: { entrega: ['criar', 'visualizar', 'cancelar', 'expedir'] } } });
+  rbac.link({ actorId, groupId, permissions: { Expedicao: {
+    entrega: ['criar', 'visualizar', 'cancelar', 'expedir'], separacao: ['conferir'], romaneio: ['criar'],
+  } } });
   const pedido = {
     id: pedidoId, group_id: groupId, empresa_id: empresaId, numero: '00000042',
     ativo: status !== 'CANCELADO', status, tipo_operacao: 'ENTREGA',
@@ -48,13 +50,14 @@ const payload = {
   itens: [{ produto_id: productId, descricao: 'Descricao nao confiavel', unidade_sigla: 'UN', quantidade_pedida: '10' }],
 };
 
-async function post(runtime: ReturnType<typeof fixture>, body: unknown, empresa = empresaId) {
+async function post(runtime: ReturnType<typeof fixture>, body: unknown, empresa = empresaId,
+  path = '/api/v1/entregas') {
   const server = runtime.app.listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const address = server.address();
   assert.ok(address && typeof address !== 'string');
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/entregas`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-group-id': groupId,
         'x-empresa-id': empresa, 'x-actor-id': actorId }, body: JSON.stringify(body),
     });
@@ -140,4 +143,31 @@ test('cancelamento e despacho direto de Entrega vinculada aguardam compensacao c
   assert.equal(cancelled.body.error.code, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE');
   const pending = await runtime.expedicaoService.getEntrega({ groupId, empresaId, actorId }, created.body.data.id);
   assert.equal(pending.status_code, 'AGUARDANDO_SEPARACAO');
+});
+
+test('Pedido vinculado nao despacha com portas reserved; romaneio sem despacho nao invoca efeito', async () => {
+  const runtime = fixture();
+  const created = await post(runtime, payload);
+  assert.equal(created.status, 201);
+  const id = created.body.data.id;
+  const separation = await post(runtime, {
+    confirmed: true,
+    checklist: { conferiu_quantidade: true, conferiu_qualidade: true, conferiu_embalagem: true,
+      conferiu_etiquetas: true, conferiu_documentos: true },
+    itens: [{ produto_id: productId, descricao: 'Produto do Pedido', unidade_sigla: 'UN',
+      quantidade_pedida: '10', quantidade_separada: '10' }],
+  }, empresaId, `/api/v1/entregas/${id}/separacao`);
+  assert.equal(separation.status, 201);
+  const romaneio = { confirmed: true, motorista_nome: 'Motorista', veiculo: 'Veiculo', placa: 'ABC1D23',
+    checklist_saida: { documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true },
+    entregas_ids: [id], idempotency_key: 'linked-romaneio-1' };
+  const blocked = await post(runtime, { ...romaneio, despachar: true }, empresaId, '/api/v1/romaneios');
+  assert.equal(blocked.status, 503);
+  assert.equal(blocked.body.error.code, 'PEDIDO_ESTOQUE_CONTRACT_UNAVAILABLE');
+  const stillReady = await runtime.expedicaoService.getEntrega({ groupId, empresaId, actorId }, id);
+  assert.equal(stillReady.status_code, 'PRONTO_EXPEDIR');
+  const withoutDispatch = await post(runtime, { ...romaneio, despachar: false }, empresaId, '/api/v1/romaneios');
+  assert.equal(withoutDispatch.status, 201);
+  assert.equal(withoutDispatch.body.data.estoqueSideEffect, 'reserved');
+  assert.equal(withoutDispatch.body.data.entregas[0].status_code, 'EM_ROMANEIO');
 });
