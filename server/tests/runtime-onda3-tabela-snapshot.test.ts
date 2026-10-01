@@ -143,6 +143,7 @@ function pedidoFixture(options: {
     permissions: {
       Comercial: {
         pedido: ['visualizar', 'criar', 'aprovar', 'editar', 'cancelar', 'converter-pedido', 'alterar-status'],
+        orcamento: ['visualizar', 'criar', 'versionar', 'aprovar'],
       },
     },
   });
@@ -162,7 +163,18 @@ function pedidoFixture(options: {
     { get: async () => tabela } as never,
     pricePort(options.price),
   );
-  return { service, repo, orcamentos, audit };
+  const orcamentoService = new OrcamentoService(
+    orcamentos, audit,
+    { assertEmpresaInGroup: async () => undefined }, rbac,
+    { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as never,
+    { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as never,
+    { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
+    { get: async () => condicaoStub() } as never,
+    pricePort(options.price), null, null, null,
+    { get: async () => tabela } as never,
+    repo,
+  );
+  return { service, orcamentoService, repo, orcamentos, audit };
 }
 
 test('helper: buildTabelaPrecoDocumentoSnapshot fail-closed sem codigo/nome', () => {
@@ -232,6 +244,20 @@ test('Onda3: conversão copia snapshot da tabela do Orçamento (não-retroativid
     promocao_bps: null,
     promocao_cupom: null,
   } as never);
+  await assert.rejects(
+    () => service.convert(ctx, quote.id, {
+      tipo_operacao: 'RETIRADA', data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
+      tipo_comercial: 'ARMADO', requer_producao: true,
+    }),
+    (error: AppError) => error.statusCode === 422,
+  );
+  await assert.rejects(
+    () => service.convert(ctx, quote.id, {
+      tipo_operacao: 'RETIRADA', data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
+      tabela_preco_id: otherEmpresa,
+    }),
+    (error: AppError) => error.statusCode === 422,
+  );
   const order = await service.convert(ctx, quote.id, {
     tipo_operacao: 'RETIRADA',
     data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
@@ -240,6 +266,42 @@ test('Onda3: conversão copia snapshot da tabela do Orçamento (não-retroativid
   assert.equal(order.tabela_preco_codigo_snapshot, 'SNAP-TAB');
   assert.equal(order.tabela_preco_nome_snapshot, 'Tabela snapshot original');
   assert.notEqual(order.tabela_preco_nome_snapshot, 'Tabela atual alterada');
+
+  // A tabela mestre pode mudar/sumir depois da conversão: edição não a reconsulta.
+  (service as any).tabelas = { get: async () => { throw new Error('LIVE_TABELA_SHOULD_NOT_BE_READ'); } };
+
+  const updatePayload = {
+    ...pedidoPayload,
+    tipo_operacao: order.tipo_operacao,
+    orcamento_id: quote.id,
+    itens: [{ ...pedidoPayload.itens[0], preco_unitario: '12.340000' }],
+  };
+  await assert.rejects(
+    () => service.update(ctx, order.id, { ...updatePayload, itens: [{ ...updatePayload.itens[0], preco_unitario: '1' }] }),
+    (error: AppError) => error.statusCode === 422,
+  );
+  const updated = await service.update(ctx, order.id, updatePayload);
+  assert.equal(updated.itens[0]?.preco_unitario, '12.340000');
+  assert.equal(updated.tabela_preco_id, tabelaId);
+  assert.equal(updated.tabela_preco_codigo_snapshot, 'SNAP-TAB');
+  assert.equal(updated.tabela_preco_nome_snapshot, 'Tabela snapshot original');
+  const reopened = await service.get(ctx, order.id);
+  assert.equal(reopened.tabela_preco_nome_snapshot, 'Tabela snapshot original');
+});
+
+test('converter v1 bloqueia versionar e impede segundo Pedido da cadeia', async () => {
+  const { service, orcamentoService, repo } = pedidoFixture();
+  const v1 = await orcamentoService.create(ctx, quotePayload);
+  const p1 = await service.convert(ctx, v1.id, {
+    tipo_operacao: 'RETIRADA', data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
+  });
+  await assert.rejects(
+    () => orcamentoService.createVersion(ctx, v1.id, quotePayload),
+    (error: AppError) => error.code === 'ORCAMENTO_ALREADY_CONVERTED',
+  );
+  assert.equal((await orcamentoService.get(ctx, v1.id)).status, 'EM_ABERTO');
+  assert.equal((await repo.list({ groupId, empresaId }, 10, 0)).total, 1);
+  assert.equal((await service.get(ctx, p1.id)).orcamento_id, v1.id);
 });
 
 test('Onda3: Pedido update regrava snapshot da tabela atual', async () => {

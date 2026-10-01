@@ -137,12 +137,12 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
   }
 
-  async update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor, preserveItems = false): Promise<Pedido | null> {
     return this.run(executor, async (query) => {
       const current = await this.get(scope, id, query);
       if (!current || current.status !== 'EM_ABERTO') return null;
       const totals = calculatePedido(data.itens);
-      await query.query(
+      const updated = await query.query<{ id: string }>(
         `UPDATE pedidos SET
           cliente_empresa_id=$4,cliente_local_id=$5,obra_id=$6,tabela_preco_id=$7,
           tabela_preco_codigo_snapshot=$8,tabela_preco_nome_snapshot=$9,
@@ -151,7 +151,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
           promocao_aplicada=$14,promocao_bps=$15,promocao_cupom=$16,
           tipo_operacao=$17,data_entrega_solicitada=$18,observacoes=$19,subtotal=$20,desconto=$21,total=$22,
           tipo_comercial=$23,updated_by=$24
-         WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+         WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='EM_ABERTO' RETURNING id`,
         [
           id, scope.groupId, scope.empresaId, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null,
           data.tabela_preco_codigo_snapshot ?? null, data.tabela_preco_nome_snapshot ?? null,
@@ -162,17 +162,25 @@ export class PostgresPedidoRepository implements PedidoRepository {
           totals.subtotal, totals.desconto, totals.total, data.tipo_comercial, actorId,
         ],
       );
-      await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
-      await this.insertItems(query, scope, id, data, actorId);
+      if (updated.rows.length !== 1) return null;
+      if (!preserveItems) {
+        await query.query('DELETE FROM pedido_itens WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId]);
+        await this.insertItems(query, scope, id, data, actorId);
+      }
       return this.get(scope, id, query);
     });
   }
 
-  async changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor, expectedStatus?: PedidoStatus): Promise<Pedido | null> {
     return this.run(executor, async (query) => {
       const current = await this.get(scope, id, query);
       if (!current) return null;
-      await query.query('UPDATE pedidos SET status=$4,ativo=$5,updated_by=$6 WHERE id=$1 AND group_id=$2 AND empresa_id=$3', [id, scope.groupId, scope.empresaId, status, status !== 'CANCELADO', actorId]);
+      if (expectedStatus !== undefined && current.status !== expectedStatus) return null;
+      const updated = await query.query<{ id: string }>(
+        'UPDATE pedidos SET status=$4,ativo=$5,updated_by=$6 WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status=$7 RETURNING id',
+        [id, scope.groupId, scope.empresaId, status, status !== 'CANCELADO', actorId, expectedStatus ?? current.status],
+      );
+      if (updated.rows.length !== 1) return null;
       await query.query('INSERT INTO pedido_historico(group_id,empresa_id,pedido_id,status_anterior,status_novo,actor_id,motivo) VALUES($1,$2,$3,$4,$5,$6,$7)', [scope.groupId, scope.empresaId, id, current.status, status, actorId, motivo ?? null]);
       return this.get(scope, id, query);
     });

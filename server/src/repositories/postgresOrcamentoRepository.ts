@@ -54,6 +54,8 @@ const map = (row: Row): Orcamento => ({
     quantidade: String(item.quantidade),
     preco_unitario: String(item.preco_unitario),
     desconto: String(item.desconto ?? '0'),
+    requer_producao: item.requer_producao === true,
+    tipo_comercial: item.tipo_comercial == null ? undefined : String(item.tipo_comercial) as 'ARMADO' | 'CORTE_DOBRA',
     subtotal: String(item.subtotal),
     total: String(item.total),
   })),
@@ -63,6 +65,11 @@ const SELECT = `SELECT o.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.i
 
 export class PostgresOrcamentoRepository implements OrcamentoRepository {
   constructor(private readonly db: DbClient) {}
+
+  async lockConversionChain(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<void> {
+    if (!executor) throw new Error('ORCAMENTO_CHAIN_TRANSACTION_REQUIRED');
+    await executor.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`orcamento-chain:${scope.groupId}:${scope.empresaId}:${raizId}`]);
+  }
 
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     return this.db.withTransaction(fn);
@@ -76,8 +83,8 @@ export class PostgresOrcamentoRepository implements OrcamentoRepository {
     const totals = calculateOrcamento(data.itens);
     for (const item of totals.itens) {
       await query.query(
-        'INSERT INTO orcamento_itens(group_id,empresa_id,orcamento_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,desconto,subtotal,total) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
-        [scope.groupId, scope.empresaId, id, item.produto_id, item.unidade_id, item.descricao, item.unidade_sigla, item.quantidade, item.preco_unitario, item.desconto ?? '0', item.subtotal, item.total],
+        'INSERT INTO orcamento_itens(group_id,empresa_id,orcamento_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)',
+        [scope.groupId, scope.empresaId, id, item.produto_id, item.unidade_id, item.descricao, item.unidade_sigla, item.quantidade, item.preco_unitario, item.desconto ?? '0', item.subtotal, item.total, item.requer_producao ?? false, item.tipo_comercial ?? null],
       );
     }
     return totals;

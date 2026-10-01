@@ -34,6 +34,7 @@ import {
 } from './comercialTabelaSnapshot.js';
 import { assertOrcamentoValidadeVigente } from './comercialOrcamentoValidadePolicy.js';
 import type { TabelaPrecoRepository } from '../repositories/inMemoryTabelaPrecoRepository.js';
+import type { PedidoRepository } from '../repositories/pedidoTypes.js';
 
 const RBAC_MODULE = 'Comercial';
 const RBAC_SECTION = 'orcamento';
@@ -72,6 +73,8 @@ export function orcamentoAuditSnapshot(row: Orcamento) {
     campanha: row.campanha,
     subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length,
+    tipos_especiais_itens: row.itens.map((item) => item.tipo_comercial ?? null),
+    requer_producao_itens: row.itens.map((item) => item.requer_producao === true),
   });
 }
 
@@ -94,6 +97,7 @@ export class OrcamentoService {
     private readonly promocaoConfig: ComercialPromocaoConfigPort | null = null,
     /** Lookup TabelaPreco para snapshot codigo+nome quando o price port não ecoar. */
     private readonly tabelas: Pick<TabelaPrecoRepository, 'get'> | null = null,
+    private readonly convertedPedidos: Pick<PedidoRepository, 'getByOrcamento'> | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -169,6 +173,10 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
+      const locked = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(locked);
+      await this.assertChainNotConverted(scope, locked.orcamento_raiz_id, executor);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       const write = await this.applyCondicaoSnapshot(scope, priced, executor);
@@ -196,6 +204,10 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
+      const locked = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(locked);
+      await this.assertChainNotConverted(scope, locked.orcamento_raiz_id, executor);
       if (data.origem !== undefined && data.origem !== before.origem) {
         throw new AppError(422, 'VALIDATION_ERROR', 'Invalid Orcamento payload', { origem: 'immutable' });
       }
@@ -247,11 +259,24 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.repo.lockConversionChain(scope, before.orcamento_raiz_id, executor);
+      const locked = await this.requireOrcamento(scope, id, executor);
+      this.requireOpen(locked);
+      await this.assertChainNotConverted(scope, locked.orcamento_raiz_id, executor);
       const after = await this.repo.cancel(scope, id, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
       return after;
     });
+  }
+
+  private async assertChainNotConverted(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<void> {
+    if (!this.convertedPedidos) throw new AppError(503, 'ORCAMENTO_CONVERSION_GUARD_UNAVAILABLE', 'Conversion guard unavailable');
+    for (const version of await this.repo.listVersions(scope, raizId, executor)) {
+      if (await this.convertedPedidos.getByOrcamento(scope, version.id, executor)) {
+        throw new AppError(409, 'ORCAMENTO_ALREADY_CONVERTED', 'Quotation chain already converted');
+      }
+    }
   }
 
   private parse(payload: unknown): OrcamentoCreate {
@@ -515,6 +540,9 @@ export class OrcamentoService {
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
     if (!condicao || !condicao.ativo) throw new AppError(422, 'ORCAMENTO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {
+      if (Boolean(item.tipo_comercial) !== (item.requer_producao === true)) {
+        throw new AppError(422, 'ORCAMENTO_TIPO_ESPECIAL_INVALIDO', 'Special commercial type requires explicit production flag');
+      }
       const produto = await this.produtos.getById(scope, item.produto_id);
       if (!produto || !produto.ativo) throw new AppError(422, 'ORCAMENTO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
       if (produto.unidade_medida_id !== item.unidade_id) throw new AppError(422, 'ORCAMENTO_UNIDADE_INVALIDA', 'Unidade is not the principal product unit');

@@ -32,6 +32,8 @@ export const orcamentoItemSchema = z.object({
   quantidade: money,
   preco_unitario: money,
   desconto: money.optional(),
+  requer_producao: z.boolean().optional(),
+  tipo_comercial: z.enum(['ARMADO', 'CORTE_DOBRA']).optional(),
 }).strict();
 
 export const orcamentoPromocaoSchema = z.object({
@@ -141,6 +143,7 @@ export type OrcamentoListFilters = {
 
 export type OrcamentoRepository = {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
+  lockConversionChain(scope: OrcamentoScope, raizId: string, executor?: DbQueryExecutor): Promise<void>;
   create(scope: OrcamentoScope, data: OrcamentoWrite, executor?: DbQueryExecutor): Promise<Orcamento>;
   get(scope: OrcamentoScope, id: string, executor?: DbQueryExecutor): Promise<Orcamento | null>;
   getByIdempotencyKey(scope: OrcamentoScope, origem: OrcamentoOrigem, idempotencyKey: string, executor?: DbQueryExecutor): Promise<Orcamento | null>;

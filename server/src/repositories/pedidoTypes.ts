@@ -162,7 +162,7 @@ export type PedidoPage = { rows: Pedido[]; total: number };
 export function calculatePedido(
   items: Array<z.infer<typeof pedidoItemSchema> & { tipo_comercial_snapshot?: PedidoTipoComercialItem }>,
 ): Pick<Pedido, 'itens' | 'subtotal' | 'desconto' | 'total'> {
-  const calculated = calculateOrcamento(items);
+  const calculated = calculateOrcamento(items.map(({ tipo_comercial: _hint, ...item }) => item));
   return {
     ...calculated,
     itens: calculated.itens.map((item, index) => {
@@ -185,7 +185,7 @@ export interface PedidoRepository {
   getByIdempotencyKey(scope: PedidoScope, origem: PedidoOrigem, idempotencyKey: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByExternalId(scope: PedidoScope, origem: PedidoOrigem, externalId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   list(scope: PedidoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: PedidoListFilters): Promise<PedidoPage>;
-  update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
-  changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
+  update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor, preserveItems?: boolean): Promise<Pedido | null>;
+  changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor, expectedStatus?: PedidoStatus): Promise<Pedido | null>;
   history(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<PedidoHistorico[]>;
 }

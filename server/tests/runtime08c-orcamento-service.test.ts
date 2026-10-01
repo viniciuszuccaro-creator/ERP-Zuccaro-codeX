@@ -5,6 +5,7 @@ import { InMemoryAuditRepository } from '../src/audit/auditRepository.js';
 import type { DbQueryExecutor } from '../src/db/client.js';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.js';
 import { InMemoryOrcamentoRepository } from '../src/repositories/inMemoryOrcamentoRepository.js';
+import { InMemoryPedidoRepository } from '../src/repositories/inMemoryPedidoRepository.js';
 import type { OrcamentoCreate, OrcamentoScope } from '../src/repositories/orcamentoTypes.js';
 import { OrcamentoService } from '../src/services/orcamentoService.js';
 
@@ -122,6 +123,7 @@ function fixture(overrides: {
     {
       resolveSalePrice: async () => ({ preco: '10.000000' }),
     },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
   return { repo, audit, rbac, service };
 }
@@ -255,6 +257,7 @@ test('update revalida todas as referencias sem persistir falha', async () => {
         { getById: async () => item.overrides.unidade === null ? null : { id: unidadeId, ativo: true } } as any,
         { get: async () => item.overrides.condicao === null ? null : { id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] } } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
       assert.equal(await code(invalidService.update(ctx, validCreated.id, { ...payload, itens: [{ ...payload.itens[0], quantidade: '9' }] })), item.expected);
       assert.equal((await valid.service.get(ctx, validCreated.id)).total, '20.000000');
@@ -272,6 +275,7 @@ test('update revalida todas as referencias sem persistir falha', async () => {
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,
     { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
   assert.equal(await code(invalidService.update(ctx, created.id, payload)), 'ORCAMENTO_UNIDADE_INVALIDA');
 });

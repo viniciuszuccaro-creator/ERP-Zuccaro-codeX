@@ -318,7 +318,9 @@ export const executarReservasComCompensacao = async ({ itens = [], reservar, com
   const erros = [];
   for (const item of validacao.itens) {
     try {
-      reservas.push(await reservar(item));
+      const reserva = await reservar(item);
+      if (!reserva?.id && reserva?.skipped !== true) throw new Error('Reserva sem confirmacao verificavel');
+      reservas.push(reserva);
     } catch (error) {
       erros.push(error?.message || 'Falha na reserva de estoque');
       break;
