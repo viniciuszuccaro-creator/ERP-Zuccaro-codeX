@@ -38,6 +38,12 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return result.rows[0] ? map(result.rows[0]) : null;
   }
 
+  async getForExpedicao(scope: PedidoScope, id: string, executor: DbQueryExecutor = this.db): Promise<Pedido | null> {
+    const result = await executor.query<Row>(`${SELECT} WHERE p.id=$1 AND p.group_id=$2 AND p.empresa_id=$3 FOR UPDATE OF p`,
+      [id, scope.groupId, scope.empresaId]);
+    return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
   async getByOrcamento(scope: PedidoScope, orcamentoId: string, executor: DbQueryExecutor = this.db): Promise<Pedido | null> {
     const result = await executor.query<Row>(`${SELECT} WHERE p.orcamento_id=$1 AND p.group_id=$2 AND p.empresa_id=$3`, [orcamentoId, scope.groupId, scope.empresaId]);
     return result.rows[0] ? map(result.rows[0]) : null;

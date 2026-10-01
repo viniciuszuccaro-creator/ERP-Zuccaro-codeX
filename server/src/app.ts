@@ -65,6 +65,7 @@ import { InMemoryExpedicaoRepository } from './repositories/inMemoryExpedicaoRep
 import { PostgresExpedicaoRepository } from './repositories/postgresExpedicaoRepository.js';
 import { ExpedicaoService } from './services/expedicaoService.js';
 import type { ExpedicaoEstoquePort, ExpedicaoPedidoSideEffectPort } from './repositories/expedicaoTypes.js';
+import type { PedidoRepository } from './repositories/pedidoTypes.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
@@ -89,6 +90,7 @@ export type CreateAppOptions = {
   /** Portas reservadas Expedição ↔ Pedido/estoque (coordenação Codex). */
   expedicaoPedidoPort?: ExpedicaoPedidoSideEffectPort;
   expedicaoEstoquePort?: ExpedicaoEstoquePort;
+  expedicaoPedidoReader?: Pick<PedidoRepository, 'getForExpedicao'>;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -196,6 +198,7 @@ export function createApp(options: CreateAppOptions) {
     rbacGuard,
     options.expedicaoPedidoPort,
     options.expedicaoEstoquePort,
+    options.expedicaoPedidoReader ?? pedidoRepo,
   );
   const obraService = new ObraService(
     obraRepo,

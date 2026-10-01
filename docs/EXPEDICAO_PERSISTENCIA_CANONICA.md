@@ -1,5 +1,14 @@
 # Expedição — Persistência canônica (Entrega / Romaneio / Separação)
 
+## Contrato Pedido em composição Codex
+
+- Entrega com `pedido_id` lê o Pedido pelo mesmo Grupo/Empresa e trava a linha no PostgreSQL dentro da transação de criação. Após o lock, verifica novamente se outra requisição já criou a Entrega. Pedido ausente, cancelado, fora de `PRONTO_ENTREGA` ou de tipo diferente de `ENTREGA` bloqueia a criação.
+- Número, cliente, local, data e itens/quantidades do Pedido são confrontados; os snapshots persistidos vêm do Pedido, não da descrição enviada pela interface. Repetição da mesma chave para outro Pedido falha com conflito.
+- Parcial deve ser menor que o total; devolução deve ter quantidade positiva e não exceder o total. Itens de devolução informados devem pertencer à Entrega, sem duplicatas, e fechar a quantidade agregada.
+- `PATCH` comum de estado/edição e auditoria compartilham a transação do repositório. Cancelamento ou despacho direto de Entrega ligada a Pedido é bloqueado até o contrato de compensação de Pedido/estoque ser integrado.
+- **Ainda não implantável:** as portas de efeitos Pedido/estoque continuam `reserved`; elas não recebem executor transacional e não provam rollback de efeito externo. O fluxo vinculado não deve ser promovido antes de tip-port transacional ou compensação persistente com testes de falha/retry.
+- Na composição com #178, `025_expedicao_entregas_romaneios.sql` colide com `025_pedidos_origem_canal_idempotency.sql`. Renumerar e validar a ordem da candidata final, preservando ambas; a migration 026 comercial permanece bloqueada pela prova histórica.
+
 ## Inventário (pré-implementação)
 
 | Camada | Entrega | Romaneio | Separação | Achado |
@@ -57,6 +66,7 @@ cd server && node --import tsx --test \
 ```
 
 Cobertura: ciclo completo, RBAC, isolamento empresa, concorrência de número, retry idempotente, falha intermediária estoque → rollback, bridge cliente HTTP.
+O contrato Pedido usa ainda `runtime11-expedicao-pedido-contract.test.ts` (HTTP) e `runtime11-expedicao-pedido-pglite.test.ts` (PostgreSQL efêmero). Isso não substitui E2E do conjunto com migrations compostas em PostgreSQL externo isolado.
 
 ## Roteiro HML (pós-merge / gate VPS)
 

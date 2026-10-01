@@ -29,8 +29,41 @@ import {
   type SeparacaoConcluir,
 } from '../repositories/expedicaoTypes.js';
 import { z } from 'zod';
+import type { Pedido, PedidoRepository } from '../repositories/pedidoTypes.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function qtyMicros(value: string): bigint {
+  if (!/^\d+(?:\.\d{1,6})?$/.test(value)) throw new AppError(422, 'ENTREGA_QUANTIDADE_INVALIDA', 'Invalid linked quantity');
+  const [whole, fraction = ''] = value.split('.');
+  return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
+}
+
+function linkedPedidoItems(pedido: Pedido, data: EntregaCreate): EntregaCreate['itens'] {
+  const totals = (items: { produto_id?: string | null; unidade_sigla: string; quantidade: string }[]) => {
+    const result = new Map<string, bigint>();
+    for (const item of items) {
+      if (!item.produto_id) throw new AppError(422, 'ENTREGA_ITEM_SEM_PRODUTO', 'Linked item requires product');
+      const key = JSON.stringify([item.produto_id, item.unidade_sigla.trim().toUpperCase()]);
+      result.set(key, (result.get(key) ?? 0n) + qtyMicros(item.quantidade));
+    }
+    return result;
+  };
+  const requested = totals(data.itens.map((item) => ({ ...item, quantidade: item.quantidade_pedida })));
+  const ordered = totals(pedido.itens);
+  if (requested.size !== ordered.size || [...ordered].some(([key, qty]) => requested.get(key) !== qty)
+    || data.itens.some((item) => ['quantidade_separada', 'quantidade_entregue', 'quantidade_devolvida']
+      .some((field) => qtyMicros(String(item[field as keyof typeof item] ?? '0')) !== 0n))) {
+    throw new AppError(409, 'ENTREGA_PEDIDO_ITENS_DIVERGENTES', 'Entrega items differ from Pedido');
+  }
+  return pedido.itens.map((item) => ({
+    produto_id: item.produto_id,
+    descricao: item.descricao,
+    unidade_sigla: item.unidade_sigla,
+    quantidade_pedida: item.quantidade,
+    quantidade_separada: '0', quantidade_entregue: '0', quantidade_devolvida: '0',
+  }));
+}
 
 const ALLOWED_TRANSITIONS: Record<EntregaStatus, EntregaStatus[]> = {
   AGUARDANDO_SEPARACAO: ['EM_SEPARACAO', 'PRONTO_EXPEDIR', 'CANCELADA'],
@@ -130,6 +163,7 @@ export class ExpedicaoService {
     private readonly rbac: RbacGuard,
     private readonly pedidoPort: ExpedicaoPedidoSideEffectPort = reservedPedidoPort,
     private readonly estoquePort: ExpedicaoEstoquePort = reservedEstoquePort,
+    private readonly pedidoRepo?: Pick<PedidoRepository, 'getForExpedicao'>,
   ) {}
 
   async listEntregas(ctx: RequestContext, options: {
@@ -170,18 +204,40 @@ export class ExpedicaoService {
     const scope = await this.prepare(ctx, 'criar', 'entrega');
     const data = this.parseCreate(payload);
     return this.repo.withTransaction(async (executor) => {
+      let canonical = data;
       if (data.pedido_id) {
         const existing = await this.repo.getEntregaByPedido(scope, data.pedido_id, executor);
-        if (existing) {
-          await this.auditRow(ctx, 'Entrega', 'create', null, existing, executor);
-          return toSpaEntrega(existing);
+        if (existing) return toSpaEntrega(existing);
+        if (!this.pedidoRepo) throw new AppError(503, 'PEDIDO_READ_UNAVAILABLE', 'Pedido read unavailable');
+        const pedido = await this.pedidoRepo.getForExpedicao(scope, data.pedido_id, executor);
+        if (!pedido) throw new AppError(404, 'PEDIDO_NOT_FOUND', 'Pedido not found in tenant');
+        const createdWhileWaiting = await this.repo.getEntregaByPedido(scope, data.pedido_id, executor);
+        if (createdWhileWaiting) return toSpaEntrega(createdWhileWaiting);
+        if (!pedido.ativo || pedido.status !== 'PRONTO_ENTREGA' || pedido.tipo_operacao !== 'ENTREGA') {
+          throw new AppError(409, 'PEDIDO_NAO_EXPEDIVEL', 'Pedido is not ready for delivery');
         }
+        if ((data.pedido_numero && data.pedido_numero !== pedido.numero)
+          || (data.cliente_empresa_id && data.cliente_empresa_id !== pedido.cliente_empresa_id)
+          || (data.cliente_id && data.cliente_id !== pedido.cliente_empresa_id)
+          || (data.cliente_local_id && data.cliente_local_id !== pedido.cliente_local_id)
+          || (data.data_entrega_solicitada && data.data_entrega_solicitada !== pedido.data_entrega_solicitada)) {
+          throw new AppError(409, 'ENTREGA_PEDIDO_SNAPSHOT_DIVERGENTE', 'Entrega snapshot differs from Pedido');
+        }
+        canonical = { ...data, pedido_numero: pedido.numero, cliente_id: pedido.cliente_empresa_id,
+          cliente_empresa_id: pedido.cliente_empresa_id,
+          cliente_local_id: pedido.cliente_local_id, data_entrega_solicitada: pedido.data_entrega_solicitada,
+          itens: linkedPedidoItems(pedido, data) };
       }
       if (data.idempotency_key) {
         const byIdem = await this.repo.getEntregaByIdempotency(scope, data.idempotency_key, executor);
-        if (byIdem) return toSpaEntrega(byIdem);
+        if (byIdem) {
+          if (byIdem.pedido_id !== (data.pedido_id ?? null)) {
+            throw new AppError(409, 'ENTREGA_IDEMPOTENCY_CONFLICT', 'Idempotency key belongs to another Pedido');
+          }
+          return toSpaEntrega(byIdem);
+        }
       }
-      const created = await this.repo.createEntrega(scope, data, ctx.actorId!, executor);
+      const created = await this.repo.createEntrega(scope, canonical, ctx.actorId!, executor);
       await this.auditRow(ctx, 'Entrega', 'create', null, created, executor);
       return toSpaEntrega(created);
     });
@@ -434,6 +490,9 @@ export class ExpedicaoService {
         }
         nextStatus = 'ENTREGUE_PARCIAL';
         const quantidadePedida = Number(before.entrega_parcial?.quantidade_pedida || before.quantidade_total || before.volumes || 0);
+        if (!(quantidadePedida > 0) || nextQty >= quantidadePedida) {
+          throw new AppError(422, 'PARCIAL_QTY_EXCEEDS_TOTAL', 'Partial delivery must remain below total');
+        }
         patch = {
           data_entrega: now,
           comprovante_entrega: comprovante,
@@ -449,7 +508,9 @@ export class ExpedicaoService {
           throw new AppError(422, 'COMPROVANTE_REQUIRED', 'Entrega exige comprovante');
         }
         nextStatus = 'ENTREGUE';
-        patch = { data_entrega: now, comprovante_entrega: comprovante };
+        patch = { data_entrega: now, comprovante_entrega: comprovante,
+          entrega_parcial: { ...(before.entrega_parcial || {}), quantidade_entregue: Number(before.quantidade_total),
+            quantidade_pedida: Number(before.quantidade_total) } };
       }
 
       let updated = await this.repo.updateEntregaRow(scope, entregaId, patch, ctx.actorId!, executor);
@@ -483,11 +544,34 @@ export class ExpedicaoService {
       const elegivel = ['ENTREGUE', 'ENTREGUE_PARCIAL', 'FRUSTRADA', 'SAIU_ENTREGA'].includes(before.status);
       if (!elegivel) throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega not eligible for devolucao');
 
-      const qty = data.quantidade_devolvida
-        || (data.itens?.reduce((acc, item) => acc + Number(item.quantidade_devolvida || 0), 0).toFixed(6))
-        || '0.000000';
+      const qty = data.quantidade_devolvida && Number(data.quantidade_devolvida) > 0
+        ? data.quantidade_devolvida
+        : data.itens?.reduce((acc, item) => acc + Number(item.quantidade_devolvida || 0), 0).toFixed(6) ?? '0.000000';
+      if (!(Number(qty) > 0) || Number(qty) > Number(before.quantidade_total)) {
+        throw new AppError(422, 'DEVOLUCAO_QTY_EXCEEDS_TOTAL', 'Returned quantity must be within delivery total');
+      }
+      let itens: Entrega['itens'] | undefined;
+      if (data.itens?.length) {
+        const seen = new Set<string>();
+        let total = 0n;
+        itens = before.itens.map((item) => {
+          const match = data.itens!.find((candidate) => candidate.item_id === item.id);
+          if (!match) return item;
+          seen.add(item.id);
+          const returned = qtyMicros(match.quantidade_devolvida);
+          if (returned > qtyMicros(item.quantidade_pedida)) {
+            throw new AppError(422, 'DEVOLUCAO_ITEM_QTY_INVALIDA', 'Returned item exceeds ordered quantity');
+          }
+          total += returned;
+          return { ...item, quantidade_devolvida: match.quantidade_devolvida };
+        });
+        if (seen.size !== data.itens.length || total !== qtyMicros(qty)) {
+          throw new AppError(422, 'DEVOLUCAO_ITEM_QTY_INVALIDA', 'Returned items differ from total');
+        }
+      }
 
       const patch: Partial<Entrega> = {
+        ...(itens ? { itens } : {}),
         logistica_reversa: {
           ...(before.logistica_reversa || {}),
           motivo: data.motivo,
@@ -576,32 +660,40 @@ export class ExpedicaoService {
         })).entrega;
       }
       const scope = await this.prepare(ctx, rbacForStatus(next), 'entrega');
-      const before = await this.repo.getEntrega(scope, id);
-      if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
-      if (before.status === next) return toSpaEntrega(before);
-      if (!ALLOWED_TRANSITIONS[before.status].includes(next)) {
-        throw new AppError(409, 'ENTREGA_STATE_CONFLICT', `Transition ${before.status} -> ${next} not allowed`);
-      }
-      const updated = await this.repo.changeEntregaStatus(scope, id, next, ctx.actorId!, String(body.motivo || ''), String(body.idempotency_key || '') || undefined);
-      if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
-      await this.auditRow(ctx, 'Entrega', 'change_status', before, updated);
-      return toSpaEntrega(updated);
+      return this.repo.withTransaction(async (executor) => {
+        const before = await this.repo.getEntrega(scope, id, executor);
+        if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
+        if (before.status === next) return toSpaEntrega(before);
+        if (!ALLOWED_TRANSITIONS[before.status].includes(next)) {
+          throw new AppError(409, 'ENTREGA_STATE_CONFLICT', `Transition ${before.status} -> ${next} not allowed`);
+        }
+        if (before.pedido_id && ['CANCELADA', 'SAIU_ENTREGA'].includes(next)) {
+          throw new AppError(409, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE', 'Linked Pedido requires stock contract');
+        }
+        const updated = await this.repo.changeEntregaStatus(scope, id, next, ctx.actorId!,
+          String(body.motivo || ''), String(body.idempotency_key || '') || undefined, executor);
+        if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
+        await this.auditRow(ctx, 'Entrega', 'change_status', before, updated, executor);
+        return toSpaEntrega(updated);
+      });
     }
     const scope = await this.prepare(ctx, 'editar', 'entrega');
-    const before = await this.repo.getEntrega(scope, id);
-    if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
-    if (['ENTREGUE', 'DEVOLVIDA', 'CANCELADA'].includes(before.status)) {
-      throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega finalizada nao pode ser editada');
-    }
-    const updated = await this.repo.updateEntregaRow(scope, id, {
-      observacoes: body.observacoes != null ? String(body.observacoes) : undefined,
-      motorista_nome: body.motorista != null ? String(body.motorista) : body.motorista_nome != null ? String(body.motorista_nome) : undefined,
-      veiculo: body.veiculo != null ? String(body.veiculo) : undefined,
-      placa: body.placa != null ? String(body.placa) : undefined,
-    }, ctx.actorId!);
-    if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
-    await this.auditRow(ctx, 'Entrega', 'update', before, updated);
-    return toSpaEntrega(updated);
+    return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getEntrega(scope, id, executor);
+      if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
+      if (['ENTREGUE', 'DEVOLVIDA', 'CANCELADA'].includes(before.status)) {
+        throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega finalizada nao pode ser editada');
+      }
+      const updated = await this.repo.updateEntregaRow(scope, id, {
+        observacoes: body.observacoes != null ? String(body.observacoes) : undefined,
+        motorista_nome: body.motorista != null ? String(body.motorista) : body.motorista_nome != null ? String(body.motorista_nome) : undefined,
+        veiculo: body.veiculo != null ? String(body.veiculo) : undefined,
+        placa: body.placa != null ? String(body.placa) : undefined,
+      }, ctx.actorId!, executor);
+      if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
+      await this.auditRow(ctx, 'Entrega', 'update', before, updated, executor);
+      return toSpaEntrega(updated);
+    });
   }
 
   private parseCreate(payload: unknown): EntregaCreate {
