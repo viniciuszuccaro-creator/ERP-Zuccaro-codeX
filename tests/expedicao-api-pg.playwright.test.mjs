@@ -22,7 +22,7 @@ const GROUP = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const EMPRESA = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const ACTOR = 'a4a4a4a4-aaaa-4aaa-8aaa-a4a4a4a4a4a4';
 
-function harnessHtml(apiBase) {
+function harnessHtml() {
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -38,15 +38,15 @@ function harnessHtml(apiBase) {
 <body>
   <h1 data-testid="harness-title">Expedicao — API + PostgreSQL (PGlite)</h1>
   <p data-testid="harness-layer">LAYER=API_HTTP_PGLITE</p>
-  <p>Base: <code id="base">${apiBase}</code></p>
+  <p>Proxy same-origin → BFF PGlite</p>
   <div>
     <button data-testid="btn-ciclo" id="btn-ciclo">Rodar ciclo</button>
     <button data-testid="btn-retry" id="btn-retry">Despacho repetido</button>
-    <button data-testid="btn-rollback" id="btn-rollback">Simular rollback estoque</button>
+    <button data-testid="btn-rollback" id="btn-rollback">Meta migration 036</button>
   </div>
   <pre id="log" data-testid="harness-log"></pre>
   <script>
-    const API = ${JSON.stringify(apiBase)};
+    const API = '';
     const H = {
       'content-type': 'application/json',
       'x-group-id': ${JSON.stringify(GROUP)},
@@ -81,7 +81,7 @@ function harnessHtml(apiBase) {
           idempotency_key: 'br-ent-' + key,
         }),
       });
-      if (created.status !== 201) throw new Error('create ' + created.status);
+      if (created.status !== 201) throw new Error('create ' + created.status + ' ' + JSON.stringify(created.body));
       const id = created.body.data.id;
       const sep = await api('/api/v1/entregas/' + id + '/separacao', {
         method: 'POST',
@@ -95,7 +95,7 @@ function harnessHtml(apiBase) {
           idempotency_key: 'br-sep-' + key,
         }),
       });
-      if (sep.status !== 201) throw new Error('sep ' + sep.status);
+      if (sep.status !== 201) throw new Error('sep ' + sep.status + ' ' + JSON.stringify(sep.body));
       return id;
     }
 
@@ -157,7 +157,7 @@ function harnessHtml(apiBase) {
         };
         const a = await api('/api/v1/romaneios', { method: 'POST', body: JSON.stringify(payload) });
         const b = await api('/api/v1/romaneios', { method: 'POST', body: JSON.stringify(payload) });
-        if (a.status !== 201 || b.status !== 201) throw new Error('retry status');
+        if (a.status !== 201 || b.status !== 201) throw new Error('retry status ' + a.status + '/' + b.status);
         if (!b.body.data.reused) throw new Error('retry not reused');
         if (a.body.data.romaneio.id !== b.body.data.romaneio.id) throw new Error('retry id mismatch');
         state.retryOk = true;
@@ -170,14 +170,12 @@ function harnessHtml(apiBase) {
 
     document.getElementById('btn-rollback').onclick = async () => {
       try {
-        // Meta prova: endpoint meta + fluxo normal documentam porta reserved;
-        // rollback real estoque failed e coberto nos testes PGlite/HTTP do server.
         const meta = await api('/api/v1/meta');
         if (!meta.body.expedicao || meta.body.expedicao.pedidoEstoqueSideEffects !== 'reserved') {
-          throw new Error('meta side-effects');
+          throw new Error('meta side-effects ' + JSON.stringify(meta.body.expedicao));
         }
         if (meta.body.expedicao.migration !== '036_expedicao_entregas_romaneios.sql') {
-          throw new Error('meta migration');
+          throw new Error('meta migration ' + meta.body.expedicao.migration);
         }
         state.rollbackMetaOk = true;
         log('ROLLBACK_META_OK migration=036 side=reserved', true);
@@ -191,8 +189,36 @@ function harnessHtml(apiBase) {
 </html>`;
 }
 
-async function startStatic(html) {
-  const server = createServer((req, res) => {
+async function startProxy(bffPort) {
+  const html = harnessHtml();
+  const server = createServer(async (req, res) => {
+    const url = req.url || '/';
+    if (url.startsWith('/api/') || url === '/health' || url === '/ready' || url.startsWith('/api')) {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const body = Buffer.concat(chunks);
+      try {
+        const upstream = await fetch(`http://127.0.0.1:${bffPort}${url}`, {
+          method: req.method,
+          headers: {
+            'content-type': req.headers['content-type'] || 'application/json',
+            'x-group-id': req.headers['x-group-id'] || '',
+            'x-empresa-id': req.headers['x-empresa-id'] || '',
+            'x-actor-id': req.headers['x-actor-id'] || '',
+          },
+          body: req.method === 'GET' || req.method === 'HEAD' ? undefined : body,
+        });
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        res.writeHead(upstream.status, {
+          'content-type': upstream.headers.get('content-type') || 'application/json',
+        });
+        res.end(buf);
+      } catch (err) {
+        res.writeHead(502, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: { message: String(err) } }));
+      }
+      return;
+    }
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     res.end(html);
   });
@@ -230,17 +256,16 @@ async function startBff() {
   return { child, port, log: buf };
 }
 
-test('Playwright: navegador contra API+PGlite (ciclo, retry, meta 036)', async (t) => {
+test('Playwright: navegador contra API+PGlite (ciclo, retry, meta 036)', async () => {
   let bff;
-  let staticSrv;
+  let proxy;
   let browser;
   try {
     bff = await startBff();
-    const apiBase = `http://127.0.0.1:${bff.port}`;
-    staticSrv = await startStatic(harnessHtml(apiBase));
+    proxy = await startProxy(bff.port);
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
-    await page.goto(`http://127.0.0.1:${staticSrv.port}/`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`http://127.0.0.1:${proxy.port}/`, { waitUntil: 'domcontentloaded' });
     assert.equal(await page.getByTestId('harness-layer').innerText(), 'LAYER=API_HTTP_PGLITE');
 
     await page.getByTestId('btn-ciclo').click();
@@ -259,12 +284,9 @@ test('Playwright: navegador contra API+PGlite (ciclo, retry, meta 036)', async (
     assert.equal(meta.rollbackMetaOk, true, JSON.stringify(meta.results));
 
     await page.screenshot({ path: path.join(ART, 'expedicao-api-pg-harness.png'), fullPage: true });
-  } catch (err) {
-    t.diagnostic?.(String(err));
-    throw err;
   } finally {
     if (browser) await browser.close().catch(() => {});
-    if (staticSrv) await new Promise((r) => staticSrv.server.close(() => r()));
+    if (proxy) await new Promise((r) => proxy.server.close(() => r()));
     if (bff?.child) {
       bff.child.kill('SIGTERM');
       await new Promise((r) => setTimeout(r, 500));
