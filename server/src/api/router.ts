@@ -1254,7 +1254,7 @@ export function createApiRouter(deps: ApiDeps) {
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio', 'SeparacaoConferencia'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento/Pedido/Expedicao use the canonical frontend HTTP client; Expedicao Pedido/estoque side-effects remain reserved until Codex tip-port',
+      note: 'TabelaPreco and CondicaoPagamento prepared in backend; Orcamento and Pedido use the canonical frontend HTTP client; Pedido backend HTTP is active; Expedicao HTTP prepared with Pedido/estoque side-effects reserved until Codex tip-port',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',
