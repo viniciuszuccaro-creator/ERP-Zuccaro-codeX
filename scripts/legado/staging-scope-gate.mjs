@@ -7,6 +7,7 @@ import { stripSegredosMigracao } from '../../src/components/lib/migracaoErpPolic
 import { types as utilTypes } from 'node:util';
 const MESTRES_GRUPO = new Set(['cliente', 'fornecedor', 'produto_revenda']);
 const OPERACOES = new Set(['pedido', 'estoque', 'conta_receber', 'conta_pagar', 'nota_fiscal']);
+const FINANCEIRAS = new Set(['conta_receber', 'conta_pagar']);
 const CODIGOS_EMPRESA = new Set(['001', '002', '005']);
 const TIPOS_EVIDENCIA = new Set(['cnpj', 'documento_fiscal']);
 const TIPOS_EVIDENCIA_OPERACAO = new Set(['coluna_empresa_origem', 'documento_fiscal']);
@@ -182,12 +183,29 @@ export function prepararLoteStagingLegado(itens, { autorizado = false, vinculosV
  */
 export function reconciliarPlanoStagingLegado({
   itens, existentes = [], vinculosVerificados = {}, evidenciasOperacaoVerificadas = {},
-  autorizado = false, groupId, contagensEsperadas = [],
+  autorizado = false, groupId, contagensEsperadas = [], saldosEsperados,
 } = {}) {
   const grupo = String(groupId ?? '').trim();
   if (!grupo) throw new Error('Grupo do plano de staging obrigatorio.');
   if (!Array.isArray(itens) || !Array.isArray(existentes) || !Array.isArray(contagensEsperadas)) {
     throw new Error('Plano de staging exige listas validas.');
+  }
+  if (saldosEsperados !== undefined) {
+    if (!Array.isArray(saldosEsperados) || utilTypes.isProxy(saldosEsperados)
+      || Object.getPrototypeOf(saldosEsperados) !== Array.prototype
+      || Reflect.ownKeys(saldosEsperados).some((key) => key !== 'length'
+        && (typeof key !== 'string' || !/^(?:0|[1-9]\d*)$/.test(key)
+          || !Object.hasOwn(Object.getOwnPropertyDescriptor(saldosEsperados, key), 'value')))) {
+      throw new Error('Saldos financeiros esperados invalidos.');
+    }
+    for (let indice = 0; indice < saldosEsperados.length; indice += 1) {
+      const entrada = Object.getOwnPropertyDescriptor(saldosEsperados, String(indice));
+      if (!entrada || !Object.hasOwn(entrada, 'value') || !dadosInertes(entrada.value)
+        || Reflect.ownKeys(entrada.value).some((key) =>
+          !['entidade', 'codigoEmpresaLegado', 'valorCentavos'].includes(key))) {
+        throw new Error('Saldos financeiros esperados invalidos.');
+      }
+    }
   }
   // Valida estruturas JSON antes de qualquer leitura de campos usada no relatorio.
   const linhas = itens.map((item) => stripSegredosMigracao(item));
@@ -237,17 +255,17 @@ export function reconciliarPlanoStagingLegado({
     }
   }
   const fila = [...graus].filter(([, grau]) => grau === 0).map(([id]) => id);
-  let ordenados = 0;
-  while (fila.length > 0) {
-    const id = fila.pop();
-    ordenados += 1;
+  const ordem = [];
+  for (let indice = 0; indice < fila.length; indice += 1) {
+    const id = fila[indice];
+    ordem.push(id);
     for (const dependente of dependentes.get(id)) {
       const grau = graus.get(dependente) - 1;
       graus.set(dependente, grau);
       if (grau === 0) fila.push(dependente);
     }
   }
-  const dependenciasCiclicas = idsLote.size - ordenados;
+  const dependenciasCiclicas = idsLote.size - ordem.length;
   if (dependenciasCiclicas > 0) contar('dependencia_ciclica');
   const observadas = {};
   for (const item of linhas) {
@@ -279,11 +297,47 @@ export function reconciliarPlanoStagingLegado({
       contar('contagem_origem_divergente');
     }
   }
-  const bloqueado = dependenciasPendentes > 0 || dependenciasCiclicas > 0 || divergencias > 0;
+  const centavos = (valor) => {
+    if (typeof valor !== 'string' || !/^-?(?:0|[1-9]\d*)$/.test(valor)) {
+      throw new Error('Saldo financeiro exige centavos inteiros em texto.');
+    }
+    return BigInt(valor);
+  };
+  const observadosFinanceiros = new Map();
+  for (const item of linhas) {
+    if (!FINANCEIRAS.has(item.entidade)) continue;
+    const categoria = `${item.entidade}|${codigo(item.codigoEmpresaLegado)}`;
+    observadosFinanceiros.set(categoria,
+      (observadosFinanceiros.get(categoria) || 0n) + centavos(item.valorCentavos));
+  }
+  if (observadosFinanceiros.size > 0 && !Array.isArray(saldosEsperados)) {
+    throw new Error('Saldos financeiros esperados obrigatorios.');
+  }
+  const esperadosFinanceiros = new Map();
+  for (const entrada of saldosEsperados || []) {
+    const categoria = `${entrada?.entidade}|${entrada?.codigoEmpresaLegado}`;
+    if (!FINANCEIRAS.has(entrada?.entidade)
+      || !CODIGOS_EMPRESA.has(entrada?.codigoEmpresaLegado)
+      || esperadosFinanceiros.has(categoria)) {
+      throw new Error('Saldos financeiros esperados invalidos.');
+    }
+    esperadosFinanceiros.set(categoria, centavos(entrada.valorCentavos));
+  }
+  let divergenciasSaldos = 0;
+  for (const categoria of new Set([...observadosFinanceiros.keys(), ...esperadosFinanceiros.keys()])) {
+    if (!observadosFinanceiros.has(categoria) || !esperadosFinanceiros.has(categoria)
+      || observadosFinanceiros.get(categoria) !== esperadosFinanceiros.get(categoria)) {
+      divergenciasSaldos += 1;
+      contar('saldo_origem_divergente');
+    }
+  }
+  const bloqueado = dependenciasPendentes > 0 || dependenciasCiclicas > 0
+    || divergencias > 0 || divergenciasSaldos > 0;
+  const posicao = new Map(ordem.map((id, indice) => [id, indice]));
   return {
-    privados: bloqueado ? [] : preparado.privados,
+    privados: bloqueado ? [] : [...preparado.privados].sort((a, b) => posicao.get(chave(a)) - posicao.get(chave(b))),
     bloqueado,
     relatorio: { ...preparado.relatorio, porMotivo, porEntidadeEmpresaOrigem: observadas,
-      dependenciasPendentes, dependenciasCiclicas, divergencias },
+      dependenciasPendentes, dependenciasCiclicas, divergencias, divergenciasSaldos },
   };
 }

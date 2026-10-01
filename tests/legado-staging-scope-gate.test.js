@@ -293,6 +293,65 @@ test('plano reconcilia mestre do Grupo e pedido da Empresa sem copiar operacao a
   assert.equal(result.relatorio.divergencias, 0);
 });
 
+test('plano entrega mestres antes das operacoes mesmo com origem em ordem inversa', () => {
+  const result = reconciliarPlanoStagingLegado({ ...planoBase, itens: [pedido, cliente] });
+  assert.equal(result.bloqueado, false);
+  assert.deepEqual(result.privados.map((item) => item.entidade), ['cliente', 'pedido']);
+  const repetido = reconciliarPlanoStagingLegado({ ...planoBase, itens: [pedido, cliente],
+    existentes: [cliente] });
+  assert.equal(repetido.bloqueado, false);
+  assert.deepEqual(repetido.privados.map((item) => item.entidade), ['pedido']);
+  assert.equal(repetido.relatorio.reusos, 1);
+});
+
+test('plano financeiro exige soma exata em centavos sem divulgar valores', () => {
+  const titulo = { entidade: 'conta_receber', groupId: 'g1', empresaId: 'e1',
+    codigoEmpresaLegado: '001', codigoLegado: 'TIT-S1', assinaturaOrigem: 'c'.repeat(64),
+    valorCentavos: '1250', dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-S1', escopo: 'grupo' }] };
+  const base = { ...planoBase, itens: [titulo, cliente],
+    evidenciasOperacaoVerificadas: provas(titulo),
+    contagensEsperadas: [
+      { entidade: 'cliente', codigoEmpresaLegado: 'grupo', quantidade: 1 },
+      { entidade: 'conta_receber', codigoEmpresaLegado: '001', quantidade: 1 },
+    ] };
+  assert.throws(() => reconciliarPlanoStagingLegado(base), /Saldos financeiros esperados/);
+  const esperado = [{ entidade: 'conta_receber', codigoEmpresaLegado: '001', valorCentavos: '1250' }];
+  const aprovado = reconciliarPlanoStagingLegado({ ...base, saldosEsperados: esperado });
+  assert.equal(aprovado.bloqueado, false);
+  assert.deepEqual(aprovado.privados.map((item) => item.entidade), ['cliente', 'conta_receber']);
+  assert.equal(aprovado.relatorio.divergenciasSaldos, 0);
+  assert.doesNotMatch(JSON.stringify(aprovado.relatorio), /1250|TIT-S1/);
+  const divergente = reconciliarPlanoStagingLegado({ ...base, saldosEsperados: [
+    { ...esperado[0], valorCentavos: '1249' },
+  ] });
+  assert.equal(divergente.bloqueado, true);
+  assert.deepEqual(divergente.privados, []);
+  assert.equal(divergente.relatorio.divergenciasSaldos, 1);
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...base,
+    itens: [{ ...titulo, valorCentavos: 12.5 }, cliente], saldosEsperados: esperado }),
+  /centavos inteiros/);
+  assert.throws(() => reconciliarPlanoStagingLegado({ ...base,
+    saldosEsperados: [...esperado, esperado[0]] }), /Saldos financeiros esperados invalidos/);
+  const empresaErrada = reconciliarPlanoStagingLegado({ ...base, saldosEsperados: [
+    { ...esperado[0], codigoEmpresaLegado: '002' },
+  ] });
+  assert.equal(empresaErrada.bloqueado, true);
+  assert.deepEqual(empresaErrada.privados, []);
+  assert.equal(empresaErrada.relatorio.divergenciasSaldos, 2);
+  let leituras = 0;
+  const getter = Object.defineProperty({ entidade: 'conta_receber', codigoEmpresaLegado: '001' },
+    'valorCentavos', { enumerable: true, get() { leituras += 1; return '1250'; } });
+  for (const saldosEsperados of [
+    [getter],
+    new Proxy(esperado, { get(target, key) { leituras += 1; return target[key]; } }),
+    [{ ...esperado[0], identificadorPrivado: 'nao-publicar' }],
+  ]) {
+    assert.throws(() => reconciliarPlanoStagingLegado({ ...base, saldosEsperados }),
+      /Saldos financeiros esperados invalidos/);
+  }
+  assert.equal(leituras, 0);
+});
+
 test('plano bloqueia dependencia ausente, cross-empresa e divergencia sem entregar lote parcial', () => {
   const missing = reconciliarPlanoStagingLegado({ ...planoBase, itens: [cliente,
     { ...pedido, dependencias: [{ entidade: 'cliente', codigoLegado: 'CLI-OUTRO', escopo: 'grupo' }] }] });
