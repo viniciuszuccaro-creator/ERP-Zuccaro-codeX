@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -39,13 +41,13 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
 
   const effectiveEmpresaId = pedido?.empresa_id || entrega?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = pedido?.group_id || pedido?.grupo_id || entrega?.group_id || entrega?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(pedido?.id && (effectiveEmpresaId || effectiveGroupId));
+  const contextoValido = Boolean(pedido?.id && effectiveEmpresaId && effectiveGroupId);
   const canConfirmDelivery = hasPermission("Expedicao", "Comprovante Digital", "criar")
     || hasPermission("Expedicao", "Entregas", "editar")
     || hasPermission("Expedicao", "Estoque", "baixar")
     || hasPermission("Comercial", "Pedido", "editar");
 
-  const auditComprovante = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
+  const auditComprovante = async ({ acao, sucesso = true, motivo = null, detalhes = {}, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao,
@@ -68,6 +70,9 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar comprovante de entrega: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar comprovante de entrega", error);
     }
   };
@@ -198,8 +203,8 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         throw new Error("Confirmacao cancelada pelo usuario.");
       }
 
-      await baixarEstoqueItens();
-
+      // Compensação multi-etapa: Entrega/Pedido primeiro; estoque depois (não TX atômica).
+      // UI NÃO declara sucesso se qualquer etapa posterior falhar após persistência parcial.
       const agora = new Date().toISOString();
       const comprovanteData = {
         foto_comprovante: fotoComprovante,
@@ -209,49 +214,104 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
         data_hora_recebimento: agora,
         latitude_entrega: geolocalizacao?.latitude || null,
         longitude_entrega: geolocalizacao?.longitude || null,
-        observacoes_recebimento: sanitizeText(observacoes)
+        observacoes_recebimento: sanitizeText(observacoes),
       };
 
-      const entregaPayload = {
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        status: "Entregue",
-        data_entrega: agora,
-        comprovante_entrega: comprovanteData,
-        historico_status: [
-          ...(entrega?.historico_status || []),
-          {
-            status: "Entregue",
-            data_hora: agora,
-            usuario: user?.full_name || user?.email || "Sistema",
-            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
-            localizacao: geolocalizacao || null
-          }
-        ]
-      };
-
+      let entregaPersistidaId = entrega?.id || null;
       if (entrega?.id) {
-        await updateInContext("Entrega", entrega.id, entregaPayload);
+        const resolved = resolveRegistroEntregaFinal({
+          before: entrega,
+          modo: "total",
+          comprovante: comprovanteData,
+          groupId: effectiveGroupId,
+          empresaId: effectiveEmpresaId,
+          confirmed: true,
+          now: agora,
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+        });
+        const historico = Array.isArray(resolved.patch.historico_status) ? [...resolved.patch.historico_status] : [];
+        if (historico.length > 0) {
+          historico[historico.length - 1] = {
+            ...historico[historico.length - 1],
+            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
+            localizacao: geolocalizacao || null,
+          };
+        }
+        await updateInContext("Entrega", entrega.id, {
+          ...resolved.patch,
+          historico_status: historico,
+        });
       } else {
-        await createInContext("Entrega", {
-          ...entregaPayload,
+        const seed = {
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
           pedido_id: pedido.id,
           numero_pedido: sanitizeText(pedido.numero_pedido),
           cliente_id: pedido.cliente_id,
           cliente_nome: sanitizeText(pedido.cliente_nome),
-          endereco_entrega_completo: pedido.endereco_entrega_principal || pedido.endereco_entrega_completo || null
-        });
+          endereco_entrega_completo: pedido.endereco_entrega_principal || pedido.endereco_entrega_completo || null,
+          status: "Entregue",
+          data_entrega: agora,
+          comprovante_entrega: comprovanteData,
+          historico_status: [{
+            status: "Entregue",
+            data_hora: agora,
+            usuario: user?.full_name || user?.email || "Sistema",
+            observacao: "Entrega confirmada. Recebido por: " + recebedorSanitizado,
+            localizacao: geolocalizacao || null,
+          }],
+        };
+        assertEntregaOnCreate({ record: seed, entregas: [] });
+        const criada = await createInContext("Entrega", seed);
+        entregaPersistidaId = criada?.id || null;
       }
 
-      await updateInContext("Pedido", pedido.id, {
-        status: "Entregue",
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId
-      });
+      // Side-effect legado Pedido → Entregue (contrato Codex).
+      try {
+        await updateInContext("Pedido", pedido.id, {
+          status: "Entregue",
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+        });
+      } catch (pedidoError) {
+        await auditComprovante({
+          acao: "Entrega.comprovante.confirmar.parcial",
+          sucesso: false,
+          motivo: "pedido_legado_parcial",
+          detalhes: { entrega_id: entregaPersistidaId, erro: String(pedidoError?.message || pedidoError) },
+        });
+        throw new Error(
+          `Estado parcial: entrega persistida, mas Pedido legado incompleto. ${pedidoError?.message || pedidoError}`,
+        );
+      }
 
-      await auditComprovante({ acao: "Entrega.comprovante.confirmar", detalhes: { possui_foto: Boolean(fotoComprovante), possui_gps: Boolean(geolocalizacao), itens_baixados: pedido?.itens_revenda?.length || 0 } });
+      try {
+        await baixarEstoqueItens();
+      } catch (estoqueError) {
+        await auditComprovante({
+          acao: "Entrega.comprovante.confirmar.parcial",
+          sucesso: false,
+          motivo: "estoque_parcial",
+          detalhes: { entrega_id: entregaPersistidaId, erro: String(estoqueError?.message || estoqueError) },
+        });
+        throw new Error(
+          `Estado parcial: entrega/Pedido persistidos, mas baixa de estoque incompleta. ${estoqueError?.message || estoqueError}`,
+        );
+      }
+
+      await auditComprovante({
+        acao: "Entrega.comprovante.confirmar",
+        failClosed: true,
+        detalhes: {
+          possui_foto: Boolean(fotoComprovante),
+          possui_gps: Boolean(geolocalizacao),
+          itens_baixados: pedido?.itens_revenda?.length || 0,
+          entrega_id: entregaPersistidaId,
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pedidos"] });

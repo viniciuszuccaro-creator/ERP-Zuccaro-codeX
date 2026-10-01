@@ -29,7 +29,7 @@ export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose,
 
   const effectiveEmpresaId = entrega?.empresa_id || pedido?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = entrega?.group_id || entrega?.grupo_id || pedido?.group_id || pedido?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(pedido?.id && (effectiveGroupId || effectiveEmpresaId));
+  const contextoValido = Boolean(pedido?.id && effectiveGroupId && effectiveEmpresaId);
   const canNotify = hasPermission("Expedicao", "Comunicacao", "criar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Comercial", "Pedido", "editar");
 
   const mensagensPadrao = {

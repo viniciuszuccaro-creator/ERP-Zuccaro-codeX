@@ -1,3 +1,491 @@
+## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
+
+Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.
+
+---
+
+## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
+
+Cards: limitação computerUse; Playwright OK. Correções: hydrate/contexto, topologia Empresa, empresa operacional, pedidosBase romaneio. Prova SPA local (≠ PG). A–D+E+I PASS; H LogisticaReversa não ligada. #178 `4f8c6593` sem tip-port; sim compat isolada. Merge/VPS bloqueado.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T12:14Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 `01d5c16e` CI OK. Homologação SPA parcial (A–J BLOCKED agente). Vigília 15min.
+
+---
+
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T12:05Z)
+
+#197: bootstrap sessão + redirect `/Expedicao/*`→launchpad. Seed+KPIs OK. A–J **BLOCKED** no agente (`openWindow`/cards). Requisito: operar cards do launchpad. #178 `4f8c6593` sem tip-port. Merge/VPS bloqueado. Doc canônica candidata atualizada.
+
+---
+
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
+
+#197 `b8497171` CI OK. Bootstrap sessão mestre local corrigido. SPA isolada + seed HML no tenant snapshot. Homologação navegador A–J parcial (launchpad). #178 `4f8c6593` ainda candidato — sem tip-port. Merge/VPS bloqueado. Doc: `EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T09:30Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T09:14Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:59Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:43Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:27Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:11Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:55Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:39Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:23Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:08Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:52Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:35Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:20Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:04Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:48Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:32Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:17Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:01Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T04:45Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T04:30Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T04:14Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:58Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:43Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:27Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:12Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:56Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:41Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:25Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:09Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:54Z)
+
+#178 HEAD `4f8c6593` (antes `790e4be1`) — ainda candidato; delta R08C auditoria. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:34Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:19Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:03Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:48Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:31Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:15Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:00Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T23:44Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T23:29Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T23:13Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:58Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:43Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:27Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:12Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:56Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:41Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:23Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:08Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:52Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:37Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:28Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 + CI #197 (2026-09-30T20:23Z)
+
+#178 `790e4be1` ainda candidato (CI OK). Sem tip-port. #197 `7d4f445e` CI SUCCESS (persistência fail-closed). Homologação SPA pendente. Merge/VPS bloqueado. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:08Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:01Z)
+
+#178 `790e4be1` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:58Z)
+
+#178 HEAD `790e4be1` (delta: aprovação sem confirmação da reserva) — ainda candidato. Sem tip-port. #197 OK. Vigília 15min.
+
+---
+
+## CURSOR — pacote Expedição #197 (2026-09-30T19:55Z)
+
+Pacote fechado: filtros cliente coerentes, devolução assert, qtd pendentes, compensação≠atômico.
+Doc: `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`. Testes 32/32.
+#178 ainda candidato. Homologação SPA pendente. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo operacional completo + candidata documentada
+- **Falta:** homologação SPA; WhatsApp/roteirizador/assinatura como serviço
+- **Bloqueios:** #178 FINAL; merge/VPS; import Empresas
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:52Z)
+
+#178 `0596a763` ainda candidato. Sem tip-port. Homologação SPA pendente. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:49Z)
+
+#178 `0596a763` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:46Z)
+
+#178 `0596a763` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:39Z)
+
+#178 `0596a763` ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:36Z)
+
+#178 `0596a763` ainda candidato. Sem tip-port. #197 OK. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:31Z)
+
+#178 `0596a763` estável — ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:27Z)
+
+#178 HEAD `0596a763` (delta: histórico pré-025/026) — ainda candidato. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:21Z)
+
+#178 HEAD `49ec5d97` (delta preflight 026) — ainda candidato. Sem tip-port. #197 OK. Vigília 15min.
+
+---
+
+## CURSOR — candidata #192–#197 (2026-09-30T19:20Z)
+
+Candidata documentada em `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
+Tip #197: IntegracaoRomaneio + soft∨ crítico + comprovante/ocorrência/IA canônicos + teste E2E.
+#178 ainda candidata. Homologação SPA pendente. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo integrado completo no tip #197 (testes 16/16)
+- **Falta:** homologação humana; soft∨ residual dashboard/financeiro
+- **Bloqueios:** #178 FINAL; merge/VPS; import Empresas
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:10Z)
+
+#178 `9df73886` ainda candidato. #197 CI SUCCESS `0ac5af04`. Sem tip-port. Vigília 15min.
+
+---
+
+## CURSOR — comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
+
+`ComprovanteEntregaDigital` e `RegistroOcorrenciaLogistica` usam `resolveRegistroEntregaFinal`/asserts.
+#178 `9df73886` ainda candidato. #197 em recheck. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo integrado + IntegracaoRomaneio + soft∨ crítico + comprovante/ocorrência policy
+- **Falta:** soft∨ residual dashboard/config; #178 FINAL
+- **Bloqueios:** tip Comercial; merge/VPS; import Empresas
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:57Z)
+
+#178 `9df73886` ainda candidato; CI SUCCESS. Sem tip-port. #197 OK. Vigília 15min.
+
+---
+
+## CURSOR — #197 CI SUCCESS HEAD soft∨ (2026-09-30T18:56Z)
+
+#197 CI SUCCESS `09ada19d`. Soft∨ caminho crítico ok. #178 ainda candidata. Sem merge/VPS.
+
+---
+
+## CURSOR — #197 CI SUCCESS + soft∨ + vigília #178 (2026-09-30T18:55Z)
+
+#197 CI SUCCESS. Soft∨→∧ em ocorrência/comprovante/notificador/reversa/chat.
+#178 HEAD `9df73886` ainda candidato (delta transição). Sem tip-port. Sem merge/VPS.
+
+### Quadro
+- **Pronto:** fluxo operacional integrado + IntegracaoRomaneio canônica + soft∨ caminho crítico
+- **Falta:** #178 FINAL; soft∨ residual só em dashboard/config leitura
+- **Bloqueios:** tip Comercial; merge/VPS; import Empresas (frente legado)
+
+---
+
+## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
+
+`IntegracaoRomaneio` conectado à policy canônica (Pedidos→Entrega create/reuse→romaneio→despacho+rollback→legado descritivo).
+Docs: `docs/EXPEDICAO_INTEGRACAO_ROMANEIO_CANONICO.md`. Sem merge/VPS. #178 ainda candidato.
+
+### Quadro: pronto | falta | bloqueios
+- **Pronto:** seleção→separação→romaneio→despacho→parcial/ocorrência→pendências; Isolamento∧; RBAC; unidades; concurrency/idempotência/rollback.
+- **Falta:** tip-port Comercial só após #178 FINAL; homologação humana VPS (autorizada).
+- **Bloqueios:** #178 não-final; merge/VPS/migration/import Empresas (frente legado chat principal).
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:38Z)
 
 #178 `e5eef59d` ainda candidato. Sem tip-port. Vigília 15min.

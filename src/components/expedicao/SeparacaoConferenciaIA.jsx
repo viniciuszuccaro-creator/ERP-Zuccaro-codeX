@@ -20,8 +20,12 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import {
   assertSeparacaoQuantidades,
+  resolveEmpresaOperacionalExpedicao,
+  resolveSeparacaoConclusion,
   selectPedidosParaSeparacao,
+  SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
 } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { assertSeparacaoOnCreate } from "@/components/lib/expedicaoEntregaPolicy";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
@@ -66,8 +70,15 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
     }
   }, [activePedidoId]);
 
-  const baseEmpresaId = empresaAtual?.id || null;
-  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const baseEmpresaId = resolveEmpresaOperacionalExpedicao({
+    empresaAtualId: empresaAtual?.id,
+    userEmpresaAtualId: user?.empresa_atual_id,
+    userEmpresaPadraoId: user?.empresa_padrao_id,
+    storedEmpresaId: (() => { try { return localStorage.getItem("empresa_atual_id"); } catch { return null; } })(),
+  });
+  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || user?.grupo_atual_id || (() => {
+    try { return localStorage.getItem("group_atual_id"); } catch { return null; }
+  })() || null;
   const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canUseSeparacaoIA = hasPermission("Expedicao", "Separacao", "editar") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
@@ -273,7 +284,15 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
       }
 
       const tempoTotalMinutos = Math.floor(cronometro.segundos / 60);
-      const qty = assertSeparacaoQuantidades({
+      // Conferência IA concluída implica checklist operacional marcado (mesmo contrato canônico).
+      const checklistIa = {
+        conferiu_quantidade: true,
+        conferiu_qualidade: true,
+        conferiu_embalagem: true,
+        conferiu_etiquetas: true,
+        conferiu_documentos: true,
+      };
+      const conclusion = resolveSeparacaoConclusion({
         itens: (separacao.itens_separados || []).map((item) => ({
           ...item,
           quantidade_pedida: item.quantidade_pedida,
@@ -281,48 +300,79 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           unidade: item.unidade || item.unidade_medida,
           unidade_separada: item.unidade_separada || item.unidade || item.unidade_medida,
         })),
+        checklist: checklistIa,
+        groupId: effectiveGroupId,
+        empresaId: effectiveEmpresaId,
+        pedidoId: pedido.id,
+        confirmed: true,
       });
-      const temDivergencia = qty.temDivergencia || separacao.divergencias.length > 0;
-      const registro = await createInContext("SeparacaoConferencia", {
+      const temDivergencia = conclusion.qty.temDivergencia || separacao.divergencias.length > 0;
+      const recordBase = {
         ...separacao,
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        pedido_id: pedido.id,
-        numero_pedido: pedido.numero_pedido,
-        cliente_id: pedido.cliente_id,
-        cliente_nome: pedido.cliente_nome,
+        ...conclusion.separacaoRecord,
         tipo: "conferencia_ia",
         separador_id: user?.id || separacao.separador_id,
         separador_nome: user?.full_name || user?.email || separacao.separador_nome || "Conferente",
         data_conclusao: new Date().toISOString(),
         tempo_total_minutos: tempoTotalMinutos,
         tempo_separacao_min: tempoTotalMinutos,
-        status: temDivergencia ? "com_divergencia" : "concluido",
+        status: temDivergencia ? "com_divergencia" : conclusion.statusSeparacao,
         tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia ? `${Math.max(qty.divergencias.length, separacao.divergencias.length)} divergencia(s) detectada(s).` : "",
-        itens: qty.itens,
-        observacoes: sanitizeText(separacao.observacoes)
+        divergencias_resumo: temDivergencia
+          ? `${Math.max(conclusion.qty.divergencias.length, separacao.divergencias.length)} divergencia(s) detectada(s).`
+          : "",
+        observacoes: sanitizeText(separacao.observacoes),
+      };
+      const decision = assertSeparacaoOnCreate({
+        record: recordBase,
+        separacoes: [],
       });
+      if (decision.reuse) {
+        await auditarSeparacaoIA({
+          acao: "SeparacaoConferenciaIA.finalizar.retry",
+          descricao: "Separacao IA reusou registro existente (idempotencia).",
+          sucesso: true,
+          dadosNovos: { reuse_id: decision.reuse.id },
+        });
+        return decision.reuse;
+      }
+      const registro = await createInContext("SeparacaoConferencia", recordBase);
 
-      await updateInContext("Pedido", pedido.id, {
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        status: temDivergencia ? "Separacao com Divergencia" : "Pronto para Faturar",
-        historico_status: [
-          ...(pedido.historico_status || []),
-          {
-            status: temDivergencia ? "Separacao com Divergencia" : "Pronto para Faturar",
-            data_hora: new Date().toISOString(),
-            usuario: user?.full_name || user?.email || "Sistema",
-            usuario_id: user?.id,
-            observacao: temDivergencia
-              ? "Separacao/conferencia IA concluida com divergencias."
-              : "Separacao/conferencia IA concluida sem divergencias."
-          }
-        ]
-      });
+      // Side-effect legado Pedido (contrato Codex) — só sem divergência.
+      if (conclusion.shouldUpdatePedidoLegado && conclusion.pedidoLegadoPatch) {
+        const { _legado_side_effect, ...pedidoPatch } = conclusion.pedidoLegadoPatch;
+        await updateInContext("Pedido", pedido.id, {
+          ...pedidoPatch,
+          historico_status: [
+            ...(pedido.historico_status || []),
+            {
+              status: pedidoPatch.status,
+              data_hora: new Date().toISOString(),
+              usuario: user?.full_name || user?.email || "Sistema",
+              usuario_id: user?.id,
+              observacao: "Separacao/conferencia IA concluida sem divergencias.",
+              _legado_side_effect: _legado_side_effect || SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
+            },
+          ],
+        });
+      } else if (temDivergencia) {
+        await updateInContext("Pedido", pedido.id, {
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+          status: "Separacao com Divergencia",
+          historico_status: [
+            ...(pedido.historico_status || []),
+            {
+              status: "Separacao com Divergencia",
+              data_hora: new Date().toISOString(),
+              usuario: user?.full_name || user?.email || "Sistema",
+              usuario_id: user?.id,
+              observacao: "Separacao/conferencia IA concluida com divergencias.",
+            },
+          ],
+        });
+      }
 
       await auditarSeparacaoIA({
         acao: "SeparacaoConferenciaIA.finalizar",

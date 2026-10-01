@@ -34,7 +34,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
-  const contextoBaseValido = Boolean(grupoAtual?.id || empresaAtual?.id || empresaId);
+  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const baseEmpresaId = empresaId || empresaAtual?.id || null;
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canConcluirSeparacao = hasPermission("Expedicao", "Separacao", "conferir") ||
     hasPermission("Expedicao", "Entrega", "conferir") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
@@ -87,10 +89,13 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   };
 
   useEffect(() => {
-    if (dadosParaSeparacao?.itens_revenda && dadosParaSeparacao.itens_revenda.length > 0) {
-      const initialItens = dadosParaSeparacao.itens_revenda.map(i => ({
+    const fonteItens = Array.isArray(dadosParaSeparacao?.itens_revenda) && dadosParaSeparacao.itens_revenda.length > 0
+      ? dadosParaSeparacao.itens_revenda
+      : (Array.isArray(dadosParaSeparacao?.itens) ? dadosParaSeparacao.itens : []);
+    if (fonteItens.length > 0) {
+      const initialItens = fonteItens.map(i => ({
         ...i,
-        quantidade_pedida: i.quantidade,
+        quantidade_pedida: Number(i.quantidade_pedida ?? i.quantidade ?? 0),
         quantidade_separada: 0,
         unidade: i.unidade || i.unidade_medida || "",
         unidade_separada: i.unidade || i.unidade_medida || "",
@@ -176,14 +181,18 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
       const separacao = await createInContext("SeparacaoConferencia", separacaoRecord);
 
-      if (conclusion.nextEntregaStatus && entrega?.id) {
-        await updateInContext("Entrega", entrega.id, {
+      if (conclusion.nextEntregaStatus && (entrega?.id || entregaId)) {
+        const targetEntregaId = entrega?.id || entregaId;
+        const historicoBase = Array.isArray(entrega?.historico_status)
+          ? entrega.historico_status
+          : (Array.isArray(dadosParaSeparacao?.historico_status) ? dadosParaSeparacao.historico_status : []);
+        await updateInContext("Entrega", targetEntregaId, {
           status: conclusion.nextEntregaStatus,
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: effectiveEmpresaId,
           historico_status: [
-            ...(entrega.historico_status || []),
+            ...historicoBase,
             {
               status: conclusion.nextEntregaStatus,
               data_hora: new Date().toISOString(),
@@ -414,7 +423,11 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         <TabsContent value="scanner">
           <ScannerQRCode
             entregaId={entregaId}
-            itensEsperados={dadosParaSeparacao?.itens_revenda || []}
+            itensEsperados={
+              (Array.isArray(dadosParaSeparacao?.itens_revenda) && dadosParaSeparacao.itens_revenda.length > 0)
+                ? dadosParaSeparacao.itens_revenda
+                : (Array.isArray(dadosParaSeparacao?.itens) ? dadosParaSeparacao.itens : [])
+            }
             modo="separacao"
             onItemEscaneado={handleItemEscaneado}
           />

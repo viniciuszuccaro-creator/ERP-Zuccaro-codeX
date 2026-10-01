@@ -60,6 +60,20 @@ export function useContextoGrupoEmpresa() {
       return grupos[0];
     }
 
+    // Fallback get(): filter multiempresa nao deve impedir bootstrap da topologia
+    if (!isHttpBackendMode) {
+      try {
+        const grupo = await base44.entities.GrupoEmpresarial.get(grupoId);
+        if (grupo) {
+          setGrupoAtual(grupo);
+          try { localStorage.setItem('group_atual_id', grupo.id); } catch { /* Estado em memoria permanece valido. */ }
+          return grupo;
+        }
+      } catch {
+        return null;
+      }
+    }
+
     return null;
   };
 
@@ -107,10 +121,20 @@ export function useContextoGrupoEmpresa() {
           empresaId = typeof first === 'string' ? first : first?.empresa_id;
         }
         if (empresaId && groupId) {
-          const empresas = isHttpBackendMode
-            ? (readErpHttpSession()?.empresas || []).filter(e => e.id === empresaId)
-            : await base44.entities.Empresa.filter({ id: empresaId });
-          const empresa = empresas[0];
+          let empresa = null;
+          if (isHttpBackendMode) {
+            empresa = (readErpHttpSession()?.empresas || []).find(e => e.id === empresaId) || null;
+          } else {
+            const empresas = await base44.entities.Empresa.filter({ id: empresaId });
+            empresa = empresas[0] || null;
+            if (!empresa) {
+              try {
+                empresa = await base44.entities.Empresa.get(empresaId);
+              } catch {
+                empresa = null;
+              }
+            }
+          }
           if (empresa && empresaPertenceAoGrupo(empresa, groupId) && userTemAcessoEmpresa(currentUser, empresa)) {
             setEmpresaAtual(empresa);
             try { localStorage.setItem('empresa_atual_id', empresa.id); } catch { /* Estado em memoria permanece valido. */ }

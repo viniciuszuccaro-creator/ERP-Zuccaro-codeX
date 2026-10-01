@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
 
@@ -31,10 +33,10 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
 
   const effectiveEmpresaId = entrega?.empresa_id || pedido?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = entrega?.group_id || entrega?.grupo_id || pedido?.group_id || pedido?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(pedido?.id && (effectiveGroupId || effectiveEmpresaId));
+  const contextoValido = Boolean(pedido?.id && effectiveGroupId && effectiveEmpresaId);
   const canRegister = hasPermission("Expedicao", "Ocorrencias", "criar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Comercial", "Pedido", "editar");
 
-  const auditarOcorrencia = async ({ acao, sucesso = true, motivo = null, detalhes = {}, dadosNovos = null, dadosAnteriores = null }) => {
+  const auditarOcorrencia = async ({ acao, sucesso = true, motivo = null, detalhes = {}, dadosNovos = null, dadosAnteriores = null, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || "Usuario",
@@ -56,6 +58,9 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar ocorrencia logistica: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar ocorrencia logistica", error);
     }
   };
@@ -105,19 +110,40 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
         responsavel: user?.full_name || user?.email || "Sistema",
         responsavel_id: user?.id,
         resolucao: sanitizeText(resolucao) || "Em analise",
-        foto_url: fotoUrl
+        foto_url: fotoUrl,
       };
 
+      const motivoFrustrada = sanitizeText(descricao) || sanitizeText(tipoOcorrencia) || "Ocorrencia logistica";
       let entregaAtualizada = null;
-      if (entrega?.id) {
-        entregaAtualizada = await updateInContext("Entrega", entrega.id, {
+
+      if (entrega?.id && tipoOcorrencia === "Entrega Frustrada") {
+        const resolved = resolveRegistroEntregaFinal({
+          before: entrega,
+          modo: "ocorrencia",
+          motivo: motivoFrustrada,
+          groupId: effectiveGroupId,
+          empresaId: effectiveEmpresaId,
+          confirmed: true,
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+        });
+        const patch = {
+          ...resolved.patch,
+          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia],
+        };
+        assertEntregaOnUpdate({ before: entrega, patch });
+        entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
+      } else if (entrega?.id) {
+        const patch = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: effectiveEmpresaId,
-          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia]
-        });
+          ocorrencias: [...(entrega.ocorrencias || []), novaOcorrencia],
+        };
+        assertEntregaOnUpdate({ before: entrega, patch });
+        entregaAtualizada = await updateInContext("Entrega", entrega.id, patch);
       } else {
-        entregaAtualizada = await createInContext("Entrega", {
+        const seed = {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
           empresa_id: effectiveEmpresaId,
@@ -126,31 +152,59 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
           cliente_id: pedido.cliente_id,
           cliente_nome: pedido.cliente_nome,
           endereco_entrega_completo: pedido.endereco_entrega_principal,
-          status: "Em Transito",
-          ocorrencias: [novaOcorrencia]
-        });
+          status: tipoOcorrencia === "Entrega Frustrada" ? "Entrega Frustrada" : "Em Transito",
+          ocorrencias: [novaOcorrencia],
+        };
+        if (tipoOcorrencia === "Entrega Frustrada") {
+          seed.entrega_frustrada = { motivo: motivoFrustrada, tentativa_numero: 1 };
+        }
+        assertEntregaOnCreate({ record: seed, entregas: [] });
+        entregaAtualizada = await createInContext("Entrega", seed);
       }
 
       if (tipoOcorrencia === "Entrega Frustrada") {
-        await updateInContext("Pedido", pedido.id, {
-          group_id: effectiveGroupId,
-          grupo_id: effectiveGroupId,
-          empresa_id: effectiveEmpresaId,
-          status: "Em Transito",
-          historico_status: [
-            ...(pedido.historico_status || []),
-            {
-              status: "Em Transito",
-              data_hora: new Date().toISOString(),
-              usuario: user?.full_name || user?.email || "Sistema",
-              usuario_id: user?.id,
-              observacao: "Entrega frustrada registrada para nova tentativa."
-            }
-          ]
-        });
+        // Side-effect legado Pedido (contrato Codex).
+        try {
+          await updateInContext("Pedido", pedido.id, {
+            group_id: effectiveGroupId,
+            grupo_id: effectiveGroupId,
+            empresa_id: effectiveEmpresaId,
+            status: "Em Transito",
+            historico_status: [
+              ...(pedido.historico_status || []),
+              {
+                status: "Em Transito",
+                data_hora: new Date().toISOString(),
+                usuario: user?.full_name || user?.email || "Sistema",
+                usuario_id: user?.id,
+                observacao: "Entrega frustrada registrada para nova tentativa.",
+              },
+            ],
+          });
+        } catch (pedidoError) {
+          await auditarOcorrencia({
+            acao: "OcorrenciaLogistica.registrar.parcial",
+            sucesso: false,
+            motivo: "pedido_legado_parcial",
+            detalhes: {
+              tipoOcorrencia,
+              entrega_id: entregaAtualizada?.id,
+              erro: String(pedidoError?.message || pedidoError),
+            },
+          });
+          throw new Error(
+            `Estado parcial: ocorrencia/entrega persistida, mas Pedido legado incompleto. ${pedidoError?.message || pedidoError}`,
+          );
+        }
       }
 
-      await auditarOcorrencia({ acao: "OcorrenciaLogistica.registrar", detalhes: { tipoOcorrencia, pedido_id: pedido.id, entrega_id: entregaAtualizada?.id }, dadosAnteriores: entrega || null, dadosNovos: novaOcorrencia });
+      await auditarOcorrencia({
+        acao: "OcorrenciaLogistica.registrar",
+        failClosed: true,
+        detalhes: { tipoOcorrencia, pedido_id: pedido.id, entrega_id: entregaAtualizada?.id },
+        dadosAnteriores: entrega || null,
+        dadosNovos: novaOcorrencia,
+      });
       return entregaAtualizada;
     },
     onSuccess: () => {

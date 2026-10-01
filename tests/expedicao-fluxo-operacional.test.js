@@ -9,17 +9,27 @@ import {
 } from '../src/components/lib/expedicaoEntregaPolicy.js';
 import {
   SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
+  INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT,
   assertConfirmacaoDupla,
   assertSeparacaoChecklist,
   assertSeparacaoQuantidades,
+  buildEntregaSeedFromPedido,
   filterEntregasPendencias,
+  planEntregasFromPedidosParaRomaneio,
+  resolvePedidoLegadoAposRomaneio,
   resolveRegistroEntregaFinal,
   resolveRomaneioDespacho,
   resolveSeparacaoConclusion,
   revalidarSelecaoAposTrocaEmpresa,
   selectEntregasParaRomaneio,
+  selectPedidosParaRomaneio,
   selectPedidosParaSeparacao,
   applyDespachoPatchesWithRollback,
+  resolveQuantidadesPendentesEntrega,
+  resolveEmpresaOperacionalExpedicao,
+  isPedidoStatusElegivelRomaneio,
+  isEntregaElegivelLogisticaReversa,
+  PERSISTENCIA_EXPEDICAO,
 } from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
 const checklistOk = {
@@ -559,4 +569,538 @@ test('fluxo integrado: pedido elegível → separação → romaneio → despach
   });
   const pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
   assert.ok(pendencias.some((p) => p.pendencia.tipo === 'ocorrencia'));
+});
+
+test('selectPedidosParaRomaneio: isolamento grupo∧empresa e exclusão de retirada', () => {
+  const pedidos = [
+    { id: 'p1', empresa_id: 'emp-a', group_id: 'g1', status: 'Faturado', tipo_frete: 'CIF' },
+    { id: 'p2', empresa_id: 'emp-b', group_id: 'g1', status: 'Faturado', tipo_frete: 'CIF' },
+    { id: 'p3', empresa_id: 'emp-a', group_id: 'g2', status: 'Em Expedição', tipo_frete: 'FOB' },
+    { id: 'p4', empresa_id: 'emp-a', group_id: 'g1', status: 'Faturado', tipo_frete: 'Retirada' },
+    { id: 'p5', empresa_id: 'emp-a', group_id: 'g1', status: 'Cancelado', tipo_frete: 'CIF' },
+  ];
+  const elegiveis = selectPedidosParaRomaneio(pedidos, { empresaId: 'emp-a', groupId: 'g1' });
+  assert.deepEqual(elegiveis.map((p) => p.id), ['p1']);
+
+  assert.throws(
+    () => selectPedidosParaRomaneio(pedidos, {
+      empresaId: 'emp-a', groupId: 'g1', selectedIds: ['p2'], exigirSelecao: true,
+    }),
+    /nao pertence ao contexto/,
+  );
+  assert.throws(
+    () => selectPedidosParaRomaneio(pedidos, { empresaId: null }),
+    /Empresa obrigatoria/,
+  );
+});
+
+test('resolveEmpresaOperacionalExpedicao: prioriza pedido com empresa; ignora órfão; fallback storage', () => {
+  assert.equal(
+    resolveEmpresaOperacionalExpedicao({
+      pedidosSelecionados: [{ id: 'x', empresa_id: null, group_id: 'g1' }],
+      empresaAtualId: null,
+      storedEmpresaId: 'emp-stored',
+    }),
+    'emp-stored',
+  );
+  assert.equal(
+    resolveEmpresaOperacionalExpedicao({
+      pedidosSelecionados: [
+        { id: 'orfao', group_id: 'g1' },
+        { id: 'ok', empresa_id: 'emp-a', group_id: 'g1' },
+      ],
+      empresaAtualId: 'emp-b',
+    }),
+    'emp-a',
+  );
+  assert.equal(
+    resolveEmpresaOperacionalExpedicao({ pedidosSelecionados: [], empresaAtualId: null }),
+    null,
+  );
+  assert.equal(isPedidoStatusElegivelRomaneio('Pronto para Expedir'), true);
+  assert.equal(isPedidoStatusElegivelRomaneio('Em Separação'), true);
+  assert.equal(isPedidoStatusElegivelRomaneio('Cancelado'), false);
+  assert.equal(isEntregaElegivelLogisticaReversa('Saiu para Entrega'), true);
+  assert.equal(isEntregaElegivelLogisticaReversa('Entrega Frustrada'), true);
+  assert.equal(isEntregaElegivelLogisticaReversa('Entrega Parcial'), true);
+  assert.equal(isEntregaElegivelLogisticaReversa('Aguardando Separação'), false);
+  assert.equal(isEntregaElegivelLogisticaReversa('Devolvido'), false);
+  assert.equal(isEntregaElegivelLogisticaReversa('Cancelado'), false);
+});
+
+test('planEntregasFromPedidosParaRomaneio: create + reuse idempotente', () => {
+  const pedidos = [
+    {
+      id: 'ped-a',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Faturado',
+      numero_pedido: 'N-1',
+      cliente_nome: 'Cliente A',
+      peso_total_kg: 10,
+      valor_total: 100,
+    },
+    {
+      id: 'ped-b',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Pronto para Faturar',
+      numero_pedido: 'N-2',
+      cliente_nome: 'Cliente B',
+      peso_total_kg: 5,
+      valor_total: 50,
+    },
+  ];
+  const existentes = [{
+    id: 'e-exist',
+    pedido_id: 'ped-a',
+    empresa_id: 'emp-a',
+    group_id: 'g1',
+    status: 'Pronto para Expedir',
+  }];
+
+  const plano = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: existentes,
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-a', 'ped-b'],
+  });
+  assert.equal(plano.reuses.length, 1);
+  assert.equal(plano.reuses[0].id, 'e-exist');
+  assert.equal(plano.creates.length, 1);
+  assert.equal(plano.creates[0].pedido_id, 'ped-b');
+  assert.equal(plano.creates[0].status, 'Pronto para Expedir');
+  assert.equal(plano.action, 'criar');
+
+  const retry = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: [
+      ...existentes,
+      { id: 'e-b', pedido_id: 'ped-b', empresa_id: 'emp-a', group_id: 'g1', status: 'Pronto para Expedir' },
+    ],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-a', 'ped-b'],
+  });
+  assert.equal(retry.creates.length, 0);
+  assert.equal(retry.reuses.length, 2);
+  assert.equal(retry.action, 'retry');
+});
+
+test('buildEntregaSeedFromPedido e resolvePedidoLegadoAposRomaneio: contexto obrigatório', () => {
+  assert.throws(
+    () => buildEntregaSeedFromPedido({ id: 'p1' }, { empresaId: 'emp-a' }),
+    /Contexto multiempresa/,
+  );
+  const seed = buildEntregaSeedFromPedido(
+    { id: 'p1', empresa_id: 'emp-a', group_id: 'g1', numero_pedido: 'X', valor_total: 9 },
+    { groupId: 'g1', empresaId: 'emp-a' },
+  );
+  assert.equal(seed.pedido_id, 'p1');
+  assert.equal(seed.valor_mercadoria, 9);
+
+  assert.equal(resolvePedidoLegadoAposRomaneio({ pedidoId: 'p1' }), null);
+  const patch = resolvePedidoLegadoAposRomaneio({
+    pedidoId: 'p1', groupId: 'g1', empresaId: 'emp-a', romaneioId: 'r1',
+  });
+  assert.equal(patch.status, INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT.statusAlvo);
+  assert.equal(patch._legado_side_effect.reservado, true);
+  assert.equal(patch._legado_side_effect.romaneio_id, 'r1');
+});
+
+test('IntegracaoRomaneio canônico: pedidos → entregas → romaneio → despacho → legado + rollback', async () => {
+  const store = createFluxoStore();
+  const pedidosState = new Map();
+  const pedidos = [
+    {
+      id: 'ped-rom-1',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Faturado',
+      numero_pedido: 'R-1',
+      cliente_nome: 'Acme',
+      peso_total_kg: 12,
+      valor_total: 200,
+      historico_status: [],
+    },
+    {
+      id: 'ped-rom-2',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Em Expedicao',
+      numero_pedido: 'R-2',
+      cliente_nome: 'Beta',
+      peso_total_kg: 8,
+      valor_total: 80,
+      historico_status: [],
+    },
+  ];
+  for (const p of pedidos) pedidosState.set(p.id, { ...p });
+
+  const plano = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: store.listEntregas(),
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-rom-1', 'ped-rom-2'],
+  });
+  assert.equal(plano.creates.length, 2);
+
+  const entregasCriadas = plano.creates.map((seed, idx) => {
+    const id = `e-rom-${idx + 1}`;
+    return store.seedEntrega({ ...seed, id });
+  });
+
+  const checklist = {
+    documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+  };
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: entregasCriadas,
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Joao',
+    veiculo: 'HR',
+    placa: 'ABC1D23',
+    checklist_saida: checklist,
+    confirmed: true,
+    usuario: 'tester',
+  });
+  assert.equal(fluxo.action, 'criar');
+  assert.equal(fluxo.despachoPatches.length, 2);
+  assert.equal(fluxo.despachoPatches[0].patch.sequencia_rota, 1);
+  assert.equal(fluxo.despachoPatches[1].patch.sequencia_rota, 2);
+
+  // Concorrência/idempotência: mesmo conjunto de entregas → reuse
+  const romaneio = {
+    id: 'rom-1',
+    ...fluxo.romaneioRecord,
+  };
+  store.state.romaneios.set(romaneio.id, romaneio);
+  const retryFluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: entregasCriadas,
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Joao',
+    veiculo: 'HR',
+    placa: 'ABC1D23',
+    checklist_saida: checklist,
+    confirmed: true,
+    romaneiosExistentes: [romaneio],
+  });
+  assert.equal(retryFluxo.action, 'retry');
+  assert.equal(retryFluxo.reuse.id, 'rom-1');
+
+  // Rollback se falhar no meio do despacho
+  const mapRollback = new Map(entregasCriadas.map((e) => [String(e.id), { ...e }]));
+  const rolled = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: mapRollback,
+    failAtIndex: 1,
+  });
+  assert.equal(rolled.ok, false);
+  assert.equal(mapRollback.get('e-rom-1').status, 'Pronto para Expedir');
+
+  // Despacho ok + side-effect legado Pedido
+  const mapOk = new Map(entregasCriadas.map((e) => [String(e.id), { ...e }]));
+  const ok = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches.map((item) => ({
+      entregaId: item.entregaId,
+      patch: { ...item.patch, romaneio_id: romaneio.id },
+    })),
+    entregasById: mapOk,
+  });
+  assert.equal(ok.ok, true);
+  assert.equal(mapOk.get('e-rom-1').status, 'Saiu para Entrega');
+  assert.equal(mapOk.get('e-rom-2').romaneio_id, 'rom-1');
+
+  for (const pedido of plano.pedidos) {
+    const legado = resolvePedidoLegadoAposRomaneio({
+      pedidoId: pedido.id,
+      groupId: 'g1',
+      empresaId: 'emp-a',
+      romaneioId: romaneio.id,
+    });
+    const before = pedidosState.get(pedido.id);
+    pedidosState.set(pedido.id, {
+      ...before,
+      status: legado.status,
+      historico_status: [
+        ...(before.historico_status || []),
+        { status: legado.status, observacao: `Romaneio ${romaneio.id}` },
+      ],
+    });
+  }
+  assert.equal(pedidosState.get('ped-rom-1').status, 'Em Trânsito');
+  assert.equal(pedidosState.get('ped-rom-2').status, 'Em Trânsito');
+
+  // RBAC/contexto fail-closed na policy
+  assert.throws(
+    () => resolveRomaneioDespacho({
+      entregasSelecionadas: entregasCriadas,
+      empresaId: 'emp-a',
+      groupId: null,
+      motorista: 'Joao',
+      placa: 'ABC1D23',
+      veiculo: 'HR',
+      checklist_saida: checklist,
+      confirmed: true,
+    }),
+    /Contexto multiempresa/,
+  );
+  assert.throws(
+    () => resolveRomaneioDespacho({
+      entregasSelecionadas: entregasCriadas,
+      empresaId: 'emp-a',
+      groupId: 'g1',
+      motorista: 'Joao',
+      placa: 'ABC1D23',
+      veiculo: 'HR',
+      checklist_saida: checklist,
+      confirmed: false,
+    }),
+    /Confirmacao/,
+  );
+  assert.throws(
+    () => resolveRomaneioDespacho({
+      entregasSelecionadas: entregasCriadas,
+      empresaId: 'emp-a',
+      groupId: 'g1',
+      motorista: 'Joao',
+      placa: 'ABC1D23',
+      veiculo: 'HR',
+      checklist_saida: { documentos_ok: true },
+      confirmed: true,
+      exigirChecklist: true,
+    }),
+    /checklist/,
+  );
+});
+
+test('candidata #192–#197: Pedido→separação→romaneio→despacho→parcial→ocorrência→pendências + auditoria/falha', async () => {
+  const store = createFluxoStore();
+  const pedidos = [
+    {
+      id: 'ped-cand',
+      empresa_id: 'emp-a',
+      group_id: 'g1',
+      status: 'Faturado',
+      numero_pedido: 'C-197',
+      cliente_nome: 'Cand',
+      peso_total_kg: 20,
+      valor_total: 400,
+      itens_revenda: [{ id: 'i1', quantidade: 6, unidade: 'UN' }],
+    },
+  ];
+
+  // 1) Pedido elegível → Entrega (create)
+  const plano = planEntregasFromPedidosParaRomaneio({
+    pedidos,
+    entregasExistentes: [],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    selectedIds: ['ped-cand'],
+  });
+  assert.equal(plano.creates.length, 1);
+  const entrega = store.seedEntrega({ ...plano.creates[0], id: 'e-cand', status: 'Em Separacao' });
+
+  // 2) Separação/conferência
+  const sep = await store.concluirSeparacao({
+    entregaId: entrega.id,
+    pedidoId: 'ped-cand',
+    itens: [{
+      id: 'i1',
+      quantidade_pedida: 6,
+      quantidade_separada: 6,
+      unidade: 'UN',
+      unidade_separada: 'UN',
+    }],
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.equal(sep.conclusion.nextEntregaStatus, 'Pronto para Expedir');
+  assert.equal(store.state.entregas.get('e-cand').status, 'Pronto para Expedir');
+  assert.ok(store.state.audit.some((a) => a.acao === 'SeparacaoConferencia.concluir' && a.sucesso));
+
+  // 3–4) Romaneio + despacho com falha parcial → recuperação
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: [store.state.entregas.get('e-cand')],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'CandMotorista',
+    veiculo: 'Truck',
+    placa: 'CAND123',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+  });
+  const mapFail = new Map([['e-cand', { ...store.state.entregas.get('e-cand') }]]);
+  // simula falha no patch (único item) via failAtIndex 0
+  const failed = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: mapFail,
+    failAtIndex: 0,
+  });
+  assert.equal(failed.ok, false);
+  assert.equal(mapFail.get('e-cand').status, 'Pronto para Expedir');
+
+  const rom = await store.gerarRomaneioEDespachar({
+    selectedIds: ['e-cand'],
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.ok(rom.romaneio.id);
+  assert.equal(store.state.entregas.get('e-cand').status, 'Saiu para Entrega');
+  assert.ok(store.state.audit.some((a) => a.acao === 'Romaneio.gerar'));
+
+  // Idempotência: mesmo conjunto de entregas reusa romaneio (não re-seleciona pós-despacho)
+  const duplicate = assertRomaneioOnCreate({
+    record: {
+      empresa_id: 'emp-a',
+      motorista: 'Ana',
+      placa: 'ABC1D23',
+      entregas_ids: ['e-cand'],
+    },
+    romaneios: [rom.romaneio],
+  });
+  assert.equal(duplicate.reuse.id, rom.romaneio.id);
+
+  // 5) Entrega parcial → pendência
+  await store.registrarFinal({
+    entregaId: 'e-cand',
+    modo: 'parcial',
+    quantidade_entregue: 3,
+    comprovante: { nome_recebedor: 'Recebedor', foto_comprovante: 'foto://x' },
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  assert.equal(store.state.entregas.get('e-cand').status, 'Entrega Parcial');
+  let pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
+  assert.ok(pendencias.some((p) => p.pendencia.tipo === 'parcial' || p.id === 'e-cand'));
+
+  // 6) Ocorrência no retry (nova tentativa frustrada) — exige motivo
+  store.state.entregas.set('e-cand', {
+    ...store.state.entregas.get('e-cand'),
+    status: 'Saiu para Entrega',
+    comprovante_entrega: null,
+    entrega_parcial: null,
+  });
+  assert.throws(
+    () => resolveRegistroEntregaFinal({
+      before: store.state.entregas.get('e-cand'),
+      modo: 'ocorrencia',
+      groupId: 'g1',
+      empresaId: 'emp-a',
+      confirmed: true,
+      motivo: '',
+    }),
+    /motivo/,
+  );
+  await store.registrarFinal({
+    entregaId: 'e-cand',
+    modo: 'ocorrencia',
+    motivo: 'Cliente ausente',
+    groupId: 'g1',
+    empresaId: 'emp-a',
+    confirmed: true,
+  });
+  pendencias = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-a', groupId: 'g1' });
+  assert.ok(pendencias.some((p) => p.pendencia.tipo === 'ocorrencia'));
+  assert.ok(store.state.audit.some((a) => a.acao === 'Entrega.registro_ocorrencia'));
+
+  // Isolamento: empresa B não vê pendência
+  const cruzadas = filterEntregasPendencias(store.listEntregas(), { empresaId: 'emp-b', groupId: 'g1' });
+  assert.equal(cruzadas.length, 0);
+
+  // Falha de auditoria sobe
+  store.state.failAudit = true;
+  assert.throws(() => store.audit({ acao: 'probe' }), /auditar/);
+});
+
+test('quantidades pendentes e compensação≠atômico no despacho/reversa', () => {
+  assert.equal(PERSISTENCIA_EXPEDICAO.despachoPatches, 'compensacao');
+  assert.equal(PERSISTENCIA_EXPEDICAO.registroFinal, 'atomico_policy');
+  assert.equal(PERSISTENCIA_EXPEDICAO.logisticaReversa, 'compensacao');
+  assert.equal(PERSISTENCIA_EXPEDICAO.romaneioCreate, 'atomico_policy');
+
+  const parcial = resolveQuantidadesPendentesEntrega({
+    status: 'Entrega Parcial',
+    volumes: 10,
+    entrega_parcial: { ativada: true, quantidade_entregue: 4, quantidade_pedida: 10 },
+  });
+  assert.equal(parcial.quantidade_pedida, 10);
+  assert.equal(parcial.quantidade_entregue, 4);
+  assert.equal(parcial.quantidade_pendente, 6);
+  assert.equal(parcial.parcial, true);
+
+  const total = resolveQuantidadesPendentesEntrega({
+    status: 'Entregue',
+    quantidade_total: 5,
+    entrega_parcial: { quantidade_entregue: 5 },
+  });
+  assert.equal(total.quantidade_pendente, 0);
+
+  // Compensação: falha no 2º patch reverte o 1º (não é TX atômica única)
+  const map = new Map([
+    ['e1', { id: 'e1', empresa_id: 'emp-a', group_id: 'g1', status: 'Pronto para Expedir', historico_status: [] }],
+    ['e2', { id: 'e2', empresa_id: 'emp-a', group_id: 'g1', status: 'Pronto para Expedir', historico_status: [] }],
+  ]);
+  const fluxo = resolveRomaneioDespacho({
+    entregasSelecionadas: [...map.values()],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Ana',
+    placa: 'ABC1D23',
+    veiculo: 'Truck',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+  });
+  const compensated = applyDespachoPatchesWithRollback({
+    despachoPatches: fluxo.despachoPatches,
+    entregasById: map,
+    failAtIndex: 1,
+  });
+  assert.equal(compensated.ok, false);
+  assert.deepEqual(compensated.rolledBackIds, ['e1']);
+  assert.equal(map.get('e1').status, 'Pronto para Expedir');
+  assert.equal(map.get('e2').status, 'Pronto para Expedir');
+
+  // Atômico de policy: reuse romaneio sem aplicar patches
+  const romaneio = { id: 'r-atom', ...fluxo.romaneioRecord };
+  const retry = resolveRomaneioDespacho({
+    entregasSelecionadas: [...map.values()],
+    empresaId: 'emp-a',
+    groupId: 'g1',
+    motorista: 'Ana',
+    placa: 'ABC1D23',
+    veiculo: 'Truck',
+    checklist_saida: {
+      documentos_ok: true, veiculo_ok: true, carga_conferida: true, combustivel_ok: true,
+    },
+    confirmed: true,
+    romaneiosExistentes: [romaneio],
+  });
+  assert.equal(retry.action, 'retry');
+  assert.equal(retry.despachoPatches.length, 0);
+});
+
+test('listagem Entregas liga LogisticaReversa existente com RBAC/contexto (sem módulo paralelo)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const listagem = await readFile(new URL('../src/components/expedicao/EntregasListagem.jsx', import.meta.url), 'utf8');
+  const detalhe = await readFile(new URL('../src/components/expedicao/DetalhesEntregaView.jsx', import.meta.url), 'utf8');
+  assert.match(listagem, /import LogisticaReversa from '\.\/LogisticaReversa'/);
+  assert.match(listagem, /isEntregaElegivelLogisticaReversa/);
+  assert.match(listagem, /data-action="Entrega\.logisticaReversa\.abrir"/);
+  assert.match(listagem, /data-testid="entrega-list-abrir-logistica-reversa"/);
+  assert.match(listagem, /Logistica Reversa.*editar|LogisticaReversa.*editar/);
+  assert.match(detalhe, /import LogisticaReversa from "\.\/LogisticaReversa"/);
+  assert.match(detalhe, /data-testid="entrega-detalhe-logistica-reversa"/);
+  assert.match(detalhe, /data-testid="entrega-detalhe-ocorrencia"/);
+  assert.doesNotMatch(listagem, /LogisticaReversaNovo|DevolucaoV2|ReversaParallel/);
 });

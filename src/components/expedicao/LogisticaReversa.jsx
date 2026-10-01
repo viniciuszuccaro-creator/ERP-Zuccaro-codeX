@@ -11,6 +11,8 @@ import { RotateCcw, AlertTriangle } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+import { PERSISTENCIA_EXPEDICAO } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -33,12 +35,12 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
 
   const effectiveEmpresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = entrega?.group_id || entrega?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(entrega?.id && (effectiveEmpresaId || effectiveGroupId));
+  const contextoValido = Boolean(entrega?.id && effectiveEmpresaId && effectiveGroupId);
   const canProcess = hasPermission("Expedicao", "Logistica Reversa", "editar")
     || hasPermission("Expedicao", "Entregas", "editar")
     || hasPermission("Expedicao", "Painel Logistico", "editar");
 
-  const auditReversa = async ({ acao: acaoAudit, sucesso = true, motivo: motivoAudit = null, detalhes: detalhesAudit = {} }) => {
+  const auditReversa = async ({ acao: acaoAudit, sucesso = true, motivo: motivoAudit = null, detalhes: detalhesAudit = {}, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao: acaoAudit,
@@ -57,6 +59,9 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar logistica reversa: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar logistica reversa", error);
     }
   };
@@ -78,16 +83,33 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         throw new Error("Processamento cancelado pelo usuario.");
       }
 
-      await updateInContext("Entrega", entrega.id, {
+      // Compensação multi-etapa (não TX atômica): Entrega → ContaReceber → estoque → notificação.
+      // UI NÃO declara sucesso se etapa posterior falhar após Entrega já persistida.
+      const etapasOk = { entrega: false, financeiro: false, estoque: false, notificacao: false };
+      const quantidadeDevolvida = Number(
+        (entrega.pedido_id && (await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1))?.[0]
+          ?.itens_revenda || [])
+          .reduce((sum, item) => sum + Number(item.quantidade || 0), 0),
+      ) || Number(entrega.volumes || entrega.quantidade_total || 1);
+      const entregaPatch = {
         status: "Devolvido",
         group_id: effectiveGroupId,
         grupo_id: effectiveGroupId,
         empresa_id: effectiveEmpresaId,
+        logistica_reversa: {
+          motivo: motivoLimpo,
+          detalhes: detalhesLimpos,
+          acao: acao,
+          quantidade_devolvida: quantidadeDevolvida > 0 ? quantidadeDevolvida : 1,
+          persistencia: PERSISTENCIA_EXPEDICAO.logisticaReversa,
+        },
         entrega_frustrada: {
           motivo: motivoLimpo,
           detalhes: detalhesLimpos,
-          tentativa_numero: 1,
-          reagendamento: null
+          tentativa_numero: Number(entrega.entrega_frustrada?.tentativa_numero || 0) + 1,
+          reagendamento: null,
+          acao_reversa: acao,
+          persistencia: PERSISTENCIA_EXPEDICAO.logisticaReversa,
         },
         historico_status: [
           ...(entrega.historico_status || []),
@@ -95,66 +117,91 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
             status: "Devolvido",
             data_hora: new Date().toISOString(),
             usuario: user?.full_name || user?.email || "Sistema",
-            observacao: `Logistica reversa processada. Motivo: ${motivoLimpo}. Acao: ${acao}`
-          }
-        ]
-      });
+            observacao: `Logistica reversa processada. Motivo: ${motivoLimpo}. Acao: ${acao}`,
+          },
+        ],
+      };
+      assertEntregaOnUpdate({ before: entrega, patch: entregaPatch });
+      await updateInContext("Entrega", entrega.id, entregaPatch);
+      etapasOk.entrega = true;
 
       let ped = null;
-      if (entrega.pedido_id) {
-        const pedido = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
-        ped = pedido[0] || null;
-        if (ped?.contas_receber_ids?.length > 0) {
-          for (const contaId of ped.contas_receber_ids) {
-            await updateInContext("ContaReceber", contaId, {
-              status: "Cancelado",
-              group_id: effectiveGroupId,
-              grupo_id: effectiveGroupId,
-              empresa_id: effectiveEmpresaId,
-              observacoes: `Cancelado automaticamente - Devolução total. Motivo: ${motivoLimpo}`
-            });
+      try {
+        if (entrega.pedido_id) {
+          const pedido = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
+          ped = pedido[0] || null;
+          if (ped?.contas_receber_ids?.length > 0) {
+            for (const contaId of ped.contas_receber_ids) {
+              await updateInContext("ContaReceber", contaId, {
+                status: "Cancelado",
+                group_id: effectiveGroupId,
+                grupo_id: effectiveGroupId,
+                empresa_id: effectiveEmpresaId,
+                observacoes: `Cancelado automaticamente - Devolução total. Motivo: ${motivoLimpo}`
+              });
+            }
           }
         }
-      }
+        etapasOk.financeiro = true;
 
-      if (acao === "devolver_estoque" && entrega.pedido_id) {
-        const pedidoRef = ped || (await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1))[0];
-        if (pedidoRef) {
-          for (const item of (pedidoRef.itens_revenda || [])) {
-            await createInContext("MovimentacaoEstoque", {
-              empresa_id: effectiveEmpresaId,
-              group_id: effectiveGroupId,
-              grupo_id: effectiveGroupId,
-              origem_movimento: "devolucao",
-              origem_documento_id: entrega.id,
-              tipo_movimento: "entrada",
-              produto_id: item.produto_id,
-              produto_descricao: item.descricao,
-              quantidade: item.quantidade,
-              unidade_medida: item.unidade,
-              data_movimentacao: new Date().toISOString(),
-              documento: entrega.numero_pedido,
-              motivo: `Devolução - ${motivoLimpo}`,
-              responsavel: user?.full_name || user?.email || "Sistema Automático"
-            });
+        if (acao === "devolver_estoque" && entrega.pedido_id) {
+          const pedidoRef = ped || (await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1))[0];
+          if (pedidoRef) {
+            for (const item of (pedidoRef.itens_revenda || [])) {
+              await createInContext("MovimentacaoEstoque", {
+                empresa_id: effectiveEmpresaId,
+                group_id: effectiveGroupId,
+                grupo_id: effectiveGroupId,
+                origem_movimento: "devolucao",
+                origem_documento_id: entrega.id,
+                tipo_movimento: "entrada",
+                produto_id: item.produto_id,
+                produto_descricao: item.descricao,
+                quantidade: item.quantidade,
+                unidade_medida: item.unidade,
+                data_movimentacao: new Date().toISOString(),
+                documento: entrega.numero_pedido,
+                motivo: `Devolução - ${motivoLimpo}`,
+                responsavel: user?.full_name || user?.email || "Sistema Automático"
+              });
+            }
           }
         }
+        etapasOk.estoque = true;
+
+        const destinatario = ped?.vendedor_id || null;
+        await createInContext("Notificacao", {
+          destinatario_id: destinatario,
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+          tipo: "urgente",
+          categoria: "Comercial",
+          titulo: `Devolução Total - Pedido ${entrega.numero_pedido}`,
+          mensagem: `Cliente ${entrega.cliente_nome} recusou a entrega. Motivo: ${motivoLimpo}. Ação tomada: ${acao}.`,
+          link_acao: `/expedicao?ver=entrega&id=${entrega.id}`
+        });
+        etapasOk.notificacao = true;
+      } catch (secundarioError) {
+        await auditReversa({
+          acao: "Entrega.logisticaReversa.processar.parcial",
+          sucesso: false,
+          motivo: "compensacao_parcial",
+          detalhes: {
+            etapas_ok: etapasOk,
+            erro: String(secundarioError?.message || secundarioError),
+          },
+        });
+        throw new Error(
+          `Estado parcial: entrega marcada Devolvido, mas etapas posteriores incompletas (${JSON.stringify(etapasOk)}). ${secundarioError?.message || secundarioError}`,
+        );
       }
 
-      const destinatario = ped?.vendedor_id || null;
-      await createInContext("Notificacao", {
-        destinatario_id: destinatario,
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        tipo: "urgente",
-        categoria: "Comercial",
-        titulo: `Devolução Total - Pedido ${entrega.numero_pedido}`,
-        mensagem: `Cliente ${entrega.cliente_nome} recusou a entrega. Motivo: ${motivoLimpo}. Ação tomada: ${acao}.`,
-        link_acao: `/expedicao?ver=entrega&id=${entrega.id}`
+      await auditReversa({
+        acao: "Entrega.logisticaReversa.processar",
+        failClosed: true,
+        detalhes: { motivo: motivoLimpo, acao, pedido_id: entrega.pedido_id || null, etapas_ok: etapasOk },
       });
-
-      await auditReversa({ acao: "Entrega.logisticaReversa.processar", detalhes: { motivo: motivoLimpo, acao, pedido_id: entrega.pedido_id || null } });
       return true;
     },
     onSuccess: () => {
@@ -171,7 +218,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
   });
 
   return (
-    <Card className="border-orange-300 bg-orange-50" data-permission="Expedicao.LogisticaReversa.visualizar" data-context-required="true">
+    <Card className="border-orange-300 bg-orange-50" data-permission="Expedicao.LogisticaReversa.visualizar" data-context-required="true" data-testid="logistica-reversa-panel">
       <CardHeader className="border-b bg-white">
         <CardTitle className="text-base flex items-center gap-2">
           <RotateCcw className="w-5 h-5 text-orange-600" />
@@ -187,7 +234,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         <div>
           <Label>Motivo da Recusa</Label>
           <Select value={motivo} onValueChange={setMotivo} disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending}>
-            <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione o motivo..." /></SelectTrigger>
+            <SelectTrigger className="mt-1" data-testid="logistica-reversa-motivo" data-action="Entrega.logisticaReversa.motivo"><SelectValue placeholder="Selecione o motivo..." /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Recusa de Recebimento">Recusa de Recebimento</SelectItem>
               <SelectItem value="Produto Danificado">Produto Danificado</SelectItem>
@@ -200,13 +247,13 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
 
         <div>
           <Label>Detalhes</Label>
-          <Textarea value={detalhes} onChange={(e) => setDetalhes(e.target.value)} placeholder="Descreva o que aconteceu..." rows={3} className="mt-1" disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending} />
+          <Textarea value={detalhes} onChange={(e) => setDetalhes(e.target.value)} placeholder="Descreva o que aconteceu..." rows={3} className="mt-1" disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending} data-testid="logistica-reversa-detalhes" />
         </div>
 
         <div>
           <Label>Ação a Tomar</Label>
           <Select value={acao} onValueChange={setAcao} disabled={!contextoValido || !canProcess || processarDevolucaoMutation.isPending}>
-            <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione a ação..." /></SelectTrigger>
+            <SelectTrigger className="mt-1" data-testid="logistica-reversa-acao" data-action="Entrega.logisticaReversa.acao"><SelectValue placeholder="Selecione a ação..." /></SelectTrigger>
             <SelectContent>
               <SelectItem value="devolver_estoque">Devolver ao Estoque</SelectItem>
               <SelectItem value="descartar">Descartar (Refugo)</SelectItem>

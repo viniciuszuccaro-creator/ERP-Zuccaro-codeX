@@ -25,6 +25,9 @@ import NotificadorAutomaticoEntrega from "../components/logistica/NotificadorAut
 import ComprovanteEntregaDigital from "../components/logistica/ComprovanteEntregaDigital";
 import RegistroOcorrenciaLogistica from "../components/logistica/RegistroOcorrenciaLogistica";
 import IntegracaoRomaneio from "../components/logistica/IntegracaoRomaneio";
+import {
+  isPedidoStatusElegivelRomaneio,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const EntregasListagem = React.lazy(() => import("../components/expedicao/EntregasListagem"));
 const SeparacaoConferencia = React.lazy(() => import("../components/expedicao/SeparacaoConferencia"));
@@ -204,7 +207,13 @@ export default function Expedicao() {
       windowTitle: '📋 Romaneios',
       width: 1400,
       height: 800,
-      props: { pedidosSelecionados: pedidos.filter(p => ['Faturado', 'Em Expedição', 'Pronto para Faturar'].includes(p.status)) }
+      // Só pré-seleciona pedidos com empresa_id + status elegível (policy).
+      // Órfãos só com group_id bloqueavam effectiveEmpresaId em visão grupo.
+      props: {
+        pedidosSelecionados: pedidos.filter((p) => (
+          Boolean(p?.empresa_id) && isPedidoStatusElegivelRomaneio(p?.status)
+        )),
+      },
     },
     {
       title: 'Rotas e Mapa',

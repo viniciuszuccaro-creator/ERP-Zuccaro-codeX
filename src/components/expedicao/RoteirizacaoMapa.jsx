@@ -32,6 +32,7 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
   const [soFuturas, setSoFuturas] = useState(true);
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
+  const [clienteIdFiltro, setClienteIdFiltro] = useState("todos");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -75,9 +76,19 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
     }));
 
   const cidadesDisponiveis = listCidadesFromEntregas(entregasContextuais);
+  const clientesDisponiveis = React.useMemo(() => {
+    const map = new Map();
+    for (const e of entregasContextuais) {
+      if (e?.cliente_id && !map.has(String(e.cliente_id))) {
+        map.set(String(e.cliente_id), e.cliente_nome || e.cliente_id);
+      }
+    }
+    return [...map.entries()].map(([id, nome]) => ({ id, nome }));
+  }, [entregasContextuais]);
   const entregasFiltradas = filterEntregasList(entregasContextuais, {
     empresaId,
     cidade: cidadeFiltro !== "todas" ? cidadeFiltro : "",
+    clienteId: clienteIdFiltro !== "todos" ? clienteIdFiltro : "",
     dataDe,
     dataAte,
     soFuturas,
@@ -335,6 +346,17 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
                   <SelectItem value="todas">Todas as cidades</SelectItem>
                   {cidadesDisponiveis.map((cidade) => (
                     <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={clienteIdFiltro} onValueChange={setClienteIdFiltro}>
+                <SelectTrigger className="h-8" data-testid="roteirizacao-filtro-cliente">
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os clientes</SelectItem>
+                  {clientesDisponiveis.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

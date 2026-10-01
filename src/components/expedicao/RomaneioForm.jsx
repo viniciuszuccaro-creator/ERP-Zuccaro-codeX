@@ -55,6 +55,9 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
   });
   const [cidadeFiltro, setCidadeFiltro] = useState("todas");
   const [soFuturasRomaneio, setSoFuturasRomaneio] = useState(false);
+  const [dataDeRomaneio, setDataDeRomaneio] = useState("");
+  const [dataAteRomaneio, setDataAteRomaneio] = useState("");
+  const [clienteIdRomaneio, setClienteIdRomaneio] = useState("todos");
 
   const [checklist, setChecklist] = useState({
     documentos_ok: false,
@@ -84,7 +87,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     enabled: (isOpen || windowMode) && contextoValido && canGerarRomaneio,
   });
 
-  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null }) => {
+  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao,
@@ -103,6 +106,9 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar romaneio: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar romaneio", error);
     }
   };
@@ -280,6 +286,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
       await auditRomaneio({
         acao: "Romaneio.gerar",
         sucesso: true,
+        failClosed: true,
         dadosAnteriores: { entregas: entregasSelecionadas.map(e => ({ id: e.id, status: e.status, romaneio_id: e.romaneio_id || null })) },
         dadosNovos: { romaneio_id: romaneio.id, numero_romaneio: romaneio.numero_romaneio, entregas_ids: formData.entregas_selecionadas }
       });
@@ -323,8 +330,21 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     gerarRomaneioMutation.mutate();
   }, [auditRomaneio, canGerarRomaneio, contextoValido, formData.entregas_selecionadas.length, gerarRomaneioMutation, toast]);
   const cidadesRomaneio = listCidadesFromEntregas(entregas);
+  const clientesRomaneio = React.useMemo(() => {
+    const map = new Map();
+    for (const e of entregas) {
+      if (e?.cliente_id && !map.has(String(e.cliente_id))) {
+        map.set(String(e.cliente_id), e.cliente_nome || e.cliente_id);
+      }
+    }
+    return [...map.entries()].map(([id, nome]) => ({ id, nome }));
+  }, [entregas]);
   const entregasFiltradas = filterEntregasList(entregas, {
+    empresaId: effectiveEmpresaId,
     cidade: cidadeFiltro !== "todas" ? cidadeFiltro : "",
+    clienteId: clienteIdRomaneio !== "todos" ? clienteIdRomaneio : "",
+    dataDe: dataDeRomaneio,
+    dataAte: dataAteRomaneio,
     soFuturas: soFuturasRomaneio,
   });
   const entregasSelecionadas = entregasFiltradas.filter(e => formData.entregas_selecionadas.includes(e.id));
@@ -420,7 +440,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 space-y-3" data-testid="romaneio-entregas-filtros" data-action="Expedicao.romaneio.filtro-entregas">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <Select value={cidadeFiltro} onValueChange={setCidadeFiltro}>
                   <SelectTrigger className="h-8" data-testid="romaneio-filtro-cidade">
                     <SelectValue placeholder="Cidade" />
@@ -432,6 +452,33 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                     ))}
                   </SelectContent>
                 </Select>
+                <Select value={clienteIdRomaneio} onValueChange={setClienteIdRomaneio}>
+                  <SelectTrigger className="h-8" data-testid="romaneio-filtro-cliente">
+                    <SelectValue placeholder="Cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os clientes</SelectItem>
+                    {clientesRomaneio.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="date"
+                  value={dataDeRomaneio}
+                  onChange={(e) => setDataDeRomaneio(e.target.value)}
+                  className="h-8"
+                  data-testid="romaneio-filtro-data-de"
+                  aria-label="Data entrega de"
+                />
+                <Input
+                  type="date"
+                  value={dataAteRomaneio}
+                  onChange={(e) => setDataAteRomaneio(e.target.value)}
+                  className="h-8"
+                  data-testid="romaneio-filtro-data-ate"
+                  aria-label="Data entrega até"
+                />
                 <label className="flex items-center gap-2 text-xs text-slate-700 h-8 px-1" data-testid="romaneio-filtro-futuras">
                   <Checkbox
                     checked={soFuturasRomaneio}

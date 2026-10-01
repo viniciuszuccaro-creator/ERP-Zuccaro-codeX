@@ -1,3 +1,1045 @@
+## CURSOR — pacote #197 integrado: LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | LogisticaReversa na listagem/detalhe (RBAC+Grupo/Empresa); Separacao `itens`+`entregaId` |
+| Playwright SPA | A–H+I+J **PASS** (ação/estado/reload); falha intermediária sem toast sucesso; retry sem duplicação |
+| Camada | `SPA_LOCAL_BASE44` ≠ API HTTP ≠ PostgreSQL |
+| Backend HTTP Entrega/Romaneio | **Ausente** no router — prova PG **não aplicável** até existir contrato |
+| Prova mocks | `expedicao-fluxo-operacional` + `integracao-telas` PASS |
+| #198 | CI `d7d3627c` SUCCESS confirmado; atualizar sobre tip após push |
+| Codex | Pedido de revisão do pacote #192–#197 — **sem tip-port #178** |
+| Merge/VPS | **Bloqueado** |
+
+---
+
+## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
+
+| Campo | Valor |
+|---|---|
+| Diagnóstico cards | **Limitação computerUse** — cadeia `LaunchpadCard→handleModuleClick→openWindow→WindowRenderer` íntegra; Playwright abre cards |
+| Correções app | Hydrate parcial não reseta contexto; `Empresa.filter` topologia sem `empresa_id`; `resolveEmpresaOperacionalExpedicao`; `pedidosBase` no Romaneio; clamp janela; `data-testid=erp-window` |
+| Camada prova | **SPA_LOCAL_BASE44** — ≠ API/PostgreSQL/VPS |
+| Roteiro Playwright | A listagem PASS; B sep PASS_attempted; C romaneio PASS; D retry PASS (1 romaneio); E parcial PASS_attempted; I falha estoque PASS_sem_falso_sucesso; G/H gaps UI |
+| #178 | `4f8c6593` candidata; sim compat em branch isolada; **sem tip-port** |
+| Merge/VPS | **Bloqueado** |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T12:14Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata (draft); CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `01d5c16e` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Parcial — A–J BLOCKED no agente (`openWindow`) |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T12:05Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | HEAD tip + correções: `recoverMasterLocalAccess`, redirect subpath `PageNotFound` |
+| SPA | HTTPS local; seed HML no tenant snapshot; KPIs 1 aguardando / 1 pronto |
+| Launchpad `/Expedicao` | OK (13 cards) |
+| A–J navegador | **BLOCKED no agente**: cards não abrem `openWindow` sob clique automatizado |
+| Requisito exato | Abrir cards Entregas/Romaneios/Separação no launchpad e percorrer fluxo + falha estoque→`Estado parcial` |
+| Prova policy/telas | 41/41 integração — ≠ gate navegador |
+| #178 | `4f8c6593` candidata; sem tip-port |
+| Pacote implantação | Em `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
+| Merge/VPS | **Bloqueado** |
+
+---
+
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | HEAD `b8497171` (pacote `7d4f445e`) CI SUCCESS |
+| Correção independente | `recoverMasterLocalAccess` — bootstrap mestre local após `session_access_changed` / storage órfão |
+| SPA isolada | Vite local + TLS autoassinado (Chrome do agente força HTTPS em 127.0.0.1) |
+| Seed HML | Tenant sintético do snapshot (`Grupo`/`Empresa` canônicos) + Pedido/Entrega HML-* |
+| Homologação navegador A–J | **Parcial** — auth+seed OK; checklist UI depende do launchpad `/Expedicao` (não sub-rota); evidências em `/tmp/computer-use/` |
+| Prova falha≠sucesso / retry | Testes integração telas **41/41** (não substitui gate navegador) |
+| Codex #178 | `4f8c6593` ainda candidata; CI OK; **sem tip-port**; contratos Pedido reservados |
+| Merge/VPS | **Bloqueado** |
+| Doc canônico | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` (SHAs + pacote implantação + recuperação) |
+| Próximo | Fechar A–J no launchpad; tip-port só após #178 FINAL |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T09:30Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `c58cf8d9` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T09:14Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `a2297763` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:59Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `5257cf6c` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:43Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `f80eca09` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:27Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `3ec3476c` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T08:11Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `bf5e73b9` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:55Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `b2efe903` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:39Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `c4608930` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:23Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `802612bd` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T07:08Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `4609c995` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:52Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `f8e4a3d2` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:35Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `e40c3439` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:20Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `a8611ebc` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T06:04Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `35ea8209` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:48Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `c508c2bb` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:32Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `189ace24` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:17Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `8ea372f9` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T05:01Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `a5b6ca63` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T04:45Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `34276f74` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T04:30Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `4f51ed1a` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T04:14Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `df06c2f4` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:58Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `06a20f29` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:43Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `9e9d6def` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:27Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `5e2de496` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T03:12Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `46cb7053` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:56Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `22266c1f` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:41Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `6ced22e0` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:25Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `4ae34a03` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T02:09Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `de2ea798` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:54Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `4f8c6593` (antes `790e4be1`) — ainda candidata; CI SUCCESS |
+| Delta | `Mantém validade futura no ensaio R08C de auditoria` |
+| Ação | Sem tip-port; sem revisão consolidada FINAL |
+| Expedição #197 | HEAD `f63cb4af` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:34Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `145b8f1f` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:19Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `2c124b27` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T01:03Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `fca34008` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:48Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `4f92d109` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:31Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `8256f029` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:15Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `6c8fcc7a` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-10-01T00:00Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `75401edc` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T23:44Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `003bbaa9` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T23:29Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `763e4747` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T23:13Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `b62ab5bf` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:58Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `97ed77a5` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:43Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `3b0d29e6` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:27Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `413d797f` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T22:12Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `cd44a1a3` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:56Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `00ef54bc` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:41Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `3f951725` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:23Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `bd449c00` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T21:08Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `5b1cd6b4` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:52Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `85e08072` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:37Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `18506389` CI SUCCESS |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:28Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição #197 | HEAD `1c9d0e02` CI SUCCESS (pacote `7d4f445e`) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 + CI #197 (2026-09-30T20:23Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port; sem revisão consolidada FINAL |
+| Expedição #197 | HEAD `7d4f445e` — CI frontend+backend **SUCCESS** (persistência fail-closed) |
+| Homologação SPA | Pendente |
+| Merge/VPS | **Bloqueado** |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — #197 persistência/recuperação + integração telas (2026-09-30T20:20Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#197** `cursor/expedicao-integracao-romaneio-canonico-392b` |
+| Objetivo | Provar persistência/recuperação Pedido→separação→romaneio→despacho→parcial/total; UI sem sucesso parcial |
+| Mudança | Comprovante (Entrega→Pedido→estoque); RomaneioForm/Integracao/Ocorrência/Reversa audit fail-closed; `logistica_reversa` na devolução; parcial idempotente; testes `expedicao-integracao-telas` |
+| Testes | policy+fluxo+integração telas **41/41** |
+| Doc | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` (cenários recuperação + homologação) |
+| Codex #178 | HEAD `790e4be1` ainda “Correção candidata” — **sem tip-port** |
+| Homologação SPA | Pendente (roteiro na doc) |
+| Merge/VPS | **Bloqueado** |
+
+### Quadro
+
+| Pronto p/ integração | Falta | Bloqueios |
+|---|---|---|
+| Persistência multi-etapa fail-closed + testes telas | Homologação humana | #178 FINAL |
+| Compensação documentada | Tip Comercial / externas | Merge/VPS |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:08Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T20:01Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:58Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `790e4be1` (antes `0596a763`) — ainda candidata |
+| Delta | `Bloqueia aprovação sem confirmação da reserva` |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #197 tip `aa887013` CI SUCCESS (pacote fechado) |
+| Próximo | Vigília FINAL 15min |
+
+---
+
+## CURSOR — pacote Expedição fechado no tip #197 (2026-09-30T19:55Z)
+
+| Campo | Valor |
+|---|---|
+| Tip | **#197** — pacote grande conclusão fluxo |
+| Doc | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
+| Lacunas | filtro cliente coerente listagem/mapa/romaneio; devolução assert; qtd pendentes; compensação≠atômico |
+| Testes | expedicao-fluxo + entrega-policy **32/32** |
+| Codex #178 | ainda candidata `0596a763` — sem tip-port |
+| Homologação SPA | **Pendente** |
+| Externas | WhatsApp/roteirizador/assinatura serviço — **pendentes explícitas** |
+| Merge/VPS | **Bloqueado** |
+
+### Quadro
+
+| Pronto p/ integração | Falta | Bloqueios |
+|---|---|---|
+| Fluxo 1–6 + filtros coerentes + testes | Homologação humana | #178 FINAL |
+| Compensação documentada | Tip Comercial | Merge/VPS/import Empresas |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:52Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Homologação SPA Expedição | Pendente |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:49Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:46Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:39Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:36Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição | #197 CI OK; homologação SPA pendente |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:31Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` estável — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:27Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `0596a763` (antes `49ec5d97`) — ainda candidata; CI SUCCESS |
+| Delta | `Bloqueia histórico antes da migration 025 e da 026` |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #197 tip OK (candidata #192–#197) |
+| Próximo | Vigília FINAL 15min |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:21Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `49ec5d97` (antes `9df73886`) — ainda candidata; CI SUCCESS |
+| Delta | `Amplia reconciliação agregada do preflight 026` |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Expedição | #197 CI SUCCESS tip `7e2fe275` (candidata #192–#197) |
+| Próximo | Vigília FINAL 15min |
+
+---
+
+## CURSOR — candidata #192–#197 fechada no tip (2026-09-30T19:20Z)
+
+| Campo | Valor |
+|---|---|
+| Tip PR | **#197** HEAD em push deste lote |
+| Doc candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
+| Lacunas fechadas | ComprovanteDigital + OcorrenciasPanel + SeparacaoConferenciaIA na policy; Config exige groupId; teste E2E candidata |
+| Testes | expedicao-fluxo-operacional 16/16 |
+| Codex #178 | ainda candidata `9df73886` — sem tip-port |
+| Homologação SPA | **Pendente** (CI ≠ homologação) |
+| Merge/VPS | **Bloqueado** |
+
+### Quadro objetivo
+
+| Pronto p/ integração | Falta | Bloqueios reais |
+|---|---|---|
+| Fluxo Pedido→…→pendências (policy+UI) | Homologação humana SPA | #178 FINAL |
+| Isolamento∧, RBAC, unidades, idempotência, rollback, auditoria | Soft∨ residual dashboard/financeiro leitura | Merge/VPS/import Empresas |
+| Stack #192–#197 documentada | Tip Comercial 360 | Autorização merge ordenado |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T19:10Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `9df73886` — ainda candidata; CI SUCCESS |
+| Expedição #197 | CI SUCCESS HEAD `0ac5af04` |
+| Ação | Sem tip-port |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — #197 wire comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
+
+| Campo | Valor |
+|---|---|
+| Lacuna | `ComprovanteEntregaDigital` / `RegistroOcorrenciaLogistica` sem policy canônica |
+| Mudança | `resolveRegistroEntregaFinal` + asserts create/update nos existentes |
+| Codex #178 | HEAD `9df73886` — ainda candidata; CI SUCCESS |
+| Ação | Sem tip-port; push + CI |
+| Reservados | Pedido legado só side-effect descritivo |
+| Próximo | CI #197; vigília FINAL #178 |
+
+### Quadro
+
+| Pronto | Falta | Bloqueios |
+|---|---|---|
+| Fluxo ponta a ponta + IntegracaoRomaneio + soft∨ crítico | Soft∨ dashboard/config leitura | #178 FINAL |
+| Comprovante/ocorrência na policy (Detalhes + Logística) | Homologação VPS | Merge/VPS/import Empresas |
+
+---
+
+## CURSOR — vigília #178 (2026-09-30T18:57Z)
+
+| Campo | Valor |
+|---|---|
+| Codex #178 | HEAD `9df73886` — ainda “Correção candidata” (**não** final); CI SUCCESS |
+| Ação | Sem tip-port |
+| Expedição | #197 CI SUCCESS `09ada19d` |
+| Próximo | Vigília 15min |
+
+---
+
+## CURSOR — #197 CI SUCCESS HEAD soft∨ (2026-09-30T18:56Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#197** | CI SUCCESS HEAD `09ada19d` (IntegracaoRomaneio + soft∨ caminho crítico) |
+| Stack | #192→#197 |
+| Codex #178 | ainda candidata `9df73886` — sem tip-port |
+| Próximo | Vigília FINAL #178; residual só dashboard/config leitura |
+
+---
+
+## CURSOR — #197 CI SUCCESS + soft∨ fluxo + vigília #178 (2026-09-30T18:55Z)
+
+| Campo | Valor |
+|---|---|
+| Draft PR **#197** | CI SUCCESS HEAD `d5b1e199` (+ soft∨ satélites em commit seguinte) |
+| Soft∨→∧ | SeparacaoConferencia base; Ocorrência; Comprovante×2; Notificador; Reversa; Chat; EnvioMsg |
+| Codex #178 | HEAD `9df73886` (delta: vincula transição ao status do serviço) — ainda “Correção candidata” |
+| CI #178 | frontend/concurrency SUCCESS; backend em curso |
+| Ação | Sem tip-port; sem revisão consolidada |
+| Reservados | Pedido/Orçamento/026–035 intactos |
+| Próximo | Push soft∨; CI recheck; vigília FINAL #178 |
+
+### Quadro objetivo
+
+| Item | Status |
+|---|---|
+| Fluxo select→separar→romaneio→despacho→parcial/ocorrência→pendências | **Pronto** (#192–#197) |
+| Isolamento∧ / RBAC / unidades / idempotência / rollback | **Pronto** |
+| Soft∨ no caminho ocorrência/comprovante | **Pronto** (este lote) |
+| Soft∨ dashboards/config/financeiro leitura grupo | Residual deliberado |
+| #178 FINAL / tip Comercial | **Bloqueado** |
+| Merge/VPS/migration/import Empresas | **Bloqueado** |
+
+---
+
+## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-integracao-romaneio-canonico-392b` (base tip #196) |
+| Lacuna fechada | `IntegracaoRomaneio` → policy canônica (Pedidos→Entrega→romaneio→despacho→legado) |
+| Docs | `docs/EXPEDICAO_INTEGRACAO_ROMANEIO_CANONICO.md` |
+| Testes | expedicao-fluxo-operacional (+ select/plan/legado/rollback IntegracaoRomaneio) |
+| Stack | #192→#196 + este lote |
+| Codex #178 | ainda candidato — sem tip-port |
+| Reservados | Pedido/Orçamento/026–035/legado intactos; export Empresas não duplicado |
+| Colisão | Sem merge/VPS |
+| Próximo | Draft PR + CI; vigília FINAL #178 |
+
+### Quadro objetivo (integração)
+
+| Item | Status |
+|---|---|
+| Seleção Pedidos/Entregas fail-closed | Pronto (#195/#196 + IntegracaoRomaneio) |
+| Separação/conferência + unidades | Pronto (#196) |
+| Romaneio + despacho + rollback | Pronto (RomaneioForm + IntegracaoRomaneio) |
+| Entrega parcial/total/ocorrência → pendências | Pronto (#195) |
+| Idempotência create/reuse Entrega+Romaneio | Pronto (este lote) |
+| Side-effect Pedido legado | Documentado; mutação UI descritiva; contrato Codex |
+| Tip Comercial 360 / #178 FINAL | **Bloqueado** (aguarda FINAL Codex) |
+| Merge/VPS/migration/import Empresas | **Bloqueado** por política |
+
+---
+
 ## CURSOR — vigília #178 (2026-09-30T18:38Z)
 
 | Campo | Valor |

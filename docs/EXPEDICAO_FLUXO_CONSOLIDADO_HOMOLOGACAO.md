@@ -1,9 +1,10 @@
-# Expedição/Logística — candidata consolidada (#192–#194 + fluxo operacional)
+# Expedição/Logística — candidata consolidada (#192–#197 tip)
 
 ## Escopo da candidata
 
-Branch: `cursor/expedicao-fluxo-consolidado-392b`  
-Base de consolidação: tip stack Expedição `#192 → #193 → #194` (filtros → detalhe/separação → roteirização) + fluxo operacional.
+Branch tip: `cursor/expedicao-integracao-romaneio-canonico-392b` @ `b8497171`
+Pacote persistência fail-closed: `7d4f445e`
+Base de consolidação: stack Expedição `#192 → #197`.
 
 Fluxo coberto (telas/serviços existentes):
 
@@ -13,8 +14,11 @@ Fluxo coberto (telas/serviços existentes):
 4. Despachar (status `Saiu para Entrega` + histórico)
 5. Registrar entrega total / parcial / ocorrência (prova/motivo)
 6. Acompanhar pendências (listagem + filas)
+7. Devolução (`logistica_reversa`) com estado parcial sem toast de sucesso
 
 **Não simulado neste lote:** roteirizador avançado, WhatsApp, provedores externos ausentes, VPS/merge, tip-port #178.
+
+Doc canônico da candidata (SHAs, recuperação, pacote implantação): `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
 
 ## Arquivos principais
 
@@ -48,10 +52,19 @@ Pré-condições: contexto grupo∧empresa, perfil com `Expedicao.Separacao.conf
 1. **Troca de empresa:** na listagem em visão de grupo, selecionar entregas da empresa A; filtrar empresa B → seleção de A some; romaneio não aceita ID de outra empresa.
 2. **RBAC:** perfil sem conferir/criar romaneio → botões/ações bloqueados; tentativa audita bloqueio.
 3. **Separação:** informar quantidades; checklist incompleto bloqueia; confirmação cancelada não grava; quantidades zeradas bloqueiam; divergência grava separação sem liberar “Pronto para Expedir”.
-4. **Romaneio/despacho:** só entregas “Pronto para Expedir” da empresa; checklist de saída; confirmação; após gerar, entregas em “Saiu para Entrega” com `romaneio_id`.
-5. **Parcial/total/ocorrência:** parcial exige quantidade > 0 e prova; total exige prova (assinatura); ocorrência exige motivo; confirmação dupla.
-6. **Pendências:** banner na listagem e resumo em `QueuesLogistica` refletem parcial/ocorrência/atraso/separação.
-7. **Pedido legado:** ver `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — não validar contrato canônico Codex neste gate.
+4. **Romaneio/despacho:** só entregas “Pronto para Expedir” da empresa; checklist de saída; confirmação; após gerar, entregas em “Saiu para Entrega” com `romaneio_id`. Falha no meio do despacho → rollback + **sem toast de sucesso**.
+5. **Parcial/total/ocorrência:** parcial exige quantidade > 0 e prova; retry mesma qtd é idempotente; redução bloqueada; total exige prova; ocorrência exige motivo; confirmação dupla. Comprovante: Entrega antes do estoque; falha de estoque → `Estado parcial` (sem sucesso).
+6. **Devolução:** `logistica_reversa` com motivo+quantidade; falha em financeiro/estoque/notificação após Entrega `Devolvido` → `Estado parcial` (sem sucesso).
+7. **Pendências:** banner na listagem e resumo em `QueuesLogistica` refletem parcial/ocorrência/atraso/separação.
+8. **Pedido legado:** ver `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — não validar contrato canônico Codex neste gate.
+
+## Testes de integração (telas)
+
+```bash
+node --test tests/expedicao-integracao-telas.test.js
+```
+
+Cobre concorrência, despacho repetido, falha parcial, auditoria fail-closed, parcial repetida e devolução — espelhando orquestração de IntegracaoRomaneio / RomaneioForm / Comprovante / LogisticaReversa.
 
 ## Rollback
 
