@@ -11,6 +11,7 @@ import { SEED_IDS } from '../scripts/seedDevIds.ts';
 const enabled = Boolean(process.env.DATABASE_URL);
 const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
 const other = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 };
+const validadeFutura = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
 function repositorySnapshots() {
   return {
@@ -35,7 +36,7 @@ test('R08C PostgreSQL real: orcamento create get list update cancel e isolamento
     if (!migrations.rows.some((row) => row.id === '027_orcamentos_versao.sql')) return;
     const client = await db.query<{ id: string }>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo=true LIMIT 1', [scope.groupId, scope.empresaId]);
     assert.ok(client.rows[0]?.id);
-    const input = { cliente_empresa_id: client.rows[0].id, condicao_pagamento_id: SEED_IDS.condicaoPagamentoA, validade_em: '2026-10-01T00:00:00.000Z', itens: [{ produto_id: SEED_IDS.produtoA, unidade_id: SEED_IDS.unidadeA, descricao: 'R08C sintetico', unidade_sigla: 'UN', quantidade: '2.000000', preco_unitario: '10.000000', desconto: '0.000000' }] };
+    const input = { cliente_empresa_id: client.rows[0].id, condicao_pagamento_id: SEED_IDS.condicaoPagamentoA, validade_em: validadeFutura(), itens: [{ produto_id: SEED_IDS.produtoA, unidade_id: SEED_IDS.unidadeA, descricao: 'R08C sintetico', unidade_sigla: 'UN', quantidade: '2.000000', preco_unitario: '10.000000', desconto: '0.000000' }] };
     const created = await repo.create(scope, { ...input, ...repositorySnapshots() }); id = created.id;
     assert.match(created.numero, /^\d{8}$/); assert.equal(created.itens.length, 1); assert.equal(created.total, '20.000000');
     assert.equal(created.versao, 1);
@@ -77,7 +78,7 @@ test('R08C PostgreSQL real: auditoria rollbacka create update cancel e sequencia
     const input = {
       cliente_empresa_id: client.rows[0].id,
       condicao_pagamento_id: SEED_IDS.condicaoPagamentoA,
-      validade_em: '2026-10-01T00:00:00.000Z',
+      validade_em: validadeFutura(),
       itens: [{
         produto_id: SEED_IDS.produtoA,
         unidade_id: SEED_IDS.unidadeA,
