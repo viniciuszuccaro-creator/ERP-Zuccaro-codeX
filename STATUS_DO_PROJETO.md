@@ -1,3 +1,18 @@
+## CURSOR — pacote #197 integrado: LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | LogisticaReversa na listagem/detalhe (RBAC+Grupo/Empresa); Separacao `itens`+`entregaId` |
+| Playwright SPA | A–H+I+J **PASS** (ação/estado/reload); falha intermediária sem toast sucesso; retry sem duplicação |
+| Camada | `SPA_LOCAL_BASE44` ≠ API HTTP ≠ PostgreSQL |
+| Backend HTTP Entrega/Romaneio | **Ausente** no router — prova PG **não aplicável** até existir contrato |
+| Prova mocks | `expedicao-fluxo-operacional` + `integracao-telas` PASS |
+| #198 | CI `d7d3627c` SUCCESS confirmado; atualizar sobre tip após push |
+| Codex | Pedido de revisão do pacote #192–#197 — **sem tip-port #178** |
+| Merge/VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
 
 | Campo | Valor |
