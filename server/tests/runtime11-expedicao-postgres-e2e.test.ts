@@ -26,7 +26,7 @@ async function cleanup(db: ReturnType<typeof createDbClient>, entregaIds: string
   });
 }
 
-test('R11 PostgreSQL: migration 025 presente e Entrega/Romaneio tenant-scoped', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+test('R11 PostgreSQL: migration 036 presente e Entrega/Romaneio tenant-scoped', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({
     NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL,
   }));
@@ -36,7 +36,7 @@ test('R11 PostgreSQL: migration 025 presente e Entrega/Romaneio tenant-scoped', 
   try {
     const migrations = await db.query<{ id: string }>('SELECT id FROM schema_migrations ORDER BY id');
     const ids = migrations.rows.map((r) => r.id);
-    if (!ids.includes('025_expedicao_entregas_romaneios.sql')) {
+    if (!ids.includes('036_expedicao_entregas_romaneios.sql')) {
       // Candidata: migration no repositório; aplicação operacional/CI migrate é gate separado.
       return;
     }

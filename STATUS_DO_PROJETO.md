@@ -1,10 +1,28 @@
+## CURSOR — #199 Expedição persistência canônica (2026-10-01T18:00Z)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| Migration | **`036_expedicao_entregas_romaneios.sql`** (renumerada; comercial Codex #178 reserva **025–035**) |
+| Implementado | repos in-memory+PG, `ExpedicaoService`, HTTP `/entregas\|romaneios`, auditoria TX, telas → API (`VITE_ERP_HTTP_EXPEDICAO`); bridge `entities.Entrega` no hybrid |
+| Portas Pedido/estoque | Contrato em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` — default `reserved`; **sem tip-port** na branch Codex |
+| Testes PG | `runtime11-expedicao-pglite` — tenant/RBAC/concorrência/rollback/despacho repetido/parcial/devolução **PASS** |
+| Navegador | `tests/expedicao-api-pg.playwright.test.mjs` — **API_HTTP_PGLITE PASS** (≠ SPA_LOCAL / ≠ mock) |
+| Mocks identificados | `runtime11-expedicao-http*` = in-memory |
+| Candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` atualizada #192–#199 |
+| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
+| HEAD / CI | `a48e57fe` — `erp-runtime-ci` frontend+backend **SUCCESS** |
+| Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
+
+---
+
 ## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
 
 | Campo | Valor |
 |---|---|
 | Branch | `cursor/expedicao-persistencia-canonica-392b` |
 | Inventário | Sem Entrega/Romaneio no server até 024; SPA/policies/telas existentes reutilizadas |
-| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) |
+| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) → **superseded by 036** |
 | Multiempresa/RBAC/auditoria | `groupId∧empresaId`; actions `conferir/expedir/entregar/ocorrencia`; audit create/change_status |
 | Pedido/estoque | Portas **reserved** (coordenação Codex; sem tip-port) |
 | UI | Flag `VITE_ERP_HTTP_EXPEDICAO`; Separacao/Romaneio/Detalhes/Reversa/Integracao → API canônica |
@@ -12917,9 +12935,9 @@ Checklist inicial:
 |---|---|
 | Base | #199 HEAD `6602d985`, branch Codex isolada; sem alteração na branch Cursor |
 | Implementado | leitura Pedido tenant-scoped com `FOR UPDATE` na criação; snapshots/quantidades canônicos, idempotência por Pedido, limites parcial/devolução, `PATCH` + auditoria na mesma transação |
-| Testado | HTTP sintético e PostgreSQL efêmero focados; servidor 296 PASS/0 FAIL/17 PG externos skipped, typecheck/build PASS; raiz audit/lint/build PASS, `npm test` falha em fixtures shell/VPS no Windows e typecheck raiz tem erros preexistentes fora do diff; não é teste do conjunto de migrations aplicado em destino |
-| Revisão #199 | riscos registrados: portas Pedido/estoque sem executor, rollback externo não comprovado e colisão de migration `025` com #178 |
-| Integração | merge simulado com #178 revelou 11 conflitos; tentativa abortada sem perder históricos; composição final pendente |
+| Testado | HTTP sintético e PostgreSQL efêmero focados; após avanço da base #199, servidor 300 PASS/0 FAIL/17 PG externos skipped e typecheck PASS; 32 testes bridge/UI PASS, lint raiz 0 erros/1 aviso; `npm test` raiz falha em fixtures shell/VPS no Windows e typecheck raiz tem erros preexistentes fora do diff; não é teste do conjunto de migrations aplicado em destino |
+| Revisão #199 | portas Pedido/estoque sem executor e rollback externo não comprovado; colisão da migration `025` corrigida na base #199 por renumeração para `036`, ainda sem CI do conjunto |
+| Integração | base #199 atualizada até `540c4998` com migration 036, conflitos locais combinados; merge simulado com #178 revelou 11 conflitos e foi abortado sem perder históricos; composição comercial final pendente |
 | Gates | sem merge/VPS; 026 histórica bloqueada; estoque/reserva/compensação e autorização operacional pendentes |
 
 ---

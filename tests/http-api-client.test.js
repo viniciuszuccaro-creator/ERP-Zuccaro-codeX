@@ -346,3 +346,33 @@ test('HTTP rejected Bearer never falls back to local data or leaks token in erro
   });
   assert.equal(calls, 1);
 });
+
+test('Entrega/Romaneio/Separacao ficam em entities e no pilot quando VITE_ERP_HTTP_EXPEDICAO=true', async () => {
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_BACKEND: 'http' }).includes('Entrega'), false);
+  const withFlag = resolveHttpPilotEntities({
+    VITE_ERP_BACKEND: 'http',
+    VITE_ERP_HTTP_EXPEDICAO: 'true',
+  });
+  assert.ok(withFlag.includes('Entrega'));
+  assert.ok(withFlag.includes('Romaneio'));
+  assert.ok(withFlag.includes('SeparacaoConferencia'));
+
+  /** @type {string[]} */
+  const paths = [];
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    getScope: () => ({ groupId: 'g1', empresaId: 'e1', actorId: 'a1' }),
+    fetchImpl: async (url) => {
+      paths.push(String(url));
+      return new Response(JSON.stringify({ data: [], meta: { total: 0 } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  assert.equal(typeof client.entities.Entrega?.list, 'function');
+  assert.equal(typeof client.entities.Romaneio?.list, 'function');
+  assert.equal(typeof client.preparedEntities.Entrega?.list, 'function');
+  await client.entities.Entrega.list('-created_date', 10);
+  assert.ok(paths.some((p) => p.includes('/api/v1/entregas')));
+});

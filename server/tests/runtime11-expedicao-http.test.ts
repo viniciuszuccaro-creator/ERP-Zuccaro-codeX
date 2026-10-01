@@ -117,7 +117,8 @@ async function seedPronto(runtime: ReturnType<typeof createApp>, key = 'seed-a')
   return { id, created: created.body.data, sep: sep.body.data };
 }
 
-test('HTTP Expedicao: ciclo separacao → romaneio/despacho → parcial → total → historico + auditoria', async () => {
+// Camada: MOCK in-memory (useMemory=true) — ≠ PostgreSQL. Ver runtime11-expedicao-pglite.test.ts para PG.
+test('HTTP Expedicao (mock in-memory): ciclo separacao → romaneio/despacho → parcial → total → historico + auditoria', async () => {
   const runtime = fixture();
   const { id } = await seedPronto(runtime, 'ciclo-1');
 
@@ -175,7 +176,7 @@ test('HTTP Expedicao: ciclo separacao → romaneio/despacho → parcial → tota
   assert.ok(audits.some((a) => a.action === 'change_status'));
 });
 
-test('HTTP Expedicao: idempotencia create/romaneio/retry e isolamento empresa + RBAC fail-closed', async () => {
+test('HTTP Expedicao (mock in-memory): idempotencia create/romaneio/retry e isolamento empresa + RBAC fail-closed', async () => {
   const runtime = fixture();
   const first = await request(runtime.app, '/api/v1/entregas', {
     method: 'POST', headers: headers(), body: JSON.stringify({ ...entregaPayload, idempotency_key: 'idem-ent-1' }),
@@ -253,7 +254,7 @@ test('HTTP Expedicao: parcial e devolucao nao ultrapassam total nem duplicam ite
   assert.equal(duplicateItem.body.error.code, 'DEVOLUCAO_ITEM_QTY_INVALIDA');
 });
 
-test('HTTP Expedicao: ocorrencia + devolucao + falha intermediaria estoque faz rollback', async () => {
+test('HTTP Expedicao (mock in-memory): ocorrencia + devolucao + falha intermediaria estoque faz rollback', async () => {
   const runtime = fixture({
     expedicaoEstoquePort: {
       async onDespacho() { return 'failed' as const; },
@@ -287,7 +288,7 @@ test('HTTP Expedicao: ocorrencia + devolucao + falha intermediaria estoque faz r
   assert.equal(listed.body.meta.total, 0);
 });
 
-test('HTTP Expedicao: concorrencia de create na mesma empresa gera numeros distintos; retry parcial idempotente', async () => {
+test('HTTP Expedicao (mock in-memory): concorrencia de create na mesma empresa gera numeros distintos; retry parcial idempotente', async () => {
   const runtime = fixture();
   const payloads = [1, 2, 3].map((n) => ({
     ...entregaPayload,

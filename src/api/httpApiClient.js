@@ -506,10 +506,15 @@ export function createHttpApiClient(options = {}) {
       });
     },
   };
-  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
+  /** @type {Record<string, object>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;
+  }
+  // Expedição: rotas preparadas sempre no mapa entities; o hybrid client
+  // só as expõe quando VITE_ERP_HTTP_EXPEDICAO=true (resolveHttpPilotEntities).
+  for (const name of ['Entrega', 'Romaneio', 'SeparacaoConferencia']) {
+    if (entityRoutes[name]) entities[name] = entityRoutes[name];
   }
 
   return {

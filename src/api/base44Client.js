@@ -98,6 +98,8 @@ function createHttpHybridClient() {
     get(target, prop, receiver) {
       if (typeof prop === 'string' && pilotSet.has(prop)) {
         if (http.entities[prop]) return http.entities[prop];
+        // Fallback: rotas preparadas (ex.: Entrega antes do registro no mapa pilot).
+        if (http.preparedEntities?.[prop]) return http.preparedEntities[prop];
       }
       return Reflect.get(target, prop, receiver);
     },

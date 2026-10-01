@@ -11,7 +11,8 @@ const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const empresaId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const actorId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 
-test('cliente HTTP Expedicao (bridge) percorre fluxo sintetico com retry e falha intermediaria', async () => {
+// Camada: MOCK in-memory (useMemory=true) — ≠ PostgreSQL / ≠ SPA_LOCAL.
+test('cliente HTTP Expedicao (bridge mock in-memory) percorre fluxo sintetico com retry e falha intermediaria', async () => {
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
   const tenant = new InMemoryTenantGuard();
   tenant.link(empresaId, groupId);
