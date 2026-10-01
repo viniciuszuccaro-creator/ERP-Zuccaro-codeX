@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## CURSOR — CI compat #178×#197 flaky validade (2026-10-01T13:12Z)
 
 | Campo | Valor |
@@ -6,10 +7,24 @@
 | Causa | `orcamento-ui-policy`: `validade_em=2026-10-01` + comparação T12:00 após meio-dia UTC → `Validade expirada` nos payloads OK |
 | Correção | Relógio fixo `NOW=2026-09-29T15:00Z` em `buildOrcamentoPayload` dos testes — **sem** tip-port #178 |
 | Tip #197 | Intacta; Codex #178 `4f8c6593` intacta |
+=======
+## CURSOR — pacote #197 integrado: LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | LogisticaReversa na listagem/detalhe (RBAC+Grupo/Empresa); Separacao `itens`+`entregaId` |
+| Playwright SPA | A–H+I+J **PASS** (ação/estado/reload); falha intermediária sem toast sucesso; retry sem duplicação |
+| Camada | `SPA_LOCAL_BASE44` ≠ API HTTP ≠ PostgreSQL |
+| Backend HTTP Entrega/Romaneio | **Ausente** no router — prova PG **não aplicável** até existir contrato |
+| Prova mocks | `expedicao-fluxo-operacional` + `integracao-telas` PASS |
+| #198 | CI `d7d3627c` SUCCESS confirmado; atualizar sobre tip após push |
+| Codex | Pedido de revisão do pacote #192–#197 — **sem tip-port #178** |
+>>>>>>> origin/cursor/expedicao-integracao-romaneio-canonico-392b
 | Merge/VPS | **Bloqueado** |
 
 ---
 
+<<<<<<< HEAD
 ## CURSOR — simulação compat #178×#197 (branch isolada)
 
 Merge `4f8c6593` (#178 candidata) em `cursor/expedicao-compat-178-sim-392b` sobre tip Expedição.
@@ -18,6 +33,8 @@ Merge/VPS/aprovação: **bloqueados** (ambas candidatas).
 
 ---
 
+=======
+>>>>>>> origin/cursor/expedicao-integracao-romaneio-canonico-392b
 ## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
 
 | Campo | Valor |
