@@ -69,15 +69,17 @@ Usar o menor contexto e o menor número de operações necessários para resolve
 6. Expandir a busca apenas quando dependência real exigir.
 7. Reutilizar diagnóstico já registrado no status quando ainda for válido.
 
-## 2.3 Unidade de trabalho
+## 2.3 Unidade de trabalho e continuidade do programa autorizado
 
-Trabalhar em UMA tarefa, Gate, subgate ou defeito por vez, salvo quando dependências inseparáveis exigirem um lote pequeno conjunto.
+Em tarefa localizada, resolver completamente o defeito ou Gate solicitado, sem expandir para módulos não relacionados.
 
-Não avançar automaticamente para a próxima tarefa.
+Quando o proprietário autorizar expressamente um programa contínuo (como o Comercial 360), executar vários incrementos relacionados e independentes na mesma execução, em lotes funcionais substanciais. Após validar e publicar cada incremento na branch própria, seguir o próximo item elegível do plano e do status sem pedir “próximo” e sem aguardar revisão do Cursor entre commits. Coordenar arquivos e solicitar revisão independente do HEAD final do conjunto. Priorizar testes comportamentais dos fluxos reais, além de checks de CI.
 
-Não aproveitar uma tarefa para “melhorar” módulos não relacionados.
+Encerrar a execução somente ao concluir o objetivo autorizado, atingir um limite real da ferramenta/tempo, ou encontrar bloqueio concreto que impeça todos os itens independentes disponíveis. Registrar no handoff o último SHA remoto, os testes/CI, o próximo item executável e o bloqueio preciso; não chamar “CI pendente”, “revisão pendente” ou “tarefa ativa” de bloqueio para itens independentes.
 
-Não refatorar código saudável fora do escopo apenas por preferência estética.
+Estas instruções persistentes orientam cada execução, mas não iniciam uma nova sessão em segundo plano. Se a execução terminar, só uma automação/agendamento realmente configurado ou uma nova mensagem pode reabri-la; nunca prometer retomada automática inexistente.
+
+Não aproveitar uma tarefa para “melhorar” módulos não relacionados. Não refatorar código saudável fora do escopo apenas por preferência estética. Não executar merge, migration, importação real ou deploy sem cumprir os Gates e autorizações próprios.
 
 ## 2.4 Busca econômica
 
@@ -435,7 +437,7 @@ Preferir commits pequenos, coerentes e reversíveis. Não misturar vários módu
 
 Não reescrever histórico, fazer force push, reset destrutivo ou apagar branch sem autorização explícita.
 
-Após commit de lote válido: `git push origin main`. Não deixar commits só na máquina local. Não esperar o usuário pedir push. Se as validações do lote falharem, não commitar nem enviar.
+Após commit de lote válido: fazer push da branch própria para `origin` e confirmar o SHA remoto. Push direto em `main` é proibido neste programa; integração em `main` exige PR, revisão, CI e autorização aplicável. Não deixar commits só na máquina local. Se as validações do lote falharem, não commitar nem enviar.
 
 Mensagem de commit deve descrever a finalidade, não apenas “ajustes”.
 
@@ -471,15 +473,17 @@ Sequência obrigatória:
 3. Se as validações do lote falharem: não fazer commit e não fazer push.
 4. `git add` somente dos arquivos do lote.
 5. `git commit` com mensagem curta em português, no estilo do repositório, explicando o porquê.
-6. `git push origin main`.
+6. `git push origin <branch-do-lote>`; nunca usar `main` como branch de trabalho.
 7. Informar o hash do commit e confirmar que o push chegou ao remoto.
 
 Regras:
 
-- Trabalhar somente neste clone interno `ERP-Zuccaro-codeX` ligado a `origin`. Nunca no projeto do HD externo.
+- Trabalhar em checkout/worktree isolado do repositório canônico ligado a `origin`, com escrita e testes comprovados. O nome da pasta local não define a fonte oficial. Nunca usar o backup do ERP antigo como workspace de código.
 - Não misturar lotes não relacionados no mesmo commit.
 - Não usar `--no-verify`, force push, amend de commit já enviado, nem alterar `git config`.
 - Se o push falhar (auth, divergência, rede), reportar o erro e o comando; não marcar o lote como entregue no GitHub.
+
+Esta regra substitui as instruções históricas de push direto em `main`. Para o Comercial 360, `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md` define o escopo, `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` coordena as frentes e `docs/HANDOFF_ATUAL.md` registra o checkpoint. Documentos de gate registram autorizações apenas para os alvos, versões e janelas expressamente identificados; uma aprovação anterior não autoriza migration, canário, importação ou promoção de um candidato novo. Segurança, Regra-Mãe e isolamento Grupo/Empresa prevalecem em qualquer divergência.
 
 ---
 
@@ -487,7 +491,7 @@ Regras:
 
 Enquanto o sistema não estiver liberado para operação real, seguir esta ordem sem pular etapa.
 
-Ao concluir um item, seguir automaticamente o próximo da lista, a menos que o usuário peça parar. “Próxima ordem” significa o próximo número ainda aberto em P0, depois P1, depois P2. Consultar `PLANO_GO_LIVE.md` para o Gate correspondente (Gate 1 autenticação, Gate 2 RBAC, Gate 3 multiempresa, Gate 4 auditoria, e assim por diante).
+Dentro de um programa contínuo expressamente autorizado, seguir automaticamente o próximo item elegível, salvo pedido de parada ou gate externo. Priorizar P0 aberto, depois P1 e P2, sem tratar essa ordem como autorização operacional. Consultar `PLANO_GO_LIVE.md` para o Gate correspondente (Gate 1 autenticação, Gate 2 RBAC, Gate 3 multiempresa, Gate 4 auditoria, e assim por diante).
 
 ## P0 — BLOQUEADORES
 1. segurança/autenticação;

@@ -72,6 +72,7 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
     codigo: data.codigo ?? null,
+    codigo_legado: data.codigo_legado ?? null,
     codigo_barras: data.codigo_barras ?? null,
     descricao: data.descricao,
     nome: data.nome ?? data.descricao,
@@ -176,7 +177,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     }
     if (filter.search) {
       const term = filter.search.toLowerCase();
-      const fields = [r.descricao, r.codigo, r.nome, r.codigo_barras,
+      const fields = [r.descricao, r.codigo, r.codigo_legado, r.nome, r.codigo_barras,
         r.material, r.liga, r.norma_tecnica];
       if (!fields.some((value) => String(value ?? '').toLowerCase().includes(term))) return false;
     }

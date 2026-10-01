@@ -751,9 +751,10 @@ test('API Cliente isolation + pagination + search + soft delete + restore', asyn
 
   const meta = await fetchOk(app, '/api/v1/meta');
   assert.ok(['ERP-RUNTIME-04', 'ERP-RUNTIME-05', 'ERP-RUNTIME-06A', 'ERP-RUNTIME-06B', 'ERP-RUNTIME-07B', 'ERP-RUNTIME-08B'].includes(meta.runtime));
-  assert.equal(meta.cliente.frontendHttp, false);
+  assert.equal(meta.cliente.frontendHttp, true);
   assert.ok(meta.preparedEntities.includes('Cliente'));
-  assert.ok(!meta.httpPilotEntities.includes('Cliente'));
+  assert.ok(meta.httpPilotEntities.includes('Cliente'));
+  assert.ok(meta.httpEntities.includes('Cliente'));
 });
 
 async function fetchStatus(app: ReturnType<typeof createApp>['app'], path: string, init: RequestInit = {}) {
