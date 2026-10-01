@@ -24,6 +24,7 @@ const SOURCES = [
 const bucketNames = ['semCodigo', 'codigo000', 'codigo001', 'codigo002', 'codigo003', 'codigo004', 'codigo005', 'outroCodigo'];
 const financialLinkBuckets = ['semPedido', 'semCliente', 'semCorrespondencia', 'pedidoAmbiguo', 'pedidoSemCodigo', 'pedidoCandidatoUnico'];
 const financialUnmatchedBuckets = ['numeroComOutroCliente', 'numeroNaoEncontrado'];
+const financialDocumentBuckets = ['notaEOrcamento', 'somenteNota', 'somenteOrcamento', 'semReferenciaDocumental'];
 
 function readOnlyGate() {
   const databaseList = DATABASES.map((name) => `'${name}'`).join(', ');
@@ -86,6 +87,26 @@ SELECT categoria, COUNT_BIG(*) AS quantidade FROM divergentes
 GROUP BY categoria FOR JSON PATH;`;
 }
 
+export function financialDocumentHintQuery() {
+  return `${readOnlyGate()}
+WITH divergentes AS (
+  SELECT CASE
+    WHEN NULLIF(LTRIM(RTRIM(c.NumeroNFMTR)), '') IS NOT NULL
+      AND NULLIF(LTRIM(RTRIM(c.NUMEROORCAMENTO)), '') IS NOT NULL THEN 'notaEOrcamento'
+    WHEN NULLIF(LTRIM(RTRIM(c.NumeroNFMTR)), '') IS NOT NULL THEN 'somenteNota'
+    WHEN NULLIF(LTRIM(RTRIM(c.NUMEROORCAMENTO)), '') IS NOT NULL THEN 'somenteOrcamento'
+    ELSE 'semReferenciaDocumental' END AS categoria
+  FROM [LEGACY_TID_EMP03].[dbo].[ContaCorrenteClientes] c
+  WHERE c.NRPEDIDOVENDA > 0 AND c.CODIGOCLIENTE IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM [LEGACY_TID_EMP03].[dbo].[PedidoVenda] v
+      WHERE v.NRPEDIDO = c.NRPEDIDOVENDA AND v.CODIGOCLIENTE = c.CODIGOCLIENTE
+    )
+)
+SELECT categoria, COUNT_BIG(*) AS quantidade FROM divergentes
+GROUP BY categoria FOR JSON PATH;`;
+}
+
 function parseFinancialBuckets(raw, names) {
   let rows;
   try { rows = JSON.parse(String(raw).replace(/\r?\n/g, '').trim()); } catch { throw new Error('LEGACY_SQL_RESULT_INVALID'); }
@@ -111,6 +132,12 @@ export function parseFinancialUnmatched(raw) {
   return { mode: 'READ_ONLY_AGGREGATE', source: 'EMP03', entity: 'ContaCorrenteClientes',
     subset: 'semCorrespondencia', ...parseFinancialBuckets(raw, financialUnmatchedBuckets),
     ownershipProven: false, importAuthorized: false };
+}
+
+export function parseFinancialDocumentHints(raw) {
+  return { mode: 'READ_ONLY_AGGREGATE', source: 'EMP03', entity: 'ContaCorrenteClientes',
+    subset: 'semCorrespondencia', ...parseFinancialBuckets(raw, financialDocumentBuckets),
+    documentHintsOnly: true, ownershipProven: false, importAuthorized: false };
 }
 
 export function parseOwnershipCounts(raw) {
@@ -148,15 +175,17 @@ if (process.argv[1]?.endsWith('sql-ownership-counts.mjs')) {
   const sqlcmd = 'C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\180\\Tools\\Binn\\SQLCMD.EXE';
   try {
     if (process.argv.length > 3 || (process.argv[2]
-      && !['--financial-links', '--financial-unmatched'].includes(process.argv[2]))) {
+      && !['--financial-links', '--financial-unmatched', '--financial-document-hints'].includes(process.argv[2]))) {
       throw new Error('LEGACY_SQL_MODE_INVALID');
     }
     const query = process.argv[2] === '--financial-links' ? financialLinkQuery()
-      : process.argv[2] === '--financial-unmatched' ? financialUnmatchedQuery() : ownershipCountQuery();
+      : process.argv[2] === '--financial-unmatched' ? financialUnmatchedQuery()
+        : process.argv[2] === '--financial-document-hints' ? financialDocumentHintQuery() : ownershipCountQuery();
     const raw = execFileSync(sqlcmd, sqlcmdArguments(query),
       { encoding: 'utf8', maxBuffer: 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
     const report = process.argv[2] === '--financial-links' ? parseFinancialLinks(raw)
-      : process.argv[2] === '--financial-unmatched' ? parseFinancialUnmatched(raw) : parseOwnershipCounts(raw);
+      : process.argv[2] === '--financial-unmatched' ? parseFinancialUnmatched(raw)
+        : process.argv[2] === '--financial-document-hints' ? parseFinancialDocumentHints(raw) : parseOwnershipCounts(raw);
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } catch {
     process.stderr.write('LEGACY_SQL_INSPECTION_FAILED\n');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { financialLinkQuery, financialUnmatchedQuery, inspectLegacySql, ownershipCountQuery, parseFinancialLinks, parseFinancialUnmatched, parseOwnershipCounts, sqlcmdArguments } from '../scripts/legado/sql-ownership-counts.mjs';
+import { financialDocumentHintQuery, financialLinkQuery, financialUnmatchedQuery, inspectLegacySql, ownershipCountQuery, parseFinancialDocumentHints, parseFinancialLinks, parseFinancialUnmatched, parseOwnershipCounts, sqlcmdArguments } from '../scripts/legado/sql-ownership-counts.mjs';
 
 test('uses only allowlisted read-only SQL sources and requires every copy online/read-only', () => {
   const sql = ownershipCountQuery();
@@ -116,4 +116,36 @@ test('unmatched financial parser rejects private, duplicate, and invalid buckets
     JSON.stringify([{ categoria: 'numeroNaoEncontrado', quantidade: 1 }, { categoria: 'numeroNaoEncontrado', quantidade: 2 }]),
   ]) assert.throws(() => parseFinancialUnmatched(value), { message: 'LEGACY_SQL_RESULT_INVALID' });
   assert.equal(parseFinancialUnmatched('[]').total, 0);
+});
+
+test('document hint probe counts only unmatched titles and cannot prove a fiscal link', () => {
+  const sql = financialDocumentHintQuery();
+  assert.match(sql, /LEGACY_SQL_READ_ONLY_GATE/);
+  assert.match(sql, /is_read_only = 1/);
+  assert.match(sql, /c\.NumeroNFMTR/);
+  assert.match(sql, /c\.NUMEROORCAMENTO/);
+  assert.match(sql, /NOT EXISTS/);
+  assert.match(sql, /v\.NRPEDIDO = c\.NRPEDIDOVENDA AND v\.CODIGOCLIENTE = c\.CODIGOCLIENTE/);
+  assert.doesNotMatch(sql, /\b(?:INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|EXEC)\b/i);
+  const report = parseFinancialDocumentHints(JSON.stringify([
+    { categoria: 'somenteNota', quantidade: 3 },
+    { categoria: 'somenteOrcamento', quantidade: 2 },
+    { categoria: 'semReferenciaDocumental', quantidade: 5 },
+  ]));
+  assert.equal(report.total, 10);
+  assert.equal(report.notaEOrcamento, 0);
+  assert.equal(report.documentHintsOnly, true);
+  assert.equal(report.ownershipProven, false);
+  assert.equal(report.importAuthorized, false);
+  assert.doesNotMatch(JSON.stringify(report), /clienteId|pedidoId|cnpj|numeroNfmtr/);
+});
+
+test('document hint parser rejects unknown categories and private rows', () => {
+  for (const value of [
+    'private-row', '{}',
+    JSON.stringify([{ categoria: 'numeroNaoEncontrado', quantidade: 1 }]),
+    JSON.stringify([{ categoria: 'somenteNota', quantidade: 0 }]),
+    JSON.stringify([{ categoria: 'somenteNota', quantidade: 1 }, { categoria: 'somenteNota', quantidade: 2 }]),
+  ]) assert.throws(() => parseFinancialDocumentHints(value), { message: 'LEGACY_SQL_RESULT_INVALID' });
+  assert.equal(parseFinancialDocumentHints('[]').total, 0);
 });
