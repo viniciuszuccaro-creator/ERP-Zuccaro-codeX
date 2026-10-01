@@ -1,3 +1,9 @@
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
+
+#197 `b8497171` CI OK. Bootstrap sessão mestre local corrigido. SPA isolada + seed HML no tenant snapshot. Homologação navegador A–J parcial (launchpad). #178 `4f8c6593` ainda candidato — sem tip-port. Merge/VPS bloqueado. Doc: `EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
+
+---
+
 ## CURSOR — vigília #178 (2026-10-01T09:30Z)
 
 #178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.

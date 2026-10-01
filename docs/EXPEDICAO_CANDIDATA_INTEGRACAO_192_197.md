@@ -6,8 +6,11 @@
 |---|---|
 | Candidata | Stack draft **#192 → #197** (tip = #197) |
 | Branch tip | `cursor/expedicao-integracao-romaneio-canonico-392b` |
-| Estado | **Candidata de integração homologável** — persistência/recuperação provada em testes de integração das telas |
+| HEAD tip (código pacote) | `7d4f445e` (persistência fail-closed) |
+| HEAD tip (atual) | `b8497171` — vigílias #178; CI tip SUCCESS |
+| Estado | **Candidata de integração** — pacote código fechado; homologação SPA local em curso |
 | CI tip | frontend+backend no HEAD do tip (**≠** homologação SPA/VPS) |
+| Codex Comercial #178 | `4f8c6593` ainda **candidata** (R08C fixture); sem tip-port; CI SUCCESS |
 
 ## Cadeia
 
@@ -84,6 +87,19 @@ Inclui filtro cliente, E2E Pedido→pendências, quantidades pendentes, compensa
 
 ## Homologação SPA (obrigatória antes de merge)
 
+Identidade sintética local (não Auth HTTP / não VPS):
+
+| Campo | Valor |
+|---|---|
+| Backend | `VITE_ERP_BACKEND=local` (localBase44) |
+| Usuário | `admin@erp-local.test` (`local-admin-user`) |
+| Grupo / Empresa | `local_grupo_cpa` / `local_empresa_3z` (ou topologia do snapshot core após `?reset-local=1`) |
+| Perfil | `local_perfil_admin` |
+| Reset limpo | `/?reset-local=1` |
+| Bootstrap sessão | `recoverMasterLocalAccess` recria perfil/sessão do mestre se storage órfão (`session_access_changed`) |
+
+Checklist (navegador — **não** substituível por testes de policy):
+
 1. Grupo∧empresa + permissões Separação/Romaneio/Entrega/Ocorrência/Reversa  
 2. Pedido elegível → separação (manual/IA) → Entrega pronta  
 3. Filtros listagem/mapa/romaneio alinhados (empresa, cidade, cliente, data, futuras)  
@@ -92,6 +108,45 @@ Inclui filtro cliente, E2E Pedido→pendências, quantidades pendentes, compensa
 6. Parcial repetida (retry / aumento / bloqueio de redução); ocorrência; devolução; pendências com qtd  
 7. Retry não duplica Entrega/Romaneio  
 8. Pedido legado: validar com Codex no #178 FINAL  
+
+### Estado da homologação SPA (2026-10-01)
+
+| Item | Status |
+|---|---|
+| Pacote tip #197 `b8497171` (código `7d4f445e`) + CI | OK |
+| Correção bootstrap sessão mestre local | Aplicada (`recoverMasterLocalAccess`) |
+| SPA isolada Vite | Sobe; Chrome no agente forçava HTTPS → TLS local autoassinado para teste |
+| Fluxo A–J no navegador | **Parcial** — HTTPS local + seed + KPIs (1 aguardando / 1 pronto) + launchpad `/Expedicao`; subpath `/Expedicao/Entregas` → redirect canônico. **BLOCKED** no agente: clique nos cards não abre `openWindow` (janela interna). Evidências: `/opt/cursor/artifacts/screenshots/hml-exp-*.webp` |
+| Requisito exato p/ fechar A–J | Operador (ou automação com WindowProvider) abrir cards **Entregas** / **Romaneios** / **Separação** no launchpad `/Expedicao` com seed HML no tenant snapshot; percorrer parcial/total/ocorrência/devolução e injetar falha de estoque → `Estado parcial` |
+| Prova falha≠sucesso + retry sem duplicar | Coberta em `tests/expedicao-integracao-telas.test.js` (41/41); **não fecha** o gate de navegador |
+
+### Recuperação executável (estado parcial)
+
+| Sintoma | Recuperação verificável |
+|---|---|
+| `Estado parcial: … Pedido legado incompleto` | Reabrir romaneio/despacho; Pedido ainda elegível; retry `updateInContext` legado; **sem** novo Romaneio se Entrega já despachada |
+| `Estado parcial: … baixa de estoque incompleta` | Corrigir estoque/produto; reabrir comprovante da mesma Entrega; completar baixa; conferir 1 Entrega + movimentações idempotentes |
+| `Estado parcial` pós-devolução | Completar financeiro/estoque/notificação faltantes; Entrega permanece `Devolvido`; sem segundo `logistica_reversa` criado |
+| `session_access_changed` na SPA local | `/?reset-local=1` ou reload — mestre local reidrata `local_perfil_admin` e nova sessão |
+
+## Coordenação Comercial (#178) × Expedição (#197)
+
+| Frente | HEAD | CI | Contrato cruzado | Tip-port |
+|---|---|---|---|---|
+| #178 Comercial 360 | `4f8c6593` (R08C validade fixture) | frontend+backend+concurrency SUCCESS | Pedido/Orçamento/mig 026–035 / `saleIngress` — **reserva Codex** | **Não** até FINAL |
+| #197 Expedição tip | `b8497171` | frontend+backend SUCCESS | Side-effect legado `Pedido` só descritivo (`INTEGRACAO_ROMANEIO_PEDIDO_LEGADO_SIDE_EFFECT` / separação) | Aguarda #178 FINAL |
+| Integrada Comercial+Expedição | — | — | Contratos HTTP Pedido + Entrega/Romaneio no mesmo tenant | Bloqueada |
+
+## Pacote de implantação (gates vigentes — sem VPS neste lote)
+
+| Item | Conteúdo |
+|---|---|
+| Dependências de merge | Stack draft **#192→#197** em ordem; **não** mesclar tip Expedição antes de revisão humana; tip Comercial **só após #178 FINAL** |
+| Artefato código | Branch `cursor/expedicao-integracao-romaneio-canonico-392b` @ `b8497171` |
+| Validações pré-merge | `node --test tests/expedicao-*.test.js` (41); CI `erp-runtime-ci`; `git diff --check` |
+| Runtime | Sem promoção VPS; sem migration nova nesta candidata |
+| Rollback | Fechar drafts #197→#192; pós-merge autorizado: revert do merge; **não** reverter 026–035; **não** tocar Pedido Codex |
+| Segredos | Nenhum no pacote; evidências SPA sem tokens/PII |
 
 ## Rollback
 
@@ -103,6 +158,6 @@ Inclui filtro cliente, E2E Pedido→pendências, quantidades pendentes, compensa
 
 | Pronto p/ integração | Falta | Bloqueios reais |
 |---|---|---|
-| Fluxo operacional + persistência fail-closed no tip #197 | Homologação humana SPA | #178 FINAL |
-| Isolamento∧, RBAC, filtros, testes policy+telas | WhatsApp/roteirizador/assinatura como serviço | Merge/VPS/import Empresas |
-| Compensação≠atômico documentada e testada | Tip Comercial 360 | Autorização merge ordenado |
+| Fluxo operacional + persistência fail-closed no tip #197 (`b8497171`) | Homologação navegador A–J completa no ambiente do agente | #178 FINAL |
+| Isolamento∧, RBAC, filtros, testes policy+telas 41/41 | WhatsApp/roteirizador/assinatura como serviço | Merge/VPS/import Empresas |
+| Compensação≠atômico + recuperação documentada | Tip Comercial 360 + candidata integrada | Autorização merge ordenado |

@@ -1,9 +1,10 @@
-# Expedição/Logística — candidata consolidada (#192–#194 + fluxo operacional)
+# Expedição/Logística — candidata consolidada (#192–#197 tip)
 
 ## Escopo da candidata
 
-Branch: `cursor/expedicao-fluxo-consolidado-392b`  
-Base de consolidação: tip stack Expedição `#192 → #193 → #194` (filtros → detalhe/separação → roteirização) + fluxo operacional.
+Branch tip: `cursor/expedicao-integracao-romaneio-canonico-392b` @ `b8497171`
+Pacote persistência fail-closed: `7d4f445e`
+Base de consolidação: stack Expedição `#192 → #197`.
 
 Fluxo coberto (telas/serviços existentes):
 
@@ -13,8 +14,11 @@ Fluxo coberto (telas/serviços existentes):
 4. Despachar (status `Saiu para Entrega` + histórico)
 5. Registrar entrega total / parcial / ocorrência (prova/motivo)
 6. Acompanhar pendências (listagem + filas)
+7. Devolução (`logistica_reversa`) com estado parcial sem toast de sucesso
 
 **Não simulado neste lote:** roteirizador avançado, WhatsApp, provedores externos ausentes, VPS/merge, tip-port #178.
+
+Doc canônico da candidata (SHAs, recuperação, pacote implantação): `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md`.
 
 ## Arquivos principais
 

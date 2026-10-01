@@ -1,3 +1,20 @@
+## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
+
+| Campo | Valor |
+|---|---|
+| Tip #197 | HEAD `b8497171` (pacote `7d4f445e`) CI SUCCESS |
+| Correção independente | `recoverMasterLocalAccess` — bootstrap mestre local após `session_access_changed` / storage órfão |
+| SPA isolada | Vite local + TLS autoassinado (Chrome do agente força HTTPS em 127.0.0.1) |
+| Seed HML | Tenant sintético do snapshot (`Grupo`/`Empresa` canônicos) + Pedido/Entrega HML-* |
+| Homologação navegador A–J | **Parcial** — auth+seed OK; checklist UI depende do launchpad `/Expedicao` (não sub-rota); evidências em `/tmp/computer-use/` |
+| Prova falha≠sucesso / retry | Testes integração telas **41/41** (não substitui gate navegador) |
+| Codex #178 | `4f8c6593` ainda candidata; CI OK; **sem tip-port**; contratos Pedido reservados |
+| Merge/VPS | **Bloqueado** |
+| Doc canônico | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` (SHAs + pacote implantação + recuperação) |
+| Próximo | Fechar A–J no launchpad; tip-port só após #178 FINAL |
+
+---
+
 ## CURSOR — vigília #178 (2026-10-01T09:30Z)
 
 | Campo | Valor |

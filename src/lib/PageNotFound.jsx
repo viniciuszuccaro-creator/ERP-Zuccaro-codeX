@@ -44,12 +44,17 @@ export default function PageNotFound({}) {
         const norm = normalize(pageName);
         let target = normMap[norm] || alias[norm];
         if (!target && norm && norm.endsWith('cliente')) target = 'PortalCliente';
-        if (target && ('/' + pageName) !== ('/' + target)) {
+        // Subcaminho sob página conhecida (ex.: /Expedicao/Entregas) → volta ao launchpad canônico
+        if (!target && segs.length > 1) {
+          const parentNorm = normalize(segs[0]);
+          target = normMap[parentNorm] || alias[parentNorm] || null;
+        }
+        if (target && location.pathname !== ('/' + target)) {
             const qs = window.location.search || '';
             const hash = window.location.hash || '';
             window.location.replace('/' + target + qs + hash);
         }
-    }, [pageName]);
+    }, [pageName, location.pathname]);
 
     const { data: authData, isFetched } = useQuery({
         queryKey: ['user'],

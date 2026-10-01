@@ -831,18 +831,72 @@ const notifyLocalSingleSession = ({ revoked = [], audit = null } = {}) => {
   if (audit) notify('AuditLog', 'create', audit);
 };
 
+/**
+ * Recupera bootstrap do mestre local quando PerfilAcesso/topologia ficaram órfãos
+ * (ex.: clear parcial de localStorage ou seed incompleto). Não aplica a usuário comum.
+ */
+const recoverMasterLocalAccess = (db, user) => {
+  if (!isMasterLocalUser(user)) return { db, user: null, profile: null, accessVersion: null };
+  const repairedDb = ensureLocalTopology(db);
+  const topologyGroupId = (repairedDb.GrupoEmpresarial || [])[0]?.id || 'local_grupo_cpa';
+  const topologyEmpresaId = (repairedDb.Empresa || [])[0]?.id || 'local_empresa_3z';
+  const master = normalizeLocalUser({
+    ...(getEntityStore(repairedDb, 'User').find((item) => isMasterLocalUser(item)) || user || localApiUser),
+    perfil_acesso_id: 'local_perfil_admin',
+    mestre_local: true,
+    grupo_atual_id: topologyGroupId,
+    grupo_padrao_id: topologyGroupId,
+    empresa_atual_id: topologyEmpresaId,
+    empresa_padrao_id: topologyEmpresaId,
+  });
+  const profiles = getEntityStore(repairedDb, 'PerfilAcesso');
+  const profileIdx = profiles.findIndex((item) => String(item.id) === 'local_perfil_admin');
+  const profileBase = profileIdx >= 0 ? profiles[profileIdx] : {
+    id: 'local_perfil_admin',
+    nome: 'Administrador Local',
+    ativo: true,
+    permissoes: { '*': [...GRANULAR_PERMISSION_ACTIONS] },
+  };
+  const profile = {
+    ...profileBase,
+    id: 'local_perfil_admin',
+    ativo: true,
+    group_id: topologyGroupId,
+    grupo_id: topologyGroupId,
+    permissoes: buildMasterLocalPermissions(profileBase.permissoes),
+  };
+  if (profileIdx >= 0) profiles[profileIdx] = profile;
+  else profiles.push(profile);
+  repairedDb.User = [master, ...(repairedDb.User || []).filter((item) => String(item.id) !== String(master.id))];
+  saveDb(repairedDb);
+  safeStorage.setItem(USER_KEY, JSON.stringify(master));
+  const accessVersion = buildLocalAccessVersion(master, profile);
+  return { db: repairedDb, user: master, profile, accessVersion };
+};
+
 const ensureLocalActiveSession = async (user) => {
   const authState = readLocalAuthState(safeStorage);
   const sessaoId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
   let session = await loadLocalSessionById(sessaoId);
-  const db = loadDb();
-  const currentUser = getEntityStore(db, 'User').find((item) => String(item.id) === String(user?.id));
-  const currentProfile = currentUser?.perfil_acesso_id
+  let db = loadDb();
+  let workingUser = user;
+  let currentUser = getEntityStore(db, 'User').find((item) => String(item.id) === String(workingUser?.id));
+  let currentProfile = currentUser?.perfil_acesso_id
     ? getEntityStore(db, 'PerfilAcesso').find((item) => String(item.id) === String(currentUser.perfil_acesso_id))
     : null;
-  const accessVersion = buildLocalAccessVersion(currentUser, currentProfile);
-  const groupId = user.grupo_atual_id || user.grupo_padrao_id || null;
-  const empresaId = user.empresa_atual_id || user.empresa_padrao_id || null;
+  let accessVersion = buildLocalAccessVersion(currentUser, currentProfile);
+
+  if (!accessVersion && isMasterLocalUser(workingUser || currentUser)) {
+    const recovered = recoverMasterLocalAccess(db, workingUser || currentUser || localApiUser);
+    db = recovered.db;
+    if (recovered.user) workingUser = recovered.user;
+    currentUser = recovered.user;
+    currentProfile = recovered.profile;
+    accessVersion = recovered.accessVersion;
+  }
+
+  let groupId = workingUser.grupo_atual_id || workingUser.grupo_padrao_id || null;
+  let empresaId = workingUser.empresa_atual_id || workingUser.empresa_padrao_id || null;
   const sessionTimeout = resolveLocalSessionTimeoutConfig({
     securityConfigs: getEntityStore(db, 'ConfiguracaoSeguranca'),
     groupId,
@@ -855,46 +909,56 @@ const ensureLocalActiveSession = async (user) => {
   }
 
   if (session) {
-    const evaluation = evaluateLocalUserSession(user, session, Date.now(), accessVersion, sessionTimeout);
+    const evaluation = evaluateLocalUserSession(workingUser, session, Date.now(), accessVersion, sessionTimeout);
     if (!evaluation.allowed) {
       if (evaluation.reason === 'session_access_version_missing' || evaluation.reason === 'session_access_changed') {
         revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
+        // Mestre local: após revogar versão antiga, recria sessão (bootstrap) em vez de travar a SPA.
+        if (isMasterLocalUser(workingUser)) {
+          session = null;
+          safeStorage.removeItem(LOCAL_SESSION_ID_KEY);
+        } else {
+          throw createAuthDeniedError(evaluation);
+        }
+      } else {
+        if (evaluation.reason === 'session_expired') {
+          revokeLocalSessionRecord(db, session, 'Expiracao por inatividade');
+        }
+        if (evaluation.reason === 'session_absolute_expired') {
+          revokeLocalSessionRecord(db, session, 'Expiracao absoluta');
+        }
+        throw createAuthDeniedError(evaluation);
       }
-      if (evaluation.reason === 'session_expired') {
-        revokeLocalSessionRecord(db, session, 'Expiracao por inatividade');
-      }
-      if (evaluation.reason === 'session_absolute_expired') {
-        revokeLocalSessionRecord(db, session, 'Expiracao absoluta');
-      }
-      throw createAuthDeniedError(evaluation);
     }
-    const sessions = getEntityStore(db, 'SessaoUsuario');
-    const index = sessions.findIndex((item) => String(item.id) === String(session.id));
-    if (index < 0) throw createAuthDeniedError({ reason: 'session_not_found', type: 'auth_required' });
-    const timestamp = now();
-    const singleSession = enforceLocalSingleSession(db, {
-      user,
-      currentSessionId: session.id,
-      groupId,
-      empresaId,
-      timestamp,
-    });
-    session = {
-      ...sessions[index],
-      data_hora_ultimo_acesso: timestamp,
-      data_hora_inicio: sessions[index].data_hora_inicio || timestamp,
-      max_idle_ms: sessionTimeout.maxIdleMs,
-      max_absolute_ms: sessionTimeout.maxAbsoluteMs,
-      timeout_config_source: sessionTimeout.source,
-      ativa: true,
-      status: 'Ativa',
-      updated_date: timestamp,
-    };
-    sessions[index] = session;
-    saveDbStrict(db);
-    notifyLocalSingleSession(singleSession);
-    writeLocalAuthState({ logged_in: true, sessao_id: String(session.id || sessaoId) }, safeStorage);
-    return session;
+    if (session) {
+      const sessions = getEntityStore(db, 'SessaoUsuario');
+      const index = sessions.findIndex((item) => String(item.id) === String(session.id));
+      if (index < 0) throw createAuthDeniedError({ reason: 'session_not_found', type: 'auth_required' });
+      const timestamp = now();
+      const singleSession = enforceLocalSingleSession(db, {
+        user: workingUser,
+        currentSessionId: session.id,
+        groupId,
+        empresaId,
+        timestamp,
+      });
+      session = {
+        ...sessions[index],
+        data_hora_ultimo_acesso: timestamp,
+        data_hora_inicio: sessions[index].data_hora_inicio || timestamp,
+        max_idle_ms: sessionTimeout.maxIdleMs,
+        max_absolute_ms: sessionTimeout.maxAbsoluteMs,
+        timeout_config_source: sessionTimeout.source,
+        ativa: true,
+        status: 'Ativa',
+        updated_date: timestamp,
+      };
+      sessions[index] = session;
+      saveDbStrict(db);
+      notifyLocalSingleSession(singleSession);
+      writeLocalAuthState({ logged_in: true, sessao_id: String(session.id || sessaoId) }, safeStorage);
+      return session;
+    }
   }
 
   const empresa = empresaId
@@ -903,10 +967,13 @@ const ensureLocalActiveSession = async (user) => {
   if (empresaId && (!empresa || String(empresa.group_id || empresa.grupo_id || '') !== String(groupId || ''))) {
     throw createAuthDeniedError({ reason: 'company_outside_group', type: 'auth_required' });
   }
+  if (!currentProfile?.id) {
+    throw createAuthDeniedError({ reason: 'session_access_changed', type: 'auth_required' });
+  }
   const timestamp = now();
   const sessionId = makeId('sessao');
   const singleSession = enforceLocalSingleSession(db, {
-    user,
+    user: workingUser,
     currentSessionId: sessionId,
     groupId,
     empresaId,
@@ -914,8 +981,8 @@ const ensureLocalActiveSession = async (user) => {
   });
   session = {
     id: sessionId,
-    usuario_id: user.id,
-    usuario_email: user.email,
+    usuario_id: workingUser.id,
+    usuario_email: workingUser.email,
     ativa: true,
     status: 'Ativa',
     data_hora_inicio: timestamp,
@@ -935,8 +1002,8 @@ const ensureLocalActiveSession = async (user) => {
   getEntityStore(db, 'SessaoUsuario').unshift(session);
   getEntityStore(db, 'AuditLog').unshift({
     id: makeId('audit'),
-    usuario: user.full_name || user.email || 'Usuario Local',
-    usuario_id: user.id,
+    usuario: workingUser.full_name || workingUser.email || 'Usuario Local',
+    usuario_id: workingUser.id,
     acao: 'Login',
     modulo: 'Sistema Local',
     tipo_auditoria: 'seguranca',

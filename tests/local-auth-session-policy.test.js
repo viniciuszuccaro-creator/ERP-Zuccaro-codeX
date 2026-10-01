@@ -394,8 +394,9 @@ test('local auth stack binds session and refuses api-key browser bypass', async 
   const sessoes = await readFile(new URL('../src/components/sistema/GerenciadorSessoes.jsx', import.meta.url), 'utf8');
 
   assert.match(policy, /ensureLocalActiveSession/);
+  assert.match(policy, /recoverMasterLocalAccess/);
   assert.match(policy, /markLocalLoggedOut/);
-  assert.match(policy, /evaluateLocalUserSession\(user, session, Date\.now\(\), accessVersion, sessionTimeout\)/);
+  assert.match(policy, /evaluateLocalUserSession\(workingUser, session, Date\.now\(\), accessVersion, sessionTimeout\)/);
   assert.match(policy, /max_absolute_ms: sessionTimeout\.maxAbsoluteMs/);
   assert.match(policy, /access_version: accessVersion/);
   assert.match(policy, /revokeLocalSessionRecord\(db, session, 'Alteracao de acesso'\)/);
