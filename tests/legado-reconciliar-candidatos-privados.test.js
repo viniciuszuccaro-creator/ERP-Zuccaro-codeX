@@ -51,12 +51,12 @@ function fixture(overrides = {}) {
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
 }
 
-function purchaseFixture({ authorization = 'False', paid = '1' } = {}) {
+function purchaseFixture({ authorization = 'False', paid = '1', classification = 'MESMO_CADASTRO_LEGADO' } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'legacy-purchase-reconcile-'));
   const folder = join(root, '04_REPORTS');
   mkdirSync(folder);
   writeFileSync(join(folder, 'legacy-purchase-company-code-reconciliation.csv'),
-    `EmpresaPedido,EmpresaFiscal,Classificacao,ImportacaoAutorizada\nEMP-SINT,EMP-SINT,MESMO_CADASTRO_LEGADO,${authorization}\n`);
+    `EmpresaPedido,EmpresaFiscal,Classificacao,ImportacaoAutorizada\nEMP-SINT,EMP-SINT,${classification},${authorization}\n`);
   writeFileSync(join(folder, 'legacy-purchase-candidate-fiscal-title-total-reconciliation.csv'),
     `Composicao,QuantidadeDocumentos,QuantidadeTitulos,TitulosAbertos,TitulosBaixados\nABERTOS_E_BAIXADOS,1,2,1,${paid}\n`);
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
@@ -67,12 +67,13 @@ test('purchase report reconciliation exposes only counts and never authorizes im
   try {
     const report = reconcilePrivatePurchaseFinance(data.root);
     assert.equal(report.companyComparisons, 1);
+    assert.equal(report.companyClassificationCounts.MESMO_CADASTRO_LEGADO, 1);
     assert.equal(report.titles, 2);
     assert.equal(report.openTitles + report.paidTitles, report.titles);
     assert.equal(report.fiscalCompanyProven, false);
     assert.equal(report.reportIntegrityVerified, false);
     assert.equal(report.operationalImportAuthorized, false);
-    assert.doesNotMatch(JSON.stringify(report), /EMP-SINT|MESMO_CADASTRO_LEGADO/);
+    assert.doesNotMatch(JSON.stringify(report), /EMP-SINT/);
   } finally { data.cleanup(); }
 });
 
@@ -81,6 +82,7 @@ test('purchase report gate rejects changed authorization and unmatched title tot
     [{ authorization: 'True' }, 'LEGACY_PURCHASE_SCOPE_UNPROVEN'],
     [{ paid: '2' }, 'LEGACY_PURCHASE_COUNTS_MISMATCH'],
     [{ paid: 'private' }, 'LEGACY_PURCHASE_COUNTS_INVALID'],
+    [{ classification: 'IDENTIFICADOR_PRIVADO' }, 'LEGACY_PURCHASE_SCOPE_UNPROVEN'],
   ]) {
     const data = purchaseFixture(options);
     try { assert.throws(() => reconcilePrivatePurchaseFinance(data.root), { message: expected }); }

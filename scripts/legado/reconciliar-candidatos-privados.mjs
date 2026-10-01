@@ -177,6 +177,10 @@ export function reconcilePrivateProductsWithTarget(root, inventoryPath) {
 }
 
 export function reconcilePrivatePurchaseFinance(root) {
+  const classes = [
+    'MESMO_CADASTRO_LEGADO', 'CRUZAMENTO_ENTRE_ESCOPOS',
+    'CRUZAMENTO_ENTRE_DESTINOS', 'CRUZAMENTO_COM_IDENTIDADE_SEM_ALIAS_APROVADO',
+  ];
   let companies, titles;
   try {
     companies = rows(`${root}/04_REPORTS/legacy-purchase-company-code-reconciliation.csv`);
@@ -184,7 +188,7 @@ export function reconcilePrivatePurchaseFinance(root) {
   } catch { throw new Error('LEGACY_PURCHASE_REPORT_UNREADABLE'); }
   if (!companies.length || !titles.length
     || companies.some((row) => row.ImportacaoAutorizada !== 'False'
-      || !row.Classificacao || !row.EmpresaPedido || !row.EmpresaFiscal)) {
+      || !classes.includes(row.Classificacao) || !row.EmpresaPedido || !row.EmpresaFiscal)) {
     throw new Error('LEGACY_PURCHASE_SCOPE_UNPROVEN');
   }
   const integer = (value) => {
@@ -197,9 +201,11 @@ export function reconcilePrivatePurchaseFinance(root) {
   };
   const report = { mode: 'READ_ONLY_NO_IMPORT', companyComparisons: companies.length,
     blockedCompanyComparisons: companies.length, documentGroups: titles.length,
+    companyClassificationCounts: Object.fromEntries(classes.map((value) => [value, 0])),
     documents: 0, titles: 0, openTitles: 0, paidTitles: 0,
     fiscalCompanyProven: false, reportIntegrityVerified: false,
     operationalImportAuthorized: false };
+  for (const row of companies) report.companyClassificationCounts[row.Classificacao] += 1;
   const compositions = new Set();
   for (const row of titles) {
     if (!row.Composicao || compositions.has(row.Composicao)) {
