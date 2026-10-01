@@ -150,6 +150,9 @@ export function reconcilePrivateProductsWithTarget(root, inventoryPath) {
       sameGroup.set(key, matches);
     }
   }
+  if (target.length > 0 && !target.some((row) => row.group_id === groupId)) {
+    throw new Error('LEGACY_PRODUCT_GROUP_SCOPE_UNPROVEN');
+  }
   const report = { mode: 'READ_ONLY_NO_IMPORT', sourceCandidates: candidates.length,
     targetRows: target.length, targetGroupRows: target.filter((row) => row.group_id === groupId).length,
     existing: 0, absent: 0, conflicts: 0, otherGroupCodeOnly: 0,

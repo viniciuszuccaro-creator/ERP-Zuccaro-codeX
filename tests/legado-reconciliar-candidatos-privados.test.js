@@ -152,10 +152,15 @@ test('keeps target collisions and different descriptions out of automatic existi
     inventory.produtos[0].codigo = 'novo';
     inventory.produtos[0].group_id = 'other-group';
     writeFileSync(file, JSON.stringify(inventory));
-    const report = reconcilePrivateProductsWithTarget(data.root, file);
-    assert.equal(report.absent, 1);
-    assert.equal(report.otherGroupCodeOnly, 0);
+    assert.throws(() => reconcilePrivateProductsWithTarget(data.root, file),
+      { message: 'LEGACY_PRODUCT_GROUP_SCOPE_UNPROVEN' });
     inventory.produtos[0].codigo = 'synthetic-produtos_revenda';
+    writeFileSync(file, JSON.stringify(inventory));
+    assert.throws(() => reconcilePrivateProductsWithTarget(data.root, file),
+      { message: 'LEGACY_PRODUCT_GROUP_SCOPE_UNPROVEN' });
+    inventory.produtos.push({ id: 'p2', group_id: 'synthetic-group', codigo: 'other-code',
+      codigo_legado: null, descricao: 'Outro produto' });
+    inventory.row_count = 2;
     writeFileSync(file, JSON.stringify(inventory));
     assert.equal(reconcilePrivateProductsWithTarget(data.root, file).otherGroupCodeOnly, 1);
   } finally { data.cleanup(); }
