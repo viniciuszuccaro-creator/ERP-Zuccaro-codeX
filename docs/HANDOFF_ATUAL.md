@@ -1,3 +1,9 @@
+## CURSOR — vigília #178 (2026-10-01T02:09Z)
+
+#178 `4f8c6593` ainda candidato. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
+
+---
+
 ## CURSOR — vigília #178 (2026-10-01T01:54Z)
 
 #178 HEAD `4f8c6593` (antes `790e4be1`) — ainda candidato; delta R08C auditoria. Sem tip-port. #197 CI OK. Homologação SPA pendente. Vigília 15min.
