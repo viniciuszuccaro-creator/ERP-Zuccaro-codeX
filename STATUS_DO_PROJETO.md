@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - BLOCKED VPS apos lote liberacao/reconcile/UI/env (2026-10-02)
+
+- Codigo seguro da Onda 1 neste checkpoint esgotado na branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202): liberacao, bloqueio PUBLICADO, orfaos, UI V22, scanner opt-in, meta/HTTP reconcile, env docs, readiness banner, teste `.env.example`.
+- HEAD: `0abf335b`. Testes focados: produto-pim-ui+http-api-client 29/29; runtime01 15/15.
+- **BLOCKED** sem Auth + Storage/clamd homologados na VPS: nao ativar Produto HTTP na 3080; nao tip-port/merge.
+- Proximo (humano/VPS): configurar Storage privado + clamd opt-in; so entao habilitar HTTP Produto em janela autorizada.
+
 ## Comercial 360 / Onda 1 - readiness DAM na UI + env opt-in (2026-10-02)
 
 - Continuacao: `midiaDamStatus` no cliente prepared le `/api/v1/meta` (flags publicas, sem segredos); banner de readiness na secao DAM V22; mensagens 503 distinguem Storage vs scanner opt-in; `.env.example` alinhado ao `loadConfig`.

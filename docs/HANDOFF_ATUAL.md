@@ -15,7 +15,7 @@
 - UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar + Reconciliar vencidas/infectadas + banner de readiness via `/api/v1/meta` (prepared HTTP); Produto HTTP permanece opt-in/desligado.
 - Bootstrap: Storage/scanner via env opt-in (`CLAMD_SOCKET_PATH` ausente = scanner desligado por padrao); documentado em `server/.env.example`.
 - HTTP: `POST /api/v1/produtos/midias/reconciliar-vencidas|reconciliar-infectadas`; meta `produto.dam` documenta capacidades sem ativar frontend HTTP.
-- Proximo gate Onda 1: Auth + homologar Storage/clamd na VPS; nao ativar HTTP na 3080 neste checkpoint. Codigo seguro da liberacao/reconcile/UI/env esgotado ate esse gate.
+- Proximo gate Onda 1: **BLOCKED** Auth + Storage/clamd na VPS; nao ativar HTTP na 3080. Codigo seguro da liberacao/reconcile/UI/env/readiness esgotado (HEAD `0abf335b`).
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.
