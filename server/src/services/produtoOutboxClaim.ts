@@ -4,6 +4,7 @@ import type { AuditRepository, RequestContext } from '../audit/types.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
+import { assertSafeCatalogProjection } from './produtoCatalogProjection.js';
 import type { Scope } from './tenantCrudService.js';
 
 export type OutboxEventStatus = 'pending' | 'processing' | 'published' | 'retry' | 'dead_letter' | 'cancelled';
@@ -395,12 +396,23 @@ export type CatalogPublisherPort = {
 };
 
 export class FakeCatalogPublisher implements CatalogPublisherPort {
-  readonly delivered: ClaimedPublicationEvent[] = [];
+  readonly delivered: Array<ClaimedPublicationEvent & { projection: ReturnType<typeof assertSafeCatalogProjection> }> = [];
   constructor(private readonly mode: 'ok' | 'fail' = 'ok') {}
   async publish(event: ClaimedPublicationEvent) {
     if (this.mode === 'fail') return { ok: false as const, error: 'FAKE_PUBLISHER_FAILURE' };
+    let projection: ReturnType<typeof assertSafeCatalogProjection>;
+    try {
+      projection = assertSafeCatalogProjection(event.payload || {});
+    } catch (error) {
+      return {
+        ok: false as const,
+        error: error instanceof Error ? error.message : 'CATALOG_PROJECTION_REJECTED',
+      };
+    }
     // Recibo idempotente local: mesmo eventId nao duplica entrega sintetica.
-    if (!this.delivered.some((row) => row.id === event.id)) this.delivered.push(event);
+    if (!this.delivered.some((row) => row.id === event.id)) {
+      this.delivered.push({ ...event, payload: projection as unknown as Record<string, unknown>, projection });
+    }
     return { ok: true as const };
   }
 }

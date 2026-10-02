@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
+import { buildProdutoCatalogProjection } from '../services/produtoCatalogProjection.js';
 import {
   assertOutboxLeaseToken,
   computeOutboxRetryAt,
@@ -329,12 +330,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       empresaId: produto.empresa_id,
       produtoId: produto.id,
       requestId,
-      payload: {
-        produtoId: produto.id,
-        codigo: produto.codigo,
-        workflowStatus: produto.workflow_status,
-        schemaVersion: 1,
-      },
+      payload: buildProdutoCatalogProjection(produto) as unknown as Record<string, unknown>,
     }));
   }
 

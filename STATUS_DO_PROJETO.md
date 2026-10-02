@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - projeção allowlisted no publisher fake (2026-10-02)
+
+- Continuacao: `buildProdutoCatalogProjection` + `assertSafeCatalogProjection` (sem custo/margem/ncm/URL assinada/tenant); emit nos repos in-memory/PG; FakeCatalogPublisher valida e falha fechado em campo proibido; meta `outboxCatalogProjection`.
+- Sem canal real, worker cron, VPS, Auth, migration.
+- Testes: outbox unit+HTTP 19/19; PG outbox/claim 3/3.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Publisher real/reconciliacao externa continuam bloqueados.
+
 ## Comercial 360 / Onda 15 - closeout in-repo claim/lease (2026-10-02)
 
 - Escopo in-repo fechado neste checkpoint: claim/lease/confirm/fail/reprocess/discard, list/metrics com `produtoId`, recibo idempotente, batch fake+metrics, HTTP/client prepared, UI Produto V22, E2E PostgreSQL (incl. discard/filtro).

@@ -227,14 +227,62 @@ test('Outbox confirm: recibo idempotente quando ja published', async () => {
 
 test('Outbox fake publisher: segundo publish do mesmo eventId nao duplica recibo', async () => {
   const publisher = new FakeCatalogPublisher('ok');
+  const produtoId = randomUUID();
   const event = {
-    id: randomUUID(), produtoId: randomUUID(), requestId: randomUUID(), status: 'processing' as const,
+    id: randomUUID(), produtoId, requestId: randomUUID(), status: 'processing' as const,
     attempts: 1, maxAttempts: 10, lockedUntil: new Date().toISOString(), leaseToken: 't',
-    schemaVersion: 1, payload: {},
+    schemaVersion: 1, payload: { produtoId, schemaVersion: 1, descricao: 'proj' },
   };
   assert.deepEqual(await publisher.publish(event), { ok: true });
   assert.deepEqual(await publisher.publish(event), { ok: true });
   assert.equal(publisher.delivered.length, 1);
+  assert.equal(publisher.delivered[0].projection.produtoId, produtoId);
+  assert.equal(publisher.delivered[0].projection.descricao, 'proj');
+});
+
+test('Outbox projecao: allowlist no emit e rejeita custo/margem no publisher fake', async () => {
+  const { service, repo, ctx } = setup();
+  const produto = await service.create(ctx, {
+    descricao: 'Projecao allowlist',
+    descricao_comercial: 'Texto canal',
+    multiplo_venda: 2,
+    permite_fracionamento: true,
+    embalagem_tipo: 'barra',
+  });
+  await service.changeWorkflowStatus(ctx, produto.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, produto.id, 'APROVADO');
+  await service.changeWorkflowStatus(ctx, produto.id, 'PUBLICADO');
+
+  const events = (repo as { publicationEvents: Array<{ payload: Record<string, unknown> }> }).publicationEvents;
+  const payload = events[0].payload;
+  assert.equal(payload.produtoId, produto.id);
+  assert.equal(payload.descricao, 'Projecao allowlist');
+  assert.equal(payload.descricaoComercial, 'Texto canal');
+  assert.equal(payload.multiploVenda, 2);
+  assert.equal(payload.permiteFracionamento, true);
+  assert.equal(payload.embalagemTipo, 'barra');
+  assert.equal(payload.workflowStatus, 'PUBLICADO');
+  assert.equal(payload.schemaVersion, 1);
+  assert.equal(payload.custo, undefined);
+  assert.equal(payload.margem, undefined);
+  assert.equal(payload.ncm, undefined);
+  assert.equal(payload.groupId, undefined);
+  assert.equal(payload.fotoProdutoUrl, undefined);
+
+  const publisher = new FakeCatalogPublisher('ok');
+  const claimed = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 30_000 });
+  const ok = await publisher.publish(claimed[0]);
+  assert.equal(ok.ok, true);
+  assert.equal(publisher.delivered[0].projection.descricaoComercial, 'Texto canal');
+
+  const poisoned = {
+    ...claimed[0],
+    id: randomUUID(),
+    payload: { ...claimed[0].payload, custo: 10, margem: 5 },
+  };
+  const rejected = await publisher.publish(poisoned);
+  assert.equal(rejected.ok, false);
+  assert.match(String((rejected as { error?: string }).error), /CATALOG_PROJECTION_FORBIDDEN/);
 });
 
 test('Outbox list: dead_letter read-only exige visualizar e isola tenant', async () => {

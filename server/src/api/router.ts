@@ -1284,6 +1284,7 @@ export function createApiRouter(deps: ApiDeps) {
         frontendHttp: false,
         outboxClaimLease: true,
         outboxFakeBatch: true,
+        outboxCatalogProjection: true,
         outboxDeadLetterReprocess: true,
         outboxConfirmIdempotent: true,
         outboxListRead: true,

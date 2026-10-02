@@ -1,7 +1,6 @@
-## Checkpoint Onda 15 - claim/lease outbox (2026-10-02)
-- Branch `cursor/comercial360-onda15-outbox-claim-392b`: claim/confirm/fail/reprocess/discard/list/metrics + UI prepared no Produto V22; filtro `produtoId`; RBAC `visualizar|publicar|reprocessar|descartar`; confirm idempotente; batch fake; E2E PostgreSQL R10.
+## Checkpoint Onda 15 - claim/lease + projecao allowlisted (2026-10-02)
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`: claim/confirm/fail/reprocess/discard/list/metrics + UI prepared; projecao allowlisted no emit e no FakeCatalogPublisher (rejeita custo/margem/ncm/URL).
 - Rotas: GET outbox (+produtoId) + outbox/metrics; POST claim/process/confirm/fail/reprocess/discard.
-- UI: metricas/dead-letter escopados ao produto; Reprocessar/Descartar na secao DAM/relacoes.
 - Bloqueado externo: publisher real, Storage/Auth/VPS, reconciliacao de canal.
 
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)

@@ -246,8 +246,22 @@ test('R10 PostgreSQL real: publicacao Produto grava outbox tenant-scoped com rol
     assert.equal(event.event_type, 'produto.publicado');
     assert.equal(event.status, 'pending');
     assert.equal(event.schema_version, 1);
-    assert.deepEqual(Object.keys(event.payload).sort(), ['codigo', 'produtoId', 'schemaVersion', 'workflowStatus']);
     assert.equal(event.payload.produtoId, produtoId);
+    assert.equal(event.payload.descricao, 'R10 OUTBOX SINTETICO');
+    assert.equal(event.payload.schemaVersion, 1);
+    assert.ok(typeof event.payload.workflowStatus === 'string');
+    assert.equal(event.payload.custo, undefined);
+    assert.equal(event.payload.margem, undefined);
+    assert.equal(event.payload.ncm, undefined);
+    assert.equal(event.payload.groupId, undefined);
+    for (const key of Object.keys(event.payload)) {
+      assert.ok([
+        'produtoId', 'codigo', 'codigoBarras', 'descricao', 'nome', 'descricaoComercial',
+        'tituloSeo', 'descricaoSeo', 'material', 'liga', 'normaTecnica', 'embalagemTipo',
+        'multiploVenda', 'quantidadeMinimaVenda', 'permiteFracionamento', 'unidadeMedidaId',
+        'unidadeMedida', 'unidadePrincipal', 'workflowStatus', 'schemaVersion',
+      ].includes(key), `chave fora da allowlist: ${key}`);
+    }
     assert.match(event.payload_checksum, /^[a-f0-9]{64}$/);
   } catch (error) {
     originalError = error;

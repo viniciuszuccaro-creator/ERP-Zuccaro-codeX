@@ -1,5 +1,6 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
+import { buildProdutoCatalogProjection } from '../services/produtoCatalogProjection.js';
 import {
   assertOutboxLeaseToken,
   computeOutboxRetryAt,
@@ -339,12 +340,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       throw new Error('TENANT_FK_MISMATCH');
     }
     const query = executor ?? this.db;
-    const payload = {
-      produtoId: produto.id,
-      codigo: produto.codigo,
-      workflowStatus: produto.workflow_status,
-      schemaVersion: 1,
-    };
+    const payload = buildProdutoCatalogProjection(produto);
     await query.query(
       `INSERT INTO integration_events (
         group_id, empresa_id, source, event_type, idempotency_key, payload, status,
