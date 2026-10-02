@@ -30,6 +30,11 @@ import {
 } from '../repositories/produtoTypes.js';
 
 import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
+import {
+  claimProdutoPublicationEvents,
+  confirmProdutoPublicationEvent,
+  failProdutoPublicationEvent,
+} from './produtoOutboxClaim.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -262,6 +267,25 @@ export class ProdutoService {
       return updated;
     });
   }
+
+  async claimPublicationEvents(ctx: RequestContext, options: { limit?: number; leaseMs?: number } = {}) {
+    return claimProdutoPublicationEvents({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, options);
+  }
+
+  async confirmPublicationEvent(ctx: RequestContext, eventId: string, leaseToken: string) {
+    return confirmProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, leaseToken);
+  }
+
+  async failPublicationEvent(ctx: RequestContext, eventId: string, leaseToken: string, errorMessage: string) {
+    return failProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, leaseToken, errorMessage);
+  }
+
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
   async listMidias(ctx: RequestContext, produtoId: string, page?: { limit: number; offset: number }) {
     return listProdutoMidias({

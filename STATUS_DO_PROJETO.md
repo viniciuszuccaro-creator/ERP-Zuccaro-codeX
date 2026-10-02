@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - claim/lease outbox produto.publicado (2026-10-02)
+
+- Objetivo: menor checkpoint seguro da Onda 15 sem worker externo — claim concorrente, confirm e fail/retry/dead-letter sobre `integration_events` existente (colunas 018), lease token derivado (sem migration nova).
+- Reutilizado: `appendPublicationEvent`, `locked_until`/`attempts`/`next_attempt_at`/`dead_letter_at`, RBAC `publicar`, auditoria `IntegrationEvent`.
+- HTTP prepared: `POST /api/v1/produtos/outbox/claim|.../confirm|.../fail`; meta `produto.outboxClaimLease`. Sem publicacao externa, sem VPS.
+- Testes: runtime10-produto-outbox-claim + pim 36/36.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

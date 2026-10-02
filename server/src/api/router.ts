@@ -111,6 +111,35 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
 }
 
 function mountProdutoRoutes(router: Router, service: ProdutoService) {
+  router.post('/api/v1/produtos/outbox/claim', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.claimPublicationEvents(ctxFromReq(req), {
+        limit: req.body?.limit != null ? Number(req.body.limit) : undefined,
+        leaseMs: req.body?.leaseMs != null ? Number(req.body.leaseMs) : undefined,
+      });
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/confirm', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.confirmPublicationEvent(
+        ctxFromReq(req), req.params.eventId, String(req.body?.leaseToken || ''),
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/fail', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.failPublicationEvent(
+        ctxFromReq(req), req.params.eventId, String(req.body?.leaseToken || ''),
+        String(req.body?.errorMessage || 'delivery_failed'),
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
       const ativoParam = req.query.ativo;
@@ -1198,6 +1227,7 @@ export function createApiRouter(deps: ApiDeps) {
         pagination: true,
         tenantFkIntegrity: true,
         frontendHttp: false,
+        outboxClaimLease: true,
       },
       cliente: {
         masterData: true,

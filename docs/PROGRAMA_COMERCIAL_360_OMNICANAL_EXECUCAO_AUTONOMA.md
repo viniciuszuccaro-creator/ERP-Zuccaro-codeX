@@ -590,7 +590,7 @@ Distribuir do ERP para site, portal, app, chatbots e marketplaces:
 - alerta de divergência;
 - webhooks verificados e auditados.
 
-A unicidade global de `integration_events.idempotency_key` ja existe na migration 001 e o emissor Produto usa `ON CONFLICT`; a implementacao em memoria espelha essa semantica. Claim/lease, entrega por canal e reconciliacao externa continuam pendentes e nao sao ativados por esse contrato.
+A unicidade global de `integration_events.idempotency_key` ja existe na migration 001 e o emissor Produto usa `ON CONFLICT`; a implementacao em memoria espelha essa semantica. Claim/lease de `produto.publicado` (tenant-scoped, lease token derivado, retry/dead-letter) esta preparado em service/HTTP sem worker externo; entrega por canal e reconciliacao externa continuam pendentes.
 
 Contrato pendente de claim/lease: reutilizar `integration_events` da migration 018; selecionar apenas evento `produto.publicado` no Grupo/Empresa explicitos, com `FOR UPDATE SKIP LOCKED`, limite e ordem estavel. O lease precisa impedir dois consumidores simultaneos, recuperar expirados e respeitar `attempts/max_attempts`; confirmacao, retry e dead-letter devem exigir o mesmo token/versao de lease para barrar resposta atrasada. Todo resultado deve ser auditado sem payload sensivel; falha transacional nao pode confirmar publicacao.
 

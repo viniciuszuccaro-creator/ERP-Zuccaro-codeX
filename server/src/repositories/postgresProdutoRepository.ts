@@ -1,5 +1,10 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
+import {
+  assertOutboxLeaseToken,
+  computeOutboxRetryAt,
+  type ProdutoPublicationEvent,
+} from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema } from './produtoTypes.js';
 import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaScanEvidence, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
@@ -358,6 +363,141 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       ],
     );
   }
+
+  private mapPublicationEvent(row: Record<string, unknown>): ProdutoPublicationEvent {
+    const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : (row.payload as Record<string, unknown>);
+    return {
+      id: String(row.id),
+      groupId: String(row.group_id),
+      empresaId: row.empresa_id == null ? null : String(row.empresa_id),
+      produtoId: String(row.aggregate_id),
+      requestId: String(row.correlation_id ?? ''),
+      eventType: 'produto.publicado',
+      status: String(row.status) as ProdutoPublicationEvent['status'],
+      attempts: Number(row.attempts ?? 0),
+      maxAttempts: Number(row.max_attempts ?? 10),
+      lockedUntil: row.locked_until == null ? null : new Date(String(row.locked_until)).toISOString(),
+      nextAttemptAt: row.next_attempt_at == null ? null : new Date(String(row.next_attempt_at)).toISOString(),
+      publishedAt: row.published_at == null ? null : new Date(String(row.published_at)).toISOString(),
+      deadLetterAt: row.dead_letter_at == null ? null : new Date(String(row.dead_letter_at)).toISOString(),
+      errorMessage: row.error_message == null ? null : String(row.error_message),
+      schemaVersion: Number(row.schema_version ?? 1),
+      payload: payload && typeof payload === 'object' ? payload as Record<string, unknown> : {},
+    };
+  }
+
+  async claimPublicationEvents(
+    scope: Scope,
+    options: { limit: number; leaseMs: number },
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent[]> {
+    if (!scope.empresaId) return [];
+    const query = executor ?? this.db;
+    const lockedUntil = new Date(Date.now() + options.leaseMs).toISOString();
+    const result = await query.query(
+      `WITH candidates AS (
+         SELECT id FROM integration_events
+         WHERE group_id=$1 AND empresa_id=$2 AND event_type='produto.publicado'
+           AND attempts < max_attempts
+           AND (next_attempt_at IS NULL OR next_attempt_at <= timezone('utc', now()))
+           AND (
+             (status IN ('pending','retry') AND (locked_until IS NULL OR locked_until <= timezone('utc', now())))
+             OR (status='processing' AND locked_until IS NOT NULL AND locked_until <= timezone('utc', now()))
+           )
+         ORDER BY created_at ASC, id ASC
+         FOR UPDATE SKIP LOCKED
+         LIMIT $3
+       )
+       UPDATE integration_events e
+       SET status='processing',
+           locked_until=$4::timestamptz,
+           attempts=e.attempts + 1,
+           next_attempt_at=NULL,
+           error_message=NULL,
+           updated_at=timezone('utc', now())
+       FROM candidates c
+       WHERE e.id=c.id
+       RETURNING e.id,e.group_id,e.empresa_id,e.aggregate_id,e.correlation_id,e.status,e.attempts,e.max_attempts,
+                 e.locked_until,e.next_attempt_at,e.published_at,e.dead_letter_at,e.error_message,e.schema_version,e.payload`,
+      [scope.groupId, scope.empresaId, options.limit, lockedUntil],
+    );
+    return result.rows.map((row) => this.mapPublicationEvent(row as Record<string, unknown>));
+  }
+
+  async confirmPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    leaseToken: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null> {
+    if (!scope.empresaId) return null;
+    const query = executor ?? this.db;
+    const current = await query.query(
+      `SELECT id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+              locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload
+       FROM integration_events
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND event_type='produto.publicado' AND status='processing'
+       FOR UPDATE`,
+      [eventId, scope.groupId, scope.empresaId],
+    );
+    if (!current.rows[0]) return null;
+    const mapped = this.mapPublicationEvent(current.rows[0] as Record<string, unknown>);
+    try {
+      assertOutboxLeaseToken(mapped.id, mapped.lockedUntil, leaseToken);
+    } catch {
+      return null;
+    }
+    const updated = await query.query(
+      `UPDATE integration_events
+       SET status='published', published_at=timezone('utc', now()), locked_until=NULL,
+           next_attempt_at=NULL, error_message=NULL, updated_at=timezone('utc', now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='processing'
+       RETURNING id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+                 locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload`,
+      [eventId, scope.groupId, scope.empresaId],
+    );
+    return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
+  }
+
+  async failPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    leaseToken: string,
+    errorMessage: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null> {
+    if (!scope.empresaId) return null;
+    const query = executor ?? this.db;
+    const current = await query.query(
+      `SELECT id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+              locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload
+       FROM integration_events
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND event_type='produto.publicado' AND status='processing'
+       FOR UPDATE`,
+      [eventId, scope.groupId, scope.empresaId],
+    );
+    if (!current.rows[0]) return null;
+    const mapped = this.mapPublicationEvent(current.rows[0] as Record<string, unknown>);
+    try {
+      assertOutboxLeaseToken(mapped.id, mapped.lockedUntil, leaseToken);
+    } catch {
+      return null;
+    }
+    const exhausted = mapped.attempts >= mapped.maxAttempts;
+    const nextAttemptAt = exhausted ? null : computeOutboxRetryAt(mapped.attempts);
+    const updated = await query.query(
+      `UPDATE integration_events
+       SET status=$4, locked_until=NULL, next_attempt_at=$5::timestamptz,
+           dead_letter_at=CASE WHEN $4='dead_letter' THEN timezone('utc', now()) ELSE dead_letter_at END,
+           error_message=$6, updated_at=timezone('utc', now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND status='processing'
+       RETURNING id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+                 locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload`,
+      [eventId, scope.groupId, scope.empresaId, exhausted ? 'dead_letter' : 'retry', nextAttemptAt, errorMessage],
+    );
+    return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
+  }
+
   private mapCanal(row: Record<string, unknown>): ProdutoCanal {
     return { ...row, ...ts(row) } as ProdutoCanal;
   }
