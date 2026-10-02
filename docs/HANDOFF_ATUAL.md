@@ -1,6 +1,6 @@
 ## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
 
-Reload Playwright com `page.reload()` real (não sessionStorage fake). Job CI `expedicao-comercial-compose`: fetch explícito tip Comercial `4f8c6593`; ref ausente/skip = fail. Prova SPA `/Expedicao` × BFF+PGlite (criação→separação→romaneio→parcial/total→ocorrência→devolução + RBAC + troca empresa). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Sem tip-port/merge/VPS.
+Reload Playwright com `page.reload()` real — **PASS**. Job CI `expedicao-comercial-compose` fetch tip Comercial `4f8c6593`; ref ausente/skip = fail. SPA `/Expedicao` × BFF+PGlite **PASS** (`localhost`). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Descrição #199: migration **036** (não 025) — ManagePullRequest bloqueado; corpo canônico no STATUS/HANDOFF. Sem tip-port/merge/VPS. HEAD `f969e49e`.
 
 ---
 

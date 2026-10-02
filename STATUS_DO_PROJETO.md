@@ -3,12 +3,13 @@
 | Campo | Valor |
 |---|---|
 | Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
-| Reload | Playwright `page.reload()` real + revalidação PG (`exp_reload_*` em localStorage) |
-| CI | Job `expedicao-comercial-compose`: fetch tip Comercial **`4f8c6593`**; `COMERCIAL_COMPOSE_REQUIRE=1`; skip/ausência = **fail** |
-| Telas ERP | `tests/expedicao-erp-telas-pg.playwright.test.mjs` — SPA `/Expedicao` × BFF+PGlite (fluxo+RBAC+empresa) |
+| HEAD | `f969e49e` |
+| Reload | Playwright `page.reload()` real + revalidação PG — **PASS** |
+| CI | Job `expedicao-comercial-compose`: fetch tip Comercial **`4f8c6593`**; `COMERCIAL_COMPOSE_REQUIRE=1`; skip/ausência = **fail** (provado) |
+| Telas ERP | `tests/expedicao-erp-telas-pg.playwright.test.mjs` — SPA `/Expedicao` × BFF+PGlite **PASS** (fluxo+RBAC+empresa; host `localhost` evita redirect HTTPS do Layout) |
 | Parecer #178 | permanece `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (sem extensão) |
 | Parecer #200 | **novo** `docs/PARECER_CODEX_200_SHA_619bddd0.md` — SHA exato `619bddd0`; tip-port **NÃO** |
-| Migration | **036** (PR body atualizada; sem 025_expedicao) |
+| Migration | **036** — descrição #199 deve citar 036 (não 025); ferramenta ManagePullRequest bloqueada neste run → canal documental |
 | Tip-port / Merge / VPS | **Bloqueado** |
 
 ---
