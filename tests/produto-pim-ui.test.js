@@ -24,6 +24,9 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(section, /produto-canal-salvar|produto-canal-editar|produto-canal-inativar/);
   assert.match(section, /Conteudo por canal \(rascunho\)|Somente RASCUNHO/);
   assert.match(section, /getProdutoEquivalentApproveAction|produto-equivalente-aprovar/);
+  assert.match(section, /produto-equivalente-direcional|direcional/);
+  assert.match(section, /produto-canal-descricao|Descricao do canal/);
+  assert.match(section, /aprovado:\s*false/);
   assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
   assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
 });

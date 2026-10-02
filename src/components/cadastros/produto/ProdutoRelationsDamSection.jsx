@@ -60,9 +60,9 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   const [damStatus, setDamStatus] = useState(null);
   const [variantDraft, setVariantDraft] = useState({ sku: '', nome: '' });
   const [variantEditing, setVariantEditing] = useState(null);
-  const [channelDraft, setChannelDraft] = useState({ canal: 'site_cpa', sku: '', nome: '' });
+  const [channelDraft, setChannelDraft] = useState({ canal: 'site_cpa', sku: '', nome: '', descricao: '' });
   const [channelEditing, setChannelEditing] = useState(null);
-  const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' });
+  const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE', direcional: false });
   const [equivalentEditing, setEquivalentEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [candidates, setCandidates] = useState([]);
@@ -117,6 +117,7 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     const payload = {
       sku: channelDraft.sku.trim() || null,
       nome: channelDraft.nome.trim() || null,
+      descricao: channelDraft.descricao.trim() || null,
     };
     if (channelEditing) {
       await api.canais.update(produtoId, channelEditing, payload);
@@ -124,7 +125,7 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
       await api.canais.create(produtoId, { canal, ...payload });
     }
     setChannelEditing(null);
-    setChannelDraft({ canal: 'site_cpa', sku: '', nome: '' });
+    setChannelDraft({ canal: 'site_cpa', sku: '', nome: '', descricao: '' });
   }, 'Rascunho de canal salvo');
   const run = async (action, success, { requireEdit = true } = {}) => {
     if ((requireEdit && !canEdit) || busy) return;
@@ -168,14 +169,22 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
 
   const saveEquivalent = () => run(async () => {
     if (equivalentEditing) {
-      await api.equivalentes.update(produtoId, equivalentEditing, { tipo: equivalentDraft.tipo });
+      await api.equivalentes.update(produtoId, equivalentEditing, {
+        tipo: equivalentDraft.tipo,
+        direcional: Boolean(equivalentDraft.direcional),
+      });
     } else {
       if (!equivalentDraft.produto_equivalente_id) throw new Error('Selecione um produto do mesmo contexto');
       await api.equivalentes.create(produtoId, {
-        produto_equivalente_id: equivalentDraft.produto_equivalente_id, tipo: equivalentDraft.tipo,
+        produto_equivalente_id: equivalentDraft.produto_equivalente_id,
+        tipo: equivalentDraft.tipo,
+        direcional: Boolean(equivalentDraft.direcional),
+        aprovado: false,
       });
     }
-    setEquivalentEditing(null); setEquivalentDraft({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' }); setSearch('');
+    setEquivalentEditing(null);
+    setEquivalentDraft({ produto_equivalente_id: '', tipo: 'EQUIVALENTE', direcional: false });
+    setSearch('');
   }, 'Relacao salva');
   const liberarMidia = (mediaId, action) => {
     if (!canApprove || busy) return;
@@ -319,7 +328,7 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
       {equivalents.map((row) => {
         const approveAction = getProdutoEquivalentApproveAction(row, { canApprove });
         return <div key={row.id} className="flex flex-wrap items-center gap-2 border-b py-1 text-sm">
-        <span className="min-w-0 flex-1 truncate">{row.produto_equivalente_id} · {row.tipo} · {row.aprovado ? 'aprovado' : 'pendente'}</span>
+        <span className="min-w-0 flex-1 truncate">{row.produto_equivalente_id} · {row.tipo}{row.direcional ? ' · direcional' : ''} · {row.aprovado ? 'aprovado' : 'pendente'}</span>
         {approveAction && <Button type="button" variant="outline" size="sm" disabled={busy}
           data-action="produto-equivalente-aprovar"
           data-permission="Cadastros.Produto.aprovar-conteudo"
@@ -329,7 +338,14 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
             if (result?.aprovado !== true) throw new Error('Aprovacao da relacao nao concluida');
           }, 'Relacao aprovada', { requireEdit: false })}>{approveAction.label}</Button>}
         {canEdit && <><Button type="button" variant="ghost" size="icon" title="Editar relacao" disabled={busy}
-          onClick={() => { setEquivalentEditing(row.id); setEquivalentDraft({ produto_equivalente_id: row.produto_equivalente_id, tipo: row.tipo }); }}><Save className="h-4 w-4" /></Button>
+          onClick={() => {
+            setEquivalentEditing(row.id);
+            setEquivalentDraft({
+              produto_equivalente_id: row.produto_equivalente_id,
+              tipo: row.tipo,
+              direcional: Boolean(row.direcional),
+            });
+          }}><Save className="h-4 w-4" /></Button>
           <Button type="button" variant="ghost" size="icon" title="Inativar relacao" disabled={busy}
             onClick={() => run(() => api.equivalentes.deactivate(produtoId, row.id), 'Relacao inativada')}><Trash2 className="h-4 w-4" /></Button></>}
       </div>;
@@ -340,10 +356,19 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
             <SelectTrigger><SelectValue placeholder="Selecione um produto" /></SelectTrigger>
             <SelectContent>{candidates.map((row) => <SelectItem key={row.id} value={row.id}>{row.codigo} · {row.descricao}</SelectItem>)}</SelectContent>
           </Select></>}
-        <div className="flex gap-2"><Select value={equivalentDraft.tipo} onValueChange={(tipo) => setEquivalentDraft((v) => ({ ...v, tipo }))}>
-          <SelectTrigger className="max-w-52"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="EQUIVALENTE">Equivalente</SelectItem><SelectItem value="SUBSTITUTO">Substituto</SelectItem></SelectContent>
-        </Select><Button type="button" onClick={saveEquivalent} disabled={busy || (!equivalentEditing && !equivalentDraft.produto_equivalente_id)} title="Salvar relacao"><Save className="h-4 w-4" /></Button></div>
+        <div className="flex flex-wrap gap-2">
+          <Select value={equivalentDraft.tipo} onValueChange={(tipo) => setEquivalentDraft((v) => ({ ...v, tipo }))}>
+            <SelectTrigger className="max-w-52"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="EQUIVALENTE">Equivalente</SelectItem><SelectItem value="SUBSTITUTO">Substituto</SelectItem></SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={Boolean(equivalentDraft.direcional)}
+              data-action="produto-equivalente-direcional"
+              onChange={(e) => setEquivalentDraft((v) => ({ ...v, direcional: e.target.checked }))} />
+            Direcional
+          </label>
+          <Button type="button" onClick={saveEquivalent} disabled={busy || (!equivalentEditing && !equivalentDraft.produto_equivalente_id)} title="Salvar relacao"><Save className="h-4 w-4" /></Button>
+        </div>
       </div>}
     </section>
     <section className="space-y-2" data-permission="Cadastros.Produto.editar">
@@ -355,7 +380,9 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
           data-action="produto-canal-editar"
           onClick={() => {
             setChannelEditing(row.id);
-            setChannelDraft({ canal: row.canal, sku: row.sku || '', nome: row.nome || '' });
+            setChannelDraft({
+              canal: row.canal, sku: row.sku || '', nome: row.nome || '', descricao: row.descricao || '',
+            });
           }}><Save className="h-4 w-4" /></Button>
           <Button type="button" variant="ghost" size="icon" title="Inativar rascunho de canal" disabled={busy}
             data-action="produto-canal-inativar"
@@ -375,8 +402,12 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
           title={channelEditing ? 'Salvar rascunho de canal' : 'Criar rascunho de canal'}>
           {channelEditing ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}</Button>
       </div>}
+      {canEdit && <Input aria-label="Descricao do canal" value={channelDraft.descricao}
+        data-action="produto-canal-descricao"
+        onChange={(e) => setChannelDraft((v) => ({ ...v, descricao: e.target.value }))}
+        placeholder="Descricao comercial do canal (rascunho)" />}
       {channelEditing && canEdit && <Button type="button" variant="ghost" size="sm" disabled={busy}
-        onClick={() => { setChannelEditing(null); setChannelDraft({ canal: 'site_cpa', sku: '', nome: '' }); }}>
+        onClick={() => { setChannelEditing(null); setChannelDraft({ canal: 'site_cpa', sku: '', nome: '', descricao: '' }); }}>
         <X className="mr-1 h-4 w-4" /> Cancelar edicao</Button>}
     </section>
     <section className="space-y-2">
