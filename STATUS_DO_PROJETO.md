@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - download assinado DAM (2026-10-02)
+
+- Continuacao: `downloadProdutoMidia` usa `StoragePort.createSignedDownloadUrl` (opt-in); HTTP `POST .../midias/:mediaId/download`; UI V22 `Baixar`; RBAC `visualizar`; auditoria `read` sem URL/token/storage_key. Meta `midiaDownloadAssinado`.
+- Sem ativar Produto HTTP, sem VPS.
+- Testes: service+HTTP download OK; produto-pim-ui+http-api-client 32/32.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
 ## Comercial 360 / Onda 1 - inativacao midia DAM HTTP+UI (2026-10-02)
 
 - Continuacao: expoe `deactivateMidia` ja existente via `DELETE /api/v1/produtos/:id/midias/:mediaId`; cliente prepared `midiaDeactivate`; UI V22 `Inativar midia` (RBAC `editar`, confirma, soft-delete). Meta `produto.dam.midiaInativacao`. HTTP cobre tambem principal.
