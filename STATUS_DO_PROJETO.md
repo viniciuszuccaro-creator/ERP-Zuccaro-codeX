@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - env DAM opt-in + UI reconcile (2026-10-02)
+
+- Continuacao: `server/.env.example` (e templates raiz) documentam Storage/CLAMD opt-in alinhados ao `loadConfig` — sem `SUPABASE_STORAGE_PUBLIC_BUCKET` fantasma; `CLAMD_SOCKET_PATH` comentado (scanner desligado por padrao).
+- UI: secao DAM V22 existente ganhou `Reconciliar vencidas` (`inativar`) e `Reconciliar infectadas` (`aprovar-conteudo`) sobre rotas HTTP ja prepared.
+- Sem Produto HTTP, sem VPS, sem ativar clamd.
+- Testes: `produto-pim-ui` focado. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo bloqueio: Auth + Storage/clamd na VPS.
+
 ## Comercial 360 / Onda 1 - meta DAM + HTTP reconcile (2026-10-02)
 
 - Continuacao: `/api/v1/meta.produto.dam` declara liberacao/bloqueio/reconciliacao/scanner opt-in; rotas HTTP `POST /api/v1/produtos/midias/reconciliar-vencidas` e `.../reconciliar-infectadas` expõem services existentes; cliente prepared correspondente. Sem Produto HTTP, sem VPS.

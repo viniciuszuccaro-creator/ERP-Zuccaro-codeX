@@ -13,6 +13,8 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(section, /getProdutoMediaScanLabel\(row\)/);
   assert.match(section, /getProdutoMediaLiberacaoActions\(row/);
   assert.match(section, /midiaApprove|midiaRejectContent|midiaScan/);
+  assert.match(section, /midiaReconcileExpired|midiaReconcileInfected/);
+  assert.match(section, /produto-midia-reconciliar-vencidas|produto-midia-reconciliar-infectadas/);
   assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
   assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner/);
 });
@@ -55,6 +57,9 @@ test('formulario V22 usa RBAC por acao e confirma workflow somente pela resposta
   assert.match(section, /target === 'PUBLICADO'/);
   assert.match(section, /media\.some\(\(row\) => row\.status === 'QUARENTENA'\)/);
   assert.match(section, /window\.confirm/);
+  assert.match(section, /Cadastros\.Produto\.inativar/);
+  assert.match(section, /Cadastros\.Produto\.aprovar-conteudo/);
+  assert.match(section, /canDeactivate &&/);
 });
 
 

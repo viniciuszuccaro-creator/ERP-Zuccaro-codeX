@@ -173,6 +173,27 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
       }
     }, labels[action], { requireEdit: false });
   };
+  const reconciliarMidias = (kind) => {
+    if (busy) return;
+    if (kind === 'expired' && !canDeactivate) return;
+    if (kind === 'infected' && !canApprove) return;
+    const prompts = {
+      expired: 'Rejeitar no tenant midias com reserva de upload vencida (ate 50)?',
+      infected: 'Rejeitar no tenant midias em quarentena com varredura INFECTED (ate 50)?',
+    };
+    if (!window.confirm(prompts[kind])) return;
+    run(async () => {
+      const result = kind === 'expired'
+        ? await api.midiaReconcileExpired({ limit: 50 })
+        : await api.midiaReconcileInfected({ limit: 50 });
+      if (!result || typeof result !== 'object'
+        || !Number.isInteger(result.inspected)
+        || !Number.isInteger(result.rejected)
+        || !Number.isInteger(result.raced)) {
+        throw new Error('Reconciliacao nao confirmada pelo ERP');
+      }
+    }, kind === 'expired' ? 'Reservas vencidas reconciliadas' : 'Midias infectadas rejeitadas', { requireEdit: false });
+  };
   const upload = async (event) => {
     const file = event.target.files?.[0];
     if (!file || !canEdit || !groupId || !empresaId || busy) return;
@@ -249,6 +270,18 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Midias do produto</h3>
+      {(canDeactivate || canApprove) && <div className="flex flex-wrap gap-2">
+        {canDeactivate && <Button type="button" variant="outline" size="sm" disabled={busy}
+          onClick={() => reconciliarMidias('expired')}
+          data-action="produto-midia-reconciliar-vencidas"
+          data-permission="Cadastros.Produto.inativar"
+          data-sensitive>Reconciliar vencidas</Button>}
+        {canApprove && <Button type="button" variant="outline" size="sm" disabled={busy}
+          onClick={() => reconciliarMidias('infected')}
+          data-action="produto-midia-reconciliar-infectadas"
+          data-permission="Cadastros.Produto.aprovar-conteudo"
+          data-sensitive>Reconciliar infectadas</Button>}
+      </div>}
       {media.map((row) => {
         const liberacao = getProdutoMediaLiberacaoActions(row, { canApprove });
         return <div key={row.id} className="flex flex-col gap-2 border-b py-2 text-sm">

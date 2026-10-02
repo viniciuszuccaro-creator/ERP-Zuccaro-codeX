@@ -195,7 +195,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 | Onda | Estado inicial | Dependências imediatas | Próximo checkpoint | Risco principal | Rollback |
 | --- | --- | --- | --- | --- | --- |
 | 0 | CONCLUÍDO | baseline V1 | `COMERCIAL_360_ONDA_0_CONTRATOS.md` | duplicar fonte de verdade | revert documental |
-| 1 | EM EXECUÇÃO | Onda 0 concluída | liberação+bloqueio+órfãos+UI+scanner opt-in+meta/HTTP reconcile; faltam Auth e homologação VPS antes de ativar HTTP | publicar mídia sem varredura ou misturar IDs | manter opt-in desligado; midia sem liberação permanece em QUARENTENA |
+| 1 | EM EXECUÇÃO | Onda 0 concluída | liberação+bloqueio+órfãos+UI+scanner opt-in+meta/HTTP reconcile+env docs; faltam Auth e homologação VPS antes de ativar HTTP | publicar mídia sem varredura ou misturar IDs | manter opt-in desligado; midia sem liberação permanece em QUARENTENA |
 | 2 | EM EXECUÇÃO | 0/1 | consulta read-only por ClienteEmpresa integrada; faltam snapshot comercial, margem, desconto e alçadas | alterar snapshot histórico | preservar preços dos itens já gravados |
 | 3 | PENDENTE | Onda 0 concluída | contrato em `COMERCIAL_360_ONDA_3_CLIENTE_CRM.md`; implementar read model no existente | expor dados financeiros | RBAC fail-closed |
 | 4 | PENDENTE | baseline comprovado | versões, anexos e aprovações faltantes | regressão no Orçamento atual | preservar fluxo V1 |
