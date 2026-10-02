@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - inativacao midia DAM HTTP+UI (2026-10-02)
+
+- Continuacao: expoe `deactivateMidia` ja existente via `DELETE /api/v1/produtos/:id/midias/:mediaId`; cliente prepared `midiaDeactivate`; UI V22 `Inativar midia` (RBAC `editar`, confirma, soft-delete). Meta `produto.dam.midiaInativacao`. HTTP cobre tambem principal.
+- Sem apagar objeto no Storage, sem Produto HTTP, sem VPS.
+- Testes: HTTP principal/inativar OK; produto-pim-ui+http-api-client 31/31.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
 ## Comercial 360 / Onda 1 - midia principal DAM (2026-10-02)
 
 - Continuacao: `setMidiaPrincipal` no DAM existente (APROVADO apenas, uma por produto, RBAC `editar`, auditoria); HTTP `POST .../midias/:mediaId/principal`; UI V22 `Tornar principal`; meta `produto.dam.midiaPrincipal`. Nao grava URL assinada em `foto_produto_url`.
