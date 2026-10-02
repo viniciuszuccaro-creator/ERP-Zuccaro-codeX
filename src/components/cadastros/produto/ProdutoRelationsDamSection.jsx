@@ -30,7 +30,7 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
 const errorText = (error) => {
   if (error?.status === 503 && (error?.code === 'MALWARE_SCANNER_NOT_CONFIGURED'
     || /MALWARE_SCANNER_NOT_CONFIGURED|scanner is not configured/i.test(error?.message || ''))) {
-    return 'Scanner de midia desligado (opt-in). Defina CLAMD_SOCKET_PATH no servidor apos homologacao.';
+    return 'Scanner de midia desligado (opt-in). Ative o scanner no servidor apos homologacao.';
   }
   if (error?.status === 503 && (error?.code === 'STORAGE_ADAPTER_NOT_CONFIGURED'
     || /STORAGE_ADAPTER_NOT_CONFIGURED|Storage is not configured/i.test(error?.message || ''))) {

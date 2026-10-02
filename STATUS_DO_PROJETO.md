@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 1 - readiness DAM na UI + env opt-in (2026-10-02)
+
+- Continuacao: `midiaDamStatus` no cliente prepared le `/api/v1/meta` (flags publicas, sem segredos); banner de readiness na secao DAM V22; mensagens 503 distinguem Storage vs scanner opt-in; `.env.example` alinhado ao `loadConfig`.
+- UI reconcile vencidas/infectadas ja no lote anterior desta sessao.
+- Sem ativar Produto HTTP, sem VPS.
+- Testes: `produto-pim-ui` + `http-api-client` 29/29. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo bloqueio Onda 1: Auth + Storage/clamd na VPS (codigo safe esgotado neste checkpoint).
+
 ## Comercial 360 / Onda 1 - env DAM opt-in + UI reconcile (2026-10-02)
 
 - Continuacao: `server/.env.example` (e templates raiz) documentam Storage/CLAMD opt-in alinhados ao `loadConfig` — sem `SUPABASE_STORAGE_PUBLIC_BUCKET` fantasma; `CLAMD_SOCKET_PATH` comentado (scanner desligado por padrao).
