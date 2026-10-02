@@ -29,7 +29,7 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
-import { approveProdutoMidia, checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, rejectExpiredProdutoMidia, rejectProdutoMidiaContent, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
+import { approveProdutoMidia, checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, reconcileInfectedProdutoMidias, rejectExpiredProdutoMidia, rejectProdutoMidiaContent, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -241,6 +241,16 @@ export class ProdutoService {
       if (!WORKFLOW_TRANSITIONS[before.workflow_status].includes(target)) {
         throw new AppError(409, 'PRODUTO_WORKFLOW_CONFLICT', 'Produto workflow transition is not allowed');
       }
+      if (target === 'PUBLICADO') {
+        const midias = await this.repo.listMidias(scope, id, executor);
+        if (midias.some((row) => row.status === 'QUARENTENA')) {
+          throw new AppError(
+            409,
+            'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+            'Produto cannot be published while media remains in quarantine',
+          );
+        }
+      }
       const updated = await this.repo.changeWorkflowStatus(scope, id, target, executor);
       if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
       if (target === 'PUBLICADO') {
@@ -293,6 +303,12 @@ export class ProdutoService {
     return reconcileExpiredProdutoMidias({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
       rbacGuard: this.rbacGuard, storage: this.storage,
+    }, ctx, limit);
+  }
+  async reconcileInfectedMidias(ctx: RequestContext, limit = 50) {
+    return reconcileInfectedProdutoMidias({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
     }, ctx, limit);
   }
   async scanMidia(ctx: RequestContext, produtoId: string, midiaId: string) {

@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - bloqueio PUBLICADO + orfaos infectados (2026-10-02)
+
+- Continuacao da liberacao DAM: (1) `changeWorkflowStatus(PUBLICADO)` falha fechado se houver midia ativa em QUARENTENA (`PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO`); publica apos APROVADO ou REJEITADO do conteudo. (2) `reconcileInfectedMidias` rejeita lote tenant-scoped de QUARENTENA+INFECTED reutilizando `rejectProdutoMidiaContent`.
+- Sem scanner real VPS, sem Produto HTTP, sem apagar objeto no Storage, sem outbox de canal.
+- Testes: `runtime10-produto-pim` 36/36. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo: scanner real / Auth antes de ativar HTTP; orfaos de storage fisico exigem gate Storage.
+
 ## Comercial 360 / Onda 1 - liberacao DAM interna (2026-10-02)
 
 - Objetivo: menor avanco seguro da Onda 1 no Produto/DAM existente — separar liberacao de midia (QUARENTENA→APROVADO/REJEITADO) da publicacao externa.

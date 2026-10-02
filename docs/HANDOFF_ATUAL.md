@@ -11,7 +11,8 @@
 ## Checkpoint Onda 1 - liberacao DAM (2026-10-02)
 - Branch `cursor/comercial360-onda1-midia-liberacao-392b`: no DAM existente, liberacao interna QUARENTENA→APROVADO (exige CLEAN) e QUARENTENA→REJEITADO, separada da publicacao externa e do workflow Produto. Sem scanner real, sem Produto HTTP, sem VPS.
 - Rotas: POST `/api/v1/produtos/:id/midias/:mediaId/aprovar` e `.../rejeitar-conteudo`; RBAC `Cadastros.produto.aprovar-conteudo`.
-- Proximo gate Onda 1: scanner real / orfaos / Auth; nao ativar HTTP na 3080 neste checkpoint.
+- Continuacao: PUBLICADO do Produto bloqueado enquanto midia em QUARENTENA; `reconcileInfectedMidias` limpa orfaos INFECTED em lote (service, sem rota nova).
+- Proximo gate Onda 1: scanner real / Auth; nao ativar HTTP na 3080 neste checkpoint.
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.

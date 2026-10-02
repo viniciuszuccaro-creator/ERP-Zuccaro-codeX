@@ -71,6 +71,8 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     target: 'APROVADO' | 'REJEITADO',
     executor?: DbQueryExecutor,
   ): Promise<ProdutoMidia | null>;
+  /** Órfãos de conteúdo: midias em QUARENTENA com veredito INFECTED. */
+  listInfectedQuarantinedMidias(scope: Scope, limit: number, executor?: DbQueryExecutor): Promise<Array<{ id: string; produto_id: string }>>;
 
 }
 
@@ -509,6 +511,17 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     const next: ProdutoMidia = { ...row, status: 'REJEITADO', ativo: false, principal: false };
     this.midias.set(midiaId, structuredClone(next));
     return structuredClone(next);
+  }
+
+  async listInfectedQuarantinedMidias(scope: Scope, limit: number): Promise<Array<{ id: string; produto_id: string }>> {
+    if (!scope.empresaId) return [];
+    return [...this.midias.values()]
+      .filter((row) => row.group_id === scope.groupId && row.empresa_id === scope.empresaId
+        && row.ativo && row.status === 'QUARENTENA' && row.scan_verdict === 'INFECTED'
+        && row.scan_sha256 === row.sha256)
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .slice(0, limit)
+      .map((row) => ({ id: row.id, produto_id: row.produto_id }));
   }
 
   async listCanais(scope: Scope, produtoId: string): Promise<ProdutoCanal[]> {

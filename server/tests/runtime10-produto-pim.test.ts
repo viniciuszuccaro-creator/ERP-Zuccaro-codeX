@@ -514,6 +514,41 @@ test('DAM liberacao aprova CLEAN e rejeita conteudo sem publicar canal externo',
   assert.equal(repo.listPublicationEvents().length, 0);
 });
 
+test('DAM reconcilia orfaos infectados em QUARENTENA sem publicar', async () => {
+  let verdict: 'CLEAN' | 'INFECTED' = 'INFECTED';
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict, scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
+  const storage = reservableStorage().storage;
+  const { service, repo, audit, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Orfao infectado' });
+  const first = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, first.mediaId, first.attemptId);
+  await service.scanMidia(ctx, product.id, first.mediaId);
+  const second = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, second.mediaId, second.attemptId);
+  await service.scanMidia(ctx, product.id, second.mediaId);
+  verdict = 'CLEAN';
+  const clean = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, clean.mediaId, clean.attemptId);
+  await service.scanMidia(ctx, product.id, clean.mediaId);
+  const denied = harness(['visualizar', 'criar', 'editar', 'inativar'], storage, scanner);
+  await assert.rejects(denied.service.reconcileInfectedMidias(denied.ctx),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.reconcileInfectedMidias(ctx, 0),
+    (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  assert.deepEqual(await service.reconcileInfectedMidias(ctx, 1), { inspected: 1, rejected: 1, raced: 0 });
+  assert.equal((await service.listMidias(ctx, product.id)).some((row) => row.id === first.mediaId), false);
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, second.mediaId))?.scan_verdict, 'INFECTED');
+  assert.deepEqual(await service.reconcileInfectedMidias(ctx), { inspected: 1, rejected: 1, raced: 0 });
+  assert.deepEqual(await service.reconcileInfectedMidias(ctx), { inspected: 0, rejected: 0, raced: 0 });
+  assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === clean.mediaId)?.status, 'QUARENTENA');
+  assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === clean.mediaId)?.scan_verdict, 'CLEAN');
+  const logs = await audit.listByEntity('ProdutoMidia', first.mediaId);
+  assert.equal(logs.some((entry) => entry.action === 'change_status'), true);
+  assert.equal(repo.listPublicationEvents().length, 0);
+});
+
 test('Produto pagina por data e ID estaveis sem misturar empresas', async () => {
   const { service, repo, ctx, tenant } = harness();
   const otherEmpresa = randomUUID();
@@ -658,6 +693,47 @@ test('Workflow Produto exige transicoes e RBAC de aprovacao/publicacao e grava o
     () => denied.service.changeWorkflowStatus(denied.ctx, deniedRow.id, 'APROVADO'),
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
   );
+});
+
+test('Workflow PUBLICADO bloqueia midia em QUARENTENA e libera apos APROVADO ou REJEITADO', async () => {
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict: 'CLEAN', scanner: 'synthetic-scanner',
+    scannedAt: new Date().toISOString(),
+  }) };
+  const storage = reservableStorage().storage;
+  const { repo, service, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Publicacao com midia' });
+  await service.changeWorkflowStatus(ctx, product.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, product.id, 'APROVADO');
+  const reservation = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, reservation.mediaId, reservation.attemptId);
+  await assert.rejects(
+    () => service.changeWorkflowStatus(ctx, product.id, 'PUBLICADO'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+  );
+  assert.equal((await service.get(ctx, product.id)).workflow_status, 'APROVADO');
+  assert.equal(repo.listPublicationEvents().length, 0);
+  await service.scanMidia(ctx, product.id, reservation.mediaId);
+  await assert.rejects(
+    () => service.changeWorkflowStatus(ctx, product.id, 'PUBLICADO'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+  );
+  await service.approveMidia(ctx, product.id, reservation.mediaId);
+  assert.equal((await service.changeWorkflowStatus(ctx, product.id, 'PUBLICADO')).workflow_status, 'PUBLICADO');
+  assert.equal(repo.listPublicationEvents().length, 1);
+
+  const other = await service.create(ctx, { descricao: 'Publicacao apos rejeicao' });
+  await service.changeWorkflowStatus(ctx, other.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, other.id, 'APROVADO');
+  const rejectReservation = await service.reserveMidia(ctx, other.id, mediaFixture(other.id));
+  await service.confirmMidia(ctx, other.id, rejectReservation.mediaId, rejectReservation.attemptId);
+  await assert.rejects(
+    () => service.changeWorkflowStatus(ctx, other.id, 'PUBLICADO'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+  );
+  await service.rejectMidiaContent(ctx, other.id, rejectReservation.mediaId);
+  assert.equal((await service.changeWorkflowStatus(ctx, other.id, 'PUBLICADO')).workflow_status, 'PUBLICADO');
+  assert.equal(repo.listPublicationEvents().length, 2);
 });
 
 test('Outbox Produto em memoria preserva idempotencia global e rollback', async () => {

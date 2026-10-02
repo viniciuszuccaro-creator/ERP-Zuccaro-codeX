@@ -332,3 +332,36 @@ export async function rejectProdutoMidiaContent(deps: Dependencies, ctx: Request
     return { id: after.id, status: after.status };
   });
 }
+
+/**
+ * Reconcilia órfãos de conteúdo infectado ainda em QUARENTENA (tenant-scoped).
+ * Reutiliza rejectProdutoMidiaContent; não apaga objeto no Storage nem publica.
+ */
+export async function reconcileInfectedProdutoMidias(deps: Dependencies, ctx: RequestContext, limit = 50) {
+  if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+  if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+  if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
+  if (!ctx.requestId) throw new AppError(400, 'REQUEST_ID_REQUIRED', 'requestId is required');
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Invalid reconciliation limit');
+  }
+  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'aprovar-conteudo');
+  await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+  const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+  const candidates = await deps.repo.listInfectedQuarantinedMidias(scope, limit);
+  let rejected = 0;
+  let raced = 0;
+  for (const candidate of candidates) {
+    try {
+      await rejectProdutoMidiaContent(deps, ctx, candidate.produto_id, candidate.id);
+      rejected += 1;
+    } catch (error) {
+      if (error instanceof AppError && error.code === 'PRODUTO_MIDIA_NOT_FOUND') {
+        raced += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
+  return { inspected: candidates.length, rejected, raced };
+}

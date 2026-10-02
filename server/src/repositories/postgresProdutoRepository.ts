@@ -690,4 +690,16 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     );
     return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
   }
+
+  async listInfectedQuarantinedMidias(scope: Scope, limit: number, executor?: DbQueryExecutor): Promise<Array<{ id: string; produto_id: string }>> {
+    if (!scope.empresaId) return [];
+    const result = await (executor ?? this.db).query<{ id: string; produto_id: string }>(
+      `SELECT id, produto_id FROM produto_midias
+       WHERE group_id=$1 AND empresa_id=$2 AND ativo=true AND status='QUARENTENA'
+         AND scan_verdict='INFECTED' AND scan_sha256 IS NOT NULL AND scan_sha256=sha256
+       ORDER BY id ASC LIMIT $3`,
+      [scope.groupId, scope.empresaId, limit],
+    );
+    return result.rows;
+  }
 }
