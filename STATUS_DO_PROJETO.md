@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - midia principal DAM (2026-10-02)
+
+- Continuacao: `setMidiaPrincipal` no DAM existente (APROVADO apenas, uma por produto, RBAC `editar`, auditoria); HTTP `POST .../midias/:mediaId/principal`; UI V22 `Tornar principal`; meta `produto.dam.midiaPrincipal`. Nao grava URL assinada em `foto_produto_url`.
+- Sem Produto HTTP, sem VPS.
+- Testes: runtime10-produto-pim 37/37; produto-pim-ui+http-api-client 30/30.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS continuam BLOCKED para ativar HTTP.
+
 ## Comercial 360 / Onda 1 - BLOCKED VPS apos lote liberacao/reconcile/UI/env (2026-10-02)
 
 - Codigo seguro da Onda 1 neste checkpoint esgotado na branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202): liberacao, bloqueio PUBLICADO, orfaos, UI V22, scanner opt-in, meta/HTTP reconcile, env docs, readiness banner, teste `.env.example`.
