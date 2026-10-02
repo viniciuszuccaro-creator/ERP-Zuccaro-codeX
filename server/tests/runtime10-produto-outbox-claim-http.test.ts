@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import test from 'node:test';
+import type { AddressInfo } from 'node:net';
+import { createApp } from '../src/app.ts';
+import { loadConfig } from '../src/config/env.ts';
+import { createDbClient } from '../src/db/client.ts';
+import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
+import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+
+const GROUP = '11111111-1111-4111-8111-111111111111';
+const EMPRESA = '33333333-3333-4333-8333-333333333333';
+const ACTOR = '66666666-6666-4666-8666-666666666666';
+const ACTOR_DENIED = '88888888-8888-4888-8888-888888888888';
+
+function fixture(extra: string[] = []) {
+  const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
+  const tenantGuard = new InMemoryTenantGuard();
+  tenantGuard.link(EMPRESA, GROUP);
+  const rbacGuard = new InMemoryRbacGuard();
+  const allowed = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'aprovar-conteudo', 'publicar', ...extra] } };
+  rbacGuard.link({ actorId: ACTOR, groupId: GROUP, permissions: allowed });
+  rbacGuard.link({ actorId: ACTOR_DENIED, groupId: GROUP, permissions: { Cadastros: { produto: ['visualizar', 'criar', 'editar'] } } });
+  return createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard, rbacGuard });
+}
+
+function headers(actorId = ACTOR) {
+  return { 'content-type': 'application/json', 'x-group-id': GROUP, 'x-empresa-id': EMPRESA, 'x-actor-id': actorId };
+}
+
+test('HTTP Onda 15: claim/confirm outbox exige publicar e nao entrega canal', async () => {
+  const { app } = fixture();
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const port = (server.address() as AddressInfo).port;
+  const request = async (path: string, method = 'GET', body?: unknown, hdrs = headers()) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: hdrs, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    const created = await request('/api/v1/produtos', 'POST', { descricao: 'Outbox HTTP' });
+    assert.equal(created.status, 201);
+    const id = created.body.data.id;
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'EM_REVISAO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'APROVADO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'PUBLICADO' })).status, 200);
+
+    const denied = await request('/api/v1/produtos/outbox/claim', 'POST', { limit: 5 }, headers(ACTOR_DENIED));
+    assert.equal(denied.status, 403);
+
+    const claimed = await request('/api/v1/produtos/outbox/claim', 'POST', { limit: 5, leaseMs: 30000 });
+    assert.equal(claimed.status, 200);
+    assert.equal(claimed.body.data.length, 1);
+    assert.equal(claimed.body.data[0].status, 'processing');
+    assert.ok(claimed.body.data[0].leaseToken);
+    assert.equal(claimed.body.data[0].produtoId, id);
+
+    const eventId = claimed.body.data[0].id;
+    const bad = await request(`/api/v1/produtos/outbox/${eventId}/confirm`, 'POST', { leaseToken: 'x' });
+    assert.equal(bad.status, 404);
+
+    const ok = await request(`/api/v1/produtos/outbox/${eventId}/confirm`, 'POST', {
+      leaseToken: claimed.body.data[0].leaseToken,
+    });
+    assert.equal(ok.status, 200);
+    assert.equal(ok.body.data.status, 'published');
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
