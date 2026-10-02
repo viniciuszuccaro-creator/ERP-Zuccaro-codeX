@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - UI prepared outbox no Produto V22 (2026-10-02)
+
+- Continuacao: secao existente `ProdutoRelationsDamSection` mostra metricas/dead-letter read-only e botao reprocessar com RBAC `reprocessar`; form passa `canReprocess`.
+- Sem worker cron, sem canal real, sem VPS, sem migration, sem tela paralela.
+- Testes: produto-pim-ui 11/11.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Onda 15 in-repo quase fechada para claim/lease/ops locais; publisher real e reconciliacao externa continuam bloqueados.
+
 ## Comercial 360 / Onda 15 - metricas locais outbox (2026-10-02)
 
 - Continuacao: batch `process` devolve `metrics.{published,retry,dead_letter,durationMs}`; `GET /api/v1/produtos/outbox/metrics` com contagens por status (RBAC visualizar); client `outboxMetrics`; meta `outboxMetrics`.
