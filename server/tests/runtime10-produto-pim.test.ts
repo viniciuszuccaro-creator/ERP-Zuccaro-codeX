@@ -554,6 +554,52 @@ test('DAM define midia APROVADA como principal sem gravar URL assinada', async (
   assert.equal(repo.listPublicationEvents().length, 0);
 });
 
+test('DAM download assinado exige visualizar, Storage e nao vaza chave/URL na auditoria', async () => {
+  let downloadCalls = 0;
+  const storage: StoragePort = {
+    ...reservableStorage().storage,
+    createSignedDownloadUrl: async (_context, storageKey) => {
+      downloadCalls += 1;
+      assert.match(storageKey, /^groups\//);
+      return {
+        url: 'https://public.example.test/storage/v1/object/sign/private/synthetic?token=TEMP',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      };
+    },
+  };
+  const { service, audit, ctx } = harness(undefined, storage);
+  const product = await service.create(ctx, { descricao: 'Download DAM' });
+  const reserved = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, reserved.mediaId, reserved.attemptId);
+  const denied = harness(['criar', 'editar'], storage);
+  await assert.rejects(denied.service.downloadMidia(denied.ctx, product.id, reserved.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.downloadMidia(ctx, product.id, randomUUID()),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND'
+      || (error as { code?: string }).code === 'VALIDATION_ERROR');
+  const brokenStorage: StoragePort = {
+    ...reservableStorage().storage,
+    createSignedDownloadUrl: async () => { throw new Error('STORAGE_ADAPTER_NOT_CONFIGURED'); },
+  };
+  const broken = harness(undefined, brokenStorage);
+  const brokenProduct = await broken.service.create(broken.ctx, { descricao: 'Download quebrado' });
+  const brokenReserved = await broken.service.reserveMidia(broken.ctx, brokenProduct.id, mediaFixture(brokenProduct.id));
+  await broken.service.confirmMidia(broken.ctx, brokenProduct.id, brokenReserved.mediaId, brokenReserved.attemptId);
+  await assert.rejects(broken.service.downloadMidia(broken.ctx, brokenProduct.id, brokenReserved.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'STORAGE_ADAPTER_NOT_CONFIGURED');
+  const downloaded = await service.downloadMidia(ctx, product.id, reserved.mediaId);
+  assert.equal(downloadCalls, 1);
+  assert.equal(downloaded.id, reserved.mediaId);
+  assert.equal(downloaded.mime_type, 'image/png');
+  assert.match(downloaded.url, /token=TEMP/);
+  assert.ok(downloaded.expiresAt);
+  const logs = await audit.listByEntity('ProdutoMidia', reserved.mediaId);
+  assert.equal(logs.some((entry) => entry.action === 'read'), true);
+  assert.equal(JSON.stringify(logs).includes('token=TEMP'), false);
+  assert.equal(JSON.stringify(logs).includes('groups/'), false);
+  assert.equal(JSON.stringify(logs).includes(downloaded.url), false);
+});
+
 test('DAM reconcilia orfaos infectados em QUARENTENA sem publicar', async () => {
   let verdict: 'CLEAN' | 'INFECTED' = 'INFECTED';
   const scanner: MalwareScanPort = { scan: async (request) => ({

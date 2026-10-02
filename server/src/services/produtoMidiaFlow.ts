@@ -34,7 +34,7 @@ async function authorize(
   deps: Dependencies,
   ctx: RequestContext,
   produtoId: string,
-  action: 'editar' | 'aprovar-conteudo' = 'editar',
+  action: 'editar' | 'aprovar-conteudo' | 'visualizar' = 'editar',
   options: { requireStorage?: boolean } = {},
 ) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
@@ -406,4 +406,56 @@ export async function setProdutoMidiaPrincipal(deps: Dependencies, ctx: RequestC
     }, executor);
     return { id: after.id, status: after.status, principal: after.principal };
   });
+}
+
+/**
+ * Download privado: URL assinada curta para mídia ativa (QUARENTENA/APROVADO).
+ * Auditoria sem token/URL/conteúdo; Storage obrigatório.
+ */
+export async function downloadProdutoMidia(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'visualizar');
+  assertId(mediaId);
+  const produto = await deps.repo.getById(scope, produtoId);
+  if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+    throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+  }
+  const midia = (await deps.repo.listMidias(scope, produtoId)).find((row) => row.id === mediaId);
+  if (!midia || !midia.ativo || (midia.status !== 'QUARENTENA' && midia.status !== 'APROVADO')) {
+    throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+  }
+  let signed: { url: string; expiresAt: string };
+  try {
+    signed = await deps.storage.createSignedDownloadUrl({
+      groupId: ctx.groupId!,
+      empresaId: ctx.empresaId!,
+      actorId: ctx.actorId!,
+      entity: 'Produto',
+      entityId: produtoId,
+    }, midia.storage_key);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/STORAGE_ADAPTER_NOT_CONFIGURED|STORAGE_CONFIG|STORAGE_SCOPE|STORAGE_URL/i.test(message)) {
+      throw new AppError(503, 'STORAGE_ADAPTER_NOT_CONFIGURED', 'Storage download is unavailable');
+    }
+    throw error;
+  }
+  if (!signed?.url || !signed.expiresAt) {
+    throw new AppError(503, 'STORAGE_ADAPTER_NOT_CONFIGURED', 'Storage download is unavailable');
+  }
+  await deps.audit.append({
+    groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+    actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'read',
+    afterData: {
+      status: midia.status, versao: midia.versao, categoria: midia.categoria,
+      mime_type: midia.mime_type, tamanho_bytes: midia.tamanho_bytes,
+    },
+    requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+  });
+  return {
+    id: midia.id,
+    nome_arquivo: midia.nome_arquivo,
+    mime_type: midia.mime_type,
+    url: signed.url,
+    expiresAt: signed.expiresAt,
+  };
 }

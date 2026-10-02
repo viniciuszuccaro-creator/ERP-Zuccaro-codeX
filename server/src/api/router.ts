@@ -309,6 +309,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     } catch (error) { next(error); }
   });
 
+  router.post('/api/v1/produtos/:id/midias/:mediaId/download', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media download payload');
+      }
+      const result = await service.downloadMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
   router.delete('/api/v1/produtos/:id/midias/:mediaId', requireTenantScope, async (req, res, next) => {
     try {
       const result = await service.deactivateMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
@@ -1267,6 +1278,7 @@ export function createApiRouter(deps: ApiDeps) {
           scannerOptIn: true,
           midiaPrincipal: true,
           midiaInativacao: true,
+          midiaDownloadAssinado: true,
         },
       },
       cliente: {

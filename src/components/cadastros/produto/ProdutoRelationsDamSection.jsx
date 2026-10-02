@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProdutoMediaDeactivateAction, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
+import { getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -203,6 +203,16 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
       }
     }, 'Midia inativada');
   };
+  const baixarMidia = (mediaId) => {
+    if (!canView || busy) return;
+    run(async () => {
+      const result = await api.midiaDownload(produtoId, mediaId);
+      if (!result?.url || !result.expiresAt) throw new Error('Download nao confirmado pelo ERP');
+      if (typeof window !== 'undefined' && typeof window.open === 'function') {
+        window.open(result.url, '_blank', 'noopener,noreferrer');
+      }
+    }, 'Download autorizado', { requireEdit: false });
+  };
   const reconciliarMidias = (kind) => {
     if (busy) return;
     if (kind === 'expired' && !canDeactivate) return;
@@ -324,17 +334,23 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
         const liberacao = getProdutoMediaLiberacaoActions(row, { canApprove });
         const principalAction = getProdutoMediaPrincipalAction(row, { canEdit });
         const deactivateAction = getProdutoMediaDeactivateAction(row, { canEdit });
+        const downloadAction = getProdutoMediaDownloadAction(row, { canView });
         return <div key={row.id} className="flex flex-col gap-2 border-b py-2 text-sm">
           <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
             <span className="min-w-0 break-all">{row.nome_arquivo}</span>
             <span className="min-w-0 break-words sm:text-right">{getProdutoMediaScanLabel(row)} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
           </div>
-          {(liberacao.length > 0 || principalAction || deactivateAction) && <div className="flex flex-wrap gap-2">
+          {(liberacao.length > 0 || principalAction || deactivateAction || downloadAction) && <div className="flex flex-wrap gap-2">
             {liberacao.map((action) => <Button key={action.action} type="button" variant="outline" size="sm"
               disabled={busy} onClick={() => liberarMidia(row.id, action.action)}
               data-action={`produto-midia-${action.action}`}
               data-permission="Cadastros.Produto.aprovar-conteudo"
               data-sensitive>{action.label}</Button>)}
+            {downloadAction && <Button type="button" variant="outline" size="sm"
+              disabled={busy} onClick={() => baixarMidia(row.id)}
+              data-action="produto-midia-download"
+              data-permission="Cadastros.Produto.visualizar"
+              data-sensitive>{downloadAction.label}</Button>}
             {principalAction && <Button type="button" variant="outline" size="sm"
               disabled={busy} onClick={() => tornarPrincipal(row.id)}
               data-action="produto-midia-principal"

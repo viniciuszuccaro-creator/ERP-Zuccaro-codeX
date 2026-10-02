@@ -131,6 +131,13 @@ export function getProdutoMediaDeactivateAction(media, permissions = {}) {
   return { action: 'deactivate', label: 'Inativar midia' };
 }
 
+/** Download privado (URL assinada curta). Exige visualizar; QUARENTENA ou APROVADO. */
+export function getProdutoMediaDownloadAction(media, permissions = {}) {
+  if (permissions.canView !== true) return null;
+  if (!media || (media.status !== 'QUARENTENA' && media.status !== 'APROVADO')) return null;
+  return { action: 'download', label: 'Baixar' };
+}
+
 /** Torna midia APROVADA a principal do produto. Exige editar; nao publica canal. */
 export function getProdutoMediaPrincipalAction(media, permissions = {}) {
   if (permissions.canEdit !== true || media?.status !== 'APROVADO' || media?.principal === true) return null;

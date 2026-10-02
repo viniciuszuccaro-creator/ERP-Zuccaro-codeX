@@ -559,6 +559,56 @@ test('HTTP R10 DAM: principal e inativacao exigem editar e nao vazam storage', a
   }, storage, scanner, ['aprovar-conteudo']);
 });
 
+test('HTTP R10 DAM: download assinado exige visualizar e nao vaza URL na auditoria', async () => {
+  let downloadCalls = 0;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => ({
+      url: 'https://synthetic.example.test/upload?token=synthetic',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      requiredHeaders: { 'content-type': 'image/png' },
+    }),
+    confirmUpload: async (request) => ({
+      storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+      sizeBytes: request.sizeBytes, sha256: request.sha256, version: request.version ?? 1,
+    }),
+    createSignedDownloadUrl: async () => {
+      downloadCalls += 1;
+      return {
+        url: 'https://synthetic.example.test/download?token=TEMP',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      };
+    },
+  };
+  await withHttp(async (request) => {
+    const id = await product(request, 'DAM download HTTP');
+    const payload = {
+      storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-download.png`,
+      categoria: 'IMAGEM', nome_arquivo: 'download.png', mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'e'.repeat(64), versao: 1,
+    };
+    const reserved = await request(`/api/v1/produtos/${id}/midias/reservas`, 'POST', payload);
+    assert.equal(reserved.status, 201);
+    const mediaId = reserved.body.data.mediaId as string;
+    assert.equal((await request(`/api/v1/produtos/${id}/midias/${mediaId}/confirmar`, 'POST', {
+      attemptId: reserved.body.data.attemptId,
+    })).status, 200);
+    const path = `/api/v1/produtos/${id}/midias/${mediaId}/download`;
+    assert.equal((await request(path, 'POST', { groupId: GROUP_A })).status, 400);
+    assert.equal((await request(path, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    const downloaded = await request(path, 'POST', {});
+    assert.equal(downloaded.status, 200, JSON.stringify(downloaded.body));
+    assert.equal(downloadCalls, 1);
+    assert.equal(downloaded.body.data.id, mediaId);
+    assert.match(downloaded.body.data.url, /token=TEMP/);
+    assert.equal(downloaded.headers.get('cache-control'), 'no-store');
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const logs = await audit.listByEntity('ProdutoMidia', mediaId);
+    assert.equal(logs.some((entry) => entry.action === 'read'), true);
+    assert.equal(JSON.stringify(logs).includes('token=TEMP'), false);
+    assert.equal(JSON.stringify(logs).includes(payload.storage_key), false);
+  }, storage);
+});
+
 test('HTTP R10 DAM: reconciliacao de vencidas e infectadas exige tenant e RBAC', async () => {
   const storage: StoragePort = {
     createSignedUploadUrl: async () => ({

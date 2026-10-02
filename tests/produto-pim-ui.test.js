@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaDeactivateAction } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
@@ -15,10 +15,11 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(section, /midiaApprove|midiaRejectContent|midiaScan/);
   assert.match(section, /midiaSetPrincipal|getProdutoMediaPrincipalAction/);
   assert.match(section, /midiaDeactivate|getProdutoMediaDeactivateAction/);
+  assert.match(section, /midiaDownload|getProdutoMediaDownloadAction/);
   assert.match(section, /midiaReconcileExpired|midiaReconcileInfected/);
   assert.match(section, /midiaDamStatus/);
   assert.match(section, /produto-midia-reconciliar-vencidas|produto-midia-reconciliar-infectadas/);
-  assert.match(section, /produto-dam-readiness|produto-midia-principal|produto-midia-inativar/);
+  assert.match(section, /produto-dam-readiness|produto-midia-principal|produto-midia-inativar|produto-midia-download/);
   assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
   assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
 });
@@ -57,6 +58,16 @@ test('V22 expoe inativar midia so com editar e estado ativo liberavel', () => {
     { action: 'deactivate', label: 'Inativar midia' });
   assert.deepEqual(getProdutoMediaDeactivateAction({ status: 'APROVADO', principal: true }, { canEdit: true }),
     { action: 'deactivate', label: 'Inativar midia' });
+});
+
+test('V22 expoe download so com visualizar e midia em quarentena ou aprovada', () => {
+  assert.equal(getProdutoMediaDownloadAction({ status: 'APROVADO' }, { canView: false }), null);
+  assert.equal(getProdutoMediaDownloadAction({ status: 'PENDENTE_UPLOAD' }, { canView: true }), null);
+  assert.equal(getProdutoMediaDownloadAction({ status: 'REJEITADO' }, { canView: true }), null);
+  assert.deepEqual(getProdutoMediaDownloadAction({ status: 'QUARENTENA' }, { canView: true }),
+    { action: 'download', label: 'Baixar' });
+  assert.deepEqual(getProdutoMediaDownloadAction({ status: 'APROVADO' }, { canView: true }),
+    { action: 'download', label: 'Baixar' });
 });
 
 test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual', () => {
