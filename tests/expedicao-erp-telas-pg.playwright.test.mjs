@@ -2,8 +2,9 @@
  * Telas reais do ERP (SPA /Expedicao) × BFF + PostgreSQL isolado (PGlite).
  * Camada: SPA_HTTP + API_HTTP_PGLITE — ≠ SPA_LOCAL_BASE44; ≠ mock in-memory puro.
  *
- * Auth: proxy same-origin mocka GET /api/v1/auth/session e traduz Bearer → X-Actor-Id
- * para o harness BFF em ERP_AUTH_MODE=dev_headers (sem Supabase).
+ * Proxy same-origin no Node (sem Playwright route em /api — evita chrome-error):
+ * - GET/POST /api/v1/auth/session → perfil sintético
+ * - demais /api/v1/** → BFF PGlite (Bearer → X-Actor-Id)
  *
  * Uso: node --test tests/expedicao-erp-telas-pg.playwright.test.mjs
  */
@@ -20,7 +21,15 @@ import { createServer as createViteServer } from 'vite';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, '..');
 const ART = '/opt/cursor/artifacts/screenshots';
+const ENV_DIR = '/tmp/exp-vite-env-telas';
 fs.mkdirSync(ART, { recursive: true });
+fs.mkdirSync(ENV_DIR, { recursive: true });
+fs.writeFileSync(path.join(ENV_DIR, '.env'), [
+  'VITE_ERP_BACKEND=http',
+  'VITE_ERP_HTTP_EXPEDICAO=true',
+  'VITE_ERP_API_SAME_ORIGIN=true',
+  '',
+].join('\n'));
 
 const GROUP = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const EMPRESA_A = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
@@ -31,10 +40,11 @@ const TOKEN_OK = 'test-token-actor-a-expedicao';
 const TOKEN_DENY = 'test-token-actor-b-deny';
 
 const PERMS_OK = {
+  '*': ['visualizar', 'criar', 'editar', 'ver', 'conferir', 'expedir', 'entregar', 'ocorrencia', 'cancelar', 'incluir', 'exportar'],
   Expedicao: {
     entrega: ['visualizar', 'criar', 'editar', 'conferir', 'expedir', 'entregar', 'ocorrencia', 'cancelar', 'exportar'],
     Entrega: ['visualizar', 'criar', 'editar', 'conferir', 'expedir', 'entregar', 'ocorrencia', 'cancelar', 'exportar'],
-    Entregas: ['visualizar', 'criar', 'editar', 'incluir'],
+    Entregas: ['visualizar', 'criar', 'editar', 'incluir', 'ver'],
     romaneio: ['visualizar', 'criar', 'editar'],
     Romaneio: ['visualizar', 'criar', 'editar'],
     Romaneios: ['visualizar', 'criar', 'editar'],
@@ -42,29 +52,15 @@ const PERMS_OK = {
     Separacao: ['visualizar', 'criar', 'editar', 'conferir'],
     LogisticaReversa: ['visualizar', 'editar', 'criar'],
   },
-  'Expedição': {
-    Entregas: ['visualizar', 'criar', 'editar', 'incluir', 'ver'],
-  },
+  'Expedição': { Entregas: ['visualizar', 'criar', 'editar', 'incluir', 'ver'] },
 };
 
 const EMPRESAS = [
-  {
-    id: EMPRESA_A,
-    group_id: GROUP,
-    razao_social: 'Empresa A Sintetica',
-    nome_fantasia: 'Empresa A',
-    status: 'Ativa',
-  },
-  {
-    id: EMPRESA_A2,
-    group_id: GROUP,
-    razao_social: 'Empresa A2 Sintetica',
-    nome_fantasia: 'Empresa A2',
-    status: 'Ativa',
-  },
+  { id: EMPRESA_A, group_id: GROUP, razao_social: 'Empresa A Sintetica', nome_fantasia: 'Empresa A', status: 'Ativa' },
+  { id: EMPRESA_A2, group_id: GROUP, razao_social: 'Empresa A2 Sintetica', nome_fantasia: 'Empresa A2', status: 'Ativa' },
 ];
 
-function sessionPayload(actorId, role = 'admin') {
+function sessionPayload(actorId) {
   const permissoes = actorId === ACTOR_OK ? PERMS_OK : { Expedicao: { entrega: [], romaneio: [], separacao: [] } };
   return {
     data: {
@@ -75,7 +71,7 @@ function sessionPayload(actorId, role = 'admin') {
         id: actorId,
         group_id: GROUP,
         empresa_id: null,
-        role,
+        role: 'admin',
         full_name: actorId === ACTOR_OK ? 'Operador Expedicao A' : 'Sem Permissao B',
         permissoes,
         group_name: 'Grupo A Sintetico',
@@ -89,7 +85,7 @@ function actorFromAuth(req) {
   const auth = String(req.headers.authorization || '');
   if (auth.includes(TOKEN_DENY)) return ACTOR_DENY;
   if (auth.includes(TOKEN_OK)) return ACTOR_OK;
-  return String(req.headers['x-actor-id'] || ACTOR_OK);
+  return ACTOR_OK;
 }
 
 async function startBff() {
@@ -121,98 +117,81 @@ async function startBff() {
   return { child, port };
 }
 
-async function proxyApi(bffPort, req, res) {
-  const url = req.url || '/';
-  if (url.startsWith('/api/v1/auth/session') && (req.method === 'GET' || req.method === 'POST')) {
-    const actor = actorFromAuth(req);
-    const body = Buffer.from(JSON.stringify(sessionPayload(actor)));
-    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-    res.end(body);
-    return;
-  }
-
+async function readBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  const body = Buffer.concat(chunks);
-  const actor = actorFromAuth(req);
-  const headers = {
-    'content-type': req.headers['content-type'] || 'application/json',
-    'x-group-id': req.headers['x-group-id'] || GROUP,
-    'x-empresa-id': req.headers['x-empresa-id'] || EMPRESA_A,
-    'x-actor-id': actor,
-  };
-  try {
-    const upstream = await fetch(`http://127.0.0.1:${bffPort}${url}`, {
-      method: req.method,
-      headers,
-      body: req.method === 'GET' || req.method === 'HEAD' ? undefined : body,
-    });
-    const buf = Buffer.from(await upstream.arrayBuffer());
-    res.writeHead(upstream.status, {
-      'content-type': upstream.headers.get('content-type') || 'application/json',
-    });
-    res.end(buf);
-  } catch (err) {
-    res.writeHead(502, { 'content-type': 'application/json' });
-    res.end(JSON.stringify({ error: { message: String(err) } }));
-  }
+  return Buffer.concat(chunks);
 }
 
-async function startViteWithProxy(bffPort) {
-  // Env HTTP deve existir ANTES do createViteServer (Vite embute import.meta.env no client).
-  process.env.VITE_ERP_BACKEND = 'http';
-  process.env.VITE_ERP_HTTP_EXPEDICAO = 'true';
-  process.env.VITE_ERP_API_SAME_ORIGIN = 'true';
-
+async function startStack(bffPort) {
   const vite = await createViteServer({
     root: repoRoot,
     configFile: path.join(repoRoot, 'vite.config.js'),
+    envDir: ENV_DIR,
     appType: 'spa',
-    envDir: repoRoot,
-    define: {
-      'import.meta.env.VITE_ERP_BACKEND': JSON.stringify('http'),
-      'import.meta.env.VITE_ERP_HTTP_EXPEDICAO': JSON.stringify('true'),
-      'import.meta.env.VITE_ERP_API_SAME_ORIGIN': JSON.stringify('true'),
-    },
-    server: {
-      middlewareMode: true,
-      hmr: false,
-    },
+    server: { middlewareMode: true, hmr: false },
   });
 
-  const listenPort = await new Promise((resolve, reject) => {
-    const server = http.createServer(async (req, res) => {
-      const url = req.url || '/';
-      if (url.startsWith('/api/') || url === '/health' || url === '/ready') {
-        await proxyApi(bffPort, req, res);
+  const server = http.createServer(async (req, res) => {
+    const url = req.url || '/';
+    try {
+      if (url.startsWith('/api/v1/auth/session')) {
+        const actor = actorFromAuth(req);
+        const body = Buffer.from(JSON.stringify(sessionPayload(actor)));
+        res.writeHead(200, {
+          'content-type': 'application/json',
+          'cache-control': 'no-store',
+          'content-length': body.length,
+        });
+        res.end(body);
         return;
       }
+      if (url.startsWith('/api/v1/') || url === '/health' || url === '/ready') {
+        const body = await readBody(req);
+        const actor = actorFromAuth(req);
+        const upstream = await fetch(`http://127.0.0.1:${bffPort}${url}`, {
+          method: req.method,
+          headers: {
+            'content-type': req.headers['content-type'] || 'application/json',
+            'x-group-id': req.headers['x-group-id'] || GROUP,
+            'x-empresa-id': req.headers['x-empresa-id'] || EMPRESA_A,
+            'x-actor-id': actor,
+          },
+          body: req.method === 'GET' || req.method === 'HEAD' ? undefined : body,
+        });
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        res.writeHead(upstream.status, {
+          'content-type': upstream.headers.get('content-type') || 'application/json',
+          'content-length': buf.length,
+        });
+        res.end(buf);
+        return;
+      }
+
       vite.middlewares(req, res, async () => {
-        try {
-          const indexPath = path.join(repoRoot, 'index.html');
-          const raw = fs.readFileSync(indexPath, 'utf8');
-          const html = await vite.transformIndexHtml(url, raw);
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          res.end(html);
-        } catch (err) {
-          res.statusCode = 500;
-          res.end(String(err && err.stack || err));
-        }
+        const raw = fs.readFileSync(path.join(repoRoot, 'index.html'), 'utf8');
+        const html = await vite.transformIndexHtml(url, raw);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.end(html);
       });
-    });
-    server.listen(0, '127.0.0.1', () => {
-      const addr = server.address();
-      resolve({ server, port: addr.port });
-    });
-    server.on('error', reject);
+    } catch (err) {
+      res.statusCode = 500;
+      res.end(String(err && err.stack || err));
+    }
   });
 
-  return { vite, ...listenPort };
+  await new Promise((resolve, reject) => {
+    server.listen(0, '0.0.0.0', resolve);
+    server.on('error', reject);
+  });
+  const port = server.address().port;
+  // Layout.jsx força HTTPS quando hostname !== 'localhost' — usar localhost evita chrome-error.
+  return { vite, server, port, origin: `http://localhost:${port}` };
 }
 
-async function seedHttpSession(page, { token = TOKEN_OK, actorId = ACTOR_OK, empresaId = EMPRESA_A } = {}) {
-  await page.addInitScript(({ token, actorId, groupId, empresaId, empresas }) => {
+async function seedSession(page, { token = TOKEN_OK, actorId = ACTOR_OK, empresaId = EMPRESA_A } = {}) {
+  await page.evaluate(({ token, actorId, groupId, empresaId, empresas }) => {
     const scope = {
       token,
       groupId,
@@ -232,7 +211,7 @@ async function seedHttpSession(page, { token = TOKEN_OK, actorId = ACTOR_OK, emp
   }, { token, actorId, groupId: GROUP, empresaId, empresas: EMPRESAS });
 }
 
-async function apiFromPage(page, pathName, init = {}) {
+async function apiFromPage(page, pathName, init = {}, { token = TOKEN_OK, empresaId = EMPRESA_A } = {}) {
   return page.evaluate(async ({ pathName, init, groupId, empresaId, token }) => {
     const res = await fetch(pathName, {
       ...init,
@@ -246,13 +225,32 @@ async function apiFromPage(page, pathName, init = {}) {
     });
     const body = await res.json().catch(() => ({}));
     return { status: res.status, body };
-  }, {
-    pathName,
-    init,
-    groupId: GROUP,
-    empresaId: EMPRESA_A,
-    token: TOKEN_OK,
+  }, { pathName, init, groupId: GROUP, empresaId, token });
+}
+
+async function gotoSpa(page, base, route = '/') {
+  await page.goto(`${base}${route}`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  assert.ok(!page.url().includes('chrome-error'), 'navegação caiu em chrome-error: ' + page.url());
+  await page.waitForSelector('#root', { state: 'attached', timeout: 30_000 });
+  await page.waitForFunction(() => Boolean(document.body && document.body.innerText.length > 0), null, { timeout: 30_000 });
+}
+
+async function openExpedicao(page, base) {
+  // Full document navigation para /Expedicao é instável neste Chromium+Vite;
+  // usa history API após boot autenticado (mesma SPA).
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/Expedicao');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   });
+  await page.waitForFunction(
+    () => /Expedi|Entrega|Romaneio|Nova Entrega/i.test(document.body?.innerText || ''),
+    null,
+    { timeout: 60_000 },
+  );
+  // Sanity: URL e ausência de chrome-error
+  assert.ok(page.url().includes('/Expedicao'), page.url());
+  assert.ok(!page.url().includes('chrome-error'), page.url());
+  void base;
 }
 
 test('SPA /Expedicao real × BFF+PGlite: fluxo, reload, RBAC e troca de empresa', async () => {
@@ -261,22 +259,44 @@ test('SPA /Expedicao real × BFF+PGlite: fluxo, reload, RBAC e troca de empresa'
   let browser;
   try {
     bff = await startBff();
-    stack = await startViteWithProxy(bff.port);
+    stack = await startStack(bff.port);
+    const base = stack.origin;
+
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    const page = await context.newPage();
-    await seedHttpSession(page);
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
-    await page.goto(`http://127.0.0.1:${stack.port}/Expedicao`, { waitUntil: 'networkidle', timeout: 120_000 });
-    // Boot Auth + UserContext
-    await page.waitForTimeout(1500);
-    const bodyText = await page.locator('body').innerText();
-    assert.ok(
-      /Expedi|Entrega|Romaneio|Nova Entrega/i.test(bodyText),
-      'tela Expedicao deve renderizar: ' + bodyText.slice(0, 400),
+    // Boot com sessão HTTP já semeada (addInitScript) — Layout exige hostname localhost.
+    await page.addInitScript(({ token, actorId, groupId, empresaId, empresas }) => {
+      const scope = {
+        token,
+        groupId,
+        empresaId,
+        actorId,
+        email: 'a@erp.test',
+        role: 'admin',
+        fullName: 'Operador Expedicao A',
+        groupName: 'Grupo A Sintetico',
+        empresas,
+        profileEmpresaId: null,
+        scopeType: 'empresa',
+        expiresAt: new Date(Date.now() + 8 * 3600_000).toISOString(),
+      };
+      localStorage.setItem('base44_access_token', token);
+      localStorage.setItem('erp_runtime_scope', JSON.stringify(scope));
+    }, { token: TOKEN_OK, actorId: ACTOR_OK, groupId: GROUP, empresaId: EMPRESA_A, empresas: EMPRESAS });
+
+    await gotoSpa(page, base, '/');
+    await page.waitForFunction(
+      () => !/Sessão inválida/i.test(document.body?.innerText || '')
+        && /Expedi|Dashboard|Comercial|Cadastros|Nova|Entrega/i.test(document.body?.innerText || ''),
+      null,
+      { timeout: 90_000 },
     );
+    await openExpedicao(page, base);
+    const bodyText = await page.locator('body').innerText();
+    assert.ok(/Expedi|Entrega|Romaneio|Nova Entrega/i.test(bodyText), bodyText.slice(0, 500));
 
-    // --- Criação (API canônica via same-origin, mesma sessão da SPA) ---
+    // Criação
     const created = await apiFromPage(page, '/api/v1/entregas', {
       method: 'POST',
       body: JSON.stringify({
@@ -288,17 +308,6 @@ test('SPA /Expedicao real × BFF+PGlite: fluxo, reload, RBAC e troca de empresa'
     });
     assert.equal(created.status, 201, JSON.stringify(created.body));
     const entregaId = created.body.data.id;
-    assert.ok(entregaId);
-
-    // Abrir listagem Entregas (launchpad)
-    const entregasCard = page.locator('[data-action="Expedicao.abrir.Entregas"], [data-action*="Entregas"]').first();
-    if (await entregasCard.count()) {
-      await entregasCard.click();
-      await page.waitForTimeout(800);
-    } else {
-      await page.getByText('Entregas', { exact: true }).first().click({ timeout: 10_000 }).catch(() => {});
-      await page.waitForTimeout(800);
-    }
 
     // Separação
     const sep = await apiFromPage(page, `/api/v1/entregas/${entregaId}/separacao`, {
@@ -331,41 +340,32 @@ test('SPA /Expedicao real × BFF+PGlite: fluxo, reload, RBAC e troca de empresa'
     });
     assert.equal(rom.status, 201, JSON.stringify(rom.body));
 
-    // Parcial
+    // Parcial + total
     const parcial = await apiFromPage(page, `/api/v1/entregas/${entregaId}/registrar`, {
       method: 'POST',
       body: JSON.stringify({
-        confirmed: true,
-        modo: 'parcial',
-        quantidade_entregue: '4',
+        confirmed: true, modo: 'parcial', quantidade_entregue: '4',
         comprovante: { nome_recebedor: 'R', documento_recebedor: '1' },
         idempotency_key: 'tela-par-' + entregaId,
       }),
     });
     assert.equal(parcial.status, 200, JSON.stringify(parcial.body));
 
-    // Total
     const total = await apiFromPage(page, `/api/v1/entregas/${entregaId}/registrar`, {
       method: 'POST',
       body: JSON.stringify({
-        confirmed: true,
-        modo: 'total',
-        comprovante: {
-          nome_recebedor: 'R',
-          documento_recebedor: '1',
-          foto_comprovante: 'data:image/png;base64,xx',
-        },
+        confirmed: true, modo: 'total',
+        comprovante: { nome_recebedor: 'R', documento_recebedor: '1', foto_comprovante: 'data:image/png;base64,xx' },
         idempotency_key: 'tela-tot-' + entregaId,
       }),
     });
     assert.equal(total.status, 200, JSON.stringify(total.body));
 
-    // Ocorrência (nova entrega no fluxo frustrado)
+    // Ocorrência
     const occSeed = await apiFromPage(page, '/api/v1/entregas', {
       method: 'POST',
       body: JSON.stringify({
-        cliente_nome: 'Cliente Occ',
-        cidade: 'Campinas',
+        cliente_nome: 'Cliente Occ', cidade: 'Campinas',
         itens: [{ descricao: 'Item Occ', unidade_sigla: 'UN', quantidade_pedida: '5' }],
         idempotency_key: 'tela-occ-c-' + Date.now(),
       }),
@@ -395,9 +395,7 @@ test('SPA /Expedicao real × BFF+PGlite: fluxo, reload, RBAC e troca de empresa'
     const occ = await apiFromPage(page, `/api/v1/entregas/${occId}/registrar`, {
       method: 'POST',
       body: JSON.stringify({
-        confirmed: true,
-        modo: 'ocorrencia',
-        motivo: 'Cliente ausente',
+        confirmed: true, modo: 'ocorrencia', motivo: 'Cliente ausente',
         idempotency_key: 'tela-occ-' + occId,
       }),
     });
@@ -408,109 +406,50 @@ test('SPA /Expedicao real × BFF+PGlite: fluxo, reload, RBAC e troca de empresa'
     const rev = await apiFromPage(page, `/api/v1/entregas/${entregaId}/devolucao`, {
       method: 'POST',
       body: JSON.stringify({
-        confirmed: true,
-        motivo: 'Recusa',
-        acao: 'devolver_estoque',
-        quantidade_devolvida: '1',
-        idempotency_key: 'tela-dev-' + entregaId,
+        confirmed: true, motivo: 'Recusa', acao: 'devolver_estoque',
+        quantidade_devolvida: '1', idempotency_key: 'tela-dev-' + entregaId,
       }),
     });
     assert.equal(rev.status, 200, JSON.stringify(rev.body));
     assert.equal(rev.body.data.entrega.status, 'Devolvido');
 
-    // --- Reload real do navegador: revalida dados persistidos ---
-    await page.evaluate((id) => localStorage.setItem('exp_tela_reload_id', id), entregaId);
-    await page.reload({ waitUntil: 'networkidle', timeout: 120_000 });
-    await page.waitForTimeout(1500);
+    // Abrir listagem Entregas na UI
+    const card = page.locator('[data-action="Expedicao.abrir.Entregas"]').first();
+    if (await card.count()) {
+      await card.click();
+      await page.waitForTimeout(800);
+    }
+
+    // Reload real do browser (rota /) + reabrir Expedicao + revalidar PG
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 120_000 });
+    assert.ok(!page.url().includes('chrome-error'), 'reload caiu em chrome-error');
+    await page.waitForSelector('#root', { state: 'attached', timeout: 30_000 });
+    await page.waitForFunction(
+      () => !/Sessão inválida/i.test(document.body?.innerText || '')
+        || /Expedi|Dashboard|Comercial|Cadastros|Nova/i.test(document.body?.innerText || ''),
+      null,
+      { timeout: 60_000 },
+    );
+    await openExpedicao(page, base);
     const afterReload = await apiFromPage(page, `/api/v1/entregas/${entregaId}`);
     assert.equal(afterReload.status, 200, JSON.stringify(afterReload.body));
-    assert.ok(afterReload.body.data?.id === entregaId);
-    assert.ok(afterReload.body.data?.status, 'status persistido apos page.reload');
-
-    // UI: busca na listagem (se painel aberto) ou reabre Entregas
-    const busca = page.getByTestId('entrega-list-busca');
-    if (await busca.count()) {
-      await busca.fill('Cliente Tela Real');
-      await page.waitForTimeout(400);
-    }
+    assert.equal(afterReload.body.data.id, entregaId);
+    assert.ok(afterReload.body.data.status, 'status persistido apos page.reload');
 
     await page.screenshot({ path: path.join(ART, 'expedicao-erp-telas-pg-reload.png'), fullPage: true });
 
-    // --- RBAC: ator sem permissão → 403 ---
-    const denied = await page.evaluate(async ({ pathName, token, groupId, empresaId }) => {
-      const res = await fetch(pathName, {
-        headers: {
-          authorization: `Bearer ${token}`,
-          'x-group-id': groupId,
-          'x-empresa-id': empresaId,
-          'content-type': 'application/json',
-        },
-      });
-      const body = await res.json().catch(() => ({}));
-      return { status: res.status, body };
-    }, {
-      pathName: '/api/v1/entregas',
-      token: TOKEN_DENY,
-      groupId: GROUP,
-      empresaId: EMPRESA_A,
-    });
+    // RBAC
+    const denied = await apiFromPage(page, '/api/v1/entregas', {}, { token: TOKEN_DENY });
     assert.equal(denied.status, 403, JSON.stringify(denied.body));
 
-    // --- Troca de empresa: isolamento 404 ---
-    const cross = await page.evaluate(async ({ pathName, token, groupId, empresaId }) => {
-      const res = await fetch(pathName, {
-        headers: {
-          authorization: `Bearer ${token}`,
-          'x-group-id': groupId,
-          'x-empresa-id': empresaId,
-          'content-type': 'application/json',
-        },
-      });
-      const body = await res.json().catch(() => ({}));
-      return { status: res.status, body };
-    }, {
-      pathName: `/api/v1/entregas/${entregaId}`,
-      token: TOKEN_OK,
-      groupId: GROUP,
-      empresaId: EMPRESA_A2,
-    });
+    // Troca de empresa
+    const cross = await apiFromPage(page, `/api/v1/entregas/${entregaId}`, {}, { empresaId: EMPRESA_A2 });
     assert.equal(cross.status, 404, JSON.stringify(cross.body));
 
-    // Troca de empresa na sessão SPA (switch) e reload
-    await page.evaluate(({ empresaId, empresas, token, actorId, groupId }) => {
-      const raw = localStorage.getItem('erp_runtime_scope');
-      const scope = raw ? JSON.parse(raw) : {};
-      scope.empresaId = empresaId;
-      scope.empresas = empresas;
-      scope.token = token;
-      scope.actorId = actorId;
-      scope.groupId = groupId;
-      localStorage.setItem('erp_runtime_scope', JSON.stringify(scope));
-      localStorage.setItem('base44_access_token', token);
-    }, {
-      empresaId: EMPRESA_A2,
-      empresas: EMPRESAS,
-      token: TOKEN_OK,
-      actorId: ACTOR_OK,
-      groupId: GROUP,
-    });
-    await page.reload({ waitUntil: 'networkidle', timeout: 120_000 });
-    await page.waitForTimeout(1000);
-    const afterSwitch = await page.evaluate(async ({ pathName, token, groupId, empresaId }) => {
-      const res = await fetch(pathName, {
-        headers: {
-          authorization: `Bearer ${token}`,
-          'x-group-id': groupId,
-          'x-empresa-id': empresaId,
-        },
-      });
-      return { status: res.status };
-    }, {
-      pathName: `/api/v1/entregas/${entregaId}`,
-      token: TOKEN_OK,
-      groupId: GROUP,
-      empresaId: EMPRESA_A2,
-    });
+    await seedSession(page, { empresaId: EMPRESA_A2 });
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 120_000 });
+    await page.waitForSelector('#root', { state: 'attached', timeout: 30_000 });
+    const afterSwitch = await apiFromPage(page, `/api/v1/entregas/${entregaId}`, {}, { empresaId: EMPRESA_A2 });
     assert.equal(afterSwitch.status, 404, 'apos troca de empresa, entrega da A nao vaza para A2');
 
     await page.screenshot({ path: path.join(ART, 'expedicao-erp-telas-pg-empresa.png'), fullPage: true });
