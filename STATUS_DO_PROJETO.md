@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - aprovacao equivalente fail-closed (2026-10-02)
+
+- Continuacao: mudar `aprovado` em `ProdutoEquivalente` exige RBAC `aprovar-conteudo` (alem de `editar`); UI V22 expoe `Aprovar relacao` via policy existente; create com `aprovado:true` tambem fail-closed.
+- Sem publicacao externa, sem Produto HTTP, sem VPS.
+- Testes: runtime10 pim+relacoes-http 56/56; produto-pim-ui+http-api-client OK.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
 ## Comercial 360 / Onda 1 - canais rascunho UI+client (2026-10-02)
 
 - Continuacao: expoe CRUD de `produto_canais` (ja no backend/HTTP, status fixo RASCUNHO) no cliente prepared `canais` e na secao V22 existente (`ProdutoRelationsDamSection`). Meta `produto.dam.canaisRascunho`. Sem publicacao externa, sem Produto HTTP, sem VPS.

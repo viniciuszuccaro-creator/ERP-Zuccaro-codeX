@@ -114,6 +114,20 @@ test('HTTP R10: variantes e equivalentes percorrem todas as rotas, auditam e nao
       assert.ok(entries[1].beforeData && entries[1].afterData);
     }
     assert.equal(audit.entries.some((entry) => /Estoque|Preco|Fiscal|NotaFiscal/.test(entry.entity)), false);
+  }, undefined, undefined, ['aprovar-conteudo']);
+});
+
+test('HTTP R10: aprovar equivalente exige aprovar-conteudo alem de editar', async () => {
+  await withHttp(async (request) => {
+    const source = await product(request, 'Origem aprovacao equivalente');
+    const target = await product(request, 'Destino aprovacao equivalente');
+    const path = `/api/v1/produtos/${source}/equivalentes`;
+    const created = await request(path, 'POST', { produto_equivalente_id: target });
+    assert.equal(created.status, 201);
+    const denied = await request(`${path}/${created.body.data.id}`, 'PATCH', { aprovado: true });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.body.error.code, 'PERMISSION_DENIED');
+    assert.equal(created.body.data.aprovado, false);
   });
 });
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
+import { getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaScanLabel, getProdutoEquivalentApproveAction, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -316,13 +316,24 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Equivalentes e substitutos</h3>
-      {equivalents.map((row) => <div key={row.id} className="flex items-center gap-2 border-b py-1 text-sm">
-        <span className="flex-1 truncate">{row.produto_equivalente_id} · {row.tipo}</span>
+      {equivalents.map((row) => {
+        const approveAction = getProdutoEquivalentApproveAction(row, { canApprove });
+        return <div key={row.id} className="flex flex-wrap items-center gap-2 border-b py-1 text-sm">
+        <span className="min-w-0 flex-1 truncate">{row.produto_equivalente_id} · {row.tipo} · {row.aprovado ? 'aprovado' : 'pendente'}</span>
+        {approveAction && <Button type="button" variant="outline" size="sm" disabled={busy}
+          data-action="produto-equivalente-aprovar"
+          data-permission="Cadastros.Produto.aprovar-conteudo"
+          data-sensitive
+          onClick={() => run(async () => {
+            const result = await api.equivalentes.update(produtoId, row.id, { aprovado: true });
+            if (result?.aprovado !== true) throw new Error('Aprovacao da relacao nao concluida');
+          }, 'Relacao aprovada', { requireEdit: false })}>{approveAction.label}</Button>}
         {canEdit && <><Button type="button" variant="ghost" size="icon" title="Editar relacao" disabled={busy}
           onClick={() => { setEquivalentEditing(row.id); setEquivalentDraft({ produto_equivalente_id: row.produto_equivalente_id, tipo: row.tipo }); }}><Save className="h-4 w-4" /></Button>
           <Button type="button" variant="ghost" size="icon" title="Inativar relacao" disabled={busy}
             onClick={() => run(() => api.equivalentes.deactivate(produtoId, row.id), 'Relacao inativada')}><Trash2 className="h-4 w-4" /></Button></>}
-      </div>)}
+      </div>;
+      })}
       {canEdit && <div className="space-y-2">
         {!equivalentEditing && <><Input aria-label="Buscar produto equivalente" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={equivalentDraft.produto_equivalente_id} onValueChange={(id) => setEquivalentDraft((v) => ({ ...v, produto_equivalente_id: id }))}>

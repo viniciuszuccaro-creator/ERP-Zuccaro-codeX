@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction, getProdutoEquivalentApproveAction } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
@@ -23,8 +23,17 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(section, /api\.canais\.(list|create|update|deactivate)/);
   assert.match(section, /produto-canal-salvar|produto-canal-editar|produto-canal-inativar/);
   assert.match(section, /Conteudo por canal \(rascunho\)|Somente RASCUNHO/);
+  assert.match(section, /getProdutoEquivalentApproveAction|produto-equivalente-aprovar/);
   assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
   assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
+});
+
+test('V22 expoe aprovar equivalente so com aprovar-conteudo e pendente', () => {
+  assert.equal(getProdutoEquivalentApproveAction({ aprovado: false }, { canApprove: false }), null);
+  assert.equal(getProdutoEquivalentApproveAction({ aprovado: true }, { canApprove: true }), null);
+  assert.equal(getProdutoEquivalentApproveAction({ aprovado: false, ativo: false }, { canApprove: true }), null);
+  assert.deepEqual(getProdutoEquivalentApproveAction({ aprovado: false }, { canApprove: true }),
+    { action: 'approve', label: 'Aprovar relacao' });
 });
 
 test('V22 expoe liberacao DAM somente com aprovar-conteudo e estado de quarentena', () => {

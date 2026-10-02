@@ -144,6 +144,12 @@ export function getProdutoMediaPrincipalAction(media, permissions = {}) {
   return { action: 'principal', label: 'Tornar principal' };
 }
 
+/** Aprova relacao de equivalente/substituto. Exige aprovar-conteudo; nao publica canal. */
+export function getProdutoEquivalentApproveAction(row, permissions = {}) {
+  if (permissions.canApprove !== true || !row || row.aprovado === true || row.ativo === false) return null;
+  return { action: 'approve', label: 'Aprovar relacao' };
+}
+
 export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, version = 1, maxBytes = 10_000_000 }) {
   if (!groupId || !empresaId || !produtoId) throw new Error('Produto e empresa canonicos obrigatorios para midia');
   const originalName = String(file?.name || '');

@@ -1040,6 +1040,26 @@ test('Equivalente cria atualiza inativa e audita atomicamente', async () => {
   assert.deepEqual(await service.listEquivalents(ctx, produto.id), []);
 });
 
+test('Equivalente exige aprovar-conteudo para mudar aprovado', async () => {
+  const editor = harness(['visualizar', 'criar', 'editar', 'inativar']);
+  const produto = await editor.service.create(editor.ctx, { descricao: 'Origem sem aprovar' });
+  const target = await editor.service.create(editor.ctx, { descricao: 'Destino sem aprovar' });
+  const relation = await editor.service.createEquivalent(editor.ctx, produto.id, {
+    produto_equivalente_id: target.id,
+  });
+  await assert.rejects(
+    () => editor.service.updateEquivalent(editor.ctx, produto.id, relation.id, { aprovado: true }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+  await assert.rejects(
+    () => editor.service.createEquivalent(editor.ctx, produto.id, {
+      produto_equivalente_id: target.id,
+      aprovado: true,
+    }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+});
+
 test('Equivalente exige editar', async () => {
   const denied = harness(['visualizar', 'criar']);
   const produto = await denied.service.create(denied.ctx, { descricao: 'Origem sem editar' });
