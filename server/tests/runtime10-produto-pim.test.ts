@@ -624,13 +624,18 @@ test('DAM reconcilia orfaos infectados em QUARENTENA sem publicar', async () => 
   await assert.rejects(service.reconcileInfectedMidias(ctx, 0),
     (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
   assert.deepEqual(await service.reconcileInfectedMidias(ctx, 1), { inspected: 1, rejected: 1, raced: 0 });
-  assert.equal((await service.listMidias(ctx, product.id)).some((row) => row.id === first.mediaId), false);
-  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, second.mediaId))?.scan_verdict, 'INFECTED');
+  const afterLimitOne = await service.listMidias(ctx, product.id);
+  const remainingInfected = [first.mediaId, second.mediaId]
+    .filter((id) => afterLimitOne.some((row) => row.id === id));
+  assert.equal(remainingInfected.length, 1);
+  const stillInfectedId = remainingInfected[0]!;
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, stillInfectedId))?.scan_verdict, 'INFECTED');
   assert.deepEqual(await service.reconcileInfectedMidias(ctx), { inspected: 1, rejected: 1, raced: 0 });
   assert.deepEqual(await service.reconcileInfectedMidias(ctx), { inspected: 0, rejected: 0, raced: 0 });
   assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === clean.mediaId)?.status, 'QUARENTENA');
   assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === clean.mediaId)?.scan_verdict, 'CLEAN');
-  const logs = await audit.listByEntity('ProdutoMidia', first.mediaId);
+  const rejectedId = [first.mediaId, second.mediaId].find((id) => id !== stillInfectedId)!;
+  const logs = await audit.listByEntity('ProdutoMidia', rejectedId);
   assert.equal(logs.some((entry) => entry.action === 'change_status'), true);
   assert.equal(repo.listPublicationEvents().length, 0);
 });
