@@ -30,7 +30,7 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
 const errorText = (error) => error?.status === 503 ? 'Storage do ERP indisponivel' : (error?.message || 'Operacao nao concluida');
 
 export default function ProdutoRelationsDamSection({
-  produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canReprocess, canDeactivate,
+  produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canReprocess, canDiscard, canDeactivate,
   workflowStatus, onWorkflowChanged,
 }) {
   const api = getHttpProdutoApi();
@@ -60,8 +60,8 @@ export default function ProdutoRelationsDamSection({
       setOutboxMetrics(null); setDeadLetters([]); return Promise.resolve();
     }
     return Promise.all([
-      api.outboxMetrics(),
-      api.outboxList({ status: 'dead_letter', limit: 5, offset: 0 }),
+      api.outboxMetrics({ produtoId }),
+      api.outboxList({ status: 'dead_letter', produtoId, limit: 5, offset: 0 }),
     ]).then(([metrics, page]) => {
       setOutboxMetrics(metrics);
       setDeadLetters(Array.isArray(page?.rows) ? page.rows : []);
@@ -75,9 +75,11 @@ export default function ProdutoRelationsDamSection({
     Promise.all([
       api.variantes.list(produtoId), api.equivalentes.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
-      typeof api.outboxMetrics === 'function' ? api.outboxMetrics().catch(() => null) : Promise.resolve(null),
+      typeof api.outboxMetrics === 'function'
+        ? api.outboxMetrics({ produtoId }).catch(() => null)
+        : Promise.resolve(null),
       typeof api.outboxList === 'function'
-        ? api.outboxList({ status: 'dead_letter', limit: 5, offset: 0 }).catch(() => ({ rows: [] }))
+        ? api.outboxList({ status: 'dead_letter', produtoId, limit: 5, offset: 0 }).catch(() => ({ rows: [] }))
         : Promise.resolve({ rows: [] }),
     ]).then(([v, e, m, metrics, page]) => {
       if (!active) return;
@@ -201,11 +203,11 @@ export default function ProdutoRelationsDamSection({
           published {outboxMetrics.byStatus.published ?? 0}
         </p>
       ) : <p className="text-sm text-muted-foreground">Metricas indisponiveis</p>}
-      {deadLetters.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum dead-letter no tenant</p> : (
+      {deadLetters.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum dead-letter deste produto</p> : (
         <ul className="space-y-1 text-sm">
           {deadLetters.map((row) => (
             <li key={row.id} className="flex flex-wrap items-center gap-2 border-b py-1">
-              <span className="min-w-0 flex-1 break-all">{row.produtoId} · {row.errorMessage || 'sem erro'}</span>
+              <span className="min-w-0 flex-1 break-all">{row.errorMessage || 'sem erro'}</span>
               {canReprocess && (
                 <Button type="button" variant="outline" size="sm" disabled={busy}
                   data-action="produto-outbox-reprocess" data-permission="Cadastros.Produto.reprocessar"
@@ -216,6 +218,17 @@ export default function ProdutoRelationsDamSection({
                     },
                     'Dead-letter reprocessado',
                   )}>Reprocessar</Button>
+              )}
+              {canDiscard && (
+                <Button type="button" variant="outline" size="sm" disabled={busy}
+                  data-action="produto-outbox-discard" data-permission="Cadastros.Produto.descartar"
+                  onClick={() => run(
+                    async () => {
+                      await api.outboxDiscard(row.id, 'ui_operator_discard');
+                      await refreshOutbox();
+                    },
+                    'Dead-letter descartado',
+                  )}>Descartar</Button>
               )}
             </li>
           ))}

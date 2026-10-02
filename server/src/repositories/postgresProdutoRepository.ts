@@ -532,7 +532,12 @@ export class PostgresProdutoRepository implements ProdutoRepository {
 
   async listPublicationEvents(
     scope: Scope,
-    options: { status?: import('../services/produtoOutboxClaim.js').OutboxEventStatus; limit: number; offset: number },
+    options: {
+      status?: import('../services/produtoOutboxClaim.js').OutboxEventStatus;
+      produtoId?: string;
+      limit: number;
+      offset: number;
+    },
     executor?: DbQueryExecutor,
   ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }> {
     if (!scope.empresaId) return { rows: [], total: 0 };
@@ -542,6 +547,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     if (options.status) {
       params.push(options.status);
       where += ` AND status=$${params.length}`;
+    }
+    if (options.produtoId) {
+      params.push(options.produtoId);
+      where += ` AND aggregate_id=$${params.length}`;
     }
     const totalResult = await query.query(
       `SELECT count(*)::int AS total FROM integration_events WHERE ${where}`,
@@ -566,21 +575,52 @@ export class PostgresProdutoRepository implements ProdutoRepository {
 
   async countPublicationEventsByStatus(
     scope: Scope,
+    options: { produtoId?: string } = {},
     executor?: DbQueryExecutor,
   ): Promise<Record<import('../services/produtoOutboxClaim.js').OutboxEventStatus, number>> {
-    const base = { pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0 };
+    const base = {
+      pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0, cancelled: 0,
+    };
     if (!scope.empresaId) return base;
     const query = executor ?? this.db;
+    const params: unknown[] = [scope.groupId, scope.empresaId];
+    let where = `group_id=$1 AND empresa_id=$2 AND event_type='produto.publicado'`;
+    if (options.produtoId) {
+      params.push(options.produtoId);
+      where += ` AND aggregate_id=$${params.length}`;
+    }
     const result = await query.query<{ status: string; total: number }>(
       `SELECT status, count(*)::int AS total FROM integration_events
-       WHERE group_id=$1 AND empresa_id=$2 AND event_type='produto.publicado'
+       WHERE ${where}
        GROUP BY status`,
-      [scope.groupId, scope.empresaId],
+      params,
     );
     for (const row of result.rows) {
       if (row.status in base) base[row.status as keyof typeof base] = Number(row.total);
     }
     return base;
+  }
+
+  async discardPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null> {
+    if (!scope.empresaId) return null;
+    const query = executor ?? this.db;
+    const updated = await query.query(
+      `UPDATE integration_events
+       SET status='cancelled',
+           locked_until=NULL,
+           next_attempt_at=NULL,
+           updated_at=timezone('utc', now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3
+         AND event_type='produto.publicado' AND status='dead_letter'
+       RETURNING id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+                 locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload`,
+      [eventId, scope.groupId, scope.empresaId],
+    );
+    return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
   }
 
   private mapCanal(row: Record<string, unknown>): ProdutoCanal {

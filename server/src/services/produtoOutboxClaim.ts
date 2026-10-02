@@ -6,7 +6,7 @@ import type { RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { Scope } from './tenantCrudService.js';
 
-export type OutboxEventStatus = 'pending' | 'processing' | 'published' | 'retry' | 'dead_letter';
+export type OutboxEventStatus = 'pending' | 'processing' | 'published' | 'retry' | 'dead_letter' | 'cancelled';
 
 export type ProdutoPublicationEvent = {
   id: string;
@@ -83,13 +83,19 @@ export type OutboxClaimRepository = {
   ): Promise<ProdutoPublicationEvent | null>;
   listPublicationEvents(
     scope: Scope,
-    options: { status?: OutboxEventStatus; limit: number; offset: number },
+    options: { status?: OutboxEventStatus; produtoId?: string; limit: number; offset: number },
     executor?: DbQueryExecutor,
   ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
   countPublicationEventsByStatus(
     scope: Scope,
+    options?: { produtoId?: string },
     executor?: DbQueryExecutor,
   ): Promise<Record<OutboxEventStatus, number>>;
+  discardPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
 };
 
 type Dependencies = {
@@ -108,7 +114,7 @@ function assertId(id: string) {
 async function authorize(
   deps: Dependencies,
   ctx: RequestContext,
-  action: 'visualizar' | 'publicar' | 'reprocessar' = 'publicar',
+  action: 'visualizar' | 'publicar' | 'reprocessar' | 'descartar' = 'publicar',
 ) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
   if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
@@ -272,13 +278,23 @@ export async function reprocessProdutoPublicationEvent(
   });
 }
 
-const OUTBOX_LIST_STATUSES: OutboxEventStatus[] = ['pending', 'processing', 'published', 'retry', 'dead_letter'];
+const OUTBOX_LIST_STATUSES: OutboxEventStatus[] = [
+  'pending', 'processing', 'published', 'retry', 'dead_letter', 'cancelled',
+];
+
+function assertOptionalProdutoId(produtoId?: string) {
+  if (produtoId == null || produtoId === '') return undefined;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(produtoId)) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Invalid produtoId filter');
+  }
+  return produtoId;
+}
 
 /** Listagem read-only tenant-scoped. RBAC visualizar. Sem payload integral. */
 export async function listProdutoPublicationEvents(
   deps: Dependencies,
   ctx: RequestContext,
-  options: { status?: string; limit?: number; offset?: number } = {},
+  options: { status?: string; produtoId?: string; limit?: number; offset?: number } = {},
 ) {
   const scope = await authorize(deps, ctx, 'visualizar');
   const status = options.status
@@ -286,9 +302,10 @@ export async function listProdutoPublicationEvents(
       ? options.status as OutboxEventStatus
       : (() => { throw new AppError(400, 'VALIDATION_ERROR', 'Invalid outbox status filter'); })())
     : undefined;
+  const produtoId = assertOptionalProdutoId(options.produtoId);
   const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
   const offset = Math.min(Math.max(options.offset ?? 0, 0), 10_000);
-  const page = await deps.repo.listPublicationEvents(scope, { status, limit, offset });
+  const page = await deps.repo.listPublicationEvents(scope, { status, produtoId, limit, offset });
   return {
     total: page.total,
     limit,
@@ -307,6 +324,41 @@ export async function listProdutoPublicationEvents(
       schemaVersion: row.schemaVersion,
     })),
   };
+}
+
+/**
+ * Descarta dead-letter → cancelled. Exige RBAC `descartar`.
+ * Preserva eventId; nao reenvia nem apaga historico.
+ */
+export async function discardProdutoPublicationEvent(
+  deps: Dependencies,
+  ctx: RequestContext,
+  eventId: string,
+  reason?: string,
+) {
+  const scope = await authorize(deps, ctx, 'descartar');
+  assertId(eventId);
+  const sanitizedReason = String(reason || 'manual_discard').trim().slice(0, 500) || 'manual_discard';
+  return deps.repo.withTransaction(async (executor) => {
+    const row = await deps.repo.discardPublicationEvent(scope, eventId, executor);
+    if (!row) throw new AppError(404, 'OUTBOX_EVENT_NOT_FOUND', 'Outbox dead-letter event not found in tenant scope');
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'IntegrationEvent', entityId: eventId, action: 'update',
+      beforeData: { status: 'dead_letter' },
+      afterData: {
+        event_type: 'produto.publicado', status: row.status,
+        aggregate_id: row.produtoId, reason: sanitizedReason,
+      },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return {
+      id: row.id,
+      status: row.status,
+      produtoId: row.produtoId,
+      schemaVersion: row.schemaVersion,
+    };
+  });
 }
 
 export function createPendingPublicationEvent(input: {
@@ -394,9 +446,14 @@ export async function processProdutoOutboxBatch(
 }
 
 /** Snapshot de contagens por status (tenant). RBAC visualizar. Sem payload. */
-export async function getProdutoOutboxMetrics(deps: Dependencies, ctx: RequestContext) {
+export async function getProdutoOutboxMetrics(
+  deps: Dependencies,
+  ctx: RequestContext,
+  options: { produtoId?: string } = {},
+) {
   const scope = await authorize(deps, ctx, 'visualizar');
-  const byStatus = await deps.repo.countPublicationEventsByStatus(scope);
+  const produtoId = assertOptionalProdutoId(options.produtoId);
+  const byStatus = await deps.repo.countPublicationEventsByStatus(scope, { produtoId });
   const total = OUTBOX_LIST_STATUSES.reduce((sum, status) => sum + (byStatus[status] ?? 0), 0);
-  return { total, byStatus };
+  return { total, byStatus, produtoId: produtoId ?? null };
 }

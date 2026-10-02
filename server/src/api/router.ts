@@ -115,6 +115,7 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     try {
       const data = await service.listPublicationEvents(ctxFromReq(req), {
         status: req.query.status != null ? String(req.query.status) : undefined,
+        produtoId: req.query.produtoId != null ? String(req.query.produtoId) : undefined,
         limit: req.query.limit != null ? Number(req.query.limit) : undefined,
         offset: req.query.offset != null ? Number(req.query.offset) : undefined,
       });
@@ -125,7 +126,9 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos/outbox/metrics', requireTenantScope, async (req, res, next) => {
     try {
-      const data = await service.getOutboxMetrics(ctxFromReq(req));
+      const data = await service.getOutboxMetrics(ctxFromReq(req), {
+        produtoId: req.query.produtoId != null ? String(req.query.produtoId) : undefined,
+      });
       res.setHeader('Cache-Control', 'no-store');
       res.json({ data });
     } catch (error) { next(error); }
@@ -173,6 +176,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
   router.post('/api/v1/produtos/outbox/:eventId/reprocess', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.reprocessPublicationEvent(
+        ctxFromReq(req),
+        req.params.eventId,
+        req.body?.reason != null ? String(req.body.reason) : undefined,
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/discard', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.discardPublicationEvent(
         ctxFromReq(req),
         req.params.eventId,
         req.body?.reason != null ? String(req.body.reason) : undefined,
@@ -1274,6 +1288,7 @@ export function createApiRouter(deps: ApiDeps) {
         outboxConfirmIdempotent: true,
         outboxListRead: true,
         outboxMetrics: true,
+        outboxDeadLetterDiscard: true,
       },
       cliente: {
         masterData: true,

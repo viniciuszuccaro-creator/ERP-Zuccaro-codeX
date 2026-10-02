@@ -238,7 +238,7 @@ test('Outbox fake publisher: segundo publish do mesmo eventId nao duplica recibo
 });
 
 test('Outbox list: dead_letter read-only exige visualizar e isola tenant', async () => {
-  const { service, repo, ctx } = setup(['visualizar', 'criar', 'editar', 'publicar']);
+  const { service, repo, ctx } = setup(['visualizar', 'criar', 'editar', 'publicar', 'descartar']);
   const produto = await service.create(ctx, { descricao: 'List dead letter' });
   await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'req-list-1');
   const events = (repo as any).publicationEvents as Array<{ maxAttempts: number }>;
@@ -264,4 +264,31 @@ test('Outbox list: dead_letter read-only exige visualizar e isola tenant', async
   const metrics = await service.getOutboxMetrics(ctx);
   assert.equal(metrics.byStatus.dead_letter, 1);
   assert.ok(metrics.total >= 1);
+
+  const scoped = await service.listPublicationEvents(ctx, {
+    status: 'dead_letter', produtoId: produto.id, limit: 10, offset: 0,
+  });
+  assert.equal(scoped.total, 1);
+  assert.equal(scoped.rows[0].produtoId, produto.id);
+  const otherProduto = randomUUID();
+  const emptyScoped = await service.listPublicationEvents(ctx, {
+    status: 'dead_letter', produtoId: otherProduto, limit: 10, offset: 0,
+  });
+  assert.equal(emptyScoped.total, 0);
+  const scopedMetrics = await service.getOutboxMetrics(ctx, { produtoId: produto.id });
+  assert.equal(scopedMetrics.byStatus.dead_letter, 1);
+  assert.equal(scopedMetrics.produtoId, produto.id);
+
+  const onlyReprocess = setup(['visualizar', 'criar', 'editar', 'publicar', 'reprocessar']);
+  await assert.rejects(
+    onlyReprocess.service.discardPublicationEvent(onlyReprocess.ctx, claimed[0].id, 'nope'),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+  const discarded = await service.discardPublicationEvent(ctx, claimed[0].id, 'operator_discard');
+  assert.equal(discarded.status, 'cancelled');
+  assert.equal(discarded.id, claimed[0].id);
+  const afterDiscard = await service.listPublicationEvents(ctx, { status: 'dead_letter', produtoId: produto.id });
+  assert.equal(afterDiscard.total, 0);
+  const cancelled = await service.listPublicationEvents(ctx, { status: 'cancelled', produtoId: produto.id });
+  assert.equal(cancelled.total, 1);
 });

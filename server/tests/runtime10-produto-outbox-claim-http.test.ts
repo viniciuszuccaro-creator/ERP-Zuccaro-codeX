@@ -273,7 +273,7 @@ test('HTTP Onda 15: confirm repetido devolve recibo already_published', async ()
 });
 
 test('HTTP Onda 15: GET outbox lista dead_letter com visualizar e rejeita sem permissao', async () => {
-  const { app, produtoService } = fixture();
+  const { app, produtoService } = fixture(['descartar']);
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const port = (server.address() as AddressInfo).port;
@@ -314,6 +314,24 @@ test('HTTP Onda 15: GET outbox lista dead_letter com visualizar e rejeita sem pe
     assert.equal(listed.body.data.rows[0].status, 'dead_letter');
     assert.equal(listed.body.data.rows[0].errorMessage, 'list_http_dead');
     assert.equal(listed.body.data.rows[0].payload, undefined);
+
+    const scoped = await request(`/api/v1/produtos/outbox?status=dead_letter&produtoId=${id}`);
+    assert.equal(scoped.status, 200);
+    assert.equal(scoped.body.data.total, 1);
+    const scopedMetrics = await request(`/api/v1/produtos/outbox/metrics?produtoId=${id}`);
+    assert.equal(scopedMetrics.status, 200);
+    assert.equal(scopedMetrics.body.data.byStatus.dead_letter, 1);
+    assert.equal(scopedMetrics.body.data.produtoId, id);
+
+    const discardedDenied = await request(`/api/v1/produtos/outbox/${eventId}/discard`, 'POST',
+      { reason: 'no' }, headers(ACTOR_DENIED));
+    assert.equal(discardedDenied.status, 403);
+
+    const discarded = await request(`/api/v1/produtos/outbox/${eventId}/discard`, 'POST', {
+      reason: 'http_operator_discard',
+    });
+    assert.equal(discarded.status, 200);
+    assert.equal(discarded.body.data.status, 'cancelled');
 
     const bad = await request('/api/v1/produtos/outbox?status=nope');
     assert.equal(bad.status, 400);

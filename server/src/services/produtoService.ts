@@ -33,6 +33,7 @@ import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcil
 import {
   claimProdutoPublicationEvents,
   confirmProdutoPublicationEvent,
+  discardProdutoPublicationEvent,
   failProdutoPublicationEvent,
   getProdutoOutboxMetrics,
   listProdutoPublicationEvents,
@@ -300,10 +301,10 @@ export class ProdutoService {
     }, ctx, eventId, reason);
   }
 
-  /** Listagem read-only da outbox (filtro status). RBAC visualizar. */
+  /** Listagem read-only da outbox (filtro status/produto). RBAC visualizar. */
   async listPublicationEvents(
     ctx: RequestContext,
-    options: { status?: string; limit?: number; offset?: number } = {},
+    options: { status?: string; produtoId?: string; limit?: number; offset?: number } = {},
   ) {
     return listProdutoPublicationEvents({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
@@ -311,10 +312,17 @@ export class ProdutoService {
   }
 
   /** Contagens por status da outbox. RBAC visualizar. */
-  async getOutboxMetrics(ctx: RequestContext) {
+  async getOutboxMetrics(ctx: RequestContext, options: { produtoId?: string } = {}) {
     return getProdutoOutboxMetrics({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
-    }, ctx);
+    }, ctx, options);
+  }
+
+  /** Descarta dead-letter → cancelled. Exige Cadastros.produto.descartar. */
+  async discardPublicationEvent(ctx: RequestContext, eventId: string, reason?: string) {
+    return discardProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, reason);
   }
 
   /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */

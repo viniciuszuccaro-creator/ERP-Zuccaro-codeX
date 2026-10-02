@@ -210,10 +210,11 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   await produto.outboxConfirm('e1', 'token');
   await produto.outboxFail('e1', 'token', 'temporary');
   await produto.outboxReprocess('e1', 'manual_reprocess');
-  await produto.outboxList({ status: 'dead_letter', limit: 10, offset: 0 });
-  await produto.outboxMetrics();
+  await produto.outboxList({ status: 'dead_letter', produtoId: 'p', limit: 10, offset: 0 });
+  await produto.outboxMetrics({ produtoId: 'p' });
+  await produto.outboxDiscard('e1', 'manual_discard');
   await produto.outboxProcess({ limit: 3 });
-  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'GET', 'GET', 'POST']);
+  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'GET', 'GET', 'POST', 'POST']);
   assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
     '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
     '/api/v1/produtos/p/midias/m/confirmar',
@@ -223,6 +224,7 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
     '/api/v1/produtos/outbox/e1/reprocess',
     '/api/v1/produtos/outbox',
     '/api/v1/produtos/outbox/metrics',
+    '/api/v1/produtos/outbox/e1/discard',
     '/api/v1/produtos/outbox/process',
   ]);
   assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
@@ -234,7 +236,10 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   assert.deepEqual(JSON.parse(calls[5].body), { leaseToken: 'token', errorMessage: 'temporary' });
   assert.deepEqual(JSON.parse(calls[6].body), { reason: 'manual_reprocess' });
   assert.equal(new URL(calls[7].url).searchParams.get('status'), 'dead_letter');
-  assert.deepEqual(JSON.parse(calls[9].body), { limit: 3, leaseMs: 60_000 });
+  assert.equal(new URL(calls[7].url).searchParams.get('produtoId'), 'p');
+  assert.equal(new URL(calls[8].url).searchParams.get('produtoId'), 'p');
+  assert.deepEqual(JSON.parse(calls[9].body), { reason: 'manual_discard' });
+  assert.deepEqual(JSON.parse(calls[10].body), { limit: 3, leaseMs: 60_000 });
   assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
 });
 

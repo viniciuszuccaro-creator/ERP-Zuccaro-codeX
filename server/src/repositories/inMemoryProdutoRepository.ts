@@ -72,13 +72,19 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   ): Promise<ProdutoPublicationEvent | null>;
   listPublicationEvents(
     scope: Scope,
-    options: { status?: OutboxEventStatus; limit: number; offset: number },
+    options: { status?: OutboxEventStatus; produtoId?: string; limit: number; offset: number },
     executor?: DbQueryExecutor,
   ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
   countPublicationEventsByStatus(
     scope: Scope,
+    options?: { produtoId?: string },
     executor?: DbQueryExecutor,
   ): Promise<Record<OutboxEventStatus, number>>;
+  discardPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
   listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
   listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
   listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]>;
@@ -449,13 +455,14 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   async listPublicationEvents(
     scope: Scope,
-    options: { status?: OutboxEventStatus; limit: number; offset: number },
+    options: { status?: OutboxEventStatus; produtoId?: string; limit: number; offset: number },
   ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }> {
     if (!scope.empresaId) return { rows: [], total: 0 };
     const filtered = this.publicationEvents
       .filter((row) => row.groupId === scope.groupId && row.empresaId === scope.empresaId
         && row.eventType === 'produto.publicado'
-        && (options.status == null || row.status === options.status))
+        && (options.status == null || row.status === options.status)
+        && (options.produtoId == null || row.produtoId === options.produtoId))
       .sort((a, b) => {
         const aTime = a.deadLetterAt || a.publishedAt || a.nextAttemptAt || a.lockedUntil || '';
         const bTime = b.deadLetterAt || b.publishedAt || b.nextAttemptAt || b.lockedUntil || '';
@@ -469,20 +476,40 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   async countPublicationEventsByStatus(
     scope: Scope,
+    options: { produtoId?: string } = {},
   ): Promise<Record<OutboxEventStatus, number>> {
     const base: Record<OutboxEventStatus, number> = {
-      pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0,
+      pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0, cancelled: 0,
     };
     if (!scope.empresaId) return base;
     for (const row of this.publicationEvents) {
       if (row.groupId !== scope.groupId || row.empresaId !== scope.empresaId || row.eventType !== 'produto.publicado') continue;
+      if (options.produtoId && row.produtoId !== options.produtoId) continue;
       base[row.status] += 1;
     }
     return base;
   }
 
-  async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
-    return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+  async discardPublicationEvent(
+    scope: Scope,
+    eventId: string,
+  ): Promise<ProdutoPublicationEvent | null> {
+    const current = this.publicationEvents.find((row) => row.id === eventId);
+    if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status !== 'dead_letter') return null;
+    const next: ProdutoPublicationEvent = {
+      ...current,
+      status: 'cancelled',
+      lockedUntil: null,
+      nextAttemptAt: null,
+      errorMessage: current.errorMessage,
+    };
+    const index = this.publicationEvents.findIndex((event) => event.id === eventId);
+    this.publicationEvents[index] = next;
+    return structuredClone(next);
+  }
+
+  async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {    return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
       && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
       .sort((a, b) => a.sku.localeCompare(b.sku) || a.id.localeCompare(b.id)));
   }

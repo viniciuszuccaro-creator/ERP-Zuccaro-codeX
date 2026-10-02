@@ -24,6 +24,7 @@ export type RbacAction =
   | 'aprovar-conteudo'
   | 'publicar'
   | 'reprocessar'
+  | 'descartar'
   | 'alterar-status';
 
 export type PermissionTree = Record<string, unknown>;

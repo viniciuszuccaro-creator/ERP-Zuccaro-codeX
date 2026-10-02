@@ -315,15 +315,21 @@ export function createHttpApiClient(options = {}) {
             method: 'POST', body: { reason }, signal,
           });
         },
-        /** Listagem read-only outbox. @param {{ status?: string, limit?: number, offset?: number, signal?: AbortSignal }} [options] */
-        outboxList({ status, limit = 20, offset = 0, signal } = {}) {
+        /** Listagem read-only outbox. @param {{ status?: string, produtoId?: string, limit?: number, offset?: number, signal?: AbortSignal }} [options] */
+        outboxList({ status, produtoId, limit = 20, offset = 0, signal } = {}) {
           return request('/api/v1/produtos/outbox', {
-            query: { status, limit, offset }, signal,
+            query: { status, produtoId, limit, offset }, signal,
           });
         },
-        /** Contagens por status. @param {{ signal?: AbortSignal }} [options] */
-        outboxMetrics({ signal } = {}) {
-          return request('/api/v1/produtos/outbox/metrics', { signal });
+        /** Contagens por status. @param {{ produtoId?: string, signal?: AbortSignal }} [options] */
+        outboxMetrics({ produtoId, signal } = {}) {
+          return request('/api/v1/produtos/outbox/metrics', { query: { produtoId }, signal });
+        },
+        /** Descarta dead-letter → cancelled (RBAC descartar). @param {string} eventId @param {string} [reason] @param {{ signal?: AbortSignal }} [options] */
+        outboxDiscard(eventId, reason = 'manual_discard', { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/discard`, {
+            method: 'POST', body: { reason }, signal,
+          });
         },
         /** Lote claim→publisher fake→confirm/fail (sem canal real). @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
         outboxProcess({ limit = 10, leaseMs = 60_000, signal } = {}) {
