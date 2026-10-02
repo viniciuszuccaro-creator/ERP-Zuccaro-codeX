@@ -123,6 +123,14 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     } catch (error) { next(error); }
   });
 
+  router.get('/api/v1/produtos/outbox/metrics', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.getOutboxMetrics(ctxFromReq(req));
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
   router.post('/api/v1/produtos/outbox/claim', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.claimPublicationEvents(ctxFromReq(req), {
@@ -1265,6 +1273,7 @@ export function createApiRouter(deps: ApiDeps) {
         outboxDeadLetterReprocess: true,
         outboxConfirmIdempotent: true,
         outboxListRead: true,
+        outboxMetrics: true,
       },
       cliente: {
         masterData: true,

@@ -75,6 +75,10 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     options: { status?: OutboxEventStatus; limit: number; offset: number },
     executor?: DbQueryExecutor,
   ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
+  countPublicationEventsByStatus(
+    scope: Scope,
+    executor?: DbQueryExecutor,
+  ): Promise<Record<OutboxEventStatus, number>>;
   listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
   listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
   listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]>;
@@ -461,6 +465,20 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       total: filtered.length,
       rows: filtered.slice(options.offset, options.offset + options.limit).map((row) => structuredClone(row)),
     };
+  }
+
+  async countPublicationEventsByStatus(
+    scope: Scope,
+  ): Promise<Record<OutboxEventStatus, number>> {
+    const base: Record<OutboxEventStatus, number> = {
+      pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0,
+    };
+    if (!scope.empresaId) return base;
+    for (const row of this.publicationEvents) {
+      if (row.groupId !== scope.groupId || row.empresaId !== scope.empresaId || row.eventType !== 'produto.publicado') continue;
+      base[row.status] += 1;
+    }
+    return base;
   }
 
   async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {

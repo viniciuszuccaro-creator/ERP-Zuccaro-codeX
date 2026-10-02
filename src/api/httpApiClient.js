@@ -321,6 +321,10 @@ export function createHttpApiClient(options = {}) {
             query: { status, limit, offset }, signal,
           });
         },
+        /** Contagens por status. @param {{ signal?: AbortSignal }} [options] */
+        outboxMetrics({ signal } = {}) {
+          return request('/api/v1/produtos/outbox/metrics', { signal });
+        },
         /** Lote claim→publisher fake→confirm/fail (sem canal real). @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
         outboxProcess({ limit = 10, leaseMs = 60_000, signal } = {}) {
           return request('/api/v1/produtos/outbox/process', { method: 'POST', body: { limit, leaseMs }, signal });

@@ -103,6 +103,10 @@ test('Outbox batch fake publisher confirma sem rede', async () => {
   const result = await service.processOutboxBatch(ctx, { limit: 5, leaseMs: 30_000 });
   assert.equal(result.claimed, 1);
   assert.equal(result.results[0].outcome, 'published');
+  assert.equal(result.metrics.published, 1);
+  assert.equal(result.metrics.retry, 0);
+  assert.equal(result.metrics.dead_letter, 0);
+  assert.ok(result.metrics.durationMs >= 0);
   assert.equal(publisher.delivered.length, 1);
   assert.equal(publisher.delivered[0].produtoId, produto.id);
 });
@@ -125,6 +129,8 @@ test('Outbox batch fake publisher falha agenda retry sem rede', async () => {
   const result = await service.processOutboxBatch(ctx, { limit: 5, leaseMs: 30_000 });
   assert.equal(result.claimed, 1);
   assert.equal(result.results[0].outcome, 'retry');
+  assert.equal(result.metrics.retry, 1);
+  assert.equal(result.metrics.published, 0);
   assert.equal(result.results[0].error, 'FAKE_PUBLISHER_FAILURE');
   assert.equal(publisher.delivered.length, 0);
 });
@@ -254,4 +260,8 @@ test('Outbox list: dead_letter read-only exige visualizar e isola tenant', async
 
   await assert.rejects(service.listPublicationEvents(ctx, { status: 'invalid' as any }),
     (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+
+  const metrics = await service.getOutboxMetrics(ctx);
+  assert.equal(metrics.byStatus.dead_letter, 1);
+  assert.ok(metrics.total >= 1);
 });

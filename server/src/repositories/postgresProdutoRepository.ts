@@ -564,6 +564,25 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     };
   }
 
+  async countPublicationEventsByStatus(
+    scope: Scope,
+    executor?: DbQueryExecutor,
+  ): Promise<Record<import('../services/produtoOutboxClaim.js').OutboxEventStatus, number>> {
+    const base = { pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0 };
+    if (!scope.empresaId) return base;
+    const query = executor ?? this.db;
+    const result = await query.query<{ status: string; total: number }>(
+      `SELECT status, count(*)::int AS total FROM integration_events
+       WHERE group_id=$1 AND empresa_id=$2 AND event_type='produto.publicado'
+       GROUP BY status`,
+      [scope.groupId, scope.empresaId],
+    );
+    for (const row of result.rows) {
+      if (row.status in base) base[row.status as keyof typeof base] = Number(row.total);
+    }
+    return base;
+  }
+
   private mapCanal(row: Record<string, unknown>): ProdutoCanal {
     return { ...row, ...ts(row) } as ProdutoCanal;
   }

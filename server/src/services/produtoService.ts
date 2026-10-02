@@ -34,6 +34,7 @@ import {
   claimProdutoPublicationEvents,
   confirmProdutoPublicationEvent,
   failProdutoPublicationEvent,
+  getProdutoOutboxMetrics,
   listProdutoPublicationEvents,
   processProdutoOutboxBatch,
   reprocessProdutoPublicationEvent,
@@ -307,6 +308,13 @@ export class ProdutoService {
     return listProdutoPublicationEvents({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
     }, ctx, options);
+  }
+
+  /** Contagens por status da outbox. RBAC visualizar. */
+  async getOutboxMetrics(ctx: RequestContext) {
+    return getProdutoOutboxMetrics({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx);
   }
 
   /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */

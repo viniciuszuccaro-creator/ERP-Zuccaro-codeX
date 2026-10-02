@@ -86,6 +86,10 @@ export type OutboxClaimRepository = {
     options: { status?: OutboxEventStatus; limit: number; offset: number },
     executor?: DbQueryExecutor,
   ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
+  countPublicationEventsByStatus(
+    scope: Scope,
+    executor?: DbQueryExecutor,
+  ): Promise<Record<OutboxEventStatus, number>>;
 };
 
 type Dependencies = {
@@ -358,6 +362,7 @@ export async function processProdutoOutboxBatch(
   ctx: RequestContext,
   options: { limit?: number; leaseMs?: number } = {},
 ) {
+  const started = Date.now();
   const claimed = await claimProdutoPublicationEvents(deps, ctx, options);
   const results: Array<{ id: string; outcome: 'published' | 'retry' | 'dead_letter'; error?: string }> = [];
   for (const event of claimed) {
@@ -379,5 +384,19 @@ export async function processProdutoOutboxBatch(
       });
     }
   }
-  return { claimed: claimed.length, results };
+  const metrics = {
+    published: results.filter((row) => row.outcome === 'published').length,
+    retry: results.filter((row) => row.outcome === 'retry').length,
+    dead_letter: results.filter((row) => row.outcome === 'dead_letter').length,
+    durationMs: Date.now() - started,
+  };
+  return { claimed: claimed.length, results, metrics };
+}
+
+/** Snapshot de contagens por status (tenant). RBAC visualizar. Sem payload. */
+export async function getProdutoOutboxMetrics(deps: Dependencies, ctx: RequestContext) {
+  const scope = await authorize(deps, ctx, 'visualizar');
+  const byStatus = await deps.repo.countPublicationEventsByStatus(scope);
+  const total = OUTBOX_LIST_STATUSES.reduce((sum, status) => sum + (byStatus[status] ?? 0), 0);
+  return { total, byStatus };
 }
