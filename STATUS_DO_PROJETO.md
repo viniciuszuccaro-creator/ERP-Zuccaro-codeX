@@ -1,3 +1,8 @@
+## Comercial 360 / Onda 1 - extracao secao canal V22 (2026-10-02)
+
+- Refatoracao permitida (arquivo >400 linhas): extrai `ProdutoCanalRascunhoSection` da secao DAM existente, preservando CRUD rascunho e data-actions. Sem funcionalidade nova, sem VPS.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+
 ## Comercial 360 / Onda 1 - campos canal/equivalente na UI (2026-10-02)
 
 - Continuacao: V22 existente passa a persistir `descricao` do rascunho de canal e `direcional` do equivalente; create de equivalente forca `aprovado:false` (aprovacao so via botao/RBAC).
