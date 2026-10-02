@@ -138,3 +138,25 @@ test('Outbox claim concorrente: segundo claim nao pega o mesmo evento', async ()
   const second = await service.claimPublicationEvents(ctx, { limit: 10, leaseMs: 60_000 });
   assert.equal(second.length, 0);
 });
+
+test('Outbox claim recupera lease expirado do mesmo evento', async () => {
+  const { service, repo, ctx } = setup();
+  const produto = await service.create(ctx, { descricao: 'Lease expirado' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'lease-expired');
+  const first = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 60_000 });
+  assert.equal(first.length, 1);
+  const events = (repo as any).publicationEvents as Array<{ id: string; lockedUntil: string | null; status: string }>;
+  const row = events.find((event) => event.id === first[0].id);
+  assert.ok(row);
+  row!.lockedUntil = new Date(Date.now() - 1000).toISOString();
+  row!.status = 'processing';
+  const reclaimed = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 30_000 });
+  assert.equal(reclaimed.length, 1);
+  assert.equal(reclaimed[0].id, first[0].id);
+  assert.notEqual(reclaimed[0].leaseToken, first[0].leaseToken);
+  await assert.rejects(service.confirmPublicationEvent(ctx, first[0].id, first[0].leaseToken),
+    (error: unknown) => (error as { code?: string }).code === 'OUTBOX_EVENT_NOT_FOUND'
+      || (error as { code?: string }).code === 'OUTBOX_LEASE_MISMATCH');
+  const confirmed = await service.confirmPublicationEvent(ctx, reclaimed[0].id, reclaimed[0].leaseToken);
+  assert.equal(confirmed.status, 'published');
+});

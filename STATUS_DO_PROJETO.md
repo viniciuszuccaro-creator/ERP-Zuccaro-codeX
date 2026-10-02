@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - reclaim lease expirado + HTTP fail (2026-10-02)
+
+- Continuacao: teste de reclaim apos `lockedUntil` expirado (token antigo invalidado; confirm so com token novo); HTTP `POST .../outbox/:id/fail` agenda retry com lease valido.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox service+HTTP 10/10.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: auditoria/RBAC de reprocessamento dead-letter ou recibo idempotente local; publisher real e reconciliacao externa continuam bloqueados.
+
 ## Comercial 360 / Onda 15 - HTTP process + client prepared (2026-10-02)
 
 - Continuacao: `POST /api/v1/produtos/outbox/process`; client prepared `outboxClaim|Confirm|Fail|Process`; meta `outboxFakeBatch`; testes fail-publisher→retry e claim concorrente.

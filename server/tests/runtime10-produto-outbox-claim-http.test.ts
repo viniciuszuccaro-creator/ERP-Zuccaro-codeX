@@ -104,3 +104,36 @@ test('HTTP Onda 15: process batch fake exige publicar e confirma localmente', as
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 });
+
+test('HTTP Onda 15: fail agenda retry com lease token valido', async () => {
+  const { app } = fixture();
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const port = (server.address() as AddressInfo).port;
+  const request = async (path: string, method = 'GET', body?: unknown, hdrs = headers()) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: hdrs, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    const created = await request('/api/v1/produtos', 'POST', { descricao: 'Outbox fail HTTP' });
+    const id = created.body.data.id;
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'EM_REVISAO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'APROVADO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'PUBLICADO' })).status, 200);
+    const claimed = await request('/api/v1/produtos/outbox/claim', 'POST', { limit: 1, leaseMs: 30000 });
+    assert.equal(claimed.status, 200);
+    assert.equal(claimed.body.data.length, 1);
+    const eventId = claimed.body.data[0].id;
+    const failed = await request(`/api/v1/produtos/outbox/${eventId}/fail`, 'POST', {
+      leaseToken: claimed.body.data[0].leaseToken,
+      errorMessage: 'temporary_http',
+    });
+    assert.equal(failed.status, 200);
+    assert.equal(failed.body.data.status, 'retry');
+    assert.ok(failed.body.data.nextAttemptAt);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
