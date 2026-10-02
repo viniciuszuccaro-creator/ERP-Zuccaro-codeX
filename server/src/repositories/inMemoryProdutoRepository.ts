@@ -56,7 +56,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     eventId: string,
     leaseToken: string,
     executor?: DbQueryExecutor,
-  ): Promise<ProdutoPublicationEvent | null>;
+  ): Promise<{ event: ProdutoPublicationEvent; receipt: 'confirmed' | 'already_published' } | null>;
   failPublicationEvent(
     scope: Scope,
     eventId: string,
@@ -362,9 +362,12 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     scope: Scope,
     eventId: string,
     leaseToken: string,
-  ): Promise<ProdutoPublicationEvent | null> {
+  ): Promise<{ event: ProdutoPublicationEvent; receipt: 'confirmed' | 'already_published' } | null> {
     const current = this.publicationEvents.find((row) => row.id === eventId);
     if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status === 'published') {
+      return { event: structuredClone(current), receipt: 'already_published' };
+    }
     if (current.status !== 'processing') return null;
     try {
       assertOutboxLeaseToken(current.id, current.lockedUntil, leaseToken);
@@ -381,7 +384,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     };
     const index = this.publicationEvents.findIndex((event) => event.id === eventId);
     this.publicationEvents[index] = next;
-    return structuredClone(next);
+    return { event: structuredClone(next), receipt: 'confirmed' };
   }
 
   async failPublicationEvent(

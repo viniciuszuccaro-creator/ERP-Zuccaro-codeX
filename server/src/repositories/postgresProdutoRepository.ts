@@ -429,19 +429,23 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     eventId: string,
     leaseToken: string,
     executor?: DbQueryExecutor,
-  ): Promise<ProdutoPublicationEvent | null> {
+  ): Promise<{ event: ProdutoPublicationEvent; receipt: 'confirmed' | 'already_published' } | null> {
     if (!scope.empresaId) return null;
     const query = executor ?? this.db;
     const current = await query.query(
       `SELECT id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
               locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload
        FROM integration_events
-       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND event_type='produto.publicado' AND status='processing'
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND event_type='produto.publicado'
        FOR UPDATE`,
       [eventId, scope.groupId, scope.empresaId],
     );
     if (!current.rows[0]) return null;
     const mapped = this.mapPublicationEvent(current.rows[0] as Record<string, unknown>);
+    if (mapped.status === 'published') {
+      return { event: mapped, receipt: 'already_published' };
+    }
+    if (mapped.status !== 'processing') return null;
     try {
       assertOutboxLeaseToken(mapped.id, mapped.lockedUntil, leaseToken);
     } catch {
@@ -456,7 +460,9 @@ export class PostgresProdutoRepository implements ProdutoRepository {
                  locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload`,
       [eventId, scope.groupId, scope.empresaId],
     );
-    return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
+    return updated.rows[0]
+      ? { event: this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>), receipt: 'confirmed' }
+      : null;
   }
 
   async failPublicationEvent(

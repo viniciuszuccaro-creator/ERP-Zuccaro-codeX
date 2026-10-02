@@ -227,3 +227,39 @@ test('HTTP Onda 15: reprocess dead-letter preserva eventId e volta a pending', a
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 });
+
+test('HTTP Onda 15: confirm repetido devolve recibo already_published', async () => {
+  const { app } = fixture();
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const port = (server.address() as AddressInfo).port;
+  const request = async (path: string, method = 'GET', body?: unknown, hdrs = headers()) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: hdrs, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    const created = await request('/api/v1/produtos', 'POST', { descricao: 'Confirm idempotente HTTP' });
+    const id = created.body.data.id;
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'EM_REVISAO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'APROVADO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'PUBLICADO' })).status, 200);
+    const claimed = await request('/api/v1/produtos/outbox/claim', 'POST', { limit: 1, leaseMs: 30000 });
+    const eventId = claimed.body.data[0].id;
+    const first = await request(`/api/v1/produtos/outbox/${eventId}/confirm`, 'POST', {
+      leaseToken: claimed.body.data[0].leaseToken,
+    });
+    assert.equal(first.status, 200);
+    assert.equal(first.body.data.receipt, 'confirmed');
+    const second = await request(`/api/v1/produtos/outbox/${eventId}/confirm`, 'POST', {
+      leaseToken: 'stale-or-any',
+    });
+    assert.equal(second.status, 200);
+    assert.equal(second.body.data.receipt, 'already_published');
+    assert.equal(second.body.data.id, eventId);
+    assert.equal(second.body.data.status, 'published');
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});

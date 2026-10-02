@@ -199,3 +199,34 @@ test('Outbox dead-letter: reprocess exige RBAC proprio e volta a pending claimav
   assert.equal(reclaimable.length, 1);
   assert.equal(reclaimable[0].id, claimed[0].id);
 });
+
+test('Outbox confirm: recibo idempotente quando ja published', async () => {
+  const { service, audit, ctx } = setup();
+  const produto = await service.create(ctx, { descricao: 'Confirm idempotente' });
+  await service.changeWorkflowStatus(ctx, produto.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, produto.id, 'APROVADO');
+  await service.changeWorkflowStatus(ctx, produto.id, 'PUBLICADO');
+  const claimed = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 30_000 });
+  const first = await service.confirmPublicationEvent(ctx, claimed[0].id, claimed[0].leaseToken);
+  assert.equal(first.status, 'published');
+  assert.equal(first.receipt, 'confirmed');
+  const second = await service.confirmPublicationEvent(ctx, claimed[0].id, 'token-atrasado-qualquer');
+  assert.equal(second.status, 'published');
+  assert.equal(second.receipt, 'already_published');
+  assert.equal(second.id, first.id);
+  assert.equal(second.publishedAt, first.publishedAt);
+  const logs = await audit.listByEntity('IntegrationEvent', claimed[0].id);
+  assert.equal(logs.filter((row) => row.afterData?.status === 'published').length, 1);
+});
+
+test('Outbox fake publisher: segundo publish do mesmo eventId nao duplica recibo', async () => {
+  const publisher = new FakeCatalogPublisher('ok');
+  const event = {
+    id: randomUUID(), produtoId: randomUUID(), requestId: randomUUID(), status: 'processing' as const,
+    attempts: 1, maxAttempts: 10, lockedUntil: new Date().toISOString(), leaseToken: 't',
+    schemaVersion: 1, payload: {},
+  };
+  assert.deepEqual(await publisher.publish(event), { ok: true });
+  assert.deepEqual(await publisher.publish(event), { ok: true });
+  assert.equal(publisher.delivered.length, 1);
+});

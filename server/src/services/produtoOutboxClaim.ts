@@ -68,7 +68,7 @@ export type OutboxClaimRepository = {
     eventId: string,
     leaseToken: string,
     executor?: DbQueryExecutor,
-  ): Promise<ProdutoPublicationEvent | null>;
+  ): Promise<{ event: ProdutoPublicationEvent; receipt: 'confirmed' | 'already_published' } | null>;
   failPublicationEvent(
     scope: Scope,
     eventId: string,
@@ -165,22 +165,27 @@ export async function confirmProdutoPublicationEvent(
     throw new AppError(400, 'VALIDATION_ERROR', 'Invalid outbox lease token');
   }
   return deps.repo.withTransaction(async (executor) => {
-    const confirmed = await deps.repo.confirmPublicationEvent(scope, eventId, leaseToken, executor);
-    if (!confirmed) throw new AppError(404, 'OUTBOX_EVENT_NOT_FOUND', 'Outbox event not found in tenant scope');
-    await deps.audit.append({
-      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail, entity: 'IntegrationEvent', entityId: eventId, action: 'update',
-      afterData: {
-        event_type: 'produto.publicado', status: confirmed.status,
-        published_at: confirmed.publishedAt, aggregate_id: confirmed.produtoId,
-      },
-      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
-    }, executor);
+    const result = await deps.repo.confirmPublicationEvent(scope, eventId, leaseToken, executor);
+    if (!result) throw new AppError(404, 'OUTBOX_EVENT_NOT_FOUND', 'Outbox event not found in tenant scope');
+    const { event: confirmed, receipt } = result;
+    if (receipt === 'confirmed') {
+      await deps.audit.append({
+        groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail, entity: 'IntegrationEvent', entityId: eventId, action: 'update',
+        afterData: {
+          event_type: 'produto.publicado', status: confirmed.status,
+          published_at: confirmed.publishedAt, aggregate_id: confirmed.produtoId,
+          receipt,
+        },
+        requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+      }, executor);
+    }
     return {
       id: confirmed.id,
       status: confirmed.status,
       publishedAt: confirmed.publishedAt,
       produtoId: confirmed.produtoId,
+      receipt,
     };
   });
 }
@@ -296,7 +301,8 @@ export class FakeCatalogPublisher implements CatalogPublisherPort {
   constructor(private readonly mode: 'ok' | 'fail' = 'ok') {}
   async publish(event: ClaimedPublicationEvent) {
     if (this.mode === 'fail') return { ok: false as const, error: 'FAKE_PUBLISHER_FAILURE' };
-    this.delivered.push(event);
+    // Recibo idempotente local: mesmo eventId nao duplica entrega sintetica.
+    if (!this.delivered.some((row) => row.id === event.id)) this.delivered.push(event);
     return { ok: true as const };
   }
 }
