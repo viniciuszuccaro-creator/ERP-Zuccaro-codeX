@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
-| HEAD | `59207a71` |
+| HEAD | `009be3c3` (pacote `59207a71`) |
 | Causa CI | Job `expedicao-comercial-compose` falhava com teste **PASS** porque `grep` de skip casava `# skipped 0` (falso positivo) |
 | Correção CI | Grep só `# skipped [1-9]…` / TAP `# SKIP`; exige pass; **não** removeu teste nem enfraqueceu assertions |
 | Compose PG | `runtime11-expedicao-compose-postgres.test.ts` + step CI postgres:16; SHA Comercial **`4f8c6593`**; trava **026** (hash tip) — **PASS** local |
