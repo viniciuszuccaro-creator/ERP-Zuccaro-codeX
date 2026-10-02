@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
+import { getProdutoMediaLiberacaoActions, getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -27,7 +27,18 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   });
 }
 
-const errorText = (error) => error?.status === 503 ? 'Storage do ERP indisponivel' : (error?.message || 'Operacao nao concluida');
+const errorText = (error) => {
+  if (error?.status === 503) return 'Storage do ERP indisponivel';
+  if (error?.code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO'
+    || /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO|media remains in quarantine/i.test(error?.message || '')) {
+    return 'Libere ou rejeite midias em quarentena antes de publicar';
+  }
+  if (error?.code === 'MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN'
+    || /MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN|CLEAN scan/i.test(error?.message || '')) {
+    return 'Aprovacao exige varredura CLEAN';
+  }
+  return error?.message || 'Operacao nao concluida';
+};
 
 export default function ProdutoRelationsDamSection({ produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canDeactivate, workflowStatus, onWorkflowChanged }) {
   const api = getHttpProdutoApi();
@@ -85,8 +96,8 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     ]);
     setVariants(v); setEquivalents(e); setMedia(m); setMediaHasMore(m.length === 20);
   };
-  const run = async (action, success) => {
-    if (!canEdit || busy) return;
+  const run = async (action, success, { requireEdit = true } = {}) => {
+    if ((requireEdit && !canEdit) || busy) return;
     setBusy(true); setError(''); setNotice('');
     try { await action(); await reload(); setNotice(success); }
     catch (err) { setError(errorText(err)); }
@@ -101,7 +112,13 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   }, 'Variante salva');
   const changeWorkflow = async (target) => {
     if (busy || !workflowActions.some((action) => action.target === target)) return;
-    if (target === 'PUBLICADO' && !window.confirm('Publicar este produto nos canais autorizados?')) return;
+    if (target === 'PUBLICADO') {
+      if (media.some((row) => row.status === 'QUARENTENA')) {
+        setError('Libere ou rejeite midias em quarentena antes de publicar');
+        return;
+      }
+      if (!window.confirm('Publicar este produto nos canais autorizados?')) return;
+    }
     setBusy(true); setError(''); setNotice('');
     try {
       const updated = await api.workflow(produtoId, target);
@@ -130,6 +147,32 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     }
     setEquivalentEditing(null); setEquivalentDraft({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' }); setSearch('');
   }, 'Relacao salva');
+  const liberarMidia = (mediaId, action) => {
+    if (!canApprove || busy) return;
+    const labels = {
+      scan: 'Varredura registrada',
+      approve: 'Midia liberada internamente',
+      reject: 'Conteudo rejeitado',
+    };
+    const confirmReject = action === 'reject'
+      ? window.confirm('Rejeitar este conteudo em quarentena? A midia ficara inativa.')
+      : true;
+    if (!confirmReject) return;
+    run(async () => {
+      if (action === 'scan') {
+        const result = await api.midiaScan(produtoId, mediaId);
+        if (result?.status !== 'QUARENTENA') throw new Error('Varredura nao concluida');
+      } else if (action === 'approve') {
+        const result = await api.midiaApprove(produtoId, mediaId);
+        if (result?.status !== 'APROVADO') throw new Error('Liberacao de midia nao concluida');
+      } else if (action === 'reject') {
+        const result = await api.midiaRejectContent(produtoId, mediaId);
+        if (result?.status !== 'REJEITADO') throw new Error('Rejeicao de conteudo nao concluida');
+      } else {
+        throw new Error('Acao de midia invalida');
+      }
+    }, labels[action], { requireEdit: false });
+  };
   const upload = async (event) => {
     const file = event.target.files?.[0];
     if (!file || !canEdit || !groupId || !empresaId || busy) return;
@@ -206,9 +249,22 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Midias do produto</h3>
-      {media.map((row) => <div key={row.id} className="flex flex-col gap-1 border-b py-1 text-sm sm:flex-row sm:justify-between sm:gap-2">
-        <span className="min-w-0 break-all">{row.nome_arquivo}</span><span className="min-w-0 break-words sm:text-right">{getProdutoMediaScanLabel(row)} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
-      </div>)}
+      {media.map((row) => {
+        const liberacao = getProdutoMediaLiberacaoActions(row, { canApprove });
+        return <div key={row.id} className="flex flex-col gap-2 border-b py-2 text-sm">
+          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
+            <span className="min-w-0 break-all">{row.nome_arquivo}</span>
+            <span className="min-w-0 break-words sm:text-right">{getProdutoMediaScanLabel(row)} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
+          </div>
+          {liberacao.length > 0 && <div className="flex flex-wrap gap-2">
+            {liberacao.map((action) => <Button key={action.action} type="button" variant="outline" size="sm"
+              disabled={busy} onClick={() => liberarMidia(row.id, action.action)}
+              data-action={`produto-midia-${action.action}`}
+              data-permission="Cadastros.Produto.aprovar-conteudo"
+              data-sensitive>{action.label}</Button>)}
+          </div>}
+        </div>;
+      })}
       <div className="flex items-center gap-2"><Button type="button" variant="outline" disabled={mediaPage === 0 || busy} onClick={() => setMediaPage((p) => p - 1)}>Anterior</Button>
         <span className="text-sm">{mediaPage + 1}</span><Button type="button" variant="outline" disabled={!mediaHasMore || busy} onClick={() => setMediaPage((p) => p + 1)}>Proxima</Button></div>
       {canEdit && <><Label htmlFor="produto-dam-file">Arquivo</Label>

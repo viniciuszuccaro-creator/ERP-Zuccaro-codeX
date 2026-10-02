@@ -1,16 +1,37 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel, getProdutoMediaLiberacaoActions } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'CLEAN' }), /ainda em quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INFECTED' }), /ameaca.*quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INCONCLUSIVE' }), /pendente.*quarentena/i);
+  assert.match(getProdutoMediaScanLabel({ status: 'APROVADO' }), /liberada internamente/i);
   const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
   assert.match(section, /getProdutoMediaScanLabel\(row\)/);
+  assert.match(section, /getProdutoMediaLiberacaoActions\(row/);
+  assert.match(section, /midiaApprove|midiaRejectContent|midiaScan/);
+  assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
   assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner/);
+});
+
+test('V22 expoe liberacao DAM somente com aprovar-conteudo e estado de quarentena', () => {
+  assert.deepEqual(getProdutoMediaLiberacaoActions({ status: 'QUARENTENA' }, { canApprove: false }), []);
+  assert.deepEqual(getProdutoMediaLiberacaoActions({ status: 'APROVADO', scan_verdict: 'CLEAN' }, { canApprove: true }), []);
+  assert.deepEqual(
+    getProdutoMediaLiberacaoActions({ status: 'QUARENTENA' }, { canApprove: true }).map((a) => a.action),
+    ['scan', 'reject'],
+  );
+  assert.deepEqual(
+    getProdutoMediaLiberacaoActions({ status: 'QUARENTENA', scan_verdict: 'CLEAN' }, { canApprove: true }).map((a) => a.action),
+    ['approve', 'reject'],
+  );
+  assert.deepEqual(
+    getProdutoMediaLiberacaoActions({ status: 'QUARENTENA', scan_verdict: 'INFECTED' }, { canApprove: true }).map((a) => a.action),
+    ['reject'],
+  );
 });
 
 test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual', () => {
@@ -31,7 +52,9 @@ test('formulario V22 usa RBAC por acao e confirma workflow somente pela resposta
   for (const action of ['aprovar-conteudo', 'publicar', 'inativar']) assert.match(form, new RegExp(`hasPermission\\('Cadastros', 'Produto', '${action}'\\)`));
   assert.match(section, /updated\?\.workflow_status !== target/);
   assert.match(section, /onWorkflowChanged\?\.\(updated\.workflow_status\)/);
-  assert.match(section, /target === 'PUBLICADO' && !window\.confirm/);
+  assert.match(section, /target === 'PUBLICADO'/);
+  assert.match(section, /media\.some\(\(row\) => row\.status === 'QUARENTENA'\)/);
+  assert.match(section, /window\.confirm/);
 });
 
 

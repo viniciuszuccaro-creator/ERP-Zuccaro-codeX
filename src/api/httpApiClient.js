@@ -293,6 +293,18 @@ export function createHttpApiClient(options = {}) {
         midiaConfirm(produtoId, mediaId, attemptId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/confirmar`, { method: 'POST', body: { attemptId }, signal });
         },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaScan(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/verificar`, { method: 'POST', body: {}, signal });
+        },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaApprove(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/aprovar`, { method: 'POST', body: {}, signal });
+        },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaRejectContent(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/rejeitar-conteudo`, { method: 'POST', body: {}, signal });
+        },
         equivalentes: relationRoutes('equivalentes'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */

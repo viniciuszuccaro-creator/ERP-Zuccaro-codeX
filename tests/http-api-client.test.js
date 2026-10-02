@@ -206,15 +206,24 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   await produto.workflow('p', 'EM_REVISAO');
   await produto.midiaReserve('p', { storage_key: 'synthetic' });
   await produto.midiaConfirm('p', 'm', 'a');
-  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST']);
+  await produto.midiaScan('p', 'm');
+  await produto.midiaApprove('p', 'm');
+  await produto.midiaRejectContent('p', 'm');
+  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST']);
   assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
     '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
     '/api/v1/produtos/p/midias/m/confirmar',
+    '/api/v1/produtos/p/midias/m/verificar',
+    '/api/v1/produtos/p/midias/m/aprovar',
+    '/api/v1/produtos/p/midias/m/rejeitar-conteudo',
   ]);
   assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
     && call.headers['X-Empresa-Id'] === 'empresa-sintetica'));
   assert.equal(JSON.parse(calls[0].body).status, 'EM_REVISAO');
   assert.deepEqual(JSON.parse(calls[2].body), { attemptId: 'a' });
+  assert.deepEqual(JSON.parse(calls[3].body), {});
+  assert.deepEqual(JSON.parse(calls[4].body), {});
+  assert.deepEqual(JSON.parse(calls[5].body), {});
   assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
 });
 
