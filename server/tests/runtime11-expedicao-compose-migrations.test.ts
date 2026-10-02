@@ -16,10 +16,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
 /** Tip Comercial (#178) — SHA pinado pela CI; default local = tip #178. */
 const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9';
-/** Em CI/job de integração: ausência de ref ou skip = FALHA (não aprovação silenciosa). */
-const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1'
-  || process.env.CI === 'true'
-  || process.env.GITHUB_ACTIONS === 'true';
+/** Só o job dedicado (COMERCIAL_COMPOSE_REQUIRE=1) falha fechado; npm test geral faz skip. */
+const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1';
 
 function gitShow(ref, rel) {
   const show = spawnSync('git', ['-C', repoRoot, 'show', `${ref}:${rel}`], {

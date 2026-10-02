@@ -20,9 +20,8 @@ import pg from 'pg';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
 const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9';
-const REQUIRE = process.env.COMERCIAL_COMPOSE_REQUIRE === '1'
-  || process.env.CI === 'true'
-  || process.env.GITHUB_ACTIONS === 'true';
+/** Só o job dedicado (COMERCIAL_COMPOSE_REQUIRE=1) falha fechado; npm test geral faz skip. */
+const REQUIRE = process.env.COMERCIAL_COMPOSE_REQUIRE === '1';
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const LOCKED_026 = '026_pedidos_tipo_comercial.sql';
 

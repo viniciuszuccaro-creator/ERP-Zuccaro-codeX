@@ -1,3 +1,9 @@
+## CURSOR — #199 hotfix CI backend compose PG REQUIRE (2026-10-02)
+
+Backend `npm test` falhava: compose PG exigia DATABASE_URL sob CI. REQUIRE agora só com `COMERCIAL_COMPOSE_REQUIRE=1`. Job `expedicao-comercial-compose` permanece fail-closed. Sem tip-port/merge/VPS.
+
+---
+
 ## CURSOR — #199 fechar integração: CI compose + PG + telas + #201 (2026-10-02)
 
 Causa CI: grep de skip batia em `# skipped 0` → falso fail com teste PASS. Corrigido (só skip real). Compose **PGlite + PostgreSQL isolado** com SHA Comercial `4f8c6593` e trava histórica **026** — **PASS**. Telas: Nova Entrega→FormularioEntrega; fluxo completo + reload — **PASS**. Parecer **#201** SHA `d20a6dde` em `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — **não** estende #200. Comercial 360 → tarefa existente. Legado → executor staging. HEAD tip `009be3c3` (pacote `59207a71`). Sem tip-port/merge/VPS.

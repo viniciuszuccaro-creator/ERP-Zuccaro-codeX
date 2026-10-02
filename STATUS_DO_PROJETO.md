@@ -1,3 +1,14 @@
+## CURSOR — #199 hotfix CI backend: compose PG só sob REQUIRE (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Causa | `npm test` backend falhava: compose PostgreSQL exigia DATABASE_URL sob `CI=true` |
+| Correção | REQUIRE só com `COMERCIAL_COMPOSE_REQUIRE=1` (job dedicado); npm test geral → skip |
+| Compose job | permanece fail-closed (PGlite+PG + trava 026) |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — #199 fechar CI compose + PG isolado + telas + parecer #201 (2026-10-02)
 
 | Campo | Valor |
