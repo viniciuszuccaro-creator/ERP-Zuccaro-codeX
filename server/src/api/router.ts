@@ -298,6 +298,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     } catch (error) { next(error); }
   });
 
+  router.post('/api/v1/produtos/:id/midias/:mediaId/principal', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media principal payload');
+      }
+      const result = await service.setMidiaPrincipal(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);
@@ -1246,6 +1257,7 @@ export function createApiRouter(deps: ApiDeps) {
           reconciliacaoReservasVencidas: true,
           reconciliacaoInfectados: true,
           scannerOptIn: true,
+          midiaPrincipal: true,
         },
       },
       cliente: {

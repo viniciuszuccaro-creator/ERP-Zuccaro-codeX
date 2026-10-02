@@ -12,10 +12,10 @@
 - Branch `cursor/comercial360-onda1-midia-liberacao-392b`: no DAM existente, liberacao interna QUARENTENA→APROVADO (exige CLEAN) e QUARENTENA→REJEITADO, separada da publicacao externa e do workflow Produto. Sem scanner real, sem Produto HTTP, sem VPS.
 - Rotas: POST `/api/v1/produtos/:id/midias/:mediaId/aprovar` e `.../rejeitar-conteudo`; RBAC `Cadastros.produto.aprovar-conteudo`.
 - Continuacao: PUBLICADO do Produto bloqueado enquanto midia em QUARENTENA; `reconcileInfectedMidias` limpa orfaos INFECTED em lote (service, sem rota nova).
-- UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar + Reconciliar vencidas/infectadas + banner de readiness via `/api/v1/meta` (prepared HTTP); Produto HTTP permanece opt-in/desligado.
+- UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar + Reconciliar vencidas/infectadas + Tornar principal + banner de readiness via `/api/v1/meta` (prepared HTTP); Produto HTTP permanece opt-in/desligado.
 - Bootstrap: Storage/scanner via env opt-in (`CLAMD_SOCKET_PATH` ausente = scanner desligado por padrao); documentado em `server/.env.example`.
-- HTTP: `POST /api/v1/produtos/midias/reconciliar-vencidas|reconciliar-infectadas`; meta `produto.dam` documenta capacidades sem ativar frontend HTTP.
-- Proximo gate Onda 1: **BLOCKED** Auth + Storage/clamd na VPS; nao ativar HTTP na 3080. Codigo seguro da liberacao/reconcile/UI/env/readiness esgotado (HEAD `0abf335b`).
+- HTTP: `POST /api/v1/produtos/midias/reconciliar-vencidas|reconciliar-infectadas`; `POST .../midias/:mediaId/principal`; meta `produto.dam` documenta capacidades sem ativar frontend HTTP.
+- Proximo gate Onda 1: **BLOCKED** Auth + Storage/clamd na VPS; nao ativar HTTP na 3080.
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.

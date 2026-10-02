@@ -209,15 +209,17 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   await produto.midiaScan('p', 'm');
   await produto.midiaApprove('p', 'm');
   await produto.midiaRejectContent('p', 'm');
+  await produto.midiaSetPrincipal('p', 'm');
   await produto.midiaReconcileExpired({ limit: 10 });
   await produto.midiaReconcileInfected({ limit: 5 });
-  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST']);
+  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST']);
   assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
     '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
     '/api/v1/produtos/p/midias/m/confirmar',
     '/api/v1/produtos/p/midias/m/verificar',
     '/api/v1/produtos/p/midias/m/aprovar',
     '/api/v1/produtos/p/midias/m/rejeitar-conteudo',
+    '/api/v1/produtos/p/midias/m/principal',
     '/api/v1/produtos/midias/reconciliar-vencidas',
     '/api/v1/produtos/midias/reconciliar-infectadas',
   ]);
@@ -228,8 +230,9 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   assert.deepEqual(JSON.parse(calls[3].body), {});
   assert.deepEqual(JSON.parse(calls[4].body), {});
   assert.deepEqual(JSON.parse(calls[5].body), {});
-  assert.deepEqual(JSON.parse(calls[6].body), { limit: 10 });
-  assert.deepEqual(JSON.parse(calls[7].body), { limit: 5 });
+  assert.deepEqual(JSON.parse(calls[6].body), {});
+  assert.deepEqual(JSON.parse(calls[7].body), { limit: 10 });
+  assert.deepEqual(JSON.parse(calls[8].body), { limit: 5 });
   assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
 });
 

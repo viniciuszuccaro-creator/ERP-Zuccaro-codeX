@@ -365,3 +365,45 @@ export async function reconcileInfectedProdutoMidias(deps: Dependencies, ctx: Re
   }
   return { inspected: candidates.length, rejected, raced };
 }
+
+/**
+ * Define mídia APROVADA como principal do produto (uma por produto/tenant).
+ * Não altera workflow/publicação e não grava URL assinada em foto_produto_url.
+ */
+export async function setProdutoMidiaPrincipal(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'editar', { requireStorage: false });
+  assertId(mediaId);
+  return deps.repo.withTransaction(async (executor) => {
+    const produto = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
+    if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const midias = await deps.repo.listMidias(scope, produtoId, executor);
+    const before = midias.find((row) => row.id === mediaId);
+    if (!before || before.status !== 'APROVADO' || !before.ativo) {
+      throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Approved media not found in tenant scope');
+    }
+    if (before.principal) {
+      return { id: before.id, status: before.status, principal: true };
+    }
+    const previousPrincipal = midias.find((row) => row.principal && row.id !== mediaId);
+    const after = await deps.repo.setMidiaPrincipal(scope, produtoId, mediaId, executor);
+    if (!after || !after.principal) {
+      throw new AppError(409, 'MEDIA_PRINCIPAL_CONFLICT', 'Media cannot become principal from current state');
+    }
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'update',
+      beforeData: {
+        principal: before.principal, status: before.status, versao: before.versao,
+        previous_principal_id: previousPrincipal?.id ?? null,
+      },
+      afterData: {
+        principal: after.principal, status: after.status, versao: after.versao,
+        previous_principal_id: previousPrincipal?.id ?? null,
+      },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return { id: after.id, status: after.status, principal: after.principal };
+  });
+}

@@ -123,6 +123,12 @@ export function getProdutoMediaLiberacaoActions(media, permissions = {}) {
   return actions;
 }
 
+/** Torna midia APROVADA a principal do produto. Exige editar; nao publica canal. */
+export function getProdutoMediaPrincipalAction(media, permissions = {}) {
+  if (permissions.canEdit !== true || media?.status !== 'APROVADO' || media?.principal === true) return null;
+  return { action: 'principal', label: 'Tornar principal' };
+}
+
 export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, version = 1, maxBytes = 10_000_000 }) {
   if (!groupId || !empresaId || !produtoId) throw new Error('Produto e empresa canonicos obrigatorios para midia');
   const originalName = String(file?.name || '');

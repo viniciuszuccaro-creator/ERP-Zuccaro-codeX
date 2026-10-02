@@ -71,6 +71,13 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     target: 'APROVADO' | 'REJEITADO',
     executor?: DbQueryExecutor,
   ): Promise<ProdutoMidia | null>;
+  /** Define mídia APROVADA como principal do produto (uma por produto). Não grava URL assinada. */
+  setMidiaPrincipal(
+    scope: Scope,
+    produtoId: string,
+    midiaId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoMidia | null>;
   /** Órfãos de conteúdo: midias em QUARENTENA com veredito INFECTED. */
   listInfectedQuarantinedMidias(scope: Scope, limit: number, executor?: DbQueryExecutor): Promise<Array<{ id: string; produto_id: string }>>;
 
@@ -509,6 +516,23 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       return structuredClone(next);
     }
     const next: ProdutoMidia = { ...row, status: 'REJEITADO', ativo: false, principal: false };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async setMidiaPrincipal(scope: Scope, produtoId: string, midiaId: string): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    if (!row || !scope.empresaId || row.group_id !== scope.groupId || row.empresa_id !== scope.empresaId
+      || row.produto_id !== produtoId || !row.ativo || row.status !== 'APROVADO') {
+      return null;
+    }
+    for (const [id, current] of this.midias.entries()) {
+      if (current.group_id === scope.groupId && current.empresa_id === scope.empresaId
+        && current.produto_id === produtoId && current.principal) {
+        this.midias.set(id, structuredClone({ ...current, principal: false }));
+      }
+    }
+    const next: ProdutoMidia = { ...this.midias.get(midiaId)!, principal: true };
     this.midias.set(midiaId, structuredClone(next));
     return structuredClone(next);
   }
