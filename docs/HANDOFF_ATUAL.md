@@ -2,7 +2,11 @@
 
 Base: #200 `619bddd0` (que incorpora #199; migration Expedição 036). #178 segue `4f8c6593` separado. O ensaio `git merge-tree` ainda aponta conflitos semânticos em router/app/testes e SPA; não houve merge de PR, aplicação de migration, VPS ou importação. A 026 mantém seu preflight histórico.
 
-As portas existentes de Pedido/estoque receberam o `DbQueryExecutor` ativo do `ExpedicaoService`, sem abrir transação aninhada. Teste PGlite força a porta de Pedido a gravar, a de estoque a enxergar essa gravação e falhar, e verifica rollback de ambos os efeitos e de Romaneio/Entrega. PGlite 4/4; servidor completo 301 pass/0 fail/17 skip; servidor typecheck/build, audit/lint/build raiz e diff-check passaram. Typecheck raiz falha em arquivos fora do diff; suíte SPA/VPS raiz não se aplica ao código servidor deste subgate. A mudança **não ativa** efeitos reais: defaults `reserved` e gates de despacho/devolução vinculados seguem fail-closed. Próximo lote: compor semanticamente #178, validar a sequência 025–036 em banco isolado e implementar adaptadores persistentes com unidades/quantidades por item, auditoria e retry; só então pedir revisão do HEAD integrado. Commit/CI: registrar após publicação.
+As portas existentes de Pedido/estoque receberam o `DbQueryExecutor` ativo do `ExpedicaoService`, sem abrir transação aninhada. Teste PGlite força a porta de Pedido a gravar, a de estoque a enxergar essa gravação e falhar, e verifica rollback de ambos os efeitos e de Romaneio/Entrega. Teste adicional injeta falha na devolução após parcial e verifica rollback de movimento/status. PGlite 5/5; servidor completo do primeiro commit 301 pass/0 fail/17 skip; servidor typecheck/build, audit/lint/build raiz e diff-check passaram. CI do primeiro commit `70d1e75a` SUCCESS. Typecheck raiz falha em arquivos fora do diff; suíte SPA/VPS raiz não se aplica ao código servidor deste subgate. Ensaio PGlite efêmero aplicou 001–024 + dez migrations comerciais 025–035 da #178 + 036 Expedição sem erro; isso não libera a 026 em banco com histórico. A mudança **não ativa** efeitos reais: defaults `reserved` e gates de despacho/devolução vinculados seguem fail-closed. Próximo lote: compor semanticamente #178 e implementar adaptadores persistentes com unidades/quantidades por item, auditoria e retry; só então pedir revisão do HEAD integrado. CI do commit adicional: conferir após push.
+
+---
+
+Atualização do teste adicional: suíte completa do servidor reexecutada, **302 pass / 0 fail / 17 skip** (o 301 acima corresponde ao primeiro commit). PGlite 5/5.
 
 ---
 
