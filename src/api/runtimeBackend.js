@@ -62,8 +62,27 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
   'SetorAtividade',
 ]);
 
+/** Entidades Expedição no BFF — opt-in via VITE_ERP_HTTP_EXPEDICAO=true (modo http). */
+export const HTTP_EXPEDICAO_ENTITIES = Object.freeze([
+  'Entrega',
+  'Romaneio',
+  'SeparacaoConferencia',
+]);
+
+/**
+ * @param {ImportMetaEnv | Record<string, string | undefined>} [env]
+ * @returns {boolean}
+ */
+export function isHttpExpedicaoEnabled(env = import.meta.env) {
+  return resolveErpBackendMode(env) === 'http'
+    && String(env?.VITE_ERP_HTTP_EXPEDICAO || '').trim().toLowerCase() === 'true';
+}
+
 /** Produto HTTP e explicito no formulario; consumidores legados mantem sua fonte. */
 export function resolveHttpPilotEntities(env = import.meta.env) {
-  void env;
-  return [...HTTP_PILOT_ENTITIES];
+  const base = [...HTTP_PILOT_ENTITIES];
+  if (isHttpExpedicaoEnabled(env)) {
+    base.push(...HTTP_EXPEDICAO_ENTITIES);
+  }
+  return base;
 }

@@ -1,3 +1,109 @@
+## CURSOR — #199 CI verde tip dd8ee9d1 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| HEAD | `dd8ee9d1` |
+| CI push | [37022604642](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37022604642) **success** |
+| CI PR | [37022611912](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37022611912) **success** |
+| Jobs | frontend · backend · `expedicao-comercial-compose` (PGlite+PG + trava 026) |
+| Parecer #201 | `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — **não** estende #200 |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
+## CURSOR — #199 hotfix CI backend: compose PG só sob REQUIRE (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Causa | `npm test` backend falhava: compose PostgreSQL exigia DATABASE_URL sob `CI=true` |
+| Correção | REQUIRE só com `COMERCIAL_COMPOSE_REQUIRE=1` (job dedicado); npm test geral → skip |
+| Compose job | permanece fail-closed (PGlite+PG + trava 026) |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
+## CURSOR — #199 fechar CI compose + PG isolado + telas + parecer #201 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| HEAD | `009be3c3` (pacote `59207a71`) |
+| Causa CI | Job `expedicao-comercial-compose` falhava com teste **PASS** porque `grep` de skip casava `# skipped 0` (falso positivo) |
+| Correção CI | Grep só `# skipped [1-9]…` / TAP `# SKIP`; exige pass; **não** removeu teste nem enfraqueceu assertions |
+| Compose PG | `runtime11-expedicao-compose-postgres.test.ts` + step CI postgres:16; SHA Comercial **`4f8c6593`**; trava **026** (hash tip) — **PASS** local |
+| Telas | UI Nova Entrega→FormularioEntrega; cards; fluxo HTTP criar→sep→romaneio→despacho→parcial→total→ocorrência→devolução + `page.reload` — **PASS** |
+| Parecer #201 | `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — SHA `d20a6dde`; **não** estende #200 |
+| Comercial 360 | Encaminhado à **tarefa existente** (código no workspace dela); confirmação de recebimento + primeira ação lá |
+| Legado | Continua no executor com staging privado — **sem** tarefa duplicada |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
+## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| HEAD | `f969e49e` |
+| Reload | Playwright `page.reload()` real + revalidação PG — **PASS** |
+| CI | Job `expedicao-comercial-compose`: fetch tip Comercial **`4f8c6593`**; `COMERCIAL_COMPOSE_REQUIRE=1`; skip/ausência = **fail** (provado) |
+| Telas ERP | `tests/expedicao-erp-telas-pg.playwright.test.mjs` — SPA `/Expedicao` × BFF+PGlite **PASS** (fluxo+RBAC+empresa; host `localhost` evita redirect HTTPS do Layout) |
+| Parecer #178 | permanece `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (sem extensão) |
+| Parecer #200 | **novo** `docs/PARECER_CODEX_200_SHA_619bddd0.md` — SHA exato `619bddd0`; tip-port **NÃO** |
+| Migration | **036** — descrição #199 deve citar 036 (não 025); ferramenta ManagePullRequest bloqueada neste run → canal documental |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
+## CURSOR — #199 complementar UI BFF + composição Comercial (2026-10-01T19:50Z)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| UI BFF | FormularioEntrega create; Separacao; Romaneio; Detalhes parcial/total/assinatura; Ocorrencia frustrada; Comprovante; Devolucao |
+| Erros | `formatExpedicaoHttpError` nas telas HTTP |
+| Provas | Playwright reload + RBAC + isolamento + erro 404; PGlite compose 025–035+036 |
+| Coordenação | `docs/EXPEDICAO_COORDENACAO_CODEX.md` |
+| Parecer Codex | SHA **`4f8c6593506f681689e021226ab024f57c7aede9`** — `docs/PARECER_CODEX_178_SHA_4f8c6593.md` |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
+## CURSOR — #199 Expedição persistência canônica (2026-10-01T18:00Z)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| Migration | **`036_expedicao_entregas_romaneios.sql`** (renumerada; comercial Codex #178 reserva **025–035**) |
+| Implementado | repos in-memory+PG, `ExpedicaoService`, HTTP `/entregas\|romaneios`, auditoria TX, telas → API (`VITE_ERP_HTTP_EXPEDICAO`); bridge `entities.Entrega` no hybrid |
+| Portas Pedido/estoque | Contrato em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` — default `reserved`; **sem tip-port** na branch Codex |
+| Testes PG | `runtime11-expedicao-pglite` — tenant/RBAC/concorrência/rollback/despacho repetido/parcial/devolução **PASS** |
+| Navegador | `tests/expedicao-api-pg.playwright.test.mjs` — **API_HTTP_PGLITE PASS** (≠ SPA_LOCAL / ≠ mock) |
+| Mocks identificados | `runtime11-expedicao-http*` = in-memory |
+| Candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` atualizada #192–#199 |
+| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
+| HEAD / CI | `a48e57fe` — `erp-runtime-ci` frontend+backend **SUCCESS** |
+| Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
+
+---
+
+## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/expedicao-persistencia-canonica-392b` |
+| Inventário | Sem Entrega/Romaneio no server até 024; SPA/policies/telas existentes reutilizadas |
+| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) → **superseded by 036** |
+| Multiempresa/RBAC/auditoria | `groupId∧empresaId`; actions `conferir/expedir/entregar/ocorrencia`; audit create/change_status |
+| Pedido/estoque | Portas **reserved** (coordenação Codex; sem tip-port) |
+| UI | Flag `VITE_ERP_HTTP_EXPEDICAO`; Separacao/Romaneio/Detalhes/Reversa/Integracao → API canônica |
+| Testes | `runtime11-expedicao-*` HTTP+migration+bridge PASS; PG e2e gated por `DATABASE_URL` |
+| SPA local | **≠** persistência real (base UX apenas) |
+| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
+| Merge/VPS | **Bloqueado** até gate; migration sem aplicação operacional |
+
+---
+
 ## CURSOR — pacote #197 integrado: LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
 
 | Campo | Valor |

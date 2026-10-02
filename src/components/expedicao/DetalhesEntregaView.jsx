@@ -1,5 +1,6 @@
 ﻿import React from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import {
   isEntregaElegivelLogisticaReversa,
   resolveRegistroEntregaFinal,
 } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 import { useWindow } from "@/components/lib/useWindow";
 
 /**
@@ -168,14 +170,27 @@ export default function DetalhesEntregaView({
             return;
           }
         }
-        const atualizada = await updateInContext("Entrega", entrega.id, resolved.patch);
+        let atualizada;
+        if (isHttpExpedicaoMode) {
+          const result = await httpApiClient.expedicao.registrar(entrega.id, {
+            confirmed: true,
+            modo,
+            comprovante: entrega.comprovante_entrega || {},
+            quantidade_entregue: quantidadeParcial,
+            motivo: motivoOcorrencia,
+            idempotency_key: `reg:${entrega.id}:${modo}:${quantidadeParcial || motivoOcorrencia || 'total'}`,
+          });
+          atualizada = result?.entrega || result;
+        } else {
+          atualizada = await updateInContext("Entrega", entrega.id, resolved.patch);
+        }
         await auditarEntrega({
           acao: "DetalhesEntrega.alterar_status",
           descricao: `Status da entrega alterado para ${resolved.patch.status}.`,
           dadosNovos: atualizada || resolved.patch,
         });
         queryClient.invalidateQueries({ queryKey: ["entregas"] });
-        toast.success(`Status alterado para ${resolved.patch.status}.`);
+        toast.success(`Status alterado para ${atualizada?.status || resolved.patch.status}.`);
         return;
       } catch (policyError) {
         await auditarEntrega({
@@ -184,7 +199,7 @@ export default function DetalhesEntregaView({
           sucesso: false,
           dadosNovos: { status_novo: novoStatus, motivo: "policy_fail_closed" },
         });
-        toast.error(String(policyError?.message || policyError));
+        toast.error(formatExpedicaoHttpError(policyError));
         return;
       }
     }
@@ -278,7 +293,26 @@ export default function DetalhesEntregaView({
       if (!hasProvaEntrega({ ...entrega, ...patch })) {
         throw new Error("Entrega exige comprovante (recebedor e prova).");
       }
-      const atualizada = await updateInContext("Entrega", entrega.id, patch);
+      let atualizada;
+      if (isHttpExpedicaoMode) {
+        const result = await httpApiClient.expedicao.registrar(entrega.id, {
+          confirmed: true,
+          modo: 'total',
+          comprovante: {
+            nome_recebedor: nomeRecebedor,
+            documento_recebedor: documentoRecebedor,
+            foto_comprovante: dadosAssinatura.assinatura_base64,
+            assinatura_digital: dadosAssinatura.assinatura_base64,
+            data_hora_recebimento: dadosAssinatura.data_hora_assinatura,
+            latitude_entrega: dadosAssinatura.latitude || null,
+            longitude_entrega: dadosAssinatura.longitude || null,
+          },
+          idempotency_key: `assinatura:${entrega.id}:${dadosAssinatura.data_hora_assinatura || Date.now()}`,
+        });
+        atualizada = result?.entrega || result;
+      } else {
+        atualizada = await updateInContext("Entrega", entrega.id, patch);
+      }
       await auditarEntrega({
         acao: "DetalhesEntrega.confirmar_entrega",
         descricao: "Entrega confirmada com assinatura digital.",
@@ -292,7 +326,7 @@ export default function DetalhesEntregaView({
       toast.success("Entrega confirmada com assinatura.");
     },
     onError: (error) => {
-      if (error?.message !== "Confirmacao cancelada pelo usuario.") toast.error(error.message || "Erro ao confirmar entrega.");
+      if (error?.message !== "Confirmacao cancelada pelo usuario.") toast.error(formatExpedicaoHttpError(error));
     }
   });
 

@@ -61,6 +61,10 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import { InMemoryExpedicaoRepository } from './repositories/inMemoryExpedicaoRepository.js';
+import { PostgresExpedicaoRepository } from './repositories/postgresExpedicaoRepository.js';
+import { ExpedicaoService } from './services/expedicaoService.js';
+import type { ExpedicaoEstoquePort, ExpedicaoPedidoSideEffectPort } from './repositories/expedicaoTypes.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
@@ -82,6 +86,9 @@ export type CreateAppOptions = {
   costPort?: ComercialCostPort | null;
   /** Config de alçada (à vista). Null/omitido = fail-closed (não libera desconto). */
   alcadaConfig?: ComercialAlcadaConfigPort | null;
+  /** Portas reservadas Expedição ↔ Pedido/estoque (coordenação Codex). */
+  expedicaoPedidoPort?: ExpedicaoPedidoSideEffectPort;
+  expedicaoEstoquePort?: ExpedicaoEstoquePort;
 };
 
 export function createApp(options: CreateAppOptions) {
@@ -112,6 +119,7 @@ export function createApp(options: CreateAppOptions) {
   const condicaoPagamentoRepo = useMemory ? new InMemoryCondicaoPagamentoRepository() : new PostgresCondicaoPagamentoRepository(db);
   const orcamentoRepo = useMemory ? new InMemoryOrcamentoRepository() : new PostgresOrcamentoRepository(db);
   const pedidoRepo = useMemory ? new InMemoryPedidoRepository() : new PostgresPedidoRepository(db);
+  const expedicaoRepo = useMemory ? new InMemoryExpedicaoRepository() : new PostgresExpedicaoRepository(db);
 
   const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
@@ -180,6 +188,14 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+  );
+  const expedicaoService = new ExpedicaoService(
+    expedicaoRepo,
+    auditRepo,
+    tenantGuard,
+    rbacGuard,
+    options.expedicaoPedidoPort,
+    options.expedicaoEstoquePort,
   );
   const obraService = new ObraService(
     obraRepo,
@@ -261,6 +277,7 @@ export function createApp(options: CreateAppOptions) {
     condicaoPagamentoService,
     orcamentoService,
     pedidoService,
+    expedicaoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -280,6 +297,7 @@ export function createApp(options: CreateAppOptions) {
     condicaoPagamentoService,
     orcamentoService,
     pedidoService,
+    expedicaoService,
     auditRepo,
     tenantGuard,
     produtoRelationGuard,

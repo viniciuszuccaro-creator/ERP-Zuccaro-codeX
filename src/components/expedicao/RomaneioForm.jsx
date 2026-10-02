@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -207,6 +208,34 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
           dadosNovos: { reuse_id: fluxo.reuse.id },
         });
         return fluxo.reuse;
+      }
+
+      if (isHttpExpedicaoMode) {
+        const result = await httpApiClient.expedicao.criarRomaneio({
+          confirmed: true,
+          motorista_nome: fluxo.romaneioRecord.motorista || motoristaNome,
+          motorista_id: fluxo.romaneioRecord.motorista_id || null,
+          veiculo: fluxo.romaneioRecord.veiculo,
+          placa: fluxo.romaneioRecord.placa,
+          tipo_veiculo: fluxo.romaneioRecord.tipo_veiculo,
+          instrucoes_motorista: fluxo.romaneioRecord.instrucoes_motorista,
+          checklist_saida: checklist,
+          entregas_ids: entregasSelecionadas.map((e) => e.id),
+          despachar: true,
+          idempotency_key: `rom-form:${effectiveEmpresaId}:${entregasSelecionadas.map((e) => e.id).sort().join(",")}`,
+        });
+        const romaneioHttp = result?.romaneio || result;
+        await auditRomaneio({
+          acao: result?.reused ? "Romaneio.gerar.retry" : "Romaneio.gerar",
+          sucesso: true,
+          dadosNovos: {
+            romaneio_id: romaneioHttp?.id,
+            persistencia: "http_canonica",
+            pedido_side_effect: result?.pedidoSideEffect || "reserved",
+            estoque_side_effect: result?.estoqueSideEffect || "reserved",
+          },
+        });
+        return romaneioHttp;
       }
 
       const romaneio = await createInContext("Romaneio", {

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -122,6 +124,33 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         ],
       };
       assertEntregaOnUpdate({ before: entrega, patch: entregaPatch });
+      if (isHttpExpedicaoMode) {
+        await httpApiClient.expedicao.devolucao(entrega.id, {
+          confirmed: true,
+          motivo: motivoLimpo,
+          acao,
+          quantidade_devolvida: Number(entrega.quantidade_total || entrega.volumes || 1),
+          idempotency_key: `dev:${entrega.id}:${motivoLimpo}:${acao}`,
+        });
+        etapasOk.entrega = true;
+        // Estoque/CR/notificação canônicos reservados no BFF; etapas locais só em SPA.
+        etapasOk.financeiro = true;
+        etapasOk.estoque = true;
+        etapasOk.notificacao = true;
+        await auditReversa({
+          acao: "Entrega.logisticaReversa.processar",
+          failClosed: true,
+          detalhes: {
+            motivo: motivoLimpo,
+            acao,
+            pedido_id: entrega.pedido_id || null,
+            etapas_ok: etapasOk,
+            persistencia: "http_canonica",
+            side_effects: "reserved",
+          },
+        });
+        return true;
+      }
       await updateInContext("Entrega", entrega.id, entregaPatch);
       etapasOk.entrega = true;
 
@@ -213,7 +242,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
     },
     onError: (error) => {
       auditReversa({ acao: "Entrega.logisticaReversa.processar.erro", sucesso: false, motivo: error?.message || "erro_processar" });
-      toast({ title: "Erro ao processar devolução", description: error?.message || "Tente novamente", variant: "destructive" });
+      toast({ title: "Erro ao processar devolução", description: formatExpedicaoHttpError(error), variant: "destructive" });
     }
   });
 

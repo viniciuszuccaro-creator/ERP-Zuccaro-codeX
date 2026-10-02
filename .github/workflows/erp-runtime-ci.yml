@@ -62,3 +62,98 @@ jobs:
           psql postgresql://erp_test:erp_test@localhost:5432/postgres -c "CREATE DATABASE erp_r07b_compat;"
           bash scripts/vps/prove-r07b-api-schema-compat.sh
           grep -q 'R07B_API_COMPAT_STATUS=OK' docs/vps/evidence/r07b-api-schema-016-024-compat.txt
+
+  # Integração Expedição(#199) × Comercial(#178): fetch explícito da ref; skip/ausência = fail.
+  # Camadas: PGlite (rápido) + PostgreSQL isolado (prova real + trava 026 tip Comercial).
+  expedicao-comercial-compose:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: erp_test, POSTGRES_PASSWORD: erp_test, POSTGRES_DB: erp_test }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U erp_test -d erp_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    defaults:
+      run: { working-directory: server }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
+      - run: npm install
+      - name: Fetch Comercial migrations ref (obrigatório)
+        working-directory: .
+        env:
+          COMERCIAL_BRANCH: codex/comercial-corrige-parecer-155
+          # Tip #178 documentado no parecer Cursor (não tip-port).
+          COMERCIAL_SHA: 4f8c6593506f681689e021226ab024f57c7aede9
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$COMERCIAL_BRANCH" "$COMERCIAL_SHA"
+          git rev-parse --verify "$COMERCIAL_SHA"
+          git merge-base --is-ancestor "$COMERCIAL_SHA" "origin/$COMERCIAL_BRANCH" \
+            || git rev-parse "origin/$COMERCIAL_BRANCH"
+          echo "COMERCIAL_MIGRATIONS_REF=$COMERCIAL_SHA" >> "$GITHUB_ENV"
+      - name: Compose PGlite 025-035 + 036 (fail se ref ausente ou suite skip)
+        env:
+          COMERCIAL_COMPOSE_REQUIRE: '1'
+          # Prefer SHA pinado pelo step anterior; fallback explícito para não silenciar.
+          COMERCIAL_MIGRATIONS_REF: ${{ env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9' }}
+        run: |
+          set -euo pipefail
+          test -n "${COMERCIAL_MIGRATIONS_REF}"
+          git rev-parse --verify "$COMERCIAL_MIGRATIONS_REF"
+          OUT="$(mktemp)"
+          # node:test TAP: exigir pass e rejeitar skip real (não confundir "# skipped 0").
+          set +e
+          npx tsx --test tests/runtime11-expedicao-compose-migrations.test.ts 2>&1 | tee "$OUT"
+          TEST_EC=${PIPESTATUS[0]}
+          set -e
+          if [[ "$TEST_EC" -ne 0 ]]; then
+            echo "::error::Teste de composição PGlite falhou (exit $TEST_EC)"
+            exit "$TEST_EC"
+          fi
+          # Skip real: contador > 0 OU linha TAP "ok … # SKIP"
+          if grep -Eq '^# skipped [1-9][0-9]*$' "$OUT" \
+            || grep -Eqi '(^| )# SKIP( |$)' "$OUT" \
+            || grep -Eqi 't\.skip\(|TEST-SKIP' "$OUT"; then
+            echo "::error::Suíte de composição Comercial+Expedição foi ignorada — não é aprovação"
+            exit 1
+          fi
+          if ! grep -Eq '^# pass [1-9][0-9]*$' "$OUT" && ! grep -Eq '^ok [1-9]' "$OUT"; then
+            echo "::error::Nenhum pass detectado na composição PGlite"
+            exit 1
+          fi
+          echo "COMPOSE_PGLITE_STATUS=OK ref=$COMERCIAL_MIGRATIONS_REF"
+      - name: Compose PostgreSQL isolado 025-035 + 036 (trava 026 tip Comercial)
+        env:
+          COMERCIAL_COMPOSE_REQUIRE: '1'
+          COMERCIAL_MIGRATIONS_REF: ${{ env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9' }}
+          DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test
+        run: |
+          set -euo pipefail
+          test -n "${COMERCIAL_MIGRATIONS_REF}"
+          git rev-parse --verify "$COMERCIAL_MIGRATIONS_REF"
+          OUT="$(mktemp)"
+          set +e
+          npx tsx --test tests/runtime11-expedicao-compose-postgres.test.ts 2>&1 | tee "$OUT"
+          TEST_EC=${PIPESTATUS[0]}
+          set -e
+          if [[ "$TEST_EC" -ne 0 ]]; then
+            echo "::error::Teste de composição PostgreSQL isolado falhou (exit $TEST_EC)"
+            exit "$TEST_EC"
+          fi
+          if grep -Eq '^# skipped [1-9][0-9]*$' "$OUT" \
+            || grep -Eqi '(^| )# SKIP( |$)' "$OUT" \
+            || grep -Eqi 't\.skip\(|TEST-SKIP' "$OUT"; then
+            echo "::error::Suíte PostgreSQL de composição foi ignorada — não é aprovação"
+            exit 1
+          fi
+          if ! grep -Eq '^# pass [1-9][0-9]*$' "$OUT" && ! grep -Eq '^ok [1-9]' "$OUT"; then
+            echo "::error::Nenhum pass detectado na composição PostgreSQL"
+            exit 1
+          fi
+          echo "COMPOSE_POSTGRES_STATUS=OK ref=$COMERCIAL_MIGRATIONS_REF"

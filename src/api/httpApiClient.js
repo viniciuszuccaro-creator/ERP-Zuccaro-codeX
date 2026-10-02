@@ -230,6 +230,107 @@ export function createHttpApiClient(options = {}) {
     SetorAtividade: createCrudEntity('/api/v1/setores-atividade', {
       searchKeys: ['nome', 'search'],
     }),
+    Entrega: {
+      async list(orderBy, limit = 100) {
+        void orderBy;
+        const page = await request('/api/v1/entregas', { query: { limit }, unwrap: false });
+        return page?.data || [];
+      },
+      async filter(query = {}, orderBy, limit = 100) {
+        void orderBy;
+        const page = await request('/api/v1/entregas', {
+          query: {
+            limit,
+            search: query.search || query.busca || query.q || query.numero_pedido || query.cliente_nome,
+            status: query.status,
+            pedidoId: query.pedido_id || query.pedidoId,
+            cidade: query.cidade,
+            clienteId: query.cliente_id || query.clienteId,
+            offset: query.offset,
+          },
+          unwrap: false,
+        });
+        let rows = page?.data || [];
+        if (query.id) rows = rows.filter((row) => String(row.id) === String(query.id));
+        return rows;
+      },
+      async get(id) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`); },
+      async create(data) { return request('/api/v1/entregas', { method: 'POST', body: data }); },
+      async update(id, data) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { method: 'PATCH', body: data }); },
+    },
+    Romaneio: {
+      async list(orderBy, limit = 100) {
+        void orderBy;
+        const page = await request('/api/v1/romaneios', { query: { limit }, unwrap: false });
+        return page?.data || [];
+      },
+      async filter(query = {}, orderBy, limit = 100) {
+        void orderBy;
+        const page = await request('/api/v1/romaneios', { query: { limit, offset: query.offset }, unwrap: false });
+        let rows = page?.data || [];
+        if (query.id) rows = rows.filter((row) => String(row.id) === String(query.id));
+        return rows;
+      },
+      async get(id) { return request(`/api/v1/romaneios/${encodeURIComponent(id)}`); },
+      async create(data) {
+        const payload = {
+          confirmed: true,
+          motorista_nome: data.motorista_nome || data.motorista,
+          motorista_id: data.motorista_id || null,
+          veiculo: data.veiculo,
+          placa: data.placa,
+          tipo_veiculo: data.tipo_veiculo || 'Caminhao',
+          instrucoes_motorista: data.instrucoes_motorista,
+          checklist_saida: data.checklist_saida || {
+            documentos_ok: true,
+            veiculo_ok: true,
+            carga_conferida: true,
+            combustivel_ok: true,
+          },
+          entregas_ids: data.entregas_ids || [],
+          despachar: data.despachar !== false,
+          idempotency_key: data.idempotency_key,
+        };
+        const result = await request('/api/v1/romaneios', { method: 'POST', body: payload });
+        return result?.romaneio || result;
+      },
+      async update(id, data) {
+        void id; void data;
+        throw Object.assign(new Error('Romaneio update via PATCH nao suportado; use endpoints de dominio'), { status: 405 });
+      },
+    },
+    SeparacaoConferencia: {
+      async create(data) {
+        const entregaId = data.entrega_id;
+        if (!entregaId) throw Object.assign(new Error('entrega_id obrigatorio'), { status: 422 });
+        const checklist = data.checklist || {};
+        const itens = (Array.isArray(data.itens) ? data.itens : []).map((item) => ({
+          produto_id: item.produto_id || null,
+          descricao: item.descricao || item.produto_descricao || 'Item',
+          unidade_sigla: item.unidade_separada || item.unidade || item.unidade_medida || 'UN',
+          quantidade_pedida: item.quantidade_pedida ?? item.quantidade ?? 0,
+          quantidade_separada: item.quantidade_separada ?? 0,
+        }));
+        const result = await request(`/api/v1/entregas/${encodeURIComponent(entregaId)}/separacao`, {
+          method: 'POST',
+          body: {
+            confirmed: true,
+            checklist: {
+              conferiu_quantidade: checklist.conferiu_quantidade === true,
+              conferiu_qualidade: checklist.conferiu_qualidade === true,
+              conferiu_embalagem: checklist.conferiu_embalagem === true,
+              conferiu_etiquetas: checklist.conferiu_etiquetas === true,
+              conferiu_documentos: checklist.conferiu_documentos === true,
+            },
+            itens,
+            idempotency_key: data.idempotency_key,
+          },
+        });
+        return result?.separacao || result;
+      },
+      async filter() { return []; },
+      async list() { return []; },
+    },
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -355,6 +456,31 @@ export function createHttpApiClient(options = {}) {
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
+
+  const expedicao = {
+    listEntregas({ limit = 50, offset = 0, search, status, pedidoId, cidade, clienteId, signal } = {}) {
+      return request('/api/v1/entregas', { query: { limit, offset, search, status, pedidoId, cidade, clienteId }, signal, unwrap: false });
+    },
+    getEntrega(id, { signal } = {}) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { signal }); },
+    createEntrega(payload, { signal } = {}) { return request('/api/v1/entregas', { method: 'POST', body: payload, signal }); },
+    patchEntrega(id, payload, { signal } = {}) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, signal }); },
+    historyEntrega(id, { signal } = {}) { return request(`/api/v1/entregas/${encodeURIComponent(id)}/historico`, { signal }); },
+    separacao(id, payload, { signal } = {}) {
+      return request(`/api/v1/entregas/${encodeURIComponent(id)}/separacao`, { method: 'POST', body: payload, signal });
+    },
+    registrar(id, payload, { signal } = {}) {
+      return request(`/api/v1/entregas/${encodeURIComponent(id)}/registrar`, { method: 'POST', body: payload, signal });
+    },
+    devolucao(id, payload, { signal } = {}) {
+      return request(`/api/v1/entregas/${encodeURIComponent(id)}/devolucao`, { method: 'POST', body: payload, signal });
+    },
+    listRomaneios({ limit = 50, offset = 0, signal } = {}) {
+      return request('/api/v1/romaneios', { query: { limit, offset }, signal, unwrap: false });
+    },
+    getRomaneio(id, { signal } = {}) { return request(`/api/v1/romaneios/${encodeURIComponent(id)}`, { signal }); },
+    criarRomaneio(payload, { signal } = {}) { return request('/api/v1/romaneios', { method: 'POST', body: payload, signal }); },
+  };
+
   const clientes = {
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
@@ -380,10 +506,15 @@ export function createHttpApiClient(options = {}) {
       });
     },
   };
-  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
+  /** @type {Record<string, object>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;
+  }
+  // Expedição: rotas preparadas sempre no mapa entities; o hybrid client
+  // só as expõe quando VITE_ERP_HTTP_EXPEDICAO=true (resolveHttpPilotEntities).
+  for (const name of ['Entrega', 'Romaneio', 'SeparacaoConferencia']) {
+    if (entityRoutes[name]) entities[name] = entityRoutes[name];
   }
 
   return {
@@ -400,6 +531,7 @@ export function createHttpApiClient(options = {}) {
     },
     orcamentos,
     pedidos,
+    expedicao,
     clientes,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,

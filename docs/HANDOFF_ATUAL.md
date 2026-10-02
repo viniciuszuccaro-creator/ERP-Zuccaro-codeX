@@ -1,3 +1,33 @@
+## CURSOR — #199 CI verde tip dd8ee9d1 (2026-10-02)
+
+CI push/PR **success** no tip `dd8ee9d1` (frontend, backend, `expedicao-comercial-compose`). Hotfix REQUIRE + pacote compose/telas/#201 entregues. Parecer #201 `d20a6dde` não estende #200. Tip-port/merge/VPS bloqueados. Canal documental atualizado.
+
+---
+
+## CURSOR — #199 hotfix CI backend compose PG REQUIRE (2026-10-02)
+
+Backend `npm test` falhava: compose PG exigia DATABASE_URL sob CI. REQUIRE agora só com `COMERCIAL_COMPOSE_REQUIRE=1`. Job `expedicao-comercial-compose` permanece fail-closed. Sem tip-port/merge/VPS.
+
+---
+
+## CURSOR — #199 fechar integração: CI compose + PG + telas + #201 (2026-10-02)
+
+Causa CI: grep de skip batia em `# skipped 0` → falso fail com teste PASS. Corrigido (só skip real). Compose **PGlite + PostgreSQL isolado** com SHA Comercial `4f8c6593` e trava histórica **026** — **PASS**. Telas: Nova Entrega→FormularioEntrega; fluxo completo + reload — **PASS**. Parecer **#201** SHA `d20a6dde` em `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — **não** estende #200. Comercial 360 → tarefa existente. Legado → executor staging. HEAD tip `009be3c3` (pacote `59207a71`). Sem tip-port/merge/VPS.
+
+---
+
+## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+
+Reload Playwright com `page.reload()` real — **PASS**. Job CI `expedicao-comercial-compose` fetch tip Comercial `4f8c6593`; ref ausente/skip = fail. SPA `/Expedicao` × BFF+PGlite **PASS** (`localhost`). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Descrição #199: migration **036** (não 025) — ManagePullRequest bloqueado; corpo canônico no STATUS/HANDOFF. Sem tip-port/merge/VPS. HEAD `f969e49e`.
+
+---
+
+## CURSOR — pacote complementar #199 UI BFF + composição (2026-10-01T19:50Z)
+
+Wire completo separação/expedição/parcial/total/ocorrência/devolução via BFF canônico (estados suportados). Prova Playwright: reload, RBAC 403, isolamento empresa 404, erro com code. Composição mig comercial 025–035 + 036 PGlite. Parecer Codex SHA `4f8c6593` em `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (canal documental). Sem tip-port. Merge/VPS bloqueado.
+
+---
+
 ## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
 
 Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.
