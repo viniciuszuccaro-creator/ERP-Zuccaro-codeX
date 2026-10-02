@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
+import { getProdutoMediaDeactivateAction, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -193,6 +193,16 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
       }
     }, 'Midia definida como principal');
   };
+  const inativarMidia = (mediaId) => {
+    if (!canEdit || busy) return;
+    if (!window.confirm('Inativar esta midia? O arquivo historico permanece no Storage.')) return;
+    run(async () => {
+      const result = await api.midiaDeactivate(produtoId, mediaId);
+      if (result?.ativo !== false && result?.status !== 'INATIVO') {
+        throw new Error('Inativacao de midia nao concluida');
+      }
+    }, 'Midia inativada');
+  };
   const reconciliarMidias = (kind) => {
     if (busy) return;
     if (kind === 'expired' && !canDeactivate) return;
@@ -313,12 +323,13 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
       {media.map((row) => {
         const liberacao = getProdutoMediaLiberacaoActions(row, { canApprove });
         const principalAction = getProdutoMediaPrincipalAction(row, { canEdit });
+        const deactivateAction = getProdutoMediaDeactivateAction(row, { canEdit });
         return <div key={row.id} className="flex flex-col gap-2 border-b py-2 text-sm">
           <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
             <span className="min-w-0 break-all">{row.nome_arquivo}</span>
             <span className="min-w-0 break-words sm:text-right">{getProdutoMediaScanLabel(row)} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
           </div>
-          {(liberacao.length > 0 || principalAction) && <div className="flex flex-wrap gap-2">
+          {(liberacao.length > 0 || principalAction || deactivateAction) && <div className="flex flex-wrap gap-2">
             {liberacao.map((action) => <Button key={action.action} type="button" variant="outline" size="sm"
               disabled={busy} onClick={() => liberarMidia(row.id, action.action)}
               data-action={`produto-midia-${action.action}`}
@@ -329,6 +340,11 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
               data-action="produto-midia-principal"
               data-permission="Cadastros.Produto.editar"
               data-sensitive>{principalAction.label}</Button>}
+            {deactivateAction && <Button type="button" variant="outline" size="sm"
+              disabled={busy} onClick={() => inativarMidia(row.id)}
+              data-action="produto-midia-inativar"
+              data-permission="Cadastros.Produto.editar"
+              data-sensitive>{deactivateAction.label}</Button>}
           </div>}
         </div>;
       })}

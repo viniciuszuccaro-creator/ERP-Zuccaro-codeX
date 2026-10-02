@@ -489,6 +489,76 @@ test('HTTP R10 DAM: liberacao aprova CLEAN e rejeita conteudo sem publicar', asy
   }, storage, scanner, ['aprovar-conteudo']);
 });
 
+test('HTTP R10 DAM: principal e inativacao exigem editar e nao vazam storage', async () => {
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => ({
+      url: 'https://synthetic.example.test/upload?token=synthetic',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      requiredHeaders: { 'content-type': 'image/png' },
+    }),
+    confirmUpload: async (request) => ({
+      storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+      sizeBytes: request.sizeBytes, sha256: request.sha256, version: request.version ?? 1,
+    }),
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  const scanner: MalwareScanPort = {
+    scan: async (request) => ({
+      ...request, version: request.version ?? 1, verdict: 'CLEAN',
+      scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+    }),
+  };
+  await withHttp(async (request) => {
+    const id = await product(request, 'DAM principal HTTP');
+    async function approveOne(name: string) {
+      const payload = {
+        storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-${name}.png`,
+        categoria: 'IMAGEM', nome_arquivo: `${name}.png`, mime_type: 'image/png',
+        tamanho_bytes: 8, sha256: randomUUID().replace(/-/g, '').padEnd(64, 'a').slice(0, 64), versao: 1,
+      };
+      const reserved = await request(`/api/v1/produtos/${id}/midias/reservas`, 'POST', payload);
+      assert.equal(reserved.status, 201, JSON.stringify(reserved.body));
+      const mediaId = reserved.body.data.mediaId as string;
+      assert.equal((await request(`/api/v1/produtos/${id}/midias/${mediaId}/confirmar`, 'POST', {
+        attemptId: reserved.body.data.attemptId,
+      })).status, 200);
+      assert.equal((await request(`/api/v1/produtos/${id}/midias/${mediaId}/verificar`, 'POST', {})).status, 200);
+      assert.equal((await request(`/api/v1/produtos/${id}/midias/${mediaId}/aprovar`, 'POST', {})).status, 200);
+      return mediaId;
+    }
+    const first = await approveOne('first');
+    const second = await approveOne('second');
+    const principalPath = `/api/v1/produtos/${id}/midias/${first}/principal`;
+    assert.equal((await request(principalPath, 'POST', { groupId: GROUP_A })).status, 400);
+    assert.equal((await request(principalPath, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    const setFirst = await request(principalPath, 'POST', {});
+    assert.equal(setFirst.status, 200, JSON.stringify(setFirst.body));
+    assert.deepEqual(setFirst.body.data, { id: first, status: 'APROVADO', principal: true });
+    assert.equal(setFirst.headers.get('cache-control'), 'no-store');
+    const setSecond = await request(`/api/v1/produtos/${id}/midias/${second}/principal`, 'POST', {});
+    assert.equal(setSecond.status, 200, JSON.stringify(setSecond.body));
+    assert.deepEqual(setSecond.body.data, { id: second, status: 'APROVADO', principal: true });
+    const listed = await request(`/api/v1/produtos/${id}/midias`);
+    assert.equal(listed.body.data.find((row: { id: string }) => row.id === first)?.principal, false);
+    assert.equal(listed.body.data.find((row: { id: string }) => row.id === second)?.principal, true);
+    assert.equal((await request(`/api/v1/produtos/${id}/midias/${second}`, 'DELETE', undefined,
+      headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    const deactivated = await request(`/api/v1/produtos/${id}/midias/${second}`, 'DELETE');
+    assert.equal(deactivated.status, 200, JSON.stringify(deactivated.body));
+    assert.deepEqual(deactivated.body.data, { id: second, status: 'INATIVO', ativo: false, principal: false });
+    assert.equal(deactivated.headers.get('cache-control'), 'no-store');
+    const after = await request(`/api/v1/produtos/${id}/midias`);
+    assert.equal(after.body.data.some((row: { id: string }) => row.id === second), false);
+    assert.equal(after.body.data.find((row: { id: string }) => row.id === first)?.principal, false);
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const principalLogs = await audit.listByEntity('ProdutoMidia', first);
+    assert.equal(principalLogs.some((entry) => entry.action === 'update'), true);
+    assert.equal(JSON.stringify(principalLogs).includes('groups/'), false);
+    const deleteLogs = await audit.listByEntity('ProdutoMidia', second);
+    assert.equal(deleteLogs.some((entry) => entry.action === 'soft_delete'), true);
+  }, storage, scanner, ['aprovar-conteudo']);
+});
+
 test('HTTP R10 DAM: reconciliacao de vencidas e infectadas exige tenant e RBAC', async () => {
   const storage: StoragePort = {
     createSignedUploadUrl: async () => ({

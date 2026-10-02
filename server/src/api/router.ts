@@ -309,6 +309,14 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     } catch (error) { next(error); }
   });
 
+  router.delete('/api/v1/produtos/:id/midias/:mediaId', requireTenantScope, async (req, res, next) => {
+    try {
+      const result = await service.deactivateMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { id: result.id, status: result.status, ativo: result.ativo, principal: result.principal } });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
       const row = await service.get(ctxFromReq(req), req.params.id);
@@ -1258,6 +1266,7 @@ export function createApiRouter(deps: ApiDeps) {
           reconciliacaoInfectados: true,
           scannerOptIn: true,
           midiaPrincipal: true,
+          midiaInativacao: true,
         },
       },
       cliente: {

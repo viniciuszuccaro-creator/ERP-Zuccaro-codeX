@@ -309,6 +309,10 @@ export function createHttpApiClient(options = {}) {
         midiaSetPrincipal(produtoId, mediaId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/principal`, { method: 'POST', body: {}, signal });
         },
+        /** Soft-delete de midia ativa. @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaDeactivate(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}`, { method: 'DELETE', signal });
+        },
         /** @param {{ limit?: number, signal?: AbortSignal }} [options] */
         midiaReconcileExpired({ limit = 50, signal } = {}) {
           return request('/api/v1/produtos/midias/reconciliar-vencidas', { method: 'POST', body: { limit }, signal });

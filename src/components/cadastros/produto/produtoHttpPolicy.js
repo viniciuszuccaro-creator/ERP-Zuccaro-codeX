@@ -123,6 +123,14 @@ export function getProdutoMediaLiberacaoActions(media, permissions = {}) {
   return actions;
 }
 
+/** Soft-delete de midia ativa (nao apaga objeto no Storage). Exige editar. */
+export function getProdutoMediaDeactivateAction(media, permissions = {}) {
+  if (permissions.canEdit !== true) return null;
+  if (!media || media.ativo === false || media.status === 'INATIVO' || media.status === 'REJEITADO') return null;
+  if (media.status === 'PENDENTE_UPLOAD') return null;
+  return { action: 'deactivate', label: 'Inativar midia' };
+}
+
 /** Torna midia APROVADA a principal do produto. Exige editar; nao publica canal. */
 export function getProdutoMediaPrincipalAction(media, permissions = {}) {
   if (permissions.canEdit !== true || media?.status !== 'APROVADO' || media?.principal === true) return null;
