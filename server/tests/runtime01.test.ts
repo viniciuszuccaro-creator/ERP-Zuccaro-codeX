@@ -85,6 +85,18 @@ test('config load and public view never expose secrets', () => {
   assert.doesNotMatch(JSON.stringify(withScanner), /clamd\.ctl|CLAMD_SOCKET/);
 });
 
+test('server/.env.example documenta DAM Storage/CLAMD opt-in alinhado ao loadConfig', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const example = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
+  assert.match(example, /SUPABASE_STORAGE_PUBLIC_URL=/);
+  assert.match(example, /SUPABASE_STORAGE_PRIVATE_BUCKET=/);
+  assert.match(example, /SUPABASE_STORAGE_MAX_BYTES=/);
+  assert.match(example, /# CLAMD_SOCKET_PATH=/);
+  assert.match(example, /# CLAMD_TIMEOUT_MS=/);
+  assert.doesNotMatch(example, /SUPABASE_STORAGE_PUBLIC_BUCKET=/);
+  assert.doesNotMatch(example, /^CLAMD_SOCKET_PATH=.+/m);
+});
+
 test('migrations include foundation through 024 in canonical order', () => {
   const files = listMigrationFiles();
   const requiredThrough012 = [
