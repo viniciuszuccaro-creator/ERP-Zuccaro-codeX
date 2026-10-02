@@ -360,6 +360,33 @@ test('R10 PostgreSQL real: outbox claim/confirm/fail/reprocess e recibo idempote
     const leaseConfirmed = await repo.confirmPublicationEvent(scope, leasedId, newToken);
     assert.ok(leaseConfirmed);
     assert.equal(leaseConfirmed.receipt, 'confirmed');
+
+    const discardRequestId = randomUUID();
+    await repo.appendPublicationEvent(scope, produto, discardRequestId);
+    await db.query(
+      `UPDATE integration_events SET max_attempts=1
+       WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4`,
+      [scope.groupId, scope.empresaId, produtoId, discardRequestId],
+    );
+    const toDiscard = await repo.claimPublicationEvents(scope, { limit: 1, leaseMs: 30_000 });
+    assert.equal(toDiscard.length, 1);
+    const discardToken = buildOutboxLeaseToken(toDiscard[0].id, toDiscard[0].lockedUntil!);
+    const dead = await repo.failPublicationEvent(scope, toDiscard[0].id, discardToken, 'pg_discard');
+    assert.equal(dead?.status, 'dead_letter');
+    const listed = await repo.listPublicationEvents(scope, {
+      status: 'dead_letter', produtoId, limit: 10, offset: 0,
+    });
+    assert.equal(listed.total, 1);
+    assert.equal(listed.rows[0].id, toDiscard[0].id);
+    const counts = await repo.countPublicationEventsByStatus(scope, { produtoId });
+    assert.equal(counts.dead_letter, 1);
+    assert.ok(counts.published >= 1);
+    const discarded = await repo.discardPublicationEvent(scope, toDiscard[0].id);
+    assert.equal(discarded?.status, 'cancelled');
+    assert.equal((await repo.listPublicationEvents(scope, {
+      status: 'dead_letter', produtoId, limit: 10, offset: 0,
+    })).total, 0);
+    assert.equal((await repo.countPublicationEventsByStatus(scope, { produtoId })).cancelled, 1);
   } catch (error) {
     originalError = error;
     throw error;
