@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - filtro produtoId + discard dead-letter (2026-10-02)
+
+- Continuacao: list/metrics aceitam `produtoId`; `POST .../outbox/:id/discard` move dead_letter→`cancelled` com RBAC `Cadastros.produto.descartar`; UI escopa metricas/dead-letter ao produto e expoe Descartar; catalogo owner atualizado.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox+owner 21/21; http-api-client + PIM UI 27/27.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Onda 15 in-repo de claim/lease/ops locais fechada para este checkpoint; publisher real/reconciliacao externa continuam bloqueados.
+
 ## Comercial 360 / Onda 15 - UI prepared outbox no Produto V22 (2026-10-02)
 
 - Continuacao: secao existente `ProdutoRelationsDamSection` mostra metricas/dead-letter read-only e botao reprocessar com RBAC `reprocessar`; form passa `canReprocess`.
