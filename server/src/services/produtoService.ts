@@ -30,6 +30,18 @@ import {
 } from '../repositories/produtoTypes.js';
 
 import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
+import {
+  claimProdutoPublicationEvents,
+  confirmProdutoPublicationEvent,
+  discardProdutoPublicationEvent,
+  failProdutoPublicationEvent,
+  getProdutoOutboxMetrics,
+  listProdutoPublicationEvents,
+  processProdutoOutboxBatch,
+  reprocessProdutoPublicationEvent,
+  type CatalogPublisherPort,
+  FakeCatalogPublisher,
+} from './produtoOutboxClaim.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -66,6 +78,7 @@ export class ProdutoService {
     private readonly rbacGuard: RbacGuard,
     private readonly storage: StoragePort = new NotImplementedStorage(),
     private readonly scanner?: MalwareScanPort,
+    private readonly catalogPublisher: CatalogPublisherPort = new FakeCatalogPublisher('ok'),
   ) {}
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
@@ -262,6 +275,64 @@ export class ProdutoService {
       return updated;
     });
   }
+
+  async claimPublicationEvents(ctx: RequestContext, options: { limit?: number; leaseMs?: number } = {}) {
+    return claimProdutoPublicationEvents({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, options);
+  }
+
+  async confirmPublicationEvent(ctx: RequestContext, eventId: string, leaseToken: string) {
+    return confirmProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, leaseToken);
+  }
+
+  async failPublicationEvent(ctx: RequestContext, eventId: string, leaseToken: string, errorMessage: string) {
+    return failProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, leaseToken, errorMessage);
+  }
+
+  /** Reprocessa dead-letter → pending. Exige Cadastros.produto.reprocessar. Sem canal real. */
+  async reprocessPublicationEvent(ctx: RequestContext, eventId: string, reason?: string) {
+    return reprocessProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, reason);
+  }
+
+  /** Listagem read-only da outbox (filtro status/produto). RBAC visualizar. */
+  async listPublicationEvents(
+    ctx: RequestContext,
+    options: { status?: string; produtoId?: string; limit?: number; offset?: number } = {},
+  ) {
+    return listProdutoPublicationEvents({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, options);
+  }
+
+  /** Contagens por status da outbox. RBAC visualizar. */
+  async getOutboxMetrics(ctx: RequestContext, options: { produtoId?: string } = {}) {
+    return getProdutoOutboxMetrics({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, options);
+  }
+
+  /** Descarta dead-letter → cancelled. Exige Cadastros.produto.descartar. */
+  async discardPublicationEvent(ctx: RequestContext, eventId: string, reason?: string) {
+    return discardProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, reason);
+  }
+
+  /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */
+  async processOutboxBatch(ctx: RequestContext, options: { limit?: number; leaseMs?: number } = {}) {
+    return processProdutoOutboxBatch({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+      publisher: this.catalogPublisher,
+    }, ctx, options);
+  }
+
   /** Garante que CRUD de Produto nao aceita campos transacionais. */
   async listMidias(ctx: RequestContext, produtoId: string, page?: { limit: number; offset: number }) {
     return listProdutoMidias({

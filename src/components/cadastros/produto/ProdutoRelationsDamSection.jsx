@@ -29,7 +29,10 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
 
 const errorText = (error) => error?.status === 503 ? 'Storage do ERP indisponivel' : (error?.message || 'Operacao nao concluida');
 
-export default function ProdutoRelationsDamSection({ produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canDeactivate, workflowStatus, onWorkflowChanged }) {
+export default function ProdutoRelationsDamSection({
+  produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canReprocess, canDiscard, canDeactivate,
+  workflowStatus, onWorkflowChanged,
+}) {
   const api = getHttpProdutoApi();
   const workflowActions = getProdutoWorkflowActions(workflowStatus, { canEdit, canApprove, canPublish, canDeactivate });
   const [variants, setVariants] = useState([]);
@@ -37,6 +40,8 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   const [media, setMedia] = useState([]);
   const [mediaPage, setMediaPage] = useState(0);
   const [mediaHasMore, setMediaHasMore] = useState(false);
+  const [outboxMetrics, setOutboxMetrics] = useState(null);
+  const [deadLetters, setDeadLetters] = useState([]);
   const [variantDraft, setVariantDraft] = useState({ sku: '', nome: '' });
   const [variantEditing, setVariantEditing] = useState(null);
   const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' });
@@ -50,6 +55,19 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   const cancelUpload = useRef(null);
   const fileInput = useRef(null);
 
+  const refreshOutbox = () => {
+    if (!canView || !empresaId || typeof api.outboxMetrics !== 'function') {
+      setOutboxMetrics(null); setDeadLetters([]); return Promise.resolve();
+    }
+    return Promise.all([
+      api.outboxMetrics({ produtoId }),
+      api.outboxList({ status: 'dead_letter', produtoId, limit: 5, offset: 0 }),
+    ]).then(([metrics, page]) => {
+      setOutboxMetrics(metrics);
+      setDeadLetters(Array.isArray(page?.rows) ? page.rows : []);
+    });
+  };
+
   useEffect(() => {
     if (!canView || !produtoId || !empresaId) return;
     let active = true;
@@ -57,12 +75,20 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     Promise.all([
       api.variantes.list(produtoId), api.equivalentes.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
-    ]).then(([v, e, m]) => {
+      typeof api.outboxMetrics === 'function'
+        ? api.outboxMetrics({ produtoId }).catch(() => null)
+        : Promise.resolve(null),
+      typeof api.outboxList === 'function'
+        ? api.outboxList({ status: 'dead_letter', produtoId, limit: 5, offset: 0 }).catch(() => ({ rows: [] }))
+        : Promise.resolve({ rows: [] }),
+    ]).then(([v, e, m, metrics, page]) => {
       if (!active) return;
       setVariants(v);
       setEquivalents(e);
       setMedia(m);
       setMediaHasMore(m.length === 20);
+      setOutboxMetrics(metrics);
+      setDeadLetters(Array.isArray(page?.rows) ? page.rows : []);
     }).catch((err) => { if (active) setError(errorText(err)); });
     return () => { active = false; };
   }, [api, produtoId, empresaId, canView, mediaPage]);
@@ -166,6 +192,48 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
           onClick={() => changeWorkflow(action.target)} disabled={busy}
           data-action={`produto-workflow-${action.target.toLowerCase()}`} data-sensitive>{action.label}</Button>)}
       </div>
+    </section>
+    <section className="space-y-2" data-permission="Cadastros.Produto.visualizar" data-section="produto-outbox">
+      <h3 className="text-sm font-semibold">Outbox de publicacao</h3>
+      <p className="text-sm text-muted-foreground">Observabilidade local; sem envio a canal externo neste checkpoint.</p>
+      {outboxMetrics?.byStatus ? (
+        <p className="text-sm" data-testid="produto-outbox-metrics">
+          pending {outboxMetrics.byStatus.pending ?? 0} · processing {outboxMetrics.byStatus.processing ?? 0} ·
+          retry {outboxMetrics.byStatus.retry ?? 0} · dead_letter {outboxMetrics.byStatus.dead_letter ?? 0} ·
+          published {outboxMetrics.byStatus.published ?? 0}
+        </p>
+      ) : <p className="text-sm text-muted-foreground">Metricas indisponiveis</p>}
+      {deadLetters.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum dead-letter deste produto</p> : (
+        <ul className="space-y-1 text-sm">
+          {deadLetters.map((row) => (
+            <li key={row.id} className="flex flex-wrap items-center gap-2 border-b py-1">
+              <span className="min-w-0 flex-1 break-all">{row.errorMessage || 'sem erro'}</span>
+              {canReprocess && (
+                <Button type="button" variant="outline" size="sm" disabled={busy}
+                  data-action="produto-outbox-reprocess" data-permission="Cadastros.Produto.reprocessar"
+                  onClick={() => run(
+                    async () => {
+                      await api.outboxReprocess(row.id, 'ui_operator_retry');
+                      await refreshOutbox();
+                    },
+                    'Dead-letter reprocessado',
+                  )}>Reprocessar</Button>
+              )}
+              {canDiscard && (
+                <Button type="button" variant="outline" size="sm" disabled={busy}
+                  data-action="produto-outbox-discard" data-permission="Cadastros.Produto.descartar"
+                  onClick={() => run(
+                    async () => {
+                      await api.outboxDiscard(row.id, 'ui_operator_discard');
+                      await refreshOutbox();
+                    },
+                    'Dead-letter descartado',
+                  )}>Descartar</Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Variantes</h3>

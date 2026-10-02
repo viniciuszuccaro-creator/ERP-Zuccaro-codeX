@@ -12,6 +12,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
 import { produtoCreateSchema } from '../src/repositories/produtoTypes.ts';
+import { buildOutboxLeaseToken } from '../src/services/produtoOutboxClaim.ts';
 import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -245,8 +246,22 @@ test('R10 PostgreSQL real: publicacao Produto grava outbox tenant-scoped com rol
     assert.equal(event.event_type, 'produto.publicado');
     assert.equal(event.status, 'pending');
     assert.equal(event.schema_version, 1);
-    assert.deepEqual(Object.keys(event.payload).sort(), ['codigo', 'produtoId', 'schemaVersion', 'workflowStatus']);
     assert.equal(event.payload.produtoId, produtoId);
+    assert.equal(event.payload.descricao, 'R10 OUTBOX SINTETICO');
+    assert.equal(event.payload.schemaVersion, 1);
+    assert.ok(typeof event.payload.workflowStatus === 'string');
+    assert.equal(event.payload.custo, undefined);
+    assert.equal(event.payload.margem, undefined);
+    assert.equal(event.payload.ncm, undefined);
+    assert.equal(event.payload.groupId, undefined);
+    for (const key of Object.keys(event.payload)) {
+      assert.ok([
+        'produtoId', 'codigo', 'codigoBarras', 'descricao', 'nome', 'descricaoComercial',
+        'tituloSeo', 'descricaoSeo', 'material', 'liga', 'normaTecnica', 'embalagemTipo',
+        'multiploVenda', 'quantidadeMinimaVenda', 'permiteFracionamento', 'unidadeMedidaId',
+        'unidadeMedida', 'unidadePrincipal', 'workflowStatus', 'schemaVersion',
+      ].includes(key), `chave fora da allowlist: ${key}`);
+    }
     assert.match(event.payload_checksum, /^[a-f0-9]{64}$/);
   } catch (error) {
     originalError = error;
@@ -267,6 +282,149 @@ test('R10 PostgreSQL real: publicacao Produto grava outbox tenant-scoped com rol
     }
   }
 });
+
+test('R10 PostgreSQL real: outbox claim/confirm/fail/reprocess e recibo idempotente', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const produtoId = randomUUID();
+  const requestId = randomUUID();
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  const otherScope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 };
+  let eventId: string | undefined;
+  let originalError: unknown;
+  try {
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 OUTBOX CLAIM SINTETICO')",
+      [produtoId, scope.groupId, scope.empresaId, `R10C-${produtoId}`],
+    );
+    const produto = await repo.getById(scope, produtoId);
+    assert.ok(produto);
+    await repo.appendPublicationEvent(scope, produto, requestId);
+    await db.query(
+      `UPDATE integration_events SET max_attempts=1
+       WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4`,
+      [scope.groupId, scope.empresaId, produtoId, requestId],
+    );
+
+    assert.deepEqual(await repo.claimPublicationEvents(otherScope, { limit: 5, leaseMs: 30_000 }), []);
+
+    const claimed = await repo.claimPublicationEvents(scope, { limit: 5, leaseMs: 30_000 });
+    assert.equal(claimed.length, 1);
+    assert.equal(claimed[0].status, 'processing');
+    assert.equal(claimed[0].produtoId, produtoId);
+    assert.equal(claimed[0].attempts, 1);
+    assert.ok(claimed[0].lockedUntil);
+    eventId = claimed[0].id;
+    const leaseToken = buildOutboxLeaseToken(claimed[0].id, claimed[0].lockedUntil!);
+    assert.deepEqual(await repo.claimPublicationEvents(scope, { limit: 5, leaseMs: 30_000 }), []);
+
+    const badLease = await repo.confirmPublicationEvent(scope, eventId, 'token-invalido');
+    assert.equal(badLease, null);
+    const crossTenant = await repo.confirmPublicationEvent(otherScope, eventId, leaseToken);
+    assert.equal(crossTenant, null);
+
+    const failed = await repo.failPublicationEvent(scope, eventId, leaseToken, 'pg_force_dead_letter');
+    assert.ok(failed);
+    assert.equal(failed.status, 'dead_letter');
+    assert.ok(failed.deadLetterAt);
+
+    const reprocessed = await repo.reprocessPublicationEvent(scope, eventId);
+    assert.ok(reprocessed);
+    assert.equal(reprocessed.status, 'pending');
+    assert.equal(reprocessed.attempts, 0);
+    assert.equal(reprocessed.id, eventId);
+    assert.equal(reprocessed.schemaVersion, 1);
+    assert.equal(await repo.reprocessPublicationEvent(otherScope, eventId), null);
+
+    const claimedAgain = await repo.claimPublicationEvents(scope, { limit: 1, leaseMs: 45_000 });
+    assert.equal(claimedAgain.length, 1);
+    assert.equal(claimedAgain[0].id, eventId);
+    const confirmToken = buildOutboxLeaseToken(claimedAgain[0].id, claimedAgain[0].lockedUntil!);
+    const confirmed = await repo.confirmPublicationEvent(scope, eventId, confirmToken);
+    assert.ok(confirmed);
+    assert.equal(confirmed.receipt, 'confirmed');
+    assert.equal(confirmed.event.status, 'published');
+    assert.ok(confirmed.event.publishedAt);
+
+    const idempotent = await repo.confirmPublicationEvent(scope, eventId, 'stale-ack');
+    assert.ok(idempotent);
+    assert.equal(idempotent.receipt, 'already_published');
+    assert.equal(idempotent.event.id, eventId);
+    assert.equal(idempotent.event.publishedAt, confirmed.event.publishedAt);
+
+    // Reclaim de lease expirado em outro evento sintetico
+    const leaseRequestId = randomUUID();
+    await repo.appendPublicationEvent(scope, produto, leaseRequestId);
+    const leased = await repo.claimPublicationEvents(scope, { limit: 1, leaseMs: 60_000 });
+    assert.equal(leased.length, 1);
+    const leasedId = leased[0].id;
+    const oldToken = buildOutboxLeaseToken(leasedId, leased[0].lockedUntil!);
+    await db.query(
+      `UPDATE integration_events
+       SET locked_until=timezone('utc', now()) - interval '2 seconds', status='processing'
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+      [leasedId, scope.groupId, scope.empresaId],
+    );
+    const reclaimed = await repo.claimPublicationEvents(scope, { limit: 1, leaseMs: 30_000 });
+    assert.equal(reclaimed.length, 1);
+    assert.equal(reclaimed[0].id, leasedId);
+    const newToken = buildOutboxLeaseToken(reclaimed[0].id, reclaimed[0].lockedUntil!);
+    assert.notEqual(newToken, oldToken);
+    assert.equal(await repo.confirmPublicationEvent(scope, leasedId, oldToken), null);
+    const leaseConfirmed = await repo.confirmPublicationEvent(scope, leasedId, newToken);
+    assert.ok(leaseConfirmed);
+    assert.equal(leaseConfirmed.receipt, 'confirmed');
+
+    const discardRequestId = randomUUID();
+    await repo.appendPublicationEvent(scope, produto, discardRequestId);
+    await db.query(
+      `UPDATE integration_events SET max_attempts=1
+       WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3 AND correlation_id=$4`,
+      [scope.groupId, scope.empresaId, produtoId, discardRequestId],
+    );
+    const toDiscard = await repo.claimPublicationEvents(scope, { limit: 1, leaseMs: 30_000 });
+    assert.equal(toDiscard.length, 1);
+    const discardToken = buildOutboxLeaseToken(toDiscard[0].id, toDiscard[0].lockedUntil!);
+    const dead = await repo.failPublicationEvent(scope, toDiscard[0].id, discardToken, 'pg_discard');
+    assert.equal(dead?.status, 'dead_letter');
+    const listed = await repo.listPublicationEvents(scope, {
+      status: 'dead_letter', produtoId, limit: 10, offset: 0,
+    });
+    assert.equal(listed.total, 1);
+    assert.equal(listed.rows[0].id, toDiscard[0].id);
+    const counts = await repo.countPublicationEventsByStatus(scope, { produtoId });
+    assert.equal(counts.dead_letter, 1);
+    assert.ok(counts.published >= 1);
+    const discarded = await repo.discardPublicationEvent(scope, toDiscard[0].id);
+    assert.equal(discarded?.status, 'cancelled');
+    assert.equal((await repo.listPublicationEvents(scope, {
+      status: 'dead_letter', produtoId, limit: 10, offset: 0,
+    })).total, 0);
+    assert.equal((await repo.countPublicationEventsByStatus(scope, { produtoId })).cancelled, 1);
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query(
+          'DELETE FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND aggregate_id=$3',
+          [scope.groupId, scope.empresaId, produtoId],
+        );
+        await tx.query(
+          'DELETE FROM produtos WHERE group_id=$1 AND empresa_id=$2 AND id=$3',
+          [scope.groupId, scope.empresaId, produtoId],
+        );
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 outbox claim cleanup failed after original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
+
 test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresProdutoRepository(db);

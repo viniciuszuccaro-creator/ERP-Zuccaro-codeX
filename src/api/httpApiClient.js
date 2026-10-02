@@ -293,6 +293,48 @@ export function createHttpApiClient(options = {}) {
         midiaConfirm(produtoId, mediaId, attemptId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/confirmar`, { method: 'POST', body: { attemptId }, signal });
         },
+        /** Claim concorrente outbox produto.publicado. @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
+        outboxClaim({ limit = 10, leaseMs = 60_000, signal } = {}) {
+          return request('/api/v1/produtos/outbox/claim', { method: 'POST', body: { limit, leaseMs }, signal });
+        },
+        /** Confirm com lease token. @param {string} eventId @param {string} leaseToken @param {{ signal?: AbortSignal }} [options] */
+        outboxConfirm(eventId, leaseToken, { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/confirm`, {
+            method: 'POST', body: { leaseToken }, signal,
+          });
+        },
+        /** Fail/retry/dead-letter. @param {string} eventId @param {string} leaseToken @param {string} [errorMessage] @param {{ signal?: AbortSignal }} [options] */
+        outboxFail(eventId, leaseToken, errorMessage = 'delivery_failed', { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/fail`, {
+            method: 'POST', body: { leaseToken, errorMessage }, signal,
+          });
+        },
+        /** Reprocessa dead-letter → pending (RBAC reprocessar). @param {string} eventId @param {string} [reason] @param {{ signal?: AbortSignal }} [options] */
+        outboxReprocess(eventId, reason = 'manual_reprocess', { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/reprocess`, {
+            method: 'POST', body: { reason }, signal,
+          });
+        },
+        /** Listagem read-only outbox. @param {{ status?: string, produtoId?: string, limit?: number, offset?: number, signal?: AbortSignal }} [options] */
+        outboxList({ status, produtoId, limit = 20, offset = 0, signal } = {}) {
+          return request('/api/v1/produtos/outbox', {
+            query: { status, produtoId, limit, offset }, signal,
+          });
+        },
+        /** Contagens por status. @param {{ produtoId?: string, signal?: AbortSignal }} [options] */
+        outboxMetrics({ produtoId, signal } = {}) {
+          return request('/api/v1/produtos/outbox/metrics', { query: { produtoId }, signal });
+        },
+        /** Descarta dead-letter → cancelled (RBAC descartar). @param {string} eventId @param {string} [reason] @param {{ signal?: AbortSignal }} [options] */
+        outboxDiscard(eventId, reason = 'manual_discard', { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/discard`, {
+            method: 'POST', body: { reason }, signal,
+          });
+        },
+        /** Lote claim→publisher fake→confirm/fail (sem canal real). @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
+        outboxProcess({ limit = 10, leaseMs = 60_000, signal } = {}) {
+          return request('/api/v1/produtos/outbox/process', { method: 'POST', body: { limit, leaseMs }, signal });
+        },
         equivalentes: relationRoutes('equivalentes'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */

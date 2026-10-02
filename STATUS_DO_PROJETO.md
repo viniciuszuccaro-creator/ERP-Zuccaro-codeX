@@ -1,3 +1,103 @@
+## Comercial 360 / Onda 15 - projeção allowlisted no publisher fake (2026-10-02)
+
+- Continuacao: `buildProdutoCatalogProjection` + `assertSafeCatalogProjection` (sem custo/margem/ncm/URL assinada/tenant); emit nos repos in-memory/PG; FakeCatalogPublisher valida e falha fechado em campo proibido; meta `outboxCatalogProjection`.
+- Sem canal real, worker cron, VPS, Auth, migration.
+- Testes: outbox unit+HTTP 19/19; PG outbox/claim 3/3.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Publisher real/reconciliacao externa continuam bloqueados.
+
+## Comercial 360 / Onda 15 - closeout in-repo claim/lease (2026-10-02)
+
+- Escopo in-repo fechado neste checkpoint: claim/lease/confirm/fail/reprocess/discard, list/metrics com `produtoId`, recibo idempotente, batch fake+metrics, HTTP/client prepared, UI Produto V22, E2E PostgreSQL (incl. discard/filtro).
+- Sem worker cron, publisher real, Storage/Auth/VPS, reconciliacao de canal.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203) HEAD apos push deste lote.
+- Proximo: gate externo (Auth/Storage/publisher) ou frente independente autorizada; nao tip-port.
+
+## Comercial 360 / Onda 15 - filtro produtoId + discard dead-letter (2026-10-02)
+
+- Continuacao: list/metrics aceitam `produtoId`; `POST .../outbox/:id/discard` move dead_letter→`cancelled` com RBAC `Cadastros.produto.descartar`; UI escopa metricas/dead-letter ao produto e expoe Descartar; catalogo owner atualizado.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox+owner 21/21; http-api-client + PIM UI 27/27.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Onda 15 in-repo de claim/lease/ops locais fechada para este checkpoint; publisher real/reconciliacao externa continuam bloqueados.
+
+## Comercial 360 / Onda 15 - UI prepared outbox no Produto V22 (2026-10-02)
+
+- Continuacao: secao existente `ProdutoRelationsDamSection` mostra metricas/dead-letter read-only e botao reprocessar com RBAC `reprocessar`; form passa `canReprocess`.
+- Sem worker cron, sem canal real, sem VPS, sem migration, sem tela paralela.
+- Testes: produto-pim-ui 11/11.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Onda 15 in-repo quase fechada para claim/lease/ops locais; publisher real e reconciliacao externa continuam bloqueados.
+
+## Comercial 360 / Onda 15 - metricas locais outbox (2026-10-02)
+
+- Continuacao: batch `process` devolve `metrics.{published,retry,dead_letter,durationMs}`; `GET /api/v1/produtos/outbox/metrics` com contagens por status (RBAC visualizar); client `outboxMetrics`; meta `outboxMetrics`.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox 18/18; http-api-client 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: UI prepared da listagem/metricas no Produto existente, ou fechar Onda 15 in-repo (publisher real bloqueado).
+
+## Comercial 360 / Onda 15 - listagem read-only outbox/dead-letter (2026-10-02)
+
+- Continuacao: `GET /api/v1/produtos/outbox?status=&limit=&offset=` (RBAC `visualizar`, `Cache-Control: no-store`, sem payload integral); client `outboxList`; meta `outboxListRead`; helper de teste `listPublicationEventSummaries` preserva PIM.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox service+HTTP 18/18; http-api-client 16/16; PIM outbox 2/2.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: metricas do batch fake ou UI prepared da listagem; publisher real continua bloqueado.
+
+## Comercial 360 / Onda 15 - PostgreSQL claim/confirm/reprocess (2026-10-02)
+
+- Continuacao: E2E PostgreSQL no suite R10 existente cobre claim tenant-scoped, fail→dead_letter, reprocess→pending, confirm + recibo `already_published`, reclaim de lease expirado e isolamento de empresa cruzada.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Teste focado: 1/1 PASS com DATABASE_URL.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: metricas/observabilidade local do batch fake ou listagem dead-letter read-only; publisher real continua bloqueado.
+
+## Comercial 360 / Onda 15 - recibo idempotente de confirm (2026-10-02)
+
+- Continuacao: confirm de evento ja `published` devolve `receipt: already_published` sem reauditar; primeira transicao `receipt: confirmed`; FakeCatalogPublisher nao duplica eventId; meta `outboxConfirmIdempotent`.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox service+HTTP 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: cobertura PostgreSQL claim/confirm/reprocess; publisher real e reconciliacao externa continuam bloqueados.
+
+## Comercial 360 / Onda 15 - reprocess dead-letter com RBAC proprio (2026-10-02)
+
+- Continuacao: `POST /api/v1/produtos/outbox/:eventId/reprocess` move `dead_letter` → `pending` preservando eventId/schemaVersion; RBAC `Cadastros.produto.reprocessar` (nao basta `publicar`); auditoria before/after + reason sanitizado; client `outboxReprocess`; meta `outboxDeadLetterReprocess`; acao no catalogo owner.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox+owner 16/16; http-api-client 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: recibo idempotente local do publisher fake ou cobertura PostgreSQL de claim/reprocess; publisher real e reconciliacao externa continuam bloqueados.
+
+## Comercial 360 / Onda 15 - reclaim lease expirado + HTTP fail (2026-10-02)
+
+- Continuacao: teste de reclaim apos `lockedUntil` expirado (token antigo invalidado; confirm so com token novo); HTTP `POST .../outbox/:id/fail` agenda retry com lease valido.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox service+HTTP 10/10.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: auditoria/RBAC de reprocessamento dead-letter ou recibo idempotente local; publisher real e reconciliacao externa continuam bloqueados.
+
+## Comercial 360 / Onda 15 - HTTP process + client prepared (2026-10-02)
+
+- Continuacao: `POST /api/v1/produtos/outbox/process`; client prepared `outboxClaim|Confirm|Fail|Process`; meta `outboxFakeBatch`; testes fail-publisher→retry e claim concorrente.
+- Sem worker cron, sem canal real, sem VPS.
+- Testes: outbox service+HTTP 8/8; http-api-client 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+
+## Comercial 360 / Onda 15 - batch fake publisher (2026-10-02)
+
+- Continuacao: `FakeCatalogPublisher` + `processOutboxBatch` (claim→publish fake→confirm/fail) no service existente. Sem rede, sem worker HTTP, sem canal real.
+- Testes outbox claim: 5/5 (service+HTTP+batch).
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+
+## Comercial 360 / Onda 15 - claim/lease outbox produto.publicado (2026-10-02)
+
+- Objetivo: menor checkpoint seguro da Onda 15 sem worker externo — claim concorrente, confirm e fail/retry/dead-letter sobre `integration_events` existente (colunas 018), lease token derivado (sem migration nova).
+- Reutilizado: `appendPublicationEvent`, `locked_until`/`attempts`/`next_attempt_at`/`dead_letter_at`, RBAC `publicar`, auditoria `IntegrationEvent`.
+- HTTP prepared: `POST /api/v1/produtos/outbox/claim|.../confirm|.../fail`; meta `produto.outboxClaimLease`. Sem publicacao externa, sem VPS.
+- Testes: runtime10-produto-outbox-claim + pim 36/36.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
