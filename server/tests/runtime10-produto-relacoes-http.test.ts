@@ -8,7 +8,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
-import type { StoragePort } from '../src/services/storagePort.ts';
+import type { MalwareScanPort, StoragePort } from '../src/services/storagePort.ts';
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
 const GROUP_B = '22222222-2222-4222-8222-222222222222';
@@ -19,26 +19,31 @@ const ACTOR_A = '66666666-6666-4666-8666-666666666666';
 const ACTOR_B = '77777777-7777-4777-8777-777777777777';
 const ACTOR_DENIED = '88888888-8888-4888-8888-888888888888';
 
-function fixture(storagePort?: StoragePort) {
+function fixture(storagePort?: StoragePort, malwareScanPort?: MalwareScanPort, extraActions: string[] = []) {
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
   const tenantGuard = new InMemoryTenantGuard();
   tenantGuard.link(EMPRESA_A, GROUP_A);
   tenantGuard.link(EMPRESA_A2, GROUP_A);
   tenantGuard.link(EMPRESA_B, GROUP_B);
   const rbacGuard = new InMemoryRbacGuard();
-  const allowed = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'] } };
+  const allowed = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar', ...extraActions] } };
   rbacGuard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions: allowed });
   rbacGuard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions: allowed });
   rbacGuard.link({ actorId: ACTOR_DENIED, groupId: GROUP_A, permissions: { Cadastros: { produto: [] } } });
-  return createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard, rbacGuard, storagePort });
+  return createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard, rbacGuard, storagePort, malwareScanPort });
 }
 
 function headers(groupId = GROUP_A, empresaId = EMPRESA_A, actorId = ACTOR_A) {
   return { 'content-type': 'application/json', 'x-group-id': groupId, 'x-empresa-id': empresaId, 'x-actor-id': actorId };
 }
 
-async function withHttp<T>(run: (request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any; headers: Headers }>) => Promise<T>, storagePort?: StoragePort) {
-  const { app, auditRepo } = fixture(storagePort);
+async function withHttp<T>(
+  run: (request: (path: string, method?: string, body?: unknown, requestHeaders?: Record<string, string>) => Promise<{ status: number; body: any; headers: Headers }>) => Promise<T>,
+  storagePort?: StoragePort,
+  malwareScanPort?: MalwareScanPort,
+  extraActions: string[] = [],
+) {
+  const { app, auditRepo } = fixture(storagePort, malwareScanPort, extraActions);
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const port = (server.address() as AddressInfo).port;
@@ -395,6 +400,93 @@ test('HTTP R10 DAM: sem Storage configurado falha fechado', async () => {
     assert.equal(result.status, 503);
     assert.equal(result.body.error.code, 'STORAGE_ADAPTER_NOT_CONFIGURED');
   });
+});
+
+test('HTTP R10 DAM: liberacao aprova CLEAN e rejeita conteudo sem publicar', async () => {
+  let verifyCalls = 0;
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => ({
+      url: 'https://synthetic.example.test/upload?token=synthetic',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      requiredHeaders: { 'content-type': 'image/png' },
+    }),
+    confirmUpload: async (request) => {
+      verifyCalls += 1;
+      return {
+        storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+        sizeBytes: request.sizeBytes, sha256: request.sha256, version: request.version ?? 1,
+      };
+    },
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  const scanner: MalwareScanPort = {
+    scan: async (request) => ({
+      ...request, version: request.version ?? 1, verdict: 'CLEAN',
+      scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+    }),
+  };
+  await withHttp(async (request) => {
+    const id = await product(request, 'DAM liberacao HTTP');
+    const payload = {
+      storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-synthetic.png`,
+      categoria: 'IMAGEM', nome_arquivo: 'synthetic.png', mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'b'.repeat(64), versao: 1,
+    };
+    const reserved = await request(`/api/v1/produtos/${id}/midias/reservas`, 'POST', payload);
+    assert.equal(reserved.status, 201, JSON.stringify(reserved.body));
+    const mediaId = reserved.body.data.mediaId as string;
+    const confirm = await request(`/api/v1/produtos/${id}/midias/${mediaId}/confirmar`, 'POST', {
+      attemptId: reserved.body.data.attemptId,
+    });
+    assert.equal(confirm.status, 200);
+    assert.equal(confirm.body.data.status, 'QUARENTENA');
+    const approvePath = `/api/v1/produtos/${id}/midias/${mediaId}/aprovar`;
+    const rejectPath = `/api/v1/produtos/${id}/midias/${mediaId}/rejeitar-conteudo`;
+    assert.equal((await request(approvePath, 'POST', { groupId: GROUP_A })).status, 400);
+    assert.equal((await request(approvePath, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(approvePath, 'POST', {})).status, 409);
+    assert.equal((await request(approvePath, 'POST', {})).body.error.code, 'MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN');
+    const scanned = await request(`/api/v1/produtos/${id}/midias/${mediaId}/verificar`, 'POST', {});
+    assert.equal(scanned.status, 200, JSON.stringify(scanned.body));
+    assert.equal(scanned.body.data.status, 'QUARENTENA');
+    assert.equal(scanned.body.data.scan_verdict, 'CLEAN');
+    const approved = await request(approvePath, 'POST', {});
+    assert.equal(approved.status, 200, JSON.stringify(approved.body));
+    assert.deepEqual(approved.body.data, { id: mediaId, status: 'APROVADO', scan_verdict: 'CLEAN' });
+    assert.equal(approved.headers.get('cache-control'), 'no-store');
+    const listed = await request(`/api/v1/produtos/${id}/midias`);
+    assert.equal(listed.body.data[0].status, 'APROVADO');
+    assert.equal(listed.body.data[0].scan_verdict, 'CLEAN');
+    assert.equal((await request(approvePath, 'POST', {})).status, 404);
+    assert.equal((await request(rejectPath, 'POST', {})).status, 404);
+    const produto = await request(`/api/v1/produtos/${id}`);
+    assert.equal(produto.body.data.workflow_status, 'RASCUNHO');
+    assert.equal(verifyCalls, 1);
+
+    const rejectPayload = {
+      storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-reject.png`,
+      categoria: 'IMAGEM', nome_arquivo: 'reject.png', mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'c'.repeat(64), versao: 1,
+    };
+    const rejectReserved = await request(`/api/v1/produtos/${id}/midias/reservas`, 'POST', rejectPayload);
+    assert.equal(rejectReserved.status, 201);
+    const rejectMediaId = rejectReserved.body.data.mediaId as string;
+    assert.equal((await request(`/api/v1/produtos/${id}/midias/${rejectMediaId}/confirmar`, 'POST', {
+      attemptId: rejectReserved.body.data.attemptId,
+    })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/midias/${rejectMediaId}/rejeitar-conteudo`, 'POST', {},
+      headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    const rejected = await request(`/api/v1/produtos/${id}/midias/${rejectMediaId}/rejeitar-conteudo`, 'POST', {});
+    assert.equal(rejected.status, 200, JSON.stringify(rejected.body));
+    assert.deepEqual(rejected.body.data, { id: rejectMediaId, status: 'REJEITADO' });
+    const afterReject = await request(`/api/v1/produtos/${id}/midias`);
+    assert.equal(afterReject.body.data.some((row: { id: string }) => row.id === rejectMediaId), false);
+    assert.equal(afterReject.body.data.some((row: { id: string }) => row.id === mediaId), true);
+    const audit = (request as typeof request & { auditRepo: InMemoryAuditRepository }).auditRepo;
+    const approveLogs = await audit.listByEntity('ProdutoMidia', mediaId);
+    assert.equal(approveLogs.some((entry) => entry.action === 'approve'), true);
+    assert.equal(JSON.stringify(approveLogs).includes(payload.storage_key), false);
+  }, storage, scanner, ['aprovar-conteudo']);
 });
 
 test('HTTP R10 DAM: rejeicao individual de reserva vencida exige tenant e inativar', async (t) => {

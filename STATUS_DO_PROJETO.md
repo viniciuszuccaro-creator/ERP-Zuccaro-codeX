@@ -1,3 +1,12 @@
+## Comercial 360 / Onda 1 - liberacao DAM interna (2026-10-02)
+
+- Objetivo: menor avanco seguro da Onda 1 no Produto/DAM existente — separar liberacao de midia (QUARENTENA→APROVADO/REJEITADO) da publicacao externa.
+- Causa: apos scan CLEAN a midia permanecia em QUARENTENA sem rota/servico de aprovacao; rejeicao de conteudo so existia para reserva vencida (`PENDENTE_UPLOAD`).
+- Mudanca no existente: `changeMidiaStatus` (in-memory + PostgreSQL); `approveProdutoMidia` / `rejectProdutoMidiaContent`; POSTs `/midias/:mediaId/aprovar` e `/midias/:mediaId/rejeitar-conteudo`; RBAC `aprovar-conteudo`; auditoria; APROVADO exige evidencia CLEAN com SHA batendo; rejeicao inativa sem outbox/publicacao/workflow Produto.
+- Fora deste lote: scanner real VPS, Produto HTTP 3080, publicacao canal externo, tip-port.
+- Testes: `runtime10-produto-pim` + `runtime10-produto-relacoes-http` 47/47 pass. Branch `cursor/comercial360-onda1-midia-liberacao-392b`.
+- Proximo: scanner real / reconciliacao orfaos / Auth antes de ativar HTTP; Onda 2 em paralelo noutro agente.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

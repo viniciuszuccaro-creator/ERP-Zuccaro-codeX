@@ -63,6 +63,14 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   rejectExpiredReservedMidia(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   getMidiaForScan(scope: Scope, produtoId: string, midiaId: string, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
   recordMidiaScan(scope: Scope, produtoId: string, midiaId: string, storageKey: string, version: number, evidence: ProdutoMidiaScanEvidence, executor?: DbQueryExecutor): Promise<ProdutoMidia | null>;
+  /** Liberação interna: QUARENTENA→APROVADO (exige CLEAN) ou QUARENTENA→REJEITADO. Não publica canal externo. */
+  changeMidiaStatus(
+    scope: Scope,
+    produtoId: string,
+    midiaId: string,
+    target: 'APROVADO' | 'REJEITADO',
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoMidia | null>;
 
 }
 
@@ -477,6 +485,28 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       ...row, scan_verdict: evidence.verdict, scan_scanner: evidence.scanner,
       scan_sha256: evidence.sha256, scanned_at: evidence.scannedAt,
     };
+    this.midias.set(midiaId, structuredClone(next));
+    return structuredClone(next);
+  }
+
+  async changeMidiaStatus(
+    scope: Scope,
+    produtoId: string,
+    midiaId: string,
+    target: 'APROVADO' | 'REJEITADO',
+  ): Promise<ProdutoMidia | null> {
+    const row = this.midias.get(midiaId);
+    if (!row || !scope.empresaId || row.group_id !== scope.groupId || row.empresa_id !== scope.empresaId
+      || row.produto_id !== produtoId || !row.ativo || row.status !== 'QUARENTENA') {
+      return null;
+    }
+    if (target === 'APROVADO') {
+      if (row.scan_verdict !== 'CLEAN' || !row.scan_sha256 || row.scan_sha256 !== row.sha256) return null;
+      const next: ProdutoMidia = { ...row, status: 'APROVADO' };
+      this.midias.set(midiaId, structuredClone(next));
+      return structuredClone(next);
+    }
+    const next: ProdutoMidia = { ...row, status: 'REJEITADO', ativo: false, principal: false };
     this.midias.set(midiaId, structuredClone(next));
     return structuredClone(next);
   }

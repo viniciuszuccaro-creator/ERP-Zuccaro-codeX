@@ -658,4 +658,36 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     );
     return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
   }
+
+  async changeMidiaStatus(
+    scope: Scope,
+    produtoId: string,
+    midiaId: string,
+    target: 'APROVADO' | 'REJEITADO',
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoMidia | null> {
+    if (!scope.empresaId) return null;
+    if (!executor) throw new Error('MEDIA_TRANSACTION_REQUIRED');
+    if (target === 'APROVADO') {
+      const result = await executor.query(
+        `UPDATE produto_midias SET status='APROVADO',updated_at=timezone('utc',now())
+         WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4
+           AND ativo=true AND status='QUARENTENA'
+           AND scan_verdict='CLEAN' AND scan_sha256 IS NOT NULL AND scan_sha256=sha256
+         RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+           tamanho_bytes,sha256,versao,status,principal,ativo,scan_verdict,scan_scanner,scan_sha256,scanned_at`,
+        [midiaId, scope.groupId, scope.empresaId, produtoId],
+      );
+      return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+    }
+    const result = await executor.query(
+      `UPDATE produto_midias SET status='REJEITADO',ativo=false,principal=false,updated_at=timezone('utc',now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3 AND produto_id=$4
+         AND ativo=true AND status='QUARENTENA'
+       RETURNING id,group_id,empresa_id,produto_id,storage_key,categoria,nome_arquivo,mime_type,
+         tamanho_bytes,sha256,versao,status,principal,ativo,scan_verdict,scan_scanner,scan_sha256,scanned_at`,
+      [midiaId, scope.groupId, scope.empresaId, produtoId],
+    );
+    return result.rows[0] ? { ...result.rows[0], tamanho_bytes: Number(result.rows[0].tamanho_bytes) } as ProdutoMidia : null;
+  }
 }
