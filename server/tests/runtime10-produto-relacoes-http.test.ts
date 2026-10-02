@@ -489,6 +489,55 @@ test('HTTP R10 DAM: liberacao aprova CLEAN e rejeita conteudo sem publicar', asy
   }, storage, scanner, ['aprovar-conteudo']);
 });
 
+test('HTTP R10 DAM: reconciliacao de vencidas e infectadas exige tenant e RBAC', async () => {
+  const storage: StoragePort = {
+    createSignedUploadUrl: async () => ({
+      url: 'https://synthetic.example.test/upload?token=synthetic',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(), requiredHeaders: {},
+    }),
+    confirmUpload: async (request) => ({
+      storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
+      sizeBytes: request.sizeBytes, sha256: request.sha256, version: request.version ?? 1,
+    }),
+    createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
+  };
+  const scanner: MalwareScanPort = {
+    scan: async (request) => ({
+      ...request, version: request.version ?? 1, verdict: 'INFECTED',
+      scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+    }),
+  };
+  await withHttp(async (request) => {
+    const expiredPath = '/api/v1/produtos/midias/reconciliar-vencidas';
+    const infectedPath = '/api/v1/produtos/midias/reconciliar-infectadas';
+    assert.equal((await request(expiredPath, 'POST', { limit: 0 })).status, 400);
+    assert.equal((await request(expiredPath, 'POST', { groupId: GROUP_A })).status, 400);
+    assert.equal((await request(expiredPath, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    assert.equal((await request(infectedPath, 'POST', {}, headers(GROUP_A, EMPRESA_A, ACTOR_DENIED))).status, 403);
+    const emptyExpired = await request(expiredPath, 'POST', { limit: 10 });
+    assert.equal(emptyExpired.status, 200, JSON.stringify(emptyExpired.body));
+    assert.deepEqual(emptyExpired.body.data, { inspected: 0, rejected: 0, raced: 0 });
+    assert.equal(emptyExpired.headers.get('cache-control'), 'no-store');
+    const id = await product(request, 'DAM reconcile infectadas');
+    const payload = {
+      storage_key: `groups/${GROUP_A}/companies/${EMPRESA_A}/products/${id}/images/${randomUUID()}-infected.png`,
+      categoria: 'IMAGEM', nome_arquivo: 'infected.png', mime_type: 'image/png',
+      tamanho_bytes: 8, sha256: 'd'.repeat(64), versao: 1,
+    };
+    const reserved = await request(`/api/v1/produtos/${id}/midias/reservas`, 'POST', payload);
+    assert.equal(reserved.status, 201);
+    assert.equal((await request(`/api/v1/produtos/${id}/midias/${reserved.body.data.mediaId}/confirmar`, 'POST', {
+      attemptId: reserved.body.data.attemptId,
+    })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/midias/${reserved.body.data.mediaId}/verificar`, 'POST', {})).status, 200);
+    const infected = await request(infectedPath, 'POST', { limit: 5 });
+    assert.equal(infected.status, 200, JSON.stringify(infected.body));
+    assert.deepEqual(infected.body.data, { inspected: 1, rejected: 1, raced: 0 });
+    assert.deepEqual((await request(`/api/v1/produtos/${id}/midias`)).body.data, []);
+    assert.deepEqual((await request(infectedPath, 'POST', {})).body.data, { inspected: 0, rejected: 0, raced: 0 });
+  }, storage, scanner, ['aprovar-conteudo', 'inativar']);
+});
+
 test('HTTP R10 DAM: rejeicao individual de reserva vencida exige tenant e inativar', async (t) => {
   let storageCalls = 0;
   const storage: StoragePort = {

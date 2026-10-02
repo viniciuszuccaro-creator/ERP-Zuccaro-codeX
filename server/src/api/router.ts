@@ -131,6 +131,26 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     }
   });
 
+  const reconcileBody = z.object({ limit: z.coerce.number().int().min(1).max(100).optional() }).strict();
+  router.post('/api/v1/produtos/midias/reconciliar-vencidas', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsed = reconcileBody.safeParse(req.body ?? {});
+      if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media reconciliation payload');
+      const result = await service.reconcileExpiredMidias(ctxFromReq(req), parsed.data.limit ?? 50);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+  router.post('/api/v1/produtos/midias/reconciliar-infectadas', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsed = reconcileBody.safeParse(req.body ?? {});
+      if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media reconciliation payload');
+      const result = await service.reconcileInfectedMidias(ctxFromReq(req), parsed.data.limit ?? 50);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id/variantes', requireTenantScope, async (req, res, next) => {
     try { res.json({ data: await service.listVariants(ctxFromReq(req), req.params.id) }); }
     catch (error) { next(error); }
@@ -1220,6 +1240,13 @@ export function createApiRouter(deps: ApiDeps) {
         pagination: true,
         tenantFkIntegrity: true,
         frontendHttp: false,
+        dam: {
+          liberacaoInterna: true,
+          publicacaoBloqueadaComQuarentena: true,
+          reconciliacaoReservasVencidas: true,
+          reconciliacaoInfectados: true,
+          scannerOptIn: true,
+        },
       },
       cliente: {
         masterData: true,
