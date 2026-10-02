@@ -20,7 +20,7 @@ function fixture(extra: string[] = []) {
   const rbacGuard = new InMemoryRbacGuard();
   const allowed = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'aprovar-conteudo', 'publicar', ...extra] } };
   rbacGuard.link({ actorId: ACTOR, groupId: GROUP, permissions: allowed });
-  rbacGuard.link({ actorId: ACTOR_DENIED, groupId: GROUP, permissions: { Cadastros: { produto: ['visualizar', 'criar', 'editar'] } } });
+  rbacGuard.link({ actorId: ACTOR_DENIED, groupId: GROUP, permissions: { Cadastros: { produto: ['criar', 'editar'] } } });
   return createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard, rbacGuard });
 }
 
@@ -259,6 +259,56 @@ test('HTTP Onda 15: confirm repetido devolve recibo already_published', async ()
     assert.equal(second.body.data.receipt, 'already_published');
     assert.equal(second.body.data.id, eventId);
     assert.equal(second.body.data.status, 'published');
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
+
+test('HTTP Onda 15: GET outbox lista dead_letter com visualizar e rejeita sem permissao', async () => {
+  const { app, produtoService } = fixture();
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const port = (server.address() as AddressInfo).port;
+  const request = async (path: string, method = 'GET', body?: unknown, hdrs = headers()) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: hdrs, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json(), cache: response.headers.get('cache-control') };
+  };
+  try {
+    const created = await request('/api/v1/produtos', 'POST', { descricao: 'Outbox list HTTP' });
+    const id = created.body.data.id;
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'EM_REVISAO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'APROVADO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'PUBLICADO' })).status, 200);
+    const claimed = await request('/api/v1/produtos/outbox/claim', 'POST', { limit: 1, leaseMs: 30000 });
+    assert.equal(claimed.status, 200);
+    const eventId = claimed.body.data[0].id as string;
+    const leaseToken = claimed.body.data[0].leaseToken as string;
+    const repo = (produtoService as unknown as { repo: { publicationEvents?: Array<{ id: string; maxAttempts: number }> } }).repo;
+    const row = repo.publicationEvents?.find((event) => event.id === eventId);
+    assert.ok(row);
+    row!.maxAttempts = 1;
+    const failed = await request(`/api/v1/produtos/outbox/${eventId}/fail`, 'POST', {
+      leaseToken, errorMessage: 'list_http_dead',
+    });
+    assert.equal(failed.status, 200);
+    assert.equal(failed.body.data.status, 'dead_letter');
+
+    const denied = await request('/api/v1/produtos/outbox?status=dead_letter', 'GET', undefined, headers(ACTOR_DENIED));
+    assert.equal(denied.status, 403);
+
+    const listed = await request('/api/v1/produtos/outbox?status=dead_letter&limit=10&offset=0');
+    assert.equal(listed.status, 200);
+    assert.equal(listed.cache, 'no-store');
+    assert.equal(listed.body.data.total, 1);
+    assert.equal(listed.body.data.rows[0].id, eventId);
+    assert.equal(listed.body.data.rows[0].status, 'dead_letter');
+    assert.equal(listed.body.data.rows[0].errorMessage, 'list_http_dead');
+    assert.equal(listed.body.data.rows[0].payload, undefined);
+
+    const bad = await request('/api/v1/produtos/outbox?status=nope');
+    assert.equal(bad.status, 400);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }

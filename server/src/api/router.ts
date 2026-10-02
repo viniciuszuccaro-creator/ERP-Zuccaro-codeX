@@ -111,6 +111,18 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
 }
 
 function mountProdutoRoutes(router: Router, service: ProdutoService) {
+  router.get('/api/v1/produtos/outbox', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.listPublicationEvents(ctxFromReq(req), {
+        status: req.query.status != null ? String(req.query.status) : undefined,
+        limit: req.query.limit != null ? Number(req.query.limit) : undefined,
+        offset: req.query.offset != null ? Number(req.query.offset) : undefined,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
   router.post('/api/v1/produtos/outbox/claim', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.claimPublicationEvents(ctxFromReq(req), {
@@ -1252,6 +1264,7 @@ export function createApiRouter(deps: ApiDeps) {
         outboxFakeBatch: true,
         outboxDeadLetterReprocess: true,
         outboxConfirmIdempotent: true,
+        outboxListRead: true,
       },
       cliente: {
         masterData: true,

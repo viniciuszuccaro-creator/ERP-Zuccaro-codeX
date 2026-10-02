@@ -34,6 +34,7 @@ import {
   claimProdutoPublicationEvents,
   confirmProdutoPublicationEvent,
   failProdutoPublicationEvent,
+  listProdutoPublicationEvents,
   processProdutoOutboxBatch,
   reprocessProdutoPublicationEvent,
   type CatalogPublisherPort,
@@ -296,6 +297,16 @@ export class ProdutoService {
     return reprocessProdutoPublicationEvent({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
     }, ctx, eventId, reason);
+  }
+
+  /** Listagem read-only da outbox (filtro status). RBAC visualizar. */
+  async listPublicationEvents(
+    ctx: RequestContext,
+    options: { status?: string; limit?: number; offset?: number } = {},
+  ) {
+    return listProdutoPublicationEvents({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, options);
   }
 
   /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */

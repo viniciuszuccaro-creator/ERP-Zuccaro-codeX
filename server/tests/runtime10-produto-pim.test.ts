@@ -587,7 +587,7 @@ test('Workflow Produto exige transicoes e RBAC de aprovacao/publicacao e grava o
   assert.equal((await service.changeWorkflowStatus(ctx, created.id, 'EM_REVISAO')).workflow_status, 'EM_REVISAO');
   assert.equal((await service.changeWorkflowStatus(ctx, created.id, 'APROVADO')).workflow_status, 'APROVADO');
   assert.equal((await service.changeWorkflowStatus(ctx, created.id, 'PUBLICADO')).workflow_status, 'PUBLICADO');
-  assert.equal(repo.listPublicationEvents().length, 1);
+  assert.equal(repo.listPublicationEventSummaries().length, 1);
   const logs = await audit.listByEntity('Produto', created.id);
   assert.ok(logs.some((entry) => entry.action === 'approve'));
   assert.ok(logs.some((entry) => entry.action === 'publish'));
@@ -612,22 +612,22 @@ test('Outbox Produto em memoria preserva idempotencia global e rollback', async 
     await repo.appendPublicationEvent(scope, first, requestId, executor);
     await repo.appendPublicationEvent(scope, second, requestId, executor);
   });
-  assert.equal(repo.listPublicationEvents().length, 2);
+  assert.equal(repo.listPublicationEventSummaries().length, 2);
   await assert.rejects(repo.withTransaction(async (executor) => {
     await repo.appendPublicationEvent(scope, first, 'outbox-rollback-sintetico', executor);
     throw new Error('SYNTHETIC_ROLLBACK');
   }), /SYNTHETIC_ROLLBACK/);
-  assert.equal(repo.listPublicationEvents().length, 2);
+  assert.equal(repo.listPublicationEventSummaries().length, 2);
   await repo.appendPublicationEvent(scope, first, 'outbox-rollback-sintetico');
-  assert.equal(repo.listPublicationEvents().length, 3);
+  assert.equal(repo.listPublicationEventSummaries().length, 3);
   await assert.rejects(repo.appendPublicationEvent(
     { groupId: randomUUID(), empresaId: EMPRESA }, first, requestId,
   ), /TENANT_FK_MISMATCH/);
-  assert.equal(repo.listPublicationEvents().length, 3);
+  assert.equal(repo.listPublicationEventSummaries().length, 3);
   await assert.rejects(repo.appendPublicationEvent(
     { groupId: GROUP, empresaId: randomUUID() }, first, requestId,
   ), /TENANT_FK_MISMATCH/);
-  assert.equal(repo.listPublicationEvents().length, 3);
+  assert.equal(repo.listPublicationEventSummaries().length, 3);
 });
 test('Outbox Produto em memoria nao perde commit concorrente apos rollback', async () => {
   const { repo, service, ctx } = harness();
@@ -649,7 +649,7 @@ test('Outbox Produto em memoria nao perde commit concorrente apos rollback', asy
   rejectFirst();
   await assert.rejects(first, /SYNTHETIC_ROLLBACK/);
   await second;
-  assert.deepEqual(repo.listPublicationEvents().map((event) => event.requestId),
+  assert.deepEqual(repo.listPublicationEventSummaries().map((event) => event.requestId),
     ['outbox-segunda-sintetica']);
 });
 
@@ -678,7 +678,7 @@ test('Falha de auditoria rollbacka publicacao e evento outbox na mesma transacao
     /AUDIT_FAILURE/,
   );
   assert.equal((await repo.getById({ groupId: GROUP, empresaId: EMPRESA }, created.id))?.workflow_status, 'APROVADO');
-  assert.equal(repo.listPublicationEvents().length, 0);
+  assert.equal(repo.listPublicationEventSummaries().length, 0);
 });
 
 test('Variantes e equivalentes exigem Produto no tenant e RBAC visualizar', async () => {

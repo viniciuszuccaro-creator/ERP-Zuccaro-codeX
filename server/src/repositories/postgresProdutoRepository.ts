@@ -530,6 +530,40 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
   }
 
+  async listPublicationEvents(
+    scope: Scope,
+    options: { status?: import('../services/produtoOutboxClaim.js').OutboxEventStatus; limit: number; offset: number },
+    executor?: DbQueryExecutor,
+  ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }> {
+    if (!scope.empresaId) return { rows: [], total: 0 };
+    const query = executor ?? this.db;
+    const params: unknown[] = [scope.groupId, scope.empresaId];
+    let where = `group_id=$1 AND empresa_id=$2 AND event_type='produto.publicado'`;
+    if (options.status) {
+      params.push(options.status);
+      where += ` AND status=$${params.length}`;
+    }
+    const totalResult = await query.query(
+      `SELECT count(*)::int AS total FROM integration_events WHERE ${where}`,
+      params,
+    );
+    const total = Number(totalResult.rows[0]?.total ?? 0);
+    params.push(options.limit, options.offset);
+    const result = await query.query(
+      `SELECT id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+              locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload
+       FROM integration_events
+       WHERE ${where}
+       ORDER BY COALESCE(dead_letter_at, published_at, next_attempt_at, locked_until, updated_at) DESC, id DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params,
+    );
+    return {
+      total,
+      rows: result.rows.map((row) => this.mapPublicationEvent(row as Record<string, unknown>)),
+    };
+  }
+
   private mapCanal(row: Record<string, unknown>): ProdutoCanal {
     return { ...row, ...ts(row) } as ProdutoCanal;
   }

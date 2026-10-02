@@ -5,6 +5,7 @@ import {
   assertOutboxLeaseToken,
   computeOutboxRetryAt,
   createPendingPublicationEvent,
+  type OutboxEventStatus,
   type ProdutoPublicationEvent,
 } from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaScanEvidence, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
@@ -69,6 +70,11 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     eventId: string,
     executor?: DbQueryExecutor,
   ): Promise<ProdutoPublicationEvent | null>;
+  listPublicationEvents(
+    scope: Scope,
+    options: { status?: OutboxEventStatus; limit: number; offset: number },
+    executor?: DbQueryExecutor,
+  ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
   listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
   listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
   listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]>;
@@ -436,6 +442,27 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     this.publicationEvents[index] = next;
     return structuredClone(next);
   }
+
+  async listPublicationEvents(
+    scope: Scope,
+    options: { status?: OutboxEventStatus; limit: number; offset: number },
+  ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }> {
+    if (!scope.empresaId) return { rows: [], total: 0 };
+    const filtered = this.publicationEvents
+      .filter((row) => row.groupId === scope.groupId && row.empresaId === scope.empresaId
+        && row.eventType === 'produto.publicado'
+        && (options.status == null || row.status === options.status))
+      .sort((a, b) => {
+        const aTime = a.deadLetterAt || a.publishedAt || a.nextAttemptAt || a.lockedUntil || '';
+        const bTime = b.deadLetterAt || b.publishedAt || b.nextAttemptAt || b.lockedUntil || '';
+        return bTime.localeCompare(aTime) || b.id.localeCompare(a.id);
+      });
+    return {
+      total: filtered.length,
+      rows: filtered.slice(options.offset, options.offset + options.limit).map((row) => structuredClone(row)),
+    };
+  }
+
   async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
     return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
       && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
@@ -685,7 +712,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return structuredClone(row);
   }
 
-  listPublicationEvents() {
+  /** Resumo sincrono para testes de emissao (nao substitui listagem paginada tenant-scoped). */
+  listPublicationEventSummaries() {
     return structuredClone(this.publicationEvents.map((event) => ({
       groupId: event.groupId,
       empresaId: event.empresaId,

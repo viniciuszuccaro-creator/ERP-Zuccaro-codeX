@@ -179,10 +179,10 @@ test('Outbox dead-letter: reprocess exige RBAC proprio e volta a pending claimav
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
   );
 
+  const missingId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   await assert.rejects(
-    service.reprocessPublicationEvent(ctx, claimed[0].id.replace(/.$/, '0'), 'missing'),
-    (error: unknown) => (error as { code?: string }).code === 'OUTBOX_EVENT_NOT_FOUND'
-      || (error as { code?: string }).code === 'VALIDATION_ERROR',
+    service.reprocessPublicationEvent(ctx, missingId, 'missing'),
+    (error: unknown) => (error as { code?: string }).code === 'OUTBOX_EVENT_NOT_FOUND',
   );
 
   const reprocessed = await service.reprocessPublicationEvent(ctx, claimed[0].id, 'operator_retry');
@@ -229,4 +229,29 @@ test('Outbox fake publisher: segundo publish do mesmo eventId nao duplica recibo
   assert.deepEqual(await publisher.publish(event), { ok: true });
   assert.deepEqual(await publisher.publish(event), { ok: true });
   assert.equal(publisher.delivered.length, 1);
+});
+
+test('Outbox list: dead_letter read-only exige visualizar e isola tenant', async () => {
+  const { service, repo, ctx } = setup(['visualizar', 'criar', 'editar', 'publicar']);
+  const produto = await service.create(ctx, { descricao: 'List dead letter' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'req-list-1');
+  const events = (repo as any).publicationEvents as Array<{ maxAttempts: number }>;
+  events[0].maxAttempts = 1;
+  const claimed = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 30_000 });
+  await service.failPublicationEvent(ctx, claimed[0].id, claimed[0].leaseToken, 'list_dead');
+
+  const denied = setup([]);
+  await assert.rejects(denied.service.listPublicationEvents(denied.ctx, { status: 'dead_letter' }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+
+  const page = await service.listPublicationEvents(ctx, { status: 'dead_letter', limit: 10, offset: 0 });
+  assert.equal(page.total, 1);
+  assert.equal(page.rows.length, 1);
+  assert.equal(page.rows[0].id, claimed[0].id);
+  assert.equal(page.rows[0].status, 'dead_letter');
+  assert.equal(page.rows[0].errorMessage, 'list_dead');
+  assert.equal((page.rows[0] as { payload?: unknown }).payload, undefined);
+
+  await assert.rejects(service.listPublicationEvents(ctx, { status: 'invalid' as any }),
+    (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
 });

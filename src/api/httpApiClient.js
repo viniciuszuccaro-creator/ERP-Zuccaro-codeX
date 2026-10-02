@@ -315,6 +315,12 @@ export function createHttpApiClient(options = {}) {
             method: 'POST', body: { reason }, signal,
           });
         },
+        /** Listagem read-only outbox. @param {{ status?: string, limit?: number, offset?: number, signal?: AbortSignal }} [options] */
+        outboxList({ status, limit = 20, offset = 0, signal } = {}) {
+          return request('/api/v1/produtos/outbox', {
+            query: { status, limit, offset }, signal,
+          });
+        },
         /** Lote claim→publisher fake→confirm/fail (sem canal real). @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
         outboxProcess({ limit = 10, leaseMs = 60_000, signal } = {}) {
           return request('/api/v1/produtos/outbox/process', { method: 'POST', body: { limit, leaseMs }, signal });

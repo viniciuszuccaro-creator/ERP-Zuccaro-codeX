@@ -81,6 +81,11 @@ export type OutboxClaimRepository = {
     eventId: string,
     executor?: DbQueryExecutor,
   ): Promise<ProdutoPublicationEvent | null>;
+  listPublicationEvents(
+    scope: Scope,
+    options: { status?: OutboxEventStatus; limit: number; offset: number },
+    executor?: DbQueryExecutor,
+  ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
 };
 
 type Dependencies = {
@@ -99,7 +104,7 @@ function assertId(id: string) {
 async function authorize(
   deps: Dependencies,
   ctx: RequestContext,
-  action: 'publicar' | 'reprocessar' = 'publicar',
+  action: 'visualizar' | 'publicar' | 'reprocessar' = 'publicar',
 ) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
   if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
@@ -261,6 +266,43 @@ export async function reprocessProdutoPublicationEvent(
       produtoId: row.produtoId,
     };
   });
+}
+
+const OUTBOX_LIST_STATUSES: OutboxEventStatus[] = ['pending', 'processing', 'published', 'retry', 'dead_letter'];
+
+/** Listagem read-only tenant-scoped. RBAC visualizar. Sem payload integral. */
+export async function listProdutoPublicationEvents(
+  deps: Dependencies,
+  ctx: RequestContext,
+  options: { status?: string; limit?: number; offset?: number } = {},
+) {
+  const scope = await authorize(deps, ctx, 'visualizar');
+  const status = options.status
+    ? (OUTBOX_LIST_STATUSES.includes(options.status as OutboxEventStatus)
+      ? options.status as OutboxEventStatus
+      : (() => { throw new AppError(400, 'VALIDATION_ERROR', 'Invalid outbox status filter'); })())
+    : undefined;
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+  const offset = Math.min(Math.max(options.offset ?? 0, 0), 10_000);
+  const page = await deps.repo.listPublicationEvents(scope, { status, limit, offset });
+  return {
+    total: page.total,
+    limit,
+    offset,
+    rows: page.rows.map((row) => ({
+      id: row.id,
+      produtoId: row.produtoId,
+      requestId: row.requestId,
+      status: row.status,
+      attempts: row.attempts,
+      maxAttempts: row.maxAttempts,
+      nextAttemptAt: row.nextAttemptAt,
+      deadLetterAt: row.deadLetterAt,
+      publishedAt: row.publishedAt,
+      errorMessage: row.errorMessage,
+      schemaVersion: row.schemaVersion,
+    })),
+  };
 }
 
 export function createPendingPublicationEvent(input: {
