@@ -7,7 +7,8 @@ import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { createInMemoryProdutoRepo } from '../src/repositories/inMemoryProdutoRepository.ts';
 import { ProdutoService } from '../src/services/produtoService.ts';
-import { buildOutboxLeaseToken } from '../src/services/produtoOutboxClaim.ts';
+import { buildOutboxLeaseToken, FakeCatalogPublisher } from '../src/services/produtoOutboxClaim.ts';
+import { NotImplementedStorage } from '../src/services/storagePort.ts';
 
 const groupId = '11111111-1111-4111-8111-111111111111';
 const empresaId = '22222222-2222-4222-8222-222222222222';
@@ -82,4 +83,26 @@ test('Outbox claim/lease: fail com tentativas restantes agenda retry', async () 
   assert.equal(failed.status, 'retry');
   assert.ok(failed.nextAttemptAt);
   assert.equal(failed.deadLetterAt, null);
+});
+
+test('Outbox batch fake publisher confirma sem rede', async () => {
+  const publisher = new FakeCatalogPublisher('ok');
+  const repo = createInMemoryProdutoRepo();
+  const audit = new InMemoryAuditRepository();
+  const tenant = new InMemoryTenantGuard();
+  tenant.link(empresaId, groupId);
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId, groupId, permissions: { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'aprovar-conteudo', 'publicar'] } } });
+  const service = new ProdutoService(
+    repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac,
+    new NotImplementedStorage(), undefined, publisher,
+  );
+  const ctx = { requestId: randomUUID(), actorId, groupId, empresaId };
+  const produto = await service.create(ctx, { descricao: 'Batch fake ok' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'batch-ok');
+  const result = await service.processOutboxBatch(ctx, { limit: 5, leaseMs: 30_000 });
+  assert.equal(result.claimed, 1);
+  assert.equal(result.results[0].outcome, 'published');
+  assert.equal(publisher.delivered.length, 1);
+  assert.equal(publisher.delivered[0].produtoId, produto.id);
 });

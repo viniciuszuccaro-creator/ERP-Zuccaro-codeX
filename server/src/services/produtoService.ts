@@ -34,6 +34,9 @@ import {
   claimProdutoPublicationEvents,
   confirmProdutoPublicationEvent,
   failProdutoPublicationEvent,
+  processProdutoOutboxBatch,
+  type CatalogPublisherPort,
+  FakeCatalogPublisher,
 } from './produtoOutboxClaim.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
@@ -71,6 +74,7 @@ export class ProdutoService {
     private readonly rbacGuard: RbacGuard,
     private readonly storage: StoragePort = new NotImplementedStorage(),
     private readonly scanner?: MalwareScanPort,
+    private readonly catalogPublisher: CatalogPublisherPort = new FakeCatalogPublisher('ok'),
   ) {}
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
@@ -284,6 +288,14 @@ export class ProdutoService {
     return failProdutoPublicationEvent({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
     }, ctx, eventId, leaseToken, errorMessage);
+  }
+
+  /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */
+  async processOutboxBatch(ctx: RequestContext, options: { limit?: number; leaseMs?: number } = {}) {
+    return processProdutoOutboxBatch({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+      publisher: this.catalogPublisher,
+    }, ctx, options);
   }
 
   /** Garante que CRUD de Produto nao aceita campos transacionais. */

@@ -1,3 +1,9 @@
+## Comercial 360 / Onda 15 - batch fake publisher (2026-10-02)
+
+- Continuacao: `FakeCatalogPublisher` + `processOutboxBatch` (claim→publish fake→confirm/fail) no service existente. Sem rede, sem worker HTTP, sem canal real.
+- Testes outbox claim: 5/5 (service+HTTP+batch).
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+
 ## Comercial 360 / Onda 15 - claim/lease outbox produto.publicado (2026-10-02)
 
 - Objetivo: menor checkpoint seguro da Onda 15 sem worker externo — claim concorrente, confirm e fail/retry/dead-letter sobre `integration_events` existente (colunas 018), lease token derivado (sem migration nova).

@@ -239,3 +239,51 @@ export function createPendingPublicationEvent(input: {
     payload: input.payload ?? { produtoId: input.produtoId, schemaVersion: 1 },
   };
 }
+
+/** Publisher de catalogo — fake/local apenas; sem rede neste checkpoint. */
+export type CatalogPublisherPort = {
+  publish(event: ClaimedPublicationEvent): Promise<{ ok: true } | { ok: false; error: string }>;
+};
+
+export class FakeCatalogPublisher implements CatalogPublisherPort {
+  readonly delivered: ClaimedPublicationEvent[] = [];
+  constructor(private readonly mode: 'ok' | 'fail' = 'ok') {}
+  async publish(event: ClaimedPublicationEvent) {
+    if (this.mode === 'fail') return { ok: false as const, error: 'FAKE_PUBLISHER_FAILURE' };
+    this.delivered.push(event);
+    return { ok: true as const };
+  }
+}
+
+/**
+ * Processa um lote claim→publish fake→confirm/fail.
+ * Nao ativa worker HTTP nem canal real.
+ */
+export async function processProdutoOutboxBatch(
+  deps: Dependencies & { publisher: CatalogPublisherPort },
+  ctx: RequestContext,
+  options: { limit?: number; leaseMs?: number } = {},
+) {
+  const claimed = await claimProdutoPublicationEvents(deps, ctx, options);
+  const results: Array<{ id: string; outcome: 'published' | 'retry' | 'dead_letter'; error?: string }> = [];
+  for (const event of claimed) {
+    let publishResult: { ok: true } | { ok: false; error: string };
+    try {
+      publishResult = await deps.publisher.publish(event);
+    } catch (error) {
+      publishResult = { ok: false, error: error instanceof Error ? error.message : 'publisher_error' };
+    }
+    if (publishResult.ok) {
+      const confirmed = await confirmProdutoPublicationEvent(deps, ctx, event.id, event.leaseToken);
+      results.push({ id: event.id, outcome: confirmed.status === 'published' ? 'published' : 'retry' });
+    } else {
+      const failed = await failProdutoPublicationEvent(deps, ctx, event.id, event.leaseToken, publishResult.error);
+      results.push({
+        id: event.id,
+        outcome: failed.status === 'dead_letter' ? 'dead_letter' : 'retry',
+        error: publishResult.error,
+      });
+    }
+  }
+  return { claimed: claimed.length, results };
+}
