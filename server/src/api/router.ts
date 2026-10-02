@@ -121,6 +121,16 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     } catch (error) { next(error); }
   });
 
+  router.post('/api/v1/produtos/outbox/process', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.processOutboxBatch(ctxFromReq(req), {
+        limit: req.body?.limit != null ? Number(req.body.limit) : undefined,
+        leaseMs: req.body?.leaseMs != null ? Number(req.body.leaseMs) : undefined,
+      });
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
   router.post('/api/v1/produtos/outbox/:eventId/confirm', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.confirmPublicationEvent(
@@ -1228,6 +1238,7 @@ export function createApiRouter(deps: ApiDeps) {
         tenantFkIntegrity: true,
         frontendHttp: false,
         outboxClaimLease: true,
+        outboxFakeBatch: true,
       },
       cliente: {
         masterData: true,

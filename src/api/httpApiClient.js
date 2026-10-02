@@ -293,6 +293,26 @@ export function createHttpApiClient(options = {}) {
         midiaConfirm(produtoId, mediaId, attemptId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/confirmar`, { method: 'POST', body: { attemptId }, signal });
         },
+        /** Claim concorrente outbox produto.publicado. @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
+        outboxClaim({ limit = 10, leaseMs = 60_000, signal } = {}) {
+          return request('/api/v1/produtos/outbox/claim', { method: 'POST', body: { limit, leaseMs }, signal });
+        },
+        /** Confirm com lease token. @param {string} eventId @param {string} leaseToken @param {{ signal?: AbortSignal }} [options] */
+        outboxConfirm(eventId, leaseToken, { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/confirm`, {
+            method: 'POST', body: { leaseToken }, signal,
+          });
+        },
+        /** Fail/retry/dead-letter. @param {string} eventId @param {string} leaseToken @param {string} [errorMessage] @param {{ signal?: AbortSignal }} [options] */
+        outboxFail(eventId, leaseToken, errorMessage = 'delivery_failed', { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/fail`, {
+            method: 'POST', body: { leaseToken, errorMessage }, signal,
+          });
+        },
+        /** Lote claim→publisher fake→confirm/fail (sem canal real). @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
+        outboxProcess({ limit = 10, leaseMs = 60_000, signal } = {}) {
+          return request('/api/v1/produtos/outbox/process', { method: 'POST', body: { limit, leaseMs }, signal });
+        },
         equivalentes: relationRoutes('equivalentes'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */

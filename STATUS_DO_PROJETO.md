@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 15 - HTTP process + client prepared (2026-10-02)
+
+- Continuacao: `POST /api/v1/produtos/outbox/process`; client prepared `outboxClaim|Confirm|Fail|Process`; meta `outboxFakeBatch`; testes fail-publisher→retry e claim concorrente.
+- Sem worker cron, sem canal real, sem VPS.
+- Testes: outbox service+HTTP 8/8; http-api-client 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+
 ## Comercial 360 / Onda 15 - batch fake publisher (2026-10-02)
 
 - Continuacao: `FakeCatalogPublisher` + `processOutboxBatch` (claim→publish fake→confirm/fail) no service existente. Sem rede, sem worker HTTP, sem canal real.

@@ -106,3 +106,35 @@ test('Outbox batch fake publisher confirma sem rede', async () => {
   assert.equal(publisher.delivered.length, 1);
   assert.equal(publisher.delivered[0].produtoId, produto.id);
 });
+
+test('Outbox batch fake publisher falha agenda retry sem rede', async () => {
+  const publisher = new FakeCatalogPublisher('fail');
+  const repo = createInMemoryProdutoRepo();
+  const audit = new InMemoryAuditRepository();
+  const tenant = new InMemoryTenantGuard();
+  tenant.link(empresaId, groupId);
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId, groupId, permissions: { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'publicar'] } } });
+  const service = new ProdutoService(
+    repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac,
+    new NotImplementedStorage(), undefined, publisher,
+  );
+  const ctx = { requestId: randomUUID(), actorId, groupId, empresaId };
+  const produto = await service.create(ctx, { descricao: 'Batch fake fail' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'batch-fail');
+  const result = await service.processOutboxBatch(ctx, { limit: 5, leaseMs: 30_000 });
+  assert.equal(result.claimed, 1);
+  assert.equal(result.results[0].outcome, 'retry');
+  assert.equal(result.results[0].error, 'FAKE_PUBLISHER_FAILURE');
+  assert.equal(publisher.delivered.length, 0);
+});
+
+test('Outbox claim concorrente: segundo claim nao pega o mesmo evento', async () => {
+  const { service, repo, ctx } = setup();
+  const produto = await service.create(ctx, { descricao: 'Concorrencia claim' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'claim-once');
+  const first = await service.claimPublicationEvents(ctx, { limit: 10, leaseMs: 60_000 });
+  assert.equal(first.length, 1);
+  const second = await service.claimPublicationEvents(ctx, { limit: 10, leaseMs: 60_000 });
+  assert.equal(second.length, 0);
+});

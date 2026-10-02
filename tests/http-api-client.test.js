@@ -206,15 +206,27 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   await produto.workflow('p', 'EM_REVISAO');
   await produto.midiaReserve('p', { storage_key: 'synthetic' });
   await produto.midiaConfirm('p', 'm', 'a');
-  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST']);
+  await produto.outboxClaim({ limit: 5, leaseMs: 30_000 });
+  await produto.outboxConfirm('e1', 'token');
+  await produto.outboxFail('e1', 'token', 'temporary');
+  await produto.outboxProcess({ limit: 3 });
+  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST']);
   assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
     '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
     '/api/v1/produtos/p/midias/m/confirmar',
+    '/api/v1/produtos/outbox/claim',
+    '/api/v1/produtos/outbox/e1/confirm',
+    '/api/v1/produtos/outbox/e1/fail',
+    '/api/v1/produtos/outbox/process',
   ]);
   assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
     && call.headers['X-Empresa-Id'] === 'empresa-sintetica'));
   assert.equal(JSON.parse(calls[0].body).status, 'EM_REVISAO');
   assert.deepEqual(JSON.parse(calls[2].body), { attemptId: 'a' });
+  assert.deepEqual(JSON.parse(calls[3].body), { limit: 5, leaseMs: 30_000 });
+  assert.deepEqual(JSON.parse(calls[4].body), { leaseToken: 'token' });
+  assert.deepEqual(JSON.parse(calls[5].body), { leaseToken: 'token', errorMessage: 'temporary' });
+  assert.deepEqual(JSON.parse(calls[6].body), { limit: 3, leaseMs: 60_000 });
   assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
 });
 

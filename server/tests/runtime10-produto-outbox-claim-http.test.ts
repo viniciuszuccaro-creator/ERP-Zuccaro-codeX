@@ -70,3 +70,37 @@ test('HTTP Onda 15: claim/confirm outbox exige publicar e nao entrega canal', as
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 });
+
+test('HTTP Onda 15: process batch fake exige publicar e confirma localmente', async () => {
+  const { app } = fixture();
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const port = (server.address() as AddressInfo).port;
+  const request = async (path: string, method = 'GET', body?: unknown, hdrs = headers()) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: hdrs, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    const created = await request('/api/v1/produtos', 'POST', { descricao: 'Outbox process HTTP' });
+    const id = created.body.data.id;
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'EM_REVISAO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'APROVADO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'PUBLICADO' })).status, 200);
+
+    const denied = await request('/api/v1/produtos/outbox/process', 'POST', { limit: 5 }, headers(ACTOR_DENIED));
+    assert.equal(denied.status, 403);
+
+    const processed = await request('/api/v1/produtos/outbox/process', 'POST', { limit: 5, leaseMs: 30000 });
+    assert.equal(processed.status, 200);
+    assert.equal(processed.body.data.claimed, 1);
+    assert.equal(processed.body.data.results[0].outcome, 'published');
+
+    const empty = await request('/api/v1/produtos/outbox/process', 'POST', { limit: 5 });
+    assert.equal(empty.status, 200);
+    assert.equal(empty.body.data.claimed, 0);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
