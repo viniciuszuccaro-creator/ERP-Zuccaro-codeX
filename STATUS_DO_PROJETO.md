@@ -1,3 +1,16 @@
+## CURSOR — #199 CI verde tip dd8ee9d1 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| HEAD | `dd8ee9d1` |
+| CI push | [37022604642](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37022604642) **success** |
+| CI PR | [37022611912](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37022611912) **success** |
+| Jobs | frontend · backend · `expedicao-comercial-compose` (PGlite+PG + trava 026) |
+| Parecer #201 | `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — **não** estende #200 |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — #199 hotfix CI backend: compose PG só sob REQUIRE (2026-10-02)
 
 | Campo | Valor |

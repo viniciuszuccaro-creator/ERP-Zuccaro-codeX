@@ -1,3 +1,9 @@
+## CURSOR — #199 CI verde tip dd8ee9d1 (2026-10-02)
+
+CI push/PR **success** no tip `dd8ee9d1` (frontend, backend, `expedicao-comercial-compose`). Hotfix REQUIRE + pacote compose/telas/#201 entregues. Parecer #201 `d20a6dde` não estende #200. Tip-port/merge/VPS bloqueados. Canal documental atualizado.
+
+---
+
 ## CURSOR — #199 hotfix CI backend compose PG REQUIRE (2026-10-02)
 
 Backend `npm test` falhava: compose PG exigia DATABASE_URL sob CI. REQUIRE agora só com `COMERCIAL_COMPOSE_REQUIRE=1`. Job `expedicao-comercial-compose` permanece fail-closed. Sem tip-port/merge/VPS.
