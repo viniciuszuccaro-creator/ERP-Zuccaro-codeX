@@ -1,3 +1,9 @@
+## Comercial 360 / Onda 1 - campos canal/equivalente na UI (2026-10-02)
+
+- Continuacao: V22 existente passa a persistir `descricao` do rascunho de canal e `direcional` do equivalente; create de equivalente forca `aprovado:false` (aprovacao so via botao/RBAC).
+- Sem Produto HTTP, sem VPS, sem publicacao externa.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+
 ## Comercial 360 / Onda 1 - aprovacao equivalente fail-closed (2026-10-02)
 
 - Continuacao: mudar `aprovado` em `ProdutoEquivalente` exige RBAC `aprovar-conteudo` (alem de `editar`); UI V22 expoe `Aprovar relacao` via policy existente; create com `aprovado:true` tambem fail-closed.
