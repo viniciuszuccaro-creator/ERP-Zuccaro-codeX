@@ -1,16 +1,26 @@
-# Coordenação Cursor (#199) × Codex (#178) — contratos e propriedade
+# Coordenação Cursor (#199) × Codex (#178 / #200) — contratos e propriedade
 
 **Canal documental combinado** (comentários de PR bloqueados para o agente): este arquivo + `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md`.
 
-## SHA observado do tip Codex (parecer)
+## SHA observado — tip Comercial #178 (parecer separado)
 
 | Campo | Valor |
 |---|---|
 | PR | #178 |
 | Branch | `codex/comercial-corrige-parecer-155` |
 | SHA | `4f8c6593506f681689e021226ab024f57c7aede9` |
-| CI | frontend+backend SUCCESS (observado) |
+| Parecer | `docs/PARECER_CODEX_178_SHA_4f8c6593.md` |
 | Tip-port | **Não** — candidata |
+
+## SHA observado — tip Pedido/Expedição #200 (parecer separado; NÃO estende #178)
+
+| Campo | Valor |
+|---|---|
+| PR | #200 |
+| Branch | `codex/pedido-expedicao-contract-20261001` |
+| SHA | `619bddd0e550cad2957a7343100a098319ad79bd` |
+| Parecer | `docs/PARECER_CODEX_200_SHA_619bddd0.md` |
+| Tip-port | **Não** — candidata; parecer #178 **não** se aplica automaticamente |
 
 ## Propriedade de arquivos (antes de editar áreas compartilhadas)
 
@@ -29,10 +39,6 @@
 
 1. Portas `ExpedicaoPedidoSideEffectPort` / `ExpedicaoEstoquePort` — default `reserved`.
 2. Migration Expedição = **036** (sem colisão com 025–035).
-3. Sem tip-port na branch Expedição enquanto #178 for candidata.
-4. Composição integrada: aplicar comercial 025–035 **depois** 024 e **antes** 036; sem reescrever migrations aplicadas.
-
-## O que Cursor não edita neste lote
-
-- Branches/arquivos exclusivos do tip Comercial (Pedido/Orçamento/mig 025–035).
-- Force-push, tip-port, merge main, migrate VPS.
+3. Sem tip-port na branch Expedição enquanto #178/#200 forem candidatas.
+4. Composição integrada: aplicar comercial 025–035 **depois** 024 e **antes** 036; CI job `expedicao-comercial-compose` falha se ref Comercial ausente ou suíte skip.
+5. Pareceres por **SHA exato** — nunca estender automaticamente #178 → #200.

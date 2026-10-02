@@ -1,3 +1,9 @@
+## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+
+Reload Playwright com `page.reload()` real (não sessionStorage fake). Job CI `expedicao-comercial-compose`: fetch explícito tip Comercial `4f8c6593`; ref ausente/skip = fail. Prova SPA `/Expedicao` × BFF+PGlite (criação→separação→romaneio→parcial/total→ocorrência→devolução + RBAC + troca empresa). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Sem tip-port/merge/VPS.
+
+---
+
 ## CURSOR — pacote complementar #199 UI BFF + composição (2026-10-01T19:50Z)
 
 Wire completo separação/expedição/parcial/total/ocorrência/devolução via BFF canônico (estados suportados). Prova Playwright: reload, RBAC 403, isolamento empresa 404, erro com code. Composição mig comercial 025–035 + 036 PGlite. Parecer Codex SHA `4f8c6593` em `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (canal documental). Sem tip-port. Merge/VPS bloqueado.

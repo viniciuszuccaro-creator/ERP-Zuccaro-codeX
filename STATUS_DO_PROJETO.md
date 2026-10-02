@@ -1,3 +1,18 @@
+## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| Reload | Playwright `page.reload()` real + revalidação PG (`exp_reload_*` em localStorage) |
+| CI | Job `expedicao-comercial-compose`: fetch tip Comercial **`4f8c6593`**; `COMERCIAL_COMPOSE_REQUIRE=1`; skip/ausência = **fail** |
+| Telas ERP | `tests/expedicao-erp-telas-pg.playwright.test.mjs` — SPA `/Expedicao` × BFF+PGlite (fluxo+RBAC+empresa) |
+| Parecer #178 | permanece `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (sem extensão) |
+| Parecer #200 | **novo** `docs/PARECER_CODEX_200_SHA_619bddd0.md` — SHA exato `619bddd0`; tip-port **NÃO** |
+| Migration | **036** (PR body atualizada; sem 025_expedicao) |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — #199 complementar UI BFF + composição Comercial (2026-10-01T19:50Z)
 
 | Campo | Valor |

@@ -189,27 +189,46 @@ function harnessHtml() {
       }
     };
 
+    // Preparação: grava id/status no localStorage e sinaliza o Playwright para
+    // chamar page.reload() de verdade. Após a recarga, o boot abaixo revalida no PG.
     document.getElementById('btn-reload').onclick = async () => {
       try {
         const id = state.entregaId || await seedPronto('reload-' + Date.now());
         state.entregaId = id;
         const before = await api('/api/v1/entregas/' + id);
         if (before.status !== 200) throw new Error('get before ' + before.status);
-        sessionStorage.setItem('exp_reload_id', id);
-        sessionStorage.setItem('exp_reload_status', before.body.data.status);
-        const afterId = sessionStorage.getItem('exp_reload_id');
-        const after = await api('/api/v1/entregas/' + afterId);
-        if (after.status !== 200) throw new Error('get after ' + after.status);
-        if (after.body.data.status !== sessionStorage.getItem('exp_reload_status')) {
-          throw new Error('status mudou apos reload simulado');
-        }
-        state.reloadOk = true;
-        log('RELOAD_OK status=' + after.body.data.status, true);
+        localStorage.setItem('exp_reload_id', id);
+        localStorage.setItem('exp_reload_status', before.body.data.status);
+        localStorage.setItem('exp_reload_pending', '1');
+        state.reloadPrepared = true;
+        log('RELOAD_PREPARED id=' + id + ' status=' + before.body.data.status, true);
       } catch (e) {
+        state.reloadPrepared = false;
         state.reloadOk = false;
         log(String(e && e.message || e), false);
       }
     };
+
+    (async () => {
+      if (localStorage.getItem('exp_reload_pending') !== '1') return;
+      localStorage.removeItem('exp_reload_pending');
+      try {
+        const id = localStorage.getItem('exp_reload_id');
+        const expected = localStorage.getItem('exp_reload_status');
+        if (!id || !expected) throw new Error('reload markers ausentes apos page.reload');
+        state.entregaId = id;
+        const after = await api('/api/v1/entregas/' + id);
+        if (after.status !== 200) throw new Error('get after reload ' + after.status);
+        if (after.body.data.status !== expected) {
+          throw new Error('status divergiu apos reload real: ' + after.body.data.status + ' != ' + expected);
+        }
+        state.reloadOk = true;
+        log('RELOAD_OK real_browser status=' + after.body.data.status, true);
+      } catch (e) {
+        state.reloadOk = false;
+        log(String(e && e.message || e), false);
+      }
+    })();
 
     document.getElementById('btn-rbac').onclick = async () => {
       try {
@@ -354,8 +373,19 @@ test('Playwright: navegador contra API+PGlite (ciclo, retry, meta 036)', async (
     assert.equal(meta.rollbackMetaOk, true, JSON.stringify(meta.results));
 
     await page.getByTestId('btn-reload').click();
-    await page.waitForFunction(() => window.__EXP_HARNESS__?.reloadOk === true || window.__EXP_HARNESS__?.reloadOk === false, null, { timeout: 30_000 });
-    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).reloadOk, true);
+    await page.waitForFunction(
+      () => window.__EXP_HARNESS__?.reloadPrepared === true || window.__EXP_HARNESS__?.reloadOk === false,
+      null,
+      { timeout: 30_000 },
+    );
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).reloadPrepared, true, 'reload deve preparar markers antes do page.reload');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(
+      () => window.__EXP_HARNESS__?.reloadOk === true || window.__EXP_HARNESS__?.reloadOk === false,
+      null,
+      { timeout: 30_000 },
+    );
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).reloadOk, true, 'persistência deve sobreviver a page.reload() real');
 
     await page.getByTestId('btn-rbac').click();
     await page.waitForFunction(() => window.__EXP_HARNESS__?.rbacOk === true || window.__EXP_HARNESS__?.rbacOk === false, null, { timeout: 30_000 });

@@ -14,7 +14,12 @@ import { PGlite } from '@electric-sql/pglite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
+/** Tip Comercial (#178) — SHA/branch obtido explicitamente pela CI; default local = origin tip. */
 const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || 'origin/codex/comercial-corrige-parecer-155';
+/** Em CI/job de integração: ausência de ref ou skip = FALHA (não aprovação silenciosa). */
+const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1'
+  || process.env.CI === 'true'
+  || process.env.GITHUB_ACTIONS === 'true';
 
 function gitShow(ref, rel) {
   const show = spawnSync('git', ['-C', repoRoot, 'show', `${ref}:${rel}`], {
@@ -28,7 +33,14 @@ function gitShow(ref, rel) {
 test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', async (t) => {
   const probe = spawnSync('git', ['-C', repoRoot, 'rev-parse', '--verify', CODEX_REF], { encoding: 'utf8' });
   if (probe.status !== 0) {
-    t.skip(`ref ${CODEX_REF} indisponivel neste clone`);
+    const detail = (probe.stderr || probe.stdout || '').trim() || 'rev-parse failed';
+    if (REQUIRE_REF) {
+      assert.fail(
+        `COMERCIAL_MIGRATIONS_REF ausente/indisponível (${CODEX_REF}): ${detail}. `
+        + 'Job de integração deve fazer fetch explícito da ref Comercial; skip não é aprovação.',
+      );
+    }
+    t.skip(`ref ${CODEX_REF} indisponivel neste clone (local only)`);
     return;
   }
 
