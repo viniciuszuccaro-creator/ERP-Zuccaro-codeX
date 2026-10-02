@@ -336,6 +336,8 @@ export function createHttpApiClient(options = {}) {
           };
         },
         equivalentes: relationRoutes('equivalentes'),
+        /** Rascunho por canal (status fixo RASCUNHO); sem publicacao externa. */
+        canais: relationRoutes('canais'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */
           list(produtoId, { limit = 50, offset = 0, signal } = {}) {

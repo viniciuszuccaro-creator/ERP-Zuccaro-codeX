@@ -1,3 +1,9 @@
+## Comercial 360 / Onda 1 - canais rascunho UI+client (2026-10-02)
+
+- Continuacao: expoe CRUD de `produto_canais` (ja no backend/HTTP, status fixo RASCUNHO) no cliente prepared `canais` e na secao V22 existente (`ProdutoRelationsDamSection`). Meta `produto.dam.canaisRascunho`. Sem publicacao externa, sem Produto HTTP, sem VPS.
+- Testes focados: http-api-client 17/17; produto-pim-ui 32/32; runtime10-produto-canais + relacoes-http 19/19 (canais incluso).
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
 ## Comercial 360 / Onda 1 - download assinado DAM (2026-10-02)
 
 - Continuacao: `downloadProdutoMidia` usa `StoragePort.createSignedDownloadUrl` (opt-in); HTTP `POST .../midias/:mediaId/download`; UI V22 `Baixar`; RBAC `visualizar`; auditoria `read` sem URL/token/storage_key. Meta `midiaDownloadAssinado`.

@@ -1279,6 +1279,7 @@ export function createApiRouter(deps: ApiDeps) {
           midiaPrincipal: true,
           midiaInativacao: true,
           midiaDownloadAssinado: true,
+          canaisRascunho: true,
         },
       },
       cliente: {

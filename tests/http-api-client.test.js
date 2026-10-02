@@ -214,7 +214,14 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   await produto.midiaDownload('p', 'm');
   await produto.midiaReconcileExpired({ limit: 10 });
   await produto.midiaReconcileInfected({ limit: 5 });
-  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'DELETE', 'POST', 'POST', 'POST']);
+  await produto.canais.list('p');
+  await produto.canais.create('p', { canal: 'site_cpa', sku: 'SKU-1' });
+  await produto.canais.update('p', 'c1', { nome: 'Nome canal' });
+  await produto.canais.deactivate('p', 'c1');
+  assert.deepEqual(calls.map((call) => call.method), [
+    'PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'DELETE', 'POST', 'POST', 'POST',
+    'GET', 'POST', 'PATCH', 'DELETE',
+  ]);
   assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
     '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
     '/api/v1/produtos/p/midias/m/confirmar',
@@ -226,6 +233,10 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
     '/api/v1/produtos/p/midias/m/download',
     '/api/v1/produtos/midias/reconciliar-vencidas',
     '/api/v1/produtos/midias/reconciliar-infectadas',
+    '/api/v1/produtos/p/canais',
+    '/api/v1/produtos/p/canais',
+    '/api/v1/produtos/p/canais/c1',
+    '/api/v1/produtos/p/canais/c1',
   ]);
   assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
     && call.headers['X-Empresa-Id'] === 'empresa-sintetica'));
@@ -239,6 +250,9 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   assert.deepEqual(JSON.parse(calls[8].body), {});
   assert.deepEqual(JSON.parse(calls[9].body), { limit: 10 });
   assert.deepEqual(JSON.parse(calls[10].body), { limit: 5 });
+  assert.deepEqual(JSON.parse(calls[12].body), { canal: 'site_cpa', sku: 'SKU-1' });
+  assert.deepEqual(JSON.parse(calls[13].body), { nome: 'Nome canal' });
+  assert.equal(calls[14].body, undefined);
   assert.ok(calls.every((call) => !String(call.body ?? '').includes('groupId')));
 });
 

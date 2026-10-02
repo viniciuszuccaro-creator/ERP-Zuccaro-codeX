@@ -53,12 +53,15 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   const workflowActions = getProdutoWorkflowActions(workflowStatus, { canEdit, canApprove, canPublish, canDeactivate });
   const [variants, setVariants] = useState([]);
   const [equivalents, setEquivalents] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [media, setMedia] = useState([]);
   const [mediaPage, setMediaPage] = useState(0);
   const [mediaHasMore, setMediaHasMore] = useState(false);
   const [damStatus, setDamStatus] = useState(null);
   const [variantDraft, setVariantDraft] = useState({ sku: '', nome: '' });
   const [variantEditing, setVariantEditing] = useState(null);
+  const [channelDraft, setChannelDraft] = useState({ canal: 'site_cpa', sku: '', nome: '' });
+  const [channelEditing, setChannelEditing] = useState(null);
   const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' });
   const [equivalentEditing, setEquivalentEditing] = useState(null);
   const [search, setSearch] = useState('');
@@ -75,13 +78,14 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     let active = true;
     setError('');
     Promise.all([
-      api.variantes.list(produtoId), api.equivalentes.list(produtoId),
+      api.variantes.list(produtoId), api.equivalentes.list(produtoId), api.canais.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
       api.midiaDamStatus().catch(() => null),
-    ]).then(([v, e, m, status]) => {
+    ]).then(([v, e, c, m, status]) => {
       if (!active) return;
       setVariants(v);
       setEquivalents(e);
+      setChannels(c);
       setMedia(m);
       setMediaHasMore(m.length === 20);
       setDamStatus(status);
@@ -101,12 +105,27 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   }, [api, canEdit, produtoId, search]);
 
   const reload = async () => {
-    const [v, e, m] = await Promise.all([
-      api.variantes.list(produtoId), api.equivalentes.list(produtoId),
+    const [v, e, c, m] = await Promise.all([
+      api.variantes.list(produtoId), api.equivalentes.list(produtoId), api.canais.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
     ]);
-    setVariants(v); setEquivalents(e); setMedia(m); setMediaHasMore(m.length === 20);
+    setVariants(v); setEquivalents(e); setChannels(c); setMedia(m); setMediaHasMore(m.length === 20);
   };
+  const saveChannel = () => run(async () => {
+    const canal = String(channelDraft.canal || '').trim().toLowerCase();
+    if (!/^[a-z][a-z0-9_-]{1,39}$/.test(canal)) throw new Error('Canal invalido (ex.: site_cpa)');
+    const payload = {
+      sku: channelDraft.sku.trim() || null,
+      nome: channelDraft.nome.trim() || null,
+    };
+    if (channelEditing) {
+      await api.canais.update(produtoId, channelEditing, payload);
+    } else {
+      await api.canais.create(produtoId, { canal, ...payload });
+    }
+    setChannelEditing(null);
+    setChannelDraft({ canal: 'site_cpa', sku: '', nome: '' });
+  }, 'Rascunho de canal salvo');
   const run = async (action, success, { requireEdit = true } = {}) => {
     if ((requireEdit && !canEdit) || busy) return;
     setBusy(true); setError(''); setNotice('');
@@ -315,6 +334,39 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
           <SelectContent><SelectItem value="EQUIVALENTE">Equivalente</SelectItem><SelectItem value="SUBSTITUTO">Substituto</SelectItem></SelectContent>
         </Select><Button type="button" onClick={saveEquivalent} disabled={busy || (!equivalentEditing && !equivalentDraft.produto_equivalente_id)} title="Salvar relacao"><Save className="h-4 w-4" /></Button></div>
       </div>}
+    </section>
+    <section className="space-y-2" data-permission="Cadastros.Produto.editar">
+      <h3 className="text-sm font-semibold">Conteudo por canal (rascunho)</h3>
+      <p className="text-xs text-muted-foreground">Somente RASCUNHO — sem publicacao externa neste lote.</p>
+      {channels.map((row) => <div key={row.id} className="flex items-center gap-2 border-b py-1 text-sm">
+        <span className="flex-1 truncate">{row.canal} · {row.sku || 'sem SKU'}{row.nome ? ` · ${row.nome}` : ''} · {row.status}</span>
+        {canEdit && <><Button type="button" variant="ghost" size="icon" title="Editar rascunho de canal" disabled={busy}
+          data-action="produto-canal-editar"
+          onClick={() => {
+            setChannelEditing(row.id);
+            setChannelDraft({ canal: row.canal, sku: row.sku || '', nome: row.nome || '' });
+          }}><Save className="h-4 w-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" title="Inativar rascunho de canal" disabled={busy}
+            data-action="produto-canal-inativar"
+            onClick={() => run(() => api.canais.deactivate(produtoId, row.id), 'Rascunho de canal inativado')}><Trash2 className="h-4 w-4" /></Button></>}
+      </div>)}
+      {canEdit && <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
+        <Input aria-label="Identificador do canal" value={channelDraft.canal}
+          disabled={busy || Boolean(channelEditing)}
+          onChange={(e) => setChannelDraft((v) => ({ ...v, canal: e.target.value }))}
+          placeholder="site_cpa" />
+        <Input aria-label="SKU do canal" value={channelDraft.sku}
+          onChange={(e) => setChannelDraft((v) => ({ ...v, sku: e.target.value }))} placeholder="SKU canal" />
+        <Input aria-label="Nome comercial do canal" value={channelDraft.nome}
+          onChange={(e) => setChannelDraft((v) => ({ ...v, nome: e.target.value }))} placeholder="Nome no canal" />
+        <Button type="button" onClick={saveChannel} disabled={busy || !channelDraft.canal.trim()}
+          data-action="produto-canal-salvar"
+          title={channelEditing ? 'Salvar rascunho de canal' : 'Criar rascunho de canal'}>
+          {channelEditing ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}</Button>
+      </div>}
+      {channelEditing && canEdit && <Button type="button" variant="ghost" size="sm" disabled={busy}
+        onClick={() => { setChannelEditing(null); setChannelDraft({ canal: 'site_cpa', sku: '', nome: '' }); }}>
+        <X className="mr-1 h-4 w-4" /> Cancelar edicao</Button>}
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Midias do produto</h3>
