@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
 import { httpApiClient } from "@/api/httpApiClient";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -296,7 +297,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       console.error("Erro ao concluir conferência:", error);
       toast({
         title: "Erro ao concluir conferência",
-        description: error.message || "Ocorreu um erro ao salvar a conferência.",
+        description: formatExpedicaoHttpError(error),
         variant: "destructive",
       });
     }

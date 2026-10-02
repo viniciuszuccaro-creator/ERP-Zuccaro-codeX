@@ -43,6 +43,10 @@ function harnessHtml() {
     <button data-testid="btn-ciclo" id="btn-ciclo">Rodar ciclo</button>
     <button data-testid="btn-retry" id="btn-retry">Despacho repetido</button>
     <button data-testid="btn-rollback" id="btn-rollback">Meta migration 036</button>
+    <button data-testid="btn-reload" id="btn-reload">Prova reload</button>
+    <button data-testid="btn-rbac" id="btn-rbac">Prova RBAC</button>
+    <button data-testid="btn-isolamento" id="btn-isolamento">Prova isolamento</button>
+    <button data-testid="btn-erro" id="btn-erro">Prova erro 404</button>
   </div>
   <pre id="log" data-testid="harness-log"></pre>
   <script>
@@ -184,6 +188,91 @@ function harnessHtml() {
         log(String(e && e.message || e), false);
       }
     };
+
+    // Preparação: grava id/status no localStorage e sinaliza o Playwright para
+    // chamar page.reload() de verdade. Após a recarga, o boot abaixo revalida no PG.
+    document.getElementById('btn-reload').onclick = async () => {
+      try {
+        const id = state.entregaId || await seedPronto('reload-' + Date.now());
+        state.entregaId = id;
+        const before = await api('/api/v1/entregas/' + id);
+        if (before.status !== 200) throw new Error('get before ' + before.status);
+        localStorage.setItem('exp_reload_id', id);
+        localStorage.setItem('exp_reload_status', before.body.data.status);
+        localStorage.setItem('exp_reload_pending', '1');
+        state.reloadPrepared = true;
+        log('RELOAD_PREPARED id=' + id + ' status=' + before.body.data.status, true);
+      } catch (e) {
+        state.reloadPrepared = false;
+        state.reloadOk = false;
+        log(String(e && e.message || e), false);
+      }
+    };
+
+    (async () => {
+      if (localStorage.getItem('exp_reload_pending') !== '1') return;
+      localStorage.removeItem('exp_reload_pending');
+      try {
+        const id = localStorage.getItem('exp_reload_id');
+        const expected = localStorage.getItem('exp_reload_status');
+        if (!id || !expected) throw new Error('reload markers ausentes apos page.reload');
+        state.entregaId = id;
+        const after = await api('/api/v1/entregas/' + id);
+        if (after.status !== 200) throw new Error('get after reload ' + after.status);
+        if (after.body.data.status !== expected) {
+          throw new Error('status divergiu apos reload real: ' + after.body.data.status + ' != ' + expected);
+        }
+        state.reloadOk = true;
+        log('RELOAD_OK real_browser status=' + after.body.data.status, true);
+      } catch (e) {
+        state.reloadOk = false;
+        log(String(e && e.message || e), false);
+      }
+    })();
+
+    document.getElementById('btn-rbac').onclick = async () => {
+      try {
+        const denied = await api('/api/v1/entregas', {
+          headers: { 'x-actor-id': 'b4b4b4b4-bbbb-4bbb-8bbb-b4b4b4b4b4b4' },
+        });
+        if (denied.status !== 403) throw new Error('esperado 403, got ' + denied.status);
+        state.rbacOk = true;
+        log('RBAC_OK code=' + (denied.body.error && denied.body.error.code), true);
+      } catch (e) {
+        state.rbacOk = false;
+        log(String(e && e.message || e), false);
+      }
+    };
+
+    document.getElementById('btn-isolamento').onclick = async () => {
+      try {
+        const id = state.entregaId || await seedPronto('iso-' + Date.now());
+        state.entregaId = id;
+        const cross = await api('/api/v1/entregas/' + id, {
+          headers: { 'x-empresa-id': 'c2c2c2c2-cccc-4ccc-8ccc-c2c2c2c2c2c2' },
+        });
+        if (cross.status !== 404) throw new Error('esperado 404 cross-empresa, got ' + cross.status);
+        state.isolamentoOk = true;
+        log('ISOLAMENTO_OK', true);
+      } catch (e) {
+        state.isolamentoOk = false;
+        log(String(e && e.message || e), false);
+      }
+    };
+
+    document.getElementById('btn-erro').onclick = async () => {
+      try {
+        const missing = await api('/api/v1/entregas/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+        if (missing.status !== 404) throw new Error('esperado 404, got ' + missing.status);
+        const code = missing.body.error && missing.body.error.code;
+        if (!code) throw new Error('erro sem code');
+        state.erroOk = true;
+        log('ERRO_OK code=' + code, true);
+      } catch (e) {
+        state.erroOk = false;
+        log(String(e && e.message || e), false);
+      }
+    };
   </script>
 </body>
 </html>`;
@@ -282,6 +371,33 @@ test('Playwright: navegador contra API+PGlite (ciclo, retry, meta 036)', async (
     await page.waitForFunction(() => window.__EXP_HARNESS__?.rollbackMetaOk === true || window.__EXP_HARNESS__?.rollbackMetaOk === false, null, { timeout: 30_000 });
     const meta = await page.evaluate(() => window.__EXP_HARNESS__);
     assert.equal(meta.rollbackMetaOk, true, JSON.stringify(meta.results));
+
+    await page.getByTestId('btn-reload').click();
+    await page.waitForFunction(
+      () => window.__EXP_HARNESS__?.reloadPrepared === true || window.__EXP_HARNESS__?.reloadOk === false,
+      null,
+      { timeout: 30_000 },
+    );
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).reloadPrepared, true, 'reload deve preparar markers antes do page.reload');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(
+      () => window.__EXP_HARNESS__?.reloadOk === true || window.__EXP_HARNESS__?.reloadOk === false,
+      null,
+      { timeout: 30_000 },
+    );
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).reloadOk, true, 'persistência deve sobreviver a page.reload() real');
+
+    await page.getByTestId('btn-rbac').click();
+    await page.waitForFunction(() => window.__EXP_HARNESS__?.rbacOk === true || window.__EXP_HARNESS__?.rbacOk === false, null, { timeout: 30_000 });
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).rbacOk, true);
+
+    await page.getByTestId('btn-isolamento').click();
+    await page.waitForFunction(() => window.__EXP_HARNESS__?.isolamentoOk === true || window.__EXP_HARNESS__?.isolamentoOk === false, null, { timeout: 30_000 });
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).isolamentoOk, true);
+
+    await page.getByTestId('btn-erro').click();
+    await page.waitForFunction(() => window.__EXP_HARNESS__?.erroOk === true || window.__EXP_HARNESS__?.erroOk === false, null, { timeout: 30_000 });
+    assert.equal((await page.evaluate(() => window.__EXP_HARNESS__)).erroOk, true);
 
     await page.screenshot({ path: path.join(ART, 'expedicao-api-pg-harness.png'), fullPage: true });
   } finally {

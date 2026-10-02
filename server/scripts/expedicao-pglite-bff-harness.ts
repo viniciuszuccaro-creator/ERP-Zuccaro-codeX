@@ -55,7 +55,12 @@ async function main() {
       },
     },
   });
-
+  rbac.link({
+    actorId: SEED_IDS.runtimeActorB,
+    groupId: SEED_IDS.groupA,
+    permissions: { Expedicao: { entrega: [], romaneio: [], separacao: [] } },
+  });
+  tenant.link(SEED_IDS.empresaA2, SEED_IDS.groupA);
   const config = loadConfig({
     NODE_ENV: 'test',
     ERP_ENV: 'dev',

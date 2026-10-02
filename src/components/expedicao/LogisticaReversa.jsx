@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
 import { httpApiClient } from "@/api/httpApiClient";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -241,7 +242,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
     },
     onError: (error) => {
       auditReversa({ acao: "Entrega.logisticaReversa.processar.erro", sucesso: false, motivo: error?.message || "erro_processar" });
-      toast({ title: "Erro ao processar devolução", description: error?.message || "Tente novamente", variant: "destructive" });
+      toast({ title: "Erro ao processar devolução", description: formatExpedicaoHttpError(error), variant: "destructive" });
     }
   });
 

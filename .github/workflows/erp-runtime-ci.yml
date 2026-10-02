@@ -62,3 +62,52 @@ jobs:
           psql postgresql://erp_test:erp_test@localhost:5432/postgres -c "CREATE DATABASE erp_r07b_compat;"
           bash scripts/vps/prove-r07b-api-schema-compat.sh
           grep -q 'R07B_API_COMPAT_STATUS=OK' docs/vps/evidence/r07b-api-schema-016-024-compat.txt
+
+  # Integração Expedição(#199) × Comercial(#178): fetch explícito da ref; skip/ausência = fail.
+  expedicao-comercial-compose:
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: server }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
+      - run: npm install
+      - name: Fetch Comercial migrations ref (obrigatório)
+        working-directory: .
+        env:
+          COMERCIAL_BRANCH: codex/comercial-corrige-parecer-155
+          # Tip #178 documentado no parecer Cursor (não tip-port).
+          COMERCIAL_SHA: 4f8c6593506f681689e021226ab024f57c7aede9
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$COMERCIAL_BRANCH" "$COMERCIAL_SHA"
+          git rev-parse --verify "$COMERCIAL_SHA"
+          git merge-base --is-ancestor "$COMERCIAL_SHA" "origin/$COMERCIAL_BRANCH" \
+            || git rev-parse "origin/$COMERCIAL_BRANCH"
+          echo "COMERCIAL_MIGRATIONS_REF=$COMERCIAL_SHA" >> "$GITHUB_ENV"
+      - name: Compose migrations 025-035 + 036 (fail se ref ausente ou suite skip)
+        env:
+          COMERCIAL_COMPOSE_REQUIRE: '1'
+          # Prefer SHA pinado pelo step anterior; fallback explícito para não silenciar.
+          COMERCIAL_MIGRATIONS_REF: ${{ env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9' }}
+        run: |
+          set -euo pipefail
+          test -n "${COMERCIAL_MIGRATIONS_REF}"
+          git rev-parse --verify "$COMERCIAL_MIGRATIONS_REF"
+          OUT="$(mktemp)"
+          # node:test — qualquer # skip sob REQUIRE deve falhar (assert.fail no teste).
+          npx tsx --test tests/runtime11-expedicao-compose-migrations.test.ts 2>&1 | tee "$OUT"
+          if grep -Eiq '(^|# ) *skip(ped)?|t\.skip|TEST-SKIP' "$OUT"; then
+            echo "::error::Suíte de composição Comercial+Expedição foi ignorada — não é aprovação"
+            exit 1
+          fi
+          if ! grep -Eq 'pass [1-9]|# pass  [1-9]|tests [1-9]' "$OUT" && ! grep -Eq 'ok [0-9]+' "$OUT"; then
+            # Aceita reporter tap/spec; falha se nenhum pass detectável
+            if ! grep -Eq '✔|✓|pass' "$OUT"; then
+              echo "::error::Nenhum pass detectado na composição"
+              exit 1
+            fi
+          fi
