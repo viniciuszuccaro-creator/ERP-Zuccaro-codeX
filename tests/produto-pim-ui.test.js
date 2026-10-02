@@ -10,6 +10,7 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INCONCLUSIVE' }), /pendente.*quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'APROVADO' }), /liberada internamente/i);
   const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
+  const canalSection = await readFile(new URL('../src/components/cadastros/produto/ProdutoCanalRascunhoSection.jsx', import.meta.url), 'utf8');
   assert.match(section, /getProdutoMediaScanLabel\(row\)/);
   assert.match(section, /getProdutoMediaLiberacaoActions\(row/);
   assert.match(section, /midiaApprove|midiaRejectContent|midiaScan/);
@@ -20,15 +21,15 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(section, /midiaDamStatus/);
   assert.match(section, /produto-midia-reconciliar-vencidas|produto-midia-reconciliar-infectadas/);
   assert.match(section, /produto-dam-readiness|produto-midia-principal|produto-midia-inativar|produto-midia-download/);
-  assert.match(section, /api\.canais\.(list|create|update|deactivate)/);
-  assert.match(section, /produto-canal-salvar|produto-canal-editar|produto-canal-inativar/);
-  assert.match(section, /Conteudo por canal \(rascunho\)|Somente RASCUNHO/);
+  assert.match(section, /ProdutoCanalRascunhoSection|api\.canais\.(list|create|update|deactivate)/);
+  assert.match(canalSection, /api\.canais|produto-canal-salvar|produto-canal-editar|produto-canal-inativar/);
+  assert.match(canalSection, /Conteudo por canal \(rascunho\)|Somente RASCUNHO/);
+  assert.match(canalSection, /produto-canal-descricao|Descricao do canal/);
   assert.match(section, /getProdutoEquivalentApproveAction|produto-equivalente-aprovar/);
   assert.match(section, /produto-equivalente-direcional|direcional/);
-  assert.match(section, /produto-canal-descricao|Descricao do canal/);
   assert.match(section, /aprovado:\s*false/);
   assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
-  assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
+  assert.doesNotMatch(section + canalSection, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
 });
 
 test('V22 expoe aprovar equivalente so com aprovar-conteudo e pendente', () => {
