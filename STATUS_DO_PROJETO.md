@@ -12958,3 +12958,15 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+## CODEX — contrato Pedido/Expedição #199 (candidata isolada, 2026-10-01)
+
+| Campo | Estado |
+|---|---|
+| Base | #199 HEAD `6602d985`, branch Codex isolada; sem alteração na branch Cursor |
+| Implementado | leitura Pedido tenant-scoped com `FOR UPDATE` na criação; snapshots/quantidades canônicos, idempotência por Pedido, limites parcial/devolução, `PATCH` + auditoria na mesma transação; despacho/devolução vinculados bloqueiam se portas ainda `reserved`, romaneio sem despacho não chama portas |
+| Testado | HTTP sintético e PostgreSQL efêmero focados; servidor 301 PASS/0 FAIL/17 PG externos skipped no rerun, typecheck/build PASS (uma falha transitória fora do lote em R10 passou isolada e no rerun); 32 testes bridge/UI PASS, lint raiz 0 erros/1 aviso; `npm test` raiz falha em fixtures shell/VPS no Windows e typecheck raiz tem erros preexistentes fora do diff; não é teste do conjunto de migrations aplicado em destino |
+| Revisão #199 | portas Pedido/estoque sem executor e rollback externo não comprovado; colisão da migration `025` corrigida na base #199 por renumeração para `036`, ainda sem CI do conjunto |
+| Integração | base #199 atualizada até `540c4998` com migration 036, conflitos locais combinados; merge simulado com #178 revelou 11 conflitos e foi abortado sem perder históricos; composição comercial final pendente |
+| Gates | sem merge/VPS; 026 histórica bloqueada; estoque/reserva/compensação e autorização operacional pendentes |
+
+---

@@ -46,6 +46,10 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     return row?.group_id === scope.groupId && row.empresa_id === scope.empresaId ? clone(row) : null;
   }
 
+  async getForExpedicao(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+    return this.get(scope, id, executor);
+  }
+
   async getByOrcamento(scope: PedidoScope, orcamentoId: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
     const row = [...this.rows.values()].find((item) => item.group_id === scope.groupId && item.empresa_id === scope.empresaId && item.orcamento_id === orcamentoId);
     return row ? clone(row) : null;

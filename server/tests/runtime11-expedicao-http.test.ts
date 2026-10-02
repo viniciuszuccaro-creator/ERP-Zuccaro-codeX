@@ -217,6 +217,43 @@ test('HTTP Expedicao (mock in-memory): idempotencia create/romaneio/retry e isol
   assert.equal(meta.body.expedicao.pedidoEstoqueSideEffects, 'reserved');
 });
 
+test('HTTP Expedicao: parcial e devolucao nao ultrapassam total nem duplicam item', async () => {
+  const runtime = fixture();
+  const { id, created } = await seedPronto(runtime, 'limites-qtd');
+  const rom = await request(runtime.app, '/api/v1/romaneios', {
+    method: 'POST', headers: headers(), body: JSON.stringify({
+      confirmed: true, motorista_nome: 'M', veiculo: 'V', placa: 'ABC1D23',
+      checklist_saida: checklistRom, entregas_ids: [id], despachar: true,
+      idempotency_key: 'rom-limites-qtd',
+    }),
+  });
+  assert.equal(rom.status, 201);
+  const overPartial = await request(runtime.app, `/api/v1/entregas/${id}/registrar`, {
+    method: 'POST', headers: headers(), body: JSON.stringify({ confirmed: true, modo: 'parcial',
+      quantidade_entregue: '16', comprovante: { nome_recebedor: 'R', documento_recebedor: '123' } }),
+  });
+  assert.equal(overPartial.status, 422);
+  assert.equal(overPartial.body.error.code, 'PARCIAL_QTY_EXCEEDS_TOTAL');
+  const partial = await request(runtime.app, `/api/v1/entregas/${id}/registrar`, {
+    method: 'POST', headers: headers(), body: JSON.stringify({ confirmed: true, modo: 'parcial',
+      quantidade_entregue: '7', comprovante: { nome_recebedor: 'R', documento_recebedor: '123' } }),
+  });
+  assert.equal(partial.status, 200);
+  const overReturn = await request(runtime.app, `/api/v1/entregas/${id}/devolucao`, {
+    method: 'POST', headers: headers(), body: JSON.stringify({ confirmed: true, motivo: 'Retorno', acao: 'repor',
+      quantidade_devolvida: '16' }),
+  });
+  assert.equal(overReturn.status, 422);
+  assert.equal(overReturn.body.error.code, 'DEVOLUCAO_QTY_EXCEEDS_TOTAL');
+  const duplicateItem = await request(runtime.app, `/api/v1/entregas/${id}/devolucao`, {
+    method: 'POST', headers: headers(), body: JSON.stringify({ confirmed: true, motivo: 'Retorno', acao: 'repor',
+      itens: [{ item_id: created.itens[0].id, quantidade_devolvida: '1' },
+        { item_id: created.itens[0].id, quantidade_devolvida: '1' }] }),
+  });
+  assert.equal(duplicateItem.status, 422);
+  assert.equal(duplicateItem.body.error.code, 'DEVOLUCAO_ITEM_QTY_INVALIDA');
+});
+
 test('HTTP Expedicao (mock in-memory): ocorrencia + devolucao + falha intermediaria estoque faz rollback', async () => {
   const runtime = fixture({
     expedicaoEstoquePort: {

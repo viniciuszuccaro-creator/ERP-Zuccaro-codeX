@@ -1,6 +1,6 @@
 # Contrato mínimo — portas Expedição ↔ Pedido / estoque
 
-**Destinatário:** Codex Comercial (#178 / tip-port autorizado).  
+**Destinatário:** Codex Comercial (#178 / tip-port autorizado).
 **Autor:** Cursor (#199). **Sem tip-port nesta branch** — este documento é o contrato para implementação no lado Comercial.
 
 ## Princípios
@@ -93,7 +93,7 @@ Não inventar Pedido. Sem `pedidoId` → no-op `applied` ou `reserved` sem erro.
 
 ## Migration Expedição
 
-Arquivo: `server/migrations/036_expedicao_entregas_romaneios.sql`  
+Arquivo: `server/migrations/036_expedicao_entregas_romaneios.sql`.
 Numeração **036** para não colidir com a reserva comercial Codex **025–035**.
 
 ## Aceite tip-port
