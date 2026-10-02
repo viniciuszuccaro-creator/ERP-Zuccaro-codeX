@@ -313,6 +313,16 @@ export function createHttpApiClient(options = {}) {
         midiaReconcileInfected({ limit = 50, signal } = {}) {
           return request('/api/v1/produtos/midias/reconciliar-infectadas', { method: 'POST', body: { limit }, signal });
         },
+        /** Read-only readiness from /api/v1/meta — never secrets/path. @param {{ signal?: AbortSignal }} [options] */
+        async midiaDamStatus({ signal } = {}) {
+          const meta = await request('/api/v1/meta', { signal, unwrap: false });
+          return {
+            dam: meta?.produto?.dam && typeof meta.produto.dam === 'object' ? meta.produto.dam : null,
+            storageConfigured: Boolean(meta?.config?.storageConfigured),
+            malwareScannerConfigured: Boolean(meta?.config?.malwareScannerConfigured),
+            frontendHttp: Boolean(meta?.produto?.frontendHttp),
+          };
+        },
         equivalentes: relationRoutes('equivalentes'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */

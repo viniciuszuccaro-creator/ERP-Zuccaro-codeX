@@ -28,6 +28,14 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
 }
 
 const errorText = (error) => {
+  if (error?.status === 503 && (error?.code === 'MALWARE_SCANNER_NOT_CONFIGURED'
+    || /MALWARE_SCANNER_NOT_CONFIGURED|scanner is not configured/i.test(error?.message || ''))) {
+    return 'Scanner de midia desligado (opt-in). Defina CLAMD_SOCKET_PATH no servidor apos homologacao.';
+  }
+  if (error?.status === 503 && (error?.code === 'STORAGE_ADAPTER_NOT_CONFIGURED'
+    || /STORAGE_ADAPTER_NOT_CONFIGURED|Storage is not configured/i.test(error?.message || ''))) {
+    return 'Storage do ERP desligado (opt-in). Configure bucket/URLs no servidor apos homologacao.';
+  }
   if (error?.status === 503) return 'Storage do ERP indisponivel';
   if (error?.code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO'
     || /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO|media remains in quarantine/i.test(error?.message || '')) {
@@ -48,6 +56,7 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   const [media, setMedia] = useState([]);
   const [mediaPage, setMediaPage] = useState(0);
   const [mediaHasMore, setMediaHasMore] = useState(false);
+  const [damStatus, setDamStatus] = useState(null);
   const [variantDraft, setVariantDraft] = useState({ sku: '', nome: '' });
   const [variantEditing, setVariantEditing] = useState(null);
   const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' });
@@ -68,12 +77,14 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     Promise.all([
       api.variantes.list(produtoId), api.equivalentes.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
-    ]).then(([v, e, m]) => {
+      api.midiaDamStatus().catch(() => null),
+    ]).then(([v, e, m, status]) => {
       if (!active) return;
       setVariants(v);
       setEquivalents(e);
       setMedia(m);
       setMediaHasMore(m.length === 20);
+      setDamStatus(status);
     }).catch((err) => { if (active) setError(errorText(err)); });
     return () => { active = false; };
   }, [api, produtoId, empresaId, canView, mediaPage]);
@@ -219,9 +230,17 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   };
 
   if (!canView || !produtoId || !empresaId) return null;
+  const damReadiness = damStatus
+    ? [
+      damStatus.storageConfigured ? 'Storage configurado' : 'Storage desligado (opt-in)',
+      damStatus.malwareScannerConfigured ? 'Scanner opt-in ativo' : 'Scanner desligado (padrao)',
+      damStatus.frontendHttp ? 'Produto HTTP ativo' : 'Produto HTTP desligado',
+    ].join(' · ')
+    : null;
   return <div className="w-full space-y-5 border-t pt-5" data-permission="Cadastros.Produto.visualizar">
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     {notice && <p role="status" className="text-sm text-green-700">{notice}</p>}
+    {damReadiness && <p role="status" className="text-xs text-muted-foreground" data-action="produto-dam-readiness">{damReadiness}</p>}
     <section className="space-y-2" data-permission="Cadastros.Produto.visualizar">
       <h3 className="text-sm font-semibold">Fluxo do produto</h3>
       <p className="text-sm">{workflowStatus || 'Estado indisponivel'}</p>

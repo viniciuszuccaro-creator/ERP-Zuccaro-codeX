@@ -14,9 +14,11 @@ test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(section, /getProdutoMediaLiberacaoActions\(row/);
   assert.match(section, /midiaApprove|midiaRejectContent|midiaScan/);
   assert.match(section, /midiaReconcileExpired|midiaReconcileInfected/);
+  assert.match(section, /midiaDamStatus/);
   assert.match(section, /produto-midia-reconciliar-vencidas|produto-midia-reconciliar-infectadas/);
+  assert.match(section, /produto-dam-readiness/);
   assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
-  assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner/);
+  assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
 });
 
 test('V22 expoe liberacao DAM somente com aprovar-conteudo e estado de quarentena', () => {

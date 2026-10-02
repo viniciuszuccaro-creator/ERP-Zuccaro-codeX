@@ -233,6 +233,41 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
 });
 
+test('Produto prepared le readiness DAM do meta sem segredos', async () => {
+  const calls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', actorId: 'ator-sintetico' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), method: init.method, body: init.body });
+      return new Response(JSON.stringify({
+        produto: {
+          frontendHttp: false,
+          dam: {
+            liberacaoInterna: true,
+            scannerOptIn: true,
+          },
+        },
+        config: {
+          storageConfigured: false,
+          malwareScannerConfigured: false,
+          supabaseServiceRoleKey: 'LEAK',
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  const status = await client.preparedEntities.Produto.midiaDamStatus();
+  assert.equal(new URL(calls[0].url).pathname, '/api/v1/meta');
+  assert.equal(calls[0].method, 'GET');
+  assert.equal(calls[0].body, undefined);
+  assert.equal(status.storageConfigured, false);
+  assert.equal(status.malwareScannerConfigured, false);
+  assert.equal(status.frontendHttp, false);
+  assert.equal(status.dam.liberacaoInterna, true);
+  assert.equal(JSON.stringify(status).includes('LEAK'), false);
+  assert.equal(JSON.stringify(status).includes('supabaseServiceRoleKey'), false);
+});
+
 test('Produto preparado expõe oito chamadas de relações sem ativar cadastro piloto', async () => {
   const calls = [];
   const client = createHttpApiClient({
