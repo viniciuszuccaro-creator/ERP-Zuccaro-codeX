@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - listagem read-only outbox/dead-letter (2026-10-02)
+
+- Continuacao: `GET /api/v1/produtos/outbox?status=&limit=&offset=` (RBAC `visualizar`, `Cache-Control: no-store`, sem payload integral); client `outboxList`; meta `outboxListRead`; helper de teste `listPublicationEventSummaries` preserva PIM.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox service+HTTP 18/18; http-api-client 16/16; PIM outbox 2/2.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: metricas do batch fake ou UI prepared da listagem; publisher real continua bloqueado.
+
 ## Comercial 360 / Onda 15 - PostgreSQL claim/confirm/reprocess (2026-10-02)
 
 - Continuacao: E2E PostgreSQL no suite R10 existente cobre claim tenant-scoped, fail→dead_letter, reprocess→pending, confirm + recibo `already_published`, reclaim de lease expirado e isolamento de empresa cruzada.
