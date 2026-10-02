@@ -100,11 +100,56 @@ export function getProdutoWorkflowActions(status, permissions = {}) {
   return (WORKFLOW_TRANSITIONS[status] || []).filter((action) => permitted[action.permission]);
 }
 export function getProdutoMediaScanLabel(media) {
+  if (media?.status === 'APROVADO') return 'Liberada internamente';
+  if (media?.status === 'REJEITADO') return 'Conteudo rejeitado';
+  if (media?.status === 'INATIVO') return 'Inativa';
   if (media?.status !== 'QUARENTENA') return media?.status || 'Estado indisponivel';
   if (media.scan_verdict === 'INFECTED') return 'Ameaca detectada; em quarentena';
   if (media.scan_verdict === 'CLEAN') return 'Sem ameaca detectada; ainda em quarentena';
   return 'Varredura pendente; em quarentena';
 }
+
+/** Acoes de liberacao DAM (separadas da publicacao do Produto). Exige aprovar-conteudo. */
+export function getProdutoMediaLiberacaoActions(media, permissions = {}) {
+  if (permissions.canApprove !== true || media?.status !== 'QUARENTENA') return [];
+  const actions = [];
+  if (media.scan_verdict !== 'CLEAN' && media.scan_verdict !== 'INFECTED') {
+    actions.push({ action: 'scan', label: 'Verificar' });
+  }
+  if (media.scan_verdict === 'CLEAN') {
+    actions.push({ action: 'approve', label: 'Aprovar midia' });
+  }
+  actions.push({ action: 'reject', label: 'Rejeitar conteudo' });
+  return actions;
+}
+
+/** Soft-delete de midia ativa (nao apaga objeto no Storage). Exige editar. */
+export function getProdutoMediaDeactivateAction(media, permissions = {}) {
+  if (permissions.canEdit !== true) return null;
+  if (!media || media.ativo === false || media.status === 'INATIVO' || media.status === 'REJEITADO') return null;
+  if (media.status === 'PENDENTE_UPLOAD') return null;
+  return { action: 'deactivate', label: 'Inativar midia' };
+}
+
+/** Download privado (URL assinada curta). Exige visualizar; QUARENTENA ou APROVADO. */
+export function getProdutoMediaDownloadAction(media, permissions = {}) {
+  if (permissions.canView !== true) return null;
+  if (!media || (media.status !== 'QUARENTENA' && media.status !== 'APROVADO')) return null;
+  return { action: 'download', label: 'Baixar' };
+}
+
+/** Torna midia APROVADA a principal do produto. Exige editar; nao publica canal. */
+export function getProdutoMediaPrincipalAction(media, permissions = {}) {
+  if (permissions.canEdit !== true || media?.status !== 'APROVADO' || media?.principal === true) return null;
+  return { action: 'principal', label: 'Tornar principal' };
+}
+
+/** Aprova relacao de equivalente/substituto. Exige aprovar-conteudo; nao publica canal. */
+export function getProdutoEquivalentApproveAction(row, permissions = {}) {
+  if (permissions.canApprove !== true || !row || row.aprovado === true || row.ativo === false) return null;
+  return { action: 'approve', label: 'Aprovar relacao' };
+}
+
 export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, version = 1, maxBytes = 10_000_000 }) {
   if (!groupId || !empresaId || !produtoId) throw new Error('Produto e empresa canonicos obrigatorios para midia');
   const originalName = String(file?.name || '');

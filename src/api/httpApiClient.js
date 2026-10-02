@@ -293,7 +293,51 @@ export function createHttpApiClient(options = {}) {
         midiaConfirm(produtoId, mediaId, attemptId, { signal } = {}) {
           return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/confirmar`, { method: 'POST', body: { attemptId }, signal });
         },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaScan(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/verificar`, { method: 'POST', body: {}, signal });
+        },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaApprove(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/aprovar`, { method: 'POST', body: {}, signal });
+        },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaRejectContent(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/rejeitar-conteudo`, { method: 'POST', body: {}, signal });
+        },
+        /** @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaSetPrincipal(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/principal`, { method: 'POST', body: {}, signal });
+        },
+        /** Soft-delete de midia ativa. @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaDeactivate(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}`, { method: 'DELETE', signal });
+        },
+        /** URL assinada curta; nao persistir. @param {string} produtoId @param {string} mediaId @param {{ signal?: AbortSignal }} [options] */
+        midiaDownload(produtoId, mediaId, { signal } = {}) {
+          return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/midias/${encodeURIComponent(mediaId)}/download`, { method: 'POST', body: {}, signal });
+        },
+        /** @param {{ limit?: number, signal?: AbortSignal }} [options] */
+        midiaReconcileExpired({ limit = 50, signal } = {}) {
+          return request('/api/v1/produtos/midias/reconciliar-vencidas', { method: 'POST', body: { limit }, signal });
+        },
+        /** @param {{ limit?: number, signal?: AbortSignal }} [options] */
+        midiaReconcileInfected({ limit = 50, signal } = {}) {
+          return request('/api/v1/produtos/midias/reconciliar-infectadas', { method: 'POST', body: { limit }, signal });
+        },
+        /** Read-only readiness from /api/v1/meta — never secrets/path. @param {{ signal?: AbortSignal }} [options] */
+        async midiaDamStatus({ signal } = {}) {
+          const meta = await request('/api/v1/meta', { signal, unwrap: false });
+          return {
+            dam: meta?.produto?.dam && typeof meta.produto.dam === 'object' ? meta.produto.dam : null,
+            storageConfigured: Boolean(meta?.config?.storageConfigured),
+            malwareScannerConfigured: Boolean(meta?.config?.malwareScannerConfigured),
+            frontendHttp: Boolean(meta?.produto?.frontendHttp),
+          };
+        },
         equivalentes: relationRoutes('equivalentes'),
+        /** Rascunho por canal (status fixo RASCUNHO); sem publicacao externa. */
+        canais: relationRoutes('canais'),
         midias: {
           /** @param {string} produtoId @param {{ limit?: number, offset?: number, signal?: AbortSignal }} [options] */
           list(produtoId, { limit = 50, offset = 0, signal } = {}) {

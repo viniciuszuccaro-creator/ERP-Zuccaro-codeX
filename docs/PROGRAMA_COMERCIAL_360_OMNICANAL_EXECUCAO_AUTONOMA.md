@@ -184,10 +184,10 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 - Orçamento canônico: migration 016, repositories, service, TenantGuard, RBAC, auditoria, HTTP, frontend, filtros, impressão/PDF e compartilhamento revisável.
 - Pedido canônico inicial: migration 017, repositories, service, HTTP, frontend, histórico, workflow inicial e conversão idempotente de Orçamento.
 - PostgreSQL efemero: migrations 001-024 validadas na CI `35984653728`, incluindo a 023 previamente validada em `35925364121`. Seeds e suites PostgreSQL sao sinteticos e nao comprovam implantacao no DEV real.
-- Produto/PIM/DAM no código: classificação, conteúdo técnico/comercial/SEO, workflow, variantes/equivalentes, outbox e formulário V22 opt-in; reserva/confirmacão de upload privado mantém mídia em QUARENTENA. `MalwareScanPort` é contrato fail-closed, sem scanner real integrado. Produto HTTP permanece desligado por padrão.
+- Produto/PIM/DAM no código: classificação, conteúdo técnico/comercial/SEO, workflow, variantes/equivalentes, rascunho por canal (`produto_canais` status RASCUNHO na UI V22/prepared), outbox e formulário V22 opt-in; reserva/confirmação de upload privado mantém mídia em QUARENTENA até liberação interna explícita (APROVADO exige scan CLEAN; REJEITADO inativa conteúdo). Liberação ≠ publicação externa. `MalwareScanPort` é contrato fail-closed, sem scanner real integrado. Produto HTTP permanece desligado por padrão.
 - Auth no código: validação Bearer pelo Supabase Auth self-hosted e resolução de `auth_user_id` para `profiles.id`; falta homologação do endpoint/vínculos/escopo no DEV real. O MCP Hostinger confirmou a saude dos containers VPS, mas nao fornece SQL interno. A Web Console nao foi operavel por esta sessao; as evidencias de banco/3080 acima foram fornecidas pelo usuario.
 - Deploy: runbook e scripts parametrizados de canário, smoke e rollback preparados, mas não executados. Nenhuma mudança de VPS, bucket, migration real ou 3080 decorre deste baseline.
-- Varredura preparada em codigo: `SupabaseStorageAdapter.scan()` envia INSTREAM por socket local configurado ao clamd e exige tamanho/SHA-256 do objeto privado; sem socket falha fechado. Os testes usam clamd sintetico. Nao ha scanner real verificado, integracao de liberacao/publicacao ou configuracao na VPS; `CLEAN` nao e aprovacao comercial.
+- Varredura preparada em codigo: `SupabaseStorageAdapter.scan()` envia INSTREAM por socket local configurado ao clamd e exige tamanho/SHA-256 do objeto privado; sem socket falha fechado. Bootstrap opt-in via `createProdutoDamPortsFromConfig`/`CLAMD_SOCKET_PATH` (ausente = scanner desligado). Os testes usam clamd sintetico. Nao ha scanner real verificado na VPS; `CLEAN` nao e aprovacao comercial.
 - Este baseline é fundação das Ondas 1, 4 e 5; não representa conclusão integral de nenhuma delas.
 
 ## 6.3 Controle executável das ondas
@@ -195,7 +195,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 | Onda | Estado inicial | Dependências imediatas | Próximo checkpoint | Risco principal | Rollback |
 | --- | --- | --- | --- | --- | --- |
 | 0 | CONCLUÍDO | baseline V1 | `COMERCIAL_360_ONDA_0_CONTRATOS.md` | duplicar fonte de verdade | revert documental |
-| 1 | EM EXECUÇÃO | Onda 0 concluída | concluir scanner real, reconciliação de órfãos e liberação/publicação separadas no Produto/DAM existentes; homologar Auth antes de ativar HTTP | publicar mídia sem varredura ou misturar IDs | manter opt-in desligado e mídia em QUARENTENA |
+| 1 | EM EXECUÇÃO | Onda 0 concluída | liberação+bloqueio+órfãos+UI+scanner opt-in+meta/HTTP reconcile+env docs; faltam Auth e homologação VPS antes de ativar HTTP | publicar mídia sem varredura ou misturar IDs | manter opt-in desligado; midia sem liberação permanece em QUARENTENA |
 | 2 | EM EXECUÇÃO | 0/1 | consulta read-only por ClienteEmpresa integrada; faltam snapshot comercial, margem, desconto e alçadas | alterar snapshot histórico | preservar preços dos itens já gravados |
 | 3 | PENDENTE | Onda 0 concluída | contrato em `COMERCIAL_360_ONDA_3_CLIENTE_CRM.md`; implementar read model no existente | expor dados financeiros | RBAC fail-closed |
 | 4 | PENDENTE | baseline comprovado | versões, anexos e aprovações faltantes | regressão no Orçamento atual | preservar fluxo V1 |

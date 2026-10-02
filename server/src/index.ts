@@ -1,5 +1,5 @@
 import { createApp } from './app.js';
-import { loadConfig } from './config/env.js';
+import { loadConfig, publicConfigView } from './config/env.js';
 import { createDbClient } from './db/client.js';
 
 async function main() {
@@ -11,9 +11,7 @@ async function main() {
     console.log(JSON.stringify({
       msg: 'erp-api listening',
       port: config.port,
-      environment: config.erpEnv,
-      version: config.appVersion,
-      databaseConfigured: Boolean(config.databaseUrl),
+      ...publicConfigView(config),
     }));
   });
 

@@ -1,3 +1,112 @@
+## Comercial 360 / Onda 1 - extracao secao midia DAM V22 (2026-10-02)
+
+- Refatoracao: extrai `ProdutoDamMidiaSection` da secao DAM existente; `ProdutoRelationsDamSection` volta a <400 linhas. Sem mudanca de comportamento.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+
+## Comercial 360 / Onda 1 - extracao secao canal V22 (2026-10-02)
+
+- Refatoracao permitida (arquivo >400 linhas): extrai `ProdutoCanalRascunhoSection` da secao DAM existente, preservando CRUD rascunho e data-actions. Sem funcionalidade nova, sem VPS.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+
+## Comercial 360 / Onda 1 - campos canal/equivalente na UI (2026-10-02)
+
+- Continuacao: V22 existente passa a persistir `descricao` do rascunho de canal e `direcional` do equivalente; create de equivalente forca `aprovado:false` (aprovacao so via botao/RBAC).
+- Sem Produto HTTP, sem VPS, sem publicacao externa.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+
+## Comercial 360 / Onda 1 - aprovacao equivalente fail-closed (2026-10-02)
+
+- Continuacao: mudar `aprovado` em `ProdutoEquivalente` exige RBAC `aprovar-conteudo` (alem de `editar`); UI V22 expoe `Aprovar relacao` via policy existente; create com `aprovado:true` tambem fail-closed.
+- Sem publicacao externa, sem Produto HTTP, sem VPS.
+- Testes: runtime10 pim+relacoes-http 56/56; produto-pim-ui+http-api-client OK.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
+## Comercial 360 / Onda 1 - canais rascunho UI+client (2026-10-02)
+
+- Continuacao: expoe CRUD de `produto_canais` (ja no backend/HTTP, status fixo RASCUNHO) no cliente prepared `canais` e na secao V22 existente (`ProdutoRelationsDamSection`). Meta `produto.dam.canaisRascunho`. Sem publicacao externa, sem Produto HTTP, sem VPS.
+- Testes focados: http-api-client 17/17; produto-pim-ui 32/32; runtime10-produto-canais + relacoes-http 19/19 (canais incluso).
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
+## Comercial 360 / Onda 1 - download assinado DAM (2026-10-02)
+
+- Continuacao: `downloadProdutoMidia` usa `StoragePort.createSignedDownloadUrl` (opt-in); HTTP `POST .../midias/:mediaId/download`; UI V22 `Baixar`; RBAC `visualizar`; auditoria `read` sem URL/token/storage_key. Meta `midiaDownloadAssinado`.
+- Sem ativar Produto HTTP, sem VPS.
+- Testes: service+HTTP download OK; produto-pim-ui+http-api-client 32/32.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
+## Comercial 360 / Onda 1 - inativacao midia DAM HTTP+UI (2026-10-02)
+
+- Continuacao: expoe `deactivateMidia` ja existente via `DELETE /api/v1/produtos/:id/midias/:mediaId`; cliente prepared `midiaDeactivate`; UI V22 `Inativar midia` (RBAC `editar`, confirma, soft-delete). Meta `produto.dam.midiaInativacao`. HTTP cobre tambem principal.
+- Sem apagar objeto no Storage, sem Produto HTTP, sem VPS.
+- Testes: HTTP principal/inativar OK; produto-pim-ui+http-api-client 31/31.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS seguem BLOCKED.
+
+## Comercial 360 / Onda 1 - midia principal DAM (2026-10-02)
+
+- Continuacao: `setMidiaPrincipal` no DAM existente (APROVADO apenas, uma por produto, RBAC `editar`, auditoria); HTTP `POST .../midias/:mediaId/principal`; UI V22 `Tornar principal`; meta `produto.dam.midiaPrincipal`. Nao grava URL assinada em `foto_produto_url`.
+- Sem Produto HTTP, sem VPS.
+- Testes: runtime10-produto-pim 37/37; produto-pim-ui+http-api-client 30/30.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202). Auth/Storage VPS continuam BLOCKED para ativar HTTP.
+
+## Comercial 360 / Onda 1 - BLOCKED VPS apos lote liberacao/reconcile/UI/env (2026-10-02)
+
+- Codigo seguro da Onda 1 neste checkpoint esgotado na branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202): liberacao, bloqueio PUBLICADO, orfaos, UI V22, scanner opt-in, meta/HTTP reconcile, env docs, readiness banner, teste `.env.example`.
+- HEAD: `0abf335b`. Testes focados: produto-pim-ui+http-api-client 29/29; runtime01 15/15.
+- **BLOCKED** sem Auth + Storage/clamd homologados na VPS: nao ativar Produto HTTP na 3080; nao tip-port/merge.
+- Proximo (humano/VPS): configurar Storage privado + clamd opt-in; so entao habilitar HTTP Produto em janela autorizada.
+
+## Comercial 360 / Onda 1 - readiness DAM na UI + env opt-in (2026-10-02)
+
+- Continuacao: `midiaDamStatus` no cliente prepared le `/api/v1/meta` (flags publicas, sem segredos); banner de readiness na secao DAM V22; mensagens 503 distinguem Storage vs scanner opt-in; `.env.example` alinhado ao `loadConfig`.
+- UI reconcile vencidas/infectadas ja no lote anterior desta sessao.
+- Sem ativar Produto HTTP, sem VPS.
+- Testes: `produto-pim-ui` + `http-api-client` 29/29. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo bloqueio Onda 1: Auth + Storage/clamd na VPS (codigo safe esgotado neste checkpoint).
+
+## Comercial 360 / Onda 1 - env DAM opt-in + UI reconcile (2026-10-02)
+
+- Continuacao: `server/.env.example` (e templates raiz) documentam Storage/CLAMD opt-in alinhados ao `loadConfig` — sem `SUPABASE_STORAGE_PUBLIC_BUCKET` fantasma; `CLAMD_SOCKET_PATH` comentado (scanner desligado por padrao).
+- UI: secao DAM V22 existente ganhou `Reconciliar vencidas` (`inativar`) e `Reconciliar infectadas` (`aprovar-conteudo`) sobre rotas HTTP ja prepared.
+- Sem Produto HTTP, sem VPS, sem ativar clamd.
+- Testes: `produto-pim-ui` focado. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo bloqueio: Auth + Storage/clamd na VPS.
+
+## Comercial 360 / Onda 1 - meta DAM + HTTP reconcile (2026-10-02)
+
+- Continuacao: `/api/v1/meta.produto.dam` declara liberacao/bloqueio/reconciliacao/scanner opt-in; rotas HTTP `POST /api/v1/produtos/midias/reconciliar-vencidas` e `.../reconciliar-infectadas` expõem services existentes; cliente prepared correspondente. Sem Produto HTTP, sem VPS.
+- Testes: HTTP DAM 14/14; http-api-client 16/16; typecheck OK.
+- Proximo bloqueio: Auth + Storage/clamd na VPS.
+
+## Comercial 360 / Onda 1 - scanner DAM opt-in desligado por padrao (2026-10-02)
+
+- Continuacao: `createProdutoDamPortsFromConfig` no adapter existente; `createApp` liga Storage somente com URL/bucket/service role completos; clamd só com `CLAMD_SOCKET_PATH` (padrão ausente = scanner desligado). `publicConfigView` expõe `storageConfigured`/`malwareScannerConfigured` sem segredos/path.
+- Sem ativar Produto HTTP, sem VPS, sem exigir clamd na CI.
+- Testes: adapter 30/30; runtime01 14/14; HTTP DAM 13/13; typecheck OK.
+- Proximo: Auth/homologar Storage+clamd na VPS antes de ativar HTTP.
+
+## Comercial 360 / Onda 1 - UI DAM liberacao no V22 existente (2026-10-02)
+
+- Continuacao: wire no formulario/secao DAM existente (`ProdutoRelationsDamSection` + `httpApiClient` prepared) para Verificar/Aprovar midia/Rejeitar conteudo, RBAC `aprovar-conteudo`, bloqueio visual de PUBLICADO com midia em QUARENTENA. Sem tela nova, sem ativar Produto HTTP.
+- Policy: `getProdutoMediaLiberacaoActions`; labels distinguem liberacao interna de CLEAN.
+- Testes: `produto-pim-ui` + `http-api-client` 28/28. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo: scanner real / Auth antes de ativar HTTP.
+
+## Comercial 360 / Onda 1 - bloqueio PUBLICADO + orfaos infectados (2026-10-02)
+
+- Continuacao da liberacao DAM: (1) `changeWorkflowStatus(PUBLICADO)` falha fechado se houver midia ativa em QUARENTENA (`PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO`); publica apos APROVADO ou REJEITADO do conteudo. (2) `reconcileInfectedMidias` rejeita lote tenant-scoped de QUARENTENA+INFECTED reutilizando `rejectProdutoMidiaContent`.
+- Sem scanner real VPS, sem Produto HTTP, sem apagar objeto no Storage, sem outbox de canal.
+- Testes: `runtime10-produto-pim` 36/36. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo: scanner real / Auth antes de ativar HTTP; orfaos de storage fisico exigem gate Storage.
+
+## Comercial 360 / Onda 1 - liberacao DAM interna (2026-10-02)
+
+- Objetivo: menor avanco seguro da Onda 1 no Produto/DAM existente — separar liberacao de midia (QUARENTENA→APROVADO/REJEITADO) da publicacao externa.
+- Causa: apos scan CLEAN a midia permanecia em QUARENTENA sem rota/servico de aprovacao; rejeicao de conteudo so existia para reserva vencida (`PENDENTE_UPLOAD`).
+- Mudanca no existente: `changeMidiaStatus` (in-memory + PostgreSQL); `approveProdutoMidia` / `rejectProdutoMidiaContent`; POSTs `/midias/:mediaId/aprovar` e `/midias/:mediaId/rejeitar-conteudo`; RBAC `aprovar-conteudo`; auditoria; APROVADO exige evidencia CLEAN com SHA batendo; rejeicao inativa sem outbox/publicacao/workflow Produto.
+- Fora deste lote: scanner real VPS, Produto HTTP 3080, publicacao canal externo, tip-port.
+- Testes: `runtime10-produto-pim` + `runtime10-produto-relacoes-http` 47/47 pass. Branch `cursor/comercial360-onda1-midia-liberacao-392b`.
+- Proximo: scanner real / reconciliacao orfaos / Auth antes de ativar HTTP; Onda 2 em paralelo noutro agente.
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

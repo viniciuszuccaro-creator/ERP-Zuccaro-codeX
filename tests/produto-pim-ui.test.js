@@ -1,16 +1,90 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel, getProdutoMediaLiberacaoActions, getProdutoMediaPrincipalAction, getProdutoMediaDeactivateAction, getProdutoMediaDownloadAction, getProdutoEquivalentApproveAction } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'CLEAN' }), /ainda em quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INFECTED' }), /ameaca.*quarentena/i);
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA', scan_verdict: 'INCONCLUSIVE' }), /pendente.*quarentena/i);
+  assert.match(getProdutoMediaScanLabel({ status: 'APROVADO' }), /liberada internamente/i);
   const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
-  assert.match(section, /getProdutoMediaScanLabel\(row\)/);
-  assert.doesNotMatch(section, /storage_key|scan_sha256|scan_scanner/);
+  const canalSection = await readFile(new URL('../src/components/cadastros/produto/ProdutoCanalRascunhoSection.jsx', import.meta.url), 'utf8');
+  const midiaSection = await readFile(new URL('../src/components/cadastros/produto/ProdutoDamMidiaSection.jsx', import.meta.url), 'utf8');
+  assert.match(section + midiaSection, /getProdutoMediaScanLabel\(row\)/);
+  assert.match(section + midiaSection, /getProdutoMediaLiberacaoActions\(row/);
+  assert.match(section, /midiaApprove|midiaRejectContent|midiaScan/);
+  assert.match(section, /midiaSetPrincipal|getProdutoMediaPrincipalAction/);
+  assert.match(section, /midiaDeactivate|getProdutoMediaDeactivateAction/);
+  assert.match(section, /midiaDownload|getProdutoMediaDownloadAction/);
+  assert.match(section, /midiaReconcileExpired|midiaReconcileInfected/);
+  assert.match(section, /midiaDamStatus/);
+  assert.match(section + midiaSection, /produto-midia-reconciliar-vencidas|produto-midia-reconciliar-infectadas/);
+  assert.match(section + midiaSection, /produto-dam-readiness|produto-midia-principal|produto-midia-inativar|produto-midia-download/);
+  assert.match(section, /ProdutoCanalRascunhoSection|api\.canais\.(list|create|update|deactivate)/);
+  assert.match(canalSection, /api\.canais|produto-canal-salvar|produto-canal-editar|produto-canal-inativar/);
+  assert.match(canalSection, /Conteudo por canal \(rascunho\)|Somente RASCUNHO/);
+  assert.match(canalSection, /produto-canal-descricao|Descricao do canal/);
+  assert.match(section, /getProdutoEquivalentApproveAction|produto-equivalente-aprovar/);
+  assert.match(section, /produto-equivalente-direcional|direcional/);
+  assert.match(section, /aprovado:\s*false/);
+  assert.match(section, /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO/);
+  assert.doesNotMatch(section + canalSection + midiaSection, /storage_key|scan_sha256|scan_scanner|CLAMD_SOCKET|serviceRole/);
+});
+
+test('V22 expoe aprovar equivalente so com aprovar-conteudo e pendente', () => {
+  assert.equal(getProdutoEquivalentApproveAction({ aprovado: false }, { canApprove: false }), null);
+  assert.equal(getProdutoEquivalentApproveAction({ aprovado: true }, { canApprove: true }), null);
+  assert.equal(getProdutoEquivalentApproveAction({ aprovado: false, ativo: false }, { canApprove: true }), null);
+  assert.deepEqual(getProdutoEquivalentApproveAction({ aprovado: false }, { canApprove: true }),
+    { action: 'approve', label: 'Aprovar relacao' });
+});
+
+test('V22 expoe liberacao DAM somente com aprovar-conteudo e estado de quarentena', () => {
+  assert.deepEqual(getProdutoMediaLiberacaoActions({ status: 'QUARENTENA' }, { canApprove: false }), []);
+  assert.deepEqual(getProdutoMediaLiberacaoActions({ status: 'APROVADO', scan_verdict: 'CLEAN' }, { canApprove: true }), []);
+  assert.deepEqual(
+    getProdutoMediaLiberacaoActions({ status: 'QUARENTENA' }, { canApprove: true }).map((a) => a.action),
+    ['scan', 'reject'],
+  );
+  assert.deepEqual(
+    getProdutoMediaLiberacaoActions({ status: 'QUARENTENA', scan_verdict: 'CLEAN' }, { canApprove: true }).map((a) => a.action),
+    ['approve', 'reject'],
+  );
+  assert.deepEqual(
+    getProdutoMediaLiberacaoActions({ status: 'QUARENTENA', scan_verdict: 'INFECTED' }, { canApprove: true }).map((a) => a.action),
+    ['reject'],
+  );
+});
+
+test('V22 expoe tornar principal so para midia APROVADA com editar', () => {
+  assert.equal(getProdutoMediaPrincipalAction({ status: 'APROVADO' }, { canEdit: false }), null);
+  assert.equal(getProdutoMediaPrincipalAction({ status: 'QUARENTENA' }, { canEdit: true }), null);
+  assert.equal(getProdutoMediaPrincipalAction({ status: 'APROVADO', principal: true }, { canEdit: true }), null);
+  assert.deepEqual(getProdutoMediaPrincipalAction({ status: 'APROVADO', principal: false }, { canEdit: true }),
+    { action: 'principal', label: 'Tornar principal' });
+});
+
+test('V22 expoe inativar midia so com editar e estado ativo liberavel', () => {
+  assert.equal(getProdutoMediaDeactivateAction({ status: 'APROVADO' }, { canEdit: false }), null);
+  assert.equal(getProdutoMediaDeactivateAction({ status: 'PENDENTE_UPLOAD' }, { canEdit: true }), null);
+  assert.equal(getProdutoMediaDeactivateAction({ status: 'REJEITADO' }, { canEdit: true }), null);
+  assert.equal(getProdutoMediaDeactivateAction({ status: 'INATIVO' }, { canEdit: true }), null);
+  assert.deepEqual(getProdutoMediaDeactivateAction({ status: 'QUARENTENA' }, { canEdit: true }),
+    { action: 'deactivate', label: 'Inativar midia' });
+  assert.deepEqual(getProdutoMediaDeactivateAction({ status: 'APROVADO', principal: true }, { canEdit: true }),
+    { action: 'deactivate', label: 'Inativar midia' });
+});
+
+test('V22 expoe download so com visualizar e midia em quarentena ou aprovada', () => {
+  assert.equal(getProdutoMediaDownloadAction({ status: 'APROVADO' }, { canView: false }), null);
+  assert.equal(getProdutoMediaDownloadAction({ status: 'PENDENTE_UPLOAD' }, { canView: true }), null);
+  assert.equal(getProdutoMediaDownloadAction({ status: 'REJEITADO' }, { canView: true }), null);
+  assert.deepEqual(getProdutoMediaDownloadAction({ status: 'QUARENTENA' }, { canView: true }),
+    { action: 'download', label: 'Baixar' });
+  assert.deepEqual(getProdutoMediaDownloadAction({ status: 'APROVADO' }, { canView: true }),
+    { action: 'download', label: 'Baixar' });
 });
 
 test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual', () => {
@@ -28,10 +102,16 @@ test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual
 test('formulario V22 usa RBAC por acao e confirma workflow somente pela resposta do ERP', async () => {
   const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
+  const midiaSection = await readFile(new URL('../src/components/cadastros/produto/ProdutoDamMidiaSection.jsx', import.meta.url), 'utf8');
   for (const action of ['aprovar-conteudo', 'publicar', 'inativar']) assert.match(form, new RegExp(`hasPermission\\('Cadastros', 'Produto', '${action}'\\)`));
   assert.match(section, /updated\?\.workflow_status !== target/);
   assert.match(section, /onWorkflowChanged\?\.\(updated\.workflow_status\)/);
-  assert.match(section, /target === 'PUBLICADO' && !window\.confirm/);
+  assert.match(section, /target === 'PUBLICADO'/);
+  assert.match(section, /media\.some\(\(row\) => row\.status === 'QUARENTENA'\)/);
+  assert.match(section, /window\.confirm/);
+  assert.match(section + midiaSection, /Cadastros\.Produto\.inativar/);
+  assert.match(section + midiaSection, /Cadastros\.Produto\.aprovar-conteudo/);
+  assert.match(section + midiaSection, /canDeactivate &&/);
 });
 
 

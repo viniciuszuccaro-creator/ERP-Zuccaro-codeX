@@ -8,6 +8,17 @@
 - Coordenacao: Cursor revisa este contrato e as verificacoes Gate D/E na PR #34; Codex revisa requisitos da PR #33. Ordem sugerida: fechar/revisar PR #34 documental-operacional primeiro; revisar PR #33 e seu default de runtime; so entao decidir merges por revisao humana e atualizar SHA da MAIN. PR #33 segue draft, sem merge; 3080 continua R07B.
 - Frente independente Cliente 360 esta somente no workspace local, sem push e sem CI deste codigo; testes focados passaram, suite completa e build local sofreram OOM. Nao apresentar o endpoint como disponivel no remoto ou na VPS.
 
+## Checkpoint Onda 1 - liberacao DAM (2026-10-02)
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b`: no DAM existente, liberacao interna QUARENTENA→APROVADO (exige CLEAN) e QUARENTENA→REJEITADO, separada da publicacao externa e do workflow Produto. Sem scanner real, sem Produto HTTP, sem VPS.
+- Rotas: POST `/api/v1/produtos/:id/midias/:mediaId/aprovar` e `.../rejeitar-conteudo`; RBAC `Cadastros.produto.aprovar-conteudo`.
+- Continuacao: PUBLICADO do Produto bloqueado enquanto midia em QUARENTENA; `reconcileInfectedMidias` limpa orfaos INFECTED em lote (service, sem rota nova).
+- UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar + Reconciliar vencidas/infectadas + Tornar principal + Inativar midia + Baixar + banner de readiness via `/api/v1/meta` (prepared HTTP); Produto HTTP permanece opt-in/desligado.
+- Continuacao: CRUD de rascunho por canal (`produto_canais`, status RASCUNHO) no cliente prepared e na mesma secao V22; sem publicacao externa.
+- Continuacao: aprovacao de equivalente/substituto exige `aprovar-conteudo` (fail-closed) e botao na UI V22.
+- Bootstrap: Storage/scanner via env opt-in (`CLAMD_SOCKET_PATH` ausente = scanner desligado por padrao); documentado em `server/.env.example`.
+- HTTP: `POST /api/v1/produtos/midias/reconciliar-vencidas|reconciliar-infectadas`; `POST .../midias/:mediaId/principal|download`; `DELETE .../midias/:mediaId`; `GET|POST|PATCH|DELETE .../canais`; meta `produto.dam` documenta capacidades sem ativar frontend HTTP.
+- Proximo gate Onda 1: **BLOCKED** Auth + Storage/clamd na VPS; nao ativar HTTP na 3080.
+
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.
 - Backend: TabelaPrecoService consulta ClienteRepository.getEmpresaLinkById no mesmo Grupo/Empresa e usa tabela_preco_id configurada no vinculo, com fallback para tabela padrao autorizada. Produto especifico de outra Empresa nao resolve; mestre compartilhado do Grupo pode resolver. RBAC exige Cadastros.tabela_preco.visualizar e Cadastros.cliente_empresa.visualizar.

@@ -131,6 +131,26 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     }
   });
 
+  const reconcileBody = z.object({ limit: z.coerce.number().int().min(1).max(100).optional() }).strict();
+  router.post('/api/v1/produtos/midias/reconciliar-vencidas', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsed = reconcileBody.safeParse(req.body ?? {});
+      if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media reconciliation payload');
+      const result = await service.reconcileExpiredMidias(ctxFromReq(req), parsed.data.limit ?? 50);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+  router.post('/api/v1/produtos/midias/reconciliar-infectadas', requireTenantScope, async (req, res, next) => {
+    try {
+      const parsed = reconcileBody.safeParse(req.body ?? {});
+      if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media reconciliation payload');
+      const result = await service.reconcileInfectedMidias(ctxFromReq(req), parsed.data.limit ?? 50);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos/:id/variantes', requireTenantScope, async (req, res, next) => {
     try { res.json({ data: await service.listVariants(ctxFromReq(req), req.params.id) }); }
     catch (error) { next(error); }
@@ -253,6 +273,58 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
       const result = await service.scanMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
       res.setHeader('Cache-Control', 'no-store');
       res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/aprovar', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media approval payload');
+      }
+      const result = await service.approveMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/rejeitar-conteudo', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media content rejection payload');
+      }
+      const result = await service.rejectMidiaContent(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/principal', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media principal payload');
+      }
+      const result = await service.setMidiaPrincipal(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/:id/midias/:mediaId/download', requireTenantScope, async (req, res, next) => {
+    try {
+      if (!z.object({}).strict().safeParse(req.body ?? {}).success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid media download payload');
+      }
+      const result = await service.downloadMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: result });
+    } catch (error) { next(error); }
+  });
+
+  router.delete('/api/v1/produtos/:id/midias/:mediaId', requireTenantScope, async (req, res, next) => {
+    try {
+      const result = await service.deactivateMidia(ctxFromReq(req), req.params.id, req.params.mediaId);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data: { id: result.id, status: result.status, ativo: result.ativo, principal: result.principal } });
     } catch (error) { next(error); }
   });
 
@@ -1198,6 +1270,18 @@ export function createApiRouter(deps: ApiDeps) {
         pagination: true,
         tenantFkIntegrity: true,
         frontendHttp: false,
+        dam: {
+          liberacaoInterna: true,
+          publicacaoBloqueadaComQuarentena: true,
+          reconciliacaoReservasVencidas: true,
+          reconciliacaoInfectados: true,
+          scannerOptIn: true,
+          midiaPrincipal: true,
+          midiaInativacao: true,
+          midiaDownloadAssinado: true,
+          canaisRascunho: true,
+          equivalenteAprovacao: true,
+        },
       },
       cliente: {
         masterData: true,

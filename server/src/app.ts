@@ -64,6 +64,7 @@ import { PedidoService } from './services/pedidoService.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
+import { createProdutoDamPortsFromConfig } from './services/supabaseStorageAdapter.js';
 
 export type CreateAppOptions = {
   config: AppConfig;
@@ -95,6 +96,9 @@ export function createApp(options: CreateAppOptions) {
     ?? (useMemory ? new InMemoryProdutoRelationGuard() : new PostgresProdutoRelationGuard(db));
   const rbacGuard = options.rbacGuard
     ?? (useMemory ? new InMemoryRbacGuard() : new PostgresRbacGuard(db));
+  const damFromConfig = createProdutoDamPortsFromConfig(config);
+  const storagePort = options.storagePort ?? damFromConfig.storagePort;
+  const malwareScanPort = options.malwareScanPort ?? damFromConfig.malwareScanPort;
 
   const marcaRepo = useMemory ? new InMemoryMarcaRepository() : new PostgresMarcaRepository(db);
   const unidadeRepo = useMemory ? createInMemoryUnidadeRepo() : new PostgresUnidadeRepository(db);
@@ -147,8 +151,8 @@ export function createApp(options: CreateAppOptions) {
     tenantGuard,
     produtoRelationGuard,
     rbacGuard,
-    options.storagePort,
-    options.malwareScanPort,
+    storagePort,
+    malwareScanPort,
   );
   const clienteService = new ClienteService(
     clienteRepo,
