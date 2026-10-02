@@ -1,8 +1,8 @@
 ## Checkpoint Onda 15 - claim/lease outbox (2026-10-02)
-- Branch `cursor/comercial360-onda15-outbox-claim-392b`: claim/confirm/fail/reprocess de `produto.publicado` sobre `integration_events` existente; lease token derivado; RBAC `publicar` + `reprocessar`; confirm idempotente (`already_published`); batch fake local.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`: claim/confirm/fail/reprocess de `produto.publicado`; lease token derivado; RBAC `publicar` + `reprocessar`; confirm idempotente; batch fake local; E2E PostgreSQL no R10.
 - Rotas: POST `/api/v1/produtos/outbox/claim`, `.../process`, `.../:eventId/confirm|fail|reprocess`.
-- Cobertura: reclaim lease, fail→retry, dead-letter reprocess, recibo idempotente; suite outbox 16/16.
-- Proximo in-repo: testes PostgreSQL claim/confirm/reprocess. Sem publisher real/reconciliacao externa/VPS.
+- Cobertura: reclaim lease, fail→retry/dead_letter, reprocess, recibo idempotente, PG tenant A/B.
+- Proximo in-repo: listagem dead-letter read-only ou metricas do batch fake. Sem publisher real/reconciliacao externa/VPS.
 
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.

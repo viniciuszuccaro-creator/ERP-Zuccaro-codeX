@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - PostgreSQL claim/confirm/reprocess (2026-10-02)
+
+- Continuacao: E2E PostgreSQL no suite R10 existente cobre claim tenant-scoped, fail→dead_letter, reprocess→pending, confirm + recibo `already_published`, reclaim de lease expirado e isolamento de empresa cruzada.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Teste focado: 1/1 PASS com DATABASE_URL.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: metricas/observabilidade local do batch fake ou listagem dead-letter read-only; publisher real continua bloqueado.
+
 ## Comercial 360 / Onda 15 - recibo idempotente de confirm (2026-10-02)
 
 - Continuacao: confirm de evento ja `published` devolve `receipt: already_published` sem reauditar; primeira transicao `receipt: confirmed`; FakeCatalogPublisher nao duplica eventId; meta `outboxConfirmIdempotent`.
