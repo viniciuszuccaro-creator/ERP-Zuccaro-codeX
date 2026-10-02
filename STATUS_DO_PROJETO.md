@@ -1,3 +1,19 @@
+## CURSOR — #199 fechar CI compose + PG isolado + telas + parecer #201 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| Causa CI | Job `expedicao-comercial-compose` falhava com teste **PASS** porque `grep` de skip casava `# skipped 0` (falso positivo) |
+| Correção CI | Grep só `# skipped [1-9]…` / TAP `# SKIP`; exige pass; **não** removeu teste nem enfraqueceu assertions |
+| Compose PG | `runtime11-expedicao-compose-postgres.test.ts` + step CI postgres:16; SHA Comercial **`4f8c6593`**; trava **026** (hash tip) |
+| Telas | UI Nova Entrega→FormularioEntrega; cards Entregas/Separação/Romaneios; fluxo HTTP criar→sep→romaneio→despacho→parcial→total→ocorrência→devolução + `page.reload` |
+| Parecer #201 | `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — SHA `d20a6dde`; **não** estende #200 |
+| Comercial 360 | Encaminhado à **tarefa existente** (código no workspace dela); confirmação de recebimento + primeira ação lá |
+| Legado | Continua no executor com staging privado — **sem** tarefa duplicada |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
 
 | Campo | Valor |

@@ -14,8 +14,8 @@ import { PGlite } from '@electric-sql/pglite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
-/** Tip Comercial (#178) — SHA/branch obtido explicitamente pela CI; default local = origin tip. */
-const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || 'origin/codex/comercial-corrige-parecer-155';
+/** Tip Comercial (#178) — SHA pinado pela CI; default local = tip #178. */
+const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9';
 /** Em CI/job de integração: ausência de ref ou skip = FALHA (não aprovação silenciosa). */
 const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1'
   || process.env.CI === 'true'
@@ -56,8 +56,15 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
   const comercial = list.stdout.split('\n').filter((rel) => /\/0(2[5-9]|3[0-5])_.*\.sql$/.test(rel));
   assert.ok(comercial.length >= 5, 'esperado bloco comercial 025-035');
   assert.ok(comercial.some((r) => r.includes('025_')), '025 comercial');
+  assert.ok(comercial.some((r) => r.includes('026_pedidos_tipo_comercial')), 'trava histórica 026 tip Comercial');
   assert.ok(comercial.some((r) => r.includes('035_')), '035 comercial');
   assert.ok(!comercial.some((r) => r.includes('036_')), '036 nao e comercial');
+
+  // Trava: 026 vem do tip Comercial pinado — hash estável; job não reescreve classificação.
+  const locked026Rel = comercial.find((r) => r.includes('026_pedidos_tipo_comercial'));
+  assert.ok(locked026Rel, '026_pedidos_tipo_comercial.sql obrigatória no tip Comercial');
+  const locked026Body = gitShow(CODEX_REF, locked026Rel);
+  assert.match(locked026Body, /tipo_comercial/i);
 
   const out = mkdtempSync(join(tmpdir(), 'exp-compose-'));
   try {

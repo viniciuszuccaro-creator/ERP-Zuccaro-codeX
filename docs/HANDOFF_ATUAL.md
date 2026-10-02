@@ -1,3 +1,9 @@
+## CURSOR — #199 fechar integração: CI compose + PG + telas + #201 (2026-10-02)
+
+Causa CI: grep de skip batia em `# skipped 0` → falso fail com teste PASS. Corrigido (só skip real). Compose **PGlite + PostgreSQL isolado** com SHA Comercial `4f8c6593` e trava histórica **026**. Telas: Nova Entrega→FormularioEntrega; fluxo completo + reload. Parecer **#201** SHA `d20a6dde` em `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — **não** estende #200. Comercial 360 → tarefa existente (código no workspace dela). Legado → executor staging (sem duplicar). Sem tip-port/merge/VPS.
+
+---
+
 ## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
 
 Reload Playwright com `page.reload()` real — **PASS**. Job CI `expedicao-comercial-compose` fetch tip Comercial `4f8c6593`; ref ausente/skip = fail. SPA `/Expedicao` × BFF+PGlite **PASS** (`localhost`). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Descrição #199: migration **036** (não 025) — ManagePullRequest bloqueado; corpo canônico no STATUS/HANDOFF. Sem tip-port/merge/VPS. HEAD `f969e49e`.

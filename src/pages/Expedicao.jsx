@@ -30,6 +30,7 @@ import {
 } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const EntregasListagem = React.lazy(() => import("../components/expedicao/EntregasListagem"));
+const FormularioEntrega = React.lazy(() => import("../components/expedicao/FormularioEntrega"));
 const SeparacaoConferencia = React.lazy(() => import("../components/expedicao/SeparacaoConferencia"));
 const SeparacaoConferenciaIA = React.lazy(() => import("@/components/expedicao/SeparacaoConferenciaIA"));
 const RoteirizacaoInteligente = React.lazy(() => import("@/components/expedicao/RoteirizacaoInteligente"));
@@ -389,6 +390,26 @@ export default function Expedicao() {
       descricao: 'Acionamento do comando principal de nova entrega.',
     });
     base44.analytics.track({ eventName: 'expedicao_primary_action' });
+    // Reutiliza FormularioEntrega existente (HTTP canônico quando VITE_ERP_HTTP_EXPEDICAO).
+    React.startTransition(() => {
+      openWindow(
+        FormularioEntrega,
+        {
+          clientes,
+          pedidos,
+          empresasDoGrupo,
+          estaNoGrupo,
+          windowMode: true,
+          isEditing: false,
+        },
+        {
+          title: 'Nova Entrega',
+          width: 1100,
+          height: 650,
+          uniqueKey: 'expedicao-nova-entrega',
+        },
+      );
+    });
   };
   const handleModuleClick = (module) => {
     if (!contextoValido) {
