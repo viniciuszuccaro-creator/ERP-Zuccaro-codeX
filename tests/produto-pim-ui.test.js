@@ -28,10 +28,13 @@ test('workflow V22 expõe somente transicoes permitidas ao perfil e estado atual
 test('formulario V22 usa RBAC por acao e confirma workflow somente pela resposta do ERP', async () => {
   const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   const section = await readFile(new URL('../src/components/cadastros/produto/ProdutoRelationsDamSection.jsx', import.meta.url), 'utf8');
-  for (const action of ['aprovar-conteudo', 'publicar', 'inativar']) assert.match(form, new RegExp(`hasPermission\\('Cadastros', 'Produto', '${action}'\\)`));
+  for (const action of ['aprovar-conteudo', 'publicar', 'reprocessar', 'inativar']) assert.match(form, new RegExp(`hasPermission\\('Cadastros', 'Produto', '${action}'\\)`));
   assert.match(section, /updated\?\.workflow_status !== target/);
   assert.match(section, /onWorkflowChanged\?\.\(updated\.workflow_status\)/);
   assert.match(section, /target === 'PUBLICADO' && !window\.confirm/);
+  assert.match(section, /data-section="produto-outbox"/);
+  assert.match(section, /outboxMetrics|outboxList/);
+  assert.match(section, /Cadastros\.Produto\.reprocessar/);
 });
 
 
