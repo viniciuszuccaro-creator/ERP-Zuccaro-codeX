@@ -265,3 +265,41 @@ export class SupabaseStorageAdapter implements StoragePort, MalwareScanPort {
     });
   }
 }
+
+/** Config mínima para DAM; tipagem solta para não acoplar ao AppConfig. */
+export type ProdutoDamEnv = {
+  supabaseUrl?: string;
+  supabaseServiceRoleKey?: string;
+  supabaseStoragePublicUrl?: string;
+  supabaseStoragePrivateBucket?: string;
+  supabaseStorageMaxBytes: number;
+  clamdSocketPath?: string;
+  clamdTimeoutMs: number;
+};
+
+/**
+ * Opt-in: Storage só quando bucket/URLs/service role estão completos.
+ * Scanner (clamd) só quando CLAMD_SOCKET_PATH está definido — desligado por padrão.
+ */
+export function createProdutoDamPortsFromConfig(config: ProdutoDamEnv): {
+  storagePort?: StoragePort;
+  malwareScanPort?: MalwareScanPort;
+} {
+  if (!config.supabaseUrl || !config.supabaseServiceRoleKey
+    || !config.supabaseStoragePublicUrl || !config.supabaseStoragePrivateBucket) {
+    return {};
+  }
+  const adapter = new SupabaseStorageAdapter({
+    internalUrl: config.supabaseUrl,
+    publicUrl: config.supabaseStoragePublicUrl,
+    serviceRoleKey: config.supabaseServiceRoleKey,
+    privateBucket: config.supabaseStoragePrivateBucket,
+    maxBytes: config.supabaseStorageMaxBytes,
+    ...(config.clamdSocketPath ? {
+      clamdSocketPath: config.clamdSocketPath,
+      clamdTimeoutMs: config.clamdTimeoutMs,
+    } : {}),
+  });
+  if (!config.clamdSocketPath) return { storagePort: adapter };
+  return { storagePort: adapter, malwareScanPort: adapter };
+}

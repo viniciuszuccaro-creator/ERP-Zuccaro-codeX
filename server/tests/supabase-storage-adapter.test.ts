@@ -4,7 +4,7 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { SupabaseStorageAdapter } from '../src/services/supabaseStorageAdapter.js';
+import { createProdutoDamPortsFromConfig, SupabaseStorageAdapter } from '../src/services/supabaseStorageAdapter.js';
 
 import { assertCleanMalwareScan, assertMalwareScanResult, type MalwareScanResult } from '../src/services/storagePort.js';
 const groupId = '11111111-1111-4111-8111-111111111111';
@@ -249,4 +249,38 @@ test('Clamd INSTREAM verifies exact private object and fails closed on scanner r
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
+});
+
+test('DAM ports from config: storage opt-in e scanner desligado por padrao', () => {
+  assert.deepEqual(createProdutoDamPortsFromConfig({
+    supabaseStorageMaxBytes: 1024, clamdTimeoutMs: 1000,
+  }), {});
+  assert.deepEqual(createProdutoDamPortsFromConfig({
+    supabaseUrl: 'https://internal.example.test',
+    supabaseServiceRoleKey: 'synthetic-key',
+    supabaseStoragePublicUrl: 'https://public.example.test',
+    supabaseStorageMaxBytes: 1024,
+    clamdTimeoutMs: 1000,
+  }), {});
+  const storageOnly = createProdutoDamPortsFromConfig({
+    supabaseUrl: 'https://internal.example.test',
+    supabaseServiceRoleKey: 'synthetic-key',
+    supabaseStoragePublicUrl: 'https://public.example.test',
+    supabaseStoragePrivateBucket: 'private',
+    supabaseStorageMaxBytes: 1024,
+    clamdTimeoutMs: 1000,
+  });
+  assert.ok(storageOnly.storagePort);
+  assert.equal(storageOnly.malwareScanPort, undefined);
+  const withScanner = createProdutoDamPortsFromConfig({
+    supabaseUrl: 'https://internal.example.test',
+    supabaseServiceRoleKey: 'synthetic-key',
+    supabaseStoragePublicUrl: 'https://public.example.test',
+    supabaseStoragePrivateBucket: 'private',
+    supabaseStorageMaxBytes: 1024,
+    clamdSocketPath: '/tmp/clamd.sock',
+    clamdTimeoutMs: 1000,
+  });
+  assert.ok(withScanner.storagePort);
+  assert.equal(withScanner.malwareScanPort, withScanner.storagePort);
 });
