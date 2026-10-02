@@ -14,6 +14,7 @@
 - Continuacao: PUBLICADO do Produto bloqueado enquanto midia em QUARENTENA; `reconcileInfectedMidias` limpa orfaos INFECTED em lote (service, sem rota nova).
 - UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar (prepared HTTP); Produto HTTP permanece opt-in/desligado.
 - Bootstrap: Storage/scanner via env opt-in (`CLAMD_SOCKET_PATH` ausente = scanner desligado por padrao).
+- HTTP: `POST /api/v1/produtos/midias/reconciliar-vencidas|reconciliar-infectadas`; meta `produto.dam` documenta capacidades sem ativar frontend HTTP.
 - Proximo gate Onda 1: Auth + homologar Storage/clamd na VPS; nao ativar HTTP na 3080 neste checkpoint.
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)

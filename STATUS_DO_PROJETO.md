@@ -1,3 +1,9 @@
+## Comercial 360 / Onda 1 - meta DAM + HTTP reconcile (2026-10-02)
+
+- Continuacao: `/api/v1/meta.produto.dam` declara liberacao/bloqueio/reconciliacao/scanner opt-in; rotas HTTP `POST /api/v1/produtos/midias/reconciliar-vencidas` e `.../reconciliar-infectadas` expõem services existentes; cliente prepared correspondente. Sem Produto HTTP, sem VPS.
+- Testes: HTTP DAM 14/14; http-api-client 16/16; typecheck OK.
+- Proximo bloqueio: Auth + Storage/clamd na VPS.
+
 ## Comercial 360 / Onda 1 - scanner DAM opt-in desligado por padrao (2026-10-02)
 
 - Continuacao: `createProdutoDamPortsFromConfig` no adapter existente; `createApp` liga Storage somente com URL/bucket/service role completos; clamd só com `CLAMD_SOCKET_PATH` (padrão ausente = scanner desligado). `publicConfigView` expõe `storageConfigured`/`malwareScannerConfigured` sem segredos/path.
