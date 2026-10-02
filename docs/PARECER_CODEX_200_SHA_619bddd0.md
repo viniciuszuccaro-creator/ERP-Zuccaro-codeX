@@ -2,7 +2,7 @@
 
 **Canal:** documental (`docs/`, `STATUS_DO_PROJETO.md`, `HANDOFF_ATUAL.md`) — comentários de PR indisponíveis ao agente.
 
-**Escopo deste parecer:** exclusivamente o tip `#200` no SHA abaixo.  
+**Escopo deste parecer:** exclusivamente o tip `#200` no SHA abaixo.
 **Não** estende, reaproveita nem transfere o parecer de `#178` (`docs/PARECER_CODEX_178_SHA_4f8c6593.md`).
 
 ## Identidade revisada

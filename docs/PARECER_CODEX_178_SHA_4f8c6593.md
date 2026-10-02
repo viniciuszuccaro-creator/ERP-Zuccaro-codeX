@@ -22,5 +22,5 @@
 
 ## Conclusão
 
-**COMPATÍVEL com Expedição #199 sob contrato reserved + mig 036.**  
+**COMPATÍVEL com Expedição #199 sob contrato reserved + mig 036.**
 **NÃO** tip-port. **NÃO** merge. Aguardar declaração FINAL do Codex no #178.
