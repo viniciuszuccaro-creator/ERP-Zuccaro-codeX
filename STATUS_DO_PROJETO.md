@@ -1,3 +1,33 @@
+## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| HEAD | `f969e49e` |
+| Reload | Playwright `page.reload()` real + revalidação PG — **PASS** |
+| CI | Job `expedicao-comercial-compose`: fetch tip Comercial **`4f8c6593`**; `COMERCIAL_COMPOSE_REQUIRE=1`; skip/ausência = **fail** (provado) |
+| Telas ERP | `tests/expedicao-erp-telas-pg.playwright.test.mjs` — SPA `/Expedicao` × BFF+PGlite **PASS** (fluxo+RBAC+empresa; host `localhost` evita redirect HTTPS do Layout) |
+| Parecer #178 | permanece `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (sem extensão) |
+| Parecer #200 | **novo** `docs/PARECER_CODEX_200_SHA_619bddd0.md` — SHA exato `619bddd0`; tip-port **NÃO** |
+| Migration | **036** — descrição #199 deve citar 036 (não 025); ferramenta ManagePullRequest bloqueada neste run → canal documental |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
+## CURSOR — #199 complementar UI BFF + composição Comercial (2026-10-01T19:50Z)
+
+| Campo | Valor |
+|---|---|
+| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
+| UI BFF | FormularioEntrega create; Separacao; Romaneio; Detalhes parcial/total/assinatura; Ocorrencia frustrada; Comprovante; Devolucao |
+| Erros | `formatExpedicaoHttpError` nas telas HTTP |
+| Provas | Playwright reload + RBAC + isolamento + erro 404; PGlite compose 025–035+036 |
+| Coordenação | `docs/EXPEDICAO_COORDENACAO_CODEX.md` |
+| Parecer Codex | SHA **`4f8c6593506f681689e021226ab024f57c7aede9`** — `docs/PARECER_CODEX_178_SHA_4f8c6593.md` |
+| Tip-port / Merge / VPS | **Bloqueado** |
+
+---
+
 ## CURSOR — #199 Expedição persistência canônica (2026-10-01T18:00Z)
 
 | Campo | Valor |
@@ -15,6 +45,16 @@
 | Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
 
 ---
+
+## CODEX — delta #199 na candidata #201 (2026-10-02)
+
+Objetivo: incorporar à branch própria o delta recente da #199 (`7879ecbe`) sem editar a branch Cursor. Causa: a #201 ainda partia do checkpoint #199 anterior, sem o gate CI Compose e os testes de reload/API. Reuso: código de Expedição #199, executor compartilhado da #201 e handoff existente; conflito só em `docs/HANDOFF_ATUAL.md`, preservados ambos os registros. Multiempresa/RBAC/auditoria: testes focados cobrem tenant/403/404 e fluxo API; sem mudança nas portas `reserved`. Validação: servidor 303 pass/0 fail/17 skip; PGlite+composição 6/6; UI focada 17/17; audit/lint/build raiz e diff-check passaram. `npm test` raiz Windows falhou nos guards Bash/VPS preexistentes; CI Linux pendente no novo HEAD. Sem merge em main, VPS, importação ou migration operacional; 026 histórica continua bloqueada. Próximo: reconciliar #178 semanticamente e definir ownership transacional do estoque (PostgreSQL `produtos` é cadastro mestre sem saldo; Base44 atual é operacional) antes de ativar adaptador real.
+
+## CODEX — contrato de executor compartilhado Pedido/estoque (2026-10-02)
+
+Tarefa: preparar as portas canônicas da Expedição (#200 `619bddd0`, base da branch isolada) para que adaptadores Pedido/estoque operem no mesmo executor de `ExpedicaoRepository.withTransaction`, sem transação aninhada. Causa: portas injetáveis eram chamadas dentro da transação, mas não recebiam o executor; um adaptador poderia gravar fora dela. Reuso: `DbQueryExecutor`, `ExpedicaoService`, portas já existentes e ensaio PGlite R11. Arquivos: `server/src/repositories/expedicaoTypes.ts`, `server/src/services/expedicaoService.ts`, `server/tests/runtime11-expedicao-pglite.test.ts`, `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`, `docs/HANDOFF_ATUAL.md`, este status. Multiempresa/RBAC/auditoria: sem alteração de autorização ou escopo; contexto `groupId∧empresaId` preservado. Teste injeta escrita sintética Pedido seguida de estoque e força falha; ambas e Romaneio/Entrega fazem rollback. Teste adicional força falha na devolução após entrega parcial e comprova que nem o movimento sintético nem status `DEVOLVIDA` persistem. PGlite 5/5; servidor completo anterior 301 pass, 0 fail, 17 skip; typecheck/build servidor, audit baseline, lint raiz (1 warning prévio), build raiz e diff-check passaram antes do teste adicional. Typecheck raiz falhou em erros existentes fora do diff; a suíte raiz, que cobre SPA/VPS, não foi executada neste subgate exclusivamente de servidor. Ensaio isolado de schema limpo aplicou 001–024 da #200, 025–035 da #178 (10 arquivos) e 036 da Expedição em sequência, sem erro; **não** prova classificação histórica da 026 em banco existente. Pendência: adaptadores de efeito real continuam `reserved`, despacho/devolução vinculados seguem bloqueados, #178 ainda separado e 026 histórica bloqueada. Próximo: compor #178 com #199/#200 em branch isolada, então implementar movimento/idempotência/auditoria por item antes de liberar efeitos. Nenhum merge, VPS ou importação.
+
+Fechamento do teste adicional: servidor completo reexecutado com **302 pass / 0 fail / 17 skip**; PGlite 5/5. O valor 301 acima é o checkpoint anterior ao caso de devolução.
 
 ## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
 

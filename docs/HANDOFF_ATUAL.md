@@ -1,3 +1,33 @@
+## CODEX — composição incremental #199 na #201 (2026-10-02)
+
+HEAD #199 `7879ecbe` foi incorporado **somente** à branch isolada da #201, preservando a branch Cursor. O conflito único de conteúdo em `docs/HANDOFF_ATUAL.md` foi resolvido mantendo os dois checkpoints. O delta traz gate CI Compose, provas SPA×BFF+PGlite com reload e teste de migrations comerciais 025–035 + Expedição 036; nenhum adaptador de estoque real foi ativado. Testes locais: servidor 303 pass/0 fail/17 skip; focados PGlite+composição 6/6 e UI 17/17; audit/lint/build raiz passaram. `npm test` raiz no Windows permanece falhando em guards Bash/VPS preexistentes; a CI Linux do novo HEAD será a verificação aplicável. #178 continua separada; 026 histórica continua travada. Não houve merge em main, VPS ou importação.
+
+---
+
+## CODEX — executor compartilhado nas portas Pedido/estoque (2026-10-02, candidata isolada)
+
+Base: #200 `619bddd0` (que incorpora #199; migration Expedição 036). #178 segue `4f8c6593` separado. O ensaio `git merge-tree` ainda aponta conflitos semânticos em router/app/testes e SPA; não houve merge de PR, aplicação de migration, VPS ou importação. A 026 mantém seu preflight histórico.
+
+As portas existentes de Pedido/estoque receberam o `DbQueryExecutor` ativo do `ExpedicaoService`, sem abrir transação aninhada. Teste PGlite força a porta de Pedido a gravar, a de estoque a enxergar essa gravação e falhar, e verifica rollback de ambos os efeitos e de Romaneio/Entrega. Teste adicional injeta falha na devolução após parcial e verifica rollback de movimento/status. PGlite 5/5; servidor completo do primeiro commit 301 pass/0 fail/17 skip; servidor typecheck/build, audit/lint/build raiz e diff-check passaram. CI do primeiro commit `70d1e75a` SUCCESS. Typecheck raiz falha em arquivos fora do diff; suíte SPA/VPS raiz não se aplica ao código servidor deste subgate. Ensaio PGlite efêmero aplicou 001–024 + dez migrations comerciais 025–035 da #178 + 036 Expedição sem erro; isso não libera a 026 em banco com histórico. A mudança **não ativa** efeitos reais: defaults `reserved` e gates de despacho/devolução vinculados seguem fail-closed. Próximo lote: compor semanticamente #178 e implementar adaptadores persistentes com unidades/quantidades por item, auditoria e retry; só então pedir revisão do HEAD integrado. CI do commit adicional: conferir após push.
+
+---
+
+Atualização do teste adicional: suíte completa do servidor reexecutada, **302 pass / 0 fail / 17 skip** (o 301 acima corresponde ao primeiro commit). PGlite 5/5.
+
+---
+
+## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+
+Reload Playwright com `page.reload()` real — **PASS**. Job CI `expedicao-comercial-compose` fetch tip Comercial `4f8c6593`; ref ausente/skip = fail. SPA `/Expedicao` × BFF+PGlite **PASS** (`localhost`). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Descrição #199: migration **036** (não 025) — ManagePullRequest bloqueado; corpo canônico no STATUS/HANDOFF. Sem tip-port/merge/VPS. HEAD `f969e49e`.
+
+---
+
+## CURSOR — pacote complementar #199 UI BFF + composição (2026-10-01T19:50Z)
+
+Wire completo separação/expedição/parcial/total/ocorrência/devolução via BFF canônico (estados suportados). Prova Playwright: reload, RBAC 403, isolamento empresa 404, erro com code. Composição mig comercial 025–035 + 036 PGlite. Parecer Codex SHA `4f8c6593` em `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (canal documental). Sem tip-port. Merge/VPS bloqueado.
+
+---
+
 ## CURSOR — pacote #197 LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
 
 Listagem/detalhe abrem LogisticaReversa existente (RBAC+contexto). Playwright A–H+I+J PASS com persistência+reload. Camada SPA local ≠ API/PG (sem endpoints Entrega/Romaneio no router). Pedido de revisão Codex do pacote #192–#197. #178 sem tip-port. Merge/VPS bloqueado.

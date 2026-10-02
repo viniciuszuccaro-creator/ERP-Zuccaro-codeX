@@ -12,6 +12,10 @@
 5. Multiempresa absoluta: toda chamada carrega `groupId` + `empresaId`.
 6. Fail-closed: sem escopo ou sem permissão → não chama porta.
 
+### Executor transacional compartilhado (candidata Codex 02/10)
+
+Cada método de porta recebe agora `executor?: DbQueryExecutor` como segundo argumento. Em PostgreSQL, o serviço passa o executor ativo de `ExpedicaoRepository.withTransaction`; o adaptador deve executar **todas** as leituras, movimentos, mudanças de Pedido e auditorias com esse executor, sem abrir transação aninhada ou usar a conexão do pool diretamente. O `undefined` preserva os ensaios in-memory, mas não autoriza efeito persistente fora de transação. O teste PGlite grava efeitos sintéticos pelas duas portas, força falha de estoque e verifica rollback de ambos junto com Romaneio/Entrega. Nenhum adaptador de estoque real foi ativado por esta alteração; `reserved` e os bloqueios vinculados permanecem.
+
 ## Tipos canônicos (já no tip #199)
 
 Fonte: `server/src/repositories/expedicaoTypes.ts`
@@ -23,14 +27,14 @@ export type ExpedicaoPedidoSideEffectPort = {
     empresaId: string;
     pedidoId: string | null;
     entregaId: string;
-  }): Promise<'reserved' | 'applied'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
 
   onDespacho(input: {
     groupId: string;
     empresaId: string;
     pedidoIds: string[];
     romaneioId: string;
-  }): Promise<'reserved' | 'applied'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
 };
 
 export type ExpedicaoEstoquePort = {
@@ -38,14 +42,14 @@ export type ExpedicaoEstoquePort = {
     groupId: string;
     empresaId: string;
     entregaIds: string[];
-  }): Promise<'reserved' | 'applied' | 'failed'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
 
   onDevolucao(input: {
     groupId: string;
     empresaId: string;
     entregaId: string;
     quantidade: string; // NUMERIC string; nunca float
-  }): Promise<'reserved' | 'applied' | 'failed'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
 };
 ```
 

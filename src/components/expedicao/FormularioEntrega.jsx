@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, isHttpExpedicaoMode } from '@/api/base44Client';
+import { httpApiClient } from '@/api/httpApiClient';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import EntregaFormSections from './formulario-entrega/EntregaFormSections';
+import {
+  formatExpedicaoHttpError,
+  mapEntregaFormToHttpCreate,
+} from '@/components/lib/expedicaoHttpErrors';
 import {
   normalizeEntregaFormData,
   resolveEntregaContext,
@@ -136,28 +141,45 @@ export default function FormularioEntrega({
 
   const createMutation = useMutation({
     /** @param {EntregaFormData} data */
-    mutationFn: (data) => createInContext('Entrega', stampPayload(data)),
+    mutationFn: async (data) => {
+      const stamped = stampPayload(data);
+      if (isHttpExpedicaoMode) {
+        return httpApiClient.expedicao.createEntrega(mapEntregaFormToHttpCreate(stamped));
+      }
+      return createInContext('Entrega', stamped);
+    },
     onSuccess: async (result) => {
       const entrega = asRecord(result);
       await invalidateLists();
-      await auditEntrega({ acao: 'Entrega.criar', registroId: entrega.id || null, dadosNovos: { criada: true, status: entrega.status || formData.status || null } });
+      await auditEntrega({ acao: 'Entrega.criar', registroId: entrega.id || null, dadosNovos: { criada: true, status: entrega.status || formData.status || null, persistencia: isHttpExpedicaoMode ? 'http_canonica' : 'spa_local' } });
       toastHook({ title: 'Entrega criada!' });
       onCancel();
     },
-    onError: (error) => toastHook({ title: 'Erro ao criar entrega', description: error instanceof Error ? error.message : 'Falha desconhecida', variant: 'destructive' }),
+    onError: (error) => toastHook({ title: 'Erro ao criar entrega', description: formatExpedicaoHttpError(error), variant: 'destructive' }),
   });
 
   const updateMutation = useMutation({
     /** @param {{id: string, data: EntregaFormData}} input */
-    mutationFn: ({ id, data }) => updateInContext('Entrega', id, stampPayload(data)),
+    mutationFn: async ({ id, data }) => {
+      const stamped = stampPayload(data);
+      if (isHttpExpedicaoMode) {
+        return httpApiClient.expedicao.patchEntrega(id, {
+          observacoes: stamped.observacoes,
+          motorista_nome: stamped.motorista_nome || stamped.motorista,
+          veiculo: stamped.veiculo,
+          placa: stamped.placa,
+        });
+      }
+      return updateInContext('Entrega', id, stamped);
+    },
     onSuccess: async (result, variables) => {
       const entrega = asRecord(result);
       await invalidateLists();
-      await auditEntrega({ acao: 'Entrega.editar', registroId: entrega.id || variables.id, dadosAnteriores: { id: variables.id }, dadosNovos: { atualizada: true, status: entrega.status || formData.status || null } });
+      await auditEntrega({ acao: 'Entrega.editar', registroId: entrega.id || variables.id, dadosAnteriores: { id: variables.id }, dadosNovos: { atualizada: true, status: entrega.status || formData.status || null, persistencia: isHttpExpedicaoMode ? 'http_canonica' : 'spa_local' } });
       toastHook({ title: 'Entrega atualizada!' });
       onCancel();
     },
-    onError: (error) => toastHook({ title: 'Erro ao atualizar entrega', description: error instanceof Error ? error.message : 'Falha desconhecida', variant: 'destructive' }),
+    onError: (error) => toastHook({ title: 'Erro ao atualizar entrega', description: formatExpedicaoHttpError(error), variant: 'destructive' }),
   });
 
   /** @param {string} clienteId */

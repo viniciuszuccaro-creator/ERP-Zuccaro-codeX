@@ -232,9 +232,24 @@ test('R11 PGlite: concorrencia de numero + auditoria transacional create', async
 test('R11 PGlite: falha estoque no despacho faz rollback (sem romaneio orfao)', async () => {
   const pg = await bootPglite();
   try {
+    await pg.exec('CREATE TABLE side_effect_probe (kind TEXT NOT NULL)');
     const runtime = fixture(pg, {
+      expedicaoPedidoPort: {
+        async onSeparacaoConcluida() { return 'reserved' as const; },
+        async onDespacho(_input: unknown, executor?: DbQueryExecutor) {
+          assert.ok(executor, 'Pedido must receive the active transaction executor');
+          await executor.query("INSERT INTO side_effect_probe(kind) VALUES ('pedido')");
+          return 'applied' as const;
+        },
+      },
       expedicaoEstoquePort: {
-        async onDespacho() { return 'failed' as const; },
+        async onDespacho(_input: unknown, executor?: DbQueryExecutor) {
+          assert.ok(executor, 'Estoque must receive the same transaction executor');
+          const seen = await executor.query<{ kind: string }>('SELECT kind FROM side_effect_probe');
+          assert.deepEqual(seen.rows.map((row) => row.kind), ['pedido']);
+          await executor.query("INSERT INTO side_effect_probe(kind) VALUES ('estoque')");
+          return 'failed' as const;
+        },
         async onDevolucao() { return 'reserved' as const; },
       },
     });
@@ -265,6 +280,8 @@ test('R11 PGlite: falha estoque no despacho faz rollback (sem romaneio orfao)', 
 
     const count = await pg.query<{ total: number }>('SELECT count(*)::int AS total FROM romaneios');
     assert.equal(count.rows[0]?.total, 0);
+    const effects = await pg.query<{ total: number }>('SELECT count(*)::int AS total FROM side_effect_probe');
+    assert.equal(effects.rows[0]?.total, 0, 'both port writes must rollback with the Romaneio');
   } finally {
     await pg.close();
   }
@@ -365,6 +382,54 @@ test('R11 PGlite: despacho repetido idempotente + parcial + devolucao', async ()
     const audit = new PostgresAuditRepository(dbClient(pg));
     const logs = await audit.listByEntity('Entrega', id);
     assert.ok(logs.some((a) => a.action === 'change_status'));
+  } finally {
+    await pg.close();
+  }
+});
+
+test('R11 PGlite: falha da porta na devolucao reverte movimento e status', async () => {
+  const pg = await bootPglite();
+  try {
+    await pg.exec('CREATE TABLE side_effect_return_probe (entrega_id UUID NOT NULL)');
+    const runtime = fixture(pg, {
+      expedicaoEstoquePort: {
+        async onDespacho() { return 'reserved' as const; },
+        async onDevolucao(input: { entregaId: string }, executor?: DbQueryExecutor) {
+          assert.ok(executor, 'Devolucao must receive the active transaction executor');
+          await executor.query('INSERT INTO side_effect_return_probe(entrega_id) VALUES ($1)', [input.entregaId]);
+          return 'failed' as const;
+        },
+      },
+    });
+    const { id } = await seedPronto(runtime, 'rollback-devolucao');
+    const rom = await request(runtime.app, '/api/v1/romaneios', {
+      method: 'POST', headers: headers(), body: JSON.stringify({
+        confirmed: true, motorista_nome: 'Mot Retorno', veiculo: 'Truck', placa: 'PGD1A11',
+        checklist_saida: checklistRom, entregas_ids: [id], despachar: true,
+        idempotency_key: 'rom-retorno-pg',
+      }),
+    });
+    assert.equal(rom.status, 201, JSON.stringify(rom.body));
+    const parcial = await request(runtime.app, `/api/v1/entregas/${id}/registrar`, {
+      method: 'POST', headers: headers(), body: JSON.stringify({
+        confirmed: true, modo: 'parcial', quantidade_entregue: '7',
+        comprovante: { nome_recebedor: 'Rec', documento_recebedor: '1' },
+        idempotency_key: 'parcial-retorno-pg',
+      }),
+    });
+    assert.equal(parcial.status, 200, JSON.stringify(parcial.body));
+    const retorno = await request(runtime.app, `/api/v1/entregas/${id}/devolucao`, {
+      method: 'POST', headers: headers(), body: JSON.stringify({
+        confirmed: true, motivo: 'Recusa', acao: 'devolver_estoque',
+        quantidade_devolvida: '7', idempotency_key: 'dev-fail-pg',
+      }),
+    });
+    assert.equal(retorno.status, 502, JSON.stringify(retorno.body));
+    assert.equal(retorno.body.error.code, 'ESTOQUE_SIDE_EFFECT_FAILED');
+    const after = await request(runtime.app, `/api/v1/entregas/${id}`, { headers: headers() });
+    assert.equal(after.body.data.status, 'Entrega Parcial');
+    const movements = await pg.query<{ total: number }>('SELECT count(*)::int AS total FROM side_effect_return_probe');
+    assert.equal(movements.rows[0]?.total, 0);
   } finally {
     await pg.close();
   }
