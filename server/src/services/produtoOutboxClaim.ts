@@ -76,6 +76,11 @@ export type OutboxClaimRepository = {
     errorMessage: string,
     executor?: DbQueryExecutor,
   ): Promise<ProdutoPublicationEvent | null>;
+  reprocessPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
 };
 
 type Dependencies = {
@@ -91,12 +96,16 @@ function assertId(id: string) {
   }
 }
 
-async function authorize(deps: Dependencies, ctx: RequestContext) {
+async function authorize(
+  deps: Dependencies,
+  ctx: RequestContext,
+  action: 'publicar' | 'reprocessar' = 'publicar',
+) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
   if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
   if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
   await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
-  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'publicar');
+  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', action);
   return { groupId: ctx.groupId, empresaId: ctx.empresaId } as Scope;
 }
 
@@ -208,6 +217,43 @@ export async function failProdutoPublicationEvent(
       attempts: row.attempts,
       nextAttemptAt: row.nextAttemptAt,
       deadLetterAt: row.deadLetterAt,
+    };
+  });
+}
+
+/**
+ * Reprocessa dead-letter para pending, preservando eventId/schemaVersion.
+ * Exige RBAC `reprocessar` (nao basta `publicar`). Sem entrega externa.
+ */
+export async function reprocessProdutoPublicationEvent(
+  deps: Dependencies,
+  ctx: RequestContext,
+  eventId: string,
+  reason?: string,
+) {
+  const scope = await authorize(deps, ctx, 'reprocessar');
+  assertId(eventId);
+  const sanitizedReason = String(reason || 'manual_reprocess').trim().slice(0, 500) || 'manual_reprocess';
+  return deps.repo.withTransaction(async (executor) => {
+    const row = await deps.repo.reprocessPublicationEvent(scope, eventId, executor);
+    if (!row) throw new AppError(404, 'OUTBOX_EVENT_NOT_FOUND', 'Outbox dead-letter event not found in tenant scope');
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'IntegrationEvent', entityId: eventId, action: 'update',
+      beforeData: { status: 'dead_letter' },
+      afterData: {
+        event_type: 'produto.publicado', status: row.status, attempts: row.attempts,
+        schema_version: row.schemaVersion, aggregate_id: row.produtoId,
+        reason: sanitizedReason,
+      },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return {
+      id: row.id,
+      status: row.status,
+      attempts: row.attempts,
+      schemaVersion: row.schemaVersion,
+      produtoId: row.produtoId,
     };
   });
 }

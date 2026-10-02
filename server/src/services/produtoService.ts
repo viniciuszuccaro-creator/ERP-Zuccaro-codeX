@@ -35,6 +35,7 @@ import {
   confirmProdutoPublicationEvent,
   failProdutoPublicationEvent,
   processProdutoOutboxBatch,
+  reprocessProdutoPublicationEvent,
   type CatalogPublisherPort,
   FakeCatalogPublisher,
 } from './produtoOutboxClaim.js';
@@ -288,6 +289,13 @@ export class ProdutoService {
     return failProdutoPublicationEvent({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
     }, ctx, eventId, leaseToken, errorMessage);
+  }
+
+  /** Reprocessa dead-letter → pending. Exige Cadastros.produto.reprocessar. Sem canal real. */
+  async reprocessPublicationEvent(ctx: RequestContext, eventId: string, reason?: string) {
+    return reprocessProdutoPublicationEvent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
+    }, ctx, eventId, reason);
   }
 
   /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */

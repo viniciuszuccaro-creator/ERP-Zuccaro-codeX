@@ -23,6 +23,7 @@ export type RbacAction =
   | 'aprovar'
   | 'aprovar-conteudo'
   | 'publicar'
+  | 'reprocessar'
   | 'alterar-status';
 
 export type PermissionTree = Record<string, unknown>;

@@ -498,6 +498,32 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
   }
 
+  async reprocessPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null> {
+    if (!scope.empresaId) return null;
+    const query = executor ?? this.db;
+    const updated = await query.query(
+      `UPDATE integration_events
+       SET status='pending',
+           attempts=0,
+           locked_until=NULL,
+           next_attempt_at=NULL,
+           dead_letter_at=NULL,
+           error_message=NULL,
+           published_at=NULL,
+           updated_at=timezone('utc', now())
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3
+         AND event_type='produto.publicado' AND status='dead_letter'
+       RETURNING id,group_id,empresa_id,aggregate_id,correlation_id,status,attempts,max_attempts,
+                 locked_until,next_attempt_at,published_at,dead_letter_at,error_message,schema_version,payload`,
+      [eventId, scope.groupId, scope.empresaId],
+    );
+    return updated.rows[0] ? this.mapPublicationEvent(updated.rows[0] as Record<string, unknown>) : null;
+  }
+
   private mapCanal(row: Record<string, unknown>): ProdutoCanal {
     return { ...row, ...ts(row) } as ProdutoCanal;
   }

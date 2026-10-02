@@ -150,6 +150,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
     } catch (error) { next(error); }
   });
 
+  router.post('/api/v1/produtos/outbox/:eventId/reprocess', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.reprocessPublicationEvent(
+        ctxFromReq(req),
+        req.params.eventId,
+        req.body?.reason != null ? String(req.body.reason) : undefined,
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
       const ativoParam = req.query.ativo;
@@ -1239,6 +1250,7 @@ export function createApiRouter(deps: ApiDeps) {
         frontendHttp: false,
         outboxClaimLease: true,
         outboxFakeBatch: true,
+        outboxDeadLetterReprocess: true,
       },
       cliente: {
         masterData: true,

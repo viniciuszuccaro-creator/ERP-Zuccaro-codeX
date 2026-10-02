@@ -160,3 +160,42 @@ test('Outbox claim recupera lease expirado do mesmo evento', async () => {
   const confirmed = await service.confirmPublicationEvent(ctx, reclaimed[0].id, reclaimed[0].leaseToken);
   assert.equal(confirmed.status, 'published');
 });
+
+test('Outbox dead-letter: reprocess exige RBAC proprio e volta a pending claimavel', async () => {
+  const { service, repo, audit, ctx } = setup(['visualizar', 'criar', 'editar', 'publicar', 'reprocessar']);
+  const produto = await service.create(ctx, { descricao: 'Dead letter reprocess' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'req-reprocess-1');
+  const events = (repo as any).publicationEvents as Array<{ maxAttempts: number; schemaVersion: number }>;
+  events[0].maxAttempts = 1;
+  const schemaVersion = events[0].schemaVersion;
+
+  const claimed = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 30_000 });
+  const failed = await service.failPublicationEvent(ctx, claimed[0].id, claimed[0].leaseToken, 'permanent');
+  assert.equal(failed.status, 'dead_letter');
+
+  const onlyPublish = setup(['visualizar', 'criar', 'editar', 'publicar']);
+  await assert.rejects(
+    onlyPublish.service.reprocessPublicationEvent(onlyPublish.ctx, claimed[0].id, 'sem_permissao'),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+
+  await assert.rejects(
+    service.reprocessPublicationEvent(ctx, claimed[0].id.replace(/.$/, '0'), 'missing'),
+    (error: unknown) => (error as { code?: string }).code === 'OUTBOX_EVENT_NOT_FOUND'
+      || (error as { code?: string }).code === 'VALIDATION_ERROR',
+  );
+
+  const reprocessed = await service.reprocessPublicationEvent(ctx, claimed[0].id, 'operator_retry');
+  assert.equal(reprocessed.id, claimed[0].id);
+  assert.equal(reprocessed.status, 'pending');
+  assert.equal(reprocessed.attempts, 0);
+  assert.equal(reprocessed.schemaVersion, schemaVersion);
+  assert.equal(reprocessed.produtoId, produto.id);
+
+  const logs = await audit.listByEntity('IntegrationEvent', claimed[0].id);
+  assert.ok(logs.some((row) => row.afterData?.status === 'pending' && row.afterData?.reason === 'operator_retry'));
+
+  const reclaimable = await service.claimPublicationEvents(ctx, { limit: 1, leaseMs: 30_000 });
+  assert.equal(reclaimable.length, 1);
+  assert.equal(reclaimable[0].id, claimed[0].id);
+});

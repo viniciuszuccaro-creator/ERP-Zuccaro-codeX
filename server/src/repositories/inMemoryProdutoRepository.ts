@@ -64,6 +64,11 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     errorMessage: string,
     executor?: DbQueryExecutor,
   ): Promise<ProdutoPublicationEvent | null>;
+  reprocessPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
   listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
   listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
   listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]>;
@@ -401,6 +406,28 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       nextAttemptAt: exhausted ? null : computeOutboxRetryAt(current.attempts),
       deadLetterAt: exhausted ? nowIso() : null,
       errorMessage,
+    };
+    const index = this.publicationEvents.findIndex((event) => event.id === eventId);
+    this.publicationEvents[index] = next;
+    return structuredClone(next);
+  }
+
+  async reprocessPublicationEvent(
+    scope: Scope,
+    eventId: string,
+  ): Promise<ProdutoPublicationEvent | null> {
+    const current = this.publicationEvents.find((row) => row.id === eventId);
+    if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status !== 'dead_letter') return null;
+    const next: ProdutoPublicationEvent = {
+      ...current,
+      status: 'pending',
+      attempts: 0,
+      lockedUntil: null,
+      nextAttemptAt: null,
+      deadLetterAt: null,
+      errorMessage: null,
+      publishedAt: null,
     };
     const index = this.publicationEvents.findIndex((event) => event.id === eventId);
     this.publicationEvents[index] = next;

@@ -309,6 +309,12 @@ export function createHttpApiClient(options = {}) {
             method: 'POST', body: { leaseToken, errorMessage }, signal,
           });
         },
+        /** Reprocessa dead-letter → pending (RBAC reprocessar). @param {string} eventId @param {string} [reason] @param {{ signal?: AbortSignal }} [options] */
+        outboxReprocess(eventId, reason = 'manual_reprocess', { signal } = {}) {
+          return request(`/api/v1/produtos/outbox/${encodeURIComponent(eventId)}/reprocess`, {
+            method: 'POST', body: { reason }, signal,
+          });
+        },
         /** Lote claim→publisher fake→confirm/fail (sem canal real). @param {{ limit?: number, leaseMs?: number, signal?: AbortSignal }} [options] */
         outboxProcess({ limit = 10, leaseMs = 60_000, signal } = {}) {
           return request('/api/v1/produtos/outbox/process', { method: 'POST', body: { limit, leaseMs }, signal });

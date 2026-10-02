@@ -137,3 +137,93 @@ test('HTTP Onda 15: fail agenda retry com lease token valido', async () => {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 });
+
+test('HTTP Onda 15: reprocess exige Cadastros.produto.reprocessar e rejeita evento inexistente', async () => {
+  const missingId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const deniedApp = fixture(['reprocessar']); // ACTOR has reprocessar; ACTOR_DENIED does not
+  const deniedServer = deniedApp.app.listen(0);
+  await new Promise<void>((resolve) => deniedServer.once('listening', resolve));
+  const deniedPort = (deniedServer.address() as AddressInfo).port;
+  try {
+    const denied = await fetch(`http://127.0.0.1:${deniedPort}/api/v1/produtos/outbox/${missingId}/reprocess`, {
+      method: 'POST',
+      headers: headers(ACTOR_DENIED),
+      body: JSON.stringify({ reason: 'nope' }),
+    });
+    assert.equal(denied.status, 403);
+
+    const onlyPublish = fixture();
+    const pubServer = onlyPublish.app.listen(0);
+    await new Promise<void>((resolve) => pubServer.once('listening', resolve));
+    const pubPort = (pubServer.address() as AddressInfo).port;
+    try {
+      const pubDenied = await fetch(`http://127.0.0.1:${pubPort}/api/v1/produtos/outbox/${missingId}/reprocess`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ reason: 'only_publicar' }),
+      });
+      assert.equal(pubDenied.status, 403);
+    } finally {
+      await new Promise<void>((resolve, reject) => pubServer.close((e) => (e ? reject(e) : resolve())));
+    }
+
+    const missing = await fetch(`http://127.0.0.1:${deniedPort}/api/v1/produtos/outbox/${missingId}/reprocess`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ reason: 'missing_dead_letter' }),
+    });
+    assert.equal(missing.status, 404);
+    const body = await missing.json();
+    assert.equal(body.error.code, 'OUTBOX_EVENT_NOT_FOUND');
+  } finally {
+    await new Promise<void>((resolve, reject) => deniedServer.close((e) => (e ? reject(e) : resolve())));
+  }
+});
+
+test('HTTP Onda 15: reprocess dead-letter preserva eventId e volta a pending', async () => {
+  const { app, produtoService } = fixture(['reprocessar']);
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const port = (server.address() as AddressInfo).port;
+  const request = async (path: string, method = 'GET', body?: unknown, hdrs = headers()) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method, headers: hdrs, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    const created = await request('/api/v1/produtos', 'POST', { descricao: 'Outbox reprocess HTTP' });
+    const id = created.body.data.id;
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'EM_REVISAO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'APROVADO' })).status, 200);
+    assert.equal((await request(`/api/v1/produtos/${id}/workflow`, 'PATCH', { status: 'PUBLICADO' })).status, 200);
+
+    const claimed = await request('/api/v1/produtos/outbox/claim', 'POST', { limit: 1, leaseMs: 30000 });
+    assert.equal(claimed.status, 200);
+    assert.equal(claimed.body.data.length, 1);
+    const eventId = claimed.body.data[0].id as string;
+    const leaseToken = claimed.body.data[0].leaseToken as string;
+
+    // Force dead_letter via service repo contract: fail once after lowering maxAttempts on in-memory store.
+    const repo = (produtoService as unknown as { repo: { publicationEvents?: Array<{ id: string; maxAttempts: number }> } }).repo;
+    const row = repo.publicationEvents?.find((event) => event.id === eventId);
+    assert.ok(row);
+    row!.maxAttempts = 1;
+    // attempts already incremented by claim; fail now exhausts
+    const failed = await request(`/api/v1/produtos/outbox/${eventId}/fail`, 'POST', {
+      leaseToken, errorMessage: 'force_dead_letter',
+    });
+    assert.equal(failed.status, 200);
+    assert.equal(failed.body.data.status, 'dead_letter');
+
+    const reprocessed = await request(`/api/v1/produtos/outbox/${eventId}/reprocess`, 'POST', {
+      reason: 'http_operator_retry',
+    });
+    assert.equal(reprocessed.status, 200);
+    assert.equal(reprocessed.body.data.id, eventId);
+    assert.equal(reprocessed.body.data.status, 'pending');
+    assert.equal(reprocessed.body.data.attempts, 0);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
