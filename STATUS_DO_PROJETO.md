@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 15 - closeout in-repo claim/lease (2026-10-02)
+
+- Escopo in-repo fechado neste checkpoint: claim/lease/confirm/fail/reprocess/discard, list/metrics com `produtoId`, recibo idempotente, batch fake+metrics, HTTP/client prepared, UI Produto V22, E2E PostgreSQL (incl. discard/filtro).
+- Sem worker cron, publisher real, Storage/Auth/VPS, reconciliacao de canal.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203) HEAD apos push deste lote.
+- Proximo: gate externo (Auth/Storage/publisher) ou frente independente autorizada; nao tip-port.
+
 ## Comercial 360 / Onda 15 - filtro produtoId + discard dead-letter (2026-10-02)
 
 - Continuacao: list/metrics aceitam `produtoId`; `POST .../outbox/:id/discard` move dead_letter→`cancelled` com RBAC `Cadastros.produto.descartar`; UI escopa metricas/dead-letter ao produto e expoe Descartar; catalogo owner atualizado.
