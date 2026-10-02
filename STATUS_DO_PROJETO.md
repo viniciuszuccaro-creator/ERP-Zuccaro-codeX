@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - reprocess dead-letter com RBAC proprio (2026-10-02)
+
+- Continuacao: `POST /api/v1/produtos/outbox/:eventId/reprocess` move `dead_letter` → `pending` preservando eventId/schemaVersion; RBAC `Cadastros.produto.reprocessar` (nao basta `publicar`); auditoria before/after + reason sanitizado; client `outboxReprocess`; meta `outboxDeadLetterReprocess`; acao no catalogo owner.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox+owner 16/16; http-api-client 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: recibo idempotente local do publisher fake ou cobertura PostgreSQL de claim/reprocess; publisher real e reconciliacao externa continuam bloqueados.
+
 ## Comercial 360 / Onda 15 - reclaim lease expirado + HTTP fail (2026-10-02)
 
 - Continuacao: teste de reclaim apos `lockedUntil` expirado (token antigo invalidado; confirm so com token novo); HTTP `POST .../outbox/:id/fail` agenda retry com lease valido.
