@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - UI DAM liberacao no V22 existente (2026-10-02)
+
+- Continuacao: wire no formulario/secao DAM existente (`ProdutoRelationsDamSection` + `httpApiClient` prepared) para Verificar/Aprovar midia/Rejeitar conteudo, RBAC `aprovar-conteudo`, bloqueio visual de PUBLICADO com midia em QUARENTENA. Sem tela nova, sem ativar Produto HTTP.
+- Policy: `getProdutoMediaLiberacaoActions`; labels distinguem liberacao interna de CLEAN.
+- Testes: `produto-pim-ui` + `http-api-client` 28/28. Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+- Proximo: scanner real / Auth antes de ativar HTTP.
+
 ## Comercial 360 / Onda 1 - bloqueio PUBLICADO + orfaos infectados (2026-10-02)
 
 - Continuacao da liberacao DAM: (1) `changeWorkflowStatus(PUBLICADO)` falha fechado se houver midia ativa em QUARENTENA (`PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO`); publica apos APROVADO ou REJEITADO do conteudo. (2) `reconcileInfectedMidias` rejeita lote tenant-scoped de QUARENTENA+INFECTED reutilizando `rejectProdutoMidiaContent`.
