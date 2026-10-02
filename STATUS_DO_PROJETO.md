@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 1 - scanner DAM opt-in desligado por padrao (2026-10-02)
+
+- Continuacao: `createProdutoDamPortsFromConfig` no adapter existente; `createApp` liga Storage somente com URL/bucket/service role completos; clamd só com `CLAMD_SOCKET_PATH` (padrão ausente = scanner desligado). `publicConfigView` expõe `storageConfigured`/`malwareScannerConfigured` sem segredos/path.
+- Sem ativar Produto HTTP, sem VPS, sem exigir clamd na CI.
+- Testes: adapter 30/30; runtime01 14/14; HTTP DAM 13/13; typecheck OK.
+- Proximo: Auth/homologar Storage+clamd na VPS antes de ativar HTTP.
+
 ## Comercial 360 / Onda 1 - UI DAM liberacao no V22 existente (2026-10-02)
 
 - Continuacao: wire no formulario/secao DAM existente (`ProdutoRelationsDamSection` + `httpApiClient` prepared) para Verificar/Aprovar midia/Rejeitar conteudo, RBAC `aprovar-conteudo`, bloqueio visual de PUBLICADO com midia em QUARENTENA. Sem tela nova, sem ativar Produto HTTP.

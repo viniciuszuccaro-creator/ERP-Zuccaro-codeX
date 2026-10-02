@@ -13,7 +13,8 @@
 - Rotas: POST `/api/v1/produtos/:id/midias/:mediaId/aprovar` e `.../rejeitar-conteudo`; RBAC `Cadastros.produto.aprovar-conteudo`.
 - Continuacao: PUBLICADO do Produto bloqueado enquanto midia em QUARENTENA; `reconcileInfectedMidias` limpa orfaos INFECTED em lote (service, sem rota nova).
 - UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar (prepared HTTP); Produto HTTP permanece opt-in/desligado.
-- Proximo gate Onda 1: scanner real / Auth; nao ativar HTTP na 3080 neste checkpoint.
+- Bootstrap: Storage/scanner via env opt-in (`CLAMD_SOCKET_PATH` ausente = scanner desligado por padrao).
+- Proximo gate Onda 1: Auth + homologar Storage/clamd na VPS; nao ativar HTTP na 3080 neste checkpoint.
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.
