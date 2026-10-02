@@ -1,3 +1,8 @@
+## Comercial 360 / Onda 1 - extracao secao midia DAM V22 (2026-10-02)
+
+- Refatoracao: extrai `ProdutoDamMidiaSection` da secao DAM existente; `ProdutoRelationsDamSection` volta a <400 linhas. Sem mudanca de comportamento.
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b` (PR #202).
+
 ## Comercial 360 / Onda 1 - extracao secao canal V22 (2026-10-02)
 
 - Refatoracao permitida (arquivo >400 linhas): extrai `ProdutoCanalRascunhoSection` da secao DAM existente, preservando CRUD rascunho e data-actions. Sem funcionalidade nova, sem VPS.
