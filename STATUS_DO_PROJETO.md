@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - recibo idempotente de confirm (2026-10-02)
+
+- Continuacao: confirm de evento ja `published` devolve `receipt: already_published` sem reauditar; primeira transicao `receipt: confirmed`; FakeCatalogPublisher nao duplica eventId; meta `outboxConfirmIdempotent`.
+- Sem worker cron, sem canal real, sem VPS, sem migration.
+- Testes: outbox service+HTTP 16/16.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+- Proximo gap seguro in-repo: cobertura PostgreSQL claim/confirm/reprocess; publisher real e reconciliacao externa continuam bloqueados.
+
 ## Comercial 360 / Onda 15 - reprocess dead-letter com RBAC proprio (2026-10-02)
 
 - Continuacao: `POST /api/v1/produtos/outbox/:eventId/reprocess` move `dead_letter` → `pending` preservando eventId/schemaVersion; RBAC `Cadastros.produto.reprocessar` (nao basta `publicar`); auditoria before/after + reason sanitizado; client `outboxReprocess`; meta `outboxDeadLetterReprocess`; acao no catalogo owner.
