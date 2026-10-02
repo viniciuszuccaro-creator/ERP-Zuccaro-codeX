@@ -16,6 +16,10 @@
 
 ---
 
+## CODEX — contrato de executor compartilhado Pedido/estoque (2026-10-02)
+
+Tarefa: preparar as portas canônicas da Expedição (#200 `619bddd0`, base da branch isolada) para que adaptadores Pedido/estoque operem no mesmo executor de `ExpedicaoRepository.withTransaction`, sem transação aninhada. Causa: portas injetáveis eram chamadas dentro da transação, mas não recebiam o executor; um adaptador poderia gravar fora dela. Reuso: `DbQueryExecutor`, `ExpedicaoService`, portas já existentes e ensaio PGlite R11. Arquivos: `server/src/repositories/expedicaoTypes.ts`, `server/src/services/expedicaoService.ts`, `server/tests/runtime11-expedicao-pglite.test.ts`, `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`, `docs/HANDOFF_ATUAL.md`, este status. Multiempresa/RBAC/auditoria: sem alteração de autorização ou escopo; contexto `groupId∧empresaId` preservado. Teste injeta escrita sintética Pedido seguida de estoque e força falha; ambas e Romaneio/Entrega fazem rollback. PGlite 4/4; servidor completo 301 pass, 0 fail, 17 skip; typecheck/build servidor, audit baseline, lint raiz (1 warning prévio), build raiz e diff-check passaram. Typecheck raiz falhou em erros existentes fora do diff; a suíte raiz, que cobre SPA/VPS, não foi executada neste subgate exclusivamente de servidor. Pendência: adaptadores de efeito real continuam `reserved`, despacho/devolução vinculados seguem bloqueados, #178 ainda separado e 026 histórica bloqueada. Próximo: compor #178 com #199/#200 e migrations 025–036 em banco isolado, então implementar movimento/idempotência/auditoria por item antes de liberar efeitos. Nenhum merge, VPS ou importação.
+
 ## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
 
 | Campo | Valor |

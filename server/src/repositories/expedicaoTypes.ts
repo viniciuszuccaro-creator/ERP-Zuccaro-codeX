@@ -324,19 +324,19 @@ export interface ExpedicaoRepository {
 export type ExpedicaoPedidoSideEffectPort = {
   onSeparacaoConcluida(input: {
     groupId: string; empresaId: string; pedidoId: string | null; entregaId: string;
-  }): Promise<'reserved' | 'applied'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
   onDespacho(input: {
     groupId: string; empresaId: string; pedidoIds: string[]; romaneioId: string;
-  }): Promise<'reserved' | 'applied'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
 };
 
 export type ExpedicaoEstoquePort = {
   onDespacho(input: {
     groupId: string; empresaId: string; entregaIds: string[];
-  }): Promise<'reserved' | 'applied' | 'failed'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
   onDevolucao(input: {
     groupId: string; empresaId: string; entregaId: string; quantidade: string;
-  }): Promise<'reserved' | 'applied' | 'failed'>;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
 };
 
 export const reservedPedidoPort: ExpedicaoPedidoSideEffectPort = {

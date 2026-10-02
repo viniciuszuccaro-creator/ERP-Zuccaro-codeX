@@ -232,9 +232,24 @@ test('R11 PGlite: concorrencia de numero + auditoria transacional create', async
 test('R11 PGlite: falha estoque no despacho faz rollback (sem romaneio orfao)', async () => {
   const pg = await bootPglite();
   try {
+    await pg.exec('CREATE TABLE side_effect_probe (kind TEXT NOT NULL)');
     const runtime = fixture(pg, {
+      expedicaoPedidoPort: {
+        async onSeparacaoConcluida() { return 'reserved' as const; },
+        async onDespacho(_input: unknown, executor?: DbQueryExecutor) {
+          assert.ok(executor, 'Pedido must receive the active transaction executor');
+          await executor.query("INSERT INTO side_effect_probe(kind) VALUES ('pedido')");
+          return 'applied' as const;
+        },
+      },
       expedicaoEstoquePort: {
-        async onDespacho() { return 'failed' as const; },
+        async onDespacho(_input: unknown, executor?: DbQueryExecutor) {
+          assert.ok(executor, 'Estoque must receive the same transaction executor');
+          const seen = await executor.query<{ kind: string }>('SELECT kind FROM side_effect_probe');
+          assert.deepEqual(seen.rows.map((row) => row.kind), ['pedido']);
+          await executor.query("INSERT INTO side_effect_probe(kind) VALUES ('estoque')");
+          return 'failed' as const;
+        },
         async onDevolucao() { return 'reserved' as const; },
       },
     });
@@ -265,6 +280,8 @@ test('R11 PGlite: falha estoque no despacho faz rollback (sem romaneio orfao)', 
 
     const count = await pg.query<{ total: number }>('SELECT count(*)::int AS total FROM romaneios');
     assert.equal(count.rows[0]?.total, 0);
+    const effects = await pg.query<{ total: number }>('SELECT count(*)::int AS total FROM side_effect_probe');
+    assert.equal(effects.rows[0]?.total, 0, 'both port writes must rollback with the Romaneio');
   } finally {
     await pg.close();
   }

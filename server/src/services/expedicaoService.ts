@@ -314,7 +314,7 @@ export class ExpedicaoService {
         empresaId: scope.empresaId,
         pedidoId: before.pedido_id,
         entregaId,
-      });
+      }, executor);
 
       return { entrega: toSpaEntrega(entrega), separacao, reused: false, pedidoSideEffect };
     });
@@ -402,11 +402,11 @@ export class ExpedicaoService {
       const pedidoIds = selecionadas.map((s) => s.pedido_id).filter(Boolean) as string[];
       const pedidoSideEffect = data.despachar ? await this.pedidoPort.onDespacho({
         groupId: scope.groupId, empresaId: scope.empresaId, pedidoIds, romaneioId: romaneio.id,
-      }) : 'reserved';
+      }, executor) : 'reserved';
       const estoqueSideEffect = data.despachar ? await this.estoquePort.onDespacho({
         groupId: scope.groupId, empresaId: scope.empresaId,
         entregaIds: selecionadas.map((s) => s.id),
-      }) : 'reserved';
+      }, executor) : 'reserved';
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
       }
@@ -593,7 +593,7 @@ export class ExpedicaoService {
         empresaId: scope.empresaId,
         entregaId,
         quantidade: String(qty),
-      });
+      }, executor);
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
       }
