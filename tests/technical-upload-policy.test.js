@@ -71,4 +71,7 @@ test('Pedido, Corte e Dobra e Portal usam a mesma validação antes de confirmar
   assert.match(corte, /assertTechnicalAiProcessingAllowed\(\)/);
   const tabs = readFileSync(new URL('../src/components/comercial/pedido/PedidoTabsContainer.jsx', import.meta.url), 'utf8');
   assert.match(tabs, /<ProtectedSection module="Comercial" section="Pedidos" action="editar"/);
+  const site = readFileSync(new URL('../src/components/site/OrcamentoAutomaticoIA.jsx', import.meta.url), 'utf8');
+  assert.match(site, /await assertTechnicalUploadAllowed\(dados\.arquivo\);\s*assertTechnicalAiProcessingAllowed\(\);\s*const uploadResult/);
+  assert.match(site, /assertConfirmedTechnicalUploadUrl\(uploadResult\.file_url\)/);
 });
