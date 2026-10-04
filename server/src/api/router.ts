@@ -1320,7 +1320,7 @@ export function createApiRouter(deps: ApiDeps) {
       preparedEntities: ['Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'TabelaPreco', 'CondicaoPagamento', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio', 'SeparacaoConferencia'],
       httpEntities: ['Marca', 'UnidadeMedida', 'GrupoProduto', 'SetorAtividade', 'Produto', 'Cliente', 'ClienteEmpresa', 'ClienteLocal', 'Obra', 'CondicaoPagamento', 'TabelaPreco', 'Orcamento', 'Pedido', 'Entrega', 'Romaneio'],
       rlsModel: 'ENABLE+FORCE fail-closed; BFF uses privileged DB role; JWT policies planned with Auth',
-      note: 'Comercial: Pedido/Orcamento, simulacao e snapshots canonicos; Expedição: Entrega/Romaneio/Separacao HTTP opt-in, efeitos Pedido/estoque fail-closed ate homologacao operacional',
+      note: 'Pedido backend HTTP is active; Comercial: Pedido/Orcamento, simulacao e snapshots canonicos; Expedição: Entrega/Romaneio/Separacao HTTP opt-in, efeitos Pedido/estoque fail-closed ate homologacao operacional',
       authSession: {
         passwordLoginPath: '/api/v1/auth/session',
         browserLogin: deps.config.authMode === 'supabase_user',

@@ -676,6 +676,10 @@ export class ExpedicaoService {
         if (before.pedido_id && next === 'SAIU_ENTREGA') {
           throw new AppError(409, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE', 'Linked Pedido requires stock contract');
         }
+        if (before.pedido_id && next === 'CANCELADA'
+          && (!this.estoquePort.onCancelamento || !this.pedidoPort.onCancelamento)) {
+          throw new AppError(409, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE', 'Linked Pedido requires stock compensation');
+        }
         const updated = await this.repo.changeEntregaStatus(scope, id, next, ctx.actorId!,
           String(body.motivo || ''), String(body.idempotency_key || '') || undefined, executor);
         if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
