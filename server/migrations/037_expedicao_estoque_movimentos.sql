@@ -1,6 +1,7 @@
 -- Ledger operacional da Expedição. Os saldos de abertura não são inventados pela migration.
 -- Ativar a porta somente depois de reconciliar cada saldo com a fonte de estoque aprovada.
 CREATE UNIQUE INDEX idx_entrega_itens_scope_identity ON entrega_itens(id, group_id, empresa_id);
+CREATE UNIQUE INDEX idx_entrega_itens_delivery_scope_identity ON entrega_itens(id, entrega_id, group_id, empresa_id);
 CREATE TABLE expedicao_estoque_saldos (
   group_id UUID NOT NULL REFERENCES groups(id),
   empresa_id UUID NOT NULL REFERENCES empresas(id),
@@ -27,6 +28,9 @@ CREATE TABLE expedicao_estoque_movimentos (
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
   FOREIGN KEY (entrega_id, group_id, empresa_id) REFERENCES entregas(id, group_id, empresa_id),
   FOREIGN KEY (entrega_item_id, group_id, empresa_id) REFERENCES entrega_itens(id, group_id, empresa_id),
+  FOREIGN KEY (entrega_item_id, entrega_id, group_id, empresa_id)
+    REFERENCES entrega_itens(id, entrega_id, group_id, empresa_id),
+  FOREIGN KEY (romaneio_id, group_id, empresa_id) REFERENCES romaneios(id, group_id, empresa_id),
   UNIQUE (group_id, empresa_id, entrega_item_id, tipo)
 );
 CREATE INDEX idx_expedicao_estoque_movimentos_entrega
@@ -41,17 +45,18 @@ BEGIN
     RAISE EXCEPTION 'TENANT_FK_MISMATCH: estoque outside group';
   END IF;
   IF TG_TABLE_NAME <> 'expedicao_pedido_eventos' THEN
-    IF NOT EXISTS (SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id) THEN
-      RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside group';
+    IF NOT EXISTS (SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id
+      AND (p.empresa_id IS NULL OR p.empresa_id=NEW.empresa_id)) THEN
+      RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside company';
     END IF;
   END IF;
   RETURN NEW;
 END; $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_expedicao_estoque_saldos_tenant
-  BEFORE INSERT OR UPDATE OF group_id, empresa_id ON expedicao_estoque_saldos
+  BEFORE INSERT OR UPDATE OF group_id, empresa_id, produto_id ON expedicao_estoque_saldos
   FOR EACH ROW EXECUTE FUNCTION assert_expedicao_estoque_tenant();
 CREATE TRIGGER trg_expedicao_estoque_movimentos_tenant
-  BEFORE INSERT OR UPDATE OF group_id, empresa_id ON expedicao_estoque_movimentos
+  BEFORE INSERT OR UPDATE OF group_id, empresa_id, produto_id ON expedicao_estoque_movimentos
   FOR EACH ROW EXECUTE FUNCTION assert_expedicao_estoque_tenant();
 
 -- Evento de negócio Pedido sem inventar estado de Pedido inexistente no contrato canônico.
@@ -66,6 +71,8 @@ CREATE TABLE expedicao_pedido_eventos (
   actor_id UUID NOT NULL REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
   FOREIGN KEY (pedido_id, group_id, empresa_id) REFERENCES pedidos(id, group_id, empresa_id),
+  FOREIGN KEY (entrega_id, group_id, empresa_id) REFERENCES entregas(id, group_id, empresa_id),
+  FOREIGN KEY (romaneio_id, group_id, empresa_id) REFERENCES romaneios(id, group_id, empresa_id),
   UNIQUE (group_id, empresa_id, pedido_id, entrega_id, tipo)
 );
 CREATE INDEX idx_expedicao_pedido_eventos_pedido ON expedicao_pedido_eventos(group_id, empresa_id, pedido_id);

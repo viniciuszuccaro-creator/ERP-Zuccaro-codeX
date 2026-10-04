@@ -147,6 +147,17 @@ export class PostgresExpedicaoRepository implements ExpedicaoRepository {
     return mapEntrega(result.rows[0], await this.loadItens(executor, scope, id));
   }
 
+  async getEntregaForUpdate(scope: ExpedicaoScope, id: string, executor?: DbQueryExecutor): Promise<Entrega | null> {
+    return this.run(executor, async (query) => {
+      const result = await query.query<Row>(
+        'SELECT * FROM entregas WHERE id=$1 AND group_id=$2 AND empresa_id=$3 FOR UPDATE',
+        [id, scope.groupId, scope.empresaId],
+      );
+      if (!result.rows[0]) return null;
+      return mapEntrega(result.rows[0], await this.loadItens(query, scope, id));
+    });
+  }
+
   async getEntregaByPedido(scope: ExpedicaoScope, pedidoId: string, executor: DbQueryExecutor = this.db): Promise<Entrega | null> {
     const result = await executor.query<Row>(
       "SELECT * FROM entregas WHERE pedido_id=$1 AND group_id=$2 AND empresa_id=$3 AND status <> 'CANCELADA' ORDER BY created_at DESC LIMIT 1",
@@ -241,7 +252,7 @@ export class PostgresExpedicaoRepository implements ExpedicaoRepository {
 
   async updateEntregaRow(scope: ExpedicaoScope, id: string, patch: Partial<Entrega> & { itens?: EntregaItem[] }, actorId: string, executor?: DbQueryExecutor): Promise<Entrega | null> {
     return this.run(executor, async (query) => {
-      const current = await this.getEntrega(scope, id, query);
+      const current = await this.getEntregaForUpdate(scope, id, query);
       if (!current) return null;
       await query.query(
         `UPDATE entregas SET
@@ -305,7 +316,7 @@ export class PostgresExpedicaoRepository implements ExpedicaoRepository {
     executor?: DbQueryExecutor,
   ): Promise<Entrega | null> {
     return this.run(executor, async (query) => {
-      const current = await this.getEntrega(scope, id, query);
+      const current = await this.getEntregaForUpdate(scope, id, query);
       if (!current) return null;
       if (idempotencyKey) {
         const hit = await query.query<{ id: string }>(

@@ -100,18 +100,24 @@ async function movement(query: DbQueryExecutor, scope: Scope, entregaId: string,
     'SELECT quantidade::text FROM expedicao_estoque_movimentos WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo=$4',
     [scope.groupId, scope.empresaId, item.id, kind],
   );
+  if (kind !== 'DESPACHO') {
+    const movements = await query.query<{ tipo: string; quantidade: string }>(
+      `SELECT tipo,quantidade::text FROM expedicao_estoque_movimentos
+       WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3
+       AND tipo IN ('DESPACHO','DEVOLUCAO','CANCELAMENTO')`,
+      [scope.groupId, scope.empresaId, item.id],
+    );
+    const dispatched = micros(movements.rows.find((row) => row.tipo === 'DESPACHO')?.quantidade || '0');
+    const credited = movements.rows.filter((row) => row.tipo !== 'DESPACHO')
+      .reduce((sum, row) => sum + micros(row.quantidade), 0n);
+    const previous = micros(prior.rows[0]?.quantidade || '0');
+    if (dispatched === 0n || credited - previous + micros(quantity) > dispatched)
+      throw new AppError(409, 'ESTOQUE_COMPENSACAO_INVALIDA', 'Total credits exceed dispatched quantity');
+  }
   if (prior.rows[0]) {
     if (micros(prior.rows[0].quantidade) !== micros(quantity))
       throw new AppError(409, 'ESTOQUE_RETRY_CONFLICT', 'Movement replay differs from stored quantity');
     return;
-  }
-  if (kind !== 'DESPACHO') {
-    const outbound = await query.query<{ quantidade: string }>(
-      'SELECT quantidade::text FROM expedicao_estoque_movimentos WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo=$4',
-      [scope.groupId, scope.empresaId, item.id, 'DESPACHO'],
-    );
-    if (!outbound.rows[0] || micros(quantity) > micros(outbound.rows[0].quantidade))
-      throw new AppError(409, 'ESTOQUE_COMPENSACAO_INVALIDA', 'Return exceeds dispatched quantity');
   }
   const delta = kind === 'DESPACHO' ? -1 : 1;
   const updated = await query.query<{ quantidade: string }>(
@@ -164,13 +170,16 @@ export class PostgresExpedicaoEstoquePort implements ExpedicaoEstoquePort {
     for (const item of items) {
       const movements = await query.query<{ tipo: string; quantidade: string }>(
         `SELECT tipo,quantidade::text FROM expedicao_estoque_movimentos
-         WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo IN ('DESPACHO','DEVOLUCAO')`,
+         WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo IN ('DESPACHO','DEVOLUCAO','CANCELAMENTO')`,
         [input.groupId, input.empresaId, item.id],
       );
       const outbound = micros(movements.rows.find((row) => row.tipo === 'DESPACHO')?.quantidade || '0');
       const returned = micros(movements.rows.find((row) => row.tipo === 'DEVOLUCAO')?.quantidade || '0');
-      if (returned > outbound) throw new AppError(409, 'ESTOQUE_COMPENSACAO_INVALIDA', 'Return exceeds dispatched quantity');
-      if (outbound > returned) await movement(query, input, input.entregaId, item, 'CANCELAMENTO', decimal(outbound - returned), delivery.romaneio_id);
+      const cancelled = micros(movements.rows.find((row) => row.tipo === 'CANCELAMENTO')?.quantidade || '0');
+      if (returned + cancelled > outbound || (cancelled > 0n && returned + cancelled !== outbound))
+        throw new AppError(409, 'ESTOQUE_COMPENSACAO_INVALIDA', 'Compensation differs from dispatched quantity');
+      if (cancelled === 0n && outbound > returned)
+        await movement(query, input, input.entregaId, item, 'CANCELAMENTO', decimal(outbound - returned), delivery.romaneio_id);
     }
     return 'applied' as const;
   }

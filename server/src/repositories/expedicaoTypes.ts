@@ -301,6 +301,7 @@ export interface ExpedicaoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   createEntrega(scope: ExpedicaoScope, data: EntregaCreate, actorId: string, executor?: DbQueryExecutor): Promise<Entrega>;
   getEntrega(scope: ExpedicaoScope, id: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
+  getEntregaForUpdate(scope: ExpedicaoScope, id: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
   getEntregaByPedido(scope: ExpedicaoScope, pedidoId: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
   getEntregaByIdempotency(scope: ExpedicaoScope, key: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
   listEntregas(scope: ExpedicaoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: EntregaListFilters): Promise<EntregaPage>;

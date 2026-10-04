@@ -251,7 +251,7 @@ export class ExpedicaoService {
     const data = parsed.data as SeparacaoConcluir;
 
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, entregaId, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (data.idempotency_key) {
         const existingSep = await this.repo.getSeparacaoByEntrega(scope, entregaId, 'conferencia', executor);
@@ -270,6 +270,18 @@ export class ExpedicaoService {
         if (item.unidade_sigla && before.itens.length) {
           // unidade check against matching item when present
         }
+      }
+      if (before.pedido_id) {
+        if (data.itens.length !== before.itens.length || before.itens.length === 0) {
+          throw new AppError(422, 'SEPARACAO_ITENS_INCOMPLETOS', 'All linked Pedido items must be separated');
+        }
+        before.itens.forEach((row, index) => {
+          const incoming = data.itens[index];
+          if (!row.produto_id || (incoming.produto_id && incoming.produto_id !== row.produto_id)
+            || qtyMicros(incoming.quantidade_pedida) !== qtyMicros(row.quantidade_pedida)) {
+            throw new AppError(422, 'SEPARACAO_ITEM_DIVERGENTE', 'Separation differs from linked Pedido item');
+          }
+        });
       }
 
       const divergencias = data.itens.filter((item) => Number(item.quantidade_separada) !== Number(item.quantidade_pedida));
@@ -340,10 +352,17 @@ export class ExpedicaoService {
         return { romaneio: existing, entregas: [], reused: true, action: 'retry' as const, pedidoSideEffect: 'reserved' as const, estoqueSideEffect: 'reserved' as const };
       }
 
+      // Lock in a stable order so dispatch, cancellation and concurrent manifests
+      // serialize before any state check or stock movement.
+      const locked = new Map<string, Entrega>();
+      for (const id of [...new Set(data.entregas_ids)].sort()) {
+        const row = await this.repo.getEntregaForUpdate(scope, id, executor);
+        if (!row) throw new AppError(404, 'ENTREGA_NOT_FOUND', `Entrega ${id} not found`);
+        locked.set(id, row);
+      }
       const selecionadas: Entrega[] = [];
       for (const id of data.entregas_ids) {
-        const row = await this.repo.getEntrega(scope, id, executor);
-        if (!row) throw new AppError(404, 'ENTREGA_NOT_FOUND', `Entrega ${id} not found`);
+        const row = locked.get(id)!;
         if (row.romaneio_id) throw new AppError(409, 'ENTREGA_JA_EM_ROMANEIO', 'Entrega already linked to romaneio');
         if (row.status !== 'PRONTO_EXPEDIR') {
           throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega must be PRONTO_EXPEDIR');
@@ -438,7 +457,7 @@ export class ExpedicaoService {
     this.assertId(entregaId, 'entregaId');
 
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, entregaId, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
 
       if (data.idempotency_key) {
@@ -535,7 +554,7 @@ export class ExpedicaoService {
     const data = parsed.data as DevolucaoInput;
 
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, entregaId, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (data.idempotency_key) {
         const hist = await this.repo.historyEntrega(scope, entregaId, executor);
@@ -667,7 +686,7 @@ export class ExpedicaoService {
       }
       const scope = await this.prepare(ctx, rbacForStatus(next), 'entrega');
       return this.repo.withTransaction(async (executor) => {
-        const before = await this.repo.getEntrega(scope, id, executor);
+        const before = await this.repo.getEntregaForUpdate(scope, id, executor);
         if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
         if (before.status === next) return toSpaEntrega(before);
         if (!ALLOWED_TRANSITIONS[before.status].includes(next)) {
@@ -701,7 +720,7 @@ export class ExpedicaoService {
     }
     const scope = await this.prepare(ctx, 'editar', 'entrega');
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, id, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, id, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (['ENTREGUE', 'DEVOLVIDA', 'CANCELADA'].includes(before.status)) {
         throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega finalizada nao pode ser editada');
