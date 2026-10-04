@@ -138,7 +138,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       await db.withTransaction((tx) => stock.onCancelamento({ ...scope, entregaId: first.entregaId }, tx));
       assert.equal(await qty(), 10);
       await db.query(`UPDATE entregas SET status='DEVOLVIDA',ativo=true WHERE id=$1`, [first.entregaId]);
-      await db.query(`UPDATE entrega_itens SET quantidade_devolvida=2 WHERE entrega_id=$1`, [first.entregaId]);
+      await db.query(`UPDATE entrega_itens SET quantidade_entregue=2,quantidade_devolvida=2 WHERE entrega_id=$1`, [first.entregaId]);
       await assert.rejects(() => db.withTransaction((tx) => stock.onDevolucao({
         ...scope, entregaId: first.entregaId, quantidade: '2.000000',
       }, tx)), (error: unknown) => (error as { code?: string }).code === 'ESTOQUE_COMPENSACAO_INVALIDA');
