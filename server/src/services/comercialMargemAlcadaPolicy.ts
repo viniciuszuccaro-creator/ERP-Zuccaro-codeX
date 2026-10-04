@@ -168,6 +168,10 @@ export async function assertMargemDentroDaAlcadaOuAprovar(options: {
   items: MargemAlcadaItem[];
   costs: ComercialCostPort | null | undefined;
   canAprovar: boolean;
+  /** Ator da request; obrigatório quando há custo abaixo da mínima. */
+  actorId?: string | null;
+  /** Criador do documento; em create use o próprio actor (bloqueia autoaprovação). */
+  criadorActorId?: string | null;
   entityLabel?: string;
   defaultMinimaBps?: number;
 }): Promise<MargemAlcadaDecision | null> {
@@ -180,11 +184,27 @@ export async function assertMargemDentroDaAlcadaOuAprovar(options: {
     defaultMinimaBps: options.defaultMinimaBps,
   });
   if (!anyAbaixo) return serializeMargemDecision(evaluated, false);
-  if (options.canAprovar) return serializeMargemDecision(evaluated, true);
-  throw new AppError(
-    403,
-    'MARGEM_ALCADA_DENIED',
-    `${options.entityLabel || 'Documento'} com margem abaixo da mínima exige permissão de aprovar`,
-    serializeMargemDecision(evaluated, false),
-  );
+
+  const label = options.entityLabel || 'Documento';
+  if (!options.canAprovar) {
+    throw new AppError(
+      403,
+      'MARGEM_ALCADA_DENIED',
+      `${label} com margem abaixo da mínima exige permissão de aprovar`,
+      serializeMargemDecision(evaluated, false),
+    );
+  }
+
+  const actor = String(options.actorId ?? '').trim();
+  const criador = options.criadorActorId == null ? '' : String(options.criadorActorId).trim();
+  if (!actor || !criador || criador === actor) {
+    throw new AppError(
+      403,
+      'MARGEM_ALCADA_DENIED',
+      `${label} com margem abaixo da mínima exige outro aprovador`,
+      serializeMargemDecision(evaluated, false),
+    );
+  }
+
+  return serializeMargemDecision(evaluated, true);
 }

@@ -6,6 +6,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import type { ComercialAlcadaConfigPort } from '../src/services/comercialCondicaoAvistaPolicy.ts';
+import type { ComercialCostPort } from '../src/services/comercialMargemAlcadaPolicy.ts';
 
 const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const empresaId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
@@ -33,22 +34,40 @@ const payloadOrc = {
   itens: [itemComDesconto],
 };
 
+const payloadPed = {
+  cliente_empresa_id: clienteId,
+  condicao_pagamento_id: condicaoId,
+  tipo_operacao: 'RETIRADA',
+  data_entrega_solicitada: '2027-02-01T00:00:00.000Z',
+  observacoes: 'Avista Pedido HTTP',
+  itens: [itemComDesconto],
+};
+
 function fixture(options: {
   parcelas?: Array<{ dias: number; ativo?: boolean }>;
   alcadaConfig?: ComercialAlcadaConfigPort | null;
+  costs?: ComercialCostPort | null;
+  /** Quando true, criador também tem `aprovar` (teste de segregação margem). */
+  creatorCanAprovar?: boolean;
 } = {}) {
   const parcelas = options.parcelas ?? [{ dias: 0, ativo: true }];
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
   const tenant = new InMemoryTenantGuard();
   tenant.link(empresaId, groupId);
   const rbac = new InMemoryRbacGuard();
+  const orcPerms = options.creatorCanAprovar
+    ? ['visualizar', 'criar', 'editar', 'aprovar']
+    : ['visualizar', 'criar', 'editar'];
+  const pedPerms = options.creatorCanAprovar
+    ? ['visualizar', 'criar', 'editar', 'aprovar', 'converter-pedido']
+    : ['visualizar', 'criar', 'editar', 'converter-pedido'];
   rbac.link({
     actorId: creatorId,
     groupId,
     permissions: {
       Comercial: {
-        orcamento: ['visualizar', 'criar', 'editar'],
-        pedido: ['visualizar', 'criar', 'editar'],
+        orcamento: orcPerms,
+        pedido: pedPerms,
       },
     },
   });
@@ -59,6 +78,7 @@ function fixture(options: {
     tenantGuard: tenant,
     rbacGuard: rbac,
     alcadaConfig: options.alcadaConfig === undefined ? null : options.alcadaConfig,
+    costPort: options.costs === undefined ? null : options.costs,
   });
   const stubRefs = (service: any) => {
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
@@ -172,4 +192,116 @@ test('HTTP: à vista + regra + desconto > subtotal → 422 (não 500)', async ()
   });
   assert.equal(listed.status, 200);
   assert.equal(listed.body.meta.total, 0);
+});
+
+test('HTTP: à vista libera desconto mas NÃO isenta margem abaixo da mínima', async () => {
+  // Preço 100 − desconto 10 = líquido 90; custo 95 → abaixo da mínima.
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+    costs: {
+      getUnitCost: async () => ({ custo_unitario: '95', margem_minima_bps: 0 }),
+    },
+    creatorCanAprovar: true,
+  });
+  const denied = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadOrc),
+  });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body.error.code, 'MARGEM_ALCADA_DENIED');
+  assert.match(String(denied.body.error.message), /outro aprovador/i);
+});
+
+test('HTTP Pedido: à vista sem config → 403 (fail-closed)', async () => {
+  const { app } = fixture({ parcelas: [{ dias: 0 }], alcadaConfig: null });
+  const denied = await request(app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body.error.code, 'DESCONTO_ALCADA_DENIED');
+});
+
+test('HTTP Pedido: à vista + regra explícita → 201 sem aprovar', async () => {
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const ok = await request(app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(ok.status, 201);
+  assert.equal(ok.body.data.total, '90.000000');
+});
+
+test('HTTP Pedido: a prazo + regra → 403; à vista + margem abaixo → MARGEM', async () => {
+  const prazo = fixture({
+    parcelas: [{ dias: 30 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const deniedPrazo = await request(prazo.app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(deniedPrazo.status, 403);
+  assert.equal(deniedPrazo.body.error.code, 'DESCONTO_ALCADA_DENIED');
+
+  const margem = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+    costs: {
+      getUnitCost: async () => ({ custo_unitario: '95', margem_minima_bps: 0 }),
+    },
+    creatorCanAprovar: true,
+  });
+  const deniedMargem = await request(margem.app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(deniedMargem.status, 403);
+  assert.equal(deniedMargem.body.error.code, 'MARGEM_ALCADA_DENIED');
+  assert.match(String(deniedMargem.body.error.message), /outro aprovador/i);
+});
+
+test('HTTP convert: à vista + regra → Pedido 201 pelo próprio criador (sem aprovar)', async () => {
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const created = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadOrc),
+  });
+  assert.equal(created.status, 201);
+  const orcId = created.body.data.id as string;
+
+  const converted = await request(app, `/api/v1/orcamentos/${orcId}/converter-pedido`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({
+      tipo_operacao: 'RETIRADA',
+      data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
+    }),
+  });
+  assert.equal(converted.status, 201);
+  assert.equal(converted.body.data.orcamento_id, orcId);
+  assert.equal(converted.body.data.total, '90.000000');
 });

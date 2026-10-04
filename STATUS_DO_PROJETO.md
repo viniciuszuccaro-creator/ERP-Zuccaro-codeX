@@ -1,3 +1,12 @@
+## Revisão #49 + segregação margem (2026-10-04)
+
+- Branch `cursor/comercial360-onda2-avista-revisao-392b`: merge de #49 (`ef72c4bd`) + #205 segrega margem (`4ed9a83f`).
+- À vista libera **somente** alçada de desconto (`liberadoPorAvista`); margem abaixo da mínima **continua** exigindo `aprovar` + outro aprovador (não é isenta por à vista) — coberto por teste HTTP cruzado (Orçamento + Pedido + convert).
+- Fail-closed: sem `alcadaConfig` / sem `avistaLiberaDescontoSemAprovar === true` → não libera desconto.
+- CostPort null no runtime padrão (não inventa custo). Sem tip-port / VPS / UI tip.
+- Testes focados: `comercial-condicao-avista*` + `comercial-margem-alcada*` + `comercial-desconto-alcada*` — **41/41 PASS**.
+- CI PR #206: frontend+backend **SUCCESS** em `510fbfba` e `dcd1fdd5`; convert à vista pelo criador coberto no follow-up.
+
 ## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:16Z)
 
 | Etapa | Estado |
@@ -16,6 +25,14 @@
 - Mantém segregação #46 (outro aprovador; à vista **dispensa** alçada, não autoaprova). Valida `ORCAMENTO_DESCONTO_INVALIDO` antes da isenção.
 - Margem CostPort (#47) preservada. Sem UI omnicanal.
 - Testes: `comercial-condicao-avista*.ts` + desconto/margem — **36/36 PASS**.
+
+## Revisão Comercial #47 — segregação margem (2026-10-04)
+
+- Revisao Cursor no SHA disponível `a261790d` (#47 OPEN; #202/#203 ainda não mescladas → sem SHA integrado main).
+- Achado: alçada de margem permitia autoaprovação no create (ator com `aprovar` criava abaixo do custo). Desconto já segregava outro aprovador.
+- Correção na branch `cursor/comercial360-onda2-margem-segrega-392b`: `assertMargemDentroDaAlcadaOuAprovar` exige `actorId` ≠ `criadorActorId` quando abaixo da mínima; Orçamento/Pedido create/update/convert passam o criador; HTTP cobre autoaprovação bloqueada.
+- CostPort continua null no runtime padrão (não inventa custo). Sem VPS, tip-port ou UI tip.
+- Testes: margem 11/11; desconto regressão ok.
 
 ## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
 
