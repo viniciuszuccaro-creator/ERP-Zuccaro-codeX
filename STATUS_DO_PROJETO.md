@@ -1,3 +1,11 @@
+## Revisão Comercial #47 — segregação margem (2026-10-04)
+
+- Revisao Cursor no SHA disponível `a261790d` (#47 OPEN; #202/#203 ainda não mescladas → sem SHA integrado main).
+- Achado: alçada de margem permitia autoaprovação no create (ator com `aprovar` criava abaixo do custo). Desconto já segregava outro aprovador.
+- Correção na branch `cursor/comercial360-onda2-margem-segrega-392b`: `assertMargemDentroDaAlcadaOuAprovar` exige `actorId` ≠ `criadorActorId` quando abaixo da mínima; Orçamento/Pedido create/update/convert passam o criador; HTTP cobre autoaprovação bloqueada.
+- CostPort continua null no runtime padrão (não inventa custo). Sem VPS, tip-port ou UI tip.
+- Testes: margem 11/11; desconto regressão ok.
+
 ## #47 STATUS REAL — alçada margem (CostPort) (2026-09-26T20:40Z)
 
 | Etapa | Estado |
