@@ -23,6 +23,8 @@ A API futura compõe sob demanda, com paginação por bloco e timeout parcial co
 - fiscal, documentos e pós-venda conforme permissões específicas;
 - até 20 produtos mais comprados calculados por agregação server-side, nunca pela primeira página.
 
+O bloco `produtosMaisComprados` agrega somente itens de Pedidos ativos e `FINALIZADO` do `ClienteEmpresa` no contexto atual. Agrupa por produto e unidade, preserva quantidade decimal e conta Pedidos distintos; não soma unidades diferentes nem usa a página de Pedidos exibida. A leitura exige a permissão canônica `Comercial.pedido.visualizar`. CRM e demais blocos sem contrato canônico continuam indisponíveis conforme seus próprios gates.
+
 Falha de um bloco não amplia acesso nem inventa zero; retorna indisponibilidade identificada pelo request ID. Cache inclui ator, Grupo, Empresa, cliente e permissões relevantes.
 
 ## CRM e estados

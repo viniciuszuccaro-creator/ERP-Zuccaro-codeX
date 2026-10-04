@@ -269,6 +269,12 @@ export class PedidoService {
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
   }
 
+  async topProducts(ctx: RequestContext, clienteEmpresaId: string) {
+    const scope = await this.prepare(ctx, 'visualizar');
+    this.assertId(clienteEmpresaId, 'clienteEmpresaId');
+    return this.repo.topProducts(scope, clienteEmpresaId, 20);
+  }
+
   async update(ctx: RequestContext, id: string, payload: unknown) {
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
