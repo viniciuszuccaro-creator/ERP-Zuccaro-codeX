@@ -368,7 +368,7 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
     confirmUpload: async (request) => ({
       storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
       sizeBytes: request.sizeBytes, sha256: badChecksum ? 'c'.repeat(64) : request.sha256,
-      version: 1,
+      version: request.version ?? 1,
     }),
     createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
   };
