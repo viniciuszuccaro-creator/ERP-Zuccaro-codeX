@@ -1,3 +1,11 @@
+## Comercial 360 / Onda 15 - PG concorrencia + consumidor prepared (2026-10-04)
+
+- Continuacao #203: E2E PG com claim concorrente (SKIP LOCKED), lease/executor antigo, retry→dead-letter, isolamento empresa/grupo e rollback de append.
+- Consumidor prepared (`produtoOutboxConsumer`): modes fake|disabled|external; external nunca simula sucesso (canal/credenciais/gate bloqueado).
+- Meta `outboxConsumerPrepared`; env documentado em `server/.env.example`.
+- Sem publisher real, VPS, Auth, tip-port.
+- Testes: outbox unit 14/14; PG outbox 4/4.
+
 ## Comercial 360 / Onda 15 - projeção allowlisted no publisher fake (2026-10-02)
 
 - Continuacao: `buildProdutoCatalogProjection` + `assertSafeCatalogProjection` (sem custo/margem/ncm/URL assinada/tenant); emit nos repos in-memory/PG; FakeCatalogPublisher valida e falha fechado em campo proibido; meta `outboxCatalogProjection`.

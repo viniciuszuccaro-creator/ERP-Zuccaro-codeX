@@ -1285,6 +1285,7 @@ export function createApiRouter(deps: ApiDeps) {
         outboxClaimLease: true,
         outboxFakeBatch: true,
         outboxCatalogProjection: true,
+        outboxConsumerPrepared: true,
         outboxDeadLetterReprocess: true,
         outboxConfirmIdempotent: true,
         outboxListRead: true,

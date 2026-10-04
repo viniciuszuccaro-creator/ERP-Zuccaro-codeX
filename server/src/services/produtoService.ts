@@ -37,11 +37,14 @@ import {
   failProdutoPublicationEvent,
   getProdutoOutboxMetrics,
   listProdutoPublicationEvents,
-  processProdutoOutboxBatch,
   reprocessProdutoPublicationEvent,
   type CatalogPublisherPort,
-  FakeCatalogPublisher,
 } from './produtoOutboxClaim.js';
+import {
+  createCatalogPublisher,
+  resolveOutboxConsumerConfig,
+  runProdutoOutboxConsumer,
+} from './produtoOutboxConsumer.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -78,7 +81,7 @@ export class ProdutoService {
     private readonly rbacGuard: RbacGuard,
     private readonly storage: StoragePort = new NotImplementedStorage(),
     private readonly scanner?: MalwareScanPort,
-    private readonly catalogPublisher: CatalogPublisherPort = new FakeCatalogPublisher('ok'),
+    private readonly catalogPublisher: CatalogPublisherPort = createCatalogPublisher(resolveOutboxConsumerConfig()),
   ) {}
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
@@ -325,9 +328,9 @@ export class ProdutoService {
     }, ctx, eventId, reason);
   }
 
-  /** Lote controlado claim→publisher fake→confirm/fail. Sem rede/canal real. */
+  /** Lote controlado via consumidor prepared (fake/disabled/external gate). Sem sucesso falso externo. */
   async processOutboxBatch(ctx: RequestContext, options: { limit?: number; leaseMs?: number } = {}) {
-    return processProdutoOutboxBatch({
+    return runProdutoOutboxConsumer({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard, rbacGuard: this.rbacGuard,
       publisher: this.catalogPublisher,
     }, ctx, options);

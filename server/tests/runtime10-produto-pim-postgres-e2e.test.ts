@@ -425,6 +425,121 @@ test('R10 PostgreSQL real: outbox claim/confirm/fail/reprocess e recibo idempote
   }
 });
 
+test('R10 PostgreSQL real: outbox concorrencia, retry, isolamento e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresProdutoRepository(db);
+  const produtoA = randomUUID();
+  const produtoB = randomUUID();
+  const scopeA = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA };
+  const scopeA2 = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA2 };
+  const scopeB = { groupId: SEED_IDS.groupB, empresaId: SEED_IDS.empresaB };
+  const ids: string[] = [];
+  let originalError: unknown;
+  try {
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 OUTBOX CONCORRENCIA A')",
+      [produtoA, scopeA.groupId, scopeA.empresaId, `R10A-${produtoA}`],
+    );
+    await db.query(
+      "INSERT INTO produtos (id,group_id,empresa_id,codigo,descricao) VALUES ($1,$2,$3,$4,'R10 OUTBOX CONCORRENCIA B')",
+      [produtoB, scopeB.groupId, scopeB.empresaId, `R10B-${produtoB}`],
+    );
+    const rowA = await repo.getById(scopeA, produtoA);
+    const rowB = await repo.getById(scopeB, produtoB);
+    assert.ok(rowA && rowB);
+
+    // Rollback: append na mesma transacao nao grava se a tx abortar
+    const rollbackReq = randomUUID();
+    await assert.rejects(db.withTransaction(async (tx) => {
+      await repo.appendPublicationEvent(scopeA, rowA, rollbackReq, tx);
+      throw new Error('R10_OUTBOX_CLAIM_ROLLBACK');
+    }), /R10_OUTBOX_CLAIM_ROLLBACK/);
+    const rolled = await db.query<{ total: number }>(
+      'SELECT count(*)::int AS total FROM integration_events WHERE group_id=$1 AND empresa_id=$2 AND correlation_id=$3',
+      [scopeA.groupId, scopeA.empresaId, rollbackReq],
+    );
+    assert.equal(rolled.rows[0]?.total, 0);
+
+    const concurrentReq = randomUUID();
+    await repo.appendPublicationEvent(scopeA, rowA, concurrentReq);
+    ids.push(concurrentReq);
+    const [claim1, claim2] = await Promise.all([
+      repo.claimPublicationEvents(scopeA, { limit: 1, leaseMs: 30_000 }),
+      repo.claimPublicationEvents(scopeA, { limit: 1, leaseMs: 30_000 }),
+    ]);
+    assert.equal(claim1.length + claim2.length, 1, 'SKIP LOCKED garante um unico claim concorrente');
+    const winner = claim1[0] ?? claim2[0];
+    assert.ok(winner);
+    const winnerToken = buildOutboxLeaseToken(winner.id, winner.lockedUntil!);
+    // Executor antigo (token stale) nao confirma
+    assert.equal(await repo.confirmPublicationEvent(scopeA, winner.id, 'executor-antigo'), null);
+    // Isolamento empresarial e de grupo
+    assert.deepEqual(await repo.claimPublicationEvents(scopeA2, { limit: 5, leaseMs: 30_000 }), []);
+    assert.deepEqual(await repo.claimPublicationEvents(scopeB, { limit: 5, leaseMs: 30_000 }), []);
+    assert.equal(await repo.confirmPublicationEvent(scopeA2, winner.id, winnerToken), null);
+    assert.equal(await repo.confirmPublicationEvent(scopeB, winner.id, winnerToken), null);
+
+    // Retry antes de dead-letter
+    await db.query(
+      `UPDATE integration_events SET max_attempts=3, attempts=1
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+      [winner.id, scopeA.groupId, scopeA.empresaId],
+    );
+    const retrying = await repo.failPublicationEvent(scopeA, winner.id, winnerToken, 'pg_retry_1');
+    assert.equal(retrying?.status, 'retry');
+    assert.ok(retrying?.nextAttemptAt);
+    await db.query(
+      `UPDATE integration_events SET next_attempt_at=timezone('utc', now()) - interval '1 second'
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+      [winner.id, scopeA.groupId, scopeA.empresaId],
+    );
+    const afterRetry = await repo.claimPublicationEvents(scopeA, { limit: 1, leaseMs: 30_000 });
+    assert.equal(afterRetry.length, 1);
+    assert.equal(afterRetry[0].id, winner.id);
+    const retryToken = buildOutboxLeaseToken(afterRetry[0].id, afterRetry[0].lockedUntil!);
+    await db.query(
+      `UPDATE integration_events SET max_attempts=2, attempts=2
+       WHERE id=$1 AND group_id=$2 AND empresa_id=$3`,
+      [winner.id, scopeA.groupId, scopeA.empresaId],
+    );
+    const dead = await repo.failPublicationEvent(scopeA, winner.id, retryToken, 'pg_dead');
+    assert.equal(dead?.status, 'dead_letter');
+
+    // Evento do grupo B nao vaza para A
+    const reqB = randomUUID();
+    await repo.appendPublicationEvent(scopeB, rowB, reqB);
+    ids.push(reqB);
+    assert.deepEqual(await repo.claimPublicationEvents(scopeA, { limit: 5, leaseMs: 30_000 }), []);
+    const claimedB = await repo.claimPublicationEvents(scopeB, { limit: 1, leaseMs: 30_000 });
+    assert.equal(claimedB.length, 1);
+    assert.equal(claimedB[0].produtoId, produtoB);
+    const tokenB = buildOutboxLeaseToken(claimedB[0].id, claimedB[0].lockedUntil!);
+    const publishedB = await repo.confirmPublicationEvent(scopeB, claimedB[0].id, tokenB);
+    assert.equal(publishedB?.receipt, 'confirmed');
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    try {
+      await db.withTransaction(async (tx) => {
+        await tx.query(
+          'DELETE FROM integration_events WHERE (group_id=$1 AND empresa_id=$2 AND aggregate_id=$3) OR (group_id=$4 AND empresa_id=$5 AND aggregate_id=$6)',
+          [scopeA.groupId, scopeA.empresaId, produtoA, scopeB.groupId, scopeB.empresaId, produtoB],
+        );
+        await tx.query(
+          'DELETE FROM produtos WHERE (group_id=$1 AND empresa_id=$2 AND id=$3) OR (group_id=$4 AND empresa_id=$5 AND id=$6)',
+          [scopeA.groupId, scopeA.empresaId, produtoA, scopeB.groupId, scopeB.empresaId, produtoB],
+        );
+      });
+    } catch (error) {
+      if (!originalError) throw error;
+      process.stderr.write('R10 outbox concorrencia cleanup failed after original test error\n');
+    } finally {
+      await db.end();
+    }
+  }
+});
+
 test('R10 PostgreSQL real: contrato compartilhado, empresa, grupo, SKU e rollback', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
   const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
   const repo = new PostgresProdutoRepository(db);

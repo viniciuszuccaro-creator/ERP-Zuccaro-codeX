@@ -23,7 +23,7 @@ function setup(actions = ['visualizar', 'criar', 'editar', 'aprovar-conteudo', '
   rbac.link({ actorId, groupId, permissions: { Cadastros: { produto: actions } } });
   const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac);
   const ctx = { requestId: randomUUID(), actorId, groupId, empresaId };
-  return { repo, audit, service, ctx };
+  return { repo, audit, tenant, rbac, service, ctx };
 }
 
 test('Outbox claim/lease: claim confirma e falha respeitam token e tenant', async () => {
@@ -339,4 +339,50 @@ test('Outbox list: dead_letter read-only exige visualizar e isola tenant', async
   assert.equal(afterDiscard.total, 0);
   const cancelled = await service.listPublicationEvents(ctx, { status: 'cancelled', produtoId: produto.id });
   assert.equal(cancelled.total, 1);
+});
+
+test('Outbox consumer: external sem canal/credenciais nunca simula sucesso', async () => {
+  const {
+    createCatalogPublisher,
+    resolveOutboxConsumerConfig,
+  } = await import('../src/services/produtoOutboxConsumer.ts');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'weird' }).mode, 'disabled');
+  const disabled = createCatalogPublisher({ mode: 'disabled' });
+  assert.deepEqual(await disabled.publish({} as never), { ok: false, error: 'OUTBOX_CONSUMER_DISABLED' });
+  const noChannel = createCatalogPublisher({ mode: 'external' });
+  assert.deepEqual(await noChannel.publish({} as never), { ok: false, error: 'CATALOG_CHANNEL_NOT_CONFIGURED' });
+  const noCreds = createCatalogPublisher({ mode: 'external', externalChannelId: 'site', externalCredentialsPresent: false });
+  assert.deepEqual(await noCreds.publish({} as never), { ok: false, error: 'CATALOG_CHANNEL_CREDENTIALS_MISSING' });
+  const blocked = createCatalogPublisher({ mode: 'external', externalChannelId: 'site', externalCredentialsPresent: true });
+  assert.deepEqual(await blocked.publish({} as never), { ok: false, error: 'CATALOG_EXTERNAL_PUBLISHER_BLOCKED' });
+});
+
+test('Outbox consumer: lote fake idempotente e external agenda retry sem sucesso falso', async () => {
+  const { createCatalogPublisher, runProdutoOutboxConsumer } = await import('../src/services/produtoOutboxConsumer.ts');
+  const { service, ctx } = setup();
+  const produto = await service.create(ctx, { descricao: 'Consumer batch' });
+  await service.changeWorkflowStatus(ctx, produto.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, produto.id, 'APROVADO');
+  await service.changeWorkflowStatus(ctx, produto.id, 'PUBLICADO');
+  const fake = await service.processOutboxBatch(ctx, { limit: 5, leaseMs: 30_000 });
+  assert.equal(fake.metrics.published, 1);
+  assert.equal(fake.metrics.retry, 0);
+
+  const again = setup();
+  const produto2 = await again.service.create(again.ctx, { descricao: 'Consumer external block' });
+  await again.service.changeWorkflowStatus(again.ctx, produto2.id, 'EM_REVISAO');
+  await again.service.changeWorkflowStatus(again.ctx, produto2.id, 'APROVADO');
+  await again.service.changeWorkflowStatus(again.ctx, produto2.id, 'PUBLICADO');
+  const external = await runProdutoOutboxConsumer({
+    repo: again.repo,
+    audit: again.audit,
+    tenantGuard: again.tenant,
+    rbacGuard: again.rbac,
+    publisher: createCatalogPublisher({
+      mode: 'external', externalChannelId: 'portal', externalCredentialsPresent: true,
+    }),
+  }, again.ctx, { limit: 5, leaseMs: 30_000 });
+  assert.equal(external.metrics.published, 0);
+  assert.equal(external.metrics.retry, 1);
+  assert.match(String(external.results[0]?.error), /CATALOG_EXTERNAL_PUBLISHER_BLOCKED/);
 });
