@@ -116,10 +116,10 @@ async function request(app: ReturnType<typeof createApp>['app'], path: string, i
   }
 }
 
-function assertDeniedMargem(res: { status: number; body: any }) {
+function assertDeniedMargem(res: { status: number; body: any }, pattern = /margem abaixo da mínima exige permissão de aprovar/i) {
   assert.equal(res.status, 403);
   assert.equal(res.body.error.code, 'MARGEM_ALCADA_DENIED');
-  assert.match(res.body.error.message, /margem abaixo da mínima exige permissão de aprovar/i);
+  assert.match(res.body.error.message, pattern);
   assert.ok(res.body.error.requestId);
 }
 
@@ -134,7 +134,11 @@ test('HTTP Orçamento: sem CostPort → create ok (não inventa custo)', async (
 });
 
 test('HTTP Orçamento create: custo > preço sem aprovar → 403 e sem persistência', async () => {
-  const { app, auditRepo } = fixture({ costs: stubCost('15') });
+  const costsMutable: { current: ComercialCostPort } = { current: stubCost('15') };
+  const port: ComercialCostPort = {
+    getUnitCost: (input) => costsMutable.current.getUnitCost(input),
+  };
+  const { app, auditRepo } = fixture({ costs: port });
   const denied = await request(app, '/api/v1/orcamentos', {
     method: 'POST',
     headers: headers(creatorId),
@@ -142,21 +146,39 @@ test('HTTP Orçamento create: custo > preço sem aprovar → 403 e sem persistê
   });
   assertDeniedMargem(denied);
 
+  // Create com aprovar no próprio ator ainda é autoaprovação → 403
+  const selfApprove = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(approverId),
+    body: JSON.stringify(payloadOrc),
+  });
+  assertDeniedMargem(selfApprove, /outro aprovador/i);
+
   const listed = await request(app, '/api/v1/orcamentos?limit=10&offset=0', {
     headers: headers(approverId),
   });
   assert.equal(listed.status, 200);
   assert.equal(listed.body.meta.total, 0);
 
-  const allowed = await request(app, '/api/v1/orcamentos', {
+  // Fluxo segregado: criar com margem ok, depois update com custo alto por outro aprovador
+  costsMutable.current = stubCost('5');
+  const created = await request(app, '/api/v1/orcamentos', {
     method: 'POST',
+    headers: headers(creatorId),
+    body: JSON.stringify(payloadOrc),
+  });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.data.total, '10.000000');
+
+  costsMutable.current = stubCost('15');
+  const allowed = await request(app, `/api/v1/orcamentos/${created.body.data.id}`, {
+    method: 'PATCH',
     headers: headers(approverId),
     body: JSON.stringify(payloadOrc),
   });
-  assert.equal(allowed.status, 201);
-  assert.equal(allowed.body.data.total, '10.000000');
+  assert.equal(allowed.status, 200);
 
-  const audits = await auditRepo.listByEntity('Orcamento', allowed.body.data.id);
+  const audits = await auditRepo.listByEntity('Orcamento', created.body.data.id);
   const approve = audits.filter((a) => a.action === 'approve');
   assert.equal(approve.length, 1);
   const after = approve[0].afterData as {
@@ -170,7 +192,7 @@ test('HTTP Orçamento create: custo > preço sem aprovar → 403 e sem persistê
   assert.equal(typeof after.margem_avaliacao![0].cost, 'string');
 });
 
-test('HTTP Pedido create: margem abaixo sem aprovar → 403', async () => {
+test('HTTP Pedido create: margem abaixo sem aprovar → 403; autoaprovação bloqueada', async () => {
   const { app } = fixture({ costs: stubCost('12') });
   const denied = await request(app, '/api/v1/pedidos', {
     method: 'POST',
@@ -179,12 +201,12 @@ test('HTTP Pedido create: margem abaixo sem aprovar → 403', async () => {
   });
   assertDeniedMargem(denied);
 
-  const allowed = await request(app, '/api/v1/pedidos', {
+  const selfApprove = await request(app, '/api/v1/pedidos', {
     method: 'POST',
     headers: headers(approverId),
     body: JSON.stringify(payloadPed),
   });
-  assert.equal(allowed.status, 201);
+  assertDeniedMargem(selfApprove, /outro aprovador/i);
 });
 
 test('HTTP Orçamento update no mesmo runtime: custo sobe → 403', async () => {

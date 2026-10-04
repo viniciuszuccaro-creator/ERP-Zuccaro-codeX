@@ -66,7 +66,7 @@ export class OrcamentoService {
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       // Create: criador = actor → alçada acima da livre nunca autoaprova.
       await this.assertDescontoAlcada(ctx, priced.itens, ctx.actorId!);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens, ctx.actorId!);
       const created = await this.repo.create(scope, priced, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
@@ -114,7 +114,7 @@ export class OrcamentoService {
       const priced = await this.applyServerPriceSnapshots(ctx, data);
       const criador = await this.resolveCriadorActorId('Orcamento', id);
       const alcada = await this.assertDescontoAlcada(ctx, priced.itens, criador);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens, criador);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
@@ -221,6 +221,7 @@ export class OrcamentoService {
     ctx: RequestContext,
     scope: OrcamentoScope,
     itens: OrcamentoCreate['itens'],
+    criadorActorId: string | null,
   ) {
     // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
     if (!this.costs) return null;
@@ -230,6 +231,8 @@ export class OrcamentoService {
       items: itens,
       costs: this.costs,
       canAprovar: await this.canAprovarComercial(ctx),
+      actorId: ctx.actorId,
+      criadorActorId,
       entityLabel: 'Orçamento',
     });
   }
