@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Sparkles, Upload, CheckCircle, Loader2 } from 'lucide-react';
+import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, assertTechnicalAiProcessingAllowed, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * Orçamento Automático com IA
@@ -44,10 +45,12 @@ export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) {
 
       let arquivoUrl = null;
       if (dados.arquivo) {
+        await assertTechnicalUploadAllowed(dados.arquivo);
+        assertTechnicalAiProcessingAllowed();
         const uploadResult = await base44.integrations.Core.UploadFile({
           file: dados.arquivo
         });
-        arquivoUrl = uploadResult.file_url;
+        arquivoUrl = assertConfirmedTechnicalUploadUrl(uploadResult.file_url);
       }
 
       let visionAIResult = null;
@@ -289,7 +292,7 @@ Retorne em JSON estruturado com todas as peças e um resumo.
                 <input
                   type="file"
                   id="arquivo"
-                  accept=".pdf,.dwg,.dxf,image/*"
+                  accept={TECHNICAL_UPLOAD_ACCEPT}
                   onChange={(e) => setDados({...dados, arquivo: e.target.files[0]})}
                   className="hidden"
                 />
@@ -298,7 +301,7 @@ Retorne em JSON estruturado com todas as peças e um resumo.
                   <p className="text-sm text-slate-600">
                     {dados.arquivo 
                       ? `✓ ${dados.arquivo.name}` 
-                      : 'Clique para enviar PDF, DWG ou imagem para análise de IA'
+                      : 'PDF, JPG ou PNG; envio e IA aguardam armazenamento canônico'
                     }
                   </p>
                 </label>

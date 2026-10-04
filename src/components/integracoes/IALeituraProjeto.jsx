@@ -13,6 +13,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import IALeituraProjetoResultado from "./IALeituraProjetoResultado";
 import { PROJECT_READING_SCHEMA, createSimulatedProjectReading, normalizeProjectReadingResponse } from "./iaLeituraProjetoData";
 import { FileText, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { assertTechnicalUploadAllowed, assertTechnicalAiProcessingAllowed, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * IA de Leitura de Projeto
@@ -115,6 +116,8 @@ export default function IALeituraProjeto({ configuracao, windowMode = false }) {
   };
 
   const processarComIAReal = async () => {
+    await assertTechnicalUploadAllowed(arquivo);
+    assertTechnicalAiProcessingAllowed();
     const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivo });
     if (!file_url) throw new Error('InvalidUploadResponse');
 
@@ -262,7 +265,7 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
               <Input
                 id="arquivoProjeto"
                 type="file"
-                accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+                accept={TECHNICAL_UPLOAD_ACCEPT}
                 onChange={handleUpload}
                 disabled={!contextoValido || !podeProcessar}
                 data-permission="Sistema.Integracoes.executar"

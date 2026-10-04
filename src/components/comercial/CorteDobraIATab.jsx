@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Plus, Trash2, Eye, Download, Bot, Layers, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import VisualizadorPeca from './VisualizadorPeca';
-import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
+import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, assertTechnicalAiProcessingAllowed, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * V21.1 - Aba 4: Corte e Dobra (IA)
@@ -56,6 +56,7 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     if (!file) return;
 
     try {
+      assertTechnicalAiProcessingAllowed();
       const tipoArquivo = await assertTechnicalUploadAllowed(file);
       setProcessandoIA(true);
       toast.info('Processando arquivo com IA...');

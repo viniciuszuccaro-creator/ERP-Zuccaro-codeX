@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, Sparkles, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
+import { assertTechnicalUploadAllowed, assertTechnicalAiProcessingAllowed, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 export default function UploadProjetoModal({ isOpen, onClose, onPecasExtraidas }) {
   const [arquivo, setArquivo] = useState(null);
@@ -49,6 +50,8 @@ export default function UploadProjetoModal({ isOpen, onClose, onPecasExtraidas }
     }
 
     try {
+      await assertTechnicalUploadAllowed(arquivo);
+      assertTechnicalAiProcessingAllowed();
       setProcessando(true);
       setProgresso(10);
 
@@ -228,7 +231,7 @@ Retorne um JSON estruturado com todas as peças encontradas e um resumo do proje
                     <input
                       id="file-upload"
                       type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.dwg"
+                  accept={TECHNICAL_UPLOAD_ACCEPT}
                       onChange={handleFileChange}
                       className="hidden"
                     />

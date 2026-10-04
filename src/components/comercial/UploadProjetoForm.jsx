@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, Sparkles, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
+import { assertTechnicalUploadAllowed, assertTechnicalAiProcessingAllowed, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -41,6 +42,8 @@ export default function UploadProjetoForm({ onPecasExtraidas, windowMode = false
     }
 
     try {
+      await assertTechnicalUploadAllowed(arquivo);
+      assertTechnicalAiProcessingAllowed();
       setProcessando(true);
       setProgresso(10);
 
@@ -144,7 +147,7 @@ export default function UploadProjetoForm({ onPecasExtraidas, windowMode = false
                 <input
                   id="file-upload"
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.dwg"
+                  accept={TECHNICAL_UPLOAD_ACCEPT}
                   onChange={handleFileChange}
                   className="hidden"
                 />
