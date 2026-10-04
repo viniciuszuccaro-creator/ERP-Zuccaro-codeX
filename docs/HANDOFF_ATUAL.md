@@ -1,3 +1,20 @@
+## Handoff Comercial + Expedição — divisão de arquivos (2026-10-04)
+
+Fonte de verdade: `main` `d02cd012948a597a734573ab0a5a7aed6d604a3b`; PR Cursor #199 `f88460e976bef35f3efc88bb848e599d48a81312`; PR Codex #201 `59c4f506da7ae0c9f063e4f6106d1300978911c4`. Ambas seguem candidatas em branches distintas; HEAD, base e CI devem ser reconferidos antes de editar ou integrar. O código Comercial pertence à tarefa existente **Comercial 360**; este checkpoint de coordenação não transfere a implementação nem comprova recebimento nessa tarefa.
+
+| Superfície | Responsável de edição | Contrato de integração |
+|---|---|---|
+| `server/migrations/025`–`035`, inclusive a trava histórica da `026`; Pedido/Orçamento, seus serviços, repositórios, snapshots e adaptadores persistentes Pedido/estoque | Codex Comercial 360, branch própria | Não inferir tipo histórico, não eliminar preflight/rollback da 026; migrar 025–035 antes da 036 em PostgreSQL isolado. |
+| `server/migrations/036_expedicao_entregas_romaneios.sql`, `server/src/repositories/expedicaoTypes.ts`, `inMemoryExpedicaoRepository.ts`, `postgresExpedicaoRepository.ts`, `server/src/services/expedicaoService.ts` | Cursor #199 | Entrega/Romaneio e portas Expedição permanecem canônicos; coordenar assinatura do executor compartilhado com Codex sem editar branch alheia. |
+| `server/src/app.ts`, `server/src/api/router.ts`, `server/src/db/rbacGuard.ts`, testes de integração e CI compose | Compartilhada, por hunk e comunicação prévia | Codex altera apenas wiring Pedido/estoque/Comercial e composição necessária; Cursor altera Expedição. Preservar RBAC, tenant e testes de ambos. |
+| `src/api/httpApiClient.js`, `runtimeBackend.js`, `base44Client.js`; telas `src/components/expedicao/**` e `logistica/IntegracaoRomaneio` | Cursor #199 para fluxo Expedição; Codex só contrato Pedido já reservado | Comprovante, formulário, reload real, RBAC e erros da UI são responsabilidade Cursor. Não criar módulo paralelo. |
+
+Bloqueios observados na #201: o Compose passou 1/1 teste, mas o passo de CI faz `grep "# skip"` e classifica `# skipped 0` como skip; corrigir a detecção sem remover o teste nem aceitar skip verdadeiro. A revisão da #201 também encontrou payloads de comprovante fora do schema estrito, assinatura acima de 2000 caracteres, chave de idempotência estável para nova entrega manual e campos de edição que não persistem; conferir quais deltas já foram corrigidos no HEAD vigente da #199 e coordenar os restantes com Cursor. A #201 ainda usa portas `reserved`, não contém o contrato Comercial #178 e não comprova adaptadores reais de Pedido/estoque.
+
+Pacote exigido na tarefa Comercial 360: composição semântica #178/#199/#201 preservando funções existentes; executor PostgreSQL compartilhado e efeitos persistentes por item para despacho, parcial, devolução e cancelamento; auditoria, idempotência e compensação. Prova em PostgreSQL real isolado de concorrência, retry, falha intermediária e rollback sem efeitos parciais. Publicar SHA remoto, CI do HEAD final, PR atualizada e revisão independente Cursor antes de qualquer merge. VPS, migrations operacionais e dados reais obedecem aos gates próprios.
+
+---
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
