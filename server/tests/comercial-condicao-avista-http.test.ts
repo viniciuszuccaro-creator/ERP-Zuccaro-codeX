@@ -59,8 +59,8 @@ function fixture(options: {
     ? ['visualizar', 'criar', 'editar', 'aprovar']
     : ['visualizar', 'criar', 'editar'];
   const pedPerms = options.creatorCanAprovar
-    ? ['visualizar', 'criar', 'editar', 'aprovar']
-    : ['visualizar', 'criar', 'editar'];
+    ? ['visualizar', 'criar', 'editar', 'aprovar', 'converter-pedido']
+    : ['visualizar', 'criar', 'editar', 'converter-pedido'];
   rbac.link({
     actorId: creatorId,
     groupId,
@@ -276,4 +276,32 @@ test('HTTP Pedido: a prazo + regra → 403; à vista + margem abaixo → MARGEM'
   assert.equal(deniedMargem.status, 403);
   assert.equal(deniedMargem.body.error.code, 'MARGEM_ALCADA_DENIED');
   assert.match(String(deniedMargem.body.error.message), /outro aprovador/i);
+});
+
+test('HTTP convert: à vista + regra → Pedido 201 pelo próprio criador (sem aprovar)', async () => {
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const created = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadOrc),
+  });
+  assert.equal(created.status, 201);
+  const orcId = created.body.data.id as string;
+
+  const converted = await request(app, `/api/v1/orcamentos/${orcId}/converter-pedido`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({
+      tipo_operacao: 'RETIRADA',
+      data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
+    }),
+  });
+  assert.equal(converted.status, 201);
+  assert.equal(converted.body.data.orcamento_id, orcId);
+  assert.equal(converted.body.data.total, '90.000000');
 });
