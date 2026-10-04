@@ -51,7 +51,7 @@ function fixture() {
   refs.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
   refs.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   refs.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
-  refs.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
+  refs.condicoes = { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
   // Onda 2: snapshot de preço no servidor — HTTP fixture stub (TabelaPreco vazia em memória).
   refs.prices = { resolveSalePrice: async () => ({ preco: '10.000000' }) };
   return runtime;
@@ -167,10 +167,60 @@ test('meta declara HTTP canonico de Orcamento e Pedido', async () => {
     transactionalAudit: true,
     rbacFailClosed: true,
     cancelByState: true,
+    condicaoSnapshot: true,
+    tabelaSnapshot: true,
+    promocaoSnapshotFailClosed: true,
+    simularPersistFailClosed: true,
+    validadeFailClosed: true,
+    convertSnapshotFailClosed: true,
+    listFailClosed: true,
+    listSearchFilterFailClosed: true,
+    tenantCacheFailClosed: true,
+    observacoesSanitized: true,
+    descontoAlcadaUiFailClosed: true,
+    saveIdempotency: true,
+    mastersPickerFailClosed: true,
+    parcelaSchedulePreviewFailClosed: true,
+    simulacaoDirtyFailClosed: true,
+    textoResumoPreviewFailClosed: true,
   });
   assert.match(result.body.note, /Pedido backend HTTP is active/);
+  assert.match(result.body.note, /UI alçada de desconto fail-closed/);
+  assert.match(result.body.note, /pickers mestres Cliente\/Condição\/Produto\/Tabela fail-closed/);
+  assert.match(result.body.note, /agenda de parcelas read-only/);
+  assert.match(result.body.note, /simular-venda dirty-state fail-closed/);
+  assert.match(result.body.note, /resumo texto read-only Orçamento\/Pedido/);
+  assert.match(result.body.note, /queryKey groupId\+empresaId\+filters/);
+  assert.match(result.body.note, /busca vazia ≠ erro HTTP/);
+  assert.match(result.body.note, /troca de tenant limpa form\/list cache comercial fail-closed/);
   assert.equal(result.body.pedido.backendHttp, true);
   assert.equal(result.body.pedido.frontendHttp, true);
+  assert.equal(result.body.pedido.promocaoSnapshotFailClosed, true);
+  assert.equal(result.body.pedido.simularPersistFailClosed, true);
+  assert.equal(result.body.pedido.tabelaSnapshot, true);
+  assert.equal(result.body.pedido.convertValidadeFailClosed, true);
+  assert.equal(result.body.pedido.convertSnapshotFailClosed, true);
+  assert.equal(result.body.pedido.cancelByState, true);
+  assert.equal(result.body.pedido.listFailClosed, true);
+  assert.equal(result.body.pedido.listSearchFilterFailClosed, true);
+  assert.equal(result.body.pedido.tenantCacheFailClosed, true);
+  assert.equal(result.body.pedido.observacoesSanitized, true);
+  assert.equal(result.body.pedido.descontoAlcadaUiFailClosed, true);
+  assert.equal(result.body.pedido.saveIdempotency, true);
+  assert.equal(result.body.pedido.mastersPickerFailClosed, true);
+  assert.equal(result.body.pedido.parcelaSchedulePreviewFailClosed, true);
+  assert.equal(result.body.pedido.deliveryAddressSummaryFailClosed, true);
+  assert.equal(result.body.pedido.simulacaoDirtyFailClosed, true);
+  assert.equal(result.body.pedido.textoResumoPreviewFailClosed, true);
+  assert.equal(result.body.pedido.updateBlockedWhenCancelled, true);
+  assert.match(result.body.note, /Pedido cancel fail-closed/);
+  assert.match(result.body.note, /listagem Orçamento\/Pedido HTTP fail-closed/);
+  assert.match(result.body.note, /resumo de endereço Local\/Obra/);
+  assert.equal(result.body.comercialSimulacao.persistOnWrite, true);
+  assert.match(result.body.note, /desconto\/total aplicados no servidor \(simular-venda\)/);
+  assert.match(result.body.note, /snapshot de TabelaPreco/);
+  assert.match(result.body.note, /validade_em fail-closed/);
+  assert.match(result.body.note, /conversao Orçamento→Pedido copia\/verifica snapshots fail-closed/);
   assert.equal(result.body.runtime, 'ERP-RUNTIME-08B');
 });
 

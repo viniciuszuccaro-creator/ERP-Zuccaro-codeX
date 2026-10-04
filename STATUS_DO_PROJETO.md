@@ -1,1417 +1,1121 @@
-## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
+## Consolidação das instruções (2026-09-29)
 
-| Campo | Valor |
-|---|---|
-| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
-| HEAD | `f969e49e` |
-| Reload | Playwright `page.reload()` real + revalidação PG — **PASS** |
-| CI | Job `expedicao-comercial-compose`: fetch tip Comercial **`4f8c6593`**; `COMERCIAL_COMPOSE_REQUIRE=1`; skip/ausência = **fail** (provado) |
-| Telas ERP | `tests/expedicao-erp-telas-pg.playwright.test.mjs` — SPA `/Expedicao` × BFF+PGlite **PASS** (fluxo+RBAC+empresa; host `localhost` evita redirect HTTPS do Layout) |
-| Parecer #178 | permanece `docs/PARECER_CODEX_178_SHA_4f8c6593.md` (sem extensão) |
-| Parecer #200 | **novo** `docs/PARECER_CODEX_200_SHA_619bddd0.md` — SHA exato `619bddd0`; tip-port **NÃO** |
-| Migration | **036** — descrição #199 deve citar 036 (não 025); ferramenta ManagePullRequest bloqueada neste run → canal documental |
-| Tip-port / Merge / VPS | **Bloqueado** |
-
----
-
-## CURSOR — #199 complementar UI BFF + composição Comercial (2026-10-01T19:50Z)
-
-| Campo | Valor |
-|---|---|
-| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
-| UI BFF | FormularioEntrega create; Separacao; Romaneio; Detalhes parcial/total/assinatura; Ocorrencia frustrada; Comprovante; Devolucao |
-| Erros | `formatExpedicaoHttpError` nas telas HTTP |
-| Provas | Playwright reload + RBAC + isolamento + erro 404; PGlite compose 025–035+036 |
-| Coordenação | `docs/EXPEDICAO_COORDENACAO_CODEX.md` |
-| Parecer Codex | SHA **`4f8c6593506f681689e021226ab024f57c7aede9`** — `docs/PARECER_CODEX_178_SHA_4f8c6593.md` |
-| Tip-port / Merge / VPS | **Bloqueado** |
-
----
-
-## CURSOR — #199 Expedição persistência canônica (2026-10-01T18:00Z)
-
-| Campo | Valor |
-|---|---|
-| Branch / PR | `cursor/expedicao-persistencia-canonica-392b` / **#199** |
-| Migration | **`036_expedicao_entregas_romaneios.sql`** (renumerada; comercial Codex #178 reserva **025–035**) |
-| Implementado | repos in-memory+PG, `ExpedicaoService`, HTTP `/entregas\|romaneios`, auditoria TX, telas → API (`VITE_ERP_HTTP_EXPEDICAO`); bridge `entities.Entrega` no hybrid |
-| Portas Pedido/estoque | Contrato em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` — default `reserved`; **sem tip-port** na branch Codex |
-| Testes PG | `runtime11-expedicao-pglite` — tenant/RBAC/concorrência/rollback/despacho repetido/parcial/devolução **PASS** |
-| Navegador | `tests/expedicao-api-pg.playwright.test.mjs` — **API_HTTP_PGLITE PASS** (≠ SPA_LOCAL / ≠ mock) |
-| Mocks identificados | `runtime11-expedicao-http*` = in-memory |
-| Candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` atualizada #192–#199 |
-| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
-| HEAD / CI | `a48e57fe` — `erp-runtime-ci` frontend+backend **SUCCESS** |
-| Merge/VPS | **Bloqueado**; mig 036 só no repositório/CI |
-
----
-
-## CODEX — delta #199 na candidata #201 (2026-10-02)
-
-Objetivo: incorporar à branch própria o delta recente da #199 (`7879ecbe`) sem editar a branch Cursor. Causa: a #201 ainda partia do checkpoint #199 anterior, sem o gate CI Compose e os testes de reload/API. Reuso: código de Expedição #199, executor compartilhado da #201 e handoff existente; conflito só em `docs/HANDOFF_ATUAL.md`, preservados ambos os registros. Multiempresa/RBAC/auditoria: testes focados cobrem tenant/403/404 e fluxo API; sem mudança nas portas `reserved`. Validação: servidor 303 pass/0 fail/17 skip; PGlite+composição 6/6; UI focada 17/17; audit/lint/build raiz e diff-check passaram. `npm test` raiz Windows falhou nos guards Bash/VPS preexistentes; CI Linux pendente no novo HEAD. Sem merge em main, VPS, importação ou migration operacional; 026 histórica continua bloqueada. Próximo: reconciliar #178 semanticamente e definir ownership transacional do estoque (PostgreSQL `produtos` é cadastro mestre sem saldo; Base44 atual é operacional) antes de ativar adaptador real.
-
-## CODEX — contrato de executor compartilhado Pedido/estoque (2026-10-02)
+Foram conciliados `AGENTS.md`, programa mestre, divisão Codex/Cursor e handoff sem criar novo documento de regras. Push direto em `main` foi substituído por branch/PR; revisão cruzada ocorre no HEAD final, não entre commits; a fila da PR #33/Gate C foi marcada histórica. O termo E/D/F comprova execução anterior para `894b0db8`, não autorização nem verificação operacional para #153. Regras de Regra-Mãe, Grupo/Empresa, RBAC, auditoria e dados reais fora do GitHub continuam obrigatórias. Próximo lote: integrar #92/#132 com testes comportamentais e PostgreSQL em branch separada; depois revisão independente e decisão explícita de merge/deploy. Não houve migration, VPS ou carga real neste checkpoint.
 
-Tarefa: preparar as portas canônicas da Expedição (#200 `619bddd0`, base da branch isolada) para que adaptadores Pedido/estoque operem no mesmo executor de `ExpedicaoRepository.withTransaction`, sem transação aninhada. Causa: portas injetáveis eram chamadas dentro da transação, mas não recebiam o executor; um adaptador poderia gravar fora dela. Reuso: `DbQueryExecutor`, `ExpedicaoService`, portas já existentes e ensaio PGlite R11. Arquivos: `server/src/repositories/expedicaoTypes.ts`, `server/src/services/expedicaoService.ts`, `server/tests/runtime11-expedicao-pglite.test.ts`, `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md`, `docs/HANDOFF_ATUAL.md`, este status. Multiempresa/RBAC/auditoria: sem alteração de autorização ou escopo; contexto `groupId∧empresaId` preservado. Teste injeta escrita sintética Pedido seguida de estoque e força falha; ambas e Romaneio/Entrega fazem rollback. Teste adicional força falha na devolução após entrega parcial e comprova que nem o movimento sintético nem status `DEVOLVIDA` persistem. PGlite 5/5; servidor completo anterior 301 pass, 0 fail, 17 skip; typecheck/build servidor, audit baseline, lint raiz (1 warning prévio), build raiz e diff-check passaram antes do teste adicional. Typecheck raiz falhou em erros existentes fora do diff; a suíte raiz, que cobre SPA/VPS, não foi executada neste subgate exclusivamente de servidor. Ensaio isolado de schema limpo aplicou 001–024 da #200, 025–035 da #178 (10 arquivos) e 036 da Expedição em sequência, sem erro; **não** prova classificação histórica da 026 em banco existente. Pendência: adaptadores de efeito real continuam `reserved`, despacho/devolução vinculados seguem bloqueados, #178 ainda separado e 026 histórica bloqueada. Próximo: compor #178 com #199/#200 em branch isolada, então implementar movimento/idempotência/auditoria por item antes de liberar efeitos. Nenhum merge, VPS ou importação.
+## Checkpoint de orientação e integração (2026-09-29, anterior)
 
-Fechamento do teste adicional: servidor completo reexecutado com **302 pass / 0 fail / 17 skip**; PGlite 5/5. O valor 301 acima é o checkpoint anterior ao caso de devolução.
+Na candidata draft #153, a orientação da #105 foi incorporada sem criar política paralela: `AGENTS.md` aponta para `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; handoff e programa mestre distinguem o baseline histórico da situação atual. #152 + #141 estão integradas somente na branch da #153 e tiveram CI verde no HEAD anterior `d3d394f6`. #92 + #132 continuam pendentes de reconciliação semântica e CI do conjunto. Nenhuma dessas entregas foi mesclada na `main`, implantada na VPS ou usada para importação real. Próximo passo: compor Pedido/Orçamento da #92 com snapshots da #152, testar migrations e fluxos integrados, incluir #132 e pedir revisão do HEAD final.
 
-## CURSOR — Expedição persistência canônica (2026-10-01T15:45Z)
+## ORDEM ÚNICA — congelar HEAD Comercial e candidata contra `main` (2026-09-29T19:20Z)
 
-| Campo | Valor |
-|---|---|
-| Branch | `cursor/expedicao-persistencia-canonica-392b` |
-| Inventário | Sem Entrega/Romaneio no server até 024; SPA/policies/telas existentes reutilizadas |
-| Lacunas fechadas | types+inMemory+PG repos; `ExpedicaoService`; rotas `/api/v1/entregas\|romaneios`; migration `025` (repo only) → **superseded by 036** |
-| Multiempresa/RBAC/auditoria | `groupId∧empresaId`; actions `conferir/expedir/entregar/ocorrencia`; audit create/change_status |
-| Pedido/estoque | Portas **reserved** (coordenação Codex; sem tip-port) |
-| UI | Flag `VITE_ERP_HTTP_EXPEDICAO`; Separacao/Romaneio/Detalhes/Reversa/Integracao → API canônica |
-| Testes | `runtime11-expedicao-*` HTTP+migration+bridge PASS; PG e2e gated por `DATABASE_URL` |
-| SPA local | **≠** persistência real (base UX apenas) |
-| Doc | `docs/EXPEDICAO_PERSISTENCIA_CANONICA.md` |
-| Merge/VPS | **Bloqueado** até gate; migration sem aplicação operacional |
-
----
+**Ensaio Codex posterior:** branch `codex/integracao-comercial-legado-20260929` integra #152 `2b34338e` e #141 `b8a9f493` sem tocar a `main`; conflito apenas neste status, preservando os dois blocos. Merge experimental de #92 revelou incompatibilidade nos tipos/repositórios/serviços de Orçamento/Pedido e em `runtime01.test.ts`; foi abortado sem commit. #132 permanece dependente da #92. Detalhes em `docs/ORDEM_INTEGRACAO_UNICA.md`. Esta branch parcial não comprova as quatro PRs nem autoriza merge/VPS/importação.
 
-## CURSOR — pacote #197 integrado: LogisticaReversa + Playwright objetivo (2026-10-01T15:00Z)
-
 | Campo | Valor |
 |---|---|
-| Tip #197 | LogisticaReversa na listagem/detalhe (RBAC+Grupo/Empresa); Separacao `itens`+`entregaId` |
-| Playwright SPA | A–H+I+J **PASS** (ação/estado/reload); falha intermediária sem toast sucesso; retry sem duplicação |
-| Camada | `SPA_LOCAL_BASE44` ≠ API HTTP ≠ PostgreSQL |
-| Backend HTTP Entrega/Romaneio | **Ausente** no router — prova PG **não aplicável** até existir contrato |
-| Prova mocks | `expedicao-fluxo-operacional` + `integracao-telas` PASS |
-| #198 | CI `d7d3627c` SUCCESS confirmado; atualizar sobre tip após push |
-| Codex | Pedido de revisão do pacote #192–#197 — **sem tip-port #178** |
-| Merge/VPS | **Bloqueado** |
-
----
+| Objetivo | Congelar o conjunto #114–#151 e registrar a ordem única antes de merge ou gate VPS |
+| HEAD funcional | `6218511a19b43f7ca87ed32b89d48dcfbd4ee195` (tip da #151; 116 commits / 101 arquivos à frente de `main` `d02cd012`) |
+| Candidata | draft **#152** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/152 (`cursor/comercial360-candidata-main-53c4` contra `main`; commit extra só de registro) |
+| CI do conjunto | SUCCESS em `11a5914a` — [36618417250](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618417250) frontend+backend (PR) e [36618410386](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36618410386) frontend+backend (push) |
+| #141 | `b8a9f493` em `codex/legado-integracao-candidata`; CI [36617354170](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/36617354170) SUCCESS; branch não editada |
+| #92 / #132 | `8d9ce6e5` / `29211815` — fora da #141 (`merge-base --is-ancestor` = não) |
+| Migrations | 029–031 na Comercial; 025–028 e 033 na #92; 034 na #132; 032 inexistente; #141 e `main` param em 024 |
+| Conflito × #141 | somente `STATUS_DO_PROJETO.md` (`git merge-tree --write-tree`, exit 1). Código mergeia limpo |
+| Conflito × #92/#132 | 9 arquivos de Orçamento/Pedido + `runtime01.test.ts`; #132 herda os mesmos 9 |
+| Ordem | 1 Comercial consolidada → 2 #141 (STATUS no commit de integração) → 3 #92 → 4 #132 |
+| Runtime | inalterado neste registro |
+| Pendência | revisão humana da ordem; sem merge; sem VPS |
 
-## CURSOR — navegação + Playwright Expedição #197 (2026-10-01T13:10Z)
-
-| Campo | Valor |
-|---|---|
-| Diagnóstico cards | **Limitação computerUse** — cadeia `LaunchpadCard→handleModuleClick→openWindow→WindowRenderer` íntegra; Playwright abre cards |
-| Correções app | Hydrate parcial não reseta contexto; `Empresa.filter` topologia sem `empresa_id`; `resolveEmpresaOperacionalExpedicao`; `pedidosBase` no Romaneio; clamp janela; `data-testid=erp-window` |
-| Camada prova | **SPA_LOCAL_BASE44** — ≠ API/PostgreSQL/VPS |
-| Roteiro Playwright | A listagem PASS; B sep PASS_attempted; C romaneio PASS; D retry PASS (1 romaneio); E parcial PASS_attempted; I falha estoque PASS_sem_falso_sucesso; G/H gaps UI |
-| #178 | `4f8c6593` candidata; sim compat em branch isolada; **sem tip-port** |
-| Merge/VPS | **Bloqueado** |
+Fonte: `docs/ORDEM_INTEGRACAO_UNICA.md`.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T12:14Z)
+## LOTE CURSOR — offline/network retry list/masters/simular (pós-#150 a11y-live) (2026-09-29T19:06Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata (draft); CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `01d5c16e` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Parcial — A–J BLOCKED no agente (`openWindow`) |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **B** Offline/network retry — banner + Retry explícito em list/masters/simular (rede/5xx); reusa `formatComercialHttpError`; fail-closed (sem empty silencioso); 4xx sem retry |
+| Branch | `cursor/comercial360-onda3-network-retry-392b` |
+| Base | `origin/cursor/comercial360-onda3-a11y-live-392b` tip `33c3b456` (#150) |
+| Tip | `050e8eff` (`050e8eff3a8d854995c97ef35e7f1c114c5145e1`) · feat `93bf4b56` |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 |
+| Escopo | `isComercialRetryableHttpError` + `buildSimularHttpErrorBannerText`; Retry gated em list/masters; banner simular reinvoca `runSimularVenda`; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `retry rede/5xx` + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **22/22**; `orcamento-ui-policy` **16/16**; `pedido-ui-policy` **25/25**; `git diff --check` PASS |
+| Colisão | margem #47; PDF/anexos #52–62; stack #126–#150; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
 
-## CURSOR — homologação SPA Expedição #197 (2026-10-01T12:05Z)
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
-| Campo | Valor |
-|---|---|
-| Tip #197 | HEAD tip + correções: `recoverMasterLocalAccess`, redirect subpath `PageNotFound` |
-| SPA | HTTPS local; seed HML no tenant snapshot; KPIs 1 aguardando / 1 pronto |
-| Launchpad `/Expedicao` | OK (13 cards) |
-| A–J navegador | **BLOCKED no agente**: cards não abrem `openWindow` sob clique automatizado |
-| Requisito exato | Abrir cards Entregas/Romaneios/Separação no launchpad e percorrer fluxo + falha estoque→`Estado parcial` |
-| Prova policy/telas | 41/41 integração — ≠ gate navegador |
-| #178 | `4f8c6593` candidata; sem tip-port |
-| Pacote implantação | Em `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
-| Merge/VPS | **Bloqueado** |
+Diagnóstico: list/masters já tinham Retry em todo erro; simular só toast. Agora Retry só rede/5xx; simular ganha banner fail-closed que reinvoca a mesma ação.
 
 ---
 
-## CURSOR — homologação SPA Expedição #197 (2026-10-01T10:56Z)
+## LOTE CURSOR — a11y aria-live + item aria-invalid + action labels (pós-#149 inactive master) (2026-09-29T18:57Z)
 
 | Campo | Valor |
 |---|---|
-| Tip #197 | HEAD `b8497171` (pacote `7d4f445e`) CI SUCCESS |
-| Correção independente | `recoverMasterLocalAccess` — bootstrap mestre local após `session_access_changed` / storage órfão |
-| SPA isolada | Vite local + TLS autoassinado (Chrome do agente força HTTPS em 127.0.0.1) |
-| Seed HML | Tenant sintético do snapshot (`Grupo`/`Empresa` canônicos) + Pedido/Entrega HML-* |
-| Homologação navegador A–J | **Parcial** — auth+seed OK; checklist UI depende do launchpad `/Expedicao` (não sub-rota); evidências em `/tmp/computer-use/` |
-| Prova falha≠sucesso / retry | Testes integração telas **41/41** (não substitui gate navegador) |
-| Codex #178 | `4f8c6593` ainda candidata; CI OK; **sem tip-port**; contratos Pedido reservados |
-| Merge/VPS | **Bloqueado** |
-| Doc canônico | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` (SHAs + pacote implantação + recuperação) |
-| Próximo | Fechar A–J no launchpad; tip-port só após #178 FINAL |
+| Choice | **A** a11y — aria-live polite/assertive em banners/list errors; aria-invalid+aria-describedby em linhas inválidas; nomes acessíveis Simular/Salvar/Cancelar/Resumo/Converter; helpers em `comercialListHttpUiPolicy` |
+| Branch | `cursor/comercial360-onda3-a11y-live-392b` |
+| Base | `origin/cursor/comercial360-onda3-inactive-master-picker-392b` tip `50dc8b5c` (#149) |
+| Tip | `291164d5` (`291164d53711245f67f311f0d80daf059b22d21c`) · feat `aaa96026` |
+| Draft PR | **#150** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/150 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-inactive-master-picker-392b...cursor/comercial360-onda3-a11y-live-392b?expand=1) base `#149` |
+| Escopo | helpers a11y + wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration; sem lib a11y nova |
+| Meta | a11y note + preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **19/19**; `orcamento-ui-policy`+`pedido-ui-policy` **25/25**; `git diff --check` PASS |
+| Colisão | B offline retry (Retry já existe nos banners — próximo polish); margem #47; PDF/anexos #52–62; stack #126–#149; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Offline/network retry banner polish **ou** margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
 
----
-
-## CURSOR — vigília #178 (2026-10-01T09:30Z)
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `c58cf8d9` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: #148 já tinha `aria-invalid` parcial nas linhas; faltavam aria-live nos banners/list errors, aria-describedby ligando hint→campo, e aria-label estável nas ações canônicas. Extraído em helpers testáveis no UiPolicy existente.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T09:14Z)
+## LOTE CURSOR — inactive master picker keep-current (pós-#148 item-line) (2026-09-29T18:55Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `a2297763` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **C** Soft-delete/inactive master picker — esconde Condicao/Tabela/Produto/ClienteEmpresa inativos exceto seleção atual (ghost+snapshot); fail-closed |
+| Branch | `cursor/comercial360-onda3-inactive-master-picker-392b` |
+| Base | `origin/cursor/comercial360-onda3-item-line-validation-392b` tip `c38a768d` (#148 CI SUCCESS) |
+| Tip | `8729e1c8` (`8729e1c86f73ea34c6f44d9f3ff474c51d7bef36`) · feat `b08dcb10` |
+| Draft PR | **#149** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/149 createPullRequest 403 — [compare](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-item-line-validation-392b...cursor/comercial360-onda3-inactive-master-picker-392b?expand=1) base `#148` |
+| Escopo | `filterActiveMasterRowsKeepingSelection` + labels `(inativo)` + hint UI; wire `OrcamentosTab`+`PedidoCanonicoPanel`; meta note; sem migration |
+| Meta | `inactiveMasterPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | `comercial-list-http-ui-policy` **15/15**; `git diff --check` PASS |
+| Colisão | B ConfirmDialog cancel já existe (#135); A a11y parcial (aria-invalid linhas); margem #47; PDF/anexos #52–62; stack #126–#148; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** a11y aria-live/labels polish **ou** Onda 4 slice sem 025–028 |
 
-## CURSOR — vigília #178 (2026-10-01T08:59Z)
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/comercial-list-http-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `5257cf6c` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: list HTTP já filtra `ativo:true` e normalizers descartam inativos; edição com FK inativa sumia do Select. Maior polish seguro independente pós-#148 (B já ConfirmDialog; A parcial).
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T08:43Z)
+## LOTE CURSOR — item-line validation qtd/preço fail-closed (pós-#147 resumo texto) (2026-09-29T18:45Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `f80eca09` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **B** Item line validation UX — quantidade/preço >0 fail-closed antes de simular/salvar; mensagens claras; reusa forms Orçamento/Pedido |
+| Branch | `cursor/comercial360-onda3-item-line-validation-392b` |
+| Base | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` tip `0e7111af` (#147) |
+| Tip | `fdbfce92` (`fdbfce9256518818c3f9c7f5c948bdff4bac7f25`) · feat `6c3587a2` |
+| Draft PR | **#148** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/148 — ManagePullRequest indisponível; `gh pr create` 403. Abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-resumo-texto-392b...cursor/comercial360-onda3-item-line-validation-392b?expand=1 |
+| Escopo | `calculateItem` exige preço >0; `collectItemLineIssues`/`evaluateItemLinesGate`; wire `OrcamentosTab`+`PedidoCanonicoPanel` (alertas linha + disable Salvar/Simular); meta note; sem migration |
+| Meta | note + `Pedido backend HTTP is active` |
+| Testes | `orcamento-ui-policy`+`pedido-ui-policy`+simulacao/alcada/list/pedido-frontend **71/71**; `git diff --check` PASS |
+| Colisão | margem #47 OPEN; PDF/anexos #52–62; stack #126–#147; a11y A (Radix Escape já); C histórico Pedido já exibe `history`; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** a11y Escape/focus polish **ou** Onda 4 slice sem 025–028 |
 
-## CURSOR — vigília #178 (2026-10-01T08:27Z)
+Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, `tests/orcamento-ui-policy.test.js`, `tests/pedido-ui-policy.test.js`, `STATUS_DO_PROJETO.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `3ec3476c` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: emptyItem inicia `preco_unitario:'0'`; UI engolia erro de `calculateItem`; save só falhava no toast genérico. Maior polish seguro independente pós-#147.
 
 ---
-
-## CURSOR — vigília #178 (2026-10-01T08:11Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `bf5e73b9` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
 
----
+## OPINIÃO CURSOR — pós-#146 + resumo texto draft BLOCKED (2026-09-29T18:30Z)
 
-## CURSOR — vigília #178 (2026-10-01T07:55Z)
+| PR/Branch | Tip | CI | Escopo |
+|---|---|---|---|
+| #146 | `c1fdf63d` | stack | tenant cache |
+| `cursor/comercial360-onda3-pedido-resumo-texto-392b` | `2a76c8cc` | — | resumo texto fail-closed |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `b2efe903` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Próximo: margem UI pós-#47 **ou** Onda 4 sem 025–028. Sem merge/VPS.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T07:39Z)
+## LOTE CURSOR — Pedido/Orçamento resumo texto fail-closed (pós-#146 tenant-cache) (2026-09-29T18:29Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `c4608930` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+| Choice | **A** Resumo texto read-only Pedido (+ Orçamento) a partir da entidade + snapshots; painel/janela texto imprimível; fail-closed se snapshots pós-031 incompletos; sem PDF novo |
+| Branch | `cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Base | `origin/cursor/comercial360-onda3-tenant-cache-392b` tip `c1fdf63d` (#146) |
+| Tip | `b9bcbc00` (`b9bcbc005e7f818ff3c176544a336353103657a1`) · docs `2a76c8cc` (`2a76c8cc831b91ce3447eaff47f857beb4406674`) |
+| Draft PR | **#147** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/147 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tenant-cache-392b...cursor/comercial360-onda3-pedido-resumo-texto-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-pedido-resumo-texto-392b` |
+| Escopo | Policy: `comercialDocumentoSnapshotGapHint` + `buildComercialDocumentoResumoTexto` / `resolveComercialResumoPreviewState` / `openComercialResumoTextoWindow`; wrappers Pedido; wire `PedidoCanonicoPanel` + `OrcamentosTab` (painel + copiar/imprimir texto); meta `textoResumoPreviewFailClosed`; sem migration |
+| Meta | `textoResumoPreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | pedido/orcamento UI policy **21/21**; list/alcada/simulacao **44/44**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | margem #47 OPEN; anexos/PDF #52–#62 (não toca PDF); stack #126–#146; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish Comercial independente fora do stack |
 
----
-
-## CURSOR — vigília #178 (2026-10-01T07:23Z)
+Arquivos: `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `OrcamentosTab.jsx`, `server/src/api/router.ts`, tests orcamento/pedido UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `802612bd` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: após #146, maior gap seguro pedido pelo handoff — canônico sem resumo texto imprimível; legado `ImprimirPedido`/PDF Orçamento existem mas tarefa pede texto read-only com snapshots fail-closed, sem módulo PDF.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T07:08Z)
+## LOTE CURSOR — tenant cache fail-closed (pós-#145 list-search) (2026-09-29T18:30Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `4609c995` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **C** Troca de tenant limpa form/list cache comercial fail-closed |
+| Branch | `cursor/comercial360-onda3-tenant-cache-392b` |
+| Base | `origin/cursor/comercial360-onda3-list-search-392b` tip `73279042` (#145) |
+| Tip | `c484194d` (`c484194df2ea9c3a115dcbc5ad11383114086962`) |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-search-392b...cursor/comercial360-onda3-tenant-cache-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-tenant-cache-392b` |
+| Escopo | Policy: `clearComercialHttpCacheOnTenantSwitch` + reset Orçamento/Pedido (descarta dirty/diálogos/snapshots sem prompt); wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `tenantCacheFailClosed`; sem migration |
+| Meta | `tenantCacheFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy **14/14**; orcamento/alcada/simulacao/pedido UI **61/61**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | A duplicar sem endpoint; B print legado; margem #47 OPEN; anexos/PDF #52–#62; stack #126–#145; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente (imprimir/resumo texto Pedido canônico) |
 
-## CURSOR — vigília #178 (2026-10-01T06:52Z)
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `f8e4a3d2` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: A (duplicar) sem endpoint/UI — inventaria módulo. B (imprimir) já existe em legado `ImprimirPedido`; canônico sem print mas colide com superfície anexos/PDF. **C** maior gap seguro: useEffect de tenant só fechava diálogos e deixava form/dirty/editing/histórico/snapshots de outro tenant + cache React Query cruzado.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T06:35Z)
+## LOTE CURSOR — list search/filter fail-closed (pós-#144) (2026-09-29T18:20Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `e40c3439` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **A** Orçamento/Pedido list search/filter: empty busca ≠ HTTP error; queryKey groupId+empresaId+filters; sanitize/normalize via `comercialListHttpUiPolicy`; 403/5xx permanece banner de erro |
+| Branch | `cursor/comercial360-onda3-list-search-392b` |
+| Base | `origin/cursor/comercial360-onda3-simular-dirty-392b` tip `01ee61de` (#144) |
+| Tip | `dbe72104` (`dbe7210426534a2f6571b2a1dfaf25d68d712648`) |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-dirty-392b...cursor/comercial360-onda3-list-search-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-list-search-392b` |
+| Escopo | Extrai sanitize/normalize/buildParams/queryKey/empty-message na policy existente; wire `OrcamentosTab` + `PedidoCanonicoPanel`; meta `listSearchFilterFailClosed`; sem migration |
+| Meta | `listSearchFilterFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy **11/11**; orcamento/alcada/simulacao/pedido UI **58/58**; runtime07b+08c+09 **23/23**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | empty≠error base #136; dirty #144; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
 
-## CURSOR — vigília #178 (2026-10-01T06:20Z)
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list/orcamento + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `a8611ebc` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico de escolha: #136 cobria empty≠error básico; faltava sanitize/normalize de filtros, queryKey com filters na policy, empty message filtrado vs sem filtro no Pedido, e meta `listSearchFilterFailClosed` — maior gap seguro pós-#144 sem tocar #47/#52–#62.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T06:04Z)
+## LOTE CURSOR — simular-venda dirty-state fail-closed (pós-#143) (2026-09-29T18:05Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `35ea8209` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+| Choice | **A** Simular-venda dirty-state: limpa preview/agenda ao mudar condição/itens/promo; exige re-simular antes de salvar (fail-closed UI+tests) |
+| Branch | `cursor/comercial360-onda3-simular-dirty-392b` |
+| Base | `origin/cursor/comercial360-onda3-delivery-address-392b` tip `4777b4fb` (#143) |
+| Tip | `9d5235bf` feat / docs tip `1eee761b` (`1eee761bb41e5ea2dc100d1576814a4404381b87`) |
+| Draft PR | **#144** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/144 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-delivery-address-392b...cursor/comercial360-onda3-simular-dirty-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-simular-dirty-392b` |
+| Escopo | Flag `simulacaoDirty` + gate Salvar em Orçamento/Pedido; invalidação só em campos de preço (não observações/Local/Obra); banner dirty; meta `simulacaoDirtyFailClosed`; sem migration |
+| Meta | `simulacaoDirtyFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-simulacao-ui-policy **17/17 PASS**; orcamento/list/alcada/pedido UI **35/35 PASS**; runtime07b+08c+09 **23/23 PASS**; server typecheck PASS; `git diff --check` PASS |
+| Colisão | B list empty≠error já #136; C masters banner #140; delivery #143; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
 
----
+Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
-## CURSOR — vigília #178 (2026-10-01T05:48Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `c508c2bb` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico de escolha: limpeza de preview já existia, mas **Salvar seguia liberado** sem re-simular — maior gap seguro pós-#143. B/C já cobertos no stack.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T05:32Z)
+## LOTE CURSOR — delivery Local/Obra address summary fail-closed (pós-#142) (2026-09-29T17:55Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `189ace24` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **B** Resumo de endereço Local/Obra após seleção (fail-closed se HTTP get falhar) |
+| Branch | `cursor/comercial360-onda3-delivery-address-392b` |
+| Base | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` tip `d7871c23` (#142) |
+| Tip | `d65d9618` (`d65d961891b84a04e8146b2f76179d02814c0673`) — docs tip `207c26cc`+ |
+| Draft PR | BLOCKED createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-parcela-schedule-ui-392b...cursor/comercial360-onda3-delivery-address-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-delivery-address-392b` |
+| Escopo | Pedido canônico: após Local/Obra, `getLocal`/`getObra` (+ getLocal do principal) montam resumo; erro/loading bloqueia Salvar; listagem Local/Obra 403/5xx ≠ empty; reusa clients nested; sem migration |
+| Meta | `deliveryAddressSummaryFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-cliente-local-obra UI/client + pedido/list/simulação — **46/46 PASS**; runtime07b+08c+09 — **23/23 PASS**; `server` typecheck PASS; `git diff --check` PASS |
+| Colisão | A search/filter e C simular dirty já cobertos no stack #126–#142; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 **ou** polish independente fora do stack |
 
-## CURSOR — vigília #178 (2026-10-01T05:17Z)
+Arquivos: `comercialClienteLocalObraHttpUiPolicy.js`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests local-obra UI + runtime07b/08c/09, `STATUS_DO_PROJETO.md`, `docs/HANDOFF_ATUAL.md`.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `8ea372f9` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico de escolha: **A** listagem Orçamento/Pedido já tem filtros server-side + `queryKey` com filtros+tenant + empty≠error (`comercialListHttpUiPolicy` / #136). **C** botão Simular + invalidação dirty (limpa preview ao mudar condição/itens/promo) já no stack pós-#116/#130/#142. **B** era o maior gap seguro: pickers Local/Obra existiam sem resumo de endereço pós-seleção.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T05:01Z)
+## LOTE CURSOR — parcela schedule preview fail-closed (pós-#140) (2026-09-29T17:45Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `a5b6ca63` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+| Choice | **A** Parcela schedule preview UI após simular-venda / resolução de condição |
+| Branch | `cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Base | `origin/cursor/comercial360-onda3-masters-banner-392b` tip `f5009c7c` (#140) |
+| Tip | `ad927286` (`ad927286f533379abd7c7aa5abe70a2ac4354193`) — docs tip `bc5c4595`+ |
+| Draft PR | **#142** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/142 createPullRequest — compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-masters-banner-392b...cursor/comercial360-onda3-parcela-schedule-ui-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-parcela-schedule-ui-392b` |
+| Escopo | Agenda read-only do servidor (ordem/dias/%/valor/vencimento) após simular; template #/dias/% pós-condição; fail-closed se agenda ausente/inválida; reusa `comercialParcelaSchedulePolicy` via resposta simular; `OrcamentosTab` + `PedidoCanonicoPanel`; sem migration |
+| Meta | `parcelaSchedulePreviewFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-simulacao-ui-policy 15/15; orcamento+pedido UI 32/32; list-http-ui 8/8; runtime07b 13/13; runtime08c+09 10/10; `git diff --check` PASS |
+| Colisão | B convert UX já em #133/#134; margem #47 OPEN; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
 
----
-
-## CURSOR — vigília #178 (2026-10-01T04:45Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `34276f74` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Arquivos: `comercialSimulacaoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests simulacao + runtime07b/08c/09, `STATUS_DO_PROJETO.md`.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T04:30Z)
+## LOTE CURSOR — masters picker loading/error banner fail-closed (pós-#139) (2026-09-29T17:35Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `4f51ed1a` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+| Choice | **C** Condicao/Tabela/Produto (+Cliente) HTTP picker loading + error banner fail-closed |
+| Branch | `cursor/comercial360-onda3-masters-banner-392b` |
+| Base | `origin/cursor/comercial360-onda3-snapshot-reload-392b` tip `3da72df5` (#139) |
+| Tip | `ec9dcb21` (`ec9dcb210e3adafb6b2929b68122ae7eb2f0c605`) |
+| Draft PR | **#140** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/140 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-snapshot-reload-392b...cursor/comercial360-onda3-masters-banner-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-masters-banner-392b` |
+| Escopo | Pickers Cliente/Condição/Produto/Tabela nunca empty silencioso em 403/5xx; loading placeholder; banner + retry na lista e no formulário; Salvar bloqueado enquanto masters loading/erro; sem migration |
+| Meta | `mastersPickerFailClosed` + note preserva **Pedido backend HTTP is active** |
+| Testes | comercial-list-http-ui-policy + condicao/tabela/produto/orcamento/pedido UI — **46/46 PASS**; runtime07b+08c+09 meta — **23/23 PASS**; `git diff --check` PASS |
+| Colisão | Sem Codex/#104/#48; sem merge/VPS; sem 025–028; EXECUCAO_PARALELA + Regra-Mãe |
+| Próximo | Margem UI **pós-#47** **ou** Onda 4 slice sem 025–028 |
 
----
-
-## CURSOR — vigília #178 (2026-10-01T04:14Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `df06c2f4` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Arquivos: `comercialListHttpUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, `server/src/api/router.ts`, tests list-policy + runtime07b/08c/09, `STATUS_DO_PROJETO.md`.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T03:58Z)
+## LOTE CURSOR — snapshot reload pós-save (pós-#138) (2026-09-29T17:25Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `06a20f29` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+| Choice | **B** Pedido/Orçamento reload after save prova snapshots (condição/promo/tabela) — A colide com #47 margem/CostPort aberto |
+| Branch | `cursor/comercial360-onda3-snapshot-reload-392b` |
+| Base | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` tip `90a76433` (#138) |
+| Tip | `953ca272` (`953ca272e365dbd22aff22d823065c67425e9b67`) — feat `0acbec43` |
+| Draft PR | **#139** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/139 `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-alcada-ui-failclosed-392b...cursor/comercial360-onda3-snapshot-reload-392b?expand=1 |
+| Push | `origin/cursor/comercial360-onda3-snapshot-reload-392b` |
+| Escopo | Após create/update, formulário permanece aberto e recarrega snapshots persistidos (condição+tabela+promo); badges Persistido; sem migration |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Testes | `node --test` policies simulacao/orcamento/pedido/condicao/tabela — **45/45 PASS** |
+| Colisão | A) margem UI → #47 OPEN CostPort; anexos/PDF #52–#62; sem Codex/#104/#48; sem merge/VPS; sem 025–028 |
+| Próximo | Margem UI **pós-#47** **ou** masters loading/error banner (C) **ou** Onda 4 slice sem 025–028 |
 
-## CURSOR — vigília #178 (2026-10-01T03:43Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `9e9d6def` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Arquivos: `comercialSimulacaoUiPolicy.js`, `orcamentoUiPolicy.js`, `pedidoUiPolicy.js`, `OrcamentosTab.jsx`, `PedidoCanonicoPanel.jsx`, tests simulacao/orcamento/pedido.
 
 ---
-
-## CURSOR — vigília #178 (2026-10-01T03:27Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `5e2de496` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
 
----
+## OPINIÃO CURSOR — #138 tip + escolha B snapshot-reload (2026-09-29T17:25Z)
 
-## CURSOR — vigília #178 (2026-10-01T03:12Z)
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #138 | `90a76433` | pendente | alçada desconto UI fail-closed |
+| próximo | `cursor/comercial360-onda3-snapshot-reload-392b` | — | Reload pós-save prova snapshots round-trip |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `46cb7053` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: #47 (margem CostPort) ainda OPEN — UI margem adiada. Reload após save era gap: form fechava e não mostrava snapshots persistidos. Sem migration. EXECUCAO_PARALELA + Regra-Mãe.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T02:56Z)
+## LOTE CURSOR — tip alçada UI fail-closed (pós-#136) (2026-09-29T17:16Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `22266c1f` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+| Tip | `dcde4cef` (`dcde4ceff12c9e027d57a282b27d5b571c7f07c7`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Base | `#136` `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Draft PR | **#138** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/138 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
 
 ---
-
-## CURSOR — vigília #178 (2026-10-01T02:41Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `6ced22e0` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
 
----
+## OPINIÃO CURSOR — #136 tip + alçada UI fail-closed (2026-09-29T17:15Z)
 
-## CURSOR — vigília #178 (2026-10-01T02:25Z)
+| PR | Tip | CI | Escopo |
+|---|---|---|---|
+| #136 | `2db1a38d` | pendente | List HTTP fail-closed + update CANCELADO |
+| próximo | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` | — | Desconto alçada UI fail-closed + save idempotency |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `4ae34a03` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Diagnóstico: Onda 4 anexos/PDF já em PRs abertos #52–#62 — **não reimplementar**. Escolha: alçada desconto UI fail-closed (backend #46 já merged; UI só badge de simulação). Sem migration. Sem Codex/#104/#48. Sem merge/VPS.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T02:09Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `de2ea798` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
-
----
+## LOTE CURSOR — Desconto alçada UI fail-closed (pós-#136) (2026-09-29T17:15Z)
 
-## CURSOR — vigília #178 (2026-10-01T01:54Z)
+| Etapa | Estado |
+| --- | --- |
+| Choice | **Desconto alçada UI fail-closed** (+ trava save anti duplo-clique) — anexos/PDF colidem com #52–#62; margem #47 em stack separada |
+| Implementado | **SIM** — `comercialDescontoAlcadaUiPolicy`; Alert + Salvar disabled; create sem autoaprovação; HTTP `DESCONTO_ALCADA_DENIED` mapeado; meta `descontoAlcadaUiFailClosed` / `saveIdempotency`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — comercial-desconto-alcada-ui-policy 13/13; comercial-list-http-ui-policy 6/6; runtime08c 6/6; runtime09-pedido-http 4/4 (arquivo completo 10/10); `git diff --check` PASS |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#136` tip `2db1a38d` (`cursor/comercial360-onda3-list-failclosed-392b`) |
+| Branch | `cursor/comercial360-onda3-alcada-ui-failclosed-392b` |
+| Draft PR | **#143** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/143 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-list-failclosed-392b...cursor/comercial360-onda3-alcada-ui-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + descontoAlcadaUiFailClosed / saveIdempotency |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 (sem migration neste lote) |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `4f8c6593` (antes `790e4be1`) — ainda candidata; CI SUCCESS |
-| Delta | `Mantém validade futura no ensaio R08C de auditoria` |
-| Ação | Sem tip-port; sem revisão consolidada FINAL |
-| Expedição #197 | HEAD `f63cb4af` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+### Arquivos
 
----
+- `src/components/comercial/comercialDescontoAlcadaUiPolicy.js` (novo — espelho UI da política #46)
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `src/components/comercial/comercialListHttpUiPolicy.js` (map DESCONTO_ALCADA_DENIED)
+- `server/src/api/router.ts` (meta + note)
+- `tests/comercial-desconto-alcada-ui-policy.test.js`
+- `tests/comercial-list-http-ui-policy.test.js`
+- `server/tests/runtime08c-orcamento-http.test.ts` / `runtime09-pedido-http.test.ts` / `runtime07b.test.ts`
 
-## CURSOR — vigília #178 (2026-10-01T01:34Z)
+### Próximo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `145b8f1f` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Margem preview persistência de exibição (após #47 na stack) **ou** Onda 4 anexos/PDF só se stack #52+ mergear. Sem merge/VPS.
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T01:19Z)
+## LOTE CURSOR — tip list-failclosed (draft PR #136) (2026-09-29T17:06Z)
 
 | Campo | Valor |
 |---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `2c124b27` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+| Tip | `3880793b` (`3880793be2e741e2320fd25469d3c59ce3b7063f`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Base | `#135` `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Draft PR | **#136** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/136 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** |
+| Push | `origin/cursor/comercial360-onda3-list-failclosed-392b` |
 
 ---
 
-## CURSOR — vigília #178 (2026-10-01T01:03Z)
+> CI fix 2026-09-29T17:18Z: `sanitizeObservacoesText` sem regex C0 (eslint `no-control-regex`).
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `fca34008` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+## LOTE CURSOR — List fail-closed HTTP + update CANCELADO (pós-#135) (2026-09-29T17:05Z)
 
----
+| Etapa | Estado |
+| --- | --- |
+| Choice | **A** (+ **C**) — Pedido/Orçamento list empty-state HTTP fail-closed (403/5xx ≠ silent empty); queryKey groupId+empresaId; update bloqueado quando CANCELADO; observacoes sanitizadas no write; sem migration |
+| Implementado | **SIM** — `comercialListHttpUiPolicy`; painéis canônicos; schemas observacoes; meta `listFailClosed` / `updateBlockedWhenCancelled`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — comercial-list-http-ui-policy + UI pedido/orc 23/23; runtime09 security+http 10/10; 08c http 6/6; runtime07b 13/13; `server:typecheck` PASS; `git diff --check` PASS |
+| CI | tip `3880793b` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#135` tip `5b559c9a` (`cursor/comercial360-onda3-pedido-cancel-392b`) |
+| Branch | `cursor/comercial360-onda3-list-failclosed-392b` |
+| Draft PR | **#145** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/145 — abrir via compare: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-pedido-cancel-392b...cursor/comercial360-onda3-list-failclosed-392b?expand=1 |
+| Meta | note preserva **Pedido backend HTTP is active** + listFailClosed / updateBlockedWhenCancelled / cancel+convert flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
-## CURSOR — vigília #178 (2026-10-01T00:48Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `4f92d109` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+### Arquivos (Cursor — lote pós-#135)
 
----
+- `src/components/comercial/comercialListHttpUiPolicy.js` (extração: resolveHttpListViewState / formatComercialHttpError / sanitizeObservacoesText)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` / `OrcamentosTab.jsx`
+- `src/components/comercial/pedidoUiPolicy.js` / `orcamentoUiPolicy.js`
+- `server/src/repositories/pedidoTypes.ts` / `orcamentoTypes.ts` / `pedidoService.ts` (conversion observacoes)
+- `server/src/api/router.ts` (meta + note)
+- `tests/comercial-list-http-ui-policy.test.js` + ajustes UI policy
+- `server/tests/runtime09-pedido-security.test.ts` / `runtime09-pedido-http.test.ts` / `runtime08c-orcamento-http.test.ts` / `runtime07b.test.ts`
 
-## CURSOR — vigília #178 (2026-10-01T00:31Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `8256f029` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+- Listagem HTTP: `isError` → erro + retry; nunca empty em 403/5xx/rede; masters.isError banner; queryKey com groupId+empresaId.
+- Pedido update após CANCELADO → 409 `PEDIDO_STATE_CONFLICT` (simetria cancel).
+- Observações: strip controles/`<>`/javascript no payload UI e Zod write.
+- Sem migration; sem Codex/#104/#48; sem merge/VPS.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-10-01T00:15Z)
+- Onda 4 slice sem colisão 025–028 (anexos/PDF/versão se 032+ ou sem migration); sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `6c8fcc7a` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Pilha: #114 → … → #134 → #135 → **este lote**.
 
 ---
-
-## CURSOR — vigília #178 (2026-10-01T00:00Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `75401edc` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
 
----
+## LOTE CURSOR — Pedido cancel fail-closed symmetry (pós-#134) (2026-09-29T17:05Z)
 
-## CURSOR — vigília #178 (2026-09-30T23:44Z)
+| Etapa | Estado |
+| --- | --- |
+| Choice | **Pedido cancel** — simetria fail-closed com Orçamento cancel (sem migration) |
+| Implementado | **SIM** — `requireOpen` + cancel RBAC/audit; UI disable unauthorized/cancelled; meta `cancelByState`; note + **Pedido backend HTTP is active** |
+| Testado | **SIM** — runtime09 security+http+service 13/13; 08c http/security 12/12; convert-snapshot+preco 13/13; UI pedido/orc 15/15; runtime07b meta; `server:typecheck` PASS; `git diff --check` PASS |
+| CI | tip `c2bfb17c` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#134` tip `fa362ff0` (`cursor/comercial360-onda3-convert-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-pedido-cancel-392b` |
+| Draft PR | **#135** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/135 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-convert-snapshot-392b...cursor/comercial360-onda3-pedido-cancel-392b?expand=1 |
+| Tip | `c2bfb17c` |
+| Meta | note preserva **Pedido backend HTTP is active** + `cancelByState` / convert+validade flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `003bbaa9` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+### Arquivos (Cursor — lote pós-#134)
 
----
+- `server/src/services/pedidoService.ts` (`requireOpen`, cancel fail-closed documentado)
+- `server/src/api/router.ts` (meta `pedido.cancelByState` + note cancel fail-closed)
+- `src/components/comercial/pedidoUiPolicy.js` / `PedidoCanonicoPanel.jsx` (disable + guard)
+- `server/tests/runtime09-pedido-security.test.ts` (novo, simetria 08c)
+- `server/tests/runtime09-pedido-http.test.ts` / `runtime08c-orcamento-http.test.ts` / `runtime07b.test.ts`
+- `tests/pedido-ui-policy.test.js`
 
-## CURSOR — vigília #178 (2026-09-30T23:29Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `763e4747` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+- Cancel Pedido: permissão `cancelar` após tenant; só `EM_ABERTO`; auditoria before/after na transação; repetição/já cancelado → 409; isolamento tenant → 404; RBAC deny → 403.
+- UI: botão cancel sempre visível no painel canônico, **disabled** sem permissão ou status ≠ EM_ABERTO; `data-permission="Comercial.pedido.cancelar"`.
+- Sem migration; sem módulo paralelo; convert-snapshot #134 preservado.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T23:13Z)
+- Onda 4 slice sem colisão 025–028 **ou** list empty-state HTTP Pedido; sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `b62ab5bf` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Pilha: #114 → … → #133 → #134 → **este lote**.
 
 ---
-
-## CURSOR — vigília #178 (2026-09-30T22:58Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `97ed77a5` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
 
----
+## LOTE CURSOR — Convert snapshot harden residual (pós-#133) (2026-09-29T16:45Z)
 
-## CURSOR — vigília #178 (2026-09-30T22:43Z)
+| Etapa | Estado |
+| --- | --- |
+| Choice | **A residual** — harden Orçamento→Pedido copy/verify ALL snapshots fail-closed pós-031 |
+| Implementado | **SIM** — `comercialConvertSnapshotPolicy`; wire convert; UI hint; meta `convertSnapshotFailClosed`; sem migration; validade #133 preservada |
+| Testado | **SIM** — convert-snapshot 8/8 + condição/promo/tabela/validade + 08c/09/onda2 60/60 + UI 11/11 + runtime07b 13/13; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `01521a92` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#133` tip `70576db7` (`cursor/comercial360-onda3-orc-validade-392b`) |
+| Branch | `cursor/comercial360-onda3-convert-snapshot-392b` |
+| Draft PR | **#134** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/134 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-orc-validade-392b...cursor/comercial360-onda3-convert-snapshot-392b?expand=1 |
+| Tip | `01521a92` |
+| Meta | note preserva **Pedido backend HTTP is active** + `convertSnapshotFailClosed` / validade flags intactos |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028/032 |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `3b0d29e6` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+### Arquivos (Cursor — lote pós-#133)
 
----
+- `server/src/services/comercialConvertSnapshotPolicy.ts` (extração)
+- `server/src/services/pedidoService.ts` / `server/src/api/router.ts`
+- `src/components/comercial/orcamentoUiPolicy.js` / `OrcamentosTab.jsx`
+- `server/tests/runtime-onda3-convert-snapshot.test.ts` + fixtures condição/promo + meta 07b/08c
+- `tests/orcamento-ui-policy.test.js`
 
-## CURSOR — vigília #178 (2026-09-30T22:27Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `413d797f` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+- Convert copia condição (codigo+nome+parcelas), promoção e tabela (codigo+nome); pós-031 `tabela_preco_id` sem snap → 422; condição parcial → 422; legado sem nenhum campo de condição ainda resolve live.
+- UI: hint + disable convert quando snapshot incompleto; não enfraquece validade #133.
+- Multiempresa/RBAC/auditoria preservados; sem migration.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T22:12Z)
+- Onda 4 slice sem colisão 025–028 **ou** Pedido cancel fail-closed symmetry / list empty-state HTTP; sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `cd44a1a3` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Pilha: #114 → … → #131 → #133 → **este lote**.
 
 ---
-
-## CURSOR — vigília #178 (2026-09-30T21:56Z)
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `00ef54bc` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+## LOTE CURSOR — Validade Orçamento fail-closed (pós-#131) (2026-09-29T16:50Z)
 
----
+| Etapa | Estado |
+| --- | --- |
+| Choice | **B** — `validade_em` fail-closed em create/update/convert (A já sólido em #126/#129/#131) |
+| Implementado | **SIM** — policy `comercialOrcamentoValidadePolicy`; wire Orçamento/Pedido convert; UI hint/badge/bloqueio save+convert; sem migration |
+| Testado | **SIM** — validade 8/8 + UI policy 10/10 + regressões snapshot/HTTP meta 35/35; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `de369c4b` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#131` tip `1682f686` (`cursor/comercial360-onda3-tabela-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-orc-validade-392b` |
+| Draft PR | **#133** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/133 — ManagePullRequest indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-tabela-snapshot-392b...cursor/comercial360-onda3-orc-validade-392b?expand=1 |
+| Tip | `de369c4b` (feat `53aeda8d`) |
+| Meta | note preserva **Pedido backend HTTP is active** + `validadeFailClosed` / `convertValidadeFailClosed` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; sem migrations 025–028 |
 
-## CURSOR — vigília #178 (2026-09-30T21:41Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `3f951725` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+### Arquivos (Cursor — lote pós-#131)
 
----
+- `server/src/services/comercialOrcamentoValidadePolicy.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/orcamentoUiPolicy.js` / `OrcamentosTab.jsx`
+- `server/tests/runtime-onda3-orcamento-validade.test.ts` + meta asserts `runtime07b` / `runtime08c`
+- `tests/orcamento-ui-policy.test.js`
 
-## CURSOR — vigília #178 (2026-09-30T21:23Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `bd449c00` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+- Fail-closed 422 `ORCAMENTO_VALIDADE_EXPIRADA` quando `validade_em < now` em create/update/convert.
+- UI: hint no formulário, badge Expirado na lista, disable convert/save quando expirado.
+- Multiempresa/RBAC/auditoria preservados; sem migration.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T21:08Z)
+- Onda 4 slice sem colisão 025–028 **ou** harden convert snapshots legado (A residual); sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `5b1cd6b4` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Pilha: #114 → … → #130 → #131 → **este lote**.
 
 ---
-
-## CURSOR — vigília #178 (2026-09-30T20:52Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `85e08072` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
 
----
+## LOTE CURSOR — TabelaPreço codigo+nome snapshot (pós-#130) (2026-09-29T16:45Z)
 
-## CURSOR — vigília #178 (2026-09-30T20:37Z)
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — migration aditiva `031_orcamento_pedido_tabela_snapshot.sql` (codigo+nome); create/update/get/convert fail-closed via `comercialTabelaSnapshot`; UI reload; harness stubs com codigo/nome |
+| Testado | **SIM** — tabela snapshot 8/8 + migration 1/1 + condição/promo/onda2/pedido/runtime01/07b/08c 72/72 + UI policy 8/8; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `07561d2d` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#130` tip `080dd951` (`cursor/comercial360-onda3-simular-persist-392b`) |
+| Branch | `cursor/comercial360-onda3-tabela-snapshot-392b` |
+| Draft PR | **#131** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/131 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-simular-persist-392b...cursor/comercial360-onda3-tabela-snapshot-392b?expand=1 |
+| Tip | `07561d2d` |
+| Meta | note preserva **Pedido backend HTTP is active** + `tabelaSnapshot` / snapshot TabelaPreco |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe; numeração **031** (evita 025–028) |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `18506389` CI SUCCESS |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+### Arquivos reservados (Cursor — lote pós-#130)
 
----
+- `server/migrations/031_orcamento_pedido_tabela_snapshot.sql`
+- `server/src/services/comercialTabelaSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts` + inMemory/postgres repos
+- `server/src/app.ts` / `server/src/api/router.ts` (meta note + `tabelaSnapshot`)
+- `src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-tabela-snapshot*.test.ts` + stubs/harness
 
-## CURSOR — vigília #178 (2026-09-30T20:28Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição #197 | HEAD `1c9d0e02` CI SUCCESS (pacote `7d4f445e`) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+- Snapshot imutável codigo+nome TabelaPreco em Orçamento/Pedido (espelha padrão condição 029).
+- Fail-closed: tabela_preco_id sem codigo/nome → 422; conversão copia snapshot do Orçamento (não-retroatividade).
+- Multiempresa/RBAC/auditoria preservados; auditoria inclui `tabela_preco_*_snapshot`.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 + CI #197 (2026-09-30T20:23Z)
+- Onda 4 slice sem colisão 025–028 **ou** próximo item P0/Comercial 360 autorizado; sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port; sem revisão consolidada FINAL |
-| Expedição #197 | HEAD `7d4f445e` — CI frontend+backend **SUCCESS** (persistência fail-closed) |
-| Homologação SPA | Pendente |
-| Merge/VPS | **Bloqueado** |
-| Próximo | Vigília 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → #130 → **este lote**.
 
 ---
-
-## CURSOR — #197 persistência/recuperação + integração telas (2026-09-30T20:20Z)
-
-| Campo | Valor |
-|---|---|
-| Tip | **#197** `cursor/expedicao-integracao-romaneio-canonico-392b` |
-| Objetivo | Provar persistência/recuperação Pedido→separação→romaneio→despacho→parcial/total; UI sem sucesso parcial |
-| Mudança | Comprovante (Entrega→Pedido→estoque); RomaneioForm/Integracao/Ocorrência/Reversa audit fail-closed; `logistica_reversa` na devolução; parcial idempotente; testes `expedicao-integracao-telas` |
-| Testes | policy+fluxo+integração telas **41/41** |
-| Doc | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` (cenários recuperação + homologação) |
-| Codex #178 | HEAD `790e4be1` ainda “Correção candidata” — **sem tip-port** |
-| Homologação SPA | Pendente (roteiro na doc) |
-| Merge/VPS | **Bloqueado** |
 
-### Quadro
+## LOTE CURSOR — simular-venda → persist desconto/total (pós-#129) (2026-09-29T16:30Z)
 
-| Pronto p/ integração | Falta | Bloqueios |
-|---|---|---|
-| Persistência multi-etapa fail-closed + testes telas | Homologação humana | #178 FINAL |
-| Compensação documentada | Tip Comercial / externas | Merge/VPS |
+| Etapa | Estado |
+| --- | --- |
+| Choice | **B** — servidor aplica promoção/desconto/total no create/update (fail-closed; UI não inventa totais) |
+| Implementado | **SIM** — `applyPromocaoOnPersist` (idempotente com UI pós-simular); wire Orçamento/Pedido; UI `mergeSimulacaoBeforeSave` + `resolveDisplayTotals`; sem migration nova |
+| Testado | **SIM** — promo snapshot 15/15 + runtime08c/simular/condição 19/19 + UI simulação 10/10 + orçamento/pedido UI 12/12 + runtime07b meta PASS; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip `eef875b7` |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | `#129` tip `6f42f061` (`cursor/comercial360-onda3-promocao-snapshot-392b`) |
+| Branch | `cursor/comercial360-onda3-simular-persist-392b` |
+| Draft PR | **#130** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/130 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; ManagePullRequest indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-promocao-snapshot-392b...cursor/comercial360-onda3-simular-persist-392b?expand=1 |
+| Tip | `eef875b7` (feat `f51f021c`) |
+| Meta | note preserva **Pedido backend HTTP is active** + `simularPersistFailClosed` / `persistOnWrite` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; EXECUCAO_PARALELA + Regra-Mãe |
 
----
-
-## CURSOR — vigília #178 (2026-09-30T20:08Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+### Arquivos reservados (Cursor — lote pós-#129)
 
----
+- `server/src/services/comercialPromocaoPolicy.ts` (`applyPromocaoOnPersist` / strip idempotente)
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-promocao-snapshot.test.ts` / `runtime08c-orcamento-http.test.ts`
+- `tests/comercial-simulacao-ui-policy.test.js`
 
-## CURSOR — vigília #178 (2026-09-30T20:01Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+- Sem migration: colunas 030 bastam; servidor reaplica promoção no write (mesmo contrato do `simular-venda`).
+- Idempotente: UI que já aplicou simulação não dobra desconto.
+- Totais do formulário: prioriza preview do servidor; payload continua sem `total` inventado.
+- Multiempresa/RBAC/auditoria preservados.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T19:58Z)
+- ~~Snapshot código/nome TabelaPreco (**031**)~~ → lote seguinte nesta pilha.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `790e4be1` (antes `0596a763`) — ainda candidata |
-| Delta | `Bloqueia aprovação sem confirmação da reserva` |
-| Ação | Sem tip-port; sem revisão consolidada |
-| Expedição | #197 tip `aa887013` CI SUCCESS (pacote fechado) |
-| Próximo | Vigília FINAL 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → #129 → **#130**.
 
 ---
-
-## CURSOR — pacote Expedição fechado no tip #197 (2026-09-30T19:55Z)
 
-| Campo | Valor |
-|---|---|
-| Tip | **#197** — pacote grande conclusão fluxo |
-| Doc | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
-| Lacunas | filtro cliente coerente listagem/mapa/romaneio; devolução assert; qtd pendentes; compensação≠atômico |
-| Testes | expedicao-fluxo + entrega-policy **32/32** |
-| Codex #178 | ainda candidata `0596a763` — sem tip-port |
-| Homologação SPA | **Pendente** |
-| Externas | WhatsApp/roteirizador/assinatura serviço — **pendentes explícitas** |
-| Merge/VPS | **Bloqueado** |
+## LOTE CURSOR — promoção snapshot Orçamento/Pedido (pós-#127) (2026-09-29T16:15Z)
 
-### Quadro
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `030_orcamento_pedido_promocao_snapshot.sql` (bps+cupom+aplicada); create/update/get/convert validam via `comercialPromocaoPolicy` fail-closed; UI envia refs no save; meta preserva **Pedido backend HTTP is active** |
+| Testado | **SIM** — promo snapshot 12/12 + migration 1/1 + condição 7/7 + Onda2 promo/simular 15/15 + orcamento/pedido service+http+runtime01 64/64 PASS; UI policy orçamento/pedido/simulação 20/20 PASS; `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip a empurrar |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#127` `cursor/comercial360-onda3-produto-http-392b` (tip `8fba0782`) |
+| Branch | `cursor/comercial360-onda3-promocao-snapshot-392b` |
+| Draft PR | **#129** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/129 — `gh pr create` → `Resource not accessible by integration (createPullRequest)`; `ManagePullRequest` indisponível |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-produto-http-392b...cursor/comercial360-onda3-promocao-snapshot-392b?expand=1 |
+| Tip | `7dbfe5cf` |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; 030 (029=condição; 025–028 reservados #50/#92) |
 
-| Pronto p/ integração | Falta | Bloqueios |
-|---|---|---|
-| Fluxo 1–6 + filtros coerentes + testes | Homologação humana | #178 FINAL |
-| Compensação documentada | Tip Comercial | Merge/VPS/import Empresas |
+### Arquivos reservados (Cursor — lote pós-#127)
 
----
+- `server/migrations/030_orcamento_pedido_promocao_snapshot.sql`
+- `server/src/services/comercialPromocaoPolicy.ts` (assert/build/persist refs)
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts` + inMemory/postgres repos
+- `server/src/app.ts` / `server/src/api/router.ts` (meta note + flags)
+- `src/components/comercial/orcamentoUiPolicy.js` / `pedidoUiPolicy.js` / `comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-promocao-snapshot*.test.ts` + UI tests
 
-## CURSOR — vigília #178 (2026-09-30T19:52Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Homologação SPA Expedição | Pendente |
-| Próximo | Vigília 15min |
+- Sem colunas prévias de promoção → migration **030** aditiva.
+- Fail-closed: promoção no payload exige config ativa, cupom allowlist, bps ≤ teto e desconto de linha ≥ bps reclamado.
+- Conversão Orçamento→Pedido copia snapshot de promoção (não-retroatividade).
+- Multiempresa/RBAC/auditoria preservados; auditoria inclui `promocao_*`.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T19:49Z)
+- Consistência simular-venda → desconto/total persistido (choice B) **ou** Onda 4 slice sem colisão #50/#92; sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → #127 → **este lote**.
 
 ---
 
-## CURSOR — vigília #178 (2026-09-30T19:46Z)
+## LOTE CURSOR — #127 merge tip #126 CI fix stub à-vista (2026-09-29T16:00Z)
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — merge de `45195749` (#126) em `cursor/comercial360-onda3-produto-http-392b` para herdar stub `codigo`+`nome` no harness à-vista |
+| Testado | **SIM** no #126 — avista-http 4/4 + snapshot 7/7 + avista unit 7/7 + desconto/margem HTTP 12/12; revalidar CI #127 |
+| CI | tip pós-merge empurrado; aguardar verde em #127 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 |
+| Base | `#126` @ `45195749` |
 
 ---
-
-## CURSOR — vigília #178 (2026-09-30T19:39Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
 
----
+## LOTE CURSOR — Produto frontendHttp piloto (pós-#126) (2026-09-29T15:55Z)
 
-## CURSOR — vigília #178 (2026-09-30T19:36Z)
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `Produto` em `HTTP_PILOT_ENTITIES`; `http.produtos.list/get`; meta `produto.frontendHttp=true`; Orçamento/Pedido carregam itens via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy Produto + http-api-client/cliente/tabela/condicao/local-obra (52+27) + runtime03/04/07b (43/43 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | tip atualizado após merge do CI fix #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#126` `cursor/comercial360-onda3-condicao-snapshot-392b` (tip `45195749`) |
+| Branch | `cursor/comercial360-onda3-produto-http-392b` @ feat `68f78585` |
+| Draft PR | **#127** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/127 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-condicao-snapshot-392b...cursor/comercial360-onda3-produto-http-392b?expand=1 |
+| Coordenação | Sem Codex/#104/#48; sem merge/VPS; sem CRM paralelo |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição | #197 CI OK; homologação SPA pendente |
-| Próximo | Vigília 15min |
+### Arquivos reservados (Cursor — lote pós-#126; não editar em Codex/#104/#48)
 
----
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Produto)
+- `src/api/httpApiClient.js` (`produtos` list/get + entity piloto)
+- `server/src/api/router.ts` (meta `produto.frontendHttp` + pilot; note preserva **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialProdutoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx` (picker HTTP)
+- `tests/comercial-produto-http-client.test.js` / `comercial-produto-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime03.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_03.md`
 
-## CURSOR — vigília #178 (2026-09-30T19:31Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` estável — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+- Reutiliza API R03 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; assert cross-tenant na UI policy.
+- RBAC Cadastros.produto / Comercial.orcamento|pedido.visualizar fail-closed no seletor.
+- Form V22 permanece com opt-in `VITE_ERP_HTTP_PRODUTO` via `preparedEntities` (DAM/workflow).
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T19:27Z)
+- Snapshot de promoção / refs persistidas **ou** cutover restante de pickers legados; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `0596a763` (antes `49ec5d97`) — ainda candidata; CI SUCCESS |
-| Delta | `Bloqueia histórico antes da migration 025 e da 026` |
-| Ação | Sem tip-port; sem revisão consolidada |
-| Expedição | #197 tip OK (candidata #192–#197) |
-| Próximo | Vigília FINAL 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → #126 → **este lote**.
 
 ---
-
-## CURSOR — vigília #178 (2026-09-30T19:21Z)
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `49ec5d97` (antes `9df73886`) — ainda candidata; CI SUCCESS |
-| Delta | `Amplia reconciliação agregada do preflight 026` |
-| Ação | Sem tip-port; sem revisão consolidada |
-| Expedição | #197 CI SUCCESS tip `7e2fe275` (candidata #192–#197) |
-| Próximo | Vigília FINAL 15min |
+## LOTE CURSOR — CI fix #126 stub à-vista + snapshot condição (2026-09-29T15:55Z)
 
----
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — fixture `comercial-condicao-avista-http` passa a devolver `codigo`+`nome` (+parcelas) no stub de `condicoes.get`, alinhado aos outros HTTP harnesses; path de produção fail-closed intacto |
+| Causa | create Orçamento exige snapshot CondicaoPagamento (`codigo`+`nome`+parcelas); stub à-vista só tinha `id`+`ativo`+parcelas → 422 `ORCAMENTO_CONDICAO_SNAPSHOT_INVALIDO` antes de 403/201/`DESCONTO_INVALIDO` |
+| Testado | **SIM** — `comercial-condicao-avista-http` 4/4 + `comercial-condicao-avista` 7/7 + `runtime-onda3-condicao-snapshot` 7/7 + desconto/margem HTTP 12/12 PASS |
+| CI | tip `45195749` empurrado; aguardar verde em #126 |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Propagação | tip mergeado em `#127` `cursor/comercial360-onda3-produto-http-392b` |
 
-## CURSOR — candidata #192–#197 fechada no tip (2026-09-30T19:20Z)
+### Arquivos
 
-| Campo | Valor |
-|---|---|
-| Tip PR | **#197** HEAD em push deste lote |
-| Doc candidata | `docs/EXPEDICAO_CANDIDATA_INTEGRACAO_192_197.md` |
-| Lacunas fechadas | ComprovanteDigital + OcorrenciasPanel + SeparacaoConferenciaIA na policy; Config exige groupId; teste E2E candidata |
-| Testes | expedicao-fluxo-operacional 16/16 |
-| Codex #178 | ainda candidata `9df73886` — sem tip-port |
-| Homologação SPA | **Pendente** (CI ≠ homologação) |
-| Merge/VPS | **Bloqueado** |
+- `server/tests/comercial-condicao-avista-http.test.ts`
 
-### Quadro objetivo
+### Próximo
 
-| Pronto p/ integração | Falta | Bloqueios reais |
-|---|---|---|
-| Fluxo Pedido→…→pendências (policy+UI) | Homologação humana SPA | #178 FINAL |
-| Isolamento∧, RBAC, unidades, idempotência, rollback, auditoria | Soft∨ residual dashboard/financeiro leitura | Merge/VPS/import Empresas |
-| Stack #192–#197 documentada | Tip Comercial 360 | Autorização merge ordenado |
+- Aguardar CI #126/#127; sem merge/VPS.
 
 ---
 
-## CURSOR — vigília #178 (2026-09-30T19:10Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `9df73886` — ainda candidata; CI SUCCESS |
-| Expedição #197 | CI SUCCESS HEAD `0ac5af04` |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+## LOTE CURSOR — Onda 3 snapshot CondicaoPagamento Orçamento/Pedido (2026-09-29T15:46Z)
 
----
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — choice **A**: migration aditiva `029_orcamento_pedido_condicao_snapshot.sql` (codigo+nome+parcelas JSON + `tabela_preco_id` no Orçamento); create/update/get/convert persistem e recarregam; fail-closed sem parcelas; UI reload do snapshot |
+| Testado | **SIM** — runtime-onda3-condicao-snapshot (+migration) + onda2-preco + 08c orcamento + 09 pedido + runtime01/07b + desconto/margem HTTP + UI policy (94/94 PASS); `server` typecheck PASS; `git diff --check` PASS |
+| CI | **FAIL** tip `2e221def` — 4× à-vista HTTP (stub sem codigo/nome) → corrigido no lote CI fix acima |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#124` `cursor/comercial360-onda3-cliente-local-obra-http-392b` (tip `7c70de69`) |
+| Branch | `cursor/comercial360-onda3-condicao-snapshot-392b` |
+| Draft PR | **#126** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/126 |
+| Coordenação | **025 renumerado para 029** — evita colisão com #50/#92 (`025_pedidos_origem_canal_idempotency` … `028`) |
 
-## CURSOR — #197 wire comprovante/ocorrência canônicos + vigília #178 (2026-09-30T19:08Z)
+### Arquivos reservados (Cursor — lote pós-#124; não editar em Codex/#104/#48)
 
-| Campo | Valor |
-|---|---|
-| Lacuna | `ComprovanteEntregaDigital` / `RegistroOcorrenciaLogistica` sem policy canônica |
-| Mudança | `resolveRegistroEntregaFinal` + asserts create/update nos existentes |
-| Codex #178 | HEAD `9df73886` — ainda candidata; CI SUCCESS |
-| Ação | Sem tip-port; push + CI |
-| Reservados | Pedido legado só side-effect descritivo |
-| Próximo | CI #197; vigília FINAL #178 |
+- `server/migrations/029_orcamento_pedido_condicao_snapshot.sql`
+- `server/src/services/comercialCondicaoSnapshot.ts`
+- `server/src/services/orcamentoService.ts` / `pedidoService.ts`
+- `server/src/repositories/orcamentoTypes.ts` / `pedidoTypes.ts`
+- `server/src/repositories/inMemoryOrcamentoRepository.ts` / `postgresOrcamentoRepository.ts`
+- `server/src/repositories/inMemoryPedidoRepository.ts` / `postgresPedidoRepository.ts`
+- `server/src/api/router.ts` (meta note: snapshot + **Pedido backend HTTP is active**)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `server/tests/runtime-onda3-condicao-snapshot*.test.ts` + stubs runtime08c/09/onda2/alcada + `runtime01`/`runtime07b`
+- `tests/comercial-condicao-http-ui-policy.test.js`
 
-### Quadro
+### Escopo
 
-| Pronto | Falta | Bloqueios |
-|---|---|---|
-| Fluxo ponta a ponta + IntegracaoRomaneio + soft∨ crítico | Soft∨ dashboard/config leitura | #178 FINAL |
-| Comprovante/ocorrência na policy (Detalhes + Logística) | Homologação VPS | Merge/VPS/import Empresas |
+- Somente colunas aditivas; sem DROP/TRUNCATE executável.
+- Snapshot autoridade do servidor (payload não envia snapshot).
+- Multiempresa: tenant triggers atualizados para `tabela_preco_id` no Orçamento.
+- RBAC/auditoria existentes em mutações Orçamento/Pedido; audit inclui campos de snapshot.
+- Conversão Orçamento→Pedido copia snapshot persistido (não-retroatividade).
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T18:57Z)
+- Produto frontendHttp piloto (padrão Condicao/Tabela) **ou** refs de promoção persistidas; sem CRM paralelo; sem Codex/#104/#48; sem merge/VPS.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `9df73886` — ainda “Correção candidata” (**não** final); CI SUCCESS |
-| Ação | Sem tip-port |
-| Expedição | #197 CI SUCCESS `09ada19d` |
-| Próximo | Vigília 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #122 → #124 → **este lote**.
 
 ---
-
-## CURSOR — #197 CI SUCCESS HEAD soft∨ (2026-09-30T18:56Z)
-
-| Campo | Valor |
-|---|---|
-| Draft PR **#197** | CI SUCCESS HEAD `09ada19d` (IntegracaoRomaneio + soft∨ caminho crítico) |
-| Stack | #192→#197 |
-| Codex #178 | ainda candidata `9df73886` — sem tip-port |
-| Próximo | Vigília FINAL #178; residual só dashboard/config leitura |
 
----
+## LOTE CURSOR — #123 ClienteLocal + Obra frontendHttp (2026-09-29T15:45Z)
 
-## CURSOR — #197 CI SUCCESS + soft∨ fluxo + vigília #178 (2026-09-30T18:55Z)
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `ClienteLocal` + `Obra` nested (`/clientes/:id/locais|obras`); Pedido carrega endereço/obra por `cliente_id` fail-closed; Central 360 já via `central-360`; sem migration |
+| Testado | **SIM** — client+policy novos + empresa/http-api-client (33/33) + runtime06a/06b/07b 20/20 (meta Pedido backend HTTP preservado) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#122`/`#121` `cursor/comercial360-onda3-cliente-empresa-http-392b` (tip `d82c7096`) |
+| Branch | `cursor/comercial360-onda3-cliente-local-obra-http-392b` @ feat `a2c59236` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-empresa-http-392b...cursor/comercial360-onda3-cliente-local-obra-http-392b?expand=1 |
+| Draft PR | **#146** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/146 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
-| Campo | Valor |
-|---|---|
-| Draft PR **#197** | CI SUCCESS HEAD `d5b1e199` (+ soft∨ satélites em commit seguinte) |
-| Soft∨→∧ | SeparacaoConferencia base; Ocorrência; Comprovante×2; Notificador; Reversa; Chat; EnvioMsg |
-| Codex #178 | HEAD `9df73886` (delta: vincula transição ao status do serviço) — ainda “Correção candidata” |
-| CI #178 | frontend/concurrency SUCCESS; backend em curso |
-| Ação | Sem tip-port; sem revisão consolidada |
-| Reservados | Pedido/Orçamento/026–035 intactos |
-| Próximo | Push soft∨; CI recheck; vigília FINAL #178 |
-
-### Quadro objetivo
-
-| Item | Status |
-|---|---|
-| Fluxo select→separar→romaneio→despacho→parcial/ocorrência→pendências | **Pronto** (#192–#197) |
-| Isolamento∧ / RBAC / unidades / idempotência / rollback | **Pronto** |
-| Soft∨ no caminho ocorrência/comprovante | **Pronto** (este lote) |
-| Soft∨ dashboards/config/financeiro leitura grupo | Residual deliberado |
-| #178 FINAL / tip Comercial | **Bloqueado** |
-| Merge/VPS/migration/import Empresas | **Bloqueado** |
+### Arquivos reservados (Cursor — lote pós-#122; não editar em Codex/#104/#48)
 
----
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + ClienteLocal + Obra)
+- `src/api/httpApiClient.js` (entity nested + `clientes.listLocais/listObras/getLocal/getObra`)
+- `server/src/api/router.ts` (meta `clienteLocal`/`obra.frontendHttp` + pilot/httpEntities; note preserva Pedido backend HTTP)
+- `src/components/comercial/comercialClienteLocalObraHttpUiPolicy.js`
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (delivery HTTP por cliente)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js` (comentário)
+- `tests/comercial-cliente-local-obra-http-client.test.js` / `comercial-cliente-local-obra-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-empresa-http-client.test.js`
+- `server/tests/runtime06a.test.ts` / `runtime06b.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_06A.md` / `ERP_RUNTIME_06B.md` / `ERP_RUNTIME_05.md`
 
-## CURSOR — Expedição Integração Romaneio canônica (2026-09-30T18:50Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Branch | `cursor/expedicao-integracao-romaneio-canonico-392b` (base tip #196) |
-| Lacuna fechada | `IntegracaoRomaneio` → policy canônica (Pedidos→Entrega→romaneio→despacho→legado) |
-| Docs | `docs/EXPEDICAO_INTEGRACAO_ROMANEIO_CANONICO.md` |
-| Testes | expedicao-fluxo-operacional (+ select/plan/legado/rollback IntegracaoRomaneio) |
-| Stack | #192→#196 + este lote |
-| Codex #178 | ainda candidato — sem tip-port |
-| Reservados | Pedido/Orçamento/026–035/legado intactos; export Empresas não duplicado |
-| Colisão | Sem merge/VPS |
-| Próximo | Draft PR + CI; vigília FINAL #178 |
-
-### Quadro objetivo (integração)
-
-| Item | Status |
-|---|---|
-| Seleção Pedidos/Entregas fail-closed | Pronto (#195/#196 + IntegracaoRomaneio) |
-| Separação/conferência + unidades | Pronto (#196) |
-| Romaneio + despacho + rollback | Pronto (RomaneioForm + IntegracaoRomaneio) |
-| Entrega parcial/total/ocorrência → pendências | Pronto (#195) |
-| Idempotência create/reuse Entrega+Romaneio | Pronto (este lote) |
-| Side-effect Pedido legado | Documentado; mutação UI descritiva; contrato Codex |
-| Tip Comercial 360 / #178 FINAL | **Bloqueado** (aguarda FINAL Codex) |
-| Merge/VPS/migration/import Empresas | **Bloqueado** por política |
+- Reutiliza API R06A/R06B nested já existente; **sem migration**; sem flat list-for-scope.
+- Multiempresa: tenant só em headers; Obra Pedido usa `operacional=true` (exige empresaId).
+- RBAC Cadastros.cliente_local / Cadastros.obra ou Comercial.pedido.visualizar fail-closed no UI.
+- Troca de ClienteEmpresa limpa `cliente_local_id`/`obra_id`. Central 360 blocos locais/obras inalterados (já HTTP via read-model).
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T18:38Z)
+- Snapshot persistido condição/parcelas (**migration** autorizada); sem CRM paralelo.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e5eef59d` — ainda “Correção candidata” (**não** final) |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → #121/#122 → **#123**.
 
 ---
-
-## CURSOR — vigília #178 (2026-09-30T18:33Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e5eef59d` — ainda “Correção candidata” (**não** final) |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
 
----
+## LOTE CURSOR — #121 ClienteEmpresa list-for-scope frontendHttp (2026-09-29T15:35Z)
 
-## CURSOR — vigília #178 (2026-09-30T18:29Z)
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — `GET /api/v1/cliente-empresas` list-for-scope + get by id; piloto HTTP `ClienteEmpresa`; Orçamento/Pedido seleção via HTTP fail-closed; sem migration |
+| Testado | **SIM** — client+policy+http-api-client (33/33) + runtime05 3/3 + runtime07b 13/13 + runtime06b 4/4 + runtime08c 6/6 |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#120` `cursor/comercial360-onda3-cliente-http-392b` (tip `5b444a69`) |
+| Branch | `cursor/comercial360-onda3-cliente-empresa-http-392b` @ feat `6e780d73` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda3-cliente-http-392b...cursor/comercial360-onda3-cliente-empresa-http-392b?expand=1 |
+| Draft PR | **#151** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/151 — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e5eef59d` estável — ainda “Correção candidata” (**não** final) |
-| CI | frontend/backend/concurrency SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+### Arquivos reservados (Cursor — lote pós-#120; não editar em Codex/#104/#48)
 
----
+- `server/src/repositories/inMemoryClienteRepository.ts` / `postgresClienteRepository.ts` (clienteId opcional + habilitadoOperacao)
+- `server/src/services/clienteEmpresaOperations.ts` / `clienteService.ts` (`listForScope`/`getById`)
+- `server/src/api/router.ts` (rotas flat + meta `clienteEmpresa.frontendHttp` + pilot; note preserva Pedido backend HTTP)
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + ClienteEmpresa)
+- `src/api/httpApiClient.js` (entity + `clienteEmpresas` list/get)
+- `src/components/comercial/comercialClienteEmpresaHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` / `PedidoCanonicoPanel.jsx`
+- `tests/comercial-cliente-empresa-http-client.test.js` / `comercial-cliente-empresa-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `comercial-cliente-http-client.test.js`
+- `server/tests/runtime05.test.ts` / `runtime06b.test.ts` / `runtime07b.test.ts`
+- `docs/ERP_RUNTIME_05.md`
 
-## CURSOR — vigília #178 delta HEAD (2026-09-30T18:22Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e5eef59d` (antes `e84315e6`) — ainda “Correção candidata” (**não** final) |
-| Delta | `Impede transição de pedido com status alterado` — repo Pedido + teste RLS |
-| CI | frontend/concurrency SUCCESS; backend em curso no instante da vigília |
-| Ação | Sem tip-port; sem revisão consolidada |
-| Expedição | #196 CI SUCCESS |
-| Próximo | Vigília FINAL #178 |
+- Reutiliza R05 nested; **sem migration**. List-for-scope exige `empresaId` no contexto (fail-closed).
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente_empresa.visualizar no BFF.
+- Mutações ClienteEmpresa permanecem nested sob `/api/v1/clientes/:id/empresas`.
+- Local/Obra continuam fora do piloto flat.
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T18:18Z)
+- Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteLocal/Obra frontendHttp; sem CRM paralelo.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e84315e6` — ainda “Correção candidata” (**não** final) |
-| CI | SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → #120 → **#121**.
 
 ---
 
-## CURSOR — vigília #178 delta HEAD (2026-09-30T18:13Z)
-
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e84315e6` (antes `98820d20`) — ainda “Correção candidata” (**não** final) |
-| Delta | `Bloqueia edição de pedido cancelado em corrida` — `postgresPedidoRepository.ts` + teste RLS; STATUS Codex |
-| CI | frontend/backend/concurrency SUCCESS |
-| Ação | Sem tip-port; sem revisão consolidada (aguarda FINAL) |
-| Expedição | #196 CI SUCCESS — stack #192–#196 |
-| Próximo | Vigília FINAL #178 |
-
----
+## LOTE CURSOR — #119 Cliente frontendHttp Onda 3 (2026-09-29T15:10Z)
 
-## CURSOR — #196 CI SUCCESS + vigília #178 (2026-09-30T18:07Z)
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `Cliente` + CRUD/restore/vínculos/Central 360; Orçamento/Pedido labels Cliente + UnidadeMedida via HTTP; Central 360 RBAC fail-closed; sem migration |
+| Testado | **SIM** — client+policy novos + http-api-client/condicao/tabela/central360 (52/52) + runtime07b 13/13 + runtime06b meta PASS |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#118` `cursor/comercial360-onda2-tabela-http-392b` (tip `8cea7778`) |
+| Branch | `cursor/comercial360-onda3-cliente-http-392b` @ `6ffafb6f` (feat `daadbdfe`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-tabela-http-392b...cursor/comercial360-onda3-cliente-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
-| Campo | Valor |
-|---|---|
-| Draft PR **#196** | CI SUCCESS HEAD `ef0a583d` |
-| Stack Expedição | **#192→#196** (consolidado + integrado Pedido) |
-| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final); sem tip-port |
-| Próximo | Vigília FINAL #178; residual Expedição só se gap novo fora reserva |
+### Arquivos reservados (Cursor — lote pós-#118; não editar em Codex/#104/#48)
 
----
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + Cliente)
+- `src/api/httpApiClient.js` (entity Cliente + `clientes` CRUD/empresas/central360 + `unidadesMedida`)
+- `server/src/api/router.ts` (meta `cliente.frontendHttp: true` + pilot; note preserva Pedido backend HTTP)
+- `src/components/comercial/comercialClienteHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (mestres Cliente/Unidade HTTP)
+- `src/components/comercial/CentralCliente360Panel.jsx` / `DetalhesCliente.jsx` (fail-closed RBAC)
+- `tests/comercial-cliente-http-client.test.js`
+- `tests/comercial-cliente-http-ui-policy.test.js`
+- `tests/http-api-client.test.js` / `tests/central-cliente-360-session.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_04.md`
 
-## CURSOR — Expedição fluxo integrado Pedido (lacunas pós-#195) (2026-09-30T18:01Z)
+### Escopo
 
-| Campo | Valor |
-|---|---|
-| Branch | `cursor/expedicao-fluxo-integrado-pedido-392b` (base tip #195) |
-| Draft PR | **#196** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/196 |
-| Lacunas | seleção Pedidos; unidades; rollback despacho; soft∨→∧; atalho Separação |
-| Docs | `docs/EXPEDICAO_FLUXO_INTEGRADO_PEDIDO.md` |
-| Testes | expedicao-fluxo-operacional + policy + motorista (31/31 locais) |
-| Codex #178 | ainda candidato `98820d20` — sem tip-port |
-| Reservados | Pedido/Orçamento/026–035/legado intactos |
-| Colisão | Sem merge/VPS |
-| Próximo | CI da PR; vigília FINAL #178 |
+- Reutiliza API R04/Central 360 já existente; **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.cliente.* fail-closed no BFF.
+- Persistência canônica inalterada; ClienteEmpresa/Local/Obra continuam fora do piloto flat.
+- Skip A: sem colunas JSON/text de snapshot condição/parcelas (preço já em `preco_unitario` do item).
 
----
+### Próximo item independente restante
 
-## CURSOR — vigília #178 (2026-09-30T17:51Z)
+- Snapshot persistido condição/parcelas (**migration** autorizada) **ou** ClienteEmpresa list-for-scope HTTP (sem CRM paralelo); Local/Obra frontendHttp depois.
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+Pilha Onda 2→3 Cursor: #114 → #116 → #117 → #118 → **#119**.
 
 ---
 
-## CURSOR — vigília #178 (2026-09-30T17:43Z)
+## LOTE CURSOR — #118 TabelaPreco frontendHttp (2026-09-29T14:55Z)
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `TabelaPreco` + CRUD/vínculo/padrão/itens/`preco-cliente` no cliente; Pedido lista tabelas via HTTP; Orçamento/Pedido resolvem preço ao selecionar produto; sem migration |
+| Testado | **SIM** — 13 novos (client+policy) + http-api-client/condicao regressão (42/42) + runtime07b 13/13 + runtime08c 6/6 (note Pedido backend HTTP) |
+| CI | pendente neste HEAD |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#117` `cursor/comercial360-onda2-condicao-http-392b` (tip `9bb3bccc`) |
+| Branch | `cursor/comercial360-onda2-tabela-http-392b` @ `d3147801` (feat `988c6ce3`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-condicao-http-392b...cursor/comercial360-onda2-tabela-http-392b?expand=1 |
+| Draft PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create` → `Resource not accessible by integration (createPullRequest)` |
 
----
+### Arquivos reservados (Cursor — lote pós-#117; não editar em Codex/#104/#48)
 
-## CURSOR — vigília #178 (2026-09-30T17:36Z)
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + TabelaPreco)
+- `src/api/httpApiClient.js` (entity + `tabelasPreco` CRUD + `resolveClientPrice`)
+- `server/src/api/router.ts` (meta `frontendHttp: true` + pilot/httpEntities; note preserva `Pedido backend HTTP is active`)
+- `src/components/comercial/comercialTabelaPrecoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (resolve preço no produto)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (masters HTTP + resolve preço)
+- `tests/comercial-tabela-preco-http-client.test.js`
+- `tests/comercial-tabela-preco-http-ui-policy.test.js`
+- `tests/http-api-client.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_07B.md` / `docs/ERP_RUNTIME_07B_DEV_RUNBOOK.md`
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+### Escopo
 
----
+- Reutiliza API R07B já existente (`/api/v1/tabelas-preco` + `preco-cliente`); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.tabela_preco.* fail-closed no BFF.
+- Persistência canônica: `tabela_preco_id` no Pedido; preço de item continua autoridade do servidor no save. Preview no form é local.
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, snapshot persistido de preço.
 
-## CURSOR — vigília #178 (2026-09-30T17:27Z)
+### Próximo item independente restante
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `98820d20` — ainda “Correção candidata” (**não** final) |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+- Snapshot persistido condição/parcelas/preço em Orçamento/Pedido (**migration** autorizada); Onda 3 follow-up sem CRM paralelo.
 
 ---
 
-## CURSOR — vigília #178 (2026-09-30T17:20Z)
+## LOTE CURSOR — #117 CondicaoPagamento frontendHttp (2026-09-29T14:45Z)
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `98820d20` estável — ainda “Correção candidata” (**não** final) |
-| CI | frontend/backend/concurrency SUCCESS |
-| Ação | Sem tip-port |
-| Próximo | Vigília 15min |
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — piloto HTTP `CondicaoPagamento` + CRUD/parcelas/vínculo/padrão/resolve no cliente; Orçamento/Pedido listam via HTTP e resolvem condição ao trocar cliente; snapshot parcelas **só em memória** |
+| Testado | pendente neste HEAD (focado a seguir) |
+| CI | pendente |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#116` `cursor/comercial360-onda2-simular-ui-392b` (tip `00bd7c85`, que já empilha `#114`) |
+| Branch | `cursor/comercial360-onda2-condicao-http-392b` |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-simular-ui-392b...cursor/comercial360-onda2-condicao-http-392b?expand=1 |
 
----
+### Arquivos reservados (Cursor — lote pós-#116; não editar em Codex/#104/#48)
 
-## CURSOR — vigília #178 (2026-09-30T17:12Z)
+- `src/api/runtimeBackend.js` (`HTTP_PILOT_ENTITIES` + CondicaoPagamento)
+- `src/api/httpApiClient.js` (entity + `condicoesPagamento` CRUD completo)
+- `server/src/api/router.ts` (meta `frontendHttp: true` + pilot/httpEntities)
+- `src/components/comercial/comercialCondicaoHttpUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (masters HTTP + resolve)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (masters HTTP + resolve)
+- `tests/comercial-condicao-pagamento-http-client.test.js`
+- `tests/comercial-condicao-http-ui-policy.test.js`
+- `tests/http-api-client.test.js`
+- `server/tests/runtime07b.test.ts` / `runtime06b.test.ts` (meta)
+- `docs/ERP_RUNTIME_08B.md`
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `98820d20` estável — ainda “Correção candidata” (**não** final) |
-| #195 | CI SUCCESS — stack Expedição ok |
-| Ação | Sem tip-port; sem revisão consolidada |
-| Próximo | Vigília 15min |
+### Escopo
 
----
+- Reutiliza API R08B/Onda 2 já existente (`/api/v1/condicoes-pagamento` + resolve); **sem migration**.
+- Multiempresa: tenant só em headers; RBAC Cadastros.condicao_pagamento.* fail-closed no BFF.
+- Persistência canônica: `condicao_pagamento_id`. Snapshot de parcelas no form é preview local — persistir agenda exige migration futura autorizada.
+- Fora: #104, mapper #48, Codex PRs, VPS/merge, TabelaPreco frontendHttp.
 
-## CURSOR — #195 CI SUCCESS + vigília #178 (2026-09-30T17:05Z)
+### Próximo item independente restante
 
-| Campo | Valor |
-|---|---|
-| Draft PR **#195** | CI SUCCESS HEAD `2db2ca6b` (frontend+backend) |
-| Stack Expedição | **#192→#195** consolidada (filtros→detalhe/separação→roteirização→fluxo) |
-| Codex #178 | HEAD `98820d20` CI SUCCESS — body ainda “Correção candidata” (**não** final); commit preserva itens pedido convertido; **sem** tip-port / sem revisão consolidada |
-| Homologação | `docs/EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md` |
-| Pedido legado | `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — coordenação Codex |
-| Colisão | Sem merge/VPS |
-| Próximo | Vigília FINAL #178; residual Expedição só se gap novo fora reserva |
+- Snapshot persistido condição/parcelas em Orçamento/Pedido (**migration** autorizada) **ou** TabelaPreco frontendHttp; Onda 3 follow-up sem CRM paralelo.
 
 ---
 
-## CURSOR — Expedição #195 CI fix sequencia_rota (2026-09-30T17:00Z)
+## Comercial 360 / Onda 2 — UI simular-venda + preview parcelas/promo (2026-09-29)
 
-| Campo | Valor |
-|---|---|
-| Draft PR | **#195** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/195 |
-| Falha CI | frontend: `app motorista usa policy` — `sequencia_rota` sumiu do `RomaneioForm` após extração |
-| Correção | despacho reafirma `sequencia_rota`; teste também cobre `expedicaoFluxoOperacionalPolicy` |
-| Testes locais | app-motorista + expedicao-fluxo + expedicao-entrega-policy 27/27 |
-| Próximo | CI HEAD `0ca75564` |
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — Orçamento/Pedido canônicos chamam `POST /api/v1/comercial/simular-venda`; agenda de parcelas + promoção fail-closed na UI; aplica preço/desconto/condição no formulário **sem migration** |
+| Testado | **SIM** — 12 novos (`comercial-simulacao-ui-policy` + `comercial-simulacao-http-client`) + regressão orcamento/pedido UI/HTTP (27/27 no lote focado) |
+| CI | pendente neste HEAD (`db162222`) — draft PR: **BLOCKED** (`gh`/`ManagePullRequest` sem permissão createPullRequest); branch pushada |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
+| Base | empilhada em `#114` `cursor/comercial360-onda2-promocoes-parcelas-392b` |
+| Branch | `cursor/comercial360-onda2-simular-ui-392b` @ `db162222` (feat `689bbaee`) |
+| Abrir PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/cursor/comercial360-onda2-promocoes-parcelas-392b...cursor/comercial360-onda2-simular-ui-392b?expand=1 |
 
----
+### Arquivos reservados (Cursor — lote UI pós-#114)
 
-## CURSOR — Expedição fluxo consolidado #192–#194 (2026-09-30T17:00Z)
-
-| Campo | Valor |
-|---|---|
-| Branch | `cursor/expedicao-fluxo-consolidado-392b` (base tip `#194`) |
-| Draft PR | **#195** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/195 |
-| Objetivo | Consolidar filtros/detalhe/separação/roteirização e avançar fluxo ponta a ponta |
-| Fluxo | selecionar → separar/conferir → romaneio → despachar → parcial/total/ocorrência → pendências |
-| Policy | `expedicaoFluxoOperacionalPolicy.js` (extração); asserts em `expedicaoEntregaPolicy.js` |
-| UI | SeparacaoConferencia, RomaneioForm, DetalhesEntregaView, EntregasListagem, QueuesLogistica |
-| Pedido legado | Documentado em `docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md` — sem sobrescrever Codex #178 |
-| Homologação/rollback | `docs/EXPEDICAO_FLUXO_CONSOLIDADO_HOMOLOGACAO.md` |
-| Testes | expedicao-fluxo-operacional + expedicao-entrega-policy (comportamentais; sem prova por texto-fonte) |
-| Reservados Codex | Intactos (Pedido/Orçamento, mig 026–035, Armado/Corte/Dobra) |
-| Colisão | Sem merge/VPS; sem simular roteirizador/WhatsApp |
-| Codex #178 | HEAD `e4d3d904` ainda candidato — sem tip-port |
-| Próximo | CI da candidata consolidada; vigília FINAL #178 |
-
----
-
-## CURSOR — vigília #178 (2026-09-30T16:29Z)
+- `src/components/comercial/comercialSimulacaoUiPolicy.js`
+- `src/components/comercial/OrcamentosTab.jsx` (bloco simular + aplicar)
+- `src/components/comercial/PedidoCanonicoPanel.jsx` (bloco simular + aplicar)
+- `src/api/httpApiClient.js` (`comercial.simularVenda` + `condicoesPagamento.resolve`)
+- `tests/comercial-simulacao-ui-policy.test.js`
+- `tests/comercial-simulacao-http-client.test.js`
 
-| Campo | Valor |
-|---|---|
-| Codex #178 | HEAD `e4d3d904` CI SUCCESS — body ainda “Correção candidata” (**não** final) |
-| Ação | Sem revisão consolidada; sem tip-port |
-| Stack Expedição | **#192–#194** CI SUCCESS |
-| Próximo | Vigília 15min |
+### Escopo
 
----
+- Diagnóstico: Orçamento/Pedido já têm `condicao_pagamento_id`; **não** há colunas de snapshot parcelas/promo — sem migration neste lote.
+- UI reutiliza telas canônicas; simulação não persiste; Salvar continua no contrato create/update existente.
+- RBAC: botão só com `Comercial.orcamento|pedido.visualizar`; backend continua fail-closed.
+- Promoção: payload só se bps>0; aplicar no form exige `promocao.aplicada===true` do servidor.
+- Fora: #104, mapper #48, Codex #106–#109, migration de snapshot.
 
-## CURSOR — Expedição #194 CI SUCCESS + vigília #178 (2026-09-30T16:13Z)
+### Próximo item independente restante
 
-| Campo | Valor |
-|---|---|
-| Draft PR | **#194** CI SUCCESS — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/194 |
-| HEAD tip | `4656b215` |
-| Stack | **#192→#193→#194** (filtros → detalhe/separação → roteirização) |
-| Codex #178 | HEAD `03fd92d2` CI SUCCESS — body ainda “Correção candidata” (**não** final); commit preflight histórico pedidos; **sem** tip-port / sem revisão consolidada |
-| Soft `group\|\|empresa` em expedicao/logistica jsx | **esgotado** neste inventário |
-| Próximo | Vigília candidato final #178; residual Expedição só se gap novo fora reserva |
+- **Feito neste empilhamento:** CondicaoPagamento frontendHttp (`cursor/comercial360-onda2-condicao-http-392b`). Residual: snapshot persistido (migration) ou TabelaPreco frontendHttp.
 
 ---
 
-## CURSOR — Expedição roteirização contexto+filtros (pós-#193) (2026-09-30T16:02Z)
+## Comercial 360 / Onda 2 — resolução condição + parcelas + promoção + simulação (2026-09-29)
 
-| Campo | Valor |
-|---|---|
-| Tip anterior | **#193** detalhe/separação CI SUCCESS |
-| Branch | `cursor/expedicao-roteirizacao-contexto-392b` |
-| Draft PR | **#194** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/194 |
-| Escopo | `RoteirizacaoMapa` contexto `group∧empresa` + filtros cidade/data/futuras via policy |
-| Não tocado | Codex #178 reservas |
-| Testes | expedicao-entrega-policy 18/18 |
-| Colisão | Sem merge/VPS |
-| Próximo | CI; vigília candidato final #178 |
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — resolve fail-closed + schedule parcelas + promo cupom + `POST /api/v1/comercial/simular-venda` |
+| Testado | **SIM** — 13/13 (`comercial-onda2-condicao-promocao-parcelas` + `comercial-onda2-simular-venda-http`) + regressão avista/preço/R08 |
+| CI | **SIM** @ `2ef5ca86` frontend+backend SUCCESS (`36574117990`) |
+| Mesclado | **NÃO** |
+| Implantado VPS | **NÃO** |
 
----
+### Arquivos reservados (Cursor — não editar em frentes Codex #104/#106–#109)
 
-## CURSOR — Expedição #193 CI SUCCESS (2026-09-30T16:00Z)
+- `server/src/services/comercialCondicaoResolucaoPolicy.ts`
+- `server/src/services/comercialParcelaSchedulePolicy.ts`
+- `server/src/services/comercialPromocaoPolicy.ts`
+- `server/src/services/comercialSimulacaoVendaService.ts`
+- `server/src/services/condicaoPagamentoService.ts`
+- `server/src/api/router.ts` (rotas resolve + simular-venda + meta)
+- `server/src/app.ts` (wire `clienteRepo` + `promocaoConfig` + simulacao)
+- `server/tests/comercial-onda2-condicao-promocao-parcelas.test.ts`
+- `server/tests/comercial-onda2-simular-venda-http.test.ts`
 
-| Campo | Valor |
-|---|---|
-| Draft PR | **#193** CI SUCCESS |
-| HEAD | `29ef05b8` |
-| Codex #178 | `90533c2c` — candidato, **não** final declarado |
-| Próximo | Harden `RoteirizacaoMapa` contexto fail-closed + filas acompanhamento |
+### Escopo
 
----
+- Reutiliza CondicaoPagamento / TabelaPreco / alçada existentes — **sem** módulo/tabela CRM paralela nem migration.
+- Resolução: ClienteEmpresa específica → padrão Empresa → nenhuma (fail-closed).
+- Parcelas: agenda com resíduo na última; promoção só com `ativa===true` + teto bps + cupom allowlist.
+- Simulação HTTP não persiste; RBAC Comercial visualizar orçamento/pedido; resolve HTTP exige Cadastros.condicao_pagamento.visualizar.
+- Fora do escopo #104 (estoque/expedição/NF) e legado #106–#109 / mapper #48.
 
-## CURSOR — Expedição detalhe/separação fail-closed (pós-#192) (2026-09-30T15:55Z)
+### Próximo item independente restante
 
-| Campo | Valor |
-|---|---|
-| Tip anterior | **#192** filtros CI SUCCESS |
-| Branch | `cursor/expedicao-detalhe-separacao-failclosed-392b` |
-| Draft PR | **#193** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/193 |
-| Escopo | `DetalhesEntregaView` contexto∧ + `assertEntregaOnUpdate`/`hasProvaEntrega` + data cliente; `SeparacaoConferencia` + `assertSeparacaoOnCreate` |
-| Não tocado | Pedido/Orçamento services Codex; mig 026/035; Armado/Corte |
-| Testes | expedicao-entrega-policy 17/17 |
-| Colisão | Sem tip-port #178; sem merge/VPS |
-| Próximo | CI; vigília candidato final #178 |
+- **Feito neste empilhamento:** UI Orçamento/Pedido + cliente HTTP simular-venda (branch `cursor/comercial360-onda2-simular-ui-392b`). Residual: snapshot persistido (migration) ou CondicaoPagamento frontendHttp.
 
 ---
+## Onda 25 - preflight atomico de staging legado sintetico (2026-09-29)
 
-## CURSOR — Expedição filtros #192 CI SUCCESS (2026-09-30T15:53Z)
+- Branch isolada baseada no HEAD `95fef57a` da #106; #104 congelada e mapeador/aliases da #48 intactos.
+- Objetivo: impedir que um lote parcialmente valido avance para staging quando um item posterior carece de vinculo juridico, codigo legado, assinatura de origem ou conflita com codigo anterior.
+- Reuso: `staging-scope-gate.mjs` da #106 e `stripSegredosMigracao` canonico. Validacao fail-closed de autorizacao, Grupo/Empresa comprovados e codigo 001/002/005; grupo seletor 003 nao vira emissor. Retry no lote ou contra indice de staging existente conta reuso; assinatura divergente fica em conflito. Lote bloqueado devolve zero registros; lote apto devolve registros privados sanitizados, alem de relatorio agregado por entidade/codigo empresarial e motivo sem PII.
+- Sem leitura de registros reais, persistencia, importacao, migration, VPS ou mudanca nas branches #104/#106/#48. Assinatura SHA-256 fornecida pelo extrator e apenas chave de comparacao, nao prova de autenticidade; extracao/verificacao real ainda exige gate e ambiente isolado.
+- Revisao Cursor dos SHAs iniciais encontrou defeitos no agregado de mestre, indice de retry e aliases de segredo. Corrigidos: agregado usa `grupo` sem empresa proprietaria; indice exige IDs nao vazios apos trim e Empresa para operacoes; sanitizador canonico cobre camelCase, espacos, `access_token`/`client_secret` e objetos JSON de prototipo nulo, sem mutar origem. Objeto de classe, funcao ou accessor nao JSON, que antes podia passar segredo, agora falha fechado antes da leitura do getter.
+- Testes: 11 testes sinteticos de escopo/staging e 26 da politica (37/37), incluindo falha apos item apto, retry entre lotes, funcao aninhada, ausencia de dados no relatorio e achados da revisao. `audit:baseline`, lint, build e diff-check passaram nos commits anteriores; `npm test` global falha em scripts Unix/VPS no Windows e typecheck global mantem milhares de erros preexistentes fora do diff. CI Linux do SHA final e gate. Proximo: integrar ao mapeador apos coordenacao/merge da #48, obter vinculos juridicos comprovados e plano de backup/rollback antes de qualquer carga real.
 
-| Campo | Valor |
-|---|---|
-| Draft PR | **#192** CI SUCCESS — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/192 |
-| HEAD | `caf1ff43` |
-| Testes | expedicao-entrega-policy 16/16 |
-| Codex #178 | HEAD `90533c2c` CI SUCCESS — **ainda não** declarado candidato final; sem tip-port |
-| Próximo | Harden detalhe/separação/acompanhamento fail-closed (fora reserva Codex) |
+## Gate 18 - sanitizacao do staging legado (2026-09-28)
 
----
+- Tarefa: endurecer o contrato existente `migracaoErpPolicy` sem duplicar o mapeador sintetico da PR #48.
+- Causa: `stripSegredosMigracao` removia apenas chaves exatas no nivel superior; segredos em payloads aninhados ou chaves maiusculas podiam seguir para staging.
+- Mudanca: filtragem recursiva de objetos/arrays JSON, case-insensitive para as chaves secretas ja reconhecidas, preservando codigo legado e sem mutar a origem.
+- Testes sinteticos direcionados: 25 PASS, 0 FAIL; incluem stamp de Cliente e staging financeiro de ContaReceber sem senha/token/chave aninhados. `audit:baseline`, lint, build e diff-check passaram. Typecheck global continua falhando em mais de 2 mil diagnosticos preexistentes de arquivos nao alterados. Nenhum dado real ou credencial foi usado.
+- Limite: nao foi feita extracao, transformacao de registros reais, vinculacao empresarial comprovada ou carga. O proximo lote deve reutilizar o mapper da #48 e validar Grupo/Empresa em staging isolado, com reconciliacao e gate antes de importar.
 
-## CURSOR — Expedição listagem filtros (2026-09-30T15:45Z)
+## Gate 18 - inventario agregado seguro do legado (2026-09-28)
 
-| Campo | Valor |
-|---|---|
-| Branch | `cursor/expedicao-entregas-filtros-392b` (base `main`) |
-| Draft PR | **#192** — https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/192 |
-| Inventário | `EntregasListagem` já tinha busca livre+status; faltavam filtros estruturados empresa/cidade/data/futuras. Separação/acompanhamento/romaneio base já existem (Gate 11). |
-| Escopo | Policy `filterEntregasList` + wire `EntregasListagem` + filtros cidade/futuras em `RomaneioForm` |
-| Não tocado (Codex #178) | `pedidoService`/`orcamentoService`/`pedidoTypes`/`orcamentoTypes`/repos orçamento/`saleIngressContract`/`app.ts`/mig 026–035/`STATUS` tip Codex |
-| Testes | expedicao-entrega-policy 16/16 |
-| Colisão | Sem Pedido/Orçamento contratos; sem Armado/Corte; sem merge/VPS |
-| Próximo | CI; vigília candidato final #178; lote seguinte separação/acompanhamento residual se gaps |
-
-**Arquivos reservados Codex (#178 HEAD `90533c2c`, CI SUCCESS — aguarda candidato final declarado):**  
-`server/src/services/pedidoService.ts`, `orcamentoService.ts`, `orcamentoTypes.ts`, `pedidoTypes.ts`, repos orçamento, `saleIngressContract.ts`, `app.ts`, mig `035_*`, testes orçamento/recibo/runtime08c, `docs/ORDEM_INTEGRACAO_UNICA.md`. Cursor **não tip-porta** nem edita esses arquivos neste lote.
+- Frente isolada `codex/legado-inventario-20260928`, sem editar a branch da PR #48 do Cursor.
+- O inventario existente passou a emitir somente agregados no terminal. Manifesto com nomes/hashes individuais e privado, rejeitado se o destino estiver dentro do backup ou do repositorio; `--root` restringe a busca ao caminho informado. Python local configuravel, padrao CI preservado.
+- Pasta identificada por nome em leitura de metadados: 2.785 arquivos, 41.303.077.763 bytes, 18 MDF, 18 LDF e 595 TPS. Esses totais abrangem copias preservadas/de trabalho; nao representam arquivos originais distintos.
+- Testes sinteticos dirigidos: 5 PASS, 0 FAIL. `git diff --check` aprovado. Nenhum registro, nome de arquivo, documento, hash individual, segredo ou dado comercial real foi publicado.
+- Nenhum original foi alterado, nenhum banco foi anexado, nenhum arquivo foi importado e nenhuma migration foi aplicada. Staging real permanece bloqueado ate mapa Grupo/Empresa comprovado, reconciliacao, backup restauravel do destino e gate humano.
+- Proximo lote: validar o esquema/contrato de transformacao em staging sintetico reutilizando `migracaoErpPolicy` e coordenando o mapeador da PR #48; resolver alias empresarial sem inferir vinculo pelo nome da pasta.
+## Onda 7 Comercial 360 — conferência e expedição (#104, 2026-09-28)
 
----
+- Objetivo: impedir liberação de pedido com conferência incompleta e corrigir o vínculo entre entrega e pedido.
+- Causa: a conferência IA usava apenas divergências declaradas pela IA; a conferência comum gravava o ID da entrega como pedido e consultava somente 500 entregas.
+- Estruturas reutilizadas: SeparacaoConferencia, SeparacaoConferenciaIA, expedicaoEntregaPolicy, filterInContext e RBAC/contexto existentes.
+- Mudança: origem separada em entrega_id e pedido_id; consulta direta por ID; reconciliação de quantidade por produto antes de marcar pronto para faturar; scanner limita leituras ao pedido e registra item após validação IA.
+- Multiempresa/RBAC/auditoria: mantidos Grupo, Empresa e alçadas existentes. Sem VPS, migrations, dados reais ou alterações na #48.
+- Validação: 43 testes focados aprovados; git diff --check aprovado. Suite completa falha em testes Bash sem Bash no Windows; eslint, tsc e vite ausentes localmente. CI da #104 será verificada por SHA.
+- Commits funcionais: cacea93, a666b88, ceb4b82, e87ebb3, a3d3583, f71527e, f8d7be9, 16cf308, 4a33428, 6be38bf, f0a349d.
+- Próximo passo: revisão independente do HEAD final da #104; sem retomada automática sem automação configurada.
 
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
@@ -1928,6 +1632,32 @@ CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default \
 - Colar VPS: grant profile + rebuild **api e web** + logout/login.
 
 
+## Legado #48 — contrato de escopo sintético (2026-09-29)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — contexto do lote não substitui a linha; `003` é grupo; operação exige vínculo comprovado |
+| Testado | **SIM** — 17/17 `tests/legado-mapear-sintetico.test.js` |
+| CI | pendente neste push |
+| Mesclado | **NÃO** |
+| Importação / VPS / migration | **NÃO** |
+
+Arquivos desta frente: `scripts/legado/mapear-registro-sintetico.mjs`, `scripts/legado/resolver-escopo-legado.mjs` (extração do contrato), `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`, `tests/legado-mapear-sintetico.test.js`.
+Codex permanece dono do inventário/staging (#106/#107). Sem dados reais.
+
+## Legado prep sintético (sem HD) — STATUS REAL (2026-09-26T17:50Z)
+
+| Etapa | Estado |
+| --- | --- |
+| Implementado | **SIM** — aliases `tabela_preco`/`orcamento`/`pedido` no mapper existente + docs HD indisponível |
+| Testado | **SIM** — 14/14 `legado-mapear` + `legado-inventario` |
+| CI | **PENDENTE** (primeiro push) |
+| Mesclado | **NÃO** |
+| Implantado / importação real | **NÃO** — HD externo indisponível; Onda 25 BLOCKED |
+
+- Reutilizado: `scripts/legado/mapear-registro-sintetico.mjs`, `migracaoErpPolicy`, docs LEGADO_* (sem módulo paralelo).
+- Sem dados reais, PII ou preços no GitHub.
+- Paralelismo Comercial 360: #45 acesso (VPS humano), #46 desconto (CI OK / merge pendente), #47 margem (CostPort).
 
 ## Comercial 360 / Onda 2 - CI HTTP fixtures + snapshot preço (2026-09-25T20:05Z)
 
@@ -12915,6 +12645,39 @@ Checklist inicial:
 - Proximo passo: definir persistencia tenant-scoped de evidencia de scan e revisao comercial separada antes de adicionar transicao de QUARENTENA; gate DEV real continua pendente.
 
 
+## Codex — gate canônico 025 da integração omnicanal (2026-09-27)
+
+- #92 continua candidata cumulativa, sem merge/deploy; incorporada main8fbd94f887a7c9c62624c5563acfd36d3562ef77 preservando alterações de acesso. Nenhuma branch Cursor editada.
+- Nova divisão: Codex implementa, Cursor revisa. #96 acesso HEAD4fea5a639f839c94fc2a5a24dc582b2e0b847662 CI1077/run36319383460 SUCCESS, revisão independente e teste proprietário pendentes; não substituídos por este lote.
+- Auditoria read-only na VPS confirmou migrations001–024;025 ainda não aplicada. Correção na cópia canônica025 da branch Codex elimina catch que ocultava erro de NOT NULL; histórico001–024 intocado, sem migration paralela.
+- Teste executa SQL0252x preservando MANUAL/ORCAMENTO e trigger que derrota backfill: erro23502 aborta transação sem registrar schema_migrations. PGlite1PASS/0FAIL; PostgreSQL real será comprovado na CI isolada.
+- Coordenação na #50; Cursor precisa revisar conteúdo e alinhar candidato de integração. #51/#52/#53, grants/policies operacionais e providers continuam gates; canaisOFF, sem HD/VPS write/deploy.
+
+## Codex — Orçamento omnicanal versionável (2026-09-27)
+
+- Candidato consolidado #92 corrige bloqueios #52/#53 sem editar branches Cursor: migration027 ainda não aplicada no DEV faz backfill físico da raiz e exige NOT NULL; create insere id/raiz na mesma instrução. Histórico001–024 imutável.
+- Repository existente supersede a origem antes do INSERT para liberar índice imediato de número aberto, com transação única até itens/auditoria. Falha no audit restaura versão aberta e não deixa descendente ou logs parciais. Origem/canal/campanha preservados; external_id/idempotency_key pertencem ao documento raiz/recibo da entrada e ficam NULL nos descendentes. Reenvio externo segue retornando o mesmo recibo original, sem criar venda nova; histórico conecta todas as versões à raiz.
+- Testes PGlite e PostgreSQL CI usam serviços/SQL canônicos nos quatro canais SITE/APP/CHATBOT/MARKETPLACE, preço informado999 substituído pelo servidor, versões2/3, histórico completo, retry, recusa entre empresas e rollback de audit. Migration0272x preserva histórico e rejeita raizNULL. InMemory alinhado ao contrato PostgreSQL; mocks de criação atualizados para INSERT com raiz atômica.
+- Focados locais aprovados; backend typecheck/build, lint e audit:baseline PASS. Suíte completa e PostgreSQL real do novo HEAD devem ser registrados na PR antes integração; skips locais de PG não são prova operacional. Revisão independente Cursor continua obrigatória. Sem canal ativado, HD ou deploy neste lote.
+- Suíte backend local:365PASS/1FAIL/37SKIP(403); falha é crash nativo V8/WASM Node24 em runtime08-hardening, sem assert de aplicação falhando. Reexecução desse arquivo e RLS/versionamento:9PASS/0FAIL/4SKIP; frontend build PASS(--configLoader native). CI Linux Node22 deve comprovar o HEAD completo, sem alterar teste ou esconder o crash local.
+- Prioridade acesso: #96 CIverde aguarda parecer Cursor. VPS read-only reconfirmou banco postgres, grupo1/empresas esperadas2, Auth sem perfil ativo1, migrations24; API/SPA200 com imagens anteriores. Autorização contínua cobre integração/deploy controlado após revisão/CI/backup, não substitui esses gates nem confirmação real do proprietário.
+
+## Codex — tipo comercial desconhecido bloqueado (2026-09-27)
+
+- Continuidade na mesma candidata consolidada #92: tipo de Produto legado não reconhecido deixa de virar REVENDA silenciosamente. Policy existente responde422/PEDIDO_TIPO_COMERCIAL_INVALIDO com reason PRODUCT_TYPE_UNKNOWN; hints ARMADO não contornam esse gate. Aliases conhecidos continuam aceitos.
+- PGlite/PG isolado usa entrada real pelo canal, verifica ausência de Pedido/itens/histórico/audit/eventos após recusa e retry com mesma chave/nonce após mapear Produto para tipo canônico. Nenhuma chave consumida ou venda parcial. Local12PASS/0FAIL/5SKIP, backend typecheck PASS; PG real/CI final obrigatórias antes integração.
+- Histórico026 ainda exige estratégia explícita: não deduzir classificação passada usando Produto atual nem rotular todos os históricos como REVENDA. Esse bloqueio #51 permanece, junto aos grants/policies operacionais/providers. Nenhuma decisão comercial, migration adicional ou cadastro inventado; canaisOFF.
+- Recuperação acesso: backup completo restaurado em banco descartável com role administrador da restauração e presença de cadastros/Auth/migrations24 validada; banco descartável removido. Primeira tentativa postgres recusou SET log_min_messages, reteste passou. Banco operacional intacto; logs privados; #96 aguarda revisão Cursor antes grant/deploy.
+
+## Codex — gate de preservação histórica026 (2026-09-27)
+
+- Continuidade na candidata consolidada #92, sem branch ou módulo paralelo. Antes da primeira introdução das colunas de tipo comercial, SQL026 bloqueia com PEDIDO_HISTORICAL_TYPE_MAPPING_REQUIRED quando há pedidos/itens existentes sem snapshots. Nenhum default REVENDA é gravado nos históricos; nenhuma classificação passada é inferida pelo Produto atual.
+- Lock das tabelas impede entrada concorrente entre preflight e DDL. Reexecução com snapshots explicitamente classificados preserva os valores; NOT NULL valida também colunas preexistentes incompletas. Não há catch que registre migration falha como aplicada.
+- Testes PGlite/PG isolado executam o SQL real: falha aborta antes das colunas e do registro schema_migrations, IDs históricos preservados; mapeamento sintético explícito SERVICO permanece após reexecução2x e NULL é rejeitado. Local5PASS/0FAIL/6SKIP; backend typecheck, lint e audit:baseline aprovados. CI final deve provar PostgreSQL sem skips antes integração.
+- O lote elimina a corrupção silenciosa da migration, mas não fornece um backfill comercial aprovado. Se DEV tiver históricos sem tipo, apenas essa migration deve parar até mapeamento/reconciliação revisados; não apagar registros nem usar defaults para contornar. Histórico001–024 imutável;026 ainda não aplicada na VPS. CanaisOFF.
+- #96 acesso mantém prioridade, HEAD4fea5a6/CISUCCESS mas sem parecer Cursor; nenhuma implantação ou concessão de acesso executada. Autorização contínua preservada, com revisão/CI/backup/rollback como gates.
+- Fechamento local: backend completo370PASS/0FAIL/39SKIP(409), build/typecheck/lint/audit:baseline/diffPASS. PostgreSQL real será comprovado pela CI do novo HEAD; frontend não alterado e validação completa Linux mantida no workflow.
+
 ## Incidente proprietário — candidato Codex 2026-09-27
 
 - Branch `codex/acesso-owner-auditoria-segura`, base main `0acb6ac1ca0267f3e253904c633a5dc46aa2472e`. Codex implementa e Cursor revisa; não aplicar antes de revisão independente e CI do HEAD.
@@ -12935,12 +12698,25 @@ Checklist inicial:
 - Revisão Cursor e CI do novo HEAD obrigatórias; CI anterior1077 não aprova estas mudanças. Após os gates: CI PUSH main, backup fresco, canário/APPLY, SHA/digests e teste real do proprietário. Canais OFF.
 - Validação frontend local: Vite/esbuild bloqueado por ACL de leitura do sandbox Windows (Access is denied ao resolver vite.config.js). Não declarar build/frontend/npm test completo local aprovado; CI Linux do novo HEAD executará frontend e harness Bash integral. Nenhuma configuração de segurança/teste removida para contornar o ambiente.
 
+## Codex — #92 alinhada à main de acesso (2026-09-27)
+
+- Incorporada main56dae6966ae39a11eac3064ca7bb0d67553e7765 na branch própria, preservando Auth/perfil/tenant da #96 e o histórico das duas frentes. requestContext/authSessionService idênticos à main; conflito exclusivamente documental concatenado sem apagar entregas.
+- 025 idêntica ao blob4aab7f6f da #50 atual; 026 continua fail-closed para histórico não mapeado, migration033/canais não ativados. Novos HEADs92/93 requerem CI e revisão independente Cursor. Acesso bloqueado apenas pela revisão do hotfix98 após pg_read_file; não equivale a deploy.
+
 ## Acesso proprietário — falha operacional pg_read_file (2026-09-27)
 
 - #96 mesclada na main 56dae6966ae39a11eac3064ca7bb0d67553e7765 após parecer Cursor sobre 23252cc e CI; CI PUSH main #1135/run36326407270 SUCCESS frontend/backend.
 - VPS atualizada para esse SHA; AUDIT, identidade efetiva do banco, backup custom e canário API/SPA aprovados. APPLY abortou no provisionamento: `permission denied for function pg_read_file`, transação revertida, nenhuma promoção. Oficiais preservados; canário antigo exclusivamente localhost3086 parado reversivelmente com container/imagem preservados. Backups privados preservados.
 - Correção candidata em branch própria: JSON por COPY do cliente psql tanto na concessão quanto no restore seletivo, sem conceder leitura de arquivos do servidor nem elevar o usuário PostgreSQL. Preserva locks, validação de tenant, auditoria, transação e decisões do proprietário. Teste PostgreSQL CI com NOSUPERUSER/NOBYPASSRLS verifica leitura negada e COPY bem-sucedido, inclusive aspas/barra/acentos e comando real do restore.
 - Ainda requer CI do novo HEAD e revisão independente Cursor antes de merge/APPLY. Não declarar acesso/deploy concluído. Login real, duas empresas e Comercial/Configurações continuam pendentes; canais OFF. Nenhuma migration ou dado real publicado.
+
+## Codex — integração main pós-hotfix e marco DEV (2026-09-27)
+
+- Incorporada main9ed1a30e3fd37ec2f14b9c65a36b2c396ea7b74d (#98), preservando COPY cliente do grant/restore e testes PostgreSQL reais, sem reintroduzir pg_read_file. Histórico de status preservado; blocos antigos pendentes são superados por este marco.
+- Cursor aprovou bb7df2dbe59f184600396abb7cdd99ce70bb93dd em #97/docsHandoff15:00Z; CI PUSH main1154/run36338983036 SUCCESS. DEV AUDIT/backup fresco/hash/canário/identidade/grant/auditoria/promote EXIT0. API e SPA têm label SHA completo9ed1a30 e digests iguais aos canários: API79f3ec308530bbc2392e20e881c702c50371de13ae6d4092e1a73a5cbf2bc143; SPA6dd543df7abfef519df3e1e1a573e150bc57f2d5c8454de72f7ba26b250a490f.
+- Pós-check: Auth/perfil proprietário único ativo1, GROUP/admin/RBAC explícito válido, empresas ativas autorizadas2, auditprovision1, migrations24, ready200/200 e identidade fabricada/Bearer inválido401. HTML público coincide com SPA oficial. Backups e rollback06A preservados. Nenhuma senha/novo cadastro/renomeação/migration/canal.
+- Logout sintético pela UI, formulário real pronto; confirmação proprietário de login/duas empresas/Comercial/Configurações solicitada e PENDENTE. Deploy não equivale a experiência validada pelo usuário. Evidências sanitizadas na #98comentário5858407946.
+- #92/93 continuam candidatos não mesclados/implantados, 025 alinhada à #50 e gates histórico026/contratos029–032/grants/papel033/provedores preservados. Canais OFF. CIs e revisão Cursor devem validar estes novos HEADs; selos antigos não se transferem.
 # Incidente P0 — seleção Grupo/Empresa após login proprietário (2026-09-27)
 
 - Base sincronizada: main `3e327ea08cc638f84816b2f7e37c143a705f7f0c`; branch própria `codex/acesso-contexto-grupo`.
@@ -12969,15 +12745,248 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
-## CODEX — contrato Pedido/Expedição #199 (candidata isolada, 2026-10-01)
 
-| Campo | Estado |
-|---|---|
-| Base | #199 HEAD `6602d985`, branch Codex isolada; sem alteração na branch Cursor |
-| Implementado | leitura Pedido tenant-scoped com `FOR UPDATE` na criação; snapshots/quantidades canônicos, idempotência por Pedido, limites parcial/devolução, `PATCH` + auditoria na mesma transação; despacho/devolução vinculados bloqueiam se portas ainda `reserved`, romaneio sem despacho não chama portas |
-| Testado | HTTP sintético e PostgreSQL efêmero focados; servidor 301 PASS/0 FAIL/17 PG externos skipped no rerun, typecheck/build PASS (uma falha transitória fora do lote em R10 passou isolada e no rerun); 32 testes bridge/UI PASS, lint raiz 0 erros/1 aviso; `npm test` raiz falha em fixtures shell/VPS no Windows e typecheck raiz tem erros preexistentes fora do diff; não é teste do conjunto de migrations aplicado em destino |
-| Revisão #199 | portas Pedido/estoque sem executor e rollback externo não comprovado; colisão da migration `025` corrigida na base #199 por renumeração para `036`, ainda sem CI do conjunto |
-| Integração | base #199 atualizada até `540c4998` com migration 036, conflitos locais combinados; merge simulado com #178 revelou 11 conflitos e foi abortado sem perder históricos; composição comercial final pendente |
-| Gates | sem merge/VPS; 026 histórica bloqueada; estoque/reserva/compensação e autorização operacional pendentes |
+## Migração legada #106 — preflight de escopo para staging (2026-09-28)
 
----
+### Contrato sintetico mapeador → staging (2026-09-29)
+
+- Branch propria baseada no HEAD da #107; mapeador da #48 intocado. Composicao somente em memoria usa o mapeador existente e o preflight de staging, com codigo legado preservado e relatorio agregado.
+- Cliente e Produto de revenda sao mestres do Grupo somente com destino explicitamente comprovado. Divergencia de Grupo, empresa proprietaria, duplicata, erro e quarentena bloqueiam entrega parcial. Fornecedor e operacoes seguem sem mapeador homologado e nao sao liberados.
+- Assinatura SHA-256 em memoria auxilia apenas a idempotencia sintetica; nao substitui manifesto de origem ou prova juridica. O lote inteiro passa pelo sanitizador canonico antes da leitura de aliases; getter e Proxy sao recusados sem executar leitura dinamica. Revisao Cursor de 7771b3b8 encontrou codigo empresarial legado 1/2/3/5 atravessando o mapper: qualquer alias empresarial preenchido agora e recusado antes de mapear, assim como aliases de Grupo conflitantes. Sem HD, dados reais, banco operacional, migration ou VPS. Testes direcionados: 56 PASS/0 FAIL.
+- Checks locais: audit baseline, lint e build PASS; `npm test` global falha em testes de scripts Bash/PATH temporarios no Windows e `npm run typecheck` global mantem diagnosticos antigos fora do diff. CI Linux do novo HEAD obrigatoria para aprovar o checkpoint; nenhuma dessas falhas foi ocultada ou teve teste alterado.
+- Proximo: corrigir o override do escopo no mapeador da #48, provar Grupo/Empresa por registro e testar staging fisicamente isolado com contagens, conflitos e plano de reversao antes de pedir gate de carga real.
+
+- Objetivo: impedir que o mapeador sintético da #48 receba `groupId`/`empresaId` assumidos para operações. O seletor legado comprova 003 como Grupo CPA e 001/002/005 como opções de Empresas, mas nao comprova sozinho CNPJ ou empresa juridica de cada pedido, estoque, titulo ou nota.
+- `scripts/legado/staging-scope-gate.mjs` valida, antes do staging isolado, mestres compartilhados no Grupo e operacoes somente com vinculo juridico explicitamente verificado para o mesmo Grupo/Empresa. Codigos 0, 003, 004 e desconhecidos permanecem em quarentena; o relatorio resume apenas totais e motivos.
+- Nao altera o mapeador da PR #48, nao le o HD, nao grava staging nem importa dados reais. O vinculo 001/002/005 com as empresas juridicas do ERP novo segue pendente de prova documental/CNPJ e correção do override de escopo na #48 antes de carga real.
+- Testes sintéticos direcionados: 39 PASS/0 FAIL. Proximo: compatibilizar o preflight com a #48 corrigida, preparar staging fisicamente isolado e reconciliar contagens por entidade/empresa; somente depois solicitar gate de importacao real, backup do destino e rollback.
+- Validacao do lote: `npm run audit:baseline`, `npm run lint` e `npm run build` PASS. `npm test` global falha em scripts Bash/PATH e arquivos temporarios ausentes no Windows, fora deste lote; WSL nao instalado. `npm run typecheck` global continua com diagnosticos preexistentes em arquivos nao alterados. A CI Linux do novo HEAD e obrigatoria antes de considerar o checkpoint aprovado.
+## Legado - retry entre lotes de staging sintetico (2026-09-29)
+
+- Branch isolada `codex/legado-staging-persistencia`, baseada no contrato aprovado da #108. #104 congelada; #48, #106, #107 e #108 nao foram editadas.
+- `verificarMapeadorParaStaging` agora recebe o indice `existentes` do preflight canonico: retry identico nao reenvia registro, novo codigo segue apto, e assinatura divergente bloqueia o lote inteiro. Relatorio permanece agregado e sem dados pessoais.
+- Testes sinteticos direcionados: 58 pass, 0 fail. `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais falham neste ambiente Windows em testes/diagnosticos fora deste diff; a CI Linux do HEAD-base #108 estava verde. O novo HEAD ainda requer CI propria antes de revisao.
+- Nao houve leitura do backup, persistencia real, carga, migration, VPS ou alteracao de 3080. Staging em banco isolado e vinculo juridico Grupo/Empresa continuam pendentes de prova e gate.
+
+## Legado - plano de mestres integrado ao mapeador sintetico (2026-09-29)
+
+- Branch `codex/legado-plano-mestres` integra os contratos #109 e #111 sem alterar suas branches nem o mapeador Cursor da #48.
+- Cliente e Produto de revenda mestre do Grupo podem passar por mapeamento, indice de retry, contagens esperadas e verificacao de Grupo em um unico preflight em memoria. Contagem divergente ou indice de outro Grupo bloqueia o lote; nenhum registro parcial e entregue.
+- 44 testes direcionados passaram; `audit:baseline`, lint, build e `git diff --check` passaram. `npm test` e typecheck globais permanecem falhando neste Windows em arquivos fora do diff; CI Linux do novo HEAD deve ser observada antes de revisao.
+- Somente fixtures sinteticas. Nao houve leitura do backup, staging real, importacao, migration, merge ou VPS. Vínculos juridicos por operacao e aprovacao do mapeador #48 continuam gates separados.
+- Revisao Cursor do HEAD inicial apontou indice de outro Grupo aceito no caminho sem contagens e aliases empresariais camelCase nao reconhecidos. Corrigidos ambos no integrador, sem tocar no mapeador #48: `empresaCodigo`/`codEmpresa` falham fechado, e o indice existente exige o mesmo Grupo antes dos dois caminhos de preflight. `aptos` e contagem diagnostica anterior ao bloqueio; somente `bloqueado=false` com `privados` nao vazio autoriza entrega ao staging. Testes focados: 45 pass, 0 fail; lint, audit baseline e build passaram. CI do novo HEAD ainda obrigatoria.
+- Revisao subsequente confirmou esses bloqueios e mostrou aliases com hifen ainda aceitos. O filtro agora normaliza somente maiusculas, `_` e `-` nos nomes de campos de Grupo/Empresa; aliases empresariais com hifen, inclusive na segunda linha, bloqueiam o lote inteiro. 46 testes focados passaram, alem de lint, audit baseline e build. Nenhum dado real foi lido ou persistido.
+- Revisao do HEAD 49718d12 confirmou o hifen e apontou espaco, ponto e objeto aninhado. O preflight agora reconhece esses separadores em aliases de escopo e recusa qualquer valor aninhado antes de mapear linhas planas; o lote inteiro falha fechado. Testes sinteticos novos cobrem empresa com espaco/ponto, Grupo divergente com ponto e empresa aninhada na segunda linha. Sem leitura do backup ou staging real; prova juridica e revisao do novo HEAD seguem pendentes.
+
+## Legado - atestacao obrigatoria do vinculo empresarial (2026-09-29)
+
+- Branch isolada sobre a #115; #48 e as branches do Cursor nao foram editadas. Operacoes por Empresa no preflight agora exigem, alem de Grupo/Empresa iguais ao destino, evidencia tipada, hash SHA-256 e aprovacao identificada/datada. `comprovado: true` isolado nao libera staging.
+- Casos sintéticos de evidencia ausente/invalida bloqueiam o lote inteiro, devolvem `privados: []` e preservam relatorio apenas agregado. Essa verificacao de formato nao substitui prova documental, revisao humana, staging real ou gate de importacao.
+- Nenhum documento, CNPJ, backup, registro real ou credencial foi lido ou enviado. Proximo: conferir juridicamente 001/002/005 em canal privado, revisar o mapeador #48 e provar staging em banco isolado antes de solicitar qualquer carga operacional.
+- Validacao local: 38 testes sinteticos integrados, audit baseline, lint, build e diff-check PASS. `npm test` global neste Windows falha em `vps-owner-provision-guard.test.js` (execucao Bash/PATH sem codigo de saida); typecheck global acusa diagnosticos preexistentes fora deste diff em `entityGuardPolicy/entry.ts` e `erpHttpSession.js`. CI Linux do novo HEAD e obrigatoria antes de considerar o lote validado.
+- Revisao Cursor do HEAD inicial apontou coercoes de arrays e datas impossiveis. O validador agora exige strings e timestamp UTC ISO com roundtrip de calendario, rejeita hash trivial de zeros e tem nome que descreve validacao de formato, nao prova juridica. Testes sintéticos ampliados; novo HEAD requer CI e revisao final.
+
+## Legado - prova sintetica PostgreSQL isolada (2026-09-29)
+
+- Branch empilhada sobre a #119, sem editar mapeador #48 nem Produto/Fornecedor. CI provisiona banco efemero nomeado, aplica guarda de URL isolada e usa somente tabela temporaria/transacao para testar preflight, insercao, unicidade, retry e escopo de Empresa.
+- A prova cobre mecanica de staging em PostgreSQL sintetico, nao origem real, identidade juridica, restauracao do backup nem importacao operacional. Nenhum dump, CNPJ ou registro real entra na CI/GitHub. Revisao, testes e CI do HEAD deste lote ainda obrigatorios.
+- Revisao interna do primeiro HEAD encontrou retry usando indice apenas em memoria. O E2E agora insere o item do preflight, rele a linha por SQL para compor o indice de retry e confere por SQL que Empresa negada nao mudou a contagem. Novo HEAD requer CI e revisao.
+## Onda 7 #104 — saldo de reserva, faturamento e reconferência (2026-09-28)
+
+- Objetivo/causa: distinguir compensação de saída física; o histórico de reservas fazia faturamento pular a baixa e cancelamento liberar além do saldo do pedido.
+- Mudança: saldo aberto por pedido/produto; saída física `saida`; cancelamento limitado ao saldo vigente; peças de armado sem produto não entram na reserva; reconferência divergente atualiza registro existente com auditoria, preservando vínculo de entrega.
+- Reuso/escopo: `useFluxoPedido`, `pedidoFaturamentoPolicy`, `SeparacaoConferenciaIA` e políticas existentes; Grupo/Empresa/RBAC mantidos. Sem VPS, dados reais ou importação.
+- Validação: 46 testes focados aprovados, incluindo execução isolada das funções reais de baixa e cancelamento; `git diff --check` aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: a556787, 7f163b8, 01109e5, ef70dfd, 3553d67, f0cfefb. Próximo passo: confirmar CI e novo parecer do Cursor na #104.
+
+## Onda 7 #104 — retry idempotente e bloqueio de expedição (2026-09-28)
+
+- Causa: a chave legada de reserva reutilizava movimento já compensado quando a quantidade do retry era igual; a falha de baixa não impedia criação de Entrega/status.
+- Mudança: chave por ciclo de compensação, tenant, pedido e produto; conferência do movimento e saldo persistidos antes de auditar; faturamento retorna antes de Entrega/status se qualquer baixa falhar. Reutilizadas as políticas de estoque e o fluxo existente.
+- Segurança/auditoria: contexto Grupo/Empresa mantido, falha é explícita e bloqueia efeitos posteriores. Sem VPS, dados reais ou alterações na frente legada.
+- Validação: 48 testes focados aprovados, incluindo dedup real de compensação 10 → retry 10 → saída física única, falha de baixa sem Entrega/status e cancelamento 10 → 4. Diff-check aprovado. CI e revisão Cursor pendentes do HEAD final.
+- Commits funcionais: 6d17dc5, d1fb7ac, 4ee099e, b8326ca. Próximo passo: confirmar CI e parecer do Cursor.
+
+## Onda 7 #104 — segundo fechamento e NF pendente (2026-09-28)
+
+- Causa: segundo fechamento podia reservar produto já baixado; a tela gravava NF e status antes da baixa, deixando faturamento aparente após erro.
+- Mudança: reserva e fechamento bloqueados após saída física/faturamento; tela atualiza Pedido só após baixa sem erros e marca NF ainda pendente como Rejeitada quando a baixa falha, com auditoria e alerta se a reversão falhar. NF rejeitada não consome saldo faturável.
+- Reuso/segurança: fluxo, política de faturamento e handler existentes; Grupo/Empresa e RBAC mantidos. Sem cancelamento fiscal automático, VPS, dados reais ou #106.
+- Validação: 52 testes focados aprovados, incluindo segundo fechamento pós-saída e execução isolada do handler real de NF com falha de baixa ou atualização do Pedido; diff-check aprovado. CI/revisão Cursor exigidas no HEAD final.
+- Se a baixa concluiu mas falhou a atualização posterior do Pedido, a NF não é rejeitada: o caso é auditado e exige conciliação manual. Sem cancelamento fiscal automático.
+- Commits funcionais: aa3051a, e2b139b, b02eba6, 741e912, 35aebc5, a47e0fd, 10ae485, 88c4f7c, e537fe3, 5a261cf. Próximo passo: CI e parecer do Cursor.
+
+## Onda 7 #104 — etapa fiscal e rejeição da NF pendente (2026-09-28)
+
+- Causa: etapa específica marcava Pedido faturado sem baixa; emissor sem editar não conseguia rejeitar a NF pendente após falha.
+- Mudança: etapa sem estoque mantém status operacional e grava a etapa; etapa com revenda estocável falha antes de criar NF até existir fluxo de baixa por etapa. Transição restrita Pendente → Rejeitada aceita permissão emitir/enviar sem autorizar alteração de valor nem cancelamento fiscal.
+- Estruturas reutilizadas: handler de FechamentoFinanceiroTab, pedidoFaturamentoPolicy, notaFiscalEmissaoPolicy e guarda local de RBAC. Grupo/Empresa e auditoria preservados; sem VPS, dados reais ou #106.
+- Validação: 57 testes focados aprovados, incluindo execução do handler de etapa e transição real de NotaFiscal com perfil somente emitente; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: e5fb805, e8dc5d4, 68e2541, 56b92e0, c7816e0, 8c11ae0, f6eb010. Próximo passo: CI, revisão e fluxo seguro de baixa por etapa estocável.
+
+## Onda 7 #104 — NF residual e tenant fiscal imutável (2026-09-28)
+
+- Causa: NF de etapa sem estoque consumia parte do valor, mas pedido inteiro tentava emitir o valor total; rejeição pendente aceitava Grupo carimbado pelo contexto da tela.
+- Mudança: pedido inteiro após etapa emite apenas saldo e itens não faturados, preservando a baixa real da revenda aberta; NFs parciais sem etapa/vínculo canônico bloqueiam para conciliação. Transição de NotaFiscal fixa Grupo/Empresa do registro original.
+- Reuso/segurança: `remainingValorFaturar`, handler fiscal e políticas de transição existentes; RBAC do emitente e auditoria mantidos. Sem VPS, dados reais ou #106.
+- Validação: 59 testes focados aprovados, incluindo handler real de etapa → NF residual → `baixarEstoqueItem` real e carimbo de Grupo pela preparação local real; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: cfe9b46, c38160b, 12a6bf1, d0bdeb6, 75ea4ea, d071caa, fa9e6a6. Próximo passo: CI e novo parecer do Cursor.
+
+## Onda 7 #104 — etapas residuais e frete final (2026-09-28)
+
+- Causa: NF residual incluía item de etapa ainda aberta sem marcar a etapa faturada; saldo só monetário de frete/diferença ficava sem NF.
+- Mudança: NF residual marca etapas cujos itens foram absorvidos e bloqueia vínculo inválido; a última NF de etapa, quando cobre todos os itens, incorpora frete/diferença nos campos fiscais existentes. Saldo antigo sem item e sem última etapa verificável exige conciliação fiscal, sem NF vazia automática.
+- Reuso/segurança: políticas de faturamento e handler fiscal existentes, sem alterar Grupo/Empresa, RBAC ou auditoria. Sem VPS, dados reais ou #106.
+- Validação: 61 testes focados aprovados, incluindo handler de duas etapas, frete na última etapa e handler → `faturarPedidoCompleto` real → baixa/Entrega; diff-check aprovado. CI e revisão Cursor exigidas no HEAD final.
+- Commits funcionais: 527a2e4, 8b1459e, 4f411c3 e teste adicional. Próximo passo: CI e parecer independente.
+
+## Ensaio de integracao #104 + cadeia legada (2026-09-29)
+
+- Branch de ensaio baseada em `main`, sem merge de PR na `main`: preserva integralmente os checkpoints da Onda 7 e da frente legada que colidiram neste arquivo.
+- Nenhuma migration foi aplicada na VPS, nenhum dado do backup foi importado e a porta 3080 nao foi alterada. CI do HEAD combinado e revisao da resolucao sao necessarias antes de qualquer decisao de integracao.
+## Onda 25 - unicidade do mestre no staging PostgreSQL sintetico (2026-09-29)
+
+- A prova isolada da #121 usava `UNIQUE (group_id, empresa_id, entidade, codigo_legado)`; PostgreSQL permite chaves repetidas quando `empresa_id` e `NULL`, que e o escopo dos mestres compartilhados do Grupo.
+- O E2E sintetico passa a usar `UNIQUE NULLS NOT DISTINCT` e comprova retry do cliente mestre sem segunda linha, rejeicao `23505` da duplicata e independencia do mesmo codigo de pedido em empresas distintas. O teste ocorre somente no banco efemero isolado, com rollback; nao cria migration nem tabela no DEV.
+- Codigo operacional de staging real, comprovacao juridica Grupo/Empresa, reconciliacao do backup e importacao continuam pendentes dos gates proprios. Nenhum dado real foi lido ou publicado neste lote.
+
+## Gate de banco isolado - host explicito (2026-09-29)
+
+- A guarda anterior comparava apenas o nome do banco; uma URL remota com o mesmo nome podia passar antes do `DROP SCHEMA` do ensaio R07B. Agora exige `ISOLATED_DATABASE_HOST` igual ao host da URL e bloqueia parametros de URL que possam trocar o destino. A CI declara `localhost` explicitamente nos dois ensaios isolados e o E2E legado rejeita host remoto e override de `dbname`.
+- Mudanca fail-closed: qualquer execucao externa do ensaio R07B precisa declarar o host isolado esperado e validar novamente seu destino antes de usar a guarda. Nenhuma URL, credencial, banco DEV ou VPS foi acessado neste lote.
+
+## Ensaio de integracao do mapeador #48 com staging legado (2026-09-29)
+
+- Branch separada, baseada na #123; o mapper do Cursor foi incorporado por merge sem editar a branch #48. Conflitos textuais em status e contrato foram resolvidos preservando os dois historicos.
+- Testes combinados expuseram contrato divergente: o mapper atualizado omite `empresa_id` do mestre de Grupo, exige classificacao explicita de Produto de revenda e pode excluir todo o lote. O adaptador Codex agora bloqueia entrega parcial quando houver exclusoes, reporta apenas a contagem e nao chama o preflight com lista vazia. Fixtures de Produto declaram `revenda`; nenhum Produto sem classificacao e promovido por hipotese.
+- Testes sinteticos de mapper, preflight e adaptador: 57/57 PASS. CI Linux do HEAD final ainda obrigatoria. Nao houve leitura do backup, importacao, migration, VPS ou merge na main; vinculo juridico e destino real continuam pendentes dos gates proprios.
+
+## Ensaio E2E mapper → staging PostgreSQL isolado (2026-09-29)
+
+- O E2E efemero agora exercita o mapper #48 atraves do adaptador Codex: Cliente mestre e Produto explicitamente de revenda entram em tabela temporaria com codigo legado preservado e `empresa_id` nulo. O indice do Cliente e relido por SQL para comprovar retry sem segunda entrega.
+- Grupo divergente falha antes do SQL; lote misto com Produto nao-revenda devolve zero registros e contagem sanitizada de exclusoes. A constraint PostgreSQL rejeita duplicata do mestre e toda a transacao termina em rollback.
+- Esta prova nao representa extracao do HD, vinculo juridico real, staging persistente nem importacao operacional. CI PostgreSQL do novo HEAD e obrigatoria antes de aprovar o ensaio.
+
+## Fornecedor legado no contrato de staging isolado (2026-09-29)
+
+- O adaptador existente da #128 agora reutiliza o mapeador de Fornecedor da #48 como mestre compartilhado do Grupo, preservando `codigo_legado`; nao atribui Empresa por codigo do seletor, nome de pasta ou hipotese. Cliente e Produto de revenda mantem seus contratos.
+- Testes sinteticos cobrem contagem por entidade/Grupo, retry idempotente, conflito de conteudo no mesmo codigo, Grupo divergente, vinculo empresarial nao comprovado e ausencia de entrega parcial. O E2E PostgreSQL usa tabela temporaria em banco isolado, valida linha e retry por SQL e termina em rollback.
+- Validacao local: 43 testes focados PASS, audit baseline/lint/build PASS. `npm test` no Windows inclui testes de scripts VPS que exigem Bash e falham com `spawnSync.status=null`; `npm run typecheck` global falha em erros existentes de Base44/JSX fora dos arquivos alterados. CI Linux do HEAD publicado deve confirmar a suite completa e o PostgreSQL sintetico antes da revisao.
+- Nao houve leitura do HD, staging persistente, importacao, migration, VPS ou mudanca da porta 3080. O vinculo juridico para operacoes e a carga real continuam sujeitos a prova e gate proprios.
+
+## Lote unico de mestres legados antes do staging (2026-09-29)
+
+- O mesmo adaptador oferece verificacao conjunta de Cliente, Fornecedor e Produto de revenda. Contagens esperadas sao conferidas por entidade; falha, exclusao ou divergencia em qualquer parte zera a entrega privada do lote inteiro, sem misturar Grupo/Empresa nem publicar PII no relatorio.
+- Testes sintéticos cobrem sucesso, falha no ultimo mestre, entidade estranha, contagem sem lote e empresa sem prova. O E2E PostgreSQL efemero verifica o lote completo e o bloqueado junto da tabela temporaria transacional; nao representa gravacao persistente nem acesso ao backup.
+- Validacao local focada: 46/46 PASS, backend typecheck/build e diff-check PASS. Na suite backend concorrente Windows, `runtime07b.test.ts` falhou como arquivo (272 PASS, 1 FAIL, 16 SKIP); o mesmo arquivo isolado passou 13/13. A suite Linux e a prova PostgreSQL do novo HEAD continuam obrigatorias para aprovar este incremento. Nenhuma importacao real/VPS foi executada.
+
+## Hardening da entrada do lote mestre (2026-09-29)
+
+- A verificacao conjunta rejeita objeto de lotes, arrays e opcoes com getters/setters ou Proxy antes de iterar campos, evitando executar codigo do extrator ou ler registro privado durante o preflight. A checagem individual de tenant e a sanitizacao existentes continuam em vigor.
+- Testes adversariais verificam que nenhum getter e chamado. Nao ha alteracao no mapeador #48, schema, staging persistente ou importacao. CI do novo HEAD permanece obrigatoria.
+
+## Fechamento do parecer Cursor na #137 (2026-09-29)
+
+- O parecer no HEAD 5d8d664c apontou getters herdados/aninhados, `codigo_empresa_legado` aceito, contagens opcionais e perda do tipo de staging da revenda. O adaptador agora valida recursivamente lote e opcoes JSON simples antes de qualquer leitura, veda o alias empresarial e confere a saida do mapper sem inferir Empresa pelo seletor `001`.
+- O lote agregado exige uma contagem por entidade e devolve cada privado como `{ entidadeStaging, registro }`; `produto_revenda` nao e confundido com `entidade_migracao: produto`. Retry e conflito agregados sao testados, com bloqueio integral e relatorio sanitizado.
+- Esta e uma preparacao sintetica em memoria/CI PostgreSQL isolado. Nao houve leitura do backup, staging persistente, importacao no ERP operacional, migration DEV ou VPS. Nova CI e revisao consolidada do HEAD publicado continuam obrigatorias.
+
+## Candidata integrada #104 + cadeia legada (2026-09-29)
+
+- Branch separada baseada na `main` d02cd012; merge de ensaio do HEAD ae4c5a1c da #137 sem conflito textual. A ancestralidade inclui #104, #106-#109, #111, #48, #125 e #128. A ordem, o escopo de cada PR, a dependencia separada #92/#132 e os gates pendentes estao em `docs/LEGADO_INTEGRACAO_CANDIDATA.md`.
+- Esta candidata sera validada em CI como conjunto. Nao houve merge na main, acesso ao HD, staging persistente, importacao real, migration DEV ou alteracao da VPS/3080.
+
+## Entrada direta do staging legado (2026-09-29)
+
+- O caminho individual do adaptador agora valida opcoes, linhas e indice antes de destruturar campos ou ler `length`; Proxy no array e getter herdado em opcoes sao recusados sem executar armadilhas. O lote agregado conserva a validacao anterior.
+- Teste de regressao direto e suite focada do adaptador: 29/29 PASS; audit baseline, lint, build e `git diff --check` PASS. A suite `legado-*` no Windows ainda inclui quatro testes de inventario dependentes da execucao Bash. O typecheck global continua falhando em erros preexistentes de Base44/JSX fora deste diff; nao foi alterado para mascarar o baseline. A CI Linux do novo HEAD e o parecer integrado permanecem obrigatorios.
+- Nenhum registro bruto do HD foi lido ou transferido; a #141 segue draft sem merge, migration DEV ou mudanca na VPS/3080.
+
+## Evidencia sanitizada de identidade legada (2026-09-29)
+
+- Consulta somente leitura em 2026-09-29 de resumos privados gerados em 2026-09-10, sem varrer novamente o backup: o relatorio SQL gerado as 15:31 apontava 3 vinculos nao resolvidos em 5 linhas; a validacao humana posterior, gerada as 15:49, confirmou 3 decisoes, 0 pendentes e mapa de 3 aliases aprovado. O dry-run gerado as 17:34 fez 0 escritas; `importAuthorized=false`. Os horarios sao dos relatorios, nao dos commits Git. Nao apresentar o diagnostico anterior como pendencia atual do mapa de aliases.
+- Aprovacao dos aliases nao comprova a empresa proprietaria de cada Pedido, movimento de estoque, titulo ou nota. O adaptador permanece fail-closed; conjunto operacional sem coluna/origem e vinculo juridico comprovados vai para quarentena. Nenhum valor, CNPJ, registro ou arquivo privado foi copiado para o GitHub.
+- Proximo gate: comprovar, por conjunto operacional, origem e Empresa juridica sem extrapolar a aprovacao do mapa de aliases; depois validar staging isolado e plano de reversao antes de solicitar autorizacao de importacao real.
+
+## Prova de propriedade por operacao no preflight legado (2026-09-29)
+
+- Causa: a atestacao aprovada do codigo de empresa era suficiente para permitir Pedido/estoque/financeiro/nota no staging sintetico, embora nao comprovasse a empresa proprietaria da linha. O guarda canonico agora exige tambem atestacao separada vinculada a Grupo, Empresa, entidade, codigo e assinatura da origem; ausencia ou divergencia bloqueia todo o lote com motivo sanitizado.
+- O mapeador da #48, mestres do Grupo e a API operacional nao mudam. O E2E PostgreSQL usa somente prova sintetica e confere que alias sem prova nao grava na tabela temporaria. O mapa de atestacoes reais permanece privado e precisa nascer de conferência documental independente, nunca do payload nem do codigo do seletor.
+- Testes focados: 52/52 PASS, inclusive bloqueio de getters/Proxy na prova. Backend: 281 PASS, 0 FAIL, 16 SKIP por integracoes sem `DATABASE_URL` local; typecheck/build PASS. Frontend lint/build e audit:baseline PASS; diff-check PASS. `npm test` frontend completo no Windows falhou em testes Bash/VPS (spawn sem executavel Bash e arquivo temporario ausente), fora dos arquivos deste lote; CI Linux e PostgreSQL do novo HEAD ainda sao gates pendentes. Sem backup bruto publicado, importacao operacional, migration DEV, merge ou mudanca na VPS/3080.
+- Hardening complementar: evidencia circular ou aninhada demais agora falha fechada sem recursao ilimitada. Testes focados 53/53 PASS; CI Linux do HEAD anterior `614bf39b` passou frontend/backend/PostgreSQL sintetico. O novo HEAD exige CI e revisao proprias.
+
+## Integracao #141 apos revisao consolidada (2026-09-29)
+
+- O Cursor confirmou CI `36614794225` verde e fail-closed em `ab46b70a`, mas reproduziu leitura de Proxy no mapa `vinculosVerificados`. O preflight foi ajustado para recusar mapa dinamico ou alias herdado antes de qualquer acesso; testes focados 54/54 PASS verificam zero leituras de armadilha e `privados=[]`. Lint, build, audit:baseline e diff-check locais PASS. CI do novo HEAD pendente ate a publicacao.
+- `origin/main` segue `d02cd012`, base da candidata; merge-tree sem conflito textual. #104 e #48/#106-#109/#111/#125/#128/#137 estao na ancestralidade da #141, que permanece draft. #92/#132 ficam fora. Nao mesclar ancestrais separadamente depois da candidata.
+- A funcao ainda compara a assinatura recebida, sem recalcular o hash nem autenticar a atestacao privada. Isto impede tratar CI/staging sintetico como prova juridica por registro. Antes de carga real: assinatura da extracao controlada, empresa comprovada por coluna/documento, codigos legados preservados, contagens/conflitos, backup restauravel do destino, rollback e gate humano.
+
+## Marco DEV do acesso e atualização da candidata omnicanal (2026-09-27)
+
+- #101 foi aprovada pelo Cursor, mesclada na main `d02cd012948a597a734573ab0a5a7aed6d604a3b` e validada pela CI push #1209. API e SPA desse SHA foram implantadas em DEV com backup, canário e rollback preservado. O proprietário confirmou que consegue navegar em todo o sistema. Isso não homologa automaticamente fluxos comerciais, fiscais ou integrações externas.
+- #92 incorpora a main `d02cd012948a597a734573ab0a5a7aed6d604a3b`, preservando a correção de acesso e os contratos existentes. Os blobs de migration 025 e 028 permanecem idênticos aos HEADs atuais das PRs #50 e #53. Nenhuma migration 025–033 foi executada em DEV nesta atualização; canais e provedores continuam desligados. Revisão independente e CI do novo HEAD são necessárias antes de integração ou implantação da #92 e da #93 dependente.
+
+## Comercial 360 - codigo legado de Produto (candidato, 2026-09-29)
+
+- Produto canonico agora modela `codigo_legado` separadamente de `codigo`, preservando zeros a esquerda sem renumerar o codigo ERP. Schema estrito, repositórios PostgreSQL/in-memory e migration aditiva 034; sem unicidade no codigo legado porque colisões da origem exigem reconciliação, mantendo a unicidade canônica existente.
+- Testes sinteticos cobrem create/get/update, isolamento por empresa, rollback PostgreSQL e constraint de formato. PostgreSQL real fica para CI efemera; migration 034 nao foi aplicada na VPS nem no DEV.
+- Local: backend 378 pass/0 fail/41 skip sem `DATABASE_URL`; testes focados 29 pass/0 fail/2 skip; backend typecheck/build, frontend audit/lint/build e `git diff --check` passaram. `npm test` raiz no Windows falha em scripts que invocam Bash; typecheck raiz apresenta erros preexistentes em Base44/JSX fora do diff. CI Linux e revisao independente ainda pendentes.
+- Proximo gate: validar PostgreSQL na CI, revisar HEAD final, integrar somente conforme ordem de migrations acordada; carga legada real continua bloqueada por mapa juridico Grupo/Empresa, staging e reconciliacao.
+- Complemento do mesmo lote: ProdutoFormV22 existente mostra/edita `codigo_legado` com RBAC visual, e a projecao HTTP envia apenas esse campo mestre permitido. Busca backend encontra codigo legado sem perder filtro de Grupo/Empresa. Teste V22 12 pass/0 fail; backend focado 29 pass/0 fail/2 skip; lint e builds frontend/backend passaram. A primeira CI de `aba0e0f5` foi verde nos jobs frontend/backend/PostgreSQL; CI do complemento ainda pendente.
+- Fechamento da descoberta: as duas listagens existentes de Produto exibem `codigo_legado`; `entityListSorted` inclui o campo na busca local depois do filtro de escopo. HTTP create/get/search/update foi exercitado com codigo legado, 404 cross-tenant, 403 RBAC, 400 payload e auditoria before/after; rollback por falha de auditoria preserva codigo anterior. Backend completo 379 pass/0 fail/41 skip (sem PostgreSQL local), backend typecheck/build e frontend audit/lint/build passaram. A CI Linux e PostgreSQL efemero do novo HEAD serao conferidos antes de revisao; nenhum acesso VPS/DEV ou importacao real.
+## Comercial 360 — contrato de custo fail-closed (2026-09-30)
+
+Base: #155 `c717628f` em branch Codex isolada; #104 congelada e #175/#176 em ownership separado. Causa: a política de margem truncava custo com mais de seis casas e convertia margem mínima inválida em zero, podendo liberar Pedido/Orçamento indevidamente. A política existente agora rejeita precisão excessiva e bps inválidos antes de persistir; conserva escopo Grupo/Empresa, RBAC de aprovação e auditoria de override. Testes sintéticos de política/HTTP cobrem negativa, ausência de persistência e retentativa com custo corrigido (14/14); typecheck/build do servidor, lint/build/audit frontend e diff-check passam. A suíte backend ampla teve um timeout sob execução paralela; o arquivo afetado passou 15/15 isolado. `npm test` frontend no Windows falha em testes Bash/VPS legados fora do diff; `npm run typecheck` frontend ainda reporta erros preexistentes em `base44/functions`/páginas. CI Linux do HEAD é gate obrigatório. Nenhuma fonte de custo/crédito foi inventada, nenhum anexo ou dado real foi publicado, e não houve merge, migration ou VPS. Pendente: CI e revisão do HEAD desta branch, integração controlada com #175/#176; crédito depende do contrato proprietário Financeiro. Próximo item: consolidar gates de composição e provar PostgreSQL/HTTP do candidato revisado antes de qualquer autorização operacional.
+
+## Correção do parecer Cursor #155 — lote candidato (2026-09-30)
+
+Base #177 `bd6bc300` (CI 36698247228/36698247764 verde e revisão do próprio delta sem achado, mas #155 ancestral foi reprovada). Causa: conversão/versionamento coordenavam somente ID individual, update convertido aceitava preço vivo e perdia snapshot de tabela, e recibo não reconhecia `SUPERSEDIDO`. Alterações no Orçamento/Pedido e ingress canônicos: lock transacional da raiz, consulta a Pedidos em todas as versões, rejeição de preço/identidade alterados no update convertido, preservação de tabela/tipo gravados e estado `SUPERSEDIDO` no recibo. Backend completo 453 pass/0 fail/43 skip; testes sintéticos cobrem sequência, corrida, rollback da operação negada, reabertura e recibo em PGlite/HTTP. Backend typecheck/build, frontend audit/lint/build e diff-check passaram. `npm test` frontend no Windows falha em scripts Bash/VPS legados fora do diff; typecheck frontend mantém erros preexistentes. PostgreSQL real e CI do SHA final ainda são gates. Multiempresa, RBAC e auditoria existentes permanecem em uso; nenhuma branch do Cursor, main, VPS ou banco operacional foi alterada. O Orçamento não possui contrato persistido de ARMADO/CORTE_DOBRA: não homologar conversão especial nem inferir pelo Produto vivo; gate separado. Migration 026 mantém trava para histórico não classificado; estratégia de cópia isolada, mapa explícito e reconciliação está na ordem de integração. Próximo item: fechar CI/revisão da correção, depois contrato seguro para tipo especial e eventual composição autorizada, sem incluir #175 reprovada.
+## Comercial 360 — bloqueio de edição da origem convertida (#178, 2026-09-30)
+
+O parecer independente do Cursor no HEAD `0e5e4203` confirmou a proteção contra segundo Pedido, mas mostrou que o Orçamento convertido ainda aceitava edição. Causa: `OrcamentoService.update` verificava apenas `EM_ABERTO`, sem consultar a cadeia convertida. O update agora toma o mesmo lock transacional por Grupo/Empresa/raiz da conversão, relê o estado e bloqueia a edição se qualquer versão possuir Pedido. Reutiliza repositórios, RBAC, transação e auditoria existentes; rejeição não persiste nem audita atualização inexistente. Teste comportamental PGlite/PostgreSQL no fluxo convertido verifica o bloqueio e a ausência de novo evento. Fixtures antigas de serviço receberam o repositório de Pedido, sem afrouxar o guard. Backend completo: 453 pass/0 fail/43 skip na repetição isolada; backend typecheck, frontend audit/lint/build e diff-check passaram. `npm test` frontend falha em testes Bash/VPS legados no Windows; typecheck frontend mantém erros preexistentes. Nenhum dado real, migration, VPS ou merge. Próximo passo: CI Linux/PostgreSQL real e revisão do novo HEAD; manter gates de classificação ARMADO/CORTE_DOBRA e histórico 026 antes da integração.
+
+Correção da CI do mesmo lote: o SHA `a89954eb` passou no workflow `omnicanal-postgres`, mas `erp-runtime-ci` falhou no teste PostgreSQL R08C de rollback porque sua fixture criava `OrcamentoService` sem a porta de Pedido. A fixture PostgreSQL agora injeta `PostgresPedidoRepository` real; nenhuma lógica de produção nem expectativa foi afrouxada. A nova CI do próximo SHA deve confirmar o teste real antes de homologação.
+
+Complemento pós-revisão do HEAD `46569bbb`: Cursor confirmou oito corridas conversão×edição sem edição gravada depois do Pedido e CI Linux/PostgreSQL verde, mas apontou que cancelar o Orçamento convertido continuava permitido. `cancel` reutiliza o lock e o guard por raiz de versionar/editar; a rejeição preserva status, Pedido e auditoria. O teste PGlite/PostgreSQL do fluxo convertido verifica cancelar negado sem evento adicional. Próximo gate: CI e revisão deste HEAD; condição/promoção do Pedido convertido e contrato de tipos especiais continuam separados.
+
+## Comercial 360 — não retroatividade no update do Pedido convertido (2026-09-30)
+
+Parecer Cursor do HEAD `a5349636`: CI e corridas de cancelar×converter passaram, mas update do Pedido convertido ainda relia a condição mestre e apagava promoção omitida. `PedidoService.update` agora mantém os snapshots persistidos de condição, tabela, promoção, tipo e preço, rejeita alteração dos termos comerciais da conversão (cliente, condição, operação, promoção e item/quantidade/desconto/descrição) e permite apenas campos operacionais compatíveis. O guard de Grupo/Empresa, RBAC, transação e auditoria existentes permanece; condição mestre alterada não reprecifica o documento. Teste sintético PGlite/PostgreSQL muda a condição viva, simula promoção persistida, valida preservação e rejeições; testes focados de snapshots 37 pass/0 fail/8 skip. Contrato persistido de ARMADO/CORTE_DOBRA no Orçamento ainda não existe; conversão especial permanece bloqueada, sem inferência do Produto vivo. Migration 026 mantém trava para histórico sem classificação comprovada; nenhum destino operacional foi acessado. Próximo passo: CI real e revisão do HEAD final deste lote antes de composição.
+
+## Comercial 360 — intenção especial persistida e local/obra (2026-09-30)
+
+Base #178 `1243190f`, CI `erp-runtime-ci` 36723043477 e `omnicanal-postgres` 36723044053 verdes; parecer Cursor deste SHA solicitado. Causa: Orçamento não guardava intenção explícita de ARMADO/CORTE_DOBRA e a atualização do Pedido convertido anulava local/obra omitidos. A migration aditiva 035 guarda somente `tipo_comercial` especial com `requer_producao=true` no item do Orçamento; histórico permanece `NULL` sem inferência ou backfill. Serviço valida par antes de gravar, audita tipo/produção por item; conversão lê os campos persistidos e usa a política canônica de tipo comercial do Pedido. Update convertido preserva local/obra quando ausentes no payload e mantém validação de alterações explícitas. Testes sintéticos de HTTP assinado, PGlite/PostgreSQL, repetição da 035 sem classificação histórica e preservação de local/obra passaram no ambiente isolado; backend completo 454 pass/0 fail/44 skip, typecheck/build servidor, audit/lint/build frontend e diff-check passaram. PostgreSQL real ainda é gate da CI. A migration 026 não mudou e segue bloqueando histórico sem mapa comprovado. Nenhum destino operacional, VPS ou dado real foi acessado. Próximo passo: CI do HEAD, revisão independente e plano de classificação histórica/backup antes de qualquer integração.
+
+## Comercial 360 — preflight read-only do histórico 026 (2026-09-30)
+
+O HEAD `90533c2c` da #178 passou nas CIs `erp-runtime-ci` 36737509583 e `omnicanal-postgres` 36737509559; revisão Cursor solicitada. Para a limitação histórica da 026, o comando canônico `npm --prefix server run migrate -- --preflight-pedido-026` agora oferece relatório somente leitura de contagens de Pedidos e itens por Grupo/Empresa, presença de colunas, migration aplicada e motivos de bloqueio, sem IDs de registros ou dados pessoais. Se as colunas faltam e há linhas, sinaliza necessidade de mapeamento; se já existem com linhas, exige prova de proveniência e não aceita o default como evidência de classificação. A migration 026 permanece inalterada e falha fechada. Testes PGlite/PostgreSQL em base sintética cobrem ausência de colunas, rollback da 026, classificação explícita de SERVICO, caso de coluna já existente sem proveniência e contagens por empresa. Backend completo com concorrência de testes limitada: 454 pass/0 fail/44 skip; o modo paralelo padrão teve timeout no teste de transporte não relacionado, reproduzido 15/15 isolado. Backend typecheck/build, audit frontend e diff-check passaram. Nenhum preflight foi executado no destino real. Próximo passo: backup imutável do destino, extração read-only em staging autorizado, mapa por Pedido/item com evidência original, conflitos e reconciliação por empresa antes de qualquer aprovação de migration.
+
+Correção pós-parecer Cursor do HEAD `03fd92d2`: apesar da CI verde, o preflight liberava casos de coluna parcial e resultado vazio sob RLS. Agora toda linha com ao menos uma coluna de tipo presente exige proveniência, e qualquer papel sem `rolsuper`/`rolbypassrls` bloqueia o relatório como `UNTRUSTED_RLS_VISIBILITY`, mesmo que sua contagem aparente seja zero. Testes sintéticos PGlite/PostgreSQL reproduzem os dois bypasses e a rejeição. Backend completo com concorrência limitada: 454 pass/0 fail/44 skip; typecheck/build servidor, audit frontend e diff-check passaram. A consulta continua read-only; nenhuma permissão ou política RLS foi ampliada. Próximo gate: CI e revisão do novo SHA; dados reais e backup de destino seguem ausentes.
+
+## Comercial 360 — preservação de itens no Pedido convertido (2026-09-30)
+
+O HEAD anterior `e4d3d904` da #178 foi revisado pelo Cursor; ambos os bypasses do preflight 026 foram fechados em PostgreSQL 16.15, mas merge/VPS/importação continuam não aprovados por falta de classificação e backup do destino real. Nesta execução não havia `DATABASE_URL` de destino nem autorização de acesso à VPS; o preflight real não foi executado. A classificação por Pedido/item e o plano de backup devem ser obtidos em ambiente autorizado, sem inferir pelo Produto atual.
+
+Defeito independente: `PedidoService.update` de documento convertido revalidava o Produto vivo e `PostgresPedidoRepository.update` apagava/reinseria os itens imutáveis. Após a inativação do Produto, uma alteração somente operacional do Pedido falhava no gatilho de integridade e ainda recriaria IDs de itens. Agora a validação de Grupo/Empresa, RBAC, local/obra e termos imutáveis permanece; o update convertido não revalida o Produto vivo e preserva fisicamente os itens, seus IDs e snapshots. Venda direta continua revalidando Produto e regravando itens conforme o fluxo existente. Teste PGlite desativa e muda o tipo vivo do Produto, edita o Pedido `CORTE_DOBRA`, confirma ID/snapshot/auditoria; o mesmo teste roda na CI PostgreSQL real. Backend completo 454 pass/0 fail/44 skip; typecheck/build servidor, audit:baseline, lint/build frontend e diff-check passaram. `npm test` raiz falha nos testes de shell/VPS sob Windows e `npm run typecheck` raiz mantém erros anteriores fora do backend; não foram mascarados. Próximo gate: CI e revisão independente do novo HEAD; sem merge/VPS/importação antes da prova histórica e backup.
+
+## Comercial 360 — edição concorrente com cancelamento de Pedido (2026-09-30)
+
+Parecer Cursor do HEAD `98820d20` confirmou em PostgreSQL 16.15 a preservação física de itens convertidos e as negativas de Produto inativo, RBAC, tenant e local inválido; CIs `erp-runtime-ci` 36747140182 e `omnicanal-postgres` 36747140184 passaram. O novo defeito independente era a janela entre a leitura de `EM_ABERTO` e o `UPDATE` do cabeçalho: outro processo poderia cancelar o Pedido nesse intervalo e a edição prosseguiria. O SQL agora revalida `status='EM_ABERTO'` na própria escrita e retorna conflito sem apagar/inserir itens quando nenhuma linha é atualizada. Teste comportamental PGlite/PostgreSQL injeta cancelamento exatamente após a leitura e confirma cabeçalho, observação e IDs de itens preservados. Backend local 455 pass/0 fail/45 skip; typecheck/build servidor passaram. O teste PostgreSQL real e CI do novo SHA seguem como gate; sem merge/VPS/importação e sem mudança na 026.
+
+Complemento da mesma corrida: a transição/cancelamento também relia o status e fazia `UPDATE` sem comparar o status anterior, podendo gravar histórico de uma transição vencida. A escrita agora compara o status observado, retorna conflito se mudou e não insere histórico nessa tentativa. Teste sintético PGlite/PostgreSQL força o cancelamento entre a leitura e a transição e verifica que não houve nova entrada de histórico. Backend local 455 pass/0 fail/45 skip, typecheck/build servidor e diff-check passaram; audit/lint/build frontend já haviam passado no incremento imediatamente anterior sem mudança desses arquivos. O HEAD anterior `e84315e6` passou em `erp-runtime-ci` 36756528280 e `omnicanal-postgres` 36756528367 e foi revisado positivamente pelo Cursor quanto ao código. Este complemento exige novo SHA, CI e revisão final.
+
+Parecer Cursor do HEAD `e5eef59d`: a comparação com o status relido ainda permitia cancelar depois que o serviço tinha validado `EM_ABERTO` e uma transição tinha completado antes da releitura do repositório. O contrato de `changeStatus` agora recebe o status observado pelo serviço; revalida-o na releitura e no `UPDATE` condicional. O repositório em memória aplica o mesmo contrato. Teste PGlite/PostgreSQL simula essa janela: `EM_ABERTO` validado, status passa a `PRONTO_RETIRADA`, cancelamento tardio retorna conflito e não acrescenta histórico. Backend local 455 pass/0 fail/45 skip; typecheck/build servidor e diff-check passaram. Audit/lint/build frontend já estavam verdes no incremento anterior e não houve mudança de frontend. Não houve mudança na migration 026 nem acesso a destino real; CI e nova revisão do HEAD corrigido são necessárias.
+
+## Comercial 360 — reconciliação agregada no preflight 026 (2026-09-30)
+
+O HEAD `9df73886` da #178 passou em `erp-runtime-ci` 36761469458 e `omnicanal-postgres` 36761469482; o Cursor confirmou a janela de cancelamento tardio fechada em PostgreSQL 16.15, sem aprovar merge/VPS/importação por falta de classificação histórica e backup real. No primeiro incremento, o preflight 026 somente leitura passou a contar tipos inválidos/nulos em Pedido e item, itens sem Pedido no mesmo Grupo/Empresa e cabeçalhos cujo tipo diverge da agregação dos itens. As consultas de vínculo só rodam quando colunas necessárias existem; `null` significa inspeção indisponível, não zero. Valores históricos não são publicados e nenhum tipo é inferido do Produto atual. Mesmo que as contagens estejam zeradas, linhas já tipadas continuam exigindo prova de proveniência. Teste sintético PGlite/PostgreSQL inclui tipo nulo, divergência, item órfão e ausência de IDs de registros no JSON. Backend local 456 pass/0 fail/46 skip, typecheck/build servidor, audit:baseline, lint/build aplicação e diff-check passaram. `npm test` raiz sob Windows e typecheck raiz têm falhas preexistentes já registradas no lote anterior; não foram alterados. Sem acesso ao destino, backup, mapeador legado, merge ou implantação. Próximo gate: CI/revisão do SHA deste lote e relatório privado real com classificação comprovada antes de qualquer backfill.
+
+Complemento de gate antes da 025: a migration 026 ainda aceitava linhas históricas se as colunas já existissem com qualquer valor, inclusive default `REVENDA`, apesar do preflight bloquear. Agora o SQL da 026 recusa qualquer Pedido/item preexistente antes do DDL; a aplicação de histórico classificado dependerá de migration própria após mapa aprovado, não de um valor no registro. O executor canônico chama o preflight read-only antes de escrever `schema_migrations` ou aplicar 025 quando encontra tabela de Pedido preexistente e a 026 pendente. Testes PGlite/PostgreSQL verificam recusa sem DDL com `REVENDA` e `SERVICO`, recusa antes de `schema_migrations`, e repetição aditiva em base vazia. Backend local 456 pass/0 fail/46 skip, typecheck/build servidor e diff-check passaram; audit/lint/build aplicação verdes no primeiro incremento sem alteração de frontend depois. Sem classificação real, backup ou autorização de migration; CI e revisão final do novo HEAD seguem obrigatórias.
+
+## Comercial 360 — confirmação de reserva antes dos efeitos posteriores (2026-09-30)
+
+Base #178 `0596a763`, CIs `erp-runtime-ci` 36765676571 e `omnicanal-postgres` 36765676514 verdes; Cursor confirmou gate 026 no PostgreSQL real, mas sem liberar merge/VPS/importação. No fluxo legado de aprovação do Pedido, uma reserva que retornasse sem movimento/id e sem marcador de reuso podia ser tratada como sucesso. A política de reserva e a aprovação real agora rejeitam esse retorno, interrompem os itens seguintes, compensam as reservas confirmadas da tentativa e não acionam Produção, Financeiro nem status. A validação de unidade não foi endurecida neste lote porque um caminho legado de faturamento ainda não a fornece; conversão de unidade/estoque requer contrato separado. Reutilizados `pedidoFaturamentoPolicy` e `useFluxoPedido`, sem módulo novo nem edição de Expedição/Logística. Teste comportamental da função real com três itens prova reserva parcial, recibo vazio, compensação e ausência dos efeitos posteriores; 32/32 testes focados, audit:baseline, lint/build frontend e diff-check passaram. `npm test` raiz no Windows segue falhando em testes Bash/VPS não relacionados; a CI Linux do novo HEAD é obrigatória. Risco restante: a reserva legada grava movimento e Produto em chamadas separadas, sem transação; falha entre essas chamadas ainda requer reconciliação específica, não foi declarada atômica. Sem dados reais, merge, VPS ou importação.
+
+## Comercial 360 — validade futura do fixture R08C PostgreSQL (2026-10-01)
+
+O HEAD `790e4be1` da #178 passou nas CIs `erp-runtime-ci` 36769412407 e `omnicanal-postgres` 36769412099 e foi revisado pelo Cursor; merge/VPS/importação não liberados. A CI da candidata integrada #185 `3e10bf4a` reportou que o R08C de rollback de auditoria esperava o erro forçado, mas o fixture `validade_em: 2026-10-01T00:00:00Z` já estava vencido quando o serviço validou o Orçamento. Os dois inputs deste arquivo agora usam validade calculada 30 dias após a execução do teste; nenhuma regra de validade de produção mudou. Testes focados locais: 8 pass, 0 fail, 2 skip por ausência de `DATABASE_URL`, incluindo casos que continuam rejeitando validade expirada. Backend completo 456 pass/0 fail/46 skip, typecheck/build servidor e diff-check passaram. A correção está nesta branch Comercial e não foi aplicada à branch #185 ou à VPS. Gate seguinte: CI PostgreSQL do novo SHA e composição explícita antes de afirmar que #185 está corrigida.

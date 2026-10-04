@@ -4,6 +4,7 @@ import type { AuditEntry, AuditRepository, RequestContext } from '../src/audit/t
 import type { DbQueryExecutor } from '../src/db/client.js';
 import { InMemoryRbacGuard, type RbacAction } from '../src/db/rbacGuard.js';
 import { InMemoryOrcamentoRepository } from '../src/repositories/inMemoryOrcamentoRepository.js';
+import { InMemoryPedidoRepository } from '../src/repositories/inMemoryPedidoRepository.js';
 import type { OrcamentoCreate, OrcamentoScope } from '../src/repositories/orcamentoTypes.js';
 import { OrcamentoService } from '../src/services/orcamentoService.js';
 
@@ -124,8 +125,9 @@ function serviceFor(options: {
     { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as any,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) } as any,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,
-    { get: async () => ({ id: condicaoId, ativo: true }) } as any,
+    { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
   return { repo, audit, service };
 }

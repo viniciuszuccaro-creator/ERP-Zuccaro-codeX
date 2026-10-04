@@ -314,6 +314,7 @@ export class ExpedicaoService {
         empresaId: scope.empresaId,
         pedidoId: before.pedido_id,
         entregaId,
+        actorId: ctx.actorId!,
       }, executor);
 
       return { entrega: toSpaEntrega(entrega), separacao, reused: false, pedidoSideEffect };
@@ -401,11 +402,12 @@ export class ExpedicaoService {
 
       const pedidoIds = selecionadas.map((s) => s.pedido_id).filter(Boolean) as string[];
       const pedidoSideEffect = data.despachar ? await this.pedidoPort.onDespacho({
-        groupId: scope.groupId, empresaId: scope.empresaId, pedidoIds, romaneioId: romaneio.id,
+        groupId: scope.groupId, empresaId: scope.empresaId, pedidoIds, romaneioId: romaneio.id, actorId: ctx.actorId!,
       }, executor) : 'reserved';
       const estoqueSideEffect = data.despachar ? await this.estoquePort.onDespacho({
         groupId: scope.groupId, empresaId: scope.empresaId,
         entregaIds: selecionadas.map((s) => s.id),
+        actorId: ctx.actorId!,
       }, executor) : 'reserved';
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
@@ -593,6 +595,7 @@ export class ExpedicaoService {
         empresaId: scope.empresaId,
         entregaId,
         quantidade: String(qty),
+        actorId: ctx.actorId!,
       }, executor);
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
@@ -670,12 +673,24 @@ export class ExpedicaoService {
         if (!ALLOWED_TRANSITIONS[before.status].includes(next)) {
           throw new AppError(409, 'ENTREGA_STATE_CONFLICT', `Transition ${before.status} -> ${next} not allowed`);
         }
-        if (before.pedido_id && ['CANCELADA', 'SAIU_ENTREGA'].includes(next)) {
+        if (before.pedido_id && next === 'SAIU_ENTREGA') {
           throw new AppError(409, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE', 'Linked Pedido requires stock contract');
         }
         const updated = await this.repo.changeEntregaStatus(scope, id, next, ctx.actorId!,
           String(body.motivo || ''), String(body.idempotency_key || '') || undefined, executor);
         if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
+        if (next === 'CANCELADA' && before.pedido_id) {
+          const stock = await this.estoquePort.onCancelamento?.({
+            groupId: scope.groupId, empresaId: scope.empresaId, entregaId: id, actorId: ctx.actorId!,
+          }, executor);
+          const pedido = await this.pedidoPort.onCancelamento?.({
+            groupId: scope.groupId, empresaId: scope.empresaId, pedidoId: before.pedido_id,
+            entregaId: id, actorId: ctx.actorId!,
+          }, executor);
+          if (stock !== 'applied' || pedido !== 'applied') {
+            throw new AppError(503, 'PEDIDO_ESTOQUE_CONTRACT_UNAVAILABLE', 'Linked cancellation requires stock and Pedido compensation');
+          }
+        }
         await this.auditRow(ctx, 'Entrega', 'change_status', before, updated, executor);
         return toSpaEntrega(updated);
       });

@@ -332,9 +332,349 @@ export function createHttpApiClient(options = {}) {
       async list() { return []; },
     },
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
+    // CondicaoPagamento R08B — piloto HTTP (CRUD + parcelas/vínculo/padrão/resolve).
+    CondicaoPagamento: (() => {
+      const base = createCrudEntity('/api/v1/condicoes-pagamento', {
+        searchKeys: ['search', 'nome', 'codigo'],
+        ativoKeys: ['ativo'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/condicoes-pagamento', { query: { limit, ativo: true } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/condicoes-pagamento', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.codigo,
+              ativo: query.ativo ?? query.ativa,
+              eh_padrao: query.eh_padrao ?? query.ehPadrao,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        restore(id, { signal } = {}) {
+          return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/restore`, {
+            method: 'POST',
+            signal,
+          });
+        },
+        /** @param {string} id @param {unknown} parcelas @param {{ signal?: AbortSignal }} [options] */
+        replaceParcelas(id, parcelas, { signal } = {}) {
+          return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/parcelas`, {
+            method: 'PUT',
+            body: parcelas,
+            signal,
+          });
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        linkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        unlinkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'DELETE', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        restoreEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        setPadrao(id, { signal } = {}) {
+          return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/padrao`, {
+            method: 'POST',
+            signal,
+          });
+        },
+      };
+    })(),
+    // TabelaPreco R07B — piloto HTTP (CRUD + vínculo/padrão/itens + preco-cliente).
+    TabelaPreco: (() => {
+      const base = createCrudEntity('/api/v1/tabelas-preco', {
+        searchKeys: ['search', 'nome', 'codigo'],
+        ativoKeys: ['ativo'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/tabelas-preco', { query: { limit, ativo: true } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/tabelas-preco', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.codigo,
+              ativo: query.ativo ?? query.ativa,
+              vigente: query.vigente,
+              eh_padrao: query.eh_padrao ?? query.ehPadrao,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        restore(id, { signal } = {}) {
+          return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/restore`, {
+            method: 'POST',
+            signal,
+          });
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        linkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        unlinkEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+            { method: 'DELETE', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        restoreEmpresa(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+        setPadrao(id, empresaId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/padrao`,
+            { method: 'POST', signal },
+          );
+        },
+        /** @param {string} id @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options] */
+        listItens(id, { limit = 100, offset = 0, ativo, signal } = {}) {
+          return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+            query: { limit, offset, ativo },
+            signal,
+            unwrap: false,
+          });
+        },
+        /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+        createItem(id, payload, { signal } = {}) {
+          return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+            method: 'POST',
+            body: payload,
+            signal,
+          });
+        },
+        /** @param {string} id @param {string} itemId @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+        updateItem(id, itemId, payload, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+            { method: 'PATCH', body: payload, signal },
+          );
+        },
+        /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+        softDeleteItem(id, itemId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+            { method: 'DELETE', signal },
+          );
+        },
+        /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+        restoreItem(id, itemId, { signal } = {}) {
+          return request(
+            `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}/restore`,
+            { method: 'POST', signal },
+          );
+        },
+      };
+    })(),
+    // Cliente R04 — piloto HTTP Onda 3 (CRUD + restore + vínculos/Central 360 no namespace `clientes`).
+    Cliente: (() => {
+      const base = createCrudEntity('/api/v1/clientes', {
+        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'codigo', 'documento'],
+        ativoKeys: ['ativo'],
+      });
+      return {
+        ...base,
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/clientes', {
+            query: { limit, ativo: true, order_by: 'nome' },
+          });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/clientes', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.razao_social || query.codigo,
+              documento: query.documento || query.cpf_cnpj,
+              codigo: query.codigo_exato || query.codigoExact,
+              ativo: query.ativo ?? true,
+              order_by: query.order_by || query.orderBy || 'nome',
+              order_dir: query.order_dir || query.orderDir,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        restore(id, { signal } = {}) {
+          return request(`/api/v1/clientes/${encodeURIComponent(id)}/restore`, {
+            method: 'POST',
+            signal,
+          });
+        },
+      };
+    })(),
+    // ClienteEmpresa R05 — piloto HTTP list-for-scope (seleção Comercial); mutações permanecem nested.
+    ClienteEmpresa: (() => {
+      return {
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          return request('/api/v1/cliente-empresas', {
+            query: { limit, ativo: true, habilitado_operacao: true },
+          });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          const habilitado = query.habilitado_operacao ?? query.habilitadoOperacao;
+          return request('/api/v1/cliente-empresas', {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.codigo,
+              ativo: query.ativo ?? true,
+              bloqueado: query.bloqueado,
+              habilitado_operacao: habilitado === undefined ? true : habilitado,
+              situacao: query.situacao || query.situacao_comercial || query.situacaoComercial,
+              order_by: query.order_by || query.orderBy || 'created_at',
+              order_dir: query.order_dir || query.orderDir,
+            },
+          });
+        },
+        /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+        get(id, { signal } = {}) {
+          return request(`/api/v1/cliente-empresas/${encodeURIComponent(id)}`, { signal });
+        },
+      };
+    })(),
+    // ClienteLocal R06A — nested sob Cliente; exige cliente_id no filter (sem flat list-for-scope).
+    ClienteLocal: (() => {
+      const requireClienteId = (query = {}) => {
+        const clienteId = query.cliente_id || query.clienteId;
+        if (!clienteId || typeof clienteId !== 'string') {
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'cliente_id is required for ClienteLocal HTTP' } });
+        }
+        return clienteId;
+      };
+      return {
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          void limit;
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'ClienteLocal.list requires filter({ cliente_id })' } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          const clienteId = requireClienteId(query);
+          return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/locais`, {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome,
+              ativo: query.ativo ?? true,
+              finalidade: query.finalidade,
+              principal: query.principal,
+              cidade: query.cidade,
+              uf: query.uf,
+              order_by: query.order_by || query.orderBy || 'nome',
+              order_dir: query.order_dir || query.orderDir,
+            },
+            unwrap: false,
+          });
+        },
+        /**
+         * @param {string} id
+         * @param {{ clienteId?: string, cliente_id?: string, signal?: AbortSignal }} [options]
+         */
+        get(id, options = {}) {
+          const clienteId = options.clienteId || options.cliente_id;
+          if (!clienteId) {
+            throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'clienteId is required for ClienteLocal.get' } });
+          }
+          return request(
+            `/api/v1/clientes/${encodeURIComponent(clienteId)}/locais/${encodeURIComponent(id)}`,
+            { signal: options.signal },
+          );
+        },
+      };
+    })(),
+    // Obra R06B — nested sob Cliente; exige cliente_id no filter (seleção operacional no Pedido).
+    Obra: (() => {
+      const requireClienteId = (query = {}) => {
+        const clienteId = query.cliente_id || query.clienteId;
+        if (!clienteId || typeof clienteId !== 'string') {
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'cliente_id is required for Obra HTTP' } });
+        }
+        return clienteId;
+      };
+      return {
+        async list(orderBy, limit = 100) {
+          void orderBy;
+          void limit;
+          throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'Obra.list requires filter({ cliente_id })' } });
+        },
+        async filter(query = {}, orderBy, limit = 100) {
+          void orderBy;
+          const clienteId = requireClienteId(query);
+          return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/obras`, {
+            query: {
+              limit,
+              offset: query.offset,
+              search: query.search || query.nome || query.codigo,
+              ativo: query.ativo ?? true,
+              status: query.status,
+              operacional: query.operacional,
+              cidade: query.cidade,
+              uf: query.uf,
+              order_by: query.order_by || query.orderBy || 'nome',
+              order_dir: query.order_dir || query.orderDir,
+            },
+            unwrap: false,
+          });
+        },
+        /**
+         * @param {string} id
+         * @param {{ clienteId?: string, cliente_id?: string, signal?: AbortSignal }} [options]
+         */
+        get(id, options = {}) {
+          const clienteId = options.clienteId || options.cliente_id;
+          if (!clienteId) {
+            throw createHttpError(400, { error: { code: 'CLIENTE_ID_REQUIRED', message: 'clienteId is required for Obra.get' } });
+          }
+          return request(
+            `/api/v1/clientes/${encodeURIComponent(clienteId)}/obras/${encodeURIComponent(id)}`,
+            { signal: options.signal },
+          );
+        },
+      };
+    })(),
+    // Produto R03 — piloto HTTP Onda 3 (list/get Comercial + CRUD/relações prepared).
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
         searchKeys: ['descricao', 'codigo', 'nome', 'codigo_barras', 'search'],
+        ativoKeys: ['ativo'],
       });
       const listeners = new Set();
       const notify = () => {
@@ -403,7 +743,7 @@ export function createHttpApiClient(options = {}) {
         },
         async list(orderBy, limit = 50, offset = 0) {
           void orderBy;
-          return request('/api/v1/produtos', { query: { limit, offset } });
+          return request('/api/v1/produtos', { query: { limit, offset, ativo: true } });
         },
         async filter(query = {}, orderBy, limit = 50) {
           void orderBy;
@@ -413,8 +753,8 @@ export function createHttpApiClient(options = {}) {
               offset: query.offset,
               search: query.descricao || query.search || query.nome,
               codigo: query.codigo,
-              codigo_barras: query.codigo_barras,
-              ativo: query.ativo ?? query.ativa,
+              codigo_barras: query.codigo_barras || query.codigoBarras,
+              ativo: query.ativo ?? query.ativa ?? true,
             },
           });
         },
@@ -481,17 +821,451 @@ export function createHttpApiClient(options = {}) {
     criarRomaneio(payload, { signal } = {}) { return request('/api/v1/romaneios', { method: 'POST', body: payload, signal }); },
   };
 
+  /** Simulação comercial Onda 2 (não persiste). Tenant só nos headers via getScope. */
+  const comercial = {
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    simularVenda(payload, { signal } = {}) {
+      return request('/api/v1/comercial/simular-venda', { method: 'POST', body: payload, signal });
+    },
+  };
+  /**
+   * CondicaoPagamento canônica (R08B + Onda 2 resolve).
+   * Tenant só nos headers via getScope; RBAC Cadastros.condicao_pagamento.* no BFF.
+   */
+  const condicoesPagamento = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, ehPadrao?: boolean, signal?: AbortSignal }} [options]
+     */
+    list({ limit = 50, offset = 0, search, ativo = true, ehPadrao, signal } = {}) {
+      return request('/api/v1/condicoes-pagamento', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          eh_padrao: ehPadrao,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/condicoes-pagamento', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    softDelete(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    restore(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /** @param {string} id @param {unknown} parcelas @param {{ signal?: AbortSignal }} [options] */
+    replaceParcelas(id, parcelas, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/parcelas`, {
+        method: 'PUT',
+        body: parcelas,
+        signal,
+      });
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    linkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    unlinkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'DELETE', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    restoreEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    setPadrao(id, { signal } = {}) {
+      return request(`/api/v1/condicoes-pagamento/${encodeURIComponent(id)}/padrao`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /**
+     * Resolve fail-closed ClienteEmpresa → padrão Empresa
+     * (Cadastros.condicao_pagamento.visualizar no backend).
+     * @param {string} clienteEmpresaId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    resolve(clienteEmpresaId, { signal } = {}) {
+      return request('/api/v1/condicoes-pagamento/resolve', {
+        query: { clienteEmpresaId },
+        signal,
+      });
+    },
+  };
+  /**
+   * TabelaPreco canônica (R07B + Onda 2 preco-cliente).
+   * Tenant só nos headers via getScope; RBAC Cadastros.tabela_preco.* no BFF.
+   */
+  const tabelasPreco = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, vigente?: boolean, ehPadrao?: boolean, signal?: AbortSignal }} [options]
+     */
+    list({ limit = 50, offset = 0, search, ativo = true, vigente, ehPadrao, signal } = {}) {
+      return request('/api/v1/tabelas-preco', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          vigente,
+          eh_padrao: ehPadrao,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/tabelas-preco', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    softDelete(id, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    restore(id, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    linkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    unlinkEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}`,
+        { method: 'DELETE', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    restoreEmpresa(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/restore`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    setPadrao(id, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/empresas/${encodeURIComponent(empresaId)}/padrao`,
+        { method: 'POST', signal },
+      );
+    },
+    /** @param {string} id @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options] */
+    listItens(id, { limit = 100, offset = 0, ativo, signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+        query: { limit, offset, ativo },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    createItem(id, payload, { signal } = {}) {
+      return request(`/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens`, {
+        method: 'POST',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {string} itemId @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    updateItem(id, itemId, payload, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+        { method: 'PATCH', body: payload, signal },
+      );
+    },
+    /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+    softDeleteItem(id, itemId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}`,
+        { method: 'DELETE', signal },
+      );
+    },
+    /** @param {string} id @param {string} itemId @param {{ signal?: AbortSignal }} [options] */
+    restoreItem(id, itemId, { signal } = {}) {
+      return request(
+        `/api/v1/tabelas-preco/${encodeURIComponent(id)}/itens/${encodeURIComponent(itemId)}/restore`,
+        { method: 'POST', signal },
+      );
+    },
+    /**
+     * Resolve preço fail-closed via vínculo ClienteEmpresa → padrão Empresa.
+     * (Cadastros.tabela_preco.visualizar + cliente_empresa.visualizar no backend).
+     * @param {{ clienteEmpresaId: string, produtoId: string, unidadeMedidaId: string, businessDate?: string }} params
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    resolveClientPrice(params, { signal } = {}) {
+      return request('/api/v1/tabelas-preco/preco-cliente', {
+        query: {
+          clienteEmpresaId: params.clienteEmpresaId,
+          produtoId: params.produtoId,
+          unidadeMedidaId: params.unidadeMedidaId,
+          businessDate: params.businessDate,
+        },
+        signal,
+      });
+    },
+  };
+  /**
+   * Cliente canônico (R04 + Central 360 + vínculos R05).
+   * Tenant só nos headers; RBAC Cadastros.cliente.* / cliente-empresa.* no BFF.
+   */
   const clientes = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, codigo?: string, documento?: string, orderBy?: string, orderDir?: string, signal?: AbortSignal }} [options]
+     */
+    list({
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      codigo,
+      documento,
+      orderBy = 'nome',
+      orderDir,
+      signal,
+    } = {}) {
+      return request('/api/v1/clientes', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          codigo,
+          documento,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}`, { signal });
+    },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    create(payload, { signal } = {}) {
+      return request('/api/v1/clientes', { method: 'POST', body: payload, signal });
+    },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
+    update(id, payload, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: payload,
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    softDelete(id, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        signal,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    restore(id, { signal } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(id)}/restore`, {
+        method: 'POST',
+        signal,
+      });
+    },
+    /**
+     * Vínculos Cliente×Empresa (R05) — nested sob Cliente; list-for-scope flat em `clienteEmpresas`.
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, ativo?: boolean, bloqueado?: boolean, situacao?: string, empresaId?: string, search?: string, signal?: AbortSignal }} [options]
+     */
+    listEmpresaLinks(clienteId, {
+      limit = 50,
+      offset = 0,
+      ativo = true,
+      bloqueado,
+      situacao,
+      empresaId,
+      search,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/empresas`, {
+        query: {
+          limit,
+          offset,
+          ativo,
+          bloqueado,
+          situacao,
+          empresa_id: empresaId,
+          search,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} clienteId @param {string} empresaId @param {{ signal?: AbortSignal }} [options] */
+    getEmpresaLink(clienteId, empresaId, { signal } = {}) {
+      return request(
+        `/api/v1/clientes/${encodeURIComponent(clienteId)}/empresas/${encodeURIComponent(empresaId)}`,
+        { signal },
+      );
+    },
+    /**
+     * Locais do Cliente (R06A) — nested; tenant só nos headers.
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, finalidade?: string, principal?: boolean, cidade?: string, uf?: string, orderBy?: string, orderDir?: string, signal?: AbortSignal }} [options]
+     */
+    listLocais(clienteId, {
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      finalidade,
+      principal,
+      cidade,
+      uf,
+      orderBy = 'nome',
+      orderDir,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/locais`, {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          finalidade,
+          principal,
+          cidade,
+          uf,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /**
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    getLocal(clienteId, localId, { signal } = {}) {
+      return request(
+        `/api/v1/clientes/${encodeURIComponent(clienteId)}/locais/${encodeURIComponent(localId)}`,
+        { signal },
+      );
+    },
+    /**
+     * Obras do Cliente (R06B) — nested; use operacional=true no Pedido (exige empresaId no contexto).
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, status?: string, operacional?: boolean, cidade?: string, uf?: string, orderBy?: string, orderDir?: string, signal?: AbortSignal }} [options]
+     */
+    listObras(clienteId, {
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      status,
+      operacional,
+      cidade,
+      uf,
+      orderBy = 'nome',
+      orderDir,
+      signal,
+    } = {}) {
+      return request(`/api/v1/clientes/${encodeURIComponent(clienteId)}/obras`, {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo: operacional ? undefined : ativo,
+          status,
+          operacional,
+          cidade,
+          uf,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /**
+     * @param {string} clienteId
+     * @param {string} obraId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    getObra(clienteId, obraId, { signal } = {}) {
+      return request(
+        `/api/v1/clientes/${encodeURIComponent(clienteId)}/obras/${encodeURIComponent(obraId)}`,
+        { signal },
+      );
+    },
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
      * @param {string} id
-     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, signal?: AbortSignal }} [options]
+     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, empresasLimit?: number, signal?: AbortSignal }} [options]
      */
     central360(id, {
       orcamentosLimit = 10,
       pedidosLimit = 10,
       locaisLimit = 10,
       obrasLimit = 10,
+      empresasLimit = 10,
       signal,
     } = {}) {
       return request(`/api/v1/clientes/${encodeURIComponent(id)}/central-360`, {
@@ -500,6 +1274,7 @@ export function createHttpApiClient(options = {}) {
           pedidos_limit: pedidosLimit,
           locais_limit: locaisLimit,
           obras_limit: obrasLimit,
+          empresas_limit: empresasLimit,
         },
         signal,
         unwrap: false,
@@ -507,6 +1282,119 @@ export function createHttpApiClient(options = {}) {
     },
   };
   /** @type {Record<string, object>} */
+  /**
+   * UnidadeMedida já no piloto — helper de listagem com envelope para mestres Comercial.
+   */
+  const unidadesMedida = {
+    /**
+     * @param {{ limit?: number, offset?: number, search?: string, ativo?: boolean, signal?: AbortSignal }} [options]
+     */
+    list({ limit = 50, offset = 0, search, ativo = true, signal } = {}) {
+      return request('/api/v1/unidades-medida', {
+        query: { limit, offset, search, ativo },
+        signal,
+        unwrap: false,
+      });
+    },
+  };
+  /**
+   * ClienteEmpresa list-for-scope (R05) — seleção Comercial Orçamento/Pedido.
+   * Tenant só nos headers; RBAC Cadastros.cliente_empresa.visualizar no BFF.
+   * Mutações continuam nested em `clientes.*EmpresaLink`.
+   */
+  const clienteEmpresas = {
+    /**
+     * @param {{
+     *   limit?: number,
+     *   offset?: number,
+     *   search?: string,
+     *   ativo?: boolean,
+     *   bloqueado?: boolean,
+     *   habilitadoOperacao?: boolean,
+     *   situacao?: string,
+     *   orderBy?: string,
+     *   orderDir?: string,
+     *   signal?: AbortSignal,
+     * }} [options]
+     */
+    list({
+      limit = 50,
+      offset = 0,
+      search,
+      ativo = true,
+      bloqueado,
+      habilitadoOperacao = true,
+      situacao,
+      orderBy = 'created_at',
+      orderDir,
+      signal,
+    } = {}) {
+      return request('/api/v1/cliente-empresas', {
+        query: {
+          limit,
+          offset,
+          search,
+          ativo,
+          bloqueado,
+          habilitado_operacao: habilitadoOperacao,
+          situacao,
+          order_by: orderBy,
+          order_dir: orderDir,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/cliente-empresas/${encodeURIComponent(id)}`, { signal });
+    },
+  };
+  /**
+   * Produto canônico (R03 + Onda 3 piloto). Tenant só nos headers; RBAC Cadastros.produto.* no BFF.
+   * Envelope `{ data, meta }` para seletores Comercial (espelha clientes/condicoes/tabelas).
+   */
+  const produtos = {
+    /**
+     * @param {{
+     *   limit?: number,
+     *   offset?: number,
+     *   search?: string,
+     *   codigo?: string,
+     *   codigoBarras?: string,
+     *   ativo?: boolean,
+     *   signal?: AbortSignal,
+     * }} [options]
+     */
+    list({
+      limit = 50,
+      offset = 0,
+      search,
+      codigo,
+      codigoBarras,
+      ativo = true,
+      signal,
+    } = {}) {
+      return request('/api/v1/produtos', {
+        query: {
+          limit,
+          offset,
+          search,
+          codigo,
+          codigo_barras: codigoBarras,
+          ativo,
+        },
+        signal,
+        unwrap: false,
+      });
+    },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
+    get(id, { signal } = {}) {
+      return request(`/api/v1/produtos/${encodeURIComponent(id)}`, { signal });
+    },
+  };
+
+  /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;
@@ -532,8 +1420,14 @@ export function createHttpApiClient(options = {}) {
     orcamentos,
     pedidos,
     expedicao,
+    comercial,
+    condicoesPagamento,
+    tabelasPreco,
     clientes,
-    /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
+    clienteEmpresas,
+    unidadesMedida,
+    produtos,
+    /** Acesso direto a rotas preparadas (relações/DAM/workflow) além do piloto de entidades. */
     preparedEntities: entityRoutes,
     async health() {
       return request('/health');

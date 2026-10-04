@@ -113,14 +113,96 @@ export const findDuplicateRomaneio = (record = {}, romaneios = []) => {
  * @param {ExpedicaoRecord[]} separacoes
  */
 export const findDuplicateSeparacao = (record = {}, separacoes = []) => {
-  const origem = firstText(record.entrega_id, record.pedido_id);
+  const entregaId = firstText(record.entrega_id);
+  const pedidoId = firstText(record.pedido_id);
   const empresaId = firstText(record.empresa_id);
   const tipo = firstText(record.tipo) || 'conferencia';
-  if (!origem || !empresaId) return null;
-  return (Array.isArray(separacoes) ? separacoes : []).find((item) => (
-    firstText(item.empresa_id) === empresaId
-    && firstText(item.tipo) === tipo
-    && firstText(item.entrega_id, item.pedido_id) === origem
+  if ((!entregaId && !pedidoId) || !empresaId) return null;
+  return (Array.isArray(separacoes) ? separacoes : []).find((item) => {
+    const tipoExistente = firstText(item.tipo) || 'conferencia';
+    const mesmaFamilia = ['conferencia', 'conferencia_ia'].includes(tipo)
+      && ['conferencia', 'conferencia_ia'].includes(tipoExistente);
+    if (statusOf(item).includes('cancel') || firstText(item.empresa_id) !== empresaId
+      || (!mesmaFamilia && tipoExistente !== tipo)) return false;
+    const outraEntrega = firstText(item.entrega_id);
+    if (entregaId || outraEntrega) return Boolean(entregaId && outraEntrega === entregaId);
+    return Boolean(pedidoId && firstText(item.pedido_id) === pedidoId);
+  }) || null;
+};
+
+/**
+ * Reconcilia o total pedido com os scans sem confiar na classificacao da IA.
+ * @param {ExpedicaoRecord[]} pedidos
+ * @param {ExpedicaoRecord[]} separados
+ */
+export const conferirQuantidadesPedido = (pedidos = [], separados = []) => {
+  const esperadas = new Map();
+  const obtidas = new Map();
+  const somar = (map, item, campo) => {
+    const id = firstText(item?.produto_id);
+    const quantidade = Number(item?.[campo]);
+    if (!id || !Number.isFinite(quantidade) || quantidade <= 0) return false;
+    map.set(id, (map.get(id) || 0) + quantidade);
+    return true;
+  };
+  if (!Array.isArray(pedidos) || pedidos.length === 0 || !Array.isArray(separados)) {
+    return { conforme: false, divergencias: ['itens_invalidos'] };
+  }
+  if (!pedidos.every((item) => somar(esperadas, item, 'quantidade'))
+    || !separados.every((item) => somar(obtidas, item, 'quantidade_separada'))) {
+    return { conforme: false, divergencias: ['quantidade_invalida'] };
+  }
+  const divergencias = [...new Set([...esperadas.keys(), ...obtidas.keys()])]
+    .filter((id) => Math.abs((esperadas.get(id) || 0) - (obtidas.get(id) || 0)) > 0.000001);
+  return { conforme: divergencias.length === 0, divergencias };
+};
+
+/**
+ * Limita cada leitura do scanner ao total pedido do produto.
+ * @param {{ itensPedido?: ExpedicaoRecord[], itensSeparados?: ExpedicaoRecord[], produtoId?: unknown, codigo?: unknown }} options
+ */
+export const avaliarScanConferencia = ({ itensPedido = [], itensSeparados = [], produtoId } = {}) => {
+  const esperado = (Array.isArray(itensPedido) ? itensPedido : [])
+    .filter((item) => firstText(item.produto_id) === firstText(produtoId));
+  if (!firstText(produtoId) || esperado.length === 0) return { permitido: false, motivo: 'produto_fora_pedido' };
+  const quantidades = esperado.map((item) => Number(item.quantidade));
+  if (quantidades.some((valor) => !Number.isFinite(valor) || valor <= 0)) {
+    return { permitido: false, motivo: 'quantidade_invalida' };
+  }
+  const limite = quantidades.reduce((total, valor) => total + valor, 0);
+  const scans = (Array.isArray(itensSeparados) ? itensSeparados : [])
+    .filter((item) => firstText(item.produto_id) === firstText(produtoId))
+    .map((item) => Number(item.quantidade_separada));
+  if (scans.some((valor) => !Number.isFinite(valor) || valor <= 0)) {
+    return { permitido: false, motivo: 'scan_invalido' };
+  }
+  const total = scans.reduce((soma, valor) => soma + valor, 0);
+  const restante = Number((limite - total).toFixed(6));
+  return restante > 0.000001
+    ? { permitido: true, motivo: null, quantidade: Math.min(1, restante) }
+    : { permitido: false, motivo: 'quantidade_excedida' };
+};
+
+/** @param {unknown} resposta */
+export const validarRespostaConferenciaIA = (resposta) => {
+  if (!resposta || typeof resposta !== 'object' || Array.isArray(resposta)) {
+    throw new Error('Resposta da IA incompleta; item nao foi confirmado.');
+  }
+  const campos = /** @type {Record<string, unknown>} */ (resposta);
+  if (typeof campos.divergencia_quantidade !== 'boolean'
+    || typeof campos.divergencia_peso !== 'boolean') {
+    throw new Error('Resposta da IA incompleta; item nao foi confirmado.');
+  }
+  return campos;
+};
+
+/** Seleciona somente a entrega pedida no escopo completo. */
+export const selecionarEntregaConferencia = (entregas = [], { id, groupId, empresaId } = {}) => {
+  if (!firstText(id) || !firstText(groupId) || !firstText(empresaId)) return null;
+  return (Array.isArray(entregas) ? entregas : []).find((item) => (
+    firstText(item.id) === firstText(id)
+    && firstText(item.empresa_id) === firstText(empresaId)
+    && firstText(item.group_id, item.grupo_id) === firstText(groupId)
   )) || null;
 };
 

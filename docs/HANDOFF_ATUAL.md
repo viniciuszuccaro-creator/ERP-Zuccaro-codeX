@@ -16,6 +16,24 @@ Atualização do teste adicional: suíte completa do servidor reexecutada, **302
 
 ---
 
+## CURSOR — #199 CI verde tip dd8ee9d1 (2026-10-02)
+
+CI push/PR **success** no tip `dd8ee9d1` (frontend, backend, `expedicao-comercial-compose`). Hotfix REQUIRE + pacote compose/telas/#201 entregues. Parecer #201 `d20a6dde` não estende #200. Tip-port/merge/VPS bloqueados. Canal documental atualizado.
+
+---
+
+## CURSOR — #199 hotfix CI backend compose PG REQUIRE (2026-10-02)
+
+Backend `npm test` falhava: compose PG exigia DATABASE_URL sob CI. REQUIRE agora só com `COMERCIAL_COMPOSE_REQUIRE=1`. Job `expedicao-comercial-compose` permanece fail-closed. Sem tip-port/merge/VPS.
+
+---
+
+## CURSOR — #199 fechar integração: CI compose + PG + telas + #201 (2026-10-02)
+
+Causa CI: grep de skip batia em `# skipped 0` → falso fail com teste PASS. Corrigido (só skip real). Compose **PGlite + PostgreSQL isolado** com SHA Comercial `4f8c6593` e trava histórica **026** — **PASS**. Telas: Nova Entrega→FormularioEntrega; fluxo completo + reload — **PASS**. Parecer **#201** SHA `d20a6dde` em `docs/PARECER_CODEX_201_SHA_d20a6dde.md` — **não** estende #200. Comercial 360 → tarefa existente. Legado → executor staging. HEAD tip `009be3c3` (pacote `59207a71`). Sem tip-port/merge/VPS.
+
+---
+
 ## CURSOR — #199 reload real + CI compose + telas ERP + parecer #200 (2026-10-02)
 
 Reload Playwright com `page.reload()` real — **PASS**. Job CI `expedicao-comercial-compose` fetch tip Comercial `4f8c6593`; ref ausente/skip = fail. SPA `/Expedicao` × BFF+PGlite **PASS** (`localhost`). Parecer **#200** SHA `619bddd0` em `docs/PARECER_CODEX_200_SHA_619bddd0.md` — **não** estende #178. Descrição #199: migration **036** (não 025) — ManagePullRequest bloqueado; corpo canônico no STATUS/HANDOFF. Sem tip-port/merge/VPS. HEAD `f969e49e`.
@@ -834,3 +852,8 @@ Registro de 20/09, superado pelo checkpoint vigente acima. No Gate VPS autorizad
 canário. O seed RBAC já foi aplicado e não deve ser reaplicado por este hotfix;
 não reaplicar migrations. A API oficial 3080 continua R07B. Não
 criar migration 016, não promover a API R08 e não fazer merge neste gate.
+## CODEX — composição Comercial + Expedição candidata (2026-10-04)
+
+Branch isolada `codex/comercial-expedicao-fechamento-20261004`: #201 `59c4f506` + #199 **vigente** `f88460e9` + #178 `4f8c6593`. A referência `refs/pull/199/head` foi usada porque a branch remota nominal apontava para base antiga. A correção CI do falso `# skipped 0` e a prova PostgreSQL isolada foram preservadas. Migration 026 tem blob `07292e0c86133ad13e3d0c68a8a13d6d6322b228` idêntico à #178; nenhuma reclassificação histórica. Adicionada candidata 037 para saldo reconciliado, movimentos por item e eventos de Pedido, com portas persistentes opt-in; runtime default continua `reserved`, canais desligados. Testes locais de UI 27/27 e typecheck backend passaram; PostgreSQL real e CI do HEAD final ainda são gates, sem merge/VPS/dados reais. Cursor deve revisar o SHA final desta branch; não editar branches dele.
+
+---

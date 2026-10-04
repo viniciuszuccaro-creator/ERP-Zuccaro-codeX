@@ -17,7 +17,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { assertSeparacaoOnCreate } from "@/components/lib/expedicaoEntregaPolicy";
+import { assertSeparacaoOnCreate, conferirQuantidadesPedido, findDuplicateSeparacao, selecionarEntregaConferencia } from "@/components/lib/expedicaoEntregaPolicy";
 import {
   assertSeparacaoChecklist,
   assertSeparacaoQuantidades,
@@ -50,21 +50,39 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   // Fetch the delivery details (only if entregaId provided and no pedido)
   const { data: entrega, isLoading, isError, error } = useQuery({
-    queryKey: ['entrega', entregaId],
+    queryKey: ['entrega', entregaId, baseGroupId, baseEmpresaId],
     queryFn: async () => {
-      const entregas = await filterInContext("Entrega", {}, "-created_date", 500);
-      return entregas.find(e => e.id === entregaId);
+      const entregas = await filterInContext("Entrega", { id: entregaId }, undefined, 1);
+      return selecionarEntregaConferencia(entregas, {
+        id: entregaId, groupId: baseGroupId, empresaId: baseEmpresaId
+      });
     },
-    enabled: !!entregaId && !pedido && contextoBaseValido && canConcluirSeparacao,
+    enabled: !!entregaId && contextoBaseValido && canConcluirSeparacao,
+  });
+
+  const { data: pedidoDaEntrega, isLoading: pedidoLoading } = useQuery({
+    queryKey: ['pedido-da-entrega', entrega?.pedido_id, baseGroupId, baseEmpresaId],
+    queryFn: async () => {
+      const pedidos = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
+      return pedidos.find((item) => item.id === entrega.pedido_id
+        && item.empresa_id === baseEmpresaId
+        && (item.group_id || item.grupo_id) === baseGroupId) || null;
+    },
+    enabled: !!entrega?.pedido_id && !pedido && contextoBaseValido && canConcluirSeparacao,
   });
 
   const [itens, setItens] = useState([]);
 
+  const pedidoOperacao = pedido || pedidoDaEntrega;
   // Use pedido if provided, otherwise use entrega
-  const dadosParaSeparacao = pedido || entrega;
+  const dadosParaSeparacao = pedido || pedidoDaEntrega || entrega;
   const effectiveEmpresaId = dadosParaSeparacao?.empresa_id || empresaId || empresaAtual?.id || null;
   const effectiveGroupId = dadosParaSeparacao?.group_id || dadosParaSeparacao?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
+  const vinculoValido = !entregaId || (entrega?.id === entregaId
+    && (!pedidoOperacao || entrega.pedido_id === pedidoOperacao.id)
+    && (!entrega.pedido_id || pedidoOperacao?.id === entrega.pedido_id));
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId
+    && effectiveGroupId === baseGroupId && effectiveEmpresaId === baseEmpresaId && vinculoValido);
 
   const auditarSeparacao = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = null, registroId = null }) => {
     try {
@@ -155,13 +173,13 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         groupId: effectiveGroupId,
         empresaId: effectiveEmpresaId,
         entregaId: entrega?.id || entregaId || null,
-        pedidoId: pedido?.id || null,
+        pedidoId: pedidoOperacao?.id || entrega?.pedido_id || null,
         confirmed: true,
       });
 
       const separacaoRecord = {
         ...conclusion.separacaoRecord,
-        pedido_id: dadosParaSeparacao.id,
+        pedido_id: pedidoOperacao?.id || entrega?.pedido_id || null,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
         cliente_id: dadosParaSeparacao.cliente_id,
         cliente_nome: dadosParaSeparacao.cliente_nome,
@@ -171,7 +189,21 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         tempo_separacao_min: 0,
       };
 
-      const decision = assertSeparacaoOnCreate({ record: separacaoRecord, separacoes: [] });
+      const conferenciaQuantidades = conferirQuantidadesPedido(
+        pedidoOperacao?.itens_revenda || pedidoOperacao?.itens || dadosParaSeparacao.itens_revenda || dadosParaSeparacao.itens || [],
+        itens,
+      );
+      if (conclusion.nextEntregaStatus && !conferenciaQuantidades.conforme) {
+        throw new Error("Quantidade divergente nao pode liberar a entrega.");
+      }
+      const anteriores = isHttpExpedicaoMode ? [] : await filterInContext(
+        "SeparacaoConferencia", { pedido_id: separacaoRecord.pedido_id }, "-created_date", 100,
+      );
+      const existente = findDuplicateSeparacao(separacaoRecord, anteriores);
+      if (existente && !String(existente.status || "").toLowerCase().includes("diverg")) {
+        return { ...existente, _reused: true };
+      }
+      const decision = assertSeparacaoOnCreate({ record: separacaoRecord, separacoes: anteriores });
       if (decision.reuse) {
         await auditarSeparacao({
           acao: "SeparacaoConferencia.retry",
@@ -207,7 +239,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         return result?.separacao || result;
       }
 
-      const separacao = await createInContext("SeparacaoConferencia", separacaoRecord);
+      const separacao = existente
+        ? await updateInContext("SeparacaoConferencia", existente.id, separacaoRecord)
+        : await createInContext("SeparacaoConferencia", separacaoRecord);
 
       if (conclusion.nextEntregaStatus && (entrega?.id || entregaId)) {
         const targetEntregaId = entrega?.id || entregaId;
@@ -263,6 +297,16 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       return separacao;
     },
     onSuccess: async (separacao) => {
+      if (separacao?._reused) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.reutilizada",
+          descricao: "Conferencia ja registrada; nenhum status foi alterado.",
+          dadosNovos: { registro_id: separacao.id },
+          registroId: separacao.id
+        });
+        toast({ title: "Conferência já registrada", description: "Nenhum novo efeito foi aplicado." });
+        return;
+      }
       // Auditoria mínima
       try {
         await base44.entities.AuditLog.create({
@@ -402,7 +446,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   const itensDivergentes = itens.filter(i => i.divergencia);
 
-  if (isLoading) {
+  if (isLoading || pedidoLoading) {
     return <p>Carregando dados da entrega...</p>;
   }
 

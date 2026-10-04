@@ -86,7 +86,7 @@ function fixture(price = '10.000000') {
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
     service.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
     service.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
-    service.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
+    service.condicoes = { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
     service.prices = { resolveSalePrice: async () => ({ preco: price }) };
   };
   stubRefs(runtime.orcamentoService);

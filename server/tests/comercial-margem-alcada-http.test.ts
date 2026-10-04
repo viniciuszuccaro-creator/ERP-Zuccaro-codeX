@@ -86,7 +86,7 @@ function fixture(options: { price?: string; costs?: ComercialCostPort | null } =
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
     service.produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
     service.unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
-    service.condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
+    service.condicoes = { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) };
     service.prices = { resolveSalePrice: async () => ({ preco: price }) };
   };
   stubRefs(runtime.orcamentoService);
@@ -185,6 +185,26 @@ test('HTTP Pedido create: margem abaixo sem aprovar → 403', async () => {
     body: JSON.stringify(payloadPed),
   });
   assert.equal(allowed.status, 201);
+});
+
+test('HTTP Pedido: política de custo inválida falha sem persistir; retentativa válida reavalia', async () => {
+  let current = stubCost('9', Number.NaN);
+  const port: ComercialCostPort = { getUnitCost: (input) => current.getUnitCost(input) };
+  const { app } = fixture({ costs: port });
+  const create = () => request(app, '/api/v1/pedidos', {
+    method: 'POST', headers: headers(approverId), body: JSON.stringify(payloadPed),
+  });
+  const invalid = await create();
+  assert.equal(invalid.status, 422);
+  assert.equal(invalid.body.error.code, 'COST_POLICY_INVALID');
+  const before = await request(app, '/api/v1/pedidos?limit=10&offset=0', { headers: headers(approverId) });
+  assert.equal(before.status, 200);
+  assert.equal(before.body.meta.total, 0);
+  current = stubCost('9', 0);
+  const retried = await create();
+  assert.equal(retried.status, 201);
+  const after = await request(app, '/api/v1/pedidos?limit=10&offset=0', { headers: headers(approverId) });
+  assert.equal(after.body.meta.total, 1);
 });
 
 test('HTTP Orçamento update no mesmo runtime: custo sobe → 403', async () => {

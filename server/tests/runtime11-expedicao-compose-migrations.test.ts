@@ -14,12 +14,10 @@ import { PGlite } from '@electric-sql/pglite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
-/** Tip Comercial (#178) — SHA/branch obtido explicitamente pela CI; default local = origin tip. */
-const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || 'origin/codex/comercial-corrige-parecer-155';
-/** Em CI/job de integração: ausência de ref ou skip = FALHA (não aprovação silenciosa). */
-const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1'
-  || process.env.CI === 'true'
-  || process.env.GITHUB_ACTIONS === 'true';
+/** Tip Comercial (#178) — SHA pinado pela CI; default local = tip #178. */
+const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9';
+/** Só o job dedicado (COMERCIAL_COMPOSE_REQUIRE=1) falha fechado; npm test geral faz skip. */
+const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1';
 
 function gitShow(ref, rel) {
   const show = spawnSync('git', ['-C', repoRoot, 'show', `${ref}:${rel}`], {
@@ -47,6 +45,7 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
   const localMigs = join(repoRoot, 'server/migrations');
   const localFiles = readdirSync(localMigs).filter((n) => /^\d{3}_.*\.sql$/.test(n)).sort();
   assert.ok(localFiles.includes('036_expedicao_entregas_romaneios.sql'));
+  assert.ok(localFiles.includes('037_expedicao_estoque_movimentos.sql'));
   assert.ok(!localFiles.some((f) => /^025_expedicao/.test(f)), '025_expedicao nao deve existir');
 
   const list = spawnSync('git', ['-C', repoRoot, 'ls-tree', '-r', '--name-only', CODEX_REF, '--', 'server/migrations'], {
@@ -56,8 +55,15 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
   const comercial = list.stdout.split('\n').filter((rel) => /\/0(2[5-9]|3[0-5])_.*\.sql$/.test(rel));
   assert.ok(comercial.length >= 5, 'esperado bloco comercial 025-035');
   assert.ok(comercial.some((r) => r.includes('025_')), '025 comercial');
+  assert.ok(comercial.some((r) => r.includes('026_pedidos_tipo_comercial')), 'trava histórica 026 tip Comercial');
   assert.ok(comercial.some((r) => r.includes('035_')), '035 comercial');
   assert.ok(!comercial.some((r) => r.includes('036_')), '036 nao e comercial');
+
+  // Trava: 026 vem do tip Comercial pinado — hash estável; job não reescreve classificação.
+  const locked026Rel = comercial.find((r) => r.includes('026_pedidos_tipo_comercial'));
+  assert.ok(locked026Rel, '026_pedidos_tipo_comercial.sql obrigatória no tip Comercial');
+  const locked026Body = gitShow(CODEX_REF, locked026Rel);
+  assert.match(locked026Body, /tipo_comercial/i);
 
   const out = mkdtempSync(join(tmpdir(), 'exp-compose-'));
   try {
@@ -72,12 +78,15 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
       join(out, '036_expedicao_entregas_romaneios.sql'),
       readFileSync(join(localMigs, '036_expedicao_entregas_romaneios.sql'), 'utf8'),
     );
+    writeFileSync(join(out, '037_expedicao_estoque_movimentos.sql'),
+      readFileSync(join(localMigs, '037_expedicao_estoque_movimentos.sql'), 'utf8'));
 
     const composed = readdirSync(out).filter((n) => /^\d{3}_.*\.sql$/.test(n)).sort();
     const nums = composed.map((f) => f.slice(0, 3));
     assert.equal(new Set(nums).size, nums.length, 'numeracao unica na composicao');
     assert.ok(composed.indexOf('024_produto_canais_rascunho.sql') < composed.findIndex((f) => f.startsWith('025_')));
     assert.ok(composed.findIndex((f) => f.startsWith('035_')) < composed.indexOf('036_expedicao_entregas_romaneios.sql'));
+    assert.ok(composed.indexOf('036_expedicao_entregas_romaneios.sql') < composed.indexOf('037_expedicao_estoque_movimentos.sql'));
 
     const pg = new PGlite();
     try {

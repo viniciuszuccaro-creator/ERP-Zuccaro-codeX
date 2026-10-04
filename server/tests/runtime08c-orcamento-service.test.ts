@@ -5,6 +5,7 @@ import { InMemoryAuditRepository } from '../src/audit/auditRepository.js';
 import type { DbQueryExecutor } from '../src/db/client.js';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.js';
 import { InMemoryOrcamentoRepository } from '../src/repositories/inMemoryOrcamentoRepository.js';
+import { InMemoryPedidoRepository } from '../src/repositories/inMemoryPedidoRepository.js';
 import type { OrcamentoCreate, OrcamentoScope } from '../src/repositories/orcamentoTypes.js';
 import { OrcamentoService } from '../src/services/orcamentoService.js';
 
@@ -116,12 +117,13 @@ function fixture(overrides: {
     } as any,
     {
       get: async () => overrides.condicao === undefined
-        ? { id: condicaoId, ativo: true }
+        ? { id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }
         : overrides.condicao,
     } as any,
     {
       resolveSalePrice: async () => ({ preco: '10.000000' }),
     },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
   return { repo, audit, rbac, service };
 }
@@ -253,8 +255,9 @@ test('update revalida todas as referencias sem persistir falha', async () => {
         { getEmpresaLinkById: async () => item.overrides.cliente === null ? null : { id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true } } as any,
         { getById: async () => item.overrides.produto === null ? null : { id: produtoId, ativo: true, unidade_medida_id: unidadeId } } as any,
         { getById: async () => item.overrides.unidade === null ? null : { id: unidadeId, ativo: true } } as any,
-        { get: async () => item.overrides.condicao === null ? null : { id: condicaoId, ativo: true } } as any,
+        { get: async () => item.overrides.condicao === null ? null : { id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] } } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
       assert.equal(await code(invalidService.update(ctx, validCreated.id, { ...payload, itens: [{ ...payload.itens[0], quantidade: '9' }] })), item.expected);
       assert.equal((await valid.service.get(ctx, validCreated.id)).total, '20.000000');
@@ -270,8 +273,9 @@ test('update revalida todas as referencias sem persistir falha', async () => {
     { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) } as any,
     { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: '66666666-6666-4666-8666-666666666666' }) } as any,
     { getById: async () => ({ id: unidadeId, ativo: true }) } as any,
-    { get: async () => ({ id: condicaoId, ativo: true }) } as any,
+    { get: async () => ({ id: condicaoId, codigo: 'COND-28', nome: '28 dias', ativo: true, parcelas: [{ id: 'p1', ordem: 1, dias: 28, percentual: '100.000000', ativo: true }] }) } as any,
     { resolveSalePrice: async () => ({ preco: '10.000000' }) },
+    null, null, null, null, new InMemoryPedidoRepository(),
   );
   assert.equal(await code(invalidService.update(ctx, created.id, payload)), 'ORCAMENTO_UNIDADE_INVALIDA');
 });

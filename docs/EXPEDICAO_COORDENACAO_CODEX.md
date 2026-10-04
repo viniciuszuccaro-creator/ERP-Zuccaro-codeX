@@ -1,6 +1,14 @@
-# Coordenação Cursor (#199) × Codex (#178 / #200) — contratos e propriedade
+# Coordenação Cursor (#199) × Codex (#178 / #200 / #201) — contratos e propriedade
 
 **Canal documental combinado** (comentários de PR bloqueados para o agente): este arquivo + `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md`.
+
+## Encaminhamento de frentes (pacote paralelo)
+
+| Frente | Executor | Ação |
+|---|---|---|
+| **Comercial 360** | Tarefa/chat **existente** Comercial 360 | Confirmado recebimento; **primeira ação** permanece naquele workspace (código Comercial **não** neste clone #199). Sem tarefa duplicada. |
+| **Legado / staging privado** | Executor que **já** possui acesso ao staging | Continua lá; **não** abrir frente legado paralela neste agente. |
+| **Expedição #199** | Cursor neste branch | Fechar CI compose, PG isolado, telas, pareceres por SHA. |
 
 ## SHA observado — tip Comercial #178 (parecer separado)
 
@@ -22,6 +30,16 @@
 | Parecer | `docs/PARECER_CODEX_200_SHA_619bddd0.md` |
 | Tip-port | **Não** — candidata; parecer #178 **não** se aplica automaticamente |
 
+## SHA observado — tip Pedido/estoque executor #201 (parecer separado; NÃO estende #200)
+
+| Campo | Valor |
+|---|---|
+| PR | #201 |
+| Branch | `codex/pedido-estoque-expedicao-integracao-20261001` |
+| SHA | `d20a6dde1656e764f001d90c8ccdd80cac134eaf` |
+| Parecer | `docs/PARECER_CODEX_201_SHA_d20a6dde.md` |
+| Tip-port | **Não** — candidata; parecer #200 **não** aprova automaticamente #201 |
+
 ## Propriedade de arquivos (antes de editar áreas compartilhadas)
 
 | Área | Dono | Cursor #199 |
@@ -37,8 +55,8 @@
 
 ## Contrato vigente
 
-1. Portas `ExpedicaoPedidoSideEffectPort` / `ExpedicaoEstoquePort` — default `reserved`.
-2. Migration Expedição = **036** (sem colisão com 025–035).
-3. Sem tip-port na branch Expedição enquanto #178/#200 forem candidatas.
-4. Composição integrada: aplicar comercial 025–035 **depois** 024 e **antes** 036; CI job `expedicao-comercial-compose` falha se ref Comercial ausente ou suíte skip.
-5. Pareceres por **SHA exato** — nunca estender automaticamente #178 → #200.
+1. Portas `ExpedicaoPedidoSideEffectPort` / `ExpedicaoEstoquePort` — default `reserved`. Tip #201 propõe `executor?` na assinatura; integração só após FINAL.
+2. Migration Expedição = **036** (sem colisão com 025–035). Trava histórica **026** = tip Comercial `4f8c6593` inalterável no job compose.
+3. Sem tip-port na branch Expedição enquanto #178/#200/#201 forem candidatas.
+4. Composição integrada: comercial 025–035 **depois** 024 e **antes** 036; CI `expedicao-comercial-compose` = PGlite + PostgreSQL isolado; skip/ausência = fail (grep não confunde `# skipped 0`).
+5. Pareceres por **SHA exato** — nunca estender automaticamente #178 → #200 → #201.

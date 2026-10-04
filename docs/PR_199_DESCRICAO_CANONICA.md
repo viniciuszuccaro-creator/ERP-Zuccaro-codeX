@@ -19,10 +19,10 @@ Candidata de **Expedição com persistência canônica**. SPA local = base de UX
 - Repos + `ExpedicaoService` + rotas `/api/v1/entregas|romaneios`
 - Multiempresa ∧, RBAC fail-closed, auditoria, idempotência
 - Portas Pedido/estoque **reserved** (sem tip-port)
-- UI `VITE_ERP_HTTP_EXPEDICAO=true`
-- Playwright: reload real (`expedicao-api-pg`) + SPA `/Expedicao`×BFF+PGlite (`expedicao-erp-telas-pg`)
-- CI `expedicao-comercial-compose`: fetch tip Comercial `4f8c6593`; skip/ausência = fail
-- Pareceres: #178 `4f8c6593`; #200 `619bddd0` (não estende #178)
+- UI `VITE_ERP_HTTP_EXPEDICAO=true`; botão **Nova Entrega** abre `FormularioEntrega` existente
+- Playwright: reload real + SPA `/Expedicao`×BFF+PGlite (criar/separar/romaneio/despacho/parcial/total/ocorrência/devolução + UI cards + persistência pós-reload)
+- CI `expedicao-comercial-compose`: fetch tip Comercial `4f8c6593`; PGlite + **PostgreSQL isolado**; skip real = fail (não confundir `# skipped 0`); trava histórica **026**
+- Pareceres: #178 `4f8c6593`; #200 `619bddd0` (não estende #178); #201 `d20a6dde` (não estende #200)
 
 ### Gates
 

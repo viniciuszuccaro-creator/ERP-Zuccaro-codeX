@@ -27,15 +27,16 @@ test('inventario legado: descobre pasta sintética, hasheia e não altera origem
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.match(run.stdout, /backup_dir_found=YES/);
   assert.match(run.stdout, /file_count=1/);
-  assert.match(run.stdout, /format=sql_texto/);
-  assert.match(run.stdout, /sha256=[a-f0-9]{64}/);
+  assert.match(run.stdout, /format_sql_texto=1/);
+  assert.doesNotMatch(run.stdout, /amostra_sintetica|sha256=[a-f0-9]{64}/);
   assert.equal(fs.readFileSync(sample).toString(), before.toString(), 'origem alterada');
 
   const json = JSON.parse(fs.readFileSync(report, 'utf8'));
   assert.equal(json.file_count, 1);
   assert.equal(json.files[0].name, 'amostra_sintetica.sql');
   assert.equal(json.files[0].bytes, Buffer.byteLength(payload));
-  assert.equal(json.note.includes('Sem conteudo'), true);
+  assert.match(json.files[0].sha256, /^[a-f0-9]{64}$/);
+  assert.match(json.note, /sem conteudo de registros/i);
 });
 
 test('inventario legado: marca USUSENHA como blocked_secret_candidate', () => {
@@ -47,9 +48,26 @@ test('inventario legado: marca USUSENHA como blocked_secret_candidate', () => {
 
   const run = spawnSync('bash', [script, '--root', tmp], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr || run.stdout);
-  assert.match(run.stdout, /format=blocked_secret_candidate/);
-  assert.match(run.stdout, /BLOCKED_SECRET_FILENAME/);
+  assert.match(run.stdout, /format_blocked_secret_candidate=1/);
+  assert.doesNotMatch(run.stdout, /BLOCKED_SECRET_FILENAME/);
   assert.doesNotMatch(run.stdout, /USUSENHA/);
+});
+
+test('inventario legado: manifesto privado nao pode ser gravado na origem nem no Git', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'legado-inv-guard-'));
+  const folder = path.join(tmp, 'BACKUP ERP ANTIGO - CODEX');
+  fs.mkdirSync(folder, { recursive: true });
+  fs.writeFileSync(path.join(folder, 'amostra.sql'), 'synthetic');
+  const forbidden = [
+    path.join(folder, 'manifesto.json'),
+    path.join(root, '__legado_manifesto_forbidden.json'),
+  ];
+  for (const report of forbidden) {
+    const run = spawnSync('bash', [script, '--root', tmp, '--report', report], { encoding: 'utf8' });
+    assert.notEqual(run.status, 0);
+    assert.match(run.stderr, /BLOCKED: relatorio privado/);
+    assert.equal(fs.existsSync(report), false);
+  }
 });
 
 test('inventario legado: falha fechada se a pasta nao existe', () => {

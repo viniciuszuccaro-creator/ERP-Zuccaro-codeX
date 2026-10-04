@@ -323,19 +323,25 @@ export interface ExpedicaoRepository {
  */
 export type ExpedicaoPedidoSideEffectPort = {
   onSeparacaoConcluida(input: {
-    groupId: string; empresaId: string; pedidoId: string | null; entregaId: string;
+    groupId: string; empresaId: string; pedidoId: string | null; entregaId: string; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
   onDespacho(input: {
-    groupId: string; empresaId: string; pedidoIds: string[]; romaneioId: string;
+    groupId: string; empresaId: string; pedidoIds: string[]; romaneioId: string; actorId?: string;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
+  onCancelamento?(input: {
+    groupId: string; empresaId: string; pedidoId: string | null; entregaId: string; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
 };
 
 export type ExpedicaoEstoquePort = {
   onDespacho(input: {
-    groupId: string; empresaId: string; entregaIds: string[];
+    groupId: string; empresaId: string; entregaIds: string[]; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
   onDevolucao(input: {
-    groupId: string; empresaId: string; entregaId: string; quantidade: string;
+    groupId: string; empresaId: string; entregaId: string; quantidade: string; actorId?: string;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
+  onCancelamento?(input: {
+    groupId: string; empresaId: string; entregaId: string; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
 };
 
