@@ -16,6 +16,10 @@ function micros(value: string): bigint {
   return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
 }
 
+function decimal(value: bigint): string {
+  return `${value / 1_000_000n}.${(value % 1_000_000n).toString().padStart(6, '0')}`;
+}
+
 async function audit(query: DbQueryExecutor, scope: Scope, entity: string, entityId: string,
   action: string, after: Record<string, unknown>) {
   await query.query(
@@ -158,11 +162,15 @@ export class PostgresExpedicaoEstoquePort implements ExpedicaoEstoquePort {
     if (!delivery.pedido_id) return 'reserved' as const;
     if (delivery.status !== 'CANCELADA') throw new AppError(409, 'ESTOQUE_CANCEL_STATE_INVALID', 'Delivery is not cancelled');
     for (const item of items) {
-      const outbound = await query.query<{ quantidade: string }>(
-        'SELECT quantidade::text FROM expedicao_estoque_movimentos WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo=$4',
-        [input.groupId, input.empresaId, item.id, 'DESPACHO'],
+      const movements = await query.query<{ tipo: string; quantidade: string }>(
+        `SELECT tipo,quantidade::text FROM expedicao_estoque_movimentos
+         WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo IN ('DESPACHO','DEVOLUCAO')`,
+        [input.groupId, input.empresaId, item.id],
       );
-      if (outbound.rows[0]) await movement(query, input, input.entregaId, item, 'CANCELAMENTO', outbound.rows[0].quantidade, delivery.romaneio_id);
+      const outbound = micros(movements.rows.find((row) => row.tipo === 'DESPACHO')?.quantidade || '0');
+      const returned = micros(movements.rows.find((row) => row.tipo === 'DEVOLUCAO')?.quantidade || '0');
+      if (returned > outbound) throw new AppError(409, 'ESTOQUE_COMPENSACAO_INVALIDA', 'Return exceeds dispatched quantity');
+      if (outbound > returned) await movement(query, input, input.entregaId, item, 'CANCELAMENTO', decimal(outbound - returned), delivery.romaneio_id);
     }
     return 'applied' as const;
   }

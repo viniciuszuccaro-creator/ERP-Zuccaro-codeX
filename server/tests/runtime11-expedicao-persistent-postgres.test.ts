@@ -99,29 +99,36 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       await db.withTransaction((tx) => stock.onDevolucao({ ...scope, entregaId: first.entregaId, quantidade: '1.000000' }, tx));
       assert.equal(await qty(), 9);
 
+      await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [first.entregaId]);
+      await db.withTransaction((tx) => stock.onCancelamento({ ...scope, entregaId: first.entregaId }, tx));
+      assert.equal(await qty(), 10, 'cancellation compensates only the unreturned remainder');
+      assert.equal(await movementCount(first.entregaId), 3);
+      await db.withTransaction((tx) => stock.onCancelamento({ ...scope, entregaId: first.entregaId }, tx));
+      assert.equal(await qty(), 10);
+
       const second = await makeLinked(2);
       await assert.rejects(() => db.withTransaction(async (tx) => {
         await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
         await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
         throw new Error('synthetic failure after intermediate movement');
       }), /synthetic failure/);
-      assert.equal(await qty(), 9);
+      assert.equal(await qty(), 10);
       assert.equal(await movementCount(second.entregaId), 0);
       await db.withTransaction(async (tx) => {
         await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
         await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
       });
-      assert.equal(await qty(), 7);
+      assert.equal(await qty(), 8);
       await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [second.entregaId]);
       await db.withTransaction(async (tx) => {
         await stock.onCancelamento({ ...scope, entregaId: second.entregaId }, tx);
         await pedido.onCancelamento({ ...scope, pedidoId: second.pedidoId, entregaId: second.entregaId }, tx);
       });
-      assert.equal(await qty(), 9);
+      assert.equal(await qty(), 10);
       assert.equal(await movementCount(second.entregaId), 2);
       await assert.rejects(() => db.withTransaction((tx) => stock.onDespacho({
         ...scope, empresaId: SEED_IDS.empresaA2, entregaIds: [second.entregaId],
-      }, tx)), /ENTREGA_NOT_FOUND/);
+      }, tx)), (error: unknown) => (error as { code?: string }).code === 'ENTREGA_NOT_FOUND');
     } finally {
       await db.withTransaction(async (tx) => {
         await tx.query('DELETE FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND entity IN ($3,$4) AND entity_id = ANY($5::text[])',
