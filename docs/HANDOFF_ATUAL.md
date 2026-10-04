@@ -2,7 +2,7 @@
 
 HEADs no momento do registro:
 - `main` @ `d02cd012`
-- PR #202 `cursor/comercial360-onda1-midia-liberacao-392b` @ `c64f5a65` (+ fix PG em andamento neste lote)
+- PR #202 `cursor/comercial360-onda1-midia-liberacao-392b` @ `bb76129c` (fix PG version/confirmUpload)
 - PR #203 `cursor/comercial360-onda15-outbox-claim-392b` @ `01cecc9e` (CI verde; faltam cenarios PG reais alem do CI)
 - Comercial margem local `cursor/comercial360-onda2-margem-392b` @ `a261790d`
 
