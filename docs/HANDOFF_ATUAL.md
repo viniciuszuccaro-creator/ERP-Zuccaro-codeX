@@ -1,3 +1,25 @@
+## Coordenacao Comercial 360 - divisao de arquivos (2026-10-04)
+
+HEADs no momento do registro:
+- `main` @ `d02cd012`
+- PR #202 `cursor/comercial360-onda1-midia-liberacao-392b` @ `c64f5a65` (+ fix PG em andamento neste lote)
+- PR #203 `cursor/comercial360-onda15-outbox-claim-392b` @ `01cecc9e` (CI verde; faltam cenarios PG reais alem do CI)
+- Comercial margem local `cursor/comercial360-onda2-margem-392b` @ `a261790d`
+
+Divisao obrigatoria (evitar conflito):
+- **Cursor (Produto/DAM/Outbox):** `server/src/services/produtoMidiaFlow.ts`, `produtoOutboxClaim.ts`, `produtoCatalogProjection.ts`, `produtoService.ts` (somente midia/outbox), `repositories/*Produto*`, `ProdutoDamMidiaSection.jsx`, `ProdutoRelationsDamSection.jsx`, `produtoHttpPolicy.js`, testes `runtime10-produto-*`, migrations 018-024 ja existentes (sem migration nova sem gate).
+- **Comercial (Orcamento/Pedido/preco/margem/credito):** `orcamentoService.ts`, `pedidoService.ts`, `comercialMargemAlcadaPolicy.ts`, `tabelaPreco*`, UI Comercial/Pedido/Orcamento, testes `comercial-*` / `runtime08*` / `runtime09*`. Nao editar arquivos Produto/DAM/outbox deste pacote Cursor.
+- **Bloqueado ate gate:** VPS, Auth novo, publisher externo real, tip-port entre ondas tip e branches Cursor.
+
+Tarefa Comercial 360 (confirmacao de encaminhamento):
+- Recebido: fechar pacotes funcionais completos na frente Comercial (margem/alcada/snapshot/preco) no SHA integrado apos entrega Produto/DAM, sem tip-port e sem tocar midia/outbox.
+- Primeira acao Comercial: auditar HEAD `cursor/comercial360-onda2-margem-392b` @ `a261790d` e fechar lacunas de CostPort/margem com testes HTTP+PG; nao merge/VPS.
+
+## Checkpoint Onda 1 - fix PG #202 CLEAN/versao (2026-10-04)
+- Causa: mock `confirmUpload` devolvia `version: 1` fixo; segunda midia no mesmo produto usa `nextMidiaVersion` (>=2) → `STORAGE_METADATA_MISMATCH` no E2E PG.
+- Correcao: mock ecoa `request.version`; preserva exigencia CLEAN+`scan_sha256=sha256` (constraint 022) e auditoria transacional.
+- Sem canal externo, sem VPS, sem migration.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
