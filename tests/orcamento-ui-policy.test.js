@@ -23,7 +23,7 @@ import {
 const form = () => ({
   cliente_empresa_id: 'cliente-empresa-1',
   condicao_pagamento_id: 'condicao-1',
-  validade_em: '2026-10-01',
+  validade_em: '2099-10-01',
   observacoes: '  proposta sintética  ',
   groupId: 'nao-enviar', empresaId: 'nao-enviar', total: '999', status: 'CANCELADO', numero: 99,
   itens: [{

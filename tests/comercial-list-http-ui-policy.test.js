@@ -537,8 +537,8 @@ test('painéis Orçamento/Pedido wire a11y banners e labels (sem lib nova)', asy
     assert.doesNotMatch(src, /@radix-ui\/react-toast|react-aria|axe-core/);
   }
   assert.match(orc, /comercialActionAriaLabel\('converter'/);
-  assert.match(meta, /Pedido backend HTTP is active/);
-  assert.match(meta, /a11y Comercial HTTP/);
+  assert.match(meta, /pedido:\s*\{[\s\S]*?backendHttp: true,[\s\S]*?frontendHttp: true/);
+  assert.match(meta, /orcamento:\s*\{[\s\S]*?simularPersistFailClosed: true/);
 });
 
 test('painéis Orçamento/Pedido: retry rede/5xx list/masters/simular fail-closed', async () => {
@@ -568,8 +568,8 @@ test('painéis Orçamento/Pedido: retry rede/5xx list/masters/simular fail-close
   assert.match(ped, /pedido-list-retry/);
   assert.match(ped, /pedido-masters-retry/);
   assert.match(ped, /pedido-simular-retry/);
-  assert.match(meta, /retry rede\/5xx/);
-  assert.match(meta, /Pedido backend HTTP is active/);
+  assert.match(meta, /pedido:\s*\{[\s\S]*?listFailClosed: true/);
+  assert.match(meta, /orcamento:\s*\{[\s\S]*?listFailClosed: true/);
   // Fail-closed: erro de list ainda resolve via resolveHttpListViewState (nunca empty silencioso)
   assert.match(orc, /resolveHttpListViewState/);
   assert.match(ped, /resolveHttpListViewState/);
