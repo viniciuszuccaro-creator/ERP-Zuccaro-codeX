@@ -1,8 +1,9 @@
 ## Comercial 360 / coordenacao pacotes + fix PG #202 (2026-10-04)
 
 - Divisao Cursor (Produto/DAM/outbox #202+#203) vs Comercial (Orcamento/Pedido/margem) em `docs/HANDOFF_ATUAL.md`.
-- #202: E2E PG falhava com `STORAGE_METADATA_MISMATCH` — mock de storage ignorava `versao` da 2a midia; corrigido ecoando `request.version`. CLEAN+SHA (constraint 022) e auditoria transacional preservados. HEAD `bb76129c`.
-- Proximo Cursor: cenarios PG reais da #203 + consumidor outbox prepared sem sucesso falso externo.
+- #202: E2E PG falhava com `STORAGE_METADATA_MISMATCH` — mock de storage ignorava `versao` da 2a midia; corrigido ecoando `request.version`. CLEAN+SHA (constraint 022) e auditoria transacional preservados.
+- #202 follow-up: teste `setMidiaPrincipal` flaky (UUID mutado podia terminar em `0`); UUID sintetico fixo. HEAD `02e87f06`.
+- Proximo Cursor: CI #202 verde; revisao Comercial apos SHA integrado.
 
 ## Comercial 360 / Onda 1 - extracao secao midia DAM V22 (2026-10-02)
 
