@@ -40,9 +40,10 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM empresas e WHERE e.id=NEW.empresa_id AND e.group_id=NEW.group_id) THEN
     RAISE EXCEPTION 'TENANT_FK_MISMATCH: estoque outside group';
   END IF;
-  IF TG_TABLE_NAME <> 'expedicao_pedido_eventos'
-    AND NOT EXISTS (SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id) THEN
-    RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside group';
+  IF TG_TABLE_NAME <> 'expedicao_pedido_eventos' THEN
+    IF NOT EXISTS (SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id) THEN
+      RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside group';
+    END IF;
   END IF;
   RETURN NEW;
 END; $$ LANGUAGE plpgsql;

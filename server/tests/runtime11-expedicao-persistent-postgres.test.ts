@@ -91,7 +91,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       assert.equal(await qty(), 8);
 
       await db.query(`UPDATE entregas SET status='ENTREGUE_PARCIAL' WHERE id=$1`, [first.entregaId]);
-      await db.query(`UPDATE entrega_itens SET quantidade_devolvida=1 WHERE entrega_id=$1`, [first.entregaId]);
+      await db.query(`UPDATE entrega_itens SET quantidade_entregue=1,quantidade_devolvida=1 WHERE entrega_id=$1`, [first.entregaId]);
       await db.query(`UPDATE entregas SET status='DEVOLVIDA' WHERE id=$1`, [first.entregaId]);
       await db.withTransaction((tx) => stock.onDevolucao({ ...scope, entregaId: first.entregaId, quantidade: '1.000000' }, tx));
       assert.equal(await qty(), 9);
