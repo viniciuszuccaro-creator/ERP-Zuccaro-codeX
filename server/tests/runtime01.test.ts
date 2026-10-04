@@ -61,13 +61,40 @@ test('config load and public view never expose secrets', () => {
     DATABASE_URL: 'postgresql://user:secret@localhost:5432/erp',
     SUPABASE_SERVICE_ROLE_KEY: 'super-secret-service-role',
     SUPABASE_ANON_KEY: 'anon-key',
+    SUPABASE_URL: 'https://supabase.example.test',
+    SUPABASE_STORAGE_PUBLIC_URL: 'https://storage.example.test',
+    SUPABASE_STORAGE_PRIVATE_BUCKET: 'private',
   });
   const view = publicConfigView(config);
   const serialized = JSON.stringify(view);
   assert.equal(view.databaseConfigured, true);
+  assert.equal(view.storageConfigured, true);
+  assert.equal(view.malwareScannerConfigured, false);
   assert.doesNotMatch(serialized, /secret/i);
   assert.doesNotMatch(serialized, /service-role/i);
   assert.doesNotMatch(serialized, /postgresql:\/\//);
+  assert.doesNotMatch(serialized, /CLAMD|clamd|\.sock/i);
+  const withScanner = publicConfigView(testConfig({
+    SUPABASE_URL: 'https://supabase.example.test',
+    SUPABASE_SERVICE_ROLE_KEY: 'super-secret-service-role',
+    SUPABASE_STORAGE_PUBLIC_URL: 'https://storage.example.test',
+    SUPABASE_STORAGE_PRIVATE_BUCKET: 'private',
+    CLAMD_SOCKET_PATH: '/run/clamav/clamd.ctl',
+  }));
+  assert.equal(withScanner.malwareScannerConfigured, true);
+  assert.doesNotMatch(JSON.stringify(withScanner), /clamd\.ctl|CLAMD_SOCKET/);
+});
+
+test('server/.env.example documenta DAM Storage/CLAMD opt-in alinhado ao loadConfig', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const example = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
+  assert.match(example, /SUPABASE_STORAGE_PUBLIC_URL=/);
+  assert.match(example, /SUPABASE_STORAGE_PRIVATE_BUCKET=/);
+  assert.match(example, /SUPABASE_STORAGE_MAX_BYTES=/);
+  assert.match(example, /# CLAMD_SOCKET_PATH=/);
+  assert.match(example, /# CLAMD_TIMEOUT_MS=/);
+  assert.doesNotMatch(example, /SUPABASE_STORAGE_PUBLIC_BUCKET=/);
+  assert.doesNotMatch(example, /^CLAMD_SOCKET_PATH=.+/m);
 });
 
 test('migrations include foundation through 024 in canonical order', () => {

@@ -455,6 +455,191 @@ test('DAM scan falha fechado em RBAC, tenant, scanner ausente, resultado adulter
   assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, reservation.mediaId))?.scan_verdict, undefined);
 });
 
+test('DAM liberacao aprova CLEAN e rejeita conteudo sem publicar canal externo', async () => {
+  let verdict: 'CLEAN' | 'INFECTED' = 'CLEAN';
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict, scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
+  const storage = reservableStorage().storage;
+  const { service, repo, audit, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Liberacao sintetica' });
+  const cleanReservation = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, cleanReservation.mediaId, cleanReservation.attemptId);
+  await assert.rejects(service.approveMidia(ctx, product.id, cleanReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN');
+  await service.scanMidia(ctx, product.id, cleanReservation.mediaId);
+  const denied = harness(['visualizar', 'criar', 'editar'], storage, scanner);
+  await assert.rejects(denied.service.approveMidia(denied.ctx, product.id, cleanReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.approveMidia({ ...ctx, empresaId: randomUUID() }, product.id, cleanReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'TENANT_MISMATCH');
+  const original = audit.append.bind(audit);
+  audit.append = async (...args) => {
+    if (args[0].action === 'approve' && args[0].entity === 'ProdutoMidia') throw new Error('SYNTHETIC_AUDIT_FAILURE');
+    return original(...args);
+  };
+  await assert.rejects(service.approveMidia(ctx, product.id, cleanReservation.mediaId), /SYNTHETIC_AUDIT_FAILURE/);
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, cleanReservation.mediaId))?.status, 'QUARENTENA');
+  audit.append = original;
+  const approved = await service.approveMidia(ctx, product.id, cleanReservation.mediaId);
+  assert.deepEqual(approved, { id: cleanReservation.mediaId, status: 'APROVADO', scan_verdict: 'CLEAN' });
+  assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === cleanReservation.mediaId)?.status, 'APROVADO');
+  assert.equal(await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, cleanReservation.mediaId), null);
+  await assert.rejects(service.approveMidia(ctx, product.id, cleanReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND');
+  await assert.rejects(service.rejectMidiaContent(ctx, product.id, cleanReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND');
+  assert.equal(product.workflow_status, 'RASCUNHO');
+  assert.equal((await service.get(ctx, product.id)).workflow_status, 'RASCUNHO');
+  assert.equal(repo.listPublicationEvents().length, 0);
+
+  verdict = 'INFECTED';
+  const infectedReservation = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, infectedReservation.mediaId, infectedReservation.attemptId);
+  await service.scanMidia(ctx, product.id, infectedReservation.mediaId);
+  await assert.rejects(service.approveMidia(ctx, product.id, infectedReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN');
+  await assert.rejects(denied.service.rejectMidiaContent(denied.ctx, product.id, infectedReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  const rejected = await service.rejectMidiaContent(ctx, product.id, infectedReservation.mediaId);
+  assert.deepEqual(rejected, { id: infectedReservation.mediaId, status: 'REJEITADO' });
+  assert.equal((await service.listMidias(ctx, product.id)).some((row) => row.id === infectedReservation.mediaId), false);
+  await assert.rejects(service.rejectMidiaContent(ctx, product.id, infectedReservation.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND');
+  const approveLogs = await audit.listByEntity('ProdutoMidia', cleanReservation.mediaId);
+  assert.equal(approveLogs.some((entry) => entry.action === 'approve'), true);
+  const rejectLogs = await audit.listByEntity('ProdutoMidia', infectedReservation.mediaId);
+  assert.equal(rejectLogs.filter((entry) => entry.action === 'change_status').length >= 2, true);
+  assert.equal(JSON.stringify(approveLogs).includes('groups/'), false);
+  assert.equal(repo.listPublicationEvents().length, 0);
+});
+
+test('DAM define midia APROVADA como principal sem gravar URL assinada', async () => {
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict: 'CLEAN', scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
+  const storage = reservableStorage().storage;
+  const { service, repo, audit, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Principal DAM' });
+  const first = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, first.mediaId, first.attemptId);
+  await service.scanMidia(ctx, product.id, first.mediaId);
+  await service.approveMidia(ctx, product.id, first.mediaId);
+  const second = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, second.mediaId, second.attemptId);
+  await service.scanMidia(ctx, product.id, second.mediaId);
+  await service.approveMidia(ctx, product.id, second.mediaId);
+  const denied = harness(['visualizar', 'criar', 'aprovar-conteudo'], storage, scanner);
+  await assert.rejects(denied.service.setMidiaPrincipal(denied.ctx, product.id, first.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.setMidiaPrincipal(ctx, product.id, '00000000-0000-4000-8000-000000000099'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND'
+      || (error as { code?: string }).code === 'VALIDATION_ERROR');
+  const setFirst = await service.setMidiaPrincipal(ctx, product.id, first.mediaId);
+  assert.deepEqual(setFirst, { id: first.mediaId, status: 'APROVADO', principal: true });
+  const midiasAfterFirst = await service.listMidias(ctx, product.id);
+  assert.equal(midiasAfterFirst.find((row) => row.id === first.mediaId)?.principal, true);
+  assert.equal(midiasAfterFirst.find((row) => row.id === second.mediaId)?.principal, false);
+  const setSecond = await service.setMidiaPrincipal(ctx, product.id, second.mediaId);
+  assert.deepEqual(setSecond, { id: second.mediaId, status: 'APROVADO', principal: true });
+  const midiasAfterSecond = await service.listMidias(ctx, product.id);
+  assert.equal(midiasAfterSecond.find((row) => row.id === first.mediaId)?.principal, false);
+  assert.equal(midiasAfterSecond.find((row) => row.id === second.mediaId)?.principal, true);
+  assert.deepEqual(await service.setMidiaPrincipal(ctx, product.id, second.mediaId),
+    { id: second.mediaId, status: 'APROVADO', principal: true });
+  assert.equal((await service.get(ctx, product.id)).foto_produto_url, null);
+  const logs = await audit.listByEntity('ProdutoMidia', second.mediaId);
+  assert.equal(logs.some((entry) => entry.action === 'update' && (entry.afterData as { principal?: boolean } | undefined)?.principal === true), true);
+  assert.equal(JSON.stringify(logs).includes('https://'), false);
+  assert.equal(repo.listPublicationEvents().length, 0);
+});
+
+test('DAM download assinado exige visualizar, Storage e nao vaza chave/URL na auditoria', async () => {
+  let downloadCalls = 0;
+  const storage: StoragePort = {
+    ...reservableStorage().storage,
+    createSignedDownloadUrl: async (_context, storageKey) => {
+      downloadCalls += 1;
+      assert.match(storageKey, /^groups\//);
+      return {
+        url: 'https://public.example.test/storage/v1/object/sign/private/synthetic?token=TEMP',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      };
+    },
+  };
+  const { service, audit, ctx } = harness(undefined, storage);
+  const product = await service.create(ctx, { descricao: 'Download DAM' });
+  const reserved = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, reserved.mediaId, reserved.attemptId);
+  const denied = harness(['criar', 'editar'], storage);
+  await assert.rejects(denied.service.downloadMidia(denied.ctx, product.id, reserved.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.downloadMidia(ctx, product.id, randomUUID()),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND'
+      || (error as { code?: string }).code === 'VALIDATION_ERROR');
+  const brokenStorage: StoragePort = {
+    ...reservableStorage().storage,
+    createSignedDownloadUrl: async () => { throw new Error('STORAGE_ADAPTER_NOT_CONFIGURED'); },
+  };
+  const broken = harness(undefined, brokenStorage);
+  const brokenProduct = await broken.service.create(broken.ctx, { descricao: 'Download quebrado' });
+  const brokenReserved = await broken.service.reserveMidia(broken.ctx, brokenProduct.id, mediaFixture(brokenProduct.id));
+  await broken.service.confirmMidia(broken.ctx, brokenProduct.id, brokenReserved.mediaId, brokenReserved.attemptId);
+  await assert.rejects(broken.service.downloadMidia(broken.ctx, brokenProduct.id, brokenReserved.mediaId),
+    (error: unknown) => (error as { code?: string }).code === 'STORAGE_ADAPTER_NOT_CONFIGURED');
+  const downloaded = await service.downloadMidia(ctx, product.id, reserved.mediaId);
+  assert.equal(downloadCalls, 1);
+  assert.equal(downloaded.id, reserved.mediaId);
+  assert.equal(downloaded.mime_type, 'image/png');
+  assert.match(downloaded.url, /token=TEMP/);
+  assert.ok(downloaded.expiresAt);
+  const logs = await audit.listByEntity('ProdutoMidia', reserved.mediaId);
+  assert.equal(logs.some((entry) => entry.action === 'read'), true);
+  assert.equal(JSON.stringify(logs).includes('token=TEMP'), false);
+  assert.equal(JSON.stringify(logs).includes('groups/'), false);
+  assert.equal(JSON.stringify(logs).includes(downloaded.url), false);
+});
+
+test('DAM reconcilia orfaos infectados em QUARENTENA sem publicar', async () => {
+  let verdict: 'CLEAN' | 'INFECTED' = 'INFECTED';
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict, scanner: 'synthetic-scanner', scannedAt: new Date().toISOString(),
+  }) };
+  const storage = reservableStorage().storage;
+  const { service, repo, audit, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Orfao infectado' });
+  const first = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, first.mediaId, first.attemptId);
+  await service.scanMidia(ctx, product.id, first.mediaId);
+  const second = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, second.mediaId, second.attemptId);
+  await service.scanMidia(ctx, product.id, second.mediaId);
+  verdict = 'CLEAN';
+  const clean = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, clean.mediaId, clean.attemptId);
+  await service.scanMidia(ctx, product.id, clean.mediaId);
+  const denied = harness(['visualizar', 'criar', 'editar', 'inativar'], storage, scanner);
+  await assert.rejects(denied.service.reconcileInfectedMidias(denied.ctx),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
+  await assert.rejects(service.reconcileInfectedMidias(ctx, 0),
+    (error: unknown) => (error as { code?: string }).code === 'VALIDATION_ERROR');
+  assert.deepEqual(await service.reconcileInfectedMidias(ctx, 1), { inspected: 1, rejected: 1, raced: 0 });
+  const afterLimitOne = await service.listMidias(ctx, product.id);
+  const remainingInfected = [first.mediaId, second.mediaId]
+    .filter((id) => afterLimitOne.some((row) => row.id === id));
+  assert.equal(remainingInfected.length, 1);
+  const stillInfectedId = remainingInfected[0]!;
+  assert.equal((await repo.getMidiaForScan({ groupId: GROUP, empresaId: EMPRESA }, product.id, stillInfectedId))?.scan_verdict, 'INFECTED');
+  assert.deepEqual(await service.reconcileInfectedMidias(ctx), { inspected: 1, rejected: 1, raced: 0 });
+  assert.deepEqual(await service.reconcileInfectedMidias(ctx), { inspected: 0, rejected: 0, raced: 0 });
+  assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === clean.mediaId)?.status, 'QUARENTENA');
+  assert.equal((await service.listMidias(ctx, product.id)).find((row) => row.id === clean.mediaId)?.scan_verdict, 'CLEAN');
+  const rejectedId = [first.mediaId, second.mediaId].find((id) => id !== stillInfectedId)!;
+  const logs = await audit.listByEntity('ProdutoMidia', rejectedId);
+  assert.equal(logs.some((entry) => entry.action === 'change_status'), true);
+  assert.equal(repo.listPublicationEvents().length, 0);
+});
+
 test('Produto pagina por data e ID estaveis sem misturar empresas', async () => {
   const { service, repo, ctx, tenant } = harness();
   const otherEmpresa = randomUUID();
@@ -599,6 +784,47 @@ test('Workflow Produto exige transicoes e RBAC de aprovacao/publicacao e grava o
     () => denied.service.changeWorkflowStatus(denied.ctx, deniedRow.id, 'APROVADO'),
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
   );
+});
+
+test('Workflow PUBLICADO bloqueia midia em QUARENTENA e libera apos APROVADO ou REJEITADO', async () => {
+  const scanner: MalwareScanPort = { scan: async (request) => ({
+    ...request, version: request.version ?? 1, verdict: 'CLEAN', scanner: 'synthetic-scanner',
+    scannedAt: new Date().toISOString(),
+  }) };
+  const storage = reservableStorage().storage;
+  const { repo, service, ctx } = harness(undefined, storage, scanner);
+  const product = await service.create(ctx, { descricao: 'Publicacao com midia' });
+  await service.changeWorkflowStatus(ctx, product.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, product.id, 'APROVADO');
+  const reservation = await service.reserveMidia(ctx, product.id, mediaFixture(product.id));
+  await service.confirmMidia(ctx, product.id, reservation.mediaId, reservation.attemptId);
+  await assert.rejects(
+    () => service.changeWorkflowStatus(ctx, product.id, 'PUBLICADO'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+  );
+  assert.equal((await service.get(ctx, product.id)).workflow_status, 'APROVADO');
+  assert.equal(repo.listPublicationEvents().length, 0);
+  await service.scanMidia(ctx, product.id, reservation.mediaId);
+  await assert.rejects(
+    () => service.changeWorkflowStatus(ctx, product.id, 'PUBLICADO'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+  );
+  await service.approveMidia(ctx, product.id, reservation.mediaId);
+  assert.equal((await service.changeWorkflowStatus(ctx, product.id, 'PUBLICADO')).workflow_status, 'PUBLICADO');
+  assert.equal(repo.listPublicationEvents().length, 1);
+
+  const other = await service.create(ctx, { descricao: 'Publicacao apos rejeicao' });
+  await service.changeWorkflowStatus(ctx, other.id, 'EM_REVISAO');
+  await service.changeWorkflowStatus(ctx, other.id, 'APROVADO');
+  const rejectReservation = await service.reserveMidia(ctx, other.id, mediaFixture(other.id));
+  await service.confirmMidia(ctx, other.id, rejectReservation.mediaId, rejectReservation.attemptId);
+  await assert.rejects(
+    () => service.changeWorkflowStatus(ctx, other.id, 'PUBLICADO'),
+    (error: unknown) => (error as { code?: string }).code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+  );
+  await service.rejectMidiaContent(ctx, other.id, rejectReservation.mediaId);
+  assert.equal((await service.changeWorkflowStatus(ctx, other.id, 'PUBLICADO')).workflow_status, 'PUBLICADO');
+  assert.equal(repo.listPublicationEvents().length, 2);
 });
 
 test('Outbox Produto em memoria preserva idempotencia global e rollback', async () => {
@@ -812,6 +1038,26 @@ test('Equivalente cria atualiza inativa e audita atomicamente', async () => {
     /AUDIT_FAILURE/,
   );
   assert.deepEqual(await service.listEquivalents(ctx, produto.id), []);
+});
+
+test('Equivalente exige aprovar-conteudo para mudar aprovado', async () => {
+  const editor = harness(['visualizar', 'criar', 'editar', 'inativar']);
+  const produto = await editor.service.create(editor.ctx, { descricao: 'Origem sem aprovar' });
+  const target = await editor.service.create(editor.ctx, { descricao: 'Destino sem aprovar' });
+  const relation = await editor.service.createEquivalent(editor.ctx, produto.id, {
+    produto_equivalente_id: target.id,
+  });
+  await assert.rejects(
+    () => editor.service.updateEquivalent(editor.ctx, produto.id, relation.id, { aprovado: true }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
+  await assert.rejects(
+    () => editor.service.createEquivalent(editor.ctx, produto.id, {
+      produto_equivalente_id: target.id,
+      aprovado: true,
+    }),
+    (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED',
+  );
 });
 
 test('Equivalente exige editar', async () => {

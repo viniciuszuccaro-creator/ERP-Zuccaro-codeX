@@ -30,7 +30,13 @@ function assertId(id: string): void {
   }
 }
 
-async function authorize(deps: Dependencies, ctx: RequestContext, produtoId: string, action: 'editar' | 'aprovar-conteudo' = 'editar') {
+async function authorize(
+  deps: Dependencies,
+  ctx: RequestContext,
+  produtoId: string,
+  action: 'editar' | 'aprovar-conteudo' | 'visualizar' = 'editar',
+  options: { requireStorage?: boolean } = {},
+) {
   if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
   if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
   if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
@@ -38,7 +44,7 @@ async function authorize(deps: Dependencies, ctx: RequestContext, produtoId: str
   assertId(produtoId);
   await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', action);
   await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
-  if (deps.storage instanceof NotImplementedStorage) {
+  if (options.requireStorage !== false && deps.storage instanceof NotImplementedStorage) {
     throw new AppError(503, 'STORAGE_ADAPTER_NOT_CONFIGURED', 'Storage is not configured');
   }
   return { groupId: ctx.groupId, empresaId: ctx.empresaId };
@@ -261,4 +267,195 @@ export async function scanProdutoMidia(deps: Dependencies, ctx: RequestContext, 
     }, executor);
     return { id: after.id, status: after.status, scan_verdict: after.scan_verdict, scanned_at: after.scanned_at };
   });
+}
+
+/**
+ * Liberação interna pós-scan CLEAN: QUARENTENA → APROVADO.
+ * Não publica canal externo nem altera workflow do Produto.
+ */
+export async function approveProdutoMidia(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'aprovar-conteudo', { requireStorage: false });
+  assertId(mediaId);
+  return deps.repo.withTransaction(async (executor) => {
+    const produto = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
+    if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const before = (await deps.repo.listMidias(scope, produtoId, executor))
+      .find((row) => row.id === mediaId);
+    if (!before || before.status !== 'QUARENTENA') {
+      throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+    }
+    if (before.scan_verdict !== 'CLEAN' || !before.scan_sha256 || before.scan_sha256 !== before.sha256) {
+      throw new AppError(409, 'MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN',
+        'Media approval requires a matching CLEAN scan evidence');
+    }
+    const after = await deps.repo.changeMidiaStatus(scope, produtoId, mediaId, 'APROVADO', executor);
+    if (!after) throw new AppError(409, 'MEDIA_LIBERACAO_CONFLICT', 'Media cannot be approved from current state');
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'approve',
+      beforeData: { categoria: before.categoria, versao: before.versao, status: before.status, scan_verdict: before.scan_verdict ?? null },
+      afterData: { categoria: after.categoria, versao: after.versao, status: after.status, scan_verdict: after.scan_verdict ?? null },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return { id: after.id, status: after.status, scan_verdict: after.scan_verdict ?? null };
+  });
+}
+
+/**
+ * Rejeição de conteúdo em quarentena: QUARENTENA → REJEITADO (inativa).
+ * Separada da rejeição de reserva vencida e da publicação externa.
+ */
+export async function rejectProdutoMidiaContent(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'aprovar-conteudo', { requireStorage: false });
+  assertId(mediaId);
+  return deps.repo.withTransaction(async (executor) => {
+    const produto = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
+    if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const before = (await deps.repo.listMidias(scope, produtoId, executor))
+      .find((row) => row.id === mediaId);
+    if (!before || before.status !== 'QUARENTENA') {
+      throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+    }
+    const after = await deps.repo.changeMidiaStatus(scope, produtoId, mediaId, 'REJEITADO', executor);
+    if (!after) throw new AppError(409, 'MEDIA_LIBERACAO_CONFLICT', 'Media cannot be rejected from current state');
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'change_status',
+      beforeData: { categoria: before.categoria, versao: before.versao, status: before.status, scan_verdict: before.scan_verdict ?? null },
+      afterData: { categoria: after.categoria, versao: after.versao, status: after.status, reason: 'content_rejected' },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return { id: after.id, status: after.status };
+  });
+}
+
+/**
+ * Reconcilia órfãos de conteúdo infectado ainda em QUARENTENA (tenant-scoped).
+ * Reutiliza rejectProdutoMidiaContent; não apaga objeto no Storage nem publica.
+ */
+export async function reconcileInfectedProdutoMidias(deps: Dependencies, ctx: RequestContext, limit = 50) {
+  if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
+  if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for media');
+  if (!ctx.actorId) throw new AppError(403, 'PERMISSION_DENIED', 'Actor is required for media');
+  if (!ctx.requestId) throw new AppError(400, 'REQUEST_ID_REQUIRED', 'requestId is required');
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Invalid reconciliation limit');
+  }
+  await deps.rbacGuard.assertAllowed(ctx, 'Cadastros', 'produto', 'aprovar-conteudo');
+  await deps.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+  const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+  const candidates = await deps.repo.listInfectedQuarantinedMidias(scope, limit);
+  let rejected = 0;
+  let raced = 0;
+  for (const candidate of candidates) {
+    try {
+      await rejectProdutoMidiaContent(deps, ctx, candidate.produto_id, candidate.id);
+      rejected += 1;
+    } catch (error) {
+      if (error instanceof AppError && error.code === 'PRODUTO_MIDIA_NOT_FOUND') {
+        raced += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
+  return { inspected: candidates.length, rejected, raced };
+}
+
+/**
+ * Define mídia APROVADA como principal do produto (uma por produto/tenant).
+ * Não altera workflow/publicação e não grava URL assinada em foto_produto_url.
+ */
+export async function setProdutoMidiaPrincipal(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'editar', { requireStorage: false });
+  assertId(mediaId);
+  return deps.repo.withTransaction(async (executor) => {
+    const produto = await deps.repo.getById(scope, produtoId, executor, { forUpdate: true });
+    if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+      throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+    }
+    const midias = await deps.repo.listMidias(scope, produtoId, executor);
+    const before = midias.find((row) => row.id === mediaId);
+    if (!before || before.status !== 'APROVADO' || !before.ativo) {
+      throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Approved media not found in tenant scope');
+    }
+    if (before.principal) {
+      return { id: before.id, status: before.status, principal: true };
+    }
+    const previousPrincipal = midias.find((row) => row.principal && row.id !== mediaId);
+    const after = await deps.repo.setMidiaPrincipal(scope, produtoId, mediaId, executor);
+    if (!after || !after.principal) {
+      throw new AppError(409, 'MEDIA_PRINCIPAL_CONFLICT', 'Media cannot become principal from current state');
+    }
+    await deps.audit.append({
+      groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+      actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'update',
+      beforeData: {
+        principal: before.principal, status: before.status, versao: before.versao,
+        previous_principal_id: previousPrincipal?.id ?? null,
+      },
+      afterData: {
+        principal: after.principal, status: after.status, versao: after.versao,
+        previous_principal_id: previousPrincipal?.id ?? null,
+      },
+      requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+    }, executor);
+    return { id: after.id, status: after.status, principal: after.principal };
+  });
+}
+
+/**
+ * Download privado: URL assinada curta para mídia ativa (QUARENTENA/APROVADO).
+ * Auditoria sem token/URL/conteúdo; Storage obrigatório.
+ */
+export async function downloadProdutoMidia(deps: Dependencies, ctx: RequestContext, produtoId: string, mediaId: string) {
+  const scope = await authorize(deps, ctx, produtoId, 'visualizar');
+  assertId(mediaId);
+  const produto = await deps.repo.getById(scope, produtoId);
+  if (!produto || !produto.ativo || produto.empresa_id !== scope.empresaId) {
+    throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+  }
+  const midia = (await deps.repo.listMidias(scope, produtoId)).find((row) => row.id === mediaId);
+  if (!midia || !midia.ativo || (midia.status !== 'QUARENTENA' && midia.status !== 'APROVADO')) {
+    throw new AppError(404, 'PRODUTO_MIDIA_NOT_FOUND', 'Media not found in tenant scope');
+  }
+  let signed: { url: string; expiresAt: string };
+  try {
+    signed = await deps.storage.createSignedDownloadUrl({
+      groupId: ctx.groupId!,
+      empresaId: ctx.empresaId!,
+      actorId: ctx.actorId!,
+      entity: 'Produto',
+      entityId: produtoId,
+    }, midia.storage_key);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/STORAGE_ADAPTER_NOT_CONFIGURED|STORAGE_CONFIG|STORAGE_SCOPE|STORAGE_URL/i.test(message)) {
+      throw new AppError(503, 'STORAGE_ADAPTER_NOT_CONFIGURED', 'Storage download is unavailable');
+    }
+    throw error;
+  }
+  if (!signed?.url || !signed.expiresAt) {
+    throw new AppError(503, 'STORAGE_ADAPTER_NOT_CONFIGURED', 'Storage download is unavailable');
+  }
+  await deps.audit.append({
+    groupId: ctx.groupId, empresaId: ctx.empresaId, actorId: ctx.actorId,
+    actorEmail: ctx.actorEmail, entity: 'ProdutoMidia', entityId: mediaId, action: 'read',
+    afterData: {
+      status: midia.status, versao: midia.versao, categoria: midia.categoria,
+      mime_type: midia.mime_type, tamanho_bytes: midia.tamanho_bytes,
+    },
+    requestId: ctx.requestId, ipAddress: ctx.ipAddress,
+  });
+  return {
+    id: midia.id,
+    nome_arquivo: midia.nome_arquivo,
+    mime_type: midia.mime_type,
+    url: signed.url,
+    expiresAt: signed.expiresAt,
+  };
 }

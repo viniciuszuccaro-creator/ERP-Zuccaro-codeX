@@ -17,6 +17,9 @@ const envSchema = z.object({
   SUPABASE_STORAGE_PUBLIC_URL: z.string().url().optional(),
   SUPABASE_STORAGE_PRIVATE_BUCKET: z.string().min(1).optional(),
   SUPABASE_STORAGE_MAX_BYTES: z.coerce.number().int().positive().default(10_000_000),
+  /** Socket local do clamd; ausente = scanner desligado (padrão Onda 1). */
+  CLAMD_SOCKET_PATH: z.string().min(1).optional(),
+  CLAMD_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   CORS_ORIGINS: z.string().default('http://localhost:5173,https://erp-dev.cpaferroeaco.com.br'),
   BODY_LIMIT: z.string().default('1mb'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
@@ -37,6 +40,9 @@ export type AppConfig = {
   supabaseStoragePublicUrl?: string;
   supabaseStoragePrivateBucket?: string;
   supabaseStorageMaxBytes: number;
+  /** Presente somente quando scanner opt-in estiver configurado. */
+  clamdSocketPath?: string;
+  clamdTimeoutMs: number;
   corsOrigins: string[];
   bodyLimit: string;
   rateLimitWindowMs: number;
@@ -80,6 +86,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     supabaseStoragePublicUrl: data.SUPABASE_STORAGE_PUBLIC_URL,
     supabaseStoragePrivateBucket: data.SUPABASE_STORAGE_PRIVATE_BUCKET,
     supabaseStorageMaxBytes: data.SUPABASE_STORAGE_MAX_BYTES,
+    clamdSocketPath: data.CLAMD_SOCKET_PATH,
+    clamdTimeoutMs: data.CLAMD_TIMEOUT_MS,
     corsOrigins: data.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
     bodyLimit: data.BODY_LIMIT,
     rateLimitWindowMs: data.RATE_LIMIT_WINDOW_MS,
@@ -92,12 +100,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 
 /** Safe public view — never includes secrets. */
 export function publicConfigView(config: AppConfig) {
+  const storageConfigured = Boolean(
+    config.supabaseUrl
+    && config.supabaseServiceRoleKey
+    && config.supabaseStoragePublicUrl
+    && config.supabaseStoragePrivateBucket,
+  );
   return {
     environment: config.erpEnv,
     nodeEnv: config.nodeEnv,
     version: config.appVersion,
     databaseConfigured: Boolean(config.databaseUrl),
     supabaseConfigured: Boolean(config.supabaseUrl),
+    storageConfigured,
+    malwareScannerConfigured: Boolean(storageConfigured && config.clamdSocketPath),
     corsOrigins: config.corsOrigins,
   };
 }

@@ -1,3 +1,25 @@
+## Coordenacao Comercial 360 - divisao de arquivos (2026-10-04)
+
+HEADs no momento do registro:
+- `main` @ `d02cd012`
+- PR #202 `cursor/comercial360-onda1-midia-liberacao-392b` @ `bb76129c` (fix PG version/confirmUpload)
+- PR #203 `cursor/comercial360-onda15-outbox-claim-392b` @ `01cecc9e` (CI verde; faltam cenarios PG reais alem do CI)
+- Comercial margem local `cursor/comercial360-onda2-margem-392b` @ `a261790d`
+
+Divisao obrigatoria (evitar conflito):
+- **Cursor (Produto/DAM/Outbox):** `server/src/services/produtoMidiaFlow.ts`, `produtoOutboxClaim.ts`, `produtoCatalogProjection.ts`, `produtoService.ts` (somente midia/outbox), `repositories/*Produto*`, `ProdutoDamMidiaSection.jsx`, `ProdutoRelationsDamSection.jsx`, `produtoHttpPolicy.js`, testes `runtime10-produto-*`, migrations 018-024 ja existentes (sem migration nova sem gate).
+- **Comercial (Orcamento/Pedido/preco/margem/credito):** `orcamentoService.ts`, `pedidoService.ts`, `comercialMargemAlcadaPolicy.ts`, `tabelaPreco*`, UI Comercial/Pedido/Orcamento, testes `comercial-*` / `runtime08*` / `runtime09*`. Nao editar arquivos Produto/DAM/outbox deste pacote Cursor.
+- **Bloqueado ate gate:** VPS, Auth novo, publisher externo real, tip-port entre ondas tip e branches Cursor.
+
+Tarefa Comercial 360 (confirmacao de encaminhamento):
+- Recebido: fechar pacotes funcionais completos na frente Comercial (margem/alcada/snapshot/preco) no SHA integrado apos entrega Produto/DAM, sem tip-port e sem tocar midia/outbox.
+- Primeira acao Comercial: auditar HEAD `cursor/comercial360-onda2-margem-392b` @ `a261790d` e fechar lacunas de CostPort/margem com testes HTTP+PG; nao merge/VPS.
+
+## Checkpoint Onda 1 - fix PG #202 CLEAN/versao (2026-10-04)
+- Causa: mock `confirmUpload` devolvia `version: 1` fixo; segunda midia no mesmo produto usa `nextMidiaVersion` (>=2) → `STORAGE_METADATA_MISMATCH` no E2E PG.
+- Correcao: mock ecoa `request.version`; preserva exigencia CLEAN+`scan_sha256=sha256` (constraint 022) e auditoria transacional.
+- Sem canal externo, sem VPS, sem migration.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
@@ -7,6 +29,17 @@
 - 5. `auth.users=0` e dois profiles ativos sem `auth_user_id` tornam smoke Bearer impossivel hoje. Em gate Auth separado e autorizado, provisionar identidade de teste exclusivamente sintética no Supabase Auth self-hosted, vincular seu UUID a profile ERP sintetico ativo no Grupo/Empresa sinteticos autorizados, com permissoes minimas Orcamento/Pedido. Validar scope positivo e RBAC/tenant negativos. Token, senha, email e chaves somente no ambiente seguro; nenhum valor no Git/log/handoff. Depois revogar sessao/desabilitar identidade de teste conforme procedimento auditavel. Nao reutilizar automaticamente os dois profiles existentes sem provar que sao sinteticos.
 - Coordenacao: Cursor revisa este contrato e as verificacoes Gate D/E na PR #34; Codex revisa requisitos da PR #33. Ordem sugerida: fechar/revisar PR #34 documental-operacional primeiro; revisar PR #33 e seu default de runtime; so entao decidir merges por revisao humana e atualizar SHA da MAIN. PR #33 segue draft, sem merge; 3080 continua R07B.
 - Frente independente Cliente 360 esta somente no workspace local, sem push e sem CI deste codigo; testes focados passaram, suite completa e build local sofreram OOM. Nao apresentar o endpoint como disponivel no remoto ou na VPS.
+
+## Checkpoint Onda 1 - liberacao DAM (2026-10-02)
+- Branch `cursor/comercial360-onda1-midia-liberacao-392b`: no DAM existente, liberacao interna QUARENTENA→APROVADO (exige CLEAN) e QUARENTENA→REJEITADO, separada da publicacao externa e do workflow Produto. Sem scanner real, sem Produto HTTP, sem VPS.
+- Rotas: POST `/api/v1/produtos/:id/midias/:mediaId/aprovar` e `.../rejeitar-conteudo`; RBAC `Cadastros.produto.aprovar-conteudo`.
+- Continuacao: PUBLICADO do Produto bloqueado enquanto midia em QUARENTENA; `reconcileInfectedMidias` limpa orfaos INFECTED em lote (service, sem rota nova).
+- UI: secao DAM V22 existente ganhou acoes Verificar/Aprovar/Rejeitar + Reconciliar vencidas/infectadas + Tornar principal + Inativar midia + Baixar + banner de readiness via `/api/v1/meta` (prepared HTTP); Produto HTTP permanece opt-in/desligado.
+- Continuacao: CRUD de rascunho por canal (`produto_canais`, status RASCUNHO) no cliente prepared e na mesma secao V22; sem publicacao externa.
+- Continuacao: aprovacao de equivalente/substituto exige `aprovar-conteudo` (fail-closed) e botao na UI V22.
+- Bootstrap: Storage/scanner via env opt-in (`CLAMD_SOCKET_PATH` ausente = scanner desligado por padrao); documentado em `server/.env.example`.
+- HTTP: `POST /api/v1/produtos/midias/reconciliar-vencidas|reconciliar-infectadas`; `POST .../midias/:mediaId/principal|download`; `DELETE .../midias/:mediaId`; `GET|POST|PATCH|DELETE .../canais`; meta `produto.dam` documenta capacidades sem ativar frontend HTTP.
+- Proximo gate Onda 1: **BLOCKED** Auth + Storage/clamd na VPS; nao ativar HTTP na 3080.
 
 ## Contrato Cursor/deploy - preco por ClienteEmpresa (2026-09-24)
 - API read-only: GET /api/v1/tabelas-preco/preco-cliente?clienteEmpresaId=<uuid>&produtoId=<uuid>&unidadeMedidaId=<uuid>&businessDate=YYYY-MM-DD. Resposta {data: ResolvedPrice|null}; 422 para query/campo invalido, 403 para RBAC negado/ator ausente, 404 seguro para vinculo ClienteEmpresa fora do tenant. Nao enviar tabelaPrecoId, groupId ou empresaId na query; estes ultimos vem do contexto autenticado.

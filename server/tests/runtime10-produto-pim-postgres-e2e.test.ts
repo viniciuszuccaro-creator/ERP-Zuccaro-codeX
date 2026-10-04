@@ -368,7 +368,7 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
     confirmUpload: async (request) => ({
       storageKey: request.storageKey, fileName: request.fileName, mimeType: request.mimeType,
       sizeBytes: request.sizeBytes, sha256: badChecksum ? 'c'.repeat(64) : request.sha256,
-      version: 1,
+      version: request.version ?? 1,
     }),
     createSignedDownloadUrl: async () => { throw new Error('UNUSED'); },
   };
@@ -461,6 +461,30 @@ test('R10 PostgreSQL real: service DAM reserva, confirma e rollbacka auditoria',
       [first.mediaId, scope.groupId, scope.empresaId],
     );
     assert.equal(stored.rows[0]?.scan_sha256, firstData.sha256);
+    await assert.rejects(deniedService.approveMidia(ctx, productId, first.mediaId), /RBAC_DENIED/);
+    const approved = await scanService.approveMidia(ctx, productId, first.mediaId);
+    assert.deepEqual(approved, { id: first.mediaId, status: 'APROVADO', scan_verdict: 'CLEAN' });
+    const approvedRow = await db.query<{ status: string; ativo: boolean }>(
+      'SELECT status,ativo FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [first.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(approvedRow.rows[0]?.status, 'APROVADO');
+    assert.equal(approvedRow.rows[0]?.ativo, true);
+    await assert.rejects(scanService.approveMidia(ctx, productId, first.mediaId),
+      (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND');
+    const rejectData = data('reject-content');
+    const rejectReservation = await service.reserveMidia(ctx, productId, rejectData);
+    mediaIds.push(rejectReservation.mediaId);
+    await service.confirmMidia(ctx, productId, rejectReservation.mediaId, rejectReservation.attemptId);
+    await assert.rejects(deniedService.rejectMidiaContent(ctx, productId, rejectReservation.mediaId), /RBAC_DENIED/);
+    const contentRejected = await scanService.rejectMidiaContent(ctx, productId, rejectReservation.mediaId);
+    assert.deepEqual(contentRejected, { id: rejectReservation.mediaId, status: 'REJEITADO' });
+    const rejectedContent = await db.query<{ status: string; ativo: boolean }>(
+      'SELECT status,ativo FROM produto_midias WHERE id=$1 AND group_id=$2 AND empresa_id=$3',
+      [rejectReservation.mediaId, scope.groupId, scope.empresaId],
+    );
+    assert.equal(rejectedContent.rows[0]?.status, 'REJEITADO');
+    assert.equal(rejectedContent.rows[0]?.ativo, false);
     assert.deepEqual(logs.map((entry) => entry.action), ['create', 'change_status']);
     assert.equal(logs.every((entry) => entry.groupId === scope.groupId && entry.empresaId === scope.empresaId), true);
     assert.equal(JSON.stringify(logs).includes(firstData.storage_key), false);

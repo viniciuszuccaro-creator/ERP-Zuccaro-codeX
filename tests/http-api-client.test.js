@@ -206,16 +206,89 @@ test('Produto HTTP preparado cobre workflow e reserva/confirmacao sem tenant no 
   await produto.workflow('p', 'EM_REVISAO');
   await produto.midiaReserve('p', { storage_key: 'synthetic' });
   await produto.midiaConfirm('p', 'm', 'a');
-  assert.deepEqual(calls.map((call) => call.method), ['PATCH', 'POST', 'POST']);
+  await produto.midiaScan('p', 'm');
+  await produto.midiaApprove('p', 'm');
+  await produto.midiaRejectContent('p', 'm');
+  await produto.midiaSetPrincipal('p', 'm');
+  await produto.midiaDeactivate('p', 'm');
+  await produto.midiaDownload('p', 'm');
+  await produto.midiaReconcileExpired({ limit: 10 });
+  await produto.midiaReconcileInfected({ limit: 5 });
+  await produto.canais.list('p');
+  await produto.canais.create('p', { canal: 'site_cpa', sku: 'SKU-1' });
+  await produto.canais.update('p', 'c1', { nome: 'Nome canal' });
+  await produto.canais.deactivate('p', 'c1');
+  assert.deepEqual(calls.map((call) => call.method), [
+    'PATCH', 'POST', 'POST', 'POST', 'POST', 'POST', 'POST', 'DELETE', 'POST', 'POST', 'POST',
+    'GET', 'POST', 'PATCH', 'DELETE',
+  ]);
   assert.deepEqual(calls.map((call) => new URL(call.url).pathname), [
     '/api/v1/produtos/p/workflow', '/api/v1/produtos/p/midias/reservas',
     '/api/v1/produtos/p/midias/m/confirmar',
+    '/api/v1/produtos/p/midias/m/verificar',
+    '/api/v1/produtos/p/midias/m/aprovar',
+    '/api/v1/produtos/p/midias/m/rejeitar-conteudo',
+    '/api/v1/produtos/p/midias/m/principal',
+    '/api/v1/produtos/p/midias/m',
+    '/api/v1/produtos/p/midias/m/download',
+    '/api/v1/produtos/midias/reconciliar-vencidas',
+    '/api/v1/produtos/midias/reconciliar-infectadas',
+    '/api/v1/produtos/p/canais',
+    '/api/v1/produtos/p/canais',
+    '/api/v1/produtos/p/canais/c1',
+    '/api/v1/produtos/p/canais/c1',
   ]);
   assert.ok(calls.every((call) => call.headers['X-Group-Id'] === 'grupo-sintetico'
     && call.headers['X-Empresa-Id'] === 'empresa-sintetica'));
   assert.equal(JSON.parse(calls[0].body).status, 'EM_REVISAO');
   assert.deepEqual(JSON.parse(calls[2].body), { attemptId: 'a' });
-  assert.ok(calls.every((call) => !String(call.body).includes('groupId')));
+  assert.deepEqual(JSON.parse(calls[3].body), {});
+  assert.deepEqual(JSON.parse(calls[4].body), {});
+  assert.deepEqual(JSON.parse(calls[5].body), {});
+  assert.deepEqual(JSON.parse(calls[6].body), {});
+  assert.equal(calls[7].body, undefined);
+  assert.deepEqual(JSON.parse(calls[8].body), {});
+  assert.deepEqual(JSON.parse(calls[9].body), { limit: 10 });
+  assert.deepEqual(JSON.parse(calls[10].body), { limit: 5 });
+  assert.deepEqual(JSON.parse(calls[12].body), { canal: 'site_cpa', sku: 'SKU-1' });
+  assert.deepEqual(JSON.parse(calls[13].body), { nome: 'Nome canal' });
+  assert.equal(calls[14].body, undefined);
+  assert.ok(calls.every((call) => !String(call.body ?? '').includes('groupId')));
+});
+
+test('Produto prepared le readiness DAM do meta sem segredos', async () => {
+  const calls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.invalid',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', actorId: 'ator-sintetico' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), method: init.method, body: init.body });
+      return new Response(JSON.stringify({
+        produto: {
+          frontendHttp: false,
+          dam: {
+            liberacaoInterna: true,
+            scannerOptIn: true,
+          },
+        },
+        config: {
+          storageConfigured: false,
+          malwareScannerConfigured: false,
+          supabaseServiceRoleKey: 'LEAK',
+        },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  const status = await client.preparedEntities.Produto.midiaDamStatus();
+  assert.equal(new URL(calls[0].url).pathname, '/api/v1/meta');
+  assert.equal(calls[0].method, 'GET');
+  assert.equal(calls[0].body, undefined);
+  assert.equal(status.storageConfigured, false);
+  assert.equal(status.malwareScannerConfigured, false);
+  assert.equal(status.frontendHttp, false);
+  assert.equal(status.dam.liberacaoInterna, true);
+  assert.equal(JSON.stringify(status).includes('LEAK'), false);
+  assert.equal(JSON.stringify(status).includes('supabaseServiceRoleKey'), false);
 });
 
 test('Produto preparado expõe oito chamadas de relações sem ativar cadastro piloto', async () => {

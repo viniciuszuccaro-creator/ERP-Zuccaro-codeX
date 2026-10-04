@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Save, Trash2, Upload, X } from 'lucide-react';
+import { Plus, Save, Trash2 } from 'lucide-react';
 import { getHttpProdutoApi } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
+import ProdutoCanalRascunhoSection from './ProdutoCanalRascunhoSection';
+import ProdutoDamMidiaSection from './ProdutoDamMidiaSection';
+import { getProdutoEquivalentApproveAction, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   return new Promise((resolve, reject) => {
@@ -27,19 +28,40 @@ function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
   });
 }
 
-const errorText = (error) => error?.status === 503 ? 'Storage do ERP indisponivel' : (error?.message || 'Operacao nao concluida');
+const errorText = (error) => {
+  if (error?.status === 503 && (error?.code === 'MALWARE_SCANNER_NOT_CONFIGURED'
+    || /MALWARE_SCANNER_NOT_CONFIGURED|scanner is not configured/i.test(error?.message || ''))) {
+    return 'Scanner de midia desligado (opt-in). Ative o scanner no servidor apos homologacao.';
+  }
+  if (error?.status === 503 && (error?.code === 'STORAGE_ADAPTER_NOT_CONFIGURED'
+    || /STORAGE_ADAPTER_NOT_CONFIGURED|Storage is not configured/i.test(error?.message || ''))) {
+    return 'Storage do ERP desligado (opt-in). Configure bucket/URLs no servidor apos homologacao.';
+  }
+  if (error?.status === 503) return 'Storage do ERP indisponivel';
+  if (error?.code === 'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO'
+    || /PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO|media remains in quarantine/i.test(error?.message || '')) {
+    return 'Libere ou rejeite midias em quarentena antes de publicar';
+  }
+  if (error?.code === 'MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN'
+    || /MEDIA_LIBERACAO_REQUIRES_CLEAN_SCAN|CLEAN scan/i.test(error?.message || '')) {
+    return 'Aprovacao exige varredura CLEAN';
+  }
+  return error?.message || 'Operacao nao concluida';
+};
 
 export default function ProdutoRelationsDamSection({ produtoId, groupId, empresaId, canView, canEdit, canApprove, canPublish, canDeactivate, workflowStatus, onWorkflowChanged }) {
   const api = getHttpProdutoApi();
   const workflowActions = getProdutoWorkflowActions(workflowStatus, { canEdit, canApprove, canPublish, canDeactivate });
   const [variants, setVariants] = useState([]);
   const [equivalents, setEquivalents] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [media, setMedia] = useState([]);
   const [mediaPage, setMediaPage] = useState(0);
   const [mediaHasMore, setMediaHasMore] = useState(false);
+  const [damStatus, setDamStatus] = useState(null);
   const [variantDraft, setVariantDraft] = useState({ sku: '', nome: '' });
   const [variantEditing, setVariantEditing] = useState(null);
-  const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' });
+  const [equivalentDraft, setEquivalentDraft] = useState({ produto_equivalente_id: '', tipo: 'EQUIVALENTE', direcional: false });
   const [equivalentEditing, setEquivalentEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [candidates, setCandidates] = useState([]);
@@ -55,14 +77,17 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     let active = true;
     setError('');
     Promise.all([
-      api.variantes.list(produtoId), api.equivalentes.list(produtoId),
+      api.variantes.list(produtoId), api.equivalentes.list(produtoId), api.canais.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
-    ]).then(([v, e, m]) => {
+      api.midiaDamStatus().catch(() => null),
+    ]).then(([v, e, c, m, status]) => {
       if (!active) return;
       setVariants(v);
       setEquivalents(e);
+      setChannels(c);
       setMedia(m);
       setMediaHasMore(m.length === 20);
+      setDamStatus(status);
     }).catch((err) => { if (active) setError(errorText(err)); });
     return () => { active = false; };
   }, [api, produtoId, empresaId, canView, mediaPage]);
@@ -79,17 +104,17 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   }, [api, canEdit, produtoId, search]);
 
   const reload = async () => {
-    const [v, e, m] = await Promise.all([
-      api.variantes.list(produtoId), api.equivalentes.list(produtoId),
+    const [v, e, c, m] = await Promise.all([
+      api.variantes.list(produtoId), api.equivalentes.list(produtoId), api.canais.list(produtoId),
       api.midias.list(produtoId, { limit: 20, offset: mediaPage * 20 }),
     ]);
-    setVariants(v); setEquivalents(e); setMedia(m); setMediaHasMore(m.length === 20);
+    setVariants(v); setEquivalents(e); setChannels(c); setMedia(m); setMediaHasMore(m.length === 20);
   };
-  const run = async (action, success) => {
-    if (!canEdit || busy) return;
+  const run = async (action, success, { requireEdit = true } = {}) => {
+    if ((requireEdit && !canEdit) || busy) return false;
     setBusy(true); setError(''); setNotice('');
-    try { await action(); await reload(); setNotice(success); }
-    catch (err) { setError(errorText(err)); }
+    try { await action(); await reload(); setNotice(success); return true; }
+    catch (err) { setError(errorText(err)); return false; }
     finally { setBusy(false); }
   };
   const saveVariant = () => run(async () => {
@@ -99,9 +124,25 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     else await api.variantes.create(produtoId, payload);
     setVariantEditing(null); setVariantDraft({ sku: '', nome: '' });
   }, 'Variante salva');
+  const saveChannel = (request) => {
+    if (request?.error) {
+      setError(errorText(request.error));
+      return false;
+    }
+    return run(async () => {
+      if (request.mode === 'update') await api.canais.update(produtoId, request.id, request.payload);
+      else await api.canais.create(produtoId, request.payload);
+    }, 'Rascunho de canal salvo');
+  };
   const changeWorkflow = async (target) => {
     if (busy || !workflowActions.some((action) => action.target === target)) return;
-    if (target === 'PUBLICADO' && !window.confirm('Publicar este produto nos canais autorizados?')) return;
+    if (target === 'PUBLICADO') {
+      if (media.some((row) => row.status === 'QUARENTENA')) {
+        setError('Libere ou rejeite midias em quarentena antes de publicar');
+        return;
+      }
+      if (!window.confirm('Publicar este produto nos canais autorizados?')) return;
+    }
     setBusy(true); setError(''); setNotice('');
     try {
       const updated = await api.workflow(produtoId, target);
@@ -121,15 +162,99 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
 
   const saveEquivalent = () => run(async () => {
     if (equivalentEditing) {
-      await api.equivalentes.update(produtoId, equivalentEditing, { tipo: equivalentDraft.tipo });
+      await api.equivalentes.update(produtoId, equivalentEditing, {
+        tipo: equivalentDraft.tipo,
+        direcional: Boolean(equivalentDraft.direcional),
+      });
     } else {
       if (!equivalentDraft.produto_equivalente_id) throw new Error('Selecione um produto do mesmo contexto');
       await api.equivalentes.create(produtoId, {
-        produto_equivalente_id: equivalentDraft.produto_equivalente_id, tipo: equivalentDraft.tipo,
+        produto_equivalente_id: equivalentDraft.produto_equivalente_id,
+        tipo: equivalentDraft.tipo,
+        direcional: Boolean(equivalentDraft.direcional),
+        aprovado: false,
       });
     }
-    setEquivalentEditing(null); setEquivalentDraft({ produto_equivalente_id: '', tipo: 'EQUIVALENTE' }); setSearch('');
+    setEquivalentEditing(null);
+    setEquivalentDraft({ produto_equivalente_id: '', tipo: 'EQUIVALENTE', direcional: false });
+    setSearch('');
   }, 'Relacao salva');
+  const liberarMidia = (mediaId, action) => {
+    if (!canApprove || busy) return;
+    const labels = {
+      scan: 'Varredura registrada',
+      approve: 'Midia liberada internamente',
+      reject: 'Conteudo rejeitado',
+    };
+    const confirmReject = action === 'reject'
+      ? window.confirm('Rejeitar este conteudo em quarentena? A midia ficara inativa.')
+      : true;
+    if (!confirmReject) return;
+    run(async () => {
+      if (action === 'scan') {
+        const result = await api.midiaScan(produtoId, mediaId);
+        if (result?.status !== 'QUARENTENA') throw new Error('Varredura nao concluida');
+      } else if (action === 'approve') {
+        const result = await api.midiaApprove(produtoId, mediaId);
+        if (result?.status !== 'APROVADO') throw new Error('Liberacao de midia nao concluida');
+      } else if (action === 'reject') {
+        const result = await api.midiaRejectContent(produtoId, mediaId);
+        if (result?.status !== 'REJEITADO') throw new Error('Rejeicao de conteudo nao concluida');
+      } else {
+        throw new Error('Acao de midia invalida');
+      }
+    }, labels[action], { requireEdit: false });
+  };
+  const tornarPrincipal = (mediaId) => {
+    if (!canEdit || busy) return;
+    run(async () => {
+      const result = await api.midiaSetPrincipal(produtoId, mediaId);
+      if (result?.principal !== true || result?.status !== 'APROVADO') {
+        throw new Error('Definicao de midia principal nao concluida');
+      }
+    }, 'Midia definida como principal');
+  };
+  const inativarMidia = (mediaId) => {
+    if (!canEdit || busy) return;
+    if (!window.confirm('Inativar esta midia? O arquivo historico permanece no Storage.')) return;
+    run(async () => {
+      const result = await api.midiaDeactivate(produtoId, mediaId);
+      if (result?.ativo !== false && result?.status !== 'INATIVO') {
+        throw new Error('Inativacao de midia nao concluida');
+      }
+    }, 'Midia inativada');
+  };
+  const baixarMidia = (mediaId) => {
+    if (!canView || busy) return;
+    run(async () => {
+      const result = await api.midiaDownload(produtoId, mediaId);
+      if (!result?.url || !result.expiresAt) throw new Error('Download nao confirmado pelo ERP');
+      if (typeof window !== 'undefined' && typeof window.open === 'function') {
+        window.open(result.url, '_blank', 'noopener,noreferrer');
+      }
+    }, 'Download autorizado', { requireEdit: false });
+  };
+  const reconciliarMidias = (kind) => {
+    if (busy) return;
+    if (kind === 'expired' && !canDeactivate) return;
+    if (kind === 'infected' && !canApprove) return;
+    const prompts = {
+      expired: 'Rejeitar no tenant midias com reserva de upload vencida (ate 50)?',
+      infected: 'Rejeitar no tenant midias em quarentena com varredura INFECTED (ate 50)?',
+    };
+    if (!window.confirm(prompts[kind])) return;
+    run(async () => {
+      const result = kind === 'expired'
+        ? await api.midiaReconcileExpired({ limit: 50 })
+        : await api.midiaReconcileInfected({ limit: 50 });
+      if (!result || typeof result !== 'object'
+        || !Number.isInteger(result.inspected)
+        || !Number.isInteger(result.rejected)
+        || !Number.isInteger(result.raced)) {
+        throw new Error('Reconciliacao nao confirmada pelo ERP');
+      }
+    }, kind === 'expired' ? 'Reservas vencidas reconciliadas' : 'Midias infectadas rejeitadas', { requireEdit: false });
+  };
   const upload = async (event) => {
     const file = event.target.files?.[0];
     if (!file || !canEdit || !groupId || !empresaId || busy) return;
@@ -155,9 +280,17 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
   };
 
   if (!canView || !produtoId || !empresaId) return null;
+  const damReadiness = damStatus
+    ? [
+      damStatus.storageConfigured ? 'Storage configurado' : 'Storage desligado (opt-in)',
+      damStatus.malwareScannerConfigured ? 'Scanner opt-in ativo' : 'Scanner desligado (padrao)',
+      damStatus.frontendHttp ? 'Produto HTTP ativo' : 'Produto HTTP desligado',
+    ].join(' · ')
+    : null;
   return <div className="w-full space-y-5 border-t pt-5" data-permission="Cadastros.Produto.visualizar">
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     {notice && <p role="status" className="text-sm text-green-700">{notice}</p>}
+    {damReadiness && <p role="status" className="text-xs text-muted-foreground" data-action="produto-dam-readiness">{damReadiness}</p>}
     <section className="space-y-2" data-permission="Cadastros.Produto.visualizar">
       <h3 className="text-sm font-semibold">Fluxo do produto</h3>
       <p className="text-sm">{workflowStatus || 'Estado indisponivel'}</p>
@@ -185,37 +318,79 @@ export default function ProdutoRelationsDamSection({ produtoId, groupId, empresa
     </section>
     <section className="space-y-2">
       <h3 className="text-sm font-semibold">Equivalentes e substitutos</h3>
-      {equivalents.map((row) => <div key={row.id} className="flex items-center gap-2 border-b py-1 text-sm">
-        <span className="flex-1 truncate">{row.produto_equivalente_id} · {row.tipo}</span>
+      {equivalents.map((row) => {
+        const approveAction = getProdutoEquivalentApproveAction(row, { canApprove });
+        return <div key={row.id} className="flex flex-wrap items-center gap-2 border-b py-1 text-sm">
+        <span className="min-w-0 flex-1 truncate">{row.produto_equivalente_id} · {row.tipo}{row.direcional ? ' · direcional' : ''} · {row.aprovado ? 'aprovado' : 'pendente'}</span>
+        {approveAction && <Button type="button" variant="outline" size="sm" disabled={busy}
+          data-action="produto-equivalente-aprovar"
+          data-permission="Cadastros.Produto.aprovar-conteudo"
+          data-sensitive
+          onClick={() => run(async () => {
+            const result = await api.equivalentes.update(produtoId, row.id, { aprovado: true });
+            if (result?.aprovado !== true) throw new Error('Aprovacao da relacao nao concluida');
+          }, 'Relacao aprovada', { requireEdit: false })}>{approveAction.label}</Button>}
         {canEdit && <><Button type="button" variant="ghost" size="icon" title="Editar relacao" disabled={busy}
-          onClick={() => { setEquivalentEditing(row.id); setEquivalentDraft({ produto_equivalente_id: row.produto_equivalente_id, tipo: row.tipo }); }}><Save className="h-4 w-4" /></Button>
+          onClick={() => {
+            setEquivalentEditing(row.id);
+            setEquivalentDraft({
+              produto_equivalente_id: row.produto_equivalente_id,
+              tipo: row.tipo,
+              direcional: Boolean(row.direcional),
+            });
+          }}><Save className="h-4 w-4" /></Button>
           <Button type="button" variant="ghost" size="icon" title="Inativar relacao" disabled={busy}
             onClick={() => run(() => api.equivalentes.deactivate(produtoId, row.id), 'Relacao inativada')}><Trash2 className="h-4 w-4" /></Button></>}
-      </div>)}
+      </div>;
+      })}
       {canEdit && <div className="space-y-2">
         {!equivalentEditing && <><Input aria-label="Buscar produto equivalente" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={equivalentDraft.produto_equivalente_id} onValueChange={(id) => setEquivalentDraft((v) => ({ ...v, produto_equivalente_id: id }))}>
             <SelectTrigger><SelectValue placeholder="Selecione um produto" /></SelectTrigger>
             <SelectContent>{candidates.map((row) => <SelectItem key={row.id} value={row.id}>{row.codigo} · {row.descricao}</SelectItem>)}</SelectContent>
           </Select></>}
-        <div className="flex gap-2"><Select value={equivalentDraft.tipo} onValueChange={(tipo) => setEquivalentDraft((v) => ({ ...v, tipo }))}>
-          <SelectTrigger className="max-w-52"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="EQUIVALENTE">Equivalente</SelectItem><SelectItem value="SUBSTITUTO">Substituto</SelectItem></SelectContent>
-        </Select><Button type="button" onClick={saveEquivalent} disabled={busy || (!equivalentEditing && !equivalentDraft.produto_equivalente_id)} title="Salvar relacao"><Save className="h-4 w-4" /></Button></div>
+        <div className="flex flex-wrap gap-2">
+          <Select value={equivalentDraft.tipo} onValueChange={(tipo) => setEquivalentDraft((v) => ({ ...v, tipo }))}>
+            <SelectTrigger className="max-w-52"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="EQUIVALENTE">Equivalente</SelectItem><SelectItem value="SUBSTITUTO">Substituto</SelectItem></SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={Boolean(equivalentDraft.direcional)}
+              data-action="produto-equivalente-direcional"
+              onChange={(e) => setEquivalentDraft((v) => ({ ...v, direcional: e.target.checked }))} />
+            Direcional
+          </label>
+          <Button type="button" onClick={saveEquivalent} disabled={busy || (!equivalentEditing && !equivalentDraft.produto_equivalente_id)} title="Salvar relacao"><Save className="h-4 w-4" /></Button>
+        </div>
       </div>}
     </section>
-    <section className="space-y-2">
-      <h3 className="text-sm font-semibold">Midias do produto</h3>
-      {media.map((row) => <div key={row.id} className="flex flex-col gap-1 border-b py-1 text-sm sm:flex-row sm:justify-between sm:gap-2">
-        <span className="min-w-0 break-all">{row.nome_arquivo}</span><span className="min-w-0 break-words sm:text-right">{getProdutoMediaScanLabel(row)} · v{row.versao}{row.principal ? ' · principal' : ''}</span>
-      </div>)}
-      <div className="flex items-center gap-2"><Button type="button" variant="outline" disabled={mediaPage === 0 || busy} onClick={() => setMediaPage((p) => p - 1)}>Anterior</Button>
-        <span className="text-sm">{mediaPage + 1}</span><Button type="button" variant="outline" disabled={!mediaHasMore || busy} onClick={() => setMediaPage((p) => p + 1)}>Proxima</Button></div>
-      {canEdit && <><Label htmlFor="produto-dam-file">Arquivo</Label>
-        <Input ref={fileInput} id="produto-dam-file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,video/mp4"
-          onChange={upload} disabled={busy} data-permission="Cadastros.Produto.editar" />
-        {progress != null && <div className="flex items-center gap-2 text-sm"><Upload className="h-4 w-4" />{progress}%
-          <Button type="button" variant="ghost" size="icon" title="Cancelar envio" onClick={() => cancelUpload.current?.()}><X className="h-4 w-4" /></Button></div>}</>}
-    </section>
+    <ProdutoCanalRascunhoSection
+      channels={channels}
+      canEdit={canEdit}
+      busy={busy}
+      onSave={saveChannel}
+      onDeactivate={(id) => run(() => api.canais.deactivate(produtoId, id), 'Rascunho de canal inativado')}
+    />
+    <ProdutoDamMidiaSection
+      media={media}
+      mediaPage={mediaPage}
+      mediaHasMore={mediaHasMore}
+      canView={canView}
+      canEdit={canEdit}
+      canApprove={canApprove}
+      canDeactivate={canDeactivate}
+      busy={busy}
+      progress={progress}
+      fileInputRef={fileInput}
+      onReconcileExpired={() => reconciliarMidias('expired')}
+      onReconcileInfected={() => reconciliarMidias('infected')}
+      onLiberar={liberarMidia}
+      onDownload={baixarMidia}
+      onPrincipal={tornarPrincipal}
+      onDeactivate={inativarMidia}
+      onPageChange={setMediaPage}
+      onUpload={upload}
+      onCancelUpload={() => cancelUpload.current?.()}
+    />
   </div>;
 }

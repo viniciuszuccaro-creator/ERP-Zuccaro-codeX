@@ -29,7 +29,7 @@ import {
   type ProdutoUpdate,
 } from '../repositories/produtoTypes.js';
 
-import { checkProdutoMidiaPath, confirmProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, rejectExpiredProdutoMidia, reserveProdutoMidia, scanProdutoMidia } from './produtoMidiaFlow.js';
+import { approveProdutoMidia, checkProdutoMidiaPath, confirmProdutoMidia, downloadProdutoMidia, listProdutoMidias, reconcileExpiredProdutoMidias, reconcileInfectedProdutoMidias, rejectExpiredProdutoMidia, rejectProdutoMidiaContent, reserveProdutoMidia, scanProdutoMidia, setProdutoMidiaPrincipal } from './produtoMidiaFlow.js';
 import { NotImplementedStorage, type MalwareScanPort, type StoragePort } from './storagePort.js';
 const WORKFLOW_TRANSITIONS: Record<Produto['workflow_status'], Produto['workflow_status'][]> = {
   RASCUNHO: ['EM_REVISAO'],
@@ -241,6 +241,16 @@ export class ProdutoService {
       if (!WORKFLOW_TRANSITIONS[before.workflow_status].includes(target)) {
         throw new AppError(409, 'PRODUTO_WORKFLOW_CONFLICT', 'Produto workflow transition is not allowed');
       }
+      if (target === 'PUBLICADO') {
+        const midias = await this.repo.listMidias(scope, id, executor);
+        if (midias.some((row) => row.status === 'QUARENTENA')) {
+          throw new AppError(
+            409,
+            'PRODUTO_PUBLICACAO_REQUIRES_MEDIA_LIBERACAO',
+            'Produto cannot be published while media remains in quarantine',
+          );
+        }
+      }
       const updated = await this.repo.changeWorkflowStatus(scope, id, target, executor);
       if (!updated) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
       if (target === 'PUBLICADO') {
@@ -295,8 +305,42 @@ export class ProdutoService {
       rbacGuard: this.rbacGuard, storage: this.storage,
     }, ctx, limit);
   }
+  async reconcileInfectedMidias(ctx: RequestContext, limit = 50) {
+    return reconcileInfectedProdutoMidias({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
+    }, ctx, limit);
+  }
   async scanMidia(ctx: RequestContext, produtoId: string, midiaId: string) {
     return scanProdutoMidia({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
+    }, ctx, produtoId, midiaId);
+  }
+
+  async approveMidia(ctx: RequestContext, produtoId: string, midiaId: string) {
+    return approveProdutoMidia({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
+    }, ctx, produtoId, midiaId);
+  }
+
+  async rejectMidiaContent(ctx: RequestContext, produtoId: string, midiaId: string) {
+    return rejectProdutoMidiaContent({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
+    }, ctx, produtoId, midiaId);
+  }
+
+  async setMidiaPrincipal(ctx: RequestContext, produtoId: string, midiaId: string) {
+    return setProdutoMidiaPrincipal({
+      repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
+      rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
+    }, ctx, produtoId, midiaId);
+  }
+
+  async downloadMidia(ctx: RequestContext, produtoId: string, midiaId: string) {
+    return downloadProdutoMidia({
       repo: this.repo, audit: this.audit, tenantGuard: this.tenantGuard,
       rbacGuard: this.rbacGuard, storage: this.storage, scanner: this.scanner,
     }, ctx, produtoId, midiaId);
@@ -565,6 +609,9 @@ export class ProdutoService {
     if (equivalentId) this.assertRelationId(equivalentId);
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
+    if (operation === 'create' && data && 'aprovado' in data && data.aprovado === true) {
+      await this.assertPermission(ctx, 'aprovar-conteudo');
+    }
     return this.repo.withTransaction(async (executor) => {
       const produto = await this.repo.getById(scope, produtoId, executor, { forUpdate: true });
       if (!produto || !produto.ativo) throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
@@ -585,6 +632,9 @@ export class ProdutoService {
         : undefined;
       if (operation !== 'create' && !before) {
         throw new AppError(404, 'PRODUTO_EQUIVALENTE_NOT_FOUND', 'Produto equivalente not found in tenant scope');
+      }
+      if (operation === 'update' && data && 'aprovado' in data && before && Boolean(data.aprovado) !== Boolean(before.aprovado)) {
+        await this.assertPermission(ctx, 'aprovar-conteudo');
       }
       if (operation === 'update' && before) {
         const target = await this.repo.getById(ownerScope, before.produto_equivalente_id, executor, { forUpdate: true });
