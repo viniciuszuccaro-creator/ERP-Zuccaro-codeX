@@ -54,3 +54,9 @@ Auditar upload confirmado, hash, mudança de estado, extração, correção huma
 ## Aceite
 
 Revisão aprovada imutável e congelada; origem/evidência/confiança preservadas; nenhum arquivo real no GitHub; storage privado; IA não libera produção; APIs de Pedido/Produção/Estoque proprietárias; fallback legado somente durante migração testada.
+
+## Correção candidata do gate de upload (2026-10-04)
+
+A revisão independente da #175 identificou `SolicitarOrcamento` fora da política, destinos internos/URLs temporárias aceitos, IA alcançável no modo remoto e abas do Pedido sem guarda local. A candidata `codex/onda9-upload-tecnico-gate-20261004` corrige os caminhos existentes. HTTP e remoto param antes de ler/enviar arquivo; o sandbox local mantém a validação de PDF/JPG/PNG, mas `local://` nunca confirma anexo ou Pedido. A confirmação de URL exige origem explicitamente aprovada e rejeita destino interno/IPv6 e assinatura conhecida no path. Nenhum caller dispõe hoje de origem aprovada. A IA técnica fica bloqueada até storage canônico e revisão humana. Portal passa o Cliente já resolvido; Corte e Arquivos exigem a permissão de edição de Pedido.
+
+Isto não homologa Storage/DAM, upload, IA, tenant/RBAC backend ou Pedido técnico. Não criar provider fictício, ativar canal, aplicar migration ou implantar o candidato antes de CI e novo parecer independente.

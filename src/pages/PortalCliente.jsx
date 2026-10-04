@@ -185,7 +185,7 @@ export default function PortalCliente({ clienteId: propClienteId, adminMode = fa
             <DocumentosCliente />
           </TabsContent>
           <TabsContent value="solicitar-orcamento" className="mt-0 w-full">
-            <SolicitarOrcamento />
+            <SolicitarOrcamento clienteId={cliente.id} />
           </TabsContent>
           <TabsContent value="minhas-oportunidades" className="mt-0 w-full">
             <MinhasOportunidades />
@@ -194,7 +194,7 @@ export default function PortalCliente({ clienteId: propClienteId, adminMode = fa
             <AprovacaoComAssinatura />
           </TabsContent>
           <TabsContent value="projetos" className="mt-0 w-full">
-            <UploadProjetos />
+            <UploadProjetos clienteId={cliente.id} clienteNome={cliente.nome_fantasia || cliente.razao_social || cliente.nome} />
           </TabsContent>
           <TabsContent value="chat" className="mt-0 w-full">
             <ChatVendedor />

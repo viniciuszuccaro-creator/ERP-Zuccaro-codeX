@@ -10,8 +10,21 @@ const formats = {
   jpeg: { mime: 'image/jpeg', signature: [0xff, 0xd8, 0xff], label: 'JPG' },
 };
 
+function isForbiddenHost(hostname) {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (host === 'localhost' || host === '0.0.0.0' || host === '::' || host === '::1' ||
+      host.endsWith('.local') || host.endsWith('.internal') || host.includes('::ffff:')) return true;
+  if (host.includes(':')) return true; // nenhum destino IPv6 é aprovado sem contrato de storage canônico
+  const parts = host.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return a === 0 || a === 10 || a === 127 || a >= 224 ||
+    (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
+}
+
 export async function assertTechnicalUploadAllowed(file, mode = resolveErpBackendMode()) {
-  if (mode === 'http') throw new Error('Upload técnico indisponível até ativar o armazenamento canônico.');
+  if (mode === 'http' || mode === 'remote') throw new Error('Upload técnico indisponível até ativar o armazenamento canônico.');
   const name = file?.name;
   if (typeof name !== 'string' || !name || /[\\/\x00-\x1f\x7f]/.test(name)) {
     throw new Error('Nome de arquivo inválido.');
@@ -35,12 +48,17 @@ export async function assertTechnicalUploadAllowed(file, mode = resolveErpBacken
   return format.label;
 }
 
-export function assertConfirmedTechnicalUploadUrl(value) {
+export function assertConfirmedTechnicalUploadUrl(value, allowedOrigins = []) {
   let url;
   try { url = new URL(value); } catch { throw new Error('Upload sem confirmação do armazenamento.'); }
   if (url.protocol !== 'https:' || !url.hostname || url.username || url.password || url.search || url.hash ||
-    /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(url.hostname) || url.hostname.endsWith('.local')) {
+    isForbiddenHost(url.hostname) || !Array.isArray(allowedOrigins) || !allowedOrigins.includes(url.origin) ||
+    /(?:^|\/)(?:signed|signature|token|temporary|presigned)(?:\/|$)/i.test(url.pathname)) {
     throw new Error('Upload sem confirmação do armazenamento.');
   }
   return url.toString();
+}
+
+export function assertTechnicalAiProcessingAllowed() {
+  throw new Error('Leitura técnica por IA indisponível até revisão humana e armazenamento canônico.');
 }

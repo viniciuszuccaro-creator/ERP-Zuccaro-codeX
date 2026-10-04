@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { FileUp, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { sanitizeOnWrite } from '@/components/lib/sanitizeOnWrite';
+import { assertTechnicalUploadAllowed, assertConfirmedTechnicalUploadUrl, TECHNICAL_UPLOAD_ACCEPT } from '@/lib/technicalUploadPolicy';
 
 /**
  * V21.5 - Solicitar Orçamento COMPLETO
@@ -20,7 +21,7 @@ import { sanitizeOnWrite } from '@/components/lib/sanitizeOnWrite';
  * ✅ Feedback visual de sucesso
  * ✅ w-full h-full responsivo
  */
-export default function SolicitarOrcamento() {
+export default function SolicitarOrcamento({ clienteId }) {
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
@@ -89,20 +90,23 @@ export default function SolicitarOrcamento() {
   });
 
   const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     setUploadingFiles(true);
 
     try {
+      if (!clienteId) throw new Error('Vínculo do cliente indisponível.');
+      await Promise.all(files.map((file) => assertTechnicalUploadAllowed(file)));
       const uploadPromises = files.map(async (file) => {
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        return { name: file.name, url: file_url };
+        return { name: file.name, url: assertConfirmedTechnicalUploadUrl(file_url) };
       });
 
       const uploaded = await Promise.all(uploadPromises);
       setArquivos([...arquivos, ...uploaded]);
       toast.success(`${files.length} arquivo(s) enviado(s)`);
     } catch (error) {
-      toast.error('Erro ao enviar arquivos');
+      toast.error(error.message || 'Erro ao enviar arquivos');
       console.error(error);
     } finally {
       setUploadingFiles(false);
@@ -214,6 +218,7 @@ export default function SolicitarOrcamento() {
               <input
                 type="file"
                 multiple
+                accept={TECHNICAL_UPLOAD_ACCEPT}
                 onChange={handleFileUpload}
                 className="hidden"
                 id="file-upload"
@@ -225,7 +230,7 @@ export default function SolicitarOrcamento() {
                   {uploadingFiles ? 'Enviando arquivos...' : 'Clique para selecionar arquivos'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  PDF, DWG, PNG, JPG até 10MB cada
+                  PDF, PNG ou JPG até 10MB cada; CAD aguarda validação
                 </p>
               </label>
             </div>

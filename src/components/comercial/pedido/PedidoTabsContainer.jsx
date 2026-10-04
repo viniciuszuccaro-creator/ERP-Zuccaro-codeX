@@ -221,14 +221,16 @@ export default function PedidoTabsContainer({
         </TabsContent>
 
         <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
-          <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-            <CorteDobraIATab
-              formData={formData}
-              setFormData={setFormData}
-              empresaId={formData?.empresa_id}
-              onNext={() => setActiveTab('historico')}
-            />
-          </Suspense>
+          <ProtectedSection module="Comercial" section="Pedidos" action="editar" fallback={<div className="text-sm text-slate-500">Acesso restrito ao pedido.</div>}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <CorteDobraIATab
+                formData={formData}
+                setFormData={setFormData}
+                empresaId={formData?.empresa_id}
+                onNext={() => setActiveTab('historico')}
+              />
+            </Suspense>
+          </ProtectedSection>
         </TabsContent>
 
         <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
@@ -268,12 +270,14 @@ export default function PedidoTabsContainer({
         </TabsContent>
 
         <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
-          <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-            <ArquivosProjetosTab
-              formData={formData}
-              setFormData={setFormData}
-            />
-          </Suspense>
+          <ProtectedSection module="Comercial" section="Pedidos" action="editar" fallback={<div className="text-sm text-slate-500">Acesso restrito aos arquivos do pedido.</div>}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <ArquivosProjetosTab
+                formData={formData}
+                setFormData={setFormData}
+              />
+            </Suspense>
+          </ProtectedSection>
         </TabsContent>
 
         <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
