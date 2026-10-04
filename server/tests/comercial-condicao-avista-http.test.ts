@@ -6,6 +6,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import type { ComercialAlcadaConfigPort } from '../src/services/comercialCondicaoAvistaPolicy.ts';
+import type { ComercialCostPort } from '../src/services/comercialMargemAlcadaPolicy.ts';
 
 const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const empresaId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
@@ -36,19 +37,28 @@ const payloadOrc = {
 function fixture(options: {
   parcelas?: Array<{ dias: number; ativo?: boolean }>;
   alcadaConfig?: ComercialAlcadaConfigPort | null;
+  costs?: ComercialCostPort | null;
+  /** Quando true, criador também tem `aprovar` (teste de segregação margem). */
+  creatorCanAprovar?: boolean;
 } = {}) {
   const parcelas = options.parcelas ?? [{ dias: 0, ativo: true }];
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
   const tenant = new InMemoryTenantGuard();
   tenant.link(empresaId, groupId);
   const rbac = new InMemoryRbacGuard();
+  const orcPerms = options.creatorCanAprovar
+    ? ['visualizar', 'criar', 'editar', 'aprovar']
+    : ['visualizar', 'criar', 'editar'];
+  const pedPerms = options.creatorCanAprovar
+    ? ['visualizar', 'criar', 'editar', 'aprovar']
+    : ['visualizar', 'criar', 'editar'];
   rbac.link({
     actorId: creatorId,
     groupId,
     permissions: {
       Comercial: {
-        orcamento: ['visualizar', 'criar', 'editar'],
-        pedido: ['visualizar', 'criar', 'editar'],
+        orcamento: orcPerms,
+        pedido: pedPerms,
       },
     },
   });
@@ -59,6 +69,7 @@ function fixture(options: {
     tenantGuard: tenant,
     rbacGuard: rbac,
     alcadaConfig: options.alcadaConfig === undefined ? null : options.alcadaConfig,
+    costPort: options.costs === undefined ? null : options.costs,
   });
   const stubRefs = (service: any) => {
     service.clientes = { getEmpresaLinkById: async () => ({ id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
@@ -172,4 +183,26 @@ test('HTTP: à vista + regra + desconto > subtotal → 422 (não 500)', async ()
   });
   assert.equal(listed.status, 200);
   assert.equal(listed.body.meta.total, 0);
+});
+
+test('HTTP: à vista libera desconto mas NÃO isenta margem abaixo da mínima', async () => {
+  // Preço 100 − desconto 10 = líquido 90; custo 95 → abaixo da mínima.
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+    costs: {
+      getUnitCost: async () => ({ custo_unitario: '95', margem_minima_bps: 0 }),
+    },
+    creatorCanAprovar: true,
+  });
+  const denied = await request(app, '/api/v1/orcamentos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadOrc),
+  });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body.error.code, 'MARGEM_ALCADA_DENIED');
+  assert.match(String(denied.body.error.message), /outro aprovador/i);
 });

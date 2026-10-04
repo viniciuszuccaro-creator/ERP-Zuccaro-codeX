@@ -1,3 +1,15 @@
+## Revisao #49 a vista + segregacao margem (2026-10-04)
+- Branch `cursor/comercial360-onda2-avista-revisao-392b`: merge de #49 (`ef72c4bd`) + #205 segrega (`4ed9a83f`).
+- Contrato: `liberadoPorAvista` isenta **somente** alçada de desconto; margem abaixo da mínima segue fail-closed com `aprovar` + outro ator (teste HTTP cruzado).
+- Sem tip-port / VPS / Auth / publisher real. Main ainda sem merge de #202/#203/#47/#205/#49.
+- Encaminhamento: CI desta revisao; merge humano da pilha Onda 2 na ordem desconto → margem → segrega → a vista.
+
+## Revisao Comercial 360 - margem segregacao (2026-10-04)
+- SHA revisado: `cursor/comercial360-onda2-margem-392b` @ `a261790d` (PR #47). Main ainda sem merge de #202/#203.
+- Achado corrigido em `cursor/comercial360-onda2-margem-segrega-392b`: margem alinhada ao desconto — abaixo da mínima exige `aprovar` **e** outro ator (create/update/convert).
+- CostPort default null; publisher/VPS/Auth fora do escopo.
+- Encaminhamento Comercial: revalidar #47+#segrega apos CI; nao tip-port; UI omnicanal permanece Codex.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
