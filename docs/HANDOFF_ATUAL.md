@@ -1,7 +1,7 @@
 ## Revisao #49 a vista + segregacao margem (2026-10-04)
 - Branch `cursor/comercial360-onda2-avista-revisao-392b` / PR #206: merge de #49 (`ef72c4bd`) + #205 segrega (`4ed9a83f`).
-- Contrato: `liberadoPorAvista` isenta **somente** alçada de desconto; margem abaixo da mínima segue fail-closed com `aprovar` + outro ator (HTTP Orçamento + Pedido).
-- CI verde no merge; follow-up: cobertura Pedido à vista (fail-closed / regra / margem).
+- Contrato: `liberadoPorAvista` isenta **somente** alçada de desconto; margem abaixo da mínima segue fail-closed com `aprovar` + outro ator (HTTP Orçamento + Pedido + convert).
+- CI verde em `510fbfba` e `dcd1fdd5`; follow-up: Pedido create + convert à vista pelo criador.
 - Sem tip-port / VPS / Auth / publisher real. Main ainda sem merge de #202/#203/#47/#205/#49.
 - Encaminhamento: merge humano da pilha Onda 2 na ordem desconto → margem → segrega → a vista (+revisao).
 
