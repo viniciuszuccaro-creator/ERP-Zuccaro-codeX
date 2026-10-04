@@ -532,7 +532,7 @@ test('DAM define midia APROVADA como principal sem gravar URL assinada', async (
   const denied = harness(['visualizar', 'criar', 'aprovar-conteudo'], storage, scanner);
   await assert.rejects(denied.service.setMidiaPrincipal(denied.ctx, product.id, first.mediaId),
     (error: unknown) => (error as { code?: string }).code === 'PERMISSION_DENIED');
-  await assert.rejects(service.setMidiaPrincipal(ctx, product.id, second.mediaId.replace(/.$/, '0')),
+  await assert.rejects(service.setMidiaPrincipal(ctx, product.id, '00000000-0000-4000-8000-000000000099'),
     (error: unknown) => (error as { code?: string }).code === 'PRODUTO_MIDIA_NOT_FOUND'
       || (error as { code?: string }).code === 'VALIDATION_ERROR');
   const setFirst = await service.setMidiaPrincipal(ctx, product.id, first.mediaId);
