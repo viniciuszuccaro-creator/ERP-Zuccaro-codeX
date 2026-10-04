@@ -107,3 +107,37 @@ test('R09 PostgreSQL real: sequencia concorrente na empresa nao colide', { skip:
     assert.equal((await repo.list(scope, 200, 0)).rows.filter((row) => ids.includes(row.id)).length, 2);
   } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }
 });
+
+test('R09 PostgreSQL real: produtos comprados agregam Pedidos finalizados sem atravessar empresa', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresPedidoRepository(db); const ids: string[] = [];
+  try {
+    const migrations = await db.query<{ id: string }>('SELECT id FROM schema_migrations');
+    assert.ok(migrations.rows.some((row) => row.id === '026_pedidos_tipo_comercial.sql'));
+    const data = await input(db);
+    const before = (await repo.topProducts(scope, data.cliente_empresa_id, 20))
+      .find((row) => row.produto_id === SEED_IDS.produtoA && row.unidade_id === SEED_IDS.unidadeA);
+    const resolved = {
+      ...data, origem: 'MANUAL' as const, tipo_comercial: 'REVENDA' as const,
+      itens: data.itens.map((item) => ({ ...item, quantidade: '0.250000', tipo_comercial_snapshot: 'REVENDA' as const })),
+    };
+    const [first, second, open] = await Promise.all([
+      repo.create(scope, resolved, SEED_IDS.runtimeActorA),
+      repo.create(scope, resolved, SEED_IDS.runtimeActorA),
+      repo.create(scope, resolved, SEED_IDS.runtimeActorA),
+    ]);
+    ids.push(first.id, second.id, open.id);
+    await repo.changeStatus(scope, first.id, 'FINALIZADO', SEED_IDS.runtimeActorA);
+    await repo.changeStatus(scope, second.id, 'FINALIZADO', SEED_IDS.runtimeActorA);
+    const after = (await repo.topProducts(scope, data.cliente_empresa_id, 20))
+      .find((row) => row.produto_id === SEED_IDS.produtoA && row.unidade_id === SEED_IDS.unidadeA);
+    assert.ok(after);
+    const units = (value: string) => {
+      const [whole, fraction = ''] = value.split('.');
+      return BigInt(whole!) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
+    };
+    assert.equal(units(after.quantidade_total) - units(before?.quantidade_total ?? '0.000000'), 500000n);
+    assert.equal(after.pedidos_count - (before?.pedidos_count ?? 0), 2);
+    assert.deepEqual(await repo.topProducts(other, data.cliente_empresa_id, 20), []);
+  } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }
+});
