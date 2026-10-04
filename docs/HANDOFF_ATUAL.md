@@ -1,8 +1,9 @@
 ## Revisao #49 a vista + segregacao margem (2026-10-04)
-- Branch `cursor/comercial360-onda2-avista-revisao-392b`: merge de #49 (`ef72c4bd`) + #205 segrega (`4ed9a83f`).
-- Contrato: `liberadoPorAvista` isenta **somente** alçada de desconto; margem abaixo da mínima segue fail-closed com `aprovar` + outro ator (teste HTTP cruzado).
+- Branch `cursor/comercial360-onda2-avista-revisao-392b` / PR #206: merge de #49 (`ef72c4bd`) + #205 segrega (`4ed9a83f`).
+- Contrato: `liberadoPorAvista` isenta **somente** alçada de desconto; margem abaixo da mínima segue fail-closed com `aprovar` + outro ator (HTTP Orçamento + Pedido).
+- CI verde no merge; follow-up: cobertura Pedido à vista (fail-closed / regra / margem).
 - Sem tip-port / VPS / Auth / publisher real. Main ainda sem merge de #202/#203/#47/#205/#49.
-- Encaminhamento: CI desta revisao; merge humano da pilha Onda 2 na ordem desconto → margem → segrega → a vista.
+- Encaminhamento: merge humano da pilha Onda 2 na ordem desconto → margem → segrega → a vista (+revisao).
 
 ## Revisao Comercial 360 - margem segregacao (2026-10-04)
 - SHA revisado: `cursor/comercial360-onda2-margem-392b` @ `a261790d` (PR #47). Main ainda sem merge de #202/#203.

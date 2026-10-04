@@ -1,10 +1,11 @@
 ## Revisão #49 + segregação margem (2026-10-04)
 
 - Branch `cursor/comercial360-onda2-avista-revisao-392b`: merge de #49 (`ef72c4bd`) + #205 segrega margem (`4ed9a83f`).
-- À vista libera **somente** alçada de desconto (`liberadoPorAvista`); margem abaixo da mínima **continua** exigindo `aprovar` + outro aprovador (não é isenta por à vista) — coberto por teste HTTP cruzado.
+- À vista libera **somente** alçada de desconto (`liberadoPorAvista`); margem abaixo da mínima **continua** exigindo `aprovar` + outro aprovador (não é isenta por à vista) — coberto por teste HTTP cruzado (Orçamento + Pedido).
 - Fail-closed: sem `alcadaConfig` / sem `avistaLiberaDescontoSemAprovar === true` → não libera desconto.
 - CostPort null no runtime padrão (não inventa custo). Sem tip-port / VPS / UI tip.
-- Testes focados: `comercial-condicao-avista*` + `comercial-margem-alcada*` + `comercial-desconto-alcada*` — **37/37 PASS**.
+- Testes focados: `comercial-condicao-avista*` + `comercial-margem-alcada*` + `comercial-desconto-alcada*`.
+- CI PR #206 @ `510fbfba`: frontend+backend **SUCCESS**; cobertura Pedido à vista adicionada no follow-up.
 
 ## #49 STATUS REAL — à vista libera desconto (rebase sobre #47) (2026-09-26T22:16Z)
 

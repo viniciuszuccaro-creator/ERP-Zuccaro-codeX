@@ -34,6 +34,15 @@ const payloadOrc = {
   itens: [itemComDesconto],
 };
 
+const payloadPed = {
+  cliente_empresa_id: clienteId,
+  condicao_pagamento_id: condicaoId,
+  tipo_operacao: 'RETIRADA',
+  data_entrega_solicitada: '2027-02-01T00:00:00.000Z',
+  observacoes: 'Avista Pedido HTTP',
+  itens: [itemComDesconto],
+};
+
 function fixture(options: {
   parcelas?: Array<{ dias: number; ativo?: boolean }>;
   alcadaConfig?: ComercialAlcadaConfigPort | null;
@@ -205,4 +214,66 @@ test('HTTP: à vista libera desconto mas NÃO isenta margem abaixo da mínima', 
   assert.equal(denied.status, 403);
   assert.equal(denied.body.error.code, 'MARGEM_ALCADA_DENIED');
   assert.match(String(denied.body.error.message), /outro aprovador/i);
+});
+
+test('HTTP Pedido: à vista sem config → 403 (fail-closed)', async () => {
+  const { app } = fixture({ parcelas: [{ dias: 0 }], alcadaConfig: null });
+  const denied = await request(app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body.error.code, 'DESCONTO_ALCADA_DENIED');
+});
+
+test('HTTP Pedido: à vista + regra explícita → 201 sem aprovar', async () => {
+  const { app } = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const ok = await request(app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(ok.status, 201);
+  assert.equal(ok.body.data.total, '90.000000');
+});
+
+test('HTTP Pedido: a prazo + regra → 403; à vista + margem abaixo → MARGEM', async () => {
+  const prazo = fixture({
+    parcelas: [{ dias: 30 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+  });
+  const deniedPrazo = await request(prazo.app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(deniedPrazo.status, 403);
+  assert.equal(deniedPrazo.body.error.code, 'DESCONTO_ALCADA_DENIED');
+
+  const margem = fixture({
+    parcelas: [{ dias: 0 }],
+    alcadaConfig: {
+      getConfig: async () => ({ avistaLiberaDescontoSemAprovar: true }),
+    },
+    costs: {
+      getUnitCost: async () => ({ custo_unitario: '95', margem_minima_bps: 0 }),
+    },
+    creatorCanAprovar: true,
+  });
+  const deniedMargem = await request(margem.app, '/api/v1/pedidos', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(payloadPed),
+  });
+  assert.equal(deniedMargem.status, 403);
+  assert.equal(deniedMargem.body.error.code, 'MARGEM_ALCADA_DENIED');
+  assert.match(String(deniedMargem.body.error.message), /outro aprovador/i);
 });
