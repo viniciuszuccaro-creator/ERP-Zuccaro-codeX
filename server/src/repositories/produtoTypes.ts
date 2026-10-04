@@ -81,6 +81,7 @@ export function isProdutoTipoCanonico(value: string) {
 export const produtoCreateSchema = z.object({
   ...baseCreate,
   codigo: z.string().trim().max(80).optional().nullable(),
+  codigo_legado: z.string().trim().min(1).max(80).optional().nullable(),
   codigo_barras: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().min(1).max(500),
   material: z.string().trim().min(1).max(120).optional().nullable(),
@@ -133,6 +134,7 @@ export type Produto = {
   group_id: string;
   empresa_id: string | null;
   codigo: string | null;
+  codigo_legado: string | null;
   codigo_barras: string | null;
   descricao: string;
   nome: string | null;

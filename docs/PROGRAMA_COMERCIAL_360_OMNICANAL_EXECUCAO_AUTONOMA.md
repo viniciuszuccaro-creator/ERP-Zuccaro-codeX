@@ -1,6 +1,8 @@
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
+
+> **Checkpoint de integração em 29/09/2026 (confirmar HEAD remoto antes de executar):** `main` estava em `d02cd012`; candidata draft #153 integra #152 (Comercial) e #141 (Onda 7/legado), mas não #92 (origem/idempotência/tipo/versões; migrations 025-028/033) nem #132 (proveniência de Produto; migration 034). Há conflitos semânticos em Pedido e Orçamento; migration 032 não existe nesta sequência. A orientação vigente está em `AGENTS.md` e `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`; ordem e retomada em `docs/ORDEM_INTEGRACAO_UNICA.md` e `docs/HANDOFF_ATUAL.md`. O Gate E/D/F histórico executado para a imagem `894b0db8` está registrado em `docs/TERMO_AUTORIZACAO_GATES_D_E_F.md`. Esse termo **não** autoriza implantar a candidata #153 nem migrations 025-034. A versão atual da VPS requer nova verificação operacional; CI não comprova implantação ou importação real. Todo baseline abaixo datado de 23-24/09 é histórico.
 > Baseline verificado em 24/09/2026: PR #33 draft, branch `codex/comercial-360`,
 > Checkpoint funcional anterior `c09d69654259eafffd8ad8d2df5362f098308a53` (fundacao dos rascunhos por canal); consultar o HEAD atual da PR #33 no GitHub. Gate C operacional ainda parcial.
 > Migrations 001-024 presentes no repositorio; 023 material/liga/norma foi validada em codigo/CI e nao aplicada na VPS; 024 prepara apenas rascunhos por canal, validada na CI efemera e nao aplicada na VPS.
@@ -177,7 +179,7 @@ Nenhuma trilha pode inventar contratos duplicados. APIs, eventos e schemas compa
 
 ## 6.1 Referências canônicas e precedência
 
-Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_360.md`, `COMERCIAL_360_V1_EXECUCAO_AUTONOMA.md`, `COMERCIAL_360_V1_DEPLOY.md`, `CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md`, `OPERACAO_DEV_VPS.md`, `HANDOFF_ATUAL.md`, `PLANO_GO_LIVE.md` e `STATUS_DO_PROJETO.md`. Em divergência, prevalecem segurança/integridade, Regra-Mãe, código e migrations comprovados, CI e handoff operacional mais recente.
+Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_360.md`, `COMERCIAL_360_V1_EXECUCAO_AUTONOMA.md`, `COMERCIAL_360_V1_DEPLOY.md`, `CONSOLIDACAO_SITE_CPA_ERP_RUNTIME_04.md`, `OPERACAO_DEV_VPS.md`, `HANDOFF_ATUAL.md`, `PLANO_GO_LIVE.md` e `STATUS_DO_PROJETO.md`. Em divergência, prevalecem segurança/integridade, Regra-Mãe e o gate/autorização específicos para a versão e operação pretendidas. Código, migrations, CI e handoff comprovam somente seus respectivos estados; nenhum deles amplia autorização operacional anterior.
 
 ## 6.2 Baseline comprovado reutilizável
 
@@ -599,6 +601,13 @@ Esse contrato ainda nao habilita worker, canal, rede, bucket ou publicacao exter
 
 ---
 
+### Checkpoint de código em 26/09/2026 — frente Codex de canais
+
+- #68 receptor de vendas assinadas; #69 recibos e concorrência PostgreSQL; #70 cliente server-side com retry idempotente. Implementados/testados, CIs verdes dos HEADs publicados; Draft, não mesclados/implantados. Detalhes e limites em COMERCIAL_OMNICANAL_INGRESS.md.
+- Consumidor controlado do outbox Produto em codex/comercial-catalogo-outbox: claim SKIP LOCKED, fencing por versão de lease, retry, dead-letter, reprocessamento/RBAC, auditoria atômica e summary; publisher injetado somente, sem canal real/timer/ativação. Testes/CI do novo HEAD em execução, sem conclusão de onda.
+- RLS/FORCE existem desde 002, sem policy permissiva; policy por Grupo/Empresa do contrato da frente requer migration coordenada. Runtime01/migrations 025–032 estão ocupados nas PRs Cursor; não alterar ou duplicar suas bases. Origem canônica de documentos aguarda #50/#53; mídia/preço/disponibilidade continuam dos módulos proprietários.
+- Nenhuma destas entregas fecha integralmente Ondas 15–19, homologação, acesso real, migração legado ou implantação. HD indisponível: dados exclusivamente sintéticos. Sem VPS/merge nesta tarefa. Prosseguir nos checkpoints independentes sem solicitar próximo.
+
 ## Onda 16 — Site CPA, e-commerce e portal B2B
 
 ### Jornadas
@@ -985,6 +994,10 @@ PRÓXIMO GATE ................. <gate e ação exata>
 
 ## 11. Ordem imediata de execução
 
+**Fila vigente após 29/09/2026:** (1) confirmar HEADs e revisão independente da #152; (2) compor #92 sobre #153 sem perder snapshots de Pedido/Orçamento, testar migrations e fluxo completo; (3) incorporar #132 após #92, CI PostgreSQL do resultado e revisão do HEAD final; (4) preparar gate específico de implantação da nova versão e staging legado isolado. Em paralelo, continuar ondas independentes conforme ownership em `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md`. Não mesclar, aplicar migration, ativar canal, importar ou alterar a VPS apenas por esta fila. O Gate F anterior de `894b0db8` não se estende a novos SHAs.
+
+### Ordem histórica de 24/09/2026 — substituída pela fila acima
+
 1. Preservar PR #33 draft, confirmar branch/HEAD/CI e corrigir baselines documentais sem declarar implantação.
 2. Gate C: obter evidência sanitizada da VPS por ferramenta MCP VPS read-only ou Web Console; não usar SSH nem inferir estado da 3080.
 3. Onda 1: evoluir Produto V22, DAM e StoragePort existentes com scanner real desativado por padrão, testes sintéticos e bloqueio de publicação sem evidência; não ativar Produto HTTP.
@@ -1007,3 +1020,9 @@ Novos requisitos não devem ser perdidos em chats. Sempre que surgir melhoria:
 6. testar e registrar o resultado.
 
 Este documento é vivo, mas suas alterações também obedecem à Regra-Mãe, revisão e versionamento.
+
+## Checkpoint omnicanal — reconciliação de sinais, 2026-09-26
+
+Ondas 15/16/18: lotes técnicos próprios #68 → #69 → #70 → #71, abertos e sem merge/deploy; CIs dos HEADs publicadas nas PRs. #71 HEAD 8fae1bb329b973b7722b62b14ee3eadae6122098: runtime #984 e PostgreSQL #7 SUCCESS (4 PASS/0 FAIL/0 SKIP). Novo lote codex/comercial-catalogo-reconciliacao reutiliza integration_events e audita comparação dos ACKs, com paginação tenant-scoped, cursor de microssegundos e idempotência concorrente. Backend local 250 PASS/0 FAIL/19 SKIP; detalhes e gates em COMERCIAL_OMNICANAL_INGRESS.md. CI do novo lote pendente de publicação.
+
+Implementado/testado não equivale a aprovado/mesclado/implantado. Nenhuma onda é declarada integralmente concluída por esses contratos. Publicação completa de catálogo requer projeção aprovada (produto_canais ainda só RASCUNHO), policy company-scoped coordenada e providers reais homologados. Acesso do proprietário, legado com HD e implantação continuam gates externos; sem dados reais, merge automático ou acesso VPS nesta frente.

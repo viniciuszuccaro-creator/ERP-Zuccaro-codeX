@@ -16,7 +16,10 @@ O R08B implementa Condição de Pagamento como cadastro de prazo e parcelas, sem
 
 `014_condicoes_pagamento.sql` adiciona FKs e triggers tenant-aware, RLS + FORCE e revogação de acesso público. A API exige contexto Grupo/Empresa e RBAC fail-closed `cadastros.condicao_pagamento.*`. Create, update, inactivate, restore, vínculo, padrão e parcelas gravam auditoria na mesma transação.
 
-`CondicaoPagamento.frontendHttp=false`; ela não foi incluída em `HTTP_PILOT_ENTITIES`. O Cliente master bloqueia o campo; a validação do vínculo Cliente×Empresa revalida condição ativa e autorizada.
+`CondicaoPagamento.frontendHttp=true` e a entidade entra em `HTTP_PILOT_ENTITIES`.
+O Cliente master bloqueia o campo textual legado; a validação do vínculo Cliente×Empresa
+revalida condição ativa e autorizada. Snapshot de parcelas em Orçamento/Pedido permanece
+somente em memória da UI até migration autorizada — o save canônico grava `condicao_pagamento_id`.
 
 ## Validação local
 

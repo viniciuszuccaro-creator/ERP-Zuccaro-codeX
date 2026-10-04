@@ -14,26 +14,39 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
  * Calcula previsão de quando terá estoque (IA)
  */
 export default function ValidadorEstoquePedido({ pedido, empresaId }) {
+  const groupId = pedido?.group_id || pedido?.grupo_id || null;
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaId],
-    queryFn: () => base44.entities.Produto.filter({ empresa_id: empresaId }),
-    enabled: !!empresaId
+    queryKey: ['produtos', groupId, empresaId],
+    queryFn: () => base44.entities.Produto.filter({ group_id: groupId, empresa_id: empresaId }),
+    enabled: !!groupId && !!empresaId
   });
 
   const itensRevenda = pedido?.itens_revenda || [];
+  const demandaPorProduto = itensRevenda.reduce((totais, item) => {
+    const produtoId = String(item?.produto_id || '');
+    if (!produtoId) return totais;
+    totais.set(produtoId, (totais.get(produtoId) || 0) + Number(item?.quantidade || 0));
+    return totais;
+  }, new Map());
   
   const verificacoes = itensRevenda.map(item => {
     const produto = produtos.find(p => p.id === item.produto_id);
-    const estoqueAtual = produto?.estoque_atual || 0;
-    const quantidadeNecessaria = item.quantidade || 0;
-    const disponivel = estoqueAtual >= quantidadeNecessaria;
-    const falta = Math.max(0, quantidadeNecessaria - estoqueAtual);
+    const estoqueAtual = Number(produto?.estoque_atual || 0);
+    const estoqueReservado = Number(produto?.estoque_reservado || 0);
+    const estoqueDisponivel = Math.max(0, estoqueAtual - estoqueReservado);
+    const quantidadeNecessaria = Number(item.quantidade || 0);
+    const quantidadeTotalProduto = demandaPorProduto.get(String(item?.produto_id || '')) || quantidadeNecessaria;
+    const disponivel = estoqueDisponivel >= quantidadeTotalProduto;
+    const falta = Math.max(0, quantidadeTotalProduto - estoqueDisponivel);
     
     return {
       item,
       produto,
       estoqueAtual,
+      estoqueReservado,
+      estoqueDisponivel,
       quantidadeNecessaria,
+      quantidadeTotalProduto,
       disponivel,
       falta
     };
@@ -79,7 +92,7 @@ export default function ValidadorEstoquePedido({ pedido, empresaId }) {
             <TableRow className="bg-white">
               <TableHead>Produto</TableHead>
               <TableHead>Qtd Necessária</TableHead>
-              <TableHead>Estoque Atual</TableHead>
+              <TableHead>Disponível</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -91,7 +104,7 @@ export default function ValidadorEstoquePedido({ pedido, empresaId }) {
                 </TableCell>
                 <TableCell>{v.quantidadeNecessaria}</TableCell>
                 <TableCell className={v.disponivel ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                  {v.estoqueAtual}
+                  {v.estoqueDisponivel}
                 </TableCell>
                 <TableCell>
                   {v.disponivel ? (

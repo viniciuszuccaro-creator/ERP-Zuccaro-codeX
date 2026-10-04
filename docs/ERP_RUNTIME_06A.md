@@ -3,6 +3,8 @@
 **Status:** `IMPLEMENTATION_READY — DEV_MIGRATION_PENDING`
 **Branch:** `cursor/erp-runtime-06a-cliente-locais-392b`
 **Base:** `821b335fd6bff01896fcba3ba3291adab94df262`
+**Frontend HTTP:** `true`. ClienteLocal entra em `HTTP_PILOT_ENTITIES` com rotas nested
+`/api/v1/clientes/:clienteId/locais` (endereço de entrega no Pedido; sem flat list-for-scope).
 
 ## Objetivo
 

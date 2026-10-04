@@ -12,7 +12,7 @@ usage() {
 Uso: inventario-backup-erp-antigo.sh [--root DIR]... [--folder NOME] [--report FILE]
   --root DIR     ponto de montagem extra para procurar a pasta
   --folder NOME  nome da pasta (padrão: BACKUP ERP ANTIGO - CODEX)
-  --report FILE  grava JSON sanitizado (agregados + hashes; sem conteúdo)
+  --report FILE  grava manifesto PRIVADO fora do backup e do repositório
 EOF
 }
 
@@ -33,15 +33,17 @@ DEFAULT_ROOTS=(
   /Volumes
   /mnt/d /mnt/e /mnt/f /mnt/g /mnt/h
   /mnt/host/d /mnt/host/e /mnt/host/f
+  /c /d /e /f /g /h
 )
 
 ROOTS_EFFECTIVE=()
-for r in "${DEFAULT_ROOTS[@]}"; do
-  [[ -d "$r" ]] || continue
-  ROOTS_EFFECTIVE+=("$r")
-done
 if ((${#ROOTS[@]} > 0)); then
   for r in "${ROOTS[@]}"; do
+    [[ -d "$r" ]] || continue
+    ROOTS_EFFECTIVE+=("$r")
+  done
+else
+  for r in "${DEFAULT_ROOTS[@]}"; do
     [[ -d "$r" ]] || continue
     ROOTS_EFFECTIVE+=("$r")
   done
@@ -80,8 +82,9 @@ else
   exit 1
 fi
 
-export BACKUP_DIR REPORT FOLDER_NAME
-python3 - <<'PY'
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export BACKUP_DIR REPORT FOLDER_NAME REPO_ROOT
+"${PYTHON_BIN:-python3}" - <<'PY'
 import hashlib, json, os, time
 from collections import Counter
 from pathlib import Path
@@ -89,6 +92,11 @@ from pathlib import Path
 backup = Path(os.environ["BACKUP_DIR"])
 report = os.environ.get("REPORT") or ""
 folder_name = os.environ.get("FOLDER_NAME") or "BACKUP ERP ANTIGO - CODEX"
+repo_root = Path(os.environ["REPO_ROOT"]).resolve()
+if report:
+    report_path = Path(report).resolve()
+    if report_path.is_relative_to(backup.resolve()) or report_path.is_relative_to(repo_root):
+        raise SystemExit("BLOCKED: relatorio privado deve ficar fora do backup e do repositorio")
 
 def classify(path: Path):
     ext = path.suffix.lower().lstrip(".") or "sem_extensao"
@@ -144,9 +152,6 @@ for path in files:
     mtime = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(path.stat().st_mtime))
     name = safe_name(path.name, fmt)
     # Hash estrutural permanece; conteúdo nunca é impresso.
-    print(f"file name={name} bytes={size} sha256={digest} format={fmt} mtime_utc={mtime}")
-    if fmt == "blocked_secret_candidate":
-        print("NOTE blocked_secret_candidate=nao_abrir_conteudo")
     items.append({
         "name": name,
         "bytes": size,
@@ -171,11 +176,11 @@ if report:
         "file_count": len(files),
         "bytes_total": bytes_total,
         "files": items,
-        "note": "Somente metadados. Sem conteudo. Nao commitar dumps.",
+        "note": "Manifesto privado de metadados. Nunca commitar; sem conteudo de registros.",
     }
     Path(report).write_text(json.dumps(payload, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
     print("report_written=YES")
 PY
 
 echo "LEGADO_INVENTARIO_END utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo 'NOTA: nao importar; Onda 25 exige staging e autorizacao.'
+echo 'NOTA: saida padrao agregada; manifesto privado nunca no Git. Nao importar sem gate da Onda 25.'

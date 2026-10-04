@@ -147,6 +147,10 @@ export class InMemoryExpedicaoRepository implements ExpedicaoRepository {
     return row?.group_id === scope.groupId && row.empresa_id === scope.empresaId ? mapEntrega(row) : null;
   }
 
+  async getEntregaForUpdate(scope: ExpedicaoScope, id: string): Promise<Entrega | null> {
+    return this.getEntrega(scope, id);
+  }
+
   async getEntregaByPedido(scope: ExpedicaoScope, pedidoId: string): Promise<Entrega | null> {
     const row = [...this.entregas.values()].find(
       (item) => item.group_id === scope.groupId && item.empresa_id === scope.empresaId && item.pedido_id === pedidoId && item.status !== 'CANCELADA',

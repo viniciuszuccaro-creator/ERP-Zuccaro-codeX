@@ -251,7 +251,7 @@ export class ExpedicaoService {
     const data = parsed.data as SeparacaoConcluir;
 
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, entregaId, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (data.idempotency_key) {
         const existingSep = await this.repo.getSeparacaoByEntrega(scope, entregaId, 'conferencia', executor);
@@ -270,6 +270,18 @@ export class ExpedicaoService {
         if (item.unidade_sigla && before.itens.length) {
           // unidade check against matching item when present
         }
+      }
+      if (before.pedido_id) {
+        if (data.itens.length !== before.itens.length || before.itens.length === 0) {
+          throw new AppError(422, 'SEPARACAO_ITENS_INCOMPLETOS', 'All linked Pedido items must be separated');
+        }
+        before.itens.forEach((row, index) => {
+          const incoming = data.itens[index];
+          if (!row.produto_id || (incoming.produto_id && incoming.produto_id !== row.produto_id)
+            || qtyMicros(incoming.quantidade_pedida) !== qtyMicros(row.quantidade_pedida)) {
+            throw new AppError(422, 'SEPARACAO_ITEM_DIVERGENTE', 'Separation differs from linked Pedido item');
+          }
+        });
       }
 
       const divergencias = data.itens.filter((item) => Number(item.quantidade_separada) !== Number(item.quantidade_pedida));
@@ -314,6 +326,7 @@ export class ExpedicaoService {
         empresaId: scope.empresaId,
         pedidoId: before.pedido_id,
         entregaId,
+        actorId: ctx.actorId!,
       }, executor);
 
       return { entrega: toSpaEntrega(entrega), separacao, reused: false, pedidoSideEffect };
@@ -339,10 +352,17 @@ export class ExpedicaoService {
         return { romaneio: existing, entregas: [], reused: true, action: 'retry' as const, pedidoSideEffect: 'reserved' as const, estoqueSideEffect: 'reserved' as const };
       }
 
+      // Lock in a stable order so dispatch, cancellation and concurrent manifests
+      // serialize before any state check or stock movement.
+      const locked = new Map<string, Entrega>();
+      for (const id of [...new Set(data.entregas_ids)].sort()) {
+        const row = await this.repo.getEntregaForUpdate(scope, id, executor);
+        if (!row) throw new AppError(404, 'ENTREGA_NOT_FOUND', `Entrega ${id} not found`);
+        locked.set(id, row);
+      }
       const selecionadas: Entrega[] = [];
       for (const id of data.entregas_ids) {
-        const row = await this.repo.getEntrega(scope, id, executor);
-        if (!row) throw new AppError(404, 'ENTREGA_NOT_FOUND', `Entrega ${id} not found`);
+        const row = locked.get(id)!;
         if (row.romaneio_id) throw new AppError(409, 'ENTREGA_JA_EM_ROMANEIO', 'Entrega already linked to romaneio');
         if (row.status !== 'PRONTO_EXPEDIR') {
           throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega must be PRONTO_EXPEDIR');
@@ -401,11 +421,12 @@ export class ExpedicaoService {
 
       const pedidoIds = selecionadas.map((s) => s.pedido_id).filter(Boolean) as string[];
       const pedidoSideEffect = data.despachar ? await this.pedidoPort.onDespacho({
-        groupId: scope.groupId, empresaId: scope.empresaId, pedidoIds, romaneioId: romaneio.id,
+        groupId: scope.groupId, empresaId: scope.empresaId, pedidoIds, romaneioId: romaneio.id, actorId: ctx.actorId!,
       }, executor) : 'reserved';
       const estoqueSideEffect = data.despachar ? await this.estoquePort.onDespacho({
         groupId: scope.groupId, empresaId: scope.empresaId,
         entregaIds: selecionadas.map((s) => s.id),
+        actorId: ctx.actorId!,
       }, executor) : 'reserved';
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
@@ -436,7 +457,7 @@ export class ExpedicaoService {
     this.assertId(entregaId, 'entregaId');
 
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, entregaId, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
 
       if (data.idempotency_key) {
@@ -533,7 +554,7 @@ export class ExpedicaoService {
     const data = parsed.data as DevolucaoInput;
 
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, entregaId, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (data.idempotency_key) {
         const hist = await this.repo.historyEntrega(scope, entregaId, executor);
@@ -593,6 +614,7 @@ export class ExpedicaoService {
         empresaId: scope.empresaId,
         entregaId,
         quantidade: String(qty),
+        actorId: ctx.actorId!,
       }, executor);
       if (estoqueSideEffect === 'failed') {
         throw new AppError(502, 'ESTOQUE_SIDE_EFFECT_FAILED', 'Estoque side-effect failed; transaction rolled back');
@@ -664,25 +686,41 @@ export class ExpedicaoService {
       }
       const scope = await this.prepare(ctx, rbacForStatus(next), 'entrega');
       return this.repo.withTransaction(async (executor) => {
-        const before = await this.repo.getEntrega(scope, id, executor);
+        const before = await this.repo.getEntregaForUpdate(scope, id, executor);
         if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
         if (before.status === next) return toSpaEntrega(before);
         if (!ALLOWED_TRANSITIONS[before.status].includes(next)) {
           throw new AppError(409, 'ENTREGA_STATE_CONFLICT', `Transition ${before.status} -> ${next} not allowed`);
         }
-        if (before.pedido_id && ['CANCELADA', 'SAIU_ENTREGA'].includes(next)) {
+        if (before.pedido_id && next === 'SAIU_ENTREGA') {
           throw new AppError(409, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE', 'Linked Pedido requires stock contract');
+        }
+        if (before.pedido_id && next === 'CANCELADA'
+          && (!this.estoquePort.onCancelamento || !this.pedidoPort.onCancelamento)) {
+          throw new AppError(409, 'PEDIDO_ESTOQUE_COMPENSACAO_PENDENTE', 'Linked Pedido requires stock compensation');
         }
         const updated = await this.repo.changeEntregaStatus(scope, id, next, ctx.actorId!,
           String(body.motivo || ''), String(body.idempotency_key || '') || undefined, executor);
         if (!updated) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
+        if (next === 'CANCELADA' && before.pedido_id) {
+          const stock = await this.estoquePort.onCancelamento?.({
+            groupId: scope.groupId, empresaId: scope.empresaId, entregaId: id, actorId: ctx.actorId!,
+          }, executor);
+          const pedido = await this.pedidoPort.onCancelamento?.({
+            groupId: scope.groupId, empresaId: scope.empresaId, pedidoId: before.pedido_id,
+            entregaId: id, actorId: ctx.actorId!,
+          }, executor);
+          if (stock !== 'applied' || pedido !== 'applied') {
+            throw new AppError(503, 'PEDIDO_ESTOQUE_CONTRACT_UNAVAILABLE', 'Linked cancellation requires stock and Pedido compensation');
+          }
+        }
         await this.auditRow(ctx, 'Entrega', 'change_status', before, updated, executor);
         return toSpaEntrega(updated);
       });
     }
     const scope = await this.prepare(ctx, 'editar', 'entrega');
     return this.repo.withTransaction(async (executor) => {
-      const before = await this.repo.getEntrega(scope, id, executor);
+      const before = await this.repo.getEntregaForUpdate(scope, id, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (['ENTREGUE', 'DEVOLVIDA', 'CANCELADA'].includes(before.status)) {
         throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega finalizada nao pode ser editada');

@@ -301,6 +301,7 @@ export interface ExpedicaoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   createEntrega(scope: ExpedicaoScope, data: EntregaCreate, actorId: string, executor?: DbQueryExecutor): Promise<Entrega>;
   getEntrega(scope: ExpedicaoScope, id: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
+  getEntregaForUpdate(scope: ExpedicaoScope, id: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
   getEntregaByPedido(scope: ExpedicaoScope, pedidoId: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
   getEntregaByIdempotency(scope: ExpedicaoScope, key: string, executor?: DbQueryExecutor): Promise<Entrega | null>;
   listEntregas(scope: ExpedicaoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: EntregaListFilters): Promise<EntregaPage>;
@@ -323,19 +324,25 @@ export interface ExpedicaoRepository {
  */
 export type ExpedicaoPedidoSideEffectPort = {
   onSeparacaoConcluida(input: {
-    groupId: string; empresaId: string; pedidoId: string | null; entregaId: string;
+    groupId: string; empresaId: string; pedidoId: string | null; entregaId: string; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
   onDespacho(input: {
-    groupId: string; empresaId: string; pedidoIds: string[]; romaneioId: string;
+    groupId: string; empresaId: string; pedidoIds: string[]; romaneioId: string; actorId?: string;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
+  onCancelamento?(input: {
+    groupId: string; empresaId: string; pedidoId: string | null; entregaId: string; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied'>;
 };
 
 export type ExpedicaoEstoquePort = {
   onDespacho(input: {
-    groupId: string; empresaId: string; entregaIds: string[];
+    groupId: string; empresaId: string; entregaIds: string[]; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
   onDevolucao(input: {
-    groupId: string; empresaId: string; entregaId: string; quantidade: string;
+    groupId: string; empresaId: string; entregaId: string; quantidade: string; actorId?: string;
+  }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
+  onCancelamento?(input: {
+    groupId: string; empresaId: string; entregaId: string; actorId?: string;
   }, executor?: DbQueryExecutor): Promise<'reserved' | 'applied' | 'failed'>;
 };
 

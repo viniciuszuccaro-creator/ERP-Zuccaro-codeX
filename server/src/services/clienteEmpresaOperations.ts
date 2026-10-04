@@ -18,6 +18,7 @@ import {
 export type ClienteEmpresaListOptions = {
   ativo?: boolean;
   bloqueado?: boolean;
+  habilitadoOperacao?: boolean;
   situacaoComercial?: string;
   empresaId?: string;
   search?: string;
@@ -71,6 +72,7 @@ export class ClienteEmpresaOperations {
       clienteId,
       ativo: typeof options.ativo === 'boolean' ? options.ativo : true,
       bloqueado: options.bloqueado,
+      habilitadoOperacao: options.habilitadoOperacao,
       situacaoComercial: options.situacaoComercial,
       search: options.search,
       orderBy: options.orderBy,
@@ -87,6 +89,68 @@ export class ClienteEmpresaOperations {
         hasMore: offset + page.rows.length < page.total,
       },
     };
+  }
+
+  /**
+   * List-for-scope: vínculos ClienteEmpresa da Empresa do contexto autenticado.
+   * Fail-closed sem empresaId (uso comercial Orçamento/Pedido). Sem migration.
+   */
+  async listForScope(ctx: RequestContext, options: ClienteEmpresaListOptions = {}) {
+    this.assertScope(ctx);
+    await this.assertPermission(ctx, 'visualizar');
+    if (!ctx.empresaId) {
+      throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required for ClienteEmpresa list-for-scope');
+    }
+    this.assertUuid(ctx.empresaId, 'empresaId');
+    if (options.empresaId && options.empresaId !== ctx.empresaId) {
+      this.permissionDenied();
+    }
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    if (
+      options.situacaoComercial
+      && !(CLIENTE_EMPRESA_SITUACOES as readonly string[]).includes(options.situacaoComercial)
+    ) {
+      this.validationError({ situacao: 'invalid' });
+    }
+    if (options.search && options.search.length > 200) {
+      this.validationError({ search: 'max_length_200' });
+    }
+    const limit = this.pageNumber(options.limit, 50, 1, 200);
+    const offset = this.pageNumber(options.offset, 0, 0, Number.MAX_SAFE_INTEGER);
+    const page = await this.repo.listEmpresaLinks({
+      groupId: ctx.groupId,
+      empresaId: ctx.empresaId,
+      ativo: typeof options.ativo === 'boolean' ? options.ativo : true,
+      bloqueado: options.bloqueado,
+      habilitadoOperacao: options.habilitadoOperacao,
+      situacaoComercial: options.situacaoComercial,
+      search: options.search,
+      orderBy: options.orderBy ?? 'created_at',
+      orderDir: options.orderDir ?? 'asc',
+      limit,
+      offset,
+    });
+    return {
+      data: page.rows,
+      meta: {
+        limit,
+        offset,
+        total: page.total,
+        hasMore: offset + page.rows.length < page.total,
+      },
+    };
+  }
+
+  async getById(ctx: RequestContext, linkId: string) {
+    this.assertScope(ctx);
+    this.assertUuid(linkId, 'id');
+    await this.assertPermission(ctx, 'visualizar');
+    if (!ctx.empresaId) {
+      throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
+    }
+    const row = await this.repo.getEmpresaLinkById(this.scope(ctx), linkId);
+    if (!row || !row.ativo) this.notFound();
+    return row;
   }
 
   async assertCanCreate(ctx: RequestContext) {

@@ -40,7 +40,7 @@ CLIENTE MASTER (group_id)
 | Soft delete | `ativo=false`; list/search/count default ativo; GET 404; restore dedicado |
 | Auditoria | create/update/soft_delete/restore/duplicate_block (documento mascarado) |
 | Seed | Cliente PJ/PF A + PJ B sintéticos; UPSERT convergente |
-| Frontend HTTP | **fora** de `HTTP_PILOT_ENTITIES` |
+| Frontend HTTP | **piloto Onda 3** — `Cliente` em `HTTP_PILOT_ENTITIES` |
 | Integridade | trigger valida Cliente e Empresa contra o mesmo `group_id` |
 | RLS | ENABLE + FORCE, sem policy permissiva; sequence sem acesso PUBLIC |
 
@@ -109,15 +109,16 @@ E2E contra a API e o PostgreSQL DEV:
 - API oficial DEV: `127.0.0.1:3080`;
 - imagem promovida: `erp-zuccaro-erp-api:runtime04-683e0cfb`;
 - Cliente MASTER DATA, multiempresa, RBAC, auditoria e API Cliente: OK;
-- Cliente continua fora de `HTTP_PILOT_ENTITIES` do frontend;
+- Cliente **entra** em `HTTP_PILOT_ENTITIES` no piloto Onda 3 (labels Comercial +
+  Central 360); ClienteEmpresa/Local/Obra permanecem fora do piloto flat;
 - rollback RUNTIME-03 preservado temporariamente em
   `erp-api-dev-runtime03-backup`;
 - dumps pre-runtime04 também permanecem preservados.
 
 ## Limites preservados
 
-Sem Cliente 360º · sem Pedido 360º · sem Site/Portal/Marketplace paralelo ·
-sem ativar HTTP no frontend · sem RUNTIME-05.
+Sem CRM paralelo · sem Pedido 360º · sem Site/Portal/Marketplace paralelo ·
+sem ativar ClienteEmpresa/Local/Obra no piloto · sem RUNTIME-05 neste doc.
 
 ## Docs
 

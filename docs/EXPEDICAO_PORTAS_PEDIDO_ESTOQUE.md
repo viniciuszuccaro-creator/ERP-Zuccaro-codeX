@@ -1,5 +1,11 @@
 # Contrato mínimo — portas Expedição ↔ Pedido / estoque
 
+## Candidata integrada Codex (2026-10-04)
+
+`server/src/integrations/expedicaoPersistentPorts.ts` implementa as portas persistentes usando o `DbQueryExecutor` da mesma transação de Entrega/Romaneio. A migration aditiva `037_expedicao_estoque_movimentos.sql` cria eventos de Pedido sem inventar novos estados, saldo de estoque por Grupo/Empresa/Produto e movimentos por item de despacho, devolução e cancelamento, com chaves idempotentes e auditoria. A migration **não cria saldo de abertura**. A porta falha se o saldo reconciliado estiver ausente ou insuficiente; não habilitar no runtime DEV antes dessa reconciliação e da revisão independente.
+
+As portas persistentes continuam opt-in por `createApp({ expedicaoPedidoPort, expedicaoEstoquePort })`. O default `reserved` e o bloqueio de Pedido vinculado permanecem. Cada efeito exige `actorId`, executor ativo, tenant e item; nenhuma conexão paralela ou transação aninhada. O `ExpedicaoService` altera primeiro os estados na transação ainda não comitada, depois chama Pedido e estoque; qualquer erro reverte **todos** os estados, movimentos e auditorias. Na devolução vinculada, a quantidade por item é obrigatória. Cancelamento de Entrega vinculada chama compensação de estoque e evento de Pedido na mesma transação, creditando apenas o saldo ainda não devolvido por item. A CI PostgreSQL isolada exige migrações 025–037 e prova concorrência, retry, parcial, devolução, cancelamento e rollback. Esta prova sintética não homologa saldo operacional, credenciais nem implantação.
+
 **Destinatário:** Codex Comercial (#178 / tip-port autorizado).
 **Autor:** Cursor (#199). **Sem tip-port nesta branch** — este documento é o contrato para implementação no lado Comercial.
 
@@ -60,7 +66,7 @@ Defaults: `reservedPedidoPort`, `reservedEstoquePort` (sempre `'reserved'`).
 | Momento | Porta | Quando |
 |---|---|---|
 | Separação concluída sem divergência | `pedidoPort.onSeparacaoConcluida` | Após persistir Separacao + status `PRONTO_EXPEDIR` |
-| Romaneio com `despachar: true` | `estoquePort.onDespacho` **antes** de fechar status de saída | Se `failed` → throw `ESTOQUE_SIDE_EFFECT_FAILED` (502) + rollback TX |
+| Romaneio com `despachar: true` | `estoquePort.onDespacho` após marcar saída, ainda na TX | Se `failed` → throw `ESTOQUE_SIDE_EFFECT_FAILED` (502) + rollback TX |
 | Romaneio despachado | `pedidoPort.onDespacho` | Após status `SAIU_ENTREGA` / romaneio `EM_ROTA` |
 | Devolução (`devolver_estoque`) | `estoquePort.onDevolucao` | Após status `DEVOLVIDA`; `failed` → rollback TX |
 

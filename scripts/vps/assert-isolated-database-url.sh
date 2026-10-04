@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Guarda fail-closed: DATABASE_URL deve apontar para banco ISOLADO identificado.
-# Bloqueia DEV oficial (dbname=postgres / nomes reservados) antes de DROP SCHEMA.
+# Bloqueia DEV oficial e exige nome e host isolados antes de DROP SCHEMA.
 # Uso: source ou chamar; exporta ISOLATED_DB_NAME_RESOLVED.
 # Não imprime a URL completa (sanitiza).
 set -Eeuo pipefail
@@ -8,6 +8,7 @@ set -Eeuo pipefail
 assert_isolated_database_url() {
   local url="${DATABASE_URL:-}"
   local required_name="${ISOLATED_DATABASE_NAME:-}"
+  local required_host="${ISOLATED_DATABASE_HOST:-}"
   local allow="${ALLOW_DROP_SCHEMA_PUBLIC:-}"
 
   if [[ -z "$url" ]]; then
@@ -16,19 +17,28 @@ assert_isolated_database_url() {
   fi
 
   # Extrai dbname sem imprimir credenciais
-  local dbname
-  dbname="$(python3 - <<'PY'
+  local target
+  target="$(python3 - <<'PY'
 import os, urllib.parse
 u = os.environ["DATABASE_URL"]
 p = urllib.parse.urlparse(u)
-name = (p.path or "").lstrip("/")
-# query form ?dbname=
-if not name:
-    q = urllib.parse.parse_qs(p.query)
-    name = (q.get("dbname") or [""])[0]
-print(name.split("?")[0])
+q = urllib.parse.parse_qs(p.query, keep_blank_values=True)
+if p.scheme not in {"postgres", "postgresql"} or p.fragment or q or not p.hostname:
+    print("INVALID")
+else:
+    name = urllib.parse.unquote((p.path or "").lstrip("/"))
+    if "/" in name or not name:
+        print("INVALID")
+    else:
+        print(f"{name}|{p.hostname.lower()}")
 PY
 )"
+  if [[ "$target" == 'INVALID' ]]; then
+    echo 'ISOLATED_DB_GUARD=BLOCKED_INVALID_TARGET' >&2
+    return 9
+  fi
+  local dbname="${target%%|*}"
+  local host="${target#*|}"
 
   echo "isolated_db_guard_dbname=${dbname:-EMPTY}"
   echo "isolated_db_guard_required=${required_name:-UNSET}"
@@ -50,6 +60,12 @@ PY
     echo 'ISOLATED_DB_GUARD=BLOCKED_ISOLATED_DATABASE_NAME_REQUIRED' >&2
     echo 'NOTE: exporte ISOLATED_DATABASE_NAME=erp_r07b_compat|erp_restore_isolated_*' >&2
     return 5
+  fi
+
+  if [[ -z "$required_host" || "${required_host,,}" != "$host" ]]; then
+    echo 'ISOLATED_DB_GUARD=BLOCKED_HOST_MISMATCH' >&2
+    echo 'NOTE: declare ISOLATED_DATABASE_HOST igual ao host do banco isolado' >&2
+    return 10
   fi
 
   if [[ "$dbname" != "$required_name" ]]; then
@@ -87,6 +103,7 @@ run_self_test() {
   out="$(
     DATABASE_URL='postgresql://u:p@localhost:5432/postgres' \
     ISOLATED_DATABASE_NAME='erp_r07b_compat' \
+    ISOLATED_DATABASE_HOST='localhost' \
     ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
     bash "$0" 2>&1 || true
   )"
@@ -98,6 +115,7 @@ run_self_test() {
   # 2) Sem ISOLATED_DATABASE_NAME
   out="$(
     DATABASE_URL='postgresql://u:p@localhost:5432/erp_r07b_compat' \
+    ISOLATED_DATABASE_HOST='localhost' \
     ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
     bash "$0" 2>&1 || true
   )"
@@ -110,6 +128,7 @@ run_self_test() {
   out="$(
     DATABASE_URL='postgresql://u:p@localhost:5432/erp_r07b_compat' \
     ISOLATED_DATABASE_NAME='erp_restore_isolated_x' \
+    ISOLATED_DATABASE_HOST='localhost' \
     ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
     bash "$0" 2>&1 || true
   )"
@@ -122,6 +141,7 @@ run_self_test() {
   out="$(
     DATABASE_URL='postgresql://u:p@localhost:5432/erp_r07b_compat' \
     ISOLATED_DATABASE_NAME='erp_r07b_compat' \
+    ISOLATED_DATABASE_HOST='localhost' \
     bash "$0" 2>&1 || true
   )"
   echo "$out" | grep -q 'ISOLATED_DB_GUARD=BLOCKED_ALLOW_DROP_SCHEMA_PUBLIC_REQUIRED' || {
@@ -133,6 +153,7 @@ run_self_test() {
   out="$(
     DATABASE_URL='postgresql://u:p@localhost:5432/erp_r07b_compat' \
     ISOLATED_DATABASE_NAME='erp_r07b_compat' \
+    ISOLATED_DATABASE_HOST='localhost' \
     ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
     bash "$0" 2>&1
   )"
@@ -145,11 +166,47 @@ run_self_test() {
   out="$(
     DATABASE_URL='postgresql://u:p@localhost:5432/erp_restore_isolated_20260924' \
     ISOLATED_DATABASE_NAME='erp_restore_isolated_20260924' \
+    ISOLATED_DATABASE_HOST='localhost' \
     ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
     bash "$0" 2>&1
   )"
   echo "$out" | grep -q 'ISOLATED_DB_GUARD=OK' || {
     echo 'SELFTEST_FAIL: expected OK for erp_restore_isolated_*' >&2
+    fails=$((fails + 1))
+  }
+
+  out="$(
+    DATABASE_URL='postgresql://u:p@remote.example:5432/erp_restore_isolated_20260924' \
+    ISOLATED_DATABASE_NAME='erp_restore_isolated_20260924' \
+    ISOLATED_DATABASE_HOST='localhost' \
+    ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
+    bash "$0" 2>&1 || true
+  )"
+  echo "$out" | grep -q 'ISOLATED_DB_GUARD=BLOCKED_HOST_MISMATCH' || {
+    echo 'SELFTEST_FAIL: expected BLOCKED_HOST_MISMATCH' >&2
+    fails=$((fails + 1))
+  }
+
+  out="$(
+    DATABASE_URL='postgresql://u:p@localhost:5432/erp_restore_isolated_20260924' \
+    ISOLATED_DATABASE_NAME='erp_restore_isolated_20260924' \
+    ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
+    bash "$0" 2>&1 || true
+  )"
+  echo "$out" | grep -q 'ISOLATED_DB_GUARD=BLOCKED_HOST_MISMATCH' || {
+    echo 'SELFTEST_FAIL: expected explicit ISOLATED_DATABASE_HOST' >&2
+    fails=$((fails + 1))
+  }
+
+  out="$(
+    DATABASE_URL='postgresql://u:p@localhost:5432/erp_restore_isolated_20260924?dbname=postgres' \
+    ISOLATED_DATABASE_NAME='erp_restore_isolated_20260924' \
+    ISOLATED_DATABASE_HOST='localhost' \
+    ALLOW_DROP_SCHEMA_PUBLIC='ISOLATED_ONLY' \
+    bash "$0" 2>&1 || true
+  )"
+  echo "$out" | grep -q 'ISOLATED_DB_GUARD=BLOCKED_INVALID_TARGET' || {
+    echo 'SELFTEST_FAIL: expected BLOCKED_INVALID_TARGET' >&2
     fails=$((fails + 1))
   }
 
