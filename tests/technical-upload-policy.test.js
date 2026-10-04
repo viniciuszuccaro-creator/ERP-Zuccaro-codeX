@@ -75,3 +75,18 @@ test('Pedido, Corte e Dobra e Portal usam a mesma validação antes de confirmar
   assert.match(site, /await assertTechnicalUploadAllowed\(dados\.arquivo\);\s*assertTechnicalAiProcessingAllowed\(\);\s*const uploadResult/);
   assert.match(site, /assertConfirmedTechnicalUploadUrl\(uploadResult\.file_url\)/);
 });
+
+test('formulários legados de leitura técnica bloqueiam arquivo e IA antes do upload remoto', () => {
+  for (const path of [
+    'src/components/comercial/UploadProjetoForm.jsx',
+    'src/components/comercial/UploadProjetoModal.jsx',
+    'src/components/integracoes/IALeituraProjeto.jsx',
+  ]) {
+    const source = readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+    const guard = source.indexOf('await assertTechnicalUploadAllowed(arquivo);');
+    const aiGate = source.indexOf('assertTechnicalAiProcessingAllowed();', guard);
+    const upload = source.indexOf('base44.integrations.Core.UploadFile({ file: arquivo })', aiGate);
+    assert.ok(guard >= 0 && aiGate > guard && upload > aiGate, `${path}: gate deve anteceder UploadFile`);
+    assert.match(source, /accept=\{TECHNICAL_UPLOAD_ACCEPT\}/);
+  }
+});

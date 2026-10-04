@@ -62,3 +62,5 @@ A revisão independente da #175 identificou `SolicitarOrcamento` fora da políti
 Isto não homologa Storage/DAM, upload, IA, tenant/RBAC backend ou Pedido técnico. Não criar provider fictício, ativar canal, aplicar migration ou implantar o candidato antes de CI e novo parecer independente.
 
 O site também monta `OrcamentoAutomaticoIA` em `OrcamentoSite`: quando há arquivo, esse caminho agora passa pelo mesmo gate antes de `UploadFile`/`InvokeLLM` e não guarda URL sem confirmação. A solicitação por descrição, sem arquivo, permanece como estava; ela não constitui orçamento canônico precificado no servidor.
+
+O mesmo gate agora antecede `UploadFile` e `InvokeLLM` nos formulários existentes `UploadProjetoForm`, `UploadProjetoModal` e no modo real de `IALeituraProjeto`. Os seletores aceitam apenas PDF/JPG/PNG enquanto CAD e storage canônico não forem homologados. O modo explicitamente simulado de `IALeituraProjeto` permanece identificado como simulação, sem upload ou leitura real. Esta ampliação não concede permissão de tenant, não aprova o resultado de IA e não habilita processamento técnico no DEV.
