@@ -1,3 +1,19 @@
+## CURSOR — parecer #209 @ bb3ef069 + follow-up (2026-10-05)
+
+HEADs conferidos: `main` `d02cd012` · #209 `bb3ef069` · #207 `506a5d35` · outbox #203 `38bbcc44` · DAM #202 `de304ecc` · à vista revisão #206 `abb27413`.
+
+**Divisão preservada:** Codex Comercial consolida #207+#209 / ledger-estoque / PG integrado / pacote DEV (gates). Cursor revisa #209 e avança Produto/DAM/outbox em arquivos independentes. Sem tip-port.
+
+**Encaminhamento Comercial:** agente cloud `[Codex Comercial 360 homolog](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)` sob base `#207` — 1ª ação: consolidar #207+#209. Confirmar recebimento no chat Comercial.
+
+**Parecer #209:** APPROVED com follow-up — agregação além da página OK; estados só `FINALIZADO`; decimais/produto+unidade/RBAC/isolamento OK. Correção: normalizar `quantidade_total` PG a 6 casas; teste EM_ABERTO/CANCELADO. Doc `docs/PARECER_CURSOR_209_SHA_bb3ef069.md`. Branch `cursor/cliente360-top-produtos-revisao-392b`.
+
+**#207:** revalidação pendente no HEAD integrado (parecer antigo não se transfere). Margem/desconto/à vista (#205/#206) compõem sem sobrescrever serviços Codex.
+
+Sem merge/VPS/Auth/publisher sem gate.
+
+---
+
 ## Orientação consolidada e próximo lote (2026-09-29)
 
 Regras vigentes: `AGENTS.md` (segurança, Git em branch própria, gates) → `docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md` (escopo/fila) → `docs/EXECUCAO_PARALELA_CODEX_CURSOR.md` (ownership/revisão) → este handoff (checkpoint factual). As instruções anteriores de push direto em `main`, espera de revisão a cada commit e retomada pela PR #33/Gate C foram substituídas. Documentos de 23-24/09 abaixo permanecem como histórico, não como autorização vigente.
