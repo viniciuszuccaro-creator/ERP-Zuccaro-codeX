@@ -1,3 +1,8 @@
+## CURSOR — espelho Comercial diff VPS (2026-10-05)
+
+- Tip Codex `65fe8fba` espelhado; cruzado com [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) e Legado [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
+- Evidência forte: VPS R07B / migrations ≤015 / flags HTTP OFF / candidata `899ec9b3` fora de main.
+
 ## CURSOR — parecer plano import/reversão Legado (2026-10-05)
 
 - SHA Codex `9057aeab` · espelho [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) `0b35fb45`.
