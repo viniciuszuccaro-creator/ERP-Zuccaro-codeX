@@ -11609,6 +11609,7 @@ Checklist inicial:
 - Regra Legado: layouts/funcionalidades ausentes podem ser versão implantada/config/RBAC — **não** classificar automaticamente como falha de ETL/staging; exigir evidência Comercial/Cursor antes de reabrir diagnóstico de importação.
 - Pedido Legado → Comercial/Cursor: (1) SHA/imagem VPS API+SPA; (2) runtime/auth.mode/flags opt-in sem segredos; (3) rotas/menus/layouts vs commit da imagem; (4) RBAC perfil teste Grupo/CPA/3Z; (5) lista de diffs + branch de correção.
 - Flags preservadas: `importAuthorized=false`, `operationalLoadAuthorized=false`; sem carga operacional; sem tip-port; Cursor #48 intocado.
-- Arquivos: `docs/HANDOFF_ATUAL.md`, `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` (§8 coordenação / §9 próximo), `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`, este STATUS; teste estrutural do plano atualizado se necessário.
-- Validação: documental + `git diff --check`; testes estruturais do plano se tocados. Nenhuma promoção staging→operacional.
+- Arquivos: `docs/HANDOFF_ATUAL.md`, `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` (§8 coordenação / §9 próximo), `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`, este STATUS; teste estrutural do plano (regex blockquote + anti-trailing-whitespace).
+- Validação: `node --test tests/legado-plano-importacao-reversao-gate.test.js` 4/4 PASS; `git diff --check` PASS. Nenhuma promoção staging→operacional.
+- Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `cb63c769fd5f03a52b7ec967018c8750dbfbf9fa` (coordenação em `f44a60ff` + estabilização do teste).
 - Próximo: aguardar evidências VPS do Comercial/Cursor + gate humano de importação.

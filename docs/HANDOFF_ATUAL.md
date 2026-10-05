@@ -22,7 +22,7 @@ O que Legado precisa do Comercial/Cursor (para não confundir com importação):
 
 ## CODEX LEGADO — plano importação/reversão gate (2026-10-05)
 
-- Branch: `codex/legado-origem-relatorios-392b` (itens 1–5 do programa).
+- Branch: `codex/legado-origem-relatorios-392b` @ `cb63c769fd5f03a52b7ec967018c8750dbfbf9fa` (itens 1–5 do programa).
 - Plano: `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` — pré-requisitos, ordem, reconciliação (centavos), rollback, critérios GO/NO-GO.
 - `importAuthorized=false` / `operationalLoadAuthorized=false`; promoção staging→operacional proibida até autorização humana.
 - Backup original somente leitura; sem PII/dumps no Git; Cursor #48 não editado.
