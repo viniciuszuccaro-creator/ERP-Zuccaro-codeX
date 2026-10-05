@@ -1,3 +1,13 @@
+## CURSOR — cruzamento #216 × Comercial `65fe8fba` × Legado (2026-10-05)
+
+| Fonte | SHA / PR | Nota |
+| --- | --- | --- |
+| Cursor inventário | [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) `0b70e0ee` | D1–D9 + flags `.env.example` |
+| Comercial diagnóstico | `65fe8fba` · espelho `cursor/erp-novo-vps-layout-diff-392b` | R07B vs 08B; mig 015/024/037; flags OFF |
+| Legado coordenação | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) pós-`b6691189` | §8 plano: não culpar importação sem diff VPS |
+
+Consenso: reconciliar Legado só no schema VPS comprovado; gaps de versão/config/RBAC ficam com Comercial/deploy.
+
 ## CURSOR — inventário ERP novo × VPS (layouts/flags; ≠ Legado) (2026-10-05)
 
 | Campo | Valor |
