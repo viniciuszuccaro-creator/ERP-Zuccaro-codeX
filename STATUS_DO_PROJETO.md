@@ -11581,3 +11581,13 @@ Checklist inicial:
 - Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`. Nota: o mapper ainda lista código `3` em mapa de “empresa” legado — o resolvedor Codex é a fonte soberana para papel jurídico (Grupo ≠ emissor).
 - Testes: `node --test tests/legado-resolver-vinculo-juridico.test.js` → 11/11 PASS; regressão origem 9/9 PASS; `git diff --check` PASS.
 - Próximo item do programa: staging isolado (extração/transformação/carga) só para registros com vínculo comprovado — deduplicação, dependências, reconciliação por empresa; quarentena sem prova; sem carga operacional sem gate.
+
+### CODEX LEGADO — staging isolado com vínculo comprovado (2026-10-05)
+
+- Objetivo (item 3): extrair/transformar/carregar em staging isolado só registros com vínculo jurídico comprovado; deduplicação; dependências; reconciliação por empresa; quarentena sem prova; `importAuthorized`/carga operacional = false sem gate.
+- BLOCKED parcial: HD ausente — nenhuma extração real de `BACKUP ERP ANTIGO - CODEX`; avanço com fixture sintética (`blockedRealHdExtract=true`).
+- Entrega: `scripts/legado/carregar-staging-isolado-legado.mjs` + `fixtures/legado/staging-isolado-sintetico/lote-staging.json` + `tests/legado-carregar-staging-isolado.test.js`; docs LEGADO_BACKUP / HANDOFF / STATUS.
+- Contagens dry-run fixture: origem **8**; carregados **4**; reusos **1**; conflitos **1**; quarentena **2**; rejeitados **0** (no caminho feliz); monetary `DEST_CPA_FERRO_E_ACO=10050` / `DEST_3Z_LTDA=5000` centavos; `totalDiffCentavos=0` (ensaio com expectativa 10000→diff **+50** centavos coberto em teste).
+- Não tocados (Cursor #48): `mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Testes: staging 8/8 PASS; vínculo 11/11; origem 9/9; `git diff --check` PASS.
+- Próximo item: plano de importação/reversão (gate) — sem promover staging → operacional sem autorização.

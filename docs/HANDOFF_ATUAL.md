@@ -1,3 +1,11 @@
+## CODEX LEGADO — checkpoint staging isolado (2026-10-05)
+
+- Branch: `codex/legado-origem-relatorios-392b` (itens 1–3).
+- Item 3: `carregar-staging-isolado-legado.mjs` — ETL sintético com dedupe, dependências, reconciliação por empresa em centavos e quarentena sem prova; `importAuthorized=false` / `operationalLoadAuthorized=false`.
+- Fixture dry-run: origem 8 → carregados 4 / reusos 1 / conflitos 1 / quarentena 2; monetary CPA 10050 + 3Z 5000 centavos; diff 0.
+- HD/extração real BLOCKED neste VM. Cursor #48 não editado.
+- Próximo: plano de importação/reversão (gate) sem carga operacional.
+
 ## CODEX LEGADO — checkpoint vínculos jurídicos (2026-10-05)
 
 - Branch: `codex/legado-origem-relatorios-392b` (itens 1–2 do programa Legado).

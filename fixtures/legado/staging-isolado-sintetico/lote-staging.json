@@ -1,0 +1,86 @@
+{
+  "synthetic": true,
+  "stagingPrepAuthorized": true,
+  "groupId": "grupo-cpa-sintetico",
+  "importAuthorized": false,
+  "note": "Lote sintetico para staging isolado. Sem PII. Sem carga operacional. EMP03/003-emissor em quarentena.",
+  "totaisEsperadosCentavos": {
+    "DEST_CPA_FERRO_E_ACO": 10050,
+    "DEST_3Z_LTDA": 5000
+  },
+  "itens": [
+    {
+      "entidade": "cliente",
+      "codigoLegado": "CLI-S1",
+      "groupId": "grupo-cpa-sintetico",
+      "assinaturaOrigem": "0e7b2a06e835a797047d099644d79e851f365481da17a56da0a4631589c50cc4"
+    },
+    {
+      "entidade": "produto",
+      "codigoLegado": "PROD-S1",
+      "groupId": "grupo-cpa-sintetico",
+      "assinaturaOrigem": "1003bec2cc1c77ae5eb713b445f7996f9dffa4195c73ebbc82ebc2611cb60a35"
+    },
+    {
+      "entidade": "pedido",
+      "codigoLegado": "PED-CPA-1",
+      "codigoEmpresaLegado": "001",
+      "groupId": "grupo-cpa-sintetico",
+      "valorTotal": "100.50",
+      "assinaturaOrigem": "3342b9f3bf3151896cdf2bb6c45f67529b2dd5e117db8b64a6c887f711ee7263",
+      "dependencias": [
+        { "entidade": "cliente", "codigoLegado": "CLI-S1", "escopo": "grupo" }
+      ]
+    },
+    {
+      "entidade": "pedido",
+      "codigoLegado": "PED-CPA-1",
+      "codigoEmpresaLegado": "001",
+      "groupId": "grupo-cpa-sintetico",
+      "valorTotal": "100.50",
+      "assinaturaOrigem": "3342b9f3bf3151896cdf2bb6c45f67529b2dd5e117db8b64a6c887f711ee7263",
+      "dependencias": [
+        { "entidade": "cliente", "codigoLegado": "CLI-S1", "escopo": "grupo" }
+      ]
+    },
+    {
+      "entidade": "pedido",
+      "codigoLegado": "PED-3Z-1",
+      "codigoEmpresaLegado": "002",
+      "groupId": "grupo-cpa-sintetico",
+      "valorTotal": "50.00",
+      "assinaturaOrigem": "18234d2de16572b1908a62c2e47417f07d86717a696f312254a0e149df975230",
+      "dependencias": [
+        { "entidade": "cliente", "codigoLegado": "CLI-S1", "escopo": "grupo" }
+      ]
+    },
+    {
+      "entidade": "nota_fiscal",
+      "codigoLegado": "NF-GRUPO-BAD",
+      "codigoEmpresaLegado": "003",
+      "groupId": "grupo-cpa-sintetico",
+      "valorTotal": "10.00",
+      "assinaturaOrigem": "49cd68085c80a673c2b77103bbf76cce73fe466ae5a5373cad98bddecf10293f"
+    },
+    {
+      "entidade": "pedido",
+      "codigoLegado": "PED-EMP03",
+      "pasta": "EMP03",
+      "pista": "TID_EMP03",
+      "groupId": "grupo-cpa-sintetico",
+      "valorTotal": "1.00",
+      "assinaturaOrigem": "2173d22f5f548e1c95c321fb7f534d582fb8cf01982dcc9fef420b30c2df3809"
+    },
+    {
+      "entidade": "pedido",
+      "codigoLegado": "PED-CPA-1",
+      "codigoEmpresaLegado": "001",
+      "groupId": "grupo-cpa-sintetico",
+      "valorTotal": "100.50",
+      "assinaturaOrigem": "d558300ca50f7e593e0eb037872e0bd409794d92f77407b22b41800addf7953a",
+      "dependencias": [
+        { "entidade": "cliente", "codigoLegado": "CLI-S1", "escopo": "grupo" }
+      ]
+    }
+  ]
+}
