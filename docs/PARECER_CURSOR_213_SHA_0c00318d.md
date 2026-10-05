@@ -53,3 +53,7 @@ Candidata #207+#209+#210+#212:
 2. Com `DATABASE_URL` isolado: executar runtime11 completo.  
 3. Prova telas reais sob ERP DEV.  
 4. Merge humano na ordem #207→#209+#210→#212→#213; supersedir espelhos #214/#210/#209/#212 isolados preservando pareceres.
+
+## Extensão `899ec9b3`
+
+Espelho PGlite do gate #212 no ledger (sem DATABASE_URL): mesma semântica fail-closed + retry. Não fecha B1 (PG real).

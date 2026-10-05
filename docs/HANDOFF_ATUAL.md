@@ -1,3 +1,9 @@
+## CURSOR — merge `899ec9b3` PGlite gate #212 (2026-10-05)
+
+- Tip código autoritativo `899ec9b3` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Prova PGlite: sem baseline → `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE`; retry 1 movimento.
+- CI `66d1030e` SUCCESS; aguarda CI deste tip. B1–B6 permanecem.
+
 ## CURSOR — parecer SHA `0c00318d` candidata +#212 (2026-10-05)
 
 - Merge tip Comercial `0c00318d` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).

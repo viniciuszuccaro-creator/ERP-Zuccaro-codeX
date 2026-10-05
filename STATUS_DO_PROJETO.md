@@ -1,3 +1,14 @@
+## CURSOR — tip candidata `899ec9b3` + PGlite gate #212 (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| SHA código | `899ec9b3` (Codex tip docs `2fbb167e`) |
+| Espelho #213 | tip pós-merge |
+| Delta | espelho PGlite do gate saldo #212 (fail-closed sem DATABASE_URL) |
+| Parecer base | `docs/PARECER_CURSOR_213_SHA_0c00318d.md` — estendido: PGlite reforça B1 mitigação parcial |
+| CI tip anterior | `66d1030e` SUCCESS |
+| BLOCKED | B1 PG real / B2–B6 |
+
 ## CURSOR — parecer candidata integrada pós-#212 @ `0c00318d` (2026-10-05)
 
 | Campo | Valor |
