@@ -10,8 +10,9 @@
 | Diffs comprovados | imagem R07B `ca0bc5f3` vs main `d02cd012` (meta 08B); migrations VPS 001–015 vs main 024 vs tip 037; pilotos HTTP main≠tip; flags Expedição/Produto/Cliente360 opt-in; páginas 46=46; Auth/owner APPLY abortado |
 | Legado | NÃO atribuir telas vazias só a importação — ver tabela em OPERACAO_DEV_VPS |
 | Fora | merge main; mutação VPS; tip-port #213; outbox/DAM tip-* |
+| Tip remoto | `65fe8fba` |
 | Status | INVENTÁRIO LOCAL ENTREGUE; leitura VPS pendente de gate |
-| Próximo | gate leitura VPS (meta/image/migrations/flags) ou correções pontuais na branch desta diag |
+| Próximo | gate leitura VPS (meta/image/migrations/flags); PR draft se CI ok; sem tip-port candidata |
 
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
