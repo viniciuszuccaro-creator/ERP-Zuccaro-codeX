@@ -88,8 +88,9 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         'SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=$1', [probeRole]);
       assert.deepEqual(probe.rows[0], { rolsuper: false, rolbypassrls: false });
       const noBaseline = await db.query<{ id: string }>(
-        `INSERT INTO produtos(group_id,empresa_id,descricao) VALUES($1,$2,'Produto sintético sem saldo inicial') RETURNING id`,
-        [scope.groupId, scope.empresaId],
+        `INSERT INTO produtos(group_id,empresa_id,descricao,unidade_medida_id)
+         VALUES($1,$2,'Produto sintético sem saldo inicial',$3) RETURNING id`,
+        [scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
       );
       unbalancedProduct = noBaseline.rows[0].id;
       const blocked = await makeLinked(0, unbalancedProduct);
