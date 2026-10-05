@@ -11571,3 +11571,13 @@ Checklist inicial:
 - Multiempresa / carga: nenhuma inferência por pasta/`EMP03`; nenhuma carga operacional; backup original preservado (indisponível aqui).
 - Testes: `node --test tests/legado-origem-relatorios-privados.test.js` → 9/9 PASS; `tests/legado-inventario-backup.test.js` → 4/4 PASS; `git diff --check` PASS. Mudança não altera runtime do ERP; suite completa/lint/typecheck/build não exigidos para este lote de ferramenta+fixture.
 - Próximo item do programa: resolver vínculos por identidade jurídica comprovada (CPA Ferro e Aço e 3Z LTDA = operacionais; Grupo CPA = agrupamento), sem inferir empresa por pasta.
+
+### CODEX LEGADO — vínculos por identidade jurídica comprovada (2026-10-05)
+
+- Objetivo (item 2): resolver CPA Ferro e Aço e 3Z LTDA como empresas operacionais; Grupo CPA como agrupamento; proibir inferência por pasta/`EMP03`/`003` como emissor.
+- Causa / bloqueio parcial: mapa privado real `legacy-approved-business-alias-map.json` (hashes CNPJ/UUID) permanece só no HD `04_REPORTS` — **BLOCKED** neste VM. Fixture sintética espelha a topologia aprovada na Gate 18 sem PII.
+- Entrega: `scripts/legado/resolver-vinculo-juridico-legado.mjs` + `fixtures/legado/vinculos-juridicos-sinteticos/` + `tests/legado-resolver-vinculo-juridico.test.js`; docs `LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md` e este STATUS; HANDOFF atualizado.
+- Dry-run fixture: origem 7 → comprovados 3 (CPA, 3Z, Grupo cadastro) / quarentena 4 (Grupo-como-emissor, pasta EMP03, inferir-por-pasta, código 004); `empresasOperacionais=2`, `agrupamentos=1`, `importAuthorized=false`, `blockedRealHdMap=true`.
+- Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`. Nota: o mapper ainda lista código `3` em mapa de “empresa” legado — o resolvedor Codex é a fonte soberana para papel jurídico (Grupo ≠ emissor).
+- Testes: `node --test tests/legado-resolver-vinculo-juridico.test.js` → 11/11 PASS; regressão origem 9/9 PASS; `git diff --check` PASS.
+- Próximo item do programa: staging isolado (extração/transformação/carga) só para registros com vínculo comprovado — deduplicação, dependências, reconciliação por empresa; quarentena sem prova; sem carga operacional sem gate.

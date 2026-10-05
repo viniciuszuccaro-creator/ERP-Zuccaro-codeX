@@ -1,3 +1,12 @@
+## CODEX LEGADO — checkpoint vínculos jurídicos (2026-10-05)
+
+- Branch: `codex/legado-origem-relatorios-392b` (itens 1–2 do programa Legado).
+- Item 1 (origem relatórios): `validar-origem-relatorios-privados.mjs` + fixture; HD real BLOCKED neste VM.
+- Item 2 (identidade jurídica): `resolver-vinculo-juridico-legado.mjs` + contrato sintético — CPA Ferro e Aço / 3Z LTDA = operacionais; Grupo CPA (`003`) = agrupamento não emissor; EMP03/pasta não prova empresa; `importAuthorized=false`.
+- Cursor #48 (`mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`) não editado.
+- Próximo: staging isolado com deduplicação/dependências/reconciliação por empresa; quarentena sem prova; sem carga operacional sem gate.
+- Mapa privado real de aliases continua só no HD (`04_REPORTS`); não publicar PII/dumps.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.
