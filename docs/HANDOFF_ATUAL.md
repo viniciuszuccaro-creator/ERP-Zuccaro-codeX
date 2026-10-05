@@ -1,6 +1,6 @@
 ## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
 
-Recebido e executado. Branch autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` tip funcional `0c00318d`. #212 consolidado semanticamente (`bee11785`/`a37dca55`, sem tip-port #213): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id`; asserts gap 032 + 026; ledger `expedicao_estoque_saldos`; #210 `to_char` 6 casas. Item independente: espelho PGlite do gate baseline (sem DATABASE_URL). PG real BLOCKED (skip sanitizado). #214 APPROVED só o gate — não o pacote. Sem inventar 032/saldo; sem outbox/DAM tip-*; sem VPS/main.
+Recebido e executado. Branch autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` tip `b7f47720` (código #212 `0c00318d` + PGlite `899ec9b3`). #212 consolidado semanticamente (`bee11785`/`a37dca55`, sem tip-port #213): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id`; asserts gap 032 + 026; ledger `expedicao_estoque_saldos`; #210 `to_char` 6 casas. Item independente: espelho PGlite do gate baseline (sem DATABASE_URL). PG real BLOCKED (skip sanitizado). #214 APPROVED só o gate — não o pacote. Sem inventar 032/saldo; sem outbox/DAM tip-*; sem VPS/main.
 
 ## CODEX — próximo item: asserts gap 032 + skip path sanitizado (2026-10-05)
 
