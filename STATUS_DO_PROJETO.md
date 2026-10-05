@@ -1,3 +1,38 @@
+## CURSOR — inventário ERP novo × VPS (layouts/flags; ≠ Legado) (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| Branch | `cursor/erp-vps-diff-layouts-392b` |
+| Instrução | chat principal → Legado + Comercial; ausência de tela ≠ importação |
+| Agentes | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) · [Comercial](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
+
+### Diferenças comprovadas (repo; VPS live BLOCKED neste VM)
+
+| ID | Diferença | Evidência | Não é importação? |
+| --- | --- | --- | --- |
+| D1 | `main` `d02cd012` ≪ candidata Comercial (~179 commits) | `git rev-list --count main..candidata` | Sim — lag de versão |
+| D2 | VPS historicamente em SHAs antigos (ex. owner `56dae696`, SPA login `d696c00b`) vs tip atual | `docs/OPERACAO_DEV_VPS.md` / STATUS paste | Sim — imagem/checkout |
+| D3 | `VITE_ERP_BACKEND=local` (.env.example) vs `http` (compose `erp-web`) | `.env.example` / `docker-compose.erp.yml` | Sim — flag SPA |
+| D4 | Opt-ins HTTP Expedição / Cliente360 / Produto off por default | `runtimeBackend.js`, `base44Client.js` | Sim — layout/BFF |
+| D5 | `EXPEDICAO_PERSISTENT_PORTS` default false; exige `DATABASE_URL` | `server/src/config/env.ts` | Sim — config API |
+| D6 | Migrations 025–037 + gap 032 só em candidata; `main` para em 024 | migrations + STATUS candidata | Sim — schema versão |
+| D7 | RBAC fail-closed esconde Cadastros/Expedição/Comercial | `Cadastros.jsx`, `Expedicao.jsx` | Sim — permissão |
+| D8 | `EXPECTED_RUNTIME` deve ser `ERP-RUNTIME-08B` (não default legado canário) | `comercial360-canary.sh` / contrato | Sim — meta/deploy |
+| D9 | Hostinger VPS list MCP timeout neste agente | MCP `vps_virtual-machines_list` | Live digest pendente |
+
+### Correções nesta branch
+
+- `.env.example` + comentários `docker-compose.erp.yml`: documentar opt-ins HTTP
+- `docs/OPERACAO_DEV_VPS.md`: seção diagnóstico versão×VPS + checklist sanitizado
+
+### Coordenação Legado
+
+Só após D1–D8: tratar contagem/cadastro ausente como staging. Manter `importAuthorized=false`.
+
+### BLOCKED operacional
+
+Probe live VPS (digest/SHA containers) — MCP timeout / sem SSH autorizado neste turno. Comercial deve completar lista com meta 3080 quando gate permitir.
+
 ## CURSOR — fechamento pacote candidata @ `899ec9b3` (2026-10-05)
 
 | Campo | Valor |
