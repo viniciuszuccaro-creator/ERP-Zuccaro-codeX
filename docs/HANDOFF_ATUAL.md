@@ -1,3 +1,9 @@
+## CURSOR — CI tip #213 SUCCESS (2026-10-05)
+
+- Tip `1b1def8e` · 7 checks SUCCESS (merge asserts gap 032 + ledger/skip path).
+- #211 tip `b78258e8` SUCCESS · #214 tip `1932b868` SUCCESS.
+- Próximo: DATABASE_URL isolado → runtime11; merge humano das stacks.
+
 ## CURSOR — merge Comercial `00d7add2` (2026-10-05)
 
 - Incorporado tip Codex `00d7add2` no espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) sem tip-port cego.

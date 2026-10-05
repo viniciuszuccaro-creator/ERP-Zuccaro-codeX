@@ -1,3 +1,13 @@
+## CURSOR — CI tip #213 `1b1def8e` SUCCESS (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
+| Tip | `1b1def8e` (merge Comercial `00d7add2`) |
+| CI | **SUCCESS** (7 checks) |
+| Relacionados | #211 `b78258e8` SUCCESS · #214 `1932b868` SUCCESS |
+| PENDENTE | DATABASE_URL runtime11; VPS/Auth; gate Legado Onda 25; merge humano |
+
 ## CURSOR — merge tip Comercial `00d7add2` no #213 (2026-10-05)
 
 | Campo | Valor |
