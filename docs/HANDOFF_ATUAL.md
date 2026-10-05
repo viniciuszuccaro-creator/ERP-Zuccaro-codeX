@@ -1,3 +1,11 @@
+## CODEX LEGADO — plano importação/reversão gate (2026-10-05)
+
+- Branch: `codex/legado-origem-relatorios-392b` (itens 1–5 do programa).
+- Plano: `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` — pré-requisitos, ordem, reconciliação (centavos), rollback, critérios GO/NO-GO.
+- `importAuthorized=false` / `operationalLoadAuthorized=false`; promoção staging→operacional proibida até autorização humana.
+- Backup original somente leitura; sem PII/dumps no Git; Cursor #48 não editado.
+- Próximo: **aguardar gate humano** (HD montado + backup destino restauro-testado + ata de aprovação).
+
 ## CODEX LEGADO — checkpoint staging isolado (2026-10-05)
 
 - Agente [Codex Legado staging evidência](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) · SHA Codex `89b0c8c6` · PR [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
