@@ -1,9 +1,15 @@
+<<<<<<< HEAD
 ## CURSOR — revalidação HEAD integrado #207+#209 (2026-10-05)
 
 - SHA Codex `aaf29c19` · PR espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
 - Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal PG / estados (#210).
 - Agente [Codex Comercial 360 homolog](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregou compose; Cursor não disputa outbox/DAM.
 - PENDENTE: PG real `runtime11` sem `DATABASE_URL`; VPS BLOCKED.
+=======
+## CODEX — PGlite ledger + decimal/estados (2026-10-05, pós-aaf29c19)
+
+`DATABASE_URL` ausente (sem Docker/PG local). Sem tip-port tip-* #213. Aplicado semanticamente: `to_char` 6 casas em `topProducts` e teste EM_ABERTO/CANCELADO. Novo teste PGlite com portas persistentes reais (037): despacho concorrente/retry, parcial→devolução, cancelamento e rollback atômico. Pacote DEV atualizado com evidência local vs gap PG real/grants. VPS/Auth/publisher/saldo abertura operacional continuam BLOCKED.
+>>>>>>> origin/codex/comercial-expedicao-cliente360-207-209-20261005
 
 ## CODEX — candidata integrada #207+#209 (2026-10-05)
 

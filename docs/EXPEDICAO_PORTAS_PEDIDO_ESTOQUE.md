@@ -127,3 +127,21 @@ Checklist reprodutível **sem** executar VPS/Auth/publisher sem autorização:
 5. **Smoke:** `/meta` → `pedidoEstoqueSideEffects` (`reserved`|`ledger`) + fluxo sintético Pedido→separação→romaneio→despacho→parcial→devolução com auditoria. Publisher/Auth reais fora deste pacote.
 
 **Estado atual:** preparação documentada; execução VPS/DEV real **BLOCKED** até gate explícito.
+
+### Evidência local sem `DATABASE_URL` (candidata Codex)
+
+| Prova | Resultado |
+|---|---|
+| `runtime11-expedicao-pglite` (HTTP fluxo + rollback) | PASS (suíte existente) |
+| `R11 PGlite: ledger canônico — despacho/retry/parcial/devolução/cancelamento/rollback` | Portas `PostgresExpedicao*` reais sobre 037 em PGlite — cobre concorrência/idempotência/rollback **sem** inventar saldo de abertura |
+| `runtime11-expedicao-persistent-postgres` | **SKIP** — `DATABASE_URL` ausente neste ambiente (sem Docker/serviço PG) |
+| Grants/RLS probe role (`SET LOCAL ROLE`) | Só no teste PostgreSQL real; PGlite não substitui |
+| Saldo abertura reconciliado operacional | **BLOCKED** — gate humano; migration 037 não inventa |
+
+Comando quando houver PG isolado autorizado:
+
+```bash
+DATABASE_URL=postgresql://… npm test -- --test-name-pattern='R11 PostgreSQL real: despacho'
+# ou
+cd server && DATABASE_URL=… node --import tsx --test tests/runtime11-expedicao-persistent-postgres.test.ts
+```

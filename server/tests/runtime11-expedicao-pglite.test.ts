@@ -434,3 +434,154 @@ test('R11 PGlite: falha da porta na devolucao reverte movimento e status', async
     await pg.close();
   }
 });
+
+/**
+ * Fecha gap local sem DATABASE_URL: portas persistentes reais (037) em PGlite.
+ * Cobre despacho concorrente/retry, parcial→devolução, cancelamento e rollback.
+ * Não substitui runtime11-expedicao-persistent-postgres (grants/RLS probe role + seed CI).
+ */
+test('R11 PGlite: ledger canônico — despacho/retry/parcial/devolução/cancelamento/rollback', async () => {
+  const { PostgresExpedicaoEstoquePort, PostgresExpedicaoPedidoPort } = await import(
+    '../src/integrations/expedicaoPersistentPorts.ts'
+  );
+  const pg = await bootPglite();
+  const db = dbClient(pg);
+  const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA, actorId: SEED_IDS.runtimeActorA };
+  const product = SEED_IDS.produtoA;
+  const stock = new PostgresExpedicaoEstoquePort();
+  const pedido = new PostgresExpedicaoPedidoPort();
+  const created: { pedidos: string[]; entregas: string[]; romaneios: string[] } = {
+    pedidos: [], entregas: [], romaneios: [],
+  };
+
+  const qty = async () => {
+    const row = await db.query<{ quantidade: string }>(
+      'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+      [scope.groupId, scope.empresaId, product],
+    );
+    return Number(row.rows[0]?.quantidade ?? 0);
+  };
+  const movementCount = async (entregaId: string) => Number((await db.query<{ count: string }>(
+    'SELECT count(*)::text FROM expedicao_estoque_movimentos WHERE group_id=$1 AND empresa_id=$2 AND entrega_id=$3',
+    [scope.groupId, scope.empresaId, entregaId],
+  )).rows[0].count);
+
+  const makeLinked = async (ordinal: number) => {
+    const customer = await db.query<{ id: string }>(
+      `SELECT id FROM cliente_empresas
+        WHERE group_id=$1 AND empresa_id=$2 AND ativo AND habilitado_operacao AND NOT bloqueado LIMIT 1`,
+      [scope.groupId, scope.empresaId],
+    );
+    assert.ok(customer.rows[0], 'seed ClienteEmpresa required');
+    const number = String(71000000 + ordinal);
+    const order = await db.query<{ id: string }>(
+      `INSERT INTO pedidos(group_id,empresa_id,numero,status,cliente_empresa_id,condicao_pagamento_id,vendedor_id,
+         tipo_operacao,data_entrega_solicitada,subtotal,desconto,total,tipo_comercial,created_by,updated_by)
+       VALUES($1,$2,$3,'PRONTO_ENTREGA',$4,$5,$6,'ENTREGA',now()+interval '1 day',20,0,20,'REVENDA',$6,$6) RETURNING id`,
+      [scope.groupId, scope.empresaId, number, customer.rows[0].id, SEED_IDS.condicaoPagamentoA, scope.actorId],
+    );
+    const pedidoId = order.rows[0].id; created.pedidos.push(pedidoId);
+    await db.query(
+      `INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,
+        quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot)
+       VALUES($1,$2,$3,$4,$5,'Produto sintético','UN',2,10,0,20,20,false,'REVENDA')`,
+      [scope.groupId, scope.empresaId, pedidoId, product, SEED_IDS.unidadeA],
+    );
+    const delivery = await db.query<{ id: string }>(
+      `INSERT INTO entregas(group_id,empresa_id,numero,status,pedido_id,quantidade_total,volumes,created_by,updated_by)
+       VALUES($1,$2,$3,'SAIU_ENTREGA',$4,2,1,$5,$5) RETURNING id`,
+      [scope.groupId, scope.empresaId, String(81000000 + ordinal), pedidoId, scope.actorId],
+    );
+    const entregaId = delivery.rows[0].id; created.entregas.push(entregaId);
+    await db.query(
+      `INSERT INTO entrega_itens(group_id,empresa_id,entrega_id,produto_id,descricao_snapshot,unidade_snapshot,
+        quantidade_pedida,quantidade_separada,created_by,updated_by)
+       VALUES($1,$2,$3,$4,'Produto sintético','UN',2,2,$5,$5)`,
+      [scope.groupId, scope.empresaId, entregaId, product, scope.actorId],
+    );
+    const manifest = await db.query<{ id: string }>(
+      `INSERT INTO romaneios(group_id,empresa_id,numero,status,data_romaneio,motorista_nome,veiculo,placa,
+         entregas_key,quantidade_entregas,checklist_saida_json,created_by,updated_by)
+       VALUES($1,$2,$3,'EM_ROTA',current_date,'Sintético','Veículo','SYN0001',$4,1,'{}'::jsonb,$5,$5) RETURNING id`,
+      [scope.groupId, scope.empresaId, String(91000000 + ordinal), entregaId, scope.actorId],
+    );
+    created.romaneios.push(manifest.rows[0].id);
+    await db.query('UPDATE entregas SET romaneio_id=$2 WHERE id=$1', [entregaId, manifest.rows[0].id]);
+    return { pedidoId, entregaId, romaneioId: manifest.rows[0].id };
+  };
+
+  try {
+    const ledger = await db.query<{ present: boolean }>(
+      "SELECT to_regclass('expedicao_estoque_saldos') IS NOT NULL AS present",
+    );
+    assert.equal(ledger.rows[0]?.present, true, '037 ledger table required on PGlite boot');
+    const tipo = await db.query<{ present: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM information_schema.columns
+          WHERE table_name='pedidos' AND column_name='tipo_comercial'
+       ) AS present`,
+    );
+    assert.equal(tipo.rows[0]?.present, true, 'trava 026 (tipo_comercial) presente');
+
+    await db.query(
+      `INSERT INTO expedicao_estoque_saldos(group_id,empresa_id,produto_id,quantidade)
+       VALUES($1,$2,$3,10) ON CONFLICT (group_id,empresa_id,produto_id) DO UPDATE SET quantidade=10`,
+      [scope.groupId, scope.empresaId, product],
+    );
+
+    const first = await makeLinked(1);
+    const dispatch = () => db.withTransaction(async (tx) => {
+      await pedido.onDespacho({ ...scope, pedidoIds: [first.pedidoId], romaneioId: first.romaneioId }, tx);
+      return stock.onDespacho({ ...scope, entregaIds: [first.entregaId] }, tx);
+    });
+    assert.deepEqual(await Promise.all([dispatch(), dispatch()]), ['applied', 'applied']);
+    assert.equal(await qty(), 8);
+    assert.equal(await movementCount(first.entregaId), 1);
+    assert.equal(await dispatch(), 'applied', 'retry idempotente');
+    assert.equal(await qty(), 8);
+
+    await db.query(`UPDATE entregas SET status='ENTREGUE_PARCIAL' WHERE id=$1`, [first.entregaId]);
+    await db.query(
+      `UPDATE entrega_itens SET quantidade_entregue=1,quantidade_devolvida=1 WHERE entrega_id=$1`,
+      [first.entregaId],
+    );
+    await db.query(`UPDATE entregas SET status='DEVOLVIDA' WHERE id=$1`, [first.entregaId]);
+    await db.withTransaction((tx) => stock.onDevolucao({
+      ...scope, entregaId: first.entregaId, quantidade: '1.000000',
+    }, tx));
+    assert.equal(await qty(), 9);
+    assert.equal(await movementCount(first.entregaId), 2);
+    await db.withTransaction((tx) => stock.onDevolucao({
+      ...scope, entregaId: first.entregaId, quantidade: '1.000000',
+    }, tx));
+    assert.equal(await qty(), 9, 'retry devolução idempotente');
+
+    await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [first.entregaId]);
+    await db.withTransaction((tx) => stock.onCancelamento({ ...scope, entregaId: first.entregaId }, tx));
+    assert.equal(await qty(), 10, 'cancelamento compensa só o restante');
+    assert.equal(await movementCount(first.entregaId), 3);
+
+    const second = await makeLinked(2);
+    await assert.rejects(() => db.withTransaction(async (tx) => {
+      await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
+      await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
+      throw new Error('synthetic failure after intermediate movement');
+    }), /synthetic failure/);
+    assert.equal(await qty(), 10);
+    assert.equal(await movementCount(second.entregaId), 0, 'rollback atômico sem movimento órfão');
+
+    await db.withTransaction(async (tx) => {
+      await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
+      await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
+    });
+    assert.equal(await qty(), 8);
+    await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [second.entregaId]);
+    await db.withTransaction(async (tx) => {
+      await stock.onCancelamento({ ...scope, entregaId: second.entregaId }, tx);
+      await pedido.onCancelamento({ ...scope, pedidoId: second.pedidoId, entregaId: second.entregaId }, tx);
+    });
+    assert.equal(await qty(), 10);
+  } finally {
+    await db.end();
+  }
+});
