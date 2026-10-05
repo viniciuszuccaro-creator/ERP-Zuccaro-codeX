@@ -1,14 +1,14 @@
-## CODEX LEGADO — origem + vínculos jurídicos (2026-10-05)
+## CODEX LEGADO — origem + vínculos + staging (2026-10-05)
 
 | Campo | Valor |
 | --- | --- |
-| SHA Codex tip | `26c52331` |
+| SHA Codex tip | `89b0c8c6` |
 | PR espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
-| Item 1 | origem relatórios — 9/9 |
-| Item 2 | vínculos CPA/3Z/Grupo — 11/11; EMP03 não prova |
+| Item 1–2 | origem 9/9 · vínculos 11/11 |
+| Item 3 staging | carregados 4 / quarentena 2 / conflitos 1 / reusos 1 · CPA 10050¢ · 3Z 5000¢ |
 | Mapper #48 | intocado |
-| BLOCKED | HD backup / mapa privado real |
-| Próximo | staging isolado (ETL) só com vínculo comprovado |
+| BLOCKED | HD / carga operacional |
+| Próximo | plano importação/reversão (gate) |
 
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 

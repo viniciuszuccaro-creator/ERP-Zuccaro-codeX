@@ -1,9 +1,9 @@
 ## CODEX LEGADO — checkpoint staging isolado (2026-10-05)
 
-- Branch: `codex/legado-origem-relatorios-392b` (itens 1–3).
+- Agente [Codex Legado staging evidência](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) · SHA Codex `89b0c8c6` · PR [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
 - Item 3: `carregar-staging-isolado-legado.mjs` — ETL sintético com dedupe, dependências, reconciliação por empresa em centavos e quarentena sem prova; `importAuthorized=false` / `operationalLoadAuthorized=false`.
-- Fixture dry-run: origem 8 → carregados 4 / reusos 1 / conflitos 1 / quarentena 2; monetary CPA 10050 + 3Z 5000 centavos; diff 0.
-- HD/extração real BLOCKED neste VM. Cursor #48 não editado.
+- Fixture dry-run: origem 8 → carregados 4 / reusos 1 / conflitos 1 / quarentena 2; monetary CPA 10050 + 3Z 5000 centavos; diff 0 (teste força +50).
+- HD/extração real BLOCKED neste VM. Cursor #48 não editado. Testes 28/28.
 - Próximo: plano de importação/reversão (gate) sem carga operacional.
 
 ## CODEX LEGADO — checkpoint vínculos jurídicos (2026-10-05)
