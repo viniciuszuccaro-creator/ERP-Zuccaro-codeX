@@ -1,3 +1,15 @@
+## CURSOR — parecer #212 saldo inicial (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR Codex | [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) |
+| SHA | `a37dca55` |
+| Parecer | `docs/PARECER_CURSOR_212_SHA_a37dca55.md` — **APPROVED** |
+| Achado | Fail-closed sem baseline; zero movimento/audit em falha; retry 1 movimento pós-saldo isolado |
+| Não inventa | saldo de abertura / 032 / tip-port |
+| CI | SUCCESS no tip Codex |
+| PENDENTE | runtime11 com DATABASE_URL; VPS |
+
 ## Consolidação das instruções (2026-09-29)
 
 Foram conciliados `AGENTS.md`, programa mestre, divisão Codex/Cursor e handoff sem criar novo documento de regras. Push direto em `main` foi substituído por branch/PR; revisão cruzada ocorre no HEAD final, não entre commits; a fila da PR #33/Gate C foi marcada histórica. O termo E/D/F comprova execução anterior para `894b0db8`, não autorização nem verificação operacional para #153. Regras de Regra-Mãe, Grupo/Empresa, RBAC, auditoria e dados reais fora do GitHub continuam obrigatórias. Próximo lote: integrar #92/#132 com testes comportamentais e PostgreSQL em branch separada; depois revisão independente e decisão explícita de merge/deploy. Não houve migration, VPS ou carga real neste checkpoint.
@@ -12990,3 +13002,6 @@ Base #178 `0596a763`, CIs `erp-runtime-ci` 36765676571 e `omnicanal-postgres` 36
 ## Comercial 360 — validade futura do fixture R08C PostgreSQL (2026-10-01)
 
 O HEAD `790e4be1` da #178 passou nas CIs `erp-runtime-ci` 36769412407 e `omnicanal-postgres` 36769412099 e foi revisado pelo Cursor; merge/VPS/importação não liberados. A CI da candidata integrada #185 `3e10bf4a` reportou que o R08C de rollback de auditoria esperava o erro forçado, mas o fixture `validade_em: 2026-10-01T00:00:00Z` já estava vencido quando o serviço validou o Orçamento. Os dois inputs deste arquivo agora usam validade calculada 30 dias após a execução do teste; nenhuma regra de validade de produção mudou. Testes focados locais: 8 pass, 0 fail, 2 skip por ausência de `DATABASE_URL`, incluindo casos que continuam rejeitando validade expirada. Backend completo 456 pass/0 fail/46 skip, typecheck/build servidor e diff-check passaram. A correção está nesta branch Comercial e não foi aplicada à branch #185 ou à VPS. Gate seguinte: CI PostgreSQL do novo SHA e composição explícita antes de afirmar que #185 está corrigida.
+## 2026-10-05 — Gates DEV da expedição persistente (#207, branch isolada)
+
+Objetivo: provar falha fechada sem saldo inicial e preparar ativação segura, sem movimentar estoque operacional. Causa: a migration 037 cria ledger isolado sem carga inicial; ativá-lo sem reconciliação poderia duplicar ou bloquear movimentos. Reutilizados os ports, migrations e teste PostgreSQL R11 existentes. Alterados teste R11 e handoff. Grupo/Empresa, rollback de Pedido/Estoque/auditoria, retry e RLS são cobertos; RBAC de ativação permanece gate. Checks locais: servidor 478 pass/0 fail/49 skip (PostgreSQL real exige CI isolada), typecheck servidor, audit:baseline, lint e build raiz, diff-check passaram; lint mostrou 1 aviso preexistente. Typecheck raiz falha em arquivos fora do diff. A primeira CI da #212 revelou unidade_medida_id ausente no produto sintético do fixture; corrigido para atender o trigger de Pedido, com revalidação PostgreSQL pendente no novo SHA. Pendências: mapa com estoque canônico, saldos reais reconciliados, grants/RLS da role, preflight 026, backup/restore e autorização DEV. Próximo passo P0: fechar esses comprovantes em ambiente isolado antes de conectar a porta à aplicação.

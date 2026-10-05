@@ -1,3 +1,10 @@
+## CURSOR — parecer #212 @ `a37dca55` (2026-10-05)
+
+- Gate saldo inicial persistente: APPROVED (`docs/PARECER_CURSOR_212_SHA_a37dca55.md`).
+- `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` sem inventar abertura; ledger `expedicao_estoque_saldos` permanece fonte oficial.
+- Espelho `cursor/comercial-expedicao-dev-gates-392b`. Sem tip-port outbox/DAM.
+- PENDENTE: PG real runtime11; VPS/Auth/publisher.
+
 ## CODEX — composição incremental #199 na #201 (2026-10-02)
 
 HEAD #199 `7879ecbe` foi incorporado **somente** à branch isolada da #201, preservando a branch Cursor. O conflito único de conteúdo em `docs/HANDOFF_ATUAL.md` foi resolvido mantendo os dois checkpoints. O delta traz gate CI Compose, provas SPA×BFF+PGlite com reload e teste de migrations comerciais 025–035 + Expedição 036; nenhum adaptador de estoque real foi ativado. Testes locais: servidor 303 pass/0 fail/17 skip; focados PGlite+composição 6/6 e UI 17/17; audit/lint/build raiz passaram. `npm test` raiz no Windows permanece falhando em guards Bash/VPS preexistentes; a CI Linux do novo HEAD será a verificação aplicável. #178 continua separada; 026 histórica continua travada. Não houve merge em main, VPS ou importação.
@@ -857,3 +864,8 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 Branch isolada `codex/comercial-expedicao-fechamento-20261004`: #201 `59c4f506` + #199 **vigente** `f88460e9` + #178 `4f8c6593`. A referência `refs/pull/199/head` foi usada porque a branch remota nominal apontava para base antiga. A correção CI do falso `# skipped 0` e a prova PostgreSQL isolada foram preservadas. Migration 026 tem blob `07292e0c86133ad13e3d0c68a8a13d6d6322b228` idêntico à #178; nenhuma reclassificação histórica. Adicionada candidata 037 para saldo reconciliado, movimentos por item e eventos de Pedido, com portas persistentes opt-in; runtime default continua `reserved`, canais desligados. Testes locais de UI 27/27 e typecheck backend passaram; PostgreSQL real e CI do HEAD final ainda são gates, sem merge/VPS/dados reais. Cursor deve revisar o SHA final desta branch; não editar branches dele.
 
 ---
+## CODEX — gates DEV da candidata #207 (2026-10-05)
+
+Branch isolada derivada do HEAD #207 `506a5d35`; #209 `bb3ef069` permanece com outro responsável, sem edição ou merge. Migration 037 e portas persistentes continuam **opt-in**; `server/src/index.ts` não injeta essas portas. O teste PostgreSQL isolado agora prova que produto sem saldo inicial bloqueia despacho, reverte evento de Pedido e auditoria, e permite retry uma única vez depois de saldo sintético de teste. Esse saldo não é proposta de carga real.
+
+Antes de qualquer ativação em DEV: (1) identificar a fonte canônica de estoque operacional e sua unidade por produto/empresa, demonstrando que o ledger 037 não duplica movimentos; (2) reconciliar por empresa/produto saldo inicial com fonte e data de corte, contagens, divergências e responsáveis, sem fabricar zero/quantidade; (3) validar preflight histórico da 026 e migrations 036/037 em cópia isolada; (4) definir grants da role operacional e políticas RLS com prova A/B, adulteração de IDs e rollback de transação; (5) backup verificável do destino, ensaio de restore e plano de reversão de API/configuração separado de schema/dados; (6) canary, smoke e rollback conforme `docs/OPERACAO_DEV_VPS.md`. Sem esses comprovantes, não executar migration operacional, ligar adaptadores, importar dados ou tocar na VPS.
