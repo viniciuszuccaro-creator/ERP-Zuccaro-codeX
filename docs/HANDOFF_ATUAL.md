@@ -1,3 +1,9 @@
+## CURSOR — candidata integrada fechada p/ revisão (2026-10-05)
+
+- Código `899ec9b3` (#210+#212+#207+#209 + PGlite gate) no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) concluído; próximo operacional = DATABASE_URL isolado → runtime11.
+- Sem tip-port outbox/DAM. Merge humano na ordem documentada.
+
 ## CURSOR — merge `899ec9b3` PGlite gate #212 (2026-10-05)
 
 - Tip código autoritativo `899ec9b3` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
