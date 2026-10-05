@@ -15,7 +15,7 @@
 | Migrations | 001–031, **gap sem 032**, 033–037; trava histórica 026 intacta |
 | DATABASE_URL | ausente neste ambiente → fluxo PG real **BLOCKED** (skip path sanitizado PASS; não inventar sucesso) |
 | Testes locais | runtime01+compose+persistent skip: 15 pass / 0 fail / 3 skip; PGlite Expedição (+gate baseline): 6 pass / 0 fail; `git diff --check` PASS |
-| Tip remoto | `b7f47720` (código #212 `0c00318d` + PGlite espelho `899ec9b3`) |
+| Tip remoto | `899ec9b3` (código #212 `0c00318d` + espelho PGlite baseline; docs no HEAD `2fbb167e`) |
 | Status | CONSOLIDADO (código); PG E2E real aguarda URL isolada |
 | Fora | tip-port #213; inventar 032/saldo; merge main; VPS/Auth/publisher; outbox/DAM tip-* |
 | Próximo | CI tip; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo |
