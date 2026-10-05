@@ -1,3 +1,14 @@
+## CURSOR — revisão #209 Cliente 360 top produtos (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| SHA revisado | `bb3ef069` (PR #209) |
+| Follow-up | `cursor/cliente360-top-produtos-revisao-392b` |
+| Parecer | APPROVED + normalização decimal PG + teste estados |
+| Testes | `runtime-onda3-cliente-central360` **6/6 PASS** |
+| Encaminhamento | Comercial cloud: consolidar #207+#209 |
+| Fora | tip-port / merge main / VPS |
+
 ## Consolidação das instruções (2026-09-29)
 
 Foram conciliados `AGENTS.md`, programa mestre, divisão Codex/Cursor e handoff sem criar novo documento de regras. Push direto em `main` foi substituído por branch/PR; revisão cruzada ocorre no HEAD final, não entre commits; a fila da PR #33/Gate C foi marcada histórica. O termo E/D/F comprova execução anterior para `894b0db8`, não autorização nem verificação operacional para #153. Regras de Regra-Mãe, Grupo/Empresa, RBAC, auditoria e dados reais fora do GitHub continuam obrigatórias. Próximo lote: integrar #92/#132 com testes comportamentais e PostgreSQL em branch separada; depois revisão independente e decisão explícita de merge/deploy. Não houve migration, VPS ou carga real neste checkpoint.
