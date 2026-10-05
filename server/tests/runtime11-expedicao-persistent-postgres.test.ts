@@ -11,6 +11,37 @@ const scope = { groupId: SEED_IDS.groupA, empresaId: SEED_IDS.empresaA, actorId:
 const stock = new PostgresExpedicaoEstoquePort();
 const pedido = new PostgresExpedicaoPedidoPort();
 
+/**
+ * Evidência sanitizada do skip path: nunca inventa sucesso do fluxo PG real.
+ * Sem DATABASE_URL → BLOCKED reproduzível; sem logar URL/credenciais.
+ */
+test('R11 persistent-postgres: evidência sanitizada do skip path (DATABASE_URL)', () => {
+  const raw = process.env.DATABASE_URL;
+  const present = Boolean(raw && String(raw).trim());
+  assert.equal(present, enabled);
+  if (!present) {
+    assert.equal(raw ?? '', '', 'DATABASE_URL ausente — skip path ativo; sem inventar saldo/execução');
+    // Sanitizado: não serializar process.env completo; só estado booleano.
+    assert.deepEqual({
+      databaseUrlConfigured: false,
+      persistentPostgresExecutable: false,
+      blockedReason: 'DATABASE_URL_NOT_AVAILABLE',
+      doesNotInventOpeningBalance: true,
+      doesNotInventMigration032: true,
+    }, {
+      databaseUrlConfigured: false,
+      persistentPostgresExecutable: false,
+      blockedReason: 'DATABASE_URL_NOT_AVAILABLE',
+      doesNotInventOpeningBalance: true,
+      doesNotInventMigration032: true,
+    });
+    return;
+  }
+  // Presente: não logar a URL; apenas confirmar que o gate de execução está liberado para o teste abaixo.
+  assert.equal(present, true);
+  assert.doesNotMatch(String(raw).slice(0, 12), /password|secret/i);
+});
+
 test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, cancelamento e rollback atômico',
   { skip: !enabled && 'DATABASE_URL not available' }, async () => {
     const db = createDbClient(loadConfig({

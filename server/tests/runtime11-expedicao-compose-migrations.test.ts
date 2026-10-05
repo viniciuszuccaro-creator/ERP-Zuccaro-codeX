@@ -49,6 +49,18 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
   assert.ok(!localFiles.some((f) => /^025_expedicao/.test(f)), '025_expedicao nao deve existir');
   // Gap intencional: não inventar 032; sequência comercial 025–031, 033–035 + Expedição 036–037.
   assert.ok(!localFiles.some((f) => f.startsWith('032_')), 'migration 032 ausente por desenho; nao inventar');
+  const commercialAndExpedicao = localFiles.filter((f) => {
+    const n = Number(f.slice(0, 3));
+    return n >= 25 && n <= 37;
+  });
+  assert.deepEqual(
+    commercialAndExpedicao.map((f) => f.slice(0, 3)),
+    ['025', '026', '027', '028', '029', '030', '031', '033', '034', '035', '036', '037'],
+    'unico gap permitido entre 025-037 e 032',
+  );
+  const body037 = readFileSync(join(localMigs, '037_expedicao_estoque_movimentos.sql'), 'utf8');
+  assert.match(body037, /expedicao_estoque_saldos/);
+  assert.doesNotMatch(body037, /INSERT\s+INTO\s+expedicao_estoque_saldos/i, '037 nao inventa saldo de abertura');
 
   const list = spawnSync('git', ['-C', repoRoot, 'ls-tree', '-r', '--name-only', CODEX_REF, '--', 'server/migrations'], {
     encoding: 'utf8',

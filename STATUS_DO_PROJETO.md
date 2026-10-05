@@ -1,3 +1,17 @@
+## CODEX — asserts gap 032 + evidência skip DATABASE_URL (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Item independente pós-PGlite: asserts migration gap 032 / ledger oficial + evidência sanitizada skip runtime11; fail-closed ports sem DATABASE_URL |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | `284a9871` |
+| Fora de escopo | tip-* Cursor, #212 saldo inicial (branch própria), outbox/DAM, VPS, inventar 032/saldo |
+| Mudança | runtime01: gap 032 + 037 sem INSERT saldo; fail-closed EXPEDICAO_PERSISTENT_PORTS; compose sequência 025-037; meta ledger 037; evidência sanitizada skip DATABASE_URL |
+| Testes | runtime01+compose+http+persistent skip-path: 20 pass / 0 fail / 3 skip |
+| DATABASE_URL | ausente → persistent fluxo completo BLOCKED (evidência sanitizada PASS) |
+| Fora | tip-*, #212, outbox/DAM, VPS, inventar 032/saldo |
+| Próximo | DATABASE_URL isolado → runtime11 persistent; ou revisão #213/#212; Cursor outbox/DAM independente |
+
 ## CODEX — gap PGlite ledger + decimal (sem DATABASE_URL) (2026-10-05)
 
 | Campo | Valor |

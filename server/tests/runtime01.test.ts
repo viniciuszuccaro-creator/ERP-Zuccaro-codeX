@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import test from 'node:test';
 import type { QueryResult, QueryResultRow } from 'pg';
@@ -13,6 +16,8 @@ import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } fr
 import { createErrorHandler } from '../src/middleware/errorHandler.ts';
 import { InMemoryMarcaRepository } from '../src/repositories/inMemoryMarcaRepository.ts';
 import { MarcaService } from '../src/services/marcaService.ts';
+
+const migrationsDir = () => join(dirname(fileURLToPath(import.meta.url)), '../migrations');
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
 const GROUP_B = '22222222-2222-4222-8222-222222222222';
@@ -133,6 +138,8 @@ test('migrations include foundation through 037 (Expedicao apos reserva comercia
   assert.ok(files.indexOf('029_orcamento_pedido_condicao_snapshot.sql') < files.indexOf('030_orcamento_pedido_promocao_snapshot.sql'));
   assert.ok(files.includes('031_orcamento_pedido_tabela_snapshot.sql'));
   assert.ok(files.indexOf('030_orcamento_pedido_promocao_snapshot.sql') < files.indexOf('031_orcamento_pedido_tabela_snapshot.sql'));
+  // Gap intencional: não inventar 032 entre 031 e 033.
+  assert.ok(!files.some((f) => f.startsWith('032_')), 'migration 032 ausente por desenho; nao inventar');
   assert.ok(files.includes('033_integration_events_company_rls.sql'));
   assert.ok(files.indexOf('031_orcamento_pedido_tabela_snapshot.sql') < files.indexOf('033_integration_events_company_rls.sql'));
   assert.ok(files.includes('034_produtos_codigo_legado.sql'));
@@ -144,6 +151,29 @@ test('migrations include foundation through 037 (Expedicao apos reserva comercia
   assert.ok(files.includes('037_expedicao_estoque_movimentos.sql'));
   assert.ok(files.indexOf('036_expedicao_entregas_romaneios.sql') < files.indexOf('037_expedicao_estoque_movimentos.sql'));
   assert.equal(files.at(-1), '037_expedicao_estoque_movimentos.sql');
+
+  // Ledger 037: cria tabelas/RLS, não inventa saldo de abertura (sem INSERT em saldos).
+  const ledger037 = readFileSync(join(migrationsDir(), '037_expedicao_estoque_movimentos.sql'), 'utf8');
+  assert.match(ledger037, /expedicao_estoque_saldos/);
+  assert.match(ledger037, /saldos de abertura n[aã]o s[aã]o inventados|n[aã]o cria saldo/i);
+  assert.doesNotMatch(ledger037, /INSERT\s+INTO\s+expedicao_estoque_saldos/i);
+});
+
+test('EXPEDICAO_PERSISTENT_PORTS exige DATABASE_URL (fail-closed; sem inventar saldo)', () => {
+  assert.throws(
+    () => loadConfig({
+      NODE_ENV: 'test',
+      ERP_ENV: 'dev',
+      EXPEDICAO_PERSISTENT_PORTS: 'true',
+      REQUIRE_DATABASE: 'false',
+    }),
+    /DATABASE_URL is required when EXPEDICAO_PERSISTENT_PORTS=true/,
+  );
+  const off = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false' });
+  assert.equal(off.expedicaoPersistentPorts, false);
+  const view = publicConfigView(off);
+  assert.equal(view.expedicaoPersistentPorts, false);
+  assert.doesNotMatch(JSON.stringify(view), /postgresql:\/\//);
 });
 
 test('marca service validates payload and audits create/update/soft-delete', async () => {

@@ -1,3 +1,7 @@
+## CODEX — próximo item: asserts gap 032 + skip path sanitizado (2026-10-05)
+
+Recebido. Tip candidata `284a9871` (CI SUCCESS). `DATABASE_URL` ausente → persistent-postgres BLOCKED (não inventar sucesso). Entregue: asserts gap 032 + 037 sem INSERT saldo; fail-closed ports; meta ledger; evidência sanitizada skip path. Sem tip-port #213/#212; sem outbox/DAM; sem VPS/saldo abertura. Próximo: DATABASE_URL isolado ou revisão humana #213/#212.
+
 ## CODEX — PGlite ledger + decimal/estados (2026-10-05, pós-aaf29c19)
 
 `DATABASE_URL` ausente (sem Docker/PG local). Sem tip-port tip-* #213. Aplicado semanticamente: `to_char` 6 casas em `topProducts` e teste EM_ABERTO/CANCELADO. Novo teste PGlite com portas persistentes reais (037): despacho concorrente/retry, parcial→devolução, cancelamento e rollback atômico. Pacote DEV atualizado com evidência local vs gap PG real/grants. VPS/Auth/publisher/saldo abertura operacional continuam BLOCKED.
