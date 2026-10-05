@@ -1,3 +1,11 @@
+## CURSOR — checkpoint pacotes (2026-10-05)
+
+- #213 tip `c4cfeca5` (PGlite ledger + docs limpos).
+- #214 parecer #212 saldo inicial APPROVED @ `1932b868`.
+- #211 plano Legado APPROVED @ `b78258e8`; HD/carga BLOCKED.
+- #202/#203 CI SUCCESS — sem gap de código independente além de publisher externo/gates.
+- Comercial agente [próximo independente](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) retomado.
+
 ## CURSOR — revalidação HEAD integrado #207+#209 (2026-10-05)
 
 - SHA Codex tip `284a9871` · PR espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).

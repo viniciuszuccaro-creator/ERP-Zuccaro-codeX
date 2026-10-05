@@ -1,3 +1,15 @@
+## CURSOR — pacotes paralelos fechados (2026-10-05)
+
+| Pacote | PR / SHA | Parecer | Estado |
+| --- | --- | --- | --- |
+| #207+#209 candidata | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) `c4cfeca5` | APPROVED + PGlite ledger | CI tip em andamento |
+| Gate saldo inicial | Codex [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) / espelho [#214](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/214) `1932b868` | APPROVED | CI Codex SUCCESS |
+| Legado 1–5 | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) `b78258e8` | plano APPROVED | HD/carga BLOCKED |
+| Outbox Onda 15 | [#203](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/203) `38bbcc44` | — | CI SUCCESS; publisher externo BLOCKED |
+| DAM Onda 1 | [#202](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/202) `de304ecc` | — | CI SUCCESS; pub externa BLOCKED |
+
+PENDENTE humano: merge stacks; DATABASE_URL runtime11; gate Onda 25 Legado; VPS/Auth.
+
 ## CURSOR — revalidação #207+#209 (2026-10-05)
 
 | Campo | Valor |
