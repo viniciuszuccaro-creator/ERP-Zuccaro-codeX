@@ -36,6 +36,12 @@
   - CPA Ferro e Aço / 3Z LTDA = empresas operacionais (emissoras)
   - Grupo CPA (`003`) = agrupamento, **não** emissor
   - `EMP03`/pasta/`TID_EMP03` **nunca** provam empresa
+- Staging isolado (ETL sintético, item 3):
+  `scripts/legado/carregar-staging-isolado-legado.mjs`
+  - Fixture: `fixtures/legado/staging-isolado-sintetico/`
+  - Teste: `tests/legado-carregar-staging-isolado.test.js`
+  - Deduplicação, dependências, reconciliação por empresa (centavos),
+    quarentena sem prova; `importAuthorized=false`
 - Mapper sintético (#48, Cursor): `scripts/legado/mapear-registro-sintetico.mjs`
   — **não editar neste lote Codex**
 
@@ -130,4 +136,6 @@ agrupamento (não emissor). `EMP03`/pasta não prova empresa. O mapa privado
 | Revalidação privada dos relatórios reais em `04_REPORTS` | **BLOCKED** — raiz privada indisponível neste VM |
 | Resolvedor jurídico CPA/3Z/Grupo (código + fixture) | **preparado** — sem inferência por pasta/`EMP03`/`003` como emissor |
 | Mapa privado real de aliases (hashes CNPJ/UUID do HD) | **BLOCKED** — arquivo só em `04_REPORTS` do HD |
-| Staging / importação operacional | **bloqueado** (Onda 25 / gate) — próximo item do programa |
+| Staging isolado sintético (código + fixture) | **preparado** — carga em memória; sem operacional |
+| Extração real do HD → staging | **BLOCKED** — HD ausente neste VM |
+| Importação / carga operacional | **bloqueado** (Onda 25 / gate) — próximo: plano importação/reversão |
