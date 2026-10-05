@@ -1,3 +1,7 @@
+## CURSOR — espelho Comercial diff VPS (2026-10-05)
+
+- Tip Codex `65fe8fba` espelhado; cruzado com [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) e Legado [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
+
 ## CODEX — diagnóstico ERP novo × VPS layouts/flags (2026-10-05)
 
 Recebido. Branch própria `codex/erp-novo-vps-layout-diff-20261005` (não toca candidata `899ec9b3`). Primeira ação: inventário comprovado em `docs/OPERACAO_DEV_VPS.md` — commit/imagem R07B vs main/candidata, migrations 015 vs 024 vs 037, flags `VITE_*`/`EXPEDICAO_*`, pilotos HTTP, rotas (46 páginas iguais), RBAC/Auth. VPS ao vivo BLOCKED (MCP timeout). Legado: não tratar ausência de tela/cadastro só como importação.

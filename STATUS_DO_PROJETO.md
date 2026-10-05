@@ -1,3 +1,14 @@
+## CURSOR — espelho diagnóstico Comercial VPS×versão (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| Codex tip | `65fe8fba` / docs `1a40ca5d` |
+| Espelho | `cursor/erp-novo-vps-layout-diff-392b` |
+| Inventário Cursor paralelo | [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) |
+| Legado coordenação | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) pós-`b6691189` |
+| Veredito | Diffs 1–8 confirmam: ausência de tela ≠ importação |
+| BLOCKED | VPS live (MCP timeout) |
+
 ## CODEX — diagnóstico ERP novo × VPS (layouts/flags/RBAC) (2026-10-05)
 
 | Campo | Valor |
