@@ -1,3 +1,10 @@
+## CURSOR — parecer #212 @ `a37dca55` (2026-10-05)
+
+- Gate saldo inicial persistente: APPROVED (`docs/PARECER_CURSOR_212_SHA_a37dca55.md`).
+- `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` sem inventar abertura; ledger `expedicao_estoque_saldos` permanece fonte oficial.
+- Espelho `cursor/comercial-expedicao-dev-gates-392b`. Sem tip-port outbox/DAM.
+- PENDENTE: PG real runtime11; VPS/Auth/publisher.
+
 ## CODEX — composição incremental #199 na #201 (2026-10-02)
 
 HEAD #199 `7879ecbe` foi incorporado **somente** à branch isolada da #201, preservando a branch Cursor. O conflito único de conteúdo em `docs/HANDOFF_ATUAL.md` foi resolvido mantendo os dois checkpoints. O delta traz gate CI Compose, provas SPA×BFF+PGlite com reload e teste de migrations comerciais 025–035 + Expedição 036; nenhum adaptador de estoque real foi ativado. Testes locais: servidor 303 pass/0 fail/17 skip; focados PGlite+composição 6/6 e UI 17/17; audit/lint/build raiz passaram. `npm test` raiz no Windows permanece falhando em guards Bash/VPS preexistentes; a CI Linux do novo HEAD será a verificação aplicável. #178 continua separada; 026 histórica continua travada. Não houve merge em main, VPS ou importação.

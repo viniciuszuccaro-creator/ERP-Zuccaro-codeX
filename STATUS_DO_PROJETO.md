@@ -1,3 +1,15 @@
+## CURSOR — parecer #212 saldo inicial (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR Codex | [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) |
+| SHA | `a37dca55` |
+| Parecer | `docs/PARECER_CURSOR_212_SHA_a37dca55.md` — **APPROVED** |
+| Achado | Fail-closed sem baseline; zero movimento/audit em falha; retry 1 movimento pós-saldo isolado |
+| Não inventa | saldo de abertura / 032 / tip-port |
+| CI | SUCCESS no tip Codex |
+| PENDENTE | runtime11 com DATABASE_URL; VPS |
+
 ## Consolidação das instruções (2026-09-29)
 
 Foram conciliados `AGENTS.md`, programa mestre, divisão Codex/Cursor e handoff sem criar novo documento de regras. Push direto em `main` foi substituído por branch/PR; revisão cruzada ocorre no HEAD final, não entre commits; a fila da PR #33/Gate C foi marcada histórica. O termo E/D/F comprova execução anterior para `894b0db8`, não autorização nem verificação operacional para #153. Regras de Regra-Mãe, Grupo/Empresa, RBAC, auditoria e dados reais fora do GitHub continuam obrigatórias. Próximo lote: integrar #92/#132 com testes comportamentais e PostgreSQL em branch separada; depois revisão independente e decisão explícita de merge/deploy. Não houve migration, VPS ou carga real neste checkpoint.
