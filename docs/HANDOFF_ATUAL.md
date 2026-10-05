@@ -1,3 +1,10 @@
+## CURSOR — revalidação HEAD integrado #207+#209 (2026-10-05)
+
+- SHA Codex `aaf29c19` · PR espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal PG / estados (#210).
+- Agente [Codex Comercial 360 homolog](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregou compose; Cursor não disputa outbox/DAM.
+- PENDENTE: PG real `runtime11` sem `DATABASE_URL`; VPS BLOCKED.
+
 ## CODEX — candidata integrada #207+#209 (2026-10-05)
 
 Branch `codex/comercial-expedicao-cliente360-207-209-20261005` tip `85e48156` (base #207 `506a5d35` + semântica #209 `bb3ef069`). Compose sem tip-port cego: Cliente360 `produtosMaisComprados` e segregação de margem (#205/#206 — outro aprovador) preservando contratos fail-closed de alçada em Pedido/Orçamento. Ledger Expedição: `expedicao_estoque_saldos` fonte oficial no HTTP/BFF; opt-in `EXPEDICAO_PERSISTENT_PORTS`; SPA não duplica `MovimentacaoEstoque`. Migrations: 001–031, gap sem 032, 033–037; trava 026 intacta; sem saldo de abertura inventado. Fluxo PG isolado Pedido→separação→romaneio→despacho→parcial/devolução/cancelamento permanece em `runtime11-expedicao-persistent-postgres`. Pacote DEV: preparar grants/RLS/smoke só sob gates vigentes — VPS/Auth/publisher bloqueados. Cursor revisa #209 e avança Produto/DAM/outbox em arquivos independentes; não disputar tip-* / outbox Cursor.
