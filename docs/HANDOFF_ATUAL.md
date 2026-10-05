@@ -1,3 +1,11 @@
+## CODEX LEGADO — origem relatórios (2026-10-05)
+
+- Agente [Codex Legado staging evidência](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9): item 1 @ `a370e1d9`.
+- Branches: `codex/legado-origem-relatorios-392b` + PR espelho `cursor/legado-origem-relatorios-392b` (#211).
+- Fixture + script validação (fonte/hash/extrator); mapper #48 intocado; `operationalImportAuthorized=false`.
+- BLOCKED: HD backup ausente neste VM (`LEGACY_REPORTS_ROOT_UNAVAILABLE`).
+- Retomado item 2: vínculos jurídicos (CPA Ferro e Aço / 3Z LTDA operacionais; Grupo CPA = agrupamento).
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

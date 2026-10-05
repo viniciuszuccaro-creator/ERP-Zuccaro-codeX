@@ -1,3 +1,14 @@
+## CODEX LEGADO — origem relatórios privados (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| SHA | `a370e1d9` |
+| Branch Codex | `codex/legado-origem-relatorios-392b` |
+| PR | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) (`cursor/legado-origem-relatorios-392b`) |
+| Testes | origem 9/9 · inventário 4/4 |
+| BLOCKED | HD backup ausente (`LEGACY_REPORTS_ROOT_UNAVAILABLE`) |
+| Próximo | vínculos jurídicos comprovados |
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
