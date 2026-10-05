@@ -4,7 +4,7 @@
 | --- | --- |
 | Código | `899ec9b3` · tip docs Codex `72c9dba9` · espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
 | Parecer | `docs/PARECER_CURSOR_213_SHA_0c00318d.md` (+ extensão PGlite) — APPROVED COM RESSALVAS |
-| CI espelho | tip pré-docs SUCCESS; tip atual pós-merge docs |
+| CI espelho | tip `6de7e583` **SUCCESS** (7 checks) |
 | Agente | [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) — entregue |
 | BLOCKED | B1–B6 (PG real, telas, VPS, saldo operacional, Legado HD) |
 
