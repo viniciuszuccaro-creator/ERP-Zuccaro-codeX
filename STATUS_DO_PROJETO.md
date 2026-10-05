@@ -1,8 +1,21 @@
+## CURSOR — parecer candidata integrada pós-#212 @ `0c00318d` (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR espelho | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
+| SHA Codex | `0c00318d` / tip docs `f43b9c28` |
+| Parecer | `docs/PARECER_CURSOR_213_SHA_0c00318d.md` — **APPROVED COM RESSALVAS** |
+| #214 | **não** transfere aprovação automática ao pacote |
+| Incorporado | #210 decimal · #212 gate saldo · gap 032 · trava 026 · PGlite ledger |
+| Testes locais | skip-path + asserts focados (sem DATABASE_URL) |
+| BLOCKED | B1–B6 (PG real, telas, VPS, saldo operacional, Legado HD) |
+| B7 | **fechado** — #212 consolidado na candidata |
+
 ## CURSOR — ordem integração + bloqueios candidata Comercial (2026-10-05)
 
 ### Branch funcional autoritativa
-`codex/comercial-expedicao-cliente360-207-209-20261005` tip `00d7add2` · espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) `b0b983aa` (CI SUCCESS).  
-Agente [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) encaminhado: consolidar **#212** na autoritativa (ainda ausente).
+`codex/comercial-expedicao-cliente360-207-209-20261005` tip `0c00318d`/`f43b9c28` · espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) pós-merge.  
+#212 consolidado semanticamente; parecer Cursor no SHA `0c00318d`.
 
 ### Ordem de integração das PRs (merge humano)
 
@@ -10,8 +23,8 @@ Agente [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) 
 | --- | --- | --- | --- | --- |
 | 1 | [#207](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/207) | `506a5d35` | base Expedição/Pedido persistente | ancestral da candidata |
 | 2 | [#209](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/209) + [#210](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/210) | `bb3ef069` / `cdc47456` | Cliente360 topProducts + decimal/estados | **já** semântico na candidata |
-| 3 | [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) | `a37dca55` | gate saldo inicial fail-closed | **PENDENTE** consolidar na autoritativa |
-| 4 | candidata [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) | `b0b983aa`→SHA pós-#212 | pacote único homologável | revisar SHA final (não transferir #214) |
+| 3 | [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) | `a37dca55` → `0c00318d` | gate saldo inicial fail-closed | **consolidado** na candidata |
+| 4 | candidata [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) | tip pós-`0c00318d` | pacote único homologável | parecer Cursor neste SHA |
 | 5 | [#205](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/205)/[#206](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/206) | margem/à vista | já compostos semanticamente | não tip-port |
 
 ### Espelhos a supersedir (preservar evidências/pareceres)
@@ -40,7 +53,7 @@ Agente [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) 
 | B4 | VPS / Auth / publisher externo | sem SSH/credencial/autorização | gates próprios |
 | B5 | Saldo abertura operacional | não inventar; #212 só testa ausência | reconciliação humana |
 | B6 | Legado HD / carga Onda 25 | HD ausente; `importAuthorized=false` | #211 + gate humano |
-| B7 | #212 ainda fora da candidata | `merge-base --is-ancestor a37dca55 candidata` → false | Comercial consolidar |
+| B7 | #212 fora da candidata | **FECHADO** em `0c00318d` | — |
 
 ### Checagens Cursor neste tip (`b0b983aa`)
 
@@ -96,7 +109,27 @@ PENDENTE humano: merge stacks; DATABASE_URL runtime11; gate Onda 25 Legado; VPS/
 | Codex tip | `00d7add2` (pós-`284a9871`) |
 | Parecer | APPROVED + decimal/estados + asserts gap 032 |
 | PGlite ledger | 12 pass / 1 skip (`DATABASE_URL`) |
-| PENDENTE | runtime11 PG real; VPS |
+| PENDENTE | runtime11 PG real; VPS |## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Homologação completa: incorporar gate saldo inicial #212 na branch Codex autoritativa |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base tip | `00d7add2` |
+| #210 | já presente (`to_char` 6 casas em `topProducts`) — sem tip-port |
+| #212 | consolidado semanticamente (`bee11785`/`a37dca55`): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id` no fixture; `merge-base --is-ancestor` = false → não cherry-pick tip-port |
+| #213 | espelho Cursor — **não** tip-port; código funcional de #212 aplicado na Codex |
+| #214 | APPROVED só o gate #212 — **não** aprova pacote inteiro |
+| Mudança | `runtime11-expedicao-persistent-postgres.test.ts`: produto sem saldo → rejeita despacho; 0 movimentos/eventos/audit; retry após INSERT saldo isolado = 1 movimento; asserts gap 032 + trava 026; cleanup unbalanced |
+| Ledger | fonte oficial `expedicao_estoque_saldos`; reconciliação groupId/empresaId/produto; sem inventar saldo abertura; 037 sem INSERT saldo |
+| Migrations | 001–031, **gap sem 032**, 033–037; trava histórica 026 intacta |
+| DATABASE_URL | ausente neste ambiente → fluxo PG real **BLOCKED** (skip path sanitizado PASS; não inventar sucesso) |
+| Testes locais | runtime01+compose+persistent skip: 15 pass / 0 fail / 3 skip; PGlite Expedição: 7 pass / 0 fail; `git diff --check` PASS |
+| Tip remoto | `0c00318d` |
+| Status | CONSOLIDADO (código); PG E2E real aguarda URL isolada |
+| Fora | tip-port #213; inventar 032/saldo; merge main; VPS/Auth/publisher; outbox/DAM tip-* |
+| Próximo | CI tip `0c00318d`; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo; item independente fora de tip-* |
+
 
 ## CODEX — asserts gap 032 + evidência skip DATABASE_URL (2026-10-05)
 

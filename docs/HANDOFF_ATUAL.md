@@ -1,3 +1,10 @@
+## CURSOR — parecer SHA `0c00318d` candidata +#212 (2026-10-05)
+
+- Merge tip Comercial `0c00318d` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer novo: `docs/PARECER_CURSOR_213_SHA_0c00318d.md` — APPROVED COM RESSALVAS (B1 PG real; B3 telas).
+- #214 **não** aprova este pacote. Ordem: #207→#209+#210→#212→#213.
+- B7 fechado. Espelhos #214/#210/#209/#212 isolados supersedíveis após merge humano.
+
 ## CURSOR — ordem integração candidata + bloqueios (2026-10-05)
 
 - Autoritativa: `codex/comercial-expedicao-cliente360-207-209-20261005` `00d7add2` · espelho #213 `b0b983aa`.
@@ -29,7 +36,10 @@
 ## CURSOR — revalidação HEAD integrado #207+#209 (2026-10-05)
 
 - Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal/estados.
-- PGlite ledger 037 + asserts gap 032 no tip pós-`00d7add2`.
+- PGlite ledger 037 + asserts gap 032 no tip pós-`00d7add2`.## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
+
+Recebido e executado. Branch autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` tip `0c00318d` (base `00d7add2`). #212 consolidado semanticamente (`bee11785`/`a37dca55`, sem tip-port #213): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id`; asserts gap 032 + 026; ledger `expedicao_estoque_saldos`; #210 `to_char` 6 casas preservado. DATABASE_URL ausente → PG real BLOCKED (skip sanitizado). #214 APPROVED só o gate — não o pacote. Sem inventar 032/saldo; sem outbox/DAM tip-*; sem VPS/main.
+
 
 ## CODEX — próximo item: asserts gap 032 + skip path sanitizado (2026-10-05)
 
