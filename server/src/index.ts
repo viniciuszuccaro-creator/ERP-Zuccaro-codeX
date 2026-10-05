@@ -5,11 +5,23 @@ import express from 'express';
 import { transactionScope } from './integrations/transactionScope.js';
 import { SaleIngress } from './integrations/saleIngress.js';
 import { loadChannelIdentities, saleIngressHttp } from './integrations/saleIngressHttp.js';
+import {
+  PostgresExpedicaoEstoquePort,
+  PostgresExpedicaoPedidoPort,
+} from './integrations/expedicaoPersistentPorts.js';
 
 async function main() {
   const config = loadConfig();
   const db = transactionScope(createDbClient(config));
-  const runtime = createApp({ config, db });
+  // Ledger canônico (037): opt-in explícito. Sem saldo reconciliado a porta falha fechado;
+  // nunca inventa abertura nem movimenta produto.estoque_atual em paralelo.
+  const expedicaoPorts = config.expedicaoPersistentPorts
+    ? {
+        expedicaoPedidoPort: new PostgresExpedicaoPedidoPort(),
+        expedicaoEstoquePort: new PostgresExpedicaoEstoquePort(),
+      }
+    : {};
+  const runtime = createApp({ config, db, ...expedicaoPorts });
   const app = express();
   app.set('trust proxy', runtime.app.get('trust proxy'));
   const identities = loadChannelIdentities(process.env);

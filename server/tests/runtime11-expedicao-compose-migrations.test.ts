@@ -47,6 +47,8 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
   assert.ok(localFiles.includes('036_expedicao_entregas_romaneios.sql'));
   assert.ok(localFiles.includes('037_expedicao_estoque_movimentos.sql'));
   assert.ok(!localFiles.some((f) => /^025_expedicao/.test(f)), '025_expedicao nao deve existir');
+  // Gap intencional: não inventar 032; sequência comercial 025–031, 033–035 + Expedição 036–037.
+  assert.ok(!localFiles.some((f) => f.startsWith('032_')), 'migration 032 ausente por desenho; nao inventar');
 
   const list = spawnSync('git', ['-C', repoRoot, 'ls-tree', '-r', '--name-only', CODEX_REF, '--', 'server/migrations'], {
     encoding: 'utf8',

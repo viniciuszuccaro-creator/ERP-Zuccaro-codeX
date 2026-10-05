@@ -1,3 +1,19 @@
+## CODEX Comercial 360 — compose #207+#209 candidata (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Consolidar semanticamente PR #207 (Comercial/Expedição fechamento) + #209 (Cliente360 top produtos) sem tip-port cego; incorporar segregação margem #205/#206; ledger → estoque canônico |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | #207 `506a5d35` (`codex/comercial-expedicao-fechamento-20261004`) |
+| Incorporado | #209 `bb3ef069` (delta semântico); margem segregada de #205/`ffef36a7` + comentários à vista #206 |
+| Estruturas reutilizadas | `expedicaoPersistentPorts`, Cliente360, PedidoRepository, alçada margem/desconto, migrations 025–037 |
+| Mudança | `topProducts` + bloco UI; margem exige outro aprovador; `EXPEDICAO_PERSISTENT_PORTS` + meta `ledger`/`expedicao_estoque_saldos`; assert gap 032; SPA HTTP sem contabilidade paralela |
+| Multiempresa/RBAC/auditoria | fail-closed preservado; topProducts tenant-scoped; movimentos ledger auditados |
+| Migrations | 001–031, **sem 032**, 033–037; trava histórica 026; sem saldo abertura |
+| Testes | focados + CI do HEAD; PG real opcional (`DATABASE_URL`) |
+| Bloqueios | VPS/Auth/publisher/saldo abertura reconciliado operacional — gates próprios |
+| Próximo | CI verde da candidata; revisão Cursor #209; fluxo PG E2E se DATABASE_URL; pacote DEV só se gate |
+
 ## Consolidação das instruções (2026-09-29)
 
 Foram conciliados `AGENTS.md`, programa mestre, divisão Codex/Cursor e handoff sem criar novo documento de regras. Push direto em `main` foi substituído por branch/PR; revisão cruzada ocorre no HEAD final, não entre commits; a fila da PR #33/Gate C foi marcada histórica. O termo E/D/F comprova execução anterior para `894b0db8`, não autorização nem verificação operacional para #153. Regras de Regra-Mãe, Grupo/Empresa, RBAC, auditoria e dados reais fora do GitHub continuam obrigatórias. Próximo lote: integrar #92/#132 com testes comportamentais e PostgreSQL em branch separada; depois revisão independente e decisão explícita de merge/deploy. Não houve migration, VPS ou carga real neste checkpoint.

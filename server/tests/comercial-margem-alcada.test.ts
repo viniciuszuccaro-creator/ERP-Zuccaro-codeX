@@ -91,22 +91,40 @@ test('preço >= custo com mínima 0 → ok sem aprovar', async () => {
   assert.equal(lineAbaixoDaMargemMinima(20_000_000n, 20_000_000n, 0), false);
 });
 
-test('venda abaixo do custo (mínima 0) exige aprovar', async () => {
+test('venda abaixo do custo (mínima 0) exige aprovar e outro ator', async () => {
+  const creator = '55555555-5555-4555-8555-555555555555';
+  const approver = '77777777-7777-4777-8777-777777777777';
   await assert.rejects(
     () => assertMargemDentroDaAlcadaOuAprovar({
       groupId, empresaId,
       items: [{ produto_id: produtoId, unidade_id: unidadeId, quantidade: '1', preco_unitario: '9', desconto: '0' }],
       costs: stubCost('10'),
       canAprovar: false,
+      actorId: creator,
+      criadorActorId: creator,
       entityLabel: 'Orçamento',
     }),
     (err: any) => err?.statusCode === 403 && err?.code === 'MARGEM_ALCADA_DENIED',
+  );
+  await assert.rejects(
+    () => assertMargemDentroDaAlcadaOuAprovar({
+      groupId, empresaId,
+      items: [{ produto_id: produtoId, unidade_id: unidadeId, quantidade: '1', preco_unitario: '9', desconto: '0' }],
+      costs: stubCost('10'),
+      canAprovar: true,
+      actorId: creator,
+      criadorActorId: creator,
+      entityLabel: 'Orçamento',
+    }),
+    (err: any) => err?.code === 'MARGEM_ALCADA_DENIED' && /outro aprovador/i.test(String(err?.message)),
   );
   await assert.doesNotReject(() => assertMargemDentroDaAlcadaOuAprovar({
     groupId, empresaId,
     items: [{ produto_id: produtoId, unidade_id: unidadeId, quantidade: '1', preco_unitario: '9', desconto: '0' }],
     costs: stubCost('10'),
     canAprovar: true,
+    actorId: approver,
+    criadorActorId: creator,
   }));
 });
 

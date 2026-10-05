@@ -135,7 +135,13 @@ async function movement(query: DbQueryExecutor, scope: Scope, entregaId: string,
     { entrega_id: entregaId, entrega_item_id: item.id, quantidade: quantity, tipo: kind });
 }
 
-/** Operational ledger is opt-in. Missing reconciled opening balances fail closed. */
+/**
+ * Ledger operacional canônico da Expedição (tabela `expedicao_estoque_saldos`).
+ * Fonte oficial dos saldos no caminho HTTP/BFF; proíbe contabilidade paralela
+ * (`produto.estoque_atual` / MovimentacaoEstoque SPA) no mesmo fluxo.
+ * Opt-in via EXPEDICAO_PERSISTENT_PORTS. Sem saldo reconciliado → fail-closed.
+ * A migration 037 não inventa saldo de abertura.
+ */
 export class PostgresExpedicaoEstoquePort implements ExpedicaoEstoquePort {
   async onDespacho(input: Scope & { entregaIds: string[] }, executor?: DbQueryExecutor) {
     if (input.entregaIds.length === 0) return 'reserved' as const;

@@ -285,10 +285,44 @@ test('Central 360 compoe identidade + blocos com PII revelado quando autorizado'
   assert.equal(result.body.data.blocks.obras.status, 'ok');
   assert.equal(result.body.data.blocks.orcamentos.status, 'ok');
   assert.equal(result.body.data.blocks.pedidos.status, 'ok');
+  assert.equal(result.body.data.blocks.produtosMaisComprados.status, 'ok');
+  assert.deepEqual(result.body.data.blocks.produtosMaisComprados.data, []);
   assert.equal(result.body.data.blocks.crm.status, 'skipped');
   assert.equal(result.body.data.blocks.locais.data[0].id, seeded.localId);
   assert.equal(result.body.data.blocks.obras.data[0].id, seeded.obraId);
   assert.ok(!JSON.stringify(result.body).includes('Item sintetico'));
+});
+
+test('Central 360 agrega todos os Pedidos finalizados, além da primeira página, sem misturar empresas', async () => {
+  const runtime = fixture();
+  const seededA = await seedClienteComercial(runtime, ACTOR_FULL, GROUP_A, EMPRESA_A, CNPJ_A);
+  const seededB = await seedClienteComercial(runtime, ACTOR_GROUP_B, GROUP_B, EMPRESA_B, CNPJ_B);
+  const repo = (runtime.pedidoService as unknown as { repo: {
+    get: (scope: { groupId: string; empresaId: string }, id: string) => Promise<any>;
+    rows: Map<string, any>;
+  } }).repo;
+  const original = await repo.get({ groupId: GROUP_A, empresaId: EMPRESA_A }, seededA.pedidoId);
+  assert.ok(original);
+  for (let index = 0; index < 205; index += 1) {
+    const id = `88888888-8888-4888-8888-${String(index).padStart(12, '0')}`;
+    repo.rows.set(id, { ...original, id, status: 'FINALIZADO', itens: original.itens.map((item: any) => ({ ...item, quantidade: '0.100000' })) });
+  }
+  const result = await request(runtime.app,
+    `/api/v1/clientes/${seededA.clienteId}/central-360?pedidos_limit=1`,
+    { headers: headers(ACTOR_FULL, GROUP_A, EMPRESA_A) });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.data.blocks.pedidos.data.length, 1);
+  assert.deepEqual(result.body.data.blocks.produtosMaisComprados.data, [{
+    produto_id: PRODUTO_ID, unidade_id: UNIDADE_ID,
+    quantidade_total: '20.500000', pedidos_count: 205,
+  }]);
+  assert.equal(result.body.data.blocks.produtosMaisComprados.meta.hasMore, false);
+
+  const other = await request(runtime.app,
+    `/api/v1/clientes/${seededB.clienteId}/central-360`,
+    { headers: headers(ACTOR_GROUP_B, GROUP_B, EMPRESA_B) });
+  assert.equal(other.status, 200);
+  assert.deepEqual(other.body.data.blocks.produtosMaisComprados.data, []);
 });
 
 test('Central 360 mascara PII sem dados-sensiveis.visualizar e isola tenant A/B', async () => {

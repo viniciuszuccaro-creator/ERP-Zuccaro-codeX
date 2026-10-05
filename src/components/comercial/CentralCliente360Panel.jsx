@@ -17,7 +17,7 @@ import {
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
-function BlockCard({ title, icon: Icon, block, renderRow }) {
+function BlockCard({ title, icon: Icon, block, renderRow, rowLimit = 5 }) {
   if (!block) return null;
   const status = block.status;
   return (
@@ -31,8 +31,8 @@ function BlockCard({ title, icon: Icon, block, renderRow }) {
       </div>
       {status === 'ok' && Array.isArray(block.data) && block.data.length > 0 && (
         <div className="space-y-1">
-          {block.data.slice(0, 5).map((row) => (
-            <div key={row.id} className="text-sm flex items-center justify-between border-b last:border-0 py-1">
+          {block.data.slice(0, rowLimit).map((row) => (
+            <div key={row.id || `${row.produto_id}:${row.unidade_id}`} className="text-sm flex items-center justify-between border-b last:border-0 py-1">
               {renderRow(row)}
             </div>
           ))}
@@ -270,6 +270,20 @@ export default function CentralCliente360Panel({
             <>
               <span className="font-mono">{row.numero}</span>
               <span className="font-semibold">{money(row.total)}</span>
+            </>
+          )}
+        />
+        <BlockCard
+          title="Produtos comprados"
+          icon={ShoppingCart}
+          block={blocks.produtosMaisComprados}
+          rowLimit={20}
+          renderRow={(row) => (
+            <>
+              <span className="font-mono text-xs" title={row.produto_id}>Produto {String(row.produto_id).slice(0, 8)}</span>
+              <span className="text-xs text-slate-600" title={row.unidade_id}>
+                {row.quantidade_total} · unidade {String(row.unidade_id).slice(0, 8)} · {row.pedidos_count} pedidos
+              </span>
             </>
           )}
         />

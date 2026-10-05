@@ -8,6 +8,7 @@ import {
   type PedidoOrigem,
   type PedidoRepository,
   type PedidoScope,
+  type PedidoTopProduct,
   type PedidoStatus,
   type PedidoTipoComercial,
   type PedidoWrite,
@@ -141,6 +142,25 @@ export class PostgresPedidoRepository implements PedidoRepository {
       query.query<Row>(`${SELECT} WHERE ${where} ORDER BY p.numero DESC,p.id DESC LIMIT $9 OFFSET $10`, params),
     ]);
     return { rows: rows.rows.map(map), total: Number(count.rows[0]?.total ?? 0) };
+  }
+
+  async topProducts(scope: PedidoScope, clienteEmpresaId: string, limit: number, executor: DbQueryExecutor = this.db): Promise<PedidoTopProduct[]> {
+    const result = await executor.query<PedidoTopProduct>(
+      `SELECT i.produto_id::text, i.unidade_id::text, SUM(i.quantidade)::text AS quantidade_total,
+              COUNT(DISTINCT p.id)::int AS pedidos_count
+         FROM pedidos p
+         JOIN pedido_itens i ON i.pedido_id=p.id AND i.group_id=p.group_id AND i.empresa_id=p.empresa_id
+        WHERE p.group_id=$1 AND p.empresa_id=$2 AND p.cliente_empresa_id=$3
+          AND p.status='FINALIZADO' AND p.ativo=true AND i.ativo=true
+        GROUP BY i.produto_id,i.unidade_id
+        ORDER BY SUM(i.quantidade) DESC,i.produto_id,i.unidade_id
+        LIMIT $4`,
+      [scope.groupId, scope.empresaId, clienteEmpresaId, Math.min(20, Math.max(1, Math.trunc(limit)))],
+    );
+    return result.rows.map((row) => ({
+      produto_id: String(row.produto_id), unidade_id: String(row.unidade_id),
+      quantidade_total: String(row.quantidade_total), pedidos_count: Number(row.pedidos_count),
+    }));
   }
 
   async update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor, preserveItems = false): Promise<Pedido | null> {

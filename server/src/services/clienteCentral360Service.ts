@@ -3,7 +3,7 @@ import type { RequestContext } from '../audit/types.js';
 import { maskDocumento } from '../db/documentoValidators.js';
 import type { Cliente, ClienteEmpresa } from '../repositories/clienteTypes.js';
 import type { Orcamento } from '../repositories/orcamentoTypes.js';
-import type { Pedido } from '../repositories/pedidoTypes.js';
+import type { Pedido, PedidoTopProduct } from '../repositories/pedidoTypes.js';
 import type { ClienteService } from './clienteService.js';
 import type { ClienteLocalService } from './clienteLocalService.js';
 import type { ObraService } from './obraService.js';
@@ -383,6 +383,7 @@ export class ClienteCentral360Service {
     const clienteEmpresaId = empresaLink.id;
     const orcamentos = await this.loadOrcamentos(ctx, clienteEmpresaId, orcBounds);
     const pedidos = await this.loadPedidos(ctx, clienteEmpresaId, pedBounds);
+    const produtosMaisComprados = await this.loadTopProducts(ctx, clienteEmpresaId);
 
     return {
       identity,
@@ -393,6 +394,7 @@ export class ClienteCentral360Service {
         obras,
         orcamentos,
         pedidos,
+        produtosMaisComprados,
         crm,
       },
       meta: {
@@ -523,6 +525,16 @@ export class ClienteCentral360Service {
         meta: page.meta,
       };
     }, bounds);
+  }
+
+  private async loadTopProducts(
+    ctx: RequestContext,
+    clienteEmpresaId: string,
+  ): Promise<ClienteCentral360Block<PedidoTopProduct>> {
+    return this.loadBlock(async () => {
+      const data = await this.pedidos.topProducts(ctx, clienteEmpresaId);
+      return { data, meta: { limit: 20, offset: 0, total: data.length, hasMore: false } };
+    }, { limit: 20, offset: 0 });
   }
 
   private async loadBlock<T>(
