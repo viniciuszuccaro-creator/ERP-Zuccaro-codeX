@@ -325,6 +325,41 @@ test('Central 360 agrega todos os Pedidos finalizados, além da primeira página
   assert.deepEqual(other.body.data.blocks.produtosMaisComprados.data, []);
 });
 
+test('Central 360 produtos comprados ignora EM_ABERTO e CANCELADO', async () => {
+  const runtime = fixture();
+  const seeded = await seedClienteComercial(runtime, ACTOR_FULL, GROUP_A, EMPRESA_A, CNPJ_A);
+  const repo = (runtime.pedidoService as unknown as { repo: {
+    get: (scope: { groupId: string; empresaId: string }, id: string) => Promise<any>;
+    rows: Map<string, any>;
+  } }).repo;
+  const original = await repo.get({ groupId: GROUP_A, empresaId: EMPRESA_A }, seeded.pedidoId);
+  assert.ok(original);
+  // Seed tipicamente cria Pedido EM_ABERTO — não deve entrar no agregador.
+  assert.equal(original.status, 'EM_ABERTO');
+  const closedId = '88888888-8888-4888-8888-000000000099';
+  const canceledId = '88888888-8888-4888-8888-000000000098';
+  repo.rows.set(closedId, {
+    ...original,
+    id: closedId,
+    status: 'FINALIZADO',
+    itens: original.itens.map((item: any) => ({ ...item, quantidade: '1.250000' })),
+  });
+  repo.rows.set(canceledId, {
+    ...original,
+    id: canceledId,
+    status: 'CANCELADO',
+    itens: original.itens.map((item: any) => ({ ...item, quantidade: '9.000000' })),
+  });
+  const result = await request(runtime.app,
+    `/api/v1/clientes/${seeded.clienteId}/central-360`,
+    { headers: headers(ACTOR_FULL, GROUP_A, EMPRESA_A) });
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.data.blocks.produtosMaisComprados.data, [{
+    produto_id: PRODUTO_ID, unidade_id: UNIDADE_ID,
+    quantidade_total: '1.250000', pedidos_count: 1,
+  }]);
+});
+
 test('Central 360 mascara PII sem dados-sensiveis.visualizar e isola tenant A/B', async () => {
   const runtime = fixture();
   const seededA = await seedClienteComercial(runtime, ACTOR_FULL, GROUP_A, EMPRESA_A, CNPJ_A);

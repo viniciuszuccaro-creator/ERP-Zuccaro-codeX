@@ -140,7 +140,8 @@ export class PostgresPedidoRepository implements PedidoRepository {
 
   async topProducts(scope: PedidoScope, clienteEmpresaId: string, limit: number, executor: DbQueryExecutor = this.db): Promise<PedidoTopProduct[]> {
     const result = await executor.query<PedidoTopProduct>(
-      `SELECT i.produto_id::text, i.unidade_id::text, SUM(i.quantidade)::text AS quantidade_total,
+      `SELECT i.produto_id::text, i.unidade_id::text,
+              trim(to_char(SUM(i.quantidade), 'FM999999999999999990.000000')) AS quantidade_total,
               COUNT(DISTINCT p.id)::int AS pedidos_count
          FROM pedidos p
          JOIN pedido_itens i ON i.pedido_id=p.id AND i.group_id=p.group_id AND i.empresa_id=p.empresa_id
