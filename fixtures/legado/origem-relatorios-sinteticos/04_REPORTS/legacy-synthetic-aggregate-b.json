@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "report_id": "legacy-synthetic-aggregate-b",
+  "schema_version": 1,
+  "metrics": {
+    "files_hashed": 2,
+    "extractor_passes": 2,
+    "hash_mismatches": 0
+  },
+  "note": "Fixture sintetica. Sem PII. Sem dados reais."
+}

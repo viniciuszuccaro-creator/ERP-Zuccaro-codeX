@@ -11554,3 +11554,20 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+### CODEX LEGADO — validação privada da origem dos relatórios (2026-10-05)
+
+- Objetivo: retomar a prova de origem dos relatórios privados (fonte, SHA-256, versão do extrator e reprodução em duas passagens), sem repetir apenas contagens já conhecidas do Gate 18.
+- Causa / bloqueio: neste Cloud VM o HD `BACKUP ERP ANTIGO - CODEX` **não está montado** (`/mnt` e `/media` vazios; `inventario-backup-erp-antigo.sh` → `backup_dir_found=NO`). Revalidação dos artefatos reais em `04_REPORTS` permanece **BLOCKED** de forma reproduzível (`LEGACY_REPORTS_ROOT_UNAVAILABLE`).
+- Entrega neste lote (somente código + fixture sanitizada):
+  - `scripts/legado/validar-origem-relatorios-privados.mjs` (validator `1.0.0`, read-only, fail-closed, `operationalImportAuthorized=false`);
+  - fixture `fixtures/legado/origem-relatorios-sinteticos/` + `manifest-origem.json`;
+  - testes `tests/legado-origem-relatorios-privados.test.js`;
+  - doc `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md` atualizada.
+- Evidência sintética: 2/2 relatórios `ORIGIN_VERIFIED`; hashes
+  `79d43a320ee46f2115346e4758352f2b4ac7c6f08f2c5c1571267daba45445e8` e
+  `b130a34140d3bcaa7480a381136ee9b7dbb57fe93aef606931f3e1011bdbb8b4`; extratores `legado-aggregate-summary@1.0.0-synthetic` e `legado-inventory-metadata@1.0.0-synthetic`; `reproduction_passes=2`.
+- Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Multiempresa / carga: nenhuma inferência por pasta/`EMP03`; nenhuma carga operacional; backup original preservado (indisponível aqui).
+- Testes: `node --test tests/legado-origem-relatorios-privados.test.js` → 9/9 PASS; `tests/legado-inventario-backup.test.js` → 4/4 PASS; `git diff --check` PASS. Mudança não altera runtime do ERP; suite completa/lint/typecheck/build não exigidos para este lote de ferramenta+fixture.
+- Próximo item do programa: resolver vínculos por identidade jurídica comprovada (CPA Ferro e Aço e 3Z LTDA = operacionais; Grupo CPA = agrupamento), sem inferir empresa por pasta.

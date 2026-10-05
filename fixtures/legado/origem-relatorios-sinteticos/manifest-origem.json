@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "synthetic": true,
+  "note": "Manifesto sintetico de proveniencia. Sem dados reais. Nao usar como inventario do HD.",
+  "extractorRegistry": [
+    {
+      "id": "legado-aggregate-summary",
+      "version": "1.0.0-synthetic",
+      "kind": "aggregate"
+    },
+    {
+      "id": "legado-inventory-metadata",
+      "version": "1.0.0-synthetic",
+      "kind": "inventory"
+    }
+  ],
+  "reports": [
+    {
+      "relativePath": "04_REPORTS/legacy-synthetic-aggregate-a.json",
+      "sha256": "79d43a320ee46f2115346e4758352f2b4ac7c6f08f2c5c1571267daba45445e8",
+      "bytes": 263,
+      "extractorId": "legado-aggregate-summary",
+      "extractorVersion": "1.0.0-synthetic",
+      "sourceKind": "aggregate"
+    },
+    {
+      "relativePath": "04_REPORTS/legacy-synthetic-aggregate-b.json",
+      "sha256": "b130a34140d3bcaa7480a381136ee9b7dbb57fe93aef606931f3e1011bdbb8b4",
+      "bytes": 247,
+      "extractorId": "legado-inventory-metadata",
+      "extractorVersion": "1.0.0-synthetic",
+      "sourceKind": "inventory"
+    }
+  ]
+}
