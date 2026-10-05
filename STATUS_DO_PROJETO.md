@@ -1,3 +1,14 @@
+## CODEX — gap PGlite ledger + decimal (sem DATABASE_URL) (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Sem DATABASE_URL: fechar gap PGlite do ledger 037 + incorporar follow-up decimal/estados (#210/#213) sem tip-port |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base tip | `aaf29c19` |
+| Mudança | `to_char` 6 casas; teste ignora EM_ABERTO/CANCELADO; PGlite ledger concorrência/retry/parcial/devolução/cancel/rollback; docs DEV |
+| Não feito | `runtime11-expedicao-persistent-postgres` (sem DATABASE_URL); VPS; tip-* Cursor |
+| Próximo | DATABASE_URL isolado → persistent-postgres; Cursor outbox/DAM (#202/#203) independente |
+
 ## CODEX Comercial 360 — compose #207+#209 candidata (2026-10-05)
 
 | Campo | Valor |

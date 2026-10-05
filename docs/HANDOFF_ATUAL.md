@@ -1,3 +1,7 @@
+## CODEX — PGlite ledger + decimal/estados (2026-10-05, pós-aaf29c19)
+
+`DATABASE_URL` ausente (sem Docker/PG local). Sem tip-port tip-* #213. Aplicado semanticamente: `to_char` 6 casas em `topProducts` e teste EM_ABERTO/CANCELADO. Novo teste PGlite com portas persistentes reais (037): despacho concorrente/retry, parcial→devolução, cancelamento e rollback atômico. Pacote DEV atualizado com evidência local vs gap PG real/grants. VPS/Auth/publisher/saldo abertura operacional continuam BLOCKED.
+
 ## CODEX — candidata integrada #207+#209 (2026-10-05)
 
 Branch `codex/comercial-expedicao-cliente360-207-209-20261005` tip `85e48156` (base #207 `506a5d35` + semântica #209 `bb3ef069`). Compose sem tip-port cego: Cliente360 `produtosMaisComprados` e segregação de margem (#205/#206 — outro aprovador) preservando contratos fail-closed de alçada em Pedido/Orçamento. Ledger Expedição: `expedicao_estoque_saldos` fonte oficial no HTTP/BFF; opt-in `EXPEDICAO_PERSISTENT_PORTS`; SPA não duplica `MovimentacaoEstoque`. Migrations: 001–031, gap sem 032, 033–037; trava 026 intacta; sem saldo de abertura inventado. Fluxo PG isolado Pedido→separação→romaneio→despacho→parcial/devolução/cancelamento permanece em `runtime11-expedicao-persistent-postgres`. Pacote DEV: preparar grants/RLS/smoke só sob gates vigentes — VPS/Auth/publisher bloqueados. Cursor revisa #209 e avança Produto/DAM/outbox em arquivos independentes; não disputar tip-* / outbox Cursor.
