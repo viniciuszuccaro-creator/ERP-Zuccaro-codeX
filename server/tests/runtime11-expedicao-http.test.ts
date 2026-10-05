@@ -215,6 +215,8 @@ test('HTTP Expedicao (mock in-memory): idempotencia create/romaneio/retry e isol
   const meta = await request(runtime.app, '/api/v1/meta');
   assert.equal(meta.body.expedicao.backendHttp, true);
   assert.equal(meta.body.expedicao.pedidoEstoqueSideEffects, 'reserved');
+  assert.equal(meta.body.expedicao.estoqueFonteOficial, null);
+  assert.match(String(meta.body.expedicao.migrationNumberingNote || ''), /sem 032/);
 });
 
 test('HTTP Expedicao: parcial e devolucao nao ultrapassam total nem duplicam item', async () => {

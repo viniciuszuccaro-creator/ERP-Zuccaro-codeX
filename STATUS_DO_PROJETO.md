@@ -10,9 +10,12 @@
 | Mudança | `topProducts` + bloco UI; margem exige outro aprovador; `EXPEDICAO_PERSISTENT_PORTS` + meta `ledger`/`expedicao_estoque_saldos`; assert gap 032; SPA HTTP sem contabilidade paralela |
 | Multiempresa/RBAC/auditoria | fail-closed preservado; topProducts tenant-scoped; movimentos ledger auditados |
 | Migrations | 001–031, **sem 032**, 033–037; trava histórica 026; sem saldo abertura |
-| Testes | focados + CI do HEAD; PG real opcional (`DATABASE_URL`) |
-| Bloqueios | VPS/Auth/publisher/saldo abertura reconciliado operacional — gates próprios |
-| Próximo | CI verde da candidata; revisão Cursor #209; fluxo PG E2E se DATABASE_URL; pacote DEV só se gate |
+| Tip remoto | `9c762ca5` |
+| Testes locais | focados 25/25; server 479 pass / 0 fail / 50 skip; PGlite Expedição 6/6 (+1 skip DATABASE_URL); typecheck server PASS; lint raiz PASS; `git diff --check` PASS |
+| CI | push `erp-runtime-ci` em andamento no tip |
+| PR | **BLOCKED** — `ManagePullRequest` indisponível; `gh pr create`/`gh api` 403 Resource not accessible by integration. Abrir manualmente: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/compare/codex/comercial-expedicao-fechamento-20261004...codex/comercial-expedicao-cliente360-207-209-20261005 |
+| Bloqueios | VPS/Auth/publisher/saldo abertura reconciliado operacional — gates próprios; PG real E2E skip sem DATABASE_URL |
+| Próximo | CI tip `9c762ca5`; abrir/revisar PR candidata; Cursor revisa #209; não disputar outbox/DAM tip-* |
 
 ## Consolidação das instruções (2026-09-29)
 

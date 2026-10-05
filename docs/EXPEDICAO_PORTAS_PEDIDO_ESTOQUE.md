@@ -114,3 +114,16 @@ Numeração **036** para não colidir com a reserva comercial Codex **025–035*
 2. Testes PG: despacho `applied`, falha estoque → Entrega permanece `PRONTO_EXPEDIR`, sem romaneio.
 3. Meta BFF: `pedidoEstoqueSideEffects` deixa de ser só `'reserved'` quando adapters ativos (combinar com feature flag se necessário).
 4. Sem tip-port silencioso na Expedição.
+
+
+## Pacote DEV (preparação — execução sob gate)
+
+Checklist reprodutível **sem** executar VPS/Auth/publisher sem autorização:
+
+1. **Portas:** API `3080` (BFF) e SPA `3081`/`5173` conforme runbooks existentes; isolamento de schema exigido.
+2. **Grants/RLS:** migration 037 já faz `ENABLE+FORCE RLS` e `REVOKE ALL … FROM PUBLIC` em `expedicao_estoque_saldos` / `movimentos` / `pedido_eventos`. Role de probe sem `BYPASSRLS` deve ver zero linhas cross-tenant (provado em `runtime11-expedicao-persistent-postgres` quando `DATABASE_URL` existe).
+3. **Saldo de abertura:** **não inventar**. Reconciliar cada `(group_id, empresa_id, produto_id)` com a fonte de estoque aprovada **antes** de `EXPEDICAO_PERSISTENT_PORTS=true`. Ausência → `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE`.
+4. **Backup/rollback:** backup SQL restaurável do destino + imagem/container anterior preservados (gates D/E/F). Rollback de código = reverter flag/`reserved`; rollback de dados = restore do backup — sem DROP operacional.
+5. **Smoke:** `/meta` → `pedidoEstoqueSideEffects` (`reserved`|`ledger`) + fluxo sintético Pedido→separação→romaneio→despacho→parcial→devolução com auditoria. Publisher/Auth reais fora deste pacote.
+
+**Estado atual:** preparação documentada; execução VPS/DEV real **BLOCKED** até gate explícito.
