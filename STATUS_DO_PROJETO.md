@@ -11591,3 +11591,13 @@ Checklist inicial:
 - Não tocados (Cursor #48): `mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
 - Testes: staging 8/8 PASS; vínculo 11/11; origem 9/9; `git diff --check` PASS.
 - Próximo item: plano de importação/reversão (gate) — sem promover staging → operacional sem autorização.
+
+### CODEX LEGADO — plano de importação e reversão (gate) (2026-10-05)
+
+- Objetivo (itens 4–5): publicar plano de gate com pré-requisitos, ordem, reconciliação, rollback e critérios de aceite — **sem** promover staging→operacional.
+- Artefato: `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` + teste estrutural `tests/legado-plano-importacao-reversao-gate.test.js`.
+- Flags obrigatórias no plano e no loader: `importAuthorized=false`, `operationalLoadAuthorized=false`. Backup original somente leitura; evidências reais permanecem no HD.
+- Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Testes: `node --test tests/legado-plano-importacao-reversao-gate.test.js` (+ regressão staging/vínculo/origem); `git diff --check` PASS. Mudança documental + teste estrutural; sem runtime ERP.
+- Bloqueios: HD/extração real e promoção operacional continuam BLOCKED até gate humano.
+- Próximo: **aguardar autorização humana** do gate (não executar carga operacional neste lote).

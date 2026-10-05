@@ -138,4 +138,5 @@ agrupamento (não emissor). `EMP03`/pasta não prova empresa. O mapa privado
 | Mapa privado real de aliases (hashes CNPJ/UUID do HD) | **BLOCKED** — arquivo só em `04_REPORTS` do HD |
 | Staging isolado sintético (código + fixture) | **preparado** — carga em memória; sem operacional |
 | Extração real do HD → staging | **BLOCKED** — HD ausente neste VM |
-| Importação / carga operacional | **bloqueado** (Onda 25 / gate) — próximo: plano importação/reversão |
+| Plano importação/reversão (gate) | **preparado** — `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` |
+| Importação / carga operacional | **bloqueado** — aguardar gate humano; flags permanecem false |
