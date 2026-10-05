@@ -22,6 +22,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
     const probeRole = `expedicao_r11_${Math.random().toString(36).slice(2, 10)}`;
     let probeCreated = false;
     let otherCompanyProduct: string | null = null;
+    let unbalancedProduct: string | null = null;
     const qty = async () => {
       const row = await db.query<{ quantidade: string }>(
         'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
@@ -33,7 +34,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       'SELECT count(*)::text FROM expedicao_estoque_movimentos WHERE group_id=$1 AND empresa_id=$2 AND entrega_id=$3',
       [scope.groupId, scope.empresaId, entregaId],
     )).rows[0].count);
-    const makeLinked = async (ordinal: number) => {
+    const makeLinked = async (ordinal: number, itemProduct = product) => {
       const customer = await db.query<{ id: string }>(
         'SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo AND habilitado_operacao AND NOT bloqueado LIMIT 1',
         [scope.groupId, scope.empresaId],
@@ -51,7 +52,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         `INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,
           quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot)
          VALUES($1,$2,$3,$4,$5,'Produto sintético','UN',2,10,0,20,20,false,'REVENDA')`,
-        [scope.groupId, scope.empresaId, pedidoId, product, SEED_IDS.unidadeA],
+        [scope.groupId, scope.empresaId, pedidoId, itemProduct, SEED_IDS.unidadeA],
       );
       const delivery = await db.query<{ id: string }>(
         `INSERT INTO entregas(group_id,empresa_id,numero,status,pedido_id,quantidade_total,volumes,created_by,updated_by)
@@ -63,7 +64,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         `INSERT INTO entrega_itens(group_id,empresa_id,entrega_id,produto_id,descricao_snapshot,unidade_snapshot,
           quantidade_pedida,quantidade_separada,created_by,updated_by)
          VALUES($1,$2,$3,$4,'Produto sintético','UN',2,2,$5,$5)`,
-        [scope.groupId, scope.empresaId, entregaId, product, scope.actorId],
+        [scope.groupId, scope.empresaId, entregaId, itemProduct, scope.actorId],
       );
       const manifest = await db.query<{ id: string }>(
         `INSERT INTO romaneios(group_id,empresa_id,numero,status,data_romaneio,motorista_nome,veiculo,placa,
@@ -86,6 +87,34 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       const probe = await db.query<{ rolsuper: boolean; rolbypassrls: boolean }>(
         'SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=$1', [probeRole]);
       assert.deepEqual(probe.rows[0], { rolsuper: false, rolbypassrls: false });
+      const noBaseline = await db.query<{ id: string }>(
+        `INSERT INTO produtos(group_id,empresa_id,descricao,unidade_medida_id)
+         VALUES($1,$2,'Produto sintético sem saldo inicial',$3) RETURNING id`,
+        [scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
+      );
+      unbalancedProduct = noBaseline.rows[0].id;
+      const blocked = await makeLinked(0, unbalancedProduct);
+      await assert.rejects(() => db.withTransaction(async (tx) => {
+        await pedido.onDespacho({ ...scope, pedidoIds: [blocked.pedidoId], romaneioId: blocked.romaneioId }, tx);
+        await stock.onDespacho({ ...scope, entregaIds: [blocked.entregaId] }, tx);
+      }), (error: unknown) => (error as { code?: string }).code === 'ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE');
+      assert.equal(await movementCount(blocked.entregaId), 0, 'missing opening balance cannot create movement');
+      const blockedEvents = await db.query<{ count: string }>(
+        'SELECT count(*)::text FROM expedicao_pedido_eventos WHERE pedido_id=$1', [blocked.pedidoId]);
+      assert.equal(blockedEvents.rows[0].count, '0', 'stock failure rolls back the order event');
+      const blockedAudit = await db.query<{ count: string }>(
+        `SELECT count(*)::text FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND entity IN ('Pedido','Estoque')
+           AND entity_id IN ($3,$4)`, [scope.groupId, scope.empresaId, blocked.pedidoId, unbalancedProduct]);
+      assert.equal(blockedAudit.rows[0].count, '0', 'stock failure cannot leave an audit success');
+      await db.query(
+        `INSERT INTO expedicao_estoque_saldos(group_id,empresa_id,produto_id,quantidade) VALUES($1,$2,$3,2)`,
+        [scope.groupId, scope.empresaId, unbalancedProduct],
+      );
+      await db.withTransaction(async (tx) => {
+        await pedido.onDespacho({ ...scope, pedidoIds: [blocked.pedidoId], romaneioId: blocked.romaneioId }, tx);
+        await stock.onDespacho({ ...scope, entregaIds: [blocked.entregaId] }, tx);
+      });
+      assert.equal(await movementCount(blocked.entregaId), 1, 'retry applies exactly one movement after isolated baseline');
       await db.query(
         `INSERT INTO expedicao_estoque_saldos(group_id,empresa_id,produto_id,quantidade)
          VALUES($1,$2,$3,10) ON CONFLICT (group_id,empresa_id,produto_id) DO UPDATE SET quantidade=10`,
@@ -207,6 +236,8 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         await tx.query('DELETE FROM expedicao_estoque_movimentos WHERE entrega_id = ANY($1::uuid[])', [created.entregas]);
         await tx.query('DELETE FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
           [scope.groupId, scope.empresaId, product]);
+        if (unbalancedProduct) await tx.query('DELETE FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+          [scope.groupId, scope.empresaId, unbalancedProduct]);
         await tx.query('DELETE FROM entrega_historico WHERE entrega_id = ANY($1::uuid[])', [created.entregas]);
         await tx.query('DELETE FROM entrega_itens WHERE entrega_id = ANY($1::uuid[])', [created.entregas]);
         await tx.query('DELETE FROM romaneio_entregas WHERE romaneio_id = ANY($1::uuid[])', [created.romaneios]);
@@ -217,6 +248,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         await tx.query('DELETE FROM pedidos WHERE id = ANY($1::uuid[])', [created.pedidos]);
       });
       if (otherCompanyProduct) await db.query('DELETE FROM produtos WHERE id=$1', [otherCompanyProduct]);
+      if (unbalancedProduct) await db.query('DELETE FROM produtos WHERE id=$1', [unbalancedProduct]);
       if (probeCreated) {
         await db.query(`REVOKE SELECT ON expedicao_estoque_saldos,expedicao_estoque_movimentos,expedicao_pedido_eventos FROM ${probeRole}`);
         await db.query(`REVOKE USAGE ON SCHEMA public FROM ${probeRole}`);
