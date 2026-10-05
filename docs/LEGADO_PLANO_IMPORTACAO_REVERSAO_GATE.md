@@ -157,12 +157,40 @@ restantes em staging) e `totalDiffCentavos` pós-rollback = 0 no escopo da fatia
 
 ---
 
-## 8. Próximo passo
+## 8. Coordenação Comercial/Cursor (canônico)
+
+Instrução do chat principal — obrigatória antes de atribuir falhas ao legado:
+
+> Investiguem a diferença entre a versão anterior do ERP novo e a VPS:
+> commit/imagem implantada, flags, configurações, rotas, layouts e permissões.
+> Entreguem uma lista de diferenças comprovadas e correções em branch própria,
+> coordenada com o legado. Não tratem toda ausência de tela ou cadastro como
+> problema de importação.
+
+**Legado não assume** que falta de tela/cadastro = falha de ETL/staging.
+Layouts e funcionalidades podem depender da versão implantada ou de configuração.
+
+Pedido mínimo ao Comercial/Cursor (evidência sanitizada):
+
+1. commit/SHA e imagem (API+SPA) na VPS;
+2. flags/opt-in e runtime efetivos;
+3. rotas/menus/layouts presentes vs esperados;
+4. permissões do perfil de teste (Grupo CPA / CPA Ferro e Aço / 3Z LTDA);
+5. lista de diferenças vs versão anterior + branch de correção.
+
+Somente após essa triagem, divergências de **dados** (contagens/centavos/quarentena)
+voltam ao escopo do gate de importação deste plano.
+
+---
+
+## 9. Próximo passo
 
 **Aguardar gate humano** (autorização explícita + HD montado + backup de destino
-restauro-testado). Até lá:
+restauro-testado) **e** evidências VPS do Comercial/Cursor (§8). Até lá:
 
 - manter `importAuthorized=false` e `operationalLoadAuthorized=false`;
 - não promover staging → operacional;
 - não editar o mapper Cursor #48;
-- preservar o backup original somente leitura.
+- não abrir tip-port / carga operacional;
+- preservar o backup original somente leitura;
+- não classificar ausência de tela/cadastro como falha de importação sem o diff VPS.

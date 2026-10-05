@@ -5,13 +5,37 @@
 - Programa Legado itens 1–5 preparados em fixture; carga operacional continua fail-closed.
 - BLOCKED: HD + autorização humana Onda 25.
 
+## CODEX LEGADO — coordenação Comercial/Cursor (canônico, 2026-10-05)
+
+Instrução do chat principal (obrigatória para Legado e para Comercial/Cursor):
+
+> Para Comercial/Cursor, acrescente: Investiguem a diferença entre a versão anterior do ERP novo e a VPS: commit/imagem implantada, flags, configurações, rotas, layouts e permissões. Entreguem uma lista de diferenças comprovadas e correções em branch própria, coordenada com o legado. Não tratem toda ausência de tela ou cadastro como problema de importação.
+
+Regras Legado derivadas:
+
+- Layouts/funcionalidades ausentes podem ser causa de **versão implantada**, flags, rotas, layouts ou RBAC — não de ETL/staging.
+- Legado **não** classifica ausência de tela/cadastro como falha de importação sem evidência Comercial/Cursor da VPS.
+- Coordenar evidências: Legado entrega contagens/staging/quarentena; Comercial/Cursor entrega diff versão anterior ↔ VPS.
+- `importAuthorized=false` / `operationalLoadAuthorized=false`; sem carga operacional; sem tip-port; Cursor #48 intocado.
+
+O que Legado precisa do Comercial/Cursor (para não confundir com importação):
+
+1. SHA/commit e tag/digest da **imagem** implantada na VPS (API + SPA).
+2. Runtime/`EXPECTED_RUNTIME` e `auth.mode` efetivos (`/api/v1/meta`).
+3. Flags HTTP/opt-in (Produto, Comercial, canais, etc.) e env relevantes **sem segredos**.
+4. Rotas/menus/layouts visíveis vs esperados no commit da imagem.
+5. Permissões/RBAC do perfil de teste (owner vs synth) no seletor Grupo/CPA/3Z.
+6. Lista de diferenças comprovadas vs versão anterior + branch própria de correção.
+
+
 ## CODEX LEGADO — plano importação/reversão gate (2026-10-05)
 
-- Branch: `codex/legado-origem-relatorios-392b` (itens 1–5 do programa).
+- Branch: `codex/legado-origem-relatorios-392b` @ `cb63c769fd5f03a52b7ec967018c8750dbfbf9fa` (itens 1–5 do programa).
 - Plano: `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` — pré-requisitos, ordem, reconciliação (centavos), rollback, critérios GO/NO-GO.
 - `importAuthorized=false` / `operationalLoadAuthorized=false`; promoção staging→operacional proibida até autorização humana.
 - Backup original somente leitura; sem PII/dumps no Git; Cursor #48 não editado.
-- Próximo: **aguardar gate humano** (HD montado + backup destino restauro-testado + ata de aprovação).
+- Coordenação Comercial/Cursor: ver bloco acima — ausência de tela ≠ falha de importação.
+- Próximo: **aguardar gate humano** + evidências VPS do Comercial/Cursor (HD montado + backup destino restauro-testado + ata).
 
 ## CODEX LEGADO — checkpoint staging isolado (2026-10-05)
 
