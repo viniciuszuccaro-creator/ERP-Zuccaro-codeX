@@ -1,3 +1,25 @@
+## CURSOR — parecer plano Legado #211 (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
+| Codex tip | `9057aeab` · espelho `0b35fb45` |
+| Parecer | `docs/PARECER_CURSOR_211_PLANO_SHA_9057aeab.md` — **APPROVED** |
+| Testes | plano gate **4/4 PASS** |
+| Flags | `importAuthorized=false` / `operationalLoadAuthorized=false` |
+| BLOCKED | HD real; carga operacional |
+| Próximo | gate humano Onda 25 |
+
+## CODEX LEGADO — plano importação/reversão entregue (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| SHA Codex tip | `9057aeab` |
+| Artefato | `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` |
+| Escopo | pré-requisitos, ordem A–H, reconciliação centavos, rollback, GO/NO-GO |
+| Mapper #48 | intocado |
+| BLOCKED | HD / promoção operacional |
+
 ## CODEX LEGADO — origem + vínculos + staging (2026-10-05)
 
 | Campo | Valor |

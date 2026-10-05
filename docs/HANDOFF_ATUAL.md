@@ -1,3 +1,10 @@
+## CURSOR — parecer plano import/reversão Legado (2026-10-05)
+
+- SHA Codex `9057aeab` · espelho [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) `0b35fb45`.
+- Parecer: `docs/PARECER_CURSOR_211_PLANO_SHA_9057aeab.md` — APPROVED (rascunho de gate).
+- Programa Legado itens 1–5 preparados em fixture; carga operacional continua fail-closed.
+- BLOCKED: HD + autorização humana Onda 25.
+
 ## CODEX LEGADO — plano importação/reversão gate (2026-10-05)
 
 - Branch: `codex/legado-origem-relatorios-392b` (itens 1–5 do programa).
