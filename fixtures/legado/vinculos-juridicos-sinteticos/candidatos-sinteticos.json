@@ -1,0 +1,46 @@
+{
+  "synthetic": true,
+  "note": "Candidatos sinteticos para dry-run do resolvedor. Sem PII. EMP03/pasta nao provam empresa.",
+  "candidatos": [
+    {
+      "id": "CAND-CPA-001",
+      "codigoEmpresaLegado": "1",
+      "entidade": "pedido",
+      "requerEmissor": true
+    },
+    {
+      "id": "CAND-3Z-002",
+      "codigoEmpresaLegado": "002",
+      "entidade": "nota_fiscal",
+      "requerEmissor": true
+    },
+    {
+      "id": "CAND-GRUPO-003",
+      "codigoSeletor": "003",
+      "entidade": "cliente"
+    },
+    {
+      "id": "CAND-GRUPO-COMO-EMISSOR",
+      "codigoEmpresaLegado": "003",
+      "entidade": "nota_fiscal",
+      "requerEmissor": true
+    },
+    {
+      "id": "CAND-SO-PASTA-EMP03",
+      "pasta": "EMP03",
+      "pista": "TID_EMP03"
+    },
+    {
+      "id": "CAND-INFERIR-PASTA",
+      "pasta": "BACKUP/EMP03",
+      "inferirPorPasta": true,
+      "codigoEmpresaLegado": "001"
+    },
+    {
+      "id": "CAND-CODIGO-004",
+      "codigoEmpresaLegado": "004",
+      "entidade": "pedido",
+      "requerEmissor": true
+    }
+  ]
+}

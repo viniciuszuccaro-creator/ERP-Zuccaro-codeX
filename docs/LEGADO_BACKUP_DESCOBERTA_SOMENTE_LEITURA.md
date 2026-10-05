@@ -29,6 +29,13 @@
   `scripts/legado/validar-origem-relatorios-privados.mjs`
   - Fixture: `fixtures/legado/origem-relatorios-sinteticos/`
   - Teste: `tests/legado-origem-relatorios-privados.test.js`
+- Vínculos por identidade jurídica comprovada:
+  `scripts/legado/resolver-vinculo-juridico-legado.mjs`
+  - Fixture: `fixtures/legado/vinculos-juridicos-sinteticos/`
+  - Teste: `tests/legado-resolver-vinculo-juridico.test.js`
+  - CPA Ferro e Aço / 3Z LTDA = empresas operacionais (emissoras)
+  - Grupo CPA (`003`) = agrupamento, **não** emissor
+  - `EMP03`/pasta/`TID_EMP03` **nunca** provam empresa
 - Mapper sintético (#48, Cursor): `scripts/legado/mapear-registro-sintetico.mjs`
   — **não editar neste lote Codex**
 
@@ -98,9 +105,18 @@ TabelaPreco, etc.). Não criar cadastro paralelo. Campos de migração já
 previstos em `migracaoErpPolicy.js` (`origem_migracao`, `lote_migracao`,
 `status_migracao`, strip de segredos).
 
-Vínculos empresariais (próximo item do programa Codex Legado): CPA Ferro e Aço
-e 3Z LTDA = empresas operacionais; Grupo CPA = agrupamento. Não inferir
-empresa por pasta/`EMP03`/Grupo 003.
+Vínculos empresariais (item 2 — código + fixture):
+
+```bash
+node scripts/legado/resolver-vinculo-juridico-legado.mjs \
+  --contrato fixtures/legado/vinculos-juridicos-sinteticos/contrato-aliases-aprovados.json \
+  --candidatos fixtures/legado/vinculos-juridicos-sinteticos/candidatos-sinteticos.json
+```
+
+CPA Ferro e Aço / 3Z LTDA = empresas operacionais; Grupo CPA (`003`) =
+agrupamento (não emissor). `EMP03`/pasta não prova empresa. O mapa privado
+`legacy-approved-business-alias-map.json` do HD permanece fora do Git;
+`importAuthorized=false`.
 
 ---
 
@@ -112,4 +128,6 @@ empresa por pasta/`EMP03`/Grupo 003.
 | Inventário real (hashes do HD) | **pendente** — requer máquina com HD ou montagem autorizada |
 | Validador de origem (código + fixture) | **preparado** — `validar-origem-relatorios-privados.mjs` + fixture sintética |
 | Revalidação privada dos relatórios reais em `04_REPORTS` | **BLOCKED** — raiz privada indisponível neste VM |
-| Staging / importação operacional | **bloqueado** (Onda 25 / gate) |
+| Resolvedor jurídico CPA/3Z/Grupo (código + fixture) | **preparado** — sem inferência por pasta/`EMP03`/`003` como emissor |
+| Mapa privado real de aliases (hashes CNPJ/UUID do HD) | **BLOCKED** — arquivo só em `04_REPORTS` do HD |
+| Staging / importação operacional | **bloqueado** (Onda 25 / gate) — próximo item do programa |

@@ -1,10 +1,11 @@
-## CODEX LEGADO — origem relatórios (2026-10-05)
+## CODEX LEGADO — checkpoint vínculos jurídicos (2026-10-05)
 
-- Agente [Codex Legado staging evidência](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9): item 1 @ `a370e1d9`.
-- Branches: `codex/legado-origem-relatorios-392b` + PR espelho `cursor/legado-origem-relatorios-392b` (#211).
-- Fixture + script validação (fonte/hash/extrator); mapper #48 intocado; `operationalImportAuthorized=false`.
-- BLOCKED: HD backup ausente neste VM (`LEGACY_REPORTS_ROOT_UNAVAILABLE`).
-- Retomado item 2: vínculos jurídicos (CPA Ferro e Aço / 3Z LTDA operacionais; Grupo CPA = agrupamento).
+- Agente [Codex Legado staging evidência](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) · SHA Codex `26c52331` · PR espelho [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
+- Item 1 (origem relatórios): `validar-origem-relatorios-privados.mjs` + fixture; HD real BLOCKED neste VM.
+- Item 2 (identidade jurídica): `resolver-vinculo-juridico-legado.mjs` + contrato sintético — CPA Ferro e Aço / 3Z LTDA = operacionais; Grupo CPA (`003`) = agrupamento não emissor; EMP03/pasta não prova empresa; `importAuthorized=false`.
+- Cursor #48 (`mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`) não editado.
+- Próximo: staging isolado com deduplicação/dependências/reconciliação por empresa; quarentena sem prova; sem carga operacional sem gate.
+- Mapa privado real de aliases continua só no HD (`04_REPORTS`); não publicar PII/dumps.
 
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
