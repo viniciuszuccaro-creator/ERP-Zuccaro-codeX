@@ -1,13 +1,13 @@
-<<<<<<< HEAD
-## CURSOR — revalidação #207+#209 @ `aaf29c19` (2026-10-05)
+## CURSOR — revalidação #207+#209 (2026-10-05)
 
 | Campo | Valor |
 | --- | --- |
 | PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
-| Parecer | APPROVED + decimal PG + teste estados |
-| Testes focados | Central360/margem/avista **22/22 PASS** |
+| Codex tip | `284a9871` |
+| Parecer | APPROVED + decimal/estados |
+| PGlite ledger | 12 pass / 1 skip (`DATABASE_URL`) |
 | PENDENTE | runtime11 PG real; VPS |
-=======
+
 ## CODEX — gap PGlite ledger + decimal (sem DATABASE_URL) (2026-10-05)
 
 | Campo | Valor |
@@ -18,7 +18,6 @@
 | Mudança | `to_char` 6 casas; teste ignora EM_ABERTO/CANCELADO; PGlite ledger concorrência/retry/parcial/devolução/cancel/rollback; docs DEV |
 | Não feito | `runtime11-expedicao-persistent-postgres` (sem DATABASE_URL); VPS; tip-* Cursor |
 | Próximo | DATABASE_URL isolado → persistent-postgres; Cursor outbox/DAM (#202/#203) independente |
->>>>>>> origin/codex/comercial-expedicao-cliente360-207-209-20261005
 
 ## CODEX Comercial 360 — compose #207+#209 candidata (2026-10-05)
 
