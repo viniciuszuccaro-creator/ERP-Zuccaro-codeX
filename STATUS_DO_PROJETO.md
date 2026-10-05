@@ -34,7 +34,7 @@ Agente [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) 
 
 | ID | Bloqueio | Como reproduzir | Gate |
 | --- | --- | --- | --- |
-| B1 | `DATABASE_URL` ausente | `echo $DATABASE_URL` vazio; `runtime11-expedicao-persistent-postgres` skip | PG isolado |
+| B1 | `DATABASE_URL` ausente / sem credencial | `DATABASE_URL` vazio; `127.0.0.1:5432` escuta mas `fe_sendauth: no password`; docker ausente; runtime11 skip | PG isolado + senha |
 | B2 | Suíte PG real Pedido→…→cancel | depende B1 | runtime11 |
 | B3 | Telas reais SPA×API×PG | ports 3080/5173 indisponíveis neste VM (`curl` 000) | ERP DEV sob gate |
 | B4 | VPS / Auth / publisher externo | sem SSH/credencial/autorização | gates próprios |
