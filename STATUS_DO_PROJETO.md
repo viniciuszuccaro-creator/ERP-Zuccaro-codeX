@@ -10,14 +10,15 @@
 | #213 | espelho Cursor — **não** tip-port; código funcional de #212 aplicado na Codex |
 | #214 | APPROVED só o gate #212 — **não** aprova pacote inteiro |
 | Mudança | `runtime11-expedicao-persistent-postgres.test.ts`: produto sem saldo → rejeita despacho; 0 movimentos/eventos/audit; retry após INSERT saldo isolado = 1 movimento; asserts gap 032 + trava 026; cleanup unbalanced |
+| Item independente | PGlite espelho do gate baseline (#212) no ledger canônico — prova sem DATABASE_URL; `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` tip candidata |
 | Ledger | fonte oficial `expedicao_estoque_saldos`; reconciliação groupId/empresaId/produto; sem inventar saldo abertura; 037 sem INSERT saldo |
 | Migrations | 001–031, **gap sem 032**, 033–037; trava histórica 026 intacta |
 | DATABASE_URL | ausente neste ambiente → fluxo PG real **BLOCKED** (skip path sanitizado PASS; não inventar sucesso) |
-| Testes locais | runtime01+compose+persistent skip: 15 pass / 0 fail / 3 skip; PGlite Expedição: 7 pass / 0 fail; `git diff --check` PASS |
-| Tip remoto | `0c00318d` |
+| Testes locais | runtime01+compose+persistent skip: 15 pass / 0 fail / 3 skip; PGlite Expedição (+gate baseline): 6 pass / 0 fail; `git diff --check` PASS |
+| Tip remoto | `0c00318d` (+ docs tip / PGlite espelho no HEAD) |
 | Status | CONSOLIDADO (código); PG E2E real aguarda URL isolada |
 | Fora | tip-port #213; inventar 032/saldo; merge main; VPS/Auth/publisher; outbox/DAM tip-* |
-| Próximo | CI tip `0c00318d`; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo; item independente fora de tip-* |
+| Próximo | CI tip; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo |
 
 ## CODEX — asserts gap 032 + evidência skip DATABASE_URL (2026-10-05)
 
