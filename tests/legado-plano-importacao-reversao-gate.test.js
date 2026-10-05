@@ -39,8 +39,9 @@ test('plano cobre pre-requisitos, ordem, reconciliacao, rollback e aceite', () =
   assert.match(text, /carregar-staging-isolado-legado\.mjs/);
   assert.match(text, /resolver-vinculo-juridico-legado\.mjs/);
   assert.match(text, /validar-origem-relatorios-privados\.mjs/);
-  assert.match(text, /Não tratem toda ausência de tela ou cadastro como\s+problema de importação/i);
+  assert.match(text, /Não tratem toda ausência de tela ou cadastro como[\s>]+problema de importação/i);
   assert.match(text, /tip-port/);
+  assert.match(text, /ausência de tela\/cadastro como falha de importação/i);
 });
 
 test('plano nao contem PII tipica nem autoriza mapper Cursor', () => {

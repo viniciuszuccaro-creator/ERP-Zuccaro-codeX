@@ -167,7 +167,7 @@ Instrução do chat principal — obrigatória antes de atribuir falhas ao legad
 > coordenada com o legado. Não tratem toda ausência de tela ou cadastro como
 > problema de importação.
 
-**Legado não assume** que falta de tela/cadastro = falha de ETL/staging.  
+**Legado não assume** que falta de tela/cadastro = falha de ETL/staging.
 Layouts e funcionalidades podem depender da versão implantada ou de configuração.
 
 Pedido mínimo ao Comercial/Cursor (evidência sanitizada):
