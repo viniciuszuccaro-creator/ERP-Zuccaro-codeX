@@ -1,3 +1,12 @@
+## CURSOR — ordem integração candidata + bloqueios (2026-10-05)
+
+- Autoritativa: `codex/comercial-expedicao-cliente360-207-209-20261005` `00d7add2` · espelho #213 `b0b983aa`.
+- Encaminhado [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a): consolidar #212 (`a37dca55`) — ainda ausente.
+- Ordem PRs: #207 → #209+#210 (já) → #212 (pendente) → #213 SHA final → parecer Cursor novo.
+- Supersedir após compose: #214 (parecer-only), #210/#209 isoladas, #212 isolada; preservar pareceres.
+- Bloqueios B1–B7 em STATUS (DATABASE_URL, PG real, telas 3080/5173, VPS, saldo abertura, Legado HD, #212 fora).
+- #214 **não** aprova o pacote #213. Margem/avista/Cliente360: 19/19 PASS neste tip.
+
 ## CURSOR — CI tip #213 SUCCESS (2026-10-05)
 
 - Tip `1b1def8e` · 7 checks SUCCESS (merge asserts gap 032 + ledger/skip path).

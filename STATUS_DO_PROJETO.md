@@ -1,3 +1,60 @@
+## CURSOR — ordem integração + bloqueios candidata Comercial (2026-10-05)
+
+### Branch funcional autoritativa
+`codex/comercial-expedicao-cliente360-207-209-20261005` tip `00d7add2` · espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) `b0b983aa` (CI SUCCESS).  
+Agente [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) encaminhado: consolidar **#212** na autoritativa (ainda ausente).
+
+### Ordem de integração das PRs (merge humano)
+
+| Ordem | PR | SHA tip | Papel | Ação |
+| --- | --- | --- | --- | --- |
+| 1 | [#207](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/207) | `506a5d35` | base Expedição/Pedido persistente | ancestral da candidata |
+| 2 | [#209](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/209) + [#210](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/210) | `bb3ef069` / `cdc47456` | Cliente360 topProducts + decimal/estados | **já** semântico na candidata |
+| 3 | [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) | `a37dca55` | gate saldo inicial fail-closed | **PENDENTE** consolidar na autoritativa |
+| 4 | candidata [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) | `b0b983aa`→SHA pós-#212 | pacote único homologável | revisar SHA final (não transferir #214) |
+| 5 | [#205](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/205)/[#206](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/206) | margem/à vista | já compostos semanticamente | não tip-port |
+
+### Espelhos a supersedir (preservar evidências/pareceres)
+
+| Espelho | Motivo | Evidência a preservar |
+| --- | --- | --- |
+| [#214](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/214) | só parecer #212; código vai para candidata | `docs/PARECER_CURSOR_212_SHA_a37dca55.md` |
+| [#210](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/210) | decimal já na candidata | `docs/PARECER_CURSOR_209_*` / commits `cdc47456` |
+| [#209](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/209) isolada | delta absorvido | tip `bb3ef069` |
+| [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) isolada pós-compose | supersedida pela candidata pós-merge | commits `bee11785`/`a37dca55` |
+
+**Não supersedir ainda:** #202/#203 (outbox/DAM — trilhas independentes); #211 Legado.
+
+### Pareceres (não transferíveis entre SHAs)
+
+- #214 APPROVED **≠** aprovação do pacote #213 completo.
+- Revalidação #207+#209 @ `aaf29c19` / tip atual exige **novo parecer no SHA pós-consolidação #212**.
+
+### Bloqueios reproduzíveis (lista única)
+
+| ID | Bloqueio | Como reproduzir | Gate |
+| --- | --- | --- | --- |
+| B1 | `DATABASE_URL` ausente | `echo $DATABASE_URL` vazio; `runtime11-expedicao-persistent-postgres` skip | PG isolado |
+| B2 | Suíte PG real Pedido→…→cancel | depende B1 | runtime11 |
+| B3 | Telas reais SPA×API×PG | ports 3080/5173 indisponíveis neste VM (`curl` 000) | ERP DEV sob gate |
+| B4 | VPS / Auth / publisher externo | sem SSH/credencial/autorização | gates próprios |
+| B5 | Saldo abertura operacional | não inventar; #212 só testa ausência | reconciliação humana |
+| B6 | Legado HD / carga Onda 25 | HD ausente; `importAuthorized=false` | #211 + gate humano |
+| B7 | #212 ainda fora da candidata | `merge-base --is-ancestor a37dca55 candidata` → false | Comercial consolidar |
+
+### Checagens Cursor neste tip (`b0b983aa`)
+
+| Item | Resultado |
+| --- | --- |
+| Cliente360 `topProducts` + `to_char` 6 casas | presente |
+| Margem/desconto/à vista segregados | testes focados **19/19 PASS** |
+| Ledger fonte oficial doc | `expedicao_estoque_saldos` (EXPEDICAO_PORTAS) |
+| Telas reais | **BLOCKED** B3 |
+| Outbox #203 / DAM #202 | CI SUCCESS; publisher externo B4 |
+
+### Próximo Cursor
+Revisar SHA final após Comercial incorporar #212; prova telas só com ERP+PG; não tip-port.
+
 ## CURSOR — CI tip #213 `1b1def8e` SUCCESS (2026-10-05)
 
 | Campo | Valor |
