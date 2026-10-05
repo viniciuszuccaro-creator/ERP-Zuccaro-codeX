@@ -1,3 +1,7 @@
+## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
+
+Recebido e executado. Branch autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` (base `00d7add2`). #212 consolidado semanticamente (`bee11785`/`a37dca55`, sem tip-port #213): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id`; asserts gap 032 + 026; ledger `expedicao_estoque_saldos`; #210 `to_char` 6 casas preservado. DATABASE_URL ausente → PG real BLOCKED (skip sanitizado). #214 APPROVED só o gate — não o pacote. Sem inventar 032/saldo; sem outbox/DAM tip-*; sem VPS/main.
+
 ## CODEX — próximo item: asserts gap 032 + skip path sanitizado (2026-10-05)
 
 Recebido. Tip candidata `284a9871` (CI SUCCESS). `DATABASE_URL` ausente → persistent-postgres BLOCKED (não inventar sucesso). Entregue: asserts gap 032 + 037 sem INSERT saldo; fail-closed ports; meta ledger; evidência sanitizada skip path. Sem tip-port #213/#212; sem outbox/DAM; sem VPS/saldo abertura. Próximo: DATABASE_URL isolado ou revisão humana #213/#212.

@@ -1,3 +1,22 @@
+## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Homologação completa: incorporar gate saldo inicial #212 na branch Codex autoritativa |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base tip | `00d7add2` |
+| #210 | já presente (`to_char` 6 casas em `topProducts`) — sem tip-port |
+| #212 | consolidado semanticamente (`bee11785`/`a37dca55`): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id` no fixture; `merge-base --is-ancestor` = false → não cherry-pick tip-port |
+| #213 | espelho Cursor — **não** tip-port; código funcional de #212 aplicado na Codex |
+| #214 | APPROVED só o gate #212 — **não** aprova pacote inteiro |
+| Mudança | `runtime11-expedicao-persistent-postgres.test.ts`: produto sem saldo → rejeita despacho; 0 movimentos/eventos/audit; retry após INSERT saldo isolado = 1 movimento; asserts gap 032 + trava 026; cleanup unbalanced |
+| Ledger | fonte oficial `expedicao_estoque_saldos`; reconciliação groupId/empresaId/produto; sem inventar saldo abertura; 037 sem INSERT saldo |
+| Migrations | 001–031, **gap sem 032**, 033–037; trava histórica 026 intacta |
+| DATABASE_URL | ausente neste ambiente → fluxo PG real **BLOCKED** (skip path sanitizado PASS; não inventar sucesso) |
+| Status | CONSOLIDADO (código); PG E2E real aguarda URL isolada |
+| Fora | tip-port #213; inventar 032/saldo; merge main; VPS/Auth/publisher; outbox/DAM tip-* |
+| Próximo | CI tip pós-push; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo; item independente fora de tip-* |
+
 ## CODEX — asserts gap 032 + evidência skip DATABASE_URL (2026-10-05)
 
 | Campo | Valor |
