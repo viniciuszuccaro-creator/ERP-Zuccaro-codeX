@@ -128,6 +128,22 @@ Checklist reprodutível **sem** executar VPS/Auth/publisher sem autorização:
 
 **Estado atual:** preparação documentada; execução VPS/DEV real **BLOCKED** até gate explícito.
 
+### Evidência sanitizada — skip path `DATABASE_URL` (runtime11)
+
+Quando `DATABASE_URL` está ausente, o teste `R11 persistent-postgres: evidência sanitizada do skip path` **passa** documentando:
+
+```json
+{
+  "databaseUrlConfigured": false,
+  "persistentPostgresExecutable": false,
+  "blockedReason": "DATABASE_URL_NOT_AVAILABLE",
+  "doesNotInventOpeningBalance": true,
+  "doesNotInventMigration032": true
+}
+```
+
+O teste de fluxo completo permanece `skip` (não é sucesso silencioso). Com URL isolada autorizada, o mesmo arquivo executa despacho/retry/parcial/devolução/cancelamento/rollback + probe RLS. **Nunca** logar a connection string.
+
 ### Evidência local sem `DATABASE_URL` (candidata Codex)
 
 | Prova | Resultado |

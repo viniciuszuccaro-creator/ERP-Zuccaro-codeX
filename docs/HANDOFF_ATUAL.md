@@ -1,17 +1,25 @@
+## CURSOR — merge Comercial `00d7add2` (2026-10-05)
+
+- Incorporado tip Codex `00d7add2` no espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) sem tip-port cego.
+- Asserts: único gap 032; 037 sem INSERT saldo; `EXPEDICAO_PERSISTENT_PORTS` fail-closed sem URL; evidência sanitizada skip runtime11.
+- Agente [Comercial próximo independente](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregue; Legado [plano importação/reversão](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) já espelhado no #211.
+- PENDENTE: DATABASE_URL → runtime11; VPS/Auth/publisher.
+
 ## CURSOR — checkpoint pacotes (2026-10-05)
 
-- #213 tip `c4cfeca5` (PGlite ledger + docs limpos).
 - #214 parecer #212 saldo inicial APPROVED @ `1932b868`.
 - #211 plano Legado APPROVED @ `b78258e8`; HD/carga BLOCKED.
-- #202/#203 CI SUCCESS — sem gap de código independente além de publisher externo/gates.
-- Comercial agente [próximo independente](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) retomado.
+- #202/#203 CI SUCCESS — publisher externo BLOCKED.
 
 ## CURSOR — revalidação HEAD integrado #207+#209 (2026-10-05)
 
-- SHA Codex tip `284a9871` · PR espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
 - Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal/estados.
-- Agente [Codex Comercial 360 homolog](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a): PGlite ledger 037 (12 pass / 1 skip) sem tip-port.
-- PENDENTE: PG real `runtime11` sem `DATABASE_URL`; VPS BLOCKED.
+- PGlite ledger 037 + asserts gap 032 no tip pós-`00d7add2`.
+
+## CODEX — próximo item: asserts gap 032 + skip path sanitizado (2026-10-05)
+
+Recebido. Tip candidata `284a9871` (CI SUCCESS). `DATABASE_URL` ausente → persistent-postgres BLOCKED (não inventar sucesso). Entregue: asserts gap 032 + 037 sem INSERT saldo; fail-closed ports; meta ledger; evidência sanitizada skip path. Sem tip-port #213/#212; sem outbox/DAM; sem VPS/saldo abertura. Próximo: DATABASE_URL isolado ou revisão humana #213/#212.
+
 
 ## CODEX — PGlite ledger + decimal/estados (2026-10-05, pós-aaf29c19)
 

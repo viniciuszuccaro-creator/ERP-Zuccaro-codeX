@@ -1,9 +1,20 @@
+## CURSOR — merge tip Comercial `00d7add2` no #213 (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
+| Codex tip | `00d7add2` |
+| Incorporado | gap 032 assert; 037 sem INSERT saldo; fail-closed ports; skip path sanitizado |
+| Parecer prévio | APPROVED (#207+#209) + PGlite ledger; asserts reforçam homologação |
+| Relacionados | #214/#212 APPROVED; #211 Legado APPROVED; #202/#203 CI SUCCESS |
+| PENDENTE | runtime11 com DATABASE_URL; VPS |
+
 ## CURSOR — pacotes paralelos fechados (2026-10-05)
 
 | Pacote | PR / SHA | Parecer | Estado |
 | --- | --- | --- | --- |
-| #207+#209 candidata | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) `c4cfeca5` | APPROVED + PGlite ledger | CI tip em andamento |
-| Gate saldo inicial | Codex [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) / espelho [#214](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/214) `1932b868` | APPROVED | CI Codex SUCCESS |
+| #207+#209 candidata | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) | APPROVED + PGlite + asserts 032 | tip pós-`00d7add2` |
+| Gate saldo inicial | Codex [#212](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/212) / espelho [#214](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/214) `1932b868` | APPROVED | CI SUCCESS |
 | Legado 1–5 | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) `b78258e8` | plano APPROVED | HD/carga BLOCKED |
 | Outbox Onda 15 | [#203](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/203) `38bbcc44` | — | CI SUCCESS; publisher externo BLOCKED |
 | DAM Onda 1 | [#202](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/202) `de304ecc` | — | CI SUCCESS; pub externa BLOCKED |
@@ -15,10 +26,25 @@ PENDENTE humano: merge stacks; DATABASE_URL runtime11; gate Onda 25 Legado; VPS/
 | Campo | Valor |
 | --- | --- |
 | PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
-| Codex tip | `284a9871` |
-| Parecer | APPROVED + decimal/estados |
+| Codex tip | `00d7add2` (pós-`284a9871`) |
+| Parecer | APPROVED + decimal/estados + asserts gap 032 |
 | PGlite ledger | 12 pass / 1 skip (`DATABASE_URL`) |
 | PENDENTE | runtime11 PG real; VPS |
+
+## CODEX — asserts gap 032 + evidência skip DATABASE_URL (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Item independente pós-PGlite: asserts migration gap 032 / ledger oficial + evidência sanitizada skip runtime11; fail-closed ports sem DATABASE_URL |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | `284a9871` |
+| Fora de escopo | tip-* Cursor, #212 saldo inicial (branch própria), outbox/DAM, VPS, inventar 032/saldo |
+| Mudança | runtime01: gap 032 + 037 sem INSERT saldo; fail-closed EXPEDICAO_PERSISTENT_PORTS; compose sequência 025-037; meta ledger 037; evidência sanitizada skip DATABASE_URL |
+| Testes | runtime01+compose+http+persistent skip-path: 20 pass / 0 fail / 3 skip |
+| DATABASE_URL | ausente → persistent fluxo completo BLOCKED (evidência sanitizada PASS) |
+| Fora | tip-*, #212, outbox/DAM, VPS, inventar 032/saldo |
+| Próximo | DATABASE_URL isolado → runtime11 persistent; ou revisão #213/#212; Cursor outbox/DAM independente |
+
 
 ## CODEX — gap PGlite ledger + decimal (sem DATABASE_URL) (2026-10-05)
 
