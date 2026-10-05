@@ -1,3 +1,7 @@
+## CODEX — diagnóstico ERP novo × VPS layouts/flags (2026-10-05)
+
+Recebido. Branch própria `codex/erp-novo-vps-layout-diff-20261005` (não toca candidata `899ec9b3`). Primeira ação: inventário comprovado em `docs/OPERACAO_DEV_VPS.md` — commit/imagem R07B vs main/candidata, migrations 015 vs 024 vs 037, flags `VITE_*`/`EXPEDICAO_*`, pilotos HTTP, rotas (46 páginas iguais), RBAC/Auth. VPS ao vivo BLOCKED (MCP timeout). Legado: não tratar ausência de tela/cadastro só como importação.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

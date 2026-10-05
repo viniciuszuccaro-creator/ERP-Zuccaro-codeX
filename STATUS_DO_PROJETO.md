@@ -1,3 +1,18 @@
+## CODEX — diagnóstico ERP novo × VPS (layouts/flags/RBAC) (2026-10-05)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Separar gap de versão/config/flags/RBAC de problema de importação Legado |
+| Branch | `codex/erp-novo-vps-layout-diff-20261005` (base `main` `d02cd012`) |
+| Candidata preservada | tip `899ec9b3` — **não** tip-portada / não editada |
+| Recebido | sim — primeira ação: inventário local + doc em `docs/OPERACAO_DEV_VPS.md` |
+| VPS ao vivo | **BLOCKED** (Hostinger MCP list VM timeout; sem SSH/docker inspect neste lote) |
+| Diffs comprovados | imagem R07B `ca0bc5f3` vs main `d02cd012` (meta 08B); migrations VPS 001–015 vs main 024 vs tip 037; pilotos HTTP main≠tip; flags Expedição/Produto/Cliente360 opt-in; páginas 46=46; Auth/owner APPLY abortado |
+| Legado | NÃO atribuir telas vazias só a importação — ver tabela em OPERACAO_DEV_VPS |
+| Fora | merge main; mutação VPS; tip-port #213; outbox/DAM tip-* |
+| Status | INVENTÁRIO LOCAL ENTREGUE; leitura VPS pendente de gate |
+| Próximo | gate leitura VPS (meta/image/migrations/flags) ou correções pontuais na branch desta diag |
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
