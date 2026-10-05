@@ -13,9 +13,11 @@
 | Ledger | fonte oficial `expedicao_estoque_saldos`; reconciliação groupId/empresaId/produto; sem inventar saldo abertura; 037 sem INSERT saldo |
 | Migrations | 001–031, **gap sem 032**, 033–037; trava histórica 026 intacta |
 | DATABASE_URL | ausente neste ambiente → fluxo PG real **BLOCKED** (skip path sanitizado PASS; não inventar sucesso) |
+| Testes locais | runtime01+compose+persistent skip: 15 pass / 0 fail / 3 skip; PGlite Expedição: 7 pass / 0 fail; `git diff --check` PASS |
+| Tip remoto | `0c00318d` |
 | Status | CONSOLIDADO (código); PG E2E real aguarda URL isolada |
 | Fora | tip-port #213; inventar 032/saldo; merge main; VPS/Auth/publisher; outbox/DAM tip-* |
-| Próximo | CI tip pós-push; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo; item independente fora de tip-* |
+| Próximo | CI tip `0c00318d`; revisão Cursor do SHA; DATABASE_URL isolado → runtime11 completo; item independente fora de tip-* |
 
 ## CODEX — asserts gap 032 + evidência skip DATABASE_URL (2026-10-05)
 
