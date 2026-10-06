@@ -1,3 +1,15 @@
+## CURSOR — parecer #221 @ `690e44c7` + divisão pacotes (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#221](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/221) |
+| Parecer | `docs/PARECER_CURSOR_221_SHA_690e44c7.md` — **APPROVED COM RESSALVAS** |
+| Testes | writer-guard **3/3 PASS** |
+| Consolidar em | candidata tip `7ea1519a`/`06ed1141` (preservar CLI) |
+| Residuais | useFluxoPedido · Comprovante · LogisticaReversa local |
+| Outbox paralelo | #203 limpeza tenant `5f41e644` |
+| Telas autenticadas / PG | BLOCKED Bearer / DATABASE_URL |
+
 ## CODEX — unidade canônica + #219 após revisão Cursor (2026-10-06)
 
 | Campo | Valor |

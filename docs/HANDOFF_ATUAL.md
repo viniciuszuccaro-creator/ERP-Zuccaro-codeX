@@ -1,3 +1,16 @@
+## CURSOR — divisão 3 pacotes + parecer #221 (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Estoque/ledger/#219/#221 | [Comercial](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | candidata, ports, Pedidos*Tab após merge | outbox/DAM Cursor |
+| Identidade/CADESP/staging | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | scripts/legado, fixtures sintéticas | mapper #48 |
+| Revisão #221 + outbox/DAM | Cursor | pareceres; #203 `ProdutoRelationsDamSection` | router candidata |
+
+- Parecer #221: `docs/PARECER_CURSOR_221_SHA_690e44c7.md` — APPROVED COM RESSALVAS @ `690e44c7`.
+- Base #221 = `7cbe3a30` (sem CLI `06ed1141`) — consolidar sobre tip candidata sem perder reconcile:stock.
+- Residuais: `useFluxoPedido`, Comprovante/LogisticaReversa (parcial).
+- Outbox #203 tip Cursor: limpeza métricas na troca de Empresa (`1dc83941`/`5f41e644`).
+
 ## CODEX — unidade canônica e #219 na candidata (2026-10-06)
 
 Recebido e executado (CODEX COMERCIAL 360). Candidata incorporou #219 (`ec8fe57a`) e o contrato de unidade canônica (ressalva #218): PK sem unidade, não soma, porta `ESTOQUE_UNIDADE_CANONICA_*`. #215 permanece. Snapshots reais BLOCKED (URL/VPS). Fixture sanitizada compared=0. Trava 026; gap 032. Sem tip-port #213/outbox/DAM; sem promoção 3080.
