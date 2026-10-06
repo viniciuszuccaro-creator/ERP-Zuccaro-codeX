@@ -40,9 +40,35 @@ test('cortes UTC equivalentes com precisão textual diferente passam; calendári
   assert.ok(codes(snapshot([row()], '2026-02-30T12:00:00Z'), snapshot([row()])).includes('INVALID_SNAPSHOT'));
 });
 
+test('unidades distintas do mesmo produto não são somadas (chave sem unidade = DUPLICATE_KEY)', () => {
+  assert.deepEqual(
+    codes(snapshot([row(), row({ unidadeId: 't', evidenceId: 'synthetic-fixture-2' })]), snapshot([row()])),
+    ['DUPLICATE_KEY'],
+  );
+  const report = reconcileExpedicaoStock(
+    snapshot([row({ quantidade: '1' }), row({ unidadeId: 't', quantidade: '2', evidenceId: 'synthetic-fixture-2' })]),
+    snapshot([row({ quantidade: '3' })]),
+  );
+  assert.equal(report.ready, false);
+  assert.ok(report.issues.some((issue) => issue.code === 'DUPLICATE_KEY'));
+});
+
 test('linhas sem evidência, quantidade negativa/imprecisa e corte inválido falham fechado', () => {
   assert.ok(codes(snapshot([row({ evidenceId: '' })]), snapshot([])).includes('INVALID_ROW'));
   assert.ok(codes(snapshot([row({ quantidade: '-1' })]), snapshot([])).includes('INVALID_ROW'));
   assert.ok(codes(snapshot([row({ quantidade: '1.0000001' })]), snapshot([])).includes('INVALID_ROW'));
   assert.ok(codes(snapshot([],'not-a-date'), snapshot([])).includes('INVALID_SNAPSHOT'));
+});
+
+test('fixture sanitizada não afirma extração real nem ready', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { dirname, join } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const fixture = JSON.parse(readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'fixtures/expedicao-stock-reconciliation-sanitized.json'),
+    'utf8',
+  ));
+  assert.equal(fixture.counts.compared, 0);
+  assert.equal(fixture.doesNotInventOpeningBalance, true);
+  assert.equal(fixture.provenance.origin, 'NOT_EXTRACTED');
 });

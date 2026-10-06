@@ -60,6 +60,7 @@ export function reconcileExpedicaoStock(source: StockSnapshot, ledger: StockSnap
         return;
       }
       const key = `${row.groupId}/${row.empresaId}/${row.produtoId}`;
+      // Ledger PK has no unit: two units for the same product cannot be summed.
       if (found.has(key)) {
         issues.push({ code: 'DUPLICATE_KEY', side, key });
         return;

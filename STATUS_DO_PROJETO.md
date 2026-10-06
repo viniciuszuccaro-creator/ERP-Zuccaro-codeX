@@ -4,11 +4,18 @@
 |---|---|
 | Destinatário | CODEX COMERCIAL 360 |
 | Recebido | sim — continuar nesta sessão |
-| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` tip `f514c2e3` |
-| #215 | já na candidata (`5837b6e5`/`7f0dc127`) — parecer #218 APPROVED COM RESSALVA unidade |
-| #219 | `ec8fe57a` — revisão Cursor em curso; incorporar sem tip-port #213 |
-| Primeira ação | contrato unidade canônica (não somar; PK sem unidade) + cherry-pick #219 |
-| Status | EM EXECUÇÃO |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | `f514c2e3` (#215 já ancestral) |
+| #215 | validada na candidata; parecer #218 APPROVED COM RESSALVA unidade — **endereçada** |
+| #219 | cherry-pick `20793df9`/`d8ca9488`/`ec8fe57a` (comparador offline). Revisão Cursor humana ainda em curso no momento da incorporação; bot Codex COMMENTED sem findings |
+| Unidade | PK ledger permanece (group,empresa,produto); unidade canônica = `produtos.unidade_medida_id`; 017 já trava pedido_itens; porta `ESTOQUE_UNIDADE_CANONICA_*`; comparador `DUPLICATE_KEY` não soma unidades |
+| Snapshots reais | **BLOCKED** — DATABASE_URL ausente + VPS MCP timeout. Fixture sanitizada `server/tests/fixtures/expedicao-stock-reconciliation-sanitized.json` (compared=0, NOT_EXTRACTED) |
+| Testes | reconciliação+PGlite+skip: 16 pass / 0 fail / 1 skip (PG real) |
+| Migrations | 001–031, gap 032, 033–037; 026 intacta; **sem** 038 para unidade |
+| VPS | leitura ao vivo **BLOCKED** (MCP timeout); R07B/001–015 **históricos** |
+| Fora | tip-port #213; outbox/DAM; merge main; promoção 3080; inventar saldo/032 |
+| Status | CONSOLIDADO código; extração real e PG isolado BLOCKED |
+| Próximo | CI; Cursor APPROVED #219 no SHA da candidata; URL isolada + extração privada |
 
 ## CODEX — incorporar #215 multi-item na candidata (2026-10-06)
 

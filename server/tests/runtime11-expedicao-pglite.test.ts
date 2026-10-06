@@ -588,6 +588,31 @@ test('R11 PGlite: ledger canônico — despacho/retry/parcial/devolução/cancel
     );
     assert.equal(copied.rows[0].n, '0', 'ensaio não INSERT saldo a partir do cadastro');
 
+    // Unidade canônica única: PK ledger sem unidade; item com unidadeB não soma/não despacha.
+    const unitProduct = await db.query<{ id: string }>(
+      `INSERT INTO produtos(group_id,empresa_id,descricao,unidade_medida_id)
+       VALUES($1,$2,'Produto sintético unidade canônica',$3) RETURNING id`,
+      [scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
+    );
+    const unitProductId = unitProduct.rows[0].id;
+    await db.query(
+      `INSERT INTO expedicao_estoque_saldos(group_id,empresa_id,produto_id,quantidade) VALUES($1,$2,$3,4)`,
+      [scope.groupId, scope.empresaId, unitProductId],
+    );
+    const unitLinked = await makeLinked(3, unitProductId);
+    await db.query('UPDATE produtos SET unidade_medida_id=$2 WHERE id=$1 AND group_id=$3',
+      [unitProductId, SEED_IDS.unidadeUnA, scope.groupId]);
+    await assert.rejects(() => db.withTransaction(async (tx) => {
+      await pedido.onDespacho({ ...scope, pedidoIds: [unitLinked.pedidoId], romaneioId: unitLinked.romaneioId }, tx);
+      await stock.onDespacho({ ...scope, entregaIds: [unitLinked.entregaId] }, tx);
+    }), (error: unknown) => (error as { code?: string }).code === 'ESTOQUE_UNIDADE_CANONICA_MISMATCH');
+    assert.equal(await movementCount(unitLinked.entregaId), 0, 'unidade divergente não movimenta o ledger');
+    const unitQty = await db.query<{ quantidade: string }>(
+      'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+      [scope.groupId, scope.empresaId, unitProductId],
+    );
+    assert.equal(unitQty.rows[0].quantidade, '4.000000');
+
     // #215 espelho PGlite: 2º item sem baseline após 1ª dedução → rollback integral.
     const laterProduct = `e${randomUUID().slice(1)}`;
     assert.ok(product < laterProduct);

@@ -1,6 +1,6 @@
 ## CODEX — unidade canônica e #219 na candidata (2026-10-06)
 
-Recebido (CODEX COMERCIAL 360). Tip `f514c2e3`. #215 validada na candidata; ressalva #218: unidade. Primeira ação: contrato unidade canônica única por produto (não somar) e incorporar #219 `ec8fe57a` (comparador offline). Sem tip-port #213/outbox/DAM. VPS ao vivo BLOCKED se MCP falhar. Trava 026; gap 032.
+Recebido e executado (CODEX COMERCIAL 360). Candidata incorporou #219 (`ec8fe57a`) e o contrato de unidade canônica (ressalva #218): PK sem unidade, não soma, porta `ESTOQUE_UNIDADE_CANONICA_*`. #215 permanece. Snapshots reais BLOCKED (URL/VPS). Fixture sanitizada compared=0. Trava 026; gap 032. Sem tip-port #213/outbox/DAM; sem promoção 3080.
 
 ## CODEX — incorporar #215 na candidata autoritativa (2026-10-06)
 
