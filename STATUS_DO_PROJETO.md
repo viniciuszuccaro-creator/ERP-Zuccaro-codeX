@@ -1,3 +1,16 @@
+## CURSOR — espelho SFTP BLOCKED Legado `f69ebf8b` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Codex | `f69ebf8b` — tentativa SFTP real exit 255 |
+| Espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) tip `823e7613` |
+| Agente | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
+| BLOCKED | `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` |
+| Arquivo | `/root/erp-private/legado-empresas-api-20261006T153440Z.json` |
+| SHA esperado | `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` |
+| Destino | `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (sem sobrescrever; sem novo export) |
+| HUMAN_NEXT | FileZilla no PC → hash match → avisar chat → classificar/CADESP/staging |
+
 ## CURSOR — espelho Legado `7d063b17` + parecer `4b5d3b94` (2026-10-06)
 
 | Campo | Valor |
