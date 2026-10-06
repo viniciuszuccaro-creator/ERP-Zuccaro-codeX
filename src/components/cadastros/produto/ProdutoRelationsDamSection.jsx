@@ -69,7 +69,16 @@ export default function ProdutoRelationsDamSection({
   };
 
   useEffect(() => {
-    if (!canView || !produtoId || !empresaId) return;
+    // Troca/ausência de Empresa: limpa métricas e listas (fail-closed; sem vazamento entre tenants).
+    if (!canView || !produtoId || !empresaId) {
+      setVariants([]);
+      setEquivalents([]);
+      setMedia([]);
+      setMediaHasMore(false);
+      setOutboxMetrics(null);
+      setDeadLetters([]);
+      return;
+    }
     let active = true;
     setError('');
     Promise.all([

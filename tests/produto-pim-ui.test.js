@@ -37,6 +37,9 @@ test('formulario V22 usa RBAC por acao e confirma workflow somente pela resposta
   assert.match(section, /produtoId/);
   assert.match(section, /Cadastros\.Produto\.reprocessar/);
   assert.match(section, /Cadastros\.Produto\.descartar/);
+  // Troca/ausência de Empresa limpa métricas/dead-letter (sem vazamento entre tenants).
+  assert.match(section, /if \(!canView \|\| !produtoId \|\| !empresaId\) \{\s*setVariants\(\[\]\);/);
+  assert.match(section, /setOutboxMetrics\(null\);\s*setDeadLetters\(\[\]\);/);
 });
 
 
