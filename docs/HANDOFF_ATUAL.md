@@ -1,3 +1,17 @@
+## CURSOR — 3 pacotes + parecer B2 `2c6e898e` (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Estoque B3–B6 PG/snapshots/homolog | [Comercial B2 useFluxoPedido](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | candidata tip `b8492074`+ | outbox/DAM #203 |
+| SFTP export→04_REPORTS + staging | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | VPS `/root/erp-private/…153440Z.json` → HD `04_REPORTS` | **não** refazer export; mapper #48 |
+| Revisão B2 + outbox/DAM | Cursor | pareceres #222; #203 | router candidata |
+
+- B2 **fechado** tip `b8492074` / funcional `2c6e898e`. Parecer: `docs/PARECER_CURSOR_B2_SHA_2c6e898e.md` — **APPROVED COM RESSALVAS**.
+- Bloqueios: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_b8492074.md` (B3–B6 abertos; R2 GerarOPModal).
+- Writer-guard **6/6**; faturamento-policy **32/32**; CLI intacta. Telas: Bearer **401 AUTH_REQUIRED**.
+- Legado: arquivo já gerado; `private_sha256=18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`; SFTP sem sobrescrever; sem PII no Git.
+- Outbox #203 in-repo OK; publisher real BLOCKED.
+
 ## CURSOR — revalidação candidata `f5591d55` (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
@@ -6,10 +20,8 @@
 | Identidade/CADESP/staging | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | scripts/legado, SFTP privado | mapper #48; PII Git |
 | Revisão + outbox/DAM | Cursor | pareceres #222; #203 | router |
 
-- Candidata tip `f5591d55`: #219+#221+#223 incorporados; B1 Automacao **FECHADO**; CLI preservada.
-- Parecer consolidado: `docs/PARECER_CURSOR_CANDIDATA_f5591d55.md` — **APPROVED COM RESSALVAS**.
-- Bloqueios: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_f5591d55.md` (substitui `e242564f`; B2 aberto).
-- Writer-guard **5/5 PASS**; CI tip SUCCESS. Comercial retomado só para B2.
+- Histórico pré-B2; tip vigente `b8492074` — ver bloco acima.
+- Parecer consolidado pré-B2: `docs/PARECER_CURSOR_CANDIDATA_f5591d55.md`.
 - Outbox #203 `5f41e644` in-repo OK; publisher BLOCKED. Telas/PG: Bearer / DATABASE_URL.
 
 ## CURSOR — parecer #221 tip `48bce2f7` + bloqueios candidata (2026-10-06)

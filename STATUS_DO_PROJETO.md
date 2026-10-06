@@ -1,14 +1,26 @@
+## CURSOR — parecer B2 `2c6e898e` + 3 pacotes (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Candidata tip | `b8492074` (B2 funcional `2c6e898e` + harness `28dee1da`) |
+| Parecer B2 | `docs/PARECER_CURSOR_B2_SHA_2c6e898e.md` — **APPROVED COM RESSALVAS** |
+| Testes | writer-guard **6/6**; pedido-faturamento-policy **32/32**; CI `83c95f0e` SUCCESS |
+| Bloqueios | `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_b8492074.md` (B3–B6; R2 GerarOPModal) |
+| Comercial | continuar PG/snapshots/homolog — [Comercial B2 useFluxoPedido](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
+| Legado | SFTP `/root/erp-private/legado-empresas-api-20261006T153440Z.json` → `04_REPORTS` (sha256 `18e2ab9a…3d7e`); **não** refazer export — [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
+| Telas | `/api/meta` **401 AUTH_REQUIRED** |
+| Outbox | #203 in-repo; publisher BLOCKED |
+
 ## CURSOR — revalidação candidata `f5591d55` pós #219+#221+#223 (2026-10-06)
 
 | Campo | Valor |
 | --- | --- |
-| Candidata tip | `f5591d55c92c70c72d60450a5e81e5430da1c621` |
+| Candidata tip | histórico `f5591d55` — vigente `b8492074` (ver bloco B2 acima) |
 | Incorporado | #219 CLI · #221 Entrega/Retirada · #223 Automacao (B1 fechado) |
 | Parecer | `docs/PARECER_CURSOR_CANDIDATA_f5591d55.md` — **APPROVED COM RESSALVAS** |
 | Testes Cursor | writer-guard **5/5 PASS**; CLI ancestral OK |
 | CI tip | frontend/backend/compose/concurrency SUCCESS |
-| Bloqueios | `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_f5591d55.md` (B2 `useFluxoPedido` aberto) |
-| Follow-up | [Comercial: #221 estoque HTTP](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) retomado só para B2 |
+| Bloqueios | histórico `f5591d55`; vigente `b8492074` |
 | Telas / PG | BLOCKED Bearer / DATABASE_URL |
 
 ## CURSOR — parecer #221 tip `48bce2f7` + bloqueios candidata (2026-10-06)
