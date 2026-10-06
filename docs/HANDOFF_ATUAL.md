@@ -1,3 +1,7 @@
+## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
+
+Recebido. Parecer Cursor APPROVED COM RESSALVAS em `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` (SHA `7cbe3a30`; espelho #213 `42980d2e` — sem tip-port). #218/#220 não transferem. Unidade OK. CLI #219 `b6864875` trazida (`reconcile:stock`). Snapshots reais/PG/VPS/telas BLOCKED. Sem inventar abertura.
+
 ## CODEX — unidade canônica e #219 na candidata (2026-10-06)
 
 Recebido e executado (CODEX COMERCIAL 360). Candidata incorporou #219 (`ec8fe57a`) e o contrato de unidade canônica (ressalva #218): PK sem unidade, não soma, porta `ESTOQUE_UNIDADE_CANONICA_*`. #215 permanece. Snapshots reais BLOCKED (URL/VPS). Fixture sanitizada compared=0. Trava 026; gap 032. Sem tip-port #213/outbox/DAM; sem promoção 3080.

@@ -1,3 +1,16 @@
+## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Parecer | `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` — **APPROVED COM RESSALVAS** (espelho #213 tip `42980d2e`; sem tip-port cego) |
+| #218/#220 | **não** transferem |
+| Unidade | contrato runtime OK; PK sem 038 aceitável |
+| CLI #219 | `b6864875` → `npm run reconcile:stock` (offline, saída agregada) incorporada |
+| Snapshots/PG/telas/VPS | continuam **BLOCKED** |
+| Extração privada | sem acesso a origem/destino neste ambiente — fixture `NOT_EXTRACTED`; não inventar abertura |
+| Status | Parecer registrado; CLI na candidata; bloqueios B1/B3/B4/B5 abertos |
+
 ## CODEX — unidade canônica + #219 após revisão Cursor (2026-10-06)
 
 | Campo | Valor |
