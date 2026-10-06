@@ -1,3 +1,23 @@
+## CODEX — consolidar #219+#221 + anti-dupla HTTP (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — continuar nesta sessão (sem tarefa duplicada) |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base tip | `7ea1519a` (parecer `06ed1141`) |
+| #219 | já ancestral na candidata (`ec8fe57a`/`06ed1141`); PR CONFLICTING vs tip avançado — código na candidata; bot COMMENTED; CI SUCCESS no tip da PR |
+| #221 | cherry-pick `a24c743b`/`690e44c7` (PedidosEntregaTab + PedidosRetiradaTab + teste); CI frontend/compose SUCCESS no tip `690e44c7`; revisão humana Cursor ainda sem APPROVED |
+| Auditoria writers | HTTP: PedidosEntrega/Retirada **guardados**; ComprovanteEntregaDigital e LogisticaReversa **já** pulam `MovimentacaoEstoque`; DetalhesEntrega/Ocorrência usam BFF. Legado preservado. Residual: `useFluxoPedido` reserva/faturamento/liberação e módulo Estoque/Compras/Produção (fora do caminho entrega/devolução Expedição) |
+| Teste | `tests/pedido-entrega-http-writer-guard.test.js` 4/4 (entrega+retirada+comprovante+reversa) |
+| Snapshots privados | **BLOCKED** — sem origem/destino; fixture `NOT_EXTRACTED`; `ready ≠ carga` |
+| PG real | **BLOCKED** (`DATABASE_URL` ausente). Prova sintética PGlite/CI ledger permanece; não inventar sucesso E2E local |
+| Probe erp-dev | `api-erp-dev` `/health`+`/ready` **200** (`0.1.0-runtime-01`); `/meta` **AUTH_REQUIRED**; Hostinger VPS MCP **timeout** |
+| Homologação DEV | checklist em `docs/EXPEDICAO_PORTAS_PEDIDO_ESTOQUE.md` — execução **BLOCKED** até gate (backup/restore/Bearer/promoção) |
+| Fora | tip-port outbox/DAM; inventar abertura; promoção 3080; merge main |
+| Status | #219+#221 na candidata; anti-dupla entrega/retirada/devolução HTTP fechada; PG/snapshots/homolog BLOCKED |
+| Próximo | CI deste HEAD; Cursor APPROVED #221; URL isolada + extração privada + Bearer para prova PG/telas |
+
 ## CODEX — parecer 06ed1141 + staging privado BLOCKED (2026-10-06)
 
 | Campo | Valor |

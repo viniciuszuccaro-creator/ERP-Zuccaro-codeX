@@ -1,3 +1,7 @@
+## CODEX — consolidar #219+#221 + anti-dupla HTTP (2026-10-06)
+
+Recebido (CODEX COMERCIAL 360). Candidata `codex/comercial-expedicao-cliente360-207-209-20261005` base `7ea1519a` + cherry-pick #221 (`a24c743b`/`690e44c7`). #219 já ancestral. Writers entrega/retirada HTTP bloqueados; comprovante/reversa já exclusivos. Legado preservado. Snapshots/PG/homolog DEV BLOCKED (URL/Bearer/MCP). ready≠carga. Trava 026; gap 032. Sem tip-port outbox/DAM; sem promoção 3080.
+
 ## CODEX — parecer 06ed1141 + staging privado BLOCKED (2026-10-06)
 
 Recebido. Parecer vigente `docs/PARECER_CURSOR_213_SHA_06ed1141.md` (APPROVED COM RESSALVAS); `7cbe3a30` não se transfere sozinho. Probe erp-dev/api-erp-dev: health/ready/meta 200 (08B/`supabase_user`); Expedição 401 sem Bearer; ledger flags da candidata ausentes no meta público. Snapshots privados/PG/VPS BLOCKED. Checklist staging em EXPEDICAO_PORTAS. Sem inventar abertura; sem tip-port outbox/DAM.

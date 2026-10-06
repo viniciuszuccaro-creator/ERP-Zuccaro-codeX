@@ -22,3 +22,14 @@ test('retirada não oferece writer local no modo HTTP e bloqueia mutation antes 
   assert.match(source, /const handleConfirmarRetirada = \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
   assert.match(source, /modoHttpExpedicao \? \([\s\S]*role="alert"/);
 });
+
+test('comprovante e logística reversa pulam MovimentacaoEstoque local no modo HTTP', async () => {
+  const comprovante = await readFile(new URL('../src/components/logistica/ComprovanteEntregaDigital.jsx', import.meta.url), 'utf8');
+  assert.match(comprovante, /if \(!isHttpExpedicaoMode\) \{[\s\S]*baixarEstoqueItens\(\)/);
+  assert.match(comprovante, /persistencia: isHttpExpedicaoMode \? "http_canonica" : "spa_local"/);
+
+  const reversa = await readFile(new URL('../src/components/expedicao/LogisticaReversa.jsx', import.meta.url), 'utf8');
+  assert.match(reversa, /if \(isHttpExpedicaoMode\) \{[\s\S]*httpApiClient\.expedicao\.devolucao/);
+  assert.match(reversa, /Sem MovimentacaoEstoque SPA/);
+  assert.match(reversa, /acao === "devolver_estoque"/);
+});
