@@ -1,3 +1,13 @@
+## CURSOR — #216/#217 histórico vs ao vivo (2026-10-06)
+
+| Classe | Estado |
+| --- | --- |
+| Histórico | VPS `runtime07b-main-ca0bc5f3` / meta 07B / mig 001–015 / APPLY abortado — **não** renovar como live |
+| Ao vivo 2026-10-06 | Hostinger MCP `vps_virtual-machines_list` **timeout**; 3080/5173 `curl` 000; `DATABASE_URL` ausente |
+| Relacionados | parecer [#218](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/218) #215; Comercial/Legado retomados |
+
+Não corrigir layout/flag cego: causa = versão/opt-in/RBAC até preflight live.
+
 ## CURSOR — cruzamento #216 × Comercial `65fe8fba` × Legado (2026-10-05)
 
 | Fonte | SHA / PR | Nota |

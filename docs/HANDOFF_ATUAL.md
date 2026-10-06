@@ -1,3 +1,8 @@
+## CURSOR — VPS: histórico ≠ live (2026-10-06)
+
+- R07B/001–015 permanecem **históricos**. Live BLOCKED (MCP timeout + SPA down).
+- #215 parecer APPROVED COM RESSALVAS no SHA `7f0dc127` ([#218](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/218)).
+
 ## CURSOR — cruzamento inventários VPS (2026-10-05)
 
 - Comercial [diff ERP vs VPS](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) `65fe8fba` + Legado [instrução](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) `b6691189` alinhados ao [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216).
