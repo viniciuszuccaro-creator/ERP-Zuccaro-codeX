@@ -11677,3 +11677,13 @@ Checklist inicial:
 - Flags: `importAuthorized=false`; mapper #48 intocado; sem carga; neverDelete; CADESP reusado.
 - HUMAN_NEXT inalterado: SFTP `legado-empresas-api-20261006T153440Z.json` → `04_REPORTS`.
 - Coordenação: #216/#217.
+
+### CODEX LEGADO — tentativa SFTP real do export existente (2026-10-06)
+
+- Objetivo: transferir o JSON **já gerado** (sem novo export) para `04_REPORTS` e validar SHA-256.
+- Primeira ação real: `sftp BatchMode get` → **exit 255** `Permission denied (publickey,password)`; sem chave neste Cloud; `/mnt/d` HD **ABSENT**; workers self-hosted=0.
+- TRANSFER_STATUS=FAILED. **Não** declarei transferência só por tip. **Não** reli/commitei JSON.
+- expected_sha256 (paste): `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` — remoto=local **não** comprovado daqui.
+- BLOCKED=`LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED`.
+- HUMAN_NEXT: FileZilla/SFTP no PC do proprietário → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (nome único se colidir); confirmar hash; então classificador/CADESP/staging.
+- importAuthorized=false; mapper #48 intocado.
