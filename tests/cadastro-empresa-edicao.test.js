@@ -64,6 +64,9 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.match(form, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.salvar/);
   assert.match(form, /!dadosIniciais\?\.id \? \{ configuracao_fiscal:/);
+  assert.match(form, /Cadastros\.Empresa\.Certificado\.editar/);
+  assert.match(form, /disabled=\{!podeEditarCertificado\}/);
+  assert.doesNotMatch(form, /Cadastros\.Empresa\.certificado"/);
   assert.match(viewer, /loadEmpresaForEdit\(/);
   assert.match(viewer, /setEditError\("Nao foi possivel carregar o cadastro completo/);
   assert.match(viewer, /editRequestRef\.current \+= 1;\s*setIsLoadingEdit\(false\);\s*setEditItem\(null\)/);

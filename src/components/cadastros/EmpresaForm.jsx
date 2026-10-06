@@ -27,6 +27,8 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
   const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
   const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+  const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
+  const podeEditarCertificado = podeSalvar && hasPermissionKey(permissaoCertificado);
   const permissaoFormulario = dadosIniciais?.id
     ? (canEdit("Cadastros", "Empresa") ? "Cadastros.Empresa.editar" : canEdit("Sistema", "Empresas") ? "Sistema.Empresas.editar" : "Cadastros.editar")
     : (canCreate("Cadastros", "Empresa") ? "Cadastros.Empresa.criar" : canCreate("Sistema", "Empresas") ? "Sistema.Empresas.criar" : "Cadastros.criar");
@@ -90,9 +92,11 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
     regime_tributario: sanitizeText(formData.regime_tributario, 80),
     tipo: sanitizeText(formData.tipo, 40),
     status: sanitizeText(formData.status, 40),
-    ...(hasPermissionKey("Cadastros.Empresa.certificado") ? { certificado_digital: {
+    ...(podeEditarCertificado ? { certificado_digital: {
       ...formData.certificado_digital,
       tipo: sanitizeText(formData.certificado_digital?.tipo || "A1", 10),
+      arquivo_certificado: sanitizeText(formData.certificado_digital?.arquivo_certificado, 500),
+      senha_certificado: sanitizeText(formData.certificado_digital?.senha_certificado, 500),
       data_validade: sanitizeText(formData.certificado_digital?.data_validade, 20)
     }} : {}),
     ...(!dadosIniciais?.id ? { configuracao_fiscal: {
@@ -172,17 +176,18 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
 
       <div className="p-4 bg-amber-50 rounded border border-amber-200">
         <h4 className="font-semibold mb-3">Certificado Digital</h4>
+        {!podeEditarCertificado && <p className="text-xs text-amber-800 mb-3">Edicao de certificado exige permissao especifica. Alteracoes nesta secao estao bloqueadas.</p>}
 
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div>
             <Label>Data de Validade</Label>
-            <Input type="date" value={formData.certificado_digital?.data_validade} onChange={(e) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, data_validade: e.target.value } })} disabled={!podeSalvar} data-permission="Cadastros.Empresa.certificado" data-action="editar-validade-certificado" data-sensitive />
+            <Input type="date" value={formData.certificado_digital?.data_validade || ""} onChange={(e) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, data_validade: e.target.value } })} disabled={!podeEditarCertificado} data-permission={permissaoCertificado} data-action="editar-validade-certificado" data-sensitive />
           </div>
 
           <div>
             <Label>Tipo</Label>
-            <Select value={formData.certificado_digital?.tipo} onValueChange={(v) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, tipo: v } })} disabled={!podeSalvar}>
-              <SelectTrigger data-permission="Cadastros.Empresa.certificado" data-action="selecionar-tipo-certificado" data-sensitive>
+            <Select value={formData.certificado_digital?.tipo} onValueChange={(v) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, tipo: v } })} disabled={!podeEditarCertificado}>
+              <SelectTrigger data-permission={permissaoCertificado} data-action="selecionar-tipo-certificado" data-sensitive>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

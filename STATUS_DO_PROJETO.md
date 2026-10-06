@@ -13237,3 +13237,5 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 | Próximo P0 | Homologar edição/reabertura em ambiente isolado com perfil administrador legítimo e escopos Grupo/Empresa, sem alterar cadastro real sem autorização |
 
 Parecer independente da #227 sobre `397203af`: leitura de edição pendente poderia abrir registro antigo após Novo ou troca de contexto. Follow-up no mesmo lote invalida requisições ao iniciar criação ou trocar Grupo/Empresa, fecha o formulário antigo e compara o escopo capturado antes de aceitar a resposta. Teste sintético adicional cobre as duas corridas. CI do HEAD follow-up e nova revisão seguem como gates.
+
+Parecer Cursor do mesmo SHA encontrou gate inválido para certificado: ação `certificado` não é RBAC canônico, permitindo aparência de edição com descarte silencioso. Follow-up usa seção `Cadastros.Empresa.Certificado.editar`, desabilita os controles e explica a exigência sem essa permissão; payload autorizado volta a sanitizar os campos do certificado. Validação e revisão devem mirar o novo HEAD final.
