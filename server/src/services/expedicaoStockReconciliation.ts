@@ -12,7 +12,7 @@ export type StockSnapshot = {
 };
 
 export type StockIssue = {
-  code: 'INVALID_SNAPSHOT' | 'CUTOFF_MISMATCH' | 'INVALID_ROW' | 'DUPLICATE_KEY' | 'MISSING_SOURCE' | 'MISSING_LEDGER' | 'UNIT_MISMATCH' | 'QUANTITY_MISMATCH';
+  code: 'INVALID_SNAPSHOT' | 'EMPTY_SNAPSHOT' | 'CUTOFF_MISMATCH' | 'INVALID_ROW' | 'DUPLICATE_KEY' | 'MISSING_SOURCE' | 'MISSING_LEDGER' | 'UNIT_MISMATCH' | 'QUANTITY_MISMATCH';
   side?: 'source' | 'ledger';
   key?: string;
 };
@@ -65,6 +65,8 @@ export function reconcileExpedicaoStock(source: StockSnapshot, ledger: StockSnap
   };
   const left = parsed(source, 'source');
   const right = parsed(ledger, 'ledger');
+  if (left.size === 0) issues.push({ code: 'EMPTY_SNAPSHOT', side: 'source' });
+  if (right.size === 0) issues.push({ code: 'EMPTY_SNAPSHOT', side: 'ledger' });
   if (validCutoff(source?.cutoff) && validCutoff(ledger?.cutoff) && source.cutoff !== ledger.cutoff) {
     issues.push({ code: 'CUTOFF_MISMATCH' });
   }
