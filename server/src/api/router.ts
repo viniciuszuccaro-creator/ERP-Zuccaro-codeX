@@ -47,6 +47,8 @@ export type ApiDeps = {
   orcamentoService: OrcamentoService;
   pedidoService: PedidoService;
   expedicaoService: ExpedicaoService;
+  /** reserved = default fail-closed; ledger = expedicao_estoque_saldos fonte oficial (037). */
+  expedicaoPedidoEstoqueSideEffects?: 'reserved' | 'ledger';
 };
 
 function ctxFromReq(req: Request) {
@@ -1456,10 +1458,14 @@ export function createApiRouter(deps: ApiDeps) {
         rbacFailClosed: true,
         idempotency: true,
         statusHistory: true,
-        pedidoEstoqueSideEffects: 'reserved',
+        pedidoEstoqueSideEffects: deps.expedicaoPedidoEstoqueSideEffects ?? 'reserved',
+        estoqueFonteOficial: deps.expedicaoPedidoEstoqueSideEffects === 'ledger'
+          ? 'expedicao_estoque_saldos'
+          : null,
         migration: '036_expedicao_entregas_romaneios.sql',
+        migrationEstoqueLedger: '037_expedicao_estoque_movimentos.sql',
         migrationAppliedOperationally: false,
-        migrationNumberingNote: '036 evita conflito com reserva comercial Codex 025-035',
+        migrationNumberingNote: '036/037; gap intencional sem 032; 026 histórica travada; sem saldo de abertura inventado',
       },
     });
   });

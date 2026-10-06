@@ -158,6 +158,7 @@ export type PedidoListFilters = {
   tipoComercial?: PedidoTipoComercial;
 };
 export type PedidoPage = { rows: Pedido[]; total: number };
+export type PedidoTopProduct = { produto_id: string; unidade_id: string; quantidade_total: string; pedidos_count: number };
 
 export function calculatePedido(
   items: Array<z.infer<typeof pedidoItemSchema> & { tipo_comercial_snapshot?: PedidoTipoComercialItem }>,
@@ -186,6 +187,7 @@ export interface PedidoRepository {
   getByIdempotencyKey(scope: PedidoScope, origem: PedidoOrigem, idempotencyKey: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByExternalId(scope: PedidoScope, origem: PedidoOrigem, externalId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   list(scope: PedidoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: PedidoListFilters): Promise<PedidoPage>;
+  topProducts(scope: PedidoScope, clienteEmpresaId: string, limit: number, executor?: DbQueryExecutor): Promise<PedidoTopProduct[]>;
   update(scope: PedidoScope, id: string, data: PedidoWrite, actorId: string, executor?: DbQueryExecutor, preserveItems?: boolean): Promise<Pedido | null>;
   changeStatus(scope: PedidoScope, id: string, status: PedidoStatus, actorId: string, motivo?: string, executor?: DbQueryExecutor, expectedStatus?: PedidoStatus): Promise<Pedido | null>;
   history(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<PedidoHistorico[]>;

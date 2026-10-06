@@ -63,6 +63,7 @@ test('composicao PostgreSQL isolado: comercial 025-035 + 036 com trava 026', asy
   assert.ok(localFiles.includes('036_expedicao_entregas_romaneios.sql'));
   assert.ok(localFiles.includes('037_expedicao_estoque_movimentos.sql'));
   assert.ok(!localFiles.some((f) => /^025_expedicao/.test(f)));
+  assert.ok(!localFiles.some((f) => f.startsWith('032_')), 'migration 032 ausente por desenho; nao inventar');
 
   const list = spawnSync('git', ['-C', repoRoot, 'ls-tree', '-r', '--name-only', CODEX_REF, '--', 'server/migrations'], {
     encoding: 'utf8',

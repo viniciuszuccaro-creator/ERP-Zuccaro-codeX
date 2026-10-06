@@ -1,3 +1,104 @@
+## CURSOR — parecer SHA `06ed1141` candidata + CLI #219 (2026-10-06)
+
+- Tip Comercial `06ed1141` (CLI `reconcile:stock` + parecer `7cbe3a30` no branch) no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer novo: `docs/PARECER_CURSOR_213_SHA_06ed1141.md`. Parecer `7cbe3a30` **não** se transfere.
+- Probe remoto `https://erp-dev.cpaferroeaco.com.br`: health/ready/meta 200, SPA 200, Expedição `401 AUTH_REQUIRED` (fail-closed). Fluxo autenticado BLOCKED sem Bearer.
+- `127.0.0.1` na VM ≠ VPS. Hostinger MCP list timeout.
+
+## CURSOR — parecer SHA `7cbe3a30` candidata +#219 + unidade (2026-10-06)
+
+- Merge tip Comercial `7cbe3a30` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer: `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md`. #218/#220 **não** transferem aprovação a este HEAD.
+- #219 comparator (`ec8fe57a`) + porta `ESTOQUE_UNIDADE_CANONICA_*`; CLI `b6864875` **ainda fora**.
+- Agente [Comercial: #219 + unidade ledger](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregue.
+
+## CURSOR — parecer SHA `f514c2e3` candidata +#215 (2026-10-06)
+
+- Merge tip Comercial `f514c2e3` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer novo: `docs/PARECER_CURSOR_213_SHA_f514c2e3.md`. #218 não aprova este HEAD.
+- Agente [Comercial: fechar candidata +#215](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregue.
+
+## CURSOR — candidata integrada fechada p/ revisão (2026-10-05)
+
+- Código `899ec9b3` (#210+#212+#207+#209 + PGlite gate) no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) concluído; próximo operacional = DATABASE_URL isolado → runtime11.
+- Sem tip-port outbox/DAM. Merge humano na ordem documentada.
+
+## CURSOR — merge `899ec9b3` PGlite gate #212 (2026-10-05)
+
+- Tip código autoritativo `899ec9b3` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Prova PGlite: sem baseline → `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE`; retry 1 movimento.
+- CI `66d1030e` SUCCESS; aguarda CI deste tip. B1–B6 permanecem.
+
+## CURSOR — parecer SHA `0c00318d` candidata +#212 (2026-10-05)
+
+- Merge tip Comercial `0c00318d` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer novo: `docs/PARECER_CURSOR_213_SHA_0c00318d.md` — APPROVED COM RESSALVAS (B1 PG real; B3 telas).
+- #214 **não** aprova este pacote. Ordem: #207→#209+#210→#212→#213.
+- B7 fechado. Espelhos #214/#210/#209/#212 isolados supersedíveis após merge humano.
+
+## CURSOR — ordem integração candidata + bloqueios (2026-10-05)
+
+- Autoritativa: `codex/comercial-expedicao-cliente360-207-209-20261005` `00d7add2` · espelho #213 `b0b983aa`.
+- Encaminhado [Comercial candidata integrada](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a): consolidar #212 (`a37dca55`) — ainda ausente.
+- Ordem PRs: #207 → #209+#210 (já) → #212 (pendente) → #213 SHA final → parecer Cursor novo.
+- Supersedir após compose: #214 (parecer-only), #210/#209 isoladas, #212 isolada; preservar pareceres.
+- Bloqueios B1–B7 em STATUS (DATABASE_URL, PG real, telas 3080/5173, VPS, saldo abertura, Legado HD, #212 fora).
+- #214 **não** aprova o pacote #213. Margem/avista/Cliente360: 19/19 PASS neste tip.
+
+## CURSOR — CI tip #213 SUCCESS (2026-10-05)
+
+- Tip `1b1def8e` · 7 checks SUCCESS (merge asserts gap 032 + ledger/skip path).
+- #211 tip `b78258e8` SUCCESS · #214 tip `1932b868` SUCCESS.
+- Próximo: DATABASE_URL isolado → runtime11; merge humano das stacks.
+
+## CURSOR — merge Comercial `00d7add2` (2026-10-05)
+
+- Incorporado tip Codex `00d7add2` no espelho [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) sem tip-port cego.
+- Asserts: único gap 032; 037 sem INSERT saldo; `EXPEDICAO_PERSISTENT_PORTS` fail-closed sem URL; evidência sanitizada skip runtime11.
+- Agente [Comercial próximo independente](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregue; Legado [plano importação/reversão](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) já espelhado no #211.
+- PENDENTE: DATABASE_URL → runtime11; VPS/Auth/publisher.
+
+## CURSOR — checkpoint pacotes (2026-10-05)
+
+- #214 parecer #212 saldo inicial APPROVED @ `1932b868`.
+- #211 plano Legado APPROVED @ `b78258e8`; HD/carga BLOCKED.
+- #202/#203 CI SUCCESS — publisher externo BLOCKED.
+
+## CURSOR — revalidação HEAD integrado #207+#209 (2026-10-05)
+
+- Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal/estados.
+- PGlite ledger 037 + asserts gap 032 no tip pós-`00d7add2`.## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
+## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
+
+Recebido. Parecer Cursor APPROVED COM RESSALVAS em `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` (SHA `7cbe3a30`; espelho #213 `42980d2e` — sem tip-port). #218/#220 não transferem. Unidade OK. CLI #219 `b6864875` trazida (`reconcile:stock`). Snapshots reais/PG/VPS/telas BLOCKED. Sem inventar abertura.
+
+## CODEX — unidade canônica e #219 na candidata (2026-10-06)
+
+Recebido e executado (CODEX COMERCIAL 360). Candidata incorporou #219 (`ec8fe57a`) e o contrato de unidade canônica (ressalva #218): PK sem unidade, não soma, porta `ESTOQUE_UNIDADE_CANONICA_*`. #215 permanece. Snapshots reais BLOCKED (URL/VPS). Fixture sanitizada compared=0. Trava 026; gap 032. Sem tip-port #213/outbox/DAM; sem promoção 3080.
+
+## CODEX — incorporar #215 na candidata autoritativa (2026-10-06)
+
+Recebido e executado (CODEX COMERCIAL 360). Candidata `codex/comercial-expedicao-cliente360-207-209-20261005` incorporou #215 (`5837b6e5`/`7f0dc127`) sem tip-port #213. PGlite: rollback 2º item + ensaio reconciliação sem inventar saldo. DATABASE_URL ausente → PG real BLOCKED (skip sanitizado). VPS ao vivo BLOCKED (MCP timeout); R07B/001–015/APPLY abortado são **históricos**. Trava 026; gap 032. Sem outbox/DAM; sem promoção 3080.
+
+## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
+
+Recebido e executado. Branch autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` tip código `899ec9b3` (#212 funcional `0c00318d`). #212 consolidado semanticamente (`bee11785`/`a37dca55`, sem tip-port #213): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id`; asserts gap 032 + 026; ledger `expedicao_estoque_saldos`; #210 `to_char` 6 casas. Item independente: espelho PGlite do gate baseline (sem DATABASE_URL). PG real BLOCKED (skip sanitizado). #214 APPROVED só o gate — não o pacote. Sem inventar 032/saldo; sem outbox/DAM tip-*; sem VPS/main.
+
+
+## CODEX — próximo item: asserts gap 032 + skip path sanitizado (2026-10-05)
+
+Recebido. Tip candidata `284a9871` (CI SUCCESS). `DATABASE_URL` ausente → persistent-postgres BLOCKED (não inventar sucesso). Entregue: asserts gap 032 + 037 sem INSERT saldo; fail-closed ports; meta ledger; evidência sanitizada skip path. Sem tip-port #213/#212; sem outbox/DAM; sem VPS/saldo abertura. Próximo: DATABASE_URL isolado ou revisão humana #213/#212.
+
+
+## CODEX — PGlite ledger + decimal/estados (2026-10-05, pós-aaf29c19)
+
+`DATABASE_URL` ausente (sem Docker/PG local). Sem tip-port tip-* #213. Aplicado semanticamente: `to_char` 6 casas em `topProducts` e teste EM_ABERTO/CANCELADO. Novo teste PGlite com portas persistentes reais (037): despacho concorrente/retry, parcial→devolução, cancelamento e rollback atômico. Pacote DEV atualizado com evidência local vs gap PG real/grants. VPS/Auth/publisher/saldo abertura operacional continuam BLOCKED.
+
+## CODEX — candidata integrada #207+#209 (2026-10-05)
+
+Branch `codex/comercial-expedicao-cliente360-207-209-20261005` tip `85e48156` (base #207 `506a5d35` + semântica #209 `bb3ef069`). Compose sem tip-port cego: Cliente360 `produtosMaisComprados` e segregação de margem (#205/#206 — outro aprovador) preservando contratos fail-closed de alçada em Pedido/Orçamento. Ledger Expedição: `expedicao_estoque_saldos` fonte oficial no HTTP/BFF; opt-in `EXPEDICAO_PERSISTENT_PORTS`; SPA não duplica `MovimentacaoEstoque`. Migrations: 001–031, gap sem 032, 033–037; trava 026 intacta; sem saldo de abertura inventado. Fluxo PG isolado Pedido→separação→romaneio→despacho→parcial/devolução/cancelamento permanece em `runtime11-expedicao-persistent-postgres`. Pacote DEV: preparar grants/RLS/smoke só sob gates vigentes — VPS/Auth/publisher bloqueados. Cursor revisa #209 e avança Produto/DAM/outbox em arquivos independentes; não disputar tip-* / outbox Cursor.
+
 ## CODEX — composição incremental #199 na #201 (2026-10-02)
 
 HEAD #199 `7879ecbe` foi incorporado **somente** à branch isolada da #201, preservando a branch Cursor. O conflito único de conteúdo em `docs/HANDOFF_ATUAL.md` foi resolvido mantendo os dois checkpoints. O delta traz gate CI Compose, provas SPA×BFF+PGlite com reload e teste de migrations comerciais 025–035 + Expedição 036; nenhum adaptador de estoque real foi ativado. Testes locais: servidor 303 pass/0 fail/17 skip; focados PGlite+composição 6/6 e UI 17/17; audit/lint/build raiz passaram. `npm test` raiz no Windows permanece falhando em guards Bash/VPS preexistentes; a CI Linux do novo HEAD será a verificação aplicável. #178 continua separada; 026 histórica continua travada. Não houve merge em main, VPS ou importação.
@@ -857,3 +958,6 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 Branch isolada `codex/comercial-expedicao-fechamento-20261004`: #201 `59c4f506` + #199 **vigente** `f88460e9` + #178 `4f8c6593`. A referência `refs/pull/199/head` foi usada porque a branch remota nominal apontava para base antiga. A correção CI do falso `# skipped 0` e a prova PostgreSQL isolada foram preservadas. Migration 026 tem blob `07292e0c86133ad13e3d0c68a8a13d6d6322b228` idêntico à #178; nenhuma reclassificação histórica. Adicionada candidata 037 para saldo reconciliado, movimentos por item e eventos de Pedido, com portas persistentes opt-in; runtime default continua `reserved`, canais desligados. Testes locais de UI 27/27 e typecheck backend passaram; PostgreSQL real e CI do HEAD final ainda são gates, sem merge/VPS/dados reais. Cursor deve revisar o SHA final desta branch; não editar branches dele.
 
 ---
+## CODEX — complemento da candidata funcional autoritativa (2026-10-05)
+
+Branch própria `codex/comercial-ledger-multiitem-20261005` derivada da funcional autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` HEAD `72c9dba9`; #213 é espelho Cursor e não foi editada. #210 `cdc47456`, #212 `a37dca55`, #213 `b0b983aa` no precheck (depois avançou), #214 `1932b868` tinham CI verde; #214 homologou a #212 exata. A autoritativa já incorporou a prova de baseline da #212; este lote acrescenta dois itens: falha no segundo após dedução do primeiro, rollback integral, retry e compensação idempotente. Commit de código `5837b6e5` publicado na #215; `erp-runtime-ci` run 37341406770 SUCCESS (R11 PostgreSQL real 2/2, zero skips) e `omnicanal-postgres` run 37341407276 SUCCESS. O contrato de fonte oficial fica limitado ao HTTP/BFF opt-in; Base44/local continua separado e sem reconciliação comprovada. Cursor foi solicitado a revisar o HEAD exato da #215. Sem merge/main/VPS/importação/migration operacional. Próximo item executável: após parecer, integrar semanticamente #215 na branch funcional e executar gate isolado de reconciliação de saldos/unidades; não ativar ports antes disso.

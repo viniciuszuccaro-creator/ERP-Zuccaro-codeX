@@ -96,6 +96,29 @@ async function deliveryItems(query: DbQueryExecutor, scope: Scope, entregaId: st
 async function movement(query: DbQueryExecutor, scope: Scope, entregaId: string, item: Item,
   kind: 'DESPACHO' | 'DEVOLUCAO' | 'CANCELAMENTO', quantity: string, romaneioId: string | null) {
   if (!item.produto_id || micros(quantity) <= 0n) throw new AppError(422, 'ESTOQUE_ITEM_INVALID', 'Stock movement requires product and positive quantity');
+  const canon = await query.query<{ unidade_medida_id: string | null }>(
+    `SELECT unidade_medida_id::text FROM produtos
+      WHERE id=$1 AND group_id=$2 AND (empresa_id IS NULL OR empresa_id=$3)`,
+    [item.produto_id, scope.groupId, scope.empresaId],
+  );
+  const unidadeCanon = canon.rows[0]?.unidade_medida_id ?? null;
+  if (!unidadeCanon) {
+    throw new AppError(409, 'ESTOQUE_UNIDADE_CANONICA_AUSENTE', 'Product has no canonical unit of measure');
+  }
+  const pedidoUnits = await query.query<{ unidade_id: string }>(
+    `SELECT DISTINCT pi.unidade_id::text AS unidade_id
+       FROM entregas e
+       JOIN pedido_itens pi ON pi.pedido_id=e.pedido_id AND pi.group_id=e.group_id AND pi.empresa_id=e.empresa_id
+      WHERE e.id=$1 AND e.group_id=$2 AND e.empresa_id=$3 AND pi.produto_id=$4`,
+    [entregaId, scope.groupId, scope.empresaId, item.produto_id],
+  );
+  if (pedidoUnits.rows.length > 1) {
+    throw new AppError(409, 'ESTOQUE_UNIDADE_CANONICA_COLISAO', 'Same product cannot move under multiple units');
+  }
+  const pedidoUnit = pedidoUnits.rows[0]?.unidade_id;
+  if (pedidoUnit && pedidoUnit !== unidadeCanon) {
+    throw new AppError(409, 'ESTOQUE_UNIDADE_CANONICA_MISMATCH', 'Item unit differs from the product canonical unit');
+  }
   const prior = await query.query<{ quantidade: string }>(
     'SELECT quantidade::text FROM expedicao_estoque_movimentos WHERE group_id=$1 AND empresa_id=$2 AND entrega_item_id=$3 AND tipo=$4',
     [scope.groupId, scope.empresaId, item.id, kind],
@@ -135,7 +158,13 @@ async function movement(query: DbQueryExecutor, scope: Scope, entregaId: string,
     { entrega_id: entregaId, entrega_item_id: item.id, quantidade: quantity, tipo: kind });
 }
 
-/** Operational ledger is opt-in. Missing reconciled opening balances fail closed. */
+/**
+ * Ledger operacional canônico da Expedição (tabela `expedicao_estoque_saldos`).
+ * Fonte oficial dos saldos no caminho HTTP/BFF; proíbe contabilidade paralela
+ * (`produto.estoque_atual` / MovimentacaoEstoque SPA) no mesmo fluxo.
+ * Opt-in via EXPEDICAO_PERSISTENT_PORTS. Sem saldo reconciliado → fail-closed.
+ * A migration 037 não inventa saldo de abertura.
+ */
 export class PostgresExpedicaoEstoquePort implements ExpedicaoEstoquePort {
   async onDespacho(input: Scope & { entregaIds: string[] }, executor?: DbQueryExecutor) {
     if (input.entregaIds.length === 0) return 'reserved' as const;

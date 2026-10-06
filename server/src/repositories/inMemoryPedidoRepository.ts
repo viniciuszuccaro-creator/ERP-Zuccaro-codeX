@@ -8,12 +8,19 @@ import {
   type PedidoOrigem,
   type PedidoRepository,
   type PedidoScope,
+  type PedidoTopProduct,
   type PedidoStatus,
   type PedidoWrite,
 } from './pedidoTypes.js';
 
 const clone = <T>(value: T): T => structuredClone(value);
 const key = (scope: PedidoScope) => `${scope.groupId}:${scope.empresaId}`;
+const quantityUnits = (value: string): bigint => {
+  const match = /^(\d+)(?:\.(\d{1,6}))?$/.exec(value);
+  if (!match) throw new Error('PEDIDO_QUANTITY_INVALID');
+  return BigInt(match[1]!) * 1_000_000n + BigInt((match[2] ?? '').padEnd(6, '0'));
+};
+const quantityText = (units: bigint): string => `${units / 1_000_000n}.${String(units % 1_000_000n).padStart(6, '0')}`;
 
 export class InMemoryPedidoRepository implements PedidoRepository {
   private rows = new Map<string, Pedido>();
@@ -117,6 +124,28 @@ export class InMemoryPedidoRepository implements PedidoRepository {
       && (!filters.tipoComercial || row.tipo_comercial === filters.tipoComercial))
       .sort((a, b) => b.numero.localeCompare(a.numero) || b.id.localeCompare(a.id));
     return { rows: clone(rows.slice(safeOffset, safeOffset + safeLimit)), total: rows.length };
+  }
+
+  async topProducts(scope: PedidoScope, clienteEmpresaId: string, limit: number): Promise<PedidoTopProduct[]> {
+    const totals = new Map<string, { produto_id: string; unidade_id: string; units: bigint; pedidos: Set<string> }>();
+    for (const pedido of this.rows.values()) {
+      if (pedido.group_id !== scope.groupId || pedido.empresa_id !== scope.empresaId
+        || pedido.cliente_empresa_id !== clienteEmpresaId || pedido.status !== 'FINALIZADO' || !pedido.ativo) continue;
+      for (const item of pedido.itens) {
+        const itemKey = `${item.produto_id}:${item.unidade_id}`;
+        const row = totals.get(itemKey) ?? { produto_id: item.produto_id, unidade_id: item.unidade_id, units: 0n, pedidos: new Set<string>() };
+        row.units += quantityUnits(item.quantidade);
+        row.pedidos.add(pedido.id);
+        totals.set(itemKey, row);
+      }
+    }
+    return [...totals.values()]
+      .sort((a, b) => a.units === b.units
+        ? a.produto_id.localeCompare(b.produto_id) || a.unidade_id.localeCompare(b.unidade_id)
+        : a.units > b.units ? -1 : 1)
+      .slice(0, Math.min(20, Math.max(1, Math.trunc(limit))))
+      .map((row) => ({ produto_id: row.produto_id, unidade_id: row.unidade_id,
+        quantidade_total: quantityText(row.units), pedidos_count: row.pedidos.size }));
   }
 
   async update(scope: PedidoScope, id: string, data: PedidoWrite, _actorId: string, _executor?: DbQueryExecutor, preserveItems = false): Promise<Pedido | null> {

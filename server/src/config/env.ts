@@ -23,6 +23,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   APP_VERSION: z.string().default('0.1.0-runtime-01'),
   REQUIRE_DATABASE: z.string().optional(),
+  /** Opt-in: ativa portas persistentes Pedido/estoque da Expedição (ledger 037). Sem saldo reconciliado = fail-closed. */
+  EXPEDICAO_PERSISTENT_PORTS: z.string().optional(),
 });
 
 export type AppConfig = {
@@ -44,6 +46,8 @@ export type AppConfig = {
   appVersion: string;
   requireDatabase: boolean;
   isProduction: boolean;
+  /** Quando true, createApp/index pode injetar PostgresExpedicao*Port (ledger canônico). */
+  expedicaoPersistentPorts: boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -55,6 +59,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
 
   const data = parsed.data;
   const requireDatabase = boolFromEnv(data.REQUIRE_DATABASE, data.NODE_ENV === 'production');
+  const expedicaoPersistentPorts = boolFromEnv(data.EXPEDICAO_PERSISTENT_PORTS, false);
   const authMode = data.ERP_AUTH_MODE ?? (data.ERP_ENV === 'dev' && data.NODE_ENV !== 'production' ? 'dev_headers' : 'supabase_user');
   if (authMode === 'dev_headers' && (data.NODE_ENV === 'production' || data.ERP_ENV !== 'dev')) {
     throw new Error('ERP_AUTH_MODE=dev_headers is forbidden outside development');
@@ -62,7 +67,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (authMode === 'supabase_user' && (!data.SUPABASE_URL || !data.SUPABASE_ANON_KEY)) {
     throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required for supabase_user authentication');
   }
-
+  if (expedicaoPersistentPorts && !data.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required when EXPEDICAO_PERSISTENT_PORTS=true');
+  }
 
   if (requireDatabase && !data.DATABASE_URL) {
     throw new Error('DATABASE_URL is required when REQUIRE_DATABASE=true');
@@ -87,6 +94,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     appVersion: data.APP_VERSION,
     requireDatabase,
     isProduction: data.NODE_ENV === 'production',
+    expedicaoPersistentPorts,
   };
 }
 
@@ -99,5 +107,6 @@ export function publicConfigView(config: AppConfig) {
     databaseConfigured: Boolean(config.databaseUrl),
     supabaseConfigured: Boolean(config.supabaseUrl),
     corsOrigins: config.corsOrigins,
+    expedicaoPersistentPorts: config.expedicaoPersistentPorts,
   };
 }

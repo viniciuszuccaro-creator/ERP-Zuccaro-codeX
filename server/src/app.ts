@@ -282,6 +282,11 @@ export function createApp(options: CreateAppOptions) {
   }
 
   app.use(scopeMiddleware);
+  const expedicaoPedidoEstoqueSideEffects =
+    options.expedicaoPedidoPort && options.expedicaoEstoquePort && !useMemory
+      ? 'ledger' as const
+      : 'reserved' as const;
+
   app.use(createApiRouter({
     config,
     db,
@@ -300,6 +305,7 @@ export function createApp(options: CreateAppOptions) {
     orcamentoService,
     pedidoService,
     expedicaoService,
+    expedicaoPedidoEstoqueSideEffects,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));

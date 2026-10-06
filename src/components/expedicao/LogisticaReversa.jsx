@@ -133,7 +133,7 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
           idempotency_key: `dev:${entrega.id}:${motivoLimpo}:${acao}`,
         });
         etapasOk.entrega = true;
-        // Estoque/CR/notificação canônicos reservados no BFF; etapas locais só em SPA.
+        // HTTP canônico: estoque só via ledger BFF (expedicao_estoque_saldos). Sem MovimentacaoEstoque SPA.
         etapasOk.financeiro = true;
         etapasOk.estoque = true;
         etapasOk.notificacao = true;
@@ -146,7 +146,9 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
             pedido_id: entrega.pedido_id || null,
             etapas_ok: etapasOk,
             persistencia: "http_canonica",
-            side_effects: "reserved",
+            side_effects: "bff_ledger_or_reserved",
+            estoque_fonte: "expedicao_estoque_saldos",
+            contabilidade_paralela: false,
           },
         });
         return true;

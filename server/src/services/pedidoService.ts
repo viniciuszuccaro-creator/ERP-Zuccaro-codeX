@@ -138,8 +138,9 @@ export class PedidoService {
         const priced = await this.applyServerPriceSnapshots(ctx, data);
         const resolved = await this.applyTipoComercialSnapshots(scope, priced, executor);
         const write = await this.applyCondicaoSnapshot(scope, resolved, executor);
+        // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada de desconto; margem segue segregada).
         await this.assertDescontoAlcada(ctx, scope, write, ctx.actorId!, executor);
-        const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens, ctx.actorId!);
         const created = await this.repo.create(scope, write, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
@@ -209,7 +210,7 @@ export class PedidoService {
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
         const alcada = await this.assertDescontoAlcada(ctx, scope, write, criadorOrcamento, executor);
-        const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens, criadorOrcamento);
         const created = await this.repo.create(scope, write, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
@@ -244,6 +245,12 @@ export class PedidoService {
 
   async get(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); return this.requirePedido(scope, id); }
   async history(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); await this.requirePedido(scope, id); return this.repo.history(scope, id); }
+
+  async topProducts(ctx: RequestContext, clienteEmpresaId: string) {
+    const scope = await this.prepare(ctx, 'visualizar');
+    this.assertId(clienteEmpresaId, 'clienteEmpresaId');
+    return this.repo.topProducts(scope, clienteEmpresaId, 20);
+  }
 
   async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; tipoOperacao?: string; origem?: string; tipoComercial?: string } = {}) {
     const scope = await this.prepare(ctx, 'visualizar');
@@ -333,7 +340,7 @@ export class PedidoService {
       })() : await this.applyCondicaoSnapshot(scope, resolved, executor);
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, write, criador, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, write.itens, criador);
       const after = await this.repo.update(scope, id, write, ctx.actorId!, executor, Boolean(before.orcamento_id));
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
@@ -621,6 +628,7 @@ export class PedidoService {
     ctx: RequestContext,
     scope: PedidoScope,
     itens: PedidoCreate['itens'],
+    criadorActorId: string | null,
   ) {
     // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
     if (!this.costs) return null;
@@ -630,6 +638,8 @@ export class PedidoService {
       items: itens,
       costs: this.costs,
       canAprovar: await this.canAprovarComercial(ctx),
+      actorId: ctx.actorId,
+      criadorActorId,
       entityLabel: 'Pedido',
     });
   }
