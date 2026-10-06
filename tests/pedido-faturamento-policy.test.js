@@ -20,6 +20,14 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 
+/** Sandbox VM legado: HTTP Expedição desligado — writers locais exercitados. */
+const fluxoEstoqueLegadoHttp = Object.freeze({
+  isHttpExpedicaoEnabled: () => false,
+  assertEscritaEstoqueLocalPermitida: () => {},
+  HTTP_ESTOQUE_LOCAL_BLOQUEADO:
+    'MovimentacaoEstoque local indisponível no modo HTTP Expedição. Use o ledger de Expedição.',
+});
+
 const pedido = { id: 'ped-1', valor_total: 1000 };
 
 test('partial billing keeps remaining balance on the order', () => {
@@ -114,6 +122,7 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
   const baixaStart = fluxo.indexOf('async function baixarEstoqueItem');
   const baixaSource = fluxo.slice(baixaStart, fluxo.indexOf('/**', baixaStart + 1));
   const baixar = runInNewContext(baixaSource + '; baixarEstoqueItem', {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
       : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
@@ -130,6 +139,7 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
   const faturarStart = fluxo.indexOf('export async function faturarPedidoCompleto');
   const faturarSource = fluxo.slice(faturarStart, fluxo.indexOf('async function baixarEstoqueItem', faturarStart)).replace('export ', '');
   const faturar = runInNewContext(faturarSource + '; faturarPedidoCompleto', {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity) => entity === 'NotaFiscal' ? notas : [],
     assertFaturamentoDentroDoPedido, validarItensReservaEstoque, baixarEstoqueItem: baixar,
@@ -377,6 +387,7 @@ test('fluxo real baixa depois de compensar e reserva de novo, sem dupla baixa', 
   ];
   const produto = { id: 'p1', descricao: 'Produto', estoque_atual: 20, estoque_reservado: 4 };
   const ctx = {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
       : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
@@ -421,6 +432,7 @@ test('fluxo real cancela só saldo aberto do pedido após retry menor', async ()
   const produto = { id: 'p1', descricao: 'Produto', estoque_atual: 20, estoque_reservado: 11 };
   const pedidoEstado = { id: 'ped-1', numero_pedido: 'PED-1', status: 'Aprovado' };
   const ctx = {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
       : entity === 'ContaReceber' ? [] : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
@@ -459,6 +471,7 @@ test('retry de quantidade igual cria nova reserva na deduplicação real', async
   ];
   const produto = { id: 'p1', descricao: 'Produto', estoque_atual: 20, estoque_reservado: 0 };
   const ctx = {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async (entity, criteria) => entity === 'Produto' ? [produto]
       : movimentos.filter((mov) => Object.entries(criteria).every(([key, value]) => mov[key] === value)),
@@ -509,6 +522,7 @@ test('falha da baixa bloqueia Entrega e status no faturamento real', async () =>
   const fnSource = source.slice(start, source.indexOf('async function baixarEstoqueItem', start)).replace('export ', '');
   const efeitos = [];
   const ctx = {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ empresaId: 'e1', groupId: 'g1' }),
     filterScoped: async () => [],
     assertFaturamentoDentroDoPedido: () => ({ status: 'Faturado' }),
@@ -675,6 +689,7 @@ test('aprovacao real para no item sem recibo, compensa e nao aciona producao ou 
   const approvalSource = source.slice(start, end).replace(/^export /, '');
   const efeitos = [];
   const approve = runInNewContext(`(${approvalSource})`, {
+    ...fluxoEstoqueLegadoHttp,
     normalizarContextoOperacao: () => ({ groupId: 'g1', empresaId: 'e1' }),
     validarLimiteCredito: async () => ({ aprovado: true }),
     validarItensReservaEstoque,
