@@ -5,7 +5,7 @@
 | Codex | `47a19c03` · feat `3adc7900` |
 | Espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
 | Agente | [Legado: CADESP + empresas API](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
-| Parecer | **APPROVED COM RESSALVAS** — paste VPS humano; pgcrypto `digest()` no SQL |
+| Parecer | `docs/PARECER_CURSOR_211_EMPRESAS_API_SHA_3adc7900.md` — APPROVED COM RESSALVAS |
 | Flags | `importAuthorized=false` / `neverDelete=true` |
 | HUMAN | Web Console: `scripts/legado/exportar-empresas-api-somente-leitura.sh` → `PASTE_TO_GIT_*` + JSON em `04_REPORTS/` |
 
