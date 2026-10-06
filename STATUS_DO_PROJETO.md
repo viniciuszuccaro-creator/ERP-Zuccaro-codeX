@@ -6,7 +6,9 @@
 | Recebido | sim — follow-up Cursor pós-revalidação; sem executor duplicado |
 | Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
 | Base tip | `f5591d55` (#223 Automacao/B1 FECHADO; writer-guard 5/5; CI SUCCESS) |
+| Tip B2 | `28dee1da` (código `2c6e898e` + harness VM legado) |
 | B2 | `useFluxoPedido`: writers `reservarEstoqueItemAprovacao` / `baixarEstoqueItem` / `baixarMaterialProducao` / `liberarReservaEstoque` → `assertEscritaEstoqueLocalPermitida()`; orquestração HTTP omite reserva/baixa/liberação e segue aprovação/faturamento/cancelamento/OP; `executarFechamentoCompleto` aborta |
+| Teste local | writer-guard **6/6** + faturamento-policy **38/38** (sandbox VM com HTTP=false) |
 | Produto | Baixa física no HTTP = despacho ledger (não faturamento SPA). Consumo OP omitido no mesmo opt-in (fail-closed); se Produção precisar writer local com Expedição HTTP → decisão separada |
 | Cobertos | PedidosEntrega/Retirada, Automacao, Comprovante, LogisticaReversa, useFluxoPedido (4 writers + fechamento) |
 | Residuais | Módulo Estoque/Compras; `GerarOPModal`/`ApontamentoProducao`/`OtimizadorCorte` (produção fora do hook); `AutomacaoFluxoPedido.baixarEstoque` morto; reservas SPA pré-flag |
