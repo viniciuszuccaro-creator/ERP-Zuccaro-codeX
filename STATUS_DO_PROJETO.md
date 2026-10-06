@@ -1,3 +1,18 @@
+## CODEX — Cadastros Gerais: edição Empresa sem perda (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — lote Cadastros Gerais; sem executor duplicado |
+| Branch | `cursor/cadastros-empresa-edit-load-cb6a` (base candidata) |
+| Causa | `VisualizadorUniversalEntidadeV24.handleEditItem` abria o form com a **linha da grade** (projeção) sem `get` completo — save podia apagar vínculos/aninhados |
+| Correção | `getInContext` fail-closed (grupo/empresa); carga completa antes de editar; `isCadastroEditLoadComplete`; **bloqueio de save** se load falhar/incompleto; `EmpresaForm`/`EmpresaFormCompleto` preservam `id`/`group_id` e sincronizam props |
+| Escopo compartilhado | Mesmo Visualizador cobre demais cadastros do padrão Bloco/grade |
+| RBAC | Mantém `Cadastros.Empresa.*` + admin/mestre; isolamento Grupo/Empresa; negativa sem permissão/contexto |
+| Testes | `tests/cadastro-empresa-edit-load.test.js` 4/4 |
+| Fora | tip-port outbox/DAM; Financeiro; legado; merge main; promoção 3080 |
+| Prova | Abrir Empresa → carga completa → editar → salvar com id intacto → reabrir |
+
 ## CODEX — B3/B4/B5 pós-B2 (2026-10-06)
 
 | Campo | Valor |

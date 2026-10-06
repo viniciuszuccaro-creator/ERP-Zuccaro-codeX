@@ -1,3 +1,7 @@
+## CODEX — Cadastros Gerais: edição Empresa sem perda (2026-10-06)
+
+Recebido. Visualizador abria edição com projeção da grade; agora `getInContext` carrega registro completo, fail-closed por Grupo/Empresa, e bloqueia save se incompleto. EmpresaForm(s) preservam id/vínculos. Testes 4/4. Sem tip-port outbox/DAM; sem 3080/main.
+
 ## CODEX — B3/B4/B5 pós-B2 (2026-10-06)
 
 Recebido. B2 fechado (parecer @ `2c6e898e`). B4: CI tip `b8492074` provou R11_STOCK em PG efêmero; local sem DATABASE_URL = BLOCKED + skip sanitizado. B3: snapshots privados NOT_EXTRACTED; ready≠carga; CLI reconcile OK. B5/B6: checklist preparado; execução BLOCKED (MCP/Bearer/gates). R2 adiado. Sem tip-port outbox/DAM; sem 3080/main.
