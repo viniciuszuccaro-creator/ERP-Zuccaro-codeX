@@ -49,6 +49,35 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
   });
 
   const [alertaCertificado, setAlertaCertificado] = useState(null);
+  const editando = Boolean(dadosIniciais?.id);
+  const cargaCompleta = !editando || Boolean(
+    dadosIniciais?.id
+    && String(dadosIniciais.razao_social || dadosIniciais.nome || dadosIniciais.nome_fantasia || "").trim()
+    && String(dadosIniciais.cnpj || "").replace(/\D/g, "").length >= 11
+  );
+
+  useEffect(() => {
+    if (!dadosIniciais || typeof dadosIniciais !== "object") return;
+    setFormData((prev) => ({
+      ...prev,
+      ...dadosIniciais,
+      certificado_digital: {
+        tipo: "A1",
+        arquivo_certificado: "",
+        senha_certificado: "",
+        data_validade: "",
+        ...(prev.certificado_digital || {}),
+        ...(dadosIniciais.certificado_digital || {}),
+      },
+      configuracao_fiscal: {
+        ambiente_nfe: "Homologacao",
+        serie_nfe: "1",
+        proximo_numero_nfe: 1,
+        ...(prev.configuracao_fiscal || {}),
+        ...(dadosIniciais.configuracao_fiscal || {}),
+      },
+    }));
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date, dadosIniciais?.cnpj, dadosIniciais?.razao_social]);
 
   useEffect(() => {
     if (formData.certificado_digital?.data_validade) {
@@ -79,6 +108,7 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
 
   const buildPayload = () => ({
     ...formData,
+    ...(dadosIniciais?.id ? { id: dadosIniciais.id } : {}),
     razao_social: sanitizeText(formData.razao_social, 180),
     nome_fantasia: sanitizeText(formData.nome_fantasia, 180),
     nome: sanitizeText(formData.nome_fantasia || formData.razao_social, 180),
@@ -99,8 +129,8 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
       proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
       autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
     },
-    group_id: groupId || formData.group_id,
-    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+    group_id: dadosIniciais?.group_id || groupId || formData.group_id,
+    empresa_id: contexto === "empresa" ? empresaAtual?.id : (formData.empresa_id || dadosIniciais?.empresa_id)
   });
 
   const handleSubmit = async () => {
@@ -112,8 +142,16 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
       toast.error("Selecione um grupo ou empresa antes de salvar a empresa.");
       return;
     }
+    if (editando && !cargaCompleta) {
+      toast.error("Carga incompleta da empresa — salvamento bloqueado. Reabra a edicao.");
+      return;
+    }
 
     const payload = buildPayload();
+    if (editando && payload.id !== dadosIniciais.id) {
+      toast.error("ID da empresa nao pode ser alterado.");
+      return;
+    }
     if (!payload.razao_social || !payload.cnpj) {
       toast.error("Razao Social e CNPJ sao obrigatorios.");
       return;
@@ -196,7 +234,7 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !podeSalvar} data-permission="Cadastros.Empresa.salvar" data-action="salvar-empresa" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !podeSalvar || (editando && !cargaCompleta)} data-permission="Cadastros.Empresa.salvar" data-action="salvar-empresa" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? "Atualizar" : "Criar Empresa"}
         </Button>

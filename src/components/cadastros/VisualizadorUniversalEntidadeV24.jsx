@@ -95,6 +95,20 @@ const FORM_ALIASES = [
   "webhookForm",    // cobertura extra
 ];
 
+/**
+ * Fail-closed: edição só com registro completo (id bate + campos mínimos).
+ * Empresa exige razão/nome + CNPJ para não salvar projeção incompleta da grade.
+ */
+export function isCadastroEditLoadComplete(entityName, record, expectedId) {
+  if (!record || !expectedId || String(record.id) !== String(expectedId)) return false;
+  if (String(entityName || "") === "Empresa") {
+    const nome = String(record.razao_social || record.nome || record.nome_fantasia || "").trim();
+    const doc = String(record.cnpj || "").replace(/\D/g, "");
+    return Boolean(nome) && doc.length >= 11;
+  }
+  return true;
+}
+
 // ─── getDisplayValue: mostra melhor valor disponível para cada célula ───────
 // Para 1ª coluna: tenta todos os campos de nome se o campo configurado estiver vazio.
 // Para demais colunas: tenta variantes comuns do nome do campo (snake_case, sem prefixo, etc.)
@@ -236,7 +250,8 @@ export default function VisualizadorUniversalEntidadeV24({
     empresasDoGrupo,
     createInContext,
     updateInContext,
-    deleteInContext
+    deleteInContext,
+    getInContext,
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
@@ -275,6 +290,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [formKey,       setFormKey]       = useState(0);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
   const [editError,     setEditError]     = useState(null);
+  const [editLoadComplete, setEditLoadComplete] = useState(false);
   const [isSaving,      setIsSaving]      = useState(false);
 
   const [selectedIds,   setSelectedIds]   = useState(function() { return new Set(); });
@@ -457,6 +473,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
+    setEditLoadComplete(false);
     if (wasSaved) {
       // Novos cadastros no topo: sort por updated_date desc, mantém lastGoodData
       setSortField("updated_date");
@@ -493,6 +510,14 @@ export default function VisualizadorUniversalEntidadeV24({
       await auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: `Cadastros.${ENTITY}.criar`, sucesso: false });
       throw new Error("Sem permissao para criar.");
     }
+    if (editItem && editItem.id) {
+      if (editError || !editLoadComplete || !isCadastroEditLoadComplete(ENTITY, editItem, editItem.id)) {
+        await auditCadastroEvent("Bloqueio", "Salvamento bloqueado por carga incompleta", {
+          registro_id: editItem.id, motivo: "edit_load_incomplete", sucesso: false, acao_sensivel: true,
+        });
+        throw new Error("Salvamento bloqueado: carga do registro incompleta. Reabra a edicao.");
+      }
+    }
     setIsSaving(true);
     try {
       const clean = Object.assign({}, formData);
@@ -504,6 +529,10 @@ export default function VisualizadorUniversalEntidadeV24({
         throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");
       }
       if (editItem && editItem.id) {
+        // Preserva identidade e vínculos do registro carregado
+        clean.id = editItem.id;
+        if (editItem.group_id && !clean.group_id) clean.group_id = editItem.group_id;
+        if (editItem.empresa_id && !clean.empresa_id) clean.empresa_id = editItem.empresa_id;
         await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
         await auditCadastroEvent("Edicao", "Cadastro editado pelo formulario", { registro_id: editItem.id, antes: editItem, depois: clean, acao_sensivel: true });
       } else {
@@ -517,7 +546,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent]);
+  }, [ENTITY, editItem, editError, editLoadComplete, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {
@@ -533,11 +562,12 @@ export default function VisualizadorUniversalEntidadeV24({
     auditCadastroEvent("Visualizacao", "Formulario de criacao aberto", { origem: "VisualizadorUniversalEntidadeV24" });
     setEditItem(null);
     setEditError(null);
+    setEditLoadComplete(true);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
   }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido]);
 
-  const handleEditItem = useCallback(function(item) {
+  const handleEditItem = useCallback(async function(item) {
     if (!item || !item.id) return;
     if (!contextoValido) {
       auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto" });
@@ -549,14 +579,36 @@ export default function VisualizadorUniversalEntidadeV24({
       alert("Sem permissao para editar.");
       return;
     }
-    auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
-    setEditItem(JSON.parse(JSON.stringify(item)));
+    setIsLoadingEdit(true);
     setEditError(null);
-    setIsLoadingEdit(false);
-    setFormKey(function(k) { return k + 1; });
-    setShowForm(true);
-  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido]);
-
+    setEditLoadComplete(false);
+    setShowForm(false);
+    try {
+      const full = await getInContext(ENTITY, item.id, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+      if (!isCadastroEditLoadComplete(ENTITY, full, item.id)) {
+        throw new Error("Registro incompleto ao carregar para edicao. Salvamento bloqueado.");
+      }
+      auditCadastroEvent("Visualizacao", "Formulario de edicao aberto com carga completa", {
+        registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24",
+      });
+      setEditItem(JSON.parse(JSON.stringify(full)));
+      setEditLoadComplete(true);
+      setFormKey(function(k) { return k + 1; });
+      setShowForm(true);
+    } catch (e) {
+      const msg = (e && e.message) || String(e);
+      setEditItem(null);
+      setEditLoadComplete(false);
+      setEditError(msg);
+      setShowForm(false);
+      await auditCadastroEvent("Falha", "Falha ao carregar cadastro para edicao", {
+        registro_id: item.id, erro: msg, sucesso: false, acao_sensivel: true,
+      });
+      alert("Nao foi possivel abrir a edicao: " + msg);
+    } finally {
+      setIsLoadingEdit(false);
+    }
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, getInContext]);
   const formProps = useMemo(
     function() { return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit); },
     [editItem, handleCloseForm, isSelfManaged, handlePersistSubmit]

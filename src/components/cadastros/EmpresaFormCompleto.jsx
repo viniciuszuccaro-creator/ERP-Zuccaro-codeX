@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,32 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
     ...dadosIniciaisProps
   });
 
+  const editando = Boolean(dadosIniciaisProps?.id);
+  const cargaCompleta = !editando || Boolean(
+    dadosIniciaisProps?.id
+    && String(dadosIniciaisProps.razao_social || dadosIniciaisProps.nome || dadosIniciaisProps.nome_fantasia || '').trim()
+    && String(dadosIniciaisProps.cnpj || '').replace(/\D/g, '').length >= 11
+  );
+
+  useEffect(() => {
+    if (!dadosIniciaisProps || typeof dadosIniciaisProps !== 'object') return;
+    setFormData((prev) => ({
+      ...prev,
+      ...dadosIniciaisProps,
+      endereco: { ...(prev.endereco || {}), ...(dadosIniciaisProps.endereco || {}) },
+      certificado_digital: { ...(prev.certificado_digital || {}), ...(dadosIniciaisProps.certificado_digital || {}) },
+      configuracao_fiscal: {
+        ambiente_nfe: 'Homologação',
+        serie_nfe: '1',
+        proximo_numero_nfe: 1,
+        autoriza_emissao_producao: false,
+        ...(prev.configuracao_fiscal || {}),
+        ...(dadosIniciaisProps.configuracao_fiscal || {}),
+      },
+      urls_webhook_padrao: { ...(prev.urls_webhook_padrao || {}), ...(dadosIniciaisProps.urls_webhook_padrao || {}) },
+    }));
+  }, [dadosIniciaisProps?.id, dadosIniciaisProps?.updated_date, dadosIniciaisProps?.cnpj, dadosIniciaisProps?.razao_social]);
+
   const handleCEPFound = (endereco) => {
     setFormData({...formData, endereco});
     toast.success('✅ Endereço preenchido automaticamente');
@@ -88,6 +114,7 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
 
   const buildPayload = () => ({
     ...formData,
+    ...(dadosIniciaisProps?.id ? { id: dadosIniciaisProps.id } : {}),
     razao_social: sanitizeText(formData.razao_social, 180),
     nome_fantasia: sanitizeText(formData.nome_fantasia, 180),
     cnpj: sanitizeCode(formData.cnpj, 24),
@@ -110,18 +137,18 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
       nfe_emitida: sanitizeUrl(formData.urls_webhook_padrao?.nfe_emitida, 500)
     },
     status: sanitizeText(formData.status || "Ativa", 40),
-    group_id: groupId || formData.group_id,
-    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+    group_id: dadosIniciaisProps?.group_id || groupId || formData.group_id,
+    empresa_id: contexto === "empresa" ? empresaAtual?.id : (formData.empresa_id || dadosIniciaisProps?.empresa_id)
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const editando = Boolean(dadosIniciaisProps?.id);
-    if (editando && !podeEditar) {
+    const editandoAgora = Boolean(dadosIniciaisProps?.id);
+    if (editandoAgora && !podeEditar) {
       toast.error('Seu perfil nao permite editar empresas.');
       return;
     }
-    if (!editando && !podeCriar) {
+    if (!editandoAgora && !podeCriar) {
       toast.error('Seu perfil nao permite criar empresas.');
       return;
     }
@@ -129,7 +156,15 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
       toast.error('Selecione um grupo ou empresa antes de salvar a empresa.');
       return;
     }
+    if (editandoAgora && !cargaCompleta) {
+      toast.error('Carga incompleta da empresa — salvamento bloqueado. Reabra a edicao.');
+      return;
+    }
     const payload = buildPayload();
+    if (editandoAgora && payload.id !== dadosIniciaisProps.id) {
+      toast.error('ID da empresa nao pode ser alterado.');
+      return;
+    }
     if (!payload.razao_social || !payload.cnpj) {
       toast.error('Preencha Razao Social e CNPJ');
       return;
@@ -332,7 +367,7 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || !contextoValido || (dadosIniciaisProps?.id ? !podeEditar : !podeCriar)}
+          disabled={isSubmitting || !contextoValido || (dadosIniciaisProps?.id ? !podeEditar : !podeCriar) || (editando && !cargaCompleta)}
           data-permission="Cadastros.Empresa.salvar"
           data-sensitive
           className="bg-blue-600 hover:bg-blue-700"

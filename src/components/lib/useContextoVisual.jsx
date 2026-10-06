@@ -477,6 +477,31 @@ export function useContextoVisual() {
     createInContext,
     bulkCreateInContext,
     filterInContext,
+    getInContext: async (entityName, id, campo = 'empresa_id') => {
+      if (!entityName || !id) {
+        throw new Error('Entidade e ID obrigatorios para carregar cadastro.');
+      }
+      if (!validacaoContexto.valid) {
+        throw new Error(validacaoContexto.error || 'Contexto multiempresa obrigatorio para carregar cadastro.');
+      }
+      const record = await base44.entities[entityName].get(id);
+      if (!record || !record.id) {
+        return null;
+      }
+      const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+      const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
+      const groupId = contextoCanonico.groupId;
+      const empresaId = contextoCanonico.empresaId;
+      if (groupId && record.group_id && String(record.group_id) !== String(groupId)) {
+        throw new Error('Registro fora do grupo ativo — carga bloqueada.');
+      }
+      if (entityName !== 'Empresa' && entityName !== 'GrupoEmpresarial' && empresaId && record[ctxCampo]
+        && String(record[ctxCampo]) !== String(empresaId)
+        && contextoCanonico.scopeType === 'empresa') {
+        throw new Error('Registro fora da empresa ativa — carga bloqueada.');
+      }
+      return record;
+    },
     adicionarColunasContexto,
     alternarContexto,
     selecionarEmpresa,
