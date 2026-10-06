@@ -1,3 +1,15 @@
+## CODEX — unidade canônica + #219 após revisão Cursor (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — continuar nesta sessão |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` tip `f514c2e3` |
+| #215 | já na candidata (`5837b6e5`/`7f0dc127`) — parecer #218 APPROVED COM RESSALVA unidade |
+| #219 | `ec8fe57a` — revisão Cursor em curso; incorporar sem tip-port #213 |
+| Primeira ação | contrato unidade canônica (não somar; PK sem unidade) + cherry-pick #219 |
+| Status | EM EXECUÇÃO |
+
 ## CODEX — incorporar #215 multi-item na candidata (2026-10-06)
 
 | Campo | Valor |

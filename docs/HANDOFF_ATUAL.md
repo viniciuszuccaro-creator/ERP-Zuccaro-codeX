@@ -1,3 +1,7 @@
+## CODEX — unidade canônica e #219 na candidata (2026-10-06)
+
+Recebido (CODEX COMERCIAL 360). Tip `f514c2e3`. #215 validada na candidata; ressalva #218: unidade. Primeira ação: contrato unidade canônica única por produto (não somar) e incorporar #219 `ec8fe57a` (comparador offline). Sem tip-port #213/outbox/DAM. VPS ao vivo BLOCKED se MCP falhar. Trava 026; gap 032.
+
 ## CODEX — incorporar #215 na candidata autoritativa (2026-10-06)
 
 Recebido e executado (CODEX COMERCIAL 360). Candidata `codex/comercial-expedicao-cliente360-207-209-20261005` incorporou #215 (`5837b6e5`/`7f0dc127`) sem tip-port #213. PGlite: rollback 2º item + ensaio reconciliação sem inventar saldo. DATABASE_URL ausente → PG real BLOCKED (skip sanitizado). VPS ao vivo BLOCKED (MCP timeout); R07B/001–015/APPLY abortado são **históricos**. Trava 026; gap 032. Sem outbox/DAM; sem promoção 3080.
