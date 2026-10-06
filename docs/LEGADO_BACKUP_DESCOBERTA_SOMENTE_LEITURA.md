@@ -151,7 +151,7 @@ agrupamento (não emissor). `EMP03`/pasta não prova empresa. O mapa privado
 | Importação / carga operacional | **bloqueado** — aguardar gate humano; flags permanecem false |
 | Coordenação Comercial/Cursor (VPS vs versão anterior) | **canônico** — ausência de tela/cadastro **não** = falha de ETL; exige diff commit/imagem/flags/rotas/layouts/RBAC (#216/#217) |
 | CADESP / Gate 18 | **reusado** — não solicitar novamente os mesmos comprovantes; mapa privado no HD |
-| Export empresas (banco da API) | **comando Web Console pronto** — `scripts/legado/exportar-empresas-api-somente-leitura.sh` (somente leitura; arquivo privado nome novo) |
+| Export empresas (banco da API) | **executado na VPS** 2026-10-06T15:34:40Z (`executed=true`); arquivo `legado-empresas-api-20261006T153440Z.json`; classificar **PENDENTE** (JSON ainda só na VPS; SFTP→HD) |
 | Classificador API CPA/3Z/Grupo | **preparado** (fixture) — terceira linha = agrupamento, **nunca apagar** |
 | Procedência GitHub #211 | **git ok neste clone** / **fontes privadas BLOCKED** (HD ausente neste VM) |
 

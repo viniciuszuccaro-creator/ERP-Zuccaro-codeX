@@ -11714,3 +11714,23 @@ Checklist inicial:
 - Intervenção humana permanece: colar script inteiro do SHA `4b5d3b94` no Web Console; devolver PRECHECK + PASTE; JSON privado nome novo no HD; `executed=false` se health/ready/pgcrypto falhar.
 - Mapper #48 intocado. `importAuthorized=false`. Coordenação #216/#217.
 - Próximo: paste humano na Web Console (único caminho de execução real daqui).
+
+### CODEX LEGADO — alinhamento bloco Web Console (2026-10-06)
+
+- Objetivo: alinhar ao chat principal o mesmo script `4b5d3b94`/`7d063b17` + caminho privado + **uma** intervenção; sem remeter só a doc; sem retry SSH/MCP.
+- Capacidade aqui: Web Console **indisponível**; docker VPS **ausente**; HD **ausente**. `127.0.0.1` nesta VM ≠ VPS.
+- Resultado: **export NOT_PERFORMED**. Bloco completo do `.sh` entregue no chat Codex para Cursor colar.
+- Caminho privado: `/root/erp-private/legado-empresas-api-<UTC>.json` (nome novo).
+- Pós-export (humano/Cursor): confrontar CADESP já recebido; preservar 3ª linha; staging comprovados; sem carga; mapper #48 intocado.
+- Branch tip: `7d063b17` (script idêntico a `4b5d3b94`).
+
+### CODEX LEGADO — paste Web Console proprietário (2026-10-06T15:34:40Z)
+
+- Objetivo: registrar evidência sanitizada do export executado na VPS pelo proprietário; sem ler/publicar o JSON privado neste agente.
+- PRECHECK: health/ready=200; runtime `ERP-RUNTIME-08B`; `auth_mode=supabase_user`; `pgcrypto=yes`; tables/cols OK; `digest_probe_len=64`.
+- PASTE: `executed=true`; `importAuthorized=false`; `neverDelete=true`; `cadesp_reused=true`; api=`erp-api-dev` running; db=`supabase-db`; `current_database=postgres`.
+- Contagens paste: groups=2; empresas=3; empresas_ativas=3; match CPA Ferro=1; 3Z=1; Grupo CPA=1; outras_linhas_nao_apagar=1.
+- Arquivo VPS: `legado-empresas-api-20261006T153440Z.json`; `private_sha256=18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`; cluster_id_sha256 registrado no HANDOFF.
+- Classificador `seloSha256` / papéis por linha: **NÃO gerados** — JSON ausente neste VM/HD.
+- HUMAN_NEXT: SFTP → `04_REPORTS` (nome novo); classificar; CADESP já recebido; staging comprovados; quarentena resto; mapper #48 intocado; sem carga.
+- Coordenação: #216/#217.

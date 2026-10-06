@@ -1,3 +1,9 @@
+## CURSOR — paste Web Console export empresas (2026-10-06)
+
+- Evidência sanitizada do proprietário: `executed=true` · PRECHECK OK · `legado-empresas-api-20261006T153440Z.json` sha256 `18e2ab9a…3d7e`.
+- Contagens: groups=2 · empresas=3 · CPA Ferro=1 · 3Z=1 · Grupo CPA=1 · outras_não_apagar=1.
+- JSON **não** no Git. HUMAN_NEXT: SFTP → HD `04_REPORTS` → classificar. [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) tip `49e7b33b`.
+
 ## CURSOR — espelho Legado `7d063b17` (2026-10-06)
 
 - Merge Codex `4b5d3b94`+`7d063b17` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
@@ -22,6 +28,79 @@
 - Parecer: `docs/PARECER_CURSOR_211_PLANO_SHA_9057aeab.md` — APPROVED (rascunho de gate).
 - Programa Legado itens 1–5 preparados em fixture; carga operacional continua fail-closed.
 - BLOCKED: HD + autorização humana Onda 25.
+## CODEX LEGADO — paste Web Console proprietário (2026-10-06T15:34:40Z)
+
+Recebido. Sem tarefa duplicada. **Export VPS confirmado pelo paste**
+(`executed=true`). Este Cloud Agent **não** leu o JSON privado.
+
+### PRECHECK (sanitizado)
+
+```
+health=200
+ready=200
+runtime=ERP-RUNTIME-08B
+auth_mode=supabase_user
+precheck_line=postgres|pgcrypto=yes|groups=yes|empresas=yes|empresas_cols=yes|groups_cols=yes
+digest_probe_len=64
+```
+
+### PASTE (sanitizado — sem CNPJ, sem IDs de linha)
+
+```
+executed=true
+lote=legado-empresas-api-somente-leitura
+importAuthorized=false
+operationalLoadAuthorized=false
+neverDelete=true
+cadesp_reused=true
+cadesp_redocument_requested=false
+api_container=erp-api-dev
+api_image=erp-zuccaro-erp-api
+api_status=running
+db_container=supabase-db
+current_database=postgres
+cluster_id_sha256=d3b739b0883ed3a2d6419d2c388ffd16019c4e79ce6183696ac8e79cd73c6a78
+private_file=legado-empresas-api-20261006T153440Z.json
+private_sha256=18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e
+groups=2
+empresas=3
+empresas_ativas=3
+match_label_cpa_ferro=1
+match_label_3z=1
+match_label_grupo_cpa=1
+outras_linhas_empresa_nao_apagar=1
+coordenacao=#216/#217
+```
+
+VPS path: `/root/erp-private/legado-empresas-api-20261006T153440Z.json`
+Classificação / CADESP / `seloSha256` do classificador: **PENDENTE** — JSON
+ainda não no HD deste agente.
+
+**HUMAN_NEXT (único):** SFTP o arquivo **novo** (não sobrescrever) →
+`BACKUP ERP ANTIGO - CODEX/04_REPORTS/`; depois
+`node scripts/legado/classificar-empresas-api-legado.mjs --export <path>`;
+confrontar CADESP já recebido; CPA+3Z operacionais; 3ª linha `neverDelete`;
+staging só comprovados; resto quarentena; `importAuthorized=false`; mapper #48
+intocado; sem carga operacional.
+
+## CODEX LEGADO — bloco Web Console alinhado ao chat (2026-10-06)
+
+
+Recebido. Sem tarefa duplicada. **Sem** novo retry SSH/MCP.
+Neste Cloud Agent: sem Web Console autenticada, sem docker local VPS, HD ausente.
+`127.0.0.1` nesta VM **≠** VPS. **export NOT_PERFORMED.**
+
+Script = conteúdo idêntico em `4b5d3b94` e tip `7d063b17`
+(`scripts/legado/exportar-empresas-api-somente-leitura.sh`).
+
+Caminho privado (nome novo, nunca sobrescrever):
+`/root/erp-private/legado-empresas-api-<UTC>.json`
+
+Uma intervenção humana: Cursor/humano cola o script **completo** (mesmo bloco do
+chat principal) na Web Console root da VPS DEV; devolve PRECHECK + PASTE;
+SFTP o JSON novo ao HD `04_REPORTS`. Depois: confrontar IDs/Grupos/nomes/refs
+com CADESP já recebido; preservar 3ª linha; staging só comprovados;
+`importAuthorized=false`; mapper #48 intocado.
 
 ## CODEX LEGADO — parecer Cursor 4b5d3b94 (2026-10-06)
 
