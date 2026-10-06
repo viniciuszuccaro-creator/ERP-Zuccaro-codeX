@@ -1,3 +1,21 @@
+## CODEX LEGADO — bloco Web Console alinhado ao chat (2026-10-06)
+
+Recebido. Sem tarefa duplicada. **Sem** novo retry SSH/MCP.
+Neste Cloud Agent: sem Web Console autenticada, sem docker local VPS, HD ausente.
+`127.0.0.1` nesta VM **≠** VPS. **export NOT_PERFORMED.**
+
+Script = conteúdo idêntico em `4b5d3b94` e tip `7d063b17`
+(`scripts/legado/exportar-empresas-api-somente-leitura.sh`).
+
+Caminho privado (nome novo, nunca sobrescrever):
+`/root/erp-private/legado-empresas-api-<UTC>.json`
+
+Uma intervenção humana: Cursor/humano cola o script **completo** (mesmo bloco do
+chat principal) na Web Console root da VPS DEV; devolve PRECHECK + PASTE;
+SFTP o JSON novo ao HD `04_REPORTS`. Depois: confrontar IDs/Grupos/nomes/refs
+com CADESP já recebido; preservar 3ª linha; staging só comprovados;
+`importAuthorized=false`; mapper #48 intocado.
+
 ## CODEX LEGADO — parecer Cursor 4b5d3b94 (2026-10-06)
 
 Recebido. Sem tarefa duplicada. Veredito Cursor: **APPROVED COM RESSALVAS**

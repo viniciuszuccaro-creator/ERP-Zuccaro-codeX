@@ -11647,3 +11647,12 @@ Checklist inicial:
 - Intervenção humana permanece: colar script inteiro do SHA `4b5d3b94` no Web Console; devolver PRECHECK + PASTE; JSON privado nome novo no HD; `executed=false` se health/ready/pgcrypto falhar.
 - Mapper #48 intocado. `importAuthorized=false`. Coordenação #216/#217.
 - Próximo: paste humano na Web Console (único caminho de execução real daqui).
+
+### CODEX LEGADO — alinhamento bloco Web Console (2026-10-06)
+
+- Objetivo: alinhar ao chat principal o mesmo script `4b5d3b94`/`7d063b17` + caminho privado + **uma** intervenção; sem remeter só a doc; sem retry SSH/MCP.
+- Capacidade aqui: Web Console **indisponível**; docker VPS **ausente**; HD **ausente**. `127.0.0.1` nesta VM ≠ VPS.
+- Resultado: **export NOT_PERFORMED**. Bloco completo do `.sh` entregue no chat Codex para Cursor colar.
+- Caminho privado: `/root/erp-private/legado-empresas-api-<UTC>.json` (nome novo).
+- Pós-export (humano/Cursor): confrontar CADESP já recebido; preservar 3ª linha; staging comprovados; sem carga; mapper #48 intocado.
+- Branch tip: `7d063b17` (script idêntico a `4b5d3b94`).
