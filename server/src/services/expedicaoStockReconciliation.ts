@@ -27,8 +27,13 @@ function micros(value: string): bigint | null {
 }
 
 function validCutoff(value: unknown): value is string {
-  return typeof value === 'string' && utc.test(value) && !Number.isNaN(Date.parse(value))
-    && new Date(value).toISOString() === new Date(Date.parse(value)).toISOString();
+  if (typeof value !== 'string' || !utc.test(value)) return false;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return false;
+  const canonical = new Date(parsed).toISOString();
+  const expected = value.replace(/(?:\.(\d{1,3}))?Z$/, (_, fractional: string | undefined) =>
+    `.${(fractional ?? '').padEnd(3, '0')}Z`);
+  return canonical === expected;
 }
 
 type ValidRow = StockSnapshot['rows'][number] & { amount: bigint; key: string };
@@ -67,7 +72,7 @@ export function reconcileExpedicaoStock(source: StockSnapshot, ledger: StockSnap
   const right = parsed(ledger, 'ledger');
   if (left.size === 0) issues.push({ code: 'EMPTY_SNAPSHOT', side: 'source' });
   if (right.size === 0) issues.push({ code: 'EMPTY_SNAPSHOT', side: 'ledger' });
-  if (validCutoff(source?.cutoff) && validCutoff(ledger?.cutoff) && source.cutoff !== ledger.cutoff) {
+  if (validCutoff(source?.cutoff) && validCutoff(ledger?.cutoff) && Date.parse(source.cutoff) !== Date.parse(ledger.cutoff)) {
     issues.push({ code: 'CUTOFF_MISMATCH' });
   }
   let compared = 0;
