@@ -1,3 +1,16 @@
+## CURSOR — ACK tip `d21f97cb` B3/B4/B5 (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Estoque B3/B5/B6 | [Comercial B2 useFluxoPedido](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | staging privado; gates homolog | outbox/DAM #203 |
+| SFTP export→04_REPORTS | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | FileZilla no PC | **não** refazer export |
+| Revisão + outbox | Cursor | #222; #203 | router |
+
+- Tip candidata `d21f97cb` (docs). B2 parecer `2c6e898e` vigente. B4 **CI R11_STOCK** aceito; local `DATABASE_URL` BLOCKED.
+- Bloqueios: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_d21f97cb.md` · ACK `docs/PARECER_CURSOR_CANDIDATA_d21f97cb.md`.
+- Abertos: B3 snapshots · B5 Bearer · B6 gates · R2 adiado.
+- Legado SFTP: HUMAN_NEXT FileZilla (sha256 `18e2ab9a…3d7e`).
+
 ## CURSOR — 3 pacotes + parecer B2 `2c6e898e` (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
@@ -6,10 +19,8 @@
 | SFTP export→04_REPORTS + staging | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | VPS `/root/erp-private/…153440Z.json` → HD `04_REPORTS` | **não** refazer export; mapper #48 |
 | Revisão B2 + outbox/DAM | Cursor | pareceres #222; #203 | router candidata |
 
-- B2 **fechado** tip `b8492074` / funcional `2c6e898e`. Parecer: `docs/PARECER_CURSOR_B2_SHA_2c6e898e.md` — **APPROVED COM RESSALVAS**.
-- Bloqueios: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_b8492074.md` (B3–B6 abertos; R2 GerarOPModal).
-- Writer-guard **6/6**; faturamento-policy **32/32**; CLI intacta. Telas: Bearer **401 AUTH_REQUIRED**.
-- Legado: arquivo já gerado; `private_sha256=18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`; SFTP sem sobrescrever; sem PII no Git.
+- B2 **fechado** — tip vigente `d21f97cb` (ver bloco acima).
+- Parecer B2: `docs/PARECER_CURSOR_B2_SHA_2c6e898e.md`.
 - Outbox #203 in-repo OK; publisher real BLOCKED.
 
 ## CURSOR — revalidação candidata `f5591d55` (2026-10-06)
