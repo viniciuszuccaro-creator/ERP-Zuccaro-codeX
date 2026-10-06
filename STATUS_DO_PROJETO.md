@@ -13170,6 +13170,6 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 | Estruturas | Reutiliza `isHttpExpedicaoEnabled` de `runtimeBackend`; modo legado preservado, modo HTTP direcionado ao fluxo existente de Expedição |
 | Arquivos | `src/components/comercial/PedidosEntregaTab.jsx`, `PedidosRetiradaTab.jsx`, `AutomacaoFluxoPedido.jsx`; `tests/pedido-entrega-http-writer-guard.test.js` |
 | Segurança | Visibilidade e handler bloqueiam writer local em HTTP; sem alteração em saldo, migration, VPS ou RBAC existente |
-| Testes | Focado final 4/4, audit PASS, lint PASS com 1 warning preexistente, build PASS, diff-check PASS. `npm test` raiz e typecheck raiz falham em baseline Windows/JSX fora deste diff; CI Linux do SHA publicado é gate |
+| Testes | Focado integrado final 5/5 após preservar teste de Comprovante/Reversa da candidata, audit PASS, lint PASS com 1 warning preexistente, build PASS, diff-check PASS. `npm test` raiz e typecheck raiz falham em baseline Windows/JSX fora deste diff; CI Linux do SHA publicado é gate |
 | Pendência | Fluxo local multi-item ainda não oferece transação entre movimentos; não afirmar atomicidade fora do ledger HTTP. Snapshots reais comparáveis seguem indisponíveis |
 | Próximo P0 | Homologar tela HTTP com PostgreSQL isolado e comprovar que somente o ledger registra cada efeito; não ativar sem reconciliação e backup |
