@@ -71,4 +71,7 @@ test('fixture sanitizada não afirma extração real nem ready', async () => {
   assert.equal(fixture.counts.compared, 0);
   assert.equal(fixture.doesNotInventOpeningBalance, true);
   assert.equal(fixture.provenance.origin, 'NOT_EXTRACTED');
+  assert.equal(fixture.readyMeansLoad, false);
+  assert.ok(Array.isArray(fixture.blocked) && fixture.blocked.includes('B5_PRIVATE_SNAPSHOTS'));
+  assert.equal(fixture.provenance.remoteDevMeta?.pedidoEstoqueSideEffects ?? null, null);
 });

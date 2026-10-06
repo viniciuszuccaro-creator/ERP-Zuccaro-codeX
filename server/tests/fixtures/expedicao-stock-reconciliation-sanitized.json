@@ -4,7 +4,14 @@
     "origin": "NOT_EXTRACTED",
     "destination": "NOT_EXTRACTED",
     "cutoffUtc": null,
-    "reason": "DATABASE_URL_AND_VPS_READ_BLOCKED"
+    "reason": "DATABASE_URL_AND_PRIVATE_STAGING_NOT_AVAILABLE",
+    "remoteDevMeta": {
+      "runtime": "ERP-RUNTIME-08B",
+      "authMode": "supabase_user",
+      "pedidoEstoqueSideEffects": null,
+      "estoqueFonteOficial": null,
+      "note": "candidata ledger flags not present on public DEV; authenticated expedition BLOCKED without Bearer"
+    }
   },
   "counts": {
     "sourceRows": 0,
@@ -12,7 +19,16 @@
     "compared": 0,
     "conflicts": 1
   },
-  "issues": ["SNAPSHOT_NOT_AVAILABLE"],
+  "issues": [
+    "SNAPSHOT_NOT_AVAILABLE"
+  ],
+  "blocked": [
+    "B1_DATABASE_URL",
+    "B3_BEARER_SESSION",
+    "B4_VPS_MCP",
+    "B5_PRIVATE_SNAPSHOTS"
+  ],
+  "readyMeansLoad": false,
   "doesNotInventOpeningBalance": true,
   "doesNotSumDistinctUnits": true
 }

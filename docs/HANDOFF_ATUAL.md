@@ -1,3 +1,7 @@
+## CODEX — parecer 06ed1141 + staging privado BLOCKED (2026-10-06)
+
+Recebido. Parecer vigente `docs/PARECER_CURSOR_213_SHA_06ed1141.md` (APPROVED COM RESSALVAS); `7cbe3a30` não se transfere sozinho. Probe erp-dev/api-erp-dev: health/ready/meta 200 (08B/`supabase_user`); Expedição 401 sem Bearer; ledger flags da candidata ausentes no meta público. Snapshots privados/PG/VPS BLOCKED. Checklist staging em EXPEDICAO_PORTAS. Sem inventar abertura; sem tip-port outbox/DAM.
+
 ## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
 
 Recebido. Parecer Cursor APPROVED COM RESSALVAS em `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` (SHA `7cbe3a30`; espelho #213 `42980d2e` — sem tip-port). #218/#220 não transferem. Unidade OK. CLI #219 `b6864875` trazida (`reconcile:stock`). Snapshots reais/PG/VPS/telas BLOCKED. Sem inventar abertura.

@@ -6,7 +6,7 @@
 
 **Unidade canônica (ressalva #218):** a PK de `expedicao_estoque_saldos` permanece `(group_id, empresa_id, produto_id)` — **sem** coluna de unidade e **sem** somar unidades distintas. A unidade oficial é `produtos.unidade_medida_id` (uma por produto). O comparador offline usa a mesma chave composta; duas linhas de unidades diferentes no mesmo produto são `DUPLICATE_KEY`. A porta persistente rejeita `ESTOQUE_UNIDADE_CANONICA_AUSENTE` / `_MISMATCH` / `_COLISAO`. Não há migration 038/032 para “consertar” a PK.
 
-**Candidata Codex tip:** `f514c2e3` (+ #219) em `codex/comercial-expedicao-cliente360-207-209-20261005`.
+**Candidata Codex tip:** `06ed1141` (parecer Cursor APPROVED COM RESSALVAS em `docs/PARECER_CURSOR_213_SHA_06ed1141.md`; o parecer `7cbe3a30` **não** se transfere sozinho).
 
 **Fonte oficial dos saldos (caminho HTTP/BFF):** `expedicao_estoque_saldos` + `expedicao_estoque_movimentos`. Com `VITE_ERP_HTTP_EXPEDICAO=true`, a SPA **não** cria `MovimentacaoEstoque` nem altera `produto.estoque_atual` no despacho/devolução — isso evita contabilidade paralela/dupla. Opt-in de runtime: `EXPEDICAO_PERSISTENT_PORTS=true` (exige `DATABASE_URL`); `/meta` reporta `pedidoEstoqueSideEffects: ledger` e `estoqueFonteOficial: expedicao_estoque_saldos`. Sem flag, permanece `reserved` (fail-closed para Pedido vinculado). Sequência de migrations: 001–031, **gap intencional sem 032**, 033–037; trava histórica da 026 preservada.
 
@@ -15,6 +15,13 @@
 **Comparação offline preliminar:** `reconcileExpedicaoStock` recebe dois snapshots já extraídos e mapeados, sem credenciais, rede ou gravação. Cada linha requer Grupo, Empresa, produto canônico, unidade, quantidade decimal exata e identificador de evidência; ambos os lados requerem o mesmo instante de corte UTC. O resultado bloqueia duplicidades, ausências, unidades e quantidades divergentes. `ready` significa apenas igualdade desses snapshots, **não** autorização de carga ou ativação: a extração precisa demonstrar cobertura de locais/lotes, mapeamento de unidades, ausência de writers concorrentes e trilha de origem; depois são necessários backup do destino, ensaio de restore, plano de rollback, piloto isolado e aprovação humana. Nenhum saldo real deve ser incluído no GitHub.
 
 Em staging privado, executar `cd server && npm run reconcile:stock -- <fonte.json> <ledger.json>`. Os arquivos JSON seguem `{ "cutoff": "UTC RFC3339", "rows": [{ "groupId", "empresaId", "produtoId", "unidadeId", "quantidade", "evidenceId" }] }`. O comando aceita até 16 MiB por arquivo e imprime só contagens e códigos de conflito, sem IDs/quantidades; retorna código 2 para conflito ou erro de leitura. Não copiar snapshots reais para o repositório. O comparador não faz extração, conversão de unidade ou agregação de locais/lotes: isso requer mapeamento e cobertura comprovados antes do uso.
+
+**Staging privado (fora do GitHub) — checklist mínimo:**
+1. Extrair origem e destino com o **mesmo** `cutoff` UTC; cada linha leva `unidadeId` **junto** da `quantidade` (não inferir depois).
+2. Escopo explícito Grupo/Empresa; sem cruzar empresas; sem somar UOM distintas.
+3. Rodar `reconcile:stock` no staging; registrar contagens e códigos (`UNIT_MISMATCH`, `QUANTITY_MISMATCH`, `MISSING_*`, `DUPLICATE_KEY`).
+4. `ready=true` **não** autoriza carga nem INSERT de abertura: exige backup destino, restore ensaiado, plano de saldo inicial aprovado e flag `EXPEDICAO_PERSISTENT_PORTS` só após gate.
+5. Probe remoto `erp-dev` / `api-erp-dev`: health/ready/meta públicos OK (`ERP-RUNTIME-08B`, `supabase_user`); Expedição autenticada e flags de ledger da candidata **não** comprovadas no DEV público sem Bearer + promoção.
 
 **Prova técnica do lote integrado:** o teste R11 PostgreSQL cria dois itens sintéticos ordenados; o segundo sem baseline força falha após a primeira dedução na mesma transação e exige rollback do saldo, dos movimentos, do evento de Pedido e da auditoria. Após baseline sintético isolado, retry aplica um despacho por item e cancelamento compensa uma vez. Isso prova atomicidade do ledger, não reconciliação de saldos reais nem autorização de ativação. O gap 032 permanece ausência de arquivo, não migration a fabricar.
 

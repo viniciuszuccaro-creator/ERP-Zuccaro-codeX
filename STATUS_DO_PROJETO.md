@@ -1,3 +1,18 @@
+## CODEX — parecer 06ed1141 + staging privado BLOCKED (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Parecer vigente | `docs/PARECER_CURSOR_213_SHA_06ed1141.md` — **APPROVED COM RESSALVAS** (espelho #213 `0f941c69`) |
+| Parecer `7cbe3a30` | **não** se transfere sozinho |
+| Probe remoto | `erp-dev`/`api-erp-dev` health/ready/meta **200**; runtime `ERP-RUNTIME-08B`; `auth.mode=supabase_user`; `/expedicoes` **401** sem Bearer; flags ledger candidata **ausentes** no meta público |
+| Snapshots privados | **BLOCKED** — sem origem/destino neste ambiente; fixture `NOT_EXTRACTED`; `readyMeansLoad=false` |
+| PG isolado | **BLOCKED** (`DATABASE_URL` ausente) |
+| VPS MCP | **BLOCKED** (timeout) |
+| Telas autenticadas | **BLOCKED** — intervenção: Bearer proprietário/sintético autorizado |
+| Fora | tip-port outbox/DAM; inventar abertura; promoção 3080 |
+| Status | Parecer 06ed1141 na candidata; pacote restante aguarda staging privado + Bearer/URL |
+
 ## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
 
 | Campo | Valor |
