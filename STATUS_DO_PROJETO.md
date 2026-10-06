@@ -1,3 +1,58 @@
+## CURSOR — #216/#217 histórico vs ao vivo (2026-10-06)
+
+| Classe | Estado |
+| --- | --- |
+| Histórico | VPS `runtime07b-main-ca0bc5f3` / meta 07B / mig 001–015 / APPLY abortado — **não** renovar como live |
+| Ao vivo 2026-10-06 | Hostinger MCP `vps_virtual-machines_list` **timeout**; 3080/5173 `curl` 000; `DATABASE_URL` ausente |
+| Relacionados | parecer [#218](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/218) #215; Comercial/Legado retomados |
+
+Não corrigir layout/flag cego: causa = versão/opt-in/RBAC até preflight live.
+
+## CURSOR — cruzamento #216 × Comercial `65fe8fba` × Legado (2026-10-05)
+
+| Fonte | SHA / PR | Nota |
+| --- | --- | --- |
+| Cursor inventário | [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) `0b70e0ee` | D1–D9 + flags `.env.example` |
+| Comercial diagnóstico | `65fe8fba` · espelho `cursor/erp-novo-vps-layout-diff-392b` | R07B vs 08B; mig 015/024/037; flags OFF |
+| Legado coordenação | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) pós-`b6691189` | §8 plano: não culpar importação sem diff VPS |
+
+Consenso: reconciliar Legado só no schema VPS comprovado; gaps de versão/config/RBAC ficam com Comercial/deploy.
+
+## CURSOR — inventário ERP novo × VPS (layouts/flags; ≠ Legado) (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| Branch | `cursor/erp-vps-diff-layouts-392b` |
+| Instrução | chat principal → Legado + Comercial; ausência de tela ≠ importação |
+| Agentes | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) · [Comercial](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
+
+### Diferenças comprovadas (repo; VPS live BLOCKED neste VM)
+
+| ID | Diferença | Evidência | Não é importação? |
+| --- | --- | --- | --- |
+| D1 | `main` `d02cd012` ≪ candidata Comercial (~179 commits) | `git rev-list --count main..candidata` | Sim — lag de versão |
+| D2 | VPS historicamente em SHAs antigos (ex. owner `56dae696`, SPA login `d696c00b`) vs tip atual | `docs/OPERACAO_DEV_VPS.md` / STATUS paste | Sim — imagem/checkout |
+| D3 | `VITE_ERP_BACKEND=local` (.env.example) vs `http` (compose `erp-web`) | `.env.example` / `docker-compose.erp.yml` | Sim — flag SPA |
+| D4 | Opt-ins HTTP Expedição / Cliente360 / Produto off por default | `runtimeBackend.js`, `base44Client.js` | Sim — layout/BFF |
+| D5 | `EXPEDICAO_PERSISTENT_PORTS` default false; exige `DATABASE_URL` | `server/src/config/env.ts` | Sim — config API |
+| D6 | Migrations 025–037 + gap 032 só em candidata; `main` para em 024 | migrations + STATUS candidata | Sim — schema versão |
+| D7 | RBAC fail-closed esconde Cadastros/Expedição/Comercial | `Cadastros.jsx`, `Expedicao.jsx` | Sim — permissão |
+| D8 | `EXPECTED_RUNTIME` deve ser `ERP-RUNTIME-08B` (não default legado canário) | `comercial360-canary.sh` / contrato | Sim — meta/deploy |
+| D9 | Hostinger VPS list MCP timeout neste agente | MCP `vps_virtual-machines_list` | Live digest pendente |
+
+### Correções nesta branch
+
+- `.env.example` + comentários `docker-compose.erp.yml`: documentar opt-ins HTTP
+- `docs/OPERACAO_DEV_VPS.md`: seção diagnóstico versão×VPS + checklist sanitizado
+
+### Coordenação Legado
+
+Só após D1–D8: tratar contagem/cadastro ausente como staging. Manter `importAuthorized=false`.
+
+### BLOCKED operacional
+
+Probe live VPS (digest/SHA containers) — MCP timeout / sem SSH autorizado neste turno. Comercial deve completar lista com meta 3080 quando gate permitir.
+
 ## CURSOR — fechamento pacote candidata @ `899ec9b3` (2026-10-05)
 
 | Campo | Valor |

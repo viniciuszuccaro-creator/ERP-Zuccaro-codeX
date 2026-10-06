@@ -79,6 +79,38 @@ Registrar a evidência, interromper a mudança e decidir o próximo passo com
 autorização. Não promover, apagar, resetar ou reiniciar para ocultar a
 divergência.
 
+## Diagnóstico: versão ERP novo × VPS (não confundir com Legado)
+
+Layouts e cadastros ausentes na VPS **não** devem ser atribuídos automaticamente
+à importação do backup antigo. Antes de culpar staging/ETL, comprovar:
+
+1. **Commit/imagem implantada** — `git rev-parse` no checkout VPS (`/opt/erp-zuccaro`),
+   label/digest das imagens `erp-api-dev` / `erp-web-dev`, e
+   `curl -sS http://127.0.0.1:3080/api/v1/meta` (`runtime`, `auth.mode`).
+2. **Lag main × candidata** — `main` pode estar dezenas/centenas de commits atrás
+   de branches Comercial (Expedição HTTP, ledger 037, Cliente360). Schema sem
+   migrations 025–037 não é falha de importação.
+3. **Flags SPA** — `VITE_ERP_BACKEND` (`local` esconde BFF); opt-ins
+   `VITE_ERP_HTTP_EXPEDICAO`, `VITE_ERP_HTTP_CLIENTE_360`, `VITE_ERP_HTTP_PRODUTO`,
+   `VITE_ERP_API_SAME_ORIGIN` (ver `.env.example`). Rebuild do `erp-web` exigido.
+4. **Flags API** — `EXPEDICAO_PERSISTENT_PORTS` (ledger); `REQUIRE_DATABASE`;
+   `EXPECTED_RUNTIME=ERP-RUNTIME-08B` no canário (não usar default legado
+   `COMERCIAL-360-V1` sem alinhar `/meta`).
+5. **Rotas/layouts** — launchpad/`openWindow` + `src/pages/*`; permissão RBAC
+   fail-closed (`Cadastros.*`, `Expedicao`/`Expedição`, `Comercial.*`) esconde
+   card/aba sem erro de importação.
+6. **Coordenação Legado** — só após (1)–(5): divergência de contagem/cadastro
+   com prova de origem HD. Staging mantém `importAuthorized=false`.
+
+Checklist sanitizado (Web Console VPS, sem secrets):
+
+```bash
+cd /opt/erp-zuccaro && git rev-parse HEAD && git status -sb
+docker inspect -f '{{.Config.Image}} {{.Id}}' erp-api-dev erp-web-dev
+curl -sS http://127.0.0.1:3080/api/v1/meta | python3 -c 'import sys,json;m=json.load(sys.stdin);print(m.get("runtime"), (m.get("auth") or {}).get("mode"), m.get("expedicao"))'
+# Conferir build-args SPA / .env.erp.dev (flags) sem colar senhas no chat.
+```
+
 
 ## Gate proprietário: auditoria e promoção do candidato revisado
 

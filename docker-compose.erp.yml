@@ -48,6 +48,11 @@ services:
         # Same-origin via nginx proxy (/health /ready /api) — funciona sem DNS.
         VITE_ERP_API_SAME_ORIGIN: "true"
         VITE_ERP_API_BASE_URL: ""
+        # Opt-in de layouts HTTP (rebuild SPA se alterar). Default off = telas
+        # podem parecer "vazias" sem ser problema de importação do ERP antigo.
+        # VITE_ERP_HTTP_EXPEDICAO: "true"
+        # VITE_ERP_HTTP_CLIENTE_360: "true"
+        # VITE_ERP_HTTP_PRODUTO: "true"
     container_name: erp-web-dev
     restart: unless-stopped
     ports:
