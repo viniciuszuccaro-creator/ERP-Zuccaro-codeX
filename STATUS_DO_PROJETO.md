@@ -1,3 +1,10 @@
+## Comercial 360 / Onda 15 - claim in-memory serializado + Promise.all (2026-10-06)
+
+- `InMemoryProdutoRepository.claimPublicationEvents` serializado (paridade SKIP LOCKED).
+- Teste: `Promise.all` de dois claims → um ganha, outro vazio; outbox claim **15/15 PASS**.
+- Sem publisher real / VPS / tip-port candidata.
+- Branch `cursor/comercial360-onda15-outbox-claim-392b` (PR #203).
+
 ## Comercial 360 / Onda 15 - limpeza outbox na troca de Empresa (2026-10-06)
 
 - `ProdutoRelationsDamSection`: sem `empresaId`/produto/view → limpa listas e métricas outbox (isolamento tenant).
