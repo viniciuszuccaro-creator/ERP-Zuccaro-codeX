@@ -840,8 +840,6 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
   try {
     if (isHttpExpedicaoEnabled()) {
       const erro = new Error(HTTP_ESTOQUE_LOCAL_BLOQUEADO);
-      onLog(erro.message, 'error');
-      onError(erro);
       throw erro;
     }
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);

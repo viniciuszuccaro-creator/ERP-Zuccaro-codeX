@@ -34,3 +34,32 @@ for (const name of ['aprovarPedidoCompleto', 'faturarPedidoCompleto', 'concluirO
     assert.deepEqual(effects, []);
   });
 }
+
+test('fechamento automático HTTP em duas tentativas sinaliza erro uma vez por tentativa e nenhum efeito', async () => {
+  const name = 'executarFechamentoCompleto';
+  const start = source.indexOf(`export async function ${name}(`);
+  const end = source.indexOf('\n/**', start + 1);
+  assert.ok(start >= 0 && end > start);
+  const fn = runInNewContext(`${source.slice(start, end).replace(/^export /, '')}\n${name}`, {
+    isHttpExpedicaoEnabled: () => true,
+    HTTP_ESTOQUE_LOCAL_BLOQUEADO: 'HTTP_ESTOQUE_LOCAL_BLOQUEADO',
+    normalizarContextoOperacao: () => { throw new Error('UNEXPECTED_CONTEXT_READ'); },
+    filterScoped: async () => { throw new Error('UNEXPECTED_DB_READ'); },
+    createScoped: async () => { throw new Error('UNEXPECTED_DB_WRITE'); },
+    updateScoped: async () => { throw new Error('UNEXPECTED_DB_WRITE'); },
+  });
+  const errors = [];
+  const logs = [];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await fn({ id: 'synthetic' }, 'empresa-sintetica', {
+      onError: (error) => errors.push(error.message),
+      onLog: (message) => logs.push(message),
+    });
+    assert.equal(result.estoque.sucesso, false);
+    assert.equal(result.financeiro.sucesso, false);
+    assert.equal(result.logistica.sucesso, false);
+    assert.equal(result.status.sucesso, false);
+  }
+  assert.deepEqual(errors, ['HTTP_ESTOQUE_LOCAL_BLOQUEADO', 'HTTP_ESTOQUE_LOCAL_BLOQUEADO']);
+  assert.equal(logs.length, 2);
+});
