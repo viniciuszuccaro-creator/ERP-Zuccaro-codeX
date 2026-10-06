@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,38 +28,76 @@ const sanitizeEndereco = (endereco = {}) => ({
   cep: sanitizeCode(endereco.cep, 12)
 });
 
+const EMPRESA_COMPLETO_DEFAULTS = {
+  razao_social: '',
+  nome_fantasia: '',
+  cnpj: '',
+  inscricao_estadual: '',
+  regime_tributario: 'Simples Nacional',
+  endereco: {},
+  certificado_digital: {},
+  configuracao_fiscal: {
+    ambiente_nfe: 'Homologação',
+    serie_nfe: '1',
+    proximo_numero_nfe: 1,
+    autoriza_emissao_producao: false
+  },
+  urls_webhook_padrao: {},
+  status: 'Ativa',
+};
+
+function mergeEmpresaCompletoData(partial) {
+  const src = partial && typeof partial === 'object' ? partial : {};
+  return {
+    ...EMPRESA_COMPLETO_DEFAULTS,
+    ...src,
+    endereco: { ...(src.endereco && typeof src.endereco === 'object' ? src.endereco : {}) },
+    certificado_digital: { ...(src.certificado_digital && typeof src.certificado_digital === 'object' ? src.certificado_digital : {}) },
+    configuracao_fiscal: {
+      ...EMPRESA_COMPLETO_DEFAULTS.configuracao_fiscal,
+      ...(src.configuracao_fiscal && typeof src.configuracao_fiscal === 'object' ? src.configuracao_fiscal : {}),
+    },
+    urls_webhook_padrao: { ...(src.urls_webhook_padrao && typeof src.urls_webhook_padrao === 'object' ? src.urls_webhook_padrao : {}) },
+  };
+}
+
 /**
  * Formulário Completo de Empresa - V16.1
  * Com abas internas e IA Fiscal
  */
-export default function EmpresaFormCompleto({ empresa, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
+export default function EmpresaFormCompleto({
+  empresa,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  isSubmitting,
+  loadIncomplete = false,
+  isLoadingRecord = false,
+}) {
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const dadosIniciaisProps = empresa || item || data || initialData || defaultValues || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
   const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
   const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
   const podeExcluir = canDelete("Cadastros", "Empresa") || canDelete("Cadastros", null) || canDelete("Sistema", "Empresas");
+  const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
   const [activeTab, setActiveTab] = useState('dados');
-  const [formData, setFormData] = useState({
-    razao_social: '',
-    nome_fantasia: '',
-    cnpj: '',
-    inscricao_estadual: '',
-    regime_tributario: 'Simples Nacional',
-    endereco: {},
-    certificado_digital: {},
-    configuracao_fiscal: {
-      ambiente_nfe: 'Homologação',
-      serie_nfe: '1',
-      proximo_numero_nfe: 1,
-      autoriza_emissao_producao: false
-    },
-    urls_webhook_padrao: {},
-    status: 'Ativa',
-    ...dadosIniciaisProps
-  });
+  const [formData, setFormData] = useState(() => mergeEmpresaCompletoData(dadosIniciaisProps));
+
+  useEffect(() => {
+    if (!dadosIniciaisProps) return;
+    setFormData(mergeEmpresaCompletoData(dadosIniciaisProps));
+  }, [
+    dadosIniciaisProps?.id,
+    dadosIniciaisProps?.updated_date,
+    dadosIniciaisProps?.razao_social,
+    dadosIniciaisProps?.cnpj,
+    dadosIniciaisProps?.nome_fantasia,
+  ]);
 
   const handleCEPFound = (endereco) => {
     setFormData({...formData, endereco});
@@ -86,36 +124,47 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
     toast.success('✅ Certificado enviado! A IA validará o CNPJ e a validade.');
   };
 
-  const buildPayload = () => ({
-    ...formData,
-    razao_social: sanitizeText(formData.razao_social, 180),
-    nome_fantasia: sanitizeText(formData.nome_fantasia, 180),
-    cnpj: sanitizeCode(formData.cnpj, 24),
-    inscricao_estadual: sanitizeCode(formData.inscricao_estadual, 40),
-    regime_tributario: sanitizeText(formData.regime_tributario, 80),
-    endereco: sanitizeEndereco(formData.endereco),
-    certificado_digital: {
-      ...formData.certificado_digital,
-      arquivo_certificado: sanitizeUrl(formData.certificado_digital?.arquivo_certificado, 500),
-      tipo: sanitizeCode(formData.certificado_digital?.tipo || "A1", 20)
-    },
-    configuracao_fiscal: {
-      ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe, 80),
-      serie_nfe: sanitizeCode(formData.configuracao_fiscal?.serie_nfe, 20),
-      proximo_numero_nfe: toNumber(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
-      autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
-    },
-    urls_webhook_padrao: {
-      pagamento_recebido: sanitizeUrl(formData.urls_webhook_padrao?.pagamento_recebido, 500),
-      nfe_emitida: sanitizeUrl(formData.urls_webhook_padrao?.nfe_emitida, 500)
-    },
-    status: sanitizeText(formData.status || "Ativa", 40),
-    group_id: groupId || formData.group_id,
-    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
-  });
+  const buildPayload = () => {
+    const payload = {
+      ...formData,
+      id: formData.id || dadosIniciaisProps?.id,
+      razao_social: sanitizeText(formData.razao_social, 180),
+      nome_fantasia: sanitizeText(formData.nome_fantasia, 180),
+      cnpj: sanitizeCode(formData.cnpj, 24),
+      inscricao_estadual: sanitizeCode(formData.inscricao_estadual, 40),
+      regime_tributario: sanitizeText(formData.regime_tributario, 80),
+      endereco: sanitizeEndereco(formData.endereco),
+      certificado_digital: {
+        ...formData.certificado_digital,
+        arquivo_certificado: sanitizeUrl(formData.certificado_digital?.arquivo_certificado, 500),
+        tipo: sanitizeCode(formData.certificado_digital?.tipo || "A1", 20)
+      },
+      configuracao_fiscal: {
+        ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe, 80),
+        serie_nfe: sanitizeCode(formData.configuracao_fiscal?.serie_nfe, 20),
+        proximo_numero_nfe: toNumber(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
+        autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
+      },
+      urls_webhook_padrao: {
+        pagamento_recebido: sanitizeUrl(formData.urls_webhook_padrao?.pagamento_recebido, 500),
+        nfe_emitida: sanitizeUrl(formData.urls_webhook_padrao?.nfe_emitida, 500)
+      },
+      status: sanitizeText(formData.status || "Ativa", 40),
+      group_id: formData.group_id || groupId,
+      grupo_id: formData.grupo_id || formData.group_id || groupId,
+    };
+    if (formData.empresa_id != null && formData.empresa_id !== '') {
+      payload.empresa_id = formData.empresa_id;
+    }
+    return payload;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (saveBlocked) {
+      toast.error('Aguarde o carregamento completo do registro antes de salvar.');
+      return;
+    }
     const editando = Boolean(dadosIniciaisProps?.id);
     if (editando && !podeEditar) {
       toast.error('Seu perfil nao permite editar empresas.');
@@ -332,7 +381,7 @@ export default function EmpresaFormCompleto({ empresa, item, data, initialData, 
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || !contextoValido || (dadosIniciaisProps?.id ? !podeEditar : !podeCriar)}
+          disabled={isSubmitting || saveBlocked || !contextoValido || (dadosIniciaisProps?.id ? !podeEditar : !podeCriar)}
           data-permission="Cadastros.Empresa.salvar"
           data-sensitive
           className="bg-blue-600 hover:bg-blue-700"

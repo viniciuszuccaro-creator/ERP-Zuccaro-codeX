@@ -1,3 +1,13 @@
+## CURSOR — 3 frentes (atualizado 2026-10-06)
+
+| Frente | Responsável | Branch/PR | Estado |
+|---|---|---|---|
+| Cadastros/Empresas edição | Cursor (execução neste chat) | `cursor/cadastros-empresas-edicao-392b` | lote código; CI pendente |
+| Financeiro launchpad | Cursor | `cursor/financeiro-estrutura-recuperacao-392b` #225 | SHA `1f1f8cf6` |
+| Evidência ERP novo pré-VPS | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | privado + checksum 153440Z | em andamento |
+
+Agente nomeado “Comercial Cadastros Empresas” (`bc-55d5261f`) permanece no pacote estoque/expedição — **não** confundir com este lote de Cadastros.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

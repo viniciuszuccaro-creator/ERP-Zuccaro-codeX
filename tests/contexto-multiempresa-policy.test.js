@@ -6,6 +6,7 @@ import {
   buildMultiempresaReadFilter,
   empresaPertenceAoGrupo,
   entityRequiresEmpresaOnWrite,
+  isTenantMasterEntity,
   normalizeIdentifier,
   normalizeMultiempresaContext,
   recordMatchesEmpresaScope,
@@ -98,6 +99,31 @@ test('company of another group is rejected for switch and match', () => {
   assert.equal(userTemAcessoEmpresa(user, outra), false);
   assert.equal(userTemAcessoGrupo(user, 'outro-grupo'), false);
   assert.equal(userTemAcessoEmpresa(user, { id: 'local_empresa_3z', group_id: 'local_grupo_cpa' }), true);
+});
+
+test('tenant masters are Empresa and GrupoEmpresarial', () => {
+  assert.equal(isTenantMasterEntity('Empresa'), true);
+  assert.equal(isTenantMasterEntity('GrupoEmpresarial'), true);
+  assert.equal(isTenantMasterEntity('Cliente'), false);
+});
+
+test('userTemAcessoEmpresa accepts string[] vínculos without disabling security', () => {
+  const user = {
+    grupo_atual_id: 'local_grupo_cpa',
+    empresas_vinculadas: ['local_empresa_3z', 'local_empresa_cpa'],
+  };
+  assert.equal(userTemAcessoEmpresa(user, { id: 'local_empresa_3z', group_id: 'local_grupo_cpa' }), true);
+  assert.equal(userTemAcessoEmpresa(user, { id: 'outra', group_id: 'local_grupo_cpa' }), false);
+});
+
+test('tenant-master read filter scopes by group only (no empresa_id of context)', () => {
+  const filter = buildMultiempresaReadFilter({
+    groupId: 'local_grupo_cpa',
+    empresaId: null,
+    rest: {},
+  });
+  assert.ok(filter.$or?.some((item) => item.group_id === 'local_grupo_cpa'));
+  assert.equal(JSON.stringify(filter).includes('"empresa_id":"local_empresa_3z"'), false);
 });
 
 test('fiscal and commercial operations require an emitting company', () => {

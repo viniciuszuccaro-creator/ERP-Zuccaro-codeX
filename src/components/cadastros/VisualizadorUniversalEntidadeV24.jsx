@@ -11,7 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
-import { buildMultiempresaReadFilter } from "@/components/lib/contextoMultiempresaPolicy";
+import { buildMultiempresaReadFilter, isTenantMasterEntity } from "@/components/lib/contextoMultiempresaPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -188,11 +188,15 @@ function fmtValue(value, col, extraColors) {
   return String(value).substring(0, 130);
 }
 
-function buildFormProps(editItem, onClose, onSubmit) {
+function buildFormProps(editItem, onClose, onSubmit, options) {
+  const opts = options || {};
   const base = {
     onClose, onSave: onClose, onSuccess: onClose,
     onOpenChange: function(v) { if (!v) onClose(); },
     isOpen: true, open: true, windowMode: true, onSubmit,
+    isSubmitting: Boolean(opts.isSubmitting),
+    isLoadingRecord: Boolean(opts.isLoadingRecord),
+    loadIncomplete: Boolean(opts.loadIncomplete),
   };
   if (!editItem) return base;
   const aliases = {};
@@ -274,6 +278,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [editItem,      setEditItem]      = useState(null);
   const [formKey,       setFormKey]       = useState(0);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+  const [editLoadBlocked, setEditLoadBlocked] = useState(false);
   const [editError,     setEditError]     = useState(null);
   const [isSaving,      setIsSaving]      = useState(false);
 
@@ -341,17 +346,19 @@ export default function VisualizadorUniversalEntidadeV24({
   const skip = (page - 1) * pageSize;
 
   // Filtro canonico multiempresa (empresa + grupo = $and; nunca $or aberto com group_id solto)
+  // Tenant masters (Empresa/GrupoEmpresarial): consolidam por group_id; nunca filtram por empresa_id do contexto.
   const readFilter = useMemo(function() {
     if (!groupId && !empresaId) {
       return { id: "__escopo_multiempresa_obrigatorio__" };
     }
+    const tenantMaster = isTenantMasterEntity(ENTITY);
     const ctxCampo = ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id";
     return buildMultiempresaReadFilter({
       groupId,
-      empresaId,
+      empresaId: tenantMaster ? null : empresaId,
       ctxField: ctxCampo,
       shared: ENTITY === "Cliente" || SHARED_ENTITIES.has(ENTITY),
-      empresaIdsDoGrupo: (!empresaId && Array.isArray(empresasDoGrupo))
+      empresaIdsDoGrupo: (!tenantMaster && !empresaId && Array.isArray(empresasDoGrupo))
         ? empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean)
         : [],
       rest: {},
@@ -457,6 +464,8 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
+    setEditLoadBlocked(false);
+    setIsLoadingEdit(false);
     if (wasSaved) {
       // Novos cadastros no topo: sort por updated_date desc, mantém lastGoodData
       setSortField("updated_date");
@@ -493,17 +502,31 @@ export default function VisualizadorUniversalEntidadeV24({
       await auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: `Cadastros.${ENTITY}.criar`, sucesso: false });
       throw new Error("Sem permissao para criar.");
     }
+    if (isLoadingEdit || editLoadBlocked) {
+      await auditCadastroEvent("Bloqueio", "Salvamento bloqueado por carregamento incompleto", {
+        registro_id: (editItem && editItem.id) || formData.id || null,
+        sucesso: false,
+      });
+      throw new Error("Carregamento incompleto do registro. Salvamento bloqueado.");
+    }
     setIsSaving(true);
     try {
       const clean = Object.assign({}, formData);
       delete clean._action;
-      // Sempre carimbar contexto quando disponivel (inclusive catálogos "simples")
-      if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
-      if (!clean.group_id  && groupId)   clean.group_id   = groupId;
-      if (!clean.group_id && !clean.empresa_id) {
+      const tenantMaster = isTenantMasterEntity(ENTITY);
+      // Tenant masters: nao carimbar empresa_id do contexto (preserva ID/vinculos do registro).
+      if (!tenantMaster && !clean.empresa_id && empresaId) clean.empresa_id = empresaId;
+      if (!clean.group_id && groupId) clean.group_id = groupId;
+      if (tenantMaster && editItem && !editItem.empresa_id) delete clean.empresa_id;
+      if (tenantMaster) {
+        if (!clean.group_id) {
+          throw new Error("Contexto de grupo obrigatorio para salvar Empresa/Grupo.");
+        }
+      } else if (!clean.group_id && !clean.empresa_id) {
         throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");
       }
       if (editItem && editItem.id) {
+        if (!clean.id) clean.id = editItem.id;
         await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
         await auditCadastroEvent("Edicao", "Cadastro editado pelo formulario", { registro_id: editItem.id, antes: editItem, depois: clean, acao_sensivel: true });
       } else {
@@ -517,7 +540,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent]);
+  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {
@@ -550,16 +573,53 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
+    // Abre com o row da lista (nao limpa campos) e tenta hidratar o registro completo.
     setEditItem(JSON.parse(JSON.stringify(item)));
     setEditError(null);
-    setIsLoadingEdit(false);
+    setEditLoadBlocked(false);
+    setIsLoadingEdit(true);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido]);
+    (async function loadFullRecord() {
+      try {
+        const tenantMaster = isTenantMasterEntity(ENTITY);
+        const res = await base44.functions.invoke("getEntityRecord", {
+          entityName: ENTITY,
+          filter: { id: item.id },
+          group_id: groupId || null,
+          empresa_id: tenantMaster ? null : (empresaId || null),
+          limit: 1,
+        });
+        const rows = Array.isArray(res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+        const full = rows[0] || null;
+        if (!full || !full.id) {
+          setEditLoadBlocked(true);
+          setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+          return;
+        }
+        setEditItem(JSON.parse(JSON.stringify(Object.assign({}, item, full))));
+        setEditLoadBlocked(false);
+        setEditError(null);
+        setFormKey(function(k) { return k + 1; });
+      } catch (error) {
+        console.error("[VisualizadorUniversalEntidade] Falha ao carregar registro completo", error);
+        setEditLoadBlocked(true);
+        setEditError("Falha ao carregar registro completo. Salvamento bloqueado; campos da lista preservados.");
+      } finally {
+        setIsLoadingEdit(false);
+      }
+    })();
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, groupId, empresaId]);
 
   const formProps = useMemo(
-    function() { return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit); },
-    [editItem, handleCloseForm, isSelfManaged, handlePersistSubmit]
+    function() {
+      return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit, {
+        isSubmitting: isSaving,
+        isLoadingRecord: isLoadingEdit,
+        loadIncomplete: editLoadBlocked,
+      });
+    },
+    [editItem, handleCloseForm, isSelfManaged, handlePersistSubmit, isSaving, isLoadingEdit, editLoadBlocked]
   );
 
   // ── exclusão unitária ────────────────────────────────────────────────────────

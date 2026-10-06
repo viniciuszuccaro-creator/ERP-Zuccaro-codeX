@@ -1,3 +1,20 @@
+## CURSOR — Cadastros Gerais Empresas edição (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Tarefa | Primeira entrega 3 frentes: abrir/visualizar/editar/salvar Empresa sem perda |
+| Branch | `cursor/cadastros-empresas-edicao-392b` |
+| Base | `main` |
+| Causa raiz | (1) lista Empresa filtrava por `empresa_id` do contexto; (2) edição usava row parcial sem get completo; (3) save carimbava `empresa_id` do contexto; (4) form sem deep-merge nested; (5) vínculos string[] falhavam em `userTemAcessoEmpresa` |
+| Mudança | Tenant masters por `group_id`; load `getEntityRecord` + bloqueio save incompleto; forms preservam id/group; vínculos string\|objeto |
+| Arquivos | `VisualizadorUniversalEntidadeV24.jsx`, `EmpresaForm.jsx`, `EmpresaFormCompleto.jsx`, `localBase44Client.js`, `contextoMultiempresaPolicy.js`, testes |
+| Multiempresa/RBAC | Fail-closed preservado; sem desligar segurança |
+| Testes | `contexto-multiempresa-policy` + `cadastros-empresa-edicao-load` |
+| Pendências | CI; HTTP Postgres Empresa continua fora do piloto (IndexedDB); admin vínculos HTTP = gate separado |
+| Frentes | Financeiro #225; Legado evidência ERP novo; este lote = Cadastros |
+
+---
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

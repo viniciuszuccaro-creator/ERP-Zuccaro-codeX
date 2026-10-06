@@ -79,6 +79,13 @@ export const userTemAcessoGrupo = (user, grupoId) => {
   ));
 };
 
+/** Entidades tenant (cadastro do próprio Grupo/Empresa): leitura por group_id, nunca por empresa_id do contexto. */
+export const TENANT_MASTER_ENTITIES = Object.freeze(['Empresa', 'GrupoEmpresarial']);
+
+export const isTenantMasterEntity = (entityName) => (
+  TENANT_MASTER_ENTITIES.includes(String(entityName || '').trim())
+);
+
 export const userTemAcessoEmpresa = (user, empresa) => {
   const groupId = firstValue(user?.grupo_atual_id, user?.grupo_padrao_id, user?.group_id);
   if (!user || !empresaPertenceAoGrupo(empresa, groupId)) return false;
@@ -88,9 +95,14 @@ export const userTemAcessoEmpresa = (user, empresa) => {
   if (firstValue(user.empresa_atual_id, user.empresa_padrao_id) === empresaId) return true;
   const vinculos = Array.isArray(user.empresas_vinculadas) ? user.empresas_vinculadas : [];
   if (!vinculos.length) return false;
-  return vinculos.some((vinculo) => (
-    normalizeIdentifier(vinculo?.empresa_id) === empresaId && vinculo?.ativo !== false
-  ));
+  return vinculos.some((vinculo) => {
+    const linkedId = (typeof vinculo === 'string' || typeof vinculo === 'number')
+      ? normalizeIdentifier(vinculo)
+      : normalizeIdentifier(vinculo?.empresa_id);
+    if (!linkedId || linkedId !== empresaId) return false;
+    if (vinculo && typeof vinculo === 'object' && vinculo.ativo === false) return false;
+    return true;
+  });
 };
 
 export const OPERACAO_EXIGE_EMPRESA_ENTITIES = new Set([

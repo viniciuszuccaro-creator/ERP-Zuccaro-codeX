@@ -1161,10 +1161,14 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
   if (!isPlainObject(filter)) return filter || {};
 
   const { contexto, groupId: ctxGroupId, empresaId: ctxEmpresaId } = getCurrentContext();
+  const tenantMaster = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
   const hasEmpresaKey = Object.prototype.hasOwnProperty.call(filter, 'empresa_id');
-  const empresaId = hasEmpresaKey
-    ? filter.empresa_id
-    : (contexto === 'empresa' ? ctxEmpresaId : null);
+  // Tenant masters (Empresa/Grupo): listar/filtrar só por grupo — nunca por empresa_id do contexto.
+  const empresaId = tenantMaster
+    ? null
+    : (hasEmpresaKey
+      ? filter.empresa_id
+      : (contexto === 'empresa' ? ctxEmpresaId : null));
   const explicitGroupId = filter.group_id || filter.grupo_id || filter.grupo_empresarial_id;
   const groupId = explicitGroupId || ctxGroupId || null;
 
