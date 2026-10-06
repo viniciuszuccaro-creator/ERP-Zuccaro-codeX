@@ -1,3 +1,11 @@
+## CURSOR — #219 `b6864875` + revalidação HEAD + legado `4b5d3b94` (2026-10-06)
+
+- Parecer #219: `docs/PARECER_CURSOR_219_SHA_b6864875.md` — comparador/CLI offline APPROVED COM RESSALVAS (R1 unidade no ledger; sem snapshots reais).
+- Revalidação #213 `72a4b8c7`: `docs/PARECER_CURSOR_213_HEAD_72a4b8c7.md` — #218 **não** transfere; #219 **não** ancestral.
+- Legado: `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md` — pré-check pgcrypto/API; mapper #48 intocado; execução = paste Web Console.
+- Encaminhado sem duplicar: Comercial `bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a`, Legado `bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9`.
+- Telas/VPS BLOCKED (3080/5173 down; MCP timeout). Outbox #203 / DAM #202 independentes, CI verde, publisher bloqueado.
+
 ## CURSOR — parecer SHA `f514c2e3` candidata +#215 (2026-10-06)
 
 - Merge tip Comercial `f514c2e3` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
