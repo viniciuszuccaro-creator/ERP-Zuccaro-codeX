@@ -128,6 +128,7 @@ async function auditar(modulo, entidade, acao, registro_id, descricao, empresaId
  * 1️⃣ APROVAR PEDIDO → Reserva Estoque + Gera OP + Valida Crédito
  */
 export async function aprovarPedidoCompleto(pedido, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const resultados = {
     validacaoCredito: null,
     reservasEstoque: [],
@@ -432,6 +433,7 @@ async function atualizarLimiteCreditoCliente(clienteId, valor, operacao = 'adici
  * 7?????? FATURAR PEDIDO ??? Baixa Estoque + Cria Entrega
  */
 export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const resultados = {
     baixasEstoque: [],
     entrega: null,
@@ -582,6 +584,7 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
  * 9️⃣ CONCLUIR OP → Liberar para Expedição
  */
 export async function concluirOPCompleto(op, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const resultados = {
     baixasMaterial: [],
     entrega: null,
@@ -690,6 +693,7 @@ async function baixarMaterialProducao(material, op, empresaId) {
  * 1️⃣1️⃣ CANCELAR PEDIDO → Libera Reservas + Cancela Contas
  */
 export async function cancelarPedidoCompleto(pedido, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const resultados = {
     reservasLiberadas: [],
     contasCanceladas: [],

@@ -13192,3 +13192,16 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 | Testes | Focado integrado final 5/5 após preservar teste de Comprovante/Reversa da candidata, audit PASS, lint PASS com 1 warning preexistente, build PASS, diff-check PASS. `npm test` raiz e typecheck raiz falham em baseline Windows/JSX fora deste diff; CI Linux do SHA publicado é gate |
 | Pendência | Fluxo local multi-item ainda não oferece transação entre movimentos; não afirmar atomicidade fora do ledger HTTP. Snapshots reais comparáveis seguem indisponíveis |
 | Próximo P0 | Homologar tela HTTP com PostgreSQL isolado e comprovar que somente o ledger registra cada efeito; não ativar sem reconciliação e backup |
+## CODEX — B2 entrada direta de fluxo local HTTP (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Fechar entrada direta e retry de aprovação, faturamento, OP e cancelamento que poderiam avançar efeitos locais no modo Expedição HTTP |
+| Causa | Guard B2 anterior protegia writers de estoque, mas entradas públicas omitiam estoque e continuavam financeiro/Entrega/status |
+| Branch | `codex/comercial-b2-direct-failclosed-20261006`, da candidata `b8492074`, sem editar branch Cursor |
+| Reuso | `assertEscritaEstoqueLocalPermitida` existente; `useFluxoPedido` amplo não foi dividido neste gate porque extração de fluxos fiscais/financeiros mudaria contrato e ampliaria risco |
+| Arquivos | `src/components/lib/useFluxoPedido.jsx`; `tests/pedido-http-direct-failclosed.test.js` |
+| Contrato | Quatro entradas públicas revalidam o modo antes de contexto, consulta, estoque, financeiro, logística e status; legado permanece no ramo anterior |
+| Testes | VM comportamental HTTP real do guard: 4/4, zero efeitos; foco combinado legado+guards 42/42; audit, lint (1 warning preexistente), build, diff-check PASS. `npm test` raiz falha em guards VPS sob Windows e typecheck raiz falha em JSX fora do diff; CI Linux do SHA publicado é gate |
+| Pendências | Snapshots privados comparáveis e homologação operacional continuam BLOCKED; sem saldo de abertura, importação ou VPS |
+| Próximo P0 | Prova HTTP integrada por fluxo completo em PostgreSQL isolado e mapeamento de origem/unidade/corte antes da ativação |
