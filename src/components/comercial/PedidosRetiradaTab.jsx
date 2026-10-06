@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { isHttpExpedicaoEnabled } from "@/api/runtimeBackend";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
  * - Baixa automática de estoque na retirada
  */
 export default function PedidosRetiradaTab({ windowMode = false }) {
+  const modoHttpExpedicao = isHttpExpedicaoEnabled();
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [detalhesOpen, setDetalhesOpen] = useState(false);
@@ -91,6 +93,9 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
 
   const confirmarRetiradaMutation = useMutation({
     mutationFn: async ({ pedido }) => {
+      if (isHttpExpedicaoEnabled()) {
+        throw new Error("Retirada com baixa local indisponível no modo HTTP. Use o fluxo de Expedição.");
+      }
       // Baixar estoque automaticamente
       if (pedido.itens_revenda?.length > 0) {
         for (const item of pedido.itens_revenda) {
@@ -169,6 +174,10 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   });
 
   const handleConfirmarRetirada = () => {
+    if (isHttpExpedicaoEnabled()) {
+      toast.error("Use o fluxo de Expedição para confirmar a retirada no modo HTTP.");
+      return;
+    }
     if (!nomeRecebedor.trim()) {
       toast.error("⚠️ Informe quem retirou o pedido");
       return;
@@ -423,6 +432,11 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                 >
                   Cancelar
                 </Button>
+                {modoHttpExpedicao ? (
+                  <p role="alert" className="text-sm text-amber-900">
+                    A baixa local de estoque está indisponível no modo HTTP. Confirme pelo fluxo de Expedição.
+                  </p>
+                ) : (
                 <Button
                   className="bg-green-600 hover:bg-green-700"
                   onClick={handleConfirmarRetirada}
@@ -431,6 +445,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   {confirmarRetiradaMutation.isPending ? 'Confirmando...' : 'Confirmar Retirada'}
                 </Button>
+                )}
               </div>
             </div>
           )}

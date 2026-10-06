@@ -13116,12 +13116,12 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 
 | Campo | Valor |
 |---|---|
-| Objetivo | Impedir baixa duplicada de `MovimentacaoEstoque` pela tela legada quando Expedição usa ledger HTTP |
-| Causa | `PedidosEntregaTab` confirmava entrega e criava movimento local sem consultar opt-in HTTP |
+| Objetivo | Impedir baixa duplicada de `MovimentacaoEstoque` nas telas legadas de entrega e retirada quando Expedição usa ledger HTTP |
+| Causa | `PedidosEntregaTab` e `PedidosRetiradaTab` criavam movimentos locais sem consultar opt-in HTTP |
 | Branch | `codex/comercial-pedido-entrega-http-guard-20261006`, criada da candidata `7cbe3a30` sem editar branch Cursor |
 | Estruturas | Reutiliza `isHttpExpedicaoEnabled` de `runtimeBackend`; modo legado preservado, modo HTTP direcionado ao fluxo existente de Expedição |
-| Arquivos | `src/components/comercial/PedidosEntregaTab.jsx`; `tests/pedido-entrega-http-writer-guard.test.js` |
+| Arquivos | `src/components/comercial/PedidosEntregaTab.jsx`, `PedidosRetiradaTab.jsx`; `tests/pedido-entrega-http-writer-guard.test.js` |
 | Segurança | Visibilidade e handler bloqueiam writer local em HTTP; sem alteração em saldo, migration, VPS ou RBAC existente |
-| Testes | Focado 2/2, audit PASS, lint PASS com 1 warning preexistente, build PASS, diff-check PASS. `npm test` raiz e typecheck raiz falham em baseline Windows/JSX fora deste diff; CI Linux do SHA publicado é gate |
+| Testes | Focado final 3/3, audit PASS, lint PASS com 1 warning preexistente, build PASS, diff-check PASS. `npm test` raiz e typecheck raiz falham em baseline Windows/JSX fora deste diff; CI Linux do SHA publicado é gate |
 | Pendência | Fluxo local multi-item ainda não oferece transação entre movimentos; não afirmar atomicidade fora do ledger HTTP. Snapshots reais comparáveis seguem indisponíveis |
 | Próximo P0 | Homologar tela HTTP com PostgreSQL isolado e comprovar que somente o ledger registra cada efeito; não ativar sem reconciliação e backup |

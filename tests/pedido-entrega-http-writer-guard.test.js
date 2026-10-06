@@ -15,3 +15,10 @@ test('tela de Pedido não oferece writer local no modo HTTP e revalida antes da 
   assert.match(source, /onClick=\{async \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
   assert.match(source, /modoHttpExpedicao \? \([\s\S]*role="alert"/);
 });
+
+test('retirada não oferece writer local no modo HTTP e bloqueia mutation antes do primeiro efeito', async () => {
+  const source = await readFile(new URL('../src/components/comercial/PedidosRetiradaTab.jsx', import.meta.url), 'utf8');
+  assert.match(source, /mutationFn: async \(\{ pedido \}\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
+  assert.match(source, /const handleConfirmarRetirada = \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
+  assert.match(source, /modoHttpExpedicao \? \([\s\S]*role="alert"/);
+});
