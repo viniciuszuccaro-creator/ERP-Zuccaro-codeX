@@ -2,11 +2,13 @@
 
 | Frente | Responsável | Branch/PR | Estado |
 |---|---|---|---|
-| Cadastros/Empresas edição | Cursor (execução neste chat) | `cursor/cadastros-empresas-edicao-392b` | lote código; CI pendente |
-| Financeiro launchpad | Cursor | `cursor/financeiro-estrutura-recuperacao-392b` #225 | SHA `1f1f8cf6` |
-| Evidência ERP novo pré-VPS | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | privado + checksum 153440Z | em andamento |
+| Cadastros/Empresas edição | Cursor (este chat) | `cursor/cadastros-empresas-edicao-392b` #226 SHA `1c9f8234` | CI **PASS** |
+| Financeiro launchpad | Cursor | `cursor/financeiro-estrutura-recuperacao-392b` #225 SHA `1f1f8cf6` | CI **PASS** |
+| Evidência ERP novo pré-VPS | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | #211 / `1c110777` | **BLOCKED** `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` |
 
-Agente nomeado “Comercial Cadastros Empresas” (`bc-55d5261f`) permanece no pacote estoque/expedição — **não** confundir com este lote de Cadastros.
+- Legado: checksum `18e2ab9a…` do export `153440Z` **não** confrontado (arquivo ausente no Cloud). CADESP não re-pedido. `importAuthorized=false`.
+- HUMAN_NEXT Legado: FileZilla → `04_REPORTS` → `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export <json> --reports-dir <04_REPORTS>` → devolver só saída do verifier.
+- Agente nomeado “Comercial Cadastros Empresas” (`bc-55d5261f`) segue no pacote estoque/expedição — **não** é este lote de Cadastros.
 
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.

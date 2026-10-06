@@ -10,8 +10,9 @@
 | Arquivos | `VisualizadorUniversalEntidadeV24.jsx`, `EmpresaForm.jsx`, `EmpresaFormCompleto.jsx`, `localBase44Client.js`, `contextoMultiempresaPolicy.js`, testes |
 | Multiempresa/RBAC | Fail-closed preservado; sem desligar segurança |
 | Testes | `contexto-multiempresa-policy` + `cadastros-empresa-edicao-load` |
-| Pendências | CI; HTTP Postgres Empresa continua fora do piloto (IndexedDB); admin vínculos HTTP = gate separado |
-| Frentes | Financeiro #225; Legado evidência ERP novo; este lote = Cadastros |
+| Pendências | HTTP Postgres Empresa fora do piloto (IndexedDB); admin vínculos HTTP = gate separado |
+| CI | `erp-runtime-ci` frontend/backend **PASS** no SHA `1c9f8234` |
+| Frentes | Financeiro #225 CI PASS; Legado BLOCKED FileZilla; este lote = Cadastros #226 |
 
 ---
 
