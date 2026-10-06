@@ -28,7 +28,9 @@ for (const name of ['aprovarPedidoCompleto', 'faturarPedidoCompleto', 'concluirO
       updateScoped: async () => { effects.push('update'); return {}; },
       auditar: async () => { effects.push('audit'); },
     });
-    await assert.rejects(fn({ id: 'synthetic' }, 'empresa-sintetica'), /HTTP_ESTOQUE_LOCAL_BLOQUEADO/);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await assert.rejects(fn({ id: 'synthetic' }, 'empresa-sintetica'), /HTTP_ESTOQUE_LOCAL_BLOQUEADO/);
+    }
     assert.deepEqual(effects, []);
   });
 }
