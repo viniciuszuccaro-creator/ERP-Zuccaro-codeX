@@ -13196,12 +13196,12 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 
 | Campo | Valor |
 |---|---|
-| Objetivo | Fechar entrada direta e retry de aprovação, faturamento, OP e cancelamento que poderiam avançar efeitos locais no modo Expedição HTTP |
+| Objetivo | Fechar entradas diretas e retries de aprovação, faturamento, OP, cancelamento e emissão fiscal local que poderiam avançar efeitos no modo Expedição HTTP |
 | Causa | Guard B2 anterior protegia writers de estoque, mas entradas públicas omitiam estoque e continuavam financeiro/Entrega/status |
 | Branch | `codex/comercial-b2-direct-failclosed-20261006`, da candidata `b8492074`, sem editar branch Cursor |
 | Reuso | `assertEscritaEstoqueLocalPermitida` existente; `useFluxoPedido` amplo não foi dividido neste gate porque extração de fluxos fiscais/financeiros mudaria contrato e ampliaria risco |
-| Arquivos | `src/components/lib/useFluxoPedido.jsx`; `tests/pedido-http-direct-failclosed.test.js` |
-| Contrato | Quatro entradas públicas revalidam o modo antes de contexto, consulta, estoque, financeiro, logística e status; fechamento automático sinaliza callback de erro uma vez por tentativa; legado permanece no ramo anterior |
-| Testes | VM comportamental HTTP real do guard: 5/5, duas tentativas sem efeitos; foco combinado legado+guards 43/43; audit, lint (1 warning preexistente), build, diff-check PASS. `npm test` raiz falha em guards VPS sob Windows e typecheck raiz falha em JSX fora do diff; CI Linux do SHA publicado é gate |
+| Arquivos | `src/components/lib/useFluxoPedido.jsx`, `src/components/comercial/FechamentoFinanceiroTab.jsx`; `tests/pedido-http-direct-failclosed.test.js`, harness fiscal legado |
+| Contrato | Quatro entradas públicas revalidam o modo antes de contexto, consulta, estoque, financeiro, logística e status; tela fiscal bloqueia antes de criar NF pendente; fechamento automático sinaliza callback de erro uma vez por tentativa; legado permanece no ramo anterior |
+| Testes | VM HTTP com retries sem efeitos, inclusive NF; foco fiscal+legado 50/50. Audit, lint (1 warning preexistente), build, diff-check PASS no diff final; CI Linux do SHA publicado é gate. `npm test` raiz falha em guards VPS sob Windows e typecheck raiz falha em JSX fora do diff |
 | Pendências | Snapshots privados comparáveis e homologação operacional continuam BLOCKED; sem saldo de abertura, importação ou VPS |
 | Próximo P0 | Prova HTTP integrada por fluxo completo em PostgreSQL isolado e mapeamento de origem/unidade/corte antes da ativação |

@@ -63,3 +63,24 @@ test('fechamento automático HTTP em duas tentativas sinaliza erro uma vez por t
   assert.deepEqual(errors, ['HTTP_ESTOQUE_LOCAL_BLOQUEADO', 'HTTP_ESTOQUE_LOCAL_BLOQUEADO']);
   assert.equal(logs.length, 2);
 });
+
+test('emissão fiscal local HTTP em duas tentativas não cria NF pendente nem altera pedido', async () => {
+  const page = await readFile(new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url), 'utf8');
+  const start = page.indexOf('onEmitir={async (dadosNFe) => {');
+  const end = page.indexOf('\n        }}', start);
+  assert.ok(start >= 0 && end > start);
+  const handlerSource = page.slice(start + 'onEmitir={'.length, end) + '\n}';
+  const effects = [];
+  const emitir = runInNewContext(`(${handlerSource})`, {
+    isHttpExpedicaoEnabled: () => true,
+    filterInContext: async () => { effects.push('read'); return []; },
+    createInContext: async () => { effects.push('create'); return {}; },
+    updateInContext: async () => { effects.push('update'); return {}; },
+    auditFechamento: async () => { effects.push('audit'); },
+    setFormData: () => { effects.push('state'); },
+  });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await assert.rejects(emitir({ escopo: 'pedido_inteiro' }), /modo HTTP/);
+  }
+  assert.deepEqual(effects, []);
+});

@@ -14,6 +14,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
 import { faturarPedidoCompleto } from '@/components/lib/useFluxoPedido';
+import { isHttpExpedicaoEnabled } from '@/api/runtimeBackend';
 import { assertFaturamentoDentroDoPedido, avaliarEtapaFaturamento, resolverNotaResidualPedido, resolverUltimaEtapaMonetaria } from '@/components/lib/pedidoFaturamentoPolicy';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -30,6 +31,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
   const groupId = formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const canEmitirNFe = hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir');
+  const modoHttpExpedicao = isHttpExpedicaoEnabled();
   const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
   const sanitizePercentual = (value) => Math.min(100, Math.max(0, Number.parseFloat(value) || 0));
   const sanitizeInteiro = (value, fallback = 0) => Math.max(0, Number.parseInt(value, 10) || fallback);
@@ -55,6 +57,10 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
     }
   };
   const abrirModalNFe = async () => {
+    if (isHttpExpedicaoEnabled()) {
+      toast.error('Emissão pelo fechamento local indisponível no modo HTTP. Use o fluxo fiscal integrado.');
+      return;
+    }
     if (!contextoValido || !empresaId || !canEmitirNFe) {
       await auditFechamento('nfe_fechamento_abrir_bloqueada', { motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao' }, false);
       return;
@@ -123,13 +129,20 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 </AlertDescription>
               </Alert>
             )}
+            {modoHttpExpedicao && (
+              <Alert className="border-amber-300 bg-amber-50 p-3">
+                <AlertDescription className="text-sm text-amber-900">
+                  Emissão pelo fechamento local indisponível no modo HTTP. Use o fluxo fiscal integrado.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* V21.1: Botao Emitir NF-e com Escopo */}
             <Button
               onClick={abrirModalNFe}
               className="w-full bg-purple-600 hover:bg-purple-700"
               size="lg"
-              disabled={!contextoValido || !empresaId || !canEmitirNFe}
+              disabled={!contextoValido || !empresaId || !canEmitirNFe || modoHttpExpedicao}
               data-action="Fiscal.NotaFiscal.emitir"
               data-permission="Fiscal.NotaFiscal.emitir"
               data-context-required="true"
@@ -411,11 +424,14 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         onClose={() => setModalNFeOpen(false)}
         pedidoData={formData}
         contextoValido={contextoValido}
-        canEmitir={canEmitirNFe}
+        canEmitir={canEmitirNFe && !modoHttpExpedicao}
         empresaId={empresaId}
         groupId={groupId}
         onAudit={auditFechamento}
         onEmitir={async (dadosNFe) => {
+          if (isHttpExpedicaoEnabled()) {
+            throw new Error('Emissão pelo fechamento local indisponível no modo HTTP.');
+          }
           if (!formData?.id) {
             toast.error('Salve o pedido antes de emitir a NF-e.');
             throw new Error('Pedido ainda nao gravado.');

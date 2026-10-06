@@ -88,6 +88,7 @@ test('etapa com revenda estocavel bloqueia antes da NF; etapa de armado preserva
     setFormData: () => {},
     setModalNFeOpen: () => {},
   };
+  ctx.isHttpExpedicaoEnabled = () => false;
   const emitir = runInNewContext('(' + handlerSource + ')', ctx);
   await emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1', valor_total: 20,
     escopo: 'etapa_especifica', etapa_id: 'et2' });
@@ -168,6 +169,7 @@ test('etapa sem estoque seguida de NF residual baixa só revenda aberta', async 
     setFormData: (updater) => { ctx.formData = updater(ctx.formData); },
     setModalNFeOpen: () => {},
   };
+  ctx.isHttpExpedicaoEnabled = () => false;
   const emitir = runInNewContext('(' + handlerSource + ')', ctx);
   await emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1', valor_total: 30,
     escopo: 'etapa_especifica', etapa_id: 'et-armado' });
@@ -216,6 +218,7 @@ test('NF residual absorve etapa B aberta e impede segunda emissão dela', async 
     setFormData: (updater) => { ctx.formData = updater(ctx.formData); },
     setModalNFeOpen: () => {},
   };
+  ctx.isHttpExpedicaoEnabled = () => false;
   const emitir = runInNewContext('(' + handlerSource + ')', ctx);
   await emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1', valor_total: 30,
     escopo: 'etapa_especifica', etapa_id: 'et-a' });
@@ -261,6 +264,7 @@ test('frete remanescente entra na ultima NF de etapa sem nota vazia', async () =
     setFormData: (updater) => { ctx.formData = updater(ctx.formData); },
     setModalNFeOpen: () => {},
   };
+  ctx.isHttpExpedicaoEnabled = () => false;
   const emitir = runInNewContext('(' + handlerSource + ')', ctx);
   await emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1', escopo: 'etapa_especifica',
     etapa_id: 'et-1', valor_total: 100, itens: pedidoFrete.itens_armado_padrao });
@@ -580,6 +584,7 @@ test('handler real de NF rejeita pendente e preserva Pedido quando baixa falha',
     setFormData: () => { efeitos.push('setFormData'); },
     setModalNFeOpen: () => {},
   };
+  ctx.isHttpExpedicaoEnabled = () => false;
   const emitir = runInNewContext('(' + handlerSource + ')', ctx);
   await assert.rejects(() => emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1',
     cliente_id: 'c1', cliente_nome: 'Cliente', valor_total: 10, escopo: 'pedido_inteiro' }), /baixa falhou/);
@@ -608,6 +613,7 @@ test('falha ao atualizar Pedido após baixa não rejeita NF válida', async () =
     setFormData: () => {},
     setModalNFeOpen: () => {},
   };
+  ctx.isHttpExpedicaoEnabled = () => false;
   const emitir = runInNewContext('(' + handlerSource + ')', ctx);
   await assert.rejects(() => emitir({ pedido_id: 'ped-1', numero_pedido: 'PED-1',
     cliente_id: 'c1', cliente_nome: 'Cliente', valor_total: 10, escopo: 'pedido_inteiro' }), /conciliacao manual/);
