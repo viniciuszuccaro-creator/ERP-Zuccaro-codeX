@@ -11698,3 +11698,10 @@ Checklist inicial:
 - Independente: testes verifier + classificar/staging/vínculo verdes; staging sintético inalterado.
 - HUMAN_NEXT: SFTP + `verificar-evidencia-erp-novo-pre-vps.mjs --export … --reports-dir …04_REPORTS`.
 - importAuthorized=false; mapper #48 intocado; #216/#217.
+
+### CODEX LEGADO — revalidação Cloud pré-VPS (2026-10-06T17:27Z)
+
+- Reexecução: HD/SFTP ainda ausentes; inventário NO; verifier BLOCKED; checksum match = **não aplicável/ausente**.
+- Sem novo pedido CADESP; sem export; sem tip-port #48; testes sintéticos 16/16 PASS.
+- Tip: `7c255148` (+ este checkpoint docs). PR #211 OPEN.
+- HUMAN_NEXT inalterado (FileZilla → 04_REPORTS → verifier).

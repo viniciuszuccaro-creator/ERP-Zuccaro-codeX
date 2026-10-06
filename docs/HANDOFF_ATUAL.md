@@ -1,4 +1,14 @@
+## CODEX LEGADO — revalidação pré-VPS (2026-10-06T17:27Z)
+
+Status: **BLOCKED** / **HUMAN_NEXT**. Reexecução real neste Cloud:
+`NO_SSH_KEY`; inventário `backup_dir_found=NO`; verifier exit 2
+(`LEGACY_EXPORT_PATH_MISSING`, `LEGACY_REPORTS_DIR_NOT_PROVIDED`).
+Checksum match export↔HD: **não** (arquivo local ausente).
+CADESP não re-pedido. Tip Codex `7c255148`; PR #211 OPEN.
+Testes verifier+classificar+staging 16/16 PASS (sintéticos).
+
 ## CODEX LEGADO — evidência ERP novo pré-VPS (ID+CNPJ) (2026-10-06)
+
 
 Recebido. Prioridade: recuperar evidência do **ERP novo anterior à VPS**
 (registros com **ID + CNPJ juntos**), separada da importação do ERP antigo.
