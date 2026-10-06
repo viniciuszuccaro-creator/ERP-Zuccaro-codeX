@@ -1,3 +1,9 @@
+## CURSOR — espelho Legado `7d063b17` (2026-10-06)
+
+- Merge Codex `4b5d3b94`+`7d063b17` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
+- Parecer: `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`. Export **NOT_PERFORMED**.
+- Probe externo `erp-dev` health/ready 200 / `ERP-RUNTIME-08B` **não** substitui paste nem pgcrypto; localhost 3080 neste VM continua 000.
+
 ## CURSOR — parecer export empresas API Legado @ `3adc7900` (2026-10-06)
 
 - SHA Codex `47a19c03` / feat `3adc7900` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
@@ -17,7 +23,78 @@
 - Programa Legado itens 1–5 preparados em fixture; carga operacional continua fail-closed.
 - BLOCKED: HD + autorização humana Onda 25.
 
+## CODEX LEGADO — parecer Cursor 4b5d3b94 (2026-10-06)
+
+Recebido. Sem tarefa duplicada. Veredito Cursor: **APPROVED COM RESSALVAS**
+(`docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`). Cursor **não** executou o export.
+
+Nova tentativa de execução real neste agente: SSH `publickey` denied; Hostinger
+MCP timeout; workers self-hosted=0. **export NOT_PERFORMED.** Probe externo
+health/ready ainda 200 — não substitui o paste Web Console.
+
+Intervenção humana (inalterada, SHA `4b5d3b94`):
+1. Colar o script **inteiro** no Web Console.
+2. Devolver `PASTE_TO_GIT_PRECHECK` + `PASTE_TO_GIT`.
+3. JSON privado **nome novo** no HD `04_REPORTS`.
+4. `executed=false` se health/ready/pgcrypto falhar.
+
+Mapper #48 intocado. `importAuthorized=false`.
+
+## CODEX LEGADO — tentativa de execução do export API (2026-10-06)
+
+
+Recebido. **Não** declarei execução só porque o comando existia.
+
+Tentativa neste Cloud Agent (autorização do proprietário usada):
+- Hostinger MCP `vps_virtual-machines_list`: **timeout** (não executa SQL/Web Console).
+- SSH `srv1982741.hstgr.cloud`: **Permission denied (publickey)** — sem chave neste VM.
+- SFTP: cliente presente; autenticação igual ao SSH → **não transferiu**.
+- Probe **externo** (não é o export): `erp-dev`/`api-erp-dev` health HTTP 200,
+  ready HTTP 200, `database=configured/ok`, runtime `ERP-RUNTIME-08B`,
+  `auth.mode=supabase_user`. Isso **não** prova pgcrypto/`digest` nem listou empresas.
+- HD / #211 fontes privadas: **BLOCKED** neste VM ≠ backup inexistente no PC.
+- CADESP: reusado; não pedido de novo.
+- `importAuthorized=false`. Mapper Cursor #48 intocado. #216/#217 ≠ importação.
+
+**Export empresas: NOT_PERFORMED neste agente.**
+
+Comando Web Console **revisado** (pré-checagem health/ready/schema/pgcrypto `digest`
+**antes** do SELECT de empresas): `scripts/legado/exportar-empresas-api-somente-leitura.sh`
+
+Intervenção humana (exata):
+1. hPanel Hostinger → VPS DEV → Web Console root.
+2. Colar o `.sh` inteiro (um paste).
+3. Se `PASTE_TO_GIT_PRECHECK` falhar: parar; não há JSON de empresas.
+4. Se `executed=true`: SFTP o arquivo **novo**
+   `/root/erp-private/legado-empresas-api-<UTC>.json` → HD `04_REPORTS` (nunca GitHub, nunca sobrescrever).
+5. Colar no chat só PRECHECK + PASTE (hash/last4). Não apagar terceira linha.
+
+```
+PASTE_TO_GIT_BEGIN
+executed=false
+executor=cloud_agent
+export_empresas=NOT_PERFORMED
+probe_external=erp-dev+api-erp-dev
+health=200
+ready=200
+runtime=ERP-RUNTIME-08B
+auth.mode=supabase_user
+database_signal=configured/ok
+pgcrypto_digest=UNVERIFIED
+schema_groups_empresas=UNVERIFIED
+ssh=publickey_denied
+hostinger_mcp=timeout
+cadesp_reused=true
+cadesp_redocument_requested=false
+importAuthorized=false
+neverDelete=true
+coordenacao=#216/#217
+HUMAN_NEXT=colar script revisado na Web Console; SFTP JSON novo ao HD
+PASTE_TO_GIT_END
+```
+
 ## CODEX LEGADO — pacote empresas API / CADESP / #211 (2026-10-06)
+
 
 Recebido (destinatário CODEX LEGADO). Primeira ação: continuar na branch
 existente `codex/legado-origem-relatorios-392b` **sem** tarefa duplicada nem

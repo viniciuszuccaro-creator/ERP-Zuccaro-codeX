@@ -1,3 +1,14 @@
+## CURSOR — espelho Legado `7d063b17` + parecer `4b5d3b94` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Codex | `7d063b17` (script `4b5d3b94` + docs) |
+| Espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
+| Parecer | `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md` — APPROVED COM RESSALVAS |
+| Export | **NOT_PERFORMED** (SSH publickey denied; MCP timeout) |
+| Probe externo | `erp-dev` health/ready 200 · `ERP-RUNTIME-08B` · pgcrypto **UNVERIFIED** |
+| HUMAN | colar script `4b5d3b94` no Web Console; JSON privado nome novo |
+
 ## CURSOR — parecer export empresas API @ `3adc7900` (2026-10-06)
 
 | Campo | Valor |
@@ -11685,3 +11696,21 @@ Checklist inicial:
 - Testes: classificar 5/5 + staging 8/8 + plano 4/4 + vínculo 11/11 + origem 9/9 PASS; `git diff --check` PASS.
 - Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `3adc790030116332f2d677ab649666a9057ecbf8`.
 - Próximo: humano colar o `.sh` na Web Console; transferir JSON privado ao HD; classificar o export real; gate humano continua pendente.
+
+### CODEX LEGADO — execução do export (2026-10-06, NÃO realizada neste agente)
+
+- Objetivo: executar o export com autorização VPS/Web Console/SFTP; pré-checar API+esquema+`digest` antes do SELECT; arquivo privado novo.
+- Resultado: **export NOT_PERFORMED**. Probe externo health/ready 200, runtime `ERP-RUNTIME-08B`, `auth.mode=supabase_user`, `database=configured/ok`. SSH publickey denied. Hostinger MCP timeout. pgcrypto/`digest`/schema **UNVERIFIED** (exige Web Console).
+- Script revisado: `exportar-empresas-api-somente-leitura.sh` agora aborta antes do JSON de empresas se health/ready/pgcrypto/schema falharem.
+- CADESP reusado. Terceira linha: nunca apagar. #211 fontes privadas BLOCKED neste VM. Mapper #48 intocado. `importAuthorized=false`.
+- Coordenação: telas ausentes = #216/#217.
+- Testes: `tests/legado-empresas-api-classificar.test.js` + `git diff --check`.
+- Próximo: humano colar o script revisado na Web Console e SFTP o JSON novo ao HD.
+
+### CODEX LEGADO — parecer Cursor SHA 4b5d3b94 (2026-10-06)
+
+- Recebido sem duplicar tarefa. Parecer Cursor `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`: **APPROVED COM RESSALVAS**. Cursor **não** executou o export.
+- Retry Codex: SSH publickey denied; MCP Hostinger timeout; self-hosted workers=0 → **export NOT_PERFORMED**.
+- Intervenção humana permanece: colar script inteiro do SHA `4b5d3b94` no Web Console; devolver PRECHECK + PASTE; JSON privado nome novo no HD; `executed=false` se health/ready/pgcrypto falhar.
+- Mapper #48 intocado. `importAuthorized=false`. Coordenação #216/#217.
+- Próximo: paste humano na Web Console (único caminho de execução real daqui).

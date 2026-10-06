@@ -66,8 +66,13 @@ test('script Web Console e somente leitura e usa nome de arquivo novo', () => {
     .join('\n');
   assert.match(text, /legado-empresas-api-\$\{STAMP\}\.json/);
   assert.match(text, /somente leitura/);
+  assert.match(text, /PASTE_TO_GIT_PRECHECK_BEGIN/);
+  assert.match(text, /pgcrypto/);
+  assert.match(text, /digest\(/);
+  assert.match(text, /Só depois da pré-checagem/);
   assert.match(text, /PASTE_TO_GIT_BEGIN/);
   assert.match(text, /cadesp_redocument_requested=false/);
+  assert.match(text, /executed=true/);
   assert.doesNotMatch(body, /\b(UPDATE|DELETE|INSERT|DROP|TRUNCATE|ALTER)\b/);
   assert.doesNotMatch(body, /tip-port|tipPort/);
 });
