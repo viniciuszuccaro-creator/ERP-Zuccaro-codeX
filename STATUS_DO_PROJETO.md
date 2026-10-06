@@ -1,3 +1,9 @@
+## PARECER — tip Comercial Cadastros `85f87005` vs #226 (2026-10-06)
+
+- Tip [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a): CI PASS, helpers `getInContext`/merge/RBAC Sistema.Empresas.
+- **Não mergear** a branch tip (base Expedição). Conteúdo portado para #226 + `cadastroEditLoadPolicy.js`.
+- Detalhe: `docs/PARECER_CURSOR_CADASTROS_EMPRESA_85f87005.md`.
+
 ## CURSOR — Cadastros Gerais Empresas edição (2026-10-06)
 
 | Campo | Valor |

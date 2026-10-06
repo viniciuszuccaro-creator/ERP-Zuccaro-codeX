@@ -12,6 +12,12 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
 import { buildMultiempresaReadFilter, isTenantMasterEntity } from "@/components/lib/contextoMultiempresaPolicy";
+import {
+  assertCadastroRecordInTenant,
+  buildCadastroEditSavePayload,
+  hasCadastroEntityPermission,
+  isCadastroEditLoadComplete,
+} from "@/components/cadastros/cadastroEditLoadPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -238,19 +244,22 @@ export default function VisualizadorUniversalEntidadeV24({
     empresaAtual,
     grupoAtual,
     empresasDoGrupo,
+    contextoCanonico,
     createInContext,
     updateInContext,
-    deleteInContext
+    deleteInContext,
+    getInContext,
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
   const contextoValido = !!(empresaId || groupId);
-  const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
-  const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
-  const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
-  const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete };
+  const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
+  const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
+  const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
+  const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -511,22 +520,8 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     setIsSaving(true);
     try {
-      const clean = Object.assign({}, formData);
-      delete clean._action;
-      const tenantMaster = isTenantMasterEntity(ENTITY);
-      // Tenant masters: nao carimbar empresa_id do contexto (preserva ID/vinculos do registro).
-      if (!tenantMaster && !clean.empresa_id && empresaId) clean.empresa_id = empresaId;
-      if (!clean.group_id && groupId) clean.group_id = groupId;
-      if (tenantMaster && editItem && !editItem.empresa_id) delete clean.empresa_id;
-      if (tenantMaster) {
-        if (!clean.group_id) {
-          throw new Error("Contexto de grupo obrigatorio para salvar Empresa/Grupo.");
-        }
-      } else if (!clean.group_id && !clean.empresa_id) {
-        throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");
-      }
+      const clean = buildCadastroEditSavePayload(ENTITY, editItem, formData, { groupId, empresaId });
       if (editItem && editItem.id) {
-        if (!clean.id) clean.id = editItem.id;
         await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
         await auditCadastroEvent("Edicao", "Cadastro editado pelo formulario", { registro_id: editItem.id, antes: editItem, depois: clean, acao_sensivel: true });
       } else {
@@ -573,7 +568,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
-    // Abre com o row da lista (nao limpa campos) e tenta hidratar o registro completo.
+    // Abre com o row da lista (nao limpa campos) e hidrata o registro completo via getInContext.
     setEditItem(JSON.parse(JSON.stringify(item)));
     setEditError(null);
     setEditLoadBlocked(false);
@@ -582,17 +577,13 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(true);
     (async function loadFullRecord() {
       try {
-        const tenantMaster = isTenantMasterEntity(ENTITY);
-        const res = await base44.functions.invoke("getEntityRecord", {
-          entityName: ENTITY,
-          filter: { id: item.id },
-          group_id: groupId || null,
-          empresa_id: tenantMaster ? null : (empresaId || null),
-          limit: 1,
-        });
-        const rows = Array.isArray(res && res.data) ? res.data : (Array.isArray(res) ? res : []);
-        const full = rows[0] || null;
-        if (!full || !full.id) {
+        const full = await getInContext(ENTITY, item.id, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+        assertCadastroRecordInTenant(ENTITY, full, {
+          groupId: (contextoCanonico && contextoCanonico.groupId) || groupId,
+          empresaId: (contextoCanonico && contextoCanonico.empresaId) || empresaId,
+          scopeType: (contextoCanonico && contextoCanonico.scopeType) || null,
+        }, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+        if (!isCadastroEditLoadComplete(ENTITY, full, item.id)) {
           setEditLoadBlocked(true);
           setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
           return;
@@ -609,7 +600,7 @@ export default function VisualizadorUniversalEntidadeV24({
         setIsLoadingEdit(false);
       }
     })();
-  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, groupId, empresaId]);
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, groupId, empresaId, getInContext, contextoCanonico]);
 
   const formProps = useMemo(
     function() {
