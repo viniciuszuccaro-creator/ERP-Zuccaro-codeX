@@ -1,3 +1,19 @@
+## CODEX — B3/B4/B5 pós-B2 (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — follow-up pós parecer APPROVED COM RESSALVAS @ `2c6e898e` / tip `b8492074` (#222); sem reabrir B2; sem executor duplicado |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| B2 | **FECHADO** — não reabrir |
+| B4 PG real | **CI PROVADO** — tip `b8492074` `test:postgres` `POSTGRES_E2E_R11_STOCK_TOTAL_TESTS=2` (despacho/retry/parcial/devolução/cancel/rollback). **Local agente BLOCKED** (`DATABASE_URL` ausente) + skip sanitizado PASS |
+| B3 snapshots | **BLOCKED** — sem URL privada/extração; fixture `NOT_EXTRACTED`; `readyMeansLoad=false`; CLI `reconcile:stock` offline OK (agregados) |
+| B5/B6 homolog | **PREPARADO / execução BLOCKED** — checklist `EXPEDICAO_PORTAS`; probe `api-erp-dev` health/ready 200; VPS MCP timeout; sem Bearer/promoção 3080 |
+| R2 residual | **adiado** — não disputar PG/snapshots |
+| Testes locais | R11 skip+reconcile+CLI: 11 pass / 0 fail / 1 skip |
+| CLI | `reconcile:stock` preservada |
+| Fora | tip-port outbox/DAM; inventar abertura; merge main |
+
 ## CODEX — B2 useFluxoPedido anti-dupla HTTP (2026-10-06)
 
 | Campo | Valor |

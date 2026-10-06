@@ -4,10 +4,11 @@
     "origin": "NOT_EXTRACTED",
     "destination": "NOT_EXTRACTED",
     "cutoffUtc": null,
-    "reason": "DATABASE_URL_AND_PRIVATE_STAGING_NOT_AVAILABLE",
+    "reason": "PRIVATE_STAGING_URL_AND_EXTRACTION_NOT_AVAILABLE",
     "remoteDevMeta": {
       "runtime": "ERP-RUNTIME-08B",
       "authMode": "supabase_user",
+      "healthReady": "ok",
       "pedidoEstoqueSideEffects": null,
       "estoqueFonteOficial": null,
       "note": "candidata ledger flags not present on public DEV; authenticated expedition BLOCKED without Bearer"
@@ -23,12 +24,16 @@
     "SNAPSHOT_NOT_AVAILABLE"
   ],
   "blocked": [
-    "B1_DATABASE_URL",
+    "B3_PRIVATE_SNAPSHOTS",
+    "B3_PRIVATE_URL_EXTRACTION",
+    "B4_DATABASE_URL_LOCAL_AGENT",
+    "B5_B6_DEV_HOMOLOG_GATES",
+    "B5_PRIVATE_SNAPSHOTS",
     "B3_BEARER_SESSION",
-    "B4_VPS_MCP",
-    "B5_PRIVATE_SNAPSHOTS"
+    "B4_VPS_MCP"
   ],
   "readyMeansLoad": false,
   "doesNotInventOpeningBalance": true,
-  "doesNotSumDistinctUnits": true
+  "doesNotSumDistinctUnits": true,
+  "ciNote": "B4 R11_STOCK proven on CI ephemeral PostgreSQL via npm run test:postgres; local agent without DATABASE_URL stays BLOCKED with sanitized skip"
 }
