@@ -1,6 +1,6 @@
 ## CODEX — B2 useFluxoPedido anti-dupla HTTP (2026-10-06)
 
-Recebido (follow-up Cursor). Tip base `f5591d55` (#223/B1 OK). B2: writers locais de `useFluxoPedido` fail-closed no HTTP; orquestração omite reserva/baixa/liberação e preserva legado. Baixa física HTTP = ledger despacho. Residuais: Estoque/Compras/Produção fora do hook. CLI preservada. PG/snapshots/Bearer/VPS BLOCKED. Sem tip-port outbox/DAM; sem promoção 3080.
+Recebido (follow-up Cursor). Tip `83c95f0e` (B2 `2c6e898e` + harness `28dee1da` + status). Base `f5591d55` (#223/B1 OK). Writers locais `useFluxoPedido` fail-closed no HTTP; orquestração omite reserva/baixa/liberação; legado preservado. CI tip SUCCESS. Residuais: Estoque/Compras/Produção fora do hook. CLI preservada. PG/snapshots/Bearer/VPS BLOCKED. Sem tip-port outbox/DAM; sem promoção 3080.
 
 ## CODEX — consolidar #219+#221 + anti-dupla HTTP (2026-10-06)
 
