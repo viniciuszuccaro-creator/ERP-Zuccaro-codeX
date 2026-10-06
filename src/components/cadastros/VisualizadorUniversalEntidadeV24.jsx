@@ -11,7 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
-import { buildMultiempresaReadFilter, loadEmpresaForEdit } from "@/components/lib/contextoMultiempresaPolicy";
+import { buildMultiempresaReadFilter, isEditRequestCurrent, loadEmpresaForEdit } from "@/components/lib/contextoMultiempresaPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -275,8 +275,22 @@ export default function VisualizadorUniversalEntidadeV24({
   const [formKey,       setFormKey]       = useState(0);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
   const editRequestRef = useRef(0);
+  const scopeKey = `${ENTITY}:${groupId || ""}:${empresaId || ""}`;
+  const activeScopeRef = useRef(scopeKey);
+  const previousScopeRef = useRef(scopeKey);
+  activeScopeRef.current = scopeKey;
   const [editError,     setEditError]     = useState(null);
   const [isSaving,      setIsSaving]      = useState(false);
+
+  useEffect(function() {
+    if (previousScopeRef.current === scopeKey) return;
+    previousScopeRef.current = scopeKey;
+    editRequestRef.current += 1;
+    setIsLoadingEdit(false);
+    setEditError(null);
+    setEditItem(null);
+    setShowForm(false);
+  }, [scopeKey]);
 
   const [selectedIds,   setSelectedIds]   = useState(function() { return new Set(); });
   const [crossPageAll,  setCrossPageAll]  = useState(false);
@@ -534,6 +548,8 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     auditCadastroEvent("Visualizacao", "Formulario de criacao aberto", { origem: "VisualizadorUniversalEntidadeV24" });
+    editRequestRef.current += 1;
+    setIsLoadingEdit(false);
     setEditItem(null);
     setEditError(null);
     setFormKey(function(k) { return k + 1; });
@@ -553,6 +569,11 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     const request = ++editRequestRef.current;
+    const requestedScope = scopeKey;
+    const stillCurrent = () => isEditRequestCurrent({
+      request, current: editRequestRef.current,
+      requestedScope, activeScope: activeScopeRef.current,
+    });
     setEditError(null);
     if (ENTITY === "Empresa") {
       setIsLoadingEdit(true);
@@ -561,24 +582,24 @@ export default function VisualizadorUniversalEntidadeV24({
           id: item.id, groupId, empresaId,
           fetchById: (id) => base44.entities.Empresa.get(id),
         });
-        if (request !== editRequestRef.current) return;
+        if (!stillCurrent()) return;
         setEditItem(complete);
       } catch (error) {
-        if (request !== editRequestRef.current) return;
+        if (!stillCurrent()) return;
         setEditError("Nao foi possivel carregar o cadastro completo. Edicao bloqueada.");
         await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa falhou", { registro_id: item.id, sucesso: false, motivo: "leitura_ou_escopo" });
         return;
       } finally {
-        if (request === editRequestRef.current) setIsLoadingEdit(false);
+        if (stillCurrent()) setIsLoadingEdit(false);
       }
     } else {
       setEditItem(JSON.parse(JSON.stringify(item)));
     }
-    if (request !== editRequestRef.current) return;
+    if (!stillCurrent()) return;
     auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, empresaId, groupId]);
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, empresaId, groupId, scopeKey]);
 
   const formProps = useMemo(
     function() { return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit); },

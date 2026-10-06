@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { loadEmpresaForEdit } from '../src/components/lib/contextoMultiempresaPolicy.js';
+import { isEditRequestCurrent, loadEmpresaForEdit } from '../src/components/lib/contextoMultiempresaPolicy.js';
 
 const complete = Object.freeze({
   id: 'empresa-a', group_id: 'grupo-a', razao_social: 'Empresa Sintetica',
@@ -48,6 +48,14 @@ test('Falha de leitura bloqueia; retentativa relê em vez de usar linha parcial'
   assert.equal(reads, 2);
 });
 
+test('Leitura pendente deixa de ser atual apos Novo ou troca de contexto', () => {
+  const pending = { request: 1, current: 1, requestedScope: 'Empresa:grupo-a:', activeScope: 'Empresa:grupo-a:' };
+  assert.equal(isEditRequestCurrent(pending), true);
+  assert.equal(isEditRequestCurrent({ ...pending, current: 2 }), false);
+  assert.equal(isEditRequestCurrent({ ...pending, activeScope: 'Empresa:grupo-b:' }), false);
+  assert.equal(isEditRequestCurrent({ ...pending, activeScope: 'Empresa:grupo-a:empresa-b' }), false);
+});
+
 test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal oculta', async () => {
   const form = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
@@ -58,4 +66,5 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.match(form, /!dadosIniciais\?\.id \? \{ configuracao_fiscal:/);
   assert.match(viewer, /loadEmpresaForEdit\(/);
   assert.match(viewer, /setEditError\("Nao foi possivel carregar o cadastro completo/);
+  assert.match(viewer, /editRequestRef\.current \+= 1;\s*setIsLoadingEdit\(false\);\s*setEditItem\(null\)/);
 });

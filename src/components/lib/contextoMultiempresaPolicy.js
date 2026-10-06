@@ -81,6 +81,10 @@ export const loadEmpresaForEdit = async ({ id, groupId, empresaId, fetchById }) 
   return complete;
 };
 
+export const isEditRequestCurrent = ({ request, current, requestedScope, activeScope }) => (
+  request === current && requestedScope === activeScope
+);
+
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;
