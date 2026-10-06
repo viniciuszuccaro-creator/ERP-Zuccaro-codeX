@@ -44,6 +44,7 @@ import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { isHttpExpedicaoEnabled } from "@/api/runtimeBackend";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -74,6 +75,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const effectiveEmpresaId = empresaAtual?.id || null;
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
+  const modoHttpExpedicao = isHttpExpedicaoEnabled();
   const canView = hasPermission("Comercial", "Pedido", "visualizar") || hasPermission("Expedicao", "Entregas", "visualizar") || hasPermission("Expedicao", "Painel Logistico", "visualizar");
   const canEdit = hasPermission("Comercial", "Pedido", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Entrega", "editar");
   const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");
@@ -774,9 +776,19 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                     </Button>
                   ) : null}
 
-                  {entregaSelecionada.pedido.status === 'Em Trânsito' ? (
+                  {entregaSelecionada.pedido.status === 'Em Trânsito' && modoHttpExpedicao ? (
+                    <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                      A confirmação com baixa de estoque local está indisponível no modo HTTP. Conclua a entrega pelo fluxo de Expedição.
+                    </div>
+                  ) : null}
+
+                  {entregaSelecionada.pedido.status === 'Em Trânsito' && !modoHttpExpedicao ? (
                     <Button
                       onClick={async () => {
+                        if (isHttpExpedicaoEnabled()) {
+                          toast.error("Use o fluxo de Expedição para confirmar a entrega no modo HTTP.");
+                          return;
+                        }
                         const pedido = entregaSelecionada.pedido;
                         const entrega = entregaSelecionada.entrega;
                         if (!contextoValido || !(canEntregar || canRegisterProof) || !canStockMove) {
