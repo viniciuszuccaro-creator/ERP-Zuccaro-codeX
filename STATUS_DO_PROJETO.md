@@ -1,3 +1,9 @@
+## Comercial 360 / Onda 15 - limpeza outbox na troca de Empresa (2026-10-06)
+
+- `ProdutoRelationsDamSection`: sem `empresaId`/produto/view → limpa listas e métricas outbox (isolamento tenant).
+- Testes UI 11/11; outbox retry/idempotência focados 7/7. Publisher real BLOCKED.
+- Divisão: Cursor dono desta branch (#203); Comercial não edita midia/outbox aqui.
+
 ## Comercial 360 / Onda 15 - PG concorrencia + consumidor prepared (2026-10-04)
 
 - Continuacao #203: E2E PG com claim concorrente (SKIP LOCKED), lease/executor antigo, retry→dead-letter, isolamento empresa/grupo e rollback de append.
