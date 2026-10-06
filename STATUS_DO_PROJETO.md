@@ -11626,5 +11626,6 @@ Checklist inicial:
 - #211 OPEN `cursor/legado-origem-relatorios-392b`; este Codex é ancestral Git; SHA-256 de relatórios reais só no HD.
 - Coordenação: #216/#217 — telas/cadastros ausentes podem ser versão/flags/RBAC.
 - Não tocados: `mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
-- Testes: `node --test tests/legado-empresas-api-classificar.test.js` + regressão staging/plano; `git diff --check`.
+- Testes: classificar 5/5 + staging 8/8 + plano 4/4 + vínculo 11/11 + origem 9/9 PASS; `git diff --check` PASS.
+- Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `3adc790030116332f2d677ab649666a9057ecbf8`.
 - Próximo: humano colar o `.sh` na Web Console; transferir JSON privado ao HD; classificar o export real; gate humano continua pendente.

@@ -19,6 +19,7 @@ plano de importação novo.
 - Mapper Cursor #48 intocado; sem tip-port; sem carga operacional.
 - Intervenção humana: colar o `.sh` na Web Console da VPS DEV; transferir JSON
   privado ao HD `04_REPORTS`; devolver só `PASTE_TO_GIT_*`.
+- SHA remoto: `3adc790030116332f2d677ab649666a9057ecbf8`.
 
 ## CODEX LEGADO — coordenação Comercial/Cursor (canônico, 2026-10-05)
 
