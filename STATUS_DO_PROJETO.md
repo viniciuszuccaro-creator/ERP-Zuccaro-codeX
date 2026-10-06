@@ -1,3 +1,16 @@
+## CURSOR — revalidação candidata `f5591d55` pós #219+#221+#223 (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Candidata tip | `f5591d55c92c70c72d60450a5e81e5430da1c621` |
+| Incorporado | #219 CLI · #221 Entrega/Retirada · #223 Automacao (B1 fechado) |
+| Parecer | `docs/PARECER_CURSOR_CANDIDATA_f5591d55.md` — **APPROVED COM RESSALVAS** |
+| Testes Cursor | writer-guard **5/5 PASS**; CLI ancestral OK |
+| CI tip | frontend/backend/compose/concurrency SUCCESS |
+| Bloqueios | `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_f5591d55.md` (B2 `useFluxoPedido` aberto) |
+| Follow-up | [Comercial: #221 estoque HTTP](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) retomado só para B2 |
+| Telas / PG | BLOCKED Bearer / DATABASE_URL |
+
 ## CURSOR — parecer #221 tip `48bce2f7` + bloqueios candidata (2026-10-06)
 
 | Campo | Valor |
@@ -5,9 +18,8 @@
 | PR | [#221](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/221) tip `48bce2f7` (+ [#223](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/223) Automacao rebased) |
 | Parecer | `docs/PARECER_CURSOR_221_SHA_48bce2f7.md` — **APPROVED COM RESSALVAS** (não transfere `690e44c7`) |
 | Testes | writer-guard **4/4 PASS** (entrega+retirada+Automacao); CI #221/#223 SUCCESS |
-| Candidata | `e242564f` — Entrega/Retirada OK; **Automacao AUSENTE** (B1) |
-| Bloqueios | `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_e242564f.md` |
-| Ação Comercial | cherry-pick #223 `3decc4e4`→`f5591d55` preservando CLI `06ed1141`; residual B2 `useFluxoPedido` |
+| Candidata | avançou para `f5591d55` (B1 fechado) — ver bloco acima |
+| Bloqueios | histórico `e242564f`; vigente `f5591d55` |
 | Outbox | #203 `5f41e644` in-repo claim/lease OK; publisher real BLOCKED |
 | Telas / PG | BLOCKED Bearer / DATABASE_URL |
 

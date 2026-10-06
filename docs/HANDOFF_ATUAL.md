@@ -1,3 +1,17 @@
+## CURSOR — revalidação candidata `f5591d55` (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Estoque B2 `useFluxoPedido` | [Comercial: #221 estoque HTTP](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | candidata tip `f5591d55`+ | outbox/DAM #203 |
+| Identidade/CADESP/staging | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | scripts/legado, SFTP privado | mapper #48; PII Git |
+| Revisão + outbox/DAM | Cursor | pareceres #222; #203 | router |
+
+- Candidata tip `f5591d55`: #219+#221+#223 incorporados; B1 Automacao **FECHADO**; CLI preservada.
+- Parecer consolidado: `docs/PARECER_CURSOR_CANDIDATA_f5591d55.md` — **APPROVED COM RESSALVAS**.
+- Bloqueios: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_f5591d55.md` (substitui `e242564f`; B2 aberto).
+- Writer-guard **5/5 PASS**; CI tip SUCCESS. Comercial retomado só para B2.
+- Outbox #203 `5f41e644` in-repo OK; publisher BLOCKED. Telas/PG: Bearer / DATABASE_URL.
+
 ## CURSOR — parecer #221 tip `48bce2f7` + bloqueios candidata (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
@@ -8,10 +22,9 @@
 | Revisão + outbox/DAM | Cursor (este chat) | pareceres; #203 | router/candidata |
 
 - Parecer #221 tip: `docs/PARECER_CURSOR_221_SHA_48bce2f7.md` — **APPROVED COM RESSALVAS** @ `48bce2f7` (entrega+retirada+Automacao). Parecer `690e44c7` **não** transfere.
-- Candidata `e242564f`: Entrega/Retirada OK; **Automacao AUSENTE** → Comercial cherry-pick #223 (`3decc4e4`→`f5591d55`) **preservando** CLI `06ed1141`.
-- Bloqueios únicos: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_e242564f.md` (B1 Automacao, B2 useFluxoPedido, B3–B6 PG/snapshots/Bearer/gates).
-- Comprovante/reversa: cobertos na candidata (teste HTTP). Residual P0: `useFluxoPedido`.
-- Outbox #203 tip: `5f41e644` (claim/lease in-repo fechado; publisher real BLOCKED). Sem tip-port na candidata.
+- Candidata avançou para `f5591d55` (B1 fechado) — ver bloco acima.
+- Bloqueios legados `e242564f`: histórico; usar `f5591d55`.
+- Outbox #203 tip Cursor: limpeza métricas na troca de Empresa (`1dc83941`/`5f41e644`).
 - Telas autenticadas / PG real: **BLOCKED** Bearer + `DATABASE_URL`.
 
 ## CURSOR — divisão 3 pacotes + parecer #221 (2026-10-06)
