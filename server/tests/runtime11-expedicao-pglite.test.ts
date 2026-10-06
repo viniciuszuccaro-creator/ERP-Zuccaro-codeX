@@ -4,6 +4,7 @@
  * entrega parcial idempotente e devolução + auditoria transacional.
  */
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -554,6 +555,85 @@ test('R11 PGlite: ledger canônico — despacho/retry/parcial/devolução/cancel
        VALUES($1,$2,$3,10) ON CONFLICT (group_id,empresa_id,produto_id) DO UPDATE SET quantidade=10`,
       [scope.groupId, scope.empresaId, product],
     );
+
+    // Ensaio isolado: cadastro (Grupo/Empresa/produto/unidade) × ledger HTTP. Não inventa saldo.
+    const seeded = await db.query<{ ledger_qty: string | null; unidade: string | null }>(
+      `SELECT s.quantidade::text AS ledger_qty, p.unidade_medida_id::text AS unidade
+         FROM produtos p
+         LEFT JOIN expedicao_estoque_saldos s
+           ON s.group_id=$1 AND s.empresa_id=$2 AND s.produto_id=p.id
+        WHERE p.id=$3`,
+      [scope.groupId, scope.empresaId, product],
+    );
+    assert.equal(seeded.rows[0]?.unidade, SEED_IDS.unidadeA);
+    assert.equal(seeded.rows[0]?.ledger_qty, '10.000000', 'MATCH: ledger oficial após corte sintético isolado');
+    const orphan = await db.query<{ id: string }>(
+      `INSERT INTO produtos(group_id,empresa_id,descricao,unidade_medida_id)
+       VALUES($1,$2,'Produto sintético só cadastro sem ledger',$3) RETURNING id`,
+      [scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
+    );
+    const orphanId = orphan.rows[0].id;
+    const gap = await db.query<{ ledger_qty: string | null }>(
+      `SELECT s.quantidade::text AS ledger_qty FROM produtos p
+         LEFT JOIN expedicao_estoque_saldos s
+           ON s.group_id=p.group_id AND s.empresa_id=COALESCE(p.empresa_id,$1) AND s.produto_id=p.id
+        WHERE p.id=$2`,
+      [scope.empresaId, orphanId],
+    );
+    assert.equal(gap.rows[0]?.ledger_qty ?? null, null, 'CONFLICT_LEDGER_ABSENT — não copiar abertura');
+    const copied = await db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM expedicao_estoque_saldos
+        WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3`,
+      [scope.groupId, scope.empresaId, orphanId],
+    );
+    assert.equal(copied.rows[0].n, '0', 'ensaio não INSERT saldo a partir do cadastro');
+
+    // #215 espelho PGlite: 2º item sem baseline após 1ª dedução → rollback integral.
+    const laterProduct = `e${randomUUID().slice(1)}`;
+    assert.ok(product < laterProduct);
+    await db.query(
+      `INSERT INTO produtos(id,group_id,empresa_id,descricao,unidade_medida_id)
+       VALUES($1,$2,$3,'Produto sintético posterior sem saldo',$4)`,
+      [laterProduct, scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
+    );
+    const partial = await makeLinked(4);
+    await db.query(
+      `INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,
+        quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot)
+       VALUES($1,$2,$3,$4,$5,'Segundo produto sintético','UN',2,10,0,20,20,false,'REVENDA')`,
+      [scope.groupId, scope.empresaId, partial.pedidoId, laterProduct, SEED_IDS.unidadeA],
+    );
+    await db.query(
+      `INSERT INTO entrega_itens(group_id,empresa_id,entrega_id,produto_id,descricao_snapshot,unidade_snapshot,
+        quantidade_pedida,quantidade_separada,created_by,updated_by)
+       VALUES($1,$2,$3,$4,'Segundo produto sintético','UN',2,2,$5,$5)`,
+      [scope.groupId, scope.empresaId, partial.entregaId, laterProduct, scope.actorId],
+    );
+    await db.query('UPDATE pedidos SET subtotal=40,total=40 WHERE id=$1', [partial.pedidoId]);
+    await db.query('UPDATE entregas SET quantidade_total=4 WHERE id=$1', [partial.entregaId]);
+    assert.equal(await qty(), 10);
+    await assert.rejects(() => db.withTransaction(async (tx) => {
+      await pedido.onDespacho({ ...scope, pedidoIds: [partial.pedidoId], romaneioId: partial.romaneioId }, tx);
+      await stock.onDespacho({ ...scope, entregaIds: [partial.entregaId] }, tx);
+    }), (error: unknown) => (error as { code?: string }).code === 'ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE');
+    assert.equal(await qty(), 10, 'first item deduction rolls back when the second item has no baseline');
+    assert.equal(await movementCount(partial.entregaId), 0);
+    await db.query(
+      'INSERT INTO expedicao_estoque_saldos(group_id,empresa_id,produto_id,quantidade) VALUES($1,$2,$3,2)',
+      [scope.groupId, scope.empresaId, laterProduct],
+    );
+    await db.withTransaction(async (tx) => {
+      await pedido.onDespacho({ ...scope, pedidoIds: [partial.pedidoId], romaneioId: partial.romaneioId }, tx);
+      await stock.onDespacho({ ...scope, entregaIds: [partial.entregaId] }, tx);
+    });
+    assert.equal(await qty(), 8);
+    assert.equal(await movementCount(partial.entregaId), 2, 'retry applies exactly one dispatch per item');
+    await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [partial.entregaId]);
+    await db.withTransaction((tx) => stock.onCancelamento({ ...scope, entregaId: partial.entregaId }, tx));
+    assert.equal(await qty(), 10, 'cancellation compensates both items after retry');
+    assert.equal(await movementCount(partial.entregaId), 4);
+    await db.withTransaction((tx) => stock.onCancelamento({ ...scope, entregaId: partial.entregaId }, tx));
+    assert.equal(await movementCount(partial.entregaId), 4, 'cancellation retry does not double-credit');
 
     const first = await makeLinked(1);
     const dispatch = () => db.withTransaction(async (tx) => {

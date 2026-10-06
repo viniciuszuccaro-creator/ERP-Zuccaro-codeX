@@ -1,3 +1,14 @@
+## CURSOR — parecer HEAD integrado `f514c2e3` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
+| SHA Codex | `f514c2e3` (#215 `5837b6e5`/`7f0dc127` + PGlite reconciliação) |
+| Parecer | `docs/PARECER_CURSOR_213_SHA_f514c2e3.md` — **APPROVED COM RESSALVAS** |
+| #218/#215 isolado | **não** transfere automaticamente |
+| PGlite | multi-item rollback + `CONFLICT_LEDGER_ABSENT` sem INSERT |
+| BLOCKED | B1 DATABASE_URL / B2 PG real / B3 telas / B4 VPS live |
+
 ## CURSOR — fechamento pacote candidata @ `899ec9b3` (2026-10-05)
 
 | Campo | Valor |
@@ -131,6 +142,27 @@ PENDENTE humano: merge stacks; DATABASE_URL runtime11; gate Onda 25 Legado; VPS/
 | Parecer | APPROVED + decimal/estados + asserts gap 032 |
 | PGlite ledger | 12 pass / 1 skip (`DATABASE_URL`) |
 | PENDENTE | runtime11 PG real; VPS |## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
+## CODEX — incorporar #215 multi-item na candidata (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — continuar nesta sessão; sem tarefa duplicada |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | tip `72c9dba9` / código `899ec9b3` |
+| #215 | cherry-pick `5837b6e5` + `7f0dc127` (rollback 2º item; CI PG real já SUCCESS na PR) |
+| #213 | espelho Cursor — **não** tip-port |
+| Reconciliação | ensaio PGlite: JOIN cadastro×`expedicao_estoque_saldos` por group/empresa/produto + unidade do produto; `CONFLICT_LEDGER_ABSENT` sem INSERT abertura |
+| Testes | PGlite ledger (+multi-item+#215+#recon): 7 pass / 0 fail; persistent PG skip sanitizado (DATABASE_URL ausente) |
+| DATABASE_URL | ausente → PG real **BLOCKED** (não inventar sucesso); prova PG da #215 ficou na CI `37341406770` da PR |
+| VPS | preflight ao vivo **BLOCKED** (Hostinger MCP timeout). R07B `ca0bc5f3`, migrations 001–015, APPLY `pg_read_file` = **históricos**, não observação ao vivo |
+| Migrations | 001–031, **gap 032**, 033–037; trava 026 intacta |
+| Pacote DEV | smoke/backup/reversão só sob gates; sem promoção 3080 |
+| Fora | outbox/DAM tip-*; merge main; inventar 032/saldo |
+| Status | CONSOLIDADO na candidata; PG E2E local BLOCKED; VPS leitura BLOCKED |
+| Próximo | CI tip; revisão Cursor SHA; DATABASE_URL isolado; gate leitura VPS |
+
+## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
 
 | Campo | Valor |
 |---|---|
@@ -13190,3 +13222,6 @@ Base #178 `0596a763`, CIs `erp-runtime-ci` 36765676571 e `omnicanal-postgres` 36
 ## Comercial 360 — validade futura do fixture R08C PostgreSQL (2026-10-01)
 
 O HEAD `790e4be1` da #178 passou nas CIs `erp-runtime-ci` 36769412407 e `omnicanal-postgres` 36769412099 e foi revisado pelo Cursor; merge/VPS/importação não liberados. A CI da candidata integrada #185 `3e10bf4a` reportou que o R08C de rollback de auditoria esperava o erro forçado, mas o fixture `validade_em: 2026-10-01T00:00:00Z` já estava vencido quando o serviço validou o Orçamento. Os dois inputs deste arquivo agora usam validade calculada 30 dias após a execução do teste; nenhuma regra de validade de produção mudou. Testes focados locais: 8 pass, 0 fail, 2 skip por ausência de `DATABASE_URL`, incluindo casos que continuam rejeitando validade expirada. Backend completo 456 pass/0 fail/46 skip, typecheck/build servidor e diff-check passaram. A correção está nesta branch Comercial e não foi aplicada à branch #185 ou à VPS. Gate seguinte: CI PostgreSQL do novo SHA e composição explícita antes de afirmar que #185 está corrigida.
+## 2026-10-05 — complemento multi-item da candidata funcional
+
+Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` (base `72c9dba9`) em branch própria e provar falha multi-item do ledger 037. Causa: a prova R11 da #212 cobria falta de baseline em um item, mas não o rollback da dedução anterior quando o item seguinte falha. Reutilizados `PostgresExpedicaoEstoquePort`, `PostgresExpedicaoPedidoPort`, teste R11 e contratos de modo HTTP existentes. Alterados teste PostgreSQL e contrato/handoff; nenhum runtime operacional ativado. Grupo/Empresa e RBAC permanecem na implementação base; teste cobre transação, auditoria, retry e compensação. Testes locais: foco PGlite 7 pass/0 fail/1 skip PostgreSQL por ausência de URL; servidor isolado 483 pass/0 fail/50 skip; servidor typecheck, audit:baseline, lint raiz e build raiz passaram. A primeira execução paralela da suíte teve timeout por contenção; os 19 testes afetados e a suíte completa passaram ao repetir sem checks concorrentes. Typecheck raiz falha em arquivos fora do diff. Commit de código `5837b6e5` na #215; `erp-runtime-ci` 37341406770 SUCCESS incluiu R11 PostgreSQL real 2/2 sem skip e `omnicanal-postgres` 37341407276 SUCCESS. Pendências P0: comprovar reconciliação do estoque Base44/local para ledger HTTP por empresa/produto/unidade, grants/RLS da role operacional, preflight histórico 026, backup/restore e gate DEV. Gap 032 não é migration a criar. Próximo item independente: gate isolado de reconciliação e revisão Cursor do HEAD exato antes de integrar #215.
