@@ -13079,3 +13079,17 @@ O HEAD `790e4be1` da #178 passou nas CIs `erp-runtime-ci` 36769412407 e `omnican
 ## 2026-10-05 — complemento multi-item da candidata funcional
 
 Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` (base `72c9dba9`) em branch própria e provar falha multi-item do ledger 037. Causa: a prova R11 da #212 cobria falta de baseline em um item, mas não o rollback da dedução anterior quando o item seguinte falha. Reutilizados `PostgresExpedicaoEstoquePort`, `PostgresExpedicaoPedidoPort`, teste R11 e contratos de modo HTTP existentes. Alterados teste PostgreSQL e contrato/handoff; nenhum runtime operacional ativado. Grupo/Empresa e RBAC permanecem na implementação base; teste cobre transação, auditoria, retry e compensação. Testes locais: foco PGlite 7 pass/0 fail/1 skip PostgreSQL por ausência de URL; servidor isolado 483 pass/0 fail/50 skip; servidor typecheck, audit:baseline, lint raiz e build raiz passaram. A primeira execução paralela da suíte teve timeout por contenção; os 19 testes afetados e a suíte completa passaram ao repetir sem checks concorrentes. Typecheck raiz falha em arquivos fora do diff. Commit de código `5837b6e5` na #215; `erp-runtime-ci` 37341406770 SUCCESS incluiu R11 PostgreSQL real 2/2 sem skip e `omnicanal-postgres` 37341407276 SUCCESS. Pendências P0: comprovar reconciliação do estoque Base44/local para ledger HTTP por empresa/produto/unidade, grants/RLS da role operacional, preflight histórico 026, backup/restore e gate DEV. Gap 032 não é migration a criar. Próximo item independente: gate isolado de reconciliação e revisão Cursor do HEAD exato antes de integrar #215.
+## CODEX — gate offline de reconciliação de estoque (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Preparar comparação segura entre fonte anterior e ledger HTTP 037 antes de qualquer saldo de abertura |
+| Causa | A migration 037 não cria saldo e o estoque legado pode diferir em unidade/local/lote; ausência não equivale a zero |
+| Branch | `codex/comercial-ledger-reconciliacao-20261006`, separada da candidata Comercial |
+| Estruturas | Reutiliza chave canônica Grupo/Empresa/produto e escala `numeric(18,6)` do ledger; sem migration ou writer novo |
+| Arquivos | `server/src/services/expedicaoStockReconciliation.ts`, CLI offline em `server/scripts/reconcileExpedicaoStock.ts`, testes focados e documentação da Expedição |
+| Mudança | Comparador puro e CLI offline com corte UTC, evidência por linha, precisão decimal, detecção de duplicidade, falta, unidade, quantidade, snapshots vazios e cruzamento de empresas; saída agregada sem IDs/saldos e falha fechado |
+| Segurança | Nenhum dado real, credencial ou identificador de infraestrutura no código/teste; sem acesso ao banco, sem ativação de flag |
+| Testes | Focado final 8/8 (inclui parecer #219 para UTC sem milissegundos e CLI sem vazamento); server `npm test` final 491 pass/0 fail/50 skip; server typecheck, audit, lint (1 warning preexistente), build e diff-check PASS. Typecheck raiz falha em páginas JSX fora do lote; `npm test` raiz falha em guards de VPS sob Windows (ex.: `vps-owner-provision-guard.test.js:478`, esperado 2/obtido null). CI Linux necessária para confirmar SHA remoto |
+| Pendência | Exportação comprovada do estoque anterior, cobertura local/lote e corte sem writers, backup/restore e aprovação humana antes de carga ou ativação |
+| Próximo P0 | Extrair snapshots sanitizados em staging isolado, reconciliar contagens por empresa/unidade e ensaiar rollback; não importar no operacional |
