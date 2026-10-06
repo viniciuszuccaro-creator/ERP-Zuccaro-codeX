@@ -1,3 +1,7 @@
+## CODEX — B3/B4/B5 pós-B2 (2026-10-06)
+
+Recebido. B2 fechado (parecer @ `2c6e898e`). B4: CI tip `b8492074` provou R11_STOCK em PG efêmero; local sem DATABASE_URL = BLOCKED + skip sanitizado. B3: snapshots privados NOT_EXTRACTED; ready≠carga; CLI reconcile OK. B5/B6: checklist preparado; execução BLOCKED (MCP/Bearer/gates). R2 adiado. Sem tip-port outbox/DAM; sem 3080/main.
+
 ## CODEX — B2 useFluxoPedido anti-dupla HTTP (2026-10-06)
 
 Recebido (follow-up Cursor). Tip `83c95f0e` (B2 `2c6e898e` + harness `28dee1da` + status). Base `f5591d55` (#223/B1 OK). Writers locais `useFluxoPedido` fail-closed no HTTP; orquestração omite reserva/baixa/liberação; legado preservado. CI tip SUCCESS. Residuais: Estoque/Compras/Produção fora do hook. CLI preservada. PG/snapshots/Bearer/VPS BLOCKED. Sem tip-port outbox/DAM; sem promoção 3080.

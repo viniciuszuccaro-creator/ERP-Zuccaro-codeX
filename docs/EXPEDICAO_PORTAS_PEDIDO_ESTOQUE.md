@@ -6,7 +6,13 @@
 
 **Unidade canônica (ressalva #218):** a PK de `expedicao_estoque_saldos` permanece `(group_id, empresa_id, produto_id)` — **sem** coluna de unidade e **sem** somar unidades distintas. A unidade oficial é `produtos.unidade_medida_id` (uma por produto). O comparador offline usa a mesma chave composta; duas linhas de unidades diferentes no mesmo produto são `DUPLICATE_KEY`. A porta persistente rejeita `ESTOQUE_UNIDADE_CANONICA_AUSENTE` / `_MISMATCH` / `_COLISAO`. Não há migration 038/032 para “consertar” a PK.
 
-**Candidata Codex tip:** consolidação #219+#221 sobre `7ea1519a`/`06ed1141` (parecer Cursor APPROVED COM RESSALVAS em `docs/PARECER_CURSOR_213_SHA_06ed1141.md`; o parecer `7cbe3a30` **não** se transfere sozinho). Writers legados de Pedido/Entrega/Retirada bloqueados no modo HTTP (`PedidosEntregaTab`/`PedidosRetiradaTab`); comprovante e logística reversa já exclusivos.
+**Candidata Codex tip:** pós-B2 `b8492074` (parecer Cursor APPROVED COM RESSALVAS @ `2c6e898e` / #222). Pacote estoque: B1 Automacao + B2 useFluxoPedido fechados; writers HTTP anti-dupla. CLI `reconcile:stock` ancestral.
+
+**B4 PostgreSQL:** prova integrada em CI efêmera (`npm run test:postgres` → `R11_STOCK` / `runtime11-expedicao-persistent-postgres`: movimentação única, retry, concorrência, saldo insuficiente, rollback multi-item). Agente local sem `DATABASE_URL` → skip sanitizado `DATABASE_URL_NOT_AVAILABLE` (não inventar sucesso). PGlite cobre caminho sintético sem substituir PG real.
+
+**B3 snapshots:** extração somente-leitura + `reconcile:stock` exigem URL/staging privado fora do GitHub; fixture `expedicao-stock-reconciliation-sanitized.json` permanece `NOT_EXTRACTED` / `readyMeansLoad=false` (ready≠carga). Sem PII/JSON real no repositório.
+
+**B5/B6 homolog DEV:** checklist abaixo — execução **BLOCKED** até gate (backup/restore/Bearer/promoção). Hostinger VPS MCP timeout neste ambiente. Sem promoção 3080; sem merge main.
 
 **Fonte oficial dos saldos (caminho HTTP/BFF):** `expedicao_estoque_saldos` + `expedicao_estoque_movimentos`. Com `VITE_ERP_HTTP_EXPEDICAO=true`, a SPA **não** cria `MovimentacaoEstoque` nem altera `produto.estoque_atual` no despacho/devolução/entrega/retirada comercial paralela — isso evita contabilidade paralela/dupla. Opt-in de runtime: `EXPEDICAO_PERSISTENT_PORTS=true` (exige `DATABASE_URL`); `/meta` reporta `pedidoEstoqueSideEffects: ledger` e `estoqueFonteOficial: expedicao_estoque_saldos`. Sem flag, permanece `reserved` (fail-closed para Pedido vinculado). Sequência de migrations: 001–031, **gap intencional sem 032**, 033–037; trava histórica da 026 preservada.
 
