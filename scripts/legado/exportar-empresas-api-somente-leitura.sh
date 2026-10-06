@@ -7,9 +7,10 @@
 # 1) Hostinger hPanel → VPS DEV → Web Console (root).
 # 2) Colar este arquivo INTEIRO (um único paste) e Enter.
 # 3) Copiar o bloco PASTE_TO_GIT_* para o chat (contagens sanitizadas).
-# 4) Transferir o JSON privado (nome novo) para o HD
-#    `BACKUP ERP ANTIGO - CODEX/04_REPORTS/` via scp/pendrive — NUNCA GitHub.
-# 5) Não colar CNPJ completo nem senhas. Não apagar a terceira linha.
+# 4) SFTP/scp o JSON privado (nome novo, nunca sobrescrever) para o HD
+#    `BACKUP ERP ANTIGO - CODEX/04_REPORTS/` — NUNCA GitHub.
+# 5) Devolver PASTE_TO_GIT_PRECHECK_* e PASTE_TO_GIT_* (hash/last4, sem CNPJ completo).
+# 6) Não apagar a terceira linha. Este Cloud Agent NÃO executa o export só por ter o script.
 set -euo pipefail
 umask 077
 
@@ -64,10 +65,84 @@ if [[ -z "$DB" ]]; then
   exit 3
 fi
 
-API_DB_PROBE="$(docker exec "$DB" psql -U postgres -d "$DBNAME" -Atqc "SELECT current_database();")"
+# Confirma conexão efetiva + esquema + pgcrypto digest ANTES de consultar empresas.
+HEALTH_CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 8 http://127.0.0.1:3080/health || true)"
+READY_CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 8 http://127.0.0.1:3080/ready || true)"
+META_RUNTIME="$(curl -sS --max-time 8 http://127.0.0.1:3080/api/v1/meta 2>/dev/null | python3 -c 'import json,sys
+try:
+    j=json.load(sys.stdin)
+    print(j.get("runtime") or "")
+    print((j.get("auth") or {}).get("mode") or "")
+except Exception:
+    print("")
+    print("")
+' || true)"
+API_RUNTIME="$(printf '%s\n' "$META_RUNTIME" | sed -n '1p')"
+API_AUTH_MODE="$(printf '%s\n' "$META_RUNTIME" | sed -n '2p')"
+
+if [[ "$HEALTH_CODE" != "200" || "$READY_CODE" != "200" ]]; then
+  echo "PASTE_TO_GIT_BEGIN"
+  echo "executed=false"
+  echo "BLOCKED=API_HEALTH_OR_READY_NOT_200 health=${HEALTH_CODE} ready=${READY_CODE}"
+  echo "PASTE_TO_GIT_END"
+  echo "HUMAN=API 3080 health/ready != 200; não consultei empresas"
+  exit 4
+fi
+
+PRECHECK="$(docker exec "$DB" psql -U postgres -d "$DBNAME" -X -v ON_ERROR_STOP=1 -Atqc "
+SELECT concat_ws('|',
+  current_database(),
+  CASE WHEN EXISTS(SELECT 1 FROM pg_extension WHERE extname='pgcrypto') THEN 'pgcrypto=yes' ELSE 'pgcrypto=no' END,
+  CASE WHEN to_regclass('public.groups') IS NOT NULL THEN 'groups=yes' ELSE 'groups=no' END,
+  CASE WHEN to_regclass('public.empresas') IS NOT NULL THEN 'empresas=yes' ELSE 'empresas=no' END,
+  CASE WHEN EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='empresas'
+      AND column_name IN ('id','group_id','razao_social','status')
+    GROUP BY table_name HAVING count(*)=4
+  ) THEN 'empresas_cols=yes' ELSE 'empresas_cols=no' END,
+  CASE WHEN EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='groups' AND column_name='nome_do_grupo'
+  ) THEN 'groups_cols=yes' ELSE 'groups_cols=no' END
+);
+")"
+DIGEST_PROBE="$(docker exec "$DB" psql -U postgres -d "$DBNAME" -X -v ON_ERROR_STOP=1 -Atqc \
+  "SELECT encode(digest(convert_to('legado-precheck','UTF8'),'sha256'),'hex');" 2>/dev/null || true)"
+
+echo "PASTE_TO_GIT_PRECHECK_BEGIN"
+echo "health=${HEALTH_CODE}"
+echo "ready=${READY_CODE}"
+echo "runtime=${API_RUNTIME}"
+echo "auth_mode=${API_AUTH_MODE}"
+echo "precheck_line=${PRECHECK}"
+echo "digest_probe_len=${#DIGEST_PROBE}"
+echo "PASTE_TO_GIT_PRECHECK_END"
+
+case "$PRECHECK" in
+  *'|pgcrypto=yes|groups=yes|empresas=yes|empresas_cols=yes|groups_cols=yes') ;;
+  *)
+    echo "PASTE_TO_GIT_BEGIN"
+    echo "executed=false"
+    echo "BLOCKED=SCHEMA_OR_PGCRYPTO_PRECHECK_FAILED"
+    echo "PASTE_TO_GIT_END"
+    echo "HUMAN=pré-checagem falhou; empresas NÃO foram consultadas"
+    exit 5
+    ;;
+esac
+if [[ ${#DIGEST_PROBE} -ne 64 ]]; then
+  echo "PASTE_TO_GIT_BEGIN"
+  echo "executed=false"
+  echo "BLOCKED=PGCRYPTO_DIGEST_PROBE_FAILED"
+  echo "PASTE_TO_GIT_END"
+  echo "HUMAN=digest() indisponível; empresas NÃO foram consultadas; não criar extension sem gate"
+  exit 6
+fi
+
+API_DB_PROBE="${PRECHECK%%|*}"
 CLUSTER_ID="$(docker exec "$DB" psql -U postgres -d "$DBNAME" -Atqc "SELECT system_identifier::text FROM pg_control_system();")"
 
-# Export privado: nomes, IDs, grupos, status, referências; CNPJ só hash + last4.
+# Só depois da pré-checagem: export privado (nome novo, nunca sobrescreve).
 docker exec -i "$DB" psql -U postgres -d "$DBNAME" -X -v ON_ERROR_STOP=1 -Atqc "
 SELECT json_build_object(
   'generatedAtUtc', to_char(timezone('utc', now()), 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
@@ -146,6 +221,7 @@ for e in empresas:
 grupo = sum(1 for g in groups if "grupo cpa" in norm(g.get("nome_do_grupo")))
 digest = hashlib.sha256(open(path, "rb").read()).hexdigest()
 print("PASTE_TO_GIT_BEGIN")
+print("executed=true")
 print("lote=legado-empresas-api-somente-leitura")
 print("importAuthorized=false")
 print("operationalLoadAuthorized=false")

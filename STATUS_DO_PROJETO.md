@@ -11629,3 +11629,13 @@ Checklist inicial:
 - Testes: classificar 5/5 + staging 8/8 + plano 4/4 + vínculo 11/11 + origem 9/9 PASS; `git diff --check` PASS.
 - Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `3adc790030116332f2d677ab649666a9057ecbf8`.
 - Próximo: humano colar o `.sh` na Web Console; transferir JSON privado ao HD; classificar o export real; gate humano continua pendente.
+
+### CODEX LEGADO — execução do export (2026-10-06, NÃO realizada neste agente)
+
+- Objetivo: executar o export com autorização VPS/Web Console/SFTP; pré-checar API+esquema+`digest` antes do SELECT; arquivo privado novo.
+- Resultado: **export NOT_PERFORMED**. Probe externo health/ready 200, runtime `ERP-RUNTIME-08B`, `auth.mode=supabase_user`, `database=configured/ok`. SSH publickey denied. Hostinger MCP timeout. pgcrypto/`digest`/schema **UNVERIFIED** (exige Web Console).
+- Script revisado: `exportar-empresas-api-somente-leitura.sh` agora aborta antes do JSON de empresas se health/ready/pgcrypto/schema falharem.
+- CADESP reusado. Terceira linha: nunca apagar. #211 fontes privadas BLOCKED neste VM. Mapper #48 intocado. `importAuthorized=false`.
+- Coordenação: telas ausentes = #216/#217.
+- Testes: `tests/legado-empresas-api-classificar.test.js` + `git diff --check`.
+- Próximo: humano colar o script revisado na Web Console e SFTP o JSON novo ao HD.

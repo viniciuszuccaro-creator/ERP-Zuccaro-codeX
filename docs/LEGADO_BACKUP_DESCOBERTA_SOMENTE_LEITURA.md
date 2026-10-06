@@ -169,23 +169,30 @@ mapa (hashes no HD; fixture sintética no Git).
 
 ## Export empresas do banco da API (Web Console — 1 comando)
 
-Este Cloud VM **não** tem HD nem acesso funcional à VPS (MCP Hostinger listagem
-expirou). VM Cursor/Cloud sem HD **≠** backup inexistente no computador do
-proprietário.
+**Execução neste Cloud Agent: NOT_PERFORMED** (SSH sem chave; MCP Hostinger sem
+shell; preparar o script ≠ executar o export). Probe externo 2026-10-06:
+health/ready HTTP 200 em `erp-dev`/`api-erp-dev`; runtime `ERP-RUNTIME-08B`;
+`auth.mode=supabase_user`; sinal `database=configured/ok`. Isso **não** verifica
+pgcrypto `digest` nem o SELECT de `groups`/`empresas`.
+
+O script **pré-checa** health/ready, `current_database()`, extensão `pgcrypto`,
+função `digest`, tabelas `groups`/`empresas` e colunas mínimas **antes** de
+consultar empresas. Falha → exit 4–6, `executed=false`, sem JSON.
 
 ### Intervenção humana (exata)
 
 1. Abrir Hostinger hPanel → VPS DEV → **Web Console** (root).
-2. Colar **um único** paste: o conteúdo de
-   `scripts/legado/exportar-empresas-api-somente-leitura.sh` e Enter.
-3. Copiar só o bloco `PASTE_TO_GIT_BEGIN` … `PASTE_TO_GIT_END` para o chat.
-4. Transferir o JSON privado
-   `/root/erp-private/legado-empresas-api-<UTC>.json` (nome **novo**) para
-   `BACKUP ERP ANTIGO - CODEX/04_REPORTS/` via scp/pendrive — **nunca** GitHub.
-5. No host com o arquivo privado:
+2. Colar **um único** paste: `scripts/legado/exportar-empresas-api-somente-leitura.sh`.
+3. Conferir `PASTE_TO_GIT_PRECHECK_*` (`pgcrypto=yes`, `digest_probe_len=64`).
+   Se BLOCKED: parar — empresas não foram lidas.
+4. Se `executed=true`: SFTP o arquivo **novo**
+   `/root/erp-private/legado-empresas-api-<UTC>.json` para
+   `BACKUP ERP ANTIGO - CODEX/04_REPORTS/` — **nunca** GitHub, **nunca** sobrescrever.
+5. Colar no chat só PRECHECK + PASTE (nomes/IDs no arquivo privado;
+   Git: hash/last4). Classificar no PC:
    `node scripts/legado/classificar-empresas-api-legado.mjs --export <json-privado>`.
-6. **Não** UPDATE/DELETE, **não** apagar a terceira linha, **não** restart da
-   API, **não** tip-port, **não** carga operacional.
+6. **Não** UPDATE/DELETE, **não** apagar a terceira linha, **não** restart,
+   **não** tip-port, **não** carga operacional, `importAuthorized=false`.
 
 Classificação esperada: duas empresas operacionais (CPA Ferro e Aço, 3Z LTDA);
 terceira linha investigada como **Grupo CPA (agrupamento)**; `neverDelete=true`.
