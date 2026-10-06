@@ -22,3 +22,10 @@ test('retirada não oferece writer local no modo HTTP e bloqueia mutation antes 
   assert.match(source, /const handleConfirmarRetirada = \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
   assert.match(source, /modoHttpExpedicao \? \([\s\S]*role="alert"/);
 });
+
+test('automação não executa fechamento local automático nem manual com ledger HTTP', async () => {
+  const source = await readFile(new URL('../src/components/comercial/AutomacaoFluxoPedido.jsx', import.meta.url), 'utf8');
+  assert.match(source, /autoExecute && !executando && progresso === 0 && permitido && !modoHttpExpedicao/);
+  assert.match(source, /const executarFluxoCompleto = async \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
+  assert.match(source, /disabled=\{executando \|\| progresso === 100 \|\| !permitido \|\| modoHttpExpedicao\}/);
+});
