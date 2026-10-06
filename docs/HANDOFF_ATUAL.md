@@ -1,3 +1,10 @@
+## CURSOR — parecer SHA `06ed1141` candidata + CLI #219 (2026-10-06)
+
+- Tip Comercial `06ed1141` (CLI `reconcile:stock` + parecer `7cbe3a30` no branch) no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer novo: `docs/PARECER_CURSOR_213_SHA_06ed1141.md`. Parecer `7cbe3a30` **não** se transfere.
+- Probe remoto `https://erp-dev.cpaferroeaco.com.br`: health/ready/meta 200, SPA 200, Expedição `401 AUTH_REQUIRED` (fail-closed). Fluxo autenticado BLOCKED sem Bearer.
+- `127.0.0.1` na VM ≠ VPS. Hostinger MCP list timeout.
+
 ## CURSOR — parecer SHA `7cbe3a30` candidata +#219 + unidade (2026-10-06)
 
 - Merge tip Comercial `7cbe3a30` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
@@ -62,6 +69,10 @@
 
 - Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal/estados.
 - PGlite ledger 037 + asserts gap 032 no tip pós-`00d7add2`.## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
+## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
+
+Recebido. Parecer Cursor APPROVED COM RESSALVAS em `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` (SHA `7cbe3a30`; espelho #213 `42980d2e` — sem tip-port). #218/#220 não transferem. Unidade OK. CLI #219 `b6864875` trazida (`reconcile:stock`). Snapshots reais/PG/VPS/telas BLOCKED. Sem inventar abertura.
+
 ## CODEX — unidade canônica e #219 na candidata (2026-10-06)
 
 Recebido e executado (CODEX COMERCIAL 360). Candidata incorporou #219 (`ec8fe57a`) e o contrato de unidade canônica (ressalva #218): PK sem unidade, não soma, porta `ESTOQUE_UNIDADE_CANONICA_*`. #215 permanece. Snapshots reais BLOCKED (URL/VPS). Fixture sanitizada compared=0. Trava 026; gap 032. Sem tip-port #213/outbox/DAM; sem promoção 3080.

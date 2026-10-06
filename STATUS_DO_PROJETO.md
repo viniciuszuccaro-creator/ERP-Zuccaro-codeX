@@ -1,3 +1,15 @@
+## CURSOR — parecer HEAD integrado `06ed1141` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
+| SHA Codex | `06ed1141` (#219 CLI + unidade + #215) |
+| Parecer | `docs/PARECER_CURSOR_213_SHA_06ed1141.md` — **APPROVED COM RESSALVAS** |
+| `7cbe3a30` / #218 / #220 | **não** transferem |
+| Testes locais | recon+CLI **10/10**; outbox retry/idempotência **10/10** |
+| Remoto | erp-dev health/ready/meta/SPA 200; Expedição 401; runtime `ERP-RUNTIME-08B` (sem ledger flags) |
+| BLOCKED | Bearer/telas autenticadas; snapshots privados; MCP VPS; PG isolado |
+
 ## CURSOR — parecer HEAD integrado `7cbe3a30` (2026-10-06)
 
 | Campo | Valor |
@@ -155,6 +167,19 @@ PENDENTE humano: merge stacks; DATABASE_URL runtime11; gate Onda 25 Legado; VPS/
 | Parecer | APPROVED + decimal/estados + asserts gap 032 |
 | PGlite ledger | 12 pass / 1 skip (`DATABASE_URL`) |
 | PENDENTE | runtime11 PG real; VPS |## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
+## CODEX — parecer Cursor 7cbe3a30 + CLI #219 (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Parecer | `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` — **APPROVED COM RESSALVAS** (espelho #213 tip `42980d2e`; sem tip-port cego) |
+| #218/#220 | **não** transferem |
+| Unidade | contrato runtime OK; PK sem 038 aceitável |
+| CLI #219 | `b6864875` → `npm run reconcile:stock` (offline, saída agregada) incorporada |
+| Snapshots/PG/telas/VPS | continuam **BLOCKED** |
+| Extração privada | sem acesso a origem/destino neste ambiente — fixture `NOT_EXTRACTED`; não inventar abertura |
+| Status | Parecer registrado; CLI na candidata; bloqueios B1/B3/B4/B5 abertos |
+
 ## CODEX — unidade canônica + #219 após revisão Cursor (2026-10-06)
 
 | Campo | Valor |
