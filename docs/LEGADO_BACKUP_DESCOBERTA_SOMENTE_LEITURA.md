@@ -42,6 +42,15 @@
   - Teste: `tests/legado-carregar-staging-isolado.test.js`
   - Deduplicação, dependências, reconciliação por empresa (centavos),
     quarentena sem prova; `importAuthorized=false`
+- Export somente leitura das empresas no banco da API:
+  `scripts/legado/exportar-empresas-api-somente-leitura.sh`
+  - Um único paste na Web Console; JSON privado com **nome novo**
+    `legado-empresas-api-<UTC>.json` em `/root/erp-private/`
+- Classificador do export (CPA/3Z operacionais; terceira linha = Grupo CPA):
+  `scripts/legado/classificar-empresas-api-legado.mjs`
+  - Fixture: `fixtures/legado/empresas-api-sinteticas/export-sanitizado.json`
+  - Teste: `tests/legado-empresas-api-classificar.test.js`
+  - Nunca apaga a terceira linha; CADESP/Gate 18 reusado
 - Mapper sintético (#48, Cursor): `scripts/legado/mapear-registro-sintetico.mjs`
   — **não editar neste lote Codex**
 
@@ -140,4 +149,66 @@ agrupamento (não emissor). `EMP03`/pasta não prova empresa. O mapa privado
 | Extração real do HD → staging | **BLOCKED** — HD ausente neste VM |
 | Plano importação/reversão (gate) | **preparado** — `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` |
 | Importação / carga operacional | **bloqueado** — aguardar gate humano; flags permanecem false |
-| Coordenação Comercial/Cursor (VPS vs versão anterior) | **canônico** — ausência de tela/cadastro **não** = falha de ETL; exige diff commit/imagem/flags/rotas/layouts/RBAC |
+| Coordenação Comercial/Cursor (VPS vs versão anterior) | **canônico** — ausência de tela/cadastro **não** = falha de ETL; exige diff commit/imagem/flags/rotas/layouts/RBAC (#216/#217) |
+| CADESP / Gate 18 | **reusado** — não solicitar novamente os mesmos comprovantes; mapa privado no HD |
+| Export empresas (banco da API) | **comando Web Console pronto** — `scripts/legado/exportar-empresas-api-somente-leitura.sh` (somente leitura; arquivo privado nome novo) |
+| Classificador API CPA/3Z/Grupo | **preparado** (fixture) — terceira linha = agrupamento, **nunca apagar** |
+| Procedência GitHub #211 | **git ok neste clone** / **fontes privadas BLOCKED** (HD ausente neste VM) |
+
+---
+
+## CADESP / Gate 18 — não pedir de novo
+
+Comprovantes CADESP e a aprovação humana da Gate 18 já foram confrontados no HD
+(`legacy-approved-business-alias-map.json` em `04_REPORTS`): CPA Ferro e Aço e
+3Z LTDA = empresas operacionais; Grupo CPA = agrupamento. **Não solicitar
+novamente os mesmos documentos.** Identidade jurídica neste lote reusa esse
+mapa (hashes no HD; fixture sintética no Git).
+
+---
+
+## Export empresas do banco da API (Web Console — 1 comando)
+
+Este Cloud VM **não** tem HD nem acesso funcional à VPS (MCP Hostinger listagem
+expirou). VM Cursor/Cloud sem HD **≠** backup inexistente no computador do
+proprietário.
+
+### Intervenção humana (exata)
+
+1. Abrir Hostinger hPanel → VPS DEV → **Web Console** (root).
+2. Colar **um único** paste: o conteúdo de
+   `scripts/legado/exportar-empresas-api-somente-leitura.sh` e Enter.
+3. Copiar só o bloco `PASTE_TO_GIT_BEGIN` … `PASTE_TO_GIT_END` para o chat.
+4. Transferir o JSON privado
+   `/root/erp-private/legado-empresas-api-<UTC>.json` (nome **novo**) para
+   `BACKUP ERP ANTIGO - CODEX/04_REPORTS/` via scp/pendrive — **nunca** GitHub.
+5. No host com o arquivo privado:
+   `node scripts/legado/classificar-empresas-api-legado.mjs --export <json-privado>`.
+6. **Não** UPDATE/DELETE, **não** apagar a terceira linha, **não** restart da
+   API, **não** tip-port, **não** carga operacional.
+
+Classificação esperada: duas empresas operacionais (CPA Ferro e Aço, 3Z LTDA);
+terceira linha investigada como **Grupo CPA (agrupamento)**; `neverDelete=true`.
+
+Ensaio neste clone (sem VPS):
+
+```bash
+node scripts/legado/classificar-empresas-api-legado.mjs \
+  --export fixtures/legado/empresas-api-sinteticas/export-sanitizado.json
+```
+
+---
+
+## Procedência da #211 (fontes privadas vs Git)
+
+| Camada | Resultado neste VM |
+|---|---|
+| PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211 **OPEN** |
+| Branch Cursor (PR) | `cursor/legado-origem-relatorios-392b` |
+| Branch Codex (esta sessão) | `codex/legado-origem-relatorios-392b` |
+| Git | Codex está **ancestral** do head da #211 (merges Cursor à frente) |
+| SHA-256 dos relatórios reais em `04_REPORTS` | **BLOCKED** — HD ausente; validar procedência privada **no computador do proprietário** com `validar-origem-relatorios-privados.mjs --root <HD>` |
+| Mapper Cursor #48 | intocado neste lote |
+
+Ausência de tela/cadastro → investigar versão/flags/RBAC nas #216/#217; **não**
+culpar importação/ETL.

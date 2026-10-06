@@ -193,4 +193,11 @@ restauro-testado) **e** evidências VPS do Comercial/Cursor (§8). Até lá:
 - não editar o mapper Cursor #48;
 - não abrir tip-port / carga operacional;
 - preservar o backup original somente leitura;
-- não classificar ausência de tela/cadastro como falha de importação sem o diff VPS.
+- não classificar ausência de tela/cadastro como falha de importação sem o diff VPS
+  (#216/#217).
+
+Este lote **não duplica** este plano. Avanço paralelo: export somente leitura das
+empresas no banco da API (`scripts/legado/exportar-empresas-api-somente-leitura.sh`)
++ classificação sem apagar a terceira linha (`classificar-empresas-api-legado.mjs`).
+CADESP/Gate 18 já confrontados: **não** pedir os mesmos documentos de novo.
+`importAuthorized` permanece **false**.

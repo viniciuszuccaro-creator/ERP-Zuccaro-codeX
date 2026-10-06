@@ -1,3 +1,10 @@
+## CURSOR — parecer export empresas API Legado @ `3adc7900` (2026-10-06)
+
+- SHA Codex `47a19c03` / feat `3adc7900` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
+- Script Web Console somente leitura; `neverDelete`; CADESP reusado; terceira linha Grupo CPA investigada sem apagar.
+- Execução VPS **BLOCKED** neste VM — paste humano obrigatório.
+- Coordenação #216/#217: ausência de tela ≠ importação.
+
 ## CURSOR — espelho Comercial diff VPS (2026-10-05)
 
 - Tip Codex `65fe8fba` espelhado; cruzado com [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) e Legado [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
@@ -9,6 +16,30 @@
 - Parecer: `docs/PARECER_CURSOR_211_PLANO_SHA_9057aeab.md` — APPROVED (rascunho de gate).
 - Programa Legado itens 1–5 preparados em fixture; carga operacional continua fail-closed.
 - BLOCKED: HD + autorização humana Onda 25.
+
+## CODEX LEGADO — pacote empresas API / CADESP / #211 (2026-10-06)
+
+Recebido (destinatário CODEX LEGADO). Primeira ação: continuar na branch
+existente `codex/legado-origem-relatorios-392b` **sem** tarefa duplicada nem
+plano de importação novo.
+
+- CADESP/Gate 18 **reusado**; não solicitar os mesmos comprovantes.
+- HD ausente neste VM; MCP Hostinger list-VPS **timeout** → sem acesso direto
+  funcional. Backup do proprietário **não** é declarado inexistente.
+- Comando Web Console (1 paste, somente leitura):
+  `scripts/legado/exportar-empresas-api-somente-leitura.sh`
+  → arquivo privado **nome novo** `/root/erp-private/legado-empresas-api-<UTC>.json`.
+- Classificador (fixture): CPA Ferro e Aço + 3Z LTDA operacionais; terceira
+  linha Grupo CPA = agrupamento; `neverDelete=true`; `importAuthorized=false`.
+- Staging sintético inalterado: origem 8 → carregados 4 / reusos 1 / conflitos 1 /
+  quarentena 2; monetário CPA 10050 / 3Z 5000; extração real HD **BLOCKED**.
+- #211: Git ancestral ok; procedência de fontes privadas **BLOCKED** neste VM.
+- Coordenação #216/#217: ausência de tela ≠ importação.
+- Mapper Cursor #48 intocado; sem tip-port; sem carga operacional.
+- Intervenção humana: colar o `.sh` na Web Console da VPS DEV; transferir JSON
+  privado ao HD `04_REPORTS`; devolver só `PASTE_TO_GIT_*`.
+- SHA remoto: `3adc790030116332f2d677ab649666a9057ecbf8`.
+
 
 ## CODEX LEGADO — coordenação Comercial/Cursor (canônico, 2026-10-05)
 

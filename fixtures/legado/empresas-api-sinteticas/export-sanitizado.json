@@ -1,0 +1,56 @@
+{
+  "synthetic": true,
+  "importAuthorized": false,
+  "operationalLoadAuthorized": false,
+  "neverDelete": true,
+  "note": "Export sanitizado sintetico do banco da API. Sem CNPJ completo. CADESP/Gate 18 reusado. Terceira linha (Grupo CPA como cadastro) nao apagar.",
+  "counts": { "groups": 1, "empresas": 3, "empresas_ativas": 3 },
+  "groups": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "nome_do_grupo": "Grupo CPA",
+      "razao_social_grupo": null,
+      "status": "Ativo",
+      "cnpj_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "cnpj_last4": "0001"
+    }
+  ],
+  "empresas": [
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "group_id": "11111111-1111-4111-8111-111111111111",
+      "razao_social": "CPA FERRO E ACO LTDA",
+      "nome_fantasia": "CPA Ferro e Aço",
+      "status": "Ativa",
+      "cnpj_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "cnpj_last4": "0002",
+      "refs_cliente_empresas": 2,
+      "refs_profiles": 1,
+      "refs_obra_empresas": 0
+    },
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "group_id": "11111111-1111-4111-8111-111111111111",
+      "razao_social": "3Z LTDA",
+      "nome_fantasia": "3Z",
+      "status": "Ativa",
+      "cnpj_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "cnpj_last4": "0003",
+      "refs_cliente_empresas": 1,
+      "refs_profiles": 0,
+      "refs_obra_empresas": 0
+    },
+    {
+      "id": "44444444-4444-4444-8444-444444444444",
+      "group_id": "11111111-1111-4111-8111-111111111111",
+      "razao_social": "Grupo CPA",
+      "nome_fantasia": "Grupo CPA",
+      "status": "Ativa",
+      "cnpj_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "cnpj_last4": "0001",
+      "refs_cliente_empresas": 0,
+      "refs_profiles": 0,
+      "refs_obra_empresas": 0
+    }
+  ]
+}
