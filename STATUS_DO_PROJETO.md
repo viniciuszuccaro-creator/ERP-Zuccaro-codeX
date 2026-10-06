@@ -1,3 +1,8 @@
+## CI — Cadastros #226 consolidado (2026-10-06)
+
+- SHA `f9b926e2`: `erp-runtime-ci` frontend/backend **PASS** (4 checks).
+- Tip Comercial `85f87005` permanece referência; merge via #226 apenas.
+
 ## PARECER — tip Comercial Cadastros `85f87005` vs #226 (2026-10-06)
 
 - Tip [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a): CI PASS, helpers `getInContext`/merge/RBAC Sistema.Empresas.

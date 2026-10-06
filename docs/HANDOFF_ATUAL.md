@@ -2,7 +2,7 @@
 
 | Frente | Responsável | Branch/PR | Estado |
 |---|---|---|---|
-| Cadastros/Empresas edição | Cursor #226 (+ port do tip Comercial `85f87005`) | `cursor/cadastros-empresas-edicao-392b` | consolidando helpers; tip Comercial **não** mergear em main (base Expedição) |
+| Cadastros/Empresas edição | Cursor #226 (+ port tip `85f87005`) | `cursor/cadastros-empresas-edicao-392b` SHA `f9b926e2` | CI **PASS**; tip Comercial não mergear (base Expedição) |
 | Financeiro launchpad | Cursor | `cursor/financeiro-estrutura-recuperacao-392b` #225 SHA `1f1f8cf6` | CI **PASS** |
 | Evidência ERP novo pré-VPS | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | #211 / `1c110777` | **BLOCKED** `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` |
 
