@@ -1,3 +1,25 @@
+## CURSOR — parecer #215 @ `7f0dc127` + consolidação VPS (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#215](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/215) |
+| SHA | `7f0dc127` (feat `5837b6e5`) |
+| Parecer | `docs/PARECER_CURSOR_215_SHA_7f0dc127.md` — **APPROVED COM RESSALVAS** |
+| CI | SUCCESS (7 checks) |
+| Encaminhado | [Comercial](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) incorporar na autoritativa; [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) CADESP/empresas API |
+| Telas | **BLOCKED** 3080/5173 down |
+| R1 | ledger PK sem `unidade_medida_id` (docs pedem unidade) |
+
+### #216/#217 — histórico vs ao vivo (canal canônico)
+
+| Classe | Conteúdo | Fonte |
+| --- | --- | --- |
+| **Histórico** (não tratar como live) | Imagem `runtime07b-main-ca0bc5f3`; meta `ERP-RUNTIME-07B` / `dev_headers`; migrations VPS 001–015; APPLY owner `pg_read_file` abortado; `auth.users=0` | HANDOFF/OPERACAO_DEV_VPS / [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) / [#217](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/217) |
+| **Ao vivo** | **BLOCKED** neste VM: Hostinger MCP timeout; `curl` 3080/5173 = 000; sem `DATABASE_URL` | preflight não renovado 2026-10-06 |
+| **Repo comprovado** | `main` `d02cd012` R08B/mig 024; candidata `899ec9b3` 025–037; flags HTTP OFF no compose | Git |
+
+Ausência de tela/cadastro: investigar D1–D9 / diffs 1–8 **antes** de culpar importação Legado.
+
 ## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
 
 | Campo | Valor |
