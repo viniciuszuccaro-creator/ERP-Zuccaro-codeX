@@ -16,8 +16,12 @@ test('saldo equivalente com precisão de 6 casas e escopo explícito é candidat
 });
 
 test('ausência em qualquer lado não vira zero, mesmo com saldo zero explícito', () => {
-  assert.deepEqual(codes(snapshot([row({ quantidade: '0' })]), snapshot([])), ['MISSING_LEDGER']);
-  assert.deepEqual(codes(snapshot([]), snapshot([row({ quantidade: '0' })])), ['MISSING_SOURCE']);
+  assert.deepEqual(codes(snapshot([row({ quantidade: '0' })]), snapshot([])), ['EMPTY_SNAPSHOT', 'MISSING_LEDGER']);
+  assert.deepEqual(codes(snapshot([]), snapshot([row({ quantidade: '0' })])), ['EMPTY_SNAPSHOT', 'MISSING_SOURCE']);
+});
+
+test('dois snapshots vazios nunca liberam abertura ou ativação', () => {
+  assert.deepEqual(codes(snapshot([]), snapshot([])), ['EMPTY_SNAPSHOT', 'EMPTY_SNAPSHOT']);
 });
 
 test('Grupo/Empresa/produto não se cruzam e unidade não é convertida implicitamente', () => {

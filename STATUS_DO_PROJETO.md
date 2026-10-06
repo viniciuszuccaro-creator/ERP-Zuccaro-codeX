@@ -13100,8 +13100,8 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 | Branch | `codex/comercial-ledger-reconciliacao-20261006`, separada da candidata Comercial |
 | Estruturas | Reutiliza chave canônica Grupo/Empresa/produto e escala `numeric(18,6)` do ledger; sem migration ou writer novo |
 | Arquivos | `server/src/services/expedicaoStockReconciliation.ts`, teste focado e documentação da Expedição |
-| Mudança | Comparador puro e offline com corte UTC, evidência por linha, precisão decimal, detecção de duplicidade, falta, unidade, quantidade e cruzamento de empresas; falha fechado |
+| Mudança | Comparador puro e offline com corte UTC, evidência por linha, precisão decimal, detecção de duplicidade, falta, unidade, quantidade, snapshots vazios e cruzamento de empresas; falha fechado |
 | Segurança | Nenhum dado real, credencial ou identificador de infraestrutura no código/teste; sem acesso ao banco, sem ativação de flag |
-| Testes | Focado 5/5; server `npm test` 488 pass/0 fail/50 skip; server typecheck, audit, lint (1 warning preexistente), build e diff-check PASS. Typecheck raiz falha em páginas JSX fora do lote; `npm test` raiz falha em guards de VPS sob Windows (ex.: `vps-owner-provision-guard.test.js:478`, esperado 2/obtido null). CI Linux necessária para confirmar SHA remoto |
+| Testes | Focado final 6/6; server `npm test` 488 pass/0 fail/50 skip antes do pequeno follow-up fail-closed; server typecheck final, audit, lint (1 warning preexistente), build e diff-check PASS. Typecheck raiz falha em páginas JSX fora do lote; `npm test` raiz falha em guards de VPS sob Windows (ex.: `vps-owner-provision-guard.test.js:478`, esperado 2/obtido null). CI Linux necessária para confirmar SHA remoto |
 | Pendência | Exportação comprovada do estoque anterior, cobertura local/lote e corte sem writers, backup/restore e aprovação humana antes de carga ou ativação |
 | Próximo P0 | Extrair snapshots sanitizados em staging isolado, reconciliar contagens por empresa/unidade e ensaiar rollback; não importar no operacional |
