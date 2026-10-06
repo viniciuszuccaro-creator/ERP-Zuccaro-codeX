@@ -1,4 +1,41 @@
+## CODEX LEGADO — evidência ERP novo pré-VPS (ID+CNPJ) (2026-10-06)
+
+Recebido. Prioridade: recuperar evidência do **ERP novo anterior à VPS**
+(registros com **ID + CNPJ juntos**), separada da importação do ERP antigo.
+CADESP **não** pedido de novo.
+
+### Ações reais neste Cloud
+
+1. SFTP/HD: **BLOCKED** — `ssh_keys_present=false`; `/mnt/d` ausente;
+   `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` (sem transferência falsa).
+2. Inventário HD: `inventario-backup-erp-antigo.sh` → `backup_dir_found=NO`.
+3. Ferramenta nova (metadados): `scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs`
+   — confere SHA do export VPS vs paste e conta pares id+cnpj_sha256 no
+   topology-proof **sem** imprimir IDs/CNPJ.
+4. Testes: `legado-verificar-evidencia-erp-novo-pre-vps` + regressão classificar/
+   staging/vínculo PASS.
+
+### Evidência sanitizada já conhecida (STATUS Gate 18 — só no HD)
+
+- Leaf pré-VPS: `current-erp-company-topology-proof.json` em `04_REPORTS`
+  (quatro fontes: 1 Grupo + 2 Empresas; hashes de ID e CNPJ estáveis).
+- Export VPS paste: `legado-empresas-api-20261006T153440Z.json`
+  sha256 esperado `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`
+  (groups=2, empresas=3) — **mesmo arquivo?** só após SFTP + verifier.
+- Confronto: preservar **três linhas** VPS + refs; Grupo CPA=agrupamento;
+  CPA Ferro + 3Z = operacionais desejadas; rótulo ≠ vínculo.
+
+### HUMAN_NEXT (mínima)
+
+No PC com FileZilla/chave + HD:
+1. SFTP o JSON VPS existente → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (nome único se colidir).
+2. `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export <json> --reports-dir <04_REPORTS>`
+3. Devolver só o JSON de saída do verifier (sem payload).
+
+`importAuthorized=false`; mapper #48 intocado; #216/#217.
+
 ## CODEX LEGADO — transferência SFTP do export existente (2026-10-06)
+
 
 Recebido. **Não** refiz export. Primeira ação **real** (não tip-only):
 

@@ -51,6 +51,11 @@
   - Fixture: `fixtures/legado/empresas-api-sinteticas/export-sanitizado.json`
   - Teste: `tests/legado-empresas-api-classificar.test.js`
   - Nunca apaga a terceira linha; CADESP/Gate 18 reusado
+- Evidência ERP novo pré-VPS (ID+CNPJ hashes, sem PII no stdout):
+  `scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs`
+  - Confere SHA do export VPS vs paste; procura `current-erp-company-topology-proof.json`
+  - Teste: `tests/legado-verificar-evidencia-erp-novo-pre-vps.test.js`
+  - Separado da importação do ERP antigo
 - Mapper sintético (#48, Cursor): `scripts/legado/mapear-registro-sintetico.mjs`
   — **não editar neste lote Codex**
 
