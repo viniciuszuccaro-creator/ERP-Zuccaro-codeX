@@ -33,3 +33,10 @@ test('comprovante e logística reversa pulam MovimentacaoEstoque local no modo H
   assert.match(reversa, /Sem MovimentacaoEstoque SPA/);
   assert.match(reversa, /acao === "devolver_estoque"/);
 });
+
+test('automação não executa fechamento local automático nem manual com ledger HTTP', async () => {
+  const source = await readFile(new URL('../src/components/comercial/AutomacaoFluxoPedido.jsx', import.meta.url), 'utf8');
+  assert.match(source, /autoExecute && !executando && progresso === 0 && permitido && !modoHttpExpedicao/);
+  assert.match(source, /const executarFluxoCompleto = async \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
+  assert.match(source, /disabled=\{executando \|\| progresso === 100 \|\| !permitido \|\| modoHttpExpedicao\}/);
+});

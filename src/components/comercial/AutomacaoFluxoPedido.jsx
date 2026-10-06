@@ -21,6 +21,7 @@ import { executarFechamentoCompleto } from '@/components/lib/useFluxoPedido';
 import { useUser } from '@/components/lib/UserContext';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { isHttpExpedicaoEnabled } from '@/api/runtimeBackend';
 
 /**
  * V21.6 - AUTOMAÇÃO COMPLETA DO FLUXO DE PEDIDO
@@ -65,6 +66,7 @@ export default function AutomacaoFluxoPedido({
     hasPermission('Comercial.Pedido.aprovar') ||
     hasPermission('Comercial.Pedido.editar');
   const permitido = Boolean(contextoValido && podeExecutarFechamento);
+  const modoHttpExpedicao = isHttpExpedicaoEnabled();
 
   const auditFluxoPedido = async ({ acao, descricao, sucesso = true, detalhes = {} }) => {
     try {
@@ -109,10 +111,10 @@ export default function AutomacaoFluxoPedido({
 
   // V21.6: Auto-executar se solicitado
   useEffect(() => {
-    if (autoExecute && !executando && progresso === 0 && permitido) {
+    if (autoExecute && !executando && progresso === 0 && permitido && !modoHttpExpedicao) {
       executarFluxoCompleto();
     }
-  }, [autoExecute, permitido]);
+  }, [autoExecute, permitido, modoHttpExpedicao]);
 
   // ETAPA 1: Baixar Estoque (DEPRECATED - usar hook centralizado)
   const baixarEstoque = async () => {
@@ -320,6 +322,10 @@ export default function AutomacaoFluxoPedido({
 
   // V21.6: EXECUTAR FLUXO COMPLETO COM HOOK CENTRALIZADO
   const executarFluxoCompleto = async () => {
+    if (isHttpExpedicaoEnabled()) {
+      toast.error('Fechamento com estoque local indisponível no modo HTTP. Use o fluxo de Expedição.');
+      return;
+    }
     if (executando || !permitido) {
       if (!permitido) {
         await auditFluxoPedido({
@@ -540,11 +546,16 @@ export default function AutomacaoFluxoPedido({
                   ⚠️ Você não tem permissão para executar esta ação
                 </p>
               )}
+              {modoHttpExpedicao && (
+                <p role="alert" className="text-xs text-amber-800 mt-1">
+                  Fechamento com baixa local indisponível no modo HTTP. Use o fluxo de Expedição.
+                </p>
+              )}
             </div>
 
             <Button
               onClick={executarFluxoCompleto}
-              disabled={executando || progresso === 100 || !permitido}
+              disabled={executando || progresso === 100 || !permitido || modoHttpExpedicao}
               className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-8 shadow-lg"
               size="lg"
               data-permission="Comercial.Pedido.marcarProntoFaturar"
