@@ -1,3 +1,19 @@
+## CURSOR — parecer #219 @ `b6864875` + revalidação #213 (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| #219 | [#219](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/219) SHA `b6864875` — `docs/PARECER_CURSOR_219_SHA_b6864875.md` **APPROVED COM RESSALVAS** |
+| Comparador | 8/8 PASS (7 unidade/corte/duplicidade + CLI sanitizado); não soma UOM; `ready` ≠ carga |
+| R1 unidade | PK ledger sem coluna; cadastro `unidade_medida_id` único; extração deve carregar unidade na evidência |
+| #213 HEAD | `72a4b8c7` / Codex `f514c2e3` — `docs/PARECER_CURSOR_213_HEAD_72a4b8c7.md`; **#218 não transfere**; **#219 ainda fora** |
+| PGlite #213 | 6/6 PASS |
+| Telas | **BLOCKED** B3 — 3080/5173 `curl` 000 |
+| VPS MCP | **BLOCKED** B4 — `vps_virtual-machines_list` timeout |
+| Legado | SHA `4b5d3b94` — `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`; pré-check digest/API; **não executado** |
+| Encaminhado | [Comercial](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) · [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
+| Outbox/DAM | #203/#202 CI SUCCESS; publisher B4 |
+| Próximo | Comercial incorpora #219 na candidata; snapshots privados + CLI; humano cola script Legado `4b5d3b94` |
+
 ## CURSOR — parecer HEAD integrado `f514c2e3` (2026-10-06)
 
 | Campo | Valor |
