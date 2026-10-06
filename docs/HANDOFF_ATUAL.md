@@ -1,3 +1,19 @@
+## CURSOR — parecer #221 tip `48bce2f7` + bloqueios candidata (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Estoque/ledger/#219/#221/#223 | [Comercial](https://cursor.com/agents/bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | candidata tip, cherry-pick Automacao, `useFluxoPedido` | outbox/DAM #203 |
+| Automacao HTTP guard PR | [Bloqueio automação HTTP](https://cursor.com/agents/bc-3ef2d75e-cc3f-44bb-8c05-ba999a42f0cd) (#223) | só branch `codex/comercial-automacao-http-guard-20261006` | candidata tip (Comercial consolida) |
+| Identidade/CADESP/staging | [Legado](https://cursor.com/agents/bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | scripts/legado, SFTP privado | mapper #48; publicar PII |
+| Revisão + outbox/DAM | Cursor (este chat) | pareceres; #203 | router/candidata |
+
+- Parecer #221 tip: `docs/PARECER_CURSOR_221_SHA_48bce2f7.md` — **APPROVED COM RESSALVAS** @ `48bce2f7` (entrega+retirada+Automacao). Parecer `690e44c7` **não** transfere.
+- Candidata `e242564f`: Entrega/Retirada OK; **Automacao AUSENTE** → Comercial cherry-pick #223 (`3decc4e4`→`f5591d55`) **preservando** CLI `06ed1141`.
+- Bloqueios únicos: `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_e242564f.md` (B1 Automacao, B2 useFluxoPedido, B3–B6 PG/snapshots/Bearer/gates).
+- Comprovante/reversa: cobertos na candidata (teste HTTP). Residual P0: `useFluxoPedido`.
+- Outbox #203 tip: `5f41e644` (claim/lease in-repo fechado; publisher real BLOCKED). Sem tip-port na candidata.
+- Telas autenticadas / PG real: **BLOCKED** Bearer + `DATABASE_URL`.
+
 ## CURSOR — divisão 3 pacotes + parecer #221 (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
@@ -6,7 +22,7 @@
 | Identidade/CADESP/staging | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | scripts/legado, fixtures sintéticas | mapper #48 |
 | Revisão #221 + outbox/DAM | Cursor | pareceres; #203 `ProdutoRelationsDamSection` | router candidata |
 
-- Parecer #221: `docs/PARECER_CURSOR_221_SHA_690e44c7.md` — APPROVED COM RESSALVAS @ `690e44c7`.
+- Parecer #221: `docs/PARECER_CURSOR_221_SHA_690e44c7.md` — APPROVED COM RESSALVAS @ `690e44c7` (**superseded** pelo tip `48bce2f7`).
 - Base #221 = `7cbe3a30` (sem CLI `06ed1141`) — consolidar sobre tip candidata sem perder reconcile:stock.
 - Residuais: `useFluxoPedido`, Comprovante/LogisticaReversa (parcial).
 - Outbox #203 tip Cursor: limpeza métricas na troca de Empresa (`1dc83941`/`5f41e644`).
