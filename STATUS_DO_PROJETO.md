@@ -11734,3 +11734,23 @@ Checklist inicial:
 - Classificador `seloSha256` / papéis por linha: **NÃO gerados** — JSON ausente neste VM/HD.
 - HUMAN_NEXT: SFTP → `04_REPORTS` (nome novo); classificar; CADESP já recebido; staging comprovados; quarentena resto; mapper #48 intocado; sem carga.
 - Coordenação: #216/#217.
+
+### CODEX LEGADO — pacote identidade / procedência / staging (2026-10-06)
+
+- Objetivo: classificar export VPS quando no HD; CADESP; procedência #211; staging comprovados; ferramentas independentes enquanto espera.
+- JSON VPS: ainda ausente no HD deste VM → classificação real **BLOCKED**; sem re-colar script; sem SSH/MCP.
+- Independente (PASS): testes legado 37/37; staging fixture origem8/carregados4/reusos1/conflitos1/quarentena2; origem fixture verified; classificador fixture selo `c5c78e00…dbc67` (não substitui JSON VPS).
+- #211: Git OPEN; SHA-256 relatórios reais BLOCKED até HD.
+- Flags: `importAuthorized=false`; mapper #48 intocado; sem carga; neverDelete; CADESP reusado.
+- HUMAN_NEXT inalterado: SFTP `legado-empresas-api-20261006T153440Z.json` → `04_REPORTS`.
+- Coordenação: #216/#217.
+
+### CODEX LEGADO — tentativa SFTP real do export existente (2026-10-06)
+
+- Objetivo: transferir o JSON **já gerado** (sem novo export) para `04_REPORTS` e validar SHA-256.
+- Primeira ação real: `sftp BatchMode get` → **exit 255** `Permission denied (publickey,password)`; sem chave neste Cloud; `/mnt/d` HD **ABSENT**; workers self-hosted=0.
+- TRANSFER_STATUS=FAILED. **Não** declarei transferência só por tip. **Não** reli/commitei JSON.
+- expected_sha256 (paste): `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` — remoto=local **não** comprovado daqui.
+- BLOCKED=`LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED`.
+- HUMAN_NEXT: FileZilla/SFTP no PC do proprietário → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (nome único se colidir); confirmar hash; então classificador/CADESP/staging.
+- importAuthorized=false; mapper #48 intocado.

@@ -1,34 +1,56 @@
+## CURSOR — espelho SFTP BLOCKED Legado `f69ebf8b` (2026-10-06)
+
+- Merge Codex tip `f69ebf8b` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
+- Transferência **não** concluída: `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` (tentativa real exit 255).
+- [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) — sem executor duplicado; sem novo export.
+- **HUMAN_NEXT:** FileZilla no PC → VPS `/root/erp-private/legado-empresas-api-20261006T153440Z.json` → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (sem sobrescrever) → sha256 = `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` → avisar chat.
+
+## CODEX LEGADO — transferência SFTP do export existente (2026-10-06)
+
+Recebido. **Não** refiz export. Primeira ação **real** (não tip-only):
+
+```
+FIRST_ACTION=sftp_get_existing_export
+command=sftp -o BatchMode=yes root@srv1982741.hstgr.cloud get /root/erp-private/legado-empresas-api-20261006T153440Z.json
+sftp_exit=255
+result=Permission denied (publickey,password)
+local_file_present=false
+windows_04_reports=ABSENT (/mnt/d/... não montado)
+self_hosted_workers=0
+ssh_keys_present=false
+expected_sha256=18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e
+TRANSFER_STATUS=FAILED
+BLOCKED=LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED
+```
+
+Destino canônico (ainda não gravado daqui):
+`D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\legado-empresas-api-20261006T153440Z.json`
+(se colidir, sufixo `-copy` / UTC — **não sobrescrever**).
+
+**HUMAN_NEXT (mínima — PC do proprietário com FileZilla/SFTP key):**
+1. Baixar só o arquivo VPS já existente (não re-exportar).
+2. `sha256sum` remoto e local = `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`.
+3. Avisar o chat; então classificar + CADESP + staging comprovados.
+
+Classificador/staging reais: **BLOCKED** até hash remoto=local no HD.
+`importAuthorized=false`; mapper #48 intocado; #216/#217.
+
+## CODEX LEGADO — pacote identidade/procedência/staging (2026-10-06)
+
+Recebido. Sem duplicar. Paste VPS já válido (`executed=true`, tip docs `49e7b33b`).
+
+- JSON `legado-empresas-api-20261006T153440Z.json` (**sha256** `18e2ab9a…3d7e`):
+  ainda **só na VPS** — HD ausente neste agente → classificador VPS **NÃO** rodou.
+- CADESP: reusado. Confrontação IDs/refs **PENDENTE** pós-SFTP.
+- Staging fixture independente / testes 37/37 — ver tip Codex. Mapper #48 intocado.
+
 ## CURSOR — paste Web Console export empresas (2026-10-06)
 
-- Evidência sanitizada do proprietário: `executed=true` · PRECHECK OK · `legado-empresas-api-20261006T153440Z.json` sha256 `18e2ab9a…3d7e`.
+- Evidência sanitizada: `executed=true` · `legado-empresas-api-20261006T153440Z.json` sha256 `18e2ab9a…3d7e`.
 - Contagens: groups=2 · empresas=3 · CPA Ferro=1 · 3Z=1 · Grupo CPA=1 · outras_não_apagar=1.
-- JSON **não** no Git. HUMAN_NEXT: SFTP → HD `04_REPORTS` → classificar. [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) tip `49e7b33b`.
-
-## CURSOR — espelho Legado `7d063b17` (2026-10-06)
-
-- Merge Codex `4b5d3b94`+`7d063b17` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
-- Parecer: `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`. Export **NOT_PERFORMED**.
-- Probe externo `erp-dev` health/ready 200 / `ERP-RUNTIME-08B` **não** substitui paste nem pgcrypto; localhost 3080 neste VM continua 000.
-
-## CURSOR — parecer export empresas API Legado @ `3adc7900` (2026-10-06)
-
-- SHA Codex `47a19c03` / feat `3adc7900` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
-- Script Web Console somente leitura; `neverDelete`; CADESP reusado; terceira linha Grupo CPA investigada sem apagar.
-- Execução VPS **BLOCKED** neste VM — paste humano obrigatório.
-- Coordenação #216/#217: ausência de tela ≠ importação.
-
-## CURSOR — espelho Comercial diff VPS (2026-10-05)
-
-- Tip Codex `65fe8fba` espelhado; cruzado com [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) e Legado [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
-- Evidência forte: VPS R07B / migrations ≤015 / flags HTTP OFF / candidata `899ec9b3` fora de main.
-
-## CURSOR — parecer plano import/reversão Legado (2026-10-05)
-
-- SHA Codex `9057aeab` · espelho [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) `0b35fb45`.
-- Parecer: `docs/PARECER_CURSOR_211_PLANO_SHA_9057aeab.md` — APPROVED (rascunho de gate).
-- Programa Legado itens 1–5 preparados em fixture; carga operacional continua fail-closed.
-- BLOCKED: HD + autorização humana Onda 25.
+- JSON **não** no Git. SFTP cloud **FAILED** — ver bloco HUMAN_NEXT acima.
 ## CODEX LEGADO — paste Web Console proprietário (2026-10-06T15:34:40Z)
+
 
 Recebido. Sem tarefa duplicada. **Export VPS confirmado pelo paste**
 (`executed=true`). Este Cloud Agent **não** leu o JSON privado.
