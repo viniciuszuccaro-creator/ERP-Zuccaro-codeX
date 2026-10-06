@@ -11,7 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
-import { buildMultiempresaReadFilter } from "@/components/lib/contextoMultiempresaPolicy";
+import { buildMultiempresaReadFilter, loadEmpresaForEdit } from "@/components/lib/contextoMultiempresaPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -274,6 +274,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [editItem,      setEditItem]      = useState(null);
   const [formKey,       setFormKey]       = useState(0);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+  const editRequestRef = useRef(0);
   const [editError,     setEditError]     = useState(null);
   const [isSaving,      setIsSaving]      = useState(false);
 
@@ -454,6 +455,8 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── formulário ───────────────────────────────────────────────────────────────
   const handleCloseForm = useCallback(function(wasSaved) {
+    editRequestRef.current += 1;
+    setIsLoadingEdit(false);
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
@@ -537,7 +540,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(true);
   }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido]);
 
-  const handleEditItem = useCallback(function(item) {
+  const handleEditItem = useCallback(async function(item) {
     if (!item || !item.id) return;
     if (!contextoValido) {
       auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto" });
@@ -549,13 +552,33 @@ export default function VisualizadorUniversalEntidadeV24({
       alert("Sem permissao para editar.");
       return;
     }
-    auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
-    setEditItem(JSON.parse(JSON.stringify(item)));
+    const request = ++editRequestRef.current;
     setEditError(null);
-    setIsLoadingEdit(false);
+    if (ENTITY === "Empresa") {
+      setIsLoadingEdit(true);
+      try {
+        const complete = await loadEmpresaForEdit({
+          id: item.id, groupId, empresaId,
+          fetchById: (id) => base44.entities.Empresa.get(id),
+        });
+        if (request !== editRequestRef.current) return;
+        setEditItem(complete);
+      } catch (error) {
+        if (request !== editRequestRef.current) return;
+        setEditError("Nao foi possivel carregar o cadastro completo. Edicao bloqueada.");
+        await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa falhou", { registro_id: item.id, sucesso: false, motivo: "leitura_ou_escopo" });
+        return;
+      } finally {
+        if (request === editRequestRef.current) setIsLoadingEdit(false);
+      }
+    } else {
+      setEditItem(JSON.parse(JSON.stringify(item)));
+    }
+    if (request !== editRequestRef.current) return;
+    auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido]);
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, empresaId, groupId]);
 
   const formProps = useMemo(
     function() { return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit); },
@@ -980,6 +1003,12 @@ export default function VisualizadorUniversalEntidadeV24({
       {!contextoValido && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-xs text-amber-800 shrink-0">
           Selecione um grupo ou empresa para carregar, criar ou editar este cadastro no escopo correto.
+        </div>
+      )}
+
+      {editError && !showForm && (
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-sm px-3 py-2 text-xs text-red-700 shrink-0">
+          {editError} Selecione Editar novamente para tentar outra leitura.
         </div>
       )}
 

@@ -66,6 +66,21 @@ export const recordMatchesGroupScope = (record = {}, groupId) => {
 
 export const empresaPertenceAoGrupo = (empresa, groupId) => recordMatchesGroupScope(empresa, groupId);
 
+// A linha da listagem pode ser uma projecao; nunca iniciar edicao com ela.
+export const loadEmpresaForEdit = async ({ id, groupId, empresaId, fetchById }) => {
+  if (!id || !groupId || typeof fetchById !== 'function') {
+    throw new Error('Contexto e leitor completo obrigatorios para editar Empresa.');
+  }
+  const complete = await fetchById(id);
+  if (!complete || String(complete.id) !== String(id) ||
+      !recordMatchesGroupScope(complete, groupId) ||
+      (empresaId && String(complete.id) !== String(empresaId)) ||
+      !Object.hasOwn(complete, 'razao_social') || !Object.hasOwn(complete, 'cnpj')) {
+    throw new Error('Cadastro incompleto ou fora do contexto selecionado.');
+  }
+  return complete;
+};
+
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;
