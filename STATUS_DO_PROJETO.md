@@ -11613,3 +11613,18 @@ Checklist inicial:
 - Validação: `node --test tests/legado-plano-importacao-reversao-gate.test.js` 4/4 PASS; `git diff --check` PASS. Nenhuma promoção staging→operacional.
 - Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `cb63c769fd5f03a52b7ec967018c8750dbfbf9fa` (coordenação em `f44a60ff` + estabilização do teste).
 - Próximo: aguardar evidências VPS do Comercial/Cursor + gate humano de importação.
+
+### CODEX LEGADO — pacote empresas API / CADESP / #211 (2026-10-06)
+
+- Objetivo: cumprir o pacote do chat principal na sessão Legado existente (sem tarefa duplicada): reusar CADESP, exportar empresas do banco da API, investigar terceira linha sem apagar, comando Web Console único, procedência #211, avançar staging só com vínculos comprovados.
+- Primeira ação: permanecer em `codex/legado-origem-relatorios-392b`; não reabrir plano de importação/reversão; `importAuthorized=false`.
+- CADESP: reuso da Gate 18 + mapa privado HD; **não** solicitar os mesmos documentos.
+- Acesso: HD **BLOCKED** neste VM; Hostinger `vps_virtual-machines_list` timeout → comando Web Console (não execução remota).
+- Entrega código: `scripts/legado/exportar-empresas-api-somente-leitura.sh`, `scripts/legado/classificar-empresas-api-legado.mjs`, fixture `fixtures/legado/empresas-api-sinteticas/export-sanitizado.json`, teste estrutural.
+- Classificação fixture: 1 grupo + 2 operacionais (CPA/3Z) + 1 terceira linha Grupo CPA (agrupamento, neverDelete); `cadespRedocumentRequested=false`.
+- Staging: loader existente reexecutado — origem 8 / carregados 4 / reusos 1 / conflitos 1 / quarentena 2; extração real **BLOCKED**.
+- #211 OPEN `cursor/legado-origem-relatorios-392b`; este Codex é ancestral Git; SHA-256 de relatórios reais só no HD.
+- Coordenação: #216/#217 — telas/cadastros ausentes podem ser versão/flags/RBAC.
+- Não tocados: `mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Testes: `node --test tests/legado-empresas-api-classificar.test.js` + regressão staging/plano; `git diff --check`.
+- Próximo: humano colar o `.sh` na Web Console; transferir JSON privado ao HD; classificar o export real; gate humano continua pendente.

@@ -1,3 +1,25 @@
+## CODEX LEGADO — pacote empresas API / CADESP / #211 (2026-10-06)
+
+Recebido (destinatário CODEX LEGADO). Primeira ação: continuar na branch
+existente `codex/legado-origem-relatorios-392b` **sem** tarefa duplicada nem
+plano de importação novo.
+
+- CADESP/Gate 18 **reusado**; não solicitar os mesmos comprovantes.
+- HD ausente neste VM; MCP Hostinger list-VPS **timeout** → sem acesso direto
+  funcional. Backup do proprietário **não** é declarado inexistente.
+- Comando Web Console (1 paste, somente leitura):
+  `scripts/legado/exportar-empresas-api-somente-leitura.sh`
+  → arquivo privado **nome novo** `/root/erp-private/legado-empresas-api-<UTC>.json`.
+- Classificador (fixture): CPA Ferro e Aço + 3Z LTDA operacionais; terceira
+  linha Grupo CPA = agrupamento; `neverDelete=true`; `importAuthorized=false`.
+- Staging sintético inalterado: origem 8 → carregados 4 / reusos 1 / conflitos 1 /
+  quarentena 2; monetário CPA 10050 / 3Z 5000; extração real HD **BLOCKED**.
+- #211: Git ancestral ok; procedência de fontes privadas **BLOCKED** neste VM.
+- Coordenação #216/#217: ausência de tela ≠ importação.
+- Mapper Cursor #48 intocado; sem tip-port; sem carga operacional.
+- Intervenção humana: colar o `.sh` na Web Console da VPS DEV; transferir JSON
+  privado ao HD `04_REPORTS`; devolver só `PASTE_TO_GIT_*`.
+
 ## CODEX LEGADO — coordenação Comercial/Cursor (canônico, 2026-10-05)
 
 Instrução do chat principal (obrigatória para Legado e para Comercial/Cursor):
