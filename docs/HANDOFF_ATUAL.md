@@ -1,3 +1,7 @@
+## CODEX — incorporar #215 na candidata autoritativa (2026-10-06)
+
+Recebido e executado (CODEX COMERCIAL 360). Candidata `codex/comercial-expedicao-cliente360-207-209-20261005` incorporou #215 (`5837b6e5`/`7f0dc127`) sem tip-port #213. PGlite: rollback 2º item + ensaio reconciliação sem inventar saldo. DATABASE_URL ausente → PG real BLOCKED (skip sanitizado). VPS ao vivo BLOCKED (MCP timeout); R07B/001–015/APPLY abortado são **históricos**. Trava 026; gap 032. Sem outbox/DAM; sem promoção 3080.
+
 ## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
 
 Recebido e executado. Branch autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` tip código `899ec9b3` (#212 funcional `0c00318d`). #212 consolidado semanticamente (`bee11785`/`a37dca55`, sem tip-port #213): gate `ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE` + `unidade_medida_id`; asserts gap 032 + 026; ledger `expedicao_estoque_saldos`; #210 `to_char` 6 casas. Item independente: espelho PGlite do gate baseline (sem DATABASE_URL). PG real BLOCKED (skip sanitizado). #214 APPROVED só o gate — não o pacote. Sem inventar 032/saldo; sem outbox/DAM tip-*; sem VPS/main.

@@ -1,3 +1,23 @@
+## CODEX — incorporar #215 multi-item na candidata (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — continuar nesta sessão; sem tarefa duplicada |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | tip `72c9dba9` / código `899ec9b3` |
+| #215 | cherry-pick `5837b6e5` + `7f0dc127` (rollback 2º item; CI PG real já SUCCESS na PR) |
+| #213 | espelho Cursor — **não** tip-port |
+| Reconciliação | ensaio PGlite: JOIN cadastro×`expedicao_estoque_saldos` por group/empresa/produto + unidade do produto; `CONFLICT_LEDGER_ABSENT` sem INSERT abertura |
+| Testes | PGlite ledger (+multi-item+#215+#recon): 7 pass / 0 fail; persistent PG skip sanitizado (DATABASE_URL ausente) |
+| DATABASE_URL | ausente → PG real **BLOCKED** (não inventar sucesso); prova PG da #215 ficou na CI `37341406770` da PR |
+| VPS | preflight ao vivo **BLOCKED** (Hostinger MCP timeout). R07B `ca0bc5f3`, migrations 001–015, APPLY `pg_read_file` = **históricos**, não observação ao vivo |
+| Migrations | 001–031, **gap 032**, 033–037; trava 026 intacta |
+| Pacote DEV | smoke/backup/reversão só sob gates; sem promoção 3080 |
+| Fora | outbox/DAM tip-*; merge main; inventar 032/saldo |
+| Status | CONSOLIDADO na candidata; PG E2E local BLOCKED; VPS leitura BLOCKED |
+| Próximo | CI tip; revisão Cursor SHA; DATABASE_URL isolado; gate leitura VPS |
+
 ## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
 
 | Campo | Valor |
