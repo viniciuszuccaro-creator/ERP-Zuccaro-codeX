@@ -11639,3 +11639,11 @@ Checklist inicial:
 - Coordenação: telas ausentes = #216/#217.
 - Testes: `tests/legado-empresas-api-classificar.test.js` + `git diff --check`.
 - Próximo: humano colar o script revisado na Web Console e SFTP o JSON novo ao HD.
+
+### CODEX LEGADO — parecer Cursor SHA 4b5d3b94 (2026-10-06)
+
+- Recebido sem duplicar tarefa. Parecer Cursor `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`: **APPROVED COM RESSALVAS**. Cursor **não** executou o export.
+- Retry Codex: SSH publickey denied; MCP Hostinger timeout; self-hosted workers=0 → **export NOT_PERFORMED**.
+- Intervenção humana permanece: colar script inteiro do SHA `4b5d3b94` no Web Console; devolver PRECHECK + PASTE; JSON privado nome novo no HD; `executed=false` se health/ready/pgcrypto falhar.
+- Mapper #48 intocado. `importAuthorized=false`. Coordenação #216/#217.
+- Próximo: paste humano na Web Console (único caminho de execução real daqui).

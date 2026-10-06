@@ -1,4 +1,22 @@
+## CODEX LEGADO — parecer Cursor 4b5d3b94 (2026-10-06)
+
+Recebido. Sem tarefa duplicada. Veredito Cursor: **APPROVED COM RESSALVAS**
+(`docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`). Cursor **não** executou o export.
+
+Nova tentativa de execução real neste agente: SSH `publickey` denied; Hostinger
+MCP timeout; workers self-hosted=0. **export NOT_PERFORMED.** Probe externo
+health/ready ainda 200 — não substitui o paste Web Console.
+
+Intervenção humana (inalterada, SHA `4b5d3b94`):
+1. Colar o script **inteiro** no Web Console.
+2. Devolver `PASTE_TO_GIT_PRECHECK` + `PASTE_TO_GIT`.
+3. JSON privado **nome novo** no HD `04_REPORTS`.
+4. `executed=false` se health/ready/pgcrypto falhar.
+
+Mapper #48 intocado. `importAuthorized=false`.
+
 ## CODEX LEGADO — tentativa de execução do export API (2026-10-06)
+
 
 Recebido. **Não** declarei execução só porque o comando existia.
 
