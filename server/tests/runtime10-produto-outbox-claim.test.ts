@@ -145,6 +145,21 @@ test('Outbox claim concorrente: segundo claim nao pega o mesmo evento', async ()
   assert.equal(second.length, 0);
 });
 
+test('Outbox claim concorrente: Promise.all nao duplica o mesmo evento', async () => {
+  const { service, repo, ctx } = setup();
+  const produto = await service.create(ctx, { descricao: 'Concorrencia Promise.all' });
+  await repo.appendPublicationEvent({ groupId, empresaId }, produto, 'claim-race');
+  const [a, b] = await Promise.all([
+    service.claimPublicationEvents(ctx, { limit: 10, leaseMs: 60_000 }),
+    service.claimPublicationEvents(ctx, { limit: 10, leaseMs: 60_000 }),
+  ]);
+  const won = a.length === 1 ? a : b;
+  const lost = a.length === 1 ? b : a;
+  assert.equal(won.length, 1);
+  assert.equal(lost.length, 0);
+  assert.equal(won[0].produtoId, produto.id);
+});
+
 test('Outbox claim recupera lease expirado do mesmo evento', async () => {
   const { service, repo, ctx } = setup();
   const produto = await service.create(ctx, { descricao: 'Lease expirado' });

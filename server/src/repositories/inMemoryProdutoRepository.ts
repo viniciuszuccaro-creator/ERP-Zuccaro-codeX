@@ -174,6 +174,8 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   private readonly publicationEvents: ProdutoPublicationEvent[] = [];
   private transactionQueue: Promise<void> = Promise.resolve();
+  /** Serializa claims concorrentes (paridade SKIP LOCKED do Postgres). */
+  private claimQueue: Promise<void> = Promise.resolve();
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const previous = this.transactionQueue;
     let release = () => {};
@@ -338,36 +340,44 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     scope: Scope,
     options: { limit: number; leaseMs: number },
   ): Promise<ProdutoPublicationEvent[]> {
-    if (!scope.empresaId) return [];
-    const now = Date.now();
-    const lockedUntil = new Date(now + options.leaseMs).toISOString();
-    const claimed: ProdutoPublicationEvent[] = [];
-    const sorted = [...this.publicationEvents]
-      .filter((row) => row.groupId === scope.groupId && row.empresaId === scope.empresaId
-        && row.eventType === 'produto.publicado'
-        && row.attempts < row.maxAttempts
-        && (row.nextAttemptAt == null || Date.parse(row.nextAttemptAt) <= now)
-        && (
-          ((row.status === 'pending' || row.status === 'retry')
-            && (row.lockedUntil == null || Date.parse(row.lockedUntil) <= now))
-          || (row.status === 'processing' && row.lockedUntil != null && Date.parse(row.lockedUntil) <= now)
-        ))
-      .sort((a, b) => a.id.localeCompare(b.id));
-    for (const row of sorted) {
-      if (claimed.length >= options.limit) break;
-      const next: ProdutoPublicationEvent = {
-        ...row,
-        status: 'processing',
-        attempts: row.attempts + 1,
-        lockedUntil,
-        nextAttemptAt: null,
-        errorMessage: null,
-      };
-      const index = this.publicationEvents.findIndex((event) => event.id === row.id);
-      this.publicationEvents[index] = next;
-      claimed.push(structuredClone(next));
+    const previous = this.claimQueue;
+    let release = () => {};
+    this.claimQueue = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    try {
+      if (!scope.empresaId) return [];
+      const now = Date.now();
+      const lockedUntil = new Date(now + options.leaseMs).toISOString();
+      const claimed: ProdutoPublicationEvent[] = [];
+      const sorted = [...this.publicationEvents]
+        .filter((row) => row.groupId === scope.groupId && row.empresaId === scope.empresaId
+          && row.eventType === 'produto.publicado'
+          && row.attempts < row.maxAttempts
+          && (row.nextAttemptAt == null || Date.parse(row.nextAttemptAt) <= now)
+          && (
+            ((row.status === 'pending' || row.status === 'retry')
+              && (row.lockedUntil == null || Date.parse(row.lockedUntil) <= now))
+            || (row.status === 'processing' && row.lockedUntil != null && Date.parse(row.lockedUntil) <= now)
+          ))
+        .sort((a, b) => a.id.localeCompare(b.id));
+      for (const row of sorted) {
+        if (claimed.length >= options.limit) break;
+        const next: ProdutoPublicationEvent = {
+          ...row,
+          status: 'processing',
+          attempts: row.attempts + 1,
+          lockedUntil,
+          nextAttemptAt: null,
+          errorMessage: null,
+        };
+        const index = this.publicationEvents.findIndex((event) => event.id === row.id);
+        this.publicationEvents[index] = next;
+        claimed.push(structuredClone(next));
+      }
+      return claimed;
+    } finally {
+      release();
     }
-    return claimed;
   }
 
   async confirmPublicationEvent(
