@@ -492,6 +492,7 @@ export function useContextoVisual() {
       const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
       const groupId = contextoCanonico.groupId;
       const empresaId = contextoCanonico.empresaId;
+      // Fail-closed: isolamento Grupo/Empresa (Empresa/Grupo só validam group_id)
       if (groupId && record.group_id && String(record.group_id) !== String(groupId)) {
         throw new Error('Registro fora do grupo ativo — carga bloqueada.');
       }

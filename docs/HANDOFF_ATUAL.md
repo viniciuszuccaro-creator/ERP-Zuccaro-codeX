@@ -1,6 +1,6 @@
 ## CODEX — Cadastros Gerais: edição Empresa sem perda (2026-10-06)
 
-Recebido. Visualizador abria edição com projeção da grade; agora `getInContext` carrega registro completo, fail-closed por Grupo/Empresa, e bloqueia save se incompleto. EmpresaForm(s) preservam id/vínculos. Testes 4/4. Sem tip-port outbox/DAM; sem 3080/main.
+Recebido. Visualizador abria edição com projeção da grade; agora `getInContext` carrega registro completo, fail-closed por Grupo/Empresa, e bloqueia save se incompleto. Payload de save faz merge com o registro carregado (não apaga vínculos). RBAC alinha `Cadastros.Empresa` + `Sistema.Empresas` (owner/admin). Testes 9/9. Prova UI erp-dev BLOCKED sem Bearer. Sem tip-port outbox/DAM; sem 3080/main.
 
 ## CODEX — B3/B4/B5 pós-B2 (2026-10-06)
 

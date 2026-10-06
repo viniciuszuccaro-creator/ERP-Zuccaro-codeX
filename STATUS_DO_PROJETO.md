@@ -6,12 +6,13 @@
 | Recebido | sim — lote Cadastros Gerais; sem executor duplicado |
 | Branch | `cursor/cadastros-empresa-edit-load-cb6a` (base candidata) |
 | Causa | `VisualizadorUniversalEntidadeV24.handleEditItem` abria o form com a **linha da grade** (projeção) sem `get` completo — save podia apagar vínculos/aninhados |
-| Correção | `getInContext` fail-closed (grupo/empresa); carga completa antes de editar; `isCadastroEditLoadComplete`; **bloqueio de save** se load falhar/incompleto; `EmpresaForm`/`EmpresaFormCompleto` preservam `id`/`group_id` e sincronizam props |
+| Correção | `getInContext` fail-closed (grupo/empresa); carga completa antes de editar; `isCadastroEditLoadComplete`; `buildCadastroEditSavePayload` merge com registro carregado; **bloqueio de save** se load falhar/incompleto; `hasCadastroEntityPermission` alinha `Cadastros.Empresa` + `Sistema.Empresas` (owner/admin legítimo); `EmpresaForm`/`EmpresaFormCompleto` preservam `id`/`group_id` |
 | Escopo compartilhado | Mesmo Visualizador cobre demais cadastros do padrão Bloco/grade |
-| RBAC | Mantém `Cadastros.Empresa.*` + admin/mestre; isolamento Grupo/Empresa; negativa sem permissão/contexto |
-| Testes | `tests/cadastro-empresa-edit-load.test.js` 4/4 |
+| RBAC | `Cadastros.Empresa.*` **ou** `Sistema.Empresas`; Grupo via `Sistema.Grupos`; isolamento Grupo/Empresa; negativa sem permissão/contexto; sem bypass de role=admin sozinha |
+| Testes | `tests/cadastro-empresa-edit-load.test.js` **9/9** (carga, save preserva campos, bloqueio incompleto/sem contexto, RBAC, tenant) |
+| Prova UI DEV | **BLOCKED** sem Bearer — `api-erp-dev` health 200; `/meta` 401 AUTH_REQUIRED |
 | Fora | tip-port outbox/DAM; Financeiro; legado; merge main; promoção 3080 |
-| Prova | Abrir Empresa → carga completa → editar → salvar com id intacto → reabrir |
+| Prova lógica | Abrir Empresa → carga completa → editar → salvar com id/vínculos intactos → reabrir |
 
 ## CODEX — B3/B4/B5 pós-B2 (2026-10-06)
 

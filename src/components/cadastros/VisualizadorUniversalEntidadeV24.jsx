@@ -109,6 +109,94 @@ export function isCadastroEditLoadComplete(entityName, record, expectedId) {
   return true;
 }
 
+/**
+ * Aliases administrativos legítimos (owner/admin) alinhados aos forms Empresa/Grupo.
+ * Não libera role=admin sozinha — exige árvore de permissão explícita ou mestre_local.
+ */
+export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
+  const entity = String(entityName || "");
+  const act = String(action || "visualizar");
+  const hasPermission = typeof checkers.hasPermission === "function" ? checkers.hasPermission : null;
+  const canCreate = typeof checkers.canCreate === "function" ? checkers.canCreate : null;
+  const canEdit = typeof checkers.canEdit === "function" ? checkers.canEdit : null;
+  const canDelete = typeof checkers.canDelete === "function" ? checkers.canDelete : null;
+
+  const cadastrosOk = (() => {
+    if (act === "visualizar") {
+      return Boolean(
+        (hasPermission && (hasPermission("Cadastros", entity, "visualizar") || hasPermission("Cadastros", null, "visualizar")))
+      );
+    }
+    if (act === "criar") return Boolean((canCreate && (canCreate("Cadastros", entity) || canCreate("Cadastros", null))));
+    if (act === "editar") return Boolean((canEdit && (canEdit("Cadastros", entity) || canEdit("Cadastros", null))));
+    if (act === "excluir") return Boolean((canDelete && (canDelete("Cadastros", entity) || canDelete("Cadastros", null))));
+    return false;
+  })();
+  if (cadastrosOk) return true;
+
+  if (entity === "Empresa") {
+    if (act === "visualizar") return Boolean(hasPermission && hasPermission("Sistema", "Empresas", "visualizar"));
+    if (act === "criar") return Boolean(canCreate && canCreate("Sistema", "Empresas"));
+    if (act === "editar") return Boolean(canEdit && canEdit("Sistema", "Empresas"));
+    if (act === "excluir") return Boolean(canDelete && canDelete("Sistema", "Empresas"));
+  }
+  if (entity === "GrupoEmpresarial") {
+    if (act === "visualizar") return Boolean(hasPermission && hasPermission("Sistema", "Grupos", "visualizar"));
+    if (act === "criar") return Boolean(canCreate && canCreate("Sistema", "Grupos"));
+    if (act === "editar") return Boolean(canEdit && canEdit("Sistema", "Grupos"));
+    if (act === "excluir") return Boolean(canDelete && canDelete("Sistema", "Grupos"));
+  }
+  return false;
+}
+
+/**
+ * Monta payload de save preservando id/vínculos do registro carregado.
+ * Fail-closed se edição com carga incompleta.
+ */
+export function buildCadastroEditSavePayload(entityName, editItem, formData, ctx = {}) {
+  const groupId = ctx.groupId || null;
+  const empresaId = ctx.empresaId || null;
+  if (editItem && editItem.id) {
+    if (!isCadastroEditLoadComplete(entityName, editItem, editItem.id)) {
+      throw new Error("Salvamento bloqueado: carga do registro incompleta. Reabra a edicao.");
+    }
+  }
+  const base = (editItem && editItem.id) ? editItem : {};
+  const clean = Object.assign({}, base, formData || {});
+  delete clean._action;
+  if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
+  if (!clean.group_id && groupId) clean.group_id = groupId;
+  if (!clean.group_id && !clean.empresa_id) {
+    throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");
+  }
+  if (editItem && editItem.id) {
+    clean.id = editItem.id;
+    if (editItem.group_id) clean.group_id = editItem.group_id;
+    if (editItem.empresa_id && !clean.empresa_id) clean.empresa_id = editItem.empresa_id;
+  }
+  return clean;
+}
+
+/**
+ * Fail-closed de isolamento multiempresa na carga de cadastro.
+ * Empresa/GrupoEmpresarial: só valida group_id (cadastro no grupo).
+ */
+export function assertCadastroRecordInTenant(entityName, record, ctx = {}, campo = "empresa_id") {
+  if (!record || !record.id) return null;
+  const groupId = ctx.groupId || null;
+  const empresaId = ctx.empresaId || null;
+  const scopeType = ctx.scopeType || null;
+  if (groupId && record.group_id && String(record.group_id) !== String(groupId)) {
+    throw new Error("Registro fora do grupo ativo — carga bloqueada.");
+  }
+  if (entityName !== "Empresa" && entityName !== "GrupoEmpresarial" && empresaId && record[campo]
+    && String(record[campo]) !== String(empresaId)
+    && scopeType === "empresa") {
+    throw new Error("Registro fora da empresa ativa — carga bloqueada.");
+  }
+  return record;
+}
+
 // ─── getDisplayValue: mostra melhor valor disponível para cada célula ───────
 // Para 1ª coluna: tenta todos os campos de nome se o campo configurado estiver vazio.
 // Para demais colunas: tenta variantes comuns do nome do campo (snake_case, sem prefixo, etc.)
@@ -258,10 +346,11 @@ export default function VisualizadorUniversalEntidadeV24({
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
   const contextoValido = !!(empresaId || groupId);
-  const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
-  const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
-  const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
-  const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete };
+  const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
+  const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
+  const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
+  const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -520,19 +609,9 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     setIsSaving(true);
     try {
-      const clean = Object.assign({}, formData);
-      delete clean._action;
-      // Sempre carimbar contexto quando disponivel (inclusive catálogos "simples")
-      if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
-      if (!clean.group_id  && groupId)   clean.group_id   = groupId;
-      if (!clean.group_id && !clean.empresa_id) {
-        throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");
-      }
+      // Merge com registro carregado: preserva id/vínculos/valores nao enviados pelo form
+      const clean = buildCadastroEditSavePayload(ENTITY, editItem, formData, { groupId, empresaId });
       if (editItem && editItem.id) {
-        // Preserva identidade e vínculos do registro carregado
-        clean.id = editItem.id;
-        if (editItem.group_id && !clean.group_id) clean.group_id = editItem.group_id;
-        if (editItem.empresa_id && !clean.empresa_id) clean.empresa_id = editItem.empresa_id;
         await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
         await auditCadastroEvent("Edicao", "Cadastro editado pelo formulario", { registro_id: editItem.id, antes: editItem, depois: clean, acao_sensivel: true });
       } else {
