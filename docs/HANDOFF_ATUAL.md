@@ -1,3 +1,7 @@
+## CODEX — B2 useFluxoPedido anti-dupla HTTP (2026-10-06)
+
+Recebido (follow-up Cursor). Tip base `f5591d55` (#223/B1 OK). B2: writers locais de `useFluxoPedido` fail-closed no HTTP; orquestração omite reserva/baixa/liberação e preserva legado. Baixa física HTTP = ledger despacho. Residuais: Estoque/Compras/Produção fora do hook. CLI preservada. PG/snapshots/Bearer/VPS BLOCKED. Sem tip-port outbox/DAM; sem promoção 3080.
+
 ## CODEX — consolidar #219+#221 + anti-dupla HTTP (2026-10-06)
 
 Recebido (CODEX COMERCIAL 360). Candidata `codex/comercial-expedicao-cliente360-207-209-20261005` base `7ea1519a` + cherry-pick #221 (`a24c743b`/`690e44c7`). #219 já ancestral. Writers entrega/retirada HTTP bloqueados; comprovante/reversa já exclusivos. Legado preservado. Snapshots/PG/homolog DEV BLOCKED (URL/Bearer/MCP). ready≠carga. Trava 026; gap 032. Sem tip-port outbox/DAM; sem promoção 3080.

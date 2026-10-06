@@ -40,3 +40,16 @@ test('automação não executa fechamento local automático nem manual com ledge
   assert.match(source, /const executarFluxoCompleto = async \(\) => \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
   assert.match(source, /disabled=\{executando \|\| progresso === 100 \|\| !permitido \|\| modoHttpExpedicao\}/);
 });
+
+test('useFluxoPedido aborta writers locais e omite reserva/baixa/liberação no modo HTTP', async () => {
+  const source = await readFile(new URL('../src/components/lib/useFluxoPedido.jsx', import.meta.url), 'utf8');
+  assert.match(source, /import \{ isHttpExpedicaoEnabled \} from "@\/api\/runtimeBackend"/);
+  assert.match(source, /function assertEscritaEstoqueLocalPermitida\(\) \{\s*if \(isHttpExpedicaoEnabled\(\)\) \{/);
+  assert.match(source, /async function reservarEstoqueItemAprovacao\([\s\S]*?assertEscritaEstoqueLocalPermitida\(\)/);
+  assert.match(source, /async function baixarEstoqueItem\([\s\S]*?assertEscritaEstoqueLocalPermitida\(\)/);
+  assert.match(source, /async function baixarMaterialProducao\([\s\S]*?assertEscritaEstoqueLocalPermitida\(\)/);
+  assert.match(source, /async function liberarReservaEstoque\([\s\S]*?assertEscritaEstoqueLocalPermitida\(\)/);
+  assert.match(source, /if \(isHttpExpedicaoEnabled\(\)\) \{\s*resultados\.reservasEstoque = \[\];\s*resultados\.estoqueHttpLedger = true;/);
+  assert.match(source, /if \(isHttpExpedicaoEnabled\(\)\) \{\s*resultados\.estoqueHttpLedger = true;\s*\} else if \(itensFaturar\.itens\.length > 0\)/);
+  assert.match(source, /if \(isHttpExpedicaoEnabled\(\)\) \{\s*const erro = new Error\(HTTP_ESTOQUE_LOCAL_BLOQUEADO\);/);
+});

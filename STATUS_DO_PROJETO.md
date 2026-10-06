@@ -1,3 +1,20 @@
+## CODEX — B2 useFluxoPedido anti-dupla HTTP (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — follow-up Cursor pós-revalidação; sem executor duplicado |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base tip | `f5591d55` (#223 Automacao/B1 FECHADO; writer-guard 5/5; CI SUCCESS) |
+| B2 | `useFluxoPedido`: writers `reservarEstoqueItemAprovacao` / `baixarEstoqueItem` / `baixarMaterialProducao` / `liberarReservaEstoque` → `assertEscritaEstoqueLocalPermitida()`; orquestração HTTP omite reserva/baixa/liberação e segue aprovação/faturamento/cancelamento/OP; `executarFechamentoCompleto` aborta |
+| Produto | Baixa física no HTTP = despacho ledger (não faturamento SPA). Consumo OP omitido no mesmo opt-in (fail-closed); se Produção precisar writer local com Expedição HTTP → decisão separada |
+| Cobertos | PedidosEntrega/Retirada, Automacao, Comprovante, LogisticaReversa, useFluxoPedido (4 writers + fechamento) |
+| Residuais | Módulo Estoque/Compras; `GerarOPModal`/`ApontamentoProducao`/`OtimizadorCorte` (produção fora do hook); `AutomacaoFluxoPedido.baixarEstoque` morto; reservas SPA pré-flag |
+| Teste | `pedido-entrega-http-writer-guard` estendido (useFluxoPedido) |
+| CLI #219 | preservada (`reconcile:stock`) |
+| BLOCKED | DATABASE_URL / snapshots / Bearer / VPS MCP / gates homolog |
+| Fora | tip-port outbox/DAM; merge main; promoção 3080 |
+
 ## CODEX — consolidar #219+#221 + anti-dupla HTTP (2026-10-06)
 
 | Campo | Valor |

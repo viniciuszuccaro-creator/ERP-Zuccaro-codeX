@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { isHttpExpedicaoEnabled } from "@/api/runtimeBackend";
 import {
   assertFaturamentoDentroDoPedido,
   avaliarReservaParcial,
@@ -10,6 +11,16 @@ import {
   saldoReservaPedidoProduto,
   validarItensReservaEstoque,
 } from "@/components/lib/pedidoFaturamentoPolicy";
+
+/** Fail-closed: com ledger HTTP, SPA não grava MovimentacaoEstoque / estoque_atual. */
+export const HTTP_ESTOQUE_LOCAL_BLOQUEADO =
+  'MovimentacaoEstoque local indisponível no modo HTTP Expedição. Use o ledger de Expedição.';
+
+function assertEscritaEstoqueLocalPermitida() {
+  if (isHttpExpedicaoEnabled()) {
+    throw new Error(HTTP_ESTOQUE_LOCAL_BLOQUEADO);
+  }
+}
 
 // Auditoria helpers
 async function getUsuarioAtual() {
@@ -139,6 +150,11 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
 
     const baixasEstoque = [];
     const itensRevenda = pedido.itens_revenda || [];
+    // HTTP: reserva SPA omitida — baixa física canônica no ledger Expedição (despacho).
+    if (isHttpExpedicaoEnabled()) {
+      resultados.reservasEstoque = [];
+      resultados.estoqueHttpLedger = true;
+    } else {
     const validacaoItensReserva = validarItensReservaEstoque(itensRevenda);
     if (!validacaoItensReserva.valido) {
       for (const item of validacaoItensReserva.invalidos) {
@@ -159,6 +175,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       }
     }
     resultados.reservasEstoque = baixasEstoque;
+    }
 
     // Aprovacao fail-closed: nenhuma etapa comercial pode continuar quando a
     // reserva de algum item falhar. O legado persiste movimentos por item, por
@@ -244,6 +261,7 @@ export async function validarLimiteCredito(pedido, contextoOperacao = null, { pe
 }
 
 async function reservarEstoqueItemAprovacao(item, pedido, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
   const produtos = await filterScoped('Produto', { id: item.produto_id }, contextoOperacao);
   const produto = produtos[0];
@@ -434,7 +452,10 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
 
     const itensFaturar = validarItensReservaEstoque(pedido.itens_revenda || []);
     if (!itensFaturar.valido) throw new Error('Itens de revenda invalidos para baixa fisica');
-    if (itensFaturar.itens.length > 0) {
+    // HTTP: baixa física canônica no despacho ledger — não gravar MovimentacaoEstoque SPA.
+    if (isHttpExpedicaoEnabled()) {
+      resultados.estoqueHttpLedger = true;
+    } else if (itensFaturar.itens.length > 0) {
       for (const item of itensFaturar.itens) {
         try {
           const baixa = await baixarEstoqueItem(item, pedido, contextoOperacao.empresaId);
@@ -497,6 +518,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
  * 8️⃣ BAIXAR ESTOQUE
  */
 async function baixarEstoqueItem(item, pedido, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
   const produtos = await filterScoped('Produto', { id: item.produto_id }, contextoOperacao);
   const produto = produtos[0];
@@ -576,6 +598,10 @@ export async function concluirOPCompleto(op, empresaId) {
     }
 
     if (op.materiais_necessarios?.length > 0 && !op.estoque_baixado) {
+      if (isHttpExpedicaoEnabled()) {
+        // HTTP: consumo OP local omitido (anti-dupla com ledger). Residual produto: Produção×ledger.
+        resultados.estoqueHttpLedger = true;
+      } else {
       for (const material of op.materiais_necessarios) {
         try {
           const baixa = await baixarMaterialProducao(material, op, contextoOperacao.empresaId);
@@ -583,6 +609,7 @@ export async function concluirOPCompleto(op, empresaId) {
         } catch (error) {
           resultados.erros.push(`Material ${material.descricao}: ${error.message}`);
         }
+      }
       }
     }
 
@@ -626,6 +653,7 @@ export async function concluirOPCompleto(op, empresaId) {
  * 🔟 BAIXAR MATERIAL DA PRODUÇÃO
  */
 async function baixarMaterialProducao(material, op, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const contextoOperacao = normalizarContextoOperacao(op, empresaId);
   const produtos = await filterScoped('Produto', { id: material.bitola_id || material.produto_id }, contextoOperacao);
 
@@ -670,6 +698,8 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
 
   try {
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
+    // HTTP: liberação SPA omitida — cancelamento de estoque canônico via Expedição/ledger.
+    if (!isHttpExpedicaoEnabled()) {
     const movimentacoes = await filterScoped('MovimentacaoEstoque', {
       origem_documento_id: pedido.id
     }, contextoOperacao);
@@ -691,6 +721,9 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
       }
     }
     if (resultados.erros.length > 0) return resultados;
+    } else {
+      resultados.estoqueHttpLedger = true;
+    }
 
     const contas = await filterScoped('ContaReceber', {
       pedido_id: pedido.id,
@@ -725,6 +758,7 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
  * 1️⃣2️⃣ LIBERAR RESERVA DE ESTOQUE
  */
 async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
+  assertEscritaEstoqueLocalPermitida();
   const contextoOperacao = normalizarContextoOperacao(movimentacaoReserva, empresaId);
   const produtos = await filterScoped('Produto', { id: movimentacaoReserva.produto_id }, contextoOperacao);
 
@@ -800,6 +834,12 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
   };
 
   try {
+    if (isHttpExpedicaoEnabled()) {
+      const erro = new Error(HTTP_ESTOQUE_LOCAL_BLOQUEADO);
+      onLog(erro.message, 'error');
+      onError(erro);
+      throw erro;
+    }
     const contextoOperacao = normalizarContextoOperacao(pedido, empresaId);
     const pedidosAtuais = await filterScoped('Pedido', { id: pedido.id }, contextoOperacao);
     const pedidoAtual = pedidosAtuais.find((item) => String(item.id) === String(pedido.id));
