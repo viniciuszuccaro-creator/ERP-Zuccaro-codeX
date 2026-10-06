@@ -1,3 +1,10 @@
+## CURSOR — parecer SHA `7cbe3a30` candidata +#219 + unidade (2026-10-06)
+
+- Merge tip Comercial `7cbe3a30` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
+- Parecer: `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md`. #218/#220 **não** transferem aprovação a este HEAD.
+- #219 comparator (`ec8fe57a`) + porta `ESTOQUE_UNIDADE_CANONICA_*`; CLI `b6864875` **ainda fora**.
+- Agente [Comercial: #219 + unidade ledger](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) entregue.
+
 ## CURSOR — parecer SHA `f514c2e3` candidata +#215 (2026-10-06)
 
 - Merge tip Comercial `f514c2e3` no [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213).
@@ -55,6 +62,10 @@
 
 - Parecer: `docs/PARECER_CURSOR_207_209_SHA_aaf29c19.md` — APPROVED + follow-up decimal/estados.
 - PGlite ledger 037 + asserts gap 032 no tip pós-`00d7add2`.## CODEX — consolidar #212 gate saldo na candidata autoritativa (2026-10-05)
+## CODEX — unidade canônica e #219 na candidata (2026-10-06)
+
+Recebido e executado (CODEX COMERCIAL 360). Candidata incorporou #219 (`ec8fe57a`) e o contrato de unidade canônica (ressalva #218): PK sem unidade, não soma, porta `ESTOQUE_UNIDADE_CANONICA_*`. #215 permanece. Snapshots reais BLOCKED (URL/VPS). Fixture sanitizada compared=0. Trava 026; gap 032. Sem tip-port #213/outbox/DAM; sem promoção 3080.
+
 ## CODEX — incorporar #215 na candidata autoritativa (2026-10-06)
 
 Recebido e executado (CODEX COMERCIAL 360). Candidata `codex/comercial-expedicao-cliente360-207-209-20261005` incorporou #215 (`5837b6e5`/`7f0dc127`) sem tip-port #213. PGlite: rollback 2º item + ensaio reconciliação sem inventar saldo. DATABASE_URL ausente → PG real BLOCKED (skip sanitizado). VPS ao vivo BLOCKED (MCP timeout); R07B/001–015/APPLY abortado são **históricos**. Trava 026; gap 032. Sem outbox/DAM; sem promoção 3080.

@@ -1,3 +1,16 @@
+## CURSOR — parecer HEAD integrado `7cbe3a30` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#213](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/213) |
+| SHA Codex | `7cbe3a30` (#215 + #219 comparator + unidade canônica) |
+| Parecer | `docs/PARECER_CURSOR_213_SHA_7cbe3a30.md` — **APPROVED COM RESSALVAS** |
+| #218/#220 | **não** transferem automaticamente |
+| Unidade | PK ledger sem coluna; porta `ESTOQUE_UNIDADE_CANONICA_*`; comparador `DUPLICATE_KEY` não soma |
+| CLI #219 `b6864875` | **fora** deste HEAD |
+| Testes locais | recon 9/9 · PGlite 6/6 · CI tip SUCCESS |
+| BLOCKED | B1 DATABASE_URL / B2 PG real / B3 telas / B4 VPS / B5 snapshots reais |
+
 ## CURSOR — parecer HEAD integrado `f514c2e3` (2026-10-06)
 
 | Campo | Valor |
@@ -142,6 +155,25 @@ PENDENTE humano: merge stacks; DATABASE_URL runtime11; gate Onda 25 Legado; VPS/
 | Parecer | APPROVED + decimal/estados + asserts gap 032 |
 | PGlite ledger | 12 pass / 1 skip (`DATABASE_URL`) |
 | PENDENTE | runtime11 PG real; VPS |## CODEX — consolidação #212 na candidata #207+#209 (2026-10-05)
+## CODEX — unidade canônica + #219 após revisão Cursor (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Recebido | sim — continuar nesta sessão |
+| Branch | `codex/comercial-expedicao-cliente360-207-209-20261005` |
+| Base | `f514c2e3` (#215 já ancestral) |
+| #215 | validada na candidata; parecer #218 APPROVED COM RESSALVA unidade — **endereçada** |
+| #219 | cherry-pick `20793df9`/`d8ca9488`/`ec8fe57a` (comparador offline). Revisão Cursor humana ainda em curso no momento da incorporação; bot Codex COMMENTED sem findings |
+| Unidade | PK ledger permanece (group,empresa,produto); unidade canônica = `produtos.unidade_medida_id`; 017 já trava pedido_itens; porta `ESTOQUE_UNIDADE_CANONICA_*`; comparador `DUPLICATE_KEY` não soma unidades |
+| Snapshots reais | **BLOCKED** — DATABASE_URL ausente + VPS MCP timeout. Fixture sanitizada `server/tests/fixtures/expedicao-stock-reconciliation-sanitized.json` (compared=0, NOT_EXTRACTED) |
+| Testes | reconciliação+PGlite+skip: 16 pass / 0 fail / 1 skip (PG real) |
+| Migrations | 001–031, gap 032, 033–037; 026 intacta; **sem** 038 para unidade |
+| VPS | leitura ao vivo **BLOCKED** (MCP timeout); R07B/001–015 **históricos** |
+| Fora | tip-port #213; outbox/DAM; merge main; promoção 3080; inventar saldo/032 |
+| Status | CONSOLIDADO código; extração real e PG isolado BLOCKED |
+| Próximo | CI; Cursor APPROVED #219 no SHA da candidata; URL isolada + extração privada |
+
 ## CODEX — incorporar #215 multi-item na candidata (2026-10-06)
 
 | Campo | Valor |
@@ -13225,3 +13257,17 @@ O HEAD `790e4be1` da #178 passou nas CIs `erp-runtime-ci` 36769412407 e `omnican
 ## 2026-10-05 — complemento multi-item da candidata funcional
 
 Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedicao-cliente360-207-209-20261005` (base `72c9dba9`) em branch própria e provar falha multi-item do ledger 037. Causa: a prova R11 da #212 cobria falta de baseline em um item, mas não o rollback da dedução anterior quando o item seguinte falha. Reutilizados `PostgresExpedicaoEstoquePort`, `PostgresExpedicaoPedidoPort`, teste R11 e contratos de modo HTTP existentes. Alterados teste PostgreSQL e contrato/handoff; nenhum runtime operacional ativado. Grupo/Empresa e RBAC permanecem na implementação base; teste cobre transação, auditoria, retry e compensação. Testes locais: foco PGlite 7 pass/0 fail/1 skip PostgreSQL por ausência de URL; servidor isolado 483 pass/0 fail/50 skip; servidor typecheck, audit:baseline, lint raiz e build raiz passaram. A primeira execução paralela da suíte teve timeout por contenção; os 19 testes afetados e a suíte completa passaram ao repetir sem checks concorrentes. Typecheck raiz falha em arquivos fora do diff. Commit de código `5837b6e5` na #215; `erp-runtime-ci` 37341406770 SUCCESS incluiu R11 PostgreSQL real 2/2 sem skip e `omnicanal-postgres` 37341407276 SUCCESS. Pendências P0: comprovar reconciliação do estoque Base44/local para ledger HTTP por empresa/produto/unidade, grants/RLS da role operacional, preflight histórico 026, backup/restore e gate DEV. Gap 032 não é migration a criar. Próximo item independente: gate isolado de reconciliação e revisão Cursor do HEAD exato antes de integrar #215.
+## CODEX — gate offline de reconciliação de estoque (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Preparar comparação segura entre fonte anterior e ledger HTTP 037 antes de qualquer saldo de abertura |
+| Causa | A migration 037 não cria saldo e o estoque legado pode diferir em unidade/local/lote; ausência não equivale a zero |
+| Branch | `codex/comercial-ledger-reconciliacao-20261006`, separada da candidata Comercial |
+| Estruturas | Reutiliza chave canônica Grupo/Empresa/produto e escala `numeric(18,6)` do ledger; sem migration ou writer novo |
+| Arquivos | `server/src/services/expedicaoStockReconciliation.ts`, teste focado e documentação da Expedição |
+| Mudança | Comparador puro e offline com corte UTC, evidência por linha, precisão decimal, detecção de duplicidade, falta, unidade, quantidade, snapshots vazios e cruzamento de empresas; falha fechado |
+| Segurança | Nenhum dado real, credencial ou identificador de infraestrutura no código/teste; sem acesso ao banco, sem ativação de flag |
+| Testes | Focado final 7/7 (inclui correção do parecer #219 para timestamps UTC válidos sem milissegundos); server `npm test` 488 pass/0 fail/50 skip antes dos pequenos follow-ups fail-closed; server typecheck final, audit, lint (1 warning preexistente), build e diff-check PASS. Typecheck raiz falha em páginas JSX fora do lote; `npm test` raiz falha em guards de VPS sob Windows (ex.: `vps-owner-provision-guard.test.js:478`, esperado 2/obtido null). CI Linux necessária para confirmar SHA remoto |
+| Pendência | Exportação comprovada do estoque anterior, cobertura local/lote e corte sem writers, backup/restore e aprovação humana antes de carga ou ativação |
+| Próximo P0 | Extrair snapshots sanitizados em staging isolado, reconciliar contagens por empresa/unidade e ensaiar rollback; não importar no operacional |

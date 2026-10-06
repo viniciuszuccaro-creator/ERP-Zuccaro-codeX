@@ -1,0 +1,18 @@
+{
+  "identity": "synthetic-offline-only",
+  "provenance": {
+    "origin": "NOT_EXTRACTED",
+    "destination": "NOT_EXTRACTED",
+    "cutoffUtc": null,
+    "reason": "DATABASE_URL_AND_VPS_READ_BLOCKED"
+  },
+  "counts": {
+    "sourceRows": 0,
+    "ledgerRows": 0,
+    "compared": 0,
+    "conflicts": 1
+  },
+  "issues": ["SNAPSHOT_NOT_AVAILABLE"],
+  "doesNotInventOpeningBalance": true,
+  "doesNotSumDistinctUnits": true
+}
