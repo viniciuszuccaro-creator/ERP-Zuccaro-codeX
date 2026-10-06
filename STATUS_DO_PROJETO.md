@@ -1,9 +1,22 @@
+## CURSOR — parecer #221 tip `48bce2f7` + bloqueios candidata (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#221](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/221) tip `48bce2f7` (+ [#223](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/223) Automacao rebased) |
+| Parecer | `docs/PARECER_CURSOR_221_SHA_48bce2f7.md` — **APPROVED COM RESSALVAS** (não transfere `690e44c7`) |
+| Testes | writer-guard **4/4 PASS** (entrega+retirada+Automacao); CI #221/#223 SUCCESS |
+| Candidata | `e242564f` — Entrega/Retirada OK; **Automacao AUSENTE** (B1) |
+| Bloqueios | `docs/BLOQUEIOS_CANDIDATA_ESTOQUE_e242564f.md` |
+| Ação Comercial | cherry-pick #223 `3decc4e4`→`f5591d55` preservando CLI `06ed1141`; residual B2 `useFluxoPedido` |
+| Outbox | #203 `5f41e644` in-repo claim/lease OK; publisher real BLOCKED |
+| Telas / PG | BLOCKED Bearer / DATABASE_URL |
+
 ## CURSOR — parecer #221 @ `690e44c7` + divisão pacotes (2026-10-06)
 
 | Campo | Valor |
 | --- | --- |
 | PR | [#221](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/221) |
-| Parecer | `docs/PARECER_CURSOR_221_SHA_690e44c7.md` — **APPROVED COM RESSALVAS** |
+| Parecer | `docs/PARECER_CURSOR_221_SHA_690e44c7.md` — **APPROVED COM RESSALVAS** (superseded pelo tip `48bce2f7`) |
 | Testes | writer-guard **3/3 PASS** |
 | Consolidar em | candidata tip `7ea1519a`/`06ed1141` (preservar CLI) |
 | Residuais | useFluxoPedido · Comprovante · LogisticaReversa local |
