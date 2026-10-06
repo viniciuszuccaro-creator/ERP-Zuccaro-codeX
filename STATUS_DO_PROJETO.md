@@ -11667,3 +11667,13 @@ Checklist inicial:
 - Classificador `seloSha256` / papéis por linha: **NÃO gerados** — JSON ausente neste VM/HD.
 - HUMAN_NEXT: SFTP → `04_REPORTS` (nome novo); classificar; CADESP já recebido; staging comprovados; quarentena resto; mapper #48 intocado; sem carga.
 - Coordenação: #216/#217.
+
+### CODEX LEGADO — pacote identidade / procedência / staging (2026-10-06)
+
+- Objetivo: classificar export VPS quando no HD; CADESP; procedência #211; staging comprovados; ferramentas independentes enquanto espera.
+- JSON VPS: ainda ausente no HD deste VM → classificação real **BLOCKED**; sem re-colar script; sem SSH/MCP.
+- Independente (PASS): testes legado 37/37; staging fixture origem8/carregados4/reusos1/conflitos1/quarentena2; origem fixture verified; classificador fixture selo `c5c78e00…dbc67` (não substitui JSON VPS).
+- #211: Git OPEN; SHA-256 relatórios reais BLOCKED até HD.
+- Flags: `importAuthorized=false`; mapper #48 intocado; sem carga; neverDelete; CADESP reusado.
+- HUMAN_NEXT inalterado: SFTP `legado-empresas-api-20261006T153440Z.json` → `04_REPORTS`.
+- Coordenação: #216/#217.

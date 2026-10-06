@@ -1,4 +1,24 @@
+## CODEX LEGADO — pacote identidade/procedência/staging (2026-10-06)
+
+Recebido. Sem duplicar. Paste VPS já válido (`executed=true`, tip docs `49e7b33b`).
+
+- JSON `legado-empresas-api-20261006T153440Z.json` (**sha256** `18e2ab9a…3d7e`):
+  ainda **só na VPS** — HD ausente neste agente → classificador VPS **NÃO** rodou.
+- **HUMAN_NEXT:** SFTP VPS → `BACKUP ERP ANTIGO - CODEX/04_REPORTS/` (nome novo,
+  não sobrescrever). Sem re-colar script; sem retry SSH/MCP.
+- CADESP: reusado (não pedido de novo). Confrontação IDs/refs **PENDENTE** pós-SFTP.
+- #211 procedência Git: PR OPEN (`d89d1d92…`); fontes privadas reais **BLOCKED** (HD).
+  Fixture origem: `all_origins_verified=true`, `operationalImportAuthorized=false`.
+- Staging fixture (independente): origem 8 → carregados 4 / reusos 1 / conflitos 1 /
+  quarentena 2; monetário CPA 10050 / 3Z 5000; diff 0; `importAuthorized=false`;
+  `blockedRealHdExtract=true`.
+- Classificador **fixture** (não é o JSON VPS): seloSha256
+  `c5c78e00e16df7413882b39742b35bab5f9a85997790567da41bf1cfa1cdbc67`;
+  2 operacionais + 3ª linha agrupamento neverDelete.
+- Testes independentes: 37/37 PASS. Mapper #48 intocado. #216/#217.
+
 ## CODEX LEGADO — paste Web Console proprietário (2026-10-06T15:34:40Z)
+
 
 Recebido. Sem tarefa duplicada. **Export VPS confirmado pelo paste**
 (`executed=true`). Este Cloud Agent **não** leu o JSON privado.
