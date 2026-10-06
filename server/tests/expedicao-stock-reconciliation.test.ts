@@ -35,6 +35,11 @@ test('quantidade distinta, corte distinto e duplicidade são conflitos bloqueant
   assert.deepEqual(codes(snapshot([row(), row({ evidenceId: 'synthetic-fixture-2' })]), snapshot([row()])), ['DUPLICATE_KEY']);
 });
 
+test('cortes UTC equivalentes com precisão textual diferente passam; calendário impossível falha', () => {
+  assert.equal(reconcileExpedicaoStock(snapshot([row()], '2026-10-06T12:00:00Z'), snapshot([row()], '2026-10-06T12:00:00.00Z')).ready, true);
+  assert.ok(codes(snapshot([row()], '2026-02-30T12:00:00Z'), snapshot([row()])).includes('INVALID_SNAPSHOT'));
+});
+
 test('linhas sem evidência, quantidade negativa/imprecisa e corte inválido falham fechado', () => {
   assert.ok(codes(snapshot([row({ evidenceId: '' })]), snapshot([])).includes('INVALID_ROW'));
   assert.ok(codes(snapshot([row({ quantidade: '-1' })]), snapshot([])).includes('INVALID_ROW'));
