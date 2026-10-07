@@ -11831,3 +11831,9 @@ Checklist inicial:
 | Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
 | Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
 | Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
+## CODEX — candidata integrada Cadastros + segurança + outbox (2026-10-07)
+
+- Branch isolada compõe #226 (código `7bfd3f93`, gate Organizacional UI/local, leitura integral, tenant mestre, ID/campos fiscais/vínculos), contenção #231 (`47d3a148`) e outbox Produto #203 (`ddf0c16f`). Conflitos de merge ocorreram somente neste status e em `docs/HANDOFF_ATUAL.md`; ambos os históricos foram preservados. Nenhum merge em `main`, deploy, migration ou importação.
+- Testes focados: frontend 51/51; servidor outbox 22/22; servidor completo 303 pass/0 fail/18 skip. `npm --prefix server run typecheck`, `npm --prefix server run build`, `npm run audit:baseline`, `npm run lint`, `npm run build` e diff-check passaram. Suíte raiz no Windows mantém falha preexistente nos guards VPS Unix; typecheck raiz mantém erros preexistentes fora do diff.
+- Os dois snapshots não existem no tree composto nem em `dist/`; a remoção no HEAD não limpa histórico Git. Recuperação local da #231 ainda exige correção dos dois achados de escopo no fluxo `recover.html` antes de merge/implantação, em coordenação com a frente de segurança. CI e revisão do HEAD composto são gates restantes. Próximo P0: integrar somente após pareceres por SHA, gates de segurança e validação real de sessão/Grupo/Empresa.
+
