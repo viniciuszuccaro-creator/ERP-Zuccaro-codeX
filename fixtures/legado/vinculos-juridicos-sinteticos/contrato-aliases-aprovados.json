@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "synthetic": true,
+  "contratoId": "contrato-aliases-aprovados-sintetico-v1",
+  "humanAttested": true,
+  "digitalSignatureConfigured": false,
+  "importAuthorized": false,
+  "note": "Contrato sintetico espelhando a aprovacao humana Gate 18 (CPA Ferro e Aco, 3Z LTDA, Grupo CPA). Sem CNPJ/UUID reais. Mapa privado do HD permanece fora do Git. Nao autoriza carga.",
+  "blockedRealHdMap": true,
+  "aliases": [
+    {
+      "aliasId": "ALIAS_SYN_CPA_FERRO",
+      "codigoSeletorLegado": "001",
+      "destinoKey": "DEST_CPA_FERRO_E_ACO",
+      "scopeType": "empresa",
+      "papel": "empresa_operacional",
+      "humanApproved": true,
+      "evidencia": {
+        "tipo": "aprovacao_humana",
+        "sha256": "c825fba9af67430bd92ecec8c630d2b875bebae2565df45cd49bd5598203546f",
+        "aprovadoPor": "11111111-1111-4111-8111-111111111111",
+        "aprovadoEm": "2026-09-29T12:00:00.000Z"
+      }
+    },
+    {
+      "aliasId": "ALIAS_SYN_3Z",
+      "codigoSeletorLegado": "002",
+      "destinoKey": "DEST_3Z_LTDA",
+      "scopeType": "empresa",
+      "papel": "empresa_operacional",
+      "humanApproved": true,
+      "evidencia": {
+        "tipo": "aprovacao_humana",
+        "sha256": "e2fb45187fdf17671d5179fe9c2b7b39d08045a7f88e6bb5e08fc10bc7c54100",
+        "aprovadoPor": "22222222-2222-4222-8222-222222222222",
+        "aprovadoEm": "2026-09-29T12:00:00.000Z"
+      }
+    },
+    {
+      "aliasId": "ALIAS_SYN_GRUPO_CPA",
+      "codigoSeletorLegado": "003",
+      "destinoKey": "DEST_GRUPO_CPA",
+      "scopeType": "group",
+      "papel": "agrupamento",
+      "humanApproved": true,
+      "evidencia": {
+        "tipo": "aprovacao_humana",
+        "sha256": "db471b0aaffe8d955a2258101dd2f4c8c8078ac7ea05ad7477d6ac5ecd24571b",
+        "aprovadoPor": "33333333-3333-4333-8333-333333333333",
+        "aprovadoEm": "2026-09-29T12:00:00.000Z"
+      }
+    }
+  ]
+}

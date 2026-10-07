@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "report_id": "legacy-synthetic-aggregate-a",
+  "schema_version": 1,
+  "metrics": {
+    "source_rows": 3,
+    "accepted": 2,
+    "quarantine": 1,
+    "monetary_diff_cents": 0
+  },
+  "note": "Fixture sintetica. Sem PII. Sem dados reais."
+}

@@ -1,3 +1,98 @@
+## FOLLOW-UP — Legado host-local #211 (2026-10-07)
+
+- Tip espelhado: Codex `67a18633` → PR branch (merge commit).
+- Script: `scripts/legado/executar-verifier-host-local.sh` + teste.
+- Checksum **UNVERIFIED**; contagens reais **0** neste Cloud.
+- HUMAN_NEXT: rodar no PC com HD; colar `PASTE_TO_GIT_HOST_*` + JSON verifier.
+
+## FOLLOW-UP — Comercial #226 + Legado #211 (2026-10-07)
+
+| Frente | Tip | Estado |
+|---|---|---|
+| Comercial #226 | `480d8b14` CI SUCCESS 37628559142 · 36/36 | **pronto merge HUMAN** · #227/#228 arquivar |
+| Legado #211 | espelho `a03564cc` | checksum **UNVERIFIED**; pacote **sintético**; HUMAN_NEXT verifier no PC com HD |
+| Cursor Financeiro #225 / Auth #230 / browser | tips anteriores | launchpad+Empresas validados local; VPS não implantado |
+
+## CURSOR — espelho SFTP BLOCKED Legado `f69ebf8b` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Codex | `f69ebf8b` — tentativa SFTP real exit 255 |
+| Espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) tip `823e7613` |
+| Agente | [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
+| BLOCKED | `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` |
+| Arquivo | `/root/erp-private/legado-empresas-api-20261006T153440Z.json` |
+| SHA esperado | `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` |
+| Destino | `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (sem sobrescrever; sem novo export) |
+| HUMAN_NEXT | FileZilla no PC → hash match → avisar chat → classificar/CADESP/staging |
+
+## CURSOR — espelho Legado `7d063b17` + parecer `4b5d3b94` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Codex | `7d063b17` (script `4b5d3b94` + docs) |
+| Espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
+| Parecer | `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md` — APPROVED COM RESSALVAS |
+| Export | **NOT_PERFORMED** (SSH publickey denied; MCP timeout) |
+| Probe externo | `erp-dev` health/ready 200 · `ERP-RUNTIME-08B` · pgcrypto **UNVERIFIED** |
+| HUMAN | colar script `4b5d3b94` no Web Console; JSON privado nome novo |
+
+## CURSOR — parecer export empresas API @ `3adc7900` (2026-10-06)
+
+| Campo | Valor |
+| --- | --- |
+| Codex | `47a19c03` · feat `3adc7900` |
+| Espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
+| Agente | [Legado: CADESP + empresas API](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
+| Parecer | `docs/PARECER_CURSOR_211_EMPRESAS_API_SHA_3adc7900.md` — APPROVED COM RESSALVAS |
+| Flags | `importAuthorized=false` / `neverDelete=true` |
+| HUMAN | Web Console: `scripts/legado/exportar-empresas-api-somente-leitura.sh` → `PASTE_TO_GIT_*` + JSON em `04_REPORTS/` |
+
+## CURSOR — espelho diagnóstico Comercial VPS×versão (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| Codex tip | `65fe8fba` / docs `1a40ca5d` |
+| Espelho | `cursor/erp-novo-vps-layout-diff-392b` |
+| Inventário Cursor paralelo | [#216](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/216) `0b70e0ee` |
+| Legado coordenação | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) tip pós-`b6691189` |
+| Veredito | Diffs 1–8 Comercial **confirmam** D1–D9 Cursor: ausência de tela ≠ importação |
+| BLOCKED | VPS live (MCP timeout) |
+
+## CURSOR — parecer plano Legado #211 (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| PR | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
+| Codex tip | `9057aeab` · espelho `0b35fb45` |
+| Parecer | `docs/PARECER_CURSOR_211_PLANO_SHA_9057aeab.md` — **APPROVED** |
+| Testes | plano gate **4/4 PASS** |
+| Flags | `importAuthorized=false` / `operationalLoadAuthorized=false` |
+| BLOCKED | HD real; carga operacional |
+| Próximo | gate humano Onda 25 |
+
+## CODEX LEGADO — plano importação/reversão entregue (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| SHA Codex tip | `9057aeab` |
+| Artefato | `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` |
+| Escopo | pré-requisitos, ordem A–H, reconciliação centavos, rollback, GO/NO-GO |
+| Mapper #48 | intocado |
+| BLOCKED | HD / promoção operacional |
+
+## CODEX LEGADO — origem + vínculos + staging (2026-10-05)
+
+| Campo | Valor |
+| --- | --- |
+| SHA Codex tip | `89b0c8c6` |
+| PR espelho | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
+| Item 1–2 | origem 9/9 · vínculos 11/11 |
+| Item 3 staging | carregados 4 / quarentena 2 / conflitos 1 / reusos 1 · CPA 10050¢ · 3Z 5000¢ |
+| Mapper #48 | intocado |
+| BLOCKED | HD / carga operacional |
+| Próximo | plano importação/reversão (gate) |
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
@@ -11554,3 +11649,183 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+### CODEX LEGADO — validação privada da origem dos relatórios (2026-10-05)
+
+- Objetivo: retomar a prova de origem dos relatórios privados (fonte, SHA-256, versão do extrator e reprodução em duas passagens), sem repetir apenas contagens já conhecidas do Gate 18.
+- Causa / bloqueio: neste Cloud VM o HD `BACKUP ERP ANTIGO - CODEX` **não está montado** (`/mnt` e `/media` vazios; `inventario-backup-erp-antigo.sh` → `backup_dir_found=NO`). Revalidação dos artefatos reais em `04_REPORTS` permanece **BLOCKED** de forma reproduzível (`LEGACY_REPORTS_ROOT_UNAVAILABLE`).
+- Entrega neste lote (somente código + fixture sanitizada):
+  - `scripts/legado/validar-origem-relatorios-privados.mjs` (validator `1.0.0`, read-only, fail-closed, `operationalImportAuthorized=false`);
+  - fixture `fixtures/legado/origem-relatorios-sinteticos/` + `manifest-origem.json`;
+  - testes `tests/legado-origem-relatorios-privados.test.js`;
+  - doc `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md` atualizada.
+- Evidência sintética: 2/2 relatórios `ORIGIN_VERIFIED`; hashes
+  `79d43a320ee46f2115346e4758352f2b4ac7c6f08f2c5c1571267daba45445e8` e
+  `b130a34140d3bcaa7480a381136ee9b7dbb57fe93aef606931f3e1011bdbb8b4`; extratores `legado-aggregate-summary@1.0.0-synthetic` e `legado-inventory-metadata@1.0.0-synthetic`; `reproduction_passes=2`.
+- Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Multiempresa / carga: nenhuma inferência por pasta/`EMP03`; nenhuma carga operacional; backup original preservado (indisponível aqui).
+- Testes: `node --test tests/legado-origem-relatorios-privados.test.js` → 9/9 PASS; `tests/legado-inventario-backup.test.js` → 4/4 PASS; `git diff --check` PASS. Mudança não altera runtime do ERP; suite completa/lint/typecheck/build não exigidos para este lote de ferramenta+fixture.
+- Próximo item do programa: resolver vínculos por identidade jurídica comprovada (CPA Ferro e Aço e 3Z LTDA = operacionais; Grupo CPA = agrupamento), sem inferir empresa por pasta.
+
+### CODEX LEGADO — vínculos por identidade jurídica comprovada (2026-10-05)
+
+- Objetivo (item 2): resolver CPA Ferro e Aço e 3Z LTDA como empresas operacionais; Grupo CPA como agrupamento; proibir inferência por pasta/`EMP03`/`003` como emissor.
+- Causa / bloqueio parcial: mapa privado real `legacy-approved-business-alias-map.json` (hashes CNPJ/UUID) permanece só no HD `04_REPORTS` — **BLOCKED** neste VM. Fixture sintética espelha a topologia aprovada na Gate 18 sem PII.
+- Entrega: `scripts/legado/resolver-vinculo-juridico-legado.mjs` + `fixtures/legado/vinculos-juridicos-sinteticos/` + `tests/legado-resolver-vinculo-juridico.test.js`; docs `LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md` e este STATUS; HANDOFF atualizado.
+- Dry-run fixture: origem 7 → comprovados 3 (CPA, 3Z, Grupo cadastro) / quarentena 4 (Grupo-como-emissor, pasta EMP03, inferir-por-pasta, código 004); `empresasOperacionais=2`, `agrupamentos=1`, `importAuthorized=false`, `blockedRealHdMap=true`.
+- Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`. Nota: o mapper ainda lista código `3` em mapa de “empresa” legado — o resolvedor Codex é a fonte soberana para papel jurídico (Grupo ≠ emissor).
+- Testes: `node --test tests/legado-resolver-vinculo-juridico.test.js` → 11/11 PASS; regressão origem 9/9 PASS; `git diff --check` PASS.
+- Próximo item do programa: staging isolado (extração/transformação/carga) só para registros com vínculo comprovado — deduplicação, dependências, reconciliação por empresa; quarentena sem prova; sem carga operacional sem gate.
+
+### CODEX LEGADO — staging isolado com vínculo comprovado (2026-10-05)
+
+- Objetivo (item 3): extrair/transformar/carregar em staging isolado só registros com vínculo jurídico comprovado; deduplicação; dependências; reconciliação por empresa; quarentena sem prova; `importAuthorized`/carga operacional = false sem gate.
+- BLOCKED parcial: HD ausente — nenhuma extração real de `BACKUP ERP ANTIGO - CODEX`; avanço com fixture sintética (`blockedRealHdExtract=true`).
+- Entrega: `scripts/legado/carregar-staging-isolado-legado.mjs` + `fixtures/legado/staging-isolado-sintetico/lote-staging.json` + `tests/legado-carregar-staging-isolado.test.js`; docs LEGADO_BACKUP / HANDOFF / STATUS.
+- Contagens dry-run fixture: origem **8**; carregados **4**; reusos **1**; conflitos **1**; quarentena **2**; rejeitados **0** (no caminho feliz); monetary `DEST_CPA_FERRO_E_ACO=10050` / `DEST_3Z_LTDA=5000` centavos; `totalDiffCentavos=0` (ensaio com expectativa 10000→diff **+50** centavos coberto em teste).
+- Não tocados (Cursor #48): `mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Testes: staging 8/8 PASS; vínculo 11/11; origem 9/9; `git diff --check` PASS.
+- Próximo item: plano de importação/reversão (gate) — sem promover staging → operacional sem autorização.
+
+### CODEX LEGADO — plano de importação e reversão (gate) (2026-10-05)
+
+- Objetivo (itens 4–5): publicar plano de gate com pré-requisitos, ordem, reconciliação, rollback e critérios de aceite — **sem** promover staging→operacional.
+- Artefato: `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` + teste estrutural `tests/legado-plano-importacao-reversao-gate.test.js`.
+- Flags obrigatórias no plano e no loader: `importAuthorized=false`, `operationalLoadAuthorized=false`. Backup original somente leitura; evidências reais permanecem no HD.
+- Não tocados (Cursor #48): `scripts/legado/mapear-registro-sintetico.mjs`, `docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Testes: `node --test tests/legado-plano-importacao-reversao-gate.test.js` (+ regressão staging/vínculo/origem); `git diff --check` PASS. Mudança documental + teste estrutural; sem runtime ERP.
+- Bloqueios: HD/extração real e promoção operacional continuam BLOCKED até gate humano.
+- Próximo: **aguardar autorização humana** do gate (não executar carga operacional neste lote).
+
+### CODEX LEGADO — coordenação Comercial/Cursor (canônico, 2026-10-05)
+
+- Objetivo: registrar instrução do chat principal como regra canônica de coordenação Legado ↔ Comercial/Cursor.
+- Texto canônico: investigar diferença entre versão anterior do ERP novo e a VPS (commit/imagem, flags, configurações, rotas, layouts, permissões); entregar lista de diferenças comprovadas e correções em branch própria coordenada com o legado; **não** tratar toda ausência de tela ou cadastro como problema de importação.
+- Regra Legado: layouts/funcionalidades ausentes podem ser versão implantada/config/RBAC — **não** classificar automaticamente como falha de ETL/staging; exigir evidência Comercial/Cursor antes de reabrir diagnóstico de importação.
+- Pedido Legado → Comercial/Cursor: (1) SHA/imagem VPS API+SPA; (2) runtime/auth.mode/flags opt-in sem segredos; (3) rotas/menus/layouts vs commit da imagem; (4) RBAC perfil teste Grupo/CPA/3Z; (5) lista de diffs + branch de correção.
+- Flags preservadas: `importAuthorized=false`, `operationalLoadAuthorized=false`; sem carga operacional; sem tip-port; Cursor #48 intocado.
+- Arquivos: `docs/HANDOFF_ATUAL.md`, `docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md` (§8 coordenação / §9 próximo), `docs/LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md`, este STATUS; teste estrutural do plano (regex blockquote + anti-trailing-whitespace).
+- Validação: `node --test tests/legado-plano-importacao-reversao-gate.test.js` 4/4 PASS; `git diff --check` PASS. Nenhuma promoção staging→operacional.
+- Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `cb63c769fd5f03a52b7ec967018c8750dbfbf9fa` (coordenação em `f44a60ff` + estabilização do teste).
+- Próximo: aguardar evidências VPS do Comercial/Cursor + gate humano de importação.
+
+### CODEX LEGADO — pacote empresas API / CADESP / #211 (2026-10-06)
+
+- Objetivo: cumprir o pacote do chat principal na sessão Legado existente (sem tarefa duplicada): reusar CADESP, exportar empresas do banco da API, investigar terceira linha sem apagar, comando Web Console único, procedência #211, avançar staging só com vínculos comprovados.
+- Primeira ação: permanecer em `codex/legado-origem-relatorios-392b`; não reabrir plano de importação/reversão; `importAuthorized=false`.
+- CADESP: reuso da Gate 18 + mapa privado HD; **não** solicitar os mesmos documentos.
+- Acesso: HD **BLOCKED** neste VM; Hostinger `vps_virtual-machines_list` timeout → comando Web Console (não execução remota).
+- Entrega código: `scripts/legado/exportar-empresas-api-somente-leitura.sh`, `scripts/legado/classificar-empresas-api-legado.mjs`, fixture `fixtures/legado/empresas-api-sinteticas/export-sanitizado.json`, teste estrutural.
+- Classificação fixture: 1 grupo + 2 operacionais (CPA/3Z) + 1 terceira linha Grupo CPA (agrupamento, neverDelete); `cadespRedocumentRequested=false`.
+- Staging: loader existente reexecutado — origem 8 / carregados 4 / reusos 1 / conflitos 1 / quarentena 2; extração real **BLOCKED**.
+- #211 OPEN `cursor/legado-origem-relatorios-392b`; este Codex é ancestral Git; SHA-256 de relatórios reais só no HD.
+- Coordenação: #216/#217 — telas/cadastros ausentes podem ser versão/flags/RBAC.
+- Não tocados: `mapear-registro-sintetico.mjs`, `LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md`.
+- Testes: classificar 5/5 + staging 8/8 + plano 4/4 + vínculo 11/11 + origem 9/9 PASS; `git diff --check` PASS.
+- Branch/SHA remoto: `codex/legado-origem-relatorios-392b` @ `3adc790030116332f2d677ab649666a9057ecbf8`.
+- Próximo: humano colar o `.sh` na Web Console; transferir JSON privado ao HD; classificar o export real; gate humano continua pendente.
+
+### CODEX LEGADO — execução do export (2026-10-06, NÃO realizada neste agente)
+
+- Objetivo: executar o export com autorização VPS/Web Console/SFTP; pré-checar API+esquema+`digest` antes do SELECT; arquivo privado novo.
+- Resultado: **export NOT_PERFORMED**. Probe externo health/ready 200, runtime `ERP-RUNTIME-08B`, `auth.mode=supabase_user`, `database=configured/ok`. SSH publickey denied. Hostinger MCP timeout. pgcrypto/`digest`/schema **UNVERIFIED** (exige Web Console).
+- Script revisado: `exportar-empresas-api-somente-leitura.sh` agora aborta antes do JSON de empresas se health/ready/pgcrypto/schema falharem.
+- CADESP reusado. Terceira linha: nunca apagar. #211 fontes privadas BLOCKED neste VM. Mapper #48 intocado. `importAuthorized=false`.
+- Coordenação: telas ausentes = #216/#217.
+- Testes: `tests/legado-empresas-api-classificar.test.js` + `git diff --check`.
+- Próximo: humano colar o script revisado na Web Console e SFTP o JSON novo ao HD.
+
+### CODEX LEGADO — parecer Cursor SHA 4b5d3b94 (2026-10-06)
+
+- Recebido sem duplicar tarefa. Parecer Cursor `docs/PARECER_CURSOR_211_SHA_4b5d3b94.md`: **APPROVED COM RESSALVAS**. Cursor **não** executou o export.
+- Retry Codex: SSH publickey denied; MCP Hostinger timeout; self-hosted workers=0 → **export NOT_PERFORMED**.
+- Intervenção humana permanece: colar script inteiro do SHA `4b5d3b94` no Web Console; devolver PRECHECK + PASTE; JSON privado nome novo no HD; `executed=false` se health/ready/pgcrypto falhar.
+- Mapper #48 intocado. `importAuthorized=false`. Coordenação #216/#217.
+- Próximo: paste humano na Web Console (único caminho de execução real daqui).
+
+### CODEX LEGADO — alinhamento bloco Web Console (2026-10-06)
+
+- Objetivo: alinhar ao chat principal o mesmo script `4b5d3b94`/`7d063b17` + caminho privado + **uma** intervenção; sem remeter só a doc; sem retry SSH/MCP.
+- Capacidade aqui: Web Console **indisponível**; docker VPS **ausente**; HD **ausente**. `127.0.0.1` nesta VM ≠ VPS.
+- Resultado: **export NOT_PERFORMED**. Bloco completo do `.sh` entregue no chat Codex para Cursor colar.
+- Caminho privado: `/root/erp-private/legado-empresas-api-<UTC>.json` (nome novo).
+- Pós-export (humano/Cursor): confrontar CADESP já recebido; preservar 3ª linha; staging comprovados; sem carga; mapper #48 intocado.
+- Branch tip: `7d063b17` (script idêntico a `4b5d3b94`).
+
+### CODEX LEGADO — paste Web Console proprietário (2026-10-06T15:34:40Z)
+
+- Objetivo: registrar evidência sanitizada do export executado na VPS pelo proprietário; sem ler/publicar o JSON privado neste agente.
+- PRECHECK: health/ready=200; runtime `ERP-RUNTIME-08B`; `auth_mode=supabase_user`; `pgcrypto=yes`; tables/cols OK; `digest_probe_len=64`.
+- PASTE: `executed=true`; `importAuthorized=false`; `neverDelete=true`; `cadesp_reused=true`; api=`erp-api-dev` running; db=`supabase-db`; `current_database=postgres`.
+- Contagens paste: groups=2; empresas=3; empresas_ativas=3; match CPA Ferro=1; 3Z=1; Grupo CPA=1; outras_linhas_nao_apagar=1.
+- Arquivo VPS: `legado-empresas-api-20261006T153440Z.json`; `private_sha256=18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`; cluster_id_sha256 registrado no HANDOFF.
+- Classificador `seloSha256` / papéis por linha: **NÃO gerados** — JSON ausente neste VM/HD.
+- HUMAN_NEXT: SFTP → `04_REPORTS` (nome novo); classificar; CADESP já recebido; staging comprovados; quarentena resto; mapper #48 intocado; sem carga.
+- Coordenação: #216/#217.
+
+### CODEX LEGADO — pacote identidade / procedência / staging (2026-10-06)
+
+- Objetivo: classificar export VPS quando no HD; CADESP; procedência #211; staging comprovados; ferramentas independentes enquanto espera.
+- JSON VPS: ainda ausente no HD deste VM → classificação real **BLOCKED**; sem re-colar script; sem SSH/MCP.
+- Independente (PASS): testes legado 37/37; staging fixture origem8/carregados4/reusos1/conflitos1/quarentena2; origem fixture verified; classificador fixture selo `c5c78e00…dbc67` (não substitui JSON VPS).
+- #211: Git OPEN; SHA-256 relatórios reais BLOCKED até HD.
+- Flags: `importAuthorized=false`; mapper #48 intocado; sem carga; neverDelete; CADESP reusado.
+- HUMAN_NEXT inalterado: SFTP `legado-empresas-api-20261006T153440Z.json` → `04_REPORTS`.
+- Coordenação: #216/#217.
+
+### CODEX LEGADO — tentativa SFTP real do export existente (2026-10-06)
+
+- Objetivo: transferir o JSON **já gerado** (sem novo export) para `04_REPORTS` e validar SHA-256.
+- Primeira ação real: `sftp BatchMode get` → **exit 255** `Permission denied (publickey,password)`; sem chave neste Cloud; `/mnt/d` HD **ABSENT**; workers self-hosted=0.
+- TRANSFER_STATUS=FAILED. **Não** declarei transferência só por tip. **Não** reli/commitei JSON.
+- expected_sha256 (paste): `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` — remoto=local **não** comprovado daqui.
+- BLOCKED=`LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED`.
+- HUMAN_NEXT: FileZilla/SFTP no PC do proprietário → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (nome único se colidir); confirmar hash; então classificador/CADESP/staging.
+- importAuthorized=false; mapper #48 intocado.
+
+### CODEX LEGADO — evidência ERP novo pré-VPS ID+CNPJ (2026-10-06)
+
+- Objetivo: localizar backups/exports do ERP novo **antes da VPS** com pares ID+CNPJ; conferir se o export VPS transferido é o mesmo arquivo (`18e2ab9a…3d7e`); preparar confronto preservando 3 linhas; staging isolado; sem re-pedir CADESP.
+- Ação real Cloud: HD/SFTP ainda BLOCKED (`NO_SSH_KEY`, `/mnt/d` ABSENT). Sem transferência falsa.
+- Entrega código: `scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs` + teste (conta pares id+cnpj_sha256 sem PII; compara SHA do export).
+- Fonte pré-VPS conhecida (Gate 18, só HD): `current-erp-company-topology-proof.json` — 1 grupo + 2 empresas, hashes ID/CNPJ; **não** no Git.
+- Export VPS: ainda só em `/root/erp-private/…153440Z.json`; same-file check **PENDENTE**.
+- Independente: testes verifier + classificar/staging/vínculo verdes; staging sintético inalterado.
+- HUMAN_NEXT: SFTP + `verificar-evidencia-erp-novo-pre-vps.mjs --export … --reports-dir …04_REPORTS`.
+- importAuthorized=false; mapper #48 intocado; #216/#217.
+
+### CODEX LEGADO — revalidação Cloud pré-VPS (2026-10-06T17:27Z)
+
+- Reexecução: HD/SFTP ainda ausentes; inventário NO; verifier BLOCKED; checksum match = **não aplicável/ausente**.
+- Sem novo pedido CADESP; sem export; sem tip-port #48; testes sintéticos 16/16 PASS.
+- Tip: `7c255148` (+ este checkpoint docs). PR #211 OPEN.
+- HUMAN_NEXT inalterado (FileZilla → 04_REPORTS → verifier).
+
+### CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
+- Objetivo: registrar confirmação humana da transferência do export 153440Z; avançar checksum/pré-VPS/staging sem re-export e sem re-pedir CADESP.
+- Transferência: **confirmada pelo proprietário**. Checksum match neste Cloud Agent: **UNVERIFIED** (HD não montado; `find` sem o leaf; inventário NO). Não alegar match nem mismatch de bytes daqui.
+- SHA esperado: `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`.
+- Staging paralelo (fixture): origem 8 / carregados 4 / reusos 1 / conflitos 1 / quarentena 2; porEmpresa Grupo=2 CPA=1 3Z=1; totalDiffCentavos=0; importAuthorized=false.
+- PR #211: tip Cursor OPEN; `gh pr edit` falhou (`Resource not accessible by integration`) — corpo/título sugeridos no HANDOFF para Cursor aplicar.
+- Branch tip Codex: este commit. Mapper #48 intocado. #216/#217.
+- HUMAN_NEXT: no PC, `verificar-evidencia-erp-novo-pre-vps.mjs` no arquivo transferido + `04_REPORTS`; devolver saída sanitizada.
+
+### CODEX LEGADO — pacote paralelo Cloud sem HD (2026-10-07T13:07Z)
+
+- Acesso: `LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT` + `LEGACY_NO_SELF_HOSTED_WORKER` + `LEGACY_EXPORT_PATH_MISSING`. Verifier no JSON real **não** rodou.
+- Checksum 153440Z: **UNVERIFIED** (transferência humana OK; bytes não vistos daqui).
+- Pacote migração **sintético** (não efetivo): staging 8→4/1/1/2; vínculos 3 comprovados/4 quarentena; origem 2/2 verified; classificador fixture selo `c5c78e00…`; importAuthorized=false.
+- PR #211: edit GraphQL negado; texto no HANDOFF.
+- Tip: este commit. Mapper #48 intocado.
+- HUMAN_NEXT: verifier no PC com HD (comando no HANDOFF).
+
+### CODEX LEGADO — saída do só-sintético bloqueada sem host HD (2026-10-07T19:17Z)
+
+- Objetivo: processar arquivo transferido + backup real; sair do pacote exclusivamente sintético.
+- Acesso efetivo Cloud: HD **não** montado; workers self-hosted **0**; desktop agent sem private worker.
+- Entrega: `scripts/legado/executar-verifier-host-local.sh` + teste estrutural (executor host_local).
+- Checksum match: **UNVERIFIED**. Contagens reais: **nenhuma** neste agente. Sintético permanece só referência.
+- `gh pr edit` #211 tipicamente negado; HANDOFF atualizado.
+- HUMAN_NEXT: rodar `executar-verifier-host-local.sh` no PC com `04_REPORTS` ou subir self-hosted worker.
+- importAuthorized=false; mapper #48 intocado; sem re-export/CADESP.
