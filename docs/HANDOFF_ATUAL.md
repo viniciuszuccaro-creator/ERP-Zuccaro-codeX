@@ -1,4 +1,37 @@
+## CODEX LEGADO — tentativa execução real staging (2026-10-07T20:27Z)
+
+Recebido. **Acionei** `executar-verifier-host-local.sh` **neste executor** — resultado real:
+
+```
+executor=this_cloud_agent (hostname=cursor)
+executed=false
+HOST_EXIT=4
+BLOCKED=LEGACY_HOST_REPORTS_DIR_NOT_FOUND
+FOUND_EXPORT=NONE
+self_hosted_workers=0
+usePrivateWorker_desktop_agent=false
+bcId_desktop_chat=bc-d973626e-1060-4071-a25a-6a549769392b
+```
+
+**Quem TEM o backup (não alegar cloud):** PC do proprietário com
+`D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (transferência 153440Z já confirmada).
+Este Cloud Agent **não** é esse host. Nenhum self-hosted worker conectado.
+
+| | Sintético (fixtures) | Real (backup/export) |
+|---|---|---|
+| Checksum 153440Z | n/a | **UNVERIFIED** neste executor |
+| Staging contagens | 8→4/1/1/2 | **0 processadas** |
+| Pré-VPS ID+CNPJ | n/a | topology-proof só no HD do PC |
+| importAuthorized | false | false |
+
+**HUMAN_NEXT (host com HD — único):** no PC autorizado, no clone tip Legado:
+`bash scripts/legado/executar-verifier-host-local.sh`
+Colar `PASTE_TO_GIT_HOST_*` + JSON verifier. Ou `cursor worker start` nesse PC.
+
+Sem CADESP/re-export/re-transferência. Mapper #48 intocado. Carga sob gate.
+
 ## CODEX LEGADO — sair do só-sintético / executor host (2026-10-07T19:17Z)
+
 
 Recebido. **Permissão ≠ HD montado no Cloud.** Confirmação efetiva neste agente:
 
