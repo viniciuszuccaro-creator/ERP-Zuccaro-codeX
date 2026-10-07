@@ -66,6 +66,8 @@ export const recordMatchesGroupScope = (record = {}, groupId) => {
 
 export const empresaPertenceAoGrupo = (empresa, groupId) => recordMatchesGroupScope(empresa, groupId);
 
+export const isTenantMasterEntity = (entityName) => ['Empresa', 'GrupoEmpresarial'].includes(String(entityName || '').trim());
+
 // A linha da listagem pode ser uma projecao; nunca iniciar edicao com ela.
 export const loadEmpresaForEdit = async ({ id, groupId, empresaId, fetchById }) => {
   if (!id || !groupId || typeof fetchById !== 'function') {
@@ -107,9 +109,12 @@ export const userTemAcessoEmpresa = (user, empresa) => {
   if (firstValue(user.empresa_atual_id, user.empresa_padrao_id) === empresaId) return true;
   const vinculos = Array.isArray(user.empresas_vinculadas) ? user.empresas_vinculadas : [];
   if (!vinculos.length) return false;
-  return vinculos.some((vinculo) => (
-    normalizeIdentifier(vinculo?.empresa_id) === empresaId && vinculo?.ativo !== false
-  ));
+  return vinculos.some((vinculo) => {
+    const linkedId = (typeof vinculo === 'string' || typeof vinculo === 'number')
+      ? normalizeIdentifier(vinculo)
+      : normalizeIdentifier(vinculo?.empresa_id);
+    return linkedId === empresaId && !(vinculo && typeof vinculo === 'object' && vinculo.ativo === false);
+  });
 };
 
 export const OPERACAO_EXIGE_EMPRESA_ENTITIES = new Set([
