@@ -1,3 +1,14 @@
+## CODEX — coordenação #231 snapshots (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| HEAD | `47d3a148` · PR https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/231 |
+| CI | SUCCESS frontend+backend |
+| Guard | `tests/public-snapshot-exposure-guard.test.js` **4/4** |
+| Privado | cópia fora do git (Cloud: `/tmp/erp-private-snapshots-backup`) |
+| Histórico | runbook `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md` — **não** executar rewrite neste lote |
+| Próximo | HUMAN merge #231; limpeza hist. sob janela; deploy só após main sem assets |
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
