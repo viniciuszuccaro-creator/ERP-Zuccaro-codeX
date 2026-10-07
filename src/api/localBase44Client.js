@@ -891,25 +891,30 @@ const ensureLocalActiveSession = async (user) => {
   }
 
   if (session) {
-    const evaluation = evaluateLocalUserSession(user, session, Date.now(), accessVersion, sessionTimeout);
+    const evaluation = evaluateLocalUserSession(currentUser, session, Date.now(), accessVersion, sessionTimeout);
     if (!evaluation.allowed) {
-      if (evaluation.reason === 'session_access_version_missing' || evaluation.reason === 'session_access_changed') {
-        revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
+      const masterTopologyRepair = isMasterLocalUser(currentUser)
+        && (evaluation.reason === 'session_access_version_missing' || evaluation.reason === 'session_access_changed');
+      if (!masterTopologyRepair) {
+        if (evaluation.reason === 'session_access_version_missing' || evaluation.reason === 'session_access_changed') {
+          revokeLocalSessionRecord(db, session, 'Alteracao de acesso');
+        }
+        if (evaluation.reason === 'session_expired') {
+          revokeLocalSessionRecord(db, session, 'Expiracao por inatividade');
+        }
+        if (evaluation.reason === 'session_absolute_expired') {
+          revokeLocalSessionRecord(db, session, 'Expiracao absoluta');
+        }
+        throw createAuthDeniedError(evaluation);
       }
-      if (evaluation.reason === 'session_expired') {
-        revokeLocalSessionRecord(db, session, 'Expiracao por inatividade');
-      }
-      if (evaluation.reason === 'session_absolute_expired') {
-        revokeLocalSessionRecord(db, session, 'Expiracao absoluta');
-      }
-      throw createAuthDeniedError(evaluation);
+      // Mestre local: realinhamento de topologia/snapshot muda access_version — rotaciona na sessão ativa.
     }
     const sessions = getEntityStore(db, 'SessaoUsuario');
     const index = sessions.findIndex((item) => String(item.id) === String(session.id));
     if (index < 0) throw createAuthDeniedError({ reason: 'session_not_found', type: 'auth_required' });
     const timestamp = now();
     const singleSession = enforceLocalSingleSession(db, {
-      user,
+      user: currentUser,
       currentSessionId: session.id,
       groupId,
       empresaId,
@@ -917,6 +922,7 @@ const ensureLocalActiveSession = async (user) => {
     });
     session = {
       ...sessions[index],
+      access_version: accessVersion,
       data_hora_ultimo_acesso: timestamp,
       data_hora_inicio: sessions[index].data_hora_inicio || timestamp,
       max_idle_ms: sessionTimeout.maxIdleMs,
