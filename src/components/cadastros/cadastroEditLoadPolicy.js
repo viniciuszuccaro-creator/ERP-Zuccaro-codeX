@@ -19,8 +19,8 @@ export function isCadastroEditLoadComplete(entityName, record, expectedId) {
 }
 
 /**
- * Aliases administrativos legítimos (owner/admin) alinhados aos forms Empresa/Grupo.
- * Não libera role=admin sozinha — exige árvore de permissão explícita.
+ * Mestre organizacional usa exatamente o gate efetivo do cliente local.
+ * Não libera role=admin sozinha nem aliases que o backend recusaria.
  */
 export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   const entity = String(entityName || '');
@@ -29,6 +29,14 @@ export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   const canCreate = typeof checkers.canCreate === 'function' ? checkers.canCreate : null;
   const canEdit = typeof checkers.canEdit === 'function' ? checkers.canEdit : null;
   const canDelete = typeof checkers.canDelete === 'function' ? checkers.canDelete : null;
+
+  if (isTenantMasterEntity(entity)) {
+    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Cadastros', 'Organizacional', 'visualizar'));
+    if (act === 'criar') return Boolean(canCreate && canCreate('Cadastros', 'Organizacional'));
+    if (act === 'editar') return Boolean(canEdit && canEdit('Cadastros', 'Organizacional'));
+    if (act === 'excluir') return Boolean(canDelete && canDelete('Cadastros', 'Organizacional'));
+    return false;
+  }
 
   const cadastrosOk = (() => {
     if (act === 'visualizar') {
@@ -44,31 +52,6 @@ export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   })();
   if (cadastrosOk) return true;
 
-  // Gate canônico local/UI do cartão Organizacional (Empresa/GrupoEmpresarial).
-  if (entity === 'Empresa' || entity === 'GrupoEmpresarial') {
-    if (act === 'visualizar') {
-      if (hasPermission && hasPermission('Cadastros', 'Organizacional', 'visualizar')) return true;
-    } else if (act === 'criar') {
-      if (canCreate && canCreate('Cadastros', 'Organizacional')) return true;
-    } else if (act === 'editar') {
-      if (canEdit && canEdit('Cadastros', 'Organizacional')) return true;
-    } else if (act === 'excluir') {
-      if (canDelete && canDelete('Cadastros', 'Organizacional')) return true;
-    }
-  }
-
-  if (entity === 'Empresa') {
-    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Sistema', 'Empresas', 'visualizar'));
-    if (act === 'criar') return Boolean(canCreate && canCreate('Sistema', 'Empresas'));
-    if (act === 'editar') return Boolean(canEdit && canEdit('Sistema', 'Empresas'));
-    if (act === 'excluir') return Boolean(canDelete && canDelete('Sistema', 'Empresas'));
-  }
-  if (entity === 'GrupoEmpresarial') {
-    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Sistema', 'Grupos', 'visualizar'));
-    if (act === 'criar') return Boolean(canCreate && canCreate('Sistema', 'Grupos'));
-    if (act === 'editar') return Boolean(canEdit && canEdit('Sistema', 'Grupos'));
-    if (act === 'excluir') return Boolean(canDelete && canDelete('Sistema', 'Grupos'));
-  }
   return false;
 }
 

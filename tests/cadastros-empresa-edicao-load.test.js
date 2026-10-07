@@ -70,14 +70,15 @@ test('Save incompleto de Empresa bloqueia', () => {
   );
 });
 
-test('hasCadastroEntityPermission: Organizacional + Sistema.Empresas; sem liberar admin cego', () => {
+test('hasCadastroEntityPermission: mestres exigem Organizacional como o backend', () => {
   const sistemaOnly = {
     hasPermission: (mod, sec) => mod === 'Sistema' && sec === 'Empresas',
     canEdit: (mod, sec) => mod === 'Sistema' && sec === 'Empresas',
     canCreate: () => false,
     canDelete: () => false,
   };
-  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', sistemaOnly), true);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', sistemaOnly), false);
+  assert.equal(hasCadastroEntityPermission('GrupoEmpresarial', 'editar', sistemaOnly), false);
   assert.equal(hasCadastroEntityPermission('Cliente', 'editar', sistemaOnly), false);
   assert.equal(hasCadastroEntityPermission('Empresa', 'editar', {}), false);
 
@@ -90,6 +91,12 @@ test('hasCadastroEntityPermission: Organizacional + Sistema.Empresas; sem libera
   assert.equal(hasCadastroEntityPermission('Empresa', 'editar', organizacional), true);
   assert.equal(hasCadastroEntityPermission('Empresa', 'criar', organizacional), true);
   assert.equal(hasCadastroEntityPermission('Empresa', 'visualizar', organizacional), true);
+  const entidadeOnly = {
+    hasPermission: (mod, sec) => mod === 'Cadastros' && sec === 'Empresa',
+    canEdit: (mod, sec) => mod === 'Cadastros' && sec === 'Empresa',
+  };
+  assert.equal(hasCadastroEntityPermission('Empresa', 'visualizar', entidadeOnly), false);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', entidadeOnly), false);
 });
 
 test('assertCadastroRecordInTenant: Empresa só exige group_id', () => {
@@ -191,10 +198,10 @@ test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular
   assert.doesNotMatch(source, /Cadastros\.Empresa\.salvar/);
 });
 
-test('Bloco5 Empresas: gate Organizacional + aliases Sistema/Empresa', async () => {
+test('Bloco5 Empresas: gate Organizacional sem aliases recusados no backend', async () => {
   const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
   assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
-  assert.match(block, /hasPermission\("Sistema", "Empresas", "visualizar"\)/);
+  assert.doesNotMatch(block, /hasPermission\("Sistema", "Empresas", "visualizar"\)/);
   assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
 });
 
