@@ -1,3 +1,20 @@
+## CURSOR — browser Cadastros+Financeiro (2026-10-07)
+
+validado no navegador (parcial): `/Financeiro` 15 cards + `/Empresas` lista via URL em `:5174`. Parecer `docs/PARECER_CURSOR_BROWSER_CADASTROS_FINANCEIRO_20261007.md`. Auth local #230. Sidebar click→logout pendente. Implantado VPS: não.
+
+## CURSOR — 3 frentes + Financeiro launchpad (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Cadastros/Empresas edição | [Comercial B3-B6 PG/snapshots](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Empresas + forms compartilhados | Financeiro Cursor; outbox |
+| Evidência ERP novo pré-VPS | [Legado SFTP transfer JSON](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | backups privados; checksum 153440Z | CADESP de novo; mapper #48 |
+| Financeiro estrutura | Cursor `cursor/financeiro-estrutura-recuperacao-392b` | `Financeiro.jsx`, `financeiroLaunchpadAccess.js` | candidata Comercial |
+
+- Causa launchpad vazio: filtro só por seção com grant plano `Financeiro: ['visualizar']`.
+- Fix: helper `canViewFinanceLaunchpadModule` (plano vs granular) + `ModuleTabs moduleName="Financeiro"`.
+- Testes: `financeiro-launchpad-access` **4/4**. Sem valores financeiros fictícios.
+- Primeira entrega Cadastros (abrir/editar/salvar): Comercial.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

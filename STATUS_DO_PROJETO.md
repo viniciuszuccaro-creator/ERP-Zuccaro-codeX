@@ -1,3 +1,58 @@
+## CURSOR — evidência navegador 2026-10-07
+
+- Vite `:5174` local: `/Financeiro` 15 cards + Contas a Receber; `/Empresas` lista 2 registros.
+- Artefatos: `docs/PARECER_CURSOR_BROWSER_CADASTROS_FINANCEIRO_20261007.md`.
+- Dependência auth: #230. Sidebar→Financeiro ainda derruba sessão (pendente).
+- VPS implantado: não (MCP timeout).
+
+## CURSOR — bootstrap auth local browser (2026-10-07)
+
+- Causa: pós-snapshot, `buildLocalAccessVersion` null (perfil mestre com `group_id` desalinhado) → `session_access_changed`.
+- Fix: `ensureLocalActiveSession` normaliza mestre + realinha `local_perfil_admin`; `reset-local` limpa auth/sessão.
+- Testes: `local-auth-master-bootstrap` 2/2.
+- Branch: `cursor/local-auth-bootstrap-browser-392b`.
+
+## CURSOR — validação funcional Financeiro #225 (2026-10-07)
+
+- Tip código launchpad: `1f1f8cf6`; tip docs anterior: `3ea5db7b`.
+- Inventário: 15 cards + rotas + `queryKey`/`contextKey`/`filtrarPorContexto` (teste estendido).
+- Parecer funcional: `docs/PARECER_CURSOR_FINANCEIRO_FUNCIONAL_225.md`.
+- Browser/implantação: pendente (VPS MCP timeout).
+- Veredito merge launchpad: **APROVAR**.
+
+## CURSOR — Financeiro #225 pacote completo (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| SHA | `1f1f8cf6` |
+| CI | PASS (4 checks) |
+| Inventário | 15 cards + rota Layout/pages.config — teste `financeiro-navegacao-inventory` |
+| Parecer | `docs/PARECER_CURSOR_FINANCEIRO_225_SHA_1f1f8cf6.md` |
+| Deploy cmp | `docs/PARECER_CURSOR_DEPLOY_CMP_20261007.md` — VPS MCP timeout (auth≠conexão) |
+| Veredito | APROVAR merge #225; homologação browser pós-merge |
+
+---
+
+## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Tarefa | Recuperar estrutura funcional do Financeiro (frente Cursor nas 3 frentes) |
+| Branch | `cursor/financeiro-estrutura-recuperacao-392b` |
+| Base | `main` |
+| Causa raiz | Launchpad filtrava só por seção; grant plano `Financeiro: ['visualizar']` deixava o grid vazio |
+| Mudança | Helper `canViewFinanceLaunchpadModule` (plano vs granular) + `ModuleTabs moduleName="Financeiro"` + empty-state |
+| Arquivos | `src/components/financeiro/financeiroLaunchpadAccess.js`, `src/pages/Financeiro.jsx`, `tests/financeiro-launchpad-access.test.js`, `docs/HANDOFF_ATUAL.md` |
+| Multiempresa/RBAC | Fail-closed sem permissão; granular por seção preservado; sem desligar segurança |
+| Valores fictícios | Não introduzidos |
+| Testes | `node --test tests/financeiro-launchpad-access.test.js` **4/4** |
+| Inventário submódulos no código | Caixa Central, Formas de Pagamento, Caixa PDV, Vendas Multicanal, CNAB, CR, CP, Aprovações Descontos, Conciliação, Custos Logísticos, Relatórios, Alertas, IA Anomalias, Régua Cobrança, Rateio Multi-Empresa |
+| Frentes paralelas | Cadastros/Empresas → Comercial; Legado evidência ERP novo → Legado; este lote = Financeiro |
+| Pendências | CI desta PR; revisão SHA Cadastros quando Comercial publicar; deploy VPS sob gate |
+| Próximo | Revisar SHA final Cadastros; inventário vs implantado VPS se launchpad ainda vazio pós-merge |
+
+---
+
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.

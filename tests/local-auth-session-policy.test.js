@@ -395,7 +395,8 @@ test('local auth stack binds session and refuses api-key browser bypass', async 
 
   assert.match(policy, /ensureLocalActiveSession/);
   assert.match(policy, /markLocalLoggedOut/);
-  assert.match(policy, /evaluateLocalUserSession\(user, session, Date\.now\(\), accessVersion, sessionTimeout\)/);
+  // currentUser = mestre normalizado pós-snapshot; mesma sessão + accessVersion.
+  assert.match(policy, /evaluateLocalUserSession\(currentUser, session, Date\.now\(\), accessVersion, sessionTimeout\)/);
   assert.match(policy, /max_absolute_ms: sessionTimeout\.maxAbsoluteMs/);
   assert.match(policy, /access_version: accessVersion/);
   assert.match(policy, /revokeLocalSessionRecord\(db, session, 'Alteracao de acesso'\)/);

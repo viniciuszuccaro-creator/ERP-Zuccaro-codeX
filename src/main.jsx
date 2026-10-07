@@ -14,6 +14,9 @@ const recoverLocalStorageIfRequested = () => {
     [
       'erp_integra_local_db_v1',
       'erp_integra_local_user_v1',
+      'erp_integra_local_auth_state_v1',
+      'erp_integra_local_deleted_records_v1',
+      'sessao_id',
       'erp_integra_base44_snapshot_imported_v1',
       'erp_integra_base44_snapshot_imported_v2',
       'erp_integra_base44_snapshot_imported_v3_core',
