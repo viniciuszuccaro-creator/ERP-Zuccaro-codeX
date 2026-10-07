@@ -17,6 +17,7 @@ import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunc
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
 
 import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
+import { canViewFinanceLaunchpadModule } from "@/components/financeiro/financeiroLaunchpadAccess";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
 
@@ -405,10 +406,7 @@ export default function Financeiro() {
 
   const allModules = [...modules, ...grupoModules];
 
-  const canViewFinanceModule = (module) => (
-    hasPermission('Financeiro', (module.sectionKey || module.title), 'ver') ||
-    hasPermission('Financeiro', (module.sectionKey || module.title), 'visualizar')
-  );
+  const canViewFinanceModule = (module) => canViewFinanceLaunchpadModule(hasPermission, module);
 
   const allowedAllModules = allModules.filter(canViewFinanceModule);
 
@@ -485,7 +483,21 @@ export default function Financeiro() {
             totalPendentesAprovacao={totalPendentesAprovacao}
           />
           <ModuleTabs
-            listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
+            moduleName="Financeiro"
+            listagem={
+              allowedAllModules.length === 0 ? (
+                <div
+                  role="alert"
+                  className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                  data-permission="Financeiro.visualizar"
+                >
+                  Nenhum submódulo financeiro liberado para este perfil neste contexto.
+                  Confira permissões de Financeiro (módulo ou seção) e a empresa selecionada.
+                </div>
+              ) : (
+                <ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />
+              )
+            }
           />
         </ModuleContent>
       </ModuleLayout>
