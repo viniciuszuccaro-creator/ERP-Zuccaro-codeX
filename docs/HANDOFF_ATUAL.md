@@ -1,6 +1,25 @@
-## FOLLOW-UP chat principal — Comercial + Legado (2026-10-07)
+## FOLLOW-UP — Legado host-local `67a18633` (2026-10-07)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Agente: [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
+
+| Campo | Valor |
+|---|---|
+| Tip Codex | `67a18633` (espelhado neste #211) |
+| Status | **BLOCKED** só-sintético no Cloud |
+| Checksum 153440Z | **UNVERIFIED** |
+| Contagens REAIS | **0** processadas neste agente |
+| Contagens sintéticas | referência apenas (não migradas) |
+| Script | `scripts/legado/executar-verifier-host-local.sh` |
+| Bloqueios | `LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT` · `LEGACY_NO_SELF_HOSTED_WORKER` |
+| Flags | `importAuthorized=false` · sem re-export/CADESP · mapper #48 intocado |
+
+**HUMAN_NEXT (PC com HD):**
+```bash
+bash scripts/legado/executar-verifier-host-local.sh
+# ou: --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier. Alternativa: `cursor worker start` nesse PC.
 
 ### CODEX Comercial — solução final #226
 | Campo | Valor |

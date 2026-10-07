@@ -56,6 +56,9 @@
   - Confere SHA do export VPS vs paste; procura `current-erp-company-topology-proof.json`
   - Teste: `tests/legado-verificar-evidencia-erp-novo-pre-vps.test.js`
   - Separado da importação do ERP antigo
+- Executor host (PC com HD): `scripts/legado/executar-verifier-host-local.sh`
+  - Um comando no proprietário; não re-exporta; emite PASTE sanitizado + chama o verifier
+  - Teste: `tests/legado-executar-verifier-host-local.test.js`
 - Mapper sintético (#48, Cursor): `scripts/legado/mapear-registro-sintetico.mjs`
   — **não editar neste lote Codex**
 
