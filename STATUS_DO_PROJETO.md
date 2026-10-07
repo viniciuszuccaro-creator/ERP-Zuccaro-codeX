@@ -1,12 +1,26 @@
+## CODEX — consolidação #226+#227 Cadastros Empresa (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Destinatário | CODEX COMERCIAL 360 |
+| Veículo | **#226** `cursor/cadastros-empresas-edicao-392b` contra `main` — **sem** merge da base Expedição |
+| De #226 | tenant master `group_id`; `cadastroEditLoadPolicy`; `getInContext`; deep-merge forms; `userTemAcessoEmpresa` string[]; `localBase44` |
+| De #227 `5e50e6b1` | `loadEmpresaForEdit` + `isEditRequestCurrent`; edição Empresa só após leitura completa; ID somente leitura; não reenvia `configuracao_fiscal` no update; certificado `Cadastros.Empresa.Certificado.editar`; Bloco5 gate `Organizacional` |
+| RBAC unificado | `Cadastros.Organizacional` **ou** `Cadastros.Empresa` **ou** `Sistema.Empresas` (fail-closed; sem bypass role=admin) |
+| Testes | `cadastros-empresa-edicao-load` + `contexto-multiempresa-policy` **29/29** |
+| #227 | permanece na base Expedição — **não** mergear em main; conteúdo útil portado |
+| Fora | tip-port outbox/DAM; Financeiro; legado; merge main sem HUMAN; promoção 3080 |
+| Próximo | CI deste tip; HUMAN merge #226; Expedição (persistência/rollback/idempotência) em arquivos **separados** |
+
 ## ORDEM 3 FRENTES — chat principal (2026-10-07)
 
 | Frente | Agente / PR | Primeira ação executada |
 |---|---|---|
-| Comercial | bc-55d5261f + bc-88244dac · #226/#227 | Retomados em background para consolidar |
-| Cursor | este chat · pareceres + #225 | Pareceres SHA `5e50e6b1` e `1f1f8cf6` |
+| Comercial | bc-55d5261f + bc-88244dac · #226/#227 | Consolidação #227→#226 **executada** (código neste tip) |
+| Cursor | chat principal · pareceres + #225 | Pareceres SHA `5e50e6b1` e `1f1f8cf6` |
 | Legado | bc-4427c136 · #211 | Retomado: transferência confirmada → checksum |
 
-Encaminhamento ≠ implementação concluída. Consolidação #227→#226 e checksum Legado são entregas Codex.
+Encaminhamento ≠ implementação concluída. Checksum Legado continua entrega separada.
 
 ## CI — Cadastros #226 consolidado (2026-10-06)
 

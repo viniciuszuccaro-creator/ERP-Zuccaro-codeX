@@ -7,6 +7,19 @@ import {
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
+import {
+  isEditRequestCurrent,
+  loadEmpresaForEdit,
+} from '../src/components/lib/contextoMultiempresaPolicy.js';
+
+const completeEmpresa = Object.freeze({
+  id: 'empresa-a',
+  group_id: 'grupo-a',
+  razao_social: 'Empresa Sintetica',
+  nome_fantasia: 'Sintetica',
+  cnpj: '00000000000191',
+  configuracao_fiscal: { serie_nfe: '9' },
+});
 
 test('Empresa: carga completa exige id, nome e CNPJ; incompleta falha fechado', () => {
   assert.equal(isCadastroEditLoadComplete('Empresa', null, 'e1'), false);
@@ -41,6 +54,7 @@ test('Save Empresa: preserva id, group_id e nested; não carimba empresa_id do c
   assert.equal(clean.razao_social, 'CPA Ferro e Aco');
   assert.equal(clean.inscricao_estadual, 'ISENTO');
   assert.equal(clean.certificado_digital.tipo, 'A1');
+  assert.equal(clean.configuracao_fiscal.serie_nfe, '1');
   assert.equal(clean.empresa_id, undefined);
 });
 
@@ -56,16 +70,26 @@ test('Save incompleto de Empresa bloqueia', () => {
   );
 });
 
-test('hasCadastroEntityPermission aceita Sistema.Empresas sem liberar admin cego', () => {
-  const checkers = {
+test('hasCadastroEntityPermission: Organizacional + Sistema.Empresas; sem liberar admin cego', () => {
+  const sistemaOnly = {
     hasPermission: (mod, sec) => mod === 'Sistema' && sec === 'Empresas',
     canEdit: (mod, sec) => mod === 'Sistema' && sec === 'Empresas',
     canCreate: () => false,
     canDelete: () => false,
   };
-  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', checkers), true);
-  assert.equal(hasCadastroEntityPermission('Cliente', 'editar', checkers), false);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', sistemaOnly), true);
+  assert.equal(hasCadastroEntityPermission('Cliente', 'editar', sistemaOnly), false);
   assert.equal(hasCadastroEntityPermission('Empresa', 'editar', {}), false);
+
+  const organizacional = {
+    hasPermission: (mod, sec) => mod === 'Cadastros' && sec === 'Organizacional',
+    canEdit: (mod, sec) => mod === 'Cadastros' && sec === 'Organizacional',
+    canCreate: (mod, sec) => mod === 'Cadastros' && sec === 'Organizacional',
+    canDelete: () => false,
+  };
+  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', organizacional), true);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'criar', organizacional), true);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'visualizar', organizacional), true);
 });
 
 test('assertCadastroRecordInTenant: Empresa só exige group_id', () => {
@@ -85,26 +109,93 @@ test('assertCadastroRecordInTenant: Empresa só exige group_id', () => {
   );
 });
 
-test('Visualizador usa getInContext + policy de carga/save', async () => {
+test('loadEmpresaForEdit: lê completo e bloqueia parcial/ID/grupo/empresa estranhos', async () => {
+  let reads = 0;
+  const record = await loadEmpresaForEdit({
+    id: 'empresa-a',
+    groupId: 'grupo-a',
+    fetchById: async (id) => {
+      reads += 1;
+      assert.equal(id, 'empresa-a');
+      return completeEmpresa;
+    },
+  });
+  assert.equal(reads, 1);
+  assert.equal(record, completeEmpresa);
+  assert.equal(record.configuracao_fiscal.serie_nfe, '9');
+
+  const attempt = (row, empresaId) => loadEmpresaForEdit({
+    id: 'empresa-a', groupId: 'grupo-a', empresaId,
+    fetchById: async () => row,
+  });
+  await assert.rejects(attempt({ id: 'empresa-a', group_id: 'grupo-a', razao_social: 'Parcial' }));
+  await assert.rejects(attempt({ ...completeEmpresa, id: 'empresa-b' }));
+  await assert.rejects(attempt({ ...completeEmpresa, group_id: 'grupo-b' }));
+  await assert.rejects(attempt(completeEmpresa, 'empresa-b'));
+  await assert.rejects(loadEmpresaForEdit({ id: 'empresa-a', fetchById: async () => completeEmpresa }));
+});
+
+test('loadEmpresaForEdit: falha de leitura bloqueia; retentativa relê', async () => {
+  let reads = 0;
+  const fetchById = async () => {
+    reads += 1;
+    if (reads === 1) throw new Error('falha sintetica');
+    return completeEmpresa;
+  };
+  const args = { id: 'empresa-a', groupId: 'grupo-a', fetchById };
+  await assert.rejects(loadEmpresaForEdit(args), /falha sintetica/);
+  assert.equal(await loadEmpresaForEdit(args), completeEmpresa);
+  assert.equal(reads, 2);
+});
+
+test('isEditRequestCurrent invalida após Novo ou troca de contexto', () => {
+  const pending = {
+    request: 1, current: 1,
+    requestedScope: 'Empresa:grupo-a:',
+    activeScope: 'Empresa:grupo-a:',
+  };
+  assert.equal(isEditRequestCurrent(pending), true);
+  assert.equal(isEditRequestCurrent({ ...pending, current: 2 }), false);
+  assert.equal(isEditRequestCurrent({ ...pending, activeScope: 'Empresa:grupo-b:' }), false);
+});
+
+test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy', async () => {
   const source = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   assert.match(source, /cadastroEditLoadPolicy/);
+  assert.match(source, /loadEmpresaForEdit\(/);
+  assert.match(source, /isEditRequestCurrent/);
   assert.match(source, /getInContext\(ENTITY, item\.id/);
   assert.match(source, /isCadastroEditLoadComplete/);
   assert.match(source, /buildCadastroEditSavePayload/);
   assert.match(source, /hasCadastroEntityPermission/);
   assert.match(source, /isTenantMasterEntity/);
   assert.match(source, /editLoadBlocked/);
+  assert.match(source, /Nao foi possivel carregar o cadastro completo/);
 });
 
-test('EmpresaForm preserva id/group e bloqueia save enquanto load incompleto', async () => {
+test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, sem wipe fiscal', async () => {
   const source = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   assert.match(source, /mergeEmpresaFormData/);
   assert.match(source, /loadIncomplete/);
   assert.match(source, /isLoadingRecord/);
   assert.match(source, /Aguarde o carregamento completo/);
   assert.match(source, /id: formData\.id \|\| dadosIniciais\?\.id/);
+  assert.match(source, /ID do cadastro \(somente leitura\)/);
+  assert.match(source, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
+  assert.match(source, /hasCadastroEntityPermission\("Empresa"/);
+  assert.match(source, /Cadastros\.Organizacional\.editar/);
+  assert.match(source, /Cadastros\.Empresa\.Certificado\.editar/);
+  assert.match(source, /!dadosIniciais\?\.id/);
+  assert.match(source, /delete payload\.configuracao_fiscal/);
   assert.doesNotMatch(source, /empresa_id: contexto === ["']empresa["']/);
-  assert.match(source, /canEdit\(["']Sistema["'], ["']Empresas["']\)/);
+  assert.doesNotMatch(source, /Cadastros\.Empresa\.salvar/);
+});
+
+test('Bloco5 Empresas: gate Organizacional + aliases Sistema/Empresa', async () => {
+  const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
+  assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
+  assert.match(block, /hasPermission\("Sistema", "Empresas", "visualizar"\)/);
+  assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
 });
 
 test('useContextoVisual expoe getInContext fail-closed', async () => {
@@ -119,4 +210,5 @@ test('localBase44 nao filtra Empresa/Grupo por empresa_id do contexto', async ()
   const source = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   assert.match(source, /tenantMaster/);
   assert.match(source, /entityName === 'Empresa' \|\| entityName === 'GrupoEmpresarial'/);
+  assert.match(source, /Empresa: \{ module: 'Cadastros', section: 'Organizacional' \}/);
 });

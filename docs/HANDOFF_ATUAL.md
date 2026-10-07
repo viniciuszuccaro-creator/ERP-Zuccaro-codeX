@@ -1,28 +1,31 @@
+## CODEX — consolidação #226+#227 Cadastros (2026-10-07)
+
+Recebido e **executado**. Solução única na **#226** contra `main` (sem merge Expedição). De #226: tenant master, policy, getInContext, deep-merge, string[]. De #227 `5e50e6b1`: loadEmpresaForEdit, ID visível, Organizacional+certificado, invalida escopo. Testes 29/29. #227 tip Expedição não mergear. VPS MCP timeout neste turno (acesso tentado). Próximo: CI #226; Expedição persistência em arquivos separados.
+
 ## CURSOR/CODEX — ordem 3 frentes paralelas (2026-10-07)
 
 Chat principal: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
 
-| Frente | Responsável | Tarefa recebida | Arquivos quentes | Não tocar | Primeira ação |
+| Frente | Responsável | Tarefa recebida | Arquivos quentes | Não tocar | Estado |
 |---|---|---|---|---|---|
-| Comercial 360 | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) + [Empresa edição segura](bc-88244dac-2a5e-4bf1-9398-67a4af484a02) | Consolidar #227+#226; validar Cadastros; admin empresas; bloqueios candidata Expedição; lote independente | Visualizador, EmpresaForm*, Bloco5, policies, localBase44 | Financeiro #225; Legado staging | Retomar consolidação em #226 base `main` |
-| Cursor | este chat | Parecer #227; **não** 3ª correção Empresas; fechar #225; comparar implantado vs candidata; pareceres por SHA | `docs/PARECER_*`, Financeiro.*, deploy docs | EmpresaForm concorrente | Pareceres `5e50e6b1` / `1f1f8cf6` publicados |
-| Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | Transferência **confirmada** — checksum 153440Z; ID+CNPJ pré-VPS; ETL staging; pacote importação; atualizar #211 | scripts/legado/*, staging privado, #211 | CADESP de novo; mapper paralelo | Verificar arquivo transferido vs sha `18e2ab9a…` |
+| Comercial 360 | este executor Cadastros | Consolidar #227+#226; validar Cadastros; admin empresas | Visualizador, EmpresaForm*, Bloco5, policies, localBase44 | Financeiro #225; Legado staging | **#226 consolidada** (código) |
+| Cursor | chat principal | Parecer #227; fechar #225; pareceres por SHA | `docs/PARECER_*`, Financeiro.* | EmpresaForm concorrente | Pareceres `5e50e6b1` / `1f1f8cf6` |
+| Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | checksum 153440Z; ETL staging; #211 | scripts/legado/*, #211 | CADESP; mapper paralelo | BLOCKED / transferência |
 
-- #226 código: `f9b926e2` CI PASS · #227 tip: `5e50e6b1` CI PASS (base Expedição — não mergear em main) · #225: `1f1f8cf6` CI PASS
 - Pareceres Cursor: `docs/PARECER_CURSOR_227_SHA_5e50e6b1.md`, `docs/PARECER_CURSOR_FINANCEIRO_225_SHA_1f1f8cf6.md`
-- Autorização VPS/SFTP/GitHub válida; confirmar acesso efetivo por frente.
+- Autorização VPS/SFTP/GitHub válida; VPS list timeout neste turno.
 
-## CURSOR — 3 frentes (atualizado 2026-10-06)
+## CURSOR — 3 frentes (atualizado 2026-10-07)
 
 | Frente | Responsável | Branch/PR | Estado |
 |---|---|---|---|
-| Cadastros/Empresas edição | Cursor #226 (+ port tip `85f87005`) | `cursor/cadastros-empresas-edicao-392b` SHA `f9b926e2` | CI **PASS**; tip Comercial não mergear (base Expedição) |
+| Cadastros/Empresas edição | #226 (+ #227 portado; tip `85f87005`) | `cursor/cadastros-empresas-edicao-392b` | consolidação #226+#227; CI deste tip a confirmar |
 | Financeiro launchpad | Cursor | `cursor/financeiro-estrutura-recuperacao-392b` #225 SHA `1f1f8cf6` | CI **PASS** |
 | Evidência ERP novo pré-VPS | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | #211 / `1c110777` | **BLOCKED** `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` |
 
 - Legado: checksum `18e2ab9a…` do export `153440Z` **não** confrontado (arquivo ausente no Cloud). CADESP não re-pedido. `importAuthorized=false`.
 - HUMAN_NEXT Legado: FileZilla → `04_REPORTS` → `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export <json> --reports-dir <04_REPORTS>` → devolver só saída do verifier.
-- Agente nomeado “Comercial Cadastros Empresas” (`bc-55d5261f`) segue no pacote estoque/expedição — **não** é este lote de Cadastros.
+- #227 `codex/cadastros-empresa-edit-safe-20261006` @ `5e50e6b1`: útil portado; **não** mergear base Expedição em main.
 
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.

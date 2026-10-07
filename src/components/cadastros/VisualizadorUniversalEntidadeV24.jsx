@@ -11,7 +11,12 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
-import { buildMultiempresaReadFilter, isTenantMasterEntity } from "@/components/lib/contextoMultiempresaPolicy";
+import {
+  buildMultiempresaReadFilter,
+  isEditRequestCurrent,
+  isTenantMasterEntity,
+  loadEmpresaForEdit,
+} from "@/components/lib/contextoMultiempresaPolicy";
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
@@ -297,6 +302,22 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const lastGoodData  = useRef([]);
   const everLoadedRef = useRef(false);
+  const editRequestRef = useRef(0);
+  const scopeKey = ENTITY + ":" + (groupId || "") + ":" + (empresaId || "");
+  const activeScopeRef = useRef(scopeKey);
+  const previousScopeRef = useRef(scopeKey);
+  activeScopeRef.current = scopeKey;
+
+  useEffect(function() {
+    if (previousScopeRef.current === scopeKey) return;
+    previousScopeRef.current = scopeKey;
+    editRequestRef.current += 1;
+    setIsLoadingEdit(false);
+    setEditLoadBlocked(false);
+    setEditError(null);
+    setEditItem(null);
+    setShowForm(false);
+  }, [scopeKey]);
 
   // Debounce busca
   const debRef = useRef(null);
@@ -470,6 +491,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── formulário ───────────────────────────────────────────────────────────────
   const handleCloseForm = useCallback(function(wasSaved) {
+    editRequestRef.current += 1;
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
@@ -549,13 +571,16 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     auditCadastroEvent("Visualizacao", "Formulario de criacao aberto", { origem: "VisualizadorUniversalEntidadeV24" });
+    editRequestRef.current += 1;
+    setIsLoadingEdit(false);
+    setEditLoadBlocked(false);
     setEditItem(null);
     setEditError(null);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
   }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido]);
 
-  const handleEditItem = useCallback(function(item) {
+  const handleEditItem = useCallback(async function(item) {
     if (!item || !item.id) return;
     if (!contextoValido) {
       auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto" });
@@ -567,40 +592,95 @@ export default function VisualizadorUniversalEntidadeV24({
       alert("Sem permissao para editar.");
       return;
     }
-    auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
-    // Abre com o row da lista (nao limpa campos) e hidrata o registro completo via getInContext.
-    setEditItem(JSON.parse(JSON.stringify(item)));
+    const request = ++editRequestRef.current;
+    const requestedScope = scopeKey;
+    const stillCurrent = function() {
+      return isEditRequestCurrent({
+        request: request,
+        current: editRequestRef.current,
+        requestedScope: requestedScope,
+        activeScope: activeScopeRef.current,
+      });
+    };
     setEditError(null);
     setEditLoadBlocked(false);
+
+    // Empresa: nunca abrir com projeção da grade — lê completo antes do form (#227).
+    if (ENTITY === "Empresa") {
+      setIsLoadingEdit(true);
+      setShowForm(false);
+      try {
+        const complete = await loadEmpresaForEdit({
+          id: item.id,
+          groupId: groupId,
+          empresaId: (contextoCanonico && contextoCanonico.scopeType === "empresa") ? empresaId : null,
+          fetchById: function(id) { return base44.entities.Empresa.get(id); },
+        });
+        if (!stillCurrent()) return;
+        if (!isCadastroEditLoadComplete(ENTITY, complete, item.id)) {
+          setEditLoadBlocked(true);
+          setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+          await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa incompleta", {
+            registro_id: item.id, sucesso: false, motivo: "carga_incompleta",
+          });
+          return;
+        }
+        setEditItem(JSON.parse(JSON.stringify(complete)));
+        setEditLoadBlocked(false);
+        auditCadastroEvent("Visualizacao", "Formulario de edicao aberto com carga completa", {
+          registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24",
+        });
+        setFormKey(function(k) { return k + 1; });
+        setShowForm(true);
+      } catch (error) {
+        if (!stillCurrent()) return;
+        console.error("[VisualizadorUniversalEntidade] Falha ao carregar Empresa completa", error);
+        setEditItem(null);
+        setEditLoadBlocked(true);
+        setEditError("Nao foi possivel carregar o cadastro completo. Edicao bloqueada.");
+        await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa falhou", {
+          registro_id: item.id, sucesso: false, motivo: "leitura_ou_escopo",
+          erro: (error && error.message) || String(error),
+        });
+        alert("Nao foi possivel abrir a edicao: " + ((error && error.message) || String(error)));
+      } finally {
+        if (stillCurrent()) setIsLoadingEdit(false);
+      }
+      return;
+    }
+
+    // Demais cadastros: abre com row e hidrata via getInContext (#226).
+    auditCadastroEvent("Visualizacao", "Formulario de edicao aberto", { registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24" });
+    setEditItem(JSON.parse(JSON.stringify(item)));
     setIsLoadingEdit(true);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-    (async function loadFullRecord() {
-      try {
-        const full = await getInContext(ENTITY, item.id, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
-        assertCadastroRecordInTenant(ENTITY, full, {
-          groupId: (contextoCanonico && contextoCanonico.groupId) || groupId,
-          empresaId: (contextoCanonico && contextoCanonico.empresaId) || empresaId,
-          scopeType: (contextoCanonico && contextoCanonico.scopeType) || null,
-        }, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
-        if (!isCadastroEditLoadComplete(ENTITY, full, item.id)) {
-          setEditLoadBlocked(true);
-          setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
-          return;
-        }
-        setEditItem(JSON.parse(JSON.stringify(Object.assign({}, item, full))));
-        setEditLoadBlocked(false);
-        setEditError(null);
-        setFormKey(function(k) { return k + 1; });
-      } catch (error) {
-        console.error("[VisualizadorUniversalEntidade] Falha ao carregar registro completo", error);
+    try {
+      const full = await getInContext(ENTITY, item.id, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+      if (!stillCurrent()) return;
+      assertCadastroRecordInTenant(ENTITY, full, {
+        groupId: (contextoCanonico && contextoCanonico.groupId) || groupId,
+        empresaId: (contextoCanonico && contextoCanonico.empresaId) || empresaId,
+        scopeType: (contextoCanonico && contextoCanonico.scopeType) || null,
+      }, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
+      if (!isCadastroEditLoadComplete(ENTITY, full, item.id)) {
         setEditLoadBlocked(true);
-        setEditError("Falha ao carregar registro completo. Salvamento bloqueado; campos da lista preservados.");
-      } finally {
-        setIsLoadingEdit(false);
+        setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+        return;
       }
-    })();
-  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, groupId, empresaId, getInContext, contextoCanonico]);
+      setEditItem(JSON.parse(JSON.stringify(Object.assign({}, item, full))));
+      setEditLoadBlocked(false);
+      setEditError(null);
+      setFormKey(function(k) { return k + 1; });
+    } catch (error) {
+      if (!stillCurrent()) return;
+      console.error("[VisualizadorUniversalEntidade] Falha ao carregar registro completo", error);
+      setEditLoadBlocked(true);
+      setEditError("Falha ao carregar registro completo. Salvamento bloqueado; campos da lista preservados.");
+    } finally {
+      if (stillCurrent()) setIsLoadingEdit(false);
+    }
+  }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, groupId, empresaId, getInContext, contextoCanonico, scopeKey]);
 
   const formProps = useMemo(
     function() {

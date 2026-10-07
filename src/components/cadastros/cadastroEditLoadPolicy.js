@@ -44,6 +44,19 @@ export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   })();
   if (cadastrosOk) return true;
 
+  // Gate canônico local/UI do cartão Organizacional (Empresa/GrupoEmpresarial).
+  if (entity === 'Empresa' || entity === 'GrupoEmpresarial') {
+    if (act === 'visualizar') {
+      if (hasPermission && hasPermission('Cadastros', 'Organizacional', 'visualizar')) return true;
+    } else if (act === 'criar') {
+      if (canCreate && canCreate('Cadastros', 'Organizacional')) return true;
+    } else if (act === 'editar') {
+      if (canEdit && canEdit('Cadastros', 'Organizacional')) return true;
+    } else if (act === 'excluir') {
+      if (canDelete && canDelete('Cadastros', 'Organizacional')) return true;
+    }
+  }
+
   if (entity === 'Empresa') {
     if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Sistema', 'Empresas', 'visualizar'));
     if (act === 'criar') return Boolean(canCreate && canCreate('Sistema', 'Empresas'));

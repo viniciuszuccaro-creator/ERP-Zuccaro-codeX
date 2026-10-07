@@ -10,6 +10,7 @@ import { Loader2, Building2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDocument = (value, max = 32) => String(value ?? "").replace(/[^0-9A-Za-z.\-/]/g, "").slice(0, max).trim();
@@ -55,6 +56,7 @@ function mergeEmpresaFormData(partial) {
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * Consolida #226 (deep-merge/tenant) + #227 (ID visível, Organizacional, certificado granular).
  */
 export default function EmpresaForm({
   empresa,
@@ -69,13 +71,19 @@ export default function EmpresaForm({
   isLoadingRecord = false,
 }) {
   const dadosIniciais = item || data || initialData || defaultValues || empresa;
-  const { canCreate, canEdit } = usePermissions();
+  const { canCreate, canEdit, hasPermission, hasPermissionKey } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
-  const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
-  const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
+  const permCheckers = { hasPermission, canCreate, canEdit };
+  const podeCriar = hasCadastroEntityPermission("Empresa", "criar", permCheckers);
+  const podeEditar = hasCadastroEntityPermission("Empresa", "editar", permCheckers);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+  const permissaoFormulario = dadosIniciais?.id
+    ? "Cadastros.Organizacional.editar"
+    : "Cadastros.Organizacional.criar";
+  const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
+  const podeEditarCertificado = podeSalvar && hasPermissionKey(permissaoCertificado);
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
   const [formData, setFormData] = useState(() => mergeEmpresaFormData(dadosIniciais));
 
@@ -131,24 +139,38 @@ export default function EmpresaForm({
       regime_tributario: sanitizeText(formData.regime_tributario, 80),
       tipo: sanitizeText(formData.tipo, 40),
       status: sanitizeText(formData.status, 40),
-      certificado_digital: {
-        tipo: sanitizeText(formData.certificado_digital?.tipo || "A1", 10),
-        arquivo_certificado: sanitizeText(formData.certificado_digital?.arquivo_certificado, 500),
-        senha_certificado: sanitizeText(formData.certificado_digital?.senha_certificado, 500),
-        data_validade: sanitizeText(formData.certificado_digital?.data_validade, 20)
-      },
-      configuracao_fiscal: {
-        ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe || "Homologacao", 40),
-        serie_nfe: sanitizeText(formData.configuracao_fiscal?.serie_nfe || "1", 20),
-        proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
-        autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
-      },
       group_id: formData.group_id || groupId,
       grupo_id: formData.grupo_id || formData.group_id || groupId,
     };
+
+    // Update: não reenviar configuração fiscal oculta — merge no Visualizador preserva a carregada (#227).
+    if (!dadosIniciais?.id) {
+      payload.configuracao_fiscal = {
+        ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe || "Homologacao", 40),
+        serie_nfe: sanitizeText(formData.configuracao_fiscal?.serie_nfe || "1", 20),
+        proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
+        autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao),
+      };
+    } else {
+      delete payload.configuracao_fiscal;
+    }
+
+    if (podeEditarCertificado) {
+      payload.certificado_digital = {
+        tipo: sanitizeText(formData.certificado_digital?.tipo || "A1", 10),
+        arquivo_certificado: sanitizeText(formData.certificado_digital?.arquivo_certificado, 500),
+        senha_certificado: sanitizeText(formData.certificado_digital?.senha_certificado, 500),
+        data_validade: sanitizeText(formData.certificado_digital?.data_validade, 20),
+      };
+    } else {
+      delete payload.certificado_digital;
+    }
+
     // Tenant master: nao carimbar empresa_id do contexto atual sobre o registro.
     if (formData.empresa_id != null && formData.empresa_id !== "") {
       payload.empresa_id = formData.empresa_id;
+    } else {
+      delete payload.empresa_id;
     }
     return payload;
   };
@@ -168,6 +190,10 @@ export default function EmpresaForm({
     }
 
     const payload = buildPayload();
+    if (dadosIniciais?.id && payload.id !== dadosIniciais.id) {
+      toast.error("ID da empresa nao pode ser alterado.");
+      return;
+    }
     if (!payload.razao_social || !payload.cnpj) {
       toast.error("Razao Social e CNPJ sao obrigatorios.");
       return;
@@ -187,34 +213,40 @@ export default function EmpresaForm({
           </AlertDescription>
         </Alert>
       )}
+      {dadosIniciais?.id && (
+        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <span className="font-medium">ID do cadastro (somente leitura): </span>
+          <code className="break-all select-text">{dadosIniciais.id}</code>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Razao Social *</Label>
-          <Input value={formData.razao_social} onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission="Cadastros.Empresa.editar" data-action="editar-razao-social-empresa" data-sensitive />
+          <Input value={formData.razao_social} onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="editar-razao-social-empresa" data-sensitive />
         </div>
 
         <div>
           <Label>Nome Fantasia</Label>
-          <Input value={formData.nome_fantasia} onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission="Cadastros.Empresa.editar" data-action="editar-nome-fantasia-empresa" data-sensitive />
+          <Input value={formData.nome_fantasia} onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="editar-nome-fantasia-empresa" data-sensitive />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>CNPJ *</Label>
-          <Input value={formData.cnpj} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder="00.000.000/0000-00" disabled={!podeSalvar || saveBlocked} data-permission="Cadastros.Empresa.editar" data-action="editar-cnpj-empresa" data-sensitive />
+          <Input value={formData.cnpj} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} placeholder="00.000.000/0000-00" disabled={!podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="editar-cnpj-empresa" data-sensitive />
         </div>
 
         <div>
           <Label>Inscricao Estadual</Label>
-          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission="Cadastros.Empresa.editar" data-action="editar-inscricao-estadual-empresa" data-sensitive />
+          <Input value={formData.inscricao_estadual} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} disabled={!podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="editar-inscricao-estadual-empresa" data-sensitive />
         </div>
       </div>
 
       <div>
         <Label>Regime Tributario</Label>
         <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked}>
-          <SelectTrigger data-permission="Cadastros.Empresa.editar" data-action="selecionar-regime-tributario-empresa" data-sensitive>
+          <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-regime-tributario-empresa" data-sensitive>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -228,17 +260,22 @@ export default function EmpresaForm({
 
       <div className="p-4 bg-amber-50 rounded border border-amber-200">
         <h4 className="font-semibold mb-3">Certificado Digital</h4>
+        {!podeEditarCertificado && (
+          <p className="text-xs text-amber-800 mb-3">
+            Edicao de certificado exige permissao especifica. Alteracoes nesta secao estao bloqueadas.
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div>
             <Label>Data de Validade</Label>
-            <Input type="date" value={formData.certificado_digital?.data_validade || ""} onChange={(e) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, data_validade: e.target.value } })} disabled={!podeSalvar || saveBlocked} data-permission="Cadastros.Empresa.certificado" data-action="editar-validade-certificado" data-sensitive />
+            <Input type="date" value={formData.certificado_digital?.data_validade || ""} onChange={(e) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, data_validade: e.target.value } })} disabled={!podeEditarCertificado || saveBlocked} data-permission={permissaoCertificado} data-action="editar-validade-certificado" data-sensitive />
           </div>
 
           <div>
             <Label>Tipo</Label>
-            <Select value={formData.certificado_digital?.tipo || "A1"} onValueChange={(v) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, tipo: v } })} disabled={!podeSalvar || saveBlocked}>
-              <SelectTrigger data-permission="Cadastros.Empresa.certificado" data-action="selecionar-tipo-certificado" data-sensitive>
+            <Select value={formData.certificado_digital?.tipo || "A1"} onValueChange={(v) => setFormData({ ...formData, certificado_digital: { ...formData.certificado_digital, tipo: v } })} disabled={!podeEditarCertificado || saveBlocked}>
+              <SelectTrigger data-permission={permissaoCertificado} data-action="selecionar-tipo-certificado" data-sensitive>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -260,7 +297,7 @@ export default function EmpresaForm({
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !podeSalvar || saveBlocked} data-permission="Cadastros.Empresa.salvar" data-action="salvar-empresa" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="salvar-empresa" data-sensitive>
           {(isSubmitting || isLoadingRecord) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais?.id ? "Atualizar" : "Criar Empresa"}
         </Button>
