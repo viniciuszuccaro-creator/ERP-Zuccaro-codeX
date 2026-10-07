@@ -1,16 +1,26 @@
+## CODEX — solução final #226+#227+#228 Empresas (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Veículo | **#226** `cursor/cadastros-empresas-edicao-392b` → `main` |
+| De #226 | tenant master, `cadastroEditLoadPolicy`, getInContext, deep-merge, string[] vínculos |
+| De #227 | loadEmpresaForEdit, anti-race request/scope, ID readonly, fiscal omit no update, certificado granular, Organizacional |
+| De #228 `9ab5ec5a` | group_id/empresa_id do registro; lista-mestre; mutação **não** aceita `Cadastros.Empresa` sozinho; localBase44 alias `Sistema.Empresas` |
+| Testes | load+edicao+policy **36/36** |
+| #227/#228 | base Expedição — **não** mergear em main |
+| Próximo | CI deste tip; HUMAN merge #226; Expedição separado |
+
 ## PACOTES GRANDES PARALELOS — 2026-10-07 (chat principal)
 
 | Item | Estado |
 |---|---|
 | Ordem | 3 frentes sem esperar “próximo”; HANDOFF atualizado |
-| HEADs | #226 tip branch; #227 `5e50e6b1`; #228 `9ab5ec5a` (escopo mestre sobre #227) |
-| Cursor revisão | `#226` já tinha runtime de escopo mestre; **testes #228 portados** em `tests/cadastro-empresa-edicao.test.js` (7/7) |
-| Parecer | `docs/PARECER_CURSOR_226_227_228_SHA.md` — merge só #226; #227/#228 não mergear |
-| Financeiro #225 | tip `3ea5db7b`; 15 cards/rotas inventariados; browser pendente |
-| Legado #211 | tip `cf96c4bb`; checksum UNVERIFIED no Cloud; executor local |
-| VPS | MCP Hostinger timeout — implantado = não |
-| Codex Comercial | retomado bc-55d5261f |
-| Codex Legado | retomado bc-4427c136 |
+| HEADs | #226 tip branch; #227 `5e50e6b1`; #228 `9ab5ec5a` |
+| Cursor | testes #228 já em #226 (`5445f7cb`); runtime+RBAC+forms reforçados neste tip |
+| Parecer | `docs/PARECER_CURSOR_226_227_228_SHA.md` — merge só #226 |
+| Financeiro #225 | tip `3ea5db7b`; browser pendente |
+| Legado #211 | checksum UNVERIFIED no Cloud |
+| VPS | MCP Hostinger timeout |
 
 ## SHA FINAL consolidacao Cadastros (2026-10-07)
 

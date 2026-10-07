@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import BuscaCEP from "../comercial/BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
@@ -76,14 +77,15 @@ export default function EmpresaFormCompleto({
   loadIncomplete = false,
   isLoadingRecord = false,
 }) {
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const dadosIniciaisProps = empresa || item || data || initialData || defaultValues || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
-  const podeCriar = canCreate("Cadastros", "Organizacional") || canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
-  const podeEditar = canEdit("Cadastros", "Organizacional") || canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
-  const podeExcluir = canDelete("Cadastros", "Organizacional") || canDelete("Cadastros", "Empresa") || canDelete("Cadastros", null) || canDelete("Sistema", "Empresas");
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete };
+  const podeCriar = hasCadastroEntityPermission("Empresa", "criar", permCheckers);
+  const podeEditar = hasCadastroEntityPermission("Empresa", "editar", permCheckers);
+  const podeExcluir = hasCadastroEntityPermission("Empresa", "excluir", permCheckers);
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
   const [activeTab, setActiveTab] = useState('dados');
   const [formData, setFormData] = useState(() => mergeEmpresaCompletoData(dadosIniciaisProps));
@@ -150,11 +152,14 @@ export default function EmpresaFormCompleto({
         nfe_emitida: sanitizeUrl(formData.urls_webhook_padrao?.nfe_emitida, 500)
       },
       status: sanitizeText(formData.status || "Ativa", 40),
-      group_id: formData.group_id || groupId,
-      grupo_id: formData.grupo_id || formData.group_id || groupId,
+      // Preferir group_id do registro carregado; tenant master não carimba empresa do contexto (#228).
+      group_id: dadosIniciaisProps?.group_id || formData.group_id || groupId,
+      grupo_id: dadosIniciaisProps?.grupo_id || dadosIniciaisProps?.group_id || formData.grupo_id || formData.group_id || groupId,
     };
-    if (formData.empresa_id != null && formData.empresa_id !== '') {
-      payload.empresa_id = formData.empresa_id;
+    if (dadosIniciaisProps?.empresa_id != null && dadosIniciaisProps.empresa_id !== '') {
+      payload.empresa_id = dadosIniciaisProps.empresa_id;
+    } else {
+      delete payload.empresa_id;
     }
     return payload;
   };

@@ -1,3 +1,7 @@
+## CODEX — solução final #226+#227+#228 (2026-10-07)
+
+Recebido e **executado**. HEADs #226/#227/#228 comparados. Delta #228 (escopo mestre, vínculos, negação Cadastros.Empresa sozinho, lista group_id) + RBAC Sistema.Empresas local no veículo #226 vs main. Sem merge Expedição. Testes 36/36.
+
 ## ORDEM PACOTES GRANDES EM PARALELO (2026-10-07) — chat principal
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
@@ -21,6 +25,7 @@ Autorização VPS/Web Console/SFTP/GitHub: válida; **acesso efetivo VPS MCP = t
 
 Parecer SHA: `docs/PARECER_CURSOR_226_227_228_SHA.md`
 **Não presumir** que tip antigo #226 já tinha #228: gap de **testes** de escopo mestre fechado neste lote; runtime já estava em #226.
+
 
 ## PARECER CURSOR — #226 consolidada `f64e89a5` (2026-10-07)
 

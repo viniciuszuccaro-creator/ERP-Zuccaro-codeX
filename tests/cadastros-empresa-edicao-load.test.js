@@ -70,7 +70,7 @@ test('Save incompleto de Empresa bloqueia', () => {
   );
 });
 
-test('hasCadastroEntityPermission: Organizacional + Sistema.Empresas; sem liberar admin cego', () => {
+test('hasCadastroEntityPermission: Organizacional + Sistema.Empresas; Cadastros.Empresa sozinho não edita', () => {
   const sistemaOnly = {
     hasPermission: (mod, sec) => mod === 'Sistema' && sec === 'Empresas',
     canEdit: (mod, sec) => mod === 'Sistema' && sec === 'Empresas',
@@ -90,6 +90,16 @@ test('hasCadastroEntityPermission: Organizacional + Sistema.Empresas; sem libera
   assert.equal(hasCadastroEntityPermission('Empresa', 'editar', organizacional), true);
   assert.equal(hasCadastroEntityPermission('Empresa', 'criar', organizacional), true);
   assert.equal(hasCadastroEntityPermission('Empresa', 'visualizar', organizacional), true);
+
+  const soEmpresa = {
+    hasPermission: (mod, sec) => mod === 'Cadastros' && sec === 'Empresa',
+    canEdit: (mod, sec) => mod === 'Cadastros' && sec === 'Empresa',
+    canCreate: (mod, sec) => mod === 'Cadastros' && sec === 'Empresa',
+    canDelete: () => false,
+  };
+  assert.equal(hasCadastroEntityPermission('Empresa', 'visualizar', soEmpresa), true);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'editar', soEmpresa), false);
+  assert.equal(hasCadastroEntityPermission('Empresa', 'criar', soEmpresa), false);
 });
 
 test('assertCadastroRecordInTenant: Empresa só exige group_id', () => {

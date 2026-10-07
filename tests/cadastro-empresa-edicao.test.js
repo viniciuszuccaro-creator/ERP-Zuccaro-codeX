@@ -91,12 +91,14 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.match(viewer, /isEditRequestCurrent/);
   assert.match(viewer, /empresaId: tenantMaster \? null : empresaId/);
   assert.match(policy, /!tenantMaster && !clean\.empresa_id && empresaId/);
-  assert.doesNotMatch(form, /empresa_id: contexto === "empresa"/);
   assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
   assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
   assert.match(form, /ID do cadastro \(somente leitura\)/);
   assert.match(form, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.salvar/);
+  assert.doesNotMatch(form, /empresa_id: contexto === ["']empresa["']/);
+  assert.match(form, /dadosIniciais\?\.group_id \|\| formData\.group_id \|\| groupId/);
+  assert.match(form, /dadosIniciais\?\.empresa_id/);
   assert.match(form, /if \(!dadosIniciais\?\.id\) \{\s*payload\.configuracao_fiscal/);
   assert.match(form, /Cadastros\.Empresa\.Certificado\.editar/);
   assert.match(form, /disabled=\{!podeEditarCertificado/);

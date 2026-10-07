@@ -139,8 +139,9 @@ export default function EmpresaForm({
       regime_tributario: sanitizeText(formData.regime_tributario, 80),
       tipo: sanitizeText(formData.tipo, 40),
       status: sanitizeText(formData.status, 40),
-      group_id: formData.group_id || groupId,
-      grupo_id: formData.grupo_id || formData.group_id || groupId,
+      // Preferir group_id do registro carregado (#228); nunca carimbar empresa operacional.
+      group_id: dadosIniciais?.group_id || formData.group_id || groupId,
+      grupo_id: dadosIniciais?.grupo_id || dadosIniciais?.group_id || formData.grupo_id || formData.group_id || groupId,
     };
 
     // Update: não reenviar configuração fiscal oculta — merge no Visualizador preserva a carregada (#227).
@@ -166,9 +167,9 @@ export default function EmpresaForm({
       delete payload.certificado_digital;
     }
 
-    // Tenant master: nao carimbar empresa_id do contexto atual sobre o registro.
-    if (formData.empresa_id != null && formData.empresa_id !== "") {
-      payload.empresa_id = formData.empresa_id;
+    // Tenant master: só preserva empresa_id já existente no registro; não carimba contexto (#228).
+    if (dadosIniciais?.empresa_id != null && dadosIniciais.empresa_id !== "") {
+      payload.empresa_id = dadosIniciais.empresa_id;
     } else {
       delete payload.empresa_id;
     }

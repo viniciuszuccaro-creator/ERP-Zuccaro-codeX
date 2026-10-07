@@ -1411,11 +1411,25 @@ const auditLocalTotpAttempt = ({ success, reason, groupId, empresaId, sessionId 
   notify('AuditLog', 'create', audit[0]);
 };
 
+const TENANT_MASTER_PERMISSION_ALIASES = {
+  Empresa: [
+    { module: 'Cadastros', section: 'Organizacional' },
+    { module: 'Sistema', section: 'Empresas' },
+  ],
+  GrupoEmpresarial: [
+    { module: 'Cadastros', section: 'Organizacional' },
+    { module: 'Sistema', section: 'Grupos' },
+  ],
+};
+
 const assertLocalMutationAllowed = (entityName, action, recordId = null) => {
   if (entityName === 'AuditLog') return;
-  const scope = getEntityPermissionScope(entityName);
-  const result = evaluateLocalPermission({ ...scope, entityName, action });
-  if (!result.allowed) {
+  const scopes = TENANT_MASTER_PERMISSION_ALIASES[entityName]
+    || [getEntityPermissionScope(entityName)];
+  const allowed = scopes.some((scope) => (
+    evaluateLocalPermission({ ...scope, entityName, action }).allowed
+  ));
+  if (!allowed) {
     auditLocalPermissionDenied(entityName, action, recordId);
     throw new Error(`Permissao negada para ${action} em ${entityName}.`);
   }
@@ -1432,8 +1446,11 @@ const assertLocalTituloSettlementAllowed = (entityName, recordId = null) => {
 };
 
 const assertLocalPermissionAny = (entityName, actions = [], recordId = null) => {
-  const scope = getEntityPermissionScope(entityName);
-  const allowed = actions.some((action) => evaluateLocalPermission({ ...scope, entityName, action }).allowed);
+  const scopes = TENANT_MASTER_PERMISSION_ALIASES[entityName]
+    || [getEntityPermissionScope(entityName)];
+  const allowed = actions.some((action) => scopes.some((scope) => (
+    evaluateLocalPermission({ ...scope, entityName, action }).allowed
+  )));
   if (!allowed) {
     const primary = actions[0] || 'editar';
     auditLocalPermissionDenied(entityName, primary, recordId);
