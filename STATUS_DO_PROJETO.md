@@ -11635,3 +11635,9 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## CODEX — gate único de mestres organizacionais após #226 (2026-10-07)
+
+- Base #226 `566d4552` (que já consolida conteúdo #227); #228 `9ab5ec5a` mantém recorte alternativo em base Expedição e não foi mesclada. Causa comprovada: o helper/Bloco5 liberavam Empresa e GrupoEmpresarial por aliases `Sistema.*` ou Cadastros amplo, enquanto o cliente local exige `Cadastros.Organizacional`, gerando botão acionável e gravação negada.
+- Corrigidos helper e cartão existentes para usar somente o gate efetivo, preservando os demais cadastros. Teste cobre negação de aliases, autorização Organizacional, abertura completa, falha/retentativa e troca de contexto: 19/19 focados. Não houve alteração de CNPJ real, migration, VPS ou importação.
+- Próximo P0: CI e revisão independente deste HEAD; homologação visual com sessão administrativa legítima e API/PostgreSQL isolados permanecem gates antes de merge/deploy.
