@@ -1,3 +1,8 @@
+## CURSOR — Financeiro #225 fluxo real (2026-10-07)
+
+- Teste `financeiro-contexto-fluxo-real`: ContaReceber isolada empresa A/B via localBase44 (não texto-fonte).
+- Grant plano 15 cards + granular. **Não** equivale a validação erp-dev (Supabase).
+
 ## CURSOR — validação funcional Financeiro #225 (2026-10-07)
 
 - Tip código launchpad: `1f1f8cf6`; tip docs anterior: `3ea5db7b`.
