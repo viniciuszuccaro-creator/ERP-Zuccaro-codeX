@@ -22,6 +22,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+public/base44-local-core-snapshot.json
+public/base44-local-snapshot.json
 *.local
 
 # Editor directories and files
