@@ -1,4 +1,17 @@
-<<<<<<< HEAD
+## CODEX — #226 MERGED; tip branch pós-merge limpo (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Merge | `6dfd39d2` · tip código `5271da58` |
+| Matriz | #226 ⊇ #227/#228/#229 — `docs/MATRIZ_226_CONTEM_227_228_229.md` |
+| Gate | UI ≡ localBase44 só Organizacional |
+| PRs arquivar | #227, #228, #229 (sem close sem HUMAN; gh comment negado) |
+| Main | `5c81a542` (#231+#226+#225+#233) |
+| Indep. | #203 rebase main |
+| VPS | MCP timeout |
+
+## TRÊS PACOTES — integrado em main (2026-10-07T20:45Z)
+
 ## CODEX — tip #226 CI verde pós-matriz (2026-10-07)
 
 | Campo | Valor |
@@ -14,9 +27,8 @@
 | Próximo | HUMAN merge #226 → #225 → #203 |
 
 ## TRÊS PACOTES — integração pós-#231 (2026-10-07)
-=======
-## TRÊS PACOTES — integrado em main (2026-10-07T20:45Z)
->>>>>>> origin/main
+
+
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
 Main tip: `e2c51d84` (#231 + #226 + #225).
