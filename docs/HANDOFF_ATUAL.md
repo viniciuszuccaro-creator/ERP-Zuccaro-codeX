@@ -1,15 +1,37 @@
+## TRÊS PACOTES ATÉ CONCLUSÃO (2026-10-07T20:30Z)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Acessos: GitHub OK · merge #231 OK · VPS MCP **timeout** · HD Legado **não no Cloud**.
+
+| Frente | Responsável | 1ª ação | Estado |
+|---|---|---|---|
+| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Confirmar #226⊇#227/8/9 + lote #203 | rebase pós-#231 em andamento |
+| CURSOR | este chat | Revisar HEADs; merge #231→#226→#225; deploy; validar erp-dev | **#231 MERGED** `c0efab11`; #226 rebase; deploy BLOCKED MCP |
+| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | Executor no PC com HD + staging real | disparado |
+
+### Fases
+
+| Fase | #231 | #226 | #225 | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | launchpad+fluxo | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED cloud | — |
+| integrado | **sim** `c0efab11` | rebase tip | não | — | parcial |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | pendente | pendente | pendente | N/A | RUNTIME-08B `d02cd012` pré-#231 deploy |
+| dados reais | — | — | — | pendente host | — |
+
 ## FOLLOW-UP Cursor — Comercial pacote fechado (2026-10-07)
 
 Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)
 
 | PR | HEAD | Veredito |
 |---|---|---|
-| #226 | `434b4bf3` CI SUCCESS MERGEABLE | **APROVAR merge → main** |
+| #226 | rebase pós-#231 | **merge após CI tip** |
 | #229 | `2350a05f` CONFLICTING | **arquivar** (portado) |
-| #231 | `4ca140fe` MERGEABLE | **APROVAR** (snapshots) |
+| #231 | `4ca140fe` | **MERGED** |
 | #203 | `ddf0c16f` MERGEABLE | lote indep. outbox |
 
-Ordem merge sugerida: **#231 → #226 → #225**; depois #203. erp-dev sem estas correções até deploy. VPS MCP timeout.
+Ordem: **#231✓ → #226 → #225**; depois #203. Deploy erp-dev bloqueado por VPS MCP timeout.
 
 ## CODEX — pacotes fechados (2026-10-07T19:30Z)
 
@@ -298,3 +320,11 @@ Registro de 20/09, superado pelo checkpoint vigente acima. No Gate VPS autorizad
 canário. O seed RBAC já foi aplicado e não deve ser reaplicado por este hotfix;
 não reaplicar migrations. A API oficial 3080 continua R07B. Não
 criar migration 016, não promover a API R08 e não fazer merge neste gate.
+
+## CODEX — contencao dos snapshots publicos (2026-10-07)
+
+- O proprietario autorizou retirar da versao atual os dois snapshots reais do ERP novo servidos por `public/` e preparar a limpeza do historico. O repositorio e publico; remover arquivos na HEAD nao elimina blobs de commits anteriores, caches, clones nem artefatos ja implantados.
+- Branch `codex/remove-public-erp-snapshots`, baseada na main atual: remove os dois assets reais, desliga hidratacao automatica por URL publica, exige arquivo privado escolhido pelo usuario para recuperar somente em localhost e adiciona guardas contra reintroducao. Copias originais privadas foram preservadas fora desta worktree.
+- A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
+- Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
+- Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).
