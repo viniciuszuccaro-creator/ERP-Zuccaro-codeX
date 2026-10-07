@@ -1,13 +1,17 @@
+## CODEX — #231 na base deste merge (2026-10-07)
+
+#231 snapshots já em main (`c0efab11`). Esta branch #203 só rebase/merge de base; sem tocar Cadastros/Financeiro/Legado.
+
 ## CODEX — lote indep. Onda 15 outbox #203 (2026-10-07)
 
 | Campo | Valor |
 |---|---|
 | PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/203 |
-| HEAD | `0a345d6b` · MERGEABLE · CI SUCCESS |
+| HEAD | tip pós-merge main (#231) · CI a confirmar |
 | Escopo | claim/lease outbox `produto.publicado` — arquivos **≠** Cadastros #226, Financeiro #225, Legado |
 | Testes | outbox claim unit **15/15** revalidado neste ciclo |
-| Paralelo | Cadastros #226 `434b4bf3` (port #229); snapshots #231 `4ca140fe` |
-| Pendência | publisher real / VPS — BLOCKED; HUMAN merge #203 após #226/#231 se desejado |
+| Paralelo | Cadastros #226 `5271da58`; #231 **MERGED** main `c0efab11` |
+| Pendência | publisher real BLOCKED; HUMAN merge #203 após #226 |
 | Branch coord | `cursor/comercial360-onda15-outbox-ready-cb6a` |
 
 ## Comercial 360 / Onda 15 - claim in-memory serializado + Promise.all (2026-10-06)
@@ -130,7 +134,6 @@
 - HTTP prepared: `POST /api/v1/produtos/outbox/claim|.../confirm|.../fail`; meta `produto.outboxClaimLease`. Sem publicacao externa, sem VPS.
 - Testes: runtime10-produto-outbox-claim + pim 36/36.
 - Branch `cursor/comercial360-onda15-outbox-claim-392b`.
-
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
 - Review automatizada #99 no HEAD39d3b905 apontou dois defeitos verificáveis, corrigidos no candidato seguinte: exigir admin em escopo GROUP e todas as permissões do arquivo canônico, rejeitando wildcard; resposta PUT 2xx ilegível/divergente fica auditada como unconfirmed e bloqueia retry. Testes incluem perfil rebaixado/empresa/permissões incompletas e JSON truncado. Revisão Cursor e CI do novo HEAD continuam obrigatórias; nenhuma redefinição executada.
@@ -11687,3 +11690,15 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## CODEX — retirada de snapshots reais do bundle publico (2026-10-07)
+
+| Campo | Estado |
+|---|---|
+| Objetivo | Conter exposicao de snapshots reais do ERP novo no repositorio e nos assets publicos atuais |
+| Causa | Dois JSONs reais em `public/`; modo local e pagina de recuperacao buscavam automaticamente o snapshot por URL publica |
+| Mudanca | Retirados os dois assets da branch; hidratacao automatica removida; recuperacao local exige selecao explicita de arquivo e bloqueia host remoto; ignore e testes impedem regressao |
+| Seguranca | Nenhum valor real no diff novo; copias privadas preservadas; historico Git e build implantado ainda exigem tratamento coordenado |
+| Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
+| Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
+| Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
