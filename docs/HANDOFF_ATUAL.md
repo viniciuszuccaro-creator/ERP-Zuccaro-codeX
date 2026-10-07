@@ -1,4 +1,46 @@
+## CODEX LEGADO — pacote paralelo checksum/ETL (2026-10-07T13:07Z)
+
+Recebido. Transferência humana já confirmada — **sem** nova transferência/CADESP/export.
+
+### Acesso efetivo (este Cloud)
+| Probe | Resultado |
+|---|---|
+| SSH key | `NO_SSH_KEY` |
+| Self-hosted worker | 0 |
+| Inventário HD | `backup_dir_found=NO` |
+| Leaf export / topology | **NONE** neste filesystem |
+| Verifier no arquivo real | **NÃO executado** (`LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT`) |
+| Checksum match 153440Z | **UNVERIFIED** (não mismatch) |
+| `gh pr edit` #211 | `Resource not accessible by integration` |
+
+### Pacote migração — SINTÉTICO (fixtures) ≠ processamento efetivo do backup
+
+```
+kind=synthetic_fixture_migration_package
+effectiveBackupProcessing=false
+importAuthorized=false
+origem: verified=2 failed=0 all_origins_verified=true
+vinculos: comprovados=3 quarentena=4 empresasOperacionais=2 agrupamentos=1 blockedRealHdMap=true
+staging: origem=8 carregados=4 reusos=1 conflitos=1 quarentena=2 rejeitados=0
+  porEmpresa: GRUPO=2 CPA=1 3Z=1
+  monetary: CPA=10050 3Z=5000 diff=0 reconciliado=true
+classificador_fixture: selo=c5c78e00…dbc67 operacionais=2 terceiraLinha=neverDelete
+dependencias_gate: HD 04_REPORTS + sameFileAsPaste + CADESP reusado + backup destino + aprovação humana
+reversao: docs/LEGADO_PLANO_IMPORTACAO_REVERSAO_GATE.md
+```
+
+### HUMAN_NEXT (executor com HD — único caminho do checksum real)
+```bash
+node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs \
+  --export "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS/legado-empresas-api-20261006T153440Z.json" \
+  --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Devolver só JSON do verifier. Depois classificar + staging efetivo sobre backup.
+
+Mapper #48 intocado. #216/#217.
+
 ## CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
 
 Recebido (chat principal). **Transferência do export confirmada pelo proprietário.**
 NÃO pedir CADESP de novo. NÃO repetir export.

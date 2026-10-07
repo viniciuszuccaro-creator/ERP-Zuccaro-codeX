@@ -11715,3 +11715,12 @@ Checklist inicial:
 - PR #211: tip Cursor OPEN; `gh pr edit` falhou (`Resource not accessible by integration`) — corpo/título sugeridos no HANDOFF para Cursor aplicar.
 - Branch tip Codex: este commit. Mapper #48 intocado. #216/#217.
 - HUMAN_NEXT: no PC, `verificar-evidencia-erp-novo-pre-vps.mjs` no arquivo transferido + `04_REPORTS`; devolver saída sanitizada.
+
+### CODEX LEGADO — pacote paralelo Cloud sem HD (2026-10-07T13:07Z)
+
+- Acesso: `LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT` + `LEGACY_NO_SELF_HOSTED_WORKER` + `LEGACY_EXPORT_PATH_MISSING`. Verifier no JSON real **não** rodou.
+- Checksum 153440Z: **UNVERIFIED** (transferência humana OK; bytes não vistos daqui).
+- Pacote migração **sintético** (não efetivo): staging 8→4/1/1/2; vínculos 3 comprovados/4 quarentena; origem 2/2 verified; classificador fixture selo `c5c78e00…`; importAuthorized=false.
+- PR #211: edit GraphQL negado; texto no HANDOFF.
+- Tip: este commit. Mapper #48 intocado.
+- HUMAN_NEXT: verifier no PC com HD (comando no HANDOFF).
