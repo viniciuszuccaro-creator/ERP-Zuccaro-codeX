@@ -1,4 +1,33 @@
+## CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
+Recebido (chat principal). **Transferência do export confirmada pelo proprietário.**
+NÃO pedir CADESP de novo. NÃO repetir export.
+
+| Item | Estado |
+|---|---|
+| Export VPS | `legado-empresas-api-20261006T153440Z.json` |
+| SHA esperado (paste) | `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` |
+| Transferência | **confirmada pelo proprietário** (HD privado) |
+| Checksum match neste Cloud | **UNVERIFIED** — HD Windows **não montado** aqui (`backup_dir_found=NO`, arquivo local ausente); **não** declarar mismatch |
+| ERP novo pré-VPS ID+CNPJ | fonte Gate 18 no HD: `current-erp-company-topology-proof.json` — recuperação física ainda exige PC/HD |
+| Staging sintético (paralelo) | origem 8 → carregados 4 / reusos 1 / conflitos 1 / quarentena 2; monetário OK; `importAuthorized=false` |
+| PR #211 | OPEN; `gh pr edit` **Resource not accessible** neste token — atualizar título/corpo via Cursor/humano com texto abaixo |
+| Mapper #48 | intocado |
+
+**HUMAN_NEXT (PC com HD — mínimo):**
+```bash
+node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs \
+  --export "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS/legado-empresas-api-20261006T153440Z.json" \
+  --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Devolver só JSON do verifier (`sameFileAsPaste`, `paresIdCnpj`, `blocked`). Depois:
+classificar → CADESP já recebido → staging comprovados / quarentena.
+
+**Texto sugerido título #211:**
+`legado: export 153440Z transferido — checksum/HD verifier + staging`
+
 ## CODEX LEGADO — revalidação pré-VPS (2026-10-06T17:27Z)
+
 
 Status: **BLOCKED** / **HUMAN_NEXT**. Reexecução real neste Cloud:
 `NO_SSH_KEY`; inventário `backup_dir_found=NO`; verifier exit 2

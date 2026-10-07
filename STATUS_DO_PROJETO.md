@@ -11705,3 +11705,13 @@ Checklist inicial:
 - Sem novo pedido CADESP; sem export; sem tip-port #48; testes sintéticos 16/16 PASS.
 - Tip: `7c255148` (+ este checkpoint docs). PR #211 OPEN.
 - HUMAN_NEXT inalterado (FileZilla → 04_REPORTS → verifier).
+
+### CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
+- Objetivo: registrar confirmação humana da transferência do export 153440Z; avançar checksum/pré-VPS/staging sem re-export e sem re-pedir CADESP.
+- Transferência: **confirmada pelo proprietário**. Checksum match neste Cloud Agent: **UNVERIFIED** (HD não montado; `find` sem o leaf; inventário NO). Não alegar match nem mismatch de bytes daqui.
+- SHA esperado: `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`.
+- Staging paralelo (fixture): origem 8 / carregados 4 / reusos 1 / conflitos 1 / quarentena 2; porEmpresa Grupo=2 CPA=1 3Z=1; totalDiffCentavos=0; importAuthorized=false.
+- PR #211: tip Cursor OPEN; `gh pr edit` falhou (`Resource not accessible by integration`) — corpo/título sugeridos no HANDOFF para Cursor aplicar.
+- Branch tip Codex: este commit. Mapper #48 intocado. #216/#217.
+- HUMAN_NEXT: no PC, `verificar-evidencia-erp-novo-pre-vps.mjs` no arquivo transferido + `04_REPORTS`; devolver saída sanitizada.
