@@ -124,15 +124,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
   }, [searchTerm, contextoValido, filteredTiles.length]);
   const canViewEntity = (entidade) => {
     if (entidade === "Empresa" || entidade === "GrupoEmpresarial") {
-      return (
-        hasPermission("Cadastros", "Organizacional", "visualizar") ||
-        hasPermission("Cadastros", entidade, "visualizar") ||
-        hasPermission("Cadastros", null, "visualizar") ||
-        (entidade === "Empresa"
-          ? hasPermission("Sistema", "Empresas", "visualizar")
-          : hasPermission("Sistema", "Grupos", "visualizar")) ||
-        hasPermission("Sistema", null, "visualizar")
-      );
+      return hasPermission("Cadastros", "Organizacional", "visualizar");
     }
     return (
       hasPermission("Cadastros", entidade, "visualizar") ||

@@ -1,3 +1,26 @@
+## EXECUÇÃO PARALELA — concluir pacotes (2026-10-07)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Acessos: GitHub OK · VPS MCP **timeout** · self-hosted workers **0** · HD Legado **não montado no Cloud**.
+
+| Frente | Responsável | Arquivos quentes | Não tocar | 1ª ação |
+|---|---|---|---|---|
+| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Cadastros #226/#229; #231 assets; lote Comercial indep. | Financeiro #225; Legado staging | Confrontar #229×#226; coordenar #231 |
+| CURSOR | este chat | pareceres SHA; #225 fluxo real; #230≠VPS; deploy gates; browser erp-dev | concorrer tip Codex Cadastros | Revisar #231+#229; port #229→#226; Financeiro real |
+| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | verifier HD; staging real #211 | CADESP; re-export; mapper paralelo | Executor no PC com HD; sair do só-sintético |
+
+### Fases (não misturar)
+
+| Fase | Cadastros #226+#229 | #231 assets | Financeiro #225 | Auth #230 | Legado | Deploy erp-dev |
+|---|---|---|---|---|---|---|
+| implementado | port #229 em #226 (este tip) | código PR | launchpad | local bootstrap | sintético + scripts | — |
+| revisado | parecer `PARECER_CURSOR_229_231_SHA.md` | APROVAR | parcial (texto+queryKey) | separado da VPS | UNVERIFIED | cmp BLOCKED |
+| integrado | aguarda HUMAN merge | aguarda merge | aguarda merge | N/A na VPS | — | não |
+| implantado | não | não | não | não | não | não (MCP timeout) |
+| validado | local sim · **VPS não** | — | local launchpad · **VPS não** | local only | — | — |
+
+**erp-dev ainda RUNTIME-08B / main `d02cd012`** — correções só em PRs até merge+deploy.
+
 ## CODEX — solução final #226+#227+#228 (2026-10-07)
 
 Recebido e **executado**. HEADs #226/#227/#228 comparados. Delta #228 (escopo mestre, vínculos, negação Cadastros.Empresa sozinho, lista group_id) + RBAC Sistema.Empresas local no veículo #226 vs main. Sem merge Expedição. Testes 36/36.

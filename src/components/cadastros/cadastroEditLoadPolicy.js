@@ -19,8 +19,8 @@ export function isCadastroEditLoadComplete(entityName, record, expectedId) {
 }
 
 /**
- * Aliases administrativos legítimos (owner/admin) alinhados aos forms Empresa/Grupo.
- * Não libera role=admin sozinha — exige árvore de permissão explícita.
+ * Mestre organizacional usa exatamente o gate efetivo do cliente local.
+ * Não libera role=admin sozinha nem aliases que o backend recusaria.
  */
 export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   const entity = String(entityName || '');
@@ -29,53 +29,25 @@ export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   const canCreate = typeof checkers.canCreate === 'function' ? checkers.canCreate : null;
   const canEdit = typeof checkers.canEdit === 'function' ? checkers.canEdit : null;
   const canDelete = typeof checkers.canDelete === 'function' ? checkers.canDelete : null;
-  const isTenantMaster = entity === 'Empresa' || entity === 'GrupoEmpresarial';
 
-  // Cadastros em módulo amplo (null) — admin explícito do módulo.
-  if (act === 'visualizar' && hasPermission && hasPermission('Cadastros', null, 'visualizar')) return true;
-  if (act === 'criar' && canCreate && canCreate('Cadastros', null)) return true;
-  if (act === 'editar' && canEdit && canEdit('Cadastros', null)) return true;
-  if (act === 'excluir' && canDelete && canDelete('Cadastros', null)) return true;
-
-  if (isTenantMaster) {
-    // Mutação: gate canônico Organizacional (#227/#228). Cadastros.Empresa sozinho NÃO grava.
-    if (act === 'visualizar') {
-      if (hasPermission && (
-        hasPermission('Cadastros', 'Organizacional', 'visualizar')
-        || hasPermission('Cadastros', entity, 'visualizar')
-      )) return true;
-    } else if (act === 'criar') {
-      if (canCreate && canCreate('Cadastros', 'Organizacional')) return true;
-    } else if (act === 'editar') {
-      if (canEdit && canEdit('Cadastros', 'Organizacional')) return true;
-    } else if (act === 'excluir') {
-      if (canDelete && canDelete('Cadastros', 'Organizacional')) return true;
-    }
-  } else {
-    if (act === 'visualizar') {
-      if (hasPermission && hasPermission('Cadastros', entity, 'visualizar')) return true;
-    } else if (act === 'criar') {
-      if (canCreate && canCreate('Cadastros', entity)) return true;
-    } else if (act === 'editar') {
-      if (canEdit && canEdit('Cadastros', entity)) return true;
-    } else if (act === 'excluir') {
-      if (canDelete && canDelete('Cadastros', entity)) return true;
-    }
+  // #229: mestres = gate Organizacional do backend local (sem Sistema.* / Cadastros.Empresa sozinho).
+  if (isTenantMasterEntity(entity)) {
+    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Cadastros', 'Organizacional', 'visualizar'));
+    if (act === 'criar') return Boolean(canCreate && canCreate('Cadastros', 'Organizacional'));
+    if (act === 'editar') return Boolean(canEdit && canEdit('Cadastros', 'Organizacional'));
+    if (act === 'excluir') return Boolean(canDelete && canDelete('Cadastros', 'Organizacional'));
+    return false;
   }
 
-  // Alias admin Sistema (owner legítimo) — alinhado ao localBase44.
-  if (entity === 'Empresa') {
-    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Sistema', 'Empresas', 'visualizar'));
-    if (act === 'criar') return Boolean(canCreate && canCreate('Sistema', 'Empresas'));
-    if (act === 'editar') return Boolean(canEdit && canEdit('Sistema', 'Empresas'));
-    if (act === 'excluir') return Boolean(canDelete && canDelete('Sistema', 'Empresas'));
+  if (act === 'visualizar') {
+    return Boolean(
+      hasPermission
+      && (hasPermission('Cadastros', entity, 'visualizar') || hasPermission('Cadastros', null, 'visualizar')),
+    );
   }
-  if (entity === 'GrupoEmpresarial') {
-    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Sistema', 'Grupos', 'visualizar'));
-    if (act === 'criar') return Boolean(canCreate && canCreate('Sistema', 'Grupos'));
-    if (act === 'editar') return Boolean(canEdit && canEdit('Sistema', 'Grupos'));
-    if (act === 'excluir') return Boolean(canDelete && canDelete('Sistema', 'Grupos'));
-  }
+  if (act === 'criar') return Boolean(canCreate && (canCreate('Cadastros', entity) || canCreate('Cadastros', null)));
+  if (act === 'editar') return Boolean(canEdit && (canEdit('Cadastros', entity) || canEdit('Cadastros', null)));
+  if (act === 'excluir') return Boolean(canDelete && (canDelete('Cadastros', entity) || canDelete('Cadastros', null)));
   return false;
 }
 

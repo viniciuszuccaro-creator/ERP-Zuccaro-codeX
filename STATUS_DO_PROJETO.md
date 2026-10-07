@@ -1,3 +1,10 @@
+## EXECUÇÃO PARALELA Cursor — #229→#226 + #231 (2026-10-07)
+
+- Port #229 `2350a05f` no veículo #226: gate mestre **só** `Cadastros.Organizacional` (UI=backend).
+- Parecer: `docs/PARECER_CURSOR_229_231_SHA.md` — APROVAR #231; arquivar #229 após merge #226.
+- #230 ≠ Auth Supabase VPS. Deploy erp-dev bloqueado até merge+build; VPS MCP timeout.
+- Legado: workers self-hosted 0; HUMAN_NEXT verifier no PC com HD.
+
 ## CODEX — solução final #226+#227+#228 Empresas (2026-10-07)
 
 | Campo | Valor |
