@@ -1,3 +1,18 @@
+## CODEX — candidata #226 ⊇ #227/#228/#229 (2026-10-07)
+
+Agente: CODEX COMERCIAL 360 · tip pós-merge main (#231 `c0efab11`).
+Matriz detalhada: `docs/MATRIZ_226_CONTEM_227_228_229.md`.
+
+| Origem | Contido? | Gate visual ≡ save |
+|---|---|---|
+| #227 `5e50e6b1` | **SIM** — loadEmpresaForEdit, anti-race, ID readonly, fiscal omit, certificado | Organizacional |
+| #228 `9ab5ec5a` | **SIM** — lista group_id; sem Cadastros.Empresa sozinho na mutação | Organizacional |
+| #229 `2350a05f` | **SIM** — Bloco5/policy + localBase44 sem aliases Sistema | **UI ≡ backend só Organizacional** |
+
+**PRs a arquivar (não fechar sem HUMAN):** #227, #228, #229.  
+**#231:** MERGED main `c0efab11`. Testes Empresa **36/36** (+ snapshot guard).  
+Ordem: **HUMAN merge #226** → #225 → #203. VPS MCP timeout (auth válida).
+
 ## TRÊS PACOTES ATÉ CONCLUSÃO (2026-10-07T20:30Z)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
@@ -5,8 +20,8 @@ Acessos: GitHub OK · merge #231 OK · VPS MCP **timeout** · HD Legado **não n
 
 | Frente | Responsável | 1ª ação | Estado |
 |---|---|---|---|
-| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Confirmar #226⊇#227/8/9 + lote #203 | rebase pós-#231 em andamento |
-| CURSOR | este chat | Revisar HEADs; merge #231→#226→#225; deploy; validar erp-dev | **#231 MERGED** `c0efab11`; #226 rebase; deploy BLOCKED MCP |
+| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Confirmar #226⊇#227/8/9 + lote #203 | matriz comprovada; tip pós-#231 |
+| CURSOR | chat principal | Revisar HEADs; merge #226→#225; deploy; validar erp-dev | **#231 MERGED**; deploy BLOCKED MCP |
 | CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | Executor no PC com HD + staging real | disparado |
 
 ### Fases
@@ -14,10 +29,10 @@ Acessos: GitHub OK · merge #231 OK · VPS MCP **timeout** · HD Legado **não n
 | Fase | #231 | #226 | #225 | Legado | erp-dev |
 |---|---|---|---|---|---|
 | implementado | sim | sim | launchpad+fluxo | scripts | — |
-| revisado | sim | sim | parcial | UNVERIFIED cloud | — |
-| integrado | **sim** `c0efab11` | rebase tip | não | — | parcial |
+| revisado | sim | sim (matriz) | parcial | UNVERIFIED cloud | — |
+| integrado | **sim** `c0efab11` | tip pós-merge | não | — | parcial |
 | implantado | não | não | não | não | MCP timeout |
-| validado VPS | pendente | pendente | pendente | N/A | RUNTIME-08B `d02cd012` pré-#231 deploy |
+| validado VPS | pendente | pendente | pendente | N/A | RUNTIME-08B pré-deploy #231 |
 | dados reais | — | — | — | pendente host | — |
 
 ## FOLLOW-UP Cursor — Comercial pacote fechado (2026-10-07)
@@ -26,10 +41,10 @@ Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)
 
 | PR | HEAD | Veredito |
 |---|---|---|
-| #226 | rebase pós-#231 | **merge após CI tip** |
-| #229 | `2350a05f` CONFLICTING | **arquivar** (portado) |
-| #231 | `4ca140fe` | **MERGED** |
-| #203 | `ddf0c16f` MERGEABLE | lote indep. outbox |
+| #226 | tip pós-merge main | **APROVAR merge → main** (após CI) |
+| #227/#228/#229 | portados | **arquivar** (não fechar sem HUMAN) |
+| #231 | `c0efab11` | **MERGED** |
+| #203 | outbox indep. | lote Comercial paralelo |
 
 Ordem: **#231✓ → #226 → #225**; depois #203. Deploy erp-dev bloqueado por VPS MCP timeout.
 
