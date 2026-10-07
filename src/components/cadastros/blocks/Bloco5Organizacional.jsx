@@ -61,8 +61,8 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
         dados_novos: {
           ...getDadosContexto(),
           entidade,
-          permissao: `Cadastros.${entidade}.visualizar`,
-          permissao_alternativa: `Sistema.${entidade}.visualizar`,
+          permissao: `Cadastros.${entidade === "Empresa" ? "Organizacional" : entidade}.visualizar`,
+          permissao_alternativa: entidade === "Empresa" ? null : `Sistema.${entidade}.visualizar`,
           total_entidade: getTotalEntidade(entidade),
           contexto_exigido: entidade === "GrupoEmpresarial" ? "grupo" : "group-or-company",
           ...(extras || {}),
@@ -121,10 +121,11 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
     });
   }, [searchTerm, contextoValido, filteredTiles.length]);
   const canViewEntity = (entidade) =>
+    (entidade === "Empresa" ? hasPermission("Cadastros", "Organizacional", "visualizar") :
     hasPermission("Cadastros", entidade, "visualizar") ||
     hasPermission("Cadastros", null, "visualizar") ||
     hasPermission("Sistema", entidade, "visualizar") ||
-    hasPermission("Sistema", null, "visualizar");
+    hasPermission("Sistema", null, "visualizar"));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -144,7 +145,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
       {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, t, Icon, c, FormComp)}
-          data-permission={`Cadastros.${k}.visualizar`}
+          data-permission={`Cadastros.${k === "Empresa" ? "Organizacional" : k}.visualizar`}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required={k === "GrupoEmpresarial" ? "group" : "group-or-company"}>
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -159,7 +160,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
                 disabled={(!contextoValido && k !== "GrupoEmpresarial") || !canViewEntity(k)}
-                data-permission={`Cadastros.${k}.visualizar`}
+                data-permission={`Cadastros.${k === "Empresa" ? "Organizacional" : k}.visualizar`}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required={k === "GrupoEmpresarial" ? "group" : "group-or-company"}>
                 Abrir

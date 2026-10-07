@@ -61,10 +61,14 @@ test('Leitura pendente deixa de ser atual apos Novo ou troca de contexto', () =>
 test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal oculta', async () => {
   const form = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
   assert.match(form, /data-permission=\{permissaoFormulario\}/);
   assert.match(form, /canEdit\("Cadastros", "Organizacional"\)/);
   assert.match(form, /Cadastros\.Organizacional\.editar/);
   assert.match(viewer, /ENTITY === "Empresa"\s*\? canEdit\("Cadastros", empresaPermissionSection\)/);
+  assert.match(viewer, /permissao: `Cadastros\.\$\{empresaPermissionSection\}\.editar`/);
+  assert.match(block, /entidade === "Empresa" \? hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
+  assert.match(block, /k === "Empresa" \? "Organizacional" : k/);
   assert.match(form, /ID do cadastro \(somente leitura\)/);
   assert.match(form, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.salvar/);
