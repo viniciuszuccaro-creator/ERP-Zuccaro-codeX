@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Veredito | **APROVAR merge #226 → main** |
-| Código | `f64e89a5` CI SUCCESS `37613106916` |
+| Código | `92799ccf` (unifica #227 Completo/testes; ancestral `f64e89a5` CI `37613106916`) |
 | Testes locais tip | **29/29** |
 | #227 | **não mergear** (base Expedição); conteúdo portado — arquivar após merge #226 |
 | Parecer | `docs/PARECER_CURSOR_226_SHA_f64e89a5.md` |

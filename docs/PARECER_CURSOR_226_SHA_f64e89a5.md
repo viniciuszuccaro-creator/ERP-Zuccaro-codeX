@@ -1,5 +1,11 @@
 # Parecer Cursor — #226 consolidada `#226+#227` SHA `f64e89a5`
 
+## Emenda tip (2026-10-07)
+
+Código final consolidado na #226: **`92799ccf`** (`fix(cadastros): unifica tip #226 com testes #227 e Completo`), ancestral `f64e89a5`.  
+Tip docs: `dddf2732`. Veredito permanece **APROVAR merge → main**. #227 tip `5e50e6b1` continua **não mergear**.
+
+
 **PR:** [#226](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226)  
 **Branch:** `cursor/cadastros-empresas-edicao-392b` → `main`  
 **SHA código:** `f64e89a570411dc130f504d277c0b1f8ba81d4b0`  
