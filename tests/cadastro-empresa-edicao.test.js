@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
 import { isEditRequestCurrent, loadEmpresaForEdit } from '../src/components/lib/contextoMultiempresaPolicy.js';
 
 const complete = Object.freeze({
@@ -70,4 +72,91 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.match(viewer, /loadEmpresaForEdit\(/);
   assert.match(viewer, /setEditError\("Nao foi possivel carregar o cadastro completo/);
   assert.match(viewer, /editRequestRef\.current \+= 1;\s*setIsLoadingEdit\(false\);\s*setEditItem\(null\)/);
+});
+
+test('perfil administrativo explicito salva e reabre Empresa sintética sem perda; perfil restrito e escopo alheio bloqueiam', async () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(String(key)) ?? null,
+    setItem: (key, value) => values.set(String(key), String(value)),
+    removeItem: (key) => values.delete(String(key)),
+  };
+  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { localStorage: storage } });
+  const server = await createServer({
+    root: fileURLToPath(new URL('../', import.meta.url)),
+    appType: 'custom', logLevel: 'silent', server: { middlewareMode: true },
+  });
+  const reopen = async (suffix) => (await server.ssrLoadModule(
+    `/src/api/localBase44Client.js?empresa-edicao=${suffix}-${Date.now()}`,
+  )).localBase44;
+  try {
+    const client = await reopen('setup');
+    client.__local.reset();
+    const db = client.__local.export();
+    const target = db.Empresa[0];
+    const other = db.Empresa[1];
+    const groupId = target.group_id;
+    target.razao_social = 'Empresa Sintetica Original';
+    target.nome_fantasia = 'Sintetica Original';
+    target.cnpj = '00.000.000/0001-91';
+    target.configuracao_fiscal = { serie_nfe: '9', ambiente_nfe: 'Homologacao' };
+    db.PerfilAcesso.push({
+      id: 'perfil-admin-sintetico', ativo: true, group_id: groupId,
+      permissoes: { Cadastros: { Organizacional: ['visualizar', 'editar'], Empresa: ['visualizar', 'editar'] } },
+    });
+    db.PerfilAcesso.push({
+      id: 'perfil-leitura-sintetico', ativo: true, group_id: groupId,
+      permissoes: { Cadastros: { Organizacional: ['visualizar'], Empresa: ['visualizar'] } },
+    });
+    storage.setItem('erp_integra_local_db_v1', JSON.stringify(db));
+    const useProfile = (perfilId) => {
+      storage.setItem('erp_integra_local_user_v1', JSON.stringify({
+        id: 'usuario-sintetico', role: 'user', mestre_local: false,
+        perfil_acesso_id: perfilId, contexto_atual: 'grupo', grupo_atual_id: groupId,
+        grupos_vinculados: [{ grupo_id: groupId, ativo: true }],
+      }));
+      storage.setItem('contexto_atual', 'grupo');
+      storage.setItem('group_atual_id', groupId);
+      storage.removeItem('empresa_atual_id');
+    };
+
+    useProfile('perfil-admin-sintetico');
+    const admin = await reopen('admin');
+    const loaded = await loadEmpresaForEdit({
+      id: target.id, groupId, fetchById: (id) => admin.entities.Empresa.get(id),
+    });
+    assert.equal(loaded.cnpj, target.cnpj);
+    assert.equal(loaded.configuracao_fiscal.serie_nfe, '9');
+    await admin.entities.Empresa.update(target.id, {
+      id: loaded.id, group_id: groupId, razao_social: 'Empresa Sintetica Editada',
+      nome_fantasia: loaded.nome_fantasia, cnpj: loaded.cnpj,
+    });
+
+    const reopened = await reopen('reabertura');
+    const saved = await loadEmpresaForEdit({
+      id: target.id, groupId, fetchById: (id) => reopened.entities.Empresa.get(id),
+    });
+    assert.equal(saved.id, target.id);
+    assert.equal(saved.razao_social, 'Empresa Sintetica Editada');
+    assert.equal(saved.cnpj, target.cnpj);
+    assert.deepEqual(saved.configuracao_fiscal, target.configuracao_fiscal);
+    assert.equal((await reopened.entities.Empresa.get(other.id)).id, other.id);
+    assert.ok(reopened.__local.export().AuditLog.some((row) => row.entidade === 'Empresa' && row.registro_id === target.id));
+
+    await assert.rejects(loadEmpresaForEdit({
+      id: target.id, groupId, empresaId: other.id,
+      fetchById: (id) => reopened.entities.Empresa.get(id),
+    }), /fora do contexto/);
+    useProfile('perfil-leitura-sintetico');
+    const restricted = await reopen('restrito');
+    await assert.rejects(restricted.entities.Empresa.update(target.id, {
+      group_id: groupId, razao_social: 'Alteracao Negada',
+    }), /Permissao negada/);
+    assert.equal((await restricted.entities.Empresa.get(target.id)).razao_social, 'Empresa Sintetica Editada');
+  } finally {
+    await server.close();
+    if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow);
+    else delete globalThis.window;
+  }
 });
