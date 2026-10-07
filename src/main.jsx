@@ -2,9 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
-import { queryClientInstance } from '@/lib/query-client'
-import { hydrateLocalBase44FromSnapshot, PESSOAS_PARCEIROS_ENTITIES } from '@/api/localBase44Client'
-import { isLocalOnlyMode } from '@/api/base44Client'
 
 const recoverLocalStorageIfRequested = () => {
   try {
@@ -35,7 +32,7 @@ const recoverLocalStorageIfRequested = () => {
   }
 };
 
-const resetLocalRequested = recoverLocalStorageIfRequested();
+recoverLocalStorageIfRequested();
 
 const renderApp = () => {
   ReactDOM.createRoot(document.getElementById('root')).render(
@@ -45,63 +42,7 @@ const renderApp = () => {
   )
 }
 
-const hydrateLocalDataBeforeRender = async () => {
-  if (!isLocalOnlyMode) return { imported: false, reason: 'remote-mode' };
-
-  const result = await hydrateLocalBase44FromSnapshot({
-    sourceUrl: '/base44-local-core-snapshot.json',
-    force: resetLocalRequested,
-  });
-  const pessoasResult = await hydrateLocalBase44FromSnapshot({
-    sourceUrl: '/base44-local-core-snapshot.json',
-    onlyEntities: PESSOAS_PARCEIROS_ENTITIES,
-    force: true,
-  });
-
-  if (result?.imported || pessoasResult?.imported) {
-    console.info('[base44-local] Snapshot core importado antes de montar o ERP.', result);
-  }
-
-  return { core: result, pessoasParceiros: pessoasResult };
-}
-
-const hydrateCoreSnapshotInBackground = () => {
-  try {
-    const run = async () => {
-      const result = await hydrateLocalBase44FromSnapshot({
-        sourceUrl: '/base44-local-core-snapshot.json',
-      });
-      const pessoasResult = await hydrateLocalBase44FromSnapshot({
-        sourceUrl: '/base44-local-core-snapshot.json',
-        onlyEntities: PESSOAS_PARCEIROS_ENTITIES,
-        force: true,
-      });
-      if (result?.imported || pessoasResult?.imported) {
-        console.info('[base44-local] Snapshot core importado para banco local.', result);
-        queryClientInstance.invalidateQueries();
-        window.dispatchEvent(new CustomEvent('base44-local:snapshot-imported', {
-          detail: { core: result, pessoasParceiros: pessoasResult },
-        }));
-      }
-    };
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(run, { timeout: 1500 });
-    } else {
-      window.setTimeout(run, 800);
-    }
-  } catch (error) {
-    console.warn('[base44-local] Falha ao hidratar snapshot core:', error?.message || error);
-  }
-};
-
-hydrateLocalDataBeforeRender()
-  .catch((error) => {
-    console.warn('[base44-local] Falha ao hidratar snapshot antes do render:', error?.message || error);
-  })
-  .finally(() => {
-    renderApp();
-    hydrateCoreSnapshotInBackground();
-  });
+renderApp();
 
 if (import.meta.hot) {
   import.meta.hot.on('vite:beforeUpdate', () => {
