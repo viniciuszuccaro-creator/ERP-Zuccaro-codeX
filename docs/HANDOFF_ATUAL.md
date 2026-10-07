@@ -1,23 +1,41 @@
-## TRÊS PACOTES — Cursor Financeiro #225 (2026-10-07T20:35Z)
+## TRÊS PACOTES ATÉ CONCLUSÃO — atualização (2026-10-07T20:40Z)
 
-Chat principal: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
-- #231 **MERGED** `c0efab11`. Este tip: rebase #225 sobre main com snapshots removidos.
-- Próximo merge: #226 (CI tip `d1bc8bb7`) → #225 → deploy.
-- erp-dev ainda HTTP 200 nos snapshots públicos até promoção; VPS MCP timeout.
-- Validação VPS (CPA/3Z, financeiro) **pendente** pós-deploy.
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+| Frente | Responsável | 1ª ação | Estado |
+|---|---|---|---|
+| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #226⊇#227/8/9 + #203 | **#226 MERGED** `6dfd39d2`; arquivar 227/8/9; #203 indep. |
+| CURSOR | este chat | merge #231→#226→#225; deploy; validar erp-dev | **#231+#226 em main**; #225 rebase; deploy **BLOCKED** VPS MCP timeout |
+| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | executor PC com HD | workers 0; HD não no Cloud |
+
+### Fases
+
+| Fase | #231 | #226 | #225 | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | sim | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED | — |
+| integrado | **sim** | **sim** | tip | — | parcial |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | não | não | não | N/A | snapshots ainda 200 |
+| dados reais | — | — | — | pendente host | — |
+
+## CODEX — candidata #226 ⊇ #227/#228/#229 (2026-10-07)
+
+Matriz: `docs/MATRIZ_226_CONTEM_227_228_229.md`. **#226 MERGED**. PRs a arquivar: #227, #228, #229.
+
+## CURSOR — Financeiro #225 (2026-10-07)
+
+- Rebase sobre main (#231+#226). Launchpad grant plano + fluxo ContaReceber A/B.
+- Próximo: merge #225 → deploy → validar CPA/3Z e financeiro na VPS.
 
 ## CURSOR — 3 frentes + Financeiro launchpad (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
 |---|---|---|---|
-| Cadastros/Empresas edição | [Comercial B3-B6 PG/snapshots](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Empresas + forms compartilhados | Financeiro Cursor; outbox |
-| Evidência ERP novo pré-VPS | [Legado SFTP transfer JSON](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | backups privados; checksum 153440Z | CADESP de novo; mapper #48 |
-| Financeiro estrutura | Cursor `cursor/financeiro-estrutura-recuperacao-392b` | `Financeiro.jsx`, `financeiroLaunchpadAccess.js` | candidata Comercial |
+| Cadastros/Empresas | Comercial #226 **MERGED** | — | — |
+| Legado | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | verifier HD | CADESP |
+| Financeiro | Cursor #225 | Financeiro.jsx, financeiroLaunchpadAccess.js | Cadastros tip |
 
-- Causa launchpad vazio: filtro só por seção com grant plano `Financeiro: ['visualizar']`.
-- Fix: helper `canViewFinanceLaunchpadModule` (plano vs granular) + `ModuleTabs moduleName="Financeiro"`.
-- Testes: `financeiro-launchpad-access` **4/4**. Sem valores financeiros fictícios.
-- Primeira entrega Cadastros (abrir/editar/salvar): Comercial.
 
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.

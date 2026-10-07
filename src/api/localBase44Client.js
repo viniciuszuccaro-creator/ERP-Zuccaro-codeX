@@ -1161,10 +1161,14 @@ const expandLocalContextFilter = (entityName, filter = {}) => {
   if (!isPlainObject(filter)) return filter || {};
 
   const { contexto, groupId: ctxGroupId, empresaId: ctxEmpresaId } = getCurrentContext();
+  const tenantMaster = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
   const hasEmpresaKey = Object.prototype.hasOwnProperty.call(filter, 'empresa_id');
-  const empresaId = hasEmpresaKey
-    ? filter.empresa_id
-    : (contexto === 'empresa' ? ctxEmpresaId : null);
+  // Tenant masters (Empresa/Grupo): listar/filtrar só por grupo — nunca por empresa_id do contexto.
+  const empresaId = tenantMaster
+    ? null
+    : (hasEmpresaKey
+      ? filter.empresa_id
+      : (contexto === 'empresa' ? ctxEmpresaId : null));
   const explicitGroupId = filter.group_id || filter.grupo_id || filter.grupo_empresarial_id;
   const groupId = explicitGroupId || ctxGroupId || null;
 
@@ -1409,9 +1413,11 @@ const auditLocalTotpAttempt = ({ success, reason, groupId, empresaId, sessionId 
 
 const assertLocalMutationAllowed = (entityName, action, recordId = null) => {
   if (entityName === 'AuditLog') return;
+  // #229/#226: mestres Empresa/GrupoEmpresarial usam só Cadastros.Organizacional
+  // (ENTITY_PERMISSION_SCOPE) — sem aliases Sistema.Empresas/Grupos.
   const scope = getEntityPermissionScope(entityName);
-  const result = evaluateLocalPermission({ ...scope, entityName, action });
-  if (!result.allowed) {
+  const allowed = evaluateLocalPermission({ ...scope, entityName, action }).allowed;
+  if (!allowed) {
     auditLocalPermissionDenied(entityName, action, recordId);
     throw new Error(`Permissao negada para ${action} em ${entityName}.`);
   }
@@ -1429,7 +1435,9 @@ const assertLocalTituloSettlementAllowed = (entityName, recordId = null) => {
 
 const assertLocalPermissionAny = (entityName, actions = [], recordId = null) => {
   const scope = getEntityPermissionScope(entityName);
-  const allowed = actions.some((action) => evaluateLocalPermission({ ...scope, entityName, action }).allowed);
+  const allowed = actions.some((action) => (
+    evaluateLocalPermission({ ...scope, entityName, action }).allowed
+  ));
   if (!allowed) {
     const primary = actions[0] || 'editar';
     auditLocalPermissionDenied(entityName, primary, recordId);

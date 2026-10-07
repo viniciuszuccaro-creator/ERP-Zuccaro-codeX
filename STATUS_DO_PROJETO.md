@@ -1,32 +1,42 @@
-## CURSOR — Financeiro #225 rebase pós-#231 (2026-10-07)
+## TRÊS PACOTES — pós-merge #231+#226 (2026-10-07)
 
-- Integra main com #231 MERGED (`c0efab11`). Launchpad + fluxo real multiempresa preservados.
-- Veredito: **APROVAR merge #225** após CI tip. Validação erp-dev pendente (deploy BLOCKED MCP).
+| Fase | #231 | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | launchpad + fluxo real | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | tip rebase (este) | — | parcial em main |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | pendente | pendente | pendente | N/A | RUNTIME-08B; snapshots HTTP 200 |
+| dados reais | — | — | — | pendente host | — |
+
+Ordem restante: merge **#225** → deploy com backup/rollback. Arquivar #227/#228/#229.
+
+## CURSOR — Financeiro #225 rebase pós-#226 (2026-10-07)
+
+- Integra main com #231+#226. Launchpad + fluxo real multiempresa preservados.
+- Veredito: **APROVAR/merge #225** após CI tip. Validação erp-dev pendente (deploy BLOCKED MCP).
 
 ## CURSOR — Financeiro #225 fluxo real (2026-10-07)
 
-- Teste `financeiro-contexto-fluxo-real`: ContaReceber isolada empresa A/B via localBase44 (não texto-fonte).
-- Grant plano 15 cards + granular. **Não** equivale a validação erp-dev (Supabase).
-
-## CURSOR — Financeiro #225 pacote completo (2026-10-07)
-
-| Campo | Valor |
-|---|---|
-| SHA código | `1f1f8cf6` / tip docs `e35e53e6` |
-| Inventário | 15 cards + rotas + queryKey/contextKey |
-| Veredito | APROVAR merge; homologação browser pós-deploy |
+- Teste `financeiro-contexto-fluxo-real`: ContaReceber isolada empresa A/B via localBase44.
+- Grant plano 15 cards + granular. **Não** equivale a validação erp-dev.
 
 ## CODEX — coordenação #231 snapshots (2026-10-07)
 
 | Campo | Valor |
 |---|---|
-| Estado | **MERGED** em main `c0efab11` |
-| Histórico | runbook separado — sem rewrite neste lote |
-| erp-dev | ainda serve snapshots HTTP 200 até deploy |
+| Estado | **MERGED** `c0efab11` |
+| Guard | `tests/public-snapshot-exposure-guard.test.js` |
+| Histórico | runbook separado — sem rewrite |
+| erp-dev | ainda HTTP 200 nos snapshots até deploy |
+
+## CODEX — #226 Cadastros (2026-10-07)
+
+**MERGED** `6dfd39d2`. Gate só `Cadastros.Organizacional`. Arquivar #227/#228/#229.
 
 ## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
 
-Helper `canViewFinanceLaunchpadModule` + ModuleTabs Financeiro. 15 submódulos inventariados. Fail-closed.
+Helper `canViewFinanceLaunchpadModule` + ModuleTabs Financeiro. 15 submódulos. Fail-closed.
 
 ---
 
