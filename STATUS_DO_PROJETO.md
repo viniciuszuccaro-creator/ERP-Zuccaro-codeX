@@ -1,3 +1,10 @@
+## CURSOR — evidência navegador 2026-10-07
+
+- Vite `:5174` local: `/Financeiro` 15 cards + Contas a Receber; `/Empresas` lista 2 registros.
+- Artefatos: `docs/PARECER_CURSOR_BROWSER_CADASTROS_FINANCEIRO_20261007.md`.
+- Dependência auth: #230. Sidebar→Financeiro ainda derruba sessão (pendente).
+- VPS implantado: não (MCP timeout).
+
 ## CURSOR — bootstrap auth local browser (2026-10-07)
 
 - Causa: pós-snapshot, `buildLocalAccessVersion` null (perfil mestre com `group_id` desalinhado) → `session_access_changed`.

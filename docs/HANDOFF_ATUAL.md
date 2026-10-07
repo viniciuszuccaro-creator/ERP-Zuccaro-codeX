@@ -1,3 +1,7 @@
+## CURSOR — browser Cadastros+Financeiro (2026-10-07)
+
+validado no navegador (parcial): `/Financeiro` 15 cards + `/Empresas` lista via URL em `:5174`. Parecer `docs/PARECER_CURSOR_BROWSER_CADASTROS_FINANCEIRO_20261007.md`. Auth local #230. Sidebar click→logout pendente. Implantado VPS: não.
+
 ## CURSOR — 3 frentes + Financeiro launchpad (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
