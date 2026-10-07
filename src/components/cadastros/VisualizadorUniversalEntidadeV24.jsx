@@ -11,7 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
-import { buildMultiempresaReadFilter, isEditRequestCurrent, loadEmpresaForEdit } from "@/components/lib/contextoMultiempresaPolicy";
+import { buildMultiempresaReadFilter, isEditRequestCurrent, isTenantMasterEntity, loadEmpresaForEdit } from "@/components/lib/contextoMultiempresaPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -370,12 +370,13 @@ export default function VisualizadorUniversalEntidadeV24({
       return { id: "__escopo_multiempresa_obrigatorio__" };
     }
     const ctxCampo = ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id";
+    const tenantMaster = isTenantMasterEntity(ENTITY);
     return buildMultiempresaReadFilter({
       groupId,
-      empresaId,
+      empresaId: tenantMaster ? null : empresaId,
       ctxField: ctxCampo,
       shared: ENTITY === "Cliente" || SHARED_ENTITIES.has(ENTITY),
-      empresaIdsDoGrupo: (!empresaId && Array.isArray(empresasDoGrupo))
+      empresaIdsDoGrupo: (!tenantMaster && !empresaId && Array.isArray(empresasDoGrupo))
         ? empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean)
         : [],
       rest: {},
@@ -524,7 +525,7 @@ export default function VisualizadorUniversalEntidadeV24({
       const clean = Object.assign({}, formData);
       delete clean._action;
       // Sempre carimbar contexto quando disponivel (inclusive catálogos "simples")
-      if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
+      if (!isTenantMasterEntity(ENTITY) && !clean.empresa_id && empresaId) clean.empresa_id = empresaId;
       if (!clean.group_id  && groupId)   clean.group_id   = groupId;
       if (!clean.group_id && !clean.empresa_id) {
         throw new Error("Contexto de grupo/empresa obrigatorio para salvar cadastro.");

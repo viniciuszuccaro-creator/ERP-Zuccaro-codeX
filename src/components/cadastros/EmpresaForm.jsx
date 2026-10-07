@@ -21,7 +21,7 @@ const toInteger = (value, fallback = 0) => Number.isFinite(Number(value)) ? pars
 export default function EmpresaForm({ empresa, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || empresa;
   const { canCreate, canEdit, hasPermissionKey } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId);
   const podeCriar = canCreate("Cadastros", "Organizacional");
@@ -105,8 +105,8 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
       proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
       autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)
     }} : {}),
-    group_id: groupId || formData.group_id,
-    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+    group_id: dadosIniciais?.group_id || groupId,
+    ...(dadosIniciais?.empresa_id ? { empresa_id: dadosIniciais.empresa_id } : {})
   });
 
   const handleSubmit = async () => {
