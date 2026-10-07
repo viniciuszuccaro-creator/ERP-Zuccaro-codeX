@@ -13221,3 +13221,29 @@ Objetivo: complementar a branch funcional autoritativa `codex/comercial-expedica
 | Testes | VM HTTP com retries sem efeitos, inclusive NF; foco fiscal+legado 50/50. Audit, lint (1 warning preexistente), build, diff-check PASS no diff final; CI Linux do SHA publicado é gate. `npm test` raiz falha em guards VPS sob Windows e typecheck raiz falha em JSX fora do diff |
 | Pendências | Snapshots privados comparáveis e homologação operacional continuam BLOCKED; sem saldo de abertura, importação ou VPS |
 | Próximo P0 | Prova HTTP integrada por fluxo completo em PostgreSQL isolado e mapeamento de origem/unidade/corte antes da ativação |
+
+## CODEX — edição segura de Empresas em Cadastros (2026-10-06)
+
+| Campo | Valor |
+|---|---|
+| Objetivo | Corrigir abertura do formulário de Empresa com campos mascarados/ausentes e impedir atualização a partir de linha parcial |
+| Causa | Visualizador passava a linha da lista ao formulário sem reler o registro; botão/formulário/campos usavam gates diferentes, inclusive ação `salvar` sem contrato canônico |
+| Branch | `codex/cadastros-empresa-edit-safe-20261006`, separada da candidata Comercial e da frente Cursor |
+| Reuso | `EmpresaForm`, `VisualizadorUniversalEntidadeV24`, `usePermissions`, `contextoMultiempresaPolicy` e API `Empresa.get` existentes; nenhum cadastro paralelo |
+| Contrato | Editar relê registro completo, confere ID e Grupo/Empresa e bloqueia abertura em falha/projeção incompleta; formulário exibe ID somente leitura, usa gate efetivo de criar/editar e não reenvia configuração fiscal oculta no update; erro visível permite retentativa |
+| Segurança | Sem bypass de role, mudança de CNPJ real, importação, banco operacional ou VPS; certificado continua sob permissão separada |
+| Testes | Foco sintético 4/4; audit:baseline, lint (1 warning preexistente), build e diff-check passaram. `npm test` raiz falha em guards de VPS sob Windows; typecheck raiz mantém 1.810 diagnósticos, nove nos arquivos tocados em linhas preexistentes. Base `df25c9a9` teve `erp-runtime-ci` e `omnicanal-postgres` verdes; CI Linux do novo SHA ainda é gate |
+| Pendências | Confirmar perfil e resposta completa da sessão real sem publicar dados pessoais; revisar o HEAD final e obter CI verde antes de integração |
+| Próximo P0 | Homologar edição/reabertura em ambiente isolado com perfil administrador legítimo e escopos Grupo/Empresa, sem alterar cadastro real sem autorização |
+
+Parecer independente da #227 sobre `397203af`: leitura de edição pendente poderia abrir registro antigo após Novo ou troca de contexto. Follow-up no mesmo lote invalida requisições ao iniciar criação ou trocar Grupo/Empresa, fecha o formulário antigo e compara o escopo capturado antes de aceitar a resposta. Teste sintético adicional cobre as duas corridas. CI do HEAD follow-up e nova revisão seguem como gates.
+
+Parecer Cursor do mesmo SHA encontrou gate inválido para certificado: ação `certificado` não é RBAC canônico, permitindo aparência de edição com descarte silencioso. Follow-up usa seção `Cadastros.Empresa.Certificado.editar`, desabilita os controles e explica a exigência sem essa permissão; payload autorizado volta a sanitizar os campos do certificado. Validação e revisão devem mirar o novo HEAD final.
+
+## CODEX — homologação isolada do cadastro Empresa (2026-10-07)
+
+PR #227 em `4a2c93a5` estava com `erp-runtime-ci` e `omnicanal-postgres` verdes e parecer Cursor do mesmo SHA; nenhuma implantação realizada. Complemento de teste na mesma branch usa o cliente local e armazenamento descartável em memória, sem banco/API operacional nem CNPJ real. Perfil sintético não-mestre com permissão explícita de Cadastros relê registro completo, salva, reabre em nova sessão e comprova ID/CNPJ/configuração fiscal preservados, outra Empresa intacta e auditoria presente. Perfil somente leitura bloqueia update; escopo de outra Empresa bloqueia abertura; testes anteriores cobrem falha de leitura e retentativa. Foco 6/6; audit:baseline, lint (1 warning preexistente), build e diff-check passaram. Suíte raiz no Windows e typecheck raiz mantêm falhas anteriores fora do diff; CI Linux do novo SHA é gate. Navegador Playwright não instalado localmente; esta prova não substitui clique visual e homologação com perfil administrativo real em ambiente autorizado. Próximo P0: conferir fluxo visual com sessão legítima em ambiente isolado sem alterar dados reais; implantação/merge continuam sujeitos a gate.
+
+Parecer Cursor do `70585a6e` identificou lacuna de contrato: o cliente local grava Empresa com `Cadastros.Organizacional.editar`, enquanto a grade/formulário podiam liberar edição por outra seção de Cadastros. Follow-up alinha somente a entidade Empresa ao gate Organizacional em listagem, criação, edição, exclusão e campos; demais entidades mantêm regra anterior. O perfil administrador sintético agora tem só Organizacional; perfil com Empresa.editar sem Organizacional é negado pelo backend. Teste compara razão social/CNPJ/configuração da outra Empresa e exige auditoria de atualização com usuário, grupo e antes/depois. Sem alteração de perfil real, banco operacional ou VPS. CI e revisão do HEAD follow-up são gates.
+
+Parecer Cursor do `cd2bcd29` confirmou o gate, mas apontou entrada do cartão Empresas ainda com `Cadastros.Empresa.visualizar` e texto de auditoria de bloqueio com chave antiga. Follow-up pontual alinha cartão/botão Abrir e metadados de auditoria ao mesmo `Cadastros.Organizacional`, sem alterar outros cartões ou dados. Teste focado verifica essas chaves; CI e revisão do novo HEAD seguem como gates.
