@@ -1,3 +1,17 @@
+## CODEX — tip #226 CI verde pós-matriz (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Tip | `5271da58` |
+| Matriz | `docs/MATRIZ_226_CONTEM_227_228_229.md` — #226 ⊇ #227/#228/#229 |
+| Visual ≡ save | só `Cadastros.Organizacional` (UI + localBase44) |
+| Testes | Empresa+policy+snapshot guard **40/40** |
+| CI | SUCCESS frontend+backend |
+| PRs arquivar | #227, #228, #229 (não fechar sem HUMAN; `gh comment` negado) |
+| Indep. | #203 `8784842f` CI SUCCESS |
+| VPS | MCP timeout (auth válida) |
+| Próximo | HUMAN merge #226 → #225 → #203 |
+
 ## TRÊS PACOTES — integração pós-#231 (2026-10-07)
 
 | Fase | #231 snapshots | Cadastros #226 | Financeiro #225 | Legado | Deploy erp-dev |
