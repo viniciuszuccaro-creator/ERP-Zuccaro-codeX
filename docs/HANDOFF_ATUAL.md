@@ -123,6 +123,22 @@ Chat principal: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769
 - HUMAN_NEXT Legado: FileZilla → `04_REPORTS` → `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export <json> --reports-dir <04_REPORTS>` → devolver só saída do verifier.
 - #227 `codex/cadastros-empresa-edit-safe-20261006` @ `5e50e6b1`: útil portado; **não** mergear base Expedição em main.
 
+## Checkpoint Onda 15 - limpeza outbox na troca de Empresa (2026-10-06)
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`: `ProdutoRelationsDamSection` zera variantes/equivalentes/mídia/métricas/dead-letter quando `empresaId`/produto/view faltam — fail-closed entre tenants.
+- Teste estrutural em `tests/produto-pim-ui.test.js`. Sem publisher externo.
+- Coordenação pacotes paralelos: Comercial = candidata/#219/#221 + ledger; Legado = export/CADESP/staging; Cursor = revisão #221 + outbox/DAM nesta branch. Não editar router/STATUS da candidata daqui.
+
+## Checkpoint Onda 15 - PG concorrencia + consumidor prepared (2026-10-04)
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`: alem de claim/lease/projecao, E2E PG cobre claim concorrente, lease/executor antigo, retry→DL, isolamento A/A2/B e rollback; consumidor prepared fail-closed para external.
+- Meta `outboxConsumerPrepared`. Env: `ERP_OUTBOX_CONSUMER_MODE` / fake outcome / channel flags (sem segredo).
+- Divisao Cursor vs Comercial: ver secao de coordenacao na branch #202 (`docs/HANDOFF_ATUAL.md`); Comercial nao edita midia/outbox deste pacote.
+- Bloqueado: publisher real, cron VPS, Auth, tip-port.
+
+## Checkpoint Onda 15 - claim/lease + projecao allowlisted (2026-10-02)
+- Branch `cursor/comercial360-onda15-outbox-claim-392b`: claim/confirm/fail/reprocess/discard/list/metrics + UI prepared; projecao allowlisted no emit e no FakeCatalogPublisher (rejeita custo/margem/ncm/URL).
+- Rotas: GET outbox (+produtoId) + outbox/metrics; POST claim/process/confirm/fail/reprocess/discard.
+- Bloqueado externo: publisher real, Storage/Auth/VPS, reconciliacao de canal.
+
 ## Resposta Codex ao contrato Cursor do canario - PR #34 secao 4 (2026-09-24)
 - Fonte: PR #33 branch codex/comercial-360 em bfdfe834; PR #34 branch cursor/vps-hml-gate-c-legado-392b em e40a8a61. Main ainda ca417160. O Gate C foi marcado aprovado pelo Cursor com evidencias sanitizadas; isso NAO autoriza D/E/F, migration ou Auth novo.
 - 1. EXPECTED_RUNTIME=ERP-RUNTIME-08B. `server/src/api/router.ts` fixa esse valor em `/api/v1/meta`. O default `COMERCIAL-360-V1` de `scripts/deploy/comercial360-canary.sh` esta incorreto para este candidato; antes do Gate D passar EXPECTED_RUNTIME explicitamente e ajustar o default em checkpoint validado. Revalidar meta na imagem da MAIN, nao confiar em branch.

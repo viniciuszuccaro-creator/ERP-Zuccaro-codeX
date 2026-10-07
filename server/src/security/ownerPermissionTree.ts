@@ -26,6 +26,8 @@ export const OWNER_ERP_PERMISSION_ACTIONS = [
   'alterar-status',
   'aprovar-conteudo',
   'publicar',
+  'reprocessar',
+  'descartar',
   'dados-sensiveis.visualizar',
   'receber',
   'pagar',

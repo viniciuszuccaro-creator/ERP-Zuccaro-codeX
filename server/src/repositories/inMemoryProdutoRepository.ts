@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
+import { buildProdutoCatalogProjection } from '../services/produtoCatalogProjection.js';
+import {
+  assertOutboxLeaseToken,
+  computeOutboxRetryAt,
+  createPendingPublicationEvent,
+  type OutboxEventStatus,
+  type ProdutoPublicationEvent,
+} from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaScanEvidence, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 
@@ -40,6 +48,44 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
     requestId: string,
     executor?: DbQueryExecutor,
   ): Promise<void>;
+  claimPublicationEvents(
+    scope: Scope,
+    options: { limit: number; leaseMs: number },
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent[]>;
+  confirmPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    leaseToken: string,
+    executor?: DbQueryExecutor,
+  ): Promise<{ event: ProdutoPublicationEvent; receipt: 'confirmed' | 'already_published' } | null>;
+  failPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    leaseToken: string,
+    errorMessage: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
+  reprocessPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
+  listPublicationEvents(
+    scope: Scope,
+    options: { status?: OutboxEventStatus; produtoId?: string; limit: number; offset: number },
+    executor?: DbQueryExecutor,
+  ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }>;
+  countPublicationEventsByStatus(
+    scope: Scope,
+    options?: { produtoId?: string },
+    executor?: DbQueryExecutor,
+  ): Promise<Record<OutboxEventStatus, number>>;
+  discardPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    executor?: DbQueryExecutor,
+  ): Promise<ProdutoPublicationEvent | null>;
   listVariants(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoVariante[]>;
   listEquivalents(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoEquivalente[]>;
   listCanais(scope: Scope, produtoId: string, executor?: DbQueryExecutor): Promise<ProdutoCanal[]>;
@@ -126,8 +172,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   private readonly canais = new Map<string, ProdutoCanal>();
   private readonly midias = new Map<string, ProdutoMidia>();
 
-  private readonly publicationEvents: Array<{ groupId: string; empresaId: string | null; produtoId: string; requestId: string }> = [];
+  private readonly publicationEvents: ProdutoPublicationEvent[] = [];
   private transactionQueue: Promise<void> = Promise.resolve();
+  /** Serializa claims concorrentes (paridade SKIP LOCKED do Postgres). */
+  private claimQueue: Promise<void> = Promise.resolve();
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
     const previous = this.transactionQueue;
     let release = () => {};
@@ -279,10 +327,195 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
       && event.produtoId === produto.id && event.requestId === requestId)) {
       return;
     }
-    this.publicationEvents.push({ groupId: scope.groupId, empresaId: produto.empresa_id, produtoId: produto.id, requestId });
+    this.publicationEvents.push(createPendingPublicationEvent({
+      groupId: scope.groupId,
+      empresaId: produto.empresa_id,
+      produtoId: produto.id,
+      requestId,
+      payload: buildProdutoCatalogProjection(produto) as unknown as Record<string, unknown>,
+    }));
   }
-  async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {
-    return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
+
+  async claimPublicationEvents(
+    scope: Scope,
+    options: { limit: number; leaseMs: number },
+  ): Promise<ProdutoPublicationEvent[]> {
+    const previous = this.claimQueue;
+    let release = () => {};
+    this.claimQueue = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    try {
+      if (!scope.empresaId) return [];
+      const now = Date.now();
+      const lockedUntil = new Date(now + options.leaseMs).toISOString();
+      const claimed: ProdutoPublicationEvent[] = [];
+      const sorted = [...this.publicationEvents]
+        .filter((row) => row.groupId === scope.groupId && row.empresaId === scope.empresaId
+          && row.eventType === 'produto.publicado'
+          && row.attempts < row.maxAttempts
+          && (row.nextAttemptAt == null || Date.parse(row.nextAttemptAt) <= now)
+          && (
+            ((row.status === 'pending' || row.status === 'retry')
+              && (row.lockedUntil == null || Date.parse(row.lockedUntil) <= now))
+            || (row.status === 'processing' && row.lockedUntil != null && Date.parse(row.lockedUntil) <= now)
+          ))
+        .sort((a, b) => a.id.localeCompare(b.id));
+      for (const row of sorted) {
+        if (claimed.length >= options.limit) break;
+        const next: ProdutoPublicationEvent = {
+          ...row,
+          status: 'processing',
+          attempts: row.attempts + 1,
+          lockedUntil,
+          nextAttemptAt: null,
+          errorMessage: null,
+        };
+        const index = this.publicationEvents.findIndex((event) => event.id === row.id);
+        this.publicationEvents[index] = next;
+        claimed.push(structuredClone(next));
+      }
+      return claimed;
+    } finally {
+      release();
+    }
+  }
+
+  async confirmPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    leaseToken: string,
+  ): Promise<{ event: ProdutoPublicationEvent; receipt: 'confirmed' | 'already_published' } | null> {
+    const current = this.publicationEvents.find((row) => row.id === eventId);
+    if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status === 'published') {
+      return { event: structuredClone(current), receipt: 'already_published' };
+    }
+    if (current.status !== 'processing') return null;
+    try {
+      assertOutboxLeaseToken(current.id, current.lockedUntil, leaseToken);
+    } catch {
+      return null;
+    }
+    const next: ProdutoPublicationEvent = {
+      ...current,
+      status: 'published',
+      publishedAt: nowIso(),
+      lockedUntil: null,
+      nextAttemptAt: null,
+      errorMessage: null,
+    };
+    const index = this.publicationEvents.findIndex((event) => event.id === eventId);
+    this.publicationEvents[index] = next;
+    return { event: structuredClone(next), receipt: 'confirmed' };
+  }
+
+  async failPublicationEvent(
+    scope: Scope,
+    eventId: string,
+    leaseToken: string,
+    errorMessage: string,
+  ): Promise<ProdutoPublicationEvent | null> {
+    const current = this.publicationEvents.find((row) => row.id === eventId);
+    if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status !== 'processing') return null;
+    try {
+      assertOutboxLeaseToken(current.id, current.lockedUntil, leaseToken);
+    } catch {
+      return null;
+    }
+    const exhausted = current.attempts >= current.maxAttempts;
+    const next: ProdutoPublicationEvent = {
+      ...current,
+      status: exhausted ? 'dead_letter' : 'retry',
+      lockedUntil: null,
+      nextAttemptAt: exhausted ? null : computeOutboxRetryAt(current.attempts),
+      deadLetterAt: exhausted ? nowIso() : null,
+      errorMessage,
+    };
+    const index = this.publicationEvents.findIndex((event) => event.id === eventId);
+    this.publicationEvents[index] = next;
+    return structuredClone(next);
+  }
+
+  async reprocessPublicationEvent(
+    scope: Scope,
+    eventId: string,
+  ): Promise<ProdutoPublicationEvent | null> {
+    const current = this.publicationEvents.find((row) => row.id === eventId);
+    if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status !== 'dead_letter') return null;
+    const next: ProdutoPublicationEvent = {
+      ...current,
+      status: 'pending',
+      attempts: 0,
+      lockedUntil: null,
+      nextAttemptAt: null,
+      deadLetterAt: null,
+      errorMessage: null,
+      publishedAt: null,
+    };
+    const index = this.publicationEvents.findIndex((event) => event.id === eventId);
+    this.publicationEvents[index] = next;
+    return structuredClone(next);
+  }
+
+  async listPublicationEvents(
+    scope: Scope,
+    options: { status?: OutboxEventStatus; produtoId?: string; limit: number; offset: number },
+  ): Promise<{ rows: ProdutoPublicationEvent[]; total: number }> {
+    if (!scope.empresaId) return { rows: [], total: 0 };
+    const filtered = this.publicationEvents
+      .filter((row) => row.groupId === scope.groupId && row.empresaId === scope.empresaId
+        && row.eventType === 'produto.publicado'
+        && (options.status == null || row.status === options.status)
+        && (options.produtoId == null || row.produtoId === options.produtoId))
+      .sort((a, b) => {
+        const aTime = a.deadLetterAt || a.publishedAt || a.nextAttemptAt || a.lockedUntil || '';
+        const bTime = b.deadLetterAt || b.publishedAt || b.nextAttemptAt || b.lockedUntil || '';
+        return bTime.localeCompare(aTime) || b.id.localeCompare(a.id);
+      });
+    return {
+      total: filtered.length,
+      rows: filtered.slice(options.offset, options.offset + options.limit).map((row) => structuredClone(row)),
+    };
+  }
+
+  async countPublicationEventsByStatus(
+    scope: Scope,
+    options: { produtoId?: string } = {},
+  ): Promise<Record<OutboxEventStatus, number>> {
+    const base: Record<OutboxEventStatus, number> = {
+      pending: 0, processing: 0, published: 0, retry: 0, dead_letter: 0, cancelled: 0,
+    };
+    if (!scope.empresaId) return base;
+    for (const row of this.publicationEvents) {
+      if (row.groupId !== scope.groupId || row.empresaId !== scope.empresaId || row.eventType !== 'produto.publicado') continue;
+      if (options.produtoId && row.produtoId !== options.produtoId) continue;
+      base[row.status] += 1;
+    }
+    return base;
+  }
+
+  async discardPublicationEvent(
+    scope: Scope,
+    eventId: string,
+  ): Promise<ProdutoPublicationEvent | null> {
+    const current = this.publicationEvents.find((row) => row.id === eventId);
+    if (!current || current.groupId !== scope.groupId || current.empresaId !== scope.empresaId) return null;
+    if (current.status !== 'dead_letter') return null;
+    const next: ProdutoPublicationEvent = {
+      ...current,
+      status: 'cancelled',
+      lockedUntil: null,
+      nextAttemptAt: null,
+      errorMessage: current.errorMessage,
+    };
+    const index = this.publicationEvents.findIndex((event) => event.id === eventId);
+    this.publicationEvents[index] = next;
+    return structuredClone(next);
+  }
+
+  async listVariants(scope: Scope, produtoId: string): Promise<ProdutoVariante[]> {    return structuredClone([...this.variants.values()].filter((row) => row.ativo && row.group_id === scope.groupId
       && row.produto_id === produtoId && (!scope.empresaId || row.empresa_id === scope.empresaId))
       .sort((a, b) => a.sku.localeCompare(b.sku) || a.id.localeCompare(b.id)));
   }
@@ -530,8 +763,14 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     return structuredClone(row);
   }
 
-  listPublicationEvents() {
-    return structuredClone(this.publicationEvents);
+  /** Resumo sincrono para testes de emissao (nao substitui listagem paginada tenant-scoped). */
+  listPublicationEventSummaries() {
+    return structuredClone(this.publicationEvents.map((event) => ({
+      groupId: event.groupId,
+      empresaId: event.empresaId,
+      produtoId: event.produtoId,
+      requestId: event.requestId,
+    })));
   }
 }
 
