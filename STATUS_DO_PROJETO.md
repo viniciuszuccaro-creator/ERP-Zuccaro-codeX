@@ -1,3 +1,15 @@
+## CODEX — lote indep. Onda 15 outbox #203 (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/203 |
+| HEAD | `0a345d6b` · MERGEABLE · CI SUCCESS |
+| Escopo | claim/lease outbox `produto.publicado` — arquivos **≠** Cadastros #226, Financeiro #225, Legado |
+| Testes | outbox claim unit **15/15** revalidado neste ciclo |
+| Paralelo | Cadastros #226 `434b4bf3` (port #229); snapshots #231 `4ca140fe` |
+| Pendência | publisher real / VPS — BLOCKED; HUMAN merge #203 após #226/#231 se desejado |
+| Branch coord | `cursor/comercial360-onda15-outbox-ready-cb6a` |
+
 ## Comercial 360 / Onda 15 - claim in-memory serializado + Promise.all (2026-10-06)
 
 - `InMemoryProdutoRepository.claimPublicationEvents` serializado (paridade SKIP LOCKED).
