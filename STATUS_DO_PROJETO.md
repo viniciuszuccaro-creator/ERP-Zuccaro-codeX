@@ -1,13 +1,60 @@
+## TRÊS PACOTES — integração pós-#231 (2026-10-07)
+
+| Fase | #231 snapshots | Cadastros #226 | Financeiro #225 | Legado | Deploy erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim (UI≡localBase44 Organizacional) | launchpad + fluxo real | scripts/verifier | — |
+| revisado | Cursor APROVAR | Cursor+Codex | parcial | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | rebase pós-#231 (este tip) | aguarda | — | parcial (#231 em main) |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | pendente (assets) | pendente | pendente | N/A | RUNTIME-08B ainda |
+
+Ordem restante: merge #226 → #225 → deploy com backup/rollback. Arquivar #227/#228/#229 após merge #226.
+
+## FOLLOW-UP — Comercial #226/#229/#231/#203 (2026-10-07)
+
+- #226 tip pré-rebase `434b4bf3`/`6fd07b97` (gate Organizacional completo UI≡localBase44) CI verde.
+- #229 arquivar. #231 **MERGED** em main (`c0efab11`). #203 outbox indep.
+- Deploy erp-dev ainda pendente (VPS MCP timeout).
+
 ## CODEX — coordenação #231 snapshots (2026-10-07)
 
 | Campo | Valor |
 |---|---|
-| HEAD | `47d3a148` · PR https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/231 |
+| HEAD | `4ca140fe` · MERGED via `c0efab11` |
 | CI | SUCCESS frontend+backend |
 | Guard | `tests/public-snapshot-exposure-guard.test.js` **4/4** |
-| Privado | cópia fora do git (Cloud: `/tmp/erp-private-snapshots-backup`) |
-| Histórico | runbook `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md` — **não** executar rewrite neste lote |
-| Próximo | HUMAN merge #231; limpeza hist. sob janela; deploy só após main sem assets |
+| Privado | cópia fora do git |
+| Histórico | runbook `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md` — **não** rewrite neste lote |
+
+## CODEX — completa port #229 no #226 + localBase44 (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Tip #226 | `7bfd3f93` · CI SUCCESS |
+| Completação | mutação só `Cadastros.Organizacional` (sem aliases Sistema) |
+| Ciclo Empresa | abrir/editar/salvar/reabrir — **36/36** |
+| Indep. Comercial | #203 outbox CI SUCCESS |
+| Próximo | merge #226 pós-rebase; arquivar #229 |
+
+## EXECUÇÃO PARALELA Cursor — #229→#226 + #231 (2026-10-07)
+
+- Port #229 no veículo #226: gate mestre **só** `Cadastros.Organizacional`.
+- #231 merged. #230 ≠ Auth Supabase VPS. Deploy bloqueado por MCP timeout.
+- Legado: HUMAN_NEXT verifier no PC com HD se cloud sem mount.
+
+## CODEX — solução final #226+#227+#228 Empresas (2026-10-07)
+
+Veículo **#226** → main. De #227/#228 portados; bases Expedição **não** mergear. Testes 36/36.
+
+## PARECER CURSOR — #226 consolidada (2026-10-07)
+
+Veredito: **APROVAR merge #226 → main** após rebase limpo com #231. #227/#228/#229 arquivar.
+
+## CURSOR — Cadastros Gerais Empresas edição (2026-10-06)
+
+Tenant masters por `group_id`; load completo; forms preservam id/group; fail-closed. CI PASS no lote Cadastros.
+
+---
 
 ## Primeira senha do proprietário — candidato PASSWORD (2026-09-27)
 
