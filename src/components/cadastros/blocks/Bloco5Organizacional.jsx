@@ -62,9 +62,6 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
           ...getDadosContexto(),
           entidade,
           permissao: `Cadastros.${entidade === "Empresa" || entidade === "GrupoEmpresarial" ? "Organizacional" : entidade}.visualizar`,
-          permissao_alternativa: entidade === "Empresa"
-            ? "Sistema.Empresas.visualizar"
-            : (entidade === "GrupoEmpresarial" ? "Sistema.Grupos.visualizar" : `Sistema.${entidade}.visualizar`),
           total_entidade: getTotalEntidade(entidade),
           contexto_exigido: entidade === "GrupoEmpresarial" ? "grupo" : "group-or-company",
           ...(extras || {}),

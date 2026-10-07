@@ -218,4 +218,6 @@ test('localBase44 nao filtra Empresa/Grupo por empresa_id do contexto', async ()
   assert.match(source, /tenantMaster/);
   assert.match(source, /entityName === 'Empresa' \|\| entityName === 'GrupoEmpresarial'/);
   assert.match(source, /Empresa: \{ module: 'Cadastros', section: 'Organizacional' \}/);
+  assert.doesNotMatch(source, /TENANT_MASTER_PERMISSION_ALIASES/);
+  assert.doesNotMatch(source, /module: 'Sistema', section: 'Empresas'/);
 });

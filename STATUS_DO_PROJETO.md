@@ -1,3 +1,15 @@
+## CODEX — completa port #229 no #226 + localBase44 (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Base | tip Cursor `8a43810f` (UI/policy/Bloco5 de #229) |
+| Completação | remove `TENANT_MASTER_PERMISSION_ALIASES` Sistema — mutação só `Cadastros.Organizacional` |
+| Pareceres | `docs/PARECER_CURSOR_229_231_SHA.md` + `docs/PARECER_CODEX_229_VS_226_TIP.md` |
+| Ciclo Empresa | abrir/editar/salvar/reabrir + falha API + troca contexto — testes focados |
+| #231 | `47d3a148` MERGEABLE CI SUCCESS; cópia privada `/tmp/erp-private-snapshots-backup`; hist. **separada** |
+| VPS | MCP timeout (auth válida) |
+| Próximo | HUMAN merge #226+#231; arquivar #229; Expedição arquivos separados |
+
 ## EXECUÇÃO PARALELA Cursor — #229→#226 + #231 (2026-10-07)
 
 - Port #229 `2350a05f` no veículo #226: gate mestre **só** `Cadastros.Organizacional` (UI=backend).

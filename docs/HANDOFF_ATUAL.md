@@ -1,3 +1,15 @@
+## CODEX — #229 portado + localBase44 alinhado; #231 coordenado (2026-10-07)
+
+| Item | SHA / URL | Estado |
+|---|---|---|
+| #226 Cadastros | tip com port #229 + localBase44 · https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226 | **solução única** → main |
+| De #229 | gate só `Cadastros.Organizacional` (UI+Bloco5+policy+backend local) | port Cursor `8a43810f` + completação Codex |
+| #229 PR | `2350a05f` · https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/229 | **arquivar** — não mergear sozinha |
+| #231 snapshots | `47d3a148` · https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/231 | MERGEABLE · CI SUCCESS; cópia privada OK; hist. rewrite **não** |
+| VPS MCP | Hostinger | timeout; autorização válida |
+
+**Próximo:** HUMAN merge #226+#231; lote Comercial/Expedição separado de Financeiro #225 e Legado.
+
 ## EXECUÇÃO PARALELA — concluir pacotes (2026-10-07)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
@@ -13,8 +25,8 @@ Acessos: GitHub OK · VPS MCP **timeout** · self-hosted workers **0** · HD Leg
 
 | Fase | Cadastros #226+#229 | #231 assets | Financeiro #225 | Auth #230 | Legado | Deploy erp-dev |
 |---|---|---|---|---|---|---|
-| implementado | port #229 em #226 (este tip) | código PR | launchpad | local bootstrap | sintético + scripts | — |
-| revisado | parecer `PARECER_CURSOR_229_231_SHA.md` | APROVAR | parcial (texto+queryKey) | separado da VPS | UNVERIFIED | cmp BLOCKED |
+| implementado | port #229 + localBase44 (este tip) | código PR | launchpad | local bootstrap | sintético + scripts | — |
+| revisado | parecer Cursor + Codex | APROVAR | parcial (texto+queryKey) | separado da VPS | UNVERIFIED | cmp BLOCKED |
 | integrado | aguarda HUMAN merge | aguarda merge | aguarda merge | N/A na VPS | — | não |
 | implantado | não | não | não | não | não | não (MCP timeout) |
 | validado | local sim · **VPS não** | — | local launchpad · **VPS não** | local only | — | — |
