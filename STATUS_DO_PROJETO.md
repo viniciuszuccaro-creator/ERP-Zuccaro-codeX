@@ -1,3 +1,16 @@
+## CURSOR — Financeiro #225 pacote completo (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| SHA | `1f1f8cf6` |
+| CI | PASS (4 checks) |
+| Inventário | 15 cards + rota Layout/pages.config — teste `financeiro-navegacao-inventory` |
+| Parecer | `docs/PARECER_CURSOR_FINANCEIRO_225_SHA_1f1f8cf6.md` |
+| Deploy cmp | `docs/PARECER_CURSOR_DEPLOY_CMP_20261007.md` — VPS MCP timeout (auth≠conexão) |
+| Veredito | APROVAR merge #225; homologação browser pós-merge |
+
+---
+
 ## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
 
 | Campo | Valor |
