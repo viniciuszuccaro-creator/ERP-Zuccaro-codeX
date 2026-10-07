@@ -1,3 +1,14 @@
+## PARECER CURSOR — #226 consolidada `f64e89a5` (2026-10-07)
+
+| Campo | Valor |
+|---|---|
+| Veredito | **APROVAR merge #226 → main** |
+| Código | `f64e89a5` CI SUCCESS `37613106916` |
+| Testes locais tip | **29/29** |
+| #227 | **não mergear** (base Expedição); conteúdo portado — arquivar após merge #226 |
+| Parecer | `docs/PARECER_CURSOR_226_SHA_f64e89a5.md` |
+| Agente | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
+
 ## UNIFICACAO tip Comercial+Cursor #227→#226 (2026-10-07)
 
 - Base única: tip Comercial `f64e89a5` em #226 (`main`).
