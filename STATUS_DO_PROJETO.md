@@ -1,3 +1,10 @@
+## CURSOR — bootstrap auth local browser (2026-10-07)
+
+- Causa: pós-snapshot, `buildLocalAccessVersion` null (perfil mestre com `group_id` desalinhado) → `session_access_changed`.
+- Fix: `ensureLocalActiveSession` normaliza mestre + realinha `local_perfil_admin`; `reset-local` limpa auth/sessão.
+- Testes: `local-auth-master-bootstrap` 2/2.
+- Branch: `cursor/local-auth-bootstrap-browser-392b`.
+
 ## CURSOR — validação funcional Financeiro #225 (2026-10-07)
 
 - Tip código launchpad: `1f1f8cf6`; tip docs anterior: `3ea5db7b`.

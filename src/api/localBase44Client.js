@@ -835,14 +835,50 @@ const ensureLocalActiveSession = async (user) => {
   const authState = readLocalAuthState(safeStorage);
   const sessaoId = safeStorage.getItem(LOCAL_SESSION_ID_KEY) || authState.sessao_id || null;
   let session = await loadLocalSessionById(sessaoId);
+  // loadDb() já passa por ensureLocalTopology (perfil mestre + grupo canônico).
   const db = loadDb();
-  const currentUser = getEntityStore(db, 'User').find((item) => String(item.id) === String(user?.id));
+  const rawUser = getEntityStore(db, 'User').find((item) => String(item.id) === String(user?.id))
+    || (isMasterLocalUser(user) ? getEntityStore(db, 'User').find((item) => isMasterLocalUser(item)) : null)
+    || user;
+  // Snapshot pode deixar User com perfil/grupo desalinhados; mestre local precisa do perfil canônico.
+  const currentUser = isMasterLocalUser(rawUser || user)
+    ? normalizeLocalUser({ ...(rawUser || {}), ...user, id: localApiUser.id, mestre_local: true })
+    : (rawUser || user);
+  if (isMasterLocalUser(currentUser)) {
+    const seededPerfil = seedRecords().PerfilAcesso[0];
+    if (!isRecordDeletedLocally('PerfilAcesso', seededPerfil.id)) {
+      ensureRecord(db, 'PerfilAcesso', seededPerfil.id, () => ({
+        ...seededPerfil,
+        group_id: currentUser.grupo_atual_id || currentUser.grupo_padrao_id || seededPerfil.group_id,
+        grupo_id: currentUser.grupo_atual_id || currentUser.grupo_padrao_id || seededPerfil.grupo_id,
+        permissoes: buildMasterLocalPermissions(seededPerfil.permissoes),
+        ativo: true,
+      }));
+    }
+    // Alinha group_id do perfil mestre ao grupo atual do usuário (pós-import de snapshot).
+    db.PerfilAcesso = (db.PerfilAcesso || []).map((item) => {
+      if (String(item.id) !== 'local_perfil_admin') return item;
+      const gid = currentUser.grupo_atual_id || currentUser.grupo_padrao_id || item.group_id || item.grupo_id;
+      return {
+        ...item,
+        group_id: gid,
+        grupo_id: gid,
+        ativo: true,
+        permissoes: buildMasterLocalPermissions(item.permissoes),
+      };
+    });
+    ensureRecord(db, 'User', currentUser.id, () => currentUser);
+    db.User = (db.User || []).map((item) => (
+      String(item.id) === String(currentUser.id) ? currentUser : item
+    ));
+    saveDb(db);
+  }
   const currentProfile = currentUser?.perfil_acesso_id
     ? getEntityStore(db, 'PerfilAcesso').find((item) => String(item.id) === String(currentUser.perfil_acesso_id))
     : null;
   const accessVersion = buildLocalAccessVersion(currentUser, currentProfile);
-  const groupId = user.grupo_atual_id || user.grupo_padrao_id || null;
-  const empresaId = user.empresa_atual_id || user.empresa_padrao_id || null;
+  const groupId = currentUser.grupo_atual_id || currentUser.grupo_padrao_id || user.grupo_atual_id || user.grupo_padrao_id || null;
+  const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || user.empresa_atual_id || user.empresa_padrao_id || null;
   const sessionTimeout = resolveLocalSessionTimeoutConfig({
     securityConfigs: getEntityStore(db, 'ConfiguracaoSeguranca'),
     groupId,
