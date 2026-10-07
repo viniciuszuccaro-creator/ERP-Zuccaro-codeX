@@ -11734,3 +11734,11 @@ Checklist inicial:
 - `gh pr edit` #211 tipicamente negado; HANDOFF atualizado.
 - HUMAN_NEXT: rodar `executar-verifier-host-local.sh` no PC com `04_REPORTS` ou subir self-hosted worker.
 - importAuthorized=false; mapper #48 intocado; sem re-export/CADESP.
+
+### CODEX LEGADO — execução real staging BLOQUEADA neste Cloud (2026-10-07T20:27Z)
+
+- Ação real: `bash scripts/legado/executar-verifier-host-local.sh` → exit 4 `LEGACY_HOST_REPORTS_DIR_NOT_FOUND`; `FOUND_EXPORT=NONE`; workers=0.
+- Executor com backup: **PC proprietário** (`D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS`), não este Cloud (`hostname=cursor`).
+- Contagens reais processadas: **0**. Sintético ≠ efetivo.
+- Checksum: **UNVERIFIED**. PR #211: edit tipicamente negado; HANDOFF atualizado.
+- HUMAN_NEXT: host PC roda o script OU self-hosted worker nesse PC.
