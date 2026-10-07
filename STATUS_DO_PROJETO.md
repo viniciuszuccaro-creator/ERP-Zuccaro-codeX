@@ -1,3 +1,15 @@
+## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
+
+Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)
+
+| Item | Estado |
+|---|---|
+| #226 ⊇ #227/#228/#229 | **SIM** · visual≡save Organizacional · merge `6dfd39d2` |
+| #203 outbox | **MERGED** `2403586e` (tip `91675712`) · CI SUCCESS |
+| #227/#228/#229 | **arquivar** (conteúdo em #226); close negado à integration — HUMAN close |
+| Main | `2403586e` (#231+#226+#225+#233+#234+#203) |
+| Deploy erp-dev | ainda BLOCKED VPS MCP |
+
 ## CODEX — #203 outbox rebase main pós-#226 (2026-10-07)
 
 | Campo | Valor |
