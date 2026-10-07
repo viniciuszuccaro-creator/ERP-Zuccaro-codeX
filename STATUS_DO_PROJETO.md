@@ -11767,3 +11767,31 @@ Checklist inicial:
 - BLOCKED=`LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED`.
 - HUMAN_NEXT: FileZilla/SFTP no PC do proprietário → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (nome único se colidir); confirmar hash; então classificador/CADESP/staging.
 - importAuthorized=false; mapper #48 intocado.
+
+### CODEX LEGADO — evidência ERP novo pré-VPS ID+CNPJ (2026-10-06)
+
+- Objetivo: localizar backups/exports do ERP novo **antes da VPS** com pares ID+CNPJ; conferir se o export VPS transferido é o mesmo arquivo (`18e2ab9a…3d7e`); preparar confronto preservando 3 linhas; staging isolado; sem re-pedir CADESP.
+- Ação real Cloud: HD/SFTP ainda BLOCKED (`NO_SSH_KEY`, `/mnt/d` ABSENT). Sem transferência falsa.
+- Entrega código: `scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs` + teste (conta pares id+cnpj_sha256 sem PII; compara SHA do export).
+- Fonte pré-VPS conhecida (Gate 18, só HD): `current-erp-company-topology-proof.json` — 1 grupo + 2 empresas, hashes ID/CNPJ; **não** no Git.
+- Export VPS: ainda só em `/root/erp-private/…153440Z.json`; same-file check **PENDENTE**.
+- Independente: testes verifier + classificar/staging/vínculo verdes; staging sintético inalterado.
+- HUMAN_NEXT: SFTP + `verificar-evidencia-erp-novo-pre-vps.mjs --export … --reports-dir …04_REPORTS`.
+- importAuthorized=false; mapper #48 intocado; #216/#217.
+
+### CODEX LEGADO — revalidação Cloud pré-VPS (2026-10-06T17:27Z)
+
+- Reexecução: HD/SFTP ainda ausentes; inventário NO; verifier BLOCKED; checksum match = **não aplicável/ausente**.
+- Sem novo pedido CADESP; sem export; sem tip-port #48; testes sintéticos 16/16 PASS.
+- Tip: `7c255148` (+ este checkpoint docs). PR #211 OPEN.
+- HUMAN_NEXT inalterado (FileZilla → 04_REPORTS → verifier).
+
+### CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
+- Objetivo: registrar confirmação humana da transferência do export 153440Z; avançar checksum/pré-VPS/staging sem re-export e sem re-pedir CADESP.
+- Transferência: **confirmada pelo proprietário**. Checksum match neste Cloud Agent: **UNVERIFIED** (HD não montado; `find` sem o leaf; inventário NO). Não alegar match nem mismatch de bytes daqui.
+- SHA esperado: `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`.
+- Staging paralelo (fixture): origem 8 / carregados 4 / reusos 1 / conflitos 1 / quarentena 2; porEmpresa Grupo=2 CPA=1 3Z=1; totalDiffCentavos=0; importAuthorized=false.
+- PR #211: tip Cursor OPEN; `gh pr edit` falhou (`Resource not accessible by integration`) — corpo/título sugeridos no HANDOFF para Cursor aplicar.
+- Branch tip Codex: este commit. Mapper #48 intocado. #216/#217.
+- HUMAN_NEXT: no PC, `verificar-evidencia-erp-novo-pre-vps.mjs` no arquivo transferido + `04_REPORTS`; devolver saída sanitizada.

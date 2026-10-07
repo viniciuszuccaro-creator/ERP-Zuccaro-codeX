@@ -1,11 +1,92 @@
-## CURSOR — espelho SFTP BLOCKED Legado `f69ebf8b` (2026-10-06)
+## CURSOR — Legado #211 pós-transferência (2026-10-07)
 
-- Merge Codex tip `f69ebf8b` no [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211).
-- Transferência **não** concluída: `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` (tentativa real exit 255).
-- [Legado: CADESP + staging](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) — sem executor duplicado; sem novo export.
-- **HUMAN_NEXT:** FileZilla no PC → VPS `/root/erp-private/legado-empresas-api-20261006T153440Z.json` → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (sem sobrescrever) → sha256 = `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` → avisar chat.
+| Campo | Valor |
+|---|---|
+| Agente | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
+| Transferência | **confirmada** pelo proprietário |
+| Checksum Cloud | **UNVERIFIED** (HD não montado; `backup_dir_found=NO`) |
+| SHA esperado | `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` |
+| Tip espelhado | Codex `f9247587` |
+| Staging fixture | 8→4/1/1/2 · `importAuthorized=false` |
+| HUMAN_NEXT | No PC: `verificar-evidencia-erp-novo-pre-vps.mjs` → devolver só JSON do verifier |
+
+## CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
+Recebido (chat principal). **Transferência do export confirmada pelo proprietário.**
+NÃO pedir CADESP de novo. NÃO repetir export.
+
+| Item | Estado |
+|---|---|
+| Export VPS | `legado-empresas-api-20261006T153440Z.json` |
+| SHA esperado (paste) | `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` |
+| Transferência | **confirmada pelo proprietário** (HD privado) |
+| Checksum match neste Cloud | **UNVERIFIED** — HD Windows **não montado** aqui (`backup_dir_found=NO`, arquivo local ausente); **não** declarar mismatch |
+| ERP novo pré-VPS ID+CNPJ | fonte Gate 18 no HD: `current-erp-company-topology-proof.json` — recuperação física ainda exige PC/HD |
+| Staging sintético (paralelo) | origem 8 → carregados 4 / reusos 1 / conflitos 1 / quarentena 2; monetário OK; `importAuthorized=false` |
+| PR #211 | OPEN; `gh pr edit` **Resource not accessible** neste token — atualizar título/corpo via Cursor/humano com texto abaixo |
+| Mapper #48 | intocado |
+
+**HUMAN_NEXT (PC com HD — mínimo):**
+```bash
+node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs \
+  --export "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS/legado-empresas-api-20261006T153440Z.json" \
+  --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Devolver só JSON do verifier (`sameFileAsPaste`, `paresIdCnpj`, `blocked`). Depois:
+classificar → CADESP já recebido → staging comprovados / quarentena.
+
+**Texto sugerido título #211:**
+`legado: export 153440Z transferido — checksum/HD verifier + staging`
+
+## CODEX LEGADO — revalidação pré-VPS (2026-10-06T17:27Z)
+
+
+Status: **BLOCKED** / **HUMAN_NEXT**. Reexecução real neste Cloud:
+`NO_SSH_KEY`; inventário `backup_dir_found=NO`; verifier exit 2
+(`LEGACY_EXPORT_PATH_MISSING`, `LEGACY_REPORTS_DIR_NOT_PROVIDED`).
+Checksum match export↔HD: **não** (arquivo local ausente).
+CADESP não re-pedido. Tip Codex `7c255148`; PR #211 OPEN.
+Testes verifier+classificar+staging 16/16 PASS (sintéticos).
+
+## CODEX LEGADO — evidência ERP novo pré-VPS (ID+CNPJ) (2026-10-06)
+
+
+Recebido. Prioridade: recuperar evidência do **ERP novo anterior à VPS**
+(registros com **ID + CNPJ juntos**), separada da importação do ERP antigo.
+CADESP **não** pedido de novo.
+
+### Ações reais neste Cloud
+
+1. SFTP/HD: **BLOCKED** — `ssh_keys_present=false`; `/mnt/d` ausente;
+   `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` (sem transferência falsa).
+2. Inventário HD: `inventario-backup-erp-antigo.sh` → `backup_dir_found=NO`.
+3. Ferramenta nova (metadados): `scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs`
+   — confere SHA do export VPS vs paste e conta pares id+cnpj_sha256 no
+   topology-proof **sem** imprimir IDs/CNPJ.
+4. Testes: `legado-verificar-evidencia-erp-novo-pre-vps` + regressão classificar/
+   staging/vínculo PASS.
+
+### Evidência sanitizada já conhecida (STATUS Gate 18 — só no HD)
+
+- Leaf pré-VPS: `current-erp-company-topology-proof.json` em `04_REPORTS`
+  (quatro fontes: 1 Grupo + 2 Empresas; hashes de ID e CNPJ estáveis).
+- Export VPS paste: `legado-empresas-api-20261006T153440Z.json`
+  sha256 esperado `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e`
+  (groups=2, empresas=3) — **mesmo arquivo?** só após SFTP + verifier.
+- Confronto: preservar **três linhas** VPS + refs; Grupo CPA=agrupamento;
+  CPA Ferro + 3Z = operacionais desejadas; rótulo ≠ vínculo.
+
+### HUMAN_NEXT (mínima)
+
+No PC com FileZilla/chave + HD:
+1. SFTP o JSON VPS existente → `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS\` (nome único se colidir).
+2. `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export <json> --reports-dir <04_REPORTS>`
+3. Devolver só o JSON de saída do verifier (sem payload).
+
+`importAuthorized=false`; mapper #48 intocado; #216/#217.
 
 ## CODEX LEGADO — transferência SFTP do export existente (2026-10-06)
+
 
 Recebido. **Não** refiz export. Primeira ação **real** (não tip-only):
 

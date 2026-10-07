@@ -51,6 +51,11 @@
   - Fixture: `fixtures/legado/empresas-api-sinteticas/export-sanitizado.json`
   - Teste: `tests/legado-empresas-api-classificar.test.js`
   - Nunca apaga a terceira linha; CADESP/Gate 18 reusado
+- Evidência ERP novo pré-VPS (ID+CNPJ hashes, sem PII no stdout):
+  `scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs`
+  - Confere SHA do export VPS vs paste; procura `current-erp-company-topology-proof.json`
+  - Teste: `tests/legado-verificar-evidencia-erp-novo-pre-vps.test.js`
+  - Separado da importação do ERP antigo
 - Mapper sintético (#48, Cursor): `scripts/legado/mapear-registro-sintetico.mjs`
   — **não editar neste lote Codex**
 
@@ -151,9 +156,11 @@ agrupamento (não emissor). `EMP03`/pasta não prova empresa. O mapa privado
 | Importação / carga operacional | **bloqueado** — aguardar gate humano; flags permanecem false |
 | Coordenação Comercial/Cursor (VPS vs versão anterior) | **canônico** — ausência de tela/cadastro **não** = falha de ETL; exige diff commit/imagem/flags/rotas/layouts/RBAC (#216/#217) |
 | CADESP / Gate 18 | **reusado** — não solicitar novamente os mesmos comprovantes; mapa privado no HD |
-| Export empresas (banco da API) | **executado na VPS** 2026-10-06T15:34:40Z; SFTP Cloud→HD **FAILED** (`LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED`); file permanece `/root/erp-private/legado-empresas-api-20261006T153440Z.json` |
-| Classificador API CPA/3Z/Grupo | **preparado** (fixture selo `c5c78e00…`); real aguarda JSON no HD |
-| Procedência GitHub #211 | **git OK** (PR OPEN) / **fontes privadas BLOCKED** (HD ausente neste VM) |
+| ERP novo pré-VPS (ID+CNPJ) | **fonte no HD** `current-erp-company-topology-proof.json` (Gate 18); verifier preparado; recuperação física no PC do proprietário |
+| Export VPS same-file check | **transferência confirmada (proprietário)**; checksum neste Cloud **UNVERIFIED** (HD não montado); esperado `18e2ab9a…3d7e` |
+| Export empresas (banco da API) | **transferido ao HD (confirmação humana 2026-10-07)**; sem re-export; CADESP não re-pedido |
+| Classificador API CPA/3Z/Grupo | **preparado** (fixture selo `c5c78e00…`); real aguarda verifier `sameFileAsPaste=true` no PC |
+| Procedência GitHub #211 | **git OK** (PR OPEN); `gh pr edit` negado neste token — título/corpo sugeridos no HANDOFF |
 
 ---
 
