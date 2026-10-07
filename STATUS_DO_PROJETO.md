@@ -1,3 +1,27 @@
+## TRÊS PACOTES — integrado em main (2026-10-07T20:45Z)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Main tip: `e2c51d84` (#231 + #226 + #225).
+
+| Fase | #231 snapshots | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | sim | scripts/verifier | — |
+| revisado | sim | sim | parcial (fluxo real local) | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | **MERGED** `e2c51d84` | — | código em main |
+| implantado | **não** | **não** | **não** | não | **BLOCKED** VPS MCP timeout; workers 0; sem SSH neste Cloud |
+| validado VPS | **não** — assets ainda HTTP 200 (~13.8MB / ~1.0MB) | **não** | **não** | N/A | RUNTIME-08B pré-promoção |
+| dados reais | — | — | — | pendente host com HD | — |
+
+**Pendência concreta de implantar:** Hostinger VPS MCP `vps_virtual-machines_list` timeout (−32001); self-hosted workers = 0; sem chave SSH no ambiente Cloud. Autorização válida ≠ conexão efetiva.
+
+**Arquivar (não mergear):** #227, #228, #229. Lote indep. Comercial: #203. Auth local #230 ≠ Auth VPS.
+
+| Frente | Responsável | Próxima ação |
+|---|---|---|
+| CODEX Comercial | [bc-55d5261f](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #203 outbox; confirmar arquive 227/8/9 |
+| CURSOR | este chat | desbloquear VPS (MCP/SSH/worker) → backup → build/promover main `e2c51d84` → validar CPA/3Z + financeiro + snapshots 404 |
+| CODEX Legado | [bc-4427c136](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | `executar-verifier-host-local.sh` no PC com D:; staging real |
+
 ## TRÊS PACOTES — pós-merge #231+#226 (2026-10-07)
 
 | Fase | #231 | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
