@@ -1,14 +1,16 @@
-## CODEX — #229 portado + localBase44 alinhado; #231 coordenado (2026-10-07)
+## CODEX — pacotes fechados (2026-10-07T19:30Z)
 
-| Item | SHA / URL | Estado |
-|---|---|---|
-| #226 Cadastros | tip com port #229 + localBase44 · https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226 | **solução única** → main |
-| De #229 | gate só `Cadastros.Organizacional` (UI+Bloco5+policy+backend local) | port Cursor `8a43810f` + completação Codex |
-| #229 PR | `2350a05f` · https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/229 | **arquivar** — não mergear sozinha |
-| #231 snapshots | `47d3a148` · https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/231 | MERGEABLE · CI SUCCESS; cópia privada OK; hist. rewrite **não** |
-| VPS MCP | Hostinger | timeout; autorização válida |
+| Item | SHA | PR | Estado |
+|---|---|---|---|
+| #226 Cadastros | `7bfd3f93` | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226 | MERGEABLE · CI SUCCESS · solução única → main |
+| De #229 | `2350a05f` → port `8a43810f` + localBase44 `7bfd3f93` | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/229 | **arquivar** (não mergear sozinha) |
+| #231 snapshots | `4ca140fe` (base `47d3a148`) | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/231 | MERGEABLE · runbook hist. SEPARADA |
+| #203 outbox (indep.) | `0a345d6b` | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/203 | MERGEABLE · CI SUCCESS · arquivos ≠ #225/#226 |
+| VPS MCP | — | Hostinger | timeout; auth válida |
 
-**Próximo:** HUMAN merge #226+#231; lote Comercial/Expedição separado de Financeiro #225 e Legado.
+**O que veio de #229:** gate só `Cadastros.Organizacional` (UI+Bloco5+policy); remoção aliases Sistema; testes. Completação Codex: `localBase44` sem `TENANT_MASTER_PERMISSION_ALIASES`.
+
+**Próximo:** HUMAN merge #226+#231; arquivar #229; merge #203 (Comercial indep.); limpeza hist. snapshots sob janela; Expedição tip fora de main.
 
 ## EXECUÇÃO PARALELA — concluir pacotes (2026-10-07)
 

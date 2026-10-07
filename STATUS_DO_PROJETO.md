@@ -2,13 +2,15 @@
 
 | Campo | Valor |
 |---|---|
-| Base | tip Cursor `8a43810f` (UI/policy/Bloco5 de #229) |
+| Tip #226 | `7bfd3f93` · CI SUCCESS · MERGEABLE |
+| Base Cursor | `8a43810f` (UI/policy/Bloco5 de #229) |
 | Completação | remove `TENANT_MASTER_PERMISSION_ALIASES` Sistema — mutação só `Cadastros.Organizacional` |
 | Pareceres | `docs/PARECER_CURSOR_229_231_SHA.md` + `docs/PARECER_CODEX_229_VS_226_TIP.md` |
-| Ciclo Empresa | abrir/editar/salvar/reabrir + falha API + troca contexto — testes focados |
-| #231 | `47d3a148` MERGEABLE CI SUCCESS; cópia privada `/tmp/erp-private-snapshots-backup`; hist. **separada** |
+| Ciclo Empresa | abrir/editar/salvar/reabrir + falha API + troca contexto — **36/36** |
+| #231 | `4ca140fe` MERGEABLE; runbook hist. SEPARADA; cópia privada OK |
+| Indep. Comercial | #203 outbox `0a345d6b` CI SUCCESS (≠ Financeiro/Legado/Cadastros) |
 | VPS | MCP timeout (auth válida) |
-| Próximo | HUMAN merge #226+#231; arquivar #229; Expedição arquivos separados |
+| Próximo | HUMAN merge #226+#231+#203; arquivar #229; Expedição fora de main |
 
 ## EXECUÇÃO PARALELA Cursor — #229→#226 + #231 (2026-10-07)
 
