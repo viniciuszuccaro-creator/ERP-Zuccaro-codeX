@@ -66,6 +66,29 @@ export const recordMatchesGroupScope = (record = {}, groupId) => {
 
 export const empresaPertenceAoGrupo = (empresa, groupId) => recordMatchesGroupScope(empresa, groupId);
 
+/** A linha da listagem pode ser projeção; nunca iniciar edição de Empresa com ela. */
+export const loadEmpresaForEdit = async ({ id, groupId, empresaId, fetchById }) => {
+  if (!id || !groupId || typeof fetchById !== 'function') {
+    throw new Error('Contexto e leitor completo obrigatorios para editar Empresa.');
+  }
+  const complete = await fetchById(id);
+  if (
+    !complete
+    || String(complete.id) !== String(id)
+    || !recordMatchesGroupScope(complete, groupId)
+    || (empresaId && String(complete.id) !== String(empresaId))
+    || !Object.hasOwn(complete, 'razao_social')
+    || !Object.hasOwn(complete, 'cnpj')
+  ) {
+    throw new Error('Cadastro incompleto ou fora do contexto selecionado.');
+  }
+  return complete;
+};
+
+export const isEditRequestCurrent = ({ request, current, requestedScope, activeScope }) => (
+  request === current && requestedScope === activeScope
+);
+
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;
@@ -79,6 +102,13 @@ export const userTemAcessoGrupo = (user, grupoId) => {
   ));
 };
 
+/** Entidades tenant (cadastro do próprio Grupo/Empresa): leitura por group_id, nunca por empresa_id do contexto. */
+export const TENANT_MASTER_ENTITIES = Object.freeze(['Empresa', 'GrupoEmpresarial']);
+
+export const isTenantMasterEntity = (entityName) => (
+  TENANT_MASTER_ENTITIES.includes(String(entityName || '').trim())
+);
+
 export const userTemAcessoEmpresa = (user, empresa) => {
   const groupId = firstValue(user?.grupo_atual_id, user?.grupo_padrao_id, user?.group_id);
   if (!user || !empresaPertenceAoGrupo(empresa, groupId)) return false;
@@ -88,9 +118,14 @@ export const userTemAcessoEmpresa = (user, empresa) => {
   if (firstValue(user.empresa_atual_id, user.empresa_padrao_id) === empresaId) return true;
   const vinculos = Array.isArray(user.empresas_vinculadas) ? user.empresas_vinculadas : [];
   if (!vinculos.length) return false;
-  return vinculos.some((vinculo) => (
-    normalizeIdentifier(vinculo?.empresa_id) === empresaId && vinculo?.ativo !== false
-  ));
+  return vinculos.some((vinculo) => {
+    const linkedId = (typeof vinculo === 'string' || typeof vinculo === 'number')
+      ? normalizeIdentifier(vinculo)
+      : normalizeIdentifier(vinculo?.empresa_id);
+    if (!linkedId || linkedId !== empresaId) return false;
+    if (vinculo && typeof vinculo === 'object' && vinculo.ativo === false) return false;
+    return true;
+  });
 };
 
 export const OPERACAO_EXIGE_EMPRESA_ENTITIES = new Set([

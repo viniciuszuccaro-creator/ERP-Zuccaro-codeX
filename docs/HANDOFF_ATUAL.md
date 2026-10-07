@@ -1,3 +1,65 @@
+## TRÊS PACOTES — integrado em main (2026-10-07T20:45Z)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Main tip: `e2c51d84` (#231 + #226 + #225).
+
+| Fase | #231 snapshots | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | sim | scripts/verifier | — |
+| revisado | sim | sim | parcial (fluxo real local) | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | **MERGED** `e2c51d84` | — | código em main |
+| implantado | **não** | **não** | **não** | não | **BLOCKED** VPS MCP timeout; workers 0; sem SSH neste Cloud |
+| validado VPS | **não** — assets ainda HTTP 200 (~13.8MB / ~1.0MB) | **não** | **não** | N/A | RUNTIME-08B pré-promoção |
+| dados reais | — | — | — | pendente host com HD | — |
+
+**Pendência concreta de implantar:** Hostinger VPS MCP `vps_virtual-machines_list` timeout (−32001); self-hosted workers = 0; sem chave SSH no ambiente Cloud. Autorização válida ≠ conexão efetiva.
+
+**Arquivar (não mergear):** #227, #228, #229. Lote indep. Comercial: #203. Auth local #230 ≠ Auth VPS.
+
+| Frente | Responsável | Próxima ação |
+|---|---|---|
+| CODEX Comercial | [bc-55d5261f](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #203 outbox; confirmar arquive 227/8/9 |
+| CURSOR | este chat | desbloquear VPS (MCP/SSH/worker) → backup → build/promover main `e2c51d84` → validar CPA/3Z + financeiro + snapshots 404 |
+| CODEX Legado | [bc-4427c136](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | `executar-verifier-host-local.sh` no PC com D:; staging real |
+
+## TRÊS PACOTES ATÉ CONCLUSÃO — atualização (2026-10-07T20:40Z)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+| Frente | Responsável | 1ª ação | Estado |
+|---|---|---|---|
+| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #226⊇#227/8/9 + #203 | **#226 MERGED** `6dfd39d2`; arquivar 227/8/9; #203 indep. |
+| CURSOR | este chat | merge #231→#226→#225; deploy; validar erp-dev | **#231+#226 em main**; #225 rebase; deploy **BLOCKED** VPS MCP timeout |
+| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | executor PC com HD | workers 0; HD não no Cloud |
+
+### Fases
+
+| Fase | #231 | #226 | #225 | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | sim | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED | — |
+| integrado | **sim** | **sim** | tip | — | parcial |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | não | não | não | N/A | snapshots ainda 200 |
+| dados reais | — | — | — | pendente host | — |
+
+## CODEX — candidata #226 ⊇ #227/#228/#229 (2026-10-07)
+
+Matriz: `docs/MATRIZ_226_CONTEM_227_228_229.md`. **#226 MERGED**. PRs a arquivar: #227, #228, #229.
+
+## CURSOR — Financeiro #225 (2026-10-07)
+
+- Rebase sobre main (#231+#226). Launchpad grant plano + fluxo ContaReceber A/B.
+- Próximo: merge #225 → deploy → validar CPA/3Z e financeiro na VPS.
+
+## CURSOR — 3 frentes + Financeiro launchpad (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
+|---|---|---|---|
+| Cadastros/Empresas | Comercial #226 **MERGED** | — | — |
+| Legado | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | verifier HD | CADESP |
+| Financeiro | Cursor #225 | Financeiro.jsx, financeiroLaunchpadAccess.js | Cadastros tip |
+
 ## Checkpoint Onda 15 - limpeza outbox na troca de Empresa (2026-10-06)
 - Branch `cursor/comercial360-onda15-outbox-claim-392b`: `ProdutoRelationsDamSection` zera variantes/equivalentes/mídia/métricas/dead-letter quando `empresaId`/produto/view faltam — fail-closed entre tenants.
 - Teste estrutural em `tests/produto-pim-ui.test.js`. Sem publisher externo.
