@@ -62,6 +62,9 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   const form = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   assert.match(form, /data-permission=\{permissaoFormulario\}/);
+  assert.match(form, /canEdit\("Cadastros", "Organizacional"\)/);
+  assert.match(form, /Cadastros\.Organizacional\.editar/);
+  assert.match(viewer, /ENTITY === "Empresa"\s*\? canEdit\("Cadastros", empresaPermissionSection\)/);
   assert.match(form, /ID do cadastro \(somente leitura\)/);
   assert.match(form, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.salvar/);
@@ -96,6 +99,7 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
     const db = client.__local.export();
     const target = db.Empresa[0];
     const other = db.Empresa[1];
+    const otherBefore = structuredClone(other);
     const groupId = target.group_id;
     target.razao_social = 'Empresa Sintetica Original';
     target.nome_fantasia = 'Sintetica Original';
@@ -103,11 +107,15 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
     target.configuracao_fiscal = { serie_nfe: '9', ambiente_nfe: 'Homologacao' };
     db.PerfilAcesso.push({
       id: 'perfil-admin-sintetico', ativo: true, group_id: groupId,
-      permissoes: { Cadastros: { Organizacional: ['visualizar', 'editar'], Empresa: ['visualizar', 'editar'] } },
+      permissoes: { Cadastros: { Organizacional: ['visualizar', 'editar'] } },
     });
     db.PerfilAcesso.push({
       id: 'perfil-leitura-sintetico', ativo: true, group_id: groupId,
-      permissoes: { Cadastros: { Organizacional: ['visualizar'], Empresa: ['visualizar'] } },
+      permissoes: { Cadastros: { Organizacional: ['visualizar'] } },
+    });
+    db.PerfilAcesso.push({
+      id: 'perfil-empresa-sem-organizacional', ativo: true, group_id: groupId,
+      permissoes: { Cadastros: { Empresa: ['visualizar', 'editar'] } },
     });
     storage.setItem('erp_integra_local_db_v1', JSON.stringify(db));
     const useProfile = (perfilId) => {
@@ -141,8 +149,18 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
     assert.equal(saved.razao_social, 'Empresa Sintetica Editada');
     assert.equal(saved.cnpj, target.cnpj);
     assert.deepEqual(saved.configuracao_fiscal, target.configuracao_fiscal);
-    assert.equal((await reopened.entities.Empresa.get(other.id)).id, other.id);
-    assert.ok(reopened.__local.export().AuditLog.some((row) => row.entidade === 'Empresa' && row.registro_id === target.id));
+    const otherAfter = await reopened.entities.Empresa.get(other.id);
+    assert.equal(otherAfter.id, otherBefore.id);
+    assert.equal(otherAfter.razao_social, otherBefore.razao_social);
+    assert.equal(otherAfter.cnpj, otherBefore.cnpj);
+    assert.deepEqual(otherAfter.configuracao_fiscal, otherBefore.configuracao_fiscal);
+    const updateAudit = reopened.__local.export().AuditLog.find((row) => row.entidade === 'Empresa' && row.registro_id === target.id && row.acao === 'Atualizacao');
+    assert.ok(updateAudit);
+    assert.equal(updateAudit.group_id, groupId);
+    assert.equal(updateAudit.usuario_id, 'usuario-sintetico');
+    assert.equal(updateAudit.dados_anteriores.razao_social, 'Empresa Sintetica Original');
+    assert.equal(updateAudit.dados_novos.razao_social, 'Empresa Sintetica Editada');
+    assert.equal(updateAudit.sucesso, true);
 
     await assert.rejects(loadEmpresaForEdit({
       id: target.id, groupId, empresaId: other.id,
@@ -154,6 +172,11 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
       group_id: groupId, razao_social: 'Alteracao Negada',
     }), /Permissao negada/);
     assert.equal((await restricted.entities.Empresa.get(target.id)).razao_social, 'Empresa Sintetica Editada');
+    useProfile('perfil-empresa-sem-organizacional');
+    const incompatible = await reopen('empresa-sem-organizacional');
+    await assert.rejects(incompatible.entities.Empresa.update(target.id, {
+      group_id: groupId, razao_social: 'Alteracao Negada',
+    }), /Permissao negada/);
   } finally {
     await server.close();
     if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow);

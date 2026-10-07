@@ -243,10 +243,19 @@ export default function VisualizadorUniversalEntidadeV24({
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
   const contextoValido = !!(empresaId || groupId);
-  const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
-  const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
-  const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
-  const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
+  const empresaPermissionSection = ENTITY === "Empresa" ? "Organizacional" : ENTITY;
+  const canViewCadastro = ENTITY === "Empresa"
+    ? hasPermission("Cadastros", empresaPermissionSection, "visualizar")
+    : hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
+  const canCreateCadastro = ENTITY === "Empresa"
+    ? canCreate("Cadastros", empresaPermissionSection)
+    : canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
+  const canEditCadastro = ENTITY === "Empresa"
+    ? canEdit("Cadastros", empresaPermissionSection)
+    : canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
+  const canDeleteCadastro = ENTITY === "Empresa"
+    ? canDelete("Cadastros", empresaPermissionSection)
+    : canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -827,7 +836,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 checked={allPageSelected}
                 onChange={handleToggleSelectPage}
                 disabled={!contextoValido || !canDeleteCadastro}
-                data-permission={`Cadastros.${ENTITY}.excluir`}
+                data-permission={`Cadastros.${empresaPermissionSection}.excluir`}
                 data-sensitive="true"
                 className="w-4 h-4 cursor-pointer accent-blue-600"
               />
@@ -863,7 +872,7 @@ export default function VisualizadorUniversalEntidadeV24({
                     checked={checked}
                     onChange={function(e) { handleItemCheck(item.id, e.target.checked); }}
                     disabled={!contextoValido || !canDeleteCadastro}
-                    data-permission={`Cadastros.${ENTITY}.excluir`}
+                    data-permission={`Cadastros.${empresaPermissionSection}.excluir`}
                     data-sensitive="true"
                     className="w-4 h-4 cursor-pointer accent-blue-600"
                   />
@@ -883,7 +892,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         onClick={function(e) { e.stopPropagation(); handleEditItem(item); }}
                         title="Editar"
                         disabled={isLoadingEdit || !canEditCadastro}
-                        data-permission={`Cadastros.${ENTITY}.editar`}
+                        data-permission={`Cadastros.${empresaPermissionSection}.editar`}
                         data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
@@ -897,7 +906,7 @@ export default function VisualizadorUniversalEntidadeV24({
                       onClick={function() { handleDelete(item); }}
                       title="Excluir"
                       disabled={!contextoValido || !canDeleteCadastro}
-                      data-permission={`Cadastros.${ENTITY}.excluir`}
+                      data-permission={`Cadastros.${empresaPermissionSection}.excluir`}
                       data-sensitive="true"
                       className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
@@ -934,14 +943,14 @@ export default function VisualizadorUniversalEntidadeV24({
             value={search}
             onChange={function(e) { setSearch(e.target.value); }}
             className="pl-8 h-9 rounded-sm text-sm bg-white border-slate-200"
-            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-permission={`Cadastros.${empresaPermissionSection}.visualizar`}
             data-action={`Cadastros.${ENTITY}.buscar`}
           />
           {search && (
             <button
               onClick={function() { setSearch(""); }}
               className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600"
-              data-permission={`Cadastros.${ENTITY}.visualizar`}
+              data-permission={`Cadastros.${empresaPermissionSection}.visualizar`}
               data-action={`Cadastros.${ENTITY}.limpar-busca`}
             >
               <X className="w-3.5 h-3.5" />
@@ -953,7 +962,7 @@ export default function VisualizadorUniversalEntidadeV24({
           value={pageSize}
           onChange={function(e) { setPageSize(Number(e.target.value)); setPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={`Cadastros.${empresaPermissionSection}.visualizar`}
           data-action={`Cadastros.${ENTITY}.alterar-paginacao`}
         >
           {PAGE_SIZES.map(function(ps) { return <option key={ps} value={ps}>{ps}/pág</option>; })}
@@ -963,7 +972,7 @@ export default function VisualizadorUniversalEntidadeV24({
           value={sortField + "|" + sortDir}
           onChange={function(e) { handleSortDropdown(e.target.value); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={`Cadastros.${empresaPermissionSection}.visualizar`}
           data-action={`Cadastros.${ENTITY}.ordenar`}
         >
           <option value="updated_date|desc">↓ Mais Recentes</option>
@@ -984,7 +993,7 @@ export default function VisualizadorUniversalEntidadeV24({
           onClick={function() { lastGoodData.current = []; everLoadedRef.current = false; invalidateAll(queryClient, ENTITY); }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0"
           title="Recarregar"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={`Cadastros.${empresaPermissionSection}.visualizar`}
           data-action={`Cadastros.${ENTITY}.recarregar`}
         >
           <RefreshCw className={"w-4 h-4 " + (isFetching ? "animate-spin text-blue-500" : "text-slate-500")} />
@@ -996,7 +1005,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={handleNewItem}
             disabled={!contextoValido || !canCreateCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
-            data-permission={`Cadastros.${ENTITY}.criar`}
+            data-permission={`Cadastros.${empresaPermissionSection}.criar`}
             data-action={`Cadastros.${ENTITY}.criar`}
             data-sensitive="true"
           >
@@ -1011,7 +1020,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={handleDeleteSelected}
             disabled={!contextoValido || !canDeleteCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
-            data-permission={`Cadastros.${ENTITY}.excluir`}
+            data-permission={`Cadastros.${empresaPermissionSection}.excluir`}
             data-action={`Cadastros.${ENTITY}.excluir-selecionados`}
             data-sensitive="true"
           >
@@ -1040,7 +1049,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <button
             onClick={handleActivateCrossPage}
             className="text-blue-600 hover:text-blue-800 underline font-semibold"
-            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-permission={`Cadastros.${empresaPermissionSection}.visualizar`}
             data-action={`Cadastros.${ENTITY}.selecionar-todos`}
           >
             Selecionar todos os {totalCount} registros

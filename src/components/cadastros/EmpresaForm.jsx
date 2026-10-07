@@ -24,14 +24,14 @@ export default function EmpresaForm({ empresa, item, data, initialData, defaultV
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(groupId);
-  const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
-  const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
+  const podeCriar = canCreate("Cadastros", "Organizacional");
+  const podeEditar = canEdit("Cadastros", "Organizacional");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
   const podeEditarCertificado = podeSalvar && hasPermissionKey(permissaoCertificado);
   const permissaoFormulario = dadosIniciais?.id
-    ? (canEdit("Cadastros", "Empresa") ? "Cadastros.Empresa.editar" : canEdit("Sistema", "Empresas") ? "Sistema.Empresas.editar" : "Cadastros.editar")
-    : (canCreate("Cadastros", "Empresa") ? "Cadastros.Empresa.criar" : canCreate("Sistema", "Empresas") ? "Sistema.Empresas.criar" : "Cadastros.criar");
+    ? "Cadastros.Organizacional.editar"
+    : "Cadastros.Organizacional.criar";
   const [formData, setFormData] = useState(dadosIniciais || {
     razao_social: "",
     nome_fantasia: "",
