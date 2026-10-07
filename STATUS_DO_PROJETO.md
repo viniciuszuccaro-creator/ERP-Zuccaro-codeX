@@ -8,9 +8,12 @@
 | De #227 `5e50e6b1` | `loadEmpresaForEdit` + `isEditRequestCurrent`; edição Empresa só após leitura completa; ID somente leitura; não reenvia `configuracao_fiscal` no update; certificado `Cadastros.Empresa.Certificado.editar`; Bloco5 gate `Organizacional` |
 | RBAC unificado | `Cadastros.Organizacional` **ou** `Cadastros.Empresa` **ou** `Sistema.Empresas` (fail-closed; sem bypass role=admin) |
 | Testes | `cadastros-empresa-edicao-load` + `contexto-multiempresa-policy` **29/29** |
+| Tip | `f64e89a570411dc130f504d277c0b1f8ba81d4b0` |
+| CI | SUCCESS [37613106916](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37613106916) frontend+backend |
+| PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226 |
 | #227 | permanece na base Expedição — **não** mergear em main; conteúdo útil portado |
 | Fora | tip-port outbox/DAM; Financeiro; legado; merge main sem HUMAN; promoção 3080 |
-| Próximo | CI deste tip; HUMAN merge #226; Expedição (persistência/rollback/idempotência) em arquivos **separados** |
+| Próximo | HUMAN merge #226; Expedição (persistência/rollback/idempotência) em arquivos **separados** da candidata |
 
 ## ORDEM 3 FRENTES — chat principal (2026-10-07)
 

@@ -1,6 +1,6 @@
 ## CODEX — consolidação #226+#227 Cadastros (2026-10-07)
 
-Recebido e **executado**. Solução única na **#226** contra `main` (sem merge Expedição). De #226: tenant master, policy, getInContext, deep-merge, string[]. De #227 `5e50e6b1`: loadEmpresaForEdit, ID visível, Organizacional+certificado, invalida escopo. Testes 29/29. #227 tip Expedição não mergear. VPS MCP timeout neste turno (acesso tentado). Próximo: CI #226; Expedição persistência em arquivos separados.
+Recebido e **executado**. Solução única na **#226** contra `main` (sem merge Expedição). De #226: tenant master, policy, getInContext, deep-merge, string[]. De #227 `5e50e6b1`: loadEmpresaForEdit, ID visível, Organizacional+certificado, invalida escopo. Testes 29/29. Tip `f64e89a5` CI SUCCESS `37613106916`. #227 tip Expedição não mergear. VPS MCP timeout neste turno. Próximo: HUMAN merge #226; Expedição persistência em arquivos separados.
 
 ## CURSOR/CODEX — ordem 3 frentes paralelas (2026-10-07)
 
