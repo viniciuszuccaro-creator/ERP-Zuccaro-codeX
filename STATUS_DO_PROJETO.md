@@ -1,3 +1,17 @@
+## PACOTES GRANDES PARALELOS — 2026-10-07 (chat principal)
+
+| Item | Estado |
+|---|---|
+| Ordem | 3 frentes sem esperar “próximo”; HANDOFF atualizado |
+| HEADs | #226 tip branch; #227 `5e50e6b1`; #228 `9ab5ec5a` (escopo mestre sobre #227) |
+| Cursor revisão | `#226` já tinha runtime de escopo mestre; **testes #228 portados** em `tests/cadastro-empresa-edicao.test.js` (7/7) |
+| Parecer | `docs/PARECER_CURSOR_226_227_228_SHA.md` — merge só #226; #227/#228 não mergear |
+| Financeiro #225 | tip `3ea5db7b`; 15 cards/rotas inventariados; browser pendente |
+| Legado #211 | tip `cf96c4bb`; checksum UNVERIFIED no Cloud; executor local |
+| VPS | MCP Hostinger timeout — implantado = não |
+| Codex Comercial | retomado bc-55d5261f |
+| Codex Legado | retomado bc-4427c136 |
+
 ## SHA FINAL consolidacao Cadastros (2026-10-07)
 
 - Codigo unificado: `92799ccf` (teste `cadastro-empresa-edicao` + Completo sobre tip Comercial `f64e89a5`).

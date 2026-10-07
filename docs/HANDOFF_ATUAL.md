@@ -1,3 +1,27 @@
+## ORDEM PACOTES GRANDES EM PARALELO (2026-10-07) — chat principal
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Autorização VPS/Web Console/SFTP/GitHub: válida; **acesso efetivo VPS MCP = timeout** neste ciclo.
+
+| Frente | Responsável | Arquivos quentes | Não tocar | Primeira ação |
+|---|---|---|---|---|
+| CODEX Comercial 360 | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Cadastros Empresa*, Visualizador, policies, Expedição (separado) | Financeiro #225; Legado staging | Comparar HEADs #226/`566d4552` #227/`5e50e6b1` #228/`9ab5ec5a`; solução única em #226→main |
+| CURSOR | este chat | pareceres SHA; #225 Financeiro; evidência browser | concorrer EmpresaForm com Codex tip | Revisar #228 vs #226 por SHA; portar testes #228; validar Financeiro 15 cards |
+| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | `scripts/legado/*`, #211 | CADESP; mapper paralelo | Verifier no host com arquivo; staging ETL; sem pedir transferência |
+
+### Status por fase (separado)
+
+| Fase | Cadastros Empresas | Financeiro #225 | Legado #211 | Deploy |
+|---|---|---|---|---|
+| **implementado** | código #226 (+ port #227 + testes #228) | launchpad grant plano | verifier/scripts no PR | — |
+| **revisado** | parecer `docs/PARECER_CURSOR_226_227_228_SHA.md` | parecer `1f1f8cf6` + inventário | tip `cf96c4bb` | cmp VPS BLOCKED (MCP timeout) |
+| **integrado** | aguarda HUMAN merge #226 | aguarda HUMAN merge #225 | — | não |
+| **implantado** | não | não | não | gates; sem inventário imagem |
+| **validado no navegador** | pendente evidência sanitizada | pendente evidência sanitizada | N/A | — |
+
+Parecer SHA: `docs/PARECER_CURSOR_226_227_228_SHA.md`
+**Não presumir** que tip antigo #226 já tinha #228: gap de **testes** de escopo mestre fechado neste lote; runtime já estava em #226.
+
 ## PARECER CURSOR — #226 consolidada `f64e89a5` (2026-10-07)
 
 | Campo | Valor |

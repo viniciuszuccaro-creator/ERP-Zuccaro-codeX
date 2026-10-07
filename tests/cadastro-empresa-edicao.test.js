@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
-import { isEditRequestCurrent, loadEmpresaForEdit } from '../src/components/lib/contextoMultiempresaPolicy.js';
+import {
+  buildMultiempresaReadFilter,
+  isEditRequestCurrent,
+  isTenantMasterEntity,
+  loadEmpresaForEdit,
+  userTemAcessoEmpresa,
+} from '../src/components/lib/contextoMultiempresaPolicy.js';
 
 const complete = Object.freeze({
   id: 'empresa-a', group_id: 'grupo-a', razao_social: 'Empresa Sintetica',
@@ -58,16 +64,34 @@ test('Leitura pendente deixa de ser atual apos Novo ou troca de contexto', () =>
   assert.equal(isEditRequestCurrent({ ...pending, activeScope: 'Empresa:grupo-a:empresa-b' }), false);
 });
 
+test('Empresa e Grupo sao mestres do tenant; vinculo string autoriza so empresa do mesmo Grupo', () => {
+  assert.equal(isTenantMasterEntity('Empresa'), true);
+  assert.equal(isTenantMasterEntity('GrupoEmpresarial'), true);
+  assert.equal(isTenantMasterEntity('Cliente'), false);
+  const user = { group_id: 'grupo-a', empresas_vinculadas: ['empresa-a'] };
+  assert.equal(userTemAcessoEmpresa(user, { id: 'empresa-a', group_id: 'grupo-a' }), true);
+  assert.equal(userTemAcessoEmpresa(user, { id: 'empresa-b', group_id: 'grupo-a' }), false);
+  assert.equal(userTemAcessoEmpresa(user, { id: 'empresa-a', group_id: 'grupo-b' }), false);
+  assert.equal(userTemAcessoEmpresa({
+    group_id: 'grupo-a',
+    empresas_vinculadas: [{ empresa_id: 'empresa-a', ativo: false }],
+  }, { id: 'empresa-a', group_id: 'grupo-a' }), false);
+});
+
 test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal oculta', async () => {
   const form = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
+  const policy = await readFile(new URL('../src/components/cadastros/cadastroEditLoadPolicy.js', import.meta.url), 'utf8');
   assert.match(form, /data-permission=\{permissaoFormulario\}/);
   assert.match(form, /hasCadastroEntityPermission\("Empresa", "editar"/);
   assert.match(form, /Cadastros\.Organizacional\.editar/);
   assert.match(viewer, /hasCadastroEntityPermission/);
   assert.match(viewer, /loadEmpresaForEdit\(/);
   assert.match(viewer, /isEditRequestCurrent/);
+  assert.match(viewer, /empresaId: tenantMaster \? null : empresaId/);
+  assert.match(policy, /!tenantMaster && !clean\.empresa_id && empresaId/);
+  assert.doesNotMatch(form, /empresa_id: contexto === "empresa"/);
   assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
   assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
   assert.match(form, /ID do cadastro \(somente leitura\)/);
@@ -152,6 +176,7 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
     assert.equal(saved.id, target.id);
     assert.equal(saved.razao_social, 'Empresa Sintetica Editada');
     assert.equal(saved.cnpj, target.cnpj);
+    assert.equal(saved.empresa_id, target.empresa_id);
     assert.deepEqual(saved.configuracao_fiscal, target.configuracao_fiscal);
     const otherAfter = await reopened.entities.Empresa.get(other.id);
     assert.equal(otherAfter.id, otherBefore.id);
@@ -176,6 +201,20 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
       group_id: groupId, razao_social: 'Alteracao Negada',
     }), /Permissao negada/);
     assert.equal((await restricted.entities.Empresa.get(target.id)).razao_social, 'Empresa Sintetica Editada');
+    // Escopo mestre (#228): lista Empresa por group_id mesmo com empresa_id no contexto da invocacao.
+    storage.setItem('contexto_atual', 'empresa');
+    storage.setItem('empresa_atual_id', target.id);
+    const companyContext = await reopen('lista-mestre');
+    const grouped = await companyContext.functions.invoke('entityListSorted', {
+      entityName: 'Empresa',
+      filter: buildMultiempresaReadFilter({ groupId, empresaId: null }),
+      group_id: groupId,
+      empresa_id: target.id,
+      sortField: 'id',
+      sortDirection: 'asc',
+      limit: 10,
+    });
+    assert.deepEqual(new Set(grouped.data.map((row) => row.id)), new Set([target.id, other.id]));
     useProfile('perfil-empresa-sem-organizacional');
     const incompatible = await reopen('empresa-sem-organizacional');
     await assert.rejects(incompatible.entities.Empresa.update(target.id, {
