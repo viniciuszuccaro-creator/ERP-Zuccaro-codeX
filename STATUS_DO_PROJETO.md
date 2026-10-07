@@ -1,3 +1,11 @@
+## SHA FINAL consolidacao Cadastros (2026-10-07)
+
+- Codigo unificado: `92799ccf` (teste `cadastro-empresa-edicao` + Completo sobre tip Comercial `f64e89a5`).
+- HEAD PR #226: `43cc2d74` (parecer Cursor docs acima do codigo).
+- Tip #227 `5e50e6b1`: referencia apenas — nao mergear (base Expedicao).
+- Testes locais: `cadastro-empresa-edicao` + `cadastros-empresa-edicao-load` **19/19**.
+- Diff vs `main`: ~16 arquivos Cadastros (sem Expedicao).
+
 ## PARECER CURSOR — #226 consolidada `f64e89a5` (2026-10-07)
 
 | Campo | Valor |
