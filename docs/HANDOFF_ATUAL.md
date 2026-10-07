@@ -1,3 +1,9 @@
+## UNIFICACAO Cadastros #226+#227 (2026-10-07)
+
+- SHA unificado pós-complemento: (ver commit deste push).
+- Base Comercial `f64e89a5` + teste `cadastro-empresa-edicao` + Completo Organizacional/ID.
+- Veículo merge: PR #226 → `main`. Tip #227 arquivar/não mergear.
+
 ## CODEX — consolidação #226+#227 Cadastros (2026-10-07)
 
 Recebido e **executado**. Solução única na **#226** contra `main` (sem merge Expedição). De #226: tenant master, policy, getInContext, deep-merge, string[]. De #227 `5e50e6b1`: loadEmpresaForEdit, ID visível, Organizacional+certificado, invalida escopo. Testes 29/29. Tip `f64e89a5` CI SUCCESS `37613106916`. #227 tip Expedição não mergear. VPS MCP timeout neste turno. Próximo: HUMAN merge #226; Expedição persistência em arquivos separados.

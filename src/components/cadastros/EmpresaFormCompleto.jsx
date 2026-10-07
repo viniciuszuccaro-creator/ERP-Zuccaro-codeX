@@ -81,9 +81,9 @@ export default function EmpresaFormCompleto({
   const dadosIniciaisProps = empresa || item || data || initialData || defaultValues || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
-  const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
-  const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
-  const podeExcluir = canDelete("Cadastros", "Empresa") || canDelete("Cadastros", null) || canDelete("Sistema", "Empresas");
+  const podeCriar = canCreate("Cadastros", "Organizacional") || canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
+  const podeEditar = canEdit("Cadastros", "Organizacional") || canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
+  const podeExcluir = canDelete("Cadastros", "Organizacional") || canDelete("Cadastros", "Empresa") || canDelete("Cadastros", null) || canDelete("Sistema", "Empresas");
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
   const [activeTab, setActiveTab] = useState('dados');
   const [formData, setFormData] = useState(() => mergeEmpresaCompletoData(dadosIniciaisProps));
@@ -218,6 +218,12 @@ export default function EmpresaFormCompleto({
         </TabsList>
 
         <TabsContent value="dados" className="space-y-4">
+          {dadosIniciaisProps?.id && (
+            <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <span className="font-medium">ID do cadastro (somente leitura): </span>
+              <code className="break-all select-text">{dadosIniciaisProps.id}</code>
+            </div>
+          )}
           <div>
             <Label>Razão Social *</Label>
             <Input value={formData.razao_social} onChange={(e) => setFormData({...formData, razao_social: e.target.value})} />

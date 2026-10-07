@@ -1,3 +1,9 @@
+## UNIFICACAO tip Comercial+Cursor #227→#226 (2026-10-07)
+
+- Base única: tip Comercial `f64e89a5` em #226 (`main`).
+- Complemento Cursor: `tests/cadastro-empresa-edicao.test.js` (leitura/auditoria/sessão local) + `EmpresaFormCompleto` gate Organizacional/ID.
+- Branch agente: `cursor/cadastros-empresas-227-no-226-593f`. Tip #227 `5e50e6b1` **não** mergear (Expedição).
+
 ## CODEX — consolidação #226+#227 Cadastros Empresa (2026-10-07)
 
 | Campo | Valor |
