@@ -1,132 +1,42 @@
-## FOLLOW-UP — Comercial #226/#229/#231/#203 (2026-10-07)
+## TRÊS PACOTES — pós-merge #231+#226 (2026-10-07)
 
-- #226 tip `434b4bf3` (gate Organizacional completo UI≡localBase44) CI verde.
-- #229 arquivar. #231 `4ca140fe` APROVAR. #203 outbox `ddf0c16f` indep.
-- HUMAN merge + deploy ainda pendentes para erp-dev.
+| Fase | #231 | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | launchpad + fluxo real | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | tip rebase (este) | — | parcial em main |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | pendente | pendente | pendente | N/A | RUNTIME-08B; snapshots HTTP 200 |
+| dados reais | — | — | — | pendente host | — |
 
-## CODEX — completa port #229 no #226 + localBase44 (2026-10-07)
+Ordem restante: merge **#225** → deploy com backup/rollback. Arquivar #227/#228/#229.
 
-| Campo | Valor |
-|---|---|
-| Tip #226 | `7bfd3f93` · CI SUCCESS · MERGEABLE |
-| Base Cursor | `8a43810f` (UI/policy/Bloco5 de #229) |
-| Completação | remove `TENANT_MASTER_PERMISSION_ALIASES` Sistema — mutação só `Cadastros.Organizacional` |
-| Pareceres | `docs/PARECER_CURSOR_229_231_SHA.md` + `docs/PARECER_CODEX_229_VS_226_TIP.md` |
-| Ciclo Empresa | abrir/editar/salvar/reabrir + falha API + troca contexto — **36/36** |
-| #231 | `4ca140fe` MERGEABLE; runbook hist. SEPARADA; cópia privada OK |
-| Indep. Comercial | #203 outbox `0a345d6b` CI SUCCESS (≠ Financeiro/Legado/Cadastros) |
-| VPS | MCP timeout (auth válida) |
-| Próximo | HUMAN merge #226+#231+#203; arquivar #229; Expedição fora de main |
+## CURSOR — Financeiro #225 rebase pós-#226 (2026-10-07)
 
-## EXECUÇÃO PARALELA Cursor — #229→#226 + #231 (2026-10-07)
+- Integra main com #231+#226. Launchpad + fluxo real multiempresa preservados.
+- Veredito: **APROVAR/merge #225** após CI tip. Validação erp-dev pendente (deploy BLOCKED MCP).
 
-- Port #229 `2350a05f` no veículo #226: gate mestre **só** `Cadastros.Organizacional` (UI=backend).
-- Parecer: `docs/PARECER_CURSOR_229_231_SHA.md` — APROVAR #231; arquivar #229 após merge #226.
-- #230 ≠ Auth Supabase VPS. Deploy erp-dev bloqueado até merge+build; VPS MCP timeout.
-- Legado: workers self-hosted 0; HUMAN_NEXT verifier no PC com HD.
+## CURSOR — Financeiro #225 fluxo real (2026-10-07)
 
-## CODEX — solução final #226+#227+#228 Empresas (2026-10-07)
+- Teste `financeiro-contexto-fluxo-real`: ContaReceber isolada empresa A/B via localBase44.
+- Grant plano 15 cards + granular. **Não** equivale a validação erp-dev.
+
+## CODEX — coordenação #231 snapshots (2026-10-07)
 
 | Campo | Valor |
 |---|---|
-| Veículo | **#226** `cursor/cadastros-empresas-edicao-392b` → `main` |
-| De #226 | tenant master, `cadastroEditLoadPolicy`, getInContext, deep-merge, string[] vínculos |
-| De #227 | loadEmpresaForEdit, anti-race request/scope, ID readonly, fiscal omit no update, certificado granular, Organizacional |
-| De #228 `9ab5ec5a` | group_id/empresa_id do registro; lista-mestre; mutação **não** aceita `Cadastros.Empresa` sozinho; localBase44 alias `Sistema.Empresas` |
-| Testes | load+edicao+policy **36/36** |
-| #227/#228 | base Expedição — **não** mergear em main |
-| Próximo | CI deste tip; HUMAN merge #226; Expedição separado |
+| Estado | **MERGED** `c0efab11` |
+| Guard | `tests/public-snapshot-exposure-guard.test.js` |
+| Histórico | runbook separado — sem rewrite |
+| erp-dev | ainda HTTP 200 nos snapshots até deploy |
 
-## PACOTES GRANDES PARALELOS — 2026-10-07 (chat principal)
+## CODEX — #226 Cadastros (2026-10-07)
 
-| Item | Estado |
-|---|---|
-| Ordem | 3 frentes sem esperar “próximo”; HANDOFF atualizado |
-| HEADs | #226 tip branch; #227 `5e50e6b1`; #228 `9ab5ec5a` |
-| Cursor | testes #228 já em #226 (`5445f7cb`); runtime+RBAC+forms reforçados neste tip |
-| Parecer | `docs/PARECER_CURSOR_226_227_228_SHA.md` — merge só #226 |
-| Financeiro #225 | tip `3ea5db7b`; browser pendente |
-| Legado #211 | checksum UNVERIFIED no Cloud |
-| VPS | MCP Hostinger timeout |
+**MERGED** `6dfd39d2`. Gate só `Cadastros.Organizacional`. Arquivar #227/#228/#229.
 
-## SHA FINAL consolidacao Cadastros (2026-10-07)
+## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
 
-- Codigo unificado: `92799ccf` (teste `cadastro-empresa-edicao` + Completo sobre tip Comercial `f64e89a5`).
-- HEAD PR #226: `43cc2d74` (parecer Cursor docs acima do codigo).
-- Tip #227 `5e50e6b1`: referencia apenas — nao mergear (base Expedicao).
-- Testes locais: `cadastro-empresa-edicao` + `cadastros-empresa-edicao-load` **19/19**.
-- Diff vs `main`: ~16 arquivos Cadastros (sem Expedicao).
-
-## PARECER CURSOR — #226 consolidada `f64e89a5` (2026-10-07)
-
-| Campo | Valor |
-|---|---|
-| Veredito | **APROVAR merge #226 → main** |
-| Código | `f64e89a5` CI SUCCESS `37613106916` |
-| Testes locais tip | **29/29** |
-| #227 | **não mergear** (base Expedição); conteúdo portado — arquivar após merge #226 |
-| Parecer | `docs/PARECER_CURSOR_226_SHA_f64e89a5.md` |
-| Agente | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
-
-## UNIFICACAO tip Comercial+Cursor #227→#226 (2026-10-07)
-
-- Base única: tip Comercial `f64e89a5` em #226 (`main`).
-- Complemento Cursor: `tests/cadastro-empresa-edicao.test.js` (leitura/auditoria/sessão local) + `EmpresaFormCompleto` gate Organizacional/ID.
-- Branch agente: `cursor/cadastros-empresas-227-no-226-593f`. Tip #227 `5e50e6b1` **não** mergear (Expedição).
-
-## CODEX — consolidação #226+#227 Cadastros Empresa (2026-10-07)
-
-| Campo | Valor |
-|---|---|
-| Destinatário | CODEX COMERCIAL 360 |
-| Veículo | **#226** `cursor/cadastros-empresas-edicao-392b` contra `main` — **sem** merge da base Expedição |
-| De #226 | tenant master `group_id`; `cadastroEditLoadPolicy`; `getInContext`; deep-merge forms; `userTemAcessoEmpresa` string[]; `localBase44` |
-| De #227 `5e50e6b1` | `loadEmpresaForEdit` + `isEditRequestCurrent`; edição Empresa só após leitura completa; ID somente leitura; não reenvia `configuracao_fiscal` no update; certificado `Cadastros.Empresa.Certificado.editar`; Bloco5 gate `Organizacional` |
-| RBAC unificado | `Cadastros.Organizacional` **ou** `Cadastros.Empresa` **ou** `Sistema.Empresas` (fail-closed; sem bypass role=admin) |
-| Testes | `cadastros-empresa-edicao-load` + `contexto-multiempresa-policy` **29/29** |
-| Tip | `f64e89a570411dc130f504d277c0b1f8ba81d4b0` |
-| CI | SUCCESS [37613106916](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37613106916) frontend+backend |
-| PR | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226 |
-| #227 | permanece na base Expedição — **não** mergear em main; conteúdo útil portado |
-| Fora | tip-port outbox/DAM; Financeiro; legado; merge main sem HUMAN; promoção 3080 |
-| Próximo | HUMAN merge #226; Expedição (persistência/rollback/idempotência) em arquivos **separados** da candidata |
-
-## ORDEM 3 FRENTES — chat principal (2026-10-07)
-
-| Frente | Agente / PR | Primeira ação executada |
-|---|---|---|
-| Comercial | bc-55d5261f + bc-88244dac · #226/#227 | Consolidação #227→#226 **executada** (código neste tip) |
-| Cursor | chat principal · pareceres + #225 | Pareceres SHA `5e50e6b1` e `1f1f8cf6` |
-| Legado | bc-4427c136 · #211 | Retomado: transferência confirmada → checksum |
-
-Encaminhamento ≠ implementação concluída. Checksum Legado continua entrega separada.
-
-## CI — Cadastros #226 consolidado (2026-10-06)
-
-- SHA `f9b926e2`: `erp-runtime-ci` frontend/backend **PASS** (4 checks).
-- Tip Comercial `85f87005` permanece referência; merge via #226 apenas.
-
-## PARECER — tip Comercial Cadastros `85f87005` vs #226 (2026-10-06)
-
-- Tip [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a): CI PASS, helpers `getInContext`/merge/RBAC Sistema.Empresas.
-- **Não mergear** a branch tip (base Expedição). Conteúdo portado para #226 + `cadastroEditLoadPolicy.js`.
-- Detalhe: `docs/PARECER_CURSOR_CADASTROS_EMPRESA_85f87005.md`.
-
-## CURSOR — Cadastros Gerais Empresas edição (2026-10-06)
-
-| Campo | Valor |
-|---|---|
-| Tarefa | Primeira entrega 3 frentes: abrir/visualizar/editar/salvar Empresa sem perda |
-| Branch | `cursor/cadastros-empresas-edicao-392b` |
-| Base | `main` |
-| Causa raiz | (1) lista Empresa filtrava por `empresa_id` do contexto; (2) edição usava row parcial sem get completo; (3) save carimbava `empresa_id` do contexto; (4) form sem deep-merge nested; (5) vínculos string[] falhavam em `userTemAcessoEmpresa` |
-| Mudança | Tenant masters por `group_id`; load `getEntityRecord` + bloqueio save incompleto; forms preservam id/group; vínculos string\|objeto |
-| Arquivos | `VisualizadorUniversalEntidadeV24.jsx`, `EmpresaForm.jsx`, `EmpresaFormCompleto.jsx`, `localBase44Client.js`, `contextoMultiempresaPolicy.js`, testes |
-| Multiempresa/RBAC | Fail-closed preservado; sem desligar segurança |
-| Testes | `contexto-multiempresa-policy` + `cadastros-empresa-edicao-load` |
-| Pendências | HTTP Postgres Empresa fora do piloto (IndexedDB); admin vínculos HTTP = gate separado |
-| CI | `erp-runtime-ci` frontend/backend **PASS** no SHA `1c9f8234` |
-| Frentes | Financeiro #225 CI PASS; Legado BLOCKED FileZilla; este lote = Cadastros #226 |
+Helper `canViewFinanceLaunchpadModule` + ModuleTabs Financeiro. 15 submódulos. Fail-closed.
 
 ---
 
@@ -11833,6 +11743,6 @@ Checklist inicial:
 | Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
 ## CODEX — candidata integrada Cadastros + segurança + outbox (2026-10-07)
 
-- Branch isolada compõe #226 (código `7bfd3f93`, gate Organizacional UI/local, leitura integral, tenant mestre, ID/campos fiscais/vínculos), contenção #231 (`47d3a148`) e outbox Produto #203 (`ddf0c16f`). Conflitos de merge ocorreram somente neste status e em `docs/HANDOFF_ATUAL.md`; ambos os históricos foram preservados. Nenhum merge em `main`, deploy, migration ou importação.
+- Branch isolada compôs #226 (código `7bfd3f93`, gate Organizacional UI/local, leitura integral, tenant mestre, ID/campos fiscais/vínculos), contenção #231 (`47d3a148`) e outbox Produto #203 (`ddf0c16f`). Durante os testes, a `main` recebeu #226/#231/#225; a branch recebeu essa `main` por merge normal, sem reescrever histórico, e agora a candidata acrescenta somente o outbox e seus checkpoints. Conflitos ocorreram somente neste status e em `docs/HANDOFF_ATUAL.md`; ambos os históricos foram preservados. Nenhum deploy, migration ou importação.
 - Testes focados: frontend 51/51; servidor outbox 22/22; servidor completo 303 pass/0 fail/18 skip. `npm --prefix server run typecheck`, `npm --prefix server run build`, `npm run audit:baseline`, `npm run lint`, `npm run build` e diff-check passaram. Suíte raiz no Windows mantém falha preexistente nos guards VPS Unix; typecheck raiz mantém erros preexistentes fora do diff.
-- Os dois snapshots não existem no tree composto nem em `dist/`; a remoção no HEAD não limpa histórico Git. Recuperação local da #231 ainda exige correção dos dois achados de escopo no fluxo `recover.html` antes de merge/implantação, em coordenação com a frente de segurança. CI e revisão do HEAD composto são gates restantes. Próximo P0: integrar somente após pareceres por SHA, gates de segurança e validação real de sessão/Grupo/Empresa.
+- Os dois snapshots não existem no tree composto nem em `dist/`; a remoção no HEAD não limpa histórico Git. A recuperação local e os gates de segurança seguem sob responsabilidade da #231/main, sem duplicação neste lote. CI e revisão do HEAD composto são gates restantes. Próximo P0: integrar somente após pareceres por SHA, gates de segurança e validação real de sessão/Grupo/Empresa.

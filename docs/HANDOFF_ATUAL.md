@@ -1,127 +1,41 @@
-## FOLLOW-UP Cursor — Comercial pacote fechado (2026-10-07)
+## TRÊS PACOTES ATÉ CONCLUSÃO — atualização (2026-10-07T20:40Z)
 
-Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
 
-| PR | HEAD | Veredito |
-|---|---|---|
-| #226 | `434b4bf3` CI SUCCESS MERGEABLE | **APROVAR merge → main** |
-| #229 | `2350a05f` CONFLICTING | **arquivar** (portado) |
-| #231 | `4ca140fe` MERGEABLE | **APROVAR** (snapshots) |
-| #203 | `ddf0c16f` MERGEABLE | lote indep. outbox |
-
-Ordem merge sugerida: **#231 → #226 → #225**; depois #203. erp-dev sem estas correções até deploy. VPS MCP timeout.
-
-## CODEX — pacotes fechados (2026-10-07T19:30Z)
-
-| Item | SHA | PR | Estado |
+| Frente | Responsável | 1ª ação | Estado |
 |---|---|---|---|
-| #226 Cadastros | `7bfd3f93` | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226 | MERGEABLE · CI SUCCESS · solução única → main |
-| De #229 | `2350a05f` → port `8a43810f` + localBase44 `7bfd3f93` | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/229 | **arquivar** (não mergear sozinha) |
-| #231 snapshots | `4ca140fe` (base `47d3a148`) | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/231 | MERGEABLE · runbook hist. SEPARADA |
-| #203 outbox (indep.) | `0a345d6b` | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/203 | MERGEABLE · CI SUCCESS · arquivos ≠ #225/#226 |
-| VPS MCP | — | Hostinger | timeout; auth válida |
+| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #226⊇#227/8/9 + #203 | **#226 MERGED** `6dfd39d2`; arquivar 227/8/9; #203 indep. |
+| CURSOR | este chat | merge #231→#226→#225; deploy; validar erp-dev | **#231+#226 em main**; #225 rebase; deploy **BLOCKED** VPS MCP timeout |
+| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | executor PC com HD | workers 0; HD não no Cloud |
 
-**O que veio de #229:** gate só `Cadastros.Organizacional` (UI+Bloco5+policy); remoção aliases Sistema; testes. Completação Codex: `localBase44` sem `TENANT_MASTER_PERMISSION_ALIASES`.
+### Fases
 
-**Próximo:** HUMAN merge #226+#231; arquivar #229; merge #203 (Comercial indep.); limpeza hist. snapshots sob janela; Expedição tip fora de main.
-
-## EXECUÇÃO PARALELA — concluir pacotes (2026-10-07)
-
-Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
-Acessos: GitHub OK · VPS MCP **timeout** · self-hosted workers **0** · HD Legado **não montado no Cloud**.
-
-| Frente | Responsável | Arquivos quentes | Não tocar | 1ª ação |
-|---|---|---|---|---|
-| CODEX Comercial | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Cadastros #226/#229; #231 assets; lote Comercial indep. | Financeiro #225; Legado staging | Confrontar #229×#226; coordenar #231 |
-| CURSOR | este chat | pareceres SHA; #225 fluxo real; #230≠VPS; deploy gates; browser erp-dev | concorrer tip Codex Cadastros | Revisar #231+#229; port #229→#226; Financeiro real |
-| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | verifier HD; staging real #211 | CADESP; re-export; mapper paralelo | Executor no PC com HD; sair do só-sintético |
-
-### Fases (não misturar)
-
-| Fase | Cadastros #226+#229 | #231 assets | Financeiro #225 | Auth #230 | Legado | Deploy erp-dev |
-|---|---|---|---|---|---|---|
-| implementado | port #229 + localBase44 (este tip) | código PR | launchpad | local bootstrap | sintético + scripts | — |
-| revisado | parecer Cursor + Codex | APROVAR | parcial (texto+queryKey) | separado da VPS | UNVERIFIED | cmp BLOCKED |
-| integrado | aguarda HUMAN merge | aguarda merge | aguarda merge | N/A na VPS | — | não |
-| implantado | não | não | não | não | não | não (MCP timeout) |
-| validado | local sim · **VPS não** | — | local launchpad · **VPS não** | local only | — | — |
-
-**erp-dev ainda RUNTIME-08B / main `d02cd012`** — correções só em PRs até merge+deploy.
-
-## CODEX — solução final #226+#227+#228 (2026-10-07)
-
-Recebido e **executado**. HEADs #226/#227/#228 comparados. Delta #228 (escopo mestre, vínculos, negação Cadastros.Empresa sozinho, lista group_id) + RBAC Sistema.Empresas local no veículo #226 vs main. Sem merge Expedição. Testes 36/36.
-
-## ORDEM PACOTES GRANDES EM PARALELO (2026-10-07) — chat principal
-
-Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
-Autorização VPS/Web Console/SFTP/GitHub: válida; **acesso efetivo VPS MCP = timeout** neste ciclo.
-
-| Frente | Responsável | Arquivos quentes | Não tocar | Primeira ação |
-|---|---|---|---|---|
-| CODEX Comercial 360 | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | Cadastros Empresa*, Visualizador, policies, Expedição (separado) | Financeiro #225; Legado staging | Comparar HEADs #226/`566d4552` #227/`5e50e6b1` #228/`9ab5ec5a`; solução única em #226→main |
-| CURSOR | este chat | pareceres SHA; #225 Financeiro; evidência browser | concorrer EmpresaForm com Codex tip | Revisar #228 vs #226 por SHA; portar testes #228; validar Financeiro 15 cards |
-| CODEX Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | `scripts/legado/*`, #211 | CADESP; mapper paralelo | Verifier no host com arquivo; staging ETL; sem pedir transferência |
-
-### Status por fase (separado)
-
-| Fase | Cadastros Empresas | Financeiro #225 | Legado #211 | Deploy |
-|---|---|---|---|---|
-| **implementado** | código #226 (+ port #227 + testes #228) | launchpad grant plano | verifier/scripts no PR | — |
-| **revisado** | parecer `docs/PARECER_CURSOR_226_227_228_SHA.md` | parecer `1f1f8cf6` + inventário | tip `cf96c4bb` | cmp VPS BLOCKED (MCP timeout) |
-| **integrado** | aguarda HUMAN merge #226 | aguarda HUMAN merge #225 | — | não |
-| **implantado** | não | não | não | gates; sem inventário imagem |
-| **validado no navegador** | pendente evidência sanitizada | pendente evidência sanitizada | N/A | — |
-
-Parecer SHA: `docs/PARECER_CURSOR_226_227_228_SHA.md`
-**Não presumir** que tip antigo #226 já tinha #228: gap de **testes** de escopo mestre fechado neste lote; runtime já estava em #226.
-
-
-## PARECER CURSOR — #226 consolidada `f64e89a5` (2026-10-07)
-
-| Campo | Valor |
-|---|---|
-| Veredito | **APROVAR merge #226 → main** |
-| Código | `92799ccf` (unifica #227 Completo/testes; ancestral `f64e89a5` CI `37613106916`) |
-| Testes locais tip | **29/29** |
-| #227 | **não mergear** (base Expedição); conteúdo portado — arquivar após merge #226 |
-| Parecer | `docs/PARECER_CURSOR_226_SHA_f64e89a5.md` |
-| Agente | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
-
-## UNIFICACAO Cadastros #226+#227 (2026-10-07)
-
-- SHA unificado pós-complemento: (ver commit deste push).
-- Base Comercial `f64e89a5` + teste `cadastro-empresa-edicao` + Completo Organizacional/ID.
-- Veículo merge: PR #226 → `main`. Tip #227 arquivar/não mergear.
-
-## CODEX — consolidação #226+#227 Cadastros (2026-10-07)
-
-Recebido e **executado**. Solução única na **#226** contra `main` (sem merge Expedição). De #226: tenant master, policy, getInContext, deep-merge, string[]. De #227 `5e50e6b1`: loadEmpresaForEdit, ID visível, Organizacional+certificado, invalida escopo. Testes 29/29. Tip `f64e89a5` CI SUCCESS `37613106916`. #227 tip Expedição não mergear. VPS MCP timeout neste turno. Próximo: HUMAN merge #226; Expedição persistência em arquivos separados.
-
-## CURSOR/CODEX — ordem 3 frentes paralelas (2026-10-07)
-
-Chat principal: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
-
-| Frente | Responsável | Tarefa recebida | Arquivos quentes | Não tocar | Estado |
+| Fase | #231 | #226 | #225 | Legado | erp-dev |
 |---|---|---|---|---|---|
-| Comercial 360 | este executor Cadastros | Consolidar #227+#226; validar Cadastros; admin empresas | Visualizador, EmpresaForm*, Bloco5, policies, localBase44 | Financeiro #225; Legado staging | **#226 consolidada** (código) |
-| Cursor | chat principal | Parecer #227; fechar #225; pareceres por SHA | `docs/PARECER_*`, Financeiro.* | EmpresaForm concorrente | Pareceres `5e50e6b1` / `1f1f8cf6` |
-| Legado | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | checksum 153440Z; ETL staging; #211 | scripts/legado/*, #211 | CADESP; mapper paralelo | BLOCKED / transferência |
+| implementado | sim | sim | sim | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED | — |
+| integrado | **sim** | **sim** | tip | — | parcial |
+| implantado | não | não | não | não | MCP timeout |
+| validado VPS | não | não | não | N/A | snapshots ainda 200 |
+| dados reais | — | — | — | pendente host | — |
 
-- Pareceres Cursor: `docs/PARECER_CURSOR_227_SHA_5e50e6b1.md`, `docs/PARECER_CURSOR_FINANCEIRO_225_SHA_1f1f8cf6.md`
-- Autorização VPS/SFTP/GitHub válida; VPS list timeout neste turno.
+## CODEX — candidata #226 ⊇ #227/#228/#229 (2026-10-07)
 
-## CURSOR — 3 frentes (atualizado 2026-10-07)
+Matriz: `docs/MATRIZ_226_CONTEM_227_228_229.md`. **#226 MERGED**. PRs a arquivar: #227, #228, #229.
 
-| Frente | Responsável | Branch/PR | Estado |
+## CURSOR — Financeiro #225 (2026-10-07)
+
+- Rebase sobre main (#231+#226). Launchpad grant plano + fluxo ContaReceber A/B.
+- Próximo: merge #225 → deploy → validar CPA/3Z e financeiro na VPS.
+
+## CURSOR — 3 frentes + Financeiro launchpad (2026-10-06)
+
+| Frente | Responsável | Arquivos quentes | Não tocar |
 |---|---|---|---|
-| Cadastros/Empresas edição | #226 (+ #227 portado; tip `85f87005`) | `cursor/cadastros-empresas-edicao-392b` | consolidação #226+#227; CI deste tip a confirmar |
-| Financeiro launchpad | Cursor | `cursor/financeiro-estrutura-recuperacao-392b` #225 SHA `1f1f8cf6` | CI **PASS** |
-| Evidência ERP novo pré-VPS | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | #211 / `1c110777` | **BLOCKED** `LEGACY_SFTP_NO_KEY_AND_HD_UNMOUNTED` |
+| Cadastros/Empresas | Comercial #226 **MERGED** | — | — |
+| Legado | [Legado](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | verifier HD | CADESP |
+| Financeiro | Cursor #225 | Financeiro.jsx, financeiroLaunchpadAccess.js | Cadastros tip |
 
-- Legado: checksum `18e2ab9a…` do export `153440Z` **não** confrontado (arquivo ausente no Cloud). CADESP não re-pedido. `importAuthorized=false`.
-- HUMAN_NEXT Legado: FileZilla → `04_REPORTS` → `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export <json> --reports-dir <04_REPORTS>` → devolver só saída do verifier.
-- #227 `codex/cadastros-empresa-edit-safe-20261006` @ `5e50e6b1`: útil portado; **não** mergear base Expedição em main.
 
 ## Checkpoint Onda 15 - limpeza outbox na troca de Empresa (2026-10-06)
 - Branch `cursor/comercial360-onda15-outbox-claim-392b`: `ProdutoRelationsDamSection` zera variantes/equivalentes/mídia/métricas/dead-letter quando `empresaId`/produto/view faltam — fail-closed entre tenants.
@@ -321,3 +235,4 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 - Branch `codex/remove-public-erp-snapshots`, baseada na main atual: remove os dois assets reais, desliga hidratacao automatica por URL publica, exige arquivo privado escolhido pelo usuario para recuperar somente em localhost e adiciona guardas contra reintroducao. Copias originais privadas foram preservadas fora desta worktree.
 - A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
 - Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
+- Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).
