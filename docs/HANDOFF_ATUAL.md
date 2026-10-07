@@ -1,3 +1,11 @@
+## TRÊS PACOTES — Cursor Financeiro #225 (2026-10-07T20:35Z)
+
+Chat principal: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+- #231 **MERGED** `c0efab11`. Este tip: rebase #225 sobre main com snapshots removidos.
+- Próximo merge: #226 (CI tip `d1bc8bb7`) → #225 → deploy.
+- erp-dev ainda HTTP 200 nos snapshots públicos até promoção; VPS MCP timeout.
+- Validação VPS (CPA/3Z, financeiro) **pendente** pós-deploy.
+
 ## CURSOR — 3 frentes + Financeiro launchpad (2026-10-06)
 
 | Frente | Responsável | Arquivos quentes | Não tocar |
@@ -186,3 +194,11 @@ Registro de 20/09, superado pelo checkpoint vigente acima. No Gate VPS autorizad
 canário. O seed RBAC já foi aplicado e não deve ser reaplicado por este hotfix;
 não reaplicar migrations. A API oficial 3080 continua R07B. Não
 criar migration 016, não promover a API R08 e não fazer merge neste gate.
+
+## CODEX — contencao dos snapshots publicos (2026-10-07)
+
+- O proprietario autorizou retirar da versao atual os dois snapshots reais do ERP novo servidos por `public/` e preparar a limpeza do historico. O repositorio e publico; remover arquivos na HEAD nao elimina blobs de commits anteriores, caches, clones nem artefatos ja implantados.
+- Branch `codex/remove-public-erp-snapshots`, baseada na main atual: remove os dois assets reais, desliga hidratacao automatica por URL publica, exige arquivo privado escolhido pelo usuario para recuperar somente em localhost e adiciona guardas contra reintroducao. Copias originais privadas foram preservadas fora desta worktree.
+- A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
+- Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
+- Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).

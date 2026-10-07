@@ -1,46 +1,32 @@
+## CURSOR — Financeiro #225 rebase pós-#231 (2026-10-07)
+
+- Integra main com #231 MERGED (`c0efab11`). Launchpad + fluxo real multiempresa preservados.
+- Veredito: **APROVAR merge #225** após CI tip. Validação erp-dev pendente (deploy BLOCKED MCP).
+
 ## CURSOR — Financeiro #225 fluxo real (2026-10-07)
 
 - Teste `financeiro-contexto-fluxo-real`: ContaReceber isolada empresa A/B via localBase44 (não texto-fonte).
 - Grant plano 15 cards + granular. **Não** equivale a validação erp-dev (Supabase).
 
-## CURSOR — validação funcional Financeiro #225 (2026-10-07)
-
-- Tip código launchpad: `1f1f8cf6`; tip docs anterior: `3ea5db7b`.
-- Inventário: 15 cards + rotas + `queryKey`/`contextKey`/`filtrarPorContexto` (teste estendido).
-- Parecer funcional: `docs/PARECER_CURSOR_FINANCEIRO_FUNCIONAL_225.md`.
-- Browser/implantação: pendente (VPS MCP timeout).
-- Veredito merge launchpad: **APROVAR**.
-
 ## CURSOR — Financeiro #225 pacote completo (2026-10-07)
 
 | Campo | Valor |
 |---|---|
-| SHA | `1f1f8cf6` |
-| CI | PASS (4 checks) |
-| Inventário | 15 cards + rota Layout/pages.config — teste `financeiro-navegacao-inventory` |
-| Parecer | `docs/PARECER_CURSOR_FINANCEIRO_225_SHA_1f1f8cf6.md` |
-| Deploy cmp | `docs/PARECER_CURSOR_DEPLOY_CMP_20261007.md` — VPS MCP timeout (auth≠conexão) |
-| Veredito | APROVAR merge #225; homologação browser pós-merge |
+| SHA código | `1f1f8cf6` / tip docs `e35e53e6` |
+| Inventário | 15 cards + rotas + queryKey/contextKey |
+| Veredito | APROVAR merge; homologação browser pós-deploy |
 
----
-
-## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
+## CODEX — coordenação #231 snapshots (2026-10-07)
 
 | Campo | Valor |
 |---|---|
-| Tarefa | Recuperar estrutura funcional do Financeiro (frente Cursor nas 3 frentes) |
-| Branch | `cursor/financeiro-estrutura-recuperacao-392b` |
-| Base | `main` |
-| Causa raiz | Launchpad filtrava só por seção; grant plano `Financeiro: ['visualizar']` deixava o grid vazio |
-| Mudança | Helper `canViewFinanceLaunchpadModule` (plano vs granular) + `ModuleTabs moduleName="Financeiro"` + empty-state |
-| Arquivos | `src/components/financeiro/financeiroLaunchpadAccess.js`, `src/pages/Financeiro.jsx`, `tests/financeiro-launchpad-access.test.js`, `docs/HANDOFF_ATUAL.md` |
-| Multiempresa/RBAC | Fail-closed sem permissão; granular por seção preservado; sem desligar segurança |
-| Valores fictícios | Não introduzidos |
-| Testes | `node --test tests/financeiro-launchpad-access.test.js` **4/4** |
-| Inventário submódulos no código | Caixa Central, Formas de Pagamento, Caixa PDV, Vendas Multicanal, CNAB, CR, CP, Aprovações Descontos, Conciliação, Custos Logísticos, Relatórios, Alertas, IA Anomalias, Régua Cobrança, Rateio Multi-Empresa |
-| Frentes paralelas | Cadastros/Empresas → Comercial; Legado evidência ERP novo → Legado; este lote = Financeiro |
-| Pendências | CI desta PR; revisão SHA Cadastros quando Comercial publicar; deploy VPS sob gate |
-| Próximo | Revisar SHA final Cadastros; inventário vs implantado VPS se launchpad ainda vazio pós-merge |
+| Estado | **MERGED** em main `c0efab11` |
+| Histórico | runbook separado — sem rewrite neste lote |
+| erp-dev | ainda serve snapshots HTTP 200 até deploy |
+
+## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
+
+Helper `canViewFinanceLaunchpadModule` + ModuleTabs Financeiro. 15 submódulos inventariados. Fail-closed.
 
 ---
 
@@ -11600,3 +11586,15 @@ Checklist inicial:
 - Árvore owner preserva Configurações e inclui Gerais/Herança/Versionamento/Conflitos e Segurança/Políticas/Governança/Monitoramento/AcessoRealtime/Backup já existentes. Caminhos reais testados no backend HTTP e hook frontend; Auditoria.excluir continua negado. Não foi adicionado bypass de role nem criada tela/módulo.
 - Delta focado 37 frontend + 7 backend PASS; backend completo 281 PASS/0 FAIL/16 SKIP; typecheck/build backend, lint, audit, diff-check e build SPA runner PASS. CI/revisão do HEAD corrigido necessárias. Aprovação/CI do d336734f não autorizam este delta; nenhum merge/grant/deploy realizado.
 - Completação dos paths B2 conferida nos callers reais: Configurações.Fiscal/Integrações/IA/ConflictPolicy/Notificações incluídos explicitamente; painel de notificações existente corrigido de sequência de aliases para path Configurações.Notificações, sem remover funcionalidade nem autorizar paths desconhecidos. Testes backend e hook real cobrem todos esses paths.
+
+## CODEX — retirada de snapshots reais do bundle publico (2026-10-07)
+
+| Campo | Estado |
+|---|---|
+| Objetivo | Conter exposicao de snapshots reais do ERP novo no repositorio e nos assets publicos atuais |
+| Causa | Dois JSONs reais em `public/`; modo local e pagina de recuperacao buscavam automaticamente o snapshot por URL publica |
+| Mudanca | Retirados os dois assets da branch; hidratacao automatica removida; recuperacao local exige selecao explicita de arquivo e bloqueia host remoto; ignore e testes impedem regressao |
+| Seguranca | Nenhum valor real no diff novo; copias privadas preservadas; historico Git e build implantado ainda exigem tratamento coordenado |
+| Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
+| Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
+| Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |

@@ -1969,8 +1969,9 @@ const normalizeSnapshotRecord = (entityName, raw, topology) => {
   return record;
 };
 
-export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAuditLog = false, sourceUrl = '/base44-local-core-snapshot.json', onlyEntities = null } = {}) => {
+export const hydrateLocalBase44FromSnapshot = async ({ force = false, includeAuditLog = false, sourceUrl = null, onlyEntities = null } = {}) => {
   if (typeof window === 'undefined') return { imported: false, reason: 'server' };
+  if (!sourceUrl) return { imported: false, reason: 'snapshot-source-required' };
 
   let snapshot;
   try {
