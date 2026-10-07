@@ -19,3 +19,25 @@ test('Layout e pages.config expõem rota Financeiro', async () => {
   assert.match(layout, /createPageUrl\(["']Financeiro["']\)/);
   assert.match(pages, /["']Financeiro["']\s*:\s*Financeiro/);
 });
+
+test('Consultas do launchpad usam contextKey e filtro multiempresa', async () => {
+  const source = await readFile(new URL('../src/pages/Financeiro.jsx', import.meta.url), 'utf8');
+  assert.match(source, /const contextKey = empresaAtual\?\.id \|\| groupId \|\| 'sem-contexto'/);
+  assert.match(source, /enabled:\s*canSeeFinanceiro && contextoValido/);
+  for (const key of [
+    'contasReceber',
+    'contas-receber-count',
+    'contasPagar',
+    'contas-pagar-count',
+    'rateios',
+    'extratos',
+    'configs-gateway',
+    'caixa-ordens-liquidacao',
+    'pedidos-pendentes-aprovacao',
+  ]) {
+    assert.match(source, new RegExp(`queryKey:\\s*\\[['"]${key}['"],\\s*contextKey\\]`));
+  }
+  assert.match(source, /filtrarPorContexto\(/);
+  assert.match(source, /getFiltroContexto\(/);
+  assert.match(source, /group_id:\s*groupId/);
+});

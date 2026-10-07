@@ -1,3 +1,11 @@
+## CURSOR — validação funcional Financeiro #225 (2026-10-07)
+
+- Tip código launchpad: `1f1f8cf6`; tip docs anterior: `3ea5db7b`.
+- Inventário: 15 cards + rotas + `queryKey`/`contextKey`/`filtrarPorContexto` (teste estendido).
+- Parecer funcional: `docs/PARECER_CURSOR_FINANCEIRO_FUNCIONAL_225.md`.
+- Browser/implantação: pendente (VPS MCP timeout).
+- Veredito merge launchpad: **APROVAR**.
+
 ## CURSOR — Financeiro #225 pacote completo (2026-10-07)
 
 | Campo | Valor |
