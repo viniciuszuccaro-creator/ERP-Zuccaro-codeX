@@ -209,7 +209,7 @@ Este programa consolida, sem substituir nem duplicar, `AGENTS.md`, `COMERCIAL_36
 | 12 | PENDENTE | 1/9/11 | BOM/roteiro/fabricação | produto duplicado | versionamento/revisão |
 | 13 | PENDENTE | 7/11/12 | corte, retalho e sucata | saldo incorreto | transação/estorno |
 | 14 | PENDENTE | 5/9/12/13 | produção canônica | baixa indevida | apontamento reversível |
-| 15 | PENDENTE | 0 concluída; 1/2/7 | contrato em `COMERCIAL_360_ONDA_15_CATALOGO_OUTBOX.md`; implementar outbox e projeção | divergência de canal | replay/reconciliação |
+| 15 | EM EXECUÇÃO (in-repo claim/lease+projeção; publisher real bloqueado) | 0 concluída; 1/2/7 | contrato em `COMERCIAL_360_ONDA_15_CATALOGO_OUTBOX.md`; claim/lease/ops locais + projeção allowlisted; falta publisher real/reconciliação | divergência de canal | replay/reconciliação |
 | 16 | PENDENTE | 3/5/6/15 | evoluir Site/Portal existentes | segunda verdade | desligar adaptador |
 | 17 | PENDENTE | 16/20 | vistas móveis sobre mesmas APIs | conflito offline | fila idempotente |
 | 18 | PENDENTE | 3/5/15 | evoluir Hub/Chatbot existentes | bot executar ação crítica | transferência humana |
@@ -590,11 +590,11 @@ Distribuir do ERP para site, portal, app, chatbots e marketplaces:
 - alerta de divergência;
 - webhooks verificados e auditados.
 
-A unicidade global de `integration_events.idempotency_key` ja existe na migration 001 e o emissor Produto usa `ON CONFLICT`; a implementacao em memoria espelha essa semantica. Claim/lease, entrega por canal e reconciliacao externa continuam pendentes e nao sao ativados por esse contrato.
+A unicidade global de `integration_events.idempotency_key` ja existe na migration 001 e o emissor Produto usa `ON CONFLICT`; a implementacao em memoria espelha essa semantica. Claim/lease de `produto.publicado` (tenant-scoped, lease token derivado, retry/dead-letter, reclaim, reprocessamento, descarte `cancelled`, list/metrics com filtro produtoId, recibo idempotente, batch fake, HTTP/UI prepared) esta no service/HTTP sem worker externo; entrega por canal e reconciliacao externa continuam pendentes.
 
-Contrato pendente de claim/lease: reutilizar `integration_events` da migration 018; selecionar apenas evento `produto.publicado` no Grupo/Empresa explicitos, com `FOR UPDATE SKIP LOCKED`, limite e ordem estavel. O lease precisa impedir dois consumidores simultaneos, recuperar expirados e respeitar `attempts/max_attempts`; confirmacao, retry e dead-letter devem exigir o mesmo token/versao de lease para barrar resposta atrasada. Todo resultado deve ser auditado sem payload sensivel; falha transacional nao pode confirmar publicacao.
+Contrato de claim/lease (implementado no repositorio, sem ativacao externa): reutilizar `integration_events` da migration 018; selecionar apenas evento `produto.publicado` no Grupo/Empresa explicitos, com `FOR UPDATE SKIP LOCKED`, limite e ordem estavel. O lease impede dois consumidores simultaneos, recupera expirados e respeita `attempts/max_attempts`; confirmacao, retry e dead-letter exigem o mesmo token/versao de lease para barrar resposta atrasada. Dead-letter so volta a `pending` via `reprocessar` (preserva eventId/schemaVersion) ou vai a `cancelled` via `descartar`. Todo resultado deve ser auditado sem payload sensivel; falha transacional nao pode confirmar publicacao.
 
-Esse contrato ainda nao habilita worker, canal, rede, bucket ou publicacao externa. Antes de implementar consumidor: definir RBAC/identidade de servico, recibo idempotente do canal, politica de retry/timeout e testes PostgreSQL de concorrencia, rollback e empresa cruzada. Gate DEV/Auth/Storage permanece separado.
+Esse contrato ainda nao habilita worker cron, canal, rede, bucket ou publicacao externa. Antes de consumidor real: identidade de servico, recibo do canal externo, testes PostgreSQL de concorrencia ampla. Gate DEV/Auth/Storage permanece separado.
 
 
 ---

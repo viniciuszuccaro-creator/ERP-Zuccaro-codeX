@@ -111,6 +111,90 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
 }
 
 function mountProdutoRoutes(router: Router, service: ProdutoService) {
+  router.get('/api/v1/produtos/outbox', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.listPublicationEvents(ctxFromReq(req), {
+        status: req.query.status != null ? String(req.query.status) : undefined,
+        produtoId: req.query.produtoId != null ? String(req.query.produtoId) : undefined,
+        limit: req.query.limit != null ? Number(req.query.limit) : undefined,
+        offset: req.query.offset != null ? Number(req.query.offset) : undefined,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.get('/api/v1/produtos/outbox/metrics', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.getOutboxMetrics(ctxFromReq(req), {
+        produtoId: req.query.produtoId != null ? String(req.query.produtoId) : undefined,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/claim', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.claimPublicationEvents(ctxFromReq(req), {
+        limit: req.body?.limit != null ? Number(req.body.limit) : undefined,
+        leaseMs: req.body?.leaseMs != null ? Number(req.body.leaseMs) : undefined,
+      });
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/process', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.processOutboxBatch(ctxFromReq(req), {
+        limit: req.body?.limit != null ? Number(req.body.limit) : undefined,
+        leaseMs: req.body?.leaseMs != null ? Number(req.body.leaseMs) : undefined,
+      });
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/confirm', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.confirmPublicationEvent(
+        ctxFromReq(req), req.params.eventId, String(req.body?.leaseToken || ''),
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/fail', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.failPublicationEvent(
+        ctxFromReq(req), req.params.eventId, String(req.body?.leaseToken || ''),
+        String(req.body?.errorMessage || 'delivery_failed'),
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/reprocess', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.reprocessPublicationEvent(
+        ctxFromReq(req),
+        req.params.eventId,
+        req.body?.reason != null ? String(req.body.reason) : undefined,
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
+  router.post('/api/v1/produtos/outbox/:eventId/discard', requireTenantScope, async (req, res, next) => {
+    try {
+      const data = await service.discardPublicationEvent(
+        ctxFromReq(req),
+        req.params.eventId,
+        req.body?.reason != null ? String(req.body.reason) : undefined,
+      );
+      res.json({ data });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
       const ativoParam = req.query.ativo;
@@ -1198,6 +1282,15 @@ export function createApiRouter(deps: ApiDeps) {
         pagination: true,
         tenantFkIntegrity: true,
         frontendHttp: false,
+        outboxClaimLease: true,
+        outboxFakeBatch: true,
+        outboxCatalogProjection: true,
+        outboxConsumerPrepared: true,
+        outboxDeadLetterReprocess: true,
+        outboxConfirmIdempotent: true,
+        outboxListRead: true,
+        outboxMetrics: true,
+        outboxDeadLetterDiscard: true,
       },
       cliente: {
         masterData: true,

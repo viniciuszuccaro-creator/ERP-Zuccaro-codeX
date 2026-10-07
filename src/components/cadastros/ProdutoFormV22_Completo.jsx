@@ -1193,6 +1193,8 @@ Caso contrário, sugira:
                 empresaId={empresaAtual.id} canView={podeVisualizar} canEdit={podeEditar}
                 canApprove={hasPermission('Cadastros', 'Produto', 'aprovar-conteudo')}
                 canPublish={hasPermission('Cadastros', 'Produto', 'publicar')}
+                canReprocess={hasPermission('Cadastros', 'Produto', 'reprocessar')}
+                canDiscard={hasPermission('Cadastros', 'Produto', 'descartar')}
                 canDeactivate={hasPermission('Cadastros', 'Produto', 'inativar')}
                 workflowStatus={formData.workflow_status} onWorkflowChanged={(status) => setFormData((current) => ({ ...current, workflow_status: status }))} />
             </Suspense>
