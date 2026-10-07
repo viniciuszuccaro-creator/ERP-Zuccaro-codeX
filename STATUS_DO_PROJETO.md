@@ -8,6 +8,25 @@
 | #226 | **MERGED** `6dfd39d2` / tip `5271da58` |
 | Pendência | publisher real BLOCKED |
 
+## LEGADO — follow-up verifier (2026-10-07T20:50Z)
+
+Agente: [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
+
+| Campo | Valor |
+|---|---|
+| Estado | **BLOCKED** — execução real não avançou |
+| Checksum | **UNVERIFIED** (`FOUND_EXPORT=NONE`) |
+| Tentativa Cloud | `executar-verifier-host-local.sh` exit 4 `LEGACY_HOST_REPORTS_DIR_NOT_FOUND` |
+| Host com backup | PC proprietário `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS` (não este Cloud) |
+| Workers | 0 · sem `usePrivateWorker` |
+| Contagens reais | **0** processadas |
+| Sintético (≠ efetivo) | staging 8→4/1/1/2 · vínculos 3/4 |
+| PR | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) tip remoto `66f0520f` |
+
+**HUMAN_NEXT (único bloqueio):** no PC com o HD → `bash scripts/legado/executar-verifier-host-local.sh` → colar saída sanitizada · ou `cursor worker start` nesse PC.
+
+Dados reais / credenciais: fora do GitHub.
+
 ## TRÊS PACOTES — integrado em main (2026-10-07T20:45Z)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
@@ -20,7 +39,7 @@ Main tip: `e2c51d84` (#231 + #226 + #225).
 | integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | **MERGED** `e2c51d84` | — | código em main |
 | implantado | **não** | **não** | **não** | não | **BLOCKED** VPS MCP timeout; workers 0; sem SSH neste Cloud |
 | validado VPS | **não** — assets ainda HTTP 200 (~13.8MB / ~1.0MB) | **não** | **não** | N/A | RUNTIME-08B pré-promoção |
-| dados reais | — | — | — | pendente host com HD | — |
+| dados reais | — | — | — | **0** (BLOCKED host HD) | — |
 
 **Pendência concreta de implantar:** Hostinger VPS MCP `vps_virtual-machines_list` timeout (−32001); self-hosted workers = 0; sem chave SSH no ambiente Cloud. Autorização válida ≠ conexão efetiva.
 
@@ -30,7 +49,7 @@ Main tip: `e2c51d84` (#231 + #226 + #225).
 |---|---|---|
 | CODEX Comercial | [bc-55d5261f](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #203 outbox; confirmar arquive 227/8/9 |
 | CURSOR | este chat | desbloquear VPS (MCP/SSH/worker) → backup → build/promover main `e2c51d84` → validar CPA/3Z + financeiro + snapshots 404 |
-| CODEX Legado | [bc-4427c136](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | `executar-verifier-host-local.sh` no PC com D:; staging real |
+| CODEX Legado | [bc-4427c136](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | **BLOCKED** exit4 HD ausente; HUMAN_NEXT no PC com D: |
 
 ## TRÊS PACOTES — pós-merge #231+#226 (2026-10-07)
 
