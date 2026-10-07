@@ -11724,3 +11724,13 @@ Checklist inicial:
 - PR #211: edit GraphQL negado; texto no HANDOFF.
 - Tip: este commit. Mapper #48 intocado.
 - HUMAN_NEXT: verifier no PC com HD (comando no HANDOFF).
+
+### CODEX LEGADO — saída do só-sintético bloqueada sem host HD (2026-10-07T19:17Z)
+
+- Objetivo: processar arquivo transferido + backup real; sair do pacote exclusivamente sintético.
+- Acesso efetivo Cloud: HD **não** montado; workers self-hosted **0**; desktop agent sem private worker.
+- Entrega: `scripts/legado/executar-verifier-host-local.sh` + teste estrutural (executor host_local).
+- Checksum match: **UNVERIFIED**. Contagens reais: **nenhuma** neste agente. Sintético permanece só referência.
+- `gh pr edit` #211 tipicamente negado; HANDOFF atualizado.
+- HUMAN_NEXT: rodar `executar-verifier-host-local.sh` no PC com `04_REPORTS` ou subir self-hosted worker.
+- importAuthorized=false; mapper #48 intocado; sem re-export/CADESP.

@@ -1,4 +1,33 @@
+## CODEX LEGADO — sair do só-sintético / executor host (2026-10-07T19:17Z)
+
+Recebido. **Permissão ≠ HD montado no Cloud.** Confirmação efetiva neste agente:
+
+| Probe | Resultado |
+|---|---|
+| Executor Cloud | **sem** arquivo privado (`EXPORT_FOUND=NONE`) |
+| Self-hosted workers | **0** (`LEGACY_NO_SELF_HOSTED_WORKER`) |
+| Desktop agent listado | `bc-d973626e…` source=desktop, `usePrivateWorker=false` — **não** é executor HD |
+| SSH key | `NO_SSH_KEY` |
+| Inventário | `backup_dir_found=NO` |
+| Checksum 153440Z | **UNVERIFIED** (não mismatch) |
+| Contagens REAIS backup | **0 / NÃO processadas** — ainda só sintético disponível aqui |
+| Contagens sintéticas | inalteradas (staging 8→4/1/1/2; vínculos 3/4) — **não** substituem efetivo |
+
+**Executor autorizado identificado para o passo real:** `host_local` no PC do proprietário
+(`scripts/legado/executar-verifier-host-local.sh`) — um comando, sem re-export/CADESP.
+
+**HUMAN_NEXT (mínima):**
+```bash
+bash scripts/legado/executar-verifier-host-local.sh
+# ou: bash scripts/legado/executar-verifier-host-local.sh --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier. Alternativa: `cursor worker start` nesse PC.
+
+Bloqueio específico: `LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT` + `LEGACY_NO_SELF_HOSTED_WORKER`.
+Mapper #48 intocado. `importAuthorized=false`. Primeira carga operacional **ainda sob gate**.
+
 ## CODEX LEGADO — pacote paralelo checksum/ETL (2026-10-07T13:07Z)
+
 
 Recebido. Transferência humana já confirmada — **sem** nova transferência/CADESP/export.
 
