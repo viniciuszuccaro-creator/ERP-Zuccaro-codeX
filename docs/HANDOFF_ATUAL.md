@@ -1,16 +1,33 @@
-## CURSOR — Legado #211 pós-transferência (2026-10-07)
+## FOLLOW-UP chat principal — Comercial + Legado (2026-10-07)
 
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+### CODEX Comercial — solução final #226
+| Campo | Valor |
+|---|---|
+| Agente | [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) |
+| PR | [#226](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/226) |
+| SHA final | `480d8b141973228d7c584124a9c25c4fdfe357c1` |
+| CI | SUCCESS [37628559142](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/37628559142) |
+| Testes | 36/36 |
+| De #226/#227/#228 | tenant master + loadEmpresaForEdit + escopo mestre lista/save |
+| Veredito | **APROVAR merge #226 → main**; arquivar #227/#228 (não mergear Expedição) |
+
+### CODEX Legado — pacote paralelo (checksum UNVERIFIED)
 | Campo | Valor |
 |---|---|
 | Agente | [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
-| Transferência | **confirmada** pelo proprietário |
-| Checksum Cloud | **UNVERIFIED** (HD não montado; `backup_dir_found=NO`) |
-| SHA esperado | `18e2ab9a085dda6040d4d63d2dfc88d702b0a84203a5cf19d80358c46cca3d7e` |
-| Tip espelhado | Codex `f9247587` |
-| Staging fixture | 8→4/1/1/2 · `importAuthorized=false` |
-| HUMAN_NEXT | No PC: `verificar-evidencia-erp-novo-pre-vps.mjs` → devolver só JSON do verifier |
+| Tip Codex | `a03564cc` (espelhado neste PR #211) |
+| Transferência | **confirmada** — sem nova transferência/CADESP/export |
+| Checksum 153440Z | **UNVERIFIED** (`LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT`) |
+| Pacote | **SINTÉTICO** `effectiveBackupProcessing=false` · staging 8→4/1/1/2 · CPA/3Z diff 0 |
+| Flags | `importAuthorized=false` |
+| HUMAN_NEXT | no PC com HD: `node scripts/legado/verificar-evidencia-erp-novo-pre-vps.mjs --export "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS/legado-empresas-api-20261006T153440Z.json" --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"` → devolver só JSON |
+
+Mapper #48 intocado. VPS MCP timeout neste ciclo.
 
 ## CODEX LEGADO — transferência confirmada pelo proprietário (2026-10-07)
+
 
 Recebido (chat principal). **Transferência do export confirmada pelo proprietário.**
 NÃO pedir CADESP de novo. NÃO repetir export.
