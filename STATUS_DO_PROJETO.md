@@ -1,3 +1,9 @@
+## FOLLOW-UP — Comercial #226/#229/#231/#203 (2026-10-07)
+
+- #226 tip `434b4bf3` (gate Organizacional completo UI≡localBase44) CI verde.
+- #229 arquivar. #231 `4ca140fe` APROVAR. #203 outbox `ddf0c16f` indep.
+- HUMAN merge + deploy ainda pendentes para erp-dev.
+
 ## CODEX — completa port #229 no #226 + localBase44 (2026-10-07)
 
 | Campo | Valor |

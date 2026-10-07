@@ -1,3 +1,16 @@
+## FOLLOW-UP Cursor — Comercial pacote fechado (2026-10-07)
+
+Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)
+
+| PR | HEAD | Veredito |
+|---|---|---|
+| #226 | `434b4bf3` CI SUCCESS MERGEABLE | **APROVAR merge → main** |
+| #229 | `2350a05f` CONFLICTING | **arquivar** (portado) |
+| #231 | `4ca140fe` MERGEABLE | **APROVAR** (snapshots) |
+| #203 | `ddf0c16f` MERGEABLE | lote indep. outbox |
+
+Ordem merge sugerida: **#231 → #226 → #225**; depois #203. erp-dev sem estas correções até deploy. VPS MCP timeout.
+
 ## CODEX — pacotes fechados (2026-10-07T19:30Z)
 
 | Item | SHA | PR | Estado |
