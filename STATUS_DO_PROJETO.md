@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## CODEX — tip #226 CI verde pós-matriz (2026-10-07)
 
 | Campo | Valor |
@@ -13,60 +14,71 @@
 | Próximo | HUMAN merge #226 → #225 → #203 |
 
 ## TRÊS PACOTES — integração pós-#231 (2026-10-07)
+=======
+## TRÊS PACOTES — integrado em main (2026-10-07T20:45Z)
+>>>>>>> origin/main
 
-| Fase | #231 snapshots | Cadastros #226 | Financeiro #225 | Legado | Deploy erp-dev |
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Main tip: `e2c51d84` (#231 + #226 + #225).
+
+| Fase | #231 snapshots | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
 |---|---|---|---|---|---|
-| implementado | sim | sim (UI≡localBase44 Organizacional) | launchpad + fluxo real | scripts/verifier | — |
-| revisado | Cursor APROVAR | Cursor+Codex | parcial | UNVERIFIED cloud | — |
-| integrado | **MERGED** `c0efab11` | rebase pós-#231 (este tip) | aguarda | — | parcial (#231 em main) |
+| implementado | sim | sim | sim | scripts/verifier | — |
+| revisado | sim | sim | parcial (fluxo real local) | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | **MERGED** `e2c51d84` | — | código em main |
+| implantado | **não** | **não** | **não** | não | **BLOCKED** VPS MCP timeout; workers 0; sem SSH neste Cloud |
+| validado VPS | **não** — assets ainda HTTP 200 (~13.8MB / ~1.0MB) | **não** | **não** | N/A | RUNTIME-08B pré-promoção |
+| dados reais | — | — | — | pendente host com HD | — |
+
+**Pendência concreta de implantar:** Hostinger VPS MCP `vps_virtual-machines_list` timeout (−32001); self-hosted workers = 0; sem chave SSH no ambiente Cloud. Autorização válida ≠ conexão efetiva.
+
+**Arquivar (não mergear):** #227, #228, #229. Lote indep. Comercial: #203. Auth local #230 ≠ Auth VPS.
+
+| Frente | Responsável | Próxima ação |
+|---|---|---|
+| CODEX Comercial | [bc-55d5261f](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a) | #203 outbox; confirmar arquive 227/8/9 |
+| CURSOR | este chat | desbloquear VPS (MCP/SSH/worker) → backup → build/promover main `e2c51d84` → validar CPA/3Z + financeiro + snapshots 404 |
+| CODEX Legado | [bc-4427c136](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) | `executar-verifier-host-local.sh` no PC com D:; staging real |
+
+## TRÊS PACOTES — pós-merge #231+#226 (2026-10-07)
+
+| Fase | #231 | #226 Cadastros | #225 Financeiro | Legado | erp-dev |
+|---|---|---|---|---|---|
+| implementado | sim | sim | launchpad + fluxo real | scripts | — |
+| revisado | sim | sim | parcial | UNVERIFIED cloud | — |
+| integrado | **MERGED** `c0efab11` | **MERGED** `6dfd39d2` | tip rebase (este) | — | parcial em main |
 | implantado | não | não | não | não | MCP timeout |
-| validado VPS | pendente (assets) | pendente | pendente | N/A | RUNTIME-08B ainda |
+| validado VPS | pendente | pendente | pendente | N/A | RUNTIME-08B; snapshots HTTP 200 |
+| dados reais | — | — | — | pendente host | — |
 
-Ordem restante: merge #226 → #225 → deploy com backup/rollback. Arquivar #227/#228/#229 após merge #226.
+Ordem restante: merge **#225** → deploy com backup/rollback. Arquivar #227/#228/#229.
 
-## FOLLOW-UP — Comercial #226/#229/#231/#203 (2026-10-07)
+## CURSOR — Financeiro #225 rebase pós-#226 (2026-10-07)
 
-- #226 tip pré-rebase `434b4bf3`/`6fd07b97` (gate Organizacional completo UI≡localBase44) CI verde.
-- #229 arquivar. #231 **MERGED** em main (`c0efab11`). #203 outbox indep.
-- Deploy erp-dev ainda pendente (VPS MCP timeout).
+- Integra main com #231+#226. Launchpad + fluxo real multiempresa preservados.
+- Veredito: **APROVAR/merge #225** após CI tip. Validação erp-dev pendente (deploy BLOCKED MCP).
+
+## CURSOR — Financeiro #225 fluxo real (2026-10-07)
+
+- Teste `financeiro-contexto-fluxo-real`: ContaReceber isolada empresa A/B via localBase44.
+- Grant plano 15 cards + granular. **Não** equivale a validação erp-dev.
 
 ## CODEX — coordenação #231 snapshots (2026-10-07)
 
 | Campo | Valor |
 |---|---|
-| HEAD | `4ca140fe` · MERGED via `c0efab11` |
-| CI | SUCCESS frontend+backend |
-| Guard | `tests/public-snapshot-exposure-guard.test.js` **4/4** |
-| Privado | cópia fora do git |
-| Histórico | runbook `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md` — **não** rewrite neste lote |
+| Estado | **MERGED** `c0efab11` |
+| Guard | `tests/public-snapshot-exposure-guard.test.js` |
+| Histórico | runbook separado — sem rewrite |
+| erp-dev | ainda HTTP 200 nos snapshots até deploy |
 
-## CODEX — completa port #229 no #226 + localBase44 (2026-10-07)
+## CODEX — #226 Cadastros (2026-10-07)
 
-| Campo | Valor |
-|---|---|
-| Tip #226 | `7bfd3f93` · CI SUCCESS |
-| Completação | mutação só `Cadastros.Organizacional` (sem aliases Sistema) |
-| Ciclo Empresa | abrir/editar/salvar/reabrir — **36/36** |
-| Indep. Comercial | #203 outbox CI SUCCESS |
-| Próximo | merge #226 pós-rebase; arquivar #229 |
+**MERGED** `6dfd39d2`. Gate só `Cadastros.Organizacional`. Arquivar #227/#228/#229.
 
-## EXECUÇÃO PARALELA Cursor — #229→#226 + #231 (2026-10-07)
+## CURSOR — Financeiro estrutura / launchpad RBAC (2026-10-06)
 
-- Port #229 no veículo #226: gate mestre **só** `Cadastros.Organizacional`.
-- #231 merged. #230 ≠ Auth Supabase VPS. Deploy bloqueado por MCP timeout.
-- Legado: HUMAN_NEXT verifier no PC com HD se cloud sem mount.
-
-## CODEX — solução final #226+#227+#228 Empresas (2026-10-07)
-
-Veículo **#226** → main. De #227/#228 portados; bases Expedição **não** mergear. Testes 36/36.
-
-## PARECER CURSOR — #226 consolidada (2026-10-07)
-
-Veredito: **APROVAR merge #226 → main** após rebase limpo com #231. #227/#228/#229 arquivar.
-
-## CURSOR — Cadastros Gerais Empresas edição (2026-10-06)
-
-Tenant masters por `group_id`; load completo; forms preservam id/group; fail-closed. CI PASS no lote Cadastros.
+Helper `canViewFinanceLaunchpadModule` + ModuleTabs Financeiro. 15 submódulos. Fail-closed.
 
 ---
 
