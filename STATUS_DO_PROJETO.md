@@ -1,3 +1,13 @@
+## ORDEM 3 FRENTES — chat principal (2026-10-07)
+
+| Frente | Agente / PR | Primeira ação executada |
+|---|---|---|
+| Comercial | bc-55d5261f + bc-88244dac · #226/#227 | Retomados em background para consolidar |
+| Cursor | este chat · pareceres + #225 | Pareceres SHA `5e50e6b1` e `1f1f8cf6` |
+| Legado | bc-4427c136 · #211 | Retomado: transferência confirmada → checksum |
+
+Encaminhamento ≠ implementação concluída. Consolidação #227→#226 e checksum Legado são entregas Codex.
+
 ## CI — Cadastros #226 consolidado (2026-10-06)
 
 - SHA `f9b926e2`: `erp-runtime-ci` frontend/backend **PASS** (4 checks).
