@@ -16,4 +16,6 @@ test('Empresas: edição controlada sem DialogTrigger e FormWrapper com key', as
   assert.match(source, /enabled:\s*Boolean\(groupIdCadastro\)/);
   assert.match(source, /REGIMES\.includes\(empresa\.regime_tributario\)/);
   assert.match(source, /group_id: groupId/);
+  assert.match(source, /invalidateEmpresasQueries/);
+  assert.match(source, /invalidateQueries\(\{\s*queryKey:\s*\[['"]empresas-cadastro['"]\]/);
 });

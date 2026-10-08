@@ -93,10 +93,15 @@ export default function Empresas() {
     enabled: Boolean(groupIdCadastro),
   });
 
+  const invalidateEmpresasQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['empresas-cadastro'] });
+    queryClient.invalidateQueries({ queryKey: ['empresas'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => createInContext('Empresa', data, 'group_id'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      invalidateEmpresasQueries();
       setIsDialogOpen(false);
       resetForm();
       toast.success("Empresa cadastrada com sucesso!");
@@ -106,7 +111,7 @@ export default function Empresas() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => updateInContext('Empresa', id, data, 'group_id'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      invalidateEmpresasQueries();
       setIsDialogOpen(false);
       setEditingEmpresa(null);
       resetForm();
