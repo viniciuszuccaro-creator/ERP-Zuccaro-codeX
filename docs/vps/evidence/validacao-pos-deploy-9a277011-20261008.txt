@@ -1,0 +1,12 @@
+# Evidência sanitizada — validação pós-deploy erp-dev (2026-10-08)
+vps_head=9a277011
+api_image_id=sha256:82264ae5… web_image_id=sha256:beb9a8c4…
+health=200 ready=200 web=200
+auth_mode=supabase_user runtime=ERP-RUNTIME-08B browserLogin=true
+snapshots_in_git_public=0 snapshots_in_nginx_html=0
+legacy_snapshot_urls=HTTP200 text/html 1958B (SPA fallback; NOT JSON dump)
+https_meta=ERP-RUNTIME-08B supabase_user
+rollback_tags=pre-spa-login-20261008-133314
+backup_latest=pre-gate-e-20261008-133238.sql
+browser_login_CPA_3Z=pendente (agente browser em paralelo / conta real)
+main_github_tip_docs_ahead=f6ec95bc (docs only; runtime VPS=9a277011)

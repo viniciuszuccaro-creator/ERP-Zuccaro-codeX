@@ -1,3 +1,16 @@
+## CURSOR — validação pós-deploy `9a277011` (2026-10-08)
+
+| Item | Resultado |
+|---|---|
+| Versão VPS | **`9a277011`** implantada |
+| health/ready/web | **200** |
+| HTTPS meta | RUNTIME-08B · supabase_user |
+| Snapshots JSON | **ausentes** (HTML fallback 1958B; 0 arquivos) |
+| Browser CPA/3Z | em andamento (agente) |
+| Defeito tratado | nginx passa a **404** nos paths legados (não mascarar com SPA) |
+| Parecer Codex | #236 `6581cfec` — APROVAR runbook (sem rewrite) |
+| Evidência | `docs/vps/evidence/validacao-pos-deploy-9a277011-20261008.txt` |
+
 ## ACESSO VPS CANÔNICO (2026-10-08)
 
 Contrato: `docs/OPERACAO_DEV_VPS.md` § Acesso operacional Cursor/Codex.
