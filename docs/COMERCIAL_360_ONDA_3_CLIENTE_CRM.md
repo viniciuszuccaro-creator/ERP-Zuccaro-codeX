@@ -74,6 +74,10 @@ Conclusões (Regra-Mãe):
 
 **BLOCKED:** preencher o bloco CRM da Central 360 com dados reais até existir caminho canônico autorizado (A ou B).
 
+### Sugestão de vínculo (leitura, sem mescla)
+
+`GET /api/v1/clientes/sugestao-vinculo` reutiliza `ClienteService` e `findByDocumento` no Grupo. Retorna o cliente existente mascarado e audita `possible_duplicate`. Não cria registro, não mescla e não copia saldo. Documento igual em outra empresa do mesmo grupo reusa o mestre. Outro grupo, cliente inativo ou ator sem `Cadastros.cliente.visualizar` não revela o registro. A criação duplicada continua `409`.
+
 ### Checkpoint entregue (2026-09-25)
 
 - `GET /api/v1/clientes/:id/central-360` compõe identidade mascarada, vínculo `ClienteEmpresa`, blocos `empresas`/`locais`/`obras`/`orcamentos`/`pedidos` e `crm=skipped`.

@@ -1,0 +1,13 @@
+# Evidência sanitizada — deploy #246 / main / VPS
+# utc=2026-10-08T15:01:33Z
+#
+# implementado = 3faa46ff (Financeiro scope + stale cancel)
+# integrado    = 64301fdb (Merge #246)
+# implantado   = 64301fdb (rebuild spa-login)
+# validado snapshots/health = sim (clientes 404; health 200)
+# validado browser CPA/3Z   = BLOCKED (ERP_DEV_LOGIN_EMAIL + ERP_DEV_LOGIN_PASSWORD)
+# spa bundle contém "Entrar no ERP"
+# rollback_api=erp-zuccaro-erp-api:pre-spa-login-20261008-150055
+# rollback_web=erp-zuccaro-erp-web:pre-spa-login-20261008-150055
+# runtime=ERP-RUNTIME-08B auth_mode=supabase_user
+# sem segredos
