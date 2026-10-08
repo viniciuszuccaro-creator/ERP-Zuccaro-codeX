@@ -12,6 +12,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
 import {
+  buildCadastroScopeSwitchReset,
   buildMultiempresaReadFilter,
   isEditRequestCurrent,
   isTenantMasterEntity,
@@ -308,15 +309,24 @@ export default function VisualizadorUniversalEntidadeV24({
   const previousScopeRef = useRef(scopeKey);
   activeScopeRef.current = scopeKey;
 
+  // Troca de empresa/grupo: fecha form, limpa seleção e invalida carga em voo (fail-closed multiempresa).
   useEffect(function() {
     if (previousScopeRef.current === scopeKey) return;
     previousScopeRef.current = scopeKey;
-    editRequestRef.current += 1;
-    setIsLoadingEdit(false);
-    setEditLoadBlocked(false);
-    setEditError(null);
-    setEditItem(null);
-    setShowForm(false);
+    const reset = buildCadastroScopeSwitchReset({ formKey: 0 });
+    if (reset.bumpEditRequest) editRequestRef.current += 1;
+    setIsLoadingEdit(reset.isLoadingEdit);
+    setEditLoadBlocked(reset.editLoadBlocked);
+    setEditError(reset.editError);
+    setEditItem(reset.editItem);
+    setShowForm(reset.showForm);
+    setIsSaving(reset.isSaving);
+    setSelectedIds(reset.selectedIds);
+    setDeselectedIds(reset.deselectedIds);
+    setCrossPageAll(reset.crossPageAll);
+    setFormKey(function(prevKey) {
+      return buildCadastroScopeSwitchReset({ formKey: prevKey }).formKey;
+    });
   }, [scopeKey]);
 
   // Debounce busca
