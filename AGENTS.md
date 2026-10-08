@@ -165,6 +165,14 @@ entre GitHub, workspace, VPS ou handoff exige parar e diagnosticar; não resetar
 forçar push, reaplicar migration ou recriar container silenciosamente. Nunca
 registrar segredos nos documentos.
 
+Contrato de acesso Cursor/Codex (host, paths, pubkey, nomes dos secrets,
+rebuild/rollback): `docs/OPERACAO_DEV_VPS.md` § «Acesso operacional Cursor /
+Codex». Credenciais ficam em Runtime Secrets do Environment
+(`ERP_DEV_VPS_SSH_PRIVATE_KEY`, `ERP_DEV_VPS_SSH_USER`) — nunca no Git nem no
+chat. Após qualquer operação VPS: atualizar `docs/HANDOFF_ATUAL.md`,
+`STATUS_DO_PROJETO.md` e evidência sanitizada em `docs/vps/evidence/`, com
+commit/push; não deixar só no disco do agente.
+
 ---
 
 # 4. MULTIEMPRESA ABSOLUTA
