@@ -1,3 +1,16 @@
+## CURSOR — concluir pacote #248/#249/#250 (2026-10-08T20:45Z)
+
+| PR | HEAD tip | Fase |
+|---|---|---|
+| #250 Central 360 página | tip pós-reset escopo (este branch) | implementado reset+flag; **não** integrado/implantado |
+| #249 Empresas/Financeiro | `4ab97760` | CI verde; VPS ainda ≠ tip (era `54b9f9d0`) |
+| #248 sugestão UI | `bdf54b86` | aberta; sem mescla automática |
+| main | `6ff6b0f2` | ≠ VPS tip #249 |
+| flag CLIENTE_360 | compose/Dockerfile ARG default `false` | opt-in DEV |
+
+Próximo: merge-tree integração → CI → deploy tip integrado → browser → handoff SHA efetivo.
+≠ Codex outbox/legado.
+
 ## CURSOR — lote Central 360 paginação blocos (2026-10-08T20:20Z)
 
 Branch `cursor/comercial360-onda3-central360-pagina-392b` · base main.

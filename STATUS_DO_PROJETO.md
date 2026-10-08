@@ -1,3 +1,15 @@
+## CURSOR — #250 reset escopo + flag CLIENTE_360 (2026-10-08T20:45Z)
+
+| Fase | Estado |
+|---|---|
+| implementado | reset `blockLimits` em troca cliente/grupo/empresa/ator/sessão; helpers scope; ARG/compose `VITE_ERP_HTTP_CLIENTE_360` opt-in; runtime 7 locais limit/offset |
+| integrado | **não** (PR #250 aberta; pacote com #248/#249 em andamento) |
+| implantado | **não** |
+| validado testes | UI 3/3 · runtime central360 5/5 PASS |
+| flag VPS | default `false` (só true após prova supabase_user em DEV) |
+
+≠ #248/#249 · ≠ Codex outbox/legado.
+
 ## CURSOR — lote Central 360 paginação blocos (2026-10-08T20:20Z)
 
 Branch `cursor/comercial360-onda3-central360-pagina-392b` · base main.
