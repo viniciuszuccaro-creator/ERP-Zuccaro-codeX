@@ -1,3 +1,17 @@
+## ACESSO VPS CANÔNICO (Cursor + Codex) — 2026-10-08
+
+Contrato operacional: `docs/OPERACAO_DEV_VPS.md` § «Acesso operacional Cursor / Codex».
+
+| Item | Valor no Git | Segredo |
+|---|---|---|
+| Host | `srv1982741` · erp-dev.cpaferroeaco.com.br | IP não versionar |
+| Path | `/opt/erp-zuccaro` | `.env.erp.dev` só na VPS |
+| SSH user | tipicamente `root` | nome do secret: `ERP_DEV_VPS_SSH_USER` |
+| SSH key | pubkey + fingerprint no OPERACAO_DEV_VPS | privada: `ERP_DEV_VPS_SSH_PRIVATE_KEY` (Environment Secret) |
+| authorized_keys | deve conter `erp-zuccaro-vps` na VPS viva | hPanel sozinho não basta |
+
+**Regra:** após qualquer deploy/backup/rollback VPS → atualizar este HANDOFF + `docs/vps/evidence/` + push. Trocar de PC não exige reenviar chave no chat se o Environment Cursor mantiver os secrets.
+
 ## CURSOR — deploy erp-dev main `9a277011` (2026-10-08T13:35Z)
 
 | Fase | Estado |

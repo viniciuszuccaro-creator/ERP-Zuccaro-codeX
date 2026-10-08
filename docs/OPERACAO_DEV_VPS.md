@@ -33,14 +33,90 @@ autorização operacional.
 
 ## VPS DEV
 
+- Hostname Hostinger: `srv1982741`.
+- Domínios: `https://erp-dev.cpaferroeaco.com.br/` (SPA + same-origin `/api`) · `api-erp-dev` quando aplicável.
 - Raiz: `/opt/erp-zuccaro`.
+- Compose: `docker-compose.erp.yml` · env na VPS: `.env.erp.dev` (nunca no Git).
 - PostgreSQL Docker: `supabase-db`.
-- API oficial: `erp-api-dev`.
-- Bind oficial: `127.0.0.1:3080`.
+- API oficial: `erp-api-dev` · bind `127.0.0.1:3080`.
+- SPA oficial: `erp-web-dev` · bind `127.0.0.1:3081`.
+- Rede Docker observada em operação: `supabase_default` (revalidar no precheck; não presumir se divergir).
+- Backups: `/opt/erp-zuccaro/backups` (arquivos reais só na VPS; no Git só path/bytes/sha256 sanitizados em `docs/vps/evidence/`).
 
 A rede Docker deve ser consultada na configuração existente durante uma tarefa
 VPS autorizada; não deve ser presumida. Não documentar senhas, tokens, arquivos
-de ambiente, cookies, dados de clientes ou IP público desnecessário.
+de ambiente, cookies, dados de clientes, chave privada SSH nem IP público desnecessário.
+
+## Acesso operacional Cursor / Codex (canônico)
+
+Objetivo: qualquer agente ou PC novo consiga operar a VPS **sem** reenviar
+credenciais no chat. Segredos ficam no ambiente Cursor (Runtime Secrets) ou no
+Hostinger; o GitHub guarda só o contrato e os nomes.
+
+### Secrets do ambiente Cursor (valores FORA do Git)
+
+| Nome | Obrigatório | Conteúdo |
+|---|---|---|
+| `ERP_DEV_VPS_SSH_PRIVATE_KEY` | sim | chave **privada** OpenSSH completa (`-----BEGIN OPENSSH PRIVATE KEY-----` … `-----END-----`), ou corpo base64 OpenSSH que o agente reconstrói com headers |
+| `ERP_DEV_VPS_SSH_USER` | recomendado | usuário SSH (em produção DEV: `root`) |
+
+- Configurar em: Cursor → Environment → Secrets (Runtime Secret) · Apply to this environment.
+- **Proibido** commitar a chave privada, colar no chat, PR, HANDOFF ou evidence.
+- Trocar de computador: os secrets do Environment continuam; não é preciso reenviar no chat se o Environment for o mesmo.
+
+### Chave pública autorizada na VPS (pode ir no Git)
+
+Comentário: `erp-zuccaro-vps` · tipo ED25519  
+Fingerprint: `SHA256:o2kp7MNg3H8D5ArHT34/BrI35J23/y9e8MIsdMqYwMA`
+
+```text
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII8ouskwnfnbFg/qCD376xnYlxMwGTjR4OtphP8Vw2nm erp-zuccaro-vps
+```
+
+A chave no hPanel **não** injeta sozinha em VPS já criada. Tem de existir em
+`/root/.ssh/authorized_keys` na instância viva (Web Console se SSH falhar):
+
+```bash
+mkdir -p /root/.ssh && chmod 700 /root/.ssh
+cat > /root/.ssh/authorized_keys <<'EOF'
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII8ouskwnfnbFg/qCD376xnYlxMwGTjR4OtphP8Vw2nm erp-zuccaro-vps
+EOF
+chmod 600 /root/.ssh/authorized_keys
+```
+
+Conferir: `wnfnbFg` (F maiúsculo) · `YlxMw` (letra L) · `R4Otph` (letra O).
+
+### Como o agente conecta
+
+1. Resolver host: `getent hosts erp-dev.cpaferroeaco.com.br` (não gravar IP no Git).
+2. Montar `~/.ssh/erp_dev_vps` a partir de `ERP_DEV_VPS_SSH_PRIVATE_KEY` (chmod 600).
+3. `ssh -i ~/.ssh/erp_dev_vps -o BatchMode=yes -o IdentitiesOnly=yes "$ERP_DEV_VPS_SSH_USER@<host>" …`
+4. Hostinger VPS MCP: útil para inventário; se timeout, SSH/Web Console são o caminho operacional.
+
+### Rebuild SPA/API da main (já autorizado quando o lote pedir deploy)
+
+```bash
+cd /opt/erp-zuccaro
+bash scripts/vps/create-pre-gate-e-backup.sh
+git fetch origin main
+CONFIRM_SPA_LOGIN_REBUILD=YES ERP_DOCKER_NETWORK=supabase_default GIT_REF=origin/main \
+  bash scripts/vps/spa-login-rebuild-api-web.sh
+```
+
+Rollback (tags gravadas em `/opt/erp-zuccaro/.spa-login-rollback-tags`):
+
+```bash
+CONFIRM_SPA_LOGIN_ROLLBACK=YES ERP_DOCKER_NETWORK=supabase_default \
+  ROLLBACK_TAG_FILE=/opt/erp-zuccaro/.spa-login-rollback-tags \
+  bash scripts/vps/spa-login-rollback-api-web.sh
+```
+
+### Obrigatório após qualquer operação VPS (sempre)
+
+1. Atualizar `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` com: SHA implantado, backup path/sha256, tags de rollback, o que falta validar no browser.
+2. Evidência sanitizada em `docs/vps/evidence/` (sem dump, sem `.env`, sem chave).
+3. Commit/push/PR — não deixar só no disco do agente.
+4. Nunca gravar no Git: chave privada, senha, `.env.erp.dev`, dump SQL, tokens.
 
 ## Backup e rollback
 

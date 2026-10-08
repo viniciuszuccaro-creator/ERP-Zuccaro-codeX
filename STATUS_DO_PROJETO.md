@@ -1,3 +1,9 @@
+## ACESSO VPS CANÔNICO (2026-10-08)
+
+Contrato: `docs/OPERACAO_DEV_VPS.md` § Acesso operacional Cursor/Codex.
+Secrets Environment: `ERP_DEV_VPS_SSH_PRIVATE_KEY` + `ERP_DEV_VPS_SSH_USER` (fora do Git).
+PubKey `erp-zuccaro-vps` + fingerprint documentados. Após operação VPS: HANDOFF + `docs/vps/evidence/` + push.
+
 ## CURSOR — deploy erp-dev main `9a277011` (2026-10-08T13:35Z)
 
 | Fase | Estado |
