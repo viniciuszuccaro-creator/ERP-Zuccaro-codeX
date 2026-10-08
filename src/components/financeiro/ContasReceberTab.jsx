@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,6 +25,11 @@ import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
+import {
+  buildFinanceiroQueryScopeKey,
+  buildFinanceiroTitulosScopeSwitchReset,
+  cancelFinanceiroQueriesOnScopeSwitch,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
@@ -32,7 +37,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const { hasPermission } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const scopeKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
+  const contextoValido = scopeKey !== 'sem-contexto';
   const podeVisualizarReceber = hasPermission('Financeiro','ContaReceber','visualizar') || hasPermission('Financeiro', null, 'visualizar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaReceber', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
@@ -81,14 +87,35 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
     observacoes: ""
   });
 
+  const previousScopeRef = useRef(scopeKey);
+  useEffect(() => {
+    if (previousScopeRef.current === scopeKey) return;
+    const previousScopeKey = previousScopeRef.current;
+    previousScopeRef.current = scopeKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
+    const reset = buildFinanceiroTitulosScopeSwitchReset('receber');
+    setContasSelecionadas(reset.contasSelecionadas);
+    setContaAtual(reset.contaAtual);
+    setDialogBaixaOpen(reset.dialogBaixaOpen);
+    setGerarCobrancaDialogOpen(reset.gerarCobrancaDialogOpen);
+    setSimularPagamentoDialogOpen(reset.simularPagamentoDialogOpen);
+    setGerarLinkDialogOpen(reset.gerarLinkDialogOpen);
+    setContaParaCobranca(reset.contaParaCobranca);
+    setContaParaSimulacao(reset.contaParaSimulacao);
+    setContaParaLink(reset.contaParaLink);
+    setDadosBaixa(reset.dadosBaixa);
+  }, [scopeKey, queryClient]);
+
   const { data: empresasQuery = [] } = useQuery({
-    queryKey: ['empresas'],
+    queryKey: ['empresas', scopeKey],
     queryFn: () => base44.entities.Empresa.list(),
+    enabled: contextoValido,
   });
 
   const { data: configsCobranca = [] } = useQuery({
-    queryKey: ['configs-cobranca'],
+    queryKey: ['configs-cobranca', scopeKey],
     queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
+    enabled: contextoValido,
   });
 
   const empresasData = empresas.length > 0 ? empresas : empresasQuery;

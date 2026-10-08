@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,10 @@ import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import {
+  buildFinanceiroQueryScopeKey,
+  cancelFinanceiroQueriesOnScopeSwitch,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ConciliacaoBancariaTab() {
   const queryClient = useQueryClient();
@@ -24,8 +28,16 @@ export default function ConciliacaoBancariaTab() {
   const [contaSelecionadaId, setContaSelecionadaId] = useState("");
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
   const contextoValido = contextKey !== "sem-contexto";
+  const previousScopeRef = useRef(contextKey);
+  useEffect(() => {
+    if (previousScopeRef.current === contextKey) return;
+    const previousScopeKey = previousScopeRef.current;
+    previousScopeRef.current = contextKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
+    setContaSelecionadaId("");
+  }, [contextKey, queryClient]);
   const podeConciliar = hasPermission('Financeiro', 'ConciliacaoBancaria', 'conciliar')
     || hasPermission('Financeiro', 'Conciliação Bancária', 'conciliar')
     || hasPermission('Financeiro', 'Conciliacao', 'conciliar')

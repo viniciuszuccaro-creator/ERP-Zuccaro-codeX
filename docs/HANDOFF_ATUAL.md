@@ -1,3 +1,45 @@
+## CURSOR — fases #245 reconciliadas (2026-10-08T14:52Z)
+
+| Fase | SHA | Nota |
+|---|---|---|
+| implementado | `542be525` | nginx regex 404 |
+| **integrado** | `dd6c211d` | MERGED #245 → main |
+| **implantado** | `dd6c211d` | VPS rebuild pós-merge |
+| validado health/snapshots | sim | 404 `base44-local-*.json` |
+| validado CPA/3Z browser | **não** | secrets login ausentes |
+
+Evidência: `docs/vps/evidence/reconcile-245-main-vps-dd6c211d-20261008.txt`.
+Rollback: `pre-spa-login-20261008-145118`.
+
+## CURSOR — #246 Financeiro scope + stale cancel (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `cancelFinanceiroQueriesOnScopeSwitch` + reset CR/CP/Caixa/Cartões/Conciliação/Lote |
+| integrado | PR #246 (rebase main `dd6c211d`) — CI a correr |
+| implantado | **não** (aguardar merge) |
+| validado VPS browser | BLOCKED `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
+
+Testes focados empresa-switch **7/7**. ≠ outbox/legado/#245.
+
+## CURSOR — estado vivo pós-validação (2026-10-08T14:25Z)
+
+| Item | Valor |
+|---|---|
+| **implantado erp-dev** | **`542be525`** (branch #245 nginx 404-all; detached) |
+| Anterior | `85049afd` (#243) — superseded |
+| health/ready/web | **200** · RUNTIME-08B · supabase_user |
+| Snapshots `base44-local-*.json` | **404** application/json (clientes/produtos/empresas/snapshot/core) |
+| Browser CPA/3Z | **BLOCKED** — Environment sem `ERP_DEV_LOGIN_*` (pedido ao usuário) |
+| Lote UX | `cursor/cadastros-financeiro-empresa-ux-392b` (rebase main; PR) |
+| Legado destino | runtime **`542be525`**; contratos #231/#226/#225/#203/#237/#239/#242/#243/#245; **não** duplicar mapper; **não** vínculos sem prova |
+
+> Seções abaixo com `implantado=9a277011` / `NONE` são **históricas**.
+
+## CURSOR — Cadastros ↔ Financeiro ↔ empresa UX (2026-10-08)
+
+Branch `cursor/cadastros-financeiro-empresa-ux-392b` · SHA `ec27b9f7` (base main). Gap: Financeiro sem scope `grupo:empresa` no queryKey/uniqueKey; CR/CP com seleção residual na troca; sem alerta sem contexto. Fix: `buildMultiempresaQueryScopeKey` + `buildFinanceiroTitulosScopeSwitchReset` em launchpad + tabs. Testes **47/47**. PR create **BLOCKED** (integration) — abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/cadastros-financeiro-empresa-ux-392b. ≠ outbox/legado. **Sem deploy VPS.**
+
 ## CURSOR — implantado erp-dev `542be525` (2026-10-08T14:24Z)
 
 | Item | Valor |
@@ -28,6 +70,7 @@
 | Legado destino | erp-dev **85049afd**; sem vínculos empresariais sem prova; mapper não duplicar |
 
 > Histórico abaixo com `implantado=NONE` / `9a277011` é **superseded** por esta seção.
+
 
 ## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
@@ -71,6 +114,7 @@ Antes do rebuild 13:34Z a VPS ainda estava em NONE (SPA last-mod 2026-09-27; sna
 | Defeito tratado | nginx passa a **404** nos paths legados (não mascarar com SPA) |
 | Parecer Codex | #236 `6581cfec` — APROVAR runbook (sem rewrite) |
 | Evidência | `docs/vps/evidence/validacao-pos-deploy-9a277011-20261008.txt` |
+
 
 ## ACESSO VPS CANÔNICO (Cursor + Codex) — 2026-10-08
 

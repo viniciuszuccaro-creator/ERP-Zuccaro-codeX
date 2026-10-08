@@ -1,3 +1,41 @@
+## CURSOR — #246 Financeiro scope + stale cancel (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `cancelFinanceiroQueriesOnScopeSwitch` + reset CR/CP/Caixa/Cartões/Conciliação/Lote |
+| integrado | PR #246 (rebase main `dd6c211d`) — CI a correr |
+| implantado | **não** (aguardar merge) |
+| validado VPS browser | BLOCKED `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
+
+Testes focados empresa-switch **7/7**. ≠ outbox/legado/#245.
+
+## CURSOR — fases #245 reconciliadas (2026-10-08T14:52Z)
+
+| Fase | SHA | Nota |
+|---|---|---|
+| implementado | `542be525` | nginx regex 404 |
+| **integrado** | `dd6c211d` | MERGED #245 → main |
+| **implantado** | `dd6c211d` | VPS rebuild pós-merge |
+| validado health/snapshots | sim | 404 `base44-local-*.json` |
+| validado CPA/3Z browser | **não** | secrets login ausentes |
+
+Evidência: `docs/vps/evidence/reconcile-245-main-vps-dd6c211d-20261008.txt`.
+Rollback: `pre-spa-login-20261008-145118`.
+
+## CURSOR — Cadastros ↔ Financeiro ↔ troca de empresa (2026-10-08)
+
+Agente: lote pós-deploy independente (≠ outbox / legado / #245 snapshots).
+
+| Item | Valor |
+|---|---|
+| Branch | `cursor/cadastros-financeiro-empresa-ux-392b` |
+| Base | main `fa868f82` (rebase) |
+| Gap | scope fraco Financeiro; seleção residual CR/CP; Caixa/Cartões/Conciliação/Liquidação lote; título "Sessão inválida" no login |
+| Fix | `buildFinanceiroQueryScopeKey` + reset títulos; wire CaixaCentral/Cartoes/Conciliacao/LiquidacaoEmLote; App título "Entrar no ERP" |
+| Testes | financeiro-empresa-switch-ux + launchpad + snapshot-guard → **18/18** focados |
+| PR | a publicar neste push |
+| Deploy VPS | **não** (código UX); runtime VPS = `542be525` (#245 nginx) |
+
 ## CURSOR — deploy erp-dev `542be525` nginx 404-all (2026-10-08)
 
 | Fase | Estado |
@@ -22,6 +60,7 @@ Agente: validação pós-deploy erp-dev `85049afd` encontrou gap: só `snapshot`
 | Deploy VPS | após merge/CI — rebuild web |
 
 **≠** lote Financeiro UX / outbox / legado.
+
 
 ## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
@@ -65,6 +104,7 @@ Antes do rebuild 13:34Z a VPS ainda estava em NONE (SPA last-mod 2026-09-27; sna
 | Defeito tratado | nginx passa a **404** nos paths legados (não mascarar com SPA) |
 | Parecer Codex | #236 `6581cfec` — APROVAR runbook (sem rewrite) |
 | Evidência | `docs/vps/evidence/validacao-pos-deploy-9a277011-20261008.txt` |
+
 
 ## ACESSO VPS CANÔNICO (2026-10-08)
 

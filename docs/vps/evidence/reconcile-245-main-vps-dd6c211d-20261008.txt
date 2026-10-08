@@ -1,0 +1,16 @@
+# Evidência sanitizada — reconciliação #245 / main / VPS
+# utc=2026-10-08T14:51:55Z
+# host=srv1982741 / erp-dev.cpaferroeaco.com.br
+#
+# Fases (separadas):
+#   implementado (fix nginx) = 542be525
+#   integrado (main)          = dd6c211d  (Merge #245)
+#   implantado (VPS HEAD)     = dd6c211d  (rebuild spa-login pós-merge)
+#   validado snapshots/health = sim (404 base44-local-*.json; health/ready/web 200)
+#   validado browser CPA/3Z   = BLOCKED (secrets ERP_DEV_LOGIN_EMAIL + ERP_DEV_LOGIN_PASSWORD)
+#
+# rollback_api=erp-zuccaro-erp-api:pre-spa-login-20261008-145118
+# rollback_web=erp-zuccaro-erp-web:pre-spa-login-20261008-145118
+# runtime=ERP-RUNTIME-08B auth_mode=supabase_user
+# nota: implantado pré-merge 542be525 supersedido pelo rebuild pós-integração
+# sem segredos / sem IPs / sem tokens

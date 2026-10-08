@@ -1,12 +1,16 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, AlertCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import { useWindow } from "@/components/lib/useWindow";
+import {
+  buildFinanceiroQueryScopeKey,
+  cancelFinanceiroQueriesOnScopeSwitch,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 import CaixaCentralHeader from "./caixa-central/CaixaCentralHeader";
 import KPIsFinanceiros from "./caixa-central/KPIsFinanceiros";
 import DistribuicaoFormasPagamento from "./caixa-central/DistribuicaoFormasPagamento";
@@ -26,11 +30,19 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
   const { hasPermission, canCreate } = usePermissions();
   const { toast } = useToast();
   const { openWindow } = useWindow();
+  const queryClient = useQueryClient();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
+  const contextoValido = contextKey !== "sem-contexto";
+  const previousScopeRef = useRef(contextKey);
+  useEffect(() => {
+    if (previousScopeRef.current === contextKey) return;
+    const previousScopeKey = previousScopeRef.current;
+    previousScopeRef.current = contextKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
+  }, [contextKey, queryClient]);
   const canViewCaixa = hasPermission("Financeiro", "Caixa", "visualizar")
     || hasPermission("Financeiro", "Caixa Central", "visualizar")
     || hasPermission("Financeiro", null, "visualizar")

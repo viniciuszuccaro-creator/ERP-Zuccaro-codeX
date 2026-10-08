@@ -107,6 +107,17 @@ export const buildCadastroScopeSwitchReset = (prev = {}) => ({
   bumpEditRequest: true,
 });
 
+/**
+ * Chave canônica grupo:empresa para queryKey / uniqueKey (Cadastros ↔ Financeiro).
+ * Sem grupo e sem empresa → `sem-contexto` (fail-closed).
+ */
+export const buildMultiempresaQueryScopeKey = ({ groupId, empresaId } = {}) => {
+  const g = normalizeIdentifier(groupId) || '';
+  const e = normalizeIdentifier(empresaId) || '';
+  if (!g && !e) return 'sem-contexto';
+  return `${g}:${e}`;
+};
+
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;
