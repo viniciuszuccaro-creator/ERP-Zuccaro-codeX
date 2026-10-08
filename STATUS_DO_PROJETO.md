@@ -1,3 +1,36 @@
+## COORDENAÇÃO CURSOR → LEGADO — versão implantada=NONE (2026-10-08)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Agente Legado: [Legado: versão implantada](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
+PR: [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211)
+
+| Campo | Valor |
+|---|---|
+| **Versão efetivamente implantada em erp-dev** | **NONE** |
+| Main GitHub (código) | tip `77afbbe7` ⊇ `f0549a89` + **#237 MERGED**; contém #231/#226/#225/#203 |
+| SPA pública last-modified | **2026-09-27** (não promoveu main) |
+| Snapshots públicos | ainda **HTTP 200** |
+| Runtime meta VPS | **ERP-RUNTIME-08B** (pré-promoção) |
+| Contratos no código (não na VPS até deploy) | Cadastros Empresas Organizacional (#226); Financeiro launchpad (#225); Snapshots fora de `public/` (#231); Outbox claim UI (#203) + consumer disabled fail-closed (#237) |
+| Deploy Cloud | **BLOCKED** — SSH Permission denied; Hostinger MCP timeout; self-hosted workers **0** |
+| Flags Legado | `importAuthorized=false` · sintético ≠ importação · **não** alterar vínculos empresariais · mapper #48 intocado |
+| Checksum 153440Z | **UNVERIFIED** (`FOUND_EXPORT=NONE` neste Cloud) |
+| Contagens REAIS backup | **0** processadas neste agente |
+
+**HUMAN_NEXT (deploy erp-dev):** Web Console rebuild/promover **main** (`77afbbe7` ou tip atual) **ou** secret SSH — sem isso versão implantada permanece **NONE**.
+
+**HUMAN_NEXT (Legado, se PC com HD):** somente verifier host-local — sem re-export/CADESP/transferência; sem tratar teste sintético como importação:
+```bash
+bash scripts/legado/executar-verifier-host-local.sh
+# ou: --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier.
+
+**#211 tip:** `1f1fe089`. `gh pr edit` **Resource not accessible** neste token — Cursor/humano atualizar título/corpo:
+
+- Título: `legado: erp-dev versão implantada=NONE — verifier host-local`
+- Corpo (resumo): versão implantada=**NONE**; main `77afbbe7` tem #231/#226/#225/#203/#237 no código; SPA last-mod 2026-09-27; snapshots HTTP 200; meta RUNTIME-08B; deploy BLOCKED (SSH/MCP/workers 0); HUMAN_NEXT deploy=Web Console rebuild main ou secret SSH; Legado=só verifier host-local no PC com HD; sintético≠importação; vínculos intocados; `importAuthorized=false`.
+
 ## CURSOR — pacote frentes paralelas (2026-10-08)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
