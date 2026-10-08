@@ -1,8 +1,5 @@
-# sanitizado — sem dump SQL
-backup path=pre-gate-e-20261008-200329.sql bytes=878776 sha256=77b722c6c1b7c816827ada8e144ba89779dbbe77d4110f57e61769fb0367ce19 dump_complete_marker=YES
-integrity_header_pg_dump=YES
-integrity_tail_complete=YES
-integrity_sha256_recompute_match=YES
-integrity_file_mode_600=YES
-restore_destructive=NOT_PERFORMED
-AUTHORIZES_GATES_DEF=NO
+backup path=pre-gate-e-20261008-204826.sql
+sha256=3d7de82326a22c582c340d392d421eff9e0080211ca9f6cee3aec15ef26c94d7
+utc=2026-10-08T20:48:26Z
+tip=dd13fb5f
+note=sanitized meta only; dump stays on VPS

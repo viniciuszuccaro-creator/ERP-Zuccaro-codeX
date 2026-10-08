@@ -1,0 +1,24 @@
+# Evidência sanitizada — validação tip dd13fb5f (pacote #251)
+# utc=2026-10-08T20:55Z
+# implantado = dd13fb5f (SPA index-CMrmwZdE.js)
+# PR = #251 (merge-tree #248+#249+#250)
+#
+# Playwright headless erp-dev (sem senhas/tokens/PII):
+#   login = PASS
+#   switcher Grupo· vs Empresa· (CPA + 3Z) = PASS
+#   empresas_list edits=2 = PASS
+#   save_reopen Nome Fantasia marker = PASS (nf_match=true listHas=true; restaurado)
+#   cnpj_origem data-field = PASS
+#   financeiro_caixa open sem crash = PASS
+#   sugestao_ui Novo Cliente = BLOCKED_NAV headless (mesmo padrão #248)
+#   central360_ui = PASS_HIDDEN_FLAG_OFF (flag false)
+#
+# API (Bearer + x-group-id/x-empresa-id):
+#   grupo vs CPA(cccccccc…) vs 3Z(c2c2c2c2…) = PASS
+#   pedidos isolamento CPA 0 ≠ 3Z 3 = PASS
+#   sugestao-vinculo sem_match + mescla=proibida = PASS
+#   sugestao sem token = 401
+#   central-360 locais 7 itens: page1 n=5 hasMore + page2 n=2 sem overlap = PASS
+#   cross-empresa locais status=forbidden (fail-closed por bloco) = PASS
+#
+# títulos reais não alterados; locais sintéticos só para ultrapassar página

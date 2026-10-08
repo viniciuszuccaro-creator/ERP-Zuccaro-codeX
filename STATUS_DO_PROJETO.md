@@ -1,3 +1,18 @@
+## CURSOR — pacote #251 implantado+validado `dd13fb5f` (2026-10-08T21:01Z)
+
+| Fase | Estado |
+|---|---|
+| implementado | merge-tree #248 `bdf54b86` + #249 `4ab97760` + #250 `49e677ce` |
+| revisado | **APROVAR COM RESSALVAS** |
+| integrado | PR [#251](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/251) tip `dd13fb5f` (não merged em main) |
+| **implantado** | **`dd13fb5f`** erp-dev (antes `54b9f9d0`) |
+| **validado** | Playwright Empresas/Financeiro PASS · API paginação/sugestão/isolamento PASS |
+| flag CLIENTE_360 | `false` — UI 360 oculta; API central-360 testada |
+| rollback | `pre-spa-login-20261008-204827` · backup `pre-gate-e-20261008-204826.sql` |
+
+Evidências: `docs/vps/evidence/deploy-251-integra-dd13fb5f-20261008.txt`, `browser-251-integra-dd13fb5f-20261008.txt`.
+Pendência: UI Novo Cliente sugestão (BLOCKED_NAV headless); merge em main após aprovação humana.
+
 ## CURSOR — parecer integração #251 (2026-10-08T20:45Z)
 
 | Item | Valor |
