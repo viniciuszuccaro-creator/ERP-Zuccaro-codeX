@@ -49,9 +49,11 @@ export class ExternalCatalogPublisherGate implements CatalogPublisherPort {
 
 export function resolveOutboxConsumerConfig(env: Record<string, string | undefined> = process.env): OutboxConsumerConfig {
   const raw = String(env.ERP_OUTBOX_CONSUMER_MODE || 'disabled').trim().toLowerCase();
-  const mode: OutboxConsumerMode = raw === 'disabled' || raw === 'external' || raw === 'fake'
+  const requestedMode: OutboxConsumerMode = raw === 'disabled' || raw === 'external' || raw === 'fake'
     ? raw
     : 'disabled'; // valor desconhecido → fail-closed
+  const fakeAllowed = env.ERP_OUTBOX_FAKE_ALLOWED === 'true' && env.NODE_ENV !== 'production';
+  const mode: OutboxConsumerMode = requestedMode === 'fake' && !fakeAllowed ? 'disabled' : requestedMode;
   const fakeOutcome = String(env.ERP_OUTBOX_FAKE_OUTCOME || 'ok').trim().toLowerCase() === 'fail'
     ? 'fail' as const
     : 'ok' as const;

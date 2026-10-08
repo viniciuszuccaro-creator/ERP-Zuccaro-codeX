@@ -362,6 +362,9 @@ test('Outbox consumer: external sem canal/credenciais nunca simula sucesso', asy
     resolveOutboxConsumerConfig,
   } = await import('../src/services/produtoOutboxConsumer.ts');
   assert.equal(resolveOutboxConsumerConfig({}).mode, 'disabled');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'fake' }).mode, 'disabled');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'fake', ERP_OUTBOX_FAKE_ALLOWED: 'true', NODE_ENV: 'test' }).mode, 'fake');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'fake', ERP_OUTBOX_FAKE_ALLOWED: 'true', NODE_ENV: 'production' }).mode, 'disabled');
   assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'weird' }).mode, 'disabled');
   const disabled = createCatalogPublisher({ mode: 'disabled' });
   assert.deepEqual(await disabled.publish({} as never), { ok: false, error: 'OUTBOX_CONSUMER_DISABLED' });
