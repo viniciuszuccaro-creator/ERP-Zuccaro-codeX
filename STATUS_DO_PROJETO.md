@@ -1,3 +1,10 @@
+## CURSOR — #249 Empresas save implantado `1e691933` (2026-10-08T20:04Z)
+
+| item | tip | estado |
+|---|---|---|
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | `1e691933` | **implantado** erp-dev; browser em curso |
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | CI PASS; aguarda browser pós-deploy |
+
 ## CURSOR — CI verde #248/#249 (2026-10-08T17:33Z)
 
 | PR | Tip CI | frontend/backend |

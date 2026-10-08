@@ -1,0 +1,13 @@
+# Evidência sanitizada — deploy #249 tip 1e691933
+# utc=2026-10-08T20:04Z
+#
+# branch = cursor/spa-ui-empresas-financeiro-clicks-392b
+# implantado = 1e691933
+# rollback_api = erp-zuccaro-erp-api:pre-spa-login-20261008-200329
+# rollback_web = erp-zuccaro-erp-web:pre-spa-login-20261008-200329
+# backup = pre-gate-e-20261008-200329.sql sha256=77b722c6c1b7c816827ada8e144ba89779dbbe77d4110f57e61769fb0367ce19
+# health_3080=200 web_3081=200
+# spa_asset=/assets/index-CRLOsZak.js
+# fix = Input onChange after spread + remirror preserve local Empresa + seletor Grupo/Empresa + CNPJ origem
+# validacao_browser = em curso
+# sem senhas / sem tokens / sem e-mail

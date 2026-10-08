@@ -1,3 +1,13 @@
+## CURSOR — implantado #249 `1e691933` (2026-10-08T20:04Z)
+
+| fase | estado |
+|---|---|
+| integrado | PR [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) tip `1e691933` · CI no tip |
+| implantado | **`1e691933`** erp-dev · rollback `pre-spa-login-20261008-200329` · backup `pre-gate-e-20261008-200329.sql` |
+| validado browser | em curso (save/reopen + seletor Grupo×Empresa + CNPJ origem) |
+
+Causa save: RHF perdia digitação (`Input` spread após onChange) + remirror sessão sobrescrevia `nome_fantasia`. Testes focados 5/5. ≠ Codex outbox/legado. ≠ #248.
+
 ## CURSOR — CI verde #248/#249 (2026-10-08T17:33Z)
 
 | PR | Tip CI | frontend/backend |
