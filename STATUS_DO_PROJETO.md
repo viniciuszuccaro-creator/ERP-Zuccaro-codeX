@@ -1,3 +1,9 @@
+## CODEX — Onda 15 outbox sem sucesso fake por omissão (2026-10-08)
+
+- Causa: `ProdutoService` usava `resolveOutboxConsumerConfig()` cujo default era `fake`; a rota `/api/v1/produtos/outbox/process` podia confirmar evento como `published` sem entrega externa quando `ERP_OUTBOX_CONSUMER_MODE` não estava configurado. O `.env.example` também sugeria `fake`.
+- O consumidor existente agora inicia `disabled`; a chamada valida Grupo/Empresa e RBAC `publicar`, depois devolve conflito explícito antes do claim, preservando evento pendente, tentativas e auditoria. Fake exige `ERP_OUTBOX_FAKE_ALLOWED=true` e nunca funciona com `NODE_ENV=production`, inclusive se configuração antiga ainda pedir `fake`; injeção explícita permanece para ensaio. Teste HTTP cobre 403 sem permissão, 409 autorizado, métrica pendente e zero publicado; unitário mantém fake idempotente e verifica o opt-in.
+- Validação: 22/22 focados; servidor completo 303 pass/0 fail/18 skip; typecheck/build servidor, `audit:baseline`, lint, build SPA e diff-check passaram. Suíte raiz no Windows mantém falhas anteriores dos guards VPS Unix; typecheck raiz mantém erros anteriores fora do diff. CI do novo SHA é gate. Nenhuma migration, canal real, VPS, snapshot ou dado operacional foi tocado. Próximo P0: revisão independente do HEAD e CI, depois ativação externa somente com publisher real e credenciais/gates próprios.
+
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 
 Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)

@@ -3,13 +3,14 @@
  * Reutiliza claim/lease/confirm/fail existentes. Sem sucesso falso para canal externo.
  */
 import type { RequestContext } from '../audit/types.js';
+import { AppError } from '../api/errors.js';
 import type { CatalogPublisherPort } from './produtoOutboxClaim.js';
-import { FakeCatalogPublisher, processProdutoOutboxBatch } from './produtoOutboxClaim.js';
+import { FakeCatalogPublisher, authorize, processProdutoOutboxBatch } from './produtoOutboxClaim.js';
 
 export type OutboxConsumerMode = 'disabled' | 'fake' | 'external';
 
 export type OutboxConsumerConfig = {
-  /** disabled/fake por padrao; external exige credenciais comprovadas. */
+  /** disabled por padrao; fake somente para ensaio explicitamente configurado. */
   mode: OutboxConsumerMode;
   /** So para mode=fake. */
   fakeOutcome?: 'ok' | 'fail';
@@ -47,10 +48,12 @@ export class ExternalCatalogPublisherGate implements CatalogPublisherPort {
 }
 
 export function resolveOutboxConsumerConfig(env: Record<string, string | undefined> = process.env): OutboxConsumerConfig {
-  const raw = String(env.ERP_OUTBOX_CONSUMER_MODE || 'fake').trim().toLowerCase();
-  const mode: OutboxConsumerMode = raw === 'disabled' || raw === 'external' || raw === 'fake'
+  const raw = String(env.ERP_OUTBOX_CONSUMER_MODE || 'disabled').trim().toLowerCase();
+  const requestedMode: OutboxConsumerMode = raw === 'disabled' || raw === 'external' || raw === 'fake'
     ? raw
     : 'disabled'; // valor desconhecido → fail-closed
+  const fakeAllowed = env.ERP_OUTBOX_FAKE_ALLOWED === 'true' && env.NODE_ENV !== 'production';
+  const mode: OutboxConsumerMode = requestedMode === 'fake' && !fakeAllowed ? 'disabled' : requestedMode;
   const fakeOutcome = String(env.ERP_OUTBOX_FAKE_OUTCOME || 'ok').trim().toLowerCase() === 'fail'
     ? 'fail' as const
     : 'ok' as const;
@@ -81,6 +84,10 @@ export async function runProdutoOutboxConsumer(
 ) {
   const config = options.config ?? resolveOutboxConsumerConfig();
   const publisher = deps.publisher ?? createCatalogPublisher(config);
+  if (publisher instanceof DisabledCatalogPublisher) {
+    await authorize(deps, ctx);
+    throw new AppError(409, 'OUTBOX_CONSUMER_DISABLED', 'Outbox consumer is disabled');
+  }
   return processProdutoOutboxBatch({ ...deps, publisher }, ctx, {
     limit: options.limit,
     leaseMs: options.leaseMs,

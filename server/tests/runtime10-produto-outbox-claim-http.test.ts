@@ -71,7 +71,7 @@ test('HTTP Onda 15: claim/confirm outbox exige publicar e nao entrega canal', as
   }
 });
 
-test('HTTP Onda 15: process batch fake exige publicar e confirma localmente', async () => {
+test('HTTP Onda 15: process sem publisher configurado bloqueia antes do claim', async () => {
   const { app } = fixture();
   const server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
@@ -93,21 +93,17 @@ test('HTTP Onda 15: process batch fake exige publicar e confirma localmente', as
     assert.equal(denied.status, 403);
 
     const processed = await request('/api/v1/produtos/outbox/process', 'POST', { limit: 5, leaseMs: 30000 });
-    assert.equal(processed.status, 200);
-    assert.equal(processed.body.data.claimed, 1);
-    assert.equal(processed.body.data.results[0].outcome, 'published');
-    assert.equal(processed.body.data.metrics.published, 1);
-    assert.ok(processed.body.data.metrics.durationMs >= 0);
+    assert.equal(processed.status, 409);
+    assert.equal(processed.body.error.code, 'OUTBOX_CONSUMER_DISABLED');
 
     const metrics = await request('/api/v1/produtos/outbox/metrics');
     assert.equal(metrics.status, 200);
-    assert.equal(metrics.body.data.byStatus.published, 1);
+    assert.equal(metrics.body.data.byStatus.published, 0);
+    assert.equal(metrics.body.data.byStatus.pending, 1);
     assert.ok(metrics.body.data.total >= 1);
 
     const empty = await request('/api/v1/produtos/outbox/process', 'POST', { limit: 5 });
-    assert.equal(empty.status, 200);
-    assert.equal(empty.body.data.claimed, 0);
-    assert.equal(empty.body.data.metrics.published, 0);
+    assert.equal(empty.status, 409);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
