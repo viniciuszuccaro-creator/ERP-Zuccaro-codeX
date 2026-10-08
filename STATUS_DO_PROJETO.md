@@ -1,3 +1,15 @@
+## CURSOR — #246 integrado+implantado `64301fdb` (2026-10-08T15:01Z)
+
+| Fase | SHA |
+|---|---|
+| implementado | `3faa46ff` |
+| **integrado** | `64301fdb` MERGED #246 |
+| **implantado** | `64301fdb` VPS rebuild |
+| validado health/snapshots | sim |
+| validado CPA/3Z browser | BLOCKED `ERP_DEV_LOGIN_*` |
+
+Evidência: `docs/vps/evidence/deploy-246-main-64301fdb-20261008.txt`. Rollback `pre-spa-login-20261008-150055`.
+
 ## CURSOR — Onda 3 sugestão vínculo #113 (2026-10-08)
 
 | Item | Valor |
