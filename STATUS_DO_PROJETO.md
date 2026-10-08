@@ -2,16 +2,17 @@
 
 | Fase | Estado |
 |---|---|
-| implementado | `51d11e75` + `677b1ab1` (branch `cursor/spa-ui-empresas-financeiro-clicks-392b`) |
-| integrado | **não** (PR — ferramenta ManagePullRequest indisponível neste run) |
-| **implantado** | `677b1ab1` erp-dev (rebuild API+web) |
+| implementado | `51d11e75` → `677b1ab1` → `11fd3510` (branch `cursor/spa-ui-empresas-financeiro-clicks-392b`) |
+| integrado | **não** (ManagePullRequest indisponível — abrir PR manual) |
+| **implantado** | `11fd3510` erp-dev (rebuild API+web) |
 | auth session cnpj | **PASS** digits=14 CPA+3Z |
 | browser listagem Empresas + cores Financeiro | **PASS** |
 | browser seletor/Editar/close | PARTIAL (overlays Chrome; handlers no bundle) |
-| rollback | `pre-spa-login-20261008-160517` |
+| rollback | `pre-spa-login-20261008-161558` |
 | backup | `pre-gate-e-20261008-154546.sql` sha256=`ceb97054…` |
 
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
 Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)

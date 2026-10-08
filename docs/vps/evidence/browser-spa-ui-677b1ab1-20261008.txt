@@ -2,9 +2,9 @@
 # utc=2026-10-08
 #
 # Branch: cursor/spa-ui-empresas-financeiro-clicks-392b
-# implantado erp-dev = 677b1ab1
-# rollback_api = erp-zuccaro-erp-api:pre-spa-login-20261008-160517
-# rollback_web = erp-zuccaro-erp-web:pre-spa-login-20261008-160517
+# implantado erp-dev = 11fd3510 (tip; supersede 677b1ab1/51d11e75)
+# rollback_api = erp-zuccaro-erp-api:pre-spa-login-20261008-161558
+# rollback_web = erp-zuccaro-erp-web:pre-spa-login-20261008-161558
 # backup = pre-gate-e-20261008-154546.sql sha256=ceb97054… (pré 51d11e75)
 #
 # Causa raiz (edit Empresa):

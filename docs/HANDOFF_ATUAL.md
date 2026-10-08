@@ -2,14 +2,14 @@
 
 | Fase | Estado |
 |---|---|
-| implementado | `51d11e75` + `677b1ab1` |
+| implementado | `11fd3510` |
 | integrado | PR pendente (`cursor/spa-ui-empresas-financeiro-clicks-392b` → main) |
-| **implantado** | `677b1ab1` |
+| **implantado** | `11fd3510` |
 | auth `empresas[].cnpj` | **PASS** |
 | /Empresas lista CNPJ | **PASS** |
 | Financeiro cores CR≠Régua | **PASS** |
 | seletor/Editar/close browser | PARTIAL (overlays Chrome) |
-| rollback | `pre-spa-login-20261008-160517` |
+| rollback | `pre-spa-login-20261008-161558` |
 
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`. ≠ outbox/legado.
 
