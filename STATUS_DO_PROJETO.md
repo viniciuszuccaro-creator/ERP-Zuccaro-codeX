@@ -11809,3 +11809,9 @@ Checklist inicial:
 | Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
 | Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
 | Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
+## Segurança #231 e staging legado local - checkpoint (2026-10-08)
+
+- Contenção dos assets públicos integrada na `main` pela #231; CI do HEAD `4ca140f` verde. Deploy e purge histórico não comprovados.
+- Inventário read-only depois de fetch: 237/249 refs remotas conhecidas ainda contêm ambos os snapshots no tip (86 `codex/`, 151 `cursor/`); `origin/main` está limpa na árvore. Nenhuma reescrita/deleção/force-push. Plano e gates no runbook existente `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`.
+- No PC local com HD, três CSVs privados reais conferem por SHA-256 com seus resumos: clientes 18.458 candidatos/4.437 quarentena; fornecedores 790/271; produtos 1.208/14. Nenhum candidato autorizado para importação. Fonte MDF->extrator->CSV não comprovada por esses resumos; 9 entradas MDF dos manifestos original/cópia concordam, sem re-hash dos arquivos neste lote. Backup original intocado; sem carga ou alteração operacional.
+- Lote documental/somente leitura: `git diff --check`; não altera runtime. Próximo: fechar inventário de PRs/forks e cadeia de extração em canal privado; aprovar janela operacional antes de qualquer reescrita ou importação.
