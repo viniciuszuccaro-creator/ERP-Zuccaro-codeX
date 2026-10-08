@@ -11862,3 +11862,7 @@ Checklist inicial:
 ## Legado EXETPS - campos de clientes (08/10)
 
 22.895 registros da copia SQL `READ_ONLY` confrontados com CSVs privados. Treze campos adicionais conferem apos trim; duas transformacoes de codigo (`Potencial`/`Prospect` e `F/J`/tipo de pessoa) reproduzidas nas contagens do handoff. Nenhum dado real publicado, valor monetario inferido ou registro operacional importado. SQL encerrado. Pendem versao/consulta do extrator, dependencias canonicas e escopo empresarial; proximo passo: continuar prova de campos e regras de classificacao antes de propor piloto.
+
+## Legado EXETPS - campos permitidos de fornecedores (08/10)
+
+1.061 registros SQL `READ_ONLY` confrontados por codigo com CSVs privados: atividade, situacao, tipo e UF sem divergencia apos trim; `status` e `categoria` replicam os respectivos campos de origem. A classificacao, extrator historico, campos adiados e mapeamento empresarial continuam pendentes; sem importacao. SQL local encerrado. Proximo passo: fechar prova dos campos de material de revenda e manter filas de unidade/excecoes bloqueadas.

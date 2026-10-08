@@ -341,3 +341,7 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 ## Legado EXETPS - campos de clientes (08/10)
 
 Comparacao por codigo de 22.895 clientes entre SQL original auditado `READ_ONLY` e CSVs privados: zero chave ausente; 13 campos adicionais de referencia, data bruta, limite, desconto, tipo de inscricao e codigo de origem sem divergencia apos trim. `Potencial` -> `Prospect` em 1.109 linhas; `F` -> `Pessoa Fisica` em 18.565 e `J` -> `Pessoa Juridica` em 4.330. `Ativo` (21.747) e `Inativo` (39) permanecem iguais. Isto valida valores observados, nao versao do extrator, semantica financeira, dependencia de destino ou Grupo/Empresa. SQL local devolvido a `Stopped`/`Manual`; nenhuma importacao autorizada.
+
+## Legado EXETPS - campos permitidos de fornecedores (08/10)
+
+Comparacao por codigo dos 1.061 fornecedores entre SQL auditado `READ_ONLY` e CSVs candidatos/quarentena: zero chave ausente; atividade, situacao, tipo de fornecedor e UF coincidem integralmente apos trim. O CSV duplica situacao em `status` sem traducao (1.061 `Ativo`) e tipo em `categoria` sem traducao (65 `Ambos`, 180 `Custos`, 816 `Despesas`). Isto nao homologa semantica da categoria no ERP destino, nem campos adiados pelo contrato, nem classificacao/extrator historico. SQL encerrado; nenhuma importacao autorizada.
