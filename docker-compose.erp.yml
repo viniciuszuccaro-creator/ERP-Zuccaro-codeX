@@ -48,6 +48,8 @@ services:
         # Same-origin via nginx proxy (/health /ready /api) — funciona sem DNS.
         VITE_ERP_API_SAME_ORIGIN: "true"
         VITE_ERP_API_BASE_URL: ""
+        # Central 360 UI: override com VITE_ERP_HTTP_CLIENTE_360=true só em DEV autorizado.
+        VITE_ERP_HTTP_CLIENTE_360: ${VITE_ERP_HTTP_CLIENTE_360:-false}
     container_name: erp-web-dev
     restart: unless-stopped
     ports:

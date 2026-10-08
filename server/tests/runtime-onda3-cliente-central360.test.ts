@@ -348,6 +348,70 @@ test('Central 360 exige vinculo ClienteEmpresa na Empresa do contexto (mesmo Gru
   )).status, 400);
 });
 
+test('Central 360 pagina blocos com limit/offset sem duplicar nem inventar total', async () => {
+  const runtime = fixture();
+  const seeded = await seedClienteComercial(runtime, ACTOR_FULL, GROUP_A, EMPRESA_A, CNPJ_A);
+
+  const localIds: string[] = [seeded.localId];
+  for (let i = 1; i <= 6; i += 1) {
+    const local = await request(runtime.app, `/api/v1/clientes/${seeded.clienteId}/locais`, {
+      method: 'POST',
+      headers: headers(ACTOR_FULL, GROUP_A, EMPRESA_A),
+      body: JSON.stringify({
+        nome: `Local pagina ${i}`,
+        cep: '01310100',
+        logradouro: 'Av Paulista',
+        numero: String(1000 + i),
+        bairro: 'Bela Vista',
+        cidade: 'Sao Paulo',
+        uf: 'SP',
+        pais: 'Brasil',
+        finalidades: [{ finalidade: 'ENTREGA', principal: false }],
+      }),
+    });
+    assert.equal(local.status, 201, JSON.stringify(local.body));
+    localIds.push(local.body.data.id as string);
+  }
+  assert.equal(localIds.length, 7);
+
+  const page1 = await request(
+    runtime.app,
+    `/api/v1/clientes/${seeded.clienteId}/central-360?locais_limit=5&locais_offset=0`,
+    { headers: headers(ACTOR_FULL, GROUP_A, EMPRESA_A) },
+  );
+  assert.equal(page1.status, 200);
+  assert.equal(page1.body.data.blocks.locais.status, 'ok');
+  assert.equal(page1.body.data.blocks.locais.data.length, 5);
+  assert.equal(page1.body.data.blocks.locais.meta.hasMore, true);
+  assert.equal(page1.body.data.blocks.locais.meta.total, 7);
+  assert.equal(page1.body.data.blocks.locais.meta.limit, 5);
+  assert.equal(page1.body.data.blocks.locais.meta.offset, 0);
+
+  const page2 = await request(
+    runtime.app,
+    `/api/v1/clientes/${seeded.clienteId}/central-360?locais_limit=5&locais_offset=5`,
+    { headers: headers(ACTOR_FULL, GROUP_A, EMPRESA_A) },
+  );
+  assert.equal(page2.status, 200);
+  assert.equal(page2.body.data.blocks.locais.data.length, 2);
+  assert.equal(page2.body.data.blocks.locais.meta.hasMore, false);
+  assert.equal(page2.body.data.blocks.locais.meta.offset, 5);
+
+  const ids1 = page1.body.data.blocks.locais.data.map((row: { id: string }) => row.id);
+  const ids2 = page2.body.data.blocks.locais.data.map((row: { id: string }) => row.id);
+  assert.equal(new Set([...ids1, ...ids2]).size, 7);
+  assert.equal(ids1.some((id: string) => ids2.includes(id)), false);
+
+  const full = await request(
+    runtime.app,
+    `/api/v1/clientes/${seeded.clienteId}/central-360?locais_limit=10&locais_offset=0`,
+    { headers: headers(ACTOR_FULL, GROUP_A, EMPRESA_A) },
+  );
+  assert.equal(full.status, 200);
+  assert.equal(full.body.data.blocks.locais.data.length, 7);
+  assert.equal(full.body.data.blocks.locais.meta.hasMore, false);
+});
+
 test('Central 360 falha parcial: bloco unavailable com meta null e demais ok', async () => {
   const runtime = fixture();
   const seeded = await seedClienteComercial(runtime, ACTOR_FULL, GROUP_A, EMPRESA_A, CNPJ_A);

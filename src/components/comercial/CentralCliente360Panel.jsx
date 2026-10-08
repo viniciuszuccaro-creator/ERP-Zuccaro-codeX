@@ -98,6 +98,13 @@ export default function CentralCliente360Panel({
   });
   const sessionKey = central360SessionKey(sessionToken);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
+
+  // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
+  // "Carregar mais" de outro contexto pintar o painel atual.
+  React.useEffect(() => {
+    setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
+  }, [clienteId, groupId, empresaId, actorId, sessionKey]);
+
   const api = useMemo(
     () => createHttpApiClient({
       getScope: () => ({
@@ -146,6 +153,7 @@ export default function CentralCliente360Panel({
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     placeholderData: undefined,
+    // Sem keepPreviousData: resposta atrasada de outro queryKey não pinta a UI.
   });
 
   const handleLoadMore = (blockKey) => {
