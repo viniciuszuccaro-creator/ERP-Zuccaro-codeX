@@ -252,8 +252,8 @@ export default function EmpresaSwitcher() {
         </SelectContent>
       </Select>
 
-      {/* INDICADOR DE CONTEXTO ATUAL */}
-      <div className="absolute -bottom-6 left-0 right-0 flex justify-center">
+      {/* INDICADOR DE CONTEXTO ATUAL — não captura clique do seletor */}
+      <div className="absolute -bottom-6 left-0 right-0 flex justify-center pointer-events-none">
         <Badge 
           className={`text-[10px] ${
             contexto === 'grupo' 

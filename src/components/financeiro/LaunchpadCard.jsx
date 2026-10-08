@@ -50,7 +50,7 @@ export default function LaunchpadCard({
       data-action={dataAction}
       data-launchpad-color={COLOR_CLASSES[color] ? color : 'blue'}
       className={`
-        min-w-[280px] min-h-[140px] 
+        w-full min-w-0 min-h-[140px] 
         cursor-pointer 
         border-0 
         bg-gradient-to-br ${gradient} 
@@ -59,6 +59,7 @@ export default function LaunchpadCard({
         hover:shadow-xl
         relative
         overflow-hidden
+        isolate
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400
       `}>
       

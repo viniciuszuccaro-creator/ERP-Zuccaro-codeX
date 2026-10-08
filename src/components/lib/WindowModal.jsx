@@ -168,17 +168,21 @@ export default function WindowModal({ window, children }) {
           </button>
           <button
             type="button"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               closeWindow(window.id);
             }}
-            className="p-1.5 hover:bg-red-600 rounded transition-colors"
+            className="p-1.5 hover:bg-red-600 rounded transition-colors relative z-30"
             title="Fechar"
             aria-label="Fechar janela"
             data-action="window-close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 pointer-events-none" />
           </button>
         </div>
       </div>

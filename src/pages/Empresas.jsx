@@ -465,31 +465,37 @@ export default function Empresas() {
                     <div className="flex items-center justify-center gap-1">
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 px-2"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setViewingEmpresa(empresa);
                         }}
                         title="Ver detalhes"
                         data-action="empresa-view"
+                        aria-label={`Ver detalhes ${empresa.nome_fantasia || empresa.razao_social || ''}`}
                       >
                         <Eye className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs hidden sm:inline">Ver</span>
                       </Button>
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 px-2"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           handleEdit(empresa);
                         }}
                         title="Editar"
                         data-action="empresa-edit"
+                        aria-label={`Editar ${empresa.nome_fantasia || empresa.razao_social || ''}`}
                       >
                         <Edit className="w-4 h-4 text-slate-600" />
+                        <span className="text-xs hidden sm:inline">Editar</span>
                       </Button>
                     </div>
                   </TableCell>
