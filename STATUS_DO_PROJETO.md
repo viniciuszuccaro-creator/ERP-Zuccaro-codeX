@@ -11874,3 +11874,7 @@ Checklist inicial:
 ## Legado EXETPS - fontes candidatas de saldo (08/10)
 
 `FluxoEstoque` e `BalancoEstoqueItens` vazias na copia SQL auditada. `MovimentacaoEstoque` possui 421 movimentos/150 produtos, dos quais 138 movimentos alcancam somente 96/1.222 revendas; codigos de data 77095-77134 (2012 sob hipotese Clarion). Nao e fonte suficiente para saldo atual em 2026 e ausencia de movimento nao prova saldo zero. Nenhuma abertura ou importacao; SQL local desligado. Proximo passo: identificar fonte oficial de saldo com unidade, Grupo/Empresa e corte verificaveis, preservando os 8 conflitos de unidade e 14 sem unidade em quarentena.
+
+## Legado EMP03 - fonte de estoque candidata (08/10)
+
+`EstoqueMateriais` no EMP03 tem 2.382 linhas; clone fisico auditado e copia de trabalho `READ_ONLY` conferem integralmente (2.382/2.382, `EXCEPT` bilateral zero). Por codigo, 2.360 linhas encontram mestre EXETPS e 1.222 encontram material de revenda; 791 destas revendas tem quantidade diferente de zero, em contraste com os zeros-placeholder dos CSVs. Nenhuma data de corte ou Empresa juridica consta da tabela. Outras bases empresariais tem 150/17/1/0 linhas e nao foram vinculadas ao destino. Nao consolidar entre bases, converter unidade nem importar saldo. SQL local desligado. Proximo passo: provar corte, unidade e identidade de base->Empresa em revisao privada antes de qualquer proposta de abertura.
