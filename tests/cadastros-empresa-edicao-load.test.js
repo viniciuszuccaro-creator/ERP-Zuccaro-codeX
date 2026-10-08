@@ -8,6 +8,7 @@ import {
   isCadastroEditLoadComplete,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
 import {
+  buildCadastroScopeSwitchReset,
   isEditRequestCurrent,
   loadEmpresaForEdit,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
@@ -166,11 +167,52 @@ test('isEditRequestCurrent invalida após Novo ou troca de contexto', () => {
   assert.equal(isEditRequestCurrent({ ...pending, activeScope: 'Empresa:grupo-b:' }), false);
 });
 
+test('buildCadastroScopeSwitchReset: fecha form, zera seleção e bump formKey (sem rascunho cross-tenant)', () => {
+  const dirty = {
+    formKey: 3,
+    showForm: true,
+    editItem: { id: 'emp-a', razao_social: 'Sintetica A' },
+    isLoadingEdit: true,
+    editLoadBlocked: true,
+    editError: 'erro sintetico',
+    isSaving: true,
+    selectedIds: new Set(['id-a', 'id-b']),
+    deselectedIds: new Set(['id-c']),
+    crossPageAll: true,
+  };
+  const reset = buildCadastroScopeSwitchReset(dirty);
+  assert.equal(reset.showForm, false);
+  assert.equal(reset.editItem, null);
+  assert.equal(reset.isLoadingEdit, false);
+  assert.equal(reset.editLoadBlocked, false);
+  assert.equal(reset.editError, null);
+  assert.equal(reset.isSaving, false);
+  assert.equal(reset.crossPageAll, false);
+  assert.equal(reset.selectedIds.size, 0);
+  assert.equal(reset.deselectedIds.size, 0);
+  assert.equal(reset.formKey, 4);
+  assert.equal(reset.bumpEditRequest, true);
+  // Sets novos — não reutiliza referência da seleção anterior
+  assert.notEqual(reset.selectedIds, dirty.selectedIds);
+  assert.notEqual(reset.deselectedIds, dirty.deselectedIds);
+  assert.equal(dirty.selectedIds.size, 2);
+});
+
+test('buildCadastroScopeSwitchReset: formKey ausente ou inválido inicia em 1', () => {
+  assert.equal(buildCadastroScopeSwitchReset({}).formKey, 1);
+  assert.equal(buildCadastroScopeSwitchReset({ formKey: 'x' }).formKey, 1);
+  assert.equal(buildCadastroScopeSwitchReset({ formKey: -1 }).formKey, 0);
+});
+
 test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy', async () => {
   const source = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   assert.match(source, /cadastroEditLoadPolicy/);
   assert.match(source, /loadEmpresaForEdit\(/);
   assert.match(source, /isEditRequestCurrent/);
+  assert.match(source, /buildCadastroScopeSwitchReset/);
+  assert.match(source, /setSelectedIds\(reset\.selectedIds\)/);
+  assert.match(source, /setDeselectedIds\(reset\.deselectedIds\)/);
+  assert.match(source, /setCrossPageAll\(reset\.crossPageAll\)/);
   assert.match(source, /getInContext\(ENTITY, item\.id/);
   assert.match(source, /isCadastroEditLoadComplete/);
   assert.match(source, /buildCadastroEditSavePayload/);

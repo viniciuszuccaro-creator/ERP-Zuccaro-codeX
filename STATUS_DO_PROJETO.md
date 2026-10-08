@@ -1,3 +1,20 @@
+## CURSOR — Comercial 360 UX operação: troca de empresa no Visualizador (2026-10-08T10:31Z)
+
+| Campo | Valor |
+|---|---|
+| Branch | `cursor/comercial360-empresa-switch-form-392b` |
+| Base | `origin/main` |
+| Gap | Troca de grupo/empresa no `VisualizadorUniversalEntidadeV24` fechava o form, mas **não** limpava seleção em massa (`selectedIds`/`deselectedIds`/`crossPageAll`) nem `isSaving`/`formKey` — risco de exclusão cross-tenant e form stale |
+| Fix | Helper `buildCadastroScopeSwitchReset` em `contextoMultiempresaPolicy.js`; wire no effect de `scopeKey` do visualizador existente |
+| Multiempresa | Fail-closed: sem rascunho/seleção preservados entre empresas |
+| RBAC/auditoria | Sem mudança de gates; mutações continuam fail-closed |
+| Testes | `node --test tests/cadastros-empresa-edicao-load.test.js tests/cadastro-empresa-edicao.test.js` → **22/22 PASS** |
+| NÃO tocou | `produtoOutbox*`, `runtime10-produto-outbox*`, `server/.env.example` outbox, `legado/scripts/legado`, #237 |
+| Deploy VPS | **não** |
+| Próximo | PR draft → main; não mergear #237 |
+
+Arquivos: `src/components/lib/contextoMultiempresaPolicy.js`, `src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx`, `tests/cadastros-empresa-edicao-load.test.js`, este STATUS, `docs/HANDOFF_ATUAL.md`.
+
 ## CODEX — Onda 15 outbox sem sucesso fake por omissão (2026-10-08)
 
 - Causa: `ProdutoService` usava `resolveOutboxConsumerConfig()` cujo default era `fake`; a rota `/api/v1/produtos/outbox/process` podia confirmar evento como `published` sem entrega externa quando `ERP_OUTBOX_CONSUMER_MODE` não estava configurado. O `.env.example` também sugeria `fake`.

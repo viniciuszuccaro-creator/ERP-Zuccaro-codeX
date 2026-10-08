@@ -1,3 +1,7 @@
+## CURSOR — Comercial 360 empresa-switch form (2026-10-08T10:31Z)
+
+Branch `cursor/comercial360-empresa-switch-form-392b` (base main). Gap: seleção em massa + form stale após troca de empresa no `VisualizadorUniversalEntidadeV24`. Fix: `buildCadastroScopeSwitchReset` + wire no `scopeKey`. Testes 22/22. Sem outbox/#237, sem legado, sem deploy VPS.
+
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 
 Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)

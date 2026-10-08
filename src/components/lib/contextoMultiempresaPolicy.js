@@ -89,6 +89,24 @@ export const isEditRequestCurrent = ({ request, current, requestedScope, activeS
   request === current && requestedScope === activeScope
 );
 
+/**
+ * Troca de grupo/empresa no VisualizadorUniversal: fecha form, zera seleção em massa
+ * e invalida request de edição em voo. Não preserva rascunho cross-tenant.
+ */
+export const buildCadastroScopeSwitchReset = (prev = {}) => ({
+  showForm: false,
+  editItem: null,
+  isLoadingEdit: false,
+  editLoadBlocked: false,
+  editError: null,
+  isSaving: false,
+  selectedIds: new Set(),
+  deselectedIds: new Set(),
+  crossPageAll: false,
+  formKey: (Number(prev.formKey) || 0) + 1,
+  bumpEditRequest: true,
+});
+
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;
