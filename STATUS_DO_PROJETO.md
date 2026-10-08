@@ -2,20 +2,21 @@
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
 
-| Fase | #231/#226/#225/#203 | #237 outbox | Deploy erp-dev | Legado |
-|---|---|---|---|---|
-| integrado | **sim** main `f0549a89` | OPEN tip `4dcc61b4` CI PASS | código em main | scripts |
-| implantado | **não** | — | **BLOCKED** | não |
-| validado VPS | **não** | — | SPA last-mod 2026-09-27; snapshots HTTP 200 | N/A |
-| dados reais | — | — | — | BLOCKED HD |
+| Fase | #231/#226/#225/#203/#237 | Deploy erp-dev | Legado |
+|---|---|---|---|
+| integrado | **sim** main pós-#237 `7606776b` | código em main | scripts |
+| implantado | **não** | **BLOCKED** SSH sem chave / MCP timeout | não |
+| validado VPS | **não** | SPA last-mod 2026-09-27; snapshots HTTP 200 | N/A |
+| dados reais | — | — | BLOCKED HD |
 
-**Acesso efetivo:** GitHub OK · DNS erp-dev OK · TCP/22 aberto · SSH **Permission denied (publickey)** · Hostinger MCP auth OK mas list/get **timeout** · workers **0**.
+**Parecer #237:** `docs/PARECER_CURSOR_OUTBOX_237_SHA_4dcc61b4.md` — **APROVAR** · **MERGED**.
 
-**Parecer #237:** `docs/PARECER_CURSOR_OUTBOX_237_SHA_4dcc61b4.md` — **APROVAR**. Testes 22+7.
+## CODEX — Onda 15 outbox sem sucesso fake por omissão (2026-10-08)
 
-**HUMAN_NEXT deploy:** Web Console srv1982741 → `spa-login-rebuild-api-web.sh` com `GIT_REF=HEAD` na main + backup; ou secret `ERP_DEV_VPS_SSH_PRIVATE_KEY`.
+- Causa: default `fake` em `resolveOutboxConsumerConfig`; process podia marcar `published` sem entrega.
+- Fix: default `disabled`; authorize+409 antes do claim; fake só com opt-in não-produção.
+- Validação Codex: 22/22 focados; servidor 303 pass. Parecer Cursor no tip `4dcc61b4`.
 
-**Lote UX paralelo:** [Comercial UX empresa-switch](bc-5656ace2-6ada-57dc-87dd-81e7868ccc0c) branch `cursor/comercial360-empresa-switch-form-392b` (≠ #237/legado).
 
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 

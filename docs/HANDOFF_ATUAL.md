@@ -4,7 +4,7 @@ Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
 
 | Fase | #231/#226/#225/#203 | #237 outbox | Deploy erp-dev | Legado |
 |---|---|---|---|---|
-| integrado | **sim** main `f0549a89` | OPEN tip `4dcc61b4` CI PASS | código em main | scripts |
+| integrado | **sim** main `7606776b` | **MERGED** `7606776b` | código em main | scripts |
 | implantado | **não** | — | **BLOCKED** | não |
 | validado VPS | **não** | — | SPA last-mod 2026-09-27; snapshots HTTP 200 | N/A |
 | dados reais | — | — | — | BLOCKED HD |

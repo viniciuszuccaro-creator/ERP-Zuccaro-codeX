@@ -14,14 +14,14 @@ const groupId = '11111111-1111-4111-8111-111111111111';
 const empresaId = '22222222-2222-4222-8222-222222222222';
 const actorId = '33333333-3333-4333-8333-333333333333';
 
-function setup(actions = ['visualizar', 'criar', 'editar', 'aprovar-conteudo', 'publicar']) {
+function setup(actions = ['visualizar', 'criar', 'editar', 'aprovar-conteudo', 'publicar'], publisher?: FakeCatalogPublisher) {
   const repo = createInMemoryProdutoRepo();
   const audit = new InMemoryAuditRepository();
   const tenant = new InMemoryTenantGuard();
   tenant.link(empresaId, groupId);
   const rbac = new InMemoryRbacGuard();
   rbac.link({ actorId, groupId, permissions: { Cadastros: { produto: actions } } });
-  const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac);
+  const service = new ProdutoService(repo, audit, tenant, new InMemoryProdutoRelationGuard(), rbac, new NotImplementedStorage(), undefined, publisher);
   const ctx = { requestId: randomUUID(), actorId, groupId, empresaId };
   return { repo, audit, tenant, rbac, service, ctx };
 }
@@ -361,6 +361,10 @@ test('Outbox consumer: external sem canal/credenciais nunca simula sucesso', asy
     createCatalogPublisher,
     resolveOutboxConsumerConfig,
   } = await import('../src/services/produtoOutboxConsumer.ts');
+  assert.equal(resolveOutboxConsumerConfig({}).mode, 'disabled');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'fake' }).mode, 'disabled');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'fake', ERP_OUTBOX_FAKE_ALLOWED: 'true', NODE_ENV: 'test' }).mode, 'fake');
+  assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'fake', ERP_OUTBOX_FAKE_ALLOWED: 'true', NODE_ENV: 'production' }).mode, 'disabled');
   assert.equal(resolveOutboxConsumerConfig({ ERP_OUTBOX_CONSUMER_MODE: 'weird' }).mode, 'disabled');
   const disabled = createCatalogPublisher({ mode: 'disabled' });
   assert.deepEqual(await disabled.publish({} as never), { ok: false, error: 'OUTBOX_CONSUMER_DISABLED' });
@@ -374,7 +378,7 @@ test('Outbox consumer: external sem canal/credenciais nunca simula sucesso', asy
 
 test('Outbox consumer: lote fake idempotente e external agenda retry sem sucesso falso', async () => {
   const { createCatalogPublisher, runProdutoOutboxConsumer } = await import('../src/services/produtoOutboxConsumer.ts');
-  const { service, ctx } = setup();
+  const { service, ctx } = setup(undefined, new FakeCatalogPublisher('ok'));
   const produto = await service.create(ctx, { descricao: 'Consumer batch' });
   await service.changeWorkflowStatus(ctx, produto.id, 'EM_REVISAO');
   await service.changeWorkflowStatus(ctx, produto.id, 'APROVADO');
