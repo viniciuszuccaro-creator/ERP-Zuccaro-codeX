@@ -11878,3 +11878,7 @@ Checklist inicial:
 ## Legado EMP03 - fonte de estoque candidata (08/10)
 
 `EstoqueMateriais` no EMP03 tem 2.382 linhas; clone fisico auditado e copia de trabalho `READ_ONLY` conferem integralmente (2.382/2.382, `EXCEPT` bilateral zero). Por codigo, 2.360 linhas encontram mestre EXETPS e 1.222 encontram material de revenda; 791 destas revendas tem quantidade diferente de zero, em contraste com os zeros-placeholder dos CSVs. Nenhuma data de corte ou Empresa juridica consta da tabela. Outras bases empresariais tem 150/17/1/0 linhas e nao foram vinculadas ao destino. Nao consolidar entre bases, converter unidade nem importar saldo. SQL local desligado. Proximo passo: provar corte, unidade e identidade de base->Empresa em revisao privada antes de qualquer proposta de abertura.
+
+## Legado EMP03 - consistencia interna de estoque (08/10)
+
+Clone fisico auditado e copia de trabalho `READ_ONLY` tem as mesmas 557.060 movimentacoes (`EXCEPT` bilateral zero); sequencia unica. O ultimo `ESTOQUEATUAL` coincide com `EstoqueMateriais.ESTOQUE` para todos os 1.923 codigos com movimento e saldo estatico; 459 codigos sem movimento aparecem como zero, mas nao ha prova de corte atual. No subconjunto revenda: 1.077 paridades e 145 sem movimento. So 651 ultimos movimentos datam de 2026 pela hipotese Clarion. Consistencia interna nao libera abertura, escopo/Empresa nem unidade; SQL local encerrado, nenhuma importacao. Proximo passo: comprovar identidade e corte da fonte de estoque para comparar ao ERP novo sem somar unidades.
