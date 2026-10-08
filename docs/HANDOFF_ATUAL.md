@@ -1,3 +1,18 @@
+## CURSOR — implantado erp-dev `542be525` (2026-10-08T14:24Z)
+
+| Item | Valor |
+|---|---|
+| **implantado** | **`542be525`** · PR [#245](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/245) |
+| Anterior | `85049afd` (#243) — superseded |
+| Smoke | health/ready/web **200** · RUNTIME-08B · supabase_user |
+| Snapshots `base44-local-*.json` | **404** JSON (clientes/produtos/empresas/snapshot/core) via HTTPS público |
+| Rollback tags | `pre-spa-login-20261008-142359` (api+web) |
+| Evidência | `docs/vps/evidence/deploy-542be525-snapshot-404-all-20261008.txt` |
+| Browser CPA/3Z | **BLOCKED** sem `ERP_DEV_LOGIN_EMAIL`/`PASSWORD` |
+| Legado destino | runtime **`542be525`**; sem mapper paralelo; sem vínculos sem prova |
+
+> `implantado=9a277011` / `NONE` abaixo = histórico.
+
 ## CURSOR — validação pós-deploy + gap snapshots (2026-10-08)
 
 | Item | Valor |

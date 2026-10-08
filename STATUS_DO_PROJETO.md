@@ -1,3 +1,14 @@
+## CURSOR — deploy erp-dev `542be525` nginx 404-all (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| integrado | PR #245 (draft) |
+| **implantado** | **sim** — rebuild spa-login `542be525` |
+| snapshots | **404** todos `base44-local-*.json` (HTTPS) |
+| browser CPA/3Z | BLOCKED sem ERP_DEV_LOGIN_* |
+
+Evidência: `docs/vps/evidence/deploy-542be525-snapshot-404-all-20261008.txt`.
+
 ## CURSOR — nginx 404 para todos base44-local-*.json (2026-10-08)
 
 Agente: validação pós-deploy erp-dev `85049afd` encontrou gap: só `snapshot`/`core-snapshot` retornavam 404; `clientes`/`produtos`/`empresas` ainda HTTP 200 + HTML SPA.
