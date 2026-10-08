@@ -117,6 +117,9 @@ export default function Empresas() {
       resetForm();
       toast.success("Empresa atualizada com sucesso!");
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Falha ao atualizar empresa.');
+    },
   });
 
   const handleSubmit = (e) => {

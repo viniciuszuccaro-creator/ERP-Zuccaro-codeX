@@ -1,3 +1,14 @@
+## CURSOR — tip implantado `fff3abc8` (2026-10-08T17:30Z)
+
+| Pacote | Tip | PR | Estado |
+|---|---|---|---|
+| SPA UI + Financeiro + Empresas | **`fff3abc8`** implantado erp-dev | [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) | Caixa/CR/CP/Conciliação/Lote/Cartões PASS; Empresas lista PASS; save Empresa BLOCKED local |
+| Onda 3 sugestão UI + race | `bdf54b86` | [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) | testes 5/5; aguarda CI/merge |
+| Legado destino | tip `fff3abc8` · main `6ff6b0f2` | — | contratos #113/#246/#245; sem reprocessar backup |
+| rollback | `pre-spa-login-20261008-172657` | — | |
+
+Evidências: `docs/vps/evidence/browser-financeiro-pos-caixa-9b2c9b63-20261008.txt`, `browser-financeiro-caixa-08da3b8e-20261008.txt`, `browser-empresas-lista-empresa-2e50ee33-20261008.txt`.
+
 ## CURSOR — Empresas save regime + carimbar group_id (2026-10-08T17:25Z)
 
 | Item | Estado |

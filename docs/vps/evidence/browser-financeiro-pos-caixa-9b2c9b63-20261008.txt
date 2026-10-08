@@ -1,29 +1,24 @@
 # Evidência sanitizada — Financeiro pós-fix Caixa (erp-dev)
-# utc=2026-10-08T17:12Z
+# utc=2026-10-08T17:12Z · tip implantado atual supersede: fff3abc8
 #
-# implantado tip = 9b2c9b63
-# branch = cursor/spa-ui-empresas-financeiro-clicks-392b
-# rollback = erp-zuccaro-erp-api|web:pre-spa-login-20261008-170810
+# implantado tip (Caixa fix) = 9b2c9b63 → … → fff3abc8
+# rollback atual = pre-spa-login-20261008-172657
 # PR = #249
 #
 # Login: PASS
-# Seletor opções: Grupo CPA · 3Z LTDA · CPA ferro e aço — PASS
+# Seletor: Grupo CPA · 3Z LTDA · CPA ferro e aço — PASS
 #
-# Grupo CPA (visão consolidada):
-#   Caixa Central — PASS (sem ErrorBoundary); alerta "Selecione uma empresa…"; card Liquidação em Lote visível
-#   Contas a Receber — PASS (vazio sintético)
-#   Contas a Pagar — PASS
-#   Conciliação Bancária — PASS
-#   Formas de Pagamento — PASS (pré-smoke)
+# Grupo CPA:
+#   Caixa Central — PASS (alerta selecione empresa; sem ErrorBoundary; Liquidação em Lote visível)
+#   Contas a Receber / Pagar / Conciliação — PASS
 #
-# Empresa 3Z LTDA:
-#   Caixa Central — PASS
-#   filho Liquidacao em Lote — PASS (abre; sem crash; sem baixa de título real)
-#   filho Cartoes — PASS
-#   filho Liquidar — PASS
+# Empresa 3Z:
+#   Caixa Central + Liquidacao em Lote + Cartoes + Liquidar — PASS (sem crash; sem baixa real)
 #
-# Troca de contexto durante sessão Financeiro — PASS (goto /Financeiro após switch)
-# Escrita em títulos reais — NÃO executada
+# Cadastros Empresas (tip fff3abc8):
+#   lista Grupo/CPA ferro/3Z — PASS edits=2
+#   dialog Editar + regime default — PASS
+#   persistência Nome Fantasia no local store — BLOCKED (DB local inalterado após submit;
+#     sem /api/v1/empresas; provável gate Organizacional/remirror sessão — onError toast adicionado)
 #
-# Screenshots: /opt/cursor/artifacts/screenshots/pw7-*.png (ambiente agente)
 # sem senhas / sem tokens / sem e-mail
