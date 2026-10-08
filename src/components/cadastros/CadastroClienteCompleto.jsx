@@ -731,7 +731,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                             setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
                           }
                         }}
-                        onBlur={() => { void consultarSugestaoVinculo(formData.cnpj); }}
+                        onBlur={(e) => { void consultarSugestaoVinculo(e.target.value); }}
                         placeholder="00.000.000/0000-00"
                         data-action="cliente-cnpj"
                       />
@@ -780,7 +780,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                             setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
                           }
                         }}
-                        onBlur={() => { void consultarSugestaoVinculo(formData.cpf); }}
+                        onBlur={(e) => { void consultarSugestaoVinculo(e.target.value); }}
                         placeholder="000.000.000-00"
                         data-action="cliente-cpf"
                       />
