@@ -1,0 +1,16 @@
+# Evidência sanitizada — deploy #113 / main / VPS
+# utc=2026-10-08T15:09:12Z
+#
+# implementado = 502122bc (sugerirVinculo)
+# tip docs     = 7a980f74
+# integrado    = 68c311cc (Merge #113)
+# implantado   = 68c311cc (rebuild spa-login)
+# validado:
+#   health/ready/web = 200
+#   base44-local-clientes.json = 404
+#   GET /api/v1/clientes/sugestao-vinculo (sem token) = 401 AUTH_REQUIRED (rota viva; não 404)
+# validado browser CPA/3Z = BLOCKED (ERP_DEV_LOGIN_EMAIL + ERP_DEV_LOGIN_PASSWORD)
+# rollback_api=erp-zuccaro-erp-api:pre-spa-login-20261008-150832
+# rollback_web=erp-zuccaro-erp-web:pre-spa-login-20261008-150832
+# runtime=ERP-RUNTIME-08B auth_mode=supabase_user
+# sem segredos
