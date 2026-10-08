@@ -13,7 +13,7 @@ Não confundir: implantado em `542be525` (pré-merge) foi supersedido pelo rebui
 
 ## CURSOR — Cadastros ↔ Financeiro ↔ empresa UX (2026-10-08)
 
-Branch `cursor/cadastros-financeiro-empresa-ux-392b` (base main). Gap: Financeiro sem scope `grupo:empresa` no queryKey/uniqueKey; CR/CP com seleção residual na troca; sem alerta sem contexto. Fix: `buildMultiempresaQueryScopeKey` + `buildFinanceiroTitulosScopeSwitchReset` em launchpad + tabs. Testes **47/47**. ≠ outbox/legado. **Sem deploy VPS.**
+Branch `cursor/cadastros-financeiro-empresa-ux-392b` · SHA `ec27b9f7` (base main). Gap: Financeiro sem scope `grupo:empresa` no queryKey/uniqueKey; CR/CP com seleção residual na troca; sem alerta sem contexto. Fix: `buildMultiempresaQueryScopeKey` + `buildFinanceiroTitulosScopeSwitchReset` em launchpad + tabs. Testes **47/47**. PR create **BLOCKED** (integration) — abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/cadastros-financeiro-empresa-ux-392b. ≠ outbox/legado. **Sem deploy VPS.**
 
 ## CURSOR — implantado erp-dev `542be525` (2026-10-08T14:24Z)
 

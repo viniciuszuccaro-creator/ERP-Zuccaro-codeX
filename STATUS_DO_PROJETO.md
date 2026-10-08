@@ -18,9 +18,11 @@ Agente: lote pós-deploy independente (≠ outbox / legado / VPS).
 | Item | Valor |
 |---|---|
 | Branch | `cursor/cadastros-financeiro-empresa-ux-392b` |
+| SHA | `ec27b9f7` |
 | Gap | Financeiro: `contextKey` só empresa\|grupo; seleção residual CR/CP; janela sem scope; sem banner sem contexto |
 | Fix | `buildMultiempresaQueryScopeKey` + `buildFinanceiroTitulosScopeSwitchReset`; wire Financeiro + ContasReceber/Pagar |
 | Testes | `financeiro-empresa-switch-ux` + launchpad/inventory/contexto/cadastros-empresa → **47/47** |
+| PR | **BLOCKED** createPullRequest (integration / ManagePullRequest ausente); abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/cadastros-financeiro-empresa-ux-392b |
 | Deploy VPS | **não** neste lote |
 
 **HUMAN_NEXT browser:** hard refresh → CPA/3Z → Cadastros Empresas → Financeiro (seleção/baixa não deve cruzar empresa).
