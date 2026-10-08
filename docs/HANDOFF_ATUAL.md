@@ -1,16 +1,17 @@
-## CURSOR — pacote integração #248+#249+#250 (2026-10-08T20:50Z)
+## CURSOR — pacote integração #248+#249+#250 (2026-10-08T20:55Z)
 
 Branch `cursor/cliente360-cadfin-integra-392b` · base main `6ff6b0f2`.
-Merge: #249 `4ab97760` → #248 `bdf54b86` (handoff resolvido) → #250 tip.
+Merge-tree: #249 `4ab97760` + #248 `bdf54b86` + #250 `49e677ce` (reset escopo + flag CLIENTE_360).
+
 | Fase | Estado |
 |---|---|
 | implementado | HEADs das 3 PRs no branch de integração |
-| revisado | pendente (parecer independente) |
-| integrado | merge-tree local; **não** merged em main |
-| implantado | **não** (aguardar CI + gates) |
-| validado VPS | **não** — tip erp-dev ainda `54b9f9d0` ≠ pacote |
+| revisado | pendente |
+| integrado | merge-tree neste branch; **não** merged em main |
+| implantado | **não** — erp-dev tip anterior `54b9f9d0` ≠ pacote |
+| validado VPS | **não** |
 
-≠ Codex outbox/legado. Flag `VITE_ERP_HTTP_CLIENTE_360` default false.
+Flag `VITE_ERP_HTTP_CLIENTE_360` default `false`. ≠ Codex outbox/legado.
 
 ## CURSOR — Onda 3 sugestão UI race-guard (#248)
 

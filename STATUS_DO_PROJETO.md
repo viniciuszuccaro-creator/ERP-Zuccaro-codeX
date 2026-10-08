@@ -1,3 +1,33 @@
+## CURSOR — pacote integração #248+#249+#250 (2026-10-08T20:55Z)
+
+| PR | tip | neste branch |
+|---|---|---|
+| #249 Empresas/Financeiro | `4ab97760` | merge |
+| #248 sugestão UI | `bdf54b86` | merge |
+| #250 Central 360 página+reset | `49e677ce` | merge |
+| main base | `6ff6b0f2` | |
+| erp-dev atual | `54b9f9d0` | **≠** pacote — deploy pendente |
+
+Testes pré-push: UI página 3/3 · runtime central360 5/5 · (suite integração a seguir). ≠ Codex outbox/legado.
+
+## CURSOR — #250 reset escopo + flag CLIENTE_360 (2026-10-08T20:45Z)
+
+| Fase | Estado |
+|---|---|
+| implementado | reset `blockLimits` em troca cliente/grupo/empresa/ator/sessão; helpers scope; ARG/compose `VITE_ERP_HTTP_CLIENTE_360` opt-in; runtime 7 locais limit/offset |
+| integrado | **não** (PR #250 aberta; pacote com #248/#249 em andamento) |
+| implantado | **não** |
+| validado testes | UI 3/3 · runtime central360 5/5 PASS |
+| flag VPS | default `false` (só true após prova supabase_user em DEV) |
+
+≠ #248/#249 · ≠ Codex outbox/legado.
+
+## CURSOR — lote Central 360 paginação blocos (2026-10-08T20:20Z)
+
+Branch `cursor/comercial360-onda3-central360-pagina-392b` · base main.
+Reusa `central360` HTTP com `*_limit`/`*_offset`; UI "Carregar mais" por bloco; remove `slice(0,5)` morto.
+≠ #248/#249 · ≠ Codex outbox/legado.
+
 ## CURSOR — pacote #248/#249 + lote Central360 página (2026-10-08T20:17Z)
 
 | item | tip | integrado | implantado | validado |
