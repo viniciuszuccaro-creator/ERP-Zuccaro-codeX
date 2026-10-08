@@ -1,3 +1,29 @@
+## CURSOR — validação login API pós-secrets (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implantado | `68c311cc` |
+| login API | **PASS** 200 (secrets Environment) |
+| CPA/3Z IDs | CPA=`cccccccc-…` · 3Z=`c2c2c2c2-…` (mesmo group) |
+| isolamento pedidos | **PASS** CPA 0 ≠ 3Z 3 |
+| sugestao-vinculo #113 | **PASS** 200 + mescla proibida |
+| browser UI Cadastros/Financeiro | em andamento |
+
+Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
+
+## CURSOR — #113 Onda 3 sugestão vínculo (2026-10-08T15:09Z)
+
+| Fase | SHA |
+|---|---|
+| implementado | `502122bc` |
+| **integrado** | `68c311cc` MERGED #113 |
+| **implantado** | `68c311cc` VPS |
+| validado rota | `GET .../sugestao-vinculo` → **401** sem token (não 404) |
+| validado CPA/3Z browser | BLOCKED `ERP_DEV_LOGIN_*` |
+
+Evidência: `docs/vps/evidence/deploy-113-main-68c311cc-20261008.txt`. Rollback `pre-spa-login-20261008-150832`.
+Contém também #246 Financeiro UX + #245 nginx 404-all.
+
 ## CURSOR — #246 integrado+implantado `64301fdb` (2026-10-08T15:01Z)
 
 | Fase | SHA |
