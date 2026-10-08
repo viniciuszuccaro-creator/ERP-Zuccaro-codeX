@@ -1,3 +1,11 @@
+## CURSOR — pacote #248/#249 + lote Central360 página (2026-10-08T20:17Z)
+
+| item | tip | integrado | implantado | validado |
+|---|---|---|---|---|
+| #249 | `54b9f9d0` | PR aberta | erp-dev atual | browser PASS |
+| #248 | `bdf54b86` | PR CI PASS | temporário; restaurado #249 | API/bundle PASS; UI Novo BLOCKED_NAV |
+| lote indep. | Central360 paginação blocos | a abrir | — | — |
+
 ## CURSOR — #249 validado browser `1e691933` (2026-10-08T20:08Z)
 
 Browser PASS: switcher · save/reopen · CNPJ origem · Caixa. Evidência `docs/vps/evidence/browser-249-empresas-save-1e691933-20261008.txt`.

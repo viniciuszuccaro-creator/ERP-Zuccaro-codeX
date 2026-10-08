@@ -1,3 +1,14 @@
+## CURSOR — #248 validado API/bundle + #249 restaurado (2026-10-08T20:17Z)
+
+| frente | integrado | implantado | validado |
+|---|---|---|---|
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) Empresas/Financeiro | tip `54b9f9d0` / save `1e691933` | **`54b9f9d0`** erp-dev (atual) | browser PASS save/seletor/CNPJ/Caixa |
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` CI PASS | temporário `bdf54b86` → restaurado | API ausente+401+mescla proibida+bundle PASS; UI Novo janela BLOCKED_NAV headless |
+
+Evidências: `browser-249-empresas-save-1e691933-20261008.txt`, `browser-248-sugestao-bdf54b86-20261008.txt`, `deploy-249-restored-54b9f9d0-20261008.txt`.
+
+Lote independente reservado: Central 360 paginação por bloco → branch `cursor/comercial360-onda3-central360-pagina-392b`. ≠ Codex outbox/legado.
+
 ## CURSOR — #249 validado browser `1e691933` (2026-10-08T20:08Z)
 
 | fase | estado |
