@@ -1,3 +1,19 @@
+## CURSOR — deploy erp-dev main `9a277011` (2026-10-08T13:35Z)
+
+| Fase | Estado |
+|---|---|
+| integrado | sim (main `9a277011`) |
+| **implantado** | **sim** — SPA/API rebuild em srv1982741 |
+| validado VPS (browser CPA/3Z) | **pendente** hard refresh + login real |
+| snapshots públicos JSON | **ausentes** (fallback HTML SPA; não os dumps) |
+
+- Backup: `pre-gate-e-20261008-133238.sql` · 845186 B · sha256 `1f1b55b2…` · evidence `docs/vps/evidence/pre-gate-e-backup-latest.txt`
+- Rollback: `erp-zuccaro-erp-api:pre-spa-login-20261008-133314` / `…-web:…`
+- Evidência: `docs/vps/evidence/deploy-main-9a277011-20261008.txt`
+- Contém: #231 #226 #225 #203 #237 #239
+
+**HUMAN_NEXT browser:** abrir https://erp-dev.cpaferroeaco.com.br/ com hard refresh → login → CPA/3Z → Cadastros Empresas → Financeiro.
+
 ## CURSOR — UX troca de empresa fail-closed (2026-10-08)
 
 Agente: [Comercial UX empresa-switch](bc-5656ace2-6ada-57dc-87dd-81e7868ccc0c)
