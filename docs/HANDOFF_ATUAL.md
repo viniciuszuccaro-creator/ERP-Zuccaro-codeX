@@ -1,3 +1,23 @@
+## CURSOR — pacote integração #248+#249+#250 (2026-10-08T20:50Z)
+
+Branch `cursor/cliente360-cadfin-integra-392b` · base main `6ff6b0f2`.
+Merge: #249 `4ab97760` → #248 `bdf54b86` (handoff resolvido) → #250 tip.
+| Fase | Estado |
+|---|---|
+| implementado | HEADs das 3 PRs no branch de integração |
+| revisado | pendente (parecer independente) |
+| integrado | merge-tree local; **não** merged em main |
+| implantado | **não** (aguardar CI + gates) |
+| validado VPS | **não** — tip erp-dev ainda `54b9f9d0` ≠ pacote |
+
+≠ Codex outbox/legado. Flag `VITE_ERP_HTTP_CLIENTE_360` default false.
+
+## CURSOR — Onda 3 sugestão UI race-guard (#248)
+
+Arquivos: `clienteSugestaoVinculoUi.js`, `CadastroClienteCompleto.jsx`, `httpApiClient.js` sugestaoVinculo.
+Race: `buildClienteSugestaoVinculoRaceKey` + `shouldApplyClienteSugestaoVinculoBanner` descartam resposta atrasada.
+Sem mescla automática. HEAD `bdf54b86`.
+
 ## CURSOR — #248 validado API/bundle + #249 restaurado (2026-10-08T20:17Z)
 
 | frente | integrado | implantado | validado |

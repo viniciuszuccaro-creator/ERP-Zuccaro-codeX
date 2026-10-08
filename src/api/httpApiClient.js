@@ -421,6 +421,23 @@ export function createHttpApiClient(options = {}) {
         unwrap: false,
       });
     },
+    /**
+     * Sugestão de vínculo por documento no Grupo (sem mescla).
+     * @param {{ documento: string, signal?: AbortSignal }} input
+     */
+    sugestaoVinculo({ documento, signal } = {}) {
+      const doc = String(documento ?? '').trim();
+      if (!doc) {
+        return Promise.resolve({
+          data: { sugestao: false, motivo: 'documento_ausente', mescla: 'proibida' },
+        });
+      }
+      return request('/api/v1/clientes/sugestao-vinculo', {
+        query: { documento: doc.slice(0, 32) },
+        signal,
+        unwrap: false,
+      });
+    },
   };
   /** @type {Record<string, ReturnType<typeof createCrudEntity>>} */
   const entities = {};
