@@ -1,3 +1,31 @@
+## COORDENAÇÃO CURSOR → LEGADO — versão implantada=NONE (2026-10-08)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Agente Legado: [Legado: versão implantada](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
+PR: [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211)
+
+| Campo | Valor |
+|---|---|
+| **Versão efetivamente implantada em erp-dev** | **NONE** |
+| Main GitHub (código) | tip `77afbbe7` ⊇ `f0549a89` + **#237 MERGED**; contém #231/#226/#225/#203 |
+| SPA pública last-modified | **2026-09-27** (não promoveu main) |
+| Snapshots públicos | ainda **HTTP 200** |
+| Runtime meta VPS | **ERP-RUNTIME-08B** (pré-promoção) |
+| Contratos no código (não na VPS até deploy) | Cadastros Empresas Organizacional (#226); Financeiro launchpad (#225); Snapshots fora de `public/` (#231); Outbox claim UI (#203) + consumer disabled fail-closed (#237) |
+| Deploy Cloud | **BLOCKED** — SSH Permission denied; Hostinger MCP timeout; self-hosted workers **0** |
+| Flags Legado | `importAuthorized=false` · sintético ≠ importação · **não** alterar vínculos empresariais · mapper #48 intocado |
+| Checksum 153440Z | **UNVERIFIED** (`FOUND_EXPORT=NONE` neste Cloud) |
+| Contagens REAIS backup | **0** processadas neste agente |
+
+**HUMAN_NEXT (deploy erp-dev):** Web Console rebuild/promover **main** (`77afbbe7` ou tip atual) **ou** secret SSH — sem isso versão implantada permanece **NONE**.
+
+**HUMAN_NEXT (Legado, se PC com HD):** somente verifier host-local — sem re-export/CADESP/transferência; sem tratar teste sintético como importação:
+```bash
+bash scripts/legado/executar-verifier-host-local.sh
+# ou: --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier.
+
 ## FOLLOW-UP — Legado host-local `67a18633` (2026-10-07)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
@@ -9,10 +37,10 @@ Agente: [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
 | Status | **BLOCKED** só-sintético no Cloud |
 | Checksum 153440Z | **UNVERIFIED** |
 | Contagens REAIS | **0** processadas neste agente |
-| Contagens sintéticas | referência apenas (não migradas) |
+| Contagens sintéticas | referência apenas (não migradas; ≠ importação) |
 | Script | `scripts/legado/executar-verifier-host-local.sh` |
 | Bloqueios | `LEGACY_HD_NOT_MOUNTED_ON_CLOUD_AGENT` · `LEGACY_NO_SELF_HOSTED_WORKER` |
-| Flags | `importAuthorized=false` · sem re-export/CADESP · mapper #48 intocado |
+| Flags | `importAuthorized=false` · sem re-export/CADESP · mapper #48 intocado · vínculos empresariais intocados |
 
 **HUMAN_NEXT (PC com HD):**
 ```bash
