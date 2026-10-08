@@ -1,3 +1,33 @@
+## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+Agente Legado: [Legado: versão implantada](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
+PR: [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211)
+
+| Campo | Valor |
+|---|---|
+| **Versão efetivamente implantada em erp-dev** | **`9a277011`** (não mais NONE) |
+| Imagens | `erp-api-dev` / `erp-web-dev` rebuild **2026-10-08T13:34Z** |
+| Smoke VPS | health/ready/web **200** · `auth.mode=supabase_user` · meta **ERP-RUNTIME-08B** |
+| Snapshots JSON públicos | **AUSENTES** (SPA HTML fallback ~1958B; 0 arquivos no nginx) |
+| Contratos no destino | #231 snapshots · #226 Cadastros Organizacional · #225 Financeiro · #203/#237 outbox · #239 troca empresa · #242 acesso VPS canônico |
+| Main GitHub tip | pode estar à frente só em docs (ex. `f6ec95bc`); **runtime VPS = `9a277011`** |
+| Flags Legado | `importAuthorized=false` · sintético ≠ importação · **não** alterar vínculos empresariais · mapper #48 intocado |
+| Checksum 153440Z | **UNVERIFIED** neste Cloud |
+| Contagens REAIS backup | **0** processadas neste agente |
+
+**HUMAN_NEXT (Legado — PC com HD):** somente verifier host-local — sem re-export/CADESP/transferência; sem tratar teste sintético como importação:
+```bash
+bash scripts/legado/executar-verifier-host-local.sh
+# ou: --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+```
+Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier.
+
+**#211:** `gh pr edit` costuma falhar neste token — Cursor/humano: título `legado: erp-dev implantado=9a277011 — verifier host-local`; corpo = tabela acima + flags + HUMAN_NEXT verifier.
+
+### Histórico — versão implantada=NONE (pré-deploy, obsoleto)
+Antes do rebuild 13:34Z a VPS ainda estava em NONE (SPA last-mod 2026-09-27; snapshots HTTP 200; deploy BLOCKED SSH/MCP). Superseded pela seção acima.
+
 ## CURSOR — validação pós-deploy `9a277011` (2026-10-08)
 
 | Item | Resultado |
@@ -43,7 +73,7 @@ PR: [#239](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/239
 - Testes: `cadastros-empresa-edicao-load` **15/15** · CI SUCCESS.
 - ≠ outbox #237 / legado.
 
-## COORDENAÇÃO CURSOR → LEGADO — versão implantada=NONE (2026-10-08)
+## HISTÓRICO — Legado versão implantada=NONE (obsoleto) (2026-10-08)
 
 **Versão efetivamente implantada em erp-dev: NONE.** Main tem #231/#226/#225/#203/#237 no código; SPA last-mod 2026-09-27; snapshots HTTP 200; deploy BLOCKED (SSH/MCP). Legado: só verifier no PC com HD.
 
