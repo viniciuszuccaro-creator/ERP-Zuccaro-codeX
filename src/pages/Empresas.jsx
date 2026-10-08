@@ -24,7 +24,7 @@ import {
   Package,
   Eye
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -254,6 +254,20 @@ export default function Empresas() {
           />
         </div>
 
+        <Button
+          type="button"
+          className="bg-blue-600 hover:bg-blue-700"
+          data-action="empresa-nova"
+          onClick={() => {
+            setEditingEmpresa(null);
+            resetForm();
+            setIsDialogOpen(true);
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Empresa
+        </Button>
+
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) {
@@ -261,19 +275,15 @@ export default function Empresas() {
             resetForm();
           }
         }}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Empresa
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-action="empresa-form-dialog">
             <DialogHeader>
               <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             </DialogHeader>
             <FormWrapper
+              key={editingEmpresa?.id || 'nova-empresa'}
               schema={empresaSchema}
-              defaultValues={editingEmpresa || formData}
+              defaultValues={formData}
+              withContext={false}
               onSubmit={(values) => {
                 if (editingEmpresa) {
                   updateMutation.mutate({ id: editingEmpresa.id, data: values });

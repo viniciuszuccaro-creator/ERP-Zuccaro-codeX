@@ -1,3 +1,13 @@
+## CURSOR — paralelo SPA UI + Onda 3 sugestão UI (2026-10-08T16:37Z)
+
+| Pacote | Branch | SHA tip | Estado |
+|---|---|---|---|
+| SPA UI empresas/financeiro | `cursor/spa-ui-empresas-financeiro-clicks-392b` | tip local pós-dialog | implantado VPS ainda `11fd3510` até rebuild |
+| Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR manual (ManagePullRequest indisponível) |
+
+PR sugestão UI: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/comercial360-onda3-sugestao-ui-392b
+PR SPA UI: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
+
 ## CURSOR — SPA UI empresas/financeiro implantado `677b1ab1` (2026-10-08)
 
 | Fase | Estado |
