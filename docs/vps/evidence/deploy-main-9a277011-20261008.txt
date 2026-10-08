@@ -1,0 +1,13 @@
+# Evidência sanitizada — deploy erp-dev main 9a277011 (2026-10-08)
+vps=srv1982741
+pre_sha=d02cd012
+post_sha=9a277011
+backup=pre-gate-e-20261008-133238.sql sha256=1f1b55b2…
+rollback_api=erp-zuccaro-erp-api:pre-spa-login-20261008-133314
+rollback_web=erp-zuccaro-erp-web:pre-spa-login-20261008-133314
+health_3080=200 ready_3080=200 web_3081=200
+auth_mode=supabase_user runtime=ERP-RUNTIME-08B
+snapshots_public_json=ABSENT (SPA HTML fallback 1958B text/html; nginx html 0 files)
+spa_bundle=index-DWgm0h5H.js
+includes=#231 #226 #225 #203 #237 #239 #238 #240
+browser_login_CPA_3Z=PENDENTE (hard refresh + conta real)
