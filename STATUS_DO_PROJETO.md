@@ -1,8 +1,22 @@
+## CURSOR — pacote frentes paralelas (2026-10-08)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+| Fase | #231/#226/#225/#203/#237 | Deploy erp-dev | Legado |
+|---|---|---|---|
+| integrado | **sim** main pós-#237 `7606776b` | código em main | scripts |
+| implantado | **não** | **BLOCKED** SSH sem chave / MCP timeout | não |
+| validado VPS | **não** | SPA last-mod 2026-09-27; snapshots HTTP 200 | N/A |
+| dados reais | — | — | BLOCKED HD |
+
+**Parecer #237:** `docs/PARECER_CURSOR_OUTBOX_237_SHA_4dcc61b4.md` — **APROVAR** · **MERGED**.
+
 ## CODEX — Onda 15 outbox sem sucesso fake por omissão (2026-10-08)
 
-- Causa: `ProdutoService` usava `resolveOutboxConsumerConfig()` cujo default era `fake`; a rota `/api/v1/produtos/outbox/process` podia confirmar evento como `published` sem entrega externa quando `ERP_OUTBOX_CONSUMER_MODE` não estava configurado. O `.env.example` também sugeria `fake`.
-- O consumidor existente agora inicia `disabled`; a chamada valida Grupo/Empresa e RBAC `publicar`, depois devolve conflito explícito antes do claim, preservando evento pendente, tentativas e auditoria. Fake exige `ERP_OUTBOX_FAKE_ALLOWED=true` e nunca funciona com `NODE_ENV=production`, inclusive se configuração antiga ainda pedir `fake`; injeção explícita permanece para ensaio. Teste HTTP cobre 403 sem permissão, 409 autorizado, métrica pendente e zero publicado; unitário mantém fake idempotente e verifica o opt-in.
-- Validação: 22/22 focados; servidor completo 303 pass/0 fail/18 skip; typecheck/build servidor, `audit:baseline`, lint, build SPA e diff-check passaram. Suíte raiz no Windows mantém falhas anteriores dos guards VPS Unix; typecheck raiz mantém erros anteriores fora do diff. CI do novo SHA é gate. Nenhuma migration, canal real, VPS, snapshot ou dado operacional foi tocado. Próximo P0: revisão independente do HEAD e CI, depois ativação externa somente com publisher real e credenciais/gates próprios.
+- Causa: default `fake` em `resolveOutboxConsumerConfig`; process podia marcar `published` sem entrega.
+- Fix: default `disabled`; authorize+409 antes do claim; fake só com opt-in não-produção.
+- Validação Codex: 22/22 focados; servidor 303 pass. Parecer Cursor no tip `4dcc61b4`.
+
 
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 
