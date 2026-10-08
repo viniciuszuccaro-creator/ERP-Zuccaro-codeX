@@ -1,25 +1,26 @@
-## CURSOR — Comercial 360 UX operação: troca de empresa no Visualizador (2026-10-08T10:31Z)
+## CURSOR — UX troca de empresa fail-closed (2026-10-08)
 
-| Campo | Valor |
-|---|---|
-| Branch | `cursor/comercial360-empresa-switch-form-392b` |
-| Base | `origin/main` |
-| Gap | Troca de grupo/empresa no `VisualizadorUniversalEntidadeV24` fechava o form, mas **não** limpava seleção em massa (`selectedIds`/`deselectedIds`/`crossPageAll`) nem `isSaving`/`formKey` — risco de exclusão cross-tenant e form stale |
-| Fix | Helper `buildCadastroScopeSwitchReset` em `contextoMultiempresaPolicy.js`; wire no effect de `scopeKey` do visualizador existente |
-| Multiempresa | Fail-closed: sem rascunho/seleção preservados entre empresas |
-| RBAC/auditoria | Sem mudança de gates; mutações continuam fail-closed |
-| Testes | `node --test tests/cadastros-empresa-edicao-load.test.js tests/cadastro-empresa-edicao.test.js` → **22/22 PASS** |
-| NÃO tocou | `produtoOutbox*`, `runtime10-produto-outbox*`, `server/.env.example` outbox, `legado/scripts/legado`, #237 |
-| Deploy VPS | **não** |
-| Próximo | PR draft → main; não mergear #237 |
+Agente: [Comercial UX empresa-switch](bc-5656ace2-6ada-57dc-87dd-81e7868ccc0c)
+Branch: `cursor/comercial360-empresa-switch-form-392b`
 
-Arquivos: `src/components/lib/contextoMultiempresaPolicy.js`, `src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx`, `tests/cadastros-empresa-edicao-load.test.js`, este STATUS, `docs/HANDOFF_ATUAL.md`.
+- Gap: troca de grupo/empresa fechava form sem zerar seleção em massa / isSaving / formKey (risco exclusão cross-tenant).
+- Fix: `buildCadastroScopeSwitchReset` + effect `scopeKey` no VisualizadorUniversal.
+- Testes: `cadastros-empresa-edicao-load` PASS.
+- ≠ outbox #237 / legado.
+
+## CURSOR — pacote frentes paralelas (2026-10-08)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+| Fase | Main (#231…#237) | Deploy erp-dev | Legado |
+|---|---|---|---|
+| integrado | **sim** | código em main | scripts |
+| implantado | **não** | **BLOCKED** SSH/MCP | não |
+| validado VPS | **não** | snapshots HTTP 200 | N/A |
 
 ## CODEX — Onda 15 outbox sem sucesso fake por omissão (2026-10-08)
 
-- Causa: `ProdutoService` usava `resolveOutboxConsumerConfig()` cujo default era `fake`; a rota `/api/v1/produtos/outbox/process` podia confirmar evento como `published` sem entrega externa quando `ERP_OUTBOX_CONSUMER_MODE` não estava configurado. O `.env.example` também sugeria `fake`.
-- O consumidor existente agora inicia `disabled`; a chamada valida Grupo/Empresa e RBAC `publicar`, depois devolve conflito explícito antes do claim, preservando evento pendente, tentativas e auditoria. Fake exige `ERP_OUTBOX_FAKE_ALLOWED=true` e nunca funciona com `NODE_ENV=production`, inclusive se configuração antiga ainda pedir `fake`; injeção explícita permanece para ensaio. Teste HTTP cobre 403 sem permissão, 409 autorizado, métrica pendente e zero publicado; unitário mantém fake idempotente e verifica o opt-in.
-- Validação: 22/22 focados; servidor completo 303 pass/0 fail/18 skip; typecheck/build servidor, `audit:baseline`, lint, build SPA e diff-check passaram. Suíte raiz no Windows mantém falhas anteriores dos guards VPS Unix; typecheck raiz mantém erros anteriores fora do diff. CI do novo SHA é gate. Nenhuma migration, canal real, VPS, snapshot ou dado operacional foi tocado. Próximo P0: revisão independente do HEAD e CI, depois ativação externa somente com publisher real e credenciais/gates próprios.
+- Default consumer `disabled`; #237 MERGED; parecer Cursor `docs/PARECER_CURSOR_OUTBOX_237_SHA_4dcc61b4.md`.
 
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 

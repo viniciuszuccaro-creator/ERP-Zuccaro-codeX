@@ -1,6 +1,22 @@
-## CURSOR — Comercial 360 empresa-switch form (2026-10-08T10:31Z)
+## CURSOR — UX troca de empresa fail-closed (2026-10-08)
 
-Branch `cursor/comercial360-empresa-switch-form-392b` (base main). Gap: seleção em massa + form stale após troca de empresa no `VisualizadorUniversalEntidadeV24`. Fix: `buildCadastroScopeSwitchReset` + wire no `scopeKey`. Testes 22/22. Sem outbox/#237, sem legado, sem deploy VPS.
+Agente: [Comercial UX empresa-switch](bc-5656ace2-6ada-57dc-87dd-81e7868ccc0c)
+Branch: `cursor/comercial360-empresa-switch-form-392b`
+
+- Gap: troca de grupo/empresa fechava form sem zerar seleção em massa / isSaving / formKey (risco exclusão cross-tenant).
+- Fix: `buildCadastroScopeSwitchReset` + effect `scopeKey` no VisualizadorUniversal.
+- Testes: `cadastros-empresa-edicao-load` PASS.
+- ≠ outbox #237 / legado.
+
+## CURSOR — pacote frentes paralelas (2026-10-08)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+| Fase | Main (#231…#237) | Deploy erp-dev | Legado |
+|---|---|---|---|
+| integrado | **sim** | código em main | scripts |
+| implantado | **não** | **BLOCKED** SSH/MCP | não |
+| validado VPS | **não** | snapshots HTTP 200 | N/A |
 
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 
