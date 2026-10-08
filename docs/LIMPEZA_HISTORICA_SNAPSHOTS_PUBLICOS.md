@@ -16,6 +16,8 @@
 - O inventário não abriu nem publicou o conteúdo dos arquivos. Nenhuma branch foi apagada, reescrita ou enviada por force-push.
 - Foi criado um bundle **privado, fora do GitHub** com as refs locais após o fetch (~19 MB). `git bundle verify` confirmou história completa; um clone bare independente do bundle abriu 268 refs. Checksum integral e metadados de recuperação ficaram somente no diretório privado do proprietário. Essa prova não cobre forks ou refs internas do GitHub e deve ser refeita após novo fetch imediatamente antes da janela.
 - Em nova consulta pública de PRs e novo fetch, 176/178 PRs abertas apontavam para branches cujo tip ainda continha o snapshot; 2 não continham. O clone passou a conhecer 251 refs remotas, 237 afetadas. O bundle anterior permanece um checkpoint recuperável, **não** o backup final para uma janela futura. Não publicar a lista de PRs/refs afetadas em massa antes da coordenação com os responsáveis.
+- Um espelho fresco do remoto enumerou 663 refs: 237/250 branches e 400/413 refs internas de PR ainda continham os dois caminhos no tip. Essas refs de PR incluem histórico além das PRs abertas; a contagem não equivale a 400 PRs abertas. A limpeza de refs internas/caches requer coordenação com o GitHub, não apenas force-push das branches.
+- O ensaio de `git-filter-repo` em dois clones bare **privados e descartáveis** falhou no `git fast-import` com `OSError: [Errno 22] Invalid argument`. Nenhuma ref remota foi modificada. Os clones parcialmente processados não são backups nem candidatos de promoção. Os bundles privados verificados permanecem preservados. Resolver e repetir o ensaio, com inspeção sanitizada do erro, antes de pedir janela de rewrite.
 
 ## Inventário antes de qualquer rewrite (humano)
 
