@@ -11882,3 +11882,7 @@ Checklist inicial:
 ## Legado EMP03 - consistencia interna de estoque (08/10)
 
 Clone fisico auditado e copia de trabalho `READ_ONLY` tem as mesmas 557.060 movimentacoes (`EXCEPT` bilateral zero); sequencia unica. O ultimo `ESTOQUEATUAL` coincide com `EstoqueMateriais.ESTOQUE` para todos os 1.923 codigos com movimento e saldo estatico; 459 codigos sem movimento aparecem como zero, mas nao ha prova de corte atual. No subconjunto revenda: 1.077 paridades e 145 sem movimento. So 651 ultimos movimentos datam de 2026 pela hipotese Clarion. Consistencia interna nao libera abertura, escopo/Empresa nem unidade; SQL local encerrado, nenhuma importacao. Proximo passo: comprovar identidade e corte da fonte de estoque para comparar ao ERP novo sem somar unidades.
+
+## Legado EMP03 - staging bruto de estoque (08/10)
+
+2.382 saldos brutos do clone auditado `READ_ONLY` foram carregados em novo SQLite privado, com 1.257 quantidades nao zero. JSONL/SQLite/manifesto novos e hashados, sem sobrescrever backup ou artefatos anteriores. Reabertura independente: 2.382 correspondencias exatas, integridade OK, duplicata divergente rejeitada com rollback. IDs de Grupo/Empresa/produto/unidade do destino nulos e gates de corte/importacao em zero por restricao SQLite. Nenhum saldo de abertura ou importacao operacional. Proximo passo: obter snapshot comparavel do estoque canonico e validar identidade empresarial/unidade antes de propor reconciliação monetaria ou quantitativa.
