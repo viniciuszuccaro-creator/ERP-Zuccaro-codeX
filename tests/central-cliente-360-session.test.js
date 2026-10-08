@@ -83,7 +83,12 @@ test('central360 envia Authorization Bearer e tenant; sem token não mascara fal
       }), { status: 200, headers: { 'content-type': 'application/json' } });
     },
   });
-  await client.clientes.central360(CLIENTE);
+  await client.clientes.central360(CLIENTE, {
+    locaisLimit: 5,
+    locaisOffset: 5,
+    pedidosLimit: 10,
+    pedidosOffset: 0,
+  });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].headers.Authorization, `Bearer ${TOKEN}`);
   assert.equal(calls[0].headers['X-Group-Id'], GROUP_A);
@@ -91,6 +96,10 @@ test('central360 envia Authorization Bearer e tenant; sem token não mascara fal
   assert.equal(calls[0].headers['X-Actor-Id'], undefined);
   assert.equal(calls[0].url.includes(TOKEN), false);
   assert.match(calls[0].url, /\/api\/v1\/clientes\/.+\/central-360/);
+  assert.match(calls[0].url, /locais_limit=5/);
+  assert.match(calls[0].url, /locais_offset=5/);
+  assert.match(calls[0].url, /pedidos_limit=10/);
+  assert.match(calls[0].url, /empresas_limit=/);
 });
 
 test('central360 sem sessão não envia Bearer e propaga 401', async () => {

@@ -1,3 +1,9 @@
+## CURSOR — lote Central 360 paginação blocos (2026-10-08T20:20Z)
+
+Branch `cursor/comercial360-onda3-central360-pagina-392b` · base main.
+Reusa `central360` HTTP com `*_limit`/`*_offset`; UI "Carregar mais" por bloco; remove `slice(0,5)` morto.
+≠ #248/#249 · ≠ Codex outbox/legado.
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |

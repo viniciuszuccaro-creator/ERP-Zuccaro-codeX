@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat } from 'lucide-react';
 import {
@@ -10,14 +10,20 @@ import { isHttpCliente360Enabled } from '@/api/base44Client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  growCentral360BlockLimit,
+  INITIAL_CENTRAL360_BLOCK_LIMITS,
+} from '@/components/comercial/centralCliente360Pagination';
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
-function BlockCard({ title, icon: Icon, block, renderRow }) {
+function BlockCard({ title, icon: Icon, block, blockKey, renderRow, onLoadMore, loadingMore }) {
   if (!block) return null;
   const status = block.status;
+  const rows = status === 'ok' && Array.isArray(block.data) ? block.data : [];
+  const hasMore = Boolean(block.meta?.hasMore);
   return (
-    <div className="border rounded-md bg-white p-3 space-y-2" data-block-status={status}>
+    <div className="border rounded-md bg-white p-3 space-y-2" data-block-status={status} data-block-key={blockKey}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-slate-600" />
@@ -25,19 +31,34 @@ function BlockCard({ title, icon: Icon, block, renderRow }) {
         </div>
         <Badge variant={status === 'ok' ? 'default' : 'secondary'}>{status}</Badge>
       </div>
-      {status === 'ok' && Array.isArray(block.data) && block.data.length > 0 && (
+      {status === 'ok' && rows.length > 0 && (
         <div className="space-y-1">
-          {block.data.slice(0, 5).map((row) => (
+          {rows.map((row) => (
             <div key={row.id} className="text-sm flex items-center justify-between border-b last:border-0 py-1">
               {renderRow(row)}
             </div>
           ))}
-          {block.meta?.hasMore ? (
-            <p className="text-xs text-slate-500">Mais registros disponíveis ({block.meta.total}).</p>
+          {hasMore ? (
+            <div className="pt-1 flex items-center justify-between gap-2">
+              <p className="text-xs text-slate-500">
+                Mais registros disponíveis ({block.meta?.total ?? '…'}).
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                data-action={`central360-${blockKey}-carregar-mais`}
+                disabled={loadingMore}
+                onClick={() => onLoadMore?.(blockKey)}
+              >
+                {loadingMore ? 'Carregando…' : 'Carregar mais'}
+              </Button>
+            </div>
           ) : null}
         </div>
       )}
-      {status === 'ok' && (!block.data || block.data.length === 0) && (
+      {status === 'ok' && rows.length === 0 && (
         <p className="text-xs text-slate-500">Nenhum registro neste contexto.</p>
       )}
       {status === 'forbidden' && (
@@ -76,6 +97,7 @@ export default function CentralCliente360Panel({
     token: sessionToken,
   });
   const sessionKey = central360SessionKey(sessionToken);
+  const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
   const api = useMemo(
     () => createHttpApiClient({
       getScope: () => ({
@@ -90,8 +112,32 @@ export default function CentralCliente360Panel({
   );
 
   const query = useQuery({
-    queryKey: ['cliente-central-360', groupId, empresaId, actorId, clienteId, sessionKey],
-    queryFn: ({ signal }) => api.central360(clienteId, { signal }),
+    queryKey: [
+      'cliente-central-360',
+      groupId,
+      empresaId,
+      actorId,
+      clienteId,
+      sessionKey,
+      blockLimits.empresas,
+      blockLimits.locais,
+      blockLimits.obras,
+      blockLimits.orcamentos,
+      blockLimits.pedidos,
+    ],
+    queryFn: ({ signal }) => api.central360(clienteId, {
+      signal,
+      empresasLimit: blockLimits.empresas,
+      empresasOffset: 0,
+      locaisLimit: blockLimits.locais,
+      locaisOffset: 0,
+      obrasLimit: blockLimits.obras,
+      obrasOffset: 0,
+      orcamentosLimit: blockLimits.orcamentos,
+      orcamentosOffset: 0,
+      pedidosLimit: blockLimits.pedidos,
+      pedidosOffset: 0,
+    }),
     enabled,
     retry: 1,
     // Evita reutilizar payload de outro Grupo/Empresa/ator/sessão no painel.
@@ -101,6 +147,10 @@ export default function CentralCliente360Panel({
     refetchOnWindowFocus: false,
     placeholderData: undefined,
   });
+
+  const handleLoadMore = (blockKey) => {
+    setBlockLimits((prev) => growCentral360BlockLimit(prev, blockKey));
+  };
 
   if (!isHttpCliente360Enabled) return null;
 
@@ -126,7 +176,7 @@ export default function CentralCliente360Panel({
     );
   }
 
-  if (query.isLoading) {
+  if (query.isLoading && !query.data) {
     return <p className="text-sm text-slate-500 mb-4">Carregando Central 360…</p>;
   }
 
@@ -158,6 +208,7 @@ export default function CentralCliente360Panel({
   const identity = payload?.identity;
   const blocks = payload?.blocks || {};
   const meta = payload?.meta || {};
+  const loadingMore = query.isFetching && !query.isLoading;
 
   return (
     <div className="mb-6 space-y-3" data-permission="Cadastros.cliente.visualizar" data-central360="true">
@@ -169,7 +220,15 @@ export default function CentralCliente360Panel({
             {meta.requestId ? ` · req ${String(meta.requestId).slice(0, 8)}` : ''}
           </p>
         </div>
-        <Button type="button" size="sm" variant="ghost" onClick={() => query.refetch()}>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
+            query.refetch();
+          }}
+        >
           Atualizar
         </Button>
       </div>
@@ -189,7 +248,10 @@ export default function CentralCliente360Panel({
         <BlockCard
           title="Empresas"
           icon={Building2}
+          blockKey="empresas"
           block={blocks.empresas}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
           renderRow={(row) => (
             <>
               <span className="font-mono text-xs">{String(row.empresa_id).slice(0, 8)}</span>
@@ -200,7 +262,10 @@ export default function CentralCliente360Panel({
         <BlockCard
           title="Locais"
           icon={MapPin}
+          blockKey="locais"
           block={blocks.locais}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
           renderRow={(row) => (
             <>
               <span>{row.nome}</span>
@@ -211,7 +276,10 @@ export default function CentralCliente360Panel({
         <BlockCard
           title="Obras"
           icon={HardHat}
+          blockKey="obras"
           block={blocks.obras}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
           renderRow={(row) => (
             <>
               <span>{row.nome}</span>
@@ -222,7 +290,10 @@ export default function CentralCliente360Panel({
         <BlockCard
           title="Orçamentos"
           icon={FileText}
+          blockKey="orcamentos"
           block={blocks.orcamentos}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
           renderRow={(row) => (
             <>
               <span className="font-mono">{row.numero}</span>
@@ -233,7 +304,10 @@ export default function CentralCliente360Panel({
         <BlockCard
           title="Pedidos"
           icon={ShoppingCart}
+          blockKey="pedidos"
           block={blocks.pedidos}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
           renderRow={(row) => (
             <>
               <span className="font-mono">{row.numero}</span>
@@ -244,6 +318,7 @@ export default function CentralCliente360Panel({
         <BlockCard
           title="CRM"
           icon={Building2}
+          blockKey="crm"
           block={blocks.crm}
           renderRow={() => null}
         />
