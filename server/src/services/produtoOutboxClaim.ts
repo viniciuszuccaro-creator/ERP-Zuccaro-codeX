@@ -112,7 +112,7 @@ function assertId(id: string) {
   }
 }
 
-async function authorize(
+export async function authorize(
   deps: Dependencies,
   ctx: RequestContext,
   action: 'visualizar' | 'publicar' | 'reprocessar' | 'descartar' = 'publicar',
