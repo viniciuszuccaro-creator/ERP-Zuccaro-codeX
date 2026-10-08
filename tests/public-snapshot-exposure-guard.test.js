@@ -15,6 +15,12 @@ test('real ERP snapshots are not shipped as public assets', () => {
   assert.doesNotMatch(read('src/api/localBase44Client.js'), /sourceUrl\s*=\s*['"]\//);
 });
 
+test('nginx SPA denies legacy public snapshot paths with 404 (not HTML fallback)', () => {
+  const nginx = read('deploy/nginx-erp.conf');
+  assert.match(nginx, /location\s+=\s+\/base44-local-snapshot\.json\s*\{\s*return\s+404;/);
+  assert.match(nginx, /location\s+=\s+\/base44-local-core-snapshot\.json\s*\{\s*return\s+404;/);
+});
+
 test('local recovery requires a selected file and never fetches a public snapshot', () => {
   const recovery = read('public/recover.html');
   assert.match(recovery, /type="file"/);
