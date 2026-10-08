@@ -11870,3 +11870,7 @@ Checklist inicial:
 ## Legado EXETPS - placeholders de estoque em produtos (08/10)
 
 1.222 materiais de revenda SQL `READ_ONLY` confrontados com CSVs: chaves de material e status conferem. `CodigoSistemaAntigo` da origem esta vazio em todas as linhas; `codigo_origem` CSV repete o codigo de material, sem ID historico distinto. Os tres campos de estoque CSV sao zero em 1.222/1.222, mas a tabela `CadastroMateriais` nao contem saldo atual/reservado/disponivel. Esses zeros nao autorizam abertura de estoque nem provam saldo zero. SQL encerrado; CSVs e banco operacional intactos. Proximo passo: localizar fonte oficial de saldo com corte comparavel e homologar unidades/propriedade antes de qualquer carga.
+
+## Legado EXETPS - fontes candidatas de saldo (08/10)
+
+`FluxoEstoque` e `BalancoEstoqueItens` vazias na copia SQL auditada. `MovimentacaoEstoque` possui 421 movimentos/150 produtos, dos quais 138 movimentos alcancam somente 96/1.222 revendas; codigos de data 77095-77134 (2012 sob hipotese Clarion). Nao e fonte suficiente para saldo atual em 2026 e ausencia de movimento nao prova saldo zero. Nenhuma abertura ou importacao; SQL local desligado. Proximo passo: identificar fonte oficial de saldo com unidade, Grupo/Empresa e corte verificaveis, preservando os 8 conflitos de unidade e 14 sem unidade em quarentena.
