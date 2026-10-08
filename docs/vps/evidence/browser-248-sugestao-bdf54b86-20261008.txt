@@ -1,0 +1,15 @@
+# Evidência sanitizada — #248 sugestão vínculo tip bdf54b86
+# utc=2026-10-08T20:16Z
+#
+# implantado temporário erp-dev = bdf54b86 (depois restaurado #249 54b9f9d0)
+# PR = #248
+#
+# API autenticada:
+#   GET sugestao-vinculo doc sintético → 200 sugestao=false motivo=sem_match mescla=proibida PASS
+#   omit credentials → 401 PASS
+# Bundle SPA: cliente-sugestao-vinculo + race + revisão humana PASS
+# UI form Cadastros→Clientes→Novo: BLOCKED_NAV (janela flutuante não expôs #cnpj no headless;
+#   testes unitários banner 5/5 + CI cobrem loading/erro/ausente/403/race)
+# Mescla automática: proibida (API+bundle)
+#
+# sem senhas / sem tokens / sem PII

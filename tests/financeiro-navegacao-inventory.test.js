@@ -20,6 +20,16 @@ test('Layout e pages.config expõem rota Financeiro', async () => {
   assert.match(pages, /["']Financeiro["']\s*:\s*Financeiro/);
 });
 
+test('LaunchpadCard preserva gradiente por cor (sem override primary) e cobre violet/teal/rose', async () => {
+  const source = await readFile(new URL('../src/components/financeiro/LaunchpadCard.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /bg-\[hsl\(var\(--primary\)\)\]/);
+  assert.match(source, /bg-transparent/);
+  for (const color of ['violet', 'teal', 'rose', 'green', 'red']) {
+    assert.match(source, new RegExp(`${color}:\\s*'from-${color}-`));
+  }
+  assert.match(source, /data-launchpad-color/);
+});
+
 test('Consultas do launchpad usam contextKey grupo:empresa e filtro multiempresa', async () => {
   const source = await readFile(new URL('../src/pages/Financeiro.jsx', import.meta.url), 'utf8');
   assert.match(source, /buildFinanceiroQueryScopeKey/);

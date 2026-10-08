@@ -1,3 +1,79 @@
+## CURSOR — pacote #248/#249 + lote Central360 página (2026-10-08T20:17Z)
+
+| item | tip | integrado | implantado | validado |
+|---|---|---|---|---|
+| #249 | `54b9f9d0` | PR aberta | erp-dev atual | browser PASS |
+| #248 | `bdf54b86` | PR CI PASS | temporário; restaurado #249 | API/bundle PASS; UI Novo BLOCKED_NAV |
+| lote indep. | Central360 paginação blocos | a abrir | — | — |
+
+## CURSOR — #249 validado browser `1e691933` (2026-10-08T20:08Z)
+
+Browser PASS: switcher · save/reopen · CNPJ origem · Caixa. Evidência `docs/vps/evidence/browser-249-empresas-save-1e691933-20261008.txt`.
+
+## CURSOR — #249 Empresas save implantado `1e691933` (2026-10-08T20:04Z)
+
+| item | tip | estado |
+|---|---|---|
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | `1e691933` | **implantado+validado** browser PASS |
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | CI PASS; aguarda browser pós-deploy |
+
+## CURSOR — CI verde #248/#249 (2026-10-08T17:33Z)
+
+| PR | Tip CI | frontend/backend |
+|---|---|---|
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | **PASS** |
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | tip branch incl. `9c19da80` | **PASS** |
+| implantado erp-dev | `b81bc1cd` | — |
+
+Aguarda review/merge. Persistência save Empresa segue BLOCKED.
+
+## CURSOR — tip implantado `b81bc1cd` (2026-10-08T17:30Z)
+
+| Pacote | Tip | PR | Estado |
+|---|---|---|---|
+| SPA UI + Financeiro + Empresas | **`b81bc1cd`** implantado erp-dev | [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) | Caixa/CR/CP/Conciliação/Lote/Cartões PASS; Empresas lista PASS; save Empresa BLOCKED local |
+| Onda 3 sugestão UI + race | `bdf54b86` | [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) | testes 5/5; aguarda CI/merge |
+| Legado destino | tip `fff3abc8` · main `6ff6b0f2` | — | contratos #113/#246/#245; sem reprocessar backup |
+| rollback | `pre-spa-login-20261008-173140` | — | |
+
+Evidências: `docs/vps/evidence/browser-financeiro-pos-caixa-9b2c9b63-20261008.txt`, `browser-financeiro-caixa-08da3b8e-20261008.txt`, `browser-empresas-lista-empresa-2e50ee33-20261008.txt`.
+
+## CURSOR — Empresas lista no escopo empresa (2026-10-08T17:22Z)
+
+Causa: `filterInContext('Empresa', …, 'group_id')` + `getFiltroContexto('group_id')` sobrescrevia `group_id` com UUID da empresa → lista vazia sem Editar.
+Fix: `MASTER_GROUP_SET` em `useContextoVisual` (leitura só por groupId canônico) + `queryKey` `empresas-cadastro` com `groupIdCadastro`.
+Testes: empresas-dialog-edit + contexto-multiempresa-policy **17/17**.
+Branch `cursor/spa-ui-empresas-financeiro-clicks-392b` · PR **#249**. ≠ Codex #209 / outbox.
+
+## CURSOR — paralelo SPA UI + Onda 3 sugestão UI (2026-10-08T17:06Z)
+
+| Pacote | Branch | SHA tip | Estado |
+|---|---|---|---|
+| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | `9b2c9b63` | **implantado** erp-dev · PR **#249** · Caixa/CR/CP/Conciliação/Lote/Cartões PASS |
+| Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR **#248** draft |
+
+PR #248: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248  
+PR #249: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249  
+Evidência Financeiro: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt`.  
+Legado: destino tip `08da3b8e` + main `6ff6b0f2` (#113/#246/#245); sem reprocessar backup.
+
+## CURSOR — SPA UI empresas/financeiro `677b1ab1` (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `51d11e75` → `677b1ab1` → `11fd3510` (branch `cursor/spa-ui-empresas-financeiro-clicks-392b`) |
+| integrado | **não** (ManagePullRequest indisponível — abrir PR manual) |
+| **implantado** | `11fd3510` erp-dev (rebuild API+web) |
+| auth session cnpj | **PASS** digits=14 CPA+3Z |
+| browser listagem Empresas + cores Financeiro | **PASS** |
+| browser seletor/Editar/close | PARTIAL (overlays Chrome; handlers no bundle) |
+| rollback | `pre-spa-login-20261008-161558` |
+| backup | `pre-gate-e-20261008-154546.sql` sha256=`ceb97054…` |
+
+Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
+Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |
@@ -7,7 +83,7 @@
 | CPA/3Z IDs | CPA=`cccccccc-…` · 3Z=`c2c2c2c2-…` (mesmo group) |
 | isolamento pedidos | **PASS** CPA 0 ≠ 3Z 3 |
 | sugestao-vinculo #113 | **PASS** 200 + mescla proibida |
-| browser UI Cadastros/Financeiro | em andamento |
+| browser UI Cadastros/Financeiro | superseded por seção `677b1ab1` acima |
 
 Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
 

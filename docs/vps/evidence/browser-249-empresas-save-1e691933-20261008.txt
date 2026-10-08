@@ -1,0 +1,14 @@
+# Evidência sanitizada — browser #249 tip 1e691933
+# utc=2026-10-08T20:06Z
+# implantado = 1e691933 (SPA index-CRLOsZak.js)
+# PR = #249
+#
+# Playwright headless erp-dev (sem senhas/tokens/PII):
+#   login = PASS
+#   switcher Grupo· vs Empresa· (CPA + 3Z + id trunc) = PASS
+#   empresas_list edits=2 = PASS
+#   save_reopen Nome Fantasia marker = PASS (nf_match=true listHas=true; restaurado)
+#   cnpj_origem data-field = PASS
+#   financeiro_caixa open sem crash = PASS
+#
+# títulos reais não alterados

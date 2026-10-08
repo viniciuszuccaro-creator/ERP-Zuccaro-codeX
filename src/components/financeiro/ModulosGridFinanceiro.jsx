@@ -18,16 +18,16 @@ export default function ModulosGridFinanceiro({ modules, onModuleClick }) {
       </CardHeader>
       <CardContent className="p-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {modules.map((module, idx) => (
+          {modules.map((module) => (
             <LaunchpadCard
-              key={idx}
+              key={module.title}
               title={module.title}
               description={module.description}
               icon={module.icon}
               color={module.color}
               badge={module.badge}
               dataPermission={`Financeiro.${module.sectionKey || module.title}.visualizar`}
-              dataAction={`Financeiro.abrir.${module.sectionKey || module.title}`}
+              dataAction={`Financeiro.abrir.${module.title}`}
               onClick={() => onModuleClick(module)}
             />
           ))}

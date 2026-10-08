@@ -1,0 +1,19 @@
+# Evidência sanitizada — Cadastros Empresas no escopo empresa (erp-dev)
+# utc=2026-10-08T17:20Z
+#
+# implantado tip = 2e50ee33
+# rollback = pre-spa-login-20261008-171759
+# PR = #249
+#
+# Causa: filterInContext(Empresa, campo=group_id) + getFiltroContexto('group_id')
+# sobrescrevia group_id com UUID da empresa → lista vazia / sem Editar.
+#
+# Validação browser (Playwright):
+#   Grupo CPA — edits=2 views=2 nova=1 CNPJ visível — PASS
+#   EMPRESA CPA ferro e aço — edits=2 views=2 nova=1 — PASS
+#   EMPRESA 3Z LTDA — edits=2 views=2 nova=1 — PASS
+#
+# Persistência Nome Fantasia: ver smoke persist (marker temporário restaurado).
+# sem senhas / sem tokens / sem e-mail
+
+# Update: save falhava por regime vazio + carimbar group_id; correção no tip seguinte.
