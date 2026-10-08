@@ -15,10 +15,11 @@
 - Esta contagem cobre as refs remotas que o clone conseguiu buscar naquele instante. Não comprova inventário completo de forks, refs de PR do GitHub, caches, clones privados ou artefatos de deploy. Atualizar a contagem imediatamente antes de qualquer janela.
 - O inventário não abriu nem publicou o conteúdo dos arquivos. Nenhuma branch foi apagada, reescrita ou enviada por force-push.
 - Foi criado um bundle **privado, fora do GitHub** com as refs locais após o fetch (~19 MB). `git bundle verify` confirmou história completa; um clone bare independente do bundle abriu 268 refs. Checksum integral e metadados de recuperação ficaram somente no diretório privado do proprietário. Essa prova não cobre forks ou refs internas do GitHub e deve ser refeita após novo fetch imediatamente antes da janela.
+- Em nova consulta pública de PRs e novo fetch, 176/178 PRs abertas apontavam para branches cujo tip ainda continha o snapshot; 2 não continham. O clone passou a conhecer 251 refs remotas, 237 afetadas. O bundle anterior permanece um checkpoint recuperável, **não** o backup final para uma janela futura. Não publicar a lista de PRs/refs afetadas em massa antes da coordenação com os responsáveis.
 
 ## Inventário antes de qualquer rewrite (humano)
 
-1. Fechar o inventário de branches, PRs abertos, forks, tags, releases e artefatos de CI/deploy; avisar os responsáveis por branches afetadas.
+1. Fechar o inventário de branches, PRs abertos, forks, tags, releases e artefatos de CI/deploy; avisar os responsáveis pelas 176 PRs abertas afetadas e definir como preservar revisões/comentários antes de rebase ou recriação.
 2. Congelar pushes e merges por uma janela definida. Registrar os tips e aprovações; novos commits baseados no histórico antigo reintroduziriam os blobs.
 3. Confirmar uma cópia privada recuperável, com checksum e teste de restauração, fora do GitHub. O backup não deve ser usado para repor os arquivos no repositório público.
 4. Em clone espelho descartável e isolado, ensaiar `git filter-repo` para remover **somente** os dois caminhos de todas as refs a preservar. Não executar em worktree ativo. Guardar mapeamento antigo->novo e relatório de refs em canal privado.
