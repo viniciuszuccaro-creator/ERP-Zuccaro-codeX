@@ -1,3 +1,18 @@
+## CURSOR — parecer integração #251 (2026-10-08T20:45Z)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/cliente360-cadfin-integra-392b` |
+| tip | `100cf997` |
+| PR | [#251](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/251) |
+| parecer | **APROVAR COM RESSALVAS** (revisão independente) |
+| CI | em andamento |
+| implantado | **não** |
+| validado | **não** |
+| flag CLIENTE_360 | `false` no deploy |
+
+Ressalvas baixas: reset paginação via useEffect (sem vazamento cross-tenant); EmpresaSwitcher fallback HTTP sem groupId; Empresas FE sem usePermissions (pré-existente). Sem auto-mescla. Deploy DEV seguro após CI verde com flag off.
+
 ## CURSOR — pacote integração #248+#249+#250 (2026-10-08T20:55Z)
 
 | PR | tip | neste branch |
