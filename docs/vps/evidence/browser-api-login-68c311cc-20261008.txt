@@ -1,0 +1,25 @@
+# Evidência sanitizada — login + isolamento API erp-dev (68c311cc)
+# utc=2026-10-08
+#
+# Secrets: ERP_DEV_LOGIN_EMAIL + ERP_DEV_LOGIN_PASSWORD (Environment; não versionados)
+# implantado = 68c311cc
+#
+# Login POST /api/v1/auth/session = 200 (access_token emitido; email redacted)
+# Perfil: role=admin · empresa_id=NULL · group_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+# Meta: ERP-RUNTIME-08B · auth.mode=supabase_user
+#
+# Empresas no grupo (DB, sem CNPJ):
+#   cccccccc-… = CPA ferro e aço (Ativa)
+#   c2c2c2c2-… = 3Z LTDA (Ativa)
+#
+# Isolamento pedidos (X-Group-Id + X-Empresa-Id + Bearer):
+#   CPA → pedidos n=0 · orcamentos n=0
+#   3Z  → pedidos n=3 · orcamentos n=5
+#
+# #113 sugestao-vinculo (documento sintético do seed):
+#   200 · sugestao=true · mescla=revisao_humana_obrigatoria · documento mascarado
+#
+# Cadastros Empresas HTTP: sem rota /api/v1/empresas (404) — UI Cadastros via SPA/localBase44
+# Browser UI CPA/3Z/Cadastros edit-save: em andamento (computerUse)
+#
+# sem senhas / sem tokens / sem e-mail

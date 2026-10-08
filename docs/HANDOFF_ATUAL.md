@@ -1,3 +1,16 @@
+## CURSOR — validação login API pós-secrets (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implantado | `68c311cc` |
+| login API | **PASS** 200 (secrets Environment) |
+| CPA/3Z IDs | CPA=`cccccccc-…` · 3Z=`c2c2c2c2-…` (mesmo group) |
+| isolamento pedidos | **PASS** CPA 0 ≠ 3Z 3 |
+| sugestao-vinculo #113 | **PASS** 200 + mescla proibida |
+| browser UI Cadastros/Financeiro | em andamento |
+
+Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
+
 ## CURSOR — #113 Onda 3 sugestão vínculo (2026-10-08T15:09Z)
 
 | Fase | SHA |
