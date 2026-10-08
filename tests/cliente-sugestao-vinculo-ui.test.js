@@ -3,8 +3,10 @@ import test from 'node:test';
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 import {
   buildClienteSugestaoVinculoBanner,
+  buildClienteSugestaoVinculoRaceKey,
   digitsDocumento,
   documentoProntoParaSugestao,
+  shouldApplyClienteSugestaoVinculoBanner,
 } from '../src/components/cadastros/clienteSugestaoVinculoUi.js';
 
 test('documentoProntoParaSugestao aceita CPF/CNPJ e rejeita incompleto', () => {
@@ -34,6 +36,29 @@ test('banner match: mostra máscara e proíbe mescla automática', () => {
   assert.match(banner.detail, /C-001/);
   assert.equal(banner.mescla, 'revisao_humana_obrigatoria');
   assert.doesNotMatch(banner.detail, /mesclar automaticamente/i);
+});
+
+test('race key: resposta atrasada de outro documento/escopo é descartada', () => {
+  const a = buildClienteSugestaoVinculoRaceKey({
+    documento: '12345678909',
+    groupId: 'g1',
+    empresaId: 'e1',
+  });
+  const b = buildClienteSugestaoVinculoRaceKey({
+    documento: '12345678909',
+    groupId: 'g1',
+    empresaId: 'e2',
+  });
+  const c = buildClienteSugestaoVinculoRaceKey({
+    documento: '98765432100',
+    groupId: 'g1',
+    empresaId: 'e1',
+  });
+  assert.notEqual(a, b);
+  assert.notEqual(a, c);
+  assert.equal(shouldApplyClienteSugestaoVinculoBanner(a, a), true);
+  assert.equal(shouldApplyClienteSugestaoVinculoBanner(a, b), false);
+  assert.equal(shouldApplyClienteSugestaoVinculoBanner('', a), false);
 });
 
 test('banner fail-closed: 401/403 e sem_match não liberam create', () => {

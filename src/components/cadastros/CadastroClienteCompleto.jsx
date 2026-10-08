@@ -37,7 +37,9 @@ import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import {
   buildClienteSugestaoVinculoBanner,
+  buildClienteSugestaoVinculoRaceKey,
   documentoProntoParaSugestao,
+  shouldApplyClienteSugestaoVinculoBanner,
 } from "./clienteSugestaoVinculoUi";
 
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
@@ -105,10 +107,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     || hasPermission("Cadastros", null, "visualizar");
   const [sugestaoBanner, setSugestaoBanner] = useState(() => buildClienteSugestaoVinculoBanner({}));
   const sugestaoAbortRef = useRef(null);
+  const sugestaoRaceKeyRef = useRef('');
 
   const consultarSugestaoVinculo = React.useCallback(async (documentoRaw) => {
     const doc = documentoProntoParaSugestao(documentoRaw);
     if (!doc) {
+      sugestaoRaceKeyRef.current = '';
       setSugestaoBanner(buildClienteSugestaoVinculoBanner({
         ok: true,
         data: { sugestao: false, motivo: 'documento_ausente', mescla: 'proibida' },
@@ -116,14 +120,23 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       return;
     }
     if (!isHttpBackendMode || !contextoValido || !podeVerCliente || cliente?.id) {
+      sugestaoRaceKeyRef.current = '';
       setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
       return;
     }
     const session = readErpHttpSession();
     if (!session?.token || !session?.groupId || !session?.actorId) {
+      sugestaoRaceKeyRef.current = '';
       setSugestaoBanner(buildClienteSugestaoVinculoBanner({ ok: false, status: 401 }));
       return;
     }
+    const empresaId = empresaAtual?.id || session.empresaId || null;
+    const raceKey = buildClienteSugestaoVinculoRaceKey({
+      documento: doc,
+      groupId: session.groupId,
+      empresaId,
+    });
+    sugestaoRaceKeyRef.current = raceKey;
     if (sugestaoAbortRef.current) sugestaoAbortRef.current.abort();
     const controller = new AbortController();
     sugestaoAbortRef.current = controller;
@@ -132,16 +145,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         getScope: () => ({
           token: session.token,
           groupId: session.groupId,
-          empresaId: empresaAtual?.id || session.empresaId || null,
+          empresaId,
           actorId: session.actorId,
           actorEmail: session.email || null,
         }),
       }).clientes;
       const body = await api.sugestaoVinculo({ documento: doc, signal: controller.signal });
       if (controller.signal.aborted) return;
+      if (!shouldApplyClienteSugestaoVinculoBanner(sugestaoRaceKeyRef.current, raceKey)) return;
       setSugestaoBanner(buildClienteSugestaoVinculoBanner({ ok: true, data: body?.data || body }));
     } catch (error) {
       if (controller.signal.aborted || error?.name === 'AbortError') return;
+      if (!shouldApplyClienteSugestaoVinculoBanner(sugestaoRaceKeyRef.current, raceKey)) return;
       setSugestaoBanner(buildClienteSugestaoVinculoBanner({
         ok: false,
         status: error?.status || 0,
@@ -151,7 +166,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   }, [cliente?.id, contextoValido, empresaAtual?.id, podeVerCliente]);
 
   useEffect(() => {
+    sugestaoRaceKeyRef.current = '';
     setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
+    if (sugestaoAbortRef.current) sugestaoAbortRef.current.abort();
     return () => {
       if (sugestaoAbortRef.current) sugestaoAbortRef.current.abort();
     };

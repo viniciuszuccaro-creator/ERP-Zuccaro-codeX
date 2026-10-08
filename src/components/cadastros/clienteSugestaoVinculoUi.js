@@ -4,6 +4,29 @@
  */
 
 /**
+ * Chave de corrida para ignorar resposta atrasada após troca de
+ * documento/grupo/empresa (fail-closed: não pintar banner de outro escopo).
+ * @param {{ documento?: unknown, groupId?: unknown, empresaId?: unknown }} input
+ * @returns {string}
+ */
+export function buildClienteSugestaoVinculoRaceKey(input = {}) {
+  const doc = digitsDocumento(input.documento);
+  const groupId = String(input.groupId ?? '').trim() || 'sem-grupo';
+  const empresaId = String(input.empresaId ?? '').trim() || 'sem-empresa';
+  return `${groupId}|${empresaId}|${doc || 'sem-documento'}`;
+}
+
+/**
+ * @param {string} expectedKey
+ * @param {string} responseKey
+ * @returns {boolean}
+ */
+export function shouldApplyClienteSugestaoVinculoBanner(expectedKey, responseKey) {
+  if (!expectedKey || !responseKey) return false;
+  return expectedKey === responseKey;
+}
+
+/**
  * @param {unknown} value
  * @returns {string} só dígitos
  */

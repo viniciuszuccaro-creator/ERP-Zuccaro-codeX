@@ -1,3 +1,14 @@
+## CURSOR — Onda 3 sugestão UI race-guard (2026-10-08T17:20Z)
+
+| Pacote | Branch | SHA | Estado |
+|---|---|---|---|
+| Sugestão vínculo UI + race | `cursor/comercial360-onda3-sugestao-ui-392b` | tip pós-race | PR **#248** · testes 5/5 |
+| SPA UI / Caixa | `cursor/spa-ui-empresas-financeiro-clicks-392b` | `18516f9c` docs / `9b2c9b63` implantado | PR **#249** |
+
+Arquivos reservados Cursor (≠ Codex #209 Central360): `clienteSugestaoVinculoUi.js`, `CadastroClienteCompleto.jsx`, `httpApiClient.js` sugestaoVinculo.
+Race: `buildClienteSugestaoVinculoRaceKey` + `shouldApplyClienteSugestaoVinculoBanner` descartam resposta atrasada de outro documento/empresa.
+≠ outbox/legado. Sem mescla automática.
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |
