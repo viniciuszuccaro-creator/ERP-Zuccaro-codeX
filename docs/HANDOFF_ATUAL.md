@@ -1,13 +1,28 @@
+## CURSOR — SPA UI empresas/financeiro implantado `677b1ab1` (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `51d11e75` + `677b1ab1` |
+| integrado | PR pendente (`cursor/spa-ui-empresas-financeiro-clicks-392b` → main) |
+| **implantado** | `677b1ab1` |
+| auth `empresas[].cnpj` | **PASS** |
+| /Empresas lista CNPJ | **PASS** |
+| Financeiro cores CR≠Régua | **PASS** |
+| seletor/Editar/close browser | PARTIAL (overlays Chrome) |
+| rollback | `pre-spa-login-20261008-160517` |
+
+Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`. ≠ outbox/legado.
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |
 |---|---|
-| implantado | `68c311cc` |
+| implantado | `68c311cc` (superseded por `677b1ab1` acima) |
 | login API | **PASS** 200 (secrets Environment) |
 | CPA/3Z IDs | CPA=`cccccccc-…` · 3Z=`c2c2c2c2-…` (mesmo group) |
 | isolamento pedidos | **PASS** CPA 0 ≠ 3Z 3 |
 | sugestao-vinculo #113 | **PASS** 200 + mescla proibida |
-| browser UI Cadastros/Financeiro | em andamento |
+| browser UI Cadastros/Financeiro | ver seção `677b1ab1` |
 
 Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
 

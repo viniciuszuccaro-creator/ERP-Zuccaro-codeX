@@ -1,3 +1,19 @@
+## CURSOR — SPA UI empresas/financeiro `677b1ab1` (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `51d11e75` + `677b1ab1` (branch `cursor/spa-ui-empresas-financeiro-clicks-392b`) |
+| integrado | **não** (PR — ferramenta ManagePullRequest indisponível neste run) |
+| **implantado** | `677b1ab1` erp-dev (rebuild API+web) |
+| auth session cnpj | **PASS** digits=14 CPA+3Z |
+| browser listagem Empresas + cores Financeiro | **PASS** |
+| browser seletor/Editar/close | PARTIAL (overlays Chrome; handlers no bundle) |
+| rollback | `pre-spa-login-20261008-160517` |
+| backup | `pre-gate-e-20261008-154546.sql` sha256=`ceb97054…` |
+
+Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
+Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |
@@ -7,7 +23,7 @@
 | CPA/3Z IDs | CPA=`cccccccc-…` · 3Z=`c2c2c2c2-…` (mesmo group) |
 | isolamento pedidos | **PASS** CPA 0 ≠ 3Z 3 |
 | sugestao-vinculo #113 | **PASS** 200 + mescla proibida |
-| browser UI Cadastros/Financeiro | em andamento |
+| browser UI Cadastros/Financeiro | superseded por seção `677b1ab1` acima |
 
 Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
 

@@ -147,8 +147,12 @@ export default function EmpresaSwitcher() {
   return (
     <div className="relative">
       <Select value={valorAtual} onValueChange={handleSelecaoContexto} open={open} onOpenChange={setOpen}>
-        <SelectTrigger className="w-64 md:w-72 lg:w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors">
-          <div className="flex items-center gap-2 w-full">
+        <SelectTrigger
+          className="w-64 md:w-72 lg:w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors"
+          data-action="empresa-switcher"
+          aria-label="Seletor de grupo ou empresa"
+        >
+          <div className="flex items-center gap-2 w-full pointer-events-none">
             {contexto === 'grupo' ? (
               <Users className="w-4 h-4 text-blue-600" />
             ) : (

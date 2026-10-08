@@ -1,0 +1,33 @@
+# Evidência sanitizada — SPA UI empresas/financeiro (677b1ab1)
+# utc=2026-10-08
+#
+# Branch: cursor/spa-ui-empresas-financeiro-clicks-392b
+# implantado erp-dev = 677b1ab1
+# rollback_api = erp-zuccaro-erp-api:pre-spa-login-20261008-160517
+# rollback_web = erp-zuccaro-erp-web:pre-spa-login-20261008-160517
+# backup = pre-gate-e-20261008-154546.sql sha256=ceb97054… (pré 51d11e75)
+#
+# Causa raiz (edit Empresa):
+#   auth session listava empresas sem cnpj → espelho local incompleto →
+#   loadEmpresaForEdit / isCadastroEditLoadComplete falhava.
+# Correção: SELECT cnpj em authSessionService + persist/mirror no SPA.
+#
+# Login API pós-deploy:
+#   POST /api/v1/auth/session = 200
+#   profiles[0].empresas[n].cnpj digits=14 (CPA + 3Z)
+#
+# Browser (computerUse) em https://erp-dev.cpaferroeaco.com.br :
+#   PASS  listagem /Empresas mostra CPA + 3Z com CNPJ
+#   PASS  Financeiro cards: Contas a Receber verde ≠ Régua violeta
+#   PARTIAL / FAIL interação seletor e botão Editar — cliques capturados
+#           por overlays do Chrome (Translate/Lens/bookmarks); handlers no
+#           bundle (data-action=empresa-edit|empresa-switcher|window-close).
+#
+# Testes locais:
+#   node --test tests/erp-http-session.test.js tests/financeiro-navegacao-inventory.test.js → 26/26
+#   server auth-session (suite) → pass
+#
+# Pendência: merge PR + validação humana do seletor/Editar sem overlays.
+# Persistência Postgres de PATCH Empresa: ainda sem /api/v1/empresas (local mirror).
+#
+# sem senhas / sem tokens / sem e-mail
