@@ -1,8 +1,12 @@
+## CURSOR — #249 validado browser `1e691933` (2026-10-08T20:08Z)
+
+Browser PASS: switcher · save/reopen · CNPJ origem · Caixa. Evidência `docs/vps/evidence/browser-249-empresas-save-1e691933-20261008.txt`.
+
 ## CURSOR — #249 Empresas save implantado `1e691933` (2026-10-08T20:04Z)
 
 | item | tip | estado |
 |---|---|---|
-| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | `1e691933` | **implantado** erp-dev; browser em curso |
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | `1e691933` | **implantado+validado** browser PASS |
 | [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | CI PASS; aguarda browser pós-deploy |
 
 ## CURSOR — CI verde #248/#249 (2026-10-08T17:33Z)
