@@ -1,12 +1,14 @@
-## CURSOR — paralelo SPA UI + Onda 3 sugestão UI (2026-10-08T16:37Z)
+## CURSOR — paralelo SPA UI + Onda 3 sugestão UI (2026-10-08T17:06Z)
 
 | Pacote | Branch | SHA tip | Estado |
 |---|---|---|---|
-| SPA UI empresas/financeiro | `cursor/spa-ui-empresas-financeiro-clicks-392b` | tip local pós-dialog | implantado VPS ainda `11fd3510` até rebuild |
-| Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR manual (ManagePullRequest indisponível) |
+| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | tip pós-fix Button/LiquidacaoEmLote | **implantado** pré-fix `08da3b8e`; rebuild após push · PR **#249** |
+| Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR **#248** draft |
 
-PR sugestão UI: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/comercial360-onda3-sugestao-ui-392b
-PR SPA UI: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
+PR #248: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248  
+PR #249: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249  
+Evidência Financeiro: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt`.  
+Legado: destino tip `08da3b8e` + main `6ff6b0f2` (#113/#246/#245); sem reprocessar backup.
 
 ## CURSOR — SPA UI empresas/financeiro `677b1ab1` (2026-10-08)
 
