@@ -11890,3 +11890,7 @@ Clone fisico auditado e copia de trabalho `READ_ONLY` tem as mesmas 557.060 movi
 ## Legado EMP03 - fila privada de estoque e unidades (08/10)
 
 Nova fila privada hashada, sem sobrescrever filas anteriores: 44 materiais distintos (22 sem mestre compartilhado, 14 sem unidade mapeada, 6 conflitos reais de unidade, 2 apenas caixa). Onze linhas tem quantidade nao zero; oito sao produtos em quarentena sem unidade. Todos os 22 sem mestre tem saldo zero, mas permanecem bloqueados. O confronto por codigo nao atribui Empresa do destino. Segunda leitura confirmou classe/unicidade/gates fechados; SQL local desligado, nenhuma carga. Proximo passo: revisar origem/unidade dos 11 saldos nao zero antes de qualquer proposta de saldo inicial, alem de comprovar corte e identidade empresarial.
+
+## Legado EMP03 - identidade fiscal ainda nao atribuida (08/10)
+
+Mestre EXETPS auditado: cinco Empresas, tres documentos fiscais distintos preenchidos; os dois CNPJs aprovados aparecem em 1 e 2 linhas respectivamente. Sem mapa unico de codigo legado para EMP03; suas tabelas `ParametrizacaoEmpresa` estao vazias e `EstoqueMateriais` nao traz documento. Confronto de documentos EMP03 bloqueado por desconexao TCP `wsarecv` reproduzida mesmo apos reiniciar SQL; servico local desligado. Nao atribuir EMP03, Grupo/Empresa do destino ou os 2.382 saldos por nome/codigo. Prosseguir nas revisoes privadas de unidade e corte; retomar leitura empresarial apenas com conexao estavel ou outra evidencia explicita.
