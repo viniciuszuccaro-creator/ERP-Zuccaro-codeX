@@ -26,6 +26,11 @@ bash scripts/legado/executar-verifier-host-local.sh
 ```
 Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier.
 
+**#211 tip:** `1f1fe089`. `gh pr edit` **Resource not accessible** neste token — Cursor/humano atualizar título/corpo:
+
+- Título: `legado: erp-dev versão implantada=NONE — verifier host-local`
+- Corpo (resumo): versão implantada=**NONE**; main `77afbbe7` tem #231/#226/#225/#203/#237 no código; SPA last-mod 2026-09-27; snapshots HTTP 200; meta RUNTIME-08B; deploy BLOCKED (SSH/MCP/workers 0); HUMAN_NEXT deploy=Web Console rebuild main ou secret SSH; Legado=só verifier host-local no PC com HD; sintético≠importação; vínculos intocados; `importAuthorized=false`.
+
 ## FOLLOW-UP — Legado host-local `67a18633` (2026-10-07)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
