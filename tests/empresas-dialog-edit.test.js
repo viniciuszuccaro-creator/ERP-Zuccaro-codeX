@@ -11,4 +11,7 @@ test('Empresas: edição controlada sem DialogTrigger e FormWrapper com key', as
   assert.match(source, /key=\{editingEmpresa\?\.id \|\| ['"]nova-empresa['"]\}/);
   assert.match(source, /withContext=\{false\}/);
   assert.match(source, /setIsDialogOpen\(true\)/);
+  assert.match(source, /groupIdCadastro/);
+  assert.match(source, /empresas-cadastro/);
+  assert.match(source, /enabled:\s*Boolean\(groupIdCadastro\)/);
 });

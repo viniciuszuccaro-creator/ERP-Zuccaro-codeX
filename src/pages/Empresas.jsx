@@ -33,7 +33,8 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from "sonner";
 
 export default function Empresas() {
-  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual } = useContextoVisual();
+  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual, empresaAtual } = useContextoVisual();
+  const groupIdCadastro = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState(null);
@@ -87,8 +88,9 @@ export default function Empresas() {
   });
 
   const { data: empresas = [], isLoading } = useQuery({
-    queryKey: ['empresas', grupoAtual?.id],
+    queryKey: ['empresas-cadastro', groupIdCadastro],
     queryFn: () => filterInContext('Empresa', {}, '-created_date', undefined, 'group_id'),
+    enabled: Boolean(groupIdCadastro),
   });
 
   const createMutation = useMutation({

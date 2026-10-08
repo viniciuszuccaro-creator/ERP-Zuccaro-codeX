@@ -404,7 +404,41 @@ export function useContextoVisual() {
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
                    const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
                    const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
+                   const MASTER_GROUP_SET = new Set(['Empresa', 'GrupoEmpresarial']);
                    const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
+
+                   // Cadastro mestre de Empresa/Grupo: sempre ler pelo groupId canônico.
+                   // Nunca usar getFiltroContexto('group_id') — em escopo empresa isso
+                   // sobrescreve group_id com o UUID da empresa e esvazia a lista.
+                   if (MASTER_GROUP_SET.has(entityName)) {
+                     const masterGroupId = contextoCanonico.groupId;
+                     if (!masterGroupId) return [];
+                     let sortField;
+                     let sortDirection;
+                     if (typeof order === 'string' && order.length) {
+                       sortDirection = order.startsWith('-') ? 'desc' : 'asc';
+                       sortField = normalizeSortField(entityName, order.replace(/^-/, ''));
+                       setLastSort(entityName, { sortField, sortDirection });
+                     } else {
+                       const last = getLastSort(entityName);
+                       sortField = normalizeSortField(entityName, last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date');
+                       sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
+                     }
+                     const res = await base44.functions.invoke('entityListSorted', {
+                       entityName,
+                       filter: {
+                         ...criterios,
+                         $or: [
+                           { group_id: masterGroupId },
+                           { grupo_id: masterGroupId },
+                         ],
+                       },
+                       sortField,
+                       sortDirection,
+                       limit: limit || 100,
+                     });
+                     return Array.isArray(res?.data) ? res.data : [];
+                   }
 
                    const scope = getFiltroContexto(ctxCampo, true) || {};
                    const groupId = scope.group_id;

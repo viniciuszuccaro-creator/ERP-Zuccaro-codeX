@@ -1,3 +1,10 @@
+## CURSOR — Empresas lista no escopo empresa (2026-10-08T17:22Z)
+
+Causa: `filterInContext('Empresa', …, 'group_id')` + `getFiltroContexto('group_id')` sobrescrevia `group_id` com UUID da empresa → lista vazia sem Editar.
+Fix: `MASTER_GROUP_SET` em `useContextoVisual` (leitura só por groupId canônico) + `queryKey` `empresas-cadastro` com `groupIdCadastro`.
+Testes: empresas-dialog-edit + contexto-multiempresa-policy **17/17**.
+Branch `cursor/spa-ui-empresas-financeiro-clicks-392b` · PR **#249**. ≠ Codex #209 / outbox.
+
 ## CURSOR — paralelo SPA UI + Onda 3 sugestão UI (2026-10-08T17:06Z)
 
 | Pacote | Branch | SHA tip | Estado |
