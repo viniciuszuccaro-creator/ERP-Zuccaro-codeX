@@ -1,3 +1,22 @@
+## CURSOR — pacote frentes paralelas (2026-10-08)
+
+Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
+
+| Fase | #231/#226/#225/#203 | #237 outbox | Deploy erp-dev | Legado |
+|---|---|---|---|---|
+| integrado | **sim** main `f0549a89` | OPEN tip `4dcc61b4` CI PASS | código em main | scripts |
+| implantado | **não** | — | **BLOCKED** | não |
+| validado VPS | **não** | — | SPA last-mod 2026-09-27; snapshots HTTP 200 | N/A |
+| dados reais | — | — | — | BLOCKED HD |
+
+**Acesso efetivo:** GitHub OK · DNS erp-dev OK · TCP/22 aberto · SSH **Permission denied (publickey)** · Hostinger MCP auth OK mas list/get **timeout** · workers **0**.
+
+**Parecer #237:** `docs/PARECER_CURSOR_OUTBOX_237_SHA_4dcc61b4.md` — **APROVAR**. Testes 22+7.
+
+**HUMAN_NEXT deploy:** Web Console srv1982741 → `spa-login-rebuild-api-web.sh` com `GIT_REF=HEAD` na main + backup; ou secret `ERP_DEV_VPS_SSH_PRIVATE_KEY`.
+
+**Lote UX paralelo:** [Comercial UX empresa-switch](bc-5656ace2-6ada-57dc-87dd-81e7868ccc0c) branch `cursor/comercial360-empresa-switch-form-392b` (≠ #237/legado).
+
 ## CODEX Comercial — follow-up #226/#203 (2026-10-07T20:50Z)
 
 Agente: [Comercial Cadastros Empresas](bc-55d5261f-d7a1-5e68-9b15-bd09a65ecb6a)
