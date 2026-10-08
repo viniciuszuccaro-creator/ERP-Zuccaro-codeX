@@ -11866,3 +11866,7 @@ Checklist inicial:
 ## Legado EXETPS - campos permitidos de fornecedores (08/10)
 
 1.061 registros SQL `READ_ONLY` confrontados por codigo com CSVs privados: atividade, situacao, tipo e UF sem divergencia apos trim; `status` e `categoria` replicam os respectivos campos de origem. A classificacao, extrator historico, campos adiados e mapeamento empresarial continuam pendentes; sem importacao. SQL local encerrado. Proximo passo: fechar prova dos campos de material de revenda e manter filas de unidade/excecoes bloqueadas.
+
+## Legado EXETPS - placeholders de estoque em produtos (08/10)
+
+1.222 materiais de revenda SQL `READ_ONLY` confrontados com CSVs: chaves de material e status conferem. `CodigoSistemaAntigo` da origem esta vazio em todas as linhas; `codigo_origem` CSV repete o codigo de material, sem ID historico distinto. Os tres campos de estoque CSV sao zero em 1.222/1.222, mas a tabela `CadastroMateriais` nao contem saldo atual/reservado/disponivel. Esses zeros nao autorizam abertura de estoque nem provam saldo zero. SQL encerrado; CSVs e banco operacional intactos. Proximo passo: localizar fonte oficial de saldo com corte comparavel e homologar unidades/propriedade antes de qualquer carga.
