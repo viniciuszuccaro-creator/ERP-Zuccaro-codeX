@@ -2,7 +2,7 @@
 
 | Pacote | Branch | SHA tip | Estado |
 |---|---|---|---|
-| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | tip pós-fix Button/LiquidacaoEmLote | **implantado** pré-fix `08da3b8e`; rebuild após push · PR **#249** |
+| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | `9b2c9b63` | **implantado** erp-dev · PR **#249** · Caixa/CR/CP/Conciliação/Lote/Cartões PASS |
 | Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR **#248** draft |
 
 PR #248: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248  

@@ -2,7 +2,7 @@
 
 | Pacote | Branch | SHA tip | Estado |
 |---|---|---|---|
-| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | tip pós-fix Button/LiquidacaoEmLote | **implantado** pré-fix `08da3b8e`; rebuild após push |
+| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | `9b2c9b63` | **implantado** erp-dev · PR **#249** |
 | Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR **#248** draft |
 
 PR sugestão UI: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248  
@@ -11,13 +11,14 @@ PR SPA UI / Financeiro: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-c
 ### Legado / destino erp-dev (contratos; sem reprocessar backup)
 | Campo | Valor |
 |---|---|
-| implantado tip (pré-rebuild Caixa) | `08da3b8e` |
+| **implantado tip** | **`9b2c9b63`** |
 | main integrado | `6ff6b0f2` (#247) · contém #113/#246/#245 |
-| contratos no destino | #231 snapshots · #226 Cadastros · #225/#246 Financeiro · #113 sugestão · #203/#237 outbox · #239 troca empresa · #242 acesso VPS |
+| contratos no destino | #231 snapshots · #226 Cadastros · #225/#246 Financeiro · #113 sugestão API · #203/#237 outbox · #239 troca empresa · #242 acesso VPS |
 | snapshots públicos | ausentes |
 | escrita títulos reais | proibida neste lote (só sintético/isolado) |
+| rollback | `pre-spa-login-20261008-170810` |
 
-Evidência Financeiro: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt`.
+Evidência: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt` · `docs/vps/evidence/browser-financeiro-pos-caixa-9b2c9b63-20261008.txt`.
 
 ## CURSOR — SPA UI empresas/financeiro implantado `677b1ab1` (2026-10-08)
 
