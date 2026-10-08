@@ -1,3 +1,30 @@
+## CURSOR — reconciliacao #245 / main / VPS (2026-10-08T14:52Z)
+
+| Fase | SHA | Estado |
+|---|---|---|
+| **integrado** (main) | `dd6c211d` | MERGED #245 |
+| **implantado** (erp-dev) | `dd6c211d` | rebuild spa-login; HEAD VPS = main tip |
+| **implementado** (fix nginx) | `542be525` | ancestral de main; conteúdo nginx ativo |
+| **validado VPS** (snapshots/health) | `dd6c211d` | health/ready/web 200; `base44-local-*.json` → 404 |
+| **validado browser CPA/3Z** | — | **BLOCKED** secrets `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
+
+Rollback: `erp-zuccaro-erp-api:pre-spa-login-20261008-145118` / `…-web:…`.
+Não confundir: implantado em `542be525` (pré-merge) foi supersedido pelo rebuild pós-integração `dd6c211d`.
+
+## CURSOR — Cadastros ↔ Financeiro ↔ troca de empresa (2026-10-08)
+
+Agente: lote pós-deploy independente (≠ outbox / legado / VPS).
+
+| Item | Valor |
+|---|---|
+| Branch | `cursor/cadastros-financeiro-empresa-ux-392b` |
+| Gap | Financeiro: `contextKey` só empresa\|grupo; seleção residual CR/CP; janela sem scope; sem banner sem contexto |
+| Fix | `buildMultiempresaQueryScopeKey` + `buildFinanceiroTitulosScopeSwitchReset`; wire Financeiro + ContasReceber/Pagar |
+| Testes | `financeiro-empresa-switch-ux` + launchpad/inventory/contexto/cadastros-empresa → **47/47** |
+| Deploy VPS | **não** neste lote |
+
+**HUMAN_NEXT browser:** hard refresh → CPA/3Z → Cadastros Empresas → Financeiro (seleção/baixa não deve cruzar empresa).
+
 ## CURSOR — deploy erp-dev `542be525` nginx 404-all (2026-10-08)
 
 | Fase | Estado |
@@ -22,6 +49,7 @@ Agente: validação pós-deploy erp-dev `85049afd` encontrou gap: só `snapshot`
 | Deploy VPS | após merge/CI — rebuild web |
 
 **≠** lote Financeiro UX / outbox / legado.
+
 
 ## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
@@ -65,6 +93,7 @@ Antes do rebuild 13:34Z a VPS ainda estava em NONE (SPA last-mod 2026-09-27; sna
 | Defeito tratado | nginx passa a **404** nos paths legados (não mascarar com SPA) |
 | Parecer Codex | #236 `6581cfec` — APROVAR runbook (sem rewrite) |
 | Evidência | `docs/vps/evidence/validacao-pos-deploy-9a277011-20261008.txt` |
+
 
 ## ACESSO VPS CANÔNICO (2026-10-08)
 

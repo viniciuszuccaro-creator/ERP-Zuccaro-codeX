@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +22,10 @@ import TabelaPagar from "./contas-pagar/TabelaPagar";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
+import {
+  buildFinanceiroQueryScopeKey,
+  buildFinanceiroTitulosScopeSwitchReset,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
@@ -29,7 +33,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const { hasPermission } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const scopeKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
+  const contextoValido = scopeKey !== 'sem-contexto';
   const podeVisualizarPagar = hasPermission('Financeiro','ContaPagar','visualizar') || hasPermission('Financeiro', null, 'visualizar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaPagar', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
@@ -65,9 +70,21 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
     observacoes: ""
   });
 
+  const previousScopeRef = useRef(scopeKey);
+  useEffect(() => {
+    if (previousScopeRef.current === scopeKey) return;
+    previousScopeRef.current = scopeKey;
+    const reset = buildFinanceiroTitulosScopeSwitchReset('pagar');
+    setContasSelecionadas(reset.contasSelecionadas);
+    setContaAtual(reset.contaAtual);
+    setDialogBaixaOpen(reset.dialogBaixaOpen);
+    setDadosBaixa(reset.dadosBaixa);
+  }, [scopeKey]);
+
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
+    queryKey: ['empresas', scopeKey],
     queryFn: () => base44.entities.Empresa.list(),
+    enabled: contextoValido,
   });
 
   const auditarFinanceiro = async ({ acao, entidade, registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {

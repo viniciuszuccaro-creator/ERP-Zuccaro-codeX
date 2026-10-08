@@ -17,7 +17,10 @@ import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunc
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
 
 import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
-import { canViewFinanceLaunchpadModule } from "@/components/financeiro/financeiroLaunchpadAccess";
+import {
+  canViewFinanceLaunchpadModule,
+  buildFinanceiroQueryScopeKey,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
 
@@ -54,7 +57,10 @@ export default function Financeiro() {
     getFiltroContexto
   } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || empresasDoGrupo?.[0]?.group_id || null;
-  const contextKey = empresaAtual?.id || groupId || 'sem-contexto';
+  const contextKey = buildFinanceiroQueryScopeKey({
+    groupId,
+    empresaId: empresaAtual?.id || null,
+  });
   const contextoValido = contextKey !== 'sem-contexto';
 
   const { data: contasReceber = [] } = useQuery({
@@ -451,7 +457,7 @@ export default function Financeiro() {
           title: module.windowTitle,
           width: module.width,
           height: module.height,
-          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
+          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}-${contextKey}`
         }
       );
     });
@@ -485,7 +491,16 @@ export default function Financeiro() {
           <ModuleTabs
             moduleName="Financeiro"
             listagem={
-              allowedAllModules.length === 0 ? (
+              !contextoValido ? (
+                <div
+                  role="alert"
+                  className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                  data-permission="Financeiro.visualizar"
+                >
+                  Selecione um grupo ou empresa no seletor multiempresa antes de operar o Financeiro.
+                  Consultas e abertura de seções ficam bloqueadas sem contexto.
+                </div>
+              ) : allowedAllModules.length === 0 ? (
                 <div
                   role="alert"
                   className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"

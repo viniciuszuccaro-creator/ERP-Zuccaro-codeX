@@ -6,6 +6,8 @@
  *   (antes o filtro só por seção escondia o grid inteiro).
  * - Árvore granular por seção: só cards com grant explícito na seção.
  */
+import { buildMultiempresaQueryScopeKey } from '../lib/contextoMultiempresaPolicy.js';
+
 export const FINANCEIRO_LAUNCHPAD_MODULE_TITLES = Object.freeze([
   'Caixa Central',
   'Formas de Pagamento',
@@ -23,6 +25,8 @@ export const FINANCEIRO_LAUNCHPAD_MODULE_TITLES = Object.freeze([
   'Régua de Cobrança IA',
   'Rateio Multi-Empresa',
 ]);
+
+export { buildMultiempresaQueryScopeKey as buildFinanceiroQueryScopeKey };
 
 function hasView(hasPermission, section) {
   return (
@@ -47,4 +51,49 @@ export function canViewFinanceLaunchpadModule(hasPermission, module, options = {
   if (!anySectionGranted) return true;
   // Árvore granular: esta seção não tem grant.
   return false;
+}
+
+const emptyBaixaReceber = () => ({
+  data_recebimento: new Date().toISOString().split('T')[0],
+  valor_recebido: 0,
+  forma_recebimento: 'PIX',
+  juros: 0,
+  multa: 0,
+  desconto: 0,
+  observacoes: '',
+});
+
+const emptyBaixaPagar = () => ({
+  data_pagamento: new Date().toISOString().split('T')[0],
+  valor_pago: 0,
+  forma_pagamento: 'PIX',
+  juros: 0,
+  multa: 0,
+  desconto: 0,
+  observacoes: '',
+});
+
+/**
+ * Troca de grupo/empresa em Contas a Receber/Pagar: zera seleção residual,
+ * fecha diálogos e limpa rascunho de baixa (sem preservar IDs cross-tenant).
+ */
+export function buildFinanceiroTitulosScopeSwitchReset(kind = 'receber') {
+  const base = {
+    contasSelecionadas: [],
+    contaAtual: null,
+    dialogBaixaOpen: false,
+  };
+  if (kind === 'pagar') {
+    return { ...base, dadosBaixa: emptyBaixaPagar() };
+  }
+  return {
+    ...base,
+    gerarCobrancaDialogOpen: false,
+    simularPagamentoDialogOpen: false,
+    gerarLinkDialogOpen: false,
+    contaParaCobranca: null,
+    contaParaSimulacao: null,
+    contaParaLink: null,
+    dadosBaixa: emptyBaixaReceber(),
+  };
 }
