@@ -1,5 +1,7 @@
-import React, { useState, useEffect, Suspense } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import { base44, isHttpBackendMode } from "@/api/base44Client";
+import { createHttpApiClient } from "@/api/httpApiClient";
+import { readErpHttpSession } from "@/api/erpHttpSession";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   User,
   Building2,
@@ -32,6 +35,10 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
+import {
+  buildClienteSugestaoVinculoBanner,
+  documentoProntoParaSugestao,
+} from "./clienteSugestaoVinculoUi";
 
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 const HistoricoOrigemCliente = React.lazy(() => import("@/components/comercial/HistoricoOrigemCliente"));
@@ -87,13 +94,68 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     updateInContext,
     deleteInContext
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);
   const podeCriar = canCreate("Cadastros", "Cliente") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Cliente") || canDelete("Cadastros", null);
+  const podeVerCliente = hasPermission("Cadastros", "Cliente", "visualizar")
+    || hasPermission("Cadastros", null, "visualizar");
+  const [sugestaoBanner, setSugestaoBanner] = useState(() => buildClienteSugestaoVinculoBanner({}));
+  const sugestaoAbortRef = useRef(null);
+
+  const consultarSugestaoVinculo = React.useCallback(async (documentoRaw) => {
+    const doc = documentoProntoParaSugestao(documentoRaw);
+    if (!doc) {
+      setSugestaoBanner(buildClienteSugestaoVinculoBanner({
+        ok: true,
+        data: { sugestao: false, motivo: 'documento_ausente', mescla: 'proibida' },
+      }));
+      return;
+    }
+    if (!isHttpBackendMode || !contextoValido || !podeVerCliente || cliente?.id) {
+      setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
+      return;
+    }
+    const session = readErpHttpSession();
+    if (!session?.token || !session?.groupId || !session?.actorId) {
+      setSugestaoBanner(buildClienteSugestaoVinculoBanner({ ok: false, status: 401 }));
+      return;
+    }
+    if (sugestaoAbortRef.current) sugestaoAbortRef.current.abort();
+    const controller = new AbortController();
+    sugestaoAbortRef.current = controller;
+    try {
+      const api = createHttpApiClient({
+        getScope: () => ({
+          token: session.token,
+          groupId: session.groupId,
+          empresaId: empresaAtual?.id || session.empresaId || null,
+          actorId: session.actorId,
+          actorEmail: session.email || null,
+        }),
+      }).clientes;
+      const body = await api.sugestaoVinculo({ documento: doc, signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setSugestaoBanner(buildClienteSugestaoVinculoBanner({ ok: true, data: body?.data || body }));
+    } catch (error) {
+      if (controller.signal.aborted || error?.name === 'AbortError') return;
+      setSugestaoBanner(buildClienteSugestaoVinculoBanner({
+        ok: false,
+        status: error?.status || 0,
+        errorCode: error?.code || null,
+      }));
+    }
+  }, [cliente?.id, contextoValido, empresaAtual?.id, podeVerCliente]);
+
+  useEffect(() => {
+    setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
+    return () => {
+      if (sugestaoAbortRef.current) sugestaoAbortRef.current.abort();
+    };
+  }, [contextKey, groupId, empresaAtual?.id]);
 
   const [formData, setFormData] = useState(cliente || {
     tipo: "Pessoa Física",
@@ -573,6 +635,26 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
+              {sugestaoBanner.visible && !cliente?.id && (
+                <Alert
+                  className={
+                    sugestaoBanner.tone === 'match'
+                      ? 'border-amber-300 bg-amber-50'
+                      : 'border-slate-300 bg-slate-50'
+                  }
+                  data-action="cliente-sugestao-vinculo"
+                  data-sugestao-tone={sugestaoBanner.tone}
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-semibold text-sm">{sugestaoBanner.title}</p>
+                    <p className="text-sm mt-1">{sugestaoBanner.detail}</p>
+                    <p className="text-xs mt-2 text-slate-600">
+                      Esta tela não mescla cadastros. Use o cliente existente ou revise com autorização.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="tipo">Tipo de Pessoa *</Label>
@@ -643,8 +725,15 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="cnpj"
                         value={formData.cnpj}
-                        onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, cnpj: e.target.value });
+                          if (!documentoProntoParaSugestao(e.target.value)) {
+                            setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
+                          }
+                        }}
+                        onBlur={() => { void consultarSugestaoVinculo(formData.cnpj); }}
                         placeholder="00.000.000/0000-00"
+                        data-action="cliente-cnpj"
                       />
                     </div>
 
@@ -685,8 +774,15 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="cpf"
                         value={formData.cpf}
-                        onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, cpf: e.target.value });
+                          if (!documentoProntoParaSugestao(e.target.value)) {
+                            setSugestaoBanner(buildClienteSugestaoVinculoBanner({}));
+                          }
+                        }}
+                        onBlur={() => { void consultarSugestaoVinculo(formData.cpf); }}
                         placeholder="000.000.000-00"
+                        data-action="cliente-cpf"
                       />
                     </div>
 
