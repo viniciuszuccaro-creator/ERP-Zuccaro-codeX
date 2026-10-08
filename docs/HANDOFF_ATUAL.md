@@ -1,3 +1,13 @@
+## CURSOR — CI verde #248/#249 (2026-10-08T17:33Z)
+
+| PR | Tip CI | frontend/backend |
+|---|---|---|
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | **PASS** |
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | tip branch incl. `9c19da80` | **PASS** |
+| implantado erp-dev | `b81bc1cd` | — |
+
+Aguarda review/merge. Persistência save Empresa segue BLOCKED.
+
 ## CURSOR — tip implantado `b81bc1cd` (2026-10-08T17:30Z)
 
 | Pacote | Tip | PR | Estado |
