@@ -1,3 +1,34 @@
+## CURSOR — implantado erp-dev `542be525` (2026-10-08T14:24Z)
+
+| Item | Valor |
+|---|---|
+| **implantado** | **`542be525`** · PR [#245](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/245) |
+| Anterior | `85049afd` (#243) — superseded |
+| Smoke | health/ready/web **200** · RUNTIME-08B · supabase_user |
+| Snapshots `base44-local-*.json` | **404** JSON (clientes/produtos/empresas/snapshot/core) via HTTPS público |
+| Rollback tags | `pre-spa-login-20261008-142359` (api+web) |
+| Evidência | `docs/vps/evidence/deploy-542be525-snapshot-404-all-20261008.txt` |
+| Browser CPA/3Z | **BLOCKED** sem `ERP_DEV_LOGIN_EMAIL`/`PASSWORD` |
+| Legado destino | runtime **`542be525`**; sem mapper paralelo; sem vínculos sem prova |
+
+> `implantado=9a277011` / `NONE` abaixo = histórico.
+
+## CURSOR — validação pós-deploy + gap snapshots (2026-10-08)
+
+| Item | Valor |
+|---|---|
+| **implantado erp-dev** | `85049afd` (main #243+#244) · web/api rebuilt ~14:12Z |
+| health/ready :3080/:3081 | **200** ok/ready |
+| HTTPS público | SPA 200; `/api/health`/`ready` 401 AUTH_REQUIRED (edge) |
+| Snapshots canônicos | `/base44-local-snapshot.json` + `core` → **404** |
+| Gap encontrado | `/base44-local-clientes|produtos|empresas.json` → **200 HTML SPA** (não JSON) |
+| Correção | branch `cursor/spa-snapshot-paths-404-all-392b` (regex 404 todos `base44-local-*.json`) |
+| Browser CPA/3Z | **BLOCKED** sem `ERP_DEV_LOGIN_EMAIL`/`PASSWORD` no Environment |
+| Lote UX indep | `cursor/cadastros-financeiro-empresa-ux-392b` SHA `ec27b9f7` (PR a abrir) |
+| Legado destino | erp-dev **85049afd**; sem vínculos empresariais sem prova; mapper não duplicar |
+
+> Histórico abaixo com `implantado=NONE` / `9a277011` é **superseded** por esta seção.
+
 ## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)

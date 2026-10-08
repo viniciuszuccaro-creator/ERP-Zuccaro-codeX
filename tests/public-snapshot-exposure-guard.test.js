@@ -15,10 +15,18 @@ test('real ERP snapshots are not shipped as public assets', () => {
   assert.doesNotMatch(read('src/api/localBase44Client.js'), /sourceUrl\s*=\s*['"]\//);
 });
 
-test('nginx SPA denies legacy public snapshot paths with 404 (not HTML fallback)', () => {
+test('nginx SPA denies all legacy base44-local-*.json paths with 404 (not HTML fallback)', () => {
   const nginx = read('deploy/nginx-erp.conf');
-  assert.match(nginx, /location\s+=\s+\/base44-local-snapshot\.json\s*\{\s*return\s+404;/);
-  assert.match(nginx, /location\s+=\s+\/base44-local-core-snapshot\.json\s*\{\s*return\s+404;/);
+  // Regex única: snapshot, core-snapshot, clientes, produtos, empresas, etc.
+  assert.match(
+    nginx,
+    /location\s+~\s+\^\/base44-local-\[\^\/\]\+\\.json\$\s*\{[\s\S]*?return\s+404/,
+  );
+  assert.doesNotMatch(nginx, /location\s+=\s+\/base44-local-clientes\.json/);
+  // try_files SPA não deve ser a única resposta para esses paths
+  const denyBlock = nginx.match(/location\s+~\s+\^\/base44-local-\[\^\/\]\+\\.json\$\s*\{[\s\S]*?\}/);
+  assert.ok(denyBlock, 'bloco location base44-local-*.json ausente');
+  assert.doesNotMatch(denyBlock[0], /try_files/);
 });
 
 test('local recovery requires a selected file and never fetches a public snapshot', () => {
