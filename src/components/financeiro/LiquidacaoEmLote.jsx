@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,13 +8,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { toast } from 'sonner';
+import { buildFinanceiroQueryScopeKey } from '@/components/financeiro/financeiroLaunchpadAccess';
 
 /**
  * V22.0 ETAPA 4 - Liquidação em Lote
  * Permite liquidar múltiplas contas simultaneamente com diferentes critérios
  */
 export default function LiquidacaoEmLote({ onClose }) {
-  const { filterInContext, updateInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const [tipo, setTipo] = useState('receber'); // 'receber' ou 'pagar'
@@ -24,10 +25,21 @@ export default function LiquidacaoEmLote({ onClose }) {
     cliente: '',
     vencimento: 'todos',
   });
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
+  const contextoValido = scopeKey !== 'sem-contexto';
+  const previousScopeRef = useRef(scopeKey);
+  useEffect(() => {
+    if (previousScopeRef.current === scopeKey) return;
+    previousScopeRef.current = scopeKey;
+    setSelecionados([]);
+    setFiltros({ forma: 'todos', cliente: '', vencimento: 'todos' });
+  }, [scopeKey]);
 
   // Buscar contas pendentes
   const { data: contas = [] } = useQuery({
-    queryKey: ['liquidacao-lote', tipo, filtros],
+    queryKey: ['liquidacao-lote', scopeKey, tipo, filtros],
     queryFn: () => {
       const query = { status: 'Pendente' };
       if (filtros.forma !== 'todos') {
@@ -38,6 +50,7 @@ export default function LiquidacaoEmLote({ onClose }) {
       }
       return filterInContext(tipo === 'receber' ? 'ContaReceber' : 'ContaPagar', query, '-data_vencimento', 100);
     },
+    enabled: contextoValido,
   });
 
   // Mutation para liquidar em lote

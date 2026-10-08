@@ -75,7 +75,7 @@ const AuthenticatedApp = () => {
     }
     return (
       <UserNotRegisteredError
-        title="Sessão inválida"
+        title={supportsPasswordLogin ? 'Entrar no ERP' : 'Sessão inválida'}
         message={supportsPasswordLogin
           ? 'Entre com e-mail e senha do usuário Auth (supabase_user) para acessar o ERP.'
           : 'Faça login novamente. Usuário não autenticado não acessa dados internos.'}

@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import { useWindow } from "@/components/lib/useWindow";
+import { buildFinanceiroQueryScopeKey } from "@/components/financeiro/financeiroLaunchpadAccess";
 import CaixaCentralHeader from "./caixa-central/CaixaCentralHeader";
 import KPIsFinanceiros from "./caixa-central/KPIsFinanceiros";
 import DistribuicaoFormasPagamento from "./caixa-central/DistribuicaoFormasPagamento";
@@ -29,8 +30,8 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
+  const contextoValido = contextKey !== "sem-contexto";
   const canViewCaixa = hasPermission("Financeiro", "Caixa", "visualizar")
     || hasPermission("Financeiro", "Caixa Central", "visualizar")
     || hasPermission("Financeiro", null, "visualizar")

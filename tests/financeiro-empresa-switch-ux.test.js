@@ -58,6 +58,11 @@ test('wire: Financeiro + tabs usam scope canônico e reset na troca', async () =
   const receber = await readFile(new URL('../src/components/financeiro/ContasReceberTab.jsx', import.meta.url), 'utf8');
   const pagar = await readFile(new URL('../src/components/financeiro/ContasPagarTab.jsx', import.meta.url), 'utf8');
   const viz = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  const caixa = await readFile(new URL('../src/components/financeiro/CaixaCentralLiquidacao.jsx', import.meta.url), 'utf8');
+  const cartoes = await readFile(new URL('../src/components/financeiro/CartoesACompensar.jsx', import.meta.url), 'utf8');
+  const concil = await readFile(new URL('../src/components/financeiro/ConciliacaoBancariaTab.jsx', import.meta.url), 'utf8');
+  const lote = await readFile(new URL('../src/components/financeiro/LiquidacaoEmLote.jsx', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
 
   assert.match(fin, /buildFinanceiroQueryScopeKey/);
   assert.match(fin, /uniqueKey:.*contextKey/);
@@ -65,4 +70,9 @@ test('wire: Financeiro + tabs usam scope canônico e reset na troca', async () =
   assert.match(receber, /buildFinanceiroTitulosScopeSwitchReset\(['"]receber['"]\)/);
   assert.match(pagar, /buildFinanceiroTitulosScopeSwitchReset\(['"]pagar['"]\)/);
   assert.match(viz, /buildCadastroScopeSwitchReset/);
+  assert.match(caixa, /buildFinanceiroQueryScopeKey/);
+  assert.match(cartoes, /buildFinanceiroQueryScopeKey/);
+  assert.match(concil, /setContaSelecionadaId\(""\)/);
+  assert.match(lote, /queryKey:\s*\['liquidacao-lote',\s*scopeKey/);
+  assert.match(app, /Entrar no ERP/);
 });

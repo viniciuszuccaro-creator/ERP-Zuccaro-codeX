@@ -1,3 +1,17 @@
+## CURSOR — estado vivo pós-validação (2026-10-08T14:25Z)
+
+| Item | Valor |
+|---|---|
+| **implantado erp-dev** | **`542be525`** (branch #245 nginx 404-all; detached) |
+| Anterior | `85049afd` (#243) — superseded |
+| health/ready/web | **200** · RUNTIME-08B · supabase_user |
+| Snapshots `base44-local-*.json` | **404** application/json (clientes/produtos/empresas/snapshot/core) |
+| Browser CPA/3Z | **BLOCKED** — Environment sem `ERP_DEV_LOGIN_*` (pedido ao usuário) |
+| Lote UX | `cursor/cadastros-financeiro-empresa-ux-392b` (rebase main; PR) |
+| Legado destino | runtime **`542be525`**; contratos #231/#226/#225/#203/#237/#239/#242/#243/#245; **não** duplicar mapper; **não** vínculos sem prova |
+
+> Seções abaixo com `implantado=9a277011` / `NONE` são **históricas**.
+
 ## CURSOR — reconciliacao #245 / main / VPS (2026-10-08T14:52Z)
 
 | Fase | SHA | Estado |
@@ -10,6 +24,7 @@
 
 Rollback: `erp-zuccaro-erp-api:pre-spa-login-20261008-145118` / `…-web:…`.
 Não confundir: implantado em `542be525` (pré-merge) foi supersedido pelo rebuild pós-integração `dd6c211d`.
+
 
 ## CURSOR — Cadastros ↔ Financeiro ↔ empresa UX (2026-10-08)
 

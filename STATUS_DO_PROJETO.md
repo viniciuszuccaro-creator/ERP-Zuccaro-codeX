@@ -13,19 +13,17 @@ Não confundir: implantado em `542be525` (pré-merge) foi supersedido pelo rebui
 
 ## CURSOR — Cadastros ↔ Financeiro ↔ troca de empresa (2026-10-08)
 
-Agente: lote pós-deploy independente (≠ outbox / legado / VPS).
+Agente: lote pós-deploy independente (≠ outbox / legado / #245 snapshots).
 
 | Item | Valor |
 |---|---|
 | Branch | `cursor/cadastros-financeiro-empresa-ux-392b` |
-| SHA | `ec27b9f7` |
-| Gap | Financeiro: `contextKey` só empresa\|grupo; seleção residual CR/CP; janela sem scope; sem banner sem contexto |
-| Fix | `buildMultiempresaQueryScopeKey` + `buildFinanceiroTitulosScopeSwitchReset`; wire Financeiro + ContasReceber/Pagar |
-| Testes | `financeiro-empresa-switch-ux` + launchpad/inventory/contexto/cadastros-empresa → **47/47** |
-| PR | **BLOCKED** createPullRequest (integration / ManagePullRequest ausente); abrir: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/cadastros-financeiro-empresa-ux-392b |
-| Deploy VPS | **não** neste lote |
-
-**HUMAN_NEXT browser:** hard refresh → CPA/3Z → Cadastros Empresas → Financeiro (seleção/baixa não deve cruzar empresa).
+| Base | main `fa868f82` (rebase) |
+| Gap | scope fraco Financeiro; seleção residual CR/CP; Caixa/Cartões/Conciliação/Liquidação lote; título "Sessão inválida" no login |
+| Fix | `buildFinanceiroQueryScopeKey` + reset títulos; wire CaixaCentral/Cartoes/Conciliacao/LiquidacaoEmLote; App título "Entrar no ERP" |
+| Testes | financeiro-empresa-switch-ux + launchpad + snapshot-guard → **18/18** focados |
+| PR | a publicar neste push |
+| Deploy VPS | **não** (código UX); runtime VPS = `542be525` (#245 nginx) |
 
 ## CURSOR — deploy erp-dev `542be525` nginx 404-all (2026-10-08)
 

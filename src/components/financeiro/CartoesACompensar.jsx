@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { buildFinanceiroQueryScopeKey } from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function CartoesACompensar() {
   const queryClient = useQueryClient();
@@ -19,8 +20,14 @@ export default function CartoesACompensar() {
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
   const contextoValido = contextKey !== "sem-contexto";
+  const previousScopeRef = useRef(contextKey);
+  useEffect(() => {
+    if (previousScopeRef.current === contextKey) return;
+    previousScopeRef.current = contextKey;
+    setFiltroStatus("todos");
+  }, [contextKey]);
   const canViewCartoes = hasPermission("Financeiro", "Cartoes", "visualizar") ||
     hasPermission("Financeiro", "Caixa Central", "visualizar") ||
     hasPermission("Financeiro", null, "visualizar");
