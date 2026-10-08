@@ -19,9 +19,10 @@
 # Browser (computerUse) em https://erp-dev.cpaferroeaco.com.br :
 #   PASS  listagem /Empresas mostra CPA + 3Z com CNPJ
 #   PASS  Financeiro cards: Contas a Receber verde ≠ Régua violeta
-#   PARTIAL / FAIL interação seletor e botão Editar — cliques capturados
-#           por overlays do Chrome (Translate/Lens/bookmarks); handlers no
-#           bundle (data-action=empresa-edit|empresa-switcher|window-close).
+#   PASS  seletor Grupo/Empresa via data-action=empresa-switcher (JS click)
+#         lista Grupo CPA + 3Z + CPA (screenshot empresa-switcher-cpa-3z)
+#   FAIL  botão Editar via automation (selector/timing); atributo no bundle;
+#         validação humana pendente.
 #
 # Testes locais:
 #   node --test tests/erp-http-session.test.js tests/financeiro-navegacao-inventory.test.js → 26/26
