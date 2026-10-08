@@ -3,7 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
-import { buildMultiempresaReadFilter, entityRequiresEmpresaOnWrite, normalizeMultiempresaContext, resolveEmpresaIdOnWrite, validateMultiempresaContext } from "./contextoMultiempresaPolicy";
+import {
+  buildMultiempresaReadFilter,
+  entityRequiresEmpresaOnWrite,
+  normalizeMultiempresaContext,
+  resolveEmpresaIdOnWrite,
+  TENANT_MASTER_ENTITIES,
+  validateMultiempresaContext,
+} from "./contextoMultiempresaPolicy";
 
 export function useContextoVisual() {
   const { user, isLoading: loadingUser } = useUser();
@@ -251,10 +258,12 @@ export function useContextoVisual() {
     const empresaId = contextoCanonico.scopeType === 'empresa'
       ? contextoCanonico.empresaId
       : (filtroEmpresa !== 'todas' ? filtroEmpresa : null);
+    // Nunca usar group_id/grupo_id como "campo de empresa" — sobrescreveria o grupo.
+    const stampEmpresaField = Boolean(campo && campo !== 'group_id' && campo !== 'grupo_id');
     return {
       ...dados,
       ...(!dados?.group_id ? { group_id: contextoCanonico.groupId } : {}),
-      ...(empresaId && !dados?.[campo] ? { [campo]: empresaId } : {}),
+      ...(stampEmpresaField && empresaId && !dados?.[campo] ? { [campo]: empresaId } : {}),
     };
   };
 
@@ -404,13 +413,12 @@ export function useContextoVisual() {
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
                    const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
                    const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
-                   const MASTER_GROUP_SET = new Set(['Empresa', 'GrupoEmpresarial']);
                    const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
 
                    // Cadastro mestre de Empresa/Grupo: sempre ler pelo groupId canônico.
                    // Nunca usar getFiltroContexto('group_id') — em escopo empresa isso
                    // sobrescreve group_id com o UUID da empresa e esvazia a lista.
-                   if (MASTER_GROUP_SET.has(entityName)) {
+                   if (TENANT_MASTER_ENTITIES.includes(entityName)) {
                      const masterGroupId = contextoCanonico.groupId;
                      if (!masterGroupId) return [];
                      let sortField;

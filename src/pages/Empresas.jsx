@@ -123,12 +123,36 @@ export default function Empresas() {
     }
   };
 
+  const REGIMES = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI'];
+  const TIPOS = ['Matriz', 'Filial'];
+
   const handleEdit = (empresa) => {
     setEditingEmpresa(empresa);
     setFormData({
-      ...empresa,
-      endereco: empresa.endereco || { logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "" },
-      contato: empresa.contato || { telefone: "", email: "" }
+      razao_social: empresa.razao_social || '',
+      nome_fantasia: empresa.nome_fantasia || '',
+      cnpj: empresa.cnpj || '',
+      inscricao_estadual: empresa.inscricao_estadual || '',
+      regime_tributario: REGIMES.includes(empresa.regime_tributario)
+        ? empresa.regime_tributario
+        : 'Simples Nacional',
+      tipo: TIPOS.includes(empresa.tipo) ? empresa.tipo : 'Matriz',
+      endereco: {
+        logradouro: '',
+        numero: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        ...(empresa.endereco || {}),
+      },
+      contato: {
+        telefone: '',
+        email: '',
+        ...(empresa.contato || {}),
+      },
+      status: empresa.status || 'Ativa',
+      permite_emissao_fiscal: empresa.permite_emissao_fiscal !== false,
     });
     setIsDialogOpen(true);
   };
@@ -287,10 +311,17 @@ export default function Empresas() {
               defaultValues={formData}
               withContext={false}
               onSubmit={(values) => {
+                const groupId = editingEmpresa?.group_id
+                  || editingEmpresa?.grupo_id
+                  || groupIdCadastro;
+                const payload = {
+                  ...values,
+                  ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+                };
                 if (editingEmpresa) {
-                  updateMutation.mutate({ id: editingEmpresa.id, data: values });
+                  updateMutation.mutate({ id: editingEmpresa.id, data: payload });
                 } else {
-                  createMutation.mutate(values);
+                  createMutation.mutate(payload);
                 }
               }}
             >

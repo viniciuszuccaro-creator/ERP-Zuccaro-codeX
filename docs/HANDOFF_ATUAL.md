@@ -1,3 +1,13 @@
+## CURSOR — Empresas save regime + carimbar group_id (2026-10-08T17:25Z)
+
+| Item | Estado |
+|---|---|
+| tip | tip local pós-regime/carimbar (base `2e50ee33` implantado) |
+| lista escopo empresa | PASS edits=2 |
+| save falhava | regime_tributario vazio no edit + carimbar `group_id`←empresaId |
+| fix | defaults REGIMES/TIPOS no handleEdit; carimbar não estampa group_id como campo empresa; payload preserva group_id |
+| testes | empresas-dialog-edit + contexto-multiempresa-policy PASS |
+
 ## CURSOR — Empresas lista no escopo empresa (2026-10-08T17:22Z)
 
 Causa: `filterInContext('Empresa', …, 'group_id')` + `getFiltroContexto('group_id')` sobrescrevia `group_id` com UUID da empresa → lista vazia sem Editar.

@@ -175,8 +175,9 @@ test('existing multiempresa call sites fail closed against cross-company leak', 
   assert.match(entityReadApi, /applyReadScope/);
   assert.doesNotMatch(policy, /if \(filter\.\$or \|\| filter\.\$and\) return filter/);
   assert.match(visual, /buildMultiempresaReadFilter/);
-  assert.match(visual, /MASTER_GROUP_SET/);
+  assert.match(visual, /TENANT_MASTER_ENTITIES/);
   assert.match(visual, /Cadastro mestre de Empresa\/Grupo/);
+  assert.match(visual, /stampEmpresaField/);
   assert.doesNotMatch(visual, /Empresa\.list\(\)/);
   assert.match(visual, /item\[campo\] === filtroEmpresa \|\| item\.empresa_id === filtroEmpresa/);
   assert.match(visual, /Sem contexto valido: fail-closed/);
