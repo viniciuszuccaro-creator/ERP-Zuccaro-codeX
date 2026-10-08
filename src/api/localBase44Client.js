@@ -394,20 +394,25 @@ export function upsertHttpTenantLocalMirror(input = {}) {
     if (!id) return;
     const nome = String(row.nome_fantasia || row.razao_social || 'Empresa').trim() || 'Empresa';
     const razao = String(row.razao_social || row.nome_fantasia || nome).trim() || nome;
+    const cnpjRaw = row?.cnpj == null ? '' : String(row.cnpj).trim();
     const idx = empresaStore.findIndex((item) => String(item.id) === id);
+    const prev = idx >= 0 ? empresaStore[idx] : null;
+    // CNPJ do servidor (sessão) prevalece; se ausente, preserva o já espelhado (não apagar).
+    const cnpj = cnpjRaw || (prev?.cnpj ? String(prev.cnpj) : '');
     const next = {
       id,
       nome_fantasia: nome,
       razao_social: razao,
+      cnpj,
       group_id: groupId,
       grupo_id: groupId,
       status: String(row.status || 'Ativa'),
-      tipo: 'Matriz',
+      tipo: prev?.tipo || 'Matriz',
       ativo: true,
       updated_date: now(),
-      created_date: idx >= 0 ? (empresaStore[idx].created_date || now()) : now(),
+      created_date: prev?.created_date || now(),
     };
-    if (idx >= 0) empresaStore[idx] = { ...empresaStore[idx], ...next };
+    if (idx >= 0) empresaStore[idx] = { ...prev, ...next };
     else empresaStore.push(next);
     mirroredEmpresas += 1;
   };

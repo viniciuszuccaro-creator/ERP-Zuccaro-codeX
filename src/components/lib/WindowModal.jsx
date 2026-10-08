@@ -137,9 +137,11 @@ export default function WindowModal({ window, children }) {
         style={{ touchAction: 'none', userSelect: 'none' }}
       >
         <h3 className="font-semibold text-sm truncate flex-1 pointer-events-none">{window.title}</h3>
-        <div className="window-controls flex items-center gap-1">
+        <div className="window-controls flex items-center gap-1 relative z-20">
           <button
+            type="button"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               minimizeWindow(window.id);
             }}
@@ -149,7 +151,9 @@ export default function WindowModal({ window, children }) {
             <Minus className="w-4 h-4" />
           </button>
           <button
+            type="button"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               toggleMaximize(window.id);
             }}
@@ -163,12 +167,16 @@ export default function WindowModal({ window, children }) {
             )}
           </button>
           <button
+            type="button"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               closeWindow(window.id);
             }}
             className="p-1.5 hover:bg-red-600 rounded transition-colors"
             title="Fechar"
+            aria-label="Fechar janela"
+            data-action="window-close"
           >
             <X className="w-4 h-4" />
           </button>

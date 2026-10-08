@@ -464,20 +464,30 @@ export default function Empresas() {
                   <TableCell>
                     <div className="flex items-center justify-center gap-1">
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => setViewingEmpresa(empresa)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingEmpresa(empresa);
+                        }}
                         title="Ver detalhes"
+                        data-action="empresa-view"
                       >
                         <Eye className="w-4 h-4 text-blue-600" />
                       </Button>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => handleEdit(empresa)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(empresa);
+                        }}
                         title="Editar"
+                        data-action="empresa-edit"
                       >
                         <Edit className="w-4 h-4 text-slate-600" />
                       </Button>

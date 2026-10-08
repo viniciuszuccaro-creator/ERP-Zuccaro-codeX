@@ -30,12 +30,14 @@ test('createPasswordAuthSession troca senha por Bearer e lista perfis ativos', a
             group_id: groupId,
             razao_social: 'CPA Ferro e Aco LTDA',
             nome_fantasia: 'CPA ferro e aço',
+            cnpj: '67.370.123/0001-99',
             status: 'Ativa',
           }, {
             id: '55555555-5555-4555-8555-555555555555',
             group_id: groupId,
             razao_social: '3Z LTDA',
             nome_fantasia: '3Z LTDA',
+            cnpj: '05431234000188',
             status: 'Ativa',
           }],
         };
@@ -76,6 +78,8 @@ test('createPasswordAuthSession troca senha por Bearer e lista perfis ativos', a
   assert.equal(session.profiles[0].groupName, 'Grupo CPA');
   assert.equal(session.profiles[0].empresas.length, 2);
   assert.equal(session.profiles[0].empresas[0].nome_fantasia, 'CPA ferro e aço');
+  assert.equal(session.profiles[0].empresas[0].cnpj, '67.370.123/0001-99');
+  assert.equal(session.profiles[0].empresas[1].cnpj, '05431234000188');
   assert.deepEqual(session.profiles[0].permissoes, {});
 });
 
@@ -177,10 +181,10 @@ test('tenant session: company admin A, group owner A/B, inactive and cross-group
   const c = '77777777-7777-4777-8777-777777777777';
   try {
     await db.exec(`CREATE TABLE groups(id uuid, nome_do_grupo text);
-      CREATE TABLE empresas(id uuid, group_id uuid, razao_social text, nome_fantasia text, status text);
+      CREATE TABLE empresas(id uuid, group_id uuid, razao_social text, nome_fantasia text, cnpj text, status text);
       CREATE TABLE profiles(id uuid, auth_user_id uuid, group_id uuid, empresa_id uuid, role text, full_name text, permissoes jsonb, ativo boolean);`);
     await db.query('INSERT INTO groups VALUES ($1,$2),($3,$4)', [group,'Synthetic group',other,'Other']);
-    for (const [id,g] of [[a,group],[b,group],[c,other]]) await db.query("INSERT INTO empresas VALUES($1,$2,'Synthetic','Synthetic','Ativa')",[id,g]);
+    for (const [id,g] of [[a,group],[b,group],[c,other]]) await db.query("INSERT INTO empresas VALUES($1,$2,'Synthetic','Synthetic','12345678000199','Ativa')",[id,g]);
     await db.query("INSERT INTO profiles VALUES($1,$2,$3,$4,'admin','Synthetic','{}',true)",[actor,user,group,a]);
     const fetchImpl = async () => ({ok:true,status:200,json:async()=>({id:user,email:'owner@example.com'})}) as Response;
     const adapter = {query:async(sql:string,params?:unknown[])=>db.query(sql,params)};

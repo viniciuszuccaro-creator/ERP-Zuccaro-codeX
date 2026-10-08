@@ -68,8 +68,14 @@ export default function EmpresaSwitcher() {
   const { data: empresasDisponiveis = [] } = useQuery({
     queryKey: ['empresas-usuario', user?.id, user?.grupo_atual_id, empresasDoGrupo],
     queryFn: async () => {
-      if (isHttpBackendMode) return (readErpHttpSession()?.empresas || [])
-        .filter(e => e.group_id === user?.grupo_atual_id && e.status === 'Ativa');
+      if (isHttpBackendMode) {
+        const groupId = user?.grupo_atual_id || grupoAtual?.id;
+        const fromSession = (readErpHttpSession()?.empresas || [])
+          .filter((e) => (!groupId || e.group_id === groupId) && e.status === 'Ativa');
+        // Fallback: espelho/contexto já carregado (profiles[].empresas → sessão → empresasDoGrupo).
+        if (fromSession.length > 0) return fromSession;
+        return (empresasDoGrupo || []).filter((e) => e.status === 'Ativa' || !e.status);
+      }
       if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
         const empresas = [];
         for (const rawVinculo of user.empresas_vinculadas) {

@@ -24,7 +24,7 @@ test('guard HTTP revalida Bearer/perfil; owner em grupo/A/A2, filial isolada e r
         assert.equal(values[0], AUTH_OWNER);
         return { rows: [{ id: OWNER_ID, group_id: SEED_IDS.groupA, empresa_id: company, empresa_id_raw: company, role: company ? 'user' : 'admin', full_name: 'Synthetic Owner', permissoes: permissions, group_name: 'Synthetic Group' }] };
       }
-      if (sql.includes('FROM empresas')) return { rows: [SEED_IDS.empresaA, SEED_IDS.empresaA2].filter(id => !company || id === company).map(id => ({ id, group_id: SEED_IDS.groupA, razao_social: 'Synthetic Company', nome_fantasia: null, status: 'Ativa' })) };
+      if (sql.includes('FROM empresas')) return { rows: [SEED_IDS.empresaA, SEED_IDS.empresaA2].filter(id => !company || id === company).map(id => ({ id, group_id: SEED_IDS.groupA, razao_social: 'Synthetic Company', nome_fantasia: null, cnpj: '12345678000199', status: 'Ativa' })) };
       throw new Error('Unexpected SQL');
     },
   };
