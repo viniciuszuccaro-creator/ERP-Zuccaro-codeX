@@ -1,20 +1,22 @@
-## COORDENAÇÃO CURSOR → LEGADO — versão implantada=NONE (2026-10-08)
+## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
 | Campo | Valor |
 |---|---|
-| Tarefa | Registrar coordenação Cursor: erp-dev **versão implantada = NONE** |
+| Tarefa | Registrar coordenação Cursor pós-deploy: erp-dev **implantado = `9a277011`** |
 | Agente | [bc-4427c136](https://cursor.com/agents/bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9) |
 | PR | [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211) |
-| **Versão efetivamente implantada erp-dev** | **NONE** |
-| Main GitHub | `77afbbe7` (⊇ `f0549a89` + #237) com #231/#226/#225/#203/#237 no código |
-| Evidência VPS | SPA last-modified **2026-09-27**; snapshots públicos ainda **HTTP 200**; meta **ERP-RUNTIME-08B** |
-| Contratos só em código até deploy | #226 Cadastros Organizacional · #225 Financeiro launchpad · #231 snapshots fora de public/ · #203 outbox claim UI · #237 consumer disabled |
-| Deploy | **BLOCKED** neste Cloud — SSH Permission denied; Hostinger MCP timeout; workers **0** |
-| Regras | sintético ≠ importação; **não** alterar vínculos empresariais; HD → só `executar-verifier-host-local.sh` |
+| **Versão efetivamente implantada erp-dev** | **`9a277011`** (não mais NONE) |
+| Imagens | `erp-api-dev` / `erp-web-dev` rebuild **2026-10-08T13:34Z** |
+| Smoke | health/ready/web **200** · `auth.mode=supabase_user` · **ERP-RUNTIME-08B** |
+| Snapshots JSON públicos | **AUSENTES** (SPA HTML fallback ~1958B; 0 no nginx) |
+| Contratos no destino | #231 · #226 · #225 · #203/#237 · #239 · #242 |
+| Main tip vs runtime | tip docs pode estar à frente (ex. `f6ec95bc`); **runtime VPS = `9a277011`** |
+| Regras | sintético ≠ importação; **não** alterar vínculos empresariais; HD → só verifier host-local |
 | Flags | `importAuthorized=false` · mapper #48 intocado |
-| HUMAN_NEXT deploy | Web Console rebuild main **ou** secret SSH |
-| HUMAN_NEXT Legado | PC com HD: verifier host-local; colar saída sanitizada |
-| Próximo | aguardar deploy humano → reavaliar versão implantada; verifier real no host |
+| HUMAN_NEXT Legado | PC com HD: `bash scripts/legado/executar-verifier-host-local.sh` → colar saída sanitizada |
+| Próximo | verifier real no host; sem carga operacional |
+
+Histórico pré-deploy: versão implantada=NONE (SPA 2026-09-27 / snapshots 200 / deploy BLOCKED) — superseded.
 
 ## FOLLOW-UP — Legado host-local #211 (2026-10-07)
 
@@ -22,7 +24,7 @@
 - Script: `scripts/legado/executar-verifier-host-local.sh` + teste.
 - Checksum **UNVERIFIED**; contagens reais **0** neste Cloud.
 - HUMAN_NEXT: rodar no PC com HD; colar `PASTE_TO_GIT_HOST_*` + JSON verifier.
-- Atualizado 2026-10-08: versão erp-dev implantada permanece **NONE** (ver seção acima).
+- Atualizado 2026-10-08 pós-deploy: erp-dev implantado **`9a277011`** (ver seção acima).
 
 ## FOLLOW-UP — Comercial #226 + Legado #211 (2026-10-07)
 
