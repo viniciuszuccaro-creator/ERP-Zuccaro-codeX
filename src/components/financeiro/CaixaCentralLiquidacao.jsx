@@ -1,10 +1,11 @@
 import React, { Suspense, useEffect, useRef } from "react";
-import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, AlertCircle } from "lucide-react";
+import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, AlertCircle, DollarSign } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { persistOperationalAudit } from "@/components/lib/uiAudit";
 import { useWindow } from "@/components/lib/useWindow";
 import {
@@ -24,6 +25,7 @@ const ExtratoBancarioResumo = React.lazy(() => import("./caixa-central/ExtratoBa
 const VisaoGeralPendencias = React.lazy(() => import("./caixa-central/VisaoGeralPendencias"));
 const CartoesACompensar = React.lazy(() => import("./CartoesACompensar"));
 const ConciliacaoBancariaTab = React.lazy(() => import("./ConciliacaoBancariaTab"));
+const LiquidacaoEmLote = React.lazy(() => import("./LiquidacaoEmLote"));
 
 export default function CaixaCentralLiquidacao({ windowMode = false }) {
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
@@ -103,6 +105,7 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
     { title: "Visao Geral", description: "Pendencias consolidadas", icon: List, color: "blue", component: VisaoGeralPendencias, windowTitle: "Visao Geral Pendencias", props: { contasReceber, contasPagar }, sensitive: false },
     { title: "Movimentos Diarios", description: "Fluxo de caixa diario", icon: Calendar, color: "slate", component: MovimentosDiarios, windowTitle: "Movimentos Diarios", sensitive: false },
     { title: "Liquidar", description: "Receber e pagar titulos", icon: TrendingUp, color: "green", component: LiquidarReceberPagar, windowTitle: "Liquidacao de Titulos", sensitive: true },
+    { title: "Liquidacao em Lote", description: "Baixa multipla com filtros", icon: DollarSign, color: "emerald", component: LiquidacaoEmLote, windowTitle: "Liquidacao em Lote", sensitive: true, props: { onClose: () => {} } },
     { title: "Ordens Pendentes", description: "Aguardando processamento", icon: Clock, color: "orange", component: OrdensLiquidacaoPendentes, windowTitle: "Ordens de Liquidacao", sensitive: true },
     { title: "Cartoes", description: "Compensacao de cartoes", icon: CreditCard, color: "purple", component: CartoesACompensar, windowTitle: "Cartoes a Compensar", sensitive: true },
     { title: "Extrato Bancario", description: "Resumo de extratos", icon: Building2, color: "teal", component: ExtratoBancarioResumo, windowTitle: "Extrato Bancario", sensitive: false },

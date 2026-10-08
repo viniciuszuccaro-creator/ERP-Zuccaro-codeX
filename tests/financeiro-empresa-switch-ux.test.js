@@ -108,6 +108,10 @@ test('wire: Financeiro + tabs usam scope canônico e reset na troca', async () =
   assert.match(pagar, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(viz, /buildCadastroScopeSwitchReset/);
   assert.match(caixa, /cancelFinanceiroQueriesOnScopeSwitch/);
+  assert.match(caixa, /import\s*\{\s*Button\s*\}\s*from\s*['"]@\/components\/ui\/button['"]/);
+  assert.match(caixa, /data-action=["']caixa-contexto-bloqueado["']/);
+  assert.match(caixa, /LiquidacaoEmLote/);
+  assert.match(caixa, /Liquidacao em Lote/);
   assert.match(cartoes, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(concil, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(concil, /setContaSelecionadaId\(""\)/);
