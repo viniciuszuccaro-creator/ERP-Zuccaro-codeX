@@ -11886,3 +11886,7 @@ Clone fisico auditado e copia de trabalho `READ_ONLY` tem as mesmas 557.060 movi
 ## Legado EMP03 - staging bruto de estoque (08/10)
 
 2.382 saldos brutos do clone auditado `READ_ONLY` foram carregados em novo SQLite privado, com 1.257 quantidades nao zero. JSONL/SQLite/manifesto novos e hashados, sem sobrescrever backup ou artefatos anteriores. Reabertura independente: 2.382 correspondencias exatas, integridade OK, duplicata divergente rejeitada com rollback. IDs de Grupo/Empresa/produto/unidade do destino nulos e gates de corte/importacao em zero por restricao SQLite. Nenhum saldo de abertura ou importacao operacional. Proximo passo: obter snapshot comparavel do estoque canonico e validar identidade empresarial/unidade antes de propor reconciliação monetaria ou quantitativa.
+
+## Legado EMP03 - fila privada de estoque e unidades (08/10)
+
+Nova fila privada hashada, sem sobrescrever filas anteriores: 44 materiais distintos (22 sem mestre compartilhado, 14 sem unidade mapeada, 6 conflitos reais de unidade, 2 apenas caixa). Onze linhas tem quantidade nao zero; oito sao produtos em quarentena sem unidade. Todos os 22 sem mestre tem saldo zero, mas permanecem bloqueados. O confronto por codigo nao atribui Empresa do destino. Segunda leitura confirmou classe/unicidade/gates fechados; SQL local desligado, nenhuma carga. Proximo passo: revisar origem/unidade dos 11 saldos nao zero antes de qualquer proposta de saldo inicial, alem de comprovar corte e identidade empresarial.
