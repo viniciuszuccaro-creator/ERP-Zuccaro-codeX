@@ -1,3 +1,19 @@
+## CURSOR — validação pós-deploy + gap snapshots (2026-10-08)
+
+| Item | Valor |
+|---|---|
+| **implantado erp-dev** | `85049afd` (main #243+#244) · web/api rebuilt ~14:12Z |
+| health/ready :3080/:3081 | **200** ok/ready |
+| HTTPS público | SPA 200; `/api/health`/`ready` 401 AUTH_REQUIRED (edge) |
+| Snapshots canônicos | `/base44-local-snapshot.json` + `core` → **404** |
+| Gap encontrado | `/base44-local-clientes|produtos|empresas.json` → **200 HTML SPA** (não JSON) |
+| Correção | branch `cursor/spa-snapshot-paths-404-all-392b` (regex 404 todos `base44-local-*.json`) |
+| Browser CPA/3Z | **BLOCKED** sem `ERP_DEV_LOGIN_EMAIL`/`PASSWORD` no Environment |
+| Lote UX indep | `cursor/cadastros-financeiro-empresa-ux-392b` SHA `ec27b9f7` (PR a abrir) |
+| Legado destino | erp-dev **85049afd**; sem vínculos empresariais sem prova; mapper não duplicar |
+
+> Histórico abaixo com `implantado=NONE` / `9a277011` é **superseded** por esta seção.
+
 ## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)

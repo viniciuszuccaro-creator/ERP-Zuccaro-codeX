@@ -1,3 +1,17 @@
+## CURSOR — nginx 404 para todos base44-local-*.json (2026-10-08)
+
+Agente: validação pós-deploy erp-dev `85049afd` encontrou gap: só `snapshot`/`core-snapshot` retornavam 404; `clientes`/`produtos`/`empresas` ainda HTTP 200 + HTML SPA.
+
+| Item | Valor |
+|---|---|
+| Branch | `cursor/spa-snapshot-paths-404-all-392b` |
+| Gap | `try_files` mascarava ausência de dumps legados |
+| Fix | `location ~ ^/base44-local-[^/]+\.json$` → 404 JSON |
+| Testes | `public-snapshot-exposure-guard` **5/5** |
+| Deploy VPS | após merge/CI — rebuild web |
+
+**≠** lote Financeiro UX / outbox / legado.
+
 ## COORDENAÇÃO CURSOR → LEGADO — implantado=`9a277011` (2026-10-08 pós-deploy)
 
 Chat: [ERP ZUCCARO - CODEX/CURSOR](bc-d973626e-1060-4071-a25a-6a549769392b)
