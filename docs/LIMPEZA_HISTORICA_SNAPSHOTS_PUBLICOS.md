@@ -19,12 +19,19 @@
 - Um espelho fresco do remoto enumerou 663 refs: 237/250 branches e 400/413 refs internas de PR ainda continham os dois caminhos no tip. Essas refs de PR incluem histórico além das PRs abertas; a contagem não equivale a 400 PRs abertas. A limpeza de refs internas/caches requer coordenação com o GitHub, não apenas force-push das branches.
 - O ensaio de `git-filter-repo` em dois clones bare **privados e descartáveis** falhou no `git fast-import` com `OSError: [Errno 22] Invalid argument`. Nenhuma ref remota foi modificada. Os clones parcialmente processados não são backups nem candidatos de promoção. Os bundles privados verificados permanecem preservados. Resolver e repetir o ensaio, com inspeção sanitizada do erro, antes de pedir janela de rewrite.
 
+## Ensaio tecnico posterior (2026-10-08)
+
+- O erro anterior foi localizado em um caminho historico invalido para Windows no `git fast-import`. Em processo isolado, com `core.protectNTFS=false` **somente nesse processo** e o `PYTHONPATH` da instalacao privada de `git-filter-repo`, o filtro concluiu. Nenhuma configuracao global foi alterada.
+- Um espelho fresco do GitHub, com o remoto imediatamente redirecionado para um bundle privado para impedir push acidental, continha 250 branches e 413 refs de PR. O filtro removeu os dois caminhos de toda a historia alcancavel nessas 663 refs: contagem de caminhos alcançaveis `0`; `git fsck --full --no-reflogs --strict` passou. O espelho e **descartavel**, nao e o backup nem uma candidata autorizada a push.
+- O bundle local mais amplo contem tres refs auxiliares `refs/codex/turn-diffs/*` apontando diretamente para arvores, nao commits. `git-filter-repo` as ignora; elas nao apareceram no espelho fresco do GitHub. Nao usar a contagem dessas refs locais como prova de exposicao publica; preservar o bundle privado e excluir essas refs do escopo de qualquer promocao.
+- Este ensaio prova apenas que a transformacao e a integridade Git sao reproduziveis. Ainda faltam janela coordenada, backup final de todas as refs, preservacao de revisoes de PR, autorizacao especifica para force-push/delecao de refs, tratamento pelo GitHub das refs internas/caches, reinstalacao segura dos clones e verificacao independente de deploy/CDN. **Nenhuma dessas etapas foi executada.**
+
 ## Inventário antes de qualquer rewrite (humano)
 
 1. Fechar o inventário de branches, PRs abertos, forks, tags, releases e artefatos de CI/deploy; avisar os responsáveis pelas 176 PRs abertas afetadas e definir como preservar revisões/comentários antes de rebase ou recriação.
 2. Congelar pushes e merges por uma janela definida. Registrar os tips e aprovações; novos commits baseados no histórico antigo reintroduziriam os blobs.
 3. Confirmar uma cópia privada recuperável, com checksum e teste de restauração, fora do GitHub. O backup não deve ser usado para repor os arquivos no repositório público.
-4. Em clone espelho descartável e isolado, ensaiar `git filter-repo` para remover **somente** os dois caminhos de todas as refs a preservar. Não executar em worktree ativo. Guardar mapeamento antigo->novo e relatório de refs em canal privado.
+4. Repetir em clone espelho descartável e isolado o ensaio de `git filter-repo` para remover **somente** os dois caminhos de todas as refs a preservar. Não executar em worktree ativo. No Windows, isolar `core.protectNTFS=false` ao processo; não mudar a configuração global. Guardar mapeamento antigo->novo e relatório de refs em canal privado.
 5. Provar no espelho: nenhum tip contém os caminhos; nenhum blob correspondente é alcançável pelas refs reescritas; árvore funcional, testes e CI da candidata limpa passam. Conferir PRs que precisarão ser recriados/rebaseados.
 6. Obter aprovação operacional específica para a janela de reescrita/force-push e para o plano de recuperação dos colaboradores. Só então atualizar refs coordenadamente, invalidar clones/worktrees antigos e impedir push de histórico contaminado.
 7. Solicitar tratamento de caches/refs internas ao provedor GitHub e verificar URL bruta, builds, CDN e VPS por leitura independente. Merge e rewrite não removem automaticamente assets já publicados.
