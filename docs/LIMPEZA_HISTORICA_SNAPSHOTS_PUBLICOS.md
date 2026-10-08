@@ -14,6 +14,7 @@
 - Após `git fetch origin --prune`, 249 refs locais de `refs/remotes/origin` foram inspecionadas. Em 237 tips, **ambos** os caminhos ainda existem: 86 branches `codex/` e 151 `cursor/`. A `origin/main` não tem esses assets na árvore atual. Nenhuma tag local foi encontrada.
 - Esta contagem cobre as refs remotas que o clone conseguiu buscar naquele instante. Não comprova inventário completo de forks, refs de PR do GitHub, caches, clones privados ou artefatos de deploy. Atualizar a contagem imediatamente antes de qualquer janela.
 - O inventário não abriu nem publicou o conteúdo dos arquivos. Nenhuma branch foi apagada, reescrita ou enviada por force-push.
+- Foi criado um bundle **privado, fora do GitHub** com as refs locais após o fetch (~19 MB). `git bundle verify` confirmou história completa; um clone bare independente do bundle abriu 268 refs. Checksum integral e metadados de recuperação ficaram somente no diretório privado do proprietário. Essa prova não cobre forks ou refs internas do GitHub e deve ser refeita após novo fetch imediatamente antes da janela.
 
 ## Inventário antes de qualquer rewrite (humano)
 
