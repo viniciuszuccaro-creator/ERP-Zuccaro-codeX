@@ -399,21 +399,41 @@ export function upsertHttpTenantLocalMirror(input = {}) {
     const prev = idx >= 0 ? empresaStore[idx] : null;
     // CNPJ do servidor (sessão) prevalece; se ausente, preserva o já espelhado (não apagar).
     const cnpj = cnpjRaw || (prev?.cnpj ? String(prev.cnpj) : '');
-    const next = {
-      id,
-      nome_fantasia: nome,
-      razao_social: razao,
-      cnpj,
-      group_id: groupId,
-      grupo_id: groupId,
-      status: String(row.status || 'Ativa'),
-      tipo: prev?.tipo || 'Matriz',
-      ativo: true,
-      updated_date: now(),
-      created_date: prev?.created_date || now(),
-    };
-    if (idx >= 0) empresaStore[idx] = { ...prev, ...next };
-    else empresaStore.push(next);
+    // Espelho de sessão é projeção enxuta: não sobrescrever cadastro local
+    // (nome/razão/tipo/regime/endereço/contato) já persistido no IndexedDB.
+    if (prev) {
+      empresaStore[idx] = {
+        ...prev,
+        id,
+        cnpj,
+        group_id: groupId,
+        grupo_id: groupId,
+        status: String(row.status || prev.status || 'Ativa'),
+        nome_fantasia: prev.nome_fantasia || nome,
+        razao_social: prev.razao_social || razao,
+        tipo: prev.tipo || 'Matriz',
+        ativo: prev.ativo !== false,
+        created_date: prev.created_date || now(),
+        // updated_date do cadastro local permanece; remirror não "atualiza" a empresa
+        updated_date: prev.updated_date || now(),
+        _cnpj_origem: cnpjRaw ? 'sessao_http' : (prev._cnpj_origem || 'local'),
+      };
+    } else {
+      empresaStore.push({
+        id,
+        nome_fantasia: nome,
+        razao_social: razao,
+        cnpj,
+        group_id: groupId,
+        grupo_id: groupId,
+        status: String(row.status || 'Ativa'),
+        tipo: 'Matriz',
+        ativo: true,
+        updated_date: now(),
+        created_date: now(),
+        _cnpj_origem: cnpjRaw ? 'sessao_http' : 'local',
+      });
+    }
     mirroredEmpresas += 1;
   };
   empresasInput.forEach(upsertEmpresa);

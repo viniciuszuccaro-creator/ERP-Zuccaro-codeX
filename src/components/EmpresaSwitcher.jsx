@@ -160,10 +160,10 @@ export default function EmpresaSwitcher() {
             )}
             <div className="flex flex-col items-start flex-1 min-w-0">
               <span className="text-xs text-slate-500 uppercase font-semibold">
-                {contexto === 'grupo' ? 'Grupo Corporativo' : 'Empresa'}
+                {contexto === 'grupo' ? 'Grupo Corporativo' : 'Empresa operacional'}
               </span>
               <span className="text-sm font-medium text-slate-900 truncate w-full">
-                {nomeAtual}
+                {contexto === 'grupo' ? `Grupo · ${nomeAtual || '—'}` : (nomeAtual || '—')}
               </span>
             </div>
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -191,11 +191,18 @@ export default function EmpresaSwitcher() {
                   key={`grupo:${grupo.id}`} 
                   value={`grupo:${grupo.id}`}
                   className="cursor-pointer"
+                  data-scope="grupo"
+                  data-group-id={grupo.id}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      <span className="font-medium">{grupo.nome_do_grupo}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium">Grupo · {grupo.nome_do_grupo}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono ml-6 truncate max-w-[200px]" title={grupo.id}>
+                        id {String(grupo.id || '').slice(0, 8)}…
+                      </span>
                     </div>
                     {contexto === 'grupo' && grupoAtual?.id === grupo.id && (
                       <Badge className="bg-blue-100 text-blue-700 text-xs">Atual</Badge>
@@ -218,23 +225,30 @@ export default function EmpresaSwitcher() {
                   key={`empresa:${empresa.id}`} 
                   value={`empresa:${empresa.id}`}
                   className="cursor-pointer"
+                  data-scope="empresa"
+                  data-empresa-id={empresa.id}
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-purple-600" />
                         <span className="font-medium">
-                          {empresa.nome_fantasia || empresa.razao_social}
+                          Empresa · {empresa.nome_fantasia || empresa.razao_social}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 ml-6">
-                        <span className="text-xs text-slate-500">{empresa.cnpj}</span>
+                      <div className="flex items-center gap-2 ml-6 flex-wrap">
+                        <span className="text-xs text-slate-500">{empresa.cnpj || 'CNPJ ausente'}</span>
+                        <span className="text-[10px] text-slate-400 font-mono" title={empresa.id}>
+                          id {String(empresa.id || '').slice(0, 8)}…
+                        </span>
                         <Badge variant="outline" className="text-xs">
                           {empresa.tipo}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {empresa.nivel_acesso}
-                        </Badge>
+                        {empresa.nivel_acesso ? (
+                          <Badge variant="outline" className="text-xs">
+                            {empresa.nivel_acesso}
+                          </Badge>
+                        ) : null}
                       </div>
                     </div>
                     {contexto === 'empresa' && empresaAtual?.id === empresa.id && (

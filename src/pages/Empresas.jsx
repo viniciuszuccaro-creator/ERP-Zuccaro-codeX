@@ -594,7 +594,16 @@ export default function Empresas() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-slate-600">CNPJ</p>
-                      <p className="font-medium font-mono">{viewingEmpresa.cnpj}</p>
+                      <p className="font-medium font-mono" data-field="empresa-cnpj">{viewingEmpresa.cnpj || '-'}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5" data-field="empresa-cnpj-origem">
+                        Origem: {
+                          viewingEmpresa._cnpj_origem === 'sessao_http'
+                            ? 'sessão HTTP (API/perfil)'
+                            : viewingEmpresa.cnpj
+                              ? 'cadastro local / banco espelhado'
+                              : 'ausente (sem cache de perfil)'
+                        }
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-600">Inscrição Estadual</p>
