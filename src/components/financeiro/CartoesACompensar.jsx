@@ -10,7 +10,10 @@ import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
-import { buildFinanceiroQueryScopeKey } from "@/components/financeiro/financeiroLaunchpadAccess";
+import {
+  buildFinanceiroQueryScopeKey,
+  cancelFinanceiroQueriesOnScopeSwitch,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function CartoesACompensar() {
   const queryClient = useQueryClient();
@@ -25,9 +28,11 @@ export default function CartoesACompensar() {
   const previousScopeRef = useRef(contextKey);
   useEffect(() => {
     if (previousScopeRef.current === contextKey) return;
+    const previousScopeKey = previousScopeRef.current;
     previousScopeRef.current = contextKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
     setFiltroStatus("todos");
-  }, [contextKey]);
+  }, [contextKey, queryClient]);
   const canViewCartoes = hasPermission("Financeiro", "Cartoes", "visualizar") ||
     hasPermission("Financeiro", "Caixa Central", "visualizar") ||
     hasPermission("Financeiro", null, "visualizar");

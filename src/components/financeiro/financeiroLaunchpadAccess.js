@@ -97,3 +97,58 @@ export function buildFinanceiroTitulosScopeSwitchReset(kind = 'receber') {
     dadosBaixa: emptyBaixaReceber(),
   };
 }
+
+/**
+ * Prefixos de queryKey Financeiro escopados por empresa.
+ * Na troca CPA↔3Z: cancelar in-flight + remover cache do scope anterior
+ * para uma resposta atrasada não pintar a tela da empresa atual.
+ */
+export const FINANCEIRO_SCOPE_QUERY_ROOTS = Object.freeze([
+  'contasReceber',
+  'contasPagar',
+  'contas-receber-count',
+  'contas-pagar-count',
+  'empresas',
+  'configs-cobranca',
+  'liquidacao',
+  'liquidacao-lote',
+  'movimento-cartao',
+  'caixa-ordens-liquidacao',
+  'extratos',
+  'contas-receber',
+  'contas-pagar',
+]);
+
+/** True somente se o resultado ainda pertence ao scope ativo. */
+export function shouldApplyFinanceiroQueryResult(activeScopeKey, resultScopeKey) {
+  if (!activeScopeKey || activeScopeKey === 'sem-contexto') return false;
+  return activeScopeKey === resultScopeKey;
+}
+
+/**
+ * Cancela fetches em voo e remove cache do scope anterior.
+ * Aceita QueryClient (ou mock de teste com cancelQueries/removeQueries).
+ */
+export function cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey) {
+  if (!queryClient || typeof queryClient.cancelQueries !== 'function') {
+    return { cancelledRoots: 0, removedPrevious: false };
+  }
+  let cancelledRoots = 0;
+  for (const root of FINANCEIRO_SCOPE_QUERY_ROOTS) {
+    queryClient.cancelQueries({ queryKey: [root] });
+    cancelledRoots += 1;
+  }
+  let removedPrevious = false;
+  if (previousScopeKey && previousScopeKey !== 'sem-contexto'
+      && typeof queryClient.removeQueries === 'function') {
+    queryClient.removeQueries({
+      predicate: (query) => {
+        const key = query?.queryKey;
+        if (!Array.isArray(key)) return false;
+        return key.includes(previousScopeKey);
+      },
+    });
+    removedPrevious = true;
+  }
+  return { cancelledRoots, removedPrevious };
+}

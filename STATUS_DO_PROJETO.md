@@ -1,15 +1,26 @@
-## CURSOR — reconciliacao #245 / main / VPS (2026-10-08T14:52Z)
+## CURSOR — #246 Financeiro scope + stale cancel (2026-10-08)
 
-| Fase | SHA | Estado |
+| Fase | Estado |
+|---|---|
+| implementado | `cancelFinanceiroQueriesOnScopeSwitch` + reset CR/CP/Caixa/Cartões/Conciliação/Lote |
+| integrado | PR #246 (rebase main `dd6c211d`) — CI a correr |
+| implantado | **não** (aguardar merge) |
+| validado VPS browser | BLOCKED `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
+
+Testes focados empresa-switch **7/7**. ≠ outbox/legado/#245.
+
+## CURSOR — fases #245 reconciliadas (2026-10-08T14:52Z)
+
+| Fase | SHA | Nota |
 |---|---|---|
-| **integrado** (main) | `dd6c211d` | MERGED #245 |
-| **implantado** (erp-dev) | `dd6c211d` | rebuild spa-login; HEAD VPS = main tip |
-| **implementado** (fix nginx) | `542be525` | ancestral de main; conteúdo nginx ativo |
-| **validado VPS** (snapshots/health) | `dd6c211d` | health/ready/web 200; `base44-local-*.json` → 404 |
-| **validado browser CPA/3Z** | — | **BLOCKED** secrets `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
+| implementado | `542be525` | nginx regex 404 |
+| **integrado** | `dd6c211d` | MERGED #245 → main |
+| **implantado** | `dd6c211d` | VPS rebuild pós-merge |
+| validado health/snapshots | sim | 404 `base44-local-*.json` |
+| validado CPA/3Z browser | **não** | secrets login ausentes |
 
-Rollback: `erp-zuccaro-erp-api:pre-spa-login-20261008-145118` / `…-web:…`.
-Não confundir: implantado em `542be525` (pré-merge) foi supersedido pelo rebuild pós-integração `dd6c211d`.
+Evidência: `docs/vps/evidence/reconcile-245-main-vps-dd6c211d-20261008.txt`.
+Rollback: `pre-spa-login-20261008-145118`.
 
 ## CURSOR — Cadastros ↔ Financeiro ↔ troca de empresa (2026-10-08)
 

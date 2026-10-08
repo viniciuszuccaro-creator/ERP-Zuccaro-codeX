@@ -25,6 +25,7 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 import {
   buildFinanceiroQueryScopeKey,
   buildFinanceiroTitulosScopeSwitchReset,
+  cancelFinanceiroQueriesOnScopeSwitch,
 } from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
@@ -73,13 +74,15 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const previousScopeRef = useRef(scopeKey);
   useEffect(() => {
     if (previousScopeRef.current === scopeKey) return;
+    const previousScopeKey = previousScopeRef.current;
     previousScopeRef.current = scopeKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
     const reset = buildFinanceiroTitulosScopeSwitchReset('pagar');
     setContasSelecionadas(reset.contasSelecionadas);
     setContaAtual(reset.contaAtual);
     setDialogBaixaOpen(reset.dialogBaixaOpen);
     setDadosBaixa(reset.dadosBaixa);
-  }, [scopeKey]);
+  }, [scopeKey, queryClient]);
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas', scopeKey],

@@ -11,7 +11,10 @@ import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
-import { buildFinanceiroQueryScopeKey } from "@/components/financeiro/financeiroLaunchpadAccess";
+import {
+  buildFinanceiroQueryScopeKey,
+  cancelFinanceiroQueriesOnScopeSwitch,
+} from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ConciliacaoBancariaTab() {
   const queryClient = useQueryClient();
@@ -30,9 +33,11 @@ export default function ConciliacaoBancariaTab() {
   const previousScopeRef = useRef(contextKey);
   useEffect(() => {
     if (previousScopeRef.current === contextKey) return;
+    const previousScopeKey = previousScopeRef.current;
     previousScopeRef.current = contextKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
     setContaSelecionadaId("");
-  }, [contextKey]);
+  }, [contextKey, queryClient]);
   const podeConciliar = hasPermission('Financeiro', 'ConciliacaoBancaria', 'conciliar')
     || hasPermission('Financeiro', 'Conciliação Bancária', 'conciliar')
     || hasPermission('Financeiro', 'Conciliacao', 'conciliar')

@@ -5,6 +5,9 @@ import {
   buildFinanceiroQueryScopeKey,
   buildFinanceiroTitulosScopeSwitchReset,
   canViewFinanceLaunchpadModule,
+  cancelFinanceiroQueriesOnScopeSwitch,
+  shouldApplyFinanceiroQueryResult,
+  FINANCEIRO_SCOPE_QUERY_ROOTS,
 } from '../src/components/financeiro/financeiroLaunchpadAccess.js';
 import {
   buildCadastroScopeSwitchReset,
@@ -53,6 +56,37 @@ test('fail-closed: sem permissão Financeiro não libera card mesmo com scope v�
   assert.equal(canViewFinanceLaunchpadModule(null, { title: 'Contas a Pagar' }), false);
 });
 
+test('resposta atrasada do scope anterior não deve aplicar na tela atual', () => {
+  const cpa = 'grupo-cpa:empresa-cpa';
+  const z = 'grupo-cpa:empresa-3z';
+  assert.equal(shouldApplyFinanceiroQueryResult(z, cpa), false);
+  assert.equal(shouldApplyFinanceiroQueryResult(z, z), true);
+  assert.equal(shouldApplyFinanceiroQueryResult('sem-contexto', z), false);
+});
+
+test('cancelFinanceiroQueriesOnScopeSwitch cancela roots e remove cache do scope anterior', () => {
+  const cancelled = [];
+  const removed = [];
+  const qc = {
+    cancelQueries: (opts) => { cancelled.push(opts.queryKey[0]); },
+    removeQueries: (opts) => {
+      const fakeQueries = [
+        { queryKey: ['contasReceber', 'grupo-cpa:empresa-cpa'] },
+        { queryKey: ['contasReceber', 'grupo-cpa:empresa-3z'] },
+        { queryKey: ['outro', 'x'] },
+      ];
+      removed.push(...fakeQueries.filter((q) => opts.predicate(q)).map((q) => q.queryKey.join('|')));
+    },
+  };
+  const result = cancelFinanceiroQueriesOnScopeSwitch(qc, 'grupo-cpa:empresa-cpa');
+  assert.equal(result.cancelledRoots, FINANCEIRO_SCOPE_QUERY_ROOTS.length);
+  assert.ok(cancelled.includes('contasReceber'));
+  assert.ok(cancelled.includes('liquidacao-lote'));
+  assert.ok(cancelled.includes('movimento-cartao'));
+  assert.equal(result.removedPrevious, true);
+  assert.deepEqual(removed, ['contasReceber|grupo-cpa:empresa-cpa']);
+});
+
 test('wire: Financeiro + tabs usam scope canônico e reset na troca', async () => {
   const fin = await readFile(new URL('../src/pages/Financeiro.jsx', import.meta.url), 'utf8');
   const receber = await readFile(new URL('../src/components/financeiro/ContasReceberTab.jsx', import.meta.url), 'utf8');
@@ -65,14 +99,19 @@ test('wire: Financeiro + tabs usam scope canônico e reset na troca', async () =
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
 
   assert.match(fin, /buildFinanceiroQueryScopeKey/);
+  assert.match(fin, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(fin, /uniqueKey:.*contextKey/);
   assert.match(fin, /Selecione um grupo ou empresa/);
   assert.match(receber, /buildFinanceiroTitulosScopeSwitchReset\(['"]receber['"]\)/);
+  assert.match(receber, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(pagar, /buildFinanceiroTitulosScopeSwitchReset\(['"]pagar['"]\)/);
+  assert.match(pagar, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(viz, /buildCadastroScopeSwitchReset/);
-  assert.match(caixa, /buildFinanceiroQueryScopeKey/);
-  assert.match(cartoes, /buildFinanceiroQueryScopeKey/);
+  assert.match(caixa, /cancelFinanceiroQueriesOnScopeSwitch/);
+  assert.match(cartoes, /cancelFinanceiroQueriesOnScopeSwitch/);
+  assert.match(concil, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(concil, /setContaSelecionadaId\(""\)/);
   assert.match(lote, /queryKey:\s*\['liquidacao-lote',\s*scopeKey/);
+  assert.match(lote, /cancelFinanceiroQueriesOnScopeSwitch/);
   assert.match(app, /Entrar no ERP/);
 });

@@ -1,3 +1,27 @@
+## CURSOR — fases #245 reconciliadas (2026-10-08T14:52Z)
+
+| Fase | SHA | Nota |
+|---|---|---|
+| implementado | `542be525` | nginx regex 404 |
+| **integrado** | `dd6c211d` | MERGED #245 → main |
+| **implantado** | `dd6c211d` | VPS rebuild pós-merge |
+| validado health/snapshots | sim | 404 `base44-local-*.json` |
+| validado CPA/3Z browser | **não** | secrets login ausentes |
+
+Evidência: `docs/vps/evidence/reconcile-245-main-vps-dd6c211d-20261008.txt`.
+Rollback: `pre-spa-login-20261008-145118`.
+
+## CURSOR — #246 Financeiro scope + stale cancel (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `cancelFinanceiroQueriesOnScopeSwitch` + reset CR/CP/Caixa/Cartões/Conciliação/Lote |
+| integrado | PR #246 (rebase main `dd6c211d`) — CI a correr |
+| implantado | **não** (aguardar merge) |
+| validado VPS browser | BLOCKED `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
+
+Testes focados empresa-switch **7/7**. ≠ outbox/legado/#245.
+
 ## CURSOR — estado vivo pós-validação (2026-10-08T14:25Z)
 
 | Item | Valor |
@@ -11,20 +35,6 @@
 | Legado destino | runtime **`542be525`**; contratos #231/#226/#225/#203/#237/#239/#242/#243/#245; **não** duplicar mapper; **não** vínculos sem prova |
 
 > Seções abaixo com `implantado=9a277011` / `NONE` são **históricas**.
-
-## CURSOR — reconciliacao #245 / main / VPS (2026-10-08T14:52Z)
-
-| Fase | SHA | Estado |
-|---|---|---|
-| **integrado** (main) | `dd6c211d` | MERGED #245 |
-| **implantado** (erp-dev) | `dd6c211d` | rebuild spa-login; HEAD VPS = main tip |
-| **implementado** (fix nginx) | `542be525` | ancestral de main; conteúdo nginx ativo |
-| **validado VPS** (snapshots/health) | `dd6c211d` | health/ready/web 200; `base44-local-*.json` → 404 |
-| **validado browser CPA/3Z** | — | **BLOCKED** secrets `ERP_DEV_LOGIN_EMAIL` + `ERP_DEV_LOGIN_PASSWORD` |
-
-Rollback: `erp-zuccaro-erp-api:pre-spa-login-20261008-145118` / `…-web:…`.
-Não confundir: implantado em `542be525` (pré-merge) foi supersedido pelo rebuild pós-integração `dd6c211d`.
-
 
 ## CURSOR — Cadastros ↔ Financeiro ↔ empresa UX (2026-10-08)
 

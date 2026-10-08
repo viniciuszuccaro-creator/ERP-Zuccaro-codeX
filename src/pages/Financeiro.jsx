@@ -1,6 +1,6 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Wallet } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -20,6 +20,7 @@ import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro
 import {
   canViewFinanceLaunchpadModule,
   buildFinanceiroQueryScopeKey,
+  cancelFinanceiroQueriesOnScopeSwitch,
 } from "@/components/financeiro/financeiroLaunchpadAccess";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
@@ -45,6 +46,7 @@ export default function Financeiro() {
   const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver') || hasPermission('Financeiro', null, 'visualizar');
   const { openWindow } = useWindow();
   const { user } = useUser();
+  const queryClient = useQueryClient();
 
   const {
     contexto,
@@ -62,6 +64,13 @@ export default function Financeiro() {
     empresaId: empresaAtual?.id || null,
   });
   const contextoValido = contextKey !== 'sem-contexto';
+  const previousScopeRef = useRef(contextKey);
+  useEffect(() => {
+    if (previousScopeRef.current === contextKey) return;
+    const previousScopeKey = previousScopeRef.current;
+    previousScopeRef.current = contextKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
+  }, [contextKey, queryClient]);
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', contextKey],

@@ -28,6 +28,7 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 import {
   buildFinanceiroQueryScopeKey,
   buildFinanceiroTitulosScopeSwitchReset,
+  cancelFinanceiroQueriesOnScopeSwitch,
 } from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
@@ -89,7 +90,9 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const previousScopeRef = useRef(scopeKey);
   useEffect(() => {
     if (previousScopeRef.current === scopeKey) return;
+    const previousScopeKey = previousScopeRef.current;
     previousScopeRef.current = scopeKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
     const reset = buildFinanceiroTitulosScopeSwitchReset('receber');
     setContasSelecionadas(reset.contasSelecionadas);
     setContaAtual(reset.contaAtual);
@@ -101,7 +104,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
     setContaParaSimulacao(reset.contaParaSimulacao);
     setContaParaLink(reset.contaParaLink);
     setDadosBaixa(reset.dadosBaixa);
-  }, [scopeKey]);
+  }, [scopeKey, queryClient]);
 
   const { data: empresasQuery = [] } = useQuery({
     queryKey: ['empresas', scopeKey],

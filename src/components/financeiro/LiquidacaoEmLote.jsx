@@ -8,7 +8,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { toast } from 'sonner';
-import { buildFinanceiroQueryScopeKey } from '@/components/financeiro/financeiroLaunchpadAccess';
+import {
+  buildFinanceiroQueryScopeKey,
+  cancelFinanceiroQueriesOnScopeSwitch,
+} from '@/components/financeiro/financeiroLaunchpadAccess';
 
 /**
  * V22.0 ETAPA 4 - Liquidação em Lote
@@ -32,10 +35,12 @@ export default function LiquidacaoEmLote({ onClose }) {
   const previousScopeRef = useRef(scopeKey);
   useEffect(() => {
     if (previousScopeRef.current === scopeKey) return;
+    const previousScopeKey = previousScopeRef.current;
     previousScopeRef.current = scopeKey;
+    cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
     setSelecionados([]);
     setFiltros({ forma: 'todos', cliente: '', vencimento: 'todos' });
-  }, [scopeKey]);
+  }, [scopeKey, queryClient]);
 
   // Buscar contas pendentes
   const { data: contas = [] } = useQuery({
