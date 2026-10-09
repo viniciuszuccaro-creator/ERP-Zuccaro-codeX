@@ -83,6 +83,13 @@ test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do f
   assert.deepEqual(enabled.filter((name) => name === 'Produto'), []);
 });
 
+test('Cliente entra no piloto HTTP somente com flag CLIENTE autorizada', () => {
+  assert.equal(resolveHttpPilotEntities({}).includes('Cliente'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'false' }).includes('Cliente'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), true);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'), true);
+});
+
 
 test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
   /** @type {{ method: string, url: string, headers: HeadersInit, body?: string }[]} */
