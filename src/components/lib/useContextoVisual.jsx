@@ -74,6 +74,9 @@ export function useContextoVisual() {
   const validacaoContexto = validateMultiempresaContext(contextoCanonico);
 
   useEffect(() => {
+            // Em HTTP a sessão revalidada é a fonte canônica; um consumidor montando
+            // com estado antigo não pode sobrescrever a escolha do seletor.
+            if (isHttpBackendMode) return;
             try {
               localStorage.setItem('contexto_atual', contexto);
             } catch (e) {

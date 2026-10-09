@@ -29,7 +29,7 @@ const EMPRESA_A = '44444444-4444-4444-8444-444444444444';
 const EMPRESA_B = '55555555-5555-4555-8555-555555555555';
 const ACTOR = '22222222-2222-4222-8222-222222222222';
 
-async function loadRealHook(file, dependencies) {
+async function loadRealHook(file, dependencies, globals = {}) {
   const source = (await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('import.meta.env', '({ VITE_ERP_BACKEND: "http" })');
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS,
     jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -37,7 +37,7 @@ async function loadRealHook(file, dependencies) {
   vm.runInNewContext(compiled, { exports, require: id => {
     assert.ok(id in dependencies, `Unmocked dependency ${id}`);
     return dependencies[id];
-  }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} } });
+  }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} }, ...globals });
   return exports;
 }
 
@@ -100,7 +100,7 @@ test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadast
   const selected = [];
   const localEntity = new Proxy({}, { get() { throw new Error('Local mirror must not authorize context'); } });
   const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
-    react: { useState: value => [typeof value === 'function' ? value() : value, () => {}], useEffect() {} },
+    react: { useState: value => [typeof value === 'function' ? value() : value, () => {}], useEffect() {}, useRef: value => ({ current: value }) },
     '@/api/base44Client': { isHttpBackendMode: true, base44: { entities: localEntity } },
     '@tanstack/react-query': { useQuery: () => ({}), useQueryClient: () => ({ invalidateQueries() {} }),
       useMutation: options => { mutations.push(options); return options; } },
@@ -117,6 +117,48 @@ test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadast
   await assert.rejects(mutations[1].mutationFn(ACTOR), /não autorizada/);
   await assert.rejects(mutations[0].mutationFn(ACTOR), /não autorizado/);
   assert.deepEqual(selected, [null, EMPRESA_A, EMPRESA_B]);
+});
+
+test('hook de Cadastros ignora carregamento antigo após evento de troca Empresa', async () => {
+  const groupSession = { token: 'synthetic-token', groupId: GROUP, empresaId: null, scopeType: 'grupo', actorId: ACTOR };
+  const companySession = { ...groupSession, empresaId: EMPRESA_A, scopeType: 'empresa',
+    empresas: [{ id: EMPRESA_A, group_id: GROUP, status: 'Ativa' }] };
+  let activeSession = groupSession;
+  let releaseOld;
+  let refreshCount = 0;
+  let contextChanged;
+  const effects = [];
+  const updates = [];
+  let stateIndex = 0;
+  const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
+    react: { useState: initial => {
+      const index = stateIndex++;
+      return [typeof initial === 'function' ? initial() : initial, value => updates.push({ index, value })];
+    }, useRef: value => ({ current: value }), useEffect: effect => effects.push(effect) },
+    '@/api/base44Client': { isHttpBackendMode: true, isLocalOnlyMode: false, isApiKeyMode: true },
+    '@tanstack/react-query': { useQuery: () => ({ data: [] }), useQueryClient: () => ({ invalidateQueries() {} }),
+      useMutation: options => options },
+    './contextoMultiempresaPolicy': { userTemAcessoGrupo: () => true, userTemAcessoEmpresa: () => true,
+      empresaPertenceAoGrupo: () => true },
+    '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'erp-http-context-changed',
+      refreshErpHttpSessionFromServer: () => (++refreshCount === 1
+        ? new Promise(resolve => { releaseOld = resolve; }) : Promise.resolve(companySession)),
+      ensureHttpTenantLocalMirror: async () => {},
+      buildHttpSessionUser: session => ({ id: ACTOR, contexto_atual: session.scopeType,
+        grupo_atual_id: GROUP, empresa_atual_id: session.empresaId }),
+      readErpHttpSession: () => activeSession,
+    },
+  }, { window: { addEventListener: (_, handler) => { contextChanged = handler; }, removeEventListener() {} } });
+  hooks.useContextoGrupoEmpresa();
+  effects[0]();
+  activeSession = companySession;
+  contextChanged();
+  await new Promise(resolve => setImmediate(resolve));
+  releaseOld(groupSession);
+  await new Promise(resolve => setImmediate(resolve));
+  const companyUpdates = updates.filter(update => update.index === 4 && update.value?.id);
+  assert.equal(companyUpdates.at(-1)?.value.id, EMPRESA_A, JSON.stringify(updates));
+  assert.equal(updates.some(update => update.index === 4 && update.value === null), false);
 });
 
 test('permissões HTTP do hook real usam perfil servidor mesmo com espelho local vazio', async () => {
