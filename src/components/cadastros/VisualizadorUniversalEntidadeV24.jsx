@@ -1094,7 +1094,8 @@ export default function VisualizadorUniversalEntidadeV24({
             disabled={!contextoValido || !canCreateCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
             data-permission={`Cadastros.${ENTITY}.criar`}
-            data-action={`Cadastros.${ENTITY}.criar`}
+            data-action={ENTITY === 'Cliente' ? 'cliente-novo' : `Cadastros.${ENTITY}.criar`}
+            data-action-cadastro={`Cadastros.${ENTITY}.criar`}
             data-sensitive="true"
           >
             <Plus className="w-4 h-4" /> Novo
