@@ -366,6 +366,8 @@ Roteirizador + App Motorista devem formar fluxo único: ERP → rota → veícul
 
 # 14. MIGRAÇÃO DO ERP ANTIGO
 
+Capturas de telas e contagens de versoes diferentes sao referencias visuais e de estrutura, nao metas de seed ou importacao. Preservar cadastros auxiliares e exemplos uteis do ERP novo, inclusive seus IDs, codigos e vinculos, ate verificar origem, consistencia, uso e escopo. Uma listagem vazia por contexto, permissao ou falha de carregamento nao prova ausencia no banco e nao autoriza recriar registros. Separar exemplos de dados operacionais reais; nao misturar, substituir em massa ou apagar exemplos referenciados sem analise. Mapear legado para auxiliar existente somente com correspondencia comprovada e registrar conflitos/lacunas no staging privado.
+
 Prioridade:
 1. exportação nativa;
 2. CSV/Excel/XML/PDF estruturado;
