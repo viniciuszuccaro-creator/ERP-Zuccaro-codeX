@@ -1,3 +1,20 @@
+## CURSOR — #258 lista HTTP Cadastros + edição + consumidor (2026-10-09T14:45Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`7418243f`** (+ `data-action` editar Visualizador pendente no tip seguinte) |
+| **implantado** | **`7418243f`** erp-dev · asset `index-Bc213K00.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-143634` |
+| mudança | `entityListSorted`→piloto HTTP (Cliente com flag); consumidor `consumir-lote-staging.mjs`; merge/classify edição |
+| validado browser | Cadastros layout+busca PASS · Clientes lista n=5 PASS · edição abrir preenchido PASS · Empresa ciclo PASS · Central360 PASS |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO**; consumidor testado (não mapper paralelo) |
+| fases | staging=contagens · reconciliado=testes consumidor · importado=não · validado_nav=sim (lista/abrir) |
+| próxima ação | CI tip · merge #258 → main; Codex #254 rebase; Legado ensaio isolado |
+
+Evidências: `deploy-258-http-list-7418243f-20261009.txt`, `browser-258-cadfin-edit-7418243f-20261009.txt`.
+
 ## CURSOR — homolog #254 + CadFin/360 + consumidor legado (2026-10-09T12:10Z)
 
 | Item | Valor |

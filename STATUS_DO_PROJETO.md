@@ -1,3 +1,16 @@
+## CURSOR — #258 lista HTTP + edição CadFin + consumidor (2026-10-09T14:45Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `7418243f` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| **implantado** | **`7418243f`** erp-dev · `index-Bc213K00.js` · CLIENTE_360=true |
+| **homologado** | Cadastros layout/busca PASS · Clientes HTTP n=5 PASS · abrir edição preenchida PASS · Empresa ciclo PASS · Central360 PASS |
+| **em staging** | #211 stage privado com contagens (authorized=0) |
+| **reconciliado** | consumidor `consumir-lote-staging` (deps/rejeição/idempotência/auditoria) testes PASS |
+| **importado** | **NÃO** |
+| #254 | APROVAR COM RESSALVAS · reservado Codex · CONFLICTING STATUS |
+| ≠ | Codex sessão #254 · Legado ensaio isolado/importação |
+
 ## CURSOR — homolog #254 + CadFin/360 + legado consumidor (2026-10-09T12:10Z)
 
 | Fase | Estado |

@@ -1035,6 +1035,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         title="Editar"
                         disabled={isLoadingEdit || !canEditCadastro}
                         data-permission={`Cadastros.${ENTITY}.editar`}
+                        data-action={`Cadastros.${ENTITY}.editar`}
                         data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
