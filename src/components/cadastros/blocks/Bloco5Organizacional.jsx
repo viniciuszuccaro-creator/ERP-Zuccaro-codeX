@@ -99,7 +99,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
 
   // Campos reais de cada entidade (sem alias — getDisplayValue faz fallback)
   const tiles = [
-    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['nome','cnpj','descricao'],                              f: GrupoEmpresarialForm },
+    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['codigo','nome','cnpj','descricao'],                    f: GrupoEmpresarialForm },
     { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['razao_social','nome_fantasia','cnpj','cidade'],          f: EmpresaForm },
     { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['nome','descricao'],                                     f: DepartamentoForm },
     { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
