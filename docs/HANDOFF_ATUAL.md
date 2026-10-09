@@ -1,3 +1,17 @@
+## CURSOR — Cadastros código + Abrir único (2026-10-09)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/cadastros-codigo-abrir-unico-392b` |
+| mudança | Abrir 1 janela (uniqueKey+registry); Código registro auxiliares (025+reserve); edit merge sem esvaziar; alias salvar→editar |
+| **implantado** | **NÃO** |
+| **importado** | **NÃO** |
+| #258 | tip CI `e94f39b2` / runtime `d9a72802` — merge após owner |
+| #254 / #211 | Codex reservado |
+| evidência | `cadastros-codigo-abrir-matriz-20261009.txt` |
+| próxima | CI → VPS migrate 025 + SPA rebuild → homolog Abrir/código/editar |
+
 ## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
 
 | Item | Valor |

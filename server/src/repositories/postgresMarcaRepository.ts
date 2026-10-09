@@ -6,12 +6,14 @@ import type {
   MarcaRepository,
   MarcaUpdateInput,
 } from './marcaTypes.js';
+import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 
 function mapRow(row: Record<string, unknown>): Marca {
   return {
     id: String(row.id),
     group_id: String(row.group_id),
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
+    codigo: row.codigo == null ? null : String(row.codigo),
     nome_marca: String(row.nome_marca),
     descricao: row.descricao == null ? null : String(row.descricao),
     cnpj: row.cnpj == null ? null : String(row.cnpj),
@@ -73,15 +75,24 @@ export class PostgresMarcaRepository implements MarcaRepository {
 
   async create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput): Promise<Marca> {
     const empresaId = data.empresa_id ?? scope.empresaId ?? null;
+    const codigo = await reserveEntityCodigo({
+      db: this.db,
+      groupId: scope.groupId,
+      entityName: 'Marca',
+      table: 'marcas',
+      width: 6,
+      incomingCodigo: data.codigo,
+    });
     const result = await this.db.query(
       `INSERT INTO marcas (
-        group_id, empresa_id, nome_marca, descricao, cnpj, pais_origem, site,
+        group_id, empresa_id, codigo, nome_marca, descricao, cnpj, pais_origem, site,
         logo_url, categoria, fornecedor_id, certificacoes, ativo
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13)
       RETURNING *`,
       [
         scope.groupId,
         empresaId,
+        codigo,
         data.nome_marca,
         data.descricao ?? null,
         data.cnpj ?? null,

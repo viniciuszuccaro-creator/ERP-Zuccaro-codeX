@@ -39,7 +39,22 @@ export function isCadastroEditLoadComplete(entityName, record, expectedId) {
     const codigo = hasText(record.codigo, record.cod);
     return descricao && codigo;
   }
-  return hasText(record.nome, record.descricao, record.razao_social);
+  if (entity === 'Marca') {
+    return hasText(record.nome_marca, record.nome);
+  }
+  if (entity === 'GrupoProduto') {
+    return hasText(record.nome_grupo, record.nome);
+  }
+  if (entity === 'SetorAtividade') {
+    return hasText(record.nome, record.descricao);
+  }
+  if (entity === 'UnidadeMedida') {
+    return hasText(record.sigla, record.nome_completo, record.nome);
+  }
+  if (entity === 'Servico') {
+    return hasText(record.nome, record.descricao);
+  }
+  return hasText(record.nome, record.descricao, record.razao_social, record.nome_marca, record.nome_grupo, record.sigla);
 }
 
 /**
@@ -82,21 +97,27 @@ export function classifyCadastroEditLoad({
       message: 'Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.',
     };
   }
-  if (!isCadastroEditLoadComplete(entityName, fullRecord, expectedId)) {
+  // GET parcial: hidrata com a grade antes do gate de identidade (não esvaziar nome/código).
+  const merged = mergeCadastroEditHydration(listRow, fullRecord);
+  if (!isCadastroEditLoadComplete(entityName, merged, expectedId)) {
     return {
       kind: 'load_incomplete',
       message: 'Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.',
     };
   }
-  const merged = mergeCadastroEditHydration(listRow, fullRecord);
   const entity = String(entityName || '');
   const watchByEntity = {
     Empresa: ['razao_social', 'nome', 'cnpj'],
     Cliente: ['razao_social', 'nome', 'nome_completo', 'documento', 'cnpj', 'cpf'],
     Fornecedor: ['razao_social', 'nome', 'documento', 'cnpj', 'cpf'],
     Produto: ['descricao', 'nome', 'codigo'],
+    Marca: ['nome_marca', 'nome', 'codigo'],
+    GrupoProduto: ['nome_grupo', 'nome', 'codigo'],
+    SetorAtividade: ['nome', 'descricao', 'codigo'],
+    UnidadeMedida: ['sigla', 'nome_completo', 'codigo'],
+    Servico: ['nome', 'descricao', 'codigo'],
   };
-  const watch = watchByEntity[entity] || ['nome', 'descricao'];
+  const watch = watchByEntity[entity] || ['nome', 'descricao', 'codigo'];
   const absentFields = watch.filter((field) => {
     const v = merged[field];
     return v == null || String(v).trim() === '';

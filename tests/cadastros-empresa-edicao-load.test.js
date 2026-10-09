@@ -87,6 +87,26 @@ test('classifyCadastroEditLoad: distingue falha, incompleto e ok', () => {
   assert.equal(ok.message, null);
 });
 
+test('Marca/Grupo/Setor: GET parcial hidrata com grade e libera identidade', () => {
+  assert.equal(isCadastroEditLoadComplete('Marca', { id: 'm1', nome_marca: 'GATE-D SYNTH' }, 'm1'), true);
+  assert.equal(isCadastroEditLoadComplete('GrupoProduto', { id: 'g1', nome_grupo: 'Longos' }, 'g1'), true);
+  assert.equal(isCadastroEditLoadComplete('SetorAtividade', { id: 's1', nome: 'Construcao' }, 's1'), true);
+  const marcaOk = classifyCadastroEditLoad({
+    entityName: 'Marca',
+    expectedId: 'm1',
+    listRow: { id: 'm1', nome_marca: 'GATE-D SYNTH', codigo: '000001' },
+    fullRecord: { id: 'm1', descricao: '', cnpj: '', pais_origem: '' },
+  });
+  assert.equal(marcaOk.kind, 'ok');
+  const grupoOk = classifyCadastroEditLoad({
+    entityName: 'GrupoProduto',
+    expectedId: 'g1',
+    listRow: { id: 'g1', nome_grupo: 'GATE-D SYNTH', codigo: 'GATED-GP' },
+    fullRecord: { id: 'g1', natureza: 'Revenda' },
+  });
+  assert.equal(grupoOk.kind, 'ok');
+});
+
 test('Save Empresa: preserva id, group_id e nested; não carimba empresa_id do contexto', () => {
   const loaded = {
     id: 'emp-1',

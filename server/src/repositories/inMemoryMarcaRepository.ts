@@ -11,6 +11,21 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function nextCodigo(groupId: string, rows: Iterable<Marca>, incoming?: string | null): string {
+  const trimmed = typeof incoming === 'string' ? incoming.trim() : '';
+  let hw = 0;
+  for (const row of rows) {
+    if (row.group_id !== groupId) continue;
+    const c = String(row.codigo || '').trim();
+    if (/^[0-9]+$/.test(c)) hw = Math.max(hw, Number.parseInt(c, 10));
+  }
+  if (trimmed) {
+    if (/^[0-9]+$/.test(trimmed)) hw = Math.max(hw, Number.parseInt(trimmed, 10));
+    return trimmed;
+  }
+  return String(hw + 1).padStart(6, '0');
+}
+
 export class InMemoryMarcaRepository implements MarcaRepository {
   private readonly rows = new Map<string, Marca>();
 
@@ -42,10 +57,12 @@ export class InMemoryMarcaRepository implements MarcaRepository {
 
   async create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput): Promise<Marca> {
     const ts = nowIso();
+    const codigo = nextCodigo(scope.groupId, this.rows.values(), data.codigo);
     const row: Marca = {
       id: randomUUID(),
       group_id: scope.groupId,
       empresa_id: data.empresa_id ?? scope.empresaId ?? null,
+      codigo,
       nome_marca: data.nome_marca,
       descricao: data.descricao ?? null,
       cnpj: data.cnpj ?? null,
