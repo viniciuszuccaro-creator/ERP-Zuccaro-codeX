@@ -1,0 +1,20 @@
+# Evidência sanitizada — browser main tip 99ee35b0 (#255)
+# utc=2026-10-09T11:05Z
+# implantado=99ee35b0 · asset index-DbVDch1Q.js
+#
+# login=PASS
+# switch_empresa CPA/3Z=PASS
+# Cadastros Gerais página=PASS · padrão azul (from-blue-50/bg-blue-600)=PASS
+# Cadastros.Cliente.abrir + cliente-novo=PASS (acordeão Pessoas expandido)
+# Comercial Clientes v24 + cliente-detalhes-360 → Central Cliente 360=PASS
+# Carregar mais UI=NO_BUTTON_MAYBE_EOF · API limit/offset já PASS em lotes anteriores
+# Financeiro launchpad=PASS
+# Financeiro cores CR green ≠ Régua violet=PASS (referência visual spa-ui)
+# Espelho local Cliente a partir de GET /api/v1/clientes (somente browser profile)
+#   — NÃO reseed Postgres; listagem vazia por store ≠ recriação
+# Quantidades UI (0/3/5) variam; não forçar 11/91/14
+#
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-255-main-99ee35b0.png
+#   /opt/cursor/artifacts/screenshots/pw-255-cadastros2-99ee35b0.png
+# ≠ evidência SHA anterior

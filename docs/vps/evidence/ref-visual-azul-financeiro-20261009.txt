@@ -1,0 +1,15 @@
+# Referência visual aprovada — padrão azul + Financeiro (sem regressão)
+# utc=2026-10-09
+# Fontes: browser-spa-ui-677b1ab1 · browser-255-main-99ee35b0 · LaunchpadCard.jsx · Cadastros.jsx · Bloco1Pessoas.jsx
+#
+# Cadastros Gerais:
+#   - cards/acordeão Pessoas: from-blue-50 / border-blue-200 / bg-blue-600 / text-blue-600-700
+#   - default LaunchpadCard color='blue' (from-blue-500 to-blue-600)
+#
+# Financeiro (não colapsar cores):
+#   - Contas a Receber → green
+#   - Régua de Cobrança IA → violet
+#   - CR ≠ Régua (teste regressão em financeiro-navegacao-inventory.test.js)
+#
+# EmpresaSwitcher: grupo=azul / empresa=roxo operacional — preservar (não é regressão).
+# Não reverter funcionalidades recentes (#251/#252/#255) ao corrigir estética.
