@@ -1,3 +1,17 @@
+## CURSOR — #258 ciclo edição Cliente PASS `02d59aa6` (2026-10-09T15:22Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `02d59aa6` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| **implantado** | **`02d59aa6`** erp-dev · `index-BD0zl8Pi.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-151957` |
+| **homologado** | Cadastros layout/busca PASS · lista n=5 PASS · **Cliente abrir→salvar→reabrir PASS (PATCH 200)** · Empresa PASS · Central360 PASS · Financeiro PASS |
+| causa | Salvar usava `data-permission=…salvar` (Acesso negado); PATCH enviava vendedor/crédito (400) |
+| **em staging** | #211 stage privado (authorized=0) |
+| **reconciliado** | consumidor lote staging testes PASS |
+| **importado** | **NÃO** |
+| #254 | reservado Codex |
+| ≠ | Codex sessão · Legado importação operacional |
+
 ## CURSOR — #258 lista HTTP + edição CadFin + consumidor (2026-10-09T14:45Z)
 
 | Fase | Estado |

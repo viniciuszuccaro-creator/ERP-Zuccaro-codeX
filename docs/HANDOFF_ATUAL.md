@@ -1,3 +1,20 @@
+## CURSOR — #258 ciclo edição Cliente PASS tip `02d59aa6` (2026-10-09T15:22Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`02d59aa6`** |
+| **implantado** | **`02d59aa6`** erp-dev · asset `index-BD0zl8Pi.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-151957` |
+| mudança | RBAC Salvar=`editar`/`criar`; `toClienteMasterHttpPayload` allowlist; lista HTTP + consumidor (tips anteriores) |
+| validado browser | Cadastros layout+busca PASS · lista n=5 PASS · **Cliente abrir→salvar→reabrir PASS (PATCH 200)** · Empresa PASS · Central360 PASS · Financeiro PASS |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO** |
+| fases | staging=contagens · reconciliado=consumidor · importado=não · **validado_nav=sim (ciclo completo)** |
+| próxima ação | CI tip → merge #258 → main; Codex #254 rebase; Legado ensaio isolado |
+
+Evidências: `deploy-258-cliente-cycle-02d59aa6-20261009.txt`, `browser-258-cliente-cycle-02d59aa6-20261009.txt`.
+
 ## CURSOR — #258 lista HTTP Cadastros + edição + consumidor (2026-10-09T14:45Z)
 
 | Item | Valor |
