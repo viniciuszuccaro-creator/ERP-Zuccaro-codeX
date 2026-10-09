@@ -1,3 +1,13 @@
+## CURSOR — padrão azul Comercial tip `7d068dbb` (2026-10-09T11:45Z)
+
+| Campo | Valor |
+|---|---|
+| tip | `7d068dbb` · PR #257 |
+| browser | Comercial 10×blue PASS · Financeiro CR≠Régua PASS |
+| #255 | MERGED `99ee35b0` (inalterado funcionalmente) |
+| evidência | `browser-azul-comercial-7d068dbb-20261009.txt` |
+| próximo | merge #257 → rebuild main |
+
 ## CURSOR — #255 MERGED + validação main `99ee35b0` (2026-10-09T11:05Z)
 
 | Campo | Valor |
