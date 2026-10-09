@@ -1,0 +1,22 @@
+# Referência visual aprovada pelo proprietário (2026-10-09)
+# Screenshots: /opt/cursor/artifacts/screenshots/ref-visual-aprovado/
+#
+# Janelas Cadastros (chrome azul WindowModal from-blue-600→700 + botão + Novo azul):
+#   - Grupos Empresariais (1 registro auxiliar — não forçar contagem)
+#   - Empresas (CPA + 3Z)
+#   - Centros de Custo (auxiliares CC00x; Nome pode mapear de descricao)
+#   - Setores de Atividade (códigos 001–011)
+#   - Grupos/Linhas de Produto (paginação; rótulo em nome_grupo)
+#
+# Hub Comercial e Vendas:
+#   - Tiles Launchpad **uniformemente blue** (padrão azul)
+#   - CTA Novo Pedido pode permanecer indigo/roxo (ação primária)
+#   - KPIs zerados OK — não reseed por lista vazia
+#
+# Financeiro (já travado em teste):
+#   - Contas a Receber green ≠ Régua violet (não colapsar para azul único)
+#
+# Regras:
+#   - Quantidades variam; preservar auxiliares úteis; sem reseed destrutivo
+#   - #255 MERGED main 99ee35b0 — Central360/Cadastros/Financeiro validados
+#   - ≠ Codex #254 (sessão/contexto)

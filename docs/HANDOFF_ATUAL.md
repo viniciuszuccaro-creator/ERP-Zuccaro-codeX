@@ -1,3 +1,17 @@
+## CURSOR — padrão azul Comercial + auxiliares (2026-10-09T11:40Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/comercial-azul-padrao-visual-392b` |
+| mudança | hub Comercial tiles → blue uniforme; V24 fallback Nome→descricao/nome_grupo; colunas auxiliares codigo-first |
+| preservado | todos os módulos Comercial; auxiliares existentes; Financeiro CR≠Régua |
+| testes | `comercial-azul-padrao-visual` + inventário + clientes-tab |
+| #255 | já MERGED/validado `99ee35b0` |
+| #254 Codex | não tocado |
+| ref | `ref-visual-azul-aprovado-proprietario-20261009.txt` + artifacts `ref-visual-aprovado/*` |
+| próxima ação | CI → merge → rebuild tip → browser Comercial azul + Cadastros auxiliares |
+
 ## CURSOR — #255 MERGED main `99ee35b0` + ajuste proprietário (2026-10-09T11:05Z)
 
 | Item | Valor |

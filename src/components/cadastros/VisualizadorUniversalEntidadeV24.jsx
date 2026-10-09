@@ -149,8 +149,10 @@ function buildFieldVariants(field) {
 function getDisplayValue(item, col, isFirstCol) {
   var v = item[col.field];
   if (v !== null && v !== undefined && v !== '') return v;
-  // Para primeira coluna usa todos os LABEL_FALLBACKS
-  if (isFirstCol) {
+  // Coluna de rótulo vazia (1ª coluna ou campo "nome"): reutiliza fallbacks
+  // (descricao / nome_grupo / nome_do_grupo…) sem recriar cadastros auxiliares.
+  var isLabelCol = isFirstCol || /^(nome|titulo|label)$/i.test(String(col.field || ''));
+  if (isLabelCol) {
     for (var i = 0; i < LABEL_FALLBACKS.length; i++) {
       var f = LABEL_FALLBACKS[i];
       if (f !== col.field && item[f] != null && item[f] !== '') return item[f];
@@ -993,7 +995,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         disabled={!contextoValido || !canViewCadastro}
                         data-permission={`Cadastros.${ENTITY}.visualizar`}
                         data-action="cliente-detalhes-360"
-                        className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40"
+                        className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
