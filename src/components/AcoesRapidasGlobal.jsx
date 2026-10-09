@@ -38,17 +38,28 @@ import { toast } from 'sonner';
 export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
-  const { empresaAtual, estaNoGrupo, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, createInContext } = useContextoVisual();
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
+    queryKey: ['clientes', empresaAtual?.id || null, grupoAtual?.id || null],
     queryFn: () => base44.entities.Cliente.list(),
+    enabled: Boolean(empresaAtual?.id || grupoAtual?.id),
   });
 
   const { hasPermission, isLoading: loadingPerms, user } = usePermissions();
 
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+
+  const requireContexto = (label, fn) => () => {
+    if (!contextoValido) {
+      toast.error(`Selecione grupo ou empresa para ${label}.`);
+      return;
+    }
+    fn();
+  };
+
   const actionHandlers = {
-    novoPedido: () => openWindow(
+    novoPedido: requireContexto('criar pedido', () => openWindow(
       PedidoFormCompleto,
       {
         clientes,
@@ -64,8 +75,12 @@ export default function AcoesRapidasGlobal() {
         onCancel: () => {}
       },
       { title: '🛒 Novo Pedido', width: 1400, height: 800 }
-    ),
-    novoCliente: () => openWindow(CadastroClienteCompleto, { windowMode: true }, { title: '🧑 Novo Cliente', width: 1100, height: 650 }),
+    )),
+    novoCliente: requireContexto('criar cliente', () => openWindow(
+      CadastroClienteCompleto,
+      { windowMode: true },
+      { title: '🧑 Novo Cliente', width: 1100, height: 650 },
+    )),
     novoProduto: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, { title: '📦 Novo Produto', width: 1200, height: 700 }),
     novoFornecedor: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, { title: '🏢 Novo Fornecedor', width: 1100, height: 650 }),
     novaTabelaPreco: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, { title: '💰 Nova Tabela', width: 1200, height: 700 }),
@@ -140,6 +155,7 @@ export default function AcoesRapidasGlobal() {
 
   const acoes = ModuleMap.quickActions
     .filter((qa) => {
+      // Fail-closed: sem usuário/perms carregados não libera criação.
       if (loadingPerms || !user) return false;
       try {
         return hasPermission(qa.module || qa.modulo || '', null, qa.perm || 'criar');
@@ -148,16 +164,22 @@ export default function AcoesRapidasGlobal() {
       }
     })
     .map((qa) => ({
+      key: qa.key,
       label: qa.label,
       icon: qa.icon,
       action: actionHandlers[qa.key],
       cor: colorMap[qa.key] || 'text-slate-600',
-    }));
+    }))
+    .filter((acao) => typeof acao.action === 'function');
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 shadow-md">
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 shadow-md"
+          data-action="acoes-rapidas-novo"
+          data-context-required="group-or-company"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo
         </Button>
@@ -173,13 +195,15 @@ export default function AcoesRapidasGlobal() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {acoes.map((acao, idx) => {
+        {acoes.map((acao) => {
           const Icon = acao.icon;
           return (
             <DropdownMenuItem
-              key={idx}
+              key={acao.key}
               onClick={acao.action}
               className="cursor-pointer"
+              data-action={acao.key}
+              data-context-required="group-or-company"
             >
               <Icon className={`w-4 h-4 mr-2 ${acao.cor}`} />
               <span>{acao.label}</span>

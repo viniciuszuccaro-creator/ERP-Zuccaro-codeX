@@ -1,3 +1,17 @@
+## CURSOR — #252 rebase pós-#251 (2026-10-09T10:03Z)
+
+Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `96287638` (#251 MERGED).
+| Fase | Estado |
+|---|---|
+| implementado | ClientesTab V24 + Ações Rápidas fail-closed + `cliente-novo` |
+| revisado | **APROVAR COM RESSALVAS** (rebase obrigatório — feito) |
+| overlap #251 | só STATUS/HANDOFF (runtime NONE) |
+| CI | a correr pós-push |
+| implantado | não |
+| validado | testes focados + browser a seguir |
+
+≠ Codex outbox/legado.
+
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 
 | Item | Valor |
@@ -188,6 +202,7 @@ Legado: destino tip `08da3b8e` + main `6ff6b0f2` (#113/#246/#245); sem reprocess
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
 PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
 Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
+>>>>>>> 86ff02c6 (feat(comercial): ClientesTab no Visualizador V24 com Novo fail-closed)
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
