@@ -1,0 +1,11 @@
+# Evidência sanitizada — #252 MERGED + implantado
+# utc=2026-10-09T10:08Z
+# integrado = d6cca4c2
+# implantado = d6cca4c2 erp-dev
+# spa_asset = /assets/index-CrVInskz.js
+# CLIENTE_360 = true
+# backup = pre-gate-e-20261009-100720.sql sha256=b302608ea56e56521738a40fab9eddea210e7b77cf0a314407e5198704bead2d
+# rollback = pre-spa-login-20261009-100721
+# health = 200
+# overlap runtime #251 = NONE
+# sem senhas / sem tokens

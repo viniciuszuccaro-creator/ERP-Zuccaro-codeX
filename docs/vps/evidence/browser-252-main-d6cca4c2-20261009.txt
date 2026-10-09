@@ -1,0 +1,10 @@
+# Evidência sanitizada — browser tip d6cca4c2
+# utc=2026-10-09T10:09Z
+# implantado = d6cca4c2 · asset index-CrVInskz.js
+# login = PASS
+# switch_empresa = PASS
+# Novo via Ações Rápidas = PASS · sugestão PASS_NO_AUTOMERGE
+# Cadastros Cliente data-action=cliente-novo + form = PASS
+# Comercial marker v24 = PARTIAL (hub/janela)
+# testes #252 = 6/6
+# ≠ evidência SHA anterior

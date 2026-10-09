@@ -1,5 +1,4 @@
-backup path=pre-gate-e-20261008-204826.sql
-sha256=3d7de82326a22c582c340d392d421eff9e0080211ca9f6cee3aec15ef26c94d7
-utc=2026-10-08T20:48:26Z
-tip=dd13fb5f
-note=sanitized meta only; dump stays on VPS
+backup path=pre-gate-e-20261009-100720.sql
+sha256=b302608ea56e56521738a40fab9eddea210e7b77cf0a314407e5198704bead2d
+utc=2026-10-09T10:07:20Z
+tip=d6cca4c2

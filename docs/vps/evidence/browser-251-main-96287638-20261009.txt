@@ -1,0 +1,21 @@
+# Evidência sanitizada — browser tip main 96287638
+# utc=2026-10-09T10:05Z
+# implantado = 96287638 · asset index-B0gNWKWR.js
+#
+# Playwright headless (networkidle / waits longos):
+#   login = PASS
+#   switcher Grupo×CPA×3Z = PASS
+#   empresas_list edits=2 = PASS
+#   save_reopen Nome Fantasia marker = PASS (nf_match=true listHas=true; restaurado)
+#   cnpj_origem = PASS
+#   financeiro_caixa + troca 3Z = PASS
+#   sugestao Novo Cliente (Ações Rápidas) = PASS_NO_AUTOMERGE
+#   central360 UI DetalhesCliente = FAIL_NAV (sem import/openWindow consumidor no tip; API paginação PASS)
+#
+# API tip 96287638:
+#   login + Grupo/CPA/3Z = PASS
+#   pedidos CPA 0 ≠ 3Z 3 = PASS
+#   sugestao mescla=proibida + 401 sem token = PASS
+#   central-360 locais page1=5 page2=2 overlap=0 total=7 = PASS
+#
+# ≠ evidência de SHA anterior (dd13fb5f); prova nova deste tip

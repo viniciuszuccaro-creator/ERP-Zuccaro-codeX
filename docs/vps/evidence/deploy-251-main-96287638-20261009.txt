@@ -1,0 +1,16 @@
+# Evidência sanitizada — #251 MERGED em main + implantado erp-dev
+# utc=2026-10-09T09:59Z
+#
+# integrado = 96287638 Merge pull request #251
+# implantado = 96287638 erp-dev
+# antes = dd13fb5f
+# CI tip 562765fa / merge = PASS
+# parecer = APROVAR COM RESSALVAS (parecer-251-dd13fb5f-20261009.txt)
+# backup = pre-gate-e-20261009-095825.sql sha256=292c8ac86f6316fd449c78caebba516675278f3a240c2f6c99d50c533740a4aa
+# rollback = pre-spa-login-20261009-095826
+# spa_asset = /assets/index-B0gNWKWR.js
+# VITE_ERP_HTTP_CLIENTE_360 = true
+# health/ready/web = 200 · RUNTIME-08B · supabase_user
+# ancestrais incorporados = #248 bdf54b86 · #249 4ab97760 · #250 49e677ce · tip 562765fa
+# PRs #248/#249/#250 = MERGED (GitHub)
+# sem senhas / sem tokens / sem e-mail
