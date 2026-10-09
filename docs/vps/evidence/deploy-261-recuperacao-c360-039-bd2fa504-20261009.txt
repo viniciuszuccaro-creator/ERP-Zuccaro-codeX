@@ -1,0 +1,36 @@
+# Deploy #261 recuperação + C360 contrato 039 — tip bd2fa504 (2026-10-09T20:37Z)
+# Sanitizado — sem dump, sem .env, sem chave.
+
+| Item | Valor |
+|---|---|
+| tip implantado | **bd2fa504** |
+| branch / PR | cursor/cadastros-recuperacao-c360-contrato-392b · [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) |
+| backup | pre-gate-e-20261009-203540.sql · sha256=b8686cb4315f81a9acf6444cdcd32d605025d54f74da63d71322b8c6e9589a24 · 988514 bytes |
+| migration | **039_orcamentos_tabela_preco.sql** APPLIED (executed=[039]; pending=[]) |
+| schema_migrations | 001–024 + **038** + **039** |
+| 038 | **não** reaplicada / **não** modificada |
+| 025–037 Codex | intocados (não no VPS) |
+| SPA asset | `/assets/index-BufSJCA3.js` |
+| health | 3080=200 · 3081=200 |
+| rollback_api | erp-zuccaro-erp-api:pre-spa-login-20261009-203649 |
+| rollback_web | erp-zuccaro-erp-web:pre-spa-login-20261009-203649 |
+| runtime anterior | 18113337 (#260) |
+
+## DB pós-039 (contagens sanitizadas)
+| tabela | n | codigo |
+|---|---:|---|
+| marcas | 5 | 5 |
+| setores_atividade | 4 | 4 |
+| grupos_produto | 4 | 4 |
+| unidades_medida | 4 | 4 |
+| clientes | 6 | 6 |
+| cliente_empresas | 7 | — |
+| produtos | 4 | 4 |
+| condicoes_pagamento | 8 | 8 |
+| tabelas_preco | 3 | 3 |
+| orcamentos | 5 | — |
+| pedidos | 3 | — |
+| empresas | 3 | — |
+| orcamentos.tabela_preco_id | coluna **SIM** | |
+
+GATE-D SYNTH em marcas: n=1 (preservar).

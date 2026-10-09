@@ -1,19 +1,24 @@
+## CURSOR — #261 tip `bd2fa504` implantado + matriz (2026-10-09T20:50Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`bd2fa504`** · PR [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) |
+| **recuperado** | matriz DB×API · GATE-D SYNTH n=1 preservado · Fornecedor schema ausente · legado #211 **NÃO** |
+| **implementado** | 039 + UI tabela + convert + codigo grades + regressões Abrir/merge |
+| **integrado** | PR #261 |
+| **implantado** | erp-dev **`bd2fa504`** · `index-BufSJCA3.js` · mig **039** · backup `pre-gate-e-20261009-203540.sql` · rollback `pre-spa-login-20261009-203649` |
+| **validado** | BE 305/0 · FE cobertura/regressão PASS · API orçamentos+`tabela_preco_id` PASS · SPA label PASS |
+| browser UI fluxo completo | **BLOCKED** reproduzível: toast contexto Cadastros Marca + Orçamentos UI “sem servidor” com API 200 → **Codex #254** |
+| consolidação | #258⊂#259⊂#260⊂#261 · `consolidacao-258-259-260-20261009.txt` |
+| mig | 038 intocada · 025–037 Codex intocados · **039** aplicada |
+| evidências | `deploy-261-*` · `browser-261-*` · `registros-recuperacao-matriz-*` |
+| próxima | Codex #254 contexto; CI #261; merge owner; #211 legado |
+
 ## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
 
 | Fase | Estado |
 |---|---|
-| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` |
-| **implementado** | mig **039** `orcamentos.tabela_preco_id` · UI Orçamento tabela · convert preserva · Bloco codigo grades · regressão Abrir/merge |
-| **integrado** | PR deste branch (base tip #260 `bf1ecb17`) |
-| **implantado** | pendente migrate 039 + rebuild (VPS ainda `18113337`+038) |
-| **homologado** | unitários FE 44 + BE 305/0 fail · browser pós-deploy |
-| **recuperado** | matriz atualizada · GATE-D SYNTH preservado · legado #211 **NÃO** |
-| **importado** | **NÃO** (#211 authorized=0) |
-| consolidação | `#258⊂#259⊂#260` · evidência `consolidacao-258-259-260-20261009.txt` |
-| mig | 038 intocada · 025–037 Codex intocados · **039** aditiva |
-| ≠ Codex | sessão/contexto/outbox intocados |
-| evidências | `consolidacao-258-259-260-*` · `registros-recuperacao-matriz-*` · testes cobertura/regressão |
-| próxima | CI tip → VPS migrate 039 → browser Abrir 3 escopos + fluxo Cliente→Orç→Pedido |
+| tip | supersedido por implantado **`bd2fa504`** acima |
 
 ## CURSOR — #260 tip `18113337` CI+VPS+browser (2026-10-09T19:52Z)
 

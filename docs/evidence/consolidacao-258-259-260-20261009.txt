@@ -27,18 +27,22 @@ Causa 038: CI #259 falhou porque `025_cadastros_*` colidia com reserva Codex `02
 | 55fcac4f (#259) | index-DlbCJL3w.js | pre-gate-e-20261009-183944.sql | Abrir/edit Marca/Grupo/Setor/UM |
 | 18113337 (#260) | index-wiWHreg3.js | pre-gate-e-20261009-194341.sql | Orçamento/Pedido busca código |
 
-## Este lote (branch cursor/cadastros-recuperacao-c360-contrato-392b)
+## Este lote → PR #261 tip `bd2fa504`
 
 - Fecha lacuna contrato Orçamento `tabela_preco_id` (mig 039 + UI + service + convert).
 - Cobertura `codigo` nas grades Bloco 1–5 + testes regressão (2 janelas / merge GET parcial).
 - Sem reaplicar 038; sem editar arquivos Codex reservados (sessão/contexto/outbox).
 
-## Matriz fases (este lote — pré-deploy)
+| Tip | Asset | Mig | Backup |
+|---|---|---|---|
+| **bd2fa504** (#261) | index-BufSJCA3.js | **039** APPLIED | pre-gate-e-20261009-203540.sql |
+
+## Matriz fases (pós-deploy)
 
 | Dimensão | Estado |
 |---|---|
-| recuperado | parcial — ver registros-recuperacao-matriz (legado #211 NÃO) |
-| implementado | SIM (código local tip deste branch) |
-| integrado | PR deste branch |
-| implantado | após migrate 039 + spa-login-rebuild |
-| validado | unitários locais PASS; browser pós-deploy |
+| recuperado | parcial — SYNTH preservado; legado #211 NÃO |
+| implementado | SIM `bd2fa504` |
+| integrado | PR #261 |
+| implantado | SIM erp-dev 039 + SPA |
+| validado | unitários+API+asset PASS; UI fluxo completo BLOCKED #254 |
