@@ -4,7 +4,8 @@
 |---|---|
 | tip | **`bd2fa504`** · PR [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) · docs tip `dccd6ae3` |
 | CI runtime `bd2fa504` | erp-runtime-ci **SUCCESS** (4 checks · push 37987907880 · PR 37987938769) |
-| CI docs `dccd6ae3` | backend FAIL **infra** Docker Hub `toomanyrequests` (postgres:16); frontend SUCCESS · ≠ regressão código |
+| CI docs tip | backend FAIL **infra** Docker Hub `toomanyrequests`/timeout postgres:16; frontend SUCCESS · ≠ regressão código |
+| CI retry 2/2 | tip docs após cooldown longo (sem mudança de código) |
 | **recuperado** | matriz DB×API · GATE-D SYNTH n=1 preservado · Fornecedor schema ausente · legado #211 **NÃO** |
 | **implementado** | 039 + UI tabela + convert + codigo grades + regressões Abrir/merge |
 | **integrado** | PR #261 |
