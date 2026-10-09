@@ -1,3 +1,18 @@
+## CURSOR — #258 badge Clientes HTTP (batch count) + HEAD `1d3b8fb6` (2026-10-09)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip base implantado | **`1d3b8fb6`** erp-dev · CLIENTE_360=true · CI SUCCESS · MERGEABLE |
+| mudança tip seguinte | `countEntities` batch → piloto HTTP (`httpPilotCountBridge`); `buildContextFilter` = `buildMultiempresaReadFilter` |
+| causa badge 0 | lista HTTP ok; contagem lote caía no store local |
+| ops DB | clientes=6 · produtos=4 · empresas=3 · marcas/UM/grupos OK · tabela `fornecedores` **ausente** (não “sumiu” na UI) |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO**; sem contrato/crosswalk operacional |
+| fases | staging=contagens · reconciliado=consumidor · importado=não · validado_nav tip `1d3b8fb6` (ciclo Cliente); badge pós-rebuild pendente |
+| próxima ação | push fix → rebuild spa-login no tip → re-homolog badge/lista CPA·3Z → merge #258 só após owner |
+
 ## CURSOR — #258 ciclo edição Cliente PASS tip `02d59aa6` (2026-10-09T15:22Z)
 
 | Item | Valor |

@@ -8,6 +8,10 @@ import {
 import { createHttpApiClient } from './httpApiClient.js';
 import { runLocalEntityReadFunction } from './localEntityReadApi.js';
 import {
+  countEntitiesTouchesHttpPilot,
+  runHttpPilotAwareCountEntities,
+} from './httpPilotCountBridge.js';
+import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,
   resolveErpBackendMode,
@@ -197,13 +201,21 @@ function createHttpHybridClient() {
           }
         }
         if (name === 'countEntities') {
-          const entityName = String(payload?.entityName || '').trim();
-          if (entityName && pilotSet.has(entityName) && http.entities?.[entityName]) {
-            const filter = {
-              ...(payload.filter && typeof payload.filter === 'object' ? payload.filter : {}),
-            };
-            const rows = await http.entities[entityName].filter(filter, undefined, 500, 0);
-            return { data: { count: Array.isArray(rows) ? rows.length : 0 } };
+          // Batch (useEntityCounts) e single: piloto HTTP; senao store local.
+          // Sem isso o badge "Clientes: 0" diverge da lista HTTP (n>0).
+          if (countEntitiesTouchesHttpPilot(payload, pilotSet, http.entities)) {
+            return runHttpPilotAwareCountEntities(payload, {
+              pilotSet,
+              httpEntities: http.entities,
+              countLocal: async (entityName, filter) => {
+                const localRes = await localBase44.functions.invoke('countEntities', {
+                  entityName,
+                  filter: filter || {},
+                });
+                const d = localRes?.data;
+                return typeof d?.count === 'number' ? d.count : 0;
+              },
+            });
           }
         }
         return localBase44.functions.invoke(name, payload);
