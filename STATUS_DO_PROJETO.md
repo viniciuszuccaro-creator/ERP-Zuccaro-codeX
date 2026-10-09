@@ -1,9 +1,20 @@
+## CURSOR — #258 CI tip `e94f39b2` SUCCESS (2026-10-09T16:17Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`e94f39b2`** (fix CI mocks/contrato sobre `d9a72802`) |
+| CI | erp-runtime-ci frontend+backend **SUCCESS** |
+| **implantado** | código runtime **`d9a72802`** (docs/testes não exigem rebuild) |
+| **homologado** | badge/lista tip `d9a72802` |
+| **importado** | **NÃO** |
+| próxima | merge #258 após owner |
+
 ## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
 
 | Fase | Estado |
 |---|---|
 | **implementado** | `d9a72802` · `httpPilotCountBridge` (countEntities batch→HTTP) + filtro contagem alinhado |
-| **integrado** | PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) aberto · tip anterior CI SUCCESS |
+| **integrado** | PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) · CI tip `e94f39b2` SUCCESS |
 | **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` · backup `pre-gate-e-20261009-155122.sql` |
 | **homologado** | asset PASS · login PASS · hub Clientes badge=5 · V24 badge=5 · rows=5 · API n=5 · badge_ok |
 | causa | batch `countEntities` caía no store local → badge 0 com API n>0 |

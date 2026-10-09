@@ -4,7 +4,8 @@
 |---|---|
 | responsável | Cursor |
 | branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
-| tip | **`d9a72802`** |
+| tip | **`e94f39b2`** (CI) · runtime implantado **`d9a72802`** |
+| CI | erp-runtime-ci **SUCCESS** (`e94f39b2`) |
 | **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` |
 | mudança | `countEntities` batch → piloto HTTP; filtro contagem = multiempresa Visualizador |
 | **homologado** | hub badge Clientes=5 · V24 badge=5 · rows=5 · API n=5 (tip = d9a72802) |
