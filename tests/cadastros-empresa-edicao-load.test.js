@@ -4,8 +4,10 @@ import { readFile } from 'node:fs/promises';
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
+  classifyCadastroEditLoad,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
+  mergeCadastroEditHydration,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
 import {
   buildCadastroScopeSwitchReset,
@@ -28,6 +30,81 @@ test('Empresa: carga completa exige id, nome e CNPJ; incompleta falha fechado', 
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', razao_social: 'A Ltda', cnpj: '12.345.678/0001-99' }, 'e1'), true);
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', nome_fantasia: 'A', cnpj: '12345678000199' }, 'e1'), true);
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', razao_social: 'A', cnpj: '' }, 'e1'), false);
+});
+
+test('mergeCadastroEditHydration: vazio intencional do GET aplica; chave ausente preserva grade', () => {
+  const merged = mergeCadastroEditHydration(
+    { id: 'c1', nome: 'Cliente Lista', email: 'a@b.com', telefone: '11', obs: 'lista' },
+    { id: 'c1', nome: '', email: 'novo@b.com', telefone: null, documento: '123' },
+  );
+  assert.equal(merged.nome, '');
+  assert.equal(merged.email, 'novo@b.com');
+  assert.equal(merged.telefone, null);
+  assert.equal(merged.documento, '123');
+  assert.equal(merged.obs, 'lista');
+});
+
+test('isCadastroEditLoadComplete: Cliente/Fornecedor/Produto exigem identidade', () => {
+  assert.equal(isCadastroEditLoadComplete('Cliente', { id: 'c1' }, 'c1'), false);
+  assert.equal(isCadastroEditLoadComplete('Cliente', { id: 'c1', nome: 'X' }, 'c1'), false);
+  assert.equal(isCadastroEditLoadComplete('Cliente', {
+    id: 'c1', razao_social: 'ACME', documento: '11222333000181',
+  }, 'c1'), true);
+  assert.equal(isCadastroEditLoadComplete('Fornecedor', {
+    id: 'f1', nome: 'Forn', cnpj: '11222333000181',
+  }, 'f1'), true);
+  assert.equal(isCadastroEditLoadComplete('Produto', { id: 'p1', descricao: 'Barra' }, 'p1'), false);
+  assert.equal(isCadastroEditLoadComplete('Produto', {
+    id: 'p1', descricao: 'Barra', codigo: 'P-01',
+  }, 'p1'), true);
+});
+
+test('classifyCadastroEditLoad: distingue falha, incompleto e ok', () => {
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Cliente',
+    expectedId: 'c1',
+    listRow: { id: 'c1', nome: 'X' },
+    loadError: new Error('rede'),
+  }).kind, 'load_failed');
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Empresa',
+    expectedId: 'e1',
+    fullRecord: { id: 'e1', razao_social: 'A', cnpj: '' },
+  }).kind, 'load_incomplete');
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Cliente',
+    expectedId: 'c1',
+    listRow: { id: 'c1', nome: 'Lista' },
+    fullRecord: { id: 'c1' },
+  }).kind, 'load_incomplete');
+  const ok = classifyCadastroEditLoad({
+    entityName: 'Empresa',
+    expectedId: 'e1',
+    listRow: { id: 'e1', razao_social: 'A' },
+    fullRecord: { id: 'e1', razao_social: 'A Ltda', cnpj: '12345678000199' },
+  });
+  assert.equal(ok.kind, 'ok');
+  assert.equal(ok.message, null);
+});
+
+test('Marca/Grupo/Setor: GET parcial hidrata com grade e libera identidade', () => {
+  assert.equal(isCadastroEditLoadComplete('Marca', { id: 'm1', nome_marca: 'GATE-D SYNTH' }, 'm1'), true);
+  assert.equal(isCadastroEditLoadComplete('GrupoProduto', { id: 'g1', nome_grupo: 'Longos' }, 'g1'), true);
+  assert.equal(isCadastroEditLoadComplete('SetorAtividade', { id: 's1', nome: 'Construcao' }, 's1'), true);
+  const marcaOk = classifyCadastroEditLoad({
+    entityName: 'Marca',
+    expectedId: 'm1',
+    listRow: { id: 'm1', nome_marca: 'GATE-D SYNTH', codigo: '000001' },
+    fullRecord: { id: 'm1', descricao: '', cnpj: '', pais_origem: '' },
+  });
+  assert.equal(marcaOk.kind, 'ok');
+  const grupoOk = classifyCadastroEditLoad({
+    entityName: 'GrupoProduto',
+    expectedId: 'g1',
+    listRow: { id: 'g1', nome_grupo: 'GATE-D SYNTH', codigo: 'GATED-GP' },
+    fullRecord: { id: 'g1', natureza: 'Revenda' },
+  });
+  assert.equal(grupoOk.kind, 'ok');
 });
 
 test('Save Empresa: preserva id, group_id e nested; não carimba empresa_id do contexto', () => {
@@ -215,11 +292,14 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /setCrossPageAll\(reset\.crossPageAll\)/);
   assert.match(source, /getInContext\(ENTITY, item\.id/);
   assert.match(source, /isCadastroEditLoadComplete/);
+  assert.match(source, /mergeCadastroEditHydration/);
+  assert.match(source, /classifyCadastroEditLoad/);
   assert.match(source, /buildCadastroEditSavePayload/);
   assert.match(source, /hasCadastroEntityPermission/);
   assert.match(source, /isTenantMasterEntity/);
   assert.match(source, /editLoadBlocked/);
-  assert.match(source, /Nao foi possivel carregar o cadastro completo/);
+  assert.match(source, /classifyCadastroEditLoad\(/);
+  assert.match(source, /Falha ao carregar registro completo/);
 });
 
 test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, sem wipe fiscal', async () => {

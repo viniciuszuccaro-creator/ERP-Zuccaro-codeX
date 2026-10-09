@@ -83,6 +83,13 @@ test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do f
   assert.deepEqual(enabled.filter((name) => name === 'Produto'), []);
 });
 
+test('Cliente entra no piloto HTTP somente com flag CLIENTE autorizada', () => {
+  assert.equal(resolveHttpPilotEntities({}).includes('Cliente'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'false' }).includes('Cliente'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), true);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'), true);
+});
+
 
 test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
   /** @type {{ method: string, url: string, headers: HeadersInit, body?: string }[]} */
@@ -370,4 +377,42 @@ test('HTTP rejected Bearer never falls back to local data or leaks token in erro
     return true;
   });
   assert.equal(calls, 1);
+});
+
+test('Cliente HTTP update strips commercial/extra form fields to master-data allowlist', async () => {
+  let body = null;
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async (_url, init) => {
+      body = JSON.parse(init.body);
+      return new Response(JSON.stringify({
+        data: { id: 'cli-1', nome_fantasia: body.nome_fantasia, razao_social: body.razao_social },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  const updated = await client.entities.Cliente.update('cli-1', {
+    id: 'cli-1',
+    group_id: 'grupo-sintetico',
+    empresa_id: 'empresa-sintetica',
+    tipo: 'Pessoa Juridica',
+    razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
+    nome_fantasia: 'MARKER-OK',
+    cnpj: '11222333000181',
+    vendedor_responsavel: 'X',
+    vendedor_responsavel_id: 'y',
+    condicao_comercial: { limite_credito: 999 },
+    endereco_principal: { cidade: 'SP' },
+    contatos: [{ tipo: 'email', valor: 'a@b.c' }],
+    status: 'Ativo',
+  });
+  assert.equal(updated.nome_fantasia, 'MARKER-OK');
+  assert.equal(body.nome_fantasia, 'MARKER-OK');
+  assert.equal(body.documento, '11222333000181');
+  assert.equal(body.tipo, 'Pessoa Jurídica');
+  assert.equal(body.vendedor_responsavel, undefined);
+  assert.equal(body.condicao_comercial, undefined);
+  assert.equal(body.endereco_principal, undefined);
+  assert.equal(body.group_id, undefined);
+  assert.equal(body.id, undefined);
 });

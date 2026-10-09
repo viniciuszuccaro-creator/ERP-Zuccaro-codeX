@@ -78,6 +78,21 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {dadosIniciais?.id ? (
+        <div>
+          <Label>Código de registro</Label>
+          <Input
+            value={formData.codigo || ''}
+            readOnly
+            disabled
+            className="bg-slate-50 font-mono tabular-nums"
+            data-action="codigo-registro-setor-atividade"
+            title="Gerado automaticamente no backend; ID técnico permanece separado"
+          />
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500">Código de registro numérico será gerado automaticamente ao salvar.</p>
+      )}
       <div>
         <Label>Nome do Setor *</Label>
         <Input
@@ -184,7 +199,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission="Cadastros.SetorAtividade.salvar"
+          data-permission={dadosIniciais?.id ? "Cadastros.SetorAtividade.editar" : "Cadastros.SetorAtividade.criar"}
           data-action="salvar-setor-atividade"
           data-sensitive="true"
         >

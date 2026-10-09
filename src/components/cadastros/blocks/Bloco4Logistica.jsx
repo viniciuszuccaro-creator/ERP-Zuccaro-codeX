@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
@@ -95,7 +96,19 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" 
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   // Campos reais das entidades — getDisplayValue faz fallback automático se vazio
@@ -119,7 +132,14 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" 
       return;
     }
     registrarAuditoria("Motorista", "Visualizacao app motorista", true, { titulo: "App Motorista", visualizador: "AppEntregasMotorista", window_mode: true });
-    openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: AppEntregasMotorista,
+      entityName: "AppMotorista",
+      title: "App Motorista",
+      props: {},
+      width: 420,
+      height: 800,
+    });
   };
 
   useEffect(() => {
