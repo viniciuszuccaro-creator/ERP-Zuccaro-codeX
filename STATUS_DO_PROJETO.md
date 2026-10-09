@@ -1,16 +1,16 @@
-## CURSOR — Cadastros código + Abrir único (2026-10-09)
+## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | branch `cursor/cadastros-codigo-abrir-unico-392b` · Abrir uniqueKey+registry · edit merge grade · MASTER_CODE auxiliares · migration `025` · `reserveEntityCodigo` Marca/Grupo/Setor/UM · forms Código de registro |
-| **integrado** | PR deste branch (base `cursor/comercial360-onda15-outbox-claim-392b` / alinhar main via #258) |
-| **implantado** | **NÃO** (migration 025 + rebuild VPS pendente) |
-| **homologado** | testes unitários PASS · browser/VPS pendente tip |
+| **implementado** | tip **`c2e32750`** · Abrir uniqueKey+registry · edit merge grade · MASTER_CODE auxiliares · migration `025` · `reserveEntityCodigo` Marca/Grupo/Setor/UM · forms Código de registro |
+| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) · CI em andamento |
+| **implantado** | **NÃO** (migration 025 + rebuild VPS pendente tip) |
+| **homologado** | unitários PASS · browser/VPS pendente |
 | **importado** | **NÃO** (#211) |
 | matriz | `docs/evidence/cadastros-codigo-abrir-matriz-20261009.txt` |
 | #258 | CI `e94f39b2` SUCCESS · runtime `d9a72802` · merge aguarda owner |
 | #254 / #211 | reservados Codex |
-| próxima | commit/push → CI → migrate 025 + rebuild erp-dev → browser Abrir/código/editar |
+| próxima | CI #259 → migrate 025 + rebuild erp-dev (GIT_REF tip) → browser Abrir/código/editar |
 
 ## CURSOR — #258 CI tip `e94f39b2` SUCCESS (2026-10-09T16:17Z)
 
