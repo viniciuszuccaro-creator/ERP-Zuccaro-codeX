@@ -1,3 +1,18 @@
+## CURSOR — DetalhesCliente→Central360 entry (em curso) (2026-10-09T10:20Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/comercial-detalhes-cliente-360-entry-392b` |
+| base | `main` `61c67d86` (#253 docs; #251+#252 já MERGED) |
+| mudança | V24: botão `data-action="cliente-detalhes-360"` → `openWindow(DetalhesCliente)` + painel Central360 |
+| testes | `comercial-clientes-tab-v24` **7/7** |
+| #251/#252 | **MERGED+implantados** `d6cca4c2` · evidências tip próprias |
+| implantado tip entry | pendente merge/CI |
+| próxima ação | CI → merge → `spa-login-rebuild` com CLIENTE_360=true → Playwright Cadastros/Clientes → `cliente-detalhes-360` → Carregar mais |
+
+≠ Codex outbox/legado. Arquivos runtime: só `VisualizadorUniversalEntidadeV24.jsx` (+ teste).
+
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 
 | Pacote | integrado | implantado | validado |
@@ -40,7 +55,6 @@ Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `9628763
 | validado | testes focados + browser a seguir |
 
 ≠ Codex outbox/legado.
->>>>>>> bf3d47ff (docs(vps): #251 merged em 96287638 — evidência e parecer #252)
 
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 
@@ -253,7 +267,6 @@ Evidência: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt` �
 | rollback | `pre-spa-login-20261008-161558` |
 
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`. ≠ outbox/legado.
->>>>>>> 86ff02c6 (feat(comercial): ClientesTab no Visualizador V24 com Novo fail-closed)
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 

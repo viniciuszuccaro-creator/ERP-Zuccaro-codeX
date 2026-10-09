@@ -52,6 +52,19 @@ test('Visualizador V24: botão Novo Cliente usa data-action cliente-novo', async
   assert.match(source, /enabled: !!ENTITY && contextoValido && canViewCadastro/);
 });
 
+test('Visualizador V24: entrada DetalhesCliente/Central360 via data-action cliente-detalhes-360', async () => {
+  const source = await readFile(
+    new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /import DetalhesCliente from ["']@\/components\/comercial\/DetalhesCliente["']/);
+  assert.match(source, /import \{ useWindow \} from ["']@\/components\/lib\/useWindow["']/);
+  assert.match(source, /data-action="cliente-detalhes-360"/);
+  assert.match(source, /ENTITY === "Cliente"/);
+  assert.match(source, /openWindow\(\s*DetalhesCliente/);
+  assert.match(source, /disabled=\{!contextoValido \|\| !canViewCadastro\}/);
+});
+
 test('comportamento: perms loading / sem contexto / sem permissão bloqueiam Novo', () => {
   assert.equal(canOpenAcaoRapida({ empresaId: 'e1', groupId: 'g1', loadingPerms: true, user: { id: 1 }, hasPerm: () => true }), false);
   assert.equal(canOpenAcaoRapida({ empresaId: null, groupId: null, loadingPerms: false, user: { id: 1 }, hasPerm: () => true }), false);
@@ -81,4 +94,25 @@ test('diff vs #251: runtime #252 não inclui Empresas/Financeiro/Central360', as
   }
   const tab = await readFile(new URL('../src/components/comercial/ClientesTab.jsx', import.meta.url), 'utf8');
   assert.doesNotMatch(tab, /CentralCliente360|EmpresaSwitcher|LaunchpadCard/);
+});
+
+/** Regressão integrada #251+#252: entrada 360 na listagem + Novo Cliente coexistentes. */
+test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; DetalhesCliente compõe Central360', async () => {
+  const v24 = await readFile(
+    new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url),
+    'utf8',
+  );
+  const detalhes = await readFile(
+    new URL('../src/components/comercial/DetalhesCliente.jsx', import.meta.url),
+    'utf8',
+  );
+  const panel = await readFile(
+    new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(v24, /data-action="cliente-novo"|ENTITY === 'Cliente' \? 'cliente-novo'/);
+  assert.match(v24, /data-action="cliente-detalhes-360"/);
+  assert.match(detalhes, /CentralCliente360Panel/);
+  assert.match(panel, /Carregar mais/);
+  assert.match(panel, /_limit|_offset|blockLimits/);
 });

@@ -30,9 +30,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
-  Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
+  Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X, Eye
 } from "lucide-react";
+import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
+import DetalhesCliente from "@/components/comercial/DetalhesCliente";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
@@ -246,6 +248,7 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [FormComponent]);
 
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
   const {
     empresaAtual,
     grupoAtual,
@@ -974,6 +977,27 @@ export default function VisualizadorUniversalEntidadeV24({
                 })}
                 <td className="px-3 py-2">
                   <div className="flex items-center justify-center gap-1">
+                    {ENTITY === "Cliente" && (
+                      <button
+                        type="button"
+                        onClick={function(e) {
+                          e.stopPropagation();
+                          if (!contextoValido || !canViewCadastro) return;
+                          openWindow(
+                            DetalhesCliente,
+                            { cliente: item, windowMode: true },
+                            { title: `Cliente ${item.nome || item.razao_social || item.id || ""}`.trim(), width: 1100, height: 720 },
+                          );
+                        }}
+                        title="Detalhes / Central 360"
+                        disabled={!contextoValido || !canViewCadastro}
+                        data-permission={`Cadastros.${ENTITY}.visualizar`}
+                        data-action="cliente-detalhes-360"
+                        className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     {FormComponent && (
                       <button
                         type="button"
