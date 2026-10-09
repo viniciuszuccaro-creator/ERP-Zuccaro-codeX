@@ -2,14 +2,14 @@
 
 | Fase | Estado |
 |---|---|
-| **implementado** | merge/classify edição cadastro; fornecedor no mapper legado existente |
+| **implementado** | `3575b4a4` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) · CI **SUCCESS** |
 | **revisado #254** | APROVAR COM RESSALVAS `fd1778f6` (Cursor não edita arquivos reservados) |
 | **implantado** | tip erp-dev `baba91a6` (azul #257) — #254 ainda não mergeado |
 | **homologado** | login/CPA/contexto/Cadastros/edição/Financeiro PASS · API×DB ≠ lista vazia |
 | **importado** | **NÃO** — stage privado #211 com contagens; gate operacional pendente |
 | #211 | checksum conferido + CNPJs corrigidos (owner); não repetir pedidos |
 | stage | clientes 18458/4437 · forn 790/271 · prod 1208/14 · authorized=0 |
-| testes | 28/28 focados · evidências em `docs/vps/evidence/*254*` / `*211*` |
+| testes | edição+legado focados PASS · erp-runtime-ci frontend+backend SUCCESS |
 | ≠ | Codex edita sessão #254 · Legado ETL real |
 
 ## CURSOR — padrão azul Comercial tip `7d068dbb` (2026-10-09T11:45Z)
