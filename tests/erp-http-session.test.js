@@ -48,6 +48,10 @@ test('fachada Base44 real em HTTP encaminha entityGuard somente ao BFF, sem fall
     './localBase44Client.js': { localApiUser: {}, localBase44: { entities: {}, auth: {}, functions: { invoke: async () => { localCalls++; return 'legacy'; } } } },
     './localAuthSessionPolicy.js': { assertInteractiveAuthAllowed: () => ({ allowed: true }) },
     './localEntityReadApi.js': { runLocalEntityReadFunction: async () => ({ data: [] }) },
+    './httpPilotCountBridge.js': {
+      countEntitiesTouchesHttpPilot: () => false,
+      runHttpPilotAwareCountEntities: async () => ({ data: { counts: {} } }),
+    },
     './httpApiClient.js': { createHttpApiClient: () => ({ entities: {}, entityGuard: async payload => { backendCalls++; assert.equal(payload.module, 'Comercial'); throw new Error('Bearer rejected'); } }) },
     './runtimeBackend.js': { HTTP_PILOT_ENTITIES: [], resolveErpApiBaseUrl: () => '', resolveErpBackendMode: () => 'http', resolveHttpPilotEntities: () => [] },
   });
