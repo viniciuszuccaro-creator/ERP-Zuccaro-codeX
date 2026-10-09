@@ -1,4 +1,5 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
+import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
@@ -236,10 +237,21 @@ export function createHttpApiClient(options = {}) {
       searchKeys: ['nome', 'search'],
     }),
     // Listagem/CRUD Cliente no BFF — piloto quando VITE_ERP_HTTP_CLIENTE_360=true.
-    Cliente: createCrudEntity('/api/v1/clientes', {
-      searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],
-      ativoKeys: ['ativo', 'ativa', 'status'],
-    }),
+    Cliente: (() => {
+      const base = createCrudEntity('/api/v1/clientes', {
+        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],
+        ativoKeys: ['ativo', 'ativa', 'status'],
+      });
+      return {
+        ...base,
+        async create(data) {
+          return base.create(toClienteMasterHttpPayload(data));
+        },
+        async update(id, data) {
+          return base.update(id, toClienteMasterHttpPayload(data));
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
