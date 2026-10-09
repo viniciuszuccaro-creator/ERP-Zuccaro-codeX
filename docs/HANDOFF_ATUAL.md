@@ -1,3 +1,20 @@
+## CURSOR — #260 tip `18113337` implantado + homolog (2026-10-09T19:52Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/comercial360-fluxo-cliente-orc-pedido-392b` · [#260](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/260) |
+| tip | **`18113337`** |
+| CI | **SUCCESS** · MERGEABLE |
+| **implantado** | erp-dev · `index-wiWHreg3.js` · backup `pre-gate-e-20261009-194341.sql` · rollback `pre-spa-login-20261009-194342` |
+| **homologado** | Orçamento busca+gap PASS · Pedido busca/tabela PASS · 3Z PASS |
+| **importado** | **NÃO** |
+| #259 | tip `55fcac4f` · MERGEABLE · merge owner |
+| #258 | ancestor de #259 |
+| #254 / #211 | Codex |
+| evidências | `deploy-260-*` · `browser-260-*` |
+| próxima | merge #260/#259 após owner; Codex #254/#211 |
+
 ## CURSOR — Comercial 360 picker + #259 closeout (2026-10-09T19:40Z)
 
 | Item | Valor |
@@ -5,14 +22,13 @@
 | responsável | Cursor |
 | #259 | tip **`55fcac4f`** implantado · CI SUCCESS · MERGEABLE · Setor/UM/Grupo edit+codigo **PASS** |
 | #258 | ancestor OPEN — merge #259 cobre |
-| Comercial 360 | branch `cursor/comercial360-fluxo-cliente-orc-pedido-392b` · busca código Cliente/Produto · gaps orçamento explícitos |
-| **implantado** Comercial | **NÃO** |
+| Comercial 360 | supersedido pelo tip **`18113337`** implantado |
 | **importado** | **NÃO** (#211 staging) |
 | registros | matriz `registros-recuperacao-matriz-20261009.txt` · Fornecedor schema ausente · SYNTH≠legado |
 | Financeiro menus | inventário `financeiro-menus-nav-20261009.txt` · sem módulo paralelo |
 | #254 / #211 / outbox | **reservado Codex** — Cursor não edita sessão/contexto/outbox |
 | mig | VPS 001–024+**038**; Codex 025–037 intocados |
-| próxima | merge #259; CI+deploy Comercial picker; Codex #254/#211 |
+| próxima | merge #259/#260 após owner |
 
 ## CURSOR — #259 tip `55fcac4f` implantado + homolog (2026-10-09T18:55Z)
 

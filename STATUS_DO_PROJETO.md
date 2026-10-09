@@ -1,3 +1,16 @@
+## CURSOR — #260 tip `18113337` CI+VPS+browser (2026-10-09T19:52Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`18113337`** |
+| CI | erp-runtime-ci **SUCCESS** (4 checks) · MERGEABLE |
+| **implantado** | erp-dev **`18113337`** · asset `index-wiWHreg3.js` · backup `pre-gate-e-20261009-194341.sql` · rollback `pre-spa-login-20261009-194342` |
+| **homologado** | Orçamento busca+gap PASS · Pedido busca/tabela PASS · switch 3Z PASS |
+| **importado** | **NÃO** (#211) |
+| #259 | tip `55fcac4f` predecessor · merge owner |
+| evidências | `deploy-260-comercial-picker-18113337-*` · `browser-260-comercial-picker-18113337-*` |
+| próxima | merge #260/#259 após owner; Codex #254/#211 |
+
 ## CURSOR — Legado consumidor + Financeiro menus (2026-10-09T19:42Z)
 
 | Fase | Estado |
