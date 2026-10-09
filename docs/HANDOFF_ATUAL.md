@@ -1,3 +1,18 @@
+## CURSOR — #255 MERGED main `99ee35b0` + ajuste proprietário (2026-10-09T11:05Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| #255 | **MERGED** `99ee35b0` · implantado erp-dev · rollback `pre-spa-login-20261009-110013` |
+| validado | Central360 PASS · Cadastros+azul PASS · Financeiro+CR≠Régua PASS |
+| regras | AGENTS.md §14.1 — exemplos/sintéticos ≠ carga operacional/legado; sem reseed por lista vazia |
+| visual | ref `ref-visual-azul-financeiro-20261009.txt` · testes regressão cores no inventário Financeiro |
+| Codex #254 | **reservado Codex** — `erpHttpSession` / `useContextoGrupoEmpresa` / `useContextoVisual` · Cursor **não** edita |
+| Codex Legado | staging privado + backup original; conflitos/lacunas; dados reais **fora** do GitHub |
+| próxima ação | Codex concluir #254 (sessão/troca empresa); Cursor não reseed; legado prepara ETL staging |
+
+Evidências: `deploy-255-main-99ee35b0-20261009.txt`, `browser-255-main-99ee35b0-20261009.txt`.
+
 ## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
 
 | Item | Valor |

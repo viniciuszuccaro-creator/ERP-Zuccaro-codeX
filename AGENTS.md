@@ -388,6 +388,14 @@ Preservar ID/código antigo, origem, data, lote, mapeamento antigo→novo, respo
 
 Nunca migrar diretamente para produção sem staging e relatório de divergência. Migração deve ser reexecutável/idempotente sempre que tecnicamente possível.
 
+## 14.1 Exemplos / sintéticos ≠ dados operacionais / legado real
+
+- **Exemplos e cadastros auxiliares** já construídos no ERP novo (DEV/sintético) devem ser preservados quando úteis: verificar origem, consistência e vínculos antes de qualquer limpeza. Quantidades em telas/screenshots variam por versão — não forçar reprodução de contagens fixas (ex.: 11, 91, 14).
+- **Listagem vazia por contexto, permissão ou store local** não autoriza recriar registros, reseed destrutivo nem duplicar códigos/IDs. Diagnosticar filtro/escopo/RBAC primeiro.
+- **Carga real do ERP antigo** (produtos, clientes, fornecedores e demais entidades) ocorre em **staging privado**, a partir do backup original preservado. Reutilizar cadastros auxiliares do ERP novo somente com correspondência comprovada; apresentar conflitos e lacunas — não substituir tudo indiscriminadamente.
+- **Separar** registros de exemplo/fictícios dos operacionais. Não misturar clientes/produtos de demonstração com a carga real; não apagar exemplos com referências sem inventário e análise.
+- **Dados reais e credenciais ficam fora do GitHub.** Evidências publicadas são sanitizadas. Recuperação/carga operacional seguem gates vigentes, com backup e reversão.
+
 ---
 
 # 15. BANCO, INTEGRIDADE E OPERAÇÕES DESTRUTIVAS

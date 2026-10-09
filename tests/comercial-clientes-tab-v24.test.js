@@ -96,6 +96,19 @@ test('diff vs #251: runtime #252 não inclui Empresas/Financeiro/Central360', as
   assert.doesNotMatch(tab, /CentralCliente360|EmpresaSwitcher|LaunchpadCard/);
 });
 
+/** Cadastros Bloco1: padrão azul aprovado (não reverter para primary genérico). */
+test('regressão visual Cadastros Bloco1: tiles Clientes usam azul (bg-blue / text-blue)', async () => {
+  const bloco = await readFile(
+    new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(bloco, /from-blue-50/);
+  assert.match(bloco, /text-blue-600|text-blue-700/);
+  assert.match(bloco, /bg-blue-600/);
+  assert.match(bloco, /data-action=\{`Cadastros\.\$\{k\}\.abrir`\}/);
+  assert.match(bloco, /k: 'Cliente'/);
+});
+
 /** Regressão integrada #251+#252: entrada 360 na listagem + Novo Cliente coexistentes. */
 test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; DetalhesCliente compõe Central360', async () => {
   const v24 = await readFile(

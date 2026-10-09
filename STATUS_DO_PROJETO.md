@@ -1,3 +1,14 @@
+## CURSOR — #255 MERGED + validação main `99ee35b0` (2026-10-09T11:05Z)
+
+| Campo | Valor |
+|---|---|
+| #255 | MERGED `99ee35b0` · implantado · browser Central360/Cadastros/Financeiro PASS |
+| visual | padrão azul Cadastros + CR green ≠ Régua violet travados em teste |
+| AGENTS | §14.1 exemplos ≠ operacional/legado; lista vazia ≠ reseed |
+| coordenação | #254 Codex (contexto/sessão); Legado staging privado |
+| evidências | `deploy-255-main-99ee35b0-20261009.txt`, `browser-255-main-99ee35b0-20261009.txt`, `ref-visual-azul-financeiro-20261009.txt` |
+| próximo | aguardar/apoiar #254 sem overlap de arquivos; ETL legado só em staging |
+
 ## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
 
 | Campo | Valor |

@@ -1,0 +1,10 @@
+# Evidência sanitizada — deploy main #255
+# utc=2026-10-09T11:01Z
+# merge=#255 → main 99ee35b057ee40c16d37df0096a3a8099c364496
+# implantado=99ee35b0 erp-dev spa-login-rebuild GIT_REF=origin/main
+# spa_asset=index-DbVDch1Q.js (cliente-detalhes-360 + from-blue-500)
+# flag=VITE_ERP_HTTP_CLIENTE_360=true
+# rollback=erp-zuccaro-erp-api:pre-spa-login-20261009-110013 / erp-zuccaro-erp-web:pre-spa-login-20261009-110013
+# health=200
+# SPA_LOGIN_REBUILD_OK
+# ≠ evidência tip de branch anterior; prova do SHA de merge
