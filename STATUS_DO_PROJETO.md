@@ -1,3 +1,15 @@
+## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
+
+| Item | Valor |
+|---|---|
+| tip branch | `6ed9e7dc` |
+| runtime | `dd13fb5f` |
+| parecer | **APROVAR COM RESSALVAS** → `docs/vps/evidence/parecer-251-dd13fb5f-20261009.txt` |
+| CI | PASS |
+| overlap #252 | só STATUS/HANDOFF (runtime disjunto) |
+| merge main | em curso |
+| PR body GitHub | tentativa update; se BLOCKED, este handoff é canônico |
+
 ## CURSOR — #251 CLIENTE_360 ON + validação (2026-10-09T09:43Z)
 
 | Item | Valor |

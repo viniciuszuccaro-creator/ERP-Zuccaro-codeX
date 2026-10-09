@@ -1,0 +1,28 @@
+# Parecer independente — pacote #251
+# utc=2026-10-09
+# revisor = Cursor agent (revisão independente do merge-tree)
+#
+# SHA código revisado = dd13fb5f
+# SHA branch tip docs = 6ed9e7dc (sem diff runtime vs dd13fb5f)
+# base main = 6ff6b0f2
+# incorpora = #248 bdf54b86 · #249 4ab97760 · #250 49e677ce
+#
+# VEREDITO = APROVAR COM RESSALVAS
+#
+# Checklist:
+# - multiempresa/RBAC fail-closed = OK
+# - sugestão sem auto-mescla = OK
+# - paginação Central360 reset/stale = OK
+# - persistência Empresa (Input RHF + remirror) = OK
+# - Financeiro scope/stale cancel = OK
+# - secrets em evidências = OK (sanitizado)
+#
+# Ressalvas baixas:
+# - reset paginação via useEffect (sem vazamento cross-tenant)
+# - EmpresaSwitcher fallback HTTP sem groupId
+# - Empresas FE sem usePermissions (pré-existente)
+# - sugestão UI Novo path headless BLOCKED_NAV (API PASS; #252 cobre cliente-novo)
+#
+# Merge main com CI verde = SIM
+# CLIENTE_360 em DEV = permitido após meta auth.mode=supabase_user (cumprido)
+# sem senhas / sem tokens / sem e-mail
