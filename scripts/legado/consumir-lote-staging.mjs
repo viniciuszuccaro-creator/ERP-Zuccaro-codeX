@@ -34,8 +34,14 @@ export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([
 
 /**
  * Valida dependencias de um registro mapeado (empresa conhecida, codigo, tenant).
+ * Fail-closed: sem empresa_id de destino e sem crosswalk autenticado → não comprova.
  * @param {Record<string, unknown>} mapped
- * @param {{ entidadesDisponiveis?: Set<string>, chavesEmpresa?: Set<string> }} ctx
+ * @param {{
+ *   entidadesDisponiveis?: Set<string>,
+ *   chavesEmpresa?: Set<string>,
+ *   crosswalkEmpresas?: Record<string, string>|Map<string, string>,
+ *   requireContratoEntrada?: boolean,
+ * }} ctx
  */
 export const validarDependenciasLegado = (mapped = {}, ctx = {}) => {
   const rejeicoes = [];
@@ -43,6 +49,10 @@ export const validarDependenciasLegado = (mapped = {}, ctx = {}) => {
   if (!entidade) rejeicoes.push('entidade_ausente');
   if (!mapped.group_id) rejeicoes.push('group_id_obrigatorio');
   if (!mapped.codigo_legado) rejeicoes.push('codigo_legado_obrigatorio');
+  // Destino canônico obrigatório (exceto o próprio cadastro de empresa).
+  if (entidade && entidade !== 'empresa' && !mapped.empresa_id && !mapped.target_empresa_id) {
+    rejeicoes.push('empresa_destino_obrigatoria');
+  }
   if (mapped.codigo_empresa_legado != null && mapped.codigo_empresa_legado !== '') {
     const emp = resolverEmpresaLegadoCodigo(mapped.codigo_empresa_legado);
     if (emp.quarentena || emp.conhecido === false) {
@@ -51,6 +61,15 @@ export const validarDependenciasLegado = (mapped = {}, ctx = {}) => {
     if (ctx.chavesEmpresa instanceof Set && emp.conhecido && !ctx.chavesEmpresa.has(String(emp.codigo))) {
       rejeicoes.push('empresa_destino_ausente_no_lote');
     }
+    const crosswalk = ctx.crosswalkEmpresas;
+    if (crosswalk) {
+      const code = String(emp.codigo || mapped.codigo_empresa_legado);
+      const target = crosswalk instanceof Map ? crosswalk.get(code) : crosswalk[code];
+      if (!target) rejeicoes.push('crosswalk_empresa_ausente');
+    }
+  }
+  if (ctx.requireContratoEntrada !== false && !ctx.crosswalkEmpresas) {
+    rejeicoes.push('contrato_entrada_ausente');
   }
   if (ctx.entidadesDisponiveis instanceof Set && entidade && !ctx.entidadesDisponiveis.has(entidade)) {
     rejeicoes.push('entidade_fora_do_lote');
@@ -88,6 +107,8 @@ export const buildAuditoriaConsumoLegado = (mapped = {}, meta = { acao: 'consumi
  *   empresaId?: string,
  *   arquivoNome?: string,
  *   chavesJaGravadas?: string[],
+ *   contratoEntrada?: { coorte?: string, crosswalkEmpresas?: Record<string, string>, linhagemHash?: string },
+ *   requireContratoEntrada?: boolean,
  * }} opts
  */
 export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
@@ -103,7 +124,14 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
     (opts.chavesJaGravadas || []).map((c) => String(c)).filter(Boolean),
   );
   const entidadesDisponiveis = new Set(LEGADO_DEPENDENCIA_ORDEM);
-  const chavesEmpresa = new Set(['1', '2', '3', '5']);
+  // Codigos legados CPA/3Z conhecidos — crosswalk de IDs de destino vem do contrato.
+  const chavesEmpresa = new Set(
+    opts.contratoEntrada?.crosswalkEmpresas
+      ? Object.keys(opts.contratoEntrada.crosswalkEmpresas)
+      : ['1', '2', '3', '5'],
+  );
+  const crosswalkEmpresas = opts.contratoEntrada?.crosswalkEmpresas || null;
+  const requireContratoEntrada = opts.requireContratoEntrada !== false;
 
   const comprovados = [];
   const quarentena = [];
@@ -140,8 +168,27 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
       continue;
     }
 
-    const deps = validarDependenciasLegado(mapped, { entidadesDisponiveis, chavesEmpresa });
+    const deps = validarDependenciasLegado(mapped, {
+      entidadesDisponiveis,
+      chavesEmpresa,
+      crosswalkEmpresas,
+      requireContratoEntrada,
+    });
     if (!deps.ok) {
+      const soContrato = deps.rejeicoes.every((r) => r === 'contrato_entrada_ausente' || r === 'crosswalk_empresa_ausente');
+      if (soContrato || deps.rejeicoes.includes('contrato_entrada_ausente')) {
+        quarentena.push({
+          codigo_legado: mapped.codigo_legado,
+          motivos: deps.rejeicoes,
+          chave_idempotente_migracao: mapped.chave_idempotente_migracao,
+        });
+        auditoria.push(buildAuditoriaConsumoLegado(mapped, {
+          acao: 'consumir',
+          resultado: 'quarentena_contrato',
+          motivos: deps.rejeicoes,
+        }));
+        continue;
+      }
       rejeicoes.push({
         codigo_legado: mapped.codigo_legado,
         rejeicoes: deps.rejeicoes,
@@ -175,6 +222,8 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
     destino_migracao: MIGRACAO_DESTINO_STAGING,
     importacao_erp: true,
     importado_operacional: false,
+    contrato_entrada: Boolean(crosswalkEmpresas && opts.contratoEntrada?.coorte),
+    coorte: opts.contratoEntrada?.coorte || null,
     comprovados,
     quarentena,
     rejeicoes,
@@ -241,6 +290,10 @@ if (process.argv[1] && process.argv[1].includes('consumir-lote-staging')) {
   const { primeiro, segundo } = consumirLoteStagingIdempotente(sample, {
     entidade: 'cliente',
     arquivoNome: 'demo_consumo.csv',
+    contratoEntrada: {
+      coorte: 'sintetico-demo',
+      crosswalkEmpresas: { 1: 'e1', 2: 'e1', 3: 'e1', 5: 'e1' },
+    },
   });
   const out = {
     importado_operacional: false,

@@ -4,35 +4,56 @@
  */
 import { isTenantMasterEntity } from '../lib/contextoMultiempresaPolicy.js';
 
-/**
- * Fail-closed: edição só com registro completo (id bate + campos mínimos).
- * Empresa exige razão/nome + CNPJ para não salvar projeção incompleta da grade.
- */
-export function isCadastroEditLoadComplete(entityName, record, expectedId) {
-  if (!record || !expectedId || String(record.id) !== String(expectedId)) return false;
-  if (String(entityName || '') === 'Empresa') {
-    const nome = String(record.razao_social || record.nome || record.nome_fantasia || '').trim();
-    const doc = String(record.cnpj || '').replace(/\D/g, '');
-    return Boolean(nome) && doc.length >= 11;
+function hasText(...values) {
+  return values.some((v) => v != null && String(v).trim() !== '');
+}
+
+function digitsDoc(...values) {
+  for (const v of values) {
+    const d = String(v ?? '').replace(/\D/g, '');
+    if (d.length >= 11) return d;
   }
-  return true;
+  return '';
 }
 
 /**
- * Hidratação de edição: não sobrescreve valor útil da grade com string/null vazios
- * vindos de uma leitura parcial. Campos realmente ausentes no backend ficam vazios
- * só quando também estavam vazios na projeção da lista.
+ * Fail-closed: edição só com registro completo (id bate + campos mínimos de identidade).
+ * Empresa / Cliente / Fornecedor / Produto — GET parcial `{id}` NÃO libera salvamento.
+ */
+export function isCadastroEditLoadComplete(entityName, record, expectedId) {
+  if (!record || !expectedId || String(record.id) !== String(expectedId)) return false;
+  const entity = String(entityName || '');
+  if (entity === 'Empresa') {
+    const nome = String(record.razao_social || record.nome || record.nome_fantasia || '').trim();
+    const doc = digitsDoc(record.cnpj, record.documento);
+    return Boolean(nome) && doc.length >= 11;
+  }
+  if (entity === 'Cliente' || entity === 'Fornecedor') {
+    const nome = hasText(record.razao_social, record.nome, record.nome_completo, record.nome_fantasia);
+    const doc = digitsDoc(record.documento, record.cnpj, record.cpf);
+    // Identidade mínima: nome + documento (evita liberar projeção incompleta da grade).
+    return nome && doc.length >= 11;
+  }
+  if (entity === 'Produto') {
+    const descricao = hasText(record.descricao, record.nome);
+    const codigo = hasText(record.codigo, record.cod);
+    return descricao && codigo;
+  }
+  return hasText(record.nome, record.descricao, record.razao_social);
+}
+
+/**
+ * Hidratação de edição:
+ * - chave AUSENTE no GET → preserva valor da grade (resposta parcial);
+ * - chave PRESENTE no GET (incl. null/'') → aplica (vazio intencional do backend).
+ * Salvamento só após classify/isComplete — GET parcial bloqueia save.
  */
 export function mergeCadastroEditHydration(listRow, fullRecord) {
   const base = listRow && typeof listRow === 'object' ? { ...listRow } : {};
   const full = fullRecord && typeof fullRecord === 'object' ? fullRecord : {};
   const out = { ...base };
   for (const [key, value] of Object.entries(full)) {
-    if (value === undefined || value === null) continue;
-    if (typeof value === 'string' && value.trim() === '') {
-      const prev = base[key];
-      if (prev != null && String(prev).trim() !== '') continue;
-    }
+    if (value === undefined) continue;
     out[key] = value;
   }
   return out;

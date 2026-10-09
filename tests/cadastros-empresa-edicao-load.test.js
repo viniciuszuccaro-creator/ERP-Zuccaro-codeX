@@ -32,15 +32,31 @@ test('Empresa: carga completa exige id, nome e CNPJ; incompleta falha fechado', 
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', razao_social: 'A', cnpj: '' }, 'e1'), false);
 });
 
-test('mergeCadastroEditHydration: nao esvazia campo util da grade com string vazia da API', () => {
+test('mergeCadastroEditHydration: vazio intencional do GET aplica; chave ausente preserva grade', () => {
   const merged = mergeCadastroEditHydration(
-    { id: 'c1', nome: 'Cliente Lista', email: 'a@b.com', telefone: '11' },
+    { id: 'c1', nome: 'Cliente Lista', email: 'a@b.com', telefone: '11', obs: 'lista' },
     { id: 'c1', nome: '', email: 'novo@b.com', telefone: null, documento: '123' },
   );
-  assert.equal(merged.nome, 'Cliente Lista');
+  assert.equal(merged.nome, '');
   assert.equal(merged.email, 'novo@b.com');
-  assert.equal(merged.telefone, '11');
+  assert.equal(merged.telefone, null);
   assert.equal(merged.documento, '123');
+  assert.equal(merged.obs, 'lista');
+});
+
+test('isCadastroEditLoadComplete: Cliente/Fornecedor/Produto exigem identidade', () => {
+  assert.equal(isCadastroEditLoadComplete('Cliente', { id: 'c1' }, 'c1'), false);
+  assert.equal(isCadastroEditLoadComplete('Cliente', { id: 'c1', nome: 'X' }, 'c1'), false);
+  assert.equal(isCadastroEditLoadComplete('Cliente', {
+    id: 'c1', razao_social: 'ACME', documento: '11222333000181',
+  }, 'c1'), true);
+  assert.equal(isCadastroEditLoadComplete('Fornecedor', {
+    id: 'f1', nome: 'Forn', cnpj: '11222333000181',
+  }, 'f1'), true);
+  assert.equal(isCadastroEditLoadComplete('Produto', { id: 'p1', descricao: 'Barra' }, 'p1'), false);
+  assert.equal(isCadastroEditLoadComplete('Produto', {
+    id: 'p1', descricao: 'Barra', codigo: 'P-01',
+  }, 'p1'), true);
 });
 
 test('classifyCadastroEditLoad: distingue falha, incompleto e ok', () => {
@@ -54,6 +70,12 @@ test('classifyCadastroEditLoad: distingue falha, incompleto e ok', () => {
     entityName: 'Empresa',
     expectedId: 'e1',
     fullRecord: { id: 'e1', razao_social: 'A', cnpj: '' },
+  }).kind, 'load_incomplete');
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Cliente',
+    expectedId: 'c1',
+    listRow: { id: 'c1', nome: 'Lista' },
+    fullRecord: { id: 'c1' },
   }).kind, 'load_incomplete');
   const ok = classifyCadastroEditLoad({
     entityName: 'Empresa',
