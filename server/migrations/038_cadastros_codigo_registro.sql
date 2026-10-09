@@ -1,24 +1,54 @@
 -- Código de registro numérico (sequência canônica por grupo) para auxiliares Cadastros Gerais.
 -- Preserva códigos alfanuméricos já existentes; atribui numérico determinístico aos sem código.
+-- codigo_origem guarda o código original (alfanumérico/legado) sem alterar referências.
 -- Escopo: group_id (Grupo). Não renumerar silenciosamente.
+-- Numeração 038: 025–037 reservados a branches Codex (não renumerar aplicados aplicadas).
 
 -- marcas
 ALTER TABLE marcas ADD COLUMN IF NOT EXISTS codigo TEXT;
+ALTER TABLE marcas ADD COLUMN IF NOT EXISTS codigo_origem TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_marcas_group_codigo
   ON marcas (group_id, lower(codigo))
   WHERE codigo IS NOT NULL AND btrim(codigo) <> '';
 
 -- setores_atividade
 ALTER TABLE setores_atividade ADD COLUMN IF NOT EXISTS codigo TEXT;
+ALTER TABLE setores_atividade ADD COLUMN IF NOT EXISTS codigo_origem TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_setores_atividade_group_codigo
   ON setores_atividade (group_id, lower(codigo))
   WHERE codigo IS NOT NULL AND btrim(codigo) <> '';
 
 -- unidades_medida (sigla permanece chave de negócio; codigo = registro sequencial)
 ALTER TABLE unidades_medida ADD COLUMN IF NOT EXISTS codigo TEXT;
+ALTER TABLE unidades_medida ADD COLUMN IF NOT EXISTS codigo_origem TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_unidades_medida_group_codigo
   ON unidades_medida (group_id, lower(codigo))
   WHERE codigo IS NOT NULL AND btrim(codigo) <> '';
+
+-- grupos_produto já tem codigo; só mapeamento de origem (não altera codigo existente)
+ALTER TABLE grupos_produto ADD COLUMN IF NOT EXISTS codigo_origem TEXT;
+UPDATE grupos_produto
+SET codigo_origem = codigo
+WHERE (codigo_origem IS NULL OR btrim(codigo_origem) = '')
+  AND codigo IS NOT NULL AND btrim(codigo) <> ''
+  AND codigo !~ '^[0-9]+$';
+
+-- Origem: preservar alfanumérico já presente em codigo (sem alterar o valor)
+UPDATE marcas
+SET codigo_origem = codigo
+WHERE (codigo_origem IS NULL OR btrim(codigo_origem) = '')
+  AND codigo IS NOT NULL AND btrim(codigo) <> ''
+  AND codigo !~ '^[0-9]+$';
+UPDATE setores_atividade
+SET codigo_origem = codigo
+WHERE (codigo_origem IS NULL OR btrim(codigo_origem) = '')
+  AND codigo IS NOT NULL AND btrim(codigo) <> ''
+  AND codigo !~ '^[0-9]+$';
+UPDATE unidades_medida
+SET codigo_origem = codigo
+WHERE (codigo_origem IS NULL OR btrim(codigo_origem) = '')
+  AND codigo IS NOT NULL AND btrim(codigo) <> ''
+  AND codigo !~ '^[0-9]+$';
 
 -- Backfill determinístico: só linhas sem código; ordem created_at, id.
 -- Usa high-water por grupo a partir do maior código numérico puro já existente.

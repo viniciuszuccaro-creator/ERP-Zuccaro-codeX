@@ -1,17 +1,23 @@
-## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
+## CURSOR — Cadastros #259 CI fix → migration 038 (2026-10-09)
 
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
 | branch / PR | `cursor/cadastros-codigo-abrir-unico-392b` · [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) |
-| tip | **`c2e32750`** |
-| mudança | Abrir 1 janela (uniqueKey+registry); Código registro auxiliares (025+reserve); edit merge sem esvaziar; alias salvar→editar |
+| CI falha | last migration esperada 024; `025_cadastros_*` colidia com Codex `025_pedidos_*` |
+| correção | **`038_cadastros_codigo_registro.sql`** + teste through 038; 025–037 intocados (Codex) |
+| #258×#259 | #258 é ancestor de #259 → merge #259 em main integra ambos |
 | **implantado** | **NÃO** |
-| **importado** | **NÃO** |
-| #258 | tip CI `e94f39b2` / runtime `d9a72802` — merge após owner |
-| #254 / #211 | Codex reservado |
-| evidência | `cadastros-codigo-abrir-matriz-20261009.txt` |
-| próxima | CI #259 → VPS migrate 025 + SPA rebuild tip → homolog Abrir/código/editar |
+| evidências | `cadastros-codigo-abrir-matriz-*` · `cadastros-codigo-inventario-completo-*` |
+| próxima | CI tip → migrate 038 + SPA rebuild → browser Abrir/código/editar |
+
+## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
+
+| Item | Valor |
+|---|---|
+| tip | **`c2e32750`** (pré-fix CI) |
+| mudança | Abrir único; código auxiliares; edit merge |
+| **implantado** | **NÃO** |
 
 ## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
 

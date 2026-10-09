@@ -14,6 +14,7 @@ function mapRow(row: Record<string, unknown>): Marca {
     group_id: String(row.group_id),
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
     codigo: row.codigo == null ? null : String(row.codigo),
+    codigo_origem: row.codigo_origem == null ? null : String(row.codigo_origem),
     nome_marca: String(row.nome_marca),
     descricao: row.descricao == null ? null : String(row.descricao),
     cnpj: row.cnpj == null ? null : String(row.cnpj),
@@ -83,16 +84,20 @@ export class PostgresMarcaRepository implements MarcaRepository {
       width: 6,
       incomingCodigo: data.codigo,
     });
+    const incoming = typeof data.codigo === 'string' ? data.codigo.trim() : '';
+    const codigoOrigem = (data.codigo_origem && String(data.codigo_origem).trim())
+      || (incoming && !/^[0-9]+$/.test(incoming) ? incoming : null);
     const result = await this.db.query(
       `INSERT INTO marcas (
-        group_id, empresa_id, codigo, nome_marca, descricao, cnpj, pais_origem, site,
+        group_id, empresa_id, codigo, codigo_origem, nome_marca, descricao, cnpj, pais_origem, site,
         logo_url, categoria, fornecedor_id, certificacoes, ativo
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14)
       RETURNING *`,
       [
         scope.groupId,
         empresaId,
         codigo,
+        codigoOrigem,
         data.nome_marca,
         data.descricao ?? null,
         data.cnpj ?? null,

@@ -1,16 +1,26 @@
+## CURSOR — Cadastros #259 CI fix migration 038 (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| causa CI | `runtime01` exigia last=024; conflito nome `025` com Codex (`025_pedidos_origem…`) |
+| correção | renomear → **`038_cadastros_codigo_registro.sql`** (025–037 reservados Codex); teste through 038 |
+| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) contém #258 (ancestor) — merge #259 cobre #258 |
+| **implantado** | **NÃO** |
+| inventário | `docs/evidence/cadastros-codigo-inventario-completo-20261009.txt` |
+| #254 / #211 | Codex |
+| próxima | CI tip → migrate 038 + rebuild → browser |
+
 ## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | tip **`c2e32750`** · Abrir uniqueKey+registry · edit merge grade · MASTER_CODE auxiliares · migration `025` · `reserveEntityCodigo` Marca/Grupo/Setor/UM · forms Código de registro |
-| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) · CI em andamento |
-| **implantado** | **NÃO** (migration 025 + rebuild VPS pendente tip) |
-| **homologado** | unitários PASS · browser/VPS pendente |
+| **implementado** | tip **`c2e32750`** · Abrir uniqueKey+registry · edit merge · MASTER_CODE · migration (→038) · reserve Marca/Grupo/Setor/UM |
+| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) |
+| **implantado** | **NÃO** |
+| **homologado** | unitários locais · CI falhou order 024→fix 038 |
 | **importado** | **NÃO** (#211) |
 | matriz | `docs/evidence/cadastros-codigo-abrir-matriz-20261009.txt` |
-| #258 | CI `e94f39b2` SUCCESS · runtime `d9a72802` · merge aguarda owner |
-| #254 / #211 | reservados Codex |
-| próxima | CI #259 → migrate 025 + rebuild erp-dev (GIT_REF tip) → browser Abrir/código/editar |
+| #258 | ancestor de #259 · tip `e94f39b2` / VPS `d9a72802` |
 
 ## CURSOR — #258 CI tip `e94f39b2` SUCCESS (2026-10-09T16:17Z)
 

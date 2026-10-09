@@ -7,6 +7,7 @@ export type Marca = {
   group_id: string;
   empresa_id: string | null;
   codigo: string | null;
+  codigo_origem: string | null;
   nome_marca: string;
   descricao: string | null;
   cnpj: string | null;
@@ -24,6 +25,7 @@ export type Marca = {
 export const marcaCreateSchema = z.object({
   nome_marca: z.string().trim().min(1).max(200),
   codigo: z.string().trim().max(64).optional().nullable(),
+  codigo_origem: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().max(2000).optional().nullable(),
   cnpj: z.string().trim().max(18).optional().nullable(),
   pais_origem: z.string().trim().max(120).optional().nullable(),

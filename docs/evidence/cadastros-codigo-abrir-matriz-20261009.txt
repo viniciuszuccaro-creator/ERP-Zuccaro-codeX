@@ -6,7 +6,7 @@
 | Entidade | Escopo | Campo | Width | Backend |
 |---|---|---|---|---|
 | Cliente / Fornecedor / Transportadora / Produto | Grupo | codigo | 6/4 | reserve_entity_codigo / local MASTER_CODE |
-| Marca / GrupoProduto / SetorAtividade / UnidadeMedida | Grupo | codigo | 6 | reserveEntityCodigo + migration 025 |
+| Marca / GrupoProduto / SetorAtividade / UnidadeMedida | Grupo | codigo | 6 | reserveEntityCodigo + migration 038 (025–037 Codex) |
 | Servico / Kit / Catalogo / Segmento / Região / Bancos / Formas / Centros / Plano / Frete / Locais / Veículo / Motorista / Depto / Cargo / Turno | Grupo | codigo | 6 | MASTER_CODE_SPECS (local) + specs inventário |
 | Pedido/OP/Entrega/Romaneio/… | Grupo | numero_* | 6+prefix | operacional (prefixo) |
 
@@ -17,9 +17,9 @@ alfanumérico legado preservado; duplicado no grupo → conflito explícito (sem
 | Entidade | Código lista/form | Create reserva | Registros vs anterior | Abrir único | Editar fail-closed | Implantado VPS | Validado browser |
 |---|---|---|---|---|---|---|---|
 | GrupoProduto | SIM (coluna codigo) | SIM (Postgres+local) | alfanum. ensaio preservados (GATED-GP, GP-API, LG-A); não são ERP antigo | uniqueKey+registry | SIM (nome_grupo) | PENDENTE migração 025 N/A coluna já existia; rebuild tip | PENDENTE tip |
-| Marca | SIM (form + lista) | SIM | load incompleto corrigido (merge grade); códigos backfill 025 | uniqueKey | SIM (nome_marca) | PENDENTE 025 | PENDENTE tip |
-| SetorAtividade | SIM | SIM | códigos alfanum. ensaio ≠ legado; coluna codigo + backfill 025 | uniqueKey | SIM (nome) | PENDENTE 025 | PENDENTE tip |
-| UnidadeMedida | SIM | SIM | coluna codigo + backfill 025 | uniqueKey | SIM (sigla/nome) | PENDENTE 025 | PENDENTE tip |
+| Marca | SIM (form + lista) | SIM | load incompleto corrigido (merge grade); códigos backfill 038 | uniqueKey | SIM (nome_marca) | PENDENTE 038 | PENDENTE tip |
+| SetorAtividade | SIM | SIM | códigos alfanum. ensaio ≠ legado; coluna codigo + backfill 038 | uniqueKey | SIM (nome) | PENDENTE 038 | PENDENTE tip |
+| UnidadeMedida | SIM | SIM | coluna codigo + backfill 038 | uniqueKey | SIM (sigla/nome) | PENDENTE 038 | PENDENTE tip |
 | Cliente | SIM (já) | SIM (já) | ops n≈6; staging legado não importado (authorized=0) | uniqueKey Bloco1 | SIM (#258) | tip d9a72802 badge | PASS #258 |
 | Produto | SIM (já) | SIM (já) | ops n≈4; reais ERP antigo ainda em staging | uniqueKey | SIM | tip | lista PASS |
 | Fornecedor | SIM (spec) | SIM (local) | tabela ops ausente — não inventar seed | uniqueKey | policy | N/A | N/A |

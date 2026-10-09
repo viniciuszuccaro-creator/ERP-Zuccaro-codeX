@@ -58,11 +58,15 @@ export class InMemoryMarcaRepository implements MarcaRepository {
   async create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput): Promise<Marca> {
     const ts = nowIso();
     const codigo = nextCodigo(scope.groupId, this.rows.values(), data.codigo);
+    const incoming = typeof data.codigo === 'string' ? data.codigo.trim() : '';
+    const codigoOrigem = (data.codigo_origem && String(data.codigo_origem).trim())
+      || (incoming && !/^[0-9]+$/.test(incoming) ? incoming : null);
     const row: Marca = {
       id: randomUUID(),
       group_id: scope.groupId,
       empresa_id: data.empresa_id ?? scope.empresaId ?? null,
       codigo,
+      codigo_origem: codigoOrigem,
       nome_marca: data.nome_marca,
       descricao: data.descricao ?? null,
       cnpj: data.cnpj ?? null,

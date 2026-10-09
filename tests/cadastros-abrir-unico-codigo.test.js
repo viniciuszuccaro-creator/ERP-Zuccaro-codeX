@@ -78,15 +78,30 @@ test('Marca/Grupo: criação gera código; duplicado falha fechado', () => {
   );
 });
 
-test('Blocos Cadastros usam openCadastroEntityWindow; migration 025 e reserve existem', async () => {
-  const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
+test('Blocos Cadastros usam openCadastroEntityWindow; migration 038 e reserve existem', async () => {
+  const blocos = await Promise.all([1, 2, 3, 4, 5, 6].map((n) => {
+    const names = {
+      1: 'Bloco1Pessoas.jsx',
+      2: 'Bloco2Produtos.jsx',
+      3: 'Bloco3Financeiro.jsx',
+      4: 'Bloco4Logistica.jsx',
+      5: 'Bloco5Organizacional.jsx',
+      6: 'Bloco6Tecnologia.jsx',
+    };
+    return readFile(new URL(`../src/components/cadastros/blocks/${names[n]}`, import.meta.url), 'utf8');
+  }));
+  for (const src of blocos) assert.match(src, /openCadastroEntityWindow/);
   const wm = await readFile(new URL('../src/components/lib/WindowManager.jsx', import.meta.url), 'utf8');
-  const migration = await readFile(new URL('../server/migrations/025_cadastros_codigo_registro.sql', import.meta.url), 'utf8');
+  const viz = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  const migration = await readFile(new URL('../server/migrations/038_cadastros_codigo_registro.sql', import.meta.url), 'utf8');
   const reserve = await readFile(new URL('../server/src/repositories/reserveEntityCodigo.ts', import.meta.url), 'utf8');
-  assert.match(bloco2, /openCadastroEntityWindow/);
   assert.match(wm, /uniqueKeyRegistryRef/);
+  assert.match(viz, /buildCadastroScopeSwitchReset/);
+  assert.match(viz, /previousScopeRef/);
   assert.match(migration, /uq_marcas_group_codigo/);
+  assert.match(migration, /codigo_origem/);
   assert.match(migration, /SetorAtividade/);
+  assert.doesNotMatch(migration, /025_cadastros/);
   assert.match(reserve, /reserve_entity_codigo/);
   assert.match(reserve, /GREATEST/);
 });
