@@ -1,17 +1,21 @@
-## CURSOR — #258 badge Clientes HTTP (batch count) + HEAD `1d3b8fb6` (2026-10-09)
+## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
 
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
 | branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
-| tip base implantado | **`1d3b8fb6`** erp-dev · CLIENTE_360=true · CI SUCCESS · MERGEABLE |
-| mudança tip seguinte | `countEntities` batch → piloto HTTP (`httpPilotCountBridge`); `buildContextFilter` = `buildMultiempresaReadFilter` |
-| causa badge 0 | lista HTTP ok; contagem lote caía no store local |
-| ops DB | clientes=6 · produtos=4 · empresas=3 · marcas/UM/grupos OK · tabela `fornecedores` **ausente** (não “sumiu” na UI) |
-| #254 Codex | **reservado** — Cursor não edita sessão |
-| #211 | staging privado; **importado=NÃO**; sem contrato/crosswalk operacional |
-| fases | staging=contagens · reconciliado=consumidor · importado=não · validado_nav tip `1d3b8fb6` (ciclo Cliente); badge pós-rebuild pendente |
-| próxima ação | push fix → rebuild spa-login no tip → re-homolog badge/lista CPA·3Z → merge #258 só após owner |
+| tip | **`d9a72802`** |
+| **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` |
+| mudança | `countEntities` batch → piloto HTTP; filtro contagem = multiempresa Visualizador |
+| **homologado** | hub badge Clientes=5 · V24 badge=5 · rows=5 · API n=5 (tip = d9a72802) |
+| ops DB | clientes=6 · produtos=4 · empresas=3 · auxiliares OK · `fornecedores` tabela ausente |
+| registros | preservados ops; volume legado só staging; sem reseed |
+| #254 Codex | **reservado** |
+| #211 | staging 20456 · authorized=0 · **importado=NÃO** · consumidor testes PASS |
+| fases | implementado=sim · integrado=PR · implantado=sim · homologado=badge/lista · importado=não |
+| próxima ação | CI tip `d9a72802` → merge #258 após owner; Codex #254/#211 contrato+crosswalk |
+
+Evidências: `deploy-258-count-badge-d9a72802-20261009.txt`, `browser-258-count-badge-d9a72802-20261009.txt`, `registros-sumidos-fonte-api-ui-20261009.txt`, `legado-211-ensaio-consumidor-20261009.txt`.
 
 ## CURSOR — #258 ciclo edição Cliente PASS tip `02d59aa6` (2026-10-09T15:22Z)
 

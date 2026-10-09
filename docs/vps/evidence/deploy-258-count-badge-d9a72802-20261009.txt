@@ -1,0 +1,15 @@
+# Evidência sanitizada — deploy #258 tip d9a72802 (badge Clientes HTTP)
+# utc≈2026-10-09T15:51Z · host=srv1982741 · erp-dev
+
+implantado=d9a72802
+branch=origin/cursor/homolog-254-cadfin-360-legado-392b
+asset=index-okyVzZdT.js
+CLIENTE_360=true (env)
+rollback=pre-spa-login-20261009-155123
+backup_pre=pre-gate-e-20261009-155122.sql sha256=f97da7ca28f0f1eed83de7087e5e477f5389de09bc2aafd7f3be7afc924a64b4
+health_api=200
+health_web=200
+SPA_LOGIN_REBUILD_OK=YES
+
+mudança=countEntities batch→HTTP piloto; buildContextFilter=buildMultiempresaReadFilter
+≠ Codex sessão #254 · ≠ import legado operacional

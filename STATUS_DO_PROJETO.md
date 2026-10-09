@@ -1,18 +1,19 @@
-## CURSOR — #258 badge Clientes HTTP + tip `1d3b8fb6` (2026-10-09)
+## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | bridge `countEntities` batch→HTTP piloto (`httpPilotCountBridge`) + filtro contagem alinhado ao Visualizador |
-| **causa** | lista HTTP n=5 / badge `Clientes: 0` — batch caía no store local |
-| tip base | `1d3b8fb6` já implantado erp-dev; tip seguinte = este fix |
-| CI tip `1d3b8fb6` | frontend+backend **SUCCESS** · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) MERGEABLE |
-| **implantado** | tip anterior `1d3b8fb6` · CLIENTE_360=true — rebuild pendente deste fix |
-| **homologado** | tip `1d3b8fb6` (ciclo Cliente) — re-homolog badge após rebuild |
+| **implementado** | `d9a72802` · `httpPilotCountBridge` (countEntities batch→HTTP) + filtro contagem alinhado |
+| **integrado** | PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) aberto · tip anterior CI SUCCESS |
+| **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` · backup `pre-gate-e-20261009-155122.sql` |
+| **homologado** | asset PASS · login PASS · hub Clientes badge=5 · V24 badge=5 · rows=5 · API n=5 · badge_ok |
+| causa | batch `countEntities` caía no store local → badge 0 com API n>0 |
 | ops DB | clientes=6 · produtos=4 · empresas=3 · auxiliares OK · `fornecedores` tabela ausente |
-| **em staging** | #211 privado (authorized=0) |
+| registros “sumidos” | ops preservados; legado só em staging (authorized=0); Fornecedor=schema ausente |
+| **em staging** | #211 20456 · quarentena 4722 · sem contrato/crosswalk |
 | **importado** | **NÃO** |
-| #254 | reservado Codex |
-| testes | `http-pilot-count-bridge` + contratos contagem PASS |
+| legado | consumidor testes 15/15 (docker); ensaio PG isolado pendente Codex |
+| #254 | reservado Codex (switch empresa flaky nesta corrida) |
+| evidências | `deploy-258-count-badge-d9a72802-*` · `browser-258-count-badge-d9a72802-*` · `registros-sumidos-*` · `legado-211-ensaio-*` |
 
 ## CURSOR — #258 ciclo edição Cliente PASS `02d59aa6` (2026-10-09T15:22Z)
 
