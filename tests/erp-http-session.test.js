@@ -166,6 +166,56 @@ test('admin de Grupo preserva visão consolidada; troca A/B/Grupo não fabrica e
   }
 });
 
+test('refresh HTTP iniciado no Grupo não desfaz Empresa selecionada durante resposta atrasada', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  let completeFetch;
+  const fetchImpl = () => new Promise(resolve => { completeFetch = resolve; });
+  const pendingRefresh = refreshErpHttpSessionFromServer({ storage, fetchImpl, baseUrl: '' });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  completeFetch({ ok: true, json: async () => ({ data: { profiles: [{
+    id: ACTOR, group_id: GROUP, empresa_id: null, role: 'admin', empresas,
+    permissoes: { Cadastros: { Fornecedor: ['visualizar'] } },
+  }] } }) });
+  const session = await pendingRefresh;
+  assert.equal(session.empresaId, EMPRESA_A);
+  assert.equal(session.scopeType, 'empresa');
+  assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_A);
+  assert.equal(buildHttpSessionUser(session).contexto_atual, 'empresa');
+});
+
+test('falha de refresh antigo não apaga a Empresa escolhida enquanto ele aguardava', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  let failFetch;
+  const pendingRefresh = refreshErpHttpSessionFromServer({ storage,
+    fetchImpl: () => new Promise((_, reject) => { failFetch = reject; }), baseUrl: '' });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  failFetch(new Error('network unavailable'));
+  assert.equal(await pendingRefresh, null);
+  assert.equal(readErpHttpSession(storage)?.empresaId, EMPRESA_A);
+});
+
+test('refresh HTTP da Empresa A não reverte troca para Empresa B no mesmo Grupo', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    empresaId: EMPRESA_A, role: 'admin', empresas, scopeType: 'empresa', storage });
+  let completeFetch;
+  const pendingRefresh = refreshErpHttpSessionFromServer({ storage,
+    fetchImpl: () => new Promise(resolve => { completeFetch = resolve; }), baseUrl: '' });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_B });
+  completeFetch({ ok: true, json: async () => ({ data: { profiles: [{
+    id: ACTOR, group_id: GROUP, empresa_id: null, role: 'admin', empresas, permissoes: {},
+  }] } }) });
+  assert.equal((await pendingRefresh).empresaId, EMPRESA_B);
+  assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_B);
+});
+
 test('admin exclusivo de filial não recebe operação no Grupo nem outra empresa', async () => {
   const storage = memoryStorage();
   persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
