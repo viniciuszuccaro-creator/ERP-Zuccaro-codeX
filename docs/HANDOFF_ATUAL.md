@@ -1,15 +1,18 @@
-## CURSOR — Cadastros #259 CI fix → migration 038 (2026-10-09)
+## CURSOR — #259 tip `55fcac4f` implantado + homolog (2026-10-09T18:55Z)
 
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
 | branch / PR | `cursor/cadastros-codigo-abrir-unico-392b` · [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) |
-| CI falha | last migration esperada 024; `025_cadastros_*` colidia com Codex `025_pedidos_*` |
-| correção | **`038_cadastros_codigo_registro.sql`** + teste through 038; 025–037 intocados (Codex) |
-| #258×#259 | #258 é ancestor de #259 → merge #259 em main integra ambos |
-| **implantado** | **NÃO** |
-| evidências | `cadastros-codigo-abrir-matriz-*` · `cadastros-codigo-inventario-completo-*` |
-| próxima | CI tip → migrate 038 + SPA rebuild → browser Abrir/código/editar |
+| tip | **`55fcac4f`** |
+| CI | **SUCCESS** |
+| **implantado** | erp-dev · `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` |
+| **homologado** | Grupo/Marca Abrir=1 + edit+codigo PASS · layout azul PASS |
+| **importado** | **NÃO** |
+| #258 | ancestor — merge #259 cobre #258 |
+| #254 / #211 | Codex |
+| evidências | `deploy-259-*` · `browser-259-*` · inventário completo |
+| próxima | merge #259 após owner; fechar #258 |
 
 ## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
 
