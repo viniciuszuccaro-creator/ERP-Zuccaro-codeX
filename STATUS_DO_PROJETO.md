@@ -1,3 +1,32 @@
+## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
+
+| Pacote | integrado | implantado | validado |
+|---|---|---|---|
+| #251 | `96287638` | superseded por d6cca4c2 | Empresas/Financeiro/API 360 PASS |
+| #252 | **`d6cca4c2`** MERGED | **`d6cca4c2`** erp-dev | Novo Cliente Cadastros+Ações PASS |
+| #248/#249/#250 | MERGED via #251 | — | ancestrais OK |
+
+Rollback: `pre-spa-login-20261009-100721`. Flag CLIENTE_360=true.
+Evidências novas: `deploy-252-main-d6cca4c2-20261009.txt`, `browser-252-main-d6cca4c2-20261009.txt`, `deploy-251-main-96287638-20261009.txt`, `browser-251-main-96287638-20261009.txt`.
+
+### Próxima entrega (reservada Cursor)
+`cursor/comercial-detalhes-cliente-360-entry-392b` — wire `DetalhesCliente`+Central360 a partir do Visualizador/Comercial. ≠ Codex outbox.
+
+## CURSOR — #251 MERGED+implantado `96287638` (2026-10-09T10:06Z)
+
+| Fase | Estado |
+|---|---|
+| implementado | #248+#249+#250 no merge-tree |
+| revisado | APROVAR COM RESSALVAS |
+| **integrado** | **`96287638` MERGED #251 → main** |
+| **implantado** | **`96287638`** erp-dev · flag CLIENTE_360=true · rollback `pre-spa-login-20261009-095826` |
+| **validado** | Playwright Empresas/Financeiro/sugestão PASS · API paginação/isolamento PASS · Central360 UI DetalhesCliente FAIL_NAV |
+| #248/#249/#250 | **MERGED** (ancestrais em main) |
+| #252 | rebase `d766e5df` · parecer APROVAR COM RESSALVAS · CI a correr |
+
+Evidências: `deploy-251-main-96287638-20261009.txt`, `browser-251-main-96287638-20261009.txt`.
+Próximo: merge/deploy #252; abrir consumidor DetalhesCliente se UI 360 for P0.
+
 ## CURSOR — #252 rebase pós-#251 (2026-10-09T10:03Z)
 
 Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `96287638` (#251 MERGED).
@@ -11,6 +40,7 @@ Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `9628763
 | validado | testes focados + browser a seguir |
 
 ≠ Codex outbox/legado.
+>>>>>>> bf3d47ff (docs(vps): #251 merged em 96287638 — evidência e parecer #252)
 
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 

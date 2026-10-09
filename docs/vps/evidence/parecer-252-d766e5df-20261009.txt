@@ -1,0 +1,16 @@
+# Parecer independente — PR #252
+# utc=2026-10-09
+# tip = d766e5df (rebase main 96287638)
+# base = 96287638 (#251 MERGED)
+#
+# VEREDITO = APROVAR COM RESSALVAS
+#
+# overlap runtime com #251 = NONE (só STATUS/HANDOFF)
+# multiempresa/RBAC Novo Cliente fail-closed = OK
+# queryKey V24 com empresaId/groupId = OK
+# Cadastros V24 preservado (data-action-cadastro) = OK
+# secrets = nenhum
+#
+# Ressalvas: requireContexto só pedido/cliente; testes fonte+helpers comportamentais
+# Merge seguro após rebase (feito) + CI verde
+# sem senhas / sem tokens
