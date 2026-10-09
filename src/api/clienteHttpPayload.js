@@ -38,7 +38,10 @@ const ALLOWED_KEYS = [
 function pickDoc(src) {
   const raw = src.documento ?? src.cpf_cnpj ?? src.cnpj ?? src.cpf ?? '';
   const text = String(raw ?? '').trim();
-  return text || null;
+  const digits = text.replace(/\D/g, '');
+  // Placeholder/máscara vazia do form não pode ir no PATCH (senão identity check 400).
+  if (!digits || /^0+$/.test(digits)) return null;
+  return text;
 }
 
 function normalizeTipo(value) {
