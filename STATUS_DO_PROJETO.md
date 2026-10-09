@@ -1,15 +1,17 @@
-## CURSOR — DetalhesCliente→Central360 entry (2026-10-09T10:20Z)
+## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
 
 | Campo | Valor |
 |---|---|
-| objetivo | Fechar FAIL_NAV UI Central360: entrada a partir do Visualizador Cliente (Cadastros/Comercial) |
-| causa | DetalhesCliente+Central360 existiam sem consumidor na listagem V24 |
-| arquivos | `VisualizadorUniversalEntidadeV24.jsx`, `tests/comercial-clientes-tab-v24.test.js`, HANDOFF/STATUS |
-| multiempresa/RBAC | botão fail-closed `!contextoValido \|\| !canViewCadastro`; DetalhesCliente mantém gates |
-| testes | 7/7 focados |
+| objetivo | Fechar FAIL_NAV UI Central360 via entrada V24 |
+| tip / PR | `b2ce9611` · [#255](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/255) |
+| mudança | `cliente-detalhes-360` → `openWindow(DetalhesCliente)` + Central360 |
+| CI | PASS |
+| implantado | `b2ce9611` erp-dev · rollback `pre-spa-login-20261009-101703` · flag CLIENTE_360=true |
+| browser | **PASS** detalhes-360+painel 360 · Carregar mais UI NO_BUTTON_MAYBE_EOF · API paginação PASS |
+| testes | 8/8 `comercial-clientes-tab-v24` (incl. regressão integrada #251+#252) |
 | #251+#252 | concluídos em main `d6cca4c2` |
-| pendência | CI/PR → deploy tip → browser `cliente-detalhes-360` + Carregar mais (evidência nova) |
-| próximo | merge + rebuild spa-login + validação tip |
+| pendência | merge #255 → main + rebuild no SHA de merge |
+| próximo | merge #255; depois programa canônico (Codex reserva outbox) |
 
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 

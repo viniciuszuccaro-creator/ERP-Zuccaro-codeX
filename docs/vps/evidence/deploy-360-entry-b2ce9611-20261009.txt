@@ -1,0 +1,12 @@
+# Evidência sanitizada — deploy tip DetalhesCliente→Central360 entry
+# utc=2026-10-09T10:35Z
+# branch=cursor/comercial-detalhes-cliente-360-entry-392b
+# tip=b2ce961107b428ef9ab19b1fbddbd273ffe28fe3
+# PR=#255
+# implantado=erp-dev spa-login-rebuild GIT_REF=origin/cursor/comercial-detalhes-cliente-360-entry-392b
+# spa_asset=index-DbVDch1Q.js (contém cliente-detalhes-360 + cliente-novo + CLIENTE_360)
+# flag=VITE_ERP_HTTP_CLIENTE_360=true
+# rollback=erp-zuccaro-erp-api:pre-spa-login-20261009-101703 / erp-zuccaro-erp-web:pre-spa-login-20261009-101703
+# health_3080=200 web_3081=200
+# SPA_LOGIN_REBUILD_OK
+# ≠ evidência de SHA anterior (#251/#252)

@@ -1,17 +1,19 @@
-## CURSOR — DetalhesCliente→Central360 entry (em curso) (2026-10-09T10:20Z)
+## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
 
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
-| branch | `cursor/comercial-detalhes-cliente-360-entry-392b` |
-| base | `main` `61c67d86` (#253 docs; #251+#252 já MERGED) |
-| mudança | V24: botão `data-action="cliente-detalhes-360"` → `openWindow(DetalhesCliente)` + painel Central360 |
-| testes | `comercial-clientes-tab-v24` **7/7** |
-| #251/#252 | **MERGED+implantados** `d6cca4c2` · evidências tip próprias |
-| implantado tip entry | pendente merge/CI |
-| próxima ação | CI → merge → `spa-login-rebuild` com CLIENTE_360=true → Playwright Cadastros/Clientes → `cliente-detalhes-360` → Carregar mais |
+| branch / PR | `cursor/comercial-detalhes-cliente-360-entry-392b` · [#255](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/255) |
+| tip | **`b2ce9611`** |
+| CI | **PASS** (erp-runtime-ci) |
+| parecer | APROVAR COM RESSALVAS → `parecer-detalhes-cliente-360-entry-20261009.txt` |
+| implantado | **`b2ce9611`** erp-dev · asset `index-DbVDch1Q.js` · CLIENTE_360=true |
+| rollback | `pre-spa-login-20261009-101703` |
+| validado browser | login/CPA · v24 · cliente-novo · **cliente-detalhes-360→Central360 PASS** · Carregar mais UI NO_BUTTON_MAYBE_EOF · API limit/offset PASS |
+| #251/#252 | MERGED em main `d6cca4c2` (ancestrais); tip entry ainda **não** em main |
+| próxima ação | **merge #255 → main** → rebuild spa-login no tip main → revalidar browser com evidência nova do SHA de merge |
 
-≠ Codex outbox/legado. Arquivos runtime: só `VisualizadorUniversalEntidadeV24.jsx` (+ teste).
+≠ Codex outbox/legado. Evidências: `deploy-360-entry-b2ce9611-20261009.txt`, `browser-360-entry-b2ce9611-20261009.txt`.
 
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 
