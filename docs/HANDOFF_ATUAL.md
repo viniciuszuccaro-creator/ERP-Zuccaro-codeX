@@ -1,3 +1,19 @@
+## CURSOR — Comercial 360 picker + #259 closeout (2026-10-09T19:40Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| #259 | tip **`55fcac4f`** implantado · CI SUCCESS · MERGEABLE · Setor/UM/Grupo edit+codigo **PASS** |
+| #258 | ancestor OPEN — merge #259 cobre |
+| Comercial 360 | branch `cursor/comercial360-fluxo-cliente-orc-pedido-392b` · busca código Cliente/Produto · gaps orçamento explícitos |
+| **implantado** Comercial | **NÃO** |
+| **importado** | **NÃO** (#211 staging) |
+| registros | matriz `registros-recuperacao-matriz-20261009.txt` · Fornecedor schema ausente · SYNTH≠legado |
+| Financeiro menus | inventário `financeiro-menus-nav-20261009.txt` · sem módulo paralelo |
+| #254 / #211 / outbox | **reservado Codex** — Cursor não edita sessão/contexto/outbox |
+| mig | VPS 001–024+**038**; Codex 025–037 intocados |
+| próxima | merge #259; CI+deploy Comercial picker; Codex #254/#211 |
+
 ## CURSOR — #259 tip `55fcac4f` implantado + homolog (2026-10-09T18:55Z)
 
 | Item | Valor |
@@ -7,7 +23,7 @@
 | tip | **`55fcac4f`** |
 | CI | **SUCCESS** |
 | **implantado** | erp-dev · `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` |
-| **homologado** | Grupo/Marca Abrir=1 + edit+codigo PASS · layout azul PASS |
+| **homologado** | Grupo/Marca Abrir=1 + edit+codigo PASS · Setor/UM supersedido closeout 19:35Z |
 | **importado** | **NÃO** |
 | #258 | ancestor — merge #259 cobre #258 |
 | #254 / #211 | Codex |

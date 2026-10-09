@@ -1,3 +1,33 @@
+## CURSOR — Comercial 360 picker Cliente→Orçamento→Pedido (2026-10-09T19:40Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | busca cliente/produto por código · labels código · gaps orçamento explícitos |
+| **integrado** | branch `cursor/comercial360-fluxo-cliente-orc-pedido-392b` |
+| **implantado** | **NÃO** |
+| **homologado** | unitários picker/orcamento/pedido PASS |
+| **importado** | **NÃO** (#211) |
+| arquivos | `comercialMasterPicker.js` · `OrcamentosTab` · `PedidoCanonicoPanel` |
+| ≠ Codex | sessão/contexto/outbox intocados |
+| gaps | orçamento sem `tabela_preco_id`; preço server-side; UM só principal |
+| evidências | `comercial360-fluxo-cliente-orc-pedido-20261009.txt` · `financeiro-menus-nav-20261009.txt` |
+| próxima | CI tip → deploy → homolog browser fluxo completo |
+
+## CURSOR — #259 closeout Setor/UM + matriz registros (2026-10-09T19:35Z)
+
+| Fase | Estado |
+|---|---|
+| tip implantado | **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** |
+| CI #259 | **SUCCESS** · MERGEABLE · head docs `51ac5d4b` |
+| #258 | ancestor OPEN · merge #259 cobre |
+| **homologado** | Grupo/Setor/UM edit+codigo PASS · Marca PASS (corrida anterior) · layout azul PASS |
+| **importado** | **NÃO** |
+| matriz registros | `registros-recuperacao-matriz-20261009.txt` — ensaios≠legado; Fornecedor schema ausente; staging #211 |
+| mig Codex | 025–037 **não** no VPS; 038 Cadastros OK |
+| #254 | toast Abrir sem scroll → Codex sessão; Cursor não edita hooks |
+| evidências | `browser-259-setor-um-grupo-55fcac4f-*` |
+| próxima | merge #259 após owner; fechar #258 |
+
 ## CURSOR — #259 tip `55fcac4f` CI+VPS+browser (2026-10-09T18:55Z)
 
 | Fase | Estado |
@@ -5,13 +35,13 @@
 | tip | **`55fcac4f`** |
 | CI | erp-runtime-ci **SUCCESS** (push 37974475772 · PR 37974480936) |
 | **implantado** | erp-dev **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` · rollback `pre-spa-login-20261009-184004` |
-| **homologado** | asset/login/layout PASS · Grupo Abrir=1 + edit codigo GATED-GP PASS · Marca Abrir=1 + edit codigo 000004 PASS · Setor/UM PARTIAL (script) |
+| **homologado** | asset/login/layout PASS · Grupo/Marca PASS · Setor/UM supersedido por closeout 19:35Z |
 | **importado** | **NÃO** (#211) |
 | #258×#259 | #258 ancestor → merge #259 cobre #258 |
 | migração | **038** (025–037 Codex intocados) |
 | evidências | `deploy-259-cadastros-038-55fcac4f-*` · `browser-259-cadastros-55fcac4f-*` · inventário completo |
 | #254 / #211 | Codex |
-| próxima | merge #259 após owner; fechar #258; Setor/UM re-smoke opcional |
+| próxima | merge #259 após owner; fechar #258 |
 
 ## CURSOR — Cadastros #259 CI fix migration 038 (2026-10-09)
 
