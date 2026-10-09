@@ -75,7 +75,10 @@ Legenda: L=lista · D=detalhe/form · A=API/local · B=banco/seq · Esc=Grupo|Em
 ## Implantação
 | Item | Estado |
 |---|---|
-| CI tip | corrigir ordem migration → 038 |
-| VPS migrate 038 | pendente |
-| SPA rebuild tip | pendente |
-| Homolog browser | pendente tip implantado |
+| CI tip `55fcac4f` | **SUCCESS** |
+| VPS migrate 038 | **APPLIED** |
+| SPA rebuild tip | **OK** `index-DlbCJL3w.js` |
+| Homolog browser | Grupo/Marca PASS · Setor/UM PARTIAL |
+
+## Integração #258×#259
+Merge #259 → main (contém #258). Não rebase destrutivo.

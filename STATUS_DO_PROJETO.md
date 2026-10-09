@@ -1,14 +1,25 @@
+## CURSOR — #259 tip `55fcac4f` CI+VPS+browser (2026-10-09T18:55Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`55fcac4f`** |
+| CI | erp-runtime-ci **SUCCESS** (push 37974475772 · PR 37974480936) |
+| **implantado** | erp-dev **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` · rollback `pre-spa-login-20261009-184004` |
+| **homologado** | asset/login/layout PASS · Grupo Abrir=1 + edit codigo GATED-GP PASS · Marca Abrir=1 + edit codigo 000004 PASS · Setor/UM PARTIAL (script) |
+| **importado** | **NÃO** (#211) |
+| #258×#259 | #258 ancestor → merge #259 cobre #258 |
+| migração | **038** (025–037 Codex intocados) |
+| evidências | `deploy-259-cadastros-038-55fcac4f-*` · `browser-259-cadastros-55fcac4f-*` · inventário completo |
+| #254 / #211 | Codex |
+| próxima | merge #259 após owner; fechar #258; Setor/UM re-smoke opcional |
+
 ## CURSOR — Cadastros #259 CI fix migration 038 (2026-10-09)
 
 | Fase | Estado |
 |---|---|
-| causa CI | `runtime01` exigia last=024; conflito nome `025` com Codex (`025_pedidos_origem…`) |
-| correção | renomear → **`038_cadastros_codigo_registro.sql`** (025–037 reservados Codex); teste through 038 |
-| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) contém #258 (ancestor) — merge #259 cobre #258 |
-| **implantado** | **NÃO** |
-| inventário | `docs/evidence/cadastros-codigo-inventario-completo-20261009.txt` |
-| #254 / #211 | Codex |
-| próxima | CI tip → migrate 038 + rebuild → browser |
+| causa CI | last=024; `025_cadastros` colidia Codex `025_pedidos_*` |
+| correção | **`038_cadastros_codigo_registro.sql`** + teste through 038 |
+| status | supersedido pelo tip `55fcac4f` implantado |
 
 ## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
 
