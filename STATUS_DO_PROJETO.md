@@ -1,3 +1,194 @@
+## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
+
+| Item | Valor |
+|---|---|
+| tip branch | `6ed9e7dc` |
+| runtime | `dd13fb5f` |
+| parecer | **APROVAR COM RESSALVAS** → `docs/vps/evidence/parecer-251-dd13fb5f-20261009.txt` |
+| CI | PASS |
+| overlap #252 | só STATUS/HANDOFF (runtime disjunto) |
+| merge main | em curso |
+| PR body GitHub | tentativa update; se BLOCKED, este handoff é canônico |
+
+## CURSOR — #251 CLIENTE_360 ON + validação (2026-10-09T09:43Z)
+
+| Item | Valor |
+|---|---|
+| código implantado | **`dd13fb5f`** |
+| flag | `VITE_ERP_HTTP_CLIENTE_360=true` (após prova Auth supabase_user) |
+| spa_asset | `index-B0gNWKWR.js` |
+| browser Central360 | **PASS** (visível) |
+| carregar mais UI | NO_BUTTON_MAYBE_EOF nesta vista; API limit/offset já PASS |
+| sugestão UI Novo | BLOCKED_NAV no path Cadastros headless → lote indep. [#252](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/252) |
+| branch tip docs | `3e0d61dd`+ |
+| merge main | **não** |
+| PRs redundantes #248/#249/#250 | manter abertas até merge #251; inventário no handoff anterior |
+
+Evidências: `deploy-251-c360-flag-on-dd13fb5f-20261009.txt`, `browser-251-c360-flag-on-dd13fb5f-20261009.txt`.
+
+## CURSOR — #251 continuidade (2026-10-09T09:39Z)
+
+| Fase | SHA / estado |
+|---|---|
+| branch tip | `8ad3cdbd` |
+| **implantado** | **`dd13fb5f`** erp-dev (asset `index-CMrmwZdE.js`) |
+| CI | PASS tip `8ad3cdbd` + `dd13fb5f` |
+| revisado | **APROVAR COM RESSALVAS** (parecer SHA final `dd13fb5f`; docs `8ad3cdbd` sem runtime) |
+| integrado | PR #251 aberta; **não** merged em main |
+| validado tip implantado | Playwright revalidação 2026-10-09: Empresas/Financeiro PASS; sugestão UI BLOCKED_NAV; 360 UI oculta (flag off) |
+| Auth prova CLIENTE_360 | `/api/v1/meta` → `auth.mode=supabase_user` · `browserLogin=true` · `central360ReadModel=true` · env=dev **PASS** |
+| PR body update | **BLOCKED** ManagePullRequest (repo rename) + `gh pr edit` (integration sem write) — corpo canônico neste handoff |
+
+### Inventário incorporado (#248/#249/#250 → #251)
+| Origem | Arquivos runtime |
+|---|---|
+| #249 | `Empresas.jsx`, `EmpresaSwitcher.jsx`, `input.jsx`, `localBase44Client.js`, `erpHttpSession.js`, `useContextoVisual.jsx`, `LaunchpadCard.jsx`, `ModulosGridFinanceiro.jsx`, `CaixaCentralLiquidacao.jsx`, `WindowModal.jsx`, `authSessionService.ts` + testes |
+| #248 | `clienteSugestaoVinculoUi.js`, `CadastroClienteCompleto.jsx`, `httpApiClient.js` (sugestaoVinculo) + teste UI |
+| #250 | `CentralCliente360Panel.jsx`, `centralCliente360Pagination.js`, `httpApiClient.js` (offsets), Dockerfile/compose flag, runtime test paginação |
+
+Antes de fechar #248/#249/#250: merge #251 → main e confirmar ancestrais no tip merged.
+
+### Lote indep. reservado (≠ #251)
+Branch `cursor/comercial-clientes-tab-v24-392b` — `ClientesTab.jsx` → Visualizador V24 (Cadastros); `AcoesRapidasGlobal.jsx` data-action; **não** edita arquivos do #251.
+
+≠ Codex outbox/legado/#236.
+
+## CURSOR — pacote #251 implantado+validado `dd13fb5f` (2026-10-08T21:01Z)
+
+| Fase | Estado |
+|---|---|
+| implementado | merge-tree #248 `bdf54b86` + #249 `4ab97760` + #250 `49e677ce` |
+| revisado | **APROVAR COM RESSALVAS** |
+| integrado | PR [#251](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/251) tip `dd13fb5f` (não merged em main) |
+| **implantado** | **`dd13fb5f`** erp-dev (antes `54b9f9d0`) |
+| **validado** | Playwright Empresas/Financeiro PASS · API paginação/sugestão/isolamento PASS |
+| flag CLIENTE_360 | `false` — UI 360 oculta; API central-360 testada |
+| rollback | `pre-spa-login-20261008-204827` · backup `pre-gate-e-20261008-204826.sql` |
+
+Evidências: `docs/vps/evidence/deploy-251-integra-dd13fb5f-20261008.txt`, `browser-251-integra-dd13fb5f-20261008.txt`.
+Pendência: UI Novo Cliente sugestão (BLOCKED_NAV headless); merge em main após aprovação humana.
+
+## CURSOR — parecer integração #251 (2026-10-08T20:45Z)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/cliente360-cadfin-integra-392b` |
+| tip | `100cf997` |
+| PR | [#251](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/251) |
+| parecer | **APROVAR COM RESSALVAS** (revisão independente) |
+| CI | em andamento |
+| implantado | **não** |
+| validado | **não** |
+| flag CLIENTE_360 | `false` no deploy |
+
+Ressalvas baixas: reset paginação via useEffect (sem vazamento cross-tenant); EmpresaSwitcher fallback HTTP sem groupId; Empresas FE sem usePermissions (pré-existente). Sem auto-mescla. Deploy DEV seguro após CI verde com flag off.
+
+## CURSOR — pacote integração #248+#249+#250 (2026-10-08T20:55Z)
+
+| PR | tip | neste branch |
+|---|---|---|
+| #249 Empresas/Financeiro | `4ab97760` | merge |
+| #248 sugestão UI | `bdf54b86` | merge |
+| #250 Central 360 página+reset | `49e677ce` | merge |
+| main base | `6ff6b0f2` | |
+| erp-dev atual | `54b9f9d0` | **≠** pacote — deploy pendente |
+
+Testes pré-push: UI página 3/3 · runtime central360 5/5 · (suite integração a seguir). ≠ Codex outbox/legado.
+
+## CURSOR — #250 reset escopo + flag CLIENTE_360 (2026-10-08T20:45Z)
+
+| Fase | Estado |
+|---|---|
+| implementado | reset `blockLimits` em troca cliente/grupo/empresa/ator/sessão; helpers scope; ARG/compose `VITE_ERP_HTTP_CLIENTE_360` opt-in; runtime 7 locais limit/offset |
+| integrado | **não** (PR #250 aberta; pacote com #248/#249 em andamento) |
+| implantado | **não** |
+| validado testes | UI 3/3 · runtime central360 5/5 PASS |
+| flag VPS | default `false` (só true após prova supabase_user em DEV) |
+
+≠ #248/#249 · ≠ Codex outbox/legado.
+
+## CURSOR — lote Central 360 paginação blocos (2026-10-08T20:20Z)
+
+Branch `cursor/comercial360-onda3-central360-pagina-392b` · base main.
+Reusa `central360` HTTP com `*_limit`/`*_offset`; UI "Carregar mais" por bloco; remove `slice(0,5)` morto.
+≠ #248/#249 · ≠ Codex outbox/legado.
+
+## CURSOR — pacote #248/#249 + lote Central360 página (2026-10-08T20:17Z)
+
+| item | tip | integrado | implantado | validado |
+|---|---|---|---|---|
+| #249 | `54b9f9d0` | PR aberta | erp-dev atual | browser PASS |
+| #248 | `bdf54b86` | PR CI PASS | temporário; restaurado #249 | API/bundle PASS; UI Novo BLOCKED_NAV |
+| lote indep. | Central360 paginação blocos | a abrir | — | — |
+
+## CURSOR — #249 validado browser `1e691933` (2026-10-08T20:08Z)
+
+Browser PASS: switcher · save/reopen · CNPJ origem · Caixa. Evidência `docs/vps/evidence/browser-249-empresas-save-1e691933-20261008.txt`.
+
+## CURSOR — #249 Empresas save implantado `1e691933` (2026-10-08T20:04Z)
+
+| item | tip | estado |
+|---|---|---|
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | `1e691933` | **implantado+validado** browser PASS |
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | CI PASS; aguarda browser pós-deploy |
+
+## CURSOR — CI verde #248/#249 (2026-10-08T17:33Z)
+
+| PR | Tip CI | frontend/backend |
+|---|---|---|
+| [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) sugestão UI | `bdf54b86` | **PASS** |
+| [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) SPA/Financeiro/Empresas | tip branch incl. `9c19da80` | **PASS** |
+| implantado erp-dev | `b81bc1cd` | — |
+
+Aguarda review/merge. Persistência save Empresa segue BLOCKED.
+
+## CURSOR — tip implantado `b81bc1cd` (2026-10-08T17:30Z)
+
+| Pacote | Tip | PR | Estado |
+|---|---|---|---|
+| SPA UI + Financeiro + Empresas | **`b81bc1cd`** implantado erp-dev | [#249](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249) | Caixa/CR/CP/Conciliação/Lote/Cartões PASS; Empresas lista PASS; save Empresa BLOCKED local |
+| Onda 3 sugestão UI + race | `bdf54b86` | [#248](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248) | testes 5/5; aguarda CI/merge |
+| Legado destino | tip `fff3abc8` · main `6ff6b0f2` | — | contratos #113/#246/#245; sem reprocessar backup |
+| rollback | `pre-spa-login-20261008-173140` | — | |
+
+Evidências: `docs/vps/evidence/browser-financeiro-pos-caixa-9b2c9b63-20261008.txt`, `browser-financeiro-caixa-08da3b8e-20261008.txt`, `browser-empresas-lista-empresa-2e50ee33-20261008.txt`.
+
+## CURSOR — Empresas lista no escopo empresa (2026-10-08T17:22Z)
+
+Causa: `filterInContext('Empresa', …, 'group_id')` + `getFiltroContexto('group_id')` sobrescrevia `group_id` com UUID da empresa → lista vazia sem Editar.
+Fix: `MASTER_GROUP_SET` em `useContextoVisual` (leitura só por groupId canônico) + `queryKey` `empresas-cadastro` com `groupIdCadastro`.
+Testes: empresas-dialog-edit + contexto-multiempresa-policy **17/17**.
+Branch `cursor/spa-ui-empresas-financeiro-clicks-392b` · PR **#249**. ≠ Codex #209 / outbox.
+
+## CURSOR — paralelo SPA UI + Onda 3 sugestão UI (2026-10-08T17:06Z)
+
+| Pacote | Branch | SHA tip | Estado |
+|---|---|---|---|
+| SPA UI + Caixa Button | `cursor/spa-ui-empresas-financeiro-clicks-392b` | `9b2c9b63` | **implantado** erp-dev · PR **#249** · Caixa/CR/CP/Conciliação/Lote/Cartões PASS |
+| Onda 3 sugestão vínculo UI | `cursor/comercial360-onda3-sugestao-ui-392b` | `ce99d428` | implementado; PR **#248** draft |
+
+PR #248: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/248  
+PR #249: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/249  
+Evidência Financeiro: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt`.  
+Legado: destino tip `08da3b8e` + main `6ff6b0f2` (#113/#246/#245); sem reprocessar backup.
+
+## CURSOR — SPA UI empresas/financeiro `677b1ab1` (2026-10-08)
+
+| Fase | Estado |
+|---|---|
+| implementado | `51d11e75` → `677b1ab1` → `11fd3510` (branch `cursor/spa-ui-empresas-financeiro-clicks-392b`) |
+| integrado | **não** (ManagePullRequest indisponível — abrir PR manual) |
+| **implantado** | `11fd3510` erp-dev (rebuild API+web) |
+| auth session cnpj | **PASS** digits=14 CPA+3Z |
+| browser listagem Empresas + cores Financeiro | **PASS** |
+| browser seletor/Editar/close | PARTIAL (overlays Chrome; handlers no bundle) |
+| rollback | `pre-spa-login-20261008-161558` |
+| backup | `pre-gate-e-20261008-154546.sql` sha256=`ceb97054…` |
+
+Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
+Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |
@@ -7,7 +198,7 @@
 | CPA/3Z IDs | CPA=`cccccccc-…` · 3Z=`c2c2c2c2-…` (mesmo group) |
 | isolamento pedidos | **PASS** CPA 0 ≠ 3Z 3 |
 | sugestao-vinculo #113 | **PASS** 200 + mescla proibida |
-| browser UI Cadastros/Financeiro | em andamento |
+| browser UI Cadastros/Financeiro | superseded por seção `677b1ab1` acima |
 
 Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
 

@@ -182,6 +182,25 @@ test('admin exclusivo de filial não recebe operação no Grupo nem outra empres
   assert.throws(() => switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_B }), /não autorizada/);
 });
 
+test('persistErpHttpSession espelha cnpj das empresas do perfil (edit Cadastros)', () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({
+    accessToken: 'tok',
+    groupId: GROUP,
+    actorId: ACTOR,
+    role: 'admin',
+    empresas: [
+      { id: EMPRESA_A, group_id: GROUP, razao_social: 'A', nome_fantasia: 'A', cnpj: '67.370.123/0001-99', status: 'Ativa' },
+      { id: EMPRESA_B, group_id: GROUP, razao_social: 'B', cnpj: '05431234000188', status: 'Ativa' },
+    ],
+    storage,
+  });
+  const session = readErpHttpSession(storage);
+  assert.equal(session.empresas.length, 2);
+  assert.equal(session.empresas[0].cnpj, '67.370.123/0001-99');
+  assert.equal(session.empresas[1].cnpj, '05431234000188');
+});
+
 test('persist/readErpHttpSession guarda token + tenant + role + expiresAt', () => {
   const storage = memoryStorage();
   const expiresAt = new Date(Date.now() + 3600_000).toISOString();

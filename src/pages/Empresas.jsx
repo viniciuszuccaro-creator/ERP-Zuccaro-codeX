@@ -24,7 +24,7 @@ import {
   Package,
   Eye
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,7 +33,8 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from "sonner";
 
 export default function Empresas() {
-  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual } = useContextoVisual();
+  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual, empresaAtual } = useContextoVisual();
+  const groupIdCadastro = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState(null);
@@ -87,14 +88,20 @@ export default function Empresas() {
   });
 
   const { data: empresas = [], isLoading } = useQuery({
-    queryKey: ['empresas', grupoAtual?.id],
+    queryKey: ['empresas-cadastro', groupIdCadastro],
     queryFn: () => filterInContext('Empresa', {}, '-created_date', undefined, 'group_id'),
+    enabled: Boolean(groupIdCadastro),
   });
+
+  const invalidateEmpresasQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['empresas-cadastro'] });
+    queryClient.invalidateQueries({ queryKey: ['empresas'] });
+  };
 
   const createMutation = useMutation({
     mutationFn: (data) => createInContext('Empresa', data, 'group_id'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      invalidateEmpresasQueries();
       setIsDialogOpen(false);
       resetForm();
       toast.success("Empresa cadastrada com sucesso!");
@@ -104,11 +111,14 @@ export default function Empresas() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => updateInContext('Empresa', id, data, 'group_id'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      invalidateEmpresasQueries();
       setIsDialogOpen(false);
       setEditingEmpresa(null);
       resetForm();
       toast.success("Empresa atualizada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Falha ao atualizar empresa.');
     },
   });
 
@@ -121,12 +131,36 @@ export default function Empresas() {
     }
   };
 
+  const REGIMES = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI'];
+  const TIPOS = ['Matriz', 'Filial'];
+
   const handleEdit = (empresa) => {
     setEditingEmpresa(empresa);
     setFormData({
-      ...empresa,
-      endereco: empresa.endereco || { logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "" },
-      contato: empresa.contato || { telefone: "", email: "" }
+      razao_social: empresa.razao_social || '',
+      nome_fantasia: empresa.nome_fantasia || '',
+      cnpj: empresa.cnpj || '',
+      inscricao_estadual: empresa.inscricao_estadual || '',
+      regime_tributario: REGIMES.includes(empresa.regime_tributario)
+        ? empresa.regime_tributario
+        : 'Simples Nacional',
+      tipo: TIPOS.includes(empresa.tipo) ? empresa.tipo : 'Matriz',
+      endereco: {
+        logradouro: '',
+        numero: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        ...(empresa.endereco || {}),
+      },
+      contato: {
+        telefone: '',
+        email: '',
+        ...(empresa.contato || {}),
+      },
+      status: empresa.status || 'Ativa',
+      permite_emissao_fiscal: empresa.permite_emissao_fiscal !== false,
     });
     setIsDialogOpen(true);
   };
@@ -254,6 +288,20 @@ export default function Empresas() {
           />
         </div>
 
+        <Button
+          type="button"
+          className="bg-blue-600 hover:bg-blue-700"
+          data-action="empresa-nova"
+          onClick={() => {
+            setEditingEmpresa(null);
+            resetForm();
+            setIsDialogOpen(true);
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Empresa
+        </Button>
+
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) {
@@ -261,24 +309,27 @@ export default function Empresas() {
             resetForm();
           }
         }}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Empresa
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-action="empresa-form-dialog">
             <DialogHeader>
               <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             </DialogHeader>
             <FormWrapper
+              key={editingEmpresa?.id || 'nova-empresa'}
               schema={empresaSchema}
-              defaultValues={editingEmpresa || formData}
+              defaultValues={formData}
+              withContext={false}
               onSubmit={(values) => {
+                const groupId = editingEmpresa?.group_id
+                  || editingEmpresa?.grupo_id
+                  || groupIdCadastro;
+                const payload = {
+                  ...values,
+                  ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+                };
                 if (editingEmpresa) {
-                  updateMutation.mutate({ id: editingEmpresa.id, data: values });
+                  updateMutation.mutate({ id: editingEmpresa.id, data: payload });
                 } else {
-                  createMutation.mutate(values);
+                  createMutation.mutate(payload);
                 }
               }}
             >
@@ -464,22 +515,38 @@ export default function Empresas() {
                   <TableCell>
                     <div className="flex items-center justify-center gap-1">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setViewingEmpresa(empresa)}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 px-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setViewingEmpresa(empresa);
+                        }}
                         title="Ver detalhes"
+                        data-action="empresa-view"
+                        aria-label={`Ver detalhes ${empresa.nome_fantasia || empresa.razao_social || ''}`}
                       >
                         <Eye className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs hidden sm:inline">Ver</span>
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleEdit(empresa)}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 px-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEdit(empresa);
+                        }}
                         title="Editar"
+                        data-action="empresa-edit"
+                        aria-label={`Editar ${empresa.nome_fantasia || empresa.razao_social || ''}`}
                       >
                         <Edit className="w-4 h-4 text-slate-600" />
+                        <span className="text-xs hidden sm:inline">Editar</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -527,7 +594,16 @@ export default function Empresas() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-slate-600">CNPJ</p>
-                      <p className="font-medium font-mono">{viewingEmpresa.cnpj}</p>
+                      <p className="font-medium font-mono" data-field="empresa-cnpj">{viewingEmpresa.cnpj || '-'}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5" data-field="empresa-cnpj-origem">
+                        Origem: {
+                          viewingEmpresa._cnpj_origem === 'sessao_http'
+                            ? 'sessão HTTP (API/perfil)'
+                            : viewingEmpresa.cnpj
+                              ? 'cadastro local / banco espelhado'
+                              : 'ausente (sem cache de perfil)'
+                        }
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-600">Inscrição Estadual</p>

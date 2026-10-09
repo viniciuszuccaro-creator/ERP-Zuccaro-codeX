@@ -48,7 +48,7 @@ function isUuid(value) {
  *   expiresAt?: string | number | null,
  *   expiresIn?: number | null,
  *   groupName?: string | null,
- *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, status?: string }>,
+ *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, cnpj?: string | null, status?: string }>,
  *   storage?: Storage,
  * }} input
  */
@@ -68,11 +68,13 @@ export function persistErpHttpSession(input) {
       .map((e) => {
         const id = e?.id ? String(e.id).trim() : '';
         if (!id || !isUuid(id)) return null;
+        const cnpjRaw = e?.cnpj == null ? '' : String(e.cnpj).trim();
         return {
           id,
           group_id: e.group_id ? String(e.group_id) : groupId,
           razao_social: String(e.razao_social || e.nome_fantasia || 'Empresa'),
           nome_fantasia: e.nome_fantasia == null ? null : String(e.nome_fantasia),
+          cnpj: cnpjRaw || null,
           status: String(e.status || 'Ativa'),
         };
       })
@@ -271,7 +273,7 @@ export function switchErpHttpSessionEmpresa(input) {
  *   role?: string | null,
  *   fullName?: string | null,
  *   groupName?: string | null,
- *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, status?: string }>,
+ *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, cnpj?: string | null, status?: string }>,
  *   permissoes?: Record<string, unknown>,
  * }} session
  */
@@ -340,7 +342,7 @@ export function buildHttpDevAdminUser(session) {
  *   groupId: string,
  *   empresaId?: string | null,
  *   groupName?: string | null,
- *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, status?: string }>,
+ *   empresas?: Array<{ id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, cnpj?: string | null, status?: string }>,
  *   perfilAcessoId?: string | null,
  *   permissoes?: Record<string, unknown> | null,
  *   perfilNome?: string | null,

@@ -400,23 +400,60 @@ export function createHttpApiClient(options = {}) {
   const clientes = {
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
+     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).
      * @param {string} id
-     * @param {{ orcamentosLimit?: number, pedidosLimit?: number, locaisLimit?: number, obrasLimit?: number, signal?: AbortSignal }} [options]
+     * @param {{
+     *   orcamentosLimit?: number, orcamentosOffset?: number,
+     *   pedidosLimit?: number, pedidosOffset?: number,
+     *   empresasLimit?: number, empresasOffset?: number,
+     *   locaisLimit?: number, locaisOffset?: number,
+     *   obrasLimit?: number, obrasOffset?: number,
+     *   signal?: AbortSignal
+     * }} [options]
      */
     central360(id, {
       orcamentosLimit = 10,
+      orcamentosOffset = 0,
       pedidosLimit = 10,
+      pedidosOffset = 0,
+      empresasLimit = 10,
+      empresasOffset = 0,
       locaisLimit = 10,
+      locaisOffset = 0,
       obrasLimit = 10,
+      obrasOffset = 0,
       signal,
     } = {}) {
       return request(`/api/v1/clientes/${encodeURIComponent(id)}/central-360`, {
         query: {
           orcamentos_limit: orcamentosLimit,
+          orcamentos_offset: orcamentosOffset,
           pedidos_limit: pedidosLimit,
+          pedidos_offset: pedidosOffset,
+          empresas_limit: empresasLimit,
+          empresas_offset: empresasOffset,
           locais_limit: locaisLimit,
+          locais_offset: locaisOffset,
           obras_limit: obrasLimit,
+          obras_offset: obrasOffset,
         },
+        signal,
+        unwrap: false,
+      });
+    },
+    /**
+     * Sugestão de vínculo por documento no Grupo (sem mescla).
+     * @param {{ documento: string, signal?: AbortSignal }} input
+     */
+    sugestaoVinculo({ documento, signal } = {}) {
+      const doc = String(documento ?? '').trim();
+      if (!doc) {
+        return Promise.resolve({
+          data: { sugestao: false, motivo: 'documento_ausente', mescla: 'proibida' },
+        });
+      }
+      return request('/api/v1/clientes/sugestao-vinculo', {
+        query: { documento: doc.slice(0, 32) },
         signal,
         unwrap: false,
       });

@@ -394,21 +394,46 @@ export function upsertHttpTenantLocalMirror(input = {}) {
     if (!id) return;
     const nome = String(row.nome_fantasia || row.razao_social || 'Empresa').trim() || 'Empresa';
     const razao = String(row.razao_social || row.nome_fantasia || nome).trim() || nome;
+    const cnpjRaw = row?.cnpj == null ? '' : String(row.cnpj).trim();
     const idx = empresaStore.findIndex((item) => String(item.id) === id);
-    const next = {
-      id,
-      nome_fantasia: nome,
-      razao_social: razao,
-      group_id: groupId,
-      grupo_id: groupId,
-      status: String(row.status || 'Ativa'),
-      tipo: 'Matriz',
-      ativo: true,
-      updated_date: now(),
-      created_date: idx >= 0 ? (empresaStore[idx].created_date || now()) : now(),
-    };
-    if (idx >= 0) empresaStore[idx] = { ...empresaStore[idx], ...next };
-    else empresaStore.push(next);
+    const prev = idx >= 0 ? empresaStore[idx] : null;
+    // CNPJ do servidor (sessão) prevalece; se ausente, preserva o já espelhado (não apagar).
+    const cnpj = cnpjRaw || (prev?.cnpj ? String(prev.cnpj) : '');
+    // Espelho de sessão é projeção enxuta: não sobrescrever cadastro local
+    // (nome/razão/tipo/regime/endereço/contato) já persistido no IndexedDB.
+    if (prev) {
+      empresaStore[idx] = {
+        ...prev,
+        id,
+        cnpj,
+        group_id: groupId,
+        grupo_id: groupId,
+        status: String(row.status || prev.status || 'Ativa'),
+        nome_fantasia: prev.nome_fantasia || nome,
+        razao_social: prev.razao_social || razao,
+        tipo: prev.tipo || 'Matriz',
+        ativo: prev.ativo !== false,
+        created_date: prev.created_date || now(),
+        // updated_date do cadastro local permanece; remirror não "atualiza" a empresa
+        updated_date: prev.updated_date || now(),
+        _cnpj_origem: cnpjRaw ? 'sessao_http' : (prev._cnpj_origem || 'local'),
+      };
+    } else {
+      empresaStore.push({
+        id,
+        nome_fantasia: nome,
+        razao_social: razao,
+        cnpj,
+        group_id: groupId,
+        grupo_id: groupId,
+        status: String(row.status || 'Ativa'),
+        tipo: 'Matriz',
+        ativo: true,
+        updated_date: now(),
+        created_date: now(),
+        _cnpj_origem: cnpjRaw ? 'sessao_http' : 'local',
+      });
+    }
     mirroredEmpresas += 1;
   };
   empresasInput.forEach(upsertEmpresa);

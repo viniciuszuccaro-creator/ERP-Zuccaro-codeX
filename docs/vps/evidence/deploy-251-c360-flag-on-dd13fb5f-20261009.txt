@@ -1,0 +1,10 @@
+# Evidência sanitizada — #251 tip dd13fb5f com CLIENTE_360=true (DEV)
+# utc=2026-10-09T09:40Z
+#
+# implantado_codigo = dd13fb5f (mesmo SHA; rebuild com flag)
+# spa_asset = /assets/index-B0gNWKWR.js (antes index-CMrmwZdE.js flag off)
+# VITE_ERP_HTTP_CLIENTE_360 = true
+# Auth prova pré-ativação = /api/v1/meta auth.mode=supabase_user · browserLogin=true · central360ReadModel=true · env=dev
+# health/ready/web = 200
+# rollback = pre-spa-login-20261009-093934
+# sem senhas / sem tokens / sem e-mail

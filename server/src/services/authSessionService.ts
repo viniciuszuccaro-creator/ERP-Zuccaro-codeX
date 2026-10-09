@@ -65,6 +65,7 @@ export type AuthSessionProfile = {
     group_id: string;
     razao_social: string;
     nome_fantasia: string | null;
+    cnpj: string | null;
     status: string;
   }>;
 };
@@ -94,6 +95,7 @@ type EmpresaRow = {
   group_id: string;
   razao_social: string;
   nome_fantasia: string | null;
+  cnpj: string | null;
   status: string;
 };
 
@@ -127,7 +129,7 @@ async function loadEmpresasForProfile(
   try {
     if (listAll) {
       const result = await db.query<EmpresaRow>(
-        `SELECT id, group_id, razao_social, nome_fantasia, status
+        `SELECT id, group_id, razao_social, nome_fantasia, cnpj, status
          FROM empresas
          WHERE group_id = $1 AND status = 'Ativa'
          ORDER BY COALESCE(nome_fantasia, razao_social) ASC`,
@@ -138,11 +140,12 @@ async function loadEmpresasForProfile(
         group_id: row.group_id,
         razao_social: row.razao_social,
         nome_fantasia: row.nome_fantasia,
+        cnpj: row.cnpj == null ? null : String(row.cnpj),
         status: row.status,
       }));
     }
     const result = await db.query<EmpresaRow>(
-      `SELECT id, group_id, razao_social, nome_fantasia, status
+      `SELECT id, group_id, razao_social, nome_fantasia, cnpj, status
        FROM empresas
        WHERE group_id = $1 AND id = $2 AND status = 'Ativa'
        LIMIT 1`,
@@ -153,6 +156,7 @@ async function loadEmpresasForProfile(
       group_id: row.group_id,
       razao_social: row.razao_social,
       nome_fantasia: row.nome_fantasia,
+      cnpj: row.cnpj == null ? null : String(row.cnpj),
       status: row.status,
     }));
   } catch {

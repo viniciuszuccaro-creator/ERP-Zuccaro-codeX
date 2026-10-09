@@ -1,0 +1,30 @@
+# Evidência sanitizada — Financeiro browser + Caixa crash (erp-dev)
+# utc=2026-10-08T17:06Z
+#
+# tip implantado pré-fix: 08da3b8e (branch cursor/spa-ui-empresas-financeiro-clicks-392b)
+# host: srv1982741 / https://erp-dev.cpaferroeaco.com.br
+#
+# Login: PASS (secrets Environment; sem e-mail/token neste arquivo)
+# Seletor: Grupo CPA (visão consolidada) — PASS
+# Cadastros /Empresas Editar: dialog Razão/CNPJ — PASS (Playwright)
+#
+# Financeiro launchpad (Grupo CPA):
+#   cards data-action Financeiro.abrir.* — PASS (15 módulos)
+#   Contas a Receber — PASS (janela V22.0; tabela vazia sintética R$0)
+#   Contas a Pagar — PASS
+#   Formas de Pagamento — PASS
+#   Caixa PDV Completo — PASS
+#   Conciliação Bancária — PASS
+#   Caixa Central — FAIL crash SPA: ReferenceError Button is not defined
+#     (CaixaCentralLiquidacao.jsx usava <Button> no alerta bloqueado sem import)
+#     repro: abrir Caixa Central com contexto Grupo (sem empresaId) → ErrorBoundary
+#
+# Correção neste lote:
+#   + import { Button } from "@/components/ui/button"
+#   + reconectar LiquidacaoEmLote no grid do Caixa Central (componente existente)
+#   testes: financeiro-empresa-switch-ux 7/7
+#
+# Pós-rebuild: validar Caixa Central com alerta fail-closed (grupo) e com empresa 3Z/CPA;
+#   Cartões e Liquidação em Lote via módulos do Caixa; troca de empresa sem crash.
+#
+# sem senhas / sem tokens / sem e-mail / sem títulos reais alterados

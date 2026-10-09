@@ -1,0 +1,15 @@
+# Evidência sanitizada — browser #251 com CLIENTE_360=true
+# utc=2026-10-09T09:41Z
+# implantado = dd13fb5f · asset index-B0gNWKWR.js
+#
+# Playwright headless:
+#   login = PASS
+#   switcher Grupo×CPA×3Z = PASS
+#   central360 UI = PASS (textHits Locais/Central)
+#   carregar mais = NO_BUTTON_MAYBE_EOF (cliente sem hasMore na vista aberta; API paginação já PASS)
+#   sugestao Novo Cadastros.Cliente.criar = BLOCKED_NAV (novo_count=0 neste path; lote #252 cobre cliente-novo)
+#
+# API (inalterada):
+#   paginação 7 locais sem overlap = PASS (sessão anterior)
+#   sugestao mescla=proibida = PASS
+# títulos reais não alterados

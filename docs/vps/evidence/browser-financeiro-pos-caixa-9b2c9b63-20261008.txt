@@ -1,0 +1,24 @@
+# Evidência sanitizada — Financeiro pós-fix Caixa (erp-dev)
+# utc=2026-10-08T17:12Z · tip implantado atual supersede: fff3abc8
+#
+# implantado tip (Caixa fix) = 9b2c9b63 → … → fff3abc8
+# rollback atual = pre-spa-login-20261008-172657
+# PR = #249
+#
+# Login: PASS
+# Seletor: Grupo CPA · 3Z LTDA · CPA ferro e aço — PASS
+#
+# Grupo CPA:
+#   Caixa Central — PASS (alerta selecione empresa; sem ErrorBoundary; Liquidação em Lote visível)
+#   Contas a Receber / Pagar / Conciliação — PASS
+#
+# Empresa 3Z:
+#   Caixa Central + Liquidacao em Lote + Cartoes + Liquidar — PASS (sem crash; sem baixa real)
+#
+# Cadastros Empresas (tip fff3abc8):
+#   lista Grupo/CPA ferro/3Z — PASS edits=2
+#   dialog Editar + regime default — PASS
+#   persistência Nome Fantasia no local store — BLOCKED (DB local inalterado após submit;
+#     sem /api/v1/empresas; provável gate Organizacional/remirror sessão — onError toast adicionado)
+#
+# sem senhas / sem tokens / sem e-mail

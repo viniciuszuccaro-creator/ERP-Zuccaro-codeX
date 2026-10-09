@@ -68,8 +68,14 @@ export default function EmpresaSwitcher() {
   const { data: empresasDisponiveis = [] } = useQuery({
     queryKey: ['empresas-usuario', user?.id, user?.grupo_atual_id, empresasDoGrupo],
     queryFn: async () => {
-      if (isHttpBackendMode) return (readErpHttpSession()?.empresas || [])
-        .filter(e => e.group_id === user?.grupo_atual_id && e.status === 'Ativa');
+      if (isHttpBackendMode) {
+        const groupId = user?.grupo_atual_id || grupoAtual?.id;
+        const fromSession = (readErpHttpSession()?.empresas || [])
+          .filter((e) => (!groupId || e.group_id === groupId) && e.status === 'Ativa');
+        // Fallback: espelho/contexto já carregado (profiles[].empresas → sessão → empresasDoGrupo).
+        if (fromSession.length > 0) return fromSession;
+        return (empresasDoGrupo || []).filter((e) => e.status === 'Ativa' || !e.status);
+      }
       if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
         const empresas = [];
         for (const rawVinculo of user.empresas_vinculadas) {
@@ -141,8 +147,12 @@ export default function EmpresaSwitcher() {
   return (
     <div className="relative">
       <Select value={valorAtual} onValueChange={handleSelecaoContexto} open={open} onOpenChange={setOpen}>
-        <SelectTrigger className="w-64 md:w-72 lg:w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors">
-          <div className="flex items-center gap-2 w-full">
+        <SelectTrigger
+          className="w-64 md:w-72 lg:w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors"
+          data-action="empresa-switcher"
+          aria-label="Seletor de grupo ou empresa"
+        >
+          <div className="flex items-center gap-2 w-full pointer-events-none">
             {contexto === 'grupo' ? (
               <Users className="w-4 h-4 text-blue-600" />
             ) : (
@@ -150,10 +160,10 @@ export default function EmpresaSwitcher() {
             )}
             <div className="flex flex-col items-start flex-1 min-w-0">
               <span className="text-xs text-slate-500 uppercase font-semibold">
-                {contexto === 'grupo' ? 'Grupo Corporativo' : 'Empresa'}
+                {contexto === 'grupo' ? 'Grupo Corporativo' : 'Empresa operacional'}
               </span>
               <span className="text-sm font-medium text-slate-900 truncate w-full">
-                {nomeAtual}
+                {contexto === 'grupo' ? `Grupo · ${nomeAtual || '—'}` : (nomeAtual || '—')}
               </span>
             </div>
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -181,11 +191,18 @@ export default function EmpresaSwitcher() {
                   key={`grupo:${grupo.id}`} 
                   value={`grupo:${grupo.id}`}
                   className="cursor-pointer"
+                  data-scope="grupo"
+                  data-group-id={grupo.id}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      <span className="font-medium">{grupo.nome_do_grupo}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium">Grupo · {grupo.nome_do_grupo}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono ml-6 truncate max-w-[200px]" title={grupo.id}>
+                        id {String(grupo.id || '').slice(0, 8)}…
+                      </span>
                     </div>
                     {contexto === 'grupo' && grupoAtual?.id === grupo.id && (
                       <Badge className="bg-blue-100 text-blue-700 text-xs">Atual</Badge>
@@ -208,23 +225,30 @@ export default function EmpresaSwitcher() {
                   key={`empresa:${empresa.id}`} 
                   value={`empresa:${empresa.id}`}
                   className="cursor-pointer"
+                  data-scope="empresa"
+                  data-empresa-id={empresa.id}
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-purple-600" />
                         <span className="font-medium">
-                          {empresa.nome_fantasia || empresa.razao_social}
+                          Empresa · {empresa.nome_fantasia || empresa.razao_social}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 ml-6">
-                        <span className="text-xs text-slate-500">{empresa.cnpj}</span>
+                      <div className="flex items-center gap-2 ml-6 flex-wrap">
+                        <span className="text-xs text-slate-500">{empresa.cnpj || 'CNPJ ausente'}</span>
+                        <span className="text-[10px] text-slate-400 font-mono" title={empresa.id}>
+                          id {String(empresa.id || '').slice(0, 8)}…
+                        </span>
                         <Badge variant="outline" className="text-xs">
                           {empresa.tipo}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {empresa.nivel_acesso}
-                        </Badge>
+                        {empresa.nivel_acesso ? (
+                          <Badge variant="outline" className="text-xs">
+                            {empresa.nivel_acesso}
+                          </Badge>
+                        ) : null}
                       </div>
                     </div>
                     {contexto === 'empresa' && empresaAtual?.id === empresa.id && (
@@ -246,8 +270,8 @@ export default function EmpresaSwitcher() {
         </SelectContent>
       </Select>
 
-      {/* INDICADOR DE CONTEXTO ATUAL */}
-      <div className="absolute -bottom-6 left-0 right-0 flex justify-center">
+      {/* INDICADOR DE CONTEXTO ATUAL — não captura clique do seletor */}
+      <div className="absolute -bottom-6 left-0 right-0 flex justify-center pointer-events-none">
         <Badge 
           className={`text-[10px] ${
             contexto === 'grupo' 

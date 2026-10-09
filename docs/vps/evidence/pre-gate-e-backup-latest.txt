@@ -1,9 +1,5 @@
-# Evidência sanitizada — backup pre-deploy erp-dev (2026-10-08)
-# Fonte: create-pre-gate-e-backup.sh na VPS srv1982741
-backup path=pre-gate-e-20261008-133238.sql bytes=845186 sha256=1f1b55b2d19c631b981d6f9ace1221269a5429d013f09dd399e1bdfd8f963b94 dump_complete_marker=YES
-integrity_header_pg_dump=YES
-integrity_tail_complete=YES
-integrity_sha256_recompute_match=YES
-integrity_file_mode_600=YES
-restore_destructive=NOT_PERFORMED
-AUTHORIZES_GATES_DEF=NO
+backup path=pre-gate-e-20261008-204826.sql
+sha256=3d7de82326a22c582c340d392d421eff9e0080211ca9f6cee3aec15ef26c94d7
+utc=2026-10-08T20:48:26Z
+tip=dd13fb5f
+note=sanitized meta only; dump stays on VPS

@@ -1,0 +1,6 @@
+# Evidência — erp-dev restaurado #249 após validação #248
+# utc=2026-10-08T20:16Z
+# implantado = 54b9f9d0 (código save Empresas = 1e691933)
+# rollback = pre-spa-login-20261008-201601
+# spa_asset = /assets/index-CRLOsZak.js
+# health 3080/3081 = 200

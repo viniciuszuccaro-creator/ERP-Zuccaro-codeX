@@ -1,0 +1,16 @@
+# Evidência sanitizada — deploy pacote #251 (integra #248+#249+#250)
+# utc=2026-10-08T20:49Z
+#
+# branch = cursor/cliente360-cadfin-integra-392b
+# implantado = dd13fb5f
+# antes = 54b9f9d0 (#249 tip)
+# CI tip = frontend/backend PASS (runs 37841845639 / 37841854174)
+# parecer = APROVAR COM RESSALVAS (revisão independente)
+# rollback_api = erp-zuccaro-erp-api:pre-spa-login-20261008-204827
+# rollback_web = erp-zuccaro-erp-web:pre-spa-login-20261008-204827
+# backup = pre-gate-e-20261008-204826.sql sha256=3d7de82326a22c582c340d392d421eff9e0080211ca9f6cee3aec15ef26c94d7
+# health_3080=200 web_3081=200 ready=200
+# spa_asset=/assets/index-CMrmwZdE.js
+# VITE_ERP_HTTP_CLIENTE_360=false (opt-in; UI Central 360 não monta)
+# runtime=ERP-RUNTIME-08B auth_mode=supabase_user
+# sem senhas / sem tokens / sem e-mail
