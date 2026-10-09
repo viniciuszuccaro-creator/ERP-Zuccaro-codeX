@@ -1,0 +1,15 @@
+# Evidência sanitizada — browser tip b2ce9611
+# utc=2026-10-09T10:36Z
+# implantado=b2ce9611 · asset index-DbVDch1Q.js
+# login=PASS
+# switch_empresa CPA/3Z=PASS (data-empresa-id)
+# seed local sintético=PASS (HTTP /api/v1/clientes → erp_integra_local_db_v1.Cliente; lista V24 usa entityListSorted local)
+# Comercial Clientes v24=PASS · cliente-novo=PASS · rows=5 · eye=5
+# cliente-detalhes-360 click=PASS → DetalhesCliente window
+# Central Cliente 360 panel=PASS (código/documento/empresas/orçamentos visíveis)
+# Carregar mais UI=NO_BUTTON_MAYBE_EOF nesta vista (blocos curtos/EOF)
+# API central-360 limit/offset=PASS (HTTP 200 + meta/blocks)
+# testes focados comercial-clientes-tab-v24=8/8
+# CI tip branch=PASS (erp-runtime-ci push+PR)
+# screenshot=/opt/cursor/artifacts/screenshots/pw-360-entry10-b2ce9611.png
+# ≠ evidência SHA anterior

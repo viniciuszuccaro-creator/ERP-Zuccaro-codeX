@@ -1,0 +1,24 @@
+# Parecer independente — DetalhesCliente→Central360 entry
+# utc=2026-10-09T10:20Z
+# branch=cursor/comercial-detalhes-cliente-360-entry-392b
+# base=main 61c67d86 (#251+#252+#253 já em main)
+
+## Escopo
+Wire único: VisualizadorUniversalEntidadeV24 abre DetalhesCliente (windowMode)
+via data-action=cliente-detalhes-360, reutilizando CentralCliente360Panel já
+presente em DetalhesCliente (#251). Não altera Empresas/Financeiro/paginação API.
+
+## Revisão
+- Multiempresa: botão disabled sem contextoValido; DetalhesCliente exige group/empresa.
+- RBAC: canViewCadastro no botão; DetalhesCliente hasPermission Comercial/CRM/Cadastros.
+- Sem duplicar Central360; sem auto-merge em sugestão (fora deste diff).
+- Overlap runtime com #251/#252: apenas extensão mínima de V24 (já tocado por #252
+  para cliente-novo); entrada 360 era P0 após FAIL_NAV documentado.
+
+## Veredito
+APROVAR COM RESSALVAS — merge após CI verde; validar no tip implantado com
+Playwright (login → CPA → Cadastros/Clientes → cliente-detalhes-360 → painel 360 /
+Carregar mais). Evidência de SHA anterior não serve.
+
+## ≠
+Codex outbox/legado. Secrets não incluídos.

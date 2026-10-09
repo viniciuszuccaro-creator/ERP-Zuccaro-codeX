@@ -1,3 +1,20 @@
+## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/comercial-detalhes-cliente-360-entry-392b` · [#255](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/255) |
+| tip | **`b2ce9611`** |
+| CI | **PASS** (erp-runtime-ci) |
+| parecer | APROVAR COM RESSALVAS → `parecer-detalhes-cliente-360-entry-20261009.txt` |
+| implantado | **`b2ce9611`** erp-dev · asset `index-DbVDch1Q.js` · CLIENTE_360=true |
+| rollback | `pre-spa-login-20261009-101703` |
+| validado browser | login/CPA · v24 · cliente-novo · **cliente-detalhes-360→Central360 PASS** · Carregar mais UI NO_BUTTON_MAYBE_EOF · API limit/offset PASS |
+| #251/#252 | MERGED em main `d6cca4c2` (ancestrais); tip entry ainda **não** em main |
+| próxima ação | **merge #255 → main** → rebuild spa-login no tip main → revalidar browser com evidência nova do SHA de merge |
+
+≠ Codex outbox/legado. Evidências: `deploy-360-entry-b2ce9611-20261009.txt`, `browser-360-entry-b2ce9611-20261009.txt`.
+
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 
 | Pacote | integrado | implantado | validado |
@@ -40,7 +57,6 @@ Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `9628763
 | validado | testes focados + browser a seguir |
 
 ≠ Codex outbox/legado.
->>>>>>> bf3d47ff (docs(vps): #251 merged em 96287638 — evidência e parecer #252)
 
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 
@@ -253,7 +269,6 @@ Evidência: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt` �
 | rollback | `pre-spa-login-20261008-161558` |
 
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`. ≠ outbox/legado.
->>>>>>> 86ff02c6 (feat(comercial): ClientesTab no Visualizador V24 com Novo fail-closed)
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 

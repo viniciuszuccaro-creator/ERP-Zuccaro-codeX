@@ -1,3 +1,18 @@
+## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
+
+| Campo | Valor |
+|---|---|
+| objetivo | Fechar FAIL_NAV UI Central360 via entrada V24 |
+| tip / PR | `b2ce9611` · [#255](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/255) |
+| mudança | `cliente-detalhes-360` → `openWindow(DetalhesCliente)` + Central360 |
+| CI | PASS |
+| implantado | `b2ce9611` erp-dev · rollback `pre-spa-login-20261009-101703` · flag CLIENTE_360=true |
+| browser | **PASS** detalhes-360+painel 360 · Carregar mais UI NO_BUTTON_MAYBE_EOF · API paginação PASS |
+| testes | 8/8 `comercial-clientes-tab-v24` (incl. regressão integrada #251+#252) |
+| #251+#252 | concluídos em main `d6cca4c2` |
+| pendência | merge #255 → main + rebuild no SHA de merge |
+| próximo | merge #255; depois programa canônico (Codex reserva outbox) |
+
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 
 | Pacote | integrado | implantado | validado |
@@ -40,7 +55,6 @@ Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `9628763
 | validado | testes focados + browser a seguir |
 
 ≠ Codex outbox/legado.
->>>>>>> bf3d47ff (docs(vps): #251 merged em 96287638 — evidência e parecer #252)
 
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 
@@ -232,7 +246,6 @@ Legado: destino tip `08da3b8e` + main `6ff6b0f2` (#113/#246/#245); sem reprocess
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
 PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
 Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
->>>>>>> 86ff02c6 (feat(comercial): ClientesTab no Visualizador V24 com Novo fail-closed)
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
