@@ -4,18 +4,115 @@
  */
 import { isTenantMasterEntity } from '../lib/contextoMultiempresaPolicy.js';
 
+function hasText(...values) {
+  return values.some((v) => v != null && String(v).trim() !== '');
+}
+
+function digitsDoc(...values) {
+  for (const v of values) {
+    const d = String(v ?? '').replace(/\D/g, '');
+    if (d.length >= 11) return d;
+  }
+  return '';
+}
+
 /**
- * Fail-closed: edição só com registro completo (id bate + campos mínimos).
- * Empresa exige razão/nome + CNPJ para não salvar projeção incompleta da grade.
+ * Fail-closed: edição só com registro completo (id bate + campos mínimos de identidade).
+ * Empresa / Cliente / Fornecedor / Produto — GET parcial `{id}` NÃO libera salvamento.
  */
 export function isCadastroEditLoadComplete(entityName, record, expectedId) {
   if (!record || !expectedId || String(record.id) !== String(expectedId)) return false;
-  if (String(entityName || '') === 'Empresa') {
+  const entity = String(entityName || '');
+  if (entity === 'Empresa') {
     const nome = String(record.razao_social || record.nome || record.nome_fantasia || '').trim();
-    const doc = String(record.cnpj || '').replace(/\D/g, '');
+    const doc = digitsDoc(record.cnpj, record.documento);
     return Boolean(nome) && doc.length >= 11;
   }
-  return true;
+  if (entity === 'Cliente' || entity === 'Fornecedor') {
+    const nome = hasText(record.razao_social, record.nome, record.nome_completo, record.nome_fantasia);
+    const doc = digitsDoc(record.documento, record.cnpj, record.cpf);
+    // Identidade mínima: nome + documento (evita liberar projeção incompleta da grade).
+    return nome && doc.length >= 11;
+  }
+  if (entity === 'Produto') {
+    const descricao = hasText(record.descricao, record.nome);
+    const codigo = hasText(record.codigo, record.cod);
+    return descricao && codigo;
+  }
+  return hasText(record.nome, record.descricao, record.razao_social);
+}
+
+/**
+ * Hidratação de edição:
+ * - chave AUSENTE no GET → preserva valor da grade (resposta parcial);
+ * - chave PRESENTE no GET (incl. null/'') → aplica (vazio intencional do backend).
+ * Salvamento só após classify/isComplete — GET parcial bloqueia save.
+ */
+export function mergeCadastroEditHydration(listRow, fullRecord) {
+  const base = listRow && typeof listRow === 'object' ? { ...listRow } : {};
+  const full = fullRecord && typeof fullRecord === 'object' ? fullRecord : {};
+  const out = { ...base };
+  for (const [key, value] of Object.entries(full)) {
+    if (value === undefined) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * Distingue falha de carga, carga incompleta e campos realmente ausentes.
+ * @returns {{ kind: 'ok'|'load_failed'|'load_incomplete', message: string|null, absentFields?: string[] }}
+ */
+export function classifyCadastroEditLoad({
+  entityName,
+  expectedId,
+  listRow = null,
+  fullRecord = null,
+  loadError = null,
+} = {}) {
+  if (loadError) {
+    return {
+      kind: 'load_failed',
+      message: 'Falha ao carregar registro completo. Campos da lista preservados; salvamento bloqueado ate recarregar.',
+    };
+  }
+  if (!fullRecord || !expectedId || String(fullRecord.id) !== String(expectedId)) {
+    return {
+      kind: 'load_incomplete',
+      message: 'Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.',
+    };
+  }
+  if (!isCadastroEditLoadComplete(entityName, fullRecord, expectedId)) {
+    return {
+      kind: 'load_incomplete',
+      message: 'Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.',
+    };
+  }
+  const merged = mergeCadastroEditHydration(listRow, fullRecord);
+  const entity = String(entityName || '');
+  const watchByEntity = {
+    Empresa: ['razao_social', 'nome', 'cnpj'],
+    Cliente: ['razao_social', 'nome', 'nome_completo', 'documento', 'cnpj', 'cpf'],
+    Fornecedor: ['razao_social', 'nome', 'documento', 'cnpj', 'cpf'],
+    Produto: ['descricao', 'nome', 'codigo'],
+  };
+  const watch = watchByEntity[entity] || ['nome', 'descricao'];
+  const absentFields = watch.filter((field) => {
+    const v = merged[field];
+    return v == null || String(v).trim() === '';
+  });
+  // Só alerta "ausente" quando nenhum dos aliases de identidade principais veio preenchido.
+  const hasIdentity = watch.some((field) => {
+    const v = merged[field];
+    return v != null && String(v).trim() !== '';
+  });
+  return {
+    kind: 'ok',
+    message: (!hasIdentity && absentFields.length)
+      ? `Campos ausentes no cadastro (nao e falha de carga): ${absentFields.join(', ')}.`
+      : null,
+    absentFields: hasIdentity ? [] : absentFields,
+  };
 }
 
 /**

@@ -510,7 +510,13 @@ function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" data-permission="Cadastros.Cliente.salvar" data-sensitive disabled={isSubmitting}>
+        <Button
+          type="submit"
+          data-permission={cliente ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
+          data-action="Cadastros.Cliente.salvar"
+          data-sensitive
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Salvando...' : cliente ? 'Atualizar Cliente' : 'Cadastrar Cliente'}
         </Button>
       </div>

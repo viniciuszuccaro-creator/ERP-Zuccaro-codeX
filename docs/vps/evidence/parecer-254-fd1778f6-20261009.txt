@@ -1,0 +1,36 @@
+# Parecer independente — PR #254
+# utc=2026-10-09T12:08Z
+# revisor = Cursor agent (revisão independente do HEAD solicitado)
+#
+# SHA código revisado = fd1778f6eac5a1e45e84db5678fbb3fcf940cb9c
+# branch = codex/cadastros-http-context-race-20261009
+# base main = baba91a6 (tip implantado erp-dev no momento da revisão)
+# CI erp-runtime-ci = SUCCESS (frontend+backend nos runs do tip)
+# mergeable = CONFLICTING (somente STATUS_DO_PROJETO.md — docs; runtime merge limpo)
+#
+# VEREDITO = APROVAR COM RESSALVAS
+#
+# Escopo revisado (não editado por Cursor — reserva Codex):
+# - src/api/erpHttpSession.js — initialContextStillCurrent / contextChanged
+# - src/components/lib/useContextoGrupoEmpresa.jsx — invalidação por versão + HTTP_CONTEXT_CHANGED
+# - src/components/lib/useContextoVisual.jsx — não regrava localStorage em modo HTTP na montagem
+# - tests/erp-http-session.test.js
+#
+# Checklist:
+# - refresh atrasado Grupo→Empresa / Empresa A→B não regrava escopo obsoleto = OK
+# - falha stale não limpa sessão se contexto já mudou (path do refresh) = OK
+# - não aceita empresa fora da lista autorizada do servidor = OK
+# - hook invalida carregamento antigo após evento/unmount = OK
+# - contagem visual Fornecedores=0 NÃO é evidência = OK (não usada)
+#
+# Ressalvas (não bloqueiam merge do lote, exigem lote seguinte):
+# - UserContext.loadUser ainda sem geração/versão → null atrasado pode zerar user
+# - AuthContext.applyHttpSession(null) / clearErpHttpSession em 401·403 ainda sem
+#   a mesma guarda de “contexto já mudou” em todos os caminhos
+# - ensureHttpTenantLocalMirror pode reescrever localStorage fora da versão do hook
+# - Visualizador placeholderData/lastGoodData pode mostrar grade da empresa anterior
+# - conflito de merge só em STATUS_DO_PROJETO.md — resolver rebase docs antes do merge
+#
+# Merge main com CI verde = SIM (após rebase do STATUS)
+# Deploy/homologação visual pós-merge = gate separado (Cursor homologou tip atual baba91a6)
+# sem senhas / sem tokens / sem PII

@@ -21,8 +21,10 @@ import {
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
+  classifyCadastroEditLoad,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
+  mergeCadastroEditHydration,
 } from "@/components/cadastros/cadastroEditLoadPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -632,16 +634,23 @@ export default function VisualizadorUniversalEntidadeV24({
           fetchById: function(id) { return base44.entities.Empresa.get(id); },
         });
         if (!stillCurrent()) return;
-        if (!isCadastroEditLoadComplete(ENTITY, complete, item.id)) {
+        const classified = classifyCadastroEditLoad({
+          entityName: ENTITY,
+          expectedId: item.id,
+          listRow: item,
+          fullRecord: complete,
+        });
+        if (classified.kind !== "ok") {
           setEditLoadBlocked(true);
-          setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+          setEditError(classified.message);
           await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa incompleta", {
-            registro_id: item.id, sucesso: false, motivo: "carga_incompleta",
+            registro_id: item.id, sucesso: false, motivo: classified.kind,
           });
           return;
         }
-        setEditItem(JSON.parse(JSON.stringify(complete)));
+        setEditItem(JSON.parse(JSON.stringify(mergeCadastroEditHydration(item, complete))));
         setEditLoadBlocked(false);
+        setEditError(classified.message);
         auditCadastroEvent("Visualizacao", "Formulario de edicao aberto com carga completa", {
           registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24",
         });
@@ -650,11 +659,17 @@ export default function VisualizadorUniversalEntidadeV24({
       } catch (error) {
         if (!stillCurrent()) return;
         console.error("[VisualizadorUniversalEntidade] Falha ao carregar Empresa completa", error);
+        const failed = classifyCadastroEditLoad({
+          entityName: ENTITY,
+          expectedId: item.id,
+          listRow: item,
+          loadError: error,
+        });
         setEditItem(null);
         setEditLoadBlocked(true);
-        setEditError("Nao foi possivel carregar o cadastro completo. Edicao bloqueada.");
+        setEditError(failed.message);
         await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa falhou", {
-          registro_id: item.id, sucesso: false, motivo: "leitura_ou_escopo",
+          registro_id: item.id, sucesso: false, motivo: "load_failed",
           erro: (error && error.message) || String(error),
         });
         alert("Nao foi possivel abrir a edicao: " + ((error && error.message) || String(error)));
@@ -678,20 +693,33 @@ export default function VisualizadorUniversalEntidadeV24({
         empresaId: (contextoCanonico && contextoCanonico.empresaId) || empresaId,
         scopeType: (contextoCanonico && contextoCanonico.scopeType) || null,
       }, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
-      if (!isCadastroEditLoadComplete(ENTITY, full, item.id)) {
+      const classified = classifyCadastroEditLoad({
+        entityName: ENTITY,
+        expectedId: item.id,
+        listRow: item,
+        fullRecord: full,
+      });
+      if (classified.kind !== "ok") {
         setEditLoadBlocked(true);
-        setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+        setEditError(classified.message);
+        setEditItem(JSON.parse(JSON.stringify(mergeCadastroEditHydration(item, full || {}))));
         return;
       }
-      setEditItem(JSON.parse(JSON.stringify(Object.assign({}, item, full))));
+      setEditItem(JSON.parse(JSON.stringify(mergeCadastroEditHydration(item, full))));
       setEditLoadBlocked(false);
-      setEditError(null);
+      setEditError(classified.message);
       setFormKey(function(k) { return k + 1; });
     } catch (error) {
       if (!stillCurrent()) return;
       console.error("[VisualizadorUniversalEntidade] Falha ao carregar registro completo", error);
+      const failed = classifyCadastroEditLoad({
+        entityName: ENTITY,
+        expectedId: item.id,
+        listRow: item,
+        loadError: error,
+      });
       setEditLoadBlocked(true);
-      setEditError("Falha ao carregar registro completo. Salvamento bloqueado; campos da lista preservados.");
+      setEditError(failed.message);
     } finally {
       if (stillCurrent()) setIsLoadingEdit(false);
     }
@@ -1007,6 +1035,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         title="Editar"
                         disabled={isLoadingEdit || !canEditCadastro}
                         data-permission={`Cadastros.${ENTITY}.editar`}
+                        data-action={`Cadastros.${ENTITY}.editar`}
                         data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >

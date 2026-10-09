@@ -1,3 +1,73 @@
+## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`e94f39b2`** (CI) · runtime implantado **`d9a72802`** |
+| CI | erp-runtime-ci **SUCCESS** (`e94f39b2`) |
+| **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` |
+| mudança | `countEntities` batch → piloto HTTP; filtro contagem = multiempresa Visualizador |
+| **homologado** | hub badge Clientes=5 · V24 badge=5 · rows=5 · API n=5 (tip = d9a72802) |
+| ops DB | clientes=6 · produtos=4 · empresas=3 · auxiliares OK · `fornecedores` tabela ausente |
+| registros | preservados ops; volume legado só staging; sem reseed |
+| #254 Codex | **reservado** |
+| #211 | staging 20456 · authorized=0 · **importado=NÃO** · consumidor testes PASS |
+| fases | implementado=sim · integrado=PR · implantado=sim · homologado=badge/lista · importado=não |
+| próxima ação | CI tip `d9a72802` → merge #258 após owner; Codex #254/#211 contrato+crosswalk |
+
+Evidências: `deploy-258-count-badge-d9a72802-20261009.txt`, `browser-258-count-badge-d9a72802-20261009.txt`, `registros-sumidos-fonte-api-ui-20261009.txt`, `legado-211-ensaio-consumidor-20261009.txt`.
+
+## CURSOR — #258 ciclo edição Cliente PASS tip `02d59aa6` (2026-10-09T15:22Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`02d59aa6`** |
+| **implantado** | **`02d59aa6`** erp-dev · asset `index-BD0zl8Pi.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-151957` |
+| mudança | RBAC Salvar=`editar`/`criar`; `toClienteMasterHttpPayload` allowlist; lista HTTP + consumidor (tips anteriores) |
+| validado browser | Cadastros layout+busca PASS · lista n=5 PASS · **Cliente abrir→salvar→reabrir PASS (PATCH 200)** · Empresa PASS · Central360 PASS · Financeiro PASS |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO** |
+| fases | staging=contagens · reconciliado=consumidor · importado=não · **validado_nav=sim (ciclo completo)** |
+| próxima ação | CI tip → merge #258 → main; Codex #254 rebase; Legado ensaio isolado |
+
+Evidências: `deploy-258-cliente-cycle-02d59aa6-20261009.txt`, `browser-258-cliente-cycle-02d59aa6-20261009.txt`.
+
+## CURSOR — #258 lista HTTP Cadastros + edição + consumidor (2026-10-09T14:45Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`7418243f`** (+ `data-action` editar Visualizador pendente no tip seguinte) |
+| **implantado** | **`7418243f`** erp-dev · asset `index-Bc213K00.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-143634` |
+| mudança | `entityListSorted`→piloto HTTP (Cliente com flag); consumidor `consumir-lote-staging.mjs`; merge/classify edição |
+| validado browser | Cadastros layout+busca PASS · Clientes lista n=5 PASS · edição abrir preenchido PASS · Empresa ciclo PASS · Central360 PASS |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO**; consumidor testado (não mapper paralelo) |
+| fases | staging=contagens · reconciliado=testes consumidor · importado=não · validado_nav=sim (lista/abrir) |
+| próxima ação | CI tip · merge #258 → main; Codex #254 rebase; Legado ensaio isolado |
+
+Evidências: `deploy-258-http-list-7418243f-20261009.txt`, `browser-258-cadfin-edit-7418243f-20261009.txt`.
+
+## CURSOR — homolog #254 + CadFin/360 + consumidor legado (2026-10-09T12:10Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/homolog-254-cadfin-360-legado-392b` |
+| #254 | parecer **APROVAR COM RESSALVAS** tip `fd1778f6` · arquivos **reservados Codex** (`erpHttpSession` / `useContextoGrupoEmpresa` / `useContextoVisual`) — Cursor **não** edita |
+| mudança Cursor | `cadastroEditLoadPolicy` merge/classify (edição sem esvaziar); mapper legado +`fornecedor`; evidências sanitizadas |
+| homolog tip implantado | `baba91a6` · login/CPA/contexto/Cadastros azul/edição Empresa/Financeiro CR≠Régua PASS · API×DB (clientes/produtos) ≠ lista V24 vazia |
+| #211 Legado | checksum+CNPJs já OK nos comentários · stage VPS `legacy-stage-20261009T115402Z` · staging 20456 / quarentena 4722 · **importado=NÃO** |
+| preservado | auxiliares ERP novo; visual azul; sem reseed; sem PII no GitHub |
+| testes | cadastro edit load + legado mapear = **28/28** |
+| próxima ação | Codex rebase #254 (STATUS) → merge → deploy; Legado vincular `target_empresa_id` + gate importação |
+
+Evidências: `parecer-254-fd1778f6-20261009.txt`, `browser-homolog-254-cadfin-360-baba91a6-20261009.txt`, `legado-211-stage-consumo-20261009.txt`.
+
 ## CURSOR — padrão azul Comercial + auxiliares (2026-10-09T11:40Z)
 
 | Item | Valor |

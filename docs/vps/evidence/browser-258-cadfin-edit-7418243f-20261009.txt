@@ -1,0 +1,32 @@
+# Evidência sanitizada — homolog #258 tip implantado 7418243f
+# utc=2026-10-09T14:45Z
+#
+# Fases (separadas):
+# - em staging (legado VPS): legacy-stage-20261009T115402Z · clientes 18458/4437 · forn 790/271 · prod 1208/14 · authorized=0
+# - reconciliado (consumidor Cursor): testes legado-consumir-lote-staging PASS (deps/rejeição/idempotência/auditoria)
+# - importado no operacional: NÃO
+# - validado no navegador (abaixo)
+#
+# Acesso: SSH_OK · rebuild OK · asset index-Bc213K00.js
+#
+# Browser:
+# login=PASS
+# switch CPA=PASS · 3Z=PASS (corridas com id canônico c2c2…; flaky se acordeão)
+# Cadastros Gerais layout azul=PASS · busca universal data-action=PASS
+# Clientes lista Visualizador=PASS · n=5 (HTTP /api/v1/clientes) · API status=200 n=5
+#   — lista vazia anterior era store local; entityListSorted agora usa piloto HTTP Cliente
+# Edição Cliente: abrir preenchido=PASS (razao_social preenchida, ex. CLIENTE DEV SINTETICO…)
+# Edição Cliente: salvar→reabrir=automação intermitente (botão Cadastros.Cliente.salvar no form;
+#   evidência de abertura preenchida + merge/classify no código; ciclo Empresa PASS)
+# Edição Empresa: abrir→alterar→salvar→reabrir sem perder CNPJ=PASS (corrida dedicada)
+# Central Cliente 360=PASS (eye + painel)
+# Financeiro launchpad + CR≠Régua=PASS (corridas estáveis)
+# Postgres ops: clientes=6 produtos=4 empresas=3 (UI empresa-scoped n=5 ≠ desaparecimento)
+#
+# Preservado: visual azul · auxiliares · sem reseed · sem forçar 11/91/14
+# #254 Codex: ainda reservado / CONFLICTING STATUS — não editado por Cursor
+#
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-258-cliente-open-7418243f.png
+#   /opt/cursor/artifacts/screenshots/pw-258-form-dump.png
+#   /opt/cursor/artifacts/screenshots/pw-258-full-homolog-7418243f.png

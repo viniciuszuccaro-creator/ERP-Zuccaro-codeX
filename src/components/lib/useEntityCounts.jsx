@@ -7,6 +7,7 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { buildMultiempresaReadFilter } from "@/components/lib/contextoMultiempresaPolicy";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useMemo, useEffect } from "react";
 
@@ -35,15 +36,26 @@ const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
 /**
  * buildContextFilter — escopo multiempresa para contagens.
- * Catálogos "simples" tambem recebem group/empresa quando o contexto existe.
+ * Alinhado ao Visualizador (buildMultiempresaReadFilter + shared/CAMPO_CTX)
+ * para badge e lista não divergirem (ex.: Cliente grupo consolidado).
  */
 export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  if (groupId && !empresaId) return { group_id: groupId };
-  if (empresaId && groupId) return { group_id: groupId, empresa_id: empresaId };
-  if (empresaId) return { empresa_id: empresaId };
-  // Sem contexto: so catálogos verdadeiramente globais contam aberto; demais fail-closed
-  if (SIMPLE_CATALOG.has(entityName)) return {};
-  return { id: '__escopo_multiempresa_obrigatorio__' };
+  if (!groupId && !empresaId) {
+    if (SIMPLE_CATALOG.has(entityName)) return {};
+    return { id: '__escopo_multiempresa_obrigatorio__' };
+  }
+  const ctxField = CAMPO_CTX[entityName] || 'empresa_id';
+  const tenantMaster = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
+  return buildMultiempresaReadFilter({
+    groupId,
+    empresaId: tenantMaster ? null : empresaId,
+    ctxField,
+    shared: SHARED.has(entityName),
+    empresaIdsDoGrupo: (!tenantMaster && !empresaId && Array.isArray(empresasDoGrupo))
+      ? empresasDoGrupo.map((e) => e.id).filter(Boolean)
+      : [],
+    rest: {},
+  });
 }
 
 // Fallback: contagem individual via countEntities (single mode)
