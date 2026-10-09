@@ -1,3 +1,20 @@
+## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| base | tip #260 docs `bf1ecb17` / runtime VPS `18113337` |
+| **implementado** | 039 tabela_preco Orçamento · UI · convert · codigo grades · regressão Abrir |
+| **integrado** | PR deste branch |
+| **implantado** | **NÃO** (aguarda CI + migrate 039; 038 não reaplicar) |
+| **recuperado** | matriz + SYNTH IDs · legado #211 NÃO |
+| consolidação | #258⊂#259⊂#260 · `docs/evidence/consolidacao-258-259-260-20261009.txt` |
+| mig VPS | 001–024+**038**; Codex 025–037 intocados; **039** pendente |
+| #254 / #211 / outbox | **reservado Codex** |
+| ≠ | não editar sessão/contexto/outbox; não seed Fornecedor fake |
+| próxima | CI → deploy 039 → browser 3 escopos + fluxo completo |
+
 ## CURSOR — #260 tip `18113337` implantado + homolog (2026-10-09T19:52Z)
 
 | Item | Valor |
@@ -13,7 +30,7 @@
 | #258 | ancestor de #259 |
 | #254 / #211 | Codex |
 | evidências | `deploy-260-*` · `browser-260-*` |
-| próxima | merge #260/#259 após owner; Codex #254/#211 |
+| próxima | supersedido pelo lote recuperação+039 |
 
 ## CURSOR — Comercial 360 picker + #259 closeout (2026-10-09T19:40Z)
 

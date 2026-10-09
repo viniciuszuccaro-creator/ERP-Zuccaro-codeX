@@ -38,6 +38,8 @@ test('payload permite somente campos comerciais e ignora tenant, status, numero 
   assert.equal(payload.itens[0].quantidade, '2.500000');
   assert.equal('groupId' in payload, false);
   assert.equal('total' in payload, false);
+  const withTabela = buildOrcamentoPayload({ ...form(), tabela_preco_id: '11111111-1111-4111-8111-111111111111' });
+  assert.equal(withTabela.tabela_preco_id, '11111111-1111-4111-8111-111111111111');
 });
 
 test('politica visual exige permissao exata e estado editavel', () => {
@@ -84,6 +86,9 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /comercialMasterPicker/);
   assert.match(tab, /orcamento-busca-cliente/);
   assert.match(tab, /orcamento-busca-produto/);
+  assert.match(tab, /orcamento-tabela-preco/);
+  assert.match(tab, /tabela_preco_id/);
+  assert.match(tab, /TabelaPreco/);
   assert.match(tab, /ORCAMENTO_PERSISTENCE_GAPS/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {

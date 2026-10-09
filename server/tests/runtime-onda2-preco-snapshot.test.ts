@@ -93,6 +93,9 @@ function orcamentoFixture(options: { preco?: string | null; calls?: Array<unknow
     { getById: async () => ({ id: unidadeId, ativo: true }) } as never,
     { get: async () => ({ id: condicaoId, ativo: true }) } as never,
     prices,
+    null,
+    null,
+    { get: async () => ({ id: tabelaId, ativo: true }) },
   );
   return { service, repo, prices, calls: options.calls };
 }

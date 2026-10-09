@@ -116,7 +116,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
     { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['razao_social','nome_fantasia','cnpj','cidade'],          f: EmpresaForm },
     { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['codigo','nome','descricao'],                                     f: DepartamentoForm },
     { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['codigo','nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
-    { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },
+    { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['codigo','nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },
     { k: 'PerfilAcesso',     t: 'Perfis de Acesso',     i: Shield,    c: ['nome_perfil','nivel_perfil','descricao','ativo'],        f: PerfilAcessoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);

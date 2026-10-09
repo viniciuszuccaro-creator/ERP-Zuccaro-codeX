@@ -55,9 +55,8 @@ export function filterProdutoOptions(produtos, query) {
   });
 }
 
-/** Campos do contrato Comercial 360 ainda sem coluna/persistência no Orçamento. */
+/** Lacunas remanescentes do contrato Orçamento (após 039 tabela_preco_id). */
 export const ORCAMENTO_PERSISTENCE_GAPS = Object.freeze({
-  tabela_preco_id: 'schema orcamentos sem coluna; preço via resolveSalePrice (ClienteEmpresa→tabela)',
   preco_unitario_ui: 'UI pode divergir do gravado — servidor sobrescreve snapshot',
   unidade_alternativa: 'somente unidade principal do produto; sem conversão',
 });

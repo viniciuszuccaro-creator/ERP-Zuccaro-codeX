@@ -1,0 +1,52 @@
+# Cadastros Gerais — cobertura código numérico (2026-10-09)
+# Teste: tests/cadastros-codigo-cobertura-entidades.test.js PASS
+
+## MASTER_CODE_SPECS (field=codigo) nas grades
+
+| Entidade | Bloco | Campo grade | Form codigo-registro |
+|---|---|---|---|
+| Cliente | 1 | codigo | cadastro completo |
+| Fornecedor | 1 | codigo | cadastro completo |
+| Transportadora | 1 | codigo | form |
+| SegmentoCliente | 1 | codigo | form |
+| RegiaoAtendimento | 1 | codigo | form |
+| Produto | 2 (VisualizadorProdutos) | camposPrincipais.codigo | form V22 |
+| Servico | 2 | codigo | form |
+| SetorAtividade | 2 | codigo | codigo-registro-setor-atividade |
+| GrupoProduto | 2 | codigo | codigo-registro-grupo-produto |
+| Marca | 2 | codigo | codigo-registro-marca |
+| TabelaPreco | 2 | codigo | form |
+| KitProduto | 2 | codigo | form |
+| CatalogoWeb | 2 | codigo | form |
+| UnidadeMedida | 2 | codigo | codigo-registro-unidade-medida |
+| Banco | 3 | codigo (+codigo_banco) | form |
+| FormaPagamento | 3 | codigo | form |
+| PlanoDeContas | 3 | codigo | form |
+| CentroCusto | 3 | codigo | form |
+| CentroResultado | 3 | codigo | form |
+| TipoDespesa | 3 | codigo | form |
+| Veiculo | 4 | codigo | form |
+| Motorista | 4 | codigo | form |
+| TipoFrete | 4 | codigo | form |
+| LocalEstoque | 4 | codigo | form |
+| RotaPadrao | 4 | codigo | form |
+| Departamento | 5 | codigo | form |
+| Cargo | 5 | codigo | form |
+| Turno | 5 | codigo | form |
+
+## Regressões cobertas
+
+| Caso | Teste | Resultado |
+|---|---|---|
+| Dois cliques Abrir → uniqueKey estável | cadastros-abrir-regressao-comportamental | PASS |
+| GET parcial não apaga campos grade | mergeCadastroEditHydration | PASS |
+| WindowManager uniqueKey | source assert | PASS |
+| Visualizador bloqueia save incompleto | source assert | PASS |
+
+## Escopos browser (pós-deploy 039)
+
+| Escopo | Abrir único | Edit/save/reopen | Status |
+|---|---|---|---|
+| Grupo CPA | pendente browser | pendente | não declarar completo só com 4 entidades |
+| CPA | pendente | pendente | |
+| 3Z | pendente | pendente | |

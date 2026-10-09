@@ -1,0 +1,44 @@
+# Consolidação #258 → #259 → #260 — fatos verificáveis (2026-10-09)
+# Dados reais privados; este arquivo é sanitizado.
+
+## Cadeia de PRs
+
+| PR | Branch | Tip runtime | Papel | Relação |
+|---|---|---|---|---|
+| #258 | cursor/homolog-254-cadfin-360-legado-392b | d9a72802 (badge HTTP) / e94f39b2 (CI tip) | Lista HTTP Clientes + edição CadFin + badge | Ancestor OPEN |
+| #259 | cursor/cadastros-codigo-abrir-unico-392b | **55fcac4f** | Abrir único + MASTER_CODE + mig **038** | Contém #258; merge cobre #258 |
+| #260 | cursor/comercial360-fluxo-cliente-orc-pedido-392b | **18113337** | Picker Cliente/Produto + fluxo canônico UI | Contém tip #259; HEAD VPS implantado |
+
+## Migrations
+
+| Nº | Arquivo | Origem | VPS (pré-este lote) | Regra |
+|---|---|---|---|---|
+| 001–024 | foundation…produto_canais | canônico | aplicados | intocados |
+| 025–037 | pedidos_* / Codex | reservados Codex | **não** no VPS | não reaplicar; não renomear |
+| **038** | 038_cadastros_codigo_registro.sql | Cursor Cadastros | **aplicado** com #259 | não modificar arquivo aplicado |
+| **039** | 039_orcamentos_tabela_preco.sql | Cursor C360 contrato | pendente este lote | aditiva; não toca 038 |
+
+Causa 038: CI #259 falhou porque `025_cadastros_*` colidia com reserva Codex `025_pedidos_*` (last=024 no runner). Renomear para 038 resolveu ordem canônica.
+
+## Commits implantados no erp-dev (evidência prévia)
+
+| Tip | Asset | Backup | Homolog |
+|---|---|---|---|
+| 55fcac4f (#259) | index-DlbCJL3w.js | pre-gate-e-20261009-183944.sql | Abrir/edit Marca/Grupo/Setor/UM |
+| 18113337 (#260) | index-wiWHreg3.js | pre-gate-e-20261009-194341.sql | Orçamento/Pedido busca código |
+
+## Este lote (branch cursor/cadastros-recuperacao-c360-contrato-392b)
+
+- Fecha lacuna contrato Orçamento `tabela_preco_id` (mig 039 + UI + service + convert).
+- Cobertura `codigo` nas grades Bloco 1–5 + testes regressão (2 janelas / merge GET parcial).
+- Sem reaplicar 038; sem editar arquivos Codex reservados (sessão/contexto/outbox).
+
+## Matriz fases (este lote — pré-deploy)
+
+| Dimensão | Estado |
+|---|---|
+| recuperado | parcial — ver registros-recuperacao-matriz (legado #211 NÃO) |
+| implementado | SIM (código local tip deste branch) |
+| integrado | PR deste branch |
+| implantado | após migrate 039 + spa-login-rebuild |
+| validado | unitários locais PASS; browser pós-deploy |

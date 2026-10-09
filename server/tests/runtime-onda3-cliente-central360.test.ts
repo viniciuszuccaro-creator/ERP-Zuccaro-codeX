@@ -114,13 +114,15 @@ function fixture() {
   const condicoes = { get: async () => ({ id: CONDICAO_ID, ativo: true }) };
   const clientes = { getEmpresaLinkById: resolveCliente };
   // Onda 2 na main: create Orçamento/Pedido exige resolveSalePrice (TabelaPreco vazia em memória).
+  const tabelaPrecoId = '99999999-9999-4999-8999-999999999999';
   const prices = {
     resolveSalePrice: async () => ({
       preco: '10.000000',
-      tabela_preco_id: '99999999-9999-4999-8999-999999999999',
+      tabela_preco_id: tabelaPrecoId,
     }),
   };
-  Object.assign(refs, { clientes, produtos, unidades, condicoes, prices });
+  const tabelas = { get: async (_scope: unknown, id: string) => (id === tabelaPrecoId ? { id: tabelaPrecoId, ativo: true } : null) };
+  Object.assign(refs, { clientes, produtos, unidades, condicoes, tabelas, prices });
   Object.assign(pedidoRefs, {
     clientes,
     produtos,
@@ -128,7 +130,7 @@ function fixture() {
     condicoes,
     locais: { get: async () => null },
     obras: { get: async () => null },
-    tabelas: { get: async () => null },
+    tabelas,
     prices,
   });
   return runtime;

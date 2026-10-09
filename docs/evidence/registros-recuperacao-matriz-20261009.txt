@@ -1,48 +1,59 @@
 # Matriz recuperação registros — privado × DB × API × UI (sanitizado)
-# VPS tip implantado: 55fcac4f · 2026-10-09T19:35Z
-# Migrations aplicadas: 001–024 + 038 (025–037 Codex reservados, não no VPS)
+# Base VPS tip implantado: 18113337 · atualizado 2026-10-09 (lote recuperação+C360)
+# Migrations aplicadas pré-lote: 001–024 + 038 (025–037 Codex reservados, não no VPS)
 
-## Contagens ops (PostgreSQL erp-dev)
+## Contagens ops (PostgreSQL erp-dev — sanitizado)
 
-| Entidade | DB n | codigo preenchido | UI badge CPA (aprox) | Classe |
-|---|---:|---:|---|---|
-| marcas | 5 | 5 | 3 | ensaio/seed ERP novo |
-| setores_atividade | 4 | 4 | 2 | ensaio |
-| grupos_produto | 4 | 4 | 2 | ensaio (alfanum em codigo+origem) |
-| unidades_medida | 4 | 4 | 3 | ensaio |
-| clientes | 6 | 6 | 5 | ops preservados (≠ volume legado) |
-| cliente_empresas | 7 | — | — | vínculos |
-| produtos | 4 | 4 | 0* | *badge Produto 0 em CPA (escopo/filtro) |
-| condicoes_pagamento | 8 | 8 | — | OK |
-| tabelas_preco | 3 | 3 | 0 | seed |
-| orcamentos | 5 | — | — | ensaios |
-| pedidos | 3 | — | — | ensaios |
-| empresas | 3 | — | — | CPA + 3Z + … |
-| fornecedores | **ausente** | — | 0 | schema ops sem tabela |
+| Entidade | DB n | codigo preenchido | UI badge CPA (aprox) | Classe | Diferença real |
+|---|---:|---:|---|---|---|
+| marcas | 5 | 5 | 3 | ensaio/seed ERP novo | GATE-D SYNTH / API Alterado presentes |
+| setores_atividade | 4 | 4 | 2 | ensaio | nomes ensaio ≠ legado |
+| grupos_produto | 4 | 4 | 2 | ensaio | alfanum em codigo+codigo_origem |
+| unidades_medida | 4 | 4 | 3 | ensaio | Longos Sintetico / ensaios |
+| clientes | 6 | 6 | 5 | ops parciais | n≪legado; preservar IDs |
+| cliente_empresas | 7 | — | — | vínculos | não apagar |
+| produtos | 4 | 4 | 0* | ops/seed | *badge CPA 0 por filtro/escopo; IDs ops |
+| condicoes_pagamento | 8 | 8 | — | OK | |
+| tabelas_preco | 3 | 3 | 0 | seed | |
+| orcamentos | 5 | — | — | ensaios | |
+| pedidos | 3 | — | — | ensaios | |
+| empresas | 3 | — | — | CPA + 3Z + … | |
+| fornecedores | **ausente** | — | 0 | schema ops sem tabela | ausência real |
 
-## Distinção
+## GATE-D SYNTH — referências (preservar antes de qualquer limpeza)
 
-| Achado | Classificação | Ação |
+| Marcador | Onde aparece | Classe | Ação |
+|---|---|---|---|
+| GATE-D SYNTH | marcas.nome_marca (ops) | ensaio ERP novo | **não** apagar se referenciado |
+| API Alterado | auxiliares editados em homolog | ensaio | preservar vínculo |
+| Longos Sintetico | UM / descrições longas | ensaio | preservar |
+| testes runtime *sintetico* | server/tests payloads | fixture | ≠ dados ops |
+
+Critério: limpeza só após inventário de FKs (orcamento_itens, pedidos, cliente_empresas). Exemplos novos **não** substituem cadastros anteriores.
+
+## Fontes privadas (fora do GitHub)
+
+| Fonte | Conteúdo | Estado importação ops |
 |---|---|---|
-| GATE-D SYNTH / API Alterado / Longos Sintetico | ensaios ERP novo | preservar; ≠ legado |
-| Clientes/Produtos ops n pequeno | dados reais parciais / seeds | não substituir por SYNTH |
-| Staging #211 authorized=0 | volume legado privado | **importado=NÃO** até crosswalk Codex |
-| Fornecedor tabela ausente | ausência real de schema | não seed fake; ETL #211 |
-| Badge 0 com API n>0 (histórico) | mapeamento/count | corrigido #258 httpPilotCountBridge |
-| Auxiliares com codigo 038 | backfill numérico | OK; alfanum em codigo_origem |
+| Staging legado #211 | Produtos/Clientes/Fornecedores reais | **authorized=0** → importado=NÃO |
+| Backup ops | pre-gate-e-20261009-183944.sql (pré-038) | disponível rollback |
+| Backup #260 | pre-gate-e-20261009-194341.sql | disponível rollback |
 
-## Fontes privadas
+## Produtos / Clientes / Fornecedores operacionais
 
-- Staging legado: lotes reais fora do GitHub; consumidor Cursor testes PASS; ensaio PG isolado pendente Codex.
-- Backup ops: `pre-gate-e-20261009-183944.sql` (pré-038).
-- Sem reseed; sem apagar referenciados.
+| Entidade | Ops atual | Legado (privado) | Conclusão |
+|---|---|---|---|
+| Produtos | n pequeno seed/ops | volume staging | devem vir do legado via #211 |
+| Clientes | n=6 ops | volume staging | preservar IDs; enriquecer via #211 |
+| Fornecedores | tabela ausente | staging | schema+ETL #211; sem seed fake |
 
 ## Conclusão recuperação
 
 | Fase | Estado |
 |---|---|
-| ocultos por filtro/escopo | parcialmente (Produto badge CPA) |
+| ocultos por filtro/escopo | parcial (Produto badge CPA) |
 | mapeamento incorreto | badge Clientes corrigido #258 |
-| exemplos teste | identificados e preservados |
+| exemplos teste / GATE-D SYNTH | identificados e **preservados** |
 | ausência real | Fornecedor schema; volume legado só staging |
-| recuperado importado | **NÃO** — aguarda #211 |
+| recuperado importado | **NÃO** — aguarda autorização #211 + crosswalk Codex |
+| auxiliares com codigo 038 | backfill numérico OK; alfanum em codigo_origem |

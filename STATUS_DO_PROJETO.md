@@ -1,3 +1,20 @@
+## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **implementado** | mig **039** `orcamentos.tabela_preco_id` · UI Orçamento tabela · convert preserva · Bloco codigo grades · regressão Abrir/merge |
+| **integrado** | PR deste branch (base tip #260 `bf1ecb17`) |
+| **implantado** | pendente migrate 039 + rebuild (VPS ainda `18113337`+038) |
+| **homologado** | unitários FE 44 + BE 305/0 fail · browser pós-deploy |
+| **recuperado** | matriz atualizada · GATE-D SYNTH preservado · legado #211 **NÃO** |
+| **importado** | **NÃO** (#211 authorized=0) |
+| consolidação | `#258⊂#259⊂#260` · evidência `consolidacao-258-259-260-20261009.txt` |
+| mig | 038 intocada · 025–037 Codex intocados · **039** aditiva |
+| ≠ Codex | sessão/contexto/outbox intocados |
+| evidências | `consolidacao-258-259-260-*` · `registros-recuperacao-matriz-*` · testes cobertura/regressão |
+| próxima | CI tip → VPS migrate 039 → browser Abrir 3 escopos + fluxo Cliente→Orç→Pedido |
+
 ## CURSOR — #260 tip `18113337` CI+VPS+browser (2026-10-09T19:52Z)
 
 | Fase | Estado |
@@ -9,7 +26,7 @@
 | **importado** | **NÃO** (#211) |
 | #259 | tip `55fcac4f` predecessor · merge owner |
 | evidências | `deploy-260-comercial-picker-18113337-*` · `browser-260-comercial-picker-18113337-*` |
-| próxima | merge #260/#259 após owner; Codex #254/#211 |
+| próxima | supersedido pelo lote recuperação+039 |
 
 ## CURSOR — Legado consumidor + Financeiro menus (2026-10-09T19:42Z)
 

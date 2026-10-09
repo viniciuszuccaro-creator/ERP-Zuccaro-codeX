@@ -150,7 +150,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
   // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
   const tiles = [
-    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['nome','descricao','tipo_servico','ativo'],      form: ServicoForm },
+    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['codigo','nome','descricao','tipo_servico','ativo'],      form: ServicoForm },
     { k: 'SetorAtividade', title: 'Setores de Atividade',    Icon: Factory,    campos: ['codigo','nome','descricao'],                    form: SetorAtividadeForm },
     // nome_grupo é o rótulo canônico nos auxiliares; nome pode estar vazio
     { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['codigo','nome_grupo','natureza','nome'],        form: GrupoProdutoForm },

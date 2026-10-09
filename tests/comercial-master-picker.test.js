@@ -37,7 +37,8 @@ test('filtro de cliente e produto busca por codigo e nome normalizado', () => {
   assert.equal(filterProdutoOptions(produtos, 'tubo').length, 0);
 });
 
-test('gaps de persistencia do orcamento ficam explicitos no contrato UI', () => {
-  assert.match(ORCAMENTO_PERSISTENCE_GAPS.tabela_preco_id, /sem coluna/i);
+test('gaps remanescentes do orcamento ficam explicitos (tabela_preco persistida via 039)', () => {
+  assert.equal('tabela_preco_id' in ORCAMENTO_PERSISTENCE_GAPS, false);
   assert.match(ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui, /servidor/i);
+  assert.match(ORCAMENTO_PERSISTENCE_GAPS.unidade_alternativa, /principal/i);
 });

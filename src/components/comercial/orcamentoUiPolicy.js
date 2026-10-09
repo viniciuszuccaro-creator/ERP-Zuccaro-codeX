@@ -41,9 +41,11 @@ export function buildOrcamentoPayload(form) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.validade_em) throw new Error('Preencha cliente, condição e validade.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
+  const tabelaId = String(form.tabela_preco_id || '').trim();
   return {
     cliente_empresa_id: form.cliente_empresa_id,
     condicao_pagamento_id: form.condicao_pagamento_id,
+    ...(tabelaId ? { tabela_preco_id: tabelaId } : {}),
     validade_em: new Date(`${form.validade_em}T12:00:00`).toISOString(),
     observacoes: String(form.observacoes || '').trim() || undefined,
     itens: form.itens.map((item) => ({

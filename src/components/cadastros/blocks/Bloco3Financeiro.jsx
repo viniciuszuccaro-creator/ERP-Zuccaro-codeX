@@ -116,13 +116,13 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
   };
 
   const tiles = [
-    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
-    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
-    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['nome','nome_conta','codigo','codigo_conta','tipo_conta'], f: PlanoContasForm },
+    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['codigo','nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
+    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['codigo','nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
+    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['codigo','nome','nome_conta','codigo_conta','tipo_conta'], f: PlanoContasForm },
     // codigo/descricao/tipo: auxiliares usam descricao como rótulo (nome pode vir vazio)
     { k: 'CentroCusto',                   t: 'Centros de Custo',        i: Layers,       c: ['codigo','descricao','tipo','nome'],                       f: CentroCustoForm },
-    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['nome','codigo','descricao'],                              f: CentroResultadoForm },
-    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['nome','codigo','categoria'],                              f: TipoDespesaForm },
+    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['codigo','nome','descricao'],                              f: CentroResultadoForm },
+    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['codigo','nome','categoria'],                              f: TipoDespesaForm },
     { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['nome','tipo','sigla','codigo'],                           f: MoedaIndiceForm },
     { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],            f: OperadorCaixaForm },
     { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
