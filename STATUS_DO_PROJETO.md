@@ -1,3 +1,14 @@
+## CURSOR — Legado consumidor + Financeiro menus (2026-10-09T19:42Z)
+
+| Fase | Estado |
+|---|---|
+| consumidor staging | testes **4/4 PASS** · sem promoção ops |
+| **importado** | **NÃO** (#211 authorized=0) |
+| Financeiro menus | inventário launchpad existente · CR≠Régua · sem módulo paralelo |
+| PG isolado | pendente Codex |
+| evidências | `legado-consumidor-coord-20261009.txt` · `financeiro-menus-nav-20261009.txt` |
+| ≠ | extração Codex Legado |
+
 ## CURSOR — Comercial 360 picker Cliente→Orçamento→Pedido (2026-10-09T19:40Z)
 
 | Fase | Estado |
