@@ -4,7 +4,9 @@
 |---|---|
 | responsável | Cursor |
 | branch / PR | `cursor/cadastros-recuperacao-c360-contrato-392b` · [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) |
-| tip | **`bd2fa504`** |
+| tip | **`bd2fa504`** (docs `dccd6ae3`) |
+| CI runtime | **SUCCESS** 4 checks (`bd2fa504`) |
+| CI docs tip | backend FAIL infra Docker Hub rate-limit · frontend SUCCESS |
 | **implantado** | erp-dev · `index-BufSJCA3.js` · mig **039** · backup `pre-gate-e-20261009-203540.sql` · rollback `pre-spa-login-20261009-203649` |
 | **recuperado** | parcial (SYNTH preservado; #211 NÃO) |
 | **validado** | unitários + API `tabela_preco_id` + asset; UI fluxo completo **BLOCKED** #254 |
@@ -12,7 +14,7 @@
 | mig VPS | 001–024+**038**+**039**; 038/025–037 intocados |
 | #254 / #211 / outbox | **reservado Codex** — toast contexto Cadastros + Orçamentos UI≠API |
 | evidências | `deploy-261-*` · `browser-261-*` |
-| próxima | Codex #254; CI #261; merge owner |
+| próxima | Codex #254; CI docs pós rate-limit; merge owner |
 
 ## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
 

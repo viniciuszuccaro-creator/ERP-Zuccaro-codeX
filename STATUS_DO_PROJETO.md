@@ -2,7 +2,9 @@
 
 | Fase | Estado |
 |---|---|
-| tip | **`bd2fa504`** · PR [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) |
+| tip | **`bd2fa504`** · PR [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) · docs tip `dccd6ae3` |
+| CI runtime `bd2fa504` | erp-runtime-ci **SUCCESS** (4 checks · push 37987907880 · PR 37987938769) |
+| CI docs `dccd6ae3` | backend FAIL **infra** Docker Hub `toomanyrequests` (postgres:16); frontend SUCCESS · ≠ regressão código |
 | **recuperado** | matriz DB×API · GATE-D SYNTH n=1 preservado · Fornecedor schema ausente · legado #211 **NÃO** |
 | **implementado** | 039 + UI tabela + convert + codigo grades + regressões Abrir/merge |
 | **integrado** | PR #261 |
@@ -12,7 +14,7 @@
 | consolidação | #258⊂#259⊂#260⊂#261 · `consolidacao-258-259-260-20261009.txt` |
 | mig | 038 intocada · 025–037 Codex intocados · **039** aplicada |
 | evidências | `deploy-261-*` · `browser-261-*` · `registros-recuperacao-matriz-*` |
-| próxima | Codex #254 contexto; CI #261; merge owner; #211 legado |
+| próxima | Codex #254 contexto; CI docs pós rate-limit; merge owner; #211 legado |
 
 ## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
 
