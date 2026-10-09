@@ -1,3 +1,30 @@
+## CURSOR — #251 continuidade (2026-10-09T09:39Z)
+
+| Fase | SHA / estado |
+|---|---|
+| branch tip | `8ad3cdbd` |
+| **implantado** | **`dd13fb5f`** erp-dev (asset `index-CMrmwZdE.js`) |
+| CI | PASS tip `8ad3cdbd` + `dd13fb5f` |
+| revisado | **APROVAR COM RESSALVAS** (parecer SHA final `dd13fb5f`; docs `8ad3cdbd` sem runtime) |
+| integrado | PR #251 aberta; **não** merged em main |
+| validado tip implantado | Playwright revalidação 2026-10-09: Empresas/Financeiro PASS; sugestão UI BLOCKED_NAV; 360 UI oculta (flag off) |
+| Auth prova CLIENTE_360 | `/api/v1/meta` → `auth.mode=supabase_user` · `browserLogin=true` · `central360ReadModel=true` · env=dev **PASS** |
+| PR body update | **BLOCKED** ManagePullRequest (repo rename) + `gh pr edit` (integration sem write) — corpo canônico neste handoff |
+
+### Inventário incorporado (#248/#249/#250 → #251)
+| Origem | Arquivos runtime |
+|---|---|
+| #249 | `Empresas.jsx`, `EmpresaSwitcher.jsx`, `input.jsx`, `localBase44Client.js`, `erpHttpSession.js`, `useContextoVisual.jsx`, `LaunchpadCard.jsx`, `ModulosGridFinanceiro.jsx`, `CaixaCentralLiquidacao.jsx`, `WindowModal.jsx`, `authSessionService.ts` + testes |
+| #248 | `clienteSugestaoVinculoUi.js`, `CadastroClienteCompleto.jsx`, `httpApiClient.js` (sugestaoVinculo) + teste UI |
+| #250 | `CentralCliente360Panel.jsx`, `centralCliente360Pagination.js`, `httpApiClient.js` (offsets), Dockerfile/compose flag, runtime test paginação |
+
+Antes de fechar #248/#249/#250: merge #251 → main e confirmar ancestrais no tip merged.
+
+### Lote indep. reservado (≠ #251)
+Branch `cursor/comercial-clientes-tab-v24-392b` — `ClientesTab.jsx` → Visualizador V24 (Cadastros); `AcoesRapidasGlobal.jsx` data-action; **não** edita arquivos do #251.
+
+≠ Codex outbox/legado/#236.
+
 ## CURSOR — pacote #251 implantado+validado `dd13fb5f` (2026-10-08T21:01Z)
 
 | Fase | Estado |
