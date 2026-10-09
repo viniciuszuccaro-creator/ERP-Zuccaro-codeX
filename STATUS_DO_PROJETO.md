@@ -1,3 +1,19 @@
+## CURSOR — #251 CLIENTE_360 ON + validação (2026-10-09T09:43Z)
+
+| Item | Valor |
+|---|---|
+| código implantado | **`dd13fb5f`** |
+| flag | `VITE_ERP_HTTP_CLIENTE_360=true` (após prova Auth supabase_user) |
+| spa_asset | `index-B0gNWKWR.js` |
+| browser Central360 | **PASS** (visível) |
+| carregar mais UI | NO_BUTTON_MAYBE_EOF nesta vista; API limit/offset já PASS |
+| sugestão UI Novo | BLOCKED_NAV no path Cadastros headless → lote indep. [#252](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/252) |
+| branch tip docs | `3e0d61dd`+ |
+| merge main | **não** |
+| PRs redundantes #248/#249/#250 | manter abertas até merge #251; inventário no handoff anterior |
+
+Evidências: `deploy-251-c360-flag-on-dd13fb5f-20261009.txt`, `browser-251-c360-flag-on-dd13fb5f-20261009.txt`.
+
 ## CURSOR — #251 continuidade (2026-10-09T09:39Z)
 
 | Fase | SHA / estado |
