@@ -19,6 +19,82 @@ export function isCadastroEditLoadComplete(entityName, record, expectedId) {
 }
 
 /**
+ * Hidratação de edição: não sobrescreve valor útil da grade com string/null vazios
+ * vindos de uma leitura parcial. Campos realmente ausentes no backend ficam vazios
+ * só quando também estavam vazios na projeção da lista.
+ */
+export function mergeCadastroEditHydration(listRow, fullRecord) {
+  const base = listRow && typeof listRow === 'object' ? { ...listRow } : {};
+  const full = fullRecord && typeof fullRecord === 'object' ? fullRecord : {};
+  const out = { ...base };
+  for (const [key, value] of Object.entries(full)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === 'string' && value.trim() === '') {
+      const prev = base[key];
+      if (prev != null && String(prev).trim() !== '') continue;
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * Distingue falha de carga, carga incompleta e campos realmente ausentes.
+ * @returns {{ kind: 'ok'|'load_failed'|'load_incomplete', message: string|null, absentFields?: string[] }}
+ */
+export function classifyCadastroEditLoad({
+  entityName,
+  expectedId,
+  listRow = null,
+  fullRecord = null,
+  loadError = null,
+} = {}) {
+  if (loadError) {
+    return {
+      kind: 'load_failed',
+      message: 'Falha ao carregar registro completo. Campos da lista preservados; salvamento bloqueado ate recarregar.',
+    };
+  }
+  if (!fullRecord || !expectedId || String(fullRecord.id) !== String(expectedId)) {
+    return {
+      kind: 'load_incomplete',
+      message: 'Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.',
+    };
+  }
+  if (!isCadastroEditLoadComplete(entityName, fullRecord, expectedId)) {
+    return {
+      kind: 'load_incomplete',
+      message: 'Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.',
+    };
+  }
+  const merged = mergeCadastroEditHydration(listRow, fullRecord);
+  const entity = String(entityName || '');
+  const watchByEntity = {
+    Empresa: ['razao_social', 'nome', 'cnpj'],
+    Cliente: ['razao_social', 'nome', 'nome_completo', 'documento', 'cnpj', 'cpf'],
+    Fornecedor: ['razao_social', 'nome', 'documento', 'cnpj', 'cpf'],
+    Produto: ['descricao', 'nome', 'codigo'],
+  };
+  const watch = watchByEntity[entity] || ['nome', 'descricao'];
+  const absentFields = watch.filter((field) => {
+    const v = merged[field];
+    return v == null || String(v).trim() === '';
+  });
+  // Só alerta "ausente" quando nenhum dos aliases de identidade principais veio preenchido.
+  const hasIdentity = watch.some((field) => {
+    const v = merged[field];
+    return v != null && String(v).trim() !== '';
+  });
+  return {
+    kind: 'ok',
+    message: (!hasIdentity && absentFields.length)
+      ? `Campos ausentes no cadastro (nao e falha de carga): ${absentFields.join(', ')}.`
+      : null,
+    absentFields: hasIdentity ? [] : absentFields,
+  };
+}
+
+/**
  * Mestre organizacional usa exatamente o gate efetivo do cliente local.
  * Não libera role=admin sozinha nem aliases que o backend recusaria.
  */

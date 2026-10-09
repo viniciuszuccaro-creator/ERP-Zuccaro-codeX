@@ -1,3 +1,19 @@
+## CURSOR — homolog #254 + CadFin/360 + consumidor legado (2026-10-09T12:10Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/homolog-254-cadfin-360-legado-392b` |
+| #254 | parecer **APROVAR COM RESSALVAS** tip `fd1778f6` · arquivos **reservados Codex** (`erpHttpSession` / `useContextoGrupoEmpresa` / `useContextoVisual`) — Cursor **não** edita |
+| mudança Cursor | `cadastroEditLoadPolicy` merge/classify (edição sem esvaziar); mapper legado +`fornecedor`; evidências sanitizadas |
+| homolog tip implantado | `baba91a6` · login/CPA/contexto/Cadastros azul/edição Empresa/Financeiro CR≠Régua PASS · API×DB (clientes/produtos) ≠ lista V24 vazia |
+| #211 Legado | checksum+CNPJs já OK nos comentários · stage VPS `legacy-stage-20261009T115402Z` · staging 20456 / quarentena 4722 · **importado=NÃO** |
+| preservado | auxiliares ERP novo; visual azul; sem reseed; sem PII no GitHub |
+| testes | cadastro edit load + legado mapear = **28/28** |
+| próxima ação | Codex rebase #254 (STATUS) → merge → deploy; Legado vincular `target_empresa_id` + gate importação |
+
+Evidências: `parecer-254-fd1778f6-20261009.txt`, `browser-homolog-254-cadfin-360-baba91a6-20261009.txt`, `legado-211-stage-consumo-20261009.txt`.
+
 ## CURSOR — padrão azul Comercial + auxiliares (2026-10-09T11:40Z)
 
 | Item | Valor |
