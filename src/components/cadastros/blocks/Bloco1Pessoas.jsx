@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Users, Building2, Truck, User, Award, MessageCircle, TrendingUp, MapPin } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -109,9 +110,11 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
       campos_principais: campos,
       window_mode: true,
     });
-    openWindow(
-      VisualizadorUniversalEntidadeV24,
-      {
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
         nomeEntidade: entidade,
         tituloDisplay: titulo,
         icone: Icon,
@@ -119,8 +122,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
         componenteEdicao: FormComp,
         windowMode: true,
       },
-      { title: titulo, width: 1400, height: 800 }
-    );
+    });
   };
 
   const tiles = [

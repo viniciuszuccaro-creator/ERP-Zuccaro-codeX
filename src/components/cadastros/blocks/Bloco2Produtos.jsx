@@ -8,6 +8,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import VisualizadorProdutos from "@/components/cadastros/VisualizadorProdutos";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -97,7 +98,12 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
       return;
     }
     registrarAuditoria("Produto", "Visualizacao", true, { titulo: "Todos os Produtos", modulo_permissao: "Estoque", visualizador: "VisualizadorProdutos", window_mode: true });
-    openWindow(VisualizadorProdutos, { windowMode: true }, { title: 'Todos os Produtos', width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorProdutos,
+      entityName: "Produto",
+      title: "Todos os Produtos",
+      props: { windowMode: true },
+    });
   };
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
@@ -120,7 +126,19 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   const canViewEntity = (entidade, modulo = "Cadastros") =>
@@ -136,11 +154,11 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
     { k: 'SetorAtividade', title: 'Setores de Atividade',    Icon: Factory,    campos: ['codigo','nome','descricao'],                    form: SetorAtividadeForm },
     // nome_grupo é o rótulo canônico nos auxiliares; nome pode estar vazio
     { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['codigo','nome_grupo','natureza','nome'],        form: GrupoProdutoForm },
-    { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['nome','nome_marca','pais_origem','categoria'],  form: MarcaForm },
-    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['nome','tipo','ativo'],                          form: TabelaPrecoFormCompleto },
-    { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['nome','descricao','ativo'],                     form: KitProdutoForm },
-    { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
-    { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['sigla','nome','descricao'],                     form: UnidadeMedidaForm },
+    { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['codigo','nome_marca','nome','pais_origem','categoria'],  form: MarcaForm },
+    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo','nome','tipo','ativo'],                          form: TabelaPrecoFormCompleto },
+    { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['codigo','nome','descricao','ativo'],                     form: KitProdutoForm },
+    { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['codigo','nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
+    { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 

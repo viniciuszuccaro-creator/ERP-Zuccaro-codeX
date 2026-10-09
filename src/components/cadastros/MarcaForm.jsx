@@ -82,6 +82,21 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {dadosIniciais?.id ? (
+        <div>
+          <Label>Código de registro</Label>
+          <Input
+            value={formData.codigo || ''}
+            readOnly
+            disabled
+            className="bg-slate-50 font-mono tabular-nums"
+            data-action="codigo-registro-marca"
+            title="Gerado automaticamente no backend; ID técnico permanece separado"
+          />
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500">Código de registro numérico será gerado automaticamente ao salvar.</p>
+      )}
       <div>
         <Label>Nome da Marca *</Label>
         <Input
@@ -196,7 +211,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission="Cadastros.Marca.salvar"
+          data-permission={dadosIniciais?.id ? "Cadastros.Marca.editar" : "Cadastros.Marca.criar"}
           data-action="salvar-marca"
           data-sensitive="true"
         >

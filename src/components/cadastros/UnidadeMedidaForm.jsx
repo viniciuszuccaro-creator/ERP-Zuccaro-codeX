@@ -57,6 +57,21 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      {dadosIniciais?.id ? (
+        <div>
+          <Label>Código de registro</Label>
+          <Input
+            value={formData.codigo || ''}
+            readOnly
+            disabled
+            className="bg-slate-50 font-mono tabular-nums"
+            data-action="codigo-registro-unidade-medida"
+            title="Gerado automaticamente no backend; ID técnico permanece separado"
+          />
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500">Código de registro numérico será gerado automaticamente ao salvar.</p>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Sigla *</Label>
@@ -174,7 +189,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
         type="submit"
         className="w-full bg-indigo-600 hover:bg-indigo-700"
         disabled={!contextoValido || !podeSalvar}
-        data-permission="Cadastros.UnidadeMedida.salvar"
+        data-permission={dadosIniciais?.id ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
         data-action="salvar-unidade-medida"
         data-sensitive="true"
       >

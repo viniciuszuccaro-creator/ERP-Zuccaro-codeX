@@ -1,4 +1,5 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
+import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
@@ -178,8 +179,12 @@ export function createHttpApiClient(options = {}) {
         void orderBy;
         return request(basePath, { query: { limit } });
       },
-      async filter(query = {}, orderBy, limit = 100) {
+      async filter(query = {}, orderBy, limit = 100, skip = 0) {
         void orderBy;
+        if (typeof orderBy === 'number') {
+          skip = limit || 0;
+          limit = orderBy;
+        }
         let search;
         for (const key of searchKeys) {
           if (query[key] != null && query[key] !== '') {
@@ -194,8 +199,9 @@ export function createHttpApiClient(options = {}) {
             break;
           }
         }
+        const offset = Number.isInteger(Number(skip)) && Number(skip) > 0 ? Number(skip) : undefined;
         return request(basePath, {
-          query: { limit, search, ativo },
+          query: { limit, offset, search, ativo },
         });
       },
       async get(id) {
@@ -230,6 +236,22 @@ export function createHttpApiClient(options = {}) {
     SetorAtividade: createCrudEntity('/api/v1/setores-atividade', {
       searchKeys: ['nome', 'search'],
     }),
+    // Listagem/CRUD Cliente no BFF — piloto quando VITE_ERP_HTTP_CLIENTE_360=true.
+    Cliente: (() => {
+      const base = createCrudEntity('/api/v1/clientes', {
+        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],
+        ativoKeys: ['ativo', 'ativa', 'status'],
+      });
+      return {
+        ...base,
+        async create(data) {
+          return base.create(toClienteMasterHttpPayload(data));
+        },
+        async update(id, data) {
+          return base.update(id, toClienteMasterHttpPayload(data));
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -464,6 +486,9 @@ export function createHttpApiClient(options = {}) {
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;
   }
+  // Rotas preparadas (Cliente etc.) ficam disponiveis para o piloto efetivo
+  // resolvido em resolveHttpPilotEntities — sem forcar Produto na listagem.
+  if (entityRoutes.Cliente) entities.Cliente = entityRoutes.Cliente;
 
   return {
     entities,

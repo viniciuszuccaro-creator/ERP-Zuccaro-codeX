@@ -1,0 +1,32 @@
+# Deploy #259 Cadastros código/Abrir — tip 55fcac4f (2026-10-09T18:40Z)
+# Sanitizado — sem dump, sem .env, sem chave.
+
+| Item | Valor |
+|---|---|
+| tip implantado | **55fcac4f** |
+| branch | cursor/cadastros-codigo-abrir-unico-392b |
+| PR | #259 |
+| CI | erp-runtime-ci SUCCESS (push 37974475772 · PR 37974480936) |
+| backup | pre-gate-e-20261009-183944.sql · sha256=237bc99bb638f3e96d1e0180817b1b6d44c6434b4056b95c87544af968b77d27 · 964808 bytes |
+| migration | **038_cadastros_codigo_registro.sql** APPLIED (025–037 Codex intocados) |
+| schema_migrations | …024… + 038 |
+| SPA asset | `/assets/index-DlbCJL3w.js` |
+| health | 3080=200 · 3081=200 |
+| rollback_api | erp-zuccaro-erp-api:pre-spa-login-20261009-184004 |
+| rollback_web | erp-zuccaro-erp-web:pre-spa-login-20261009-184004 |
+| runtime anterior | d9a72802 |
+
+## DB pós-038 (contagens)
+| tabela | n | codigo preenchido | codigo_origem |
+|---|---|---|---|
+| clientes | 6 | (já) | — |
+| produtos | 4 | (já) | — |
+| empresas | 3 | — | — |
+| marcas | 5 | 5 | col OK |
+| grupos_produto | 4 | alfanum preservado | 4 |
+| setores_atividade | 4 | 4 | col OK |
+| unidades_medida | 4 | 4 | col OK |
+| fornecedores | tabela ausente | — | — |
+
+## Integração
+#258 ancestor de #259 → tip 55fcac4f inclui badge HTTP #258 + pacote Cadastros.

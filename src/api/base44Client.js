@@ -6,6 +6,11 @@ import {
   createAuthDeniedError,
 } from './localAuthSessionPolicy.js';
 import { createHttpApiClient } from './httpApiClient.js';
+import { runLocalEntityReadFunction } from './localEntityReadApi.js';
+import {
+  countEntitiesTouchesHttpPilot,
+  runHttpPilotAwareCountEntities,
+} from './httpPilotCountBridge.js';
 import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,
@@ -175,6 +180,44 @@ function createHttpHybridClient() {
       ...localBase44.functions,
       async invoke(name, payload = {}) {
         if (name === 'entityGuard') return http.entityGuard(payload);
+        // Grids Cadastros (entityListSorted/getEntityRecord) devem usar o piloto HTTP
+        // — senao a lista fica vazia no store local enquanto a API/Postgres tem dados.
+        if (name === 'entityListSorted' || name === 'getEntityRecord') {
+          const entityName = String(payload?.entityName || '').trim();
+          if (entityName && pilotSet.has(entityName) && http.entities?.[entityName]) {
+            const filter = {
+              ...(payload.filter && typeof payload.filter === 'object' ? payload.filter : {}),
+            };
+            if (payload.search != null && String(payload.search).trim()) {
+              filter.search = String(payload.search).trim();
+            }
+            return runLocalEntityReadFunction(name, { ...payload, filter }, {
+              expandFilter: (_entity, nextFilter) => nextFilter || {},
+              listEntity: async (entity, nextFilter, order, limit, skip) => {
+                const rows = await http.entities[entity].filter(nextFilter, order, limit, skip);
+                return Array.isArray(rows) ? rows : [];
+              },
+            });
+          }
+        }
+        if (name === 'countEntities') {
+          // Batch (useEntityCounts) e single: piloto HTTP; senao store local.
+          // Sem isso o badge "Clientes: 0" diverge da lista HTTP (n>0).
+          if (countEntitiesTouchesHttpPilot(payload, pilotSet, http.entities)) {
+            return runHttpPilotAwareCountEntities(payload, {
+              pilotSet,
+              httpEntities: http.entities,
+              countLocal: async (entityName, filter) => {
+                const localRes = await localBase44.functions.invoke('countEntities', {
+                  entityName,
+                  filter: filter || {},
+                });
+                const d = localRes?.data;
+                return typeof d?.count === 'number' ? d.count : 0;
+              },
+            });
+          }
+        }
         return localBase44.functions.invoke(name, payload);
       },
     },

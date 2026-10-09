@@ -1,0 +1,63 @@
+# Evidência sanitizada — registros “sumidos” (fonte × DB × API × tela)
+# data=2026-10-09 · tip ops erp-dev HEAD no momento da coleta (ver HANDOFF)
+# sem PII / sem dump / sem tokens
+
+## Escopo
+Comparar staging legado privado, Postgres ops, API HTTP e UI Cadastros.
+Não recriar exemplos; não importar sem contrato/crosswalk.
+
+## Postgres ops (erp-dev)
+clientes=6
+produtos=4
+empresas=3
+marcas=5
+unidades_medida=4
+grupos_produto=4
+fornecedores=tabela ausente (to_regclass null)
+
+## Staging privado #211 (legacy-stage-20261009T115402Z)
+staging_records=20456
+  clientes=18458
+  fornecedores=790
+  produtos=1208
+import_authorized_1=0
+import_authorized_0=20456
+target_empresa_id vazio=20456
+quarantine_records=4722
+contratoEntrada/crosswalkEmpresas em disco=AUSENTE
+
+## Classificação por entidade
+
+### Cliente
+- preservado ops: SIM (6 no Postgres; API empresa-scoped tipicamente n=5)
+- oculto por filtro/permissão: parcial (grupo consolidado vs empresa; badge 0 era bug de contagem local — corrigido no tip pós-1d3b8fb6)
+- falha de mapeamento: N/A na ops (não veio do stage)
+- realmente ausente ops vs legado: SIM — 18458 em staging NÃO importados (authorized=0)
+
+### Produto
+- preservado ops: SIM (4)
+- staging: 1208 não importados
+- auxiliares (marca/UM/grupo): preservados ERP novo
+
+### Fornecedor
+- preservado ops: NÃO há tabela public.fornecedores
+- staging: 790 em quarentena/stage privado
+- UI “lista vazia” ≠ apagamento de ops — entidade ainda não materializada no schema ops
+- recuperação: depende de migration/schema + contrato/crosswalk + import_authorized (Codex Legado)
+
+### Empresa
+- preservado: SIM (3)
+- isolamento CPA/3Z: validar no browser pós-rebuild (troca empresa #254 reservado Codex)
+
+### Cadastros auxiliares
+- preservados (marcas/UM/grupos_produto > 0)
+- regra: não sobrescrever auxiliares úteis do ERP novo na carga legado
+
+## Conclusão
+1. “Sumiram” na UI vs API: bug de contagem batch (store local) — corrigido no código Cursor.
+2. Volume legado (milhares): em staging privado, NÃO na ops — importado=NÃO.
+3. Fornecedores: ausência de tabela ops, não filtro de tela.
+4. Sem reseed / sem mascarar com exemplos.
+
+## importado
+NÃO

@@ -19,6 +19,11 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     nome: ['nome', 'razao_social', 'nome_cliente', 'descricao'],
     documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
   },
+  fornecedor: {
+    codigo: ['codigo', 'cod_fornecedor', 'codigo_fornecedor', 'id_fornecedor', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'nome_fornecedor', 'descricao'],
+    documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
+  },
   produto: {
     codigo: ['codigo', 'cod_produto', 'sku', 'codigo_legado'],
     descricao: ['descricao', 'nome', 'produto'],
@@ -150,7 +155,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const nomeOuDesc = entidade === 'produto'
     ? pickAlias(row, aliases.descricao)
     : pickAlias(row, aliases.nome);
-  const documento = (entidade === 'cliente' || entidade === 'empresa')
+  const documento = (entidade === 'cliente' || entidade === 'fornecedor' || entidade === 'empresa')
     ? pickAlias(row, aliases.documento)
     : '';
 

@@ -1,0 +1,28 @@
+# Evidência sanitizada — homolog #258 tip implantado 02d59aa6
+# utc=2026-10-09T15:22Z
+#
+# Fases (separadas):
+# - em staging (legado VPS): legacy-stage-20261009T115402Z · authorized=0 · importado=NÃO
+# - reconciliado (consumidor Cursor): testes legado-consumir-lote-staging PASS
+# - importado no operacional: NÃO
+# - validado no navegador (abaixo)
+#
+# Acesso: SSH_OK · rebuild OK · asset index-BD0zl8Pi.js
+#
+# Browser:
+# login=PASS
+# switch CPA=PASS · 3Z=PASS (id canônico c2c2c2c2-…; CPA back flaky se acordeão)
+# Cadastros Gerais layout azul=PASS · busca data-action=buscar-cadastros-gerais=PASS
+# Clientes lista Visualizador=PASS · n=5 · API status=200 n=5 (Bearer+X-Group-Id)
+# Edição Cliente: abrir preenchido=PASS
+# Edição Cliente: alterar nome_fantasia → Salvar → reabrir=PASS (PATCH 200)
+#   — save_disabled=false após fix RBAC; payload master-data após allowlist
+# Edição Empresa: abrir→alterar→salvar→reabrir=PASS
+# Central Cliente 360=PASS
+# Financeiro=PASS (sem crash; CR≠Régua preservado em corridas anteriores)
+#
+# Preservado: visual azul · auxiliares · sem reseed · sem forçar 11/91/14
+# #254 Codex: reservado (erpHttpSession / useContexto* / empresaId no scope ainda null no localStorage — UI opera via grupo)
+#
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-258-cliente-cycle-02d59aa6.png

@@ -1,3 +1,161 @@
+## CURSOR — #260 tip `18113337` CI+VPS+browser (2026-10-09T19:52Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`18113337`** |
+| CI | erp-runtime-ci **SUCCESS** (4 checks) · MERGEABLE |
+| **implantado** | erp-dev **`18113337`** · asset `index-wiWHreg3.js` · backup `pre-gate-e-20261009-194341.sql` · rollback `pre-spa-login-20261009-194342` |
+| **homologado** | Orçamento busca+gap PASS · Pedido busca/tabela PASS · switch 3Z PASS |
+| **importado** | **NÃO** (#211) |
+| #259 | tip `55fcac4f` predecessor · merge owner |
+| evidências | `deploy-260-comercial-picker-18113337-*` · `browser-260-comercial-picker-18113337-*` |
+| próxima | merge #260/#259 após owner; Codex #254/#211 |
+
+## CURSOR — Legado consumidor + Financeiro menus (2026-10-09T19:42Z)
+
+| Fase | Estado |
+|---|---|
+| consumidor staging | testes **4/4 PASS** · sem promoção ops |
+| **importado** | **NÃO** (#211 authorized=0) |
+| Financeiro menus | inventário launchpad existente · CR≠Régua · sem módulo paralelo |
+| PG isolado | pendente Codex |
+| evidências | `legado-consumidor-coord-20261009.txt` · `financeiro-menus-nav-20261009.txt` |
+| ≠ | extração Codex Legado |
+
+## CURSOR — Comercial 360 picker Cliente→Orçamento→Pedido (2026-10-09T19:40Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | busca cliente/produto por código · labels código · gaps orçamento explícitos |
+| **integrado** | branch `cursor/comercial360-fluxo-cliente-orc-pedido-392b` |
+| **implantado** | **NÃO** |
+| **homologado** | unitários picker/orcamento/pedido PASS |
+| **importado** | **NÃO** (#211) |
+| arquivos | `comercialMasterPicker.js` · `OrcamentosTab` · `PedidoCanonicoPanel` |
+| ≠ Codex | sessão/contexto/outbox intocados |
+| gaps | orçamento sem `tabela_preco_id`; preço server-side; UM só principal |
+| evidências | `comercial360-fluxo-cliente-orc-pedido-20261009.txt` · `financeiro-menus-nav-20261009.txt` |
+| próxima | CI tip → deploy → homolog browser fluxo completo |
+
+## CURSOR — #259 closeout Setor/UM + matriz registros (2026-10-09T19:35Z)
+
+| Fase | Estado |
+|---|---|
+| tip implantado | **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** |
+| CI #259 | **SUCCESS** · MERGEABLE · head docs `51ac5d4b` |
+| #258 | ancestor OPEN · merge #259 cobre |
+| **homologado** | Grupo/Setor/UM edit+codigo PASS · Marca PASS (corrida anterior) · layout azul PASS |
+| **importado** | **NÃO** |
+| matriz registros | `registros-recuperacao-matriz-20261009.txt` — ensaios≠legado; Fornecedor schema ausente; staging #211 |
+| mig Codex | 025–037 **não** no VPS; 038 Cadastros OK |
+| #254 | toast Abrir sem scroll → Codex sessão; Cursor não edita hooks |
+| evidências | `browser-259-setor-um-grupo-55fcac4f-*` |
+| próxima | merge #259 após owner; fechar #258 |
+
+## CURSOR — #259 tip `55fcac4f` CI+VPS+browser (2026-10-09T18:55Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`55fcac4f`** |
+| CI | erp-runtime-ci **SUCCESS** (push 37974475772 · PR 37974480936) |
+| **implantado** | erp-dev **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` · rollback `pre-spa-login-20261009-184004` |
+| **homologado** | asset/login/layout PASS · Grupo/Marca PASS · Setor/UM supersedido por closeout 19:35Z |
+| **importado** | **NÃO** (#211) |
+| #258×#259 | #258 ancestor → merge #259 cobre #258 |
+| migração | **038** (025–037 Codex intocados) |
+| evidências | `deploy-259-cadastros-038-55fcac4f-*` · `browser-259-cadastros-55fcac4f-*` · inventário completo |
+| #254 / #211 | Codex |
+| próxima | merge #259 após owner; fechar #258 |
+
+## CURSOR — Cadastros #259 CI fix migration 038 (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| causa CI | last=024; `025_cadastros` colidia Codex `025_pedidos_*` |
+| correção | **`038_cadastros_codigo_registro.sql`** + teste through 038 |
+| status | supersedido pelo tip `55fcac4f` implantado |
+
+## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | tip **`c2e32750`** · Abrir uniqueKey+registry · edit merge · MASTER_CODE · migration (→038) · reserve Marca/Grupo/Setor/UM |
+| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) |
+| **implantado** | **NÃO** |
+| **homologado** | unitários locais · CI falhou order 024→fix 038 |
+| **importado** | **NÃO** (#211) |
+| matriz | `docs/evidence/cadastros-codigo-abrir-matriz-20261009.txt` |
+| #258 | ancestor de #259 · tip `e94f39b2` / VPS `d9a72802` |
+
+## CURSOR — #258 CI tip `e94f39b2` SUCCESS (2026-10-09T16:17Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`e94f39b2`** (fix CI mocks/contrato sobre `d9a72802`) |
+| CI | erp-runtime-ci frontend+backend **SUCCESS** |
+| **implantado** | código runtime **`d9a72802`** (docs/testes não exigem rebuild) |
+| **homologado** | badge/lista tip `d9a72802` |
+| **importado** | **NÃO** |
+| próxima | merge #258 após owner |
+
+## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `d9a72802` · `httpPilotCountBridge` (countEntities batch→HTTP) + filtro contagem alinhado |
+| **integrado** | PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) · CI tip `e94f39b2` SUCCESS |
+| **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` · backup `pre-gate-e-20261009-155122.sql` |
+| **homologado** | asset PASS · login PASS · hub Clientes badge=5 · V24 badge=5 · rows=5 · API n=5 · badge_ok |
+| causa | batch `countEntities` caía no store local → badge 0 com API n>0 |
+| ops DB | clientes=6 · produtos=4 · empresas=3 · auxiliares OK · `fornecedores` tabela ausente |
+| registros “sumidos” | ops preservados; legado só em staging (authorized=0); Fornecedor=schema ausente |
+| **em staging** | #211 20456 · quarentena 4722 · sem contrato/crosswalk |
+| **importado** | **NÃO** |
+| legado | consumidor testes 15/15 (docker); ensaio PG isolado pendente Codex |
+| #254 | reservado Codex (switch empresa flaky nesta corrida) |
+| evidências | `deploy-258-count-badge-d9a72802-*` · `browser-258-count-badge-d9a72802-*` · `registros-sumidos-*` · `legado-211-ensaio-*` |
+
+## CURSOR — #258 ciclo edição Cliente PASS `02d59aa6` (2026-10-09T15:22Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `02d59aa6` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| **implantado** | **`02d59aa6`** erp-dev · `index-BD0zl8Pi.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-151957` |
+| **homologado** | Cadastros layout/busca PASS · lista n=5 PASS · **Cliente abrir→salvar→reabrir PASS (PATCH 200)** · Empresa PASS · Central360 PASS · Financeiro PASS |
+| causa | Salvar usava `data-permission=…salvar` (Acesso negado); PATCH enviava vendedor/crédito (400) |
+| **em staging** | #211 stage privado (authorized=0) |
+| **reconciliado** | consumidor lote staging testes PASS |
+| **importado** | **NÃO** |
+| #254 | reservado Codex |
+| ≠ | Codex sessão · Legado importação operacional |
+
+## CURSOR — #258 lista HTTP + edição CadFin + consumidor (2026-10-09T14:45Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `7418243f` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| **implantado** | **`7418243f`** erp-dev · `index-Bc213K00.js` · CLIENTE_360=true |
+| **homologado** | Cadastros layout/busca PASS · Clientes HTTP n=5 PASS · abrir edição preenchida PASS · Empresa ciclo PASS · Central360 PASS |
+| **em staging** | #211 stage privado com contagens (authorized=0) |
+| **reconciliado** | consumidor `consumir-lote-staging` (deps/rejeição/idempotência/auditoria) testes PASS |
+| **importado** | **NÃO** |
+| #254 | APROVAR COM RESSALVAS · reservado Codex · CONFLICTING STATUS |
+| ≠ | Codex sessão #254 · Legado ensaio isolado/importação |
+
+## CURSOR — homolog #254 + CadFin/360 + legado consumidor (2026-10-09T12:10Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `3575b4a4` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) · CI **SUCCESS** |
+| **revisado #254** | APROVAR COM RESSALVAS `fd1778f6` (Cursor não edita arquivos reservados) |
+| **implantado** | tip erp-dev `baba91a6` (azul #257) — #254 ainda não mergeado |
+| **homologado** | login/CPA/contexto/Cadastros/edição/Financeiro PASS · API×DB ≠ lista vazia |
+| **importado** | **NÃO** — stage privado #211 com contagens; gate operacional pendente |
+| #211 | checksum conferido + CNPJs corrigidos (owner); não repetir pedidos |
+| stage | clientes 18458/4437 · forn 790/271 · prod 1208/14 · authorized=0 |
+| testes | edição+legado focados PASS · erp-runtime-ci frontend+backend SUCCESS |
+| ≠ | Codex edita sessão #254 · Legado ETL real |
+
 ## CURSOR — padrão azul Comercial tip `7d068dbb` (2026-10-09T11:45Z)
 
 | Campo | Valor |

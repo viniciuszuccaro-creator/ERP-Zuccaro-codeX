@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -99,11 +100,19 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(
-      VisualizadorUniversalEntidadeV24,
-      { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
-      { title: titulo, width: 1400, height: 800 }
-    );
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   const tiles = [

@@ -1,0 +1,27 @@
+# Browser homolog #260 tip 18113337 — 2026-10-09T19:52Z
+# Asset: index-wiWHreg3.js · SPA rebuild OK · sem migration nova
+
+| Check | Result | Evidence |
+|---|---|---|
+| asset | **PASS** | index-wiWHreg3.js |
+| login | **PASS** | |
+| contexto CPA | **PASS** | EMPRESA OPERACIONAL CPA |
+| Orçamento busca cliente | **PASS** | data-action=orcamento-busca-cliente |
+| Orçamento busca produto | **PASS** | data-action=orcamento-busca-produto |
+| Orçamento gap tabela/preço | **PASS** | texto sem persistência / servidor |
+| Pedido panel | **PASS** | Operação comercial da empresa ativa |
+| Pedido list token | **PASS** | sem “Authenticated user token required” nesta corrida |
+| Pedido busca cliente | **PASS** | #ped-cliente-busca + data-action |
+| Pedido busca produto | **PASS** | data-action=pedido-busca-produto |
+| Pedido tabela preço | **PASS** | label Tabela de preço |
+| Isolamento 3Z switch | **PASS** | EMPRESA OPERACIONAL 3Z LTDA |
+| #254 sessão | reservado Codex | — |
+| importado legado | **NÃO** | #211 |
+
+Screenshots:
+- /opt/cursor/artifacts/screenshots/pw-260-orcamento-18113337.png
+- /opt/cursor/artifacts/screenshots/pw-260-orc-form-18113337.png
+- /opt/cursor/artifacts/screenshots/pw-260-ped-form-18113337.png
+- /opt/cursor/artifacts/screenshots/pw-260-3z-18113337.png
+
+Nota: clique Playwright em “Novo pedido” do hub (Novo Pedido) ≠ painel canônico; form homologado via click no botão do painel PedidoCanonicoPanel.

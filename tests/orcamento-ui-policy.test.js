@@ -81,6 +81,10 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /beforeunload/);
   assert.match(tab, /\[groupId, empresaId\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
+  assert.match(tab, /comercialMasterPicker/);
+  assert.match(tab, /orcamento-busca-cliente/);
+  assert.match(tab, /orcamento-busca-produto/);
+  assert.match(tab, /ORCAMENTO_PERSISTENCE_GAPS/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
   const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });

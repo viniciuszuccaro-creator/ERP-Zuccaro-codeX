@@ -261,7 +261,10 @@ test('product form no longer invents the next code from a frontend list', async 
   assert.match(viewer, /buildMultiempresaReadFilter/);
   assert.doesNotMatch(viewer, /return orConds\.length \? \{ \$or: orConds \} : \{\}/);
   assert.match(viewer, /contextoValido = !!\(empresaId \|\| groupId\)/);
-  assert.match(counts, /Catálogos "simples" tambem recebem group\/empresa/);
+  // Contagens alinhadas ao Visualizador (buildMultiempresaReadFilter); SIMPLE_CATALOG só fail-open sem contexto
+  assert.match(counts, /buildMultiempresaReadFilter/);
+  assert.match(counts, /Alinhado ao Visualizador/);
+  assert.match(counts, /SIMPLE_CATALOG\.has\(entityName\)/);
 });
 
 test('legacy reference fields are exposed with RBAC and searchable by backend', async () => {

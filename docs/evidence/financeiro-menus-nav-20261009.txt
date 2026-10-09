@@ -1,0 +1,25 @@
+# Financeiro — menus/submódulos (inventário Cursor, sem módulo paralelo)
+# Fonte: src/pages/Financeiro.jsx · tip base #259
+
+## Módulos launchpad existentes
+
+| Título | Componente | Notas |
+|---|---|---|
+| Caixa PDV Completo | CaixaPDVCompleto | operacional |
+| Vendas Multicanal | VendasMulticanal | |
+| Remessa/Retorno CNAB | GestaoRemessaRetorno | |
+| Contas a Receber | ContasReceberTab | scope multiempresa |
+| Contas a Pagar | ContasPagarTab | |
+| Aprovações Descontos | AprovacaoDescontosManager | badge pendentes |
+| Conciliação Bancária | ConciliacaoBancaria | |
+| Custos Logísticos | LogisticaFinanceiroPanel | LOG |
+| Relatórios Financeiros | RelatorioFinanceiro | |
+| Alertas por Empresa | AlertasFinanceirosEmpresa | |
+| IA Anomalias | IADetectorAnomalias | sectionKey Alertas |
+| Régua de Cobrança IA | ReguaCobrancaIA | sectionKey CR · ≠ CR |
+
+## Estado
+- Navegação: **existente** (não duplicar)
+- Scope switch: buildFinanceiroQueryScopeKey (lotes anteriores)
+- Homolog browser Financeiro: PASS tip 02d59aa6 (#258)
+- Sem alteração neste lote Cadastros/Comercial picker

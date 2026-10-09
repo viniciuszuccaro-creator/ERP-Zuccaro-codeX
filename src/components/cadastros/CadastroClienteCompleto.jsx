@@ -572,7 +572,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Button
                                     type="button"
                                     variant="outline"
-                                    data-permission="Cadastros.Cliente.alterarStatus"
+                                    data-permission="Cadastros.Cliente.editar"
+                                    data-action="Cadastros.Cliente.alterarStatus"
                                     data-sensitive
                                     onClick={handleAlternarStatus}
                                     disabled={!podeEditar || !contextoValido}
@@ -605,7 +606,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               )}
               <Button
                 onClick={handleSave}
-                data-permission="Cadastros.Cliente.salvar"
+                data-permission={cliente?.id ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
+                data-action="Cadastros.Cliente.salvar"
                 data-sensitive
                 disabled={isSaving || saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
                 className="bg-blue-600 hover:bg-blue-700"

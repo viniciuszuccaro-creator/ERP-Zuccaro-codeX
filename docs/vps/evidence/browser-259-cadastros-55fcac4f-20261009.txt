@@ -1,0 +1,27 @@
+# Browser homolog #259 tip 55fcac4f (Playwright headless) — 2026-10-09T18:55Z
+# Asset: index-DlbCJL3w.js · SPA rebuild OK · migration 038 applied
+
+| Check | Result | Evidence |
+|---|---|---|
+| asset | **PASS** | index-DlbCJL3w.js |
+| login | **PASS** | email/senha |
+| layout azul Cadastros | **PASS** | bg-blue-* no hub |
+| GrupoProduto Abrir único | **PASS** | h3 titles n=1 após 2º clique/duplo |
+| GrupoProduto coluna Codigo | **PASS** | thead "Codigo Nome Grupo…" · rows=3 |
+| GrupoProduto edit | **PASS** | incomplete=0 · nome=GATE-D SYNTH · codigo=GATED-GP (alfanum preservado) |
+| Marca Abrir único | **PASS** | n2=n3=1 |
+| Marca coluna Codigo | **PASS** | thead Codigo · rows=4 |
+| Marca edit | **PASS** | incomplete=0 · nome=GATE-D SYNTH · codigo=000004 (backfill 038) |
+| Setor/UM Abrir | **PARTIAL** | script contaminado por janela Marca não fechada; unitário Blocos 1–6 + uniqueKey OK |
+| #254 switch | reservado Codex | — |
+| importado legado | **NÃO** | #211 |
+
+Screenshots:
+- /opt/cursor/artifacts/screenshots/pw-259-grupos-55fcac4f.png
+- /opt/cursor/artifacts/screenshots/pw-259-marca-55fcac4f.png
+- /opt/cursor/artifacts/screenshots/pw-259-Marca-55fcac4f.png
+
+Notas:
+- "Acesso negado" no DOM do hub (tiles sem permissão) ≠ botão Salvar Marca.
+- Ensaios GATE-D SYNTH ≠ mestres ERP antigo; preservação IDs/refs; sem delete.
+- Fornecedor: tabela ops ausente.

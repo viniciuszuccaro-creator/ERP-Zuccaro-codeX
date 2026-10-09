@@ -9,11 +9,40 @@ import type {
 
 function nowIso() { return new Date().toISOString(); }
 
+/** Sequência in-memory por grupo/entidade (espelha high-water do Postgres). */
+const memorySequences = new Map<string, number>();
+
+function reserveMemoryCodigo(
+  groupId: string,
+  entityName: string,
+  existing: Iterable<{ codigo?: string | null }>,
+  incoming?: string | null,
+  width = 6,
+): string {
+  const key = `${groupId}::${entityName}`;
+  let hw = memorySequences.get(key) ?? 0;
+  for (const row of existing) {
+    const c = String(row.codigo || '').trim();
+    if (/^[0-9]+$/.test(c)) hw = Math.max(hw, Number.parseInt(c, 10));
+  }
+  const trimmed = typeof incoming === 'string' ? incoming.trim() : '';
+  if (trimmed) {
+    if (/^[0-9]+$/.test(trimmed)) {
+      hw = Math.max(hw, Number.parseInt(trimmed, 10));
+    }
+    memorySequences.set(key, hw);
+    return trimmed;
+  }
+  const next = hw + 1;
+  memorySequences.set(key, next);
+  return String(next).padStart(width, '0');
+}
+
 class MemRepo<TRow extends { id: string; group_id: string; empresa_id: string | null; ativo: boolean }, TCreate extends { empresa_id?: string | null; ativo?: boolean }, TUpdate>
   implements TenantEntityRepository<TRow, TCreate, TUpdate> {
   private readonly rows = new Map<string, TRow>();
   constructor(
-    private readonly build: (scope: Scope, data: TCreate, id: string, ts: string) => TRow,
+    private readonly build: (scope: Scope, data: TCreate, id: string, ts: string, rows: Iterable<TRow>) => TRow,
     private readonly merge: (current: TRow, data: TUpdate) => TRow,
     private readonly searchText: (row: TRow) => string,
   ) {}
@@ -35,7 +64,7 @@ class MemRepo<TRow extends { id: string; group_id: string; empresa_id: string | 
   }
   async create(scope: Scope, data: TCreate): Promise<TRow> {
     const ts = nowIso();
-    const row = this.build(scope, data, randomUUID(), ts);
+    const row = this.build(scope, data, randomUUID(), ts, this.rows.values());
     this.rows.set(row.id, row);
     return row;
   }
@@ -52,9 +81,10 @@ class MemRepo<TRow extends { id: string; group_id: string; empresa_id: string | 
 }
 
 export function createInMemoryUnidadeRepo() {
-  return new MemRepo<UnidadeMedida, UnidadeCreate, UnidadeUpdate>(
-    (scope, data, id, ts) => ({
+  return new MemRepo<UnidadeMedida, UnidadeCreate & { codigo?: string | null }, UnidadeUpdate>(
+    (scope, data, id, ts, rows) => ({
       id, group_id: scope.groupId, empresa_id: data.empresa_id ?? scope.empresaId ?? null,
+      codigo: reserveMemoryCodigo(scope.groupId, 'UnidadeMedida', rows, data.codigo),
       sigla: data.sigla, nome_completo: data.nome_completo, tipo_grandeza: data.tipo_grandeza ?? 'Unidade',
       unidade_base_conversao: data.unidade_base_conversao ?? null,
       fator_conversao_para_base: data.fator_conversao_para_base ?? 1,
@@ -63,33 +93,46 @@ export function createInMemoryUnidadeRepo() {
       ativo: data.ativo ?? true, created_at: ts, updated_at: ts,
     }),
     (c, d) => ({ ...c, ...d, empresa_id: d.empresa_id === undefined ? c.empresa_id : d.empresa_id, updated_at: nowIso() }),
-    (r) => `${r.sigla} ${r.nome_completo}`,
+    (r) => `${r.codigo || ''} ${r.sigla} ${r.nome_completo}`,
   );
 }
 
 export function createInMemoryGrupoProdutoRepo() {
   return new MemRepo<GrupoProduto, GrupoProdutoCreate, GrupoProdutoUpdate>(
-    (scope, data, id, ts) => ({
+    (scope, data, id, ts, rows) => ({
       id, group_id: scope.groupId, empresa_id: data.empresa_id ?? scope.empresaId ?? null,
-      nome_grupo: data.nome_grupo, codigo: data.codigo ?? null, natureza: data.natureza ?? 'Revenda',
+      nome_grupo: data.nome_grupo,
+      codigo: reserveMemoryCodigo(scope.groupId, 'GrupoProduto', rows, data.codigo),
+      natureza: data.natureza ?? 'Revenda',
       ncm_padrao: data.ncm_padrao ?? null, margem_sugerida: data.margem_sugerida ?? 0,
       icone: data.icone ?? null, cor: data.cor ?? null, observacoes: data.observacoes ?? null,
       ativo: data.ativo ?? true, created_at: ts, updated_at: ts,
     }),
-    (c, d) => ({ ...c, ...d, empresa_id: d.empresa_id === undefined ? c.empresa_id : d.empresa_id, updated_at: nowIso() }),
+    (c, d) => ({
+      ...c, ...d,
+      codigo: c.codigo,
+      empresa_id: d.empresa_id === undefined ? c.empresa_id : d.empresa_id,
+      updated_at: nowIso(),
+    }),
     (r) => `${r.nome_grupo} ${r.codigo || ''}`,
   );
 }
 
 export function createInMemorySetorRepo() {
   return new MemRepo<SetorAtividade, SetorCreate, SetorUpdate>(
-    (scope, data, id, ts) => ({
+    (scope, data, id, ts, rows) => ({
       id, group_id: scope.groupId, empresa_id: data.empresa_id ?? scope.empresaId ?? null,
+      codigo: reserveMemoryCodigo(scope.groupId, 'SetorAtividade', rows, data.codigo),
       nome: data.nome, descricao: data.descricao ?? null, tipo_operacao: data.tipo_operacao ?? 'Revenda',
       icone: data.icone ?? null, cor: data.cor ?? null, ativo: data.ativo ?? true, created_at: ts, updated_at: ts,
     }),
-    (c, d) => ({ ...c, ...d, empresa_id: d.empresa_id === undefined ? c.empresa_id : d.empresa_id, updated_at: nowIso() }),
-    (r) => `${r.nome} ${r.descricao || ''}`,
+    (c, d) => ({
+      ...c, ...d,
+      codigo: c.codigo,
+      empresa_id: d.empresa_id === undefined ? c.empresa_id : d.empresa_id,
+      updated_at: nowIso(),
+    }),
+    (r) => `${r.codigo || ''} ${r.nome} ${r.descricao || ''}`,
   );
 }
 
