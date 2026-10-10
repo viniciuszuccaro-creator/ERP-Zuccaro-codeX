@@ -1159,3 +1159,31 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 - A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
 - Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
 - Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).
+
+## CODEX COMERCIAL 360 — execucao local autorizada (2026-10-10)
+
+Recebimento neste chat confirmado pelo proprietario: executar em workspace
+`comercial360-integracao-20261010`, branch propria da #265. Primeira acao:
+compor #265 com ponta Cursor #261 `046f69f3`, conservando todos os blocos de
+STATUS/HANDOFF e codigo #264. A main continua `baba91a6`; nao contem #261.
+Proximo: integrar protecoes Orçamento #263 revisadas, testar composicao final,
+publicar HEAD/CI e pedir Cursor revisar SHA exato. Legado continua separado #266.
+Sem merge main, VPS, migration ou canais neste lote de composicao.
+
+Composicao semantica #263: conflito de import no OrcamentosTab preservou
+pickers e tabela de preco da #261 mais gate de submissao/escopo da #263.
+Permissoes criar/editar/cancelar/converter sao reconferidas antes da chamada.
+Teste comportamental executa JSX real com hooks e transporte controlados:
+save/retry/reabrir, duplo clique, CPA→3Z antes do rerender, callbacks de erro,
+cancelar/converter, detalhe tardio e revogacao do perfil. 63 focados PASS.
+Test harness somente em tests; policies/client/entidades existentes reutilizados.
+
+## CODEX COMERCIAL 360 — checkpoint de troca de computador (2026-10-10)
+
+- Repositório canônico `viniciuszuccaro-creator/ERP-Zuccaro-codeX`. #254 HEAD `20a2c2fb` e #264 HEAD mesclado `d9403665` já são ancestrais da #261; não repetir o porte. Cursor é dono da branch #261 `cursor/cadastros-recuperacao-c360-contrato-392b`, HEAD público conferido `c3c45c21` (docs após código `f22d1151`).
+- Correção posterior do achado Cursor (`GET Produto {id}` liberava PATCH PIM) está **implementada e revisada** na PR draft [#265](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/265), commit `4ce27394`, CI `38059398538` SUCCESS. O review Cursor desse SHA confirmou o fechamento; não declarou homologação visual. A #265 estava baseada em `181b52c1`; esta branch isolada agora também incorporou a ponta `c3c45c21` da #261, sem conflito de código. O novo merge exige CI/revisão próprios antes de considerar a candidata final validada.
+- Separação de estados: #265 **não** está mesclada à #261 nem implantada; o último SHA **implantado/homologado documentado pelo Cursor** é `f22d1151`, não `4ce27394` nem o merge Codex. Homologação de usuário restrito segue BLOCKED por secret ausente. Nenhuma importação legada, migration ou acesso VPS foi feito por esta frente.
+- Arquivos reservados: Cursor mantém Visualizador/Cadastros UI/STATUS/HANDOFF na #261; Codex só reconcilia em branch própria, sem sobrescrever sua branch. Legado mantém staging/mapeador privados; backup e credenciais não acompanham automaticamente troca de computador. Contrato Produto mestre de Grupo compartilhado × itens Orçamento/Pedido da empresa jurídica continua pendente; não afrouxar migrations 016/017 implicitamente.
+- Próximo executável: rodar testes no merge atual, publicar novo HEAD da #265 e pedir revisão exata; depois homologação visual autenticada sob gate operacional. Para legado, confirmar no novo host o acesso ao backup original e ao staging antes de qualquer extração; nunca pôr dados pessoais no GitHub.
+
+Checkpoint final: base Cursor db89aa45 incorporada; codigo Produto ja portado pelo Cursor e preservado. Orçamento 263 composto com pickers e RBAC no clique; 63 focados PASS. Fonte/implantacao permanecem estados distintos. Checkpoint Codex anexado ao final para evitar conflito com atualizacoes Cursor no topo.
