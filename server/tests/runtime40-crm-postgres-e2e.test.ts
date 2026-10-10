@@ -26,6 +26,14 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
   try{
     const preflight=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
     assert.equal(preflight.ready,true);assert.deepEqual(preflight.blocked,[]);
+    await f.exec(`DROP TRIGGER trg_oportunidades_codigo ON oportunidades;
+      CREATE TRIGGER trg_oportunidades_codigo AFTER UPDATE ON oportunidades
+      FOR EACH ROW EXECUTE PROCEDURE sync_oportunidade_codigo();`);
+    const wrongEvents=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
+    assert.ok(wrongEvents.blocked.includes('codeTrigger'));
+    await f.exec(`DROP TRIGGER trg_oportunidades_codigo ON oportunidades;
+      CREATE TRIGGER trg_oportunidades_codigo BEFORE INSERT OR UPDATE OF codigo,group_id ON oportunidades
+      FOR EACH ROW EXECUTE PROCEDURE sync_oportunidade_codigo();`);
     const premature=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema,stage:'before_migration'}));
     assert.equal(premature.ready,false);assert.ok(premature.blocked.includes('crmAbsent'));
     const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'r40-synthetic'};

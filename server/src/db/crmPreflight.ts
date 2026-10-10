@@ -46,11 +46,17 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
     const canonical="group_id = NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id = NULLIF(current_setting('app.empresa_id',true),'')::uuid";
     const p=policies.rows[0];checks.policy=policies.rows.length===1&&p.cmd==='*'&&p.roles==='{0}'
       &&tokens(p.using)===tokens(canonical)&&tokens(p.check)===tokens(canonical);
-    const columns=await db.query<{name:string}>('SELECT attname AS name FROM pg_attribute WHERE attrelid=$1::oid AND attnum>0 AND NOT attisdropped',[oid]);
+    const columns=await db.query<{name:string;number:number}>('SELECT attname AS name,attnum::int AS number FROM pg_attribute WHERE attrelid=$1::oid AND attnum>0 AND NOT attisdropped',[oid]);
     checks.columns=['legacy_store_id','legacy_orcamento_id','legacy_pedido_id','convertido_em_id','version','codigo'].every(n=>columns.rows.some(r=>r.name===n));
-    const triggers=await db.query<{enabled:string;definer:boolean;name:string}>(
-      'SELECT t.tgenabled AS enabled,p.prosecdef AS definer,p.proname AS name FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid WHERE t.tgrelid=$1::oid AND NOT t.tgisinternal',[oid]);
-    checks.codeTrigger=triggers.rows.some(t=>t.name==='sync_oportunidade_codigo'&&!t.definer&&['O','A'].includes(t.enabled));
+    const triggers=await db.query<{enabled:string;definer:boolean;name:string;triggerName:string;type:number;attrs:string;condition:string|null;args:number;namespace:string}>(
+      `SELECT t.tgenabled AS enabled,p.prosecdef AS definer,p.proname AS name,t.tgname AS "triggerName",t.tgtype::int AS type,
+       t.tgattr::text AS attrs,pg_get_expr(t.tgqual,t.tgrelid) AS condition,octet_length(t.tgargs)::int AS args,n.nspname AS namespace
+       FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid JOIN pg_namespace n ON n.oid=p.pronamespace
+       WHERE t.tgrelid=$1::oid AND NOT t.tgisinternal`,[oid]);
+    const attrs=columns.rows.filter(c=>['codigo','group_id'].includes(c.name)).map(c=>String(c.number)).sort().join(' ');
+    checks.codeTrigger=triggers.rows.some(t=>t.name==='sync_oportunidade_codigo'&&t.triggerName==='trg_oportunidades_codigo'
+      &&!t.definer&&['O','A'].includes(t.enabled)&&t.type===23&&t.condition===null&&t.args===0&&t.namespace===expected.schema
+      &&t.attrs.trim().split(/\s+/).sort().join(' ')===attrs);
     const indexes=await db.query<{valid:boolean;unique:boolean;definition:string;predicate:string}>(
       `SELECT indisvalid AS valid,indisunique AS unique,pg_get_indexdef(indexrelid) AS definition,
        pg_get_expr(indpred,indrelid) AS predicate FROM pg_index WHERE indrelid=$1::oid`,[oid]);

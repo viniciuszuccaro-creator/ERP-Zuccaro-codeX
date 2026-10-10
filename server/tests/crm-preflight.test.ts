@@ -50,6 +50,13 @@ test('CRM preflight: somente leitura, destino/papel/RLS/ledger/trigger/índice f
       assert.match(sql.trim(),/^SELECT\b/i);return tx.query(sql,params);
     }},expected));
     const ok=await inspect();assert.equal(ok.ready,true);assert.deepEqual(ok.blocked,[]);
+    await f.exec(`DROP TRIGGER trg_oportunidades_codigo ON oportunidades;
+      CREATE TRIGGER trg_oportunidades_codigo AFTER UPDATE ON oportunidades
+      FOR EACH ROW EXECUTE PROCEDURE sync_oportunidade_codigo();`);
+    assert.ok((await inspect()).blocked.includes('codeTrigger'));
+    await f.exec(`DROP TRIGGER trg_oportunidades_codigo ON oportunidades;
+      CREATE TRIGGER trg_oportunidades_codigo BEFORE INSERT OR UPDATE OF codigo,group_id ON oportunidades
+      FOR EACH ROW EXECUTE PROCEDURE sync_oportunidade_codigo();`);
     assert.deepEqual(Object.keys(ok).sort(),['blocked','checks','ready']);
     assert.equal((await inspectCrmPreflight(f.admin,expected)).checks.restrictedRole,false);
     assert.equal((await inspectCrmPreflight(f.admin,{...expected,database:'wrong-destination'})).checks.destination,false);
