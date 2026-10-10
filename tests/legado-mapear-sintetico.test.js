@@ -243,3 +243,29 @@ test('linha em quarentena nao absorve duplicata valida posterior', () => {
   assert.equal(out.gravados.filter((r) => !r.quarentena).length, 1);
   assert.equal(out.quarentenas.length, 1);
 });
+
+test('headers do staging SQL preservam codigo original e fantasia sem inferir empresa', () => {
+  const cliente = mapLegadoRowToCanonicalStub({ CODIGOCLIENTE: '0007', RAZAOSOCIAL: 'Cliente Sintetico',
+    NOMEGUERRA: 'Fantasia Sintetica', CGC: '00000000000000' }, { entidade: 'cliente', groupId: 'g1' });
+  assert.equal(cliente.codigo_legado, '0007');
+  assert.equal(cliente.nome_fantasia, 'Fantasia Sintetica');
+  assert.equal(cliente.empresa_id, undefined);
+  const fornecedor = mapLegadoRowToCanonicalStub({ CODIGOFORNEC: '0009', RAZAOSOCIAL: 'Fornecedor Sintetico',
+    NOMEFANTASIA: 'Fornecedor Fantasia', CGCFORNEC: '00000000000001' }, { entidade: 'fornecedor', groupId: 'g1' });
+  assert.equal(fornecedor.codigo_legado, '0009');
+  assert.equal(fornecedor.documento, '00000000000001');
+  const lote = mapLegadoLoteSintetico([{ ...cliente }, { ...cliente, nome_fantasia: 'Outra Fantasia' }], { entidade: 'cliente' });
+  assert.equal(lote.conflitos.length, 1);
+});
+
+test('material SQL usa classe e unidade da origem somente com mapa explicito', () => {
+  const input = { CODIGOMATERIAL: '0012', DESCRICAO: 'Material Sintetico', CODIGOCLASSE: '08', UNIDADE: 'KG' };
+  const options = { entidade: 'produto', groupId: 'g1' };
+  assert.equal(mapLegadoRowToCanonicalStub(input, options).quarentena, true);
+  const mapped = mapLegadoRowToCanonicalStub(input, { ...options,
+    produtoClassUnitMap: { '08|KG': { tipo_produto: 'MATERIA_PRIMA', unidade_medida_id: 'unidade-isolada' } } });
+  assert.equal(mapped.quarentena, false);
+  assert.equal(mapped.codigo_legado, '0012');
+  assert.equal(mapped.classe_legado, '08');
+  assert.equal(mapped.unidade_legado, 'KG');
+});

@@ -1186,3 +1186,10 @@ Complemento #266 revalida origem/Grupo, contrato e classificacao antes de retry;
 permissoes amplas da sessao; piloto real/importacao ainda nao executados.
 
 Checkpoint base: db89aa45 incorporada; runtime legado idêntico ao 661f3ef3 testado, revisao/CI do merge requeridas. Comercial ja executa aqui em workspace separado com autorizacao do proprietario.
+
+Checkpoint posterior: 03_STAGING legivel; 04_REPORTS permanece negada. Somente
+dry-run privado de transformacao (20 Clientes/20 Fornecedores mapeados;
+20 Produtos em quarentena), sem carga/persistencia. Recuperados/importados 0.
+Aliases SQL incorporados ao mapper existente, 27 focados PASS. Origem/destino,
+classe/unidade e vinculo juridico exigem revisao/validacao antes do piloto real.
+Dados e arquivos privados nao acompanham commit; evidencias somente agregadas.

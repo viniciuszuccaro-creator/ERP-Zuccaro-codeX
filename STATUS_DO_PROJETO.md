@@ -12786,3 +12786,9 @@ Suite Windows 841 PASS/50 FAIL/0 SKIP, falhas em processos Bash sem status de sa
 CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
 
 Checkpoint base: db89aa45 incorporada; runtime legado idêntico ao 661f3ef3 testado, revisao/CI do merge requeridas. Comercial ja executa aqui em workspace separado com autorizacao do proprietario.
+
+Atualizacao posterior: staging privado 03_STAGING disponivel. Aliases SQL reais
+preparados com fixtures sinteticas e 27 focados PASS. Dry-run sem persistencia:
+20 Clientes e 20 Fornecedores mapeados; 20 Produtos em quarentena por mapa ausente.
+Nenhuma recuperacao/importacao concluida. Destino e linhagem historica ainda
+nao comprovados nesta rodada; referencia privada nao equivale a identidade valida.

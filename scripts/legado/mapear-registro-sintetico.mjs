@@ -16,19 +16,21 @@ import {
 /** Aliases comuns de planilhas/ERP antigo → campo canônico (hipótese até inventário). */
 export const LEGADO_FIELD_ALIASES = Object.freeze({
   cliente: {
-    codigo: ['codigo', 'cod_cliente', 'codigo_cliente', 'id_cliente', 'codigo_legado'],
-    nome: ['nome', 'razao_social', 'nome_cliente', 'descricao'],
+    codigo: ['codigo', 'cod_cliente', 'codigo_cliente', 'codigocliente', 'id_cliente', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'razaosocial', 'nome_cliente', 'descricao'],
+    nome_fantasia: ['nome_fantasia', 'nomefantasia', 'nomeguerra'],
     documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
   },
   fornecedor: {
-    codigo: ['codigo', 'cod_fornecedor', 'codigo_fornecedor', 'id_fornecedor', 'codigo_legado'],
-    nome: ['nome', 'razao_social', 'nome_fornecedor', 'descricao'],
-    documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
+    codigo: ['codigo', 'cod_fornecedor', 'codigo_fornecedor', 'codigofornec', 'id_fornecedor', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'razaosocial', 'nome_fornecedor', 'descricao'],
+    nome_fantasia: ['nome_fantasia', 'nomefantasia'],
+    documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc', 'cgcfornec'],
   },
   produto: {
-    codigo: ['codigo', 'cod_produto', 'sku', 'codigo_legado'],
+    codigo: ['codigo', 'cod_produto', 'codigomaterial', 'sku', 'codigo_legado'],
     descricao: ['descricao', 'nome', 'produto'],
-    classe: ['classe', 'classe_produto', 'tipo_produto'],
+    classe: ['classe', 'classe_produto', 'codigoclasse', 'tipo_produto'],
     unidade: ['unidade', 'unidade_medida', 'um'],
   },
   empresa: {
@@ -166,6 +168,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const documento = (entidade === 'cliente' || entidade === 'fornecedor' || entidade === 'empresa')
     ? pickAlias(row, aliases.documento)
     : '';
+  const nomeFantasia = aliases.nome_fantasia ? pickAlias(row, aliases.nome_fantasia) : '';
 
   if (!codigo && !nomeOuDesc) {
     throw new Error('Registro sintetico sem codigo nem nome/descricao mapeavel.');
@@ -219,7 +222,8 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
           ? { tipo_produto: classificacao.tipo_produto, unidade_medida_id: classificacao.unidade_medida_id }
           : {}),
       }
-      : { nome: nomeOuDesc, ...(documento ? { documento } : {}) }),
+      : { nome: nomeOuDesc, ...(nomeFantasia ? { nome_fantasia: nomeFantasia } : {}),
+        ...(documento ? { documento } : {}) }),
     origem: 'erp_antigo',
     ...(motivos.length
       ? {
@@ -240,7 +244,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const fingerprint = createHash('sha256').update(JSON.stringify([
     entidade, first(stamped.group_id), first(stamped.empresa_id),
     first(stamped.codigo_legado), first(stamped.nome).toLowerCase(),
-    first(stamped.descricao).toLowerCase(), first(stamped.documento),
+    first(stamped.descricao).toLowerCase(), first(stamped.documento), first(stamped.nome_fantasia).toLowerCase(),
     first(stamped.classe_legado).toLowerCase(), first(stamped.unidade_legado).toLowerCase(),
     first(stamped.tipo_produto), first(stamped.unidade_medida_id),
   ])).digest('hex');

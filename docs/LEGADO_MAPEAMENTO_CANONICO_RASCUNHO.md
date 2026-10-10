@@ -99,6 +99,20 @@ pelo sistema de arquivos. Nenhum relatório real foi extraído, carregado ou
 publicado. A PR #211 mantém o verificador e staging isolado existentes; este
 lote ajusta apenas o mapeador/consumidor canônicos já presentes no repositório.
 
+Checkpoint posterior no mesmo dia: `03_STAGING` e legivel. Headers SQL
+CODIGOCLIENTE/RAZAOSOCIAL/NOMEGUERRA, CODIGOFORNEC/CGCFORNEC e
+CODIGOMATERIAL/CODIGOCLASSE/UNIDADE foram incorporados ao mapper existente,
+com testes inteiramente sinteticos; codigo original e fantasia entram no
+fingerprint. Os arquivos de origem privados permanecem completos e intocados;
+o stub de transformacao nao representa carga completa de todos os campos.
+Dry-run privado examinou 20 registros de cada entidade: Cliente 20 mapeados,
+Fornecedor 20 mapeados, Produto 20 em quarentena por mapa classe/unidade ausente.
+Nao houve persistencia isolada nem operacional: recuperados/importados = 0.
+Referencia de destino existe no manifesto privado, mas nao foi revalidada nesta
+rodada. Manifestos indicam extracao nova/hash verificados e origem SQL read-only;
+linhagem historica, crosswalk de Grupo/Empresa e equivalencia de unidades seguem
+nao comprovados. Nao tratar presenca de classe/unidade como autorizacao de uso.
+
 1. Liberar leitura somente de `04_REPORTS` no host do HD e executar o verificador
    da #211 sem tocar na origem; manter `importAuthorized=false`.
 2. Validar manifesto/procedência e mapa jurídico privado; conferir destino e
