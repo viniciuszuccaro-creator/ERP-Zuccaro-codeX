@@ -18,13 +18,17 @@ test('formulários autogeridos bloqueiam escrita e efeitos tardios após troca C
   assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, tresZ), false);
   assert.equal(isCadastroSelfManagedScopeCurrent(cpa, tresZ, tresZ), false);
   assert.equal(isCadastroSelfManagedScopeCurrent(null, cpa, cpa), false);
+  const opened = { ...cpa, actorId: 'ator-a', token: 'bearer-a' };
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, opened), true);
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, { ...opened, token: 'bearer-novo' }), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, { ...opened, actorId: 'ator-b' }), false);
 });
 
 test('hook real congela sessão CPA mesmo com primeiro paint parcial; aceita render completo e rejeita 3Z', async () => {
   const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
   const refs = []; let nextRef = 0;
-  let active = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa' };
+  let active = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa', actorId: 'ator-a', token: 'bearer-a' };
   const exports = {};
   vm.runInNewContext(compiled, { exports, require: id => ({
     react: { useRef: initial => refs[nextRef++] ||= { current: initial } },
@@ -37,9 +41,31 @@ test('hook real congela sessão CPA mesmo com primeiro paint parcial; aceita ren
   assert.equal(partial.isCurrent(), false);
   const complete = render('grupo-cpa', 'empresa-cpa');
   assert.doesNotThrow(() => complete.assertCurrent());
+  const requestScope = { ...active };
+  let applied = false;
+  const lateResponse = Promise.resolve({ id: 'cadastro-cpa' }).then(() => { if (complete.isCurrent()) applied = true; });
   active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  await lateResponse;
+  assert.equal(requestScope.empresaId, 'empresa-cpa');
+  assert.equal(applied, false);
   assert.throws(() => complete.assertCurrent(), /Contexto alterado/);
   assert.equal(render('grupo-cpa', 'empresa-3z').isCurrent(), false);
+  active = { ...requestScope, token: 'bearer-novo' };
+  assert.equal(render('grupo-cpa', 'empresa-cpa').isCurrent(), false);
+});
+
+test('os quatro formulários próprios usam o guard no envio e descartam respostas antigas', async () => {
+  for (const name of ['CadastroClienteCompleto.jsx', 'CadastroFornecedorCompleto.jsx', 'RepresentanteFormCompleto.jsx']) {
+    const source = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(source, /useCadastroFormScopeGuard\(groupId, empresaAtual\?\.id\)/);
+    assert.match(source, /mutationFn:[\s\S]*?assertFormScopeCurrent\(\)/);
+    assert.match(source, /onSuccess:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+    assert.match(source, /onError:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+  }
+  const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(produto, /assertFormScopeCurrent\(\)[\s\S]*?getHttpProdutoApi\(\)\.update/);
+  assert.match(produto, /if \(!isFormScopeCurrent\(\)\) return/);
+  assert.match(produto, /useProdutoHttpEditLoad\(\{/);
 });
 import {
   assertCadastroFormScopeCurrent,

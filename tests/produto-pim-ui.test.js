@@ -9,10 +9,10 @@ test('edição HTTP espera GET completo antes de permitir payload que pode limpa
   assert.equal(isProdutoHttpEditReady(true, 'produto-cpa', 'produto-cpa'), true);
   assert.equal(isProdutoHttpEditReady(true, null, null), true);
   const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
-  assert.match(form, /!produtoHttp \|\| !produto\?\.id \|\| !isFormScopeCurrent\(\)/);
-  assert.match(form, /\[produtoHttp, produto\?\.id, groupId, empresaAtual\?\.id, produtoHttpLoadAttempt\]/);
+  assert.match(form, /useProdutoHttpEditLoad\(\{/);
+  assert.match(form, /isScopeCurrent: isFormScopeCurrent/);
   assert.match(form, /if \(!isProdutoHttpEditReady\(produtoHttp, produto\?\.id, produtoHttpReadyId\)\)/);
-  assert.match(form, /setProdutoHttpLoadError\(true\)/);
+  assert.match(form, /onClick=\{retryProdutoHttpLoad\}/);
   assert.match(form, /Tentar carregar produto novamente/);
 });
 

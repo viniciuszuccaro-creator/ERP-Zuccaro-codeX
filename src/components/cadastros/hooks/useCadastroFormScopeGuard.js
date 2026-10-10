@@ -16,6 +16,8 @@ export default function useCadastroFormScopeGuard(groupId, empresaId) {
     if (opening?.groupId) opened.current = {
       groupId: opening.groupId,
       empresaId: opening.empresaId || null,
+      actorId: opening.actorId || null,
+      token: opening.token || null,
     };
   }
 
