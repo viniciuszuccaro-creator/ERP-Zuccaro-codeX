@@ -25,8 +25,8 @@ Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, P
 |---|---|
 | #254 final | `20a2c2fb` (ancestral) |
 | #264 Codex | `d9403665` (porte #254→base #261) |
-| PR HEAD #261 | tip branch (pós-CRM legado) |
-| implantado erp-dev | `f22d1151` · `index-KP6RdCBA.js` (até redeploy tip CRM) |
+| PR HEAD #261 | `346192e4` |
+| implantado erp-dev | `346192e4` · `index-BvhNui57.js` |
 | merge #264→#261 | `861513cd` · main ainda `baba91a6` |
 Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
 

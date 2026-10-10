@@ -8,8 +8,8 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip CRM legado C360 · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`f22d1151`** · `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `f22d1151` |
+| SHA implantado | **`346192e4`** · `index-BvhNui57.js` · ≡ PR HEAD |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `346192e4` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
 | próxima funcional | CI+redeploy tip CRM · secret restrito · contrato HTTP Codex Oportunidade se A; merge owner #261→main |
@@ -24,12 +24,12 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | tip CRM legado C360 **`21a63549`** (+ Contratos ID lista) · CI SUCCESS em `21a63549` · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
-| rollback | `pre-spa-login-20261010-144429` |
-| backup | `pre-gate-e-20261010-144428.sql` (só VPS; **não** no Git) |
+| **PR HEAD #261** | **`346192e4`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`346192e4`** · asset `index-BvhNui57.js` · ≡ PR HEAD |
+| rollback | `pre-spa-login-20261010-163939` |
+| backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`f22d1151` apenas** |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`346192e4`** (não reusar prova `f22d1151`) |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | CRM | C360 adaptador **opção B** (legado Oportunidade); HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
@@ -39,15 +39,15 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → tip CRM legado C360 (pós-`52655450`).
-2. Confirmar VPS implantado: ainda `MERGE_SHA8=f22d1151` / `index-KP6RdCBA.js` até redeploy do tip CRM — não atribuir homolog antiga ao tip novo.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`346192e4`**.
+2. Confirmar VPS: `MERGE_SHA8=346192e4` / `index-BvhNui57.js` — não atribuir homolog de `f22d1151` a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. CI + redeploy tip CRM legado C360; homolog owner **neste** SHA (não reusar prova `f22d1151`).
+1. ~~CI + redeploy tip CRM~~ **feito** `346192e4` / `index-BvhNui57.js` · homolog owner fail_count=0.
 2. Secret usuário restrito → homolog fail-closed FE+BE.
-3. Inventário/azul residual (Contratos UX; grades; POD/Separação keep-both).
+3. Inventário/azul residual (grades; POD/Separação keep-both; Painel seletivo).
 4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
 5. Codex: decidir CRM HTTP (A schema) se for além do adaptador B; Legado #211.
 
