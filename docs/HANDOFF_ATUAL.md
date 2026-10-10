@@ -3,7 +3,7 @@
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
-| candidata | [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) MERGEABLE CLEAN · CI SUCCESS |
+| candidata | [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) MERGEABLE CLEAN · CI SUCCESS (`6b19e862`) |
 | ancestralidade | #258⊂#259⊂#260⊂#261 (tips verificados) |
 | **implantado** | **`bd2fa504`** · `index-BufSJCA3.js` · 038+039 · backup/rollback 203540/203649 |
 | **homologado API** | CPA create/reopen/convert PASS · 3Z convert PASS · fail-closed preço/cliente |
