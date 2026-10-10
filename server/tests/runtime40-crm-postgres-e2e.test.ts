@@ -12,6 +12,7 @@ import { PostgresOportunidadeRepository } from '../src/repositories/postgresOpor
 import { OportunidadeService } from '../src/services/oportunidadeService.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { assertCrmIsolatedUrl, realCrmFixture } from './helpers/crmPostgresFixture.ts';
+import { inspectCrmPreflight } from '../src/db/crmPreflight.ts';
 
 test('R40 gate de PostgreSQL isolado rejeita DEV/remoto/ausente antes de conectar',()=>{
   for(const url of [undefined,'postgresql://synthetic@localhost/postgres','postgresql://synthetic@example.invalid/erp_test'])
@@ -23,6 +24,8 @@ test('R40 gate de PostgreSQL isolado rejeita DEV/remoto/ausente antes de conecta
 if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/replay/audit rollback/RLS/Cliente→Orçamento→CRM',async()=>{
   const f=await realCrmFixture(process.env.DATABASE_URL!);
   try{
+    const preflight=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
+    assert.equal(preflight.ready,true);assert.deepEqual(preflight.blocked,[]);
     const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'r40-synthetic'};
     const scope={groupId:ctx.groupId,empresaId:ctx.empresaId};
     const audit=new PostgresAuditRepository(f.admin),repo=new PostgresOportunidadeRepository(f.data);

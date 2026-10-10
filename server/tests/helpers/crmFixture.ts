@@ -10,6 +10,8 @@ export async function setupCrmFixture(exec:(sql:string)=>Promise<unknown>,role=R
   const dir=new URL('../../migrations/',import.meta.url);
   const names=(await readdir(dir)).filter(n=>/^\d+.*\.sql$/.test(n)).sort();
   for(const name of names){const sql=await readFile(new URL(name,dir),'utf8');await exec(sql.replace('CREATE EXTENSION IF NOT EXISTS pgcrypto;',''));}
+  await exec(`CREATE TABLE IF NOT EXISTS schema_migrations(id TEXT PRIMARY KEY);
+    INSERT INTO schema_migrations(id) VALUES('040_crm_oportunidades.sql') ON CONFLICT DO NOTHING;`);
   await exec(await readFile(new URL('../../scripts/seed-dev-synthetic.sql',import.meta.url),'utf8'));
   await exec(`UPDATE profiles SET empresa_id=NULL,permissoes='${JSON.stringify(OWNER_ERP_PERMISSION_TREE)}'::jsonb WHERE id IN ('${ID.runtimeActorA}','${ID.runtimeActorB}')`);
   await exec(`CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS NOLOGIN;
@@ -17,6 +19,7 @@ export async function setupCrmFixture(exec:(sql:string)=>Promise<unknown>,role=R
     GRANT SELECT,INSERT ON audit_logs TO ${role};
     GRANT SELECT ON cliente_empresas,orcamentos,orcamento_itens,pedidos,pedido_itens TO ${role};
     GRANT SELECT ON profiles TO ${role};
+    GRANT SELECT ON schema_migrations TO ${role};
     GRANT UPDATE(updated_at) ON orcamentos TO ${role};
     GRANT UPDATE(updated_at) ON pedidos TO ${role};
     GRANT EXECUTE ON FUNCTION reserve_entity_codigo(uuid,text,integer) TO ${role};`);

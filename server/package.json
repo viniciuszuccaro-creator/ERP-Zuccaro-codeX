@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "migrate": "tsx src/db/migrate.ts",
     "migrate:status": "tsx src/db/migrate.ts --status",
+    "crm:preflight": "tsx scripts/crmPreflight.ts",
     "test": "node --import tsx --test tests/**/*.test.ts",
     "test:postgres": "node scripts/runPostgresTests.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
