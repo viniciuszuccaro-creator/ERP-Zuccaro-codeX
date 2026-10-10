@@ -60,6 +60,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-unidade-medida"
       />

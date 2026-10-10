@@ -85,6 +85,7 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-banco"
       />

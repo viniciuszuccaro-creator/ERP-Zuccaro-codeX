@@ -906,14 +906,32 @@ Caso contrário, sugira:
                     value={formData.codigo}
                     onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
                     placeholder="Gerado ao salvar"
+                    readOnly={Boolean(produto?.id)}
+                    disabled={Boolean(produto?.id)}
+                    className={produto?.id ? 'bg-slate-50 font-mono tabular-nums' : undefined}
                     data-permission="Cadastros.Produto.editar"
                     data-action="editar-codigo-produto"
                     data-sensitive
+                    title={produto?.id ? 'Código de registro (backend); ID técnico permanece separado' : undefined}
                   />
                   <p className="text-xs text-slate-500 mt-1">
-                    {produto ? 'Código do produto' : `Próximo: ${formData.codigo}`}
+                    {produto?.id ? 'Código de registro (readonly)' : `Próximo: ${formData.codigo}`}
                   </p>
                 </div>
+
+                {produto?.id ? (
+                  <div>
+                    <Label>ID técnico</Label>
+                    <Input
+                      value={String(produto.id)}
+                      readOnly
+                      disabled
+                      className="bg-slate-50 font-mono text-xs"
+                      data-action="id-tecnico-produto"
+                      title="Identificador técnico imutável; distinto do código/SKU"
+                    />
+                  </div>
+                ) : null}
 
                 <div>
                   <Label>Código de Barras</Label>

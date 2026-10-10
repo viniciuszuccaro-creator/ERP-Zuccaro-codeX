@@ -353,6 +353,12 @@ export default function CentralCliente360Panel({
           renderRow={() => null}
         />
       </div>
+
+      <p className="text-xs text-slate-500" data-action="central360-fonte-canonica">
+        Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido ·
+        Locais/Obras no vínculo empresa · Financeiro/Expedição via pedido. Use os IDs técnicos acima
+        para navegar nos módulos existentes.
+      </p>
     </div>
   );
 }

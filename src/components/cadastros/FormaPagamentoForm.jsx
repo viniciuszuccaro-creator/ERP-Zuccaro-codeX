@@ -117,6 +117,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
 
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-forma-pagamento"
       />

@@ -92,6 +92,7 @@ export default function LocalEstoqueForm({
 
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-local-estoque"
       />

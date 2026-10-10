@@ -34,6 +34,7 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import {
@@ -685,6 +686,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   </AlertDescription>
                 </Alert>
               )}
+              <CadastroCodigoRegistroField
+                hasId={Boolean(cliente?.id)}
+                entityId={cliente?.id}
+                value={formData.codigo ?? cliente?.codigo}
+                action="codigo-registro-cliente-completo"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="tipo">Tipo de Pessoa *</Label>

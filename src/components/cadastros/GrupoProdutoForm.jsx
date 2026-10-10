@@ -86,6 +86,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-grupo-produto"
       />
