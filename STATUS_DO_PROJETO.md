@@ -11,6 +11,7 @@
 | CI tip pós-push | erp-runtime-ci (push) |
 | **homologado** tip implantado | só **`bdeec58c`** (fail_count=0) — não atribuir ao tip integrado |
 | residual | redeploy+homolog tip integrado · usuário restrito · Legado #211 · ManagePR casing |
+| independente (pós-merge) | Contratos ID técnico (form+detalhe) · C360 código/ID + status/id em orç./pedidos |
 | matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
 | próxima | CI tip · implantar tip branch · homolog login tipado neste SHA · merge owner |
