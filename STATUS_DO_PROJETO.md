@@ -1,17 +1,32 @@
+## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
+| **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
+| **PR HEAD #261** | tip CRM legado C360 · CI **pendente** neste tip · MERGEABLE → main |
+| **implantado** | erp-dev **`f22d1151`** · `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
+| **homologado implantado** | owner tip `f22d1151` fail_count=0 — **não** atribuir ao tip CRM |
+| usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
+| **implementado neste lote** | C360 adaptador CRM opção B (store Oportunidade) · CRM queryKey group/empresa · funis `sectionKey=oportunidades` · testes 7/7 |
+| **não feito** | CRM HTTP canônico novo (reservado Codex A schema) · merge #261→main |
+| **recuperado / importado** | **NÃO** · #211 |
+| evidência | `reconciliacao-261-pos-264-main-20261010.txt` |
+| próxima | CI tip · redeploy · homolog owner neste SHA · secret restrito · azul residual · merge owner · #211 |
+
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | integração #264+#254 em #261 · ID técnico MASTER_CODE/Cliente/Produto/Fornecedor/Representante · Contratos/C360 · minify-safe · V23→V24 · azul hubs |
-| **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED** · #254 tip `20a2c2fb` ancestral (OPEN, não re-portar) |
-| **PR HEAD remoto** | **`2f82dea4`** até este commit · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · **não** está em `main` `baba91a6` |
-| **implantado** | erp-dev **`f22d1151`** · `index-KP6RdCBA.js` · rollback `pre-spa-login-20261010-144429` · **≠** PR HEAD |
-| **homologado** | tip **`f22d1151`** login tipado fail_count=0 (owner) · usuário restrito **BLOCKED** (sem secret) |
-| **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 Codex |
-| workspace | limpo · local≡`origin` · sem commit pendente na troca |
-| handoff | `docs/HANDOFF_ATUAL.md` bloco **CONTINUIDADE CASA** |
-| BLOCKED | usuário restrito (secret) · CRM funil canônico HTTP · Legado import |
-| próxima casa | `git fetch` tip `c3c45c21`+ · secret restrito · inventário/azul residual · merge owner · #211 |
+| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul hubs |
+| **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
+| **PR HEAD** | tip CRM legado C360 (pós-`52655450` docs Codex) · **não** em `main` `baba91a6` |
+| **implantado** | runtime ainda `f22d1151` até redeploy tip CRM — ver bloco pós-#264 acima |
+| **homologado** | tip **`f22d1151`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
+| handoff | `docs/HANDOFF_ATUAL.md` · RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
+| BLOCKED | usuário restrito · CRM HTTP schema server · Legado |
+| próxima | supersedido pelo bloco pós-#264 acima |
 
 ## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 

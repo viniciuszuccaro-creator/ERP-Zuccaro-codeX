@@ -1,0 +1,19 @@
+# Reconciliação #261 pós-#264 × main (sanitizado)
+# utc=2026-10-10T16:26Z
+#
+# #264 MERGED into base=cursor/cadastros-recuperacao-c360-contrato-392b ( candidata #261 )
+#   mergeCommit=861513cd · tip Codex d9403665 · NÃO mesclado em main
+# main HEAD=baba91a6 (#257 azul) · #261 contém main (behind=0) · ahead≈94
+# #261 PR HEAD tip docs · implantado erp-dev=f22d1151 asset=index-KP6RdCBA.js
+# #254 OPEN tip=20a2c2fb ancestral de #261 — não re-portar
+#
+# Homolog restrito: BLOCKED
+#   auth.users=2 (owner real + gate-d.synth@dev.synthetic.local)
+#   SYNTH ≠ usuário restrito operacional
+#   secrets: só ERP_DEV_LOGIN_EMAIL/PASSWORD (owner)
+#
+# Lote seguinte Cursor (sem CRM HTTP paralelo):
+#   adaptador C360 opção B sobre store Oportunidade
+#   CRM queryKey multiempresa · funis sectionKey oportunidades
+#
+# Recuperado/importado: NÃO (#211)

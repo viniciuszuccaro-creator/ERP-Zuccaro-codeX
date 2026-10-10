@@ -1,18 +1,18 @@
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
-Consulta desta sessão ao GitHub. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD de documentação.
+Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD novo.
 
 | Item | Valor |
 |---|---|
 | `origin/main` | **`baba91a6`** (merge #257) · **não** contém o HEAD da #261 |
-| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · HEAD **`2f82dea4`** · mergeable vs main · **não** incorporada na main |
+| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip CRM legado C360 · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`f22d1151`** · `index-KP6RdCBA.js` · ancestral do HEAD · commits depois (`c3c45c21`, `2f82dea4`) são só docs |
+| SHA implantado | **`f22d1151`** · `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
 | homolog deste SHA | owner login tipado fail_count=0 · **somente** `f22d1151` |
-| usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` · sem prova fail-closed nesta sessão |
-| CRM HTTP | **não iniciado** — não há rota canônica `Oportunidade` no server; funil continua no cliente local; `useContextoVisual` reservado Codex; sem CRM paralelo |
-| próxima funcional | secret restrito **ou** contrato HTTP Codex para Oportunidade; merge owner #261→main continua decisão do owner |
+| usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
+| próxima funcional | CI+redeploy tip CRM · secret restrito · contrato HTTP Codex Oportunidade se A; merge owner #261→main |
 
 ## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
 
@@ -22,38 +22,41 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 |---|---|
 | repositório canônico | `viniciuszuccaro-creator/ERP-Zuccaro-codeX` (clone também via `erp-zuccaro-codex`) |
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
-| **PR HEAD #261** | **`2f82dea4`** · docs após `c3c45c21` · **não** é o SHA implantado |
-| **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** PR HEAD (docs após deploy) |
+| **main** | `baba91a6` — **#261 ainda não mesclada em main** |
+| **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
+| **PR HEAD #261** | tip CRM legado C360 · CI pendente neste tip · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
 | rollback | `pre-spa-login-20261010-144429` |
 | backup | `pre-gate-e-20261010-144428.sql` (só VPS; **não** no Git) |
-| #264 Codex | **MERGED** tip `d9403665` (porte #254→#261) — ancestral `861513cd` confirmado |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| merge código integração | `861513cd` (#264 → candidata #261, não main) |
 | homologado tip implantado | login tipado fail_count=0 (owner) em **`f22d1151` apenas** |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
+| CRM | C360 adaptador **opção B** (legado Oportunidade); HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
-| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual` em lote) — Cursor só com coordenação |
+| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
+| evidência | `docs/vps/evidence/reconciliacao-261-pos-264-main-20261010.txt` · `reconciliacao-261-pos-264-20261010.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → `git rev-parse HEAD` deve ser **`2f82dea4`** ou tip posterior. O implantado continua **`f22d1151`**.
-2. Confirmar VPS implantado: `MERGE_SHA8=f22d1151` / asset `index-KP6RdCBA.js` — não atribuir homolog de SHA antigo ao tip novo.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → tip CRM legado C360 (pós-`52655450`).
+2. Confirmar VPS implantado: ainda `MERGE_SHA8=f22d1151` / `index-KP6RdCBA.js` até redeploy do tip CRM — não atribuir homolog antiga ao tip novo.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. Secret usuário restrito → homolog fail-closed RBAC no tip implantado.
-2. Inventário/azul residual (CRM funil BLOCKED; Contratos UX; grades `id` coluna onde faltar).
-3. C360: vínculos navegáveis Pedido/Orçamento sem duplicar fonte (só após contrato Codex se mutação).
+1. CI + redeploy tip CRM legado C360; homolog owner **neste** SHA (não reusar prova `f22d1151`).
+2. Secret usuário restrito → homolog fail-closed FE+BE.
+3. Inventário/azul residual (Contratos UX; grades; POD/Separação keep-both).
 4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
-5. Codex Legado #211: recuperação real (Cursor não marca recuperado).
+5. Codex: decidir CRM HTTP (A schema) se for além do adaptador B; Legado #211.
 
 ### Pendências / parcial (não concluído)
 - Homolog usuário restrito.
-- Auditoria global módulos ainda com gaps (CRM canônico HTTP, POD/Separação keep-both curto prazo).
+- CRM HTTP canônico (server) — adaptador B cobre leitura C360; funis ainda no store legado.
+- #261 **não** incorporada em `main` (só #264→#261).
 - Legado staging→ops: **não importado**.
-- CI do tip ≠ prova de merge em `main` nem homolog pós-merge.
+- CI do tip ≠ prova de merge em `main`.
 
 ## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
 
