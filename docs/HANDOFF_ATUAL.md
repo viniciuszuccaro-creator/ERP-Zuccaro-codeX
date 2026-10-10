@@ -21,6 +21,11 @@ Chat principal: [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d97362
 Corrigido Visualizador: gate `Organizacional` no `data-permission`; fallback sem `codigo` em campos descritivos; `GrupoEmpresarial` inclui `id===groupId` no filtro.
 **Implantado** erp-dev tip **`ea213906`** · `index-Dqf6E74p.js` · evidências `orientacao-coordenada-auditoria-global-20261010.txt` · `deploy-261-tip-ea213906-*`.
 
+### Segunda ação efetiva Cursor — Fiscal RBAC
+Causa: cards/botões usavam `Fiscal.Notas Fiscais.*` enquanto owner tree é `Fiscal.nfe|tabelas_fiscais|sped|obrigacoes`.
+Correção: `sectionKey` canônico no launchpad + aliases UI→owner em `usePermissions`/`localBase44Client` + `NotasFiscaisTab` consulta `Fiscal.nfe` + teste focado owner.
+Fail-closed preservado (gate por seção). Deploy tip pendente de CI deste commit.
+
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 

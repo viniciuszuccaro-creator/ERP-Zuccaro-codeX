@@ -1274,6 +1274,19 @@ const LOCAL_SECTION_ALIASES = {
   segmentocliente: 'pessoas',
   regiaoatendimento: 'pessoas',
   pessoasparceiros: 'pessoas',
+  // Fiscal UI ↔ árvore owner (espelha usePermissions.SECTION_ALIASES)
+  nfe: 'nfe',
+  notafiscal: 'nfe',
+  notasfiscais: 'nfe',
+  motorfiscalia: 'nfe',
+  importarxml: 'nfe',
+  tabelasfiscais: 'tabelas_fiscais',
+  configuracaofiscal: 'tabelas_fiscais',
+  planodecontas: 'tabelas_fiscais',
+  sped: 'sped',
+  spedfiscal: 'sped',
+  obrigacoes: 'obrigacoes',
+  dregerencial: 'obrigacoes',
 };
 
 const findPermissionNode = (root, key) => {

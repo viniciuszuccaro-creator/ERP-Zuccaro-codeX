@@ -77,6 +77,20 @@ export default function usePermissions() {
       colaboradores: 'pessoas',
       representante: 'pessoas',
       representantes: 'pessoas',
+      // Fiscal UI ↔ árvore owner (nfe / tabelas_fiscais / sped / obrigacoes).
+      // Evitar alias genérico "configuracao" (colide com Sistema.configuracoes).
+      nfe: 'nfe',
+      notafiscal: 'nfe',
+      notasfiscais: 'nfe',
+      motorfiscalia: 'nfe',
+      importarxml: 'nfe',
+      tabelasfiscais: 'tabelas_fiscais',
+      configuracaofiscal: 'tabelas_fiscais',
+      planodecontas: 'tabelas_fiscais',
+      sped: 'sped',
+      spedfiscal: 'sped',
+      obrigacoes: 'obrigacoes',
+      dregerencial: 'obrigacoes',
     };
 
     const resolveModule = (mod) => {

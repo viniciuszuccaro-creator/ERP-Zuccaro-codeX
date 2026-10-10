@@ -150,6 +150,26 @@ test('owner canônico abre paths reais de Configurações/Segurança no hook fro
   assert.equal(permissions.hasPermission('Sistema', 'Auditoria', 'excluir'), false);
 });
 
+test('owner Fiscal: seção canônica nfe + aliases UI Notas Fiscais / NotaFiscal', async () => {
+  const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, role: 'admin', permissoes } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { permissoes: {} } }) },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  assert.equal(permissions.hasPermission('Fiscal', null, 'visualizar'), true);
+  for (const section of ['nfe', 'NotaFiscal', 'Notas Fiscais', 'tabelas_fiscais', 'Configuração Fiscal', 'sped', 'SPED Fiscal', 'obrigacoes', 'DRE Gerencial']) {
+    assert.equal(permissions.hasPermission('Fiscal', section, 'visualizar'), true, section);
+  }
+  assert.equal(permissions.hasPermission('Fiscal', 'nfe', 'emitir'), true);
+  assert.equal(permissions.hasPermissionKey('Fiscal.nfe.emitir'), true);
+  assert.equal(permissions.hasPermissionKey('Fiscal.Notas Fiscais.visualizar'), true);
+  // Fail-closed: seção inexistente não herda do módulo.
+  assert.equal(permissions.hasPermission('Fiscal', 'SecaoInexistente', 'visualizar'), false);
+});
+
 test('admin de Grupo preserva visão consolidada; troca A/B/Grupo não fabrica empresa', async () => {
   const storage = memoryStorage();
   const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));

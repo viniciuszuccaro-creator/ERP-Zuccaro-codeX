@@ -1,3 +1,15 @@
+## CURSOR — Fiscal RBAC + inventário (pós-orientação 2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| causa | launchpad usava título UI (`Notas Fiscais`) em `data-permission` / gate; árvore owner é `Fiscal.nfe|tabelas_fiscais|sped|obrigacoes` |
+| **implementado** | `Fiscal.jsx` sectionKey canônico + NotasFiscaisTab · aliases UI→owner em `usePermissions`/`localBase44Client` · `Fiscal.nfe` em NotasFiscaisTab · teste owner Fiscal |
+| fail-closed | gate por seção (sem liberar tudo só com `Fiscal.visualizar`) |
+| matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| **implantado** | tip anterior erp-dev **`ea213906`** · este lote aguarda CI+deploy |
+| próxima | CI tip · implantar VPS · hard refresh Fiscal/Empresas/Grupos/Marcas · inventário restante · merge owner |
+
 ## CURSOR — Auditoria global UI (pós-orientação 2026-10-10)
 
 | Fase | Estado |
@@ -5,11 +17,12 @@
 | orientação | registrada no chat principal + HANDOFF (substitui anterior) |
 | **implementado** | Visualizador: `Cadastros.Organizacional.*` em data-permission · fallback células sem codigo · GrupoEmpresarial self-id · Empresa coluna codigo |
 | prints cobertos | Empresas/Grupos Acesso negado · Marcas pais/categoria · Grupos vazios |
-| Fiscal Acesso negado | pendente (RBAC `Fiscal.*` / launchpad) |
+| Fiscal Acesso negado | **corrigido neste tip** (sectionKey + aliases) |
 | matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
 | **implantado** | erp-dev **`ea213906`** · `index-Dqf6E74p.js` · backup `pre-gate-e-20261010-102145.sql` · rollback `pre-spa-login-20261010-102145` |
-| próxima | CI tip · hard refresh UI Empresas/Grupos/Marcas · Fiscal RBAC · inventário global |
+| CI tip HEAD `7d7367d9` | erp-runtime-ci **SUCCESS** (4 checks) · #261 MERGEABLE CLEAN |
+| próxima | supersedido pelo bloco Fiscal RBAC acima |
 
 ## CURSOR — #261 tip `d6952b9d`/`279f26fc` implantado (2026-10-10)
 

@@ -68,7 +68,11 @@ export default function NotasFiscaisTab({ notasFiscais = [], pedidos = [], onCre
   const contextoValido = fiscalScope.valid;
   const scopeInput = { groupId, empresaId, contexto, empresasDoGrupo };
 
-  const hasFiscalPermission = (action) => hasPermission('Fiscal', 'NotaFiscal', action) || hasPermission('Fiscal', 'Notas Fiscais', action) || hasPermission('Fiscal', null, action);
+  const hasFiscalPermission = (action) =>
+    hasPermission('Fiscal', 'nfe', action) ||
+    hasPermission('Fiscal', 'NotaFiscal', action) ||
+    hasPermission('Fiscal', 'Notas Fiscais', action) ||
+    hasPermission('Fiscal', null, action);
   const canViewNota = hasFiscalPermission('visualizar');
   const canCreateNota = hasFiscalPermission('criar');
   const canEditNota = hasFiscalPermission('editar');

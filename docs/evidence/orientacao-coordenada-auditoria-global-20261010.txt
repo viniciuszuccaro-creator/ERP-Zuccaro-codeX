@@ -19,17 +19,30 @@ Causa raiz comprovada pelos prints:
 
 Correções no VisualizadorUniversalEntidadeV24 + Bloco5 (codigo na grade Empresa).
 
-## Matriz global (inventário inicial — exemplos dos prints + blocos)
+## Matriz global (inventário — exemplos dos prints + blocos + Fiscal)
 | Módulo | Entidade/Sub | codigo numérico lista | ID técnico detalhe | UI | Observação |
 |---|---|---|---|---|---|
 | Cadastros | UnidadeMedida | SIM (00000x) | form readonly | OK azul | referência |
 | Cadastros | Marca | SIM | form | mapeamento pais/categoria CORRIGIDO | SYNTH≠recuperado |
 | Cadastros | GrupoProduto | misto alfanumérico legado | form | GATE-D SYNTH visível | #211 |
-| Cadastros | Empresa | coluna codigo + ID form | SIM form | Acesso negado CORRIGIDO | |
+| Cadastros | Empresa | coluna codigo + ID form | SIM form | Acesso negado CORRIGIDO | Organizacional.* |
 | Cadastros | GrupoEmpresarial | codigo coluna | — | filtro self-id CORRIGIDO | |
-| Financeiro | 12 módulos launchpad | n/a | n/a | grid colorido presente | auditar vs azul |
-| Fiscal | NF-e KPIs/tabs | n/a | n/a | badge Acesso negado | RBAC Fiscal.* pendente |
+| Cadastros | Cliente/Fornecedor | codigo | form | Abrir único parcial | #211 legado |
+| Financeiro | Contas a Receber | n/a | n/a | launchpad presente | auditar vs azul |
+| Financeiro | Contas a Pagar | n/a | n/a | launchpad presente | auditar vs azul |
+| Financeiro | Caixa/Bancos | n/a | n/a | launchpad presente | |
+| Fiscal | Notas Fiscais (nfe) | n/a | n/a | sectionKey+alias CORRIGIDO | owner Fiscal.nfe |
+| Fiscal | tabelas_fiscais | n/a | n/a | Config/Plano → tabelas_fiscais | |
+| Fiscal | sped / obrigacoes | n/a | n/a | SPED/DRE → sped/obrigacoes | |
 | Comercial 360 | Orçamento/Pedido | numero | id | API homologada | UI #254 |
+| Comercial | Clientes / NF tab | codigo | id | NotasFiscaisTab usa Fiscal.nfe | |
+| Estoque | launchpad | n/a | n/a | inventariar badges | próximo |
+| Expedição | launchpad | n/a | n/a | inventariar badges | próximo |
+| Compras | launchpad | n/a | n/a | inventariar badges | próximo |
+
+## Fiscal — causa raiz (2026-10-10)
+Launchpad/botão: `Fiscal.Notas Fiscais.visualizar|emitir` ≠ árvore owner `Fiscal.nfe.*`.
+Fix: sectionKey canônico + SECTION_ALIASES + data-permission `Fiscal.nfe.emitir`.
 
 ## Não recuperação
 GATE-D SYNTH, Seed sintetico, PROD-A-001 DEV ≠ recuperação de legado.
