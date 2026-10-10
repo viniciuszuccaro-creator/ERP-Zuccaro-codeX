@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
+import { readErpHttpSession } from '@/api/erpHttpSession';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, microsToDecimal } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, microsToDecimal, sameOrcamentoScope } from './orcamentoUiPolicy';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
@@ -41,6 +42,21 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [form, setForm] = useState(emptyForm);
   const [dirty, setDirty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const actionGate = useRef(createOrcamentoActionGate());
+  const formScope = useRef(null);
+  const cancelScope = useRef(null);
+  const conversionScope = useRef(null);
+  const renderedScope = useRef(null);
+  renderedScope.current = { groupId, empresaId, actorId };
+  const activeScope = () => readErpHttpSession();
+  const beginAction = (opened) => {
+    const ticket = actionGate.current.begin(opened, renderedScope.current, activeScope());
+    if (!ticket) { toast.error('Contexto alterado ou operação em andamento. Reabra o orçamento.'); return null; }
+    setSubmitting(true);
+    return ticket;
+  };
+  const actionCurrent = (ticket) => actionGate.current.isCurrent(ticket, renderedScope.current, activeScope());
+  const endAction = (ticket) => { if (actionGate.current.end(ticket)) setSubmitting(false); };
   const [pendingCancel, setPendingCancel] = useState(null);
   const [pendingConversion, setPendingConversion] = useState(null);
   const [conversion, setConversion] = useState({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
@@ -88,7 +104,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   };
   const condicaoLabel = (id) => masters.condicoes.find((item) => item.id === id)?.nome || id;
 
-  useEffect(() => { setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId]);
+  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -99,9 +115,10 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
     setFormOpen(false); setDirty(false); setEditing(null);
   };
-  const openCreate = () => { setEditing(null); setForm(emptyForm()); setDirty(false); setFormOpen(true); };
+  const openCreate = () => { formScope.current = renderedScope.current; setEditing(null); setForm(emptyForm()); setDirty(false); setFormOpen(true); };
   const openEdit = (row) => {
     if (!canEdit(row)) return;
+    formScope.current = renderedScope.current;
     setEditing(row);
     setForm({
       cliente_empresa_id: row.cliente_empresa_id,
@@ -130,45 +147,53 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     catch { return { subtotal: '0', desconto: '0', total: '0' }; }
   }, [form.itens]);
   const save = async () => {
-    if (submitting) return;
-    setSubmitting(true);
+    const ticket = beginAction(formScope.current);
+    if (!ticket) return;
     try {
       const payload = buildOrcamentoPayload(form);
       const saved = editing ? await api.update(editing.id, payload) : await api.create(payload);
+      if (!actionCurrent(ticket)) return;
       toast.success(editing ? 'Orçamento atualizado.' : 'Orçamento criado.');
       setDirty(false); setFormOpen(false); setEditing(null); setSelected(saved);
       await queryClient.invalidateQueries({ queryKey: ['orcamentos-http', groupId, empresaId] });
-    } catch (error) { toast.error(errorMessage(error)); }
-    finally { setSubmitting(false); }
+    } catch (error) { if (actionCurrent(ticket)) toast.error(errorMessage(error)); }
+    finally { endAction(ticket); }
   };
   const showDetail = async (row) => {
-    try { const detail = await api.get(row.id); setSelected(detail); setDetailOpen(true); }
-    catch (error) { toast.error(errorMessage(error)); }
+    const opened = renderedScope.current;
+    try { const detail = await api.get(row.id); if (sameOrcamentoScope(opened, renderedScope.current, activeScope())) { setSelected(detail); setDetailOpen(true); } }
+    catch (error) { if (sameOrcamentoScope(opened, renderedScope.current, activeScope())) toast.error(errorMessage(error)); }
   };
   const performCancel = async (row) => {
-    if (!row || submitting) return;
-    setSubmitting(true);
+    if (!row) return;
+    const ticket = beginAction(cancelScope.current);
+    if (!ticket) return;
     try {
-      const cancelled = await api.cancel(row.id); setSelected(cancelled);
+      const cancelled = await api.cancel(row.id);
+      if (!actionCurrent(ticket)) return;
+      setSelected(cancelled);
       toast.success('Orçamento cancelado e preservado.');
       await queryClient.invalidateQueries({ queryKey: ['orcamentos-http', groupId, empresaId] });
-    } catch (error) { toast.error(errorMessage(error)); }
-    finally { setSubmitting(false); }
+    } catch (error) { if (actionCurrent(ticket)) toast.error(errorMessage(error)); }
+    finally { endAction(ticket); }
   };
   const cancel = (row) => {
     if (!canCancel(row) || submitting) return;
+    cancelScope.current = renderedScope.current;
     setPendingCancel(row);
   };
 const convertToPedido = async () => {
-    if (!pendingConversion || submitting) return;
+    if (!pendingConversion) return;
     if (!conversion.data_entrega_solicitada) { toast.error('Informe a data solicitada pelo cliente.'); return; }
-    setSubmitting(true);
+    const ticket = beginAction(conversionScope.current);
+    if (!ticket) return;
     try {
       await pedidosApi.convertOrcamento(pendingConversion.id, { tipo_operacao: conversion.tipo_operacao, data_entrega_solicitada: new Date(`${conversion.data_entrega_solicitada}T12:00:00`).toISOString() });
+      if (!actionCurrent(ticket)) return;
       toast.success('Orçamento convertido em pedido.'); setPendingConversion(null); setDetailOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['pedidos-http', groupId, empresaId] });
-    } catch (error) { toast.error(errorMessage(error)); }
-    finally { setSubmitting(false); }
+    } catch (error) { if (actionCurrent(ticket)) toast.error(errorMessage(error)); }
+    finally { endAction(ticket); }
   };
   const printOrcamento = (row) => {
     const opened = gerarPDFOrcamento(row, { empresa: empresaAtual, clienteNome: clienteLabel(row.cliente_empresa_id), condicaoPagamento: condicaoLabel(row.condicao_pagamento_id) });
@@ -213,7 +238,7 @@ const convertToPedido = async () => {
       <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
     <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) setPendingConversion(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setPendingConversion(null)} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting}>{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}

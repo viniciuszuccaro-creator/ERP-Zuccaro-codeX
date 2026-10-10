@@ -12298,3 +12298,7 @@ Checklist inicial:
 | Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
 | Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
 | Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
+## CODEX — Onda 4 Orçamento HTTP: ações isoladas por tenant (2026-10-10)
+
+- Fluxo: salvar, cancelar e converter orçamento para pedido agora usam trava síncrona contra clique duplo e comparam Grupo/Empresa/ator da abertura, render e sessão HTTP ativa antes da request. Resposta tardia após CPA→3Z não fecha formulário, notifica ou invalida lista da outra empresa. Detalhe assíncrono também não reabre no tenant seguinte. Backend canônico preserva validação, RBAC, persistência e auditoria; não foram criados cadastro/endpoint paralelo nem alterados banco/VPS.
+- Teste comportamental da trava cobre repetição, troca CPA→3Z, resposta antiga e troca de ator (9/9 focados). `audit:baseline`, lint, build e diff-check passaram. Suíte raiz Windows segue com falhas preexistentes nos guards Unix/VPS; typecheck raiz segue com passivo preexistente, sem diagnóstico nos arquivos tocados. Próximo P0/P1 autorizado: ampliar masters paginados por ClienteEmpresa via contrato backend próprio, sem editar `clienteService.ts` reservado à migração legada.
