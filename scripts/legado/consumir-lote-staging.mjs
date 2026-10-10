@@ -59,6 +59,9 @@ export const validarDependenciasLegado = (mapped = {}, ctx = {}) => {
     rejeicoes.push('empresa_destino_obrigatoria');
   }
   if (mestreGrupo && mapped.empresa_id) rejeicoes.push('mestre_grupo_com_empresa');
+  if (!mestreGrupo && entidade !== 'empresa' && !mapped.codigo_empresa_legado) {
+    rejeicoes.push('empresa_legado_comprovada_obrigatoria');
+  }
   if (mapped.codigo_empresa_legado != null && mapped.codigo_empresa_legado !== '') {
     const emp = resolverEmpresaLegadoCodigo(mapped.codigo_empresa_legado);
     if (emp.quarentena || emp.conhecido === false) {
@@ -72,6 +75,11 @@ export const validarDependenciasLegado = (mapped = {}, ctx = {}) => {
       const code = String(emp.codigo || mapped.codigo_empresa_legado);
       const target = crosswalk instanceof Map ? crosswalk.get(code) : crosswalk[code];
       if (!target) rejeicoes.push('crosswalk_empresa_ausente');
+      else if ((mapped.empresa_id && mapped.empresa_id !== target)
+        || (mapped.target_empresa_id && mapped.target_empresa_id !== target)
+        || (!mapped.empresa_id && !mapped.target_empresa_id)) {
+        rejeicoes.push('empresa_destino_divergente_do_crosswalk');
+      }
     }
   }
   if (ctx.requireContratoEntrada !== false && !ctx.contratoEntradaPresente) {
@@ -117,7 +125,7 @@ export const buildAuditoriaConsumoLegado = (mapped = {}, meta = { acao: 'consumi
  *   arquivoNome?: string,
  *   chavesJaGravadas?: Array<string|{chave:string,fingerprint:string}>,
  *   contratoEntrada?: { coorte?: string, crosswalkEmpresas?: Record<string, string>, linhagemHash?: string },
- *   produtoClassUnitMap?: Record<string, {tipo_produto:string,unidade_medida_id:string}>,
+ *   produtoClassUnitMap?: Record<string, {tipo_item?:string,tipo_produto?:string,unidade_medida_id:string}>,
  *   requireContratoEntrada?: boolean,
  * }} opts
  */
@@ -239,9 +247,13 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
   // Duplicata so e reuso quando sua raiz passou pelos mesmos gates de entrada.
   for (const dup of lote.reusos) {
     if (chavesValidadas.has(dup.chave_idempotente_migracao)) reusos.push(dup);
-    else quarentena.push({ codigo_legado: dup.codigo_legado,
-      chave_idempotente_migracao: dup.chave_idempotente_migracao,
-      motivos: ['reuso_origem_nao_validada'] });
+    else {
+      const motivos = ['reuso_origem_nao_validada'];
+      quarentena.push({ codigo_legado: dup.codigo_legado,
+        chave_idempotente_migracao: dup.chave_idempotente_migracao, motivos });
+      const raiz = lote.gravados.find((r) => r.chave_idempotente_migracao === dup.chave_idempotente_migracao);
+      auditoria.push(buildAuditoriaConsumoLegado(raiz, { acao: 'consumir', resultado: 'quarentena_reuso', motivos }));
+    }
   }
 
   const reconciliacao = buildReconciliacaoMigracao({

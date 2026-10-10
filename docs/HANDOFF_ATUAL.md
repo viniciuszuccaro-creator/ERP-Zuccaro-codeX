@@ -1193,3 +1193,10 @@ dry-run privado de transformacao (20 Clientes/20 Fornecedores mapeados;
 Aliases SQL incorporados ao mapper existente, 27 focados PASS. Origem/destino,
 classe/unidade e vinculo juridico exigem revisao/validacao antes do piloto real.
 Dados e arquivos privados nao acompanham commit; evidencias somente agregadas.
+
+Checkpoint corretivo da revisao Cursor 6100174767: operacao exige codigo legado
+juridico e empresa identica ao crosswalk; opcoes nao substituem empresa de origem.
+Produto grava tipo_item canonico (chave/rotulo explicitos normalizados sem default).
+Duplicata em quarentena recebe auditoria. 30 focados PASS, lint/audit/build/diff PASS.
+Suite Windows completa com Git Bash foi interrompida apos travar no teste
+vps-gate-precheck; nenhum teste removido/skip. CI Linux final e revisao exigidas.

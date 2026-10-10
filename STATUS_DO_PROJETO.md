@@ -12792,3 +12792,10 @@ preparados com fixtures sinteticas e 27 focados PASS. Dry-run sem persistencia:
 20 Clientes e 20 Fornecedores mapeados; 20 Produtos em quarentena por mapa ausente.
 Nenhuma recuperacao/importacao concluida. Destino e linhagem historica ainda
 nao comprovados nesta rodada; referencia privada nao equivale a identidade valida.
+
+Checkpoint corretivo da revisao Cursor 6100174767: operacao exige codigo legado
+juridico e empresa identica ao crosswalk; opcoes nao substituem empresa de origem.
+Produto grava tipo_item canonico (chave/rotulo explicitos normalizados sem default).
+Duplicata em quarentena recebe auditoria. 30 focados PASS, lint/audit/build/diff PASS.
+Suite Windows completa com Git Bash foi interrompida apos travar no teste
+vps-gate-precheck; nenhum teste removido/skip. CI Linux final e revisao exigidas.

@@ -178,6 +178,7 @@ test('retry e duplicatas revalidam contrato antes de confirmar reuso', () => {
   assert.equal(segundo.comprovados.length, 0);
   assert.equal(segundo.reusos.length, 0);
   assert.equal(segundo.quarentena.length, 2);
+  assert.equal(segundo.auditoria.length, 2);
   assert.ok(segundo.quarentena.some((r) => r.motivos.includes('contrato_entrada_ausente')));
 });
 
@@ -192,4 +193,19 @@ test('quarentena de origem nao vira retry aceito por fingerprint igual', () => {
   assert.equal(retry.reusos.length, 0);
   assert.equal(retry.quarentena.length, 1);
   assert.ok(retry.quarentena[0].motivos.includes('codigo_empresa_legado_0'));
+});
+
+test('operacao exige codigo juridico e destino exatamente ligado ao crosswalk', () => {
+  const opts = { entidade: 'obra', groupId: 'g1',
+    contratoEntrada: { coorte: 'sintetico', crosswalkEmpresas: { 1: 'empresa-provada' } } };
+  const expected = opts.contratoEntrada.crosswalkEmpresas[1];
+  const semCodigo = consumirLoteStagingLegado([{ cod_obra: 'O-1', nome: 'Obra', empresa_id: expected }], opts);
+  assert.equal(semCodigo.comprovados.length, 0);
+  assert.ok(semCodigo.rejeicoes[0].rejeicoes.includes('empresa_legado_comprovada_obrigatoria'));
+  const wrong = consumirLoteStagingLegado([{ cod_obra: 'O-1', nome: 'Obra', codigo_empresa: '1' }], { ...opts, empresaId: 'outra' });
+  assert.equal(wrong.comprovados.length, 0);
+  assert.ok(wrong.rejeicoes[0].rejeicoes.includes('empresa_destino_divergente_do_crosswalk'));
+  const ok = consumirLoteStagingLegado([{ cod_obra: 'O-1', nome: 'Obra', codigo_empresa: '1' }], { ...opts, empresaId: expected });
+  assert.equal(ok.comprovados.length, 1);
+  assert.equal(ok.comprovados[0].empresa_id, expected);
 });

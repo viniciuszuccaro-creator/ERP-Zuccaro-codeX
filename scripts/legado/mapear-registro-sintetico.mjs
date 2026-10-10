@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { PRODUTO_TIPOS_CANONICOS } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
+import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
  * Não lê HD real. Não grava staging. Reutiliza migracaoErpPolicy (Regra-Mãe).
@@ -156,6 +156,10 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     throw new Error('LEGACY_GROUP_MISMATCH');
   }
   const entidade = opts.entidade || 'cliente';
+  if (!LEGADO_MESTRES_COMPARTILHADOS.includes(entidade) && opts.empresaId
+    && first(row.empresa_id) && first(row.empresa_id) !== first(opts.empresaId)) {
+    throw new Error('LEGACY_COMPANY_MISMATCH');
+  }
   const aliases = LEGADO_FIELD_ALIASES[entidade];
   if (!aliases) {
     throw new Error(`Entidade de mapeamento nao suportada: ${entidade}`);
@@ -191,8 +195,9 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const classificacao = entidade === 'produto'
     ? opts.produtoClassUnitMap?.[chaveClasseUnidade]
     : null;
-  const classificacaoValida = Boolean(classificacao
-    && Object.hasOwn(PRODUTO_TIPOS_CANONICOS, classificacao.tipo_produto)
+  const tipoExplicito = first(classificacao?.tipo_item, classificacao?.tipo_produto);
+  const tipoResolvido = tipoExplicito ? resolveProdutoTipoImportacao(tipoExplicito) : null;
+  const classificacaoValida = Boolean(tipoResolvido && !tipoResolvido.requiresReview && !tipoResolvido.usedDefault
     && typeof classificacao.unidade_medida_id === 'string' && first(classificacao.unidade_medida_id));
   const motivos = [...q.motivos];
   if (entidade === 'produto' && (!classeLegado || !unidadeLegado || !classificacaoValida)) {
@@ -219,7 +224,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
         classe_legado: classeLegado || undefined,
         unidade_legado: unidadeLegado || undefined,
         ...(classificacaoValida
-          ? { tipo_produto: classificacao.tipo_produto, unidade_medida_id: classificacao.unidade_medida_id }
+          ? { tipo_item: tipoResolvido.value, unidade_medida_id: classificacao.unidade_medida_id }
           : {}),
       }
       : { nome: nomeOuDesc, ...(nomeFantasia ? { nome_fantasia: nomeFantasia } : {}),
@@ -246,7 +251,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     first(stamped.codigo_legado), first(stamped.nome).toLowerCase(),
     first(stamped.descricao).toLowerCase(), first(stamped.documento), first(stamped.nome_fantasia).toLowerCase(),
     first(stamped.classe_legado).toLowerCase(), first(stamped.unidade_legado).toLowerCase(),
-    first(stamped.tipo_produto), first(stamped.unidade_medida_id),
+    first(stamped.tipo_item), first(stamped.unidade_medida_id),
   ])).digest('hex');
 
   return {

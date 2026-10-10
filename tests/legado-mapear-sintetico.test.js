@@ -48,7 +48,7 @@ test('mapear legado sintetico produto usa descricao', () => {
   } });
   assert.equal(out.codigo_legado, 'SKU-1');
   assert.equal(out.descricao, 'Chapa sintetica');
-  assert.equal(out.tipo_produto, 'MATERIA_PRIMA');
+  assert.equal(out.tipo_item, 'Matéria-Prima Produção');
   assert.equal(out.unidade_medida_id, 'u-kg');
   assert.equal(out.empresa_id, undefined);
   assert.match(out.chave_idempotente_migracao, /\|produto\|SKU-1$/);
@@ -268,4 +268,22 @@ test('material SQL usa classe e unidade da origem somente com mapa explicito', (
   assert.equal(mapped.codigo_legado, '0012');
   assert.equal(mapped.classe_legado, '08');
   assert.equal(mapped.unidade_legado, 'KG');
+});
+
+test('produto explicito aceita chave e rotulo canonicos e grava tipo_item sem default', () => {
+  for (const tipo of ['MATERIA_PRIMA', 'Matéria-Prima Produção']) {
+    const out = mapLegadoRowToCanonicalStub({ sku: 'P-1', descricao: 'Item', classe: 'C', unidade: 'KG' },
+      { entidade: 'produto', groupId: 'g1', produtoClassUnitMap: {
+        'C|KG': { tipo_item: tipo, unidade_medida_id: 'u-kg' },
+      } });
+    assert.equal(out.quarentena, false);
+    assert.equal(out.tipo_item, 'Matéria-Prima Produção');
+    assert.equal('tipo_produto' in out, false);
+  }
+});
+
+test('opcoes nao substituem empresa da operacao sem comprovacao', () => {
+  assert.throws(() => mapLegadoRowToCanonicalStub({ cod_obra: 'O-1', nome: 'Obra',
+    group_id: 'g1', empresa_id: 'origem', codigo_empresa: '1' },
+  { entidade: 'obra', empresaId: 'destino' }), /LEGACY_COMPANY_MISMATCH/);
 });

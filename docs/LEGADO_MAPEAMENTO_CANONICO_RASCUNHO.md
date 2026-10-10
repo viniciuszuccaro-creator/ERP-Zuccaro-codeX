@@ -122,3 +122,10 @@ nao comprovados. Nao tratar presenca de classe/unidade como autorizacao de uso.
 4. Separar históricos sem empresa identificada dos saldos operacionais e exigir
    validação fiscal/financeira para notas, títulos, parcelas, cartões e recebimentos.
 4. Staging isolado só com gate Onda 25.
+
+Revisao Cursor 6100174767: os tres bloqueios foram reproduzidos/corrigidos.
+Operacoes rejeitam empresa divergente nas opcoes, exigem codigo juridico e
+destino identico ao crosswalk (nao basta a chave existir). Tipo de Produto e
+persistido em `tipo_item` com rotulo canonico; mapas explicitos aceitam chave ou
+rotulo conhecidos via policy existente, sem default de Revenda. Toda duplicata
+em quarentena recebe auditoria. 30 focados PASS; novo SHA/CI/revisao obrigatorios.
