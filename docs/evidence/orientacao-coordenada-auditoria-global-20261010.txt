@@ -35,7 +35,9 @@ Correções no VisualizadorUniversalEntidadeV24 + Bloco5 (codigo na grade Empres
 | Fiscal | tabelas_fiscais | n/a | n/a | Config/Plano → tabelas_fiscais | |
 | Fiscal | sped / obrigacoes | n/a | n/a | SPED/DRE → sped/obrigacoes | |
 | Comercial 360 | Orçamento/Pedido | numero | id | API homologada | UI #254 |
-| Comercial | Clientes / NF tab | codigo | id | NotasFiscaisTab usa Fiscal.nfe | |
+| Comercial | Clientes / NF tab | codigo | id | NotasFiscaisTab usa Fiscal.nfe | alias Notas Fiscais→nfe |
+| Comercial | Pedidos Retirada / Canais | n/a | n/a | sectionKey título UI | auditar vs árvore |
+| Produção | Kanban/Ordens/Apontamentos… | n/a | n/a | sectionKeys título UI | auditar vs árvore |
 | Estoque | launchpad | n/a | n/a | inventariar badges | próximo |
 | Expedição | launchpad | n/a | n/a | inventariar badges | próximo |
 | Compras | launchpad | n/a | n/a | inventariar badges | próximo |
