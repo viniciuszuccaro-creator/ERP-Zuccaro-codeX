@@ -86,6 +86,12 @@ Fail-closed preservado (gate por seção).
 | testes | produto-http-edit-load + edicao-load + pim-ui 40/40 |
 | próxima | CI tip · redeploy erp-dev · homolog **neste** SHA · merge owner #261/#264 |
 
+### Décima segunda ação — Contratos/C360 independente (aguardando CI tip)
+- Contratos: ID técnico em `ContratoForm` + `ContratoDialogs` (≠ número).
+- Central 360: código + ID técnico; orçamentos/pedidos com status e id (fonte canônica).
+- Tip branch pós-push · implantado permanece **`bdeec58c`** até redeploy.
+- ManagePR update BLOCKED (casing `ERP-Zuccaro-codeX` vs `erp-zuccaro-codex`).
+
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
