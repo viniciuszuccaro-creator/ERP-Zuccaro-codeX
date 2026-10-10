@@ -1,3 +1,17 @@
+## REVISÃO CODEX — #267 CRM HTTP 040 (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`7bc52b0e`** (runtime `0481e940`) |
+| base | #261 `c125c4db` · draft · MERGEABLE · CI SUCCESS |
+| agente | `codex/crm-http-canonico-20261010` **RUNNING** |
+| escopo | mig 040 + routes/repo/service Oportunidade · flag `ENABLE_CRM_HTTP` default false |
+| UI/C360 | opção B intacta · sem dual-write · sem backfill |
+| ação Cursor | **monitorar** — **não** porte/merge/deploy/migração neste ciclo |
+| gates Codex | revisão independente · sem VPS/ativação até backup/mapa IDs/reconciliação |
+| #266/#265/#263/#254 | sem mudança · sem re-porte |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` (docs tip `21183bf6`) |
+
 ## TIP c125c4db IMPLANTADO — policy CRM + revisão Codex (2026-10-10)
 
 | Item | Valor |

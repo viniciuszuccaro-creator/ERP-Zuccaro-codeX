@@ -1,3 +1,17 @@
+## CURSOR — revisão Codex timer: #267 CRM HTTP (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#267** tip **`7bc52b0e`** | draft · MERGEABLE · base #261 `c125c4db` · CI SUCCESS · agente **RUNNING** |
+| conteúdo | Oportunidade HTTP + mig 040 + RLS/auditoria · `ENABLE_CRM_HTTP=false` · UI opção B intacta |
+| porte Cursor | **não** — ownership Codex schema/repo/RLS; PR pede revisão independente **sem** merge/VPS/ativação |
+| risco Regra-Mãe | baixo neste tip (flag off, sem dual-write/UI paralela); corte exige gate separado |
+| **#266** | tip `cb3af26e` · IDLE · Legado — sem porte |
+| **#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs **`21183bf6`** · runtime implantado **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar #267 até revisão/gate; secret restrito; timer |
+
 ## CURSOR — tip c125c4db implantado + revisão Codex timer (2026-10-10)
 
 | Item | Estado |
