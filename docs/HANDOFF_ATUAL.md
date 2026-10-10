@@ -104,12 +104,16 @@ Fail-closed preservado (gate por seção).
 | ≠ implantado antigo | `bdeec58c` supersedido neste redeploy |
 | próxima | 14ª ação (ID técnico) · merge owner · #211 |
 
-### Décima quarta ação — ID técnico MASTER_CODE + Cliente/Produto
-- `CadastroCodigoRegistroField` aceita `entityId` e renderiza ID técnico (≠ código).
-- 22 forms auxiliares + FormaPagamentoCompleto · ClienteCompleto · Produto V22 (codigo readonly na edição).
-- C360: nota de fontes canônicas (sem duplicar dados).
-- Usuário restrito: **BLOCKED** — falta secret tipado no Environment (`homolog-usuario-restrito-blocked-20261010.txt`).
-- Implantado permanece `00edfb2b` até CI+redeploy deste lote.
+### Décima quarta ação — tip `6e397596` ID técnico implantado
+- `CadastroCodigoRegistroField` + `entityId` · 22 forms · ClienteCompleto · Produto V22 · C360 fontes canônicas.
+- **Implantado** erp-dev **`6e397596`** · `index-BE23NqEC.js` · backup `pre-gate-e-20261010-143842.sql` · rollback `pre-spa-login-20261010-143842`.
+- **Homologado** login tipado fail_count=0 neste SHA.
+- Usuário restrito: **BLOCKED** (`homolog-usuario-restrito-blocked-20261010.txt`).
+- Evidência: `deploy-261-tip-6e397596-id-tecnico-20261010.txt`.
+
+### Décima quinta ação — Fornecedor/Representante codigo+ID
+- `CadastroFornecedorCompleto` + `RepresentanteFormCompleto` usam `CadastroCodigoRegistroField` (codigo ≠ ID).
+- Redeploy pendente após CI do tip.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).

@@ -1,14 +1,26 @@
+## CURSOR — #261 tip `6e397596` implantado (ID técnico) + Fornecedor/Representante (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **PR HEAD** | tip branch (Fornecedor/Representante codigo/ID no tip) |
+| **SHA implantado** | erp-dev **`6e397596`** · `index-BE23NqEC.js` · backup `pre-gate-e-20261010-143842.sql` · rollback `pre-spa-login-20261010-143842` |
+| **implementado** | MASTER_CODE+Cliente+Produto ID · FornecedorCompleto+RepresentanteCompleto codigo/ID · C360 fontes canônicas |
+| CI tip `6e397596` | erp-runtime-ci **SUCCESS** |
+| **homologado** (implantado) | login tipado fail_count=0 · Clientes V24 abrir/salvar/reabrir · launchpads |
+| usuário restrito | **BLOCKED** sem secret · `homolog-usuario-restrito-blocked-20261010.txt` |
+| evidências | `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | CI tip Fornecedor/Rep · redeploy · secret restrito · merge owner · #211 |
+
 ## CURSOR — #261 lote ID técnico MASTER_CODE + Cliente/Produto (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | `CadastroCodigoRegistroField` + `entityId` → ID técnico em 22 forms · ClienteCompleto codigo/ID · Produto V22 codigo readonly+ID · C360 fonte canônica |
-| tip código (pré-CI) | branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
-| testes | cadastros-codigo-cobertura + produto-pim + contratos **24/24** |
-| **implantado** | ainda **`00edfb2b`** até redeploy deste lote |
-| usuário restrito | **BLOCKED** sem `ERP_DEV_LOGIN_RESTRICTED_*` · evidência `homolog-usuario-restrito-blocked-20261010.txt` |
+| **implementado** | `CadastroCodigoRegistroField` + `entityId` → ID técnico em 22 forms · ClienteCompleto · Produto V22 · C360 |
+| **implantado** | supersedido runtime por tip **`6e397596`** |
+| usuário restrito | **BLOCKED** sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | CI tip · redeploy · homolog owner neste SHA · secret restrito · merge owner · #211 |
+| próxima | supersedido pelo tip `6e397596` acima |
 
 ## CURSOR — #261 tip `00edfb2b` implantado (#264+#254 integrado) (2026-10-10)
 
