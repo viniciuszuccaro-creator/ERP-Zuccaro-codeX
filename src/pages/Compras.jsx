@@ -33,7 +33,9 @@ export default function Compras() {
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
-  const podeCriarOC = hasPermission("Compras", "Ordens de Compra", "criar") || hasPermission("Compras", "Ordens Compra", "criar");
+  const podeCriarOC = hasPermission("Compras", "ordens_compra", "criar")
+    || hasPermission("Compras", "Ordens de Compra", "criar")
+    || hasPermission("Compras", "Ordens Compra", "criar");
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', contextKey],
@@ -136,6 +138,7 @@ export default function Compras() {
   const modules = [
     {
       title: 'Fornecedores',
+      sectionKey: 'fornecedores',
       description: 'Cadastro e gestão',
       icon: Users,
       color: 'cyan',
@@ -147,6 +150,7 @@ export default function Compras() {
     },
     {
       title: 'Recebimento NF-e',
+      sectionKey: 'ordens_compra',
       description: 'Importação automática',
       icon: Upload,
       color: 'blue',
@@ -157,6 +161,7 @@ export default function Compras() {
     },
     {
       title: 'Solicitações',
+      sectionKey: 'solicitacoes',
       description: 'Requisições internas',
       icon: FileText,
       color: 'orange',
@@ -169,6 +174,7 @@ export default function Compras() {
     },
     {
       title: 'Cotações',
+      sectionKey: 'cotacoes',
       description: 'Comparativo de preços',
       icon: FileText,
       color: 'indigo',
@@ -179,6 +185,7 @@ export default function Compras() {
     },
     {
       title: 'Ordens de Compra',
+      sectionKey: 'ordens_compra',
       description: 'Pedidos a fornecedores',
       icon: ShoppingCart,
       color: 'purple',
@@ -190,7 +197,10 @@ export default function Compras() {
     },
   ];
 
-  const allowedModules = modules.filter(m => hasPermission('Compras', (m.sectionKey || m.title), 'ver'));
+  const allowedModules = modules.filter((m) => (
+    hasPermission('Compras', (m.sectionKey || m.title), 'ver')
+    || hasPermission('Compras', (m.sectionKey || m.title), 'visualizar')
+  ));
 
    const handleModuleClick = (module) => {
     React.startTransition(() => {

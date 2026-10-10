@@ -324,6 +324,26 @@ test('owner Fiscal: seção canônica nfe + aliases UI Notas Fiscais / NotaFisca
   assert.equal(permissions.hasPermission('Fiscal', 'SecaoInexistente', 'visualizar'), false);
 });
 
+test('owner Compras/Estoque/Expedição/Financeiro: títulos UI resolvem seções canônicas', async () => {
+  const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, role: 'admin', permissoes } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { permissoes: {} } }) },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  for (const [mod, section] of [
+    ['Compras', 'ordens_compra'], ['Compras', 'Ordens de Compra'], ['Compras', 'Recebimento NF-e'],
+    ['Estoque', 'requisicoes'], ['Estoque', 'Requisições Almox.'], ['Estoque', 'movimentacoes'],
+    ['Expedição', 'entregas'], ['Expedição', 'Separação'], ['Expedição', 'roteirizacao'], ['Expedição', 'Rotas e Mapa'],
+    ['Financeiro', 'caixa'], ['Financeiro', 'Caixa Central'], ['Financeiro', 'contas_receber'],
+  ]) {
+    assert.equal(permissions.hasPermission(mod, section, 'visualizar'), true, `${mod}.${section}`);
+  }
+  assert.equal(permissions.hasPermission('Compras', 'SecaoFantasma', 'visualizar'), false);
+});
+
 test('owner Cadastros: ContatoB2B/Departamento/PerfilAcesso aliases canônicos', async () => {
   const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
   const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {

@@ -328,6 +328,7 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /Falha ao carregar registro completo/);
   assert.match(source, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional" : ENTITY/);
   assert.match(source, /Fallbacks só de rótulo/);
+  assert.match(source, /uniqueKey: `Comercial\.Cliente\.detalhes\.\$\{item\.id\}`/);
 });
 
 test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, sem wipe fiscal', async () => {

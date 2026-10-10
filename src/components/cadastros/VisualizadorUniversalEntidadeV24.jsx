@@ -1056,7 +1056,12 @@ export default function VisualizadorUniversalEntidadeV24({
                           openWindow(
                             DetalhesCliente,
                             { cliente: item, windowMode: true },
-                            { title: `Cliente ${item.nome || item.razao_social || item.id || ""}`.trim(), width: 1100, height: 720 },
+                            {
+                              title: `Cliente ${item.nome || item.razao_social || item.id || ""}`.trim(),
+                              width: 1100,
+                              height: 720,
+                              uniqueKey: `Comercial.Cliente.detalhes.${item.id}`,
+                            },
                           );
                         }}
                         title="Detalhes / Central 360"

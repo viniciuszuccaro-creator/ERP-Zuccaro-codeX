@@ -253,6 +253,7 @@ export default function Financeiro() {
   const modules = [
     {
       title: 'Caixa Central',
+      sectionKey: 'caixa',
       description: 'Hub unificado de liquidações',
       icon: Wallet,
       color: 'green',
@@ -265,6 +266,7 @@ export default function Financeiro() {
 
     {
       title: 'Formas de Pagamento',
+      sectionKey: 'caixa',
       description: 'Gestão centralizada de meios',
       icon: Wallet,
       color: 'indigo',
@@ -275,6 +277,7 @@ export default function Financeiro() {
     },
     {
       title: 'Caixa PDV Completo',
+      sectionKey: 'caixa',
       description: 'Vendas e liquidações multi-operador',
       icon: Wallet,
       color: 'emerald',
@@ -286,6 +289,7 @@ export default function Financeiro() {
 
     {
       title: 'Vendas Multicanal',
+      sectionKey: 'caixa',
       description: 'E-commerce e marketplaces',
       icon: Wallet,
       color: 'blue',
@@ -296,6 +300,7 @@ export default function Financeiro() {
     },
     {
       title: 'Remessa/Retorno CNAB',
+      sectionKey: 'caixa',
       description: 'Arquivos bancários automatizados',
       icon: Wallet,
       color: 'purple',
@@ -306,6 +311,7 @@ export default function Financeiro() {
     },
     {
       title: 'Contas a Receber',
+      sectionKey: 'contas_receber',
       description: 'Títulos e cobranças completas',
       icon: Wallet,
       color: 'green',
@@ -317,6 +323,7 @@ export default function Financeiro() {
     },
     {
       title: 'Contas a Pagar',
+      sectionKey: 'contas_pagar',
       description: 'Fornecedores e obrigações',
       icon: Wallet,
       color: 'red',
@@ -328,6 +335,7 @@ export default function Financeiro() {
     },
     {
       title: 'Aprovações Descontos',
+      sectionKey: 'contas_pagar',
       description: 'Hierarquia de aprovações',
       icon: Wallet,
       color: 'orange',
@@ -339,6 +347,7 @@ export default function Financeiro() {
     },
     {
       title: 'Conciliação Bancária',
+      sectionKey: 'conciliacao',
       description: 'Matching automático de extratos',
       icon: Wallet,
       color: 'cyan',
@@ -349,6 +358,7 @@ export default function Financeiro() {
     },
     {
       title: 'Custos Logísticos',
+      sectionKey: 'conciliacao',
       description: 'Conciliação e relatórios (LOG)',
       icon: Wallet,
       color: 'teal',
@@ -360,6 +370,7 @@ export default function Financeiro() {
     },
     {
       title: 'Relatórios Financeiros',
+      sectionKey: 'relatorios',
       description: 'DRE, fluxo e análises',
       icon: Wallet,
       color: 'indigo',
@@ -371,6 +382,7 @@ export default function Financeiro() {
     },
     {
       title: 'Alertas por Empresa',
+      sectionKey: 'relatorios',
       description: 'Notificações e riscos',
       icon: Wallet,
       color: 'orange',
@@ -382,6 +394,7 @@ export default function Financeiro() {
     },
     {
       title: 'IA Anomalias',
+      sectionKey: 'relatorios',
       description: 'Sugestões de risco financeiro (sem baixa automática)',
       icon: Wallet,
       color: 'rose',
@@ -389,10 +402,10 @@ export default function Financeiro() {
       windowTitle: '🛡️ IA Detector de Anomalias',
       width: 1400,
       height: 850,
-      sectionKey: 'Alertas por Empresa',
     },
     {
       title: 'Régua de Cobrança IA',
+      sectionKey: 'contas_receber',
       description: 'Sugestões por faixa de atraso (com confirmação)',
       icon: Wallet,
       color: 'violet',
@@ -400,7 +413,6 @@ export default function Financeiro() {
       windowTitle: 'Régua de Cobrança IA',
       width: 1200,
       height: 800,
-      sectionKey: 'Contas a Receber',
       props: { empresaId: empresaAtual?.id },
     },
   ];
@@ -408,6 +420,7 @@ export default function Financeiro() {
   const grupoModules = estaNoGrupo ? [
     {
       title: 'Rateio Multi-Empresa',
+      sectionKey: 'relatorios',
       description: 'Distribuição consolidada de custos',
       icon: Wallet,
       color: 'purple',

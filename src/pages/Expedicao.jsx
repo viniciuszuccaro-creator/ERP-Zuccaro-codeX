@@ -176,6 +176,7 @@ export default function Expedicao() {
   const modules = [
     {
       title: 'Entregas',
+      sectionKey: 'entregas',
       description: 'Lista e gestão',
       icon: Truck,
       color: 'blue',
@@ -187,6 +188,7 @@ export default function Expedicao() {
     },
     {
       title: 'Separação',
+      sectionKey: 'entregas',
       description: 'Picking de pedidos',
       icon: Package,
       color: 'purple',
@@ -197,6 +199,7 @@ export default function Expedicao() {
     },
     {
       title: 'Romaneios',
+      sectionKey: 'romaneios',
       description: 'Gestão de cargas',
       icon: FileText,
       color: 'indigo',
@@ -208,6 +211,7 @@ export default function Expedicao() {
     },
     {
       title: 'Rotas e Mapa',
+      sectionKey: 'roteirizacao',
       description: 'Visualização cartográfica',
       icon: Map,
       color: 'green',
@@ -219,6 +223,7 @@ export default function Expedicao() {
     },
     {
       title: 'Roteirização IA',
+      sectionKey: 'roteirizacao',
       description: 'Otimização automática',
       icon: Route,
       color: 'purple',
@@ -229,6 +234,7 @@ export default function Expedicao() {
     },
     {
       title: 'Métricas Realtime',
+      sectionKey: 'entregas',
       description: 'Monitoramento ao vivo',
       icon: Activity,
       color: 'green',
@@ -239,6 +245,7 @@ export default function Expedicao() {
     },
     {
       title: 'Dashboard IA',
+      sectionKey: 'entregas',
       description: 'Analytics inteligente',
       icon: BarChart3,
       color: 'blue',
@@ -249,6 +256,7 @@ export default function Expedicao() {
     },
     {
       title: 'Dashboard Entregas',
+      sectionKey: 'entregas',
       description: 'Visão geral realtime',
       icon: Activity,
       color: 'cyan',
@@ -260,6 +268,7 @@ export default function Expedicao() {
     },
     {
       title: 'Financeiro Logístico',
+      sectionKey: 'romaneios',
       description: 'CR/CP e conciliação',
       icon: BarChart3,
       color: 'teal',
@@ -271,6 +280,7 @@ export default function Expedicao() {
     },
     {
       title: 'Relatório Financeiro',
+      sectionKey: 'romaneios',
       description: 'KPIs, grupos e detalhamento',
       icon: BarChart3,
       color: 'cyan',
@@ -281,6 +291,7 @@ export default function Expedicao() {
     },
     {
       title: 'Relatórios',
+      sectionKey: 'entregas',
       description: 'Análises e exportação',
       icon: FileText,
       color: 'indigo',
@@ -292,6 +303,7 @@ export default function Expedicao() {
     },
     {
       title: 'Configurações',
+      sectionKey: 'transportadoras',
       description: 'Parâmetros e ajustes',
       icon: Settings,
       color: 'purple',
@@ -303,6 +315,7 @@ export default function Expedicao() {
     },
   {
     title: 'Painel Logístico',
+    sectionKey: 'roteirizacao',
     description: 'Mapa + filas em tempo real',
     icon: Activity,
     color: 'teal',
@@ -361,7 +374,12 @@ export default function Expedicao() {
       return;
     }
 
-    const canCreateEntrega = hasPermission('Expedição', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'incluir') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedicao', 'Entregas', 'incluir');
+    const canCreateEntrega = hasPermission('Expedição', 'entregas', 'criar')
+      || hasPermission('Expedição', 'Entregas', 'criar')
+      || hasPermission('Expedição', 'Entregas', 'incluir')
+      || hasPermission('Expedicao', 'entregas', 'criar')
+      || hasPermission('Expedicao', 'Entregas', 'criar')
+      || hasPermission('Expedicao', 'Entregas', 'incluir');
     if (!canCreateEntrega) {
       await auditExpedicaoAction('nova_entrega_bloqueada', { title: 'Nova Entrega' }, {
         sucesso: false,
