@@ -31,6 +31,19 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
     await assert.rejects(app.orcamentoService.create(ctx,data),{code:'ORCAMENTO_PRODUTO_INVALIDO'});
     const links=await Promise.all(Array.from({length:6},()=>f.service.habilitarEmpresa(ctx,ID.produtoA,{ativo:true,habilitado_operacao:true,expected_version:0})));
     assert.equal(new Set(links.map(r=>r.id)).size,1);assert.ok(links.every(r=>r.version===1));
+    // An intermediate audit failure must roll back the complete sale, not only its audit.
+    const counts=()=>f.admin.query<{quotes:number;items:number;audits:number}>(`SELECT
+      (SELECT count(*)::int FROM orcamentos WHERE group_id=$1 AND empresa_id=$2) quotes,
+      (SELECT count(*)::int FROM orcamento_itens WHERE group_id=$1 AND empresa_id=$2) items,
+      (SELECT count(*)::int FROM audit_logs WHERE group_id=$1 AND empresa_id=$2) audits`,[ctx.groupId,ctx.empresaId]);
+    const beforeFailure=(await counts()).rows[0];
+    await f.exec(`CREATE FUNCTION r41_sale_audit_failure() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.entity='Orcamento' THEN RAISE EXCEPTION 'R41 synthetic audit failure'; END IF;RETURN NEW;END $$;
+      CREATE TRIGGER r41_sale_audit_failure BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE PROCEDURE r41_sale_audit_failure();`);
+    try {
+      await assert.rejects(app.orcamentoService.create(ctx,data),/R41 synthetic audit failure/);
+      assert.deepEqual((await counts()).rows[0],beforeFailure);
+    }finally{await f.exec('DROP TRIGGER r41_sale_audit_failure ON audit_logs;DROP FUNCTION r41_sale_audit_failure();');}
     const quote=await app.orcamentoService.create(ctx,data);assert.notEqual(quote.itens[0].preco_unitario,'999.000000');
     const order=await app.pedidoService.convert(ctx,quote.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z'});
     assert.equal(order.itens[0].produto_id,ID.produtoA);assert.equal(order.itens[0].preco_unitario,quote.itens[0].preco_unitario);
