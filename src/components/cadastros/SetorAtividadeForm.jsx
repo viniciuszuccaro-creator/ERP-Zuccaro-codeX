@@ -81,6 +81,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-setor-atividade"
       />

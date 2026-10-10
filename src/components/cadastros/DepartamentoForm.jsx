@@ -93,6 +93,7 @@ export default function DepartamentoForm({ departamento, item, data, initialData
         </div>
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-departamento"
       />

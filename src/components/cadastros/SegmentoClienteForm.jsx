@@ -66,6 +66,7 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-segmento-cliente"
       />

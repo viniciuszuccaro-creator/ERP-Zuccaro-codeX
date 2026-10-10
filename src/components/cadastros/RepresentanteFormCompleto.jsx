@@ -30,6 +30,7 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
@@ -370,6 +371,12 @@ export default function RepresentanteFormCompleto({ representante: representante
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
+              <CadastroCodigoRegistroField
+                hasId={Boolean(representante?.id)}
+                entityId={representante?.id}
+                value={formData.codigo ?? representante?.codigo}
+                action="codigo-registro-representante-completo"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de Pessoa *</Label>

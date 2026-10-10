@@ -56,6 +56,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-catalogo-web"
       />

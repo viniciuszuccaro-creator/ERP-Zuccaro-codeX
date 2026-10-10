@@ -63,6 +63,13 @@ test('openCadastroEntityWindow cobre todos os blocos com uniqueKey', async () =>
   }
 });
 
+test('CadastroCodigoRegistroField expõe ID técnico quando entityId informado', async () => {
+  const fieldSrc = await readFile(new URL('../src/components/cadastros/CadastroCodigoRegistroField.jsx', import.meta.url), 'utf8');
+  assert.match(fieldSrc, /entityId/);
+  assert.match(fieldSrc, /ID técnico/);
+  assert.match(fieldSrc, /id-tecnico-/);
+});
+
 test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () => {
   const fieldSrc = await readFile(new URL('../src/components/cadastros/CadastroCodigoRegistroField.jsx', import.meta.url), 'utf8');
   assert.match(fieldSrc, /readOnly/);
@@ -94,7 +101,27 @@ test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () =>
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, new RegExp(action));
     assert.match(src, /CadastroCodigoRegistroField/);
+    assert.match(src, /entityId=\{/, `${file} deve passar entityId ao campo codigo/ID`);
   }
+});
+
+test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', async () => {
+  const cliente = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(cliente, /CadastroCodigoRegistroField/);
+  assert.match(cliente, /codigo-registro-cliente-completo/);
+  assert.match(cliente, /entityId=\{cliente\?\.id\}/);
+  assert.match(produto, /data-action="id-tecnico-produto"/);
+  assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
+});
+
+test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
+  const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
+  const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(fornecedor, /codigo-registro-fornecedor-completo/);
+  assert.match(fornecedor, /entityId=\{fornecedor\?\.id\}/);
+  assert.match(representante, /codigo-registro-representante-completo/);
+  assert.match(representante, /entityId=\{representante\?\.id\}/);
 });
 
 test('Bloco 6 Tecnologia lista entidades fora de MASTER_CODE field=codigo', async () => {

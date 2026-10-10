@@ -73,6 +73,7 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id || veiculo?.id)}
+        entityId={dadosIniciais?.id || veiculo?.id}
         value={formData.codigo}
         action="codigo-registro-veiculo"
       />

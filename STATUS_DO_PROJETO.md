@@ -1,19 +1,53 @@
-## CURSOR — #261 tip integrado `#264`+#254 `20a2c2fb` (2026-10-10)
+## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 
 | Pacote | SHA / estado |
 |---|---|
-| **PR HEAD #261** | tip branch pós-push · merge código **`861513cd`** · docs pacote **`c9f845a8`+** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
-| **código incorporado** | #254 final **`20a2c2fb`** (ancestral) · #264 tip **`d9403665`** (useProdutoHttpEditLoad · actorId/token · cliente consolidado) · #261 minify-safe **`bdeec58c`** |
-| **SHA implantado** | erp-dev ainda **`bdeec58c`** · `index-5EmU7-cb.js` · **≠** PR HEAD (redeploy pendente) |
-| responsável integração | **Cursor** merge em #261 · Codex dono porte #254→#264 · sem segunda cópia dos mesmos arquivos |
-| **preservado** | `isSelfManagedCadastro` · freeze sessão≡render · V23→V24 · HTTP ativo≠status · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
-| testes locais | `produto-http-edit-load` + `cadastros-empresa-edicao-load` + `produto-pim-ui` **40/40** |
-| CI tip pós-push | erp-runtime-ci (push) |
-| **homologado** tip implantado | só **`bdeec58c`** (fail_count=0) — não atribuir ao tip integrado |
-| residual | redeploy+homolog tip integrado · usuário restrito · Legado #211 · ManagePR casing |
-| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
+| **PR HEAD / implantado** | **`f22d1151`** · `index-KP6RdCBA.js` · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **implementado** | MASTER_CODE+Cliente+Produto+Fornecedor+Representante codigo/ID · C360 fontes · #254/#264 |
+| CI tip `f22d1151` | erp-runtime-ci **SUCCESS** |
+| backup | `pre-gate-e-20261010-144428.sql` sha256 `a838fa18…c7a6` |
+| rollback | `pre-spa-login-20261010-144429` |
+| **homologado** (este SHA) | login tipado fail_count=0 · Clientes V24 · launchpads |
+| usuário restrito | **BLOCKED** sem secret |
+| evidências | `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt` · `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | CI tip · implantar tip branch · homolog login tipado neste SHA · merge owner |
+| próxima | secret restrito · merge owner #261/#264 · Legado #211 · inventário residual |
+
+## CURSOR — #261 tip `6e397596` implantado (ID técnico) (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **implantado** | supersedido por **`f22d1151`** |
+| evidências | `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
+| próxima | supersedido pelo tip `f22d1151` acima |
+
+## CURSOR — #261 lote ID técnico MASTER_CODE + Cliente/Produto (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `CadastroCodigoRegistroField` + `entityId` → ID técnico em 22 forms · ClienteCompleto · Produto V22 · C360 |
+| **implantado** | supersedido runtime por tip **`6e397596`** |
+| usuário restrito | **BLOCKED** sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | supersedido pelo tip `6e397596` acima |
+
+## CURSOR — #261 tip `00edfb2b` implantado (#264+#254 integrado) (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **PR HEAD #261** | tip docs · runtime implantado **`00edfb2b`** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **código incorporado** | #254 final **`20a2c2fb`** · #264 tip **`d9403665`** · minify-safe **`bdeec58c`** · Contratos/C360 ID · merge **`861513cd`** |
+| **SHA implantado** | erp-dev **`00edfb2b`** · `index-ChwPPG6e.js` · backup `pre-gate-e-20261010-142336.sql` · rollback `pre-spa-login-20261010-142346` |
+| responsável integração | **Cursor** merge em #261 · Codex porte #254→#264 · sem segunda cópia |
+| **preservado** | `isSelfManagedCadastro` · freeze sessão≡render · V23→V24 · HTTP ativo≠status · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
+| testes locais | produto-http-edit-load+edicao+pim **40/40** · contratos **5/5** |
+| CI tip `00edfb2b` | erp-runtime-ci **SUCCESS** (4 checks) |
+| **homologado** (este SHA) | login tipado · Clientes V24 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads · **fail_count=0** |
+| residual | lote ID técnico acima · usuário restrito BLOCKED · Legado #211 · merge owner |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
+| evidências | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | supersedido pelo lote ID técnico acima após CI/redeploy |
 
 ## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
 

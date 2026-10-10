@@ -158,6 +158,7 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <CadastroCodigoRegistroField
         hasId={Boolean(transportadora?.id)}
+        entityId={transportadora?.id}
         value={formData.codigo}
         action="codigo-registro-transportadora"
       />

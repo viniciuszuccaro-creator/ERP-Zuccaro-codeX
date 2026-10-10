@@ -93,6 +93,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosCentroCusto?.id)}
+        entityId={dadosCentroCusto?.id}
         value={formData.codigo}
         action="codigo-registro-centro-custo"
       />

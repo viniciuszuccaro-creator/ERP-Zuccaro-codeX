@@ -81,15 +81,47 @@ Fail-closed preservado (gate por seção).
 | HEAD #264 Codex | **`d9403665`** · CI SUCCESS · base #261 `d31b9bbe`/`a004044b` |
 | **PR HEAD #261** | tip branch · merge código **`861513cd`** · docs **`c9f845a8`+** |
 | código incorporado | `useProdutoHttpEditLoad` · actorId/token no form scope/edit policy · cliente consolidado · **preservado** `isSelfManagedCadastro` minify-safe |
-| **SHA implantado** | ainda **`bdeec58c`** — **não** confundir com PR HEAD |
+| **SHA implantado** | supersedido pela 13ª ação (**`00edfb2b`**) |
 | sem cópia divergente | Cursor **não** re-portou #254 enquanto Codex fechava #264; merge preservou ambos os conjuntos |
 | testes | produto-http-edit-load + edicao-load + pim-ui 40/40 |
-| próxima | CI tip · redeploy erp-dev · homolog **neste** SHA · merge owner #261/#264 |
+| próxima | supersedido pela 13ª ação |
+
+### Décima segunda ação — Contratos/C360 independente
+- Contratos: ID técnico em `ContratoForm` + `ContratoDialogs` (≠ número).
+- Central 360: código + ID técnico; orçamentos/pedidos com status e id (fonte canônica).
+- ManagePR: URL lowercase `erp-zuccaro-codex` (PR #261).
+
+### Décima terceira ação — tip `00edfb2b` implantado + homolog
+| Pacote | Valor |
+|---|---|
+| **PR HEAD / implantado** | **`00edfb2b`** · asset `index-ChwPPG6e.js` |
+| incorporado | #254 `20a2c2fb` · #264 `d9403665` · minify-safe · Contratos/C360 |
+| CI | erp-runtime-ci **SUCCESS** (4) |
+| backup | `pre-gate-e-20261010-142336.sql` sha256 `501c0400…ba5f` |
+| rollback | `pre-spa-login-20261010-142346` |
+| **homologado** | login tipado fail_count=0 (não inject) |
+| evidência | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
+| ≠ implantado antigo | `bdeec58c` supersedido neste redeploy |
+| próxima | 14ª ação (ID técnico) · merge owner · #211 |
+
+### Décima quarta ação — tip `6e397596` ID técnico implantado
+- `CadastroCodigoRegistroField` + `entityId` · 22 forms · ClienteCompleto · Produto V22 · C360 fontes canônicas.
+- **Implantado** erp-dev **`6e397596`** · `index-BE23NqEC.js` · backup `pre-gate-e-20261010-143842.sql` · rollback `pre-spa-login-20261010-143842`.
+- **Homologado** login tipado fail_count=0 neste SHA.
+- Usuário restrito: **BLOCKED** (`homolog-usuario-restrito-blocked-20261010.txt`).
+- Evidência: `deploy-261-tip-6e397596-id-tecnico-20261010.txt`.
+
+### Décima quinta ação — tip `f22d1151` Fornecedor/Representante implantado
+- `CadastroFornecedorCompleto` + `RepresentanteFormCompleto` com `CadastroCodigoRegistroField`.
+- **Implantado** **`f22d1151`** · `index-KP6RdCBA.js` · backup `pre-gate-e-20261010-144428.sql` · rollback `pre-spa-login-20261010-144429`.
+- **Homologado** login tipado fail_count=0 neste SHA.
+- Evidência: `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt`.
+- Residual: secret usuário restrito · merge owner · Legado #211.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
-#254 tip **`20a2c2fb`** + #264 tip **`d9403665`** já em #261 HEAD `861513cd` — merge owner coordenado; não abrir segundo porte.
+#254 tip **`20a2c2fb`** + #264 tip **`d9403665`** em #261 tip implantado **`00edfb2b`** — merge owner; não abrir segundo porte.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 

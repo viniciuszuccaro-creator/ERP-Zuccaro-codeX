@@ -183,6 +183,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
           <div className="grid grid-cols-2 gap-4">
             <CadastroCodigoRegistroField
               hasId={Boolean(formaPagamentoNorm?.id)}
+              entityId={formaPagamentoNorm?.id}
               value={formData.codigo}
               action="codigo-registro-forma-pagamento-completo"
             />
@@ -197,20 +198,6 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
               />
             </div>
           </div>
-
-          {formaPagamentoNorm?.id ? (
-            <div>
-              <Label>ID técnico</Label>
-              <Input
-                value={String(formaPagamentoNorm.id)}
-                readOnly
-                disabled
-                className="bg-slate-50 font-mono text-xs"
-                data-action="id-tecnico-forma-pagamento-completo"
-                title="Identificador técnico imutável; distinto do código de registro"
-              />
-            </div>
-          ) : null}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

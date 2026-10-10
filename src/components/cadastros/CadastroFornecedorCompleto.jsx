@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { normalizeFornecedorCadastro } from "@/api/localCadastroMasterPolicy";
 import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection, FornecedorFiscalFinanceiroSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
 
@@ -404,6 +405,12 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
+              <CadastroCodigoRegistroField
+                hasId={Boolean(fornecedor?.id)}
+                entityId={fornecedor?.id}
+                value={formData.codigo ?? fornecedor?.codigo}
+                action="codigo-registro-fornecedor-completo"
+              />
               <FornecedorDadosGeraisSection
                 formData={formData}
                 setFormData={setFormData}

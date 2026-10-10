@@ -84,6 +84,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       <div className="grid grid-cols-2 gap-4">
       <CadastroCodigoRegistroField
         hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
         value={formData.codigo}
         action="codigo-registro-tipo-despesa"
       />
