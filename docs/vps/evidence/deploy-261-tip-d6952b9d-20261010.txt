@@ -19,3 +19,10 @@
 - CadastroCodigoRegistroField + forms MASTER_CODE (código readonly)
 - httpApiClient order_by/order_dir (revisão independente)
 - docs CI SUCCESS anteriores
+
+## Redeploy tip 279f26fc (lint hasId)
+| tip | 279f26fc |
+| SPA | /assets/index-D_uICNJK.js |
+| backup | pre-gate-e-20261010-100519.sql · 1122345 B · sha256=1b7c593c8ad7b01e528ceaa8a182e1fc7a113ef5d85e7581edc3042b7b1ac5b4 |
+| rollback | pre-spa-login-20261010-100519 |
+

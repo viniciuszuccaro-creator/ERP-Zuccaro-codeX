@@ -1,18 +1,24 @@
-## CURSOR — #261 candidata integração + homolog API (2026-10-10)
+## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
-| candidata | [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) MERGEABLE CLEAN · CI SUCCESS (`6b19e862`) |
-| ancestralidade | #258⊂#259⊂#260⊂#261 (tips verificados) |
-| **implantado** | **`bd2fa504`** · `index-BufSJCA3.js` · 038+039 · backup/rollback 203540/203649 |
-| **homologado API** | CPA create/reopen/convert PASS · 3Z convert PASS · fail-closed preço/cliente |
-| **recuperado** | NÃO (#211) |
-| UI | BLOCKED #254 Codex contexto |
-| #258/#259/#260 | ancestors — superseder após merge #261 |
+| candidata | [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) · `#258⊂#259⊂#260⊂#261` |
+| tip | **`279f26fc`** · asset `index-D_uICNJK.js` (runtime forms em `d6952b9d`+) |
+| delta | forms MASTER_CODE `codigo-registro` · HTTP `order_by` (Bugbot) · lint hasId |
+| **implantado** | erp-dev · mig 038+039 · backup `pre-gate-e-20261010-100519.sql` · rollback `pre-spa-login-20261010-100519` |
+| **homologado API** | CPA create/reopen/convert/dup409/cross404 PASS |
+| **recuperado** | NÃO legado (#211) · auxiliares codigo API OK |
+| UI | BLOCKED #254 Codex |
 | ≠ | sessão/contexto/outbox Codex |
-| evidências | `consolidacao-261-ancestralidade-20261010.txt` · `homolog-261-comercial-api-*` |
-| próxima | merge owner #261; Codex #254; #211 |
+| evidências | `deploy-261-tip-d6952b9d-*` · `homolog-261-tip-d6952b9d-c360-*` |
+| próxima | CI tip → merge owner; #254; #211 |
+
+## CURSOR — #261 candidata integração + homolog API (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| tip | supersedido por **`d6952b9d`** acima |
 
 ## CURSOR — #261 tip `bd2fa504` implantado (2026-10-09T20:50Z)
 
