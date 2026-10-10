@@ -439,3 +439,30 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
 });
+
+test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({
+      data: [{ id: 'c1', codigo: '000001', nome: 'A' }],
+      meta: { total: 1 },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    fetchImpl,
+    getScope: () => ({ groupId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', token: 'tok' }),
+  });
+  // Filtro multiempresa com status textual NÃO deve enviar ativo=Ativo/false
+  const rows = await client.entities.Cliente.filter({
+    $and: [{ $or: [{ group_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }] }],
+    status: 'Ativo',
+  }, '-updated_date', 20, 0);
+  assert.ok(Array.isArray(rows));
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].codigo, '000001');
+  assert.equal(urls[0].includes('ativo='), false);
+  assert.match(urls[0], /\/api\/v1\/clientes\?/);
+});

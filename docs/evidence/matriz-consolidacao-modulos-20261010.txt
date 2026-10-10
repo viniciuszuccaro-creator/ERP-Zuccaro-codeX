@@ -6,7 +6,7 @@
 | Financeiro card AprovacaoDescontosManager | comercial/CentralAprovacoesManager | descontos+crédito+conciliação | **redirect feito** (lazy import) |
 | Cadastros Base (rótulo homolog) | pages/Cadastros.jsx · sidebar "Cadastros Gerais" | mesmo shell; Pessoas→V24→ClienteCompleto | **keep** — unificar rótulo só com owner |
 | comercial/ClientesTab | V24 + CadastroClienteCompleto | HTTP lista/abrir | **keep** (entrada Comercial) |
-| VisualizadorUniversalEntidade (V23) em Estoque/Compras/RH | VisualizadorUniversalEntidadeV24 | scope, RBAC, codigo, open único | **redirect pendente** (migrar tabs) |
+| VisualizadorUniversalEntidade (V23) em Estoque/Compras/RH | VisualizadorUniversalEntidadeV24 | scope, RBAC, codigo, open único | **redirect feito** (ProdutosTab · FornecedoresTab · ColaboradoresTab · RH window) |
 | FormaPagamentoForm (simples) | FormaPagamentoFormCompleto | codigo+ID, abas | **keep both** curto prazo (Completo no Bloco3) |
 | ChatbotIntentsForm | ChatbotIntentForm | adapter já consolidado | **keep** (adapter) |
 | ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |

@@ -121,19 +121,32 @@ async function main() {
       if (await com.isVisible().catch(() => false)) {
         await com.click({ force: true });
         await page.waitForTimeout(1500);
-        const c2 = page.getByText(/^Clientes?$/i).first();
-        if (await c2.isVisible().catch(() => false)) {
-          await c2.click({ force: true });
-          await page.waitForTimeout(2500);
-          mark('clientes_list', true, 'via Comercial Clientes');
-          clientesOk = true;
+        // Tile Launchpad (data-action) — não o KPI "Clientes"
+        const tile = page.locator('[data-action="Comercial.Clientes.abrir"]').first();
+        if (await tile.isVisible().catch(() => false)) {
+          await tile.click({ force: true });
+          await page.waitForTimeout(3500);
+          const v24 = await page.locator('[data-comercial-clientes-tab="v24"]').count();
+          mark('clientes_list', v24 > 0, v24 > 0 ? 'via Comercial launchpad V24' : 'tile clicked; V24 marker missing');
+          clientesOk = v24 > 0;
+        } else {
+          const c2 = page.getByRole('button', { name: /Clientes/i }).first();
+          if (await c2.isVisible().catch(() => false)) {
+            await c2.click({ force: true });
+            await page.waitForTimeout(2500);
+            mark('clientes_list', true, 'via Comercial role=button Clientes');
+            clientesOk = true;
+          }
         }
       }
     }
     if (!clientesOk) mark('clientes_list', false, 'Cliente tile missing Cadastros+Comercial');
 
-    // Abrir primeira linha da grade se existir
-    const row = page.locator('table tbody tr, [role="row"]').filter({ hasNotText: /^$/ }).nth(1);
+    // Abrir primeira linha da grade V24 (janela flutuante)
+    const gridRoot = page.locator('[data-comercial-clientes-tab="v24"]').first();
+    const row = (await gridRoot.count()) > 0
+      ? gridRoot.locator('table tbody tr').first()
+      : page.locator('table tbody tr').first();
     const rowVisible = await row.isVisible().catch(() => false);
     if (rowVisible) {
       await row.dblclick().catch(async () => { await row.click(); });

@@ -1,10 +1,11 @@
 import React from "react";
 import { Package } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 
 export default function FornecedoresTab({ fornecedores, windowMode = false }) {
+  void fornecedores;
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -17,14 +18,14 @@ export default function FornecedoresTab({ fornecedores, windowMode = false }) {
       data-context-mode={contexto}
       data-group-id={groupId || ""}
       data-empresa-id={empresaId || ""}
+      data-compras-fornecedores-tab="v24"
     >
-      <VisualizadorUniversalEntidade
+      <VisualizadorUniversalEntidadeV24
         nomeEntidade="Fornecedor"
         tituloDisplay="Fornecedores"
         icone={Package}
         camposPrincipais={["nome","razao_social","cnpj","categoria","status","telefone","email"]}
         componenteEdicao={CadastroFornecedorCompleto}
-        queryKey={["fornecedores"]}
         windowMode={windowMode}
       />
     </div>
