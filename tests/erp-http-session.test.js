@@ -203,6 +203,58 @@ test('UserContext real ignora falha antiga após carregar usuário da Empresa no
   assert.equal(state[2], null);
 });
 
+test('AuthContext real revalida 401 em segundo plano sem spinner global e bloqueia shell', async () => {
+  const state = [];
+  const effects = [];
+  let slot = 0;
+  let onContextChange;
+  const session = { token: 'synthetic', groupId: GROUP, actorId: ACTOR,
+    empresaId: EMPRESA_A, empresas: [{ id: EMPRESA_A }], permissoes: {} };
+  let active = session;
+  let revoked = false;
+  const react = {
+    createContext: () => ({ Provider: 'provider' }),
+    createElement: (_type, props) => props.value,
+    useState: initial => {
+      const index = slot++;
+      state[index] = initial;
+      return [state[index], value => { state[index] = value; }];
+    },
+    useRef: initial => ({ current: initial }),
+    useCallback: fn => fn,
+    useEffect: effect => effects.push(effect),
+    useContext: () => null,
+  };
+  const auth = await loadRealHook('../src/lib/AuthContext.jsx', {
+    react: { ...react, default: react },
+    '@/api/base44Client': { isHttpBackendMode: true, isApiKeyMode: true,
+      isLocalOnlyMode: false, base44: {} },
+    '@/lib/app-params': { appParams: {} },
+    '@base44/sdk/dist/utils/axios-client': { createAxiosClient: () => ({}) },
+    '@/api/localAuthSessionPolicy': { assertInteractiveAuthAllowed: () => ({ allowed: true }) },
+    '@/api/erpHttpSession': {
+      readErpHttpSession: () => active,
+      clearErpHttpSession: () => { active = null; },
+      refreshErpHttpSessionFromServer: async () => {
+        if (revoked) { active = null; return null; }
+        return session;
+      },
+      ensureHttpTenantLocalMirror: async () => {},
+      buildHttpSessionUser: () => ({ id: ACTOR }),
+    },
+  }, { window: { addEventListener: (_, handler) => { onContextChange = handler; }, removeEventListener() {} } });
+  const provider = auth.AuthProvider({ children: null });
+  assert.equal(await provider.checkUserAuth(), true);
+  assert.equal(state[1], true);
+  assert.equal(state[2], false);
+  effects[1]();
+  revoked = true;
+  onContextChange();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(state[1], false);
+  assert.equal(state[2], false);
+});
+
 test('permissões HTTP do hook real usam perfil servidor mesmo com espelho local vazio', async () => {
   const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
     './UserContext': { useUser: () => ({ user: { id: ACTOR, permissoes: { Comercial: { pedido: ['visualizar'] } } } }) },
@@ -625,6 +677,34 @@ test('loginErpHttpSession persiste expires_in e monta admin/comum conforme role 
         value: origLocal,
       });
     }
+  }
+});
+
+test('login novo invalida carga antiga; tentativa substituída não persiste nem emite evento', async () => {
+  const storage = memoryStorage();
+  const originalStorage = globalThis.localStorage;
+  const originalWindow = globalThis.window;
+  const events = [];
+  globalThis.localStorage = storage;
+  globalThis.window = { dispatchEvent: event => events.push(event.type) };
+  const response = { ok: true, status: 200, json: async () => ({ data: {
+    access_token: 'login-novo', expires_in: 3600,
+    profiles: [{ id: ACTOR, group_id: GROUP, empresa_id: EMPRESA_A, role: 'user' }],
+  } }) };
+  try {
+    await assert.rejects(loginErpHttpSession({ email: 'sintetico@example.test', password: 'senha',
+      baseUrl: '', fetchImpl: async () => response, shouldAccept: () => false }), /substituída/);
+    assert.equal(readErpHttpSession(storage), null);
+    assert.deepEqual(events, []);
+    await loginErpHttpSession({ email: 'sintetico@example.test', password: 'senha',
+      baseUrl: '', fetchImpl: async () => response, shouldAccept: () => true });
+    assert.equal(readErpHttpSession(storage)?.token, 'login-novo');
+    assert.deepEqual(events, ['erp-http-context-changed']);
+  } finally {
+    if (originalStorage === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = originalStorage;
+    if (originalWindow === undefined) delete globalThis.window;
+    else globalThis.window = originalWindow;
   }
 });
 

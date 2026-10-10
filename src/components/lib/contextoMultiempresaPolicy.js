@@ -89,6 +89,22 @@ export const isEditRequestCurrent = ({ request, current, requestedScope, activeS
   request === current && requestedScope === activeScope
 );
 
+/** Bloqueia save de formulário aberto em tenant anterior, mesmo antes do efeito de fechamento. */
+export const assertCadastroFormScopeCurrent = ({ formScope, renderedScope, activeScope }) => {
+  if (!formScope || formScope !== renderedScope || formScope !== activeScope) {
+    throw new Error('Contexto alterado durante a edição. Reabra o cadastro antes de salvar.');
+  }
+};
+
+/** Placeholder da grade só atravessa paginação/sort, nunca troca de tenant ou busca. */
+export const getScopedCadastroPlaceholder = (previousData, previousKey, currentKey) => {
+  if (!Array.isArray(previousKey) || !Array.isArray(currentKey)) return [];
+  for (const index of [1, 6, 7, 8]) {
+    if (previousKey[index] !== currentKey[index]) return [];
+  }
+  return Array.isArray(previousData) ? previousData : [];
+};
+
 /**
  * Troca de grupo/empresa no VisualizadorUniversal: fecha form, zera seleção em massa
  * e invalida request de edição em voo. Não preserva rascunho cross-tenant.

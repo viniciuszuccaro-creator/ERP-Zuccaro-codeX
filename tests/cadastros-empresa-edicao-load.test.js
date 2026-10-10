@@ -8,10 +8,33 @@ import {
   isCadastroEditLoadComplete,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
 import {
+  assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,
+  getScopedCadastroPlaceholder,
   isEditRequestCurrent,
   loadEmpresaForEdit,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
+
+test('formulário aberto na Empresa A não salva após troca para B, nem antes do efeito de fechamento', () => {
+  const opened = 'Cliente:grupo-a:empresa-a';
+  assert.doesNotThrow(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: opened,
+  }));
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: 'Cliente:grupo-a:empresa-b', activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+});
+
+test('grade conserva placeholder só no mesmo tenant; CPA→3Z não mostra linhas de CPA', () => {
+  const rowA = [{ id: 'cliente-a', empresa_id: 'empresa-a' }];
+  const base = ['viz-v33', 'Cliente', 'updated_date', 'desc', 1, 25, '', 'empresa-a', 'grupo-a'];
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 4), 2, ...base.slice(5)]), rowA);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 7), 'empresa-b', 'grupo-a']), []);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 6), 'busca', 'empresa-a', 'grupo-a']), []);
+});
 
 const completeEmpresa = Object.freeze({
   id: 'empresa-a',
