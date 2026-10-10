@@ -82,6 +82,20 @@ export default function ContratoForm({ contrato, onSubmit, clientes = [], fornec
           </Select>
         </div>
 
+        {contrato?.id ? (
+          <div className="col-span-2">
+            <Label>ID técnico</Label>
+            <Input
+              value={String(contrato.id)}
+              readOnly
+              disabled
+              className="bg-slate-50 font-mono text-xs"
+              data-action="id-tecnico-contrato-form"
+              title="Identificador técnico imutável; distinto do número do contrato"
+            />
+          </div>
+        ) : null}
+
         <div className="col-span-2">
           <Label htmlFor="parte_contratante">Parte Contratante *</Label>
           <Input

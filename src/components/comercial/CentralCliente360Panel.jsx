@@ -243,7 +243,13 @@ export default function CentralCliente360Panel({
 
       {identity && (
         <div className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div><span className="text-slate-500">Código</span><p className="font-mono">{identity.codigo}</p></div>
+          <div><span className="text-slate-500">Código</span><p className="font-mono" data-action="codigo-registro-central360">{identity.codigo ?? '—'}</p></div>
+          <div>
+            <span className="text-slate-500">ID técnico</span>
+            <p className="font-mono text-xs" data-action="id-tecnico-central360" title="Identificador técnico imutável; distinto do código de registro">
+              {identity.id || clienteId || '—'}
+            </p>
+          </div>
           <div><span className="text-slate-500">Documento</span><p>{identity.documento || '—'}</p></div>
           <div><span className="text-slate-500">E-mail</span><p>{identity.email || '—'}</p></div>
           <div><span className="text-slate-500">Telefone</span><p>{identity.telefone || '—'}</p></div>
@@ -304,8 +310,16 @@ export default function CentralCliente360Panel({
           loadingMore={loadingMore}
           renderRow={(row) => (
             <>
-              <span className="font-mono">{row.numero}</span>
-              <span>{money(row.total)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="font-mono" data-action="central360-orcamento-numero">{row.numero}</span>
+                {row.id ? (
+                  <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-orcamento-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+                ) : null}
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
+                <span>{money(row.total)}</span>
+              </span>
             </>
           )}
         />
@@ -318,8 +332,16 @@ export default function CentralCliente360Panel({
           loadingMore={loadingMore}
           renderRow={(row) => (
             <>
-              <span className="font-mono">{row.numero}</span>
-              <span>{money(row.total)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="font-mono" data-action="central360-pedido-numero">{row.numero}</span>
+                {row.id ? (
+                  <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-pedido-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+                ) : null}
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
+                <span>{money(row.total)}</span>
+              </span>
             </>
           )}
         />
