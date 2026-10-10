@@ -4,17 +4,16 @@
 |---|---|
 | **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
 | **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
-| **PR HEAD #261** | **`346192e4`** · MERGEABLE → main |
-| CI tip `21a63549`/`346192e4` | erp-runtime-ci **SUCCESS** |
-| **implantado** | erp-dev **`346192e4`** · `index-BvhNui57.js` · rollback `pre-spa-login-20261010-163939` |
-| **homologado implantado** | owner tip **`346192e4`** fail_count=0 (login tipado + Clientes + launchpads) |
+| **PR HEAD #261** | **`58e01754`** · MERGEABLE → main |
+| CI tip `58e01754` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`58e01754`** · `index-Bl46Ykvq.js` · rollback `pre-spa-login-20261010-164602` |
+| **homologado implantado** | owner tip **`58e01754`** fail_count=0 (login tipado + Clientes + launchpads) |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
-| **implementado neste lote** | C360 CRM opção B · CRM multiempresa/`sectionKey` · Contratos lista ID · testes 7/7 |
+| **implementado neste lote** | C360 CRM opção B · CRM multiempresa/`sectionKey` · Contratos ID lista · azul Contratos/AdminHeader · testes 7/7 |
 | **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
-| evidência | `deploy-261-tip-346192e4-crm-legado-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
-| **azul residual** | Contratos chrome/CTA azul · AdminHeader ícone azul (pós-`346192e4`; redeploy tip docs) |
-| próxima | CI+redeploy tip azul · secret restrito · merge owner #261→main · Codex CRM HTTP / #211 |
+| evidência | `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `deploy-261-tip-346192e4-crm-legado-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · Codex CRM HTTP / #211 · POD/Separação keep-both |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 

@@ -28,8 +28,8 @@ Cadastros: blocos multi-cor aprovados (#257) — não forçar tudo azul.
 |---|---|
 | #254 final | `20a2c2fb` (ancestral) |
 | #264 Codex | `d9403665` (porte #254→base #261) |
-| PR HEAD #261 | `346192e4` |
-| implantado erp-dev | `346192e4` · `index-BvhNui57.js` |
+| PR HEAD #261 | `58e01754` |
+| implantado erp-dev | `58e01754` · `index-Bl46Ykvq.js` |
 | merge #264→#261 | `861513cd` · main ainda `baba91a6` |
 Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
 
