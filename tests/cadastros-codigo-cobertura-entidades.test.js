@@ -115,6 +115,15 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
 });
 
+test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
+  const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
+  const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(fornecedor, /codigo-registro-fornecedor-completo/);
+  assert.match(fornecedor, /entityId=\{fornecedor\?\.id\}/);
+  assert.match(representante, /codigo-registro-representante-completo/);
+  assert.match(representante, /entityId=\{representante\?\.id\}/);
+});
+
 test('Bloco 6 Tecnologia lista entidades fora de MASTER_CODE field=codigo', async () => {
   const src = await readFile(new URL('../src/components/cadastros/blocks/Bloco6Tecnologia.jsx', import.meta.url), 'utf8');
   for (const entity of [
