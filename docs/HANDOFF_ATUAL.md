@@ -86,16 +86,28 @@ Fail-closed preservado (gate por seção).
 | testes | produto-http-edit-load + edicao-load + pim-ui 40/40 |
 | próxima | CI tip · redeploy erp-dev · homolog **neste** SHA · merge owner #261/#264 |
 
-### Décima segunda ação — Contratos/C360 independente (aguardando CI tip)
+### Décima segunda ação — Contratos/C360 independente
 - Contratos: ID técnico em `ContratoForm` + `ContratoDialogs` (≠ número).
 - Central 360: código + ID técnico; orçamentos/pedidos com status e id (fonte canônica).
-- Tip branch pós-push · implantado permanece **`bdeec58c`** até redeploy.
-- ManagePR: usar URL lowercase `erp-zuccaro-codex` (PR #261 atualizado).
+- ManagePR: URL lowercase `erp-zuccaro-codex` (PR #261).
+
+### Décima terceira ação — tip `00edfb2b` implantado + homolog
+| Pacote | Valor |
+|---|---|
+| **PR HEAD / implantado** | **`00edfb2b`** · asset `index-ChwPPG6e.js` |
+| incorporado | #254 `20a2c2fb` · #264 `d9403665` · minify-safe · Contratos/C360 |
+| CI | erp-runtime-ci **SUCCESS** (4) |
+| backup | `pre-gate-e-20261010-142336.sql` sha256 `501c0400…ba5f` |
+| rollback | `pre-spa-login-20261010-142346` |
+| **homologado** | login tipado fail_count=0 (não inject) |
+| evidência | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
+| ≠ implantado antigo | `bdeec58c` supersedido neste redeploy |
+| próxima | merge owner #261/#264 · Legado #211 · usuário restrito |
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
-#254 tip **`20a2c2fb`** + #264 tip **`d9403665`** já em #261 HEAD `861513cd` — merge owner coordenado; não abrir segundo porte.
+#254 tip **`20a2c2fb`** + #264 tip **`d9403665`** em #261 tip implantado **`00edfb2b`** — merge owner; não abrir segundo porte.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 
