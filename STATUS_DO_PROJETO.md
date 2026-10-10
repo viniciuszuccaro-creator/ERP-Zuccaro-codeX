@@ -1,3 +1,18 @@
+## CURSOR — #261 tip `7e515fbc` implantado + homolog login tipado (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | #254 `f0844fa5` form scope guard · FormaPagamento Completo codigo+ID · Onda 5 Pedido detail UX |
+| **preservado #261** | piloto HTTP · Organizacional · sectionKeys · reserveEntityCodigo · classify/merge |
+| **sem cópia divergente** | tip #254 nos mesmos forms #261; sessão/outbox Codex intocados |
+| CI tip `82c10905`/`7e515fbc` | erp-runtime-ci (aguardar head) |
+| **implantado** | erp-dev **`7e515fbc`** · `index-Ctj_ukNA.js` · backup `pre-gate-e-20261010-125801.sql.gz` · rollback `pre-spa-login-20261010-125801` |
+| **homologado** | login **tipado** PASS · Cadastros Base PASS · trocar Grupo PASS · launchpads Comercial/Financeiro/Fiscal PASS |
+| residual UI | tile Clientes/abrir/salvar grade (navegação shell; lista vazia ≠ DB) |
+| evidências | `deploy-261-tip-7e515fbc-homolog-login-20261010.txt` · `scripts/vps/homolog-browser-login-cadastros.mjs` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | fechar navegação grade Clientes no shell · merge #261 · Legado CPA/#211 · C360 Onda 6 só com backend |
+
 ## CURSOR — #261 tip `4c0c167a` implantado (2026-10-10)
 
 | Fase | Estado |
@@ -6,11 +21,9 @@
 | **preservado #261** | piloto HTTP · Organizacional · fallback células · classify/merge |
 | **sem cópia divergente** | tip #254 nos mesmos arquivos #261 |
 | CI tip `4c0c167a` | erp-runtime-ci **SUCCESS** |
-| **implantado** | erp-dev **`4c0c167a`** · `index-DFgiLWLi.js` · backup `pre-gate-e-20261010-122408.sql` · rollback `pre-spa-login-20261010-122409` |
-| bundle público | sectionKeys caixa/ordens_compra/requisicoes/entregas/roteirizacao/nfe presentes |
-| homolog browser | asset PASS · login **BLOCKED** (sem credencial owner no env do agente) |
-| evidências | `deploy-261-tip-4c0c167a-integrado-20261010.txt` · `integracao-254-b11843c8-no-261-20261010.txt` · `inventario-launchpad-sectionkey-20261010.txt` |
-| próxima | homolog badges com sessão owner · formulários codigo readonly residual · Legado CPA/#211 |
+| **implantado** | supersedido por **`7e515fbc`** |
+| evidências | `deploy-261-tip-4c0c167a-integrado-20261010.txt` |
+| próxima | supersedido pelo bloco tip `7e515fbc` acima |
 
 ## CURSOR — #261 launchpads sectionKey + #254 tip (2026-10-10)
 

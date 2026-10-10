@@ -50,14 +50,23 @@ Fail-closed preservado (gate por seção).
 ### Sexta ação — tip `4c0c167a` implantado erp-dev
 - CI SUCCESS · SPA `index-DFgiLWLi.js` · backup `pre-gate-e-20261010-122408.sql` · rollback `pre-spa-login-20261010-122409`.
 - Bundle público confirma sectionKeys + shouldAccept + DetalhesCliente uniqueKey.
-- Homolog badges owner: **BLOCKED** neste agente (sem OWNER email/senha no `.env.erp.dev` / Runtime Secret).
 - P0 codigo: Cliente/Produto/TabelaPreco via `reserveEntityCodigo` (preserve incoming + high-water).
 - Evidência: `docs/vps/evidence/deploy-261-tip-4c0c167a-integrado-20261010.txt`.
+- **Supersedido** pela sétima ação (`7e515fbc`).
+
+### Sétima ação — tip `7e515fbc` + homolog login tipado + Onda 5 Pedido UX
+- Port #254 `f0844fa5`: `useCadastroFormScopeGuard` em Cliente/Fornecedor/Produto/Representante (sem tocar sessão/outbox Codex).
+- FormaPagamentoFormCompleto: `CadastroCodigoRegistroField` + ID técnico readonly.
+- Onda 5 no `PedidoCanonicoPanel` existente: cancel motivo 3–500, confirm status + motivo opcional, histórico fail-closed, Imprimir/PDF + WhatsApp/e-mail (clipboard).
+- **Implantado** erp-dev tip **`7e515fbc`** · asset `index-Ctj_ukNA.js` · backup `pre-gate-e-20261010-125801.sql.gz` · rollback `pre-spa-login-20261010-125801`.
+- **Homologado** Playwright login tipado (`ERP_DEV_LOGIN_*`): Cadastros Base + trocar Grupo + launchpads Comercial/Financeiro/Fiscal PASS.
+- Residual: tile Clientes na grade do shell (navegação) — lista vazia ≠ DB missing.
+- Evidência: `docs/vps/evidence/deploy-261-tip-7e515fbc-homolog-login-20261010.txt`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
-#254 tip já em #261 — merge owner coordenado sem segunda cópia.
+#254 tip forms já em #261 — merge owner coordenado sem segunda cópia.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 
