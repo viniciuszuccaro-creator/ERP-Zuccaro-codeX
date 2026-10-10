@@ -1,3 +1,44 @@
+## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
+
+Troca de máquina. **Não depender** de alterações locais da empresa — só GitHub + este HANDOFF.
+
+| Item | Valor |
+|---|---|
+| repositório canônico | `viniciuszuccaro-creator/ERP-Zuccaro-codeX` (clone também via `erp-zuccaro-codex`) |
+| branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **PR HEAD #261** | **`c3c45c21`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** PR HEAD (docs após deploy) |
+| rollback | `pre-spa-login-20261010-144429` |
+| backup | `pre-gate-e-20261010-144428.sql` (só VPS; **não** no Git) |
+| #264 Codex | **MERGED** tip `d9403665` (porte #254→#261) — já ancestral de #261 |
+| #254 Codex | OPEN tip `20a2c2fb` — **já ancestral** de #261; **não** re-portar |
+| merge código integração | `861513cd` (#264 ort → candidata) |
+| homologado tip implantado | login tipado fail_count=0 (owner) |
+| usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
+| **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
+| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual` em lote) — Cursor só com coordenação |
+| ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
+| chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
+
+### Ao abrir no PC de casa
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → `git rev-parse HEAD` deve ser **`c3c45c21`** (ou tip docs mais novo se houver push).
+2. Confirmar VPS implantado: `MERGE_SHA8=f22d1151` / asset `index-KP6RdCBA.js` — não atribuir homolog de SHA antigo ao tip novo.
+3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
+4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
+
+### Próxima ação Cursor (independente enquanto merge owner)
+1. Secret usuário restrito → homolog fail-closed RBAC no tip implantado.
+2. Inventário/azul residual (CRM funil BLOCKED; Contratos UX; grades `id` coluna onde faltar).
+3. C360: vínculos navegáveis Pedido/Orçamento sem duplicar fonte (só após contrato Codex se mutação).
+4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
+5. Codex Legado #211: recuperação real (Cursor não marca recuperado).
+
+### Pendências / parcial (não concluído)
+- Homolog usuário restrito.
+- Auditoria global módulos ainda com gaps (CRM canônico HTTP, POD/Separação keep-both curto prazo).
+- Legado staging→ops: **não importado**.
+- CI do tip ≠ prova de merge em `main` nem homolog pós-merge.
+
 ## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
 
 Substitui a orientação anterior. Imagens = exemplos; escopo = **todo o sistema**.

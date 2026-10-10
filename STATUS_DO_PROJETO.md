@@ -1,17 +1,32 @@
+## CURSOR — CONTINUIDADE CASA (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | integração #264+#254 em #261 · ID técnico MASTER_CODE/Cliente/Produto/Fornecedor/Representante · Contratos/C360 · minify-safe · V23→V24 · azul hubs |
+| **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED** · #254 tip `20a2c2fb` ancestral (OPEN, não re-portar) |
+| **PR HEAD remoto** | **`c3c45c21`** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · CI SUCCESS · MERGEABLE |
+| **implantado** | erp-dev **`f22d1151`** · `index-KP6RdCBA.js` · rollback `pre-spa-login-20261010-144429` · **≠** PR HEAD |
+| **homologado** | tip **`f22d1151`** login tipado fail_count=0 (owner) |
+| **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 Codex |
+| workspace | limpo · local≡`origin` · sem commit pendente na troca |
+| handoff | `docs/HANDOFF_ATUAL.md` bloco **CONTINUIDADE CASA** |
+| BLOCKED | usuário restrito (secret) · CRM funil canônico HTTP · Legado import |
+| próxima casa | `git fetch` tip `c3c45c21`+ · secret restrito · inventário/azul residual · merge owner · #211 |
+
 ## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 
 | Pacote | SHA / estado |
 |---|---|
-| **PR HEAD / implantado** | **`f22d1151`** · `index-KP6RdCBA.js` · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **PR HEAD** | **`c3c45c21`** (docs) · runtime implantado **`f22d1151`** · `index-KP6RdCBA.js` |
 | **implementado** | MASTER_CODE+Cliente+Produto+Fornecedor+Representante codigo/ID · C360 fontes · #254/#264 |
-| CI tip `f22d1151` | erp-runtime-ci **SUCCESS** |
+| CI tip `f22d1151`/`c3c45c21` | erp-runtime-ci **SUCCESS** |
 | backup | `pre-gate-e-20261010-144428.sql` sha256 `a838fa18…c7a6` |
 | rollback | `pre-spa-login-20261010-144429` |
-| **homologado** (este SHA) | login tipado fail_count=0 · Clientes V24 · launchpads |
+| **homologado** (implantado) | login tipado fail_count=0 · Clientes V24 · launchpads |
 | usuário restrito | **BLOCKED** sem secret |
 | evidências | `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt` · `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | secret restrito · merge owner #261/#264 · Legado #211 · inventário residual |
+| próxima | continuidade casa — ver bloco acima |
 
 ## CURSOR — #261 tip `6e397596` implantado (ID técnico) (2026-10-10)
 
