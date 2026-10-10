@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {produtoEmpresaFixture} from './helpers/produtoEmpresaFixture.ts';
+import {produtoEmpresaFixture,grantProdutoSalesFixture} from './helpers/produtoEmpresaFixture.ts';
 import {assertCrmIsolatedUrl} from './helpers/crmPostgresFixture.ts';
 import {SEED_IDS as ID} from '../scripts/seedDevIds.ts';
 import {createApp} from '../src/app.ts';
 import {loadConfig} from '../src/config/env.ts';
+import type {DbClient} from '../src/db/client.ts';
 
 test('R41 ProdutoEmpresa: destino isolado obrigatÃ³rio antes de conectar',()=>{
   assert.throws(()=>assertCrmIsolatedUrl(undefined));
@@ -14,8 +15,16 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
   const f=await produtoEmpresaFixture(process.env.DATABASE_URL);try {
     const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'r41-synthetic'};
     await f.admin.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1',[ID.produtoA]);
+    await grantProdutoSalesFixture(f.exec,f.role);
+    let restrictedTransactions=0;
+    const scoped:DbClient={...f.data,withTransaction:fn=>f.data.withTransaction(async tx=>{
+      await tx.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      const role=await tx.query<{rolsuper:boolean;rolbypassrls:boolean}>('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
+      assert.equal(role.rows[0].rolsuper,false);assert.equal(role.rows[0].rolbypassrls,false);
+      restrictedTransactions++;return fn(tx);
+    }),query:(sql,params)=>scoped.withTransaction(tx=>tx.query(sql,params))};
     const app=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',DATABASE_URL:process.env.DATABASE_URL,
-      ENABLE_PRODUTO_EMPRESA:'true'}),db:f.admin});
+      ENABLE_PRODUTO_EMPRESA:'true'}),db:scoped});
     const ce=await f.admin.query<{id:string}>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo AND habilitado_operacao AND NOT bloqueado LIMIT 1',[ctx.groupId,ctx.empresaId]);
     const data={cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,validade_em:'2027-01-31T00:00:00.000Z',
       itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,descricao:'Mestre sintÃ©tico',unidade_sigla:'KG',quantidade:'2.000000',preco_unitario:'999.000000',desconto:'0.000000'}]};
@@ -34,13 +43,13 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
       assert.equal((await tx.query('UPDATE produto_empresas SET habilitado_operacao=false RETURNING id')).rows.length,0);
     });
     // Hold the real sale after reference/price validation, before its INSERT.
-    const originalAdmin=f.admin.withTransaction.bind(f.admin),originalData=f.data.withTransaction.bind(f.data);
+    const originalSale=scoped.withTransaction.bind(scoped),originalData=f.data.withTransaction.bind(f.data);
     let release!:()=>void,seenSale!:()=>void,seenRevocation!:()=>void;
     const held=new Promise<void>(resolve=>{release=resolve;}),saleSeen=new Promise<void>(resolve=>{seenSale=resolve;}),revocationSeen=new Promise<void>(resolve=>{seenRevocation=resolve;});
     const wait=async(p:Promise<void>)=>{let timer:ReturnType<typeof setTimeout>|undefined;try{await Promise.race([p,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('R41 shared lock not observed')),5000);})]);}finally{if(timer)clearTimeout(timer);}};
     let sale:Promise<any>|undefined,revoke:Promise<any>|undefined;
     try {
-      f.admin.withTransaction=fn=>originalAdmin(tx=>fn({query:async(sql,params)=>{
+      scoped.withTransaction=fn=>originalSale(tx=>fn({query:async(sql,params)=>{
         if(/INSERT INTO orcamentos\b/.test(sql)){seenSale();await held;}return tx.query(sql,params);
       }}));
       sale=app.orcamentoService.create(ctx,data).then(value=>({ok:true,value}),error=>({ok:false,error}));
@@ -53,10 +62,11 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
         .then(value=>{completed=true;return {ok:true,value};},error=>({ok:false,error}));
       await wait(revocationSeen);assert.equal(completed,false);release();
       assert.equal((await sale).ok,true);assert.equal((await revoke).ok,true);
-    }finally{release();f.admin.withTransaction=originalAdmin;f.data.withTransaction=originalData;if(sale)await sale;if(revoke)await revoke;}
+    }finally{release();scoped.withTransaction=originalSale;f.data.withTransaction=originalData;if(sale)await sale;if(revoke)await revoke;}
     await assert.rejects(app.orcamentoService.create(ctx,data),{code:'ORCAMENTO_PRODUTO_INVALIDO'});
     await assert.rejects(app.pedidoService.create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
       tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',itens:data.itens.map(i=>({...i,requer_producao:false}))}),{code:'PEDIDO_PRODUTO_INVALIDO'});
+    assert.ok(restrictedTransactions>0);
     const unchanged=await app.pedidoService.get(ctx,order.id);
     assert.deepEqual({price:unchanged.itens[0].preco_unitario,description:unchanged.itens[0].descricao,unit:unchanged.itens[0].unidade_sigla},snapshot);
     assert.equal((await app.orcamentoService.get(ctx,quote.id)).itens[0].preco_unitario,quote.itens[0].preco_unitario);
