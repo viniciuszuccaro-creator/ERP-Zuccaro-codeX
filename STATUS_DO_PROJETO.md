@@ -12031,6 +12031,9 @@ Checklist inicial:
 
 ## 2026-10-10 — Legado: mestres compartilhados no Grupo CPA
 
+- Diretrizes adicionais do proprietario: preservar o visual azul claro no ERP inteiro, codigos numericos/IDs e vinculos; screenshots nao determinam quantidades. Recuperacao de auxiliares do ERP novo pre-VPS e separada da migracao dos mestres reais do ERP antigo. Submodulos duplicados so podem ser consolidados com equivalencia de contratos, permissoes e auditoria; Comercial 360 orquestra as fontes existentes.
+- Acesso ao SQLite derivado de staging privado na VPS foi confirmado nesta rodada por existencia e tamanho do arquivo, sem leitura de registros nem mutacao. Isto nao prova carga nas entidades PostgreSQL, recuperacao de historico ou importacao operacional.
+
 - Decisao do proprietario: cadastros compartilhados do ERP antigo ficam no Grupo CPA; a ausencia de empresa exclusiva nao bloqueia esses mestres. Historicos sem empresa identificada sao apenas consultaveis, sem efeito em cobranca, baixa, saldo ou estoque. Documento fiscal exige empresa comprovada.
 - Staging privado na VPS: copia derivada dos gates para 20.456 candidatos (18.458 Clientes, 790 Fornecedores, 1.208 Produtos) com escopo de Grupo; 4.722 quarentenas inalteradas. 25.178 linhas verificadas, sem sobreposicao, sem IDs de destino ou autorizacao de importacao. Backup e gate anterior preservados; nenhum dado real entrou no GitHub ou no operacional.
 - Contrato auditado: Cliente e Produto admitem mestre de Grupo (`empresa_id` nulo), mas Produto em contexto empresarial tem filtro restrito. `cliente_empresas` segue vinculo operacional explicito. Banco efetivo da API nao contem tabela canonica de Fornecedor; nao usar entidade local como substituto de carga operacional.
