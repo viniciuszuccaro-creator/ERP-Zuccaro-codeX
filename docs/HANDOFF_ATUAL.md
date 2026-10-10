@@ -1,3 +1,15 @@
+## REVISÃO CODEX — #272 UI vínculo Produto×Empresa (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#272](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/272) tip **`f2fda9c1`** |
+| base | #271 @ `3260696e` · draft · MERGEABLE · CI SUCCESS |
+| escopo | `ProdutoEmpresaOperacaoSection` + `useProdutoEmpresaOperacao` no form canônico · httpApiClient methods |
+| flag / UI | flags/piloto inalterados · seção só com Produto HTTP + mestre Grupo + empresa |
+| ação Cursor | **monitorar** — **não** porte sem stack backend/#041 homologada |
+| stack | #272 → #271 → #270 → #269 → #268 → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
 ## REVISÃO CODEX — #271 seleção operacional Produto (2026-10-10)
 
 | Item | Valor |
@@ -75,7 +87,8 @@
 | #269 Codex | tip **`8d806386`** · CRM preflight RO · CI SUCCESS · **monitorar** (sem porte/exec DEV) |
 | #270 Codex | tip **`0ea56046`** · Produto×Empresa 041 · CI SUCCESS · **monitorar** (sem porte) |
 | #271 Codex | tip **`3260696e`** · seleção operacional GET · CI SUCCESS · **monitorar** (sem porte) |
-| porte neste ciclo | nenhum (Legado/#267–#271 schema fora; #265/#263 já absorvidos) |
+| #272 Codex | tip **`f2fda9c1`** · UI vínculo empresa form · CI SUCCESS · **monitorar** (sem porte) |
+| porte neste ciclo | nenhum (Legado/#267–#272 schema fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -94,7 +107,8 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a38a94e`** | CRM→Pedido exclusivo sobre #267 · CI SUCCESS · flag off | **monitorar** — sem porte; depende #267 |
 | [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`8d806386`** | preflight RO · CI SUCCESS | **monitorar** — sem porte/exec DEV |
 | [#270](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/270) tip **`0ea56046`** | Produto×Empresa 041 · CI SUCCESS · flag off | **monitorar** — sem porte; stack CRM |
-| [#271](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/271) tip **`3260696e`** | seleção operacional GET · CI SUCCESS · flag off | **monitorar** — sem porte; UI reservada |
+| [#271](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/271) tip **`3260696e`** | seleção operacional GET · CI SUCCESS · flag off | **monitorar** — sem porte |
+| [#272](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/272) tip **`f2fda9c1`** | UI vínculo empresa form · CI SUCCESS · flag off | **monitorar** — sem porte; stack |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | stack CRM/#270 em curso · Legado/Produto GET **IDLE** | timer contínuo |
 

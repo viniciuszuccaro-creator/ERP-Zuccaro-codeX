@@ -1,3 +1,16 @@
+## CURSOR — revisão Codex timer: #272 UI vínculo Produto×Empresa (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#272** tip **`f2fda9c1`** | draft · MERGEABLE · base #271 `3260696e` · CI SUCCESS |
+| conteúdo | seção/hook no `ProdutoFormV22` · facade GET/PUT empresa-operacao · RBAC visualizar/vincular-empresa |
+| porte Cursor | **não** — depende stack #271→#267 + flags OFF; sem merge/VPS/ativação |
+| risco Regra-Mãe | extração de form grande OK; ativação exige 041/HTTP produto e homolog |
+| **#271/#270/#269/#268/#267** | tips estáveis · sem porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar stack #272→#267; secret restrito; timer |
+
 ## CURSOR — revisão Codex timer: #271 seleção operacional Produto (2026-10-10)
 
 | Item | Estado |
