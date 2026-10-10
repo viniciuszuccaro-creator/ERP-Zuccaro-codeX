@@ -12,8 +12,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
 import {
+  assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,
   buildMultiempresaReadFilter,
+  getScopedCadastroPlaceholder,
   isEditRequestCurrent,
   isTenantMasterEntity,
   loadEmpresaForEdit,
@@ -307,9 +309,11 @@ export default function VisualizadorUniversalEntidadeV24({
   const [deselectedIds, setDeselectedIds] = useState(function() { return new Set(); });
 
   const lastGoodData  = useRef([]);
+  const lastGoodScope = useRef(null);
   const everLoadedRef = useRef(false);
   const editRequestRef = useRef(0);
   const scopeKey = ENTITY + ":" + (groupId || "") + ":" + (empresaId || "");
+  const formScopeRef = useRef(scopeKey);
   const activeScopeRef = useRef(scopeKey);
   const previousScopeRef = useRef(scopeKey);
   activeScopeRef.current = scopeKey;
@@ -318,6 +322,7 @@ export default function VisualizadorUniversalEntidadeV24({
   useEffect(function() {
     if (previousScopeRef.current === scopeKey) return;
     previousScopeRef.current = scopeKey;
+    formScopeRef.current = null;
     const reset = buildCadastroScopeSwitchReset({ formKey: 0 });
     if (reset.bumpEditRequest) editRequestRef.current += 1;
     setIsLoadingEdit(reset.isLoadingEdit);
@@ -417,6 +422,14 @@ export default function VisualizadorUniversalEntidadeV24({
     function() { return ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]; },
     [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]
   );
+  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch]);
+  // O efeito abaixo roda depois do render; limpe o cache já neste render para
+  // impedir que a grade mostre linhas do tenant anterior por um frame.
+  if (lastGoodScope.current !== visibleScope) {
+    lastGoodScope.current = visibleScope;
+    lastGoodData.current = [];
+    everLoadedRef.current = false;
+  }
 
   // ── query principal ──────────────────────────────────────────────────────────
   // placeholderData garante que a lista NÃO desaparece durante sort/paginação/exclusão
@@ -443,7 +456,9 @@ export default function VisualizadorUniversalEntidadeV24({
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
-    placeholderData: function(prev) { return prev !== undefined ? prev : []; },
+    placeholderData: function(prev, previousQuery) {
+      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);
+    },
     enabled: !!ENTITY && contextoValido && canViewCadastro,
   });
 
@@ -507,6 +522,7 @@ export default function VisualizadorUniversalEntidadeV24({
   // ── formulário ───────────────────────────────────────────────────────────────
   const handleCloseForm = useCallback(function(wasSaved) {
     editRequestRef.current += 1;
+    formScopeRef.current = null;
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
@@ -524,6 +540,16 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const handlePersistSubmit = useCallback(async function(formData) {
     if (!formData || !ENTITY) return;
+    try {
+      assertCadastroFormScopeCurrent({ formScope: formScopeRef.current,
+        renderedScope: scopeKey, activeScope: activeScopeRef.current });
+    } catch (error) {
+      await auditCadastroEvent("Bloqueio", "Salvamento bloqueado após troca de contexto", {
+        registro_id: (editItem && editItem.id) || formData.id || null,
+        sucesso: false, motivo: "escopo_alterado",
+      });
+      throw error;
+    }
     if (formData._action === "delete") {
       if (!canDeleteCadastro) {
         await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro pelo formulario sem permissao", { registro_id: formData.id || null, permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false });
@@ -572,7 +598,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked]);
+  }, [ENTITY, editItem, empresaId, groupId, scopeKey, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {
@@ -586,6 +612,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     auditCadastroEvent("Visualizacao", "Formulario de criacao aberto", { origem: "VisualizadorUniversalEntidadeV24" });
+    formScopeRef.current = scopeKey;
     editRequestRef.current += 1;
     setIsLoadingEdit(false);
     setEditLoadBlocked(false);
@@ -593,7 +620,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setEditError(null);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido]);
+  }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido, scopeKey]);
 
   const handleEditItem = useCallback(async function(item) {
     if (!item || !item.id) return;
@@ -607,6 +634,7 @@ export default function VisualizadorUniversalEntidadeV24({
       alert("Sem permissao para editar.");
       return;
     }
+    formScopeRef.current = scopeKey;
     const request = ++editRequestRef.current;
     const requestedScope = scopeKey;
     const stillCurrent = function() {

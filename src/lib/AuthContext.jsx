@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
@@ -23,10 +23,19 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState(null);
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState(null);
+  const authVersion = useRef(0);
+  const checkVersion = useRef(0);
+  const loginVersion = useRef(0);
+  const bootstrapComplete = useRef(false);
 
   const applyHttpSession = useCallback(async (session) => {
+    const version = ++authVersion.current;
+    const current = () => version === authVersion.current;
+    const sameToken = () => session?.token && readErpHttpSession()?.token === session.token;
     if (!session?.token || !session?.groupId || !session?.actorId) {
-      clearErpHttpSession();
+      if (!current()) return false;
+      if (readErpHttpSession()?.token) return false;
+      if (session?.token && sameToken()) clearErpHttpSession();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
@@ -35,7 +44,8 @@ export const AuthProvider = ({ children }) => {
     if (session.expiresAt) {
       const expiresMs = Date.parse(String(session.expiresAt));
       if (!Number.isFinite(expiresMs) || expiresMs <= Date.now()) {
-        clearErpHttpSession();
+        if (!current()) return false;
+        if (sameToken()) clearErpHttpSession();
         setUser(null);
         setIsAuthenticated(false);
         setAuthError({ type: 'auth_required', message: 'Authentication required' });
@@ -56,7 +66,9 @@ export const AuthProvider = ({ children }) => {
         preferredEmpresaId: session.empresaId,
       });
       if (!trusted?.token) {
-        clearErpHttpSession();
+        if (!current()) return false;
+        if (readErpHttpSession()?.token && !sameToken()) return false;
+        if (sameToken()) clearErpHttpSession();
         setUser(null);
         setIsAuthenticated(false);
         setAuthError({ type: 'auth_required', message: 'Authentication required' });
@@ -65,6 +77,8 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       await ensureHttpTenantLocalMirror({
+        token: trusted.token,
+        actorId: trusted.actorId,
         groupId: trusted.groupId,
         empresaId: trusted.empresaId,
         groupName: trusted.groupName,
@@ -78,8 +92,9 @@ export const AuthProvider = ({ children }) => {
       console.warn('[Auth] espelho local Grupo/Empresa falhou; seguindo com sessão.', error);
     }
     const sessionUser = buildHttpSessionUser(trusted);
+    if (!current()) return false;
     if (!sessionUser) {
-      clearErpHttpSession();
+      if (sameToken()) clearErpHttpSession();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
@@ -91,29 +106,43 @@ export const AuthProvider = ({ children }) => {
     return true;
   }, []);
 
-  const checkUserAuth = useCallback(async () => {
+  const checkUserAuth = useCallback(async ({ background = false } = {}) => {
+    const version = ++checkVersion.current;
+    const current = () => version === checkVersion.current;
     try {
-      setIsLoadingAuth(true);
+      if (!background) setIsLoadingAuth(true);
       if (isHttpBackendMode) {
         const session = readErpHttpSession();
         const ok = await applyHttpSession(session);
-        setIsLoadingAuth(false);
+        if (!current()) return false;
+        if (!background) {
+          setIsLoadingAuth(false);
+          bootstrapComplete.current = true;
+        }
         setAuthChecked(true);
         return ok;
       }
       const currentUser = await base44.auth.me();
       const authenticated = await base44.auth.isAuthenticated();
+      if (!current()) return false;
       setUser(authenticated ? currentUser : null);
       setIsAuthenticated(Boolean(authenticated));
       setAuthError(authenticated ? null : { type: 'auth_required', message: 'Authentication required' });
-      setIsLoadingAuth(false);
+      if (!background) {
+        setIsLoadingAuth(false);
+        bootstrapComplete.current = true;
+      }
       setAuthChecked(true);
       return Boolean(authenticated);
     } catch (error) {
+      if (!current()) return false;
       console.error('User auth check failed:', error);
       setUser(null);
       setIsAuthenticated(false);
-      setIsLoadingAuth(false);
+      if (!background) {
+        setIsLoadingAuth(false);
+        bootstrapComplete.current = true;
+      }
       setAuthChecked(true);
       setAuthError({
         type: error?.authType || (error?.status === 401 || error?.status === 403 ? 'auth_required' : 'unknown'),
@@ -225,16 +254,32 @@ export const AuthProvider = ({ children }) => {
     checkAppState();
   }, [checkAppState]);
 
+  useEffect(() => {
+    if (!isHttpBackendMode || typeof window === 'undefined') return undefined;
+    const onContextChange = () => { void checkUserAuth({ background: bootstrapComplete.current }); };
+    window.addEventListener('erp-http-context-changed', onContextChange);
+    return () => {
+      window.removeEventListener('erp-http-context-changed', onContextChange);
+      checkVersion.current += 1;
+      authVersion.current += 1;
+    };
+  }, [checkUserAuth]);
+
   const loginWithPassword = useCallback(async ({ email, password }) => {
     if (!isHttpBackendMode) {
       setLoginError('Login por senha disponível apenas no modo HTTP/supabase_user.');
       return false;
     }
+    const attempt = ++loginVersion.current;
+    let loginToken = null;
     setLoginBusy(true);
     setLoginError(null);
     try {
-      const session = await loginErpHttpSession({ email, password });
-      await applyHttpSession({
+      const session = await loginErpHttpSession({ email, password,
+        shouldAccept: () => attempt === loginVersion.current });
+      if (attempt !== loginVersion.current) return false;
+      loginToken = session.accessToken;
+      const accepted = await applyHttpSession({
         token: session.accessToken,
         groupId: session.groupId,
         empresaId: session.empresaId,
@@ -248,22 +293,28 @@ export const AuthProvider = ({ children }) => {
         permissoes: session.permissoes || {},
         _serverValidated: true,
       });
+      if (attempt !== loginVersion.current || !accepted) return false;
       setAuthChecked(true);
       setIsLoadingAuth(false);
+      bootstrapComplete.current = true;
       return true;
     } catch (error) {
-      clearErpHttpSession();
+      if (attempt !== loginVersion.current) return false;
+      if (loginToken && readErpHttpSession()?.token === loginToken) clearErpHttpSession();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
       setLoginError(error?.message || 'Falha no login');
       return false;
     } finally {
-      setLoginBusy(false);
+      if (attempt === loginVersion.current) setLoginBusy(false);
     }
   }, [applyHttpSession]);
 
   const logout = (shouldRedirect = true) => {
+    loginVersion.current += 1;
+    authVersion.current += 1;
+    checkVersion.current += 1;
     setUser(null);
     setIsAuthenticated(false);
     setAuthChecked(true);

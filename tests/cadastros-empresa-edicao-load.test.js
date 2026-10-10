@@ -1,17 +1,100 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+import ts from 'typescript';
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
+  isCadastroSelfManagedScopeCurrent,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
+
+test('formulários autogeridos bloqueiam escrita e efeitos tardios após troca CPA→3Z', () => {
+  const cpa = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa' };
+  const tresZ = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, cpa), true);
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, tresZ), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, tresZ, tresZ), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(null, cpa, cpa), false);
+  const opened = { ...cpa, actorId: 'ator-a', token: 'bearer-a' };
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, opened), true);
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, { ...opened, token: 'bearer-novo' }), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, { ...opened, actorId: 'ator-b' }), false);
+});
+
+test('hook real congela sessão CPA mesmo com primeiro paint parcial; aceita render completo e rejeita 3Z', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const refs = []; let nextRef = 0;
+  let active = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa', actorId: 'ator-a', token: 'bearer-a' };
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: id => ({
+    react: { useRef: initial => refs[nextRef++] ||= { current: initial } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '@/api/erpHttpSession': { readErpHttpSession: () => active },
+    '../cadastroEditLoadPolicy.js': { isCadastroSelfManagedScopeCurrent },
+  })[id] });
+  const render = (groupId, empresaId) => { nextRef = 0; return exports.default(groupId, empresaId); };
+  const partial = render('grupo-cpa', null);
+  assert.equal(partial.isCurrent(), false);
+  const complete = render('grupo-cpa', 'empresa-cpa');
+  assert.doesNotThrow(() => complete.assertCurrent());
+  const requestScope = { ...active };
+  let applied = false;
+  const lateResponse = Promise.resolve({ id: 'cadastro-cpa' }).then(() => { if (complete.isCurrent()) applied = true; });
+  active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  await lateResponse;
+  assert.equal(requestScope.empresaId, 'empresa-cpa');
+  assert.equal(applied, false);
+  assert.throws(() => complete.assertCurrent(), /Contexto alterado/);
+  assert.equal(render('grupo-cpa', 'empresa-3z').isCurrent(), false);
+  active = { ...requestScope, token: 'bearer-novo' };
+  assert.equal(render('grupo-cpa', 'empresa-cpa').isCurrent(), false);
+});
+
+test('os quatro formulários próprios usam o guard no envio e descartam respostas antigas', async () => {
+  for (const name of ['CadastroClienteCompleto.jsx', 'CadastroFornecedorCompleto.jsx', 'RepresentanteFormCompleto.jsx']) {
+    const source = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(source, /useCadastroFormScopeGuard\(groupId, empresaAtual\?\.id\)/);
+    assert.match(source, /mutationFn:[\s\S]*?assertFormScopeCurrent\(\)/);
+    assert.match(source, /onSuccess:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+    assert.match(source, /onError:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+  }
+  const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(produto, /assertFormScopeCurrent\(\)[\s\S]*?getHttpProdutoApi\(\)\.update/);
+  assert.match(produto, /if \(!isFormScopeCurrent\(\)\) return/);
+  assert.match(produto, /useProdutoHttpEditLoad\(\{/);
+});
 import {
+  assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,
+  getScopedCadastroPlaceholder,
   isEditRequestCurrent,
   loadEmpresaForEdit,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
+
+test('formulário aberto na Empresa A não salva após troca para B, nem antes do efeito de fechamento', () => {
+  const opened = 'Cliente:grupo-a:empresa-a';
+  assert.doesNotThrow(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: opened,
+  }));
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: 'Cliente:grupo-a:empresa-b', activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+});
+
+test('grade conserva placeholder só no mesmo tenant; CPA→3Z não mostra linhas de CPA', () => {
+  const rowA = [{ id: 'cliente-a', empresa_id: 'empresa-a' }];
+  const base = ['viz-v33', 'Cliente', 'updated_date', 'desc', 1, 25, '', 'empresa-a', 'grupo-a'];
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 4), 2, ...base.slice(5)]), rowA);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 7), 'empresa-b', 'grupo-a']), []);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 6), 'busca', 'empresa-a', 'grupo-a']), []);
+});
 
 const completeEmpresa = Object.freeze({
   id: 'empresa-a',
