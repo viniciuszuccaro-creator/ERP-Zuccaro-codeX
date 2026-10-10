@@ -1,3 +1,15 @@
+## REVISÃO CODEX — #269 CRM preflight (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`5116c257`** |
+| base | #268 @ `5a38a94e` · draft · MERGEABLE · CI IN_PROGRESS · agente RUNNING |
+| escopo | preflight DB/schema read-only (`crmPreflight`) · stages before/after_migration · sem DML/ativação |
+| flag / UI | `ENABLE_CRM_HTTP` OFF · UI/store/C360 intactos |
+| ação Cursor | **monitorar** — **não** porte/executar preflight em DEV/VPS neste ciclo |
+| stack | #269 → #268 → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
 ## REVISÃO CODEX — #268 CRM→Pedido (2026-10-10)
 
 | Item | Valor |

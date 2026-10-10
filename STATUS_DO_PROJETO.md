@@ -1,3 +1,17 @@
+## CURSOR — revisão Codex timer: #269 CRM preflight (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#269** tip **`5116c257`** | draft · MERGEABLE · base #268 `5a38a94e` · CI **IN_PROGRESS** · agente **RUNNING** |
+| conteúdo | `npm run crm:preflight` read-only · stages before/after_migration · `activationAuthorized=false` · sanitizado |
+| porte Cursor | **não** — prep estrutural Codex; sem merge/VPS/migração/ativação; flag CRM HTTP OFF |
+| **#268** | tip `5a38a94e` · IDLE · sem porte |
+| **#267** | tip `e3194fb1` · IDLE · sem porte |
+| **#266/#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | aguardar CI #269; monitorar stack #269→#268→#267; timer |
+
 ## CURSOR — revisão Codex timer: #268 CRM→Pedido (2026-10-10)
 
 | Item | Estado |
