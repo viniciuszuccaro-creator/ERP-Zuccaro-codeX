@@ -2,9 +2,9 @@
 
 | Item | Valor |
 |---|---|
-| PR | [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`7bc52b0e`** (runtime `0481e940`) |
+| PR | [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`e3194fb1`** (fix legado orçamento/high-water; runtime base `0481e940`) |
 | base | #261 `c125c4db` · draft · MERGEABLE · CI SUCCESS |
-| agente | `codex/crm-http-canonico-20261010` **RUNNING** |
+| agente | `codex/crm-http-canonico-20261010` **IDLE** |
 | escopo | mig 040 + routes/repo/service Oportunidade · flag `ENABLE_CRM_HTTP` default false |
 | UI/C360 | opção B intacta · sem dual-write · sem backfill |
 | ação Cursor | **monitorar** — **não** porte/merge/deploy/migração neste ciclo |
@@ -22,7 +22,7 @@
 | homolog deste SHA | owner login tipado fail_count=0 · **somente** `c125c4db` |
 | evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
 | #266 Codex | tip **`cb3af26e`** · CI SUCCESS · IDLE · **não** merge Cursor (#211) |
-| #267 Codex | tip **`7bc52b0e`** · CRM HTTP 040 · RUNNING · **monitorar** (sem porte/deploy) |
+| #267 Codex | tip **`e3194fb1`** · CRM HTTP 040 · IDLE · **monitorar** (sem porte/deploy) |
 | porte neste ciclo | nenhum (Legado/#267 schema fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
@@ -38,7 +38,7 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#265](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/265) tip `910e4ec9` | Produto+Orçamento sobre #261; MERGEABLE · IDLE | já em #261 — **não** re-portar |
 | [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) | vs main · ancestral Orçamento | absorvido |
 | [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) tip **`cb3af26e`** | Legado crosswalk/tipo + SQL headers · IDLE · CI SUCCESS | **não** merge Cursor — #211 |
-| [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`7bc52b0e`** | CRM HTTP 040 · RUNNING · CI SUCCESS · flag off | **monitorar** — sem porte/merge/VPS |
+| [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`e3194fb1`** | CRM HTTP 040 · IDLE · CI SUCCESS · tip `e3194fb1` · flag off | **monitorar** — sem porte/merge/VPS |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | CRM HTTP **RUNNING** · Legado/Produto/Orçamento **IDLE** | timer contínuo |
 
