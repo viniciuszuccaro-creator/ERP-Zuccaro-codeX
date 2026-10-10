@@ -25,6 +25,8 @@ export const AuthProvider = ({ children }) => {
   const [loginError, setLoginError] = useState(null);
   const authVersion = useRef(0);
   const checkVersion = useRef(0);
+  const loginVersion = useRef(0);
+  const bootstrapComplete = useRef(false);
 
   const applyHttpSession = useCallback(async (session) => {
     const version = ++authVersion.current;
@@ -65,7 +67,8 @@ export const AuthProvider = ({ children }) => {
       });
       if (!trusted?.token) {
         if (!current()) return false;
-        if (!sameToken()) return false;
+        // Token novo (login concorrente) permanece; só limpa se ainda for o mesmo.
+        if (readErpHttpSession()?.token && !sameToken()) return false;
         if (sameToken()) clearErpHttpSession();
         setUser(null);
         setIsAuthenticated(false);
@@ -104,16 +107,19 @@ export const AuthProvider = ({ children }) => {
     return true;
   }, []);
 
-  const checkUserAuth = useCallback(async () => {
+  const checkUserAuth = useCallback(async ({ background = false } = {}) => {
     const version = ++checkVersion.current;
     const current = () => version === checkVersion.current;
     try {
-      setIsLoadingAuth(true);
+      if (!background) setIsLoadingAuth(true);
       if (isHttpBackendMode) {
         const session = readErpHttpSession();
         const ok = await applyHttpSession(session);
         if (!current()) return false;
-        setIsLoadingAuth(false);
+        if (!background) {
+          setIsLoadingAuth(false);
+          bootstrapComplete.current = true;
+        }
         setAuthChecked(true);
         return ok;
       }
@@ -123,7 +129,10 @@ export const AuthProvider = ({ children }) => {
       setUser(authenticated ? currentUser : null);
       setIsAuthenticated(Boolean(authenticated));
       setAuthError(authenticated ? null : { type: 'auth_required', message: 'Authentication required' });
-      setIsLoadingAuth(false);
+      if (!background) {
+        setIsLoadingAuth(false);
+        bootstrapComplete.current = true;
+      }
       setAuthChecked(true);
       return Boolean(authenticated);
     } catch (error) {
@@ -131,7 +140,10 @@ export const AuthProvider = ({ children }) => {
       console.error('User auth check failed:', error);
       setUser(null);
       setIsAuthenticated(false);
-      setIsLoadingAuth(false);
+      if (!background) {
+        setIsLoadingAuth(false);
+        bootstrapComplete.current = true;
+      }
       setAuthChecked(true);
       setAuthError({
         type: error?.authType || (error?.status === 401 || error?.status === 403 ? 'auth_required' : 'unknown'),
@@ -245,7 +257,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (!isHttpBackendMode || typeof window === 'undefined') return undefined;
-    const onContextChange = () => { void checkUserAuth(); };
+    const onContextChange = () => { void checkUserAuth({ background: bootstrapComplete.current }); };
     window.addEventListener('erp-http-context-changed', onContextChange);
     return () => {
       window.removeEventListener('erp-http-context-changed', onContextChange);
@@ -259,11 +271,19 @@ export const AuthProvider = ({ children }) => {
       setLoginError('Login por senha disponível apenas no modo HTTP/supabase_user.');
       return false;
     }
+    const attempt = ++loginVersion.current;
+    let loginToken = null;
     setLoginBusy(true);
     setLoginError(null);
     try {
-      const session = await loginErpHttpSession({ email, password });
-      await applyHttpSession({
+      const session = await loginErpHttpSession({
+        email,
+        password,
+        shouldAccept: () => attempt === loginVersion.current,
+      });
+      if (attempt !== loginVersion.current) return false;
+      loginToken = session.accessToken;
+      const accepted = await applyHttpSession({
         token: session.accessToken,
         groupId: session.groupId,
         empresaId: session.empresaId,
@@ -277,22 +297,29 @@ export const AuthProvider = ({ children }) => {
         permissoes: session.permissoes || {},
         _serverValidated: true,
       });
+      if (attempt !== loginVersion.current || !accepted) return false;
       setAuthChecked(true);
       setIsLoadingAuth(false);
+      bootstrapComplete.current = true;
       return true;
     } catch (error) {
-      clearErpHttpSession();
+      if (attempt !== loginVersion.current) return false;
+      // Só limpa se o token persistido ainda for desta tentativa (não apaga login mais novo).
+      if (loginToken && readErpHttpSession()?.token === loginToken) clearErpHttpSession();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError({ type: 'auth_required', message: 'Authentication required' });
       setLoginError(error?.message || 'Falha no login');
       return false;
     } finally {
-      setLoginBusy(false);
+      if (attempt === loginVersion.current) setLoginBusy(false);
     }
   }, [applyHttpSession]);
 
   const logout = (shouldRedirect = true) => {
+    loginVersion.current += 1;
+    authVersion.current += 1;
+    checkVersion.current += 1;
     setUser(null);
     setIsAuthenticated(false);
     setAuthChecked(true);

@@ -35,9 +35,16 @@ Fail-closed preservado (gate por seção).
 - Inventário: `docs/evidence/inventario-global-modulos-20261010.txt`.
 - Login xdotool continua quebrado; homolog usa API session + inject.
 
+### Quarta ação — #254 tip `b11843c8` (corridas login/empresa) no #261
+- Fonte: PR #254 branch `codex/cadastros-http-context-race-20261009` tip **`b11843c8`**.
+- Portado no mesmo arquivo #261: `loginErpHttpSession.shouldAccept` + evento contexto no login; Auth `loginVersion`/`bootstrapComplete`/revalidate background; `assertCadastroFormScopeCurrent` + `getScopedCadastroPlaceholder` + `formScopeRef`.
+- **Não** revertido: piloto HTTP, Organizacional `data-permission`, fallback sem codigo/sigla, `classify`/`merge` edit load, `grupoSelfOr`.
+- Testes focados PASS. Redeploy VPS pendente pós-CI deste tip.
+- #254 Codex: tip já incorporado em #261 — fechar/merge coordenado sem segunda cópia dos arquivos.
+
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
-#254 restante no branch Codex: merge owner coordenado com #261 (não duplicar Visualizador).
+Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 

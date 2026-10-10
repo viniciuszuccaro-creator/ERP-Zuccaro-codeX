@@ -1,3 +1,16 @@
+## CURSOR — #261 + #254 tip `b11843c8` corridas login/empresa (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | Port final #254 `b11843c8`: `shouldAccept`+`HTTP_CONTEXT_CHANGED` no login · `loginVersion`/`bootstrapComplete`/revalidate background · `assertCadastroFormScopeCurrent`+`getScopedCadastroPlaceholder`+`formScopeRef` |
+| **preservado #261** | piloto HTTP `entityListSorted`/`countEntities` · gate Organizacional · fallback sem codigo/sigla · `classifyCadastroEditLoad`/`mergeCadastroEditHydration` · `grupoSelfOr` |
+| **sem cópia divergente** | `erpHttpSession`+policy idênticos ao tip #254; Auth/Visualizador = #254 race + #261 melhorias no mesmo arquivo |
+| **testes** | `erp-http-session` 55/55 · `cadastros-empresa-edicao-load` 21/21 |
+| **integrado** | PR #261 (mesmo branch) |
+| **implantado** | erp-dev ainda **`7fe1067b`** até redeploy deste tip |
+| CI | tip desta entrega — aguardando Actions após push |
+| próxima | CI verde → redeploy VPS → auditoria Compras/Estoque/Expedição · códigos/ID · homolog fluxo |
+
 ## CURSOR — #261 homolog global + #254 contexto + Cadastros RBAC (2026-10-10)
 
 | Fase | Estado |
@@ -12,7 +25,7 @@
 | evidências | `deploy-261-tip-7fe1067b-homolog-global-20261010.txt` |
 | login automação | xdotool FAIL · alternativa API session inject **PASS** |
 | CI tip `53814e9a` | erp-runtime-ci **SUCCESS** (4 checks · asserts Bloco5 alinhados) |
-| próxima | merge owner #261 · #254 Codex restante · inventário Estoque card residual se aparecer |
+| próxima | supersedido pelo bloco #254 tip `b11843c8` acima |
 
 ## CURSOR — Fiscal RBAC tip `7f00e392` implantado (2026-10-10)
 

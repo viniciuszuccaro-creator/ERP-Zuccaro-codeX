@@ -403,7 +403,7 @@ export async function ensureHttpTenantLocalMirror(input) {
 
 /**
  * Login password via BFF (same-origin /api).
- * @param {{ email: string, password: string, baseUrl?: string, fetchImpl?: typeof fetch }} input
+ * @param {{ email: string, password: string, baseUrl?: string, fetchImpl?: typeof fetch, shouldAccept?: () => boolean }} input
  */
 export async function loginErpHttpSession(input) {
   const baseUrl = (input.baseUrl ?? resolveErpApiBaseUrl(import.meta.env) ?? '').replace(/\/$/, '');
@@ -463,7 +463,12 @@ export async function loginErpHttpSession(input) {
     expiresIn,
   };
   const expiresAt = new Date(Date.now() + Math.floor(expiresIn) * 1000).toISOString();
+  if (input.shouldAccept && !input.shouldAccept()) {
+    throw new Error('Tentativa de login substituída por outra mais recente');
+  }
   persistErpHttpSession({ ...session, expiresAt });
+  // Login novo invalida cargas antigas do UserContext antes de qualquer await.
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(HTTP_CONTEXT_CHANGED));
   try {
     await ensureHttpTenantLocalMirror({
       token: session.accessToken,

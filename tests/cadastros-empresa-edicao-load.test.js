@@ -10,10 +10,33 @@ import {
   mergeCadastroEditHydration,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
 import {
+  assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,
+  getScopedCadastroPlaceholder,
   isEditRequestCurrent,
   loadEmpresaForEdit,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
+
+test('formulário aberto na Empresa A não salva após troca para B, nem antes do efeito de fechamento', () => {
+  const opened = 'Cliente:grupo-a:empresa-a';
+  assert.doesNotThrow(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: opened,
+  }));
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: 'Cliente:grupo-a:empresa-b', activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+});
+
+test('grade conserva placeholder só no mesmo tenant; CPA→3Z não mostra linhas de CPA', () => {
+  const rowA = [{ id: 'cliente-a', empresa_id: 'empresa-a' }];
+  const base = ['viz-v33', 'Cliente', 'updated_date', 'desc', 1, 25, '', 'empresa-a', 'grupo-a'];
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 4), 2, ...base.slice(5)]), rowA);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 7), 'empresa-b', 'grupo-a']), []);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 6), 'busca', 'empresa-a', 'grupo-a']), []);
+});
 
 const completeEmpresa = Object.freeze({
   id: 'empresa-a',
@@ -287,6 +310,9 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /loadEmpresaForEdit\(/);
   assert.match(source, /isEditRequestCurrent/);
   assert.match(source, /buildCadastroScopeSwitchReset/);
+  assert.match(source, /assertCadastroFormScopeCurrent/);
+  assert.match(source, /getScopedCadastroPlaceholder/);
+  assert.match(source, /formScopeRef/);
   assert.match(source, /setSelectedIds\(reset\.selectedIds\)/);
   assert.match(source, /setDeselectedIds\(reset\.deselectedIds\)/);
   assert.match(source, /setCrossPageAll\(reset\.crossPageAll\)/);
@@ -300,6 +326,8 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /editLoadBlocked/);
   assert.match(source, /classifyCadastroEditLoad\(/);
   assert.match(source, /Falha ao carregar registro completo/);
+  assert.match(source, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional" : ENTITY/);
+  assert.match(source, /Fallbacks só de rótulo/);
 });
 
 test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, sem wipe fiscal', async () => {
