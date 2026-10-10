@@ -11,7 +11,8 @@
 | inventário | `docs/evidence/inventario-global-modulos-20261010.txt` |
 | evidências | `deploy-261-tip-7fe1067b-homolog-global-20261010.txt` |
 | login automação | xdotool FAIL · alternativa API session inject **PASS** |
-| próxima | CI tip · merge owner #261 · #254 Codex restante · inventário Estoque card residual se aparecer |
+| CI tip `53814e9a` | erp-runtime-ci **SUCCESS** (4 checks · asserts Bloco5 alinhados) |
+| próxima | merge owner #261 · #254 Codex restante · inventário Estoque card residual se aparecer |
 
 ## CURSOR — Fiscal RBAC tip `7f00e392` implantado (2026-10-10)
 
