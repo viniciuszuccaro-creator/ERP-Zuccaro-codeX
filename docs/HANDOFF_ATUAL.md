@@ -39,8 +39,13 @@ Fail-closed preservado (gate por seção).
 - Fonte: PR #254 branch `codex/cadastros-http-context-race-20261009` tip **`b11843c8`**.
 - Portado no mesmo arquivo #261: `loginErpHttpSession.shouldAccept` + evento contexto no login; Auth `loginVersion`/`bootstrapComplete`/revalidate background; `assertCadastroFormScopeCurrent` + `getScopedCadastroPlaceholder` + `formScopeRef`.
 - **Não** revertido: piloto HTTP, Organizacional `data-permission`, fallback sem codigo/sigla, `classify`/`merge` edit load, `grupoSelfOr`.
-- Testes focados PASS. Redeploy VPS pendente pós-CI deste tip.
+- CI tip **`95ee6179` SUCCESS**. Redeploy VPS pendente (ainda `7fe1067b` no erp-dev).
 - #254 Codex: tip já incorporado em #261 — fechar/merge coordenado sem segunda cópia dos arquivos.
+
+### Quinta ação — launchpads sectionKey (Compras/Estoque/Expedição/Financeiro)
+- Mesmo padrão Fiscal.nfe: `sectionKey` canônico + aliases em `usePermissions`/`localBase44Client`.
+- DetalhesCliente: `uniqueKey` por id (anti janela dupla).
+- Evidência: `docs/evidence/inventario-launchpad-sectionkey-20261010.txt`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).

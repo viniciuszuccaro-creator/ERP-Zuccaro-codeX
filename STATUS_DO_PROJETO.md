@@ -1,3 +1,16 @@
+## CURSOR — #261 launchpads sectionKey + #254 tip (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | #254 `b11843c8` corridas login/empresa · sectionKey canônico Compras/Estoque/Expedição/Financeiro · aliases UI→owner · DetalhesCliente `uniqueKey` anti-dupla |
+| **preservado #261** | piloto HTTP · Organizacional · fallback células · classify/merge edit load |
+| **sem cópia divergente** | tip #254 incorporado nos mesmos arquivos #261 |
+| **testes** | erp-http-session + financeiro-launchpad + empresa-edicao **65/65** |
+| CI tip `95ee6179` | erp-runtime-ci **SUCCESS** (push+PR) |
+| **implantado** | erp-dev ainda **`7fe1067b`** — redeploy do tip atual pendente |
+| evidências | `integracao-254-b11843c8-no-261-20261010.txt` · `inventario-launchpad-sectionkey-20261010.txt` |
+| próxima | redeploy VPS → homolog launchpads + fluxo login→empresa → códigos P0 Cliente/Produto/TabelaPreco |
+
 ## CURSOR — #261 + #254 tip `b11843c8` corridas login/empresa (2026-10-10)
 
 | Fase | Estado |
@@ -7,9 +20,8 @@
 | **sem cópia divergente** | `erpHttpSession`+policy idênticos ao tip #254; Auth/Visualizador = #254 race + #261 melhorias no mesmo arquivo |
 | **testes** | `erp-http-session` 55/55 · `cadastros-empresa-edicao-load` 21/21 |
 | **integrado** | PR #261 (mesmo branch) |
-| **implantado** | erp-dev ainda **`7fe1067b`** até redeploy deste tip |
-| CI | tip desta entrega — aguardando Actions após push |
-| próxima | CI verde → redeploy VPS → auditoria Compras/Estoque/Expedição · códigos/ID · homolog fluxo |
+| CI tip `95ee6179` | erp-runtime-ci **SUCCESS** |
+| próxima | supersedido pelo bloco launchpads acima |
 
 ## CURSOR — #261 homolog global + #254 contexto + Cadastros RBAC (2026-10-10)
 
