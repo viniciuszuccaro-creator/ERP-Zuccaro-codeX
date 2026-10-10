@@ -5,12 +5,13 @@
 | **implementado** | Fiscal sectionKey · Cadastros aliases ContatoB2B/Depto→pessoas/organizacional · Bloco5 PerfilAcesso→Sistema.acessos · port seletivo #254 (race refresh/espelho/grade) |
 | **revisado** | #254 HEAD `860114ca` — contexto HTTP; integrado sem remover piloto HTTP entityListSorted/#261 Organizacional |
 | **integrado** | PR #261 · ManagePR body atualizado |
-| **implantado** | tip anterior `7f00e392`; este tip aguarda CI+deploy |
-| **homologado** | browser session-inject: Fiscal/Financeiro/Comercial **PASS** (0 badges); Cadastros badges ContatoB2B/Depto **corrigidos neste tip** |
+| **implantado** | erp-dev **`7fe1067b`** · `index-Dys3YYYF.js` · backup `pre-gate-e-20261010-112413.sql` · rollback `pre-spa-login-20261010-112413` |
+| **homologado** | Fiscal/Financeiro/Comercial/Cadastros **PASS** (0 badges) no tip implantado |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
 | inventário | `docs/evidence/inventario-global-modulos-20261010.txt` |
-| login automação | desbloqueado via API session + localStorage (`base44_access_token`/`erp_runtime_scope`) — xdotool permanece quebrado |
-| próxima | CI → deploy tip · re-homolog Cadastros badges · merge owner #261/#254 |
+| evidências | `deploy-261-tip-7fe1067b-homolog-global-20261010.txt` |
+| login automação | xdotool FAIL · alternativa API session inject **PASS** |
+| próxima | CI tip · merge owner #261 · #254 Codex restante · inventário Estoque card residual se aparecer |
 
 ## CURSOR — Fiscal RBAC tip `7f00e392` implantado (2026-10-10)
 
