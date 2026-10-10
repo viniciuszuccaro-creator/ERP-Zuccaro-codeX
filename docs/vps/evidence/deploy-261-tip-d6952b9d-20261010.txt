@@ -1,0 +1,28 @@
+# Deploy #261 tip d6952b9d — erp-dev (2026-10-10T10:00Z)
+# Sanitizado — sem tokens, sem PII.
+
+| Campo | Valor |
+|---|---|
+| tip | d6952b9d |
+| branch | cursor/cadastros-recuperacao-c360-contrato-392b |
+| script | spa-login-rebuild-api-web.sh CONFIRM=YES GIT_REF=HEAD |
+| SPA asset | /assets/index-lraHuft9.js |
+| health 3080/3081 | 200 / 200 |
+| mig 038 | aplicada 2026-10-09T18:39:56Z |
+| mig 039 | aplicada 2026-10-09T20:36:48Z · orcamentos.tabela_preco_id=YES |
+| backup SQL | pre-gate-e-20261010-100021.sql · 1111170 B · sha256=a94e7d7d897e28b6c643f9776333b2986d2a597cb1dd4a625e4f1cda447c7d32 |
+| rollback API | erp-zuccaro-erp-api:pre-spa-login-20261010-095905 |
+| rollback WEB | erp-zuccaro-erp-web:pre-spa-login-20261010-095905 |
+| runtime | ERP-RUNTIME-08B · auth supabase_user |
+
+## Delta tip vs bd2fa504
+- CadastroCodigoRegistroField + forms MASTER_CODE (código readonly)
+- httpApiClient order_by/order_dir (revisão independente)
+- docs CI SUCCESS anteriores
+
+## Redeploy tip 279f26fc (lint hasId)
+| tip | 279f26fc |
+| SPA | /assets/index-D_uICNJK.js |
+| backup | pre-gate-e-20261010-100519.sql · 1122345 B · sha256=1b7c593c8ad7b01e528ceaa8a182e1fc7a113ef5d85e7581edc3042b7b1ac5b4 |
+| rollback | pre-spa-login-20261010-100519 |
+

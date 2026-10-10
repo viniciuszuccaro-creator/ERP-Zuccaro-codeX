@@ -1,4 +1,8 @@
-backup path=pre-gate-e-20261009-100720.sql
-sha256=b302608ea56e56521738a40fab9eddea210e7b77cf0a314407e5198704bead2d
-utc=2026-10-09T10:07:20Z
-tip=d6cca4c2
+backup path=pre-gate-e-20261009-203540.sql bytes=988514 sha256=b8686cb4315f81a9acf6444cdcd32d605025d54f74da63d71322b8c6e9589a24 dump_complete_marker=YES
+integrity_header_pg_dump=YES
+integrity_tail_complete=YES
+integrity_sha256_recompute_match=YES
+integrity_file_mode_600=YES
+restore_destructive=NOT_PERFORMED
+AUTHORIZES_GATES_DEF=NO
+tip=bd2fa504

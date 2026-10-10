@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Users } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 
@@ -63,6 +64,13 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-segmento-cliente"
+      />
+
       <div>
         <Label>Nome do Segmento *</Label>
         <Input

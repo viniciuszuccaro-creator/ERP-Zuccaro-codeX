@@ -9,6 +9,7 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -48,21 +49,24 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     tipo: z.string().min(1, "Tipo e obrigatorio")
   });
 
-  const buildPayload = (extra = {}) => ({
-    ...formData,
-    ...extra,
-    codigo: sanitizeText(formData.codigo, 80),
-    descricao: sanitizeText(formData.descricao, 180),
-    nome: sanitizeText(formData.descricao, 180),
-    tipo: sanitizeText(formData.tipo, 80),
-    percentual_desconto_padrao: toNumber(formData.percentual_desconto_padrao, 0),
-    percentual_acrescimo_padrao: toNumber(formData.percentual_acrescimo_padrao, 0),
-    prazo_compensacao_dias: toInteger(formData.prazo_compensacao_dias, 0),
-    maximo_parcelas: toInteger(formData.maximo_parcelas, 1),
-    intervalo_parcelas_dias: toInteger(formData.intervalo_parcelas_dias, 30),
-    group_id: groupId || formData.group_id,
-    empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
-  });
+  const buildPayload = (extra = {}) => {
+    const codigoReservado = sanitizeText(formData.codigo, 80);
+    return {
+      ...formData,
+      ...extra,
+      descricao: sanitizeText(formData.descricao, 180),
+      nome: sanitizeText(formData.descricao, 180),
+      tipo: sanitizeText(formData.tipo, 80),
+      percentual_desconto_padrao: toNumber(formData.percentual_desconto_padrao, 0),
+      percentual_acrescimo_padrao: toNumber(formData.percentual_acrescimo_padrao, 0),
+      prazo_compensacao_dias: toInteger(formData.prazo_compensacao_dias, 0),
+      maximo_parcelas: toInteger(formData.maximo_parcelas, 1),
+      intervalo_parcelas_dias: toInteger(formData.intervalo_parcelas_dias, 30),
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      ...(codigoReservado ? { codigo: codigoReservado } : {}),
+    };
+  };
 
   const handleSubmit = async () => {
     if (!podeSalvar) {
@@ -111,10 +115,12 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
           <Input value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder="Ex: PIX, Boleto 30 dias" disabled={!podeSalvar} data-permission="Cadastros.FormaPagamento.editar" data-action="editar-descricao-forma-pagamento" data-sensitive />
         </div>
 
-        <div>
-          <Label>Codigo (opcional)</Label>
-          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} placeholder="PIX-01" disabled={!podeSalvar} data-permission="Cadastros.FormaPagamento.editar" data-action="editar-codigo-forma-pagamento" data-sensitive />
-        </div>
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-forma-pagamento"
+      />
       </div>
 
       <div>

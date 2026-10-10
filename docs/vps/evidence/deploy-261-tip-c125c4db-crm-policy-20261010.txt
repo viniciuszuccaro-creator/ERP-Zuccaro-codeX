@@ -1,0 +1,20 @@
+# Evidência sanitizada — tip c125c4db implantado (policy CRM compartilhada FE↔API)
+# utc=2026-10-10T18:04Z
+#
+# tip=c125c4db fix(crm): compartilha a policy de Oportunidade com a API
+# asset=index-C-lbE7zK.js (web layer cached; mesmo asset hash que 9f084ed0)
+# api=dist/domain/crmOportunidadePolicy.js (14549 bytes · rebuilt)
+# rollback=pre-spa-login-20261010-180111
+# MERGE_SHA8=c125c4db · STAMP=20261010-180111
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip c125c4db: erp-runtime-ci SUCCESS (frontend+backend)
+# Homolog OWNER tipado (este SHA) fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-c125c4db.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-c125c4db.json
+#
+# Bundle markers: CRM_CANONICAL_HTTP_PENDING · salvar-produto
+# VPS git HEAD=/opt/erp-zuccaro @ c125c4db
+# #266 Legado tip cb3af26e: monitorada — NÃO mesclada
+# Usuário restrito: BLOCKED · Recuperado: NÃO
+# Não atribuir homolog de 9f084ed0 a este tip (homolog reexecutada neste SHA).

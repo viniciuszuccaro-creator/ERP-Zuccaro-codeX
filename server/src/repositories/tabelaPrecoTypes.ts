@@ -58,6 +58,8 @@ export const tabelaPrecoCreateSchema = z.object({
   vigencia_inicio: dateOnly,
   vigencia_fim: dateOnly.nullable().optional(),
   moeda: z.literal('BRL').optional().default('BRL'),
+  /** Código de registro (importação); novos sem código usam reserva concorrente. */
+  codigo: nullableText(80),
   codigo_tabela_legado: nullableText(64),
   origem: z.string().trim().max(40).optional(),
   legacy_id: nullableText(120),

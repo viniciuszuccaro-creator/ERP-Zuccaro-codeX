@@ -1,0 +1,29 @@
+# Deploy #261 tip 4c0c167a — integrado #254 + launchpads + codigo (2026-10-10)
+# Sanitizado — sem tokens, sem PII, sem .env.
+
+| Campo | Valor |
+|---|---|
+| tip | **4c0c167a70f794a5457b2914894e0b5ea1273346** |
+| branch | cursor/cadastros-recuperacao-c360-contrato-392b |
+| SPA asset | /assets/index-DFgiLWLi.js |
+| health 3080/3081 | 200 / 200 (auth session probe reachable) |
+| backup SQL | pre-gate-e-20261010-122408.sql · 1027881 B · sha256=5ff597bd5227edc2f2dfbca2d2d582bacf846e2d6edaf3576ba5a58b149b0610 |
+| rollback | pre-spa-login-20261010-122409 |
+| CI tip | erp-runtime-ci **SUCCESS** (push 38051604610 + PR 38051607384) |
+
+## Bundle público (sem login)
+sectionKey no asset: caixa×5, contas_receber×2, entregas×6, nfe×3, ordens_compra×2, requisicoes×2, roteirizacao×3
+markers: shouldAccept×3 · Comercial.Cliente.detalhes×1
+
+## Homolog browser
+- Asset público: PASS
+- Login UI: BLOCKED neste agente (sem OWNER_* no .env.erp.dev / Runtime Secret de senha)
+- Badges launchpad owner: pendente sessão legítima (API inject histórico; xdotool FAIL)
+
+## Conteúdo tip
+- #254 b11843c8 corridas login/empresa (sem cópia divergente)
+- Launchpads Compras/Estoque/Expedição/Financeiro sectionKey canônico
+- reserveEntityCodigo Cliente/Produto/TabelaPreco + high-water
+
+## Recuperado
+NÃO legado · SYNTH≠recuperado

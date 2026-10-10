@@ -82,6 +82,20 @@ export default function ContratoForm({ contrato, onSubmit, clientes = [], fornec
           </Select>
         </div>
 
+        {contrato?.id ? (
+          <div className="col-span-2">
+            <Label>ID técnico</Label>
+            <Input
+              value={String(contrato.id)}
+              readOnly
+              disabled
+              className="bg-slate-50 font-mono text-xs"
+              data-action="id-tecnico-contrato-form"
+              title="Identificador técnico imutável; distinto do número do contrato"
+            />
+          </div>
+        ) : null}
+
         <div className="col-span-2">
           <Label htmlFor="parte_contratante">Parte Contratante *</Label>
           <Input
@@ -323,7 +337,7 @@ export default function ContratoForm({ contrato, onSubmit, clientes = [], fornec
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
-        <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
           {contrato ? 'Atualizar' : 'Criar Contrato'}
         </Button>
       </div>
@@ -335,7 +349,7 @@ export default function ContratoForm({ contrato, onSubmit, clientes = [], fornec
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <FileText className="w-5 h-5 text-emerald-600" />
+            <FileText className="w-5 h-5 text-blue-600" />
             {contrato ? 'Editar Contrato' : 'Novo Contrato'}
           </h2>
         </div>

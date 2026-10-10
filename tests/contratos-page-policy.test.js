@@ -39,6 +39,15 @@ test('exige identificador antes de atualizar um contrato', () => {
   assert.throws(() => requireContratoId({}), /sem identificador válido/);
 });
 
+test('Contratos exibem ID técnico distinto do número nos detalhes e no form', async () => {
+  const dialogs = await readFile(new URL('../src/components/contratos/ContratoDialogs.jsx', import.meta.url), 'utf8');
+  const form = await readFile(new URL('../src/components/contratos/ContratoForm.jsx', import.meta.url), 'utf8');
+  assert.match(dialogs, /data-action="id-tecnico-contrato"/);
+  assert.match(dialogs, /ID técnico/);
+  assert.match(form, /data-action="id-tecnico-contrato-form"/);
+  assert.match(form, /contrato\?\.id/);
+});
+
 test('pagina consulta por contexto e preserva historico na inativacao', async () => {
   const source = await readFile(new URL('../src/pages/Contratos.jsx', import.meta.url), 'utf8');
 

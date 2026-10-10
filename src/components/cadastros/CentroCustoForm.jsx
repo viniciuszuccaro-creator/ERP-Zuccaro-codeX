@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -90,21 +91,14 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosCentroCusto?.id)}
+        entityId={dadosCentroCusto?.id}
+        value={formData.codigo}
+        action="codigo-registro-centro-custo"
+      />
+
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="codigo">Código *</Label>
-          <Input
-            id="codigo"
-            value={formData.codigo}
-            onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-            placeholder="Ex: CC001"
-            required
-            disabled={!podeSalvar}
-            data-permission="Financeiro.CentroCusto.editar"
-            data-action="editar-codigo-centro-custo"
-            data-sensitive
-          />
-        </div>
 
         <div>
           <Label htmlFor="tipo">Tipo *</Label>

@@ -83,6 +83,13 @@ test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do f
   assert.deepEqual(enabled.filter((name) => name === 'Produto'), []);
 });
 
+test('Cliente entra no piloto HTTP somente com flag CLIENTE autorizada', () => {
+  assert.equal(resolveHttpPilotEntities({}).includes('Cliente'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'false' }).includes('Cliente'), false);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), true);
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'), true);
+});
+
 
 test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
   /** @type {{ method: string, url: string, headers: HeadersInit, body?: string }[]} */
@@ -119,6 +126,29 @@ test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
 
   const listed = await client.entities.Marca.list('-created_date', 10);
   assert.equal(listed.length, 1);
+  assert.match(calls[1].url, /order_by=created_at/);
+  assert.match(calls[1].url, /order_dir=desc/);
+});
+
+test('HttpApiClient filter encaminha order_by/order_dir ao BFF', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    fetchImpl,
+    getScope: () => ({ groupId: '11111111-1111-4111-8111-111111111111' }),
+  });
+  await client.entities.Marca.filter({ search: 'x' }, 'codigo', 50);
+  assert.match(urls[0], /order_by=codigo/);
+  assert.match(urls[0], /order_dir=asc/);
+  assert.match(urls[0], /search=x/);
 });
 
 test('HttpApiClient maps UnidadeMedida/GrupoProduto/SetorAtividade routes', async () => {
@@ -370,4 +400,69 @@ test('HTTP rejected Bearer never falls back to local data or leaks token in erro
     return true;
   });
   assert.equal(calls, 1);
+});
+
+test('Cliente HTTP update strips commercial/extra form fields to master-data allowlist', async () => {
+  let body = null;
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async (_url, init) => {
+      body = JSON.parse(init.body);
+      return new Response(JSON.stringify({
+        data: { id: 'cli-1', nome_fantasia: body.nome_fantasia, razao_social: body.razao_social },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  const updated = await client.entities.Cliente.update('cli-1', {
+    id: 'cli-1',
+    group_id: 'grupo-sintetico',
+    empresa_id: 'empresa-sintetica',
+    tipo: 'Pessoa Juridica',
+    razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
+    nome_fantasia: 'MARKER-OK',
+    cnpj: '11222333000181',
+    vendedor_responsavel: 'X',
+    vendedor_responsavel_id: 'y',
+    condicao_comercial: { limite_credito: 999 },
+    endereco_principal: { cidade: 'SP' },
+    contatos: [{ tipo: 'email', valor: 'a@b.c' }],
+    status: 'Ativo',
+  });
+  assert.equal(updated.nome_fantasia, 'MARKER-OK');
+  assert.equal(body.nome_fantasia, 'MARKER-OK');
+  assert.equal(body.documento, '11222333000181');
+  assert.equal(body.tipo, 'Pessoa Jurídica');
+  assert.equal(body.vendedor_responsavel, undefined);
+  assert.equal(body.condicao_comercial, undefined);
+  assert.equal(body.endereco_principal, undefined);
+  assert.equal(body.group_id, undefined);
+  assert.equal(body.id, undefined);
+});
+
+test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({
+      data: [{ id: 'c1', codigo: '000001', nome: 'A' }],
+      meta: { total: 1 },
+    }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    fetchImpl,
+    getScope: () => ({ groupId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', token: 'tok' }),
+  });
+  // Filtro multiempresa com status textual NÃO deve enviar ativo=Ativo/false
+  const rows = await client.entities.Cliente.filter({
+    $and: [{ $or: [{ group_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }] }],
+    status: 'Ativo',
+  }, '-updated_date', 20, 0);
+  assert.ok(Array.isArray(rows));
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].codigo, '000001');
+  assert.equal(urls[0].includes('ativo='), false);
+  assert.match(urls[0], /\/api\/v1\/clientes\?/);
 });

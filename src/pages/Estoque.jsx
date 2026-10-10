@@ -34,7 +34,11 @@ export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const canSeeEstoque = hasPermission('Estoque', null, 'ver') || hasPermission('Estoque', null, 'visualizar');
   const canExportEstoque = hasPermission('Estoque', null, 'exportar') || hasPermission('Estoque', 'Relatórios', 'exportar') || hasPermission('Estoque', 'Relatorios', 'exportar');
-  const canTransferirEstoque = hasPermission('Estoque', 'Transferências', 'criar') || hasPermission('Estoque', 'Transferencias', 'criar') || hasPermission('Estoque', 'Movimentações', 'criar') || hasPermission('Estoque', 'Movimentacoes', 'criar');
+  const canTransferirEstoque = hasPermission('Estoque', 'movimentacoes', 'criar')
+    || hasPermission('Estoque', 'Transferências', 'criar')
+    || hasPermission('Estoque', 'Transferencias', 'criar')
+    || hasPermission('Estoque', 'Movimentações', 'criar')
+    || hasPermission('Estoque', 'Movimentacoes', 'criar');
   const { openWindow } = useWindow();
   const { user } = useUser();
   const { estaNoGrupo, empresaAtual, grupoAtual, empresasDoGrupo, filtrarPorContexto, getFiltroContexto } = useContextoVisual();
@@ -247,9 +251,10 @@ export default function Estoque() {
   const modules = [
     {
       title: 'Inventário',
+      sectionKey: 'inventario',
       description: 'Contagem e ajustes',
       icon: Box,
-      color: 'cyan',
+      color: 'blue',
       component: React.lazy(() => import('../components/estoque/InventarioForm')),
       windowTitle: '📋 Inventário',
       width: 1200,
@@ -258,9 +263,10 @@ export default function Estoque() {
     },
     {
       title: 'Produtos',
+      sectionKey: 'produtos',
       description: 'Cadastro e estoque',
       icon: Box,
-      color: 'indigo',
+      color: 'blue',
       component: ProdutosTab,
       windowTitle: '📦 Produtos',
       width: 1500,
@@ -269,6 +275,7 @@ export default function Estoque() {
     },
     {
       title: 'Movimentações',
+      sectionKey: 'movimentacoes',
       description: 'Entradas e saídas',
       icon: TrendingUp,
       color: 'blue',
@@ -280,9 +287,10 @@ export default function Estoque() {
     },
     {
       title: 'Recebimento',
+      sectionKey: 'movimentacoes',
       description: 'Entrada de mercadorias',
       icon: PackageCheck,
-      color: 'green',
+      color: 'blue',
       component: RecebimentoTab,
       windowTitle: '📥 Recebimento',
       width: 1400,
@@ -291,9 +299,10 @@ export default function Estoque() {
     },
     {
       title: 'Requisições Almox.',
+      sectionKey: 'requisicoes',
       description: 'Saídas almoxarifado',
       icon: PackageMinus,
-      color: 'orange',
+      color: 'blue',
       component: RequisicoesAlmoxarifadoTab,
       windowTitle: '📤 Requisições Almoxarifado',
       width: 1400,
@@ -302,9 +311,10 @@ export default function Estoque() {
     },
     {
       title: 'Solicitações Compra',
+      sectionKey: 'requisicoes',
       description: 'Requisições internas',
       icon: PackageOpen,
-      color: 'purple',
+      color: 'blue',
       component: SolicitacoesTab,
       windowTitle: '📋 Solicitações Compra',
       width: 1400,
@@ -313,9 +323,10 @@ export default function Estoque() {
     },
     {
       title: 'Lotes e Validade',
+      sectionKey: 'produtos',
       description: 'Controle de lotes',
       icon: Clock,
-      color: 'orange',
+      color: 'blue',
       component: ControleLotesValidade,
       windowTitle: '⏰ Lotes e Validade',
       width: 1400,
@@ -324,9 +335,10 @@ export default function Estoque() {
     },
     {
       title: 'Relatórios',
+      sectionKey: 'inventario',
       description: 'Analytics de estoque',
       icon: BarChart3,
-      color: 'indigo',
+      color: 'blue',
       component: RelatoriosEstoque,
       windowTitle: '📈 Relatórios Estoque',
       width: 1400,
@@ -335,6 +347,7 @@ export default function Estoque() {
     },
     {
       title: 'IA Reposição',
+      sectionKey: 'produtos',
       description: 'Sugestões inteligentes',
       icon: Sparkles,
       color: 'blue',

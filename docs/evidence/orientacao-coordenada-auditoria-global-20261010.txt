@@ -1,0 +1,50 @@
+# ERP ZUCCARO — Orientação coordenada (substitui anterior)
+# Chat principal: ERP ZUCCARO - CODEX/CURSOR (bc-d973626e-1060-4071-a25a-6a549769392b)
+# Imagens anexadas = exemplos; escopo = todo o sistema.
+# Sanitizado — sem tokens, sem PII.
+
+## Coordenação
+| Papel | Responsável | Ambiente | Reservado |
+|---|---|---|---|
+| Chat principal | Cursor (este) | branch #261 / VPS erp-dev | — |
+| Comercial 360 contratos | Codex Comercial 360 | tarefa própria | sessão/contexto/outbox Codex |
+| Legado migração | Codex Legado | staging VPS privado | importadores legado |
+| Auditoria UI/recuperação funcional | **Cursor** | #261 tip | Visualizador/Cadastros/Financeiro UI |
+
+## CURSOR — primeira ação efetiva (2026-10-10)
+Causa raiz comprovada pelos prints:
+1. Empresas/Grupos: `data-permission=Cadastros.Empresa.*` enquanto gate efetivo é `Cadastros.Organizacional.*` → busca/+ Novo "Acesso negado".
+2. Marcas: fallback de célula caía em `codigo` para pais_origem/categoria vazios.
+3. Grupos Empresariais vazios: filtro por group_id sem incluir `id === groupId` do mestre.
+
+Correções no VisualizadorUniversalEntidadeV24 + Bloco5 (codigo na grade Empresa).
+
+## Matriz global (inventário — exemplos dos prints + blocos + Fiscal)
+| Módulo | Entidade/Sub | codigo numérico lista | ID técnico detalhe | UI | Observação |
+|---|---|---|---|---|---|
+| Cadastros | UnidadeMedida | SIM (00000x) | form readonly | OK azul | referência |
+| Cadastros | Marca | SIM | form | mapeamento pais/categoria CORRIGIDO | SYNTH≠recuperado |
+| Cadastros | GrupoProduto | misto alfanumérico legado | form | GATE-D SYNTH visível | #211 |
+| Cadastros | Empresa | coluna codigo + ID form | SIM form | Acesso negado CORRIGIDO | Organizacional.* |
+| Cadastros | GrupoEmpresarial | codigo coluna | — | filtro self-id CORRIGIDO | |
+| Cadastros | Cliente/Fornecedor | codigo | form | Abrir único parcial | #211 legado |
+| Financeiro | Contas a Receber | n/a | n/a | launchpad presente | auditar vs azul |
+| Financeiro | Contas a Pagar | n/a | n/a | launchpad presente | auditar vs azul |
+| Financeiro | Caixa/Bancos | n/a | n/a | launchpad presente | |
+| Fiscal | Notas Fiscais (nfe) | n/a | n/a | sectionKey+alias CORRIGIDO | owner Fiscal.nfe |
+| Fiscal | tabelas_fiscais | n/a | n/a | Config/Plano → tabelas_fiscais | |
+| Fiscal | sped / obrigacoes | n/a | n/a | SPED/DRE → sped/obrigacoes | |
+| Comercial 360 | Orçamento/Pedido | numero | id | API homologada | UI #254 |
+| Comercial | Clientes / NF tab | codigo | id | NotasFiscaisTab usa Fiscal.nfe | alias Notas Fiscais→nfe |
+| Comercial | Pedidos Retirada / Canais | n/a | n/a | sectionKey título UI | auditar vs árvore |
+| Produção | Kanban/Ordens/Apontamentos… | n/a | n/a | sectionKeys título UI | auditar vs árvore |
+| Estoque | launchpad | n/a | n/a | inventariar badges | próximo |
+| Expedição | launchpad | n/a | n/a | inventariar badges | próximo |
+| Compras | launchpad | n/a | n/a | inventariar badges | próximo |
+
+## Fiscal — causa raiz (2026-10-10)
+Launchpad/botão: `Fiscal.Notas Fiscais.visualizar|emitir` ≠ árvore owner `Fiscal.nfe.*`.
+Fix: sectionKey canônico + SECTION_ALIASES + data-permission `Fiscal.nfe.emitir`.
+
+## Não recuperação
+GATE-D SYNTH, Seed sintetico, PROD-A-001 DEV ≠ recuperação de legado.

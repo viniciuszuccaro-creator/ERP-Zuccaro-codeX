@@ -1,4 +1,5 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
+import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
@@ -170,16 +171,33 @@ export function createHttpApiClient(options = {}) {
    * @param {string} basePath
    * @param {{ searchKeys?: string[], ativoKeys?: string[] }} [opts]
    */
+  /**
+   * Converte orderBy legado Base44 (`-created_date`, `codigo`) em query BFF.
+   * Campos não suportados pelo endpoint são ignorados no servidor (allowlist).
+   * @param {unknown} orderBy
+   */
+  function normalizeOrderByQuery(orderBy) {
+    if (typeof orderBy !== 'string' || !orderBy.trim()) return {};
+    const desc = orderBy.startsWith('-');
+    let field = (desc ? orderBy.slice(1) : orderBy).trim();
+    if (!field) return {};
+    if (field === 'created_date') field = 'created_at';
+    return { order_by: field, order_dir: desc ? 'desc' : 'asc' };
+  }
+
   function createCrudEntity(basePath, opts = {}) {
     const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];
     const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];
     return {
       async list(orderBy, limit = 100) {
-        void orderBy;
-        return request(basePath, { query: { limit } });
+        return request(basePath, { query: { limit, ...normalizeOrderByQuery(orderBy) } });
       },
-      async filter(query = {}, orderBy, limit = 100) {
-        void orderBy;
+      async filter(query = {}, orderBy, limit = 100, skip = 0) {
+        if (typeof orderBy === 'number') {
+          skip = limit || 0;
+          limit = orderBy;
+          orderBy = undefined;
+        }
         let search;
         for (const key of searchKeys) {
           if (query[key] != null && query[key] !== '') {
@@ -194,9 +212,25 @@ export function createHttpApiClient(options = {}) {
             break;
           }
         }
-        return request(basePath, {
-          query: { limit, search, ativo },
+        const offset = Number.isInteger(Number(skip)) && Number(skip) > 0 ? Number(skip) : undefined;
+        // Coerce status legado ("Ativo"/"Inativo") e booleans; strings inválidas
+        // NÃO viram ativo=false no BFF (parseAtivoQuery trata qualquer não-true como false).
+        let ativoQuery;
+        if (typeof ativo === 'boolean') {
+          ativoQuery = ativo;
+        } else if (ativo != null && ativo !== '') {
+          const raw = String(ativo).trim().toLowerCase();
+          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;
+          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;
+        }
+        const result = await request(basePath, {
+          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },
         });
+        // entityListSorted exige array; BFF pode devolver página {data|rows}.
+        if (Array.isArray(result)) return result;
+        if (Array.isArray(result?.data)) return result.data;
+        if (Array.isArray(result?.rows)) return result.rows;
+        return [];
       },
       async get(id) {
         return request(`${basePath}/${encodeURIComponent(id)}`);
@@ -230,6 +264,24 @@ export function createHttpApiClient(options = {}) {
     SetorAtividade: createCrudEntity('/api/v1/setores-atividade', {
       searchKeys: ['nome', 'search'],
     }),
+    // Listagem/CRUD Cliente no BFF — piloto quando VITE_ERP_HTTP_CLIENTE_360=true.
+    Cliente: (() => {
+      const base = createCrudEntity('/api/v1/clientes', {
+        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],
+        // NÃO usar "status" aqui: filtros multiempresa / colunas status:"Ativo"
+        // quebravam parseAtivoQuery → ativo=false → grade vazia com API n>0.
+        ativoKeys: ['ativo', 'ativa'],
+      });
+      return {
+        ...base,
+        async create(data) {
+          return base.create(toClienteMasterHttpPayload(data));
+        },
+        async update(id, data) {
+          return base.update(id, toClienteMasterHttpPayload(data));
+        },
+      };
+    })(),
     // API MASTER DATA pronta; NAO habilitada em HTTP_PILOT_ENTITIES.
     Produto: (() => {
       const base = createCrudEntity('/api/v1/produtos', {
@@ -464,6 +516,9 @@ export function createHttpApiClient(options = {}) {
   for (const name of HTTP_PILOT_ENTITIES) {
     entities[name] = entityRoutes[name] || entityRoutes.Marca;
   }
+  // Rotas preparadas (Cliente etc.) ficam disponiveis para o piloto efetivo
+  // resolvido em resolveHttpPilotEntities — sem forcar Produto na listagem.
+  if (entityRoutes.Cliente) entities.Cliente = entityRoutes.Cliente;
 
   return {
     entities,

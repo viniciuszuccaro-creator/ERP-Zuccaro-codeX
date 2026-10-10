@@ -1,3 +1,421 @@
+## REVISÃO CODEX — #269 CRM preflight (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`8d806386`** |
+| base | #268 @ `5a38a94e` · draft · MERGEABLE · CI SUCCESS · agente RUNNING |
+| escopo | preflight RO · stages before/after_migration · gate `codeTrigger` (BEFORE INSERT/UPDATE OF codigo,group_id) · sem DML/ativação |
+| flag / UI | `ENABLE_CRM_HTTP` OFF · UI/store/C360 intactos |
+| ação Cursor | **monitorar** — **não** porte/executar preflight em DEV/VPS neste ciclo |
+| stack | #269 → #268 → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
+## REVISÃO CODEX — #268 CRM→Pedido (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a38a94e`** |
+| base | #267 `codex/crm-http-canonico-20261010` @ `e3194fb1` · draft · MERGEABLE · CI SUCCESS |
+| escopo | vincular-pedido · exclusividade Pedido (índice único + `byPedido`) · orçamento de origem obrigatório quando presente |
+| flag / UI | `ENABLE_CRM_HTTP` OFF · opção B intacta · sem dual-write |
+| ação Cursor | **monitorar** — **não** porte/merge/deploy; não integrar sem #267 revalidada |
+| #267/#266/#265/#254 | tips estáveis neste ciclo |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
+## REVISÃO CODEX — #267 CRM HTTP 040 (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`e3194fb1`** (fix legado orçamento/high-water; runtime base `0481e940`) |
+| base | #261 `c125c4db` · draft · MERGEABLE · CI SUCCESS |
+| agente | `codex/crm-http-canonico-20261010` **IDLE** |
+| escopo | mig 040 + routes/repo/service Oportunidade · flag `ENABLE_CRM_HTTP` default false |
+| UI/C360 | opção B intacta · sem dual-write · sem backfill |
+| ação Cursor | **monitorar** — **não** porte/merge/deploy/migração neste ciclo |
+| gates Codex | revisão independente · sem VPS/ativação até backup/mapa IDs/reconciliação |
+| #266/#265/#263/#254 | sem mudança · sem re-porte |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` (docs tip `21183bf6`) |
+
+## TIP c125c4db IMPLANTADO — policy CRM + revisão Codex (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| **PR HEAD #261** | **`c125c4db`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · API `dist/domain/crmOportunidadePolicy.js` |
+| rollback | `pre-spa-login-20261010-180111` |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `c125c4db` |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
+| #266 Codex | tip **`cb3af26e`** · CI SUCCESS · IDLE · **não** merge Cursor (#211) |
+| #267 Codex | tip **`e3194fb1`** · CRM HTTP 040 · IDLE · **monitorar** (sem porte/deploy) |
+| #268 Codex | tip **`5a38a94e`** · CRM→Pedido exclusivo · IDLE · **monitorar** (depende #267; sem porte) |
+| #269 Codex | tip **`8d806386`** · CRM preflight RO · CI SUCCESS · RUNNING · **monitorar** (sem porte/exec DEV) |
+| porte neste ciclo | nenhum (Legado/#267–#269 schema fora; #265/#263 já absorvidos) |
+
+## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
+
+Fonte única: `server/src/domain/crmOportunidadePolicy.js`. O arquivo `src/components/lib/crmOportunidadePolicy.js` permanece wrapper. A API empacota essa fonte porque o contexto Docker continua `server/` (`COPY src` → `dist/domain`). Não alargar o contexto para a raiz: `docker build ./server` é o contrato do compose, do gate-f, do canário e do incidente. Codex importa o módulo; não edita a policy nem a UI. Schema, repositório e RLS da 040 seguem no workspace Codex, sem corte do store e sem dual-write. **Implantado** erp-dev tip **`c125c4db`**.
+
+## REVISÃO CODEX AUTÔNOMO (2026-10-10)
+
+Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
+
+| PR / agente | Achado | Ação Cursor |
+|---|---|---|
+| [#265](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/265) tip `910e4ec9` | Produto+Orçamento sobre #261; MERGEABLE · IDLE | já em #261 — **não** re-portar |
+| [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) | vs main · ancestral Orçamento | absorvido |
+| [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) tip **`cb3af26e`** | Legado crosswalk/tipo + SQL headers · IDLE · CI SUCCESS | **não** merge Cursor — #211 |
+| [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`e3194fb1`** | CRM HTTP 040 · IDLE · CI SUCCESS · flag off | **monitorar** — sem porte/merge/VPS |
+| [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a38a94e`** | CRM→Pedido exclusivo sobre #267 · CI SUCCESS · flag off | **monitorar** — sem porte; depende #267 |
+| [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`8d806386`** | preflight RO · CI SUCCESS · RUNNING | **monitorar** — sem porte/exec DEV |
+| #254 | ancestral OPEN | não re-portar |
+| Agentes | #269 **RUNNING** · #268/#267 **IDLE** · Legado/Produto/Orçamento **IDLE** | timer contínuo |
+
+## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
+
+Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `9f084ed0` ao HEAD novo.
+
+| Item | Valor |
+|---|---|
+| `origin/main` | **`baba91a6`** (merge #257) · **não** contém o HEAD da #261 |
+| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip policy CRM · mergeable vs main · **não** incorporada na main |
+| #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
+| #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
+| SHA implantado | **`c125c4db`** · `index-C-lbE7zK.js` · ≡ PR HEAD |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `c125c4db` |
+| usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| CRM | C360 adaptador **opção B** · policy shared API · HTTP canônico server **pendente Codex** · sem CRM paralelo |
+| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main |
+
+## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
+
+Troca de máquina. **Não depender** de alterações locais da empresa — só GitHub + este HANDOFF.
+
+| Item | Valor |
+|---|---|
+| repositório canônico | `viniciuszuccaro-creator/ERP-Zuccaro-codeX` (clone também via `erp-zuccaro-codex`) |
+| branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **main** | `baba91a6` — **#261 ainda não mesclada em main** |
+| **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
+| **PR HEAD #261** | **`c125c4db`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · ≡ PR HEAD |
+| rollback | `pre-spa-login-20261010-180111` |
+| backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
+| #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`c125c4db`** (não reusar SHAs anteriores) |
+| usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
+| CRM | C360 adaptador **opção B** + policy shared; HTTP canônico **pendente Codex** (sem paralelo) |
+| **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
+| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo · Legado #266/#211 |
+| ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` · `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
+| chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
+
+### Ao abrir no PC de casa
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`c125c4db`** (ou tip docs posterior).
+2. Confirmar VPS: `MERGE_SHA8=c125c4db` / `index-C-lbE7zK.js` — não atribuir homolog antiga a este tip.
+3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
+4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
+
+### Próxima ação Cursor (independente enquanto merge owner)
+1. ~~CI + redeploy tip policy CRM~~ **feito** `c125c4db` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
+2. Secret usuário restrito → homolog fail-closed FE+BE.
+3. Inventário residual (POD/Separação keep-both; Painel seletivo).
+4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
+5. Codex: CRM HTTP (A schema) se além do adaptador B; Legado #211/#266.
+
+### Pendências / parcial (não concluído)
+- Homolog usuário restrito.
+- CRM HTTP canônico (server) — adaptador B cobre leitura C360; funis ainda no store legado.
+- #261 **não** incorporada em `main` (só #264→#261).
+- Legado staging→ops: **não importado**.
+- CI do tip ≠ prova de merge em `main`.
+
+## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
+
+Substitui a orientação anterior. Imagens = exemplos; escopo = **todo o sistema**.
+Chat principal: [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b).
+
+| Papel | Quem | Branch/ambiente | Não editar |
+|---|---|---|---|
+| Coordenação + UI/recuperação funcional | **Cursor** | `#261` `cursor/cadastros-recuperacao-c360-contrato-392b` · erp-dev | sessão/contexto/outbox Codex |
+| Contratos/sequências C360 | **Codex Comercial 360** | tarefa própria | Visualizador em lote Cursor sem coordenação |
+| Migração/recuperação real | **Codex Legado** | staging VPS privado | não misturar SYNTH como recuperado |
+
+### CURSOR — mandato ativo
+1. Inventariar módulos/submódulos/entidades (matriz global).
+2. Recuperar melhorias da azul-clara seletivamente (sem restaurar versão inteira).
+3. Código numérico + ID técnico em listas/detalhes/forms.
+4. Corrigir abertura dupla, carga incompleta, campos sumindo, busca, paginação, permissões.
+5. Confrontar UI/API × legado privado; SYNTH ≠ recuperado.
+6. Consolidar #261, CI, implantar e homologar SHA VPS.
+
+### Primeira ação efetiva Cursor
+Corrigido Visualizador: gate `Organizacional` no `data-permission`; fallback sem `codigo` em campos descritivos; `GrupoEmpresarial` inclui `id===groupId` no filtro.
+**Implantado** erp-dev tip **`ea213906`** · `index-Dqf6E74p.js` · evidências `orientacao-coordenada-auditoria-global-20261010.txt` · `deploy-261-tip-ea213906-*`.
+
+### Segunda ação efetiva Cursor — Fiscal RBAC
+Causa: cards/botões usavam `Fiscal.Notas Fiscais.*` enquanto owner tree é `Fiscal.nfe|tabelas_fiscais|sped|obrigacoes`.
+Correção: `sectionKey` canônico no launchpad + aliases UI→owner em `usePermissions`/`localBase44Client` + `NotasFiscaisTab` consulta `Fiscal.nfe` + teste focado owner.
+Fail-closed preservado (gate por seção).
+**Implantado** erp-dev tip **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` · evidência `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt`.
+**Homologado browser** (session inject API→localStorage): Fiscal/Financeiro/Comercial PASS · 0 badges.
+
+### Terceira ação — #254 contexto + Cadastros RBAC residual
+- Revisado #254 HEAD `860114ca` (race refresh/espelho/grade).
+- Port seletivo em #261 **sem** remover piloto HTTP `entityListSorted`/`countEntities` nem Organizacional/Marcas do Visualizador.
+- Cadastros: aliases ContatoB2B/Segmento/Região→pessoas; Depto/Cargo/Turno→organizacional; PerfilAcesso→`Sistema.acessos`.
+- Inventário: `docs/evidence/inventario-global-modulos-20261010.txt`.
+- Login xdotool continua quebrado; homolog usa API session + inject.
+
+### Quarta ação — #254 tip `b11843c8` (corridas login/empresa) no #261
+- Fonte: PR #254 branch `codex/cadastros-http-context-race-20261009` tip **`b11843c8`**.
+- Portado no mesmo arquivo #261: `loginErpHttpSession.shouldAccept` + evento contexto no login; Auth `loginVersion`/`bootstrapComplete`/revalidate background; `assertCadastroFormScopeCurrent` + `getScopedCadastroPlaceholder` + `formScopeRef`.
+- **Não** revertido: piloto HTTP, Organizacional `data-permission`, fallback sem codigo/sigla, `classify`/`merge` edit load, `grupoSelfOr`.
+- CI tip **`95ee6179` SUCCESS**. Redeploy VPS pendente (ainda `7fe1067b` no erp-dev).
+- #254 Codex: tip já incorporado em #261 — fechar/merge coordenado sem segunda cópia dos arquivos.
+
+### Quinta ação — launchpads sectionKey (Compras/Estoque/Expedição/Financeiro)
+- Mesmo padrão Fiscal.nfe: `sectionKey` canônico + aliases em `usePermissions`/`localBase44Client`.
+- DetalhesCliente: `uniqueKey` por id (anti janela dupla).
+- Evidência: `docs/evidence/inventario-launchpad-sectionkey-20261010.txt`.
+
+### Sexta ação — tip `4c0c167a` implantado erp-dev
+- CI SUCCESS · SPA `index-DFgiLWLi.js` · backup `pre-gate-e-20261010-122408.sql` · rollback `pre-spa-login-20261010-122409`.
+- Bundle público confirma sectionKeys + shouldAccept + DetalhesCliente uniqueKey.
+- P0 codigo: Cliente/Produto/TabelaPreco via `reserveEntityCodigo` (preserve incoming + high-water).
+- Evidência: `docs/vps/evidence/deploy-261-tip-4c0c167a-integrado-20261010.txt`.
+- **Supersedido** pela sétima ação (`7e515fbc`).
+
+### Sétima ação — tip `7e515fbc` + homolog login tipado + Onda 5 Pedido UX
+- Port #254 `f0844fa5` + Pedido Onda 5 + FormaPagamento codigo/ID.
+- **Supersedido** pela oitava ação (`3108b9f2`). Evidência tip antigo: `deploy-261-tip-7e515fbc-homolog-login-20261010.txt`.
+
+### Oitava ação — tip `3108b9f2` (#254 HEAD `4a1ecf4c` + azul global + consolidação)
+- **Supersedido** pela nona ação (`0d458ab9`). Evidência tip antigo: `deploy-261-tip-3108b9f2-integrado-20261010.txt`.
+
+### Nona ação — tip `0d458ab9` (Clientes API×UI + V23→V24)
+- **Supersedido** pela décima ação (`bdeec58c`). Evidência: `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt`.
+
+### Décima ação — tip `bdeec58c` (salvar minify-safe)
+- Crash salvar: `Function.name` some no bundle → self-managed falso → `onSuccess`→`handlePersistSubmit`→ErrorBoundary.
+- Fix: `FormComponent.isSelfManagedCadastro = true` (+ displayName) em Cliente/Fornecedor/Representante/Produto V22.
+- Freeze scope só quando sessão HTTP ≡ render (visão consolidada Grupo ok).
+- **Implantado** erp-dev tip **`bdeec58c`** · asset `index-5EmU7-cb.js` · backup `pre-gate-e-20261010-134527.sql` · rollback `pre-spa-login-20261010-134528`.
+- **Homologado neste SHA** fail_count=0: login · Clientes V24 n=5 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads.
+- Residual: usuário restrito · Legado #211 · ManagePR casing repo.
+- Evidência: `deploy-261-tip-bdeec58c-salvar-minify-20261010.txt`.
+
+### Décima primeira ação — integração #264 + #254 final `20a2c2fb` em #261
+| Pacote | Valor |
+|---|---|
+| responsável | **Cursor** (merge na candidata #261) · Codex porte #254→#264 |
+| HEAD referência #254 | **`20a2c2fb`** (ancestral de #261 pós-merge) |
+| HEAD #264 Codex | **`d9403665`** · CI SUCCESS · base #261 `d31b9bbe`/`a004044b` |
+| **PR HEAD #261** | tip branch · merge código **`861513cd`** · docs **`c9f845a8`+** |
+| código incorporado | `useProdutoHttpEditLoad` · actorId/token no form scope/edit policy · cliente consolidado · **preservado** `isSelfManagedCadastro` minify-safe |
+| **SHA implantado** | supersedido pela 13ª ação (**`00edfb2b`**) |
+| sem cópia divergente | Cursor **não** re-portou #254 enquanto Codex fechava #264; merge preservou ambos os conjuntos |
+| testes | produto-http-edit-load + edicao-load + pim-ui 40/40 |
+| próxima | supersedido pela 13ª ação |
+
+### Décima segunda ação — Contratos/C360 independente
+- Contratos: ID técnico em `ContratoForm` + `ContratoDialogs` (≠ número).
+- Central 360: código + ID técnico; orçamentos/pedidos com status e id (fonte canônica).
+- ManagePR: URL lowercase `erp-zuccaro-codex` (PR #261).
+
+### Décima terceira ação — tip `00edfb2b` implantado + homolog
+| Pacote | Valor |
+|---|---|
+| **PR HEAD / implantado** | **`00edfb2b`** · asset `index-ChwPPG6e.js` |
+| incorporado | #254 `20a2c2fb` · #264 `d9403665` · minify-safe · Contratos/C360 |
+| CI | erp-runtime-ci **SUCCESS** (4) |
+| backup | `pre-gate-e-20261010-142336.sql` sha256 `501c0400…ba5f` |
+| rollback | `pre-spa-login-20261010-142346` |
+| **homologado** | login tipado fail_count=0 (não inject) |
+| evidência | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
+| ≠ implantado antigo | `bdeec58c` supersedido neste redeploy |
+| próxima | 14ª ação (ID técnico) · merge owner · #211 |
+
+### Décima quarta ação — tip `6e397596` ID técnico implantado
+- `CadastroCodigoRegistroField` + `entityId` · 22 forms · ClienteCompleto · Produto V22 · C360 fontes canônicas.
+- **Implantado** erp-dev **`6e397596`** · `index-BE23NqEC.js` · backup `pre-gate-e-20261010-143842.sql` · rollback `pre-spa-login-20261010-143842`.
+- **Homologado** login tipado fail_count=0 neste SHA.
+- Usuário restrito: **BLOCKED** (`homolog-usuario-restrito-blocked-20261010.txt`).
+- Evidência: `deploy-261-tip-6e397596-id-tecnico-20261010.txt`.
+
+### Décima quinta ação — tip `f22d1151` Fornecedor/Representante implantado
+- `CadastroFornecedorCompleto` + `RepresentanteFormCompleto` com `CadastroCodigoRegistroField`.
+- **Implantado** **`f22d1151`** · `index-KP6RdCBA.js` · backup `pre-gate-e-20261010-144428.sql` · rollback `pre-spa-login-20261010-144429`.
+- **Homologado** login tipado fail_count=0 neste SHA.
+- Evidência: `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt`.
+- Residual: secret usuário restrito · merge owner · Legado #211.
+
+### Codex Comercial 360 / Legado
+Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
+Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
+#254 tip **`20a2c2fb`** + #264 tip **`d9403665`** em #261 tip implantado **`00edfb2b`** — merge owner; não abrir segundo porte.
+
+## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| candidata | [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) · `#258⊂#259⊂#260⊂#261` |
+| tip | **`279f26fc`** · asset `index-D_uICNJK.js` (runtime forms em `d6952b9d`+) |
+| delta | forms MASTER_CODE `codigo-registro` · HTTP `order_by` (Bugbot) · lint hasId |
+| **implantado** | erp-dev · mig 038+039 · backup `pre-gate-e-20261010-100519.sql` · rollback `pre-spa-login-20261010-100519` |
+| **homologado API** | CPA create/reopen/convert/dup409/cross404 PASS |
+| **recuperado** | NÃO legado (#211) · auxiliares codigo API OK |
+| UI | BLOCKED #254 Codex |
+| ≠ | sessão/contexto/outbox Codex |
+| evidências | `deploy-261-tip-d6952b9d-*` · `homolog-261-tip-d6952b9d-c360-*` |
+| próxima | CI tip → merge owner; #254; #211 |
+
+## CURSOR — #261 candidata integração + homolog API (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| tip | supersedido por **`d6952b9d`** acima |
+
+## CURSOR — #261 tip `bd2fa504` implantado (2026-10-09T20:50Z)
+
+| Item | Valor |
+|---|---|
+| tip | supersedido pelo bloco candidata 2026-10-10 acima |
+
+## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| tip | supersedido por **`bd2fa504`** implantado acima |
+
+## CURSOR — #260 tip `18113337` implantado + homolog (2026-10-09T19:52Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/comercial360-fluxo-cliente-orc-pedido-392b` · [#260](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/260) |
+| tip | **`18113337`** |
+| CI | **SUCCESS** · MERGEABLE |
+| **implantado** | erp-dev · `index-wiWHreg3.js` · backup `pre-gate-e-20261009-194341.sql` · rollback `pre-spa-login-20261009-194342` |
+| **homologado** | Orçamento busca+gap PASS · Pedido busca/tabela PASS · 3Z PASS |
+| **importado** | **NÃO** |
+| #259 | tip `55fcac4f` · MERGEABLE · merge owner |
+| #258 | ancestor de #259 |
+| #254 / #211 | Codex |
+| evidências | `deploy-260-*` · `browser-260-*` |
+| próxima | supersedido pelo lote recuperação+039 |
+
+## CURSOR — Comercial 360 picker + #259 closeout (2026-10-09T19:40Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| #259 | tip **`55fcac4f`** implantado · CI SUCCESS · MERGEABLE · Setor/UM/Grupo edit+codigo **PASS** |
+| #258 | ancestor OPEN — merge #259 cobre |
+| Comercial 360 | supersedido pelo tip **`18113337`** implantado |
+| **importado** | **NÃO** (#211 staging) |
+| registros | matriz `registros-recuperacao-matriz-20261009.txt` · Fornecedor schema ausente · SYNTH≠legado |
+| Financeiro menus | inventário `financeiro-menus-nav-20261009.txt` · sem módulo paralelo |
+| #254 / #211 / outbox | **reservado Codex** — Cursor não edita sessão/contexto/outbox |
+| mig | VPS 001–024+**038**; Codex 025–037 intocados |
+| próxima | merge #259/#260 após owner |
+
+## CURSOR — #259 tip `55fcac4f` implantado + homolog (2026-10-09T18:55Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/cadastros-codigo-abrir-unico-392b` · [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) |
+| tip | **`55fcac4f`** |
+| CI | **SUCCESS** |
+| **implantado** | erp-dev · `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` |
+| **homologado** | Grupo/Marca Abrir=1 + edit+codigo PASS · Setor/UM supersedido closeout 19:35Z |
+| **importado** | **NÃO** |
+| #258 | ancestor — merge #259 cobre #258 |
+| #254 / #211 | Codex |
+| evidências | `deploy-259-*` · `browser-259-*` · inventário completo |
+| próxima | merge #259 após owner; fechar #258 |
+
+## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
+
+| Item | Valor |
+|---|---|
+| tip | **`c2e32750`** (pré-fix CI) |
+| mudança | Abrir único; código auxiliares; edit merge |
+| **implantado** | **NÃO** |
+
+## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`e94f39b2`** (CI) · runtime implantado **`d9a72802`** |
+| CI | erp-runtime-ci **SUCCESS** (`e94f39b2`) |
+| **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` |
+| mudança | `countEntities` batch → piloto HTTP; filtro contagem = multiempresa Visualizador |
+| **homologado** | hub badge Clientes=5 · V24 badge=5 · rows=5 · API n=5 (tip = d9a72802) |
+| ops DB | clientes=6 · produtos=4 · empresas=3 · auxiliares OK · `fornecedores` tabela ausente |
+| registros | preservados ops; volume legado só staging; sem reseed |
+| #254 Codex | **reservado** |
+| #211 | staging 20456 · authorized=0 · **importado=NÃO** · consumidor testes PASS |
+| fases | implementado=sim · integrado=PR · implantado=sim · homologado=badge/lista · importado=não |
+| próxima ação | CI tip `d9a72802` → merge #258 após owner; Codex #254/#211 contrato+crosswalk |
+
+Evidências: `deploy-258-count-badge-d9a72802-20261009.txt`, `browser-258-count-badge-d9a72802-20261009.txt`, `registros-sumidos-fonte-api-ui-20261009.txt`, `legado-211-ensaio-consumidor-20261009.txt`.
+
+## CURSOR — #258 ciclo edição Cliente PASS tip `02d59aa6` (2026-10-09T15:22Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`02d59aa6`** |
+| **implantado** | **`02d59aa6`** erp-dev · asset `index-BD0zl8Pi.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-151957` |
+| mudança | RBAC Salvar=`editar`/`criar`; `toClienteMasterHttpPayload` allowlist; lista HTTP + consumidor (tips anteriores) |
+| validado browser | Cadastros layout+busca PASS · lista n=5 PASS · **Cliente abrir→salvar→reabrir PASS (PATCH 200)** · Empresa PASS · Central360 PASS · Financeiro PASS |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO** |
+| fases | staging=contagens · reconciliado=consumidor · importado=não · **validado_nav=sim (ciclo completo)** |
+| próxima ação | CI tip → merge #258 → main; Codex #254 rebase; Legado ensaio isolado |
+
+Evidências: `deploy-258-cliente-cycle-02d59aa6-20261009.txt`, `browser-258-cliente-cycle-02d59aa6-20261009.txt`.
+
+## CURSOR — #258 lista HTTP Cadastros + edição + consumidor (2026-10-09T14:45Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/homolog-254-cadfin-360-legado-392b` · [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| tip | **`7418243f`** (+ `data-action` editar Visualizador pendente no tip seguinte) |
+| **implantado** | **`7418243f`** erp-dev · asset `index-Bc213K00.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-143634` |
+| mudança | `entityListSorted`→piloto HTTP (Cliente com flag); consumidor `consumir-lote-staging.mjs`; merge/classify edição |
+| validado browser | Cadastros layout+busca PASS · Clientes lista n=5 PASS · edição abrir preenchido PASS · Empresa ciclo PASS · Central360 PASS |
+| #254 Codex | **reservado** — Cursor não edita sessão |
+| #211 | staging privado; **importado=NÃO**; consumidor testado (não mapper paralelo) |
+| fases | staging=contagens · reconciliado=testes consumidor · importado=não · validado_nav=sim (lista/abrir) |
+| próxima ação | CI tip · merge #258 → main; Codex #254 rebase; Legado ensaio isolado |
+
+Evidências: `deploy-258-http-list-7418243f-20261009.txt`, `browser-258-cadfin-edit-7418243f-20261009.txt`.
+
+## CURSOR — homolog #254 + CadFin/360 + consumidor legado (2026-10-09T12:10Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/homolog-254-cadfin-360-legado-392b` |
+| #254 | parecer **APROVAR COM RESSALVAS** tip `fd1778f6` · arquivos **reservados Codex** (`erpHttpSession` / `useContextoGrupoEmpresa` / `useContextoVisual`) — Cursor **não** edita |
+| mudança Cursor | `cadastroEditLoadPolicy` merge/classify (edição sem esvaziar); mapper legado +`fornecedor`; evidências sanitizadas |
+| homolog tip implantado | `baba91a6` · login/CPA/contexto/Cadastros azul/edição Empresa/Financeiro CR≠Régua PASS · API×DB (clientes/produtos) ≠ lista V24 vazia |
+| #211 Legado | checksum+CNPJs já OK nos comentários · stage VPS `legacy-stage-20261009T115402Z` · staging 20456 / quarentena 4722 · **importado=NÃO** |
+| preservado | auxiliares ERP novo; visual azul; sem reseed; sem PII no GitHub |
+| testes | cadastro edit load + legado mapear = **28/28** |
+| próxima ação | Codex rebase #254 (STATUS) → merge → deploy; Legado vincular `target_empresa_id` + gate importação |
+
+Evidências: `parecer-254-fd1778f6-20261009.txt`, `browser-homolog-254-cadfin-360-baba91a6-20261009.txt`, `legado-211-stage-consumo-20261009.txt`.
+
 ## CURSOR — padrão azul Comercial + auxiliares (2026-10-09T11:40Z)
 
 | Item | Valor |

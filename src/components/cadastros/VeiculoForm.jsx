@@ -9,6 +9,7 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from "sonner";
 
 /**
@@ -70,6 +71,13 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
 
   const formContent = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id || veiculo?.id)}
+        entityId={dadosIniciais?.id || veiculo?.id}
+        value={formData.codigo}
+        action="codigo-registro-veiculo"
+      />
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Placa *</Label>

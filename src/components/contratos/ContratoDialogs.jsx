@@ -19,6 +19,11 @@ export default function ContratoDialogs({ viewing, onCloseViewing, historyOpen, 
         <DialogHeader><DialogTitle>Detalhes do Contrato</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <ResponsiveGrid><Field label="Número" value={viewing.numero_contrato} strong /><Field label="Status"><Badge className={STATUS_COLORS[viewing.status] || STATUS_COLORS.Rascunho}>{viewing.status}</Badge></Field></ResponsiveGrid>
+          {viewing.id ? (
+            <Field label="ID técnico">
+              <p className="font-mono text-xs text-slate-600" data-action="id-tecnico-contrato" title="Identificador técnico imutável; distinto do número do contrato">{String(viewing.id)}</p>
+            </Field>
+          ) : null}
           <ResponsiveGrid><Field label="Tipo" value={viewing.tipo} /><Field label="Parte Contratante" value={viewing.parte_contratante} /></ResponsiveGrid>
           <Field label="Objeto" value={viewing.objeto} />
           {viewing.descricao && <Field label="Descrição" value={viewing.descricao} />}

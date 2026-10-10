@@ -44,6 +44,11 @@ const ACTION_ALIASES = {
   update: 'editar',
   edit: 'editar',
   corrigir: 'editar',
+  // Formulários legados usam data-permission=…salvar — mapear para editar
+  // (criar continua preferível via chave explícita …criar no botão Novo).
+  salvar: 'editar',
+  save: 'editar',
+  gravar: 'editar',
   approve: 'aprovar',
   approvar: 'aprovar',
   ajustar: 'aprovar',

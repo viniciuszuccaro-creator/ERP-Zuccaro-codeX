@@ -1,0 +1,24 @@
+# Integração #254 tip b11843c8 → PR #261 (sem cópia divergente)
+Data: 2026-10-10
+Branch: cursor/cadastros-recuperacao-c360-contrato-392b
+Fonte #254: codex/cadastros-http-context-race-20261009 @ b11843c8
+
+## Portado (mesmos arquivos #261)
+- src/api/erpHttpSession.js — shouldAccept + HTTP_CONTEXT_CHANGED no login (idêntico ao tip #254)
+- src/lib/AuthContext.jsx — loginVersion, bootstrapComplete, checkUserAuth({background}), clear seguro
+- src/components/lib/contextoMultiempresaPolicy.js — assertCadastroFormScopeCurrent + getScopedCadastroPlaceholder
+- src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx — formScopeRef + assert no save + placeholder scoped
+
+## Preservado do #261 (não aceitar regressão #254)
+- src/api/base44Client.js — piloto HTTP entityListSorted/getEntityRecord/countEntities
+- Visualizador: permSection Organizacional, fallback rótulo sem codigo/sigla,
+  classifyCadastroEditLoad/mergeCadastroEditHydration, grupoSelfOr, lastGoodScope
+- UserContext / useContextoGrupoEmpresa / useContextoVisual — já idênticos ao tip #254
+
+## Testes focados
+- tests/erp-http-session.test.js — 55/55 PASS
+- tests/cadastros-empresa-edicao-load.test.js — 21/21 PASS
+
+## Não feito neste lote
+- Redeploy VPS (aguardar CI tip)
+- Preenchimento SYNTH (proibido)

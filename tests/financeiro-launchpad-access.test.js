@@ -55,6 +55,22 @@ test('árvore granular libera só as seções concedidas', () => {
   assert.equal(canViewFinanceLaunchpadModule(has, { title: 'Contas a Receber' }), true);
   assert.equal(canViewFinanceLaunchpadModule(has, { title: 'Contas a Pagar' }), true);
   assert.equal(canViewFinanceLaunchpadModule(has, { title: 'Caixa Central' }), false);
+  // sectionKey canônico + título legado (compat árvore UI)
+  assert.equal(canViewFinanceLaunchpadModule(has, {
+    title: 'Contas a Receber', sectionKey: 'contas_receber',
+  }), true);
+});
+
+test('árvore owner canônica (caixa/contas_*) libera cards mapeados', () => {
+  const has = makeHasPermission({
+    Financeiro: {
+      caixa: ['visualizar'],
+      contas_receber: ['visualizar'],
+    },
+  });
+  assert.equal(canViewFinanceLaunchpadModule(has, { title: 'Caixa Central', sectionKey: 'caixa' }), true);
+  assert.equal(canViewFinanceLaunchpadModule(has, { title: 'Contas a Receber', sectionKey: 'contas_receber' }), true);
+  assert.equal(canViewFinanceLaunchpadModule(has, { title: 'Contas a Pagar', sectionKey: 'contas_pagar' }), false);
 });
 
 test('sem permissão Financeiro bloqueia (fail-closed)', () => {

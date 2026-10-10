@@ -23,6 +23,31 @@ test('Comercial: todos os módulos do launchpad usam color blue (padrão azul)',
   assert.match(source, /ModulosGridComercial|LaunchpadCard/);
 });
 
+/** Hub ERP (ref #257 baba91a6): azul uniforme; Financeiro mantém semântica CR≠Régua. */
+test('launchpads operacionais usam color blue (azul-claro global seletivo)', async () => {
+  const pages = [
+    '../src/pages/Estoque.jsx',
+    '../src/pages/Expedicao.jsx',
+    '../src/pages/Compras.jsx',
+    '../src/pages/Fiscal.jsx',
+    '../src/pages/Producao.jsx',
+    '../src/pages/RH.jsx',
+    '../src/pages/CRM.jsx',
+  ];
+  for (const rel of pages) {
+    const source = await readFile(new URL(rel, import.meta.url), 'utf8');
+    const colors = [...source.matchAll(/color:\s*['"](\w+)['"]/g)].map((m) => m[1]);
+    assert.ok(colors.length >= 4, `${rel}: esperado ≥4 tiles, got ${colors.length}`);
+    for (const c of colors) {
+      assert.equal(c, 'blue', `${rel}: tile color=${c}`);
+    }
+  }
+  const fin = await readFile(new URL('../src/pages/Financeiro.jsx', import.meta.url), 'utf8');
+  assert.match(fin, /color:\s*['"]green['"]/);
+  assert.match(fin, /color:\s*['"]violet['"]|color:\s*['"]purple['"]/);
+  assert.match(fin, /CentralAprovacoesManager/);
+});
+
 test('WindowModal: barra de título azul (chrome aprovado das janelas Cadastros)', async () => {
   const source = await readFile(new URL('../src/components/lib/WindowModal.jsx', import.meta.url), 'utf8');
   assert.match(source, /from-blue-600 to-blue-700/);

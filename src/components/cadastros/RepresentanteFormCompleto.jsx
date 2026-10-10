@@ -29,6 +29,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
@@ -68,6 +70,7 @@ export default function RepresentanteFormCompleto({ representante: representante
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || representante?.group_id || null;
+  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = Boolean(empresaAtual?.id || groupId || representante?.empresa_id || representante?.group_id);
   const podeCriar = canCreate("Cadastros", "Representante") || canCreate("Cadastros", null);
@@ -180,6 +183,7 @@ export default function RepresentanteFormCompleto({ representante: representante
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      assertFormScopeCurrent();
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o representante.");
       }
@@ -193,6 +197,7 @@ export default function RepresentanteFormCompleto({ representante: representante
       return createInContext('Representante', payload);
     },
     onSuccess: (_result, savedPayload) => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: `✅ Representante ${representante?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
@@ -200,17 +205,20 @@ export default function RepresentanteFormCompleto({ representante: representante
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      if (!isFormScopeCurrent()) return;
       toast({ title: "❌ Erro ao salvar", description: error.message, variant: "destructive" });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
+      assertFormScopeCurrent();
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir representantes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir representantes.");
       return deleteInContext('Representante', id);
     },
     onSuccess: () => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: "✅ Representante excluído!" });
       if (onSuccess) onSuccess();
@@ -218,8 +226,14 @@ export default function RepresentanteFormCompleto({ representante: representante
     }
   });
 
-  const handleSave = () => saveMutation.mutate(buildPayload(formData));
+  const handleSave = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    saveMutation.mutate(buildPayload(formData));
+  };
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
       deleteMutation.mutate(representante.id);
     }
@@ -357,6 +371,12 @@ export default function RepresentanteFormCompleto({ representante: representante
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
+              <CadastroCodigoRegistroField
+                hasId={Boolean(representante?.id)}
+                entityId={representante?.id}
+                value={formData.codigo ?? representante?.codigo}
+                action="codigo-registro-representante-completo"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de Pessoa *</Label>
@@ -813,3 +833,6 @@ export default function RepresentanteFormCompleto({ representante: representante
     </Dialog>
   );
 }
+
+RepresentanteFormCompleto.displayName = 'RepresentanteFormCompleto';
+RepresentanteFormCompleto.isSelfManagedCadastro = true;

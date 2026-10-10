@@ -7,6 +7,7 @@ import {
   buildHttpDevAdminUser,
   buildHttpSessionUser,
   clearErpHttpSession,
+  isHttpMirrorContextCurrent,
   loginErpHttpSession,
   persistErpHttpSession,
   readErpHttpSession,
@@ -29,7 +30,7 @@ const EMPRESA_A = '44444444-4444-4444-8444-444444444444';
 const EMPRESA_B = '55555555-5555-4555-8555-555555555555';
 const ACTOR = '22222222-2222-4222-8222-222222222222';
 
-async function loadRealHook(file, dependencies) {
+async function loadRealHook(file, dependencies, globals = {}) {
   const source = (await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('import.meta.env', '({ VITE_ERP_BACKEND: "http" })');
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS,
     jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -37,7 +38,7 @@ async function loadRealHook(file, dependencies) {
   vm.runInNewContext(compiled, { exports, require: id => {
     assert.ok(id in dependencies, `Unmocked dependency ${id}`);
     return dependencies[id];
-  }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} } });
+  }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} }, ...globals });
   return exports;
 }
 
@@ -47,6 +48,11 @@ test('fachada Base44 real em HTTP encaminha entityGuard somente ao BFF, sem fall
     '@base44/sdk': {}, '@/lib/app-params': { appParams: {} },
     './localBase44Client.js': { localApiUser: {}, localBase44: { entities: {}, auth: {}, functions: { invoke: async () => { localCalls++; return 'legacy'; } } } },
     './localAuthSessionPolicy.js': { assertInteractiveAuthAllowed: () => ({ allowed: true }) },
+    './localEntityReadApi.js': { runLocalEntityReadFunction: async () => ({ data: [] }) },
+    './httpPilotCountBridge.js': {
+      countEntitiesTouchesHttpPilot: () => false,
+      runHttpPilotAwareCountEntities: async () => ({ data: { counts: {} } }),
+    },
     './httpApiClient.js': { createHttpApiClient: () => ({ entities: {}, entityGuard: async payload => { backendCalls++; assert.equal(payload.module, 'Comercial'); throw new Error('Bearer rejected'); } }) },
     './runtimeBackend.js': { HTTP_PILOT_ENTITIES: [], resolveErpApiBaseUrl: () => '', resolveErpBackendMode: () => 'http', resolveHttpPilotEntities: () => [] },
   });
@@ -100,7 +106,7 @@ test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadast
   const selected = [];
   const localEntity = new Proxy({}, { get() { throw new Error('Local mirror must not authorize context'); } });
   const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
-    react: { useState: value => [typeof value === 'function' ? value() : value, () => {}], useEffect() {} },
+    react: { useState: value => [typeof value === 'function' ? value() : value, () => {}], useEffect() {}, useRef: value => ({ current: value }) },
     '@/api/base44Client': { isHttpBackendMode: true, base44: { entities: localEntity } },
     '@tanstack/react-query': { useQuery: () => ({}), useQueryClient: () => ({ invalidateQueries() {} }),
       useMutation: options => { mutations.push(options); return options; } },
@@ -117,6 +123,160 @@ test('hook real troca Grupo/A/B usando empresas revalidadas sem filtro do cadast
   await assert.rejects(mutations[1].mutationFn(ACTOR), /não autorizada/);
   await assert.rejects(mutations[0].mutationFn(ACTOR), /não autorizado/);
   assert.deepEqual(selected, [null, EMPRESA_A, EMPRESA_B]);
+});
+
+test('hook de Cadastros ignora carregamento antigo após evento de troca Empresa', async () => {
+  const groupSession = { token: 'synthetic-token', groupId: GROUP, empresaId: null, scopeType: 'grupo', actorId: ACTOR };
+  const companySession = { ...groupSession, empresaId: EMPRESA_A, scopeType: 'empresa',
+    empresas: [{ id: EMPRESA_A, group_id: GROUP, status: 'Ativa' }] };
+  let activeSession = groupSession;
+  let releaseOld;
+  let refreshCount = 0;
+  let contextChanged;
+  const effects = [];
+  const updates = [];
+  let stateIndex = 0;
+  const hooks = await loadRealHook('../src/components/lib/useContextoGrupoEmpresa.jsx', {
+    react: { useState: initial => {
+      const index = stateIndex++;
+      return [typeof initial === 'function' ? initial() : initial, value => updates.push({ index, value })];
+    }, useRef: value => ({ current: value }), useEffect: effect => effects.push(effect) },
+    '@/api/base44Client': { isHttpBackendMode: true, isLocalOnlyMode: false, isApiKeyMode: true },
+    '@tanstack/react-query': { useQuery: () => ({ data: [] }), useQueryClient: () => ({ invalidateQueries() {} }),
+      useMutation: options => options },
+    './contextoMultiempresaPolicy': { userTemAcessoGrupo: () => true, userTemAcessoEmpresa: () => true,
+      empresaPertenceAoGrupo: () => true },
+    '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'erp-http-context-changed',
+      refreshErpHttpSessionFromServer: () => (++refreshCount === 1
+        ? new Promise(resolve => { releaseOld = resolve; }) : Promise.resolve(companySession)),
+      ensureHttpTenantLocalMirror: async () => {},
+      buildHttpSessionUser: session => ({ id: ACTOR, contexto_atual: session.scopeType,
+        grupo_atual_id: GROUP, empresa_atual_id: session.empresaId }),
+      readErpHttpSession: () => activeSession,
+    },
+  }, { window: { addEventListener: (_, handler) => { contextChanged = handler; }, removeEventListener() {} } });
+  hooks.useContextoGrupoEmpresa();
+  effects[0]();
+  activeSession = companySession;
+  contextChanged();
+  await new Promise(resolve => setImmediate(resolve));
+  releaseOld(groupSession);
+  await new Promise(resolve => setImmediate(resolve));
+  const companyUpdates = updates.filter(update => update.index === 4 && update.value?.id);
+  assert.equal(companyUpdates.at(-1)?.value.id, EMPRESA_A, JSON.stringify(updates));
+  assert.equal(updates.some(update => update.index === 4 && update.value === null), false);
+});
+
+test('UserContext real ignora falha antiga após carregar usuário da Empresa nova', async () => {
+  const state = [];
+  const effects = [];
+  let slot = 0;
+  let onContextChange;
+  const pending = [];
+  const react = {
+    createContext: () => ({ Provider: 'provider' }),
+    createElement: () => null,
+    useState: initial => {
+      const index = slot++;
+      state[index] = initial;
+      return [state[index], value => { state[index] = value; }];
+    },
+    useRef: initial => ({ current: initial }),
+    useEffect: effect => effects.push(effect),
+    useContext: () => null,
+  };
+  const hook = await loadRealHook('../src/components/lib/UserContext.jsx', {
+    react: { ...react, default: react },
+    '@/api/base44Client': { isHttpBackendMode: true, isApiKeyMode: true,
+      isLocalOnlyMode: false, base44: {}, localApiUser: {} },
+    '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'erp-http-context-changed',
+      refreshErpHttpSessionFromServer: () => new Promise(resolve => pending.push(resolve)),
+      ensureHttpTenantLocalMirror: async () => {},
+      buildHttpSessionUser: session => ({ id: session.actorId, empresa_atual_id: session.empresaId }) },
+  }, { window: { addEventListener: (_, handler) => { onContextChange = handler; }, removeEventListener() {} } });
+  hook.UserProvider({ children: null });
+  effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  onContextChange();
+  await new Promise(resolve => setImmediate(resolve));
+  pending[1]({ token: 'synthetic', actorId: ACTOR, groupId: GROUP, empresaId: EMPRESA_A });
+  await new Promise(resolve => setImmediate(resolve));
+  pending[0](null);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(state[0]?.empresa_atual_id, EMPRESA_A);
+  assert.equal(state[1], false);
+  assert.equal(state[2], null);
+});
+
+test('AuthContext real revalida 401 em segundo plano sem spinner global e bloqueia shell', async () => {
+  const state = [];
+  const effects = [];
+  let slot = 0;
+  let onContextChange;
+  const session = {
+    token: 'synthetic',
+    groupId: GROUP,
+    actorId: ACTOR,
+    empresaId: EMPRESA_A,
+    empresas: [{ id: EMPRESA_A }],
+    permissoes: {},
+  };
+  let active = session;
+  let revoked = false;
+  const react = {
+    createContext: () => ({ Provider: 'provider' }),
+    createElement: (_type, props) => props.value,
+    useState: (initial) => {
+      const index = slot++;
+      state[index] = initial;
+      return [state[index], (value) => { state[index] = value; }];
+    },
+    useRef: (initial) => ({ current: initial }),
+    useCallback: (fn) => fn,
+    useEffect: (effect) => effects.push(effect),
+    useContext: () => null,
+  };
+  const auth = await loadRealHook('../src/lib/AuthContext.jsx', {
+    react: { ...react, default: react },
+    '@/api/base44Client': {
+      isHttpBackendMode: true,
+      isApiKeyMode: true,
+      isLocalOnlyMode: false,
+      base44: {},
+    },
+    '@/lib/app-params': { appParams: {} },
+    '@base44/sdk/dist/utils/axios-client': { createAxiosClient: () => ({}) },
+    '@/api/localAuthSessionPolicy': { assertInteractiveAuthAllowed: () => ({ allowed: true }) },
+    '@/api/erpHttpSession': {
+      loginErpHttpSession: async () => { throw new Error('login nao usado neste teste'); },
+      readErpHttpSession: () => active,
+      clearErpHttpSession: () => { active = null; },
+      refreshErpHttpSessionFromServer: async () => {
+        if (revoked) {
+          active = null;
+          return null;
+        }
+        return session;
+      },
+      ensureHttpTenantLocalMirror: async () => {},
+      buildHttpSessionUser: () => ({ id: ACTOR }),
+    },
+  }, {
+    window: {
+      addEventListener: (_event, handler) => { onContextChange = handler; },
+      removeEventListener() {},
+    },
+  });
+  const provider = auth.AuthProvider({ children: null });
+  assert.equal(await provider.checkUserAuth(), true);
+  assert.equal(state[1], true);
+  assert.equal(state[2], false);
+  effects[1]();
+  revoked = true;
+  onContextChange();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(state[1], false);
+  assert.equal(state[2], false);
 });
 
 test('permissões HTTP do hook real usam perfil servidor mesmo com espelho local vazio', async () => {
@@ -145,6 +305,65 @@ test('owner canônico abre paths reais de Configurações/Segurança no hook fro
   assert.equal(permissions.hasPermission('Sistema', 'Auditoria', 'excluir'), false);
 });
 
+test('owner Fiscal: seção canônica nfe + aliases UI Notas Fiscais / NotaFiscal', async () => {
+  const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, role: 'admin', permissoes } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { permissoes: {} } }) },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  assert.equal(permissions.hasPermission('Fiscal', null, 'visualizar'), true);
+  for (const section of ['nfe', 'NotaFiscal', 'Notas Fiscais', 'tabelas_fiscais', 'Configuração Fiscal', 'sped', 'SPED Fiscal', 'obrigacoes', 'DRE Gerencial']) {
+    assert.equal(permissions.hasPermission('Fiscal', section, 'visualizar'), true, section);
+  }
+  assert.equal(permissions.hasPermission('Fiscal', 'nfe', 'emitir'), true);
+  assert.equal(permissions.hasPermissionKey('Fiscal.nfe.emitir'), true);
+  assert.equal(permissions.hasPermissionKey('Fiscal.Notas Fiscais.visualizar'), true);
+  assert.equal(permissions.hasPermission('Fiscal', 'SecaoInexistente', 'visualizar'), false);
+});
+
+test('owner Compras/Estoque/Expedição/Financeiro: títulos UI resolvem seções canônicas', async () => {
+  const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, role: 'admin', permissoes } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { permissoes: {} } }) },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  for (const [mod, section] of [
+    ['Compras', 'ordens_compra'], ['Compras', 'Ordens de Compra'], ['Compras', 'Recebimento NF-e'],
+    ['Estoque', 'requisicoes'], ['Estoque', 'Requisições Almox.'], ['Estoque', 'movimentacoes'],
+    ['Expedição', 'entregas'], ['Expedição', 'Separação'], ['Expedição', 'roteirizacao'], ['Expedição', 'Rotas e Mapa'],
+    ['Financeiro', 'caixa'], ['Financeiro', 'Caixa Central'], ['Financeiro', 'contas_receber'],
+  ]) {
+    assert.equal(permissions.hasPermission(mod, section, 'visualizar'), true, `${mod}.${section}`);
+  }
+  assert.equal(permissions.hasPermission('Compras', 'SecaoFantasma', 'visualizar'), false);
+});
+
+test('owner Cadastros: ContatoB2B/Departamento/PerfilAcesso aliases canônicos', async () => {
+  const permissoes = JSON.parse(await readFile(new URL('../scripts/vps/owner-admin-permissoes.json', import.meta.url), 'utf8'));
+  const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
+    './UserContext': { useUser: () => ({ user: { id: ACTOR, role: 'admin', permissoes } }) },
+    '@tanstack/react-query': { useQuery: () => ({ data: { permissoes: {} } }) },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts': { normalizeGuardAction: action => action === 'ver' ? 'visualizar' : action },
+  });
+  const permissions = hook.default();
+  assert.equal(permissions.hasPermission('Cadastros', 'ContatoB2B', 'visualizar'), true);
+  assert.equal(permissions.hasPermission('Cadastros', 'SegmentoCliente', 'visualizar'), true);
+  assert.equal(permissions.hasPermission('Cadastros', 'Departamento', 'visualizar'), true);
+  assert.equal(permissions.hasPermission('Cadastros', 'Organizacional', 'visualizar'), true);
+  assert.equal(permissions.hasPermissionKey('Cadastros.ContatoB2B.visualizar'), true);
+  assert.equal(permissions.hasPermissionKey('Sistema.acessos.visualizar'), true);
+  assert.equal(permissions.hasPermission('Cadastros', 'EntidadeFantasma', 'visualizar'), false);
+});
+
+
+
 test('admin de Grupo preserva visão consolidada; troca A/B/Grupo não fabrica empresa', async () => {
   const storage = memoryStorage();
   const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
@@ -164,6 +383,97 @@ test('admin de Grupo preserva visão consolidada; troca A/B/Grupo não fabrica e
     assert.equal(buildHttpSessionUser(session).contexto_atual, empresaId ? 'empresa' : 'grupo');
     assert.deepEqual(session.permissoes, { Comercial: { pedido: ['visualizar', 'criar'] } });
   }
+});
+
+test('refresh HTTP iniciado no Grupo não desfaz Empresa selecionada durante resposta atrasada', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  let completeFetch;
+  const fetchImpl = () => new Promise(resolve => { completeFetch = resolve; });
+  const pendingRefresh = refreshErpHttpSessionFromServer({ storage, fetchImpl, baseUrl: '' });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  completeFetch({ ok: true, json: async () => ({ data: { profiles: [{
+    id: ACTOR, group_id: GROUP, empresa_id: null, role: 'admin', empresas,
+    permissoes: { Cadastros: { Fornecedor: ['visualizar'] } },
+  }] } }) });
+  const session = await pendingRefresh;
+  assert.equal(session.empresaId, EMPRESA_A);
+  assert.equal(session.scopeType, 'empresa');
+  assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_A);
+  assert.equal(buildHttpSessionUser(session).contexto_atual, 'empresa');
+});
+
+test('falha de refresh antigo não apaga a Empresa escolhida enquanto ele aguardava', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  let failFetch;
+  const pendingRefresh = refreshErpHttpSessionFromServer({ storage,
+    fetchImpl: () => new Promise((_, reject) => { failFetch = reject; }), baseUrl: '' });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  failFetch(new Error('network unavailable'));
+  assert.equal(await pendingRefresh, null);
+  assert.equal(readErpHttpSession(storage)?.empresaId, EMPRESA_A);
+});
+
+test('401 do Bearer ativo revoga sessão mesmo após troca de Empresa', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'token-revogado', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  let finish;
+  const pending = refreshErpHttpSessionFromServer({ storage, baseUrl: '',
+    fetchImpl: () => new Promise(resolve => { finish = resolve; }) });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  finish({ ok: false, status: 401, json: async () => ({}) });
+  assert.equal(await pending, null);
+  assert.equal(readErpHttpSession(storage), null);
+});
+
+test('401 de Bearer anterior não revoga login novo', async () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({ accessToken: 'token-antigo', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', scopeType: 'grupo', storage });
+  let finish;
+  const pending = refreshErpHttpSessionFromServer({ storage, baseUrl: '',
+    fetchImpl: () => new Promise(resolve => { finish = resolve; }) });
+  persistErpHttpSession({ accessToken: 'token-novo', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', scopeType: 'grupo', storage });
+  finish({ ok: false, status: 401, json: async () => ({}) });
+  assert.equal(await pending, null);
+  assert.equal(readErpHttpSession(storage)?.token, 'token-novo');
+});
+
+test('espelho assíncrono não grava contexto capturado antes da troca de Empresa', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  const captured = { token: 'synthetic-token', actorId: ACTOR,
+    groupId: GROUP, empresaId: null, storage };
+  assert.equal(isHttpMirrorContextCurrent(captured), true);
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  assert.equal(isHttpMirrorContextCurrent(captured), false);
+  assert.equal(readErpHttpSession(storage)?.empresaId, EMPRESA_A);
+});
+
+test('refresh HTTP da Empresa A não reverte troca para Empresa B no mesmo Grupo', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A, EMPRESA_B].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    empresaId: EMPRESA_A, role: 'admin', empresas, scopeType: 'empresa', storage });
+  let completeFetch;
+  const pendingRefresh = refreshErpHttpSessionFromServer({ storage,
+    fetchImpl: () => new Promise(resolve => { completeFetch = resolve; }), baseUrl: '' });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_B });
+  completeFetch({ ok: true, json: async () => ({ data: { profiles: [{
+    id: ACTOR, group_id: GROUP, empresa_id: null, role: 'admin', empresas, permissoes: {},
+  }] } }) });
+  assert.equal((await pendingRefresh).empresaId, EMPRESA_B);
+  assert.equal(readErpHttpSession(storage).empresaId, EMPRESA_B);
 });
 
 test('admin exclusivo de filial não recebe operação no Grupo nem outra empresa', async () => {
@@ -450,6 +760,54 @@ test('loginErpHttpSession persiste expires_in e monta admin/comum conforme role 
         value: origLocal,
       });
     }
+  }
+});
+
+test('login novo invalida carga antiga; tentativa substituída não persiste nem emite evento', async () => {
+  const storage = memoryStorage();
+  const originalStorage = globalThis.localStorage;
+  const originalWindow = globalThis.window;
+  const events = [];
+  globalThis.localStorage = storage;
+  globalThis.window = { dispatchEvent: (event) => events.push(event.type) };
+  const response = {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      data: {
+        access_token: 'login-novo',
+        expires_in: 3600,
+        profiles: [{ id: ACTOR, group_id: GROUP, empresa_id: EMPRESA_A, role: 'user' }],
+      },
+    }),
+  };
+  try {
+    await assert.rejects(
+      loginErpHttpSession({
+        email: 'sintetico@example.test',
+        password: 'senha',
+        baseUrl: '',
+        fetchImpl: async () => response,
+        shouldAccept: () => false,
+      }),
+      /substituída/,
+    );
+    assert.equal(readErpHttpSession(storage), null);
+    assert.deepEqual(events, []);
+    await loginErpHttpSession({
+      email: 'sintetico@example.test',
+      password: 'senha',
+      baseUrl: '',
+      fetchImpl: async () => response,
+      shouldAccept: () => true,
+    });
+    assert.equal(readErpHttpSession(storage)?.token, 'login-novo');
+    assert.deepEqual(events, ['erp-http-context-changed']);
+  } finally {
+    if (originalStorage === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = originalStorage;
+    if (originalWindow === undefined) delete globalThis.window;
+    else globalThis.window = originalWindow;
   }
 });
 

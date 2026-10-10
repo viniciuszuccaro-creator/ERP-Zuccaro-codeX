@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat } from 'lucide-react';
+import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target } from 'lucide-react';
 import {
   canLoadCentralCliente360,
   central360SessionKey,
@@ -14,8 +14,117 @@ import {
   growCentral360BlockLimit,
   INITIAL_CENTRAL360_BLOCK_LIMITS,
 } from '@/components/comercial/centralCliente360Pagination';
+import {
+  filterOportunidadesDoCliente,
+  resumirOportunidadeCrm,
+  shouldUseCrmLegadoAdapter,
+} from '@/components/comercial/centralCliente360CrmLegado';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import { useWindow } from '@/components/lib/useWindow';
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
+
+function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, httpBlock }) {
+  const { filterInContext } = useContextoVisual();
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const { openWindow } = useWindow();
+  const canView = !permissionsLoading && (
+    hasPermission('CRM', 'oportunidades', 'ver')
+    || hasPermission('CRM', 'Oportunidade', 'visualizar')
+    || hasPermission('CRM', null, 'visualizar')
+  );
+  const enabled = Boolean(clienteId && groupId && canView);
+
+  const query = useQuery({
+    queryKey: ['central360-crm-legado', groupId, empresaId, clienteId],
+    queryFn: async () => {
+      const rows = await filterInContext('Oportunidade', {}, '-created_date', 100);
+      return filterOportunidadesDoCliente(rows, clienteId).map(resumirOportunidadeCrm);
+    },
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+    retry: 1,
+  });
+
+  const openCrm = async () => {
+    const OportunidadesLista = (await import('@/components/crm/OportunidadesLista')).default;
+    const rows = query.data || [];
+    openWindow(
+      OportunidadesLista,
+      { oportunidades: rows, windowMode: true },
+      {
+        title: 'CRM · Oportunidades do cliente',
+        width: 1400,
+        height: 800,
+        uniqueKey: `crm-oportunidades-cliente-${clienteId}`,
+      },
+    );
+  };
+
+  if (permissionsLoading) {
+    return (
+      <div className="border rounded-md bg-white p-3" data-block-key="crm" data-block-status="loading" data-crm-source="legado">
+        <p className="text-xs text-slate-500">Verificando permissão CRM…</p>
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <div className="border rounded-md bg-white p-3 space-y-2" data-block-key="crm" data-block-status="forbidden" data-crm-source="legado">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-slate-600" />
+          <h4 className="text-sm font-semibold">CRM</h4>
+          <Badge variant="secondary">forbidden</Badge>
+        </div>
+        <p className="text-xs text-amber-700">Sem permissão para oportunidades do CRM.</p>
+        <p className="text-[11px] text-slate-400">HTTP canônico pendente ({httpBlock?.code || 'CRM_CANONICAL_HTTP_PENDING'}).</p>
+      </div>
+    );
+  }
+
+  const rows = query.data || [];
+  return (
+    <div className="border rounded-md bg-white p-3 space-y-2" data-block-key="crm" data-block-status={query.isError ? 'unavailable' : 'ok'} data-crm-source="legado">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-slate-600" />
+          <h4 className="text-sm font-semibold text-slate-900">CRM</h4>
+          <Badge variant="outline">legado</Badge>
+        </div>
+        <Button type="button" size="sm" variant="outline" className="h-7 text-xs" data-action="central360-crm-abrir" onClick={openCrm}>
+          Abrir CRM
+        </Button>
+      </div>
+      {query.isLoading && <p className="text-xs text-slate-500">Carregando oportunidades do cliente…</p>}
+      {query.isError && (
+        <p className="text-xs text-red-700">Falha ao ler CRM legado (fonte Oportunidade). Tente novamente.</p>
+      )}
+      {!query.isLoading && !query.isError && rows.length === 0 && (
+        <p className="text-xs text-slate-500">Nenhuma oportunidade deste cliente no contexto atual.</p>
+      )}
+      {rows.map((row) => (
+        <div key={row.id || row.titulo} className="text-sm flex items-center justify-between border-b last:border-0 py-1">
+          <span className="min-w-0 flex-1 truncate">
+            <span data-action="central360-crm-titulo">{row.titulo}</span>
+            {row.id ? (
+              <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-crm-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+            ) : null}
+          </span>
+          <span className="flex items-center gap-2 shrink-0">
+            <Badge variant="outline">{row.etapa}</Badge>
+            <span>{money(row.valor)}</span>
+          </span>
+        </div>
+      ))}
+      <p className="text-[11px] text-slate-400" data-action="central360-crm-fonte">
+        Fonte canônica atual: store Oportunidade (CRM). HTTP dedicado permanece {httpBlock?.code || 'CRM_CANONICAL_HTTP_PENDING'} — sem tabela paralela.
+      </p>
+    </div>
+  );
+}
 
 function BlockCard({ title, icon: Icon, block, blockKey, renderRow, onLoadMore, loadingMore }) {
   if (!block) return null;
@@ -243,7 +352,13 @@ export default function CentralCliente360Panel({
 
       {identity && (
         <div className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div><span className="text-slate-500">Código</span><p className="font-mono">{identity.codigo}</p></div>
+          <div><span className="text-slate-500">Código</span><p className="font-mono" data-action="codigo-registro-central360">{identity.codigo ?? '—'}</p></div>
+          <div>
+            <span className="text-slate-500">ID técnico</span>
+            <p className="font-mono text-xs" data-action="id-tecnico-central360" title="Identificador técnico imutável; distinto do código de registro">
+              {identity.id || clienteId || '—'}
+            </p>
+          </div>
           <div><span className="text-slate-500">Documento</span><p>{identity.documento || '—'}</p></div>
           <div><span className="text-slate-500">E-mail</span><p>{identity.email || '—'}</p></div>
           <div><span className="text-slate-500">Telefone</span><p>{identity.telefone || '—'}</p></div>
@@ -304,8 +419,16 @@ export default function CentralCliente360Panel({
           loadingMore={loadingMore}
           renderRow={(row) => (
             <>
-              <span className="font-mono">{row.numero}</span>
-              <span>{money(row.total)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="font-mono" data-action="central360-orcamento-numero">{row.numero}</span>
+                {row.id ? (
+                  <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-orcamento-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+                ) : null}
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
+                <span>{money(row.total)}</span>
+              </span>
             </>
           )}
         />
@@ -318,19 +441,41 @@ export default function CentralCliente360Panel({
           loadingMore={loadingMore}
           renderRow={(row) => (
             <>
-              <span className="font-mono">{row.numero}</span>
-              <span>{money(row.total)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="font-mono" data-action="central360-pedido-numero">{row.numero}</span>
+                {row.id ? (
+                  <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-pedido-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+                ) : null}
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
+                <span>{money(row.total)}</span>
+              </span>
             </>
           )}
         />
-        <BlockCard
-          title="CRM"
-          icon={Building2}
-          blockKey="crm"
-          block={blocks.crm}
-          renderRow={() => null}
-        />
+        {shouldUseCrmLegadoAdapter(blocks.crm) ? (
+          <CrmLegadoAdapterBlock
+            clienteId={clienteId}
+            groupId={groupId}
+            empresaId={empresaId}
+            httpBlock={blocks.crm}
+          />
+        ) : (
+          <BlockCard
+            title="CRM"
+            icon={Building2}
+            blockKey="crm"
+            block={blocks.crm}
+            renderRow={() => null}
+          />
+        )}
       </div>
+
+      <p className="text-xs text-slate-500" data-action="central360-fonte-canonica">
+        Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido ·
+        CRM via Oportunidade legado (até HTTP canônico Codex) · Locais/Obras · Financeiro/Expedição via pedido.
+      </p>
     </div>
   );
 }

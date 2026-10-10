@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -78,6 +79,12 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-setor-atividade"
+      />
       <div>
         <Label>Nome do Setor *</Label>
         <Input
@@ -184,7 +191,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission="Cadastros.SetorAtividade.salvar"
+          data-permission={dadosIniciais?.id ? "Cadastros.SetorAtividade.editar" : "Cadastros.SetorAtividade.criar"}
           data-action="salvar-setor-atividade"
           data-sensitive="true"
         >

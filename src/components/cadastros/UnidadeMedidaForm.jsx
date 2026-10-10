@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Ruler } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
@@ -57,6 +58,12 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-unidade-medida"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Sigla *</Label>
@@ -174,7 +181,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
         type="submit"
         className="w-full bg-indigo-600 hover:bg-indigo-700"
         disabled={!contextoValido || !podeSalvar}
-        data-permission="Cadastros.UnidadeMedida.salvar"
+        data-permission={dadosIniciais?.id ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
         data-action="salvar-unidade-medida"
         data-sensitive="true"
       >

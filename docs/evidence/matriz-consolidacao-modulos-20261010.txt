@@ -1,0 +1,54 @@
+# Matriz de consolidação — módulos/submódulos (2026-10-10)
+# Sanitizado. Regra-Mãe: não apagar funcionalidade distinta; redirect antes de retirar.
+
+| origem | destino canônico | capacidades preservadas | ação |
+|---|---|---|---|
+| Financeiro card AprovacaoDescontosManager | comercial/CentralAprovacoesManager | descontos+crédito+conciliação | **redirect feito** (lazy import) |
+| Cadastros Base (rótulo homolog) | pages/Cadastros.jsx · sidebar "Cadastros Gerais" | mesmo shell; Pessoas→V24→ClienteCompleto | **keep** — unificar rótulo só com owner |
+| comercial/ClientesTab | V24 + CadastroClienteCompleto | HTTP lista/abrir | **keep** (entrada Comercial) |
+| VisualizadorUniversalEntidade (V23) em Estoque/Compras/RH | VisualizadorUniversalEntidadeV24 | scope, RBAC, codigo, open único | **redirect feito** (ProdutosTab · FornecedoresTab · ColaboradoresTab · RH window) |
+| FormaPagamentoForm (simples) | FormaPagamentoFormCompleto | codigo+ID, abas | **keep both** curto prazo (Completo no Bloco3) |
+| ChatbotIntentsForm | ChatbotIntentForm | adapter já consolidado | **keep** (adapter) |
+| ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
+| CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade | funil/scoring/IA | **keep both curto** · HTTP schema **BLOCKED** Codex · C360 usa adaptador legado (opção B) |
+| SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA | conferência+audit | keep both curto prazo |
+| ComprovanteDigital × ComprovanteEntregaDigital | diff payload pendente | POD | keep both |
+| Dashboard × DashboardCorporativo | escopos distintos | KPIs empresa vs grupo | keep both |
+| HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |
+
+## Azul-claro global (ref #257 baba91a6 / tip 7d068dbb)
+Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, Produção, RH, CRM, Comercial.
+Contratos: chrome/CTA azul (valores/KPI receita permanecem emerald semântico).
+Sistema AdminHeader: ícone azul (badge empresa emerald preservado = contexto ≠ grupo).
+Cadastros: blocos multi-cor aprovados (#257) — não forçar tudo azul.
+**Preservado:** Financeiro CR green ≠ Régua violet; EmpresaSwitcher grupo azul/empresa roxo; CTAs/funcionalidades posteriores (#261 HTTP, codigo, Pedido Onda 5).
+
+## #254 / #264 tip integrado (pacote)
+| item | SHA |
+|---|---|
+| #254 final | `20a2c2fb` (ancestral) |
+| #264 Codex | `d9403665` (porte #254→base #261) |
+| PR HEAD #261 | `58e01754` |
+| implantado erp-dev | `58e01754` · `index-Bl46Ykvq.js` |
+| merge #264→#261 | `861513cd` · main ainda `baba91a6` |
+Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
+
+## Inventário complementar (independente da integração)
+| módulo | canônico | duplicidade | status |
+|---|---|---|---|
+| Painel | Dashboard + DashboardCorporativo | escopos distintos | keep both |
+| CRM | Funil* ×3 mesma fonte | HTTP schema Codex | C360 adaptador B feito |
+| Cadastros | V24 + Completo forms | V23 redirect feito | keep |
+| Comercial | Comercial.jsx + C360 | fonte única por entidade | keep · vínculos |
+| Estoque | Estoque hub V24 Produtos | — | azul aplicado |
+| Compras | Compras hub V24 Fornecedores | — | azul aplicado |
+| Expedição | Expedicao hub | Separacao×IA / Comprovante× | keep both curto |
+| Produção | Producao hub | — | azul aplicado |
+| Financeiro | Financeiro hub | Aprovações→Central | redirect feito |
+| Fiscal | Fiscal sectionKey nfe… | — | RBAC ok |
+| RH | RH hub V24 Colaboradores | — | azul aplicado |
+| Contratos | Contratos | — | form ID técnico ok · lista ID técnico neste tip |
+| Sistema | Administração | PerfilAcesso→Sistema.acessos | aliases ok |
+
+## Recuperado
+NÃO legado · SYNTH≠recuperado · #211 Codex Legado

@@ -173,6 +173,7 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+    tabelaPrecoRepo,
   );
   const pedidoService = new PedidoService(
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,

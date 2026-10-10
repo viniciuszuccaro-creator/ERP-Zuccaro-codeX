@@ -91,8 +91,12 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.match(viewer, /isEditRequestCurrent/);
   assert.match(viewer, /empresaId: tenantMaster \? null : empresaId/);
   assert.match(policy, /!tenantMaster && !clean\.empresa_id && empresaId/);
-  assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
-  assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
+  // Gate canônico via permissionSectionFor → Cadastros.Organizacional (Empresa/Grupo/…).
+  assert.match(block, /permissionSectionFor/);
+  assert.match(block, /section:\s*"Organizacional"/);
+  assert.match(block, /"Empresa",\s*"GrupoEmpresarial"/);
+  assert.match(block, /dataPermissionFor\(k\)/);
+  assert.doesNotMatch(block, /hasPermission\("Sistema", "Empresas", "visualizar"\)/);
   assert.match(form, /ID do cadastro \(somente leitura\)/);
   assert.match(form, /<code className="break-all select-text">\{dadosIniciais\.id\}<\/code>/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.salvar/);
@@ -103,7 +107,9 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.match(form, /Cadastros\.Empresa\.Certificado\.editar/);
   assert.match(form, /disabled=\{!podeEditarCertificado/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.certificado"/);
-  assert.match(viewer, /setEditError\("Nao foi possivel carregar o cadastro completo/);
+  assert.match(viewer, /classifyCadastroEditLoad\(/);
+  assert.match(viewer, /mergeCadastroEditHydration\(/);
+  assert.match(viewer, /Falha ao carregar registro completo/);
   assert.match(viewer, /editRequestRef\.current \+= 1;\s*setIsLoadingEdit\(false\)/);
 });
 
@@ -227,4 +233,14 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
     if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow);
     else delete globalThis.window;
   }
+});
+
+test("visualizador V24: gate Organizacional no data-permission e GrupoEmpresarial self-id", async () => {
+  const viewer = await readFile(new URL("../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx", import.meta.url), "utf8");
+  assert.match(viewer, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional"/);
+  assert.match(viewer, /cadastroPerm\("criar"\)/);
+  assert.match(viewer, /cadastroPerm\("visualizar"\)/);
+  assert.match(viewer, /extraGroupOr: grupoSelfOr/);
+  assert.match(viewer, /NÃO cair em codigo\/sigla/);
+  assert.doesNotMatch(viewer, /variants = variants\.concat\(\['nome', 'descricao', 'titulo', 'sigla', 'codigo'\]\)/);
 });

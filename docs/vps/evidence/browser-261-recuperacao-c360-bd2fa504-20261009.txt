@@ -1,0 +1,38 @@
+# Browser homolog #261 tip bd2fa504 (2026-10-09T20:45Z)
+# Sanitizado — sem credenciais, sem PII.
+
+| Item | Valor |
+|---|---|
+| tip / asset | **bd2fa504** · `index-BufSJCA3.js` |
+| método | Playwright headless (computerUse xdotool FAIL → Playwright) |
+| screenshots | `/opt/cursor/artifacts/screenshots/browser-261-*.png` |
+
+## Matriz
+
+| Step | Status | Notas |
+|---|---|---|
+| asset | **PASS** | index-BufSJCA3.js |
+| login | **PASS** | session HTTP + SPA |
+| scope CPA (Visão Individual) | **PASS** | EMPRESA OPERACIONAL CPA ferro e aço |
+| Cadastros Abrir Fornecedores | **PASS** | janela única (uniqueKey); lista 0 (schema/ops) |
+| Cadastros Abrir Marca 2× | **BLOCKED** | toast “Selecione grupo ou empresa” apesar header CPA — **#254 Codex contexto/sessão** |
+| codigo grade Marca | **BLOCKED** | depende Abrir |
+| Financeiro menus | **PASS** (corrida anterior) | Contas a Receber / Caixa Central / layout azul |
+| Orçamentos lista UI | **FAIL/BLOCKED** | UI “Não foi possível comunicar…”; **API GET /orcamentos 200** com x-group-id/x-empresa-id |
+| SPA bundle Tabela de preço | **PASS** | `tabela_preco_id` + label no asset |
+| API orcamentos.tabela_preco_id | **PASS** | campo presente (3Z n=5; CPA n=0) |
+| Pedido busca / convert UI | **BLOCKED** | depende abertura Comercial estável |
+| scope 3Z UI | **BLOCKED** | seletor flaky na automação |
+| legado importado | **NÃO** | #211 |
+
+## API vs UI
+
+| Prova | Resultado |
+|---|---|
+| POST /auth/session | 200 |
+| GET /orcamentos (Bearer + tenant) | 200 · campo tabela_preco_id |
+| GET /tabelas-preco | 200 |
+| UI Orçamentos sem headers efetivos | erro comunicação (frontend contexto) |
+
+## Conclusão homolog browser
+Implantação e contrato backend **validados**. Fluxo UI completo Cliente→Orçamento→Pedido **não** fechado neste turno: bloqueio reproduzível de contexto Cadastros/Comercial alinhado a **Codex #254** (Cursor não edita sessão/contexto/outbox).

@@ -24,6 +24,7 @@ const RelatorioDRE = React.lazy(() => import("../components/fiscal/RelatorioDRE"
 const MotorFiscalInteligente = React.lazy(() => import("@/components/fiscal/MotorFiscalInteligente"));
 const ExportacaoSPED = React.lazy(() => import("../components/fiscal/ExportacaoSPED"));
 const ImportarXMLNFe = React.lazy(() => import('../components/fiscal/ImportarXMLNFe'));
+const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
 
 export default function FiscalPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -33,7 +34,13 @@ export default function FiscalPage() {
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || estaNoGrupo);
   const podeVerFiscal = hasPermission('Fiscal', null, 'ver') || hasPermission('Fiscal', null, 'visualizar');
-  const podeEmitirNFe = hasPermission('Fiscal', 'Notas Fiscais', 'emitir') ||
+  // Árvore canônica owner: Fiscal.nfe.*; aliases UI (NotaFiscal / Notas Fiscais) via usePermissions.
+  const podeEmitirNFe =
+    hasPermission('Fiscal', 'nfe', 'emitir') ||
+    hasPermission('Fiscal', 'nfe', 'criar') ||
+    hasPermission('Fiscal', 'NotaFiscal', 'emitir') ||
+    hasPermission('Fiscal', 'NotaFiscal', 'criar') ||
+    hasPermission('Fiscal', 'Notas Fiscais', 'emitir') ||
     hasPermission('Fiscal', 'Notas Fiscais', 'criar') ||
     hasPermission('Fiscal', null, 'emitir') ||
     hasPermission('Fiscal', null, 'criar');
@@ -98,19 +105,22 @@ export default function FiscalPage() {
   const modules = [
     {
       title: 'Notas Fiscais',
+      sectionKey: 'nfe',
       description: 'NF-e emitidas',
       icon: FileText,
       color: 'blue',
-      component: () => <div className="p-4">Listagem de NF-e (em desenvolvimento)</div>,
+      component: NotasFiscaisTab,
       windowTitle: '📄 Notas Fiscais',
       width: 1500,
       height: 850,
+      props: { notasFiscais: notasFiltradasContexto, windowMode: true },
     },
     {
       title: 'Motor Fiscal IA',
+      sectionKey: 'nfe',
       description: 'Validação inteligente',
       icon: Sparkles,
-      color: 'purple',
+      color: 'blue',
       component: MotorFiscalInteligente,
       windowTitle: '🤖 Motor Fiscal IA',
       width: 1400,
@@ -119,9 +129,10 @@ export default function FiscalPage() {
     },
     {
       title: 'Configuração',
+      sectionKey: 'tabelas_fiscais',
       description: 'Config fiscal automática',
       icon: Settings,
-      color: 'cyan',
+      color: 'blue',
       component: ConfigFiscalAutomatica,
       windowTitle: '⚙️ Configuração Fiscal',
       width: 1200,
@@ -130,9 +141,10 @@ export default function FiscalPage() {
     },
     {
       title: 'Plano de Contas',
+      sectionKey: 'tabelas_fiscais',
       description: 'Estrutura contábil',
       icon: Book,
-      color: 'indigo',
+      color: 'blue',
       component: PlanoDeContasTree,
       windowTitle: '📚 Plano de Contas',
       width: 1200,
@@ -141,9 +153,10 @@ export default function FiscalPage() {
     },
     {
       title: 'DRE Gerencial',
+      sectionKey: 'obrigacoes',
       description: 'Demonstração resultado',
       icon: BarChart3,
-      color: 'green',
+      color: 'blue',
       component: RelatorioDRE,
       windowTitle: '📊 DRE Gerencial',
       width: 1400,
@@ -152,9 +165,10 @@ export default function FiscalPage() {
     },
     {
       title: 'SPED Fiscal',
+      sectionKey: 'sped',
       description: 'Exportação SPED',
       icon: FileText,
-      color: 'orange',
+      color: 'blue',
       component: ExportacaoSPED,
       windowTitle: '📁 SPED Fiscal',
       width: 1200,
@@ -163,6 +177,7 @@ export default function FiscalPage() {
     },
     {
       title: 'Importar XML',
+      sectionKey: 'nfe',
       description: 'Upload NF-e',
       icon: Upload,
       color: 'blue',
@@ -174,10 +189,14 @@ export default function FiscalPage() {
     },
   ];
 
-  const canViewFiscalModule = (module) => (
-    hasPermission('Fiscal', (module.sectionKey || module.title), 'ver') ||
-    hasPermission('Fiscal', (module.sectionKey || module.title), 'visualizar')
-  );
+  const canViewFiscalModule = (module) => {
+    const key = module.sectionKey || module.title;
+    // Fail-closed por seção canônica (aliases UI→nfe/tabelas_fiscais/sped/obrigacoes no hook).
+    return (
+      hasPermission('Fiscal', key, 'ver') ||
+      hasPermission('Fiscal', key, 'visualizar')
+    );
+  };
 
   const allowedModules = modules.filter(canViewFiscalModule);
 
@@ -220,7 +239,7 @@ export default function FiscalPage() {
     <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full" data-permission="Fiscal.visualizar">
-      <ModuleLayout title="Fiscal e Tributário" subtitle="NF-e, tributos e relatórios" actions={<div className="flex items-center gap-2"><Button size="sm" data-permission="Fiscal.Notas Fiscais.emitir" data-action="Fiscal.emitir_nfe" disabled={!podeEmitirNFe || !empresaObrigatoriaParaNFe} onClick={() => {
+      <ModuleLayout title="Fiscal e Tributário" subtitle="NF-e, tributos e relatórios" actions={<div className="flex items-center gap-2"><Button size="sm" data-permission="Fiscal.nfe.emitir" data-action="Fiscal.emitir_nfe" disabled={!podeEmitirNFe || !empresaObrigatoriaParaNFe} onClick={() => {
         if (!empresaObrigatoriaParaNFe) {
           auditFiscalAction('emissao_nfe_bloqueada_sem_empresa', { motivo: 'NF-e exige empresa faturadora' }, 'seguranca');
           return;
@@ -231,6 +250,8 @@ export default function FiscalPage() {
         }
         auditFiscalAction('iniciar_nova_nfe', { empresa_faturamento_id: empresaAtual?.id }, 'sensivel');
         base44.analytics.track({ eventName: 'fiscal_primary_action' });
+        // Abre a listagem/canônico existente (sem stub paralelo).
+        handleModuleClick(modules.find((m) => m.sectionKey === 'nfe' && m.title === 'Notas Fiscais') || modules[0]);
       }}>Nova NF-e</Button></div>}>
         <ModuleKPIs>
           <KPIsFiscal

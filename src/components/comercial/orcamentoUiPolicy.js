@@ -1,5 +1,35 @@
 const MICROS = 1_000_000n;
 
+export function sameOrcamentoScope(opened, rendered, active) {
+  return Boolean(opened?.groupId && opened?.empresaId && opened?.actorId
+    && [rendered, active].every((scope) => scope
+      && scope.groupId === opened.groupId
+      && scope.empresaId === opened.empresaId
+      && scope.actorId === opened.actorId));
+}
+
+/** Trava síncrona: um clique repetido não envia uma segunda mutação. */
+export function createOrcamentoActionGate() {
+  let pending = null;
+  let sequence = 0;
+  return {
+    begin(opened, rendered, active) {
+      if (pending || !sameOrcamentoScope(opened, rendered, active)) return null;
+      pending = { id: ++sequence, scope: opened };
+      return pending;
+    },
+    isCurrent(ticket, rendered, active) {
+      return pending === ticket && sameOrcamentoScope(ticket?.scope, rendered, active);
+    },
+    end(ticket) {
+      if (pending !== ticket) return false;
+      pending = null;
+      return true;
+    },
+    invalidate() { pending = null; },
+  };
+}
+
 export function decimalToMicros(value) {
   const text = String(value ?? '0').trim();
   if (!/^\d+(\.\d{0,6})?$/.test(text)) throw new Error('Valor decimal inválido.');
@@ -41,9 +71,11 @@ export function buildOrcamentoPayload(form) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.validade_em) throw new Error('Preencha cliente, condição e validade.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
+  const tabelaId = String(form.tabela_preco_id || '').trim();
   return {
     cliente_empresa_id: form.cliente_empresa_id,
     condicao_pagamento_id: form.condicao_pagamento_id,
+    ...(tabelaId ? { tabela_preco_id: tabelaId } : {}),
     validade_em: new Date(`${form.validade_em}T12:00:00`).toISOString(),
     observacoes: String(form.observacoes || '').trim() || undefined,
     itens: form.itens.map((item) => ({

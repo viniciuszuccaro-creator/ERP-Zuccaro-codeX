@@ -10,6 +10,7 @@ import { produtoMidiaCreateSchema } from './produtoTypes.js';
 import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaScanEvidence, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
+import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 
 function ts(row: Record<string, unknown>) {
   return {
@@ -192,6 +193,14 @@ export class PostgresProdutoRepository implements ProdutoRepository {
 
   async create(scope: Scope, data: ProdutoCreate, executor?: DbQueryExecutor): Promise<Produto> {
     const query = executor ?? this.db;
+    const codigo = await reserveEntityCodigo({
+      db: query,
+      groupId: scope.groupId,
+      entityName: 'Produto',
+      table: 'produtos',
+      width: 6,
+      incomingCodigo: data.codigo,
+    });
     const result = await query.query(
       `INSERT INTO produtos (
         group_id, empresa_id, codigo, codigo_barras, descricao, nome, tipo_item, tipo_aco, eh_bitola,
@@ -211,7 +220,7 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       [
         scope.groupId,
         data.empresa_id ?? scope.empresaId ?? null,
-        data.codigo ?? null,
+        codigo,
         data.codigo_barras ?? null,
         data.descricao,
         data.nome ?? data.descricao,

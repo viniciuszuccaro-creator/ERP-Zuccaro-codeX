@@ -12,6 +12,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2: Transportadora Form - Adaptado para Window Mode
@@ -155,7 +156,13 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
 
   const content = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
-      <Card>
+      <CadastroCodigoRegistroField
+        hasId={Boolean(transportadora?.id)}
+        entityId={transportadora?.id}
+        value={formData.codigo}
+        action="codigo-registro-transportadora"
+      />
+<Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <Truck className="w-5 h-5 text-orange-600" />

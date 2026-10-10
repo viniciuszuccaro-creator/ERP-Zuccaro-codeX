@@ -18,6 +18,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { normalizeFornecedorCadastro } from "@/api/localCadastroMasterPolicy";
 import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection, FornecedorFiscalFinanceiroSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
 
@@ -60,6 +62,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasFieldPermission, isAdmin } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || fornecedor?.group_id || null;
+  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const contextoValido = Boolean(empresaAtual?.id || groupId || fornecedor?.empresa_id || fornecedor?.empresa_dona_id || fornecedor?.group_id);
   const podeCriar = canCreate("Cadastros", "Fornecedor") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Fornecedor") || canEdit("Cadastros", null);
@@ -163,6 +166,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      assertFormScopeCurrent();
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o fornecedor.");
       }
@@ -178,6 +182,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       return createInContext('Fornecedor', payload, 'empresa_dona_id');
     },
     onSuccess: () => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
@@ -185,6 +190,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      if (!isFormScopeCurrent()) return;
       toast({ 
         title: "❌ Erro ao salvar fornecedor", 
         description: error.message,
@@ -195,16 +201,19 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
+      assertFormScopeCurrent();
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir fornecedores.");
       return deleteInContext('Fornecedor', id);
     },
     onSuccess: () => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       toast({ title: "✅ Fornecedor excluído com sucesso!" });
       if (onSuccess) onSuccess();
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      if (!isFormScopeCurrent()) return;
       toast({
         title: "❌ Erro ao excluir fornecedor",
         description: error.message,
@@ -214,6 +223,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   });
 
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (!window.confirm(`Tem certeza que deseja excluir o fornecedor "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -230,6 +241,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   };
 
   const handleSave = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     saveMutation.mutate(buildPayload(formData));
   };
 
@@ -392,6 +405,12 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
+              <CadastroCodigoRegistroField
+                hasId={Boolean(fornecedor?.id)}
+                entityId={fornecedor?.id}
+                value={formData.codigo ?? fornecedor?.codigo}
+                action="codigo-registro-fornecedor-completo"
+              />
               <FornecedorDadosGeraisSection
                 formData={formData}
                 setFormData={setFormData}
@@ -529,3 +548,6 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     </Dialog>
   );
 }
+
+CadastroFornecedorCompleto.displayName = 'CadastroFornecedorCompleto';
+CadastroFornecedorCompleto.isSelfManagedCadastro = true;

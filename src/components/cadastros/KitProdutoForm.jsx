@@ -8,6 +8,7 @@ import { Box, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode = false }) {
   const dadosIniciais = kitProduto || kit;
@@ -63,6 +64,13 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-kit-produto"
+      />
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Nome do Kit *</Label>

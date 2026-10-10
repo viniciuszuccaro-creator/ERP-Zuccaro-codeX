@@ -8,8 +8,27 @@ import {
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
+  createOrcamentoActionGate,
   microsToDecimal,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
+
+test('Orçamento trava duplo clique e descarta resposta antiga após CPA→3Z', () => {
+  const gate = createOrcamentoActionGate();
+  const cpa = { groupId: 'g', empresaId: 'cpa', actorId: 'u' };
+  const tresZ = { groupId: 'g', empresaId: '3z', actorId: 'u' };
+  const first = gate.begin(cpa, cpa, cpa);
+  assert.ok(first);
+  assert.equal(gate.begin(cpa, cpa, cpa), null);
+  assert.equal(gate.isCurrent(first, cpa, tresZ), false);
+  gate.invalidate();
+  const second = gate.begin(tresZ, tresZ, tresZ);
+  assert.ok(second);
+  assert.equal(gate.end(first), false);
+  assert.equal(gate.isCurrent(second, tresZ, tresZ), true);
+  assert.equal(gate.end(second), true);
+  assert.equal(gate.begin(cpa, tresZ, tresZ), null);
+  assert.equal(gate.begin(cpa, cpa, { ...cpa, actorId: 'outro-usuario' }), null);
+});
 
 const form = () => ({
   cliente_empresa_id: 'cliente-empresa-1',
@@ -38,6 +57,8 @@ test('payload permite somente campos comerciais e ignora tenant, status, numero 
   assert.equal(payload.itens[0].quantidade, '2.500000');
   assert.equal('groupId' in payload, false);
   assert.equal('total' in payload, false);
+  const withTabela = buildOrcamentoPayload({ ...form(), tabela_preco_id: '11111111-1111-4111-8111-111111111111' });
+  assert.equal(withTabela.tabela_preco_id, '11111111-1111-4111-8111-111111111111');
 });
 
 test('politica visual exige permissao exata e estado editavel', () => {
@@ -79,8 +100,15 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /openEdit/);
   assert.match(tab, /Cancelar orçamento\?/);
   assert.match(tab, /beforeunload/);
-  assert.match(tab, /\[groupId, empresaId\]/);
+  assert.match(tab, /\[groupId, empresaId, actorId\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
+  assert.match(tab, /comercialMasterPicker/);
+  assert.match(tab, /orcamento-busca-cliente/);
+  assert.match(tab, /orcamento-busca-produto/);
+  assert.match(tab, /orcamento-tabela-preco/);
+  assert.match(tab, /tabela_preco_id/);
+  assert.match(tab, /TabelaPreco/);
+  assert.match(tab, /ORCAMENTO_PERSISTENCE_GAPS/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
   const text = buildOrcamentoShareText({ numero: '00000042', status: 'EM_ABERTO', validade_em: '2027-01-31T00:00:00.000Z', total: '125.500000' }, { empresaNome: 'Empresa Sintetica', clienteNome: 'Cliente Sintetico' });

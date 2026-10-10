@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -99,21 +100,29 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(
-      VisualizadorUniversalEntidadeV24,
-      { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
-      { title: titulo, width: 1400, height: 800 }
-    );
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   const tiles = [
-    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
-    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
-    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['nome','nome_conta','codigo','codigo_conta','tipo_conta'], f: PlanoContasForm },
+    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['codigo','nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
+    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['codigo','nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
+    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['codigo','nome','nome_conta','codigo_conta','tipo_conta'], f: PlanoContasForm },
     // codigo/descricao/tipo: auxiliares usam descricao como rótulo (nome pode vir vazio)
     { k: 'CentroCusto',                   t: 'Centros de Custo',        i: Layers,       c: ['codigo','descricao','tipo','nome'],                       f: CentroCustoForm },
-    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['nome','codigo','descricao'],                              f: CentroResultadoForm },
-    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['nome','codigo','categoria'],                              f: TipoDespesaForm },
+    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['codigo','nome','descricao'],                              f: CentroResultadoForm },
+    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['codigo','nome','categoria'],                              f: TipoDespesaForm },
     { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['nome','tipo','sigla','codigo'],                           f: MoedaIndiceForm },
     { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],            f: OperadorCaixaForm },
     { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },

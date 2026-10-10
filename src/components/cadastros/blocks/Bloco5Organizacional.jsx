@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Building2, Spline, Users, Briefcase, Clock, Shield } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -61,7 +62,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
         dados_novos: {
           ...getDadosContexto(),
           entidade,
-          permissao: `Cadastros.${entidade === "Empresa" || entidade === "GrupoEmpresarial" ? "Organizacional" : entidade}.visualizar`,
+          permissao: dataPermissionFor(entidade),
           total_entidade: getTotalEntidade(entidade),
           contexto_exigido: entidade === "GrupoEmpresarial" ? "grupo" : "group-or-company",
           ...(extras || {}),
@@ -94,16 +95,28 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   // Campos reais de cada entidade (sem alias — getDisplayValue faz fallback)
   const tiles = [
-    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['codigo','nome','cnpj','descricao'],                    f: GrupoEmpresarialForm },
-    { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['razao_social','nome_fantasia','cnpj','cidade'],          f: EmpresaForm },
-    { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['nome','descricao'],                                     f: DepartamentoForm },
-    { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
-    { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },
+    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['codigo','nome','nome_do_grupo','cnpj','descricao'],     f: GrupoEmpresarialForm },
+    { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['codigo','razao_social','nome_fantasia','cnpj','cidade'], f: EmpresaForm },
+    { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['codigo','nome','descricao'],                                     f: DepartamentoForm },
+    { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['codigo','nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
+    { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['codigo','nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },
     { k: 'PerfilAcesso',     t: 'Perfis de Acesso',     i: Shield,    c: ['nome_perfil','nivel_perfil','descricao','ativo'],        f: PerfilAcessoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
@@ -119,16 +132,26 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
   }, [searchTerm, contextoValido, filteredTiles.length]);
-  const canViewEntity = (entidade) => {
-    if (entidade === "Empresa" || entidade === "GrupoEmpresarial") {
-      return hasPermission("Cadastros", "Organizacional", "visualizar");
+  // Gate canônico owner: Organizacional (Empresa/Grupo/Depto/Cargo/Turno);
+  // PerfilAcesso vive em Sistema.acessos (não sob Cadastros.*).
+  const permissionSectionFor = (entidade) => {
+    if (["Empresa", "GrupoEmpresarial", "Departamento", "Cargo", "Turno"].includes(entidade)) {
+      return { module: "Cadastros", section: "Organizacional" };
     }
+    if (entidade === "PerfilAcesso") return { module: "Sistema", section: "acessos" };
+    return { module: "Cadastros", section: entidade };
+  };
+  const canViewEntity = (entidade) => {
+    const { module, section } = permissionSectionFor(entidade);
     return (
-      hasPermission("Cadastros", entidade, "visualizar") ||
+      hasPermission(module, section, "visualizar") ||
       hasPermission("Cadastros", null, "visualizar") ||
-      hasPermission("Sistema", entidade, "visualizar") ||
-      hasPermission("Sistema", null, "visualizar")
+      (entidade === "PerfilAcesso" && hasPermission("Sistema", null, "visualizar"))
     );
+  };
+  const dataPermissionFor = (entidade) => {
+    const { module, section } = permissionSectionFor(entidade);
+    return `${module}.${section}.visualizar`;
   };
 
   return (
@@ -149,7 +172,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
       {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, t, Icon, c, FormComp)}
-          data-permission={`Cadastros.${k === "Empresa" || k === "GrupoEmpresarial" ? "Organizacional" : k}.visualizar`}
+          data-permission={dataPermissionFor(k)}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required={k === "GrupoEmpresarial" ? "group" : "group-or-company"}>
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -164,7 +187,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
                 disabled={(!contextoValido && k !== "GrupoEmpresarial") || !canViewEntity(k)}
-                data-permission={`Cadastros.${k === "Empresa" || k === "GrupoEmpresarial" ? "Organizacional" : k}.visualizar`}
+                data-permission={dataPermissionFor(k)}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required={k === "GrupoEmpresarial" ? "group" : "group-or-company"}>
                 Abrir

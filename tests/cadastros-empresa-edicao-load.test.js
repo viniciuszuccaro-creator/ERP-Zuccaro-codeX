@@ -1,17 +1,123 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+import ts from 'typescript';
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
+  classifyCadastroEditLoad,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
+  isCadastroSelfManagedScopeCurrent,
+  mergeCadastroEditHydration,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
+
+test('formulários autogeridos bloqueiam escrita e efeitos tardios após troca CPA→3Z', () => {
+  const cpa = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa' };
+  const tresZ = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, cpa), true);
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, tresZ), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, tresZ, tresZ), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(null, cpa, cpa), false);
+  const opened = { ...cpa, actorId: 'ator-a', token: 'bearer-a' };
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, opened), true);
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, { ...opened, token: 'bearer-novo' }), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(opened, cpa, { ...opened, actorId: 'ator-b' }), false);
+});
+
+test('hook real congela sessão CPA mesmo com primeiro paint parcial; aceita render completo e rejeita 3Z', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const refs = []; let nextRef = 0;
+  let active = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa', actorId: 'ator-a', token: 'bearer-a' };
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: id => ({
+    react: { useRef: initial => refs[nextRef++] ||= { current: initial } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '@/api/erpHttpSession': { readErpHttpSession: () => active },
+    '../cadastroEditLoadPolicy.js': { isCadastroSelfManagedScopeCurrent },
+  })[id] });
+  const render = (groupId, empresaId) => { nextRef = 0; return exports.default(groupId, empresaId); };
+  const partial = render('grupo-cpa', null);
+  assert.equal(partial.isCurrent(), false);
+  const complete = render('grupo-cpa', 'empresa-cpa');
+  assert.doesNotThrow(() => complete.assertCurrent());
+  const requestScope = { ...active };
+  let applied = false;
+  const lateResponse = Promise.resolve({ id: 'cadastro-cpa' }).then(() => { if (complete.isCurrent()) applied = true; });
+  active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  await lateResponse;
+  assert.equal(requestScope.empresaId, 'empresa-cpa');
+  assert.equal(applied, false);
+  assert.throws(() => complete.assertCurrent(), /Contexto alterado/);
+  assert.equal(render('grupo-cpa', 'empresa-3z').isCurrent(), false);
+  active = { ...requestScope, token: 'bearer-novo' };
+  assert.equal(render('grupo-cpa', 'empresa-cpa').isCurrent(), false);
+});
+
+test('os quatro formulários próprios usam o guard no envio e descartam respostas antigas', async () => {
+  for (const name of ['CadastroClienteCompleto.jsx', 'CadastroFornecedorCompleto.jsx', 'RepresentanteFormCompleto.jsx']) {
+    const source = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(source, /useCadastroFormScopeGuard\(groupId, empresaAtual\?\.id\)/);
+    assert.match(source, /mutationFn:[\s\S]*?assertFormScopeCurrent\(\)/);
+    assert.match(source, /onSuccess:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+    if (name !== 'CadastroClienteCompleto.jsx') {
+      assert.match(source, /onError:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+    }
+  }
+  const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(produto, /assertFormScopeCurrent\(\)[\s\S]*?getHttpProdutoApi\(\)\.update/);
+  assert.match(produto, /if \(!isFormScopeCurrent\(\)\) return/);
+  assert.match(produto, /data-action="salvar-produto"[^>]*disabled=\{[^}]*!isFormScopeCurrent\(\)/);
+  assert.match(produto, /useProdutoHttpEditLoad\(\{/);
+});
 import {
+  assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,
+  getScopedCadastroPlaceholder,
   isEditRequestCurrent,
   loadEmpresaForEdit,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
+test('hook aceita visão consolidada do Grupo (empresaId null nos três lados)', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const refs = []; let nextRef = 0;
+  let active = { groupId: 'grupo-cpa', empresaId: null };
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: (id) => ({
+    react: { useRef: (initial) => refs[nextRef++] ||= { current: initial } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '@/api/erpHttpSession': { readErpHttpSession: () => active },
+    '../cadastroEditLoadPolicy.js': { isCadastroSelfManagedScopeCurrent },
+  })[id] });
+  const render = (groupId, empresaId) => { nextRef = 0; return exports.default(groupId, empresaId); };
+  const consolidado = render('grupo-cpa', null);
+  assert.doesNotThrow(() => consolidado.assertCurrent());
+  active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.throws(() => consolidado.assertCurrent(), /Contexto alterado/);
+});
+
+test('formulário aberto na Empresa A não salva após troca para B, nem antes do efeito de fechamento', () => {
+  const opened = 'Cliente:grupo-a:empresa-a';
+  assert.doesNotThrow(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: opened,
+  }));
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: opened, activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+  assert.throws(() => assertCadastroFormScopeCurrent({
+    formScope: opened, renderedScope: 'Cliente:grupo-a:empresa-b', activeScope: 'Cliente:grupo-a:empresa-b',
+  }), /Contexto alterado/);
+});
+
+test('grade conserva placeholder só no mesmo tenant; CPA→3Z não mostra linhas de CPA', () => {
+  const rowA = [{ id: 'cliente-a', empresa_id: 'empresa-a' }];
+  const base = ['viz-v33', 'Cliente', 'updated_date', 'desc', 1, 25, '', 'empresa-a', 'grupo-a'];
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 4), 2, ...base.slice(5)]), rowA);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 7), 'empresa-b', 'grupo-a']), []);
+  assert.deepEqual(getScopedCadastroPlaceholder(rowA, base, [...base.slice(0, 6), 'busca', 'empresa-a', 'grupo-a']), []);
+});
 
 const completeEmpresa = Object.freeze({
   id: 'empresa-a',
@@ -28,6 +134,81 @@ test('Empresa: carga completa exige id, nome e CNPJ; incompleta falha fechado', 
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', razao_social: 'A Ltda', cnpj: '12.345.678/0001-99' }, 'e1'), true);
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', nome_fantasia: 'A', cnpj: '12345678000199' }, 'e1'), true);
   assert.equal(isCadastroEditLoadComplete('Empresa', { id: 'e1', razao_social: 'A', cnpj: '' }, 'e1'), false);
+});
+
+test('mergeCadastroEditHydration: vazio intencional do GET aplica; chave ausente preserva grade', () => {
+  const merged = mergeCadastroEditHydration(
+    { id: 'c1', nome: 'Cliente Lista', email: 'a@b.com', telefone: '11', obs: 'lista' },
+    { id: 'c1', nome: '', email: 'novo@b.com', telefone: null, documento: '123' },
+  );
+  assert.equal(merged.nome, '');
+  assert.equal(merged.email, 'novo@b.com');
+  assert.equal(merged.telefone, null);
+  assert.equal(merged.documento, '123');
+  assert.equal(merged.obs, 'lista');
+});
+
+test('isCadastroEditLoadComplete: Cliente/Fornecedor/Produto exigem identidade', () => {
+  assert.equal(isCadastroEditLoadComplete('Cliente', { id: 'c1' }, 'c1'), false);
+  assert.equal(isCadastroEditLoadComplete('Cliente', { id: 'c1', nome: 'X' }, 'c1'), false);
+  assert.equal(isCadastroEditLoadComplete('Cliente', {
+    id: 'c1', razao_social: 'ACME', documento: '11222333000181',
+  }, 'c1'), true);
+  assert.equal(isCadastroEditLoadComplete('Fornecedor', {
+    id: 'f1', nome: 'Forn', cnpj: '11222333000181',
+  }, 'f1'), true);
+  assert.equal(isCadastroEditLoadComplete('Produto', { id: 'p1', descricao: 'Barra' }, 'p1'), false);
+  assert.equal(isCadastroEditLoadComplete('Produto', {
+    id: 'p1', descricao: 'Barra', codigo: 'P-01',
+  }, 'p1'), true);
+});
+
+test('classifyCadastroEditLoad: distingue falha, incompleto e ok', () => {
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Cliente',
+    expectedId: 'c1',
+    listRow: { id: 'c1', nome: 'X' },
+    loadError: new Error('rede'),
+  }).kind, 'load_failed');
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Empresa',
+    expectedId: 'e1',
+    fullRecord: { id: 'e1', razao_social: 'A', cnpj: '' },
+  }).kind, 'load_incomplete');
+  assert.equal(classifyCadastroEditLoad({
+    entityName: 'Cliente',
+    expectedId: 'c1',
+    listRow: { id: 'c1', nome: 'Lista' },
+    fullRecord: { id: 'c1' },
+  }).kind, 'load_incomplete');
+  const ok = classifyCadastroEditLoad({
+    entityName: 'Empresa',
+    expectedId: 'e1',
+    listRow: { id: 'e1', razao_social: 'A' },
+    fullRecord: { id: 'e1', razao_social: 'A Ltda', cnpj: '12345678000199' },
+  });
+  assert.equal(ok.kind, 'ok');
+  assert.equal(ok.message, null);
+});
+
+test('Marca/Grupo/Setor: GET parcial hidrata com grade e libera identidade', () => {
+  assert.equal(isCadastroEditLoadComplete('Marca', { id: 'm1', nome_marca: 'GATE-D SYNTH' }, 'm1'), true);
+  assert.equal(isCadastroEditLoadComplete('GrupoProduto', { id: 'g1', nome_grupo: 'Longos' }, 'g1'), true);
+  assert.equal(isCadastroEditLoadComplete('SetorAtividade', { id: 's1', nome: 'Construcao' }, 's1'), true);
+  const marcaOk = classifyCadastroEditLoad({
+    entityName: 'Marca',
+    expectedId: 'm1',
+    listRow: { id: 'm1', nome_marca: 'GATE-D SYNTH', codigo: '000001' },
+    fullRecord: { id: 'm1', descricao: '', cnpj: '', pais_origem: '' },
+  });
+  assert.equal(marcaOk.kind, 'ok');
+  const grupoOk = classifyCadastroEditLoad({
+    entityName: 'GrupoProduto',
+    expectedId: 'g1',
+    listRow: { id: 'g1', nome_grupo: 'GATE-D SYNTH', codigo: 'GATED-GP' },
+    fullRecord: { id: 'g1', natureza: 'Revenda' },
+  });
+  assert.equal(grupoOk.kind, 'ok');
 });
 
 test('Save Empresa: preserva id, group_id e nested; não carimba empresa_id do contexto', () => {
@@ -210,16 +391,25 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /loadEmpresaForEdit\(/);
   assert.match(source, /isEditRequestCurrent/);
   assert.match(source, /buildCadastroScopeSwitchReset/);
+  assert.match(source, /assertCadastroFormScopeCurrent/);
+  assert.match(source, /getScopedCadastroPlaceholder/);
+  assert.match(source, /formScopeRef/);
   assert.match(source, /setSelectedIds\(reset\.selectedIds\)/);
   assert.match(source, /setDeselectedIds\(reset\.deselectedIds\)/);
   assert.match(source, /setCrossPageAll\(reset\.crossPageAll\)/);
   assert.match(source, /getInContext\(ENTITY, item\.id/);
   assert.match(source, /isCadastroEditLoadComplete/);
+  assert.match(source, /mergeCadastroEditHydration/);
+  assert.match(source, /classifyCadastroEditLoad/);
   assert.match(source, /buildCadastroEditSavePayload/);
   assert.match(source, /hasCadastroEntityPermission/);
   assert.match(source, /isTenantMasterEntity/);
   assert.match(source, /editLoadBlocked/);
-  assert.match(source, /Nao foi possivel carregar o cadastro completo/);
+  assert.match(source, /classifyCadastroEditLoad\(/);
+  assert.match(source, /Falha ao carregar registro completo/);
+  assert.match(source, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional" : ENTITY/);
+  assert.match(source, /Fallbacks só de rótulo/);
+  assert.match(source, /uniqueKey: `Comercial\.Cliente\.detalhes\.\$\{item\.id\}`/);
 });
 
 test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, sem wipe fiscal', async () => {
@@ -242,9 +432,12 @@ test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular
 
 test('Bloco5 Empresas: gate Organizacional sem aliases recusados no backend', async () => {
   const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
-  assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
+  assert.match(block, /permissionSectionFor/);
+  assert.match(block, /section:\s*"Organizacional"/);
+  assert.match(block, /"Empresa",\s*"GrupoEmpresarial"/);
+  assert.match(block, /dataPermissionFor\(k\)/);
   assert.doesNotMatch(block, /hasPermission\("Sistema", "Empresas", "visualizar"\)/);
-  assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
+  assert.doesNotMatch(block, /Cadastros\.Empresa\.visualizar/);
 });
 
 test('useContextoVisual expoe getInContext fail-closed', async () => {
@@ -262,4 +455,12 @@ test('localBase44 nao filtra Empresa/Grupo por empresa_id do contexto', async ()
   assert.match(source, /Empresa: \{ module: 'Cadastros', section: 'Organizacional' \}/);
   assert.doesNotMatch(source, /TENANT_MASTER_PERMISSION_ALIASES/);
   assert.doesNotMatch(source, /module: 'Sistema', section: 'Empresas'/);
+});
+
+test('V24 detecta form self-managed por flag (minify-safe), não só Function.name', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  assert.match(source, /isSelfManagedCadastroForm/);
+  assert.match(source, /FormComponent\.isSelfManagedCadastro === true/);
+  const cliente = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(cliente, /isSelfManagedCadastro = true/);
 });

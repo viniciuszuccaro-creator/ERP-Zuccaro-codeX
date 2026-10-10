@@ -1,0 +1,77 @@
+# Inventário global módulos/submódulos/cadastros — tip #261 (sanitizado)
+# utc≈2026-10-10 · SYNTH≠recuperado · legado #211 reservado Codex
+
+## Sidebar (menus)
+- PRINCIPAL: Dashboard, Dashboard Corporativo, Relatórios, Agenda, CRM, Hub Atendimento
+- CADASTROS: Cadastros Gerais
+- OPERACIONAL: Comercial, Estoque, Compras, Expedição, Produção
+- ADMINISTRATIVO: Financeiro, RH, Fiscal, Contratos
+- SISTEMA: Administração do Sistema
+
+## Launchpads (sectionKey / cards)
+### Comercial
+- sectionKeys: Clientes, orcamento, pedido, Pedidos Retirada, Notas Fiscais, Canais Realtime
+- titles amostra:  Novo Pedido, Clientes, Orçamentos, Pedidos, Logística Entrega, Pedidos Retirada, Comissões, Notas Fiscais, Aprovações, Tabelas de Preço, Canais Realtime, Validar Pedidos Externos
+### Financeiro
+- sectionKeys: Alertas por Empresa, Contas a Receber
+- titles amostra: Caixa Central, Formas de Pagamento, Caixa PDV Completo, Vendas Multicanal, Remessa/Retorno CNAB, Contas a Receber, Contas a Pagar, Aprovações Descontos, Conciliação Bancária, Custos Logísticos, Relatórios Financeiros, Alertas por Empresa
+### Fiscal
+- sectionKeys: nfe, nfe, tabelas_fiscais, tabelas_fiscais, obrigacoes, sped, nfe
+- titles amostra: Notas Fiscais, Motor Fiscal IA, Configuração, Plano de Contas, DRE Gerencial, SPED Fiscal, Importar XML
+### Estoque
+- sectionKeys: (via title)
+- titles amostra: Inventário, Produtos, Movimentações, Recebimento, Requisições Almox., Solicitações Compra, Lotes e Validade, Relatórios, IA Reposição, ↔️ Transferência Entre Empresas
+### Expedicao
+- sectionKeys: (via title)
+- titles amostra: Entregas, Separação, Romaneios, Rotas e Mapa, Roteirização IA, Métricas Realtime, Dashboard IA, Dashboard Entregas, Financeiro Logístico, Relatório Financeiro, Relatórios, Configurações
+### Compras
+- sectionKeys: (via title)
+- titles amostra: Fornecedores, Recebimento NF-e, Solicitações, Cotações, Ordens de Compra, Nova Ordem de Compra
+### Producao
+- sectionKeys: Kanban, Ordens Produção, Apontamentos, Controle Refugo, Dashboard IA, Dashboard Realtime, IoT Equipamentos, Documentos, Relatórios, Configurações
+- titles amostra: Kanban, Ordens Produção, Apontamentos, Controle Refugo, Dashboard IA, Dashboard Realtime, IoT Equipamentos, Documentos, Relatórios, Configurações, Empresa obrigatória, Acesso negado
+### CRM
+- sectionKeys: (via title)
+- titles amostra: Funil Visual, Funil IA, Funil Avançado, Oportunidades, Interações, Campanhas, IA Leads, IA Churn, 📊 Oportunidades
+### RH
+- sectionKeys: (via title)
+- titles amostra: Colaboradores, Ponto, Ponto Biométrico, Dashboard RH, Férias, Rankings, Monitoramento IA
+
+## Cadastros Gerais — blocos/entidades
+### Bloco1Pessoas.jsx: Cliente, Fornecedor, Transportadora, Colaborador, Representante, ContatoB2B, SegmentoCliente, RegiaoAtendimento
+### Bloco2Produtos.jsx: Servico, SetorAtividade, GrupoProduto, Marca, TabelaPreco, KitProduto, CatalogoWeb, UnidadeMedida
+### Bloco3Financeiro.jsx: Banco, FormaPagamento, PlanoDeContas, CentroCusto, CentroResultado, TipoDespesa, MoedaIndice, OperadorCaixa, ConfiguracaoDespesaRecorrente, TabelaFiscal, CondicaoComercial
+### Bloco4Logistica.jsx: Veiculo, Motorista, TipoFrete, LocalEstoque, RotaPadrao, ModeloDocumento
+### Bloco5Organizacional.jsx: GrupoEmpresarial, Empresa, Departamento, Cargo, Turno, PerfilAcesso
+### Bloco6Tecnologia.jsx: ApiExterna, ChatbotCanal, ChatbotIntent, GatewayPagamento, JobAgendado, Webhook, ConfiguracaoNFe, EventoNotificacao
+
+## Homolog tip 7f00e392 (browser session inject)
+| Módulo | Status | Badges Acesso negado | Nota |
+|---|---|---|---|
+| Fiscal | PASS | 0 | cards nfe/tabelas/sped/obrigacoes + Nova NF-e |
+| Financeiro | PASS | 0 | launchpad módulos visíveis |
+| Comercial | PASS | 0 | hub azul + 10 cards |
+| Cadastros ContatoB2B/Segmento/Região | FAIL→fix | 3 | aliases → pessoas |
+| Cadastros Depto/Cargo/Turno/Perfil | FAIL→fix | 4 | Organizacional / Sistema.acessos |
+| Estoque | WARN | 1 | inventariar card |
+
+## #254 revisão HEAD 860114ca
+- Escopo: race refresh HTTP / contexto Empresa / espelho stale / grade Visualizador
+- Integrado seletivamente em #261 (erpHttpSession, Auth/User/Contexto*, Visualizador scope clear)
+- Reservado Codex: não misturar sessão/outbox; merge owner #254 vs #261
+
+## Painel / Contratos / Sistema (complemento 2026-10-10)
+### Painel
+- Dashboard (empresa) × DashboardCorporativo (grupo) — escopos distintos; keep both
+- Relatórios / Agenda — entradas sidebar; sem duplicata de launchpad Cadastros
+### Contratos
+- Menu ADMINISTRATIVO → Contratos (página existente); não criar ContratosV2
+- Form: ID técnico readonly (≠ número); lista: coluna ID técnico; homolog UX pendente tip implantado pós-redeploy
+### Sistema / Integrações
+- Administração do Sistema · PerfilAcesso aliases → `Sistema.acessos`
+- Bloco6: ApiExterna, Chatbot*, Gateway, Job, Webhook, ConfiguracaoNFe, EventoNotificacao
+### Pacote tip
+- PR HEAD / implantado #261 `00edfb2b` · merge `861513cd` · #254 `20a2c2fb` · #264 `d9403665`
+
+## Recuperado
+NÃO legado. SYNTH/GATE-D ≠ recuperado.

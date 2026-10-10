@@ -14,6 +14,7 @@ import type {
   ClienteListFilter,
   ClienteRepository,
 } from './inMemoryClienteRepository.js';
+import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
@@ -196,12 +197,14 @@ export class PostgresClienteRepository implements ClienteRepository {
     const empresaId = data.empresa_id ?? scope.empresaId ?? null;
 
     const execute = async (client: DbQueryExecutor) => {
-      const codigoResult = await client.query<{ codigo: string }>(
-        'SELECT reserve_entity_codigo($1, $2, 6) AS codigo',
-        [scope.groupId, 'Cliente'],
-      );
-      const codigo = codigoResult.rows[0]?.codigo;
-      if (!codigo) throw new Error('failed to reserve cliente codigo');
+      const codigo = await reserveEntityCodigo({
+        db: client,
+        groupId: scope.groupId,
+        entityName: 'Cliente',
+        table: 'clientes',
+        width: 6,
+        incomingCodigo: data.codigo,
+      });
 
       const insert = await client.query(
         `INSERT INTO clientes (

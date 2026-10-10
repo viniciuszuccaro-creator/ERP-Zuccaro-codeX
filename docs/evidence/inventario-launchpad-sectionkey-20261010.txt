@@ -1,0 +1,28 @@
+# Launchpad sectionKey canônico — Compras/Estoque/Expedição/Financeiro
+# utc≈2026-10-10 · tip pós #254 b11843c8 · SYNTH≠recuperado
+
+## Problema
+Mesma classe do Fiscal pré-fix: cards usavam title UI (Ordens de Compra,
+Requisições Almox., Separação…) enquanto owner tree é snake_case
+(ordens_compra, requisicoes, entregas, roteirizacao…).
+
+## Correção (#261)
+- sectionKey canônico em Compras.jsx / Estoque.jsx / Expedicao.jsx / Financeiro.jsx
+- SECTION_ALIASES em usePermissions + LOCAL_SECTION_ALIASES em localBase44Client
+- Nova OC / Nova Entrega / Transferência consultam chave canônica
+- DetalhesCliente: uniqueKey Comercial.Cliente.detalhes.<id> (anti janela dupla)
+- financeiroLaunchpadAccess: compat title legado + probe owner keys
+
+## Mapeamento (cards → owner)
+### Compras
+fornecedores | ordens_compra (Recebimento NF-e, OC) | solicitacoes | cotacoes
+### Estoque
+inventario | produtos (Lotes, IA) | movimentacoes (Recebimento) | requisicoes (Almox, Solicit. Compra)
+### Expedição
+entregas (Separação, dashboards, Relatórios) | romaneios (Financeiro LOG) | roteirizacao (Rotas/IA/Painel) | transportadoras (Config)
+### Financeiro
+caixa | contas_receber | contas_pagar | conciliacao | relatorios
+
+## Testes
+erp-http-session (owner launchpad aliases) · financeiro-launchpad-access · cadastros-empresa-edicao-load
+PASS focado 65 testes no lote combinado.

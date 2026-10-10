@@ -1,3 +1,499 @@
+## CURSOR — revisão Codex timer: #269 CRM preflight (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#269** tip **`8d806386`** | draft · MERGEABLE · base #268 `5a38a94e` · CI **SUCCESS** · agente **RUNNING** |
+| conteúdo | preflight RO · stages before/after_migration · rejeita trigger código com eventos incorretos · `activationAuthorized=false` |
+| porte Cursor | **não** — prep estrutural Codex; sem merge/VPS/migração/ativação; flag CRM HTTP OFF |
+| **#268** | tip `5a38a94e` · IDLE · sem porte |
+| **#267** | tip `e3194fb1` · IDLE · sem porte |
+| **#266/#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar #269 tip `8d806386` / stack #268→#267; secret restrito; timer |
+
+## CURSOR — revisão Codex timer: #268 CRM→Pedido (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#268** tip **`5a38a94e`** | draft · MERGEABLE · base #267 `e3194fb1` · CI SUCCESS · IDLE |
+| conteúdo | vincular-pedido + exclusividade Pedido (`uq_oportunidades_pedido_canonico` / `byPedido`) · proveniência Orçamento · flag **OFF** |
+| porte Cursor | **não** — depende de #267; sem merge/VPS/ativação |
+| **#267** | tip `e3194fb1` · IDLE · sem porte |
+| **#266/#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar #268 tip `5a38a94e` / #267; secret restrito; timer |
+
+## CURSOR — revisão Codex timer: #267 CRM HTTP (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#267** tip **`e3194fb1`** | draft · MERGEABLE · base #261 `c125c4db` · CI SUCCESS · agente **IDLE** |
+| conteúdo | Oportunidade HTTP + mig 040 · fix legado orçamento + high-water código grupo · flag off · UI B intacta |
+| porte Cursor | **não** — ownership Codex schema/repo/RLS; PR pede revisão independente **sem** merge/VPS/ativação |
+| risco Regra-Mãe | baixo neste tip (flag off, sem dual-write/UI paralela); corte exige gate separado |
+| **#266** | tip `cb3af26e` · IDLE · Legado — sem porte |
+| **#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs **`21183bf6`** · runtime implantado **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar #267 tip `e3194fb1` (sem porte); secret restrito; timer |
+
+## CURSOR — tip c125c4db implantado + revisão Codex timer (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **PR HEAD #261** | **`c125c4db`** · MERGEABLE → main · CI SUCCESS |
+| **implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · API `dist/domain/crmOportunidadePolicy.js` · rollback `pre-spa-login-20261010-180111` |
+| **homologado implantado** | owner tipado **este SHA** fail_count=0 · screenshot `pw-homolog-261-tip-c125c4db.png` |
+| policy CRM | fonte única `server/src/domain/crmOportunidadePolicy.js` · wrapper FE · testes FE 6/6 + server shared 2/2 |
+| **#265** tip `910e4ec9` | MERGEABLE · Produto+Orçamento já em #261 · **não** re-portar |
+| **#263** tip `1b19f4ee` | ancestral Orçamento · MERGEABLE |
+| **#266** tip **`cb3af26e`** | MERGEABLE · CI SUCCESS · Legado crosswalk/tipo + headers SQL (`ca1234b9`) · agente **IDLE** · **não** mesclar Cursor (#211) |
+| **#254** | ancestral OPEN `20a2c2fb` — não re-portar |
+| porte Cursor neste ciclo | **nenhum** (só docs/evidência; Legado fora de escopo) |
+| usuário restrito | **BLOCKED** sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · #266/#211 · timer |
+
+## CURSOR — policy CRM compartilhada para o pacote 040 (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| objetivo | Codex importa a mesma policy sem copiar regra e sem editar a UI |
+| fonte única | `server/src/domain/crmOportunidadePolicy.js` |
+| wrapper | `src/components/lib/crmOportunidadePolicy.js` só reexporta |
+| barrel server | `server/src/domain/index.ts` |
+| Docker | contexto continua `./server` (`docker build ./server` do compose, gate-f, canário e incidente). `COPY src` + build exigem `dist/domain/crmOportunidadePolicy.js` |
+| ownership | Cursor edita a policy e o wrapper. Codex importa; schema/repositório/RLS 040 seguem no workspace Codex. UI/store sem corte nem dual-write |
+| testes | `tests/crm-oportunidade-policy.test.js` (wrapper ≡ fonte). `server/tests/crm-oportunidade-policy-shared.test.ts`. server typecheck/build PASS. suite server 307 pass / 0 fail / 18 skip. typecheck raiz segue com erros anteriores fora deste diff |
+| implantado | supersedido pelo bloco tip **`c125c4db`** acima |
+| próxima | Codex importa `../domain/crmOportunidadePolicy.js` no workspace 040. Sem migration 040 nesta branch |
+
+## CURSOR — revisão Codex autônomo (ciclo timer) (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#265** tip `910e4ec9` | MERGEABLE · Produto **já em** `db89aa45` · Orçamento **já em** `80ba3187` |
+| **#263** | ancestral do pacote Orçamento · tip `1b19f4ee` · vs main MERGEABLE |
+| **#266** tip **`cb3af26e`** | MERGEABLE · Legado · **não** mesclar Cursor · agente **IDLE** |
+| **#254** | ancestral OPEN `20a2c2fb` — não re-portar |
+| implantado erp-dev | supersedido por **`c125c4db`** / `index-C-lbE7zK.js` |
+| agentes | Legado IDLE · Produto/Orçamento IDLE |
+| próxima | supersedido pelo bloco tip `c125c4db` acima |
+
+## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
+| **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
+| **PR HEAD #261** | **`c125c4db`** · MERGEABLE → main |
+| CI tip `c125c4db` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`c125c4db`** · `index-C-lbE7zK.js` · rollback `pre-spa-login-20261010-180111` |
+| **homologado implantado** | owner tip **`c125c4db`** fail_count=0 (login tipado + Clientes + launchpads) |
+| usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
+| **implementado neste lote** | C360 CRM · #265 Produto · #263/#265 Orçamento tenant-safe · Contratos/AdminHeader azul · policy CRM shared API |
+| **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
+| **recuperado / importado** | **NÃO** · #211 |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` · `deploy-261-tip-9f084ed0-orcamento-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · #266/#211 Legado · CRM HTTP Codex |
+
+## CURSOR — CONTINUIDADE CASA (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul · porte #265 · policy CRM shared |
+| **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
+| **PR HEAD** | tip **`c125c4db`** · **não** em `main` `baba91a6` |
+| **implantado** | supersedido pelo tip **`c125c4db`** / `index-C-lbE7zK.js` |
+| **homologado** | tip **`c125c4db`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
+| handoff | `docs/HANDOFF_ATUAL.md` · tip c125c4db + RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
+| BLOCKED | usuário restrito · CRM HTTP schema server · Legado |
+| próxima | supersedido pelo bloco tip `c125c4db` acima |
+
+## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **PR HEAD** | **`c3c45c21`** (docs) · runtime implantado **`f22d1151`** · `index-KP6RdCBA.js` |
+| **implementado** | MASTER_CODE+Cliente+Produto+Fornecedor+Representante codigo/ID · C360 fontes · #254/#264 |
+| CI tip `f22d1151`/`c3c45c21` | erp-runtime-ci **SUCCESS** |
+| backup | `pre-gate-e-20261010-144428.sql` sha256 `a838fa18…c7a6` |
+| rollback | `pre-spa-login-20261010-144429` |
+| **homologado** (implantado) | login tipado fail_count=0 · Clientes V24 · launchpads |
+| usuário restrito | **BLOCKED** sem secret |
+| evidências | `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt` · `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | continuidade casa — ver bloco acima |
+
+## CURSOR — #261 tip `6e397596` implantado (ID técnico) (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **implantado** | supersedido por **`f22d1151`** |
+| evidências | `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
+| próxima | supersedido pelo tip `f22d1151` acima |
+
+## CURSOR — #261 lote ID técnico MASTER_CODE + Cliente/Produto (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `CadastroCodigoRegistroField` + `entityId` → ID técnico em 22 forms · ClienteCompleto · Produto V22 · C360 |
+| **implantado** | supersedido runtime por tip **`6e397596`** |
+| usuário restrito | **BLOCKED** sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | supersedido pelo tip `6e397596` acima |
+
+## CURSOR — #261 tip `00edfb2b` implantado (#264+#254 integrado) (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **PR HEAD #261** | tip docs · runtime implantado **`00edfb2b`** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **código incorporado** | #254 final **`20a2c2fb`** · #264 tip **`d9403665`** · minify-safe **`bdeec58c`** · Contratos/C360 ID · merge **`861513cd`** |
+| **SHA implantado** | erp-dev **`00edfb2b`** · `index-ChwPPG6e.js` · backup `pre-gate-e-20261010-142336.sql` · rollback `pre-spa-login-20261010-142346` |
+| responsável integração | **Cursor** merge em #261 · Codex porte #254→#264 · sem segunda cópia |
+| **preservado** | `isSelfManagedCadastro` · freeze sessão≡render · V23→V24 · HTTP ativo≠status · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
+| testes locais | produto-http-edit-load+edicao+pim **40/40** · contratos **5/5** |
+| CI tip `00edfb2b` | erp-runtime-ci **SUCCESS** (4 checks) |
+| **homologado** (este SHA) | login tipado · Clientes V24 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads · **fail_count=0** |
+| residual | lote ID técnico acima · usuário restrito BLOCKED · Legado #211 · merge owner |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
+| evidências | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | supersedido pelo lote ID técnico acima após CI/redeploy |
+
+## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `isSelfManagedCadastro` minify-safe · freeze scope quando sessão≡render · V23→V24 · HTTP ativo≠status |
+| **causa crash salvar** | `Function.name` some no bundle → onSuccess chamava `handlePersistSubmit` → ErrorBoundary |
+| **preservado** | #254 `4a1ecf4c` · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
+| CI tip `bdeec58c` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`bdeec58c`** · `index-5EmU7-cb.js` · backup `pre-gate-e-20261010-134527.sql` · rollback `pre-spa-login-20261010-134528` |
+| **homologado** (este SHA) | login tipado · Clientes V24 n=5 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads · **fail_count=0** |
+| residual | supersedido como HEAD de código pelo tip `861513cd` (ainda é o SHA implantado) |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` (V23→V24 **feito**) |
+| evidências | `deploy-261-tip-bdeec58c-salvar-minify-20261010.txt` · `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | redeploy tip integrado `861513cd` |
+
+## CURSOR — #261 tip `0d458ab9` (Clientes API×UI + V23→V24) (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implantado** | supersedido por **`bdeec58c`** |
+| evidências | `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` |
+| próxima | supersedido pelo bloco tip `bdeec58c` acima |
+
+## CURSOR — #261 tip `3108b9f2` (#254 4a1ecf4c + azul global) (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implantado** | supersedido por **`0d458ab9`** |
+| **homologado** | tip `3108b9f2` (não reutilizar para tip novo) |
+| evidências | `deploy-261-tip-3108b9f2-integrado-20261010.txt` |
+| próxima | supersedido pelo bloco tip `0d458ab9` acima |
+
+## CURSOR — #261 tip `7e515fbc` implantado + homolog login tipado (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implantado** | supersedido por **`3108b9f2`** |
+| **homologado** | tip `7e515fbc` (não reutilizar para tip novo) |
+| evidências | `deploy-261-tip-7e515fbc-homolog-login-20261010.txt` |
+| próxima | supersedido pelo bloco tip `3108b9f2` acima |
+
+## CURSOR — #261 tip `4c0c167a` implantado (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | #254 `b11843c8` · sectionKey Compras/Estoque/Expedição/Financeiro · `uniqueKey` DetalhesCliente · `reserveEntityCodigo` Cliente/Produto/TabelaPreco |
+| **preservado #261** | piloto HTTP · Organizacional · fallback células · classify/merge |
+| **sem cópia divergente** | tip #254 nos mesmos arquivos #261 |
+| CI tip `4c0c167a` | erp-runtime-ci **SUCCESS** |
+| **implantado** | supersedido por **`7e515fbc`** |
+| evidências | `deploy-261-tip-4c0c167a-integrado-20261010.txt` |
+| próxima | supersedido pelo bloco tip `7e515fbc` acima |
+
+## CURSOR — #261 launchpads sectionKey + #254 tip (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | #254 `b11843c8` · sectionKey canônico · DetalhesCliente `uniqueKey` |
+| CI tip `95ee6179`/`601c179e` | SUCCESS |
+| **implantado** | supersedido por **`4c0c167a`** |
+| próxima | supersedido pelo bloco tip `4c0c167a` acima |
+
+## CURSOR — #261 + #254 tip `b11843c8` corridas login/empresa (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | Port final #254 `b11843c8`: `shouldAccept`+`HTTP_CONTEXT_CHANGED` no login · `loginVersion`/`bootstrapComplete`/revalidate background · `assertCadastroFormScopeCurrent`+`getScopedCadastroPlaceholder`+`formScopeRef` |
+| **preservado #261** | piloto HTTP `entityListSorted`/`countEntities` · gate Organizacional · fallback sem codigo/sigla · `classifyCadastroEditLoad`/`mergeCadastroEditHydration` · `grupoSelfOr` |
+| **sem cópia divergente** | `erpHttpSession`+policy idênticos ao tip #254; Auth/Visualizador = #254 race + #261 melhorias no mesmo arquivo |
+| **testes** | `erp-http-session` 55/55 · `cadastros-empresa-edicao-load` 21/21 |
+| **integrado** | PR #261 (mesmo branch) |
+| CI tip `95ee6179` | erp-runtime-ci **SUCCESS** |
+| próxima | supersedido pelo bloco launchpads acima |
+
+## CURSOR — #261 homolog global + #254 contexto + Cadastros RBAC (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | Fiscal sectionKey · Cadastros aliases ContatoB2B/Depto→pessoas/organizacional · Bloco5 PerfilAcesso→Sistema.acessos · port seletivo #254 (race refresh/espelho/grade) |
+| **revisado** | #254 HEAD `860114ca` — contexto HTTP; integrado sem remover piloto HTTP entityListSorted/#261 Organizacional |
+| **integrado** | PR #261 · ManagePR body atualizado |
+| **implantado** | erp-dev **`7fe1067b`** · `index-Dys3YYYF.js` · backup `pre-gate-e-20261010-112413.sql` · rollback `pre-spa-login-20261010-112413` |
+| **homologado** | Fiscal/Financeiro/Comercial/Cadastros **PASS** (0 badges) no tip implantado |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| inventário | `docs/evidence/inventario-global-modulos-20261010.txt` |
+| evidências | `deploy-261-tip-7fe1067b-homolog-global-20261010.txt` |
+| login automação | xdotool FAIL · alternativa API session inject **PASS** |
+| CI tip `53814e9a` | erp-runtime-ci **SUCCESS** (4 checks · asserts Bloco5 alinhados) |
+| próxima | supersedido pelo bloco #254 tip `b11843c8` acima |
+
+## CURSOR — Fiscal RBAC tip `7f00e392` implantado (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| causa | launchpad usava título UI (`Notas Fiscais`) em `data-permission` / gate; árvore owner é `Fiscal.nfe|tabelas_fiscais|sped|obrigacoes` |
+| **implementado** | `Fiscal.jsx` sectionKey canônico + NotasFiscaisTab · aliases UI→owner · `Fiscal.nfe` em NotasFiscaisTab · teste owner Fiscal |
+| fail-closed | gate por seção (sem liberar tudo só com `Fiscal.visualizar`) |
+| matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| **implantado** | erp-dev **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` |
+| CI tip `062ef3fe` | erp-runtime-ci **SUCCESS** |
+| evidências | `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt` |
+| homolog API/bundle | PASS |
+| browser UI Fiscal | **PASS** session-inject (cards + Nova NF-e sem Acesso negado) |
+| próxima | supersedido pelo bloco homolog+#254 acima |
+
+## CURSOR — Auditoria global UI (pós-orientação 2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| orientação | registrada no chat principal + HANDOFF (substitui anterior) |
+| **implementado** | Visualizador: `Cadastros.Organizacional.*` em data-permission · fallback células sem codigo · GrupoEmpresarial self-id · Empresa coluna codigo |
+| prints cobertos | Empresas/Grupos Acesso negado · Marcas pais/categoria · Grupos vazios |
+| Fiscal Acesso negado | **corrigido neste tip** (sectionKey + aliases) |
+| matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| **implantado** | erp-dev **`ea213906`** · `index-Dqf6E74p.js` · backup `pre-gate-e-20261010-102145.sql` · rollback `pre-spa-login-20261010-102145` |
+| CI tip HEAD `7d7367d9` | erp-runtime-ci **SUCCESS** (4 checks) · #261 MERGEABLE CLEAN |
+| próxima | supersedido pelo bloco Fiscal RBAC acima |
+
+## CURSOR — #261 tip `d6952b9d`/`279f26fc` implantado (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| candidata | **PR #261** · `#258⊂#259⊂#260⊂#261` · Bugbot order_by → corrigido |
+| **implementado** | `CadastroCodigoRegistroField` forms MASTER_CODE · HTTP order_by · lint hasId |
+| **integrado** | PR OPEN — merge **owner** |
+| **implantado** | erp-dev **`279f26fc`** · `index-D_uICNJK.js` · mig **038+039** · backup `pre-gate-e-20261010-100519.sql` · rollback `pre-spa-login-20261010-100519` |
+| **homologado** | API CPA create→reabrir→convert→dup409→cross404 **PASS** |
+| **recuperado** | **NÃO** legado (#211) · auxiliares codigo API · SYNTH≠recuperado |
+| UI Abrir/Orçamentos | **BLOCKED** #254 contexto (Codex) |
+| evidências | `deploy-261-tip-d6952b9d-*` · `homolog-261-tip-d6952b9d-c360-*` |
+| CI tip HEAD `5bedf3f8` | erp-runtime-ci **SUCCESS** (4 checks · push+PR) |
+| próxima | merge owner #261; Codex #254; #211 legado |
+
+## CURSOR — #261 candidata integração + homolog API C360 (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| tip runtime | supersedido por bloco `d6952b9d` acima |
+
+## CURSOR — #261 tip `bd2fa504` implantado + matriz (2026-10-09T20:50Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`bd2fa504`** · PR [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) · docs tip `c270c171` |
+| CI runtime `bd2fa504` | erp-runtime-ci **SUCCESS** (4 checks · push 37987907880 · PR 37987938769) |
+| CI tip `c270c171` | erp-runtime-ci **SUCCESS** (4 checks · pós cooldown Docker Hub) |
+| CI tip docs intermediários | falhas infra Docker Hub rate-limit (não código) — resolvido no retry 2/2 |
+| **recuperado** | matriz DB×API · GATE-D SYNTH n=1 preservado · Fornecedor schema ausente · legado #211 **NÃO** |
+| **implementado** | 039 + UI tabela + convert + codigo grades + regressões Abrir/merge |
+| **integrado** | PR #261 |
+| **implantado** | erp-dev **`bd2fa504`** · `index-BufSJCA3.js` · mig **039** · backup `pre-gate-e-20261009-203540.sql` · rollback `pre-spa-login-20261009-203649` |
+| **validado** | BE 305/0 · FE cobertura/regressão PASS · API orçamentos+`tabela_preco_id` PASS · SPA label PASS |
+| browser UI fluxo completo | **BLOCKED** reproduzível: toast contexto Cadastros Marca + Orçamentos UI “sem servidor” com API 200 → **Codex #254** |
+| consolidação | #258⊂#259⊂#260⊂#261 · `consolidacao-258-259-260-20261009.txt` |
+| mig | 038 intocada · 025–037 Codex intocados · **039** aplicada |
+| evidências | `deploy-261-*` · `browser-261-*` · `registros-recuperacao-matriz-*` |
+| próxima | Codex #254 contexto; merge owner #261; #211 legado |
+
+## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| tip | supersedido por implantado **`bd2fa504`** acima |
+
+## CURSOR — #260 tip `18113337` CI+VPS+browser (2026-10-09T19:52Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`18113337`** |
+| CI | erp-runtime-ci **SUCCESS** (4 checks) · MERGEABLE |
+| **implantado** | erp-dev **`18113337`** · asset `index-wiWHreg3.js` · backup `pre-gate-e-20261009-194341.sql` · rollback `pre-spa-login-20261009-194342` |
+| **homologado** | Orçamento busca+gap PASS · Pedido busca/tabela PASS · switch 3Z PASS |
+| **importado** | **NÃO** (#211) |
+| #259 | tip `55fcac4f` predecessor · merge owner |
+| evidências | `deploy-260-comercial-picker-18113337-*` · `browser-260-comercial-picker-18113337-*` |
+| próxima | supersedido pelo lote recuperação+039 |
+
+## CURSOR — Legado consumidor + Financeiro menus (2026-10-09T19:42Z)
+
+| Fase | Estado |
+|---|---|
+| consumidor staging | testes **4/4 PASS** · sem promoção ops |
+| **importado** | **NÃO** (#211 authorized=0) |
+| Financeiro menus | inventário launchpad existente · CR≠Régua · sem módulo paralelo |
+| PG isolado | pendente Codex |
+| evidências | `legado-consumidor-coord-20261009.txt` · `financeiro-menus-nav-20261009.txt` |
+| ≠ | extração Codex Legado |
+
+## CURSOR — Comercial 360 picker Cliente→Orçamento→Pedido (2026-10-09T19:40Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | busca cliente/produto por código · labels código · gaps orçamento explícitos |
+| **integrado** | branch `cursor/comercial360-fluxo-cliente-orc-pedido-392b` |
+| **implantado** | **NÃO** |
+| **homologado** | unitários picker/orcamento/pedido PASS |
+| **importado** | **NÃO** (#211) |
+| arquivos | `comercialMasterPicker.js` · `OrcamentosTab` · `PedidoCanonicoPanel` |
+| ≠ Codex | sessão/contexto/outbox intocados |
+| gaps | orçamento sem `tabela_preco_id`; preço server-side; UM só principal |
+| evidências | `comercial360-fluxo-cliente-orc-pedido-20261009.txt` · `financeiro-menus-nav-20261009.txt` |
+| próxima | CI tip → deploy → homolog browser fluxo completo |
+
+## CURSOR — #259 closeout Setor/UM + matriz registros (2026-10-09T19:35Z)
+
+| Fase | Estado |
+|---|---|
+| tip implantado | **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** |
+| CI #259 | **SUCCESS** · MERGEABLE · head docs `51ac5d4b` |
+| #258 | ancestor OPEN · merge #259 cobre |
+| **homologado** | Grupo/Setor/UM edit+codigo PASS · Marca PASS (corrida anterior) · layout azul PASS |
+| **importado** | **NÃO** |
+| matriz registros | `registros-recuperacao-matriz-20261009.txt` — ensaios≠legado; Fornecedor schema ausente; staging #211 |
+| mig Codex | 025–037 **não** no VPS; 038 Cadastros OK |
+| #254 | toast Abrir sem scroll → Codex sessão; Cursor não edita hooks |
+| evidências | `browser-259-setor-um-grupo-55fcac4f-*` |
+| próxima | merge #259 após owner; fechar #258 |
+
+## CURSOR — #259 tip `55fcac4f` CI+VPS+browser (2026-10-09T18:55Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`55fcac4f`** |
+| CI | erp-runtime-ci **SUCCESS** (push 37974475772 · PR 37974480936) |
+| **implantado** | erp-dev **`55fcac4f`** · asset `index-DlbCJL3w.js` · mig **038** · backup `pre-gate-e-20261009-183944.sql` · rollback `pre-spa-login-20261009-184004` |
+| **homologado** | asset/login/layout PASS · Grupo/Marca PASS · Setor/UM supersedido por closeout 19:35Z |
+| **importado** | **NÃO** (#211) |
+| #258×#259 | #258 ancestor → merge #259 cobre #258 |
+| migração | **038** (025–037 Codex intocados) |
+| evidências | `deploy-259-cadastros-038-55fcac4f-*` · `browser-259-cadastros-55fcac4f-*` · inventário completo |
+| #254 / #211 | Codex |
+| próxima | merge #259 após owner; fechar #258 |
+
+## CURSOR — Cadastros #259 CI fix migration 038 (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| causa CI | last=024; `025_cadastros` colidia Codex `025_pedidos_*` |
+| correção | **`038_cadastros_codigo_registro.sql`** + teste through 038 |
+| status | supersedido pelo tip `55fcac4f` implantado |
+
+## CURSOR — Cadastros código + Abrir único tip `c2e32750` (2026-10-09)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | tip **`c2e32750`** · Abrir uniqueKey+registry · edit merge · MASTER_CODE · migration (→038) · reserve Marca/Grupo/Setor/UM |
+| **integrado** | PR [#259](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/259) |
+| **implantado** | **NÃO** |
+| **homologado** | unitários locais · CI falhou order 024→fix 038 |
+| **importado** | **NÃO** (#211) |
+| matriz | `docs/evidence/cadastros-codigo-abrir-matriz-20261009.txt` |
+| #258 | ancestor de #259 · tip `e94f39b2` / VPS `d9a72802` |
+
+## CURSOR — #258 CI tip `e94f39b2` SUCCESS (2026-10-09T16:17Z)
+
+| Fase | Estado |
+|---|---|
+| tip | **`e94f39b2`** (fix CI mocks/contrato sobre `d9a72802`) |
+| CI | erp-runtime-ci frontend+backend **SUCCESS** |
+| **implantado** | código runtime **`d9a72802`** (docs/testes não exigem rebuild) |
+| **homologado** | badge/lista tip `d9a72802` |
+| **importado** | **NÃO** |
+| próxima | merge #258 após owner |
+
+## CURSOR — #258 badge Clientes HTTP tip `d9a72802` (2026-10-09T16:07Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `d9a72802` · `httpPilotCountBridge` (countEntities batch→HTTP) + filtro contagem alinhado |
+| **integrado** | PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) · CI tip `e94f39b2` SUCCESS |
+| **implantado** | **`d9a72802`** erp-dev · asset `index-okyVzZdT.js` · rollback `pre-spa-login-20261009-155123` · backup `pre-gate-e-20261009-155122.sql` |
+| **homologado** | asset PASS · login PASS · hub Clientes badge=5 · V24 badge=5 · rows=5 · API n=5 · badge_ok |
+| causa | batch `countEntities` caía no store local → badge 0 com API n>0 |
+| ops DB | clientes=6 · produtos=4 · empresas=3 · auxiliares OK · `fornecedores` tabela ausente |
+| registros “sumidos” | ops preservados; legado só em staging (authorized=0); Fornecedor=schema ausente |
+| **em staging** | #211 20456 · quarentena 4722 · sem contrato/crosswalk |
+| **importado** | **NÃO** |
+| legado | consumidor testes 15/15 (docker); ensaio PG isolado pendente Codex |
+| #254 | reservado Codex (switch empresa flaky nesta corrida) |
+| evidências | `deploy-258-count-badge-d9a72802-*` · `browser-258-count-badge-d9a72802-*` · `registros-sumidos-*` · `legado-211-ensaio-*` |
+
+## CURSOR — #258 ciclo edição Cliente PASS `02d59aa6` (2026-10-09T15:22Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `02d59aa6` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| **implantado** | **`02d59aa6`** erp-dev · `index-BD0zl8Pi.js` · CLIENTE_360=true · rollback `pre-spa-login-20261009-151957` |
+| **homologado** | Cadastros layout/busca PASS · lista n=5 PASS · **Cliente abrir→salvar→reabrir PASS (PATCH 200)** · Empresa PASS · Central360 PASS · Financeiro PASS |
+| causa | Salvar usava `data-permission=…salvar` (Acesso negado); PATCH enviava vendedor/crédito (400) |
+| **em staging** | #211 stage privado (authorized=0) |
+| **reconciliado** | consumidor lote staging testes PASS |
+| **importado** | **NÃO** |
+| #254 | reservado Codex |
+| ≠ | Codex sessão · Legado importação operacional |
+
+## CURSOR — #258 lista HTTP + edição CadFin + consumidor (2026-10-09T14:45Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `7418243f` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) |
+| **implantado** | **`7418243f`** erp-dev · `index-Bc213K00.js` · CLIENTE_360=true |
+| **homologado** | Cadastros layout/busca PASS · Clientes HTTP n=5 PASS · abrir edição preenchida PASS · Empresa ciclo PASS · Central360 PASS |
+| **em staging** | #211 stage privado com contagens (authorized=0) |
+| **reconciliado** | consumidor `consumir-lote-staging` (deps/rejeição/idempotência/auditoria) testes PASS |
+| **importado** | **NÃO** |
+| #254 | APROVAR COM RESSALVAS · reservado Codex · CONFLICTING STATUS |
+| ≠ | Codex sessão #254 · Legado ensaio isolado/importação |
+
+## CURSOR — homolog #254 + CadFin/360 + legado consumidor (2026-10-09T12:10Z)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `3575b4a4` · PR [#258](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/258) · CI **SUCCESS** |
+| **revisado #254** | APROVAR COM RESSALVAS `fd1778f6` (Cursor não edita arquivos reservados) |
+| **implantado** | tip erp-dev `baba91a6` (azul #257) — #254 ainda não mergeado |
+| **homologado** | login/CPA/contexto/Cadastros/edição/Financeiro PASS · API×DB ≠ lista vazia |
+| **importado** | **NÃO** — stage privado #211 com contagens; gate operacional pendente |
+| #211 | checksum conferido + CNPJs corrigidos (owner); não repetir pedidos |
+| stage | clientes 18458/4437 · forn 790/271 · prod 1208/14 · authorized=0 |
+| testes | edição+legado focados PASS · erp-runtime-ci frontend+backend SUCCESS |
+| ≠ | Codex edita sessão #254 · Legado ETL real |
+## CODEX — Cadastros preserva contexto após refresh HTTP atrasado (2026-10-09)
+
+- Evidência DEV: seletor exibiu Empresa operacional, mas bloco Pessoas/Fornecedores voltou a contexto inválido ao terminar carregamento; o zero visual não mede registros. Causa reproduzida em teste: refresh iniciado no Grupo persistia escopo antigo depois de selecionar Empresa; falha antiga também apagava a sessão nova.
+- `refreshErpHttpSessionFromServer` usa o escopo ainda ativo depois da resposta para escolher perfil/Empresa autorizados pelo servidor, sem regravar contexto obsoleto; falha de requisição antiga não limpa sessão já alterada. O hook `useContextoGrupoEmpresa` invalida carregamentos anteriores ao evento HTTP e `useContextoVisual` não sobrescreve a sessão HTTP com estado local de montagem. Sem aceitar ID fora da lista de Empresas do perfil nem permissões do storage como autoridade. Reutilizados `readErpHttpSession`, `resolveRefreshEmpresaId` e o evento HTTP existente; Cadastros/Visualizador/EmpresaSwitcher não ganharam estrutura paralela.
+- Testes: resposta atrasada Grupo→Empresa e Empresa A→B, falha atrasada e dois carregamentos concorrentes do hook real preservam a escolha; casos de Grupo, filial restrita, revogação e política multiempresa seguem verdes (42/42 focados). `audit:baseline`, lint, build SPA e diff-check do complemento passaram. Suíte raiz no Windows mantém falhas preexistentes em guards VPS Unix; typecheck raiz mantém erros anteriores fora do diff. Nenhum dado operacional, snapshot, migration ou VPS alterado. Próximo P0: CI, revisão independente do HEAD e homologação visual no ERP DEV com sessão legítima; não declarar contagem de Fornecedores a partir do estado inválido.
+
 ## CURSOR — padrão azul Comercial tip `7d068dbb` (2026-10-09T11:45Z)
 
 | Campo | Valor |
@@ -12298,3 +12794,46 @@ Checklist inicial:
 | Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
 | Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
 | Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
+## CODEX — #254 corridas residuais de sessão e cache HTTP (2026-10-10)
+
+- Objetivo: fechar as ressalvas do parecer Cursor sobre `fd1778f6` sem alterar layout, migração legada, banco operacional ou VPS. Causa: `UserContext` e `AuthContext` aceitavam conclusão antiga; o espelho local podia escrever escopo capturado antes de `await import`; o Visualizador podia reaproveitar linhas do tenant anterior por um render.
+- Reutilizados sessão HTTP/BFF, evento `HTTP_CONTEXT_CHANGED`, `useContextoGrupoEmpresa` e Visualizador V24. Mudanças: geração de carregamento em UserContext/AuthContext; 401/403 revogam apenas o Bearer ativo mesmo se mudou a Empresa; espelho verifica token/ator/Grupo/Empresa após a espera; cache/placeholder da grade só reaproveita linhas no mesmo escopo. O servidor continua autoridade de Grupo/Empresa e RBAC; nenhuma permissão ou auditoria foi afrouxada.
+- Testes focados HTTP: 30/30 PASS, incluindo falha antiga após novo usuário, 401 após troca de Empresa, 401 de token substituído e guarda do espelho. `audit:baseline`, lint e build PASS. Typecheck raiz falha em passivo global preexistente; diagnósticos novos das anotações do espelho foram corrigidos. Suíte raiz no Windows mantém falhas de scripts Bash/VPS anteriores; CI Linux será gate do SHA publicado. Próximo P0: integrar `origin/main` preservando ambos os históricos do STATUS, revisão independente do HEAD final e homologação DEV somente pelo gate operacional.
+- Reconciliada a base `origin/main` `baba91a6` nesta branch: conflito exclusivamente no topo do STATUS, resolvido preservando o checkpoint Codex e os três checkpoints Cursor; runtime do Visualizador mesclou automaticamente. Pós-integração: 49/49 testes focados (sessão, edição e padrão azul), `audit:baseline`, lint, build e `git diff --check` PASS. Ainda sem merge em `main`, sem deploy e sem homologação da #254; CI do novo HEAD e revisão independente permanecem gates.
+## CODEX — #254 login, 401 e troca CPA/3Z sem desmontar formulário (2026-10-10)
+
+- Parecer Cursor do SHA `860114ca`: storage e espelho fechados, mas login novo não emitia evento de invalidação; 401 do Bearer ativo podia deixar shell autenticado; revalidação de contexto acionava spinner global; formulário podia salvar antes do efeito de fechamento. Código anterior da #254 e layout azul preservados.
+- `loginErpHttpSession` invalida cargas antigas assim que persiste login aceito e rejeita tentativa substituída antes da persistência. `AuthContext` separa bootstrap de revalidação em background: troca CPA/3Z não liga `isLoadingAuth`, mas 401 do Bearer ativo desautentica a UI; logout invalida operações em voo. `VisualizadorUniversalEntidadeV24` compara escopo do formulário aberto com escopo renderizado e ativo antes de criar/editar/excluir, audita bloqueio e fecha ao mudar de tenant. Policy existente de Cadastros abriga a regra de save e placeholder por tenant; sem módulos novos, sem permissões relaxadas, sem dados reais.
+- Testes comportamentais: 53/53 focados PASS (login substituído/evento, 401 sem spinner, formulário A→B, grade CPA→3Z e visual azul). `audit:baseline`, lint, build e `git diff --check` PASS. `npm test` raiz no Windows continua falhando nos guards Bash/VPS preexistentes; typecheck global permanece com passivo amplo, sem alteração de baseline. Próximo P0: CI e revisão independente do HEAD publicado; merge/deploy/homologação somente pelos gates.
+## CODEX — #254 formulários autogeridos isolados na troca de Empresa (2026-10-10)
+
+- Objetivo/causa: Cliente, Fornecedor, Produto V22 e Representante persistiam por callbacks próprios, fora do guard do Visualizador; uma troca CPA→3Z durante edição ou resposta tardia podia gravar/exibir efeito no contexto seguinte.
+- Reuso: sessão HTTP ativa, `useContextoVisual`, mutações e política existente de Cadastros. Guard compartilhado congela Grupo/Empresa na abertura, confere render e sessão no clique e na mutação; callbacks de sucesso/erro antigos não fecham nem notificam a tela do novo tenant. RBAC e auditoria de persistência existentes permanecem; sem migração, importação ou dados reais.
+- Validação: teste focado de isolamento CPA→3Z e suíte de carga de Empresa 18/18; `audit:baseline`, lint, build e diff-check executados. Suíte raiz Windows mantém falhas preexistentes nos guards VPS Unix; typecheck raiz mantém passivo fora do diff. Próximo P0: CI e revisão independente do HEAD da #254, depois homologação visual com sessão legítima; não fazer merge/DEV sem gate.
+## CODEX — #254 parecer do primeiro paint parcial (2026-10-10)
+
+- Causa confirmada pelo Cursor em `f0844fa5`: `useContextoVisual` renderiza Grupo antes de Empresa; o guard fixava `empresaId:null` na abertura e bloqueava save legítimo ao completar a sessão CPA.
+- Correção: em HTTP o guard congela o escopo da sessão ativa, não o render parcial, e só libera quando tela e sessão convergem. Exclusão bloqueada antes da confirmação; resposta tardia do GET de Produto também não altera a tela 3Z. Write já enviado continua pertencendo ao escopo carimbado na request; callback tardio é descartado, sem promessa de cancelamento no servidor. Reutilizados sessão/guard/mutações existentes; nenhum dado real ou schema alterado.
+- Teste do hook real: primeiro paint parcial → render CPA válido → sessão 3Z rejeitada. Próximo P0: CI e revisão independente do novo HEAD; homologação visual autenticada segue gate para merge/deploy.
+## CODEX — #254 Produto HTTP espera carga completa (2026-10-10)
+
+- Parecer Cursor de `17b7c7aa`: GET descartado antes de a Empresa terminar de carregar não repetia; update posterior poderia limpar campos PIM presentes apenas no registro completo.
+- O GET agora só inicia com tela/sessão convergentes e repete ao resolver Grupo/Empresa. O update HTTP fica bloqueado até o GET devolver o mesmo ID; erro ou resposta de outro ID não liberam save. Resposta antiga de outro tenant continua descartada. Reutilizados `getHttpProdutoApi`, formulário V22 e policy HTTP já existentes; sem tocar no backend reservado ou banco operacional.
+- Teste da política cobre carga pendente, ID alheio, carga completa e create; teste de integração estática verifica o gate e dependências do efeito. Próximo: CI, parecer do HEAD e homologação visual autenticada antes de merge/deploy.
+## CODEX — #254 retentativa explícita do GET Produto (2026-10-10)
+
+- Parecer Cursor de `9ba6aefe`: falha HTTP mantinha update bloqueado sem ação de retry na mesma tela. O formulário agora expõe «Tentar carregar produto novamente» somente no escopo original; nova tentativa limpa o erro e mantém salvar desabilitado até GET completo do mesmo ID. Troca CPA→3Z não libera nem exibe retry do registro anterior. Sem retry ilimitado automático ou segundo cadastro.
+- Próximo P0: validar CI/parecer do novo HEAD e homologar visualmente com sessão legítima antes de qualquer merge/deploy.
+## CODEX — #254 teste comportamental de GET/retry e sessão original (2026-10-10)
+
+- Extraído o efeito de carga HTTP do Produto V22 para hook reutilizado pelo próprio formulário (arquivo grande >1400 linhas). Teste executa o hook real com falha GET, retry, carga completa, projeção do payload sem apagar PIM, reabertura e troca CPA→3Z durante retry. O guard dos quatro formulários próprios agora também congela Bearer e ator, impedindo resposta/login novo na mesma Empresa de reutilizar rascunho antigo. Teste de wiring confirma que Cliente, Fornecedor, Representante e Produto chamam o guard antes do write e descartam callbacks antigos.
+- Não altera o destino operacional nem cancela write já aceito pelo servidor; este conclui no escopo original da request. Testes focados 66/66, `audit:baseline`, lint, build e diff-check passaram; typecheck global mantém passivo anterior sem erro no hook novo. `#261` do Cursor permanece em branch própria; sua integração requer reconciliação isolada porque contém ancestralidade parcial da #254 e sobrepõe STATUS/arquivos de Cadastros. Próximo gate: CI do HEAD, parecer independente e ensaio de integração sem merge em main.
+## CODEX — ensaio integrado #254 final + #261 atual (2026-10-10)
+
+- Branch de ensaio isolada baseada na #261 `d3b1cc3c`, incorporando #254 `20a2c2fb`; sem editar branch Cursor, sem merge em main/VPS/importação. Resolução preserva padrão azul do Produto e classificação/hidratação de cadastro da #261, mais guard Bearer/ator e hook GET/retry testado da #254. Conflitos foram concentrados em STATUS, Produto, policy, Visualizador, Auth e testes.
+- O ensaio incorporou #261 `0d458ab9` (API×UI Clientes) e seu checkpoint documental `d31b9bbe`: 98/98 testes focados de sessão/Cadastros/Produto/HTTP/padrão azul, lint e build passaram. CI do merge e homologação visual autenticada seguem gates; este checkpoint é do conjunto de SHAs, não autorização de merge/deploy. Contrato Legado: Produto mestre compartilhado do Grupo exige regra explícita de visibilidade operacional antes de usar em itens de Orçamento/Pedido; não afrouxar migration 016/017 implicitamente.
+
+## CODEX — atualização do ensaio #264 com Cliente consolidado da #261 (2026-10-10)
+
+- Incorporado o novo HEAD Cursor `a004044b` em branch isolada, sem editar sua branch nem `main`. Conflito no guard resolvido preservando a convergência tela/sessão para Empresa ou Grupo consolidado e a trava por ator/Bearer; teste de Grupo consolidado somado aos cenários CPA→3Z e login novo. Fluxo Cliente inclui erro visível, sem engolir rejeição após mudança de contexto, e duplo clique de edição mantém RBAC/carga existente.
+- 27/27 testes focados de Cadastros/Produto, lint, build e diff-check PASS. CI e revisão independente são gates do novo SHA; não houve deploy, migração ou importação. Próximo P0: homologação visual autenticada e contrato explícito de Produto mestre de Grupo para itens de documento da empresa jurídica antes de integrar/migrar.

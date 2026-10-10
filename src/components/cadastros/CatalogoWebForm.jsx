@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Globe } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { syncFlagsCatalogoProduto } from "@/components/lib/siteOrigemPolicy";
 
 export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
@@ -53,6 +54,13 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-catalogo-web"
+      />
+
       <div>
         <Label>Nome do Catálogo *</Label>
         <Input

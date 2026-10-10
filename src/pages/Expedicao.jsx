@@ -176,6 +176,7 @@ export default function Expedicao() {
   const modules = [
     {
       title: 'Entregas',
+      sectionKey: 'entregas',
       description: 'Lista e gestão',
       icon: Truck,
       color: 'blue',
@@ -187,9 +188,10 @@ export default function Expedicao() {
     },
     {
       title: 'Separação',
+      sectionKey: 'entregas',
       description: 'Picking de pedidos',
       icon: Package,
-      color: 'purple',
+      color: 'blue',
       component: SeparacaoConferenciaIA,
       windowTitle: '📦 Separação IA',
       width: 1400,
@@ -197,9 +199,10 @@ export default function Expedicao() {
     },
     {
       title: 'Romaneios',
+      sectionKey: 'romaneios',
       description: 'Gestão de cargas',
       icon: FileText,
-      color: 'indigo',
+      color: 'blue',
       component: IntegracaoRomaneio,
       windowTitle: '📋 Romaneios',
       width: 1400,
@@ -208,9 +211,10 @@ export default function Expedicao() {
     },
     {
       title: 'Rotas e Mapa',
+      sectionKey: 'roteirizacao',
       description: 'Visualização cartográfica',
       icon: Map,
-      color: 'green',
+      color: 'blue',
       component: RoteirizacaoMapa,
       windowTitle: '🗺️ Rotas e Mapa',
       width: 1400,
@@ -219,9 +223,10 @@ export default function Expedicao() {
     },
     {
       title: 'Roteirização IA',
+      sectionKey: 'roteirizacao',
       description: 'Otimização automática',
       icon: Route,
-      color: 'purple',
+      color: 'blue',
       component: RoteirizacaoInteligente,
       windowTitle: '🤖 Roteirização IA',
       width: 1400,
@@ -229,9 +234,10 @@ export default function Expedicao() {
     },
     {
       title: 'Métricas Realtime',
+      sectionKey: 'entregas',
       description: 'Monitoramento ao vivo',
       icon: Activity,
-      color: 'green',
+      color: 'blue',
       component: PainelMetricasRealtime,
       windowTitle: '⚡ Métricas Tempo Real',
       width: 1200,
@@ -239,6 +245,7 @@ export default function Expedicao() {
     },
     {
       title: 'Dashboard IA',
+      sectionKey: 'entregas',
       description: 'Analytics inteligente',
       icon: BarChart3,
       color: 'blue',
@@ -249,9 +256,10 @@ export default function Expedicao() {
     },
     {
       title: 'Dashboard Entregas',
+      sectionKey: 'entregas',
       description: 'Visão geral realtime',
       icon: Activity,
-      color: 'cyan',
+      color: 'blue',
       component: DashboardEntregasRealtime,
       windowTitle: '📊 Dashboard Entregas',
       width: 1300,
@@ -260,9 +268,10 @@ export default function Expedicao() {
     },
     {
       title: 'Financeiro Logístico',
+      sectionKey: 'romaneios',
       description: 'CR/CP e conciliação',
       icon: BarChart3,
-      color: 'teal',
+      color: 'blue',
       component: LogisticaFinanceiroPanel,
       windowTitle: '💸 Financeiro Logístico',
       width: 1300,
@@ -271,9 +280,10 @@ export default function Expedicao() {
     },
     {
       title: 'Relatório Financeiro',
+      sectionKey: 'romaneios',
       description: 'KPIs, grupos e detalhamento',
       icon: BarChart3,
-      color: 'cyan',
+      color: 'blue',
       component: RelatorioFinanceiroLogistica,
       windowTitle: '📊 Relatório Financeiro Logístico',
       width: 1300,
@@ -281,9 +291,10 @@ export default function Expedicao() {
     },
     {
       title: 'Relatórios',
+      sectionKey: 'entregas',
       description: 'Análises e exportação',
       icon: FileText,
-      color: 'indigo',
+      color: 'blue',
       component: RelatoriosLogistica,
       windowTitle: '📄 Relatórios Logística',
       width: 1400,
@@ -292,9 +303,10 @@ export default function Expedicao() {
     },
     {
       title: 'Configurações',
+      sectionKey: 'transportadoras',
       description: 'Parâmetros e ajustes',
       icon: Settings,
-      color: 'purple',
+      color: 'blue',
       component: ConfiguracaoExpedicao,
       windowTitle: '⚙️ Configurações',
       width: 1200,
@@ -303,9 +315,10 @@ export default function Expedicao() {
     },
   {
     title: 'Painel Logístico',
+    sectionKey: 'roteirizacao',
     description: 'Mapa + filas em tempo real',
     icon: Activity,
-    color: 'teal',
+    color: 'blue',
     component: DashboardLogistico,
     windowTitle: '🗺️ Painel Logístico',
     width: 1400,
@@ -361,7 +374,12 @@ export default function Expedicao() {
       return;
     }
 
-    const canCreateEntrega = hasPermission('Expedição', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'incluir') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedicao', 'Entregas', 'incluir');
+    const canCreateEntrega = hasPermission('Expedição', 'entregas', 'criar')
+      || hasPermission('Expedição', 'Entregas', 'criar')
+      || hasPermission('Expedição', 'Entregas', 'incluir')
+      || hasPermission('Expedicao', 'entregas', 'criar')
+      || hasPermission('Expedicao', 'Entregas', 'criar')
+      || hasPermission('Expedicao', 'Entregas', 'incluir');
     if (!canCreateEntrega) {
       await auditExpedicaoAction('nova_entrega_bloqueada', { title: 'Nova Entrega' }, {
         sucesso: false,

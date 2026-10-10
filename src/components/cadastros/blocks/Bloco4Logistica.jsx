@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
@@ -95,16 +96,28 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" 
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   // Campos reais das entidades — getDisplayValue faz fallback automático se vazio
   const tiles = [
-    { k: 'Veiculo',         t: 'Veículos',                        i: Truck,    c: ['placa','modelo','tipo_veiculo','status'],     f: VeiculoForm },
-    { k: 'Motorista',       t: 'Motoristas',                      i: User,     c: ['nome','nome_completo','cpf','status'],         f: MotoristaForm },
-    { k: 'TipoFrete',       t: 'Tipos de Frete',                  i: Settings, c: ['nome','descricao','modalidade','cobra_frete'],f: TipoFreteForm },
-    { k: 'LocalEstoque',    t: 'Locais de Estoque',               i: Package,  c: ['nome','descricao','codigo'],                  f: LocalEstoqueForm },
-    { k: 'RotaPadrao',      t: 'Rotas Padrão',                    i: MapPin,   c: ['nome','nome_rota','origem','destino'],         f: RotaPadraoForm },
+    { k: 'Veiculo',         t: 'Veículos',                        i: Truck,    c: ['codigo','placa','modelo','tipo_veiculo','status'],     f: VeiculoForm },
+    { k: 'Motorista',       t: 'Motoristas',                      i: User,     c: ['codigo','nome','nome_completo','cpf','status'],         f: MotoristaForm },
+    { k: 'TipoFrete',       t: 'Tipos de Frete',                  i: Settings, c: ['codigo','nome','descricao','modalidade','cobra_frete'],f: TipoFreteForm },
+    { k: 'LocalEstoque',    t: 'Locais de Estoque',               i: Package,  c: ['codigo','nome','descricao'],                  f: LocalEstoqueForm },
+    { k: 'RotaPadrao',      t: 'Rotas Padrão',                    i: MapPin,   c: ['codigo','nome','nome_rota','origem','destino'],         f: RotaPadraoForm },
     { k: 'ModeloDocumento', t: 'Modelos de Documento Logístico',  i: FileText, c: ['nome','nome_modelo','tipo_documento','ativo'], f: ModeloDocumentoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
@@ -119,7 +132,14 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" 
       return;
     }
     registrarAuditoria("Motorista", "Visualizacao app motorista", true, { titulo: "App Motorista", visualizador: "AppEntregasMotorista", window_mode: true });
-    openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: AppEntregasMotorista,
+      entityName: "AppMotorista",
+      title: "App Motorista",
+      props: {},
+      width: 420,
+      height: 800,
+    });
   };
 
   useEffect(() => {
