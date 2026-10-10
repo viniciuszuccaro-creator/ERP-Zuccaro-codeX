@@ -208,11 +208,17 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
+      const operationParam=req.query.operacao;
+      if(operationParam!==undefined&&operationParam!=='true'&&operationParam!=='false')
+        throw new AppError(422,'VALIDATION_ERROR','operacao must be true or false');
+      const forOperation=operationParam==='true';
+      if(forOperation)res.setHeader('Cache-Control','no-store');
       const ativoParam = req.query.ativo;
       const ativo = ativoParam == null
         ? undefined
         : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
       const page = await service.list(ctxFromReq(req), {
+        forOperation,
         ativo,
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,

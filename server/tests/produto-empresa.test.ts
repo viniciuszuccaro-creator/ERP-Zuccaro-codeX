@@ -17,8 +17,13 @@ test('Produto mestre→Empresa: habilitação explícita, replay/CAS/audit rollb
     await assert.rejects(quotes.create(ctx,quoteData),/TENANT_FK_MISMATCH/);
     const lookup=(scope=ctx)=>f.data.withTransaction(tx=>f.repo.getForOperation(scope,ID.produtoA,tx));
     assert.equal(await lookup(),null);
+    const operational=(scope=ctx)=>f.data.withTransaction(tx=>f.repo.listPage({...scope,forOperation:true,codigo:undefined,search:'',limit:50},tx));
+    assert.equal((await operational()).rows.some(p=>p.id===ID.produtoA),false);
     const enabled=await f.service.habilitarEmpresa(ctx,ID.produtoA,{ativo:true,habilitado_operacao:true,expected_version:0});
     assert.equal(enabled.version,1);assert.equal((await lookup())?.id,ID.produtoA);
+    const available=await operational();assert.equal(available.rows.filter(p=>p.id===ID.produtoA).length,1);
+    assert.equal((await operational({...ctx,empresaId:ID.empresaA2})).rows.some(p=>p.id===ID.produtoA),false);
+    assert.equal((await f.repo.listPage(ctx)).rows.some(p=>p.id===ID.produtoA),false);
     const quote=await quotes.create(ctx,quoteData);
     const order=await orders.create(ctx,{...quoteData,orcamento_id:quote.id,tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',
       itens:quoteData.itens.map(i=>({...i,requer_producao:false}))},ctx.actorId);

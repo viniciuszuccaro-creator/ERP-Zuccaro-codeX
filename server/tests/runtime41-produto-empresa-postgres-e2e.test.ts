@@ -29,8 +29,15 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
     const data={cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,validade_em:'2027-01-31T00:00:00.000Z',
       itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,descricao:'Mestre sintÃ©tico',unidade_sigla:'KG',quantidade:'2.000000',preco_unitario:'999.000000',desconto:'0.000000'}]};
     await assert.rejects(app.orcamentoService.create(ctx,data),{code:'ORCAMENTO_PRODUTO_INVALIDO'});
+    assert.equal((await app.produtoService.list(ctx,{forOperation:true})).data.some(p=>p.id===ID.produtoA),false);
     const links=await Promise.all(Array.from({length:6},()=>f.service.habilitarEmpresa(ctx,ID.produtoA,{ativo:true,habilitado_operacao:true,expected_version:0})));
     assert.equal(new Set(links.map(r=>r.id)).size,1);assert.ok(links.every(r=>r.version===1));
+    const productCode=(await f.admin.query<{codigo:string}>('SELECT codigo FROM produtos WHERE id=$1',[ID.produtoA])).rows[0].codigo;
+    const operationalPage=await app.produtoService.list(ctx,{forOperation:true,codigo:productCode,limit:1});
+    assert.equal(operationalPage.meta.total,1);assert.equal(operationalPage.data[0].id,ID.produtoA);
+    assert.equal((await app.produtoService.list(ctx,{codigo:productCode})).data.length,0);
+    const afterPage=await app.produtoService.list(ctx,{forOperation:true,codigo:productCode,limit:1,offset:1});
+    assert.equal(afterPage.meta.total,1);assert.equal(afterPage.data.length,0);
     // An intermediate audit failure must roll back the complete sale, not only its audit.
     const counts=()=>f.admin.query<{quotes:number;items:number;audits:number}>(`SELECT
       (SELECT count(*)::int FROM orcamentos WHERE group_id=$1 AND empresa_id=$2) quotes,
@@ -53,6 +60,7 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
       assert.equal(role.rows[0].rolsuper,false);assert.equal(role.rows[0].rolbypassrls,false);
       assert.equal(await f.repo.getForOperation({...ctx,empresaId:ID.empresaA2},ID.produtoA,tx),null);
       assert.equal((await tx.query('SELECT id FROM produto_empresas')).rows.length,0);
+      assert.equal((await f.repo.listPage({...ctx,empresaId:ID.empresaA2,forOperation:true,codigo:productCode},tx)).total,0);
       assert.equal((await tx.query('UPDATE produto_empresas SET habilitado_operacao=false RETURNING id')).rows.length,0);
     });
     // Hold the real sale after reference/price validation, before its INSERT.
@@ -77,6 +85,7 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
       assert.equal((await sale).ok,true);assert.equal((await revoke).ok,true);
     }finally{release();scoped.withTransaction=originalSale;f.data.withTransaction=originalData;if(sale)await sale;if(revoke)await revoke;}
     await assert.rejects(app.orcamentoService.create(ctx,data),{code:'ORCAMENTO_PRODUTO_INVALIDO'});
+    assert.equal((await app.produtoService.list(ctx,{forOperation:true})).data.some(p=>p.id===ID.produtoA),false);
     await assert.rejects(app.pedidoService.create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
       tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',itens:data.itens.map(i=>({...i,requer_producao:false}))}),{code:'PEDIDO_PRODUTO_INVALIDO'});
     assert.ok(restrictedTransactions>0);
