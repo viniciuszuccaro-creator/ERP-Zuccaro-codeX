@@ -1411,7 +1411,7 @@ Caso contrário, sugira:
             </>
           )}
         </div>
-        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-action="salvar-produto" data-sensitive disabled={isSubmitting || !contextoValido || !isProdutoHttpEditReady(produtoHttp, produto?.id, produtoHttpReadyId) || (produto?.id ? !podeEditar : !podeCriar)} className="bg-blue-600 hover:bg-blue-700 px-8">
+        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-action="salvar-produto" data-sensitive disabled={isSubmitting || !contextoValido || !isFormScopeCurrent() || !isProdutoHttpEditReady(produtoHttp, produto?.id, produtoHttpReadyId) || (produto?.id ? !podeEditar : !podeCriar)} className="bg-blue-600 hover:bg-blue-700 px-8">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {!isSubmitting && <Save className="w-4 h-4 mr-2" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}

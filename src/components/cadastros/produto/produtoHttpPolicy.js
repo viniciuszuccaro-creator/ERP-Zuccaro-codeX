@@ -1,5 +1,6 @@
 // Projecao estrita do V22 legado para o Produto MASTER DATA; campos operacionais
 // continuam com seus modulos proprietarios e nunca entram no body do BFF.
+import { isCadastroEditLoadComplete } from '../cadastroEditLoadPolicy.js';
 const MASTER_FIELDS = [
   'descricao', 'material', 'liga', 'norma_tecnica', 'descricao_tecnica', 'descricao_comercial', 'titulo_seo',
   'descricao_seo', 'embalagem_tipo', 'multiplo_venda', 'quantidade_minima_venda',
@@ -21,6 +22,12 @@ const CLEARABLE_PIM_FIELDS = new Set([
   'material', 'liga', 'norma_tecnica', 'descricao_tecnica', 'descricao_comercial',
   'titulo_seo', 'descricao_seo', 'embalagem_tipo',
 ]);
+
+/** GET de edição deve incluir identidade e todos os campos que o V22 pode limpar no PATCH. */
+export function isProdutoHttpEditLoadComplete(row, expectedId) {
+  return isCadastroEditLoadComplete('Produto', row, expectedId)
+    && [...CLEARABLE_PIM_FIELDS].every((key) => Object.prototype.hasOwnProperty.call(row, key) && row[key] !== undefined);
+}
 
 export function validateProdutoPimQuantities(form) {
   const multiple = form.multiplo_venda;
