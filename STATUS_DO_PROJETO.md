@@ -1,3 +1,16 @@
+## CURSOR — policy CRM compartilhada para o pacote 040 (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| objetivo | Codex importa a mesma policy sem copiar regra e sem editar a UI |
+| fonte única | `server/src/domain/crmOportunidadePolicy.js` |
+| wrapper | `src/components/lib/crmOportunidadePolicy.js` só reexporta |
+| barrel server | `server/src/domain/index.ts` |
+| Docker | contexto continua `./server` (`docker build ./server` do compose, gate-f, canário e incidente). `COPY src` + build exigem `dist/domain/crmOportunidadePolicy.js` |
+| ownership | Cursor edita a policy e o wrapper. Codex importa; schema/repositório/RLS 040 seguem no workspace Codex. UI/store sem corte nem dual-write |
+| testes | `tests/crm-oportunidade-policy.test.js` (wrapper ≡ fonte). `server/tests/crm-oportunidade-policy-shared.test.ts`. server typecheck/build PASS. suite server 307 pass / 0 fail / 18 skip. typecheck raiz segue com erros anteriores fora deste diff |
+| próxima | Codex rebaseia este commit sobre `8dd52c78` e importa `../domain/crmOportunidadePolicy.js`. Sem migration 040 nesta branch |
+
 ## CURSOR — revisão Codex autônomo (ciclo timer) (2026-10-10)
 
 | Item | Estado |

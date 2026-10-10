@@ -1,3 +1,7 @@
+## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
+
+Fonte única: `server/src/domain/crmOportunidadePolicy.js`. O arquivo `src/components/lib/crmOportunidadePolicy.js` permanece wrapper. A API empacota essa fonte porque o contexto Docker continua `server/` (`COPY src` → `dist/domain`). Não alargar o contexto para a raiz: `docker build ./server` é o contrato do compose, do gate-f, do canário e do incidente. Codex importa o módulo; não edita a policy nem a UI. Schema, repositório e RLS da 040 seguem no workspace Codex, sem corte do store e sem dual-write.
+
 ## REVISÃO CODEX AUTÔNOMO (2026-10-10)
 
 Cursor monitora agentes/PRs Codex sem re-portar #254/#264.

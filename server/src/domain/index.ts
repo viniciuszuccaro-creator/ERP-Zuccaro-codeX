@@ -1,7 +1,3 @@
-/**
- * Wrapper compatível. A regra mora em `server/src/domain/crmOportunidadePolicy.js`.
- * Não acrescentar comportamento aqui.
- */
 export {
   CRM_ENTITIES,
   CRM_ETAPAS,
@@ -21,4 +17,4 @@ export {
   buildDocumentoFromOportunidade,
   stampOportunidadeConvertida,
   applyCrmCreate,
-} from '../../../server/src/domain/crmOportunidadePolicy.js';
+} from './crmOportunidadePolicy.js';
