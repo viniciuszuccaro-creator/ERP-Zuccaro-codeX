@@ -26,6 +26,16 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
   try{
     const preflight=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
     assert.equal(preflight.ready,true);assert.deepEqual(preflight.blocked,[]);
+    const inspectAcl=()=>f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
+    await f.exec('GRANT SELECT(codigo),UPDATE(status) ON oportunidades TO PUBLIC');
+    assert.ok((await inspectAcl()).blocked.includes('noPublicDml'));
+    await f.exec('REVOKE SELECT(codigo),UPDATE(status) ON oportunidades FROM PUBLIC');
+    const recreatePolicy=(mode:'PERMISSIVE'|'RESTRICTIVE')=>f.exec(`DROP POLICY oportunidades_tenant_scope ON oportunidades;
+      CREATE POLICY oportunidades_tenant_scope ON oportunidades AS ${mode} FOR ALL
+      USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)
+      WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)`);
+    await recreatePolicy('RESTRICTIVE');assert.ok((await inspectAcl()).blocked.includes('policy'));
+    await recreatePolicy('PERMISSIVE');assert.equal((await inspectAcl()).ready,true);
     await f.exec(`DROP TRIGGER trg_oportunidades_codigo ON oportunidades;
       CREATE TRIGGER trg_oportunidades_codigo AFTER UPDATE ON oportunidades
       FOR EACH ROW EXECUTE PROCEDURE sync_oportunidade_codigo();`);
