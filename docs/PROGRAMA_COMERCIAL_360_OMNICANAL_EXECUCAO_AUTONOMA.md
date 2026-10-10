@@ -1007,3 +1007,27 @@ Novos requisitos não devem ser perdidos em chats. Sempre que surgir melhoria:
 6. testar e registrar o resultado.
 
 Este documento é vivo, mas suas alterações também obedecem à Regra-Mãe, revisão e versionamento.
+
+
+## CODEX — pacote CRM HTTP 040 (2026-10-10)
+
+Workspace/branch próprios `comercial360-crm-http-20261010` / `codex/crm-http-canonico-20261010`.
+Base c125c4db, descendente da candidata Cursor #261; main conferida baba91a6 ainda sem #261.
+Numeração/ownership 040 reservados em6100290423; policy única extraída pelo Cursor em c125c4db,
+importada do domínio server e reexportada pelo wrapper frontend. UI/store/C360 permanecem intactos.
+Implementado: Oportunidade HTTP create/get/list/patch/inativar/restaurar, busca por ID legado,
+vínculo de Orçamento existente (sem documento paralelo), códigos via reserveEntityCodigo,
+idempotência, CAS/versionamento, histórico e auditoria no executor compartilhado.
+Campos existentes preservados: descrição, responsável textual (não identidade de autorização),
+previsão, próxima ação, interesse em produtos e orçamento informado pelo cliente. PATCH omitido/
+undefined não limpa campos; null explícito limpa somente campo autorizado. Decimais como strings.
+IDs legados e referências de Interacao/documentos não viram UUID fictício; legacy_store_id TEXT
+é único por Grupo/Empresa. Sem backfill/importação/dual-write ou corte automático.
+040: RLS/FORCE company-scoped, FKs compostas, sem grants PUBLIC. Grants das provas são fixtures,
+não homologação DEV. ENABLE_CRM_HTTP=false por padrão; habilitação/corte exigem revisão, CI,
+migration/grants/runtime homologados, backup/reconciliação/rollback e mapa de IDs/códigos.
+10 testes locais focados PASS (inclui PGlite com papel NOSUPERUSER/NOBYPASSRLS).
+Suite PostgreSQL real adicionada ao runner obrigatório com gate de banco isolado, sem skip flag;
+prova concorrência/retry/CAS/rollback de auditoria/RLS e Cliente→Orçamento server-priced→CRM.
+Migrations aplicadas/025–037/026 e branches Cursor não alterados. Nenhum deploy/VPS/canal neste lote.
+Revisão do HEAD final e CI ainda requeridas. Não declarar CRM/onda implantados por esta preparação.

@@ -13,6 +13,8 @@ import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
+import type { OportunidadeService } from '../services/oportunidadeService.js';
+import { mountOportunidadeRoutes } from './oportunidadeRoutes.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
@@ -43,6 +45,7 @@ export type ApiDeps = {
   condicaoPagamentoService: CondicaoPagamentoService;
   orcamentoService: OrcamentoService;
   pedidoService: PedidoService;
+  oportunidadeService?: OportunidadeService | null;
 };
 
 function ctxFromReq(req: Request) {
@@ -1367,6 +1370,8 @@ export function createApiRouter(deps: ApiDeps) {
         idempotentConversion: true,
         statusHistory: true,
       },
+      oportunidade: {backendHttp:deps.config.crmHttpEnabled===true,frontendHttp:false,
+        migration:'040_crm_oportunidades.sql',legacyAutomaticImport:false,dualWrite:false},
     });
   });
 
@@ -1382,6 +1387,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
   mountOrcamentoRoutes(router, deps.orcamentoService);
   mountPedidoRoutes(router, deps.pedidoService);
+  mountOportunidadeRoutes(router,deps.oportunidadeService,ctxFromReq);
 
   return router;
 }

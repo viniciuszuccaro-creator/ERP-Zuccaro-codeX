@@ -1163,3 +1163,27 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 - A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
 - Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
 - Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).
+
+
+## CODEX — pacote CRM HTTP 040 (2026-10-10)
+
+Workspace/branch próprios `comercial360-crm-http-20261010` / `codex/crm-http-canonico-20261010`.
+Base c125c4db, descendente da candidata Cursor #261; main conferida baba91a6 ainda sem #261.
+Numeração/ownership 040 reservados em6100290423; policy única extraída pelo Cursor em c125c4db,
+importada do domínio server e reexportada pelo wrapper frontend. UI/store/C360 permanecem intactos.
+Implementado: Oportunidade HTTP create/get/list/patch/inativar/restaurar, busca por ID legado,
+vínculo de Orçamento existente (sem documento paralelo), códigos via reserveEntityCodigo,
+idempotência, CAS/versionamento, histórico e auditoria no executor compartilhado.
+Campos existentes preservados: descrição, responsável textual (não identidade de autorização),
+previsão, próxima ação, interesse em produtos e orçamento informado pelo cliente. PATCH omitido/
+undefined não limpa campos; null explícito limpa somente campo autorizado. Decimais como strings.
+IDs legados e referências de Interacao/documentos não viram UUID fictício; legacy_store_id TEXT
+é único por Grupo/Empresa. Sem backfill/importação/dual-write ou corte automático.
+040: RLS/FORCE company-scoped, FKs compostas, sem grants PUBLIC. Grants das provas são fixtures,
+não homologação DEV. ENABLE_CRM_HTTP=false por padrão; habilitação/corte exigem revisão, CI,
+migration/grants/runtime homologados, backup/reconciliação/rollback e mapa de IDs/códigos.
+10 testes locais focados PASS (inclui PGlite com papel NOSUPERUSER/NOBYPASSRLS).
+Suite PostgreSQL real adicionada ao runner obrigatório com gate de banco isolado, sem skip flag;
+prova concorrência/retry/CAS/rollback de auditoria/RLS e Cliente→Orçamento server-priced→CRM.
+Migrations aplicadas/025–037/026 e branches Cursor não alterados. Nenhum deploy/VPS/canal neste lote.
+Revisão do HEAD final e CI ainda requeridas. Não declarar CRM/onda implantados por esta preparação.
