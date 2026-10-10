@@ -237,7 +237,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   const FormContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
+        hasId={Boolean(dadosIniciaisProps?.id || regiaoId)}
         value={formData.codigo}
         action="codigo-registro-regiao-atendimento"
       />
