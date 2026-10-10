@@ -25,7 +25,8 @@ test('consumidor staging separa comprovados, quarentena, reuso e rejeicao', () =
     },
     {
       cod_cliente: 'C-1',
-      razao_social: 'Ok dup',
+      razao_social: 'Ok Sintetico',
+      cnpj: '00000000000191',
       group_id: 'g1',
       empresa_id: 'e1',
       codigo_empresa: '1',
@@ -45,6 +46,8 @@ test('consumidor staging separa comprovados, quarentena, reuso e rejeicao', () =
   assert.equal(out.destino_migracao, 'staging');
   assert.equal(out.contrato_entrada, true);
   assert.equal(out.comprovados.length, 1);
+  assert.equal(out.comprovados[0].scopeType, 'group');
+  assert.equal(out.comprovados[0].empresa_id, undefined);
   assert.equal(out.reusos.length, 1);
   assert.equal(out.quarentena.length, 1);
   assert.equal(out.auditoria.length >= 2, true);
@@ -100,6 +103,7 @@ test('validarDependencias e auditoria sanitizada', () => {
     crosswalkEmpresas: CONTRATO_SINTETICO.crosswalkEmpresas,
     chavesEmpresa: new Set(['1', '2', '3', '5']),
     requireContratoEntrada: true,
+    contratoEntradaPresente: true,
   });
   assert.equal(ok.ok, true);
 
@@ -114,4 +118,48 @@ test('validarDependencias e auditoria sanitizada', () => {
   assert.equal(audit.codigo_legado, 'C-1');
   assert.equal('documento' in audit, false);
   assert.equal('senha' in audit, false);
+});
+
+test('mestres de Grupo dispensam empresa exclusiva, mas operacao sem empresa falha', () => {
+  const master = consumirLoteStagingLegado([{
+    cod_cliente: 'C-G', nome: 'Cliente Grupo', group_id: 'g1', codigo_empresa: '1',
+  }], { entidade: 'cliente', contratoEntrada: { coorte: 'piloto-sintetico' } });
+  assert.equal(master.comprovados.length, 1);
+  assert.equal(master.comprovados[0].chave_idempotente_migracao, 'g1|grupo|erp_antigo|cliente|C-G');
+
+  const operation = validarDependenciasLegado({
+    entidade_migracao: 'obra', codigo_legado: 'O-1', group_id: 'g1', scopeType: 'empresa',
+  }, { contratoEntradaPresente: true, requireContratoEntrada: true });
+  assert.equal(operation.ok, false);
+  assert.ok(operation.rejeicoes.includes('empresa_destino_obrigatoria'));
+});
+
+test('produto tipado conserva classe/unidade e retry; conflito sem sobrescrita', () => {
+  const rows = [
+    { sku: 'P-1', descricao: 'Chapa', classe: 'CHAPA', unidade: 'KG', group_id: 'g1', codigo_empresa: '1' },
+    { sku: 'P-1', descricao: 'Chapa', classe: 'CHAPA', unidade: 'KG', group_id: 'g1', codigo_empresa: '2' },
+    { sku: 'P-1', descricao: 'Tubo', classe: 'TUBO', unidade: 'M', group_id: 'g1', codigo_empresa: '2' },
+  ];
+  const opts = { entidade: 'produto', contratoEntrada: { coorte: 'piloto-sintetico' },
+    produtoClassUnitMap: { 'CHAPA|KG': { tipo_produto: 'MATERIA_PRIMA', unidade_medida_id: 'u-kg' },
+      'TUBO|M': { tipo_produto: 'MATERIA_PRIMA', unidade_medida_id: 'u-m' } } };
+  const { primeiro, segundo } = consumirLoteStagingIdempotente(rows, opts);
+  assert.equal(primeiro.comprovados.length, 1);
+  assert.equal(primeiro.reusos.length, 1);
+  assert.equal(primeiro.rejeicoes.length, 1);
+  assert.equal(segundo.comprovados.length, 0);
+  assert.equal(segundo.rejeicoes.length, 1);
+  assert.equal(primeiro.comprovados[0].unidade_medida_id, 'u-kg');
+});
+
+test('retry com mesma chave e conteúdo diferente não reutiliza venda/cadastro', () => {
+  const rows = [{ cod_cliente: 'C-1', nome: 'Alterado', group_id: 'g1' }];
+  const out = consumirLoteStagingLegado(rows, {
+    entidade: 'cliente', contratoEntrada: { coorte: 'sintetico' },
+    chavesJaGravadas: [{ chave: 'g1|grupo|erp_antigo|cliente|C-1', fingerprint: 'a'.repeat(64) }],
+  });
+  assert.equal(out.comprovados.length, 0);
+  assert.equal(out.reusos.length, 0);
+  assert.equal(out.quarentena.length, 1);
+  assert.ok(out.quarentena[0].motivos.includes('reuso_sem_fingerprint_igual'));
 });

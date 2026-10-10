@@ -29,18 +29,28 @@ test('mapear legado sintetico cliente carimba staging e remove segredo', () => {
   assert.equal('senha' in out, false);
   assert.equal('password' in out, false);
   assert.match(String(out.lote_migracao), /^MIG-/);
-  assert.equal(out.chave_idempotente_migracao, 'g1|e1|erp_antigo|cliente|LEG-9');
+  assert.equal(out.scopeType, 'group');
+  assert.equal(out.empresa_id, undefined);
+  assert.equal(out.codigo_empresa_legado, '1');
+  assert.equal(out.chave_idempotente_migracao, 'g1|grupo|erp_antigo|cliente|LEG-9');
 });
 
 test('mapear legado sintetico produto usa descricao', () => {
   const out = mapLegadoRowToCanonicalStub({
     sku: 'SKU-1',
     produto: 'Chapa sintetica',
+    classe: 'CHAPA',
+    unidade: 'KG',
     group_id: 'g1',
     empresa_id: 'e1',
-  }, { entidade: 'produto', arquivoNome: 'prod.csv' });
+  }, { entidade: 'produto', arquivoNome: 'prod.csv', produtoClassUnitMap: {
+    'CHAPA|KG': { tipo_produto: 'MATERIA_PRIMA', unidade_medida_id: 'u-kg' },
+  } });
   assert.equal(out.codigo_legado, 'SKU-1');
   assert.equal(out.descricao, 'Chapa sintetica');
+  assert.equal(out.tipo_produto, 'MATERIA_PRIMA');
+  assert.equal(out.unidade_medida_id, 'u-kg');
+  assert.equal(out.empresa_id, undefined);
   assert.match(out.chave_idempotente_migracao, /\|produto\|SKU-1$/);
 });
 
@@ -56,7 +66,8 @@ test('mapear legado sintetico fornecedor (consumidor sem mapper paralelo)', () =
     },
     {
       cod_fornecedor: 'F-10',
-      razao_social: 'Fornecedor Sintetico dup',
+      razao_social: 'Fornecedor Sintetico',
+      cnpj: '00000000000191',
       group_id: 'g1',
       empresa_id: 'e1',
       codigo_empresa: '2',
@@ -157,7 +168,7 @@ test('chave idempotente exige group e legado', () => {
 test('lote sintetico detecta duplicata, quarentena e reconcilia', () => {
   const lote = mapLegadoLoteSintetico([
     { cod_cliente: 'A1', nome: 'Um', group_id: 'g1', empresa_id: 'e1', valor: 10, codigo_empresa: '1' },
-    { cod_cliente: 'A1', nome: 'Um dup', group_id: 'g1', empresa_id: 'e1', valor: 10, codigo_empresa: '1' },
+    { cod_cliente: 'A1', nome: 'Um', group_id: 'g1', empresa_id: 'e1', valor: 10, codigo_empresa: '1' },
     { cod_cliente: 'A2', nome: 'Dois', group_id: 'g1', empresa_id: 'e1', valor: 5, codigo_empresa: '1' },
     { cod_cliente: 'A0', nome: 'Zero', group_id: 'g1', empresa_id: 'e1', valor: 1, codigo_empresa: '0' },
   ], { entidade: 'cliente', arquivoNome: 'lote.csv' });
@@ -176,4 +187,26 @@ test('lote sintetico detecta duplicata, quarentena e reconcilia', () => {
 
 test('lote sintetico vazio falha', () => {
   assert.throws(() => mapLegadoLoteSintetico([]));
+});
+
+test('cadastro compartilhado reusa entre empresas, mas divergencia vira conflito', () => {
+  const out = mapLegadoLoteSintetico([
+    { cod_cliente: 'C-1', nome: 'Mesmo', group_id: 'g1', codigo_empresa: '1' },
+    { cod_cliente: 'C-1', nome: 'Mesmo', group_id: 'g1', codigo_empresa: '2' },
+    { cod_cliente: 'C-1', nome: 'Outro', group_id: 'g1', codigo_empresa: '2' },
+  ], { entidade: 'cliente' });
+  assert.equal(out.gravados.length, 1);
+  assert.equal(out.reusos.length, 1);
+  assert.equal(out.conflitos.length, 1);
+  assert.equal(out.gravados[0].empresa_id, undefined);
+  assert.deepEqual(out.gravados[0].origens_empresa_legado, ['1', '2']);
+});
+
+test('produto sem classe/unidade comprovada fica em quarentena', () => {
+  const out = mapLegadoRowToCanonicalStub({
+    sku: 'P-1', descricao: 'Item', group_id: 'g1', classe: 'X', unidade: 'CX',
+  }, { entidade: 'produto' });
+  assert.equal(out.quarentena, true);
+  assert.ok(out.quarentena_motivos.includes('produto_classe_unidade_sem_mapeamento'));
+  assert.equal(out.tipo_produto, undefined);
 });

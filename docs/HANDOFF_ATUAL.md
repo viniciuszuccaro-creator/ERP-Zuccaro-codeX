@@ -57,6 +57,21 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 - #261 **não** incorporada em `main` (só #264→#261).
 - Legado staging→ops: **não importado**.
 - CI do tip ≠ prova de merge em `main`.
+## CODEX LEGADO — ownership e gate de origem (2026-10-10)
+
+| Frente | Arquivos / responsável | Estado |
+|---|---|---|
+| Comercial 360 | Tarefa própria em outra conta/chat; nenhum arquivo Comercial editado neste checkout | Encaminhamento direto ainda sem ID acessível; não criar tarefa duplicada |
+| Cursor #261/#264 | Branches Cursor intocadas; `861513cd` é descendente da main `baba91a6`, não integrado à main | Integração anterior preservada como base deste checkout Codex |
+| Codex Legado | `scripts/legado/mapear-registro-sintetico.mjs`, `consumir-lote-staging.mjs`, testes e documentação de mapeamento | Branch Codex isolada; mestres de Grupo, classificação Produto, conflito/idempotência |
+| Cursor Legado #211 | Verificador, proveniência, vínculo jurídico e staging isolado | Reutilizar na etapa real; não copiar mapper nem editar branch Cursor |
+
+O HD foi detectado no host, mas a leitura de `04_REPORTS` foi negada pelo
+sistema de arquivos. Nenhuma leitura de conteúdo, carga real, importação
+operacional, migration ou alteração do backup ocorreu. `importAuthorized=false`.
+Próximo gate: acesso somente leitura à pasta dos relatórios, procedência
+verificada, destino isolado identificado e backup recuperável antes do piloto
+real; evidência pública somente agregada e sanitizada.
 
 ## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
 

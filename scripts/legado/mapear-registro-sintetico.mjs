@@ -1,11 +1,11 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
  * Não lê HD real. Não grava staging. Reutiliza migracaoErpPolicy (Regra-Mãe).
  */
 import {
   buildReconciliacaoMigracao,
-  findRegistroMigracaoDuplicado,
   MIGRACAO_DESTINO_STAGING,
   MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
   stampMigracaoRecord,
@@ -27,6 +27,8 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
   produto: {
     codigo: ['codigo', 'cod_produto', 'sku', 'codigo_legado'],
     descricao: ['descricao', 'nome', 'produto'],
+    classe: ['classe', 'classe_produto', 'tipo_produto'],
+    unidade: ['unidade', 'unidade_medida', 'um'],
   },
   empresa: {
     codigo: ['codigo', 'cod_empresa', 'codigo_empresa', 'codigoempresa', 'codigo_legado'],
@@ -42,6 +44,8 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     nome: ['nome', 'descricao', 'condicao', 'titulo'],
   },
 });
+
+export const LEGADO_MESTRES_COMPARTILHADOS = Object.freeze(['cliente', 'fornecedor', 'produto']);
 
 /** Códigos empresariais legados válidos conhecidos (Gate 18); `0` = quarentena. */
 export const LEGADO_EMPRESA_CODIGOS_VALIDOS = Object.freeze(['1', '2', '3', '4', '5']);
@@ -173,10 +177,23 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const empresaLegado = codigoEmpresaLegado
     ? resolverEmpresaLegadoCodigo(codigoEmpresaLegado)
     : null;
+  const compartilhado = LEGADO_MESTRES_COMPARTILHADOS.includes(entidade);
+  const classeLegado = entidade === 'produto' ? String(pickAlias(row, aliases.classe)).trim() : '';
+  const unidadeLegado = entidade === 'produto' ? String(pickAlias(row, aliases.unidade)).trim() : '';
+  const chaveClasseUnidade = `${classeLegado}|${unidadeLegado}`;
+  const classificacao = entidade === 'produto'
+    ? opts.produtoClassUnitMap?.[chaveClasseUnidade]
+    : null;
+  const motivos = [...q.motivos];
+  if (entidade === 'produto' && (!classeLegado || !unidadeLegado || !classificacao?.tipo_produto || !classificacao?.unidade_medida_id)) {
+    motivos.push('produto_classe_unidade_sem_mapeamento');
+  }
 
   const base = stripSegredosMigracao({
     group_id: first(opts.groupId, row.group_id, row.grupo_id),
-    empresa_id: first(opts.empresaId, row.empresa_id),
+    // Cadastros mestres pertencem ao Grupo. A empresa legada e somente procedencia.
+    empresa_id: compartilhado ? undefined : first(opts.empresaId, row.empresa_id),
+    scopeType: compartilhado ? 'group' : 'empresa',
     codigo_legado: codigo,
     id_antigo: codigo,
     ...(empresaLegado
@@ -187,14 +204,21 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
       }
       : {}),
     ...(entidade === 'produto'
-      ? { descricao: nomeOuDesc }
+      ? {
+        descricao: nomeOuDesc,
+        classe_legado: classeLegado || undefined,
+        unidade_legado: unidadeLegado || undefined,
+        ...(classificacao?.tipo_produto && classificacao?.unidade_medida_id
+          ? { tipo_produto: classificacao.tipo_produto, unidade_medida_id: classificacao.unidade_medida_id }
+          : {}),
+      }
       : { nome: nomeOuDesc, ...(documento ? { documento } : {}) }),
     origem: 'erp_antigo',
-    ...(q.quarentena
+    ...(motivos.length
       ? {
         status_migracao: MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
         requer_conciliacao_manual: true,
-        quarentena_motivos: q.motivos,
+        quarentena_motivos: motivos,
       }
       : {}),
   });
@@ -206,11 +230,21 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     destino: MIGRACAO_DESTINO_STAGING,
   });
 
+  const fingerprint = createHash('sha256').update(JSON.stringify([
+    entidade, first(stamped.group_id), first(stamped.empresa_id),
+    first(stamped.codigo_legado), first(stamped.nome).toLowerCase(),
+    first(stamped.descricao).toLowerCase(), first(stamped.documento),
+    first(stamped.classe_legado).toLowerCase(), first(stamped.unidade_legado).toLowerCase(),
+    first(stamped.tipo_produto), first(stamped.unidade_medida_id),
+  ])).digest('hex');
+
   return {
     ...stamped,
     entidade_migracao: entidade,
-    quarentena: q.quarentena,
-    quarentena_motivos: q.motivos,
+    fingerprint_migracao: fingerprint,
+    origens_empresa_legado: empresaLegado?.codigo ? [empresaLegado.codigo] : [],
+    quarentena: motivos.length > 0,
+    quarentena_motivos: motivos,
     chave_idempotente_migracao: buildChaveIdempotenteMigracaoLegado(stamped, { entidade }),
   };
 };
@@ -229,20 +263,32 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
 
   const mapped = [];
   const reusos = [];
+  const conflitos = [];
   const erros = [];
   const quarentenas = [];
 
   for (let i = 0; i < list.length; i += 1) {
     try {
       const out = mapLegadoRowToCanonicalStub(list[i], opts);
-      const dup = findRegistroMigracaoDuplicado(out, mapped);
+      const dup = mapped.find((item) => item.chave_idempotente_migracao === out.chave_idempotente_migracao);
       if (dup) {
+        const same = dup.fingerprint_migracao === out.fingerprint_migracao;
+        if (!same) {
+          conflitos.push({ indice: i, codigo_legado: out.codigo_legado,
+            chave_idempotente_migracao: out.chave_idempotente_migracao,
+            motivo: 'mestre_compartilhado_divergente' });
+          continue;
+        }
         reusos.push({
           indice: i,
           codigo_legado: out.codigo_legado,
           chave_idempotente_migracao: out.chave_idempotente_migracao,
           reuso_de: dup.chave_idempotente_migracao,
         });
+        if (out.codigo_empresa_legado && !dup.origens_empresa_legado.includes(out.codigo_empresa_legado)) {
+          dup.origens_empresa_legado.push(out.codigo_empresa_legado);
+          dup.origens_empresa_legado.sort();
+        }
         continue;
       }
       if (out.quarentena) {
@@ -272,6 +318,7 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
     importacao_erp: true,
     gravados: mapped,
     reusos,
+    conflitos,
     erros,
     quarentenas,
     reconciliacao,

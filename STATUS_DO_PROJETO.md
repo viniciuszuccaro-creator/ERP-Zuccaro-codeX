@@ -79,6 +79,16 @@
 | evidências | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
 | próxima | supersedido pelo lote ID técnico acima após CI/redeploy |
+## CODEX LEGADO — contrato de cadastros compartilhados (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| Base | `main` GitHub `baba91a6`; #264 mesclada em `861513cd` na branch Cursor, que descende da main por 80 commits; branch Codex isolada criada de `861513cd` |
+| Implementado | Mapeador/consumidor de staging existentes preservam mestres Cliente/Fornecedor/Produto no Grupo sem `empresa_id` imposto; operação mantém empresa obrigatória; Produto requer classe/unidade mapeadas; duplicata divergente vira conflito |
+| Testes | 20 focados PASS; audit:baseline, lint e build PASS. Suíte geral Windows 824 PASS/54 FAIL/0 SKIP: falhas em wrappers Bash/MSYS (erro de permissão `NtCreateDirectoryObject`); typecheck global 1658 erros fora dos scripts alterados. CI Linux do HEAD final pendente |
+| Recuperado/importado | NÃO. HD detectado, mas leitura de `04_REPORTS` negada pelo sistema de arquivos; nenhum dado real copiado, carregado ou publicado |
+| Gate | Reutilizar verificador/staging da #211 após acesso somente leitura, procedência e destino/backup validados. `importAuthorized=false`; nenhuma promoção operacional |
+| Próximo | Concluir checks, commit/push/PR desta branch; revisão independente; depois ensaio real isolado por entidades com reconciliação e reversão |
 
 ## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
 
