@@ -111,9 +111,12 @@ Fail-closed preservado (gate por seção).
 - Usuário restrito: **BLOCKED** (`homolog-usuario-restrito-blocked-20261010.txt`).
 - Evidência: `deploy-261-tip-6e397596-id-tecnico-20261010.txt`.
 
-### Décima quinta ação — Fornecedor/Representante codigo+ID
-- `CadastroFornecedorCompleto` + `RepresentanteFormCompleto` usam `CadastroCodigoRegistroField` (codigo ≠ ID).
-- Redeploy pendente após CI do tip.
+### Décima quinta ação — tip `f22d1151` Fornecedor/Representante implantado
+- `CadastroFornecedorCompleto` + `RepresentanteFormCompleto` com `CadastroCodigoRegistroField`.
+- **Implantado** **`f22d1151`** · `index-KP6RdCBA.js` · backup `pre-gate-e-20261010-144428.sql` · rollback `pre-spa-login-20261010-144429`.
+- **Homologado** login tipado fail_count=0 neste SHA.
+- Evidência: `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt`.
+- Residual: secret usuário restrito · merge owner · Legado #211.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).

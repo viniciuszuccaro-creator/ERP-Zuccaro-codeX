@@ -1,0 +1,19 @@
+# Evidência sanitizada — tip f22d1151 implantado (Fornecedor/Representante codigo+ID)
+# utc=2026-10-10T14:45Z
+#
+# tip=f22d1151 docs: tip 6e397596 implantado e lote Fornecedor/Representante
+# codigo=93fe9c94 feat Fornecedor/Representante CadastroCodigoRegistroField
+# asset=index-KP6RdCBA.js
+# backup=pre-gate-e-20261010-144428.sql sha256=a838fa1860ba53e3d90eb7f8590c9d513dd769384b909a061341ed51db66c7a6
+# rollback=pre-spa-login-20261010-144429
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip f22d1151: erp-runtime-ci SUCCESS (4)
+# Bundle: codigo-registro-fornecedor-completo · codigo-registro-representante-completo · id-tecnico- · isSelfManagedCadastro
+#
+# Homolog tipado (este SHA) fail_count=0:
+#   login · Clientes V24 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads PASS
+#
+# Usuário restrito: BLOCKED (sem secret tipado)
+# Recuperado legado: NÃO (#211) · SYNTH≠recuperado
+# screenshots: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-f22d1151.png

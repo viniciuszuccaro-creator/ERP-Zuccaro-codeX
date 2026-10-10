@@ -1,16 +1,25 @@
-## CURSOR — #261 tip `6e397596` implantado (ID técnico) + Fornecedor/Representante (2026-10-10)
+## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 
 | Pacote | SHA / estado |
 |---|---|
-| **PR HEAD** | tip branch (Fornecedor/Representante codigo/ID no tip) |
-| **SHA implantado** | erp-dev **`6e397596`** · `index-BE23NqEC.js` · backup `pre-gate-e-20261010-143842.sql` · rollback `pre-spa-login-20261010-143842` |
-| **implementado** | MASTER_CODE+Cliente+Produto ID · FornecedorCompleto+RepresentanteCompleto codigo/ID · C360 fontes canônicas |
-| CI tip `6e397596` | erp-runtime-ci **SUCCESS** |
-| **homologado** (implantado) | login tipado fail_count=0 · Clientes V24 abrir/salvar/reabrir · launchpads |
-| usuário restrito | **BLOCKED** sem secret · `homolog-usuario-restrito-blocked-20261010.txt` |
-| evidências | `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
+| **PR HEAD / implantado** | **`f22d1151`** · `index-KP6RdCBA.js` · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **implementado** | MASTER_CODE+Cliente+Produto+Fornecedor+Representante codigo/ID · C360 fontes · #254/#264 |
+| CI tip `f22d1151` | erp-runtime-ci **SUCCESS** |
+| backup | `pre-gate-e-20261010-144428.sql` sha256 `a838fa18…c7a6` |
+| rollback | `pre-spa-login-20261010-144429` |
+| **homologado** (este SHA) | login tipado fail_count=0 · Clientes V24 · launchpads |
+| usuário restrito | **BLOCKED** sem secret |
+| evidências | `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt` · `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | CI tip Fornecedor/Rep · redeploy · secret restrito · merge owner · #211 |
+| próxima | secret restrito · merge owner #261/#264 · Legado #211 · inventário residual |
+
+## CURSOR — #261 tip `6e397596` implantado (ID técnico) (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **implantado** | supersedido por **`f22d1151`** |
+| evidências | `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
+| próxima | supersedido pelo tip `f22d1151` acima |
 
 ## CURSOR — #261 lote ID técnico MASTER_CODE + Cliente/Produto (2026-10-10)
 
