@@ -1,3 +1,17 @@
+## CURSOR — revisão Codex timer: #271 seleção operacional Produto (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#271** tip **`3260696e`** | draft · MERGEABLE · base #270 `0ea56046` · CI SUCCESS |
+| conteúdo | GET produtos `?operacao=true` lista/detalhe com `getForOperation` · flag `ENABLE_PRODUTO_EMPRESA` OFF · UI intacta |
+| porte Cursor | **não** — empilhada em #270→#269→#268→#267; sem merge/VPS/ativação; UI facades reservadas |
+| **#270** | tip `0ea56046` · CI SUCCESS · sem porte |
+| **#269/#268/#267** | tips estáveis · sem porte |
+| **#266/#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar stack #271→#267; secret restrito; timer |
+
 ## CURSOR — revisão Codex timer: #270 Produto×Empresa (2026-10-10)
 
 | Item | Estado |
