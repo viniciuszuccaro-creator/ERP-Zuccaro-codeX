@@ -4,6 +4,42 @@
 - `refreshErpHttpSessionFromServer` usa o escopo ainda ativo depois da resposta para escolher perfil/Empresa autorizados pelo servidor, sem regravar contexto obsoleto; falha de requisição antiga não limpa sessão já alterada. O hook `useContextoGrupoEmpresa` invalida carregamentos anteriores ao evento HTTP e `useContextoVisual` não sobrescreve a sessão HTTP com estado local de montagem. Sem aceitar ID fora da lista de Empresas do perfil nem permissões do storage como autoridade. Reutilizados `readErpHttpSession`, `resolveRefreshEmpresaId` e o evento HTTP existente; Cadastros/Visualizador/EmpresaSwitcher não ganharam estrutura paralela.
 - Testes: resposta atrasada Grupo→Empresa e Empresa A→B, falha atrasada e dois carregamentos concorrentes do hook real preservam a escolha; casos de Grupo, filial restrita, revogação e política multiempresa seguem verdes (42/42 focados). `audit:baseline`, lint, build SPA e diff-check do complemento passaram. Suíte raiz no Windows mantém falhas preexistentes em guards VPS Unix; typecheck raiz mantém erros anteriores fora do diff. Nenhum dado operacional, snapshot, migration ou VPS alterado. Próximo P0: CI, revisão independente do HEAD e homologação visual no ERP DEV com sessão legítima; não declarar contagem de Fornecedores a partir do estado inválido.
 
+## CURSOR — padrão azul Comercial tip `7d068dbb` (2026-10-09T11:45Z)
+
+| Campo | Valor |
+|---|---|
+| tip | `7d068dbb` · PR #257 |
+| browser | Comercial 10×blue PASS · Financeiro CR≠Régua PASS |
+| #255 | MERGED `99ee35b0` (inalterado funcionalmente) |
+| evidência | `browser-azul-comercial-7d068dbb-20261009.txt` |
+| próximo | merge #257 → rebuild main |
+
+## CURSOR — #255 MERGED + validação main `99ee35b0` (2026-10-09T11:05Z)
+
+| Campo | Valor |
+|---|---|
+| #255 | MERGED `99ee35b0` · implantado · browser Central360/Cadastros/Financeiro PASS |
+| visual | padrão azul Cadastros + CR green ≠ Régua violet travados em teste |
+| AGENTS | §14.1 exemplos ≠ operacional/legado; lista vazia ≠ reseed |
+| coordenação | #254 Codex (contexto/sessão); Legado staging privado |
+| evidências | `deploy-255-main-99ee35b0-20261009.txt`, `browser-255-main-99ee35b0-20261009.txt`, `ref-visual-azul-financeiro-20261009.txt` |
+| próximo | aguardar/apoiar #254 sem overlap de arquivos; ETL legado só em staging |
+
+## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
+
+| Campo | Valor |
+|---|---|
+| objetivo | Fechar FAIL_NAV UI Central360 via entrada V24 |
+| tip / PR | `b2ce9611` · [#255](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/255) |
+| mudança | `cliente-detalhes-360` → `openWindow(DetalhesCliente)` + Central360 |
+| CI | PASS |
+| implantado | `b2ce9611` erp-dev · rollback `pre-spa-login-20261009-101703` · flag CLIENTE_360=true |
+| browser | **PASS** detalhes-360+painel 360 · Carregar mais UI NO_BUTTON_MAYBE_EOF · API paginação PASS |
+| testes | 8/8 `comercial-clientes-tab-v24` (incl. regressão integrada #251+#252) |
+| #251+#252 | concluídos em main `d6cca4c2` |
+| pendência | merge #255 → main + rebuild no SHA de merge |
+| próximo | merge #255; depois programa canônico (Codex reserva outbox) |
+
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 
 | Pacote | integrado | implantado | validado |
@@ -46,7 +82,6 @@ Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `9628763
 | validado | testes focados + browser a seguir |
 
 ≠ Codex outbox/legado.
->>>>>>> bf3d47ff (docs(vps): #251 merged em 96287638 — evidência e parecer #252)
 
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 
@@ -238,7 +273,6 @@ Legado: destino tip `08da3b8e` + main `6ff6b0f2` (#113/#246/#245); sem reprocess
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`.
 PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/new/cursor/spa-ui-empresas-financeiro-clicks-392b
 Próximo: merge PR → validação humana seletor/Editar; PATCH `/api/v1/empresas` fica pendente (não criado sem autorização).
->>>>>>> 86ff02c6 (feat(comercial): ClientesTab no Visualizador V24 com Novo fail-closed)
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
@@ -12275,3 +12309,4 @@ Checklist inicial:
 - Objetivo: fechar as ressalvas do parecer Cursor sobre `fd1778f6` sem alterar layout, migração legada, banco operacional ou VPS. Causa: `UserContext` e `AuthContext` aceitavam conclusão antiga; o espelho local podia escrever escopo capturado antes de `await import`; o Visualizador podia reaproveitar linhas do tenant anterior por um render.
 - Reutilizados sessão HTTP/BFF, evento `HTTP_CONTEXT_CHANGED`, `useContextoGrupoEmpresa` e Visualizador V24. Mudanças: geração de carregamento em UserContext/AuthContext; 401/403 revogam apenas o Bearer ativo mesmo se mudou a Empresa; espelho verifica token/ator/Grupo/Empresa após a espera; cache/placeholder da grade só reaproveita linhas no mesmo escopo. O servidor continua autoridade de Grupo/Empresa e RBAC; nenhuma permissão ou auditoria foi afrouxada.
 - Testes focados HTTP: 30/30 PASS, incluindo falha antiga após novo usuário, 401 após troca de Empresa, 401 de token substituído e guarda do espelho. `audit:baseline`, lint e build PASS. Typecheck raiz falha em passivo global preexistente; diagnósticos novos das anotações do espelho foram corrigidos. Suíte raiz no Windows mantém falhas de scripts Bash/VPS anteriores; CI Linux será gate do SHA publicado. Próximo P0: integrar `origin/main` preservando ambos os históricos do STATUS, revisão independente do HEAD final e homologação DEV somente pelo gate operacional.
+- Reconciliada a base `origin/main` `baba91a6` nesta branch: conflito exclusivamente no topo do STATUS, resolvido preservando o checkpoint Codex e os três checkpoints Cursor; runtime do Visualizador mesclou automaticamente. Pós-integração: 49/49 testes focados (sessão, edição e padrão azul), `audit:baseline`, lint, build e `git diff --check` PASS. Ainda sem merge em `main`, sem deploy e sem homologação da #254; CI do novo HEAD e revisão independente permanecem gates.

@@ -313,6 +313,8 @@ export default function Comercial() {
     );
   }
 
+  // Padrão azul aprovado (hub Comercial): tiles uniformes blue — não multi-cor.
+  // Funcionalidades/módulos preservados; só a cor do LaunchpadCard.
   const modules = [
     {
       title: 'Clientes',
@@ -332,7 +334,7 @@ export default function Comercial() {
       exactPermission: true,
       description: 'Propostas comerciais',
       icon: ClipboardList,
-      color: 'indigo',
+      color: 'blue',
       component: OrcamentosTab,
       windowTitle: 'Orçamentos',
       width: 1500,
@@ -345,7 +347,7 @@ export default function Comercial() {
       exactPermission: true,
       description: 'Orçamentos e vendas',
       icon: ShoppingCart,
-      color: 'purple',
+      color: 'blue',
       component: PedidosTab,
       windowTitle: ' Pedidos',
       width: 1500,
@@ -368,7 +370,7 @@ export default function Comercial() {
       sectionKey: 'Pedidos Retirada',
       description: 'Cliente retira',
       icon: Package,
-      color: 'green',
+      color: 'blue',
       component: PedidosRetiradaTab,
       windowTitle: ' Pedidos p/ Retirada',
       width: 1400,
@@ -379,7 +381,7 @@ export default function Comercial() {
       title: 'Comissões',
       description: 'Vendedores e indicadores',
       icon: TrendingUp,
-      color: 'green',
+      color: 'blue',
       component: ComissoesTab,
       windowTitle: 'Comissões',
       width: 1400,
@@ -391,7 +393,7 @@ export default function Comercial() {
       sectionKey: 'Notas Fiscais',
       description: 'NF-e emitidas',
       icon: FileText,
-      color: 'indigo',
+      color: 'blue',
       component: NotasFiscaisTab,
       windowTitle: ' Notas Fiscais',
       width: 1500,
@@ -402,7 +404,7 @@ export default function Comercial() {
       title: 'Aprovações',
       description: 'Descontos hierárquicos',
       icon: ShieldCheck,
-      color: 'orange',
+      color: 'blue',
       component: CentralAprovacoesManager,
       windowTitle: 'Aviso: Central de Aprovações',
       width: 1400,
@@ -413,7 +415,7 @@ export default function Comercial() {
       title: 'Tabelas de Preço',
       description: 'Gestão de preços',
       icon: TrendingUp,
-      color: 'indigo',
+      color: 'blue',
       component: TabelasPrecoTab,
       windowTitle: ' Tabelas de Preço',
       width: 1400,
@@ -425,7 +427,7 @@ export default function Comercial() {
       sectionKey: 'Canais Realtime',
       description: 'Monitoramento de origem',
       icon: TrendingUp,
-      color: 'cyan',
+      color: 'blue',
       component: MonitoramentoCanaisRealtime,
       windowTitle: ' Canais em Tempo Real',
       width: 1300,

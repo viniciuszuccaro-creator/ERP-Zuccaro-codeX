@@ -1,0 +1,22 @@
+# Referência visual aprovada — padrão azul + Financeiro (sem regressão)
+# utc=2026-10-09
+# Fontes: screenshots proprietário · browser-spa-ui-677b1ab1 · browser-255-main-99ee35b0
+# Complemento: ref-visual-azul-aprovado-proprietario-20261009.txt
+#
+# Cadastros Gerais / janelas V24:
+#   - chrome WindowModal from-blue-600 to-blue-700
+#   - cards/acordeão Pessoas: from-blue-50 / border-blue-200 / bg-blue-600
+#   - default LaunchpadCard color='blue'
+#
+# Comercial hub (padrão azul aprovado):
+#   - todos os tiles do launchpad color='blue' (teste comercial-azul-padrao-visual)
+#   - módulos preservados; só cor uniformizada
+#
+# Financeiro (não colapsar cores):
+#   - Contas a Receber → green
+#   - Régua de Cobrança IA → violet
+#   - CR ≠ Régua (teste em financeiro-navegacao-inventory.test.js)
+#
+# EmpresaSwitcher: grupo=azul / empresa=roxo operacional — preservar.
+# Não reverter funcionalidades (#251/#252/#255) ao corrigir estética.
+# Contagens auxiliares variam — não forçar 11/14/91; sem reseed.

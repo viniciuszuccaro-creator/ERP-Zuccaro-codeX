@@ -1,0 +1,10 @@
+# Evidência sanitizada — padrão azul Comercial tip 7d068dbb
+# utc=2026-10-09T11:45Z
+# implantado=7d068dbb (branch cursor/comercial-azul-padrao-visual-392b)
+# login=PASS
+# comercial_tiles=10× blue = PASS
+# Financeiro CR green ≠ Régua violet = PASS (não colapsado)
+# Central360 entry (v24/cliente-novo path) = PASS
+# screenshot=/opt/cursor/artifacts/screenshots/pw-azul-comercial-7d068dbb.png
+# #255 main 99ee35b0 permanece validado; este tip só visual azul + colunas auxiliares
+# sem reseed; contagens não forçadas

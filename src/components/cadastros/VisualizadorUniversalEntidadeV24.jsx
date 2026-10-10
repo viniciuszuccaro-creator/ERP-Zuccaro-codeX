@@ -30,9 +30,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
-  Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
+  Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X, Eye
 } from "lucide-react";
+import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
+import DetalhesCliente from "@/components/comercial/DetalhesCliente";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
@@ -147,8 +149,10 @@ function buildFieldVariants(field) {
 function getDisplayValue(item, col, isFirstCol) {
   var v = item[col.field];
   if (v !== null && v !== undefined && v !== '') return v;
-  // Para primeira coluna usa todos os LABEL_FALLBACKS
-  if (isFirstCol) {
+  // Coluna de rótulo vazia (1ª coluna ou campo "nome"): reutiliza fallbacks
+  // (descricao / nome_grupo / nome_do_grupo…) sem recriar cadastros auxiliares.
+  var isLabelCol = isFirstCol || /^(nome|titulo|label)$/i.test(String(col.field || ''));
+  if (isLabelCol) {
     for (var i = 0; i < LABEL_FALLBACKS.length; i++) {
       var f = LABEL_FALLBACKS[i];
       if (f !== col.field && item[f] != null && item[f] !== '') return item[f];
@@ -246,6 +250,7 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [FormComponent]);
 
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
   const {
     empresaAtual,
     grupoAtual,
@@ -988,6 +993,27 @@ export default function VisualizadorUniversalEntidadeV24({
                 })}
                 <td className="px-3 py-2">
                   <div className="flex items-center justify-center gap-1">
+                    {ENTITY === "Cliente" && (
+                      <button
+                        type="button"
+                        onClick={function(e) {
+                          e.stopPropagation();
+                          if (!contextoValido || !canViewCadastro) return;
+                          openWindow(
+                            DetalhesCliente,
+                            { cliente: item, windowMode: true },
+                            { title: `Cliente ${item.nome || item.razao_social || item.id || ""}`.trim(), width: 1100, height: 720 },
+                          );
+                        }}
+                        title="Detalhes / Central 360"
+                        disabled={!contextoValido || !canViewCadastro}
+                        data-permission={`Cadastros.${ENTITY}.visualizar`}
+                        data-action="cliente-detalhes-360"
+                        className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     {FormComponent && (
                       <button
                         type="button"

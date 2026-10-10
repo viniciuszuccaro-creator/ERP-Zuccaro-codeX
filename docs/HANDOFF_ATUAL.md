@@ -1,3 +1,49 @@
+## CURSOR — padrão azul Comercial + auxiliares (2026-10-09T11:40Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch | `cursor/comercial-azul-padrao-visual-392b` |
+| mudança | hub Comercial tiles → blue uniforme; V24 fallback Nome→descricao/nome_grupo; colunas auxiliares codigo-first |
+| preservado | todos os módulos Comercial; auxiliares existentes; Financeiro CR≠Régua |
+| testes | `comercial-azul-padrao-visual` + inventário + clientes-tab |
+| #255 | já MERGED/validado `99ee35b0` |
+| #254 Codex | não tocado |
+| ref | `ref-visual-azul-aprovado-proprietario-20261009.txt` + artifacts `ref-visual-aprovado/*` |
+| próxima ação | CI → merge → rebuild tip → browser Comercial azul + Cadastros auxiliares |
+
+## CURSOR — #255 MERGED main `99ee35b0` + ajuste proprietário (2026-10-09T11:05Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| #255 | **MERGED** `99ee35b0` · implantado erp-dev · rollback `pre-spa-login-20261009-110013` |
+| validado | Central360 PASS · Cadastros+azul PASS · Financeiro+CR≠Régua PASS |
+| regras | AGENTS.md §14.1 — exemplos/sintéticos ≠ carga operacional/legado; sem reseed por lista vazia |
+| visual | ref `ref-visual-azul-financeiro-20261009.txt` · testes regressão cores no inventário Financeiro |
+| Codex #254 | **reservado Codex** — `erpHttpSession` / `useContextoGrupoEmpresa` / `useContextoVisual` · Cursor **não** edita |
+| Codex Legado | staging privado + backup original; conflitos/lacunas; dados reais **fora** do GitHub |
+| próxima ação | Codex concluir #254 (sessão/troca empresa); Cursor não reseed; legado prepara ETL staging |
+
+Evidências: `deploy-255-main-99ee35b0-20261009.txt`, `browser-255-main-99ee35b0-20261009.txt`.
+
+## CURSOR — DetalhesCliente→Central360 entry tip `b2ce9611` (2026-10-09T10:36Z)
+
+| Item | Valor |
+|---|---|
+| responsável | Cursor |
+| branch / PR | `cursor/comercial-detalhes-cliente-360-entry-392b` · [#255](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/255) |
+| tip | **`b2ce9611`** |
+| CI | **PASS** (erp-runtime-ci) |
+| parecer | APROVAR COM RESSALVAS → `parecer-detalhes-cliente-360-entry-20261009.txt` |
+| implantado | **`b2ce9611`** erp-dev · asset `index-DbVDch1Q.js` · CLIENTE_360=true |
+| rollback | `pre-spa-login-20261009-101703` |
+| validado browser | login/CPA · v24 · cliente-novo · **cliente-detalhes-360→Central360 PASS** · Carregar mais UI NO_BUTTON_MAYBE_EOF · API limit/offset PASS |
+| #251/#252 | MERGED em main `d6cca4c2` (ancestrais); tip entry ainda **não** em main |
+| próxima ação | **merge #255 → main** → rebuild spa-login no tip main → revalidar browser com evidência nova do SHA de merge |
+
+≠ Codex outbox/legado. Evidências: `deploy-360-entry-b2ce9611-20261009.txt`, `browser-360-entry-b2ce9611-20261009.txt`.
+
 ## CURSOR — #251+#252 em main `d6cca4c2` (2026-10-09T10:10Z)
 
 | Pacote | integrado | implantado | validado |
@@ -40,7 +86,6 @@ Branch `cursor/comercial-clientes-tab-v24-392b` · rebase `origin/main` `9628763
 | validado | testes focados + browser a seguir |
 
 ≠ Codex outbox/legado.
->>>>>>> bf3d47ff (docs(vps): #251 merged em 96287638 — evidência e parecer #252)
 
 ## CURSOR — #251 parecer publicado + fechamento (2026-10-09T09:55Z)
 
@@ -253,7 +298,6 @@ Evidência: `docs/vps/evidence/browser-financeiro-caixa-08da3b8e-20261008.txt` �
 | rollback | `pre-spa-login-20261008-161558` |
 
 Evidência: `docs/vps/evidence/browser-spa-ui-677b1ab1-20261008.txt`. ≠ outbox/legado.
->>>>>>> 86ff02c6 (feat(comercial): ClientesTab no Visualizador V24 com Novo fail-closed)
 
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
