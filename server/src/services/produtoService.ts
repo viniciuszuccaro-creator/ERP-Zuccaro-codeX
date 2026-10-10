@@ -176,7 +176,21 @@ export class ProdutoService {
     };
   }
 
-  async get(ctx: RequestContext, id: string) {
+  async get(ctx: RequestContext, id: string, options:{forOperation?:boolean}={}) {
+    if(options.forOperation){
+      this.assertScope(ctx);this.assertRelationId(id);
+      if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+      if(!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false});
+      return this.repo.withTransaction(async executor=>{
+        if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+        const row=await this.repo.getForOperation({groupId:ctx.groupId,empresaId:ctx.empresaId},id,executor);
+        if(!row||!row.ativo)throw new AppError(404,'PRODUTO_NOT_FOUND','Produto not found in tenant scope');
+        return row;
+      });
+    }
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
