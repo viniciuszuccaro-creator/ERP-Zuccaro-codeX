@@ -1,14 +1,14 @@
-## CURSOR — revisão Codex autônomo + porte #265 Produto GET parcial (2026-10-10)
+## CURSOR — revisão Codex autônomo (ciclo timer) (2026-10-10)
 
 | Item | Estado |
 |---|---|
-| **#265** Codex | OPEN draft · tip `fdb4af81` · CONFLICTING → **porte seletivo implantado** `db89aa45` / `index-Dg3GA2bC.js` · homolog owner fail_count=0 |
-| **#266** Codex Legado | OPEN draft · tip `661f3ef3` · MERGEABLE vs #261 · **não** mesclar aqui — coordenar #211 |
-| **#263** Orçamento | OPEN vs `main` · tip `1b19f4ee` · CI SUCCESS · MERGEABLE · decisão owner (independente #261) |
-| **#254** | OPEN ancestral `20a2c2fb` — **não** re-portar |
-| **#264** branch pós-merge | `d7254bc1` = mesmo delta Produto da #265 (já portado) |
-| agentes Codex | IDLE (produto HTTP, integração #254/#261, orçamento, legado piloto) |
-| próxima revisão | timer · PRs Codex novas / commits em `codex/*` |
+| **#265** tip `910e4ec9` | MERGEABLE · CI FE SUCCESS / BE parcial · Produto **já em** `db89aa45` · Orçamento **porte neste tip** |
+| **#263** | ancestral do pacote Orçamento · tip `1b19f4ee` · vs main MERGEABLE |
+| **#266** tip `001e6c85` | MERGEABLE · Legado (+`661f3ef3` retry tenant/classe) · **não** mesclar Cursor · agente **RUNNING** |
+| **#254** | ancestral OPEN `20a2c2fb` — não re-portar |
+| implantado erp-dev | **`db89aa45`** · `index-Dg3GA2bC.js` · **≠** tip Orçamento até CI+redeploy |
+| agentes | Legado RUNNING · Produto/Orçamento IDLE |
+| próxima | CI tip Orçamento · redeploy · #266/#211 · timer |
 
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
