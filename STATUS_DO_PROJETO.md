@@ -1,17 +1,27 @@
+## CURSOR — #261 tip `3108b9f2` (#254 4a1ecf4c + azul global) (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | #254 tip **`4a1ecf4c`** (produto edit-ready + session freeze) · azul hubs operacionais · Aprovações→Central · DetalhesCliente codigo+ID |
+| **preservado** | piloto HTTP · sectionKeys · reserveEntityCodigo · Pedido Onda 5 · Financeiro CR≠Régua |
+| **sem cópia divergente** | tip #254 nos forms #261; sessão/outbox Codex intocados |
+| CI tip `3108b9f2` | erp-runtime-ci (push/PR em curso) |
+| **implantado** | erp-dev **`3108b9f2`** · `index-Chstx7-i.js` · backup `pre-gate-e-20261010-131907.sql.gz` · rollback `pre-spa-login-20261010-131907` |
+| **homologado** (este SHA) | login tipado · Cadastros · Clientes via Comercial · trocar Grupo · launchpads PASS |
+| residual | grade Clientes 0 rows UI (≠ DB) · abrir/salvar/reabrir pendente com linhas |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
+| evidências | `deploy-261-tip-3108b9f2-integrado-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | API×DB clientes no contexto · V23→V24 tabs · merge #261 · Legado #211 |
+
 ## CURSOR — #261 tip `7e515fbc` implantado + homolog login tipado (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | #254 `f0844fa5` form scope guard · FormaPagamento Completo codigo+ID · Onda 5 Pedido detail UX |
-| **preservado #261** | piloto HTTP · Organizacional · sectionKeys · reserveEntityCodigo · classify/merge |
-| **sem cópia divergente** | tip #254 nos mesmos forms #261; sessão/outbox Codex intocados |
-| CI tip `82c10905`/`7e515fbc` | erp-runtime-ci (aguardar head) |
-| **implantado** | erp-dev **`7e515fbc`** · `index-Ctj_ukNA.js` · backup `pre-gate-e-20261010-125801.sql.gz` · rollback `pre-spa-login-20261010-125801` |
-| **homologado** | login **tipado** PASS · Cadastros Base PASS · trocar Grupo PASS · launchpads Comercial/Financeiro/Fiscal PASS |
-| residual UI | tile Clientes/abrir/salvar grade (navegação shell; lista vazia ≠ DB) |
-| evidências | `deploy-261-tip-7e515fbc-homolog-login-20261010.txt` · `scripts/vps/homolog-browser-login-cadastros.mjs` |
-| **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | fechar navegação grade Clientes no shell · merge #261 · Legado CPA/#211 · C360 Onda 6 só com backend |
+| **implantado** | supersedido por **`3108b9f2`** |
+| **homologado** | tip `7e515fbc` (não reutilizar para tip novo) |
+| evidências | `deploy-261-tip-7e515fbc-homolog-login-20261010.txt` |
+| próxima | supersedido pelo bloco tip `3108b9f2` acima |
 
 ## CURSOR — #261 tip `4c0c167a` implantado (2026-10-10)
 

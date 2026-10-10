@@ -1,0 +1,49 @@
+# Deploy #261 tip 3108b9f2 — #254 4a1ecf4c + azul global + consolidação
+# utc=2026-10-10T13:19Z
+# Sanitizado — sem tokens, sem PII, sem .env.
+# NÃO atribuir testes de tip anterior (7e515fbc) a este SHA.
+
+| Campo | Valor |
+|---|---|
+| tip código | **3108b9f2a9921ecc3e5abaa8a0ed4748ef3f0184** |
+| branch | cursor/cadastros-recuperacao-c360-contrato-392b |
+| SPA asset | /assets/index-Chstx7-i.js |
+| health 3080/3081 | 200 / 200 |
+| backup SQL | pre-gate-e-20261010-131907.sql.gz · 125688 B · sha256=202d7fc09ed4916838bd215882ea213daa5b59002dce6f522bcced230e9e1bdd |
+| rollback | pre-spa-login-20261010-131907 |
+| runtime | ERP-RUNTIME-08B |
+
+## Delta vs tip implantado anterior 7e515fbc
+1. #254 tip `4a1ecf4c` (após f0844fa5): session freeze no form scope; assert delete; produto HTTP edit-ready + retry
+2. Azul-claro global seletivo (ref #257 baba91a6): Estoque/Expedição/Compras/Fiscal/Produção/RH/CRM → color blue
+3. Financeiro: Aprovações → CentralAprovacoesManager (redirect; CR green ≠ Régua violet preservado)
+4. DetalhesCliente: código de registro + ID técnico no header
+5. Matriz: docs/evidence/matriz-consolidacao-modulos-20261010.txt
+
+## Bundle público (este tip)
+- CentralAprovacoesManager×3 · codigo-registro-cliente-360×1
+- asset index-Chstx7-i.js
+
+## Homolog browser (login tipado) — SHA 3108b9f2 somente
+script=scripts/vps/homolog-browser-login-cadastros.mjs
+- spa_load / typed_credentials / login PASS
+- cadastros_open PASS
+- clientes_list PASS (via Comercial Clientes → V24)
+- trocar_empresa PASS
+- launchpad_comercial / financeiro / fiscal PASS
+- abrir/salvar/reabrir grade: FAIL (0 rows UI) — lista vazia ≠ DB missing; comparar API×DB no mesmo contexto
+- screenshot=/opt/cursor/artifacts/screenshots/pw-homolog-261-3108b9f2-login.png
+
+## Classificação
+| Estado | Item |
+|---|---|
+| implementado | #254 4a1ecf4c · azul hubs · consolidação Aprovações · codigo/ID DetalhesCliente |
+| revisado | tip #254 HEAD 4a1ecf4c vs #261 |
+| integrado | PR #261 |
+| implantado | erp-dev **3108b9f2** · index-Chstx7-i.js |
+| homologado | login tipado + Clientes via Comercial + launchpads (este SHA) |
+| recuperado | NÃO legado · SYNTH≠recuperado |
+| importado | N/A |
+
+## ≠ Codex
+sessão/outbox Onda 15 · Legado #211 · CRM HTTP funis

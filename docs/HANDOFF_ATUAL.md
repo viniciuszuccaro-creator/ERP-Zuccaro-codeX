@@ -55,18 +55,22 @@ Fail-closed preservado (gate por seção).
 - **Supersedido** pela sétima ação (`7e515fbc`).
 
 ### Sétima ação — tip `7e515fbc` + homolog login tipado + Onda 5 Pedido UX
-- Port #254 `f0844fa5`: `useCadastroFormScopeGuard` em Cliente/Fornecedor/Produto/Representante (sem tocar sessão/outbox Codex).
-- FormaPagamentoFormCompleto: `CadastroCodigoRegistroField` + ID técnico readonly.
-- Onda 5 no `PedidoCanonicoPanel` existente: cancel motivo 3–500, confirm status + motivo opcional, histórico fail-closed, Imprimir/PDF + WhatsApp/e-mail (clipboard).
-- **Implantado** erp-dev tip **`7e515fbc`** · asset `index-Ctj_ukNA.js` · backup `pre-gate-e-20261010-125801.sql.gz` · rollback `pre-spa-login-20261010-125801`.
-- **Homologado** Playwright login tipado (`ERP_DEV_LOGIN_*`): Cadastros Base + trocar Grupo + launchpads Comercial/Financeiro/Fiscal PASS.
-- Residual: tile Clientes na grade do shell (navegação) — lista vazia ≠ DB missing.
-- Evidência: `docs/vps/evidence/deploy-261-tip-7e515fbc-homolog-login-20261010.txt`.
+- Port #254 `f0844fa5` + Pedido Onda 5 + FormaPagamento codigo/ID.
+- **Supersedido** pela oitava ação (`3108b9f2`). Evidência tip antigo: `deploy-261-tip-7e515fbc-homolog-login-20261010.txt`.
+
+### Oitava ação — tip `3108b9f2` (#254 HEAD `4a1ecf4c` + azul global + consolidação)
+- #254 avançou `f0844fa5`→`17b7c7aa`→`9ba6aefe`→**`4a1ecf4c`**: session freeze no guard; assert delete; produto HTTP só salva após GET completo + retry.
+- Azul-claro (ref #257 `baba91a6`): launchpads Estoque/Expedição/Compras/Fiscal/Produção/RH/CRM → `color:'blue'`; Financeiro CR≠Régua preservado.
+- Consolidação: Financeiro Aprovações → `CentralAprovacoesManager`; matriz em `docs/evidence/matriz-consolidacao-modulos-20261010.txt`.
+- DetalhesCliente 360: código de registro + ID técnico no header (histórico existente preservado).
+- **Implantado** erp-dev tip **`3108b9f2`** · asset `index-Chstx7-i.js` · backup `pre-gate-e-20261010-131907.sql.gz` · rollback `pre-spa-login-20261010-131907`.
+- **Homologado neste SHA** (login tipado): Cadastros · Clientes via Comercial · trocar Grupo · launchpads PASS; grade 0 rows ≠ DB.
+- Evidência: `docs/vps/evidence/deploy-261-tip-3108b9f2-integrado-20261010.txt`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
-#254 tip forms já em #261 — merge owner coordenado sem segunda cópia.
+#254 tip `4a1ecf4c` já em #261 — merge owner coordenado sem segunda cópia.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 
