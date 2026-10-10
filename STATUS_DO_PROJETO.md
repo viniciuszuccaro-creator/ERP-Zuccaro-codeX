@@ -12330,3 +12330,7 @@ Checklist inicial:
 - Parecer Cursor de `17b7c7aa`: GET descartado antes de a Empresa terminar de carregar não repetia; update posterior poderia limpar campos PIM presentes apenas no registro completo.
 - O GET agora só inicia com tela/sessão convergentes e repete ao resolver Grupo/Empresa. O update HTTP fica bloqueado até o GET devolver o mesmo ID; erro ou resposta de outro ID não liberam save. Resposta antiga de outro tenant continua descartada. Reutilizados `getHttpProdutoApi`, formulário V22 e policy HTTP já existentes; sem tocar no backend reservado ou banco operacional.
 - Teste da política cobre carga pendente, ID alheio, carga completa e create; teste de integração estática verifica o gate e dependências do efeito. Próximo: CI, parecer do HEAD e homologação visual autenticada antes de merge/deploy.
+## CODEX — #254 retentativa explícita do GET Produto (2026-10-10)
+
+- Parecer Cursor de `9ba6aefe`: falha HTTP mantinha update bloqueado sem ação de retry na mesma tela. O formulário agora expõe «Tentar carregar produto novamente» somente no escopo original; nova tentativa limpa o erro e mantém salvar desabilitado até GET completo do mesmo ID. Troca CPA→3Z não libera nem exibe retry do registro anterior. Sem retry ilimitado automático ou segundo cadastro.
+- Próximo P0: validar CI/parecer do novo HEAD e homologar visualmente com sessão legítima antes de qualquer merge/deploy.

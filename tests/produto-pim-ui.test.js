@@ -10,8 +10,10 @@ test('edição HTTP espera GET completo antes de permitir payload que pode limpa
   assert.equal(isProdutoHttpEditReady(true, null, null), true);
   const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   assert.match(form, /!produtoHttp \|\| !produto\?\.id \|\| !isFormScopeCurrent\(\)/);
-  assert.match(form, /\[produtoHttp, produto\?\.id, groupId, empresaAtual\?\.id\]/);
+  assert.match(form, /\[produtoHttp, produto\?\.id, groupId, empresaAtual\?\.id, produtoHttpLoadAttempt\]/);
   assert.match(form, /if \(!isProdutoHttpEditReady\(produtoHttp, produto\?\.id, produtoHttpReadyId\)\)/);
+  assert.match(form, /setProdutoHttpLoadError\(true\)/);
+  assert.match(form, /Tentar carregar produto novamente/);
 });
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {

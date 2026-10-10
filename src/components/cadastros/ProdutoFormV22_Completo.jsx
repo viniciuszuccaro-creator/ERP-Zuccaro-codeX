@@ -212,6 +212,8 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
   });
 
   const [produtoHttpReadyId, setProdutoHttpReadyId] = useState(null);
+  const [produtoHttpLoadError, setProdutoHttpLoadError] = useState(false);
+  const [produtoHttpLoadAttempt, setProdutoHttpLoadAttempt] = useState(0);
   const [iaSugestao, setIaSugestao] = useState(null);
   // Mantém w-full/h-full e responsivo/redimensionável (conteúdo já usa classes).
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -227,6 +229,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     if (!produtoHttp || !produto?.id || !isFormScopeCurrent()) return;
     let active = true;
     setProdutoHttpReadyId(null);
+    setProdutoHttpLoadError(false);
     getHttpProdutoApi().get(produto.id).then((row) => {
       if (!row || row.id !== produto.id) throw new Error('Resposta sem produto completo correspondente');
       if (active && isFormScopeCurrent()) {
@@ -234,10 +237,13 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
         setProdutoHttpReadyId(produto.id);
       }
     }).catch((error) => {
-      if (active && isFormScopeCurrent()) toast.error('Erro ao carregar produto: ' + error.message);
+      if (active && isFormScopeCurrent()) {
+        setProdutoHttpLoadError(true);
+        toast.error('Erro ao carregar produto: ' + error.message);
+      }
     });
     return () => { active = false; };
-  }, [produtoHttp, produto?.id, groupId, empresaAtual?.id]);
+  }, [produtoHttp, produto?.id, groupId, empresaAtual?.id, produtoHttpLoadAttempt]);
 
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', contextKey],
@@ -1354,6 +1360,11 @@ Caso contrário, sugira:
       {/* BOTÕES DE AÇÃO */}
       <div className="flex items-center justify-between pt-4 border-t sticky bottom-0 bg-white">
         <div className="flex gap-2">
+          {produtoHttp && produto?.id && produtoHttpLoadError && isFormScopeCurrent() && (
+            <Button type="button" variant="outline" onClick={() => setProdutoHttpLoadAttempt((value) => value + 1)}>
+              Tentar carregar produto novamente
+            </Button>
+          )}
           {produto && (
             <>
               {!produtoHttp && (
@@ -1395,7 +1406,7 @@ Caso contrário, sugira:
             </>
           )}
         </div>
-        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-action="salvar-produto" data-sensitive disabled={isSubmitting || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="bg-purple-600 hover:bg-purple-700 px-8">
+        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-action="salvar-produto" data-sensitive disabled={isSubmitting || !contextoValido || !isProdutoHttpEditReady(produtoHttp, produto?.id, produtoHttpReadyId) || (produto?.id ? !podeEditar : !podeCriar)} className="bg-purple-600 hover:bg-purple-700 px-8">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {!isSubmitting && <Save className="w-4 h-4 mr-2" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}
