@@ -8,8 +8,27 @@ import {
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
+  createOrcamentoActionGate,
   microsToDecimal,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
+
+test('Orçamento trava duplo clique e descarta resposta antiga após CPA→3Z', () => {
+  const gate = createOrcamentoActionGate();
+  const cpa = { groupId: 'g', empresaId: 'cpa', actorId: 'u' };
+  const tresZ = { groupId: 'g', empresaId: '3z', actorId: 'u' };
+  const first = gate.begin(cpa, cpa, cpa);
+  assert.ok(first);
+  assert.equal(gate.begin(cpa, cpa, cpa), null);
+  assert.equal(gate.isCurrent(first, cpa, tresZ), false);
+  gate.invalidate();
+  const second = gate.begin(tresZ, tresZ, tresZ);
+  assert.ok(second);
+  assert.equal(gate.end(first), false);
+  assert.equal(gate.isCurrent(second, tresZ, tresZ), true);
+  assert.equal(gate.end(second), true);
+  assert.equal(gate.begin(cpa, tresZ, tresZ), null);
+  assert.equal(gate.begin(cpa, cpa, { ...cpa, actorId: 'outro-usuario' }), null);
+});
 
 const form = () => ({
   cliente_empresa_id: 'cliente-empresa-1',
@@ -79,7 +98,7 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /openEdit/);
   assert.match(tab, /Cancelar orçamento\?/);
   assert.match(tab, /beforeunload/);
-  assert.match(tab, /\[groupId, empresaId\]/);
+  assert.match(tab, /\[groupId, empresaId, actorId\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {
