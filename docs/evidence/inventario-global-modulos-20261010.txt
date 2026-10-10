@@ -71,7 +71,7 @@
 - Administração do Sistema · PerfilAcesso aliases → `Sistema.acessos`
 - Bloco6: ApiExterna, Chatbot*, Gateway, Job, Webhook, ConfiguracaoNFe, EventoNotificacao
 ### Pacote tip
-- PR HEAD #261 tip branch · merge `861513cd` · #254 `20a2c2fb` · #264 `d9403665` · implantado `bdeec58c`
+- PR HEAD / implantado #261 `00edfb2b` · merge `861513cd` · #254 `20a2c2fb` · #264 `d9403665`
 
 ## Recuperado
 NÃO legado. SYNTH/GATE-D ≠ recuperado.
