@@ -1,3 +1,19 @@
+## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
+
+Consulta desta sessão ao GitHub. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD de documentação.
+
+| Item | Valor |
+|---|---|
+| `origin/main` | **`baba91a6`** (merge #257) · **não** contém o HEAD da #261 |
+| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · HEAD **`2f82dea4`** · mergeable vs main · **não** incorporada na main |
+| #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
+| #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
+| SHA implantado | **`f22d1151`** · `index-KP6RdCBA.js` · ancestral do HEAD · commits depois (`c3c45c21`, `2f82dea4`) são só docs |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `f22d1151` |
+| usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` · sem prova fail-closed nesta sessão |
+| CRM HTTP | **não iniciado** — não há rota canônica `Oportunidade` no server; funil continua no cliente local; `useContextoVisual` reservado Codex; sem CRM paralelo |
+| próxima funcional | secret restrito **ou** contrato HTTP Codex para Oportunidade; merge owner #261→main continua decisão do owner |
+
 ## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
 
 Troca de máquina. **Não depender** de alterações locais da empresa — só GitHub + este HANDOFF.
@@ -6,14 +22,14 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 |---|---|
 | repositório canônico | `viniciuszuccaro-creator/ERP-Zuccaro-codeX` (clone também via `erp-zuccaro-codex`) |
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
-| **PR HEAD #261** | **`c3c45c21`** · CI SUCCESS · MERGEABLE → `main` |
+| **PR HEAD #261** | **`2f82dea4`** · docs após `c3c45c21` · **não** é o SHA implantado |
 | **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** PR HEAD (docs após deploy) |
 | rollback | `pre-spa-login-20261010-144429` |
 | backup | `pre-gate-e-20261010-144428.sql` (só VPS; **não** no Git) |
-| #264 Codex | **MERGED** tip `d9403665` (porte #254→#261) — já ancestral de #261 |
-| #254 Codex | OPEN tip `20a2c2fb` — **já ancestral** de #261; **não** re-portar |
-| merge código integração | `861513cd` (#264 ort → candidata) |
-| homologado tip implantado | login tipado fail_count=0 (owner) |
+| #264 Codex | **MERGED** tip `d9403665` (porte #254→#261) — ancestral `861513cd` confirmado |
+| #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
+| merge código integração | `861513cd` (#264 → candidata #261, não main) |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`f22d1151` apenas** |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
 | arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual` em lote) — Cursor só com coordenação |
@@ -21,7 +37,7 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → `git rev-parse HEAD` deve ser **`c3c45c21`** (ou tip docs mais novo se houver push).
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → `git rev-parse HEAD` deve ser **`2f82dea4`** ou tip posterior. O implantado continua **`f22d1151`**.
 2. Confirmar VPS implantado: `MERGE_SHA8=f22d1151` / asset `index-KP6RdCBA.js` — não atribuir homolog de SHA antigo ao tip novo.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
