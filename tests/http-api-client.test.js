@@ -466,3 +466,16 @@ test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array',
   assert.equal(urls[0].includes('ativo='), false);
   assert.match(urls[0], /\/api\/v1\/clientes\?/);
 });
+
+test('ProdutoEmpresa facade preparada: GET/PUT usam tenant/Bearer/CAS/AbortSignal sem ativar Produto',async()=>{
+  const seen=[];const controller=new AbortController();
+  const client=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>({groupId:'synthetic-group',empresaId:'synthetic-company',actorId:'synthetic-actor',token:'synthetic-token'}),
+    fetchImpl:async(url,init)=>{seen.push({url:String(url),init});return new Response(JSON.stringify({data:{id:'synthetic-link',version:2}}),{status:200});}});
+  assert.equal(client.entities.Produto,undefined);
+  const api=client.preparedEntities.Produto.empresaOperacao;
+  assert.equal((await api.get('synthetic/product',{signal:controller.signal})).version,2);
+  const payload={ativo:true,habilitado_operacao:true,expected_version:1};await api.update('synthetic/product',payload,{signal:controller.signal});
+  assert.equal(new URL(seen[0].url).pathname,'/api/v1/produtos/synthetic%2Fproduct/empresa-operacao');
+  assert.equal(seen[1].init.method,'PUT');assert.deepEqual(JSON.parse(seen[1].init.body),payload);
+  for(const call of seen){assert.equal(call.init.headers.Authorization,'Bearer synthetic-token');assert.equal(call.init.headers['X-Empresa-Id'],'synthetic-company');assert.equal(call.init.signal,controller.signal);assert.equal(call.url.includes('synthetic-token'),false);}
+});
