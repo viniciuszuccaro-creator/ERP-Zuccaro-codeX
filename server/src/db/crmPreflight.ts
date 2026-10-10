@@ -40,11 +40,11 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
   checks.policy=false;checks.columns=false;checks.codeTrigger=false;checks.exclusivePedido=false;checks.grants=false;checks.noPublicDml=false;
   if(opportunity) {
     const oid=opportunity.oid;
-    const policies=await db.query<{cmd:string;roles:string;using:string;check:string}>(
-      `SELECT polcmd AS cmd,polroles::text AS roles,pg_get_expr(polqual,polrelid) AS "using",
+    const policies=await db.query<{cmd:string;roles:string;permissive:boolean;using:string;check:string}>(
+      `SELECT polcmd AS cmd,polroles::text AS roles,polpermissive AS permissive,pg_get_expr(polqual,polrelid) AS "using",
        pg_get_expr(polwithcheck,polrelid) AS "check" FROM pg_policy WHERE polrelid=$1::oid`,[oid]);
     const canonical="group_id = NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id = NULLIF(current_setting('app.empresa_id',true),'')::uuid";
-    const p=policies.rows[0];checks.policy=policies.rows.length===1&&p.cmd==='*'&&p.roles==='{0}'
+    const p=policies.rows[0];checks.policy=policies.rows.length===1&&p.cmd==='*'&&p.roles==='{0}'&&p.permissive===true
       &&tokens(p.using)===tokens(canonical)&&tokens(p.check)===tokens(canonical);
     const columns=await db.query<{name:string;number:number}>('SELECT attname AS name,attnum::int AS number FROM pg_attribute WHERE attrelid=$1::oid AND attnum>0 AND NOT attisdropped',[oid]);
     checks.columns=['legacy_store_id','legacy_orcamento_id','legacy_pedido_id','convertido_em_id','version','codigo'].every(n=>columns.rows.some(r=>r.name===n));
@@ -69,7 +69,10 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
     checks.grants=checks.schema&&grants.rows[0]?.ok===true;
     const publicAcl=await db.query<{ok:boolean}>(`SELECT NOT EXISTS(SELECT 1 FROM pg_class c,
       LATERAL aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
-      WHERE c.oid=$1::oid AND a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE')) AS ok`,[oid]);
+      WHERE c.oid=$1::oid AND a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE'))
+      AND NOT EXISTS(SELECT 1 FROM pg_attribute att,LATERAL aclexplode(att.attacl) a
+      WHERE att.attrelid=$1::oid AND att.attnum>0 AND NOT att.attisdropped AND a.grantee=0
+        AND a.privilege_type IN ('SELECT','INSERT','UPDATE')) AS ok`,[oid]);
     checks.noPublicDml=publicAcl.rows[0]?.ok===true;
   }
   const blocked=Object.keys(checks).filter(k=>!checks[k]);

@@ -77,3 +77,19 @@ test('CRM preflight: somente leitura, destino/papel/RLS/ledger/trigger/índice f
     await assert.rejects(inspectCrmPreflight(f.admin,{database:'',schema:'public'}),/DESTINATION_REQUIRED/);
   }finally{await f.close();}
 });
+
+test('CRM preflight: policy restrictive-only e PUBLIC column ACL não homologam schema',async()=>{
+  const f=await localCrmFixture();try {
+    const expected=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+    const inspect=()=>f.data.withTransaction(tx=>inspectCrmPreflight(tx,expected));
+    await f.exec(`GRANT SELECT(codigo),UPDATE(status) ON oportunidades TO PUBLIC`);
+    assert.ok((await inspect()).blocked.includes('noPublicDml'));
+    await f.exec('REVOKE SELECT(codigo),UPDATE(status) ON oportunidades FROM PUBLIC');
+    assert.equal((await inspect()).ready,true);
+    await f.exec(`DROP POLICY oportunidades_tenant_scope ON oportunidades;
+      CREATE POLICY oportunidades_tenant_scope ON oportunidades AS RESTRICTIVE FOR ALL
+      USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)
+      WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)`);
+    assert.ok((await inspect()).blocked.includes('policy'));
+  }finally{await f.close();}
+});
