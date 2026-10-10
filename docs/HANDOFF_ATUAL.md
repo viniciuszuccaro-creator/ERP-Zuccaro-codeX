@@ -47,9 +47,17 @@ Fail-closed preservado (gate por seção).
 - DetalhesCliente: `uniqueKey` por id (anti janela dupla).
 - Evidência: `docs/evidence/inventario-launchpad-sectionkey-20261010.txt`.
 
+### Sexta ação — tip `4c0c167a` implantado erp-dev
+- CI SUCCESS · SPA `index-DFgiLWLi.js` · backup `pre-gate-e-20261010-122408.sql` · rollback `pre-spa-login-20261010-122409`.
+- Bundle público confirma sectionKeys + shouldAccept + DetalhesCliente uniqueKey.
+- Homolog badges owner: **BLOCKED** neste agente (sem OWNER email/senha no `.env.erp.dev` / Runtime Secret).
+- P0 codigo: Cliente/Produto/TabelaPreco via `reserveEntityCodigo` (preserve incoming + high-water).
+- Evidência: `docs/vps/evidence/deploy-261-tip-4c0c167a-integrado-20261010.txt`.
+
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
+#254 tip já em #261 — merge owner coordenado sem segunda cópia.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 

@@ -1,15 +1,25 @@
+## CURSOR — #261 tip `4c0c167a` implantado (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | #254 `b11843c8` · sectionKey Compras/Estoque/Expedição/Financeiro · `uniqueKey` DetalhesCliente · `reserveEntityCodigo` Cliente/Produto/TabelaPreco |
+| **preservado #261** | piloto HTTP · Organizacional · fallback células · classify/merge |
+| **sem cópia divergente** | tip #254 nos mesmos arquivos #261 |
+| CI tip `4c0c167a` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`4c0c167a`** · `index-DFgiLWLi.js` · backup `pre-gate-e-20261010-122408.sql` · rollback `pre-spa-login-20261010-122409` |
+| bundle público | sectionKeys caixa/ordens_compra/requisicoes/entregas/roteirizacao/nfe presentes |
+| homolog browser | asset PASS · login **BLOCKED** (sem credencial owner no env do agente) |
+| evidências | `deploy-261-tip-4c0c167a-integrado-20261010.txt` · `integracao-254-b11843c8-no-261-20261010.txt` · `inventario-launchpad-sectionkey-20261010.txt` |
+| próxima | homolog badges com sessão owner · formulários codigo readonly residual · Legado CPA/#211 |
+
 ## CURSOR — #261 launchpads sectionKey + #254 tip (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | #254 `b11843c8` corridas login/empresa · sectionKey canônico Compras/Estoque/Expedição/Financeiro · aliases UI→owner · DetalhesCliente `uniqueKey` anti-dupla |
-| **preservado #261** | piloto HTTP · Organizacional · fallback células · classify/merge edit load |
-| **sem cópia divergente** | tip #254 incorporado nos mesmos arquivos #261 |
-| **testes** | erp-http-session + financeiro-launchpad + empresa-edicao **65/65** |
-| CI tip `95ee6179` | erp-runtime-ci **SUCCESS** (push+PR) |
-| **implantado** | erp-dev ainda **`7fe1067b`** — redeploy do tip atual pendente |
-| evidências | `integracao-254-b11843c8-no-261-20261010.txt` · `inventario-launchpad-sectionkey-20261010.txt` |
-| próxima | redeploy VPS → homolog launchpads + fluxo login→empresa → códigos P0 Cliente/Produto/TabelaPreco |
+| **implementado** | #254 `b11843c8` · sectionKey canônico · DetalhesCliente `uniqueKey` |
+| CI tip `95ee6179`/`601c179e` | SUCCESS |
+| **implantado** | supersedido por **`4c0c167a`** |
+| próxima | supersedido pelo bloco tip `4c0c167a` acima |
 
 ## CURSOR — #261 + #254 tip `b11843c8` corridas login/empresa (2026-10-10)
 
