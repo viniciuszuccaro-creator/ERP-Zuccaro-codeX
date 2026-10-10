@@ -1,6 +1,18 @@
+## TIP c125c4db IMPLANTADO — policy CRM + revisão Codex (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| **PR HEAD #261** | **`c125c4db`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · API `dist/domain/crmOportunidadePolicy.js` |
+| rollback | `pre-spa-login-20261010-180111` |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `c125c4db` |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
+| #266 Codex | tip **`cb3af26e`** · CI SUCCESS · IDLE · **não** merge Cursor (#211) |
+| porte neste ciclo | nenhum (Legado fora; #265/#263 já absorvidos) |
+
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
-Fonte única: `server/src/domain/crmOportunidadePolicy.js`. O arquivo `src/components/lib/crmOportunidadePolicy.js` permanece wrapper. A API empacota essa fonte porque o contexto Docker continua `server/` (`COPY src` → `dist/domain`). Não alargar o contexto para a raiz: `docker build ./server` é o contrato do compose, do gate-f, do canário e do incidente. Codex importa o módulo; não edita a policy nem a UI. Schema, repositório e RLS da 040 seguem no workspace Codex, sem corte do store e sem dual-write.
+Fonte única: `server/src/domain/crmOportunidadePolicy.js`. O arquivo `src/components/lib/crmOportunidadePolicy.js` permanece wrapper. A API empacota essa fonte porque o contexto Docker continua `server/` (`COPY src` → `dist/domain`). Não alargar o contexto para a raiz: `docker build ./server` é o contrato do compose, do gate-f, do canário e do incidente. Codex importa o módulo; não edita a policy nem a UI. Schema, repositório e RLS da 040 seguem no workspace Codex, sem corte do store e sem dual-write. **Implantado** erp-dev tip **`c125c4db`**.
 
 ## REVISÃO CODEX AUTÔNOMO (2026-10-10)
 
@@ -8,27 +20,27 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 
 | PR / agente | Achado | Ação Cursor |
 |---|---|---|
-| [#265](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/265) tip `910e4ec9` | Produto+Orçamento sobre #261; MERGEABLE | Produto já em `db89aa45`; **Orçamento porte** neste ciclo |
-| [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) | vs main · ancestral do Orçamento em #265 | absorvido via porte seletivo na #261 |
-| [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) tip `001e6c85` | Legado mestres+retry · agente RUNNING | **não** merge Cursor — #211 |
+| [#265](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/265) tip `910e4ec9` | Produto+Orçamento sobre #261; MERGEABLE · IDLE | já em #261 — **não** re-portar |
+| [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) | vs main · ancestral Orçamento | absorvido |
+| [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) tip **`cb3af26e`** | Legado crosswalk/tipo + SQL headers · IDLE · CI SUCCESS | **não** merge Cursor — #211 |
 | #254 | ancestral OPEN | não re-portar |
-| Agentes | Legado RUNNING | timer contínuo |
+| Agentes | Legado/Produto/Orçamento **IDLE** | timer contínuo |
 
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
-Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD novo.
+Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `9f084ed0` ao HEAD novo.
 
 | Item | Valor |
 |---|---|
 | `origin/main` | **`baba91a6`** (merge #257) · **não** contém o HEAD da #261 |
-| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip CRM legado C360 · mergeable vs main · **não** incorporada na main |
+| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip policy CRM · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`9f084ed0`** · `index-C-lbE7zK.js` · ≡ PR HEAD (Orçamento+#265) |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `9f084ed0` |
+| SHA implantado | **`c125c4db`** · `index-C-lbE7zK.js` · ≡ PR HEAD |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `c125c4db` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
-| CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
-| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main · azul residual |
+| CRM | C360 adaptador **opção B** · policy shared API · HTTP canônico server **pendente Codex** · sem CRM paralelo |
+| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main |
 
 ## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
 
@@ -40,32 +52,32 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | **`9f084ed0`** · CI SUCCESS · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`9f084ed0`** · asset `index-C-lbE7zK.js` · ≡ PR HEAD |
-| rollback | `pre-spa-login-20261010-172341` |
+| **PR HEAD #261** | **`c125c4db`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · ≡ PR HEAD |
+| rollback | `pre-spa-login-20261010-180111` |
 | backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`9f084ed0`** (não reusar SHAs anteriores) |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`c125c4db`** (não reusar SHAs anteriores) |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
-| CRM | C360 adaptador **opção B** (legado Oportunidade); HTTP canônico **pendente Codex** (sem paralelo) |
+| CRM | C360 adaptador **opção B** + policy shared; HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
-| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo |
+| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo · Legado #266/#211 |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `deploy-261-tip-db89aa45-porte-265-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` · `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`9f084ed0`** (ou tip docs posterior).
-2. Confirmar VPS: `MERGE_SHA8=9f084ed0` / `index-C-lbE7zK.js` — não atribuir homolog antiga a este tip.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`c125c4db`** (ou tip docs posterior).
+2. Confirmar VPS: `MERGE_SHA8=c125c4db` / `index-C-lbE7zK.js` — não atribuir homolog antiga a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. ~~CI + redeploy tip CRM+azul+#265+Orçamento~~ **feito** `9f084ed0` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
+1. ~~CI + redeploy tip policy CRM~~ **feito** `c125c4db` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
 2. Secret usuário restrito → homolog fail-closed FE+BE.
 3. Inventário residual (POD/Separação keep-both; Painel seletivo).
 4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
-5. Codex: decidir CRM HTTP (A schema) se for além do adaptador B; Legado #211.
+5. Codex: CRM HTTP (A schema) se além do adaptador B; Legado #211/#266.
 
 ### Pendências / parcial (não concluído)
 - Homolog usuário restrito.

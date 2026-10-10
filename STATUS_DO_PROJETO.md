@@ -1,3 +1,20 @@
+## CURSOR — tip c125c4db implantado + revisão Codex timer (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **PR HEAD #261** | **`c125c4db`** · MERGEABLE → main · CI SUCCESS |
+| **implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · API `dist/domain/crmOportunidadePolicy.js` · rollback `pre-spa-login-20261010-180111` |
+| **homologado implantado** | owner tipado **este SHA** fail_count=0 · screenshot `pw-homolog-261-tip-c125c4db.png` |
+| policy CRM | fonte única `server/src/domain/crmOportunidadePolicy.js` · wrapper FE · testes FE 6/6 + server shared 2/2 |
+| **#265** tip `910e4ec9` | MERGEABLE · Produto+Orçamento já em #261 · **não** re-portar |
+| **#263** tip `1b19f4ee` | ancestral Orçamento · MERGEABLE |
+| **#266** tip **`cb3af26e`** | MERGEABLE · CI SUCCESS · Legado crosswalk/tipo + headers SQL (`ca1234b9`) · agente **IDLE** · **não** mesclar Cursor (#211) |
+| **#254** | ancestral OPEN `20a2c2fb` — não re-portar |
+| porte Cursor neste ciclo | **nenhum** (só docs/evidência; Legado fora de escopo) |
+| usuário restrito | **BLOCKED** sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · #266/#211 · timer |
+
 ## CURSOR — policy CRM compartilhada para o pacote 040 (2026-10-10)
 
 | Item | Estado |
@@ -9,19 +26,20 @@
 | Docker | contexto continua `./server` (`docker build ./server` do compose, gate-f, canário e incidente). `COPY src` + build exigem `dist/domain/crmOportunidadePolicy.js` |
 | ownership | Cursor edita a policy e o wrapper. Codex importa; schema/repositório/RLS 040 seguem no workspace Codex. UI/store sem corte nem dual-write |
 | testes | `tests/crm-oportunidade-policy.test.js` (wrapper ≡ fonte). `server/tests/crm-oportunidade-policy-shared.test.ts`. server typecheck/build PASS. suite server 307 pass / 0 fail / 18 skip. typecheck raiz segue com erros anteriores fora deste diff |
-| próxima | Codex rebaseia este commit sobre `8dd52c78` e importa `../domain/crmOportunidadePolicy.js`. Sem migration 040 nesta branch |
+| implantado | supersedido pelo bloco tip **`c125c4db`** acima |
+| próxima | Codex importa `../domain/crmOportunidadePolicy.js` no workspace 040. Sem migration 040 nesta branch |
 
 ## CURSOR — revisão Codex autônomo (ciclo timer) (2026-10-10)
 
 | Item | Estado |
 |---|---|
-| **#265** tip `910e4ec9` | MERGEABLE · CI FE SUCCESS / BE parcial · Produto **já em** `db89aa45` · Orçamento **porte neste tip** |
+| **#265** tip `910e4ec9` | MERGEABLE · Produto **já em** `db89aa45` · Orçamento **já em** `80ba3187` |
 | **#263** | ancestral do pacote Orçamento · tip `1b19f4ee` · vs main MERGEABLE |
-| **#266** tip `001e6c85` | MERGEABLE · Legado (+`661f3ef3` retry tenant/classe) · **não** mesclar Cursor · agente **RUNNING** |
+| **#266** tip **`cb3af26e`** | MERGEABLE · Legado · **não** mesclar Cursor · agente **IDLE** |
 | **#254** | ancestral OPEN `20a2c2fb` — não re-portar |
-| implantado erp-dev | **`9f084ed0`** · `index-C-lbE7zK.js` · Orçamento+#265 homolog owner fail_count=0 |
-| agentes | Legado RUNNING · Produto/Orçamento IDLE |
-| próxima | secret restrito · merge owner #261→main · #266/#211 · timer |
+| implantado erp-dev | supersedido por **`c125c4db`** / `index-C-lbE7zK.js` |
+| agentes | Legado IDLE · Produto/Orçamento IDLE |
+| próxima | supersedido pelo bloco tip `c125c4db` acima |
 
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
@@ -29,30 +47,30 @@
 |---|---|
 | **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
 | **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
-| **PR HEAD #261** | **`9f084ed0`** · MERGEABLE → main |
-| CI tip `9f084ed0` | erp-runtime-ci **SUCCESS** |
-| **implantado** | erp-dev **`9f084ed0`** · `index-C-lbE7zK.js` · rollback `pre-spa-login-20261010-172341` |
-| **homologado implantado** | owner tip **`9f084ed0`** fail_count=0 (login tipado + Clientes + launchpads) |
+| **PR HEAD #261** | **`c125c4db`** · MERGEABLE → main |
+| CI tip `c125c4db` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`c125c4db`** · `index-C-lbE7zK.js` · rollback `pre-spa-login-20261010-180111` |
+| **homologado implantado** | owner tip **`c125c4db`** fail_count=0 (login tipado + Clientes + launchpads) |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
-| **implementado neste lote** | C360 CRM · #265 Produto · #263/#265 Orçamento tenant-safe · Contratos ID/azul · AdminHeader azul |
+| **implementado neste lote** | C360 CRM · #265 Produto · #263/#265 Orçamento tenant-safe · Contratos/AdminHeader azul · policy CRM shared API |
 | **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
-| evidência | `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `deploy-261-tip-db89aa45-porte-265-20261010.txt` |
-| próxima | secret restrito · merge owner #261→main · #266/#211 Legado · #263 owner · CRM HTTP Codex |
+| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` · `deploy-261-tip-9f084ed0-orcamento-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · #266/#211 Legado · CRM HTTP Codex |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul · porte #265 |
+| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul · porte #265 · policy CRM shared |
 | **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
-| **PR HEAD** | tip **`9f084ed0`** · **não** em `main` `baba91a6` |
-| **implantado** | supersedido pelo bloco pós-#264 (`9f084ed0` / `index-C-lbE7zK.js`) |
-| **homologado** | tip **`9f084ed0`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **PR HEAD** | tip **`c125c4db`** · **não** em `main` `baba91a6` |
+| **implantado** | supersedido pelo tip **`c125c4db`** / `index-C-lbE7zK.js` |
+| **homologado** | tip **`c125c4db`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
 | **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
-| handoff | `docs/HANDOFF_ATUAL.md` · RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
+| handoff | `docs/HANDOFF_ATUAL.md` · tip c125c4db + RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
 | BLOCKED | usuário restrito · CRM HTTP schema server · Legado |
-| próxima | supersedido pelo bloco pós-#264 acima |
+| próxima | supersedido pelo bloco tip `c125c4db` acima |
 
 ## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 
