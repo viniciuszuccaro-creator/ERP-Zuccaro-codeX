@@ -60,5 +60,18 @@
 - Integrado seletivamente em #261 (erpHttpSession, Auth/User/Contexto*, Visualizador scope clear)
 - Reservado Codex: não misturar sessão/outbox; merge owner #254 vs #261
 
+## Painel / Contratos / Sistema (complemento 2026-10-10)
+### Painel
+- Dashboard (empresa) × DashboardCorporativo (grupo) — escopos distintos; keep both
+- Relatórios / Agenda — entradas sidebar; sem duplicata de launchpad Cadastros
+### Contratos
+- Menu ADMINISTRATIVO → Contratos (página existente); não criar ContratosV2
+- Capacidades: inventário UX (lista/abrir/salvar) pendente homolog tip implantado
+### Sistema / Integrações
+- Administração do Sistema · PerfilAcesso aliases → `Sistema.acessos`
+- Bloco6: ApiExterna, Chatbot*, Gateway, Job, Webhook, ConfiguracaoNFe, EventoNotificacao
+### Pacote tip
+- PR HEAD #261 `d2e31eec` · merge `861513cd` · #254 `20a2c2fb` · #264 `d9403665` · implantado `bdeec58c`
+
 ## Recuperado
 NÃO legado. SYNTH/GATE-D ≠ recuperado.

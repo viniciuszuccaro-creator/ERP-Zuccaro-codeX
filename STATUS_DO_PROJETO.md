@@ -1,3 +1,20 @@
+## CURSOR — #261 tip integrado `#264`+#254 `20a2c2fb` (2026-10-10)
+
+| Pacote | SHA / estado |
+|---|---|
+| **PR HEAD #261** | `d2e31eec` (docs pacote) · merge código **`861513cd`** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **código incorporado** | #254 final **`20a2c2fb`** (ancestral) · #264 tip **`d9403665`** (useProdutoHttpEditLoad · actorId/token · cliente consolidado) · #261 minify-safe **`bdeec58c`** |
+| **SHA implantado** | erp-dev ainda **`bdeec58c`** · `index-5EmU7-cb.js` · **≠** PR HEAD (redeploy pendente) |
+| responsável integração | **Cursor** merge em #261 · Codex dono porte #254→#264 · sem segunda cópia dos mesmos arquivos |
+| **preservado** | `isSelfManagedCadastro` · freeze sessão≡render · V23→V24 · HTTP ativo≠status · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
+| testes locais | `produto-http-edit-load` + `cadastros-empresa-edicao-load` + `produto-pim-ui` **40/40** |
+| CI tip `d2e31eec` | erp-runtime-ci (push) |
+| **homologado** tip implantado | só **`bdeec58c`** (fail_count=0) — não atribuir a `d2e31eec`/`861513cd` |
+| residual | redeploy+homolog tip integrado · usuário restrito · Legado #211 · ManagePR casing |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | CI tip · implantar `d2e31eec` · homolog login tipado neste SHA · merge owner |
+
 ## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
 
 | Fase | Estado |
@@ -5,14 +22,14 @@
 | **implementado** | `isSelfManagedCadastro` minify-safe · freeze scope quando sessão≡render · V23→V24 · HTTP ativo≠status |
 | **causa crash salvar** | `Function.name` some no bundle → onSuccess chamava `handlePersistSubmit` → ErrorBoundary |
 | **preservado** | #254 `4a1ecf4c` · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
-| CI tip `bdeec58c` | erp-runtime-ci (push/PR) |
+| CI tip `bdeec58c` | erp-runtime-ci **SUCCESS** |
 | **implantado** | erp-dev **`bdeec58c`** · `index-5EmU7-cb.js` · backup `pre-gate-e-20261010-134527.sql` · rollback `pre-spa-login-20261010-134528` |
 | **homologado** (este SHA) | login tipado · Clientes V24 n=5 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads · **fail_count=0** |
-| residual | usuário restrito · Legado #211 · ManagePR casing ERP-Zuccaro-codeX |
+| residual | supersedido como HEAD de código pelo tip `861513cd` (ainda é o SHA implantado) |
 | matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` (V23→V24 **feito**) |
 | evidências | `deploy-261-tip-bdeec58c-salvar-minify-20261010.txt` · `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | merge owner #261 · Legado #211 · usuário restrito |
+| próxima | redeploy tip integrado `861513cd` |
 
 ## CURSOR — #261 tip `0d458ab9` (Clientes API×UI + V23→V24) (2026-10-10)
 

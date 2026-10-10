@@ -73,10 +73,23 @@ Fail-closed preservado (gate por seção).
 - Residual: usuário restrito · Legado #211 · ManagePR casing repo.
 - Evidência: `deploy-261-tip-bdeec58c-salvar-minify-20261010.txt`.
 
+### Décima primeira ação — integração #264 + #254 final `20a2c2fb` em #261
+| Pacote | Valor |
+|---|---|
+| responsável | **Cursor** (merge na candidata #261) · Codex porte #254→#264 |
+| HEAD referência #254 | **`20a2c2fb`** (ancestral de #261 pós-merge) |
+| HEAD #264 Codex | **`d9403665`** · CI SUCCESS · base #261 `d31b9bbe`/`a004044b` |
+| **PR HEAD #261** | **`d2e31eec`** (docs) · merge código **`861513cd`** |
+| código incorporado | `useProdutoHttpEditLoad` · actorId/token no form scope/edit policy · cliente consolidado · **preservado** `isSelfManagedCadastro` minify-safe |
+| **SHA implantado** | ainda **`bdeec58c`** — **não** confundir com PR HEAD |
+| sem cópia divergente | Cursor **não** re-portou #254 enquanto Codex fechava #264; merge preservou ambos os conjuntos |
+| testes | produto-http-edit-load + edicao-load + pim-ui 40/40 |
+| próxima | CI tip `d2e31eec` · redeploy erp-dev · homolog **neste** SHA · merge owner #261/#264 |
+
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
 Contratos CPA/compartilhados e recuperação real: Legado (#211); Cursor prepara UI/consumo sem SYNTH.
-#254 tip `4a1ecf4c` já em #261 — merge owner coordenado sem segunda cópia.
+#254 tip **`20a2c2fb`** + #264 tip **`d9403665`** já em #261 HEAD `861513cd` — merge owner coordenado; não abrir segundo porte.
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 

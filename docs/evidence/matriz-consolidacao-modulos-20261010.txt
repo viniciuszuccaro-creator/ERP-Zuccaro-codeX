@@ -20,8 +20,31 @@
 Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, Produção, RH, CRM.
 **Preservado:** Financeiro CR green ≠ Régua violet; EmpresaSwitcher grupo azul/empresa roxo; CTAs/funcionalidades posteriores (#261 HTTP, codigo, Pedido Onda 5).
 
-## #254 tip integrado
-HEAD #254 `4a1ecf4c` portado em #261: form scope session freeze, assert delete, produto HTTP edit-ready + retry.
+## #254 / #264 tip integrado (pacote)
+| item | SHA |
+|---|---|
+| #254 final | `20a2c2fb` (ancestral) |
+| #264 Codex | `d9403665` (porte #254→base #261) |
+| PR HEAD #261 | `d2e31eec` (docs) · merge `861513cd` |
+| implantado erp-dev | `bdeec58c` (≠ HEAD até redeploy) |
+Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
+
+## Inventário complementar (independente da integração)
+| módulo | canônico | duplicidade | status |
+|---|---|---|---|
+| Painel | Dashboard + DashboardCorporativo | escopos distintos | keep both |
+| CRM | Funil* ×3 | decisão HTTP | BLOCKED |
+| Cadastros | V24 + Completo forms | V23 redirect feito | keep |
+| Comercial | Comercial.jsx + C360 | fonte única por entidade | keep · vínculos |
+| Estoque | Estoque hub V24 Produtos | — | azul aplicado |
+| Compras | Compras hub V24 Fornecedores | — | azul aplicado |
+| Expedição | Expedicao hub | Separacao×IA / Comprovante× | keep both curto |
+| Produção | Producao hub | — | azul aplicado |
+| Financeiro | Financeiro hub | Aprovações→Central | redirect feito |
+| Fiscal | Fiscal sectionKey nfe… | — | RBAC ok |
+| RH | RH hub V24 Colaboradores | — | azul aplicado |
+| Contratos | Contratos | — | inventariar UX |
+| Sistema | Administração | PerfilAcesso→Sistema.acessos | aliases ok |
 
 ## Recuperado
 NÃO legado · SYNTH≠recuperado · #211 Codex Legado
