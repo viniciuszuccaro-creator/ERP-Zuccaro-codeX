@@ -1,0 +1,24 @@
+# Deploy #261 tip 7f00e392 — Fiscal RBAC (2026-10-10)
+# Sanitizado — sem tokens, sem PII.
+
+| Campo | Valor |
+|---|---|
+| tip | **7f00e392** (código Fiscal `062ef3fe` + docs matriz) |
+| branch | cursor/cadastros-recuperacao-c360-contrato-392b |
+| script | spa-login-rebuild-api-web.sh CONFIRM=YES GIT_REF=HEAD |
+| SPA asset | /assets/index-BAZjmDZB.js |
+| health 3080/3081 | 200 / 200 |
+| backup SQL | pre-gate-e-20261010-104907.sql · 1019489 B · sha256=bffe71de3d068c8c1741230133a4b725df943c8831f27f15552c1004a2e65df6 |
+| rollback API | erp-zuccaro-erp-api:pre-spa-login-20261010-104908 |
+| rollback WEB | erp-zuccaro-erp-web:pre-spa-login-20261010-104908 |
+| runtime | ERP-RUNTIME-08B · auth supabase_user |
+
+## Delta
+- Fiscal.jsx sectionKey canônico (nfe / tabelas_fiscais / sped / obrigacoes)
+- aliases UI→owner em usePermissions + localBase44Client
+- NotasFiscaisTab consulta Fiscal.nfe
+- data-permission Nova NF-e = Fiscal.nfe.emitir
+- teste owner Fiscal + matriz inventário
+
+## Homolog browser (pendente hard refresh)
+Fiscal launchpad sem badge Acesso negado nos cards owner; Empresas/Grupos/Marcas do tip ea213906.

@@ -1,14 +1,16 @@
-## CURSOR — Fiscal RBAC + inventário (pós-orientação 2026-10-10)
+## CURSOR — Fiscal RBAC tip `7f00e392` implantado (2026-10-10)
 
 | Fase | Estado |
 |---|---|
 | causa | launchpad usava título UI (`Notas Fiscais`) em `data-permission` / gate; árvore owner é `Fiscal.nfe|tabelas_fiscais|sped|obrigacoes` |
-| **implementado** | `Fiscal.jsx` sectionKey canônico + NotasFiscaisTab · aliases UI→owner em `usePermissions`/`localBase44Client` · `Fiscal.nfe` em NotasFiscaisTab · teste owner Fiscal |
+| **implementado** | `Fiscal.jsx` sectionKey canônico + NotasFiscaisTab · aliases UI→owner · `Fiscal.nfe` em NotasFiscaisTab · teste owner Fiscal |
 | fail-closed | gate por seção (sem liberar tudo só com `Fiscal.visualizar`) |
 | matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| **implantado** | tip anterior erp-dev **`ea213906`** · este lote aguarda CI+deploy |
-| próxima | CI tip · implantar VPS · hard refresh Fiscal/Empresas/Grupos/Marcas · inventário restante · merge owner |
+| **implantado** | erp-dev **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` |
+| CI tip `062ef3fe` | erp-runtime-ci **SUCCESS** (push+PR) · docs tip `7f00e392` CI em curso |
+| evidências | `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt` |
+| próxima | hard refresh Fiscal/Empresas/Grupos/Marcas · inventário Estoque/Expedição/Compras · merge owner #261 |
 
 ## CURSOR — Auditoria global UI (pós-orientação 2026-10-10)
 

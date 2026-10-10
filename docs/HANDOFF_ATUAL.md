@@ -24,7 +24,8 @@ Corrigido Visualizador: gate `Organizacional` no `data-permission`; fallback sem
 ### Segunda ação efetiva Cursor — Fiscal RBAC
 Causa: cards/botões usavam `Fiscal.Notas Fiscais.*` enquanto owner tree é `Fiscal.nfe|tabelas_fiscais|sped|obrigacoes`.
 Correção: `sectionKey` canônico no launchpad + aliases UI→owner em `usePermissions`/`localBase44Client` + `NotasFiscaisTab` consulta `Fiscal.nfe` + teste focado owner.
-Fail-closed preservado (gate por seção). Deploy tip pendente de CI deste commit.
+Fail-closed preservado (gate por seção).
+**Implantado** erp-dev tip **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` · evidência `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
