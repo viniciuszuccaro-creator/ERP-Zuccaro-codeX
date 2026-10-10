@@ -90,7 +90,7 @@ Fail-closed preservado (gate por seção).
 - Contratos: ID técnico em `ContratoForm` + `ContratoDialogs` (≠ número).
 - Central 360: código + ID técnico; orçamentos/pedidos com status e id (fonte canônica).
 - Tip branch pós-push · implantado permanece **`bdeec58c`** até redeploy.
-- ManagePR update BLOCKED (casing `ERP-Zuccaro-codeX` vs `erp-zuccaro-codex`).
+- ManagePR: usar URL lowercase `erp-zuccaro-codex` (PR #261 atualizado).
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
