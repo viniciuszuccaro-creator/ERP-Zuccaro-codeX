@@ -47,8 +47,9 @@
 | evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
 | #266 Codex | tip **`cb3af26e`** · CI SUCCESS · IDLE · **não** merge Cursor (#211) |
 | #267 Codex | tip **`e3194fb1`** · CRM HTTP 040 · IDLE · **monitorar** (sem porte/deploy) |
-| #268 Codex | tip **`5a9d2500`** · CRM→Pedido · IDLE · **monitorar** (depende #267; sem porte) |
-| porte neste ciclo | nenhum (Legado/#267/#268 schema fora; #265/#263 já absorvidos) |
+| #268 Codex | tip **`5a38a94e`** · CRM→Pedido exclusivo · IDLE · **monitorar** (depende #267; sem porte) |
+| #269 Codex | tip **`5116c257`** · CRM preflight RO · RUNNING · **monitorar** (sem porte/exec DEV) |
+| porte neste ciclo | nenhum (Legado/#267–#269 schema fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -64,9 +65,10 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) | vs main · ancestral Orçamento | absorvido |
 | [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) tip **`cb3af26e`** | Legado crosswalk/tipo + SQL headers · IDLE · CI SUCCESS | **não** merge Cursor — #211 |
 | [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`e3194fb1`** | CRM HTTP 040 · IDLE · CI SUCCESS · flag off | **monitorar** — sem porte/merge/VPS |
-| [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a9d2500`** | CRM→Pedido sobre #267 · CI SUCCESS · flag off | **monitorar** — sem porte; depende #267 |
+| [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a38a94e`** | CRM→Pedido exclusivo sobre #267 · CI SUCCESS · flag off | **monitorar** — sem porte; depende #267 |
+| [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`5116c257`** | preflight RO · CI IN_PROGRESS · RUNNING | **monitorar** — sem porte/exec DEV |
 | #254 | ancestral OPEN | não re-portar |
-| Agentes | CRM HTTP/#268 **IDLE** · Legado/Produto/Orçamento **IDLE** | timer contínuo |
+| Agentes | #269 **RUNNING** · #268/#267 **IDLE** · Legado/Produto/Orçamento **IDLE** | timer contínuo |
 
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
