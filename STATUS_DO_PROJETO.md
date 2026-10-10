@@ -4,15 +4,16 @@
 |---|---|
 | **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
 | **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
-| **PR HEAD #261** | tip CRM legado C360 · CI **pendente** neste tip · MERGEABLE → main |
+| **PR HEAD #261** | **`21a63549`** CRM legado C360 · + tip Contratos ID lista · MERGEABLE → main |
+| CI tip `21a63549` | erp-runtime-ci **SUCCESS** (frontend+backend) · runs `38068118516`/`38068115361` |
 | **implantado** | erp-dev **`f22d1151`** · `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
 | **homologado implantado** | owner tip `f22d1151` fail_count=0 — **não** atribuir ao tip CRM |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
-| **implementado neste lote** | C360 adaptador CRM opção B (store Oportunidade) · CRM queryKey group/empresa · funis `sectionKey=oportunidades` · testes 7/7 |
+| **implementado neste lote** | C360 adaptador CRM opção B · CRM multiempresa/`sectionKey` · Contratos lista ID técnico · testes 7/7 |
 | **não feito** | CRM HTTP canônico novo (reservado Codex A schema) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
 | evidência | `reconciliacao-261-pos-264-main-20261010.txt` |
-| próxima | CI tip · redeploy · homolog owner neste SHA · secret restrito · azul residual · merge owner · #211 |
+| próxima | redeploy tip CRM+Contratos · homolog owner neste SHA · secret restrito · azul residual · merge owner · #211 |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 

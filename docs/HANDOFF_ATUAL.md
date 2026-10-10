@@ -24,7 +24,7 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | tip CRM legado C360 · CI pendente neste tip · MERGEABLE → `main` |
+| **PR HEAD #261** | tip CRM legado C360 **`21a63549`** (+ Contratos ID lista) · CI SUCCESS em `21a63549` · MERGEABLE → `main` |
 | **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
 | rollback | `pre-spa-login-20261010-144429` |
 | backup | `pre-gate-e-20261010-144428.sql` (só VPS; **não** no Git) |

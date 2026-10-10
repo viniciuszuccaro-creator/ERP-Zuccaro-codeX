@@ -44,7 +44,7 @@ Capacidades: form scope session freeze + actorId/token · assert delete · `useP
 | Financeiro | Financeiro hub | Aprovações→Central | redirect feito |
 | Fiscal | Fiscal sectionKey nfe… | — | RBAC ok |
 | RH | RH hub V24 Colaboradores | — | azul aplicado |
-| Contratos | Contratos | — | inventariar UX |
+| Contratos | Contratos | — | form ID técnico ok · lista ID técnico neste tip |
 | Sistema | Administração | PerfilAcesso→Sistema.acessos | aliases ok |
 
 ## Recuperado

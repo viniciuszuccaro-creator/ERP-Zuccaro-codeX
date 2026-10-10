@@ -66,7 +66,7 @@
 - Relatórios / Agenda — entradas sidebar; sem duplicata de launchpad Cadastros
 ### Contratos
 - Menu ADMINISTRATIVO → Contratos (página existente); não criar ContratosV2
-- Capacidades: inventário UX (lista/abrir/salvar) pendente homolog tip implantado
+- Form: ID técnico readonly (≠ número); lista: coluna ID técnico; homolog UX pendente tip implantado pós-redeploy
 ### Sistema / Integrações
 - Administração do Sistema · PerfilAcesso aliases → `Sistema.acessos`
 - Bloco6: ApiExterna, Chatbot*, Gateway, Job, Webhook, ConfiguracaoNFe, EventoNotificacao
