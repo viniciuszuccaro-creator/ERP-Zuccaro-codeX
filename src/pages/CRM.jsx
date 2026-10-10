@@ -39,8 +39,11 @@ export default function CRMPage() {
     await updateInContext('Oportunidade', oportunidadeId, { etapa: novaEtapa, etapa_funil: novaEtapa });
   };
 
+  const groupId = empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const scopeKey = [groupId, empresaAtual?.id, estaNoGrupo ? 'grupo' : 'empresa'];
+
   const { data: oportunidades = [] } = useQuery({
-    queryKey: ['oportunidades', empresaAtual?.id],
+    queryKey: ['oportunidades', ...scopeKey],
     queryFn: async () => filtrarPorContexto('Oportunidade', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 2,
@@ -48,7 +51,7 @@ export default function CRMPage() {
   });
 
   const { data: interacoes = [] } = useQuery({
-    queryKey: ['interacoes', empresaAtual?.id],
+    queryKey: ['interacoes', ...scopeKey],
     queryFn: async () => filtrarPorContexto('Interacao', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 1,
@@ -56,7 +59,7 @@ export default function CRMPage() {
   });
 
   const { data: campanhas = [] } = useQuery({
-    queryKey: ['campanhas', empresaAtual?.id],
+    queryKey: ['campanhas', ...scopeKey],
     queryFn: async () => filtrarPorContexto('Campanha', {}, '-created_date', 50, 'empresa_dona_id'),
     staleTime: 30000,
     retry: 1,
@@ -64,7 +67,7 @@ export default function CRMPage() {
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
+    queryKey: ['clientes', ...scopeKey],
     queryFn: async () => filtrarPorContexto('Cliente', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 1,
@@ -72,7 +75,7 @@ export default function CRMPage() {
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count-crm', empresaAtual?.id],
+    queryKey: ['clientes-count-crm', ...scopeKey],
     queryFn: async () => {
       const response = await base44.functions.invoke('countEntities', {
         entityName: 'Cliente',
@@ -116,11 +119,12 @@ export default function CRMPage() {
   const modules = [
     {
       title: 'Funil Visual',
-      description: 'Drag-drop etapas',
+      description: 'Canônico · drag-drop (fonte Oportunidade)',
       icon: TrendingUp,
       color: 'blue',
+      sectionKey: 'oportunidades',
       component: FunilVisual,
-      windowTitle: '🎯 Funil Visual',
+      windowTitle: 'Funil Visual',
       width: 1600,
       height: 900,
       props: {
@@ -131,33 +135,36 @@ export default function CRMPage() {
     },
     {
       title: 'Funil IA',
-      description: 'Análise inteligente',
+      description: 'Especializado IA · mesma fonte (não HTTP paralelo)',
       icon: Sparkles,
       color: 'blue',
+      sectionKey: 'oportunidades',
       component: FunilComercialInteligente,
-      windowTitle: '🤖 Funil IA',
+      windowTitle: 'Funil IA',
       width: 1500,
       height: 850,
       props: { windowMode: true }
     },
     {
       title: 'Funil Avançado',
-      description: 'Scoring automático',
+      description: 'Scoring · mesma fonte Oportunidade',
       icon: Target,
       color: 'blue',
+      sectionKey: 'oportunidades',
       component: FunilVendasAvancado,
-      windowTitle: '🎯 Funil Avançado',
+      windowTitle: 'Funil Avançado',
       width: 1500,
       height: 850,
       props: { windowMode: true }
     },
     {
       title: 'Oportunidades',
-      description: 'Gestão completa',
+      description: 'Lista canônica CRM',
       icon: Target,
       color: 'blue',
+      sectionKey: 'oportunidades',
       component: OportunidadesLista,
-      windowTitle: '📊 Oportunidades',
+      windowTitle: 'Oportunidades',
       width: 1500,
       height: 850,
       props: { oportunidades: oportunidadesFiltradas, windowMode: true }

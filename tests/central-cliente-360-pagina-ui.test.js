@@ -49,5 +49,5 @@ test('CentralCliente360Panel: Carregar mais real sem slice(0,5) morto', async ()
   assert.match(source, /setBlockLimits\(INITIAL_CENTRAL360_BLOCK_LIMITS\)/);
   assert.match(source, /\[clienteId, groupId, empresaId, actorId, sessionKey\]/);
   assert.match(source, /blockKey="crm"/);
-  assert.match(source, /status === 'skipped'/);
+  assert.match(source, /shouldUseCrmLegadoAdapter|status === 'skipped'/);
 });

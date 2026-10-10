@@ -1,22 +1,60 @@
+## CODEX — composicao Comercial 360 local (2026-10-10)
+
+Proprietario autorizou execucao neste chat em workspace separado.
+Branch #265 incorpora #261 `046f69f3`; conflitos somente documentais resolvidos
+preservando ambos os historicos. #264 continua ancestral da candidata, nao da main.
+Pacote alvo: Produto com GET completo e Orçamento com trava de submissao e
+resposta tardia isolada. Testes/CI/revisao do novo HEAD sao gates de integracao.
+
 ## CODEX — #265 handoff da correção Produto sobre #261 atual (2026-10-10)
 
 - Estado remoto conferido: #254 `20a2c2fb` e #264 `d9403665` integrados na #261; #261 HEAD `c3c45c21` (código `f22d1151` implantado/homologado segundo evidência Cursor). #265 `4ce27394` corrigiu GET parcial de Produto, CI SUCCESS e parecer Cursor favorável; não mesclado/implantado/homologado. O merge local da ponta #261 à #265 foi automático, sem sobrepor a branch Cursor, e ainda requer testes/CI/parecer do novo SHA.
 - Não transportar pressupostos de acesso: backup original, staging legado e secrets VPS devem ser verificados no novo host; nenhum dado real publicado. Arquivos Cursor em Cadastros/Visualizador/status/handoff não são editados na branch dele. Próximo P0: validar/publicar candidata #265 reconciliada, obter CI/revisão, homologar visualmente sob autorização; em paralelo, contrato explícito Produto Grupo×item Empresa antes da importação operacional.
+## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
+| **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
+| **PR HEAD #261** | **`58e01754`** · MERGEABLE → main |
+| CI tip `58e01754` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`58e01754`** · `index-Bl46Ykvq.js` · rollback `pre-spa-login-20261010-164602` |
+| **homologado implantado** | owner tip **`58e01754`** fail_count=0 (login tipado + Clientes + launchpads) |
+| usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
+| **implementado neste lote** | C360 CRM opção B · CRM multiempresa/`sectionKey` · Contratos ID lista · azul Contratos/AdminHeader · testes 7/7 |
+| **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
+| **recuperado / importado** | **NÃO** · #211 |
+| evidência | `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `deploy-261-tip-346192e4-crm-legado-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · Codex CRM HTTP / #211 · POD/Separação keep-both |
+
+## CURSOR — CONTINUIDADE CASA (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul hubs |
+| **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
+| **PR HEAD** | tip docs `75d93727` · runtime implantado **`58e01754`** · **não** em `main` `baba91a6` |
+| **implantado** | supersedido pelo bloco pós-#264 (`58e01754` / `index-Bl46Ykvq.js`) |
+| **homologado** | tip **`58e01754`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
+| handoff | `docs/HANDOFF_ATUAL.md` · RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
+| BLOCKED | usuário restrito · CRM HTTP schema server · Legado |
+| próxima | supersedido pelo bloco pós-#264 acima |
 
 ## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 
 | Pacote | SHA / estado |
 |---|---|
-| **PR HEAD / implantado** | **`f22d1151`** · `index-KP6RdCBA.js` · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **PR HEAD** | **`c3c45c21`** (docs) · runtime implantado **`f22d1151`** · `index-KP6RdCBA.js` |
 | **implementado** | MASTER_CODE+Cliente+Produto+Fornecedor+Representante codigo/ID · C360 fontes · #254/#264 |
-| CI tip `f22d1151` | erp-runtime-ci **SUCCESS** |
+| CI tip `f22d1151`/`c3c45c21` | erp-runtime-ci **SUCCESS** |
 | backup | `pre-gate-e-20261010-144428.sql` sha256 `a838fa18…c7a6` |
 | rollback | `pre-spa-login-20261010-144429` |
-| **homologado** (este SHA) | login tipado fail_count=0 · Clientes V24 · launchpads |
+| **homologado** (implantado) | login tipado fail_count=0 · Clientes V24 · launchpads |
 | usuário restrito | **BLOCKED** sem secret |
 | evidências | `deploy-261-tip-f22d1151-fornecedor-rep-20261010.txt` · `deploy-261-tip-6e397596-id-tecnico-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | secret restrito · merge owner #261/#264 · Legado #211 · inventário residual |
+| próxima | continuidade casa — ver bloco acima |
 
 ## CURSOR — #261 tip `6e397596` implantado (ID técnico) (2026-10-10)
 

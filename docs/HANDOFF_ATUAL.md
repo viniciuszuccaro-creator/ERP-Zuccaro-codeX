@@ -1,3 +1,13 @@
+## CODEX COMERCIAL 360 — execucao local autorizada (2026-10-10)
+
+Recebimento neste chat confirmado pelo proprietario: executar em workspace
+`comercial360-integracao-20261010`, branch propria da #265. Primeira acao:
+compor #265 com ponta Cursor #261 `046f69f3`, conservando todos os blocos de
+STATUS/HANDOFF e codigo #264. A main continua `baba91a6`; nao contem #261.
+Proximo: integrar protecoes Orçamento #263 revisadas, testar composicao final,
+publicar HEAD/CI e pedir Cursor revisar SHA exato. Legado continua separado #266.
+Sem merge main, VPS, migration ou canais neste lote de composicao.
+
 ## CODEX COMERCIAL 360 — checkpoint de troca de computador (2026-10-10)
 
 - Repositório canônico `viniciuszuccaro-creator/ERP-Zuccaro-codeX`. #254 HEAD `20a2c2fb` e #264 HEAD mesclado `d9403665` já são ancestrais da #261; não repetir o porte. Cursor é dono da branch #261 `cursor/cadastros-recuperacao-c360-contrato-392b`, HEAD público conferido `c3c45c21` (docs após código `f22d1151`).
@@ -5,6 +15,65 @@
 - Separação de estados: #265 **não** está mesclada à #261 nem implantada; o último SHA **implantado/homologado documentado pelo Cursor** é `f22d1151`, não `4ce27394` nem o merge Codex. Homologação de usuário restrito segue BLOCKED por secret ausente. Nenhuma importação legada, migration ou acesso VPS foi feito por esta frente.
 - Arquivos reservados: Cursor mantém Visualizador/Cadastros UI/STATUS/HANDOFF na #261; Codex só reconcilia em branch própria, sem sobrescrever sua branch. Legado mantém staging/mapeador privados; backup e credenciais não acompanham automaticamente troca de computador. Contrato Produto mestre de Grupo compartilhado × itens Orçamento/Pedido da empresa jurídica continua pendente; não afrouxar migrations 016/017 implicitamente.
 - Próximo executável: rodar testes no merge atual, publicar novo HEAD da #265 e pedir revisão exata; depois homologação visual autenticada sob gate operacional. Para legado, confirmar no novo host o acesso ao backup original e ao staging antes de qualquer extração; nunca pôr dados pessoais no GitHub.
+## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
+
+Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD novo.
+
+| Item | Valor |
+|---|---|
+| `origin/main` | **`baba91a6`** (merge #257) · **não** contém o HEAD da #261 |
+| #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip CRM legado C360 · mergeable vs main · **não** incorporada na main |
+| #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
+| #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
+| SHA implantado | **`58e01754`** · `index-Bl46Ykvq.js` · ≡ PR HEAD |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `58e01754` |
+| usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
+| CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
+| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main · azul residual |
+
+## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
+
+Troca de máquina. **Não depender** de alterações locais da empresa — só GitHub + este HANDOFF.
+
+| Item | Valor |
+|---|---|
+| repositório canônico | `viniciuszuccaro-creator/ERP-Zuccaro-codeX` (clone também via `erp-zuccaro-codex`) |
+| branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **main** | `baba91a6` — **#261 ainda não mesclada em main** |
+| **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
+| **PR HEAD #261** | **`58e01754`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`58e01754`** · asset `index-Bl46Ykvq.js` · ≡ PR HEAD |
+| rollback | `pre-spa-login-20261010-164602` |
+| backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
+| #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`58e01754`** (não reusar `346192e4`/`f22d1151`) |
+| usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
+| CRM | C360 adaptador **opção B** (legado Oportunidade); HTTP canônico **pendente Codex** (sem paralelo) |
+| **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
+| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo |
+| ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
+| evidência | `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `deploy-261-tip-346192e4-crm-legado-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
+| chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
+
+### Ao abrir no PC de casa
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`58e01754`** (ou tip docs posterior).
+2. Confirmar VPS: `MERGE_SHA8=58e01754` / `index-Bl46Ykvq.js` — não atribuir homolog antiga a este tip.
+3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
+4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
+
+### Próxima ação Cursor (independente enquanto merge owner)
+1. ~~CI + redeploy tip CRM+azul~~ **feito** `58e01754` / `index-Bl46Ykvq.js` · homolog owner fail_count=0.
+2. Secret usuário restrito → homolog fail-closed FE+BE.
+3. Inventário residual (POD/Separação keep-both; Painel seletivo).
+4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
+5. Codex: decidir CRM HTTP (A schema) se for além do adaptador B; Legado #211.
+
+### Pendências / parcial (não concluído)
+- Homolog usuário restrito.
+- CRM HTTP canônico (server) — adaptador B cobre leitura C360; funis ainda no store legado.
+- #261 **não** incorporada em `main` (só #264→#261).
+- Legado staging→ops: **não importado**.
+- CI do tip ≠ prova de merge em `main`.
 
 ## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
 
