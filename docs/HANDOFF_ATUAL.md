@@ -8,6 +8,14 @@ Proximo: integrar protecoes Orçamento #263 revisadas, testar composicao final,
 publicar HEAD/CI e pedir Cursor revisar SHA exato. Legado continua separado #266.
 Sem merge main, VPS, migration ou canais neste lote de composicao.
 
+Composicao semantica #263: conflito de import no OrcamentosTab preservou
+pickers e tabela de preco da #261 mais gate de submissao/escopo da #263.
+Permissoes criar/editar/cancelar/converter sao reconferidas antes da chamada.
+Teste comportamental executa JSX real com hooks e transporte controlados:
+save/retry/reabrir, duplo clique, CPA→3Z antes do rerender, callbacks de erro,
+cancelar/converter, detalhe tardio e revogacao do perfil. 63 focados PASS.
+Test harness somente em tests; policies/client/entidades existentes reutilizados.
+
 ## CODEX COMERCIAL 360 — checkpoint de troca de computador (2026-10-10)
 
 - Repositório canônico `viniciuszuccaro-creator/ERP-Zuccaro-codeX`. #254 HEAD `20a2c2fb` e #264 HEAD mesclado `d9403665` já são ancestrais da #261; não repetir o porte. Cursor é dono da branch #261 `cursor/cadastros-recuperacao-c360-contrato-392b`, HEAD público conferido `c3c45c21` (docs após código `f22d1151`).
