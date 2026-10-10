@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Ruler } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
@@ -57,21 +58,11 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      {dadosIniciais?.id ? (
-        <div>
-          <Label>Código de registro</Label>
-          <Input
-            value={formData.codigo || ''}
-            readOnly
-            disabled
-            className="bg-slate-50 font-mono tabular-nums"
-            data-action="codigo-registro-unidade-medida"
-            title="Gerado automaticamente no backend; ID técnico permanece separado"
-          />
-        </div>
-      ) : (
-        <p className="text-xs text-slate-500">Código de registro numérico será gerado automaticamente ao salvar.</p>
-      )}
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-unidade-medida"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Sigla *</Label>

@@ -11,6 +11,7 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from "sonner";
 
 /**
@@ -82,6 +83,12 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
 
   const formContent = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-motorista"
+      />
+
       <div>
         <Label>Nome Completo *</Label>
         <Input

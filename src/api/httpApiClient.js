@@ -171,19 +171,32 @@ export function createHttpApiClient(options = {}) {
    * @param {string} basePath
    * @param {{ searchKeys?: string[], ativoKeys?: string[] }} [opts]
    */
+  /**
+   * Converte orderBy legado Base44 (`-created_date`, `codigo`) em query BFF.
+   * Campos não suportados pelo endpoint são ignorados no servidor (allowlist).
+   * @param {unknown} orderBy
+   */
+  function normalizeOrderByQuery(orderBy) {
+    if (typeof orderBy !== 'string' || !orderBy.trim()) return {};
+    const desc = orderBy.startsWith('-');
+    let field = (desc ? orderBy.slice(1) : orderBy).trim();
+    if (!field) return {};
+    if (field === 'created_date') field = 'created_at';
+    return { order_by: field, order_dir: desc ? 'desc' : 'asc' };
+  }
+
   function createCrudEntity(basePath, opts = {}) {
     const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];
     const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];
     return {
       async list(orderBy, limit = 100) {
-        void orderBy;
-        return request(basePath, { query: { limit } });
+        return request(basePath, { query: { limit, ...normalizeOrderByQuery(orderBy) } });
       },
       async filter(query = {}, orderBy, limit = 100, skip = 0) {
-        void orderBy;
         if (typeof orderBy === 'number') {
           skip = limit || 0;
           limit = orderBy;
+          orderBy = undefined;
         }
         let search;
         for (const key of searchKeys) {
@@ -201,7 +214,7 @@ export function createHttpApiClient(options = {}) {
         }
         const offset = Number.isInteger(Number(skip)) && Number(skip) > 0 ? Number(skip) : undefined;
         return request(basePath, {
-          query: { limit, offset, search, ativo },
+          query: { limit, offset, search, ativo, ...normalizeOrderByQuery(orderBy) },
         });
       },
       async get(id) {

@@ -9,6 +9,7 @@ import { Receipt } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || tipoDespesa || tipo;
@@ -81,10 +82,11 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const content = (
     <form onSubmit={handleSubmit} className={windowMode ? "space-y-4 p-4 h-full overflow-auto" : "space-y-4 p-4"}>
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Código</Label>
-          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} placeholder="DESP001" disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-codigo-tipo-despesa" data-sensitive />
-        </div>
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-tipo-despesa"
+      />
         <div>
           <Label>Nome *</Label>
           <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Energia Elétrica" required disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-nome-tipo-despesa" data-sensitive />

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Target } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const sanitizeCode = (value) => String(value ?? '').replace(/[^0-9A-Za-z._-]/g, '').slice(0, 40).trim().toUpperCase();
@@ -36,16 +37,17 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
       alert("Selecione um grupo ou empresa antes de salvar.");
       return;
     }
+    const codigoReservado = sanitizeCode(formData.codigo);
     const payload = {
       ...formData,
-      codigo: sanitizeCode(formData.codigo),
       nome: sanitizeText(formData.nome, 180),
       descricao: sanitizeText(formData.descricao, 1000),
       group_id: groupId || formData.group_id,
-      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+      empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      ...(codigoReservado ? { codigo: codigoReservado } : {}),
     };
-    if (!payload.codigo || !payload.nome) {
-      alert('Preencha codigo e nome.');
+    if (!payload.nome) {
+      alert('Preencha o nome.');
       return;
     }
     if (onSubmit) onSubmit(payload);
@@ -57,11 +59,13 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-centro-resultado"
+      />
+
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Codigo *</Label>
-          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} required disabled={!podeSalvar} data-permission="Cadastros.CentroResultado.editar" data-action="editar-codigo-centro-resultado" data-sensitive />
-        </div>
         <div>
           <Label>Nome *</Label>
           <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required disabled={!podeSalvar} data-permission="Cadastros.CentroResultado.editar" data-action="editar-nome-centro-resultado" data-sensitive />

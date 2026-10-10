@@ -126,6 +126,29 @@ test('HttpApiClient maps Marca CRUD to BFF routes', async () => {
 
   const listed = await client.entities.Marca.list('-created_date', 10);
   assert.equal(listed.length, 1);
+  assert.match(calls[1].url, /order_by=created_at/);
+  assert.match(calls[1].url, /order_dir=desc/);
+});
+
+test('HttpApiClient filter encaminha order_by/order_dir ao BFF', async () => {
+  /** @type {string[]} */
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(String(url));
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    fetchImpl,
+    getScope: () => ({ groupId: '11111111-1111-4111-8111-111111111111' }),
+  });
+  await client.entities.Marca.filter({ search: 'x' }, 'codigo', 50);
+  assert.match(urls[0], /order_by=codigo/);
+  assert.match(urls[0], /order_dir=asc/);
+  assert.match(urls[0], /search=x/);
 });
 
 test('HttpApiClient maps UnidadeMedida/GrupoProduto/SetorAtividade routes', async () => {

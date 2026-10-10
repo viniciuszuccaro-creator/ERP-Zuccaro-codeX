@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import usePermissions from "@/components/lib/usePermissions";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
@@ -235,7 +236,12 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
 
   const FormContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Tabs defaultValue="geral" className="w-full">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-regiao-atendimento"
+      />
+<Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="geral" data-permission="Cadastros.RegiaoAtendimento.visualizar" data-action="Cadastros.RegiaoAtendimento.tab.geral">
             <MapPin className="w-4 h-4 mr-2" />

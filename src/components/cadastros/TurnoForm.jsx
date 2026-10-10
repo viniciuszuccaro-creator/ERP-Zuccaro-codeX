@@ -7,6 +7,7 @@ import { Loader2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -73,6 +74,12 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-turno"
+      />
+
       <div>
         <Label>Nome do Turno *</Label>
         <Input

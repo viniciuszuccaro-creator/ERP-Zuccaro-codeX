@@ -63,16 +63,37 @@ test('openCadastroEntityWindow cobre todos os blocos com uniqueKey', async () =>
   }
 });
 
-test('forms auxiliares piloto expoem codigo-registro readonly', async () => {
+test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () => {
+  const fieldSrc = await readFile(new URL('../src/components/cadastros/CadastroCodigoRegistroField.jsx', import.meta.url), 'utf8');
+  assert.match(fieldSrc, /readOnly/);
+  assert.match(fieldSrc, /Código de registro/);
   for (const [file, action] of [
     ['MarcaForm.jsx', 'codigo-registro-marca'],
     ['GrupoProdutoForm.jsx', 'codigo-registro-grupo-produto'],
     ['SetorAtividadeForm.jsx', 'codigo-registro-setor-atividade'],
     ['UnidadeMedidaForm.jsx', 'codigo-registro-unidade-medida'],
+    ['ServicoForm.jsx', 'codigo-registro-servico'],
+    ['SegmentoClienteForm.jsx', 'codigo-registro-segmento-cliente'],
+    ['BancoForm.jsx', 'codigo-registro-banco'],
+    ['TransportadoraForm.jsx', 'codigo-registro-transportadora'],
+    ['TipoDespesaForm.jsx', 'codigo-registro-tipo-despesa'],
+    ['CentroCustoForm.jsx', 'codigo-registro-centro-custo'],
+    ['CentroResultadoForm.jsx', 'codigo-registro-centro-resultado'],
+    ['RegiaoAtendimentoForm.jsx', 'codigo-registro-regiao-atendimento'],
+    ['DepartamentoForm.jsx', 'codigo-registro-departamento'],
+    ['CargoForm.jsx', 'codigo-registro-cargo'],
+    ['TurnoForm.jsx', 'codigo-registro-turno'],
+    ['TipoFreteForm.jsx', 'codigo-registro-tipo-frete'],
+    ['LocalEstoqueForm.jsx', 'codigo-registro-local-estoque'],
+    ['KitProdutoForm.jsx', 'codigo-registro-kit-produto'],
+    ['CatalogoWebForm.jsx', 'codigo-registro-catalogo-web'],
+    ['VeiculoForm.jsx', 'codigo-registro-veiculo'],
+    ['MotoristaForm.jsx', 'codigo-registro-motorista'],
+    ['FormaPagamentoForm.jsx', 'codigo-registro-forma-pagamento'],
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, new RegExp(action));
-    assert.match(src, /readOnly|disabled/);
+    assert.match(src, /CadastroCodigoRegistroField/);
   }
 });
 

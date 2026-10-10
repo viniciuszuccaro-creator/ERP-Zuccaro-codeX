@@ -3,7 +3,8 @@
 | Fase | Estado |
 |---|---|
 | candidata | **PR #261** · MERGEABLE CLEAN · CI SUCCESS · `#258⊂#259⊂#260⊂#261` |
-| **implementado** | tip runtime **`bd2fa504`** · docs `ae79e786`/`c270c171` |
+| CI tip docs `6b19e862` | erp-runtime-ci **SUCCESS** (4 checks) |
+| **implementado** | tip runtime **`bd2fa504`** · docs `6b19e862` |
 | **integrado** | PR OPEN — merge **owner** (agente sem write merge) |
 | **implantado** | erp-dev **`bd2fa504`** · `index-BufSJCA3.js` · mig **038+039** · rollback `pre-spa-login-20261009-203649` |
 | **homologado** | API CPA create→reabrir→convert→dup409→cross404 **PASS** · 3Z convert existente PASS · create 3Z fail-closed preço |

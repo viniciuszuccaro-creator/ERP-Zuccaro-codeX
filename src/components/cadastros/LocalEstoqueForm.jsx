@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Warehouse, MapPin } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from "sonner";
 
 /**
@@ -89,14 +90,11 @@ export default function LocalEstoqueForm({
               />
             </div>
 
-            <div>
-              <Label>Código</Label>
-              <Input
-                value={formData.codigo}
-                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-                placeholder="Ex: ALM-01"
-              />
-            </div>
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-local-estoque"
+      />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

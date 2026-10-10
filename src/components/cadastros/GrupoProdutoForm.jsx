@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -83,21 +84,11 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {dadosIniciais?.id ? (
-        <div>
-          <Label>Código de registro</Label>
-          <Input
-            value={formData.codigo || ''}
-            readOnly
-            disabled
-            className="bg-slate-50 font-mono tabular-nums"
-            data-action="codigo-registro-grupo-produto"
-            title="Gerado automaticamente no backend; ID técnico permanece separado"
-          />
-        </div>
-      ) : (
-        <p className="text-xs text-slate-500">Código de registro numérico será gerado automaticamente ao salvar.</p>
-      )}
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        value={formData.codigo}
+        action="codigo-registro-grupo-produto"
+      />
       <div>
         <Label>Nome do Grupo *</Label>
         <Input
