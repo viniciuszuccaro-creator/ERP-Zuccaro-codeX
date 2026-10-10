@@ -15,7 +15,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import {
   PRODUTO_TIPOS_CANONICOS,
   isProdutoMateriaPrima,
@@ -332,19 +332,16 @@ export default function ProdutosTab(props) {
         </div>
       </div>
 
-      <VisualizadorUniversalEntidade
+      <div className="w-full h-full" data-estoque-produtos-tab="v24" data-filtro-estoque-baixo={filtroEstoqueBaixo ? '1' : '0'}>
+      <VisualizadorUniversalEntidadeV24
         nomeEntidade="Produto"
         tituloDisplay="Produto"
         icone={Package}
         camposPrincipais={['codigo', 'descricao', 'tipo_item', 'unidade_medida', 'estoque_atual', 'preco_venda']}
         componenteEdicao={ProdutoFormV22_Completo}
-        queryKey={['produtos']}
-        filtroAdicional={filtroEstoqueBaixo ? (produto) => {
-          const disponivel = (produto.estoque_disponivel || 0);
-          return produto.status === 'Ativo' && disponivel <= (produto.estoque_minimo || 0);
-        } : null}
         windowMode={props.windowMode}
       />
+      </div>
     </div>
   );
 }

@@ -1,0 +1,25 @@
+# Evidência sanitizada — API×DB×UI Clientes tip implantado 3108b9f2
+# utc=2026-10-10T13:30Z
+#
+# Contexto: Grupo CPA (aaaaaaaa-aaaa-…) · visão consolidada (sem X-Empresa-Id)
+# DB ops: clientes total=6 · ativos=6 · group CPA=5 · group B=1
+# API GET /api/v1/clientes?limit=50 → 200 · n=5 · total=5
+# Flag bundle: VITE_ERP_BACKEND=http · VITE_ERP_HTTP_CLIENTE_360=true
+#
+# Diagnóstico residual "grade 0 rows":
+# - Homolog anterior clicava o texto KPI "Clientes" (não o LaunchpadCard).
+# - Janela V24 NÃO abria → tab_marker=0 · DOM rows=0 · badge hub ainda 5.
+# - Com data-action=Comercial.Clientes.abrir: V24 monta · rows=5 · mismatch=false.
+#
+# Probe tip 3108b9f2 (pré-código hardening; UI já correta ao abrir tile):
+#   api_n=5 · ui_rows=5 · ui_badge=5 · abrir=PASS · reabrir=PASS
+#   asset index-Chstx7-i.js · SHA implantado 3108b9f2
+#
+# Hardening enviado no tip seguinte (este lote):
+# - httpApiClient: ativoKeys Cliente sem "status"; coerce Ativo/Inativo;
+#   filter sempre retorna array (data|rows).
+# - V23→V24: ProdutosTab · FornecedoresTab · ColaboradoresTab · RH window.
+# - homolog/probe: clique canônico no Launchpad.
+#
+# Recuperado legado: NÃO (#211) · SYNTH≠recuperado
+# screenshots: /opt/cursor/artifacts/screenshots/pw-probe-clientes-api-ui.png

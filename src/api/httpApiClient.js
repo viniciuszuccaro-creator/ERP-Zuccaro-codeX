@@ -213,9 +213,24 @@ export function createHttpApiClient(options = {}) {
           }
         }
         const offset = Number.isInteger(Number(skip)) && Number(skip) > 0 ? Number(skip) : undefined;
-        return request(basePath, {
-          query: { limit, offset, search, ativo, ...normalizeOrderByQuery(orderBy) },
+        // Coerce status legado ("Ativo"/"Inativo") e booleans; strings inválidas
+        // NÃO viram ativo=false no BFF (parseAtivoQuery trata qualquer não-true como false).
+        let ativoQuery;
+        if (typeof ativo === 'boolean') {
+          ativoQuery = ativo;
+        } else if (ativo != null && ativo !== '') {
+          const raw = String(ativo).trim().toLowerCase();
+          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;
+          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;
+        }
+        const result = await request(basePath, {
+          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },
         });
+        // entityListSorted exige array; BFF pode devolver página {data|rows}.
+        if (Array.isArray(result)) return result;
+        if (Array.isArray(result?.data)) return result.data;
+        if (Array.isArray(result?.rows)) return result.rows;
+        return [];
       },
       async get(id) {
         return request(`${basePath}/${encodeURIComponent(id)}`);
@@ -253,7 +268,9 @@ export function createHttpApiClient(options = {}) {
     Cliente: (() => {
       const base = createCrudEntity('/api/v1/clientes', {
         searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],
-        ativoKeys: ['ativo', 'ativa', 'status'],
+        // NÃO usar "status" aqui: filtros multiempresa / colunas status:"Ativo"
+        // quebravam parseAtivoQuery → ativo=false → grade vazia com API n>0.
+        ativoKeys: ['ativo', 'ativa'],
       });
       return {
         ...base,

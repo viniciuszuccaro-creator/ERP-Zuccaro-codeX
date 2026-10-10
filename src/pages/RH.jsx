@@ -11,7 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { Button } from "@/components/ui/button";
 import HeaderRHCompacto from "@/components/rh/rh-launchpad/HeaderRHCompacto";
 import KPIsRH from "@/components/rh/rh-launchpad/KPIsRH";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
 import ModulosGridRH from "@/components/rh/rh-launchpad/ModulosGridRH";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -27,8 +27,8 @@ const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/Ponto
 const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
 
 const ColaboradoresWindow = () => (
-  <div className="h-full w-full">
-    <VisualizadorUniversalEntidade
+  <div className="h-full w-full" data-rh-colaboradores-tab="v24">
+    <VisualizadorUniversalEntidadeV24
       nomeEntidade="Colaborador"
       tituloDisplay="Colaboradores"
       icone={Users}
