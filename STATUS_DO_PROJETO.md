@@ -21,7 +21,7 @@
 | **implantado** | erp-dev **`db89aa45`** · `index-Dg3GA2bC.js` · rollback `pre-spa-login-20261010-171326` |
 | **homologado implantado** | owner tip **`db89aa45`** fail_count=0 (login tipado + Clientes + launchpads) |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
-| **implementado neste lote** | C360 CRM opção B · CRM multiempresa/`sectionKey` · Contratos ID lista · azul Contratos/AdminHeader · testes 7/7 |
+| **implementado neste lote** | C360 CRM opção B · porte #265 Produto GET parcial · Contratos ID/azul · AdminHeader azul |
 | **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
 | evidência | `deploy-261-tip-db89aa45-porte-265-20261010.txt` · `deploy-261-tip-58e01754-azul-crm-20261010.txt` |
@@ -31,11 +31,11 @@
 
 | Fase | Estado |
 |---|---|
-| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul hubs |
+| **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul · porte #265 |
 | **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
-| **PR HEAD** | tip docs `75d93727` · runtime implantado **`58e01754`** · **não** em `main` `baba91a6` |
-| **implantado** | supersedido pelo bloco pós-#264 (`58e01754` / `index-Bl46Ykvq.js`) |
-| **homologado** | tip **`58e01754`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **PR HEAD** | tip **`db89aa45`** · **não** em `main` `baba91a6` |
+| **implantado** | supersedido pelo bloco pós-#264 (`db89aa45` / `index-Dg3GA2bC.js`) |
+| **homologado** | tip **`db89aa45`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
 | **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
 | handoff | `docs/HANDOFF_ATUAL.md` · RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
 | BLOCKED | usuário restrito · CRM HTTP schema server · Legado |
