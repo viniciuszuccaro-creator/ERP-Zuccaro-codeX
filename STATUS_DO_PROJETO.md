@@ -12325,3 +12325,8 @@ Checklist inicial:
 - Causa confirmada pelo Cursor em `f0844fa5`: `useContextoVisual` renderiza Grupo antes de Empresa; o guard fixava `empresaId:null` na abertura e bloqueava save legítimo ao completar a sessão CPA.
 - Correção: em HTTP o guard congela o escopo da sessão ativa, não o render parcial, e só libera quando tela e sessão convergem. Exclusão bloqueada antes da confirmação; resposta tardia do GET de Produto também não altera a tela 3Z. Write já enviado continua pertencendo ao escopo carimbado na request; callback tardio é descartado, sem promessa de cancelamento no servidor. Reutilizados sessão/guard/mutações existentes; nenhum dado real ou schema alterado.
 - Teste do hook real: primeiro paint parcial → render CPA válido → sessão 3Z rejeitada. Próximo P0: CI e revisão independente do novo HEAD; homologação visual autenticada segue gate para merge/deploy.
+## CODEX — #254 Produto HTTP espera carga completa (2026-10-10)
+
+- Parecer Cursor de `17b7c7aa`: GET descartado antes de a Empresa terminar de carregar não repetia; update posterior poderia limpar campos PIM presentes apenas no registro completo.
+- O GET agora só inicia com tela/sessão convergentes e repete ao resolver Grupo/Empresa. O update HTTP fica bloqueado até o GET devolver o mesmo ID; erro ou resposta de outro ID não liberam save. Resposta antiga de outro tenant continua descartada. Reutilizados `getHttpProdutoApi`, formulário V22 e policy HTTP já existentes; sem tocar no backend reservado ou banco operacional.
+- Teste da política cobre carga pendente, ID alheio, carga completa e create; teste de integração estática verifica o gate e dependências do efeito. Próximo: CI, parecer do HEAD e homologação visual autenticada antes de merge/deploy.

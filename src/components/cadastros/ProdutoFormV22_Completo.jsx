@@ -26,7 +26,7 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, normalizeProdutoTipoItem } from "./produto/produtoTipoPolicy";
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
 const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
-import { toProdutoHttpPayload, validateProdutoPimQuantities } from './produto/produtoHttpPolicy';
+import { isProdutoHttpEditReady, toProdutoHttpPayload, validateProdutoPimQuantities } from './produto/produtoHttpPolicy';
 const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
 const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
 const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
@@ -211,6 +211,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     };
   });
 
+  const [produtoHttpReadyId, setProdutoHttpReadyId] = useState(null);
   const [iaSugestao, setIaSugestao] = useState(null);
   // Mantém w-full/h-full e responsivo/redimensionável (conteúdo já usa classes).
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -223,15 +224,20 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
 
   // V21.2 FASE 2: Queries dos estruturantes
   useEffect(() => {
-    if (!produtoHttp || !produto?.id) return;
+    if (!produtoHttp || !produto?.id || !isFormScopeCurrent()) return;
     let active = true;
+    setProdutoHttpReadyId(null);
     getHttpProdutoApi().get(produto.id).then((row) => {
-      if (active && isFormScopeCurrent()) setFormData((current) => ({ ...current, ...row }));
+      if (!row || row.id !== produto.id) throw new Error('Resposta sem produto completo correspondente');
+      if (active && isFormScopeCurrent()) {
+        setFormData((current) => ({ ...current, ...row }));
+        setProdutoHttpReadyId(produto.id);
+      }
     }).catch((error) => {
       if (active && isFormScopeCurrent()) toast.error('Erro ao carregar produto: ' + error.message);
     });
     return () => { active = false; };
-  }, [produtoHttp, produto?.id]);
+  }, [produtoHttp, produto?.id, groupId, empresaAtual?.id]);
 
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', contextKey],
@@ -530,6 +536,10 @@ Caso contrário, sugira:
 
   const submitProduto = async () => {
     try { assertFormScopeCurrent(); } catch (error) { toast.error(error.message); return; }
+    if (!isProdutoHttpEditReady(produtoHttp, produto?.id, produtoHttpReadyId)) {
+      toast.error('Aguarde a carga completa do produto antes de salvar.');
+      return;
+    }
     if (!formData.descricao) {
       toast.error('Preencha a descrição do produto');
       return;

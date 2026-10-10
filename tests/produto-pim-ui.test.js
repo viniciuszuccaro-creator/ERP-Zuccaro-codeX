@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { isProdutoHttpEditReady, toProdutoHttpPayload, validateProdutoPimQuantities, prepareProdutoMediaFile, CAD_FORMAT_POLICY, getProdutoWorkflowActions, getProdutoMediaScanLabel } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+
+test('edição HTTP espera GET completo antes de permitir payload que pode limpar PIM', async () => {
+  assert.equal(isProdutoHttpEditReady(true, 'produto-cpa', null), false);
+  assert.equal(isProdutoHttpEditReady(true, 'produto-cpa', 'produto-3z'), false);
+  assert.equal(isProdutoHttpEditReady(true, 'produto-cpa', 'produto-cpa'), true);
+  assert.equal(isProdutoHttpEditReady(true, null, null), true);
+  const form = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(form, /!produtoHttp \|\| !produto\?\.id \|\| !isFormScopeCurrent\(\)/);
+  assert.match(form, /\[produtoHttp, produto\?\.id, groupId, empresaAtual\?\.id\]/);
+  assert.match(form, /if \(!isProdutoHttpEditReady\(produtoHttp, produto\?\.id, produtoHttpReadyId\)\)/);
+});
 
 test('V22 apresenta varredura sem confundir CLEAN com liberacao', async () => {
   assert.match(getProdutoMediaScanLabel({ status: 'QUARENTENA' }), /pendente.*quarentena/i);
