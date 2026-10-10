@@ -2,15 +2,15 @@
 
 | Item | Estado |
 |---|---|
-| **#269** tip **`5116c257`** | draft · MERGEABLE · base #268 `5a38a94e` · CI **IN_PROGRESS** · agente **RUNNING** |
-| conteúdo | `npm run crm:preflight` read-only · stages before/after_migration · `activationAuthorized=false` · sanitizado |
+| **#269** tip **`8d806386`** | draft · MERGEABLE · base #268 `5a38a94e` · CI **SUCCESS** · agente **RUNNING** |
+| conteúdo | preflight RO · stages before/after_migration · rejeita trigger código com eventos incorretos · `activationAuthorized=false` |
 | porte Cursor | **não** — prep estrutural Codex; sem merge/VPS/migração/ativação; flag CRM HTTP OFF |
 | **#268** | tip `5a38a94e` · IDLE · sem porte |
 | **#267** | tip `e3194fb1` · IDLE · sem porte |
 | **#266/#265/#263/#254** | tips iguais · sem re-porte |
 | tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
 | `main` | `baba91a6` |
-| próxima | aguardar CI #269; monitorar stack #269→#268→#267; timer |
+| próxima | monitorar #269 tip `8d806386` / stack #268→#267; secret restrito; timer |
 
 ## CURSOR — revisão Codex timer: #268 CRM→Pedido (2026-10-10)
 
