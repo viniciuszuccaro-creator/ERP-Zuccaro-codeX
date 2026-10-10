@@ -230,3 +230,13 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
     else delete globalThis.window;
   }
 });
+
+test("visualizador V24: gate Organizacional no data-permission e GrupoEmpresarial self-id", async () => {
+  const viewer = await readFile(new URL("../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx", import.meta.url), "utf8");
+  assert.match(viewer, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional"/);
+  assert.match(viewer, /cadastroPerm\("criar"\)/);
+  assert.match(viewer, /cadastroPerm\("visualizar"\)/);
+  assert.match(viewer, /extraGroupOr: grupoSelfOr/);
+  assert.match(viewer, /NÃO cair em codigo\/sigla/);
+  assert.doesNotMatch(viewer, /variants = variants\.concat\(\['nome', 'descricao', 'titulo', 'sigla', 'codigo'\]\)/);
+});

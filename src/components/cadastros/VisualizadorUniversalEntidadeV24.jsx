@@ -143,8 +143,10 @@ function buildFieldVariants(field) {
   }
   // adiciona variante sem sufixo _id
   if (field.endsWith('_id')) variants.push(field.slice(0, -3));
-  // fallback genérico de nome
-  variants = variants.concat(['nome', 'descricao', 'titulo', 'sigla', 'codigo']);
+  // Fallbacks só de rótulo — NÃO cair em codigo/sigla (Marca.pais_origem → 000004).
+  if (/^(nome|titulo|label|descricao)/i.test(String(field || ''))) {
+    variants = variants.concat(['nome', 'descricao', 'titulo']);
+  }
   return variants;
 }
 
@@ -273,6 +275,10 @@ export default function VisualizadorUniversalEntidadeV24({
   const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
   const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
   const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
+  // Tenant masters: gate efetivo é Cadastros.Organizacional (não Cadastros.Empresa.*).
+  // data-permission do Button/Input deve espelhar o mesmo gate — senão busca/+ Novo ficam "Acesso negado".
+  const permSection = isTenantMasterEntity(ENTITY) ? "Organizacional" : ENTITY;
+  const cadastroPerm = function(action) { return "Cadastros." + permSection + "." + action; };
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -400,6 +406,8 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     const tenantMaster = isTenantMasterEntity(ENTITY);
     const ctxCampo = ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id";
+    // GrupoEmpresarial: o registro mestre tem id === groupId e pode não ter group_id espelhado.
+    const grupoSelfOr = (ENTITY === "GrupoEmpresarial" && groupId) ? [{ id: groupId }] : [];
     return buildMultiempresaReadFilter({
       groupId,
       empresaId: tenantMaster ? null : empresaId,
@@ -409,6 +417,7 @@ export default function VisualizadorUniversalEntidadeV24({
         ? empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean)
         : [],
       rest: {},
+      extraGroupOr: grupoSelfOr,
     });
   }, [ENTITY, empresaId, groupId, empresasDoGrupo]);
 
@@ -957,7 +966,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 checked={allPageSelected}
                 onChange={handleToggleSelectPage}
                 disabled={!contextoValido || !canDeleteCadastro}
-                data-permission={`Cadastros.${ENTITY}.excluir`}
+                data-permission={cadastroPerm("excluir")}
                 data-sensitive="true"
                 className="w-4 h-4 cursor-pointer accent-blue-600"
               />
@@ -993,7 +1002,7 @@ export default function VisualizadorUniversalEntidadeV24({
                     checked={checked}
                     onChange={function(e) { handleItemCheck(item.id, e.target.checked); }}
                     disabled={!contextoValido || !canDeleteCadastro}
-                    data-permission={`Cadastros.${ENTITY}.excluir`}
+                    data-permission={cadastroPerm("excluir")}
                     data-sensitive="true"
                     className="w-4 h-4 cursor-pointer accent-blue-600"
                   />
@@ -1021,7 +1030,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         }}
                         title="Detalhes / Central 360"
                         disabled={!contextoValido || !canViewCadastro}
-                        data-permission={`Cadastros.${ENTITY}.visualizar`}
+                        data-permission={cadastroPerm("visualizar")}
                         data-action="cliente-detalhes-360"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
@@ -1034,7 +1043,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         onClick={function(e) { e.stopPropagation(); handleEditItem(item); }}
                         title="Editar"
                         disabled={isLoadingEdit || !canEditCadastro}
-                        data-permission={`Cadastros.${ENTITY}.editar`}
+                        data-permission={cadastroPerm("editar")}
                         data-action={`Cadastros.${ENTITY}.editar`}
                         data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
@@ -1049,7 +1058,7 @@ export default function VisualizadorUniversalEntidadeV24({
                       onClick={function() { handleDelete(item); }}
                       title="Excluir"
                       disabled={!contextoValido || !canDeleteCadastro}
-                      data-permission={`Cadastros.${ENTITY}.excluir`}
+                      data-permission={cadastroPerm("excluir")}
                       data-sensitive="true"
                       className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
@@ -1086,14 +1095,14 @@ export default function VisualizadorUniversalEntidadeV24({
             value={search}
             onChange={function(e) { setSearch(e.target.value); }}
             className="pl-8 h-9 rounded-sm text-sm bg-white border-slate-200"
-            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-permission={cadastroPerm("visualizar")}
             data-action={`Cadastros.${ENTITY}.buscar`}
           />
           {search && (
             <button
               onClick={function() { setSearch(""); }}
               className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600"
-              data-permission={`Cadastros.${ENTITY}.visualizar`}
+              data-permission={cadastroPerm("visualizar")}
               data-action={`Cadastros.${ENTITY}.limpar-busca`}
             >
               <X className="w-3.5 h-3.5" />
@@ -1105,7 +1114,7 @@ export default function VisualizadorUniversalEntidadeV24({
           value={pageSize}
           onChange={function(e) { setPageSize(Number(e.target.value)); setPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={cadastroPerm("visualizar")}
           data-action={`Cadastros.${ENTITY}.alterar-paginacao`}
         >
           {PAGE_SIZES.map(function(ps) { return <option key={ps} value={ps}>{ps}/pág</option>; })}
@@ -1115,7 +1124,7 @@ export default function VisualizadorUniversalEntidadeV24({
           value={sortField + "|" + sortDir}
           onChange={function(e) { handleSortDropdown(e.target.value); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={cadastroPerm("visualizar")}
           data-action={`Cadastros.${ENTITY}.ordenar`}
         >
           <option value="updated_date|desc">↓ Mais Recentes</option>
@@ -1136,7 +1145,7 @@ export default function VisualizadorUniversalEntidadeV24({
           onClick={function() { lastGoodData.current = []; everLoadedRef.current = false; invalidateAll(queryClient, ENTITY); }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0"
           title="Recarregar"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={cadastroPerm("visualizar")}
           data-action={`Cadastros.${ENTITY}.recarregar`}
         >
           <RefreshCw className={"w-4 h-4 " + (isFetching ? "animate-spin text-blue-500" : "text-slate-500")} />
@@ -1148,7 +1157,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={handleNewItem}
             disabled={!contextoValido || !canCreateCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
-            data-permission={`Cadastros.${ENTITY}.criar`}
+            data-permission={cadastroPerm("criar")}
             data-action={ENTITY === 'Cliente' ? 'cliente-novo' : `Cadastros.${ENTITY}.criar`}
             data-action-cadastro={`Cadastros.${ENTITY}.criar`}
             data-sensitive="true"
@@ -1164,7 +1173,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={handleDeleteSelected}
             disabled={!contextoValido || !canDeleteCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
-            data-permission={`Cadastros.${ENTITY}.excluir`}
+            data-permission={cadastroPerm("excluir")}
             data-action={`Cadastros.${ENTITY}.excluir-selecionados`}
             data-sensitive="true"
           >
@@ -1187,7 +1196,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <button
             onClick={handleActivateCrossPage}
             className="text-blue-600 hover:text-blue-800 underline font-semibold"
-            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-permission={cadastroPerm("visualizar")}
             data-action={`Cadastros.${ENTITY}.selecionar-todos`}
           >
             Selecionar todos os {totalCount} registros

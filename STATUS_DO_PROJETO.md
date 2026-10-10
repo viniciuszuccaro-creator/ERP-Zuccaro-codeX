@@ -1,3 +1,15 @@
+## CURSOR — Auditoria global UI (pós-orientação 2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| orientação | registrada no chat principal + HANDOFF (substitui anterior) |
+| **implementado** | Visualizador: `Cadastros.Organizacional.*` em data-permission · fallback células sem codigo · GrupoEmpresarial self-id · Empresa coluna codigo |
+| prints cobertos | Empresas/Grupos Acesso negado · Marcas pais/categoria · Grupos vazios |
+| Fiscal Acesso negado | pendente (RBAC `Fiscal.*` / launchpad) |
+| matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | implantar tip · homologar UI VPS · continuar inventário global |
+
 ## CURSOR — #261 tip `d6952b9d`/`279f26fc` implantado (2026-10-10)
 
 | Fase | Estado |
@@ -10,7 +22,8 @@
 | **recuperado** | **NÃO** legado (#211) · auxiliares codigo API · SYNTH≠recuperado |
 | UI Abrir/Orçamentos | **BLOCKED** #254 contexto (Codex) |
 | evidências | `deploy-261-tip-d6952b9d-*` · `homolog-261-tip-d6952b9d-c360-*` |
-| próxima | CI tip verde → merge owner; Codex #254; #211; rebuild tip pós-lint se necessário |
+| CI tip HEAD `5bedf3f8` | erp-runtime-ci **SUCCESS** (4 checks · push+PR) |
+| próxima | merge owner #261; Codex #254; #211 legado |
 
 ## CURSOR — #261 candidata integração + homolog API C360 (2026-10-10)
 

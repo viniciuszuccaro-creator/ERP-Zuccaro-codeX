@@ -1,0 +1,35 @@
+# ERP ZUCCARO — Orientação coordenada (substitui anterior)
+# Chat principal: ERP ZUCCARO - CODEX/CURSOR (bc-d973626e-1060-4071-a25a-6a549769392b)
+# Imagens anexadas = exemplos; escopo = todo o sistema.
+# Sanitizado — sem tokens, sem PII.
+
+## Coordenação
+| Papel | Responsável | Ambiente | Reservado |
+|---|---|---|---|
+| Chat principal | Cursor (este) | branch #261 / VPS erp-dev | — |
+| Comercial 360 contratos | Codex Comercial 360 | tarefa própria | sessão/contexto/outbox Codex |
+| Legado migração | Codex Legado | staging VPS privado | importadores legado |
+| Auditoria UI/recuperação funcional | **Cursor** | #261 tip | Visualizador/Cadastros/Financeiro UI |
+
+## CURSOR — primeira ação efetiva (2026-10-10)
+Causa raiz comprovada pelos prints:
+1. Empresas/Grupos: `data-permission=Cadastros.Empresa.*` enquanto gate efetivo é `Cadastros.Organizacional.*` → busca/+ Novo "Acesso negado".
+2. Marcas: fallback de célula caía em `codigo` para pais_origem/categoria vazios.
+3. Grupos Empresariais vazios: filtro por group_id sem incluir `id === groupId` do mestre.
+
+Correções no VisualizadorUniversalEntidadeV24 + Bloco5 (codigo na grade Empresa).
+
+## Matriz global (inventário inicial — exemplos dos prints + blocos)
+| Módulo | Entidade/Sub | codigo numérico lista | ID técnico detalhe | UI | Observação |
+|---|---|---|---|---|---|
+| Cadastros | UnidadeMedida | SIM (00000x) | form readonly | OK azul | referência |
+| Cadastros | Marca | SIM | form | mapeamento pais/categoria CORRIGIDO | SYNTH≠recuperado |
+| Cadastros | GrupoProduto | misto alfanumérico legado | form | GATE-D SYNTH visível | #211 |
+| Cadastros | Empresa | coluna codigo + ID form | SIM form | Acesso negado CORRIGIDO | |
+| Cadastros | GrupoEmpresarial | codigo coluna | — | filtro self-id CORRIGIDO | |
+| Financeiro | 12 módulos launchpad | n/a | n/a | grid colorido presente | auditar vs azul |
+| Fiscal | NF-e KPIs/tabs | n/a | n/a | badge Acesso negado | RBAC Fiscal.* pendente |
+| Comercial 360 | Orçamento/Pedido | numero | id | API homologada | UI #254 |
+
+## Não recuperação
+GATE-D SYNTH, Seed sintetico, PROD-A-001 DEV ≠ recuperação de legado.

@@ -1,3 +1,28 @@
+## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
+
+Substitui a orientação anterior. Imagens = exemplos; escopo = **todo o sistema**.
+Chat principal: [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b).
+
+| Papel | Quem | Branch/ambiente | Não editar |
+|---|---|---|---|
+| Coordenação + UI/recuperação funcional | **Cursor** | `#261` `cursor/cadastros-recuperacao-c360-contrato-392b` · erp-dev | sessão/contexto/outbox Codex |
+| Contratos/sequências C360 | **Codex Comercial 360** | tarefa própria | Visualizador em lote Cursor sem coordenação |
+| Migração/recuperação real | **Codex Legado** | staging VPS privado | não misturar SYNTH como recuperado |
+
+### CURSOR — mandato ativo
+1. Inventariar módulos/submódulos/entidades (matriz global).
+2. Recuperar melhorias da azul-clara seletivamente (sem restaurar versão inteira).
+3. Código numérico + ID técnico em listas/detalhes/forms.
+4. Corrigir abertura dupla, carga incompleta, campos sumindo, busca, paginação, permissões.
+5. Confrontar UI/API × legado privado; SYNTH ≠ recuperado.
+6. Consolidar #261, CI, implantar e homologar SHA VPS.
+
+### Primeira ação efetiva Cursor
+Corrigido Visualizador: gate `Organizacional` no `data-permission`; fallback sem `codigo` em campos descritivos; `GrupoEmpresarial` inclui `id===groupId` no filtro. Evidência: `orientacao-coordenada-auditoria-global-20261010.txt`.
+
+### Codex Comercial 360 / Legado
+Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
+
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 
 | Item | Valor |

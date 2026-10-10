@@ -126,6 +126,16 @@ test('tenant-master read filter scopes by group only (no empresa_id of context)'
   assert.equal(JSON.stringify(filter).includes('"empresa_id":"local_empresa_3z"'), false);
 });
 
+test('GrupoEmpresarial read inclui id do próprio grupo no $or', () => {
+  const filter = buildMultiempresaReadFilter({
+    groupId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    empresaId: null,
+    extraGroupOr: [{ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' }],
+  });
+  assert.ok(filter.$or?.some((item) => item.id === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));
+  assert.ok(filter.$or?.some((item) => item.group_id === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));
+});
+
 test('fiscal and commercial operations require an emitting company', () => {
   assert.equal(entityRequiresEmpresaOnWrite('NotaFiscal'), true);
   assert.equal(entityRequiresEmpresaOnWrite('Pedido'), true);
