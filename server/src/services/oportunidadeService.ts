@@ -10,8 +10,9 @@ import { assertOportunidadeOnCreate, assertOportunidadeOnUpdate, CRM_ETAPAS,
   normalizeEtapaCrm, oportunidadeAberta, stampOportunidadeConvertida } from '../domain/crmOportunidadePolicy.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
+import type { PedidoRepository } from '../repositories/pedidoTypes.js';
 import { oportunidadeCreateSchema, oportunidadeUpdateSchema, oportunidadeLinkSchema,
-  OPORTUNIDADE_FIELDS,
+  OPORTUNIDADE_FIELDS, oportunidadePedidoLinkSchema,
   type Oportunidade, type OportunidadeFields, type OportunidadeFilters,
   type OportunidadeRepository, type OportunidadeScope } from '../repositories/oportunidadeTypes.js';
 
@@ -27,7 +28,8 @@ export class OportunidadeService {
   constructor(private readonly repo:OportunidadeRepository, private readonly audit:AuditRepository,
     private readonly tenant:TenantGuard, private readonly rbac:RbacGuard,
     private readonly clientes:Pick<ClienteRepository,'getEmpresaLinkById'>,
-    private readonly orcamentos:Pick<OrcamentoRepository,'get'>) {}
+    private readonly orcamentos:Pick<OrcamentoRepository,'get'>,
+    private readonly pedidos?:Pick<PedidoRepository,'get'>) {}
 
   async create(ctx:RequestContext, payload:unknown) {
     const scope=await this.prepare(ctx,'criar'), input=this.parse(oportunidadeCreateSchema,payload);
@@ -125,6 +127,35 @@ export class OportunidadeService {
       const preserved={...converted,legacy_orcamento_id:before.legacy_orcamento_id ?? before.orcamento_id};
       const after=await this.repo.update(scope,id,before.version,this.fields(preserved,before.valor_estimado),ctx.actorId!,tx);
       if(!after)this.conflict(); await this.auditRow(ctx,'link',before,after,tx); return after;
+    });
+  }
+  async linkPedido(ctx:RequestContext,id:string,payload:unknown) {
+    const scope=await this.prepare(ctx,'aprovar');this.id(id);
+    const input=this.parse(oportunidadePedidoLinkSchema,payload);
+    if(!this.pedidos)throw new AppError(503,'CRM_PEDIDO_PORT_UNAVAILABLE','Canonical Pedido port unavailable');
+    await this.rbac.assertAllowed(ctx,'Comercial','pedido','visualizar',{allowGlobalWildcard:false});
+    return this.repo.withTransaction(scope,async tx=>{
+      const before=await this.require(scope,id,tx,true);
+      await this.allowed(ctx,'aprovar',tx);
+      await this.rbac.assertAllowed(ctx,'Comercial','pedido','visualizar',{allowGlobalWildcard:false,executor:tx});
+      if(before.pedido_id===input.pedido_id && before.convertido_em==='pedido')return before;
+      this.version(before,input.expected_version);
+      if(!before.ativo)this.conflict();
+      const fromQuote=before.convertido_em==='orcamento' && before.status==='Ganho';
+      if(!fromQuote && !oportunidadeAberta({status:before.status}))this.conflict();
+      const doc=await this.pedidos!.get(scope,input.pedido_id,tx,true);
+      if(!doc)throw new AppError(404,'PEDIDO_NOT_FOUND','Pedido unavailable');
+      if(!doc.ativo || doc.status!=='EM_ABERTO' || !before.cliente_empresa_id || before.cliente_empresa_id!==doc.cliente_empresa_id
+        || (!fromQuote && doc.orcamento_id!==null)
+        || (fromQuote && doc.orcamento_id!==before.orcamento_id))
+        throw new AppError(422,'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID','Pedido must belong to the same customer, scope and quotation');
+      const owner=await this.repo.byPedido(scope,doc.id,tx);
+      if(owner && owner.id!==before.id)throw new AppError(409,'OPORTUNIDADE_PEDIDO_ALREADY_LINKED','Pedido already belongs to another opportunity');
+      await this.clientReference(scope,before.cliente_empresa_id,tx);
+      const converted=stampOportunidadeConvertida({...before,historico_mudancas_etapa:before.historico_mudancas_etapa as any[]},doc,'pedido');
+      const preserved={...converted,legacy_pedido_id:before.legacy_pedido_id??before.pedido_id};
+      const after=await this.repo.update(scope,id,before.version,this.fields(preserved,before.valor_estimado),ctx.actorId!,tx);
+      if(!after)this.conflict();await this.auditRow(ctx,'link',before,after,tx);return after;
     });
   }
   private fields(record:Record<string,unknown>, money:string):OportunidadeFields {

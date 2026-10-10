@@ -5,6 +5,7 @@ import { PostgresTenantGuard } from '../src/db/tenantGuard.ts';
 import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
 import { PostgresClienteRepository } from '../src/repositories/postgresClienteRepository.ts';
 import { PostgresOrcamentoRepository } from '../src/repositories/postgresOrcamentoRepository.ts';
+import { PostgresPedidoRepository } from '../src/repositories/postgresPedidoRepository.ts';
 import { PostgresOportunidadeRepository } from '../src/repositories/postgresOportunidadeRepository.ts';
 import { OportunidadeService } from '../src/services/oportunidadeService.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
@@ -59,5 +60,33 @@ test('CRM SQL: migration/repositório/auditoria/legado sob papel sem bypass',asy
     const cross=await service.create({...ctx,empresaId:ID.empresaA2},{titulo:'Outra empresa',cliente_nome:'Sintético',idempotency_key:'sql-high-water'});
     assert.equal(cross.codigo,'000101');
     await assert.rejects(service.get({...ctx,empresaId:ID.empresaA2},row.id),{code:'OPORTUNIDADE_NOT_FOUND'});
+  }finally{await f.close();}
+});
+
+test('CRM SQL: Cliente→Orçamento→Pedido canônico, referência/replay/audit e escopo',async()=>{
+  const f=await localCrmFixture();try {
+    const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'crm-pedido-synthetic'};
+    const ce=await f.admin.query<{id:string}>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo AND habilitado_operacao AND NOT bloqueado LIMIT 1',[ctx.groupId,ctx.empresaId]);
+    const service=new OportunidadeService(new PostgresOportunidadeRepository(f.data),new PostgresAuditRepository(f.admin),
+      new PostgresTenantGuard(f.admin),new PostgresRbacGuard(f.admin),new PostgresClienteRepository(f.admin),
+      new PostgresOrcamentoRepository(f.admin),new PostgresPedidoRepository(f.admin));
+    const row=await service.create(ctx,{titulo:'Venda sintética',cliente_empresa_id:ce.rows[0].id,idempotency_key:'pedido-link-sql'});
+    const quote=await new PostgresOrcamentoRepository(f.admin).create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
+      validade_em:'2027-01-31T00:00:00.000Z',itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,descricao:'Sintético',unidade_sigla:'KG',quantidade:'2.000000',preco_unitario:'25.500000',desconto:'0.000000'}]});
+    const linked=await service.linkOrcamento(ctx,row.id,{expected_version:1,orcamento_id:quote.id});
+    const order=await new PostgresPedidoRepository(f.admin).create(ctx,{cliente_empresa_id:quote.cliente_empresa_id,condicao_pagamento_id:quote.condicao_pagamento_id,orcamento_id:quote.id,tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',itens:quote.itens.map(i=>({...i,requer_producao:false}))},ctx.actorId);
+    assert.notEqual(order.itens[0].preco_unitario,'999.000000');assert.equal(order.itens[0].preco_unitario,quote.itens[0].preco_unitario);
+    await f.admin.query('UPDATE oportunidades SET pedido_id=$2 WHERE id=$1',[row.id,'pedido_textual_original']);
+    await f.exec(`CREATE FUNCTION crm_link_audit_failure() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.entity='Oportunidade' AND NEW.action='link' THEN RAISE EXCEPTION 'synthetic link failure'; END IF; RETURN NEW; END $$;
+      CREATE TRIGGER crm_link_audit_failure BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE PROCEDURE crm_link_audit_failure();`);
+    await assert.rejects(service.linkPedido(ctx,row.id,{expected_version:linked.version,pedido_id:order.id}),/synthetic link failure/);
+    assert.equal((await service.get(ctx,row.id)).pedido_id,'pedido_textual_original');assert.equal((await service.get(ctx,row.id)).version,2);
+    await f.exec('DROP TRIGGER crm_link_audit_failure ON audit_logs; DROP FUNCTION crm_link_audit_failure();');
+    const final=await service.linkPedido(ctx,row.id,{expected_version:2,pedido_id:order.id});
+    assert.equal(final.legacy_pedido_id,'pedido_textual_original');assert.equal(final.pedido_id,order.id);assert.equal(final.orcamento_id,quote.id);
+    assert.equal((await service.linkPedido(ctx,row.id,{expected_version:2,pedido_id:order.id})).version,3);
+    await assert.rejects(service.linkPedido({...ctx,empresaId:ID.empresaA2},row.id,{expected_version:3,pedido_id:order.id}),{code:'OPORTUNIDADE_NOT_FOUND'});
+    assert.equal((await new PostgresPedidoRepository(f.admin).get(ctx,order.id))!.status,'EM_ABERTO');
   }finally{await f.close();}
 });

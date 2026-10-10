@@ -20,6 +20,9 @@ export class InMemoryOportunidadeRepository implements OportunidadeRepository {
   async byKey(scope: OportunidadeScope, key: string) {
     return structuredClone([...this.rows.values()].find(r => this.scoped(scope,r) && r.idempotency_key===key) ?? null);
   }
+  async byPedido(scope:OportunidadeScope,id:string) {
+    return structuredClone([...this.rows.values()].find(r=>this.scoped(scope,r)&&r.convertido_em==='pedido'&&r.convertido_em_id===id)??null);
+  }
   async get(scope: OportunidadeScope, id: string) { return structuredClone(this.scoped(scope,this.rows.get(id))); }
   async byLegacy(scope:OportunidadeScope,id:string) {
     return structuredClone([...this.rows.values()].find(r=>this.scoped(scope,r)&&r.legacy_store_id===id)??null);

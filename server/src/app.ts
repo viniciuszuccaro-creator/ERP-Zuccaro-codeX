@@ -187,7 +187,7 @@ export function createApp(options: CreateAppOptions) {
   );
   const oportunidadeService = config.crmHttpEnabled===true
     ? new OportunidadeService(useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db),
-      auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo) : null;
+      auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo,pedidoRepo) : null;
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,

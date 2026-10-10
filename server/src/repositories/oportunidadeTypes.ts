@@ -36,6 +36,8 @@ export const oportunidadeUpdateSchema = z.object({ ...fields }).partial().extend
 }).strict().refine(v => Object.entries(v).some(([k,value]) => k !== 'expected_version' && value !== undefined), 'Patch required');
 export const oportunidadeLinkSchema = z.object({ orcamento_id: z.string().uuid(),
   expected_version: z.number().int().positive() }).strict();
+export const oportunidadePedidoLinkSchema = z.object({ pedido_id:z.string().uuid(),
+  expected_version:z.number().int().positive() }).strict();
 export type OportunidadeCreate = z.infer<typeof oportunidadeCreateSchema>;
 export type OportunidadeUpdate = z.infer<typeof oportunidadeUpdateSchema>;
 export type OportunidadeScope = { groupId: string; empresaId: string };
@@ -46,7 +48,7 @@ export type OportunidadeFields = {
   temperatura: string; origem: string; observacoes: string | null; necessidades: string | null;
   data_abertura: string; data_previsao:string|null;proxima_acao:string|null;data_proxima_acao:string|null;
   produtos_interesse:unknown[];data_fechamento: string | null; historico_mudancas_etapa: unknown[];
-  orcamento_id: string | null; legacy_orcamento_id: string | null; pedido_id: string | null; convertido_em: 'orcamento' | 'pedido' | null;
+  orcamento_id: string | null; legacy_orcamento_id: string | null; pedido_id: string | null; legacy_pedido_id:string|null; convertido_em: 'orcamento' | 'pedido' | null;
   convertido_em_id: string | null;
 };
 export type Oportunidade = OportunidadeFields & {
@@ -58,13 +60,14 @@ export type Oportunidade = OportunidadeFields & {
 export const OPORTUNIDADE_FIELDS = ['cliente_empresa_id','cliente_id','cliente_nome','cliente_email','cliente_telefone',
   'titulo','descricao','responsavel','etapa','status','valor_estimado','orcamento_cliente','probabilidade','temperatura','origem',
   'observacoes','necessidades','data_abertura','data_previsao','proxima_acao','data_proxima_acao','produtos_interesse',
-  'data_fechamento','historico_mudancas_etapa','orcamento_id','legacy_orcamento_id','pedido_id','convertido_em','convertido_em_id'] as const satisfies readonly (keyof OportunidadeFields)[];
+  'data_fechamento','historico_mudancas_etapa','orcamento_id','legacy_orcamento_id','pedido_id','legacy_pedido_id','convertido_em','convertido_em_id'] as const satisfies readonly (keyof OportunidadeFields)[];
 export type OportunidadeFilters = { limit: number; offset: number; search?: string;
   ativo?: boolean; status?: string; clienteEmpresaId?: string };
 export interface OportunidadeRepository {
   withTransaction<T>(scope: OportunidadeScope, fn: (tx?: DbQueryExecutor) => Promise<T>): Promise<T>;
   lockIdempotency(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<void>;
   byKey(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
+  byPedido(scope: OportunidadeScope, id:string, tx?:DbQueryExecutor):Promise<Oportunidade|null>;
   byLegacy(scope: OportunidadeScope, id: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
   get(scope: OportunidadeScope, id: string, tx?: DbQueryExecutor, lock?: boolean): Promise<Oportunidade | null>;
   list(scope: OportunidadeScope, filters: OportunidadeFilters, tx?: DbQueryExecutor): Promise<{ rows: Oportunidade[]; total: number }>;

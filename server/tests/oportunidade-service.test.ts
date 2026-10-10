@@ -6,6 +6,7 @@ import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryOportunidadeRepository } from '../src/repositories/inMemoryOportunidadeRepository.ts';
 import type { ClienteEmpresa } from '../src/repositories/clienteTypes.ts';
 import type { Orcamento } from '../src/repositories/orcamentoTypes.ts';
+import type { Pedido } from '../src/repositories/pedidoTypes.ts';
 import { OportunidadeService } from '../src/services/oportunidadeService.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 
@@ -14,7 +15,7 @@ const ctx={...scope,actorId:ID.runtimeActorA,requestId:'crm-synthetic'};
 const linkId='11111111-2222-4333-8444-555555555555';
 const docId='66666666-2222-4333-8444-555555555555';
 const input=(key='opportunity-create-1')=>({titulo:'Proposta sintética',cliente_nome:'Contato sintético',idempotency_key:key,valor_estimado:'999999999999.123456'});
-function fixture() {
+function fixture(pedido?:Pedido) {
   const repo=new InMemoryOportunidadeRepository(), audit=new InMemoryAuditRepository(), tenant=new InMemoryTenantGuard(),rbac=new InMemoryRbacGuard();
   tenant.link(ID.empresaA,ID.groupA);tenant.link(ID.empresaA2,ID.groupA);tenant.link(ID.empresaB,ID.groupB);
   rbac.link({actorId:ID.runtimeActorA,groupId:ID.groupA,permissions:{CRM:{oportunidades:['_unused','visualizar','criar','editar','inativar','restaurar','aprovar','cancelar']},Comercial:{orcamento:['visualizar']}}});
@@ -23,7 +24,8 @@ function fixture() {
   const service=new OportunidadeService(repo,audit,tenant,rbac,{
     async getEmpresaLinkById(s,id){return s.groupId===link.group_id && s.empresaId===link.empresa_id && id===linkId?link:null;},
   },{async get(s,id,_tx,lock){calls.push({scope:s,lock});return id===docId && s.empresaId===ID.empresaA
-    ? {id:docId,...{group_id:s.groupId,empresa_id:s.empresaId},cliente_empresa_id:linkId,status:'EM_ABERTO'} as Orcamento:null;}});
+    ? {id:docId,...{group_id:s.groupId,empresa_id:s.empresaId},cliente_empresa_id:linkId,status:'EM_ABERTO'} as Orcamento:null;}},
+    {async get(s,id,_tx,lock){calls.push({scope:s,lock});return pedido && id===pedido.id && s.empresaId===pedido.empresa_id?pedido:null;}});
   return {repo,audit,tenant,rbac,link,calls,service};
 }
 
@@ -35,6 +37,50 @@ test('CRM service: create/replay concorrentes, código e decimais preservados',a
   await assert.rejects(f.service.create(ctx,{...input(),titulo:'Outro'}),{code:'OPORTUNIDADE_IDEMPOTENCY_CONFLICT'});
   const page=await f.service.list(ctx,{limit:1});assert.equal(page.meta.total,1);assert.equal(page.meta.hasMore,false);
   assert.equal((await f.service.get(ctx,rows[0].id)).id,rows[0].id);
+});
+
+test('CRM Pedido: continuidade do orçamento, RBAC/referências/estado/CAS e rollback',async()=>{
+  const pedido={id:ID.obraA,group_id:ID.groupA,empresa_id:ID.empresaA,cliente_empresa_id:linkId,
+    orcamento_id:docId,status:'EM_ABERTO',ativo:true} as Pedido;
+  const f=fixture(pedido);
+  const permissions={CRM:{oportunidades:['visualizar','criar','editar','aprovar','inativar']},Comercial:{orcamento:['visualizar'],pedido:['visualizar']}};
+  f.rbac.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions});
+  const unrelated=await f.service.create(ctx,{...input('unrelated-quote'),cliente_empresa_id:linkId});
+  await assert.rejects(f.service.linkPedido(ctx,unrelated.id,{expected_version:1,pedido_id:pedido.id}),{code:'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID'});
+  const row=await f.service.create(ctx,{...input('pedido-link'),cliente_empresa_id:linkId});
+  const quote=await f.service.linkOrcamento(ctx,row.id,{expected_version:1,orcamento_id:docId});
+  const body={expected_version:2,pedido_id:pedido.id};
+  await assert.rejects(f.service.linkPedido(ctx,row.id,{...body,legacy_pedido_id:'forged'}),{code:'VALIDATION_ERROR'});
+  pedido.orcamento_id=ID.produtoA;
+  await assert.rejects(f.service.linkPedido(ctx,row.id,body),{code:'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID'});
+  pedido.orcamento_id=docId;pedido.status='CANCELADO';
+  await assert.rejects(f.service.linkPedido(ctx,row.id,body),{code:'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID'});
+  pedido.status='EM_ABERTO';pedido.cliente_empresa_id=ID.clientePjB;
+  await assert.rejects(f.service.linkPedido(ctx,row.id,body),{code:'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID'});
+  pedido.cliente_empresa_id=linkId;
+  f.rbac.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions:{...permissions,Comercial:{orcamento:['visualizar']}}});
+  await assert.rejects(f.service.linkPedido(ctx,row.id,body),{code:'PERMISSION_DENIED'});
+  f.rbac.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions});
+  const append=f.audit.append.bind(f.audit);f.audit.append=async()=>{throw new Error('synthetic link audit failure');};
+  await assert.rejects(f.service.linkPedido(ctx,row.id,body),/synthetic link audit failure/);
+  assert.equal((await f.service.get(ctx,row.id)).version,quote.version);
+  f.audit.append=append;
+  const outcomes=await Promise.all(Array.from({length:4},()=>f.service.linkPedido(ctx,row.id,body)));
+  assert.ok(outcomes.every(r=>r.version===3 && r.convertido_em_id===pedido.id && r.orcamento_id===docId));
+  assert.ok(f.calls.every(c=>c.lock===true));
+  const manual=await f.service.create(ctx,{...input('manual-close'),cliente_empresa_id:linkId});
+  const closed=await f.service.update(ctx,manual.id,{expected_version:1,status:'Ganho'});
+  await assert.rejects(f.service.linkPedido(ctx,manual.id,{expected_version:closed.version,pedido_id:pedido.id}),{code:'OPORTUNIDADE_STATE_CONFLICT'});
+  pedido.id=ID.unidadeA;pedido.orcamento_id=null;
+  const a=await f.service.create(ctx,{...input('exclusive-a'),cliente_empresa_id:linkId});
+  const b=await f.service.create(ctx,{...input('exclusive-b'),cliente_empresa_id:linkId});
+  const race=await Promise.allSettled([a,b].map(r=>f.service.linkPedido(ctx,r.id,{expected_version:1,pedido_id:pedido.id})));
+  assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal((race.find(r=>r.status==='rejected') as PromiseRejectedResult).reason.code,'OPORTUNIDADE_PEDIDO_ALREADY_LINKED');
+  const winner=(race.find(r=>r.status==='fulfilled') as PromiseFulfilledResult<any>).value;
+  await f.service.setActive(ctx,winner.id,{expected_version:2},false);
+  const loser=winner.id===a.id?b:a;
+  await assert.rejects(f.service.linkPedido(ctx,loser.id,{expected_version:1,pedido_id:pedido.id}),{code:'OPORTUNIDADE_PEDIDO_ALREADY_LINKED'});
 });
 test('CRM service: patch preserva campos, versão concorrente e histórico',async()=>{
   const f=fixture(),row=await f.service.create(ctx,input());
