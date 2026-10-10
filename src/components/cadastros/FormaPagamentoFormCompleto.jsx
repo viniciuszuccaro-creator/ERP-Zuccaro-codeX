@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from "@/components/lib/usePermissions";
 import FormWrapper from "@/components/common/FormWrapper";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from 'sonner';
 
 export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, onSubmit, onSave, onClose, windowMode = false }) {
@@ -108,8 +109,8 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
   }, [formaPagamentoNorm?.id]);
 
   const handleSubmit = async () => {
-    if (!formData.codigo || !formData.descricao) {
-      toast.error('Preencha código e descrição');
+    if (!formData.descricao) {
+      toast.error('Preencha a descrição');
       return;
     }
     if (!contextoValido) {
@@ -120,11 +121,14 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
       toast.error('Sem permissão para salvar forma de pagamento.');
       return;
     }
+    const codigoReservado = String(formData.codigo ?? '').trim();
     const payload = {
       ...formData,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+      ...(codigoReservado ? { codigo: codigoReservado } : {}),
     };
+    if (!formaPagamentoNorm?.id) delete payload.codigo;
     if (onSubmit) onSubmit(payload);
     if (onSave) onSave();
     if (onClose) onClose();
@@ -177,15 +181,11 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
         {/* ABA 1: GERAL */}
         <TabsContent value="geral" className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Código *</Label>
-              <Input
-                value={formData.codigo}
-                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-                placeholder="Ex: FP001"
-                required
-              />
-            </div>
+            <CadastroCodigoRegistroField
+              hasId={Boolean(formaPagamentoNorm?.id)}
+              value={formData.codigo}
+              action="codigo-registro-forma-pagamento-completo"
+            />
 
             <div>
               <Label>Descrição *</Label>
@@ -197,6 +197,20 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
               />
             </div>
           </div>
+
+          {formaPagamentoNorm?.id ? (
+            <div>
+              <Label>ID técnico</Label>
+              <Input
+                value={String(formaPagamentoNorm.id)}
+                readOnly
+                disabled
+                className="bg-slate-50 font-mono text-xs"
+                data-action="id-tecnico-forma-pagamento-completo"
+                title="Identificador técnico imutável; distinto do código de registro"
+              />
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

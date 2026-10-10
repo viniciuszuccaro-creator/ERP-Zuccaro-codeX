@@ -4,6 +4,13 @@
  */
 import { isTenantMasterEntity } from '../lib/contextoMultiempresaPolicy.js';
 
+/** Mesmo formulário, mesmo Grupo/Empresa e, em HTTP, mesmo escopo do Bearer ativo. */
+export function isCadastroSelfManagedScopeCurrent(opened, rendered, active) {
+  return Boolean(opened && opened.groupId && rendered && active
+    && opened.groupId === rendered.groupId && opened.empresaId === rendered.empresaId
+    && opened.groupId === active.groupId && opened.empresaId === active.empresaId);
+}
+
 function hasText(...values) {
   return values.some((v) => v != null && String(v).trim() !== '');
 }
