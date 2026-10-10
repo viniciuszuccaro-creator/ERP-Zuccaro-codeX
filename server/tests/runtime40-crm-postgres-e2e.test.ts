@@ -26,6 +26,8 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
   try{
     const preflight=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
     assert.equal(preflight.ready,true);assert.deepEqual(preflight.blocked,[]);
+    const premature=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema,stage:'before_migration'}));
+    assert.equal(premature.ready,false);assert.ok(premature.blocked.includes('crmAbsent'));
     const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'r40-synthetic'};
     const scope={groupId:ctx.groupId,empresaId:ctx.empresaId};
     const audit=new PostgresAuditRepository(f.admin),repo=new PostgresOportunidadeRepository(f.data);

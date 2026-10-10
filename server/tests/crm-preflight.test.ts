@@ -11,6 +11,37 @@ test('CRM preflight CLI: destino obrigatório antes da conexão, saída sem iden
   assert.deepEqual(JSON.parse(result.stdout),{ready:false,blocked:['destinationRequired']});
 });
 
+test('CRM preflight antes040: baseline039/ausência de tabela e ledger, inclusive colisão com view',async()=>{
+  const f=await localCrmFixture();try {
+    const identity=await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema');
+    const expected={...identity.rows[0],stage:'before_migration' as const};
+    const inspect=()=>f.data.withTransaction(tx=>inspectCrmPreflight({query:async(sql,params)=>{
+      assert.match(sql.trim(),/^SELECT\b/i);return tx.query(sql,params);
+    }},expected));
+    await f.exec("INSERT INTO schema_migrations(id) VALUES('039_orcamentos_tabela_preco.sql')");
+    assert.ok((await inspect()).blocked.includes('crmAbsent'));
+    await f.exec('DROP TABLE oportunidades CASCADE');
+    assert.ok((await inspect()).blocked.includes('crmAbsent')); // Ledger040 still present.
+    await f.exec("DELETE FROM schema_migrations WHERE id='040_crm_oportunidades.sql'");
+    assert.equal((await inspect()).ready,true);
+    await f.exec("INSERT INTO schema_migrations(id) VALUES('041_unexpected.sql')");
+    assert.ok((await inspect()).blocked.includes('baseline039'));
+    await f.exec("DELETE FROM schema_migrations WHERE id='041_unexpected.sql'");
+    await f.exec('CREATE VIEW oportunidades AS SELECT 1 AS placeholder');
+    assert.ok((await inspect()).blocked.includes('crmAbsent'));
+    await f.exec('DROP VIEW oportunidades');
+    await f.exec("DELETE FROM schema_migrations WHERE id='039_orcamentos_tabela_preco.sql'");
+    assert.ok((await inspect()).blocked.includes('baseline039'));
+  }finally{await f.close();}
+});
+
+test('CRM preflight CLI: stage inválido recusado antes de conectar',()=>{
+  const result=spawnSync(process.execPath,['--import','tsx','scripts/crmPreflight.ts'],{encoding:'utf8',cwd:new URL('../',import.meta.url),
+    env:{...process.env,CRM_EXPECTED_DATABASE:'synthetic',CRM_EXPECTED_SCHEMA:'public',CRM_PREFLIGHT_STAGE:'unknown',DATABASE_URL:'postgresql://must-not-connect:private@example.invalid/forbidden'}});
+  assert.equal(result.status,2);assert.equal(result.stderr,'');
+  assert.deepEqual(JSON.parse(result.stdout),{ready:false,blocked:['invalidStage'],activationAuthorized:false});
+});
+
 test('CRM preflight: somente leitura, destino/papel/RLS/ledger/trigger/índice fail-closed',async()=>{
   const f=await localCrmFixture();try{
     const identity=await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema');

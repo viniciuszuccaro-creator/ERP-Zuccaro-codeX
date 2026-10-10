@@ -1,25 +1,39 @@
 import type { DbQueryExecutor } from './client.js';
 
 /** Only catalogs/ledger are read. No tenant rows, credentials or names are returned. */
-export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:string;schema:string}) {
+export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:string;schema:string;stage?:'before_migration'|'after_migration'}) {
   if(!expected.database?.trim() || !expected.schema?.trim())throw new Error('CRM_PREFLIGHT_DESTINATION_REQUIRED');
+  if(expected.stage && !['before_migration','after_migration'].includes(expected.stage))throw new Error('CRM_PREFLIGHT_STAGE_INVALID');
   const identity=await db.query<{database:string;schema:string;rolsuper:boolean;rolbypassrls:boolean}>(
     'SELECT current_database() AS database,current_schema() AS schema,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
   const who=identity.rows[0];
   const checks:Record<string,boolean>={destination:!!who&&who.database===expected.database&&who.schema===expected.schema,
     restrictedRole:!!who&&!who.rolsuper&&!who.rolbypassrls};
   if(!checks.destination)return {ready:false,checks,blocked:Object.keys(checks).filter(k=>!checks[k])};
-  const relations=await db.query<{name:string;oid:string;rls:boolean;force:boolean}>(
-    `SELECT c.relname AS name,c.oid::text AS oid,c.relrowsecurity AS rls,c.relforcerowsecurity AS force
+  const relations=await db.query<{name:string;oid:string;rls:boolean;force:boolean;kind:string}>(
+    `SELECT c.relname AS name,c.oid::text AS oid,c.relrowsecurity AS rls,c.relforcerowsecurity AS force,c.relkind AS kind
      FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1
-       AND c.relname IN ('oportunidades','schema_migrations','entity_code_sequences') AND c.relkind='r'`,[expected.schema]);
+       AND c.relname IN ('oportunidades','schema_migrations','entity_code_sequences')`,[expected.schema]);
   const opportunity=relations.rows.find(r=>r.name==='oportunidades');
-  checks.schema=!!opportunity&&relations.rows.some(r=>r.name==='entity_code_sequences');
+  const schema='"'+expected.schema.replaceAll('"','""')+'"';
+  const hasLedger=relations.rows.some(r=>r.name==='schema_migrations'&&r.kind==='r');
+  if(expected.stage==='before_migration') {
+    checks.baseline039=false;checks.crmAbsent=!opportunity;
+    if(hasLedger) {
+      const ledger=await db.query<{baseline:boolean;crm:boolean;later:boolean}>(`SELECT
+        EXISTS(SELECT 1 FROM ${schema}.schema_migrations WHERE id=$1) AS baseline,
+        EXISTS(SELECT 1 FROM ${schema}.schema_migrations WHERE id=$2) AS crm,
+        EXISTS(SELECT 1 FROM ${schema}.schema_migrations WHERE substring(id from '^([0-9]+)_')::numeric>39) AS later`,['039_orcamentos_tabela_preco.sql','040_crm_oportunidades.sql']);
+      checks.baseline039=ledger.rows[0]?.baseline===true&&ledger.rows[0]?.later===false;
+      checks.crmAbsent=checks.crmAbsent&&ledger.rows[0]?.crm===false;
+    }
+    const blocked=Object.keys(checks).filter(k=>!checks[k]);return {ready:blocked.length===0,checks,blocked};
+  }
+  checks.schema=opportunity?.kind==='r'&&relations.rows.some(r=>r.name==='entity_code_sequences'&&r.kind==='r');
   checks.rls=!!opportunity?.rls&&!!opportunity?.force;
   checks.migration=false;
-  if(relations.rows.some(r=>r.name==='schema_migrations')) {
+  if(hasLedger) {
     // Identifier originates in a separately validated destination, not interpolated raw.
-    const schema='"'+expected.schema.replaceAll('"','""')+'"';
     const ledger=await db.query<{applied:boolean}>(`SELECT EXISTS(SELECT 1 FROM ${schema}.schema_migrations WHERE id=$1) AS applied`,['040_crm_oportunidades.sql']);
     checks.migration=ledger.rows[0]?.applied===true;
   }
