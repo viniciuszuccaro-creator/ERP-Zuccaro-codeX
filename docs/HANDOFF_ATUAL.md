@@ -2,12 +2,12 @@
 
 | Item | Valor |
 |---|---|
-| PR | [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a9d2500`** |
+| PR | [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a38a94e`** |
 | base | #267 `codex/crm-http-canonico-20261010` @ `e3194fb1` · draft · MERGEABLE · CI SUCCESS |
-| escopo | endpoint vincular-pedido · PedidoRepository.get lock opcional · `legacy_pedido_id` na 040 candidata |
+| escopo | vincular-pedido · exclusividade Pedido (índice único + `byPedido`) · orçamento de origem obrigatório quando presente |
 | flag / UI | `ENABLE_CRM_HTTP` OFF · opção B intacta · sem dual-write |
 | ação Cursor | **monitorar** — **não** porte/merge/deploy; não integrar sem #267 revalidada |
-| #267/#266/#265/#254 | sem mudança de tip neste ciclo |
+| #267/#266/#265/#254 | tips estáveis neste ciclo |
 | tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
 
 ## REVISÃO CODEX — #267 CRM HTTP 040 (2026-10-10)

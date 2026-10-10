@@ -2,14 +2,14 @@
 
 | Item | Estado |
 |---|---|
-| **#268** tip **`5a9d2500`** | draft · MERGEABLE · base #267 `e3194fb1` · CI SUCCESS |
-| conteúdo | vincular-pedido canônico · `legacy_pedido_id` · lock/executor Pedido · flag CRM HTTP **OFF** · UI B intacta |
-| porte Cursor | **não** — depende de #267 final; PR pede revisão sem merge/VPS/ativação |
+| **#268** tip **`5a38a94e`** | draft · MERGEABLE · base #267 `e3194fb1` · CI SUCCESS · IDLE |
+| conteúdo | vincular-pedido + exclusividade Pedido (`uq_oportunidades_pedido_canonico` / `byPedido`) · proveniência Orçamento · flag **OFF** |
+| porte Cursor | **não** — depende de #267; sem merge/VPS/ativação |
 | **#267** | tip `e3194fb1` · IDLE · sem porte |
 | **#266/#265/#263/#254** | tips iguais · sem re-porte |
-| tip #261 / implantado | docs **`b6725a28`** · runtime **`c125c4db`** |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
 | `main` | `baba91a6` |
-| próxima | monitorar #268/#267; secret restrito; timer |
+| próxima | monitorar #268 tip `5a38a94e` / #267; secret restrito; timer |
 
 ## CURSOR — revisão Codex timer: #267 CRM HTTP (2026-10-10)
 
