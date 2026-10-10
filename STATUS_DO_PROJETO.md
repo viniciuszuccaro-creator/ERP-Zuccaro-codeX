@@ -2,7 +2,7 @@
 
 | Item | Estado |
 |---|---|
-| **#265** Codex | OPEN draft · tip `fdb4af81` · CONFLICTING vs #261 → **porte seletivo neste tip** (código+testes; sem reescrever handoff Codex) |
+| **#265** Codex | OPEN draft · tip `fdb4af81` · CONFLICTING → **porte seletivo implantado** `db89aa45` / `index-Dg3GA2bC.js` · homolog owner fail_count=0 |
 | **#266** Codex Legado | OPEN draft · tip `661f3ef3` · MERGEABLE vs #261 · **não** mesclar aqui — coordenar #211 |
 | **#263** Orçamento | OPEN vs `main` · tip `1b19f4ee` · CI SUCCESS · MERGEABLE · decisão owner (independente #261) |
 | **#254** | OPEN ancestral `20a2c2fb` — **não** re-portar |
@@ -16,16 +16,16 @@
 |---|---|
 | **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
 | **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
-| **PR HEAD #261** | **`58e01754`** · MERGEABLE → main |
-| CI tip `58e01754` | erp-runtime-ci **SUCCESS** |
-| **implantado** | erp-dev **`58e01754`** · `index-Bl46Ykvq.js` · rollback `pre-spa-login-20261010-164602` |
-| **homologado implantado** | owner tip **`58e01754`** fail_count=0 (login tipado + Clientes + launchpads) |
+| **PR HEAD #261** | **`db89aa45`** · MERGEABLE → main |
+| CI tip `db89aa45` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`db89aa45`** · `index-Dg3GA2bC.js` · rollback `pre-spa-login-20261010-171326` |
+| **homologado implantado** | owner tip **`db89aa45`** fail_count=0 (login tipado + Clientes + launchpads) |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
 | **implementado neste lote** | C360 CRM opção B · CRM multiempresa/`sectionKey` · Contratos ID lista · azul Contratos/AdminHeader · testes 7/7 |
 | **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
-| evidência | `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `deploy-261-tip-346192e4-crm-legado-20261010.txt` |
-| próxima | secret restrito · merge owner #261→main · Codex CRM HTTP / #211 · POD/Separação keep-both |
+| evidência | `deploy-261-tip-db89aa45-porte-265-20261010.txt` · `deploy-261-tip-58e01754-azul-crm-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · #266/#211 Legado · #263 owner · CRM HTTP Codex |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 
