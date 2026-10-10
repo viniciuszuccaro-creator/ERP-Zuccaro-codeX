@@ -104,4 +104,12 @@ test('Blocos Cadastros usam openCadastroEntityWindow; migration 038 e reserve ex
   assert.doesNotMatch(migration, /025_cadastros/);
   assert.match(reserve, /reserve_entity_codigo/);
   assert.match(reserve, /GREATEST/);
+  assert.match(reserve, /incomingCodigo/);
+  const clienteRepo = await readFile(new URL('../server/src/repositories/postgresClienteRepository.ts', import.meta.url), 'utf8');
+  const tabelaRepo = await readFile(new URL('../server/src/repositories/postgresTabelaPrecoRepository.ts', import.meta.url), 'utf8');
+  const produtoRepo = await readFile(new URL('../server/src/repositories/postgresProdutoRepository.ts', import.meta.url), 'utf8');
+  for (const [name, src] of [['Cliente', clienteRepo], ['TabelaPreco', tabelaRepo], ['Produto', produtoRepo]]) {
+    assert.match(src, /reserveEntityCodigo/, name);
+    assert.match(src, /incomingCodigo/, name);
+  }
 });

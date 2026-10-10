@@ -49,6 +49,8 @@ export const clienteCreateSchema = z.object({
   celular: z.string().trim().max(40).optional().nullable(),
   status: z.string().trim().max(40).optional().default('Ativo'),
   origem: z.enum(CLIENTE_ORIGENS).optional().default('ERP'),
+  /** Código de registro (importação); novos sem código usam reserva concorrente. */
+  codigo: z.string().trim().max(80).optional().nullable(),
   codigo_legado: z.string().trim().max(80).optional().nullable(),
   legacy_id: z.string().trim().max(120).optional().nullable(),
   source_system: z.string().trim().max(80).optional().nullable(),

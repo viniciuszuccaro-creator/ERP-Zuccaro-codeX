@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbQueryExecutor } from '../db/client.js';
 
 /**
  * Reserva código sequencial por grupo via reserve_entity_codigo.
@@ -6,7 +6,7 @@ import type { DbClient } from '../db/client.js';
  * Código alfanumérico legado não entra no high-water; não renumerar.
  */
 export async function reserveEntityCodigo(options: {
-  db: DbClient;
+  db: DbQueryExecutor;
   groupId: string;
   entityName: string;
   table: string;
