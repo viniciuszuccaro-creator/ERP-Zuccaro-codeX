@@ -1,6 +1,7 @@
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
+import type {DbQueryExecutor} from '../db/client.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ProdutoRelationGuard } from '../db/produtoRelationGuard.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
@@ -65,6 +66,7 @@ const WORKFLOW_ACTION: Record<Produto['workflow_status'], RbacAction> = {
 };
 
 export type ProdutoListOptions = {
+  forOperation?: boolean;
   ativo?: boolean;
   search?: string;
   codigo?: string;
@@ -131,6 +133,22 @@ export class ProdutoService {
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
+    if(options.forOperation){
+      if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+      if(!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+      if(options.ativo===false||!Number.isInteger(options.limit??50)||!Number.isInteger(options.offset??0)
+        ||(options.limit??50)<1||(options.limit??50)>200||(options.offset??0)<0)
+        throw new AppError(422,'VALIDATION_ERROR','Invalid operational pagination/filter');
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+      return this.repo.withTransaction(async executor=>{
+        if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+        return this.listPage(ctx,options,executor);
+      });
+    }
+    return this.listPage(ctx,options);
+  }
+  private async listPage(ctx:RequestContext,options:ProdutoListOptions,executor?:DbQueryExecutor) {
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
     // Fail-safe operacional: sem ?ativo= explícito, listar SOMENTE ativo=true.
@@ -139,13 +157,14 @@ export class ProdutoService {
     const page = await this.repo.listPage({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
+      forOperation: options.forOperation,
       ativo,
       search: options.search,
       codigo: options.codigo,
       codigoBarras: options.codigoBarras,
       limit,
       offset,
-    });
+    },executor);
     return {
       data: page.rows,
       meta: {
@@ -157,7 +176,21 @@ export class ProdutoService {
     };
   }
 
-  async get(ctx: RequestContext, id: string) {
+  async get(ctx: RequestContext, id: string, options:{forOperation?:boolean}={}) {
+    if(options.forOperation){
+      this.assertScope(ctx);this.assertRelationId(id);
+      if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+      if(!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false});
+      return this.repo.withTransaction(async executor=>{
+        if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+        const row=await this.repo.getForOperation({groupId:ctx.groupId,empresaId:ctx.empresaId},id,executor);
+        if(!row||!row.ativo)throw new AppError(404,'PRODUTO_NOT_FOUND','Produto not found in tenant scope');
+        return row;
+      });
+    }
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);

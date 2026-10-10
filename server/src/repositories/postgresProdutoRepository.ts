@@ -152,6 +152,11 @@ export class PostgresProdutoRepository implements ProdutoRepository {
   }
 
   async listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }> {
+    if(filter.forOperation){
+      if(!this.empresaLinksEnabled||!filter.empresaId)return {rows:[],total:0};
+      if(!executor)throw new Error('PRODUTO_OPERATION_REQUIRES_TRANSACTION');
+      await this.empresaContext(filter,executor);
+    }
     const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
@@ -159,10 +164,16 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     const where = ['group_id = $1'];
     if (filter.empresaId) {
       params.push(filter.empresaId);
-      where.push(`empresa_id = $${params.length}`);
+      const companyParameter=params.length;
+      where.push(filter.forOperation
+        ? `(empresa_id = $${companyParameter} OR (empresa_id IS NULL AND EXISTS(
+            SELECT 1 FROM produto_empresas pe JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
+            WHERE pe.produto_id=produtos.id AND pe.group_id=produtos.group_id AND pe.empresa_id=$${companyParameter}
+              AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa')))`
+        : `empresa_id = $${companyParameter}`);
     }
     // Default operacional: ativo=true (fail-safe). Combinado com group_id (tenant).
-    const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    const ativoFilter = filter.forOperation?true:typeof filter.ativo === 'boolean' ? filter.ativo : true;
     params.push(ativoFilter);
     where.push(`ativo = $${params.length}`);
     if (filter.codigo) {

@@ -113,6 +113,10 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
   });
 }
 
+function parseProdutoOperation(value:unknown):boolean {
+  if(value!==undefined&&value!=='true'&&value!=='false')throw new AppError(422,'VALIDATION_ERROR','operacao must be true or false');
+  return value==='true';
+}
 function mountProdutoRoutes(router: Router, service: ProdutoService) {
   router.get('/api/v1/produtos/:id/empresa-operacao',requireTenantScope,async(req,res,next)=>{
     try {res.setHeader('Cache-Control','no-store');res.json({data:await service.empresaOperacao(ctxFromReq(req),req.params.id)});}
@@ -208,11 +212,14 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
+      const forOperation=parseProdutoOperation(req.query.operacao);
+      if(forOperation)res.setHeader('Cache-Control','no-store');
       const ativoParam = req.query.ativo;
       const ativo = ativoParam == null
         ? undefined
         : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
       const page = await service.list(ctxFromReq(req), {
+        forOperation,
         ativo,
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,
@@ -353,7 +360,9 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
-      const row = await service.get(ctxFromReq(req), req.params.id);
+      const forOperation=parseProdutoOperation(req.query.operacao);
+      if(forOperation)res.setHeader('Cache-Control','no-store');
+      const row = await service.get(ctxFromReq(req), req.params.id,{forOperation});
       res.json({ data: row });
     } catch (error) {
       next(error);

@@ -19,6 +19,7 @@ export type ProdutoListFilter = Scope & ListOptions & {
   offset?: number;
   codigo?: string;
   codigoBarras?: string;
+  forOperation?: boolean;
 };
 
 export type ProdutoReadOptions = {
@@ -223,9 +224,13 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   private matches(filter: ProdutoListFilter, r: Produto): boolean {
     if (r.group_id !== filter.groupId) return false;
-    if (filter.empresaId && r.empresa_id !== filter.empresaId) return false;
+    if(filter.forOperation&&(!this.empresaLinksEnabled||!filter.empresaId))return false;
+    if (filter.empresaId && r.empresa_id !== filter.empresaId) {
+      const link=this.empresaLinks.get(`${filter.groupId}:${filter.empresaId}:${r.id}`);
+      if(!filter.forOperation||r.empresa_id!==null||!r.ativo||!link?.ativo||!link.habilitado_operacao)return false;
+    }
     // Default operacional: ativo=true (paridade com Postgres). Combinado com group_id.
-    const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    const ativoFilter = filter.forOperation?true:typeof filter.ativo === 'boolean' ? filter.ativo : true;
     if (r.ativo !== ativoFilter) return false;
     if (filter.codigo && String(r.codigo || '').toLowerCase() !== filter.codigo.toLowerCase()) return false;
     if (filter.codigoBarras && String(r.codigo_barras || '').toLowerCase() !== filter.codigoBarras.toLowerCase()) {
