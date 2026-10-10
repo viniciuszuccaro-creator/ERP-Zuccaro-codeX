@@ -18,7 +18,8 @@ Chat principal: [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d97362
 6. Consolidar #261, CI, implantar e homologar SHA VPS.
 
 ### Primeira ação efetiva Cursor
-Corrigido Visualizador: gate `Organizacional` no `data-permission`; fallback sem `codigo` em campos descritivos; `GrupoEmpresarial` inclui `id===groupId` no filtro. Evidência: `orientacao-coordenada-auditoria-global-20261010.txt`.
+Corrigido Visualizador: gate `Organizacional` no `data-permission`; fallback sem `codigo` em campos descritivos; `GrupoEmpresarial` inclui `id===groupId` no filtro.
+**Implantado** erp-dev tip **`ea213906`** · `index-Dqf6E74p.js` · evidências `orientacao-coordenada-auditoria-global-20261010.txt` · `deploy-261-tip-ea213906-*`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
