@@ -11,7 +11,7 @@ test('CRM HTTP: desligado por padrão; CRUD/escopo/RBAC quando habilitado explic
   for(const enabled of [false,true]) {
     const config=loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:enabled?'true':'false'});
     const tenant=new InMemoryTenantGuard(),rbac=new InMemoryRbacGuard();tenant.link(ID.empresaA,ID.groupA);tenant.link(ID.empresaA2,ID.groupA);
-    rbac.link({actorId:ID.runtimeActorA,groupId:ID.groupA,permissions:{CRM:{oportunidades:['visualizar','criar','editar','inativar','restaurar']}}});
+    rbac.link({actorId:ID.runtimeActorA,groupId:ID.groupA,permissions:{CRM:{oportunidades:['visualizar','criar','editar','inativar','restaurar','aprovar']},Comercial:{pedido:['visualizar']}}});
     const built=createApp({config,db:createDbClient(config),useMemory:true,tenantGuard:tenant,rbacGuard:rbac});
     const server=await new Promise<import('node:http').Server>(resolve=>{const s=built.app.listen(0,'127.0.0.1',()=>resolve(s));});
     try {
@@ -30,6 +30,9 @@ test('CRM HTTP: desligado por padrão; CRUD/escopo/RBAC quando habilitado explic
       assert.equal((await call('PATCH',`/${row.id}`,{expected_version:1,titulo:'Concorrente'})).status,409);
       assert.equal((await call('DELETE',`/${row.id}`,{expected_version:2})).status,200);
       assert.equal((await call('POST',`/${row.id}/restaurar`,{expected_version:3})).status,200);
+      assert.equal((await call('POST',`/${row.id}/vincular-pedido`,{expected_version:4,pedido_id:ID.obraA,legacy_pedido_id:'forged'})).status,422);
+      assert.equal((await call('POST',`/${row.id}/vincular-pedido`,{expected_version:4,pedido_id:ID.obraA})).status,404);
+      assert.equal((await call('POST',`/${row.id}/vincular-pedido`,{expected_version:4,pedido_id:ID.obraA},{...headers,'x-empresa-id':ID.empresaA2})).status,404);
       rbac.link({actorId:ID.runtimeActorA,groupId:ID.groupA,permissions:{}});
       assert.equal((await call('GET',`/${row.id}`)).status,403);
     }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}

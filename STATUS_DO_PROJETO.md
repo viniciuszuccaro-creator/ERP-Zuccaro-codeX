@@ -12815,3 +12815,9 @@ padrao e sem cutover/deploy/migration operacional. Revisao final ainda requerida
 - Vínculo Orçamento preserva a referência anterior em legacy_orcamento_id, somente pelo serviço/contrato persistente; cliente HTTP não pode fabricar esse campo. Replay mantém referência e versão.
 - Provas ampliadas: código fora da reserva na empresa A seguido de criação na A2; referência textual → vínculo UUID → replay. Runner PostgreSQL real obrigatório mantido, sem remoção de testes/skip.
 - Flag, UI/store, migration DEV, importação e canais continuam desligados/pendentes. Novo HEAD requer revisão independente e CI próprias.
+
+### Codex — CRM → Pedido canônico (2026-10-10)
+Base #267 e3194fb1, branch codex/crm-pedido-integrado-20261010; coordenação de arquivos liberada por Cursor em6101860020. Reutiliza montagem/repositórios/serviços atuais, executor terceiro argumento e lock opcional quarto/default false. Sem UI/store/C360/policy paralela.
+Vínculo de Pedido existente valida ClienteEmpresa, estado ativo EM_ABERTO, tenant/RBAC/audit, CAS e replay. Avança CRM já vinculado a Orçamento somente se Pedido aponta exatamente ao mesmo Orçamento; Ganho manual não permite contornar fechamento. Mantém orçamento e referências legadas separadas; não cria/edita documento, preço, produção ou estoque no endpoint CRM.
+Migration040 continua candidata não aplicada; inclui legacy_pedido_id readonly HTTP. Nenhuma025–039 alterada, 026 permanece fail-closed. CI real R40 ampliada Cliente→Orçamento→Pedido pelos serviços atuais, preço snapshotado, replay concorrente e cancelamento sob lock; prova local SQL de auditoria/rollback/escopo. Fixture não homologa grants DEV.
+ENABLE_CRM_HTTP permanece OFF. Merge/deploy/importação/corte dependem de revisão/CI/backup/reconciliação/runtime e grants. Sem carga de dados reais ou ativação de canais neste lote.

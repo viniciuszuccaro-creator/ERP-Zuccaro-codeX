@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS oportunidades (
   orcamento_id TEXT,
   legacy_orcamento_id TEXT,
   pedido_id TEXT,
+  legacy_pedido_id TEXT,
   convertido_em TEXT CHECK (convertido_em IN ('orcamento','pedido')),
   convertido_em_id TEXT,
   ativo BOOLEAN NOT NULL DEFAULT true,

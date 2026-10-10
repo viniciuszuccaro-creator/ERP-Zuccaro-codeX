@@ -15,11 +15,12 @@ export async function setupCrmFixture(exec:(sql:string)=>Promise<unknown>,role=R
   await exec(`CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS NOLOGIN;
     GRANT SELECT,INSERT,UPDATE ON oportunidades,entity_code_sequences TO ${role};
     GRANT SELECT,INSERT ON audit_logs TO ${role};
-    GRANT SELECT ON cliente_empresas,orcamentos,orcamento_itens TO ${role};
+    GRANT SELECT ON cliente_empresas,orcamentos,orcamento_itens,pedidos,pedido_itens TO ${role};
     GRANT SELECT ON profiles TO ${role};
     GRANT UPDATE(updated_at) ON orcamentos TO ${role};
+    GRANT UPDATE(updated_at) ON pedidos TO ${role};
     GRANT EXECUTE ON FUNCTION reserve_entity_codigo(uuid,text,integer) TO ${role};`);
-  for(const table of ['cliente_empresas','orcamentos','orcamento_itens','audit_logs'])await exec(`
+  for(const table of ['cliente_empresas','orcamentos','orcamento_itens','pedidos','pedido_itens','audit_logs'])await exec(`
     CREATE POLICY crm_fixture_scope ON ${table} FOR ALL TO ${role}
     USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
       AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)

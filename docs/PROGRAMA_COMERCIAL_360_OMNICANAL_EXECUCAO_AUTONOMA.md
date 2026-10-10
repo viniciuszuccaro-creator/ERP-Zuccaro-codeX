@@ -1039,3 +1039,8 @@ Backend local completo 317 PASS/0 FAIL/18 skips existentes sem URL; R40 real nao
 adiciona skip e foi executado obrigatoriamente na CI. Evidencia sanitizada em
 `docs/evidence/crm-http-040-pg-ci-20261010.txt`. Codigo permanece desligado por
 padrao e sem cutover/deploy/migration operacional. Revisao final ainda requerida.
+### Codex — CRM → Pedido canônico (2026-10-10)
+Base #267 e3194fb1, branch codex/crm-pedido-integrado-20261010; coordenação de arquivos liberada por Cursor em6101860020. Reutiliza montagem/repositórios/serviços atuais, executor terceiro argumento e lock opcional quarto/default false. Sem UI/store/C360/policy paralela.
+Vínculo de Pedido existente valida ClienteEmpresa, estado ativo EM_ABERTO, tenant/RBAC/audit, CAS e replay. Avança CRM já vinculado a Orçamento somente se Pedido aponta exatamente ao mesmo Orçamento; Ganho manual não permite contornar fechamento. Mantém orçamento e referências legadas separadas; não cria/edita documento, preço, produção ou estoque no endpoint CRM.
+Migration040 continua candidata não aplicada; inclui legacy_pedido_id readonly HTTP. Nenhuma025–039 alterada, 026 permanece fail-closed. CI real R40 ampliada Cliente→Orçamento→Pedido pelos serviços atuais, preço snapshotado, replay concorrente e cancelamento sob lock; prova local SQL de auditoria/rollback/escopo. Fixture não homologa grants DEV.
+ENABLE_CRM_HTTP permanece OFF. Merge/deploy/importação/corte dependem de revisão/CI/backup/reconciliação/runtime e grants. Sem carga de dados reais ou ativação de canais neste lote.
