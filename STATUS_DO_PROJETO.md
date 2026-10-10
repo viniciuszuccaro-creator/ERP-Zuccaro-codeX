@@ -8,7 +8,8 @@
 | Fiscal Acesso negado | pendente (RBAC `Fiscal.*` / launchpad) |
 | matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | implantar tip · homologar UI VPS · continuar inventário global |
+| **implantado** | erp-dev **`ea213906`** · `index-Dqf6E74p.js` · backup `pre-gate-e-20261010-102145.sql` · rollback `pre-spa-login-20261010-102145` |
+| próxima | CI tip · hard refresh UI Empresas/Grupos/Marcas · Fiscal RBAC · inventário global |
 
 ## CURSOR — #261 tip `d6952b9d`/`279f26fc` implantado (2026-10-10)
 
