@@ -363,10 +363,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
-      // Sempre notifica — não engolir rejeição (evita ErrorBoundary "Promise rejeitada")
+      const sameScope = isFormScopeCurrent();
       toast({
-        title: isFormScopeCurrent() ? "❌ Erro ao salvar cliente" : "Contexto alterado",
-        description: error?.message || String(error),
+        title: sameScope ? "❌ Erro ao salvar cliente" : "Contexto alterado",
+        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
     }
@@ -387,9 +387,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      const sameScope = isFormScopeCurrent();
       toast({
-        title: isFormScopeCurrent() ? "❌ Erro ao excluir cliente" : "Contexto alterado",
-        description: error?.message || String(error),
+        title: sameScope ? "❌ Erro ao excluir cliente" : "Contexto alterado",
+        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
     }

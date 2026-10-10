@@ -69,6 +69,7 @@ test('os quatro formulários próprios usam o guard no envio e descartam respost
   const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   assert.match(produto, /assertFormScopeCurrent\(\)[\s\S]*?getHttpProdutoApi\(\)\.update/);
   assert.match(produto, /if \(!isFormScopeCurrent\(\)\) return/);
+  assert.match(produto, /data-action="salvar-produto"[^>]*disabled=\{[^}]*!isFormScopeCurrent\(\)/);
   assert.match(produto, /useProdutoHttpEditLoad\(\{/);
 });
 import {

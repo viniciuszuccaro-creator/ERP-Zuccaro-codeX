@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isProdutoHttpEditLoadComplete } from './produtoHttpPolicy.js';
 
 /** GET canônico obrigatório antes de editar; respostas de outra sessão não alteram o rascunho. */
 export default function useProdutoHttpEditLoad({ enabled, produtoId, scopeKey, isScopeCurrent, load, onLoaded, onError }) {
@@ -13,7 +14,7 @@ export default function useProdutoHttpEditLoad({ enabled, produtoId, scopeKey, i
     if (!isScopeCurrent()) return;
     let active = true;
     Promise.resolve().then(() => load(produtoId)).then((row) => {
-      if (!row || row.id !== produtoId) throw new Error('Resposta sem produto completo correspondente');
+      if (!isProdutoHttpEditLoadComplete(row, produtoId)) throw new Error('Resposta sem produto completo correspondente');
       if (!active || !isScopeCurrent()) return;
       onLoaded(row);
       setReadyId(produtoId);
