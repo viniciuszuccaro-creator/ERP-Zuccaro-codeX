@@ -59,13 +59,16 @@ Fail-closed preservado (gate por seção).
 - **Supersedido** pela oitava ação (`3108b9f2`). Evidência tip antigo: `deploy-261-tip-7e515fbc-homolog-login-20261010.txt`.
 
 ### Oitava ação — tip `3108b9f2` (#254 HEAD `4a1ecf4c` + azul global + consolidação)
-- #254 avançou `f0844fa5`→`17b7c7aa`→`9ba6aefe`→**`4a1ecf4c`**: session freeze no guard; assert delete; produto HTTP só salva após GET completo + retry.
-- Azul-claro (ref #257 `baba91a6`): launchpads Estoque/Expedição/Compras/Fiscal/Produção/RH/CRM → `color:'blue'`; Financeiro CR≠Régua preservado.
-- Consolidação: Financeiro Aprovações → `CentralAprovacoesManager`; matriz em `docs/evidence/matriz-consolidacao-modulos-20261010.txt`.
-- DetalhesCliente 360: código de registro + ID técnico no header (histórico existente preservado).
-- **Implantado** erp-dev tip **`3108b9f2`** · asset `index-Chstx7-i.js` · backup `pre-gate-e-20261010-131907.sql.gz` · rollback `pre-spa-login-20261010-131907`.
-- **Homologado neste SHA** (login tipado): Cadastros · Clientes via Comercial · trocar Grupo · launchpads PASS; grade 0 rows ≠ DB.
-- Evidência: `docs/vps/evidence/deploy-261-tip-3108b9f2-integrado-20261010.txt`.
+- **Supersedido** pela nona ação (`0d458ab9`). Evidência tip antigo: `deploy-261-tip-3108b9f2-integrado-20261010.txt`.
+
+### Nona ação — tip `0d458ab9` (Clientes API×UI + V23→V24)
+- API×DB×UI CPA: DB=5 · API=5 · V24 rows=5. Residual “0 rows” era clique no KPI, não no Launchpad `Comercial.Clientes.abrir`.
+- Hardening: `httpApiClient` Cliente sem `status` em ativoKeys; filter sempre array.
+- V23→V24: `ProdutosTab` · `FornecedoresTab` · `ColaboradoresTab` · RH window (matriz atualizada).
+- **Implantado** erp-dev tip **`0d458ab9`** · asset `index-CEQLA0kg.js` · backup `pre-gate-e-20261010-133102.sql` · rollback `pre-spa-login-20261010-133103`.
+- **Homologado neste SHA**: login tipado · Cadastros · Clientes V24 n=5 · abrir/reabrir · trocar Grupo · launchpads PASS.
+- Residual: salvar form self-managed (Salvar fora viewport headless) · usuário restrito · Legado #211.
+- Evidências: `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` · `probe-clientes-api-ui-3108b9f2-20261010.txt`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).

@@ -1,18 +1,27 @@
+## CURSOR — #261 tip `0d458ab9` (Clientes API×UI + V23→V24) (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | hardening HTTP Cliente (ativo≠status) · V23→V24 Estoque/Compras/RH · probe/homolog Launchpad |
+| **causa residual** | “grade 0” = clique no KPI Clientes; Launchpad `data-action=Comercial.Clientes.abrir` → V24 rows=5 |
+| **preservado** | #254 `4a1ecf4c` · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
+| CI tip `0d458ab9` | erp-runtime-ci (push) |
+| **implantado** | erp-dev **`0d458ab9`** · `index-CEQLA0kg.js` · backup `pre-gate-e-20261010-133102.sql` · rollback `pre-spa-login-20261010-133103` |
+| **homologado** (este SHA) | login tipado · Cadastros · Clientes V24 n=5 · abrir/reabrir · trocar Grupo · launchpads PASS |
+| residual | salvar form self-managed (Salvar fora do 1º viewport headless) · usuário restrito |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` (V23→V24 **feito**) |
+| evidências | `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` · `probe-clientes-api-ui-3108b9f2-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | merge #261 · salvar/editar form Cliente (viewport) · Legado #211 · usuário restrito |
+
 ## CURSOR — #261 tip `3108b9f2` (#254 4a1ecf4c + azul global) (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | #254 tip **`4a1ecf4c`** (produto edit-ready + session freeze) · azul hubs operacionais · Aprovações→Central · DetalhesCliente codigo+ID |
-| **preservado** | piloto HTTP · sectionKeys · reserveEntityCodigo · Pedido Onda 5 · Financeiro CR≠Régua |
-| **sem cópia divergente** | tip #254 nos forms #261; sessão/outbox Codex intocados |
-| CI tip `3108b9f2` | erp-runtime-ci (push/PR em curso) |
-| **implantado** | erp-dev **`3108b9f2`** · `index-Chstx7-i.js` · backup `pre-gate-e-20261010-131907.sql.gz` · rollback `pre-spa-login-20261010-131907` |
-| **homologado** (este SHA) | login tipado · Cadastros · Clientes via Comercial · trocar Grupo · launchpads PASS |
-| residual | grade Clientes 0 rows UI (≠ DB) · abrir/salvar/reabrir pendente com linhas |
-| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
+| **implantado** | supersedido por **`0d458ab9`** |
+| **homologado** | tip `3108b9f2` (não reutilizar para tip novo) |
 | evidências | `deploy-261-tip-3108b9f2-integrado-20261010.txt` |
-| **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | API×DB clientes no contexto · V23→V24 tabs · merge #261 · Legado #211 |
+| próxima | supersedido pelo bloco tip `0d458ab9` acima |
 
 ## CURSOR — #261 tip `7e515fbc` implantado + homolog login tipado (2026-10-10)
 
