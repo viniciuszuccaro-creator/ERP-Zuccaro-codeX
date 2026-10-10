@@ -27,6 +27,7 @@ import { PRODUTO_TIPOS_CANONICOS, getProdutoTipoOptions, normalizeProdutoTipoIte
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
 const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
 import { isProdutoHttpEditReady, toProdutoHttpPayload, validateProdutoPimQuantities } from './produto/produtoHttpPolicy';
+import useProdutoHttpEditLoad from './produto/useProdutoHttpEditLoad';
 const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
 const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
 const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
@@ -211,9 +212,15 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     };
   });
 
-  const [produtoHttpReadyId, setProdutoHttpReadyId] = useState(null);
-  const [produtoHttpLoadError, setProdutoHttpLoadError] = useState(false);
-  const [produtoHttpLoadAttempt, setProdutoHttpLoadAttempt] = useState(0);
+  const { readyId: produtoHttpReadyId, loadError: produtoHttpLoadError, retry: retryProdutoHttpLoad } = useProdutoHttpEditLoad({
+    enabled: produtoHttp,
+    produtoId: produto?.id,
+    scopeKey: `${groupId || ''}:${empresaAtual?.id || ''}`,
+    isScopeCurrent: isFormScopeCurrent,
+    load: (id) => getHttpProdutoApi().get(id),
+    onLoaded: (row) => setFormData((current) => ({ ...current, ...row })),
+    onError: (error) => toast.error('Erro ao carregar produto: ' + error.message),
+  });
   const [iaSugestao, setIaSugestao] = useState(null);
   // Mantém w-full/h-full e responsivo/redimensionável (conteúdo já usa classes).
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -225,26 +232,6 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
   const [gerandoImagem, setGerandoImagem] = useState(false);
 
   // V21.2 FASE 2: Queries dos estruturantes
-  useEffect(() => {
-    if (!produtoHttp || !produto?.id || !isFormScopeCurrent()) return;
-    let active = true;
-    setProdutoHttpReadyId(null);
-    setProdutoHttpLoadError(false);
-    getHttpProdutoApi().get(produto.id).then((row) => {
-      if (!row || row.id !== produto.id) throw new Error('Resposta sem produto completo correspondente');
-      if (active && isFormScopeCurrent()) {
-        setFormData((current) => ({ ...current, ...row }));
-        setProdutoHttpReadyId(produto.id);
-      }
-    }).catch((error) => {
-      if (active && isFormScopeCurrent()) {
-        setProdutoHttpLoadError(true);
-        toast.error('Erro ao carregar produto: ' + error.message);
-      }
-    });
-    return () => { active = false; };
-  }, [produtoHttp, produto?.id, groupId, empresaAtual?.id, produtoHttpLoadAttempt]);
-
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade', contextKey],
     queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
@@ -1361,7 +1348,7 @@ Caso contrário, sugira:
       <div className="flex items-center justify-between pt-4 border-t sticky bottom-0 bg-white">
         <div className="flex gap-2">
           {produtoHttp && produto?.id && produtoHttpLoadError && isFormScopeCurrent() && (
-            <Button type="button" variant="outline" onClick={() => setProdutoHttpLoadAttempt((value) => value + 1)}>
+            <Button type="button" variant="outline" onClick={retryProdutoHttpLoad}>
               Tentar carregar produto novamente
             </Button>
           )}

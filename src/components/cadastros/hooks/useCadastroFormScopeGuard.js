@@ -24,6 +24,8 @@ export default function useCadastroFormScopeGuard(groupId, empresaId) {
         opened.current = {
           groupId: session.groupId,
           empresaId: session.empresaId || null,
+          actorId: session.actorId || null,
+          token: session.token || null,
         };
       }
     } else if (currentRender.groupId) {
