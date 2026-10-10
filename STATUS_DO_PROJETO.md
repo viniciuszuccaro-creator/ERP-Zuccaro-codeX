@@ -13,7 +13,8 @@
 | **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
 | evidência | `deploy-261-tip-346192e4-crm-legado-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
-| próxima | secret restrito · azul residual · merge owner #261→main · Codex CRM HTTP / #211 |
+| **azul residual** | Contratos chrome/CTA azul · AdminHeader ícone azul (pós-`346192e4`; redeploy tip docs) |
+| próxima | CI+redeploy tip azul · secret restrito · merge owner #261→main · Codex CRM HTTP / #211 |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 
