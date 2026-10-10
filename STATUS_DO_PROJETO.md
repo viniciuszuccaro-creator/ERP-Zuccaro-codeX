@@ -1,3 +1,15 @@
+## CURSOR — revisão Codex autônomo + porte #265 Produto GET parcial (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#265** Codex | OPEN draft · tip `fdb4af81` · CONFLICTING vs #261 → **porte seletivo neste tip** (código+testes; sem reescrever handoff Codex) |
+| **#266** Codex Legado | OPEN draft · tip `661f3ef3` · MERGEABLE vs #261 · **não** mesclar aqui — coordenar #211 |
+| **#263** Orçamento | OPEN vs `main` · tip `1b19f4ee` · CI SUCCESS · MERGEABLE · decisão owner (independente #261) |
+| **#254** | OPEN ancestral `20a2c2fb` — **não** re-portar |
+| **#264** branch pós-merge | `d7254bc1` = mesmo delta Produto da #265 (já portado) |
+| agentes Codex | IDLE (produto HTTP, integração #254/#261, orçamento, legado piloto) |
+| próxima revisão | timer · PRs Codex novas / commits em `codex/*` |
+
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
 | Fase | Estado |

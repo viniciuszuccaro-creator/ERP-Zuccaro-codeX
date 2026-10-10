@@ -1,3 +1,15 @@
+## REVISÃO CODEX AUTÔNOMO (2026-10-10)
+
+Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
+
+| PR / agente | Achado | Ação Cursor |
+|---|---|---|
+| [#265](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/265) Produto GET parcial | CONFLICTING com tip #261; delta íntegro (policy + hook + botão + toast Cliente) | **porte seletivo** na #261 |
+| [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) Legado mestres | MERGEABLE · base avançou após `346192e4` · CI a acompanhar | **não** merge Cursor — #211 |
+| [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) Orçamento tenant | vs `main` · CI SUCCESS | owner; não misturar na #261 sem pedido |
+| #254 | ancestral OPEN | não re-portar |
+| Agentes | IDLE | timer de revisão contínua |
+
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
 Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD novo.
