@@ -1,3 +1,17 @@
+## CURSOR — revisão Codex timer: #270 Produto×Empresa (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| **#270** tip **`362e6aed`** | draft · MERGEABLE · base #269 `8d806386` · CI **parcial** (BE FAILURE + jobs IN_PROGRESS) |
+| conteúdo | `produto_empresas` mig 041 · `ENABLE_PRODUTO_EMPRESA=false` · getForOperation · UI intacta |
+| porte Cursor | **não** — empilhada em #269→#268→#267; CI incompleto; sem merge/VPS/ativação |
+| risco Regra-Mãe | baixo no tip (flag off); corte exige stack CRM+041 homologados |
+| **#269/#268/#267** | tips `8d806386` / `5a38a94e` / `e3194fb1` · sem porte |
+| **#266/#265/#263/#254** | tips iguais · sem re-porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | aguardar CI #270 verde; monitorar stack; timer |
+
 ## CURSOR — revisão Codex timer: #269 CRM preflight (2026-10-10)
 
 | Item | Estado |

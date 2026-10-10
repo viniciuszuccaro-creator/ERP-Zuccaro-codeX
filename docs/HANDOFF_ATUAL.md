@@ -1,3 +1,15 @@
+## REVISÃO CODEX — #270 Produto×Empresa (2026-10-10)
+
+| Item | Valor |
+|---|---|
+| PR | [#270](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/270) tip **`362e6aed`** |
+| base | #269 @ `8d806386` · draft · MERGEABLE · CI parcial (BE fail/in progress) |
+| escopo | mig 041 `produto_empresas` · habilitação operacional Grupo→Empresa · flag OFF |
+| flag / UI | `ENABLE_PRODUTO_EMPRESA=false` · UI/store/C360 intactos |
+| ação Cursor | **monitorar** — **não** porte (depende stack CRM #267–#269 + CI verde) |
+| stack | #270 → #269 → #268 → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
 ## REVISÃO CODEX — #269 CRM preflight (2026-10-10)
 
 | Item | Valor |
@@ -48,8 +60,9 @@
 | #266 Codex | tip **`cb3af26e`** · CI SUCCESS · IDLE · **não** merge Cursor (#211) |
 | #267 Codex | tip **`e3194fb1`** · CRM HTTP 040 · IDLE · **monitorar** (sem porte/deploy) |
 | #268 Codex | tip **`5a38a94e`** · CRM→Pedido exclusivo · IDLE · **monitorar** (depende #267; sem porte) |
-| #269 Codex | tip **`8d806386`** · CRM preflight RO · CI SUCCESS · RUNNING · **monitorar** (sem porte/exec DEV) |
-| porte neste ciclo | nenhum (Legado/#267–#269 schema fora; #265/#263 já absorvidos) |
+| #269 Codex | tip **`8d806386`** · CRM preflight RO · CI SUCCESS · **monitorar** (sem porte/exec DEV) |
+| #270 Codex | tip **`362e6aed`** · Produto×Empresa 041 · CI parcial · **monitorar** (sem porte) |
+| porte neste ciclo | nenhum (Legado/#267–#270 schema fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -66,9 +79,10 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) tip **`cb3af26e`** | Legado crosswalk/tipo + SQL headers · IDLE · CI SUCCESS | **não** merge Cursor — #211 |
 | [#267](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/267) tip **`e3194fb1`** | CRM HTTP 040 · IDLE · CI SUCCESS · flag off | **monitorar** — sem porte/merge/VPS |
 | [#268](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/268) tip **`5a38a94e`** | CRM→Pedido exclusivo sobre #267 · CI SUCCESS · flag off | **monitorar** — sem porte; depende #267 |
-| [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`8d806386`** | preflight RO · CI SUCCESS · RUNNING | **monitorar** — sem porte/exec DEV |
+| [#269](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/269) tip **`8d806386`** | preflight RO · CI SUCCESS | **monitorar** — sem porte/exec DEV |
+| [#270](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/270) tip **`362e6aed`** | Produto×Empresa 041 · CI parcial · flag off | **monitorar** — sem porte; stack CRM |
 | #254 | ancestral OPEN | não re-portar |
-| Agentes | #269 **RUNNING** · #268/#267 **IDLE** · Legado/Produto/Orçamento **IDLE** | timer contínuo |
+| Agentes | stack CRM/#270 em curso · Legado/Produto GET **IDLE** | timer contínuo |
 
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
