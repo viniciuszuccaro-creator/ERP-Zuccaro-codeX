@@ -339,6 +339,9 @@ export function buildHttpDevAdminUser(session) {
  * para o seletor multiempresa e o PerfilAcesso admin existirem no browser.
  * Usa upsert direto (sem RBAC create) — bootstrap de sessão HTTP.
  * @param {{
+ *   token?: string,
+ *   actorId?: string,
+ *   storage?: Storage | null,
  *   groupId: string,
  *   empresaId?: string | null,
  *   groupName?: string | null,
@@ -349,12 +352,31 @@ export function buildHttpDevAdminUser(session) {
  *   base44Client?: unknown,
  * }} input
  */
+export function isHttpMirrorContextCurrent(input, storage = null) {
+  if (!input?.token) return true;
+  const active = readErpHttpSession(storage || input.storage);
+  return Boolean(active && active.token === input.token
+    && active.groupId === String(input.groupId || '').trim()
+    && (active.empresaId || '') === String(input.empresaId || '').trim()
+    && (!input.actorId || active.actorId === input.actorId));
+}
+
+/**
+ * @param {{ token?: string, actorId?: string, storage?: Storage | null,
+ * groupId: string, empresaId?: string | null, groupName?: string | null,
+ * empresas?: Array<{id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, cnpj?: string | null, status?: string}>,
+ * perfilAcessoId?: string | null, permissoes?: Record<string, unknown> | null,
+ * perfilNome?: string | null, base44Client?: unknown }} input
+ */
 export async function ensureHttpTenantLocalMirror(input) {
   const groupId = String(input?.groupId || '').trim();
   const empresaId = input?.empresaId ? String(input.empresaId).trim() : '';
   if (!groupId) return { group: false, empresa: false, perfil: false };
 
   const { upsertHttpTenantLocalMirror } = await import('./localBase44Client.js');
+  // A importação é assíncrona: outra troca de Empresa/login pode ter ocorrido.
+  // Espelho obsoleto não pode regravar IDs nem vínculos no armazenamento local.
+  if (!isHttpMirrorContextCurrent(input)) return { group: false, empresa: false, perfil: false, stale: true };
   const result = upsertHttpTenantLocalMirror({
     groupId,
     empresaId,
@@ -444,6 +466,8 @@ export async function loginErpHttpSession(input) {
   persistErpHttpSession({ ...session, expiresAt });
   try {
     await ensureHttpTenantLocalMirror({
+      token: session.accessToken,
+      actorId: session.actorId,
       groupId: session.groupId,
       empresaId: session.empresaId,
       groupName,
@@ -511,6 +535,7 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
       && current.empresaId === local.empresaId
       && current.scopeType === local.scopeType;
   };
+  const initialTokenStillCurrent = () => readErpHttpSession(storage)?.token === local.token;
   const baseUrl = (input.baseUrl ?? resolveErpApiBaseUrl(import.meta.env) ?? '').replace(/\/$/, '');
   const fetchImpl = input.fetchImpl ?? fetch;
   let response;
@@ -533,7 +558,13 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     body = null;
   }
   if (!response.ok) {
-    if (initialContextStillCurrent()) clearErpHttpSession(storage);
+    // 401/403 invalidam o Bearer, inclusive após trocar de Empresa. Não apagam
+    // porém um login novo feito enquanto esta requisição estava em voo.
+    if (initialTokenStillCurrent() && (response.status === 401 || response.status === 403)) {
+      clearErpHttpSession(storage);
+    } else if (initialContextStillCurrent()) {
+      clearErpHttpSession(storage);
+    }
     return null;
   }
   // Diversos consumidores (seletor, Cadastros, Visualizador) revalidam em paralelo.
@@ -556,7 +587,7 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     || profiles.find((p) => p?.group_id && p?.id)
     || profiles[0];
   if (!profile?.id || !profile?.group_id) {
-    clearErpHttpSession(storage);
+    if (initialTokenStillCurrent()) clearErpHttpSession(storage);
     return null;
   }
   const role = String(profile.role || 'user').trim().toLowerCase() === 'admin' ? 'admin' : 'user';
@@ -603,6 +634,9 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
   });
   try {
     await ensureHttpTenantLocalMirror({
+      token: active.token,
+      actorId: String(profile.id),
+      storage,
       groupId: String(profile.group_id),
       empresaId,
       groupName,

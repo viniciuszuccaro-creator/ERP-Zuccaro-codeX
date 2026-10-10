@@ -7,6 +7,7 @@ import {
   buildHttpDevAdminUser,
   buildHttpSessionUser,
   clearErpHttpSession,
+  isHttpMirrorContextCurrent,
   loginErpHttpSession,
   persistErpHttpSession,
   readErpHttpSession,
@@ -161,6 +162,47 @@ test('hook de Cadastros ignora carregamento antigo após evento de troca Empresa
   assert.equal(updates.some(update => update.index === 4 && update.value === null), false);
 });
 
+test('UserContext real ignora falha antiga após carregar usuário da Empresa nova', async () => {
+  const state = [];
+  const effects = [];
+  let slot = 0;
+  let onContextChange;
+  const pending = [];
+  const react = {
+    createContext: () => ({ Provider: 'provider' }),
+    createElement: () => null,
+    useState: initial => {
+      const index = slot++;
+      state[index] = initial;
+      return [state[index], value => { state[index] = value; }];
+    },
+    useRef: initial => ({ current: initial }),
+    useEffect: effect => effects.push(effect),
+    useContext: () => null,
+  };
+  const hook = await loadRealHook('../src/components/lib/UserContext.jsx', {
+    react: { ...react, default: react },
+    '@/api/base44Client': { isHttpBackendMode: true, isApiKeyMode: true,
+      isLocalOnlyMode: false, base44: {}, localApiUser: {} },
+    '@/api/erpHttpSession': { HTTP_CONTEXT_CHANGED: 'erp-http-context-changed',
+      refreshErpHttpSessionFromServer: () => new Promise(resolve => pending.push(resolve)),
+      ensureHttpTenantLocalMirror: async () => {},
+      buildHttpSessionUser: session => ({ id: session.actorId, empresa_atual_id: session.empresaId }) },
+  }, { window: { addEventListener: (_, handler) => { onContextChange = handler; }, removeEventListener() {} } });
+  hook.UserProvider({ children: null });
+  effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  onContextChange();
+  await new Promise(resolve => setImmediate(resolve));
+  pending[1]({ token: 'synthetic', actorId: ACTOR, groupId: GROUP, empresaId: EMPRESA_A });
+  await new Promise(resolve => setImmediate(resolve));
+  pending[0](null);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(state[0]?.empresa_atual_id, EMPRESA_A);
+  assert.equal(state[1], false);
+  assert.equal(state[2], null);
+});
+
 test('permissões HTTP do hook real usam perfil servidor mesmo com espelho local vazio', async () => {
   const hook = await loadRealHook('../src/components/lib/usePermissions.jsx', {
     './UserContext': { useUser: () => ({ user: { id: ACTOR, permissoes: { Comercial: { pedido: ['visualizar'] } } } }) },
@@ -239,6 +281,47 @@ test('falha de refresh antigo não apaga a Empresa escolhida enquanto ele aguard
   switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
   failFetch(new Error('network unavailable'));
   assert.equal(await pendingRefresh, null);
+  assert.equal(readErpHttpSession(storage)?.empresaId, EMPRESA_A);
+});
+
+test('401 do Bearer ativo revoga sessão mesmo após troca de Empresa', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'token-revogado', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  let finish;
+  const pending = refreshErpHttpSessionFromServer({ storage, baseUrl: '',
+    fetchImpl: () => new Promise(resolve => { finish = resolve; }) });
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  finish({ ok: false, status: 401, json: async () => ({}) });
+  assert.equal(await pending, null);
+  assert.equal(readErpHttpSession(storage), null);
+});
+
+test('401 de Bearer anterior não revoga login novo', async () => {
+  const storage = memoryStorage();
+  persistErpHttpSession({ accessToken: 'token-antigo', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', scopeType: 'grupo', storage });
+  let finish;
+  const pending = refreshErpHttpSessionFromServer({ storage, baseUrl: '',
+    fetchImpl: () => new Promise(resolve => { finish = resolve; }) });
+  persistErpHttpSession({ accessToken: 'token-novo', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', scopeType: 'grupo', storage });
+  finish({ ok: false, status: 401, json: async () => ({}) });
+  assert.equal(await pending, null);
+  assert.equal(readErpHttpSession(storage)?.token, 'token-novo');
+});
+
+test('espelho assíncrono não grava contexto capturado antes da troca de Empresa', async () => {
+  const storage = memoryStorage();
+  const empresas = [EMPRESA_A].map(id => ({ id, group_id: GROUP, status: 'Ativa' }));
+  persistErpHttpSession({ accessToken: 'synthetic-token', actorId: ACTOR, groupId: GROUP,
+    role: 'admin', empresas, scopeType: 'grupo', storage });
+  const captured = { token: 'synthetic-token', actorId: ACTOR,
+    groupId: GROUP, empresaId: null, storage };
+  assert.equal(isHttpMirrorContextCurrent(captured), true);
+  switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_A });
+  assert.equal(isHttpMirrorContextCurrent(captured), false);
   assert.equal(readErpHttpSession(storage)?.empresaId, EMPRESA_A);
 });
 

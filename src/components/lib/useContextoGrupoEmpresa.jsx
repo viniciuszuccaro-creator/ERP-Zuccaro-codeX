@@ -32,6 +32,8 @@ export function useContextoGrupoEmpresa() {
       const session = await refreshErpHttpSessionFromServer({});
       if (!session?.token) return null;
       await ensureHttpTenantLocalMirror({
+        token: session.token,
+        actorId: session.actorId,
         groupId: session.groupId,
         empresaId: session.empresaId,
         groupName: session.groupName,
@@ -168,6 +170,8 @@ export function useContextoGrupoEmpresa() {
           switchErpHttpSessionEmpresa({ empresaId: null });
           const session = readErpHttpSession();
           await ensureHttpTenantLocalMirror({
+            token: session?.token,
+            actorId: session?.actorId,
             groupId: grupo.id,
             empresaId: null,
             groupName: session?.groupName || grupo.nome_do_grupo,
@@ -232,6 +236,8 @@ export function useContextoGrupoEmpresa() {
           switchErpHttpSessionEmpresa({ empresaId });
           const session = readErpHttpSession();
           await ensureHttpTenantLocalMirror({
+            token: session?.token,
+            actorId: session?.actorId,
             groupId: empresa.group_id || empresa.grupo_id || user?.grupo_atual_id,
             empresaId,
             groupName: session?.groupName,
