@@ -595,7 +595,7 @@ export default function ContratosPage() {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
               <FileText className="w-8 h-8 text-white" />
             </div>
             Gestão de Contratos
@@ -604,7 +604,7 @@ export default function ContratosPage() {
         </div>
 
         {canCreate && contextoCanonico.scopeType === 'empresa' && empresaAtual?.id && (
-          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={abrirNovoContrato}>
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={abrirNovoContrato}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Contrato
           </Button>

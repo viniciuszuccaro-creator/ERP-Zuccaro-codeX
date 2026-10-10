@@ -18,7 +18,7 @@ export default function AdminHeader() {
     <header className="px-4 md:px-6 py-4 border-b bg-white/90 backdrop-blur-sm sticky top-0 z-10">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center shadow">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow">
             <Settings className="w-5 h-5 text-white" />
           </div>
           <div>

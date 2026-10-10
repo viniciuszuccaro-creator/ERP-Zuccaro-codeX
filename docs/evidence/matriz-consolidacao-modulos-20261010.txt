@@ -17,7 +17,10 @@
 | HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |
 
 ## Azul-claro global (ref #257 baba91a6 / tip 7d068dbb)
-Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, Produção, RH, CRM.
+Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, Produção, RH, CRM, Comercial.
+Contratos: chrome/CTA azul (valores/KPI receita permanecem emerald semântico).
+Sistema AdminHeader: ícone azul (badge empresa emerald preservado = contexto ≠ grupo).
+Cadastros: blocos multi-cor aprovados (#257) — não forçar tudo azul.
 **Preservado:** Financeiro CR green ≠ Régua violet; EmpresaSwitcher grupo azul/empresa roxo; CTAs/funcionalidades posteriores (#261 HTTP, codigo, Pedido Onda 5).
 
 ## #254 / #264 tip integrado (pacote)
@@ -25,8 +28,8 @@ Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, P
 |---|---|
 | #254 final | `20a2c2fb` (ancestral) |
 | #264 Codex | `d9403665` (porte #254→base #261) |
-| PR HEAD #261 | tip branch (pós-CRM legado) |
-| implantado erp-dev | `f22d1151` · `index-KP6RdCBA.js` (até redeploy tip CRM) |
+| PR HEAD #261 | `58e01754` |
+| implantado erp-dev | `58e01754` · `index-Bl46Ykvq.js` |
 | merge #264→#261 | `861513cd` · main ainda `baba91a6` |
 Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
 

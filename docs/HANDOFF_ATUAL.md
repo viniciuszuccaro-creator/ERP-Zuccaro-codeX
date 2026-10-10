@@ -1,12 +1,14 @@
-## CODEX — divisao atual autorizada (2026-10-10)
+## REVISÃO CODEX AUTÔNOMO (2026-10-10)
 
-O proprietario autorizou executar Comercial 360 neste chat em workspace/branch
-separados, mantendo Cursor revisor. Retomar #265 sobre base atual #261,
-preservando #264. Legado segue em `legado-piloto-20261010`, branch #266;
-Comercial tera workspace proprio. Nao editar branches Cursor.
-Complemento #266 revalida origem/Grupo, contrato e classificacao antes de retry;
-25 testes focados PASS. Fonte `04_REPORTS` segue negada pelo SO mesmo com
-permissoes amplas da sessao; piloto real/importacao ainda nao executados.
+Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
+
+| PR / agente | Achado | Ação Cursor |
+|---|---|---|
+| [#265](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/265) Produto GET parcial | CONFLICTING com tip #261; delta íntegro (policy + hook + botão + toast Cliente) | **porte seletivo** na #261 |
+| [#266](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/266) Legado mestres | MERGEABLE · base avançou após `346192e4` · CI a acompanhar | **não** merge Cursor — #211 |
+| [#263](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/263) Orçamento tenant | vs `main` · CI SUCCESS | owner; não misturar na #261 sem pedido |
+| #254 | ancestral OPEN | não re-portar |
+| Agentes | IDLE | timer de revisão contínua |
 
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
@@ -18,11 +20,11 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip CRM legado C360 · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`f22d1151`** · `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `f22d1151` |
+| SHA implantado | **`58e01754`** · `index-Bl46Ykvq.js` · ≡ PR HEAD |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `58e01754` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
-| próxima funcional | CI+redeploy tip CRM · secret restrito · contrato HTTP Codex Oportunidade se A; merge owner #261→main |
+| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main · azul residual |
 
 ## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
 
@@ -34,30 +36,30 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | tip CRM legado C360 **`21a63549`** (+ Contratos ID lista) · CI SUCCESS em `21a63549` · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`f22d1151`** · asset `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
-| rollback | `pre-spa-login-20261010-144429` |
-| backup | `pre-gate-e-20261010-144428.sql` (só VPS; **não** no Git) |
+| **PR HEAD #261** | **`58e01754`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`58e01754`** · asset `index-Bl46Ykvq.js` · ≡ PR HEAD |
+| rollback | `pre-spa-login-20261010-164602` |
+| backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`f22d1151` apenas** |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`58e01754`** (não reusar `346192e4`/`f22d1151`) |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | CRM | C360 adaptador **opção B** (legado Oportunidade); HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
 | arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `docs/vps/evidence/reconciliacao-261-pos-264-main-20261010.txt` · `reconciliacao-261-pos-264-20261010.txt` |
+| evidência | `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `deploy-261-tip-346192e4-crm-legado-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → tip CRM legado C360 (pós-`52655450`).
-2. Confirmar VPS implantado: ainda `MERGE_SHA8=f22d1151` / `index-KP6RdCBA.js` até redeploy do tip CRM — não atribuir homolog antiga ao tip novo.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`58e01754`** (ou tip docs posterior).
+2. Confirmar VPS: `MERGE_SHA8=58e01754` / `index-Bl46Ykvq.js` — não atribuir homolog antiga a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. CI + redeploy tip CRM legado C360; homolog owner **neste** SHA (não reusar prova `f22d1151`).
+1. ~~CI + redeploy tip CRM+azul~~ **feito** `58e01754` / `index-Bl46Ykvq.js` · homolog owner fail_count=0.
 2. Secret usuário restrito → homolog fail-closed FE+BE.
-3. Inventário/azul residual (Contratos UX; grades; POD/Separação keep-both).
+3. Inventário residual (POD/Separação keep-both; Painel seletivo).
 4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
 5. Codex: decidir CRM HTTP (A schema) se for além do adaptador B; Legado #211.
 
@@ -1172,3 +1174,15 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 - A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
 - Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
 - Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).
+
+## CODEX — divisao atual autorizada (2026-10-10)
+
+O proprietario autorizou executar Comercial 360 neste chat em workspace/branch
+separados, mantendo Cursor revisor. Retomar #265 sobre base atual #261,
+preservando #264. Legado segue em `legado-piloto-20261010`, branch #266;
+Comercial tera workspace proprio. Nao editar branches Cursor.
+Complemento #266 revalida origem/Grupo, contrato e classificacao antes de retry;
+25 testes focados PASS. Fonte `04_REPORTS` segue negada pelo SO mesmo com
+permissoes amplas da sessao; piloto real/importacao ainda nao executados.
+
+Checkpoint base: db89aa45 incorporada; runtime legado idêntico ao 661f3ef3 testado, revisao/CI do merge requeridas. Comercial ja executa aqui em workspace separado com autorizacao do proprietario.

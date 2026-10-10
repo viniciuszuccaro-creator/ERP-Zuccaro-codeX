@@ -3,7 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { isProdutoHttpEditReady, toProdutoHttpPayload } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+import { isProdutoHttpEditLoadComplete, isProdutoHttpEditReady, toProdutoHttpPayload } from '../src/components/cadastros/produto/produtoHttpPolicy.js';
+
+const fullProduto = (id) => ({ id, descricao: 'Peça sintética', codigo: 'P-001',
+  material: 'Aço', liga: null, norma_tecnica: null, descricao_tecnica: 'ASTM sintético',
+  descricao_comercial: null, titulo_seo: null, descricao_seo: null, embalagem_tipo: null });
 
 const deferred = () => {
   let resolve; let reject;
@@ -32,7 +36,9 @@ async function mountRealLoadHook() {
   };
   const exports = {};
   vm.runInNewContext(compiled, { exports, require: (id) => {
-    assert.equal(id, 'react'); return react;
+    if (id === 'react') return react;
+    if (id === './produtoHttpPolicy.js') return { isProdutoHttpEditLoadComplete };
+    throw new Error(`Import inesperado: ${id}`);
   } });
   return {
     render(props) { index = 0; const result = exports.default(props); scheduled.splice(0).forEach((run) => run()); return result; },
@@ -48,7 +54,7 @@ test('GET real do Produto: falha, retry, carga completa, save e reabertura prese
   const props = {
     enabled: true, produtoId: 'produto-cpa', scopeKey: 'grupo-cpa:empresa-cpa',
     isScopeCurrent: () => true,
-    load: (id) => { calls.push(id); return calls.length === 1 ? Promise.reject(new Error('rede')) : Promise.resolve({ id, material: 'Aço', descricao_tecnica: 'ASTM sintético' }); },
+    load: (id) => { calls.push(id); return calls.length === 1 ? Promise.reject(new Error('rede')) : Promise.resolve(fullProduto(id)); },
     onLoaded: (row) => { current = { ...current, ...row }; },
     onError: (error) => errors.push(error.message),
   };
@@ -65,7 +71,10 @@ test('GET real do Produto: falha, retry, carga completa, save e reabertura prese
   assert.equal(view.loadError, false);
   assert.equal(isProdutoHttpEditReady(true, props.produtoId, view.readyId), true);
   assert.equal(calls.length, 2);
-  assert.deepEqual(toProdutoHttpPayload(current, { update: true }), { descricao: 'Peça sintética', material: 'Aço', descricao_tecnica: 'ASTM sintético' });
+  const payload = toProdutoHttpPayload(current, { update: true });
+  assert.equal(payload.descricao, 'Peça sintética');
+  assert.equal(payload.material, 'Aço');
+  assert.equal(payload.descricao_tecnica, 'ASTM sintético');
   assert.equal(hook.render({ ...props, scopeKey: 'grupo-cpa:empresa-3z', isScopeCurrent: () => false }).readyId, 'produto-cpa');
   assert.equal(hook.render({ ...props, scopeKey: 'grupo-cpa:empresa-3z', isScopeCurrent: () => false }).readyId, null);
   hook.unmount();
@@ -97,12 +106,31 @@ test('GET/retry antigo da CPA não preenche nem libera save após troca para 3Z'
   assert.equal(view.loadError, true);
   view.retry(); hook.render(props); await flush();
   scopeCurrent = false;
-  second.resolve({ id: 'produto-cpa', material: 'Aço' }); await flush();
+  second.resolve(fullProduto('produto-cpa')); await flush();
   view = hook.render({ ...props, scopeKey: 'grupo-cpa:empresa-3z' });
   assert.equal(calls, 2);
   assert.equal(view.readyId, null);
   assert.equal(isProdutoHttpEditReady(true, props.produtoId, view.readyId), false);
   assert.deepEqual(loaded, []);
   assert.deepEqual(errors, ['falha']);
+  hook.unmount();
+});
+
+test('GET parcial {id} ou sem campo PIM não libera PATCH; retry completo preserva PIM', async () => {
+  const hook = await mountRealLoadHook();
+  const rows = [{ id: 'produto-cpa' }, { ...fullProduto('produto-cpa'), material: undefined }, fullProduto('produto-cpa')];
+  const loaded = []; const errors = [];
+  const props = { enabled: true, produtoId: 'produto-cpa', scopeKey: 'grupo-cpa:empresa-cpa',
+    isScopeCurrent: () => true, load: async () => rows.shift(),
+    onLoaded: (row) => loaded.push(row), onError: (error) => errors.push(error.message) };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    let view = hook.render(props);
+    await flush(); view = hook.render(props);
+    assert.equal(isProdutoHttpEditReady(true, props.produtoId, view.readyId), attempt === 2);
+    if (attempt < 2) { assert.equal(view.loadError, true); view.retry(); }
+  }
+  assert.equal(errors.length, 2);
+  assert.equal(loaded.length, 1);
+  assert.equal(toProdutoHttpPayload(loaded[0], { update: true }).material, 'Aço');
   hook.unmount();
 });

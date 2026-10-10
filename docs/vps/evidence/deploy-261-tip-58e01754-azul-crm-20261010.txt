@@ -1,0 +1,22 @@
+# Evidência sanitizada — tip 58e01754 implantado (CRM legado + azul Contratos/Sistema)
+# utc=2026-10-10T16:46Z
+#
+# tip=58e01754 style AdminHeader azul + matriz
+# codigo=5d0e16ac Contratos chrome/CTA azul · 21a63549 CRM legado C360 · c1e70cfa Contratos ID lista
+# asset=index-Bl46Ykvq.js
+# rollback=pre-spa-login-20261010-164602
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# backup_sql=prévio pre-gate-e-20261010-144428.sql (SPA-only)
+#
+# CI tip 58e01754: erp-runtime-ci SUCCESS
+# Homolog OWNER tipado (este SHA) fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-58e01754.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-58e01754.json
+#
+# Azul seletivo: Contratos header/CTA + AdminHeader ícone
+# Preservado: KPI/valores emerald Contratos · badge empresa Admin · Cadastros multi-bloco · Financeiro CR≠Régua
+#
+# Usuário restrito: BLOCKED (sem ERP_DEV_LOGIN_RESTRICTED_*)
+# Recuperado legado: NÃO (#211)
+# main baba91a6 · #261 não mesclada · #264→#261 861513cd
+# Não atribuir homolog de 346192e4/f22d1151 a este tip.

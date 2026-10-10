@@ -1,11 +1,14 @@
-## CODEX — legado: validacao antes de reuso (2026-10-10)
+## CURSOR — revisão Codex autônomo + porte #265 Produto GET parcial (2026-10-10)
 
-Complemento da #266: Grupo divergente na origem e rejeitado sem remapeamento;
-retry revalida contrato/quarentena antes de aceitar fingerprint; duplicata de
-raiz invalida nao conta como reuso. Tipo de Produto usa chaves canonicas
-existentes e unidade textual explicita, sem default. 25 focados PASS/0 FAIL/0 SKIP.
-Suite Windows 841 PASS/50 FAIL/0 SKIP, falhas em processos Bash sem status de saida;
-CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
+| Item | Estado |
+|---|---|
+| **#265** Codex | OPEN draft · tip `fdb4af81` · CONFLICTING vs #261 → **porte seletivo neste tip** (código+testes; sem reescrever handoff Codex) |
+| **#266** Codex Legado | OPEN draft · tip `661f3ef3` · MERGEABLE vs #261 · **não** mesclar aqui — coordenar #211 |
+| **#263** Orçamento | OPEN vs `main` · tip `1b19f4ee` · CI SUCCESS · MERGEABLE · decisão owner (independente #261) |
+| **#254** | OPEN ancestral `20a2c2fb` — **não** re-portar |
+| **#264** branch pós-merge | `d7254bc1` = mesmo delta Produto da #265 (já portado) |
+| agentes Codex | IDLE (produto HTTP, integração #254/#261, orçamento, legado piloto) |
+| próxima revisão | timer · PRs Codex novas / commits em `codex/*` |
 
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
@@ -13,16 +16,16 @@ CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
 |---|---|
 | **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
 | **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
-| **PR HEAD #261** | **`21a63549`** CRM legado C360 · + tip Contratos ID lista · MERGEABLE → main |
-| CI tip `21a63549` | erp-runtime-ci **SUCCESS** (frontend+backend) · runs `38068118516`/`38068115361` |
-| **implantado** | erp-dev **`f22d1151`** · `index-KP6RdCBA.js` · **≠** tip CRM até redeploy |
-| **homologado implantado** | owner tip `f22d1151` fail_count=0 — **não** atribuir ao tip CRM |
+| **PR HEAD #261** | **`58e01754`** · MERGEABLE → main |
+| CI tip `58e01754` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`58e01754`** · `index-Bl46Ykvq.js` · rollback `pre-spa-login-20261010-164602` |
+| **homologado implantado** | owner tip **`58e01754`** fail_count=0 (login tipado + Clientes + launchpads) |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
-| **implementado neste lote** | C360 adaptador CRM opção B · CRM multiempresa/`sectionKey` · Contratos lista ID técnico · testes 7/7 |
-| **não feito** | CRM HTTP canônico novo (reservado Codex A schema) · merge #261→main |
+| **implementado neste lote** | C360 CRM opção B · CRM multiempresa/`sectionKey` · Contratos ID lista · azul Contratos/AdminHeader · testes 7/7 |
+| **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
-| evidência | `reconciliacao-261-pos-264-main-20261010.txt` |
-| próxima | redeploy tip CRM+Contratos · homolog owner neste SHA · secret restrito · azul residual · merge owner · #211 |
+| evidência | `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `deploy-261-tip-346192e4-crm-legado-20261010.txt` |
+| próxima | secret restrito · merge owner #261→main · Codex CRM HTTP / #211 · POD/Separação keep-both |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
 
@@ -30,9 +33,9 @@ CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
 |---|---|
 | **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul hubs |
 | **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
-| **PR HEAD** | tip CRM legado C360 (pós-`52655450` docs Codex) · **não** em `main` `baba91a6` |
-| **implantado** | runtime ainda `f22d1151` até redeploy tip CRM — ver bloco pós-#264 acima |
-| **homologado** | tip **`f22d1151`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **PR HEAD** | tip docs `75d93727` · runtime implantado **`58e01754`** · **não** em `main` `baba91a6` |
+| **implantado** | supersedido pelo bloco pós-#264 (`58e01754` / `index-Bl46Ykvq.js`) |
+| **homologado** | tip **`58e01754`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
 | **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
 | handoff | `docs/HANDOFF_ATUAL.md` · RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
 | BLOCKED | usuário restrito · CRM HTTP schema server · Legado |
@@ -12772,3 +12775,14 @@ Checklist inicial:
 
 - Incorporado o novo HEAD Cursor `a004044b` em branch isolada, sem editar sua branch nem `main`. Conflito no guard resolvido preservando a convergência tela/sessão para Empresa ou Grupo consolidado e a trava por ator/Bearer; teste de Grupo consolidado somado aos cenários CPA→3Z e login novo. Fluxo Cliente inclui erro visível, sem engolir rejeição após mudança de contexto, e duplo clique de edição mantém RBAC/carga existente.
 - 27/27 testes focados de Cadastros/Produto, lint, build e diff-check PASS. CI e revisão independente são gates do novo SHA; não houve deploy, migração ou importação. Próximo P0: homologação visual autenticada e contrato explícito de Produto mestre de Grupo para itens de documento da empresa jurídica antes de integrar/migrar.
+
+## CODEX — legado: validacao antes de reuso (2026-10-10)
+
+Complemento da #266: Grupo divergente na origem e rejeitado sem remapeamento;
+retry revalida contrato/quarentena antes de aceitar fingerprint; duplicata de
+raiz invalida nao conta como reuso. Tipo de Produto usa chaves canonicas
+existentes e unidade textual explicita, sem default. 25 focados PASS/0 FAIL/0 SKIP.
+Suite Windows 841 PASS/50 FAIL/0 SKIP, falhas em processos Bash sem status de saida;
+CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
+
+Checkpoint base: db89aa45 incorporada; runtime legado idêntico ao 661f3ef3 testado, revisao/CI do merge requeridas. Comercial ja executa aqui em workspace separado com autorizacao do proprietario.
