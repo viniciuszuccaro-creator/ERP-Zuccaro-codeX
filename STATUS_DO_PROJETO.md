@@ -1,20 +1,15 @@
-## CODEX — composicao Comercial 360 local (2026-10-10)
+## CURSOR — revisão Codex autônomo + porte #265 Produto GET parcial (2026-10-10)
 
-Proprietario autorizou execucao neste chat em workspace separado.
-Branch #265 incorpora #261 `046f69f3`; conflitos somente documentais resolvidos
-preservando ambos os historicos. #264 continua ancestral da candidata, nao da main.
-Pacote alvo: Produto com GET completo e Orçamento com trava de submissao e
-resposta tardia isolada. Testes/CI/revisao do novo HEAD sao gates de integracao.
+| Item | Estado |
+|---|---|
+| **#265** Codex | OPEN draft · tip `fdb4af81` · CONFLICTING vs #261 → **porte seletivo neste tip** (código+testes; sem reescrever handoff Codex) |
+| **#266** Codex Legado | OPEN draft · tip `661f3ef3` · MERGEABLE vs #261 · **não** mesclar aqui — coordenar #211 |
+| **#263** Orçamento | OPEN vs `main` · tip `1b19f4ee` · CI SUCCESS · MERGEABLE · decisão owner (independente #261) |
+| **#254** | OPEN ancestral `20a2c2fb` — **não** re-portar |
+| **#264** branch pós-merge | `d7254bc1` = mesmo delta Produto da #265 (já portado) |
+| agentes Codex | IDLE (produto HTTP, integração #254/#261, orçamento, legado piloto) |
+| próxima revisão | timer · PRs Codex novas / commits em `codex/*` |
 
-Composicao #263 concluida em codigo: pickers, preco, calculos e campos da #261
-preservados; Orçamento trava clique duplo e isola respostas/detalhes antigos.
-RBAC revalidado no clique de salvar/cancelar/converter. 63 focados PASS/0 FAIL/0 SKIP,
-incluindo cinco casos executando componente JSX real. Nenhuma migracao/implantacao.
-
-## CODEX — #265 handoff da correção Produto sobre #261 atual (2026-10-10)
-
-- Estado remoto conferido: #254 `20a2c2fb` e #264 `d9403665` integrados na #261; #261 HEAD `c3c45c21` (código `f22d1151` implantado/homologado segundo evidência Cursor). #265 `4ce27394` corrigiu GET parcial de Produto, CI SUCCESS e parecer Cursor favorável; não mesclado/implantado/homologado. O merge local da ponta #261 à #265 foi automático, sem sobrepor a branch Cursor, e ainda requer testes/CI/parecer do novo SHA.
-- Não transportar pressupostos de acesso: backup original, staging legado e secrets VPS devem ser verificados no novo host; nenhum dado real publicado. Arquivos Cursor em Cadastros/Visualizador/status/handoff não são editados na branch dele. Próximo P0: validar/publicar candidata #265 reconciliada, obter CI/revisão, homologar visualmente sob autorização; em paralelo, contrato explícito Produto Grupo×item Empresa antes da importação operacional.
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
 | Fase | Estado |
@@ -12781,3 +12776,23 @@ Checklist inicial:
 
 - Fluxo: salvar, cancelar e converter orçamento para pedido agora usam trava síncrona contra clique duplo e comparam Grupo/Empresa/ator da abertura, render e sessão HTTP ativa antes da request. Resposta tardia após CPA→3Z não fecha formulário, notifica ou invalida lista da outra empresa. Detalhe assíncrono também não reabre no tenant seguinte. Backend canônico preserva validação, RBAC, persistência e auditoria; não foram criados cadastro/endpoint paralelo nem alterados banco/VPS.
 - Teste comportamental da trava cobre repetição, troca CPA→3Z, resposta antiga e troca de ator (9/9 focados). `audit:baseline`, lint, build e diff-check passaram. Suíte raiz Windows segue com falhas preexistentes nos guards Unix/VPS; typecheck raiz segue com passivo preexistente, sem diagnóstico nos arquivos tocados. Próximo P0/P1 autorizado: ampliar masters paginados por ClienteEmpresa via contrato backend próprio, sem editar `clienteService.ts` reservado à migração legada.
+
+## CODEX — composicao Comercial 360 local (2026-10-10)
+
+Proprietario autorizou execucao neste chat em workspace separado.
+Branch #265 incorpora #261 `046f69f3`; conflitos somente documentais resolvidos
+preservando ambos os historicos. #264 continua ancestral da candidata, nao da main.
+Pacote alvo: Produto com GET completo e Orçamento com trava de submissao e
+resposta tardia isolada. Testes/CI/revisao do novo HEAD sao gates de integracao.
+
+Composicao #263 concluida em codigo: pickers, preco, calculos e campos da #261
+preservados; Orçamento trava clique duplo e isola respostas/detalhes antigos.
+RBAC revalidado no clique de salvar/cancelar/converter. 63 focados PASS/0 FAIL/0 SKIP,
+incluindo cinco casos executando componente JSX real. Nenhuma migracao/implantacao.
+
+## CODEX — #265 handoff da correção Produto sobre #261 atual (2026-10-10)
+
+- Estado remoto conferido: #254 `20a2c2fb` e #264 `d9403665` integrados na #261; #261 HEAD `c3c45c21` (código `f22d1151` implantado/homologado segundo evidência Cursor). #265 `4ce27394` corrigiu GET parcial de Produto, CI SUCCESS e parecer Cursor favorável; não mesclado/implantado/homologado. O merge local da ponta #261 à #265 foi automático, sem sobrepor a branch Cursor, e ainda requer testes/CI/parecer do novo SHA.
+- Não transportar pressupostos de acesso: backup original, staging legado e secrets VPS devem ser verificados no novo host; nenhum dado real publicado. Arquivos Cursor em Cadastros/Visualizador/status/handoff não são editados na branch dele. Próximo P0: validar/publicar candidata #265 reconciliada, obter CI/revisão, homologar visualmente sob autorização; em paralelo, contrato explícito Produto Grupo×item Empresa antes da importação operacional.
+
+Checkpoint final: base Cursor db89aa45 incorporada; codigo Produto ja portado pelo Cursor e preservado. Orçamento 263 composto com pickers e RBAC no clique; 63 focados PASS. Fonte/implantacao permanecem estados distintos. Checkpoint Codex anexado ao final para evitar conflito com atualizacoes Cursor no topo.
