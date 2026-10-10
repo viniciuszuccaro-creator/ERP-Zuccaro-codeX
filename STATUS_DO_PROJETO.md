@@ -10,7 +10,9 @@
 | **implantado** | erp-dev **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` |
 | CI tip `062ef3fe` | erp-runtime-ci **SUCCESS** (push+PR) · docs tip `7f00e392` CI em curso |
 | evidências | `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt` |
-| próxima | hard refresh Fiscal/Empresas/Grupos/Marcas · inventário Estoque/Expedição/Compras · merge owner #261 |
+| homolog API/bundle | PASS (perms owner Fiscal.nfe.* + markers no JS) |
+| browser UI | BLOCKED login automação · hard refresh manual owner |
+| próxima | hard refresh manual Fiscal/Empresas · inventário Estoque/Expedição/Compras · merge owner #261 |
 
 ## CURSOR — Auditoria global UI (pós-orientação 2026-10-10)
 

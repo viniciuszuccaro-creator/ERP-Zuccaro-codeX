@@ -20,5 +20,11 @@
 - data-permission Nova NF-e = Fiscal.nfe.emitir
 - teste owner Fiscal + matriz inventário
 
-## Homolog browser (pendente hard refresh)
-Fiscal launchpad sem badge Acesso negado nos cards owner; Empresas/Grupos/Marcas do tip ea213906.
+## Homolog
+| Check | Resultado |
+|---|---|
+| SPA asset público | `index-BAZjmDZB.js` |
+| bundle contém | `Fiscal.nfe.emitir` · `sectionKey:"nfe"` · `tabelas_fiscais` · alias `notasfiscais` · `NotasFiscaisTab` |
+| auth/session owner | `Fiscal` sections `nfe|tabelas_fiscais|sped|obrigacoes` · nfe ações `visualizar/criar/emitir` |
+| browser UI cards | **BLOCKED** automação login (xdotool) — hard refresh manual owner |
+| Empresas/Grupos/Marcas | tip `ea213906` já no lineage; revalidar no mesmo hard refresh |
