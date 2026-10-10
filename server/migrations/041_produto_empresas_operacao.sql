@@ -27,3 +27,32 @@ CREATE POLICY produto_empresas_tenant_scope ON produto_empresas FOR ALL
   WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
     AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid);
 COMMENT ON TABLE produto_empresas IS 'Explicit company operational eligibility for shared product masters; no stock, price or historical document rewrite.';
+
+-- Extend the existing item guards explicitly; original parent/unit/owned-product
+-- conditions remain unchanged. A shared master needs this company's live link.
+-- No SECURITY DEFINER, policy broadening, grants or historical row updates.
+CREATE OR REPLACE FUNCTION assert_orcamento_item_same_tenant() RETURNS TRIGGER AS $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM orcamentos o WHERE o.id=NEW.orcamento_id AND o.group_id=NEW.group_id AND o.empresa_id=NEW.empresa_id)
+   THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: item outside orcamento scope'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id AND p.empresa_id=NEW.empresa_id AND p.unidade_medida_id=NEW.unidade_id)
+   AND NOT EXISTS(SELECT 1 FROM produtos p JOIN produto_empresas pe ON pe.produto_id=p.id AND pe.group_id=p.group_id
+     JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
+     WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id AND p.empresa_id IS NULL AND p.ativo AND p.unidade_medida_id=NEW.unidade_id
+       AND pe.empresa_id=NEW.empresa_id AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa' FOR SHARE OF p,pe,e)
+   THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside scope'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM unidades_medida u WHERE u.id=NEW.unidade_id AND u.group_id=NEW.group_id)
+   THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: unidade outside group'; END IF;
+ RETURN NEW; END; $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION assert_pedido_item_same_tenant() RETURNS TRIGGER AS $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pedidos p WHERE p.id=NEW.pedido_id AND p.group_id=NEW.group_id AND p.empresa_id=NEW.empresa_id)
+   THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: item outside pedido scope'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM produtos p WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id AND p.empresa_id=NEW.empresa_id AND p.unidade_medida_id=NEW.unidade_id AND p.ativo)
+   AND NOT EXISTS(SELECT 1 FROM produtos p JOIN produto_empresas pe ON pe.produto_id=p.id AND pe.group_id=p.group_id
+     JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
+     WHERE p.id=NEW.produto_id AND p.group_id=NEW.group_id AND p.empresa_id IS NULL AND p.ativo AND p.unidade_medida_id=NEW.unidade_id
+       AND pe.empresa_id=NEW.empresa_id AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa' FOR SHARE OF p,pe,e)
+   THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: produto outside scope'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM unidades_medida u WHERE u.id=NEW.unidade_id AND u.group_id=NEW.group_id AND u.ativo)
+   THEN RAISE EXCEPTION 'TENANT_FK_MISMATCH: unidade outside group'; END IF;
+ RETURN NEW; END; $$ LANGUAGE plpgsql;
