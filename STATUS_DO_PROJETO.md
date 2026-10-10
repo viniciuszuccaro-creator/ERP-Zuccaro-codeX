@@ -12802,3 +12802,11 @@ Suite PostgreSQL real adicionada ao runner obrigatório com gate de banco isolad
 prova concorrência/retry/CAS/rollback de auditoria/RLS e Cliente→Orçamento server-priced→CRM.
 Migrations aplicadas/025–037/026 e branches Cursor não alterados. Nenhum deploy/VPS/canal neste lote.
 Revisão do HEAD final e CI ainda requeridas. Não declarar CRM/onda implantados por esta preparação.
+
+CRM 040 — evidencia de fechamento do runtime 0481e940: CI push3585/run38078234619 e
+PR3586/run38078299051 SUCCESS frontend/backend. Runner nativo PostgreSQL R40CRM:
+2 PASS/0 FAIL/0 SKIP, papel NOSUPERUSER/NOBYPASSRLS/NOLOGIN em schema isolado.
+Backend local completo 317 PASS/0 FAIL/18 skips existentes sem URL; R40 real nao
+adiciona skip e foi executado obrigatoriamente na CI. Evidencia sanitizada em
+`docs/evidence/crm-http-040-pg-ci-20261010.txt`. Codigo permanece desligado por
+padrao e sem cutover/deploy/migration operacional. Revisao final ainda requerida.
