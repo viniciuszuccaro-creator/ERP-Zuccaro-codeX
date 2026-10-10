@@ -9,7 +9,17 @@ export default function useCadastroFormScopeGuard(groupId, empresaId) {
   const rendered = { groupId: groupId || null, empresaId: empresaId || null };
   const renderedRef = useRef(rendered);
   renderedRef.current = rendered;
-  if (!opened.current && rendered.groupId) opened.current = rendered;
+  if (!opened.current) {
+    // useContextoVisual resolves Grupo before Empresa. The HTTP session is the
+    // authority at mount; freezing that partial render would reject a valid save.
+    const opening = isHttpBackendMode ? readErpHttpSession() : rendered;
+    if (opening?.groupId) {
+      opened.current = {
+        groupId: opening.groupId,
+        empresaId: opening.empresaId || null,
+      };
+    }
+  }
 
   const isCurrent = () => {
     const currentRender = renderedRef.current;

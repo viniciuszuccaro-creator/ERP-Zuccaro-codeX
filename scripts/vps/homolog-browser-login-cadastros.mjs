@@ -93,27 +93,44 @@ async function main() {
     const denied = await page.getByText(/Acesso negado/i).count();
     mark('cadastros_open', denied === 0, denied ? `acesso_negado_count=${denied}` : 'opened');
 
-    // Expandir Pessoas / Clientes se acordeão
-    const pessoas = page.getByText(/^Pessoas$/i).first();
-    if (await pessoas.isVisible().catch(() => false)) {
-      await pessoas.click().catch(() => {});
-      await page.waitForTimeout(800);
+    // Cadastros Gerais: card Pessoas → tile Cliente (V24); fallback Comercial
+    const pessoasCard = page.getByText(/Pessoas|Pessoas & Parceiros|1️⃣ Pessoas/i).first();
+    if (await pessoasCard.isVisible().catch(() => false)) {
+      await pessoasCard.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(1200);
     }
-    const clientesTile = page.locator('text=/^Clientes?$/i').first();
+    let clientesOk = false;
+    const clientesTile = page.getByText(/^Clientes?$/i).first();
     if (await clientesTile.isVisible().catch(() => false)) {
       await clientesTile.click({ force: true });
       await page.waitForTimeout(2500);
-      mark('clientes_list', true, 'tile clicked');
-    } else {
+      mark('clientes_list', true, 'tile Cliente after Pessoas');
+      clientesOk = true;
+    }
+    if (!clientesOk) {
       const alt = page.locator('[data-action*="cliente"], button:has-text("Cliente"), [data-permission*="Cliente"]').first();
       if (await alt.isVisible().catch(() => false)) {
-        await alt.click();
+        await alt.click({ force: true });
         await page.waitForTimeout(2500);
         mark('clientes_list', true, 'alt tile clicked');
-      } else {
-        mark('clientes_list', false, 'clientes tile not found after Cadastros Base');
+        clientesOk = true;
       }
     }
+    if (!clientesOk) {
+      const com = page.getByText(/Comercial e Vendas/i).first();
+      if (await com.isVisible().catch(() => false)) {
+        await com.click({ force: true });
+        await page.waitForTimeout(1500);
+        const c2 = page.getByText(/^Clientes?$/i).first();
+        if (await c2.isVisible().catch(() => false)) {
+          await c2.click({ force: true });
+          await page.waitForTimeout(2500);
+          mark('clientes_list', true, 'via Comercial Clientes');
+          clientesOk = true;
+        }
+      }
+    }
+    if (!clientesOk) mark('clientes_list', false, 'Cliente tile missing Cadastros+Comercial');
 
     // Abrir primeira linha da grade se existir
     const row = page.locator('table tbody tr, [role="row"]').filter({ hasNotText: /^$/ }).nth(1);

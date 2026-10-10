@@ -1,0 +1,27 @@
+# Matriz de consolidação — módulos/submódulos (2026-10-10)
+# Sanitizado. Regra-Mãe: não apagar funcionalidade distinta; redirect antes de retirar.
+
+| origem | destino canônico | capacidades preservadas | ação |
+|---|---|---|---|
+| Financeiro card AprovacaoDescontosManager | comercial/CentralAprovacoesManager | descontos+crédito+conciliação | **redirect feito** (lazy import) |
+| Cadastros Base (rótulo homolog) | pages/Cadastros.jsx · sidebar "Cadastros Gerais" | mesmo shell; Pessoas→V24→ClienteCompleto | **keep** — unificar rótulo só com owner |
+| comercial/ClientesTab | V24 + CadastroClienteCompleto | HTTP lista/abrir | **keep** (entrada Comercial) |
+| VisualizadorUniversalEntidade (V23) em Estoque/Compras/RH | VisualizadorUniversalEntidadeV24 | scope, RBAC, codigo, open único | **redirect pendente** (migrar tabs) |
+| FormaPagamentoForm (simples) | FormaPagamentoFormCompleto | codigo+ID, abas | **keep both** curto prazo (Completo no Bloco3) |
+| ChatbotIntentsForm | ChatbotIntentForm | adapter já consolidado | **keep** (adapter) |
+| ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
+| CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | decisão A/B HTTP | funil/scoring | **BLOCKED** CRM_CANONICAL_HTTP_PENDING |
+| SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA | conferência+audit | keep both curto prazo |
+| ComprovanteDigital × ComprovanteEntregaDigital | diff payload pendente | POD | keep both |
+| Dashboard × DashboardCorporativo | escopos distintos | KPIs empresa vs grupo | keep both |
+| HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |
+
+## Azul-claro global (ref #257 baba91a6 / tip 7d068dbb)
+Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, Produção, RH, CRM.
+**Preservado:** Financeiro CR green ≠ Régua violet; EmpresaSwitcher grupo azul/empresa roxo; CTAs/funcionalidades posteriores (#261 HTTP, codigo, Pedido Onda 5).
+
+## #254 tip integrado
+HEAD #254 `4a1ecf4c` portado em #261: form scope session freeze, assert delete, produto HTTP edit-ready + retry.
+
+## Recuperado
+NÃO legado · SYNTH≠recuperado · #211 Codex Legado

@@ -231,6 +231,8 @@ export default function RepresentanteFormCompleto({ representante: representante
     saveMutation.mutate(buildPayload(formData));
   };
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
       deleteMutation.mutate(representante.id);
     }

@@ -29,7 +29,8 @@ const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro
 const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
-const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
+/** Canônico: CentralAprovacoesManager (Comercial). Card Financeiro redireciona — sem shell paralelo. */
+const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/CentralAprovacoesManager"));
 const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
 const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
 const VendasMulticanal = React.lazy(() => import("../components/financeiro/VendasMulticanal"));

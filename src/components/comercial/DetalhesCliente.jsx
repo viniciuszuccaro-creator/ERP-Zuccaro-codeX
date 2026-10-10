@@ -72,7 +72,17 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <CardTitle className="text-xl">{cliente.nome || cliente.razao_social}</CardTitle>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex flex-wrap items-center gap-3 mt-1">
+                {cliente.codigo != null && String(cliente.codigo).trim() !== '' && (
+                  <p className="text-sm font-mono tabular-nums text-slate-700" data-action="codigo-registro-cliente-360" title="Código de registro (não é o ID técnico)">
+                    Cód. {String(cliente.codigo)}
+                  </p>
+                )}
+                {cliente.id && (
+                  <p className="text-xs font-mono text-slate-500" data-action="id-tecnico-cliente-360" title="ID técnico imutável">
+                    ID {String(cliente.id)}
+                  </p>
+                )}
                 <p className="text-sm text-slate-600">{cliente.tipo}</p>
                 <Badge className={statusColors[cliente.status]}>{cliente.status}</Badge>
               </div>

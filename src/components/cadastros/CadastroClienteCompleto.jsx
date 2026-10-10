@@ -397,6 +397,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   });
 
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }

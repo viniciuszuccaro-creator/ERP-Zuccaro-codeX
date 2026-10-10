@@ -125,3 +125,8 @@ export function prepareProdutoMediaFile(file, { groupId, empresaId, produtoId, v
   return { storage_key: storageKey, categoria: format.categoria, nome_arquivo: originalName,
     mime_type: file.type, tamanho_bytes: file.size, versao: version };
 }
+
+/** Edição HTTP só libera save após GET completo do mesmo id (fail-closed anti-wipe). */
+export function isProdutoHttpEditReady(produtoHttp, produtoId, loadedId) {
+  return !produtoHttp || !produtoId || loadedId === produtoId;
+}
