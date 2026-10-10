@@ -1,0 +1,27 @@
+CRM HTTP 040 — evidence sanitized, 2026-10-10
+Repository: viniciuszuccaro-creator/ERP-Zuccaro-codeX
+PR: 267
+Runtime SHA: 0481e94049efa3d99ffcbc3363220ec93e45e83d
+Base: c125c4db (candidate Cursor 261, not main)
+CI push: 3585 / 38078234619 SUCCESS frontend/backend
+CI PR: 3586 / 38078299051 SUCCESS frontend/backend
+Backend job: 114289787740
+Actual mandatory runner log:
+  ok 2 - R40 PostgreSQL real: CRUD/concorrrência/replay/audit rollback/RLS/Cliente→Orçamento→CRM
+  tests 2; pass 2; fail 0; skipped 0
+  POSTGRES_E2E_R40CRM_TOTAL_TESTS=2
+The test used native pg against the CI PostgreSQL service, a newly created isolated
+schema, and SET LOCAL ROLE under a NOSUPERUSER/NOBYPASSRLS/NOLOGIN fixture role.
+Assertions cover same-key concurrency, distinct sequential codes, stale versions,
+tenant invisibility, audit rollback (including sequence), original textual IDs,
+canonical server-priced Orcamento, and a locked read racing with cancellation.
+Reference/profile/audit grants and policies are isolated fixtures; not DEV grants.
+Local: 10 focused backend/PGlite tests PASS; 18 frontend regression tests PASS.
+Full backend local: 317 PASS/0 FAIL/18 existing DB skips without DATABASE_URL;
+mandatory native PostgreSQL runner executed separately in CI with zero skips.
+Server typecheck/build; frontend lint/audit/build; diff-check PASS.
+ENABLE_CRM_HTTP default false. UI/store/C360 legacy source remains unchanged.
+No main merge, operational migration, backfill, real-data import, VPS deploy,
+provider activation, or external channel activation performed by this package.
+Pending: exact-head independent review, dependency integration and controlled
+runtime/grants/cutover/ID-map/reconciliation/backup/rollback homologation.

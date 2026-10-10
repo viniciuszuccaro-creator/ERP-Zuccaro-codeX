@@ -12810,3 +12810,40 @@ Checklist inicial:
 
 - Incorporado o novo HEAD Cursor `a004044b` em branch isolada, sem editar sua branch nem `main`. Conflito no guard resolvido preservando a convergência tela/sessão para Empresa ou Grupo consolidado e a trava por ator/Bearer; teste de Grupo consolidado somado aos cenários CPA→3Z e login novo. Fluxo Cliente inclui erro visível, sem engolir rejeição após mudança de contexto, e duplo clique de edição mantém RBAC/carga existente.
 - 27/27 testes focados de Cadastros/Produto, lint, build e diff-check PASS. CI e revisão independente são gates do novo SHA; não houve deploy, migração ou importação. Próximo P0: homologação visual autenticada e contrato explícito de Produto mestre de Grupo para itens de documento da empresa jurídica antes de integrar/migrar.
+
+
+## CODEX — pacote CRM HTTP 040 (2026-10-10)
+
+Workspace/branch próprios `comercial360-crm-http-20261010` / `codex/crm-http-canonico-20261010`.
+Base c125c4db, descendente da candidata Cursor #261; main conferida baba91a6 ainda sem #261.
+Numeração/ownership 040 reservados em6100290423; policy única extraída pelo Cursor em c125c4db,
+importada do domínio server e reexportada pelo wrapper frontend. UI/store/C360 permanecem intactos.
+Implementado: Oportunidade HTTP create/get/list/patch/inativar/restaurar, busca por ID legado,
+vínculo de Orçamento existente (sem documento paralelo), códigos via reserveEntityCodigo,
+idempotência, CAS/versionamento, histórico e auditoria no executor compartilhado.
+Campos existentes preservados: descrição, responsável textual (não identidade de autorização),
+previsão, próxima ação, interesse em produtos e orçamento informado pelo cliente. PATCH omitido/
+undefined não limpa campos; null explícito limpa somente campo autorizado. Decimais como strings.
+IDs legados e referências de Interacao/documentos não viram UUID fictício; legacy_store_id TEXT
+é único por Grupo/Empresa. Sem backfill/importação/dual-write ou corte automático.
+040: RLS/FORCE company-scoped, FKs compostas, sem grants PUBLIC. Grants das provas são fixtures,
+não homologação DEV. ENABLE_CRM_HTTP=false por padrão; habilitação/corte exigem revisão, CI,
+migration/grants/runtime homologados, backup/reconciliação/rollback e mapa de IDs/códigos.
+10 testes locais focados PASS (inclui PGlite com papel NOSUPERUSER/NOBYPASSRLS).
+Suite PostgreSQL real adicionada ao runner obrigatório com gate de banco isolado, sem skip flag;
+prova concorrência/retry/CAS/rollback de auditoria/RLS e Cliente→Orçamento server-priced→CRM.
+Migrations aplicadas/025–037/026 e branches Cursor não alterados. Nenhum deploy/VPS/canal neste lote.
+Revisão do HEAD final e CI ainda requeridas. Não declarar CRM/onda implantados por esta preparação.
+
+CRM 040 — evidencia de fechamento do runtime 0481e940: CI push3585/run38078234619 e
+PR3586/run38078299051 SUCCESS frontend/backend. Runner nativo PostgreSQL R40CRM:
+2 PASS/0 FAIL/0 SKIP, papel NOSUPERUSER/NOBYPASSRLS/NOLOGIN em schema isolado.
+Backend local completo 317 PASS/0 FAIL/18 skips existentes sem URL; R40 real nao
+adiciona skip e foi executado obrigatoriamente na CI. Evidencia sanitizada em
+`docs/evidence/crm-http-040-pg-ci-20261010.txt`. Codigo permanece desligado por
+padrao e sem cutover/deploy/migration operacional. Revisao final ainda requerida.
+### CRM 040 — correção das ressalvas da revisão 6101234545
+- A sequência de Grupo avança em INSERT/alteração de código mediante trigger SECURITY INVOKER, na mesma transação. Não lê oportunidades de outra empresa, não adiciona BYPASSRLS nem grants operacionais. A reserva existente permanece canônica; importações devem manter triggers habilitados e reconciliação/backup.
+- Vínculo Orçamento preserva a referência anterior em legacy_orcamento_id, somente pelo serviço/contrato persistente; cliente HTTP não pode fabricar esse campo. Replay mantém referência e versão.
+- Provas ampliadas: código fora da reserva na empresa A seguido de criação na A2; referência textual → vínculo UUID → replay. Runner PostgreSQL real obrigatório mantido, sem remoção de testes/skip.
+- Flag, UI/store, migration DEV, importação e canais continuam desligados/pendentes. Novo HEAD requer revisão independente e CI próprias.
