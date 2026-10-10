@@ -1,18 +1,26 @@
+## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | `isSelfManagedCadastro` minify-safe · freeze scope quando sessão≡render · V23→V24 · HTTP ativo≠status |
+| **causa crash salvar** | `Function.name` some no bundle → onSuccess chamava `handlePersistSubmit` → ErrorBoundary |
+| **preservado** | #254 `4a1ecf4c` · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
+| CI tip `bdeec58c` | erp-runtime-ci (push/PR) |
+| **implantado** | erp-dev **`bdeec58c`** · `index-5EmU7-cb.js` · backup `pre-gate-e-20261010-134527.sql` · rollback `pre-spa-login-20261010-134528` |
+| **homologado** (este SHA) | login tipado · Clientes V24 n=5 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads · **fail_count=0** |
+| residual | usuário restrito · Legado #211 · ManagePR casing ERP-Zuccaro-codeX |
+| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` (V23→V24 **feito**) |
+| evidências | `deploy-261-tip-bdeec58c-salvar-minify-20261010.txt` · `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| próxima | merge owner #261 · Legado #211 · usuário restrito |
+
 ## CURSOR — #261 tip `0d458ab9` (Clientes API×UI + V23→V24) (2026-10-10)
 
 | Fase | Estado |
 |---|---|
-| **implementado** | hardening HTTP Cliente (ativo≠status) · V23→V24 Estoque/Compras/RH · probe/homolog Launchpad |
-| **causa residual** | “grade 0” = clique no KPI Clientes; Launchpad `data-action=Comercial.Clientes.abrir` → V24 rows=5 |
-| **preservado** | #254 `4a1ecf4c` · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
-| CI tip `0d458ab9` | erp-runtime-ci (push) |
-| **implantado** | erp-dev **`0d458ab9`** · `index-CEQLA0kg.js` · backup `pre-gate-e-20261010-133102.sql` · rollback `pre-spa-login-20261010-133103` |
-| **homologado** (este SHA) | login tipado · Cadastros · Clientes V24 n=5 · abrir/reabrir · trocar Grupo · launchpads PASS |
-| residual | salvar form self-managed (Salvar fora do 1º viewport headless) · usuário restrito |
-| matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` (V23→V24 **feito**) |
-| evidências | `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` · `probe-clientes-api-ui-3108b9f2-20261010.txt` |
-| **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | merge #261 · salvar/editar form Cliente (viewport) · Legado #211 · usuário restrito |
+| **implantado** | supersedido por **`bdeec58c`** |
+| evidências | `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` |
+| próxima | supersedido pelo bloco tip `bdeec58c` acima |
 
 ## CURSOR — #261 tip `3108b9f2` (#254 4a1ecf4c + azul global) (2026-10-10)
 

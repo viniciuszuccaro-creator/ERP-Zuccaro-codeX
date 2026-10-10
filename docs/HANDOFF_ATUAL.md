@@ -62,13 +62,16 @@ Fail-closed preservado (gate por seção).
 - **Supersedido** pela nona ação (`0d458ab9`). Evidência tip antigo: `deploy-261-tip-3108b9f2-integrado-20261010.txt`.
 
 ### Nona ação — tip `0d458ab9` (Clientes API×UI + V23→V24)
-- API×DB×UI CPA: DB=5 · API=5 · V24 rows=5. Residual “0 rows” era clique no KPI, não no Launchpad `Comercial.Clientes.abrir`.
-- Hardening: `httpApiClient` Cliente sem `status` em ativoKeys; filter sempre array.
-- V23→V24: `ProdutosTab` · `FornecedoresTab` · `ColaboradoresTab` · RH window (matriz atualizada).
-- **Implantado** erp-dev tip **`0d458ab9`** · asset `index-CEQLA0kg.js` · backup `pre-gate-e-20261010-133102.sql` · rollback `pre-spa-login-20261010-133103`.
-- **Homologado neste SHA**: login tipado · Cadastros · Clientes V24 n=5 · abrir/reabrir · trocar Grupo · launchpads PASS.
-- Residual: salvar form self-managed (Salvar fora viewport headless) · usuário restrito · Legado #211.
-- Evidências: `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt` · `probe-clientes-api-ui-3108b9f2-20261010.txt`.
+- **Supersedido** pela décima ação (`bdeec58c`). Evidência: `deploy-261-tip-0d458ab9-clientes-v24-20261010.txt`.
+
+### Décima ação — tip `bdeec58c` (salvar minify-safe)
+- Crash salvar: `Function.name` some no bundle → self-managed falso → `onSuccess`→`handlePersistSubmit`→ErrorBoundary.
+- Fix: `FormComponent.isSelfManagedCadastro = true` (+ displayName) em Cliente/Fornecedor/Representante/Produto V22.
+- Freeze scope só quando sessão HTTP ≡ render (visão consolidada Grupo ok).
+- **Implantado** erp-dev tip **`bdeec58c`** · asset `index-5EmU7-cb.js` · backup `pre-gate-e-20261010-134527.sql` · rollback `pre-spa-login-20261010-134528`.
+- **Homologado neste SHA** fail_count=0: login · Clientes V24 n=5 · abrir/campo/salvar/reabrir · trocar Grupo · launchpads.
+- Residual: usuário restrito · Legado #211 · ManagePR casing repo.
+- Evidência: `deploy-261-tip-bdeec58c-salvar-minify-20261010.txt`.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
