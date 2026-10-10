@@ -1,3 +1,11 @@
+## CODEX COMERCIAL 360 — checkpoint de troca de computador (2026-10-10)
+
+- Repositório canônico `viniciuszuccaro-creator/ERP-Zuccaro-codeX`. #254 HEAD `20a2c2fb` e #264 HEAD mesclado `d9403665` já são ancestrais da #261; não repetir o porte. Cursor é dono da branch #261 `cursor/cadastros-recuperacao-c360-contrato-392b`, HEAD público conferido `c3c45c21` (docs após código `f22d1151`).
+- Correção posterior do achado Cursor (`GET Produto {id}` liberava PATCH PIM) está **implementada e revisada** na PR draft [#265](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/265), commit `4ce27394`, CI `38059398538` SUCCESS. O review Cursor desse SHA confirmou o fechamento; não declarou homologação visual. A #265 estava baseada em `181b52c1`; esta branch isolada agora também incorporou a ponta `c3c45c21` da #261, sem conflito de código. O novo merge exige CI/revisão próprios antes de considerar a candidata final validada.
+- Separação de estados: #265 **não** está mesclada à #261 nem implantada; o último SHA **implantado/homologado documentado pelo Cursor** é `f22d1151`, não `4ce27394` nem o merge Codex. Homologação de usuário restrito segue BLOCKED por secret ausente. Nenhuma importação legada, migration ou acesso VPS foi feito por esta frente.
+- Arquivos reservados: Cursor mantém Visualizador/Cadastros UI/STATUS/HANDOFF na #261; Codex só reconcilia em branch própria, sem sobrescrever sua branch. Legado mantém staging/mapeador privados; backup e credenciais não acompanham automaticamente troca de computador. Contrato Produto mestre de Grupo compartilhado × itens Orçamento/Pedido da empresa jurídica continua pendente; não afrouxar migrations 016/017 implicitamente.
+- Próximo executável: rodar testes no merge atual, publicar novo HEAD da #265 e pedir revisão exata; depois homologação visual autenticada sob gate operacional. Para legado, confirmar no novo host o acesso ao backup original e ao staging antes de qualquer extração; nunca pôr dados pessoais no GitHub.
+
 ## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
 
 Substitui a orientação anterior. Imagens = exemplos; escopo = **todo o sistema**.

@@ -1,3 +1,8 @@
+## CODEX — #265 handoff da correção Produto sobre #261 atual (2026-10-10)
+
+- Estado remoto conferido: #254 `20a2c2fb` e #264 `d9403665` integrados na #261; #261 HEAD `c3c45c21` (código `f22d1151` implantado/homologado segundo evidência Cursor). #265 `4ce27394` corrigiu GET parcial de Produto, CI SUCCESS e parecer Cursor favorável; não mesclado/implantado/homologado. O merge local da ponta #261 à #265 foi automático, sem sobrepor a branch Cursor, e ainda requer testes/CI/parecer do novo SHA.
+- Não transportar pressupostos de acesso: backup original, staging legado e secrets VPS devem ser verificados no novo host; nenhum dado real publicado. Arquivos Cursor em Cadastros/Visualizador/status/handoff não são editados na branch dele. Próximo P0: validar/publicar candidata #265 reconciliada, obter CI/revisão, homologar visualmente sob autorização; em paralelo, contrato explícito Produto Grupo×item Empresa antes da importação operacional.
+
 ## CURSOR — #261 tip `f22d1151` implantado (Fornecedor/Representante + ID técnico) (2026-10-10)
 
 | Pacote | SHA / estado |
