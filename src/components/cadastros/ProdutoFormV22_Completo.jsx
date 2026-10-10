@@ -226,9 +226,9 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     if (!produtoHttp || !produto?.id) return;
     let active = true;
     getHttpProdutoApi().get(produto.id).then((row) => {
-      if (active) setFormData((current) => ({ ...current, ...row }));
+      if (active && isFormScopeCurrent()) setFormData((current) => ({ ...current, ...row }));
     }).catch((error) => {
-      if (active) toast.error('Erro ao carregar produto: ' + error.message);
+      if (active && isFormScopeCurrent()) toast.error('Erro ao carregar produto: ' + error.message);
     });
     return () => { active = false; };
   }, [produtoHttp, produto?.id]);

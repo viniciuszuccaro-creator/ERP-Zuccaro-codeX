@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+import ts from 'typescript';
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
@@ -16,6 +18,28 @@ test('formulários autogeridos bloqueiam escrita e efeitos tardios após troca C
   assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, tresZ), false);
   assert.equal(isCadastroSelfManagedScopeCurrent(cpa, tresZ, tresZ), false);
   assert.equal(isCadastroSelfManagedScopeCurrent(null, cpa, cpa), false);
+});
+
+test('hook real congela sessão CPA mesmo com primeiro paint parcial; aceita render completo e rejeita 3Z', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const refs = []; let nextRef = 0;
+  let active = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa' };
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: id => ({
+    react: { useRef: initial => refs[nextRef++] ||= { current: initial } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '@/api/erpHttpSession': { readErpHttpSession: () => active },
+    '../cadastroEditLoadPolicy.js': { isCadastroSelfManagedScopeCurrent },
+  })[id] });
+  const render = (groupId, empresaId) => { nextRef = 0; return exports.default(groupId, empresaId); };
+  const partial = render('grupo-cpa', null);
+  assert.equal(partial.isCurrent(), false);
+  const complete = render('grupo-cpa', 'empresa-cpa');
+  assert.doesNotThrow(() => complete.assertCurrent());
+  active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.throws(() => complete.assertCurrent(), /Contexto alterado/);
+  assert.equal(render('grupo-cpa', 'empresa-3z').isCurrent(), false);
 });
 import {
   assertCadastroFormScopeCurrent,
