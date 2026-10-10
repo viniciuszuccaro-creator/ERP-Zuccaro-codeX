@@ -2,15 +2,15 @@
 
 | Item | Estado |
 |---|---|
-| **#270** tip **`362e6aed`** | draft · MERGEABLE · base #269 `8d806386` · CI **parcial** (BE FAILURE + jobs IN_PROGRESS) |
-| conteúdo | `produto_empresas` mig 041 · `ENABLE_PRODUTO_EMPRESA=false` · getForOperation · UI intacta |
-| porte Cursor | **não** — empilhada em #269→#268→#267; CI incompleto; sem merge/VPS/ativação |
+| **#270** tip **`473608ac`** | draft · MERGEABLE · base #269 `8d806386` · CI **SUCCESS** · IDLE |
+| conteúdo | mig 041 + guards SQL item Orçamento/Pedido com vínculo empresa · flag OFF · UI intacta |
+| porte Cursor | **não** — empilhada em #269→#268→#267; sem merge/VPS/ativação |
 | risco Regra-Mãe | baixo no tip (flag off); corte exige stack CRM+041 homologados |
 | **#269/#268/#267** | tips `8d806386` / `5a38a94e` / `e3194fb1` · sem porte |
 | **#266/#265/#263/#254** | tips iguais · sem re-porte |
 | tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
 | `main` | `baba91a6` |
-| próxima | aguardar CI #270 verde; monitorar stack; timer |
+| próxima | monitorar #270 tip `473608ac` / stack CRM; secret restrito; timer |
 
 ## CURSOR — revisão Codex timer: #269 CRM preflight (2026-10-10)
 
