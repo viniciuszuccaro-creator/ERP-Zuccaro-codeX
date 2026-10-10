@@ -2,18 +2,18 @@
 
 | Pacote | SHA / estado |
 |---|---|
-| **PR HEAD #261** | `d2e31eec` (docs pacote) · merge código **`861513cd`** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| **PR HEAD #261** | tip branch pós-push · merge código **`861513cd`** · docs pacote **`c9f845a8`+** · branch `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **código incorporado** | #254 final **`20a2c2fb`** (ancestral) · #264 tip **`d9403665`** (useProdutoHttpEditLoad · actorId/token · cliente consolidado) · #261 minify-safe **`bdeec58c`** |
 | **SHA implantado** | erp-dev ainda **`bdeec58c`** · `index-5EmU7-cb.js` · **≠** PR HEAD (redeploy pendente) |
 | responsável integração | **Cursor** merge em #261 · Codex dono porte #254→#264 · sem segunda cópia dos mesmos arquivos |
 | **preservado** | `isSelfManagedCadastro` · freeze sessão≡render · V23→V24 · HTTP ativo≠status · azul hubs · Pedido Onda 5 · Financeiro CR≠Régua · piloto HTTP |
 | testes locais | `produto-http-edit-load` + `cadastros-empresa-edicao-load` + `produto-pim-ui` **40/40** |
-| CI tip `d2e31eec` | erp-runtime-ci (push) |
-| **homologado** tip implantado | só **`bdeec58c`** (fail_count=0) — não atribuir a `d2e31eec`/`861513cd` |
+| CI tip pós-push | erp-runtime-ci (push) |
+| **homologado** tip implantado | só **`bdeec58c`** (fail_count=0) — não atribuir ao tip integrado |
 | residual | redeploy+homolog tip integrado · usuário restrito · Legado #211 · ManagePR casing |
 | matriz | `docs/evidence/matriz-consolidacao-modulos-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
-| próxima | CI tip · implantar `d2e31eec` · homolog login tipado neste SHA · merge owner |
+| próxima | CI tip · implantar tip branch · homolog login tipado neste SHA · merge owner |
 
 ## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
 

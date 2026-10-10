@@ -79,12 +79,12 @@ Fail-closed preservado (gate por seção).
 | responsável | **Cursor** (merge na candidata #261) · Codex porte #254→#264 |
 | HEAD referência #254 | **`20a2c2fb`** (ancestral de #261 pós-merge) |
 | HEAD #264 Codex | **`d9403665`** · CI SUCCESS · base #261 `d31b9bbe`/`a004044b` |
-| **PR HEAD #261** | **`d2e31eec`** (docs) · merge código **`861513cd`** |
+| **PR HEAD #261** | tip branch · merge código **`861513cd`** · docs **`c9f845a8`+** |
 | código incorporado | `useProdutoHttpEditLoad` · actorId/token no form scope/edit policy · cliente consolidado · **preservado** `isSelfManagedCadastro` minify-safe |
 | **SHA implantado** | ainda **`bdeec58c`** — **não** confundir com PR HEAD |
 | sem cópia divergente | Cursor **não** re-portou #254 enquanto Codex fechava #264; merge preservou ambos os conjuntos |
 | testes | produto-http-edit-load + edicao-load + pim-ui 40/40 |
-| próxima | CI tip `d2e31eec` · redeploy erp-dev · homolog **neste** SHA · merge owner #261/#264 |
+| próxima | CI tip · redeploy erp-dev · homolog **neste** SHA · merge owner #261/#264 |
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).

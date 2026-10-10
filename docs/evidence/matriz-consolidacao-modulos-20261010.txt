@@ -25,7 +25,7 @@ Aplicado `color: 'blue'` em launchpads: Estoque, Expedição, Compras, Fiscal, P
 |---|---|
 | #254 final | `20a2c2fb` (ancestral) |
 | #264 Codex | `d9403665` (porte #254→base #261) |
-| PR HEAD #261 | `d2e31eec` (docs) · merge `861513cd` |
+| PR HEAD #261 | tip branch · merge `861513cd` · docs `c9f845a8`+ |
 | implantado erp-dev | `bdeec58c` (≠ HEAD até redeploy) |
 Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
 
