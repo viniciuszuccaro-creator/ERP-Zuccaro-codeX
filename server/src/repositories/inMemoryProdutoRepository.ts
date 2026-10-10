@@ -10,6 +10,7 @@ import {
   type ProdutoPublicationEvent,
 } from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaScanEvidence, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
+import type {ProdutoEmpresa} from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
@@ -25,6 +26,10 @@ export type ProdutoReadOptions = {
 };
 
 export interface ProdutoRepository extends TenantEntityRepository<Produto, ProdutoCreate, ProdutoUpdate> {
+  readonly empresaLinksEnabled:boolean;
+  getForOperation(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Produto|null>;
+  getEmpresaLink(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
+  saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
   getById(
@@ -166,6 +171,8 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 }
 
 export class InMemoryProdutoRepository implements ProdutoRepository {
+  constructor(readonly empresaLinksEnabled=false) {}
+  private readonly empresaLinks=new Map<string,ProdutoEmpresa>();
   private readonly rows = new Map<string, Produto>();
   private readonly variants = new Map<string, ProdutoVariante>();
   private readonly equivalents = new Map<string, ProdutoEquivalente>();
@@ -182,6 +189,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     this.transactionQueue = new Promise<void>((resolve) => { release = resolve; });
     await previous;
     const snapshot = structuredClone([...this.rows.entries()]);
+    const linksSnapshot=structuredClone([...this.empresaLinks.entries()]);
     const eventsSnapshot = structuredClone(this.publicationEvents);
     const variantsSnapshot = structuredClone([...this.variants.entries()]);
     const equivalentsSnapshot = structuredClone([...this.equivalents.entries()]);
@@ -190,6 +198,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     try {
       return await fn();
     } catch (error) {
+      this.empresaLinks.clear();for(const [key,row] of linksSnapshot)this.empresaLinks.set(key,row);
       this.rows.clear();
       for (const [id, row] of snapshot) this.rows.set(id, row);
       this.publicationEvents.length = 0;
@@ -255,6 +264,21 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     if (!row || row.group_id !== scope.groupId) return null;
     if (scope.empresaId && row.empresa_id !== scope.empresaId) return null;
     return row;
+  }
+  async getForOperation(scope:Scope,id:string) {
+    if(!scope.empresaId)return null;
+    const owned=await this.getById(scope,id);if(owned)return owned;
+    if(!this.empresaLinksEnabled)return null;
+    const master=this.rows.get(id),link=await this.getEmpresaLink(scope,id);
+    return master?.group_id===scope.groupId&&master.empresa_id===null&&master.ativo&&link?.ativo&&link.habilitado_operacao?structuredClone(master):null;
+  }
+  async getEmpresaLink(scope:Scope,id:string) {return structuredClone(this.empresaLinks.get(`${scope.groupId}:${scope.empresaId}:${id}`)??null);}
+  async saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string) {
+    const key=`${scope.groupId}:${scope.empresaId}:${id}`,before=this.empresaLinks.get(key);
+    if((before?.version??0)!==data.expected_version)return null;
+    const row:ProdutoEmpresa={id:before?.id??randomUUID(),group_id:scope.groupId,empresa_id:scope.empresaId!,produto_id:id,
+      ativo:data.ativo,habilitado_operacao:data.habilitado_operacao,version:(before?.version??0)+1,created_by:before?.created_by??actor,updated_by:actor};
+    this.empresaLinks.set(key,row);return structuredClone(row);
   }
 
   async create(scope: Scope, data: ProdutoCreate, _executor?: DbQueryExecutor): Promise<Produto> {
@@ -774,6 +798,6 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
 }
 
-export function createInMemoryProdutoRepo() {
-  return new InMemoryProdutoRepository();
+export function createInMemoryProdutoRepo(empresaLinksEnabled=false) {
+  return new InMemoryProdutoRepository(empresaLinksEnabled);
 }

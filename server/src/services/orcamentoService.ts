@@ -62,7 +62,7 @@ export class OrcamentoService {
     private readonly tenantGuard: TenantGuard,
     private readonly rbac: RbacGuard,
     private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById'>,
-    private readonly produtos: Pick<ProdutoRepository, 'getById'>,
+    private readonly produtos: Pick<ProdutoRepository, 'getById'> & Partial<Pick<ProdutoRepository,'getForOperation'>>,
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
     private readonly prices: OrcamentoSalePricePort,
@@ -324,7 +324,7 @@ export class OrcamentoService {
     if (!condicao || !condicao.ativo) throw new AppError(422, 'ORCAMENTO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     await this.validateTabelaPreco(scope, data.tabela_preco_id, executor);
     for (const item of data.itens) {
-      const produto = await this.produtos.getById(scope, item.produto_id);
+      const produto = this.produtos.getForOperation?await this.produtos.getForOperation(scope,item.produto_id,executor):await this.produtos.getById(scope,item.produto_id,executor);
       if (!produto || !produto.ativo) throw new AppError(422, 'ORCAMENTO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
       if (produto.unidade_medida_id !== item.unidade_id) throw new AppError(422, 'ORCAMENTO_UNIDADE_INVALIDA', 'Unidade is not the principal product unit');
       const unidade = await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id);

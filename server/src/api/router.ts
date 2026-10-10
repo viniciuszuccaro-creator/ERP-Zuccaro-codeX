@@ -114,6 +114,14 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
 }
 
 function mountProdutoRoutes(router: Router, service: ProdutoService) {
+  router.get('/api/v1/produtos/:id/empresa-operacao',requireTenantScope,async(req,res,next)=>{
+    try {res.setHeader('Cache-Control','no-store');res.json({data:await service.empresaOperacao(ctxFromReq(req),req.params.id)});}
+    catch(error){next(error);}
+  });
+  router.put('/api/v1/produtos/:id/empresa-operacao',requireTenantScope,async(req,res,next)=>{
+    try {res.setHeader('Cache-Control','no-store');res.json({data:await service.habilitarEmpresa(ctxFromReq(req),req.params.id,req.body)});}
+    catch(error){next(error);}
+  });
   router.get('/api/v1/produtos/outbox', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.listPublicationEvents(ctxFromReq(req), {
@@ -1292,6 +1300,7 @@ export function createApiRouter(deps: ApiDeps) {
       },
       produto: {
         masterData: true,
+        empresaOperacao:{enabled:deps.config.produtoEmpresaEnabled===true,migration:'041_produto_empresas_operacao.sql',automaticEnable:false},
         pagination: true,
         tenantFkIntegrity: true,
         frontendHttp: false,

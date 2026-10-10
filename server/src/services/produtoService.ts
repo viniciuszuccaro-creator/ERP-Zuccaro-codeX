@@ -7,6 +7,7 @@ import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import {
   PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
+  produtoEmpresaSchema,
   isProdutoTipoCanonico,
   produtoCreateSchema,
   produtoUpdateSchema,
@@ -83,6 +84,49 @@ export class ProdutoService {
     private readonly scanner?: MalwareScanPort,
     private readonly catalogPublisher: CatalogPublisherPort = createCatalogPublisher(resolveOutboxConsumerConfig()),
   ) {}
+  async empresaOperacao(ctx:RequestContext,id:string) {
+    if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+    if(!ctx.groupId||!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+    this.assertRelationId(id);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false});
+    return this.repo.withTransaction(async executor=>{
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+      const row=await this.repo.getEmpresaLink({groupId:ctx.groupId,empresaId:ctx.empresaId},id,executor);
+      if(!row)throw new AppError(404,'PRODUTO_EMPRESA_NOT_FOUND','Link unavailable in company scope');
+      return row;
+    });
+  }
+  async habilitarEmpresa(ctx:RequestContext,id:string,payload:unknown) {
+    if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+    if(!ctx.groupId||!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+    this.assertRelationId(id);
+    const parsed=produtoEmpresaSchema.safeParse(payload);
+    if(!parsed.success)throw new AppError(422,'VALIDATION_ERROR','Invalid ProdutoEmpresa payload');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','vincular-empresa',{allowGlobalWildcard:false});
+    return this.repo.withTransaction(async executor=>{
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      const master=await this.repo.getById({groupId:ctx.groupId},id,executor,{forUpdate:true});
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','vincular-empresa',{allowGlobalWildcard:false,executor});
+      if(!master||master.empresa_id!==null)throw new AppError(422,'PRODUTO_MESTRE_REQUIRED','Shared master required');
+      if(!master.ativo&&parsed.data.habilitado_operacao)throw new AppError(422,'PRODUTO_INATIVO','Inactive product cannot be enabled');
+      if(executor) {
+        const company=await executor.query("SELECT id FROM empresas WHERE group_id=$1 AND id=$2 AND status='Ativa' FOR SHARE",[ctx.groupId,ctx.empresaId]);
+        if(!company.rows[0])throw new AppError(422,'PRODUTO_EMPRESA_INATIVA','Active company required');
+      }
+      const scope={groupId:ctx.groupId,empresaId:ctx.empresaId};
+      const before=await this.repo.getEmpresaLink(scope,id,executor);
+      if(before&&before.ativo===parsed.data.ativo&&before.habilitado_operacao===parsed.data.habilitado_operacao)return before;
+      if((before?.version??0)!==parsed.data.expected_version)throw new AppError(409,'PRODUTO_EMPRESA_VERSION_CONFLICT','Link changed');
+      const after=await this.repo.saveEmpresaLink(scope,id,parsed.data,ctx.actorId!,executor);
+      if(!after)throw new AppError(409,'PRODUTO_EMPRESA_VERSION_CONFLICT','Link changed');
+      await this.audit.append({groupId:ctx.groupId,empresaId:ctx.empresaId,actorId:ctx.actorId,entity:'ProdutoEmpresa',entityId:after.id,
+        action:before?'update':'link',beforeData:before?sanitizeAuditSnapshot(before):null,afterData:sanitizeAuditSnapshot(after),requestId:ctx.requestId},executor);
+      return after;
+    });
+  }
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
     this.assertScope(ctx);
