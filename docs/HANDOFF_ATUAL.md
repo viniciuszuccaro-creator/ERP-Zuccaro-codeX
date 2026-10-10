@@ -102,7 +102,14 @@ Fail-closed preservado (gate por seção).
 | **homologado** | login tipado fail_count=0 (não inject) |
 | evidência | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
 | ≠ implantado antigo | `bdeec58c` supersedido neste redeploy |
-| próxima | merge owner #261/#264 · Legado #211 · usuário restrito |
+| próxima | 14ª ação (ID técnico) · merge owner · #211 |
+
+### Décima quarta ação — ID técnico MASTER_CODE + Cliente/Produto
+- `CadastroCodigoRegistroField` aceita `entityId` e renderiza ID técnico (≠ código).
+- 22 forms auxiliares + FormaPagamentoCompleto · ClienteCompleto · Produto V22 (codigo readonly na edição).
+- C360: nota de fontes canônicas (sem duplicar dados).
+- Usuário restrito: **BLOCKED** — falta secret tipado no Environment (`homolog-usuario-restrito-blocked-20261010.txt`).
+- Implantado permanece `00edfb2b` até CI+redeploy deste lote.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
