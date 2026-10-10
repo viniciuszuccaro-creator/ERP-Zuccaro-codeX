@@ -12,7 +12,7 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | homolog deste SHA | owner login tipado fail_count=0 · **somente** `346192e4` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
-| próxima funcional | CI+redeploy tip CRM · secret restrito · contrato HTTP Codex Oportunidade se A; merge owner #261→main |
+| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main · azul residual |
 
 ## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
 
@@ -35,7 +35,7 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
 | arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `docs/vps/evidence/reconciliacao-261-pos-264-main-20261010.txt` · `reconciliacao-261-pos-264-20261010.txt` |
+| evidência | `deploy-261-tip-346192e4-crm-legado-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` · `reconciliacao-261-pos-264-20261010.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
