@@ -67,6 +67,9 @@ CREATE INDEX IF NOT EXISTS idx_oportunidades_page
   ON oportunidades(group_id, empresa_id, ativo, updated_at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_oportunidades_cliente
   ON oportunidades(group_id, empresa_id, cliente_empresa_id);
+-- Canonical order ownership survives inactivation; legacy text is not renamed.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_oportunidades_pedido_canonico
+  ON oportunidades(group_id,empresa_id,convertido_em_id) WHERE convertido_em='pedido';
 DROP TRIGGER IF EXISTS trg_oportunidades_updated_at ON oportunidades;
 CREATE TRIGGER trg_oportunidades_updated_at BEFORE UPDATE ON oportunidades
   FOR EACH ROW EXECUTE PROCEDURE set_updated_at();

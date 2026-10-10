@@ -86,6 +86,12 @@ export class PostgresOportunidadeRepository implements OportunidadeRepository {
       return map(r.rows[0]);
     });
   }
+  byPedido(scope:OportunidadeScope,id:string,tx?:DbQueryExecutor) {
+    return this.run(scope,tx,async q=>{
+      const r=await q.query<Record<string,unknown>>("SELECT * FROM oportunidades WHERE group_id=$1 AND empresa_id=$2 AND convertido_em='pedido' AND convertido_em_id=$3",[scope.groupId,scope.empresaId,id]);
+      return r.rows[0]?map(r.rows[0]):null;
+    });
+  }
   update(scope: OportunidadeScope, id: string, expectedVersion: number, fields: OportunidadeFields, actor: string, tx?: DbQueryExecutor) {
     return this.run(scope,tx,async q => {
       const r = await q.query<Record<string,unknown>>(`UPDATE oportunidades SET

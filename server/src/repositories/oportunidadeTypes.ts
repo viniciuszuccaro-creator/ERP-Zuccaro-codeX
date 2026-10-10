@@ -67,6 +67,7 @@ export interface OportunidadeRepository {
   withTransaction<T>(scope: OportunidadeScope, fn: (tx?: DbQueryExecutor) => Promise<T>): Promise<T>;
   lockIdempotency(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<void>;
   byKey(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
+  byPedido(scope: OportunidadeScope, id:string, tx?:DbQueryExecutor):Promise<Oportunidade|null>;
   byLegacy(scope: OportunidadeScope, id: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
   get(scope: OportunidadeScope, id: string, tx?: DbQueryExecutor, lock?: boolean): Promise<Oportunidade | null>;
   list(scope: OportunidadeScope, filters: OportunidadeFilters, tx?: DbQueryExecutor): Promise<{ rows: Oportunidade[]; total: number }>;

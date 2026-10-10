@@ -146,8 +146,11 @@ export class OportunidadeService {
       const doc=await this.pedidos!.get(scope,input.pedido_id,tx,true);
       if(!doc)throw new AppError(404,'PEDIDO_NOT_FOUND','Pedido unavailable');
       if(!doc.ativo || doc.status!=='EM_ABERTO' || !before.cliente_empresa_id || before.cliente_empresa_id!==doc.cliente_empresa_id
+        || (!fromQuote && doc.orcamento_id!==null)
         || (fromQuote && doc.orcamento_id!==before.orcamento_id))
         throw new AppError(422,'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID','Pedido must belong to the same customer, scope and quotation');
+      const owner=await this.repo.byPedido(scope,doc.id,tx);
+      if(owner && owner.id!==before.id)throw new AppError(409,'OPORTUNIDADE_PEDIDO_ALREADY_LINKED','Pedido already belongs to another opportunity');
       await this.clientReference(scope,before.cliente_empresa_id,tx);
       const converted=stampOportunidadeConvertida({...before,historico_mudancas_etapa:before.historico_mudancas_etapa as any[]},doc,'pedido');
       const preserved={...converted,legacy_pedido_id:before.legacy_pedido_id??before.pedido_id};

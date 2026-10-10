@@ -43,8 +43,10 @@ test('CRM Pedido: continuidade do orçamento, RBAC/referências/estado/CAS e rol
   const pedido={id:ID.obraA,group_id:ID.groupA,empresa_id:ID.empresaA,cliente_empresa_id:linkId,
     orcamento_id:docId,status:'EM_ABERTO',ativo:true} as Pedido;
   const f=fixture(pedido);
-  const permissions={CRM:{oportunidades:['visualizar','criar','editar','aprovar']},Comercial:{orcamento:['visualizar'],pedido:['visualizar']}};
+  const permissions={CRM:{oportunidades:['visualizar','criar','editar','aprovar','inativar']},Comercial:{orcamento:['visualizar'],pedido:['visualizar']}};
   f.rbac.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions});
+  const unrelated=await f.service.create(ctx,{...input('unrelated-quote'),cliente_empresa_id:linkId});
+  await assert.rejects(f.service.linkPedido(ctx,unrelated.id,{expected_version:1,pedido_id:pedido.id}),{code:'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID'});
   const row=await f.service.create(ctx,{...input('pedido-link'),cliente_empresa_id:linkId});
   const quote=await f.service.linkOrcamento(ctx,row.id,{expected_version:1,orcamento_id:docId});
   const body={expected_version:2,pedido_id:pedido.id};
@@ -69,6 +71,16 @@ test('CRM Pedido: continuidade do orçamento, RBAC/referências/estado/CAS e rol
   const manual=await f.service.create(ctx,{...input('manual-close'),cliente_empresa_id:linkId});
   const closed=await f.service.update(ctx,manual.id,{expected_version:1,status:'Ganho'});
   await assert.rejects(f.service.linkPedido(ctx,manual.id,{expected_version:closed.version,pedido_id:pedido.id}),{code:'OPORTUNIDADE_STATE_CONFLICT'});
+  pedido.id=ID.unidadeA;pedido.orcamento_id=null;
+  const a=await f.service.create(ctx,{...input('exclusive-a'),cliente_empresa_id:linkId});
+  const b=await f.service.create(ctx,{...input('exclusive-b'),cliente_empresa_id:linkId});
+  const race=await Promise.allSettled([a,b].map(r=>f.service.linkPedido(ctx,r.id,{expected_version:1,pedido_id:pedido.id})));
+  assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal((race.find(r=>r.status==='rejected') as PromiseRejectedResult).reason.code,'OPORTUNIDADE_PEDIDO_ALREADY_LINKED');
+  const winner=(race.find(r=>r.status==='fulfilled') as PromiseFulfilledResult<any>).value;
+  await f.service.setActive(ctx,winner.id,{expected_version:2},false);
+  const loser=winner.id===a.id?b:a;
+  await assert.rejects(f.service.linkPedido(ctx,loser.id,{expected_version:1,pedido_id:pedido.id}),{code:'OPORTUNIDADE_PEDIDO_ALREADY_LINKED'});
 });
 test('CRM service: patch preserva campos, versão concorrente e histórico',async()=>{
   const f=fixture(),row=await f.service.create(ctx,input());

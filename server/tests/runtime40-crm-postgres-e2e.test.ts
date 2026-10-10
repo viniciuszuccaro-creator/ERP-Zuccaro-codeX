@@ -84,6 +84,16 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
     assert.ok(linkedOrders.every(r=>r.version===6 && r.pedido_id===pedido.id && r.legacy_pedido_id==='pedido_original_textual'));
     assert.equal(linkedOrders[0].orcamento_id,orcamento.id);assert.equal(linkedOrders[0].legacy_orcamento_id,'orcamento_original_textual');
     assert.equal((await app.pedidoService.get(ctx,pedido.id)).status,'EM_ABERTO');
+    const direct=await app.pedidoService.create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
+      tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,
+        descricao:'Pedido direto sintético',unidade_sigla:'KG',quantidade:'1.000000',preco_unitario:'999.000000',desconto:'0.000000',requer_producao:false}]});
+    const exclusive=await Promise.allSettled([separate[4],separate[5]].map(r=>service.linkPedido(ctx,r.id,{expected_version:1,pedido_id:direct.id})));
+    assert.equal(exclusive.filter(r=>r.status==='fulfilled').length,1);
+    assert.equal((exclusive.find(r=>r.status==='rejected') as PromiseRejectedResult).reason.code,'OPORTUNIDADE_PEDIDO_ALREADY_LINKED');
+    const owner=(exclusive.find(r=>r.status==='fulfilled') as PromiseFulfilledResult<any>).value;
+    const loser=owner.id===separate[4].id?separate[5]:separate[4];
+    assert.equal((await service.get(ctx,loser.id)).version,1);
+    await assert.rejects(f.admin.query("UPDATE oportunidades SET convertido_em='pedido',convertido_em_id=$2 WHERE id=$1",[loser.id,direct.id]),/uq_oportunidades_pedido_canonico/);
     await assert.rejects(service.linkPedido({...ctx,empresaId:ID.empresaA2},row.id,{expected_version:6,pedido_id:pedido.id}),{code:'OPORTUNIDADE_NOT_FOUND'});
     // An uncommitted cancellation must be seen after the locked canonical read.
     const secondDoc=await app.orcamentoService.create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
