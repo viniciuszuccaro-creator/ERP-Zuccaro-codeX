@@ -26,9 +26,18 @@ Causa: cards/botões usavam `Fiscal.Notas Fiscais.*` enquanto owner tree é `Fis
 Correção: `sectionKey` canônico no launchpad + aliases UI→owner em `usePermissions`/`localBase44Client` + `NotasFiscaisTab` consulta `Fiscal.nfe` + teste focado owner.
 Fail-closed preservado (gate por seção).
 **Implantado** erp-dev tip **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` · evidência `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt`.
+**Homologado browser** (session inject API→localStorage): Fiscal/Financeiro/Comercial PASS · 0 badges.
+
+### Terceira ação — #254 contexto + Cadastros RBAC residual
+- Revisado #254 HEAD `860114ca` (race refresh/espelho/grade).
+- Port seletivo em #261 **sem** remover piloto HTTP `entityListSorted`/`countEntities` nem Organizacional/Marcas do Visualizador.
+- Cadastros: aliases ContatoB2B/Segmento/Região→pessoas; Depto/Cargo/Turno→organizacional; PerfilAcesso→`Sistema.acessos`.
+- Inventário: `docs/evidence/inventario-global-modulos-20261010.txt`.
+- Login xdotool continua quebrado; homolog usa API session + inject.
 
 ### Codex Comercial 360 / Legado
 Receber contexto por este HANDOFF; executar nos ambientes próprios; confirmar encaminhamento com ação efetiva (não só ack).
+#254 restante no branch Codex: merge owner coordenado com #261 (não duplicar Visualizador).
 
 ## CURSOR — #261 tip `d6952b9d` implantado (2026-10-10)
 

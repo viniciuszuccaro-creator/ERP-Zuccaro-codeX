@@ -1,3 +1,17 @@
+## CURSOR — #261 homolog global + #254 contexto + Cadastros RBAC (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| **implementado** | Fiscal sectionKey · Cadastros aliases ContatoB2B/Depto→pessoas/organizacional · Bloco5 PerfilAcesso→Sistema.acessos · port seletivo #254 (race refresh/espelho/grade) |
+| **revisado** | #254 HEAD `860114ca` — contexto HTTP; integrado sem remover piloto HTTP entityListSorted/#261 Organizacional |
+| **integrado** | PR #261 · ManagePR body atualizado |
+| **implantado** | tip anterior `7f00e392`; este tip aguarda CI+deploy |
+| **homologado** | browser session-inject: Fiscal/Financeiro/Comercial **PASS** (0 badges); Cadastros badges ContatoB2B/Depto **corrigidos neste tip** |
+| **recuperado** | NÃO legado · SYNTH≠recuperado |
+| inventário | `docs/evidence/inventario-global-modulos-20261010.txt` |
+| login automação | desbloqueado via API session + localStorage (`base44_access_token`/`erp_runtime_scope`) — xdotool permanece quebrado |
+| próxima | CI → deploy tip · re-homolog Cadastros badges · merge owner #261/#254 |
+
 ## CURSOR — Fiscal RBAC tip `7f00e392` implantado (2026-10-10)
 
 | Fase | Estado |
@@ -8,11 +22,11 @@
 | matriz | `docs/evidence/orientacao-coordenada-auditoria-global-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
 | **implantado** | erp-dev **`7f00e392`** · `index-BAZjmDZB.js` · backup `pre-gate-e-20261010-104907.sql` · rollback `pre-spa-login-20261010-104908` |
-| CI tip `062ef3fe` | erp-runtime-ci **SUCCESS** (push+PR) · docs tip `7f00e392` CI em curso |
+| CI tip `062ef3fe` | erp-runtime-ci **SUCCESS** |
 | evidências | `deploy-261-tip-7f00e392-fiscal-rbac-20261010.txt` |
-| homolog API/bundle | PASS (perms owner Fiscal.nfe.* + markers no JS) |
-| browser UI | BLOCKED login automação · hard refresh manual owner |
-| próxima | hard refresh manual Fiscal/Empresas · inventário Estoque/Expedição/Compras · merge owner #261 |
+| homolog API/bundle | PASS |
+| browser UI Fiscal | **PASS** session-inject (cards + Nova NF-e sem Acesso negado) |
+| próxima | supersedido pelo bloco homolog+#254 acima |
 
 ## CURSOR — Auditoria global UI (pós-orientação 2026-10-10)
 
