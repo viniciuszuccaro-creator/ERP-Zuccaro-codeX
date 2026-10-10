@@ -322,9 +322,12 @@ test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular
 
 test('Bloco5 Empresas: gate Organizacional sem aliases recusados no backend', async () => {
   const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
-  assert.match(block, /hasPermission\("Cadastros", "Organizacional", "visualizar"\)/);
+  assert.match(block, /permissionSectionFor/);
+  assert.match(block, /section:\s*"Organizacional"/);
+  assert.match(block, /"Empresa",\s*"GrupoEmpresarial"/);
+  assert.match(block, /dataPermissionFor\(k\)/);
   assert.doesNotMatch(block, /hasPermission\("Sistema", "Empresas", "visualizar"\)/);
-  assert.match(block, /k === "Empresa" \|\| k === "GrupoEmpresarial" \? "Organizacional"/);
+  assert.doesNotMatch(block, /Cadastros\.Empresa\.visualizar/);
 });
 
 test('useContextoVisual expoe getInContext fail-closed', async () => {
