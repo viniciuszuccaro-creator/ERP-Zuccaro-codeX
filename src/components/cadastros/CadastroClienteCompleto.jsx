@@ -363,10 +363,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
-      if (!isFormScopeCurrent()) return;
+      // Sempre notifica — não engolir rejeição (evita ErrorBoundary "Promise rejeitada")
       toast({
-        title: "❌ Erro ao salvar cliente",
-        description: error.message,
+        title: isFormScopeCurrent() ? "❌ Erro ao salvar cliente" : "Contexto alterado",
+        description: error?.message || String(error),
         variant: "destructive"
       });
     }
@@ -387,10 +387,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
-      if (!isFormScopeCurrent()) return;
       toast({
-        title: "❌ Erro ao excluir cliente",
-        description: error.message,
+        title: isFormScopeCurrent() ? "❌ Erro ao excluir cliente" : "Contexto alterado",
+        description: error?.message || String(error),
         variant: "destructive"
       });
     }

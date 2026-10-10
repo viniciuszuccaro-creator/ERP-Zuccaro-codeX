@@ -3,22 +3,35 @@ import { isHttpBackendMode } from '@/api/base44Client';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { isCadastroSelfManagedScopeCurrent } from '../cadastroEditLoadPolicy.js';
 
-/** Congela o tenant na abertura; um clique ou resposta tardia não reutiliza a tela no novo tenant. */
+/**
+ * Congela o tenant na abertura quando sessão HTTP e render do form concordam.
+ * Evita freeze prematuro (sessão com empresa + primeiro paint consolidado null)
+ * e libera visão de Grupo (empresaId null nos três lados).
+ */
 export default function useCadastroFormScopeGuard(groupId, empresaId) {
   const opened = useRef(null);
   const rendered = { groupId: groupId || null, empresaId: empresaId || null };
   const renderedRef = useRef(rendered);
   renderedRef.current = rendered;
+
   if (!opened.current) {
-    // useContextoVisual resolves Grupo before Empresa. The HTTP session is the
-    // authority at mount; freezing that partial render would reject a valid save.
-    const opening = isHttpBackendMode ? readErpHttpSession() : rendered;
-    if (opening?.groupId) {
+    const currentRender = renderedRef.current;
+    if (isHttpBackendMode) {
+      const session = readErpHttpSession();
+      if (session?.groupId && currentRender.groupId
+        && session.groupId === currentRender.groupId
+        && (session.empresaId || null) === (currentRender.empresaId || null)) {
+        opened.current = {
+          groupId: session.groupId,
+          empresaId: session.empresaId || null,
+          actorId: session.actorId || null,
+          token: session.token || null,
+        };
+      }
+    } else if (currentRender.groupId) {
       opened.current = {
-        groupId: opening.groupId,
-        empresaId: opening.empresaId || null,
-        actorId: opening.actorId || null,
-        token: opening.token || null,
+        groupId: currentRender.groupId,
+        empresaId: currentRender.empresaId || null,
       };
     }
   }

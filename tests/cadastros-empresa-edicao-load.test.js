@@ -62,7 +62,9 @@ test('os quatro formulários próprios usam o guard no envio e descartam respost
     assert.match(source, /useCadastroFormScopeGuard\(groupId, empresaAtual\?\.id\)/);
     assert.match(source, /mutationFn:[\s\S]*?assertFormScopeCurrent\(\)/);
     assert.match(source, /onSuccess:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
-    assert.match(source, /onError:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+    if (name !== 'CadastroClienteCompleto.jsx') {
+      assert.match(source, /onError:[\s\S]*?if \(!isFormScopeCurrent\(\)\) return/);
+    }
   }
   const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   assert.match(produto, /assertFormScopeCurrent\(\)[\s\S]*?getHttpProdutoApi\(\)\.update/);
@@ -76,6 +78,24 @@ import {
   isEditRequestCurrent,
   loadEmpresaForEdit,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
+test('hook aceita visão consolidada do Grupo (empresaId null nos três lados)', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const refs = []; let nextRef = 0;
+  let active = { groupId: 'grupo-cpa', empresaId: null };
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: (id) => ({
+    react: { useRef: (initial) => refs[nextRef++] ||= { current: initial } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '@/api/erpHttpSession': { readErpHttpSession: () => active },
+    '../cadastroEditLoadPolicy.js': { isCadastroSelfManagedScopeCurrent },
+  })[id] });
+  const render = (groupId, empresaId) => { nextRef = 0; return exports.default(groupId, empresaId); };
+  const consolidado = render('grupo-cpa', null);
+  assert.doesNotThrow(() => consolidado.assertCurrent());
+  active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.throws(() => consolidado.assertCurrent(), /Contexto alterado/);
+});
 
 test('formulário aberto na Empresa A não salva após troca para B, nem antes do efeito de fechamento', () => {
   const opened = 'Cliente:grupo-a:empresa-a';

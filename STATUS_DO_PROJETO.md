@@ -12658,3 +12658,8 @@ Checklist inicial:
 
 - Branch de ensaio isolada baseada na #261 `d3b1cc3c`, incorporando #254 `20a2c2fb`; sem editar branch Cursor, sem merge em main/VPS/importação. Resolução preserva padrão azul do Produto e classificação/hidratação de cadastro da #261, mais guard Bearer/ator e hook GET/retry testado da #254. Conflitos foram concentrados em STATUS, Produto, policy, Visualizador, Auth e testes.
 - O ensaio incorporou #261 `0d458ab9` (API×UI Clientes) e seu checkpoint documental `d31b9bbe`: 98/98 testes focados de sessão/Cadastros/Produto/HTTP/padrão azul, lint e build passaram. CI do merge e homologação visual autenticada seguem gates; este checkpoint é do conjunto de SHAs, não autorização de merge/deploy. Contrato Legado: Produto mestre compartilhado do Grupo exige regra explícita de visibilidade operacional antes de usar em itens de Orçamento/Pedido; não afrouxar migration 016/017 implicitamente.
+
+## CODEX — atualização do ensaio #264 com Cliente consolidado da #261 (2026-10-10)
+
+- Incorporado o novo HEAD Cursor `a004044b` em branch isolada, sem editar sua branch nem `main`. Conflito no guard resolvido preservando a convergência tela/sessão para Empresa ou Grupo consolidado e a trava por ator/Bearer; teste de Grupo consolidado somado aos cenários CPA→3Z e login novo. Fluxo Cliente inclui erro visível, sem engolir rejeição após mudança de contexto, e duplo clique de edição mantém RBAC/carga existente.
+- 27/27 testes focados de Cadastros/Produto, lint, build e diff-check PASS. CI e revisão independente são gates do novo SHA; não houve deploy, migração ou importação. Próximo P0: homologação visual autenticada e contrato explícito de Produto mestre de Grupo para itens de documento da empresa jurídica antes de integrar/migrar.

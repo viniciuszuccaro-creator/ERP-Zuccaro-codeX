@@ -138,28 +138,37 @@ async function main() {
     result.ui.data_group = await scopeEl.getAttribute('data-group-id').catch(() => null);
     result.ui.data_empresa = await scopeEl.getAttribute('data-empresa-id').catch(() => null);
 
-    // Abrir / reabrir primeira linha (não altera dados reais agressivamente)
+    // Abrir / reabrir via botão Editar canônico (V24 não abre form no dblclick)
     const grid = page.locator('[data-comercial-clientes-tab="v24"]').first();
     const firstRow = grid.locator('table tbody tr').first();
     if (await firstRow.isVisible().catch(() => false)) {
-      await firstRow.dblclick().catch(async () => { await firstRow.click(); });
-      await page.waitForTimeout(2500);
-      const formVisible = await page.locator('input[name="nome"], input[name="razao_social"], input[name="nome_fantasia"], [data-cadastro-cliente]').first().isVisible().catch(() => false);
-      mark('abrir_registro', formVisible || true, formVisible ? 'form fields visible' : 'row dblclick done');
-      await page.keyboard.press('Escape').catch(() => {});
-      await page.waitForTimeout(800);
+      const editBtn = firstRow.locator('[data-action="Cadastros.Cliente.editar"]').first();
+      await editBtn.scrollIntoViewIfNeeded().catch(() => {});
+      await editBtn.evaluate((el) => el.click()).catch(async () => {
+        await editBtn.click({ force: true, timeout: 5000 });
+      });
+      await page.waitForTimeout(3000);
+      const formVisible = await page.locator('[data-action="Cadastros.Cliente.salvar"], #razao_social, #nome_fantasia').first().isVisible().catch(() => false);
+      mark('abrir_registro', formVisible, formVisible ? 'CadastroClienteCompleto' : 'edit clicked; form missing');
       const closeBtn = page.getByRole('button', { name: /Fechar|Cancelar|✕|Close/i }).first();
       if (await closeBtn.isVisible().catch(() => false)) {
         await closeBtn.click().catch(() => {});
         await page.waitForTimeout(600);
+      } else {
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.waitForTimeout(500);
       }
-      if (await firstRow.isVisible().catch(() => false)) {
-        await firstRow.dblclick().catch(async () => { await firstRow.click(); });
-        await page.waitForTimeout(1500);
-        mark('reabrir', true, 'row reopened');
+      if (await editBtn.count()) {
+        await editBtn.scrollIntoViewIfNeeded().catch(() => {});
+        await editBtn.evaluate((el) => el.click()).catch(async () => {
+          await editBtn.click({ force: true, timeout: 5000 });
+        });
+        await page.waitForTimeout(2000);
+        const reopen = await page.locator('[data-action="Cadastros.Cliente.salvar"], #razao_social').first().isVisible().catch(() => false);
+        mark('reabrir', reopen, reopen ? 'edit reopened' : 'form missing on reopen');
         await page.keyboard.press('Escape').catch(() => {});
       } else {
-        mark('reabrir', false, 'row missing after close');
+        mark('reabrir', false, 'edit button gone');
       }
     } else {
       mark('abrir_registro', false, 'no rows');

@@ -1025,7 +1025,11 @@ export default function VisualizadorUniversalEntidadeV24({
             return (
               <tr
                 key={item.id}
-                className={"transition-colors hover:bg-blue-50/30" + (checked ? " bg-blue-50/40" : "")}
+                className={"transition-colors hover:bg-blue-50/30 cursor-pointer" + (checked ? " bg-blue-50/40" : "")}
+                onDoubleClick={function() {
+                  if (!FormComponent || !canEditCadastro || isLoadingEdit) return;
+                  handleEditItem(item);
+                }}
               >
                 <td className="px-3 py-2 text-center">
                   <input
