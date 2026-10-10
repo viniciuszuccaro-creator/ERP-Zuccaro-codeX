@@ -1,3 +1,13 @@
+## CODEX — divisao atual autorizada (2026-10-10)
+
+O proprietario autorizou executar Comercial 360 neste chat em workspace/branch
+separados, mantendo Cursor revisor. Retomar #265 sobre base atual #261,
+preservando #264. Legado segue em `legado-piloto-20261010`, branch #266;
+Comercial tera workspace proprio. Nao editar branches Cursor.
+Complemento #266 revalida origem/Grupo, contrato e classificacao antes de retry;
+25 testes focados PASS. Fonte `04_REPORTS` segue negada pelo SO mesmo com
+permissoes amplas da sessao; piloto real/importacao ainda nao executados.
+
 ## RECONCILIAÇÃO PÓS-#264 (2026-10-10)
 
 Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribuir homolog de `f22d1151` ao HEAD novo.

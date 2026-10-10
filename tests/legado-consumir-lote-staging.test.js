@@ -163,3 +163,33 @@ test('retry com mesma chave e conteúdo diferente não reutiliza venda/cadastro'
   assert.equal(out.quarentena.length, 1);
   assert.ok(out.quarentena[0].motivos.includes('reuso_sem_fingerprint_igual'));
 });
+
+test('retry e duplicatas revalidam contrato antes de confirmar reuso', () => {
+  const row = { cod_cliente: 'C-1', nome: 'Mesmo', group_id: 'g1' };
+  const primeiro = consumirLoteStagingLegado([row], {
+    entidade: 'cliente', contratoEntrada: { coorte: 'sintetico' },
+  });
+  const anterior = primeiro.comprovados[0];
+  const segundo = consumirLoteStagingLegado([row, row], {
+    entidade: 'cliente', chavesJaGravadas: [{
+      chave: anterior.chave_idempotente_migracao, fingerprint: anterior.fingerprint_migracao,
+    }],
+  });
+  assert.equal(segundo.comprovados.length, 0);
+  assert.equal(segundo.reusos.length, 0);
+  assert.equal(segundo.quarentena.length, 2);
+  assert.ok(segundo.quarentena.some((r) => r.motivos.includes('contrato_entrada_ausente')));
+});
+
+test('quarentena de origem nao vira retry aceito por fingerprint igual', () => {
+  const good = { cod_cliente: 'C-1', nome: 'Mesmo', group_id: 'g1', codigo_empresa: '1' };
+  const opts = { entidade: 'cliente', contratoEntrada: { coorte: 'sintetico' } };
+  const anterior = consumirLoteStagingLegado([good], opts).comprovados[0];
+  const retry = consumirLoteStagingLegado([{ ...good, codigo_empresa: '0' }], {
+    ...opts, chavesJaGravadas: [{ chave: anterior.chave_idempotente_migracao,
+      fingerprint: anterior.fingerprint_migracao }],
+  });
+  assert.equal(retry.reusos.length, 0);
+  assert.equal(retry.quarentena.length, 1);
+  assert.ok(retry.quarentena[0].motivos.includes('codigo_empresa_legado_0'));
+});

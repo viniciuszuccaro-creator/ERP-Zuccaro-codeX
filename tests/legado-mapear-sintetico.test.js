@@ -210,3 +210,36 @@ test('produto sem classe/unidade comprovada fica em quarentena', () => {
   assert.ok(out.quarentena_motivos.includes('produto_classe_unidade_sem_mapeamento'));
   assert.equal(out.tipo_produto, undefined);
 });
+
+test('Grupo de destino nao oculta tenant divergente na origem', () => {
+  for (const field of ['group_id', 'grupo_id']) {
+    assert.throws(() => mapLegadoRowToCanonicalStub({
+      cod_cliente: 'C-1', nome: 'Sintetico', [field]: 'outro-grupo',
+    }, { entidade: 'cliente', groupId: 'grupo-destino' }), /LEGACY_GROUP_MISMATCH/);
+  }
+});
+
+test('classe mapeada exige tipo canonico e unidade textual sem default', () => {
+  for (const entry of [
+    { tipo_produto: 'TIPO_DESCONHECIDO', unidade_medida_id: 'u-kg' },
+    { tipo_produto: 'REVENDA', unidade_medida_id: '   ' },
+    { tipo_produto: 'REVENDA', unidade_medida_id: {} },
+  ]) {
+    const out = mapLegadoRowToCanonicalStub({
+      sku: 'P-1', descricao: 'Item', group_id: 'g1', classe: 'CHAPA', unidade: 'KG',
+    }, { entidade: 'produto', produtoClassUnitMap: { 'CHAPA|KG': entry } });
+    assert.equal(out.quarentena, true);
+    assert.equal(out.tipo_produto, undefined);
+    assert.equal(out.unidade_medida_id, undefined);
+  }
+});
+
+test('linha em quarentena nao absorve duplicata valida posterior', () => {
+  const out = mapLegadoLoteSintetico([
+    { cod_cliente: 'C-1', nome: 'Mesmo', group_id: 'g1', codigo_empresa: '0' },
+    { cod_cliente: 'C-1', nome: 'Mesmo', group_id: 'g1', codigo_empresa: '1' },
+  ], { entidade: 'cliente' });
+  assert.equal(out.reusos.length, 0);
+  assert.equal(out.gravados.filter((r) => !r.quarentena).length, 1);
+  assert.equal(out.quarentenas.length, 1);
+});

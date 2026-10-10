@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { PRODUTO_TIPOS_CANONICOS } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
  * Não lê HD real. Não grava staging. Reutiliza migracaoErpPolicy (Regra-Mãe).
@@ -149,6 +150,9 @@ export const avaliarQuarentenaLegado = (row = {}, opts = {}) => {
  * @param {{ entidade?: keyof typeof LEGADO_FIELD_ALIASES, groupId?: string, empresaId?: string, arquivoNome?: string }} opts
  */
 export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
+  if (opts.groupId && [row.group_id, row.grupo_id].some((id) => first(id) && first(id) !== first(opts.groupId))) {
+    throw new Error('LEGACY_GROUP_MISMATCH');
+  }
   const entidade = opts.entidade || 'cliente';
   const aliases = LEGADO_FIELD_ALIASES[entidade];
   if (!aliases) {
@@ -184,8 +188,11 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const classificacao = entidade === 'produto'
     ? opts.produtoClassUnitMap?.[chaveClasseUnidade]
     : null;
+  const classificacaoValida = Boolean(classificacao
+    && Object.hasOwn(PRODUTO_TIPOS_CANONICOS, classificacao.tipo_produto)
+    && typeof classificacao.unidade_medida_id === 'string' && first(classificacao.unidade_medida_id));
   const motivos = [...q.motivos];
-  if (entidade === 'produto' && (!classeLegado || !unidadeLegado || !classificacao?.tipo_produto || !classificacao?.unidade_medida_id)) {
+  if (entidade === 'produto' && (!classeLegado || !unidadeLegado || !classificacaoValida)) {
     motivos.push('produto_classe_unidade_sem_mapeamento');
   }
 
@@ -208,7 +215,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
         descricao: nomeOuDesc,
         classe_legado: classeLegado || undefined,
         unidade_legado: unidadeLegado || undefined,
-        ...(classificacao?.tipo_produto && classificacao?.unidade_medida_id
+        ...(classificacaoValida
           ? { tipo_produto: classificacao.tipo_produto, unidade_medida_id: classificacao.unidade_medida_id }
           : {}),
       }
@@ -270,7 +277,8 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
   for (let i = 0; i < list.length; i += 1) {
     try {
       const out = mapLegadoRowToCanonicalStub(list[i], opts);
-      const dup = mapped.find((item) => item.chave_idempotente_migracao === out.chave_idempotente_migracao);
+      const dup = !out.quarentena && mapped.find((item) => !item.quarentena
+        && item.chave_idempotente_migracao === out.chave_idempotente_migracao);
       if (dup) {
         const same = dup.fingerprint_migracao === out.fingerprint_migracao;
         if (!same) {

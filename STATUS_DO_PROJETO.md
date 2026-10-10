@@ -1,3 +1,12 @@
+## CODEX — legado: validacao antes de reuso (2026-10-10)
+
+Complemento da #266: Grupo divergente na origem e rejeitado sem remapeamento;
+retry revalida contrato/quarentena antes de aceitar fingerprint; duplicata de
+raiz invalida nao conta como reuso. Tipo de Produto usa chaves canonicas
+existentes e unidade textual explicita, sem default. 25 focados PASS/0 FAIL/0 SKIP.
+Suite Windows 841 PASS/50 FAIL/0 SKIP, falhas em processos Bash sem status de saida;
+CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
+
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
 | Fase | Estado |

@@ -22,6 +22,8 @@ import {
   mapLegadoRowToCanonicalStub,
   resolverEmpresaLegadoCodigo,
 } from './mapear-registro-sintetico.mjs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /** Ordem de dependencia minima para Produtos / Clientes / Fornecedores. */
 export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([
@@ -146,34 +148,11 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
   const comprovados = [];
   const quarentena = [];
   const rejeicoes = [...lote.erros, ...lote.conflitos];
-  const reusos = [...lote.reusos];
+  const reusos = [];
+  const chavesValidadas = new Set();
   const auditoria = [];
 
   for (const mapped of lote.gravados) {
-    if (chavesPrevias.has(mapped.chave_idempotente_migracao)) {
-      const anterior = chavesPrevias.get(mapped.chave_idempotente_migracao);
-      if (!anterior || anterior !== mapped.fingerprint_migracao) {
-        quarentena.push({ codigo_legado: mapped.codigo_legado,
-          motivos: ['reuso_sem_fingerprint_igual'],
-          chave_idempotente_migracao: mapped.chave_idempotente_migracao });
-        auditoria.push(buildAuditoriaConsumoLegado(mapped, {
-          acao: 'consumir', resultado: 'conflito_reuso', motivos: ['reuso_sem_fingerprint_igual'],
-        }));
-        continue;
-      }
-      reusos.push({
-        codigo_legado: mapped.codigo_legado,
-        chave_idempotente_migracao: mapped.chave_idempotente_migracao,
-        motivo: 'idempotente_ja_consumido',
-      });
-      auditoria.push(buildAuditoriaConsumoLegado(mapped, {
-        acao: 'consumir',
-        resultado: 'reuso_idempotente',
-        motivos: ['chave_ja_presente'],
-      }));
-      continue;
-    }
-
     if (mapped.quarentena) {
       quarentena.push({
         codigo_legado: mapped.codigo_legado,
@@ -223,12 +202,46 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
       continue;
     }
 
+    if (chavesPrevias.has(mapped.chave_idempotente_migracao)) {
+      const anterior = chavesPrevias.get(mapped.chave_idempotente_migracao);
+      if (!anterior || anterior !== mapped.fingerprint_migracao) {
+        quarentena.push({ codigo_legado: mapped.codigo_legado,
+          motivos: ['reuso_sem_fingerprint_igual'],
+          chave_idempotente_migracao: mapped.chave_idempotente_migracao });
+        auditoria.push(buildAuditoriaConsumoLegado(mapped, {
+          acao: 'consumir', resultado: 'conflito_reuso', motivos: ['reuso_sem_fingerprint_igual'],
+        }));
+        continue;
+      }
+      reusos.push({
+        codigo_legado: mapped.codigo_legado,
+        chave_idempotente_migracao: mapped.chave_idempotente_migracao,
+        motivo: 'idempotente_ja_consumido',
+      });
+      chavesValidadas.add(mapped.chave_idempotente_migracao);
+      auditoria.push(buildAuditoriaConsumoLegado(mapped, {
+        acao: 'consumir',
+        resultado: 'reuso_idempotente',
+        motivos: ['chave_ja_presente'],
+      }));
+      continue;
+    }
+
     comprovados.push(mapped);
+    chavesValidadas.add(mapped.chave_idempotente_migracao);
     chavesPrevias.set(mapped.chave_idempotente_migracao, mapped.fingerprint_migracao);
     auditoria.push(buildAuditoriaConsumoLegado(mapped, {
       acao: 'consumir',
       resultado: 'comprovado_staging',
     }));
+  }
+
+  // Duplicata so e reuso quando sua raiz passou pelos mesmos gates de entrada.
+  for (const dup of lote.reusos) {
+    if (chavesValidadas.has(dup.chave_idempotente_migracao)) reusos.push(dup);
+    else quarentena.push({ codigo_legado: dup.codigo_legado,
+      chave_idempotente_migracao: dup.chave_idempotente_migracao,
+      motivos: ['reuso_origem_nao_validada'] });
   }
 
   const reconciliacao = buildReconciliacaoMigracao({
@@ -282,7 +295,7 @@ export {
   stampMigracaoRecord,
 };
 
-if (process.argv[1] && process.argv[1].includes('consumir-lote-staging')) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const sample = [
     {
       cod_cliente: 'C-OK',
