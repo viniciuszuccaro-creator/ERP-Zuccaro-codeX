@@ -6,7 +6,17 @@ import {
   buildCadastroEditSavePayload,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
+  isCadastroSelfManagedScopeCurrent,
 } from '../src/components/cadastros/cadastroEditLoadPolicy.js';
+
+test('formulários autogeridos bloqueiam escrita e efeitos tardios após troca CPA→3Z', () => {
+  const cpa = { groupId: 'grupo-cpa', empresaId: 'empresa-cpa' };
+  const tresZ = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, cpa), true);
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, cpa, tresZ), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(cpa, tresZ, tresZ), false);
+  assert.equal(isCadastroSelfManagedScopeCurrent(null, cpa, cpa), false);
+});
 import {
   assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,

@@ -19,6 +19,7 @@ import { base44, getHttpProdutoApi, isHttpBackendMode, isHttpProdutoEnabled } fr
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useCadastroFormScopeGuard from "@/components/cadastros/hooks/useCadastroFormScopeGuard";
 import usePermissions from "@/components/lib/usePermissions";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
@@ -58,6 +59,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const podeVisualizar = hasPermission('Cadastros', 'Produto', 'visualizar');
   const contextoValido = contextKey !== "sem-contexto";
@@ -527,6 +529,7 @@ Caso contrário, sugira:
   };
 
   const submitProduto = async () => {
+    try { assertFormScopeCurrent(); } catch (error) { toast.error(error.message); return; }
     if (!formData.descricao) {
       toast.error('Preencha a descrição do produto');
       return;
@@ -611,6 +614,7 @@ Caso contrário, sugira:
     };
 
     try {
+      assertFormScopeCurrent();
       const dadosSubmit = produtoHttp ? toProdutoHttpPayload(dadosBase, { update: Boolean(produto?.id) }) : carimbarContexto(dadosBase, 'empresa_id');
       let saved;
       if (produto?.id) {
@@ -619,11 +623,13 @@ Caso contrário, sugira:
         saved = produtoHttp ? await getHttpProdutoApi().create(dadosSubmit) : await createInContext('Produto', dadosSubmit);
       }
       if (produtoHttp && !saved?.id) throw new Error('Resposta do ERP sem identificador do produto');
+      if (!isFormScopeCurrent()) return;
       if (onSuccess) onSuccess();
       if (onSubmit) await onSubmit(produtoHttp ? { ...saved, _http: true } : dadosSubmit);
       toast.success(produto?.id ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!');
       if (typeof closeSelf === 'function') closeSelf();
     } catch (error) {
+      if (!isFormScopeCurrent()) return;
       toast.error('❌ Erro ao salvar produto: ' + error.message);
     }
   };
@@ -631,6 +637,7 @@ Caso contrário, sugira:
   const unifiedSubmit = submitProduto;
 
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); } catch (error) { toast.error(error.message); return; }
     if (!window.confirm(`Tem certeza que deseja excluir o produto "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -641,11 +648,12 @@ Caso contrário, sugira:
     if (produto?.id) {
       (produtoHttp ? getHttpProdutoApi().delete(produto.id) : deleteInContext('Produto', produto.id))
         .then(() => {
+          if (!isFormScopeCurrent()) return;
           toast.success('Produto excluido com sucesso!');
           if (onSuccess) onSuccess();
           if (typeof closeSelf === 'function') closeSelf();
         })
-        .catch((error) => toast.error('Erro ao excluir produto: ' + error.message));
+        .catch((error) => { if (isFormScopeCurrent()) toast.error('Erro ao excluir produto: ' + error.message); });
       return;
     }
     if (onSubmit) {
