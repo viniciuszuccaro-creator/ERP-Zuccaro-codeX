@@ -1,0 +1,41 @@
+# Homolog API Comercial 360 — tip implantado bd2fa504 (2026-10-10)
+# Sanitizado — sem tokens, sem PII.
+
+## CPA ferro e aço
+
+| Step | Status | Notas |
+|---|---|---|
+| auth session | PASS | |
+| clientes + link empresa | PASS | link ativo/não bloqueado |
+| produto + unidade | PASS | PROD-A-001 |
+| condição + tabela | PASS | tabela autorizada |
+| POST orçamento | PASS 201 | numero 00000001 · tabela_preco_id gravado |
+| preço servidor | PASS | total 24.691356 (≠ payload cliente) |
+| GET reabrir | PASS | total+tabela preservados |
+| converter-pedido | PASS 201 | orcamento_id link · mesma tabela/total |
+| dup convert | PASS 409 | |
+| GET cross-empresa | PASS 404 | isolamento |
+
+## 3Z LTDA
+
+| Step | Status | Notas |
+|---|---|---|
+| create novo | FAIL-CLOSED 422 | ORCAMENTO_PRECO_INDISPONIVEL (GATED-PROD fora tabela) — correto |
+| convert orc existente 00000002 | PASS 201 | pedido 00000004 · total 10.000000 · tabela null (pré-039) |
+| dup convert | PASS 409 | |
+| cliente bloqueado | FAIL-CLOSED | ORCAMENTO_CLIENTE_INVALIDO |
+
+## UI browser (relembrete)
+Lista Orçamentos / Abrir Marca ainda **BLOCKED** por contexto frontend (#254 Codex).
+Contrato backend + mig 039 + SPA label tabela = implantados.
+
+## Matriz fases Comercial
+
+| Fase | Estado |
+|---|---|
+| implementado | SIM (039+UI+service) |
+| integrado | PR #261 |
+| implantado | SIM bd2fa504 |
+| homologado API CPA | SIM create/reopen/convert |
+| homologado UI fluxo | BLOCKED #254 |
+| recuperado mestres | NÃO (#211) |

@@ -1,20 +1,24 @@
-## CURSOR — #261 tip `bd2fa504` implantado (2026-10-09T20:50Z)
+## CURSOR — #261 candidata integração + homolog API (2026-10-10)
 
 | Item | Valor |
 |---|---|
 | responsável | Cursor |
-| branch / PR | `cursor/cadastros-recuperacao-c360-contrato-392b` · [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) |
-| tip | **`bd2fa504`** (docs `c270c171`) |
-| CI runtime | **SUCCESS** 4 checks (`bd2fa504`) |
-| CI tip atual | **SUCCESS** 4 checks (`c270c171`) |
-| **implantado** | erp-dev · `index-BufSJCA3.js` · mig **039** · backup `pre-gate-e-20261009-203540.sql` · rollback `pre-spa-login-20261009-203649` |
-| **recuperado** | parcial (SYNTH preservado; #211 NÃO) |
-| **validado** | unitários + API `tabela_preco_id` + asset; UI fluxo completo **BLOCKED** #254 |
-| consolidação | #258⊂#259⊂#260⊂#261 |
-| mig VPS | 001–024+**038**+**039**; 038/025–037 intocados |
-| #254 / #211 / outbox | **reservado Codex** — toast contexto Cadastros + Orçamentos UI≠API |
-| evidências | `deploy-261-*` · `browser-261-*` |
-| próxima | Codex #254; merge owner #261 |
+| candidata | [#261](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/261) MERGEABLE CLEAN · CI SUCCESS |
+| ancestralidade | #258⊂#259⊂#260⊂#261 (tips verificados) |
+| **implantado** | **`bd2fa504`** · `index-BufSJCA3.js` · 038+039 · backup/rollback 203540/203649 |
+| **homologado API** | CPA create/reopen/convert PASS · 3Z convert PASS · fail-closed preço/cliente |
+| **recuperado** | NÃO (#211) |
+| UI | BLOCKED #254 Codex contexto |
+| #258/#259/#260 | ancestors — superseder após merge #261 |
+| ≠ | sessão/contexto/outbox Codex |
+| evidências | `consolidacao-261-ancestralidade-20261010.txt` · `homolog-261-comercial-api-*` |
+| próxima | merge owner #261; Codex #254; #211 |
+
+## CURSOR — #261 tip `bd2fa504` implantado (2026-10-09T20:50Z)
+
+| Item | Valor |
+|---|---|
+| tip | supersedido pelo bloco candidata 2026-10-10 acima |
 
 ## CURSOR — Cadastros recuperação + C360 contrato 039 (2026-10-09)
 

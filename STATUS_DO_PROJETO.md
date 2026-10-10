@@ -1,3 +1,18 @@
+## CURSOR — #261 candidata integração + homolog API C360 (2026-10-10)
+
+| Fase | Estado |
+|---|---|
+| candidata | **PR #261** · MERGEABLE CLEAN · CI SUCCESS · `#258⊂#259⊂#260⊂#261` |
+| **implementado** | tip runtime **`bd2fa504`** · docs `ae79e786`/`c270c171` |
+| **integrado** | PR OPEN — merge **owner** (agente sem write merge) |
+| **implantado** | erp-dev **`bd2fa504`** · `index-BufSJCA3.js` · mig **038+039** · rollback `pre-spa-login-20261009-203649` |
+| **homologado** | API CPA create→reabrir→convert→dup409→cross404 **PASS** · 3Z convert existente PASS · create 3Z fail-closed preço |
+| **recuperado** | **NÃO** legado (#211) · SYNTH≠recuperado · Fornecedor schema ausente |
+| UI Abrir/Orçamentos | **BLOCKED** #254 contexto (Codex) |
+| evidências | `consolidacao-261-ancestralidade-*` · `registros-recuperacao-matriz-20261010` · `homolog-261-comercial-api-*` · inventário cadastros |
+| PRs 258–260 | ancestors — marcar substituídas **após** merge #261 |
+| próxima | merge owner #261; Codex #254; #211 legado |
+
 ## CURSOR — #261 tip `bd2fa504` implantado + matriz (2026-10-09T20:50Z)
 
 | Fase | Estado |

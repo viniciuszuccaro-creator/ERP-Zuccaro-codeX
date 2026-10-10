@@ -75,3 +75,14 @@ test('forms auxiliares piloto expoem codigo-registro readonly', async () => {
     assert.match(src, /readOnly|disabled/);
   }
 });
+
+test('Bloco 6 Tecnologia lista entidades fora de MASTER_CODE field=codigo', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/blocks/Bloco6Tecnologia.jsx', import.meta.url), 'utf8');
+  for (const entity of [
+    'ApiExterna', 'ChatbotCanal', 'ChatbotIntent', 'GatewayPagamento',
+    'JobAgendado', 'Webhook', 'ConfiguracaoNFe', 'EventoNotificacao',
+  ]) {
+    assert.match(src, new RegExp(`k:\\s*'${entity}'`));
+    assert.equal(MASTER_CODE_SPECS[entity]?.field === 'codigo', false, `${entity} não deve exigir codigo numérico Cadastros`);
+  }
+});

@@ -1,0 +1,53 @@
+# Matriz recuperação — privado × DB × API × UI (2026-10-10)
+# VPS tip implantado: bd2fa504 · mig 001–024+038+039
+# Dados reais privados fora do GitHub; contagens sanitizadas.
+
+## Contagens ops (PostgreSQL)
+
+| Entidade | DB n | Classe | Diferença |
+|---|---:|---|---|
+| marcas | 5 | ensaio/seed | SYNTH/GATE-D presente — **não** é recuperação legado |
+| setores_atividade | 4 | ensaio | ≠ volume legado |
+| grupos_produto | 4 | ensaio | alfanum em codigo_origem |
+| unidades_medida | 4 | ensaio | |
+| clientes | 6 | ops parcial | n≪legado privado |
+| cliente_empresas | 7 | vínculos | CPA=4 · 3Z=2 · DEV B=1 |
+| produtos | 4 | ops/seed | GATED-PROD / PROD-A — ensaios + seed |
+| condicoes_pagamento | 8 | OK | |
+| tabelas_preco | 3 | seed | |
+| orcamentos | 6+ | ensaio+homolog | CPA create homolog 2026-10-10 |
+| pedidos | 4+ | ensaio+homolog | CPA convert + 3Z convert |
+| empresas | 3 | CPA · 3Z · DEV B | |
+| fornecedores | **ausente** | schema | ausência real |
+
+## Classificação por achado
+
+| Achado | Classe | Ação |
+|---|---|---|
+| GATE-D SYNTH / API Alterado / Longos Sintetico / GATED-PROD | ensaio ERP novo | **preservar**; ≠ recuperado |
+| Clientes/Produtos n pequeno | ops parcial / seed | não substituir por SYNTH |
+| Badge 0 com DB n>0 (UI) | oculto por filtro/contexto (#254) | Codex contexto |
+| Fornecedor sem tabela | ausente | ETL #211 — sem seed fake |
+| Staging legado authorized=0 | não importado | **recuperado=NÃO** |
+| Auxiliares codigo 038 | preservado/backfill | OK |
+
+## Por dimensão solicitada
+
+| Dimensão | Estado |
+|---|---|
+| preservado | IDs ops atuais; SYNTH referenciáveis mantidos |
+| oculto | badges/UI zero com contexto falho (#254); Produto badge histórico |
+| ausente | Fornecedor schema; volume legado só staging |
+| conflitante | nenhum merge destrutivo; alfanum→codigo_origem (038) |
+| recuperado | **NÃO** import legado — aguarda #211 |
+
+## Produtos / Clientes / Fornecedores
+
+| Entidade | Fonte correta | Ops hoje |
+|---|---|---|
+| Produtos | legado privado | seed/ensaio n=4 |
+| Clientes | legado privado | n=6 ops parciais |
+| Fornecedores | legado + schema | tabela ausente |
+
+## Conclusão
+Não declarar recuperação de cadastros operacionais. Exemplos sintéticos identificados e separados. Import legado permanece BLOCKED em #211.

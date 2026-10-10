@@ -1,0 +1,53 @@
+# Consolidação integração — candidata única #261 (2026-10-10)
+# Sanitizado.
+
+## Ancestralidade (git merge-base --is-ancestor)
+
+| Relação | Tips | Resultado |
+|---|---|---|
+| #258 ⊂ #259 | d9a72802 ⊂ 55fcac4f | YES |
+| #259 ⊂ #260 | 55fcac4f ⊂ 18113337 | YES |
+| #260 ⊂ #261 | 18113337 ⊂ bd2fa504 ⊂ ae79e786/c270c171 | YES |
+| #261 contém e94f39b2 (#258 CI) | YES | |
+
+## PRs
+
+| PR | Estado | Papel |
+|---|---|---|
+| #258 | OPEN | ancestor — badge/lista HTTP CadFin |
+| #259 | OPEN | ancestor — Abrir único + mig **038** |
+| #260 | OPEN | ancestor — picker Comercial 360 |
+| **#261** | OPEN · **MERGEABLE CLEAN** · CI **SUCCESS** 4 checks | **candidata única de integração** |
+
+HEAD PR #261: tip docs `ae79e786` / runtime implantado **`bd2fa504`** (commits docs após tip sem mudança de runtime).
+
+## Migrations VPS (erp-dev)
+
+| Item | Valor |
+|---|---|
+| aplicadas | 001–024 + **038** + **039** · pending=[] |
+| 038 | intocada (não reaplicada) |
+| 025–037 Codex | ausentes no VPS (reservados) |
+| backup pré-039 | pre-gate-e-20261009-203540.sql sha256=b8686cb4… |
+| rollback imagens | pre-spa-login-20261009-203649 |
+
+## Implantado
+
+| Item | Valor |
+|---|---|
+| SHA | **bd2fa504** |
+| asset | index-BufSJCA3.js |
+| health | 3080=200 · 3081=200 |
+
+## Gates
+
+| Gate | Estado |
+|---|---|
+| CI erp-runtime-ci tip c270c171 | SUCCESS 4/4 |
+| MERGEABLE | CLEAN |
+| Revisão owner | **pendente** (agente não faz merge) |
+| PRs 258–260 como substituídas | após merge #261 → main |
+
+## Decisão
+
+Integrar **somente #261**. Não mergear #258/#259/#260 em paralelo (conteúdo já ancestral).
