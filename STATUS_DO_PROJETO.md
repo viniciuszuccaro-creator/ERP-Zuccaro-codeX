@@ -12810,3 +12810,8 @@ Backend local completo 317 PASS/0 FAIL/18 skips existentes sem URL; R40 real nao
 adiciona skip e foi executado obrigatoriamente na CI. Evidencia sanitizada em
 `docs/evidence/crm-http-040-pg-ci-20261010.txt`. Codigo permanece desligado por
 padrao e sem cutover/deploy/migration operacional. Revisao final ainda requerida.
+### CRM 040 — correção das ressalvas da revisão 6101234545
+- A sequência de Grupo avança em INSERT/alteração de código mediante trigger SECURITY INVOKER, na mesma transação. Não lê oportunidades de outra empresa, não adiciona BYPASSRLS nem grants operacionais. A reserva existente permanece canônica; importações devem manter triggers habilitados e reconciliação/backup.
+- Vínculo Orçamento preserva a referência anterior em legacy_orcamento_id, somente pelo serviço/contrato persistente; cliente HTTP não pode fabricar esse campo. Replay mantém referência e versão.
+- Provas ampliadas: código fora da reserva na empresa A seguido de criação na A2; referência textual → vínculo UUID → replay. Runner PostgreSQL real obrigatório mantido, sem remoção de testes/skip.
+- Flag, UI/store, migration DEV, importação e canais continuam desligados/pendentes. Novo HEAD requer revisão independente e CI próprias.

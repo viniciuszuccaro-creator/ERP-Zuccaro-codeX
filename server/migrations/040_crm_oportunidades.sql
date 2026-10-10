@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS oportunidades (
     CHECK (jsonb_typeof(historico_mudancas_etapa) = 'array'),
   -- Referências legadas são textuais: não fabricar UUID nem alterar o store.
   orcamento_id TEXT,
+  legacy_orcamento_id TEXT,
   pedido_id TEXT,
   convertido_em TEXT CHECK (convertido_em IN ('orcamento','pedido')),
   convertido_em_id TEXT,
@@ -68,6 +69,25 @@ CREATE INDEX IF NOT EXISTS idx_oportunidades_cliente
 DROP TRIGGER IF EXISTS trg_oportunidades_updated_at ON oportunidades;
 CREATE TRIGGER trg_oportunidades_updated_at BEFORE UPDATE ON oportunidades
   FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+
+-- Every authorized insert/code change advances the group sequence, including
+-- imports outside HTTP. SECURITY INVOKER preserves the caller's RLS and grants;
+-- no cross-company opportunity read or bypass role is needed. The sequence row
+-- serializes reservations/imports and rolls back with the opportunity.
+CREATE OR REPLACE FUNCTION sync_oportunidade_codigo() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY INVOKER AS $$
+BEGIN
+  INSERT INTO entity_code_sequences(group_id,entity_name,next_value)
+    VALUES(NEW.group_id,'Oportunidade',NEW.codigo::bigint + 1)
+    ON CONFLICT(group_id,entity_name) DO UPDATE
+    SET next_value=GREATEST(entity_code_sequences.next_value,EXCLUDED.next_value),
+        updated_at=timezone('utc',now());
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION sync_oportunidade_codigo() FROM PUBLIC;
+DROP TRIGGER IF EXISTS trg_oportunidades_codigo ON oportunidades;
+CREATE TRIGGER trg_oportunidades_codigo BEFORE INSERT OR UPDATE OF codigo,group_id ON oportunidades
+  FOR EACH ROW EXECUTE PROCEDURE sync_oportunidade_codigo();
 
 ALTER TABLE oportunidades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE oportunidades FORCE ROW LEVEL SECURITY;

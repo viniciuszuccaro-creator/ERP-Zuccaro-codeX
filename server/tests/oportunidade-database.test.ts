@@ -55,5 +55,9 @@ test('CRM SQL: migration/repositório/auditoria/legado sob papel sem bypass',asy
     assert.ok(rls.rows[0].relrowsecurity&&rls.rows[0].relforcerowsecurity);
     assert.ok((await audit.listByEntity('Oportunidade',row.id)).length>=2);
     assert.equal(ROLE,'erp_crm_test_role');
+    await f.admin.query('UPDATE oportunidades SET codigo=$2 WHERE id=$1',[row.id,'000100']);
+    const cross=await service.create({...ctx,empresaId:ID.empresaA2},{titulo:'Outra empresa',cliente_nome:'Sintético',idempotency_key:'sql-high-water'});
+    assert.equal(cross.codigo,'000101');
+    await assert.rejects(service.get({...ctx,empresaId:ID.empresaA2},row.id),{code:'OPORTUNIDADE_NOT_FOUND'});
   }finally{await f.close();}
 });

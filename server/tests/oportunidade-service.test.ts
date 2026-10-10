@@ -71,11 +71,14 @@ test('CRM service: auditoria falha reverte linha, alterações e reserva',async(
 });
 test('CRM service: ClienteEmpresa validado e vínculo Orçamento usa porta canônica com lock',async()=>{
   const f=fixture();const row=await f.service.create(ctx,{...input(),cliente_empresa_id:linkId});
-  await assert.rejects(f.service.linkOrcamento(ctx,row.id,{expected_version:1,orcamento_id:ID.obraA}),{code:'ORCAMENTO_NOT_FOUND'});
-  const linked=await f.service.linkOrcamento(ctx,row.id,{expected_version:1,orcamento_id:docId});
+    await f.repo.update(scope,row.id,1,{...row,orcamento_id:'orcamento_original_textual'},ctx.actorId);
+    await assert.rejects(f.service.linkOrcamento(ctx,row.id,{expected_version:2,orcamento_id:ID.obraA}),{code:'ORCAMENTO_NOT_FOUND'});
+    const linked=await f.service.linkOrcamento(ctx,row.id,{expected_version:2,orcamento_id:docId});
   assert.equal(linked.status,'Ganho');assert.equal(linked.orcamento_id,docId);assert.equal(linked.etapa,'Fechamento');
   assert.ok(f.calls.every(c=>c.lock===true));assert.equal(linked.valor_estimado,row.valor_estimado);
-  const replay=await f.service.linkOrcamento(ctx,row.id,{expected_version:1,orcamento_id:docId});assert.equal(replay.version,2);
+    assert.equal(linked.legacy_orcamento_id,'orcamento_original_textual');
+    const replay=await f.service.linkOrcamento(ctx,row.id,{expected_version:2,orcamento_id:docId});assert.equal(replay.version,3);
+    assert.equal(replay.legacy_orcamento_id,'orcamento_original_textual');
   await assert.rejects(f.service.update(ctx,row.id,{expected_version:2,status:'Ganho',valor_estimado:'1'}),{code:'OPORTUNIDADE_STATE_CONFLICT'});
   f.link.bloqueado=true;
   await assert.rejects(f.service.create(ctx,{...input('blocked-customer'),cliente_empresa_id:linkId}),{code:'OPORTUNIDADE_CLIENTE_INVALID'});

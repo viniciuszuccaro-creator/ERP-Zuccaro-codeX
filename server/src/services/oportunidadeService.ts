@@ -121,7 +121,9 @@ export class OportunidadeService {
         throw new AppError(422,'OPORTUNIDADE_DOCUMENT_REFERENCE_INVALID','Orcamento must belong to the same customer and scope');
       await this.clientReference(scope,before.cliente_empresa_id,tx);
       const converted=stampOportunidadeConvertida({...before,historico_mudancas_etapa:before.historico_mudancas_etapa as any[]},doc,'orcamento');
-      const after=await this.repo.update(scope,id,before.version,this.fields(converted,before.valor_estimado),ctx.actorId!,tx);
+      // Preserve the original textual document reference before canonical linking.
+      const preserved={...converted,legacy_orcamento_id:before.legacy_orcamento_id ?? before.orcamento_id};
+      const after=await this.repo.update(scope,id,before.version,this.fields(preserved,before.valor_estimado),ctx.actorId!,tx);
       if(!after)this.conflict(); await this.auditRow(ctx,'link',before,after,tx); return after;
     });
   }

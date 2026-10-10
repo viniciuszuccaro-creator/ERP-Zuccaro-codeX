@@ -68,8 +68,12 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
       validade_em:'2027-01-31T00:00:00.000Z',itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,descricao:'R40 item sintético',
         unidade_sigla:'KG',quantidade:'2.000000',preco_unitario:'999.000000',desconto:'0.000000'}]});
     assert.notEqual(orcamento.itens[0].preco_unitario,'999.000000');
+    await f.admin.query('UPDATE oportunidades SET orcamento_id=$2 WHERE id=$1',[row.id,'orcamento_original_textual']);
     const linked=await service.linkOrcamento(ctx,row.id,{expected_version:4,orcamento_id:orcamento.id});
     assert.equal(linked.status,'Ganho');assert.equal(linked.orcamento_id,orcamento.id);
+    assert.equal(linked.legacy_orcamento_id,'orcamento_original_textual');
+    const replayLink=await service.linkOrcamento(ctx,row.id,{expected_version:4,orcamento_id:orcamento.id});
+    assert.equal(replayLink.legacy_orcamento_id,'orcamento_original_textual');assert.equal(replayLink.version,linked.version);
     assert.equal((await app.orcamentoService.get(ctx,orcamento.id)).id,orcamento.id);
     // An uncommitted cancellation must be seen after the locked canonical read.
     const secondDoc=await app.orcamentoService.create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
@@ -99,5 +103,13 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
     const legacy=separate[0];await f.admin.query('UPDATE oportunidades SET legacy_store_id=$2,pedido_id=$3 WHERE id=$1',[legacy.id,'oportunidade_store_original','pedido_store_original']);
     const reopened=await service.getByLegacy(ctx,'oportunidade_store_original');assert.equal(reopened.id,legacy.id);assert.equal(reopened.pedido_id,'pedido_store_original');
     assert.equal((await audit.listByEntity('Oportunidade',row.id)).filter(a=>a.action==='create').length,1);
+    // A code written outside the allocator in A must advance allocation in A2
+    // without exposing A's opportunity to the non-bypass role in A2.
+    await f.admin.query(`INSERT INTO oportunidades SELECT (jsonb_populate_record(NULL::oportunidades,
+      to_jsonb(o)||jsonb_build_object('id',gen_random_uuid(),'codigo','000100','codigo_oportunidade','OPP-000100',
+        'idempotency_key','r40-direct-import','legacy_store_id',NULL))).* FROM oportunidades o WHERE id=$1`,[separate[0].id]);
+    const cross=await service.create({...ctx,empresaId:ID.empresaA2},{titulo:'Outra empresa',cliente_nome:'Sintético',idempotency_key:'r40-high-water'});
+    assert.equal(cross.codigo,'000101');
+    await assert.rejects(service.get({...ctx,empresaId:ID.empresaA2},separate[0].id),{code:'OPORTUNIDADE_NOT_FOUND'});
   }finally{await f.close();}
 });
