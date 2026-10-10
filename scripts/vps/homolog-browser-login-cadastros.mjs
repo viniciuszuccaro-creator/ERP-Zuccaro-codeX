@@ -88,7 +88,7 @@ async function main() {
     // Sidebar: Cadastros Base (shell atual)
     const cadastrosNav = page.getByText(/Cadastros Base|Cadastros Gerais|Cadastros/i).first();
     await cadastrosNav.waitFor({ state: 'visible', timeout: 20000 });
-    await cadastrosNav.click();
+    await cadastrosNav.click({ force: true });
     await page.waitForTimeout(3000);
     const denied = await page.getByText(/Acesso negado/i).count();
     mark('cadastros_open', denied === 0, denied ? `acesso_negado_count=${denied}` : 'opened');
@@ -101,7 +101,7 @@ async function main() {
     }
     const clientesTile = page.locator('text=/^Clientes?$/i').first();
     if (await clientesTile.isVisible().catch(() => false)) {
-      await clientesTile.click();
+      await clientesTile.click({ force: true });
       await page.waitForTimeout(2500);
       mark('clientes_list', true, 'tile clicked');
     } else {
@@ -166,33 +166,42 @@ async function main() {
       mark('reabrir', false, 'skipped');
     }
 
-    // Trocar empresa se seletor disponível
-    const switcher = page.getByRole('button', { name: /empresa|CPA|3Z|Grupo/i }).first();
+    // Trocar grupo/empresa via seletor Grupo Corporativo
+    const switcher = page.getByText(/Grupo - Grupo CPA|Grupo Corporativo|Grupo CPA/i).first();
     if (await switcher.isVisible().catch(() => false)) {
-      await switcher.click();
-      await page.waitForTimeout(600);
-      const other = page.getByText(/3Z|outra empresa|Empresa/i).nth(1);
+      await switcher.click({ force: true });
+      await page.waitForTimeout(800);
+      const other = page.getByText(/3Z|Empresa/i).first();
       if (await other.isVisible().catch(() => false)) {
-        await other.click().catch(() => {});
+        await other.click({ force: true }).catch(() => {});
         await page.waitForTimeout(2000);
-        mark('trocar_empresa', true, 'switched');
+        mark('trocar_empresa', true, 'switcher interacted');
       } else {
         mark('trocar_empresa', true, 'switcher opened; alternate not matched');
+        await page.keyboard.press('Escape').catch(() => {});
       }
     } else {
-      mark('trocar_empresa', false, 'switcher not found');
+      mark('trocar_empresa', false, 'grupo switcher not found');
     }
 
-    // Launchpads: Fiscal / Financeiro sem Acesso negado indevido no owner
-    for (const mod of ['Financeiro', 'Fiscal', 'Comercial']) {
-      const nav = page.getByText(new RegExp(`^${mod}$`, 'i')).first();
-      if (await nav.isVisible().catch(() => false)) {
-        await nav.click();
-        await page.waitForTimeout(1500);
-        const den = await page.getByText(/Acesso negado/i).count();
-        mark(`launchpad_${mod.toLowerCase()}`, den === 0, den ? `denied=${den}` : 'ok');
-      } else {
-        mark(`launchpad_${mod.toLowerCase()}`, false, 'nav missing');
+    // Modulos sidebar/launchpad owner (force: overlays do shell)
+    for (const mod of [
+      { key: 'comercial', re: /Comercial e Vendas/i },
+      { key: 'financeiro', re: /Financeiro e Contábil|Financeiro/i },
+      { key: 'fiscal', re: /Fiscal|Notas Fiscais/i },
+    ]) {
+      try {
+        const nav = page.getByText(mod.re).first();
+        if (await nav.isVisible().catch(() => false)) {
+          await nav.click({ force: true, timeout: 10000 });
+          await page.waitForTimeout(2000);
+          const den = await page.getByText(/Acesso negado/i).count();
+          mark(`launchpad_${mod.key}`, den === 0, den ? `denied=${den}` : 'ok');
+        } else {
+          mark(`launchpad_${mod.key}`, false, 'nav missing');
+        }
+      } catch (err) {
+        mark(`launchpad_${mod.key}`, false, String(err?.message || err).slice(0, 120));
       }
     }
 
