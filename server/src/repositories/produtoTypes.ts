@@ -1,4 +1,7 @@
 import { z } from 'zod';
+export const produtoEmpresaSchema=z.object({ativo:z.boolean(),habilitado_operacao:z.boolean(),expected_version:z.number().int().min(0)})
+  .strict().refine(v=>v.ativo||!v.habilitado_operacao,'Inactive link cannot enable operations');
+export type ProdutoEmpresa={id:string;group_id:string;empresa_id:string;produto_id:string;ativo:boolean;habilitado_operacao:boolean;version:number;created_by:string;updated_by:string};
 
 const nonNegativeNumber = z.number().finite().min(0);
 const conversionFactors = z.record(z.number().finite().positive()).optional().default({});

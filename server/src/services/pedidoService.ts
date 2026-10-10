@@ -60,7 +60,7 @@ export class PedidoService {
     private readonly tenantGuard: TenantGuard,
     private readonly rbac: RbacGuard,
     private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById'>,
-    private readonly produtos: Pick<ProdutoRepository, 'getById'>,
+    private readonly produtos: Pick<ProdutoRepository, 'getById'> & Partial<Pick<ProdutoRepository,'getForOperation'>>,
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
     private readonly locais: Pick<ClienteLocalRepository, 'get'>,
@@ -279,7 +279,7 @@ export class PedidoService {
     if (data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
     if (!(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {
-      const product = await this.produtos.getById(scope, item.produto_id);
+      const product = this.produtos.getForOperation?await this.produtos.getForOperation(scope,item.produto_id,executor):await this.produtos.getById(scope,item.produto_id,executor);
       if (!product?.ativo) throw new AppError(422, 'PEDIDO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
       if (product.unidade_medida_id !== item.unidade_id || !(await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id))?.ativo) throw new AppError(422, 'PEDIDO_UNIDADE_INVALIDA', 'Unidade unavailable for product');
     }

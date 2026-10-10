@@ -103,7 +103,7 @@ export function createApp(options: CreateAppOptions) {
   const unidadeRepo = useMemory ? createInMemoryUnidadeRepo() : new PostgresUnidadeRepository(db);
   const grupoRepo = useMemory ? createInMemoryGrupoProdutoRepo() : new PostgresGrupoProdutoRepository(db);
   const setorRepo = useMemory ? createInMemorySetorRepo() : new PostgresSetorRepository(db);
-  const produtoRepo = useMemory ? createInMemoryProdutoRepo() : new PostgresProdutoRepository(db);
+  const produtoRepo = useMemory ? createInMemoryProdutoRepo(config.produtoEmpresaEnabled===true) : new PostgresProdutoRepository(db,config.produtoEmpresaEnabled===true);
   const clienteRepo = useMemory ? createInMemoryClienteRepo() : new PostgresClienteRepository(db);
   const clienteLocalRepo = useMemory
     ? new InMemoryClienteLocalRepository()

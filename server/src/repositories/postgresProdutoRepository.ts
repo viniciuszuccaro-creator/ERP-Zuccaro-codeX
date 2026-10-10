@@ -7,6 +7,7 @@ import {
   type ProdutoPublicationEvent,
 } from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema } from './produtoTypes.js';
+import type {ProdutoEmpresa} from './produtoTypes.js';
 import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaScanEvidence, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
@@ -111,7 +112,39 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return this.db.withTransaction(fn);
   }
 
-  constructor(private readonly db: DbClient) {}
+  constructor(private readonly db: DbClient,readonly empresaLinksEnabled=false) {}
+
+  private async empresaContext(scope:Scope,q:DbQueryExecutor) {
+    await q.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId??'']);
+  }
+  async getForOperation(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Produto|null> {
+    if(!scope.empresaId)return null;
+    if(executor)await this.empresaContext(scope,executor);
+    const owned=await this.getById(scope,id,executor);if(owned)return owned;
+    if(!this.empresaLinksEnabled)return null;
+    if(!executor)throw new Error('PRODUTO_OPERATION_REQUIRES_TRANSACTION');
+    const master=await executor.query('SELECT * FROM produtos WHERE group_id=$1 AND id=$2 AND empresa_id IS NULL AND ativo FOR SHARE',[scope.groupId,id]);
+    if(!master.rows[0])return null;
+    const link=await executor.query(`SELECT pe.id FROM produto_empresas pe JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
+      WHERE pe.group_id=$1 AND pe.empresa_id=$2 AND pe.produto_id=$3 AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa'
+      FOR SHARE OF pe,e`,[scope.groupId,scope.empresaId,id]);
+    return link.rows[0]?mapProduto(master.rows[0]):null;
+  }
+  async getEmpresaLink(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null> {
+    if(!executor)throw new Error('PRODUTO_LINK_REQUIRES_TRANSACTION');await this.empresaContext(scope,executor);
+    const r=await executor.query<ProdutoEmpresa>('SELECT * FROM produto_empresas WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',[scope.groupId,scope.empresaId,id]);
+    return r.rows[0]??null;
+  }
+  async saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null> {
+    if(!executor)throw new Error('PRODUTO_LINK_REQUIRES_TRANSACTION');await this.empresaContext(scope,executor);
+    const p=[scope.groupId,scope.empresaId,id,data.ativo,data.habilitado_operacao,actor,data.expected_version];
+    const r=await executor.query<ProdutoEmpresa>(data.expected_version===0
+      ? `INSERT INTO produto_empresas(group_id,empresa_id,produto_id,ativo,habilitado_operacao,created_by,updated_by)
+          VALUES($1,$2,$3,$4,$5,$6,$6) ON CONFLICT(group_id,empresa_id,produto_id) DO NOTHING RETURNING *`
+      : `UPDATE produto_empresas SET ativo=$4,habilitado_operacao=$5,updated_by=$6,version=version+1,updated_at=timezone('utc',now())
+          WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3 AND version=$7 RETURNING *`,data.expected_version===0?p.slice(0,6):p);
+    return r.rows[0]??null;
+  }
 
   async list(filter: Scope & ListOptions): Promise<Produto[]> {
     const page = await this.listPage({ ...filter, offset: 0 });
