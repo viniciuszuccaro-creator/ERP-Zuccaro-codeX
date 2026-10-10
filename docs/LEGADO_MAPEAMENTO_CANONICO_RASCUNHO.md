@@ -1,6 +1,6 @@
 # Legado → canônico — rascunho de mapeamento (somente sintético)
 
-**Status:** `RASCUNHO / SEM DADOS REAIS`
+**Status:** `CONTRATO DE STAGING SINTÉTICO / SEM IMPORTAÇÃO REAL`
 **Onda:** 25 (bloqueada)
 **Política existente (não duplicar):** `src/components/lib/migracaoErpPolicy.js`
 **Inventário:** `scripts/legado/inventario-backup-erp-antigo.sh`
@@ -18,6 +18,13 @@ quando o inventário do HD externo existir.
 4. Conflito → reservar código interno novo + mapeamento; nunca sobrescrita silenciosa.
 5. Strip de segredos via `stripSegredosMigracao` / `SECRET_MIGRACAO_KEYS`.
 6. Dados reais fora do GitHub; testes só sintéticos.
+7. Cliente, Fornecedor e Produto são mestres compartilhados no Grupo: `empresa_id`
+   não é exigido nem preenchido por inferência da empresa legada. O código de
+   empresa da origem permanece como procedência, não como autorização de uso.
+   Operações e vínculos fiscais continuam exigindo empresa comprovada.
+8. Produto exige mapa explícito `classe|unidade` para tipo e unidade canônicos;
+   sem mapa fica em quarentena. Código legado igual com conteúdo divergente é
+   conflito, não reuso nem sobrescrita.
 
 ---
 
@@ -82,9 +89,43 @@ Implementação local (sem HD/import): `buildChaveIdempotenteMigracaoLegado` e
 `mapLegadoLoteSintetico` em `scripts/legado/mapear-registro-sintetico.mjs`.
 Duplicata no lote → reuso; reconciliação via `buildReconciliacaoMigracao`.
 
-## 6. Próximos passos desta frente
+## 6. Estado do piloto e próximos passos
 
-1. Rodar inventário no HD (`BACKUP ERP ANTIGO - CODEX`) — metadados/hashes.
-2. Preencher “Formato/origem observada” na matriz §2.
-3. Propor ETL idempotente real só após inventário + Onda 25.
+Em 10/10/2026, a `main` do GitHub estava em `baba91a6` e o merge `861513cd`
+da #264 era descendente dela em branch Cursor, ainda não ancestral da `main`.
+Este lote parte de `861513cd` em branch Codex isolada, preservando #254/#261.
+O HD foi detectado neste computador, mas a leitura de `04_REPORTS` foi negada
+pelo sistema de arquivos. Nenhum relatório real foi extraído, carregado ou
+publicado. A PR #211 mantém o verificador e staging isolado existentes; este
+lote ajusta apenas o mapeador/consumidor canônicos já presentes no repositório.
+
+Checkpoint posterior no mesmo dia: `03_STAGING` e legivel. Headers SQL
+CODIGOCLIENTE/RAZAOSOCIAL/NOMEGUERRA, CODIGOFORNEC/CGCFORNEC e
+CODIGOMATERIAL/CODIGOCLASSE/UNIDADE foram incorporados ao mapper existente,
+com testes inteiramente sinteticos; codigo original e fantasia entram no
+fingerprint. Os arquivos de origem privados permanecem completos e intocados;
+o stub de transformacao nao representa carga completa de todos os campos.
+Dry-run privado examinou 20 registros de cada entidade: Cliente 20 mapeados,
+Fornecedor 20 mapeados, Produto 20 em quarentena por mapa classe/unidade ausente.
+Nao houve persistencia isolada nem operacional: recuperados/importados = 0.
+Referencia de destino existe no manifesto privado, mas nao foi revalidada nesta
+rodada. Manifestos indicam extracao nova/hash verificados e origem SQL read-only;
+linhagem historica, crosswalk de Grupo/Empresa e equivalencia de unidades seguem
+nao comprovados. Nao tratar presenca de classe/unidade como autorizacao de uso.
+
+1. Liberar leitura somente de `04_REPORTS` no host do HD e executar o verificador
+   da #211 sem tocar na origem; manter `importAuthorized=false`.
+2. Validar manifesto/procedência e mapa jurídico privado; conferir destino e
+   backup restauro-testado antes de qualquer carga isolada de entidades reais.
+3. Ensaio isolado: extração → transformação → deduplicação → carga → consulta →
+   edição/reabertura → reconciliação → retry → reversão, com evidência sanitizada.
+4. Separar históricos sem empresa identificada dos saldos operacionais e exigir
+   validação fiscal/financeira para notas, títulos, parcelas, cartões e recebimentos.
 4. Staging isolado só com gate Onda 25.
+
+Revisao Cursor 6100174767: os tres bloqueios foram reproduzidos/corrigidos.
+Operacoes rejeitam empresa divergente nas opcoes, exigem codigo juridico e
+destino identico ao crosswalk (nao basta a chave existir). Tipo de Produto e
+persistido em `tipo_item` com rotulo canonico; mapas explicitos aceitam chave ou
+rotulo conhecidos via policy existente, sem default de Revenda. Toda duplicata
+em quarentena recebe auditoria. 30 focados PASS; novo SHA/CI/revisao obrigatorios.

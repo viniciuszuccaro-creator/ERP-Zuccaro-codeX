@@ -91,6 +91,16 @@
 | evidências | `deploy-261-tip-00edfb2b-integrado-20261010.txt` |
 | **recuperado** | NÃO legado · SYNTH≠recuperado |
 | próxima | supersedido pelo lote ID técnico acima após CI/redeploy |
+## CODEX LEGADO — contrato de cadastros compartilhados (2026-10-10)
+
+| Item | Estado |
+|---|---|
+| Base | `main` GitHub `baba91a6`; #264 mesclada em `861513cd` na branch Cursor, que descende da main por 80 commits; branch Codex isolada criada de `861513cd` |
+| Implementado | Mapeador/consumidor de staging existentes preservam mestres Cliente/Fornecedor/Produto no Grupo sem `empresa_id` imposto; operação mantém empresa obrigatória; Produto requer classe/unidade mapeadas; duplicata divergente vira conflito |
+| Testes | 20 focados PASS; audit:baseline, lint e build PASS. Suíte geral Windows 824 PASS/54 FAIL/0 SKIP: falhas em wrappers Bash/MSYS (erro de permissão `NtCreateDirectoryObject`); typecheck global 1658 erros fora dos scripts alterados. CI Linux do HEAD final pendente |
+| Recuperado/importado | NÃO. HD detectado, mas leitura de `04_REPORTS` negada pelo sistema de arquivos; nenhum dado real copiado, carregado ou publicado |
+| Gate | Reutilizar verificador/staging da #211 após acesso somente leitura, procedência e destino/backup validados. `importAuthorized=false`; nenhuma promoção operacional |
+| Próximo | Concluir checks, commit/push/PR desta branch; revisão independente; depois ensaio real isolado por entidades com reconciliação e reversão |
 
 ## CURSOR — #261 tip `bdeec58c` (salvar minify-safe + Clientes API×UI) (2026-10-10)
 
@@ -12765,3 +12775,27 @@ Checklist inicial:
 
 - Incorporado o novo HEAD Cursor `a004044b` em branch isolada, sem editar sua branch nem `main`. Conflito no guard resolvido preservando a convergência tela/sessão para Empresa ou Grupo consolidado e a trava por ator/Bearer; teste de Grupo consolidado somado aos cenários CPA→3Z e login novo. Fluxo Cliente inclui erro visível, sem engolir rejeição após mudança de contexto, e duplo clique de edição mantém RBAC/carga existente.
 - 27/27 testes focados de Cadastros/Produto, lint, build e diff-check PASS. CI e revisão independente são gates do novo SHA; não houve deploy, migração ou importação. Próximo P0: homologação visual autenticada e contrato explícito de Produto mestre de Grupo para itens de documento da empresa jurídica antes de integrar/migrar.
+
+## CODEX — legado: validacao antes de reuso (2026-10-10)
+
+Complemento da #266: Grupo divergente na origem e rejeitado sem remapeamento;
+retry revalida contrato/quarentena antes de aceitar fingerprint; duplicata de
+raiz invalida nao conta como reuso. Tipo de Produto usa chaves canonicas
+existentes e unidade textual explicita, sem default. 25 focados PASS/0 FAIL/0 SKIP.
+Suite Windows 841 PASS/50 FAIL/0 SKIP, falhas em processos Bash sem status de saida;
+CI Linux do novo HEAD e revisao Cursor permanecem gates. Nenhum dado real lido.
+
+Checkpoint base: db89aa45 incorporada; runtime legado idêntico ao 661f3ef3 testado, revisao/CI do merge requeridas. Comercial ja executa aqui em workspace separado com autorizacao do proprietario.
+
+Atualizacao posterior: staging privado 03_STAGING disponivel. Aliases SQL reais
+preparados com fixtures sinteticas e 27 focados PASS. Dry-run sem persistencia:
+20 Clientes e 20 Fornecedores mapeados; 20 Produtos em quarentena por mapa ausente.
+Nenhuma recuperacao/importacao concluida. Destino e linhagem historica ainda
+nao comprovados nesta rodada; referencia privada nao equivale a identidade valida.
+
+Checkpoint corretivo da revisao Cursor 6100174767: operacao exige codigo legado
+juridico e empresa identica ao crosswalk; opcoes nao substituem empresa de origem.
+Produto grava tipo_item canonico (chave/rotulo explicitos normalizados sem default).
+Duplicata em quarentena recebe auditoria. 30 focados PASS, lint/audit/build/diff PASS.
+Suite Windows completa com Git Bash foi interrompida apos travar no teste
+vps-gate-precheck; nenhum teste removido/skip. CI Linux final e revisao exigidas.

@@ -69,6 +69,21 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 - #261 **não** incorporada em `main` (só #264→#261).
 - Legado staging→ops: **não importado**.
 - CI do tip ≠ prova de merge em `main`.
+## CODEX LEGADO — ownership e gate de origem (2026-10-10)
+
+| Frente | Arquivos / responsável | Estado |
+|---|---|---|
+| Comercial 360 | Tarefa própria em outra conta/chat; nenhum arquivo Comercial editado neste checkout | Encaminhamento direto ainda sem ID acessível; não criar tarefa duplicada |
+| Cursor #261/#264 | Branches Cursor intocadas; `861513cd` é descendente da main `baba91a6`, não integrado à main | Integração anterior preservada como base deste checkout Codex |
+| Codex Legado | `scripts/legado/mapear-registro-sintetico.mjs`, `consumir-lote-staging.mjs`, testes e documentação de mapeamento | Branch Codex isolada; mestres de Grupo, classificação Produto, conflito/idempotência |
+| Cursor Legado #211 | Verificador, proveniência, vínculo jurídico e staging isolado | Reutilizar na etapa real; não copiar mapper nem editar branch Cursor |
+
+O HD foi detectado no host, mas a leitura de `04_REPORTS` foi negada pelo
+sistema de arquivos. Nenhuma leitura de conteúdo, carga real, importação
+operacional, migration ou alteração do backup ocorreu. `importAuthorized=false`.
+Próximo gate: acesso somente leitura à pasta dos relatórios, procedência
+verificada, destino isolado identificado e backup recuperável antes do piloto
+real; evidência pública somente agregada e sanitizada.
 
 ## ORIENTAÇÃO COORDENADA — Auditoria global / C360 / Legado (2026-10-10)
 
@@ -1159,3 +1174,29 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 - A limpeza do historico NAO foi executada: inventariar refs/PRs afetados, congelar pushes, preparar copia recuperavel e janela coordenada; reescrita/force-push exigem decisao operacional separada antes de executar. Nao publicar dados, IDs, hashes ou credenciais no PR.
 - Implantacao na VPS tambem e separada: antes de trocar imagem/build, conferir gates, backup, rollback e eliminar assets antigos da distribuicao/CDN. Nao presumir que merge remove arquivos ja servidos.
 - Runbook separado: `docs/LIMPEZA_HISTORICA_SNAPSHOTS_PUBLICOS.md`. CI tip SUCCESS. Coordenacao Cadastros #226 tip `7bfd3f93` (port #229 completo).
+
+## CODEX — divisao atual autorizada (2026-10-10)
+
+O proprietario autorizou executar Comercial 360 neste chat em workspace/branch
+separados, mantendo Cursor revisor. Retomar #265 sobre base atual #261,
+preservando #264. Legado segue em `legado-piloto-20261010`, branch #266;
+Comercial tera workspace proprio. Nao editar branches Cursor.
+Complemento #266 revalida origem/Grupo, contrato e classificacao antes de retry;
+25 testes focados PASS. Fonte `04_REPORTS` segue negada pelo SO mesmo com
+permissoes amplas da sessao; piloto real/importacao ainda nao executados.
+
+Checkpoint base: db89aa45 incorporada; runtime legado idêntico ao 661f3ef3 testado, revisao/CI do merge requeridas. Comercial ja executa aqui em workspace separado com autorizacao do proprietario.
+
+Checkpoint posterior: 03_STAGING legivel; 04_REPORTS permanece negada. Somente
+dry-run privado de transformacao (20 Clientes/20 Fornecedores mapeados;
+20 Produtos em quarentena), sem carga/persistencia. Recuperados/importados 0.
+Aliases SQL incorporados ao mapper existente, 27 focados PASS. Origem/destino,
+classe/unidade e vinculo juridico exigem revisao/validacao antes do piloto real.
+Dados e arquivos privados nao acompanham commit; evidencias somente agregadas.
+
+Checkpoint corretivo da revisao Cursor 6100174767: operacao exige codigo legado
+juridico e empresa identica ao crosswalk; opcoes nao substituem empresa de origem.
+Produto grava tipo_item canonico (chave/rotulo explicitos normalizados sem default).
+Duplicata em quarentena recebe auditoria. 30 focados PASS, lint/audit/build/diff PASS.
+Suite Windows completa com Git Bash foi interrompida apos travar no teste
+vps-gate-precheck; nenhum teste removido/skip. CI Linux final e revisao exigidas.

@@ -17,10 +17,13 @@ import {
 import {
   avaliarQuarentenaLegado,
   buildChaveIdempotenteMigracaoLegado,
+  LEGADO_MESTRES_COMPARTILHADOS,
   mapLegadoLoteSintetico,
   mapLegadoRowToCanonicalStub,
   resolverEmpresaLegadoCodigo,
 } from './mapear-registro-sintetico.mjs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /** Ordem de dependencia minima para Produtos / Clientes / Fornecedores. */
 export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([
@@ -31,6 +34,7 @@ export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([
   'obra',
   'condicao_pagamento',
 ]);
+const MESTRES_COMPARTILHADOS = new Set(LEGADO_MESTRES_COMPARTILHADOS);
 
 /**
  * Valida dependencias de um registro mapeado (empresa conhecida, codigo, tenant).
@@ -50,26 +54,39 @@ export const validarDependenciasLegado = (mapped = {}, ctx = {}) => {
   if (!mapped.group_id) rejeicoes.push('group_id_obrigatorio');
   if (!mapped.codigo_legado) rejeicoes.push('codigo_legado_obrigatorio');
   // Destino canônico obrigatório (exceto o próprio cadastro de empresa).
-  if (entidade && entidade !== 'empresa' && !mapped.empresa_id && !mapped.target_empresa_id) {
+  const mestreGrupo = MESTRES_COMPARTILHADOS.has(entidade) && mapped.scopeType === 'group';
+  if (entidade && entidade !== 'empresa' && !mestreGrupo && !mapped.empresa_id && !mapped.target_empresa_id) {
     rejeicoes.push('empresa_destino_obrigatoria');
+  }
+  if (mestreGrupo && mapped.empresa_id) rejeicoes.push('mestre_grupo_com_empresa');
+  if (!mestreGrupo && entidade !== 'empresa' && !mapped.codigo_empresa_legado) {
+    rejeicoes.push('empresa_legado_comprovada_obrigatoria');
   }
   if (mapped.codigo_empresa_legado != null && mapped.codigo_empresa_legado !== '') {
     const emp = resolverEmpresaLegadoCodigo(mapped.codigo_empresa_legado);
     if (emp.quarentena || emp.conhecido === false) {
       rejeicoes.push('empresa_legado_nao_resolvida');
     }
-    if (ctx.chavesEmpresa instanceof Set && emp.conhecido && !ctx.chavesEmpresa.has(String(emp.codigo))) {
+    if (!mestreGrupo && ctx.chavesEmpresa instanceof Set && emp.conhecido && !ctx.chavesEmpresa.has(String(emp.codigo))) {
       rejeicoes.push('empresa_destino_ausente_no_lote');
     }
     const crosswalk = ctx.crosswalkEmpresas;
-    if (crosswalk) {
+    if (crosswalk && !mestreGrupo) {
       const code = String(emp.codigo || mapped.codigo_empresa_legado);
       const target = crosswalk instanceof Map ? crosswalk.get(code) : crosswalk[code];
       if (!target) rejeicoes.push('crosswalk_empresa_ausente');
+      else if ((mapped.empresa_id && mapped.empresa_id !== target)
+        || (mapped.target_empresa_id && mapped.target_empresa_id !== target)
+        || (!mapped.empresa_id && !mapped.target_empresa_id)) {
+        rejeicoes.push('empresa_destino_divergente_do_crosswalk');
+      }
     }
   }
-  if (ctx.requireContratoEntrada !== false && !ctx.crosswalkEmpresas) {
+  if (ctx.requireContratoEntrada !== false && !ctx.contratoEntradaPresente) {
     rejeicoes.push('contrato_entrada_ausente');
+  }
+  if (!mestreGrupo && ctx.requireContratoEntrada !== false && !ctx.crosswalkEmpresas) {
+    rejeicoes.push('crosswalk_empresa_ausente');
   }
   if (ctx.entidadesDisponiveis instanceof Set && entidade && !ctx.entidadesDisponiveis.has(entidade)) {
     rejeicoes.push('entidade_fora_do_lote');
@@ -106,8 +123,9 @@ export const buildAuditoriaConsumoLegado = (mapped = {}, meta = { acao: 'consumi
  *   groupId?: string,
  *   empresaId?: string,
  *   arquivoNome?: string,
- *   chavesJaGravadas?: string[],
+ *   chavesJaGravadas?: Array<string|{chave:string,fingerprint:string}>,
  *   contratoEntrada?: { coorte?: string, crosswalkEmpresas?: Record<string, string>, linhagemHash?: string },
+ *   produtoClassUnitMap?: Record<string, {tipo_item?:string,tipo_produto?:string,unidade_medida_id:string}>,
  *   requireContratoEntrada?: boolean,
  * }} opts
  */
@@ -118,10 +136,12 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
     groupId: opts.groupId,
     empresaId: opts.empresaId,
     arquivoNome: opts.arquivoNome || `staging_${entidade}.csv`,
+    produtoClassUnitMap: opts.produtoClassUnitMap,
   });
 
-  const chavesPrevias = new Set(
-    (opts.chavesJaGravadas || []).map((c) => String(c)).filter(Boolean),
+  const chavesPrevias = new Map(
+    (opts.chavesJaGravadas || []).map((c) => typeof c === 'string'
+      ? [c, ''] : [String(c?.chave || ''), String(c?.fingerprint || '')]).filter(([chave]) => chave),
   );
   const entidadesDisponiveis = new Set(LEGADO_DEPENDENCIA_ORDEM);
   // Codigos legados CPA/3Z conhecidos — crosswalk de IDs de destino vem do contrato.
@@ -135,25 +155,12 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
 
   const comprovados = [];
   const quarentena = [];
-  const rejeicoes = [...lote.erros];
-  const reusos = [...lote.reusos];
+  const rejeicoes = [...lote.erros, ...lote.conflitos];
+  const reusos = [];
+  const chavesValidadas = new Set();
   const auditoria = [];
 
   for (const mapped of lote.gravados) {
-    if (chavesPrevias.has(mapped.chave_idempotente_migracao)) {
-      reusos.push({
-        codigo_legado: mapped.codigo_legado,
-        chave_idempotente_migracao: mapped.chave_idempotente_migracao,
-        motivo: 'idempotente_ja_consumido',
-      });
-      auditoria.push(buildAuditoriaConsumoLegado(mapped, {
-        acao: 'consumir',
-        resultado: 'reuso_idempotente',
-        motivos: ['chave_ja_presente'],
-      }));
-      continue;
-    }
-
     if (mapped.quarentena) {
       quarentena.push({
         codigo_legado: mapped.codigo_legado,
@@ -173,6 +180,7 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
       chavesEmpresa,
       crosswalkEmpresas,
       requireContratoEntrada,
+      contratoEntradaPresente: Boolean(opts.contratoEntrada?.coorte),
     });
     if (!deps.ok) {
       const soContrato = deps.rejeicoes.every((r) => r === 'contrato_entrada_ausente' || r === 'crosswalk_empresa_ausente');
@@ -202,12 +210,50 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
       continue;
     }
 
+    if (chavesPrevias.has(mapped.chave_idempotente_migracao)) {
+      const anterior = chavesPrevias.get(mapped.chave_idempotente_migracao);
+      if (!anterior || anterior !== mapped.fingerprint_migracao) {
+        quarentena.push({ codigo_legado: mapped.codigo_legado,
+          motivos: ['reuso_sem_fingerprint_igual'],
+          chave_idempotente_migracao: mapped.chave_idempotente_migracao });
+        auditoria.push(buildAuditoriaConsumoLegado(mapped, {
+          acao: 'consumir', resultado: 'conflito_reuso', motivos: ['reuso_sem_fingerprint_igual'],
+        }));
+        continue;
+      }
+      reusos.push({
+        codigo_legado: mapped.codigo_legado,
+        chave_idempotente_migracao: mapped.chave_idempotente_migracao,
+        motivo: 'idempotente_ja_consumido',
+      });
+      chavesValidadas.add(mapped.chave_idempotente_migracao);
+      auditoria.push(buildAuditoriaConsumoLegado(mapped, {
+        acao: 'consumir',
+        resultado: 'reuso_idempotente',
+        motivos: ['chave_ja_presente'],
+      }));
+      continue;
+    }
+
     comprovados.push(mapped);
-    chavesPrevias.add(mapped.chave_idempotente_migracao);
+    chavesValidadas.add(mapped.chave_idempotente_migracao);
+    chavesPrevias.set(mapped.chave_idempotente_migracao, mapped.fingerprint_migracao);
     auditoria.push(buildAuditoriaConsumoLegado(mapped, {
       acao: 'consumir',
       resultado: 'comprovado_staging',
     }));
+  }
+
+  // Duplicata so e reuso quando sua raiz passou pelos mesmos gates de entrada.
+  for (const dup of lote.reusos) {
+    if (chavesValidadas.has(dup.chave_idempotente_migracao)) reusos.push(dup);
+    else {
+      const motivos = ['reuso_origem_nao_validada'];
+      quarentena.push({ codigo_legado: dup.codigo_legado,
+        chave_idempotente_migracao: dup.chave_idempotente_migracao, motivos });
+      const raiz = lote.gravados.find((r) => r.chave_idempotente_migracao === dup.chave_idempotente_migracao);
+      auditoria.push(buildAuditoriaConsumoLegado(raiz, { acao: 'consumir', resultado: 'quarentena_reuso', motivos }));
+    }
   }
 
   const reconciliacao = buildReconciliacaoMigracao({
@@ -222,7 +268,7 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
     destino_migracao: MIGRACAO_DESTINO_STAGING,
     importacao_erp: true,
     importado_operacional: false,
-    contrato_entrada: Boolean(crosswalkEmpresas && opts.contratoEntrada?.coorte),
+    contrato_entrada: Boolean(opts.contratoEntrada?.coorte),
     coorte: opts.contratoEntrada?.coorte || null,
     comprovados,
     quarentena,
@@ -247,7 +293,9 @@ export const consumirLoteStagingIdempotente = (rows = [], opts = {}) => {
   const primeiro = consumirLoteStagingLegado(rows, opts);
   const segundo = consumirLoteStagingLegado(rows, {
     ...opts,
-    chavesJaGravadas: primeiro.comprovados.map((r) => r.chave_idempotente_migracao),
+    chavesJaGravadas: primeiro.comprovados.map((r) => ({
+      chave: r.chave_idempotente_migracao, fingerprint: r.fingerprint_migracao,
+    })),
   });
   return { primeiro, segundo };
 };
@@ -259,7 +307,7 @@ export {
   stampMigracaoRecord,
 };
 
-if (process.argv[1] && process.argv[1].includes('consumir-lote-staging')) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const sample = [
     {
       cod_cliente: 'C-OK',
