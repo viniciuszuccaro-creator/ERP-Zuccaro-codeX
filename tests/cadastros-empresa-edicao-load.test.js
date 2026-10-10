@@ -51,6 +51,25 @@ test('hook real congela sessão CPA mesmo com primeiro paint parcial; aceita ren
   assert.equal(render('grupo-cpa', 'empresa-3z').isCurrent(), false);
 });
 
+test('hook aceita visão consolidada do Grupo (empresaId null nos três lados)', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/hooks/useCadastroFormScopeGuard.js', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const refs = []; let nextRef = 0;
+  let active = { groupId: 'grupo-cpa', empresaId: null };
+  const exports = {};
+  vm.runInNewContext(compiled, { exports, require: (id) => ({
+    react: { useRef: (initial) => refs[nextRef++] ||= { current: initial } },
+    '@/api/base44Client': { isHttpBackendMode: true },
+    '@/api/erpHttpSession': { readErpHttpSession: () => active },
+    '../cadastroEditLoadPolicy.js': { isCadastroSelfManagedScopeCurrent },
+  })[id] });
+  const render = (groupId, empresaId) => { nextRef = 0; return exports.default(groupId, empresaId); };
+  const consolidado = render('grupo-cpa', null);
+  assert.doesNotThrow(() => consolidado.assertCurrent());
+  active = { groupId: 'grupo-cpa', empresaId: 'empresa-3z' };
+  assert.throws(() => consolidado.assertCurrent(), /Contexto alterado/);
+});
+
 test('formulário aberto na Empresa A não salva após troca para B, nem antes do efeito de fechamento', () => {
   const opened = 'Cliente:grupo-a:empresa-a';
   assert.doesNotThrow(() => assertCadastroFormScopeCurrent({

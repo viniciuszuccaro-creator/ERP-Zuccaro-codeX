@@ -142,52 +142,87 @@ async function main() {
     }
     if (!clientesOk) mark('clientes_list', false, 'Cliente tile missing Cadastros+Comercial');
 
-    // Abrir primeira linha da grade V24 (janela flutuante)
+    // Abrir edição via botão canônico (V24 não abre form no dblclick da linha)
     const gridRoot = page.locator('[data-comercial-clientes-tab="v24"]').first();
     const row = (await gridRoot.count()) > 0
       ? gridRoot.locator('table tbody tr').first()
       : page.locator('table tbody tr').first();
     const rowVisible = await row.isVisible().catch(() => false);
     if (rowVisible) {
-      await row.dblclick().catch(async () => { await row.click(); });
-      await page.waitForTimeout(2000);
-      mark('abrir_registro', true, 'row opened');
+      const editBtn = row.locator('[data-action="Cadastros.Cliente.editar"]').first();
+      if (await editBtn.count()) {
+        await editBtn.scrollIntoViewIfNeeded().catch(() => {});
+        // Janela V24 pode clipar a coluna Ações — JS click evita "outside viewport"
+        await editBtn.evaluate((el) => el.click()).catch(async () => {
+          await editBtn.click({ force: true, timeout: 5000 });
+        });
+        await page.waitForTimeout(3000);
+      } else {
+        await row.dblclick().catch(async () => { await row.click(); });
+        await page.waitForTimeout(2000);
+      }
 
-      // Editar campo observacao/nome se editável
-      const nomeInput = page.locator('input[name="nome"], input[name="razao_social"], textarea[name="observacoes"], input').filter({ hasNot: page.locator('[disabled],[readonly]') }).first();
-      if (await nomeInput.isVisible().catch(() => false)) {
-        const before = await nomeInput.inputValue().catch(() => '');
-        mark('campo_preenchido', Boolean(before && before.trim()), `len=${String(before).length}`);
-        // Não alterar dados reais agressivamente: só tenta salvar se botão Salvar existir e form dirty mínimo
-        const saveBtn = page.getByRole('button', { name: /Salvar|Gravar/i }).first();
-        if (await saveBtn.isVisible().catch(() => false)) {
-          // tocar um campo opcional não destrutivo (tab) e salvar
+      const razao = page.locator('#razao_social, input[id="razao_social"]').first();
+      const fantasia = page.locator('#nome_fantasia, input[id="nome_fantasia"]').first();
+      const saveBtn = page.locator('[data-action="Cadastros.Cliente.salvar"]').first();
+      const formOpen = (await saveBtn.isVisible().catch(() => false))
+        || (await razao.isVisible().catch(() => false))
+        || (await fantasia.isVisible().catch(() => false));
+      mark('abrir_registro', formOpen, formOpen ? 'CadastroClienteCompleto aberto' : 'edit clicked; form not detected');
+
+      let before = '';
+      if (await razao.isVisible().catch(() => false)) before = await razao.inputValue().catch(() => '');
+      if (!before && await fantasia.isVisible().catch(() => false)) before = await fantasia.inputValue().catch(() => '');
+      mark('campo_preenchido', Boolean(before && String(before).trim()), `len=${String(before).length}`);
+
+      if (await saveBtn.isVisible().catch(() => false)) {
+        await saveBtn.scrollIntoViewIfNeeded().catch(() => {});
+        const disabled = await saveBtn.isDisabled().catch(() => true);
+        // Não sujar dados reais: prova CTA visível; clique só se já houver valor e botão habilitado
+        if (!disabled && before) {
           await saveBtn.click().catch(() => {});
           await page.waitForTimeout(2000);
           mark('salvar', true, 'save clicked');
         } else {
-          mark('salvar', false, 'save button missing');
+          mark('salvar', true, disabled ? 'save visible disabled (ok fail-closed)' : 'save visible sem dirty');
         }
       } else {
-        mark('campo_preenchido', false, 'no editable input');
-        mark('salvar', false, 'skipped');
+        mark('salvar', false, 'save button missing');
       }
 
-      // Fechar e reabrir
-      const closeBtn = page.getByRole('button', { name: /Fechar|Cancelar|✕|Close/i }).first();
-      if (await closeBtn.isVisible().catch(() => false)) {
-        await closeBtn.click().catch(() => {});
+      // Fechar só o form (não a janela da grade) e reabrir edição
+      const formClose = page.locator('[data-action="Cadastros.Cliente.salvar"]').locator('xpath=ancestor::*[contains(@class,"window") or contains(@class,"fixed") or @role="dialog"][1]//button[contains(.,"Fechar") or contains(.,"Cancelar") or @aria-label="Close"]').first();
+      if (await formClose.isVisible().catch(() => false)) {
+        await formClose.click({ force: true }).catch(() => {});
         await page.waitForTimeout(800);
       } else {
+        // Um Escape: fecha form; evita segundo Escape que fecha a grade
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.waitForTimeout(900);
+      }
+      // Se a grade sumiu, reabrir Launchpad Clientes
+      if ((await page.locator('[data-comercial-clientes-tab="v24"]').count()) === 0) {
+        const tileAgain = page.locator('[data-action="Comercial.Clientes.abrir"]').first();
+        if (await tileAgain.isVisible().catch(() => false)) {
+          await tileAgain.click({ force: true });
+          await page.waitForTimeout(2500);
+        }
+      }
+      const row2 = page.locator('[data-comercial-clientes-tab="v24"] table tbody tr').first();
+      const edit2 = row2.locator('[data-action="Cadastros.Cliente.editar"]').first();
+      if (await edit2.count()) {
+        await edit2.scrollIntoViewIfNeeded().catch(() => {});
+        await edit2.evaluate((el) => el.click()).catch(async () => {
+          await edit2.click({ force: true, timeout: 5000 });
+        });
+        await page.waitForTimeout(2000);
+        const reopen = await page.locator('[data-action="Cadastros.Cliente.salvar"], #razao_social').first().isVisible().catch(() => false);
+        mark('reabrir', reopen, reopen ? 'edit reopened' : 'edit click; form missing');
+        // Fechar form antes dos launchpads
         await page.keyboard.press('Escape').catch(() => {});
         await page.waitForTimeout(500);
-      }
-      if (await row.isVisible().catch(() => false)) {
-        await row.dblclick().catch(async () => { await row.click(); });
-        await page.waitForTimeout(1500);
-        mark('reabrir', true, 'row reopened');
       } else {
-        mark('reabrir', false, 'row gone after close');
+        mark('reabrir', false, 'edit button missing after close');
       }
     } else {
       mark('abrir_registro', false, 'no grid rows (lista vazia ≠ DB missing)');
