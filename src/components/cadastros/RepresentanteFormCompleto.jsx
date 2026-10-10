@@ -826,3 +826,6 @@ export default function RepresentanteFormCompleto({ representante: representante
     </Dialog>
   );
 }
+
+RepresentanteFormCompleto.displayName = 'RepresentanteFormCompleto';
+RepresentanteFormCompleto.isSelfManagedCadastro = true;

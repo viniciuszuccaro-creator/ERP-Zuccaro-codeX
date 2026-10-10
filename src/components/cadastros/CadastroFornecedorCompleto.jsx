@@ -541,3 +541,6 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     </Dialog>
   );
 }
+
+CadastroFornecedorCompleto.displayName = 'CadastroFornecedorCompleto';
+CadastroFornecedorCompleto.isSelfManagedCadastro = true;

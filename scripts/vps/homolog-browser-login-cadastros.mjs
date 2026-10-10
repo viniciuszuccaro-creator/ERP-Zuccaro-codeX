@@ -93,13 +93,31 @@ async function main() {
     const denied = await page.getByText(/Acesso negado/i).count();
     mark('cadastros_open', denied === 0, denied ? `acesso_negado_count=${denied}` : 'opened');
 
+    // Prefer Comercial Launchpad Clientes (canônico V24) antes do hub Cadastros
+    {
+      const comFirst = page.getByText(/Comercial e Vendas/i).first();
+      if (await comFirst.isVisible().catch(() => false)) {
+        await comFirst.click({ force: true });
+        await page.waitForTimeout(1500);
+        const tileFirst = page.locator('[data-action="Comercial.Clientes.abrir"]').first();
+        if (await tileFirst.isVisible().catch(() => false)) {
+          await tileFirst.click({ force: true });
+          await page.waitForTimeout(3500);
+          const v24 = await page.locator('[data-comercial-clientes-tab="v24"]').count();
+          if (v24 > 0) {
+            mark('clientes_list', true, 'Comercial first for Clientes V24');
+          }
+        }
+      }
+    }
+
     // Cadastros Gerais: card Pessoas → tile Cliente (V24); fallback Comercial
     const pessoasCard = page.getByText(/Pessoas|Pessoas & Parceiros|1️⃣ Pessoas/i).first();
     if (await pessoasCard.isVisible().catch(() => false)) {
       await pessoasCard.click({ force: true }).catch(() => {});
       await page.waitForTimeout(1200);
     }
-    let clientesOk = false;
+    let clientesOk = Boolean(result.steps.clientes_list?.ok);
     const clientesTile = page.getByText(/^Clientes?$/i).first();
     if (await clientesTile.isVisible().catch(() => false)) {
       await clientesTile.click({ force: true });

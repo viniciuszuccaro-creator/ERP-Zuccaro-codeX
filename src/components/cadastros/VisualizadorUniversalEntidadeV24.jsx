@@ -91,6 +91,14 @@ const SELF_MANAGED_NAMES = new Set([
   "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
 ]);
 
+/** Flag estável sob minify (Function.name some no bundle). */
+function isSelfManagedCadastroForm(FormComponent) {
+  if (!FormComponent) return false;
+  if (FormComponent.isSelfManagedCadastro === true) return true;
+  const name = FormComponent.displayName || FormComponent.name || "";
+  return SELF_MANAGED_NAMES.has(name);
+}
+
 const FORM_ALIASES = [
   "item","data","initialData","defaultValues","record","entity","value",
   "cliente","fornecedor","colaborador","transportadora","representante",
@@ -250,9 +258,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const _pageSizeProp     = pageSizeProp || 20;
 
   const isSelfManaged = useMemo(function() {
-    if (!FormComponent) return false;
-    const name = FormComponent.displayName || FormComponent.name || "";
-    return SELF_MANAGED_NAMES.has(name);
+    return isSelfManagedCadastroForm(FormComponent);
   }, [FormComponent]);
 
   const queryClient = useQueryClient();

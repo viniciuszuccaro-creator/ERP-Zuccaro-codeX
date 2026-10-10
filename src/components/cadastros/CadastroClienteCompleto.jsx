@@ -1554,3 +1554,6 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     </Dialog>
   );
 }
+
+CadastroClienteCompleto.displayName = 'CadastroClienteCompleto';
+CadastroClienteCompleto.isSelfManagedCadastro = true;

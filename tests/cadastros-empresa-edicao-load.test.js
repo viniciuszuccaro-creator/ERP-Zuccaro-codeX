@@ -428,3 +428,11 @@ test('localBase44 nao filtra Empresa/Grupo por empresa_id do contexto', async ()
   assert.doesNotMatch(source, /TENANT_MASTER_PERMISSION_ALIASES/);
   assert.doesNotMatch(source, /module: 'Sistema', section: 'Empresas'/);
 });
+
+test('V24 detecta form self-managed por flag (minify-safe), não só Function.name', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  assert.match(source, /isSelfManagedCadastroForm/);
+  assert.match(source, /FormComponent\.isSelfManagedCadastro === true/);
+  const cliente = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(cliente, /isSelfManagedCadastro = true/);
+});

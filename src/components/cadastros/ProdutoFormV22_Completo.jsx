@@ -1423,3 +1423,6 @@ Caso contrário, sugira:
 }
 
 export default React.memo(ProdutoFormV22_Completo);
+
+ProdutoFormV22_Completo.displayName = 'ProdutoFormV22_Completo';
+ProdutoFormV22_Completo.isSelfManagedCadastro = true;
