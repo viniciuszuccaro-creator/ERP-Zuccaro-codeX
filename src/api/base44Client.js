@@ -124,6 +124,8 @@ function createHttpHybridClient() {
       }
       try {
         await ensureHttpTenantLocalMirror({
+          token: session.token,
+          actorId: session.actorId,
           groupId: session.groupId,
           empresaId: session.empresaId,
           groupName: session.groupName,

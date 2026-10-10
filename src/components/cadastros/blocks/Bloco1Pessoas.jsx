@@ -36,8 +36,11 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
 
+  // ContatoB2B/Segmento/Região → Cadastros.pessoas (aliases no hook); Cliente/etc. idem.
   const canViewEntity = (entidade) => (
-    hasPermission('Cadastros', entidade, 'visualizar') || hasPermission('Cadastros', null, 'visualizar')
+    hasPermission('Cadastros', entidade, 'visualizar')
+    || hasPermission('Cadastros', 'pessoas', 'visualizar')
+    || hasPermission('Cadastros', null, 'visualizar')
   );
 
   const getTotalEntidade = (entidade) => Number(allCounts?.[entidade] || 0);

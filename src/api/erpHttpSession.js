@@ -339,6 +339,9 @@ export function buildHttpDevAdminUser(session) {
  * para o seletor multiempresa e o PerfilAcesso admin existirem no browser.
  * Usa upsert direto (sem RBAC create) — bootstrap de sessão HTTP.
  * @param {{
+ *   token?: string,
+ *   actorId?: string,
+ *   storage?: Storage | null,
  *   groupId: string,
  *   empresaId?: string | null,
  *   groupName?: string | null,
@@ -349,12 +352,31 @@ export function buildHttpDevAdminUser(session) {
  *   base44Client?: unknown,
  * }} input
  */
+export function isHttpMirrorContextCurrent(input, storage = null) {
+  if (!input?.token) return true;
+  const active = readErpHttpSession(storage || input.storage);
+  return Boolean(active && active.token === input.token
+    && active.groupId === String(input.groupId || '').trim()
+    && (active.empresaId || '') === String(input.empresaId || '').trim()
+    && (!input.actorId || active.actorId === input.actorId));
+}
+
+/**
+ * @param {{ token?: string, actorId?: string, storage?: Storage | null,
+ * groupId: string, empresaId?: string | null, groupName?: string | null,
+ * empresas?: Array<{id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, cnpj?: string | null, status?: string}>,
+ * perfilAcessoId?: string | null, permissoes?: Record<string, unknown> | null,
+ * perfilNome?: string | null, base44Client?: unknown }} input
+ */
 export async function ensureHttpTenantLocalMirror(input) {
   const groupId = String(input?.groupId || '').trim();
   const empresaId = input?.empresaId ? String(input.empresaId).trim() : '';
   if (!groupId) return { group: false, empresa: false, perfil: false };
 
   const { upsertHttpTenantLocalMirror } = await import('./localBase44Client.js');
+  // A importação é assíncrona: outra troca de Empresa/login pode ter ocorrido.
+  // Espelho obsoleto não pode regravar IDs nem vínculos no armazenamento local.
+  if (!isHttpMirrorContextCurrent(input)) return { group: false, empresa: false, perfil: false, stale: true };
   const result = upsertHttpTenantLocalMirror({
     groupId,
     empresaId,
@@ -444,6 +466,8 @@ export async function loginErpHttpSession(input) {
   persistErpHttpSession({ ...session, expiresAt });
   try {
     await ensureHttpTenantLocalMirror({
+      token: session.accessToken,
+      actorId: session.actorId,
       groupId: session.groupId,
       empresaId: session.empresaId,
       groupName,
@@ -503,6 +527,15 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     clearErpHttpSession(storage);
     return null;
   }
+  const initialContextStillCurrent = () => {
+    const current = readErpHttpSession(storage);
+    return current?.token === local.token
+      && current.actorId === local.actorId
+      && current.groupId === local.groupId
+      && current.empresaId === local.empresaId
+      && current.scopeType === local.scopeType;
+  };
+  const initialTokenStillCurrent = () => readErpHttpSession(storage)?.token === local.token;
   const baseUrl = (input.baseUrl ?? resolveErpApiBaseUrl(import.meta.env) ?? '').replace(/\/$/, '');
   const fetchImpl = input.fetchImpl ?? fetch;
   let response;
@@ -515,7 +548,7 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
       },
     });
   } catch {
-    clearErpHttpSession(storage);
+    if (initialContextStillCurrent()) clearErpHttpSession(storage);
     return null;
   }
   let body = null;
@@ -525,13 +558,27 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     body = null;
   }
   if (!response.ok) {
-    clearErpHttpSession(storage);
+    // 401/403 invalidam o Bearer, inclusive após trocar de Empresa. Não apagam
+    // porém um login novo feito enquanto esta requisição estava em voo.
+    if (initialTokenStillCurrent() && (response.status === 401 || response.status === 403)) {
+      clearErpHttpSession(storage);
+    } else if (initialContextStillCurrent()) {
+      clearErpHttpSession(storage);
+    }
     return null;
   }
+  // Diversos consumidores (seletor, Cadastros, Visualizador) revalidam em paralelo.
+  // A resposta antiga não pode regravar o escopo capturado antes da troca de Empresa.
+  const active = readErpHttpSession(storage);
+  if (!active || active.token !== local.token) return null;
+  const contextChanged = active.actorId !== local.actorId
+    || active.groupId !== local.groupId
+    || active.empresaId !== local.empresaId
+    || active.scopeType !== local.scopeType;
   const data = body?.data || {};
   const profiles = Array.isArray(data.profiles) ? data.profiles : [];
-  const preferredActor = String(input.preferredActorId || local.actorId || '').trim();
-  const preferredGroup = String(input.preferredGroupId || local.groupId || '').trim();
+  const preferredActor = String((contextChanged ? active.actorId : input.preferredActorId) || active.actorId || '').trim();
+  const preferredGroup = String((contextChanged ? active.groupId : input.preferredGroupId) || active.groupId || '').trim();
   const matchedSameGroup = profiles.find(
     (p) => String(p?.id) === preferredActor && String(p?.group_id) === preferredGroup,
   );
@@ -540,7 +587,7 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     || profiles.find((p) => p?.group_id && p?.id)
     || profiles[0];
   if (!profile?.id || !profile?.group_id) {
-    clearErpHttpSession(storage);
+    if (initialTokenStillCurrent()) clearErpHttpSession(storage);
     return null;
   }
   const role = String(profile.role || 'user').trim().toLowerCase() === 'admin' ? 'admin' : 'user';
@@ -556,61 +603,64 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
   const empresas = Array.isArray(profile.empresas) ? profile.empresas : [];
   // Preferência de empresa só vale no mesmo grupo do perfil escolhido (nunca misturar tenant).
   const sameGroupAsPreference = String(profile.group_id) === preferredGroup;
-  const rawPreferred = input.preferredEmpresaId !== undefined
+  const rawPreferred = contextChanged ? active.empresaId : input.preferredEmpresaId !== undefined
     ? input.preferredEmpresaId
-    : local.empresaId;
+    : active.empresaId;
   let empresaId = resolveRefreshEmpresaId({
     profile,
     profiles,
     preferredEmpresaId: sameGroupAsPreference ? rawPreferred : null,
   });
   // Se o servidor listou empresas e a preferência/perfil não bate, usa a primeira autorizada.
-  const groupView = !profile.empresa_id && role === 'admin' && local.scopeType === 'grupo';
+  const groupView = !profile.empresa_id && role === 'admin' && active.scopeType === 'grupo';
   if (groupView) empresaId = null;
   if (!groupView && !empresaId && empresas.length > 0) {
     empresaId = String(empresas[0].id);
   }
   persistErpHttpSession({
-    accessToken: local.token,
+    accessToken: active.token,
     groupId: String(profile.group_id),
     empresaId,
     actorId: String(profile.id),
-    email: data.user?.email || local.email || undefined,
+    email: data.user?.email || active.email || undefined,
     role,
     fullName,
     groupName,
     empresas,
     profileEmpresaId: profile.empresa_id || null,
     scopeType: groupView ? 'grupo' : 'empresa',
-    expiresAt: local.expiresAt,
+    expiresAt: active.expiresAt,
     storage,
   });
   try {
     await ensureHttpTenantLocalMirror({
+      token: active.token,
+      actorId: String(profile.id),
+      storage,
       groupId: String(profile.group_id),
       empresaId,
       groupName,
       empresas,
       perfilAcessoId: `http_perfil_${profile.id}`,
       permissoes,
-      perfilNome: fullName || data.user?.email || local.email,
+      perfilNome: fullName || data.user?.email || active.email,
     });
   } catch {
     /* espelho best-effort */
   }
   return {
-    token: local.token,
+    token: active.token,
     groupId: String(profile.group_id),
     empresaId,
     actorId: String(profile.id),
-    email: data.user?.email || local.email || null,
+    email: data.user?.email || active.email || null,
     role,
     fullName,
     groupName,
     empresas,
     profileEmpresaId: profile.empresa_id || null,
     scopeType: groupView ? 'grupo' : 'empresa',
-    expiresAt: local.expiresAt,
+    expiresAt: active.expiresAt,
     permissoes,
     profiles,
   };

@@ -1274,6 +1274,13 @@ const LOCAL_SECTION_ALIASES = {
   segmentocliente: 'pessoas',
   regiaoatendimento: 'pessoas',
   pessoasparceiros: 'pessoas',
+  departamento: 'organizacional',
+  departamentos: 'organizacional',
+  cargo: 'organizacional',
+  cargos: 'organizacional',
+  turno: 'organizacional',
+  turnos: 'organizacional',
+  organizacional: 'organizacional',
   // Fiscal UI ↔ árvore owner (espelha usePermissions.SECTION_ALIASES)
   nfe: 'nfe',
   notafiscal: 'nfe',

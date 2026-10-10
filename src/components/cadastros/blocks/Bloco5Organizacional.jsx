@@ -62,7 +62,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
         dados_novos: {
           ...getDadosContexto(),
           entidade,
-          permissao: `Cadastros.${entidade === "Empresa" || entidade === "GrupoEmpresarial" ? "Organizacional" : entidade}.visualizar`,
+          permissao: dataPermissionFor(entidade),
           total_entidade: getTotalEntidade(entidade),
           contexto_exigido: entidade === "GrupoEmpresarial" ? "grupo" : "group-or-company",
           ...(extras || {}),
@@ -132,16 +132,26 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
   }, [searchTerm, contextoValido, filteredTiles.length]);
-  const canViewEntity = (entidade) => {
-    if (entidade === "Empresa" || entidade === "GrupoEmpresarial") {
-      return hasPermission("Cadastros", "Organizacional", "visualizar");
+  // Gate canônico owner: Organizacional (Empresa/Grupo/Depto/Cargo/Turno);
+  // PerfilAcesso vive em Sistema.acessos (não sob Cadastros.*).
+  const permissionSectionFor = (entidade) => {
+    if (["Empresa", "GrupoEmpresarial", "Departamento", "Cargo", "Turno"].includes(entidade)) {
+      return { module: "Cadastros", section: "Organizacional" };
     }
+    if (entidade === "PerfilAcesso") return { module: "Sistema", section: "acessos" };
+    return { module: "Cadastros", section: entidade };
+  };
+  const canViewEntity = (entidade) => {
+    const { module, section } = permissionSectionFor(entidade);
     return (
-      hasPermission("Cadastros", entidade, "visualizar") ||
+      hasPermission(module, section, "visualizar") ||
       hasPermission("Cadastros", null, "visualizar") ||
-      hasPermission("Sistema", entidade, "visualizar") ||
-      hasPermission("Sistema", null, "visualizar")
+      (entidade === "PerfilAcesso" && hasPermission("Sistema", null, "visualizar"))
     );
+  };
+  const dataPermissionFor = (entidade) => {
+    const { module, section } = permissionSectionFor(entidade);
+    return `${module}.${section}.visualizar`;
   };
 
   return (
@@ -162,7 +172,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
       {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, t, Icon, c, FormComp)}
-          data-permission={`Cadastros.${k === "Empresa" || k === "GrupoEmpresarial" ? "Organizacional" : k}.visualizar`}
+          data-permission={dataPermissionFor(k)}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required={k === "GrupoEmpresarial" ? "group" : "group-or-company"}>
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -177,7 +187,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
                 disabled={(!contextoValido && k !== "GrupoEmpresarial") || !canViewEntity(k)}
-                data-permission={`Cadastros.${k === "Empresa" || k === "GrupoEmpresarial" ? "Organizacional" : k}.visualizar`}
+                data-permission={dataPermissionFor(k)}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required={k === "GrupoEmpresarial" ? "group" : "group-or-company"}>
                 Abrir

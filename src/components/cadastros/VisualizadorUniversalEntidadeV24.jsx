@@ -315,6 +315,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [deselectedIds, setDeselectedIds] = useState(function() { return new Set(); });
 
   const lastGoodData  = useRef([]);
+  const lastGoodScope = useRef(null);
   const everLoadedRef = useRef(false);
   const editRequestRef = useRef(0);
   const scopeKey = ENTITY + ":" + (groupId || "") + ":" + (empresaId || "");
@@ -428,6 +429,13 @@ export default function VisualizadorUniversalEntidadeV24({
     function() { return ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]; },
     [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]
   );
+  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch]);
+  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.
+  if (lastGoodScope.current !== visibleScope) {
+    lastGoodScope.current = visibleScope;
+    lastGoodData.current = [];
+    everLoadedRef.current = false;
+  }
 
   // ── query principal ──────────────────────────────────────────────────────────
   // placeholderData garante que a lista NÃO desaparece durante sort/paginação/exclusão
@@ -454,7 +462,12 @@ export default function VisualizadorUniversalEntidadeV24({
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
-    placeholderData: function(prev) { return prev !== undefined ? prev : []; },
+    placeholderData: function(prev, previousQuery) {
+      const key = previousQuery?.queryKey;
+      if (!Array.isArray(key) || key[1] !== ENTITY || key[6] !== debouncedSearch
+        || key[7] !== empresaId || key[8] !== groupId) return [];
+      return prev !== undefined ? prev : [];
+    },
     enabled: !!ENTITY && contextoValido && canViewCadastro,
   });
 

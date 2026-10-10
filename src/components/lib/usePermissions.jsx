@@ -77,6 +77,17 @@ export default function usePermissions() {
       colaboradores: 'pessoas',
       representante: 'pessoas',
       representantes: 'pessoas',
+      contatob2b: 'pessoas',
+      segmentocliente: 'pessoas',
+      regiaoatendimento: 'pessoas',
+      // Cadastros UI entidade → seções owner (pessoas/produtos/organizacional/…)
+      departamento: 'organizacional',
+      departamentos: 'organizacional',
+      cargo: 'organizacional',
+      cargos: 'organizacional',
+      turno: 'organizacional',
+      turnos: 'organizacional',
+      organizacional: 'organizacional',
       // Fiscal UI ↔ árvore owner (nfe / tabelas_fiscais / sped / obrigacoes).
       // Evitar alias genérico "configuracao" (colide com Sistema.configuracoes).
       nfe: 'nfe',
