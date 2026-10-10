@@ -6,9 +6,9 @@
 | **#263** | ancestral do pacote Orçamento · tip `1b19f4ee` · vs main MERGEABLE |
 | **#266** tip `001e6c85` | MERGEABLE · Legado (+`661f3ef3` retry tenant/classe) · **não** mesclar Cursor · agente **RUNNING** |
 | **#254** | ancestral OPEN `20a2c2fb` — não re-portar |
-| implantado erp-dev | **`db89aa45`** · `index-Dg3GA2bC.js` · **≠** tip Orçamento até CI+redeploy |
+| implantado erp-dev | **`9f084ed0`** · `index-C-lbE7zK.js` · Orçamento+#265 homolog owner fail_count=0 |
 | agentes | Legado RUNNING · Produto/Orçamento IDLE |
-| próxima | CI tip Orçamento · redeploy · #266/#211 · timer |
+| próxima | secret restrito · merge owner #261→main · #266/#211 · timer |
 
 ## CURSOR — pós-#264: reconciliação + CRM legado C360 (2026-10-10)
 
@@ -16,15 +16,15 @@
 |---|---|
 | **#264** | MERGED **na candidata #261** (base branch), merge `861513cd` — **não** está em `main` |
 | **main** | `baba91a6` (#257 azul) · ⊂ #261 · **#261 ainda não em main** |
-| **PR HEAD #261** | **`db89aa45`** · MERGEABLE → main |
-| CI tip `db89aa45` | erp-runtime-ci **SUCCESS** |
-| **implantado** | erp-dev **`db89aa45`** · `index-Dg3GA2bC.js` · rollback `pre-spa-login-20261010-171326` |
-| **homologado implantado** | owner tip **`db89aa45`** fail_count=0 (login tipado + Clientes + launchpads) |
+| **PR HEAD #261** | **`9f084ed0`** · MERGEABLE → main |
+| CI tip `9f084ed0` | erp-runtime-ci **SUCCESS** |
+| **implantado** | erp-dev **`9f084ed0`** · `index-C-lbE7zK.js` · rollback `pre-spa-login-20261010-172341` |
+| **homologado implantado** | owner tip **`9f084ed0`** fail_count=0 (login tipado + Clientes + launchpads) |
 | usuário restrito | **BLOCKED** — sem `ERP_DEV_LOGIN_RESTRICTED_*`; só owner + SYNTH gate-d |
-| **implementado neste lote** | C360 CRM opção B · porte #265 Produto GET parcial · Contratos ID/azul · AdminHeader azul |
+| **implementado neste lote** | C360 CRM · #265 Produto · #263/#265 Orçamento tenant-safe · Contratos ID/azul · AdminHeader azul |
 | **não feito** | CRM HTTP canônico novo (Codex A) · merge #261→main |
 | **recuperado / importado** | **NÃO** · #211 |
-| evidência | `deploy-261-tip-db89aa45-porte-265-20261010.txt` · `deploy-261-tip-58e01754-azul-crm-20261010.txt` |
+| evidência | `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `deploy-261-tip-db89aa45-porte-265-20261010.txt` |
 | próxima | secret restrito · merge owner #261→main · #266/#211 Legado · #263 owner · CRM HTTP Codex |
 
 ## CURSOR — CONTINUIDADE CASA (2026-10-10)
@@ -33,9 +33,9 @@
 |---|---|
 | **implementado** | integração #264+#254 em #261 · ID técnico · Contratos/C360 · minify-safe · V23→V24 · azul · porte #265 |
 | **integrado** | PR [#261](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261) · #264 **MERGED→#261** · #254 `20a2c2fb` ancestral |
-| **PR HEAD** | tip **`db89aa45`** · **não** em `main` `baba91a6` |
-| **implantado** | supersedido pelo bloco pós-#264 (`db89aa45` / `index-Dg3GA2bC.js`) |
-| **homologado** | tip **`db89aa45`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
+| **PR HEAD** | tip **`9f084ed0`** · **não** em `main` `baba91a6` |
+| **implantado** | supersedido pelo bloco pós-#264 (`9f084ed0` / `index-C-lbE7zK.js`) |
+| **homologado** | tip **`9f084ed0`** owner fail_count=0 · restrito **BLOCKED** (sem secret) |
 | **recuperado / importado** | **NÃO** · SYNTH≠recuperado · #211 |
 | handoff | `docs/HANDOFF_ATUAL.md` · RECONCILIAÇÃO PÓS-#264 + CONTINUIDADE CASA |
 | BLOCKED | usuário restrito · CRM HTTP schema server · Legado |

@@ -20,8 +20,8 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip CRM legado C360 · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`db89aa45`** · `index-Dg3GA2bC.js` · ≡ PR HEAD (porte #265) |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `db89aa45` |
+| SHA implantado | **`9f084ed0`** · `index-C-lbE7zK.js` · ≡ PR HEAD (Orçamento+#265) |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `9f084ed0` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** (store Oportunidade legado) · HTTP canônico server **pendente Codex** · sem CRM paralelo · `useContextoVisual` reservado |
 | próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main · azul residual |
@@ -36,28 +36,28 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | **`db89aa45`** · CI SUCCESS · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`db89aa45`** · asset `index-Dg3GA2bC.js` · ≡ PR HEAD |
-| rollback | `pre-spa-login-20261010-171326` |
+| **PR HEAD #261** | **`9f084ed0`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`9f084ed0`** · asset `index-C-lbE7zK.js` · ≡ PR HEAD |
+| rollback | `pre-spa-login-20261010-172341` |
 | backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`db89aa45`** (não reusar SHAs anteriores) |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`9f084ed0`** (não reusar SHAs anteriores) |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | CRM | C360 adaptador **opção B** (legado Oportunidade); HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
 | arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `deploy-261-tip-db89aa45-porte-265-20261010.txt` · `deploy-261-tip-58e01754-azul-crm-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
+| evidência | `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `deploy-261-tip-db89aa45-porte-265-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`db89aa45`** (ou tip docs posterior).
-2. Confirmar VPS: `MERGE_SHA8=db89aa45` / `index-Dg3GA2bC.js` — não atribuir homolog antiga a este tip.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`9f084ed0`** (ou tip docs posterior).
+2. Confirmar VPS: `MERGE_SHA8=9f084ed0` / `index-C-lbE7zK.js` — não atribuir homolog antiga a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. ~~CI + redeploy tip CRM+azul+#265~~ **feito** `db89aa45` / `index-Dg3GA2bC.js` · homolog owner fail_count=0.
+1. ~~CI + redeploy tip CRM+azul+#265+Orçamento~~ **feito** `9f084ed0` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
 2. Secret usuário restrito → homolog fail-closed FE+BE.
 3. Inventário residual (POD/Separação keep-both; Painel seletivo).
 4. Merge owner #261→main; fechar #254 como supersedido/ancestral.

@@ -1,0 +1,17 @@
+# Evidência sanitizada — tip 9f084ed0 implantado (Orçamento tenant-safe #265/#263)
+# utc=2026-10-10T17:24Z
+#
+# tip=9f084ed0 docs revisão Codex timer Orçamento
+# codigo=80ba3187 porte Orçamento sameOrcamentoScope + action gate
+# asset=index-C-lbE7zK.js
+# rollback=pre-spa-login-20261010-172341
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip 9f084ed0: erp-runtime-ci SUCCESS (4)
+# Homolog OWNER tipado (este SHA) fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-9f084ed0.png
+#
+# Bundle markers: CRM_CANONICAL_HTTP_PENDING · salvar-produto
+# #266 Legado: não mesclado
+# Usuário restrito: BLOCKED · Recuperado: NÃO
+# Não atribuir homolog de db89aa45 a este tip.
