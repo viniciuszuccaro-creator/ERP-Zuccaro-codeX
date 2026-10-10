@@ -11,6 +11,14 @@
 
 Evidência: `docs/vps/evidence/browser-api-login-68c311cc-20261008.txt`.
 
+## CODEX LEGADO — decisao de escopo dos mestres (2026-10-10)
+
+- Decisao expressa do proprietario: Clientes, Fornecedores, Produtos de revenda e auxiliares compartilhados do legado pertencem ao Grupo CPA. Nao exigir divisao artificial de cada mestre entre CPA e 3Z. Preservar ID/codigo de origem, vinculos e registros existentes do ERP novo; nenhum seed ou substituicao em massa.
+- Historico nao fiscal pode ser consultado no Grupo. Quando a origem comprovar CPA ou 3Z, preservar e permitir filtro; empresa desconhecida deve aparecer como historico legado sem empresa identificada, nunca como titulo, saldo, baixa ou movimento de estoque operacional. Documento fiscal requer emitente/destinatario comprovado. Grupo nao e emitente fiscal.
+- Staging privado derivado na VPS: 20.456 candidatos (18.458 Clientes, 790 Fornecedores, 1.208 Produtos) receberam apenas o escopo de Grupo aprovado; 4.722 quarentenas mantidas. Integridade, chaves e fingerprints conferidos na copia; 25.178 gates no total, zero IDs de destino e zero autorizacoes de importacao. O gate anterior e o backup original permanecem intactos. Nenhum registro foi carregado no ERP operacional.
+- Contrato efetivo verificado: `clientes` e `produtos` aceitam `group_id` com `empresa_id` nulo; `cliente_empresas` representa vinculo operacional separado. A listagem de Produto em contexto de Empresa filtra Empresa e nao deve ser ampliada automaticamente para operacoes. A API efetiva ainda nao possui tabela canonica de Fornecedor. O caminho de importacao de Grupo e os alvos explicitos precisam de teste em PostgreSQL isolado antes de promover candidatos.
+- Pendencias: linhagem historica completa da extracao, dependencias e codigos canonicos do destino, duplicidades documentais, contrato de Fornecedor, consulta historica separada de saldos, e gate de carga com backup/reversao. Nenhuma atribuição automatica de operacoes ou documentos fiscais a CPA/3Z.
+
 ## CURSOR — #113 Onda 3 sugestão vínculo (2026-10-08T15:09Z)
 
 | Fase | SHA |

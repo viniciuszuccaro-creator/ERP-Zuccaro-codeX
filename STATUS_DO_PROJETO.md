@@ -12028,3 +12028,10 @@ Checklist inicial:
 | Multiempresa | Recuperacao manual rejeita Grupo/Empresa incoerentes e IDs duplicados; nenhuma carga operacional afetada |
 | Testes | Foco 4/4, audit:baseline, lint, build e diff-check PASS; `dist` sem os dois assets. `npm test` raiz falha em guards bash/VPS no Windows; typecheck raiz falha amplamente fora do diff. Sem WSL/Docker local; CI Linux e gate de merge pendentes |
 | Pendencia | PR/CI/revisao e gate de implantacao; preparar limpeza de historico sem executar force-push nesta etapa |
+
+## 2026-10-10 — Legado: mestres compartilhados no Grupo CPA
+
+- Decisao do proprietario: cadastros compartilhados do ERP antigo ficam no Grupo CPA; a ausencia de empresa exclusiva nao bloqueia esses mestres. Historicos sem empresa identificada sao apenas consultaveis, sem efeito em cobranca, baixa, saldo ou estoque. Documento fiscal exige empresa comprovada.
+- Staging privado na VPS: copia derivada dos gates para 20.456 candidatos (18.458 Clientes, 790 Fornecedores, 1.208 Produtos) com escopo de Grupo; 4.722 quarentenas inalteradas. 25.178 linhas verificadas, sem sobreposicao, sem IDs de destino ou autorizacao de importacao. Backup e gate anterior preservados; nenhum dado real entrou no GitHub ou no operacional.
+- Contrato auditado: Cliente e Produto admitem mestre de Grupo (`empresa_id` nulo), mas Produto em contexto empresarial tem filtro restrito. `cliente_empresas` segue vinculo operacional explicito. Banco efetivo da API nao contem tabela canonica de Fornecedor; nao usar entidade local como substituto de carga operacional.
+- Pendente: caminho canonico de Fornecedor, mapeamento dos alvos e dependencias, linhagem historica, consulta segregada de saldos, e ensaio PostgreSQL isolado de importacao de Grupo com idempotencia/reversao. Sem piloto operacional aprovado. Alteracao deste lote e documental; `git diff --check` passou, testes de runtime nao se aplicam.
