@@ -8,7 +8,9 @@ import { isTenantMasterEntity } from '../lib/contextoMultiempresaPolicy.js';
 export function isCadastroSelfManagedScopeCurrent(opened, rendered, active) {
   return Boolean(opened && opened.groupId && rendered && active
     && opened.groupId === rendered.groupId && opened.empresaId === rendered.empresaId
-    && opened.groupId === active.groupId && opened.empresaId === active.empresaId);
+    && opened.groupId === active.groupId && opened.empresaId === active.empresaId
+    && (!opened.actorId || opened.actorId === active.actorId)
+    && (!opened.token || opened.token === active.token));
 }
 
 function hasText(...values) {
