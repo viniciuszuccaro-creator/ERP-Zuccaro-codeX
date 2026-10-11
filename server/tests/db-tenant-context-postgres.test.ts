@@ -40,8 +40,12 @@ if(process.env.DATABASE_URL)test('Auth bootstrap PostgreSQL: verified provider, 
     for(const[token,group,company,actor,status]of [
       ['invalid',I.group,I.company,'',401],['branch',I.group,I.second,'',403],['owner',I.group,I.inactive,'',403],['owner',I.other,I.company,'',403],['owner',I.group,I.company,I.foreignProfile,403],
     ]as const){const response=await fetch(`${base}/api/v1/marcas`,{headers:{authorization:`Bearer ${token}`,'x-group-id':group,'x-empresa-id':company,...(actor?{'x-actor-id':actor}:{})}});assert.equal(response.status,status);}
-    // Authorized identity reaches the existing RBAC guard, which still denies absent permissions.
-    const denied=await fetch(`${base}/api/v1/marcas`,{headers:{authorization:'Bearer owner','x-group-id':I.group,'x-empresa-id':I.company}});assert.equal(denied.status,403);
+    const headers={authorization:'Bearer owner','x-group-id':I.group,'x-empresa-id':I.company};
+    // Marca's legacy list validates scope only; this positive control proves Auth admitted the request.
+    const admitted=await fetch(`${base}/api/v1/marcas`,{headers});assert.equal(admitted.status,200);
+    // The canonical Orçamento endpoint enforces RBAC; absence of permissions must deny access.
+    const denied=await fetch(`${base}/api/v1/orcamentos`,{headers});assert.equal(denied.status,403);
+    assert.equal((await denied.json()).error.code,'PERMISSION_DENIED');
   }finally{if(server)await new Promise<void>(resolve=>server!.close(()=>resolve()));await new Promise<void>(resolve=>provider.close(()=>resolve()));await clients?.end();await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE;DROP ROLE IF EXISTS ${authRole};DROP ROLE IF EXISTS ${dataRole}`);await admin.end();}
 });
 if (process.env.DATABASE_URL) test('Auth/data PostgreSQL: restricted login startup, matching target and separate connections',async()=>{
