@@ -1,3 +1,15 @@
+## CURSOR — tip 4d04a42a implantado+homologado (Painel/Agenda) (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`4d04a42a`** · CI SUCCESS (UI `8ad26932`) · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-pwtjc2Qs.js` · rollback `pre-spa-login-20261011-102027` |
+| **conteúdo** | chrome azul Agenda/Painel · inventário POD/Separação keep-both |
+| **evidência** | `deploy-261-tip-4d04a42a-painel-agenda-20261011.txt` |
+| `#277/#278` | monitorar sem porte Auth |
+| BLOCKED | usuário restrito |
+| próxima | secret restrito · merge owner · C360 info/nav residual |
+
 ## CURSOR — inventário POD/Separação keep-both (2026-10-11)
 
 | Item | Estado |
