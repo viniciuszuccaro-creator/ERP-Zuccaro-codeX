@@ -34,7 +34,7 @@ async function prove(f:any,role:string) {
   assert.equal(flags.rolsuper,false);assert.equal(flags.rolbypassrls,false);
   const guard=new InMemoryRbacGuard();const tenant=new InMemoryTenantGuard();
   for(const [group,actor] of [[I.groupA,I.runtimeActorA],[I.groupB,I.runtimeActorB]]) guard.link({actorId:actor,groupId:group,
-    permissions:{Cadastros:{cliente:['visualizar','criar','editar','excluir','importar'],produto:['visualizar','criar','editar','excluir','importar']}}});
+    permissions:{Cadastros:{cliente:['visualizar','criar','editar','excluir','importar','inativar','restaurar'],produto:['visualizar','criar','editar','excluir','importar']}}});
   const limited='00000000-0000-4000-8000-000000000099';guard.link({actorId:limited,groupId:I.groupA,permissions:{Cadastros:{cliente:['visualizar'],produto:['visualizar']}}});
   function services(group:string) {
     const run=(fn:any)=>f.data.withTransaction(async(q:any)=>{
@@ -57,6 +57,9 @@ async function prove(f:any,role:string) {
   assert.equal((await f.admin.query("SELECT count(*)::int n FROM clientes WHERE source_system='' OR codigo_legado='' ")).rows[0].n,0);
   assert.equal((await f.admin.query("SELECT count(*)::int n FROM produtos WHERE source_system='' OR codigo_legado='' ")).rows[0].n,0);
   const first=await persistirClienteGrupoLegado(ctx,row,opts);
+  tenant.link(I.empresaB,ctx.groupId);
+  await assert.rejects(()=>s.cliente.update(ctx,first.registro.id,{empresa_id:I.empresaB}),e=>e.code==='LEGACY_GROUP_SCOPE_REQUIRED');
+  assert.equal((await s.cliente.get(ctx,first.registro.id)).empresa_id,null);
   assert.equal((await persistirClienteGrupoLegado(ctx,row,opts)).registro.id,first.registro.id);
   for(const variant of [{...row,documento:'39053344705'},{...row,codigo_legado:'0008'}]) {
     await assert.rejects(()=>persistirClienteGrupoLegado(ctx,variant,opts),/LEGACY_RECONCILIATION_REQUIRED/);
@@ -71,6 +74,24 @@ async function prove(f:any,role:string) {
   assert.equal(concurrent.filter(r=>r.status==='rejected'&&/LEGACY_RECONCILIATION_REQUIRED/.test(r.reason.message)).length,1);
   assert.equal((await f.admin.query('SELECT count(*)::int n FROM clientes WHERE source_system=$1 AND codigo_legado=$2',[opts.sourceSystem,'0009'])).rows[0].n,1);
 
+  await Promise.all([s.cliente.update(ctx,first.registro.id,{telefone:'Preserved synthetic'}),
+    s.cliente.update(ctx,first.registro.id,{observacoes:'Preserved note'})]);
+  const beforeClient=await s.cliente.get(ctx,first.registro.id);assert.equal(beforeClient.telefone,'Preserved synthetic');assert.equal(beforeClient.observacoes,'Preserved note');
+  const beforeAudit=(await f.admin.query("SELECT count(*)::int n FROM audit_logs WHERE entity='Cliente' AND entity_id=$1",[first.registro.id])).rows[0].n;
+  await f.exec("CREATE FUNCTION legacy_client_audit_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.entity='Cliente' THEN RAISE EXCEPTION 'synthetic client lifecycle audit failure';END IF;RETURN NEW;END $$;CREATE TRIGGER legacy_client_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION legacy_client_audit_fail()");
+  await assert.rejects(()=>s.cliente.update(ctx,first.registro.id,{telefone:'Must roll back'}),/synthetic client lifecycle audit failure/);
+  await assert.rejects(()=>s.cliente.softDelete(ctx,first.registro.id),/synthetic client lifecycle audit failure/);
+  assert.deepEqual(await s.cliente.get(ctx,first.registro.id),beforeClient);
+  assert.equal((await f.admin.query("SELECT count(*)::int n FROM audit_logs WHERE entity='Cliente' AND entity_id=$1",[first.registro.id])).rows[0].n,beforeAudit);
+  await f.exec('DROP TRIGGER legacy_client_audit_fail ON audit_logs');
+  await s.cliente.softDelete(ctx,first.registro.id);
+  await f.exec('CREATE TRIGGER legacy_client_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION legacy_client_audit_fail()');
+  await assert.rejects(()=>s.cliente.restore(ctx,first.registro.id),/synthetic client lifecycle audit failure/);
+  assert.equal((await s.cliente.findByLegacyIdentity(ctx,opts.sourceSystem,'0007'))!.ativo,false);
+  await f.exec('DROP TRIGGER legacy_client_audit_fail ON audit_logs');
+  const reopened=await s.cliente.restore(ctx,first.registro.id);assert.equal(reopened.id,beforeClient.id);assert.equal(reopened.codigo,beforeClient.codigo);assert.equal(reopened.telefone,beforeClient.telefone);assert.equal(reopened.codigo_legado,'0007');
+  await assert.rejects(()=>s.cliente.softDelete({...ctx,actorId:limited},first.registro.id),e=>e.code==='PERMISSION_DENIED');
+  await assert.rejects(()=>services(I.groupB).cliente.update({groupId:I.groupB,actorId:I.runtimeActorB},first.registro.id,{telefone:'Wrong scope'}),e=>e.code==='CLIENTE_NOT_FOUND');
   const productPayload={descricao:'Synthetic steel',tipo_item:'Matéria-Prima Produção',empresa_id:null,
     origem:'MIGRACAO',codigo_legado:'P-0001',legacy_id:'P-0001',source_system:'synthetic-contract',migration_batch:'synthetic'};
   const product=await s.produto.create(ctx,productPayload);assert.match(product.codigo!,/^\d+$/);
@@ -140,4 +161,47 @@ test('Legacy identity memory compatibility and blank-key gate before persistence
  cr.seed([{...client,id:'synthetic-ambiguous'}]);pr.seed([{...product,id:'synthetic-ambiguous'}]);
  await assert.rejects(()=>cs.findByLegacyIdentity(ctx,'synthetic','0001'),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
  await assert.rejects(()=>ps.findByLegacyIdentity(ctx,'synthetic','0001'),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+});
+
+
+test('Cliente memory lifecycle rolls back audit failures without erasing a concurrent successful mutation',async()=>{
+ const repo=createInMemoryClienteRepo(),tenant=new InMemoryTenantGuard(),guard=new InMemoryRbacGuard();
+ const ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-client-atomic'};
+ guard.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions:{Cadastros:{cliente:['visualizar','criar','editar','inativar','restaurar']}}});
+ let failId='';const entries:any[]=[];const audit={append:async(e:any)=>{if(e.entityId===failId)throw Error('synthetic memory audit failure');entries.push(e);}};
+ const s=new ClienteService(repo,audit,tenant,guard);
+ const a=await s.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic A',documento:'11144477735'}),b=await s.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic B',documento:'39053344705'});
+ await s.update(ctx,a.id,{telefone:'Preserve'});failId=a.id;
+ const mutations=await Promise.allSettled([s.update(ctx,a.id,{telefone:'Rollback'}),s.update(ctx,b.id,{telefone:'Successful'})]);
+ assert.equal(mutations[0].status,'rejected');assert.equal(mutations[1].status,'fulfilled');
+ assert.equal((await s.get(ctx,a.id)).telefone,'Preserve');assert.equal((await s.get(ctx,b.id)).telefone,'Successful');
+ await assert.rejects(()=>s.softDelete(ctx,a.id),/synthetic memory audit failure/);assert.equal((await s.get(ctx,a.id)).ativo,true);
+ failId='';await s.softDelete(ctx,a.id);failId=a.id;
+ await assert.rejects(()=>s.restore(ctx,a.id),/synthetic memory audit failure/);assert.equal((await repo.getById({groupId:ctx.groupId},a.id))!.ativo,false);
+ failId='';const restored=await s.restore(ctx,a.id);assert.equal(restored.id,a.id);assert.equal(restored.codigo,a.codigo);assert.equal(restored.telefone,'Preserve');
+ // Duplicate rejection remains audited after rollback of the mutation transaction.
+ await assert.rejects(()=>s.update(ctx,a.id,{documento:b.documento!}),e=>e.code==='DUPLICATE_DOCUMENT');
+ assert.equal((await s.get(ctx,a.id)).documento,a.documento);assert.equal(entries.at(-1).action,'duplicate_block');
+});
+
+
+test('Cliente SQL read lock requires executor and mutation never escapes it',async()=>{
+ let escaped=0;const db:any={query:async()=>{escaped++;return {rows:[]};},withTransaction:async(fn:any)=>fn(executor)};
+ const row={id:'00000000-0000-4000-8000-000000000099',group_id:I.groupA,empresa_id:null,codigo:'000001',tipo:'Pessoa Física',nome:'Synthetic',ativo:true};
+ const seen:string[]=[];const executor:any={query:async(sql:string)=>{seen.push(sql);return {rows:[row]};}};
+ const repo=new PostgresClienteRepository(db),scope={groupId:I.groupA};
+ await assert.rejects(()=>repo.getById(scope,row.id,undefined,{forUpdate:true}),/CLIENTE_ROW_LOCK_REQUIRES_TRANSACTION/);assert.equal(escaped,0);
+ assert.equal(await repo.getById(scope,row.id),null);assert.equal(escaped,1);
+ await repo.update(scope,row.id,{telefone:'Synthetic'},executor);assert.equal(escaped,1);assert.match(seen[0],/FOR UPDATE$/);assert.match(seen[1],/UPDATE clientes/);
+});
+
+test('Cliente lifecycle revalidates permission after prepare before any mutation',async()=>{
+ const repo=createInMemoryClienteRepo(),tenant=new InMemoryTenantGuard(),ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-revocation'};
+ let revoke=false,calls=0;const audit={append:async()=>{}};
+ const guard:any={assertAllowed:async()=>{if(revoke&&++calls===2)throw Object.assign(new Error('Permission revoked'),{code:'PERMISSION_DENIED'});}};
+ const s=new ClienteService(repo,audit,tenant,guard),row=await s.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic',documento:'11144477735'});
+ revoke=true;await assert.rejects(()=>s.update(ctx,row.id,{telefone:'Must not persist'}),e=>e.code==='PERMISSION_DENIED');assert.equal(calls,2);
+ assert.equal((await repo.getById({groupId:ctx.groupId},row.id))!.telefone,null);
+ calls=0;await assert.rejects(()=>s.softDelete(ctx,row.id),e=>e.code==='PERMISSION_DENIED');assert.equal((await repo.getById({groupId:ctx.groupId},row.id))!.ativo,true);
+ revoke=false;await s.softDelete(ctx,row.id);revoke=true;calls=0;await assert.rejects(()=>s.restore(ctx,row.id),e=>e.code==='PERMISSION_DENIED');assert.equal((await repo.getById({groupId:ctx.groupId},row.id))!.ativo,false);
 });

@@ -40,10 +40,13 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<Cliente>;
+  getById(scope: Scope,id:string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}):Promise<Cliente|null>;
+  update(scope:Scope,id:string,data:ClienteUpdate,executor?:DbQueryExecutor):Promise<Cliente|null>;
+  softDelete(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Cliente|null>;
   listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
-  findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null>;
+  findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
   findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null>;
-  restore(scope: Scope, id: string): Promise<Cliente | null>;
+  restore(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
   listEmpresaLinks(filter: ClienteEmpresaListFilter): Promise<{ rows: ClienteEmpresa[]; total: number }>;
   getEmpresaLinkById(scope: Scope, linkId: string, executor?: DbQueryExecutor): Promise<ClienteEmpresa | null>;
   getEmpresaLink(
@@ -147,7 +150,10 @@ export class InMemoryClienteRepository implements ClienteRepository {
   private readonly sequences = new Map<string, number>();
   private readonly empresaLinks = new Map<string, ClienteEmpresa>();
 
+  private transactionQueue:Promise<void> = Promise.resolve();
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    const previous=this.transactionQueue;let release=()=>{};
+    this.transactionQueue=new Promise<void>(resolve=>{release=resolve;});await previous;
     const rowsSnapshot = new Map(this.rows);
     const sequencesSnapshot = new Map(this.sequences);
     const linksSnapshot = new Map(this.empresaLinks);
@@ -161,7 +167,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
       this.empresaLinks.clear();
       linksSnapshot.forEach((value, key) => this.empresaLinks.set(key, value));
       throw error;
-    }
+    } finally { release(); }
   }
 
   seed(rows: Cliente[]) {
@@ -223,13 +229,13 @@ export class InMemoryClienteRepository implements ClienteRepository {
     return { rows: all.slice(offset, offset + limit), total };
   }
 
-  async getById(scope: Scope, id: string): Promise<Cliente | null> {
+  async getById(scope: Scope, id: string,_executor?:DbQueryExecutor,_options?:{forUpdate?:boolean}): Promise<Cliente | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
     return row;
   }
 
-  async findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null> {
+  async findByDocumento(groupId: string, documentoNormalizado: string,_executor?:DbQueryExecutor): Promise<Cliente | null> {
     return [...this.rows.values()].find(
       (r) => r.group_id === groupId && r.documento_normalizado === documentoNormalizado,
     ) ?? null;
@@ -277,7 +283,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
     return matches[0] ?? null;
   }
 
-  async update(scope: Scope, id: string, data: ClienteUpdate): Promise<Cliente | null> {
+  async update(scope: Scope, id: string, data: ClienteUpdate,_executor?:DbQueryExecutor): Promise<Cliente | null> {
     const current = await this.getById(scope, id);
     if (!current) return null;
     if (data.documento !== undefined || data.cpf_cnpj !== undefined) {
@@ -309,12 +315,12 @@ export class InMemoryClienteRepository implements ClienteRepository {
     return next;
   }
 
-  softDelete(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: false, status: 'Inativo' });
+  softDelete(scope: Scope, id: string,executor?:DbQueryExecutor) {
+    return this.update(scope, id, { ativo: false, status: 'Inativo' },executor);
   }
 
-  restore(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: true, status: 'Ativo' });
+  restore(scope: Scope, id: string,executor?:DbQueryExecutor) {
+    return this.update(scope, id, { ativo: true, status: 'Ativo' },executor);
   }
 
   async listEmpresaLinks(
