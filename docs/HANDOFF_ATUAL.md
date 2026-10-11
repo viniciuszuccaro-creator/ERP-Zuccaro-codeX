@@ -1,3 +1,14 @@
+## REVISÃO CODEX — #274 preço no executor (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| PR | [#274](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/274) tip **`3ec26ad8`** |
+| base | #273 @ `8d1d7242` · draft · MERGEABLE · CI IN_PROGRESS |
+| escopo | leituras de preço/referência/unidade no executor da venda · GUC no callback |
+| ação Cursor | **monitorar** — **não** porte sem CI verde + stack homologada |
+| stack | #274 → #273 → … → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
 ## REVISÃO CODEX — #273 preflight ACL/policy (2026-10-11)
 
 | Item | Valor |
@@ -100,7 +111,8 @@
 | #271 Codex | tip **`3260696e`** · seleção operacional GET · CI SUCCESS · **monitorar** (sem porte) |
 | #272 Codex | tip **`f2fda9c1`** · UI vínculo empresa form · CI SUCCESS · **monitorar** (sem porte) |
 | #273 Codex | tip **`8d1d7242`** · preflight ACL/policy · CI SUCCESS · **monitorar** (sem porte) |
-| porte neste ciclo | nenhum (Legado/#267–#273 schema fora; #265/#263 já absorvidos) |
+| #274 Codex | tip **`3ec26ad8`** · preço no executor · CI IN_PROGRESS · **monitorar** (sem porte) |
+| porte neste ciclo | nenhum (Legado/#267–#274 schema fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -122,6 +134,7 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#271](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/271) tip **`3260696e`** | seleção operacional GET · CI SUCCESS · flag off | **monitorar** — sem porte |
 | [#272](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/272) tip **`f2fda9c1`** | UI vínculo empresa form · CI SUCCESS · flag off | **monitorar** — sem porte; stack |
 | [#273](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/273) tip **`8d1d7242`** | preflight ACL/policy · CI SUCCESS | **monitorar** — sem porte/APPLY |
+| [#274](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/274) tip **`3ec26ad8`** | preço/refs no executor da venda · CI IN_PROGRESS | **monitorar** — sem porte |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | stack CRM/#270 em curso · Legado/Produto GET **IDLE** | timer contínuo |
 
