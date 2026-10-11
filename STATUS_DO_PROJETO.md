@@ -6,7 +6,7 @@
 | **asset** | `index-CaMsSipy.js` · rollback `pre-spa-login-20261011-122739` |
 | **conteúdo** | adapters canônicos · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
 | **evidência** | `deploy-261-tip-27224f87-consolidacao-adapters-20261011.txt` |
-| #280/#281/#282/#283 | **sem porte** (Marca/Legado) · #283 tip `6d9f8823` CI SUCCESS IDLE |
+| #280–#284 | **sem porte** (Marca/Legado) · #283 `4f1e8e0c` · #284 `c1323860` |
 | BLOCKED | secret restrito |
 | próxima | secret restrito · merge owner |
 

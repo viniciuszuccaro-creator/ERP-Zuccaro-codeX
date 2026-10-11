@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-11T13:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`560c8b0b`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#282 | tips inalterados · CI SUCCESS · **sem porte** |
+| #283 | tip **`4f1e8e0c`** (+hard-link reject) · CI SUCCESS · Legado · **sem porte** |
+| #284 **novo** | tip `c1323860` · identidade contestada staging · CI SUCCESS · Legado · **sem porte** |
+| RUNNING | nenhum |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T12:45Z
 
 | Item | Valor |
