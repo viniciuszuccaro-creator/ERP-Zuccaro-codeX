@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-11T13:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`aafb12b0`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#284 | tips inalterados · **sem porte** |
+| #285 | tip **`1be11f74`** (+reject blank import keys) · CI SUCCESS · **sem porte** |
+| #286 **novo** | tip `32dd1355` · piloto Produto Legado · CI SUCCESS · RUNNING · **sem porte** |
+| porte | nenhum (Legado/Auth/CRM/produtoService) |
+
 ## REVISÃO CODEX — timer 2026-10-11T13:30Z
 
 | Item | Valor |
