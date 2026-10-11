@@ -32,6 +32,7 @@ export type OrcamentoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
+    executor?:DbQueryExecutor,
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
 
@@ -78,8 +79,9 @@ export class OrcamentoService {
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       await this.validateReferences(scope, data, executor);
-      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       // Revalida após snapshot: preço pode preencher tabela_preco_id ausente no payload.
       await this.validateTabelaPreco(scope, priced.tabela_preco_id, executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
@@ -126,10 +128,11 @@ export class OrcamentoService {
     this.assertId(id);
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
-      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       await this.validateTabelaPreco(scope, priced.tabela_preco_id, executor);
       const criador = await this.resolveCriadorActorId('Orcamento', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
@@ -162,6 +165,7 @@ export class OrcamentoService {
     const scope = await this.prepare(ctx, 'cancelar');
     this.assertId(id);
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
       const after = await this.repo.cancel(scope, id, executor);
@@ -181,7 +185,7 @@ export class OrcamentoService {
    * Política Onda 2: preço unitário vem do servidor (ClienteEmpresa → tabela).
    * Payload do cliente não é autoridade; cancelados não passam por aqui (requireOpen).
    */
-  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate> {
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate,executor?:DbQueryExecutor): Promise<OrcamentoCreate> {
     const itens = [];
     let tabelaId: string | null | undefined = data.tabela_preco_id;
     for (const item of data.itens) {
@@ -189,7 +193,7 @@ export class OrcamentoService {
         clienteEmpresaId: data.cliente_empresa_id,
         produtoId: item.produto_id,
         unidadeMedidaId: item.unidade_id,
-      });
+      },executor);
       if (!resolved?.preco) {
         throw new AppError(422, 'ORCAMENTO_PRECO_INDISPONIVEL', 'Price unavailable for product/unit in authorized table', {
           produto_id: item.produto_id,
@@ -327,7 +331,7 @@ export class OrcamentoService {
       const produto = this.produtos.getForOperation?await this.produtos.getForOperation(scope,item.produto_id,executor):await this.produtos.getById(scope,item.produto_id,executor);
       if (!produto || !produto.ativo) throw new AppError(422, 'ORCAMENTO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
       if (produto.unidade_medida_id !== item.unidade_id) throw new AppError(422, 'ORCAMENTO_UNIDADE_INVALIDA', 'Unidade is not the principal product unit');
-      const unidade = await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id);
+      const unidade = await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id,executor);
       if (!unidade || !unidade.ativo) throw new AppError(422, 'ORCAMENTO_UNIDADE_INVALIDA', 'Unidade unavailable in tenant scope');
     }
   }

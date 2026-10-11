@@ -168,8 +168,8 @@ export class PostgresClienteRepository implements ClienteRepository {
     };
   }
 
-  async getById(scope: Scope, id: string): Promise<Cliente | null> {
-    const result = await this.db.query(
+  async getById(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null> {
+    const result = await (executor??this.db).query(
       'SELECT * FROM clientes WHERE group_id = $1 AND id = $2',
       [scope.groupId, id],
     );

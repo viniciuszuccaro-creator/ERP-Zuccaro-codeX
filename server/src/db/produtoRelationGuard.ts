@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient,DbQueryExecutor } from '../db/client.js';
 import { AppError } from '../api/errors.js';
 
 export type ProdutoRelationIds = {
@@ -9,22 +9,22 @@ export type ProdutoRelationIds = {
 };
 
 export interface ProdutoRelationGuard {
-  assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds): Promise<void>;
+  assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds,executor?:DbQueryExecutor): Promise<void>;
 }
 
 export class PostgresProdutoRelationGuard implements ProdutoRelationGuard {
   constructor(private readonly db: DbClient) {}
 
-  async assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds): Promise<void> {
-    await assertOne(this.db, 'marcas', relations.marcaId, groupId, 'marca_id');
-    await assertOne(this.db, 'unidades_medida', relations.unidadeMedidaId, groupId, 'unidade_medida_id');
-    await assertOne(this.db, 'grupos_produto', relations.grupoProdutoId, groupId, 'grupo_produto_id');
-    await assertOne(this.db, 'setores_atividade', relations.setorAtividadeId, groupId, 'setor_atividade_id');
+  async assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds,executor?:DbQueryExecutor): Promise<void> {
+    await assertOne(executor??this.db, 'marcas', relations.marcaId, groupId, 'marca_id');
+    await assertOne(executor??this.db, 'unidades_medida', relations.unidadeMedidaId, groupId, 'unidade_medida_id');
+    await assertOne(executor??this.db, 'grupos_produto', relations.grupoProdutoId, groupId, 'grupo_produto_id');
+    await assertOne(executor??this.db, 'setores_atividade', relations.setorAtividadeId, groupId, 'setor_atividade_id');
   }
 }
 
 async function assertOne(
-  db: DbClient,
+  db: DbQueryExecutor,
   table: string,
   id: string | null | undefined,
   groupId: string,
@@ -59,7 +59,7 @@ export class InMemoryProdutoRelationGuard implements ProdutoRelationGuard {
   linkGrupo(id: string, groupId: string) { this.maps.grupo.set(id, groupId); }
   linkSetor(id: string, groupId: string) { this.maps.setor.set(id, groupId); }
 
-  async assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds): Promise<void> {
+  async assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds,executor?:DbQueryExecutor): Promise<void> {
     check(this.maps.marca, relations.marcaId, groupId, 'marca_id');
     check(this.maps.unidade, relations.unidadeMedidaId, groupId, 'unidade_medida_id');
     check(this.maps.grupo, relations.grupoProdutoId, groupId, 'grupo_produto_id');
