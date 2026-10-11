@@ -2,8 +2,8 @@
 
 | Item | Valor |
 |---|---|
-| PR | [#275](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/275) tip **`f7b36588`** |
-| base | #274 @ `3ec26ad8` · draft · MERGEABLE · CI parcial |
+| PR | [#275](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/275) tip **`f6fa8a8a`** |
+| base | #274 @ `3ec26ad8` · draft · MERGEABLE · CI SUCCESS |
 | escopo | `server/src/db/client.ts` + `app.ts` · contexto tenant por tx · opt-in default false |
 | ação Cursor | **monitorar** — **não** porte (reservado sessão/contexto; não tocar Auth) |
 | stack | #275 → #274 → … → #267 → #261 · fora de `main` |
@@ -123,7 +123,7 @@
 | #272 Codex | tip **`f2fda9c1`** · UI vínculo empresa form · CI SUCCESS · **monitorar** (sem porte) |
 | #273 Codex | tip **`8d1d7242`** · preflight ACL/policy · CI SUCCESS · **monitorar** (sem porte) |
 | #274 Codex | tip **`3ec26ad8`** · preço no executor · CI SUCCESS · **monitorar** (sem porte) |
-| #275 Codex | tip **`f7b36588`** · contexto tenant runtime · CI parcial · **monitorar** (sem porte; reservado) |
+| #275 Codex | tip **`f6fa8a8a`** · contexto tenant runtime · CI SUCCESS · **monitorar** (sem porte; reservado) |
 | porte neste ciclo | nenhum (Legado/#267–#275 / sessão-contexto fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
@@ -147,7 +147,7 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#272](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/272) tip **`f2fda9c1`** | UI vínculo empresa form · CI SUCCESS · flag off | **monitorar** — sem porte; stack |
 | [#273](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/273) tip **`8d1d7242`** | preflight ACL/policy · CI SUCCESS | **monitorar** — sem porte/APPLY |
 | [#274](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/274) tip **`3ec26ad8`** | preço/refs no executor da venda · CI SUCCESS | **monitorar** — sem porte |
-| [#275](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/275) tip **`f7b36588`** | contexto tenant runtime · CI parcial | **monitorar** — sem porte; reservado |
+| [#275](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/275) tip **`f6fa8a8a`** | contexto tenant runtime · CI SUCCESS | **monitorar** — sem porte; reservado |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | stack CRM/#270 em curso · Legado/Produto GET **IDLE** | timer contínuo |
 
