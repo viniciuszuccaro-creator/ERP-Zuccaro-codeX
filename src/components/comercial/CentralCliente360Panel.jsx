@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target } from 'lucide-react';
 import {
@@ -15,8 +15,8 @@ import {
   INITIAL_CENTRAL360_BLOCK_LIMITS,
 } from '@/components/comercial/centralCliente360Pagination';
 import {
-  filterOportunidadesDoCliente,
-  resumirOportunidadeCrm,
+  centralCrmLegadoQueryKey,
+  loadCentralCrmLegado,
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
 import useContextoVisual from '@/components/lib/useContextoVisual';
@@ -25,7 +25,7 @@ import { useWindow } from '@/components/lib/useWindow';
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
-function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, httpBlock }) {
+function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, actorId, sessionKey, httpBlock }) {
   const { filterInContext } = useContextoVisual();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const { openWindow } = useWindow();
@@ -34,22 +34,32 @@ function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, httpBlock }) {
     || hasPermission('CRM', 'Oportunidade', 'visualizar')
     || hasPermission('CRM', null, 'visualizar')
   );
-  const enabled = Boolean(clienteId && groupId && canView);
+  const enabled = Boolean(clienteId && groupId && empresaId && actorId && sessionKey && sessionKey !== 'none' && canView);
+  const scopedKey = centralCrmLegadoQueryKey({clienteId,groupId,empresaId,actorId,sessionKey,canView});
+  const scopeRef = useRef(null);
+  const serializedScope = JSON.stringify(scopedKey);
+  scopeRef.current = serializedScope;
+  React.useEffect(() => {
+    scopeRef.current = serializedScope;
+    return () => { scopeRef.current = null; };
+  }, [serializedScope]);
 
   const query = useQuery({
-    queryKey: ['central360-crm-legado', groupId, empresaId, clienteId],
-    queryFn: async () => {
-      const rows = await filterInContext('Oportunidade', {}, '-created_date', 100);
-      return filterOportunidadesDoCliente(rows, clienteId).map(resumirOportunidadeCrm);
-    },
+    queryKey: scopedKey,
+    queryFn: ({signal}) => loadCentralCrmLegado({clienteId,signal,
+      readRows:()=>filterInContext('Oportunidade', {}, '-created_date', 100)}),
     enabled,
+    placeholderData: undefined,
     staleTime: 0,
     gcTime: 0,
     retry: 1,
   });
 
   const openCrm = async () => {
+    if (!enabled) return;
+    const openedScope = scopeRef.current;
     const OportunidadesLista = (await import('@/components/crm/OportunidadesLista')).default;
+    if (openedScope !== scopeRef.current) return;
     const rows = query.data || [];
     openWindow(
       OportunidadesLista,
@@ -58,7 +68,7 @@ function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, httpBlock }) {
         title: 'CRM · Oportunidades do cliente',
         width: 1400,
         height: 800,
-        uniqueKey: `crm-oportunidades-cliente-${clienteId}`,
+        uniqueKey: `crm-oportunidades-cliente-${scopeRef.current}`,
       },
     );
   };
@@ -71,7 +81,7 @@ function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, httpBlock }) {
     );
   }
 
-  if (!canView) {
+  if (!enabled) {
     return (
       <div className="border rounded-md bg-white p-3 space-y-2" data-block-key="crm" data-block-status="forbidden" data-crm-source="legado">
         <div className="flex items-center gap-2">
@@ -463,6 +473,8 @@ export default function CentralCliente360Panel({
             groupId={groupId}
             empresaId={empresaId}
             httpBlock={blocks.crm}
+            actorId={actorId}
+            sessionKey={sessionKey}
           />
         ) : (
           <BlockCard

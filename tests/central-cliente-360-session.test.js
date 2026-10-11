@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import {
   canLoadCentralCliente360,
   central360SessionKey,
@@ -15,6 +16,28 @@ const ACTOR_A = '33333333-3333-4333-8333-333333333333';
 const ACTOR_B = '44444444-4444-4444-8444-444444444444';
 const CLIENTE = '55555555-5555-4555-8555-555555555555';
 const TOKEN = 'synthetic.jwt.session.token';
+
+test('Central HTTP: resposta atrasada não reaparece após troca de sessão/ator/empresa/grupo',async()=>{
+  const base={groupId:GROUP_A,empresaId:EMPRESA_A,actorId:ACTOR_A,token:TOKEN};
+  for(const field of ['groupId','empresaId','actorId','token']){
+    let finish;const delayed=new Promise(resolve=>{finish=resolve;});
+    const cache=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+    const key=scope=>['central360',CLIENTE,scope.groupId,scope.empresaId,scope.actorId,central360SessionKey(scope.token)];
+    const api=createHttpApiClient({baseUrl:'https://synthetic.test',getScope:()=>base,
+      fetchImpl:async(_url,init)=>{assert.ok(init.signal);return delayed;}});
+    const observer=new QueryObserver(cache,{queryKey:key(base),queryFn:({signal})=>api.clientes.central360(CLIENTE,{signal})});
+    const seen=[];const unsubscribe=observer.subscribe(result=>{if(result.data)seen.push(result.data);});
+    const changed={...base,[field]:field==='token'?'synthetic.other.session.token':'different'};
+    observer.setOptions({queryKey:key(changed),enabled:false});
+    await cache.cancelQueries({queryKey:key(base),exact:true});
+    // Transport deliberately ignores cancellation; cache must still reject it.
+    finish(new Response(JSON.stringify({data:{identity:{id:'old'},blocks:{}}}),{status:200}));
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.deepEqual(seen,[]);assert.equal(observer.getCurrentResult().data,undefined);
+    assert.equal(cache.getQueryData(key(base)),undefined);
+    unsubscribe();observer.destroy();cache.clear();
+  }
+});
 
 function memoryStorage(map = {}) {
   return {
