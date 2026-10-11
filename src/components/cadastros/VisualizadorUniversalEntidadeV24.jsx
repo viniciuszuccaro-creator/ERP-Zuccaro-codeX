@@ -42,7 +42,7 @@ import DetalhesCliente from "@/components/comercial/DetalhesCliente";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
-import RepresentanteFormCompleto from "@/components/cadastros/RepresentanteFormCompleto";
+import RepresentanteForm from "@/components/cadastros/RepresentanteForm";
 import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
@@ -80,14 +80,14 @@ const DEFAULT_FORM_COMPONENTS = {
   Fornecedor: CadastroFornecedorCompleto,
   Transportadora: TransportadoraForm,
   Colaborador: ColaboradorForm,
-  Representante: RepresentanteFormCompleto,
+  Representante: RepresentanteForm,
   ContatoB2B: ContatoB2BForm,
   SegmentoCliente: SegmentoClienteForm,
   RegiaoAtendimento: RegiaoAtendimentoForm,
 };
 
 const SELF_MANAGED_NAMES = new Set([
-  "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto",
+  "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto","RepresentanteForm",
   "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
 ]);
 

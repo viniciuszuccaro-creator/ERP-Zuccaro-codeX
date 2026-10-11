@@ -15,7 +15,7 @@ import {
   Eye,
   Filter
 } from "lucide-react";
-import RepresentanteFormCompleto from "./RepresentanteFormCompleto";
+import RepresentanteForm from "./RepresentanteForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { useWindow } from "@/components/lib/useWindow";
@@ -72,7 +72,7 @@ export default function RepresentantesTab() {
     openWindow({
       id: `rep-${rep.id}`,
       title: `📊 ${rep.nome}`,
-      component: 'RepresentanteFormCompleto',
+      component: 'RepresentanteForm',
       props: { representante: rep, windowMode: true },
       size: 'large'
     });
@@ -241,7 +241,7 @@ export default function RepresentantesTab() {
       )}
 
       {isFormOpen && (
-        <RepresentanteFormCompleto
+        <RepresentanteForm
           representante={selectedRepresentante}
           isOpen={isFormOpen}
           onClose={() => {

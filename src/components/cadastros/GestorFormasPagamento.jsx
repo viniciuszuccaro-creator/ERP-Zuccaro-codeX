@@ -11,7 +11,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { Plus, Edit, Trash2, CreditCard, DollarSign, Zap, CheckCircle2, XCircle, ArrowUpDown, TrendingUp, AlertTriangle, BarChart3, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import FormaPagamentoFormCompleto from './FormaPagamentoFormCompleto';
+import FormaPagamentoForm from './FormaPagamentoForm';
 import GestorGatewaysPagamento from './GestorGatewaysPagamento';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -83,7 +83,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     .sort((a, b) => (a.ordem_exibicao || 0) - (b.ordem_exibicao || 0));
 
   const handleNova = () => {
-    openWindow(FormaPagamentoFormCompleto, {
+    openWindow(FormaPagamentoForm, {
       windowMode: true,
       onSubmit: async (data) => {
         try {
@@ -103,7 +103,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
   };
 
   const handleEditar = (forma) => {
-    openWindow(FormaPagamentoFormCompleto, {
+    openWindow(FormaPagamentoForm, {
       formaPagamento: forma,
       windowMode: true,
       onSubmit: async (data) => {

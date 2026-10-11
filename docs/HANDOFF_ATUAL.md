@@ -3,7 +3,8 @@
 | Item | Valor |
 |---|---|
 | branch | #261 |
-| escopo | Bloco1/2/3 → adapters · RepresentanteForm adapter · EmpresaForm fiscal/webhooks/cert upload |
+| tip | **`c8d46058`** (+ consumidores adapters em curso) |
+| escopo | Bloco1/2/3 → adapters · RepresentanteForm adapter · EmpresaForm fiscal/webhooks/cert · V24/Tab/Gestor/Ações→adapters |
 | preservação | loadIncomplete · certificado granular · tenant #228 · Completo keep (status/delete/IA) |
 | #280 | tip **`612c2055`** — **sem porte** Marca (list/get mutate, FOR UPDATE, filtro escopo) |
 | #281/#282 | Legado tip `2e8ef5bd` / `a0979808` — **monitorar** sem porte |

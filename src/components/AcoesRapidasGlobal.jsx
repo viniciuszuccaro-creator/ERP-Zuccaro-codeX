@@ -21,7 +21,7 @@ import ModuleMap from '@/components/lib/ModuleMap';
 import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
 import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
-import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompleto';
+import TabelaPrecoForm from '@/components/cadastros/TabelaPrecoForm';
 import PedidoFormCompleto from '@/components/comercial/PedidoFormCompleto';
 import ContaReceberForm from '@/components/financeiro/ContaReceberForm';
 import ContaPagarForm from '@/components/financeiro/ContaPagarForm';
@@ -83,7 +83,7 @@ export default function AcoesRapidasGlobal() {
     )),
     novoProduto: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, { title: '📦 Novo Produto', width: 1200, height: 700 }),
     novoFornecedor: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, { title: '🏢 Novo Fornecedor', width: 1100, height: 650 }),
-    novaTabelaPreco: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, { title: '💰 Nova Tabela', width: 1200, height: 700 }),
+    novaTabelaPreco: () => openWindow(TabelaPrecoForm, { windowMode: true }, { title: '💰 Nova Tabela', width: 1200, height: 700 }),
     novaContaReceber: () => openWindow(ContaReceberForm, {
       windowMode: true,
       onSubmit: async (data) => {

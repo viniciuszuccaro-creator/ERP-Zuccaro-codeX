@@ -185,12 +185,18 @@ test('TabelaPrecoForm é adapter canônico do Completo (sem store paralelo)', as
 test('RepresentanteForm é adapter canônico do Completo (sem store paralelo)', async () => {
   const simple = await readFile(new URL('../src/components/cadastros/RepresentanteForm.jsx', import.meta.url), 'utf8');
   const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
+  const v24 = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  const tab = await readFile(new URL('../src/components/cadastros/RepresentantesTab.jsx', import.meta.url), 'utf8');
   assert.match(simple, /RepresentanteFormCompleto/);
   assert.match(simple, /representante \|\| item \|\| data/);
   assert.match(simple, /isSelfManagedCadastro = true/);
   assert.doesNotMatch(simple, /createTable|RepresentanteStore/);
   assert.match(bloco1, /RepresentanteForm/);
   assert.doesNotMatch(bloco1, /RepresentanteFormCompleto/);
+  assert.match(v24, /Representante:\s*RepresentanteForm/);
+  assert.match(v24, /"RepresentanteForm"/);
+  assert.match(tab, /from "\.\/RepresentanteForm"/);
+  assert.doesNotMatch(tab, /RepresentanteFormCompleto/);
 });
 
 test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com id', async () => {
