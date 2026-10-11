@@ -1,14 +1,26 @@
+## CURSOR — tip b76474a2 implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`b76474a2`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-QS44q1wq.js` · rollback `pre-spa-login-20261011-212411` |
+| **conteúdo** | idOnly Parametro/Config · Empresas/adapters ancestral |
+| **evidência** | `deploy-261-tip-b76474a2-parametro-idonly-20261011.txt` |
+| #280–#292 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | secret restrito · merge owner |
+
 ## CURSOR — idOnly Parametro/Config residual (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| tip | pós-`b87bb928` (este lote) · CI pendente |
-| tip runtime | **`e6379a4a`** implantado+homolog |
+| tip | **`acb29887`/`b76474a2`** implantado |
+| tip runtime | **`b76474a2`** |
 | escopo | 9 forms Parametro/Config com `CadastroCodigoRegistroField` idOnly |
 | testes | cadastros-codigo-cobertura PASS |
 | #280–#292 | **sem porte** |
 | BLOCKED | secret restrito |
-| próxima | CI tip → redeploy → homolog |
+| próxima | secret restrito · merge owner |
 
 ## CURSOR — tip e6379a4a implantado+homologado (2026-10-11)
 

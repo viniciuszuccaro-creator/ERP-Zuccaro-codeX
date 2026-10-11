@@ -1,13 +1,35 @@
+## CURSOR — tip b76474a2 implantado+homologado (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`b76474a2`** · asset `index-QS44q1wq.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-212411` |
+| escopo | idOnly Parametro/Config · ancestral Empresas/adapters |
+| evidência | `deploy-261-tip-b76474a2-parametro-idonly-20261011.txt` |
+| #280–#292 | tips inalterados · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | secret restrito · merge owner · residual Cursor independente |
+
+## REVISÃO CODEX — timer 2026-10-11T21:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`b76474a2`** implantado · main `baba91a6` |
+| #280–#292 | tips inalterados (`612c2055`/`9c6fdfe9`/`5b7dc32a` …) · **sem porte** |
+| PRs >292 | nenhuma |
+| RUNNING | nenhum (IDLE/ERROR) |
+| porte | nenhum · risco painel C360 permanece |
+
 ## CURSOR — idOnly Parametro/Config residual (2026-10-11)
 
 | Item | Valor |
 |---|---|
-| tip runtime | **`e6379a4a`** implantado · tip código este lote (CI pendente) |
-| escopo | Parametro* (caixa/conciliação/portal/NFe/roteirização/origem) · Config boletos/WhatsApp/integração · idOnly |
+| tip | **`acb29887`/`b76474a2`** · **implantado** |
+| escopo | Parametro* · Config boletos/WhatsApp/integração · idOnly |
 | testes | `cadastros-codigo-cobertura` PASS |
 | #280/#291/#292 | tips `612c2055`/`9c6fdfe9`/`5b7dc32a` · **sem porte** |
 | BLOCKED | secret restrito |
-| próxima | CI tip → redeploy → homolog |
+| próxima | secret restrito · merge owner |
 
 ## CURSOR — tip e6379a4a implantado+homologado (2026-10-11)
 
