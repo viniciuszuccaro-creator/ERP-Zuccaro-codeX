@@ -1,3 +1,13 @@
+## CURSOR — #278 tip b398202b anti-redirect Marca (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#278** tip **`b398202b`** | draft · MERGEABLE · base #277 · CI SUCCESS · +commit anti-redirect empresa |
+| porte Cursor | **sim** só `assertTargetScope` (independente Auth) · sem stack #277 |
+| tip #261 / implantado | tip após push · runtime ainda **`164e6852`** até CI/redeploy |
+| testes | `runtime01` 15 pass / 2 skip |
+| próxima | CI → redeploy · #278 monitorar tip |
+
 ## CURSOR — tip 164e6852 implantado+homologado (2026-10-11)
 
 | Item | Estado |
