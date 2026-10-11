@@ -36,7 +36,8 @@ Capacidades: form scope session freeze + actorId/token · assert delete · `useP
 ## Inventário complementar (independente da integração)
 | módulo | canônico | duplicidade | status |
 |---|---|---|---|
-| Painel | Dashboard + DashboardCorporativo | escopos distintos | keep both |
+| Painel | Dashboard + DashboardCorporativo | escopos distintos | keep both · chrome azul seletivo 2026-10-11 (headers/tabs; Fluxo Caixa purple semântico preservado) |
+| Agenda | pages/Agenda.jsx | — | chrome azul seletivo 2026-10-11 (título/KPI Total/calendário) |
 | CRM | Funil* ×3 mesma fonte | HTTP schema Codex | C360 adaptador B feito |
 | Cadastros | V24 + Completo forms | V23 redirect feito | keep · ContatoB2B/Condicao ID técnico (2026-10-11) · Marca HTTP RBAC |
 | Comercial | Comercial.jsx + C360 | fonte única por entidade | keep · vínculos |

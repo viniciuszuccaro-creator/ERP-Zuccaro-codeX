@@ -307,7 +307,7 @@ export default function DashboardCorporativo() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-purple-600" />
+              <Building2 className="w-8 h-8 text-blue-600" />
               Dashboard Corporativo
             </h1>
             <p className="text-slate-600 mt-1">
@@ -350,7 +350,7 @@ export default function DashboardCorporativo() {
         {/* Tabs de Navegação */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white border shadow-sm w-full flex-wrap h-auto">
-            <TabsTrigger value="visao-geral" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="visao-geral" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Visão Geral
             </TabsTrigger>
@@ -441,7 +441,7 @@ export default function DashboardCorporativo() {
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Faturamento por Empresa */}
               <Card className="border-0 shadow-md">
-                <CardHeader className="bg-slate-50 border-b">
+                <CardHeader className="bg-blue-50/80 border-b border-blue-100">
                   <CardTitle className="text-base flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-blue-600" />
                     Faturamento por Empresa
@@ -484,9 +484,9 @@ export default function DashboardCorporativo() {
 
             {/* Distribuição */}
             <Card className="border-0 shadow-md">
-              <CardHeader className="bg-slate-50 border-b">
+              <CardHeader className="bg-blue-50/80 border-b border-blue-100">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Package className="w-5 h-5 text-purple-600" />
+                  <Package className="w-5 h-5 text-blue-600" />
                   Distribuição de Faturamento (%)
                 </CardTitle>
               </CardHeader>
@@ -516,7 +516,7 @@ export default function DashboardCorporativo() {
           {/* ABA: Performance por Empresa */}
           <TabsContent value="performance" className="space-y-6 mt-6">
             <Card className="border-0 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/60 border-b border-blue-100">
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-blue-600" />
                   Ranking de Performance
@@ -529,7 +529,7 @@ export default function DashboardCorporativo() {
                       key={empresa.id} 
                       className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all"
                     >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold">
                         {index + 1}
                       </div>
                       <div className="flex-1">

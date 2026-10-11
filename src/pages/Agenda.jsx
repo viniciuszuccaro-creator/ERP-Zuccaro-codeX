@@ -822,7 +822,10 @@ function Agenda() {
     <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex-1 p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Agenda e Calendário</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+          <Calendar className="w-8 h-8 text-blue-600" aria-hidden="true" />
+          Agenda e Calendário
+        </h1>
         <p className="text-slate-600">Gerencie compromissos, reuniões e lembretes com notificações automáticas</p>
       </div>
 
@@ -916,10 +919,10 @@ function Agenda() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Total</CardTitle>
-            <Users className="w-5 h-5 text-purple-600" />
+            <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">{eventos.length}</div>
+            <div className="text-3xl font-bold text-blue-600">{eventos.length}</div>
             <p className="text-xs text-slate-500 mt-1">eventos cadastrados</p>
           </CardContent>
         </Card>
@@ -928,7 +931,7 @@ function Agenda() {
       {/* Calendário */}
       <ErrorBoundary>
       <Card className="border-0 shadow-md">
-        <CardHeader className="border-b bg-slate-50">
+        <CardHeader className="border-b border-blue-100 bg-blue-50/80">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
