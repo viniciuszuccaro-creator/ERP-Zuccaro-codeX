@@ -1,3 +1,15 @@
+## CURSOR — revisão Codex timer: #277 Auth bootstrap RLS (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#277** tip **`8bc4fef2`** | draft · MERGEABLE · base #276 `9dedeafb` · CI SUCCESS (tip) |
+| conteúdo | migration **042** SELECT Auth · GUC `app.auth_user_id` · middleware/sessão exigem contexto com split · NOSUPERUSER Auth |
+| porte Cursor | **não** — Auth/sessão/RLS Codex; empilhada em #276→#267; sem merge/VPS/APPLY 042 |
+| risco | lacuna MarcaService.list legado (RBAC) documentada pelo Codex — coordenação própria, não resolvida aqui |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar stack #277→#267; **não** editar Auth/client/042; timer |
+
 ## CURSOR — revisão Codex timer: #276 Auth×dados split (2026-10-11)
 
 | Item | Estado |
