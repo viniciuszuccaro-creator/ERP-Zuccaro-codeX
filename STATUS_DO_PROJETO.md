@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #296 CRM conversão atômica (2026-10-11T22:45Z)
+
+| Item | Estado |
+|---|---|
+| #296 | tip `38ebdac4` · Orçamento→Pedido mesma TX · **sem porte** |
+| stack | #296→#295→#294→#293→#292 · CRM/HTTP Codex |
+| tip #261 runtime | **`b76474a2`** |
+| BLOCKED | secret restrito |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #293/#294/#295 CRM stack (2026-10-11T22:00Z)
 
 | Item | Estado |
