@@ -9,6 +9,7 @@ import { AUTH_IDS as I, authTables, authSeed, authColumnGrants, authPolicy } fro
 import { createApp } from '../src/app.ts';
 import { createServer } from 'node:http';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
 
 test('Tenant runtime PostgreSQL: refuses unvalidated destination', () => {
   assert.throws(() => assertCrmIsolatedUrl(undefined));
@@ -34,7 +35,12 @@ if(process.env.DATABASE_URL)test('Auth bootstrap PostgreSQL: verified provider, 
     await assert.rejects(clients.authDb.withAuthIdentity!(I.owner,q=>q.query('UPDATE profiles SET role=\'admin\'')),/read-only|permission denied/i);
     assert.equal((await clients.authDb.query("SELECT NULLIF(current_setting('app.auth_user_id',true),'') AS id")).rows[0].id,null);
     const tenantGuard=new InMemoryTenantGuard();tenantGuard.link(I.company,I.group);tenantGuard.link(I.second,I.group);
-    const mounted=createApp({config,db:clients.db,authDb:clients.authDb,useMemory:true,tenantGuard,tenantContextEnabled:true});server=mounted.app.listen(0);await new Promise<void>(resolve=>server!.once('listening',resolve));const s=server.address();assert(s&&typeof s!=='string');const base=`http://127.0.0.1:${s.port}`;
+    // Fixture-only data policy/grants: test real profiles.permissoes without installing DEV policies.
+    await admin.query(`GRANT SELECT(id,ativo,group_id,empresa_id,permissoes) ON ${schema}.profiles TO ${dataRole};
+      CREATE POLICY fixture_data_profiles ON ${schema}.profiles FOR SELECT TO ${dataRole}
+      USING (ativo AND group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+        AND (empresa_id IS NULL OR empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid))`);
+    const mounted=createApp({config,db:clients.db,authDb:clients.authDb,useMemory:true,tenantGuard,rbacGuard:new PostgresRbacGuard(clients.db),tenantContextEnabled:true});server=mounted.app.listen(0);await new Promise<void>(resolve=>server!.once('listening',resolve));const s=server.address();assert(s&&typeof s!=='string');const base=`http://127.0.0.1:${s.port}`;
     const login=await fetch(`${base}/api/v1/auth/session`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'synthetic@example.test',password:'synthetic-only-test-password'})});assert.equal(login.status,200);assert.equal((await login.json()).data.profiles[0].empresas.length,2);
     for(const[token,count]of [['owner',2],['branch',1]]as const){const restored=await fetch(`${base}/api/v1/auth/session`,{headers:{authorization:`Bearer ${token}`}});assert.equal(restored.status,200);assert.equal((await restored.json()).data.profiles[0].empresas.length,count);}
     for(const[token,group,company,actor,status]of [
@@ -46,6 +52,17 @@ if(process.env.DATABASE_URL)test('Auth bootstrap PostgreSQL: verified provider, 
     // The canonical Orçamento endpoint enforces RBAC; absence of permissions must deny access.
     const denied=await fetch(`${base}/api/v1/orcamentos`,{headers});assert.equal(denied.status,403);
     assert.equal((await denied.json()).error.code,'PERMISSION_DENIED');
+    await admin.query(`UPDATE ${schema}.profiles SET permissoes=$1::jsonb WHERE id=$2`,[JSON.stringify({Cadastros:{marca:['visualizar','criar','editar','inativar']}}),I.ownerProfile]);
+    assert.equal((await fetch(`${base}/api/v1/marcas`,{headers})).status,200);
+    const created=await fetch(`${base}/api/v1/marcas`,{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({nome_marca:'Synthetic composed'})});assert.equal(created.status,201);
+    const marca=(await created.json()).data;
+    await admin.query(`UPDATE ${schema}.profiles SET permissoes=$1::jsonb WHERE id=$2`,[JSON.stringify({Cadastros:{marca:['visualizar']}}),I.branchProfile]);
+    const branchHeaders={...headers,authorization:'Bearer branch'};
+    assert.equal((await fetch(`${base}/api/v1/marcas`,{headers:branchHeaders})).status,200);
+    assert.equal((await fetch(`${base}/api/v1/marcas/${marca.id}`,{method:'PATCH',headers:{...branchHeaders,'Content-Type':'application/json'},body:JSON.stringify({descricao:'Denied'})})).status,403);
+    await admin.query(`UPDATE ${schema}.profiles SET permissoes='{}' WHERE id=$1`,[I.ownerProfile]);
+    assert.equal((await fetch(`${base}/api/v1/marcas`,{headers})).status,403);
+    assert.equal((await clients.db.query("SELECT NULLIF(current_setting('app.group_id',true),'') AS tenant")).rows[0].tenant,null);
   }finally{if(server)await new Promise<void>(resolve=>server!.close(()=>resolve()));await new Promise<void>(resolve=>provider.close(()=>resolve()));await clients?.end();await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE;DROP ROLE IF EXISTS ${authRole};DROP ROLE IF EXISTS ${dataRole}`);await admin.end();}
 });
 if (process.env.DATABASE_URL) test('Auth/data PostgreSQL: restricted login startup, matching target and separate connections',async()=>{
