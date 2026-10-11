@@ -1,3 +1,4 @@
+import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
@@ -151,6 +152,17 @@ export class ClienteService {
     };
   }
 
+  async findByLegacyIdentity(ctx: RequestContext, sourceSystem: string, codigoLegado: string) {
+    this.assertScope(ctx);
+    if (ctx.empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Group context required');
+    if (![sourceSystem,codigoLegado].every(value => typeof value === 'string' && value.trim() === value && value.length > 0 && value.length <= 80)) {
+      throw new AppError(400,'VALIDATION_ERROR','Explicit legacy identity required');
+    }
+    await this.assertPermission(ctx,'visualizar');
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','cliente','importar',{allowGlobalWildcard:false});
+    return this.repo.findByLegacyIdentity(ctx.groupId,sourceSystem,codigoLegado);
+  }
+
   async create(ctx: RequestContext, payload: unknown) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'criar');
@@ -160,6 +172,13 @@ export class ClienteService {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
     }
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    if (parsed.data.source_system && parsed.data.codigo_legado) {
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','cliente','importar',{allowGlobalWildcard:false});
+      if (empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+      if (await this.repo.findByLegacyIdentity(ctx.groupId,parsed.data.source_system,parsed.data.codigo_legado)) {
+        throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity already exists');
+      }
+    }
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     if (empresaId) await this.empresaOperations.assertCanCreate(ctx);
 
@@ -241,14 +260,10 @@ export class ClienteService {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
     }
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const before = await this.repo.getById(scope, id);
-    if (!before || before.ativo === false) {
-      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
-    }
-    this.validateUpdatedIdentity(before, parsed.data);
-    const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
-
+    // Preserve the committed negative audit outside the mutation transaction.
+    const preflight = await this.repo.getById(scope,id);
+    if(!preflight || preflight.ativo===false)throw new AppError(404,'CLIENTE_NOT_FOUND','Cliente not found in tenant scope');
+    this.validateUpdatedIdentity(preflight,parsed.data);
     if (parsed.data.documento !== undefined || parsed.data.cpf_cnpj !== undefined) {
       const docNorm = normalizeDocumento(parsed.data.documento ?? parsed.data.cpf_cnpj ?? '');
       if (docNorm) {
@@ -276,81 +291,111 @@ export class ClienteService {
       }
     }
 
-    let updated: Cliente | null;
-    try {
-      updated = await this.repo.update(scope, id, parsed.data);
-    } catch (error) {
-      this.rethrowConflict(error);
-      throw error;
-    }
-    if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: updated.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Cliente',
-      entityId: id,
-      action: 'update',
-      beforeData: sanitizeClienteAudit(before),
-      afterData: sanitizeClienteAudit(updated),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
+    return this.repo.withTransaction(async(executor)=>{
+      await this.assertPermission(ctx,'editar',executor);
+      const before = await this.repo.getById(scope, id,executor,{forUpdate:true});
+      if (!before || before.ativo === false) {
+        throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+      }
+      if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
+        .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
+        throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported provenance is immutable');
+      }
+      if (!(before.source_system && before.codigo_legado) && (parsed.data.source_system || parsed.data.codigo_legado)) {
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','cliente','importar',{allowGlobalWildcard:false,executor});
+      }
+      if(parsed.data.ativo===false)await this.assertPermission(ctx,'inativar',executor);
+      this.validateUpdatedIdentity(before, parsed.data);
+      const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+      if ((parsed.data.source_system ?? before.source_system)
+        && (parsed.data.codigo_legado ?? before.codigo_legado) && empresaId) {
+        throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+      }
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId,executor);
+
+
+      let updated: Cliente | null;
+      try {
+        updated = await this.repo.update(scope, id, parsed.data,executor);
+      } catch (error) {
+        this.rethrowConflict(error);
+        throw error;
+      }
+      if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: updated.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Cliente',
+        entityId: id,
+        action: 'update',
+        beforeData: sanitizeClienteAudit(before),
+        afterData: sanitizeClienteAudit(updated),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      },executor);
+      return updated;
     });
-    return updated;
   }
 
   async softDelete(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'inativar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const before = await this.repo.getById(scope, id);
-    if (!before || before.ativo === false) {
-      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
-    }
-    const updated = await this.repo.softDelete(scope, id);
-    if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: updated.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Cliente',
-      entityId: id,
-      action: 'soft_delete',
-      beforeData: sanitizeClienteAudit(before),
-      afterData: sanitizeClienteAudit(updated),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
+    return this.repo.withTransaction(async(executor)=>{
+      await this.assertPermission(ctx,'inativar',executor);
+      const before = await this.repo.getById(scope, id,executor,{forUpdate:true});
+      if (!before || before.ativo === false) {
+        throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+      }
+      const updated = await this.repo.softDelete(scope, id,executor);
+      if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: updated.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Cliente',
+        entityId: id,
+        action: 'soft_delete',
+        beforeData: sanitizeClienteAudit(before),
+        afterData: sanitizeClienteAudit(updated),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      },executor);
+      return updated;
     });
-    return updated;
   }
 
   async restore(ctx: RequestContext, id: string) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'restaurar');
     const scope = { groupId: ctx.groupId, empresaId: ctx.empresaId };
-    const before = await this.repo.getById(scope, id);
-    // Restore só de inativo existente no tenant; ativo → 404 idempotente.
-    if (!before || before.ativo === true) {
-      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found for restore in tenant scope');
-    }
-    const updated = await this.repo.restore(scope, id);
-    if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found for restore in tenant scope');
-    await this.audit.append({
-      groupId: ctx.groupId,
-      empresaId: updated.empresa_id ?? ctx.empresaId,
-      actorId: ctx.actorId,
-      actorEmail: ctx.actorEmail,
-      entity: 'Cliente',
-      entityId: id,
-      action: 'restore',
-      beforeData: sanitizeClienteAudit(before),
-      afterData: sanitizeClienteAudit(updated),
-      requestId: ctx.requestId,
-      ipAddress: ctx.ipAddress,
+    return this.repo.withTransaction(async(executor)=>{
+      await this.assertPermission(ctx,'restaurar',executor);
+      const before = await this.repo.getById(scope, id,executor,{forUpdate:true});
+      // Restore só de inativo existente no tenant; ativo → 404 idempotente.
+      if (!before || before.ativo === true) {
+        throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found for restore in tenant scope');
+      }
+      const updated = await this.repo.restore(scope, id,executor);
+      if (!updated) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found for restore in tenant scope');
+      await this.audit.append({
+        groupId: ctx.groupId,
+        empresaId: updated.empresa_id ?? ctx.empresaId,
+        actorId: ctx.actorId,
+        actorEmail: ctx.actorEmail,
+        entity: 'Cliente',
+        entityId: id,
+        action: 'restore',
+        beforeData: sanitizeClienteAudit(before),
+        afterData: sanitizeClienteAudit(updated),
+        requestId: ctx.requestId,
+        ipAddress: ctx.ipAddress,
+      },executor);
+      return updated;
     });
-    return updated;
   }
 
   async listEmpresaLinks(
@@ -411,6 +456,9 @@ export class ClienteService {
     tipo: string,
   ) {
     const message = error instanceof Error ? error.message : String(error);
+    if (/unique|duplicate/i.test(message) && /legacy_identity/i.test(message)) {
+      throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity conflicts');
+    }
     if (/unique|duplicate/i.test(message) && /documento/i.test(message)) {
       const existing = docNorm ? await this.repo.findByDocumento(ctx.groupId, docNorm) : null;
       await this.audit.append({
@@ -496,8 +544,8 @@ export class ClienteService {
     }
   }
 
-  private assertPermission(ctx: RequestContext, action: RbacAction) {
-    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', action);
+  private assertPermission(ctx: RequestContext, action: RbacAction,executor?:DbQueryExecutor) {
+    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', action,{executor});
   }
 
   private assertScope(ctx: RequestContext) {
@@ -508,6 +556,7 @@ export class ClienteService {
 
   private rethrowConflict(error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
+    if (/legacy_identity/i.test(message)) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity conflicts');
     if (/unique|duplicate/i.test(message)) {
       throw new AppError(409, 'CONFLICT', 'Cliente conflicts with an existing record');
     }

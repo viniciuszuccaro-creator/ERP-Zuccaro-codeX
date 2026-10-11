@@ -1,3 +1,4 @@
+import { AppError } from '../api/errors.js';
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
@@ -32,6 +33,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   getEmpresaLink(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
   saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
+  findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Produto | null>;
   listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
   getById(
     scope: Scope,
@@ -120,6 +122,8 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
   return {
+    origem:data.origem ?? null, codigo_legado:data.codigo_legado ?? null, legacy_id:data.legacy_id ?? null,
+    source_system:data.source_system ?? null, migration_batch:data.migration_batch ?? null,
     id,
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
@@ -287,6 +291,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
 
   async create(scope: Scope, data: ProdutoCreate, _executor?: DbQueryExecutor): Promise<Produto> {
+    if (data.source_system && data.codigo_legado && [...this.rows.values()].some(row =>
+      row.group_id === scope.groupId && row.source_system === data.source_system && row.codigo_legado === data.codigo_legado)) {
+      throw new Error('unique constraint produtos_legacy_identity_uidx');
+    }
     const ts = nowIso();
     const row = buildProduto(scope, data, randomUUID(), ts);
     // conflict: codigo no mesmo grupo
@@ -298,6 +306,13 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     }
     this.rows.set(row.id, row);
     return row;
+  }
+
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string) {
+    const matches = [...this.rows.values()].filter(row => row.group_id === groupId
+      && row.source_system === sourceSystem && row.codigo_legado === codigoLegado);
+    if (matches.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
+    return matches[0] ?? null;
   }
 
   async update(scope: Scope, id: string, data: ProdutoUpdate, _executor?: DbQueryExecutor): Promise<Produto | null> {
@@ -321,6 +336,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
           && r.codigo && r.codigo.toLowerCase() === next.codigo!.toLowerCase(),
       );
       if (dup) throw new Error('unique constraint produtos codigo');
+    }
+    if (next.source_system && next.codigo_legado && [...this.rows.values()].some(row =>
+      row.id !== id && row.group_id === scope.groupId && row.source_system === next.source_system && row.codigo_legado === next.codigo_legado)) {
+      throw new Error('unique constraint produtos_legacy_identity_uidx');
     }
     this.rows.set(id, next);
     return next;
