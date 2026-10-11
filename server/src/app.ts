@@ -216,6 +216,7 @@ export function createApp(options: CreateAppOptions) {
     clienteLocalService,
     obraService,
     rbacGuard,
+    oportunidadeService,
   );
 
   const app = express();

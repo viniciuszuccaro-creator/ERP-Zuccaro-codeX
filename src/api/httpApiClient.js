@@ -465,6 +465,7 @@ export function createHttpApiClient(options = {}) {
      * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).
      * @param {string} id
      * @param {{
+     *   crmLimit?: number, crmOffset?: number,
      *   orcamentosLimit?: number, orcamentosOffset?: number,
      *   pedidosLimit?: number, pedidosOffset?: number,
      *   empresasLimit?: number, empresasOffset?: number,
@@ -474,6 +475,8 @@ export function createHttpApiClient(options = {}) {
      * }} [options]
      */
     central360(id, {
+      crmLimit = 10,
+      crmOffset = 0,
       orcamentosLimit = 10,
       orcamentosOffset = 0,
       pedidosLimit = 10,
@@ -498,6 +501,8 @@ export function createHttpApiClient(options = {}) {
           locais_offset: locaisOffset,
           obras_limit: obrasLimit,
           obras_offset: obrasOffset,
+          crm_limit: crmLimit,
+          crm_offset: crmOffset,
         },
         signal,
         unwrap: false,

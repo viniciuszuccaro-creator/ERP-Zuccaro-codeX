@@ -240,6 +240,7 @@ export default function CentralCliente360Panel({
       blockLimits.obras,
       blockLimits.orcamentos,
       blockLimits.pedidos,
+      blockLimits.crm,
     ],
     queryFn: ({ signal }) => api.central360(clienteId, {
       signal,
@@ -253,6 +254,8 @@ export default function CentralCliente360Panel({
       orcamentosOffset: 0,
       pedidosLimit: blockLimits.pedidos,
       pedidosOffset: 0,
+      crmLimit: blockLimits.crm,
+      crmOffset: 0,
     }),
     enabled,
     retry: 1,
@@ -467,14 +470,28 @@ export default function CentralCliente360Panel({
             icon={Building2}
             blockKey="crm"
             block={blocks.crm}
-            renderRow={() => null}
+            onLoadMore={handleLoadMore}
+            loadingMore={query.isFetching}
+            renderRow={(row) => (
+              <>
+                <span className="min-w-0 truncate">
+                  <span className="font-mono text-xs mr-2" data-action="central360-crm-codigo">{row.codigo_oportunidade || row.codigo || 'Sem código'}</span>
+                  {row.titulo}
+                  <span className="ml-2 font-mono text-[10px] text-slate-400" title="ID técnico">{String(row.id).slice(0,8)}</span>
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  <Badge variant="outline">{row.etapa || row.status}</Badge>
+                  <span>{money(row.valor_estimado)}</span>
+                </span>
+              </>
+            )}
           />
         )}
       </div>
 
       <p className="text-xs text-slate-500" data-action="central360-fonte-canonica">
         Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido ·
-        CRM via Oportunidade legado (até HTTP canônico Codex) · Locais/Obras · Financeiro/Expedição via pedido.
+        CRM via Oportunidade canônica quando habilitada · Locais/Obras · Financeiro/Expedição via pedido.
       </p>
     </div>
   );

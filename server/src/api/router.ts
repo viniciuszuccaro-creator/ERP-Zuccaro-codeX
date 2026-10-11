@@ -433,6 +433,8 @@ function mountClienteRoutes(
         locaisOffset: parsePage(req.query.locais_offset),
         obrasLimit: parsePage(req.query.obras_limit),
         obrasOffset: parsePage(req.query.obras_offset),
+        crmLimit: parsePage(req.query.crm_limit),
+        crmOffset: parsePage(req.query.crm_offset),
       });
       res.setHeader('Cache-Control', 'no-store');
       res.json({ data });

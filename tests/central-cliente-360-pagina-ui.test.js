@@ -1,6 +1,37 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHttpApiClient } from '../src/api/httpApiClient.js';
 import { readFile } from 'node:fs/promises';
+
+test('CRM pagina independentemente e reinicia em cada troca de identidade da sessão', () => {
+  const scope = { clienteId:'c1',groupId:'g1',empresaId:'e1',actorId:'a1',sessionKey:'s1' };
+  const key = buildCentral360PaginationScopeKey(scope);
+  const grown = growCentral360BlockLimit(INITIAL_CENTRAL360_BLOCK_LIMITS,'crm');
+  assert.equal(grown.crm,CENTRAL360_BLOCK_PAGE_SIZE*2);
+  assert.equal(grown.pedidos,CENTRAL360_BLOCK_PAGE_SIZE);
+  for (const field of Object.keys(scope)) {
+    const changed = buildCentral360PaginationScopeKey({...scope,[field]:'different'});
+    assert.deepEqual(resolveCentral360LimitsForScope(key,changed,grown).limits,INITIAL_CENTRAL360_BLOCK_LIMITS);
+  }
+});
+
+test('Central CRM envia paginação, contexto e cancelamento pelo contrato HTTP existente', async () => {
+  const controller = new AbortController();
+  const client = createHttpApiClient({baseUrl:'https://synthetic.test',
+    getScope:()=>({groupId:'synthetic-group',empresaId:'synthetic-company',token:'synthetic-token'}),
+    fetchImpl:async(url,init)=>{
+      const parsed=new URL(url);
+      assert.equal(parsed.pathname,'/api/v1/clientes/synthetic-client/central-360');
+      assert.equal(parsed.searchParams.get('crm_limit'),'15');
+      assert.equal(parsed.searchParams.get('crm_offset'),'5');
+      assert.equal(init.headers['X-Empresa-Id'],'synthetic-company');
+      assert.equal(init.headers.Authorization,'Bearer synthetic-token');
+      assert.equal(init.signal,controller.signal);
+      return new Response(JSON.stringify({data:{crm:{status:'forbidden',data:[],meta:null}}}),{status:200});
+    }});
+  const result=await client.clientes.central360('synthetic-client',{crmLimit:15,crmOffset:5,signal:controller.signal});
+  assert.equal(result.data.crm.status,'forbidden');
+});
 import {
   CENTRAL360_BLOCK_PAGE_SIZE,
   buildCentral360PaginationScopeKey,

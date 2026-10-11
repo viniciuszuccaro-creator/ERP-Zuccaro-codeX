@@ -37,15 +37,16 @@ const CADASTROS_NO_PII = {
   obra: ['visualizar', 'criar', 'editar', 'principal', 'vincular-local', 'vincular-empresa'],
 };
 
-function config() {
+function config(crm = false) {
   return loadConfig({
     NODE_ENV: 'test',
     ERP_ENV: 'dev',
     REQUIRE_DATABASE: 'false',
+    ENABLE_CRM_HTTP: String(crm),
   });
 }
 
-function fixture() {
+function fixture(crm = false) {
   const tenant = new InMemoryTenantGuard();
   tenant.link(EMPRESA_A, GROUP_A);
   tenant.link(EMPRESA_A2, GROUP_A);
@@ -56,6 +57,7 @@ function fixture() {
     groupId: GROUP_A,
     permissions: {
       Cadastros: CADASTROS_OPS,
+      CRM: { oportunidades: ['visualizar','criar','editar','inativar','restaurar'] },
       Comercial: { orcamento: ['visualizar', 'criar', 'aprovar'], pedido: ['visualizar', 'criar', 'aprovar'] },
     },
   });
@@ -89,8 +91,8 @@ function fixture() {
     },
   });
   const runtime = createApp({
-    config: config(),
-    db: createDbClient(config()),
+    config: config(crm),
+    db: createDbClient(config(crm)),
     useMemory: true,
     tenantGuard: tenant,
     rbacGuard: rbac,
@@ -262,6 +264,39 @@ async function seedClienteComercial(
   };
 }
 
+
+test('Central CRM canonical HTTP is paginated, tenant/link scoped, projected and fails closed',async()=>{
+ const runtime=fixture(true),seeded=await seedClienteComercial(runtime,ACTOR_FULL,GROUP_A,EMPRESA_A,CNPJ_A);
+ const create=async(key:string,title:string)=>request(runtime.app,'/api/v1/oportunidades',{method:'POST',
+  headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A),body:JSON.stringify({titulo:title,cliente_empresa_id:seeded.clienteEmpresaId,
+   idempotency_key:key,cliente_email:'private.crm@example.invalid',cliente_telefone:'11900001111',observacoes:'private notes',valor_estimado:'100.123456'})});
+ const first=await create('central-crm-first','Canonical first');assert.equal(first.status,201,JSON.stringify(first.body));
+ assert.equal((await create('central-crm-second','Canonical second')).status,201);
+ const base='/api/v1/clientes/'+seeded.clienteId+'/central-360';
+ const page=await request(runtime.app,base+'?crm_limit=1&crm_offset=0',{headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A)});
+ assert.equal(page.status,200);assert.equal(page.cache,'no-store');
+ const block=page.body.data.blocks.crm;assert.equal(block.status,'ok');assert.equal(block.meta.total,2);assert.equal(block.data.length,1);assert.equal(block.meta.hasMore,true);
+ for(const field of ['cliente_email','cliente_telefone','observacoes','descricao','necessidades','idempotency_key','payload_fingerprint','created_by','updated_by'])assert.equal(Object.hasOwn(block.data[0],field),false);
+ assert.match(block.data[0].codigo,/^\d+$/);assert.equal(block.data[0].valor_estimado,'100.123456');
+ const next=await request(runtime.app,base+'?crm_limit=1&crm_offset=1',{headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A)});
+ assert.notEqual(next.body.data.blocks.crm.data[0].id,block.data[0].id);assert.equal(next.body.data.blocks.crm.meta.hasMore,false);
+ const denied=await request(runtime.app,base,{headers:headers(ACTOR_NO_PII,GROUP_A,EMPRESA_A)});
+ assert.equal(denied.status,200);assert.equal(denied.body.data.blocks.crm.status,'forbidden');assert.equal(denied.body.data.blocks.crm.meta,null);assert.deepEqual(denied.body.data.blocks.crm.data,[]);
+ // Reuse the master in A2 via its explicit link; A opportunities must not leak to that company.
+ const linked=await request(runtime.app,'/api/v1/clientes/'+seeded.clienteId+'/empresas/'+EMPRESA_A2,{method:'POST',headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A2),body:'{}'});
+ assert.ok([200,201].includes(linked.status));
+ const otherCompany=await request(runtime.app,base,{headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A2)});
+ assert.equal(otherCompany.status,200);assert.equal(otherCompany.body.data.blocks.crm.status,'ok');assert.equal(otherCompany.body.data.blocks.crm.meta.total,0);
+ const otherGroup=await request(runtime.app,base,{headers:headers(ACTOR_GROUP_B,GROUP_B,EMPRESA_B)});assert.equal(otherGroup.status,404);
+ const original=runtime.oportunidadeService!.list.bind(runtime.oportunidadeService);
+ runtime.oportunidadeService!.list=async()=>{throw new Error('private backend failure');};
+ const unavailable=await request(runtime.app,base,{headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A)});
+ assert.equal(unavailable.body.data.blocks.crm.status,'unavailable');assert.equal(unavailable.body.data.blocks.crm.meta,null);
+ assert.equal(JSON.stringify(unavailable.body).includes('private backend failure'),false);
+ runtime.oportunidadeService!.list=original;
+ const repeated=await request(runtime.app,base,{headers:headers(ACTOR_FULL,GROUP_A,EMPRESA_A)});
+ assert.equal(repeated.body.data.blocks.crm.meta.total,2);
+});
 test('Central 360 compoe identidade + blocos com PII revelado quando autorizado', async () => {
   const runtime = fixture();
   const seeded = await seedClienteComercial(runtime, ACTOR_FULL, GROUP_A, EMPRESA_A, CNPJ_A);

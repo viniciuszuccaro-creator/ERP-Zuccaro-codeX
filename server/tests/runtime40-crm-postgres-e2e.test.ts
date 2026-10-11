@@ -10,8 +10,12 @@ import { PostgresOrcamentoRepository } from '../src/repositories/postgresOrcamen
 import { PostgresPedidoRepository } from '../src/repositories/postgresPedidoRepository.ts';
 import { PostgresOportunidadeRepository } from '../src/repositories/postgresOportunidadeRepository.ts';
 import { OportunidadeService } from '../src/services/oportunidadeService.ts';
+import { ClienteCentral360Service } from '../src/services/clienteCentral360Service.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { assertCrmIsolatedUrl, realCrmFixture } from './helpers/crmPostgresFixture.ts';
+import { localCrmFixture } from './helpers/crmFixture.ts';
+import type { DbClient } from '../src/db/client.ts';
+import type { RequestContext } from '../src/audit/types.ts';
 import { inspectCrmPreflight } from '../src/db/crmPreflight.ts';
 
 test('R40 gate de PostgreSQL isolado rejeita DEV/remoto/ausente antes de conectar',()=>{
@@ -86,7 +90,8 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
     await f.exec('DROP TRIGGER crm_force_audit ON audit_logs; DROP FUNCTION crm_force_audit_failure();');
     const inactive=await service.setActive(ctx,row.id,{expected_version:2},false);assert.equal(inactive.ativo,false);
     const restored=await service.setActive(ctx,row.id,{expected_version:3},true);assert.equal(restored.ativo,true);
-    const app=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',DATABASE_URL:process.env.DATABASE_URL}),db:f.admin});
+    const app=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',DATABASE_URL:process.env.DATABASE_URL}),db:f.admin});
+    await proveCentralCrm(f.admin,app,ctx,service);
     const customer=await app.clienteService.get(ctx,ID.clientePjA);assert.equal(customer.id,ID.clientePjA);
     const orcamento=await app.orcamentoService.create(ctx,{cliente_empresa_id:ce.rows[0].id,condicao_pagamento_id:ID.condicaoPagamentoA,
       validade_em:'2027-01-31T00:00:00.000Z',itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,descricao:'R40 item sintético',
@@ -177,5 +182,41 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
     const cross=await service.create({...ctx,empresaId:ID.empresaA2},{titulo:'Outra empresa',cliente_nome:'Sintético',idempotency_key:'r40-high-water'});
     assert.equal(cross.codigo,'000101');
     await assert.rejects(service.get({...ctx,empresaId:ID.empresaA2},separate[0].id),{code:'OPORTUNIDADE_NOT_FOUND'});
+  }finally{await f.close();}
+});
+
+async function proveCentralCrm(db:DbClient,app:ReturnType<typeof createApp>,ctx:RequestContext,service:OportunidadeService) {
+  // Existing canonical repository executes CRM reads with NOSUPERUSER/NOBYPASSRLS
+  // fixture role. This proves isolated RLS, not an operational LOGIN/grant.
+  const central=new ClienteCentral360Service(app.clienteService,app.orcamentoService,app.pedidoService,
+    app.clienteLocalService,app.obraService,app.rbacGuard,service);
+  const page=await central.get(ctx,ID.clientePjA,{crmLimit:2,crmOffset:0});
+  assert.equal(page.blocks.crm.status,'ok');assert.equal(page.blocks.crm.meta?.total,9);
+  assert.equal(page.blocks.crm.data.length,2);assert.equal(page.blocks.crm.meta?.hasMore,true);
+  const secondPage=await central.get(ctx,ID.clientePjA,{crmLimit:2,crmOffset:2});
+  assert.notEqual(page.blocks.crm.data[0].id,secondPage.blocks.crm.data[0].id);
+  for(const item of page.blocks.crm.data)for(const field of ['cliente_email','cliente_telefone','observacoes','idempotency_key'])
+    assert.equal(Object.hasOwn(item,field),false);
+  assert.equal((await app.clienteCentral360Service.get(ctx,ID.clientePjA,{crmLimit:1})).blocks.crm.meta?.total,9);
+  const permissions=(await db.query<{permissoes:unknown}>('SELECT permissoes FROM profiles WHERE id=$1',[ctx.actorId])).rows[0].permissoes;
+  try{
+    await db.query("UPDATE profiles SET permissoes=permissoes-'CRM' WHERE id=$1",[ctx.actorId]);
+    const denied=await central.get(ctx,ID.clientePjA);
+    assert.equal(denied.blocks.crm.status,'forbidden');assert.deepEqual(denied.blocks.crm.data,[]);assert.equal(denied.blocks.crm.meta,null);
+  }finally{await db.query('UPDATE profiles SET permissoes=$2::jsonb WHERE id=$1',[ctx.actorId,JSON.stringify(permissions)]);}
+
+}
+
+test('Central CRM composição persistida: paginação, projeção e RBAC com repositório canônico restrito',async()=>{
+  const f=await localCrmFixture();
+  try {
+    const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'central-crm-synthetic'};
+    const app=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',DATABASE_URL:'postgresql://synthetic@localhost/erp_test'}),db:f.admin});
+    const service=new OportunidadeService(new PostgresOportunidadeRepository(f.data),new PostgresAuditRepository(f.admin),
+      new PostgresTenantGuard(f.admin),new PostgresRbacGuard(f.admin),new PostgresClienteRepository(f.admin),
+      new PostgresOrcamentoRepository(f.admin),new PostgresPedidoRepository(f.admin));
+    const link=(await f.admin.query<{id:string}>('SELECT id FROM cliente_empresas WHERE cliente_id=$1 AND empresa_id=$2',[ID.clientePjA,ID.empresaA])).rows[0].id;
+    for(let i=0;i<9;i++)await service.create(ctx,{titulo:`Central ${i}`,cliente_empresa_id:link,idempotency_key:`central-${i}`});
+    await proveCentralCrm(f.admin,app,ctx,service);
   }finally{await f.close();}
 });
