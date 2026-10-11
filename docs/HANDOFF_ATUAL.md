@@ -201,13 +201,13 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip policy CRM · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`c125c4db`** · `index-C-lbE7zK.js` · ≡ PR HEAD |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `c125c4db` |
+| SHA implantado | **`58766d82`** · `index-iZ42G-Qb.js` · código ≡ runtime (docs tip posterior OK) |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `58766d82` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** · policy shared API · HTTP canônico server **pendente Codex** · sem CRM paralelo |
-| próxima funcional | secret restrito · contrato HTTP Codex Oportunidade se A · merge owner #261→main |
+| próxima funcional | grade Representante/Colaborador · secret restrito · merge owner #261→main |
 
-## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-10)
+## CONTINUIDADE CASA — Cursor ↔ Codex (2026-10-11)
 
 Troca de máquina. **Não depender** de alterações locais da empresa — só GitHub + este HANDOFF.
 
@@ -217,28 +217,29 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | **`c125c4db`** · CI SUCCESS · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`c125c4db`** · asset `index-C-lbE7zK.js` · ≡ PR HEAD |
-| rollback | `pre-spa-login-20261010-180111` |
-| backup | `pre-gate-e-20261010-144428.sql` (SPA-only tip; só VPS) |
+| **PR HEAD #261** | tip docs atual · código runtime **`58766d82`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`58766d82`** · asset `index-iZ42G-Qb.js` |
+| rollback | `pre-spa-login-20261011-094516` |
+| backup | `pre-gate-e-20261011-094514.sql` (só VPS) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`c125c4db`** (não reusar SHAs anteriores) |
+| #277 Codex | tip `8bc4fef2` — Auth/042 · **monitorar** sem porte |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`58766d82`** |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | CRM | C360 adaptador **opção B** + policy shared; HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
-| arquivos reservados Codex | sessão/contexto/outbox (`erpHttpSession`, `useContextoGrupoEmpresa`, `useContextoVisual`) · schema CRM HTTP novo · Legado #266/#211 |
+| arquivos reservados Codex | sessão/contexto/outbox · schema CRM HTTP novo · Auth/042 · Legado #266/#211 |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `deploy-261-tip-c125c4db-crm-policy-20261010.txt` · `deploy-261-tip-9f084ed0-orcamento-20261010.txt` · `reconciliacao-261-pos-264-main-20261010.txt` |
+| evidência | `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` · `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout → **`c125c4db`** (ou tip docs posterior).
-2. Confirmar VPS: `MERGE_SHA8=c125c4db` / `index-C-lbE7zK.js` — não atribuir homolog antiga a este tip.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout tip atual (runtime **`58766d82`**).
+2. Confirmar VPS: `MERGE_SHA8=58766d82` / `index-iZ42G-Qb.js` — não atribuir homolog antiga a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. ~~CI + redeploy tip policy CRM~~ **feito** `c125c4db` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
+1. ~~CI + redeploy tip policy CRM~~ **feito** (supersedido por `58766d82`).
 2. ~~Marca RBAC + ID técnico ContatoB2B/Condicao~~ **feito** tip **`58766d82`** implantado+homolog owner fail_count=0.
 3. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
 4. Inventário residual (POD/Separação keep-both; Painel seletivo; Representante/Colaborador grade).
