@@ -1,3 +1,15 @@
+## CURSOR — EmpresaForm endereço/CEP (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | #261 |
+| escopo | endereço+BuscaCEP no `EmpresaForm` canônico (Bloco5) |
+| preservação | loadIncomplete · fiscal não wipe · certificado granular |
+| tip runtime | **`4adb7e21`** até CI+redeploy deste tip |
+| #280 | sem porte Marca |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — tip 4adb7e21 implantado (FormaPagamento adapter) (2026-10-11)
 
 | Item | Valor |

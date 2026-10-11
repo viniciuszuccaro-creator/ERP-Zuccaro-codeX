@@ -1,3 +1,15 @@
+## CURSOR — EmpresaForm endereço/CEP recuperado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| escopo | `EmpresaForm` Bloco5 canônico · BuscaCEP + endereco sanitizado |
+| preservação | guards #227/#228 (loadIncomplete, fiscal delete, certificado granular) |
+| Completo | keep — abas fiscal/webhooks até portar guards |
+| testes | `cadastros-empresa-edicao*` 34 pass |
+| tip runtime | ainda **`4adb7e21`** até CI deste tip → redeploy |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — tip 4adb7e21 implantado+homologado (2026-10-11)
 
 | Item | Estado |
