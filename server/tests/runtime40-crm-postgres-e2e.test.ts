@@ -212,6 +212,21 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)`);
   await f.exec(`GRANT INSERT ON pedidos,pedido_itens,pedido_historico TO ${role};
     GRANT UPDATE(updated_at) ON empresas,produtos,produto_empresas TO ${role};`);
+  const identity=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const inspectPersistence=()=>f.data.withTransaction(tx=>inspectCrmPreflight({query:async(sql,params)=>{
+    assert.match(sql.trim(),/^SELECT\b/i);return tx.query(sql,params);
+  }},{...identity,requirePedidoPersistence:true}));
+  assert.equal((await inspectPersistence()).ready,true);
+  await f.exec(`REVOKE INSERT ON audit_logs FROM ${role}`);
+  assert.ok((await inspectPersistence()).blocked.includes('pedidoPersistenceGrants'));
+  await f.exec(`GRANT INSERT ON audit_logs TO ${role}`);
+  await f.exec('ALTER TABLE pedidos NO FORCE ROW LEVEL SECURITY');
+  assert.ok((await inspectPersistence()).blocked.includes('pedidoPersistenceRls'));
+  await f.exec('ALTER TABLE pedidos FORCE ROW LEVEL SECURITY');
+  await f.exec('GRANT SELECT ON pedido_itens TO PUBLIC');
+  assert.ok((await inspectPersistence()).blocked.includes('pedidoPersistenceNoPublicDml'));
+  await f.exec('REVOKE SELECT ON pedido_itens FROM PUBLIC');
+  assert.equal((await inspectPersistence()).ready,true);
   await f.admin.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1',[ID.produtoA]);
   await f.admin.query(`INSERT INTO produto_empresas(group_id,empresa_id,produto_id,ativo,habilitado_operacao,created_by,updated_by)
     VALUES($1,$2,$3,true,true,$4,$4) ON CONFLICT(group_id,empresa_id,produto_id) DO UPDATE SET ativo=true,habilitado_operacao=true`,[ctx.groupId,ctx.empresaId,ID.produtoA,ctx.actorId]);
