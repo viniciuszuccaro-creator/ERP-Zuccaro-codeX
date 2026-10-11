@@ -41,8 +41,8 @@ if(process.env.DATABASE_URL)test('Auth bootstrap PostgreSQL: verified provider, 
       ['invalid',I.group,I.company,'',401],['branch',I.group,I.second,'',403],['owner',I.group,I.inactive,'',403],['owner',I.other,I.company,'',403],['owner',I.group,I.company,I.foreignProfile,403],
     ]as const){const response=await fetch(`${base}/api/v1/marcas`,{headers:{authorization:`Bearer ${token}`,'x-group-id':group,'x-empresa-id':company,...(actor?{'x-actor-id':actor}:{})}});assert.equal(response.status,status);}
     const headers={authorization:'Bearer owner','x-group-id':I.group,'x-empresa-id':I.company};
-    // Marca's legacy list validates scope only; this positive control proves Auth admitted the request.
-    const admitted=await fetch(`${base}/api/v1/marcas`,{headers});assert.equal(admitted.status,200);
+    // Marca now enforces granular RBAC after verified Auth; no profile permission means denial.
+    const admitted=await fetch(`${base}/api/v1/marcas`,{headers});assert.equal(admitted.status,403);assert.equal((await admitted.json()).error.code,'PERMISSION_DENIED');
     // The canonical Orçamento endpoint enforces RBAC; absence of permissions must deny access.
     const denied=await fetch(`${base}/api/v1/orcamentos`,{headers});assert.equal(denied.status,403);
     assert.equal((await denied.json()).error.code,'PERMISSION_DENIED');
