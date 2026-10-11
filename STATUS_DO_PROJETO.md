@@ -1,3 +1,14 @@
+## CURSOR — Painel/Agenda chrome azul seletivo (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **escopo** | `Agenda.jsx` · `DashboardHeader` · `DashboardCorporativo` · `DashboardTabsNav` |
+| **mudança** | chrome azul (ícones título, tabs, headers calendário/ranking); **keep both** Dashboard×Corporativo |
+| **preservado** | Fluxo Caixa purple semântico · KPIs green/orange Agenda · Financeiro CR≠Régua |
+| **runtime** | tip docs `9dd624ae` · implantado ainda **`d0a1b411`** até CI/redeploy deste tip |
+| BLOCKED | usuário restrito |
+| próxima | CI → redeploy · POD/Separação inventário · secret restrito · merge owner |
+
 ## CURSOR — tip d0a1b411 implantado+homologado (anti-redirect Marca) (2026-10-11)
 
 | Item | Estado |
@@ -10,7 +21,7 @@
 | **evidência** | `deploy-261-tip-d0a1b411-anti-redirect-marca-20261011.txt` |
 | `#278` | tip `b398202b` absorvido (sem stack Auth #277) |
 | BLOCKED | usuário restrito |
-| próxima | Painel/Agenda chrome azul seletivo · secret restrito · merge owner |
+| próxima | Painel/Agenda chrome (bloco acima) · secret restrito · merge owner |
 
 ## CURSOR — #278 tip b398202b anti-redirect Marca (2026-10-11)
 

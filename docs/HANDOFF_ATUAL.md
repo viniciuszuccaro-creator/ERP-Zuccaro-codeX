@@ -1,3 +1,14 @@
+## CURSOR — Painel/Agenda chrome azul seletivo (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` (#261) |
+| tip código | tip após push Painel/Agenda · runtime erp-dev ainda **`d0a1b411`** até redeploy |
+| escopo | Agenda título/KPI Total/calendário · DashboardHeader · Corporativo tabs/headers · TabsNav BI |
+| preservação | Dashboard×Corporativo **keep both** · Fluxo Caixa purple · status green/orange |
+| divisão | Cursor UI chrome · Codex Auth/042/sessão/outbox/Legado |
+| próxima | CI → redeploy · POD/Separação · secret restrito · merge owner |
+
 ## CURSOR — tip d0a1b411 implantado (anti-redirect Marca) (2026-10-11)
 
 | Item | Valor |
@@ -9,7 +20,7 @@
 | divisão | Cursor: UI cadastros + `MarcaService` · Codex: Auth/042/sessão/outbox/Legado |
 | tip Codex #277/#278 | `8bc4fef2` / `b398202b` — **sem porte** Auth; extras Marca absorvidos |
 | evidência | `deploy-261-tip-d0a1b411-anti-redirect-marca-20261011.txt` |
-| próxima | Painel/Agenda chrome azul seletivo · secret restrito · merge owner |
+| próxima | Painel/Agenda chrome (bloco acima) |
 
 ## REVISÃO CODEX — #278 Marca RBAC (2026-10-11)
 
