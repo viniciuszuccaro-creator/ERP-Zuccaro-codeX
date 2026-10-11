@@ -1,0 +1,35 @@
+PROBE — browser/API/banco mesmo contexto (sanitizado) — 2026-10-11
+====================================================================
+Host: erp-dev.cpaferroeaco.com.br
+Tip SPA runtime (pré-redeploy deste lote): index-BJYf7Dj6.js (06325316)
+Auth: POST /api/v1/auth/session (owner) · role admin · scope grupo (sem empresa_id no perfil)
+Método: contagens API + SQL group-scoped; hashes SHA-256 de IDs (sem PII/docs)
+
+RESULTADO
+---------
+clientes:
+  DB all=6 · in_group=5 (ativo=5, inativo=0) · other_group=1
+  API /api/v1/clientes total=5 · n=5
+  hash diff: ONLY_DB=0 ONLY_API=0 INTERSECTION=5
+  → sem registro ausente no grupo ativo; o “6 vs 5” era outro group_id.
+
+produtos:
+  DB all=4 · in_group=3 (ativo=2, inativo=1) · other_group=1
+  API /api/v1/produtos total=2
+  → API alinha com in_group_ativo; inativo e outro grupo fora do list.
+
+marcas:
+  DB all=5 · in_group=4 (ativo=3, inativo=1) · other_group=1
+  API /api/v1/marcas n=4 (sem meta.total)
+  → API devolve in_group (inclui 1 inativo); não há “sumiço” vs DB do grupo.
+
+CONCLUSÃO
+---------
+No contexto do owner (grupo CPA), navegador/API/DB batem para clientes.
+Gaps aparentes = filtro multiempresa (other_group) ou ativo=false (produtos),
+não perda de vínculo/ID. Homolog UI da grade Clientes permanece no tip pós-CI.
+
+BLOCKED
+-------
+Usuário restrito: Environment sem ERP_DEV_LOGIN_RESTRICTED_* — cadastrar secret
++ perfil RBAC restrito na VPS antes de repetir o probe com papel limitado.

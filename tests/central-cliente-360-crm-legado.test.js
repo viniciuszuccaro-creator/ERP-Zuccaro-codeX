@@ -47,3 +47,12 @@ test('CentralCliente360Panel usa adaptador legado sem criar CRM HTTP paralelo', 
   assert.match(panel, /central360-crm-abrir/);
   assert.doesNotMatch(panel, /OportunidadeService|crm\/v1|createTable.*Oportunidade/);
 });
+
+test('CentralCliente360Panel abre Cadastros.Cliente canônico via ClientesTab', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /central360-cadastro-abrir/);
+  assert.match(panel, /openCadastroClienteCanonico/);
+  assert.match(panel, /ClientesTab/);
+  assert.match(panel, /c360-cadastro-cliente-/);
+  assert.doesNotMatch(panel, /createTable.*Cliente|ClienteStoreParalelo/);
+});

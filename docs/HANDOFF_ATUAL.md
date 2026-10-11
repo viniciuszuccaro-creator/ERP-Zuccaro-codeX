@@ -1,3 +1,15 @@
+## CURSOR — C360 cadastro canônico + probe API/DB (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` (#261) |
+| tip prévio | **`92239ff4`** idOnly/grades · tip runtime ainda **`06325316`** |
+| C360 | Abrir cadastro → `ClientesTab` · sem store paralelo |
+| probe | clientes API↔DB in_group OK · evidência `probe-registros-contexto-api-db-20261011.txt` |
+| divisão | Cursor UI/C360 · Codex Marca atomicidade + Auth/RLS |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — auditoria cadastros ID/código residual (2026-10-11)
 
 | Item | Valor |

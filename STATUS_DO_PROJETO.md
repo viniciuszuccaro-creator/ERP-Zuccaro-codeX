@@ -1,3 +1,15 @@
+## CURSOR — C360 Abrir cadastro + probe API/DB (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip código | pós-`92239ff4` (este lote) · CI pendente |
+| C360 | `central360-cadastro-abrir` → `ClientesTab` canônico · uniqueKey |
+| ClientesTab | grade com `codigo` + campos reais |
+| probe | clientes API=DB in_group (5=5) · produtos API=ativo · marcas in_group; evidência `probe-registros-contexto-api-db-20261011.txt` |
+| divisão Codex | Marca atomicidade + Auth/RLS intocados |
+| BLOCKED | secret restrito |
+| próxima | CI `92239ff4`+este tip → redeploy → homolog |
+
 ## CURSOR — auditoria cadastros ID/código residual (2026-10-11)
 
 | Item | Estado |

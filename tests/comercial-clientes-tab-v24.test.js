@@ -26,6 +26,7 @@ test('ClientesTab Comercial reutiliza Visualizador V24 com scope (não V23 stale
   assert.match(source, /data-comercial-clientes-tab="v24"/);
   assert.match(source, /nomeEntidade="Cliente"/);
   assert.match(source, /CadastroClienteCompleto/);
+  assert.match(source, /camposPrincipais=\{\["codigo"/);
 });
 
 test('AcoesRapidasGlobal: Novo Cliente exige contexto e expõe data-action', async () => {

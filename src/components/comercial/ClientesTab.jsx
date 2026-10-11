@@ -14,7 +14,7 @@ export default function ClientesTab({ windowMode = false }) {
         nomeEntidade="Cliente"
         tituloDisplay="Clientes"
         icone={Users}
-        camposPrincipais={["nome", "razao_social", "cnpj", "cpf", "status", "email", "telefone", "endereco_principal"]}
+        camposPrincipais={["codigo", "nome", "razao_social", "cnpj", "cpf", "status", "email", "telefone"]}
         componenteEdicao={CadastroClienteCompleto}
         windowMode={windowMode}
       />

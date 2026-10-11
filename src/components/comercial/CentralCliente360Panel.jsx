@@ -224,6 +224,38 @@ export default function CentralCliente360Panel({
     || hasPermission('Comercial', 'pedido', 'visualizar')
     || hasPermission('Comercial', null, 'visualizar')
   );
+  const canViewClienteCadastro = !permissionsLoading && (
+    hasPermission('Cadastros', 'Cliente', 'visualizar')
+    || hasPermission('Cadastros', 'cliente', 'visualizar')
+    || hasPermission('Cadastros', null, 'visualizar')
+    || hasPermission('CRM', 'Cliente', 'visualizar')
+  );
+
+  const openCadastroClienteCanonico = async () => {
+    if (!canViewClienteCadastro || !clienteId || !groupId) return;
+    // Mesma UI canônica de Comercial → Clientes (V24 + CadastroClienteCompleto), sem store paralelo.
+    const ClientesTab = (await import('@/components/comercial/ClientesTab')).default;
+    openWindow(
+      ClientesTab,
+      {
+        windowMode: true,
+        groupId,
+        empresaId,
+        actorId,
+        actorEmail,
+        hasPermission,
+        filterInContext,
+        empresaAtual,
+        initialClienteId: clienteId,
+      },
+      {
+        title: 'Clientes · cadastro canônico',
+        width: 1500,
+        height: 850,
+        uniqueKey: `c360-cadastro-cliente-${clienteId}`,
+      },
+    );
+  };
 
   const openOrcamentosCanonicos = async () => {
     if (!canViewOrcamento || !groupId) return;
@@ -403,17 +435,31 @@ export default function CentralCliente360Panel({
             {meta.requestId ? ` · req ${String(meta.requestId).slice(0, 8)}` : ''}
           </p>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
-            query.refetch();
-          }}
-        >
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          {canViewClienteCadastro ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              data-action="central360-cadastro-abrir"
+              onClick={openCadastroClienteCanonico}
+            >
+              Abrir cadastro
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
+              query.refetch();
+            }}
+          >
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {identity && (
@@ -563,8 +609,8 @@ export default function CentralCliente360Panel({
       </div>
 
       <p className="text-xs text-slate-500" data-action="central360-fonte-canonica">
-        Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido (Abrir abre a aba canônica) ·
-        CRM via Oportunidade legado (até HTTP canônico Codex) · Locais/Obras · Financeiro/Expedição via pedido.
+        Fontes canônicas (sem duplicar dados): Cadastros.Cliente (Abrir cadastro) · Comercial.Orçamento/Pedido (Abrir abre a aba canônica) ·
+        CRM via Oportunidade legado (até HTTP canônico Codex) · Locais/Obras via HTTP do mesmo cliente · Financeiro/Expedição via pedido.
       </p>
     </div>
   );
