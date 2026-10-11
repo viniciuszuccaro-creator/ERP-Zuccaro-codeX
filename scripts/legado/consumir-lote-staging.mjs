@@ -318,24 +318,37 @@ export const persistirClienteGrupoLegado = async (ctx, mapped, options = {}) => 
     || !mapped.codigo_legado || !mapped.documento) throw new Error('LEGACY_SHARED_CLIENT_INVALID');
   if (!['Pessoa Física', 'Pessoa Jurídica'].includes(tipo)) throw new Error('LEGACY_CLIENT_TYPE_REQUIRED');
   await rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', 'importar', { allowGlobalWildcard: false });
-  const suggestion = await service.sugerirVinculo(ctx, { documento: mapped.documento });
-  if (suggestion.sugestao) {
+  const reuseExisting = async () => {
+    const suggestion = await service.sugerirVinculo(ctx, { documento: mapped.documento });
+    if (!suggestion.sugestao) return null;
     const existing = await service.get(ctx, suggestion.cliente_id);
     if (existing.codigo_legado !== String(mapped.codigo_legado) || existing.source_system !== sourceSystem
-      || existing.migration_batch !== batch || (existing.nome || existing.razao_social) !== mapped.nome
+      || existing.migration_batch !== batch || existing.tipo !== tipo
+      || (existing.nome || existing.razao_social) !== mapped.nome
       || (existing.nome_fantasia || '') !== (mapped.nome_fantasia || '')) {
       throw new Error('LEGACY_RECONCILIATION_REQUIRED');
     }
     return { registro: existing, reutilizado: true, persistido: true };
+  };
+  const existing = await reuseExisting();
+  if (existing) return existing;
+  try {
+    const registro = await service.create(ctx, {
+      tipo, documento: mapped.documento, empresa_id: null,
+      ...(tipo === 'Pessoa Jurídica' ? { razao_social: mapped.nome } : { nome: mapped.nome }),
+      ...(mapped.nome_fantasia ? { nome_fantasia: mapped.nome_fantasia } : {}),
+      origem: 'MIGRACAO', codigo_legado: String(mapped.codigo_legado),
+      legacy_id: String(mapped.codigo_legado), source_system: sourceSystem, migration_batch: batch,
+    });
+    return { registro, reutilizado: false, persistido: true };
+  } catch (error) {
+    // Resolve a concurrent unique-document winner by reading, never retrying a write.
+    if (error?.code !== 'DUPLICATE_DOCUMENT') throw error;
+    const winner = await reuseExisting();
+    if (winner) return winner;
+    // An inactive or otherwise invisible identity requires reconciliation, never restoration.
+    throw new Error('LEGACY_RECONCILIATION_REQUIRED');
   }
-  const registro = await service.create(ctx, {
-    tipo, documento: mapped.documento, empresa_id: null,
-    ...(tipo === 'Pessoa Jurídica' ? { razao_social: mapped.nome } : { nome: mapped.nome }),
-    ...(mapped.nome_fantasia ? { nome_fantasia: mapped.nome_fantasia } : {}),
-    origem: 'MIGRACAO', codigo_legado: String(mapped.codigo_legado),
-    legacy_id: String(mapped.codigo_legado), source_system: sourceSystem, migration_batch: batch,
-  });
-  return { registro, reutilizado: false, persistido: true };
 };
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const sample = [

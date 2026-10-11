@@ -786,8 +786,7 @@ async function fetchOk(app: ReturnType<typeof createApp>['app'], path: string, i
 import { PostgresClienteRepository } from '../src/repositories/postgresClienteRepository.ts';
 import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { consumirLoteStagingLegado, persistirClienteGrupoLegado } from '../../scripts/legado/consumir-lote-staging.mjs';
-test('Legado Cliente: Grupo canonical persistence, retry, edit reopen and reversal', async () => {
- const engine=new PGlite();
+async function proveLegacyClient(engine: any) {
  try {
   for(const file of readdirSync(join(__dirname,'../migrations')).filter(f=>/^\d{3}_.*\.sql$/.test(f)).sort()) {
    await engine.exec(readFileSync(join(__dirname,'../migrations',file),'utf8').replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/i,''));
@@ -806,11 +805,14 @@ test('Legado Cliente: Grupo canonical persistence, retry, edit reopen and revers
   assert.equal(first.registro.codigo_legado,'0007');
   const retry=await persistirClienteGrupoLegado(ctx,lote.comprovados[0],options);
   assert.equal(retry.reutilizado,true);assert.equal(retry.registro.id,first.registro.id);
+  await assert.rejects(()=>persistirClienteGrupoLegado(ctx,lote.comprovados[0],{...options,tipo:'Pessoa Física'}),/LEGACY_RECONCILIATION_REQUIRED/);
   assert.equal((await engine.query('SELECT count(*)::int n FROM clientes')).rows[0].n,1);
   assert.equal((await service.get(ctx,first.registro.id)).source_system,'synthetic-legacy');
   await service.update(ctx,first.registro.id,{telefone:'synthetic-contact'});
   await service.softDelete(ctx,first.registro.id);
   await assert.rejects(()=>service.get(ctx,first.registro.id),e=>e.code==='CLIENTE_NOT_FOUND');
+  await assert.rejects(()=>persistirClienteGrupoLegado(ctx,lote.comprovados[0],options),/LEGACY_RECONCILIATION_REQUIRED/);
+  assert.equal((await engine.query('SELECT ativo FROM clientes WHERE id=$1',[first.registro.id])).rows[0].ativo,false);
   const restored=await service.restore(ctx,first.registro.id);
   assert.equal(restored.telefone,'synthetic-contact');assert.equal(restored.codigo_legado,'0007');
   const repeated=await persistirClienteGrupoLegado(ctx,lote.comprovados[0],options);
@@ -830,5 +832,44 @@ test('Legado Cliente: Grupo canonical persistence, retry, edit reopen and revers
   await assert.rejects(()=>persistirClienteGrupoLegado(ctx,failRow,{...options,tipo:'Pessoa Física'}),/synthetic audit failure/);
   assert.equal((await engine.query('SELECT count(*)::int n FROM clientes')).rows[0].n,1);
   assert.equal((await engine.query("SELECT next_value FROM entity_code_sequences WHERE group_id=$1 AND entity_name='Cliente'",[GROUP_A])).rows[0].next_value,sequenceBefore);
+  await engine.exec('DROP TRIGGER synthetic_fail_legacy ON audit_logs');
+  const race=consumirLoteStagingLegado([{cod_cliente:'0009',nome:'Concurrent synthetic',documento:CNPJ_B,group_id:GROUP_A}],
+   {entidade:'cliente',contratoEntrada:{coorte:'synthetic-pilot'}}).comprovados[0];
+  const racers=await Promise.all([persistirClienteGrupoLegado(ctx,race,options),persistirClienteGrupoLegado(ctx,race,options)]);
+  assert.equal(racers[0].registro.id,racers[1].registro.id);
+  assert.equal(racers.filter(r=>!r.reutilizado).length,1);
+  assert.equal((await engine.query('SELECT count(*)::int n FROM clientes')).rows[0].n,2);
+  await assert.rejects(()=>persistirClienteGrupoLegado(ctx,race,{...options,batch:'different-batch'}),/LEGACY_RECONCILIATION_REQUIRED/);
  } finally {await engine.close();}
+}
+import pg from 'pg';
+import { randomUUID } from 'node:crypto';
+async function legacyIsolatedPostgres(value: string) {
+ const url=new URL(value);
+ if(!['postgres:','postgresql:'].includes(url.protocol)
+  || !['localhost','127.0.0.1','[::1]'].includes(url.hostname)
+  || !/^\/erp_test$/.test(url.pathname)) throw new Error('LEGACY_ISOLATED_POSTGRES_REQUIRED');
+ const schema='legacy_pilot_'+randomUUID().replaceAll('-','');
+ const admin=new pg.Pool({connectionString:value});
+ await admin.query(`CREATE SCHEMA ${schema}`);
+ url.searchParams.set('options',`-c search_path=${schema},pg_catalog`);
+ const pool=new pg.Pool({connectionString:url.toString()});
+ return {
+  query:(sql:string,params?:any[])=>pool.query(sql,params),
+  exec:(sql:string)=>pool.query(sql),
+  transaction:async(fn:any)=>{
+   const client=await pool.connect();
+   try {await client.query('BEGIN');const out=await fn(client);await client.query('COMMIT');return out;}
+   catch(error){await client.query('ROLLBACK');throw error;}
+   finally {client.release();}
+  },
+  close:async()=>{await pool.end();try {await admin.query(`DROP SCHEMA ${schema} CASCADE`);}finally{await admin.end();}},
+ };
+}
+test('Legado pilot refuses a non-isolated database destination',async()=>{
+ await assert.rejects(()=>legacyIsolatedPostgres('postgres://synthetic@example.test/erp_prod'),/LEGACY_ISOLATED_POSTGRES_REQUIRED/);
+});
+test('Legado Cliente: Grupo canonical persistence retry edit reopen reversal and concurrent retry',async()=>proveLegacyClient(new PGlite()));
+if(process.env.DATABASE_URL)test('Legado Cliente PostgreSQL real isolated persistence and rollback',async()=>{
+ await proveLegacyClient(await legacyIsolatedPostgres(process.env.DATABASE_URL));
 });
