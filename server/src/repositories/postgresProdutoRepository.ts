@@ -1,3 +1,4 @@
+import { AppError } from '../api/errors.js';
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import { buildProdutoCatalogProjection } from '../services/produtoCatalogProjection.js';
@@ -57,6 +58,11 @@ function asObject(value: unknown): Record<string, number> {
 
 export function mapProduto(row: Record<string, unknown>): Produto {
   return {
+    origem:row.origem == null ? null : String(row.origem),
+    codigo_legado:row.codigo_legado == null ? null : String(row.codigo_legado),
+    legacy_id:row.legacy_id == null ? null : String(row.legacy_id),
+    source_system:row.source_system == null ? null : String(row.source_system),
+    migration_batch:row.migration_batch == null ? null : String(row.migration_batch),
     id: String(row.id),
     group_id: String(row.group_id),
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
@@ -245,6 +251,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       width: 6,
       incomingCodigo: data.codigo,
     });
+    const metadataFields = (['origem','codigo_legado','legacy_id','source_system','migration_batch'] as const)
+      .filter(field => data[field] !== undefined);
+    const metadataColumns = metadataFields.map(field=>`, ${field}`).join('');
+    const metadataValues = metadataFields.map((_,index)=>`,$${45+index}`).join('');
     const result = await query.query(
       `INSERT INTO produtos (
         group_id, empresa_id, codigo, codigo_barras, descricao, nome, tipo_item, tipo_aco, eh_bitola,
@@ -255,11 +265,11 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         ncm, cest, origem_mercadoria, status, foto_produto_url, ativo,
         descricao_tecnica, descricao_comercial, titulo_seo, descricao_seo,
         embalagem_tipo, multiplo_venda, quantidade_minima_venda, permite_fracionamento,
-        material, liga, norma_tecnica
+        material, liga, norma_tecnica${metadataColumns}
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,
         $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,
-        $34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44
+        $34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44${metadataValues}
       ) RETURNING *`,
       [
         scope.groupId,
@@ -306,9 +316,17 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         data.material ?? null,
         data.liga ?? null,
         data.norma_tecnica ?? null,
+        ...metadataFields.map(field=>data[field] ?? null),
       ],
     );
     return mapProduto(result.rows[0] as Record<string, unknown>);
+  }
+
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Produto | null> {
+    const result = await this.db.query('SELECT * FROM produtos WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
+      [groupId,sourceSystem,codigoLegado]);
+    if (result.rows.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
+    return result.rows[0] ? mapProduto(result.rows[0] as Record<string,unknown>) : null;
   }
 
   async update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null> {
@@ -350,6 +368,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       embalagem_tipo=$37, multiplo_venda=$38, quantidade_minima_venda=$39, permite_fracionamento=$40,
       material=$41, liga=$42, norma_tecnica=$43
       WHERE group_id=$44 AND id=$45`;
+    const metadataFields = (['origem','codigo_legado','legacy_id','source_system','migration_batch'] as const)
+      .filter(field => data[field] !== undefined);
+    const assignments = metadataFields.map(field => { params.push(data[field] ?? null);return `${field}=$${params.length}`; });
+    if (assignments.length) sql=sql.replace('WHERE group_id=',`, ${assignments.join(',')} WHERE group_id=`);
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id=$${params.length}`;

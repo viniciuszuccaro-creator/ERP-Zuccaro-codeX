@@ -201,6 +201,17 @@ export class ProdutoService {
     return row;
   }
 
+  async findByLegacyIdentity(ctx: RequestContext, sourceSystem: string, codigoLegado: string) {
+    this.assertScope(ctx);
+    if (ctx.empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Group context required');
+    if (![sourceSystem,codigoLegado].every(value => typeof value === 'string' && value.trim() === value && value.length > 0 && value.length <= 80)) {
+      throw new AppError(400,'VALIDATION_ERROR','Explicit legacy identity required');
+    }
+    await this.assertPermission(ctx,'visualizar');
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false});
+    return this.repo.findByLegacyIdentity(ctx.groupId,sourceSystem,codigoLegado);
+  }
+
   async create(ctx: RequestContext, payload: unknown) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'criar');
@@ -211,10 +222,17 @@ export class ProdutoService {
     }
     this.assertTipoItem(parsed.data.tipo_item);
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    if (parsed.data.source_system && parsed.data.codigo_legado) {
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false});
+      if (empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+      if (await this.repo.findByLegacyIdentity(ctx.groupId,parsed.data.source_system,parsed.data.codigo_legado)) {
+        throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity already exists');
+      }
+    }
     this.assertEmpresaOwnership(ctx, empresaId);
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
-    await this.assertRelations(ctx.groupId, parsed.data);
     return this.repo.withTransaction(async (executor) => {
+      await this.assertRelations(ctx.groupId, parsed.data, executor);
       let created: Produto;
       try {
         created = await this.repo.create(
@@ -254,16 +272,35 @@ export class ProdutoService {
     return this.repo.withTransaction(async (executor) => {
       const before = await this.repo.getById(scope, id, executor, { forUpdate: true });
       // A existencia, atividade e classificacao sao validadas sobre a linha bloqueada.
-      if (!before || before.ativo === false) {
+      const reopening = before?.ativo === false && parsed.data.ativo === true
+        && Object.keys(payload as object).every(key => key === 'ativo');
+      if (!before || (before.ativo === false && !reopening)) {
         throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
+      }
+      if (reopening) {
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','editar',{allowGlobalWildcard:false,executor});
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','restaurar',{allowGlobalWildcard:false,executor});
+      }
+      if (before.ativo && parsed.data.ativo === false) await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','inativar',{allowGlobalWildcard:false,executor});
+      if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
+        .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
+        throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported provenance is immutable');
+      }
+      if (!(before.source_system && before.codigo_legado) && (parsed.data.source_system || parsed.data.codigo_legado)) {
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false,executor});
       }
       if (parsed.data.tipo_item !== undefined) {
         this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
       }
       const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+      const importedIdentity = Boolean((parsed.data.source_system ?? before.source_system)
+        && (parsed.data.codigo_legado ?? before.codigo_legado));
+      if (importedIdentity && empresaId) {
+        throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+      }
       this.assertEmpresaOwnership(ctx, empresaId);
       await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
-      await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
+      await this.assertRelations(ctx.groupId, { ...before, ...parsed.data }, executor);
       let updated: Produto | null;
       try {
         updated = await this.repo.update(scope, id, parsed.data, executor);
@@ -279,7 +316,7 @@ export class ProdutoService {
         actorEmail: ctx.actorEmail,
         entity: 'Produto',
         entityId: id,
-        action: 'update',
+        action: reopening ? 'restore' : parsed.data.ativo === false ? 'soft_delete' : 'update',
         beforeData: sanitizeAuditSnapshot(before),
         afterData: sanitizeAuditSnapshot(updated),
         requestId: ctx.requestId,
@@ -782,13 +819,16 @@ export class ProdutoService {
     unidade_medida_id?: string | null;
     grupo_produto_id?: string | null;
     setor_atividade_id?: string | null;
-  }) {
+    source_system?: string | null;
+    codigo_legado?: string | null;
+  }, executor?: DbQueryExecutor) {
     await this.relationGuard.assertRelationsInGroup(groupId, {
       marcaId: data.marca_id,
       unidadeMedidaId: data.unidade_medida_id,
       grupoProdutoId: data.grupo_produto_id,
       setorAtividadeId: data.setor_atividade_id,
-    });
+      requireActiveUnit: Boolean(data.source_system && data.codigo_legado),
+    }, executor);
   }
 
   private assertEmpresaOwnership(ctx: RequestContext, empresaId: string | null) {
@@ -837,6 +877,9 @@ export class ProdutoService {
 
   private rethrowConflict(error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
+    if (/unique|duplicate/i.test(message) && /legacy_identity/i.test(message)) {
+      throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity conflicts');
+    }
     if (/unique|duplicate/i.test(message)) {
       throw new AppError(409, 'CONFLICT', 'Produto conflicts with an existing record');
     }
