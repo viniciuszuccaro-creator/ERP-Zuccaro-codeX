@@ -1,17 +1,57 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { readFile } from 'node:fs/promises';
 import {
   CRM_CANONICAL_HTTP_PENDING,
+  centralCrmLegadoQueryKey,
+  loadCentralCrmLegado,
   filterOportunidadesDoCliente,
   resumirOportunidadeCrm,
   shouldUseCrmLegadoAdapter,
 } from '../src/components/comercial/centralCliente360CrmLegado.js';
 
+test('CRM legado: resposta atrasada não cruza ator/sessão/empresa nem revogação', async () => {
+  const base={clienteId:'client',groupId:'group',empresaId:'company',actorId:'actor',sessionKey:'hash-a',canView:true};
+  for(const field of ['clienteId','groupId','empresaId','actorId','sessionKey','canView']) {
+    const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+    let finish;const pending=new Promise(resolve=>{finish=resolve;});
+    const key=centralCrmLegadoQueryKey(base);
+    const observer=new QueryObserver(client,{queryKey:key,queryFn:({signal})=>loadCentralCrmLegado({
+      signal,clienteId:'client',readRows:()=>pending}),retry:false});
+    const seen=[];const unsubscribe=observer.subscribe(result=>{if(result.data)seen.push(result.data);});
+    const changed={...base,[field]:field==='canView'?false:'different'};
+    const nextKey=centralCrmLegadoQueryKey(changed);
+    assert.notDeepEqual(key,nextKey);
+    observer.setOptions({queryKey:nextKey,enabled:false,retry:false});
+    await client.cancelQueries({queryKey:key,exact:true});
+    finish([{id:'old',cliente_id:'client',titulo:'obsolete'}]);
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(observer.getCurrentResult().data,undefined);
+    assert.deepEqual(seen,[]);
+    assert.equal(client.getQueryData(key),undefined);
+    const fresh=await client.fetchQuery({queryKey:nextKey,queryFn:()=>loadCentralCrmLegado({
+      clienteId:'client',readRows:async()=>[{id:'fresh',cliente_id:'client',titulo:'current'}]})});
+    assert.equal(fresh[0].id,'fresh');
+    unsubscribe();observer.destroy();client.clear();
+  }
+});
+
+test('leitura CRM cancelada antes/depois do store não projeta resultado',async()=>{
+  const before=new AbortController();before.abort();let reads=0;
+  await assert.rejects(loadCentralCrmLegado({clienteId:'client',signal:before.signal,readRows:async()=>{reads++;return [];}}),{name:'AbortError'});
+  assert.equal(reads,0);
+  const after=new AbortController();
+  await assert.rejects(loadCentralCrmLegado({clienteId:'client',signal:after.signal,readRows:async()=>{
+    after.abort();return [{id:'old',cliente_id:'client'}];}}),{name:'AbortError'});
+});
+
 test('shouldUseCrmLegadoAdapter só quando HTTP CRM está skipped pendente', () => {
   assert.equal(shouldUseCrmLegadoAdapter({ status: 'skipped', code: CRM_CANONICAL_HTTP_PENDING }), true);
   assert.equal(shouldUseCrmLegadoAdapter({ status: 'ok', data: [] }), false);
   assert.equal(shouldUseCrmLegadoAdapter({ status: 'forbidden' }), false);
+  assert.equal(shouldUseCrmLegadoAdapter({ status: 'unavailable', code: CRM_CANONICAL_HTTP_PENDING }), false);
+  assert.equal(shouldUseCrmLegadoAdapter({ status: 'skipped', code: 'CRM_CANONICAL_AUTH_DENIED' }), false);
   assert.equal(shouldUseCrmLegadoAdapter(null), false);
 });
 

@@ -5,13 +5,26 @@
 
 export const CRM_CANONICAL_HTTP_PENDING = 'CRM_CANONICAL_HTTP_PENDING';
 
+/** Scope includes the non-secret session fingerprint already used by Central HTTP. */
+export function centralCrmLegadoQueryKey({ clienteId, groupId, empresaId, actorId, sessionKey, canView }) {
+  return ['central360-crm-legado',groupId,empresaId,clienteId,actorId,sessionKey,Boolean(canView)];
+}
+
+/** Legacy store cannot abort transport; reject cancelled reads before projection/cache. */
+export async function loadCentralCrmLegado({ readRows, clienteId, signal }) {
+  signal?.throwIfAborted();
+  const rows = await readRows();
+  signal?.throwIfAborted();
+  return filterOportunidadesDoCliente(rows,clienteId).map(resumirOportunidadeCrm);
+}
+
 /**
  * @param {{ status?: string, code?: string|null }} block
  */
 export function shouldUseCrmLegadoAdapter(block) {
   if (!block || block.status !== 'skipped') return false;
   const code = String(block.code || '');
-  return code === CRM_CANONICAL_HTTP_PENDING || code.includes('CRM_CANONICAL');
+  return code === CRM_CANONICAL_HTTP_PENDING;
 }
 
 /**
