@@ -11,7 +11,7 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
       FROM pg_roles effective JOIN pg_roles login ON login.rolname=session_user WHERE effective.rolname=current_user`);
   const who=identity.rows[0];
   const checks:Record<string,boolean>={destination:!!who&&who.database===expected.database&&who.schema===expected.schema,
-    restrictedRole:!!who&&!who.rolsuper&&!who.rolbypassrls};
+    restrictedRole:!!who&&who.rolsuper===false&&who.rolbypassrls===false};
   if(expected.requireRestrictedLogin)checks.restrictedLogin=!!who && who.same_login===true
     && who.session_super===false && who.session_bypass===false && who.rolsuper===false && who.rolbypassrls===false;
   if(!checks.destination || checks.restrictedLogin===false)return {ready:false,checks,blocked:Object.keys(checks).filter(k=>!checks[k])};
@@ -36,6 +36,8 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
   }
   checks.schema=opportunity?.kind==='r'&&relations.rows.some(r=>r.name==='entity_code_sequences'&&r.kind==='r');
   checks.rls=!!opportunity?.rls&&!!opportunity?.force;
+  const sequence=relations.rows.find(r=>r.name==='entity_code_sequences');
+  checks.sequenceRls=sequence?.kind==='r'&&sequence.rls===true&&sequence.force===true;
   checks.migration=false;
   if(hasLedger) {
     // Identifier originates in a separately validated destination, not interpolated raw.
@@ -74,11 +76,11 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
     checks.grants=checks.schema&&grants.rows[0]?.ok===true;
     const publicAcl=await db.query<{ok:boolean}>(`SELECT NOT EXISTS(SELECT 1 FROM pg_class c,
       LATERAL aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
-      WHERE c.oid=$1::oid AND a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE'))
+      WHERE c.oid=ANY($1::oid[]) AND a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE'))
       AND NOT EXISTS(SELECT 1 FROM pg_attribute att,LATERAL aclexplode(att.attacl) a
-      WHERE att.attrelid=$1::oid AND att.attnum>0 AND NOT att.attisdropped AND a.grantee=0
-        AND a.privilege_type IN ('SELECT','INSERT','UPDATE')) AS ok`,[oid]);
-    checks.noPublicDml=publicAcl.rows[0]?.ok===true;
+      WHERE att.attrelid=ANY($1::oid[]) AND att.attnum>0 AND NOT att.attisdropped AND a.grantee=0
+        AND a.privilege_type IN ('SELECT','INSERT','UPDATE')) AS ok`,[[oid,sequence?.oid??oid]]);
+    checks.noPublicDml=checks.schema&&publicAcl.rows[0]?.ok===true;
   }
   const blocked=Object.keys(checks).filter(k=>!checks[k]);
   return {ready:blocked.length===0,checks,blocked};
