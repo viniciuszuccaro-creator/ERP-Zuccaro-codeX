@@ -1,16 +1,28 @@
+## CURSOR — tip 27224f87 implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`27224f87`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-CaMsSipy.js` · rollback `pre-spa-login-20261011-122739` |
+| **conteúdo** | adapters canônicos · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
+| **evidência** | `deploy-261-tip-27224f87-consolidacao-adapters-20261011.txt` |
+| #280/#281/#282 | **sem porte** (Marca/Legado) · tip #282 `d972179a` |
+| BLOCKED | secret restrito |
+| próxima | secret restrito · merge owner |
+
 ## CURSOR — consolidação residual + revisão Codex (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| tip | **`b3aca689`** (fiscal/adapters/consumidores + Completo→adapter) |
+| tip | **`27224f87`** implantado (código `b3aca689`) |
 | escopo | adapters canônicos · EmpresaForm fiscal+webhooks+cert · revisão Codex |
 | testes | `cadastros-codigo-cobertura` · `cadastros-empresa-edicao*` pass |
 | #280 | tip **`612c2055`** — **sem porte** |
 | #281/#282 | Legado — **monitorar** sem porte |
-| tip runtime | **`91945247`** até CI tip → redeploy |
+| tip runtime | **`27224f87`** |
 | Completo Empresa | adapter → EmpresaForm (+ status/delete no canônico; helpers em empresaFormShared) |
 | BLOCKED | secret restrito |
-| próxima | CI tip → redeploy → homolog · secret · merge owner |
+| próxima | secret restrito · merge owner |
 
 ## CURSOR — tip 91945247 implantado+homologado (2026-10-11)
 

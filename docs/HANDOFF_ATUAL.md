@@ -1,16 +1,41 @@
+## CURSOR — tip 27224f87 implantado (consolidação adapters + Empresa) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`27224f87`** · asset `index-CaMsSipy.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-122739` |
+| escopo | adapters Bloco/V24/Tab/Gestor · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
+| #280 | tip `612c2055` — **sem porte** Marca |
+| #281/#282 | Legado `2e8ef5bd` / `d972179a` — **sem porte** |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-27224f87-consolidacao-adapters-20261011.txt` |
+| próxima | secret restrito · merge owner |
+
+## REVISÃO CODEX — timer 2026-10-11T12:15Z
+
+| Item | Valor |
+|---|---|
+| #261 tip | **`27224f87`** · CI SUCCESS · **implantado** |
+| main | `baba91a6` — sem delta porteável |
+| #280 | tip **`612c2055`** · IDLE · CI SUCCESS · **sem porte** Marca/Auth |
+| #281 | tip **`2e8ef5bd`** · IDLE · CI SUCCESS · Legado · **sem porte** |
+| #282 | tip **`d972179a`** (+teste concorrência PG) · RUNNING · Legado · **sem porte** |
+| agentes | Legado piloto RUNNING · Marca/Auth IDLE |
+| porte | nenhum (reservado Marca/Auth/Legado) |
+
 ## CURSOR — consolidação residual + revisão Codex (2026-10-11)
 
 | Item | Valor |
 |---|---|
 | branch | #261 |
-| tip | **`b3aca689`** · CI pendente → redeploy |
+| tip | **`27224f87`** implantado |
 | escopo | adapters Bloco/V24/Tab/Gestor · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
 | preservação | loadIncomplete · certificado granular · tenant #228 |
 | #280 | tip **`612c2055`** — **sem porte** Marca |
-| #281/#282 | Legado tip `2e8ef5bd` / `a0979808` — **monitorar** sem porte |
-| tip runtime | ainda **`91945247`** até CI tip → redeploy |
+| #281/#282 | Legado tip `2e8ef5bd` / `d972179a` — **monitorar** sem porte |
+| tip runtime | **`27224f87`** / `index-CaMsSipy.js` |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
-| próxima | CI tip → redeploy → homolog · secret restrito · merge owner |
+| próxima | secret restrito · merge owner |
 
 ## REVISÃO CODEX — #280 tip 612c2055 + Legado #281/#282 (2026-10-11)
 
