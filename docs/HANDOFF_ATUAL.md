@@ -32,7 +32,7 @@
 | escopo | bootstrap Auth separado da conexão de dados · validação role NOSUPERUSER no dataDb |
 | ação Cursor | **monitorar** — **não** porte (Auth/sessão reservados) |
 | stack | #276 → #275 → … → #267 → #261 · fora de `main` |
-| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+| tip implantado erp-dev | **`58766d82`** / `index-iZ42G-Qb.js` |
 
 ## REVISÃO CODEX — #275 contexto tenant runtime (2026-10-11)
 
