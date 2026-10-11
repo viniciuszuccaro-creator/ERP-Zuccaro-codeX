@@ -98,6 +98,8 @@ Acesso browser: SPA `http://127.0.0.1:3081/` — não confundir com API 3080.
 
 ### Conversão candidata atômica de Orçamento vinculado → Pedido (2026-10-11)
 
+Consumidor candidato: Central existente abre o modal ConverterOportunidade existente em modo canônico. Permissões confirmadas por HTTP e contexto validado antes/depois; empresa-alvo explícita preservada na visão Grupo. Retirada/Entrega e data/hora do cliente obrigatórias, Local exigido para Entrega e Obra opcional. Um comando ao backend, sem dual-write/fallback; resposta parcial/divergente não vira sucesso. Modo legado e suas opções preservados e não declarados atômicos. Testes React/contrato HTTP/PG isolado registrados no HANDOFF; flags/DEV/revisão/homologação permanecem gates separados.
+
 `POST /api/v1/oportunidades/:id/converter-orcamento-pedido` compõe os serviços existentes num executor SQL compartilhado. Exige versão e Orçamento original já vinculado; preserva ClienteEmpresa, empresa fiscal, snapshots e vínculo único Pedido→Oportunidade. Repetição idêntica usa recibo de hash no histórico existente, sem nova persistência; divergência retorna409. Auditoria, itens/histórico e numeração revertem juntos em falha. Em memória a nova operação falha503 pré-escrita, mantendo operações anteriores. Não cria Orçamento ou Pedido alternativo, estoque/produção nem inferência REVENDA. Fachada preparada sem ativação/troca de fonte das telas; CI/revisão do SHA final e homologação operacional continuam gates separados. Provas e fila de consumidor registradas no HANDOFF.
 
 ### Atualização candidata 2026-10-11 — Central CRM canônica

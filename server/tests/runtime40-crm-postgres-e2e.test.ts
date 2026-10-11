@@ -192,8 +192,8 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
   const role=f.role??ROLE;
   assert.match(role,/^[a-z][a-z0-9_]+$/);
   const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'crm-atomic-synthetic'};
-  const groupTables=['empresas','produtos','unidades_medida','tabelas_preco','condicoes_pagamento','condicao_pagamento_parcelas'];
-  const companyTables=['produto_empresas','tabela_preco_empresas','condicao_pagamento_empresas','pedido_historico'];
+  const groupTables=['empresas','produtos','unidades_medida','tabelas_preco','condicoes_pagamento','condicao_pagamento_parcelas','cliente_locais','cliente_local_finalidades','obras','obra_locais'];
+  const companyTables=['produto_empresas','tabela_preco_empresas','condicao_pagamento_empresas','pedido_historico','obra_empresas'];
   for(const table of groupTables)await f.exec(`GRANT SELECT ON ${table} TO ${role};
     CREATE POLICY crm_atomic_scope ON ${table} FOR ALL TO ${role}
     USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)
@@ -286,6 +286,11 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
       assert.equal(converted.pedido.orcamento_id,httpDraft.quote.id);assert.equal(converted.replayed,false);
       assert.equal((await facade.convertOrcamentoToPedido(httpDraft.bound.id,httpDraft.input)).pedido.id,converted.pedido.id);
       await assert.rejects(facade.convertOrcamentoToPedido(httpDraft.bound.id,{...httpDraft.input,actorId:ID.runtimeActorB}),(error:any)=>error.status===422);
+      const delivery=await prepare();
+      const deliveryInput={...delivery.input,pedido:{...delivery.input.pedido,tipo_operacao:'ENTREGA',cliente_local_id:ID.clienteLocalA,obra_id:ID.obraA}};
+      await assert.rejects(facade.convertOrcamentoToPedido(delivery.bound.id,{...deliveryInput,pedido:{...deliveryInput.pedido,cliente_local_id:ID.clienteLocalB1}}),(error:any)=>error.status===422);
+      const delivered=await facade.convertOrcamentoToPedido(delivery.bound.id,deliveryInput);
+      assert.equal(delivered.pedido.tipo_operacao,'ENTREGA');assert.equal(delivered.pedido.cliente_local_id,ID.clienteLocalA);assert.equal(delivered.pedido.obra_id,ID.obraA);
     }finally{await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}
     const inactive=await prepare();
     await f.admin.query("UPDATE orcamentos SET ativo=false,status='CANCELADO' WHERE id=$1",[inactive.quote.id]);
