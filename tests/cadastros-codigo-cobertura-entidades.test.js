@@ -247,11 +247,22 @@ test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com i
 test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', async () => {
   const cliente = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  const produtoCompleto = await readFile(new URL('../src/components/cadastros/ProdutoFormCompleto.jsx', import.meta.url), 'utf8');
+  const clienteComercial = await readFile(new URL('../src/components/comercial/ClienteFormCompleto.jsx', import.meta.url), 'utf8');
+  const clienteForm = await readFile(new URL('../src/components/comercial/ClienteForm.jsx', import.meta.url), 'utf8');
   assert.match(cliente, /CadastroCodigoRegistroField/);
   assert.match(cliente, /codigo-registro-cliente-completo/);
   assert.match(cliente, /entityId=\{cliente\?\.id\}/);
   assert.match(produto, /data-action="id-tecnico-produto"/);
   assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
+  assert.match(produtoCompleto, /ProdutoFormV22_Completo/);
+  assert.match(produtoCompleto, /isSelfManagedCadastro = true/);
+  assert.doesNotMatch(produtoCompleto, /createTable|useState|TabsList/);
+  assert.match(clienteComercial, /CadastroClienteCompleto/);
+  assert.match(clienteComercial, /isSelfManagedCadastro = true/);
+  assert.doesNotMatch(clienteComercial, /createTable|useState|defaultFormData/);
+  assert.match(clienteForm, /CadastroClienteCompleto/);
+  assert.doesNotMatch(clienteForm, /clienteSchema|useForm\(/);
 });
 
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
