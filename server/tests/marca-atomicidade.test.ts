@@ -22,6 +22,11 @@ async function prove(f:any,role:string){try{
  assert.equal((await f.admin.query('SELECT descricao FROM marcas WHERE id=$1',[row.id])).rows[0].descricao,null);
  await f.exec('DROP TRIGGER fixture_fail ON audit_logs');await s.update(ctx,row.id,{descricao:'Preserved'});await s.softDelete(ctx,row.id);
  const persisted=(await f.admin.query('SELECT * FROM marcas WHERE id=$1',[row.id])).rows[0];assert.equal(persisted.ativo,false);assert.equal(persisted.pais_origem,'Brasil');assert.equal(persisted.descricao,'Preserved');
+ const concurrent=await Promise.all([s.create(ctx,{nome_marca:'Concurrent A'}),s.create(ctx,{nome_marca:'Concurrent B'})]);
+ assert.notEqual(concurrent[0].codigo,concurrent[1].codigo);assert.notEqual(concurrent[0].id,concurrent[1].id);
+ assert.equal((await f.admin.query("SELECT count(*)::int n FROM marcas WHERE nome_marca LIKE 'Concurrent %'")).rows[0].n,2);
+ await assert.rejects(()=>s.create({...ctx,groupId:I.groupB},{nome_marca:'Cross tenant'}),e=>e.code==='TENANT_MISMATCH'||e.code==='PERMISSION_DENIED');
+ assert.equal((await f.admin.query("SELECT count(*)::int n FROM marcas WHERE nome_marca='Cross tenant'")).rows[0].n,0);
  }finally{await f.close();}
 }
 test('Marca persistent rollback restores record and code sequence',async()=>prove(await localCrmFixture(),ROLE));
