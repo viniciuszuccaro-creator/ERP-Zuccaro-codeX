@@ -52,3 +52,39 @@ test('Produto mestre→Empresa: habilitação explícita, replay/CAS/audit rollb
     const off=new PostgresProdutoRepository(f.admin);assert.equal(await off.getForOperation(ctx,ID.produtoA),null);
   }finally{await f.close();}
 });
+
+test('Preço canônico usa o executor recebido em todas as consultas, sem escapar para o pool',async()=>{
+  const {TabelaPrecoService}=await import('../src/services/tabelaPrecoService.ts');
+  const {PostgresTabelaPrecoRepository}=await import('../src/repositories/postgresTabelaPrecoRepository.ts');
+  const {PostgresClienteRepository}=await import('../src/repositories/postgresClienteRepository.ts');
+  const {PostgresTenantGuard}=await import('../src/db/tenantGuard.ts');
+  const {PostgresRbacGuard}=await import('../src/db/rbacGuard.ts');
+  const {PostgresProdutoRelationGuard}=await import('../src/db/produtoRelationGuard.ts');
+  const {PostgresUnidadeRepository}=await import('../src/repositories/postgresCadastroRepositories.ts');
+  const {PostgresAuditRepository}=await import('../src/audit/auditRepository.ts');
+  const {grantProdutoSalesFixture}=await import('./helpers/produtoEmpresaFixture.ts');
+  const {ROLE}=await import('./helpers/crmFixture.ts');
+  const f=await produtoEmpresaFixture();try {
+    await grantProdutoSalesFixture(f.exec,'role' in f?f.role:ROLE);
+    const escaped={...f.data,query:async()=>{throw new Error('SALE_PRICE_ESCAPED_EXECUTOR');}};
+    const service=new TabelaPrecoService(new PostgresTabelaPrecoRepository(escaped),new PostgresAuditRepository(escaped),
+      new PostgresTenantGuard(escaped),new PostgresRbacGuard(escaped),new PostgresClienteRepository(escaped));
+    const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA};
+    const ce=await f.admin.query<{id:string}>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo AND habilitado_operacao AND NOT bloqueado LIMIT 1',[ctx.groupId,ctx.empresaId]);
+    const price=await f.data.withTransaction(async tx=>{
+      await tx.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      await new PostgresProdutoRelationGuard(escaped).assertRelationsInGroup(ctx.groupId,{unidadeMedidaId:ID.unidadeA},tx);
+      assert.equal((await new PostgresUnidadeRepository(escaped).getById(ctx,ID.unidadeA,tx))?.id,ID.unidadeA);
+      return service.resolveSalePrice(ctx,{clienteEmpresaId:ce.rows[0].id,produtoId:ID.produtoA,unidadeMedidaId:ID.unidadeA},tx);
+    });
+    assert.ok(price);assert.match(price.preco,/^\d+\.\d+$/);
+    await f.exec(`GRANT UPDATE(habilitado_operacao) ON cliente_empresas TO ${'role' in f?f.role:ROLE}`);
+    await assert.rejects(f.data.withTransaction(async tx=>{
+      await tx.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      await tx.query('UPDATE cliente_empresas SET habilitado_operacao=false WHERE id=$1',[ce.rows[0].id]);
+      await assert.rejects(service.resolveSalePrice(ctx,{clienteEmpresaId:ce.rows[0].id,produtoId:ID.produtoA,unidadeMedidaId:ID.unidadeA},tx),{code:'CLIENTE_EMPRESA_INDISPONIVEL'});
+      throw new Error('synthetic-price-rollback');
+    }),/synthetic-price-rollback/);
+    assert.equal((await f.admin.query('SELECT habilitado_operacao FROM cliente_empresas WHERE id=$1',[ce.rows[0].id])).rows[0].habilitado_operacao,true);
+  }finally{await f.close();}
+});

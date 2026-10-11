@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient,DbQueryExecutor } from '../db/client.js';
 import type {
   Marca,
   MarcaCreateInput,
@@ -62,14 +62,14 @@ export class PostgresMarcaRepository implements MarcaRepository {
     return result.rows.map((row) => mapRow(row as Record<string, unknown>));
   }
 
-  async getById(scope: { groupId: string; empresaId?: string | null }, id: string): Promise<Marca | null> {
+  async getById(scope: { groupId: string; empresaId?: string | null }, id: string,executor?:DbQueryExecutor): Promise<Marca | null> {
     const params: unknown[] = [scope.groupId, id];
     let sql = 'SELECT * FROM marcas WHERE group_id = $1 AND id = $2';
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id = $3`;
     }
-    const result = await this.db.query(sql, params);
+    const result = await (executor??this.db).query(sql, params);
     const row = result.rows[0];
     return row ? mapRow(row as Record<string, unknown>) : null;
   }

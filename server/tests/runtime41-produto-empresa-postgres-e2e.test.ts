@@ -18,11 +18,18 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
     await grantProdutoSalesFixture(f.exec,f.role);
     let restrictedTransactions=0;
     const scoped:DbClient={...f.data,withTransaction:fn=>f.data.withTransaction(async tx=>{
-      await tx.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+
       const role=await tx.query<{rolsuper:boolean;rolbypassrls:boolean}>('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
       assert.equal(role.rows[0].rolsuper,false);assert.equal(role.rows[0].rolbypassrls,false);
       restrictedTransactions++;return fn(tx);
-    }),query:(sql,params)=>scoped.withTransaction(tx=>tx.query(sql,params))};
+    }),query:(sql,params)=>{
+      if(/\b(cliente_empresas|tabelas_preco|tabela_preco_itens|tabela_preco_empresas|unidades_medida)\b/i.test(sql))
+        throw new Error('REFERENCE_PRICE_ESCAPED_SALE_EXECUTOR');
+      return scoped.withTransaction(async tx=>{
+        await tx.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+        return tx.query(sql,params);
+      });
+    }};
     const app=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',DATABASE_URL:process.env.DATABASE_URL,
       ENABLE_PRODUTO_EMPRESA:'true'}),db:scoped});
     const ce=await f.admin.query<{id:string}>('SELECT id FROM cliente_empresas WHERE group_id=$1 AND empresa_id=$2 AND ativo AND habilitado_operacao AND NOT bloqueado LIMIT 1',[ctx.groupId,ctx.empresaId]);
@@ -41,6 +48,9 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
     assert.equal((await app.produtoService.list(ctx,{codigo:productCode})).data.length,0);
     const afterPage=await app.produtoService.list(ctx,{forOperation:true,codigo:productCode,limit:1,offset:1});
     assert.equal(afterPage.meta.total,1);assert.equal(afterPage.data.length,0);
+    const direct=await app.pedidoService.create(ctx,{cliente_empresa_id:data.cliente_empresa_id,condicao_pagamento_id:data.condicao_pagamento_id,
+      tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',itens:data.itens.map(i=>({...i,requer_producao:false}))});
+    assert.notEqual(direct.itens[0].preco_unitario,'999.000000');
     // An intermediate audit failure must roll back the complete sale, not only its audit.
     const counts=()=>f.admin.query<{quotes:number;items:number;audits:number}>(`SELECT
       (SELECT count(*)::int FROM orcamentos WHERE group_id=$1 AND empresa_id=$2) quotes,
@@ -56,7 +66,8 @@ if(process.env.DATABASE_URL)test('R41 PostgreSQL real: Produto Grupoâ†’Empresaâ†
     }finally{await f.exec('DROP TRIGGER r41_sale_audit_failure ON audit_logs;DROP FUNCTION r41_sale_audit_failure();');}
     const quote=await app.orcamentoService.create(ctx,data);assert.notEqual(quote.itens[0].preco_unitario,'999.000000');
     const order=await app.pedidoService.convert(ctx,quote.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z'});
-    assert.equal(order.itens[0].produto_id,ID.produtoA);assert.equal(order.itens[0].preco_unitario,quote.itens[0].preco_unitario);
+    assert.equal(order.itens[0].produto_id,ID.produtoA);
+    assert.equal(direct.itens[0].preco_unitario,quote.itens[0].preco_unitario);assert.equal(order.itens[0].preco_unitario,quote.itens[0].preco_unitario);
     const snapshot={price:order.itens[0].preco_unitario,description:order.itens[0].descricao,unit:order.itens[0].unidade_sigla};
     await f.data.withTransaction(async tx=>{
       const role=await tx.query<{rolsuper:boolean;rolbypassrls:boolean}>('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
