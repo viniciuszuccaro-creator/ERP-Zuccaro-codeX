@@ -1,3 +1,13 @@
+## CURSOR — C360 nav Orçamentos/Pedidos canônicos (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| escopo | `CentralCliente360Panel` · Abrir orçamentos/pedidos → `OrcamentosTab` / `PedidosTab` canônico |
+| fonte | **sem** tabela paralela · mesma UI Comercial |
+| RBAC | visualizar Orçamento/Pedido |
+| tip implantado | ainda **`4d04a42a`** até CI/redeploy deste tip |
+| próxima | CI → redeploy · secret restrito · merge owner |
+
 ## CURSOR — tip 4d04a42a implantado (Painel/Agenda + POD inventário) (2026-10-11)
 
 | Item | Valor |

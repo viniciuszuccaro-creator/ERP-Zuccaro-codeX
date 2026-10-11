@@ -1,3 +1,23 @@
+## CURSOR — C360 nav canônica Orçamentos/Pedidos (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **escopo** | `CentralCliente360Panel` — Abrir orçamentos/pedidos → abas canônicas (sem fonte paralela) |
+| **RBAC** | botões só com `Comercial.Orcamento/Pedido.visualizar` |
+| **chrome** | ícones bloco `text-blue-600` |
+| tip | após push · runtime ainda **`4d04a42a`** até CI/redeploy |
+| próxima | CI → redeploy · secret restrito · merge owner |
+
+## CURSOR — revisão Codex #277/#278 estável (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#277** tip **`8bc4fef2`** | MERGEABLE · CI SUCCESS · Auth bootstrap RLS 042 |
+| **#278** tip **`b398202b`** | MERGEABLE · CI SUCCESS · Marca RBAC+anti-redirect |
+| porte Cursor | **não** Auth/042 · Marca extras já em #261 |
+| tip #261 implantado | **`4d04a42a`** |
+| próxima | monitorar tip; timer; sem dual-write MarcaService |
+
 ## CURSOR — tip 4d04a42a implantado+homologado (Painel/Agenda) (2026-10-11)
 
 | Item | Estado |

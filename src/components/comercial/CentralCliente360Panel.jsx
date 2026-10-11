@@ -126,7 +126,7 @@ function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, httpBlock }) {
   );
 }
 
-function BlockCard({ title, icon: Icon, block, blockKey, renderRow, onLoadMore, loadingMore }) {
+function BlockCard({ title, icon: Icon, block, blockKey, renderRow, onLoadMore, loadingMore, headerAction = null }) {
   if (!block) return null;
   const status = block.status;
   const rows = status === 'ok' && Array.isArray(block.data) ? block.data : [];
@@ -134,11 +134,12 @@ function BlockCard({ title, icon: Icon, block, blockKey, renderRow, onLoadMore, 
   return (
     <div className="border rounded-md bg-white p-3 space-y-2" data-block-status={status} data-block-key={blockKey}>
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-slate-600" />
-          <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+        <div className="flex items-center gap-2 min-w-0">
+          <Icon className="w-4 h-4 text-blue-600 shrink-0" />
+          <h4 className="text-sm font-semibold text-slate-900 truncate">{title}</h4>
+          <Badge variant={status === 'ok' ? 'default' : 'secondary'}>{status}</Badge>
         </div>
-        <Badge variant={status === 'ok' ? 'default' : 'secondary'}>{status}</Badge>
+        {headerAction}
       </div>
       {status === 'ok' && rows.length > 0 && (
         <div className="space-y-1">
@@ -197,6 +198,9 @@ export default function CentralCliente360Panel({
   token,
 }) {
   const sessionToken = typeof token === 'string' ? token.trim() : '';
+  const { openWindow } = useWindow();
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const { empresaAtual, filterInContext } = useContextoVisual();
   const enabled = canLoadCentralCliente360({
     flag: isHttpCliente360Enabled,
     clienteId,
@@ -207,6 +211,68 @@ export default function CentralCliente360Panel({
   });
   const sessionKey = central360SessionKey(sessionToken);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
+
+  const canViewOrcamento = !permissionsLoading && (
+    hasPermission('Comercial', 'Orcamento', 'visualizar')
+    || hasPermission('Comercial', 'Orçamento', 'visualizar')
+    || hasPermission('Comercial', 'orcamento', 'visualizar')
+    || hasPermission('Comercial', null, 'visualizar')
+  );
+  const canViewPedido = !permissionsLoading && (
+    hasPermission('Comercial', 'Pedido', 'visualizar')
+    || hasPermission('Comercial', 'Pedidos', 'visualizar')
+    || hasPermission('Comercial', 'pedido', 'visualizar')
+    || hasPermission('Comercial', null, 'visualizar')
+  );
+
+  const openOrcamentosCanonicos = async () => {
+    if (!canViewOrcamento || !groupId) return;
+    const OrcamentosTab = (await import('@/components/comercial/OrcamentosTab')).default;
+    openWindow(
+      OrcamentosTab,
+      {
+        windowMode: true,
+        groupId,
+        empresaId,
+        actorId,
+        actorEmail,
+        empresaAtual,
+        hasPermission,
+        filterInContext,
+      },
+      {
+        title: 'Orçamentos · cliente',
+        width: 1500,
+        height: 850,
+        uniqueKey: `c360-orcamentos-cliente-${clienteId}`,
+      },
+    );
+  };
+
+  const openPedidosCanonicos = async () => {
+    if (!canViewPedido || !groupId) return;
+    const PedidosTab = (await import('@/components/comercial/PedidosTab')).default;
+    openWindow(
+      PedidosTab,
+      {
+        windowMode: true,
+        canonicalHttp: true,
+        groupId,
+        empresaId,
+        actorId,
+        actorEmail,
+        hasPermission,
+        filterInContext,
+        empresaAtual,
+      },
+      {
+        title: 'Pedidos · cliente',
+        width: 1500,
+        height: 850,
+        uniqueKey: `c360-pedidos-cliente-${clienteId}`,
+      },
+    );
+  };
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
   // "Carregar mais" de outro contexto pintar o painel atual.
@@ -417,6 +483,18 @@ export default function CentralCliente360Panel({
           block={blocks.orcamentos}
           onLoadMore={handleLoadMore}
           loadingMore={loadingMore}
+          headerAction={canViewOrcamento ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs shrink-0"
+              data-action="central360-orcamentos-abrir"
+              onClick={openOrcamentosCanonicos}
+            >
+              Abrir orçamentos
+            </Button>
+          ) : null}
           renderRow={(row) => (
             <>
               <span className="min-w-0 flex-1">
@@ -439,6 +517,18 @@ export default function CentralCliente360Panel({
           block={blocks.pedidos}
           onLoadMore={handleLoadMore}
           loadingMore={loadingMore}
+          headerAction={canViewPedido ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs shrink-0"
+              data-action="central360-pedidos-abrir"
+              onClick={openPedidosCanonicos}
+            >
+              Abrir pedidos
+            </Button>
+          ) : null}
           renderRow={(row) => (
             <>
               <span className="min-w-0 flex-1">
@@ -473,7 +563,7 @@ export default function CentralCliente360Panel({
       </div>
 
       <p className="text-xs text-slate-500" data-action="central360-fonte-canonica">
-        Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido ·
+        Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido (Abrir abre a aba canônica) ·
         CRM via Oportunidade legado (até HTTP canônico Codex) · Locais/Obras · Financeiro/Expedição via pedido.
       </p>
     </div>
