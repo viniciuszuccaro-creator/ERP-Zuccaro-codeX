@@ -1,5 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import ConverterOportunidade from '@/components/crm/ConverterOportunidade';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { isCanonicalQuoteOpportunity, openCrmQuoteOrderWindow, isCrmConversionScopeCurrent } from '@/components/crm/crmFormSubmission';
 import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target } from 'lucide-react';
 import {
   canLoadCentralCliente360,
@@ -206,6 +209,13 @@ export default function CentralCliente360Panel({
   actorEmail,
   token,
 }) {
+  const queryClient=useQueryClient();
+  const {openWindow,closeWindow}=useWindow();
+  const {hasPermission,isLoading:permissionsLoading}=usePermissions();
+  const {grupoAtual,empresaAtual}=useContextoVisual();
+  const renderedScope=useRef(null);
+  renderedScope.current={groupId:grupoAtual?.id||empresaAtual?.group_id||empresaAtual?.grupo_id,empresaId:empresaAtual?.id||null};
+  const [conversionError,setConversionError]=useState('');
   const sessionToken = typeof token === 'string' ? token.trim() : '';
   const enabled = canLoadCentralCliente360({
     flag: isHttpCliente360Enabled,
@@ -214,8 +224,11 @@ export default function CentralCliente360Panel({
     empresaId,
     actorId,
     token: sessionToken,
-  });
+  }) && isCrmConversionScopeCurrent({groupId,empresaId,actorId,token:sessionToken},renderedScope.current,readErpHttpSession());
   const sessionKey = central360SessionKey(sessionToken);
+  const viewKey=JSON.stringify([clienteId,groupId,empresaId,actorId,sessionKey]);
+  const viewRef=useRef(null);viewRef.current=viewKey;
+  React.useEffect(()=>{viewRef.current=viewKey;setConversionError('');return()=>{viewRef.current=null;};},[viewKey]);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
@@ -224,7 +237,7 @@ export default function CentralCliente360Panel({
     setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
   }, [clienteId, groupId, empresaId, actorId, sessionKey]);
 
-  const api = useMemo(
+  const httpApi = useMemo(
     () => createHttpApiClient({
       getScope: () => ({
         groupId,
@@ -233,9 +246,25 @@ export default function CentralCliente360Panel({
         actorEmail,
         token: sessionToken,
       }),
-    }).clientes,
+    }),
     [groupId, empresaId, actorId, actorEmail, sessionToken],
   );
+  const api=httpApi.clientes;
+  const canConvert=!permissionsLoading && hasPermission('CRM','oportunidades','aprovar')
+    && hasPermission('Comercial','pedido','converter-pedido') && hasPermission('Comercial','pedido','visualizar')
+    && hasPermission('Comercial','orcamento','visualizar');
+  const openCanonicalConversion=async(row)=>{
+    const openedKey=viewKey,openedScope={groupId,empresaId,actorId,token:sessionToken};
+    const assertCurrent=(completed=false)=>{
+      if(viewRef.current!==openedKey || !isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
+        throw new Error(completed?'Contexto alterado. O Pedido pode ter sido criado; consulte o registro antes de repetir.':'Contexto alterado. Reabra a Central antes de converter.');
+    };
+    try{
+      await openCrmQuoteOrderWindow(row,{api:httpApi,assertCurrent,scope:{groupId,empresaId},viewKey:openedKey,
+        blocks:(query.data?.data||query.data)?.blocks||{},openWindow,closeWindow,component:ConverterOportunidade,
+        invalidate:()=>queryClient.invalidateQueries({queryKey:['cliente-central-360',groupId,empresaId,actorId,clienteId,sessionKey]})});
+    }catch(error){if(viewRef.current===openedKey)setConversionError(error?.message||'Falha ao abrir conversão.');}
+  };
 
   const query = useQuery({
     queryKey: [
@@ -494,6 +523,8 @@ export default function CentralCliente360Panel({
                 <span className="flex items-center gap-2 shrink-0">
                   <Badge variant="outline">{row.etapa || row.status}</Badge>
                   <span>{money(row.valor_estimado)}</span>
+                  {canConvert && isCanonicalQuoteOpportunity(row) &&
+                    <Button type="button" size="sm" variant="outline" data-action="central360-crm-converter-pedido" data-permission="CRM.oportunidades.aprovar" onClick={()=>openCanonicalConversion(row)}>Converter em Pedido</Button>}
                 </span>
               </>
             )}
@@ -501,6 +532,7 @@ export default function CentralCliente360Panel({
         )}
       </div>
 
+      {conversionError && <p role="alert" className="text-sm text-red-700">{conversionError}</p>}
       <p className="text-xs text-slate-500" data-action="central360-fonte-canonica">
         Fontes canônicas (sem duplicar dados): Cadastros.Cliente · Comercial.Orçamento/Pedido ·
         CRM via Oportunidade canônica quando habilitada · Locais/Obras · Financeiro/Expedição via pedido.

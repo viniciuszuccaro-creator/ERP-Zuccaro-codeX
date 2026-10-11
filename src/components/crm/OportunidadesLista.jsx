@@ -181,7 +181,7 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
         open={Boolean(convertendo)}
         oportunidade={convertendo}
         onClose={() => setConvertendo(null)}
-        onConverter={(oportunidade, tipo) => convertMutation.mutate({ oportunidade, tipo })}
+        onConverter={(oportunidade, tipo) => convertMutation.mutateAsync({ oportunidade, tipo })}
       />
     </div>
   );
