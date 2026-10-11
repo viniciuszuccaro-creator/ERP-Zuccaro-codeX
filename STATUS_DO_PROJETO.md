@@ -6,7 +6,7 @@
 | **asset** | `index-CaMsSipy.js` · rollback `pre-spa-login-20261011-122739` |
 | **conteúdo** | adapters canônicos · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
 | **evidência** | `deploy-261-tip-27224f87-consolidacao-adapters-20261011.txt` |
-| #280–#292 | **sem porte** · #291/`9c6fdfe9` #292/`0200ce75` C360 CRM (painel divergente — sem porte) |
+| #280–#292 | **sem porte** · #291/`9c6fdfe9` #292/`5b7dc32a` C360 CRM (painel divergente) |
 | BLOCKED | secret restrito |
 | próxima | secret restrito · merge owner |
 
