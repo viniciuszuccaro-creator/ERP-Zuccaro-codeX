@@ -85,9 +85,9 @@ export function isProdutoTipoCanonico(value: string) {
 export const produtoCreateSchema = z.object({
   ...baseCreate,
   origem: z.enum(CLIENTE_ORIGENS).optional().nullable(),
-  codigo_legado: z.string().trim().max(80).optional().nullable(),
+  codigo_legado: z.string().trim().min(1).max(80).optional().nullable(),
   legacy_id: z.string().trim().max(120).optional().nullable(),
-  source_system: z.string().trim().max(80).optional().nullable(),
+  source_system: z.string().trim().min(1).max(80).optional().nullable(),
   migration_batch: z.string().trim().max(80).optional().nullable(),
   codigo: z.string().trim().max(80).optional().nullable(),
   codigo_barras: z.string().trim().max(64).optional().nullable(),

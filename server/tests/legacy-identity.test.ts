@@ -4,6 +4,8 @@ import {readFile} from 'node:fs/promises';
 import {localCrmFixture,ROLE} from './helpers/crmFixture.ts';
 import {realCrmFixture} from './helpers/crmPostgresFixture.ts';
 import {SEED_IDS as I} from '../scripts/seedDevIds.ts';
+import {createInMemoryClienteRepo} from '../src/repositories/inMemoryClienteRepository.ts';
+import {createInMemoryProdutoRepo} from '../src/repositories/inMemoryProdutoRepository.ts';
 import {ClienteService} from '../src/services/clienteService.ts';
 import {ProdutoService} from '../src/services/produtoService.ts';
 import {PostgresClienteRepository} from '../src/repositories/postgresClienteRepository.ts';
@@ -47,6 +49,13 @@ async function prove(f:any,role:string) {
   const opts={service:s.cliente,rbacGuard:guard,tipo:'Pessoa Física',sourceSystem:'synthetic-contract',batch:'synthetic'};
   const row=consumirLoteStagingLegado([{cod_cliente:'0007',nome:'Synthetic client',documento:'11144477735',group_id:I.groupA}],
     {entidade:'cliente',contratoEntrada:{coorte:'synthetic'}}).comprovados[0];
+  for(const metadata of [{source_system:'',codigo_legado:''},{source_system:'synthetic-contract',codigo_legado:''},
+    {source_system:'   ',codigo_legado:'0007'}]) for(const company of [undefined,I.empresaA]) {
+    await assert.rejects(()=>s.cliente.create({...ctx,empresaId:company},{tipo:'Pessoa Física',nome:'Synthetic rejected',documento:'11144477735',...metadata}),e=>e.code==='VALIDATION_ERROR');
+    await assert.rejects(()=>s.produto.create({...ctx,empresaId:company},{descricao:'Synthetic rejected',tipo_item:'Matéria-Prima Produção',...metadata}),e=>e.code==='VALIDATION_ERROR');
+  }
+  assert.equal((await f.admin.query("SELECT count(*)::int n FROM clientes WHERE source_system='' OR codigo_legado='' ")).rows[0].n,0);
+  assert.equal((await f.admin.query("SELECT count(*)::int n FROM produtos WHERE source_system='' OR codigo_legado='' ")).rows[0].n,0);
   const first=await persistirClienteGrupoLegado(ctx,row,opts);
   assert.equal((await persistirClienteGrupoLegado(ctx,row,opts)).registro.id,first.registro.id);
   for(const variant of [{...row,documento:'39053344705'},{...row,codigo_legado:'0008'}]) {
@@ -102,3 +111,33 @@ async function prove(f:any,role:string) {
 }
 test('Legacy canonical identities, restricted SQL role, concurrency and rollback',async()=>prove(await localCrmFixture(),ROLE));
 if(process.env.DATABASE_URL)test('Legacy canonical identities PostgreSQL real isolated',async()=>{const f=await realCrmFixture(process.env.DATABASE_URL!);await prove(f,f.role);});
+
+
+test('Legacy identity memory compatibility and blank-key gate before persistence',async()=>{
+ const tenant=new InMemoryTenantGuard(),guard=new InMemoryRbacGuard(),entries:any[]=[];
+ const audit={append:async(e:any)=>{entries.push(e);}};
+ const ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-memory-legacy'};
+ guard.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions:{Cadastros:{cliente:['visualizar','criar','editar','importar'],produto:['visualizar','criar','editar','importar']}}});
+ const cr=createInMemoryClienteRepo(),pr=createInMemoryProdutoRepo();
+ const cs=new ClienteService(cr,audit,tenant,guard),ps=new ProdutoService(pr,audit,tenant,new InMemoryProdutoRelationGuard(),guard);
+ for(const blank of ['', '   ']) {
+  await assert.rejects(()=>cs.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic',documento:'11144477735',source_system:blank,codigo_legado:'0001'}),e=>e.code==='VALIDATION_ERROR');
+  await assert.rejects(()=>ps.create(ctx,{descricao:'Synthetic',tipo_item:'Matéria-Prima Produção',source_system:'synthetic',codigo_legado:blank}),e=>e.code==='VALIDATION_ERROR');
+ }
+ assert.equal(entries.length,0);assert.equal((await cr.list({groupId:ctx.groupId})).length,0);assert.equal((await pr.list({groupId:ctx.groupId})).length,0);
+ const metadata={source_system:'synthetic',codigo_legado:'0001',legacy_id:'0001',origem:'MIGRACAO'};
+ const client=await cs.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic',documento:'11144477735',...metadata});
+ const product=await ps.create(ctx,{descricao:'Synthetic',tipo_item:'Matéria-Prima Produção',...metadata});
+ assert.equal((await cs.findByLegacyIdentity(ctx,'synthetic','0001'))!.id,client.id);
+ assert.equal((await ps.findByLegacyIdentity(ctx,'synthetic','0001'))!.id,product.id);
+ await assert.rejects(()=>cs.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic second',documento:'39053344705',...metadata}),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+ await assert.rejects(()=>ps.create(ctx,{descricao:'Synthetic second',tipo_item:'Matéria-Prima Produção',...metadata}),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+ const plainC=await cs.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic plain',documento:'12345678909'}),plainP=await ps.create(ctx,{descricao:'Synthetic plain',tipo_item:'Matéria-Prima Produção'});
+ await assert.rejects(()=>cs.update(ctx,plainC.id,metadata),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+ await assert.rejects(()=>ps.update(ctx,plainP.id,metadata),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+ assert.equal((await cs.get(ctx,plainC.id)).source_system,null);assert.equal((await ps.get(ctx,plainP.id)).source_system,null);
+ for(const [service,id] of [[cs,client.id],[ps,product.id]] as const)await assert.rejects(()=>service.update(ctx,id,{codigo_legado:''}),e=>e.code==='VALIDATION_ERROR');
+ cr.seed([{...client,id:'synthetic-ambiguous'}]);pr.seed([{...product,id:'synthetic-ambiguous'}]);
+ await assert.rejects(()=>cs.findByLegacyIdentity(ctx,'synthetic','0001'),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+ await assert.rejects(()=>ps.findByLegacyIdentity(ctx,'synthetic','0001'),e=>e.code==='LEGACY_RECONCILIATION_REQUIRED');
+});
