@@ -79,6 +79,8 @@ export type CreateAppOptions = {
   /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
   rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
   authFetchImpl?: typeof fetch;
+  /** Explicit opt-in after verified Auth; never enables tenant context from dev headers. */
+  tenantContextEnabled?: boolean;
   storagePort?: StoragePort;
   malwareScanPort?: MalwareScanPort;
   /** Porta de custo para alçada de margem (Onda 2). Null/omitido = skip (não inventa custo). */
@@ -252,6 +254,19 @@ export function createApp(options: CreateAppOptions) {
   }
 
   app.use(scopeMiddleware);
+  if (options.tenantContextEnabled === true) {
+    if (!db.withTenantContext) throw new Error('TENANT_CONTEXT_CLIENT_REQUIRED');
+    const publicPaths = new Set(['/health', '/ready', '/api/v1/meta', '/api/v1/auth/session']);
+    app.use((req, res, next) => {
+      if (config.authMode !== 'supabase_user' || publicPaths.has(req.path) || req.authVerified !== true) { next(); return; }
+      let alive = true;
+      res.once('finish', () => { alive = false; });
+      res.once('close', () => { alive = false; });
+      try {
+        db.withTenantContext!({ groupId: req.groupId || '', empresaId: req.empresaId }, next, () => alive);
+      } catch (error) { next(error); }
+    });
+  }
   app.use(createApiRouter({
     config,
     db,
