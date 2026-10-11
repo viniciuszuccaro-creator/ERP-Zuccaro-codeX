@@ -86,6 +86,15 @@ test('ContatoB2B e CondicaoComercial expõem ID técnico (idOnly) sem fingir MAS
   assert.match(viz, /id:\s*"ID técnico"/);
 });
 
+test('Representante grade tem codigo+id e Colaborador grade/form têm ID técnico', async () => {
+  const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
+  const colaborador = await readFile(new URL('../src/components/rh/ColaboradorForm.jsx', import.meta.url), 'utf8');
+  assert.match(bloco1, /k:\s*'Representante'[\s\S]{0,220}\bcodigo\b[\s\S]{0,80}\bid\b/);
+  assert.match(bloco1, /k:\s*'Colaborador'[\s\S]{0,200}\bid\b/);
+  assert.match(colaborador, /idOnly/);
+  assert.match(colaborador, /id-tecnico-colaborador/);
+});
+
 test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () => {
   const fieldSrc = await readFile(new URL('../src/components/cadastros/CadastroCodigoRegistroField.jsx', import.meta.url), 'utf8');
   assert.match(fieldSrc, /readOnly/);

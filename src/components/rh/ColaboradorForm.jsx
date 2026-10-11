@@ -12,6 +12,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { Save, User, Trash2, Power, PowerOff } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2: Colaborador Form - Adaptado para Window Mode
@@ -93,6 +94,13 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
               <User className="w-5 h-5 text-pink-600" />
               Dados Pessoais
             </h3>
+
+            <CadastroCodigoRegistroField
+              idOnly
+              hasId={Boolean(colaborador?.id)}
+              entityId={colaborador?.id}
+              action="id-tecnico-colaborador"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
