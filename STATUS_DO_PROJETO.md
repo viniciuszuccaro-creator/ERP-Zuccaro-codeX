@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #298/#299 CRM preflight + gates docs (2026-10-11T23:45Z)
+
+| Item | Valor |
+|---|---|
+| #298 | tip `2a11238d` · preflight flags/RLS/ACL · **sem porte** |
+| #299 | tip `6801a0f8` · docs gates Pedido CRM · **sem porte** |
+| #297 | tip `1be96223` · CI SUCCESS completo · **sem porte** |
+| stack | #299→#298→#297→#296→…→#292 · CRM Codex |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #297 consumidor conversão CRM (2026-10-11T23:30Z)
 
 | Item | Valor |
