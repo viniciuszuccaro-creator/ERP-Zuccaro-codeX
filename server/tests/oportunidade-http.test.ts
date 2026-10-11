@@ -6,6 +6,7 @@ import { createDbClient } from '../src/db/client.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
+import { createHttpApiClient } from '../../src/api/httpApiClient.js';
 
 test('CRM HTTP: desligado por padrão; CRUD/escopo/RBAC quando habilitado explicitamente',async()=>{
   for(const enabled of [false,true]) {
@@ -17,9 +18,26 @@ test('CRM HTTP: desligado por padrão; CRUD/escopo/RBAC quando habilitado explic
     try {
       const address=server.address() as import('node:net').AddressInfo;
       const base=`http://127.0.0.1:${address.port}/api/v1/oportunidades`;
+      let empresaId=ID.empresaA;
+      const facade=createHttpApiClient({baseUrl:`http://127.0.0.1:${address.port}`,
+        getScope:()=>({groupId:ID.groupA,empresaId,actorId:ID.runtimeActorA})}).oportunidades;
       const headers={'content-type':'application/json','x-group-id':ID.groupA,'x-empresa-id':ID.empresaA,'x-actor-id':ID.runtimeActorA};
       const call=(method:string,path='',body?:unknown,h=headers)=>fetch(base+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});
-      if(!enabled){assert.equal((await call('GET')).status,503);continue;}
+      if(!enabled){assert.equal((await call('GET')).status,503);await assert.rejects(facade.list(),(e:any)=>e.status===503);continue;}
+      const input={titulo:'Facade sintética',cliente_nome:'Contato',idempotency_key:'facade-create-1',valor_estimado:'100.123456'};
+      const created=await facade.create(input);assert.equal((await facade.create(input)).id,created.id);
+      assert.equal((await facade.get(created.id)).valor_estimado,'100.123456');
+      const page=await facade.list({limit:1,offset:0,search:'Facade',ativo:true});
+      assert.equal(page.meta.total,1);assert.equal(page.data[0].id,created.id);
+      assert.equal((await facade.update(created.id,{expected_version:1,titulo:'Facade editada'})).version,2);
+      await assert.rejects(facade.update(created.id,{expected_version:1,titulo:'Concorrente'}),(e:any)=>e.status===409);
+      assert.equal((await facade.deactivate(created.id,{expected_version:2})).ativo,false);
+      assert.equal((await facade.restore(created.id,{expected_version:3})).ativo,true);
+      await assert.rejects(facade.getByLegacy('nonexistent-synthetic'),(e:any)=>e.status===404);
+      // Restricted fixture lacks Comercial.orcamento.visualizar: do not expand grants to pass.
+      await assert.rejects(facade.linkOrcamento(created.id,{expected_version:4,orcamento_id:ID.obraA}),(e:any)=>e.status===403);
+      await assert.rejects(facade.linkPedido(created.id,{expected_version:4,pedido_id:ID.obraA}),(e:any)=>e.status===404);
+      empresaId=ID.empresaA2;await assert.rejects(facade.get(created.id),(e:any)=>e.status===404);empresaId=ID.empresaA;
       const response=await call('POST','',{titulo:'HTTP sintético',cliente_nome:'Contato',idempotency_key:'http-create-1'});
       assert.equal(response.status,201);assert.equal(response.headers.get('cache-control'),'no-store');const row=(await response.json()).data;
       assert.equal((await call('GET',`/${row.id}`)).status,200);
@@ -34,6 +52,7 @@ test('CRM HTTP: desligado por padrão; CRUD/escopo/RBAC quando habilitado explic
       assert.equal((await call('POST',`/${row.id}/vincular-pedido`,{expected_version:4,pedido_id:ID.obraA})).status,404);
       assert.equal((await call('POST',`/${row.id}/vincular-pedido`,{expected_version:4,pedido_id:ID.obraA},{...headers,'x-empresa-id':ID.empresaA2})).status,404);
       rbac.link({actorId:ID.runtimeActorA,groupId:ID.groupA,permissions:{}});
+      await assert.rejects(facade.get(created.id),(e:any)=>e.status===403);
       assert.equal((await call('GET',`/${row.id}`)).status,403);
     }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}
   }

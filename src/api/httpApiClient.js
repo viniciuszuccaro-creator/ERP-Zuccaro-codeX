@@ -459,6 +459,30 @@ export function createHttpApiClient(options = {}) {
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
+  // Prepared CRM surface: explicit callers only; never adds Oportunidade to the pilot.
+  const oportunidades = {
+    /** @param {{limit?:number,offset?:number,search?:string,status?:string,clienteEmpresaId?:string,ativo?:boolean,signal?:AbortSignal}} [options] */
+    list({limit=50,offset=0,search,status,clienteEmpresaId,ativo,signal}={}) {
+      return request('/api/v1/oportunidades',{query:{limit,offset,search,status,clienteEmpresaId,ativo},signal,unwrap:false});
+    },
+    /** @param {string} id @param {{signal?:AbortSignal}} [options] */
+    get(id,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}`,{signal}); },
+    /** @param {string} id @param {{signal?:AbortSignal}} [options] */
+    getByLegacy(id,{signal}={}) { return request(`/api/v1/oportunidades/legado/${encodeURIComponent(id)}`,{signal}); },
+    /** @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    create(payload,{signal}={}) { return request('/api/v1/oportunidades',{method:'POST',body:payload,signal}); },
+    /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    update(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}`,{method:'PATCH',body:payload,signal}); },
+    /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    deactivate(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}`,{method:'DELETE',body:payload,signal}); },
+    /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    restore(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}/restaurar`,{method:'POST',body:payload,signal}); },
+    /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    linkOrcamento(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}/vincular-orcamento`,{method:'POST',body:payload,signal}); },
+    /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    linkPedido(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}/vincular-pedido`,{method:'POST',body:payload,signal}); },
+  };
+
   const clientes = {
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
@@ -550,6 +574,7 @@ export function createHttpApiClient(options = {}) {
     orcamentos,
     pedidos,
     clientes,
+    oportunidades,
     /** Acesso direto a rotas preparadas (ex.: Produto base) sem feature flag. */
     preparedEntities: entityRoutes,
     async health() {
