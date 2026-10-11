@@ -171,6 +171,15 @@ test('FormaPagamentoForm é adapter canônico do Completo (sem store paralelo)',
   assert.match(bloco3, /FormaPagamentoFormCompleto/);
 });
 
+test('TabelaPrecoForm é adapter canônico do Completo (sem store paralelo)', async () => {
+  const simple = await readFile(new URL('../src/components/cadastros/TabelaPrecoForm.jsx', import.meta.url), 'utf8');
+  const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
+  assert.match(simple, /TabelaPrecoFormCompleto/);
+  assert.match(simple, /tabela \|\| item \|\| data/);
+  assert.doesNotMatch(simple, /createTable|TabelaPrecoStore/);
+  assert.match(bloco2, /TabelaPrecoFormCompleto/);
+});
+
 test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com id', async () => {
   const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
   const bloco4 = await readFile(new URL('../src/components/cadastros/blocks/Bloco4Logistica.jsx', import.meta.url), 'utf8');

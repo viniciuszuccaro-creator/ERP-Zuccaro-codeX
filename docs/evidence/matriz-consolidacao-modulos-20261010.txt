@@ -9,6 +9,7 @@
 | VisualizadorUniversalEntidade (V23) em Estoque/Compras/RH | VisualizadorUniversalEntidadeV24 | scope, RBAC, codigo, open único | **redirect feito** (ProdutosTab · FornecedoresTab · ColaboradoresTab · RH window) |
 | FormaPagamentoForm (simples) | FormaPagamentoFormCompleto | codigo+ID, abas, bancos/gateways | **adapter feito** (Form → Completo; Bloco3 já usava Completo) |
 | EmpresaFormCompleto (endereço/CEP) | EmpresaForm (Bloco5 canônico) | endereço+BuscaCEP sem perder guards #227/#228 | **recuperado no canônico** · Completo keep (abas fiscal/webhooks) até portar guards |
+| TabelaPrecoForm (simples) | TabelaPrecoFormCompleto | itens/grade/codigo_legado/ID | **adapter feito** (Bloco2/Ações já Completo) |
 | ChatbotIntentsForm | ChatbotIntentForm | adapter já consolidado | **keep** (adapter) |
 | ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
 | CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade | funil/scoring/IA | **keep both curto** · HTTP schema **BLOCKED** Codex · C360 usa adaptador legado (opção B) |
