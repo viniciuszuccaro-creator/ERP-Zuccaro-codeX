@@ -7,9 +7,19 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
+import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
 
-export default function CondicaoComercialForm({ condicao, condicaoComercial, onSubmit, windowMode = false }) {
-  const dadosIniciais = condicaoComercial || condicao;
+export default function CondicaoComercialForm({
+  condicao,
+  condicaoComercial,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || condicaoComercial || condicao;
   const { canCreate, canEdit } = usePermissions();
   const podeCriar = canCreate("Cadastros", "CondicaoComercial") || canCreate("Financeiro", "CondicaoComercial") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CondicaoComercial") || canEdit("Financeiro", "CondicaoComercial") || canEdit("Cadastros", null);
@@ -39,6 +49,12 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-condicao-comercial"
+      />
       <div>
         <Label>Nome da Condição *</Label>
         <Input

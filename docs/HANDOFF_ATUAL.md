@@ -1,3 +1,14 @@
+## CURSOR — pacote Marca RBAC + ID técnico (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` (#261) |
+| escopo | Marca HTTP RBAC · ContatoB2B/CondicaoComercial ID técnico · labels Visualizador |
+| divisão | Cursor: UI cadastros + `MarcaService`/`app.ts` · Codex: Auth/042/sessão/outbox/Legado |
+| tip Codex #277 | **`8bc4fef2`** inalterado — **sem porte** Auth |
+| tip implantado erp-dev | ainda **`c125c4db`** até redeploy deste lote |
+| próxima | redeploy+homolog · grade Representante/Colaborador · secret restrito |
+
 ## REVISÃO CODEX — #277 Auth bootstrap RLS (2026-10-11)
 
 | Item | Valor |
@@ -6,7 +17,7 @@
 | base | #276 @ `9dedeafb` · draft · MERGEABLE · CI SUCCESS (tip) |
 | escopo | migration **042** SELECT Auth · GUC `app.auth_user_id` · split exige contexto Auth · NOSUPERUSER |
 | ação Cursor | **monitorar** — **não** porte (Auth/sessão/RLS; sem APPLY 042) |
-| nota | MarcaService.list legado sem RBAC — lacuna documentada; não “resolvida” neste ciclo |
+| nota | lacuna Marca.list RBAC **corrigida em #261** (serviço canônico); 042 permanece Codex |
 | stack | #277 → #276 → #275 → … → #267 → #261 · fora de `main` |
 | tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
 
@@ -226,10 +237,11 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 
 ### Próxima ação Cursor (independente enquanto merge owner)
 1. ~~CI + redeploy tip policy CRM~~ **feito** `c125c4db` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
-2. Secret usuário restrito → homolog fail-closed FE+BE.
-3. Inventário residual (POD/Separação keep-both; Painel seletivo).
-4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
-5. Codex: CRM HTTP (A schema) se além do adaptador B; Legado #211/#266.
+2. ~~Marca RBAC + ID técnico ContatoB2B/Condicao~~ **código neste tip** — falta redeploy+homolog.
+3. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
+4. Inventário residual (POD/Separação keep-both; Painel seletivo; Representante/Colaborador grade).
+5. Merge owner #261→main; fechar #254 como supersedido/ancestral.
+6. Codex: CRM HTTP (A schema) se além do adaptador B; Legado #211/#266; Auth #277.
 
 ### Pendências / parcial (não concluído)
 - Homolog usuário restrito.

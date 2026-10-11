@@ -127,7 +127,7 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
     { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],            f: OperadorCaixaForm },
     { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
     { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
-    { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['nome','nome_condicao','forma_pagamento','ativo'],         f: CondicaoComercialForm },
+    { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['id','nome','nome_condicao','forma_pagamento','ativo'],    f: CondicaoComercialForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 

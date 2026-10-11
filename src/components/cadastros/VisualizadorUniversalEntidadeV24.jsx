@@ -290,11 +290,19 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
+    const FIELD_LABELS = {
+      id: "ID técnico",
+      codigo: "Código",
+      nome: "Nome",
+      nome_condicao: "Nome da condição",
+      forma_pagamento: "Forma de pagamento",
+      ativo: "Ativo",
+    };
     if (_camposPrincipais.length > 0) {
       return _camposPrincipais.map(function(c) {
         return {
           field: c,
-          label: c.replace(/_/g, " ").replace(/\b\w/g, function(x) { return x.toUpperCase(); }),
+          label: FIELD_LABELS[c] || c.replace(/_/g, " ").replace(/\b\w/g, function(x) { return x.toUpperCase(); }),
           sortable: true,
         };
       });

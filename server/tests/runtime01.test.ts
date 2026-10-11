@@ -7,6 +7,7 @@ import { InMemoryAuditRepository } from '../src/audit/auditRepository.ts';
 import { loadConfig, publicConfigView } from '../src/config/env.ts';
 import { createApp } from '../src/app.ts';
 import { createDbClient } from '../src/db/client.ts';
+import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { listMigrationFiles } from '../src/db/migrate.ts';
 import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from '../src/middleware/requestContext.ts';
@@ -18,6 +19,18 @@ const GROUP_A = '11111111-1111-4111-8111-111111111111';
 const GROUP_B = '22222222-2222-4222-8222-222222222222';
 const EMPRESA_A = '33333333-3333-4333-8333-333333333333';
 const EMPRESA_B = '44444444-4444-4444-8444-444444444444';
+const ACTOR_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const MARCA_ACTIONS = ['visualizar', 'criar', 'editar', 'inativar'] as const;
+
+function marcaRbac(actorId = ACTOR_A, groupId = GROUP_A, actions: readonly string[] = MARCA_ACTIONS) {
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({
+    actorId,
+    groupId,
+    permissions: { Cadastros: { marca: [...actions] } },
+  });
+  return rbac;
+}
 
 function testConfig(overrides: Record<string, string> = {}) {
   return loadConfig({
@@ -131,12 +144,12 @@ test('migrations include foundation through 039 in canonical order', () => {
 test('marca service validates payload and audits create/update/soft-delete', async () => {
   const repo = new InMemoryMarcaRepository();
   const audit = new InMemoryAuditRepository();
-  const service = new MarcaService(repo, audit, linkedGuard());
+  const service = new MarcaService(repo, audit, linkedGuard(), marcaRbac(ACTOR_A));
   const ctx = {
     requestId: 'req-1',
     groupId: GROUP_A,
     empresaId: EMPRESA_A,
-    actorId: 'actor-1',
+    actorId: ACTOR_A,
     actorEmail: 'dev@example.com',
   };
 
@@ -170,25 +183,48 @@ test('marca service validates payload and audits create/update/soft-delete', asy
 test('multiempresa scope isolates groups', async () => {
   const repo = new InMemoryMarcaRepository();
   const audit = new InMemoryAuditRepository();
-  const service = new MarcaService(repo, audit, linkedGuard());
+  // InMemoryRbacGuard: um actorId → um profile; usar actors distintos por grupo.
+  const actorB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const rbac = new InMemoryRbacGuard();
+  rbac.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions: { Cadastros: { marca: [...MARCA_ACTIONS] } } });
+  rbac.link({ actorId: actorB, groupId: GROUP_B, permissions: { Cadastros: { marca: [...MARCA_ACTIONS] } } });
+  const service = new MarcaService(repo, audit, linkedGuard(), rbac);
 
   const a = await service.create({
     requestId: 'r-a',
     groupId: GROUP_A,
+    actorId: ACTOR_A,
   }, { nome_marca: 'Marca A' });
 
   await service.create({
     requestId: 'r-b',
     groupId: GROUP_B,
+    actorId: actorB,
   }, { nome_marca: 'Marca B' });
 
-  const listA = await service.list({ requestId: 'r-list', groupId: GROUP_A });
+  const listA = await service.list({ requestId: 'r-list', groupId: GROUP_A, actorId: ACTOR_A });
   assert.equal(listA.length, 1);
   assert.equal(listA[0].id, a.id);
 
   await assert.rejects(
-    () => service.get({ requestId: 'r-x', groupId: GROUP_B }, a.id),
+    () => service.get({ requestId: 'r-x', groupId: GROUP_B, actorId: actorB }, a.id),
     /not found/i,
+  );
+});
+
+test('marca service denies list without RBAC visualizar', async () => {
+  const repo = new InMemoryMarcaRepository();
+  const audit = new InMemoryAuditRepository();
+  const denied = new InMemoryRbacGuard();
+  denied.link({
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    permissions: { Cadastros: { marca: ['criar'] } },
+  });
+  const service = new MarcaService(repo, audit, linkedGuard(), denied);
+  await assert.rejects(
+    () => service.list({ requestId: 'r-deny', groupId: GROUP_A, actorId: ACTOR_A }),
+    (err: { statusCode?: number; code?: string }) => err?.statusCode === 403 && err?.code === 'PERMISSION_DENIED',
   );
 });
 
@@ -211,15 +247,22 @@ test('GET /health and /ready with memory harness', async () => {
 test('API piloto Marca end-to-end via harness', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app, auditRepo } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const rbacGuard = marcaRbac(ACTOR_A);
+  const { app, auditRepo } = createApp({
+    config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard,
+  });
+  const actorHeaders = {
+    'x-group-id': GROUP_A,
+    'x-empresa-id': EMPRESA_A,
+    'x-actor-id': ACTOR_A,
+    'x-actor-email': 'piloto@example.com',
+  };
 
   const createRes = await fetchStatus(app, '/api/v1/marcas', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-group-id': GROUP_A,
-      'x-empresa-id': EMPRESA_A,
-      'x-actor-email': 'piloto@example.com',
+      ...actorHeaders,
       'x-request-id': 'pilot-req-1',
     },
     body: JSON.stringify({ nome_marca: 'Belgo', categoria: 'Longos' }),
@@ -230,12 +273,12 @@ test('API piloto Marca end-to-end via harness', async () => {
 
   const id = createRes.body.data.id;
   const listRes = await fetchOk(app, '/api/v1/marcas', {
-    headers: { 'x-group-id': GROUP_A },
+    headers: actorHeaders,
   });
   assert.equal(listRes.data.length, 1);
 
   const getRes = await fetchOk(app, `/api/v1/marcas/${id}`, {
-    headers: { 'x-group-id': GROUP_A },
+    headers: actorHeaders,
   });
   assert.equal(getRes.data.id, id);
 
@@ -243,7 +286,7 @@ test('API piloto Marca end-to-end via harness', async () => {
     method: 'PATCH',
     headers: {
       'content-type': 'application/json',
-      'x-group-id': GROUP_A,
+      ...actorHeaders,
     },
     body: JSON.stringify({ descricao: 'Atualizada' }),
   });
@@ -251,7 +294,7 @@ test('API piloto Marca end-to-end via harness', async () => {
 
   const delRes = await fetchOk(app, `/api/v1/marcas/${id}`, {
     method: 'DELETE',
-    headers: { 'x-group-id': GROUP_A },
+    headers: actorHeaders,
   });
   assert.equal(delRes.data.ativo, false);
 
@@ -260,11 +303,27 @@ test('API piloto Marca end-to-end via harness', async () => {
   }
 });
 
+test('API Marca nega listagem sem permissão visualizar', async () => {
+  const config = testConfig();
+  const db = createDbClient(config);
+  const rbacGuard = marcaRbac(ACTOR_A, GROUP_A, ['criar']);
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard });
+  const res = await fetchStatus(app, '/api/v1/marcas', {
+    headers: { 'x-group-id': GROUP_A, 'x-actor-id': ACTOR_A },
+  });
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.error.code, 'PERMISSION_DENIED');
+});
+
 test('API rejects missing group scope', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
-  const res = await fetchStatus(app, '/api/v1/marcas');
+  const { app } = createApp({
+    config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac(),
+  });
+  const res = await fetchStatus(app, '/api/v1/marcas', {
+    headers: { 'x-actor-id': ACTOR_A },
+  });
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, 'GROUP_ID_REQUIRED');
 });
@@ -272,12 +331,15 @@ test('API rejects missing group scope', async () => {
 test('API rejects invalid payload', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const { app } = createApp({
+    config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac(),
+  });
   const res = await fetchStatus(app, '/api/v1/marcas', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       'x-group-id': GROUP_A,
+      'x-actor-id': ACTOR_A,
     },
     body: JSON.stringify({ nome_marca: '' }),
   });
@@ -375,8 +437,9 @@ test('createApp enforces verified identity before tenant scope and exposes truth
   const config = testConfig({ ERP_AUTH_MODE: 'supabase_user', SUPABASE_URL: 'http://supabase.internal', SUPABASE_ANON_KEY: 'synthetic-anon-key' });
   const { db } = profileDb(profileId);
   let validations = 0;
+  const rbacGuard = marcaRbac(profileId, GROUP_A);
   const { app } = createApp({
-    config, db, useMemory: true, tenantGuard: linkedGuard(),
+    config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard,
     authFetchImpl: async () => {
       validations += 1;
       return new Response(JSON.stringify({ id: authUserId, email: 'user@example.test' }), { status: 200 });

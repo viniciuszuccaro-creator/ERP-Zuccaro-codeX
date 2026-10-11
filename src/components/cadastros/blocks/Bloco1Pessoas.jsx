@@ -134,7 +134,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
     { k: 'Transportadora',    t: 'Transportadoras',             i: Truck,         c: ['codigo','razao_social','nome_fantasia','cnpj','cidade','status'],              f: TransportadoraForm },
     { k: 'Colaborador',       t: 'Colaboradores',               i: User,          c: ['nome_completo','cargo','departamento','tipo_contrato','status'],      f: ColaboradorForm },
     { k: 'Representante',     t: 'Representantes & Indicadores',i: Award,         c: ['nome','email','telefone','percentual_comissao'],                      f: RepresentanteFormCompleto },
-    { k: 'ContatoB2B',        t: 'Contatos B2B',                i: MessageCircle, c: ['nome','cargo','email','telefone'],                                    f: ContatoB2BForm },
+    { k: 'ContatoB2B',        t: 'Contatos B2B',                i: MessageCircle, c: ['id','nome','cargo','email','telefone'],                                 f: ContatoB2BForm },
     { k: 'SegmentoCliente',   t: 'Segmentos de Cliente',        i: TrendingUp,    c: ['codigo','nome','descricao','tipo'],                                            f: SegmentoClienteForm },
     { k: 'RegiaoAtendimento', t: 'Regiões de Atendimento',      i: MapPin,        c: ['codigo','nome','descricao','tipo'],                                            f: RegiaoAtendimentoForm },
   ];

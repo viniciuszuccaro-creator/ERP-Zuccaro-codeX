@@ -68,6 +68,22 @@ test('CadastroCodigoRegistroField expõe ID técnico quando entityId informado',
   assert.match(fieldSrc, /entityId/);
   assert.match(fieldSrc, /ID técnico/);
   assert.match(fieldSrc, /id-tecnico-/);
+  assert.match(fieldSrc, /idOnly/);
+});
+
+test('ContatoB2B e CondicaoComercial expõem ID técnico (idOnly) sem fingir MASTER_CODE', async () => {
+  const contato = await readFile(new URL('../src/components/cadastros/ContatoB2BForm.jsx', import.meta.url), 'utf8');
+  const condicao = await readFile(new URL('../src/components/cadastros/CondicaoComercialForm.jsx', import.meta.url), 'utf8');
+  const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
+  const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
+  const viz = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  assert.match(contato, /idOnly/);
+  assert.match(contato, /id-tecnico-contato-b2b/);
+  assert.match(condicao, /idOnly/);
+  assert.match(condicao, /id-tecnico-condicao-comercial/);
+  assert.match(bloco1, /k:\s*'ContatoB2B'[\s\S]{0,200}\bid\b/);
+  assert.match(bloco3, /k:\s*'CondicaoComercial'[\s\S]{0,200}\bid\b/);
+  assert.match(viz, /id:\s*"ID técnico"/);
 });
 
 test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () => {

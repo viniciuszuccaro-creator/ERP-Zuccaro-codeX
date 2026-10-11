@@ -1,14 +1,28 @@
+## CURSOR — pacote Marca RBAC + ID técnico ContatoB2B/Condicao (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **modo** | execução contínua (implementação + revisão Codex) — não só parecer |
+| **implementado** | `MarcaService` RBAC fail-closed (`Cadastros.marca`) · ContatoB2B/CondicaoComercial `idOnly` · grade `id` · label Visualizador “ID técnico” |
+| **fechamento lacuna #277** | Marca.list/get/create/update/softDelete passam a negar sem permissão (Codex documentou; Cursor corrigiu no serviço canônico) |
+| **não tocado** | Auth/sessão/outbox · mig 042 · Legado #211/#266 · porte stack #267–#277 |
+| tip #261 / implantado | tip após push deste lote · runtime erp-dev ainda **`c125c4db`** até redeploy |
+| `main` | `baba91a6` |
+| testes | `cadastros-codigo-cobertura` 9/9 · `runtime01` 14 pass / 2 skip |
+| BLOCKED | usuário restrito (sem `ERP_DEV_LOGIN_RESTRICTED_*`) |
+| próxima | redeploy+homolog owner deste tip · Representante/Colaborador grade codigo/id · Agenda/Relatórios chrome azul seletivo |
+
 ## CURSOR — revisão Codex timer: #277 Auth bootstrap RLS (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| **#277** tip **`8bc4fef2`** | draft · MERGEABLE · base #276 `9dedeafb` · CI SUCCESS (tip) |
+| **#277** tip **`8bc4fef2`** | draft · MERGEABLE · base #276 `9dedeafb` · CI SUCCESS (tip) · **sem mudança neste ciclo** |
 | conteúdo | migration **042** SELECT Auth · GUC `app.auth_user_id` · middleware/sessão exigem contexto com split · NOSUPERUSER Auth |
 | porte Cursor | **não** — Auth/sessão/RLS Codex; empilhada em #276→#267; sem merge/VPS/APPLY 042 |
-| risco | lacuna MarcaService.list legado (RBAC) documentada pelo Codex — coordenação própria, não resolvida aqui |
+| risco | lacuna MarcaService.list — **corrigida em #261** (pacote acima); Auth 042 permanece Codex |
 | tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
 | `main` | `baba91a6` |
-| próxima | monitorar stack #277→#267; **não** editar Auth/client/042; timer |
+| próxima | tip #277 estável; continuar pacotes Cursor independentes; timer |
 
 ## CURSOR — revisão Codex timer: #276 Auth×dados split (2026-10-11)
 
