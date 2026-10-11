@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-11T14:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`4811ccfe`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#290 | tips inalterados · **sem porte** |
+| #291 **novo** | tip `9c6fdfe9` · C360↔CRM canônico server+UI · CI SUCCESS · **sem porte** |
+| #292 **novo** | tip `0200ce75` · C360 CRM legado anti-tardio · CI em curso · **sem porte** |
+| risco | `CentralCliente360Panel.jsx` diverge (#261 ~617L vs #291 ~498L) — **não editar em paralelo**; merge coordenado depois |
+| porte | nenhum (CRM HTTP/server + painel compartilhado) |
+
 ## REVISÃO CODEX — timer 2026-10-11T14:30Z
 
 | Item | Valor |
