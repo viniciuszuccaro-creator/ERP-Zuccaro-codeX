@@ -542,3 +542,22 @@ test('Marca company payload cannot redirect an authorized operation or turn it i
   const shared=await service.create({...ctx,empresaId:null},{nome_marca:'Shared'});
   assert.equal(shared.empresa_id,null);
 });
+
+test('Marca mutations share the transaction executor with tenant, RBAC, persistence and audit', async () => {
+  const q={query:async()=>({rows:[],rowCount:0,command:'SELECT',oid:0,fields:[]})};
+  let commits=0,rollbacks=0,failAudit=false;
+  const db={withTransaction:async fn=>{try{const result=await fn(q);commits++;return result;}catch(e){rollbacks++;throw e;}}};
+  const memory=new InMemoryMarcaRepository();
+  const repo={...memory,list:memory.list.bind(memory),getById:async(s,id,executor)=>{assert.equal(executor,q);return memory.getById(s,id);},create:async(s,data,executor)=>{assert.equal(executor,q);return memory.create(s,data);},update:async(s,id,data,executor)=>{assert.equal(executor,q);return memory.update(s,id,data);},softDelete:async(s,id,executor)=>{assert.equal(executor,q);return memory.softDelete(s,id);}};
+  const tenant={assertEmpresaInGroup:async(_g,_e,executor)=>{assert.equal(executor,q);}};
+  const rbac={assertAllowed:async(_c,_m,_s,_a,options)=>{assert.equal(options.executor,q);}};
+  const audit={append:async(_e,executor)=>{assert.equal(executor,q);if(failAudit)throw new Error('synthetic audit failure');},listByEntity:async()=>[]};
+  const service=new MarcaService(repo,audit,tenant,rbac,db);
+  const ctx={requestId:'tx',actorId:'test-owner',groupId:GROUP_A,empresaId:EMPRESA_A};
+  const row=await service.create(ctx,{nome_marca:'Transaction'});
+  await service.update(ctx,row.id,{descricao:'Updated'});
+  await service.softDelete(ctx,row.id);
+  assert.equal(commits,3);failAudit=true;
+  await assert.rejects(()=>service.create(ctx,{nome_marca:'Rollback requested'}),/synthetic audit failure/);
+  assert.equal(rollbacks,1); // Actual database restoration is asserted by the separate PostgreSQL proof.
+});

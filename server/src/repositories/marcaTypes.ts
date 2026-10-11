@@ -1,3 +1,4 @@
+import type { DbQueryExecutor } from '../db/client.js';
 import { z } from 'zod';
 
 export const uuidSchema = z.string().uuid();
@@ -52,9 +53,9 @@ export type MarcaListFilter = {
 };
 
 export interface MarcaRepository {
-  list(filter: MarcaListFilter): Promise<Marca[]>;
-  getById(scope: { groupId: string; empresaId?: string | null }, id: string): Promise<Marca | null>;
-  create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput): Promise<Marca>;
-  update(scope: { groupId: string; empresaId?: string | null }, id: string, data: MarcaUpdateInput): Promise<Marca | null>;
-  softDelete(scope: { groupId: string; empresaId?: string | null }, id: string): Promise<Marca | null>;
+  list(filter: MarcaListFilter, executor?: DbQueryExecutor): Promise<Marca[]>;
+  getById(scope: { groupId: string; empresaId?: string | null }, id: string, executor?: DbQueryExecutor, forUpdate?: boolean): Promise<Marca | null>;
+  create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput, executor?: DbQueryExecutor): Promise<Marca>;
+  update(scope: { groupId: string; empresaId?: string | null }, id: string, data: MarcaUpdateInput, executor?: DbQueryExecutor): Promise<Marca | null>;
+  softDelete(scope: { groupId: string; empresaId?: string | null }, id: string, executor?: DbQueryExecutor): Promise<Marca | null>;
 }
