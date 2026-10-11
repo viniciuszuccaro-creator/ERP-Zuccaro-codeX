@@ -20,8 +20,7 @@ export class MarcaService {
   ) {}
 
   async list(ctx: RequestContext, options: { ativo?: boolean; search?: string; limit?: number } = {}) {
-    this.assertScope(ctx);
-    await this.assertPermission(ctx, 'visualizar');
+    await this.prepare(ctx, 'visualizar');
     return this.repo.list({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
@@ -32,16 +31,14 @@ export class MarcaService {
   }
 
   async get(ctx: RequestContext, id: string) {
-    this.assertScope(ctx);
-    await this.assertPermission(ctx, 'visualizar');
+    await this.prepare(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!row) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     return row;
   }
 
   async create(ctx: RequestContext, payload: unknown) {
-    this.assertScope(ctx);
-    await this.assertPermission(ctx, 'criar');
+    await this.prepare(ctx, 'criar');
     const parsed = marcaCreateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
@@ -68,8 +65,7 @@ export class MarcaService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
-    this.assertScope(ctx);
-    await this.assertPermission(ctx, 'editar');
+    await this.prepare(ctx, 'editar');
     const parsed = marcaUpdateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
@@ -103,8 +99,7 @@ export class MarcaService {
   }
 
   async softDelete(ctx: RequestContext, id: string) {
-    this.assertScope(ctx);
-    await this.assertPermission(ctx, 'inativar');
+    await this.prepare(ctx, 'inativar');
     const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!before) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     const updated = await this.repo.softDelete({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
@@ -126,14 +121,13 @@ export class MarcaService {
     return updated;
   }
 
-  private assertPermission(ctx: RequestContext, action: RbacAction) {
-    return this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'marca', action);
-  }
-
-  private assertScope(ctx: RequestContext) {
+  private async prepare(ctx: RequestContext, action: RbacAction) {
     if (!ctx.groupId) {
       throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     }
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    // Sem wildcard global: Marca exige grant explícito Cadastros.marca (alinha #278 Codex).
+    await this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'marca', action, { allowGlobalWildcard: false });
   }
 }
 

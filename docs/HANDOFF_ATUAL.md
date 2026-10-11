@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #278 Marca RBAC (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| PR | [#278](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/278) tip **`b30e32ea`** |
+| base | #277 @ `8bc4fef2` · draft · MERGEABLE · CI SUCCESS |
+| escopo | Marca RBAC granular · wildcard OFF · assert empresa |
+| ação Cursor | **não** porte stack Auth · gap já em #261 · absorvido `prepare`+wildcard OFF |
+| tip implantado erp-dev | **`58766d82`** / `index-iZ42G-Qb.js` |
+
 ## CURSOR — tip 58766d82 implantado (Marca RBAC + ID técnico) (2026-10-11)
 
 | Item | Valor |
@@ -188,6 +198,7 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#275](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/275) tip **`f6fa8a8a`** | contexto tenant runtime · CI SUCCESS | **monitorar** — sem porte; reservado |
 | [#276](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/276) tip **`9dedeafb`** | Auth×dados split · CI SUCCESS | **monitorar** — sem porte; Auth |
 | [#277](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/277) tip **`8bc4fef2`** | Auth bootstrap RLS 042 · CI SUCCESS | **monitorar** — sem porte; Auth/RLS |
+| [#278](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/278) tip **`b30e32ea`** | Marca RBAC · base #277 · CI SUCCESS | **não** porte Auth · gap #261 + prepare/wildcard absorvidos |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | stack Auth #277→#276 · CRM/#270 em curso · Legado **IDLE** | timer contínuo |
 

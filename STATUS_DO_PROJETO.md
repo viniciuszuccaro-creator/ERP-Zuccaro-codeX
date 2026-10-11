@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex #278 Marca RBAC (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#278** tip **`b30e32ea`** | draft · MERGEABLE · base #277 `8bc4fef2` · CI SUCCESS |
+| conteúdo | Marca Cadastros/marca + `allowGlobalWildcard:false` + assert empresa · empilhada Auth |
+| porte Cursor | **não** stack Auth · lacuna já fechada em #261 `58766d82` · absorvido só `prepare`+wildcard OFF |
+| risco Regra-Mãe | baixo se coordenar; evitar dual-write MarcaService entre branches |
+| tip #261 | tip branch atual · runtime erp-dev **`58766d82`** até redeploy tip seguinte |
+| próxima | tip #278 monitorar; não re-portar Auth; timer |
+
 ## CURSOR — tip 58766d82 implantado+homologado (Marca RBAC + ID técnico) (2026-10-11)
 
 | Item | Estado |
