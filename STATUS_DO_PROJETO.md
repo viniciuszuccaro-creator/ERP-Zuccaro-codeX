@@ -1,3 +1,16 @@
+## CURSOR — tip 91945247 implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`91945247`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-BFDYWtUK.js` · rollback `pre-spa-login-20261011-120701` |
+| **conteúdo** | Empresa endereço · TabelaPreco/FormaPagamento adapters · idOnly · C360 |
+| **marker** | `empresa-endereco-secao` no SPA |
+| **evidência** | `deploy-261-tip-91945247-empresa-endereco-adapters-20261011.txt` |
+| #280 | tip `a76335b7` — **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | consolidação residual · secret restrito · merge owner |
+
 ## CURSOR — TabelaPrecoForm adapter Completo (2026-10-11)
 
 | Item | Estado |

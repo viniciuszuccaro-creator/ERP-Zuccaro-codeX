@@ -1,12 +1,24 @@
+## CURSOR — tip 91945247 implantado (Empresa endereço + adapters) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`91945247`** · asset `index-BFDYWtUK.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-120701` |
+| escopo | Empresa endereço/CEP · TabelaPreco+FormaPagamento adapters · idOnly · C360 |
+| #280 | tip `a76335b7` — **sem porte** Marca |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-91945247-empresa-endereco-adapters-20261011.txt` |
+| próxima | consolidação residual · secret restrito · merge owner |
+
 ## CURSOR — adapters + Empresa endereço (2026-10-11)
 
 | Item | Valor |
 |---|---|
-| HEAD | **`ffdb86d9`** TabelaPrecoForm→Completo · `535a1fc0` Empresa endereço |
-| tip runtime | **`4adb7e21`** até CI tip → redeploy |
+| HEAD | **`91945247`** implantado |
+| tip runtime | **`91945247`** / `index-BFDYWtUK.js` |
 | #280 | tip `a76335b7` — **sem porte** Marca |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
-| próxima | CI → redeploy → homolog |
+| próxima | consolidação residual · secret restrito |
 
 ## CURSOR — EmpresaForm endereço/CEP (2026-10-11)
 
