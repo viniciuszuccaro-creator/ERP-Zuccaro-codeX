@@ -276,10 +276,11 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 
 ### Próxima ação Cursor (independente enquanto merge owner)
 1. ~~Marca RBAC + ID Contato/Condicao + Rep/Colab + harden #278 + anti-redirect~~ **feito** tip **`d0a1b411`** implantado+homolog.
-2. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
-3. Painel/Agenda chrome azul seletivo · inventário residual (POD/Separação keep-both).
-4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
-5. Codex: CRM HTTP (A) · Legado #211/#266 · Auth #277/#278 (sem porte Cursor).
+2. ~~Painel/Agenda chrome azul seletivo~~ **feito** tip `6ae463dc` (aguarda CI/redeploy).
+3. ~~Inventário POD/Separação~~ **keep-both documentado** (`inventario-pod-separacao-20261011.txt`).
+4. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
+5. CI tip Painel → redeploy erp-dev · merge owner #261→main; fechar #254 ancestral.
+6. Codex: CRM HTTP (A) · Legado #211/#266 · Auth #277/#278 (sem porte Cursor).
 
 ### Pendências / parcial (não concluído)
 - Homolog usuário restrito.
