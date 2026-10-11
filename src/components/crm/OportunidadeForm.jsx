@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,20 @@ import { Save, Target, TrendingUp } from "lucide-react";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Badge } from "@/components/ui/badge";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import useCadastroFormScopeGuard from "@/components/cadastros/hooks/useCadastroFormScopeGuard";
+import { createCrmFormSubmissionGate } from "./crmFormSubmission";
 
 /**
  * V21.1.2: Oportunidade Form - Adaptado para Window Mode
  */
 export default function OportunidadeForm({ oportunidade, onSubmit, windowMode = false }) {
+  const { grupoAtual, empresaAtual } = useContextoVisual();
+  const scopeGuard = useCadastroFormScopeGuard(grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id, empresaAtual?.id || null);
+  const submissionGate = useRef(null);
+  if (!submissionGate.current) submissionGate.current = createCrmFormSubmissionGate();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [formData, setFormData] = useState(oportunidade || {
     titulo: '',
     descricao: '',
@@ -42,8 +51,14 @@ export default function OportunidadeForm({ oportunidade, onSubmit, windowMode = 
     cliente_nome: z.string().min(1, 'Cliente é obrigatório'),
   });
 
-  const handleSubmit = async () => {
-    onSubmit(formData);
+  const handleSubmit = async (payload) => {
+    setSubmitError('');
+    try {
+      return await submissionGate.current.run({payload,submit:onSubmit,
+        assertCurrent:scopeGuard.assertCurrent,onPending:setSubmitting});
+    } catch (error) {
+      setSubmitError(error?.message || 'Falha ao salvar oportunidade.');
+    }
   };
 
   const content = (
@@ -209,9 +224,10 @@ export default function OportunidadeForm({ oportunidade, onSubmit, windowMode = 
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+        {submitError && <p role="alert" className="text-sm text-red-700">{submitError}</p>}
+        <Button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700">
           <Save className="w-4 h-4 mr-2" />
-          {oportunidade ? 'Atualizar' : 'Criar'} Oportunidade
+          {submitting ? 'Salvando…' : `${oportunidade ? 'Atualizar' : 'Criar'} Oportunidade`}
         </Button>
       </div>
     </FormWrapper>
