@@ -169,17 +169,18 @@ export class PostgresClienteRepository implements ClienteRepository {
     };
   }
 
-  async getById(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null> {
+  async getById(scope: Scope, id: string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}): Promise<Cliente | null> {
+    if(options?.forUpdate&&!executor)throw new Error('CLIENTE_ROW_LOCK_REQUIRES_TRANSACTION');
     const result = await (executor??this.db).query(
-      'SELECT * FROM clientes WHERE group_id = $1 AND id = $2',
+      `SELECT * FROM clientes WHERE group_id = $1 AND id = $2${options?.forUpdate?' FOR UPDATE':''}`,
       [scope.groupId, id],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? mapCliente(row) : null;
   }
 
-  async findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null> {
-    const result = await this.db.query(
+  async findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null> {
+    const result = await (executor??this.db).query(
       'SELECT * FROM clientes WHERE group_id = $1 AND documento_normalizado = $2 LIMIT 1',
       [groupId, documentoNormalizado],
     );
@@ -267,8 +268,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     return executor ? execute(executor) : this.db.withTransaction(execute);
   }
 
-  async update(scope: Scope, id: string, data: ClienteUpdate): Promise<Cliente | null> {
-    const current = await this.getById(scope, id);
+  async update(scope: Scope, id: string, data: ClienteUpdate,executor?:DbQueryExecutor): Promise<Cliente | null> {
+    if(!executor)return this.db.withTransaction(q=>this.update(scope,id,data,q));
+    const current = await this.getById(scope, id,executor,{forUpdate:true});
     if (!current) return null;
     const rawDoc = data.documento !== undefined || data.cpf_cnpj !== undefined
       ? (data.documento ?? data.cpf_cnpj ?? '')
@@ -302,7 +304,7 @@ export class PostgresClienteRepository implements ClienteRepository {
       ativo: data.ativo === undefined ? current.ativo : data.ativo,
     };
 
-    const result = await this.db.query(
+    const result = await executor.query(
       `UPDATE clientes SET
         empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,
         nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,
@@ -324,12 +326,12 @@ export class PostgresClienteRepository implements ClienteRepository {
     return row ? mapCliente(row) : null;
   }
 
-  softDelete(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: false, status: 'Inativo' });
+  softDelete(scope: Scope, id: string,executor?:DbQueryExecutor) {
+    return this.update(scope, id, { ativo: false, status: 'Inativo' },executor);
   }
 
-  restore(scope: Scope, id: string) {
-    return this.update(scope, id, { ativo: true, status: 'Ativo' });
+  restore(scope: Scope, id: string,executor?:DbQueryExecutor) {
+    return this.update(scope, id, { ativo: true, status: 'Ativo' },executor);
   }
 
   async listEmpresaLinks(
