@@ -1,3 +1,16 @@
+## CURSOR — tip cbfce9e4 implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`cbfce9e4`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-CVJVqGZW.js` · rollback `pre-spa-login-20261011-115310` |
+| **conteúdo** | C360 Abrir cadastro · ClientesTab codigo · probe API/DB · idOnly 92239ff4 |
+| **evidência** | `deploy-261-tip-cbfce9e4-c360-probe-20261011.txt` |
+| tip pendente | **`47e2660d`** idOnly Bloco3–6 (CI em curso) |
+| consolidação | FormaPagamentoForm → adapter Completo |
+| BLOCKED | usuário restrito |
+| próxima | CI `47e2660d` → redeploy · consolidação residual |
+
 ## CURSOR — idOnly residual Bloco3–6 + RotaPadrao (2026-10-11)
 
 | Item | Estado |

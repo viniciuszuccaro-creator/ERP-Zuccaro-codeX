@@ -1,14 +1,27 @@
+## CURSOR — tip cbfce9e4 implantado (C360 + probe) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`cbfce9e4`** · asset `index-CVJVqGZW.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-115310` |
+| tip pendente | **`47e2660d`** idOnly Bloco3–6 · CI |
+| consolidação | FormaPagamentoForm → Completo (adapter) |
+| divisão | Cursor UI · Codex Marca atomicidade + Auth/RLS |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-cbfce9e4-c360-probe-20261011.txt` |
+| próxima | CI `47e2660d` → redeploy · consolidação residual |
+
 ## CURSOR — idOnly residual Bloco3–6 (2026-10-11)
 
 | Item | Valor |
 |---|---|
 | branch | #261 `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | tip CI verde | **`cbfce9e4`** · C360 Abrir cadastro + probe |
-| lote local | idOnly Bloco3–6 + RotaPadrao codigo-registro · grades `id` |
+| lote | idOnly Bloco3–6 + RotaPadrao · tip **`47e2660d`** |
 | divisão | Cursor UI · Codex Marca/`marcaService`+repo+types+app · Auth/RLS |
-| tip runtime | **`06325316`** → redeploy tip atual |
+| tip runtime | **`cbfce9e4`** implantado |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
-| próxima | push tip · redeploy · homolog · consolidação duplicados |
+| próxima | CI tip · redeploy · consolidação |
 
 ## CURSOR — C360 cadastro canônico + probe API/DB (2026-10-11)
 

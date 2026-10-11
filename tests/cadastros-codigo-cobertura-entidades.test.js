@@ -152,7 +152,7 @@ test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () =>
     ['CatalogoWebForm.jsx', 'codigo-registro-catalogo-web'],
     ['VeiculoForm.jsx', 'codigo-registro-veiculo'],
     ['MotoristaForm.jsx', 'codigo-registro-motorista'],
-    ['FormaPagamentoForm.jsx', 'codigo-registro-forma-pagamento'],
+    ['FormaPagamentoFormCompleto.jsx', 'codigo-registro-forma-pagamento-completo'],
     ['RotaPadraoForm.jsx', 'codigo-registro-rota-padrao'],
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
@@ -160,6 +160,15 @@ test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () =>
     assert.match(src, /CadastroCodigoRegistroField/);
     assert.match(src, /entityId=\{/, `${file} deve passar entityId ao campo codigo/ID`);
   }
+});
+
+test('FormaPagamentoForm é adapter canônico do Completo (sem store paralelo)', async () => {
+  const simple = await readFile(new URL('../src/components/cadastros/FormaPagamentoForm.jsx', import.meta.url), 'utf8');
+  const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
+  assert.match(simple, /FormaPagamentoFormCompleto/);
+  assert.match(simple, /formaPagamento \|\| forma \|\| item/);
+  assert.doesNotMatch(simple, /createTable|FormaPagamentoStore/);
+  assert.match(bloco3, /FormaPagamentoFormCompleto/);
 });
 
 test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com id', async () => {
