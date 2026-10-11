@@ -44,6 +44,7 @@ export class MarcaService {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
     }
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    await this.assertTargetScope(ctx, empresaId, 'criar');
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     const created = await this.repo.create(
       { groupId: ctx.groupId, empresaId: ctx.empresaId },
@@ -73,6 +74,7 @@ export class MarcaService {
     const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!before) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+    await this.assertTargetScope(ctx, empresaId, 'editar');
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
 
     const updated = await this.repo.update(
@@ -119,6 +121,25 @@ export class MarcaService {
       ipAddress: ctx.ipAddress,
     });
     return updated;
+  }
+
+  private async assertTargetScope(
+    ctx: RequestContext,
+    empresaId: string | null | undefined,
+    action: RbacAction,
+  ) {
+    // Com empresa selecionada, payload não pode redirecionar para outra filial nem virar mestre compartilhado.
+    if (ctx.empresaId && empresaId !== ctx.empresaId) {
+      throw new AppError(403, 'ACTOR_SCOPE_DENIED', 'Marca target must remain in the selected company');
+    }
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
+    await this.rbacGuard.assertAllowed(
+      { ...ctx, empresaId },
+      'Cadastros',
+      'marca',
+      action,
+      { allowGlobalWildcard: false },
+    );
   }
 
   private async prepare(ctx: RequestContext, action: RbacAction) {

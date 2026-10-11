@@ -228,6 +228,37 @@ test('marca service denies list without RBAC visualizar', async () => {
   );
 });
 
+test('Marca company payload cannot redirect an authorized operation or turn it into a shared master', async () => {
+  const repo = new InMemoryMarcaRepository();
+  const audit = new InMemoryAuditRepository();
+  const tenant = linkedGuard();
+  const second = '55555555-5555-4555-8555-555555555555';
+  tenant.link(second, GROUP_A);
+  const service = new MarcaService(repo, audit, tenant, marcaRbac());
+  const ctx = {
+    requestId: 'target-test',
+    actorId: ACTOR_A,
+    groupId: GROUP_A,
+    empresaId: EMPRESA_A,
+  };
+  await assert.rejects(
+    () => service.create(ctx, { nome_marca: 'Wrong company', empresa_id: second }),
+    (err: { code?: string }) => err?.code === 'ACTOR_SCOPE_DENIED',
+  );
+  const row = await service.create(ctx, { nome_marca: 'Original', pais_origem: 'Brasil' });
+  for (const empresa_id of [second, null]) {
+    await assert.rejects(
+      () => service.update(ctx, row.id, { empresa_id }),
+      (err: { code?: string }) => err?.code === 'ACTOR_SCOPE_DENIED',
+    );
+  }
+  assert.equal((await service.get(ctx, row.id)).empresa_id, EMPRESA_A);
+  assert.equal((await service.get(ctx, row.id)).pais_origem, 'Brasil');
+  assert.equal(audit.entries.length, 1);
+  const shared = await service.create({ ...ctx, empresaId: null }, { nome_marca: 'Shared' });
+  assert.equal(shared.empresa_id, null);
+});
+
 test('GET /health and /ready with memory harness', async () => {
   const config = testConfig();
   const db = createDbClient(config);
