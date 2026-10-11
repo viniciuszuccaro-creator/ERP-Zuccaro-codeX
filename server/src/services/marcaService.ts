@@ -3,6 +3,7 @@ import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
 import type { RequestContext } from '../audit/types.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
+import { InMemoryRbacGuard, type RbacGuard, type RbacAction } from '../db/rbacGuard.js';
 import {
   marcaCreateSchema,
   marcaUpdateSchema,
@@ -15,10 +16,11 @@ export class MarcaService {
     private readonly repo: MarcaRepository,
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
+    private readonly rbac: RbacGuard = new InMemoryRbacGuard(),
   ) {}
 
   async list(ctx: RequestContext, options: { ativo?: boolean; search?: string; limit?: number } = {}) {
-    this.assertScope(ctx);
+    await this.prepare(ctx, 'visualizar');
     return this.repo.list({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
@@ -29,14 +31,14 @@ export class MarcaService {
   }
 
   async get(ctx: RequestContext, id: string) {
-    this.assertScope(ctx);
+    await this.prepare(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!row) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     return row;
   }
 
   async create(ctx: RequestContext, payload: unknown) {
-    this.assertScope(ctx);
+    await this.prepare(ctx, 'criar');
     const parsed = marcaCreateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
@@ -63,7 +65,7 @@ export class MarcaService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
-    this.assertScope(ctx);
+    await this.prepare(ctx, 'editar');
     const parsed = marcaUpdateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
@@ -97,7 +99,7 @@ export class MarcaService {
   }
 
   async softDelete(ctx: RequestContext, id: string) {
-    this.assertScope(ctx);
+    await this.prepare(ctx, 'inativar');
     const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
     if (!before) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     const updated = await this.repo.softDelete({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
@@ -119,10 +121,12 @@ export class MarcaService {
     return updated;
   }
 
-  private assertScope(ctx: RequestContext) {
+  private async prepare(ctx: RequestContext, action: RbacAction) {
     if (!ctx.groupId) {
       throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     }
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    await this.rbac.assertAllowed(ctx, 'Cadastros', 'marca', action, { allowGlobalWildcard: false });
   }
 }
 

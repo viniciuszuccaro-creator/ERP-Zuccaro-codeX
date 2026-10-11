@@ -12,6 +12,7 @@ import { listMigrationFiles } from '../src/db/migrate.ts';
 import { createSupabaseAuthMiddleware, requestIdMiddleware, scopeMiddleware } from '../src/middleware/requestContext.ts';
 import { createErrorHandler } from '../src/middleware/errorHandler.ts';
 import { InMemoryMarcaRepository } from '../src/repositories/inMemoryMarcaRepository.ts';
+import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { MarcaService } from '../src/services/marcaService.ts';
 
 const GROUP_A = '11111111-1111-4111-8111-111111111111';
@@ -36,6 +37,8 @@ function linkedGuard() {
   guard.link(EMPRESA_B, GROUP_B);
   return guard;
 }
+
+function marcaRbac() { const rbac=new InMemoryRbacGuard(); for(const [actorId,groupId] of [['actor-1',GROUP_A],['test-owner',GROUP_A],['test-owner-b',GROUP_B],['cccccccc-cccc-4ccc-8ccc-cccccccccccc',GROUP_A]]) rbac.link({actorId,groupId,permissions:{Cadastros:{marca:['visualizar','criar','editar','inativar']}}}); return rbac; }
 
 function profileDb(profileId: string, authorize = (authUserId: string, groupId: string, empresaId: string | null) =>
   authUserId === 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' && groupId === GROUP_A && empresaId === EMPRESA_A) {
@@ -134,7 +137,7 @@ test('migrations include foundation through 039 in canonical order', () => {
 test('marca service validates payload and audits create/update/soft-delete', async () => {
   const repo = new InMemoryMarcaRepository();
   const audit = new InMemoryAuditRepository();
-  const service = new MarcaService(repo, audit, linkedGuard());
+  const service = new MarcaService(repo, audit, linkedGuard(), marcaRbac());
   const ctx = {
     requestId: 'req-1',
     groupId: GROUP_A,
@@ -173,24 +176,24 @@ test('marca service validates payload and audits create/update/soft-delete', asy
 test('multiempresa scope isolates groups', async () => {
   const repo = new InMemoryMarcaRepository();
   const audit = new InMemoryAuditRepository();
-  const service = new MarcaService(repo, audit, linkedGuard());
+  const service = new MarcaService(repo, audit, linkedGuard(), marcaRbac());
 
   const a = await service.create({
-    requestId: 'r-a',
+    requestId: 'r-a', actorId:'test-owner',
     groupId: GROUP_A,
   }, { nome_marca: 'Marca A' });
 
   await service.create({
-    requestId: 'r-b',
+    requestId: 'r-b', actorId:'test-owner-b',
     groupId: GROUP_B,
   }, { nome_marca: 'Marca B' });
 
-  const listA = await service.list({ requestId: 'r-list', groupId: GROUP_A });
+  const listA = await service.list({ actorId:'test-owner', requestId: 'r-list', groupId: GROUP_A });
   assert.equal(listA.length, 1);
   assert.equal(listA[0].id, a.id);
 
   await assert.rejects(
-    () => service.get({ requestId: 'r-x', groupId: GROUP_B }, a.id),
+    () => service.get({ actorId:'test-owner-b', requestId: 'r-x', groupId: GROUP_B }, a.id),
     /not found/i,
   );
 });
@@ -198,7 +201,7 @@ test('multiempresa scope isolates groups', async () => {
 test('GET /health and /ready with memory harness', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac() });
 
   const healthRes = await fetchOk(app, '/health');
   assert.equal(healthRes.status, 'ok');
@@ -214,13 +217,13 @@ test('GET /health and /ready with memory harness', async () => {
 test('API piloto Marca end-to-end via harness', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app, auditRepo } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const { app, auditRepo } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac() });
 
   const createRes = await fetchStatus(app, '/api/v1/marcas', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-group-id': GROUP_A,
+      'x-actor-id': 'test-owner', 'x-group-id': GROUP_A,
       'x-empresa-id': EMPRESA_A,
       'x-actor-email': 'piloto@example.com',
       'x-request-id': 'pilot-req-1',
@@ -233,12 +236,12 @@ test('API piloto Marca end-to-end via harness', async () => {
 
   const id = createRes.body.data.id;
   const listRes = await fetchOk(app, '/api/v1/marcas', {
-    headers: { 'x-group-id': GROUP_A },
+    headers: { 'x-actor-id': 'test-owner', 'x-group-id': GROUP_A },
   });
   assert.equal(listRes.data.length, 1);
 
   const getRes = await fetchOk(app, `/api/v1/marcas/${id}`, {
-    headers: { 'x-group-id': GROUP_A },
+    headers: { 'x-actor-id': 'test-owner', 'x-group-id': GROUP_A },
   });
   assert.equal(getRes.data.id, id);
 
@@ -246,7 +249,7 @@ test('API piloto Marca end-to-end via harness', async () => {
     method: 'PATCH',
     headers: {
       'content-type': 'application/json',
-      'x-group-id': GROUP_A,
+      'x-actor-id': 'test-owner', 'x-group-id': GROUP_A,
     },
     body: JSON.stringify({ descricao: 'Atualizada' }),
   });
@@ -254,7 +257,7 @@ test('API piloto Marca end-to-end via harness', async () => {
 
   const delRes = await fetchOk(app, `/api/v1/marcas/${id}`, {
     method: 'DELETE',
-    headers: { 'x-group-id': GROUP_A },
+    headers: { 'x-actor-id': 'test-owner', 'x-group-id': GROUP_A },
   });
   assert.equal(delRes.data.ativo, false);
 
@@ -266,7 +269,7 @@ test('API piloto Marca end-to-end via harness', async () => {
 test('API rejects missing group scope', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac() });
   const res = await fetchStatus(app, '/api/v1/marcas');
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, 'GROUP_ID_REQUIRED');
@@ -275,12 +278,12 @@ test('API rejects missing group scope', async () => {
 test('API rejects invalid payload', async () => {
   const config = testConfig();
   const db = createDbClient(config);
-  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard() });
+  const { app } = createApp({ config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac() });
   const res = await fetchStatus(app, '/api/v1/marcas', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-group-id': GROUP_A,
+      'x-actor-id': 'test-owner', 'x-group-id': GROUP_A,
     },
     body: JSON.stringify({ nome_marca: '' }),
   });
@@ -379,7 +382,7 @@ test('createApp enforces verified identity before tenant scope and exposes truth
   const { db } = profileDb(profileId);
   let validations = 0;
   const { app } = createApp({
-    config, db, useMemory: true, tenantGuard: linkedGuard(),
+    config, db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac(),
     authFetchImpl: async () => {
       validations += 1;
       return new Response(JSON.stringify({ id: authUserId, email: 'user@example.test' }), { status: 200 });
@@ -416,14 +419,14 @@ test('createApp enforces verified identity before tenant scope and exposes truth
   assert.equal(withoutGroup.statusCode, 400);
   assert.equal((await fetchStatus(app, path, { headers: { ...scope, authorization: 'Bearer synthetic.jwt.token' } })).body.data.length, 0);
   const absent = profileDb(profileId, () => false);
-  const absentApp = createApp({ config, db: absent.db, useMemory: true, tenantGuard: linkedGuard(),
+  const absentApp = createApp({ config, db: absent.db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac(),
     authFetchImpl: async () => new Response(JSON.stringify({ id: authUserId }), { status: 200 }),
   }).app;
   const noProfile = await fetchStatus(absentApp, path, { headers: { ...scope, authorization: 'Bearer synthetic.jwt.token' } });
   assert.equal(noProfile.statusCode, 403);
   const outage = profileDb(profileId);
   outage.db.query = async () => { throw new Error('synthetic database outage'); };
-  const outageApp = createApp({ config, db: outage.db, useMemory: true, tenantGuard: linkedGuard(),
+  const outageApp = createApp({ config, db: outage.db, useMemory: true, tenantGuard: linkedGuard(), rbacGuard: marcaRbac(),
     authFetchImpl: async () => new Response(JSON.stringify({ id: authUserId }), { status: 200 }),
   }).app;
   const unavailable = await fetchStatus(outageApp, path, { headers: { ...scope, authorization: 'Bearer synthetic.jwt.token' } });
@@ -522,3 +525,5 @@ async function fetchOk(app: ReturnType<typeof createApp>['app'], path: string, i
 }
 
 void randomUUID;
+
+ test('Marca RBAC denies missing permission, wildcard and branch escape before persistence',async()=>{ const repo=new InMemoryMarcaRepository(),audit=new InMemoryAuditRepository(),rbac=new InMemoryRbacGuard();const service=new MarcaService(repo,audit,linkedGuard(),rbac);const ctx={requestId:'deny',actorId:'restricted',groupId:GROUP_A,empresaId:EMPRESA_A};for(const permissions of [{},{'*':['visualizar','criar','editar','inativar']}]){rbac.link({actorId:ctx.actorId,groupId:GROUP_A,permissions}); for(const call of [()=>service.list(ctx),()=>service.get(ctx,'missing'),()=>service.create(ctx,{nome_marca:'Denied'}),()=>service.update(ctx,'missing',{}),()=>service.softDelete(ctx,'missing')]) await assert.rejects(call,(e)=>e.code==='PERMISSION_DENIED');}assert.equal((await repo.list({groupId:GROUP_A})).length,0);assert.equal(audit.entries.length,0);rbac.link({actorId:ctx.actorId,groupId:GROUP_A,empresaId:EMPRESA_A,permissions:{Cadastros:{marca:['visualizar']}}});await assert.rejects(()=>service.list({...ctx,empresaId:null}),(e)=>e.code==='PERMISSION_DENIED');await assert.rejects(()=>service.list({...ctx,empresaId:EMPRESA_B}),(e)=>e.code==='TENANT_MISMATCH'); });
