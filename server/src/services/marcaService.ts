@@ -24,7 +24,7 @@ export class MarcaService {
   async list(ctx: RequestContext, options: { ativo?: boolean; search?: string; limit?: number } = {}) {
     return this.mutate(ctx, async executor => {
       await this.prepare(ctx, 'visualizar', executor);
-      return this.repo.list({ groupId: ctx.groupId, empresaId: ctx.empresaId, ...options }, executor);
+      return this.repo.list({ groupId: ctx.groupId, empresaId: ctx.empresaId, ativo: options.ativo, search: options.search, limit: options.limit }, executor);
     });
   }
 

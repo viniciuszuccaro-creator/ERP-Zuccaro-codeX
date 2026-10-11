@@ -17,6 +17,7 @@ async function prove(f:any,role:string){try{
  const s=new MarcaService(new PostgresMarcaRepository(f.data),new PostgresAuditRepository(f.data),new PostgresTenantGuard(f.data),new PostgresRbacGuard(f.data),f.data);
  const ctx={groupId:I.groupA,empresaId:I.empresaA,actorId:I.runtimeActorA,requestId:'synthetic-atomic'};
  const row=await s.create(ctx,{nome_marca:'Atomic',pais_origem:'Brasil'});
+ assert((await s.list(ctx,{groupId:I.groupB,empresaId:I.empresaB} as any)).some(item=>item.id===row.id));
  const before=(await f.admin.query('SELECT next_value FROM entity_code_sequences WHERE group_id=$1 AND entity_name=$2',[I.groupA,'Marca'])).rows[0].next_value;
  await f.exec(`CREATE FUNCTION fixture_fail_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.entity='Marca' THEN RAISE EXCEPTION 'synthetic audit failure'; END IF; RETURN NEW; END $$;CREATE TRIGGER fixture_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION fixture_fail_audit();`);
  await assert.rejects(()=>s.create(ctx,{nome_marca:'Must rollback'}),/synthetic audit failure/);
