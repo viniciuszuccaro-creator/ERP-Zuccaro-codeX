@@ -2,13 +2,13 @@
 
 | Item | Estado |
 |---|---|
-| **#274** tip **`3ec26ad8`** | draft · MERGEABLE · base #273 `8d1d7242` · CI **IN_PROGRESS** |
+| **#274** tip **`3ec26ad8`** | draft · MERGEABLE · base #273 `8d1d7242` · CI **SUCCESS** |
 | conteúdo | TenantGuard/ProdutoRelationGuard/TabelaPreco com executor opcional · Orçamento/Pedido usam tx da venda |
-| porte Cursor | **não** — empilhada em #273→#267; CI incompleto; sem merge/VPS |
+| porte Cursor | **não** — empilhada em #273→#267; sem merge/VPS |
 | risco Regra-Mãe | baixo (compatível default pool); corrige escape de preço fora da tx |
 | tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
 | `main` | `baba91a6` |
-| próxima | aguardar CI #274; monitorar stack; timer |
+| próxima | monitorar #274 tip `3ec26ad8` / stack #273→#267; secret restrito; timer |
 
 ## CURSOR — revisão Codex timer: #273 preflight ACL/policy (2026-10-11)
 
