@@ -1,3 +1,16 @@
+## REVISÃO CODEX — timer 2026-10-11T22:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`c50e0d6e`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#292 | tips inalterados · **sem porte** |
+| #293 **novo** | tip `90a82a99` · CRM forms await/submit gate · base #292 · CI SUCCESS · **sem porte** |
+| #294 **novo** | tip `0e5b7795` · OportunidadesLista revalida permissão callback · CI SUCCESS · **sem porte** |
+| #295 **novo** | tip `21fa7365` · fachada HTTP `api.oportunidades` preparada (flag off) · CI parcial/ok · **sem porte** |
+| stack | #295→#294→#293→#292 · CRM/HTTP Codex · risco painel C360 |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T21:45Z
 
 | Item | Valor |
