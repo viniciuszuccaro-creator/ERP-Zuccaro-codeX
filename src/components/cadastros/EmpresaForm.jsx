@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Loader2, Building2, AlertTriangle, Upload, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -58,6 +59,21 @@ export default function EmpresaForm({
   const [formData, setFormData] = useState(() => mergeEmpresaFormData(dadosIniciais));
 
   const [alertaCertificado, setAlertaCertificado] = useState(null);
+
+  const { data: empresasGrupo = [] } = useQuery({
+    queryKey: ["empresas-matriz-picker", groupId],
+    queryFn: () => base44.entities.Empresa.list(),
+    enabled: Boolean(groupId),
+  });
+
+  const matrizes = useMemo(() => empresasGrupo.filter((empresa) => {
+    const mesmoGrupo = !groupId
+      || empresa.group_id === groupId
+      || empresa.grupo_id === groupId;
+    const isMatriz = String(empresa.tipo || "").toLowerCase() === "matriz";
+    const notSelf = !dadosIniciais?.id || empresa.id !== dadosIniciais.id;
+    return isMatriz && mesmoGrupo && notSelf;
+  }), [empresasGrupo, groupId, dadosIniciais?.id]);
 
   useEffect(() => {
     if (!dadosIniciais) return;
@@ -135,9 +151,15 @@ export default function EmpresaForm({
       cnpj: sanitizeDocument(formData.cnpj, 32),
       inscricao_estadual: sanitizeDocument(formData.inscricao_estadual, 32),
       regime_tributario: sanitizeText(formData.regime_tributario, 80),
-      tipo: sanitizeText(formData.tipo, 40),
+      tipo: sanitizeText(formData.tipo, 40) === "Filial" ? "Filial" : "Matriz",
+      matriz_id: sanitizeText(formData.tipo, 40) === "Filial" ? sanitizeText(formData.matriz_id, 120) : "",
       status: sanitizeText(formData.status, 40),
+      permite_emissao_fiscal: formData.permite_emissao_fiscal !== false,
       endereco: sanitizeEndereco(formData.endereco),
+      contato: {
+        telefone: sanitizeText(formData.contato?.telefone, 40),
+        email: sanitizeText(formData.contato?.email, 180).toLowerCase(),
+      },
       // Fiscal/webhooks visíveis no form canônico — enviáveis em create e update (sem wipe oculto).
       configuracao_fiscal: {
         ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe || "Homologacao", 40),
@@ -242,19 +264,92 @@ export default function EmpresaForm({
         </div>
       </div>
 
-      <div>
-        <Label>Regime Tributario</Label>
-        <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked}>
-          <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-regime-tributario-empresa" data-sensitive>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
-            <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
-            <SelectItem value="Lucro Real">Lucro Real</SelectItem>
-            <SelectItem value="MEI">MEI</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Regime Tributario</Label>
+          <Select value={formData.regime_tributario} onValueChange={(v) => setFormData({ ...formData, regime_tributario: v })} disabled={!podeSalvar || saveBlocked}>
+            <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-regime-tributario-empresa" data-sensitive>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
+              <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
+              <SelectItem value="Lucro Real">Lucro Real</SelectItem>
+              <SelectItem value="MEI">MEI</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tipo</Label>
+          <Select
+            value={formData.tipo === "Filial" ? "Filial" : "Matriz"}
+            onValueChange={(v) => setFormData({
+              ...formData,
+              tipo: v === "Filial" ? "Filial" : "Matriz",
+              matriz_id: v === "Filial" ? formData.matriz_id : "",
+            })}
+            disabled={!podeSalvar || saveBlocked}
+          >
+            <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-tipo-empresa" data-sensitive>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Matriz">Matriz</SelectItem>
+              <SelectItem value="Filial">Filial</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {formData.tipo === "Filial" && (
+        <div data-action="empresa-matriz-secao">
+          <Label>Matriz</Label>
+          <Select
+            value={formData.matriz_id || ""}
+            onValueChange={(v) => setFormData({ ...formData, matriz_id: v })}
+            disabled={!podeSalvar || saveBlocked}
+          >
+            <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-matriz-empresa" data-sensitive>
+              <SelectValue placeholder="Selecione a matriz" />
+            </SelectTrigger>
+            <SelectContent>
+              {matrizes.map((matriz) => (
+                <SelectItem key={matriz.id} value={matriz.id}>
+                  {matriz.razao_social || matriz.nome_fantasia || matriz.id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="space-y-3 rounded border border-slate-200 bg-slate-50/80 p-4" data-action="empresa-contato-secao">
+        <h4 className="font-semibold text-slate-800">Contato</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Telefone</Label>
+            <Input
+              value={formData.contato?.telefone || ""}
+              onChange={(e) => setFormData({ ...formData, contato: { ...formData.contato, telefone: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-telefone-empresa"
+              data-sensitive
+            />
+          </div>
+          <div>
+            <Label>E-mail</Label>
+            <Input
+              type="email"
+              value={formData.contato?.email || ""}
+              onChange={(e) => setFormData({ ...formData, contato: { ...formData.contato, email: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-email-empresa"
+              data-sensitive
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3 rounded border border-slate-200 bg-slate-50/80 p-4" data-action="empresa-endereco-secao">

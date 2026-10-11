@@ -1,3 +1,15 @@
+## CURSOR — Empresas → EmpresaForm canônico + Filial adapter (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip | pós-`35fbce38` (este lote) · CI pendente |
+| escopo | `Empresas.jsx` sem form paralelo · `EmpresaForm` tipo/matriz/contato · `FilialForm` adapter |
+| testes | empresas-dialog-edit + cobertura + empresa-edicao* + http-tenant PASS |
+| tip runtime | ainda **`27224f87`** até CI tip → redeploy |
+| #280–#292 | **sem porte** · painel C360 divergente |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog · secret restrito · merge owner |
+
 ## CURSOR — tip 27224f87 implantado+homologado (2026-10-11)
 
 | Item | Estado |

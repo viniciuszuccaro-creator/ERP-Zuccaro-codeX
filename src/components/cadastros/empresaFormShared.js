@@ -23,7 +23,9 @@ export const EMPRESA_FORM_DEFAULTS = Object.freeze({
   inscricao_estadual: "",
   regime_tributario: "Simples Nacional",
   tipo: "Matriz",
+  matriz_id: "",
   status: "Ativa",
+  permite_emissao_fiscal: true,
   endereco: Object.freeze({
     logradouro: "",
     numero: "",
@@ -32,6 +34,10 @@ export const EMPRESA_FORM_DEFAULTS = Object.freeze({
     cidade: "",
     estado: "",
     cep: "",
+  }),
+  contato: Object.freeze({
+    telefone: "",
+    email: "",
   }),
   certificado_digital: Object.freeze({
     tipo: "A1",
@@ -53,12 +59,21 @@ export const EMPRESA_FORM_DEFAULTS = Object.freeze({
 
 export function mergeEmpresaFormData(partial) {
   const src = partial && typeof partial === "object" ? partial : {};
+  const tipoRaw = sanitizeText(src.tipo || EMPRESA_FORM_DEFAULTS.tipo, 40);
+  const tipo = tipoRaw === "Filial" ? "Filial" : "Matriz";
   return {
     ...EMPRESA_FORM_DEFAULTS,
     ...src,
+    tipo,
+    matriz_id: sanitizeText(src.matriz_id, 120),
+    permite_emissao_fiscal: src.permite_emissao_fiscal !== false,
     endereco: {
       ...EMPRESA_FORM_DEFAULTS.endereco,
       ...(src.endereco && typeof src.endereco === "object" ? src.endereco : {}),
+    },
+    contato: {
+      ...EMPRESA_FORM_DEFAULTS.contato,
+      ...(src.contato && typeof src.contato === "object" ? src.contato : {}),
     },
     certificado_digital: {
       ...EMPRESA_FORM_DEFAULTS.certificado_digital,

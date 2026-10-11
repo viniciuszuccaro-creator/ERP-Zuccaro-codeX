@@ -89,6 +89,7 @@ test('ContatoB2B e CondicaoComercial expõem ID técnico (idOnly) sem fingir MAS
 test('Empresa, Grupo, CentroOperacao e TabelaPreco expõem ID técnico; grades sem fingir codigo', async () => {
   const empresa = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   const empresaCompleto = await readFile(new URL('../src/components/cadastros/EmpresaFormCompleto.jsx', import.meta.url), 'utf8');
+  const filial = await readFile(new URL('../src/components/cadastros/FilialForm.jsx', import.meta.url), 'utf8');
   const grupo = await readFile(new URL('../src/components/cadastros/GrupoEmpresarialForm.jsx', import.meta.url), 'utf8');
   const centro = await readFile(new URL('../src/components/cadastros/CentroOperacaoForm.jsx', import.meta.url), 'utf8');
   const tabela = await readFile(new URL('../src/components/cadastros/TabelaPrecoFormCompleto.jsx', import.meta.url), 'utf8');
@@ -97,6 +98,8 @@ test('Empresa, Grupo, CentroOperacao e TabelaPreco expõem ID técnico; grades s
   const viz = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   assert.match(empresaCompleto, /EmpresaForm/);
   assert.match(empresaCompleto, /Adapter legado/);
+  assert.match(filial, /EmpresaForm/);
+  assert.match(filial, /tipo:\s*["']Filial["']/);
   for (const [src, action] of [
     [empresa, 'id-tecnico-empresa'],
     [grupo, 'id-tecnico-grupo-empresarial'],
@@ -108,6 +111,7 @@ test('Empresa, Grupo, CentroOperacao e TabelaPreco expõem ID técnico; grades s
     assert.match(src, new RegExp(action));
   }
   assert.match(empresa, /id-tecnico-empresa/);
+  assert.match(empresa, /selecionar-tipo-empresa/);
   assert.match(bloco5, /k:\s*'Empresa'[\s\S]{0,220}\bid\b/);
   assert.match(bloco5, /k:\s*'GrupoEmpresarial'[\s\S]{0,220}\bid\b/);
   assert.doesNotMatch(bloco5, /k:\s*'Empresa'[\s\S]{0,120}\bcodigo\b/);

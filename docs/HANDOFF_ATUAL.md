@@ -1,3 +1,16 @@
+## CURSOR — Empresas página → EmpresaForm canônico (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | #261 `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| escopo | `Empresas.jsx` dialog → `EmpresaForm` · tipo Matriz/Filial+matriz+contato no canônico · `FilialForm` adapter |
+| preservado | lista/KPIs/visão CNPJ origem · delete via `_action` · Bloco5 EmpresaForm |
+| testes | `empresas-dialog-edit` · `cadastros-codigo-cobertura` · `cadastros-empresa-edicao*` · http-tenant Empresas PASS |
+| #280–#292 | tips inalterados · **sem porte** · painel C360 ainda divergente |
+| tip runtime | ainda **`27224f87`** até CI tip → redeploy |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI tip → redeploy → homolog · secret restrito · merge owner |
+
 ## REVISÃO CODEX — timer 2026-10-11T20:45Z
 
 | Item | Valor |

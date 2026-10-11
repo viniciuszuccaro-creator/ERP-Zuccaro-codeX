@@ -1,220 +1,151 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Building2, 
-  Plus, 
-  Search, 
-  Edit, 
+import {
+  Building2,
+  Plus,
+  Search,
+  Edit,
   MapPin,
   Phone,
   Mail,
-  FileText,
   TrendingUp,
-  Users,
-  ShoppingCart,
-  DollarSign,
-  Package,
-  Eye
+  Eye,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { z } from "zod";
-import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from "sonner";
+import EmpresaForm from "@/components/cadastros/EmpresaForm";
 
+/**
+ * Página Gestão de Empresas e Filiais.
+ * Lista/KPIs/visão permanecem aqui; create/edit usam EmpresaForm canônico (Bloco5)
+ * — sem formulário paralelo no dialog.
+ */
 export default function Empresas() {
-  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual, empresaAtual } = useContextoVisual();
+  const { filterInContext, createInContext, updateInContext, deleteInContext, grupoAtual, empresaAtual } = useContextoVisual();
   const groupIdCadastro = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState(null);
   const [viewingEmpresa, setViewingEmpresa] = useState(null);
-  const [formData, setFormData] = useState({
-    razao_social: "",
-    nome_fantasia: "",
-    cnpj: "",
-    inscricao_estadual: "",
-    regime_tributario: "Simples Nacional",
-    tipo: "Matriz",
-    endereco: {
-      logradouro: "",
-      numero: "",
-      bairro: "",
-      cidade: "",
-      estado: "",
-      cep: ""
-    },
-    contato: {
-      telefone: "",
-      email: ""
-    },
-    status: "Ativa",
-    permite_emissao_fiscal: true
-  });
 
   const queryClient = useQueryClient();
 
-  const empresaSchema = z.object({
-    razao_social: z.string().min(2, 'Informe a razão social'),
-    nome_fantasia: z.string().optional().default(''),
-    cnpj: z.string().min(14, 'CNPJ inválido'),
-    inscricao_estadual: z.string().optional().default(''),
-    regime_tributario: z.string().min(2, 'Selecione o regime'),
-    tipo: z.enum(['Matriz','Filial']).default('Matriz'),
-    endereco: z.object({
-      logradouro: z.string().optional().default(''),
-      numero: z.string().optional().default(''),
-      bairro: z.string().optional().default(''),
-      cidade: z.string().optional().default(''),
-      estado: z.string().optional().default(''),
-      cep: z.string().optional().default('')
-    }).optional().default({}),
-    contato: z.object({
-      telefone: z.string().optional().default(''),
-      email: z.string().email('E-mail inválido').optional().or(z.literal(''))
-    }).optional().default({}),
-    status: z.enum(['Ativa','Inativa','Suspensa']).default('Ativa'),
-    permite_emissao_fiscal: z.boolean().default(true)
-  });
-
   const { data: empresas = [], isLoading } = useQuery({
-    queryKey: ['empresas-cadastro', groupIdCadastro],
-    queryFn: () => filterInContext('Empresa', {}, '-created_date', undefined, 'group_id'),
+    queryKey: ["empresas-cadastro", groupIdCadastro],
+    queryFn: () => filterInContext("Empresa", {}, "-created_date", undefined, "group_id"),
     enabled: Boolean(groupIdCadastro),
   });
 
   const invalidateEmpresasQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['empresas-cadastro'] });
-    queryClient.invalidateQueries({ queryKey: ['empresas'] });
+    queryClient.invalidateQueries({ queryKey: ["empresas-cadastro"] });
+    queryClient.invalidateQueries({ queryKey: ["empresas"] });
+  };
+
+  const closeFormDialog = () => {
+    setIsDialogOpen(false);
+    setEditingEmpresa(null);
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext('Empresa', data, 'group_id'),
+    mutationFn: (data) => createInContext("Empresa", data, "group_id"),
     onSuccess: () => {
       invalidateEmpresasQueries();
-      setIsDialogOpen(false);
-      resetForm();
+      closeFormDialog();
       toast.success("Empresa cadastrada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Falha ao cadastrar empresa.");
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateInContext('Empresa', id, data, 'group_id'),
+    mutationFn: ({ id, data }) => updateInContext("Empresa", id, data, "group_id"),
     onSuccess: () => {
       invalidateEmpresasQueries();
-      setIsDialogOpen(false);
-      setEditingEmpresa(null);
-      resetForm();
+      closeFormDialog();
       toast.success("Empresa atualizada com sucesso!");
     },
     onError: (error) => {
-      toast.error(error?.message || 'Falha ao atualizar empresa.');
+      toast.error(error?.message || "Falha ao atualizar empresa.");
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingEmpresa) {
-      updateMutation.mutate({ id: editingEmpresa.id, data: formData });
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteInContext("Empresa", id),
+    onSuccess: () => {
+      invalidateEmpresasQueries();
+      closeFormDialog();
+      toast.success("Empresa excluída.");
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Falha ao excluir empresa.");
+    },
+  });
+
+  const handleEmpresaSubmit = (payload) => {
+    if (!payload || typeof payload !== "object") return;
+    if (payload._action === "delete") {
+      const id = payload.id || editingEmpresa?.id;
+      if (!id) {
+        toast.error("Empresa sem ID para exclusão.");
+        return;
+      }
+      deleteMutation.mutate(id);
+      return;
+    }
+    const groupId = payload.group_id
+      || payload.grupo_id
+      || editingEmpresa?.group_id
+      || editingEmpresa?.grupo_id
+      || groupIdCadastro;
+    const data = {
+      ...payload,
+      ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    };
+    delete data._action;
+    if (editingEmpresa?.id || data.id) {
+      updateMutation.mutate({ id: editingEmpresa?.id || data.id, data });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(data);
     }
   };
 
-  const REGIMES = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI'];
-  const TIPOS = ['Matriz', 'Filial'];
-
   const handleEdit = (empresa) => {
     setEditingEmpresa(empresa);
-    setFormData({
-      razao_social: empresa.razao_social || '',
-      nome_fantasia: empresa.nome_fantasia || '',
-      cnpj: empresa.cnpj || '',
-      inscricao_estadual: empresa.inscricao_estadual || '',
-      regime_tributario: REGIMES.includes(empresa.regime_tributario)
-        ? empresa.regime_tributario
-        : 'Simples Nacional',
-      tipo: TIPOS.includes(empresa.tipo) ? empresa.tipo : 'Matriz',
-      endereco: {
-        logradouro: '',
-        numero: '',
-        bairro: '',
-        cidade: '',
-        estado: '',
-        cep: '',
-        ...(empresa.endereco || {}),
-      },
-      contato: {
-        telefone: '',
-        email: '',
-        ...(empresa.contato || {}),
-      },
-      status: empresa.status || 'Ativa',
-      permite_emissao_fiscal: empresa.permite_emissao_fiscal !== false,
-    });
     setIsDialogOpen(true);
   };
 
-  const resetForm = () => {
-    setFormData({
-      razao_social: "",
-      nome_fantasia: "",
-      cnpj: "",
-      inscricao_estadual: "",
-      regime_tributario: "Simples Nacional",
-      tipo: "Matriz",
-      endereco: {
-        logradouro: "",
-        numero: "",
-        bairro: "",
-        cidade: "",
-        estado: "",
-        cep: ""
-      },
-      contato: {
-        telefone: "",
-        email: ""
-      },
-      status: "Ativa",
-      permite_emissao_fiscal: true
-    });
-  };
-
-  const filteredEmpresas = empresas.filter(e =>
-    e.razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.cnpj?.includes(searchTerm)
+  const filteredEmpresas = empresas.filter((e) =>
+    e.razao_social?.toLowerCase().includes(searchTerm.toLowerCase())
+    || e.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase())
+    || e.cnpj?.includes(searchTerm)
   );
 
   const statusColors = {
-    'Ativa': 'bg-green-100 text-green-700 border-green-200',
-    'Inativa': 'bg-gray-100 text-gray-700 border-gray-200',
-    'Suspensa': 'bg-red-100 text-red-700 border-red-200'
+    Ativa: "bg-green-100 text-green-700 border-green-200",
+    Inativa: "bg-gray-100 text-gray-700 border-gray-200",
+    Suspensa: "bg-red-100 text-red-700 border-red-200",
   };
 
   const tipoColors = {
-    'Matriz': 'bg-blue-500 text-white',
-    'Filial': 'bg-purple-500 text-white'
+    Matriz: "bg-blue-500 text-white",
+    Filial: "bg-sky-600 text-white",
   };
 
-  // KPIs gerais
   const totalEmpresas = empresas.length;
-  const empresasAtivas = empresas.filter(e => e.status === 'Ativa').length;
-  const matrizes = empresas.filter(e => e.tipo === 'Matriz').length;
-  const filiais = empresas.filter(e => e.tipo === 'Filial').length;
+  const empresasAtivas = empresas.filter((e) => e.status === "Ativa").length;
+  const matrizes = empresas.filter((e) => e.tipo === "Matriz").length;
+  const filiais = empresas.filter((e) => e.tipo === "Filial").length;
+  const formBusy = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="w-full h-full overflow-auto p-6 lg:p-8 space-y-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
@@ -225,7 +156,12 @@ export default function Empresas() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {!groupIdCadastro && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-action="empresas-sem-contexto">
+          Selecione um grupo ou empresa no contexto para listar e editar cadastros.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
           <CardContent className="p-4">
@@ -276,7 +212,6 @@ export default function Empresas() {
         </Card>
       </div>
 
-      {/* Filtros e Ações */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -285,6 +220,7 @@ export default function Empresas() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            data-action="empresa-buscar"
           />
         </div>
 
@@ -292,9 +228,9 @@ export default function Empresas() {
           type="button"
           className="bg-blue-600 hover:bg-blue-700"
           data-action="empresa-nova"
+          disabled={!groupIdCadastro}
           onClick={() => {
             setEditingEmpresa(null);
-            resetForm();
             setIsDialogOpen(true);
           }}
         >
@@ -302,166 +238,30 @@ export default function Empresas() {
           Nova Empresa
         </Button>
 
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingEmpresa(null);
-            resetForm();
-          }
-        }}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingEmpresa(null);
+          }}
+        >
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-action="empresa-form-dialog">
             <DialogHeader>
-              <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
+              <DialogTitle>{editingEmpresa ? "Editar Empresa" : "Nova Empresa"}</DialogTitle>
             </DialogHeader>
-            <FormWrapper
-              key={editingEmpresa?.id || 'nova-empresa'}
-              schema={empresaSchema}
-              defaultValues={formData}
-              withContext={false}
-              onSubmit={(values) => {
-                const groupId = editingEmpresa?.group_id
-                  || editingEmpresa?.grupo_id
-                  || groupIdCadastro;
-                const payload = {
-                  ...values,
-                  ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
-                };
-                if (editingEmpresa) {
-                  updateMutation.mutate({ id: editingEmpresa.id, data: payload });
-                } else {
-                  createMutation.mutate(payload);
-                }
-              }}
-            >
-              {(methods) => (
-                <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="razao_social">Razão Social *</Label>
-                  <Input id="razao_social" {...methods.register('razao_social')} />
-                </div>
-                <div>
-                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                  <Input id="nome_fantasia" {...methods.register('nome_fantasia')} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="cnpj">CNPJ *</Label>
-                  <Input id="cnpj" {...methods.register('cnpj')} />
-                </div>
-                <div>
-                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                  <Input id="inscricao_estadual" {...methods.register('inscricao_estadual')} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="regime_tributario">Regime Tributário</Label>
-                  <Select
-                    value={methods.watch('regime_tributario')}
-                    onValueChange={(value) => methods.setValue('regime_tributario', value, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
-                      <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
-                      <SelectItem value="Lucro Real">Lucro Real</SelectItem>
-                      <SelectItem value="MEI">MEI</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="tipo">Tipo</Label>
-                  <Select
-                    value={methods.watch('tipo')}
-                    onValueChange={(value) => methods.setValue('tipo', value, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Matriz">Matriz</SelectItem>
-                      <SelectItem value="Filial">Filial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Endereço */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Endereço</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="endereco.cep">CEP</Label>
-                    <Input id="endereco.cep" {...methods.register('endereco.cep')} />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="endereco.logradouro">Logradouro</Label>
-                    <Input id="endereco.logradouro" {...methods.register('endereco.logradouro')} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-3">
-                  <div>
-                    <Label htmlFor="endereco.numero">Número</Label>
-                    <Input id="endereco.numero" {...methods.register('endereco.numero')} />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="endereco.bairro">Bairro</Label>
-                    <Input id="endereco.bairro" {...methods.register('endereco.bairro')} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-3">
-                  <div className="col-span-2">
-                    <Label htmlFor="endereco.cidade">Cidade</Label>
-                    <Input id="endereco.cidade" {...methods.register('endereco.cidade')} />
-                  </div>
-                  <div>
-                    <Label htmlFor="endereco.estado">UF</Label>
-                    <Input id="endereco.estado" maxLength={2} {...methods.register('endereco.estado')} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contato */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Contato</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contato.telefone">Telefone</Label>
-                    <Input id="contato.telefone" {...methods.register('contato.telefone')} />
-                  </div>
-                  <div>
-                    <Label htmlFor="contato.email">E-mail</Label>
-                    <Input id="contato.email" type="email" {...methods.register('contato.email')} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {editingEmpresa ? 'Atualizar' : 'Cadastrar'}
-                </Button>
-              </div>
+            <div key={editingEmpresa?.id || "nova-empresa"} className="w-full">
+              <EmpresaForm
+                empresa={editingEmpresa}
+                item={editingEmpresa}
+                onSubmit={handleEmpresaSubmit}
+                isSubmitting={formBusy}
+                windowMode={false}
+              />
             </div>
-            )}
-            </FormWrapper>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Lista de Empresas */}
       <Card className="border-0 shadow-md">
         <CardContent className="p-0">
           <Table>
@@ -477,7 +277,14 @@ export default function Empresas() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEmpresas.map((empresa) => (
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-slate-500 py-8">
+                    Carregando empresas...
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && filteredEmpresas.map((empresa) => (
                 <TableRow key={empresa.id} className="hover:bg-slate-50">
                   <TableCell>
                     <div className="flex items-start gap-3">
@@ -494,8 +301,8 @@ export default function Empresas() {
                     <span className="font-mono text-sm">{empresa.cnpj}</span>
                   </TableCell>
                   <TableCell>
-                    <Badge className={tipoColors[empresa.tipo]}>
-                      {empresa.tipo}
+                    <Badge className={tipoColors[empresa.tipo] || tipoColors.Matriz}>
+                      {empresa.tipo || "Matriz"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -504,12 +311,12 @@ export default function Empresas() {
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm">
                       <MapPin className="w-3 h-3 text-slate-400" />
-                      <span>{empresa.endereco?.cidade || '-'}/{empresa.endereco?.estado || '-'}</span>
+                      <span>{empresa.endereco?.cidade || "-"}/{empresa.endereco?.estado || "-"}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusColors[empresa.status]}>
-                      {empresa.status}
+                    <Badge className={statusColors[empresa.status] || statusColors.Inativa}>
+                      {empresa.status || "-"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -526,7 +333,7 @@ export default function Empresas() {
                         }}
                         title="Ver detalhes"
                         data-action="empresa-view"
-                        aria-label={`Ver detalhes ${empresa.nome_fantasia || empresa.razao_social || ''}`}
+                        aria-label={`Ver detalhes ${empresa.nome_fantasia || empresa.razao_social || ""}`}
                       >
                         <Eye className="w-4 h-4 text-blue-600" />
                         <span className="text-xs hidden sm:inline">Ver</span>
@@ -543,7 +350,7 @@ export default function Empresas() {
                         }}
                         title="Editar"
                         data-action="empresa-edit"
-                        aria-label={`Editar ${empresa.nome_fantasia || empresa.razao_social || ''}`}
+                        aria-label={`Editar ${empresa.nome_fantasia || empresa.razao_social || ""}`}
                       >
                         <Edit className="w-4 h-4 text-slate-600" />
                         <span className="text-xs hidden sm:inline">Editar</span>
@@ -555,7 +362,7 @@ export default function Empresas() {
             </TableBody>
           </Table>
 
-          {filteredEmpresas.length === 0 && (
+          {!isLoading && filteredEmpresas.length === 0 && (
             <div className="text-center py-12 text-slate-500">
               <Building2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
               <p>Nenhuma empresa encontrada</p>
@@ -564,7 +371,6 @@ export default function Empresas() {
         </CardContent>
       </Card>
 
-      {/* Dialog de Visualização */}
       <Dialog open={!!viewingEmpresa} onOpenChange={() => setViewingEmpresa(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -575,7 +381,6 @@ export default function Empresas() {
           </DialogHeader>
           {viewingEmpresa && (
             <div className="space-y-6">
-              {/* Informações Básicas */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Informações Cadastrais</CardTitle>
@@ -588,26 +393,26 @@ export default function Empresas() {
                     </div>
                     <div>
                       <p className="text-xs text-slate-600">Nome Fantasia</p>
-                      <p className="font-medium">{viewingEmpresa.nome_fantasia || '-'}</p>
+                      <p className="font-medium">{viewingEmpresa.nome_fantasia || "-"}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-slate-600">CNPJ</p>
-                      <p className="font-medium font-mono" data-field="empresa-cnpj">{viewingEmpresa.cnpj || '-'}</p>
+                      <p className="font-medium font-mono" data-field="empresa-cnpj">{viewingEmpresa.cnpj || "-"}</p>
                       <p className="text-[11px] text-slate-500 mt-0.5" data-field="empresa-cnpj-origem">
                         Origem: {
-                          viewingEmpresa._cnpj_origem === 'sessao_http'
-                            ? 'sessão HTTP (API/perfil)'
+                          viewingEmpresa._cnpj_origem === "sessao_http"
+                            ? "sessão HTTP (API/perfil)"
                             : viewingEmpresa.cnpj
-                              ? 'cadastro local / banco espelhado'
-                              : 'ausente (sem cache de perfil)'
+                              ? "cadastro local / banco espelhado"
+                              : "ausente (sem cache de perfil)"
                         }
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-600">Inscrição Estadual</p>
-                      <p className="font-medium">{viewingEmpresa.inscricao_estadual || '-'}</p>
+                      <p className="font-medium">{viewingEmpresa.inscricao_estadual || "-"}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -617,15 +422,14 @@ export default function Empresas() {
                     </div>
                     <div>
                       <p className="text-xs text-slate-600">Tipo</p>
-                      <Badge className={tipoColors[viewingEmpresa.tipo]}>
-                        {viewingEmpresa.tipo}
+                      <Badge className={tipoColors[viewingEmpresa.tipo] || tipoColors.Matriz}>
+                        {viewingEmpresa.tipo || "Matriz"}
                       </Badge>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Endereço */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -635,14 +439,13 @@ export default function Empresas() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm">
-                    {viewingEmpresa.endereco?.logradouro}, {viewingEmpresa.endereco?.numero}<br/>
-                    {viewingEmpresa.endereco?.bairro} - {viewingEmpresa.endereco?.cidade}/{viewingEmpresa.endereco?.estado}<br/>
+                    {viewingEmpresa.endereco?.logradouro}, {viewingEmpresa.endereco?.numero}<br />
+                    {viewingEmpresa.endereco?.bairro} - {viewingEmpresa.endereco?.cidade}/{viewingEmpresa.endereco?.estado}<br />
                     CEP: {viewingEmpresa.endereco?.cep}
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Contato */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -653,11 +456,11 @@ export default function Empresas() {
                 <CardContent className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm">{viewingEmpresa.contato?.telefone || '-'}</span>
+                    <span className="text-sm">{viewingEmpresa.contato?.telefone || "-"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm">{viewingEmpresa.contato?.email || '-'}</span>
+                    <span className="text-sm">{viewingEmpresa.contato?.email || "-"}</span>
                   </div>
                 </CardContent>
               </Card>
