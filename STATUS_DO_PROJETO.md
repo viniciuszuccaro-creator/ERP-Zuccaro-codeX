@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex timer: #275 contexto tenant runtime (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#275** tip **`f7b36588`** | draft · MERGEABLE · base #274 `3ec26ad8` · CI FE SUCCESS / BE **IN_PROGRESS** |
+| conteúdo | DbClient/createApp com contexto assíncrono tenant opt-in · default false · Auth/bootstrap fora |
+| porte Cursor | **não** — sessão/contexto Codex; empilhada em #274→#267; sem merge/VPS |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | aguardar CI #275; monitorar stack; **não** editar client/Auth; timer |
+
 ## CURSOR — revisão Codex timer: #274 preço no executor (2026-10-11)
 
 | Item | Estado |
