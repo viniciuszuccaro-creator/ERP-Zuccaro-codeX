@@ -10,6 +10,7 @@ import { createApp } from '../src/app.ts';
 import { createServer } from 'node:http';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
+import { inspectCrmPreflight } from '../src/db/crmPreflight.ts';
 
 test('Tenant runtime PostgreSQL: refuses unvalidated destination', () => {
   assert.throws(() => assertCrmIsolatedUrl(undefined));
@@ -78,6 +79,16 @@ if (process.env.DATABASE_URL) test('Auth/data PostgreSQL: restricted login start
     const config=loadConfig({NODE_ENV:'test',ERP_ENV:'dev',ERP_AUTH_MODE:'supabase_user',SUPABASE_URL:'https://auth.example.test',SUPABASE_ANON_KEY:'synthetic',DATABASE_URL:dataUrl.toString(),AUTH_DATABASE_URL:authUrl.toString(),ENABLE_TENANT_CONTEXT:'true'});
     clients=await createRuntimeDbClients(config);assert.notEqual(clients.db,clients.authDb);
     const login=await clients.db.query<{name:string}>('SELECT session_user AS name');assert.equal(login.rows[0].name,role);
+    const expected={database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema,requireRestrictedLogin:true};
+    const realLogin=await inspectCrmPreflight(clients.db,expected);
+    assert.equal(realLogin.checks.restrictedRole,true);assert.equal(realLogin.checks.restrictedLogin,true);
+    assert.equal(realLogin.ready,false); // This fixture proves LOGIN only, not a complete CRM schema.
+    const disguised=await admin.connect();try {
+      await disguised.query('BEGIN');await disguised.query(`SET LOCAL ROLE ${role}; SET LOCAL search_path TO ${schema},pg_catalog`);
+      const rejected=await inspectCrmPreflight(disguised,expected);
+      assert.equal(rejected.checks.restrictedRole,true);assert.equal(rejected.checks.restrictedLogin,false);assert.equal(rejected.ready,false);
+      assert.ok(rejected.blocked.includes('restrictedLogin'));
+    }finally{await disguised.query('ROLLBACK');disguised.release();}
     const unsafe=new URL(process.env.DATABASE_URL!);unsafe.searchParams.set('options',`-c search_path=${schema}`);
     await assert.rejects(createRuntimeDbClients({...config,databaseUrl:unsafe.toString()}),/PREFLIGHT_FAILED/);
     await assert.rejects(createRuntimeDbClients({...config,authDatabaseUrl:unsafe.toString()}),/PREFLIGHT_FAILED/);

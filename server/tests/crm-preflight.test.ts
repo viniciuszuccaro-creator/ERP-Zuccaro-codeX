@@ -4,6 +4,20 @@ import {inspectCrmPreflight} from '../src/db/crmPreflight.ts';
 import {localCrmFixture,ROLE} from './helpers/crmFixture.ts';
 import {spawnSync} from 'node:child_process';
 
+test('CRM operational preflight refuses privileged session hidden behind SET ROLE',async()=>{
+ const f=await localCrmFixture();try {
+  const expected=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const structural=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,expected));assert.equal(structural.ready,true);
+  const operational=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{...expected,requireRestrictedLogin:true} as any));
+  assert.equal(operational.ready,false);assert.ok(operational.blocked.includes('restrictedLogin'));
+  const onlyIdentity:any={query:async()=>({rows:[{database:expected.database,schema:expected.schema,rolsuper:false,rolbypassrls:false,
+    session_super:false,session_bypass:false,same_login:false}]})};
+  const mismatch=await inspectCrmPreflight(onlyIdentity,{...expected,requireRestrictedLogin:true} as any);
+  assert.equal(mismatch.ready,false);assert.ok(mismatch.blocked.includes('restrictedLogin'));
+ }finally{await f.close();}
+});
+
+
 test('CRM preflight CLI: destino obrigatório antes da conexão, saída sem identidade/segredos',()=>{
   const result=spawnSync(process.execPath,['--import','tsx','scripts/crmPreflight.ts'],{encoding:'utf8',
     cwd:new URL('../',import.meta.url),env:{...process.env,CRM_EXPECTED_DATABASE:'',CRM_EXPECTED_SCHEMA:'',DATABASE_URL:'postgresql://must-not-connect:private@example.invalid/forbidden'}});
