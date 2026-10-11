@@ -1,16 +1,16 @@
-## CURSOR — pacote Marca RBAC + ID técnico ContatoB2B/Condicao (2026-10-11)
+## CURSOR — tip 58766d82 implantado+homologado (Marca RBAC + ID técnico) (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| **modo** | execução contínua (implementação + revisão Codex) — não só parecer |
-| **implementado** | `MarcaService` RBAC fail-closed (`Cadastros.marca`) · ContatoB2B/CondicaoComercial `idOnly` · grade `id` · label Visualizador “ID técnico” |
-| **fechamento lacuna #277** | Marca.list/get/create/update/softDelete passam a negar sem permissão (Codex documentou; Cursor corrigiu no serviço canônico) |
-| **não tocado** | Auth/sessão/outbox · mig 042 · Legado #211/#266 · porte stack #267–#277 |
-| tip #261 / implantado | tip após push deste lote · runtime erp-dev ainda **`c125c4db`** até redeploy |
-| `main` | `baba91a6` |
-| testes | `cadastros-codigo-cobertura` 9/9 · `runtime01` 14 pass / 2 skip |
+| **modo** | execução contínua (implementação + revisão Codex) |
+| **SHA** | tip **`58766d82`** · CI SUCCESS · implantado erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-iZ42G-Qb.js` · rollback `pre-spa-login-20261011-094516` |
+| **implementado** | `MarcaService` RBAC (`Cadastros.marca`) · ContatoB2B/Condicao `idOnly` · grade `id` · label Visualizador |
+| **fechamento lacuna #277** | Marca HTTP nega sem permissão; Auth/042 permanece Codex |
+| **evidência** | `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` |
+| `main` | `baba91a6` · #261 ainda não em main |
 | BLOCKED | usuário restrito (sem `ERP_DEV_LOGIN_RESTRICTED_*`) |
-| próxima | redeploy+homolog owner deste tip · Representante/Colaborador grade codigo/id · Agenda/Relatórios chrome azul seletivo |
+| próxima | Representante/Colaborador grade codigo/id · Painel seletivo · secret restrito |
 
 ## CURSOR — revisão Codex timer: #277 Auth bootstrap RLS (2026-10-11)
 

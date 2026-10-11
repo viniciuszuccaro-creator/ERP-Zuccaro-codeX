@@ -1,13 +1,15 @@
-## CURSOR — pacote Marca RBAC + ID técnico (2026-10-11)
+## CURSOR — tip 58766d82 implantado (Marca RBAC + ID técnico) (2026-10-11)
 
 | Item | Valor |
 |---|---|
 | branch | `cursor/cadastros-recuperacao-c360-contrato-392b` (#261) |
+| tip implantado | **`58766d82`** · asset `index-iZ42G-Qb.js` · CI SUCCESS · homolog owner fail_count=0 |
+| rollback | `pre-spa-login-20261011-094516` · backup `pre-gate-e-20261011-094514.sql` |
 | escopo | Marca HTTP RBAC · ContatoB2B/CondicaoComercial ID técnico · labels Visualizador |
 | divisão | Cursor: UI cadastros + `MarcaService`/`app.ts` · Codex: Auth/042/sessão/outbox/Legado |
 | tip Codex #277 | **`8bc4fef2`** inalterado — **sem porte** Auth |
-| tip implantado erp-dev | ainda **`c125c4db`** até redeploy deste lote |
-| próxima | redeploy+homolog · grade Representante/Colaborador · secret restrito |
+| evidência | `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` |
+| próxima | Representante/Colaborador grade · secret restrito · merge owner |
 
 ## REVISÃO CODEX — #277 Auth bootstrap RLS (2026-10-11)
 
@@ -19,7 +21,7 @@
 | ação Cursor | **monitorar** — **não** porte (Auth/sessão/RLS; sem APPLY 042) |
 | nota | lacuna Marca.list RBAC **corrigida em #261** (serviço canônico); 042 permanece Codex |
 | stack | #277 → #276 → #275 → … → #267 → #261 · fora de `main` |
-| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+| tip implantado erp-dev | **`58766d82`** / `index-iZ42G-Qb.js` (supersede `c125c4db`) |
 
 ## REVISÃO CODEX — #276 Auth×dados split (2026-10-11)
 
@@ -237,7 +239,7 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 
 ### Próxima ação Cursor (independente enquanto merge owner)
 1. ~~CI + redeploy tip policy CRM~~ **feito** `c125c4db` / `index-C-lbE7zK.js` · homolog owner fail_count=0.
-2. ~~Marca RBAC + ID técnico ContatoB2B/Condicao~~ **código neste tip** — falta redeploy+homolog.
+2. ~~Marca RBAC + ID técnico ContatoB2B/Condicao~~ **feito** tip **`58766d82`** implantado+homolog owner fail_count=0.
 3. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
 4. Inventário residual (POD/Separação keep-both; Painel seletivo; Representante/Colaborador grade).
 5. Merge owner #261→main; fechar #254 como supersedido/ancestral.

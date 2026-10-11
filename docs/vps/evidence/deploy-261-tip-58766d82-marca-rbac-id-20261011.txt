@@ -1,0 +1,20 @@
+# Evidência sanitizada — tip 58766d82 implantado (Marca RBAC + ID técnico ContatoB2B/Condicao)
+# utc=2026-10-11T09:47Z
+#
+# tip=58766d82 feat(cadastros): Marca RBAC fail-closed e ID técnico ContatoB2B/Condicao
+# asset=index-iZ42G-Qb.js
+# api=marcaService com rbacGuard (Cadastros.marca)
+# rollback=pre-spa-login-20261011-094516
+# MERGE_SHA8=58766d82 · STAMP=20261011-094516
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# backup=pre-gate-e-20261011-094514.sql sha256=f14c79e91e62516e8efebe32e7b58d23ab7fe238132294bb2b268b754868f5f5
+#
+# CI tip 58766d82: erp-runtime-ci SUCCESS (frontend+backend · 4 checks)
+# Homolog OWNER tipado (este SHA) fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-58766d82.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-58766d82.json
+#
+# Bundle markers: id-tecnico-contato-b2b · id-tecnico-condicao-comercial · ID técnico · codigo-registro-marca
+# VPS git HEAD=/opt/erp-zuccaro @ 58766d82
+# #277 Auth RLS tip 8bc4fef2: monitorada — NÃO mesclada / sem APPLY 042
+# Usuário restrito: BLOCKED · Recuperado: NÃO
