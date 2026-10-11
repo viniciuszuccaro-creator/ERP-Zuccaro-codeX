@@ -1,3 +1,14 @@
+## REVISÃO CODEX — #276 Auth×dados split (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| PR | [#276](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/276) tip **`9dedeafb`** |
+| base | #275 @ `f6fa8a8a` · draft · MERGEABLE · CI SUCCESS |
+| escopo | bootstrap Auth separado da conexão de dados · validação role NOSUPERUSER no dataDb |
+| ação Cursor | **monitorar** — **não** porte (Auth/sessão reservados) |
+| stack | #276 → #275 → … → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
 ## REVISÃO CODEX — #275 contexto tenant runtime (2026-10-11)
 
 | Item | Valor |
@@ -124,7 +135,8 @@
 | #273 Codex | tip **`8d1d7242`** · preflight ACL/policy · CI SUCCESS · **monitorar** (sem porte) |
 | #274 Codex | tip **`3ec26ad8`** · preço no executor · CI SUCCESS · **monitorar** (sem porte) |
 | #275 Codex | tip **`f6fa8a8a`** · contexto tenant runtime · CI SUCCESS · **monitorar** (sem porte; reservado) |
-| porte neste ciclo | nenhum (Legado/#267–#275 / sessão-contexto fora; #265/#263 já absorvidos) |
+| #276 Codex | tip **`9dedeafb`** · Auth×dados split · CI SUCCESS · **monitorar** (sem porte; Auth) |
+| porte neste ciclo | nenhum (Legado/#267–#276 / Auth-sessão fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -148,6 +160,7 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#273](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/273) tip **`8d1d7242`** | preflight ACL/policy · CI SUCCESS | **monitorar** — sem porte/APPLY |
 | [#274](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/274) tip **`3ec26ad8`** | preço/refs no executor da venda · CI SUCCESS | **monitorar** — sem porte |
 | [#275](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/275) tip **`f6fa8a8a`** | contexto tenant runtime · CI SUCCESS | **monitorar** — sem porte; reservado |
+| [#276](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/276) tip **`9dedeafb`** | Auth×dados split · CI SUCCESS | **monitorar** — sem porte; Auth |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | stack CRM/#270 em curso · Legado/Produto GET **IDLE** | timer contínuo |
 

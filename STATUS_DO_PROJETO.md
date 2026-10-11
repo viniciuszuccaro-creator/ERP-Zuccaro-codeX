@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex timer: #276 Auth×dados split (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#276** tip **`9dedeafb`** | draft · MERGEABLE · base #275 `f6fa8a8a` · CI SUCCESS |
+| conteúdo | `authDb` query-only opcional · `AUTH_DATABASE_URL` · ENABLE_TENANT_CONTEXT default false · sem grants/roles |
+| porte Cursor | **não** — Auth/sessão Codex; empilhada em #275→#267; sem merge/VPS |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar stack #276→#267; **não** editar Auth/client; timer |
+
 ## CURSOR — revisão Codex timer: #275 contexto tenant runtime (2026-10-11)
 
 | Item | Estado |
