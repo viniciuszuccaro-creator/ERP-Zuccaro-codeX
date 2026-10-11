@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Repeat, DollarSign, Calendar, Bell, Users } from "lucide-react";
 import { toast } from "sonner";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode = false, onSubmit }) {
   const [formData, setFormData] = useState(config || {
@@ -128,6 +129,12 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
   return (
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(config?.id)}
+        entityId={config?.id}
+        action="id-tecnico-despesa-recorrente"
+      />
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">

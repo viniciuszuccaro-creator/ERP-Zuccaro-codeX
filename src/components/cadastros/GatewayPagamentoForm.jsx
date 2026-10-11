@@ -13,6 +13,7 @@ import { CreditCard, Globe, Lock, BarChart3, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function GatewayPagamentoForm({ gateway, windowMode = false, onSubmit }) {
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
@@ -90,6 +91,12 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
   return (
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(gateway?.id)}
+        entityId={gateway?.id}
+        action="id-tecnico-gateway-pagamento"
+      />
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">

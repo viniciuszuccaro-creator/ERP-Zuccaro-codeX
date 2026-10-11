@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
 
 export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || conta;
@@ -73,6 +74,12 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-plano-contas"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Código da Conta *</Label>

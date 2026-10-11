@@ -1,3 +1,16 @@
+## CURSOR — idOnly residual Bloco3–6 + RotaPadrao (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip base | `cbfce9e4` CI SUCCESS · tip runtime ainda `06325316` até redeploy |
+| forms idOnly | Perfil/Moeda/Operador/DespesaRec/TabelaFiscal/ModeloDoc/Bloco6/PlanoContas |
+| MASTER_CODE | RotaPadrao `codigo-registro-rota-padrao` |
+| grades | Bloco3/4/5/6 com `id` onde não há codigo MASTER |
+| divisão Codex | Marca atomicidade + Auth/RLS intocados |
+| testes | `cadastros-codigo-cobertura` + azul · 17 pass |
+| BLOCKED | secret restrito |
+| próxima | commit tip · redeploy `cbfce9e4`+tip · homolog |
+
 ## CURSOR — C360 Abrir cadastro + probe API/DB (2026-10-11)
 
 | Item | Estado |

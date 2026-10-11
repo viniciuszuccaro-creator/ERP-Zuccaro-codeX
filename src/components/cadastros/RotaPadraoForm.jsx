@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MapPin } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode = false }) {
   const dadosIniciais = rotaPadrao || rota;
@@ -47,6 +48,12 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-rota-padrao"
+      />
       <div>
         <Label>Nome da Rota *</Label>
         <Input

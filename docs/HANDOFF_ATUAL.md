@@ -1,3 +1,15 @@
+## CURSOR — idOnly residual Bloco3–6 (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | #261 `cursor/cadastros-recuperacao-c360-contrato-392b` |
+| tip CI verde | **`cbfce9e4`** · C360 Abrir cadastro + probe |
+| lote local | idOnly Bloco3–6 + RotaPadrao codigo-registro · grades `id` |
+| divisão | Cursor UI · Codex Marca/`marcaService`+repo+types+app · Auth/RLS |
+| tip runtime | **`06325316`** → redeploy tip atual |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | push tip · redeploy · homolog · consolidação duplicados |
+
 ## CURSOR — C360 cadastro canônico + probe API/DB (2026-10-11)
 
 | Item | Valor |

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bell, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -53,6 +54,12 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(evento?.id)}
+        entityId={evento?.id}
+        action="id-tecnico-evento-notificacao"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -9,6 +9,7 @@ import { MessageCircle, Save, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -73,6 +74,12 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(chatbotIntent?.id)}
+        entityId={chatbotIntent?.id}
+        action="id-tecnico-chatbot-intent"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

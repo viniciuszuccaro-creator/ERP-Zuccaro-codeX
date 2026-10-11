@@ -118,7 +118,7 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" 
     { k: 'TipoFrete',       t: 'Tipos de Frete',                  i: Settings, c: ['codigo','nome','descricao','modalidade','cobra_frete'],f: TipoFreteForm },
     { k: 'LocalEstoque',    t: 'Locais de Estoque',               i: Package,  c: ['codigo','nome','descricao'],                  f: LocalEstoqueForm },
     { k: 'RotaPadrao',      t: 'Rotas Padrão',                    i: MapPin,   c: ['codigo','nome','nome_rota','origem','destino'],         f: RotaPadraoForm },
-    { k: 'ModeloDocumento', t: 'Modelos de Documento Logístico',  i: FileText, c: ['nome','nome_modelo','tipo_documento','ativo'], f: ModeloDocumentoForm },
+    { k: 'ModeloDocumento', t: 'Modelos de Documento Logístico',  i: FileText, c: ['id','nome','nome_modelo','tipo_documento','ativo'], f: ModeloDocumentoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 

@@ -113,14 +113,14 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
   };
 
   const tiles = [
-    { k: 'ApiExterna',         t: 'APIs Externas',          i: Code,          c: ['nome','nome_integracao','url_base','tipo_api'],   f: ApiExternaForm },
-    { k: 'ChatbotCanal',       t: 'Canais Chatbot',         i: MessageCircle, c: ['nome','nome_canal','tipo_canal','ativo'],          f: ChatbotCanalForm },
-    { k: 'ChatbotIntent',      t: 'Intents Chatbot',        i: Zap,           c: ['nome','nome_intent','descricao','ativo'],          f: ChatbotIntentForm },
-    { k: 'GatewayPagamento',   t: 'Gateways de Pagamento',  i: Package,       c: ['nome','provedor','ambiente','ativo'],              f: GatewayPagamentoForm },
-    { k: 'JobAgendado',        t: 'Jobs Agendados',         i: Cloud,         c: ['nome','nome_job','frequencia','tipo_job'],         f: JobAgendadoForm },
-    { k: 'Webhook',            t: 'Webhooks',               i: Link2,         c: ['nome','nome_webhook','evento_gatilho','ativo'],    f: WebhookForm },
-    { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['nome','provedor','ambiente','ativo'],              f: ConfiguracaoNFeForm },
-    { k: 'EventoNotificacao',   t: 'Eventos & Notificações', i: Bell,          c: ['nome_evento','tipo_evento','prioridade','ativo'],  f: EventoNotificacaoForm },
+    { k: 'ApiExterna',         t: 'APIs Externas',          i: Code,          c: ['id','nome','nome_integracao','url_base','tipo_api'],   f: ApiExternaForm },
+    { k: 'ChatbotCanal',       t: 'Canais Chatbot',         i: MessageCircle, c: ['id','nome','nome_canal','tipo_canal','ativo'],          f: ChatbotCanalForm },
+    { k: 'ChatbotIntent',      t: 'Intents Chatbot',        i: Zap,           c: ['id','nome','nome_intent','descricao','ativo'],          f: ChatbotIntentForm },
+    { k: 'GatewayPagamento',   t: 'Gateways de Pagamento',  i: Package,       c: ['id','nome','provedor','ambiente','ativo'],              f: GatewayPagamentoForm },
+    { k: 'JobAgendado',        t: 'Jobs Agendados',         i: Cloud,         c: ['id','nome','nome_job','frequencia','tipo_job'],         f: JobAgendadoForm },
+    { k: 'Webhook',            t: 'Webhooks',               i: Link2,         c: ['id','nome','nome_webhook','evento_gatilho','ativo'],    f: WebhookForm },
+    { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['id','nome','provedor','ambiente','ativo'],              f: ConfiguracaoNFeForm },
+    { k: 'EventoNotificacao',   t: 'Eventos & Notificações', i: Bell,          c: ['id','nome_evento','tipo_evento','prioridade','ativo'],  f: EventoNotificacaoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 

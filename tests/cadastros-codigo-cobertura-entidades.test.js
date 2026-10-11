@@ -153,11 +153,51 @@ test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () =>
     ['VeiculoForm.jsx', 'codigo-registro-veiculo'],
     ['MotoristaForm.jsx', 'codigo-registro-motorista'],
     ['FormaPagamentoForm.jsx', 'codigo-registro-forma-pagamento'],
+    ['RotaPadraoForm.jsx', 'codigo-registro-rota-padrao'],
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, new RegExp(action));
     assert.match(src, /CadastroCodigoRegistroField/);
     assert.match(src, /entityId=\{/, `${file} deve passar entityId ao campo codigo/ID`);
+  }
+});
+
+test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com id', async () => {
+  const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
+  const bloco4 = await readFile(new URL('../src/components/cadastros/blocks/Bloco4Logistica.jsx', import.meta.url), 'utf8');
+  const bloco5 = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
+  const bloco6 = await readFile(new URL('../src/components/cadastros/blocks/Bloco6Tecnologia.jsx', import.meta.url), 'utf8');
+  for (const [file, action] of [
+    ['PerfilAcessoForm.jsx', 'id-tecnico-perfil-acesso'],
+    ['MoedaIndiceForm.jsx', 'id-tecnico-moeda-indice'],
+    ['OperadorCaixaForm.jsx', 'id-tecnico-operador-caixa'],
+    ['ConfiguracaoDespesaRecorrenteForm.jsx', 'id-tecnico-despesa-recorrente'],
+    ['TabelaFiscalForm.jsx', 'id-tecnico-tabela-fiscal'],
+    ['ModeloDocumentoForm.jsx', 'id-tecnico-modelo-documento'],
+    ['ApiExternaForm.jsx', 'id-tecnico-api-externa'],
+    ['ChatbotCanalForm.jsx', 'id-tecnico-chatbot-canal'],
+    ['ChatbotIntentForm.jsx', 'id-tecnico-chatbot-intent'],
+    ['GatewayPagamentoForm.jsx', 'id-tecnico-gateway-pagamento'],
+    ['JobAgendadoForm.jsx', 'id-tecnico-job-agendado'],
+    ['WebhookForm.jsx', 'id-tecnico-webhook'],
+    ['ConfiguracaoNFeForm.jsx', 'id-tecnico-configuracao-nfe'],
+    ['EventoNotificacaoForm.jsx', 'id-tecnico-evento-notificacao'],
+    ['PlanoContasForm.jsx', 'id-tecnico-plano-contas'],
+  ]) {
+    const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
+    assert.match(src, /CadastroCodigoRegistroField/);
+    assert.match(src, /idOnly/);
+    assert.match(src, new RegExp(action));
+  }
+  assert.match(bloco5, /k:\s*'PerfilAcesso'[\s\S]{0,200}\bid\b/);
+  assert.match(bloco3, /k:\s*'MoedaIndice'[\s\S]{0,200}\bid\b/);
+  assert.match(bloco3, /k:\s*'OperadorCaixa'[\s\S]{0,200}\bid\b/);
+  assert.match(bloco4, /k:\s*'ModeloDocumento'[\s\S]{0,200}\bid\b/);
+  for (const entity of [
+    'ApiExterna', 'ChatbotCanal', 'ChatbotIntent', 'GatewayPagamento',
+    'JobAgendado', 'Webhook', 'ConfiguracaoNFe', 'EventoNotificacao',
+  ]) {
+    assert.match(bloco6, new RegExp(`k:\\s*'${entity}'[\\s\\S]{0,200}\\bid\\b`));
   }
 });
 

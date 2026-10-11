@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -53,6 +54,12 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(jobAgendado?.id)}
+        entityId={jobAgendado?.id}
+        action="id-tecnico-job-agendado"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

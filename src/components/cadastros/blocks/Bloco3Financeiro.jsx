@@ -123,10 +123,10 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
     { k: 'CentroCusto',                   t: 'Centros de Custo',        i: Layers,       c: ['codigo','descricao','tipo','nome'],                       f: CentroCustoForm },
     { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['codigo','nome','descricao'],                              f: CentroResultadoForm },
     { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['codigo','nome','categoria'],                              f: TipoDespesaForm },
-    { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['nome','tipo','sigla','codigo'],                           f: MoedaIndiceForm },
-    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],            f: OperadorCaixaForm },
-    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
-    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
+    { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['id','codigo','nome','tipo','sigla'],                           f: MoedaIndiceForm },
+    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['id','codigo_operador','nome','nome_caixa','ativo'],            f: OperadorCaixaForm },
+    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['id','nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
+    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['id','nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
     { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['id','nome','nome_condicao','forma_pagamento','ativo'],    f: CondicaoComercialForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);

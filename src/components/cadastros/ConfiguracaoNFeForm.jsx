@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { requireAutomacaoHumanConfirm } from "@/components/lib/automacaoAvancadaPolicy";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
   const { toast } = useToast();
@@ -88,6 +89,12 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(config?.id)}
+        entityId={config?.id}
+        action="id-tecnico-configuracao-nfe"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

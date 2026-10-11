@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Smartphone, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = chatbotCanal;
@@ -55,6 +56,12 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-chatbot-canal"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

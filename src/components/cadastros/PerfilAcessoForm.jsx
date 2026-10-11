@@ -10,6 +10,7 @@ import { Loader2, Shield, AlertTriangle, XCircle, Trash2, Power, PowerOff } from
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -132,6 +133,12 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(perfil?.id)}
+        entityId={perfil?.id}
+        action="id-tecnico-perfil-acesso"
+      />
       <div>
         <Label>Nome do Perfil *</Label>
         <Input

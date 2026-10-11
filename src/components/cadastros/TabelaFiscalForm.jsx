@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * FORMULÁRIO DE TABELA FISCAL V21.2 - FASE 2
@@ -181,6 +182,12 @@ Seja preciso e cite a legislação aplicável.`,
     <div className={containerClass}>
       <div className={contentClass}>
         <form onSubmit={handleSubmitForm} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(tabela?.id)}
+        entityId={tabela?.id}
+        action="id-tecnico-tabela-fiscal"
+      />
           {/* SUGESTÃO IA */}
           {sugestaoIA && (
             <Alert className="border-purple-300 bg-purple-50">

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
+import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
 
 export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit, windowMode = false }) {
   const dadosIniciais = modeloDocumento || modelo;
@@ -27,6 +28,12 @@ export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit,
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-modelo-documento"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Nome do Modelo *</Label>

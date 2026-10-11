@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Zap, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -55,6 +56,12 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(apiExterna?.id)}
+        entityId={apiExterna?.id}
+        action="id-tecnico-api-externa"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
