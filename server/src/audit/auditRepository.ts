@@ -28,8 +28,8 @@ export class PostgresAuditRepository implements AuditRepository {
     );
   }
 
-  async listByEntity(entity: string, entityId: string): Promise<AuditEntry[]> {
-    const result = await this.db.query<{
+  async listByEntity(entity: string, entityId: string, executor?: DbQueryExecutor): Promise<AuditEntry[]> {
+    const result = await (executor ?? this.db).query<{
       group_id: string | null;
       empresa_id: string | null;
       actor_id: string | null;
@@ -73,7 +73,7 @@ export class InMemoryAuditRepository implements AuditRepository {
     this.entries.push({ ...entry });
   }
 
-  async listByEntity(entity: string, entityId: string): Promise<AuditEntry[]> {
+  async listByEntity(entity: string, entityId: string, _executor?: DbQueryExecutor): Promise<AuditEntry[]> {
     return this.entries.filter((e) => e.entity === entity && e.entityId === entityId);
   }
 }

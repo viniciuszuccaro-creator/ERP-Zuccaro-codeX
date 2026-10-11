@@ -481,6 +481,8 @@ export function createHttpApiClient(options = {}) {
     linkOrcamento(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}/vincular-orcamento`,{method:'POST',body:payload,signal}); },
     /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
     linkPedido(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}/vincular-pedido`,{method:'POST',body:payload,signal}); },
+    /** @param {string} id @param {Record<string,unknown>} payload @param {{signal?:AbortSignal}} [options] */
+    convertOrcamentoToPedido(id,payload,{signal}={}) { return request(`/api/v1/oportunidades/${encodeURIComponent(id)}/converter-orcamento-pedido`,{method:'POST',body:payload,signal}); },
   };
 
   const clientes = {

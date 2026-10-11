@@ -52,5 +52,5 @@ export type AuditEntry = {
 
 export interface AuditRepository {
   append(entry: AuditEntry, executor?: DbQueryExecutor): Promise<void>;
-  listByEntity(entity: string, entityId: string): Promise<AuditEntry[]>;
+  listByEntity(entity: string, entityId: string, executor?: DbQueryExecutor): Promise<AuditEntry[]>;
 }

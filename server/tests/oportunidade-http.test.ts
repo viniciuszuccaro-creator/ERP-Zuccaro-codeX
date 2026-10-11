@@ -33,6 +33,9 @@ test('CRM HTTP: desligado por padrão; CRUD/escopo/RBAC quando habilitado explic
       await assert.rejects(facade.update(created.id,{expected_version:1,titulo:'Concorrente'}),(e:any)=>e.status===409);
       assert.equal((await facade.deactivate(created.id,{expected_version:2})).ativo,false);
       assert.equal((await facade.restore(created.id,{expected_version:3})).ativo,true);
+      await assert.rejects(facade.convertOrcamentoToPedido(created.id,{expected_version:4,orcamento_id:ID.obraA,
+        pedido:{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z'}}),
+        (error:any)=>error.status===503&&error.code==='CRM_ATOMIC_CONVERSION_UNAVAILABLE');
       await assert.rejects(facade.getByLegacy('nonexistent-synthetic'),(e:any)=>e.status===404);
       // Restricted fixture lacks Comercial.orcamento.visualizar: do not expand grants to pass.
       await assert.rejects(facade.linkOrcamento(created.id,{expected_version:4,orcamento_id:ID.obraA}),(e:any)=>e.status===403);
