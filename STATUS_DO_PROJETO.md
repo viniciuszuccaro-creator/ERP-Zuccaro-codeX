@@ -1,3 +1,27 @@
+## CURSOR — tip 4adb7e21 implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`4adb7e21`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-BVC3f2V2.js` · rollback `pre-spa-login-20261011-115823` |
+| **conteúdo** | FormaPagamentoForm → Completo · docs tip 47e2660d · revisão #280 |
+| **evidência** | `deploy-261-tip-4adb7e21-formapagamento-adapter-20261011.txt` |
+| tip docs | `5e07e007` (HANDOFF/#280) CI pendente — só docs |
+| BLOCKED | usuário restrito |
+| próxima | consolidação residual · secret restrito · merge owner |
+
+## CURSOR — revisão Codex #280 Marca atômica (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#280** tip **`a76335b7`** | draft · MERGEABLE · base #279 Auth · CI SUCCESS |
+| arquivos | `marcaService` · `postgresMarcaRepository` · `marcaTypes` · `app.ts` · `marca-atomicidade.test.ts` |
+| prova | withTransaction · falha audit → rollback registro+sequence · update/softDelete · códigos concorrentes distintos · cross-tenant rejeitado |
+| nota | fixture/PGlite — **não** homologa VPS/grants operacionais (próprio Codex) |
+| porte Cursor | **não** — stack Auth/#279 + arquivos reservados Marca |
+| tip #261 | `4adb7e21` CI SUCCESS · redeploy em curso |
+| próxima | tip `4adb7e21` implantado+homolog; monitorar #280 |
+
 ## CURSOR — tip 47e2660d implantado+homologado (2026-10-11)
 
 | Item | Estado |

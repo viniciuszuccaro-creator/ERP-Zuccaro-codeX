@@ -1,3 +1,26 @@
+## CURSOR — tip 4adb7e21 implantado (FormaPagamento adapter) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`4adb7e21`** · asset `index-BVC3f2V2.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-115823` |
+| escopo | FormaPagamentoForm adapter Completo · tip 47e2660d idOnly · C360 |
+| #280 Codex | tip `a76335b7` — **sem porte** |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-4adb7e21-formapagamento-adapter-20261011.txt` |
+| próxima | consolidação residual · secret restrito · merge owner |
+
+## REVISÃO CODEX — #280 Marca atômica (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| PR | [#280](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/280) tip **`a76335b7`** |
+| base | #279 Auth · draft · MERGEABLE · CI SUCCESS |
+| escopo | create/update/softDelete Marca na mesma `withTransaction` + auditoria · rollback sequence |
+| testes | `marca-atomicidade.test.ts` (PGlite + PG se DATABASE_URL) · concorrência códigos · isolamento |
+| ação Cursor | **não porte** — arquivos reservados + base Auth |
+| tip #261 runtime | `47e2660d` → `4adb7e21` (adapter FormaPagamento) |
+
 ## CURSOR — tip 47e2660d implantado (idOnly Bloco3–6) (2026-10-11)
 
 | Item | Valor |

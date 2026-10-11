@@ -1,0 +1,15 @@
+# Evidência sanitizada — tip 4adb7e21 implantado+homolog
+# utc=2026-10-11T11:58Z
+#
+# tip=4adb7e21 refactor(cadastros): FormaPagamentoForm adapta ao Completo canônico
+# inclui tip 47e2660d idOnly Bloco3–6
+# asset=index-BVC3f2V2.js (mesmo hash do tip 47e2660d se chunk estável)
+# rollback=pre-spa-login-20261011-115823
+# MERGE_SHA8=4adb7e21 · STAMP=20261011-115823
+#
+# CI tip 4adb7e21: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-4adb7e21.json
+#
+# #280 Codex tip a76335b7: Marca atômica — sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*
