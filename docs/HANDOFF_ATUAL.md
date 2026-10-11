@@ -1,14 +1,27 @@
+## CURSOR — tip e6379a4a implantado+homologado (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`e6379a4a`** · asset `index-CCV6avKO.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-211601` |
+| escopo | Empresas→EmpresaForm · Filial/Cliente/Produto adapters · Usuario idOnly |
+| evidência | `deploy-261-tip-e6379a4a-empresas-adapters-20261011.txt` |
+| report | `/opt/cursor/artifacts/pw-homolog-261-tip-e6379a4a.json` |
+| #280–#292 | **sem porte** · painel C360 divergente |
+| BLOCKED | secret restrito |
+| próxima | secret restrito · merge owner · residual Cursor independente |
+
 ## CURSOR — tip 198ba22b (Empresas + adapters + Usuario idOnly) (2026-10-11)
 
 | Item | Valor |
 |---|---|
-| tip | **`198ba22b`** · CI em curso |
+| tip | **`198ba22b`** · supersedido por implant **`e6379a4a`** |
 | escopo | Empresas→EmpresaForm · Filial/Cliente/Produto adapters · UsuarioForm idOnly |
 | tips | `3b6ec581` · `7238167d` · `198ba22b` |
-| tip runtime | ainda **`27224f87`** até CI → redeploy → homolog |
+| tip runtime | **`e6379a4a`** implantado |
 | #280–#292 | **sem porte** · painel C360 divergente |
 | BLOCKED | secret restrito |
-| próxima | CI SUCCESS tip → redeploy erp-dev → homolog owner |
+| próxima | secret restrito · merge owner |
 
 ## CURSOR — adapters Cliente/Produto Completo (2026-10-11)
 

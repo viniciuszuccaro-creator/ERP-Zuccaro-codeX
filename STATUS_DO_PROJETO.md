@@ -1,14 +1,26 @@
+## CURSOR — tip e6379a4a implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`e6379a4a`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-CCV6avKO.js` · rollback `pre-spa-login-20261011-211601` |
+| **conteúdo** | Empresas→EmpresaForm · Filial/Cliente/Produto adapters · Usuario idOnly |
+| **evidência** | `deploy-261-tip-e6379a4a-empresas-adapters-20261011.txt` |
+| #280–#292 | **sem porte** · painel C360 divergente |
+| BLOCKED | secret restrito |
+| próxima | secret restrito · merge owner · residual Cursor independente |
+
 ## CURSOR — tip 198ba22b consolidação Empresas/adapters/Usuario (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| tip | **`198ba22b`** · CI em curso |
+| tip | **`198ba22b`** · supersedido por **`e6379a4a`** implantado |
 | escopo | Empresas→EmpresaForm · Filial/Cliente/Produto adapters · UsuarioForm idOnly |
 | tips | `3b6ec581` Empresas · `7238167d` Cliente/Produto · `198ba22b` Usuario |
-| tip runtime | ainda **`27224f87`** até CI tip → redeploy |
+| tip runtime | **`e6379a4a`** |
 | #280–#292 | **sem porte** |
 | BLOCKED | secret restrito |
-| próxima | CI tip → redeploy → homolog |
+| próxima | secret restrito · merge owner |
 
 ## CURSOR — adapters Cliente/Produto Completo (2026-10-11)
 
