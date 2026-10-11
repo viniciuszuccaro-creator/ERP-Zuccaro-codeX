@@ -1,12 +1,26 @@
+## CURSOR — tip d0a1b411 implantado+homologado (anti-redirect Marca) (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`d0a1b411`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-Bm9XJE42.js` (SPA herdado; API tip `5fac2412`/`d0a1b411`) |
+| **rollback** | `pre-spa-login-20261011-100903` |
+| **conteúdo** | Marca `assertTargetScope` anti-redirect (#278) · docs reconciliação |
+| **API marker** | `assertTargetScope` count=3 em `marcaService.js` container |
+| **evidência** | `deploy-261-tip-d0a1b411-anti-redirect-marca-20261011.txt` |
+| `#278` | tip `b398202b` absorvido (sem stack Auth #277) |
+| BLOCKED | usuário restrito |
+| próxima | Painel/Agenda chrome azul seletivo · secret restrito · merge owner |
+
 ## CURSOR — #278 tip b398202b anti-redirect Marca (2026-10-11)
 
 | Item | Estado |
 |---|---|
 | **#278** tip **`b398202b`** | draft · MERGEABLE · base #277 · CI SUCCESS · +commit anti-redirect empresa |
 | porte Cursor | **sim** só `assertTargetScope` (independente Auth) · sem stack #277 |
-| tip #261 / implantado | tip após push · runtime ainda **`164e6852`** até CI/redeploy |
+| tip #261 / implantado | supersedido — runtime **`d0a1b411`** (bloco acima) |
 | testes | `runtime01` 15 pass / 2 skip |
-| próxima | CI → redeploy · #278 monitorar tip |
+| próxima | tip `d0a1b411` implantado+homolog |
 
 ## CURSOR — tip 164e6852 implantado+homologado (2026-10-11)
 
