@@ -2,7 +2,7 @@
 
 | Item | Estado |
 |---|---|
-| tip | pós-`3b6ec581` (este lote) · CI pendente |
+| tip | **`7238167d`** · CI pendente |
 | escopo | ProdutoFormCompleto→V22 · ClienteForm(Completo)→CadastroClienteCompleto |
 | tip Empresas | **`3b6ec581`** |
 | testes | cobertura + produto-tipo-policy PASS |

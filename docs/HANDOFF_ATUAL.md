@@ -1,3 +1,15 @@
+## CURSOR — tip 198ba22b (Empresas + adapters + Usuario idOnly) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip | **`198ba22b`** · CI em curso |
+| escopo | Empresas→EmpresaForm · Filial/Cliente/Produto adapters · UsuarioForm idOnly |
+| tips | `3b6ec581` · `7238167d` · `198ba22b` |
+| tip runtime | ainda **`27224f87`** até CI → redeploy → homolog |
+| #280–#292 | **sem porte** · painel C360 divergente |
+| BLOCKED | secret restrito |
+| próxima | CI SUCCESS tip → redeploy erp-dev → homolog owner |
+
 ## CURSOR — adapters Cliente/Produto Completo (2026-10-11)
 
 | Item | Valor |
@@ -9,7 +21,7 @@
 | tip runtime | ainda **`27224f87`** até CI tip → redeploy |
 | #280–#292 | **sem porte** |
 | BLOCKED | secret restrito |
-| próxima | CI tip → redeploy → homolog |
+| próxima | tip `198ba22b` + CI → redeploy |
 
 ## CURSOR — Empresas página → EmpresaForm canônico (2026-10-11)
 
