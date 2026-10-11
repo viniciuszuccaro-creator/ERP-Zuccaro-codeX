@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-11T23:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`fd722d62`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#297 | tips inalterados · **sem porte** · #297 CI SUCCESS completo |
+| #298 **novo** | tip `2a11238d` · preflight CRM flags/RLS/ACL · base #297 · CI SUCCESS · **sem porte** (CRM server) |
+| #299 **novo** | tip `6801a0f8` · docs gates implantação Pedido CRM · base #298 · CI SUCCESS · **sem porte** (docs CRM) |
+| stack | #299→#298→#297→#296→…→#292 |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T23:30Z
 
 | Item | Valor |
