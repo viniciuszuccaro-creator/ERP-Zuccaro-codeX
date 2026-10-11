@@ -1,14 +1,25 @@
+## CURSOR — adapters + Empresa endereço (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| HEAD | **`ffdb86d9`** TabelaPrecoForm→Completo · `535a1fc0` Empresa endereço |
+| tip runtime | **`4adb7e21`** até CI tip → redeploy |
+| #280 | tip `a76335b7` — **sem porte** Marca |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — EmpresaForm endereço/CEP (2026-10-11)
 
 | Item | Valor |
 |---|---|
 | branch | #261 |
+| tip | **`535a1fc0`** |
 | escopo | endereço+BuscaCEP no `EmpresaForm` canônico (Bloco5) |
 | preservação | loadIncomplete · fiscal não wipe · certificado granular |
-| tip runtime | **`4adb7e21`** até CI+redeploy deste tip |
+| tip runtime | **`4adb7e21`** até CI+redeploy |
 | #280 | sem porte Marca |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
-| próxima | CI → redeploy → homolog |
+| próxima | tip `ffdb86d9` · CI → redeploy |
 
 ## CURSOR — tip 4adb7e21 implantado (FormaPagamento adapter) (2026-10-11)
 

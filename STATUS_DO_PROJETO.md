@@ -1,14 +1,27 @@
+## CURSOR — TabelaPrecoForm adapter Completo (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip | **`ffdb86d9`** · CI pendente |
+| escopo | `TabelaPrecoForm` → Completo (aliases preservados) |
+| tip anterior | `535a1fc0` EmpresaForm endereço/CEP |
+| tip runtime | ainda **`4adb7e21`** até CI tip → redeploy |
+| #280 | sem porte |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — EmpresaForm endereço/CEP recuperado (2026-10-11)
 
 | Item | Estado |
 |---|---|
+| tip | **`535a1fc0`** |
 | escopo | `EmpresaForm` Bloco5 canônico · BuscaCEP + endereco sanitizado |
 | preservação | guards #227/#228 (loadIncomplete, fiscal delete, certificado granular) |
 | Completo | keep — abas fiscal/webhooks até portar guards |
 | testes | `cadastros-empresa-edicao*` 34 pass |
-| tip runtime | ainda **`4adb7e21`** até CI deste tip → redeploy |
+| tip runtime | ainda **`4adb7e21`** até CI tip → redeploy |
 | BLOCKED | secret restrito |
-| próxima | CI → redeploy → homolog |
+| próxima | tip `ffdb86d9` + CI → redeploy |
 
 ## CURSOR — tip 4adb7e21 implantado+homologado (2026-10-11)
 
