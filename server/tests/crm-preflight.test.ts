@@ -4,6 +4,15 @@ import {inspectCrmPreflight} from '../src/db/crmPreflight.ts';
 import {localCrmFixture,ROLE} from './helpers/crmFixture.ts';
 import {spawnSync} from 'node:child_process';
 
+test('CRM preflight never accepts absent or ambiguous effective-role flags',async()=>{
+ for(const flags of [{},{rolsuper:null,rolbypassrls:null},{rolsuper:false},{rolsuper:0,rolbypassrls:0}]) {
+  const db:any={query:async(sql:string)=>({rows:sql.includes('current_database()')
+   ?[{database:'synthetic',schema:'public',...flags}]:[]})};
+  const result=await inspectCrmPreflight(db,{database:'synthetic',schema:'public'});
+  assert.equal(result.ready,false);assert.ok(result.blocked.includes('restrictedRole'));
+ }
+});
+
 test('CRM operational preflight refuses privileged session hidden behind SET ROLE',async()=>{
  const f=await localCrmFixture();try {
   const expected=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];

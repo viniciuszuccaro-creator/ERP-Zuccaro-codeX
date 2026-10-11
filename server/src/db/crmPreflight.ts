@@ -11,7 +11,7 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
       FROM pg_roles effective JOIN pg_roles login ON login.rolname=session_user WHERE effective.rolname=current_user`);
   const who=identity.rows[0];
   const checks:Record<string,boolean>={destination:!!who&&who.database===expected.database&&who.schema===expected.schema,
-    restrictedRole:!!who&&!who.rolsuper&&!who.rolbypassrls};
+    restrictedRole:!!who&&who.rolsuper===false&&who.rolbypassrls===false};
   if(expected.requireRestrictedLogin)checks.restrictedLogin=!!who && who.same_login===true
     && who.session_super===false && who.session_bypass===false && who.rolsuper===false && who.rolbypassrls===false;
   if(!checks.destination || checks.restrictedLogin===false)return {ready:false,checks,blocked:Object.keys(checks).filter(k=>!checks[k])};
