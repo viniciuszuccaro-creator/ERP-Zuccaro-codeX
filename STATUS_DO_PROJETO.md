@@ -10,7 +10,16 @@
 | **evidência** | `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` |
 | `main` | `baba91a6` · #261 ainda não em main |
 | BLOCKED | usuário restrito (sem `ERP_DEV_LOGIN_RESTRICTED_*`) |
-| próxima | Representante/Colaborador grade codigo/id · Painel seletivo · secret restrito |
+| próxima | tip seguinte: Representante/Colaborador grade+ID (código local) · Painel seletivo · secret restrito |
+
+## CURSOR — Representante/Colaborador grade + ID técnico (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **implementado** | Bloco1 Representante `codigo`+`id` · Colaborador grade `id` · form Colaborador `idOnly` |
+| tip runtime | erp-dev ainda **`58766d82`** até CI+redeploy deste tip docs/código |
+| testes | `cadastros-codigo-cobertura` 10/10 |
+| próxima | CI → redeploy · Painel seletivo · secret restrito |
 
 ## CURSOR — revisão Codex timer: #277 Auth bootstrap RLS (2026-10-11)
 
