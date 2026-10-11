@@ -5,11 +5,16 @@ const suites = [
   ['OWNER_COPY', 'tests/owner-provision-sql.test.ts'],
   ['R01AUTH', 'tests/runtime01.test.ts'],
   ['LEGACY_CLIENT', 'tests/runtime04.test.ts'],
+  ['LEGACY_IDENTITY', 'tests/legacy-identity.test.ts'],
   ['R08B', 'tests/runtime08-postgres-e2e.test.ts'],
   ['R08C', 'tests/runtime08c-orcamento-postgres-e2e.test.ts'],
   ['R09', 'tests/runtime09-pedido-postgres-e2e.test.ts'],
   ['R10C', 'tests/runtime10-produto-canais-postgres-e2e.test.ts'],
   ['R10', 'tests/runtime10-produto-pim-postgres-e2e.test.ts'],
+  ['R40CRM', 'tests/runtime40-crm-postgres-e2e.test.ts'],
+  ['R41PROD', 'tests/runtime41-produto-empresa-postgres-e2e.test.ts'],
+  ['TENANT_CONTEXT', 'tests/db-tenant-context-postgres.test.ts'],
+  ['MARCA_ATOMICITY', 'tests/marca-atomicidade.test.ts'],
 ];
 let allPassed = true;
 for (const [label, suite] of suites) {

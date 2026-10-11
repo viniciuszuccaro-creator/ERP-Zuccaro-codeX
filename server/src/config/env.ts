@@ -11,6 +11,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3080),
   ERP_AUTH_MODE: z.enum(['dev_headers', 'supabase_user']).optional(),
   DATABASE_URL: z.string().min(1).optional(),
+  AUTH_DATABASE_URL: z.string().min(1).optional(),
+  ENABLE_TENANT_CONTEXT: z.string().optional(),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
@@ -23,6 +25,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   APP_VERSION: z.string().default('0.1.0-runtime-01'),
   REQUIRE_DATABASE: z.string().optional(),
+  ENABLE_CRM_HTTP: z.string().optional(),
+  ENABLE_PRODUTO_EMPRESA: z.string().optional(),
 });
 
 export type AppConfig = {
@@ -31,6 +35,8 @@ export type AppConfig = {
   erpEnv: 'dev' | 'hml' | 'prod';
   port: number;
   databaseUrl?: string;
+  authDatabaseUrl?: string;
+  tenantContextEnabled?: boolean;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   supabaseServiceRoleKey?: string;
@@ -44,6 +50,8 @@ export type AppConfig = {
   appVersion: string;
   requireDatabase: boolean;
   isProduction: boolean;
+  crmHttpEnabled?: boolean;
+  produtoEmpresaEnabled?:boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -56,6 +64,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const data = parsed.data;
   const requireDatabase = boolFromEnv(data.REQUIRE_DATABASE, data.NODE_ENV === 'production');
   const authMode = data.ERP_AUTH_MODE ?? (data.ERP_ENV === 'dev' && data.NODE_ENV !== 'production' ? 'dev_headers' : 'supabase_user');
+  const tenantContextEnabled = boolFromEnv(data.ENABLE_TENANT_CONTEXT, false);
+  if (data.AUTH_DATABASE_URL && (!data.DATABASE_URL || authMode !== 'supabase_user')) {
+    throw new Error('AUTH_DATABASE_URL requires DATABASE_URL and supabase_user authentication');
+  }
+  if (tenantContextEnabled && !data.AUTH_DATABASE_URL) {
+    throw new Error('Tenant context requires separate Auth database connection');
+  }
   if (authMode === 'dev_headers' && (data.NODE_ENV === 'production' || data.ERP_ENV !== 'dev')) {
     throw new Error('ERP_AUTH_MODE=dev_headers is forbidden outside development');
   }
@@ -73,6 +88,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     erpEnv: data.ERP_ENV,
     port: data.PORT,
     databaseUrl: data.DATABASE_URL,
+    authDatabaseUrl: data.AUTH_DATABASE_URL,
+    tenantContextEnabled,
     supabaseUrl: data.SUPABASE_URL,
     authMode,
     supabaseAnonKey: data.SUPABASE_ANON_KEY,
@@ -87,6 +104,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     appVersion: data.APP_VERSION,
     requireDatabase,
     isProduction: data.NODE_ENV === 'production',
+    crmHttpEnabled: boolFromEnv(data.ENABLE_CRM_HTTP, false),
+    produtoEmpresaEnabled:boolFromEnv(data.ENABLE_PRODUTO_EMPRESA,false),
   };
 }
 

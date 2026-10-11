@@ -363,10 +363,11 @@ export class TabelaPrecoService {
       unidadeMedidaId: string;
       businessDate?: string;
     },
+    executor?:DbQueryExecutor,
   ) {
     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId,executor);
     const parsed = z.object({
       clienteEmpresaId: z.string().uuid(),
       produtoId: z.string().uuid(),
@@ -377,7 +378,7 @@ export class TabelaPrecoService {
       }).optional(),
     }).strict().safeParse(input);
     if (!parsed.success) this.validationError(parsed.error.flatten());
-    return this.resolvePriceForClienteEmpresaLink(ctx, parsed.data);
+    return this.resolvePriceForClienteEmpresaLink(ctx, parsed.data,executor);
   }
 
   async resolveClientPrice(ctx: RequestContext, input: unknown) {
@@ -404,9 +405,10 @@ export class TabelaPrecoService {
       unidadeMedidaId: string;
       businessDate?: string;
     },
+    executor?:DbQueryExecutor,
   ) {
     const link = await this.clientes.getEmpresaLinkById(
-      { groupId: ctx.groupId, empresaId: ctx.empresaId }, data.clienteEmpresaId,
+      { groupId: ctx.groupId, empresaId: ctx.empresaId }, data.clienteEmpresaId,executor,
     );
     if (!link || !link.ativo) {
       throw new AppError(404, 'CLIENTE_EMPRESA_NOT_FOUND', 'ClienteEmpresa not found');
@@ -421,7 +423,7 @@ export class TabelaPrecoService {
       produtoId: data.produtoId,
       unidadeMedidaId: data.unidadeMedidaId,
       businessDate: data.businessDate ?? businessDateSaoPaulo(),
-    });
+    },executor);
   }
 
   async resolvePrice(

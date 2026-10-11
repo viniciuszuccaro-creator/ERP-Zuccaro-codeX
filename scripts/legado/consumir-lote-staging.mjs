@@ -335,9 +335,13 @@ export const persistirClienteGrupoLegado = async (ctx, mapped, options = {}) => 
   if (!['Pessoa Física', 'Pessoa Jurídica'].includes(tipo)) throw new Error('LEGACY_CLIENT_TYPE_REQUIRED');
   await rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', 'importar', { allowGlobalWildcard: false });
   const reuseExisting = async () => {
+    if (typeof service.findByLegacyIdentity !== 'function') throw new Error('LEGACY_CANONICAL_CONTRACT_REQUIRED');
+    const identity = await service.findByLegacyIdentity(ctx, sourceSystem, String(mapped.codigo_legado));
     const suggestion = await service.sugerirVinculo(ctx, { documento: mapped.documento });
-    if (!suggestion.sugestao) return null;
-    const existing = await service.get(ctx, suggestion.cliente_id);
+    if (!identity && !suggestion.sugestao) return null;
+    if (!identity || identity.ativo === false || identity.empresa_id != null
+      || !suggestion.sugestao || identity.id !== suggestion.cliente_id) throw new Error('LEGACY_RECONCILIATION_REQUIRED');
+    const existing = identity;
     if (existing.codigo_legado !== String(mapped.codigo_legado) || existing.source_system !== sourceSystem
       || existing.migration_batch !== batch || existing.tipo !== tipo
       || (existing.nome || existing.razao_social) !== mapped.nome
@@ -359,7 +363,7 @@ export const persistirClienteGrupoLegado = async (ctx, mapped, options = {}) => 
     return { registro, reutilizado: false, persistido: true };
   } catch (error) {
     // Resolve a concurrent unique-document winner by reading, never retrying a write.
-    if (error?.code !== 'DUPLICATE_DOCUMENT') throw error;
+    if (!['DUPLICATE_DOCUMENT','LEGACY_RECONCILIATION_REQUIRED'].includes(error?.code)) throw error;
     const winner = await reuseExisting();
     if (winner) return winner;
     // An inactive or otherwise invisible identity requires reconciliation, never restoration.

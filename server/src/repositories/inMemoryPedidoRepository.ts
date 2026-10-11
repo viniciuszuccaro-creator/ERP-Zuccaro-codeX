@@ -41,7 +41,7 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     return clone(row);
   }
 
-  async get(scope: PedidoScope, id: string, _executor?: DbQueryExecutor): Promise<Pedido | null> {
+  async get(scope: PedidoScope, id: string, _executor?: DbQueryExecutor, _lock=false): Promise<Pedido | null> {
     const row = this.rows.get(id);
     return row?.group_id === scope.groupId && row.empresa_id === scope.empresaId ? clone(row) : null;
   }

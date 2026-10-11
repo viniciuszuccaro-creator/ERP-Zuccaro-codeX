@@ -33,8 +33,8 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return totals;
   }
 
-  async get(scope: PedidoScope, id: string, executor: DbQueryExecutor = this.db): Promise<Pedido | null> {
-    const result = await executor.query<Row>(`${SELECT} WHERE p.id=$1 AND p.group_id=$2 AND p.empresa_id=$3`, [id, scope.groupId, scope.empresaId]);
+  async get(scope: PedidoScope, id: string, executor: DbQueryExecutor = this.db, lock=false): Promise<Pedido | null> {
+    const result = await executor.query<Row>(`${SELECT} WHERE p.id=$1 AND p.group_id=$2 AND p.empresa_id=$3${lock?' FOR UPDATE OF p':''}`, [id, scope.groupId, scope.empresaId]);
     return result.rows[0] ? map(result.rows[0]) : null;
   }
 

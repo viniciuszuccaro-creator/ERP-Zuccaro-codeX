@@ -1007,3 +1007,46 @@ Novos requisitos não devem ser perdidos em chats. Sempre que surgir melhoria:
 6. testar e registrar o resultado.
 
 Este documento é vivo, mas suas alterações também obedecem à Regra-Mãe, revisão e versionamento.
+
+
+## CODEX — pacote CRM HTTP 040 (2026-10-10)
+
+Workspace/branch próprios `comercial360-crm-http-20261010` / `codex/crm-http-canonico-20261010`.
+Base c125c4db, descendente da candidata Cursor #261; main conferida baba91a6 ainda sem #261.
+Numeração/ownership 040 reservados em6100290423; policy única extraída pelo Cursor em c125c4db,
+importada do domínio server e reexportada pelo wrapper frontend. UI/store/C360 permanecem intactos.
+Implementado: Oportunidade HTTP create/get/list/patch/inativar/restaurar, busca por ID legado,
+vínculo de Orçamento existente (sem documento paralelo), códigos via reserveEntityCodigo,
+idempotência, CAS/versionamento, histórico e auditoria no executor compartilhado.
+Campos existentes preservados: descrição, responsável textual (não identidade de autorização),
+previsão, próxima ação, interesse em produtos e orçamento informado pelo cliente. PATCH omitido/
+undefined não limpa campos; null explícito limpa somente campo autorizado. Decimais como strings.
+IDs legados e referências de Interacao/documentos não viram UUID fictício; legacy_store_id TEXT
+é único por Grupo/Empresa. Sem backfill/importação/dual-write ou corte automático.
+040: RLS/FORCE company-scoped, FKs compostas, sem grants PUBLIC. Grants das provas são fixtures,
+não homologação DEV. ENABLE_CRM_HTTP=false por padrão; habilitação/corte exigem revisão, CI,
+migration/grants/runtime homologados, backup/reconciliação/rollback e mapa de IDs/códigos.
+10 testes locais focados PASS (inclui PGlite com papel NOSUPERUSER/NOBYPASSRLS).
+Suite PostgreSQL real adicionada ao runner obrigatório com gate de banco isolado, sem skip flag;
+prova concorrência/retry/CAS/rollback de auditoria/RLS e Cliente→Orçamento server-priced→CRM.
+Migrations aplicadas/025–037/026 e branches Cursor não alterados. Nenhum deploy/VPS/canal neste lote.
+Revisão do HEAD final e CI ainda requeridas. Não declarar CRM/onda implantados por esta preparação.
+
+CRM 040 — evidencia de fechamento do runtime 0481e940: CI push3585/run38078234619 e
+PR3586/run38078299051 SUCCESS frontend/backend. Runner nativo PostgreSQL R40CRM:
+2 PASS/0 FAIL/0 SKIP, papel NOSUPERUSER/NOBYPASSRLS/NOLOGIN em schema isolado.
+Backend local completo 317 PASS/0 FAIL/18 skips existentes sem URL; R40 real nao
+adiciona skip e foi executado obrigatoriamente na CI. Evidencia sanitizada em
+`docs/evidence/crm-http-040-pg-ci-20261010.txt`. Codigo permanece desligado por
+padrao e sem cutover/deploy/migration operacional. Revisao final ainda requerida.
+### Codex — CRM → Pedido canônico (2026-10-10)
+Base #267 e3194fb1, branch codex/crm-pedido-integrado-20261010; coordenação de arquivos liberada por Cursor em6101860020. Reutiliza montagem/repositórios/serviços atuais, executor terceiro argumento e lock opcional quarto/default false. Sem UI/store/C360/policy paralela.
+Vínculo de Pedido existente valida ClienteEmpresa, estado ativo EM_ABERTO, tenant/RBAC/audit, CAS e replay. Avança CRM já vinculado a Orçamento somente se Pedido aponta exatamente ao mesmo Orçamento; Ganho manual não permite contornar fechamento. Mantém orçamento e referências legadas separadas; não cria/edita documento, preço, produção ou estoque no endpoint CRM.
+Migration040 continua candidata não aplicada; inclui legacy_pedido_id readonly HTTP. Nenhuma025–039 alterada, 026 permanece fail-closed. CI real R40 ampliada Cliente→Orçamento→Pedido pelos serviços atuais, preço snapshotado, replay concorrente e cancelamento sob lock; prova local SQL de auditoria/rollback/escopo. Fixture não homologa grants DEV.
+ENABLE_CRM_HTTP permanece OFF. Merge/deploy/importação/corte dependem de revisão/CI/backup/reconciliação/runtime e grants. Sem carga de dados reais ou ativação de canais neste lote.
+
+### Codex — Produto Grupo→Empresa→Orçamento/Pedido (migration041)
+Ownership e numeração liberados por Cursor6102648260. Branch codex/produtos-grupo-empresa-20261010, base de conteúdo2698d806/local5a4bc9b4 com árvore igual. Reutiliza ProdutoRepository/ProdutoService e facade backend existentes; nenhuma implementação paralela ou edição de UI/store/facades reservadas.
+041 cria apenas vínculo operacional explícito, com IDs/FKs Grupo+Empresa, RLS/FORCE, REVOKE PUBLIC, CAS/versionamento e auditoria. Sem backfill/default de habilitação. getById mantém filtro de empresa; getForOperation usa executor da venda, aceita mestre somente com vínculo ativo/habilitado e empresa Ativa, mantém locks compartilhados até commit. Produtos já pertencentes à empresa preservam comportamento anterior. Habilitação não modifica preço/estoque/master nem documentos gravados.
+API GET/PUT empresa-operacao exige contexto empresa/RBAC explícito, nega wildcard/campos de tenant fabricados e valida payload. Flags ENABLE_PRODUTO_EMPRESA/CRM seguem OFF por default; dados apenas sintéticos. 326 backend PASS/0FAIL/18DB skips preexistentes sem URL; typecheck/build/lint/audit PASS. R41 preparado no runner PG obrigatório (execução CI pendente) para provar fluxo pelos serviços Cliente→Orçamento→Pedido, preço servidor/snapshot, replay, isolamento no papel sem bypass e revogação concorrente aguardando commit da venda.
+Nenhuma001–040 alterada, 025–037/026 preservadas; 041 candidata não aplicada. Sem deploy/importação/ativação/canais/grants DEV. Gates/revisão/CI/backup/rollback/reconciliação operacionais ainda exigidos. Leitura inicial do console confirmou somente containers esperados; isso não equivale a identidade completa/homologação do banco.

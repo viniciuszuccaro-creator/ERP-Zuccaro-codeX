@@ -1,11 +1,14 @@
 import { createApp } from './app.js';
 import { loadConfig } from './config/env.js';
-import { createDbClient } from './db/client.js';
+import { createRuntimeDbClients } from './db/client.js';
 
 async function main() {
   const config = loadConfig();
-  const db = createDbClient(config);
-  const { app } = createApp({ config, db });
+  const clients = await createRuntimeDbClients(config);
+  const { db, authDb } = clients;
+  let app: ReturnType<typeof createApp>['app'];
+  try { app = createApp({ config, db, authDb, tenantContextEnabled: config.tenantContextEnabled }).app; }
+  catch (error) { await clients.end(); throw error; }
 
   const server = app.listen(config.port, () => {
     console.log(JSON.stringify({
@@ -20,7 +23,7 @@ async function main() {
   const shutdown = async (signal: string) => {
     console.log(JSON.stringify({ msg: 'shutdown', signal }));
     server.close(async () => {
-      await db.end();
+      await clients.end();
       process.exit(0);
     });
   };

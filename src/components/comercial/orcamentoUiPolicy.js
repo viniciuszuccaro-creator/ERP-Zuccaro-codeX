@@ -1,5 +1,35 @@
 const MICROS = 1_000_000n;
 
+export function sameOrcamentoScope(opened, rendered, active) {
+  return Boolean(opened?.groupId && opened?.empresaId && opened?.actorId
+    && [rendered, active].every((scope) => scope
+      && scope.groupId === opened.groupId
+      && scope.empresaId === opened.empresaId
+      && scope.actorId === opened.actorId));
+}
+
+/** Trava síncrona: um clique repetido não envia uma segunda mutação. */
+export function createOrcamentoActionGate() {
+  let pending = null;
+  let sequence = 0;
+  return {
+    begin(opened, rendered, active) {
+      if (pending || !sameOrcamentoScope(opened, rendered, active)) return null;
+      pending = { id: ++sequence, scope: opened };
+      return pending;
+    },
+    isCurrent(ticket, rendered, active) {
+      return pending === ticket && sameOrcamentoScope(ticket?.scope, rendered, active);
+    },
+    end(ticket) {
+      if (pending !== ticket) return false;
+      pending = null;
+      return true;
+    },
+    invalidate() { pending = null; },
+  };
+}
+
 export function decimalToMicros(value) {
   const text = String(value ?? '0').trim();
   if (!/^\d+(\.\d{0,6})?$/.test(text)) throw new Error('Valor decimal inválido.');

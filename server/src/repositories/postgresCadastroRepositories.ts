@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient,DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import type {
   GrupoProduto, GrupoProdutoCreate, GrupoProdutoUpdate,
@@ -33,7 +33,7 @@ async function listSimple<T>(
 }
 
 async function getSimple<T>(
-  db: DbClient, table: string, scope: Scope, id: string, mapRow: (row: Record<string, unknown>) => T,
+  db: DbQueryExecutor, table: string, scope: Scope, id: string, mapRow: (row: Record<string, unknown>) => T,
 ): Promise<T | null> {
   const params: unknown[] = [scope.groupId, id];
   let sql = `SELECT * FROM ${table} WHERE group_id = $1 AND id = $2`;
@@ -87,7 +87,7 @@ function mapSetor(row: Record<string, unknown>): SetorAtividade {
 export class PostgresUnidadeRepository implements TenantEntityRepository<UnidadeMedida, UnidadeCreate, UnidadeUpdate> {
   constructor(private readonly db: DbClient) {}
   list(f: Scope & ListOptions) { return listSimple(this.db, 'unidades_medida', f, "lower(sigla || ' ' || nome_completo || ' ' || coalesce(codigo,''))", mapUnidade); }
-  getById(s: Scope, id: string) { return getSimple(this.db, 'unidades_medida', s, id, mapUnidade); }
+  getById(s: Scope, id: string,executor?:DbQueryExecutor) { return getSimple(executor??this.db, 'unidades_medida', s, id, mapUnidade); }
   async create(scope: Scope, data: UnidadeCreate & { codigo?: string | null }) {
     const codigo = await reserveEntityCodigo({
       db: this.db,
@@ -131,7 +131,7 @@ export class PostgresUnidadeRepository implements TenantEntityRepository<Unidade
 export class PostgresGrupoProdutoRepository implements TenantEntityRepository<GrupoProduto, GrupoProdutoCreate, GrupoProdutoUpdate> {
   constructor(private readonly db: DbClient) {}
   list(f: Scope & ListOptions) { return listSimple(this.db, 'grupos_produto', f, "lower(nome_grupo || ' ' || coalesce(codigo,''))", mapGrupo); }
-  getById(s: Scope, id: string) { return getSimple(this.db, 'grupos_produto', s, id, mapGrupo); }
+  getById(s: Scope, id: string,executor?:DbQueryExecutor) { return getSimple(executor??this.db, 'grupos_produto', s, id, mapGrupo); }
   async create(scope: Scope, data: GrupoProdutoCreate) {
     const codigo = await reserveEntityCodigo({
       db: this.db,
@@ -172,7 +172,7 @@ export class PostgresGrupoProdutoRepository implements TenantEntityRepository<Gr
 export class PostgresSetorRepository implements TenantEntityRepository<SetorAtividade, SetorCreate, SetorUpdate> {
   constructor(private readonly db: DbClient) {}
   list(f: Scope & ListOptions) { return listSimple(this.db, 'setores_atividade', f, "lower(nome || ' ' || coalesce(descricao,'') || ' ' || coalesce(codigo,''))", mapSetor); }
-  getById(s: Scope, id: string) { return getSimple(this.db, 'setores_atividade', s, id, mapSetor); }
+  getById(s: Scope, id: string,executor?:DbQueryExecutor) { return getSimple(executor??this.db, 'setores_atividade', s, id, mapSetor); }
   async create(scope: Scope, data: SetorCreate) {
     const codigo = await reserveEntityCodigo({
       db: this.db,

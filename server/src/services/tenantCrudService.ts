@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type {DbQueryExecutor} from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
@@ -14,7 +15,7 @@ export type Scope = { groupId: string; empresaId?: string | null };
 
 export interface TenantEntityRepository<TRow, TCreate, TUpdate> {
   list(filter: Scope & ListOptions): Promise<TRow[]>;
-  getById(scope: Scope, id: string): Promise<TRow | null>;
+  getById(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<TRow | null>;
   create(scope: Scope, data: TCreate): Promise<TRow>;
   update(scope: Scope, id: string, data: TUpdate): Promise<TRow | null>;
   softDelete(scope: Scope, id: string): Promise<TRow | null>;

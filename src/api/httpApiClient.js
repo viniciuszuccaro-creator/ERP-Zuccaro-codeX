@@ -314,6 +314,16 @@ export function createHttpApiClient(options = {}) {
       return {
         ...base,
         variantes: relationRoutes('variantes'),
+        empresaOperacao: {
+          /** @param {string} produtoId @param {{signal?:AbortSignal}} [options] */
+          get(produtoId,{signal}={}) {
+            return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/empresa-operacao`,{signal});
+          },
+          /** @param {string} produtoId @param {{ativo:boolean,habilitado_operacao:boolean,expected_version:number}} payload @param {{signal?:AbortSignal}} [options] */
+          update(produtoId,payload,{signal}={}) {
+            return request(`/api/v1/produtos/${encodeURIComponent(produtoId)}/empresa-operacao`,{method:'PUT',body:payload,signal});
+          },
+        },
         subscribe(listener) {
           listeners.add(listener);
           return () => listeners.delete(listener);

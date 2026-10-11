@@ -43,6 +43,7 @@ export type PedidoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
+    executor?:DbQueryExecutor,
   ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
 };
 
@@ -60,7 +61,7 @@ export class PedidoService {
     private readonly tenantGuard: TenantGuard,
     private readonly rbac: RbacGuard,
     private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById'>,
-    private readonly produtos: Pick<ProdutoRepository, 'getById'>,
+    private readonly produtos: Pick<ProdutoRepository, 'getById'> & Partial<Pick<ProdutoRepository,'getForOperation'>>,
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
     private readonly locais: Pick<ClienteLocalRepository, 'get'>,
@@ -78,8 +79,9 @@ export class PedidoService {
     const data = this.parse(payload);
     if (data.orcamento_id) throw new AppError(422, 'PEDIDO_ORIGEM_INVALIDA', 'Use quotation conversion endpoint');
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       await this.validateReferences(scope, data, executor);
-      const priced = await this.applyServerPriceSnapshots(ctx, data);
+      const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
@@ -97,6 +99,7 @@ export class PedidoService {
     if (!parsed.success) this.validation(parsed.error.flatten());
     try {
       return await this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
         if (await this.repo.getByOrcamento(scope, orcamentoId, executor)) this.convertedConflict();
         const quote = await this.orcamentos.get(scope, orcamentoId, executor);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
@@ -175,12 +178,13 @@ export class PedidoService {
   async update(ctx: RequestContext, id: string, payload: unknown) {
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       const before = await this.requirePedido(scope, id, executor);
       if (before.status !== 'EM_ABERTO') this.stateConflict();
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
-      const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data);
+      const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data,executor);
       const criador = await this.resolveCriadorActorId('Pedido', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
@@ -213,6 +217,7 @@ export class PedidoService {
     if (typeof target !== 'string' || !PEDIDO_STATUS.includes(target as PedidoStatus) || target === 'CANCELADO') this.validation({ status: 'invalid' });
     if (motivo !== undefined && (typeof motivo !== 'string' || motivo.length > 500)) this.validation({ motivo: 'invalid' });
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       const before = await this.requirePedido(scope, id, executor);
       if (!this.allowedTransition(before, target as PedidoStatus)) this.stateConflict();
       const after = await this.repo.changeStatus(scope, id, target as PedidoStatus, ctx.actorId!, motivo as string | undefined, executor);
@@ -226,6 +231,7 @@ export class PedidoService {
     const scope = await this.prepare(ctx, 'cancelar'); this.assertId(id, 'pedidoId');
     if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) this.validation({ motivo: 'invalid' });
     return this.repo.withTransaction(async (executor) => {
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       const before = await this.requirePedido(scope, id, executor);
       if (before.status !== 'EM_ABERTO') this.stateConflict();
       const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor);
@@ -245,7 +251,7 @@ export class PedidoService {
 
   private parse(payload: unknown) { const parsed = pedidoCreateSchema.safeParse(payload); if (!parsed.success) this.validation(parsed.error.flatten()); return parsed.data; }
 
-  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate): Promise<PedidoCreate> {
+  private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate,executor?:DbQueryExecutor): Promise<PedidoCreate> {
     const itens = [];
     let tabelaId: string | null | undefined = data.tabela_preco_id;
     for (const item of data.itens) {
@@ -253,7 +259,7 @@ export class PedidoService {
         clienteEmpresaId: data.cliente_empresa_id,
         produtoId: item.produto_id,
         unidadeMedidaId: item.unidade_id,
-      });
+      },executor);
       if (!resolved?.preco) {
         throw new AppError(422, 'PEDIDO_PRECO_INDISPONIVEL', 'Price unavailable for product/unit in authorized table', {
           produto_id: item.produto_id,
@@ -279,9 +285,9 @@ export class PedidoService {
     if (data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
     if (!(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
     for (const item of data.itens) {
-      const product = await this.produtos.getById(scope, item.produto_id);
+      const product = this.produtos.getForOperation?await this.produtos.getForOperation(scope,item.produto_id,executor):await this.produtos.getById(scope,item.produto_id,executor);
       if (!product?.ativo) throw new AppError(422, 'PEDIDO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');
-      if (product.unidade_medida_id !== item.unidade_id || !(await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id))?.ativo) throw new AppError(422, 'PEDIDO_UNIDADE_INVALIDA', 'Unidade unavailable for product');
+      if (product.unidade_medida_id !== item.unidade_id || !(await this.unidades.getById({ groupId: scope.groupId }, item.unidade_id,executor))?.ativo) throw new AppError(422, 'PEDIDO_UNIDADE_INVALIDA', 'Unidade unavailable for product');
     }
   }
 

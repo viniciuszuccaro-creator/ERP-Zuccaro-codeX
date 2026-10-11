@@ -1,16 +1,16 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient,DbQueryExecutor } from '../db/client.js';
 import { AppError } from '../api/errors.js';
 
 export interface TenantGuard {
-  assertEmpresaInGroup(groupId: string, empresaId?: string | null): Promise<void>;
+  assertEmpresaInGroup(groupId: string, empresaId?: string | null,executor?:DbQueryExecutor): Promise<void>;
 }
 
 export class PostgresTenantGuard implements TenantGuard {
   constructor(private readonly db: DbClient) {}
 
-  async assertEmpresaInGroup(groupId: string, empresaId?: string | null): Promise<void> {
+  async assertEmpresaInGroup(groupId: string, empresaId?: string | null,executor?:DbQueryExecutor): Promise<void> {
     if (!empresaId) return;
-    const result = await this.db.query(
+    const result = await (executor??this.db).query(
       'SELECT 1 AS ok FROM empresas WHERE id = $1 AND group_id = $2 LIMIT 1',
       [empresaId, groupId],
     );
@@ -32,7 +32,7 @@ export class InMemoryTenantGuard implements TenantGuard {
     this.empresaToGroup.set(empresaId, groupId);
   }
 
-  async assertEmpresaInGroup(groupId: string, empresaId?: string | null): Promise<void> {
+  async assertEmpresaInGroup(groupId: string, empresaId?: string | null,executor?:DbQueryExecutor): Promise<void> {
     if (!empresaId) return;
     const owner = this.empresaToGroup.get(empresaId);
     if (owner !== groupId) {
