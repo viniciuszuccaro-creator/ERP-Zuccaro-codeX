@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #297 consumidor conversão CRM (2026-10-11T23:30Z)
+
+| Item | Valor |
+|---|---|
+| #297 | tip `1be96223` · Central/modal consome conversão atômica · **sem porte** |
+| motivo | toca `CentralCliente360Panel.jsx` (reservado/divergente) + CRM Codex |
+| stack | #297→#296→#295→…→#292 |
+| CI | FE SUCCESS · BE pending |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #296 CRM conversão atômica (2026-10-11T22:45Z)
 
 | Item | Estado |
