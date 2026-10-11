@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-11T15:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`87ba8ee4`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#291 | tips inalterados · **sem porte** |
+| #292 | tip **`5b7dc32a`** (+teste late HTTP cross-session) · CI SUCCESS · **sem porte** |
+| risco | painel C360 ainda divergente #261 vs #291/#292 — sem porte / sem edição paralela |
+| RUNNING | nenhum |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T14:45Z
 
 | Item | Valor |
