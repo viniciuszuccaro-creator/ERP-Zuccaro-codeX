@@ -4,6 +4,55 @@ import {inspectCrmPreflight} from '../src/db/crmPreflight.ts';
 import {localCrmFixture,ROLE} from './helpers/crmFixture.ts';
 import {spawnSync} from 'node:child_process';
 
+test('CRM/Pedido persistence gate is opt-in, read-only and refuses missing grants/RLS/public ACL',async()=>{
+ const f=await localCrmFixture();try {
+  const expected=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const inspect=()=>f.data.withTransaction(tx=>inspectCrmPreflight({query:async(sql,params)=>{
+   assert.match(sql.trim(),/^SELECT\b/i);return tx.query(sql,params);
+  }},{...expected,requirePedidoPersistence:true}));
+  assert.equal((await f.data.withTransaction(tx=>inspectCrmPreflight(tx,expected))).ready,true);
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceGrants'));
+  await f.exec(`GRANT INSERT ON pedidos,pedido_itens,pedido_historico TO ${ROLE}`);
+  assert.ok((await inspect()).blocked.includes('pedidoPersistencePolicies'));
+  await f.exec(`CREATE POLICY crm_persistence_history_fixture ON pedido_historico FOR INSERT TO ${ROLE}
+   WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid
+    AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)`);
+  assert.equal((await inspect()).ready,true); // No SELECT/UPDATE/DELETE on append-only history required.
+  await f.exec('ALTER POLICY crm_persistence_history_fixture ON pedido_historico TO CURRENT_USER');
+  assert.ok((await inspect()).blocked.includes('pedidoPersistencePolicies'));
+  await f.exec(`ALTER POLICY crm_persistence_history_fixture ON pedido_historico TO ${ROLE}`);
+  await f.exec(`REVOKE INSERT ON audit_logs FROM ${ROLE}`);
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceGrants'));
+  await f.exec(`GRANT INSERT ON audit_logs TO ${ROLE}`);
+  await f.exec(`REVOKE UPDATE(updated_at) ON orcamentos FROM ${ROLE}`);
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceGrants'));
+  await f.exec(`GRANT UPDATE(updated_at) ON orcamentos TO ${ROLE}`);
+  await f.exec('ALTER TABLE pedido_historico NO FORCE ROW LEVEL SECURITY');
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceRls'));
+  await f.exec('ALTER TABLE pedido_historico FORCE ROW LEVEL SECURITY');
+  await f.exec('GRANT UPDATE(motivo) ON pedido_historico TO PUBLIC');
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceNoPublicDml'));
+  await f.exec('REVOKE UPDATE(motivo) ON pedido_historico FROM PUBLIC');
+  assert.equal((await inspect()).ready,true);
+  await assert.rejects(inspectCrmPreflight(f.admin,{...expected,requirePedidoPersistence:'true' as any}),/PEDIDO_GATE_INVALID/);
+  await assert.rejects(inspectCrmPreflight(f.admin,{...expected,stage:'before_migration',requirePedidoPersistence:true}),/PEDIDO_STAGE_INVALID/);
+  await f.exec('ALTER TABLE pedido_historico RENAME TO pedido_historico_fixture_hidden');
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceTables'));
+  await f.exec('CREATE VIEW pedido_historico AS SELECT 1 AS placeholder');
+  assert.ok((await inspect()).blocked.includes('pedidoPersistenceTables'));
+ }finally{await f.close();}
+});
+
+test('CRM/Pedido CLI rejects ambiguous configuration before any connection',()=>{
+ for(const [flag,stage] of [['yes','after_migration'],['true','before_migration']]) {
+  const result=spawnSync(process.execPath,['--import','tsx','scripts/crmPreflight.ts'],{encoding:'utf8',cwd:new URL('../',import.meta.url),
+   env:{...process.env,CRM_EXPECTED_DATABASE:'synthetic',CRM_EXPECTED_SCHEMA:'public',CRM_PREFLIGHT_STAGE:stage,
+    CRM_PREFLIGHT_PEDIDO_PERSISTENCE:flag,DATABASE_URL:'postgresql://must-not-connect:private@example.invalid/forbidden'}});
+  assert.equal(result.status,2);assert.equal(result.stderr,'');
+  assert.deepEqual(JSON.parse(result.stdout),{ready:false,blocked:['invalidPedidoPersistenceGate'],activationAuthorized:false});
+ }
+});
+
 test('CRM preflight covers sequence isolation and PUBLIC table/column privileges',async()=>{
  const f=await localCrmFixture();try {
   const expected=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
