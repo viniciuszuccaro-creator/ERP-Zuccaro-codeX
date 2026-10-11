@@ -1,3 +1,12 @@
+## REVISÃO CODEX — timer 2026-10-11T13:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`b7f9850a`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#284 | tips inalterados vs 13:00Z · CI SUCCESS · **sem porte** |
+| RUNNING | nenhum |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T13:00Z
 
 | Item | Valor |
