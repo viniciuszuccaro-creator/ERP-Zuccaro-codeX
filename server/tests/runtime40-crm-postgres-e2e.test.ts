@@ -32,6 +32,14 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
   try{
     const preflight=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
     assert.equal(preflight.ready,true);assert.deepEqual(preflight.blocked,[]);
+    const inspectSequence=()=>f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
+    await f.exec('ALTER TABLE entity_code_sequences NO FORCE ROW LEVEL SECURITY');
+    assert.ok((await inspectSequence()).blocked.includes('sequenceRls'));
+    await f.exec('ALTER TABLE entity_code_sequences FORCE ROW LEVEL SECURITY');
+    await f.exec('GRANT UPDATE(next_value) ON entity_code_sequences TO PUBLIC');
+    assert.ok((await inspectSequence()).blocked.includes('noPublicDml'));
+    await f.exec('REVOKE UPDATE(next_value) ON entity_code_sequences FROM PUBLIC');
+    assert.equal((await inspectSequence()).ready,true);
     const inspectAcl=()=>f.data.withTransaction(tx=>inspectCrmPreflight(tx,{database:new URL(process.env.DATABASE_URL!).pathname.slice(1),schema:f.schema}));
     await f.exec('GRANT SELECT(codigo),UPDATE(status) ON oportunidades TO PUBLIC');
     assert.ok((await inspectAcl()).blocked.includes('noPublicDml'));

@@ -4,6 +4,24 @@ import {inspectCrmPreflight} from '../src/db/crmPreflight.ts';
 import {localCrmFixture,ROLE} from './helpers/crmFixture.ts';
 import {spawnSync} from 'node:child_process';
 
+test('CRM preflight covers sequence isolation and PUBLIC table/column privileges',async()=>{
+ const f=await localCrmFixture();try {
+  const expected=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const inspect=()=>f.data.withTransaction(tx=>inspectCrmPreflight(tx,expected));
+  assert.equal((await inspect()).ready,true);
+  await f.exec('ALTER TABLE entity_code_sequences NO FORCE ROW LEVEL SECURITY');
+  assert.ok((await inspect()).blocked.includes('sequenceRls'));
+  await f.exec('ALTER TABLE entity_code_sequences FORCE ROW LEVEL SECURITY');
+  await f.exec('GRANT SELECT ON entity_code_sequences TO PUBLIC');
+  assert.ok((await inspect()).blocked.includes('noPublicDml'));
+  await f.exec('REVOKE SELECT ON entity_code_sequences FROM PUBLIC');
+  await f.exec('GRANT UPDATE(next_value) ON entity_code_sequences TO PUBLIC');
+  assert.ok((await inspect()).blocked.includes('noPublicDml'));
+  await f.exec('REVOKE UPDATE(next_value) ON entity_code_sequences FROM PUBLIC');
+  assert.equal((await inspect()).ready,true);
+ }finally{await f.close();}
+});
+
 test('CRM preflight never accepts absent or ambiguous effective-role flags',async()=>{
  for(const flags of [{},{rolsuper:null,rolbypassrls:null},{rolsuper:false},{rolsuper:0,rolbypassrls:0}]) {
   const db:any={query:async(sql:string)=>({rows:sql.includes('current_database()')
