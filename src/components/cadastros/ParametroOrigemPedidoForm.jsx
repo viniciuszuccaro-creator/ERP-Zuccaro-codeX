@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Save, X, Settings, Zap } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
@@ -98,6 +99,13 @@ export default function ParametroOrigemPedidoForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <CadastroCodigoRegistroField
+              idOnly
+              hasId={Boolean(parametro?.id)}
+              entityId={parametro?.id}
+              action="id-tecnico-parametro-origem-pedido"
+            />
+
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

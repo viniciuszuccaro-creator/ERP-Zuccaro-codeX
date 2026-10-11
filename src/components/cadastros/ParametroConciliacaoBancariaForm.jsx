@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Landmark, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -59,6 +60,13 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <CadastroCodigoRegistroField
+              idOnly
+              hasId={Boolean(parametro?.id)}
+              entityId={parametro?.id}
+              action="id-tecnico-parametro-conciliacao-bancaria"
+            />
+
             <div>
               <Label>Tipo de Lançamento</Label>
               <Select value={formData.tipo_lancamento} onValueChange={(val) => setFormData({ ...formData, tipo_lancamento: val })} disabled={!podeSalvar}>

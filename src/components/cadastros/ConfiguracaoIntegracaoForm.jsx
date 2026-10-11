@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link2, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeSecret = (value) => String(value ?? "").replace(/[<>]/g, "").slice(0, 1200).trim();
@@ -84,6 +85,13 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <CadastroCodigoRegistroField
+            idOnly
+            hasId={Boolean(dadosIniciais?.id)}
+            entityId={dadosIniciais?.id}
+            action="id-tecnico-configuracao-integracao"
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Marketplace *</Label>

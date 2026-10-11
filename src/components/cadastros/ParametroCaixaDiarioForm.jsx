@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -58,6 +59,13 @@ export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <CadastroCodigoRegistroField
+              idOnly
+              hasId={Boolean(parametro?.id)}
+              entityId={parametro?.id}
+              action="id-tecnico-parametro-caixa-diario"
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm">Exigir Abertura Caixa</Label>
