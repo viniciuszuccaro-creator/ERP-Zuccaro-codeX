@@ -22,6 +22,7 @@ Contratos: chrome/CTA azul (valores/KPI receita permanecem emerald semântico).
 Sistema AdminHeader: ícone azul (badge empresa emerald preservado = contexto ≠ grupo).
 Cadastros: blocos multi-cor aprovados (#257) — não forçar tudo azul.
 **Preservado:** Financeiro CR green ≠ Régua violet; EmpresaSwitcher grupo azul/empresa roxo; CTAs/funcionalidades posteriores (#261 HTTP, codigo, Pedido Onda 5).
+**Residual 2026-10-11:** Estoque CTA transferência · Empresas KPI Filiais · Dashboard conversão/quick Comercial · Relatórios tab Estoque + cards · WidgetFechamento CTA — chrome→azul; Cadastros multi-cor e Financeiro purple intocados.
 
 ## #254 / #264 tip integrado (pacote)
 | item | SHA |

@@ -1,3 +1,12 @@
+## CURSOR — azul residual chrome (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **escopo** | Estoque CTA · Empresas Filiais · Dashboard conversão/quick · Relatórios Estoque · WidgetFechamento |
+| **preservado** | Cadastros multi-cor · Financeiro purple · status green/orange/red |
+| tip | após push · runtime ainda **`32558d23`** até CI/redeploy |
+| próxima | CI → redeploy · secret restrito · merge owner |
+
 ## CURSOR — tip 32558d23 implantado+homologado (C360 nav) (2026-10-11)
 
 | Item | Estado |

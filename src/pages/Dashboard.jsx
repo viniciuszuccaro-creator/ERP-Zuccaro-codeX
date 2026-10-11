@@ -782,7 +782,7 @@ export default function Dashboard() {
       title: "Comercial e Vendas",
       description: "Gestão de Clientes e Vendas",
       icon: ShoppingCart,
-      color: "from-purple-500 to-purple-600",
+      color: "from-blue-500 to-blue-600",
       url: createPageUrl("Comercial"),
       permission: "Comercial.visualizar",
       count: pedidosPeriodo.length
