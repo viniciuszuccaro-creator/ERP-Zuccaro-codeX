@@ -2,12 +2,13 @@
 
 | Item | Estado |
 |---|---|
-| escopo | Blocos→adapters (Rep/FormaPag/Tabela) · EmpresaForm fiscal+webhooks+upload cert |
+| tip | **`106d4805`** (c8d46058 fiscal/Blocos + consumidores V24/Tab/Gestor/Ações) |
+| escopo | adapters canônicos · EmpresaForm fiscal+webhooks+cert · revisão Codex |
 | testes | `cadastros-codigo-cobertura` · `cadastros-empresa-edicao*` pass |
 | #280 | tip **`612c2055`** — **sem porte** |
 | #281/#282 | Legado — **monitorar** sem porte |
 | tip runtime | **`91945247`** até CI tip → redeploy |
-| Completo Empresa | keep (status/delete/IA) até adapter final |
+| Completo Empresa | adapter → EmpresaForm (+ status/delete no canônico; helpers em empresaFormShared) |
 | BLOCKED | secret restrito |
 | próxima | CI tip → redeploy → homolog · secret · merge owner |
 

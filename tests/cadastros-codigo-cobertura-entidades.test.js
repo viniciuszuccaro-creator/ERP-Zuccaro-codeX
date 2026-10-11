@@ -95,9 +95,10 @@ test('Empresa, Grupo, CentroOperacao e TabelaPreco expõem ID técnico; grades s
   const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
   const bloco5 = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
   const viz = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  assert.match(empresaCompleto, /EmpresaForm/);
+  assert.match(empresaCompleto, /Adapter legado/);
   for (const [src, action] of [
     [empresa, 'id-tecnico-empresa'],
-    [empresaCompleto, 'id-tecnico-empresa'],
     [grupo, 'id-tecnico-grupo-empresarial'],
     [centro, 'id-tecnico-centro-operacao'],
     [tabela, 'id-tecnico-tabela-preco'],
@@ -106,6 +107,7 @@ test('Empresa, Grupo, CentroOperacao e TabelaPreco expõem ID técnico; grades s
     assert.match(src, /idOnly/);
     assert.match(src, new RegExp(action));
   }
+  assert.match(empresa, /id-tecnico-empresa/);
   assert.match(bloco5, /k:\s*'Empresa'[\s\S]{0,220}\bid\b/);
   assert.match(bloco5, /k:\s*'GrupoEmpresarial'[\s\S]{0,220}\bid\b/);
   assert.doesNotMatch(bloco5, /k:\s*'Empresa'[\s\S]{0,120}\bcodigo\b/);

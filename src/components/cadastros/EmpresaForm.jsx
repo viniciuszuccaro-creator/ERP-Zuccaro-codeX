@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
-import { Loader2, Building2, AlertTriangle, Upload } from "lucide-react";
+import { Loader2, Building2, AlertTriangle, Upload, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
@@ -14,80 +14,14 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import BuscaCEP from "@/components/comercial/BuscaCEP";
-
-const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
-const sanitizeDocument = (value, max = 32) => String(value ?? "").replace(/[^0-9A-Za-z.\-/]/g, "").slice(0, max).trim();
-const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
-const sanitizeUrl = (value, max = 500) => String(value ?? "").replace(/[<>"']/g, "").slice(0, max).trim();
-const toInteger = (value, fallback = 0) => Number.isFinite(Number(value)) ? parseInt(value, 10) : fallback;
-const sanitizeEndereco = (endereco = {}) => ({
-  logradouro: sanitizeText(endereco.logradouro, 180),
-  numero: sanitizeCode(endereco.numero, 30),
-  complemento: sanitizeText(endereco.complemento, 120),
-  bairro: sanitizeText(endereco.bairro, 120),
-  cidade: sanitizeText(endereco.cidade, 120),
-  estado: sanitizeCode(endereco.estado, 2),
-  cep: sanitizeCode(endereco.cep, 12),
-});
-
-const EMPRESA_FORM_DEFAULTS = Object.freeze({
-  razao_social: "",
-  nome_fantasia: "",
-  cnpj: "",
-  inscricao_estadual: "",
-  regime_tributario: "Simples Nacional",
-  tipo: "Matriz",
-  status: "Ativa",
-  endereco: Object.freeze({
-    logradouro: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-    cep: "",
-  }),
-  certificado_digital: Object.freeze({
-    tipo: "A1",
-    arquivo_certificado: "",
-    senha_certificado: "",
-    data_validade: "",
-  }),
-  configuracao_fiscal: Object.freeze({
-    ambiente_nfe: "Homologacao",
-    serie_nfe: "1",
-    proximo_numero_nfe: 1,
-    autoriza_emissao_producao: false,
-  }),
-  urls_webhook_padrao: Object.freeze({
-    pagamento_recebido: "",
-    nfe_emitida: "",
-  }),
-});
-
-function mergeEmpresaFormData(partial) {
-  const src = partial && typeof partial === "object" ? partial : {};
-  return {
-    ...EMPRESA_FORM_DEFAULTS,
-    ...src,
-    endereco: {
-      ...EMPRESA_FORM_DEFAULTS.endereco,
-      ...(src.endereco && typeof src.endereco === "object" ? src.endereco : {}),
-    },
-    certificado_digital: {
-      ...EMPRESA_FORM_DEFAULTS.certificado_digital,
-      ...(src.certificado_digital && typeof src.certificado_digital === "object" ? src.certificado_digital : {}),
-    },
-    configuracao_fiscal: {
-      ...EMPRESA_FORM_DEFAULTS.configuracao_fiscal,
-      ...(src.configuracao_fiscal && typeof src.configuracao_fiscal === "object" ? src.configuracao_fiscal : {}),
-    },
-    urls_webhook_padrao: {
-      ...EMPRESA_FORM_DEFAULTS.urls_webhook_padrao,
-      ...(src.urls_webhook_padrao && typeof src.urls_webhook_padrao === "object" ? src.urls_webhook_padrao : {}),
-    },
-  };
-}
+import {
+  mergeEmpresaFormData,
+  sanitizeDocument,
+  sanitizeEndereco,
+  sanitizeText,
+  sanitizeUrl,
+  toInteger,
+} from "@/components/cadastros/empresaFormShared";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -106,13 +40,14 @@ export default function EmpresaForm({
   isLoadingRecord = false,
 }) {
   const dadosIniciais = item || data || initialData || defaultValues || empresa;
-  const { canCreate, canEdit, hasPermission, hasPermissionKey } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission, hasPermissionKey } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
-  const permCheckers = { hasPermission, canCreate, canEdit };
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete };
   const podeCriar = hasCadastroEntityPermission("Empresa", "criar", permCheckers);
   const podeEditar = hasCadastroEntityPermission("Empresa", "editar", permCheckers);
+  const podeExcluir = hasCadastroEntityPermission("Empresa", "excluir", permCheckers);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const permissaoFormulario = dadosIniciais?.id
     ? "Cadastros.Organizacional.editar"
@@ -559,6 +494,40 @@ export default function EmpresaForm({
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
+        {dadosIniciais?.id && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!podeEditar || saveBlocked || !contextoValido}
+              data-permission={permissaoFormulario}
+              data-action="alternar-status-empresa"
+              data-sensitive
+              className={formData.status === "Ativa" ? "border-orange-300 text-orange-700" : "border-green-300 text-green-700"}
+              onClick={() => setFormData({ ...formData, status: formData.status === "Ativa" ? "Inativa" : "Ativa" })}
+            >
+              {formData.status === "Ativa" ? <><PowerOff className="w-4 h-4 mr-2" />Inativar</> : <><Power className="w-4 h-4 mr-2" />Ativar</>}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!podeExcluir || saveBlocked || !contextoValido}
+              data-permission="Cadastros.Organizacional.excluir"
+              data-action="excluir-empresa"
+              data-sensitive
+              onClick={() => {
+                if (!podeExcluir) {
+                  toast.error("Seu perfil nao permite excluir empresas.");
+                  return;
+                }
+                if (!window.confirm(`Excluir a empresa "${formData.razao_social}"?`)) return;
+                onSubmit({ ...buildPayload(), _action: "delete" });
+              }}
+            >
+              Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting || !podeSalvar || saveBlocked} data-permission={permissaoFormulario} data-action="salvar-empresa" data-sensitive>
           {(isSubmitting || isLoadingRecord) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais?.id ? "Atualizar" : "Criar Empresa"}

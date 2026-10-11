@@ -3,10 +3,10 @@
 | Item | Valor |
 |---|---|
 | branch | #261 |
-| tip | **`c8d46058`** (+ consumidores adapters em curso) |
-| escopo | Bloco1/2/3 → adapters · RepresentanteForm adapter · EmpresaForm fiscal/webhooks/cert · V24/Tab/Gestor/Ações→adapters |
-| preservação | loadIncomplete · certificado granular · tenant #228 · Completo keep (status/delete/IA) |
-| #280 | tip **`612c2055`** — **sem porte** Marca (list/get mutate, FOR UPDATE, filtro escopo) |
+| tip | **`106d4805`** + Completo→adapter em curso |
+| escopo | adapters Bloco/V24/Tab/Gestor · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
+| preservação | loadIncomplete · certificado granular · tenant #228 |
+| #280 | tip **`612c2055`** — **sem porte** Marca |
 | #281/#282 | Legado tip `2e8ef5bd` / `a0979808` — **monitorar** sem porte |
 | tip runtime | ainda **`91945247`** até CI tip → redeploy |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
