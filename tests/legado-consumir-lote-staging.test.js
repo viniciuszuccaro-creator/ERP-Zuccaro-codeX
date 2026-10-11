@@ -12,6 +12,46 @@ const CONTRATO_SINTETICO = {
   crosswalkEmpresas: { 1: 'e1', 2: 'e1', 3: 'e1', 5: 'e1' },
 };
 
+test('identidade divergente bloqueia todas as variantes, independente da ordem e do retry anterior',()=>{
+  const left={cod_cliente:'C-CONFLICT',nome:'Synthetic',documento:'00000000000191',group_id:'g1'};
+  const right={...left,documento:'00000000000272'};
+  const clean=consumirLoteStagingLegado([left],{entidade:'cliente',contratoEntrada:CONTRATO_SINTETICO}).comprovados[0];
+  for(const rows of [[left,right,left],[right,left,right]]) {
+    const out=consumirLoteStagingLegado(rows,{entidade:'cliente',contratoEntrada:CONTRATO_SINTETICO,
+      chavesJaGravadas:[{chave:clean.chave_idempotente_migracao,fingerprint:clean.fingerprint_migracao}]});
+    assert.equal(out.comprovados.length,0);assert.equal(out.reusos.length,0);
+    assert.ok(out.quarentena.some(item=>item.motivos.includes('identidade_legado_divergente_no_lote')));
+    assert.ok(out.quarentena.some(item=>item.motivos.includes('reuso_origem_nao_validada')));
+    assert.equal(out.rejeicoes.length,1);assert.equal(out.totais.origem,3);
+    assert.equal(out.auditoria.filter(item=>item.resultado==='quarentena_identidade').length,1);
+    assert.equal(out.importado_operacional,false);
+  }
+});
+
+test('conflito compartilhado nao bloqueia identidade independente nem muda registros de origem',()=>{
+  const left={cod_cliente:'C-CONFLICT',nome:'Synthetic',documento:'00000000000191',group_id:'g1'};
+  const right={...left,nome:'Different synthetic'};
+  const other={...left,cod_cliente:'C-OTHER',documento:'00000000000353'};
+  const rows=[left,right,other],before=JSON.stringify(rows);
+  const out=consumirLoteStagingLegado(rows,{entidade:'cliente',contratoEntrada:CONTRATO_SINTETICO});
+  assert.deepEqual(out.comprovados.map(item=>item.codigo_legado),['C-OTHER']);
+  assert.equal(JSON.stringify(rows),before);assert.equal(out.reusos.length,0);
+});
+
+test('referencias anteriores conflitantes nao escolhem o ultimo fingerprint',()=>{
+  const row={cod_cliente:'C-PRIOR',nome:'Synthetic',group_id:'g1'};
+  const opts={entidade:'cliente',contratoEntrada:CONTRATO_SINTETICO};
+  const previous=consumirLoteStagingLegado([row],opts).comprovados[0];
+  const correct={chave:previous.chave_idempotente_migracao,fingerprint:previous.fingerprint_migracao};
+  const wrong={...correct,fingerprint:'different'};
+  for(const references of [[wrong,correct],[correct,wrong]]) {
+    const out=consumirLoteStagingLegado([row],{...opts,chavesJaGravadas:references});
+    assert.equal(out.comprovados.length,0);assert.equal(out.reusos.length,0);
+    assert.equal(out.quarentena.length,1);
+    assert.ok(out.quarentena[0].motivos.includes('identidade_legado_divergente_no_lote'));
+  }
+});
+
 test('consumidor staging separa comprovados, quarentena, reuso e rejeicao', () => {
   const out = consumirLoteStagingLegado([
     {
@@ -143,13 +183,20 @@ test('produto tipado conserva classe/unidade e retry; conflito sem sobrescrita',
   const opts = { entidade: 'produto', contratoEntrada: { coorte: 'piloto-sintetico' },
     produtoClassUnitMap: { 'CHAPA|KG': { tipo_produto: 'MATERIA_PRIMA', unidade_medida_id: 'u-kg' },
       'TUBO|M': { tipo_produto: 'MATERIA_PRIMA', unidade_medida_id: 'u-m' } } };
-  const { primeiro, segundo } = consumirLoteStagingIdempotente(rows, opts);
+  const { primeiro, segundo } = consumirLoteStagingIdempotente(rows.slice(0, 2), opts);
   assert.equal(primeiro.comprovados.length, 1);
   assert.equal(primeiro.reusos.length, 1);
-  assert.equal(primeiro.rejeicoes.length, 1);
+  assert.equal(primeiro.rejeicoes.length, 0);
   assert.equal(segundo.comprovados.length, 0);
-  assert.equal(segundo.rejeicoes.length, 1);
+  assert.equal(segundo.rejeicoes.length, 0);
   assert.equal(primeiro.comprovados[0].unidade_medida_id, 'u-kg');
+  const conflitante = consumirLoteStagingIdempotente(rows, opts);
+  for (const rodada of [conflitante.primeiro, conflitante.segundo]) {
+    assert.equal(rodada.comprovados.length, 0);
+    assert.equal(rodada.reusos.length, 0);
+    assert.equal(rodada.rejeicoes.length, 1);
+    assert.equal(rodada.quarentena.length, 2);
+  }
 });
 
 test('retry com mesma chave e conteúdo diferente não reutiliza venda/cadastro', () => {

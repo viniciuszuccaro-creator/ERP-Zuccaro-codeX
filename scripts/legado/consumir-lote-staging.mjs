@@ -139,10 +139,15 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
     produtoClassUnitMap: opts.produtoClassUnitMap,
   });
 
-  const chavesPrevias = new Map(
-    (opts.chavesJaGravadas || []).map((c) => typeof c === 'string'
-      ? [c, ''] : [String(c?.chave || ''), String(c?.fingerprint || '')]).filter(([chave]) => chave),
-  );
+  const chavesPrevias = new Map();
+  const chavesPreviasConflitantes = new Set();
+  for (const entry of opts.chavesJaGravadas || []) {
+    const [chave,fingerprint] = typeof entry === 'string'
+      ? [entry,''] : [String(entry?.chave || ''),String(entry?.fingerprint || '')];
+    if (!chave) continue;
+    if (chavesPrevias.has(chave) && chavesPrevias.get(chave) !== fingerprint) chavesPreviasConflitantes.add(chave);
+    else chavesPrevias.set(chave,fingerprint);
+  }
   const entidadesDisponiveis = new Set(LEGADO_DEPENDENCIA_ORDEM);
   // Codigos legados CPA/3Z conhecidos — crosswalk de IDs de destino vem do contrato.
   const chavesEmpresa = new Set(
@@ -159,8 +164,19 @@ export const consumirLoteStagingLegado = (rows = [], opts = {}) => {
   const reusos = [];
   const chavesValidadas = new Set();
   const auditoria = [];
+  // Do not elect the first source row as a winner when any row disputes its identity.
+  const identidadesConflitantes = new Set([...chavesPreviasConflitantes,...lote.conflitos.map(item => item.chave_idempotente_migracao)]);
 
   for (const mapped of lote.gravados) {
+    if (identidadesConflitantes.has(mapped.chave_idempotente_migracao)) {
+      const motivos = ['identidade_legado_divergente_no_lote'];
+      quarentena.push({ codigo_legado: mapped.codigo_legado, motivos,
+        chave_idempotente_migracao: mapped.chave_idempotente_migracao });
+      auditoria.push(buildAuditoriaConsumoLegado(mapped, {
+        acao: 'consumir', resultado: 'quarentena_identidade', motivos,
+      }));
+      continue;
+    }
     if (mapped.quarentena) {
       quarentena.push({
         codigo_legado: mapped.codigo_legado,
