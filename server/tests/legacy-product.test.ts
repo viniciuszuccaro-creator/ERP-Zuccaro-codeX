@@ -5,6 +5,8 @@ import {realCrmFixture} from './helpers/crmPostgresFixture.ts';
 import {SEED_IDS as I} from '../scripts/seedDevIds.ts';
 import {ProdutoService} from '../src/services/produtoService.ts';
 import {PostgresProdutoRepository} from '../src/repositories/postgresProdutoRepository.ts';
+import {createInMemoryProdutoRepo} from '../src/repositories/inMemoryProdutoRepository.ts';
+import {InMemoryProdutoRelationGuard} from '../src/db/produtoRelationGuard.ts';
 import {PostgresUnidadeRepository} from '../src/repositories/postgresCadastroRepositories.ts';
 import {PostgresAuditRepository} from '../src/audit/auditRepository.ts';
 import {PostgresProdutoRelationGuard} from '../src/db/produtoRelationGuard.ts';
@@ -61,10 +63,17 @@ async function prove(f:any,role:string) {
     await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,variant,opts));
   }
   await service.update(ctx,id,{descricao_comercial:'Preserved details',peso_teorico_kg_m:7.5});
+  tenant.link(I.empresaA,ctx.groupId);
+  await assert.rejects(()=>service.update(ctx,id,{empresa_id:I.empresaA}),e=>e.code==='LEGACY_GROUP_SCOPE_REQUIRED');
+  assert.equal((await service.get(ctx,id)).empresa_id,null);
+  assert.equal((await service.get(ctx,id)).codigo,first.registro.codigo);
   await assert.rejects(()=>service.update({...ctx,actorId:editor},id,{ativo:false}),e=>e.code==='PERMISSION_DENIED');
   await service.softDelete(ctx,id);
   await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,opts),/LEGACY_RECONCILIATION_REQUIRED/);
   await assert.rejects(()=>service.update({...ctx,actorId:editor},id,{ativo:true}),e=>e.code==='PERMISSION_DENIED');
+  const wildcard='00000000-0000-4000-8000-000000000097';
+  guard.link({actorId:wildcard,groupId:ctx.groupId,permissions:{'*':['editar'],Cadastros:{produto:['restaurar']}}});
+  await assert.rejects(()=>service.update({...ctx,actorId:wildcard},id,{ativo:true}),e=>e.code==='PERMISSION_DENIED');
   await assert.rejects(()=>service.update(ctx,id,{ativo:true,descricao:'Not a restoration'}),e=>e.code==='PRODUTO_NOT_FOUND');
   const restored=await service.update(ctx,id,{ativo:true});assert.equal(restored.id,id);assert.equal(restored.codigo,first.registro.codigo);
   assert.equal(restored.codigo_legado,'00042');assert.equal(restored.descricao_comercial,'Preserved details');assert.equal(Number(restored.peso_teorico_kg_m),7.5);
@@ -100,4 +109,19 @@ async function prove(f:any,role:string) {
 }
 
 test('Legacy Produto persisted pilot: mapping retry edit reopen reversal RBAC and rollback',async()=>prove(await localCrmFixture(),ROLE));
+
+test('Imported Produto stays on the Group while an ordinary master can still receive a company',async()=>{
+  const tenant=new InMemoryTenantGuard(),guard=new InMemoryRbacGuard(),rel=new InMemoryProdutoRelationGuard();
+  const actor='00000000-0000-4000-8000-000000000096';
+  tenant.link(I.empresaA,I.groupA);
+  guard.link({actorId:actor,groupId:I.groupA,permissions:{Cadastros:{produto:['visualizar','criar','editar','importar']}}});
+  const service=new ProdutoService(createInMemoryProdutoRepo(),{async append(){}},tenant,rel,guard);
+  const ctx={groupId:I.groupA,actorId:actor,requestId:'synthetic-product-scope'};
+  const imported=await service.create(ctx,{descricao:'Synthetic imported',tipo_item:'Revenda',empresa_id:null,origem:'MIGRACAO',codigo_legado:'SCOPE-1',legacy_id:'SCOPE-1',source_system:'synthetic-product',migration_batch:'synthetic',codigo:'000200'});
+  await assert.rejects(()=>service.update(ctx,imported.id,{empresa_id:I.empresaA}),e=>e.code==='LEGACY_GROUP_SCOPE_REQUIRED');
+  assert.equal((await service.get(ctx,imported.id)).empresa_id,null);
+  assert.equal((await service.get(ctx,imported.id)).codigo,'000200');
+  const ordinary=await service.create(ctx,{descricao:'Synthetic ordinary',tipo_item:'Revenda',empresa_id:null});
+  assert.equal((await service.update(ctx,ordinary.id,{empresa_id:I.empresaA})).empresa_id,I.empresaA);
+});
 if(process.env.DATABASE_URL)test('Legacy Produto persisted pilot PostgreSQL real isolated',async()=>{const f=await realCrmFixture(process.env.DATABASE_URL!);await prove(f,f.role);});

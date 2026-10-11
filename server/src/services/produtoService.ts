@@ -277,7 +277,10 @@ export class ProdutoService {
       if (!before || (before.ativo === false && !reopening)) {
         throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
       }
-      if (reopening) await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','restaurar',{allowGlobalWildcard:false,executor});
+      if (reopening) {
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','editar',{allowGlobalWildcard:false,executor});
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','restaurar',{allowGlobalWildcard:false,executor});
+      }
       if (before.ativo && parsed.data.ativo === false) await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','inativar',{allowGlobalWildcard:false,executor});
       if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
         .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
@@ -290,10 +293,11 @@ export class ProdutoService {
         this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
       }
       const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
-    if (!(before.source_system && before.codigo_legado) && (parsed.data.source_system ?? before.source_system)
-      && (parsed.data.codigo_legado ?? before.codigo_legado) && empresaId) {
-      throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
-    }
+      const importedIdentity = Boolean((parsed.data.source_system ?? before.source_system)
+        && (parsed.data.codigo_legado ?? before.codigo_legado));
+      if (importedIdentity && empresaId) {
+        throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+      }
       this.assertEmpresaOwnership(ctx, empresaId);
       await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
       await this.assertRelations(ctx.groupId, { ...before, ...parsed.data }, executor);
