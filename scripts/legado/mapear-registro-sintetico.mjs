@@ -343,6 +343,43 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
   };
 };
 
+/** Inventory for the explicit class/unit crosswalk. Never infers a unit or enables company use.
+ * Only aggregated class/unit counts leave this function; source rows/IDs remain private.
+ * Existing mapper remains the sole transformation implementation.
+ */
+export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
+  if (!Array.isArray(rows)) throw new Error('LEGACY_ROWS_REQUIRED');
+  const catalogo = new Map();
+  for (const row of rows) {
+    const mapped = mapLegadoRowToCanonicalStub(row, { ...opts, entidade: 'produto' });
+    const classe = mapped.classe_legado || '';
+    const unidade = mapped.unidade_legado || '';
+    // JSON tuple prevents collisions when original codes contain delimiters.
+    const chave = JSON.stringify([classe, unidade]);
+    let entry = catalogo.get(chave);
+    if (!entry) {
+      const reasons = new Set();
+      if (!classe || !unidade) reasons.add('classe_unidade_ausente');
+      if (classe.includes('|') || unidade.includes('|')) reasons.add('chave_mapeamento_ambigua');
+      if (!mapped.tipo_item || !mapped.unidade_medida_id) reasons.add('mapeamento_explicito_ausente');
+      const target = opts.unidadesCanonicas?.find((u) => u.id === mapped.unidade_medida_id);
+      if (!target) reasons.add('unidade_destino_nao_comprovada');
+      else {
+        if (target.ativo !== true) reasons.add('unidade_destino_inativa');
+        if (!opts.groupId || target.group_id !== opts.groupId) reasons.add('unidade_destino_outro_grupo');
+      }
+      entry = { classe_legado: classe, unidade_legado: unidade, quantidade: 0,
+        motivos: [...reasons].sort(), mapeamento_comprovado: reasons.size === 0 };
+      catalogo.set(chave, entry);
+    }
+    entry.quantidade += 1;
+  }
+  const grupos = [...catalogo.values()].sort((a, b) =>
+    a.classe_legado.localeCompare(b.classe_legado) || a.unidade_legado.localeCompare(b.unidade_legado));
+  return { quantidade_origem: rows.length, quantidade_catalogada: grupos.reduce((n, g) => n + g.quantidade, 0),
+    quantidade_sem_mapa: grupos.filter((g) => !g.mapeamento_comprovado).reduce((n, g) => n + g.quantidade, 0),
+    grupos, importado_operacional: false };
+};
 if (process.argv[1] && process.argv[1].includes('mapear-registro-sintetico')) {
   const sampleRows = [
     {
