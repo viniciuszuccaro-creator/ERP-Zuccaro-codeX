@@ -1,0 +1,20 @@
+# Evidência sanitizada — tip 164e6852 implantado
+# utc=2026-10-11T09:59Z
+#
+# tip=164e6852 fix(marca): endurece RBAC (wildcard off + prepare) alinhado a #278
+# inclui tip dc59a0a1 Representante/Colaborador grade+ID
+# asset=index-Bm9XJE42.js
+# rollback=pre-spa-login-20261011-095825
+# MERGE_SHA8=164e6852 · STAMP=20261011-095825
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# backup=pre-gate-e-20261011-095824.sql sha256=b92e70ec699ff0c1922e16e2512202047eb8958d4a74bf14eb9a2a6ad797f0d1
+#
+# CI tip 164e6852: SUCCESS (frontend+backend)
+# Homolog OWNER tipado fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-164e6852.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-164e6852.json
+#
+# Bundle markers: id-tecnico-colaborador · id-tecnico-contato-b2b · codigo-registro-representante
+# VPS git HEAD=/opt/erp-zuccaro @ 164e6852
+# #278 Codex tip b30e32ea: monitorada — extras absorvidos; stack Auth NÃO mesclada
+# Usuário restrito: BLOCKED · Recuperado: NÃO

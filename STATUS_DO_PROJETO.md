@@ -1,3 +1,15 @@
+## CURSOR — tip 164e6852 implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`164e6852`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-Bm9XJE42.js` · rollback `pre-spa-login-20261011-095825` |
+| **conteúdo** | Marca prepare+wildcard OFF (#278) · Representante/Colaborador grade+ID · ContatoB2B/Condicao |
+| **evidência** | `deploy-261-tip-164e6852-marca-harden-rep-colab-20261011.txt` |
+| `#278` | tip `b30e32ea` monitorada · sem porte Auth |
+| BLOCKED | usuário restrito |
+| próxima | Painel seletivo / Agenda chrome · secret restrito · merge owner |
+
 ## CURSOR — revisão Codex #278 Marca RBAC (2026-10-11)
 
 | Item | Estado |

@@ -6,20 +6,20 @@
 | base | #277 @ `8bc4fef2` · draft · MERGEABLE · CI SUCCESS |
 | escopo | Marca RBAC granular · wildcard OFF · assert empresa |
 | ação Cursor | **não** porte stack Auth · gap já em #261 · absorvido `prepare`+wildcard OFF |
-| tip implantado erp-dev | **`58766d82`** / `index-iZ42G-Qb.js` |
+| tip implantado erp-dev | **`164e6852`** / `index-Bm9XJE42.js` |
 
-## CURSOR — tip 58766d82 implantado (Marca RBAC + ID técnico) (2026-10-11)
+## CURSOR — tip 164e6852 implantado (Marca harden + Rep/Colab) (2026-10-11)
 
 | Item | Valor |
 |---|---|
 | branch | `cursor/cadastros-recuperacao-c360-contrato-392b` (#261) |
-| tip implantado | **`58766d82`** · asset `index-iZ42G-Qb.js` · CI SUCCESS · homolog owner fail_count=0 |
-| rollback | `pre-spa-login-20261011-094516` · backup `pre-gate-e-20261011-094514.sql` |
-| escopo | Marca HTTP RBAC · ContatoB2B/CondicaoComercial ID técnico · labels Visualizador |
-| divisão | Cursor: UI cadastros + `MarcaService`/`app.ts` · Codex: Auth/042/sessão/outbox/Legado |
-| tip Codex #277 | **`8bc4fef2`** inalterado — **sem porte** Auth |
-| evidência | `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` |
-| próxima | Representante/Colaborador grade · secret restrito · merge owner |
+| tip implantado | **`164e6852`** · asset `index-Bm9XJE42.js` · CI SUCCESS · homolog owner fail_count=0 |
+| rollback | `pre-spa-login-20261011-095825` · backup `pre-gate-e-20261011-095824.sql` |
+| escopo | Marca prepare/wildcard OFF · Representante/Colaborador ID · ContatoB2B/Condicao |
+| divisão | Cursor: UI cadastros + `MarcaService` · Codex: Auth/042/sessão/outbox/Legado |
+| tip Codex #277/#278 | `8bc4fef2` / `b30e32ea` — **sem porte** Auth |
+| evidência | `deploy-261-tip-164e6852-marca-harden-rep-colab-20261011.txt` |
+| próxima | Painel seletivo · secret restrito · merge owner |
 
 ## REVISÃO CODEX — #277 Auth bootstrap RLS (2026-10-11)
 
@@ -172,7 +172,8 @@
 | #275 Codex | tip **`f6fa8a8a`** · contexto tenant runtime · CI SUCCESS · **monitorar** (sem porte; reservado) |
 | #276 Codex | tip **`9dedeafb`** · Auth×dados split · CI SUCCESS · **monitorar** (sem porte; Auth) |
 | #277 Codex | tip **`8bc4fef2`** · Auth bootstrap RLS 042 · CI SUCCESS · **monitorar** (sem porte; Auth) |
-| porte neste ciclo | nenhum (Legado/#267–#277 / Auth-sessão fora; #265/#263 já absorvidos) |
+| #278 Codex | tip **`b30e32ea`** · Marca RBAC · CI SUCCESS · **não** porte Auth · extras absorvidos em #261 |
+| porte neste ciclo | nenhum stack Auth/Legado; Marca gap #261 + prepare/wildcard de #278 |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -228,34 +229,33 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | tip docs atual · código runtime **`58766d82`** · CI SUCCESS · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`58766d82`** · asset `index-iZ42G-Qb.js` |
-| rollback | `pre-spa-login-20261011-094516` |
-| backup | `pre-gate-e-20261011-094514.sql` (só VPS) |
+| **PR HEAD #261** | tip docs atual · código runtime **`164e6852`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`164e6852`** · asset `index-Bm9XJE42.js` |
+| rollback | `pre-spa-login-20261011-095825` |
+| backup | `pre-gate-e-20261011-095824.sql` (só VPS) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
-| #277 Codex | tip `8bc4fef2` — Auth/042 · **monitorar** sem porte |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`58766d82`** |
+| #277/#278 Codex | `8bc4fef2` / `b30e32ea` — Auth/Marca · **monitorar** sem porte Auth |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`164e6852`** |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | CRM | C360 adaptador **opção B** + policy shared; HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
 | arquivos reservados Codex | sessão/contexto/outbox · schema CRM HTTP novo · Auth/042 · Legado #266/#211 |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` · `deploy-261-tip-c125c4db-crm-policy-20261010.txt` |
+| evidência | `deploy-261-tip-164e6852-marca-harden-rep-colab-20261011.txt` · `deploy-261-tip-58766d82-marca-rbac-id-20261011.txt` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout tip atual (runtime **`58766d82`**).
-2. Confirmar VPS: `MERGE_SHA8=58766d82` / `index-iZ42G-Qb.js` — não atribuir homolog antiga a este tip.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout tip atual (runtime **`164e6852`**).
+2. Confirmar VPS: `MERGE_SHA8=164e6852` / `index-Bm9XJE42.js` — não atribuir homolog antiga a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. ~~CI + redeploy tip policy CRM~~ **feito** (supersedido por `58766d82`).
-2. ~~Marca RBAC + ID técnico ContatoB2B/Condicao~~ **feito** tip **`58766d82`** implantado+homolog owner fail_count=0.
-3. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
-4. Inventário residual (POD/Separação keep-both; Painel seletivo; Representante/Colaborador grade).
-5. Merge owner #261→main; fechar #254 como supersedido/ancestral.
-6. Codex: CRM HTTP (A schema) se além do adaptador B; Legado #211/#266; Auth #277.
+1. ~~Marca RBAC + ID Contato/Condicao + Rep/Colab + harden #278~~ **feito** tip **`164e6852`** implantado+homolog.
+2. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
+3. Inventário residual (POD/Separação keep-both; Painel seletivo).
+4. Merge owner #261→main; fechar #254 como supersedido/ancestral.
+5. Codex: CRM HTTP (A) · Legado #211/#266 · Auth #277/#278 (sem porte Cursor).
 
 ### Pendências / parcial (não concluído)
 - Homolog usuário restrito.
