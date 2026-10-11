@@ -11,12 +11,15 @@ import { assertOportunidadeOnCreate, assertOportunidadeOnUpdate, CRM_ETAPAS,
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import type { PedidoRepository } from '../repositories/pedidoTypes.js';
+import { conversionSchema, type PedidoService } from './pedidoService.js';
 import { oportunidadeCreateSchema, oportunidadeUpdateSchema, oportunidadeLinkSchema,
   OPORTUNIDADE_FIELDS, oportunidadePedidoLinkSchema,
   type Oportunidade, type OportunidadeFields, type OportunidadeFilters,
   type OportunidadeRepository, type OportunidadeScope } from '../repositories/oportunidadeTypes.js';
 
 const VERSION = z.object({ expected_version:z.number().int().positive() }).strict();
+const CONVERT_PEDIDO = z.object({ expected_version:z.number().int().positive(),
+  orcamento_id:z.string().uuid(),pedido:conversionSchema }).strict();
 const LIST = z.object({ limit:z.number().int().min(1).max(200).default(50), offset:z.number().int().min(0).max(1000000).default(0),
   search:z.string().trim().max(80).optional(), ativo:z.boolean().optional(),
   status:z.enum(['Aberto','Em Andamento','Nova','Ganho','Perdido','Cancelado']).optional(),
@@ -29,7 +32,8 @@ export class OportunidadeService {
     private readonly tenant:TenantGuard, private readonly rbac:RbacGuard,
     private readonly clientes:Pick<ClienteRepository,'getEmpresaLinkById'>,
     private readonly orcamentos:Pick<OrcamentoRepository,'get'>,
-    private readonly pedidos?:Pick<PedidoRepository,'get'>) {}
+    private readonly pedidos?:Pick<PedidoRepository,'get'>,
+    private readonly pedidoConversion?:Pick<PedidoService,'convert'>|null) {}
 
   async create(ctx:RequestContext, payload:unknown) {
     const scope=await this.prepare(ctx,'criar'), input=this.parse(oportunidadeCreateSchema,payload);
@@ -129,12 +133,42 @@ export class OportunidadeService {
       if(!after)this.conflict(); await this.auditRow(ctx,'link',before,after,tx); return after;
     });
   }
-  async linkPedido(ctx:RequestContext,id:string,payload:unknown) {
+  async convertOrcamentoToPedido(ctx:RequestContext,id:string,payload:unknown) {
     const scope=await this.prepare(ctx,'aprovar');this.id(id);
+    const input=this.parse(CONVERT_PEDIDO,payload);
+    if(!this.pedidoConversion || !this.pedidos)throw new AppError(503,'CRM_ATOMIC_CONVERSION_UNAVAILABLE','Transactional conversion unavailable');
+    const hash=createHash('sha256').update(JSON.stringify({orcamento_id:input.orcamento_id,pedido:input.pedido})).digest('hex');
+    return this.repo.withTransaction(scope,async tx=>{
+      // In-memory repositories have independent snapshots; never pretend they share SQL atomicity.
+      if(!tx)throw new AppError(503,'CRM_ATOMIC_CONVERSION_UNAVAILABLE','Shared SQL executor required');
+      const before=await this.require(scope,id,tx,true);
+      await this.allowed(ctx,'aprovar',tx);
+      await this.rbac.assertAllowed(ctx,'Comercial','pedido','converter-pedido',{allowGlobalWildcard:false,executor:tx});
+      await this.rbac.assertAllowed(ctx,'Comercial','pedido','visualizar',{allowGlobalWildcard:false,executor:tx});
+      await this.rbac.assertAllowed(ctx,'Comercial','orcamento','visualizar',{allowGlobalWildcard:false,executor:tx});
+      await this.clientReference(scope,before.cliente_empresa_id,tx);
+      if(before.convertido_em==='pedido') {
+        const history=Array.isArray(before.historico_mudancas_etapa)?before.historico_mudancas_etapa:[];
+        const receipt=[...(history as Array<Record<string,unknown>>)].reverse().find(entry=>entry?.tipo==='crm_conversao_pedido');
+        if(!receipt || receipt.request_hash!==hash || before.orcamento_id!==input.orcamento_id || !before.pedido_id)this.conflict();
+        const pedido=await this.pedidos!.get(scope,before.pedido_id,tx,true);
+        if(!pedido || !pedido.ativo || pedido.orcamento_id!==input.orcamento_id || pedido.cliente_empresa_id!==before.cliente_empresa_id)this.conflict();
+        return {oportunidade:before,pedido,replayed:true};
+      }
+      this.version(before,input.expected_version);
+      if(!before.ativo || before.status!=='Ganho' || before.convertido_em!=='orcamento'
+        || before.orcamento_id!==input.orcamento_id || !before.cliente_empresa_id)this.conflict();
+      const pedido=await this.pedidoConversion!.convert(ctx,input.orcamento_id,input.pedido,tx);
+      const oportunidade=await this.linkPedido(ctx,id,{expected_version:before.version,pedido_id:pedido.id},tx,hash);
+      return {oportunidade,pedido,replayed:false};
+    });
+  }
+  async linkPedido(ctx:RequestContext,id:string,payload:unknown,sharedExecutor?:DbQueryExecutor,conversionHash?:string) {
+    const scope=await this.prepare(ctx,'aprovar',sharedExecutor);this.id(id);
     const input=this.parse(oportunidadePedidoLinkSchema,payload);
     if(!this.pedidos)throw new AppError(503,'CRM_PEDIDO_PORT_UNAVAILABLE','Canonical Pedido port unavailable');
-    await this.rbac.assertAllowed(ctx,'Comercial','pedido','visualizar',{allowGlobalWildcard:false});
-    return this.repo.withTransaction(scope,async tx=>{
+    await this.rbac.assertAllowed(ctx,'Comercial','pedido','visualizar',{allowGlobalWildcard:false,executor:sharedExecutor});
+    const link=async (tx?:DbQueryExecutor)=>{
       const before=await this.require(scope,id,tx,true);
       await this.allowed(ctx,'aprovar',tx);
       await this.rbac.assertAllowed(ctx,'Comercial','pedido','visualizar',{allowGlobalWildcard:false,executor:tx});
@@ -153,10 +187,14 @@ export class OportunidadeService {
       if(owner && owner.id!==before.id)throw new AppError(409,'OPORTUNIDADE_PEDIDO_ALREADY_LINKED','Pedido already belongs to another opportunity');
       await this.clientReference(scope,before.cliente_empresa_id,tx);
       const converted=stampOportunidadeConvertida({...before,historico_mudancas_etapa:before.historico_mudancas_etapa as any[]},doc,'pedido');
-      const preserved={...converted,legacy_pedido_id:before.legacy_pedido_id??before.pedido_id};
+      const preserved={...converted,legacy_pedido_id:before.legacy_pedido_id??before.pedido_id,
+        ...(conversionHash?{historico_mudancas_etapa:[...(converted.historico_mudancas_etapa as unknown[]),
+          {tipo:'crm_conversao_pedido',request_hash:conversionHash,data:new Date().toISOString(),
+            etapa_anterior:before.etapa,etapa_nova:converted.etapa}]}:{})};
       const after=await this.repo.update(scope,id,before.version,this.fields(preserved,before.valor_estimado),ctx.actorId!,tx);
       if(!after)this.conflict();await this.auditRow(ctx,'link',before,after,tx);return after;
-    });
+    };
+    return sharedExecutor ? link(sharedExecutor) : this.repo.withTransaction(scope,link);
   }
   private fields(record:Record<string,unknown>, money:string):OportunidadeFields {
     const fields=Object.fromEntries(FIELDS.map(key=>[key,record[key]??null]));
@@ -177,12 +215,12 @@ export class OportunidadeService {
     const row=await this.repo.get(scope,id,tx,lock);
     if(!row)throw new AppError(404,'OPORTUNIDADE_NOT_FOUND','Oportunidade unavailable'); return row;
   }
-  private async prepare(ctx:RequestContext,action:RbacAction):Promise<OportunidadeScope> {
+  private async prepare(ctx:RequestContext,action:RbacAction,executor?:DbQueryExecutor):Promise<OportunidadeScope> {
     if(!ctx.groupId || !ctx.empresaId)throw new AppError(400,'TENANT_REQUIRED','Group and company required');
     this.id(ctx.groupId); this.id(ctx.empresaId);
     if(!ctx.actorId)throw new AppError(403,'ACTOR_REQUIRED','Actor required'); this.id(ctx.actorId);
-    await this.tenant.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
-    await this.rbac.assertAllowed(ctx,'CRM','oportunidades',action,{allowGlobalWildcard:false});
+    await this.tenant.assertEmpresaInGroup(ctx.groupId,ctx.empresaId,executor);
+    await this.rbac.assertAllowed(ctx,'CRM','oportunidades',action,{allowGlobalWildcard:false,executor});
     return {groupId:ctx.groupId,empresaId:ctx.empresaId};
   }
   private async auditRow(ctx:RequestContext,action:AuditAction,before:Oportunidade|null,after:Oportunidade,tx?:DbQueryExecutor) {

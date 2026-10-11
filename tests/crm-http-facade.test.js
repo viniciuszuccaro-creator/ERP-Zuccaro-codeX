@@ -35,3 +35,10 @@ test('fachada CRM propaga 403/409/503 sem retry ou fallback, e troca empresa na 
     assert.deepEqual(scopes,['company-a','company-b']);assert.equal(calls,2);
   }
 });
+
+test('conversão CRM envia comando único ao backend, orçamento original e versão intactos',async()=>{
+  let calls=0;const payload={expected_version:2,orcamento_id:'original-quote',pedido:{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z'}};
+  const api=createHttpApiClient({baseUrl:'https://synthetic.test',getScope:()=>({token:'synthetic-token',groupId:'group',empresaId:'company'}),
+    fetchImpl:async(url,init)=>{calls++;assert.equal(new URL(url).pathname,'/api/v1/oportunidades/id%2Fone/converter-orcamento-pedido');assert.equal(init.method,'POST');assert.deepEqual(JSON.parse(init.body),payload);return new Response(JSON.stringify({data:{pedido:{id:'single'},replayed:true}}),{status:200});}});
+  assert.equal((await api.oportunidades.convertOrcamentoToPedido('id/one',payload)).pedido.id,'single');assert.equal(calls,1);
+});

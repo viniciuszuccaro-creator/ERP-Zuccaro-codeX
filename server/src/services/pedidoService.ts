@@ -29,7 +29,7 @@ import {
 } from './comercialCondicaoAvistaPolicy.js';
 import { z } from 'zod';
 
-const conversionSchema = z.object({
+export const conversionSchema = z.object({
   tipo_operacao: z.enum(['ENTREGA', 'RETIRADA']),
   data_entrega_solicitada: z.string().datetime(),
   cliente_local_id: z.string().uuid().nullable().optional(),
@@ -92,18 +92,18 @@ export class PedidoService {
     });
   }
 
-  async convert(ctx: RequestContext, orcamentoId: string, payload: unknown) {
-    const scope = await this.prepare(ctx, 'converter-pedido');
+  async convert(ctx: RequestContext, orcamentoId: string, payload: unknown, sharedExecutor?: DbQueryExecutor) {
+    const scope = await this.prepare(ctx, 'converter-pedido', sharedExecutor);
     this.assertId(orcamentoId, 'orcamentoId');
     const parsed = conversionSchema.safeParse(payload);
     if (!parsed.success) this.validation(parsed.error.flatten());
-    try {
-      return await this.repo.withTransaction(async (executor) => {
+    const convert = async (executor?: DbQueryExecutor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
-        if (await this.repo.getByOrcamento(scope, orcamentoId, executor)) this.convertedConflict();
-        const quote = await this.orcamentos.get(scope, orcamentoId, executor);
+        await this.prepare(ctx, 'converter-pedido', executor);
+        const quote = await this.orcamentos.get(scope, orcamentoId, executor, true);
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
-        if (quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+        if (await this.repo.getByOrcamento(scope, orcamentoId, executor)) this.convertedConflict();
+        if (!quote.ativo || quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
         // Não-retroatividade: preserva preco_unitario já snapshotado no Orçamento.
         const draft = {
           ...parsed.data,
@@ -128,9 +128,9 @@ export class PedidoService {
         const data: PedidoCreate = dataParsed.data;
         await this.validateReferences(scope, data, executor);
         // Segregação: aprovador do desconto ≠ criador do Orçamento (à vista com regra explícita dispensa alçada).
-        const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId);
+        const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId, executor);
         const alcada = await this.assertDescontoAlcada(ctx, scope, data, criadorOrcamento, executor);
-        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens);
+        const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens, executor);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
@@ -152,9 +152,13 @@ export class PedidoService {
           }, executor);
         }
         return created;
-      });
+      };
+    try {
+      return sharedExecutor ? await convert(sharedExecutor) : await this.repo.withTransaction(convert);
     } catch (error) {
-      if ((error as { code?: string }).code === '23505' || String((error as Error).message).includes('ALREADY_CONVERTED')) this.convertedConflict();
+      const violation=error as {code?:string;constraint?:string};
+      if ((violation.code==='23505' && violation.constraint==='pedidos_empresa_id_orcamento_id_key')
+        || String((error as Error).message).includes('PEDIDO_ORCAMENTO_ALREADY_CONVERTED')) this.convertedConflict();
       throw error;
     }
   }
@@ -291,24 +295,24 @@ export class PedidoService {
     }
   }
 
-  private async prepare(ctx: RequestContext, action: RbacAction): Promise<PedidoScope> {
+  private async prepare(ctx: RequestContext, action: RbacAction, executor?: DbQueryExecutor): Promise<PedidoScope> {
     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
     if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
-    await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', action, { allowGlobalWildcard: false });
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, executor);
+    await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', action, { allowGlobalWildcard: false, executor });
     return { groupId: ctx.groupId, empresaId: ctx.empresaId };
   }
 
-  private async resolveCriadorActorId(entity: string, entityId: string): Promise<string | null> {
-    const entries = await this.audit.listByEntity(entity, entityId);
+  private async resolveCriadorActorId(entity: string, entityId: string, executor?: DbQueryExecutor): Promise<string | null> {
+    const entries = await this.audit.listByEntity(entity, entityId, executor);
     const created = entries.find((entry) => entry.action === 'create' && entry.actorId);
     return created?.actorId ?? null;
   }
 
-  private async canAprovarComercial(ctx: RequestContext): Promise<boolean> {
+  private async canAprovarComercial(ctx: RequestContext, executor?: DbQueryExecutor): Promise<boolean> {
     try {
-      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false });
+      await this.rbac.assertAllowed(ctx, 'Comercial', 'pedido', 'aprovar', { allowGlobalWildcard: false, executor });
       return true;
     } catch (error) {
       if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
@@ -332,7 +336,7 @@ export class PedidoService {
 
     return assertDescontoDentroDaAlcadaOuAprovar({
       items: data.itens,
-      canAprovar: liberadoPorAvista ? false : await this.canAprovarComercial(ctx),
+      canAprovar: liberadoPorAvista ? false : await this.canAprovarComercial(ctx, executor),
       actorId: ctx.actorId!,
       criadorActorId,
       entityLabel: 'Pedido',
@@ -362,6 +366,7 @@ export class PedidoService {
     ctx: RequestContext,
     scope: PedidoScope,
     itens: PedidoCreate['itens'],
+    executor?: DbQueryExecutor,
   ) {
     // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
     if (!this.costs) return null;
@@ -370,7 +375,7 @@ export class PedidoService {
       empresaId: scope.empresaId,
       items: itens,
       costs: this.costs,
-      canAprovar: await this.canAprovarComercial(ctx),
+      canAprovar: await this.canAprovarComercial(ctx, executor),
       entityLabel: 'Pedido',
     });
   }

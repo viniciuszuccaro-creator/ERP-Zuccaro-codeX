@@ -13,9 +13,11 @@ import { OportunidadeService } from '../src/services/oportunidadeService.ts';
 import { ClienteCentral360Service } from '../src/services/clienteCentral360Service.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
 import { assertCrmIsolatedUrl, realCrmFixture } from './helpers/crmPostgresFixture.ts';
-import { localCrmFixture } from './helpers/crmFixture.ts';
+import { localCrmFixture, ROLE } from './helpers/crmFixture.ts';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DbClient } from '../src/db/client.ts';
 import type { RequestContext } from '../src/audit/types.ts';
+import { createHttpApiClient } from '../../src/api/httpApiClient.js';
 import { inspectCrmPreflight } from '../src/db/crmPreflight.ts';
 
 test('R40 gate de PostgreSQL isolado rejeita DEV/remoto/ausente antes de conectar',()=>{
@@ -182,7 +184,149 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
     const cross=await service.create({...ctx,empresaId:ID.empresaA2},{titulo:'Outra empresa',cliente_nome:'Sintético',idempotency_key:'r40-high-water'});
     assert.equal(cross.codigo,'000101');
     await assert.rejects(service.get({...ctx,empresaId:ID.empresaA2},separate[0].id),{code:'OPORTUNIDADE_NOT_FOUND'});
+    await proveAtomicCrmPedido(f);
   }finally{await f.close();}
+});
+
+async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:string)=>Promise<unknown>;role?:string;schema?:string}) {
+  const role=f.role??ROLE;
+  assert.match(role,/^[a-z][a-z0-9_]+$/);
+  const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'crm-atomic-synthetic'};
+  const groupTables=['empresas','produtos','unidades_medida','tabelas_preco','condicoes_pagamento','condicao_pagamento_parcelas'];
+  const companyTables=['produto_empresas','tabela_preco_empresas','condicao_pagamento_empresas','pedido_historico'];
+  for(const table of groupTables)await f.exec(`GRANT SELECT ON ${table} TO ${role};
+    CREATE POLICY crm_atomic_scope ON ${table} FOR ALL TO ${role}
+    USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)
+    WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)`);
+  for(const table of companyTables)await f.exec(`GRANT SELECT ON ${table} TO ${role};
+    CREATE POLICY crm_atomic_scope ON ${table} FOR ALL TO ${role}
+    USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)
+    WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id=NULLIF(current_setting('app.empresa_id',true),'')::uuid)`);
+  await f.exec(`GRANT INSERT ON pedidos,pedido_itens,pedido_historico TO ${role};
+    GRANT UPDATE(updated_at) ON empresas,produtos,produto_empresas TO ${role};`);
+  await f.admin.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1',[ID.produtoA]);
+  await f.admin.query(`INSERT INTO produto_empresas(group_id,empresa_id,produto_id,ativo,habilitado_operacao,created_by,updated_by)
+    VALUES($1,$2,$3,true,true,$4,$4) ON CONFLICT(group_id,empresa_id,produto_id) DO UPDATE SET ativo=true,habilitado_operacao=true`,[ctx.groupId,ctx.empresaId,ID.produtoA,ctx.actorId]);
+  const app=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',ENABLE_PRODUTO_EMPRESA:'true',DATABASE_URL:'postgresql://synthetic@localhost/erp_test'}),db:f.admin});
+  const service=new OportunidadeService(new PostgresOportunidadeRepository(f.data),new PostgresAuditRepository(f.admin),
+    new PostgresTenantGuard(f.admin),new PostgresRbacGuard(f.admin),new PostgresClienteRepository(f.admin),
+    new PostgresOrcamentoRepository(f.admin),new PostgresPedidoRepository(f.admin),app.pedidoService);
+  const link=(await f.admin.query<{id:string}>('SELECT id FROM cliente_empresas WHERE cliente_id=$1 AND empresa_id=$2',[ID.clientePjA,ID.empresaA])).rows[0].id;
+  let n=0;
+  const prepare=async()=>{
+    const quote=await app.orcamentoService.create(ctx,{cliente_empresa_id:link,condicao_pagamento_id:ID.condicaoPagamentoA,
+      validade_em:'2027-01-31T00:00:00.000Z',itens:[{produto_id:ID.produtoA,unidade_id:ID.unidadeA,descricao:'Atomic synthetic',unidade_sigla:'KG',quantidade:'2.000000',preco_unitario:'999.000000',desconto:'0.000000'}]});
+    const opportunity=await service.create(ctx,{titulo:'Atomic synthetic',cliente_empresa_id:link,idempotency_key:`atomic-opportunity-${n++}`});
+    const bound=await service.linkOrcamento(ctx,opportunity.id,{expected_version:1,orcamento_id:quote.id});
+    return {quote,bound,input:{expected_version:bound.version,orcamento_id:quote.id,pedido:{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z'}}};
+  };
+  const initial=await prepare();
+  await f.admin.query('UPDATE oportunidades SET pedido_id=$2 WHERE id=$1',[initial.bound.id,'synthetic_original_legacy_pedido']);
+  const active=new AsyncLocalStorage<boolean>(), originalAdmin=f.admin.query.bind(f.admin), originalTransaction=f.data.withTransaction.bind(f.data);
+  let queries=0;
+  f.admin.query=((sql,params)=>{if(active.getStore())throw new Error('CRM_ATOMIC_SQL_ESCAPED_EXECUTOR');return originalAdmin(sql,params);}) as DbClient['query'];
+  f.data.withTransaction=fn=>originalTransaction(async tx=>{
+    const flags=(await tx.query<{rolsuper:boolean;rolbypassrls:boolean}>('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user')).rows[0];
+    assert.deepEqual(flags,{rolsuper:false,rolbypassrls:false});
+    return active.run(true,()=>fn({query:async(sql,params)=>{queries++;return tx.query(sql,params);}}));
+  });
+  try{
+    const countOrders=async()=>Number((await f.admin.query<{n:number}>('SELECT count(*)::int n FROM pedidos WHERE orcamento_id=$1',[initial.quote.id])).rows[0].n);
+    const beforeOrderCount=await countOrders();
+    const results=await Promise.all(Array.from({length:6},()=>service.convertOrcamentoToPedido(ctx,initial.bound.id,initial.input)));
+    assert.equal(new Set(results.map(result=>result.pedido.id)).size,1);
+    assert.equal(results.filter(result=>!result.replayed).length,1);assert.equal(await countOrders(),beforeOrderCount+1);
+    assert.equal(results[0].pedido.itens[0].preco_unitario,initial.quote.itens[0].preco_unitario);
+    assert.equal(results[0].pedido.orcamento_id,initial.quote.id);assert.equal(results[0].oportunidade.orcamento_id,initial.quote.id);
+    assert.equal(results[0].oportunidade.pedido_id,results[0].pedido.id);
+    assert.equal(results[0].oportunidade.legacy_pedido_id,'synthetic_original_legacy_pedido');
+    assert.equal(results[0].oportunidade.id,initial.bound.id);assert.equal(results[0].oportunidade.codigo,initial.bound.codigo);
+    const audit=new PostgresAuditRepository(f.admin);
+    assert.equal((await audit.listByEntity('Pedido',results[0].pedido.id)).filter(row=>row.action==='create').length,1);
+    assert.equal((await audit.listByEntity('Oportunidade',initial.bound.id)).filter(row=>row.action==='link').length,2);
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,initial.bound.id,{...initial.input,pedido:{...initial.input.pedido,observacoes:'divergent'}}),{code:'OPORTUNIDADE_STATE_CONFLICT'});
+    await assert.rejects(service.convertOrcamentoToPedido({...ctx,empresaId:ID.empresaA2},initial.bound.id,initial.input),{code:'OPORTUNIDADE_NOT_FOUND'});
+    assert.ok(queries>0);
+    const rollback=await prepare();
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,rollback.bound.id,{...rollback.input,orcamento_id:initial.quote.id}),{code:'OPORTUNIDADE_STATE_CONFLICT'});
+    const before=(await f.admin.query<{n:string}>('SELECT coalesce(max(numero::int),0)::text n FROM pedidos WHERE empresa_id=$1',[ctx.empresaId])).rows[0].n;
+    const counts=()=>f.admin.query<{items:number;history:number;audit:number}>(`SELECT
+      (SELECT count(*)::int FROM pedido_itens) items,(SELECT count(*)::int FROM pedido_historico) history,
+      (SELECT count(*)::int FROM audit_logs WHERE entity='Pedido') audit`);
+    const beforeCounts=(await counts()).rows[0];
+    await f.exec(`CREATE FUNCTION crm_atomic_audit_failure() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.entity='Oportunidade' AND NEW.action='link' THEN RAISE EXCEPTION 'synthetic atomic audit failure'; END IF;
+      RETURN NEW; END $$; CREATE TRIGGER crm_atomic_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE PROCEDURE crm_atomic_audit_failure();`);
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,rollback.bound.id,rollback.input),/synthetic atomic audit failure/);
+    assert.equal((await f.admin.query<{n:number}>('SELECT count(*)::int n FROM pedidos WHERE orcamento_id=$1',[rollback.quote.id])).rows[0].n,0);
+    assert.equal((await service.get(ctx,rollback.bound.id)).version,rollback.bound.version);
+    assert.equal((await service.get(ctx,rollback.bound.id)).convertido_em,'orcamento');
+    assert.equal((await f.admin.query<{n:string}>('SELECT coalesce(max(numero::int),0)::text n FROM pedidos WHERE empresa_id=$1',[ctx.empresaId])).rows[0].n,before);
+    assert.deepEqual((await counts()).rows[0],beforeCounts);
+    await f.exec('DROP TRIGGER crm_atomic_fail ON audit_logs; DROP FUNCTION crm_atomic_audit_failure();');
+    const retried=await service.convertOrcamentoToPedido(ctx,rollback.bound.id,rollback.input);
+    assert.equal(Number(retried.pedido.numero),Number(before)+1);
+    const uniqueFault=await prepare();
+    await f.exec(`CREATE FUNCTION crm_pedido_audit_unique() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.entity='Pedido' THEN RAISE EXCEPTION 'synthetic audit unique failure' USING ERRCODE='23505',CONSTRAINT='synthetic_audit_unique'; END IF;
+      RETURN NEW; END $$; CREATE TRIGGER crm_pedido_unique_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE PROCEDURE crm_pedido_audit_unique();`);
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,uniqueFault.bound.id,uniqueFault.input),
+      (error:any)=>error.code==='23505'&&error.constraint==='synthetic_audit_unique');
+    assert.equal((await f.admin.query<{n:number}>('SELECT count(*)::int n FROM pedidos WHERE orcamento_id=$1',[uniqueFault.quote.id])).rows[0].n,0);
+    assert.equal((await service.get(ctx,uniqueFault.bound.id)).version,uniqueFault.bound.version);
+    await f.exec('DROP TRIGGER crm_pedido_unique_fail ON audit_logs; DROP FUNCTION crm_pedido_audit_unique();');
+    const httpDraft=await prepare();
+    const httpApp=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',ENABLE_PRODUTO_EMPRESA:'true',DATABASE_URL:'postgresql://synthetic@localhost/erp_test'}),
+      db:f.data,tenantGuard:new PostgresTenantGuard(f.admin),rbacGuard:new PostgresRbacGuard(f.admin)});
+    const server=await new Promise<import('node:http').Server>(resolve=>{const s=httpApp.app.listen(0,'127.0.0.1',()=>resolve(s));});
+    try {
+      const address=server.address() as import('node:net').AddressInfo;
+      const facade=createHttpApiClient({baseUrl:`http://127.0.0.1:${address.port}`,getScope:()=>({groupId:ctx.groupId,empresaId:ctx.empresaId,actorId:ctx.actorId})}).oportunidades;
+      const converted=await facade.convertOrcamentoToPedido(httpDraft.bound.id,httpDraft.input);
+      assert.equal(converted.pedido.orcamento_id,httpDraft.quote.id);assert.equal(converted.replayed,false);
+      assert.equal((await facade.convertOrcamentoToPedido(httpDraft.bound.id,httpDraft.input)).pedido.id,converted.pedido.id);
+      await assert.rejects(facade.convertOrcamentoToPedido(httpDraft.bound.id,{...httpDraft.input,actorId:ID.runtimeActorB}),(error:any)=>error.status===422);
+    }finally{await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}
+    const inactive=await prepare();
+    await f.admin.query("UPDATE orcamentos SET ativo=false,status='CANCELADO' WHERE id=$1",[inactive.quote.id]);
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,inactive.bound.id,inactive.input),{code:'ORCAMENTO_STATE_CONFLICT'});
+    assert.equal((await service.get(ctx,inactive.bound.id)).version,inactive.bound.version);
+    if(f.admin.pool && f.schema){
+      const cancelled=await prepare(),client=await f.admin.pool.connect();
+      let seen!:()=>void;const blocked=new Promise<void>(resolve=>{seen=resolve;});
+      const prior=f.data.withTransaction;
+      let outcome:Promise<any>|undefined;
+      try{
+        await client.query('BEGIN');await client.query(`SET LOCAL search_path TO "${f.schema}",pg_catalog`);
+        await client.query("UPDATE orcamentos SET status='CANCELADO',ativo=false WHERE id=$1",[cancelled.quote.id]);
+        f.data.withTransaction=fn=>prior(tx=>fn({query:async(sql,params)=>{
+          if(sql.includes('FROM orcamentos')&&sql.includes('FOR UPDATE'))seen();return tx!.query(sql,params);
+        }}));
+        outcome=service.convertOrcamentoToPedido(ctx,cancelled.bound.id,cancelled.input).then(value=>({value}),error=>({error}));
+        let timer:ReturnType<typeof setTimeout>|undefined;
+        try{await Promise.race([blocked,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error('atomic quotation lock missing')),5000);})]);}
+        finally{if(timer)clearTimeout(timer);}
+        await client.query('COMMIT');assert.equal((await outcome).error.code,'ORCAMENTO_STATE_CONFLICT');
+        assert.equal((await service.get(ctx,cancelled.bound.id)).version,cancelled.bound.version);
+        assert.equal((await f.admin.query<{n:number}>('SELECT count(*)::int n FROM pedidos WHERE orcamento_id=$1',[cancelled.quote.id])).rows[0].n,0);
+      }finally{await client.query('ROLLBACK');client.release();f.data.withTransaction=prior;if(outcome)await outcome;}
+    }
+    const unavailable=await prepare();
+    await f.admin.query('UPDATE produto_empresas SET habilitado_operacao=false WHERE produto_id=$1 AND empresa_id=$2',[ID.produtoA,ctx.empresaId]);
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,unavailable.bound.id,unavailable.input),{code:'PEDIDO_PRODUTO_INVALIDO'});
+    assert.equal((await f.admin.query<{n:number}>('SELECT count(*)::int n FROM pedidos WHERE orcamento_id=$1',[unavailable.quote.id])).rows[0].n,0);
+    await f.admin.query('UPDATE produto_empresas SET habilitado_operacao=true WHERE produto_id=$1 AND empresa_id=$2',[ID.produtoA,ctx.empresaId]);
+    await f.admin.query('UPDATE profiles SET empresa_id=$2 WHERE id=$1',[ctx.actorId,ctx.empresaId]);
+    await assert.rejects(service.convertOrcamentoToPedido({...ctx,empresaId:ID.empresaA2},initial.bound.id,initial.input),{code:'PERMISSION_DENIED'});
+    assert.equal((await service.convertOrcamentoToPedido(ctx,initial.bound.id,initial.input)).replayed,true);
+    await f.admin.query('UPDATE profiles SET empresa_id=NULL WHERE id=$1',[ctx.actorId]);
+    await f.admin.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"visualizar\"]'::jsonb) WHERE id=$1",[ctx.actorId]);
+    await assert.rejects(service.convertOrcamentoToPedido(ctx,unavailable.bound.id,unavailable.input),{code:'PERMISSION_DENIED'});
+  }finally{f.admin.query=originalAdmin;f.data.withTransaction=originalTransaction;}
+}
+
+test('CRM→Pedido: executor compartilhado, rollback, retry, preço snapshot e empresa/RBAC persistidos',async()=>{
+  const f=await localCrmFixture();try{await proveAtomicCrmPedido(f);}finally{await f.close();}
 });
 
 async function proveCentralCrm(db:DbClient,app:ReturnType<typeof createApp>,ctx:RequestContext,service:OportunidadeService) {

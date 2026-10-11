@@ -47,4 +47,7 @@ export function mountOportunidadeRoutes(router:Router,service:OportunidadeServic
   router.post('/api/v1/oportunidades/:id/vincular-pedido',requireTenantScope,run(async(s,req,res)=>{
     res.json({data:await s.linkPedido(context(req),req.params.id,req.body)});
   }));
+  router.post('/api/v1/oportunidades/:id/converter-orcamento-pedido',requireTenantScope,run(async(s,req,res)=>{
+    res.json({data:await s.convertOrcamentoToPedido(context(req),req.params.id,req.body)});
+  }));
 }

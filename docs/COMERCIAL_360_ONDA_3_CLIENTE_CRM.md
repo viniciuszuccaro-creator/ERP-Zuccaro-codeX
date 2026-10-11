@@ -96,6 +96,10 @@ Acesso browser: SPA `http://127.0.0.1:3081/` — não confundir com API 3080.
 
 ## Aceite
 
+### Conversão candidata atômica de Orçamento vinculado → Pedido (2026-10-11)
+
+`POST /api/v1/oportunidades/:id/converter-orcamento-pedido` compõe os serviços existentes num executor SQL compartilhado. Exige versão e Orçamento original já vinculado; preserva ClienteEmpresa, empresa fiscal, snapshots e vínculo único Pedido→Oportunidade. Repetição idêntica usa recibo de hash no histórico existente, sem nova persistência; divergência retorna409. Auditoria, itens/histórico e numeração revertem juntos em falha. Em memória a nova operação falha503 pré-escrita, mantendo operações anteriores. Não cria Orçamento ou Pedido alternativo, estoque/produção nem inferência REVENDA. Fachada preparada sem ativação/troca de fonte das telas; CI/revisão do SHA final e homologação operacional continuam gates separados. Provas e fila de consumidor registradas no HANDOFF.
+
 ### Atualização candidata 2026-10-11 — Central CRM canônica
 
 O inventário de 2026-09-25 acima é histórico. A composição #290 já contém OportunidadeService/repositório/HTTP canônicos existentes. Este lote conecta a Central e o painel existentes a essa fonte quando ENABLE_CRM_HTTP=true, preservando skipped e adaptador legado quando desligado. Não ativa flags na VPS. Consulta ativa por ClienteEmpresa, empresa e RBAC; paginação crm_limit/crm_offset; projeção sem contatos/notas/atores/chaves de replay; falha parcial não troca de fonte. O helper de projeção é extração do agregador grande, sem módulo paralelo. Testes HTTP, frontend e contrato persistido compartilhado PGlite/R40 real isolado registrados no HANDOFF; CI/revisão exatas obrigatórias antes de integração.
