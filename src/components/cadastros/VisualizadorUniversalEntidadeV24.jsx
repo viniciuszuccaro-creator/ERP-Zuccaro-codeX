@@ -293,6 +293,7 @@ export default function VisualizadorUniversalEntidadeV24({
     const FIELD_LABELS = {
       id: "ID técnico",
       codigo: "Código",
+      codigo_tabela_legado: "Código legado",
       nome: "Nome",
       nome_condicao: "Nome da condição",
       forma_pagamento: "Forma de pagamento",

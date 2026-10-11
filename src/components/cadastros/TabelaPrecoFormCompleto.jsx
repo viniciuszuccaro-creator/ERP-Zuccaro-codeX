@@ -14,6 +14,7 @@ import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Sa
 import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.0 - TABELA DE PREÇO RECONSTRUÍDA
@@ -492,6 +493,13 @@ RETORNE:
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4 space-y-4">
                 <h3 className="font-bold text-blue-900">⚙️ Identificação da Tabela</h3>
+
+                <CadastroCodigoRegistroField
+                  idOnly
+                  hasId={Boolean(tabela?.id)}
+                  entityId={tabela?.id}
+                  action="id-tecnico-tabela-preco"
+                />
 
                 <div>
                   <Label>Nome da Tabela *</Label>

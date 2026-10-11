@@ -14,6 +14,7 @@ import BuscaCEP from "../comercial/BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
@@ -223,12 +224,12 @@ export default function EmpresaFormCompleto({
         </TabsList>
 
         <TabsContent value="dados" className="space-y-4">
-          {dadosIniciaisProps?.id && (
-            <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              <span className="font-medium">ID do cadastro (somente leitura): </span>
-              <code className="break-all select-text">{dadosIniciaisProps.id}</code>
-            </div>
-          )}
+          <CadastroCodigoRegistroField
+            idOnly
+            hasId={Boolean(dadosIniciaisProps?.id)}
+            entityId={dadosIniciaisProps?.id}
+            action="id-tecnico-empresa"
+          />
           <div>
             <Label>Razão Social *</Label>
             <Input value={formData.razao_social} onChange={(e) => setFormData({...formData, razao_social: e.target.value})} />

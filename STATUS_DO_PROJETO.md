@@ -1,3 +1,16 @@
+## CURSOR — auditoria cadastros ID/código residual (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| escopo | Empresa/EmpresaCompleto/GrupoEmpresarial/CentroOperacao/TabelaPreco · `CadastroCodigoRegistroField` idOnly |
+| grades | Bloco5 Empresa+Grupo → `id` · Bloco2 TabelaPreco → `codigo_tabela_legado` · label V24 |
+| divisão Codex | **não** editar `marcaService` / `postgresMarcaRepository` / `marcaTypes` / `app`+testes Marca |
+| Auth/RLS | **não** absorvido (#279 tip `a0ee2f19` monitor-only) |
+| testes | `cadastros-codigo-cobertura` · `cadastro-empresa-edicao*` · `comercial-azul-padrao-visual` · 50 pass |
+| BLOCKED restrito | Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` — ação: cadastrar secret no Environment Cursor + usuário RBAC restrito na VPS |
+| tip runtime | ainda **`06325316`** até CI deste lote → redeploy |
+| próxima | CI → redeploy → homolog · probe browser/API/DB registros ausentes · C360 fontes canônicas |
+
 ## CURSOR — revisão Codex #279 Auth composição (2026-10-11)
 
 | Item | Estado |

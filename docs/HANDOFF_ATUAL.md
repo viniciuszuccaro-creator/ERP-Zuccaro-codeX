@@ -1,3 +1,15 @@
+## CURSOR — auditoria cadastros ID/código residual (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | `cursor/cadastros-recuperacao-c360-contrato-392b` (#261) |
+| escopo | idOnly Empresa/Grupo/CentroOperacao/TabelaPreco · grades `id` / `codigo_tabela_legado` |
+| divisão | Cursor: UI cadastros residual · Codex: atomicidade Marca (`marcaService`, `postgresMarcaRepository`, `marcaTypes`, `app`+testes) + Auth/RLS |
+| tip implantado | ainda **`06325316`** até CI+redeploy deste lote |
+| #279 Codex | tip `a0ee2f19` — **sem porte** Auth |
+| BLOCKED | secret `ERP_DEV_LOGIN_RESTRICTED_*` ausente no Environment |
+| próxima | CI → redeploy → homolog · probe registros ausentes · C360 canônico |
+
 ## CURSOR — tip 06325316 implantado (azul residual) (2026-10-11)
 
 | Item | Valor |

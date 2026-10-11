@@ -65,12 +65,12 @@ test('V24: coluna nome vazia usa fallbacks (descricao/nome_grupo) sem reseed', a
   assert.match(source, /descricao/);
 });
 
-test('auxiliares: CentroCusto/GrupoProduto/GrupoEmpresarial expõem codigo + rótulo útil', async () => {
+test('auxiliares: CentroCusto/GrupoProduto codigo; GrupoEmpresarial ID técnico', async () => {
   const b3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
   const b2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
   const b5 = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
   assert.match(b3, /CentroCusto[\s\S]*?\[['"]codigo['"]/);
   assert.match(b2, /GrupoProduto[\s\S]*?nome_grupo/);
   assert.match(b2, /SetorAtividade[\s\S]*?\[['"]codigo['"]/);
-  assert.match(b5, /GrupoEmpresarial[\s\S]*?\[['"]codigo['"]/);
+  assert.match(b5, /GrupoEmpresarial[\s\S]*?\[['"]id['"]/);
 });

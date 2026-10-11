@@ -155,7 +155,8 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
     // nome_grupo é o rótulo canônico nos auxiliares; nome pode estar vazio
     { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['codigo','nome_grupo','natureza','nome'],        form: GrupoProdutoForm },
     { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['codigo','nome_marca','nome','pais_origem','categoria'],  form: MarcaForm },
-    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo','nome','tipo','ativo'],                          form: TabelaPrecoFormCompleto },
+    // Campo canônico é codigo_tabela_legado (não codigo numérico MASTER_CODE)
+    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo_tabela_legado','nome','tipo','ativo'],               form: TabelaPrecoFormCompleto },
     { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['codigo','nome','descricao','ativo'],                     form: KitProdutoForm },
     { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['codigo','nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },

@@ -112,8 +112,9 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
 
   // Campos reais de cada entidade (sem alias — getDisplayValue faz fallback)
   const tiles = [
-    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['codigo','nome','nome_do_grupo','cnpj','descricao'],     f: GrupoEmpresarialForm },
-    { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['codigo','razao_social','nome_fantasia','cnpj','cidade'], f: EmpresaForm },
+    // Grupo/Empresa sem MASTER_CODE.codigo — grade usa ID técnico + campos reais
+    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['id','nome','nome_do_grupo','cnpj','descricao'],     f: GrupoEmpresarialForm },
+    { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['id','razao_social','nome_fantasia','cnpj','cidade'], f: EmpresaForm },
     { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['codigo','nome','descricao'],                                     f: DepartamentoForm },
     { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['codigo','nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
     { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['codigo','nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },

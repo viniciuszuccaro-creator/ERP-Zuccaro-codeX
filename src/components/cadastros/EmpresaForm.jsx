@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDocument = (value, max = 32) => String(value ?? "").replace(/[^0-9A-Za-z.\-/]/g, "").slice(0, max).trim();
@@ -214,12 +215,12 @@ export default function EmpresaForm({
           </AlertDescription>
         </Alert>
       )}
-      {dadosIniciais?.id && (
-        <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          <span className="font-medium">ID do cadastro (somente leitura): </span>
-          <code className="break-all select-text">{dadosIniciais.id}</code>
-        </div>
-      )}
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-empresa"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Razao Social *</Label>

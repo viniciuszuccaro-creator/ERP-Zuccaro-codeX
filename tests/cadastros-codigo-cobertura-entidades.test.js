@@ -43,7 +43,7 @@ test('Blocos 1–6 listam codigo nos campos principais das entidades MASTER_CODE
       continue;
     }
     if (entity === 'TabelaPreco') {
-      assert.match(joined, /TabelaPreco[\s\S]{0,400}codigo/);
+      assert.match(joined, /TabelaPreco[\s\S]{0,400}codigo_tabela_legado/);
       continue;
     }
     // Blocos usam `campos:` (Bloco2) ou `c:` (demais)
@@ -84,6 +84,37 @@ test('ContatoB2B e CondicaoComercial expõem ID técnico (idOnly) sem fingir MAS
   assert.match(bloco1, /k:\s*'ContatoB2B'[\s\S]{0,200}\bid\b/);
   assert.match(bloco3, /k:\s*'CondicaoComercial'[\s\S]{0,200}\bid\b/);
   assert.match(viz, /id:\s*"ID técnico"/);
+});
+
+test('Empresa, Grupo, CentroOperacao e TabelaPreco expõem ID técnico; grades sem fingir codigo', async () => {
+  const empresa = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
+  const empresaCompleto = await readFile(new URL('../src/components/cadastros/EmpresaFormCompleto.jsx', import.meta.url), 'utf8');
+  const grupo = await readFile(new URL('../src/components/cadastros/GrupoEmpresarialForm.jsx', import.meta.url), 'utf8');
+  const centro = await readFile(new URL('../src/components/cadastros/CentroOperacaoForm.jsx', import.meta.url), 'utf8');
+  const tabela = await readFile(new URL('../src/components/cadastros/TabelaPrecoFormCompleto.jsx', import.meta.url), 'utf8');
+  const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
+  const bloco5 = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
+  const viz = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  for (const [src, action] of [
+    [empresa, 'id-tecnico-empresa'],
+    [empresaCompleto, 'id-tecnico-empresa'],
+    [grupo, 'id-tecnico-grupo-empresarial'],
+    [centro, 'id-tecnico-centro-operacao'],
+    [tabela, 'id-tecnico-tabela-preco'],
+  ]) {
+    assert.match(src, /CadastroCodigoRegistroField/);
+    assert.match(src, /idOnly/);
+    assert.match(src, new RegExp(action));
+  }
+  assert.match(bloco5, /k:\s*'Empresa'[\s\S]{0,220}\bid\b/);
+  assert.match(bloco5, /k:\s*'GrupoEmpresarial'[\s\S]{0,220}\bid\b/);
+  assert.doesNotMatch(bloco5, /k:\s*'Empresa'[\s\S]{0,120}\bcodigo\b/);
+  assert.doesNotMatch(bloco5, /k:\s*'GrupoEmpresarial'[\s\S]{0,120}\bcodigo\b/);
+  assert.match(bloco2, /TabelaPreco[\s\S]{0,220}codigo_tabela_legado/);
+  assert.match(viz, /codigo_tabela_legado:\s*"Código legado"/);
+  assert.equal(MASTER_CODE_SPECS.Empresa?.field === 'codigo', false);
+  assert.equal(MASTER_CODE_SPECS.GrupoEmpresarial?.field === 'codigo', false);
+  assert.equal(MASTER_CODE_SPECS.CentroOperacao?.field === 'codigo', false);
 });
 
 test('Representante grade tem codigo+id e Colaborador grade/form têm ID técnico', async () => {
