@@ -3,7 +3,7 @@
 | Item | Valor |
 |---|---|
 | branch | #261 |
-| tip | **`106d4805`** + Completo→adapter em curso |
+| tip | **`b3aca689`** · CI pendente → redeploy |
 | escopo | adapters Bloco/V24/Tab/Gestor · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
 | preservação | loadIncomplete · certificado granular · tenant #228 |
 | #280 | tip **`612c2055`** — **sem porte** Marca |

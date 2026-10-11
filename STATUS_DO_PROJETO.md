@@ -2,7 +2,7 @@
 
 | Item | Estado |
 |---|---|
-| tip | **`106d4805`** (c8d46058 fiscal/Blocos + consumidores V24/Tab/Gestor/Ações) |
+| tip | **`b3aca689`** (fiscal/adapters/consumidores + Completo→adapter) |
 | escopo | adapters canônicos · EmpresaForm fiscal+webhooks+cert · revisão Codex |
 | testes | `cadastros-codigo-cobertura` · `cadastros-empresa-edicao*` pass |
 | #280 | tip **`612c2055`** — **sem porte** |
