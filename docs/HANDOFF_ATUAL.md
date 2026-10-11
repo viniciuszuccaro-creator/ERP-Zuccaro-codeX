@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-11T14:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`d5c2b38d`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#286 | tips inalterados · **sem porte** |
+| #287 **novo** | tip `ef4b14f2` · ciclo Cliente atômico · CI SUCCESS · **sem porte** |
+| #288 **novo** | tip `a25b4a27` · reconciliação Cliente/Produto · CI parcial · RUNNING · **sem porte** |
+| porte | nenhum (Legado/clienteService) |
+
 ## REVISÃO CODEX — timer 2026-10-11T14:00Z
 
 | Item | Valor |
