@@ -22,7 +22,9 @@ export type DbClient = {
   end: () => Promise<void>;
   pool: Pool | null;
   withTenantContext?: <T>(scope: Readonly<{ groupId: string; empresaId?: string | null }>, fn: () => T, alive?: () => boolean) => T;
+  withAuthIdentity?: <T>(authUserId: string, fn: (q: DbQueryExecutor) => Promise<T>) => Promise<T>;
 };
+export type AuthDbClient = Pick<DbClient, 'query' | 'withAuthIdentity'>;
 
 type TenantState = { scope: Readonly<{ groupId: string; empresaId: string | null }>; alive: () => boolean };
 type TransactionState = { executor: DbQueryExecutor; tenant?: TenantState; active: boolean; failed: boolean };
@@ -42,6 +44,15 @@ export function createPoolDbClient(pool: Pool): DbClient {
   };
   const api: DbClient = {
     pool,
+    async withAuthIdentity(authUserId, fn) {
+      if (!UUID.test(authUserId)) throw new Error('AUTH_CONTEXT_INVALID');
+      if (tenants.getStore() || transactions.getStore()) throw new Error('AUTH_CONTEXT_MIXED_WITH_DATA');
+      return api.withTransaction(async q => {
+        await q.query('SET TRANSACTION READ ONLY');
+        await q.query("SELECT set_config('app.auth_user_id',$1,true)", [authUserId]);
+        return fn(q);
+      });
+    },
     withTenantContext(scope, fn, alive = () => true) {
       if (!UUID.test(scope.groupId) || (scope.empresaId && !UUID.test(scope.empresaId))) throw new Error('TENANT_CONTEXT_INVALID');
       const frozen = Object.freeze({ groupId: scope.groupId, empresaId: scope.empresaId || null });
@@ -140,7 +151,10 @@ export async function createRuntimeDbClients(config: AppConfig, factory = create
     if (!row || row.rolsuper !== false || row.rolbypassrls !== false || row.login_super !== false || row.login_bypass !== false) {
       throw new Error('DATA_DATABASE_ROLE_UNSAFE');
     }
-    if (!auth || !row.database || !row.schema || row.database !== auth.database || row.schema !== auth.schema
+    if (!auth || auth.rolsuper !== false || auth.rolbypassrls !== false || auth.login_super !== false || auth.login_bypass !== false) {
+      throw new Error('AUTH_DATABASE_ROLE_UNSAFE');
+    }
+    if (!row.database || !row.schema || row.database !== auth.database || row.schema !== auth.schema
       || !row.address || !auth.address || row.address !== auth.address || !row.port || row.port !== auth.port) {
       throw new Error('AUTH_DATA_DATABASE_IDENTITY_MISMATCH');
     }

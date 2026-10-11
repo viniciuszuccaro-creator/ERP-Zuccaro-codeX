@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../api/errors.js';
-import type { DbClient } from '../db/client.js';
+import type { AuthDbClient, DbQueryExecutor } from '../db/client.js';
 
 declare global {
   namespace Express {
@@ -28,8 +28,8 @@ const PUBLIC_GET_PATHS = new Set(['/health', '/ready', '/api/v1/meta']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function createSupabaseAuthMiddleware({
-  supabaseUrl, anonKey, db, fetchImpl = fetch,
-}: { supabaseUrl: string; anonKey: string; db: Pick<DbClient, 'query'>; fetchImpl?: typeof fetch }) {
+  supabaseUrl, anonKey, db, fetchImpl = fetch, requireAuthContext = false,
+}: { supabaseUrl: string; anonKey: string; db: AuthDbClient; fetchImpl?: typeof fetch; requireAuthContext?: boolean }) {
   const userUrl = new URL('auth/v1/user', `${supabaseUrl.replace(/\/+$/, '')}/`);
   return async (req: Request, _res: Response, next: NextFunction) => {
     if (PUBLIC_GET_PATHS.has(req.path) && req.method === 'GET') { next(); return; }
@@ -80,7 +80,7 @@ export function createSupabaseAuthMiddleware({
     }
     let profileId: string | undefined;
     try {
-      const result = await db.query<{ id: string }>(
+      const lookup = (q: DbQueryExecutor) => q.query<{ id: string }>(
         `SELECT p.id
          FROM profiles p
          WHERE p.auth_user_id = $1 AND p.ativo = true AND p.group_id = $2
@@ -90,6 +90,8 @@ export function createSupabaseAuthMiddleware({
          LIMIT 1`,
         [id, groupId, empresaId || null],
       );
+      if (requireAuthContext && !db.withAuthIdentity) throw new Error('AUTH_IDENTITY_CONTEXT_REQUIRED');
+      const result = requireAuthContext ? await db.withAuthIdentity!(id, lookup) : await lookup(db);
       profileId = result.rows[0]?.id;
     } catch {
       next(new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable'));
