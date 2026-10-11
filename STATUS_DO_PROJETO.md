@@ -1,14 +1,26 @@
+## CURSOR — tip 198ba22b consolidação Empresas/adapters/Usuario (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip | **`198ba22b`** · CI em curso |
+| escopo | Empresas→EmpresaForm · Filial/Cliente/Produto adapters · UsuarioForm idOnly |
+| tips | `3b6ec581` Empresas · `7238167d` Cliente/Produto · `198ba22b` Usuario |
+| tip runtime | ainda **`27224f87`** até CI tip → redeploy |
+| #280–#292 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — adapters Cliente/Produto Completo (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| tip | **`7238167d`** · CI pendente |
+| tip | **`7238167d`** |
 | escopo | ProdutoFormCompleto→V22 · ClienteForm(Completo)→CadastroClienteCompleto |
 | tip Empresas | **`3b6ec581`** |
 | testes | cobertura + produto-tipo-policy PASS |
 | tip runtime | ainda **`27224f87`** até CI tip → redeploy |
 | BLOCKED | secret restrito |
-| próxima | CI tip → redeploy → homolog |
+| próxima | tip `198ba22b` + CI → redeploy |
 
 ## CURSOR — Empresas → EmpresaForm canônico + Filial adapter (2026-10-11)
 
