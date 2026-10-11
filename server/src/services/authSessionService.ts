@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { AppError } from '../api/errors.js';
 import type { AppConfig } from '../config/env.js';
-import type { DbClient } from '../db/client.js';
+import type { AuthDbClient, DbClient } from '../db/client.js';
 import { permissionViewAllows } from '../db/rbacGuard.js';
 
 const sessionGuardSchema = z.object({
@@ -195,9 +195,15 @@ async function loadActiveProfiles(
   }
 }
 
+async function loadVerifiedProfiles(config: AppConfig, db: AuthDbClient, userId: string) {
+  if (!config.authDatabaseUrl) return loadActiveProfiles(db, userId);
+  if (!db.withAuthIdentity) throw new AppError(503, 'PROFILE_UNAVAILABLE', 'User profile service unavailable');
+  return db.withAuthIdentity(userId, q => loadActiveProfiles(q, userId));
+}
+
 export async function createPasswordAuthSession(options: {
   config: AppConfig;
-  db: Pick<DbClient, 'query'>;
+  db: AuthDbClient;
   body: unknown;
   fetchImpl?: typeof fetch;
 }): Promise<AuthSessionResult> {
@@ -271,7 +277,7 @@ export async function createPasswordAuthSession(options: {
     throw new AppError(401, 'AUTH_INVALID_CREDENTIALS', 'Credenciais inválidas');
   }
 
-  const profiles = await loadActiveProfiles(options.db, userId);
+  const profiles = await loadVerifiedProfiles(options.config, options.db, userId);
   if (profiles.length === 0) {
     throw new AppError(403, 'AUTH_NO_ACTIVE_PROFILE', 'Usuário autenticado sem perfil ativo no ERP');
   }
@@ -291,7 +297,7 @@ export async function createPasswordAuthSession(options: {
  */
 export async function resolveBearerAuthSession(options: {
   config: AppConfig;
-  db: Pick<DbClient, 'query'>;
+  db: AuthDbClient;
   authorizationHeader: string | undefined;
   fetchImpl?: typeof fetch;
 }): Promise<Omit<AuthSessionResult, 'expiresIn'> & { expiresIn: number | null }> {
@@ -333,7 +339,7 @@ export async function resolveBearerAuthSession(options: {
   if (!UUID_RE.test(userId)) {
     throw new AppError(401, 'AUTH_INVALID', 'Invalid user token');
   }
-  const profiles = await loadActiveProfiles(options.db, userId);
+  const profiles = await loadVerifiedProfiles(options.config, options.db, userId);
   if (profiles.length === 0) {
     throw new AppError(403, 'AUTH_NO_ACTIVE_PROFILE', 'Usuário autenticado sem perfil ativo no ERP');
   }

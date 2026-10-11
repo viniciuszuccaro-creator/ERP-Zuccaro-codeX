@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { AppError } from './errors.js';
 import type { AppConfig } from '../config/env.js';
 import { publicConfigView } from '../config/env.js';
-import type { DbClient } from '../db/client.js';
+import type { AuthDbClient, DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { ClienteService } from '../services/clienteService.js';
@@ -32,7 +32,7 @@ type CrudLike = {
 export type ApiDeps = {
   config: AppConfig;
   db: DbClient;
-  authDb?: Pick<DbClient, 'query'>;
+  authDb?: AuthDbClient;
   marcaService: MarcaService;
   unidadeService: TenantCrudService<any, any, any>;
   grupoProdutoService: TenantCrudService<any, any, any>;

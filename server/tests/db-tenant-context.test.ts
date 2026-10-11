@@ -78,6 +78,15 @@ test('Unscoped bootstrap transaction preserves existing savepoint recovery contr
   assert.equal(events.at(-1)?.sql,'COMMIT');
   assert.equal(events.filter(e=>e.sql.includes('set_config')).length,0);
 });
+test('Verified Auth context is readonly, UUID-bound, transaction-local and cannot mix with data tenant',async()=>{
+  const {db,events}=fixture();
+  await db.withAuthIdentity!(A.groupId,q=>q.query('AUTH_PROFILE'));
+  const guc=events.find(e=>e.sql.includes('app.auth_user_id'));
+  assert.deepEqual(guc?.params,[A.groupId]);assert.equal(events.some(e=>e.sql==='SET TRANSACTION READ ONLY'),true);
+  assert.equal(events.some(e=>e.sql.includes('app.group_id')),false);
+  await assert.rejects(db.withAuthIdentity!('fabricated',q=>q.query('AUTH_PROFILE')),/AUTH_CONTEXT_INVALID/);
+  await db.withTenantContext!(A,()=>assert.rejects(db.withAuthIdentity!(A.groupId,q=>q.query('AUTH_PROFILE')),/MIXED_WITH_DATA/));
+});
 test('Tenant HTTP boundary: verified Auth only, bootstrap outside, public paths excluded and lifetime closed', async () => {
   const config = loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ERP_AUTH_MODE:'supabase_user',SUPABASE_URL:'https://auth.example.test',SUPABASE_ANON_KEY:'synthetic'});
   const db = createDbClient(config); const installed: unknown[]=[]; let lifetime: (()=>boolean)|undefined; let inside=false;

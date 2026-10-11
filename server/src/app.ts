@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { InMemoryAuditRepository, PostgresAuditRepository } from './audit/auditRepository.js';
 import type { AppConfig } from './config/env.js';
-import type { DbClient } from './db/client.js';
+import type { AuthDbClient, DbClient } from './db/client.js';
 import {
   InMemoryProdutoRelationGuard,
   PostgresProdutoRelationGuard,
@@ -71,7 +71,7 @@ import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 export type CreateAppOptions = {
   config: AppConfig;
   db: DbClient;
-  authDb?: Pick<DbClient, 'query'>;
+  authDb?: AuthDbClient;
   useMemory?: boolean;
   /** Optional preconfigured tenant guard (tests). */
   tenantGuard?: InMemoryTenantGuard | PostgresTenantGuard;
@@ -93,6 +93,7 @@ export type CreateAppOptions = {
 export function createApp(options: CreateAppOptions) {
   const { config, db } = options;
   const authDb = options.authDb ?? db;
+  if (config.authDatabaseUrl && !authDb.withAuthIdentity) throw new Error('AUTH_IDENTITY_CONTEXT_REQUIRED');
   const useMemory = options.useMemory === true || !config.databaseUrl;
 
   const auditRepo = useMemory ? new InMemoryAuditRepository() : new PostgresAuditRepository(db);
@@ -252,6 +253,7 @@ export function createApp(options: CreateAppOptions) {
     }
     app.use(createSupabaseAuthMiddleware({
       supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db: authDb, fetchImpl: options.authFetchImpl,
+      requireAuthContext: Boolean(config.authDatabaseUrl),
     }));
   }
 
