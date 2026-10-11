@@ -96,4 +96,8 @@ Acesso browser: SPA `http://127.0.0.1:3081/` — não confundir com API 3080.
 
 ## Aceite
 
+### Atualização candidata 2026-10-11 — Central CRM canônica
+
+O inventário de 2026-09-25 acima é histórico. A composição #290 já contém OportunidadeService/repositório/HTTP canônicos existentes. Este lote conecta a Central e o painel existentes a essa fonte quando ENABLE_CRM_HTTP=true, preservando skipped e adaptador legado quando desligado. Não ativa flags na VPS. Consulta ativa por ClienteEmpresa, empresa e RBAC; paginação crm_limit/crm_offset; projeção sem contatos/notas/atores/chaves de replay; falha parcial não troca de fonte. O helper de projeção é extração do agregador grande, sem módulo paralelo. Testes HTTP, frontend e contrato persistido compartilhado PGlite/R40 real isolado registrados no HANDOFF; CI/revisão exatas obrigatórias antes de integração.
+
 Fonte única preservada; busca sensível autorizada; leitura agregada paginada; nenhuma cópia de saldo/título/pedido; deduplicação revisável; cache isolado; recomendações sem ação crítica automática; testes tenant/RBAC/LGPD e auditoria sanitizada.

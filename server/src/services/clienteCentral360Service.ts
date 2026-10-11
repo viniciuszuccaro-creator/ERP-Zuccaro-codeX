@@ -10,8 +10,12 @@ import type { ObraService } from './obraService.js';
 import type { OrcamentoService } from './orcamentoService.js';
 import type { PedidoService } from './pedidoService.js';
 import type { RbacGuard } from '../db/rbacGuard.js';
+import type { OportunidadeService } from './oportunidadeService.js';
+import { projectCentralCrm } from './clienteCentral360CrmProjection.js';
 
 export type ClienteCentral360PageOptions = {
+  crmLimit?: number;
+  crmOffset?: number;
   orcamentosLimit?: number;
   orcamentosOffset?: number;
   pedidosLimit?: number;
@@ -346,6 +350,7 @@ export class ClienteCentral360Service {
     private readonly locais: ClienteLocalService,
     private readonly obras: ObraService,
     private readonly rbacGuard: RbacGuard,
+    private readonly crm: Pick<OportunidadeService,'list'> | null = null,
   ) {}
 
   async get(ctx: RequestContext, clienteId: string, options: ClienteCentral360PageOptions = {}) {
@@ -379,8 +384,12 @@ export class ClienteCentral360Service {
     const empresas = await this.loadEmpresas(ctx, clienteId, empresaBounds);
     const locais = await this.loadLocais(ctx, clienteId, localBounds);
     const obras = await this.loadObras(ctx, clienteId, obraBounds);
-    const crm = skippedBlock(pageBounds(20, 0), 'CRM_CANONICAL_HTTP_PENDING');
     const clienteEmpresaId = empresaLink.id;
+    const crmBounds = pageBounds(options.crmLimit,options.crmOffset);
+    const crm = this.crm ? await this.loadBlock(async()=>{
+      const page=await this.crm!.list(ctx,{clienteEmpresaId,limit:crmBounds.limit,offset:crmBounds.offset,ativo:true});
+      return {data:page.data.map(projectCentralCrm),meta:page.meta};
+    },crmBounds) : skippedBlock(crmBounds,'CRM_CANONICAL_HTTP_PENDING');
     const orcamentos = await this.loadOrcamentos(ctx, clienteEmpresaId, orcBounds);
     const pedidos = await this.loadPedidos(ctx, clienteEmpresaId, pedBounds);
 
