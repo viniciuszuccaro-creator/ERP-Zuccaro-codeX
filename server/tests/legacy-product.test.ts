@@ -15,7 +15,7 @@ import {InMemoryTenantGuard} from '../src/db/tenantGuard.ts';
 import {TenantCrudService} from '../src/services/tenantCrudService.ts';
 import {unidadeCreateSchema,unidadeUpdateSchema} from '../src/repositories/cadastroTypes.ts';
 import type {DbClient} from '../src/db/client.ts';
-import {consumirLoteStagingLegado,persistirProdutoGrupoLegado} from '../../scripts/legado/consumir-lote-staging.mjs';
+import {consumirLoteStagingLegado,persistirProdutoGrupoLegado,criarSnapshotReconciliacaoLegado,reconciliarPilotoGrupoLegado} from '../../scripts/legado/consumir-lote-staging.mjs';
 
 async function prove(f:any,role:string) {
  try {
@@ -102,6 +102,13 @@ async function prove(f:any,role:string) {
   await service.update(ctx,id,{ativo:true});
   await service.softDelete(ctx,id);
   const archived=await service.findByLegacyIdentity(ctx,opts.sourceSystem,'00042');assert.equal(archived!.ativo,false);assert.equal(archived!.id,id);
+  const baseline=criarSnapshotReconciliacaoLegado('produto',archived);
+  const reconOpts={services:{produto:service},rbacGuard:guard};
+  assert.equal((await reconciliarPilotoGrupoLegado(ctx,[baseline],reconOpts)).equivalente,true);
+  const changed=structuredClone(baseline);changed.registro.tipo_item='Revenda';changed.registro.ativo=true;
+  const mismatch=await reconciliarPilotoGrupoLegado(ctx,[changed],reconOpts);
+  assert.deepEqual(mismatch.resultados[0].campos,['ativo','tipo_item']);
+  assert.equal(JSON.stringify(mismatch).includes(id),false);assert.equal(JSON.stringify(mismatch).includes('00042'),false);
   assert.deepEqual(mapped,before);
   const actions=(await f.admin.query('SELECT action FROM audit_logs WHERE entity_id=$1 ORDER BY created_at',[id])).rows.map(r=>r.action);
   assert.deepEqual(actions,['create','update','soft_delete','restore','soft_delete','restore','soft_delete']);

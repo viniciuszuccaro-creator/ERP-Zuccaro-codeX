@@ -15,7 +15,7 @@ import {InMemoryRbacGuard} from '../src/db/rbacGuard.ts';
 import {InMemoryTenantGuard} from '../src/db/tenantGuard.ts';
 import {InMemoryProdutoRelationGuard} from '../src/db/produtoRelationGuard.ts';
 import type {DbClient} from '../src/db/client.ts';
-import {consumirLoteStagingLegado,persistirClienteGrupoLegado} from '../../scripts/legado/consumir-lote-staging.mjs';
+import {consumirLoteStagingLegado,persistirClienteGrupoLegado,criarSnapshotReconciliacaoLegado,reconciliarPilotoGrupoLegado} from '../../scripts/legado/consumir-lote-staging.mjs';
 
 const migration=await readFile(new URL('../migrations/043_legado_identidade_compartilhada.sql',import.meta.url),'utf8');
 async function prove(f:any,role:string) {
@@ -90,6 +90,18 @@ async function prove(f:any,role:string) {
   assert.equal((await s.cliente.findByLegacyIdentity(ctx,opts.sourceSystem,'0007'))!.ativo,false);
   await f.exec('DROP TRIGGER legacy_client_audit_fail ON audit_logs');
   const reopened=await s.cliente.restore(ctx,first.registro.id);assert.equal(reopened.id,beforeClient.id);assert.equal(reopened.codigo,beforeClient.codigo);assert.equal(reopened.telefone,beforeClient.telefone);assert.equal(reopened.codigo_legado,'0007');
+
+  const reconOptions={services:{cliente:s.cliente},rbacGuard:guard};
+  const clientBaseline=criarSnapshotReconciliacaoLegado('cliente',reopened);
+  const recon=await reconciliarPilotoGrupoLegado(ctx,[clientBaseline],reconOptions);assert.equal(recon.equivalente,true);
+  const altered=structuredClone(clientBaseline);altered.registro.telefone='Different expected content';
+  assert.deepEqual((await reconciliarPilotoGrupoLegado(ctx,[altered],reconOptions)).resultados[0].campos,['telefone']);
+  await assert.rejects(()=>reconciliarPilotoGrupoLegado({...ctx,actorId:limited},[clientBaseline],reconOptions),e=>e.code==='PERMISSION_DENIED');
+  await s.cliente.softDelete(ctx,reopened.id);
+  const inactive=await s.cliente.findByLegacyIdentity(ctx,opts.sourceSystem,'0007');
+  assert.equal((await reconciliarPilotoGrupoLegado(ctx,[criarSnapshotReconciliacaoLegado('cliente',inactive)],reconOptions)).equivalente,true);
+  assert.equal((await reconciliarPilotoGrupoLegado(ctx,[clientBaseline],reconOptions)).equivalente,false);
+  await s.cliente.restore(ctx,reopened.id);
   await assert.rejects(()=>s.cliente.softDelete({...ctx,actorId:limited},first.registro.id),e=>e.code==='PERMISSION_DENIED');
   await assert.rejects(()=>services(I.groupB).cliente.update({groupId:I.groupB,actorId:I.runtimeActorB},first.registro.id,{telefone:'Wrong scope'}),e=>e.code==='CLIENTE_NOT_FOUND');
   const productPayload={descricao:'Synthetic steel',tipo_item:'Matéria-Prima Produção',empresa_id:null,
@@ -195,6 +207,42 @@ test('Cliente SQL read lock requires executor and mutation never escapes it',asy
  await repo.update(scope,row.id,{telefone:'Synthetic'},executor);assert.equal(escaped,1);assert.match(seen[0],/FOR UPDATE$/);assert.match(seen[1],/UPDATE clientes/);
 });
 
+
+test('Legacy persisted reconciliation checks content and state without leaking private values',async()=>{
+ const guard=new InMemoryRbacGuard(),tenant=new InMemoryTenantGuard(),ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-reconciliation'};
+ guard.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions:{Cadastros:{cliente:['visualizar','criar','editar','inativar','restaurar','importar'],produto:['visualizar','criar','editar','inativar','restaurar','importar']}}});
+ const audit={append:async()=>{}},cr=createInMemoryClienteRepo(),pr=createInMemoryProdutoRepo();
+ const cs=new ClienteService(cr,audit,tenant,guard),ps=new ProdutoService(pr,audit,tenant,new InMemoryProdutoRelationGuard(),guard);
+ const meta={origem:'MIGRACAO',source_system:'synthetic-private-source',codigo_legado:'PRIVATE-KEY',legacy_id:'PRIVATE-KEY',migration_batch:'synthetic-private-batch'};
+ const client=await cs.create(ctx,{tipo:'Pessoa Física',nome:'Synthetic private name',documento:'11144477735',...meta});
+ const product=await ps.create(ctx,{descricao:'Synthetic private steel',tipo_item:'Revenda',codigo:'000201',...meta});
+ const snapshots=[criarSnapshotReconciliacaoLegado('cliente',client),criarSnapshotReconciliacaoLegado('produto',product)];
+ const opts={services:{cliente:cs,produto:ps},rbacGuard:guard},before=structuredClone(snapshots);
+ const report=await reconciliarPilotoGrupoLegado(ctx,snapshots,opts);
+ assert.equal(report.equivalente,true);assert.equal(report.aprovacao_importacao_operacional,false);
+ for(const secret of [client.id,client.nome,client.documento,client.codigo,product.descricao,meta.source_system,meta.codigo_legado,meta.migration_batch])assert.equal(JSON.stringify(report).includes(secret),false);
+ await cs.update(ctx,client.id,{telefone:'New synthetic phone'});
+ const changed=await reconciliarPilotoGrupoLegado(ctx,snapshots,opts);assert.equal(changed.equivalente,false);assert.deepEqual(changed.resultados[0].campos,['telefone']);
+ assert.equal(changed.totais.esperados,changed.totais.equivalentes+changed.totais.divergentes);
+ await cs.softDelete(ctx,client.id);const archived=await cs.findByLegacyIdentity(ctx,meta.source_system,meta.codigo_legado);
+ assert.equal((await reconciliarPilotoGrupoLegado(ctx,[criarSnapshotReconciliacaoLegado('cliente',archived)],opts)).equivalente,true);
+ assert.equal((await reconciliarPilotoGrupoLegado(ctx,[snapshots[0]],opts)).equivalente,false);
+ await cs.restore(ctx,client.id);assert.equal((await reconciliarPilotoGrupoLegado(ctx,[criarSnapshotReconciliacaoLegado('cliente',await cs.get(ctx,client.id))],opts)).equivalente,true);
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,[snapshots[0],snapshots[0]],opts),/DUPLICATE_SNAPSHOT/);
+ const wrong=structuredClone(snapshots[0]);wrong.registro.group_id=I.groupB;
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,[wrong],opts),/SNAPSHOT_INVALID/);
+ const forged=structuredClone(snapshots[0]);forged.registro.unexpected='Secret';
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,[forged],opts),/SNAPSHOT_INVALID/);
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado({...ctx,empresaId:I.empresaA},snapshots,opts),/CONTRACT_REQUIRED/);
+ const wildcard='synthetic-wildcard';guard.link({actorId:wildcard,groupId:ctx.groupId,permissions:{'*':['visualizar']}});
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado({...ctx,actorId:wildcard},snapshots,opts),e=>e.code==='PERMISSION_DENIED');
+ const missing={...opts,services:{cliente:{findByLegacyIdentity:async()=>null}}};
+ assert.equal((await reconciliarPilotoGrupoLegado(ctx,[snapshots[0]],missing)).totais.ausentes,1);
+ const ambiguous={...opts,services:{cliente:{findByLegacyIdentity:async()=>{throw Object.assign(Error('Private identity'),{code:'LEGACY_RECONCILIATION_REQUIRED'});}}}};
+ assert.equal((await reconciliarPilotoGrupoLegado(ctx,[snapshots[0]],ambiguous)).totais.ambiguos,1);
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,[snapshots[0]],{...opts,services:{cliente:{findByLegacyIdentity:async()=>{throw Object.assign(Error('Denied'),{code:'PERMISSION_DENIED'});}}}}),e=>e.code==='PERMISSION_DENIED');
+ assert.deepEqual(snapshots,before);
+});
 test('Cliente lifecycle revalidates permission after prepare before any mutation',async()=>{
  const repo=createInMemoryClienteRepo(),tenant=new InMemoryTenantGuard(),ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-revocation'};
  let revoke=false,calls=0;const audit={append:async()=>{}};

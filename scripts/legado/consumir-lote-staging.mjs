@@ -421,6 +421,74 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   }
 }
 
+
+/** Compare persisted pilot snapshots through canonical services. The returned report contains no record values or IDs. */
+const camposReconciliacaoPiloto = Object.freeze({
+  cliente: ['id','group_id','empresa_id','codigo','ativo','origem','source_system','codigo_legado','legacy_id','migration_batch',
+    'tipo','nome','documento','razao_social','nome_fantasia','nome_social','inscricao_estadual','inscricao_municipal',
+    'email','telefone','celular','status','observacoes'],
+  produto: ['id','group_id','empresa_id','codigo','ativo','origem','source_system','codigo_legado','legacy_id','migration_batch',
+    'descricao','tipo_item','unidade_medida_id','unidade_principal','descricao_comercial','peso_teorico_kg_m'],
+});
+const camposObrigatoriosPiloto = Object.freeze({
+  cliente: camposReconciliacaoPiloto.cliente.slice(0,14),
+  produto: camposReconciliacaoPiloto.produto.slice(0,15),
+});
+
+/** Private baseline: keep this snapshot with the private import manifest, never in a public report. */
+export const criarSnapshotReconciliacaoLegado = (entidade, registro) => {
+  if (!camposReconciliacaoPiloto[entidade] || !registro || typeof registro !== 'object') {
+    throw new Error('LEGACY_RECONCILIATION_SNAPSHOT_INVALID');
+  }
+  return {entidade,registro:Object.fromEntries(camposReconciliacaoPiloto[entidade]
+    .map(campo=>[campo,registro[campo] ?? null]))};
+};
+
+export const reconciliarPilotoGrupoLegado = async (ctx, snapshots, options = {}) => {
+  const {services,rbacGuard} = options;
+  if (!ctx?.groupId || ctx.empresaId || !services || !rbacGuard
+    || !Array.isArray(snapshots) || !snapshots.length || snapshots.length>1000) {
+    throw new Error('LEGACY_RECONCILIATION_CONTRACT_REQUIRED');
+  }
+  const identities=new Set(),ids=new Set();
+  for(const snapshot of snapshots) {
+    const {entidade,registro:r} = snapshot ?? {};
+    const fields=camposReconciliacaoPiloto[entidade],required=camposObrigatoriosPiloto[entidade];
+    if(!fields || !r || typeof r!=='object' || Array.isArray(r) || !services[entidade]?.findByLegacyIdentity
+      || required.some(field=>!Object.hasOwn(r,field)) || Object.keys(r).some(field=>!fields.includes(field))
+      || Object.values(r).some(value=>value!==null && !['string','number','boolean'].includes(typeof value))
+      || Object.values(r).some(value=>typeof value==='number'&&!Number.isFinite(value))
+      || r.group_id!==ctx.groupId || r.empresa_id!==null || r.origem!=='MIGRACAO' || typeof r.ativo!=='boolean'
+      || typeof r.codigo!=='string' || !/^\d+$/.test(r.codigo)
+      || ['id','source_system','codigo_legado','legacy_id','migration_batch'].some(field=>typeof r[field]!=='string'||!r[field].trim())
+      || r.legacy_id!==r.codigo_legado) throw new Error('LEGACY_RECONCILIATION_SNAPSHOT_INVALID');
+    const identity=JSON.stringify([entidade,r.group_id,r.source_system,r.codigo_legado]),id=JSON.stringify([entidade,r.id]);
+    if(identities.has(identity)||ids.has(id))throw new Error('LEGACY_RECONCILIATION_DUPLICATE_SNAPSHOT');
+    identities.add(identity);ids.add(id);
+  }
+  // Permission failures abort the report rather than becoming a successful "missing" row.
+  for(const entidade of new Set(snapshots.map(s=>s.entidade))) {
+    await rbacGuard.assertAllowed(ctx,'Cadastros',entidade,'visualizar',{allowGlobalWildcard:false});
+  }
+  const resultados=[];
+  for(const [indice,{entidade,registro:expected}] of snapshots.entries()) {
+    let actual;
+    try {actual=await services[entidade].findByLegacyIdentity(ctx,expected.source_system,expected.codigo_legado);}
+    catch(error) {if(error?.code!=='LEGACY_RECONCILIATION_REQUIRED')throw error;
+      resultados.push({indice,entidade,resultado:'identidade_ambigua',campos:[]});continue;}
+    if(!actual){resultados.push({indice,entidade,resultado:'ausente',campos:[]});continue;}
+    const campos=Object.keys(expected).filter(field=>(actual[field] ?? null)!==expected[field]);
+    resultados.push({indice,entidade,resultado:campos.length?'divergente':'equivalente',campos});
+  }
+  return {somente_leitura:true,aprovacao_importacao_operacional:false,
+    consistencia:'observacao_por_registro_sem_snapshot_global',
+    equivalente:resultados.every(r=>r.resultado==='equivalente'),
+    totais:{esperados:snapshots.length,equivalentes:resultados.filter(r=>r.resultado==='equivalente').length,
+      divergentes:resultados.filter(r=>r.resultado==='divergente').length,
+      ausentes:resultados.filter(r=>r.resultado==='ausente').length,
+      ambiguos:resultados.filter(r=>r.resultado==='identidade_ambigua').length},resultados};
+};
+
 /** Persisted Produto pilot; all writes remain in the existing canonical service. */
 export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => {
   const { service, unidadeService, rbacGuard, sourceSystem, batch, produtoClassUnitMap } = options;
