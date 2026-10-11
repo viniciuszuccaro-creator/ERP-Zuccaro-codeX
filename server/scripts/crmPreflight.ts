@@ -17,7 +17,7 @@ async function main() {
     db=createDbClient(loadConfig());
     const report=await db.withTransaction(async tx=>{
       await tx.query('SET TRANSACTION READ ONLY');
-      return inspectCrmPreflight(tx,{database,schema,stage});
+      return inspectCrmPreflight(tx,{database,schema,stage,requireRestrictedLogin:true});
     });
     console.log(JSON.stringify({...report,scope:'schema_only',stage,activationAuthorized:false}));
     process.exitCode=report.ready?0:1;

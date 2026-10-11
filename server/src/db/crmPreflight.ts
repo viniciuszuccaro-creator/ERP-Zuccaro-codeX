@@ -1,15 +1,20 @@
 import type { DbQueryExecutor } from './client.js';
 
 /** Only catalogs/ledger are read. No tenant rows, credentials or names are returned. */
-export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:string;schema:string;stage?:'before_migration'|'after_migration'}) {
+export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:string;schema:string;stage?:'before_migration'|'after_migration';requireRestrictedLogin?:boolean}) {
   if(!expected.database?.trim() || !expected.schema?.trim())throw new Error('CRM_PREFLIGHT_DESTINATION_REQUIRED');
   if(expected.stage && !['before_migration','after_migration'].includes(expected.stage))throw new Error('CRM_PREFLIGHT_STAGE_INVALID');
-  const identity=await db.query<{database:string;schema:string;rolsuper:boolean;rolbypassrls:boolean}>(
-    'SELECT current_database() AS database,current_schema() AS schema,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user');
+  if(expected.requireRestrictedLogin!==undefined && typeof expected.requireRestrictedLogin!=='boolean')throw new Error('CRM_PREFLIGHT_LOGIN_GATE_INVALID');
+  const identity=await db.query<{database:string;schema:string;rolsuper:boolean;rolbypassrls:boolean;session_super:boolean;session_bypass:boolean;same_login:boolean}>(
+    `SELECT current_database() AS database,current_schema() AS schema,effective.rolsuper,effective.rolbypassrls,
+      login.rolsuper AS session_super,login.rolbypassrls AS session_bypass,current_user=session_user AS same_login
+      FROM pg_roles effective JOIN pg_roles login ON login.rolname=session_user WHERE effective.rolname=current_user`);
   const who=identity.rows[0];
   const checks:Record<string,boolean>={destination:!!who&&who.database===expected.database&&who.schema===expected.schema,
     restrictedRole:!!who&&!who.rolsuper&&!who.rolbypassrls};
-  if(!checks.destination)return {ready:false,checks,blocked:Object.keys(checks).filter(k=>!checks[k])};
+  if(expected.requireRestrictedLogin)checks.restrictedLogin=!!who && who.same_login===true
+    && who.session_super===false && who.session_bypass===false && who.rolsuper===false && who.rolbypassrls===false;
+  if(!checks.destination || checks.restrictedLogin===false)return {ready:false,checks,blocked:Object.keys(checks).filter(k=>!checks[k])};
   const relations=await db.query<{name:string;oid:string;rls:boolean;force:boolean;kind:string}>(
     `SELECT c.relname AS name,c.oid::text AS oid,c.relrowsecurity AS rls,c.relforcerowsecurity AS force,c.relkind AS kind
      FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1
