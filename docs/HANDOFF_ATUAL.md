@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-11T12:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`5a9d8948`** (runtime `27224f87`) · main `baba91a6` |
+| #280/#281 | `612c2055` / `2e8ef5bd` — **sem porte** |
+| #282 | tip `d972179a` — Legado · **sem porte** |
+| #283 **novo** | tip `6d9f8823` · inventário/equivalência Legado · RUNNING · **sem porte** |
+| porte | nenhum |
+
 ## CURSOR — tip 27224f87 implantado (consolidação adapters + Empresa) (2026-10-11)
 
 | Item | Valor |
