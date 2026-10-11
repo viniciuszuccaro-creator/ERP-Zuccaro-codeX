@@ -1,3 +1,13 @@
+## CURSOR — inventário POD/Separação keep-both (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **conclusão** | **keep both** — Separação IA (scan/rota) ≠ clássico; POD EntregaDigital (GPS/estoque) ≠ Digital dialog |
+| **evidência** | `inventario-pod-separacao-20261011.txt` · matriz atualizada |
+| **unificar** | só com owner após portar capacidades |
+| tip | `66d82468`+ · runtime ainda **`d0a1b411`** até CI/redeploy Painel |
+| próxima | CI tip Painel/Agenda → redeploy · secret restrito · merge owner |
+
 ## CURSOR — Painel/Agenda chrome azul seletivo (2026-10-11)
 
 | Item | Estado |
@@ -5,9 +15,9 @@
 | **escopo** | `Agenda.jsx` · `DashboardHeader` · `DashboardCorporativo` · `DashboardTabsNav` |
 | **mudança** | chrome azul (ícones título, tabs, headers calendário/ranking); **keep both** Dashboard×Corporativo |
 | **preservado** | Fluxo Caixa purple semântico · KPIs green/orange Agenda · Financeiro CR≠Régua |
-| **runtime** | tip docs `9dd624ae` · implantado ainda **`d0a1b411`** até CI/redeploy deste tip |
+| **runtime** | tip código `6ae463dc`/`66d82468` · implantado ainda **`d0a1b411`** até CI/redeploy |
 | BLOCKED | usuário restrito |
-| próxima | CI → redeploy · POD/Separação inventário · secret restrito · merge owner |
+| próxima | CI → redeploy · secret restrito · merge owner |
 
 ## CURSOR — tip d0a1b411 implantado+homologado (anti-redirect Marca) (2026-10-11)
 
