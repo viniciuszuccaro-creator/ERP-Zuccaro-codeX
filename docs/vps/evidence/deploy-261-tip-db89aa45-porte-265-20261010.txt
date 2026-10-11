@@ -1,0 +1,20 @@
+# Evidência sanitizada — tip db89aa45 implantado (porte #265 Produto GET parcial)
+# utc=2026-10-10T17:14Z
+#
+# tip=db89aa45 docs revisão Codex + porte #265
+# codigo=944b0aee fix porte #265 isProdutoHttpEditLoadComplete
+# asset=index-Dg3GA2bC.js
+# rollback=pre-spa-login-20261010-171326
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip db89aa45: erp-runtime-ci SUCCESS (4 checks)
+# Homolog OWNER tipado (este SHA) fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-db89aa45.png
+#
+# Bundle: CRM_CANONICAL_HTTP_PENDING · salvar-produto
+# #265 CONFLICTING resolvido por porte seletivo (não merge da branch Codex)
+# #266 Legado / #263 Orçamento: monitorados, não mesclados neste tip
+#
+# Usuário restrito: BLOCKED
+# Recuperado legado: NÃO
+# Não atribuir homolog de 58e01754 a este tip.

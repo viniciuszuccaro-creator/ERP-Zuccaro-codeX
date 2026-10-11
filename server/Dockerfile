@@ -11,7 +11,10 @@ RUN npm install
 COPY tsconfig.json ./
 COPY src ./src
 COPY migrations ./migrations
-RUN npm run build
+# Policy CRM canônica entra com src/domain e precisa existir em dist/domain.
+RUN npm run build \
+  && test -f dist/domain/crmOportunidadePolicy.js \
+  && test -f dist/domain/index.js
 
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app

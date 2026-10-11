@@ -1,6 +1,6 @@
 import { AppError } from '../api/errors.js';
 import type { RequestContext } from '../audit/types.js';
-import type { DbClient } from './client.js';
+import type { DbClient, DbQueryExecutor } from './client.js';
 
 export type RbacAction =
   | 'visualizar'
@@ -61,7 +61,7 @@ export interface RbacGuard {
     moduleName: string,
     section: string,
     action: RbacAction,
-    options?: { allowGlobalWildcard?: boolean },
+    options?: { allowGlobalWildcard?: boolean; executor?: DbQueryExecutor },
   ): Promise<void>;
 }
 
@@ -108,11 +108,11 @@ export class PostgresRbacGuard implements RbacGuard {
     moduleName: string,
     section: string,
     action: RbacAction,
-    options?: { allowGlobalWildcard?: boolean },
+    options?: { allowGlobalWildcard?: boolean; executor?: DbQueryExecutor },
   ): Promise<void> {
     if (!ctx.actorId || !UUID_RE.test(ctx.actorId)) denied();
 
-    const result = await this.db.query<{ permissoes: PermissionTree }>(
+    const result = await (options?.executor ?? this.db).query<{ permissoes: PermissionTree }>(
       `SELECT permissoes
        FROM profiles
        WHERE id = $1

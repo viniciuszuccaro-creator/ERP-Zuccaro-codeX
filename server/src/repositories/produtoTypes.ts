@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import { CLIENTE_ORIGENS } from './clienteTypes.js';
+export const produtoEmpresaSchema=z.object({ativo:z.boolean(),habilitado_operacao:z.boolean(),expected_version:z.number().int().min(0)})
+  .strict().refine(v=>v.ativo||!v.habilitado_operacao,'Inactive link cannot enable operations');
+export type ProdutoEmpresa={id:string;group_id:string;empresa_id:string;produto_id:string;ativo:boolean;habilitado_operacao:boolean;version:number;created_by:string;updated_by:string};
 
 const nonNegativeNumber = z.number().finite().min(0);
 const conversionFactors = z.record(z.number().finite().positive()).optional().default({});
@@ -80,6 +84,11 @@ export function isProdutoTipoCanonico(value: string) {
 /** Campos MASTER DATA do Produto (RUNTIME-03). Sem estoque/custo/preço/fiscal operacional. */
 export const produtoCreateSchema = z.object({
   ...baseCreate,
+  origem: z.enum(CLIENTE_ORIGENS).optional().nullable(),
+  codigo_legado: z.string().trim().min(1).max(80).optional().nullable(),
+  legacy_id: z.string().trim().max(120).optional().nullable(),
+  source_system: z.string().trim().min(1).max(80).optional().nullable(),
+  migration_batch: z.string().trim().max(80).optional().nullable(),
   codigo: z.string().trim().max(80).optional().nullable(),
   codigo_barras: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().min(1).max(500),
@@ -129,6 +138,11 @@ export type ProdutoCreate = z.infer<typeof produtoCreateSchema>;
 export type ProdutoUpdate = z.infer<typeof produtoUpdateSchema>;
 
 export type Produto = {
+  origem?: string | null;
+  codigo_legado?: string | null;
+  legacy_id?: string | null;
+  source_system?: string | null;
+  migration_batch?: string | null;
   id: string;
   group_id: string;
   empresa_id: string | null;

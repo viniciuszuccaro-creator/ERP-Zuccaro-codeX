@@ -34,6 +34,7 @@ const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSec
 
 const ProdutoPimSection = React.lazy(() => import("./produto/ProdutoPimSection"));
 const ProdutoRelationsDamSection = React.lazy(() => import('./produto/ProdutoRelationsDamSection'));
+const ProdutoEmpresaOperacaoSection = React.lazy(() => import('./produto/ProdutoEmpresaOperacaoSection'));
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
  * ✅ Aba 1: Dados Gerais + TRIPLA CLASSIFICAÇÃO (Setor + Grupo + Marca)
@@ -732,6 +733,13 @@ Caso contrário, sugira:
 
         {/* ABA 1: DADOS GERAIS */}
         <TabsContent value="dados-gerais" className="space-y-6">
+          {produtoHttp && produto?.id && produto.empresa_id === null && produto.group_id === groupId && (
+            <Suspense fallback={null}>
+              <ProdutoEmpresaOperacaoSection produtoId={produto.id} groupId={groupId} empresaId={empresaAtual?.id}
+                canView={podeVisualizar} canManage={hasPermission('Cadastros','Produto','vincular-empresa')}
+                api={getHttpProdutoApi()} isScopeCurrent={isFormScopeCurrent}/>
+            </Suspense>
+          )}
           <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-4 space-y-4">
               <h3 className="font-bold flex items-center gap-2 text-purple-900">

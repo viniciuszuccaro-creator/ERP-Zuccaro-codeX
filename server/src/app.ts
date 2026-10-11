@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { InMemoryAuditRepository, PostgresAuditRepository } from './audit/auditRepository.js';
 import type { AppConfig } from './config/env.js';
-import type { DbClient } from './db/client.js';
+import type { AuthDbClient, DbClient } from './db/client.js';
 import {
   InMemoryProdutoRelationGuard,
   PostgresProdutoRelationGuard,
@@ -61,6 +61,9 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import { OportunidadeService } from './services/oportunidadeService.js';
+import { PostgresOportunidadeRepository } from './repositories/postgresOportunidadeRepository.js';
+import { InMemoryOportunidadeRepository } from './repositories/inMemoryOportunidadeRepository.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
@@ -68,6 +71,7 @@ import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 export type CreateAppOptions = {
   config: AppConfig;
   db: DbClient;
+  authDb?: AuthDbClient;
   useMemory?: boolean;
   /** Optional preconfigured tenant guard (tests). */
   tenantGuard?: InMemoryTenantGuard | PostgresTenantGuard;
@@ -76,6 +80,8 @@ export type CreateAppOptions = {
   /** Optional RBAC guard using the canonical entityGuard permission tree (tests). */
   rbacGuard?: InMemoryRbacGuard | PostgresRbacGuard;
   authFetchImpl?: typeof fetch;
+  /** Explicit opt-in after verified Auth; never enables tenant context from dev headers. */
+  tenantContextEnabled?: boolean;
   storagePort?: StoragePort;
   malwareScanPort?: MalwareScanPort;
   /** Porta de custo para alçada de margem (Onda 2). Null/omitido = skip (não inventa custo). */
@@ -86,6 +92,8 @@ export type CreateAppOptions = {
 
 export function createApp(options: CreateAppOptions) {
   const { config, db } = options;
+  const authDb = options.authDb ?? db;
+  if (config.authDatabaseUrl && !authDb.withAuthIdentity) throw new Error('AUTH_IDENTITY_CONTEXT_REQUIRED');
   const useMemory = options.useMemory === true || !config.databaseUrl;
 
   const auditRepo = useMemory ? new InMemoryAuditRepository() : new PostgresAuditRepository(db);
@@ -100,7 +108,7 @@ export function createApp(options: CreateAppOptions) {
   const unidadeRepo = useMemory ? createInMemoryUnidadeRepo() : new PostgresUnidadeRepository(db);
   const grupoRepo = useMemory ? createInMemoryGrupoProdutoRepo() : new PostgresGrupoProdutoRepository(db);
   const setorRepo = useMemory ? createInMemorySetorRepo() : new PostgresSetorRepository(db);
-  const produtoRepo = useMemory ? createInMemoryProdutoRepo() : new PostgresProdutoRepository(db);
+  const produtoRepo = useMemory ? createInMemoryProdutoRepo(config.produtoEmpresaEnabled===true) : new PostgresProdutoRepository(db,config.produtoEmpresaEnabled===true);
   const clienteRepo = useMemory ? createInMemoryClienteRepo() : new PostgresClienteRepository(db);
   const clienteLocalRepo = useMemory
     ? new InMemoryClienteLocalRepository()
@@ -113,7 +121,7 @@ export function createApp(options: CreateAppOptions) {
   const orcamentoRepo = useMemory ? new InMemoryOrcamentoRepository() : new PostgresOrcamentoRepository(db);
   const pedidoRepo = useMemory ? new InMemoryPedidoRepository() : new PostgresPedidoRepository(db);
 
-  const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
+  const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard, rbacGuard, useMemory ? undefined : db);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
     entityName: 'UnidadeMedida',
     notFoundCode: 'UNIDADE_NOT_FOUND',
@@ -182,6 +190,9 @@ export function createApp(options: CreateAppOptions) {
     costPort,
     alcadaConfig,
   );
+  const oportunidadeService = config.crmHttpEnabled===true
+    ? new OportunidadeService(useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db),
+      auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo,pedidoRepo) : null;
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -241,14 +252,29 @@ export function createApp(options: CreateAppOptions) {
       throw new Error('Supabase Auth configuration missing');
     }
     app.use(createSupabaseAuthMiddleware({
-      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db, fetchImpl: options.authFetchImpl,
+      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db: authDb, fetchImpl: options.authFetchImpl,
+      requireAuthContext: Boolean(config.authDatabaseUrl),
     }));
   }
 
   app.use(scopeMiddleware);
+  if (options.tenantContextEnabled === true) {
+    if (!db.withTenantContext) throw new Error('TENANT_CONTEXT_CLIENT_REQUIRED');
+    const publicPaths = new Set(['/health', '/ready', '/api/v1/meta', '/api/v1/auth/session']);
+    app.use((req, res, next) => {
+      if (config.authMode !== 'supabase_user' || publicPaths.has(req.path) || req.authVerified !== true) { next(); return; }
+      let alive = true;
+      res.once('finish', () => { alive = false; });
+      res.once('close', () => { alive = false; });
+      try {
+        db.withTenantContext!({ groupId: req.groupId || '', empresaId: req.empresaId }, next, () => alive);
+      } catch (error) { next(error); }
+    });
+  }
   app.use(createApiRouter({
     config,
     db,
+    authDb,
     marcaService,
     unidadeService,
     grupoProdutoService,
@@ -262,6 +288,7 @@ export function createApp(options: CreateAppOptions) {
     condicaoPagamentoService,
     orcamentoService,
     pedidoService,
+    oportunidadeService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -282,6 +309,7 @@ export function createApp(options: CreateAppOptions) {
     orcamentoService,
     pedidoService,
     auditRepo,
+    oportunidadeService,
     tenantGuard,
     produtoRelationGuard,
     rbacGuard,

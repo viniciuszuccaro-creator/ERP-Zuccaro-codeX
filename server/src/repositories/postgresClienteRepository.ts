@@ -1,3 +1,4 @@
+import { AppError } from '../api/errors.js';
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
@@ -168,8 +169,8 @@ export class PostgresClienteRepository implements ClienteRepository {
     };
   }
 
-  async getById(scope: Scope, id: string): Promise<Cliente | null> {
-    const result = await this.db.query(
+  async getById(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null> {
+    const result = await (executor??this.db).query(
       'SELECT * FROM clientes WHERE group_id = $1 AND id = $2',
       [scope.groupId, id],
     );
@@ -184,6 +185,13 @@ export class PostgresClienteRepository implements ClienteRepository {
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? mapCliente(row) : null;
+  }
+
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null> {
+    const result = await this.db.query('SELECT * FROM clientes WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
+      [groupId,sourceSystem,codigoLegado]);
+    if (result.rows.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
+    return result.rows[0] ? mapCliente(result.rows[0] as Record<string,unknown>) : null;
   }
 
   async create(

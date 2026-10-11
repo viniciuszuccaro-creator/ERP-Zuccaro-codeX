@@ -1,3 +1,4 @@
+import { AppError } from '../api/errors.js';
 import { randomUUID } from 'node:crypto';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
@@ -10,6 +11,7 @@ import {
   type ProdutoPublicationEvent,
 } from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema, type Produto, type ProdutoCreate, type ProdutoEquivalente, type ProdutoEquivalenteCreate, type ProdutoEquivalenteUpdate, type ProdutoMidia, type ProdutoMidiaCreate, type ProdutoMidiaScanEvidence, type ProdutoMidiaUploadAttempt, type ProdutoUpdate, type ProdutoVariante, type ProdutoVarianteCreate, type ProdutoVarianteUpdate } from './produtoTypes.js';
+import type {ProdutoEmpresa} from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 
 function nowIso() { return new Date().toISOString(); }
@@ -18,6 +20,7 @@ export type ProdutoListFilter = Scope & ListOptions & {
   offset?: number;
   codigo?: string;
   codigoBarras?: string;
+  forOperation?: boolean;
 };
 
 export type ProdutoReadOptions = {
@@ -25,7 +28,12 @@ export type ProdutoReadOptions = {
 };
 
 export interface ProdutoRepository extends TenantEntityRepository<Produto, ProdutoCreate, ProdutoUpdate> {
+  readonly empresaLinksEnabled:boolean;
+  getForOperation(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Produto|null>;
+  getEmpresaLink(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
+  saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
+  findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Produto | null>;
   listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
   getById(
     scope: Scope,
@@ -114,6 +122,8 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
 
 function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string): Produto {
   return {
+    origem:data.origem ?? null, codigo_legado:data.codigo_legado ?? null, legacy_id:data.legacy_id ?? null,
+    source_system:data.source_system ?? null, migration_batch:data.migration_batch ?? null,
     id,
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
@@ -166,6 +176,8 @@ function buildProduto(scope: Scope, data: ProdutoCreate, id: string, ts: string)
 }
 
 export class InMemoryProdutoRepository implements ProdutoRepository {
+  constructor(readonly empresaLinksEnabled=false) {}
+  private readonly empresaLinks=new Map<string,ProdutoEmpresa>();
   private readonly rows = new Map<string, Produto>();
   private readonly variants = new Map<string, ProdutoVariante>();
   private readonly equivalents = new Map<string, ProdutoEquivalente>();
@@ -182,6 +194,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     this.transactionQueue = new Promise<void>((resolve) => { release = resolve; });
     await previous;
     const snapshot = structuredClone([...this.rows.entries()]);
+    const linksSnapshot=structuredClone([...this.empresaLinks.entries()]);
     const eventsSnapshot = structuredClone(this.publicationEvents);
     const variantsSnapshot = structuredClone([...this.variants.entries()]);
     const equivalentsSnapshot = structuredClone([...this.equivalents.entries()]);
@@ -190,6 +203,7 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     try {
       return await fn();
     } catch (error) {
+      this.empresaLinks.clear();for(const [key,row] of linksSnapshot)this.empresaLinks.set(key,row);
       this.rows.clear();
       for (const [id, row] of snapshot) this.rows.set(id, row);
       this.publicationEvents.length = 0;
@@ -214,9 +228,13 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
 
   private matches(filter: ProdutoListFilter, r: Produto): boolean {
     if (r.group_id !== filter.groupId) return false;
-    if (filter.empresaId && r.empresa_id !== filter.empresaId) return false;
+    if(filter.forOperation&&(!this.empresaLinksEnabled||!filter.empresaId))return false;
+    if (filter.empresaId && r.empresa_id !== filter.empresaId) {
+      const link=this.empresaLinks.get(`${filter.groupId}:${filter.empresaId}:${r.id}`);
+      if(!filter.forOperation||r.empresa_id!==null||!r.ativo||!link?.ativo||!link.habilitado_operacao)return false;
+    }
     // Default operacional: ativo=true (paridade com Postgres). Combinado com group_id.
-    const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    const ativoFilter = filter.forOperation?true:typeof filter.ativo === 'boolean' ? filter.ativo : true;
     if (r.ativo !== ativoFilter) return false;
     if (filter.codigo && String(r.codigo || '').toLowerCase() !== filter.codigo.toLowerCase()) return false;
     if (filter.codigoBarras && String(r.codigo_barras || '').toLowerCase() !== filter.codigoBarras.toLowerCase()) {
@@ -256,8 +274,27 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     if (scope.empresaId && row.empresa_id !== scope.empresaId) return null;
     return row;
   }
+  async getForOperation(scope:Scope,id:string) {
+    if(!scope.empresaId)return null;
+    const owned=await this.getById(scope,id);if(owned)return owned;
+    if(!this.empresaLinksEnabled)return null;
+    const master=this.rows.get(id),link=await this.getEmpresaLink(scope,id);
+    return master?.group_id===scope.groupId&&master.empresa_id===null&&master.ativo&&link?.ativo&&link.habilitado_operacao?structuredClone(master):null;
+  }
+  async getEmpresaLink(scope:Scope,id:string) {return structuredClone(this.empresaLinks.get(`${scope.groupId}:${scope.empresaId}:${id}`)??null);}
+  async saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string) {
+    const key=`${scope.groupId}:${scope.empresaId}:${id}`,before=this.empresaLinks.get(key);
+    if((before?.version??0)!==data.expected_version)return null;
+    const row:ProdutoEmpresa={id:before?.id??randomUUID(),group_id:scope.groupId,empresa_id:scope.empresaId!,produto_id:id,
+      ativo:data.ativo,habilitado_operacao:data.habilitado_operacao,version:(before?.version??0)+1,created_by:before?.created_by??actor,updated_by:actor};
+    this.empresaLinks.set(key,row);return structuredClone(row);
+  }
 
   async create(scope: Scope, data: ProdutoCreate, _executor?: DbQueryExecutor): Promise<Produto> {
+    if (data.source_system && data.codigo_legado && [...this.rows.values()].some(row =>
+      row.group_id === scope.groupId && row.source_system === data.source_system && row.codigo_legado === data.codigo_legado)) {
+      throw new Error('unique constraint produtos_legacy_identity_uidx');
+    }
     const ts = nowIso();
     const row = buildProduto(scope, data, randomUUID(), ts);
     // conflict: codigo no mesmo grupo
@@ -269,6 +306,13 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
     }
     this.rows.set(row.id, row);
     return row;
+  }
+
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string) {
+    const matches = [...this.rows.values()].filter(row => row.group_id === groupId
+      && row.source_system === sourceSystem && row.codigo_legado === codigoLegado);
+    if (matches.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
+    return matches[0] ?? null;
   }
 
   async update(scope: Scope, id: string, data: ProdutoUpdate, _executor?: DbQueryExecutor): Promise<Produto | null> {
@@ -292,6 +336,10 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
           && r.codigo && r.codigo.toLowerCase() === next.codigo!.toLowerCase(),
       );
       if (dup) throw new Error('unique constraint produtos codigo');
+    }
+    if (next.source_system && next.codigo_legado && [...this.rows.values()].some(row =>
+      row.id !== id && row.group_id === scope.groupId && row.source_system === next.source_system && row.codigo_legado === next.codigo_legado)) {
+      throw new Error('unique constraint produtos_legacy_identity_uidx');
     }
     this.rows.set(id, next);
     return next;
@@ -774,6 +822,6 @@ export class InMemoryProdutoRepository implements ProdutoRepository {
   }
 }
 
-export function createInMemoryProdutoRepo() {
-  return new InMemoryProdutoRepository();
+export function createInMemoryProdutoRepo(empresaLinksEnabled=false) {
+  return new InMemoryProdutoRepository(empresaLinksEnabled);
 }

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { AppError } from './errors.js';
 import type { AppConfig } from '../config/env.js';
 import { publicConfigView } from '../config/env.js';
-import type { DbClient } from '../db/client.js';
+import type { AuthDbClient, DbClient } from '../db/client.js';
 import { getAuthFoundation } from '../auth/foundation.js';
 import { requireTenantScope } from '../middleware/requestContext.js';
 import type { ClienteService } from '../services/clienteService.js';
@@ -13,6 +13,8 @@ import type { ObraService } from '../services/obraService.js';
 import type { TabelaPrecoService } from '../services/tabelaPrecoService.js';
 import type { CondicaoPagamentoService } from '../services/condicaoPagamentoService.js';
 import type { OrcamentoService } from '../services/orcamentoService.js';
+import type { OportunidadeService } from '../services/oportunidadeService.js';
+import { mountOportunidadeRoutes } from './oportunidadeRoutes.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { MarcaService } from '../services/marcaService.js';
 import type { ProdutoService } from '../services/produtoService.js';
@@ -30,6 +32,7 @@ type CrudLike = {
 export type ApiDeps = {
   config: AppConfig;
   db: DbClient;
+  authDb?: AuthDbClient;
   marcaService: MarcaService;
   unidadeService: TenantCrudService<any, any, any>;
   grupoProdutoService: TenantCrudService<any, any, any>;
@@ -43,6 +46,7 @@ export type ApiDeps = {
   condicaoPagamentoService: CondicaoPagamentoService;
   orcamentoService: OrcamentoService;
   pedidoService: PedidoService;
+  oportunidadeService?: OportunidadeService | null;
 };
 
 function ctxFromReq(req: Request) {
@@ -110,7 +114,19 @@ function mountCrud(router: Router, basePath: string, service: CrudLike) {
   });
 }
 
+function parseProdutoOperation(value:unknown):boolean {
+  if(value!==undefined&&value!=='true'&&value!=='false')throw new AppError(422,'VALIDATION_ERROR','operacao must be true or false');
+  return value==='true';
+}
 function mountProdutoRoutes(router: Router, service: ProdutoService) {
+  router.get('/api/v1/produtos/:id/empresa-operacao',requireTenantScope,async(req,res,next)=>{
+    try {res.setHeader('Cache-Control','no-store');res.json({data:await service.empresaOperacao(ctxFromReq(req),req.params.id)});}
+    catch(error){next(error);}
+  });
+  router.put('/api/v1/produtos/:id/empresa-operacao',requireTenantScope,async(req,res,next)=>{
+    try {res.setHeader('Cache-Control','no-store');res.json({data:await service.habilitarEmpresa(ctxFromReq(req),req.params.id,req.body)});}
+    catch(error){next(error);}
+  });
   router.get('/api/v1/produtos/outbox', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.listPublicationEvents(ctxFromReq(req), {
@@ -197,11 +213,14 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos', requireTenantScope, async (req, res, next) => {
     try {
+      const forOperation=parseProdutoOperation(req.query.operacao);
+      if(forOperation)res.setHeader('Cache-Control','no-store');
       const ativoParam = req.query.ativo;
       const ativo = ativoParam == null
         ? undefined
         : ['1', 'true', 'yes'].includes(String(ativoParam).toLowerCase());
       const page = await service.list(ctxFromReq(req), {
+        forOperation,
         ativo,
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,
@@ -342,7 +361,9 @@ function mountProdutoRoutes(router: Router, service: ProdutoService) {
 
   router.get('/api/v1/produtos/:id', requireTenantScope, async (req, res, next) => {
     try {
-      const row = await service.get(ctxFromReq(req), req.params.id);
+      const forOperation=parseProdutoOperation(req.query.operacao);
+      if(forOperation)res.setHeader('Cache-Control','no-store');
+      const row = await service.get(ctxFromReq(req), req.params.id,{forOperation});
       res.json({ data: row });
     } catch (error) {
       next(error);
@@ -1208,7 +1229,7 @@ export function createApiRouter(deps: ApiDeps) {
     try {
       const session = await createPasswordAuthSession({
         config: deps.config,
-        db: deps.db,
+        db: deps.authDb ?? deps.db,
         body: req.body,
       });
       res.setHeader('Cache-Control', 'no-store');
@@ -1240,7 +1261,7 @@ export function createApiRouter(deps: ApiDeps) {
     try {
       const session = await resolveBearerAuthSession({
         config: deps.config,
-        db: deps.db,
+        db: deps.authDb ?? deps.db,
         authorizationHeader: req.header('authorization') || undefined,
       });
       res.setHeader('Cache-Control', 'no-store');
@@ -1289,6 +1310,7 @@ export function createApiRouter(deps: ApiDeps) {
       },
       produto: {
         masterData: true,
+        empresaOperacao:{enabled:deps.config.produtoEmpresaEnabled===true,migration:'041_produto_empresas_operacao.sql',automaticEnable:false},
         pagination: true,
         tenantFkIntegrity: true,
         frontendHttp: false,
@@ -1367,6 +1389,8 @@ export function createApiRouter(deps: ApiDeps) {
         idempotentConversion: true,
         statusHistory: true,
       },
+      oportunidade: {backendHttp:deps.config.crmHttpEnabled===true,frontendHttp:false,
+        migration:'040_crm_oportunidades.sql',legacyAutomaticImport:false,dualWrite:false},
     });
   });
 
@@ -1382,6 +1406,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountCondicaoPagamentoRoutes(router, deps.condicaoPagamentoService);
   mountOrcamentoRoutes(router, deps.orcamentoService);
   mountPedidoRoutes(router, deps.pedidoService);
+  mountOportunidadeRoutes(router,deps.oportunidadeService,ctxFromReq);
 
   return router;
 }

@@ -1,3 +1,4 @@
+import { AppError } from '../api/errors.js';
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import { buildProdutoCatalogProjection } from '../services/produtoCatalogProjection.js';
@@ -7,6 +8,7 @@ import {
   type ProdutoPublicationEvent,
 } from '../services/produtoOutboxClaim.js';
 import { produtoMidiaCreateSchema } from './produtoTypes.js';
+import type {ProdutoEmpresa} from './produtoTypes.js';
 import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCreate, ProdutoEquivalenteUpdate, ProdutoMidia, ProdutoMidiaCreate, ProdutoMidiaScanEvidence, ProdutoMidiaUploadAttempt, ProdutoUpdate, ProdutoVariante, ProdutoVarianteCreate, ProdutoVarianteUpdate } from './produtoTypes.js';
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
@@ -56,6 +58,11 @@ function asObject(value: unknown): Record<string, number> {
 
 export function mapProduto(row: Record<string, unknown>): Produto {
   return {
+    origem:row.origem == null ? null : String(row.origem),
+    codigo_legado:row.codigo_legado == null ? null : String(row.codigo_legado),
+    legacy_id:row.legacy_id == null ? null : String(row.legacy_id),
+    source_system:row.source_system == null ? null : String(row.source_system),
+    migration_batch:row.migration_batch == null ? null : String(row.migration_batch),
     id: String(row.id),
     group_id: String(row.group_id),
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
@@ -111,7 +118,39 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return this.db.withTransaction(fn);
   }
 
-  constructor(private readonly db: DbClient) {}
+  constructor(private readonly db: DbClient,readonly empresaLinksEnabled=false) {}
+
+  private async empresaContext(scope:Scope,q:DbQueryExecutor) {
+    await q.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId??'']);
+  }
+  async getForOperation(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Produto|null> {
+    if(!scope.empresaId)return null;
+    if(executor)await this.empresaContext(scope,executor);
+    const owned=await this.getById(scope,id,executor);if(owned)return owned;
+    if(!this.empresaLinksEnabled)return null;
+    if(!executor)throw new Error('PRODUTO_OPERATION_REQUIRES_TRANSACTION');
+    const master=await executor.query('SELECT * FROM produtos WHERE group_id=$1 AND id=$2 AND empresa_id IS NULL AND ativo FOR SHARE',[scope.groupId,id]);
+    if(!master.rows[0])return null;
+    const link=await executor.query(`SELECT pe.id FROM produto_empresas pe JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
+      WHERE pe.group_id=$1 AND pe.empresa_id=$2 AND pe.produto_id=$3 AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa'
+      FOR SHARE OF pe,e`,[scope.groupId,scope.empresaId,id]);
+    return link.rows[0]?mapProduto(master.rows[0]):null;
+  }
+  async getEmpresaLink(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null> {
+    if(!executor)throw new Error('PRODUTO_LINK_REQUIRES_TRANSACTION');await this.empresaContext(scope,executor);
+    const r=await executor.query<ProdutoEmpresa>('SELECT * FROM produto_empresas WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',[scope.groupId,scope.empresaId,id]);
+    return r.rows[0]??null;
+  }
+  async saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null> {
+    if(!executor)throw new Error('PRODUTO_LINK_REQUIRES_TRANSACTION');await this.empresaContext(scope,executor);
+    const p=[scope.groupId,scope.empresaId,id,data.ativo,data.habilitado_operacao,actor,data.expected_version];
+    const r=await executor.query<ProdutoEmpresa>(data.expected_version===0
+      ? `INSERT INTO produto_empresas(group_id,empresa_id,produto_id,ativo,habilitado_operacao,created_by,updated_by)
+          VALUES($1,$2,$3,$4,$5,$6,$6) ON CONFLICT(group_id,empresa_id,produto_id) DO NOTHING RETURNING *`
+      : `UPDATE produto_empresas SET ativo=$4,habilitado_operacao=$5,updated_by=$6,version=version+1,updated_at=timezone('utc',now())
+          WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3 AND version=$7 RETURNING *`,data.expected_version===0?p.slice(0,6):p);
+    return r.rows[0]??null;
+  }
 
   async list(filter: Scope & ListOptions): Promise<Produto[]> {
     const page = await this.listPage({ ...filter, offset: 0 });
@@ -119,6 +158,11 @@ export class PostgresProdutoRepository implements ProdutoRepository {
   }
 
   async listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }> {
+    if(filter.forOperation){
+      if(!this.empresaLinksEnabled||!filter.empresaId)return {rows:[],total:0};
+      if(!executor)throw new Error('PRODUTO_OPERATION_REQUIRES_TRANSACTION');
+      await this.empresaContext(filter,executor);
+    }
     const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
@@ -126,10 +170,16 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     const where = ['group_id = $1'];
     if (filter.empresaId) {
       params.push(filter.empresaId);
-      where.push(`empresa_id = $${params.length}`);
+      const companyParameter=params.length;
+      where.push(filter.forOperation
+        ? `(empresa_id = $${companyParameter} OR (empresa_id IS NULL AND EXISTS(
+            SELECT 1 FROM produto_empresas pe JOIN empresas e ON e.id=pe.empresa_id AND e.group_id=pe.group_id
+            WHERE pe.produto_id=produtos.id AND pe.group_id=produtos.group_id AND pe.empresa_id=$${companyParameter}
+              AND pe.ativo AND pe.habilitado_operacao AND e.status='Ativa')))`
+        : `empresa_id = $${companyParameter}`);
     }
     // Default operacional: ativo=true (fail-safe). Combinado com group_id (tenant).
-    const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
+    const ativoFilter = filter.forOperation?true:typeof filter.ativo === 'boolean' ? filter.ativo : true;
     params.push(ativoFilter);
     where.push(`ativo = $${params.length}`);
     if (filter.codigo) {
@@ -201,6 +251,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       width: 6,
       incomingCodigo: data.codigo,
     });
+    const metadataFields = (['origem','codigo_legado','legacy_id','source_system','migration_batch'] as const)
+      .filter(field => data[field] !== undefined);
+    const metadataColumns = metadataFields.map(field=>`, ${field}`).join('');
+    const metadataValues = metadataFields.map((_,index)=>`,$${45+index}`).join('');
     const result = await query.query(
       `INSERT INTO produtos (
         group_id, empresa_id, codigo, codigo_barras, descricao, nome, tipo_item, tipo_aco, eh_bitola,
@@ -211,11 +265,11 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         ncm, cest, origem_mercadoria, status, foto_produto_url, ativo,
         descricao_tecnica, descricao_comercial, titulo_seo, descricao_seo,
         embalagem_tipo, multiplo_venda, quantidade_minima_venda, permite_fracionamento,
-        material, liga, norma_tecnica
+        material, liga, norma_tecnica${metadataColumns}
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,
         $18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,
-        $34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44
+        $34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44${metadataValues}
       ) RETURNING *`,
       [
         scope.groupId,
@@ -262,9 +316,17 @@ export class PostgresProdutoRepository implements ProdutoRepository {
         data.material ?? null,
         data.liga ?? null,
         data.norma_tecnica ?? null,
+        ...metadataFields.map(field=>data[field] ?? null),
       ],
     );
     return mapProduto(result.rows[0] as Record<string, unknown>);
+  }
+
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Produto | null> {
+    const result = await this.db.query('SELECT * FROM produtos WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
+      [groupId,sourceSystem,codigoLegado]);
+    if (result.rows.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
+    return result.rows[0] ? mapProduto(result.rows[0] as Record<string,unknown>) : null;
   }
 
   async update(scope: Scope, id: string, data: ProdutoUpdate, executor?: DbQueryExecutor): Promise<Produto | null> {
@@ -306,6 +368,10 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       embalagem_tipo=$37, multiplo_venda=$38, quantidade_minima_venda=$39, permite_fracionamento=$40,
       material=$41, liga=$42, norma_tecnica=$43
       WHERE group_id=$44 AND id=$45`;
+    const metadataFields = (['origem','codigo_legado','legacy_id','source_system','migration_batch'] as const)
+      .filter(field => data[field] !== undefined);
+    const assignments = metadataFields.map(field => { params.push(data[field] ?? null);return `${field}=$${params.length}`; });
+    if (assignments.length) sql=sql.replace('WHERE group_id=',`, ${assignments.join(',')} WHERE group_id=`);
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id=$${params.length}`;

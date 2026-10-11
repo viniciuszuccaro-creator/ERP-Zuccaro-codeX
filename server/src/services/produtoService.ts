@@ -1,12 +1,14 @@
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import { AppError } from '../api/errors.js';
+import type {DbQueryExecutor} from '../db/client.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ProdutoRelationGuard } from '../db/produtoRelationGuard.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { ProdutoRepository } from '../repositories/inMemoryProdutoRepository.js';
 import {
   PRODUTO_FORBIDDEN_OPERATIONAL_FIELDS,
+  produtoEmpresaSchema,
   isProdutoTipoCanonico,
   produtoCreateSchema,
   produtoUpdateSchema,
@@ -64,6 +66,7 @@ const WORKFLOW_ACTION: Record<Produto['workflow_status'], RbacAction> = {
 };
 
 export type ProdutoListOptions = {
+  forOperation?: boolean;
   ativo?: boolean;
   search?: string;
   codigo?: string;
@@ -83,10 +86,69 @@ export class ProdutoService {
     private readonly scanner?: MalwareScanPort,
     private readonly catalogPublisher: CatalogPublisherPort = createCatalogPublisher(resolveOutboxConsumerConfig()),
   ) {}
+  async empresaOperacao(ctx:RequestContext,id:string) {
+    if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+    if(!ctx.groupId||!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+    this.assertRelationId(id);
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false});
+    return this.repo.withTransaction(async executor=>{
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+      const row=await this.repo.getEmpresaLink({groupId:ctx.groupId,empresaId:ctx.empresaId},id,executor);
+      if(!row)throw new AppError(404,'PRODUTO_EMPRESA_NOT_FOUND','Link unavailable in company scope');
+      return row;
+    });
+  }
+  async habilitarEmpresa(ctx:RequestContext,id:string,payload:unknown) {
+    if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+    if(!ctx.groupId||!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+    this.assertRelationId(id);
+    const parsed=produtoEmpresaSchema.safeParse(payload);
+    if(!parsed.success)throw new AppError(422,'VALIDATION_ERROR','Invalid ProdutoEmpresa payload');
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','vincular-empresa',{allowGlobalWildcard:false});
+    return this.repo.withTransaction(async executor=>{
+      if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+      const master=await this.repo.getById({groupId:ctx.groupId},id,executor,{forUpdate:true});
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','vincular-empresa',{allowGlobalWildcard:false,executor});
+      if(!master||master.empresa_id!==null)throw new AppError(422,'PRODUTO_MESTRE_REQUIRED','Shared master required');
+      if(!master.ativo&&parsed.data.habilitado_operacao)throw new AppError(422,'PRODUTO_INATIVO','Inactive product cannot be enabled');
+      if(executor) {
+        const company=await executor.query("SELECT id FROM empresas WHERE group_id=$1 AND id=$2 AND status='Ativa' FOR SHARE",[ctx.groupId,ctx.empresaId]);
+        if(!company.rows[0])throw new AppError(422,'PRODUTO_EMPRESA_INATIVA','Active company required');
+      }
+      const scope={groupId:ctx.groupId,empresaId:ctx.empresaId};
+      const before=await this.repo.getEmpresaLink(scope,id,executor);
+      if(before&&before.ativo===parsed.data.ativo&&before.habilitado_operacao===parsed.data.habilitado_operacao)return before;
+      if((before?.version??0)!==parsed.data.expected_version)throw new AppError(409,'PRODUTO_EMPRESA_VERSION_CONFLICT','Link changed');
+      const after=await this.repo.saveEmpresaLink(scope,id,parsed.data,ctx.actorId!,executor);
+      if(!after)throw new AppError(409,'PRODUTO_EMPRESA_VERSION_CONFLICT','Link changed');
+      await this.audit.append({groupId:ctx.groupId,empresaId:ctx.empresaId,actorId:ctx.actorId,entity:'ProdutoEmpresa',entityId:after.id,
+        action:before?'update':'link',beforeData:before?sanitizeAuditSnapshot(before):null,afterData:sanitizeAuditSnapshot(after),requestId:ctx.requestId},executor);
+      return after;
+    });
+  }
 
   async list(ctx: RequestContext, options: ProdutoListOptions = {}) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
+    if(options.forOperation){
+      if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+      if(!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+      if(options.ativo===false||!Number.isInteger(options.limit??50)||!Number.isInteger(options.offset??0)
+        ||(options.limit??50)<1||(options.limit??50)>200||(options.offset??0)<0)
+        throw new AppError(422,'VALIDATION_ERROR','Invalid operational pagination/filter');
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+      return this.repo.withTransaction(async executor=>{
+        if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+        return this.listPage(ctx,options,executor);
+      });
+    }
+    return this.listPage(ctx,options);
+  }
+  private async listPage(ctx:RequestContext,options:ProdutoListOptions,executor?:DbQueryExecutor) {
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
     // Fail-safe operacional: sem ?ativo= explícito, listar SOMENTE ativo=true.
@@ -95,13 +157,14 @@ export class ProdutoService {
     const page = await this.repo.listPage({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
+      forOperation: options.forOperation,
       ativo,
       search: options.search,
       codigo: options.codigo,
       codigoBarras: options.codigoBarras,
       limit,
       offset,
-    });
+    },executor);
     return {
       data: page.rows,
       meta: {
@@ -113,7 +176,21 @@ export class ProdutoService {
     };
   }
 
-  async get(ctx: RequestContext, id: string) {
+  async get(ctx: RequestContext, id: string, options:{forOperation?:boolean}={}) {
+    if(options.forOperation){
+      this.assertScope(ctx);this.assertRelationId(id);
+      if(!this.repo.empresaLinksEnabled)throw new AppError(503,'PRODUTO_EMPRESA_DISABLED','Explicit activation required');
+      if(!ctx.empresaId)throw new AppError(400,'EMPRESA_ID_REQUIRED','Company context required');
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId,ctx.empresaId);
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false});
+      return this.repo.withTransaction(async executor=>{
+        if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[ctx.groupId,ctx.empresaId]);
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+        const row=await this.repo.getForOperation({groupId:ctx.groupId,empresaId:ctx.empresaId},id,executor);
+        if(!row||!row.ativo)throw new AppError(404,'PRODUTO_NOT_FOUND','Produto not found in tenant scope');
+        return row;
+      });
+    }
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
@@ -122,6 +199,17 @@ export class ProdutoService {
       throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
     }
     return row;
+  }
+
+  async findByLegacyIdentity(ctx: RequestContext, sourceSystem: string, codigoLegado: string) {
+    this.assertScope(ctx);
+    if (ctx.empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Group context required');
+    if (![sourceSystem,codigoLegado].every(value => typeof value === 'string' && value.trim() === value && value.length > 0 && value.length <= 80)) {
+      throw new AppError(400,'VALIDATION_ERROR','Explicit legacy identity required');
+    }
+    await this.assertPermission(ctx,'visualizar');
+    await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false});
+    return this.repo.findByLegacyIdentity(ctx.groupId,sourceSystem,codigoLegado);
   }
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -134,6 +222,13 @@ export class ProdutoService {
     }
     this.assertTipoItem(parsed.data.tipo_item);
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
+    if (parsed.data.source_system && parsed.data.codigo_legado) {
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false});
+      if (empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+      if (await this.repo.findByLegacyIdentity(ctx.groupId,parsed.data.source_system,parsed.data.codigo_legado)) {
+        throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity already exists');
+      }
+    }
     this.assertEmpresaOwnership(ctx, empresaId);
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     await this.assertRelations(ctx.groupId, parsed.data);
@@ -180,10 +275,21 @@ export class ProdutoService {
       if (!before || before.ativo === false) {
         throw new AppError(404, 'PRODUTO_NOT_FOUND', 'Produto not found in tenant scope');
       }
+      if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
+        .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
+        throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported provenance is immutable');
+      }
+      if (!(before.source_system && before.codigo_legado) && (parsed.data.source_system || parsed.data.codigo_legado)) {
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false,executor});
+      }
       if (parsed.data.tipo_item !== undefined) {
         this.assertTipoItem(parsed.data.tipo_item, before.tipo_item);
       }
       const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
+    if (!(before.source_system && before.codigo_legado) && (parsed.data.source_system ?? before.source_system)
+      && (parsed.data.codigo_legado ?? before.codigo_legado) && empresaId) {
+      throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Imported master must belong to Group');
+    }
       this.assertEmpresaOwnership(ctx, empresaId);
       await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
       await this.assertRelations(ctx.groupId, { ...before, ...parsed.data });
@@ -760,6 +866,9 @@ export class ProdutoService {
 
   private rethrowConflict(error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
+    if (/unique|duplicate/i.test(message) && /legacy_identity/i.test(message)) {
+      throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported identity conflicts');
+    }
     if (/unique|duplicate/i.test(message)) {
       throw new AppError(409, 'CONFLICT', 'Produto conflicts with an existing record');
     }

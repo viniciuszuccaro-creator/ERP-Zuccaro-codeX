@@ -1,3 +1,4 @@
+import { AppError } from '../api/errors.js';
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
@@ -41,6 +42,7 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
   ): Promise<Cliente>;
   listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
   findByDocumento(groupId: string, documentoNormalizado: string): Promise<Cliente | null>;
+  findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string): Promise<Cliente | null>;
   listEmpresaLinks(filter: ClienteEmpresaListFilter): Promise<{ rows: ClienteEmpresa[]; total: number }>;
   getEmpresaLinkById(scope: Scope, linkId: string, executor?: DbQueryExecutor): Promise<ClienteEmpresa | null>;
@@ -244,6 +246,10 @@ export class InMemoryClienteRepository implements ClienteRepository {
       const dup = await this.findByDocumento(scope.groupId, doc);
       if (dup) throw new Error('unique constraint clientes documento');
     }
+    if (data.source_system && data.codigo_legado && [...this.rows.values()].some(row =>
+      row.group_id === scope.groupId && row.source_system === data.source_system && row.codigo_legado === data.codigo_legado)) {
+      throw new Error('unique constraint clientes_legacy_identity_uidx');
+    }
     const ts = nowIso();
     const codigo = this.nextCodigo(scope.groupId);
     const row = buildCliente(scope, data, randomUUID(), codigo, ts, {
@@ -262,6 +268,13 @@ export class InMemoryClienteRepository implements ClienteRepository {
       this.empresaLinks.set(this.empresaLinkKey(row.id, row.empresa_id), link);
     }
     return row;
+  }
+
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string) {
+    const matches = [...this.rows.values()].filter(row => row.group_id === groupId
+      && row.source_system === sourceSystem && row.codigo_legado === codigoLegado);
+    if (matches.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
+    return matches[0] ?? null;
   }
 
   async update(scope: Scope, id: string, data: ClienteUpdate): Promise<Cliente | null> {
@@ -287,6 +300,10 @@ export class InMemoryClienteRepository implements ClienteRepository {
       const doc = normalizeDocumento(raw);
       next.documento = raw ? String(raw).trim() : doc;
       next.documento_normalizado = doc || null;
+    }
+    if (next.source_system && next.codigo_legado && [...this.rows.values()].some(row =>
+      row.id !== id && row.group_id === scope.groupId && row.source_system === next.source_system && row.codigo_legado === next.codigo_legado)) {
+      throw new Error('unique constraint clientes_legacy_identity_uidx');
     }
     this.rows.set(id, next);
     return next;

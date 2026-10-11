@@ -1,4 +1,4 @@
-import type { DbClient } from '../db/client.js';
+import type { DbClient,DbQueryExecutor } from '../db/client.js';
 import type {
   Marca,
   MarcaCreateInput,
@@ -33,7 +33,7 @@ function mapRow(row: Record<string, unknown>): Marca {
 export class PostgresMarcaRepository implements MarcaRepository {
   constructor(private readonly db: DbClient) {}
 
-  async list(filter: MarcaListFilter): Promise<Marca[]> {
+  async list(filter: MarcaListFilter, executor?: DbQueryExecutor): Promise<Marca[]> {
     const limit = Math.min(Math.max(filter.limit ?? 100, 1), 500);
     const params: unknown[] = [filter.groupId];
     const where = ['group_id = $1'];
@@ -52,7 +52,7 @@ export class PostgresMarcaRepository implements MarcaRepository {
     }
 
     params.push(limit);
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `SELECT * FROM marcas
        WHERE ${where.join(' AND ')}
        ORDER BY nome_marca ASC
@@ -62,22 +62,23 @@ export class PostgresMarcaRepository implements MarcaRepository {
     return result.rows.map((row) => mapRow(row as Record<string, unknown>));
   }
 
-  async getById(scope: { groupId: string; empresaId?: string | null }, id: string): Promise<Marca | null> {
+  async getById(scope: { groupId: string; empresaId?: string | null }, id: string,executor?:DbQueryExecutor, forUpdate = false): Promise<Marca | null> {
     const params: unknown[] = [scope.groupId, id];
     let sql = 'SELECT * FROM marcas WHERE group_id = $1 AND id = $2';
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id = $3`;
     }
-    const result = await this.db.query(sql, params);
+    if (forUpdate && executor) sql += ' FOR UPDATE';
+    const result = await (executor??this.db).query(sql, params);
     const row = result.rows[0];
     return row ? mapRow(row as Record<string, unknown>) : null;
   }
 
-  async create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput): Promise<Marca> {
+  async create(scope: { groupId: string; empresaId?: string | null }, data: MarcaCreateInput, executor?: DbQueryExecutor): Promise<Marca> {
     const empresaId = data.empresa_id ?? scope.empresaId ?? null;
     const codigo = await reserveEntityCodigo({
-      db: this.db,
+      db: executor ?? this.db,
       groupId: scope.groupId,
       entityName: 'Marca',
       table: 'marcas',
@@ -87,7 +88,7 @@ export class PostgresMarcaRepository implements MarcaRepository {
     const incoming = typeof data.codigo === 'string' ? data.codigo.trim() : '';
     const codigoOrigem = (data.codigo_origem && String(data.codigo_origem).trim())
       || (incoming && !/^[0-9]+$/.test(incoming) ? incoming : null);
-    const result = await this.db.query(
+    const result = await (executor ?? this.db).query(
       `INSERT INTO marcas (
         group_id, empresa_id, codigo, codigo_origem, nome_marca, descricao, cnpj, pais_origem, site,
         logo_url, categoria, fornecedor_id, certificacoes, ativo
@@ -117,8 +118,9 @@ export class PostgresMarcaRepository implements MarcaRepository {
     scope: { groupId: string; empresaId?: string | null },
     id: string,
     data: MarcaUpdateInput,
+    executor?: DbQueryExecutor,
   ): Promise<Marca | null> {
-    const current = await this.getById(scope, id);
+    const current = await this.getById(scope, id, executor, true);
     if (!current) return null;
 
     const next = {
@@ -171,12 +173,12 @@ export class PostgresMarcaRepository implements MarcaRepository {
     }
     sql += ' RETURNING *';
 
-    const result = await this.db.query(sql, params);
+    const result = await (executor ?? this.db).query(sql, params);
     const row = result.rows[0];
     return row ? mapRow(row as Record<string, unknown>) : null;
   }
 
-  async softDelete(scope: { groupId: string; empresaId?: string | null }, id: string): Promise<Marca | null> {
-    return this.update(scope, id, { ativo: false });
+  async softDelete(scope: { groupId: string; empresaId?: string | null }, id: string, executor?: DbQueryExecutor): Promise<Marca | null> {
+    return this.update(scope, id, { ativo: false }, executor);
   }
 }
