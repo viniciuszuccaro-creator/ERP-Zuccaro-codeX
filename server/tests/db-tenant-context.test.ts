@@ -67,6 +67,17 @@ test('Tenant context: failed rollback discards connection and original failure s
   await assert.rejects(db.withTenantContext!(A, () => db.withTransaction(q => q.query('FAIL'))), /^Error: FAIL$/);
   assert.deepEqual(releases, [true]);
 });
+test('Unscoped bootstrap transaction preserves existing savepoint recovery contract', async () => {
+  const {db,events}=fixture();
+  await db.withTransaction(async q=>{
+    await q.query('SAVEPOINT existing');
+    await assert.rejects(q.query('FAIL'),/^Error: FAIL$/);
+    await q.query('ROLLBACK TO SAVEPOINT existing');
+    await q.query('WRITE_AFTER_RECOVERY');
+  });
+  assert.equal(events.at(-1)?.sql,'COMMIT');
+  assert.equal(events.filter(e=>e.sql.includes('set_config')).length,0);
+});
 test('Tenant HTTP boundary: verified Auth only, bootstrap outside, public paths excluded and lifetime closed', async () => {
   const config = loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ERP_AUTH_MODE:'supabase_user',SUPABASE_URL:'https://auth.example.test',SUPABASE_ANON_KEY:'synthetic'});
   const db = createDbClient(config); const installed: unknown[]=[]; let lifetime: (()=>boolean)|undefined; let inside=false;

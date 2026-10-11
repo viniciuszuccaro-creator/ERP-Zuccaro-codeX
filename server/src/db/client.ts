@@ -79,7 +79,7 @@ export function createPoolDbClient(pool: Pool): DbClient {
       const tx: TransactionState = { active: true, failed: false, tenant, executor: { query: async (text, params) => {
         ensureTransaction(tx);
         try { return await client.query(text, params); }
-        catch (error) { tx.failed = true; throw error; }
+        catch (error) { if (tenant) tx.failed = true; throw error; }
       } } };
       try {
         ensureAlive(tenant);
