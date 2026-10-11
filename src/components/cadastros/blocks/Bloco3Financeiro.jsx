@@ -12,7 +12,7 @@ import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineC
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import BancoForm from "@/components/cadastros/BancoForm";
-import FormaPagamentoFormCompleto from "@/components/cadastros/FormaPagamentoFormCompleto";
+import FormaPagamentoForm from "@/components/cadastros/FormaPagamentoForm";
 import ConfiguracaoDespesaRecorrenteForm from "@/components/cadastros/ConfiguracaoDespesaRecorrenteForm";
 import TabelaFiscalForm from "@/components/cadastros/TabelaFiscalForm";
 import CondicaoComercialForm from "@/components/cadastros/CondicaoComercialForm";
@@ -117,7 +117,7 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
 
   const tiles = [
     { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['codigo','nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
-    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['codigo','nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
+    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['codigo','nome','tipo','descricao','ativo'],                        f: FormaPagamentoForm },
     { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['codigo','nome','nome_conta','codigo_conta','tipo_conta'], f: PlanoContasForm },
     // codigo/descricao/tipo: auxiliares usam descricao como rótulo (nome pode vir vazio)
     { k: 'CentroCusto',                   t: 'Centros de Custo',        i: Layers,       c: ['codigo','descricao','tipo','nome'],                       f: CentroCustoForm },

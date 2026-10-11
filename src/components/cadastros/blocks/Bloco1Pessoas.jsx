@@ -15,7 +15,7 @@ import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompl
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
-import RepresentanteFormCompleto from "@/components/cadastros/RepresentanteFormCompleto";
+import RepresentanteForm from "@/components/cadastros/RepresentanteForm";
 import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
@@ -133,7 +133,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "" })
     { k: 'Fornecedor',        t: 'Fornecedores',                i: Building2,     c: ['codigo','nome','razao_social','cpf_cnpj','cnpj','categoria','status_fornecedor'], f: CadastroFornecedorCompleto },
     { k: 'Transportadora',    t: 'Transportadoras',             i: Truck,         c: ['codigo','razao_social','nome_fantasia','cnpj','cidade','status'],              f: TransportadoraForm },
     { k: 'Colaborador',       t: 'Colaboradores',               i: User,          c: ['id','nome_completo','cargo','departamento','tipo_contrato','status'], f: ColaboradorForm },
-    { k: 'Representante',     t: 'Representantes & Indicadores',i: Award,         c: ['codigo','id','nome','email','telefone','percentual_comissao'],        f: RepresentanteFormCompleto },
+    { k: 'Representante',     t: 'Representantes & Indicadores',i: Award,         c: ['codigo','id','nome','email','telefone','percentual_comissao'],        f: RepresentanteForm },
     { k: 'ContatoB2B',        t: 'Contatos B2B',                i: MessageCircle, c: ['id','nome','cargo','email','telefone'],                                 f: ContatoB2BForm },
     { k: 'SegmentoCliente',   t: 'Segmentos de Cliente',        i: TrendingUp,    c: ['codigo','nome','descricao','tipo'],                                            f: SegmentoClienteForm },
     { k: 'RegiaoAtendimento', t: 'Regiões de Atendimento',      i: MapPin,        c: ['codigo','nome','descricao','tipo'],                                            f: RegiaoAtendimentoForm },

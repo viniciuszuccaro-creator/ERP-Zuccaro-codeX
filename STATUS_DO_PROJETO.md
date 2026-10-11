@@ -1,3 +1,16 @@
+## CURSOR — consolidação residual + revisão Codex (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| escopo | Blocos→adapters (Rep/FormaPag/Tabela) · EmpresaForm fiscal+webhooks+upload cert |
+| testes | `cadastros-codigo-cobertura` · `cadastros-empresa-edicao*` pass |
+| #280 | tip **`612c2055`** — **sem porte** |
+| #281/#282 | Legado — **monitorar** sem porte |
+| tip runtime | **`91945247`** até CI tip → redeploy |
+| Completo Empresa | keep (status/delete/IA) até adapter final |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog · secret · merge owner |
+
 ## CURSOR — tip 91945247 implantado+homologado (2026-10-11)
 
 | Item | Estado |

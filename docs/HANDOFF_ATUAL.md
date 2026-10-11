@@ -1,3 +1,27 @@
+## CURSOR — consolidação residual + revisão Codex (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | #261 |
+| escopo | Bloco1/2/3 → adapters · RepresentanteForm adapter · EmpresaForm fiscal/webhooks/cert upload |
+| preservação | loadIncomplete · certificado granular · tenant #228 · Completo keep (status/delete/IA) |
+| #280 | tip **`612c2055`** — **sem porte** Marca (list/get mutate, FOR UPDATE, filtro escopo) |
+| #281/#282 | Legado tip `2e8ef5bd` / `a0979808` — **monitorar** sem porte |
+| tip runtime | ainda **`91945247`** até CI tip → redeploy |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI tip → redeploy → homolog · secret restrito · merge owner |
+
+## REVISÃO CODEX — #280 tip 612c2055 + Legado #281/#282 (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| #280 | tip **`612c2055`** · MERGEABLE · base Auth #279 · CI SUCCESS |
+| delta pós-`a76335b7` | `0a54be4a` campos concorrentes+HTTP · `612c2055` filtro escopo canônico |
+| arquivos | `marcaService` · repo · types · `marca-atomicidade.test.ts` (+docs) |
+| porte | **não** — reservado Codex Marca + base Auth |
+| #281 | Legado catálogo tip `2e8ef5bd` · CI SUCCESS · **sem porte** |
+| #282 | Legado cliente persistido tip `a0979808` · CI (backend em curso/ok) · **sem porte** |
+
 ## CURSOR — tip 91945247 implantado (Empresa endereço + adapters) (2026-10-11)
 
 | Item | Valor |

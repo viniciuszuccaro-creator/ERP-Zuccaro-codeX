@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
-import { Loader2, Building2, AlertTriangle } from "lucide-react";
+import { Loader2, Building2, AlertTriangle, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
@@ -17,6 +18,7 @@ import BuscaCEP from "@/components/comercial/BuscaCEP";
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDocument = (value, max = 32) => String(value ?? "").replace(/[^0-9A-Za-z.\-/]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
+const sanitizeUrl = (value, max = 500) => String(value ?? "").replace(/[<>"']/g, "").slice(0, max).trim();
 const toInteger = (value, fallback = 0) => Number.isFinite(Number(value)) ? parseInt(value, 10) : fallback;
 const sanitizeEndereco = (endereco = {}) => ({
   logradouro: sanitizeText(endereco.logradouro, 180),
@@ -57,6 +59,10 @@ const EMPRESA_FORM_DEFAULTS = Object.freeze({
     proximo_numero_nfe: 1,
     autoriza_emissao_producao: false,
   }),
+  urls_webhook_padrao: Object.freeze({
+    pagamento_recebido: "",
+    nfe_emitida: "",
+  }),
 });
 
 function mergeEmpresaFormData(partial) {
@@ -76,12 +82,16 @@ function mergeEmpresaFormData(partial) {
       ...EMPRESA_FORM_DEFAULTS.configuracao_fiscal,
       ...(src.configuracao_fiscal && typeof src.configuracao_fiscal === "object" ? src.configuracao_fiscal : {}),
     },
+    urls_webhook_padrao: {
+      ...EMPRESA_FORM_DEFAULTS.urls_webhook_padrao,
+      ...(src.urls_webhook_padrao && typeof src.urls_webhook_padrao === "object" ? src.urls_webhook_padrao : {}),
+    },
   };
 }
 
 /**
  * V21.1.2 - WINDOW MODE READY
- * Consolida #226 (deep-merge/tenant) + #227 (ID visível, Organizacional, certificado granular).
+ * Consolida #226/#227/#228 + fiscal/webhooks recuperados do Completo (UI visível → payload enviável).
  */
 export default function EmpresaForm({
   empresa,
@@ -152,6 +162,34 @@ export default function EmpresaForm({
     cnpj: z.string().min(11, "CNPJ e obrigatorio")
   });
 
+  const handleCertificadoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!podeEditarCertificado || saveBlocked) {
+      toast.error("Sem permissao ou registro incompleto para alterar certificado.");
+      return;
+    }
+    if (!String(file.name || "").toLowerCase().endsWith(".pfx")) {
+      toast.error("Apenas arquivos .pfx sao aceitos.");
+      return;
+    }
+    try {
+      toast.info("Enviando certificado...");
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData((prev) => ({
+        ...prev,
+        certificado_digital: {
+          ...prev.certificado_digital,
+          arquivo_certificado: sanitizeUrl(file_url, 500),
+          tipo: "A1",
+        },
+      }));
+      toast.success("Certificado enviado.");
+    } catch (err) {
+      toast.error(err?.message || "Falha no upload do certificado.");
+    }
+  };
+
   const buildPayload = () => {
     const payload = {
       ...formData,
@@ -165,27 +203,26 @@ export default function EmpresaForm({
       tipo: sanitizeText(formData.tipo, 40),
       status: sanitizeText(formData.status, 40),
       endereco: sanitizeEndereco(formData.endereco),
+      // Fiscal/webhooks visíveis no form canônico — enviáveis em create e update (sem wipe oculto).
+      configuracao_fiscal: {
+        ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe || "Homologacao", 40),
+        serie_nfe: sanitizeText(formData.configuracao_fiscal?.serie_nfe || "1", 20),
+        proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
+        autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao),
+      },
+      urls_webhook_padrao: {
+        pagamento_recebido: sanitizeUrl(formData.urls_webhook_padrao?.pagamento_recebido, 500),
+        nfe_emitida: sanitizeUrl(formData.urls_webhook_padrao?.nfe_emitida, 500),
+      },
       // Preferir group_id do registro carregado (#228); nunca carimbar empresa operacional.
       group_id: dadosIniciais?.group_id || formData.group_id || groupId,
       grupo_id: dadosIniciais?.grupo_id || dadosIniciais?.group_id || formData.grupo_id || formData.group_id || groupId,
     };
 
-    // Update: não reenviar configuração fiscal oculta — merge no Visualizador preserva a carregada (#227).
-    if (!dadosIniciais?.id) {
-      payload.configuracao_fiscal = {
-        ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe || "Homologacao", 40),
-        serie_nfe: sanitizeText(formData.configuracao_fiscal?.serie_nfe || "1", 20),
-        proximo_numero_nfe: toInteger(formData.configuracao_fiscal?.proximo_numero_nfe, 1),
-        autoriza_emissao_producao: Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao),
-      };
-    } else {
-      delete payload.configuracao_fiscal;
-    }
-
     if (podeEditarCertificado) {
       payload.certificado_digital = {
         tipo: sanitizeText(formData.certificado_digital?.tipo || "A1", 10),
-        arquivo_certificado: sanitizeText(formData.certificado_digital?.arquivo_certificado, 500),
+        arquivo_certificado: sanitizeUrl(formData.certificado_digital?.arquivo_certificado, 500),
         senha_certificado: sanitizeText(formData.certificado_digital?.senha_certificado, 500),
         data_validade: sanitizeText(formData.certificado_digital?.data_validade, 20),
       };
@@ -363,7 +400,71 @@ export default function EmpresaForm({
         </div>
       </div>
 
-      <div className="p-4 bg-amber-50 rounded border border-amber-200">
+      <div className="space-y-3 rounded border border-slate-200 bg-slate-50/80 p-4" data-action="empresa-fiscal-secao">
+        <h4 className="font-semibold text-slate-800">Configuração fiscal</h4>
+        <div>
+          <Label>Ambiente NF-e</Label>
+          <Select
+            value={formData.configuracao_fiscal?.ambiente_nfe || "Homologacao"}
+            onValueChange={(v) => setFormData({ ...formData, configuracao_fiscal: { ...formData.configuracao_fiscal, ambiente_nfe: v } })}
+            disabled={!podeSalvar || saveBlocked}
+          >
+            <SelectTrigger data-permission={permissaoFormulario} data-action="selecionar-ambiente-nfe-empresa" data-sensitive>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Homologacao">Homologacao (testes)</SelectItem>
+              <SelectItem value="Homologação">Homologação (testes)</SelectItem>
+              <SelectItem value="Producao">Producao</SelectItem>
+              <SelectItem value="Produção">Produção</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={Boolean(formData.configuracao_fiscal?.autoriza_emissao_producao)}
+            onChange={(e) => setFormData({
+              ...formData,
+              configuracao_fiscal: {
+                ...formData.configuracao_fiscal,
+                autoriza_emissao_producao: e.target.checked,
+              },
+            })}
+            disabled={!podeSalvar || saveBlocked}
+            data-permission={permissaoFormulario}
+            data-action="autorizar-emissao-producao-empresa"
+          />
+          Autorizar emissao em producao
+        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Série NF-e</Label>
+            <Input
+              value={formData.configuracao_fiscal?.serie_nfe || ""}
+              onChange={(e) => setFormData({ ...formData, configuracao_fiscal: { ...formData.configuracao_fiscal, serie_nfe: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-serie-nfe-empresa"
+              data-sensitive
+            />
+          </div>
+          <div>
+            <Label>Próximo número</Label>
+            <Input
+              type="number"
+              value={formData.configuracao_fiscal?.proximo_numero_nfe ?? 1}
+              onChange={(e) => setFormData({ ...formData, configuracao_fiscal: { ...formData.configuracao_fiscal, proximo_numero_nfe: Number(e.target.value) } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-proximo-numero-nfe-empresa"
+              data-sensitive
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 bg-amber-50 rounded border border-amber-200" data-action="empresa-certificado-secao">
         <h4 className="font-semibold mb-3">Certificado Digital</h4>
         {!podeEditarCertificado && (
           <p className="text-xs text-amber-800 mb-3">
@@ -391,6 +492,34 @@ export default function EmpresaForm({
           </div>
         </div>
 
+        <div className="border border-dashed rounded-lg p-4 text-center mb-3">
+          <Upload className="w-6 h-6 mx-auto mb-2 text-slate-400" />
+          <input
+            type="file"
+            accept=".pfx"
+            onChange={handleCertificadoUpload}
+            className="hidden"
+            id="upload-cert-empresa-form"
+            disabled={!podeEditarCertificado || saveBlocked}
+          />
+          <label htmlFor="upload-cert-empresa-form" className="inline-block">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!podeEditarCertificado || saveBlocked}
+              data-permission={permissaoCertificado}
+              data-action="upload-certificado-empresa"
+              onClick={() => document.getElementById("upload-cert-empresa-form")?.click()}
+            >
+              Selecionar certificado (.pfx)
+            </Button>
+          </label>
+          {formData.certificado_digital?.arquivo_certificado && (
+            <p className="text-xs text-green-700 mt-2">Certificado carregado</p>
+          )}
+        </div>
+
         {alertaCertificado && (
           <Alert className={alertaCertificado.tipo === "error" ? "border-red-200 bg-red-50" : "border-orange-200 bg-orange-50"}>
             <AlertTriangle className="w-4 h-4" />
@@ -399,6 +528,34 @@ export default function EmpresaForm({
             </AlertDescription>
           </Alert>
         )}
+      </div>
+
+      <div className="space-y-3 rounded border border-slate-200 bg-slate-50/80 p-4" data-action="empresa-webhooks-secao">
+        <h4 className="font-semibold text-slate-800">Webhooks padrão</h4>
+        <div>
+          <Label>Pagamento recebido</Label>
+          <Input
+            value={formData.urls_webhook_padrao?.pagamento_recebido || ""}
+            onChange={(e) => setFormData({ ...formData, urls_webhook_padrao: { ...formData.urls_webhook_padrao, pagamento_recebido: e.target.value } })}
+            placeholder="https://api.exemplo.com/webhook/pagamento"
+            disabled={!podeSalvar || saveBlocked}
+            data-permission={permissaoFormulario}
+            data-action="editar-webhook-pagamento-empresa"
+            data-sensitive
+          />
+        </div>
+        <div>
+          <Label>NF-e emitida</Label>
+          <Input
+            value={formData.urls_webhook_padrao?.nfe_emitida || ""}
+            onChange={(e) => setFormData({ ...formData, urls_webhook_padrao: { ...formData.urls_webhook_padrao, nfe_emitida: e.target.value } })}
+            placeholder="https://api.exemplo.com/webhook/nfe"
+            disabled={!podeSalvar || saveBlocked}
+            data-permission={permissaoFormulario}
+            data-action="editar-webhook-nfe-empresa"
+            data-sensitive
+          />
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">

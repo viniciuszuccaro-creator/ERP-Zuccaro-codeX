@@ -412,7 +412,7 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /uniqueKey: `Comercial\.Cliente\.detalhes\.\$\{item\.id\}`/);
 });
 
-test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, sem wipe fiscal', async () => {
+test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular, fiscal/webhooks visíveis', async () => {
   const source = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   assert.match(source, /mergeEmpresaFormData/);
   assert.match(source, /loadIncomplete/);
@@ -425,11 +425,15 @@ test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular
   assert.match(source, /BuscaCEP/);
   assert.match(source, /sanitizeEndereco/);
   assert.match(source, /empresa-endereco-secao/);
+  assert.match(source, /empresa-fiscal-secao/);
+  assert.match(source, /empresa-webhooks-secao/);
+  assert.match(source, /urls_webhook_padrao/);
+  assert.match(source, /configuracao_fiscal:/);
   assert.match(source, /hasCadastroEntityPermission\("Empresa"/);
   assert.match(source, /Cadastros\.Organizacional\.editar/);
   assert.match(source, /Cadastros\.Empresa\.Certificado\.editar/);
-  assert.match(source, /!dadosIniciais\?\.id/);
-  assert.match(source, /delete payload\.configuracao_fiscal/);
+  // Fiscal visível → payload envia create/update (não delete oculto).
+  assert.doesNotMatch(source, /delete payload\.configuracao_fiscal/);
   assert.doesNotMatch(source, /empresa_id: contexto === ["']empresa["']/);
   assert.doesNotMatch(source, /Cadastros\.Empresa\.salvar/);
 });

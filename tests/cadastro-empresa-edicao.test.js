@@ -78,7 +78,7 @@ test('Empresa e Grupo sao mestres do tenant; vinculo string autoriza so empresa 
   }, { id: 'empresa-a', group_id: 'grupo-a' }), false);
 });
 
-test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal oculta', async () => {
+test('Formulario usa gate efetivo e envia fiscal/webhooks visiveis no create e update', async () => {
   const form = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   const block = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
@@ -104,7 +104,10 @@ test('Formulario usa gate efetivo e update nao reenvia configuracao fiscal ocult
   assert.doesNotMatch(form, /empresa_id: contexto === ["']empresa["']/);
   assert.match(form, /dadosIniciais\?\.group_id \|\| formData\.group_id \|\| groupId/);
   assert.match(form, /dadosIniciais\?\.empresa_id/);
-  assert.match(form, /if \(!dadosIniciais\?\.id\) \{\s*payload\.configuracao_fiscal/);
+  assert.match(form, /empresa-fiscal-secao/);
+  assert.match(form, /empresa-webhooks-secao/);
+  assert.match(form, /urls_webhook_padrao/);
+  assert.doesNotMatch(form, /delete payload\.configuracao_fiscal/);
   assert.match(form, /Cadastros\.Empresa\.Certificado\.editar/);
   assert.match(form, /disabled=\{!podeEditarCertificado/);
   assert.doesNotMatch(form, /Cadastros\.Empresa\.certificado"/);

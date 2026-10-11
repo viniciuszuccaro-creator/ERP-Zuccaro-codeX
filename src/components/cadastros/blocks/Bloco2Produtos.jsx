@@ -17,7 +17,7 @@ import ServicoForm from "@/components/cadastros/ServicoForm";
 import SetorAtividadeForm from "@/components/cadastros/SetorAtividadeForm";
 import GrupoProdutoForm from "@/components/cadastros/GrupoProdutoForm";
 import MarcaForm from "@/components/cadastros/MarcaForm";
-import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompleto";
+import TabelaPrecoForm from "@/components/cadastros/TabelaPrecoForm";
 import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
@@ -156,7 +156,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
     { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['codigo','nome_grupo','natureza','nome'],        form: GrupoProdutoForm },
     { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['codigo','nome_marca','nome','pais_origem','categoria'],  form: MarcaForm },
     // Campo canônico é codigo_tabela_legado (não codigo numérico MASTER_CODE)
-    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo_tabela_legado','nome','tipo','ativo'],               form: TabelaPrecoFormCompleto },
+    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo_tabela_legado','nome','tipo','ativo'],               form: TabelaPrecoForm },
     { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['codigo','nome','descricao','ativo'],                     form: KitProdutoForm },
     { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['codigo','nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },

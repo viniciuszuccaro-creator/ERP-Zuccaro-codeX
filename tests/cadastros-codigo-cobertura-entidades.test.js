@@ -168,7 +168,8 @@ test('FormaPagamentoForm é adapter canônico do Completo (sem store paralelo)',
   assert.match(simple, /FormaPagamentoFormCompleto/);
   assert.match(simple, /formaPagamento \|\| forma \|\| item/);
   assert.doesNotMatch(simple, /createTable|FormaPagamentoStore/);
-  assert.match(bloco3, /FormaPagamentoFormCompleto/);
+  assert.match(bloco3, /FormaPagamentoForm/);
+  assert.doesNotMatch(bloco3, /FormaPagamentoFormCompleto/);
 });
 
 test('TabelaPrecoForm é adapter canônico do Completo (sem store paralelo)', async () => {
@@ -177,7 +178,19 @@ test('TabelaPrecoForm é adapter canônico do Completo (sem store paralelo)', as
   assert.match(simple, /TabelaPrecoFormCompleto/);
   assert.match(simple, /tabela \|\| item \|\| data/);
   assert.doesNotMatch(simple, /createTable|TabelaPrecoStore/);
-  assert.match(bloco2, /TabelaPrecoFormCompleto/);
+  assert.match(bloco2, /TabelaPrecoForm/);
+  assert.doesNotMatch(bloco2, /TabelaPrecoFormCompleto/);
+});
+
+test('RepresentanteForm é adapter canônico do Completo (sem store paralelo)', async () => {
+  const simple = await readFile(new URL('../src/components/cadastros/RepresentanteForm.jsx', import.meta.url), 'utf8');
+  const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
+  assert.match(simple, /RepresentanteFormCompleto/);
+  assert.match(simple, /representante \|\| item \|\| data/);
+  assert.match(simple, /isSelfManagedCadastro = true/);
+  assert.doesNotMatch(simple, /createTable|RepresentanteStore/);
+  assert.match(bloco1, /RepresentanteForm/);
+  assert.doesNotMatch(bloco1, /RepresentanteFormCompleto/);
 });
 
 test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com id', async () => {
