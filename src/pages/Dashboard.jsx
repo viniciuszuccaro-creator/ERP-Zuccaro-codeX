@@ -660,9 +660,9 @@ export default function Dashboard() {
       value: `${taxaConversao}%`,
       subtitle: "vendas/clientes",
       icon: TrendingUp,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
       link: createPageUrl("Comercial"),
       drillDown: () => handleDrillDown(createPageUrl("Comercial"))
     }

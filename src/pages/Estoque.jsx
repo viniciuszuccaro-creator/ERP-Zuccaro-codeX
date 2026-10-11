@@ -443,7 +443,7 @@ export default function Estoque() {
                   height: 600
                 });
               }}
-              className="bg-purple-600 hover:bg-purple-700 mb-2"
+              className="bg-blue-600 hover:bg-blue-700 mb-2"
               disabled={!contextoValido || !canTransferirEstoque}
               data-permission="Estoque.Transferencias.criar"
               data-action="Estoque.transferir_entre_empresas"

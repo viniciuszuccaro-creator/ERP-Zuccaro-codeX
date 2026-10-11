@@ -268,9 +268,9 @@ export default function Empresas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Filiais</p>
-                <p className="text-2xl font-bold text-purple-600">{filiais}</p>
+                <p className="text-2xl font-bold text-blue-600">{filiais}</p>
               </div>
-              <Building2 className="w-8 h-8 text-purple-400 opacity-50" />
+              <Building2 className="w-8 h-8 text-blue-400 opacity-50" />
             </div>
           </CardContent>
         </Card>
