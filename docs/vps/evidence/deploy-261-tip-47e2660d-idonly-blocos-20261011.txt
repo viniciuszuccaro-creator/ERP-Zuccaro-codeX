@@ -1,0 +1,16 @@
+# Evidência sanitizada — tip 47e2660d implantado+homolog
+# utc=2026-10-11T11:56Z
+#
+# tip=47e2660d fix(cadastros): ID técnico residual Bloco3–6 e RotaPadrao
+# inclui tip cbfce9e4 C360 Abrir cadastro + probe
+# asset=index-BVC3f2V2.js
+# rollback=pre-spa-login-20261011-115546
+# MERGE_SHA8=47e2660d · STAMP=20261011-115546
+#
+# CI tip 47e2660d: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-47e2660d.json
+#
+# Tip pendente CI/redeploy: 4adb7e21 (FormaPagamento adapter)
+# Divisão Codex: Marca atomicidade + Auth/RLS intocados
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

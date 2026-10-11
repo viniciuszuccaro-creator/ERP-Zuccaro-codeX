@@ -1,15 +1,28 @@
+## CURSOR — tip 47e2660d implantado (idOnly Bloco3–6) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`47e2660d`** · asset `index-BVC3f2V2.js` · CI SUCCESS · homolog fail_count=0 |
+| rollback | `pre-spa-login-20261011-115546` |
+| tip pendente | **`4adb7e21`** FormaPagamento adapter · CI |
+| tip anterior | `cbfce9e4` · `index-CVJVqGZW.js` |
+| divisão | Cursor UI · Codex Marca atomicidade + Auth/RLS |
+| BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
+| evidência | `deploy-261-tip-47e2660d-idonly-blocos-20261011.txt` |
+| próxima | CI `4adb7e21` → redeploy · consolidação residual |
+
 ## CURSOR — tip cbfce9e4 implantado (C360 + probe) (2026-10-11)
 
 | Item | Valor |
 |---|---|
 | tip implantado | **`cbfce9e4`** · asset `index-CVJVqGZW.js` · CI SUCCESS · homolog fail_count=0 |
 | rollback | `pre-spa-login-20261011-115310` |
-| tip pendente | **`47e2660d`** idOnly Bloco3–6 · CI |
-| consolidação | FormaPagamentoForm → Completo (adapter) |
+| tip pendente | supersedido por **`47e2660d`** implantado |
+| consolidação | FormaPagamentoForm → Completo (adapter tip `4adb7e21`) |
 | divisão | Cursor UI · Codex Marca atomicidade + Auth/RLS |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |
 | evidência | `deploy-261-tip-cbfce9e4-c360-probe-20261011.txt` |
-| próxima | CI `47e2660d` → redeploy · consolidação residual |
+| próxima | tip `47e2660d` implantado (bloco acima) |
 
 ## CURSOR — idOnly residual Bloco3–6 (2026-10-11)
 

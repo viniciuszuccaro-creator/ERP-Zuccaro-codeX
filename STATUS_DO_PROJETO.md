@@ -1,3 +1,16 @@
+## CURSOR — tip 47e2660d implantado+homologado (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`47e2660d`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-BVC3f2V2.js` · rollback `pre-spa-login-20261011-115546` |
+| **conteúdo** | idOnly Bloco3–6 · RotaPadrao codigo-registro · grades `id` |
+| **evidência** | `deploy-261-tip-47e2660d-idonly-blocos-20261011.txt` |
+| tip pendente | **`4adb7e21`** FormaPagamento adapter (CI) |
+| tip anterior | `cbfce9e4` C360+probe implantado |
+| BLOCKED | usuário restrito |
+| próxima | CI `4adb7e21` → redeploy · consolidação residual |
+
 ## CURSOR — tip cbfce9e4 implantado+homologado (2026-10-11)
 
 | Item | Estado |
