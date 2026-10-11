@@ -1443,3 +1443,6 @@ Pacote seguinte: aplicar somente achados reproduzíveis das revisões289/290/291
 
 
 Fechamento factual: #291 HEAD9c6fdfe9956c9faa791b333cfe0e651e213c1556 CI3822/run38148084260 SUCCESS frontend/backend; logs114495556142 comprovam R40CRM3PASS/0FAIL/0SKIP, LEGACY_CLIENT17/0/0, IDENTITY7/0/0, PRODUCT3/0/0, TENANT_CONTEXT4/0/0 e MARCA_ATOMICITY2/0/0. Cursor291 comentário6110157133 recusou iniciar revisão por spend limit/usage-based billing. Bloqueio externo somente de revisão/integração; não implica autorização de merge/DEV. Lote respostas tardias20/0/0, lint/buildSPA/audit/diffPASS, backendinalterado. Responsável Codex; próxima ação operacional depende de restaurar disponibilidade do revisor independente e parecer dos SHAs exatos; fila de implementação preservada nos documentos.
+
+
+Prova comportamental adicional do mesmo lote: HTTP Central com QueryClient/QueryObserver reais e transporte que deliberadamente ignora AbortSignal; retorno tardio após troca de grupo/empresa/ator/token não reaparece no observer/cache. Focados21PASS/0FAIL/0SKIP, lint/diffPASS. CI3824/run38148438733SUCCESS corresponde ao SHA0200ce75 anterior; novo teste exige CI/revisão no HEAD atualizado, não reutilizar selo antigo. Código runtime não mudou neste complemento. PR292 aberta/draft, base291 preservada.
