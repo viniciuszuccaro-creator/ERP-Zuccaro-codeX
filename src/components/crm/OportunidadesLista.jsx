@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,12 +20,21 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
+  const permissionRef = useRef(hasPermission);
+  permissionRef.current = hasPermission;
+  const canWrite = (action) => permissionRef.current("CRM", null, action)
+    || permissionRef.current("CRM", "Oportunidade", action);
+  const assertWrite = (action, completed = false) => {
+    if (!canWrite(action)) throw new Error(completed
+      ? "Permissão alterada durante a gravação. Ela pode ter sido concluída; consulte o registro antes de tentar novamente."
+      : "Sem permissão para salvar oportunidade.");
+  };
   const { createInContext, updateInContext, empresaAtual } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [convertendo, setConvertendo] = useState(null);
 
-  const canCreate = hasPermission("CRM", null, "criar") || hasPermission("CRM", "Oportunidade", "criar");
-  const canEdit = hasPermission("CRM", null, "editar") || hasPermission("CRM", "Oportunidade", "editar");
+  const canCreate = canWrite("criar");
+  const canEdit = canWrite("editar");
   const canConvert = hasPermission("CRM", "Oportunidade", "converter")
     || hasPermission("CRM", "Oportunidade", "aprovar")
     || canEdit;
@@ -46,11 +55,16 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext("Oportunidade", {
-      ...data,
-      quantidade_interacoes: 0,
-      dias_sem_contato: 0,
-    }),
+    mutationFn: async (data) => {
+      assertWrite("criar");
+      const result = await createInContext("Oportunidade", {
+        ...data,
+        quantidade_interacoes: 0,
+        dias_sem_contato: 0,
+      });
+      assertWrite("criar", true);
+      return result;
+    },
     onSuccess: () => {
       invalidate();
       toast.success("Oportunidade salva");
@@ -88,7 +102,9 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
         windowMode: true,
         onSubmit: async (data) => {
           if (oportunidade?.id) {
+            assertWrite("editar");
             await updateInContext("Oportunidade", oportunidade.id, data);
+            assertWrite("editar", true);
             invalidate();
             toast.success("Oportunidade atualizada");
             return;
