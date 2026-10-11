@@ -69,3 +69,29 @@ As contagens nao provam autorizacao efetiva. Homologar Auth somente com token si
 ## Criterio de parada
 
 Parar sem improvisar se SHA/imagem divergirem, backup falhar, migration estiver duplicada, houver migration >022 inesperada, E2E tiver zero testes/fail/skip, canario/meta divergir, smoke cross-tenant/RBAC/Auth falhar ou rollback nao estiver preservado.
+## Preparação candidata CRM → Pedido (2026-10-11, substitui pressupostos históricos para este pacote)
+
+A composição #296/#297 e o endurecimento #298 são candidatos empilhados, não main implantada. A main conferida é baba91a6b0d5d626edd607b8cd3522927e1904ab. Não construir/prometer imagem oficial desses HEADs antes da revisão independente e integração aprovada. Os estados de setembro acima são históricos e não comprovam o destino atual.
+
+### Contrato de passagem do pacote
+
+| Gate | Evidência necessária | Estado do pacote |
+|---|---|---|
+| Código | árvores iguais local/remoto; CI do SHA final; parecer Cursor da composição inteira | CI do #298 em execução; revisão não aprovada |
+| Destino | identidade de banco/schema esperados; session_user=current_user; LOGIN sem SUPERUSER/BYPASSRLS | precisa de prova privada no destino; SET ROLE de fixture não substitui |
+| Schema CRM | preflight existente: ledger040, colunas, trigger, vínculo único, policies, RLS/FORCE e ACL de oportunidade e sequência | diagnóstico somente leitura; ready não autoriza ativação |
+| Dependências Pedido | Pedido/itens/histórico/audit, Orçamento/itens, ClienteEmpresa, ProdutoEmpresa, Unidade, Condição, Tabela, Local e Obra; grants/policies efetivos no executor real | preflight CRM sozinho NÃO cobre estas dependências |
+| Auth/RBAC | Bearer real proprietário e usuário restrito; CRM.oportunidades.aprovar, Comercial.pedido.converter-pedido/visualizar, Comercial.orcamento.visualizar; empresa externa negada | testes sintéticos não homologam Auth/VPS |
+| Backup | arquivo privado recuperável, hash, leitura do archive e restauração isolada reconciliada antes da mudança | pendente no destino; preservar originais/rollbacks |
+| Canário | API/SPA do mesmo MERGE_SHA, IDs/digests/labels registrados; readiness e contrato funcional | executar só após gates; manter porta oficial até promoção |
+| Reversão | imagem anterior preservada e compatibilidade do schema comprovada; IDs sintéticos conhecidos; nenhuma exclusão ampla | rollback de imagem separado de schema/dados |
+
+### Aceite integrado no destino isolado
+
+Usar somente identidades/registros sintéticos autorizados, fora de GitHub quando contiverem credenciais. Confirmar Orçamento original ativo e Ganho vinculado; conversão cria um Pedido e mantém preços, itens, IDs e empresa fiscal. Repetição idêntica retorna mesmo Pedido; payload divergente409; concorrência preserva unicidade. Falha de auditoria após criação reverte registro, itens, histórico, audit e numeração; retry conserva o contrato. Cancelamento concorrente do Orçamento não cria Pedido.
+
+Produto mestre de Grupo exige vínculo empresarial ativo/habilitado. Testar desabilitação deste vínculo; Local/Obra de outro Grupo; proprietário na visão Grupo com empresa-alvo explícita; usuário restrito sem aprovação/conversão; troca de empresa/sessão durante consulta e submissão. Resultado tardio não confirma sucesso no contexto novo. No modal, Entrega exige Local e data/hora; não enviar preços/itens/actor/tenant fabricados no comando.
+
+A rota candidata é /api/v1/oportunidades/:id/converter-orcamento-pedido e usa os serviços/repositórios existentes no mesmo executor. ENABLE_CRM_HTTP e VITE_ERP_HTTP_CLIENTE_360 continuam desligáveis e não foram alterados na VPS por esta preparação. Modo memória da operação nova retorna503 pré-escrita; modo legado permanece disponível e não é declarado atômico. Não aplicar automaticamente 043 ou afrouxar026, nem ativar estoque/providers/canais como efeito desta entrega.
+
+Próximo responsável Codex: verificar dependências físicas/grants com identidade restrita em destino isolado e preparar evidência privada de backup/restauração; integração só após revisão independente. O bot reportou revisão desabilitada no repositório em #298, comentário6115199925; isso bloqueia revisão, não desenvolvimento independente. Nenhuma homologação operacional ou importação real declarada.
