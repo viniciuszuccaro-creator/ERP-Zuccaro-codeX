@@ -6,7 +6,7 @@
 | **asset** | `index-CaMsSipy.js` · rollback `pre-spa-login-20261011-122739` |
 | **conteúdo** | adapters canônicos · EmpresaForm fiscal/webhooks/status/delete · Completo adapter |
 | **evidência** | `deploy-261-tip-27224f87-consolidacao-adapters-20261011.txt` |
-| #280–#285 | **sem porte** · #285 tip `407b04fe` (Legado+CRM/Auth stack) |
+| #280–#286 | **sem porte** · #285 `1be11f74` · #286 `32dd1355` Legado Produto |
 | BLOCKED | secret restrito |
 | próxima | secret restrito · merge owner |
 
