@@ -213,8 +213,8 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip policy CRM · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`58766d82`** · `index-iZ42G-Qb.js` · código ≡ runtime (docs tip posterior OK) |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `58766d82` |
+| SHA implantado | **`164e6852`** · `index-Bm9XJE42.js` · código ≡ runtime (docs tip posterior OK) |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `164e6852` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** · policy shared API · HTTP canônico server **pendente Codex** · sem CRM paralelo |
 | próxima funcional | grade Representante/Colaborador · secret restrito · merge owner #261→main |
