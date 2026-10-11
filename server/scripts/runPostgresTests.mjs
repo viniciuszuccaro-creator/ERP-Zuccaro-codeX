@@ -6,6 +6,7 @@ const suites = [
   ['R01AUTH', 'tests/runtime01.test.ts'],
   ['LEGACY_CLIENT', 'tests/runtime04.test.ts'],
   ['LEGACY_IDENTITY', 'tests/legacy-identity.test.ts'],
+  ['LEGACY_PRODUCT', 'tests/legacy-product.test.ts'],
   ['R08B', 'tests/runtime08-postgres-e2e.test.ts'],
   ['R08C', 'tests/runtime08c-orcamento-postgres-e2e.test.ts'],
   ['R09', 'tests/runtime09-pedido-postgres-e2e.test.ts'],
