@@ -32,6 +32,7 @@ type CrudLike = {
 export type ApiDeps = {
   config: AppConfig;
   db: DbClient;
+  authDb?: Pick<DbClient, 'query'>;
   marcaService: MarcaService;
   unidadeService: TenantCrudService<any, any, any>;
   grupoProdutoService: TenantCrudService<any, any, any>;
@@ -1228,7 +1229,7 @@ export function createApiRouter(deps: ApiDeps) {
     try {
       const session = await createPasswordAuthSession({
         config: deps.config,
-        db: deps.db,
+        db: deps.authDb ?? deps.db,
         body: req.body,
       });
       res.setHeader('Cache-Control', 'no-store');
@@ -1260,7 +1261,7 @@ export function createApiRouter(deps: ApiDeps) {
     try {
       const session = await resolveBearerAuthSession({
         config: deps.config,
-        db: deps.db,
+        db: deps.authDb ?? deps.db,
         authorizationHeader: req.header('authorization') || undefined,
       });
       res.setHeader('Cache-Control', 'no-store');
