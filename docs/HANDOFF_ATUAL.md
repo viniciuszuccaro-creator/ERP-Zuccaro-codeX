@@ -1,3 +1,16 @@
+## CURSOR — adapters Cliente/Produto Completo (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| branch | #261 |
+| escopo | `ProdutoFormCompleto` → V22 · `ClienteFormCompleto`+`ClienteForm` → `CadastroClienteCompleto` |
+| tip | **`7238167d`** (base Empresas **`3b6ec581`**) |
+| testes | cobertura + produto-tipo-policy + empresas-dialog PASS |
+| tip runtime | ainda **`27224f87`** até CI tip → redeploy |
+| #280–#292 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — Empresas página → EmpresaForm canônico (2026-10-11)
 
 | Item | Valor |
@@ -6,6 +19,7 @@
 | escopo | `Empresas.jsx` dialog → `EmpresaForm` · tipo Matriz/Filial+matriz+contato no canônico · `FilialForm` adapter |
 | preservado | lista/KPIs/visão CNPJ origem · delete via `_action` · Bloco5 EmpresaForm |
 | testes | `empresas-dialog-edit` · `cadastros-codigo-cobertura` · `cadastros-empresa-edicao*` · http-tenant Empresas PASS |
+| tip | **`3b6ec581`** |
 | #280–#292 | tips inalterados · **sem porte** · painel C360 ainda divergente |
 | tip runtime | ainda **`27224f87`** até CI tip → redeploy |
 | BLOCKED | `ERP_DEV_LOGIN_RESTRICTED_*` |

@@ -1,8 +1,20 @@
+## CURSOR — adapters Cliente/Produto Completo (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip | pós-`3b6ec581` (este lote) · CI pendente |
+| escopo | ProdutoFormCompleto→V22 · ClienteForm(Completo)→CadastroClienteCompleto |
+| tip Empresas | **`3b6ec581`** |
+| testes | cobertura + produto-tipo-policy PASS |
+| tip runtime | ainda **`27224f87`** até CI tip → redeploy |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — Empresas → EmpresaForm canônico + Filial adapter (2026-10-11)
 
 | Item | Estado |
 |---|---|
-| tip | pós-`35fbce38` (este lote) · CI pendente |
+| tip | **`3b6ec581`** · CI pendente/em curso |
 | escopo | `Empresas.jsx` sem form paralelo · `EmpresaForm` tipo/matriz/contato · `FilialForm` adapter |
 | testes | empresas-dialog-edit + cobertura + empresa-edicao* + http-tenant PASS |
 | tip runtime | ainda **`27224f87`** até CI tip → redeploy |
