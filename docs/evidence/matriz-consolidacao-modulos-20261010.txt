@@ -11,8 +11,8 @@
 | ChatbotIntentsForm | ChatbotIntentForm | adapter já consolidado | **keep** (adapter) |
 | ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
 | CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade | funil/scoring/IA | **keep both curto** · HTTP schema **BLOCKED** Codex · C360 usa adaptador legado (opção B) |
-| SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA | conferência+audit | keep both curto prazo |
-| ComprovanteDigital × ComprovanteEntregaDigital | diff payload pendente | POD | keep both |
+| SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA (tile IA) · SeparacaoConferencia (fluxo clássico) | IA: scan+rota+audit; clássico: conferência sem IA | **keep both** — capacidades distintas; não unificar sem portar scan/rota |
+| ComprovanteDigital × ComprovanteEntregaDigital | ambos em Expedicao.jsx | Digital: dialog entrega+foto; EntregaDigital: pedido+GPS+baixa estoque+audit | **keep both** — payloads/efeitos distintos (estoque/GPS só no EntregaDigital) |
 | Dashboard × DashboardCorporativo | escopos distintos | KPIs empresa vs grupo | keep both |
 | HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |
 
