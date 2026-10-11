@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-11T13:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`fbcd2ca2`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#284 | tips inalterados · CI SUCCESS · **sem porte** |
+| #285 **novo** | tip `407b04fe` · composição Legado+CRM/040–043/Auth · CI SUCCESS · **sem porte** |
+| RUNNING | nenhum |
+| porte | nenhum (Legado/Auth/CRM HTTP) |
+
 ## REVISÃO CODEX — timer 2026-10-11T13:15Z
 
 | Item | Valor |
