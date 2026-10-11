@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-11T14:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`4dbdf629`** (runtime `27224f87`) · main `baba91a6` |
+| #280–#288 | tips inalterados · **sem porte** |
+| #289 **novo** | tip `a88b70b8` · CRM preflight LOGIN restrito · CI SUCCESS · base Marca · **sem porte** |
+| #290 **novo** | tip `e5b7bd7b` · composição Comercial+Legado · CI SUCCESS · **sem porte** |
+| RUNNING | nenhum |
+| porte | nenhum (CRM/Auth/Legado/clienteService/produtoService) |
+
 ## REVISÃO CODEX — timer 2026-10-11T14:15Z
 
 | Item | Valor |
