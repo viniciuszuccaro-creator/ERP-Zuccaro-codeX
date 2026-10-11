@@ -71,6 +71,7 @@ import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 export type CreateAppOptions = {
   config: AppConfig;
   db: DbClient;
+  authDb?: Pick<DbClient, 'query'>;
   useMemory?: boolean;
   /** Optional preconfigured tenant guard (tests). */
   tenantGuard?: InMemoryTenantGuard | PostgresTenantGuard;
@@ -91,6 +92,7 @@ export type CreateAppOptions = {
 
 export function createApp(options: CreateAppOptions) {
   const { config, db } = options;
+  const authDb = options.authDb ?? db;
   const useMemory = options.useMemory === true || !config.databaseUrl;
 
   const auditRepo = useMemory ? new InMemoryAuditRepository() : new PostgresAuditRepository(db);
@@ -249,7 +251,7 @@ export function createApp(options: CreateAppOptions) {
       throw new Error('Supabase Auth configuration missing');
     }
     app.use(createSupabaseAuthMiddleware({
-      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db, fetchImpl: options.authFetchImpl,
+      supabaseUrl: config.supabaseUrl, anonKey: config.supabaseAnonKey, db: authDb, fetchImpl: options.authFetchImpl,
     }));
   }
 
@@ -270,6 +272,7 @@ export function createApp(options: CreateAppOptions) {
   app.use(createApiRouter({
     config,
     db,
+    authDb,
     marcaService,
     unidadeService,
     grupoProdutoService,

@@ -121,6 +121,37 @@ export function createDbClient(config: AppConfig): DbClient {
   return createPoolDbClient(pool);
 }
 
+/** Two explicit connections; only verified Auth bootstrap can use authDb. No role is created or changed. */
+export async function createRuntimeDbClients(config: AppConfig, factory = createDbClient) {
+  const db = factory(config);
+  if (!config.authDatabaseUrl) return { db, authDb: db, end: () => db.end() };
+  let authDb: DbClient | undefined;
+  const close = async () => { await Promise.allSettled([db.end(), ...(authDb ? [authDb.end()] : [])]); };
+  try {
+    authDb = factory({ ...config, databaseUrl: config.authDatabaseUrl, authDatabaseUrl: undefined });
+    type Identity = { database: string; schema: string; address: string | null; port: number | null;
+      rolsuper: boolean; rolbypassrls: boolean; login_super: boolean; login_bypass: boolean };
+    const sql = `SELECT current_database() AS database, current_schema() AS schema,
+      inet_server_addr()::text AS address, inet_server_port() AS port,
+      r.rolsuper,r.rolbypassrls,s.rolsuper AS login_super,s.rolbypassrls AS login_bypass
+      FROM pg_roles r JOIN pg_roles s ON s.rolname=session_user WHERE r.rolname=current_user`;
+    const [data, bootstrap] = await Promise.all([db.query<Identity>(sql), authDb.query<Identity>(sql)]);
+    const row = data.rows[0]; const auth = bootstrap.rows[0];
+    if (!row || row.rolsuper !== false || row.rolbypassrls !== false || row.login_super !== false || row.login_bypass !== false) {
+      throw new Error('DATA_DATABASE_ROLE_UNSAFE');
+    }
+    if (!auth || !row.database || !row.schema || row.database !== auth.database || row.schema !== auth.schema
+      || !row.address || !auth.address || row.address !== auth.address || !row.port || row.port !== auth.port) {
+      throw new Error('AUTH_DATA_DATABASE_IDENTITY_MISMATCH');
+    }
+    return { db, authDb, end: close };
+  } catch {
+    await close();
+    // Do not forward driver errors containing private connection details to startup logs.
+    throw new Error('AUTH_DATA_DATABASE_PREFLIGHT_FAILED');
+  }
+}
+
 function createNullDbClient(): DbClient {
   const notConfigured = () => {
     throw new Error('DATABASE_URL is not configured');

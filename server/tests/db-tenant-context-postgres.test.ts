@@ -2,11 +2,29 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
-import { createPoolDbClient } from '../src/db/client.ts';
+import { createPoolDbClient, createRuntimeDbClients } from '../src/db/client.ts';
+import { loadConfig } from '../src/config/env.ts';
 import { assertCrmIsolatedUrl } from './helpers/crmPostgresFixture.ts';
 
 test('Tenant runtime PostgreSQL: refuses unvalidated destination', () => {
   assert.throws(() => assertCrmIsolatedUrl(undefined));
+});
+if (process.env.DATABASE_URL) test('Auth/data PostgreSQL: restricted login startup, matching target and separate connections',async()=>{
+  assertCrmIsolatedUrl(process.env.DATABASE_URL);
+  const suffix=randomUUID().replaceAll('-','');const role=`data_login_${suffix}`;const schema=`data_login_${suffix}`;
+  const admin=new pg.Pool({connectionString:process.env.DATABASE_URL});
+  let clients:Awaited<ReturnType<typeof createRuntimeDbClients>>|undefined;
+  try{
+    const password=randomUUID(); // Ephemeral synthetic fixture only, never logged or persisted.
+    await admin.query(`CREATE ROLE ${role} LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD '${password}'; CREATE SCHEMA ${schema}; GRANT USAGE ON SCHEMA ${schema} TO ${role}`);
+    const dataUrl=new URL(process.env.DATABASE_URL!);dataUrl.username=role;dataUrl.password=password;dataUrl.searchParams.set('options',`-c search_path=${schema}`);
+    const authUrl=new URL(process.env.DATABASE_URL!);authUrl.searchParams.set('options',`-c search_path=${schema}`);
+    const config=loadConfig({NODE_ENV:'test',ERP_ENV:'dev',ERP_AUTH_MODE:'supabase_user',SUPABASE_URL:'https://auth.example.test',SUPABASE_ANON_KEY:'synthetic',DATABASE_URL:dataUrl.toString(),AUTH_DATABASE_URL:authUrl.toString(),ENABLE_TENANT_CONTEXT:'true'});
+    clients=await createRuntimeDbClients(config);assert.notEqual(clients.db,clients.authDb);
+    const login=await clients.db.query<{name:string}>('SELECT session_user AS name');assert.equal(login.rows[0].name,role);
+    await assert.rejects(createRuntimeDbClients({...config,databaseUrl:authUrl.toString()}),/PREFLIGHT_FAILED/);
+    assert.equal((await clients.db.query('SELECT 1')).rows.length,1);
+  }finally{await clients?.end();await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE; DROP ROLE IF EXISTS ${role}`);await admin.end();}
 });
 if (process.env.DATABASE_URL) test('Tenant runtime PostgreSQL: NOBYPASS isolation, concurrency, rollback and recycled connection', async () => {
   assertCrmIsolatedUrl(process.env.DATABASE_URL);
