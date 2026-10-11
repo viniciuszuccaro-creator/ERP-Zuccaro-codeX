@@ -15,6 +15,7 @@ import {
   stampMigracaoRecord,
 } from '../../src/components/lib/migracaoErpPolicy.js';
 import {
+  catalogarProdutoClasseUnidadeLegado,
   avaliarQuarentenaLegado,
   buildChaveIdempotenteMigracaoLegado,
   LEGADO_MESTRES_COMPARTILHADOS,
@@ -419,3 +420,49 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     process.exit(1);
   }
 }
+
+/** Persisted Produto pilot; all writes remain in the existing canonical service. */
+export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => {
+  const { service, unidadeService, rbacGuard, sourceSystem, batch, produtoClassUnitMap } = options;
+  if (!service || !unidadeService || !rbacGuard || !sourceSystem || !batch || !produtoClassUnitMap) {
+    throw new Error('LEGACY_CANONICAL_CONTRACT_REQUIRED');
+  }
+  if (!ctx?.groupId || ctx.empresaId || mapped?.group_id !== ctx.groupId || mapped.scopeType !== 'group'
+    || mapped.entidade_migracao !== 'produto' || mapped.quarentena || mapped.requer_conciliacao_manual
+    || !mapped.codigo_legado || !mapped.descricao || !mapped.tipo_item || !mapped.unidade_medida_id) {
+    throw new Error('LEGACY_SHARED_PRODUCT_INVALID');
+  }
+  await rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false});
+  await rbacGuard.assertAllowed(ctx,'Cadastros','unidade_medida','visualizar',{allowGlobalWildcard:false});
+  const unit = await unidadeService.get(ctx,mapped.unidade_medida_id);
+  const source = {cod_produto:mapped.codigo_legado,descricao:mapped.descricao,
+    classe:mapped.classe_legado,unidade:mapped.unidade_legado,group_id:ctx.groupId};
+  const catalogue = catalogarProdutoClasseUnidadeLegado([source],{groupId:ctx.groupId,produtoClassUnitMap,unidadesCanonicas:[unit]});
+  const remapped = mapLegadoRowToCanonicalStub(source,{groupId:ctx.groupId,entidade:'produto',produtoClassUnitMap});
+  if (catalogue.quantidade_sem_mapa || remapped.tipo_item !== mapped.tipo_item
+    || remapped.unidade_medida_id !== mapped.unidade_medida_id || !unit.sigla) {
+    throw new Error('LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED');
+  }
+  const reuse = async () => {
+    const row = await service.findByLegacyIdentity(ctx,sourceSystem,String(mapped.codigo_legado));
+    if (!row) return null;
+    if (row.ativo !== true || row.empresa_id != null || row.origem !== 'MIGRACAO'
+      || row.legacy_id !== String(mapped.codigo_legado) || row.migration_batch !== batch
+      || row.descricao !== mapped.descricao || row.tipo_item !== mapped.tipo_item
+      || row.unidade_medida_id !== unit.id || row.unidade_principal !== unit.sigla) {
+      throw new Error('LEGACY_RECONCILIATION_REQUIRED');
+    }
+    return {registro:row,reutilizado:true,persistido:true};
+  };
+  const existing=await reuse();if(existing)return existing;
+  try {
+    const registro=await service.create(ctx,{empresa_id:null,descricao:mapped.descricao,tipo_item:mapped.tipo_item,
+      unidade_medida_id:unit.id,unidade_principal:unit.sigla,origem:'MIGRACAO',codigo_legado:String(mapped.codigo_legado),
+      legacy_id:String(mapped.codigo_legado),source_system:sourceSystem,migration_batch:batch});
+    return {registro,reutilizado:false,persistido:true};
+  } catch(error) {
+    if(error?.code !== 'LEGACY_RECONCILIATION_REQUIRED')throw error;
+    const winner=await reuse();if(winner)return winner;
+    throw new Error('LEGACY_RECONCILIATION_REQUIRED');
+  }
+};

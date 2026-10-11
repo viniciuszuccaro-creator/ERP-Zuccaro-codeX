@@ -779,3 +779,22 @@ async function fetchOk(app: ReturnType<typeof createApp>['app'], path: string, i
   assert.ok(res.statusCode >= 200 && res.statusCode < 300, JSON.stringify(res.body));
   return res.body;
 }
+
+
+test('Produto PATCH restoration preserves fields and checks granular permissions and tenant',async()=>{
+ const config=testConfig(),db=createDbClient(config),guard=linkedRbac();
+ const {app}=createApp({config,db,useMemory:true,tenantGuard:linkedGuard(),produtoRelationGuard:linkedRelations(),rbacGuard:guard});
+ const headers={'content-type':'application/json','x-group-id':GROUP_A};
+ const created=await fetchOk(app,'/api/v1/produtos',{method:'POST',headers,body:JSON.stringify({descricao:'Synthetic restore',codigo:'RESTORE-1',descricao_comercial:'Preserve',peso_teorico_kg_m:7.5})});
+ const path='/api/v1/produtos/'+created.data.id;
+ await fetchOk(app,path,{method:'DELETE',headers});
+ const denied=await fetchStatus(app,path,{method:'PATCH',headers,body:JSON.stringify({ativo:true})});
+ assert.equal(denied.statusCode,403);assert.equal(denied.body.error.code,'PERMISSION_DENIED');
+ guard.link({actorId:ACTOR_A,groupId:GROUP_A,permissions:{Cadastros:{produto:['visualizar','editar','restaurar']}}});
+ assert.equal((await fetchStatus(app,path,{method:'PATCH',headers:{...headers,'x-group-id':GROUP_B},body:JSON.stringify({ativo:true})})).statusCode,404);
+ assert.equal((await fetchStatus(app,path,{method:'PATCH',headers,body:JSON.stringify({ativo:true,descricao:'Fabricated'})})).statusCode,404);
+ const restored=await fetchOk(app,path,{method:'PATCH',headers,body:JSON.stringify({ativo:true})});
+ assert.equal(restored.data.id,created.data.id);assert.equal(restored.data.codigo,'RESTORE-1');assert.equal(restored.data.descricao_comercial,'Preserve');assert.equal(restored.data.peso_teorico_kg_m,7.5);
+ const forbidden=await fetchStatus(app,path,{method:'PATCH',headers,body:JSON.stringify({ativo:false})});
+ assert.equal(forbidden.statusCode,403);assert.equal((await fetchOk(app,path,{headers})).data.ativo,true);
+});
