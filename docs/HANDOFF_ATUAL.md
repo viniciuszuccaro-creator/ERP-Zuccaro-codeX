@@ -1,3 +1,14 @@
+## CURSOR — tip 32558d23 implantado (C360 nav canônica) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`32558d23`** · asset `index-CEPaXLL-.js` · CI SUCCESS · homolog owner fail_count=0 |
+| rollback | `pre-spa-login-20261011-103135` |
+| escopo | C360 Abrir orçamentos/pedidos → UI canônica · Painel/Agenda chrome · POD keep-both |
+| marker SPA | `central360-orcamentos-abrir` |
+| evidência | `deploy-261-tip-32558d23-c360-nav-20261011.txt` |
+| próxima | secret restrito · merge owner · azul residual |
+
 ## CURSOR — C360 nav Orçamentos/Pedidos canônicos (2026-10-11)
 
 | Item | Valor |
@@ -5,8 +16,8 @@
 | escopo | `CentralCliente360Panel` · Abrir orçamentos/pedidos → `OrcamentosTab` / `PedidosTab` canônico |
 | fonte | **sem** tabela paralela · mesma UI Comercial |
 | RBAC | visualizar Orçamento/Pedido |
-| tip implantado | ainda **`4d04a42a`** até CI/redeploy deste tip |
-| próxima | CI → redeploy · secret restrito · merge owner |
+| tip implantado | supersedido — **`32558d23`** (bloco acima) |
+| próxima | tip `32558d23` implantado+homolog |
 
 ## CURSOR — tip 4d04a42a implantado (Painel/Agenda + POD inventário) (2026-10-11)
 
@@ -259,8 +270,8 @@ Consulta GitHub + lote Cursor CRM. **Não** re-portar #254/#264. **Não** atribu
 | #261 | OPEN draft · branch `cursor/cadastros-recuperacao-c360-contrato-392b` · tip policy CRM · mergeable vs main · **não** incorporada na main |
 | #264 | **MERGED** na candidata #261 (não na main) · tip `d9403665` · merge **`861513cd`** · ancestral confirmado |
 | #254 | tip `20a2c2fb` · ancestral confirmado · não re-portar |
-| SHA implantado | **`4d04a42a`** · `index-pwtjc2Qs.js` · código ≡ runtime |
-| homolog deste SHA | owner login tipado fail_count=0 · **somente** `4d04a42a` |
+| SHA implantado | **`32558d23`** · `index-CEPaXLL-.js` · código ≡ runtime |
+| homolog deste SHA | owner login tipado fail_count=0 · **somente** `32558d23` |
 | usuário restrito | **BLOCKED** reconfirmado: Environment sem `ERP_DEV_LOGIN_RESTRICTED_*` |
 | CRM | C360 adaptador **opção B** · policy shared API · HTTP canônico server **pendente Codex** · sem CRM paralelo |
 | próxima funcional | grade Representante/Colaborador · secret restrito · merge owner #261→main |
@@ -275,31 +286,31 @@ Troca de máquina. **Não depender** de alterações locais da empresa — só G
 | branch Cursor | `cursor/cadastros-recuperacao-c360-contrato-392b` |
 | **main** | `baba91a6` — **#261 ainda não mesclada em main** |
 | **#264** | MERGED **na #261** (não em main) · tip `d9403665` · merge `861513cd` |
-| **PR HEAD #261** | tip docs atual · código runtime **`4d04a42a`** · CI SUCCESS · MERGEABLE → `main` |
-| **SHA implantado erp-dev** | **`4d04a42a`** · asset `index-pwtjc2Qs.js` |
-| rollback | `pre-spa-login-20261011-102027` |
+| **PR HEAD #261** | tip docs atual · código runtime **`32558d23`** · CI SUCCESS · MERGEABLE → `main` |
+| **SHA implantado erp-dev** | **`32558d23`** · asset `index-CEPaXLL-.js` |
+| rollback | `pre-spa-login-20261011-103135` |
 | backup | `pre-gate-e-20261011-095824.sql` (só VPS; ancestral) |
 | #254 Codex | tip `20a2c2fb` — ancestral confirmado; **não** re-portar |
 | #277/#278 Codex | `8bc4fef2` / `b398202b` — Auth/Marca · **monitorar** sem porte Auth |
-| homologado tip implantado | login tipado fail_count=0 (owner) em **`4d04a42a`** |
+| homologado tip implantado | login tipado fail_count=0 (owner) em **`32558d23`** |
 | usuário restrito | **BLOCKED** — falta `ERP_DEV_LOGIN_RESTRICTED_*` no Environment |
 | CRM | C360 adaptador **opção B** + policy shared; HTTP canônico **pendente Codex** (sem paralelo) |
 | **recuperado / importado** | **NÃO** legado · SYNTH≠recuperado · #211 Codex Legado |
 | arquivos reservados Codex | sessão/contexto/outbox · schema CRM HTTP novo · Auth/042 · Legado #266/#211 |
 | ManagePR | URL lowercase `…/erp-zuccaro-codex/pull/261` |
-| evidência | `deploy-261-tip-4d04a42a-painel-agenda-20261011.txt` · `deploy-261-tip-d0a1b411-*` |
+| evidência | `deploy-261-tip-32558d23-c360-nav-20261011.txt` · `deploy-261-tip-4d04a42a-*` |
 | chat coordenação | [ERP ZUCCARO - CODEX/CURSOR](https://cursor.com/agents/bc-d973626e-1060-4071-a25a-6a549769392b) |
 
 ### Ao abrir no PC de casa
-1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout tip atual (runtime **`4d04a42a`**).
-2. Confirmar VPS: `MERGE_SHA8=4d04a42a` / `index-pwtjc2Qs.js` — não atribuir homolog antiga a este tip.
+1. `git fetch origin cursor/cadastros-recuperacao-c360-contrato-392b` → checkout tip atual (runtime **`32558d23`**).
+2. Confirmar VPS: `MERGE_SHA8=32558d23` / `index-CEPaXLL-.js` — não atribuir homolog antiga a este tip.
 3. Ler este bloco + STATUS topo; **não** sobrescrever seções Codex sem merge consciente.
 4. Credenciais/SFTP/VPS: secrets do Environment (não via Git).
 
 ### Próxima ação Cursor (independente enquanto merge owner)
-1. ~~Marca RBAC + anti-redirect + Painel/Agenda + POD inventário~~ **feito** tip **`4d04a42a`** implantado+homolog.
+1. ~~Marca + Painel/Agenda + POD + C360 nav~~ **feito** tip **`32558d23`** implantado+homolog.
 2. Secret usuário restrito → homolog fail-closed FE+BE (**BLOCKED** sem secret).
-3. C360 info/nav residual (sem fonte paralela) · merge owner #261→main; fechar #254 ancestral.
+3. Azul residual módulos · merge owner #261→main; fechar #254 ancestral.
 4. Codex: CRM HTTP (A) · Legado #211/#266 · Auth #277/#278 (sem porte Cursor).
 
 ### Pendências / parcial (não concluído)

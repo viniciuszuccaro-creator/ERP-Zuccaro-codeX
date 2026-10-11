@@ -1,3 +1,14 @@
+## CURSOR — tip 32558d23 implantado+homologado (C360 nav) (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`32558d23`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-CEPaXLL-.js` · rollback `pre-spa-login-20261011-103135` |
+| **conteúdo** | C360 Abrir orçamentos/pedidos → UI canônica · marker SPA confirmado |
+| **evidência** | `deploy-261-tip-32558d23-c360-nav-20261011.txt` |
+| BLOCKED | usuário restrito |
+| próxima | secret restrito · merge owner · azul residual módulos |
+
 ## CURSOR — C360 nav canônica Orçamentos/Pedidos (2026-10-11)
 
 | Item | Estado |
@@ -5,8 +16,8 @@
 | **escopo** | `CentralCliente360Panel` — Abrir orçamentos/pedidos → abas canônicas (sem fonte paralela) |
 | **RBAC** | botões só com `Comercial.Orcamento/Pedido.visualizar` |
 | **chrome** | ícones bloco `text-blue-600` |
-| tip | após push · runtime ainda **`4d04a42a`** até CI/redeploy |
-| próxima | CI → redeploy · secret restrito · merge owner |
+| tip | supersedido — implantado **`32558d23`** |
+| próxima | tip `32558d23` implantado+homolog |
 
 ## CURSOR — revisão Codex #277/#278 estável (2026-10-11)
 
