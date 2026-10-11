@@ -226,6 +226,7 @@ test('forms fora de MASTER_CODE.codigo expõem ID técnico idOnly + grades com i
     ['ConfiguracaoNFeForm.jsx', 'id-tecnico-configuracao-nfe'],
     ['EventoNotificacaoForm.jsx', 'id-tecnico-evento-notificacao'],
     ['PlanoContasForm.jsx', 'id-tecnico-plano-contas'],
+    ['UsuarioForm.jsx', 'id-tecnico-usuario'],
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, /CadastroCodigoRegistroField/);
