@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-11T23:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`d2fee3db`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#296 | tips inalterados · **sem porte** |
+| #297 **novo** | tip `1be96223` · Central CRM consome conversão atômica (#296) · base #296 · FE SUCCESS · BE pending · **sem porte** (toca `CentralCliente360Panel.jsx` reservado + stack CRM Codex) |
+| risco | Regra-Mãe: painel C360 divergente vs #291/#292; não portar |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T23:15Z
 
 | Item | Valor |
