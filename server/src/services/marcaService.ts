@@ -22,23 +22,21 @@ export class MarcaService {
   ) {}
 
   async list(ctx: RequestContext, options: { ativo?: boolean; search?: string; limit?: number } = {}) {
-    await this.prepare(ctx, 'visualizar');
-    return this.repo.list({
-      groupId: ctx.groupId,
-      empresaId: ctx.empresaId,
-      ativo: options.ativo,
-      search: options.search,
-      limit: options.limit,
+    return this.mutate(ctx, async executor => {
+      await this.prepare(ctx, 'visualizar', executor);
+      return this.repo.list({ groupId: ctx.groupId, empresaId: ctx.empresaId, ...options }, executor);
     });
   }
 
   async get(ctx: RequestContext, id: string, executor?: DbQueryExecutor) {
-    await this.prepare(ctx, 'visualizar');
-    const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, executor);
-    if (!row) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
-    return row;
+    const read = async (q?: DbQueryExecutor) => {
+      await this.prepare(ctx, 'visualizar', q);
+      const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, q);
+      if (!row) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
+      return row;
+    };
+    return executor ? read(executor) : this.mutate(ctx, read);
   }
-
   async create(ctx: RequestContext, payload: unknown) {
     return this.mutate(ctx, q => this.createWithExecutor(ctx, payload, q));
   }
@@ -82,7 +80,7 @@ export class MarcaService {
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid marca payload', parsed.error.flatten());
     }
-    const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, executor);
+    const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, executor, true);
     if (!before) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     const empresaId = parsed.data.empresa_id === undefined ? before.empresa_id : parsed.data.empresa_id;
     await this.assertTargetScope(ctx, empresaId, 'editar', executor);
@@ -118,7 +116,7 @@ export class MarcaService {
 
   private async softDeleteWithExecutor(ctx: RequestContext, id: string, executor?: DbQueryExecutor) {
     await this.prepare(ctx, 'inativar', executor);
-    const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, executor);
+    const before = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, executor, true);
     if (!before) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
     const updated = await this.repo.softDelete({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id, executor);
     if (!updated) throw new AppError(404, 'MARCA_NOT_FOUND', 'Marca not found in tenant scope');
@@ -140,6 +138,7 @@ export class MarcaService {
   }
 
   private async mutate<T>(ctx: RequestContext, fn: (q?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!this.db) return fn();
     return this.db.withTransaction(async q => {
       await q.query("SELECT set_config('app.group_id', $1, true), set_config('app.empresa_id', $2, true)", [ctx.groupId, ctx.empresaId ?? '']);

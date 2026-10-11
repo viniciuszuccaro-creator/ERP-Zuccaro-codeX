@@ -62,13 +62,14 @@ export class PostgresMarcaRepository implements MarcaRepository {
     return result.rows.map((row) => mapRow(row as Record<string, unknown>));
   }
 
-  async getById(scope: { groupId: string; empresaId?: string | null }, id: string,executor?:DbQueryExecutor): Promise<Marca | null> {
+  async getById(scope: { groupId: string; empresaId?: string | null }, id: string,executor?:DbQueryExecutor, forUpdate = false): Promise<Marca | null> {
     const params: unknown[] = [scope.groupId, id];
     let sql = 'SELECT * FROM marcas WHERE group_id = $1 AND id = $2';
     if (scope.empresaId) {
       params.push(scope.empresaId);
       sql += ` AND empresa_id = $3`;
     }
+    if (forUpdate && executor) sql += ' FOR UPDATE';
     const result = await (executor??this.db).query(sql, params);
     const row = result.rows[0];
     return row ? mapRow(row as Record<string, unknown>) : null;
@@ -119,7 +120,7 @@ export class PostgresMarcaRepository implements MarcaRepository {
     data: MarcaUpdateInput,
     executor?: DbQueryExecutor,
   ): Promise<Marca | null> {
-    const current = await this.getById(scope, id, executor);
+    const current = await this.getById(scope, id, executor, true);
     if (!current) return null;
 
     const next = {
