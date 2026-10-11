@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, link } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { inventoryBackup, compareBackupManifests, writeInventoryReport } from '../scripts/legado/inventario-backup-erp-antigo.mjs';
 
-async function fixture(fn) {
-  const tmp=await mkdtemp(path.join(os.tmpdir(),'legacy-equivalence-'));
+async function fixture(fn, base=os.tmpdir()) {
+  const tmp=await mkdtemp(path.join(base,'legacy-equivalence-'));
   try { const source=path.join(tmp,'source'),copy=path.join(tmp,'copy');
     await mkdir(source);await mkdir(copy);await fn({tmp,source,copy});
   } finally { await rm(tmp,{recursive:true,force:true}); }
@@ -59,4 +59,21 @@ test('reports stay outside original and never overwrite an existing file',()=>fi
   const report=path.join(tmp,'report.json');await writeInventoryReport(source,report,result);
   assert.equal(JSON.parse(await readFile(report,'utf8')).complete,true);
   await assert.rejects(()=>writeInventoryReport(source,report,result),e=>e.code==='EEXIST');
+}));
+
+test('hard-link alias cannot bypass secret classification or open content',()=>fixture(async({source})=>{
+  const secret=path.join(source,'USUSENHA.TPS');await writeFile(secret,'synthetic');
+  await link(secret,path.join(source,'notes.sql'));
+  let reads=0;
+  await assert.rejects(()=>inventoryBackup(source,{hashFile:async()=>{reads++;throw new Error('must not read');}}),/LEGACY_HARDLINK_REQUIRES_REVIEW/);
+  assert.equal(reads,0);
+},process.cwd()));
+
+test('secret size divergence is blocked and reported as changed; trailing dot has no extension',()=>fixture(async({source,copy})=>{
+  await writeFile(path.join(source,'USUSENHA.TPS'),'aa');await writeFile(path.join(copy,'USUSENHA.TPS'),'aaaa');
+  const result=compareBackupManifests(await inventoryBackup(source),await inventoryBackup(copy));
+  assert.equal(result.changed,1);assert.equal(result.blocked,1);assert.equal(result.equivalent,false);
+  await writeFile(path.join(source,'file.'),'synthetic');
+  const inventory=await inventoryBackup(source);
+  assert.equal(inventory.files.find(file=>file.name==='file.' || file.name==='file').extension,'sem_extensao');
 }));

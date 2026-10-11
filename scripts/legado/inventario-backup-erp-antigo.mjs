@@ -49,6 +49,7 @@ export async function inventoryBackup(root, { hashFile = digestFile } = {}) {
       if (before.isSymbolicLink()) throw safeError('LEGACY_SYMLINK_REQUIRES_REVIEW');
       if (before.isDirectory()) { await walk(path); continue; }
       if (!before.isFile()) throw safeError('LEGACY_SPECIAL_FILE_REQUIRES_REVIEW');
+      if (before.nlink > 1n) throw safeError('LEGACY_HARDLINK_REQUIRES_REVIEW');
       const blocked = secret(item.name);
       const digest = blocked ? null : await hashFile(path);
       const after = await lstat(path, { bigint:true });
@@ -56,7 +57,7 @@ export async function inventoryBackup(root, { hashFile = digestFile } = {}) {
         throw safeError('LEGACY_SOURCE_CHANGED_DURING_INVENTORY');
       }
       if (before.size > BigInt(Number.MAX_SAFE_INTEGER)) throw safeError('LEGACY_FILE_SIZE_UNSAFE');
-      const extension = item.name.includes('.') ? item.name.split('.').at(-1).toLowerCase() : 'sem_extensao';
+      const extension = (item.name.includes('.') ? item.name.split('.').at(-1).toLowerCase() : '') || 'sem_extensao';
       files.push({ name:blocked ? 'BLOCKED_SECRET_FILENAME' : item.name.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/g,'REDACTED_EMAIL').replace(/[\u0000-\u001f\u007f]/g,'_'), extension,
         path_sha256:hash(relative(origin,path).split(sep).join('/')), bytes:Number(before.size), sha256:digest,
         format:blocked ? 'blocked_secret_candidate' : (formats[extension] || `ext_${extension}`),
@@ -90,7 +91,9 @@ export function compareBackupManifests(source, copy) {
   for (const [key,file] of left) {
     const other=right.get(key);
     if (!other) { missing++; continue; }
-    if (file.format === 'blocked_secret_candidate' || other.format === 'blocked_secret_candidate') { blocked++; continue; }
+    if (file.format === 'blocked_secret_candidate' || other.format === 'blocked_secret_candidate') {
+      blocked++;if(file.bytes !== other.bytes) changed++;continue;
+    }
     if (file.bytes !== other.bytes || file.sha256 !== other.sha256) changed++; else matched++;
   }
   const extra=[...right.keys()].filter(key=>!left.has(key)).length;
@@ -112,7 +115,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const result=await inventoryBackup(root);
     result.folder_name=process.env.FOLDER_NAME || 'BACKUP ERP ANTIGO - CODEX';
     console.log(`file_count=${result.file_count}`);
-    for (const file of result.files) console.log(`file name=${file.name} bytes=${file.bytes} sha256=${file.sha256 || 'NOT_READ'} format=${file.format} mtime_utc=${file.mtime_utc}`);
+    for (const file of result.files) {
+      console.log(`file name=${file.name} bytes=${file.bytes} sha256=${file.sha256 || 'NOT_READ'} format=${file.format} mtime_utc=${file.mtime_utc}`);
+      if (file.format === 'blocked_secret_candidate') console.log('NOTE blocked_secret_candidate=nao_abrir_conteudo');
+    }
     console.log(`bytes_total=${result.bytes_total}`);
     for (const [field,prefix,title] of [['extension','ext','EXTENSOES'],['format','format','FORMATOS']]) {
       const counts=new Map();for(const file of result.files) counts.set(file[field],(counts.get(file[field])||0)+1);
