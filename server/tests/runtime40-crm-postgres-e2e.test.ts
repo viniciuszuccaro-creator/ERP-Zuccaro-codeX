@@ -196,7 +196,16 @@ if(process.env.DATABASE_URL)test('R40 PostgreSQL real: CRUD/concorrrência/repla
   }finally{await f.close();}
 });
 
-async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:string)=>Promise<unknown>;role?:string;schema?:string}) {
+if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: real restricted LOGIN executes atomic lifecycle, rollback and retry',async()=>{
+  const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});try {
+    const login=(await f.data.query<{same:boolean;super:boolean;bypass:boolean}>(`SELECT session_user=current_user AS same,
+      rolsuper AS super,rolbypassrls AS bypass FROM pg_roles WHERE rolname=session_user`)).rows[0];
+    assert.deepEqual(login,{same:true,super:false,bypass:false});
+    await proveAtomicCrmPedido(f);
+  }finally{await f.close();}
+});
+
+async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:string)=>Promise<unknown>;role?:string;schema?:string;restrictedLogin?:boolean}) {
   const role=f.role??ROLE;
   assert.match(role,/^[a-z][a-z0-9_]+$/);
   const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'crm-atomic-synthetic'};
@@ -215,7 +224,7 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
   const identity=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
   const inspectPersistence=()=>f.data.withTransaction(tx=>inspectCrmPreflight({query:async(sql,params)=>{
     assert.match(sql.trim(),/^SELECT\b/i);return tx.query(sql,params);
-  }},{...identity,requirePedidoPersistence:true}));
+  }},{...identity,requirePedidoPersistence:true,requireRestrictedLogin:f.restrictedLogin===true}));
   assert.equal((await inspectPersistence()).ready,true);
   await f.exec(`REVOKE INSERT ON audit_logs FROM ${role}`);
   assert.ok((await inspectPersistence()).blocked.includes('pedidoPersistenceGrants'));

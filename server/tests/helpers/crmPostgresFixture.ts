@@ -9,11 +9,11 @@ export function assertCrmIsolatedUrl(value:string|undefined) {
     || !['localhost','127.0.0.1','[::1]'].includes(parsed.hostname)
     || !/^\/erp_(test|crm_test(?:_[a-z0-9]+)?)$/.test(parsed.pathname))throw new Error('CRM_ISOLATED_POSTGRES_REQUIRED');
 }
-export async function realCrmFixture(value:string) {
+export async function realCrmFixture(value:string,options:{restrictedLogin?:boolean}={}) {
   assertCrmIsolatedUrl(value);
   const tag=randomUUID().replace(/-/g,'').slice(0,18),schema=`crm_test_${tag}`,role=`crm_test_role_${tag}`;
   const adminPool=new pg.Pool({connectionString:value,max:2,connectionTimeoutMillis:5000});
-  const dataPool=new pg.Pool({connectionString:value,max:3,connectionTimeoutMillis:5000});
+  let dataPool=new pg.Pool({connectionString:value,max:3,connectionTimeoutMillis:5000});
   let schemaCreated=false,roleCreated=false;
   const make=(pool:pg.Pool,restricted:boolean):DbClient=>{
     const run=async<T>(fn:(tx:DbQueryExecutor)=>Promise<T>)=>{
@@ -26,7 +26,7 @@ export async function realCrmFixture(value:string) {
     return {pool,query:(sql,params)=>run(tx=>tx.query(sql,params)),withTransaction:run,
       checkConnection:async()=>true,end:async()=>{}};
   };
-  const admin=make(adminPool,false),data=make(dataPool,true);
+  const admin=make(adminPool,false);
   const cleanup=async()=>{
     await dataPool.end();
     try{if(schemaCreated)await adminPool.query(`DROP SCHEMA "${schema}" CASCADE`);
@@ -39,6 +39,15 @@ export async function realCrmFixture(value:string) {
       await admin.query(sql);if(sql.includes(`CREATE ROLE ${role} `))roleCreated=true;
     },role);
     await adminPool.query(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`);
+    if(options.restrictedLogin) {
+      // Ephemeral synthetic credential only. Never returned, logged or stored outside this fixture.
+      const password=randomUUID();
+      await adminPool.query(`ALTER ROLE "${role}" LOGIN PASSWORD '${password}'`);
+      const loginUrl=new URL(value);loginUrl.username=role;loginUrl.password=password;
+      await dataPool.end();
+      dataPool=new pg.Pool({connectionString:loginUrl.toString(),max:3,connectionTimeoutMillis:5000});
+    }
   }catch(error){await cleanup();throw error;}
-  return {admin,data,schema,role,exec:(sql:string)=>admin.query(sql),close:cleanup};
+  return {admin,data:make(dataPool,!options.restrictedLogin),schema,role,restrictedLogin:options.restrictedLogin===true,
+    exec:(sql:string)=>admin.query(sql),close:cleanup};
 }
