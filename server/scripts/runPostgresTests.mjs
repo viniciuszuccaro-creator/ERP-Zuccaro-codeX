@@ -11,6 +11,7 @@ const suites = [
   ['R10', 'tests/runtime10-produto-pim-postgres-e2e.test.ts'],
   ['R40CRM', 'tests/runtime40-crm-postgres-e2e.test.ts'],
   ['R41PROD', 'tests/runtime41-produto-empresa-postgres-e2e.test.ts'],
+  ['TENANT_CONTEXT', 'tests/db-tenant-context-postgres.test.ts'],
 ];
 let allPassed = true;
 for (const [label, suite] of suites) {
