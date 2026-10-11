@@ -1,11 +1,33 @@
+## CURSOR — revisão Codex #279 Auth composição (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#279** tip **`a0ee2f19`** | draft · MERGEABLE · base #278 · CI SUCCESS |
+| conteúdo | teste PG `db-tenant-context-postgres` · PostgresRbacGuard real · +18/−1 |
+| porte Cursor | **não** — Auth/tenant stack; só fixture de teste |
+| tip #277/#278 | `8bc4fef2` / `b398202b` estáveis |
+| tip #261 implantado | **`06325316`** |
+| próxima | monitorar tip; timer; sem porte Auth |
+
+## CURSOR — tip 06325316 implantado+homologado (azul residual) (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **SHA** | tip **`06325316`** · CI SUCCESS · erp-dev · homolog owner fail_count=0 |
+| **asset** | `index-BJYf7Dj6.js` · rollback `pre-spa-login-20261011-103813` |
+| **conteúdo** | azul residual chrome Estoque/Empresas/Dashboard/Relatórios/Widget |
+| **evidência** | `deploy-261-tip-06325316-azul-residual-20261011.txt` |
+| BLOCKED | usuário restrito |
+| próxima | secret restrito · merge owner |
+
 ## CURSOR — azul residual chrome (2026-10-11)
 
 | Item | Estado |
 |---|---|
 | **escopo** | Estoque CTA · Empresas Filiais · Dashboard conversão/quick · Relatórios Estoque · WidgetFechamento |
 | **preservado** | Cadastros multi-cor · Financeiro purple · status green/orange/red |
-| tip | após push · runtime ainda **`32558d23`** até CI/redeploy |
-| próxima | CI → redeploy · secret restrito · merge owner |
+| tip | supersedido — implantado **`06325316`** |
+| próxima | tip `06325316` implantado+homolog |
 
 ## CURSOR — tip 32558d23 implantado+homologado (C360 nav) (2026-10-11)
 

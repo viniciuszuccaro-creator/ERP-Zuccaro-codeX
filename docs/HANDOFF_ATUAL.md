@@ -1,3 +1,24 @@
+## CURSOR — tip 06325316 implantado (azul residual) (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip implantado | **`06325316`** · asset `index-BJYf7Dj6.js` · CI SUCCESS · homolog owner fail_count=0 |
+| rollback | `pre-spa-login-20261011-103813` |
+| escopo | azul residual chrome · C360 nav · Painel/Agenda · Marca |
+| evidência | `deploy-261-tip-06325316-azul-residual-20261011.txt` |
+| #279 Codex | tip `a0ee2f19` — prova Auth×RBAC teste · **sem porte** |
+| próxima | secret restrito · merge owner |
+
+## REVISÃO CODEX — #279 Auth composição RBAC (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| PR | [#279](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/279) tip **`a0ee2f19`** |
+| base | #278 @ `b398202b` · draft · MERGEABLE · CI SUCCESS |
+| escopo | teste PG Auth tenant + PostgresRbacGuard · arquivo só `server/tests/db-tenant-context-postgres.test.ts` |
+| ação Cursor | **monitorar** — **não** porte (Auth/RLS; sem APPLY) |
+| tip implantado erp-dev | **`06325316`** / `index-BJYf7Dj6.js` |
+
 ## CURSOR — tip 32558d23 implantado (C360 nav canônica) (2026-10-11)
 
 | Item | Valor |
