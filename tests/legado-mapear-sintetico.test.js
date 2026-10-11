@@ -287,3 +287,32 @@ test('opcoes nao substituem empresa da operacao sem comprovacao', () => {
     group_id: 'g1', empresa_id: 'origem', codigo_empresa: '1' },
   { entidade: 'obra', empresaId: 'destino' }), /LEGACY_COMPANY_MISMATCH/);
 });
+
+// Completes the class/unit inventory without exposing source customer/product records.
+import { catalogarProdutoClasseUnidadeLegado } from '../scripts/legado/mapear-registro-sintetico.mjs';
+test('catalogo classe/unidade reconcilia contagens e exige destino ativo do mesmo Grupo', () => {
+ const rows = [{sku:'001',descricao:'Synthetic private',classe:'08',unidade:'KG'},
+   {sku:'002',descricao:'Other private',classe:'08',unidade:'KG'},
+   {sku:'003',descricao:'Unmapped',classe:'09',unidade:'UN'}];
+ const opts = {groupId:'g1',produtoClassUnitMap:{'08|KG':{tipo_item:'MATERIA_PRIMA',unidade_medida_id:'kg'}},
+   unidadesCanonicas:[{id:'kg',group_id:'g1',ativo:true}]};
+ const out=catalogarProdutoClasseUnidadeLegado(rows,opts);
+ assert.equal(out.quantidade_origem,3);assert.equal(out.quantidade_catalogada,3);
+ assert.equal(out.quantidade_sem_mapa,1);assert.equal(out.grupos[0].mapeamento_comprovado,true);
+ assert.equal(out.grupos[0].quantidade,2);assert.equal(out.importado_operacional,false);
+ assert.equal(JSON.stringify(out).includes('Synthetic private'),false);
+ assert.equal(JSON.stringify(out).includes('001'),false);
+ assert.deepEqual(catalogarProdutoClasseUnidadeLegado([...rows].reverse(),opts),out);
+ for(const unidade of [{id:'kg',group_id:'g2',ativo:true},{id:'kg',group_id:'g1',ativo:false}]) {
+  assert.equal(catalogarProdutoClasseUnidadeLegado(rows,{...opts,unidadesCanonicas:[unidade]}).quantidade_sem_mapa,3);
+ }
+ assert.equal(catalogarProdutoClasseUnidadeLegado(rows,{...opts,unidadesCanonicas:[]}).quantidade_sem_mapa,3);
+});
+test('catalogo preserva codigos e separa pares ambiguos sem aceitar mapa implicito', () => {
+ const out=catalogarProdutoClasseUnidadeLegado([
+  {sku:'A',descricao:'A',classe:'C|U',unidade:'X'},
+  {sku:'B',descricao:'B',classe:'C',unidade:'U|X'}],{groupId:'g1'});
+ assert.equal(out.grupos.length,2);assert.equal(out.quantidade_sem_mapa,2);
+ assert(out.grupos.every(g=>g.motivos.includes('chave_mapeamento_ambigua')));
+ assert.throws(()=>catalogarProdutoClasseUnidadeLegado(null),/LEGACY_ROWS_REQUIRED/);
+});
