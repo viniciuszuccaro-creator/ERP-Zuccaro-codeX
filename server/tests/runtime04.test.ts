@@ -781,3 +781,54 @@ async function fetchOk(app: ReturnType<typeof createApp>['app'], path: string, i
   assert.ok(res.statusCode >= 200 && res.statusCode < 300, JSON.stringify(res.body));
   return res.body;
 }
+
+// Synthetic persisted pilot through the canonical service; no private source/operational DB.
+import { PostgresClienteRepository } from '../src/repositories/postgresClienteRepository.ts';
+import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
+import { consumirLoteStagingLegado, persistirClienteGrupoLegado } from '../../scripts/legado/consumir-lote-staging.mjs';
+test('Legado Cliente: Grupo canonical persistence, retry, edit reopen and reversal', async () => {
+ const engine=new PGlite();
+ try {
+  for(const file of readdirSync(join(__dirname,'../migrations')).filter(f=>/^\d{3}_.*\.sql$/.test(f)).sort()) {
+   await engine.exec(readFileSync(join(__dirname,'../migrations',file),'utf8').replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/i,''));
+  }
+  await engine.query('INSERT INTO groups(id,nome_do_grupo) VALUES($1,$2)',[GROUP_A,'Synthetic pilot']);
+  const query=(db:any)=>async(sql:string,params:any)=>{const result=await db.query(sql,params);return {rows:result.rows,rowCount:result.rows.length};};
+  const db:any={query:query(engine),withTransaction:(fn:any)=>engine.transaction(tx=>fn({query:query(tx)}))};
+  const guard=linkedRbacGuard();const service=new ClienteService(new PostgresClienteRepository(db),new PostgresAuditRepository(db),linkedGuard(),guard);
+  const ctx={groupId:GROUP_A,actorId:ACTOR_A,requestId:'synthetic-legado-pilot'};
+  const lote=consumirLoteStagingLegado([{cod_cliente:'0007',nome:'Synthetic pilot client',documento:CNPJ_A,group_id:GROUP_A}],
+   {entidade:'cliente',contratoEntrada:{coorte:'synthetic-pilot'}});
+  assert.equal(lote.comprovados.length,1);
+  const options={service,rbacGuard:guard,tipo:'Pessoa Jurídica',sourceSystem:'synthetic-legacy',batch:'synthetic-pilot'};
+  const first=await persistirClienteGrupoLegado(ctx,lote.comprovados[0],options);
+  assert.equal(first.registro.empresa_id,null);assert.match(first.registro.codigo,/^\d+$/);
+  assert.equal(first.registro.codigo_legado,'0007');
+  const retry=await persistirClienteGrupoLegado(ctx,lote.comprovados[0],options);
+  assert.equal(retry.reutilizado,true);assert.equal(retry.registro.id,first.registro.id);
+  assert.equal((await engine.query('SELECT count(*)::int n FROM clientes')).rows[0].n,1);
+  assert.equal((await service.get(ctx,first.registro.id)).source_system,'synthetic-legacy');
+  await service.update(ctx,first.registro.id,{telefone:'synthetic-contact'});
+  await service.softDelete(ctx,first.registro.id);
+  await assert.rejects(()=>service.get(ctx,first.registro.id),e=>e.code==='CLIENTE_NOT_FOUND');
+  const restored=await service.restore(ctx,first.registro.id);
+  assert.equal(restored.telefone,'synthetic-contact');assert.equal(restored.codigo_legado,'0007');
+  const repeated=await persistirClienteGrupoLegado(ctx,lote.comprovados[0],options);
+  assert.equal(repeated.registro.id,restored.id);assert.equal(repeated.registro.telefone,'synthetic-contact');
+  await assert.rejects(()=>persistirClienteGrupoLegado({...ctx,actorId:ACTOR_LIMITED},lote.comprovados[0],options),e=>e.code==='PERMISSION_DENIED');
+  await assert.rejects(()=>persistirClienteGrupoLegado(ctx,{...lote.comprovados[0],nome:'Changed source'},options),/LEGACY_RECONCILIATION_REQUIRED/);
+  // Reversal uses canonical soft deletion; preserves trace and fields, never deletes the row.
+  await service.softDelete(ctx,restored.id);
+  const reversed=(await engine.query('SELECT ativo,codigo_legado,telefone FROM clientes WHERE id=$1',[restored.id])).rows[0];
+  assert.equal(reversed.ativo,false);assert.equal(reversed.codigo_legado,'0007');assert.equal(reversed.telefone,'synthetic-contact');
+  assert.equal((await engine.query("SELECT count(*)::int n FROM audit_logs WHERE entity='Cliente' AND entity_id=$1",[restored.id])).rows[0].n>=5,true);
+  const sequenceBefore=(await engine.query("SELECT next_value FROM entity_code_sequences WHERE group_id=$1 AND entity_name='Cliente'",[GROUP_A])).rows[0].next_value;
+  await engine.exec(`CREATE FUNCTION synthetic_fail_legacy_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.entity='Cliente' THEN RAISE EXCEPTION 'synthetic audit failure'; END IF;RETURN NEW;END $$;
+   CREATE TRIGGER synthetic_fail_legacy BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION synthetic_fail_legacy_audit()`);
+  const failRow=consumirLoteStagingLegado([{cod_cliente:'0008',nome:'Rollback synthetic',documento:CPF_B,group_id:GROUP_A}],
+   {entidade:'cliente',contratoEntrada:{coorte:'synthetic-pilot'}}).comprovados[0];
+  await assert.rejects(()=>persistirClienteGrupoLegado(ctx,failRow,{...options,tipo:'Pessoa Física'}),/synthetic audit failure/);
+  assert.equal((await engine.query('SELECT count(*)::int n FROM clientes')).rows[0].n,1);
+  assert.equal((await engine.query("SELECT next_value FROM entity_code_sequences WHERE group_id=$1 AND entity_name='Cliente'",[GROUP_A])).rows[0].next_value,sequenceBefore);
+ } finally {await engine.close();}
+});
