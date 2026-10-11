@@ -1,3 +1,14 @@
+## CURSOR — idOnly Parametro/Config residual (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| tip runtime | **`e6379a4a`** implantado · tip código este lote (CI pendente) |
+| escopo | Parametro* (caixa/conciliação/portal/NFe/roteirização/origem) · Config boletos/WhatsApp/integração · idOnly |
+| testes | `cadastros-codigo-cobertura` PASS |
+| #280/#291/#292 | tips `612c2055`/`9c6fdfe9`/`5b7dc32a` · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — tip e6379a4a implantado+homologado (2026-10-11)
 
 | Item | Valor |

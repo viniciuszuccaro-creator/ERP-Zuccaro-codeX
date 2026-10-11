@@ -1,3 +1,15 @@
+## CURSOR — idOnly Parametro/Config residual (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| tip | pós-`b87bb928` (este lote) · CI pendente |
+| tip runtime | **`e6379a4a`** implantado+homolog |
+| escopo | 9 forms Parametro/Config com `CadastroCodigoRegistroField` idOnly |
+| testes | cadastros-codigo-cobertura PASS |
+| #280–#292 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — tip e6379a4a implantado+homologado (2026-10-11)
 
 | Item | Estado |
