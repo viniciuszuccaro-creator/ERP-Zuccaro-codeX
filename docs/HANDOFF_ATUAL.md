@@ -1286,3 +1286,8 @@ Instrução direta do proprietário substitui espera por parecer para implementa
 Harness antigo passa a fornecer perfis explícitos por ação sem remover asserts de payload/CRUD/audit/isolamento/Auth. Novo teste bloqueia cinco operações sem permissões e com wildcard, filial no Grupo/outro tenant, sem persistência/auditoria indevida. Prova PG Auth existente mantém negativos e agora exige Marca403/PERMISSION_DENIED, Orçamento403 preservado. Focados13PASS/0FAIL/2skipsPGpreexistentes semURL; typecheckPASS; suíte integral/build/CI e reviewSHAfinal exigidos. Sem migration/grant/role/flag/DEV/merge/importação/canais. Próximo: composição real de papéis/Auth/dados/RBAC e autorização operacional, mantendo bloqueio de deploy somente correspondente; legado em ambiente separado.
 
 Validação final local Marca: backend342PASS/0FAIL/18skipsPGpreexistentes(360), concorrência4; typecheck/buildPASS. CI padrão/PG obrigatório e revisão final ainda pendentes.
+
+
+### Marca — alvo empresarial do payload
+Review2786107672506 confirmou o corte e apontou ressalva reproduzível: empresa_id do body redirecionava escrita após RBAC apenas no contexto. Corrigido: contexto Empresa não muda alvo nem promove mestre Grupo; contexto Grupo revalida tenant e permissão no alvo. Preserva criação compartilhada Grupo/empresa_idNULL, IDs/campos/audit; teste troca mesmaGrupo/null sem escrita/audit adicional. 14focadosPASS/0FAIL/2PGskips preexistentes, typecheck/buildPASS; novoHEAD/CI/review exigidos. CI3670 verde aplica somente b30e32ea anterior. Sem merge/grant/migration/DEV/canais.
+

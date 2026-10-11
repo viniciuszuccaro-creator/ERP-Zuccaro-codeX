@@ -527,3 +527,18 @@ async function fetchOk(app: ReturnType<typeof createApp>['app'], path: string, i
 void randomUUID;
 
  test('Marca RBAC denies missing permission, wildcard and branch escape before persistence',async()=>{ const repo=new InMemoryMarcaRepository(),audit=new InMemoryAuditRepository(),rbac=new InMemoryRbacGuard();const service=new MarcaService(repo,audit,linkedGuard(),rbac);const ctx={requestId:'deny',actorId:'restricted',groupId:GROUP_A,empresaId:EMPRESA_A};for(const permissions of [{},{'*':['visualizar','criar','editar','inativar']}]){rbac.link({actorId:ctx.actorId,groupId:GROUP_A,permissions}); for(const call of [()=>service.list(ctx),()=>service.get(ctx,'missing'),()=>service.create(ctx,{nome_marca:'Denied'}),()=>service.update(ctx,'missing',{}),()=>service.softDelete(ctx,'missing')]) await assert.rejects(call,(e)=>e.code==='PERMISSION_DENIED');}assert.equal((await repo.list({groupId:GROUP_A})).length,0);assert.equal(audit.entries.length,0);rbac.link({actorId:ctx.actorId,groupId:GROUP_A,empresaId:EMPRESA_A,permissions:{Cadastros:{marca:['visualizar']}}});await assert.rejects(()=>service.list({...ctx,empresaId:null}),(e)=>e.code==='PERMISSION_DENIED');await assert.rejects(()=>service.list({...ctx,empresaId:EMPRESA_B}),(e)=>e.code==='TENANT_MISMATCH'); });
+
+test('Marca company payload cannot redirect an authorized operation or turn it into a shared master', async () => {
+  const repo=new InMemoryMarcaRepository(), audit=new InMemoryAuditRepository(), tenant=linkedGuard(), rbac=marcaRbac();
+  const second='55555555-5555-4555-8555-555555555555'; tenant.link(second,GROUP_A);
+  const service=new MarcaService(repo,audit,tenant,rbac);
+  const ctx={requestId:'target-test',actorId:'test-owner',groupId:GROUP_A,empresaId:EMPRESA_A};
+  await assert.rejects(()=>service.create(ctx,{nome_marca:'Wrong company',empresa_id:second}),(e)=>e.code==='ACTOR_SCOPE_DENIED');
+  const row=await service.create(ctx,{nome_marca:'Original',pais_origem:'Brasil'});
+  for(const empresa_id of [second,null]) await assert.rejects(()=>service.update(ctx,row.id,{empresa_id}),(e)=>e.code==='ACTOR_SCOPE_DENIED');
+  assert.equal((await service.get(ctx,row.id)).empresa_id,EMPRESA_A);
+  assert.equal((await service.get(ctx,row.id)).pais_origem,'Brasil');
+  assert.equal(audit.entries.length,1);
+  const shared=await service.create({...ctx,empresaId:null},{nome_marca:'Shared'});
+  assert.equal(shared.empresa_id,null);
+});
