@@ -422,6 +422,9 @@ test('EmpresaForm: ID visível, deep-merge, Organizacional, certificado granular
   assert.match(source, /CadastroCodigoRegistroField/);
   assert.match(source, /idOnly/);
   assert.match(source, /id-tecnico-empresa/);
+  assert.match(source, /BuscaCEP/);
+  assert.match(source, /sanitizeEndereco/);
+  assert.match(source, /empresa-endereco-secao/);
   assert.match(source, /hasCadastroEntityPermission\("Empresa"/);
   assert.match(source, /Cadastros\.Organizacional\.editar/);
   assert.match(source, /Cadastros\.Empresa\.Certificado\.editar/);

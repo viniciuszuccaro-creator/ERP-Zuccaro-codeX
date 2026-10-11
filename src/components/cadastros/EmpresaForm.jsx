@@ -12,10 +12,21 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { hasCadastroEntityPermission } from "@/components/cadastros/cadastroEditLoadPolicy";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import BuscaCEP from "@/components/comercial/BuscaCEP";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDocument = (value, max = 32) => String(value ?? "").replace(/[^0-9A-Za-z.\-/]/g, "").slice(0, max).trim();
+const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
 const toInteger = (value, fallback = 0) => Number.isFinite(Number(value)) ? parseInt(value, 10) : fallback;
+const sanitizeEndereco = (endereco = {}) => ({
+  logradouro: sanitizeText(endereco.logradouro, 180),
+  numero: sanitizeCode(endereco.numero, 30),
+  complemento: sanitizeText(endereco.complemento, 120),
+  bairro: sanitizeText(endereco.bairro, 120),
+  cidade: sanitizeText(endereco.cidade, 120),
+  estado: sanitizeCode(endereco.estado, 2),
+  cep: sanitizeCode(endereco.cep, 12),
+});
 
 const EMPRESA_FORM_DEFAULTS = Object.freeze({
   razao_social: "",
@@ -25,6 +36,15 @@ const EMPRESA_FORM_DEFAULTS = Object.freeze({
   regime_tributario: "Simples Nacional",
   tipo: "Matriz",
   status: "Ativa",
+  endereco: Object.freeze({
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    cep: "",
+  }),
   certificado_digital: Object.freeze({
     tipo: "A1",
     arquivo_certificado: "",
@@ -44,6 +64,10 @@ function mergeEmpresaFormData(partial) {
   return {
     ...EMPRESA_FORM_DEFAULTS,
     ...src,
+    endereco: {
+      ...EMPRESA_FORM_DEFAULTS.endereco,
+      ...(src.endereco && typeof src.endereco === "object" ? src.endereco : {}),
+    },
     certificado_digital: {
       ...EMPRESA_FORM_DEFAULTS.certificado_digital,
       ...(src.certificado_digital && typeof src.certificado_digital === "object" ? src.certificado_digital : {}),
@@ -140,6 +164,7 @@ export default function EmpresaForm({
       regime_tributario: sanitizeText(formData.regime_tributario, 80),
       tipo: sanitizeText(formData.tipo, 40),
       status: sanitizeText(formData.status, 40),
+      endereco: sanitizeEndereco(formData.endereco),
       // Preferir group_id do registro carregado (#228); nunca carimbar empresa operacional.
       group_id: dadosIniciais?.group_id || formData.group_id || groupId,
       grupo_id: dadosIniciais?.grupo_id || dadosIniciais?.group_id || formData.grupo_id || formData.group_id || groupId,
@@ -258,6 +283,84 @@ export default function EmpresaForm({
             <SelectItem value="MEI">MEI</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-3 rounded border border-slate-200 bg-slate-50/80 p-4" data-action="empresa-endereco-secao">
+        <h4 className="font-semibold text-slate-800">Endereço</h4>
+        <BuscaCEP
+          onEnderecoEncontrado={(endereco) => {
+            if (!podeSalvar || saveBlocked) return;
+            setFormData((prev) => ({
+              ...prev,
+              endereco: {
+                ...prev.endereco,
+                ...(endereco && typeof endereco === "object" ? endereco : {}),
+              },
+            }));
+          }}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Logradouro</Label>
+            <Input
+              value={formData.endereco?.logradouro || ""}
+              onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, logradouro: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-endereco-logradouro-empresa"
+              data-sensitive
+            />
+          </div>
+          <div>
+            <Label>Número</Label>
+            <Input
+              value={formData.endereco?.numero || ""}
+              onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-endereco-numero-empresa"
+              data-sensitive
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Bairro</Label>
+            <Input
+              value={formData.endereco?.bairro || ""}
+              onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-endereco-bairro-empresa"
+              data-sensitive
+            />
+          </div>
+          <div>
+            <Label>Complemento</Label>
+            <Input
+              value={formData.endereco?.complemento || ""}
+              onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, complemento: e.target.value } })}
+              disabled={!podeSalvar || saveBlocked}
+              data-permission={permissaoFormulario}
+              data-action="editar-endereco-complemento-empresa"
+              data-sensitive
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <Label>Cidade</Label>
+            <Input value={formData.endereco?.cidade || ""} readOnly disabled className="bg-white" data-action="endereco-cidade-empresa" />
+          </div>
+          <div>
+            <Label>Estado</Label>
+            <Input value={formData.endereco?.estado || ""} readOnly disabled className="bg-white" data-action="endereco-estado-empresa" />
+          </div>
+          <div>
+            <Label>CEP</Label>
+            <Input value={formData.endereco?.cep || ""} readOnly disabled className="bg-white" data-action="endereco-cep-empresa" />
+          </div>
+        </div>
       </div>
 
       <div className="p-4 bg-amber-50 rounded border border-amber-200">
