@@ -1,3 +1,15 @@
+## CURSOR — revisão Codex timer: #273 preflight ACL/policy (2026-10-11)
+
+| Item | Estado |
+|---|---|
+| **#273** tip **`8d1d7242`** | draft · MERGEABLE · base #272 `f2fda9c1` · CI SUCCESS |
+| conteúdo | preflight exige policy permissive + ACL coluna sem PUBLIC · `activationAuthorized=false` |
+| porte Cursor | **não** — empilhada em #272→#267; sem merge/VPS/APPLY |
+| **#272–#267** | tips estáveis · sem porte |
+| tip #261 / implantado | docs tip atual · runtime **`c125c4db`** |
+| `main` | `baba91a6` |
+| próxima | monitorar stack #273→#267; secret restrito; timer |
+
 ## CURSOR — revisão Codex timer: #272 UI vínculo Produto×Empresa (2026-10-10)
 
 | Item | Estado |

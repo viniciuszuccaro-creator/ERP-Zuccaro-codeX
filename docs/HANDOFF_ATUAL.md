@@ -1,3 +1,14 @@
+## REVISÃO CODEX — #273 preflight ACL/policy (2026-10-11)
+
+| Item | Valor |
+|---|---|
+| PR | [#273](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/273) tip **`8d1d7242`** |
+| base | #272 @ `f2fda9c1` · draft · MERGEABLE · CI SUCCESS |
+| escopo | `inspectCrmPreflight` rejeita policy RESTRICTIVE e grants PUBLIC de coluna |
+| ação Cursor | **monitorar** — **não** porte/executar preflight/APPLY em DEV |
+| stack | #273 → #272 → #271 → #270 → #269 → #268 → #267 → #261 · fora de `main` |
+| tip implantado erp-dev | continua **`c125c4db`** / `index-C-lbE7zK.js` |
+
 ## REVISÃO CODEX — #272 UI vínculo Produto×Empresa (2026-10-10)
 
 | Item | Valor |
@@ -88,7 +99,8 @@
 | #270 Codex | tip **`0ea56046`** · Produto×Empresa 041 · CI SUCCESS · **monitorar** (sem porte) |
 | #271 Codex | tip **`3260696e`** · seleção operacional GET · CI SUCCESS · **monitorar** (sem porte) |
 | #272 Codex | tip **`f2fda9c1`** · UI vínculo empresa form · CI SUCCESS · **monitorar** (sem porte) |
-| porte neste ciclo | nenhum (Legado/#267–#272 schema fora; #265/#263 já absorvidos) |
+| #273 Codex | tip **`8d1d7242`** · preflight ACL/policy · CI SUCCESS · **monitorar** (sem porte) |
+| porte neste ciclo | nenhum (Legado/#267–#273 schema fora; #265/#263 já absorvidos) |
 
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
@@ -109,6 +121,7 @@ Cursor monitora agentes/PRs Codex sem re-portar #254/#264.
 | [#270](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/270) tip **`0ea56046`** | Produto×Empresa 041 · CI SUCCESS · flag off | **monitorar** — sem porte; stack CRM |
 | [#271](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/271) tip **`3260696e`** | seleção operacional GET · CI SUCCESS · flag off | **monitorar** — sem porte |
 | [#272](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/272) tip **`f2fda9c1`** | UI vínculo empresa form · CI SUCCESS · flag off | **monitorar** — sem porte; stack |
+| [#273](https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/273) tip **`8d1d7242`** | preflight ACL/policy · CI SUCCESS | **monitorar** — sem porte/APPLY |
 | #254 | ancestral OPEN | não re-portar |
 | Agentes | stack CRM/#270 em curso · Legado/Produto GET **IDLE** | timer contínuo |
 
