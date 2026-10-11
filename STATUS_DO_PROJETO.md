@@ -1,3 +1,15 @@
+## REVISÃO CODEX — #293/#294/#295 CRM stack (2026-10-11T22:00Z)
+
+| Item | Estado |
+|---|---|
+| #293 | tip `90a82a99` · CRM form submission · **sem porte** |
+| #294 | tip `0e5b7795` · callback permissão · **sem porte** |
+| #295 | tip `21fa7365` · fachada HTTP Oportunidade (flag off) · **sem porte** |
+| stack | #295→#294→#293→#292 · ownership Codex CRM/HTTP |
+| tip #261 runtime | **`b76474a2`** |
+| BLOCKED | secret restrito |
+| próxima | monitorar stack · sem porte Cursor |
+
 ## CURSOR — tip b76474a2 implantado+homologado (2026-10-11)
 
 | Item | Estado |
