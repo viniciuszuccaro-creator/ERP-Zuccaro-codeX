@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-11T21:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`96913945`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#292 | tips inalterados · **sem porte** |
+| PRs >292 | nenhuma |
+| RUNNING | só chat coordenação (não entrega Codex nova) |
+| porte | nenhum |
+
 ## CURSOR — tip b76474a2 implantado+homologado (2026-10-11)
 
 | Item | Valor |
