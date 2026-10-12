@@ -1,3 +1,13 @@
+## CURSOR — sky lote CPA histórico/aprovação (2026-10-12T13:36Z)
+
+| Item | Valor |
+|---|---|
+| tip | pendente · sobre `3101334b` |
+| lote | sky histórico/aprovação/automação/externos/assistente |
+| testes | clientes-tab **9 PASS** |
+| #313/#315/#316 | **sem porte** |
+| próxima | CI → redeploy |
+
 ## CURSOR — cadastros UTF-8 + sky CPA-adjacente (2026-10-12T13:35Z)
 
 | Item | Valor |

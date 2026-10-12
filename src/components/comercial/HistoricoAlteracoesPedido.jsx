@@ -22,15 +22,15 @@ const iconesPorAcao = {
 const coresPorAcao = {
   criacao: "text-green-600 bg-green-50",
   alteracao: "text-blue-600 bg-blue-50",
-  aprovacao: "text-purple-600 bg-purple-50",
+  aprovacao: "text-sky-600 bg-sky-50",
   desconto_aplicado: "text-orange-600 bg-orange-50",
   tabela_trocada: "text-cyan-600 bg-cyan-50",
   margem_violada: "text-red-600 bg-red-50",
-  endereco_alterado: "text-indigo-600 bg-indigo-50",
+  endereco_alterado: "text-sky-700 bg-sky-50",
   item_adicionado: "text-green-600 bg-green-50",
   item_removido: "text-red-600 bg-red-50",
   item_producao_criado: "text-blue-600 bg-blue-50",
-  item_producao_enviado: "text-purple-600 bg-purple-50",
+  item_producao_enviado: "text-sky-600 bg-sky-50",
   tabela_aplicada_automaticamente: "text-green-600 bg-green-50",
   tabela_removida: "text-orange-600 bg-orange-50"
 };

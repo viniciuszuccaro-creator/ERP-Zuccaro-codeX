@@ -180,6 +180,11 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
     '../src/components/comercial/CentralAprovacoesLayout.jsx',
     '../src/components/comercial/GerarOPModal.jsx',
     '../src/components/comercial/LogisticaEntregaTab.jsx',
+    '../src/components/comercial/HistoricoAlteracoesPedido.jsx',
+    '../src/components/comercial/AuditoriaAprovacaoTab.jsx',
+    '../src/components/comercial/AutomacaoFluxoPedido.jsx',
+    '../src/components/comercial/ValidarPedidosExternos.jsx',
+    '../src/components/comercial/AssistenteInteligente.jsx',
   ]) {
     const src = await readFile(new URL(rel, import.meta.url), 'utf8');
     assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${rel} sem purple/indigo/violet`);

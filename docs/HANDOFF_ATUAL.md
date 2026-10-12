@@ -1,3 +1,14 @@
+## CURSOR — sky lote CPA histórico/aprovação (2026-10-12T13:36Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip pendente · sobre `6b9f3f5c` / runtime `3101334b` |
+| lote | sky HistoricoAlteracoes · AuditoriaAprovacao · AutomacaoFluxo · ValidarExternos · AssistenteInteligente |
+| #313/#315/#316 | **sem porte** · candidata `18fc6bfe` |
+| restrito | **BLOCKED** secrets |
+| porte Codex | nenhum |
+| próxima | CI → redeploy OWNER · residual Cursor |
+
 ## CURSOR — cadastros UTF-8 + sky CPA-adjacente (2026-10-12T13:35Z)
 
 | Item | Valor |
