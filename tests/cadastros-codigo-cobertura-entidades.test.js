@@ -299,6 +299,21 @@ test('CadastroFiscal e Comissao expõem ID técnico idOnly com reopen/contexto',
   assert.doesNotMatch(comissao, /queryKey:\s*\[\s*['"]pedidos['"]\s*\]/);
 });
 
+test('Etapa entrega e NF completo: RBAC/contexto + ID técnico NF', async () => {
+  const etapa = await readFile(new URL('../src/components/comercial/CriarEtapaEntregaForm.jsx', import.meta.url), 'utf8');
+  const nf = await readFile(new URL('../src/components/comercial/NotaFiscalFormCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(etapa, /usePermissions/);
+  assert.match(etapa, /useContextoVisual/);
+  assert.match(etapa, /sanitizeText/);
+  assert.match(etapa, /criar-etapa-entrega/);
+  assert.match(etapa, /bg-sky-/);
+  assert.match(nf, /CadastroCodigoRegistroField/);
+  assert.match(nf, /id-tecnico-nota-fiscal/);
+  assert.match(nf, /contextoEmpresaValido/);
+  assert.match(nf, /empresa_faturamento_id/);
+  assert.match(nf, /usePermissions/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

@@ -1,3 +1,13 @@
+## CURSOR — Etapa entrega + NF contexto (2026-10-12T10:10Z)
+
+| Item | Valor |
+|---|---|
+| lote | `CriarEtapaEntregaForm` RBAC/sanitize/sky · `NotaFiscalFormCompleto` idOnly + empresa obrigatória |
+| ancestral | ProdutoForm→V22 · Fiscal/Comissão idOnly (`74b266dd`) |
+| testes | cobertura codigo PASS |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — ProdutoForm adapter + Fiscal/Comissão idOnly (2026-10-12T10:00Z)
 
 | Item | Valor |

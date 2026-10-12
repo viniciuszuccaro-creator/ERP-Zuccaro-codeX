@@ -1,3 +1,13 @@
+## CURSOR — Etapa entrega + NF empresa (2026-10-12T10:10Z)
+
+| Item | Valor |
+|---|---|
+| lote | etapa entrega RBAC · NF idOnly + fail-closed empresa |
+| ancestral | `74b266dd` ProdutoForm/Fiscal/Comissão |
+| testes | cobertura codigo PASS |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — ProdutoForm adapter + Fiscal/Comissão (2026-10-12T10:00Z)
 
 | Item | Valor |
