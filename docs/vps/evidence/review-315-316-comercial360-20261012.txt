@@ -1,0 +1,23 @@
+REVISÃO CURSOR — #315 / #316 Comercial 360 (sem porte)
+UTC: 2026-10-12T13:15Z
+Branch Cursor: cursor/cadastros-recuperacao-c360-contrato-392b HEAD docs 2019d243 · runtime tip d01c961c
+
+#315 tip c5870f80 — Orçamento autorização TX + fluxo integrado
+- base: codex/comercial-pedido-autorizacao-tx-20261012 (#313 stack)
+- arquivos: orcamentoService.ts · runtime08c · runtime40 · docs
+- CI SUCCESS frontend/backend
+- Ação Cursor: **sem porte** — toca serviço Orçamento + stack Legado/CRM na base; reserved Codex
+- Dependência real: #313 Pedido TX (também sem porte nesta candidata #261)
+
+#316 tip 18fc6bfe — prova Orçamento/Pedido após restore backup
+- base: codex/comercial-orcamento-autorizacao-tx-20261012 (#315)
+- arquivos: runtime40 + docs (sem alterar serviços)
+- CI SUCCESS · cenário custom backup/restore na CI
+- Ação Cursor: **sem porte** — pacote de prova Codex; não integrar na #261
+
+Candidata integrada (coordenação):
+- Integração UI CPA (Cursor) permanece em #261 + owner homolog
+- Mutações convert/cancel/edit Pedido/Orçamento aguardam merge/canário Codex (#313→#315→#316)
+- Não portar stack Legado só porque está na base das PRs
+
+Homolog restrito: BLOCKED secrets ERP_DEV_LOGIN_RESTRICTED_* + user RBAC erp-dev
