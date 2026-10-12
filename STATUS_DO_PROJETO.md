@@ -1,3 +1,15 @@
+## CURSOR — tip 12fb882a implantado+homolog · revisão #313/#314 (2026-10-12T10:35Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`12fb882a`** · asset `index-1K-l5H8H.js` · rollback `pre-spa-login-20261012-103423` |
+| lote | wire Etapa/Comissão/NF · CalcularComissoes escopo · Servico/Kit/Catalogo reopen |
+| homolog | OWNER `fail_count=0` |
+| #313/#314 | **sem porte** (Pedido TX / Legado) |
+| #312 | tip `c5e83312` · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor independente |
+
 ## CURSOR — Servico/Kit/Catalogo reopen (2026-10-12T10:55Z)
 
 | Item | Valor |

@@ -1,3 +1,18 @@
+## REVISÃO CODEX — timer 2026-10-12T10:30Z + tip 12fb882a implantado
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`12fb882a`** CI SUCCESS · implantado · asset `index-1K-l5H8H.js` · rollback `pre-spa-login-20261012-103423` |
+| homolog | OWNER `fail_count=0` · evidence `deploy-261-tip-12fb882a-wire-reopen-20261012.txt` |
+| #280–#312 | tips inalterados · **sem porte** |
+| #313 **novo** | tip `58a9ff9f` · Pedido autorização TX (`pedidoService`) · base Legado · CI SUCCESS · **sem porte** |
+| #314 **novo** | tip `b24feee2` · Legado destino Clientes · CI · **sem porte** |
+| agents | Codex IDLE/ERROR · nenhum RUNNING entregando porte |
+| main | `baba91a6` |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito · merge owner |
+
 ## CURSOR — Servico/Kit/Catalogo reopen (2026-10-12T10:55Z)
 
 | Item | Valor |
