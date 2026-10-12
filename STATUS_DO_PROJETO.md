@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #309 Legado unidade piloto Produto (2026-10-12T02:00Z)
+
+| Item | Valor |
+|---|---|
+| #309 | tip `f96b0302` · revalidar unidade piloto Produto · CI SUCCESS · **sem porte** |
+| #308 | tip `25f0f830` · CI SUCCESS · **sem porte** |
+| motivo | Legado reservado · não portar |
+| stack | #309→#308→#307→… |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #307/#308 Legado mapa + refs (2026-10-12T01:45Z)
 
 | Item | Valor |

@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T02:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`81f92568`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#308 | tips inalterados · **sem porte** · #308 CI SUCCESS |
+| #309 **novo** | tip `f96b0302` · Legado revalidar unidade no piloto Produto · base #308 · CI SUCCESS · **sem porte** |
+| stack | #309→#308→#307→… · Legado reservado |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T01:45Z
 
 | Item | Valor |
