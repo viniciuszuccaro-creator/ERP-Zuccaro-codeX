@@ -84,3 +84,16 @@ test('Estoque/Expedição launchpad KPIs usam sky (sem purple/indigo)', async ()
     assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${label} sem purple/indigo`);
   }
 });
+
+test('Estoque/Expedição tabs alta frequência: sky sem purple/indigo', async () => {
+  const files = [
+    '../src/components/expedicao/EntregasListagem.jsx',
+    '../src/components/expedicao/DetalhesEntregaView.jsx',
+    '../src/components/estoque/ProdutosTab.jsx',
+    '../src/components/estoque/MovimentacaoForm.jsx',
+  ];
+  for (const rel of files) {
+    const src = await readFile(new URL(rel, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${rel} sem purple/indigo`);
+  }
+});

@@ -1,3 +1,12 @@
+## CURSOR — Onda D/E sky + mapa C360 (2026-10-12T13:58Z)
+
+| Item | Valor |
+|---|---|
+| tip | pendente · sobre `84f995a2` |
+| lote | sky expedição/estoque · mapa Onda E |
+| candidata | #318 `7af84751` |
+| próxima | CI → redeploy |
+
 ## CURSOR — Ondas A–C composição+#318 + reopen mestres (2026-10-12T13:55Z)
 
 | Item | Valor |

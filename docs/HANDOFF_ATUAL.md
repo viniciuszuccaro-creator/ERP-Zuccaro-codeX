@@ -1,3 +1,14 @@
+## CURSOR — Onda D/E sky expedição/estoque + mapa C360 (2026-10-12T13:58Z)
+
+| Item | Valor |
+|---|---|
+| HEAD | tip pendente · sobre `c0a03f67` / runtime `84f995a2` · implantado `6a4b304f` |
+| Onda D | sky Entregas/Detalhes/SeparaçãoIA · ProdutosTab · MovimentacaoForm |
+| Onda E | mapa consolidação C360 (panel reservado intocado) |
+| candidata Codex | **#318** `7af84751` |
+| porte | nenhum |
+| próxima | CI → redeploy tip · residual |
+
 ## CURSOR — Ondas A–C: composição #318 + reopen mestres (2026-10-12T13:55Z)
 
 | Item | Valor |

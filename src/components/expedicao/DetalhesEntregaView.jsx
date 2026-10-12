@@ -251,7 +251,7 @@ export default function DetalhesEntregaView({
             <div>
               <Label className="text-slate-600">Empresa Responsavel</Label>
               <div className="flex items-center gap-2 mt-1">
-                <Building2 className="w-5 h-5 text-purple-600" />
+                <Building2 className="w-5 h-5 text-sky-600" />
                 <span className="font-semibold">{obterNomeEmpresa(entrega.empresa_id)}</span>
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function DetalhesEntregaView({
                 onClick={() => handleStatusChangeLocal("Pronto para Expedir")}
                 disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Em Separacao"}
                 size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className="bg-sky-600 hover:bg-sky-700"
                 data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="pronto-para-expedir"
               >
