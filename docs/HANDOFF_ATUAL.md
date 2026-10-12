@@ -1,3 +1,15 @@
+## CURSOR — revisão Codex #319 (2026-10-12T14:05Z)
+
+| Item | Valor |
+|---|---|
+| novo | **#319** `5568e3a9` contexto estável Central360Service · CI SUCCESS |
+| candidata owner | tip **#319** (sobre #318) |
+| #313–#318 | tips estáveis |
+| porte | **nenhum** (serviço backend; panel UI reservado intocado) |
+| #261 implantado | **`0a97beba`** · homolog OWNER ok |
+| agents | 0 RUNNING |
+| próxima | residual Cursor · owner merge canário #319 |
+
 ## CURSOR — tip 0a97beba implantado+homolog (2026-10-12T14:01Z)
 
 | Item | Valor |

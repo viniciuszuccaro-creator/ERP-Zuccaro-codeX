@@ -16,3 +16,5 @@ COORDENAÇÃO
 - Restrito: BLOCKED secrets ERP_DEV_LOGIN_RESTRICTED_* (não bloqueia Ondas B–E).
 
 NÃO portar #317/#318 em #261 (pedidoService/orcamentoService/crmPreflight + stack CRM).
+
+UPDATE 14:05Z: candidata tip avança para #319 5568e3a9 (sobre #318).

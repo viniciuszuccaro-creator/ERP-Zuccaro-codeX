@@ -1,3 +1,11 @@
+## CURSOR — revisão #319 Central contexto (2026-10-12T14:05Z)
+
+| Item | Valor |
+|---|---|
+| #319 | `5568e3a9` SUCCESS · **sem porte** · candidata tip |
+| #261 | implantado `0a97beba` |
+| próxima | residual Cursor |
+
 ## CURSOR — tip 0a97beba implantado+homolog (2026-10-12T14:01Z)
 
 | Item | Valor |
