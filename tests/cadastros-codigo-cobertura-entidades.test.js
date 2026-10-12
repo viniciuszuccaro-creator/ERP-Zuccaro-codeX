@@ -258,6 +258,7 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   const cliente = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
   const produtoCompleto = await readFile(new URL('../src/components/cadastros/ProdutoFormCompleto.jsx', import.meta.url), 'utf8');
+  const produtoForm = await readFile(new URL('../src/components/cadastros/ProdutoForm.jsx', import.meta.url), 'utf8');
   const clienteComercial = await readFile(new URL('../src/components/comercial/ClienteFormCompleto.jsx', import.meta.url), 'utf8');
   const clienteForm = await readFile(new URL('../src/components/comercial/ClienteForm.jsx', import.meta.url), 'utf8');
   assert.match(cliente, /CadastroCodigoRegistroField/);
@@ -268,11 +269,34 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   assert.match(produtoCompleto, /ProdutoFormV22_Completo/);
   assert.match(produtoCompleto, /isSelfManagedCadastro = true/);
   assert.doesNotMatch(produtoCompleto, /createTable|useState|TabsList/);
+  assert.match(produtoForm, /ProdutoFormV22_Completo/);
+  assert.match(produtoForm, /isSelfManagedCadastro = true/);
+  assert.doesNotMatch(produtoForm, /createTable|useState|TabsList|enviarParaProducao/);
   assert.match(clienteComercial, /CadastroClienteCompleto/);
   assert.match(clienteComercial, /isSelfManagedCadastro = true/);
   assert.doesNotMatch(clienteComercial, /createTable|useState|defaultFormData/);
   assert.match(clienteForm, /CadastroClienteCompleto/);
   assert.doesNotMatch(clienteForm, /clienteSchema|useForm\(/);
+});
+
+test('CadastroFiscal e Comissao expõem ID técnico idOnly com reopen/contexto', async () => {
+  const fiscal = await readFile(new URL('../src/components/cadastros/CadastroFiscalForm.jsx', import.meta.url), 'utf8');
+  const comissao = await readFile(new URL('../src/components/comercial/ComissaoForm.jsx', import.meta.url), 'utf8');
+  assert.match(fiscal, /CadastroCodigoRegistroField/);
+  assert.match(fiscal, /idOnly/);
+  assert.match(fiscal, /id-tecnico-cadastro-fiscal/);
+  assert.match(fiscal, /prevIdRef/);
+  assert.match(fiscal, /group_id/);
+  assert.match(fiscal, /bg-sky-/);
+  assert.match(comissao, /CadastroCodigoRegistroField/);
+  assert.match(comissao, /idOnly/);
+  assert.match(comissao, /id-tecnico-comissao/);
+  assert.match(comissao, /filterInContext/);
+  assert.match(comissao, /usePermissions/);
+  assert.match(comissao, /prevIdRef/);
+  assert.match(comissao, /pedidos-comissao/);
+  assert.match(comissao, /bg-sky-/);
+  assert.doesNotMatch(comissao, /queryKey:\s*\[\s*['"]pedidos['"]\s*\]/);
 });
 
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {

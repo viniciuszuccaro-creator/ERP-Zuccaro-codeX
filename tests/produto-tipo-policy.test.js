@@ -108,14 +108,15 @@ test('conversão, dashboard e itens de pedido usam o contrato canônico', async 
   assert.match(dashboard, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
   assert.match(itens, /tipo_item: PRODUTO_TIPOS_CANONICOS\.REVENDA/);
 });
-test('ProdutoForm legado preserva compatibilidade usando a policy canônica', async () => {
+test('ProdutoForm legado adapta ao V22 canônico (policy de tipo no V22)', async () => {
   const source = await readFile(new URL('../src/components/cadastros/ProdutoForm.jsx', import.meta.url), 'utf8');
-  assert.match(source, /normalizeProdutoTipoItem\(dadosIniciais\.tipo_item\)/);
-  assert.match(source, /getProdutoTipoOptions\(formData\.tipo_item\)/);
-  assert.match(source, /tipo_item: PRODUTO_TIPOS_CANONICOS\.MATERIA_PRIMA/);
-  assert.match(source, /isProdutoMateriaPrima\(formData\.tipo_item\)/);
+  const v22 = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  assert.match(source, /ProdutoFormV22_Completo/);
+  assert.match(source, /isSelfManagedCadastro = true/);
+  assert.doesNotMatch(source, /createTable|TabsList|normalizeProdutoTipoItem|enviarParaProducao/);
   assert.doesNotMatch(source, /<SelectItem value="Produto Acabado">/);
-  assert.doesNotMatch(source, /tipo_item: 'MatÃ©ria-Prima ProduÃ§Ã£o'/);
+  assert.match(v22, /normalizeProdutoTipoItem/);
+  assert.match(v22, /getProdutoTipoOptions\(formData\.tipo_item\)/);
 });
 test('ProdutoFormCompleto adapta ao V22 canônico (policy de tipo no V22)', async () => {
   const source = await readFile(new URL('../src/components/cadastros/ProdutoFormCompleto.jsx', import.meta.url), 'utf8');
