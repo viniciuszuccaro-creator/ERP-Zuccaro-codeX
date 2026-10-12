@@ -1,3 +1,11 @@
+## REVISÃO CODEX — #304 operação pós-restauração CRM (2026-10-12T00:45Z)
+
+| Item | Valor |
+|---|---|
+| #304 | tip `5e693bac` · operação nova pós-restore · CI SUCCESS · **sem porte** |
+| stack | #304→#303→#302→…→#292 · CRM Codex |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #302 tip + #303 backup CRM (2026-10-12T00:30Z)
 
 | Item | Valor |

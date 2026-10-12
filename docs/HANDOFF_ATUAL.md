@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T00:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`79daea01`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#303 | tips inalterados · **sem porte** |
+| #304 **novo** | tip `5e693bac` · operação nova pós-restauração reconciliada · base #303 · CI SUCCESS · **sem porte** (CRM tests) |
+| stack | #304→#303→#302→…→#292 · CRM Codex |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T00:30Z
 
 | Item | Valor |
