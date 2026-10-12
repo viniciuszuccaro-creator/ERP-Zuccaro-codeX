@@ -531,6 +531,8 @@ export const reconciliarPilotoGrupoLegado = async (ctx, snapshots, options = {})
 /** Persisted Produto pilot; all writes remain in the existing canonical service. */
 export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => {
   const { service, unidadeService, rbacGuard, sourceSystem, batch, produtoClassUnitMap } = options;
+  const temRevisao = Object.prototype.hasOwnProperty.call(options,'revisoesUnidades');
+  const revisoesUnidades = temRevisao ? structuredClone(options.revisoesUnidades) : undefined;
   if (!service || !unidadeService || !rbacGuard || !sourceSystem || !batch || !produtoClassUnitMap) {
     throw new Error('LEGACY_CANONICAL_CONTRACT_REQUIRED');
   }
@@ -544,7 +546,8 @@ export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => 
   const unit = await unidadeService.get(ctx,mapped.unidade_medida_id);
   const source = {cod_produto:mapped.codigo_legado,descricao:mapped.descricao,
     classe:mapped.classe_legado,unidade:mapped.unidade_legado,group_id:ctx.groupId};
-  const catalogue = catalogarProdutoClasseUnidadeLegado([source],{groupId:ctx.groupId,produtoClassUnitMap,unidadesCanonicas:[unit]});
+  const catalogue = catalogarProdutoClasseUnidadeLegado([source],{groupId:ctx.groupId,produtoClassUnitMap,unidadesCanonicas:[unit],
+    ...(temRevisao ? {revisoesUnidades} : {})});
   const remapped = mapLegadoRowToCanonicalStub(source,{groupId:ctx.groupId,entidade:'produto',produtoClassUnitMap});
   if (catalogue.quantidade_sem_mapa || remapped.tipo_item !== mapped.tipo_item
     || remapped.unidade_medida_id !== mapped.unidade_medida_id || !unit.sigla) {
