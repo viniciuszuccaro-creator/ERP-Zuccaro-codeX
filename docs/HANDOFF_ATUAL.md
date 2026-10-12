@@ -2,10 +2,10 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip **** CI pendente |
+| HEAD candidata | tip **`d01c961c`** / docs `9b1a8b13` CI pendente |
 | implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
 | lote | EmpresaForm prevIdRef+prevUpdatedRef · sky ProdutoV22 · DashboardEstruturantes · DashboardProdutosProducao |
-| testes | cobertura+clientes-tab PASS |
+| testes | cobertura+clientes-tab **38 PASS** |
 | #313 | `58a9ff9f` · **sem porte** |
 | restrito | **BLOCKED** secrets |
 | próxima | CI → redeploy → homolog · residual Cursor |
