@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | lote2 sobre `b8e21e13` · implantado `a4b8d0fc` |
+| tip | **`8c0895a9`** CI pendente · implantado `a4b8d0fc` |
 | lote | sky Fechamento/Pedido chrome · ImportarProdutos · HistoricoProduto · FiscalContabil · PainelColaborador |
 | testes | cobertura+clientes-tab **37 PASS** |
 | #313 | `58a9ff9f` · **sem porte** |

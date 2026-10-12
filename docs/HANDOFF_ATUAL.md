@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip lote2 (sobre `b8e21e13`) CI pendente |
+| HEAD candidata | tip **`8c0895a9`** CI pendente |
 | implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
 | lote | sky FechamentoFinanceiro · PedidoFooter/Tabs · PedidoForm · ImportarProdutos · HistoricoProduto · FiscalContabil · PainelColaborador |
 | testes | cobertura+clientes-tab **37 PASS** |
