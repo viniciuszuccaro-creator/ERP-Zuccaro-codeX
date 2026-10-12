@@ -1,3 +1,14 @@
+## CURSOR — tip f6710844 implantado+homolog (2026-10-12T11:17Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`f6710844`** · asset `index-CZpoqayZ.js` · rollback `pre-spa-login-20261012-111610` |
+| lote | reopen Segmento/Frete/Local/Transportadora |
+| homolog | OWNER `fail_count=0` |
+| #280–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor |
+
 ## CURSOR — reopen Segmento/Frete/Local/Transportadora (2026-10-12T11:00Z)
 
 | Item | Valor |

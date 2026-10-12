@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-12T11:15Z + tip f6710844 implantado
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`f6710844`** CI SUCCESS · implantado · asset `index-CZpoqayZ.js` · rollback `pre-spa-login-20261012-111610` |
+| homolog | OWNER `fail_count=0` · evidence `deploy-261-tip-f6710844-reopen-forms-20261012.txt` |
+| #280–#314 | tips inalterados · **sem porte** |
+| gt314 | nenhum |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T11:00Z
 
 | Item | Valor |
