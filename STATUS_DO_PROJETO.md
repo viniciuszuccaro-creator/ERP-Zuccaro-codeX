@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip runtime pendente CI |
+| tip | **** CI pendente · implantado  |
 | implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
 | lote | EmpresaForm prevIdRef+prevUpdatedRef · sky ProdutoV22 · DashboardEstruturantes · DashboardProdutosProducao |
 | testes | cobertura+clientes-tab PASS |
