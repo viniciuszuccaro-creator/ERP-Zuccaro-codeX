@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | **`a3a45984`** · sobre `b77edcac` |
+| tip | **`e2175197`** / runtime **`f41084b3`** · sobre `b77edcac` |
 | lote | mojibake financeiro/produção/IA/acessos + PedidosTab emoji |
 | testes | cobertura+clientes-tab **38 PASS** |
 | #313/#315/#316 | **sem porte** |
