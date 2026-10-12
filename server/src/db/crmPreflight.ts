@@ -7,15 +7,7 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
   if(expected.requireRestrictedLogin!==undefined && typeof expected.requireRestrictedLogin!=='boolean')throw new Error('CRM_PREFLIGHT_LOGIN_GATE_INVALID');
   if(expected.requirePedidoPersistence!==undefined && typeof expected.requirePedidoPersistence!=='boolean')throw new Error('CRM_PREFLIGHT_PEDIDO_GATE_INVALID');
   if(expected.requirePedidoPersistence && expected.stage==='before_migration')throw new Error('CRM_PREFLIGHT_PEDIDO_STAGE_INVALID');
-  const identity=await db.query<{database:string;schema:string;rolsuper:boolean;rolbypassrls:boolean;session_super:boolean;session_bypass:boolean;same_login:boolean}>(
-    `SELECT current_database() AS database,current_schema() AS schema,effective.rolsuper,effective.rolbypassrls,
-      login.rolsuper AS session_super,login.rolbypassrls AS session_bypass,current_user=session_user AS same_login
-      FROM pg_roles effective JOIN pg_roles login ON login.rolname=session_user WHERE effective.rolname=current_user`);
-  const who=identity.rows[0];
-  const checks:Record<string,boolean>={destination:!!who&&who.database===expected.database&&who.schema===expected.schema,
-    restrictedRole:!!who&&who.rolsuper===false&&who.rolbypassrls===false};
-  if(expected.requireRestrictedLogin)checks.restrictedLogin=!!who && who.same_login===true
-    && who.session_super===false && who.session_bypass===false && who.rolsuper===false && who.rolbypassrls===false;
+  const checks=await inspectRestrictedDbIdentity(db,expected);
   if(!checks.destination || checks.restrictedLogin===false)return {ready:false,checks,blocked:Object.keys(checks).filter(k=>!checks[k])};
   const relations=await db.query<{name:string;oid:string;rls:boolean;force:boolean;kind:string}>(
     `SELECT c.relname AS name,c.oid::text AS oid,c.relrowsecurity AS rls,c.relforcerowsecurity AS force,c.relkind AS kind
@@ -87,6 +79,22 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
   if(expected.requirePedidoPersistence)Object.assign(checks,await inspectPedidoPersistence(db,expected.schema));
   const blocked=Object.keys(checks).filter(k=>!checks[k]);
   return {ready:blocked.length===0,checks,blocked};
+}
+
+/** Shared catalog identity probe; no relation grants or tenant rows are required. */
+export async function inspectRestrictedDbIdentity(db:DbQueryExecutor,expected:{database:string;schema:string;requireRestrictedLogin?:boolean}) {
+  if(!expected.database?.trim()||!expected.schema?.trim())throw new Error('CRM_PREFLIGHT_DESTINATION_REQUIRED');
+  if(expected.requireRestrictedLogin!==undefined&&typeof expected.requireRestrictedLogin!=='boolean')throw new Error('CRM_PREFLIGHT_LOGIN_GATE_INVALID');
+  const identity=await db.query<{database:string;schema:string;rolsuper:boolean;rolbypassrls:boolean;session_super:boolean;session_bypass:boolean;same_login:boolean}>(
+    `SELECT current_database() AS database,current_schema() AS schema,effective.rolsuper,effective.rolbypassrls,
+      login.rolsuper AS session_super,login.rolbypassrls AS session_bypass,current_user=session_user AS same_login
+      FROM pg_roles effective JOIN pg_roles login ON login.rolname=session_user WHERE effective.rolname=current_user`);
+  const who=identity.rows[0];
+  const checks:Record<string,boolean>={destination:!!who&&who.database===expected.database&&who.schema===expected.schema,
+    restrictedRole:!!who&&who.rolsuper===false&&who.rolbypassrls===false};
+  if(expected.requireRestrictedLogin)checks.restrictedLogin=!!who&&who.same_login===true&&who.session_super===false
+    &&who.session_bypass===false&&who.rolsuper===false&&who.rolbypassrls===false;
+  return checks;
 }
 
 /** Catalog-only core persistence gate. References, Auth and behavioral RLS remain separate gates. */

@@ -26,6 +26,45 @@ import {
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** Catalog-only pilot preflight. Reuses the canonical identity probe; never authorizes an import. */
+export async function inspecionarDestinoPilotoLegado(db,destino,{inspecionarIdentidade}={}) {
+  if(typeof db?.query!=='function'||typeof inspecionarIdentidade!=='function'
+    ||typeof destino?.database!=='string'||!destino.database.trim()||typeof destino?.schema!=='string'||!destino.schema.trim())
+    throw new Error('LEGACY_PREFLIGHT_CONTRACT_REQUIRED');
+  const identity=await inspecionarIdentidade(db,{database:destino.database,schema:destino.schema,requireRestrictedLogin:true});
+  const checks={destino:identity?.destination===true,loginRestrito:identity?.restrictedRole===true&&identity?.restrictedLogin===true};
+  const report=()=>({ready:Object.values(checks).every(x=>x===true),checks,bloqueios:Object.keys(checks).filter(k=>checks[k]!==true),
+    somente_leitura:true,scope:'grupo_schema_only',aprovacao_importacao_operacional:false,
+    gates_nao_homologados:['identidade_grupo','rbac_ator','policies_comportamentais','fonte_equivalente','mapa_classe_unidade','backup_restauracao']});
+  if(!checks.destino||!checks.loginRestrito)return report();
+  const relations=await db.query(`SELECT c.relname AS name,c.oid::text AS oid,c.relkind AS kind,c.relrowsecurity AS rls,c.relforcerowsecurity AS force,
+    NOT EXISTS(SELECT 1 FROM aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
+      WHERE a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE'))
+    AND NOT EXISTS(SELECT 1 FROM pg_attribute att,LATERAL aclexplode(att.attacl) a WHERE att.attrelid=c.oid
+      AND att.attnum>0 AND NOT att.attisdropped AND a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE')) AS public_safe,
+    has_table_privilege(current_user,c.oid,'SELECT') AND has_table_privilege(current_user,c.oid,'INSERT')
+      AND has_table_privilege(current_user,c.oid,'UPDATE') AS grants
+    FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname=$1 AND c.relname IN ('clientes','produtos')`,[destino.schema]);
+  checks.mestres=relations.rows.length===2&&relations.rows.every(r=>r.kind==='r');
+  checks.rls=checks.mestres&&relations.rows.every(r=>r.rls===true&&r.force===true);
+  checks.grants=checks.mestres&&relations.rows.every(r=>r.grants===true);
+  checks.publicAcl=checks.mestres&&relations.rows.every(r=>r.public_safe===true);
+  checks.colunas=checks.mestres;checks.identidadeUnica=checks.mestres;
+  for(const relation of relations.rows.filter(r=>r.kind==='r')) {
+    const attrs=await db.query('SELECT attname AS name,attnotnull AS required FROM pg_attribute WHERE attrelid=$1::oid AND attnum>0 AND NOT attisdropped',[relation.oid]);
+    const columns=new Map(attrs.rows.map(a=>[a.name,a.required]));
+    checks.colunas=checks.colunas&&['group_id','empresa_id','codigo','origem','codigo_legado','legacy_id','source_system','migration_batch'].every(c=>columns.has(c))
+      &&columns.get('group_id')===true&&columns.get('empresa_id')===false;
+    const indexes=await db.query(`SELECT indisvalid AS valid,indisunique AS unique,pg_get_indexdef(indexrelid) AS definition,
+      pg_get_expr(indpred,indrelid) AS predicate FROM pg_index WHERE indrelid=$1::oid`,[relation.oid]);
+    checks.identidadeUnica=checks.identidadeUnica&&indexes.rows.some(i=>i.valid===true&&i.unique===true
+      &&/\(group_id, source_system, codigo_legado\)/.test(i.definition)
+      &&String(i.predicate??'').replace(/[()\s]/g,'').toLowerCase()==='source_systemisnotnullandcodigo_legadoisnotnull');
+  }
+  return report();
+}
+
 /** Ordem de dependencia minima para Produtos / Clientes / Fornecedores. */
 export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([
   'empresa',

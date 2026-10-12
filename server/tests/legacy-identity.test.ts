@@ -16,6 +16,48 @@ import {InMemoryTenantGuard} from '../src/db/tenantGuard.ts';
 import {InMemoryProdutoRelationGuard} from '../src/db/produtoRelationGuard.ts';
 import type {DbClient} from '../src/db/client.ts';
 import {consumirLoteStagingLegado,persistirClienteGrupoLegado,criarSnapshotReconciliacaoLegado,reconciliarPilotoGrupoLegado} from '../../scripts/legado/consumir-lote-staging.mjs';
+import {inspecionarDestinoPilotoLegado} from '../../scripts/legado/consumir-lote-staging.mjs';
+import {inspectRestrictedDbIdentity} from '../src/db/crmPreflight.ts';
+
+test('Legacy preflight rejects privileged or SET ROLE sessions before catalog reads',async()=>{
+ const f=await localCrmFixture();try {
+  const destino=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const options={inspecionarIdentidade:inspectRestrictedDbIdentity};
+  assert.equal((await inspecionarDestinoPilotoLegado(f.admin,destino,options)).ready,false);
+  const denied=await f.data.withTransaction(tx=>inspecionarDestinoPilotoLegado(tx,destino,options));
+  assert.equal(denied.ready,false);assert.deepEqual(denied.bloqueios,['loginRestrito']);
+  assert.equal(denied.aprovacao_importacao_operacional,false);
+  assert.ok(!JSON.stringify(denied).includes(destino.database));
+ }finally{await f.close();}
+});
+
+if(process.env.DATABASE_URL)test('Legacy preflight PostgreSQL: shared masters, identity indexes, minimal grants and read-only fail-closed',async()=>{
+ const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});try {
+  const destino=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const options={inspecionarIdentidade:inspectRestrictedDbIdentity};
+  const inspect=()=>f.data.withTransaction(tx=>inspecionarDestinoPilotoLegado({query:async(sql,params)=>{
+   assert.match(sql.trim(),/^SELECT\b/i);return tx.query(sql,params);
+  }},destino,options));
+  await f.exec(`REVOKE ALL ON oportunidades FROM ${f.role}`); // Legacy identity checks do not require CRM DML grants.
+  assert.ok((await inspect()).bloqueios.includes('grants'));
+  await f.exec(`GRANT SELECT,INSERT,UPDATE ON clientes,produtos TO ${f.role}`);
+  assert.equal((await inspect()).ready,true);
+  await f.exec('GRANT UPDATE(nome) ON clientes TO PUBLIC');
+  assert.ok((await inspect()).bloqueios.includes('publicAcl'));
+  await f.exec('REVOKE UPDATE(nome) ON clientes FROM PUBLIC');
+  await f.exec('ALTER TABLE produtos NO FORCE ROW LEVEL SECURITY');
+  assert.ok((await inspect()).bloqueios.includes('rls'));
+  await f.exec('ALTER TABLE produtos FORCE ROW LEVEL SECURITY');
+  await f.exec('DROP INDEX produtos_legacy_identity_uidx');
+  assert.ok((await inspect()).bloqueios.includes('identidadeUnica'));
+  await f.exec('CREATE UNIQUE INDEX produtos_legacy_identity_uidx ON produtos(group_id,source_system,codigo_legado) WHERE source_system IS NOT NULL AND codigo_legado IS NOT NULL');
+  assert.equal((await inspect()).ready,true);
+  await f.exec('ALTER TABLE produtos RENAME COLUMN migration_batch TO hidden_fixture_batch');
+  assert.ok((await inspect()).bloqueios.includes('colunas'));
+  const wrong=await f.data.withTransaction(tx=>inspecionarDestinoPilotoLegado(tx,{...destino,database:'wrong'},options));
+  assert.deepEqual(wrong.bloqueios,['destino']);assert.equal(wrong.aprovacao_importacao_operacional,false);
+ }finally{await f.close();}
+});
 
 const migration=await readFile(new URL('../migrations/043_legado_identidade_compartilhada.sql',import.meta.url),'utf8');
 async function prove(f:any,role:string) {
