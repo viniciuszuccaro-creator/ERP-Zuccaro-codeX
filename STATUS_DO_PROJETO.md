@@ -1,3 +1,14 @@
+## CURSOR — CalcularComissoes multiempresa+RBAC (2026-10-12T10:45Z)
+
+| Item | Valor |
+|---|---|
+| lote | `CalcularComissoesForm` createInContext + RBAC + escopo pedidos + sky |
+| causa | create direto `base44.entities.Comissao` sem groupId/empresaId |
+| testes | cobertura 19 PASS |
+| #312 | tip `c5e83312` · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — wire runtime Etapa/Comissão/NF (2026-10-12T10:35Z)
 
 | Item | Valor |

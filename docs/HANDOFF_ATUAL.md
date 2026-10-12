@@ -1,3 +1,15 @@
+## CURSOR — CalcularComissoes multiempresa+RBAC (2026-10-12T10:45Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip wire `ff566153` · runtime ainda `cbd3624f` · main `baba91a6` |
+| lote | `CalcularComissoesForm` → `createInContext` + RBAC + escopo + sky (remove `base44.entities.Comissao.create`) |
+| ancestral | wire Etapa/Comissão/NF (`f8752af0`) |
+| testes | cobertura (19) PASS |
+| #312 | tip `c5e83312` · **sem porte** |
+| BLOCKED | secret restrito · ManagePullRequest casing repo (PR #261 já existe) |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — wire runtime Etapa/Comissão/NF (2026-10-12T10:35Z)
 
 | Item | Valor |
