@@ -229,6 +229,19 @@ if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: custom backup restores 
     },async()=>{
       const fresh=await proof.prepare();
       assert.equal(Number(fresh.bound.codigo),highWater.codigo+1);
+      const counts=()=>f.admin.query(`SELECT (SELECT count(*)::int FROM pedidos) AS orders,
+        (SELECT count(*)::int FROM pedido_itens) AS items,(SELECT count(*)::int FROM pedido_historico) AS history,
+        (SELECT count(*)::int FROM audit_logs) AS audit`);
+      const beforeFailure=(await counts()).rows[0];
+      await f.exec(`CREATE FUNCTION crm_restored_audit_failure() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW.entity='Pedido' AND NEW.action='create' THEN RAISE EXCEPTION 'synthetic postrestore audit failure'; END IF;
+        RETURN NEW; END $$;
+        CREATE TRIGGER crm_restored_audit_failure BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE PROCEDURE crm_restored_audit_failure();`);
+      await assert.rejects(proof.service.convertOrcamentoToPedido(proof.ctx,fresh.bound.id,fresh.input),/synthetic postrestore audit failure/);
+      assert.deepEqual((await counts()).rows[0],beforeFailure);
+      assert.equal((await proof.service.get(proof.ctx,fresh.bound.id)).version,fresh.bound.version);
+      assert.equal((await f.admin.query<{numero:number}>('SELECT coalesce(max(numero::int),0)::int AS numero FROM pedidos WHERE empresa_id=$1',[proof.ctx.empresaId])).rows[0].numero,highWater.pedido);
+      await f.exec('DROP TRIGGER crm_restored_audit_failure ON audit_logs; DROP FUNCTION crm_restored_audit_failure();');
       const converted=await Promise.all(Array.from({length:6},()=>proof.service.convertOrcamentoToPedido(proof.ctx,fresh.bound.id,fresh.input)));
       assert.equal(new Set(converted.map(x=>x.pedido.id)).size,1);
       assert.equal(converted.filter(x=>!x.replayed).length,1);
