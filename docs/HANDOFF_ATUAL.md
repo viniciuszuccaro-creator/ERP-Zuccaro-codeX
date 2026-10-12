@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-12T12:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip docs `8209db6e` · runtime `5b251b1c` implantado |
+| #280/#291/#312/#313/#314 | tips inalterados · **sem porte** |
+| agents | nenhum Codex RUNNING entregando porte |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+
 ## CURSOR — tip 5b251b1c implantado+homolog (2026-10-12T12:24Z)
 
 | Item | Valor |
