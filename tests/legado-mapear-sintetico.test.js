@@ -316,3 +316,31 @@ test('catalogo preserva codigos e separa pares ambiguos sem aceitar mapa implici
  assert(out.grupos.every(g=>g.motivos.includes('chave_mapeamento_ambigua')));
  assert.throws(()=>catalogarProdutoClasseUnidadeLegado(null),/LEGACY_ROWS_REQUIRED/);
 });
+
+test('classe/unidade ambigua ou mapa herdado nao vira classificacao explicita no mapper',()=>{
+ const map={'C|U|X':{tipo_item:'REVENDA',unidade_medida_id:'unit'}};
+ for(const [classe,unidade]of [['C|U','X'],['C','U|X']]){
+  const row=mapLegadoRowToCanonicalStub({sku:'001',descricao:'Synthetic',classe,unidade},{entidade:'produto',groupId:'g1',produtoClassUnitMap:map});
+  assert.equal(row.quarentena,true);assert.equal(row.tipo_item,undefined);assert.equal(row.codigo_legado,'001');
+ }
+ const inherited=Object.create({'08|KG':{tipo_item:'REVENDA',unidade_medida_id:'unit'}});
+ const row=mapLegadoRowToCanonicalStub({sku:'001',descricao:'Synthetic',classe:'08',unidade:'KG'},{entidade:'produto',groupId:'g1',produtoClassUnitMap:inherited});
+ assert.equal(row.quarentena,true);assert.equal(row.tipo_item,undefined);
+});
+
+test('catalogo nao escolhe primeira unidade quando o mesmo ID aparece duplicado',()=>{
+ const rows=[{sku:'001',descricao:'Synthetic',classe:'08',unidade:'KG'}],units=[{id:'unit',group_id:'g1',ativo:true},{id:'unit',group_id:'g2',ativo:false}];
+ const opts={groupId:'g1',produtoClassUnitMap:{'08|KG':{tipo_item:'MATERIA_PRIMA',unidade_medida_id:'unit'}}};
+ const before=JSON.stringify(units);
+ const one=catalogarProdutoClasseUnidadeLegado(rows,{...opts,unidadesCanonicas:units});
+ const two=catalogarProdutoClasseUnidadeLegado(rows,{...opts,unidadesCanonicas:[...units].reverse()});
+ assert.deepEqual(one,two);assert.equal(one.quantidade_sem_mapa,1);assert(one.grupos[0].motivos.includes('unidade_destino_ambigua'));
+ assert.equal(JSON.stringify(units),before);assert.equal(one.importado_operacional,false);
+});
+
+test('sigla igual no destino nao constitui mapa classe/unidade nem transforma quantidade',()=>{
+ const rows=[{sku:'001',descricao:'Synthetic',classe:'08',unidade:'KG',quantidade:'1.250000'}],before=JSON.stringify(rows);
+ const result=catalogarProdutoClasseUnidadeLegado(rows,{groupId:'g1',unidadesCanonicas:[{id:'unit',group_id:'g1',ativo:true,sigla:'KG'}]});
+ assert.equal(result.quantidade_sem_mapa,1);assert(result.grupos[0].motivos.includes('mapeamento_explicito_ausente'));
+ assert.equal(result.importado_operacional,false);assert.equal(JSON.stringify(rows),before);
+});

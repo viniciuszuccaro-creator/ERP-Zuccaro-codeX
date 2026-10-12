@@ -192,7 +192,9 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const classeLegado = entidade === 'produto' ? String(pickAlias(row, aliases.classe)).trim() : '';
   const unidadeLegado = entidade === 'produto' ? String(pickAlias(row, aliases.unidade)).trim() : '';
   const chaveClasseUnidade = `${classeLegado}|${unidadeLegado}`;
-  const classificacao = entidade === 'produto'
+  const parClasseUnidadeValido = Boolean(classeLegado && unidadeLegado && !classeLegado.includes('|') && !unidadeLegado.includes('|'));
+  const classificacao = entidade === 'produto' && parClasseUnidadeValido
+    && Object.prototype.hasOwnProperty.call(opts.produtoClassUnitMap ?? {},chaveClasseUnidade)
     ? opts.produtoClassUnitMap?.[chaveClasseUnidade]
     : null;
   const tipoExplicito = first(classificacao?.tipo_item, classificacao?.tipo_produto);
@@ -362,7 +364,9 @@ export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
       if (!classe || !unidade) reasons.add('classe_unidade_ausente');
       if (classe.includes('|') || unidade.includes('|')) reasons.add('chave_mapeamento_ambigua');
       if (!mapped.tipo_item || !mapped.unidade_medida_id) reasons.add('mapeamento_explicito_ausente');
-      const target = opts.unidadesCanonicas?.find((u) => u.id === mapped.unidade_medida_id);
+      const matches = opts.unidadesCanonicas?.filter((u) => u.id === mapped.unidade_medida_id) ?? [];
+      if(matches.length>1)reasons.add('unidade_destino_ambigua');
+      const target = matches.length===1 ? matches[0] : null;
       if (!target) reasons.add('unidade_destino_nao_comprovada');
       else {
         if (target.ativo !== true) reasons.add('unidade_destino_inativa');
