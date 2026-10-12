@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T01:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`736f7e4a`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#305 | tips inalterados · **sem porte** |
+| #306 **novo** | tip `7ff3b87f` · Legado hashes extrações privadas · base #305 · CI SUCCESS · **sem porte** (Legado reservado) |
+| stack | #306→#305→#304→…→#292 · Legado/CRM Codex |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T01:00Z
 
 | Item | Valor |
