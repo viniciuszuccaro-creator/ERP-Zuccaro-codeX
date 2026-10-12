@@ -3,11 +3,70 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, link } from 'node:fs/promises'
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { inventoryBackup, compareBackupManifests, writeInventoryReport,verifyPrivateExtractionFiles } from '../scripts/legado/inventario-backup-erp-antigo.mjs';
+import { inventoryBackup, compareBackupManifests, writeInventoryReport,verifyPrivateExtractionFiles,verifyPrivateUnitReviewReferences } from '../scripts/legado/inventario-backup-erp-antigo.mjs';
 import {createHash} from 'node:crypto';
 
 const extraction=files=>({privateOnly:true,operationalImportAuthorized:false,operationalDatabaseTouched:false,originalBackupModified:false,files});
 const reference=(name,content)=>({fileName:name,bytes:Buffer.byteLength(content),fileSha256:createHash('sha256').update(content).digest('hex')});
+
+async function unitReview(source){
+ const manifest={operationalImportAuthorized:false,exactSiglaIsIdentityProof:false,approvedTargetIds:999};
+ await mkdir(path.join(source,'nested'));
+ for(const [index,key]of ['sourceFile','apiSnapshotFile','reviewFile'].entries()){
+  const name=`private-${index}.csv`,content=`private content ${index}`;
+  manifest[key]=name;manifest[key.replace('File','Sha256')]=reference(name,content).fileSha256;
+  await writeFile(path.join(source,index===0?'nested':'',name),content);
+ }
+ return manifest;
+}
+
+test('unit review resolves nested references by hash without approving target mapping',()=>fixture(async({source})=>{
+ const manifest=await unitReview(source),before=JSON.stringify(manifest);
+ const out=await verifyPrivateUnitReviewReferences(source,manifest);
+ assert.equal(out.declaredReferencesVerified,true);assert.equal(out.scanComplete,true);
+ for(const key of ['semanticEquivalenceVerified','targetMappingApproved','sourceLineageVerified','originalBackupEquivalent','importAuthorized','imported'])assert.equal(out[key],false);
+ assert(out.results.every(row=>row.status==='verified'));
+ assert.equal(JSON.stringify(manifest),before);
+ assert(!JSON.stringify(out).includes('private-'));assert(!JSON.stringify(out).includes('private content'));
+ await writeFile(path.join(source,'nested',manifest.sourceFile),'changed');
+ assert.equal((await verifyPrivateUnitReviewReferences(source,manifest)).results[0].status,'divergent');
+}));
+
+test('unit review refuses duplicate basenames even with equal bytes and does not choose first',()=>fixture(async({source})=>{
+ const manifest=await unitReview(source);
+ await writeFile(path.join(source,manifest.sourceFile),'private content 0');
+ const out=await verifyPrivateUnitReviewReferences(source,manifest);
+ assert.equal(out.results[0].status,'ambiguous');assert.equal(out.declaredReferencesVerified,false);
+ await rm(path.join(source,manifest.sourceFile));await rm(path.join(source,'nested',manifest.sourceFile));
+ assert.equal((await verifyPrivateUnitReviewReferences(source,manifest)).results[0].status,'missing');
+}));
+
+test('unit review rejects invalid declarations and incomplete bounded scans',()=>fixture(async({source})=>{
+ const manifest=await unitReview(source);
+ for(const mutation of [{sourceFile:'../outside'}, {sourceSha256:'invalid'}, {reviewFile:manifest.sourceFile},
+   {operationalImportAuthorized:true},{exactSiglaIsIdentityProof:true}])
+  await assert.rejects(verifyPrivateUnitReviewReferences(source,{...manifest,...mutation}),/MANIFEST_INVALID/);
+ for(const options of [{maxDepth:0},{maxEntries:1}]){
+  const out=await verifyPrivateUnitReviewReferences(source,manifest,options);
+  assert.equal(out.scanComplete,false);assert.equal(out.declaredReferencesVerified,false);
+  assert(out.results.every(row=>row.status==='scan_incomplete'));
+ }
+}));
+
+test('unit review preserves extraction secret and mid-read change guards',()=>fixture(async({source})=>{
+ const manifest=await unitReview(source);
+ await rm(path.join(source,manifest.reviewFile));manifest.reviewFile='.env';
+ const out=await verifyPrivateUnitReviewReferences(source,manifest,{hashFile:async p=>{
+  assert.notEqual(path.basename(p),'.env');return reference('',await readFile(p)).fileSha256;
+ }});
+ assert.equal(out.results[2].status,'missing');
+ await writeFile(path.join(source,'.env'),'private');
+ assert.equal((await verifyPrivateUnitReviewReferences(source,manifest)).results[2].status,'blocked_secret');
+ const raced=await verifyPrivateUnitReviewReferences(source,manifest,{hashFile:async p=>{
+  const digest=reference('',await readFile(p)).fileSha256;await writeFile(p,'different longer value');return digest;
+ }});
+ assert.equal(raced.results[0].status,'source_changed');assert.equal(raced.declaredReferencesVerified,false);
+}));
 
 test('extraction references verify bytes without proving source lineage or exposing private names/values',()=>fixture(async({source})=>{
  const content='synthetic private value',name='private-customer.csv';await writeFile(path.join(source,name),content);

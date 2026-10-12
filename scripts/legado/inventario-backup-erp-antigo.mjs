@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import { createReadStream,realpathSync } from 'node:fs';
 import { readdir, lstat, mkdir, readFile, writeFile, realpath } from 'node:fs/promises';
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -50,6 +50,61 @@ export async function verifyPrivateExtractionFiles(root,manifest,{hashFile=diges
   }
   return {scope:'extraction_file_hash_only',declaredFilesVerified:results.every(r=>r.status==='verified'),results,
     sourceLineageVerified:false,originalBackupEquivalent:false,importAuthorized:false,imported:false};
+}
+
+/** Resolves a unit-review manifest inside private staging, never by first match or sigla.
+ * The manifest declares hashes, not sizes; extraction verification measures stability.
+ * This proves referenced bytes only, never semantic identity or approved target IDs.
+ */
+export async function verifyPrivateUnitReviewReferences(root,manifest,{hashFile=digestFile,maxDepth=5,maxEntries=10000}={}) {
+  const fields=['sourceFile','apiSnapshotFile','reviewFile'];
+  if(manifest?.operationalImportAuthorized!==false||manifest.exactSiglaIsIdentityProof!==false
+    ||!Number.isSafeInteger(maxDepth)||maxDepth<0||maxDepth>10
+    ||!Number.isSafeInteger(maxEntries)||maxEntries<1||maxEntries>100000)
+    throw safeError('LEGACY_UNIT_REVIEW_MANIFEST_INVALID');
+  const names=new Set();
+  for(const key of fields){
+    const name=manifest[key];
+    if(typeof name!=='string'||!name||name.length>255||/[\\/:\u0000-\u001f\u007f]/.test(name)
+      ||['.','..'].includes(name)||names.has(name.toLowerCase())
+      ||!/^[a-f0-9]{64}$/.test(manifest[key.replace('File','Sha256')]))
+      throw safeError('LEGACY_UNIT_REVIEW_MANIFEST_INVALID');
+    names.add(name.toLowerCase());
+  }
+  const origin=realpathSync(root),matches=new Map([...names].map(name=>[name,[]]));
+  let entries=0,scanComplete=true;
+  async function walk(directory,depth){
+    for(const item of await readdir(directory,{withFileTypes:true})){
+      if(++entries>maxEntries)throw safeError('LEGACY_REVIEW_SCAN_LIMIT');
+      const target=resolve(directory,item.name),stat=await lstat(target);
+      // Never follow linked subdirectories or ignore an inaccessible subtree.
+      if(stat.isSymbolicLink()||!within(origin,realpathSync(target)))throw safeError('LEGACY_REVIEW_SCAN_LINK');
+      if(stat.isDirectory()){
+        if(depth>=maxDepth)throw safeError('LEGACY_REVIEW_SCAN_LIMIT');
+        await walk(target,depth+1);
+      }else if(matches.has(item.name.toLowerCase()))matches.get(item.name.toLowerCase()).push(target);
+    }
+  }
+  try{await walk(origin,0);}catch{scanComplete=false;}
+  const results=[];
+  for(const [index,key]of fields.entries()){
+    const candidates=matches.get(manifest[key].toLowerCase());
+    if(!scanComplete){results.push({index,status:'scan_incomplete'});continue;}
+    if(candidates.length!==1){results.push({index,status:candidates.length?'ambiguous':'missing'});continue;}
+    try{
+      const target=candidates[0],stat=await lstat(target,{bigint:true});
+      if(!within(origin,realpathSync(target))){results.push({index,status:'blocked_link_or_type'});continue;}
+      if(stat.size>BigInt(Number.MAX_SAFE_INTEGER)){results.push({index,status:'unavailable'});continue;}
+      const report=await verifyPrivateExtractionFiles(dirname(target),{privateOnly:true,
+        operationalImportAuthorized:false,operationalDatabaseTouched:false,originalBackupModified:false,
+        files:[{fileName:basename(target),fileSha256:manifest[key.replace('File','Sha256')],bytes:Number(stat.size)}]}, {hashFile});
+      results.push({index,status:report.results[0].status});
+    }catch(error){results.push({index,status:error.code==='ENOENT'?'missing':['EPERM','EACCES'].includes(error.code)?'access_denied':'unavailable'});}
+  }
+  return {scope:'unit_review_reference_hash_only',scanComplete,
+    declaredReferencesVerified:results.every(result=>result.status==='verified'),results,
+    semanticEquivalenceVerified:false,targetMappingApproved:false,sourceLineageVerified:false,
+    originalBackupEquivalent:false,importAuthorized:false,imported:false};
 }
 
 export async function writeInventoryReport(root, report, result) {
