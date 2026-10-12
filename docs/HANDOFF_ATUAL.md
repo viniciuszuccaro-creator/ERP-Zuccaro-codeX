@@ -1,3 +1,14 @@
+## CURSOR — cadastros UTF-8 + sky CPA-adjacente (2026-10-12T13:35Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip pendente · sobre `3fbd639b` / runtime `c160b523` |
+| lote | UTF-8 gestores/produto Fiscal/Preços · sky FormasPagamentoPedido/PainelEntregas/CentralAprovacoes/GerarOP/LogisticaEntrega |
+| #313/#315/#316 | **sem porte** · candidata integrada `18fc6bfe` |
+| restrito | **BLOCKED** secrets |
+| porte Codex | nenhum |
+| próxima | CI tips · residual Cursor · owner merge canário Codex |
+
 ## CURSOR — ack Codex C360 + PedidosTab UTF-8/sky (2026-10-12T13:30Z)
 
 | Item | Valor |

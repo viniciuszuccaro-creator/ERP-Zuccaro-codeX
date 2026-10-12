@@ -41,7 +41,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
 
   const toggleAtivoMutation = useMutation({
     mutationFn: async ({ id, ativo }) => {
-      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para alterar.");
+      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissão para alterar.");
       await updateInContext('GatewayPagamento', id, { ativo: !ativo });
     },
     onSuccess: () => {
@@ -52,7 +52,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
-      if (!podeExcluir) throw new Error("Sem permissÃ£o para excluir.");
+      if (!podeExcluir) throw new Error("Sem permissão para excluir.");
       return deleteInContext('GatewayPagamento', id);
     },
     onSuccess: () => {
@@ -119,7 +119,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                   windowMode: true,
                   onSubmit: async (data) => {
                     try {
-                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissÃ£o para criar.");
+                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissão para criar.");
                       await createInContext('GatewayPagamento', data);
                       queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
                       toast({ title: "✅ Gateway cadastrado!" });
@@ -217,7 +217,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                           windowMode: true,
                           onSubmit: async (data) => {
                             try {
-                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para editar.");
+                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissão para editar.");
                               await updateInContext('GatewayPagamento', gateway.id, data);
                               queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
                               toast({ title: "✅ Gateway atualizado!" });

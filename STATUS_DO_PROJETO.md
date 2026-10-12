@@ -1,3 +1,13 @@
+## CURSOR — cadastros UTF-8 + sky CPA-adjacente (2026-10-12T13:35Z)
+
+| Item | Valor |
+|---|---|
+| tip | pendente · sobre `c160b523` |
+| lote | encoding cadastros · sky pedido/entrega/aprovação |
+| testes | cobertura+clientes-tab **38 PASS** |
+| #313/#315/#316 | **sem porte** |
+| próxima | CI → residual Cursor |
+
 ## CURSOR — ack Codex C360 + PedidosTab UTF-8/sky (2026-10-12T13:30Z)
 
 | Item | Valor |

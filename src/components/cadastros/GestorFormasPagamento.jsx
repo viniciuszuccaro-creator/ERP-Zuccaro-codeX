@@ -53,7 +53,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
-      if (!podeExcluir) throw new Error('Sem permissÃ£o para excluir.');
+      if (!podeExcluir) throw new Error('Sem permissão para excluir.');
       return deleteInContext('FormaPagamento', id);
     },
     onSuccess: () => {
@@ -64,7 +64,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
 
   const toggleAtivaMutation = useMutation({
     mutationFn: ({ id, ativa }) => {
-      if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissÃ£o para alterar status.');
+      if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissão para alterar status.');
       return updateInContext('FormaPagamento', id, { ativa });
     },
     onSuccess: () => {
@@ -87,7 +87,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
       windowMode: true,
       onSubmit: async (data) => {
         try {
-          if (!contextoValido || !podeCriar) throw new Error('Sem contexto ou permissÃ£o para criar.');
+          if (!contextoValido || !podeCriar) throw new Error('Sem contexto ou permissão para criar.');
           await createInContext('FormaPagamento', data);
           queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
           toast.success('✅ Forma criada!');
@@ -111,7 +111,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
       windowMode: true,
       onSubmit: async (data) => {
         try {
-          if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissÃ£o para editar.');
+          if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissão para editar.');
           await updateInContext('FormaPagamento', forma.id, data);
           queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
           toast.success('✅ Forma atualizada!');

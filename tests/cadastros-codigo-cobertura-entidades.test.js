@@ -432,6 +432,17 @@ test('Gestor FormaPagamento/DespesaRecorrente: uniqueKey anti-duplicata + sky', 
   assert.match(despesas, /uniqueKey:\s*'Cadastros\.ConfiguracaoDespesaRecorrente\.gestor-novo'/);
   assert.match(despesas, /bg-sky-600/);
   assert.doesNotMatch(despesas, /bg-purple-/);
+  assert.match(despesas, /permissão para alterar|permissão para criar/);
+  assert.doesNotMatch(despesas, /permissÃ£o/);
+  const gateways = await readFile(new URL('../src/components/cadastros/GestorGatewaysPagamento.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(gateways, /permissÃ£o/);
+  const precosSec = await readFile(new URL('../src/components/cadastros/produto/PrecosSection.jsx', import.meta.url), 'utf8');
+  assert.match(precosSec, /Precificação|Preço Venda/);
+  assert.doesNotMatch(precosSec, /PrecificaÃ§Ã£o|PreÃ§o/);
+  const fiscalSec = await readFile(new URL('../src/components/cadastros/produto/FiscalContabilSection.jsx', import.meta.url), 'utf8');
+  assert.match(fiscalSec, /Configuração Fiscal|Importação Direta/);
+  assert.doesNotMatch(fiscalSec, /ConfiguraÃ§Ã£o|ImportaÃ§Ã£o/);
+
   assert.match(adapter, /initialData/);
   assert.match(adapter, /defaultValues/);
 });

@@ -174,4 +174,16 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.match(pedidosEntrega, /bg-sky-600|text-sky-600/);
   assert.doesNotMatch(pedidosEntrega, /purple-|indigo-|violet-/);
 
+  for (const rel of [
+    '../src/components/comercial/FormasPagamentoPedido.jsx',
+    '../src/components/comercial/PainelEntregasPedido.jsx',
+    '../src/components/comercial/CentralAprovacoesLayout.jsx',
+    '../src/components/comercial/GerarOPModal.jsx',
+    '../src/components/comercial/LogisticaEntregaTab.jsx',
+  ]) {
+    const src = await readFile(new URL(rel, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${rel} sem purple/indigo/violet`);
+  }
+
+
 });

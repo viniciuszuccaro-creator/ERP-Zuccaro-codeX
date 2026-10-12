@@ -41,7 +41,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
 
   const toggleAtivaMutation = useMutation({
     mutationFn: async ({ id, ativa }) => {
-      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para alterar.");
+      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissão para alterar.");
       await updateInContext('ConfiguracaoDespesaRecorrente', id, { ativa: !ativa });
     },
     onSuccess: () => {
@@ -52,7 +52,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
-      if (!podeExcluir) throw new Error("Sem permissÃ£o para excluir.");
+      if (!podeExcluir) throw new Error("Sem permissão para excluir.");
       return deleteInContext('ConfiguracaoDespesaRecorrente', id);
     },
     onSuccess: () => {
@@ -121,7 +121,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                   windowMode: true,
                   onSubmit: async (data) => {
                     try {
-                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissÃ£o para criar.");
+                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissão para criar.");
                       await createInContext('ConfiguracaoDespesaRecorrente', data);
                       queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
                       toast({ title: "✅ Configuração criada!" });
@@ -204,7 +204,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                           windowMode: true,
                           onSubmit: async (data) => {
                             try {
-                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para editar.");
+                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissão para editar.");
                               await updateInContext('ConfiguracaoDespesaRecorrente', config.id, data);
                               queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
                               toast({ title: "✅ Configuração atualizada!" });
