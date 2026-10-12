@@ -389,6 +389,40 @@ test('CentroResultado/ContatoB2B/Condicao/Rota/Modelo: prevIdRef reopen', async 
   }
 });
 
+test('Parametro/Config/Bloco6: prevIdRef reopen + aliases Visualizador', async () => {
+  const files = [
+    'ParametroCaixaDiarioForm.jsx',
+    'ParametroConciliacaoBancariaForm.jsx',
+    'ParametroPortalClienteForm.jsx',
+    'ParametroRecebimentoNFeForm.jsx',
+    'ParametroRoteirizacaoForm.jsx',
+    'ParametroOrigemPedidoForm.jsx',
+    'ConfiguracaoBoletosForm.jsx',
+    'ConfiguracaoWhatsAppForm.jsx',
+    'ConfiguracaoIntegracaoForm.jsx',
+    'ConfiguracaoDespesaRecorrenteForm.jsx',
+    'ConfiguracaoNFeForm.jsx',
+    'CentroOperacaoForm.jsx',
+    'ApiExternaForm.jsx',
+    'ChatbotCanalForm.jsx',
+    'ChatbotIntentForm.jsx',
+    'JobAgendadoForm.jsx',
+    'PerfilAcessoForm.jsx',
+    'WebhookForm.jsx',
+  ];
+  for (const name of files) {
+    const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /prevIdRef/, `${name} deve ter prevIdRef`);
+    assert.match(src, /initialData/, `${name} deve aceitar alias initialData`);
+  }
+  const origem = await readFile(
+    new URL('../src/components/cadastros/ParametroOrigemPedidoForm.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(origem, /buildForm/);
+  assert.match(origem, /registro\?\.id/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, windowMode = false }) {
+export default function ApiExternaForm({ apiExterna, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || apiExterna?.group_id || null;
@@ -19,7 +19,8 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
   const podeCriar = canCreate("Cadastros", "ApiExterna") || canCreate("Sistema", "ApiExterna") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ApiExterna") || canEdit("Sistema", "ApiExterna") || canEdit("Cadastros", null);
   const podeSalvar = apiExterna?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(apiExterna || {
+  const registro = item || data || initialData || defaultValues || apiExterna;
+  const [formData, setFormData] = useState(registro || {
     nome_integracao: "",
     tipo_api: "REST",
     descricao: "",
@@ -31,6 +32,15 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
     ativo: true,
     observacoes: ""
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,8 +68,8 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(apiExterna?.id)}
-        entityId={apiExterna?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-api-externa"
       />
       <Card>

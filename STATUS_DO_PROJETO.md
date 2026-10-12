@@ -1,3 +1,14 @@
+## CURSOR — prevIdRef Parametro/Config/Bloco6 (2026-10-12T12:05Z)
+
+| Item | Valor |
+|---|---|
+| lote | reopen ParametroCaixa/Conciliacao/Portal/RecebimentoNFe/Roteirizacao/OrigemPedido · Config Boletos/WhatsApp/Integracao/DespesaRecorrente/NFe · CentroOperacao · ApiExterna · ChatbotCanal/Intent · JobAgendado · PerfilAcesso · Webhook |
+| causa | forms com idOnly sem `prevIdRef` — campos sumiam ao reabrir outro registro no Visualizador |
+| testes | cobertura 23 PASS |
+| #312–#314 | tips inalterados · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — tip c7281234 implantado+homolog (2026-10-12T11:47Z)
 
 | Item | Valor |

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,36 +23,51 @@ import usePermissions from "@/components/lib/usePermissions";
  * @param {boolean} windowMode - Se está em modo janela
  */
 export default function ParametroOrigemPedidoForm({ 
-  parametro = null, 
+  parametro = null,
+  item,
+  data,
+  initialData,
+  defaultValues,
   onSuccess, 
   onCancel,
   windowMode = false 
 }) {
+  const registro = item || data || initialData || defaultValues || parametro;
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
-  const podeSalvar = parametro?.id
+  const podeSalvar = registro?.id
     ? (canEdit("Cadastros", "ParametroOrigemPedido") || canEdit("Cadastros", "Canais de Origem") || canEdit("Cadastros", null))
     : (canCreate("Cadastros", "ParametroOrigemPedido") || canCreate("Cadastros", "Canais de Origem") || canCreate("Cadastros", null));
-  
-  const [formData, setFormData] = useState({
-    nome: parametro?.nome || '',
-    canal: parametro?.canal || 'ERP',
-    tipo_criacao: parametro?.tipo_criacao || 'Manual',
-    origem_pedido_manual: parametro?.origem_pedido_manual || 'Manual',
-    origem_pedido_automatico: parametro?.origem_pedido_automatico || 'Manual',
-    bloquear_edicao_automatico: parametro?.bloquear_edicao_automatico ?? true,
-    url_webhook: parametro?.url_webhook || '',
-    api_token: parametro?.api_token || '',
-    ativo: parametro?.ativo ?? true,
-    descricao: parametro?.descricao || '',
-    cor_badge: parametro?.cor_badge || 'blue',
-    empresa_id: parametro?.empresa_id || empresaAtual?.id || '',
-    group_id: parametro?.group_id || groupId || '',
+
+  const buildForm = (src) => ({
+    nome: src?.nome || '',
+    canal: src?.canal || 'ERP',
+    tipo_criacao: src?.tipo_criacao || 'Manual',
+    origem_pedido_manual: src?.origem_pedido_manual || 'Manual',
+    origem_pedido_automatico: src?.origem_pedido_automatico || 'Manual',
+    bloquear_edicao_automatico: src?.bloquear_edicao_automatico ?? true,
+    url_webhook: src?.url_webhook || '',
+    api_token: src?.api_token || '',
+    ativo: src?.ativo ?? true,
+    descricao: src?.descricao || '',
+    cor_badge: src?.cor_badge || 'blue',
+    empresa_id: src?.empresa_id || empresaAtual?.id || '',
+    group_id: src?.group_id || groupId || '',
   });
+
+  const [formData, setFormData] = useState(() => buildForm(registro));
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData(buildForm(registro));
+    }
+  }, [registro?.id, empresaAtual?.id, groupId]);
 
   const mutation = useMutation({
     mutationFn: (data) => {
@@ -63,14 +78,14 @@ export default function ParametroOrigemPedidoForm({
         ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
         ...(groupId && !data.group_id ? { group_id: groupId } : {})
       };
-      if (parametro?.id) {
-        return updateInContext('ParametroOrigemPedido', parametro.id, payload);
+      if (registro?.id) {
+        return updateInContext('ParametroOrigemPedido', registro.id, payload);
       }
       return createInContext('ParametroOrigemPedido', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['parametros-origem-pedido'] });
-      toast.success(parametro ? 'Parâmetro atualizado!' : 'Parâmetro criado!');
+      toast.success(registro?.id ? 'Parâmetro atualizado!' : 'Parâmetro criado!');
       onSuccess?.();
     },
     onError: (error) => {
@@ -101,8 +116,8 @@ export default function ParametroOrigemPedidoForm({
           <CardContent className="space-y-4">
             <CadastroCodigoRegistroField
               idOnly
-              hasId={Boolean(parametro?.id)}
-              entityId={parametro?.id}
+              hasId={Boolean(registro?.id)}
+              entityId={registro?.id}
               action="id-tecnico-parametro-origem-pedido"
             />
 

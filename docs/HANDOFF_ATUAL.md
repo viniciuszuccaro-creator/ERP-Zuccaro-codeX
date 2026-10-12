@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-12T12:00Z + lote prevIdRef Parametro/Config/Bloco6
+
+| Item | Valor |
+|---|---|
+| #261 | tip runtime ainda **`c7281234`** · este lote CI pendente |
+| #280–#314 | tips inalterados · #312 `c5e83312` · #313 `58a9ff9f` · #314 `b24feee2` · **sem porte** |
+| lote | prevIdRef + aliases Visualizador em Parametro*/Config*/CentroOperacao/ApiExterna/Chatbot*/Job/Perfil/Webhook |
+| testes | `cadastros-codigo-cobertura-entidades` 23 PASS |
+| porte | nenhum |
+| BLOCKED | secret restrito `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI tip → redeploy → homolog · residual Cursor |
+
 ## REVISÃO CODEX — timer 2026-10-12T11:45Z + tip c7281234 implantado
 
 | Item | Valor |

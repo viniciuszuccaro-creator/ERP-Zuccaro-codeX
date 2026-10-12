@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +15,9 @@ import { Repeat, DollarSign, Calendar, Bell, Users } from "lucide-react";
 import { toast } from "sonner";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode = false, onSubmit }) {
-  const [formData, setFormData] = useState(config || {
+export default function ConfiguracaoDespesaRecorrenteForm({ config, item, data, initialData, defaultValues, windowMode = false, onSubmit }) {
+  const registro = item || data || initialData || defaultValues || config;
+  const [formData, setFormData] = useState(registro || {
     tipo_despesa_id: "",
     tipo_despesa_nome: "",
     descricao: "",
@@ -50,6 +51,15 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
     empresa_id: "",
     origem: "empresa"
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
@@ -131,8 +141,8 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(config?.id)}
-        entityId={config?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-despesa-recorrente"
       />
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>

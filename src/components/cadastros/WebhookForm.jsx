@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +10,8 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = webhook;
+export default function WebhookForm({ webhook, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || webhook;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -27,6 +27,15 @@ export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMod
     formato_payload: 'JSON',
     ativo: true
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();

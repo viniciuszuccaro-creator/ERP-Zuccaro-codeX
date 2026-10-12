@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,15 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     ativo: true,
     ...dadosIniciais
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],

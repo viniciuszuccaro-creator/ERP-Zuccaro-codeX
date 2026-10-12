@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -9,15 +9,16 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windowMode = false }) {
+export default function ParametroRecebimentoNFeForm({ parametro, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
+  const registro = item || data || initialData || defaultValues || parametro;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || parametro?.group_id || null;
-  const contextoValido = Boolean(groupId || empresaAtual?.id || parametro?.empresa_id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || registro?.empresa_id);
   const podeCriar = canCreate("Cadastros", "ParametroRecebimentoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroRecebimentoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Cadastros", null);
-  const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const podeSalvar = registro?.id ? podeEditar : podeCriar;
+  const [formData, setFormData] = useState(registro || {
     sugerir_cadastro_automatico_produto: true,
     usar_ia_para_classificacao: true,
     vincular_produtos_fornecedor: true,
@@ -30,6 +31,15 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
     exigir_foto_comprovante: false,
     ativo: true
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -63,8 +73,8 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
           <CardContent className="space-y-4">
             <CadastroCodigoRegistroField
               idOnly
-              hasId={Boolean(parametro?.id)}
-              entityId={parametro?.id}
+              hasId={Boolean(registro?.id)}
+              entityId={registro?.id}
               action="id-tecnico-parametro-recebimento-nfe"
             />
 

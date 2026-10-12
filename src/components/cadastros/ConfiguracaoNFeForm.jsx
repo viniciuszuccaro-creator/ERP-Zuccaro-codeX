@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,13 @@ import usePermissions from "@/components/lib/usePermissions";
 import { requireAutomacaoHumanConfirm } from "@/components/lib/automacaoAvancadaPolicy";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
+export default function ConfiguracaoNFeForm({ config, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
   const { toast } = useToast();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
   const [localSubmitting, setLocalSubmitting] = useState(false);
-  const [formData, setFormData] = useState(config || {
+  const registro = item || data || initialData || defaultValues || config;
+  const [formData, setFormData] = useState(registro || {
     provedor: "eNotas",
     api_url: "",
     api_key: "",
@@ -33,6 +34,15 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
     autoriza_emissao_producao: false,
     observacoes: ""
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
   const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaIdAtual = empresaId || empresaAtual?.id || null;
   const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : null);
@@ -91,8 +101,8 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(config?.id)}
-        entityId={config?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-configuracao-nfe"
       />
       <Card>

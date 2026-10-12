@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,15 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
     ativo: true,
     observacoes: ""
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

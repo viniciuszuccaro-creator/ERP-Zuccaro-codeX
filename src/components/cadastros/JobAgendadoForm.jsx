@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, windowMode = false }) {
+export default function JobAgendadoForm({ jobAgendado, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || jobAgendado?.group_id || null;
@@ -19,7 +19,8 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
   const podeCriar = canCreate("Cadastros", "JobAgendado") || canCreate("Sistema", "JobAgendado") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "JobAgendado") || canEdit("Sistema", "JobAgendado") || canEdit("Cadastros", null);
   const podeSalvar = jobAgendado?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(jobAgendado || {
+  const registro = item || data || initialData || defaultValues || jobAgendado;
+  const [formData, setFormData] = useState(registro || {
     nome_job: "",
     tipo_job: "IA_Fiscal",
     descricao: "",
@@ -29,6 +30,15 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
     ativo: true,
     observacoes: ""
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,8 +66,8 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(jobAgendado?.id)}
-        entityId={jobAgendado?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-job-agendado"
       />
       <Card>

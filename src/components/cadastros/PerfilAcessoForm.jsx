@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,13 @@ import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRe
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windowMode = false }) {
+export default function PerfilAcessoForm({ perfil, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit, canDelete } = usePermissions();
   const podeCriar = canCreate("Cadastros", "PerfilAcesso") || canCreate("Sistema", "Controle de Acesso") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "PerfilAcesso") || canEdit("Sistema", "Controle de Acesso") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "PerfilAcesso") || canDelete("Sistema", "Controle de Acesso") || canDelete("Cadastros", null);
-  const [formData, setFormData] = useState(perfil || {
+  const registro = item || data || initialData || defaultValues || perfil;
+  const [formData, setFormData] = useState(registro || {
     nome: '',
     descricao: '',
     nivel_acesso: 'Básico',
@@ -31,6 +32,15 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
     },
     ativo: true
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const [conflitosIA, setConflitosIA] = useState([]);
   const [bloqueioSoD, setBloqueioSoD] = useState(false);
@@ -135,8 +145,8 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(perfil?.id)}
-        entityId={perfil?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-perfil-acesso"
       />
       <div>

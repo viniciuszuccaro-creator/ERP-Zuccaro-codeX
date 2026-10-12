@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmitting, windowMode = false }) {
+export default function ChatbotIntentForm({ chatbotIntent, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || chatbotIntent?.group_id || null;
@@ -19,7 +19,8 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
   const podeCriar = canCreate("Cadastros", "ChatbotIntent") || canCreate("Sistema", "ChatbotIntent") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ChatbotIntent") || canEdit("Sistema", "ChatbotIntent") || canEdit("Cadastros", null);
   const podeSalvar = chatbotIntent?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(chatbotIntent || {
+  const registro = item || data || initialData || defaultValues || chatbotIntent;
+  const [formData, setFormData] = useState(registro || {
     nome_intent: "",
     descricao: "",
     frases_treinamento: [],
@@ -29,6 +30,15 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
     ativo: true,
     observacoes: ""
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const [novaFrase, setNovaFrase] = useState("");
 
@@ -76,8 +86,8 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(chatbotIntent?.id)}
-        entityId={chatbotIntent?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-chatbot-intent"
       />
       <Card>
