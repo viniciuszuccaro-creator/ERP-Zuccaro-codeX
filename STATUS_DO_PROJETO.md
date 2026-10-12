@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip sky lote3 (sobre `0dde7b54`) |
+| tip | **`0dde7b54`** CI pendente · implantado `74a9dccb` |
 | implantado | **`74a9dccb`** · `index-C6Ab-95j.js` · rollback `pre-spa-login-20261012-131656` |
 | lote | sky PriceBrain · SugestorCanal · UploadProjeto · Armado · Canais · DetalhesColaborador · Ecommerce |
 | homolog | OWNER tip `74a9dccb` fail_count=0 (runtime anterior; redeploy após CI deste tip) |
