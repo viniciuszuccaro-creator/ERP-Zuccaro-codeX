@@ -1,0 +1,12 @@
+# Evidência sanitizada — tip 74a9dccb implantado+homolog OWNER
+# utc=2026-10-12T13:18Z
+# tip=74a9dccb (runtime d01c961c Empresa/ProdutoV22 + 8c0895a9/4f0310de sky/reopen + testes reopen)
+# asset=index-C6Ab-95j.js
+# rollback=pre-spa-login-20261012-131656
+# MERGE_SHA8=74a9dccb · STAMP=20261012-131656
+# CI tip runtime d01c961c SUCCESS · tip testes 74a9dccb push SUCCESS
+# Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-74a9dccb.json
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# #315 tip c5870f80 · #316 tip 18fc6bfe · sem porte (stack Orçamento/Legado Codex)
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

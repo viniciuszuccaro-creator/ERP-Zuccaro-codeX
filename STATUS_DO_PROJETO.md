@@ -1,3 +1,14 @@
+## CURSOR — tip 74a9dccb implantado+homolog ({ts})
+
+| Item | Valor |
+|---|---|
+| tip | **`74a9dccb`** · asset `index-C6Ab-95j.js` · rollback `pre-spa-login-20261012-131656` |
+| lote | reopen comportamental · review #315/#316 · redeploy |
+| homolog | OWNER `fail_count=0` |
+| #315/#316/#313 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
 ## CURSOR — Empresa prevIdRef + ProdutoV22/Dashboards sky (2026-10-12T13:11Z)
 
 | Item | Valor |

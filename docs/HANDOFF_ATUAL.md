@@ -1,3 +1,18 @@
+## CURSOR — tip 74a9dccb implantado+homolog + reopen tests (2026-10-12T13:18Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip **`74a9dccb`** CI pendente/pós-push |
+| implantado | **`74a9dccb`** · asset `index-C6Ab-95j.js` · rollback `pre-spa-login-20261012-131656` |
+| lote | testes reopen Representante/Forma/Região · review #315/#316 · redeploy+homolog OWNER |
+| homolog | OWNER `fail_count=0` · `pw-homolog-261-tip-74a9dccb.json` |
+| #315 | tip `c5870f80` · Orçamento TX · **sem porte** |
+| #316 | tip `18fc6bfe` · prova restore · **sem porte** |
+| #313 | tip `58a9ff9f` · **sem porte** |
+| restrito | **BLOCKED** secrets `ERP_DEV_LOGIN_RESTRICTED_*` + user RBAC |
+| porte Codex | nenhum |
+| próxima | residual Cursor · secret restrito · CPA mutações após merge Codex |
+
 ## CURSOR — Empresa prevIdRef + ProdutoV22/Dashboards sky (2026-10-12T13:11Z)
 
 | Item | Valor |
