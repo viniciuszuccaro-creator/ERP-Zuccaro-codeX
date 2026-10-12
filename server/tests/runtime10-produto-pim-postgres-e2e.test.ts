@@ -12,7 +12,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { SEED_IDS } from '../scripts/seedDevIds.ts';
 import { PostgresProdutoRepository } from '../src/repositories/postgresProdutoRepository.ts';
 import { produtoCreateSchema } from '../src/repositories/produtoTypes.ts';
-import { buildOutboxLeaseToken } from '../src/services/produtoOutboxClaim.ts';
+import { buildOutboxLeaseToken, FakeCatalogPublisher } from '../src/services/produtoOutboxClaim.ts';
 import { assertProdutoMediaContract, assertProdutoRelationsContract } from './produto-relacoes-contract.ts';
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -401,6 +401,24 @@ test('R10 PostgreSQL real: outbox claim/confirm/fail/reprocess e recibo idempote
       status: 'dead_letter', produtoId, limit: 10, offset: 0,
     })).total, 0);
     assert.equal((await repo.countPublicationEventsByStatus(scope, { produtoId })).cancelled, 1);
+    // Poison an actually persisted allowlisted field; no real provider/network.
+    const invalidRequest=randomUUID();await repo.appendPublicationEvent(scope,produto,invalidRequest);
+    await db.query("UPDATE integration_events SET payload=jsonb_set(payload,'{descricaoComercial}',$4::jsonb),max_attempts=1 WHERE group_id=$1 AND empresa_id=$2 AND correlation_id=$3",
+      [scope.groupId,scope.empresaId,invalidRequest,JSON.stringify({signedUrl:'synthetic-private-marker'})]);
+    const invalid=await repo.claimPublicationEvents(scope,{limit:1,leaseMs:30000});assert.equal(invalid.length,1);
+    const publisher=new FakeCatalogPublisher('ok'),rejected=await publisher.publish(invalid[0]);
+    assert.equal(rejected.ok,false);assert.equal(publisher.delivered.length,0);assert.match((rejected as any).error,/INVALID_FIELD:descricaoComercial/);
+    const deadInvalid=await repo.failPublicationEvent(scope,invalid[0].id,buildOutboxLeaseToken(invalid[0].id,invalid[0].lockedUntil!),(rejected as any).error);
+    assert.equal(deadInvalid?.status,'dead_letter');assert.equal(deadInvalid?.publishedAt,null);
+    assert.equal(deadInvalid?.errorMessage?.includes('synthetic-private-marker'),false);
+    await db.query("UPDATE integration_events SET payload=jsonb_set(payload,'{descricaoComercial}',$2::jsonb) WHERE id=$1",[invalid[0].id,JSON.stringify('Corrected synthetic')]);
+    assert.equal((await repo.reprocessPublicationEvent(scope,invalid[0].id))?.id,invalid[0].id);
+    const corrected=await repo.claimPublicationEvents(scope,{limit:1,leaseMs:30000});assert.equal(corrected.length,1);
+    assert.equal((await publisher.publish(corrected[0])).ok,true);
+    const receipt=await repo.confirmPublicationEvent(scope,corrected[0].id,buildOutboxLeaseToken(corrected[0].id,corrected[0].lockedUntil!));
+    assert.equal(receipt?.receipt,'confirmed');assert.equal(receipt?.event.status,'published');
+    assert.equal((await publisher.publish(corrected[0])).ok,true);assert.equal(publisher.delivered.length,1);
+
   } catch (error) {
     originalError = error;
     throw error;

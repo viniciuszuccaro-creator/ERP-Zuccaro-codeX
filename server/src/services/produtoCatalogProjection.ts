@@ -2,7 +2,7 @@
  * Projeção allowlisted de catálogo (Onda 15) — reconstruível a partir do Produto.
  * Sem custo/margem/fiscal operacional, sem URL assinada, sem PII/tenant/ator.
  */
-import type { Produto } from '../repositories/produtoTypes.js';
+import { produtoCreateSchema, type Produto } from '../repositories/produtoTypes.js';
 
 export const CATALOG_PROJECTION_SCHEMA_VERSION = 1 as const;
 
@@ -102,6 +102,7 @@ export function buildProdutoCatalogProjection(produto: Produto): ProdutoCatalogP
 export function assertSafeCatalogProjection(
   payload: Record<string, unknown>,
 ): ProdutoCatalogProjection {
+  if(!payload||typeof payload!=='object'||Array.isArray(payload))throw new Error('CATALOG_PROJECTION_INVALID_PAYLOAD');
   for (const key of Object.keys(payload)) {
     if (FORBIDDEN_SET.has(key.toLowerCase()) || /^(custo|margem|preco|estoque|saldo)/i.test(key)) {
       throw new Error(`CATALOG_PROJECTION_FORBIDDEN_FIELD:${key}`);
@@ -113,6 +114,19 @@ export function assertSafeCatalogProjection(
       safe[key] = payload[key];
     }
   }
+  const fields={codigo:'codigo',codigoBarras:'codigo_barras',descricao:'descricao',nome:'nome',
+    descricaoComercial:'descricao_comercial',tituloSeo:'titulo_seo',descricaoSeo:'descricao_seo',
+    material:'material',liga:'liga',normaTecnica:'norma_tecnica',embalagemTipo:'embalagem_tipo',
+    multiploVenda:'multiplo_venda',quantidadeMinimaVenda:'quantidade_minima_venda',permiteFracionamento:'permite_fracionamento',
+    unidadeMedidaId:'unidade_medida_id',unidadeMedida:'unidade_medida',unidadePrincipal:'unidade_principal'} as const;
+  for(const [target,source] of Object.entries(fields)){
+    if(safe[target]==null)continue;
+    const checked=produtoCreateSchema.shape[source as typeof fields[keyof typeof fields]].safeParse(safe[target]);
+    if(!checked.success)throw new Error('CATALOG_PROJECTION_INVALID_FIELD:'+target);
+    safe[target]=checked.data;
+  }
+  if(safe.workflowStatus!=null&&typeof safe.workflowStatus!=='string')throw new Error('CATALOG_PROJECTION_INVALID_FIELD:workflowStatus');
+  if(safe.schemaVersion!=null&&!['number','string'].includes(typeof safe.schemaVersion))throw new Error('CATALOG_PROJECTION_UNSUPPORTED_SCHEMA');
   for (const key of Object.keys(payload)) {
     if (!ALLOWLIST_SET.has(key) && !FORBIDDEN_SET.has(key.toLowerCase())) {
       // Chaves desconhecidas nao entram; nao falham (forward-compat do emissor antigo).

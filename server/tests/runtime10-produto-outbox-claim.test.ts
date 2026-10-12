@@ -1,3 +1,4 @@
+import {assertSafeCatalogProjection} from '../src/services/produtoCatalogProjection.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
@@ -404,4 +405,30 @@ test('Outbox consumer: lote fake idempotente e external agenda retry sem sucesso
   assert.equal(external.metrics.published, 0);
   assert.equal(external.metrics.retry, 1);
   assert.match(String(external.results[0]?.error), /CATALOG_EXTERNAL_PUBLISHER_BLOCKED/);
+});
+
+test('Catalog projection rejects nested data and coercions using canonical Product schemas',()=>{
+ const valid={produtoId:'synthetic',schemaVersion:1,descricao:'Synthetic',permiteFracionamento:false,multiploVenda:1,quantidadeMinimaVenda:0};
+ for(const patch of [{descricaoComercial:{signedUrl:'synthetic-private-marker'}},{nome:['synthetic']},{permiteFracionamento:'false'},{multiploVenda:'1'},{multiploVenda:0},{multiploVenda:NaN},{quantidadeMinimaVenda:-1},{unidadeMedida:{secret:'synthetic'}},{workflowStatus:{group_id:'synthetic'}},{schemaVersion:[1]}])
+   assert.throws(()=>assertSafeCatalogProjection({...valid,...patch}),/CATALOG_PROJECTION_(INVALID_FIELD|UNSUPPORTED_SCHEMA)/);
+ const legacy=assertSafeCatalogProjection({...valid,schemaVersion:'1',unknownFuture:{anything:'ignored'}});
+ assert.equal(legacy.schemaVersion,1);assert.equal(legacy.permiteFracionamento,false);assert.equal(Object.hasOwn(legacy,'unknownFuture'),false);
+ assert.equal(assertSafeCatalogProjection({produtoId:'legacy'}).multiploVenda,1);
+ assert.throws(()=>assertSafeCatalogProjection([] as any),/INVALID_PAYLOAD/);
+});
+test('Catalog poisoned event retries without receipt; corrected replay remains idempotent',async()=>{
+ const publisher=new FakeCatalogPublisher('ok'),f=setup(['visualizar','criar','editar','aprovar-conteudo','publicar','reprocessar'],publisher);
+ const product=await f.service.create(f.ctx,{descricao:'Catalog validation flow'});
+ await f.service.changeWorkflowStatus(f.ctx,product.id,'EM_REVISAO');await f.service.changeWorkflowStatus(f.ctx,product.id,'APROVADO');await f.service.changeWorkflowStatus(f.ctx,product.id,'PUBLICADO');
+ const event=(f.repo as any).publicationEvents[0],original=structuredClone(event.payload);
+ event.maxAttempts=2;event.payload.descricaoComercial={signedUrl:'synthetic-private-marker'};
+ const denied=await f.service.processOutboxBatch(f.ctx,{limit:1,leaseMs:30000});
+ assert.equal(denied.metrics.published,0);assert.equal(denied.metrics.retry,1);assert.equal(publisher.delivered.length,0);
+ const failed=(f.repo as any).publicationEvents.find((row:any)=>row.id===event.id);
+ assert.equal(failed.status,'retry');assert.equal(failed.publishedAt,null);assert.match(failed.errorMessage,/INVALID_FIELD:descricaoComercial/);assert.equal(failed.errorMessage.includes('synthetic-private-marker'),false);
+ failed.nextAttemptAt=new Date(0).toISOString();
+ const finalFailure=await f.service.processOutboxBatch(f.ctx,{limit:1,leaseMs:30000});assert.equal(finalFailure.metrics.dead_letter,1);assert.equal(publisher.delivered.length,0);
+ const dead=(f.repo as any).publicationEvents.find((row:any)=>row.id===event.id);assert.equal(dead.status,'dead_letter');dead.payload=original;await f.service.reprocessPublicationEvent(f.ctx,event.id);
+ const success=await f.service.processOutboxBatch(f.ctx,{limit:1,leaseMs:30000});assert.equal(success.metrics.published,1);assert.equal(publisher.delivered.length,1);
+ assert.equal((await f.service.processOutboxBatch(f.ctx,{limit:1,leaseMs:30000})).metrics.published,0);assert.equal(publisher.delivered.length,1);
 });
