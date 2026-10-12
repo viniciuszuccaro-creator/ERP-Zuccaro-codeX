@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | **** · sobre `c160b523` |
+| tip | **`19f1b75b`** / runtime **`3101334b`** · sobre `c160b523` |
 | lote | encoding cadastros · sky pedido/entrega/aprovação |
 | testes | cobertura+clientes-tab **38 PASS** |
 | #313/#315/#316 | **sem porte** |

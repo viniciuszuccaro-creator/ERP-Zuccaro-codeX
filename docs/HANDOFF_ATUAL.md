@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip **** · sobre `3fbd639b` / runtime `c160b523` |
+| HEAD candidata | tip **`19f1b75b`** · runtime **`3101334b`** · sobre `3fbd639b` / runtime `c160b523` |
 | lote | UTF-8 gestores/produto Fiscal/Preços · sky FormasPagamentoPedido/PainelEntregas/CentralAprovacoes/GerarOP/LogisticaEntrega |
 | #313/#315/#316 | **sem porte** · candidata integrada `18fc6bfe` |
 | restrito | **BLOCKED** secrets |
