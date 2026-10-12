@@ -290,6 +290,25 @@ test('opcoes nao substituem empresa da operacao sem comprovacao', () => {
 
 // Completes the class/unit inventory without exposing source customer/product records.
 import { catalogarProdutoClasseUnidadeLegado } from '../scripts/legado/mapear-registro-sintetico.mjs';
+test('snapshot revisado revalida significado e escopo sem converter unidade ou arredondar fator',()=>{
+ const unit={id:'unit',group_id:'g1',empresa_id:null,sigla:'KG',nome_completo:'Quilograma',tipo_grandeza:'Massa',unidade_base_conversao:null,fator_conversao_para_base:1,permite_conversao:true,usa_em_estoque:true,usa_em_compras:true,usa_em_vendas:true,ativo:true};
+ const opts={groupId:'g1',produtoClassUnitMap:{'08|01':{tipo_item:'MATERIA_PRIMA',unidade_medida_id:'unit'}},unidadesCanonicas:[unit],
+  revisoesUnidades:[{source_unit_code:'01',approved_target_unit_id:'unit',scope_verified:true,semantic_equivalence_verified:true,import_authorized:true}],
+  snapshotUnidades:{readOnlyTransaction:true,operationalImportAuthorized:false,records:[{...unit,fator_conversao_para_base:'1.000000'}]}};
+ const rows=[{sku:'001',descricao:'Synthetic',classe:'08',unidade:'01'}],before=JSON.stringify(opts);
+ assert.equal(catalogarProdutoClasseUnidadeLegado(rows,opts).quantidade_sem_mapa,0);
+ for(const mutation of [{fator_conversao_para_base:2},{fator_conversao_para_base:'1.000000000000000001'},
+  {fator_conversao_para_base:0},{fator_conversao_para_base:-1},{fator_conversao_para_base:Infinity},
+  {tipo_grandeza:'Comprimento'},{unidade_base_conversao:'T'},{empresa_id:'other'},
+  {nome_completo:'Changed'},{sigla:'T'},{permite_conversao:false},{usa_em_vendas:false},{usa_em_estoque:false},{usa_em_compras:false}])
+  assert.equal(catalogarProdutoClasseUnidadeLegado(rows,{...opts,unidadesCanonicas:[{...unit,...mutation}]}).quantidade_sem_mapa,1);
+ for(const records of [[],[unit,unit],[{...unit,group_id:'other'}],[]])assert.equal(catalogarProdutoClasseUnidadeLegado(rows,{...opts,snapshotUnidades:{...opts.snapshotUnidades,records}}).quantidade_sem_mapa,1);
+ for(const snapshotUnidades of [null,{...opts.snapshotUnidades,readOnlyTransaction:false},{...opts.snapshotUnidades,operationalImportAuthorized:true}])
+  assert.throws(()=>catalogarProdutoClasseUnidadeLegado(rows,{...opts,snapshotUnidades}),/LEGACY_UNIT_SNAPSHOT_INVALID/);
+ const {revisoesUnidades,...missingReview}=opts;
+ assert.equal(catalogarProdutoClasseUnidadeLegado(rows,missingReview).quantidade_sem_mapa,1);
+ assert.equal(revisoesUnidades.length,1);assert.equal(JSON.stringify(opts),before);
+});
 test('catalogo revalida revisao explicita de unidade sem escolher candidato ou coerção de flags',()=>{
  const rows=[{sku:'001',descricao:'Synthetic',classe:'08',unidade:'01'}];
  const review={source_unit_code:'01',approved_target_unit_id:'unit',scope_verified:true,semantic_equivalence_verified:true,import_authorized:true};

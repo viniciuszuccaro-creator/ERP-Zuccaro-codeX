@@ -533,6 +533,8 @@ export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => 
   const { service, unidadeService, rbacGuard, sourceSystem, batch, produtoClassUnitMap } = options;
   const temRevisao = Object.prototype.hasOwnProperty.call(options,'revisoesUnidades');
   const revisoesUnidades = temRevisao ? structuredClone(options.revisoesUnidades) : undefined;
+  const temSnapshot = Object.prototype.hasOwnProperty.call(options,'snapshotUnidades');
+  const snapshotUnidades = temSnapshot ? structuredClone(options.snapshotUnidades) : undefined;
   if (!service || !unidadeService || !rbacGuard || !sourceSystem || !batch || !produtoClassUnitMap) {
     throw new Error('LEGACY_CANONICAL_CONTRACT_REQUIRED');
   }
@@ -547,14 +549,15 @@ export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => 
   const source = {cod_produto:mapped.codigo_legado,descricao:mapped.descricao,
     classe:mapped.classe_legado,unidade:mapped.unidade_legado,group_id:ctx.groupId};
   const catalogue = catalogarProdutoClasseUnidadeLegado([source],{groupId:ctx.groupId,produtoClassUnitMap,unidadesCanonicas:[unit],
-    ...(temRevisao ? {revisoesUnidades} : {})});
+    ...(temRevisao ? {revisoesUnidades} : {}),...(temSnapshot ? {snapshotUnidades} : {})});
   const remapped = mapLegadoRowToCanonicalStub(source,{groupId:ctx.groupId,entidade:'produto',produtoClassUnitMap});
   if (catalogue.quantidade_sem_mapa || remapped.tipo_item !== mapped.tipo_item
     || remapped.unidade_medida_id !== mapped.unidade_medida_id || !unit.sigla) {
     throw new Error('LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED');
   }
+  const semanticOptions = temSnapshot ? {expectedUnitSnapshot:snapshotUnidades.records.find(row=>row.id===mapped.unidade_medida_id)} : undefined;
   const reuse = async () => {
-    const row = await service.findByLegacyIdentity(ctx,sourceSystem,String(mapped.codigo_legado));
+    const row = await service.findByLegacyIdentity(ctx,sourceSystem,String(mapped.codigo_legado),semanticOptions);
     if (!row) return null;
     if (row.ativo !== true || row.empresa_id != null || row.origem !== 'MIGRACAO'
       || row.legacy_id !== String(mapped.codigo_legado) || row.migration_batch !== batch
@@ -568,7 +571,7 @@ export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => 
   try {
     const registro=await service.create(ctx,{empresa_id:null,descricao:mapped.descricao,tipo_item:mapped.tipo_item,
       unidade_medida_id:unit.id,unidade_principal:unit.sigla,origem:'MIGRACAO',codigo_legado:String(mapped.codigo_legado),
-      legacy_id:String(mapped.codigo_legado),source_system:sourceSystem,migration_batch:batch});
+      legacy_id:String(mapped.codigo_legado),source_system:sourceSystem,migration_batch:batch},semanticOptions);
     return {registro,reutilizado:false,persistido:true};
   } catch(error) {
     if(error?.code !== 'LEGACY_RECONCILIATION_REQUIRED')throw error;

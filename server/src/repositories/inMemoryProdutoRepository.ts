@@ -33,7 +33,7 @@ export interface ProdutoRepository extends TenantEntityRepository<Produto, Produ
   getEmpresaLink(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
   saveEmpresaLink(scope:Scope,id:string,data:{ativo:boolean;habilitado_operacao:boolean;expected_version:number},actor:string,executor?:DbQueryExecutor):Promise<ProdutoEmpresa|null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
-  findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Produto | null>;
+  findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string, executor?:DbQueryExecutor): Promise<Produto | null>;
   listPage(filter: ProdutoListFilter, executor?: DbQueryExecutor): Promise<{ rows: Produto[]; total: number }>;
   getById(
     scope: Scope,

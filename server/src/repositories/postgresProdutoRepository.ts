@@ -322,8 +322,8 @@ export class PostgresProdutoRepository implements ProdutoRepository {
     return mapProduto(result.rows[0] as Record<string, unknown>);
   }
 
-  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Produto | null> {
-    const result = await this.db.query('SELECT * FROM produtos WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
+  async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string, executor?:DbQueryExecutor): Promise<Produto | null> {
+    const result = await (executor??this.db).query('SELECT * FROM produtos WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
       [groupId,sourceSystem,codigoLegado]);
     if (result.rows.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
     return result.rows[0] ? mapProduto(result.rows[0] as Record<string,unknown>) : null;
