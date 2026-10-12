@@ -1,3 +1,14 @@
+## CURSOR — wire runtime Etapa/Comissão/NF (2026-10-12T10:35Z)
+
+| Item | Valor |
+|---|---|
+| lote | Modal→`CriarEtapaEntregaForm` · ComissoesTab→`ComissaoForm` · NotasFiscaisTab→`NotaFiscalFormCompleto` |
+| arquivos | `CriarEtapaEntregaModal.jsx` · `ComissoesTab.jsx` · `NotasFiscaisTab.jsx` · `VisualizadorUniversalEntidadeV24.jsx` · testes |
+| testes | cobertura + wire runtime + nota-fiscal-emissao PASS |
+| #312 | tip `c5e83312` · **sem porte** |
+| BLOCKED | secret restrito · CadastroFiscal sem entidade backend (sem tile) |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — tip cbd3624f implantado+homolog (2026-10-12T10:20Z)
 
 | Item | Valor |

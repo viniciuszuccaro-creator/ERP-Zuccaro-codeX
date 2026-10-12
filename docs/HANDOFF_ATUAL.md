@@ -1,3 +1,14 @@
+## CURSOR — wire runtime Etapa/Comissão/NF (2026-10-12T10:35Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip docs `f14247fe` · runtime implantado `cbd3624f` · main `baba91a6` |
+| lote | `CriarEtapaEntregaModal`→Form · `ComissoesTab` Nova/Editar→`ComissaoForm` · `NotasFiscaisTab`→`NotaFiscalFormCompleto` · aliases V24 |
+| testes | cobertura codigo + wire runtime + nota-fiscal-emissao PASS |
+| #312 | tip `c5e83312` CI SUCCESS · **sem porte** Legado |
+| BLOCKED | secret `ERP_DEV_LOGIN_RESTRICTED_*` · CadastroFiscal sem entidade em localBase44 (não tile) |
+| próxima | CI tip → redeploy → homolog · residual Cursor |
+
 ## CURSOR — tip cbd3624f implantado+homolog (2026-10-12T10:20Z)
 
 | Item | Valor |
