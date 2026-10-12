@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #306 Legado hashes extração (2026-10-12T01:15Z)
+
+| Item | Valor |
+|---|---|
+| #306 | tip `7ff3b87f` · hashes extrações privadas · CI SUCCESS · **sem porte** |
+| motivo | Legado reservado · não portar |
+| stack | #306→#305→#304→…→#292 |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #305 Legado preflight destino (2026-10-12T01:00Z)
 
 | Item | Valor |
