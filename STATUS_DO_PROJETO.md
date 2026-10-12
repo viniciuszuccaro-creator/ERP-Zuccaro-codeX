@@ -1,3 +1,14 @@
+## CURSOR — tip 4a46520a implantado+homolog (2026-10-12T13:23Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`4a46520a`** · asset `index-BwUc90Ir.js` · rollback `pre-spa-login-20261012-132204` |
+| lote | sky lote3 + reopen tests · review #315/#316 |
+| homolog | OWNER `fail_count=0` |
+| #313/#315/#316 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
 ## CURSOR — sky lote3 PriceBrain/Upload/Canais (2026-10-12T13:20Z)
 
 | Item | Valor |

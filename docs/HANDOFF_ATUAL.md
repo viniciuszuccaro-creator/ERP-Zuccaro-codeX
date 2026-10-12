@@ -1,3 +1,19 @@
+## CURSOR — tip 4a46520a implantado+homolog sky lote3 (2026-10-12T13:23Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip **`4a46520a`** (runtime `d8d15982` sky lote3) |
+| implantado | **`4a46520a`** · asset `index-BwUc90Ir.js` · rollback `pre-spa-login-20261012-132204` |
+| lote | sky PriceBrain/Upload/Canais · reopen tests · review #315/#316 |
+| homolog | OWNER `fail_count=0` · `pw-homolog-261-tip-4a46520a.json` |
+| CI | tip `d8d15982` SUCCESS · docs tip implantado |
+| #315 | `c5870f80` · **sem porte** |
+| #316 | `18fc6bfe` · **sem porte** |
+| #313 | `58a9ff9f` · **sem porte** |
+| restrito | **BLOCKED** secrets `ERP_DEV_LOGIN_RESTRICTED_*` |
+| porte Codex | nenhum |
+| próxima | residual Cursor · secret restrito · CPA mutações pós-merge Codex |
+
 ## CURSOR — sky lote3 PriceBrain/Upload/Canais (2026-10-12T13:20Z)
 
 | Item | Valor |
