@@ -1,3 +1,4 @@
+import {entregaItemSchema,sumQty} from '../src/repositories/expedicaoTypes.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createApp } from '../src/app.ts';
@@ -370,4 +371,36 @@ test('HTTP Expedicao (mock in-memory): concorrencia de create na mesma empresa g
   assert.equal(dev.status, 200);
   assert.equal(dev.body.data.entrega.status, 'Devolvido');
   assert.equal(dev.body.data.estoqueSideEffect, 'reserved');
+});
+
+test('Expedicao preserva quantidade decimal do schema ao total e rejeita overflow sem Number',()=>{
+ const item=entregaItemSchema.parse({descricao:'Precision synthetic',unidade_sigla:'UN',quantidade_pedida:'999999999999.000001'});
+ assert.equal(item.quantidade_pedida,'999999999999.000001');assert.equal(sumQty(['999999999999','0.000001']),item.quantidade_pedida);
+ assert.equal(entregaItemSchema.parse({...item,quantidade_pedida:'001,1234567'}).quantidade_pedida,'1.123457');
+ assert.equal(entregaItemSchema.parse({...item,quantidade_pedida:1.25}).quantidade_pedida,'1.250000');
+ assert.equal(entregaItemSchema.parse({...item,quantidade_pedida:999999999999}).quantidade_pedida,'999999999999.000000');
+ assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:999999999999.0001}).success,false);
+ assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:'1000000000000'}).success,false);
+ assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:'NaN'}).success,false);
+ assert.throws(()=>sumQty(['999999999999.999999','0.000001']),/precision/);
+});
+test('HTTP Expedicao: micros exatos em separacao parcial retry e devolucao',async()=>{
+ const runtime=fixture(),quantidade='999999999999.000001';
+ const post=(path:string,body:any)=>request(runtime.app,path,{method:'POST',headers:headers(),body:JSON.stringify(body)});
+ const created=await post('/api/v1/entregas',{...entregaPayload,idempotency_key:'precision-flow',itens:[{descricao:'Precision',unidade_sigla:'UN',quantidade_pedida:quantidade}]});
+ assert.equal(created.status,201);const id=created.body.data.id;
+ const canonical=await runtime.expedicaoService.getEntrega({groupId,empresaId,actorId,requestId:'precision'},id);
+ assert.equal(canonical.quantidade_total,quantidade);
+ const sep=await post(`/api/v1/entregas/${id}/separacao`,{confirmed:true,checklist:checklistSep,itens:[{descricao:'Precision',unidade_sigla:'UN',quantidade_pedida:quantidade,quantidade_separada:quantidade}]});
+ assert.equal(sep.status,201,JSON.stringify(sep.body));
+ const dispatched=await post('/api/v1/romaneios',{confirmed:true,motorista_nome:'Synthetic',veiculo:'Synthetic',placa:'SYN1A23',checklist_saida:checklistRom,entregas_ids:[id],despachar:true});
+ assert.equal(dispatched.status,201,JSON.stringify(dispatched.body));
+ const partial={confirmed:true,modo:'parcial',quantidade_entregue:'999999999998.000001',comprovante:{nome_recebedor:'Synthetic',documento_recebedor:'123'}};
+ const first=await post(`/api/v1/entregas/${id}/registrar`,partial);assert.equal(first.status,200);
+ const second=await post(`/api/v1/entregas/${id}/registrar`,{...partial,quantidade_entregue:'999999999998.000002'});assert.equal(second.status,200);assert.equal(second.body.data.reused,false);
+ assert.equal(second.body.data.entrega.entrega_parcial.quantidade_entregue_decimal,'999999999998.000002');
+ const retry=await post(`/api/v1/entregas/${id}/registrar`,{...partial,quantidade_entregue:'999999999998.000002'});assert.equal(retry.body.data.reused,true);
+ const reduced=await post(`/api/v1/entregas/${id}/registrar`,partial);assert.equal(reduced.status,422);
+ const returned=await post(`/api/v1/entregas/${id}/devolucao`,{confirmed:true,motivo:'Synthetic reverse',acao:'devolver_estoque',quantidade_devolvida:'0.000001'});
+ assert.equal(returned.status,200,JSON.stringify(returned.body));assert.equal(returned.body.data.entrega.logistica_reversa.quantidade_devolvida_decimal,'0.000001');
 });

@@ -1,3 +1,4 @@
+import {entregaCreateSchema} from '../src/repositories/expedicaoTypes.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createDbClient } from '../src/db/client.ts';
@@ -36,10 +37,7 @@ test('R11 PostgreSQL: migration 036 presente e Entrega/Romaneio tenant-scoped', 
   try {
     const migrations = await db.query<{ id: string }>('SELECT id FROM schema_migrations ORDER BY id');
     const ids = migrations.rows.map((r) => r.id);
-    if (!ids.includes('036_expedicao_entregas_romaneios.sql')) {
-      // Candidata: migration no repositório; aplicação operacional/CI migrate é gate separado.
-      return;
-    }
+    assert.ok(ids.includes('036_expedicao_entregas_romaneios.sql'),'migration 036 required for R11 persistence proof');
 
     const created = await repo.createEntrega(scope, {
       cliente_nome: 'R11 Syn',
@@ -50,6 +48,19 @@ test('R11 PostgreSQL: migration 036 presente e Entrega/Romaneio tenant-scoped', 
     entregaIds.push(created.id);
     assert.match(created.numero, /^\d{8}$/);
     assert.equal(await repo.getEntrega(other, created.id), null);
+    const exact=await repo.createEntrega(scope,entregaCreateSchema.parse({cliente_nome:'Precision synthetic',itens:[
+      {descricao:'Integer',unidade_sigla:'UN',quantidade_pedida:'999999999998.000001'},
+      {descricao:'Fraction',unidade_sigla:'UN',quantidade_pedida:'0.000002'}]}),SEED_IDS.runtimeActorA);
+    entregaIds.push(exact.id);assert.equal(exact.quantidade_total,'999999999998.000003');
+    assert.equal((await repo.getEntrega(scope,exact.id))?.itens[0].quantidade_pedida,'999999999998.000001');
+    assert.equal(await repo.getEntrega(other,exact.id),null);
+    const unchanged=await repo.getEntrega(scope,exact.id);
+    await assert.rejects(repo.withTransaction(async tx=>{
+      await repo.updateEntregaRow(scope,exact.id,{entrega_parcial:{quantidade_entregue_decimal:'999999999998.000002'}},SEED_IDS.runtimeActorA,tx);
+      throw Error('synthetic quantity rollback');
+    }),/synthetic quantity rollback/);
+    assert.deepEqual(await repo.getEntrega(scope,exact.id),unchanged);
+
 
     await repo.changeEntregaStatus(scope, created.id, 'PRONTO_EXPEDIR', SEED_IDS.runtimeActorA, 'prep');
     const rom = await repo.createRomaneio(scope, {

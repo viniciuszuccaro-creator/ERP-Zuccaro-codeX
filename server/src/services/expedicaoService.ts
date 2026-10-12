@@ -5,6 +5,9 @@ import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import {
   devolucaoSchema,
+  quantityMicros as qtyMicros,
+  formatQtyMicros,
+  sumQty,
   entregaCreateSchema,
   entregaStatusToLabel,
   parseEntregaStatusLabel,
@@ -33,11 +36,6 @@ import type { Pedido, PedidoRepository } from '../repositories/pedidoTypes.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function qtyMicros(value: string): bigint {
-  if (!/^\d+(?:\.\d{1,6})?$/.test(value)) throw new AppError(422, 'ENTREGA_QUANTIDADE_INVALIDA', 'Invalid linked quantity');
-  const [whole, fraction = ''] = value.split('.');
-  return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
-}
 
 function linkedPedidoItems(pedido: Pedido, data: EntregaCreate): EntregaCreate['itens'] {
   const totals = (items: { produto_id?: string | null; unidade_sigla: string; quantidade: string }[]) => {
@@ -264,7 +262,7 @@ export class ExpedicaoService {
       }
 
       for (const item of data.itens) {
-        if (!(Number(item.quantidade_separada) > 0)) {
+        if (!(qtyMicros(item.quantidade_separada) > 0n)) {
           throw new AppError(422, 'SEPARACAO_QTY_INVALID', 'Quantidade separada must be > 0');
         }
         if (item.unidade_sigla && before.itens.length) {
@@ -284,7 +282,7 @@ export class ExpedicaoService {
         });
       }
 
-      const divergencias = data.itens.filter((item) => Number(item.quantidade_separada) !== Number(item.quantidade_pedida));
+      const divergencias = data.itens.filter((item) => qtyMicros(item.quantidade_separada) !== qtyMicros(item.quantidade_pedida));
       const temDivergencia = divergencias.length > 0;
       const statusSeparacao = temDivergencia ? 'com_divergencia' : 'concluido';
       const nextStatus: EntregaStatus | null = temDivergencia ? null : 'PRONTO_EXPEDIR';
@@ -494,15 +492,15 @@ export class ExpedicaoService {
           },
         };
       } else if (data.modo === 'parcial') {
-        if (!(Number(data.quantidade_entregue) > 0)) {
+        if (!(qtyMicros(data.quantidade_entregue ?? '0') > 0n)) {
           throw new AppError(422, 'PARCIAL_QTY_REQUIRED', 'Quantidade entregue obrigatoria');
         }
-        const prevQty = Number(before.entrega_parcial?.quantidade_entregue || 0);
-        const nextQty = Number(data.quantidade_entregue);
-        if (before.status === 'ENTREGUE_PARCIAL' && prevQty > 0 && nextQty === prevQty) {
+        const prevQty = qtyMicros(String(before.entrega_parcial?.quantidade_entregue_decimal ?? before.entrega_parcial?.quantidade_entregue ?? '0'));
+        const nextQty = qtyMicros(data.quantidade_entregue!);
+        if (before.status === 'ENTREGUE_PARCIAL' && prevQty > 0n && nextQty === prevQty) {
           return { entrega: toSpaEntrega(before), reused: true, action: 'retry' as const };
         }
-        if (before.status === 'ENTREGUE_PARCIAL' && prevQty > 0 && nextQty < prevQty) {
+        if (before.status === 'ENTREGUE_PARCIAL' && prevQty > 0n && nextQty < prevQty) {
           throw new AppError(422, 'PARCIAL_QTY_REDUCTION', 'Quantidade parcial nao pode ser reduzida sem estorno');
         }
         const comprovante = { ...(before.comprovante_entrega || {}), ...(data.comprovante || {}) };
@@ -510,8 +508,8 @@ export class ExpedicaoService {
           throw new AppError(422, 'COMPROVANTE_REQUIRED', 'Entrega parcial exige comprovante');
         }
         nextStatus = 'ENTREGUE_PARCIAL';
-        const quantidadePedida = Number(before.entrega_parcial?.quantidade_pedida || before.quantidade_total || before.volumes || 0);
-        if (!(quantidadePedida > 0) || nextQty >= quantidadePedida) {
+        const quantidadePedida = qtyMicros(String(before.entrega_parcial?.quantidade_pedida_decimal ?? before.quantidade_total ?? before.entrega_parcial?.quantidade_pedida ?? before.volumes ?? '0'));
+        if (!(quantidadePedida > 0n) || nextQty >= quantidadePedida) {
           throw new AppError(422, 'PARCIAL_QTY_EXCEEDS_TOTAL', 'Partial delivery must remain below total');
         }
         patch = {
@@ -519,8 +517,10 @@ export class ExpedicaoService {
           comprovante_entrega: comprovante,
           entrega_parcial: {
             ativada: true,
-            quantidade_entregue: nextQty,
-            ...(quantidadePedida > 0 ? { quantidade_pedida: quantidadePedida } : {}),
+            quantidade_entregue: Number(formatQtyMicros(nextQty)),
+            quantidade_entregue_decimal: formatQtyMicros(nextQty),
+            quantidade_pedida_decimal: formatQtyMicros(quantidadePedida),
+            ...(quantidadePedida > 0n ? { quantidade_pedida: Number(formatQtyMicros(quantidadePedida)) } : {}),
           },
         };
       } else {
@@ -531,7 +531,7 @@ export class ExpedicaoService {
         nextStatus = 'ENTREGUE';
         patch = { data_entrega: now, comprovante_entrega: comprovante,
           entrega_parcial: { ...(before.entrega_parcial || {}), quantidade_entregue: Number(before.quantidade_total),
-            quantidade_pedida: Number(before.quantidade_total) } };
+            quantidade_pedida: Number(before.quantidade_total),quantidade_entregue_decimal:before.quantidade_total,quantidade_pedida_decimal:before.quantidade_total } };
       }
 
       let updated = await this.repo.updateEntregaRow(scope, entregaId, patch, ctx.actorId!, executor);
@@ -565,10 +565,10 @@ export class ExpedicaoService {
       const elegivel = ['ENTREGUE', 'ENTREGUE_PARCIAL', 'FRUSTRADA', 'SAIU_ENTREGA'].includes(before.status);
       if (!elegivel) throw new AppError(409, 'ENTREGA_STATE_CONFLICT', 'Entrega not eligible for devolucao');
 
-      const qty = data.quantidade_devolvida && Number(data.quantidade_devolvida) > 0
+      const qty = data.quantidade_devolvida && qtyMicros(data.quantidade_devolvida) > 0n
         ? data.quantidade_devolvida
-        : data.itens?.reduce((acc, item) => acc + Number(item.quantidade_devolvida || 0), 0).toFixed(6) ?? '0.000000';
-      if (!(Number(qty) > 0) || Number(qty) > Number(before.quantidade_total)) {
+        : sumQty(data.itens?.map(item=>item.quantidade_devolvida) ?? []);
+      if (!(qtyMicros(qty) > 0n) || qtyMicros(qty) > qtyMicros(before.quantidade_total)) {
         throw new AppError(422, 'DEVOLUCAO_QTY_EXCEEDS_TOTAL', 'Returned quantity must be within delivery total');
       }
       let itens: Entrega['itens'] | undefined;
@@ -598,6 +598,7 @@ export class ExpedicaoService {
           motivo: data.motivo,
           acao: data.acao,
           quantidade_devolvida: Number(qty),
+          quantidade_devolvida_decimal: qty,
           valor_devolvido: data.valor_devolvido ? Number(data.valor_devolvido) : null,
           processado_em: new Date().toISOString(),
         },

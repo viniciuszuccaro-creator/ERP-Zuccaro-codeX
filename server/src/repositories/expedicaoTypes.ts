@@ -1,5 +1,6 @@
 import type { DbQueryExecutor } from '../db/client.js';
 import { z } from 'zod';
+import { AppError } from '../api/errors.js';
 
 export const ENTREGA_STATUS = [
   'AGUARDANDO_SEPARACAO',
@@ -58,10 +59,31 @@ export function parseEntregaStatusLabel(value: unknown): EntregaStatus | null {
   return null;
 }
 
-const qty = z.union([z.string(), z.number()]).transform((v) => {
-  const n = typeof v === 'number' ? v : Number(String(v).replace(',', '.'));
-  if (!Number.isFinite(n) || n < 0) throw new Error('Quantidade invalida');
-  return n.toFixed(6);
+
+const QTY_SCALE=1_000_000n, QTY_MAX=999_999_999_999_999_999n;
+export function quantityMicros(value:string):bigint {
+  if(typeof value!=='string'||value.length>128||!/^\d+(?:\.\d{1,6})?$/.test(value))throw new AppError(422,'ENTREGA_QUANTIDADE_INVALIDA','Invalid quantity');
+  const [whole,fraction='']=value.split('.');
+  const result=BigInt(whole)*QTY_SCALE+BigInt(fraction.padEnd(6,'0'));
+  if(result>QTY_MAX)throw new AppError(422,'ENTREGA_QUANTIDADE_INVALIDA','Quantity exceeds numeric precision');
+  return result;
+}
+export function formatQtyMicros(value:bigint):string {
+  if(value<0n||value>QTY_MAX)throw new AppError(422,'ENTREGA_QUANTIDADE_INVALIDA','Quantity exceeds numeric precision');
+  return (value/QTY_SCALE).toString()+'.'+(value%QTY_SCALE).toString().padStart(6,'0');
+}
+const qty = z.union([z.string(), z.number()]).transform((value,ctx)=>{
+  try{
+    let raw:string;
+    if(typeof value==='number'){
+      if(!Number.isFinite(value)||value<0||(!Number.isSafeInteger(value)&&value>Number.MAX_SAFE_INTEGER/1_000_000))throw Error('unsafe numeric quantity');
+      raw=value.toFixed(6);
+    }else raw=value.trim().replace(',','.')||'0';
+    if(raw.length>128||!/^\d+(?:\.\d+)?$/.test(raw))throw Error('invalid quantity');
+    const [whole,fraction='']=raw.split('.');
+    const result=BigInt(whole)*QTY_SCALE+BigInt(fraction.slice(0,6).padEnd(6,'0'))+(fraction.length>6&&fraction[6]>='5'?1n:0n);
+    return formatQtyMicros(result);
+  }catch{ctx.addIssue({code:z.ZodIssueCode.custom,message:'Quantidade invalida'});return z.NEVER;}
 });
 
 export const entregaItemSchema = z.object({
@@ -292,9 +314,7 @@ export function sortedEntregasKey(ids: string[]): string {
 }
 
 export function sumQty(values: string[]): string {
-  let total = 0;
-  for (const value of values) total += Number(value) || 0;
-  return total.toFixed(6);
+  return formatQtyMicros(values.reduce((total,value)=>total+quantityMicros(value),0n));
 }
 
 export interface ExpedicaoRepository {
