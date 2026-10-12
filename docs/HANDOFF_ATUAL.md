@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip pendente commit · runtime implantado **`4a46520a`** |
+| HEAD candidata | tip **`c160b523`** · runtime implantado **`4a46520a`** |
 | lote | ack pacote Codex · closeout #313/#315/#316 · PedidosTab mojibake+sky · PedidosEntregaTab sky |
 | evidência | `docs/vps/evidence/coord-codex-c360-313-315-316-20261012.txt` · `review-closeout-313-315-316-tips-20261012.txt` |
 | #313 | `58a9ff9f` CI SUCCESS MERGEABLE · **sem porte** |
@@ -11,7 +11,7 @@
 | CPA UI | OrcamentosTab/PedidosTab prontas · mutações pós-merge Codex |
 | restrito | **BLOCKED** secrets `ERP_DEV_LOGIN_RESTRICTED_*` |
 | porte Codex | nenhum (`pedidoService`/`orcamentoService`/C360/Marca/Legado intocados) |
-| próxima | CI tip → residual Cursor · owner merge canário #313→#315→#316 |
+| próxima | CI tip `c160b523` → residual Cursor · owner merge canário #313→#315→#316 |
 
 ## CURSOR — tip 4a46520a implantado+homolog sky lote3 (2026-10-12T13:23Z)
 

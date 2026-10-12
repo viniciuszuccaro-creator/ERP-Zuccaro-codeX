@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | pendente · implantado **`4a46520a`** |
+| tip | **`c160b523`** · implantado **`4a46520a`** |
 | lote | coord Codex · closeout reviews · PedidosTab encoding/sky · PedidosEntregaTab sky |
 | testes | comercial-clientes-tab-v24 (status UTF-8 + sky) |
 | #313/#315/#316 | tips atuais SUCCESS · **sem porte** · candidata=`18fc6bfe` |
