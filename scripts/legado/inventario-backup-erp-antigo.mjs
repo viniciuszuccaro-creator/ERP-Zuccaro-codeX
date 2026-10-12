@@ -1,6 +1,6 @@
 // Shared read-only engine extracted from the Bash inventory for Windows access and equivalence.
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
+import { createReadStream,realpathSync } from 'node:fs';
 import { readdir, lstat, mkdir, readFile, writeFile, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +18,39 @@ const digestFile = async path => {
 };
 const safeError = code => Object.assign(new Error(code), { code });
 const within = (root,path) => { const rel=relative(root,path); return !rel || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`)); };
+
+/** Verifies bytes of declared extraction files, not original-backup lineage or business equivalence. */
+export async function verifyPrivateExtractionFiles(root,manifest,{hashFile=digestFile}={}) {
+  if(manifest?.privateOnly!==true||manifest.operationalImportAuthorized!==false
+    ||manifest.operationalDatabaseTouched!==false||manifest.originalBackupModified!==false
+    ||!Array.isArray(manifest.files)||manifest.files.length<1||manifest.files.length>1000)
+    throw safeError('LEGACY_EXTRACTION_MANIFEST_INVALID');
+  const names=new Set();
+  for(const file of manifest.files){
+    if(typeof file.fileName!=='string'||!file.fileName||file.fileName.length>255||/[\\/:\u0000-\u001f\u007f]/.test(file.fileName)
+      ||['.','..'].includes(file.fileName)||names.has(file.fileName.toLowerCase())
+      ||!Number.isSafeInteger(file.bytes)||file.bytes<0||!/^[a-f0-9]{64}$/.test(file.fileSha256))
+      throw safeError('LEGACY_EXTRACTION_MANIFEST_INVALID');
+    names.add(file.fileName.toLowerCase());
+  }
+  // Sync canonicalization is supported on the authorized Windows source where the native async API returns EPERM.
+  // It still resolves links; source ACLs, containment and file-type checks are never suppressed.
+  const origin=realpathSync(root),results=[];
+  for(const [index,file] of manifest.files.entries()){
+    if(secret(file.fileName)||/password|senha|token|credential|credencial|private[-_]key|^\.env(?:\.|$)|\.(?:pem|key|pfx|p12)$/i.test(file.fileName)){
+      results.push({index,status:'blocked_secret'});continue;
+    }
+    try{
+      const target=resolve(origin,file.fileName),before=await lstat(target,{bigint:true});
+      if(before.isSymbolicLink()||!before.isFile()||before.nlink!==1n||!within(origin,realpathSync(target))){results.push({index,status:'blocked_link_or_type'});continue;}
+      const digest=await hashFile(target),after=await lstat(target,{bigint:true});
+      const stable=after.isFile()&&!after.isSymbolicLink()&&after.nlink===1n&&before.ino===after.ino&&before.size===after.size&&before.mtimeNs===after.mtimeNs;
+      results.push({index,status:!stable?'source_changed':before.size===BigInt(file.bytes)&&digest===file.fileSha256?'verified':'divergent'});
+    }catch(error){results.push({index,status:error.code==='ENOENT'?'missing':['EPERM','EACCES'].includes(error.code)?'access_denied':'unavailable'});}
+  }
+  return {scope:'extraction_file_hash_only',declaredFilesVerified:results.every(r=>r.status==='verified'),results,
+    sourceLineageVerified:false,originalBackupEquivalent:false,importAuthorized:false,imported:false};
+}
 
 export async function writeInventoryReport(root, report, result) {
   const origin=await realpath(root), target=resolve(report);

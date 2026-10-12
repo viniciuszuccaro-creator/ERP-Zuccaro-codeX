@@ -3,7 +3,38 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, link } from 'node:fs/promises'
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { inventoryBackup, compareBackupManifests, writeInventoryReport } from '../scripts/legado/inventario-backup-erp-antigo.mjs';
+import { inventoryBackup, compareBackupManifests, writeInventoryReport,verifyPrivateExtractionFiles } from '../scripts/legado/inventario-backup-erp-antigo.mjs';
+import {createHash} from 'node:crypto';
+
+const extraction=files=>({privateOnly:true,operationalImportAuthorized:false,operationalDatabaseTouched:false,originalBackupModified:false,files});
+const reference=(name,content)=>({fileName:name,bytes:Buffer.byteLength(content),fileSha256:createHash('sha256').update(content).digest('hex')});
+
+test('extraction references verify bytes without proving source lineage or exposing private names/values',()=>fixture(async({source})=>{
+ const content='synthetic private value',name='private-customer.csv';await writeFile(path.join(source,name),content);
+ const manifest=extraction([reference(name,content)]),before=JSON.stringify(manifest);
+ const report=await verifyPrivateExtractionFiles(source,manifest);assert.equal(report.declaredFilesVerified,true);
+ assert.equal(report.originalBackupEquivalent,false);assert.equal(report.sourceLineageVerified,false);assert.equal(report.importAuthorized,false);
+ assert.ok(!JSON.stringify(report).includes(name));assert.ok(!JSON.stringify(report).includes(content));assert.equal(JSON.stringify(manifest),before);
+ await writeFile(path.join(source,name),'changed private value!');assert.equal((await verifyPrivateExtractionFiles(source,manifest)).results[0].status,'divergent');
+}));
+
+test('extraction rejects unsafe references before reads and blocks secrets, missing or racing files',()=>fixture(async({source})=>{
+ const item=reference('sample.csv','old');await writeFile(path.join(source,item.fileName),'old');
+ for(const manifest of [extraction([{...item,fileName:'../outside'}]),extraction([item,item]),{...extraction([item]),originalBackupModified:true}])
+  await assert.rejects(verifyPrivateExtractionFiles(source,manifest),/MANIFEST_INVALID/);
+ const secretItem=reference('.env','secret');const blocked=await verifyPrivateExtractionFiles(source,extraction([secretItem]),{hashFile:async()=>{throw Error('must not read')}});
+ assert.equal(blocked.results[0].status,'blocked_secret');
+ const raced=await verifyPrivateExtractionFiles(source,extraction([item]),{hashFile:async p=>{await writeFile(p,'new longer');return item.fileSha256;}});
+ assert.equal(raced.results[0].status,'source_changed');assert.equal(raced.declaredFilesVerified,false);
+ assert.equal((await verifyPrivateExtractionFiles(source,extraction([reference('absent.csv','')]))).results[0].status,'missing');
+}));
+
+test('extraction hardlink guard refuses to open an aliased file',()=>fixture(async({source,copy})=>{
+ const item=reference('sample.csv','old');await writeFile(path.join(source,item.fileName),'old');
+ await link(path.join(source,item.fileName),path.join(copy,'alias'));
+ const report=await verifyPrivateExtractionFiles(source,extraction([item]),{hashFile:async()=>{throw Error('must not read')}});
+ assert.equal(report.results[0].status,'blocked_link_or_type');
+}));
 
 async function fixture(fn, base=os.tmpdir()) {
   const tmp=await mkdtemp(path.join(base,'legacy-equivalence-'));
