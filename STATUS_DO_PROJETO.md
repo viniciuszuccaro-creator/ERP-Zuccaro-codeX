@@ -1,8 +1,19 @@
+## CURSOR — sky lote2 Fechamento/Pedido/Produto (2026-10-12T13:10Z)
+
+| Item | Valor |
+|---|---|
+| tip | lote2 sobre `b8e21e13` · implantado `a4b8d0fc` |
+| lote | sky Fechamento/Pedido chrome · ImportarProdutos · HistoricoProduto · FiscalContabil · PainelColaborador |
+| testes | cobertura+clientes-tab **37 PASS** |
+| #313 | `58a9ff9f` · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — Representantes reopen/sky + Canais/Comercial chrome (2026-10-12T13:07Z)
 
 | Item | Valor |
 |---|---|
-| tip | **`4f0310de`** CI pendente · implantado ainda `a4b8d0fc` |
+| tip | **`4f0310de`** / docs `b8e21e13` CI pendente · implantado ainda `a4b8d0fc` |
 | lote | prevIdRef Representante/FormaPagamento/Região · RepresentantesTab filterInContext+uniqueKey · sky Representantes/Canais/C360 chrome (sem tocar panel reservado) |
 | testes | `cadastros-codigo-cobertura` + `comercial-clientes-tab-v24` **37 PASS** |
 | #313 | `58a9ff9f` · **sem porte** (Legado) |

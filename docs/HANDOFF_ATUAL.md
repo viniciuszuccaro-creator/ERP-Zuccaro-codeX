@@ -1,8 +1,20 @@
+## CURSOR — sky lote2 Fechamento/Pedido/Produto chrome (2026-10-12T13:10Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip lote2 (sobre `b8e21e13`) CI pendente |
+| implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
+| lote | sky FechamentoFinanceiro · PedidoFooter/Tabs · PedidoForm · ImportarProdutos · HistoricoProduto · FiscalContabil · PainelColaborador |
+| testes | cobertura+clientes-tab **37 PASS** |
+| #313 | `58a9ff9f` · **sem porte** |
+| restrito | **BLOCKED** secrets |
+| próxima | CI → redeploy → homolog · residual Cursor |
+
 ## CURSOR — Representantes reopen/sky + Canais/Comercial chrome (2026-10-12T13:07Z)
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip **`4f0310de`** CI pendente |
+| HEAD candidata | tip **`4f0310de`** / docs `b8e21e13` CI pendente |
 | implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
 | lote | prevIdRef Representante/FormaPagamento/Região · RepresentantesTab `filterInContext`+`uniqueKey` · sky Representantes/Canais/DetalhesCliente/launchpad/PedidoHeader/PainelDinamico |
 | testes | cobertura+clientes-tab **37 PASS** |
