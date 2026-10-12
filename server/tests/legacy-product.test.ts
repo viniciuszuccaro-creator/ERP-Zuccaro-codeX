@@ -64,6 +64,17 @@ async function prove(f:any,role:string) {
     sequences:(await f.admin.query('SELECT * FROM entity_code_sequences ORDER BY group_id,entity_name')).rows,
     audits:(await f.admin.query('SELECT id FROM audit_logs ORDER BY id')).rows});
   const beforeDenied=await snapshot();
+  for(const declaration of [{tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:I.unidadeA},
+    {tipo_item:'REVENDA',tipo_produto:'MATERIA_PRIMA',unidade_medida_id:I.unidadeA},
+    {tipo_item:'MATERIA_PRIMA',tipo_produto:'Unknown',unidade_medida_id:I.unidadeA}]){
+    await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,{...opts,produtoClassUnitMap:{'CHAPA|KG':declaration}}),/LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED/);
+    assert.deepEqual(await snapshot(),beforeDenied);
+  }
+  const changingMap={'CHAPA|KG':{tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:I.unidadeA}};
+  await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,{...opts,produtoClassUnitMap:changingMap,unidadeService:{get:async()=>{
+    changingMap['CHAPA|KG'].tipo_produto='MATERIA_PRIMA';return unidadeService.get(ctx,I.unidadeA);
+  }}}),/LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED/);
+  assert.deepEqual(await snapshot(),beforeDenied);
   for(const revisoesUnidades of [[],[review,review],[{...review,scope_verified:false}],
     [{...review,semantic_equivalence_verified:false}],[{...review,import_authorized:'true'}],
     [{...review,approved_target_unit_id:I.unidadeB}]]) {
@@ -113,6 +124,10 @@ async function prove(f:any,role:string) {
   assert.equal(first.reutilizado,false);assert.equal(first.registro.empresa_id,null);assert.match(first.registro.codigo!,/^\d+$/);
   assert.equal(first.registro.codigo_legado,'00042');assert.equal(first.registro.unidade_principal,'KG');
   assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,opts)).registro.id,id);
+  const beforeConflictingRetry=await snapshot();
+  await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,{...opts,produtoClassUnitMap:{'CHAPA|KG':{tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:I.unidadeA}}}),/LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED/);
+  assert.deepEqual(await snapshot(),beforeConflictingRetry);
+  assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,{...opts,produtoClassUnitMap:{'CHAPA|KG':{tipo_item:'MATERIA_PRIMA',tipo_produto:'Matéria-Prima Produção',unidade_medida_id:I.unidadeA}}})).registro.id,id);
   assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,reviewed)).registro.id,id);
   assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,semanticReviewed)).registro.id,id);
   const beforeSemanticRetry=await snapshot();

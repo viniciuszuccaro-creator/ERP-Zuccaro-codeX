@@ -10,7 +10,21 @@ import {
   isProdutoVendavel,
   normalizeProdutoTipoItem,
   resolveProdutoTipoImportacao,
+  resolveProdutoTiposImportacaoExplicitos,
 } from '../src/components/cadastros/produto/produtoTipoPolicy.js';
+test('aliases de importacao explicitos concordam sem default ou primeira escolha',()=>{
+ const resolve=resolveProdutoTiposImportacaoExplicitos;
+ assert.equal(resolve(['MATERIA_PRIMA','Matéria-Prima Produção']).value,PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);
+ assert.deepEqual(resolve(['REVENDA','MATERIA_PRIMA']),resolve(['MATERIA_PRIMA','REVENDA']));
+ assert.equal(resolve(['REVENDA','MATERIA_PRIMA']).conflicting,true);
+ for(const input of [[],[null,undefined],[''],[' '],['Unknown'],['REVENDA','Unknown'],[1],['REVENDA',{}],null]){
+  const out=resolve(input);assert.equal(out.requiresReview,true);assert.equal(out.usedDefault,false);assert.equal(out.value,undefined);
+ }
+ assert.equal(resolve(['','REVENDA']).value,PRODUTO_TIPOS_CANONICOS.REVENDA);
+ assert.equal(resolve([null,'REVENDA',undefined]).value,PRODUTO_TIPOS_CANONICOS.REVENDA);
+ // The existing form/import resolver's default remains unchanged for its old consumers.
+ assert.equal(resolveProdutoTipoImportacao('').usedDefault,true);
+});
 
 test('classificação frontend normaliza aliases canônicos e preserva tipo legado', () => {
   assert.equal(normalizeProdutoTipoItem('materia_prima'), PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA);

@@ -530,7 +530,8 @@ export const reconciliarPilotoGrupoLegado = async (ctx, snapshots, options = {})
 
 /** Persisted Produto pilot; all writes remain in the existing canonical service. */
 export const persistirProdutoGrupoLegado = async (ctx, mapped, options = {}) => {
-  const { service, unidadeService, rbacGuard, sourceSystem, batch, produtoClassUnitMap } = options;
+  const { service, unidadeService, rbacGuard, sourceSystem, batch, produtoClassUnitMap:sourceProdutoClassUnitMap } = options;
+  const produtoClassUnitMap = structuredClone(sourceProdutoClassUnitMap);
   const temRevisao = Object.prototype.hasOwnProperty.call(options,'revisoesUnidades');
   const revisoesUnidades = temRevisao ? structuredClone(options.revisoesUnidades) : undefined;
   const temSnapshot = Object.prototype.hasOwnProperty.call(options,'snapshotUnidades');
