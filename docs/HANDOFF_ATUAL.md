@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-12T12:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`cacf0558`** · runtime implantado `5b251b1c` |
+| #280/#291/#312/#313/#314 | tips inalterados · **sem porte** |
+| #313 | tip `58a9ff9f` já revisada neste ciclo · **sem porte** |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+
 ## CURSOR — sky Detalhes/Tabelas/Importação (2026-10-12T12:50Z)
 
 | Item | Valor |

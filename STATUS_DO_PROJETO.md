@@ -1,3 +1,10 @@
+## REVISÃO CODEX — timer 12:45Z (2026-10-12)
+
+| Item | Valor |
+|---|---|
+| #280–#314 | tips inalterados · **sem porte** |
+| próxima | CI tip `cacf0558` → redeploy · residual Cursor |
+
 ## CURSOR — sky Detalhes/Tabelas (2026-10-12T12:50Z)
 
 | Item | Valor |
