@@ -1,3 +1,23 @@
+## CURSOR — ProdutoForm adapter + Fiscal/Comissão idOnly (2026-10-12T10:00Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip docs anterior `cebcf908` · runtime `b76474a2` · main `baba91a6` |
+| lote | `ProdutoForm` → adapter V22 · `CadastroFiscalForm` idOnly+reopen · `ComissaoForm` multiempresa/RBAC/idOnly |
+| #312 | tip `c5e83312` · Legado reconciliação imutável · CI SUCCESS · **sem porte** |
+| testes | `cadastros-codigo-cobertura` · `produto-tipo-policy` PASS |
+| BLOCKED | secret `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI tip → redeploy → homolog · residual Cursor · secret restrito |
+
+## REVISÃO CODEX — timer 2026-10-12T10:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`cebcf908`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#312 | tips inalterados · **sem porte** · #312 `c5e83312` confirmado |
+| RUNNING | implementação Cursor (Fiscal/Comissão/ProdutoForm) |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T09:45Z
 
 | Item | Valor |

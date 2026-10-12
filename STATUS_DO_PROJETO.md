@@ -1,3 +1,14 @@
+## CURSOR — ProdutoForm adapter + Fiscal/Comissão (2026-10-12T10:00Z)
+
+| Item | Valor |
+|---|---|
+| lote | `ProdutoForm`→V22 · `CadastroFiscalForm` idOnly+reopen · `ComissaoForm` contexto/RBAC/idOnly |
+| #312 | tip `c5e83312` · **sem porte** (Legado) |
+| testes | cobertura codigo + produto-tipo-policy PASS |
+| runtime | ainda `b76474a2` até CI tip |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog · residual Cursor |
+
 ## REVISÃO CODEX — #312 Legado reconciliação imutável (2026-10-12T02:45Z)
 
 | Item | Valor |
