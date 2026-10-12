@@ -1,3 +1,13 @@
+## CURSOR — tip 6a4b304f implantado+homolog (2026-10-12T13:45Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`6a4b304f`** · asset `index-BluicOIY.js` · rollback `pre-spa-login-20261012-134341` |
+| homolog | OWNER `fail_count=0` |
+| #317/#318 | SUCCESS · **sem porte** · candidata=`7af84751` |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · merge canário Codex |
+
 ## CURSOR — revisão Codex 13:39Z (#317/#318) (2026-10-12T13:39Z)
 
 | Item | Valor |

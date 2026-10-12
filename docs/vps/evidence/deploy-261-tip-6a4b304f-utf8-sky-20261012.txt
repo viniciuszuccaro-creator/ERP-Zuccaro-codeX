@@ -1,0 +1,11 @@
+# Evidência sanitizada — tip 6a4b304f implantado+homolog OWNER
+# utc=2026-10-12T13:45Z
+# tip=6a4b304f (UTF-8/sky residual + revisão #317/#318)
+# asset=index-BluicOIY.js
+# rollback=pre-spa-login-20261012-134341
+# MERGE_SHA8=6a4b304f · STAMP=20261012-134341
+# CI tip SUCCESS · Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-6a4b304f.json
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# candidata Codex tip #318 7af84751 · #317 25b9093a · #313–316 estáveis · sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*
