@@ -230,8 +230,8 @@ Seja preciso e cite a legislação aplicável.`,
       />
           {/* SUGESTÃO IA */}
           {sugestaoIA && (
-            <Alert className="border-purple-300 bg-purple-50">
-              <Sparkles className="w-4 h-4 text-purple-600" />
+            <Alert className="border-sky-300 bg-sky-50">
+              <Sparkles className="w-4 h-4 text-sky-600" />
               <AlertDescription className="text-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -245,7 +245,7 @@ Seja preciso e cite a legislação aplicável.`,
                       </ul>
                     )}
                     {sugestaoIA.legislacao && (
-                      <p className="text-xs mt-2 text-purple-700">
+                      <p className="text-xs mt-2 text-sky-700">
                         <strong>Base Legal:</strong> {sugestaoIA.legislacao}
                       </p>
                     )}
@@ -257,7 +257,7 @@ Seja preciso e cite a legislação aplicável.`,
                     disabled={!podeSalvar}
                     data-permission="Cadastros.TabelaFiscal.ia"
                     data-sensitive="true"
-                    className="ml-4 bg-purple-600 hover:bg-purple-700"
+                    className="ml-4 bg-sky-600 hover:bg-sky-700"
                   >
                     Aplicar Sugestões
                   </Button>
@@ -459,7 +459,7 @@ Seja preciso e cite a legislação aplicável.`,
                   </CardContent>
                 </Card>
 
-                <Card className="bg-purple-50">
+                <Card className="bg-sky-50">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm">COFINS</CardTitle>
                   </CardHeader>

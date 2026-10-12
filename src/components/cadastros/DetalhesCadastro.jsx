@@ -127,10 +127,10 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                   </p>
                 </CardContent>
               </Card>
-              <Card className="bg-purple-50 border-purple-200">
+              <Card className="bg-sky-50 border-sky-200">
                 <CardContent className="p-4">
-                  <p className="text-sm text-purple-700">Ticket Médio</p>
-                  <p className="text-2xl font-bold text-purple-900">
+                  <p className="text-sm text-sky-700">Ticket Médio</p>
+                  <p className="text-2xl font-bold text-sky-900">
                     R$ {pedidos.length > 0 ? (totalVendas / pedidos.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
                   </p>
                 </CardContent>
