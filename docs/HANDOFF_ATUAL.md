@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip **`74a9dccb`** CI pendente/pós-push |
+| HEAD candidata | tip docs **`8d08cd0e`** · runtime implantado **`74a9dccb`** |
 | implantado | **`74a9dccb`** · asset `index-C6Ab-95j.js` · rollback `pre-spa-login-20261012-131656` |
 | lote | testes reopen Representante/Forma/Região · review #315/#316 · redeploy+homolog OWNER |
 | homolog | OWNER `fail_count=0` · `pw-homolog-261-tip-74a9dccb.json` |
