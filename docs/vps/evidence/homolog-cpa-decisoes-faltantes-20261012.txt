@@ -1,0 +1,18 @@
+HOMOLOG CPA — decisões específicas faltantes (Cursor)
+UTC: 2026-10-12T13:40Z
+
+Já autorizado / existente:
+- Destino erp-dev + script spa-login-rebuild-api-web.sh
+- OWNER credentials no environment (homolog read-only PASS tip 4a46520a)
+- Rollback tags pre-spa-login-* recuperáveis
+- Stack Codex #313→#315→#316 tip 18fc6bfe CI SUCCESS MERGEABLE (merge owner)
+
+Faltante concreto (bloqueia só restrito / mutações CPA):
+1) Secrets Environment: ERP_DEV_LOGIN_RESTRICTED_EMAIL + ERP_DEV_LOGIN_RESTRICTED_PASSWORD
+2) Usuário RBAC limitado no erp-dev (não pedir senha no chat)
+3) Owner: merge/canário #313→#315→#316 no destino antes de mutações convert/cancel
+4) Redeploy tip #261 (HEAD atual) após CI verde — não bloqueia merge Codex
+
+Não faltante (não pedir de novo):
+- Autorização geral VPS DEV para tip Cursor #261
+- Porte Pedido/Orçamento TX (explicitamente NÃO — reserved Codex)
