@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #307/#308 Legado mapa + refs (2026-10-12T01:45Z)
+
+| Item | Valor |
+|---|---|
+| #307 | tip `afb4903f` · ambiguidades classe/unidade · CI SUCCESS · **sem porte** |
+| #308 | tip `25f0f830` · refs revisão unidades · CI pending · **sem porte** |
+| motivo | Legado reservado · não portar |
+| stack | #308→#307→#306→… |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #306 Legado hashes extração (2026-10-12T01:15Z)
 
 | Item | Valor |
