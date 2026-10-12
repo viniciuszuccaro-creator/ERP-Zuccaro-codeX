@@ -330,6 +330,19 @@ test('wire runtime: EtapaModal→Form · ComissoesTab→ComissaoForm · NF→Com
   assert.match(nfTab, /useWindow/);
 });
 
+test('CalcularComissoesForm: createInContext + RBAC + sky (sem base44.entities direto)', async () => {
+  const src = await readFile(new URL('../src/components/comercial/CalcularComissoesForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /createInContext/);
+  assert.match(src, /usePermissions/);
+  assert.match(src, /useContextoVisual/);
+  assert.match(src, /calcular-comissoes-agora/);
+  assert.match(src, /bg-sky-/);
+  assert.match(src, /sanitizeOnWrite/);
+  assert.match(src, /AuditLog/);
+  assert.doesNotMatch(src, /base44\.entities\.Comissao\.create/);
+  assert.doesNotMatch(src, /bg-purple-/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
