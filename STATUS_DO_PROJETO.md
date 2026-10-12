@@ -1,3 +1,21 @@
+## CURSOR — tip 5b251b1c implantado+homolog (2026-10-12T12:24Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`5b251b1c`** · asset `index-ucPmLDAT.js` · rollback `pre-spa-login-20261012-122246` |
+| homolog | OWNER `fail_count=0` |
+| #280–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor |
+
+## REVISÃO CODEX — timer 12:15Z (2026-10-12)
+
+| Item | Valor |
+|---|---|
+| #280–#314 | tips inalterados · **sem porte** |
+| #261 | tip `5b251b1c` CI SUCCESS · redeploy em curso |
+| BLOCKED | secret restrito |
+
 ## CURSOR — Bloco3/5 colunas canônicas + sky (2026-10-12T12:25Z)
 
 | Item | Valor |

@@ -1,0 +1,11 @@
+# Evidência sanitizada — tip 5b251b1c implantado+homolog
+# utc=2026-10-12T12:24Z
+# tip=5b251b1c colunas Bloco3/5 + sky residual
+# asset=index-ucPmLDAT.js
+# rollback=pre-spa-login-20261012-122246
+# MERGE_SHA8=5b251b1c · STAMP=20261012-122246
+# CI SUCCESS · Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-5b251b1c.json
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# Revisão Codex 12:15Z: #280–#314 tips inalterados · sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

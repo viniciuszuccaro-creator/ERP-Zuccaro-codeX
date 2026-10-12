@@ -1,3 +1,30 @@
+## CURSOR — tip 5b251b1c implantado+homolog (2026-10-12T12:24Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`5b251b1c`** · asset `index-ucPmLDAT.js` · rollback `pre-spa-login-20261012-122246` |
+| lote | colunas Bloco3/5 + sky · revisão Codex 12:15Z sem porte |
+| homolog | OWNER `fail_count=0` · evidence `deploy-261-tip-5b251b1c-bloco35-sky-20261012.txt` |
+| #280–#314 | tips inalterados · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
+## REVISÃO CODEX — timer 2026-10-12T12:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`5b251b1c`** · runtime implantado ainda `a8faa3cf` · CI tip SUCCESS |
+| main | `baba91a6` |
+| #280 | tip `612c2055` SUCCESS · **sem porte** |
+| #291 | tip `9c6fdfe9` SUCCESS · **sem porte** (C360 CRM reservado) |
+| #312 | tip `c5e83312` SUCCESS · **sem porte** (Legado) |
+| #313 | tip `58a9ff9f` SUCCESS · **sem porte** (Pedido TX) |
+| #314 | tip `b24feee2` SUCCESS · **sem porte** (Legado Clientes) |
+| agents | Codex IDLE/ERROR · nenhum RUNNING entregando porte |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+| próxima | redeploy tip `5b251b1c` → homolog |
+
 ## CURSOR — Bloco3/5 colunas + sky residual (2026-10-12T12:25Z)
 
 | Item | Valor |
