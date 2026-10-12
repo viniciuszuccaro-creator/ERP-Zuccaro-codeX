@@ -178,10 +178,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b rounded-t-sm">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-sky-100 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
+              <Package className="w-5 h-5 text-sky-700"/> Produtos & Serviços
             </CardTitle>
           </div>
         </CardHeader>
@@ -199,13 +199,13 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-              <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
-                <Package className="w-4 h-4 text-purple-600" />
+              <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                <Package className="w-4 h-4 text-sky-600" />
               </div>
               Produtos
               <CountBadgeSimplificado entities={["Produto"]} allCounts={allCounts} isLoading={isLoading} />
             </CardTitle>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
+            <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
               disabled={!contextoValido || !canViewEntity("Produto", "Estoque")}
               data-permission="Cadastros.Produto.visualizar"
@@ -227,8 +227,8 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
-                  <Icon className="w-4 h-4 text-purple-600" />
+                <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                  <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {title}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />

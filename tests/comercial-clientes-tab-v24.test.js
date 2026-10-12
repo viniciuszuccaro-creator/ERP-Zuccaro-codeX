@@ -97,15 +97,16 @@ test('diff vs #251: runtime #252 não inclui Empresas/Financeiro/Central360', as
   assert.doesNotMatch(tab, /CentralCliente360|EmpresaSwitcher|LaunchpadCard/);
 });
 
-/** Cadastros Bloco1: padrão azul aprovado (não reverter para primary genérico). */
-test('regressão visual Cadastros Bloco1: tiles Clientes usam azul (bg-blue / text-blue)', async () => {
+/** Cadastros Bloco1: padrão azul claro (sky) aprovado — sem purple/indigo. */
+test('regressão visual Cadastros Bloco1: tiles Clientes usam azul claro (bg-sky / text-sky)', async () => {
   const bloco = await readFile(
     new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url),
     'utf8',
   );
-  assert.match(bloco, /from-blue-50/);
-  assert.match(bloco, /text-blue-600|text-blue-700/);
-  assert.match(bloco, /bg-blue-600/);
+  assert.match(bloco, /from-sky-50/);
+  assert.match(bloco, /text-sky-600|text-sky-700/);
+  assert.match(bloco, /bg-sky-600/);
+  assert.doesNotMatch(bloco, /purple-|indigo-|violet-/);
   assert.match(bloco, /data-action=\{`Cadastros\.\$\{k\}\.abrir`\}/);
   assert.match(bloco, /k: 'Cliente'/);
 });

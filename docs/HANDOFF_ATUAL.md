@@ -1,3 +1,14 @@
+## CURSOR — colunas Bloco1/6 + sky (2026-10-12T12:15Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip `ff0e1c74` + este lote |
+| lote | ContatoB2B/Segmento/Região colunas canônicas · Bloco6 nome_* · sky Bloco1/2/6 |
+| testes | cobertura 25 PASS · comercial-clientes-tab 9 PASS |
+| #312–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — reopen residual Usuario/Gateway/Tabela* (2026-10-12T12:10Z)
 
 | Item | Valor |

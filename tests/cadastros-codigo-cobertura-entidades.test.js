@@ -423,6 +423,28 @@ test('Parametro/Config/Bloco6: prevIdRef reopen + aliases Visualizador', async (
   assert.match(origem, /registro\?\.id/);
 });
 
+test('Bloco1/6 colunas canônicas + sky (sem purple/indigo)', async () => {
+  const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
+  const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
+  const bloco6 = await readFile(new URL('../src/components/cadastros/blocks/Bloco6Tecnologia.jsx', import.meta.url), 'utf8');
+  assert.match(bloco1, /nome_contato/);
+  assert.match(bloco1, /nome_regiao/);
+  assert.match(bloco1, /tipo_regiao/);
+  assert.match(bloco1, /nome_segmento/);
+  assert.match(bloco1, /tipo_segmento/);
+  assert.match(bloco6, /nome_integracao/);
+  assert.match(bloco6, /nome_canal/);
+  assert.match(bloco6, /nome_intent/);
+  assert.match(bloco6, /nome_job/);
+  assert.match(bloco6, /nome_webhook/);
+  assert.match(bloco6, /url_destino/);
+  assert.match(bloco6, /serie_nfe/);
+  for (const [src, label] of [[bloco1, 'Bloco1'], [bloco2, 'Bloco2'], [bloco6, 'Bloco6']]) {
+    assert.match(src, /bg-sky-/, `${label} deve usar sky`);
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${label} sem purple/indigo/violet`);
+  }
+});
+
 test('Usuario/Grupo/Evento/Gateway/TabelaFiscal/TabelaPreco: prevIdRef reopen', async () => {
   const files = [
     'UsuarioForm.jsx',

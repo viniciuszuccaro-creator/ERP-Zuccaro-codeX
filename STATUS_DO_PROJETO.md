@@ -1,3 +1,12 @@
+## CURSOR — colunas canônicas Bloco1/6 + sky (2026-10-12T12:15Z)
+
+| Item | Valor |
+|---|---|
+| lote | nome_contato/nome_regiao/tipo_segmento · Bloco6 nome_* · purple/indigo→sky |
+| testes | cobertura 25 · clientes-tab 9 PASS |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — reopen Usuario/Gateway/TabelaFiscal/TabelaPreco (2026-10-12T12:10Z)
 
 | Item | Valor |
