@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T02:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`9ffc669f`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#311 | tips inalterados · **sem porte** |
+| #312 **novo** | tip `c5e83312` · Legado baseline/escopo imutável na reconciliação · base #311 · CI SUCCESS · **sem porte** |
+| stack | #312→#311→#310→… · Legado reservado |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T02:30Z
 
 | Item | Valor |

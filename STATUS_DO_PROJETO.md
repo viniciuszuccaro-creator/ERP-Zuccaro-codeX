@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #312 Legado reconciliação imutável (2026-10-12T02:45Z)
+
+| Item | Valor |
+|---|---|
+| #312 | tip `c5e83312` · baseline/escopo imutável · CI SUCCESS · **sem porte** |
+| motivo | Legado reservado · não portar |
+| stack | #312→#311→#310→… |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #311 Legado classificação contraditória (2026-10-12T02:30Z)
 
 | Item | Valor |
