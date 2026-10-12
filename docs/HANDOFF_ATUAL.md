@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-12T01:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`493428c1`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#306 | tips inalterados · **sem porte** |
+| #307 **novo** | tip `afb4903f` · Legado bloquear ambiguidades classe/unidade · base #306 · CI SUCCESS · **sem porte** |
+| #308 **novo** | tip `25f0f830` · Legado refs privadas revisão unidades · base #307 · CI pending · **sem porte** |
+| stack | #308→#307→#306→#305→… · Legado reservado |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T01:30Z
 
 | Item | Valor |
