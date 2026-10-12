@@ -522,6 +522,13 @@ test('CRM→Pedido: executor compartilhado, rollback, retry, preço snapshot e e
 async function proveOrcamentoMutationAuthorization(f:any,service:any,pedido:any,ctx:any,quote:any){
   const role=f.role??ROLE;
   await f.exec(`GRANT UPDATE ON pedidos TO ${role};GRANT DELETE ON pedido_itens TO ${role};GRANT INSERT,UPDATE ON orcamentos TO ${role};GRANT INSERT,DELETE ON orcamento_itens TO ${role}`);
+  const identity=(await f.admin.query('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+  const preflight=()=>f.data.withTransaction((tx:any)=>inspectCrmPreflight(tx,{...identity,requireOrcamentoPersistence:true,requireRestrictedLogin:f.restrictedLogin===true}));
+  assert.equal((await preflight()).ready,true);
+  await f.exec(`REVOKE INSERT ON orcamentos FROM ${role}`);assert.ok((await preflight()).blocked.includes('orcamentoPedidoPersistenceGrants'));
+  await f.exec(`GRANT INSERT ON orcamentos TO ${role};REVOKE DELETE ON orcamento_itens FROM ${role}`);assert.ok((await preflight()).blocked.includes('orcamentoPedidoPersistenceGrants'));
+  await f.exec(`GRANT DELETE ON orcamento_itens TO ${role}`);
+  assert.equal((await preflight()).ready,true);
   const adminQuery=f.admin.query.bind(f.admin),inside=new AsyncLocalStorage<boolean>();
   const permissions=(await adminQuery('SELECT permissoes FROM profiles WHERE id=$1',[ctx.actorId])).rows[0].permissoes;
   const enable=()=>adminQuery("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}',$2::jsonb),'{Comercial,pedido}',$3::jsonb) WHERE id=$1",[ctx.actorId,JSON.stringify(['visualizar','criar','editar','cancelar','aprovar']),JSON.stringify(['visualizar','criar','editar','cancelar','alterar-status','converter-pedido','aprovar'])]);

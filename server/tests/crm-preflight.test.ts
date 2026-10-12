@@ -183,3 +183,16 @@ test('CRM preflight: policy restrictive-only e PUBLIC column ACL não homologam 
     assert.ok((await inspect()).blocked.includes('policy'));
   }finally{await f.close();}
 });
+
+test('Orcamento persistence gate rejects invalid option and CLI before connection',async()=>{
+  let calls=0;const db:any={query:async()=>{calls++;throw Error('must not connect');}};
+  await assert.rejects(inspectCrmPreflight(db,{database:'synthetic',schema:'public',requireOrcamentoPersistence:'true' as any}),/ORCAMENTO_GATE_INVALID/);
+  await assert.rejects(inspectCrmPreflight(db,{database:'synthetic',schema:'public',stage:'before_migration',requireOrcamentoPersistence:true}),/ORCAMENTO_STAGE_INVALID/);
+  assert.equal(calls,0);
+  for(const [flag,stage] of [['yes','after_migration'],['true','before_migration']]){
+    const result=spawnSync(process.execPath,['--import','tsx','scripts/crmPreflight.ts'],{encoding:'utf8',cwd:new URL('../',import.meta.url),
+      env:{...process.env,CRM_EXPECTED_DATABASE:'synthetic',CRM_EXPECTED_SCHEMA:'public',CRM_PREFLIGHT_STAGE:stage,CRM_PREFLIGHT_PEDIDO_PERSISTENCE:'false',
+        CRM_PREFLIGHT_ORCAMENTO_PERSISTENCE:flag,DATABASE_URL:'postgresql://must-not-connect:private@example.invalid/forbidden'}});
+    assert.equal(result.status,2);assert.equal(result.stderr,'');assert.deepEqual(JSON.parse(result.stdout),{ready:false,blocked:['invalidOrcamentoPersistenceGate'],activationAuthorized:false});
+  }
+});

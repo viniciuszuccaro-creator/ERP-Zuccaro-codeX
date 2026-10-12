@@ -1,12 +1,14 @@
 import type { DbQueryExecutor } from './client.js';
 
 /** Only catalogs/ledger are read. No tenant rows, credentials or names are returned. */
-export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:string;schema:string;stage?:'before_migration'|'after_migration';requireRestrictedLogin?:boolean;requirePedidoPersistence?:boolean}) {
+export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:string;schema:string;stage?:'before_migration'|'after_migration';requireRestrictedLogin?:boolean;requirePedidoPersistence?:boolean;requireOrcamentoPersistence?:boolean}) {
   if(!expected.database?.trim() || !expected.schema?.trim())throw new Error('CRM_PREFLIGHT_DESTINATION_REQUIRED');
   if(expected.stage && !['before_migration','after_migration'].includes(expected.stage))throw new Error('CRM_PREFLIGHT_STAGE_INVALID');
   if(expected.requireRestrictedLogin!==undefined && typeof expected.requireRestrictedLogin!=='boolean')throw new Error('CRM_PREFLIGHT_LOGIN_GATE_INVALID');
   if(expected.requirePedidoPersistence!==undefined && typeof expected.requirePedidoPersistence!=='boolean')throw new Error('CRM_PREFLIGHT_PEDIDO_GATE_INVALID');
   if(expected.requirePedidoPersistence && expected.stage==='before_migration')throw new Error('CRM_PREFLIGHT_PEDIDO_STAGE_INVALID');
+  if(expected.requireOrcamentoPersistence!==undefined && typeof expected.requireOrcamentoPersistence!=='boolean')throw new Error('CRM_PREFLIGHT_ORCAMENTO_GATE_INVALID');
+  if(expected.requireOrcamentoPersistence && expected.stage==='before_migration')throw new Error('CRM_PREFLIGHT_ORCAMENTO_STAGE_INVALID');
   const identity=await db.query<{database:string;schema:string;rolsuper:boolean;rolbypassrls:boolean;session_super:boolean;session_bypass:boolean;same_login:boolean}>(
     `SELECT current_database() AS database,current_schema() AS schema,effective.rolsuper,effective.rolbypassrls,
       login.rolsuper AS session_super,login.rolbypassrls AS session_bypass,current_user=session_user AS same_login
@@ -84,38 +86,41 @@ export async function inspectCrmPreflight(db:DbQueryExecutor,expected:{database:
         AND a.privilege_type IN ('SELECT','INSERT','UPDATE')) AS ok`,[[oid,sequence?.oid??oid]]);
     checks.noPublicDml=checks.schema&&publicAcl.rows[0]?.ok===true;
   }
-  if(expected.requirePedidoPersistence)Object.assign(checks,await inspectPedidoPersistence(db,expected.schema));
+  if(expected.requirePedidoPersistence||expected.requireOrcamentoPersistence)Object.assign(checks,await inspectPedidoPersistence(db,expected.schema,expected.requireOrcamentoPersistence===true));
   const blocked=Object.keys(checks).filter(k=>!checks[k]);
   return {ready:blocked.length===0,checks,blocked};
 }
 
 /** Catalog-only core persistence gate. References, Auth and behavioral RLS remain separate gates. */
-async function inspectPedidoPersistence(db:DbQueryExecutor,schema:string) {
+async function inspectPedidoPersistence(db:DbQueryExecutor,schema:string,fullFlow=false) {
   const result=await db.query<{kind:string|null;rls:boolean|null;force:boolean|null;grants:boolean|null;public_safe:boolean|null;policies:boolean|null}>(`
     SELECT c.relkind AS kind,c.relrowsecurity AS rls,c.relforcerowsecurity AS force,
       c.oid IS NOT NULL AND (NOT required.read OR has_table_privilege(current_user,c.oid,'SELECT'))
         AND (NOT required.write OR has_table_privilege(current_user,c.oid,'INSERT'))
+        AND (NOT required.mutate OR has_table_privilege(current_user,c.oid,'UPDATE'))
+        AND (NOT required.remove OR has_table_privilege(current_user,c.oid,'DELETE'))
         AND (NOT required.lock OR has_column_privilege(current_user,c.oid,'updated_at','UPDATE')) AS grants,
       NOT EXISTS(SELECT 1 FROM aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
         WHERE a.grantee=0 AND a.privilege_type IN ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE'))
       AND NOT EXISTS(SELECT 1 FROM pg_attribute att,LATERAL aclexplode(att.attacl) a
         WHERE att.attrelid=c.oid AND att.attnum>0 AND NOT att.attisdropped AND a.grantee=0
           AND a.privilege_type IN ('SELECT','INSERT','UPDATE')) AS public_safe,
-      NOT EXISTS(SELECT 1 FROM (VALUES ('r',required.read),('a',required.write)) command(cmd,needed)
+      NOT EXISTS(SELECT 1 FROM (VALUES ('r',required.read),('a',required.write),('w',required.mutate),('d',required.remove)) command(cmd,needed)
         WHERE command.needed AND NOT EXISTS(SELECT 1 FROM pg_policy p WHERE p.polrelid=c.oid AND p.polpermissive
           AND p.polcmd::text IN ('*',command.cmd)
           AND (0=ANY(p.polroles) OR EXISTS(SELECT 1 FROM unnest(p.polroles) role_oid
             WHERE CASE WHEN role_oid=0 THEN false ELSE pg_has_role(current_user,role_oid,'USAGE') END)))) AS policies
-    FROM (VALUES ('pedidos',true,true,false),('pedido_itens',true,true,false),('pedido_historico',false,true,false),
-      ('audit_logs',true,true,false),('orcamentos',true,false,true),('orcamento_itens',true,false,false)) required(name,read,write,lock)
+    FROM (VALUES ('pedidos',true,true,false,$2::boolean,false),('pedido_itens',true,true,false,false,$2::boolean),('pedido_historico',false,true,false,false,false),
+      ('audit_logs',true,true,false,false,false),('orcamentos',true,$2::boolean,true,$2::boolean,false),('orcamento_itens',true,$2::boolean,false,false,$2::boolean)) required(name,read,write,lock,mutate,remove)
     LEFT JOIN pg_namespace n ON n.nspname=$1
-    LEFT JOIN pg_class c ON c.relnamespace=n.oid AND c.relname=required.name`,[schema]);
+    LEFT JOIN pg_class c ON c.relnamespace=n.oid AND c.relname=required.name`,[schema,fullFlow]);
   const complete=result.rows.length===6&&result.rows.every(r=>r.kind==='r');
-  return {pedidoPersistenceTables:complete,
+  const resultChecks={pedidoPersistenceTables:complete,
     pedidoPersistenceRls:complete&&result.rows.every(r=>r.rls===true&&r.force===true),
     pedidoPersistenceGrants:complete&&result.rows.every(r=>r.grants===true),
     pedidoPersistencePolicies:complete&&result.rows.every(r=>r.policies===true),
     pedidoPersistenceNoPublicDml:complete&&result.rows.every(r=>r.public_safe===true)};
+  return fullFlow?Object.fromEntries(Object.entries(resultChecks).map(([key,value])=>[key.replace('pedidoPersistence','orcamentoPedidoPersistence'),value])):resultChecks;
 }
 
 // Parentheses/casts added by pg_get_expr are normalized without altering quoted

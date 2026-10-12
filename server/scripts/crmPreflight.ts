@@ -11,6 +11,10 @@ async function main() {
   let db:ReturnType<typeof createDbClient>|undefined;
   const stage=process.env.CRM_PREFLIGHT_STAGE??'after_migration';
   const pedido=process.env.CRM_PREFLIGHT_PEDIDO_PERSISTENCE??'false';
+  const orcamento=process.env.CRM_PREFLIGHT_ORCAMENTO_PERSISTENCE??'false';
+  if(!['true','false'].includes(orcamento)||(orcamento==='true'&&stage==='before_migration')) {
+    console.log(JSON.stringify({ready:false,blocked:['invalidOrcamentoPersistenceGate'],activationAuthorized:false}));process.exitCode=2;return;
+  }
   if(!['true','false'].includes(pedido)||(pedido==='true'&&stage==='before_migration')) {
     console.log(JSON.stringify({ready:false,blocked:['invalidPedidoPersistenceGate'],activationAuthorized:false}));process.exitCode=2;return;
   }
@@ -21,10 +25,10 @@ async function main() {
     db=createDbClient(loadConfig());
     const report=await db.withTransaction(async tx=>{
       await tx.query('SET TRANSACTION READ ONLY');
-      return inspectCrmPreflight(tx,{database,schema,stage,requireRestrictedLogin:true,requirePedidoPersistence:pedido==='true'});
+      return inspectCrmPreflight(tx,{database,schema,stage,requireRestrictedLogin:true,requirePedidoPersistence:pedido==='true',requireOrcamentoPersistence:orcamento==='true'});
     });
-    console.log(JSON.stringify({...report,scope:pedido==='true'?'crm_pedido_persistence_only':'schema_only',stage,
-      ...(pedido==='true'?{unverifiedGates:['referencePolicies','authRbac','behavioralIsolation','backupRestore','functionalFlow']}:{}),
+    console.log(JSON.stringify({...report,scope:orcamento==='true'?'crm_orcamento_pedido_persistence_only':pedido==='true'?'crm_pedido_persistence_only':'schema_only',stage,
+      ...((pedido==='true'||orcamento==='true')?{unverifiedGates:['referencePolicies','authRbac','behavioralIsolation','backupRestore','functionalFlow']}:{}),
       activationAuthorized:false}));
     process.exitCode=report.ready?0:1;
   }catch {
