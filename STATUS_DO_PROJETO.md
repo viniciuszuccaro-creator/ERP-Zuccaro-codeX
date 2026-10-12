@@ -1,3 +1,14 @@
+## CURSOR — tip a4b8d0fc implantado+homolog (2026-10-12T13:02Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
+| lote | sky residual Cadastros · revisão #313 documentada · CPA owner read-only |
+| homolog | OWNER `fail_count=0` |
+| #280–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor |
+
 ## REVISÃO CODEX — timer 12:45Z (2026-10-12)
 
 | Item | Valor |

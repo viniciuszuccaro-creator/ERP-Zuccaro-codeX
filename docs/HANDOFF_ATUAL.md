@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T13:00Z + tip a4b8d0fc implantado
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`a4b8d0fc`** CI SUCCESS · implantado · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
+| homolog | OWNER `fail_count=0` · evidence `deploy-261-tip-a4b8d0fc-sky-residual-20261012.txt` |
+| #280–#314 | tips inalterados · **sem porte** |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T12:45Z
 
 | Item | Valor |

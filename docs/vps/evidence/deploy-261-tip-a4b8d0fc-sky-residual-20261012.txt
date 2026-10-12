@@ -1,0 +1,11 @@
+# Evidência sanitizada — tip a4b8d0fc implantado+homolog
+# utc=2026-10-12T13:02Z
+# tip=a4b8d0fc (runtime aaf0ce13 sky Detalhes/Tabelas + f846eeff sky/revisão #313)
+# asset=index-DhRUrsdH.js
+# rollback=pre-spa-login-20261012-130128
+# MERGE_SHA8=a4b8d0fc · STAMP=20261012-130128
+# CI SUCCESS · Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-a4b8d0fc.json
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# Revisão Codex 13:00Z: #280–#314 tips inalterados · sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*
