@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip **`a3a45984`** · sobre `253f0392` / runtime `b77edcac` |
+| HEAD candidata | tip **`f41084b3`** / runtime **`a3a45984`** · sobre `253f0392` / runtime `b77edcac` |
 | lote | UTF-8 PedidosTab/Comissões/PesoDimensões · Financeiro · Produção · IA · Gestão Acessos |
 | #313/#315/#316 | **sem porte** · candidata `18fc6bfe` |
 | restrito | **BLOCKED** secrets |
