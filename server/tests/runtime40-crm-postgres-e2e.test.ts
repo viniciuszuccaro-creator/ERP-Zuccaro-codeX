@@ -277,7 +277,22 @@ async function prepareCrmHttpAuth(f:Awaited<ReturnType<typeof realCrmFixture>>) 
       assert.equal((await fetch(`${base}/api/v1/oportunidades/${id}`,{headers:headers('synthetic-branch')})).status,200);
       assert.equal((await fetch(`${base}/api/v1/oportunidades/${id}`,{headers:{...headers('synthetic-owner'),'x-actor-id':branchProfile}})).status,403);
       assert.equal((await fetch(`${base}/api/v1/auth/session`,{headers:{authorization:'Bearer synthetic-owner','x-group-id':ID.groupA}})).status,200);
-      assert.equal((await fetch(`${base}/api/v1/auth/session`,{headers:{authorization:'Bearer synthetic-branch','x-group-id':ID.groupA}})).status,403);
+      const branchSession=await fetch(`${base}/api/v1/auth/session`,{headers:{authorization:'Bearer synthetic-branch','x-group-id':ID.groupA}});
+      assert.equal(branchSession.status,200); // Bootstrap returns only the user's own authorized profile, not a Group grant.
+      const branchProfiles=(await branchSession.json()).data.profiles;
+      assert.equal(branchProfiles.length,1);assert.equal(branchProfiles[0].id,branchProfile);
+      assert.equal(branchProfiles[0].empresa_id,ID.empresaA);
+      assert.deepEqual(branchProfiles[0].empresas.map((company:{id:string})=>company.id),[ID.empresaA]);
+      for(const [company,action,allowed] of [[null,'visualizar',false],[ID.empresaA2,'visualizar',false],
+        [ID.empresaA,'aprovar',false],[ID.empresaA,'visualizar',true]] as const) {
+        const guard={profile_id:branchProfile,group_id:ID.groupA,empresa_id:company,module:'CRM',section:'oportunidades',action};
+        const result=await fetch(`${base}/api/v1/auth/session?guard=${encodeURIComponent(JSON.stringify(guard))}`,
+          {headers:{authorization:'Bearer synthetic-branch'}});
+        assert.equal(result.status,200);assert.equal((await result.json()).data.allowed,allowed);
+      }
+      assert.equal((await fetch(`${base}/api/v1/oportunidades/${id}/converter-orcamento-pedido`,{method:'POST',
+        headers:{authorization:'Bearer synthetic-branch','x-group-id':ID.groupA,'Content-Type':'application/json'},
+        body:JSON.stringify(input)})).status,403);
       assert.equal((await post('synthetic-branch',ID.empresaA2)).status,403);
       assert.deepEqual((await snapshot()).rows[0],before);
       assert.equal((await clients.db.query("SELECT NULLIF(current_setting('app.group_id',true),'') AS group_scope")).rows[0].group_scope,null);
