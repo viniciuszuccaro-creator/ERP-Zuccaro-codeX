@@ -1,3 +1,12 @@
+## CURSOR — revisão #320/#321 (2026-10-12T14:45Z)
+
+| Item | Valor |
+|---|---|
+| #320 | `b16011b6` SUCCESS · sem porte |
+| #321 | `d5538292` CI pendente · sem porte |
+| candidata | #319 |
+| próxima | residual Cursor |
+
 ## CURSOR — revisão #320 Expedição precisão (2026-10-12T14:30Z)
 
 | Item | Valor |

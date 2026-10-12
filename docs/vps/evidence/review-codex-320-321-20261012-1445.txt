@@ -1,0 +1,17 @@
+REVISÃO TIMER Codex — 2026-10-12T14:45Z
+
+#320 tip b16011b6 (era 3955c4af)
+  + fix: retain exact safe integer numeric compatibility
+  CI SUCCESS · MERGEABLE clean · SEM PORTE (expedicaoService)
+
+#321 tip d5538292 NOVO
+  title: PIM projeção catálogo estrita e reprocessável
+  base: tip #319 (comercial-central-contexto)
+  files: produtoCatalogProjection.ts · runtime10 outbox-claim/pim e2e · docs
+  CI: IN_PROGRESS (frontend/backend) · mergeable unstable
+  Cursor: SEM PORTE — serviço catálogo + testes outbox (não invadir sessão/outbox/#261)
+  Risco: porte misturaria outbox claim com UI #261
+
+#319 5568e3a9 candidata C360 inalterada
+agents RUNNING: 0
+porte #261: nenhum

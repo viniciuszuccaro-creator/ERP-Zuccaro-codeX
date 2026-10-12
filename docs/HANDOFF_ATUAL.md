@@ -1,3 +1,13 @@
+## CURSOR — revisão Codex #320 tip+#321 (2026-10-12T14:45Z)
+
+| Item | Valor |
+|---|---|
+| #320 | tip **`b16011b6`** (safe int) CI SUCCESS · **sem porte** |
+| #321 | tip **`d5538292`** PIM projeção · CI pendente · **sem porte** (outbox/catalog) |
+| candidata C360 | **#319** `5568e3a9` |
+| porte | nenhum |
+| próxima | residual Cursor · aguardar CI #321 |
+
 ## CURSOR — revisão Codex #320 (2026-10-12T14:30Z)
 
 | Item | Valor |
