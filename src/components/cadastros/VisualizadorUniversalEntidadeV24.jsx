@@ -117,6 +117,9 @@ const FORM_ALIASES = [
   "evento",       // EventoNotificacaoForm usa { evento }
   "tabela",       // TabelaFiscalForm usa { tabela }
   "condicao",     // CondicaoComercialForm usa { condicao }
+  "cadastroFiscal", // CadastroFiscalForm usa { cadastroFiscal }
+  "comissao",       // ComissaoForm usa { comissao }
+  "notaFiscal",     // NotaFiscalFormCompleto usa { notaFiscal }
   "apiExternaForm", // cobertura extra
   "webhookForm",    // cobertura extra
 ];

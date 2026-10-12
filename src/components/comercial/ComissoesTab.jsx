@@ -63,6 +63,8 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const canViewComissao = hasPermission('Comercial', 'Comissao', 'visualizar') || hasPermission('Comercial', 'Comissões', 'visualizar') || hasPermission('Comercial', null, 'visualizar');
+  const canCreateComissao = hasPermission('Comercial', 'Comissao', 'criar') || hasPermission('Comercial', 'Comissões', 'criar') || hasPermission('Comercial', null, 'criar');
+  const canEditComissao = hasPermission('Comercial', 'Comissao', 'editar') || hasPermission('Comercial', 'Comissões', 'editar') || hasPermission('Comercial', null, 'editar');
   const canCalculateComissao = hasPermission('Comercial', 'Comissao', 'calcular') || hasPermission('Comercial', 'Comissões', 'calcular') || hasPermission('Comercial', null, 'calcular');
   const canApproveComissao = hasPermission('Comercial', 'Comissao', 'aprovar') || hasPermission('Comercial', 'Comissões', 'aprovar') || hasPermission('Comercial', null, 'aprovar');
   const canRejectComissao = hasPermission('Comercial', 'Comissao', 'recusar') || hasPermission('Comercial', 'Comissões', 'recusar') || canApproveComissao;
@@ -196,6 +198,49 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
     }
   };
 
+  const abrirComissaoFormSeguro = async (comissao = null) => {
+    const isEdit = Boolean(comissao?.id);
+    if (!contextoValido || (isEdit ? !canEditComissao : !canCreateComissao)) {
+      await auditComissao(isEdit ? 'comissao_editar_bloqueada' : 'comissao_criar_bloqueada', {
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        comissao_id: comissao?.id,
+      }, false);
+      sonnerToast.error(!contextoValido
+        ? 'Selecione grupo ou empresa antes de continuar'
+        : (isEdit ? 'Sem permissao para editar comissao' : 'Sem permissao para criar comissao'));
+      return;
+    }
+    await auditComissao(isEdit ? 'comissao_edicao_aberta' : 'comissao_criacao_aberta', {
+      comissao_id: comissao?.id,
+      vendedor: comissao?.vendedor,
+    });
+    const { default: ComissaoForm } = await import('./ComissaoForm');
+    openWindow(
+      ComissaoForm,
+      {
+        comissao: comissao || undefined,
+        windowMode: true,
+        onSubmit: async (payload) => {
+          const safe = withComissaoContext(sanitizeOnWrite(payload));
+          if (isEdit) {
+            await updateInContext('Comissao', comissao.id, safe);
+            await auditComissao('comissao_atualizada', { comissao_id: comissao.id, vendedor: safe.vendedor });
+          } else {
+            const created = await createInContext('Comissao', safe);
+            await auditComissao('comissao_criada', { comissao_id: created?.id, vendedor: safe.vendedor });
+          }
+          queryClient.invalidateQueries({ queryKey: ['comissoes'] });
+          sonnerToast.success(isEdit ? 'Comissão atualizada' : 'Comissão criada');
+        },
+      },
+      {
+        title: isEdit ? `Comissão — ${comissao.vendedor || comissao.numero_pedido || 'editar'}` : 'Nova Comissão',
+        width: 900,
+        height: 700,
+      }
+    );
+  };
+
   const abrirCalculoComissoesSeguro = async () => {
     if (!contextoValido || !canCalculateComissao) {
       await auditComissao('comissao_calcular_bloqueada', { motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada' }, false);
@@ -215,7 +260,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
         onCancel: () => auditComissao('comissao_calculo_cancelado', {}, false)
       },
       {
-        title: 'ðŸ“Š Calcular ComissÃµes',
+        title: 'Calcular Comissões',
         width: 900,
         height: 700
       }
@@ -411,8 +456,20 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
                 </SelectContent>
               </Select>
 
+              <Button
+                className="bg-sky-600 hover:bg-sky-700"
+                onClick={() => abrirComissaoFormSeguro(null)}
+                disabled={!contextoValido || !canCreateComissao}
+                data-action="Comercial.Comissao.criar"
+                data-permission="Comercial.Comissao.criar"
+                data-context-required="true"
+                data-sensitive="true"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Comissão
+              </Button>
               <Button 
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-700 hover:bg-sky-800"
                 onClick={abrirCalculoComissoesSeguro}
                 disabled={!contextoValido || !canCalculateComissao}
                 data-action="Comercial.Comissao.calcular"
@@ -494,6 +551,20 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
                         title="Ver detalhes"
                       >
                         <FileText className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => abrirComissaoFormSeguro(comissao)}
+                        disabled={!contextoValido || !canEditComissao}
+                        data-action="Comercial.Comissao.editar"
+                        data-permission="Comercial.Comissao.editar"
+                        data-context-required="true"
+                        data-sensitive="true"
+                        title="Editar comissão"
+                        className="text-sky-700"
+                      >
+                        <Edit className="w-4 h-4" />
                       </Button>
                       {comissao.status === 'Pendente' && (
                         <>

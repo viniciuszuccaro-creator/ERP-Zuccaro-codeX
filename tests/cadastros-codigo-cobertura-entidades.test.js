@@ -314,6 +314,22 @@ test('Etapa entrega e NF completo: RBAC/contexto + ID técnico NF', async () => 
   assert.match(nf, /usePermissions/);
 });
 
+test('wire runtime: EtapaModal→Form · ComissoesTab→ComissaoForm · NF→Completo', async () => {
+  const modal = await readFile(new URL('../src/components/comercial/CriarEtapaEntregaModal.jsx', import.meta.url), 'utf8');
+  const comissoes = await readFile(new URL('../src/components/comercial/ComissoesTab.jsx', import.meta.url), 'utf8');
+  const nfTab = await readFile(new URL('../src/components/comercial/NotasFiscaisTab.jsx', import.meta.url), 'utf8');
+  assert.match(modal, /CriarEtapaEntregaForm/);
+  assert.match(modal, /onCriarEtapa/);
+  assert.doesNotMatch(modal, /itens_revenda/);
+  assert.match(comissoes, /import\('\.\/ComissaoForm'\)/);
+  assert.match(comissoes, /abrirComissaoFormSeguro/);
+  assert.match(comissoes, /Comercial\.Comissao\.criar/);
+  assert.match(comissoes, /bg-sky-/);
+  assert.match(nfTab, /NotaFiscalFormCompleto/);
+  assert.match(nfTab, /abrirNotaFiscalCompleto/);
+  assert.match(nfTab, /useWindow/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

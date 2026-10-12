@@ -20,6 +20,7 @@ import useBackendPagination from '@/components/lib/useBackendPagination';
 import { sanitizeOnWrite } from '@/components/lib/sanitizeOnWrite';
 import { useUser } from '@/components/lib/UserContext';
 import { assertFaturamentoDentroDoPedido } from '@/components/lib/pedidoFaturamentoPolicy';
+import { useWindow } from '@/components/lib/useWindow';
 import NotasFiscaisTabView from './notas-fiscais/NotasFiscaisTabView';
 import {
   buildNotaFiscalScope,
@@ -60,6 +61,7 @@ export default function NotasFiscaisTab({ notasFiscais = [], pedidos = [], onCre
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { openWindow } = useWindow();
   const { empresaAtual, empresasDoGrupo = [], grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -199,6 +201,64 @@ export default function NotasFiscaisTab({ notasFiscais = [], pedidos = [], onCre
     }
     await auditFiscalComercial('nota_fiscal_criacao_externa_aberta', { empresa_id: empresaId, origem_fluxo: 'onCreateNFe' });
     onCreateNFe?.();
+  };
+
+  /** Abre formulário canônico NotaFiscalFormCompleto (idOnly + empresa obrigatória). */
+  const abrirNotaFiscalCompleto = async (nota = null) => {
+    const isEdit = Boolean(nota?.id);
+    if (!contextoValido || !empresaId || (isEdit ? !canEditNota : !canCreateNota)) {
+      await auditFiscalComercial(isEdit ? 'nota_fiscal_editar_bloqueada' : 'nota_fiscal_criacao_completo_bloqueada', {
+        motivo: !empresaId ? 'empresa_faturadora_obrigatoria' : 'contexto_ou_permissao',
+        nota_id: nota?.id || null,
+      }, false);
+      toast({ title: !empresaId ? 'Selecione a empresa faturadora' : 'Sem permissao para Nota Fiscal', variant: 'destructive' });
+      return;
+    }
+    if (isEdit && !notaMatchesFiscalScope(nota, scopeInput)) {
+      await auditFiscalComercial('nota_fiscal_editar_bloqueada', { motivo: 'escopo_empresa', nota_id: nota?.id }, false);
+      toast({ title: 'Nota fora do escopo da empresa/grupo ativo', variant: 'destructive' });
+      return;
+    }
+    await auditFiscalComercial(isEdit ? 'nota_fiscal_edicao_completo_aberta' : 'nota_fiscal_criacao_completo_aberta', {
+      nota_id: nota?.id || null,
+      empresa_id: empresaId,
+      origem_fluxo: 'NotaFiscalFormCompleto',
+    });
+    setSelectedNF(nota);
+    const pedido = nota?.pedido_id
+      ? pedidos.find((item) => String(item.id) === String(nota.pedido_id))
+      : null;
+    const { default: NotaFiscalFormCompleto } = await import('./NotaFiscalFormCompleto');
+    openWindow(
+      NotaFiscalFormCompleto,
+      {
+        notaFiscal: nota || undefined,
+        pedido: pedido || undefined,
+        windowMode: true,
+        onSubmit: async (payload) => {
+          const safe = /** @type {NotaFiscalTabRecord} */ (sanitizeOnWrite({
+            ...payload,
+            cliente_fornecedor: sanitizeFiscalText(payload.cliente_fornecedor),
+            numero: sanitizeFiscalText(payload.numero),
+            serie: sanitizeFiscalText(payload.serie),
+            observacoes: sanitizeFiscalText(payload.observacoes),
+          }));
+          if (isEdit && nota?.id) {
+            await updateMutation.mutateAsync({ id: nota.id, data: safe });
+          } else {
+            await createMutation.mutateAsync(safe);
+          }
+        },
+        onCancel: () => {
+          void auditFiscalComercial('nota_fiscal_completo_cancelado', { nota_id: nota?.id || null }, false);
+        },
+      },
+      {
+        title: isEdit ? `NF-e ${nota.numero || nota.id}` : 'Nova Nota Fiscal',
+        width: 1100,
+        height: 820,
+      },
+    );
   };
 
   const invalidateNotas = () => Promise.all([
@@ -354,15 +414,7 @@ export default function NotasFiscaisTab({ notasFiscais = [], pedidos = [], onCre
 
   /** @param {NotaFiscalTabRecord} nota */
   const handleEdit = async (nota) => {
-    if (!contextoValido || !canEditNota || !notaMatchesFiscalScope(nota, scopeInput)) {
-      await auditFiscalComercial('nota_fiscal_editar_bloqueada', { motivo: 'contexto_escopo_ou_permissao', nota_id: nota?.id }, false);
-      toast({ title: 'Sem contexto, escopo ou permissao para editar NF-e', variant: 'destructive' });
-      return;
-    }
-    await auditFiscalComercial('nota_fiscal_edicao_aberta', { nota_id: nota.id, empresa_id: nota.empresa_id });
-    setSelectedNF(nota);
-    setFormData(nota);
-    setIsDialogOpen(true);
+    await abrirNotaFiscalCompleto(nota);
   };
 
   const closeForm = () => {
@@ -399,7 +451,7 @@ export default function NotasFiscaisTab({ notasFiscais = [], pedidos = [], onCre
     setSearchTerm={setSearchTerm} setStatusFilter={setStatusFilter} setTipoFilter={setTipoFilter}
     contextoValido={contextoValido} empresaId={empresaId} canViewNota={canViewNota} canCreateNota={canCreateNota}
     canEditNota={canEditNota} canCancelNota={canCancelNota} canExportNota={canExportNota} canPrintNota={canPrintNota}
-    canDownloadDanfe={canDownloadDanfe} canSendNota={canSendNota} onCreateNFe={onCreateNFe ? criarNFeExternaSeguro : null}
+    canDownloadDanfe={canDownloadDanfe} canSendNota={canSendNota} onCreateNFe={onCreateNFe ? criarNFeExternaSeguro : abrirNotaFiscalCompleto}
     isDialogOpen={isDialogOpen} onDialogOpenChange={(open) => open ? setIsDialogOpen(true) : closeForm()}
     selectedNF={selectedNF} formData={formData} setFormData={setFormData} onSubmit={handleSubmit}
     isSaving={createMutation.isPending || updateMutation.isPending} selectedNotas={selectedNotas} setSelectedNotas={setSelectedNotas}
