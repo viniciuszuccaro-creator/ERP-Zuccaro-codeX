@@ -2,10 +2,10 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip sky lote3 (sobre `0dde7b54`) |
+| HEAD candidata | tip **`d8d15982`** / docs `74427952` CI pendente |
 | implantado | **`74a9dccb`** · `index-C6Ab-95j.js` · rollback `pre-spa-login-20261012-131656` |
 | lote | sky PriceBrain · SugestorCanal · UploadProjeto · Armado · Canais · DetalhesColaborador · Ecommerce |
-| homolog | OWNER tip `74a9dccb` fail_count=0 (runtime anterior; redeploy após CI deste tip) |
+| homolog | OWNER tip `74a9dccb` fail_count=0 (redeploy após CI deste tip) |
 | #315/#316 | **sem porte** |
 | restrito | **BLOCKED** secrets |
 | próxima | CI tip → redeploy → homolog · residual Cursor |
