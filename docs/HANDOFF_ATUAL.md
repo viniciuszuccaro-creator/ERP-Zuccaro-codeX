@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-12T02:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`a4faa57f`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#310 | tips inalterados · **sem porte** |
+| #311 **novo** | tip `4b58828a` · Legado rejeitar classificação contraditória · base #310 · CI SUCCESS · **sem porte** |
+| risco | toca `produtoTipoPolicy.js` — Legado; não portar; possível conflito futuro em merge com #261 |
+| stack | #311→#310→#309→… · Legado reservado |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T02:15Z
 
 | Item | Valor |
