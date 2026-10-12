@@ -216,12 +216,32 @@ if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: custom backup restores 
   const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});try {
     const proof=await proveAtomicCrmPedido(f);
     await f.admin.query(`UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','["visualizar","converter-pedido"]'::jsonb) WHERE id=$1`,[proof.ctx.actorId]);
+    const highWater=(await f.admin.query<{pedido:number;codigo:number;history:string}>(`SELECT
+      (SELECT coalesce(max(numero::int),0) FROM pedidos WHERE empresa_id=$1)::int AS pedido,
+      (SELECT coalesce(max(codigo::int),0) FROM oportunidades WHERE group_id=$2)::int AS codigo,
+      (SELECT last_value::text FROM pedido_historico_ordem_seq) AS history`,[proof.ctx.empresaId,proof.ctx.groupId])).rows[0];
     await proveCrmFixtureBackup(process.env.DATABASE_URL!,f,async()=>{
       const identity=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
       const gates=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{...identity,requireRestrictedLogin:true,requirePedidoPersistence:true}));
       assert.equal(gates.ready,true);
       const replay=await proof.service.convertOrcamentoToPedido(proof.ctx,proof.opportunityId,proof.input);
       assert.equal(replay.replayed,true);assert.equal(replay.pedido.id,proof.pedidoId);
+    },async()=>{
+      const fresh=await proof.prepare();
+      assert.equal(Number(fresh.bound.codigo),highWater.codigo+1);
+      const converted=await Promise.all(Array.from({length:6},()=>proof.service.convertOrcamentoToPedido(proof.ctx,fresh.bound.id,fresh.input)));
+      assert.equal(new Set(converted.map(x=>x.pedido.id)).size,1);
+      assert.equal(converted.filter(x=>!x.replayed).length,1);
+      assert.equal(Number(converted[0].pedido.numero),highWater.pedido+1);
+      assert.notEqual(converted[0].pedido.id,proof.pedidoId);
+      assert.equal(converted[0].pedido.orcamento_id,fresh.quote.id);
+      assert.equal(converted[0].pedido.total,fresh.quote.total);
+      const history=(await f.admin.query<{ordem:string}>('SELECT ordem::text FROM pedido_historico WHERE pedido_id=$1',[converted[0].pedido.id])).rows;
+      assert.equal(history.length,1);assert.ok(BigInt(history[0].ordem)>BigInt(highWater.history));
+      const audit=(await new PostgresAuditRepository(f.admin).listByEntity('Pedido',converted[0].pedido.id)).filter(x=>x.action==='create');
+      assert.equal(audit.length,1);
+      await assert.rejects(proof.service.get({...proof.ctx,empresaId:ID.empresaA2},fresh.bound.id),{code:'OPORTUNIDADE_NOT_FOUND'});
+      assert.equal((await proof.service.get(proof.ctx,proof.opportunityId)).convertido_em_id,proof.pedidoId);
     });
   }finally{await f.close();}
 });
@@ -472,7 +492,7 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     await f.admin.query('UPDATE profiles SET empresa_id=NULL WHERE id=$1',[ctx.actorId]);
     await f.admin.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"visualizar\"]'::jsonb) WHERE id=$1",[ctx.actorId]);
     await assert.rejects(service.convertOrcamentoToPedido(ctx,unavailable.bound.id,unavailable.input),{code:'PERMISSION_DENIED'});
-    return {ctx,service,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
+    return {ctx,service,prepare,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
   }finally{f.admin.query=originalAdmin;f.data.withTransaction=originalTransaction;}
 }
 

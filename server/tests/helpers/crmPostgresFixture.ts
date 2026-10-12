@@ -15,7 +15,7 @@ export function assertCrmIsolatedUrl(value:string|undefined) {
 }
 
 /** Round-trip only a newly-created synthetic fixture schema; never a DEV database or original backup. */
-export async function proveCrmFixtureBackup(value:string,f:Awaited<ReturnType<typeof realCrmFixture>>,verify:()=>Promise<void>) {
+export async function proveCrmFixtureBackup(value:string,f:Awaited<ReturnType<typeof realCrmFixture>>,verify:()=>Promise<void>,afterReconciliation?:()=>Promise<void>) {
   assertCrmIsolatedUrl(value);
   if(!/^crm_test_[a-f0-9]{18}$/.test(f.schema))throw new Error('CRM_BACKUP_SCHEMA_INVALID');
   const url=new URL(value),database=url.pathname.slice(1);
@@ -72,6 +72,7 @@ export async function proveCrmFixtureBackup(value:string,f:Awaited<ReturnType<ty
     if(await snapshot()!==before)throw new Error('CRM_BACKUP_RECONCILIATION_FAILED');
     await verify();
     if(await snapshot()!==before)throw new Error('CRM_BACKUP_REPLAY_CHANGED_STATE');
+    if(afterReconciliation)await afterReconciliation();
   }finally {
     if(dirname(resolve(root))!==resolve(tmpdir())||!basename(root).startsWith('erp-crm-backup-'))throw new Error('CRM_BACKUP_TEMP_INVALID');
     await rm(root,{recursive:true,force:true});
