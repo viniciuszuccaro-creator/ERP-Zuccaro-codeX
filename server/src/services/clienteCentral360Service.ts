@@ -354,6 +354,8 @@ export class ClienteCentral360Service {
   ) {}
 
   async get(ctx: RequestContext, clienteId: string, options: ClienteCentral360PageOptions = {}) {
+    ctx = Object.freeze({ ...ctx });
+    options = Object.freeze({ ...options });
     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
     if (!clienteId || !UUID_RE.test(clienteId)) {
