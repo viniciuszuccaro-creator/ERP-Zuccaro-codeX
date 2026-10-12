@@ -1,3 +1,12 @@
+## REVISÃO CODEX — timer 2026-10-12T04:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`b398e2a8`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#312 | tips inalterados · **sem porte** |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T04:00Z
 
 | Item | Valor |
