@@ -19,6 +19,11 @@ import type { DbClient } from '../src/db/client.ts';
 import type { RequestContext } from '../src/audit/types.ts';
 import { createHttpApiClient } from '../../src/api/httpApiClient.js';
 import { inspectCrmPreflight } from '../src/db/crmPreflight.ts';
+import { createPoolDbClient,createRuntimeDbClients } from '../src/db/client.ts';
+import { authColumnGrants } from './helpers/authBootstrapFixture.ts';
+import { randomUUID } from 'node:crypto';
+import { createServer } from 'node:http';
+import pg from 'pg';
 
 test('R40 gate de PostgreSQL isolado rejeita DEV/remoto/ausente antes de conectar',()=>{
   for(const url of [undefined,'postgresql://synthetic@localhost/postgres','postgresql://synthetic@example.invalid/erp_test'])
@@ -205,7 +210,84 @@ if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: real restricted LOGIN e
   }finally{await f.close();}
 });
 
-async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:string)=>Promise<unknown>;role?:string;schema?:string;restrictedLogin?:boolean}) {
+type CrmAuthHttp={app:ReturnType<typeof createApp>;token:string;verify:(base:string,id:string,input:unknown)=>Promise<void>};
+
+if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: verified HTTP Auth, separate restricted connections and owner/branch scope',async()=>{
+  const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});
+  let auth:Awaited<ReturnType<typeof prepareCrmHttpAuth>>|undefined;
+  try{auth=await prepareCrmHttpAuth(f);await proveAtomicCrmPedido({...f,auth:auth.http});}
+  finally{try{await auth?.close();}finally{await f.close();}}
+});
+
+async function prepareCrmHttpAuth(f:Awaited<ReturnType<typeof realCrmFixture>>) {
+  assertCrmIsolatedUrl(process.env.DATABASE_URL);assert(f.data.pool);
+  const role=`${f.role}_auth`,owner=randomUUID(),branch=randomUUID(),foreign=randomUUID(),branchProfile=randomUUID();
+  const admin=new pg.Pool({connectionString:process.env.DATABASE_URL});
+  let authPool:pg.Pool|undefined,created=false;
+  const provider=createServer((req,res)=>{
+    const token=req.headers.authorization;
+    const id=token==='Bearer synthetic-owner'?owner:token==='Bearer synthetic-branch'?branch:token==='Bearer synthetic-foreign'?foreign:null;
+    res.setHeader('Content-Type','application/json');
+    if(!id){res.statusCode=401;res.end('{}');return;}
+    res.end(JSON.stringify({id,email:'synthetic@example.test'}));
+  }).listen(0,'127.0.0.1');
+  await new Promise<void>(resolve=>provider.once('listening',resolve));
+  const close=async()=>{
+    await new Promise<void>(resolve=>provider.close(()=>resolve()));
+    await authPool?.end();
+    try{if(created)await admin.query(`DROP OWNED BY "${role}"; DROP ROLE "${role}"`);}finally{await admin.end();}
+  };
+  try {
+    const password=randomUUID(); // Synthetic, fixture-only; never returned or logged.
+    await admin.query(`CREATE ROLE "${role}" LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD '${password}'`);created=true;
+    await f.exec(`GRANT USAGE ON SCHEMA "${f.schema}" TO "${role}";${authColumnGrants(role)}`);
+    await f.admin.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2',[owner,ID.runtimeActorA]);
+    await f.admin.query('UPDATE profiles SET auth_user_id=$1 WHERE id=$2',[foreign,ID.runtimeActorB]);
+    await f.admin.query(`INSERT INTO profiles(id,auth_user_id,email,full_name,role,ativo,group_id,empresa_id,permissoes)
+      VALUES($1,$2,'synthetic-branch@example.test','Synthetic branch','user',true,$3,$4,$5::jsonb)`,
+      [branchProfile,branch,ID.groupA,ID.empresaA,JSON.stringify({CRM:{oportunidades:['visualizar']},Comercial:{pedido:['visualizar']}})]);
+    const url=new URL(process.env.DATABASE_URL!);url.username=role;url.password=password;url.searchParams.set('options',`-c search_path=${f.schema},pg_catalog`);
+    authPool=new pg.Pool({connectionString:url.toString(),max:2,connectionTimeoutMillis:5000});
+    const data=createPoolDbClient(f.data.pool),authDb=createPoolDbClient(authPool);
+    const address=provider.address();assert(address&&typeof address!=='string');
+    const config=loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',ENABLE_PRODUTO_EMPRESA:'true',
+      ERP_AUTH_MODE:'supabase_user',ENABLE_TENANT_CONTEXT:'true',SUPABASE_URL:`http://127.0.0.1:${address.port}`,SUPABASE_ANON_KEY:'synthetic',
+      DATABASE_URL:'postgresql://synthetic@localhost/erp_test',AUTH_DATABASE_URL:url.toString()});
+    const clients=await createRuntimeDbClients(config,cfg=>({... (cfg.databaseUrl===url.toString()?authDb:data),end:async()=>{}}));
+    assert.notEqual(clients.db,clients.authDb);
+    assert.equal((await clients.authDb!.query("SELECT has_table_privilege(current_user,'pedidos','INSERT') AS allowed")).rows[0].allowed,false);
+    assert.equal((await clients.authDb!.query('SELECT id FROM profiles')).rows.length,0);
+    const app=createApp({config,db:clients.db,authDb:clients.authDb,tenantContextEnabled:true});
+    const verify=async(base:string,id:string,input:unknown)=>{
+      const snapshot=()=>f.admin.query(`SELECT (SELECT count(*)::int FROM pedidos) AS orders,
+        (SELECT count(*)::int FROM pedido_itens) AS items,(SELECT count(*)::int FROM pedido_historico) AS history,
+        (SELECT version FROM oportunidades WHERE id=$1) AS version`,[id]);
+      const before=(await snapshot()).rows[0];
+      const actor=(await f.admin.query('SELECT p.created_by FROM pedidos p JOIN oportunidades o ON o.convertido_em_id=p.id WHERE o.id=$1',[id])).rows[0];
+      assert.equal(actor.created_by,ID.runtimeActorA);assert.notEqual(actor.created_by,owner);
+      const headers=(token:string,company:string=ID.empresaA)=>({authorization:`Bearer ${token}`,'x-group-id':ID.groupA,'x-empresa-id':company,'Content-Type':'application/json'});
+      const post=(token:string,company=ID.empresaA)=>fetch(`${base}/api/v1/oportunidades/${id}/converter-orcamento-pedido`,{method:'POST',headers:headers(token,company),body:JSON.stringify(input)});
+      assert.equal((await post('synthetic-branch')).status,403);
+      assert.equal((await post('synthetic-foreign')).status,403);
+      assert.equal((await post('invalid')).status,401);
+      assert.equal((await fetch(`${base}/api/v1/oportunidades/${id}/converter-orcamento-pedido`,{method:'POST',
+        headers:{'x-group-id':ID.groupA,'x-empresa-id':ID.empresaA,'x-actor-id':ID.runtimeActorA,'Content-Type':'application/json'},
+        body:JSON.stringify(input)})).status,401);
+      assert.equal((await post('synthetic-owner',ID.empresaA2)).status,404);
+      assert.equal((await fetch(`${base}/api/v1/oportunidades/${id}`,{headers:headers('synthetic-branch')})).status,200);
+      assert.equal((await fetch(`${base}/api/v1/oportunidades/${id}`,{headers:{...headers('synthetic-owner'),'x-actor-id':branchProfile}})).status,403);
+      assert.equal((await fetch(`${base}/api/v1/auth/session`,{headers:{authorization:'Bearer synthetic-owner','x-group-id':ID.groupA}})).status,200);
+      assert.equal((await fetch(`${base}/api/v1/auth/session`,{headers:{authorization:'Bearer synthetic-branch','x-group-id':ID.groupA}})).status,403);
+      assert.equal((await post('synthetic-branch',ID.empresaA2)).status,403);
+      assert.deepEqual((await snapshot()).rows[0],before);
+      assert.equal((await clients.db.query("SELECT NULLIF(current_setting('app.group_id',true),'') AS group_scope")).rows[0].group_scope,null);
+      assert.equal((await clients.authDb!.query("SELECT NULLIF(current_setting('app.auth_user_id',true),'') AS auth_scope")).rows[0].auth_scope,null);
+    };
+    return {http:{app,token:'synthetic-owner',verify},close};
+  }catch(error){await close();throw error;}
+}
+
+async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:string)=>Promise<unknown>;role?:string;schema?:string;restrictedLogin?:boolean;auth?:CrmAuthHttp}) {
   const role=f.role??ROLE;
   assert.match(role,/^[a-z][a-z0-9_]+$/);
   const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'crm-atomic-synthetic'};
@@ -308,15 +390,17 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     assert.equal((await service.get(ctx,uniqueFault.bound.id)).version,uniqueFault.bound.version);
     await f.exec('DROP TRIGGER crm_pedido_unique_fail ON audit_logs; DROP FUNCTION crm_pedido_audit_unique();');
     const httpDraft=await prepare();
-    const httpApp=createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',ENABLE_PRODUTO_EMPRESA:'true',DATABASE_URL:'postgresql://synthetic@localhost/erp_test'}),
+    const httpApp=f.auth?.app??createApp({config:loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false',ENABLE_CRM_HTTP:'true',ENABLE_PRODUTO_EMPRESA:'true',DATABASE_URL:'postgresql://synthetic@localhost/erp_test'}),
       db:f.data,tenantGuard:new PostgresTenantGuard(f.admin),rbacGuard:new PostgresRbacGuard(f.admin)});
     const server=await new Promise<import('node:http').Server>(resolve=>{const s=httpApp.app.listen(0,'127.0.0.1',()=>resolve(s));});
     try {
       const address=server.address() as import('node:net').AddressInfo;
-      const facade=createHttpApiClient({baseUrl:`http://127.0.0.1:${address.port}`,getScope:()=>({groupId:ctx.groupId,empresaId:ctx.empresaId,actorId:ctx.actorId})}).oportunidades;
+      const base=`http://127.0.0.1:${address.port}`;
+      const facade=createHttpApiClient({baseUrl:base,getScope:()=>({groupId:ctx.groupId,empresaId:ctx.empresaId,actorId:ctx.actorId,token:f.auth?.token})}).oportunidades;
       const converted=await facade.convertOrcamentoToPedido(httpDraft.bound.id,httpDraft.input);
       assert.equal(converted.pedido.orcamento_id,httpDraft.quote.id);assert.equal(converted.replayed,false);
       assert.equal((await facade.convertOrcamentoToPedido(httpDraft.bound.id,httpDraft.input)).pedido.id,converted.pedido.id);
+      if(f.auth)await f.auth.verify(base,httpDraft.bound.id,httpDraft.input);
       await assert.rejects(facade.convertOrcamentoToPedido(httpDraft.bound.id,{...httpDraft.input,actorId:ID.runtimeActorB}),(error:any)=>error.status===422);
       const delivery=await prepare();
       const deliveryInput={...delivery.input,pedido:{...delivery.input.pedido,tipo_operacao:'ENTREGA',cliente_local_id:ID.clienteLocalA,obra_id:ID.obraA}};
