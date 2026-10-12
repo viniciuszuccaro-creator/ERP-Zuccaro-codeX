@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,19 +22,24 @@ import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRe
  * Com IA de Compliance Fiscal integrada
  */
 export default function TabelaFiscalForm({ 
-  tabela, 
+  tabela,
+  item,
+  data,
+  initialData,
+  defaultValues,
   windowMode = false,
   onSubmit,
   onCancel 
 }) {
+  const registro = item || data || initialData || defaultValues || tabela;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || tabela?.group_id || null;
-  const contextoValido = Boolean(empresaAtual?.id || groupId || tabela?.empresa_id || tabela?.group_id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || registro?.empresa_id || registro?.group_id);
   const podeCriar = hasPermission?.("Cadastros.TabelaFiscal.criar") || hasPermission?.("Financeiro.TabelaFiscal.criar");
   const podeEditar = hasPermission?.("Cadastros.TabelaFiscal.editar") || hasPermission?.("Financeiro.TabelaFiscal.editar");
   const podeUsarIA = hasPermission?.("Cadastros.TabelaFiscal.ia") || hasPermission?.("Financeiro.TabelaFiscal.ia") || podeEditar || podeCriar;
-  const podeSalvar = tabela?.id ? podeEditar : podeCriar;
+  const podeSalvar = registro?.id ? podeEditar : podeCriar;
 
   const [formData, setFormData] = useState({
     nome_regra: "",
@@ -61,8 +66,43 @@ export default function TabelaFiscalForm({
     origem_mercadoria: "0 - Nacional",
     regra_ativa: true,
     prioridade: 100,
-    ...tabela
+    ...registro
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({
+        nome_regra: "",
+        empresa_id: "",
+        regime_tributario: "Simples Nacional",
+        cenario_operacao: "Venda Consumidor Final",
+        ncm: "",
+        cfop: "",
+        destino_operacao: "Dentro do Estado",
+        tipo_cliente: "Pessoa Física",
+        icms_cst_csosn: "",
+        icms_aliquota: 0,
+        icms_reducao_base: 0,
+        icms_st_aliquota: 0,
+        icms_st_mva: 0,
+        pis_cst: "",
+        pis_aliquota: 0,
+        cofins_cst: "",
+        cofins_aliquota: 0,
+        ipi_cst: "",
+        ipi_aliquota: 0,
+        fcp_aliquota: 0,
+        diferencial_aliquota: 0,
+        origem_mercadoria: "0 - Nacional",
+        regra_ativa: true,
+        prioridade: 100,
+        ...(registro || {}),
+      });
+    }
+  }, [registro?.id]);
+
 
   const [abaAtiva, setAbaAtiva] = useState("configuracao");
   const [validandoIA, setValidandoIA] = useState(false);
@@ -184,8 +224,8 @@ Seja preciso e cite a legislação aplicável.`,
         <form onSubmit={handleSubmitForm} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(tabela?.id)}
-        entityId={tabela?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-tabela-fiscal"
       />
           {/* SUGESTÃO IA */}

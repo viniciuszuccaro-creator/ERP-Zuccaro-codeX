@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,15 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
     empresas_vinculadas: [],
     ativo: true
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso', groupId, empresaAtual?.id],

@@ -423,6 +423,27 @@ test('Parametro/Config/Bloco6: prevIdRef reopen + aliases Visualizador', async (
   assert.match(origem, /registro\?\.id/);
 });
 
+test('Usuario/Grupo/Evento/Gateway/TabelaFiscal/TabelaPreco: prevIdRef reopen', async () => {
+  const files = [
+    'UsuarioForm.jsx',
+    'GrupoEmpresarialForm.jsx',
+    'EventoNotificacaoForm.jsx',
+    'GatewayPagamentoForm.jsx',
+    'TabelaFiscalForm.jsx',
+    'TabelaPrecoFormCompleto.jsx',
+  ];
+  for (const name of files) {
+    const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /prevIdRef/, `${name} deve ter prevIdRef`);
+    assert.match(src, /initialData/, `${name} deve aceitar alias initialData`);
+  }
+  const gateway = await readFile(
+    new URL('../src/components/cadastros/GatewayPagamentoForm.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(gateway, /setTiposSelecionados/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

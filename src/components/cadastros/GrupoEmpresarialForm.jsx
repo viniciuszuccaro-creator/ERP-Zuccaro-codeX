@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,15 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     governanca_consolidada: false,
     score_integracao_erp: 0
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas", groupId || "sem-grupo"],

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,8 @@ import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRe
  * ✅ IA PriceBrain 3.0 com análise de mercado
  * ✅ Histórico de alterações
  */
-export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode = false }) {
+export default function TabelaPrecoFormCompleto({ tabela, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
+  const registro = item || data || initialData || defaultValues || tabela;
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   const [user, setUser] = useState(null);
@@ -36,13 +37,26 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     deleteInContext
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasFieldPermission, isAdmin } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeCriar = canCreate("Cadastros", "Tabela de Preco") || canCreate("Cadastros", "TabelaPreco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Tabela de Preco") || canEdit("Cadastros", "TabelaPreco") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Tabela de Preco") || canDelete("Cadastros", "TabelaPreco") || canDelete("Cadastros", null);
   const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Produtos', 'TabelaPreco', 'codigo_tabela_legado', 'editar');
+
+  const buildForm = (src) => ({
+    nome: src?.nome || '',
+    codigo_tabela_legado: src?.codigo_tabela_legado || '',
+    descricao: src?.descricao || '',
+    tipo: src?.tipo || 'Padrão',
+    data_inicio: src?.data_inicio || new Date().toISOString().split('T')[0],
+    data_fim: src?.data_fim || '',
+    ativo: src?.ativo !== undefined ? src.ativo : true,
+    empresa_id: src?.empresa_id || empresaAtual?.id || '',
+    group_id: src?.group_id || groupId || '',
+    compartilhar_grupo: src?.compartilhar_grupo || false
+  });
   
   useEffect(() => {
     const loadUser = async () => {
@@ -52,24 +66,22 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     loadUser();
   }, []);
 
-  const [formData, setFormData] = useState({
-    nome: tabela?.nome || '',
-    codigo_tabela_legado: tabela?.codigo_tabela_legado || '',
-    descricao: tabela?.descricao || '',
-    tipo: tabela?.tipo || 'Padrão',
-    data_inicio: tabela?.data_inicio || new Date().toISOString().split('T')[0],
-    data_fim: tabela?.data_fim || '',
-    ativo: tabela?.ativo !== undefined ? tabela.ativo : true,
-    empresa_id: tabela?.empresa_id || empresaAtual?.id || user?.empresa_selecionada_id || '',
-    group_id: tabela?.group_id || groupId || '',
-    compartilhar_grupo: tabela?.compartilhar_grupo || false
-  });
+  const [formData, setFormData] = useState(() => buildForm(registro));
 
   const [activeTab, setActiveTab] = useState('config');
   const [modoInclusao, setModoInclusao] = useState('lote');
   const [calculando, setCalculando] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
   const [itensTabela, setItensTabela] = useState([]);
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData(buildForm(registro));
+      setItensTabela([]);
+    }
+  }, [registro?.id, empresaAtual?.id, groupId]);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', contextKey],
@@ -96,11 +108,11 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
   });
 
   const { data: itensExistentes = [] } = useQuery({
-    queryKey: ['tabela-preco-itens', tabela?.id, contextKey],
-    queryFn: () => tabela?.id 
-      ? filterInContext('TabelaPrecoItem', { tabela_preco_id: tabela.id }, 'produto_descricao', 1000)
+    queryKey: ['tabela-preco-itens', registro?.id, contextKey],
+    queryFn: () => registro?.id
+      ? filterInContext('TabelaPrecoItem', { tabela_preco_id: registro.id }, 'produto_descricao', 1000)
       : Promise.resolve([]),
-    enabled: !!tabela?.id && contextoValido
+    enabled: !!registro?.id && contextoValido
   });
 
   useEffect(() => {
@@ -349,8 +361,8 @@ RETORNE:
       toast.error('Seu perfil nao permite excluir tabelas de preco');
       return;
     }
-    if (tabela?.id) {
-      await deleteInContext('TabelaPreco', tabela.id);
+    if (registro?.id) {
+      await deleteInContext('TabelaPreco', registro.id);
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
     }
     if (onSubmit) {
@@ -373,7 +385,7 @@ RETORNE:
       toast.error('Selecione um grupo ou empresa antes de salvar a tabela de preco');
       return;
     }
-    if (tabela?.id ? !podeEditar : !podeCriar) {
+    if (registro?.id ? !podeEditar : !podeCriar) {
       toast.error('Seu perfil nao permite salvar tabelas de preco');
       return;
     }
@@ -389,7 +401,7 @@ RETORNE:
       };
       if (!podeEditarCodigoLegado) delete dadosTabela.codigo_tabela_legado;
 
-      let tabelaId = tabela?.id;
+      let tabelaId = registro?.id;
       
       if (!tabelaId) {
         const tabelaCriada = await createInContext('TabelaPreco', dadosTabela);
@@ -400,7 +412,7 @@ RETORNE:
         console.log('✅ Tabela atualizada:', tabelaId);
       }
 
-      if (tabela?.id && itensExistentes.length > 0) {
+      if (registro?.id && itensExistentes.length > 0) {
         console.log('🗑️ Deletando itens antigos...');
         for (const itemAntigo of itensExistentes) {
           await deleteInContext('TabelaPrecoItem', itemAntigo.id);
@@ -496,8 +508,8 @@ RETORNE:
 
                 <CadastroCodigoRegistroField
                   idOnly
-                  hasId={Boolean(tabela?.id)}
-                  entityId={tabela?.id}
+                  hasId={Boolean(registro?.id)}
+                  entityId={registro?.id}
                   action="id-tecnico-tabela-preco"
                 />
 
@@ -521,7 +533,7 @@ RETORNE:
                     onChange={(e) => setFormData({...formData, codigo_tabela_legado: e.target.value.replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 64)})}
                     maxLength={64}
                     placeholder="Ex: TAB-01"
-                    disabled={!podeEditarCodigoLegado || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    disabled={!podeEditarCodigoLegado || !contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
                     data-permission="Cadastros.Produtos.TabelaPreco.codigo_tabela_legado.editar"
                     data-action="editar-codigo-legado-tabela-preco"
                     data-sensitive
@@ -594,7 +606,7 @@ RETORNE:
                   <Switch
                     checked={formData.compartilhar_grupo}
                     onCheckedChange={(v) => setFormData({...formData, compartilhar_grupo: v})}
-                    disabled={!contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    disabled={!contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
                     data-permission="Cadastros.TabelaPreco.compartilhar"
                     data-action="alternar-compartilhar-grupo-tabela-preco"
                     data-sensitive
@@ -609,7 +621,7 @@ RETORNE:
                   <Switch
                     checked={formData.ativo}
                     onCheckedChange={(v) => setFormData({...formData, ativo: v})}
-                    disabled={!contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    disabled={!contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
                     data-permission="Cadastros.TabelaPreco.alterarStatus"
                     data-action="alternar-status-tabela-preco"
                     data-sensitive
@@ -1126,7 +1138,7 @@ RETORNE:
             <Button 
               type="button" 
               onClick={handleSalvar}
-              disabled={salvando || !podeAvancar || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)} 
+              disabled={salvando || !podeAvancar || !contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
               className="bg-green-600 hover:bg-green-700 min-w-[180px]"
               data-permission="Cadastros.TabelaPreco.salvar"
               data-action="salvar-tabela-preco"

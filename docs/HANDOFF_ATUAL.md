@@ -1,3 +1,14 @@
+## CURSOR — reopen residual Usuario/Gateway/Tabela* (2026-10-12T12:10Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip `e3be9164` (Parametro/Config) + este lote CI pendente |
+| lote | Usuario · GrupoEmpresarial · EventoNotificacao · GatewayPagamento · TabelaFiscal · TabelaPrecoCompleto (+FormaPagamento aliases) |
+| #312–#314 | tips inalterados · **sem porte** |
+| testes | cobertura 24 PASS |
+| BLOCKED | secret restrito |
+| próxima | CI tips → redeploy → homolog |
+
 ## REVISÃO CODEX — timer 2026-10-12T12:00Z + lote prevIdRef Parametro/Config/Bloco6
 
 | Item | Valor |

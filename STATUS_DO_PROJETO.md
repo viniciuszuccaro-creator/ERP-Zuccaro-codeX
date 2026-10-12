@@ -1,3 +1,14 @@
+## CURSOR — reopen Usuario/Gateway/TabelaFiscal/TabelaPreco (2026-10-12T12:10Z)
+
+| Item | Valor |
+|---|---|
+| lote | prevIdRef + aliases Visualizador (campos ao reabrir) |
+| escopo | Usuario · GrupoEmpresarial · EventoNotificacao · GatewayPagamento · TabelaFiscal · TabelaPrecoFormCompleto |
+| testes | cobertura 24 PASS |
+| #312–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — prevIdRef Parametro/Config/Bloco6 (2026-10-12T12:05Z)
 
 | Item | Valor |

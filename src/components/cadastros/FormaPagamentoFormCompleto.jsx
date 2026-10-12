@@ -17,8 +17,8 @@ import FormWrapper from "@/components/common/FormWrapper";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from 'sonner';
 
-export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, onSubmit, onSave, onClose, windowMode = false }) {
-  const formaPagamentoNorm = formaPagamento || item || data;
+export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
+  const formaPagamentoNorm = item || data || initialData || defaultValues || formaPagamento;
   const [abaAtiva, setAbaAtiva] = useState('geral');
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();

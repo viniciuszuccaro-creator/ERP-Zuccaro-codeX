@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,16 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, windowMode = false }) {
+export default function EventoNotificacaoForm({ evento, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const registro = item || data || initialData || defaultValues || evento;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || evento?.group_id || null;
-  const contextoValido = Boolean(groupId || empresaAtual?.id || evento?.empresa_id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || registro?.empresa_id);
   const podeCriar = canCreate("Cadastros", "EventoNotificacao") || canCreate("Sistema", "EventoNotificacao") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "EventoNotificacao") || canEdit("Sistema", "EventoNotificacao") || canEdit("Cadastros", null);
-  const podeSalvar = evento?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(evento || {
+  const podeSalvar = registro?.id ? podeEditar : podeCriar;
+  const [formData, setFormData] = useState(registro || {
     nome_evento: "",
     tipo_evento: "Sistema",
     descricao: "",
@@ -29,6 +30,15 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
     usuarios_destinatarios: [],
     ativo: true
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,8 +66,8 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(evento?.id)}
-        entityId={evento?.id}
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
         action="id-tecnico-evento-notificacao"
       />
       <Card>
