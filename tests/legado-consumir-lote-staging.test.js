@@ -11,6 +11,18 @@ const CONTRATO_SINTETICO = {
   coorte: 'sintetico-teste',
   crosswalkEmpresas: { 1: 'e1', 2: 'e1', 3: 'e1', 5: 'e1' },
 };
+test('conflito classe/tipo quarentena somente seu registro e preserva lote parcial e retry',()=>{
+ const rows=[{sku:'0001',descricao:'Synthetic good',classe:'GOOD',unidade:'KG',group_id:'g1'},
+  {sku:'0002',descricao:'Synthetic conflict',classe:'BAD',unidade:'KG',group_id:'g1'}];
+ const opts={entidade:'produto',groupId:'g1',contratoEntrada:{coorte:'synthetic'},produtoClassUnitMap:{
+  'GOOD|KG':{tipo_item:'MATERIA_PRIMA',tipo_produto:'Matéria-Prima Produção',unidade_medida_id:'unit'},
+  'BAD|KG':{tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:'unit'}}};
+ const before=JSON.stringify({rows,opts}),{primeiro,segundo}=consumirLoteStagingIdempotente(rows,opts);
+ assert.equal(primeiro.comprovados.length,1);assert.equal(primeiro.comprovados[0].codigo_legado,'0001');
+ assert.equal(primeiro.quarentena.length,1);assert.equal(primeiro.quarentena[0].codigo_legado,'0002');
+ assert.equal(segundo.comprovados.length,0);assert.equal(segundo.reusos.length,1);assert.equal(segundo.quarentena.length,1);
+ assert.equal(JSON.stringify({rows,opts}),before);
+});
 
 test('identidade divergente bloqueia todas as variantes, independente da ordem e do retry anterior',()=>{
   const left={cod_cliente:'C-CONFLICT',nome:'Synthetic',documento:'00000000000191',group_id:'g1'};
