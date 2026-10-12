@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { unidadeSemanticaEquivalente } from '../../server/src/domain/unidadeSemanticaPolicy.js';
 import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
@@ -352,6 +353,10 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
 export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
   if (!Array.isArray(rows)) throw new Error('LEGACY_ROWS_REQUIRED');
   const temRevisao = Object.prototype.hasOwnProperty.call(opts, 'revisoesUnidades');
+  const temSnapshot = Object.prototype.hasOwnProperty.call(opts, 'snapshotUnidades');
+  if (temSnapshot && (opts.snapshotUnidades?.readOnlyTransaction !== true
+    || opts.snapshotUnidades.operationalImportAuthorized !== false || !Array.isArray(opts.snapshotUnidades.records)))
+    throw new Error('LEGACY_UNIT_SNAPSHOT_INVALID');
   if (temRevisao && (!Array.isArray(opts.revisoesUnidades)
     || opts.revisoesUnidades.some(row => !row || !Object.prototype.hasOwnProperty.call(row,'source_unit_code') || typeof row.source_unit_code !== 'string'
       || !row.source_unit_code.trim()))) throw new Error('LEGACY_UNIT_REVIEW_INVALID');
@@ -383,6 +388,12 @@ export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
       const matches = opts.unidadesCanonicas?.filter((u) => u.id === mapped.unidade_medida_id) ?? [];
       if(matches.length>1)reasons.add('unidade_destino_ambigua');
       const target = matches.length===1 ? matches[0] : null;
+      if (temSnapshot) {
+        const snapshots = opts.snapshotUnidades.records.filter(row => row?.id === mapped.unidade_medida_id);
+        if (snapshots.length !== 1) reasons.add(snapshots.length ? 'snapshot_unidade_ambiguo' : 'snapshot_unidade_ausente');
+        else if (!unidadeSemanticaEquivalente(target, snapshots[0])) reasons.add('snapshot_unidade_semantica_divergente');
+        if (!temRevisao) reasons.add('revisao_unidade_ausente');
+      }
       if (!target) reasons.add('unidade_destino_nao_comprovada');
       else {
         if (target.ativo !== true) reasons.add('unidade_destino_inativa');

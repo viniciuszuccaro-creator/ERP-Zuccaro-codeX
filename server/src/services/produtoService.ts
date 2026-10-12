@@ -201,7 +201,8 @@ export class ProdutoService {
     return row;
   }
 
-  async findByLegacyIdentity(ctx: RequestContext, sourceSystem: string, codigoLegado: string) {
+  async findByLegacyIdentity(ctx: RequestContext, sourceSystem: string, codigoLegado: string, options?:{expectedUnitSnapshot?:Record<string,unknown>}) {
+    const expectedUnitSnapshot=options?.expectedUnitSnapshot ? structuredClone(options.expectedUnitSnapshot) : undefined;
     this.assertScope(ctx);
     if (ctx.empresaId) throw new AppError(400,'LEGACY_GROUP_SCOPE_REQUIRED','Group context required');
     if (![sourceSystem,codigoLegado].every(value => typeof value === 'string' && value.trim() === value && value.length > 0 && value.length <= 80)) {
@@ -209,10 +210,19 @@ export class ProdutoService {
     }
     await this.assertPermission(ctx,'visualizar');
     await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false});
-    return this.repo.findByLegacyIdentity(ctx.groupId,sourceSystem,codigoLegado);
+    if(!expectedUnitSnapshot)return this.repo.findByLegacyIdentity(ctx.groupId,sourceSystem,codigoLegado);
+    return this.repo.withTransaction(async executor=>{
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','visualizar',{allowGlobalWildcard:false,executor});
+      await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false,executor});
+      await this.assertRelations(ctx.groupId,{unidade_medida_id:String(expectedUnitSnapshot.id),source_system:sourceSystem,codigo_legado:codigoLegado},executor,expectedUnitSnapshot);
+      const row=await this.repo.findByLegacyIdentity(ctx.groupId,sourceSystem,codigoLegado,executor);
+      if(row && row.unidade_medida_id!==expectedUnitSnapshot.id)throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported unit differs from reviewed identity');
+      return row;
+    });
   }
 
-  async create(ctx: RequestContext, payload: unknown) {
+  async create(ctx: RequestContext, payload: unknown, options?:{expectedUnitSnapshot?:Record<string,unknown>}) {
+    const expectedUnitSnapshot=options?.expectedUnitSnapshot ? structuredClone(options.expectedUnitSnapshot) : undefined;
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'criar');
     this.rejectOperationalFields(payload);
@@ -232,7 +242,12 @@ export class ProdutoService {
     this.assertEmpresaOwnership(ctx, empresaId);
     await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, empresaId);
     return this.repo.withTransaction(async (executor) => {
-      await this.assertRelations(ctx.groupId, parsed.data, executor);
+      if(expectedUnitSnapshot){
+        await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','criar',{allowGlobalWildcard:false,executor});
+        if(parsed.data.source_system && parsed.data.codigo_legado)
+          await this.rbacGuard.assertAllowed(ctx,'Cadastros','produto','importar',{allowGlobalWildcard:false,executor});
+      }
+      await this.assertRelations(ctx.groupId, parsed.data, executor,expectedUnitSnapshot);
       let created: Produto;
       try {
         created = await this.repo.create(
@@ -821,13 +836,14 @@ export class ProdutoService {
     setor_atividade_id?: string | null;
     source_system?: string | null;
     codigo_legado?: string | null;
-  }, executor?: DbQueryExecutor) {
+  }, executor?: DbQueryExecutor, expectedUnitSnapshot?:Record<string,unknown>) {
     await this.relationGuard.assertRelationsInGroup(groupId, {
       marcaId: data.marca_id,
       unidadeMedidaId: data.unidade_medida_id,
       grupoProdutoId: data.grupo_produto_id,
       setorAtividadeId: data.setor_atividade_id,
       requireActiveUnit: Boolean(data.source_system && data.codigo_legado),
+      expectedUnitSnapshot,
     }, executor);
   }
 

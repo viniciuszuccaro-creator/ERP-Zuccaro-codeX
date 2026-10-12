@@ -58,6 +58,8 @@ async function prove(f:any,role:string) {
   assert.ok(mapped);const opts={service,unidadeService,rbacGuard:guard,sourceSystem:'synthetic-product',batch:'synthetic',produtoClassUnitMap};
   const review={source_unit_code:'KG',approved_target_unit_id:I.unidadeA,scope_verified:true,semantic_equivalence_verified:true,import_authorized:true};
   const reviewed={...opts,revisoesUnidades:[review]};
+  const unitSnapshot=await unidadeService.get(ctx,I.unidadeA);
+  const semanticReviewed={...reviewed,snapshotUnidades:{readOnlyTransaction:true,operationalImportAuthorized:false,records:[unitSnapshot]}};
   const snapshot=async()=>({products:(await f.admin.query('SELECT id,codigo,legacy_id FROM produtos ORDER BY id')).rows,
     sequences:(await f.admin.query('SELECT * FROM entity_code_sequences ORDER BY group_id,entity_name')).rows,
     audits:(await f.admin.query('SELECT id FROM audit_logs ORDER BY id')).rows});
@@ -74,11 +76,50 @@ async function prove(f:any,role:string) {
   }}}),/LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED/);
   assert.deepEqual(await snapshot(),beforeDenied);
   const before=structuredClone(mapped);
-  const first=await persistirProdutoGrupoLegado(ctx,mapped,reviewed);const id=first.registro.id;
+  for(const [field,value]of [['fator_conversao_para_base',2],['tipo_grandeza','Other'],['unidade_base_conversao','Other'],
+    ['empresa_id',null],['sigla','Other'],['nome_completo','Changed'],['usa_em_vendas',false],['permite_conversao',false]] as const){
+    if((unitSnapshot as any)[field]===value)continue;
+    await f.admin.query(`UPDATE unidades_medida SET ${field}=$1 WHERE id=$2`,[value,I.unidadeA]);
+    await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,semanticReviewed),/LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED/);
+    assert.deepEqual(await snapshot(),beforeDenied);
+    await f.admin.query(`UPDATE unidades_medida SET ${field}=$1 WHERE id=$2`,[(unitSnapshot as any)[field],I.unidadeA]);
+  }
+  await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,{...semanticReviewed,service:{
+    findByLegacyIdentity:service.findByLegacyIdentity.bind(service),create:async(...args:any[])=>{
+      await f.admin.query('UPDATE unidades_medida SET fator_conversao_para_base=2 WHERE id=$1',[I.unidadeA]);
+      return (service.create as any)(...args);
+    }}}),e=>e.code==='LEGACY_UNIT_SEMANTICS_CHANGED');
+  assert.deepEqual(await snapshot(),beforeDenied);
+  await f.admin.query('UPDATE unidades_medida SET fator_conversao_para_base=$1 WHERE id=$2',[unitSnapshot.fator_conversao_para_base,I.unidadeA]);
+  const allowed=guard.assertAllowed.bind(guard);let createChecks=0;
+  guard.assertAllowed=async(...args:any[])=>{
+    if(args[3]==='criar' && ++createChecks===2)throw Object.assign(new Error('synthetic late permission revocation'),{code:'PERMISSION_DENIED'});
+    return (allowed as any)(...args);
+  };
+  try{
+    await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,semanticReviewed),e=>e.code==='PERMISSION_DENIED');
+    assert.deepEqual(await snapshot(),beforeDenied);assert.equal(createChecks,2);
+  }finally{guard.assertAllowed=allowed;}
+  const append=audit.append.bind(audit);let lockProved=false;
+  if(f.restrictedLogin)audit.append=async(event,executor)=>{
+    await assert.rejects(()=>f.admin.withTransaction(async(q:any)=>{
+      await q.query("SET LOCAL lock_timeout='100ms'");
+      await q.query('UPDATE unidades_medida SET fator_conversao_para_base=2 WHERE id=$1',[I.unidadeA]);
+    }), (error:any)=>error.code==='55P03');
+    lockProved=true;return append(event,executor);
+  };
+  const first=await persistirProdutoGrupoLegado(ctx,mapped,semanticReviewed);const id=first.registro.id;
+  audit.append=append;if(f.restrictedLogin)assert.equal(lockProved,true);
   assert.equal(first.reutilizado,false);assert.equal(first.registro.empresa_id,null);assert.match(first.registro.codigo!,/^\d+$/);
   assert.equal(first.registro.codigo_legado,'00042');assert.equal(first.registro.unidade_principal,'KG');
   assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,opts)).registro.id,id);
   assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,reviewed)).registro.id,id);
+  assert.equal((await persistirProdutoGrupoLegado(ctx,mapped,semanticReviewed)).registro.id,id);
+  const beforeSemanticRetry=await snapshot();
+  await f.admin.query('UPDATE unidades_medida SET fator_conversao_para_base=2 WHERE id=$1',[I.unidadeA]);
+  await assert.rejects(()=>service.findByLegacyIdentity(ctx,opts.sourceSystem,'00042',{expectedUnitSnapshot:unitSnapshot}),e=>e.code==='LEGACY_UNIT_SEMANTICS_CHANGED');
+  assert.deepEqual(await snapshot(),beforeSemanticRetry);
+  await f.admin.query('UPDATE unidades_medida SET fator_conversao_para_base=$1 WHERE id=$2',[unitSnapshot.fator_conversao_para_base,I.unidadeA]);
   const beforeRevoked=await snapshot();
   await assert.rejects(()=>persistirProdutoGrupoLegado(ctx,mapped,{...reviewed,revisoesUnidades:[{...review,import_authorized:false}]}),/LEGACY_PRODUCT_MAPPING_RECONCILIATION_REQUIRED/);
   assert.deepEqual(await snapshot(),beforeRevoked);
@@ -156,5 +197,19 @@ test('Imported Produto stays on the Group while an ordinary master can still rec
   assert.equal((await service.get(ctx,imported.id)).codigo,'000200');
   const ordinary=await service.create(ctx,{descricao:'Synthetic ordinary',tipo_item:'Revenda',empresa_id:null});
   assert.equal((await service.update(ctx,ordinary.id,{empresa_id:I.empresaA})).empresa_id,I.empresaA);
+});
+test('Reviewed unit semantics retain in-memory compatibility and reject stale meaning',async()=>{
+ const tenant=new InMemoryTenantGuard(),guard=new InMemoryRbacGuard(),rel=new InMemoryProdutoRelationGuard();
+ const ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-semantic-memory'};
+ guard.link({actorId:ctx.actorId,groupId:ctx.groupId,permissions:{Cadastros:{produto:['visualizar','criar','importar']}}});
+ const unit={id:I.unidadeA,group_id:I.groupA,empresa_id:null,sigla:'KG',nome_completo:'Quilograma',tipo_grandeza:'Massa',unidade_base_conversao:null,fator_conversao_para_base:1,permite_conversao:true,usa_em_estoque:true,usa_em_compras:true,usa_em_vendas:true,ativo:true};
+ rel.linkUnidade(unit.id,unit.group_id);rel.linkUnidadeSnapshot(unit);
+ const service=new ProdutoService(createInMemoryProdutoRepo(),{async append(){}},tenant,rel,guard);
+ const payload={descricao:'Synthetic semantic',tipo_item:'Revenda',empresa_id:null,unidade_medida_id:unit.id};
+ const created=await service.create(ctx,payload,{expectedUnitSnapshot:unit});assert.equal(created.unidade_medida_id,unit.id);
+ rel.linkUnidadeSnapshot({...unit,fator_conversao_para_base:2});
+ await assert.rejects(()=>service.create(ctx,payload,{expectedUnitSnapshot:unit}),e=>e.code==='LEGACY_UNIT_SEMANTICS_CHANGED');
+ // Existing callers without a reviewed snapshot retain the original guard contract.
+ assert.equal((await service.create(ctx,payload)).unidade_medida_id,unit.id);
 });
 if(process.env.DATABASE_URL)test('Legacy Produto persisted pilot PostgreSQL real isolated',async()=>{const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});await prove(f,f.role);});

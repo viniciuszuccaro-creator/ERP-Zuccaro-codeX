@@ -1,10 +1,12 @@
 import type { DbClient,DbQueryExecutor } from '../db/client.js';
 import { AppError } from '../api/errors.js';
+import {unidadeSemanticaEquivalente} from '../domain/unidadeSemanticaPolicy.js';
 
 export type ProdutoRelationIds = {
   marcaId?: string | null;
   unidadeMedidaId?: string | null;
   requireActiveUnit?: boolean;
+  expectedUnitSnapshot?: Record<string,unknown>;
   grupoProdutoId?: string | null;
   setorAtividadeId?: string | null;
 };
@@ -19,6 +21,13 @@ export class PostgresProdutoRelationGuard implements ProdutoRelationGuard {
   async assertRelationsInGroup(groupId: string, relations: ProdutoRelationIds,executor?:DbQueryExecutor): Promise<void> {
     await assertOne(executor??this.db, 'marcas', relations.marcaId, groupId, 'marca_id');
     await assertOne(executor??this.db, 'unidades_medida', relations.unidadeMedidaId, groupId, 'unidade_medida_id', relations.requireActiveUnit === true);
+    if(relations.expectedUnitSnapshot){
+      if(!executor || relations.expectedUnitSnapshot.id!==relations.unidadeMedidaId || relations.expectedUnitSnapshot.group_id!==groupId)
+        throw new AppError(409,'LEGACY_UNIT_SEMANTICS_CHANGED','Reviewed unit requires matching identity and transaction');
+      const result=await executor.query('SELECT * FROM unidades_medida WHERE id=$1 AND group_id=$2 FOR SHARE',[relations.unidadeMedidaId,groupId]);
+      if(!unidadeSemanticaEquivalente(result.rows[0],relations.expectedUnitSnapshot))
+        throw new AppError(409,'LEGACY_UNIT_SEMANTICS_CHANGED','Reviewed unit meaning changed');
+    }
     await assertOne(executor??this.db, 'grupos_produto', relations.grupoProdutoId, groupId, 'grupo_produto_id');
     await assertOne(executor??this.db, 'setores_atividade', relations.setorAtividadeId, groupId, 'setor_atividade_id');
   }
@@ -50,6 +59,7 @@ async function assertOne(
 /** In-memory: maps entityId -> groupId per relation table. */
 export class InMemoryProdutoRelationGuard implements ProdutoRelationGuard {
   private readonly inactiveUnits = new Set<string>();
+  private readonly semanticUnits = new Map<string,Record<string,unknown>>();
   private readonly maps = {
     marca: new Map<string, string>(),
     unidade: new Map<string, string>(),
@@ -59,6 +69,7 @@ export class InMemoryProdutoRelationGuard implements ProdutoRelationGuard {
 
   linkMarca(id: string, groupId: string) { this.maps.marca.set(id, groupId); }
   linkUnidade(id: string, groupId: string, ativo = true) { this.maps.unidade.set(id, groupId);if(ativo)this.inactiveUnits.delete(id);else this.inactiveUnits.add(id); }
+  linkUnidadeSnapshot(snapshot:Record<string,unknown>) { this.semanticUnits.set(String(snapshot.id),structuredClone(snapshot)); }
   linkGrupo(id: string, groupId: string) { this.maps.grupo.set(id, groupId); }
   linkSetor(id: string, groupId: string) { this.maps.setor.set(id, groupId); }
 
@@ -66,6 +77,10 @@ export class InMemoryProdutoRelationGuard implements ProdutoRelationGuard {
     check(this.maps.marca, relations.marcaId, groupId, 'marca_id');
     check(this.maps.unidade, relations.unidadeMedidaId, groupId, 'unidade_medida_id');
     if (relations.requireActiveUnit && relations.unidadeMedidaId && this.inactiveUnits.has(relations.unidadeMedidaId)) throw new AppError(409,'TENANT_FK_MISMATCH','Imported unit is inactive');
+    if(relations.expectedUnitSnapshot && (!relations.unidadeMedidaId
+      || relations.expectedUnitSnapshot.id!==relations.unidadeMedidaId || relations.expectedUnitSnapshot.group_id!==groupId
+      || !unidadeSemanticaEquivalente(this.semanticUnits.get(relations.unidadeMedidaId),relations.expectedUnitSnapshot)))
+      throw new AppError(409,'LEGACY_UNIT_SEMANTICS_CHANGED','Reviewed unit meaning changed');
     check(this.maps.grupo, relations.grupoProdutoId, groupId, 'grupo_produto_id');
     check(this.maps.setor, relations.setorAtividadeId, groupId, 'setor_atividade_id');
   }
