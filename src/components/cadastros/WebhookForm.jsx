@@ -147,7 +147,7 @@ export default function WebhookForm({ webhook, item, data, initialData, defaultV
         />
       </div>
 
-      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Webhook.salvar" data-action="salvar-webhook" data-sensitive>
+      <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Webhook.salvar" data-action="salvar-webhook" data-sensitive>
         {dadosIniciais ? 'Atualizar' : 'Criar Webhook'}
       </Button>
     </form>
@@ -156,8 +156,8 @@ export default function WebhookForm({ webhook, item, data, initialData, defaultV
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
-          <WebhookIcon className="w-6 h-6 text-indigo-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <WebhookIcon className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Webhook' : 'Novo Webhook'}
           </h2>

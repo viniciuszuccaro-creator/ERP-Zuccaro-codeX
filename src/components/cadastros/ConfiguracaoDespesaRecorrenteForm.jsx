@@ -591,7 +591,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, item, data, 
 
         <div className={windowMode ? "border-t bg-slate-50 p-4" : "mt-6"}>
           <div className="flex justify-end gap-3">
-            <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700">
               <Repeat className="w-4 h-4 mr-2" />
               {config ? 'Atualizar Configuração' : 'Criar Configuração'}
             </Button>

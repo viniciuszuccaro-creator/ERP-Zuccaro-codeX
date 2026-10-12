@@ -339,7 +339,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
 
         {/* ABA 3: PARCELAMENTO */}
         <TabsContent value="parcelamento" className="space-y-4 mt-4">
-          <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+          <div className="flex items-center justify-between p-4 bg-sky-50 rounded-lg border border-sky-200">
             <div>
               <Label className="font-semibold">Permite Parcelamento</Label>
               <p className="text-xs text-slate-500">Habilitar pagamento em múltiplas parcelas</p>
@@ -508,8 +508,8 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
               )}
 
               {formData.tipo !== 'Cartão Crédito' && (
-                <Alert className="border-purple-300 bg-purple-50">
-                  <AlertDescription className="text-xs text-purple-900">
+                <Alert className="border-sky-300 bg-sky-50">
+                  <AlertDescription className="text-xs text-sky-900">
                     <strong>Exemplo:</strong> Valor de R$ 1.200,00 em {formData.maximo_parcelas}x = 
                     {formData.maximo_parcelas > 0 ? ` ${formData.maximo_parcelas}x de R$ ${(1200 / formData.maximo_parcelas).toFixed(2)}` : ' -'}
                     {formData.taxa_por_parcela > 0 && ` + ${formData.taxa_por_parcela}% taxa/parcela`}
@@ -523,10 +523,10 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
         {/* ABA 4: CONFIGURAÇÕES */}
         <TabsContent value="config" className="space-y-4 mt-4">
           {/* ESCOPO MULTIEMPRESA */}
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="border-sky-200 bg-sky-50">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Building2 className="w-4 h-4 text-purple-600" />
+                <Building2 className="w-4 h-4 text-sky-600" />
                 <Label className="font-semibold">Escopo Multiempresa</Label>
               </div>
               <p className="text-xs text-slate-600 mb-3">
@@ -689,7 +689,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
                     </Badge>
                   )}
                   {formData.permite_parcelamento && (
-                    <Badge className="bg-purple-100 text-purple-700 text-xs">
+                    <Badge className="bg-sky-100 text-sky-700 text-xs">
                       Até {formData.maximo_parcelas}x
                     </Badge>
                   )}

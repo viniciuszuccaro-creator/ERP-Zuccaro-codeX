@@ -1,0 +1,43 @@
+{
+  "pass": true,
+  "fail_count": 0,
+  "steps": {
+    "login_tenant": {
+      "ok": true,
+      "detail": "empresas_n=2 empresa=True"
+    },
+    "list_clientes": {
+      "ok": true,
+      "detail": "http=200 n=5"
+    },
+    "list_orcamentos": {
+      "ok": true,
+      "detail": "http=200 n=5"
+    },
+    "list_pedidos": {
+      "ok": true,
+      "detail": "http=200 n=4"
+    },
+    "cliente_sample": {
+      "ok": true,
+      "detail": "has_codigo=True"
+    },
+    "orcamento_sample": {
+      "ok": true,
+      "detail": "status=EM_ABERTO"
+    },
+    "pedido_sample": {
+      "ok": true,
+      "detail": "status=EM_ABERTO"
+    },
+    "pedido_historico": {
+      "ok": true,
+      "detail": "http=200"
+    },
+    "troca_empresa_list_pedidos": {
+      "ok": true,
+      "detail": "http=200 n=2"
+    }
+  },
+  "note": "read-only owner smoke Cliente/Orcamento/Pedido; muta\u00e7\u00f5es convert/cancel reservadas a #313 canary/synth"
+}

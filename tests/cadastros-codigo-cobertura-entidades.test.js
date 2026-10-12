@@ -436,6 +436,24 @@ test('Gestor FormaPagamento/DespesaRecorrente: uniqueKey anti-duplicata + sky', 
   assert.match(adapter, /defaultValues/);
 });
 
+test('Bloco4 + forms residual: sky sem purple/indigo', async () => {
+  const files = [
+    'blocks/Bloco4Logistica.jsx',
+    'UnidadeMedidaForm.jsx',
+    'CentroCustoForm.jsx',
+    'GestorFormasPagamento.jsx',
+    'ChatbotIntentForm.jsx',
+    'ConfiguracaoDespesaRecorrenteForm.jsx',
+    'WebhookForm.jsx',
+    'FormaPagamentoFormCompleto.jsx',
+  ];
+  for (const name of files) {
+    const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /sky-/, `${name} deve usar sky`);
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${name} sem purple/indigo/violet`);
+  }
+});
+
 test('Bloco1/3/5/6 colunas canônicas + sky (sem purple/indigo)', async () => {
   const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
   const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');

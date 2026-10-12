@@ -93,7 +93,7 @@ export default function ChatbotIntentForm({ chatbotIntent, item, data, initialDa
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-purple-600" />
+            <MessageCircle className="w-5 h-5 text-sky-600" />
             Intent do Chatbot
           </CardTitle>
         </CardHeader>
@@ -140,7 +140,7 @@ export default function ChatbotIntentForm({ chatbotIntent, item, data, initialDa
             </div>
             <div className="flex flex-wrap gap-2">
               {(formData.frases_treinamento || []).map((frase, idx) => (
-                <Badge key={idx} className="bg-purple-100 text-purple-700">
+                <Badge key={idx} className="bg-sky-100 text-sky-700">
                   {frase}
                   <button
                     type="button"
@@ -187,7 +187,7 @@ export default function ChatbotIntentForm({ chatbotIntent, item, data, initialDa
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ChatbotIntent.salvar" data-action="salvar-intent-chatbot" data-sensitive>
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ChatbotIntent.salvar" data-action="salvar-intent-chatbot" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : chatbotIntent ? 'Atualizar' : 'Criar'}
         </Button>
@@ -200,7 +200,7 @@ export default function ChatbotIntentForm({ chatbotIntent, item, data, initialDa
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-            <MessageCircle className="w-8 h-8 text-purple-600" />
+            <MessageCircle className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {chatbotIntent ? 'Editar Intent' : 'Nova Intent'}
             </h2>

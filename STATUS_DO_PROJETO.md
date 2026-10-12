@@ -1,3 +1,13 @@
+## CURSOR — #313 revisada + CPA owner + sky (2026-10-12T12:45Z)
+
+| Item | Valor |
+|---|---|
+| implantado | **`5b251b1c`** |
+| #313 | `58a9ff9f` · revalida RBAC/tenant na TX · **sem porte** |
+| CPA owner | read-only PASS · mutações aguardam #313 |
+| restrito | BLOCKED secrets ausentes |
+| próxima | publish sky residual · CI → redeploy |
+
 ## REVISÃO CODEX — timer 12:30Z (2026-10-12)
 
 | Item | Valor |

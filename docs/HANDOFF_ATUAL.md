@@ -1,3 +1,17 @@
+## CURSOR — revisão #313 + CPA owner + sky residual (2026-10-12T12:45Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip docs pendente · runtime implantado **`5b251b1c`** (`index-ucPmLDAT.js`) |
+| #313 | tip **`58a9ff9f`** CI SUCCESS · auth TX Pedido · **sem porte** (base Legado) |
+| evidência #313 | `docs/vps/evidence/review-313-pedido-tx-58a9ff9f-20261012.txt` |
+| CPA owner | list/historico/troca-empresa **fail_count=0** · `homolog-owner-cpa-list-20261012.json` |
+| CPA mutações | convert/cancel **adiadas** até merge/canário #313 |
+| restrito | **BLOCKED** · secrets `ERP_DEV_LOGIN_RESTRICTED_EMAIL/PASSWORD` + user RBAC no erp-dev |
+| lote Cursor | sky Unidade/CentroCusto/Gestores/Bloco4/FormaPagamento/Webhook/Chatbot/Despesa |
+| porte Codex | nenhum |
+| próxima | CI tip → redeploy → homolog · residual sky/cadastros · secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T12:30Z
 
 | Item | Valor |
