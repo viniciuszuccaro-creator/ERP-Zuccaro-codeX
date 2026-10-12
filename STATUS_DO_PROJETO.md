@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #310 Legado unidade semântica TX (2026-10-12T02:15Z)
+
+| Item | Valor |
+|---|---|
+| #310 | tip `303d8230` · semântica unidade na TX Produto · CI SUCCESS · **sem porte** |
+| motivo | Legado reservado · toca produtoService — não portar |
+| stack | #310→#309→#308→… |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #309 Legado unidade piloto Produto (2026-10-12T02:00Z)
 
 | Item | Valor |
