@@ -1,0 +1,5 @@
+REVISÃO #321 tip 037985cd (era d5538292)
+UTC: 2026-10-12T15:15Z
+delta: docs readonly destination proof + pending gates
+CI SUCCESS · SEM PORTE (produtoCatalogProjection + outbox tests)
+candidata C360: #319 5568e3a9

@@ -1,3 +1,11 @@
+## CURSOR — #321 tip 037985cd (2026-10-12T15:15Z)
+
+| Item | Valor |
+|---|---|
+| #321 | `037985cd` SUCCESS · sem porte |
+| candidata | #319 |
+| próxima | residual Cursor |
+
 ## CURSOR — #321 CI SUCCESS (2026-10-12T15:00Z)
 
 | Item | Valor |

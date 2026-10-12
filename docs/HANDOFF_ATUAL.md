@@ -1,3 +1,14 @@
+## CURSOR — revisão #321 tip 037985cd (2026-10-12T15:15Z)
+
+| Item | Valor |
+|---|---|
+| #321 | tip **`037985cd`** (docs destino readonly) CI SUCCESS · **sem porte** |
+| #319/#320 | tips estáveis |
+| candidata C360 | **#319** `5568e3a9` |
+| porte | nenhum (outbox/catalog) |
+| agents | 0 RUNNING |
+| próxima | residual Cursor |
+
 ## CURSOR — revisão Codex 15:00Z (#321 CI verde) (2026-10-12T15:00Z)
 
 | Item | Valor |
