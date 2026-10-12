@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,23 +7,61 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
 import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
+import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
-export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit, windowMode = false }) {
-  const dadosIniciais = modeloDocumento || modelo;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_modelo: '',
-    tipo_documento: 'Romaneio',
-    descricao: '',
-    formato_saida: 'PDF',
-    tamanho_papel: 'A4',
-    incluir_logo_empresa: true,
-    incluir_qrcode: true,
-    ativo: true
-  });
+const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const emptyModelo = {
+  nome_modelo: '',
+  tipo_documento: 'Romaneio',
+  descricao: '',
+  formato_saida: 'PDF',
+  tamanho_papel: 'A4',
+  incluir_logo_empresa: true,
+  incluir_qrcode: true,
+  ativo: true,
+};
+
+export default function ModeloDocumentoForm({
+  modelo, modeloDocumento, item, data, initialData, defaultValues, onSubmit, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || modeloDocumento || modelo;
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = canCreate('Cadastros', 'ModeloDocumento') || canCreate('Logistica', 'ModeloDocumento') || canCreate('Cadastros', null);
+  const podeEditar = canEdit('Cadastros', 'ModeloDocumento') || canEdit('Logistica', 'ModeloDocumento') || canEdit('Cadastros', null);
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+  const [formData, setFormData] = useState(() => ({ ...emptyModelo, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyModelo, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, nome: formData.nome_modelo || formData.nome || '' });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert(dadosIniciais?.id ? 'Sem permissão para editar modelo.' : 'Sem permissão para criar modelo.');
+      return;
+    }
+    const nome = sanitizeText(formData.nome_modelo || formData.nome || '', 180);
+    onSubmit({
+      ...formData,
+      nome_modelo: nome,
+      nome,
+      descricao: sanitizeText(formData.descricao, 1000),
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const content = (

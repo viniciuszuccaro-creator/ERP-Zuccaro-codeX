@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T11:30Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip docs `b448621d` · runtime `f6710844` · main `baba91a6` |
+| #280–#314 | tips inalterados · **sem porte** |
+| gt314 | nenhum |
+| lote | reopen CentroResultado/ContatoB2B/Condicao/Rota/ModeloDocumento |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T11:15Z + tip f6710844 implantado
 
 | Item | Valor |

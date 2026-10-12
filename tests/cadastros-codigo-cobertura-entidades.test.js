@@ -373,6 +373,22 @@ test('Segmento/TipoFrete/LocalEstoque/Transportadora: prevIdRef reopen + aliases
   assert.match(local, /item \|\| data \|\| initialData \|\| defaultValues/);
 });
 
+
+test('CentroResultado/ContatoB2B/Condicao/Rota/Modelo: prevIdRef reopen', async () => {
+  const files = [
+    'CentroResultadoForm.jsx',
+    'ContatoB2BForm.jsx',
+    'CondicaoComercialForm.jsx',
+    'RotaPadraoForm.jsx',
+    'ModeloDocumentoForm.jsx',
+  ];
+  for (const name of files) {
+    const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /prevIdRef/);
+    assert.match(src, /initialData/);
+  }
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

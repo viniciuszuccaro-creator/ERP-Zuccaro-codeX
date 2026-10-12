@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,8 +9,21 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode = false }) {
-  const dadosIniciais = rotaPadrao || rota;
+const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const emptyRota = {
+  nome_rota: '',
+  descricao: '',
+  origem: '',
+  destino: '',
+  distancia_km: 0,
+  tempo_medio_horas: 0,
+  ativo: true,
+};
+
+export default function RotaPadraoForm({
+  rota, rotaPadrao, item, data, initialData, defaultValues, onSubmit, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || rotaPadrao || rota;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -18,15 +31,15 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
   const podeCriar = hasPermission?.("Cadastros.RotaPadrao.criar") || hasPermission?.("Logistica.RotaPadrao.criar");
   const podeEditar = hasPermission?.("Cadastros.RotaPadrao.editar") || hasPermission?.("Logistica.RotaPadrao.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_rota: '',
-    descricao: '',
-    origem: '',
-    destino: '',
-    distancia_km: 0,
-    tempo_medio_horas: 0,
-    ativo: true
-  });
+  const [formData, setFormData] = useState(() => ({ ...emptyRota, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyRota, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -38,11 +51,16 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
       alert('Sem permissão para salvar rota padrão.');
       return;
     }
+    const nomeRota = sanitizeText(formData.nome_rota || formData.nome || '', 180);
     onSubmit({
       ...formData,
+      nome_rota: nomeRota,
+      descricao: sanitizeText(formData.descricao, 1000),
+      origem: sanitizeText(formData.origem, 180),
+      destino: sanitizeText(formData.destino, 180),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
-      nome: formData.nome_rota || formData.nome || ''
+      nome: nomeRota,
     });
   };
 

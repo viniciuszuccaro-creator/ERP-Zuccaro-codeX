@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,20 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
+
+const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const emptyCondicao = {
+  nome_condicao: '',
+  tipo_condicao: 'Pagamento',
+  forma_pagamento: 'À Vista',
+  numero_parcelas: 1,
+  intervalo_parcelas_dias: 30,
+  desconto_percentual: 0,
+  tipo_frete: 'CIF',
+  ativo: true,
+};
 
 export default function CondicaoComercialForm({
   condicao,
@@ -21,21 +34,27 @@ export default function CondicaoComercialForm({
 }) {
   const dadosIniciais = item || data || initialData || defaultValues || condicaoComercial || condicao;
   const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "CondicaoComercial") || canCreate("Financeiro", "CondicaoComercial") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CondicaoComercial") || canEdit("Financeiro", "CondicaoComercial") || canEdit("Cadastros", null);
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_condicao: '',
-    tipo_condicao: 'Pagamento',
-    forma_pagamento: 'À Vista',
-    numero_parcelas: 1,
-    intervalo_parcelas_dias: 30,
-    desconto_percentual: 0,
-    tipo_frete: 'CIF',
-    ativo: true
-  });
+  const [formData, setFormData] = useState(() => ({ ...emptyCondicao, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyCondicao, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
     if (dadosIniciais?.id && !podeEditar) {
       alert("Sem permissao para editar condicoes comerciais.");
       return;
@@ -44,7 +63,14 @@ export default function CondicaoComercialForm({
       alert("Sem permissao para criar condicoes comerciais.");
       return;
     }
-    onSubmit({ ...formData, nome: formData.nome_condicao || formData.nome || '' });
+    const nome = sanitizeText(formData.nome_condicao || formData.nome || '', 180);
+    onSubmit({
+      ...formData,
+      nome_condicao: nome,
+      nome,
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const content = (

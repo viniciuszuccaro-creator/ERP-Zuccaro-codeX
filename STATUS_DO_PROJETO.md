@@ -1,3 +1,12 @@
+## CURSOR — reopen Bloco3/4 residual (2026-10-12T11:30Z)
+
+| Item | Valor |
+|---|---|
+| lote | CentroResultado · ContatoB2B · CondicaoComercial (+contexto) · RotaPadrao · ModeloDocumento (+RBAC) |
+| #280–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — tip f6710844 implantado+homolog (2026-10-12T11:17Z)
 
 | Item | Valor |

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRe
 
 const sanitizeText = (value, max = 255) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
 const sanitizeCode = (value) => String(value ?? '').replace(/[^0-9A-Za-z._-]/g, '').slice(0, 40).trim().toUpperCase();
+const emptyCentro = { codigo: '', nome: '', descricao: '', ativo: true };
 
 export default function CentroResultadoForm({ centro, centroResultado, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || centroResultado || centro;
@@ -21,10 +22,14 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
   const podeCriar = canCreate("Cadastros", "CentroResultado") || canCreate("Financeiro", "CentroResultado") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroResultado") || canEdit("Financeiro", "CentroResultado") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || { codigo: '', nome: '', descricao: '', ativo: true });
+  const [formData, setFormData] = useState(() => ({ ...emptyCentro, ...(dadosIniciais || {}) }));
 
+  const prevIdRef = useRef(dadosIniciais?.id);
   useEffect(() => {
-    if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyCentro, ...dadosIniciais });
+    }
   }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
