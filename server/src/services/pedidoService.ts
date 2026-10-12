@@ -75,16 +75,19 @@ export class PedidoService {
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
+    ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
     if (data.orcamento_id) throw new AppError(422, 'PEDIDO_ORIGEM_INVALIDA', 'Use quotation conversion endpoint');
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx,'criar',executor);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens,executor);
+      await this.prepare(ctx,'criar',executor);
       const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
@@ -93,6 +96,7 @@ export class PedidoService {
   }
 
   async convert(ctx: RequestContext, orcamentoId: string, payload: unknown, sharedExecutor?: DbQueryExecutor) {
+    ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'converter-pedido', sharedExecutor);
     this.assertId(orcamentoId, 'orcamentoId');
     const parsed = conversionSchema.safeParse(payload);
@@ -131,6 +135,7 @@ export class PedidoService {
         const criadorOrcamento = await this.resolveCriadorActorId('Orcamento', orcamentoId, executor);
         const alcada = await this.assertDescontoAlcada(ctx, scope, data, criadorOrcamento, executor);
         const margemDecision = await this.assertMargemAlcada(ctx, scope, data.itens, executor);
+        await this.prepare(ctx,'converter-pedido',executor);
         const created = await this.repo.create(scope, data, ctx.actorId!, executor);
         await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
         await this.auditRow(ctx, 'create', null, created, executor);
@@ -180,18 +185,21 @@ export class PedidoService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
+    ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx,'editar',executor);
       const before = await this.requirePedido(scope, id, executor);
       if (before.status !== 'EM_ABERTO') this.stateConflict();
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
       const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data,executor);
-      const criador = await this.resolveCriadorActorId('Pedido', id);
+      const criador = await this.resolveCriadorActorId('Pedido', id,executor);
       const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens,executor);
+      await this.prepare(ctx,'editar',executor);
       const after = await this.repo.update(scope, id, priced, ctx.actorId!, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
@@ -217,13 +225,16 @@ export class PedidoService {
   }
 
   async transition(ctx: RequestContext, id: string, target: unknown, motivo?: unknown) {
+    ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'alterar-status'); this.assertId(id, 'pedidoId');
     if (typeof target !== 'string' || !PEDIDO_STATUS.includes(target as PedidoStatus) || target === 'CANCELADO') this.validation({ status: 'invalid' });
     if (motivo !== undefined && (typeof motivo !== 'string' || motivo.length > 500)) this.validation({ motivo: 'invalid' });
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx,'alterar-status',executor);
       const before = await this.requirePedido(scope, id, executor);
       if (!this.allowedTransition(before, target as PedidoStatus)) this.stateConflict();
+      await this.prepare(ctx,'alterar-status',executor);
       const after = await this.repo.changeStatus(scope, id, target as PedidoStatus, ctx.actorId!, motivo as string | undefined, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
@@ -232,12 +243,15 @@ export class PedidoService {
   }
 
   async cancel(ctx: RequestContext, id: string, motivo?: unknown) {
+    ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'cancelar'); this.assertId(id, 'pedidoId');
     if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) this.validation({ motivo: 'invalid' });
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx,'cancelar',executor);
       const before = await this.requirePedido(scope, id, executor);
       if (before.status !== 'EM_ABERTO') this.stateConflict();
+      await this.prepare(ctx,'cancelar',executor);
       const after = await this.repo.changeStatus(scope, id, 'CANCELADO', ctx.actorId!, motivo as string | undefined, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
