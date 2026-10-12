@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-12T02:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`622dd8b0`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#309 | tips inalterados · **sem porte** |
+| #310 **novo** | tip `303d8230` · Legado semântica unidade na TX Produto · base #309 · CI SUCCESS · **sem porte** |
+| risco | toca `produtoService`/repos — Legado stack; não portar para #261 |
+| stack | #310→#309→#308→… · Legado reservado |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T02:00Z
 
 | Item | Valor |
