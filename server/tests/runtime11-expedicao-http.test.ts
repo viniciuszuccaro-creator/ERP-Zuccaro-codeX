@@ -378,7 +378,8 @@ test('Expedicao preserva quantidade decimal do schema ao total e rejeita overflo
  assert.equal(item.quantidade_pedida,'999999999999.000001');assert.equal(sumQty(['999999999999','0.000001']),item.quantidade_pedida);
  assert.equal(entregaItemSchema.parse({...item,quantidade_pedida:'001,1234567'}).quantidade_pedida,'1.123457');
  assert.equal(entregaItemSchema.parse({...item,quantidade_pedida:1.25}).quantidade_pedida,'1.250000');
- assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:999999999999}).success,false);
+ assert.equal(entregaItemSchema.parse({...item,quantidade_pedida:999999999999}).quantidade_pedida,'999999999999.000000');
+ assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:999999999999.0001}).success,false);
  assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:'1000000000000'}).success,false);
  assert.equal(entregaItemSchema.safeParse({...item,quantidade_pedida:'NaN'}).success,false);
  assert.throws(()=>sumQty(['999999999999.999999','0.000001']),/precision/);

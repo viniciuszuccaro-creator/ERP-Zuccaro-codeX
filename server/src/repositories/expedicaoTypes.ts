@@ -76,7 +76,7 @@ const qty = z.union([z.string(), z.number()]).transform((value,ctx)=>{
   try{
     let raw:string;
     if(typeof value==='number'){
-      if(!Number.isFinite(value)||value<0||value>Number.MAX_SAFE_INTEGER/1_000_000)throw Error('unsafe numeric quantity');
+      if(!Number.isFinite(value)||value<0||(!Number.isSafeInteger(value)&&value>Number.MAX_SAFE_INTEGER/1_000_000))throw Error('unsafe numeric quantity');
       raw=value.toFixed(6);
     }else raw=value.trim().replace(',','.')||'0';
     if(raw.length>128||!/^\d+(?:\.\d+)?$/.test(raw))throw Error('invalid quantity');
