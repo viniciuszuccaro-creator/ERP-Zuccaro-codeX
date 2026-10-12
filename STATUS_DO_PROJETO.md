@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #302 tip + #303 backup CRM (2026-10-12T00:30Z)
+
+| Item | Valor |
+|---|---|
+| #302 | tip `0cc8e718` · Auth HTTP + scope filial · CI SUCCESS · **sem porte** |
+| #303 | tip `83a07de0` · backup/restore sintético · CI SUCCESS · **sem porte** |
+| stack | #303→#302→#301→…→#292 · CRM Codex |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #302 CRM Auth HTTP + LOGIN (2026-10-12T00:15Z)
 
 | Item | Valor |
