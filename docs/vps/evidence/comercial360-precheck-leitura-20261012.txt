@@ -1,0 +1,21 @@
+COMERCIAL 360 — PRECHECK DEV SOMENTE LEITURA — 2026-10-12
+Mecanismo autorizado: WebConsole Hostinger existente; ausência MCP não implica ausência de autorização.
+Nenhuma alteração de API/SPA/DB/grants/migrations, nenhum reset de senha ou consulta de token/storage.
+Resultados observados:
+checkout_sha=6a4b304f087804ab1fb56ade5f4f4c30a5624c41
+checkout_dirty_tracked=0
+checkout_dirty_untracked=1 (arquivo preservado; conteúdo não consultado)
+api_3080_ready_http=200
+spa_3081_http=200
+api_image_id=sha256:63d0d8f7375a1980dc37a5c7923f74b33145ef8d9630e154671495b52438bd23
+api_full_revision_label=UNCONFIRMED
+public_invalid_synthetic_bearer_result=UNCONFIRMED
+console_shell_idle_at_end=UNCONFIRMED
+A requisição pública final não produziu marcador confirmável; não declarar 401, não reenviar comandos sem restabelecer prompt ocioso. Console preservado para retomada.
+Não comprovados: identidade cluster/API-DB, papéis Auth/data/grants/RLS reais, digests/labels completos, backup fresco restaurável, canário ou fluxo de negócio DEV.
+Gates continuam obrigatórios; testes isolados não homologam VPS. Nenhum dado real, credencial, identificador de empresa/ator/backup ou caminho privado nesta evidência.
+Entregas desta rodada:
+#319 HEAD5568e3a9e49f7dd75d866b0f0f1165ff8a4373a7 CI4200/run38259725372 SUCCESS
+#320 HEADb16011b6ebd77d0d839790e04913df1f5ffe4c0e CI4210/run38264611262 e PG189/run38264611290 SUCCESS
+#321 runtime código HEADd55382924f9bda1e6f566283eff8d2800b5bf058 CI4212/run38265165737 SUCCESS
+Revisão independente pendente. Este registro não autoriza merge/implantação/importação/ativação.
