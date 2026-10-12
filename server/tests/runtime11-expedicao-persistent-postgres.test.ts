@@ -1,3 +1,4 @@
+import {randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createDbClient } from '../src/db/client.ts';
@@ -13,6 +14,9 @@ const pedido = new PostgresExpedicaoPedidoPort();
 
 test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, cancelamento e rollback atômico',
   { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+    const probeUrl=new URL(process.env.DATABASE_URL!);
+    if(!['localhost','127.0.0.1','::1','[::1]'].includes(probeUrl.hostname)||probeUrl.pathname!=='/erp_test')throw Error('R11_ISOLATED_POSTGRES_REQUIRED');
+    let restrictedDb:ReturnType<typeof createDbClient>|null=null;
     const db = createDbClient(loadConfig({
       NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL,
     }));
@@ -79,7 +83,11 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
     try {
       const migrations = (await db.query<{ id: string }>('SELECT id FROM schema_migrations')).rows.map((row) => row.id);
       assert.ok(migrations.includes('037_expedicao_estoque_movimentos.sql'), 'CI must apply 037; no silent skip');
-      await db.query(`CREATE ROLE ${probeRole} NOSUPERUSER NOBYPASSRLS NOLOGIN`);
+      const password=randomUUID()+randomUUID();
+      await db.query(`CREATE ROLE ${probeRole} NOSUPERUSER NOBYPASSRLS LOGIN PASSWORD '${password}'`).catch(()=>{throw Error('R11_TEST_LOGIN_CREATION_FAILED');});
+      probeUrl.username=probeRole;probeUrl.password=password;
+      restrictedDb=createDbClient(loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'true',DATABASE_URL:probeUrl.toString()}));
+      probeUrl.password='';
       probeCreated = true;
       await db.query(`GRANT USAGE ON SCHEMA public TO ${probeRole}`);
       await db.query(`GRANT SELECT ON expedicao_estoque_saldos,expedicao_estoque_movimentos,expedicao_pedido_eventos TO ${probeRole}`);
@@ -217,6 +225,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         await tx.query('DELETE FROM pedidos WHERE id = ANY($1::uuid[])', [created.pedidos]);
       });
       if (otherCompanyProduct) await db.query('DELETE FROM produtos WHERE id=$1', [otherCompanyProduct]);
+      if(restrictedDb)await restrictedDb.end();
       if (probeCreated) {
         await db.query(`REVOKE SELECT ON expedicao_estoque_saldos,expedicao_estoque_movimentos,expedicao_pedido_eventos FROM ${probeRole}`);
         await db.query(`REVOKE USAGE ON SCHEMA public FROM ${probeRole}`);

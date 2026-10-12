@@ -127,17 +127,14 @@ async function request(app: ReturnType<typeof createApp>['app'], path: string, i
   }
 }
 
-async function seedPronto(runtime: ReturnType<typeof createApp>, key: string) {
+async function seedPronto(runtime: ReturnType<typeof createApp>, key: string, itens=[{descricao:'Barra 3/8',unidade_sigla:'UN',quantidade_pedida:'10'},{descricao:'Barra 1/2',unidade_sigla:'UN',quantidade_pedida:'5'}]) {
   const created = await request(runtime.app, '/api/v1/entregas', {
     method: 'POST',
     headers: headers(),
     body: JSON.stringify({
       cliente_nome: 'Cliente PGlite',
       cidade: 'Campinas',
-      itens: [
-        { descricao: 'Barra 3/8', unidade_sigla: 'UN', quantidade_pedida: '10' },
-        { descricao: 'Barra 1/2', unidade_sigla: 'UN', quantidade_pedida: '5' },
-      ],
+      itens,
       idempotency_key: `ent-${key}`,
     }),
   });
@@ -149,10 +146,7 @@ async function seedPronto(runtime: ReturnType<typeof createApp>, key: string) {
     body: JSON.stringify({
       confirmed: true,
       checklist: checklistSep,
-      itens: [
-        { descricao: 'Barra 3/8', unidade_sigla: 'UN', quantidade_pedida: '10', quantidade_separada: '10' },
-        { descricao: 'Barra 1/2', unidade_sigla: 'UN', quantidade_pedida: '5', quantidade_separada: '5' },
-      ],
+      itens: itens.map(item=>({...item,quantidade_separada:item.quantidade_pedida})),
       idempotency_key: `sep-${key}`,
     }),
   });
@@ -433,4 +427,22 @@ test('R11 PGlite: falha da porta na devolucao reverte movimento e status', async
   } finally {
     await pg.close();
   }
+});
+
+test('R11 PGlite: micros persistidos na separacao e parcial sem falso retry',async()=>{
+ const pg=await bootPglite();try{
+  const runtime=fixture(pg),quantity='999999999999.000001';
+  const {id}=await seedPronto(runtime,'precision-persisted',[{descricao:'Precision',unidade_sigla:'UN',quantidade_pedida:quantity}]);
+  const row=await pg.query<{quantidade_total:string}>('SELECT quantidade_total::text FROM entregas WHERE id=$1',[id]);
+  assert.equal(row.rows[0].quantidade_total,quantity);
+  const post=(path:string,body:any)=>request(runtime.app,path,{method:'POST',headers:headers(),body:JSON.stringify(body)});
+  const rom=await post('/api/v1/romaneios',{confirmed:true,motorista_nome:'Synthetic',veiculo:'Synthetic',placa:'SYN1A23',checklist_saida:checklistRom,entregas_ids:[id],despachar:true});
+  assert.equal(rom.status,201,JSON.stringify(rom.body));
+  const body={confirmed:true,modo:'parcial',comprovante:{nome_recebedor:'Synthetic',documento_recebedor:'123'}};
+  assert.equal((await post(`/api/v1/entregas/${id}/registrar`,{...body,quantidade_entregue:'999999999998.000001'})).status,200);
+  const next=await post(`/api/v1/entregas/${id}/registrar`,{...body,quantidade_entregue:'999999999998.000002'});
+  assert.equal(next.status,200);assert.equal(next.body.data.reused,false);assert.equal(next.body.data.entrega.entrega_parcial.quantidade_entregue_decimal,'999999999998.000002');
+  const retry=await post(`/api/v1/entregas/${id}/registrar`,{...body,quantidade_entregue:'999999999998.000002'});assert.equal(retry.body.data.reused,true);
+  const below=await post(`/api/v1/entregas/${id}/registrar`,{...body,quantidade_entregue:'999999999998.000001'});assert.equal(below.status,422);
+ }finally{await pg.close();}
 });

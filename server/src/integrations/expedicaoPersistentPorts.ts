@@ -1,3 +1,4 @@
+import { quantityMicros, formatQtyMicros } from '../repositories/expedicaoTypes.js';
 import { AppError } from '../api/errors.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ExpedicaoEstoquePort, ExpedicaoPedidoSideEffectPort } from '../repositories/expedicaoTypes.js';
@@ -11,14 +12,11 @@ function requiredExecutor(executor: DbQueryExecutor | undefined, actorId: string
 }
 
 function micros(value: string): bigint {
-  if (!/^\d+(?:\.\d{1,6})?$/.test(value)) throw new AppError(422, 'ESTOQUE_QTY_INVALID', 'Invalid stock quantity');
-  const [whole, fraction = ''] = value.split('.');
-  return BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'));
+  try { return quantityMicros(value); }
+  catch { throw new AppError(422, 'ESTOQUE_QTY_INVALID', 'Invalid stock quantity'); }
 }
 
-function decimal(value: bigint): string {
-  return `${value / 1_000_000n}.${(value % 1_000_000n).toString().padStart(6, '0')}`;
-}
+function decimal(value: bigint): string { return formatQtyMicros(value); }
 
 async function audit(query: DbQueryExecutor, scope: Scope, entity: string, entityId: string,
   action: string, after: Record<string, unknown>) {
