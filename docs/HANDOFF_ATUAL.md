@@ -1,3 +1,13 @@
+## CURSOR — tip 0a97beba implantado+homolog (2026-10-12T14:01Z)
+
+| Item | Valor |
+|---|---|
+| implantado | **`0a97beba`** · asset `index-BZF22CJa.js` · rollback `pre-spa-login-20261012-140004` |
+| homolog | OWNER `fail_count=0` |
+| revisão Codex 13:56Z | nada novo · candidata **#318** `7af84751` · porte nenhum |
+| restrito | **BLOCKED** secrets |
+| próxima | residual Ondas B–E · merge canário Codex |
+
 ## CURSOR — Onda D/E sky expedição/estoque + mapa C360 (2026-10-12T13:58Z)
 
 | Item | Valor |
