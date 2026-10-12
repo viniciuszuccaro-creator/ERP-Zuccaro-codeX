@@ -1,3 +1,13 @@
+## CURSOR — anti-duplicata Gestores + adapter FormaPagamento (2026-10-12T12:20Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip `3cf795f4` + este lote |
+| lote | uniqueKey GestorFormas/Despesas · FormaPagamento aliases · sky Despesas |
+| testes | cobertura 26 PASS |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — colunas Bloco1/6 + sky (2026-10-12T12:15Z)
 
 | Item | Valor |

@@ -132,10 +132,11 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                 }, {
                   title: '🔄 Nova Despesa Recorrente',
                   width: 900,
-                  height: 650
+                  height: 650,
+                  uniqueKey: 'Cadastros.ConfiguracaoDespesaRecorrente.gestor-novo',
                 })}
                 disabled={!contextoValido || !podeCriar}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-600 hover:bg-sky-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Configuração
@@ -198,6 +199,8 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         size="icon"
                         onClick={() => openWindow(ConfiguracaoDespesaRecorrenteForm, {
                           config,
+                          item: config,
+                          initialData: config,
                           windowMode: true,
                           onSubmit: async (data) => {
                             try {
@@ -212,12 +215,13 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         }, {
                           title: `✏️ Editar: ${config.descricao}`,
                           width: 900,
-                          height: 650
+                          height: 650,
+                          uniqueKey: `Cadastros.ConfiguracaoDespesaRecorrente.gestor-${config.id}`,
                         })}
                         disabled={!contextoValido || !podeEditar}
                         title="Editar"
                       >
-                        <Edit2 className="w-4 h-4 text-blue-600" />
+                        <Edit2 className="w-4 h-4 text-sky-600" />
                       </Button>
                       <Button
                         variant="ghost"

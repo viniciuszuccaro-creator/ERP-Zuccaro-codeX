@@ -1,3 +1,12 @@
+## CURSOR — uniqueKey gestores anti-duplicata (2026-10-12T12:20Z)
+
+| Item | Valor |
+|---|---|
+| lote | GestorFormasPagamento · GestorDespesasRecorrentes uniqueKey · FormaPagamentoForm aliases |
+| testes | cobertura 26 PASS |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — colunas canônicas Bloco1/6 + sky (2026-10-12T12:15Z)
 
 | Item | Valor |

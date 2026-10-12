@@ -98,13 +98,16 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     }, {
       title: '🏦 Nova Forma de Pagamento',
       width: 900,
-      height: 700
+      height: 700,
+      uniqueKey: 'Cadastros.FormaPagamento.gestor-novo',
     });
   };
 
   const handleEditar = (forma) => {
     openWindow(FormaPagamentoForm, {
       formaPagamento: forma,
+      item: forma,
+      initialData: forma,
       windowMode: true,
       onSubmit: async (data) => {
         try {
@@ -119,7 +122,8 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     }, {
       title: `✏️ Editar: ${forma.descricao}`,
       width: 900,
-      height: 700
+      height: 700,
+      uniqueKey: `Cadastros.FormaPagamento.gestor-${forma.id}`,
     });
   };
 

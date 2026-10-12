@@ -172,7 +172,7 @@ test('FormaPagamentoForm é adapter canônico do Completo (sem store paralelo)',
   const simple = await readFile(new URL('../src/components/cadastros/FormaPagamentoForm.jsx', import.meta.url), 'utf8');
   const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
   assert.match(simple, /FormaPagamentoFormCompleto/);
-  assert.match(simple, /formaPagamento \|\| forma \|\| item/);
+  assert.match(simple, /item \|\| data \|\| initialData \|\| defaultValues \|\| formaPagamento \|\| forma/);
   assert.doesNotMatch(simple, /createTable|FormaPagamentoStore/);
   assert.match(bloco3, /FormaPagamentoForm/);
   assert.doesNotMatch(bloco3, /FormaPagamentoFormCompleto/);
@@ -421,6 +421,19 @@ test('Parametro/Config/Bloco6: prevIdRef reopen + aliases Visualizador', async (
   );
   assert.match(origem, /buildForm/);
   assert.match(origem, /registro\?\.id/);
+});
+
+test('Gestor FormaPagamento/DespesaRecorrente: uniqueKey anti-duplicata + sky', async () => {
+  const formas = await readFile(new URL('../src/components/cadastros/GestorFormasPagamento.jsx', import.meta.url), 'utf8');
+  const despesas = await readFile(new URL('../src/components/cadastros/GestorDespesasRecorrentes.jsx', import.meta.url), 'utf8');
+  const adapter = await readFile(new URL('../src/components/cadastros/FormaPagamentoForm.jsx', import.meta.url), 'utf8');
+  assert.match(formas, /uniqueKey:\s*'Cadastros\.FormaPagamento\.gestor-novo'/);
+  assert.match(formas, /uniqueKey:\s*`Cadastros\.FormaPagamento\.gestor-\$\{forma\.id\}`/);
+  assert.match(despesas, /uniqueKey:\s*'Cadastros\.ConfiguracaoDespesaRecorrente\.gestor-novo'/);
+  assert.match(despesas, /bg-sky-600/);
+  assert.doesNotMatch(despesas, /bg-purple-/);
+  assert.match(adapter, /initialData/);
+  assert.match(adapter, /defaultValues/);
 });
 
 test('Bloco1/6 colunas canônicas + sky (sem purple/indigo)', async () => {
