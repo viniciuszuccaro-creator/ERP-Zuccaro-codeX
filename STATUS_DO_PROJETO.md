@@ -1,3 +1,13 @@
+## CURSOR — reopen Segmento/Frete/Local/Transportadora (2026-10-12T11:00Z)
+
+| Item | Valor |
+|---|---|
+| lote | prevIdRef + aliases Visualizador (campos ao reabrir) |
+| #280–#314 | tips inalterados · **sem porte** |
+| testes | cobertura PASS |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## REVISÃO CODEX — timer 10:45Z (2026-10-12)
 
 | Item | Valor |

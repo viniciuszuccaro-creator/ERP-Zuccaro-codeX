@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T11:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`ed800d36`** (runtime `12fb882a`) · main `baba91a6` |
+| #280–#314 | tips inalterados · **sem porte** |
+| gt314 | nenhum |
+| lote | Segmento/TipoFrete/LocalEstoque/Transportadora prevIdRef reopen |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T10:45Z
 
 | Item | Valor |

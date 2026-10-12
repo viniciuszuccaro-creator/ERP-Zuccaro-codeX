@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,18 +12,37 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from "sonner";
 
+const emptyLocal = {
+  nome: "",
+  codigo: "",
+  tipo: "Almoxarifado",
+  capacidade_m3: 0,
+  ativo: true,
+  estrutura_fisica: {
+    tem_corredores: false,
+    tem_prateleiras: false,
+    tem_andares: false,
+    quantidade_corredores: 0,
+    quantidade_ruas: 0,
+  },
+  controla_temperatura: false,
+};
+
 /**
- * FORMULÁRIO DE LOCAL DE ESTOQUE V21.2 - FASE 2
- * Padrão: w-full h-full em window mode
+ * Local de estoque — aliases Visualizador + reopen por id.
  */
-export default function LocalEstoqueForm({ 
+export default function LocalEstoqueForm({
   local,
-  localEstoque, 
+  localEstoque,
+  item,
+  data,
+  initialData,
+  defaultValues,
   windowMode = false,
   onSubmit,
-  onCancel 
+  onCancel,
 }) {
-  const dadosIniciais = localEstoque || local;
+  const dadosIniciais = item || data || initialData || defaultValues || localEstoque || local;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -31,22 +50,29 @@ export default function LocalEstoqueForm({
   const podeCriar = hasPermission?.("Cadastros.LocalEstoque.criar") || hasPermission?.("Estoque.LocalEstoque.criar");
   const podeEditar = hasPermission?.("Cadastros.LocalEstoque.editar") || hasPermission?.("Estoque.LocalEstoque.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState({
-    nome: "",
-    codigo: "",
-    tipo: "Almoxarifado",
-    capacidade_m3: 0,
-    ativo: true,
+  const [formData, setFormData] = useState(() => ({
+    ...emptyLocal,
+    ...(dadosIniciais || {}),
     estrutura_fisica: {
-      tem_corredores: false,
-      tem_prateleiras: false,
-      tem_andares: false,
-      quantidade_corredores: 0,
-      quantidade_ruas: 0
+      ...emptyLocal.estrutura_fisica,
+      ...(dadosIniciais?.estrutura_fisica || {}),
     },
-    controla_temperatura: false,
-    ...dadosIniciais
-  });
+  }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({
+        ...emptyLocal,
+        ...dadosIniciais,
+        estrutura_fisica: {
+          ...emptyLocal.estrutura_fisica,
+          ...(dadosIniciais.estrutura_fisica || {}),
+        },
+      });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmitForm = (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,25 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const emptyTipoFrete = {
+  descricao: '',
+  modalidade: 'CIF',
+  cobra_frete: true,
+  calculo_automatico: false,
+  formula_calculo: 'Por KM',
+  valor_base_km: 0,
+  responsavel_pagamento: 'Empresa',
+  ativo: true,
+};
+
 /**
- * V21.1.2 - WINDOW MODE READY
+ * Tipo de frete — aliases Visualizador + reopen por id.
  */
-export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = tipoFrete || tipo;
+export default function TipoFreteForm({
+  tipo, tipoFrete, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || tipoFrete || tipo;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -21,20 +35,20 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
   const podeCriar = hasPermission?.("Cadastros.TipoFrete.criar") || hasPermission?.("Logistica.TipoFrete.criar");
   const podeEditar = hasPermission?.("Cadastros.TipoFrete.editar") || hasPermission?.("Logistica.TipoFrete.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    descricao: '',
-    modalidade: 'CIF',
-    cobra_frete: true,
-    calculo_automatico: false,
-    formula_calculo: 'Por KM',
-    valor_base_km: 0,
-    responsavel_pagamento: 'Empresa',
-    ativo: true
-  });
+  const [formData, setFormData] = useState(() => ({ ...emptyTipoFrete, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyTipoFrete, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.descricao || !formData.modalidade) {
+    const descricao = sanitizeText(formData.descricao, 240);
+    if (!descricao || !formData.modalidade) {
       alert('Preencha os campos obrigatórios');
       return;
     }
@@ -48,9 +62,11 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
     }
     onSubmit({
       ...formData,
+      descricao,
+      modalidade: sanitizeText(formData.modalidade, 40),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
-      nome: formData.descricao
+      nome: descricao,
     });
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,49 +14,63 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
+const emptyTransportadora = {
+  razao_social: '',
+  nome_fantasia: '',
+  cnpj: '',
+  inscricao_estadual: '',
+  rntrc: '',
+  email: '',
+  telefone: '',
+  whatsapp: '',
+  contato_responsavel: '',
+  endereco: '',
+  cidade: '',
+  estado: '',
+  cep: '',
+  prazo_entrega_padrao: 0,
+  valor_frete_minimo: 0,
+  status: 'Ativo',
+  observacoes: '',
+};
+
 /**
- * V21.1.2: Transportadora Form - Adaptado para Window Mode
+ * Transportadora — aliases Visualizador + reopen por id (prevIdRef).
  */
-export default function TransportadoraForm({ transportadora: transportadoraProp, item, data, onSubmit, onSave, onClose, windowMode = false }) {
-  const transportadora = transportadoraProp || item || data || null;
+export default function TransportadoraForm({
+  transportadora: transportadoraProp,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  onSave,
+  onClose,
+  windowMode = false,
+}) {
+  const transportadora = item || data || initialData || defaultValues || transportadoraProp || null;
   const onCloseNorm = onClose || onSave;
   const { toast } = useToast();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const contextoValido = Boolean(empresaAtual?.id || groupId);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || transportadora?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || transportadora?.empresa_id || transportadora?.group_id);
   const podeCriar = canCreate("Cadastros", "Transportadora") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Transportadora") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Transportadora") || canDelete("Cadastros", null);
-  
-  const [formData, setFormData] = useState(transportadora || {
-    razao_social: '',
-    nome_fantasia: '',
-    cnpj: '',
-    inscricao_estadual: '',
-    rntrc: '',
-    email: '',
-    telefone: '',
-    whatsapp: '',
-    contato_responsavel: '',
-    endereco: '',
-    cidade: '',
-    estado: '',
-    cep: '',
-    prazo_entrega_padrao: 0,
-    valor_frete_minimo: 0,
-    status: 'Ativo',
-    observacoes: ''
-  });
+
+  const [formData, setFormData] = useState(() => ({ ...emptyTransportadora, ...(transportadora || {}) }));
 
   const schema = z.object({
     razao_social: z.string().min(1, 'Razão Social é obrigatória'),
     cnpj: z.string().min(11, 'CNPJ é obrigatório')
   });
 
+  const prevIdRef = useRef(transportadora?.id);
   useEffect(() => {
-    if (transportadora?.id) {
-      setFormData({ ...transportadora });
+    if (transportadora?.id && transportadora.id !== prevIdRef.current) {
+      prevIdRef.current = transportadora.id;
+      setFormData({ ...emptyTransportadora, ...transportadora });
     }
   }, [transportadora?.id]);
 

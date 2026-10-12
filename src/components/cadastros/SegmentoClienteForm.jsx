@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const emptySegmento = { nome_segmento: '', tipo_segmento: 'Comercial', ativo: true };
 
 export default function SegmentoClienteForm({ segmento, segmentoCliente, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || segmentoCliente || segmento;
@@ -21,11 +22,15 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
   const podeCriar = canCreate('Cadastros', 'SegmentoCliente') || canCreate('Comercial', 'SegmentoCliente') || canCreate('Cadastros', null);
   const podeEditar = canEdit('Cadastros', 'SegmentoCliente') || canEdit('Comercial', 'SegmentoCliente') || canEdit('Cadastros', null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_segmento: '',
-    tipo_segmento: 'Comercial',
-    ativo: true
-  });
+  const [formData, setFormData] = useState(() => ({ ...emptySegmento, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptySegmento, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const buildPayload = () => ({
     ...formData,

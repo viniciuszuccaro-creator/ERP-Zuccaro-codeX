@@ -360,6 +360,19 @@ test('Servico/Kit/CatalogoWeb: aliases Visualizador + prevIdRef reopen', async (
   assert.doesNotMatch(kit, /bg-purple-/);
 });
 
+test('Segmento/TipoFrete/LocalEstoque/Transportadora: prevIdRef reopen + aliases', async () => {
+  const segmento = await readFile(new URL('../src/components/cadastros/SegmentoClienteForm.jsx', import.meta.url), 'utf8');
+  const frete = await readFile(new URL('../src/components/cadastros/TipoFreteForm.jsx', import.meta.url), 'utf8');
+  const local = await readFile(new URL('../src/components/cadastros/LocalEstoqueForm.jsx', import.meta.url), 'utf8');
+  const transp = await readFile(new URL('../src/components/cadastros/TransportadoraForm.jsx', import.meta.url), 'utf8');
+  for (const src of [segmento, frete, local, transp]) {
+    assert.match(src, /prevIdRef/);
+    assert.match(src, /initialData/);
+  }
+  assert.match(frete, /item \|\| data \|\| initialData \|\| defaultValues/);
+  assert.match(local, /item \|\| data \|\| initialData \|\| defaultValues/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
