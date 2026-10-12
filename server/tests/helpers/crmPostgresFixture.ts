@@ -44,6 +44,7 @@ export async function realCrmFixture(value:string,options:{restrictedLogin?:bool
       const password=randomUUID();
       await adminPool.query(`ALTER ROLE "${role}" LOGIN PASSWORD '${password}'`);
       const loginUrl=new URL(value);loginUrl.username=role;loginUrl.password=password;
+      loginUrl.searchParams.set('options',`-c search_path=${schema},pg_catalog`);
       await dataPool.end();
       dataPool=new pg.Pool({connectionString:loginUrl.toString(),max:3,connectionTimeoutMillis:5000});
     }
