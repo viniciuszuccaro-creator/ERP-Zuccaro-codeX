@@ -1,3 +1,15 @@
+## REVISÃO CODEX — tip a8faa3cf implantado+homolog (2026-10-12T12:17Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`a8faa3cf`** CI SUCCESS · implantado · asset `index-BAWzbvTy.js` · rollback `pre-spa-login-20261012-121535` |
+| homolog | OWNER `fail_count=0` · evidence `deploy-261-tip-a8faa3cf-gestores-reopen-20261012.txt` |
+| lote | prevIdRef Parametro/Config/Usuario/Tabelas · colunas Bloco1/6 · uniqueKey Gestores · sky |
+| #280–#314 | tips inalterados · **sem porte** |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
 ## CURSOR — anti-duplicata Gestores + adapter FormaPagamento (2026-10-12T12:20Z)
 
 | Item | Valor |

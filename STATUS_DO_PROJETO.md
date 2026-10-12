@@ -1,3 +1,14 @@
+## CURSOR — tip a8faa3cf implantado+homolog (2026-10-12T12:17Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`a8faa3cf`** · asset `index-BAWzbvTy.js` · rollback `pre-spa-login-20261012-121535` |
+| lote | reopen Parametro/Config/Bloco6/Usuario/Tabelas · colunas canônicas · uniqueKey Gestores |
+| homolog | OWNER `fail_count=0` |
+| #280–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor |
+
 ## CURSOR — uniqueKey gestores anti-duplicata (2026-10-12T12:20Z)
 
 | Item | Valor |
