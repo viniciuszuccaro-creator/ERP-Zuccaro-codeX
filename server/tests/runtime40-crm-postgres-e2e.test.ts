@@ -255,6 +255,10 @@ if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: custom backup restores 
       assert.equal(audit.length,1);
       await assert.rejects(proof.service.get({...proof.ctx,empresaId:ID.empresaA2},fresh.bound.id),{code:'OPORTUNIDADE_NOT_FOUND'});
       assert.equal((await proof.service.get(proof.ctx,proof.opportunityId)).convertido_em_id,proof.pedidoId);
+      const restoredQuote=(await proof.prepare()).quote;
+      await proveOrcamentoMutationAuthorization(f,proof.app.orcamentoService,proof.app.pedidoService,proof.ctx,restoredQuote);
+      await provePedidoMutationAuthorization(f,proof.app.pedidoService,proof.ctx,(await proof.prepare()).quote);
+      assert.equal((await proof.service.get(proof.ctx,proof.opportunityId)).convertido_em_id,proof.pedidoId);
     });
   }finally{await f.close();}
 });
@@ -507,7 +511,7 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     await f.admin.query('UPDATE profiles SET empresa_id=NULL WHERE id=$1',[ctx.actorId]);
     await f.admin.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"visualizar\"]'::jsonb) WHERE id=$1",[ctx.actorId]);
     await assert.rejects(service.convertOrcamentoToPedido(ctx,unavailable.bound.id,unavailable.input),{code:'PERMISSION_DENIED'});
-    return {ctx,service,prepare,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
+    return {ctx,service,app,prepare,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
   }finally{f.admin.query=originalAdmin;f.data.withTransaction=originalTransaction;}
 }
 
