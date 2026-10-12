@@ -1,3 +1,13 @@
+## REVISÃO CODEX — timer 2026-10-12T10:45Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`5ebeccba`** (runtime `12fb882a`) · main `baba91a6` |
+| #280–#314 | tips inalterados · **sem porte** · #313 `58a9ff9f` · #314 `b24feee2` SUCCESS |
+| gt314 | nenhum |
+| RUNNING | só este agente Cursor |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T10:30Z + tip 12fb882a implantado
 
 | Item | Valor |

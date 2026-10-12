@@ -1,3 +1,10 @@
+## REVISÃO CODEX — timer 10:45Z (2026-10-12)
+
+| Item | Valor |
+|---|---|
+| #280–#314 | tips inalterados · **sem porte** |
+| próxima | residual Cursor · secret restrito |
+
 ## CURSOR — tip 12fb882a implantado+homolog · revisão #313/#314 (2026-10-12T10:35Z)
 
 | Item | Valor |
