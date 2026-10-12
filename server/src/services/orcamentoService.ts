@@ -76,17 +76,20 @@ export class OrcamentoService {
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
+    ctx = Object.freeze({ ...ctx });
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx, 'criar', executor);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       // Revalida após snapshot: preço pode preencher tabela_preco_id ausente no payload.
       await this.validateTabelaPreco(scope, priced.tabela_preco_id, executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens, executor);
+      await this.prepare(ctx, 'criar', executor);
       const created = await this.repo.create(scope, priced, executor);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
@@ -124,19 +127,22 @@ export class OrcamentoService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
+    ctx = Object.freeze({ ...ctx });
     const scope = await this.prepare(ctx, 'editar');
     this.assertId(id);
     const data = this.parse(payload);
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx, 'editar', executor);
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       await this.validateTabelaPreco(scope, priced.tabela_preco_id, executor);
-      const criador = await this.resolveCriadorActorId('Orcamento', id);
+      const criador = await this.resolveCriadorActorId('Orcamento', id, executor);
       const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
-      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
+      const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens, executor);
+      await this.prepare(ctx, 'editar', executor);
       const after = await this.repo.update(scope, id, priced, executor);
       if (!after) this.stateConflict();
       await this.auditMargemOverride(ctx, after.id, margemDecision, executor);
@@ -162,12 +168,15 @@ export class OrcamentoService {
   }
 
   async cancel(ctx: RequestContext, id: string) {
+    ctx = Object.freeze({ ...ctx });
     const scope = await this.prepare(ctx, 'cancelar');
     this.assertId(id);
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
+      await this.prepare(ctx, 'cancelar', executor);
       const before = await this.requireOrcamento(scope, id, executor);
       this.requireOpen(before);
+      await this.prepare(ctx, 'cancelar', executor);
       const after = await this.repo.cancel(scope, id, executor);
       if (!after) this.stateConflict();
       await this.auditRow(ctx, 'change_status', before, after, executor);
@@ -206,15 +215,15 @@ export class OrcamentoService {
     return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
   }
 
-  private async resolveCriadorActorId(entity: string, entityId: string): Promise<string | null> {
-    const entries = await this.audit.listByEntity(entity, entityId);
+  private async resolveCriadorActorId(entity: string, entityId: string, executor?: DbQueryExecutor): Promise<string | null> {
+    const entries = await this.audit.listByEntity(entity, entityId, executor);
     const created = entries.find((entry) => entry.action === 'create' && entry.actorId);
     return created?.actorId ?? null;
   }
 
-  private async canAprovarComercial(ctx: RequestContext): Promise<boolean> {
+  private async canAprovarComercial(ctx: RequestContext, executor?: DbQueryExecutor): Promise<boolean> {
     try {
-      await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false });
+      await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, 'aprovar', { allowGlobalWildcard: false, executor });
       return true;
     } catch (error) {
       if (isAppError(error) && error.code === 'PERMISSION_DENIED') {
@@ -238,7 +247,7 @@ export class OrcamentoService {
 
     return assertDescontoDentroDaAlcadaOuAprovar({
       items: data.itens,
-      canAprovar: liberadoPorAvista ? false : await this.canAprovarComercial(ctx),
+      canAprovar: liberadoPorAvista ? false : await this.canAprovarComercial(ctx, executor),
       actorId: ctx.actorId!,
       criadorActorId,
       entityLabel: 'Orçamento',
@@ -268,6 +277,7 @@ export class OrcamentoService {
     ctx: RequestContext,
     scope: OrcamentoScope,
     itens: OrcamentoCreate['itens'],
+    executor?: DbQueryExecutor,
   ) {
     // Sem porta: skip sem consultar RBAC `aprovar` (não inventa custo / não mascara timeout).
     if (!this.costs) return null;
@@ -276,7 +286,7 @@ export class OrcamentoService {
       empresaId: scope.empresaId,
       items: itens,
       costs: this.costs,
-      canAprovar: await this.canAprovarComercial(ctx),
+      canAprovar: await this.canAprovarComercial(ctx, executor),
       entityLabel: 'Orçamento',
     });
   }
@@ -350,12 +360,12 @@ export class OrcamentoService {
     throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
   }
 
-  private async prepare(ctx: RequestContext, action: RbacAction): Promise<OrcamentoScope> {
+  private async prepare(ctx: RequestContext, action: RbacAction, executor?: DbQueryExecutor): Promise<OrcamentoScope> {
     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
     if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');
-    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
-    await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, action, { allowGlobalWildcard: false });
+    await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, executor);
+    await this.rbac.assertAllowed(ctx, RBAC_MODULE, RBAC_SECTION, action, { allowGlobalWildcard: false, executor });
     return { groupId: ctx.groupId, empresaId: ctx.empresaId };
   }
 
