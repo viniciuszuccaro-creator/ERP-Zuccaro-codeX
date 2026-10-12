@@ -1,3 +1,15 @@
+## CURSOR — revisão Codex 13:39Z + #317/#318 (2026-10-12T13:39Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`b81fa17e`** CI SUCCESS · implantado ainda `4a46520a` |
+| novo | **#317** `25b9093a` candidata integrada · **#318** `7af84751` preflight |
+| #313/#315/#316 | tips estáveis · **sem porte** |
+| candidata owner | tip **#318** `7af84751` (stack) |
+| agents | 0 RUNNING C360 · IDLE Legado |
+| porte | nenhum |
+| próxima | redeploy tip #261 (CI verde) · owner merge canário Codex |
+
 ## CURSOR — UTF-8 transversal ERP residual (2026-10-12T13:38Z)
 
 | Item | Valor |

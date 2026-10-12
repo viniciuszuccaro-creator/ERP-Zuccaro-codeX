@@ -1,3 +1,12 @@
+## CURSOR — revisão Codex 13:39Z (#317/#318) (2026-10-12T13:39Z)
+
+| Item | Valor |
+|---|---|
+| #261 | `b81fa17e` CI SUCCESS |
+| novo | #317/#318 SUCCESS · **sem porte** |
+| candidata | #318 `7af84751` |
+| próxima | redeploy OWNER tip #261 |
+
 ## CURSOR — UTF-8 transversal ERP residual (2026-10-12T13:38Z)
 
 | Item | Valor |

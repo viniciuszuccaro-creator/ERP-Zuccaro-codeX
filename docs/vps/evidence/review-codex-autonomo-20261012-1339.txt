@@ -1,0 +1,20 @@
+REVISÃO TIMER Codex autônomo — 2026-10-12T13:39Z
+#261 tip b81fa17e CI SUCCESS · main baba91a6 inalterado
+
+NOVO desde última revisão Cursor:
+- #317 tip 25b9093a · base CRM pos-restore · CI SUCCESS MERGEABLE
+  candidata integrada: aplica 5 arquivos comerciais finais de #313/#315/#316
+  sem deltas Legado 305–312 · NÃO portar em #261 (pedidoService/orcamentoService + stack CRM)
+- #318 tip 7af84751 · base #317 · CI SUCCESS MERGEABLE
+  preflight Orçamento/Pedido opt-in (crmPreflight) · NÃO portar (server/scripts + CRM)
+
+INALTERADOS:
+- #313 58a9ff9f · #315 c5870f80 · #316 18fc6bfe (tips estáveis)
+- #254 20a2c2fb · #263 1b19f4ee · #265 910e4ec9 · #266 cb3af26e — sem re-porte
+- #291/#312/#314 Legado/C360 reserved — sem porte
+
+AGENTES cloud (ambiente): 15 IDLE Legado/auth/marca · 0 RUNNING C360
+
+PORTE Cursor: nenhum (sem gate UI independente; #317/#318 são stack Codex)
+
+Candidata integrada owner atualizada: tip #318 7af84751 (inclui #317+#313/315/316 conteúdo)
