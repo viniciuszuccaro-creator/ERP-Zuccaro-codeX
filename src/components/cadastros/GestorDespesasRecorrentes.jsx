@@ -106,7 +106,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Repeat className="w-5 h-5 text-purple-600" />
+              <Repeat className="w-5 h-5 text-sky-600" />
               Despesas Recorrentes
             </CardTitle>
             <div className="flex gap-2">
@@ -189,7 +189,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         title={config.ativa ? "Desativar" : "Ativar"}
                       >
                         {config.ativa ? (
-                          <Pause className="w-4 h-4 text-orange-600" />
+                          <Pause className="w-4 h-4 text-sky-600" />
                         ) : (
                           <Play className="w-4 h-4 text-green-600" />
                         )}

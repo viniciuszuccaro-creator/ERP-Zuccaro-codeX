@@ -163,7 +163,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
 
       <Button
         type="submit"
-        className="w-full bg-purple-600 hover:bg-purple-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.TipoDespesa.salvar"
         data-action="salvar-tipo-despesa"
@@ -177,8 +177,8 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
-          <Receipt className="w-6 h-6 text-purple-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Receipt className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}</h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

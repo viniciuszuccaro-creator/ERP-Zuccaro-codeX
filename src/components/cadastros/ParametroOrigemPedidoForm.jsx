@@ -225,7 +225,7 @@ export default function ParametroOrigemPedidoForm({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Zap className="w-5 h-5 text-purple-600" />
+              <Zap className="w-5 h-5 text-sky-600" />
               Mapeamento de Origem
             </CardTitle>
           </CardHeader>

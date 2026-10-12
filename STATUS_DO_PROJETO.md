@@ -1,3 +1,12 @@
+## CURSOR — Bloco3/5 colunas canônicas + sky (2026-10-12T12:25Z)
+
+| Item | Valor |
+|---|---|
+| lote | PerfilAcesso nome/nivel_acesso · Empresa status · MoedaIndice cotacao · sky Bloco3/5 |
+| testes | 35 PASS |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — tip a8faa3cf implantado+homolog (2026-10-12T12:17Z)
 
 | Item | Valor |

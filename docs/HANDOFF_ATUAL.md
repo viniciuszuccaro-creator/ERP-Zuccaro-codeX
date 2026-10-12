@@ -1,3 +1,14 @@
+## CURSOR — Bloco3/5 colunas + sky residual (2026-10-12T12:25Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip docs `f5874bd6` (runtime `a8faa3cf` implantado) + este lote |
+| lote | Empresa/PerfilAcesso/MoedaIndice colunas · sky Bloco3/5 · TipoDespesa/Gestores |
+| testes | cobertura+clientes-tab 35 PASS |
+| #312–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## REVISÃO CODEX — tip a8faa3cf implantado+homolog (2026-10-12T12:17Z)
 
 | Item | Valor |

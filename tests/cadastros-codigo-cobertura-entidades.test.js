@@ -436,15 +436,23 @@ test('Gestor FormaPagamento/DespesaRecorrente: uniqueKey anti-duplicata + sky', 
   assert.match(adapter, /defaultValues/);
 });
 
-test('Bloco1/6 colunas canônicas + sky (sem purple/indigo)', async () => {
+test('Bloco1/3/5/6 colunas canônicas + sky (sem purple/indigo)', async () => {
   const bloco1 = await readFile(new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url), 'utf8');
   const bloco2 = await readFile(new URL('../src/components/cadastros/blocks/Bloco2Produtos.jsx', import.meta.url), 'utf8');
+  const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
+  const bloco5 = await readFile(new URL('../src/components/cadastros/blocks/Bloco5Organizacional.jsx', import.meta.url), 'utf8');
   const bloco6 = await readFile(new URL('../src/components/cadastros/blocks/Bloco6Tecnologia.jsx', import.meta.url), 'utf8');
   assert.match(bloco1, /nome_contato/);
   assert.match(bloco1, /nome_regiao/);
   assert.match(bloco1, /tipo_regiao/);
   assert.match(bloco1, /nome_segmento/);
   assert.match(bloco1, /tipo_segmento/);
+  assert.match(bloco3, /cotacao_atual/);
+  assert.doesNotMatch(bloco3, /sigla/);
+  assert.match(bloco5, /nivel_acesso/);
+  assert.match(bloco5, /nome_perfil/);
+  assert.match(bloco5, /status/);
+  assert.doesNotMatch(bloco5, /c:\s*\[[^\]]*cidade/);
   assert.match(bloco6, /nome_integracao/);
   assert.match(bloco6, /nome_canal/);
   assert.match(bloco6, /nome_intent/);
@@ -452,7 +460,7 @@ test('Bloco1/6 colunas canônicas + sky (sem purple/indigo)', async () => {
   assert.match(bloco6, /nome_webhook/);
   assert.match(bloco6, /url_destino/);
   assert.match(bloco6, /serie_nfe/);
-  for (const [src, label] of [[bloco1, 'Bloco1'], [bloco2, 'Bloco2'], [bloco6, 'Bloco6']]) {
+  for (const [src, label] of [[bloco1, 'Bloco1'], [bloco2, 'Bloco2'], [bloco3, 'Bloco3'], [bloco5, 'Bloco5'], [bloco6, 'Bloco6']]) {
     assert.match(src, /bg-sky-/, `${label} deve usar sky`);
     assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${label} sem purple/indigo/violet`);
   }
