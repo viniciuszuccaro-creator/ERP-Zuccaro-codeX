@@ -489,11 +489,17 @@ export const reconciliarPilotoGrupoLegado = async (ctx, snapshots, options = {})
     || !Array.isArray(snapshots) || !snapshots.length || snapshots.length>1000) {
     throw new Error('LEGACY_RECONCILIATION_CONTRACT_REQUIRED');
   }
+  // Validate and compare the same private baseline, never caller-owned data after an await.
+  try { ctx=Object.freeze(structuredClone(ctx)); snapshots=structuredClone(snapshots); }
+  catch { throw new Error('LEGACY_RECONCILIATION_SNAPSHOT_INVALID'); }
+  const readers=new Map();
+  if(typeof rbacGuard.assertAllowed!=='function')throw new Error('LEGACY_RECONCILIATION_CONTRACT_REQUIRED');
+  const assertAllowed=rbacGuard.assertAllowed.bind(rbacGuard);
   const identities=new Set(),ids=new Set();
   for(const snapshot of snapshots) {
     const {entidade,registro:r} = snapshot ?? {};
     const fields=camposReconciliacaoPiloto[entidade],required=camposObrigatoriosPiloto[entidade];
-    if(!fields || !r || typeof r!=='object' || Array.isArray(r) || !services[entidade]?.findByLegacyIdentity
+    if(!fields || !r || typeof r!=='object' || Array.isArray(r) || typeof services[entidade]?.findByLegacyIdentity!=='function'
       || required.some(field=>!Object.hasOwn(r,field)) || Object.keys(r).some(field=>!fields.includes(field))
       || Object.values(r).some(value=>value!==null && !['string','number','boolean'].includes(typeof value))
       || Object.values(r).some(value=>typeof value==='number'&&!Number.isFinite(value))
@@ -504,15 +510,16 @@ export const reconciliarPilotoGrupoLegado = async (ctx, snapshots, options = {})
     const identity=JSON.stringify([entidade,r.group_id,r.source_system,r.codigo_legado]),id=JSON.stringify([entidade,r.id]);
     if(identities.has(identity)||ids.has(id))throw new Error('LEGACY_RECONCILIATION_DUPLICATE_SNAPSHOT');
     identities.add(identity);ids.add(id);
+    if(!readers.has(entidade))readers.set(entidade,services[entidade].findByLegacyIdentity.bind(services[entidade]));
   }
   // Permission failures abort the report rather than becoming a successful "missing" row.
   for(const entidade of new Set(snapshots.map(s=>s.entidade))) {
-    await rbacGuard.assertAllowed(ctx,'Cadastros',entidade,'visualizar',{allowGlobalWildcard:false});
+    await assertAllowed(ctx,'Cadastros',entidade,'visualizar',{allowGlobalWildcard:false});
   }
   const resultados=[];
   for(const [indice,{entidade,registro:expected}] of snapshots.entries()) {
     let actual;
-    try {actual=await services[entidade].findByLegacyIdentity(ctx,expected.source_system,expected.codigo_legado);}
+    try {actual=await readers.get(entidade)(ctx,expected.source_system,expected.codigo_legado);}
     catch(error) {if(error?.code!=='LEGACY_RECONCILIATION_REQUIRED')throw error;
       resultados.push({indice,entidade,resultado:'identidade_ambigua',campos:[]});continue;}
     if(!actual){resultados.push({indice,entidade,resultado:'ausente',campos:[]});continue;}

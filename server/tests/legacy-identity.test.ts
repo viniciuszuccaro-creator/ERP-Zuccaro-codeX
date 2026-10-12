@@ -74,6 +74,11 @@ async function prove(f:any,role:string) {
       WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid AND empresa_id IS NULL);`);
   const flags=(await f.admin.query('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=$1',[role])).rows[0];
   assert.equal(flags.rolsuper,false);assert.equal(flags.rolbypassrls,false);
+  if(f.restrictedLogin){
+    const login=(await f.data.query('SELECT session_user=current_user same_session,rolcanlogin,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user')).rows[0];
+    assert.equal(login.same_session,true);assert.equal(login.rolcanlogin,true);
+    assert.equal(login.rolsuper,false);assert.equal(login.rolbypassrls,false);
+  }
   const guard=new InMemoryRbacGuard();const tenant=new InMemoryTenantGuard();
   for(const [group,actor] of [[I.groupA,I.runtimeActorA],[I.groupB,I.runtimeActorB]]) guard.link({actorId:actor,groupId:group,
     permissions:{Cadastros:{cliente:['visualizar','criar','editar','excluir','importar','inativar','restaurar'],produto:['visualizar','criar','editar','excluir','importar']}}});
@@ -176,6 +181,43 @@ async function prove(f:any,role:string) {
   // Additive metadata survives an old-code update that does not mention the new columns.
   await f.admin.query('UPDATE produtos SET descricao=$1 WHERE id=$2',['Old-code compatible edit',product.id]);
   assert.equal((await s.produto.get(ctx,product.id)).legacy_id,'P-0001');
+  const privateBaseline=[criarSnapshotReconciliacaoLegado('cliente',await s.cliente.get(ctx,first.registro.id)),
+    criarSnapshotReconciliacaoLegado('produto',await s.produto.get(ctx,product.id))];
+  privateBaseline[0].registro.telefone='Stale private expectation';
+  const delayedCtx={...ctx},lookups:any[]=[];
+  const privateStorage=async()=>({clients:(await f.admin.query('SELECT * FROM clientes ORDER BY id')).rows,
+    products:(await f.admin.query('SELECT * FROM produtos ORDER BY id')).rows,
+    sequences:(await f.admin.query('SELECT * FROM entity_code_sequences ORDER BY group_id,entity_name')).rows,
+    audits:(await f.admin.query('SELECT * FROM audit_logs ORDER BY id')).rows});
+  const beforeRead=await privateStorage();
+  const readerPorts={cliente:{findByLegacyIdentity:async(...args:any[])=>{
+    lookups.push(args[0]);return (s.cliente.findByLegacyIdentity as any)(...args);
+  }},produto:s.produto};
+  const readReport=await reconciliarPilotoGrupoLegado(delayedCtx,privateBaseline,{services:readerPorts,rbacGuard:{assertAllowed:async(...args:any[])=>{
+    await (guard.assertAllowed as any)(...args);
+    privateBaseline[0].registro.telefone='Preserved synthetic';privateBaseline.pop();
+    delayedCtx.groupId=I.groupB;delayedCtx.actorId=I.runtimeActorB;
+    readerPorts.cliente.findByLegacyIdentity=async()=>{throw Error('must not use swapped reader');};
+  }}});
+  assert.equal(readReport.totais.esperados,2);assert.equal(readReport.equivalente,false);
+  assert.deepEqual(readReport.resultados[0].campos,['telefone']);assert.equal(readReport.resultados[1].resultado,'equivalente');
+  assert.equal(lookups[0].groupId,ctx.groupId);assert.equal(lookups[0].actorId,ctx.actorId);assert.equal(Object.isFrozen(lookups[0]),true);
+  assert.deepEqual(await privateStorage(),beforeRead);
+  await assert.rejects(async()=>reconciliarPilotoGrupoLegado({...ctx,actorId:limited},[
+    criarSnapshotReconciliacaoLegado('cliente',await s.cliente.get(ctx,first.registro.id)),
+    criarSnapshotReconciliacaoLegado('produto',await s.produto.get(ctx,product.id))],{services:s,rbacGuard:guard}),e=>e.code==='PERMISSION_DENIED');
+  assert.deepEqual(await privateStorage(),beforeRead);
+  for(const secret of [first.registro.id,product.id,opts.sourceSystem,'Stale private expectation'])assert.equal(JSON.stringify(readReport).includes(secret),false);
+  const observed=[criarSnapshotReconciliacaoLegado('cliente',await s.cliente.get(ctx,first.registro.id)),
+    criarSnapshotReconciliacaoLegado('produto',await s.produto.get(ctx,product.id))];
+  const observedReport=await reconciliarPilotoGrupoLegado(ctx,observed,{rbacGuard:guard,services:{cliente:{findByLegacyIdentity:async(...args:any[])=>{
+    const result=await (s.cliente.findByLegacyIdentity as any)(...args);
+    await s.produto.update(ctx,product.id,{descricao_comercial:'Concurrent synthetic edit'});return result;
+  }},produto:s.produto}});
+  assert.equal(observedReport.equivalente,false);assert.deepEqual(observedReport.resultados[1].campos,['descricao_comercial']);
+  assert.equal(observedReport.consistencia,'observacao_por_registro_sem_snapshot_global');
+  await s.produto.update(ctx,product.id,{descricao_comercial:observed[1].registro.descricao_comercial});
+  assert.equal((await reconciliarPilotoGrupoLegado(ctx,observed,{rbacGuard:guard,services:s})).equivalente,true);
   await f.exec(migration);
   await f.exec('DROP INDEX clientes_legacy_identity_uidx');
   await f.admin.query("INSERT INTO clientes(group_id,codigo,tipo,nome,source_system,codigo_legado) VALUES($1,'900001','Pessoa Física','Synthetic historical A','historical','DUP'),($1,'900002','Pessoa Física','Synthetic historical B','historical','DUP')",[I.groupA]);
@@ -185,7 +227,7 @@ async function prove(f:any,role:string) {
  } finally {await f.close();}
 }
 test('Legacy canonical identities, restricted SQL role, concurrency and rollback',async()=>prove(await localCrmFixture(),ROLE));
-if(process.env.DATABASE_URL)test('Legacy canonical identities PostgreSQL real isolated',async()=>{const f=await realCrmFixture(process.env.DATABASE_URL!);await prove(f,f.role);});
+if(process.env.DATABASE_URL)test('Legacy canonical identities PostgreSQL real isolated',async()=>{const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});await prove(f,f.role);});
 
 
 test('Legacy identity memory compatibility and blank-key gate before persistence',async()=>{
@@ -284,6 +326,27 @@ test('Legacy persisted reconciliation checks content and state without leaking p
  assert.equal((await reconciliarPilotoGrupoLegado(ctx,[snapshots[0]],ambiguous)).totais.ambiguos,1);
  await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,[snapshots[0]],{...opts,services:{cliente:{findByLegacyIdentity:async()=>{throw Object.assign(Error('Denied'),{code:'PERMISSION_DENIED'});}}}}),e=>e.code==='PERMISSION_DENIED');
  assert.deepEqual(snapshots,before);
+ const lateSnapshots=structuredClone(snapshots),lateCtx={...ctx},calls:any[]=[];
+ const stableClient=await cs.findByLegacyIdentity(ctx,meta.source_system,meta.codigo_legado);
+ const latePorts={cliente:{findByLegacyIdentity:async(...args:any[])=>{
+  calls.push({ctx:args[0],source:args[1],code:args[2]});return (cs.findByLegacyIdentity as any)(...args);
+ }},produto:ps};
+ const delayedGuard={assertAllowed:async(...args:any[])=>{
+  const permission=await (guard.assertAllowed as any)(...args);
+  lateSnapshots[0].registro=criarSnapshotReconciliacaoLegado('cliente',stableClient).registro;
+  lateSnapshots.pop();lateCtx.groupId=I.groupB;lateCtx.actorId=I.runtimeActorB;
+  latePorts.cliente.findByLegacyIdentity=async()=>{throw Error('must not use replaced reader');};
+  return permission;
+ }};
+ const stable=await reconciliarPilotoGrupoLegado(lateCtx,lateSnapshots,{services:latePorts,rbacGuard:delayedGuard});
+ assert.equal(stable.totais.esperados,2);assert.equal(stable.equivalente,false);
+ assert.deepEqual(stable.resultados[0].campos,['telefone']);assert.equal(calls.length,1);
+ assert.equal(calls[0].ctx.groupId,ctx.groupId);assert.equal(calls[0].ctx.actorId,ctx.actorId);
+ assert.equal(Object.isFrozen(calls[0].ctx),true);assert.equal(calls[0].source,meta.source_system);
+ assert.equal(calls[0].code,meta.codigo_legado);
+ const unsafe=structuredClone(snapshots[0]);unsafe.registro.nome=()=> 'private function value';
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,[unsafe],opts),/^Error: LEGACY_RECONCILIATION_SNAPSHOT_INVALID$/);
+ await assert.rejects(()=>reconciliarPilotoGrupoLegado(ctx,snapshots,{...opts,rbacGuard:{assertAllowed:1}}),/CONTRACT_REQUIRED/);
 });
 test('Cliente lifecycle revalidates permission after prepare before any mutation',async()=>{
  const repo=createInMemoryClienteRepo(),tenant=new InMemoryTenantGuard(),ctx={groupId:I.groupA,actorId:I.runtimeActorA,requestId:'synthetic-revocation'};
