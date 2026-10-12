@@ -1,3 +1,15 @@
+## REVISÃO CODEX — timer 2026-10-12T00:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`ab863b58`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#299 | tips inalterados · **sem porte** |
+| #300 **novo** | tip `a62ab7bb` · preflight persistência Pedido CRM (read-only) · base #299 · CI SUCCESS · **sem porte** |
+| #301 **novo** | tip `c2e6b839` · conversão atômica via LOGIN PG restrito · base #300 · CI SUCCESS · **sem porte** |
+| stack | #301→#300→#299→#298→#297→#296→…→#292 · CRM Codex |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-11T23:45Z
 
 | Item | Valor |
