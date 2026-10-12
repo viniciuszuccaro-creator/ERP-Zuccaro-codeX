@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #311 Legado classificação contraditória (2026-10-12T02:30Z)
+
+| Item | Valor |
+|---|---|
+| #311 | tip `4b58828a` · classificação contraditória quarentena · CI SUCCESS · **sem porte** |
+| motivo | Legado · toca `produtoTipoPolicy` — não portar |
+| stack | #311→#310→#309→… |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #310 Legado unidade semântica TX (2026-10-12T02:15Z)
 
 | Item | Valor |
