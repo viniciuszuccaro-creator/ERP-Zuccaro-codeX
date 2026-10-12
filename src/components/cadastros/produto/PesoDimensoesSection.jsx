@@ -107,7 +107,7 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
           <Alert className="border-green-300 bg-green-50">
             <AlertDescription className="text-xs text-green-900">
               ✓ Cubagem: {formData.volume_m3.toFixed(6)} m³
-              {formData.peso_bruto_kg > 0 && ` â€¢ Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
+              {formData.peso_bruto_kg > 0 && ` • Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
             </AlertDescription>
           </Alert>
         )}
