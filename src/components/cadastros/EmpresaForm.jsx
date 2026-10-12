@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -75,16 +75,20 @@ export default function EmpresaForm({
     return isMatriz && mesmoGrupo && notSelf;
   }), [empresasGrupo, groupId, dadosIniciais?.id]);
 
+  const prevIdRef = useRef(dadosIniciais?.id);
+  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (!dadosIniciais) return;
-    setFormData(mergeEmpresaFormData(dadosIniciais));
-  }, [
-    dadosIniciais?.id,
-    dadosIniciais?.updated_date,
-    dadosIniciais?.razao_social,
-    dadosIniciais?.cnpj,
-    dadosIniciais?.nome_fantasia,
-  ]);
+    if (!dadosIniciais?.id) return;
+    const idChanged = dadosIniciais.id !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      dadosIniciais.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = dadosIniciais.id;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(mergeEmpresaFormData(dadosIniciais));
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   useEffect(() => {
     if (formData.certificado_digital?.data_validade) {

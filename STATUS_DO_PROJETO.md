@@ -1,3 +1,15 @@
+## CURSOR — Empresa prevIdRef + ProdutoV22/Dashboards sky (2026-10-12T13:11Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip runtime pendente CI |
+| implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
+| lote | EmpresaForm prevIdRef+prevUpdatedRef · sky ProdutoV22 · DashboardEstruturantes · DashboardProdutosProducao |
+| testes | cobertura+clientes-tab PASS |
+| #313 | `58a9ff9f` · **sem porte** |
+| restrito | **BLOCKED** secrets |
+| próxima | CI → redeploy → homolog · residual Cursor |
+
 ## CURSOR — sky lote2 Fechamento/Pedido/Produto (2026-10-12T13:10Z)
 
 | Item | Valor |

@@ -542,6 +542,25 @@ test('Representante/FormaPagamento/Regiao: prevIdRef reopen + RepresentantesTab 
   assert.doesNotMatch(canais, /purple-|indigo-|violet-/);
 });
 
+test('EmpresaForm prevIdRef reopen + ProdutoV22/Dashboards sky', async () => {
+  const empresa = await readFile(new URL('../src/components/cadastros/EmpresaForm.jsx', import.meta.url), 'utf8');
+  const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  const dashEst = await readFile(new URL('../src/components/cadastros/DashboardEstruturantes.jsx', import.meta.url), 'utf8');
+  const dashProd = await readFile(new URL('../src/components/cadastros/DashboardProdutosProducao.jsx', import.meta.url), 'utf8');
+  assert.match(empresa, /prevIdRef/);
+  assert.match(empresa, /prevUpdatedRef/);
+  assert.match(empresa, /initialData/);
+  assert.doesNotMatch(empresa, /dadosIniciais\?\.razao_social/);
+  for (const [src, label] of [
+    [produto, 'ProdutoFormV22_Completo'],
+    [dashEst, 'DashboardEstruturantes'],
+    [dashProd, 'DashboardProdutosProducao'],
+  ]) {
+    assert.match(src, /sky-/, `${label} deve usar sky`);
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${label} sem purple/indigo/violet`);
+  }
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
