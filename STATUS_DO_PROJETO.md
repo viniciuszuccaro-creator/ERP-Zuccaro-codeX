@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | pendente · implantado **`6a4b304f`** |
+| tip | **`84f995a2`** · implantado **`6a4b304f`** |
 | candidata Codex | **#318** `7af84751` |
 | lote | prevIdRef Cliente/Fornecedor/Colaborador/Produto · sky KPIs estoque/expedição |
 | testes | reopen + azul KPIs |
