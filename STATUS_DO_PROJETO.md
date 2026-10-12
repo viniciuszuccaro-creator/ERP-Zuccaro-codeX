@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | pendente · sobre `3101334b` |
+| tip | **`b77edcac`** · sobre `3101334b` |
 | lote | sky histórico/aprovação/automação/externos/assistente |
 | testes | clientes-tab **9 PASS** |
 | #313/#315/#316 | **sem porte** |

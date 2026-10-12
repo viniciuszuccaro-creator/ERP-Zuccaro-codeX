@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip pendente · sobre `6b9f3f5c` / runtime `3101334b` |
+| HEAD candidata | tip **`b77edcac`** · sobre `6b9f3f5c` / runtime `3101334b` |
 | lote | sky HistoricoAlteracoes · AuditoriaAprovacao · AutomacaoFluxo · ValidarExternos · AssistenteInteligente |
 | #313/#315/#316 | **sem porte** · candidata `18fc6bfe` |
 | restrito | **BLOCKED** secrets |
