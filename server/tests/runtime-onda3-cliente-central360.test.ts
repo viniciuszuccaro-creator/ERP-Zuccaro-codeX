@@ -480,3 +480,14 @@ test('Central 360 falha parcial: bloco unavailable com meta null e demais ok', a
     locais.list = original;
   }
 });
+
+test('Central 360 mantem contexto e paginacao iniciais durante espera de vinculo',async()=>{
+ const runtime=fixture(),seeded=await seedClienteComercial(runtime,ACTOR_FULL,GROUP_A,EMPRESA_A,CNPJ_A);
+ const caller={requestId:'initial-central',actorId:ACTOR_FULL,groupId:GROUP_A,empresaId:EMPRESA_A},options={orcamentosLimit:1,pedidosLimit:1};
+ const get=runtime.clienteService.getEmpresaLink.bind(runtime.clienteService);
+ runtime.clienteService.getEmpresaLink=async(...args:any[])=>{const row=await(get as any)(...args);caller.actorId=ACTOR_GROUP_B;caller.groupId=GROUP_B;caller.empresaId=EMPRESA_B;caller.requestId='changed';options.orcamentosLimit=99;options.pedidosLimit=99;return row;};
+ const result=await runtime.clienteCentral360Service.get(caller,seeded.clienteId,options);
+ assert.equal(result.meta.groupId,GROUP_A);assert.equal(result.meta.empresaId,EMPRESA_A);assert.equal(result.meta.requestId,'initial-central');
+ assert.equal(result.empresaLink.id,seeded.clienteEmpresaId);assert.equal(result.blocks.orcamentos.meta?.limit,1);assert.equal(result.blocks.pedidos.meta?.limit,1);
+ assert.equal(result.blocks.orcamentos.status,'ok');assert.equal(result.blocks.pedidos.status,'ok');
+});

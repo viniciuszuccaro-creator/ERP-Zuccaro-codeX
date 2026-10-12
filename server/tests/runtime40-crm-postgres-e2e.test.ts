@@ -622,6 +622,15 @@ async function proveCentralCrm(db:DbClient,app:ReturnType<typeof createApp>,ctx:
   // fixture role. This proves isolated RLS, not an operational LOGIN/grant.
   const central=new ClienteCentral360Service(app.clienteService,app.orcamentoService,app.pedidoService,
     app.clienteLocalService,app.obraService,app.rbacGuard,service);
+  const caller={...ctx},options={crmLimit:2,crmOffset:0},getLink=app.clienteService.getEmpresaLink.bind(app.clienteService);
+  app.clienteService.getEmpresaLink=async(...args:any[])=>{
+    const row=await(getLink as any)(...args);caller.groupId=ID.groupB;caller.empresaId=ID.empresaB;caller.actorId=ID.runtimeActorB;caller.requestId='changed';options.crmLimit=99;return row;
+  };
+  try{
+    const captured=await central.get(caller,ID.clientePjA,options);
+    assert.equal(captured.meta.groupId,ctx.groupId);assert.equal(captured.meta.empresaId,ctx.empresaId);assert.equal(captured.meta.requestId,ctx.requestId);
+    assert.equal(captured.blocks.crm.status,'ok');assert.equal(captured.blocks.crm.meta?.limit,2);assert.equal(captured.blocks.crm.data.length,2);
+  }finally{app.clienteService.getEmpresaLink=getLink;}
   const page=await central.get(ctx,ID.clientePjA,{crmLimit:2,crmOffset:0});
   assert.equal(page.blocks.crm.status,'ok');assert.equal(page.blocks.crm.meta?.total,9);
   assert.equal(page.blocks.crm.data.length,2);assert.equal(page.blocks.crm.meta?.hasMore,true);
