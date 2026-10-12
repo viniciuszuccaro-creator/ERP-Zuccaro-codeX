@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex #320 (2026-10-12T14:30Z)
+
+| Item | Valor |
+|---|---|
+| novo | **#320** `3955c4af` precisão Expedição parcial/devolução · CI SUCCESS |
+| #319 | `5568e3a9` candidata C360 inalterada |
+| porte | **nenhum** (expedicaoService — stack separada) |
+| #261 | implantado `0a97beba` |
+| agents | 0 RUNNING |
+| próxima | residual Cursor · owner merge canários Codex |
+
 ## CURSOR — revisão Codex #319 (2026-10-12T14:05Z)
 
 | Item | Valor |

@@ -1,3 +1,11 @@
+## CURSOR — revisão #320 Expedição precisão (2026-10-12T14:30Z)
+
+| Item | Valor |
+|---|---|
+| #320 | `3955c4af` SUCCESS · **sem porte** |
+| candidata C360 | #319 `5568e3a9` |
+| próxima | residual Cursor |
+
 ## CURSOR — revisão #319 Central contexto (2026-10-12T14:05Z)
 
 | Item | Valor |
