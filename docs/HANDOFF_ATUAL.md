@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T01:00Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`74a752ab`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#304 | tips inalterados · **sem porte** |
+| #305 **novo** | tip `69d64adb` · Legado preflight destino canônico piloto (read-only) · base #304 · CI SUCCESS · **sem porte** (Legado/#211 reservado) |
+| risco | stack CRM+#305 Legado; não portar nem tocar scripts/legado |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T00:45Z
 
 | Item | Valor |

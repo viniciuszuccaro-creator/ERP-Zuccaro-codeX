@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #305 Legado preflight destino (2026-10-12T01:00Z)
+
+| Item | Valor |
+|---|---|
+| #305 | tip `69d64adb` · Legado destino canônico piloto · CI SUCCESS · **sem porte** |
+| motivo | Legado/#211/#266 reservado · não portar |
+| stack | #305→#304→…→#292 |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #304 operação pós-restauração CRM (2026-10-12T00:45Z)
 
 | Item | Valor |
