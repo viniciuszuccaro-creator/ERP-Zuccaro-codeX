@@ -453,6 +453,12 @@ test('Bloco4 + forms residual: sky sem purple/indigo', async () => {
     'PainelConfiancaIA.jsx',
     'ImportacaoProdutoNFe.jsx',
     'AbaConversoesProduto.jsx',
+    'ImportarProdutosLote.jsx',
+    'HistoricoProduto.jsx',
+    'IconeAcessoColaborador.jsx',
+    'PainelDinamicoColaborador.jsx',
+    'produto/FiscalContabilSection.jsx',
+    'produto/ProdutoFormHeader.jsx',
   ];
   for (const name of files) {
     const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');

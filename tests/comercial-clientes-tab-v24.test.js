@@ -132,4 +132,16 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.doesNotMatch(detalhes, /purple-|indigo-|violet-/);
   assert.match(panel, /Carregar mais/);
   assert.match(panel, /_limit|_offset|blockLimits/);
+  const fechamento = await readFile(
+    new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url),
+    'utf8',
+  );
+  const pedidoHeader = await readFile(
+    new URL('../src/components/comercial/pedido/PedidoHeader.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(fechamento, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(fechamento, /purple-|indigo-|violet-/);
+  assert.match(pedidoHeader, /to-sky-50|from-sky-600/);
+  assert.doesNotMatch(pedidoHeader, /purple-|indigo-|violet-/);
 });

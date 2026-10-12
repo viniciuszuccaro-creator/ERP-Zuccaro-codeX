@@ -23,10 +23,10 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
 
   return (
     <>
-      <Card className="border-purple-200 bg-purple-50">
-        <CardHeader className="bg-purple-100 border-b border-purple-200 pb-3">
+      <Card className="border-sky-200 bg-sky-50">
+        <CardHeader className="bg-sky-100 border-b border-sky-200 pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-600" />
+            <FileText className="w-5 h-5 text-sky-600" />
             ConfiguraÃ§Ã£o Fiscal
           </CardTitle>
         </CardHeader>
@@ -130,9 +130,9 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
             </div>
           </div>
 
-          <Alert className="border-purple-300 bg-purple-100 mt-4">
-            <Sparkles className="w-4 h-4 text-purple-700" />
-            <AlertDescription className="text-sm text-purple-900">
+          <Alert className="border-sky-300 bg-sky-100 mt-4">
+            <Sparkles className="w-4 h-4 text-sky-700" />
+            <AlertDescription className="text-sm text-sky-900">
               Defina corretamente NCM/CFOP e alÃ­quotas para evitar rejeiÃ§Ãµes na NF-e.
             </AlertDescription>
           </Alert>
