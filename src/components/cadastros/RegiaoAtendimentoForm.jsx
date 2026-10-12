@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,17 +87,22 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     enabled: contextoValido,
   });
 
+  const prevIdRef = useRef(dadosIniciaisProps?.id || regiaoId || null);
   useEffect(() => {
-    if (dadosIniciaisProps && (open || windowMode)) {
+    const nextId = dadosIniciaisProps?.id || regiaoId || null;
+    if (dadosIniciaisProps && (open || windowMode) && nextId && nextId !== prevIdRef.current) {
+      prevIdRef.current = nextId;
       setFormData(dadosIniciaisProps);
-    } else if (regiaoId && open && !dadosIniciaisProps) {
+    } else if (regiaoId && open && !dadosIniciaisProps && regiaoId !== prevIdRef.current) {
+      prevIdRef.current = regiaoId;
       base44.entities.RegiaoAtendimento.list().then(regioes => {
         const regiao = regioes.find(r => r.id === regiaoId);
         if (regiao) {
           setFormData(regiao);
         }
       });
-    } else if (!regiaoId && !dadosIniciaisProps && open) {
+    } else if (!regiaoId && !dadosIniciaisProps && open && prevIdRef.current !== null) {
+      prevIdRef.current = null;
       setFormData({
         nome_regiao: "",
         codigo_regiao: "",

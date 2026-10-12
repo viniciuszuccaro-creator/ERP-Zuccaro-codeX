@@ -1,3 +1,14 @@
+## CURSOR — Representantes reopen/sky + Canais/Comercial chrome (2026-10-12T13:07Z)
+
+| Item | Valor |
+|---|---|
+| tip | runtime pendente CI (sobre docs `0a1a3e87` / implantado `a4b8d0fc`) |
+| lote | prevIdRef Representante/FormaPagamento/Região · RepresentantesTab filterInContext+uniqueKey · sky Representantes/Canais/C360 chrome (sem tocar panel reservado) |
+| testes | `cadastros-codigo-cobertura` + `comercial-clientes-tab-v24` **37 PASS** |
+| #313 | `58a9ff9f` · **sem porte** (Legado) |
+| BLOCKED | secret restrito `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | CI → redeploy → homolog · residual Cursor |
+
 ## CURSOR — tip a4b8d0fc implantado+homolog (2026-10-12T13:02Z)
 
 | Item | Valor |

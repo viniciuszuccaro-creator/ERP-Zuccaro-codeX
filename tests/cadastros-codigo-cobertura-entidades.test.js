@@ -512,6 +512,30 @@ test('Usuario/Grupo/Evento/Gateway/TabelaFiscal/TabelaPreco: prevIdRef reopen', 
   assert.match(gateway, /setTiposSelecionados/);
 });
 
+test('Representante/FormaPagamento/Regiao: prevIdRef reopen + RepresentantesTab uniqueKey/sky', async () => {
+  const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
+  const forma = await readFile(new URL('../src/components/cadastros/FormaPagamentoFormCompleto.jsx', import.meta.url), 'utf8');
+  const regiao = await readFile(new URL('../src/components/cadastros/RegiaoAtendimentoForm.jsx', import.meta.url), 'utf8');
+  const tab = await readFile(new URL('../src/components/cadastros/RepresentantesTab.jsx', import.meta.url), 'utf8');
+  const canais = await readFile(new URL('../src/components/cadastros/GerenciadorCanaisOrigem.jsx', import.meta.url), 'utf8');
+  for (const [src, label] of [
+    [representante, 'RepresentanteFormCompleto'],
+    [forma, 'FormaPagamentoFormCompleto'],
+    [regiao, 'RegiaoAtendimentoForm'],
+  ]) {
+    assert.match(src, /prevIdRef/, `${label} deve ter prevIdRef`);
+    assert.match(src, /initialData/, `${label} deve aceitar alias initialData`);
+  }
+  assert.match(tab, /uniqueKey:\s*`Cadastros\.Representante\.form-\$\{rep\.id\}`/);
+  assert.match(tab, /filterInContext\('Representante'/);
+  assert.match(tab, /bg-sky-600/);
+  assert.doesNotMatch(tab, /purple-|indigo-|violet-/);
+  assert.match(representante, /text-sky-600|bg-sky-600/);
+  assert.doesNotMatch(representante, /purple-|indigo-|violet-/);
+  assert.match(canais, /text-sky-600|bg-sky-/);
+  assert.doesNotMatch(canais, /purple-|indigo-|violet-/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

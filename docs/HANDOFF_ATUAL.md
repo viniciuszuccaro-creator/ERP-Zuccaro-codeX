@@ -1,3 +1,17 @@
+## CURSOR — Representantes reopen/sky + Canais/Comercial chrome (2026-10-12T13:07Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip runtime pendente de CI (sobre `0a1a3e87`) |
+| implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
+| lote | prevIdRef Representante/FormaPagamento/Região · RepresentantesTab `filterInContext`+`uniqueKey` · sky Representantes/Canais/DetalhesCliente/launchpad/PedidoHeader/PainelDinamico |
+| testes | cobertura+clientes-tab **37 PASS** |
+| #313 | tip `58a9ff9f` CI SUCCESS · base Legado · **sem porte** |
+| CPA | owner read-only PASS · mutações aguardam merge/canário #313 |
+| restrito | **BLOCKED** · secrets `ERP_DEV_LOGIN_RESTRICTED_EMAIL/PASSWORD` + user RBAC erp-dev |
+| porte Codex | nenhum (`CentralCliente360Panel`/`pedidoService`/Marca/Legado intocados) |
+| próxima | CI tip → redeploy → homolog OWNER · residual sky/cadastros · secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T13:00Z + tip a4b8d0fc implantado
 
 | Item | Valor |

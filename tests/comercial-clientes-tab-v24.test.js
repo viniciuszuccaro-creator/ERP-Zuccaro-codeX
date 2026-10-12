@@ -128,6 +128,8 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.match(v24, /data-action="cliente-novo"|ENTITY === 'Cliente' \? 'cliente-novo'/);
   assert.match(v24, /data-action="cliente-detalhes-360"/);
   assert.match(detalhes, /CentralCliente360Panel/);
+  assert.match(detalhes, /text-sky-600/);
+  assert.doesNotMatch(detalhes, /purple-|indigo-|violet-/);
   assert.match(panel, /Carregar mais/);
   assert.match(panel, /_limit|_offset|blockLimits/);
 });

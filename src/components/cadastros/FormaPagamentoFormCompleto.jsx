@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -104,8 +104,12 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
 
+  const prevIdRef = useRef(formaPagamentoNorm?.id);
   useEffect(() => {
-    if (formaPagamentoNorm?.id) setFormData({ ...formaPagamentoNorm });
+    if (formaPagamentoNorm?.id && formaPagamentoNorm.id !== prevIdRef.current) {
+      prevIdRef.current = formaPagamentoNorm.id;
+      setFormData({ ...formaPagamentoNorm });
+    }
   }, [formaPagamentoNorm?.id]);
 
   const handleSubmit = async () => {
