@@ -1,3 +1,13 @@
+## REVISÃO CODEX — #300/#301 CRM persistência + LOGIN restrito (2026-10-12T00:00Z)
+
+| Item | Valor |
+|---|---|
+| #300 | tip `a62ab7bb` · preflight persistência Pedido · **sem porte** |
+| #301 | tip `c2e6b839` · conversão atômica LOGIN PG restrito · **sem porte** |
+| stack | #301→#300→#299→…→#292 · CRM Codex |
+| CI | ambos SUCCESS |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #298/#299 CRM preflight + gates docs (2026-10-11T23:45Z)
 
 | Item | Valor |
