@@ -1,3 +1,12 @@
+## REVISÃO CODEX — #302 CRM Auth HTTP + LOGIN (2026-10-12T00:15Z)
+
+| Item | Valor |
+|---|---|
+| #302 | tip `45dd8735` · Auth HTTP + LOGIN restrito Pedido · **sem porte** |
+| stack | #302→#301→#300→…→#292 · CRM Codex |
+| CI | pending |
+| próxima | monitorar · sem porte |
+
 ## REVISÃO CODEX — #300/#301 CRM persistência + LOGIN restrito (2026-10-12T00:00Z)
 
 | Item | Valor |

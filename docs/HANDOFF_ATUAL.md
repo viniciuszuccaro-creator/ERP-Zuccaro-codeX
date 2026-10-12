@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T00:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`42e7cbbb`** (runtime `b76474a2`) · main `baba91a6` |
+| #280–#301 | tips inalterados · **sem porte** |
+| #302 **novo** | tip `45dd8735` · Auth HTTP + LOGIN restrito no fluxo Pedido · base #301 · CI pending · **sem porte** (CRM tests) |
+| stack | #302→#301→#300→…→#292 · CRM Codex |
+| RUNNING | só chat coordenação |
+| porte | nenhum |
+
 ## REVISÃO CODEX — timer 2026-10-12T00:00Z
 
 | Item | Valor |
