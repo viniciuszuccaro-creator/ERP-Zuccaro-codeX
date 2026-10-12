@@ -290,6 +290,24 @@ test('opcoes nao substituem empresa da operacao sem comprovacao', () => {
 
 // Completes the class/unit inventory without exposing source customer/product records.
 import { catalogarProdutoClasseUnidadeLegado } from '../scripts/legado/mapear-registro-sintetico.mjs';
+test('catalogo revalida revisao explicita de unidade sem escolher candidato ou coerção de flags',()=>{
+ const rows=[{sku:'001',descricao:'Synthetic',classe:'08',unidade:'01'}];
+ const review={source_unit_code:'01',approved_target_unit_id:'unit',scope_verified:true,semantic_equivalence_verified:true,import_authorized:true};
+ const opts={groupId:'g1',produtoClassUnitMap:{'08|01':{tipo_item:'MATERIA_PRIMA',unidade_medida_id:'unit'}},unidadesCanonicas:[{id:'unit',group_id:'g1',ativo:true}],revisoesUnidades:[review]};
+ assert.equal(catalogarProdutoClasseUnidadeLegado(rows,opts).quantidade_sem_mapa,0);
+ const inherited=Object.assign(Object.create(review),{source_unit_code:'01'});
+ assert.equal(catalogarProdutoClasseUnidadeLegado(rows,{...opts,revisoesUnidades:[inherited]}).quantidade_sem_mapa,1);
+ for(const revisoesUnidades of [[],[review,review],[{...review,source_unit_code:'1'}],
+   [{...review,approved_target_unit_id:'other'}],...['scope_verified','semantic_equivalence_verified','import_authorized'].flatMap(key=>[false,'true',1].map(value=>[{...review,[key]:value}]))]){
+  const before=JSON.stringify(revisoesUnidades),out=catalogarProdutoClasseUnidadeLegado(rows,{...opts,revisoesUnidades});
+  assert.equal(out.quantidade_sem_mapa,1);assert.equal(out.grupos[0].mapeamento_comprovado,false);
+  assert.equal(JSON.stringify(revisoesUnidades),before);
+ }
+ for(const revisoesUnidades of [undefined,null,[null],[{source_unit_code:1}]])assert.throws(()=>catalogarProdutoClasseUnidadeLegado(rows,{...opts,revisoesUnidades}),/LEGACY_UNIT_REVIEW_INVALID/);
+ const {revisoesUnidades,...compatible}=opts;
+ assert.equal(catalogarProdutoClasseUnidadeLegado(rows,compatible).quantidade_sem_mapa,0);
+ assert.equal(revisoesUnidades[0],review);
+});
 test('catalogo classe/unidade reconcilia contagens e exige destino ativo do mesmo Grupo', () => {
  const rows = [{sku:'001',descricao:'Synthetic private',classe:'08',unidade:'KG'},
    {sku:'002',descricao:'Other private',classe:'08',unidade:'KG'},

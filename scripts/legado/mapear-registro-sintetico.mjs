@@ -351,6 +351,10 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
  */
 export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
   if (!Array.isArray(rows)) throw new Error('LEGACY_ROWS_REQUIRED');
+  const temRevisao = Object.prototype.hasOwnProperty.call(opts, 'revisoesUnidades');
+  if (temRevisao && (!Array.isArray(opts.revisoesUnidades)
+    || opts.revisoesUnidades.some(row => !row || !Object.prototype.hasOwnProperty.call(row,'source_unit_code') || typeof row.source_unit_code !== 'string'
+      || !row.source_unit_code.trim()))) throw new Error('LEGACY_UNIT_REVIEW_INVALID');
   const catalogo = new Map();
   for (const row of rows) {
     const mapped = mapLegadoRowToCanonicalStub(row, { ...opts, entidade: 'produto' });
@@ -364,6 +368,18 @@ export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
       if (!classe || !unidade) reasons.add('classe_unidade_ausente');
       if (classe.includes('|') || unidade.includes('|')) reasons.add('chave_mapeamento_ambigua');
       if (!mapped.tipo_item || !mapped.unidade_medida_id) reasons.add('mapeamento_explicito_ausente');
+      if (temRevisao) {
+        const reviews = opts.revisoesUnidades.filter(row => row.source_unit_code.trim() === unidade);
+        if (reviews.length !== 1) reasons.add(reviews.length ? 'revisao_unidade_ambigua' : 'revisao_unidade_ausente');
+        else {
+          const review = reviews[0];
+          if (!['scope_verified','semantic_equivalence_verified','import_authorized'].every(key => Object.prototype.hasOwnProperty.call(review,key))
+            || review.scope_verified !== true || review.semantic_equivalence_verified !== true
+            || review.import_authorized !== true) reasons.add('revisao_unidade_nao_aprovada');
+          if (!Object.prototype.hasOwnProperty.call(review,'approved_target_unit_id') || typeof review.approved_target_unit_id !== 'string' || !review.approved_target_unit_id
+            || review.approved_target_unit_id !== mapped.unidade_medida_id) reasons.add('revisao_unidade_destino_divergente');
+        }
+      }
       const matches = opts.unidadesCanonicas?.filter((u) => u.id === mapped.unidade_medida_id) ?? [];
       if(matches.length>1)reasons.add('unidade_destino_ambigua');
       const target = matches.length===1 ? matches[0] : null;
