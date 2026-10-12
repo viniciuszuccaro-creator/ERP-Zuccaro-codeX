@@ -1,0 +1,10 @@
+# Evidência sanitizada — tip c7281234 implantado+homolog
+# utc=2026-10-12T11:47Z
+# tip=c7281234 reopen CentroResultado/Contato/Condicao/Rota/Modelo
+# asset=index-BkzaQEun.js
+# rollback=pre-spa-login-20261012-114612
+# MERGE_SHA8=c7281234 · STAMP=20261012-114612
+# CI SUCCESS · Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-c7281234.json
+# Revisão Codex 11:45Z: #280–#314 tips inalterados · sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

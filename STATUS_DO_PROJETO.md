@@ -1,3 +1,14 @@
+## CURSOR — tip c7281234 implantado+homolog (2026-10-12T11:47Z)
+
+| Item | Valor |
+|---|---|
+| tip | **`c7281234`** · asset `index-BkzaQEun.js` · rollback `pre-spa-login-20261012-114612` |
+| lote | reopen CentroResultado/Contato/Condicao/Rota/Modelo |
+| homolog | OWNER `fail_count=0` |
+| #280–#314 | **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor |
+
 ## CURSOR — reopen Bloco3/4 residual (2026-10-12T11:30Z)
 
 | Item | Valor |

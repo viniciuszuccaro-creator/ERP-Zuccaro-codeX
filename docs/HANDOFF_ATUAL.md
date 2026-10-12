@@ -1,3 +1,14 @@
+## REVISÃO CODEX — timer 2026-10-12T11:45Z + tip c7281234 implantado
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`c7281234`** CI SUCCESS · implantado · asset `index-BkzaQEun.js` · rollback `pre-spa-login-20261012-114612` |
+| homolog | OWNER `fail_count=0` · evidence `deploy-261-tip-c7281234-reopen-bloco34-20261012.txt` |
+| #280–#314 | tips inalterados · **sem porte** |
+| porte | nenhum |
+| BLOCKED | secret restrito |
+| próxima | residual Cursor · secret restrito |
+
 ## REVISÃO CODEX — timer 2026-10-12T11:30Z
 
 | Item | Valor |
