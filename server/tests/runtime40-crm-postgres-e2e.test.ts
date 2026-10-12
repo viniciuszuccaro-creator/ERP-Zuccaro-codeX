@@ -255,6 +255,10 @@ if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: custom backup restores 
       assert.equal(audit.length,1);
       await assert.rejects(proof.service.get({...proof.ctx,empresaId:ID.empresaA2},fresh.bound.id),{code:'OPORTUNIDADE_NOT_FOUND'});
       assert.equal((await proof.service.get(proof.ctx,proof.opportunityId)).convertido_em_id,proof.pedidoId);
+      const restoredQuote=(await proof.prepare()).quote;
+      await proveOrcamentoMutationAuthorization(f,proof.app.orcamentoService,proof.app.pedidoService,proof.ctx,restoredQuote);
+      await provePedidoMutationAuthorization(f,proof.app.pedidoService,proof.ctx,(await proof.prepare()).quote);
+      assert.equal((await proof.service.get(proof.ctx,proof.opportunityId)).convertido_em_id,proof.pedidoId);
     });
   }finally{await f.close();}
 });
@@ -353,7 +357,7 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
   const role=f.role??ROLE;
   assert.match(role,/^[a-z][a-z0-9_]+$/);
   const ctx={groupId:ID.groupA,empresaId:ID.empresaA,actorId:ID.runtimeActorA,requestId:'crm-atomic-synthetic'};
-  const groupTables=['empresas','produtos','unidades_medida','tabelas_preco','condicoes_pagamento','condicao_pagamento_parcelas','cliente_locais','cliente_local_finalidades','obras','obra_locais'];
+  const groupTables=['empresas','produtos','unidades_medida','tabelas_preco','tabela_preco_itens','condicoes_pagamento','condicao_pagamento_parcelas','cliente_locais','cliente_local_finalidades','obras','obra_locais'];
   const companyTables=['produto_empresas','tabela_preco_empresas','condicao_pagamento_empresas','pedido_historico','obra_empresas'];
   for(const table of groupTables)await f.exec(`GRANT SELECT ON ${table} TO ${role};
     CREATE POLICY crm_atomic_scope ON ${table} FOR ALL TO ${role}
@@ -397,6 +401,8 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     return {quote,bound,input:{expected_version:bound.version,orcamento_id:quote.id,pedido:{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z'}}};
   };
   const initial=await prepare();
+  await proveOrcamentoMutationAuthorization(f,app.orcamentoService,app.pedidoService,ctx,(await prepare()).quote);
+  await provePedidoMutationAuthorization(f,app.pedidoService,ctx,(await prepare()).quote);
   await f.admin.query('UPDATE oportunidades SET pedido_id=$2 WHERE id=$1',[initial.bound.id,'synthetic_original_legacy_pedido']);
   const active=new AsyncLocalStorage<boolean>(), originalAdmin=f.admin.query.bind(f.admin), originalTransaction=f.data.withTransaction.bind(f.data);
   let queries=0;
@@ -505,13 +511,104 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     await f.admin.query('UPDATE profiles SET empresa_id=NULL WHERE id=$1',[ctx.actorId]);
     await f.admin.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"visualizar\"]'::jsonb) WHERE id=$1",[ctx.actorId]);
     await assert.rejects(service.convertOrcamentoToPedido(ctx,unavailable.bound.id,unavailable.input),{code:'PERMISSION_DENIED'});
-    return {ctx,service,prepare,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
+    return {ctx,service,app,prepare,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
   }finally{f.admin.query=originalAdmin;f.data.withTransaction=originalTransaction;}
 }
 
 test('CRM→Pedido: executor compartilhado, rollback, retry, preço snapshot e empresa/RBAC persistidos',async()=>{
   const f=await localCrmFixture();try{await proveAtomicCrmPedido(f);}finally{await f.close();}
 });
+
+async function proveOrcamentoMutationAuthorization(f:any,service:any,pedido:any,ctx:any,quote:any){
+  const role=f.role??ROLE;
+  await f.exec(`GRANT UPDATE ON pedidos TO ${role};GRANT DELETE ON pedido_itens TO ${role};GRANT INSERT,UPDATE ON orcamentos TO ${role};GRANT INSERT,DELETE ON orcamento_itens TO ${role}`);
+  const adminQuery=f.admin.query.bind(f.admin),inside=new AsyncLocalStorage<boolean>();
+  const permissions=(await adminQuery('SELECT permissoes FROM profiles WHERE id=$1',[ctx.actorId])).rows[0].permissoes;
+  const enable=()=>adminQuery("UPDATE profiles SET permissoes=jsonb_set(jsonb_set(permissoes,'{Comercial,orcamento}',$2::jsonb),'{Comercial,pedido}',$3::jsonb) WHERE id=$1",[ctx.actorId,JSON.stringify(['visualizar','criar','editar','cancelar','aprovar']),JSON.stringify(['visualizar','criar','editar','cancelar','alterar-status','converter-pedido','aprovar'])]);
+  const repo=service.repo,original=repo.withTransaction.bind(repo),pedidoRepo=pedido.repo,pedidoTx=pedidoRepo.withTransaction.bind(pedidoRepo);
+  const data={cliente_empresa_id:quote.cliente_empresa_id,condicao_pagamento_id:quote.condicao_pagamento_id,validade_em:'2027-01-31T00:00:00.000Z',
+    itens:quote.itens.map((item:any)=>({produto_id:item.produto_id,unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,quantidade:item.quantidade,preco_unitario:'9999',desconto:'0'}))};
+  const state=async()=>({quotes:(await adminQuery('SELECT row_to_json(q)::text value FROM orcamentos q ORDER BY id')).rows,
+    items:(await adminQuery('SELECT row_to_json(q)::text value FROM orcamento_itens q ORDER BY id')).rows,
+    audit:(await adminQuery('SELECT row_to_json(q)::text value FROM audit_logs q ORDER BY id')).rows,
+    seq:(await adminQuery('SELECT * FROM entity_code_sequences ORDER BY group_id,entity_name')).rows});
+  try{
+    await enable();repo.withTransaction=(fn:any)=>f.data.withTransaction(fn);
+    const created=await service.create(ctx,data);assert.notEqual(created.itens[0].preco_unitario,'9999.000000');
+    for(const action of ['criar','editar','cancelar']){
+      await enable();const before=await state();
+      repo.withTransaction=async(fn:any)=>{
+        await adminQuery("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,orcamento}',$2::jsonb) WHERE id=$1",[ctx.actorId,JSON.stringify(['visualizar'])]);
+        return f.data.withTransaction((tx:any)=>inside.run(true,()=>fn(tx)));
+      };
+      f.admin.query=((sql:any,args:any)=>{if(inside.getStore())throw Error('ORCAMENTO_SQL_ESCAPED_EXECUTOR');return adminQuery(sql,args);});
+      await assert.rejects(action==='criar'?service.create(ctx,data):action==='editar'?service.update(ctx,created.id,data):service.cancel(ctx,created.id),{code:'PERMISSION_DENIED'});
+      assert.deepEqual(await state(),before);f.admin.query=adminQuery;
+    }
+    await enable();repo.withTransaction=(fn:any)=>f.data.withTransaction((tx:any)=>inside.run(true,()=>fn(tx)));
+    f.admin.query=((sql:any,args:any)=>{if(inside.getStore())throw Error('ORCAMENTO_SQL_ESCAPED_EXECUTOR');return adminQuery(sql,args);});
+    await f.exec(`CREATE FUNCTION crm_quote_audit_failure() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.entity='Orcamento' THEN RAISE EXCEPTION 'synthetic quote audit failure'; END IF;
+      RETURN NEW; END $$; CREATE TRIGGER crm_quote_audit_fail BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE PROCEDURE crm_quote_audit_failure();`);
+    f.admin.query=adminQuery;
+    for(const operation of [()=>service.create(ctx,data),()=>service.update(ctx,created.id,data),()=>service.cancel(ctx,created.id)]){
+      const before=await state();await assert.rejects(operation(),/synthetic quote audit failure/);assert.deepEqual(await state(),before);
+    }
+    await f.exec('DROP TRIGGER crm_quote_audit_fail ON audit_logs; DROP FUNCTION crm_quote_audit_failure();');
+    f.admin.query=((sql:any,args:any)=>{if(inside.getStore())throw Error('ORCAMENTO_SQL_ESCAPED_EXECUTOR');return adminQuery(sql,args);});
+    const edited=await service.update(ctx,created.id,data);assert.equal(edited.numero,created.numero);
+    f.admin.query=adminQuery;pedidoRepo.withTransaction=(fn:any)=>f.data.withTransaction(fn);
+    const options={tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-02-15T00:00:00.000Z'};
+    const order=await pedido.convert(ctx,edited.id,options);assert.equal(order.total,edited.total);assert.equal(order.itens[0].preco_unitario,edited.itens[0].preco_unitario);
+    await assert.rejects(pedido.convert(ctx,edited.id,options),{code:'ORCAMENTO_ALREADY_CONVERTED'});
+    const orderData={cliente_empresa_id:edited.cliente_empresa_id,condicao_pagamento_id:edited.condicao_pagamento_id,orcamento_id:edited.id,...options,
+      itens:edited.itens.map((item:any)=>({produto_id:item.produto_id,unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,quantidade:item.quantidade,preco_unitario:item.preco_unitario,desconto:item.desconto,requer_producao:false}))};
+    await pedido.update(ctx,order.id,orderData);await pedido.transition(ctx,order.id,'PRONTO_RETIRADA');await assert.rejects(pedido.cancel(ctx,order.id,'Synthetic integrated cancellation'),{code:'PEDIDO_STATE_CONFLICT'});await pedido.transition(ctx,order.id,'FINALIZADO');
+    assert.equal((await pedido.get(ctx,order.id)).status,'FINALIZADO');assert.equal((await pedido.history(ctx,order.id)).length,3);
+    const cancellation=await service.create(ctx,data);await service.cancel(ctx,cancellation.id);assert.equal((await service.get(ctx,cancellation.id)).status,'CANCELADO');
+  }finally{f.admin.query=adminQuery;repo.withTransaction=original;pedidoRepo.withTransaction=pedidoTx;
+    await adminQuery('UPDATE profiles SET permissoes=$2::jsonb WHERE id=$1',[ctx.actorId,JSON.stringify(permissions)]);}
+}
+
+async function provePedidoMutationAuthorization(f:any,pedido:any,ctx:any,quote:any){
+  const role=f.role??ROLE;
+  await f.exec(`GRANT UPDATE ON pedidos TO ${role};GRANT DELETE ON pedido_itens TO ${role}`);
+  const permissions=(await f.admin.query('SELECT permissoes FROM profiles WHERE id=$1',[ctx.actorId])).rows[0].permissoes;
+  const enable=()=>f.admin.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}',$2::jsonb) WHERE id=$1",[ctx.actorId,JSON.stringify(['visualizar','criar','editar','cancelar','alterar-status','converter-pedido','aprovar'])]);
+  const repo=pedido.repo,original=repo.withTransaction.bind(repo);
+  const adminQuery=f.admin.query.bind(f.admin),inside=new AsyncLocalStorage<boolean>();
+  const data={cliente_empresa_id:quote.cliente_empresa_id,condicao_pagamento_id:quote.condicao_pagamento_id,
+    tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-01-31T00:00:00.000Z',itens:quote.itens.map((item:any)=>({produto_id:item.produto_id,unidade_id:item.unidade_id,descricao:item.descricao,unidade_sigla:item.unidade_sigla,quantidade:item.quantidade,preco_unitario:item.preco_unitario,desconto:item.desconto,requer_producao:false}))};
+  const state=async()=>({orders:(await adminQuery('SELECT row_to_json(p)::text value FROM pedidos p ORDER BY id')).rows,
+    items:(await adminQuery('SELECT row_to_json(p)::text value FROM pedido_itens p ORDER BY id')).rows,
+    history:(await adminQuery('SELECT row_to_json(p)::text value FROM pedido_historico p ORDER BY id')).rows,
+    audit:(await adminQuery('SELECT row_to_json(p)::text value FROM audit_logs p ORDER BY id')).rows,
+    sequence:(await adminQuery('SELECT * FROM entity_code_sequences ORDER BY group_id,entity_name')).rows});
+  try{
+    await enable();repo.withTransaction=(fn:any)=>f.data.withTransaction(fn);
+    const order=await pedido.convert(ctx,quote.id,{tipo_operacao:data.tipo_operacao,data_entrega_solicitada:data.data_entrega_solicitada});
+    const editData={...data,orcamento_id:order.orcamento_id};
+    for(const action of ['criar','editar','alterar-status','cancelar','converter-pedido']){
+      await enable();const before=await state();
+      repo.withTransaction=async(fn:any)=>{
+        await adminQuery("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"visualizar\"]'::jsonb) WHERE id=$1",[ctx.actorId]);
+        return f.data.withTransaction((tx:any)=>inside.run(true,()=>fn(tx)));
+      };
+      f.admin.query=((sql:any,args:any)=>{if(inside.getStore())throw Error('PEDIDO_SQL_ESCAPED_EXECUTOR');return adminQuery(sql,args);});
+      const run=()=>action==='criar'?pedido.create(ctx,data):action==='editar'?pedido.update(ctx,order.id,editData):action==='alterar-status'?pedido.transition(ctx,order.id,'PRONTO_RETIRADA'):action==='cancelar'?pedido.cancel(ctx,order.id,'Synthetic revoked'):pedido.convert(ctx,quote.id,{tipo_operacao:data.tipo_operacao,data_entrega_solicitada:data.data_entrega_solicitada});
+      await assert.rejects(run,{code:'PERMISSION_DENIED'});assert.deepEqual(await state(),before);
+      f.admin.query=adminQuery;
+    }
+    await enable();repo.withTransaction=(fn:any)=>f.data.withTransaction(fn);
+    await pedido.update(ctx,order.id,editData);
+    await pedido.transition(ctx,order.id,'PRONTO_RETIRADA');await pedido.transition(ctx,order.id,'FINALIZADO');
+    assert.equal((await pedido.get(ctx,order.id)).status,'FINALIZADO');
+    const directOrder=await pedido.create(ctx,data);
+    const cancelled=await pedido.cancel(ctx,directOrder.id,'Synthetic authorized cancellation');
+    assert.equal(cancelled.status,'CANCELADO');assert.equal(cancelled.numero,directOrder.numero);
+  }finally{f.admin.query=adminQuery;repo.withTransaction=original;
+    await adminQuery('UPDATE profiles SET permissoes=$2::jsonb WHERE id=$1',[ctx.actorId,JSON.stringify(permissions)]);}
+}
 
 async function proveCentralCrm(db:DbClient,app:ReturnType<typeof createApp>,ctx:RequestContext,service:OportunidadeService) {
   // Existing canonical repository executes CRM reads with NOSUPERUSER/NOBYPASSRLS

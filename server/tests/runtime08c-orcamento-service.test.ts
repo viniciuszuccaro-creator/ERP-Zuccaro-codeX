@@ -324,3 +324,28 @@ test('erro do repository faz rollback completo do cancel', async () => {
   assert.equal(persisted.ativo, true);
   assert.deepEqual(persisted.itens, created.itens);
 });
+test('Orcamento revalida mutacoes no executor e antes de gravar sem efeitos parciais', async () => {
+  for (const action of ['criar','editar','cancelar']) for (const revokeAt of [2,3]) {
+    const f=fixture(), original=await f.service.create(ctx,payload);
+    const before={page:await f.repo.list({groupId,empresaId}),audit:await f.audit.listByEntity('Orcamento',original.id)};
+    const allowed=f.rbac.assertAllowed.bind(f.rbac); let calls=0;
+    f.rbac.assertAllowed=async (...args:any[])=>{
+      if(args[3]===action){calls++;if(calls>1)assert.equal(args[4]?.executor,f.repo.executor);
+        if(calls===revokeAt)throw new AppError(403,'PERMISSION_DENIED','Synthetic revoked permission');}
+      return (allowed as any)(...args);
+    };
+    const run=()=>action==='criar'?f.service.create(ctx,payload):action==='editar'?f.service.update(ctx,original.id,payload):f.service.cancel(ctx,original.id);
+    assert.equal(await code(run()),'PERMISSION_DENIED'); assert.equal(calls,revokeAt);
+    assert.deepEqual({page:await f.repo.list({groupId,empresaId}),audit:await f.audit.listByEntity('Orcamento',original.id)},before);
+    f.rbac.assertAllowed=allowed; assert.equal((await f.service.create(ctx,payload)).numero,'00000002');
+  }
+});
+test('Orcamento captura contexto e consulta autoria no executor transacional', async () => {
+  const f=fixture(), caller={...ctx}, tx=f.repo.withTransaction.bind(f.repo);
+  f.repo.withTransaction=fn=>tx(async executor=>{caller.groupId=otherEmpresa;caller.actorId=otherEmpresa;return fn(executor);});
+  const row=await f.service.create(caller,payload);
+  assert.equal(row.group_id,groupId);assert.equal((await f.audit.listByEntity('Orcamento',row.id))[0].actorId,ctx.actorId);
+  const read=f.audit.listByEntity.bind(f.audit);let executorSeen=false;
+  f.audit.listByEntity=async (...args:any[])=>{executorSeen=args[2]===f.repo.executor;return (read as any)(...args);};
+  await f.service.update(ctx,row.id,payload);assert.equal(executorSeen,true);
+});
