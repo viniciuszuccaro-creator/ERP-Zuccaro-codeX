@@ -1,3 +1,24 @@
+## CURSOR — tip cbd3624f implantado+homolog (2026-10-12T10:20Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`cbd3624f`** implantado · asset `index-DOE6jLF_.js` · rollback `pre-spa-login-20261012-101715` |
+| lote | etapa RBAC · NF idOnly+empresa · ancestral ProdutoForm→V22/Fiscal/Comissão |
+| homolog | OWNER tipado `fail_count=0` · evidence `deploy-261-tip-cbd3624f-etapa-nf-20261012.txt` |
+| diagnóstico | Comissao/Fiscal/NF Completo/EtapaForm ainda fora do grafo de import ativo (Modal/Tab inline) |
+| #312 | tip `c5e83312` · **sem porte** Legado |
+| BLOCKED | secret `ERP_DEV_LOGIN_RESTRICTED_*` |
+| próxima | wire runtime: EtapaModal→Form · ComissoesTab→ComissaoForm · NF tab · CadastroFiscal |
+
+## REVISÃO CODEX — timer 2026-10-12T10:15Z
+
+| Item | Valor |
+|---|---|
+| #261 | tip **`cbd3624f`** CI SUCCESS · runtime ainda `b76474a2` → implantado abaixo |
+| #280–#312 | tips inalterados · **sem porte** |
+| RUNNING | redeploy tip CI verde |
+| porte | nenhum |
+
 ## CURSOR — Etapa entrega + NF contexto (2026-10-12T10:10Z)
 
 | Item | Valor |
