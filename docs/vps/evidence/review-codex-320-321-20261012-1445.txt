@@ -15,3 +15,5 @@ REVISÃO TIMER Codex — 2026-10-12T14:45Z
 #319 5568e3a9 candidata C360 inalterada
 agents RUNNING: 0
 porte #261: nenhum
+
+UPDATE 15:00Z: #321 CI SUCCESS frontend/backend · tips inalterados · sem porte.

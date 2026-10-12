@@ -1,3 +1,11 @@
+## CURSOR — #321 CI SUCCESS (2026-10-12T15:00Z)
+
+| Item | Valor |
+|---|---|
+| #319/#320/#321 | tips estáveis SUCCESS · sem porte |
+| candidata | #319 |
+| próxima | residual Cursor |
+
 ## CURSOR — revisão #320/#321 (2026-10-12T14:45Z)
 
 | Item | Valor |

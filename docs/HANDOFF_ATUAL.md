@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex 15:00Z (#321 CI verde) (2026-10-12T15:00Z)
+
+| Item | Valor |
+|---|---|
+| #319–#321 | tips estáveis · CI SUCCESS · **sem porte** |
+| candidata C360 | **#319** `5568e3a9` |
+| #321 | `d5538292` CI agora SUCCESS (era pendente) |
+| agents | 0 RUNNING |
+| porte | nenhum |
+| próxima | residual Cursor |
+
 ## CURSOR — revisão Codex #320 tip+#321 (2026-10-12T14:45Z)
 
 | Item | Valor |
