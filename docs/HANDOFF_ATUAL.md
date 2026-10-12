@@ -1,3 +1,14 @@
+## CURSOR — UTF-8 transversal ERP residual (2026-10-12T13:38Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip pendente · sobre `253f0392` / runtime `b77edcac` |
+| lote | UTF-8 PedidosTab/Comissões/PesoDimensões · Financeiro · Produção · IA · Gestão Acessos |
+| #313/#315/#316 | **sem porte** · candidata `18fc6bfe` |
+| restrito | **BLOCKED** secrets |
+| porte Codex | nenhum |
+| próxima | CI tip → redeploy OWNER |
+
 ## CURSOR — sky lote CPA histórico/aprovação (2026-10-12T13:36Z)
 
 | Item | Valor |

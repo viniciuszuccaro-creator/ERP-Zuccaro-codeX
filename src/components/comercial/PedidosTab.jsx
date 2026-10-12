@@ -381,7 +381,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     }
     try {
       await base44.functions.invoke('whatsappSend', { template: 'aprovacao_pendente', pedido_ids: alvo });
-      toast({ title: 'ðŸ“² WhatsApp enviado', description: `${alvo.length} pedido(s)` });
+      toast({ title: 'WhatsApp enviado', description: `${alvo.length} pedido(s)` });
       await auditPedido({ acao: 'Notificacao', descricao: `WhatsApp aprovacao pendente (${alvo.length})`, detalhes: { canal: 'whatsapp', pedido_ids: alvo, total: alvo.length } });
     } catch {
       await auditPedido({ acao: 'Notificacao falhou', descricao: 'Falha ao notificar aprovacao pendente por WhatsApp', sucesso: false, detalhes: { canal: 'whatsapp', pedido_ids: alvo, total: alvo.length } });
@@ -403,7 +403,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     }
     try {
       await base44.functions.invoke('sendEmailProvider', { tipo: 'aprovacao_pendente', pedido_ids: alvo });
-      toast({ title: 'âœ‰ï¸ E-mails enviados', description: `${alvo.length} pedido(s)` });
+      toast({ title: 'E-mails enviados', description: `${alvo.length} pedido(s)` });
       await auditPedido({ acao: 'Notificacao', descricao: `Email aprovacao pendente (${alvo.length})`, detalhes: { canal: 'email', pedido_ids: alvo, total: alvo.length } });
     } catch {
       await auditPedido({ acao: 'Notificacao falhou', descricao: 'Falha ao notificar aprovacao pendente por email', sucesso: false, detalhes: { canal: 'email', pedido_ids: alvo, total: alvo.length } });
@@ -455,7 +455,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
             className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
           >
             <CheckCircle2 className="w-3 h-3 mr-1" />
-            <span className="text-xs">ðŸš€ Fechar Pedido</span>
+            <span className="text-xs">Fechar Pedido</span>
           </Button>
         )}
 
@@ -483,7 +483,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
               className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
             >
               <Truck className="w-4 h-4 mr-1" />
-              <span className="text-xs">ðŸšš Fechar p/ Entrega</span>
+              <span className="text-xs">Fechar p/ Entrega</span>
             </Button>
             <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarNFe" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' })} disabled={!contextoValido || !canGerarNFe} title="Gerar NF-e" className="h-8 px-2 text-green-600">
               <FileText className="w-3 h-3 mr-1" />

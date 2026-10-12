@@ -130,10 +130,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   // Mutation: Gerar Remessa
   const gerarRemessaMutation = useMutation({
     mutationFn: async ({ bancoId, titulosIds }) => {
-      if (!contextoValido || !podeGerarRemessa) throw new Error("Sem contexto ou permissÃ£o para gerar remessa.");
+      if (!contextoValido || !podeGerarRemessa) throw new Error("Sem contexto ou permissão para gerar remessa.");
       const banco = bancos.find(b => b.id === bancoId);
       const titulos = contasReceber.filter(c => titulosIds.includes(c.id));
-      if (!titulos.length) throw new Error("Selecione ao menos um tÃ­tulo.");
+      if (!titulos.length) throw new Error("Selecione ao menos um título.");
 
       // Gerar conteúdo CNAB simplificado (mock)
       const numeroArquivo = arquivos.filter(a => a.tipo_arquivo === 'Remessa').length + 1;
@@ -216,7 +216,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   // Mutation: Processar Retorno
   const processarRetornoMutation = useMutation({
     mutationFn: async (file) => {
-      if (!contextoValido || !podeProcessarRetorno) throw new Error("Sem contexto ou permissÃ£o para processar retorno.");
+      if (!contextoValido || !podeProcessarRetorno) throw new Error("Sem contexto ou permissão para processar retorno.");
       if (!file || file.size <= 0 || file.size > 5 * 1024 * 1024) throw new Error("Arquivo de retorno invalido ou acima de 5MB.");
       const conteudo = await file.text();
       if (/<script|javascript:/i.test(conteudo)) throw new Error("Arquivo de retorno contem conteudo bloqueado por seguranca.");

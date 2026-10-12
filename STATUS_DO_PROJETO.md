@@ -1,3 +1,13 @@
+## CURSOR — UTF-8 transversal ERP residual (2026-10-12T13:38Z)
+
+| Item | Valor |
+|---|---|
+| tip | pendente · sobre `b77edcac` |
+| lote | mojibake financeiro/produção/IA/acessos + PedidosTab emoji |
+| testes | cobertura+clientes-tab **38 PASS** |
+| #313/#315/#316 | **sem porte** |
+| próxima | CI → redeploy |
+
 ## CURSOR — sky lote CPA histórico/aprovação (2026-10-12T13:36Z)
 
 | Item | Valor |

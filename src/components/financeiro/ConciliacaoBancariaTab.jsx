@@ -81,7 +81,7 @@ export default function ConciliacaoBancariaTab() {
   const gerarConciliacaoIAMutation = useMutation({
     mutationFn: async ({ contaId }) => {
       if (!contextoValido || !podeConciliar) {
-        throw new Error("Sem contexto ou permissÃ£o para gerar conciliaÃ§Ã£o.");
+        throw new Error("Sem contexto ou permissão para gerar conciliação.");
       }
       toast.info("🤖 IA analisando extratos e movimentações...");
       

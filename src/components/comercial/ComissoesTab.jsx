@@ -289,7 +289,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
       comissao,
       windowMode: true
     }, {
-      title: `ðŸ’° ${comissao.vendedor} - ${comissao.numero_pedido}`,
+      title: `${comissao.vendedor} - ${comissao.numero_pedido}`,
       width: 800,
       height: 600
     });

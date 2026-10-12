@@ -70,8 +70,8 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
       empresa_id: empresaId,
       group_id: groupId,
       grupo_id: groupId,
-      acao: sucesso ? "SeleÃ§Ã£o" : "SeletorProdutoProducao.bloqueado",
-      modulo: "ProduÃ§Ã£o",
+      acao: sucesso ? "Seleção" : "SeletorProdutoProducao.bloqueado",
+      modulo: "Produção",
       entidade: "Produto",
       registro_id: produto?.id || null,
       tipo_auditoria: sucesso ? "ui" : "seguranca",
@@ -89,10 +89,10 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
 
   const handleSelecionarProduto = (produto) => {
     if (!contextoValido || !canSelectProduto) {
-      auditarSelecaoProduto({ produto, sucesso: false, descricao: "Tentativa de selecionar produto de produÃ§Ã£o sem contexto ou permissÃ£o." });
+      auditarSelecaoProduto({ produto, sucesso: false, descricao: "Tentativa de selecionar produto de produção sem contexto ou permissão." });
       return;
     }
-    auditarSelecaoProduto({ produto, descricao: "Produto de produÃ§Ã£o selecionado para OP." });
+    auditarSelecaoProduto({ produto, descricao: "Produto de produção selecionado para OP." });
     onSelecionarProduto && onSelecionarProduto(produto);
   };
 
@@ -110,24 +110,24 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
     return matchBusca && matchBitola && matchTipoAco;
   });
 
-  // EstatÃ­sticas
+  // Estatísticas
   const totalProdutos = produtos.length;
   const totalBitolas = produtos.filter(p => p.eh_bitola).length;
   const produtosComEstoque = produtos.filter(p => (p.estoque_disponivel || p.estoque_atual || 0) > 0).length;
 
   return (
     <div className="w-full h-full space-y-4" data-permission="Producao.OrdensProducao.visualizar" data-context-required="true">
-      {/* Header com EstatÃ­sticas */}
+      {/* Header com Estatísticas */}
       <Alert className="border-orange-300 bg-orange-50">
         <Factory className="w-5 h-5 text-orange-600" />
         <AlertDescription>
           <p className="font-semibold text-orange-900 mb-2">
-            ðŸ­ Produtos DisponÃ­veis para ProduÃ§Ã£o
+            Produtos Disponíveis para Produção
           </p>
           <div className="flex gap-6 text-sm text-orange-800">
-            <span>â€¢ Total: <strong>{totalProdutos}</strong></span>
-            <span>â€¢ Bitolas: <strong>{totalBitolas}</strong></span>
-            <span>â€¢ Com Estoque: <strong>{produtosComEstoque}</strong></span>
+            <span>• Total: <strong>{totalProdutos}</strong></span>
+            <span>• Bitolas: <strong>{totalBitolas}</strong></span>
+            <span>• Com Estoque: <strong>{produtosComEstoque}</strong></span>
           </div>
         </AlertDescription>
       </Alert>
@@ -142,7 +142,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
             data-permission="Estoque.Produtos.visualizar"
             data-context-required="true"
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar produto, cÃ³digo ou bitola..."
+            placeholder="Buscar produto, código ou bitola..."
             className="pl-10"
           />
         </div>
@@ -161,7 +161,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todos">Todos AÃ§os</SelectItem>
+            <SelectItem value="todos">Todos Aços</SelectItem>
             <SelectItem value="CA-25">CA-25</SelectItem>
             <SelectItem value="CA-50">CA-50</SelectItem>
             <SelectItem value="CA-60">CA-60</SelectItem>
@@ -181,7 +181,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
             {!contextoValido || !canViewProdutos ? (
               <div className="text-center py-12 text-slate-500">
                 <AlertTriangle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p>Selecione contexto vÃ¡lido e confirme permissÃ£o para consultar produtos de Estoque.</p>
+                <p>Selecione contexto válido e confirme permissão para consultar produtos de Estoque.</p>
               </div>
             ) : isLoading ? (
               <div className="text-center py-12">
@@ -239,9 +239,9 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
                           {estoqueDisponivel} {produto.unidade_principal}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {estoqueInsuficiente ? 'âš ï¸ Insuficiente' :
-                           estoqueDisponivel > 0 ? 'âœ… DisponÃ­vel' :
-                           'âŒ Sem estoque'}
+                          {estoqueInsuficiente ? 'Insuficiente' :
+                           estoqueDisponivel > 0 ? 'Disponível' :
+                           'Sem estoque'}
                         </p>
                       </div>
                     </div>
@@ -250,7 +250,7 @@ export default function SeletorProdutosProducao({ onSelecionarProduto, quantidad
                       <Alert className="border-red-300 bg-red-50 mt-3">
                         <AlertTriangle className="w-4 h-4 text-red-600" />
                         <AlertDescription className="text-xs text-red-800">
-                          NecessÃ¡rio: {quantidadeNecessaria} {produto.unidade_principal} â€¢
+                          Necessário: {quantidadeNecessaria} {produto.unidade_principal} •
                           Faltam: {(quantidadeNecessaria - estoqueDisponivel).toFixed(2)} {produto.unidade_principal}
                         </AlertDescription>
                       </Alert>

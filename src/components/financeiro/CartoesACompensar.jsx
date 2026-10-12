@@ -148,7 +148,7 @@ export default function CartoesACompensar() {
     : cartoes.filter(c => c.status_compensacao === filtroStatus);
 
   const totalEmTransito = cartoes
-    .filter(c => c.status_compensacao === "Em Transito" || c.status_compensacao === "Em TrÃ¢nsito" || c.status_compensacao === "A Compensar")
+    .filter(c => c.status_compensacao === "Em Transito" || c.status_compensacao === "Em Trânsito" || c.status_compensacao === "A Compensar")
     .reduce((acc, c) => acc + (c.valor_liquido || 0), 0);
 
   const totalCompensado = cartoes
@@ -220,7 +220,7 @@ export default function CartoesACompensar() {
               data-permission="Financeiro.Cartoes.visualizar"
             >
               <option value="todos">Todos</option>
-              <option value="Em TrÃ¢nsito">Em Transito</option>
+              <option value="Em Trânsito">Em Transito</option>
               <option value="A Compensar">A Compensar</option>
               <option value="Compensado">Compensado</option>
               <option value="Divergente">Divergente</option>
