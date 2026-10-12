@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip runtime pendente de CI (sobre `0a1a3e87`) |
+| HEAD candidata | tip **`4f0310de`** CI pendente |
 | implantado | **`a4b8d0fc`** · asset `index-DhRUrsdH.js` · rollback `pre-spa-login-20261012-130128` |
 | lote | prevIdRef Representante/FormaPagamento/Região · RepresentantesTab `filterInContext`+`uniqueKey` · sky Representantes/Canais/DetalhesCliente/launchpad/PedidoHeader/PainelDinamico |
 | testes | cobertura+clientes-tab **37 PASS** |
