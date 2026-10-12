@@ -1,3 +1,10 @@
+## CURSOR — sky Detalhes/Tabelas (2026-10-12T12:50Z)
+
+| Item | Valor |
+|---|---|
+| tip | `aaf0ce13` CI pendente · runtime `5b251b1c` |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — #313 revisada + CPA owner + sky (2026-10-12T12:45Z)
 
 | Item | Valor |

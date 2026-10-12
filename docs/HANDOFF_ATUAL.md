@@ -1,3 +1,13 @@
+## CURSOR — sky Detalhes/Tabelas/Importação (2026-10-12T12:50Z)
+
+| Item | Valor |
+|---|---|
+| HEAD | **`aaf0ce13`** (sobre `f846eeff`) · runtime ainda **`5b251b1c`** |
+| lote | DetalhesCadastro · TabelaFiscal · TabelaPreco · MultiTabelas · PainelIA · ImportNFe · AbaConversões → sky |
+| #313 | tip `58a9ff9f` · **sem porte** |
+| restrito | BLOCKED secrets |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — revisão #313 + CPA owner + sky residual (2026-10-12T12:45Z)
 
 | Item | Valor |
