@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | pendente · sobre `c160b523` |
+| tip | **** · sobre `c160b523` |
 | lote | encoding cadastros · sky pedido/entrega/aprovação |
 | testes | cobertura+clientes-tab **38 PASS** |
 | #313/#315/#316 | **sem porte** |
