@@ -12,7 +12,7 @@ import { PostgresOportunidadeRepository } from '../src/repositories/postgresOpor
 import { OportunidadeService } from '../src/services/oportunidadeService.ts';
 import { ClienteCentral360Service } from '../src/services/clienteCentral360Service.ts';
 import { SEED_IDS as ID } from '../scripts/seedDevIds.ts';
-import { assertCrmIsolatedUrl, realCrmFixture } from './helpers/crmPostgresFixture.ts';
+import { assertCrmIsolatedUrl, realCrmFixture,proveCrmFixtureBackup } from './helpers/crmPostgresFixture.ts';
 import { localCrmFixture, ROLE } from './helpers/crmFixture.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DbClient } from '../src/db/client.ts';
@@ -211,6 +211,20 @@ if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: real restricted LOGIN e
 });
 
 type CrmAuthHttp={app:ReturnType<typeof createApp>;token:string;verify:(base:string,id:string,input:unknown)=>Promise<void>};
+
+if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: custom backup restores content, IDs, links, permissions and idempotent replay',async()=>{
+  const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});try {
+    const proof=await proveAtomicCrmPedido(f);
+    await f.admin.query(`UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','["visualizar","converter-pedido"]'::jsonb) WHERE id=$1`,[proof.ctx.actorId]);
+    await proveCrmFixtureBackup(process.env.DATABASE_URL!,f,async()=>{
+      const identity=(await f.admin.query<{database:string;schema:string}>('SELECT current_database() AS database,current_schema() AS schema')).rows[0];
+      const gates=await f.data.withTransaction(tx=>inspectCrmPreflight(tx,{...identity,requireRestrictedLogin:true,requirePedidoPersistence:true}));
+      assert.equal(gates.ready,true);
+      const replay=await proof.service.convertOrcamentoToPedido(proof.ctx,proof.opportunityId,proof.input);
+      assert.equal(replay.replayed,true);assert.equal(replay.pedido.id,proof.pedidoId);
+    });
+  }finally{await f.close();}
+});
 
 if(process.env.DATABASE_URL)test('CRM/Pedido PostgreSQL: verified HTTP Auth, separate restricted connections and owner/branch scope',async()=>{
   const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});
@@ -443,6 +457,7 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
     await f.admin.query('UPDATE profiles SET empresa_id=NULL WHERE id=$1',[ctx.actorId]);
     await f.admin.query("UPDATE profiles SET permissoes=jsonb_set(permissoes,'{Comercial,pedido}','[\"visualizar\"]'::jsonb) WHERE id=$1",[ctx.actorId]);
     await assert.rejects(service.convertOrcamentoToPedido(ctx,unavailable.bound.id,unavailable.input),{code:'PERMISSION_DENIED'});
+    return {ctx,service,opportunityId:initial.bound.id,input:initial.input,pedidoId:results[0].pedido.id};
   }finally{f.admin.query=originalAdmin;f.data.withTransaction=originalTransaction;}
 }
 
