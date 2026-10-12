@@ -30,6 +30,23 @@ test('Legacy preflight rejects privileged or SET ROLE sessions before catalog re
   assert.ok(!JSON.stringify(denied).includes(destino.database));
  }finally{await f.close();}
 });
+test('Legacy preflight selection rejects unsupported entities before connecting and captures scope',async()=>{
+ let calls=0;const db={query:async()=>{calls++;throw Error('must not query');}};
+ const identity=async()=>({destination:false,restrictedRole:false,restrictedLogin:false});
+ for(const entidades of [[],['cliente','cliente'],['fornecedor'],['produto','unknown'],null])
+  await assert.rejects(()=>inspecionarDestinoPilotoLegado(db,{database:'isolated',schema:'test'},{inspecionarIdentidade:identity,entidades}),/ENTITIES_INVALID/);
+ assert.equal(calls,0);
+ const entidades=['cliente'];
+ const report=await inspecionarDestinoPilotoLegado(db,{database:'isolated',schema:'test'},{entidades,inspecionarIdentidade:async()=>{
+  entidades.push('produto');return identity();
+ }});
+ assert.deepEqual(report.entidades_verificadas,['cliente']);assert.equal(report.gates_nao_homologados.includes('mapa_classe_unidade'),false);
+ assert.equal(report.aprovacao_importacao_operacional,false);assert.equal(calls,0);
+ const target={database:'isolated',schema:'original'},parameters:any[]=[];
+ await inspecionarDestinoPilotoLegado({query:async(_sql:any,params:any)=>{parameters.push(params);return {rows:[]};}},target,
+  {entidades:['cliente'],inspecionarIdentidade:async()=>{target.schema='changed';return {destination:true,restrictedRole:true,restrictedLogin:true};}});
+ assert.equal(parameters[0][0],'original');assert.deepEqual(parameters[0][1],['clientes']);
+});
 
 if(process.env.DATABASE_URL)test('Legacy preflight PostgreSQL: shared masters, identity indexes, minimal grants and read-only fail-closed',async()=>{
  const f=await realCrmFixture(process.env.DATABASE_URL!,{restrictedLogin:true});try {
@@ -41,6 +58,15 @@ if(process.env.DATABASE_URL)test('Legacy preflight PostgreSQL: shared masters, i
   await f.exec(`REVOKE ALL ON oportunidades FROM ${f.role}`); // Legacy identity checks do not require CRM DML grants.
   assert.ok((await inspect()).bloqueios.includes('grants'));
   await f.exec(`GRANT SELECT,INSERT,UPDATE ON clientes,produtos TO ${f.role}`);
+  await f.exec(`REVOKE ALL ON produtos FROM ${f.role}`);
+  const clientOnly=await f.data.withTransaction(tx=>inspecionarDestinoPilotoLegado(tx,destino,{...options,entidades:['cliente']}));
+  assert.equal(clientOnly.ready,true);assert.deepEqual(clientOnly.entidades_verificadas,['cliente']);
+  assert.equal(clientOnly.aprovacao_importacao_operacional,false);assert.equal(clientOnly.gates_nao_homologados.includes('mapa_classe_unidade'),false);
+  assert.equal((await inspect()).ready,false);
+  await f.exec('ALTER TABLE clientes NO FORCE ROW LEVEL SECURITY');
+  assert.equal((await f.data.withTransaction(tx=>inspecionarDestinoPilotoLegado(tx,destino,{...options,entidades:['cliente']}))).ready,false);
+  await f.exec('ALTER TABLE clientes FORCE ROW LEVEL SECURITY');
+  await f.exec(`GRANT SELECT,INSERT,UPDATE ON produtos TO ${f.role}`);
   assert.equal((await inspect()).ready,true);
   await f.exec('GRANT UPDATE(nome) ON clientes TO PUBLIC');
   assert.ok((await inspect()).bloqueios.includes('publicAcl'));

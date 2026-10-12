@@ -27,15 +27,20 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Catalog-only pilot preflight. Reuses the canonical identity probe; never authorizes an import. */
-export async function inspecionarDestinoPilotoLegado(db,destino,{inspecionarIdentidade}={}) {
+export async function inspecionarDestinoPilotoLegado(db,destino,{inspecionarIdentidade,entidades=['cliente','produto']}={}) {
+  destino=Object.freeze({...destino});
   if(typeof db?.query!=='function'||typeof inspecionarIdentidade!=='function'
     ||typeof destino?.database!=='string'||!destino.database.trim()||typeof destino?.schema!=='string'||!destino.schema.trim())
     throw new Error('LEGACY_PREFLIGHT_CONTRACT_REQUIRED');
+  if(!Array.isArray(entidades)||!entidades.length||entidades.length>2
+    ||entidades.some(entidade=>!['cliente','produto'].includes(entidade))||new Set(entidades).size!==entidades.length)
+    throw new Error('LEGACY_PREFLIGHT_ENTITIES_INVALID');
+  const escolhidas=[...entidades],tables=escolhidas.map(entidade=>entidade==='cliente'?'clientes':'produtos');
   const identity=await inspecionarIdentidade(db,{database:destino.database,schema:destino.schema,requireRestrictedLogin:true});
   const checks={destino:identity?.destination===true,loginRestrito:identity?.restrictedRole===true&&identity?.restrictedLogin===true};
   const report=()=>({ready:Object.values(checks).every(x=>x===true),checks,bloqueios:Object.keys(checks).filter(k=>checks[k]!==true),
-    somente_leitura:true,scope:'grupo_schema_only',aprovacao_importacao_operacional:false,
-    gates_nao_homologados:['identidade_grupo','rbac_ator','policies_comportamentais','fonte_equivalente','mapa_classe_unidade','backup_restauracao']});
+    somente_leitura:true,scope:'grupo_schema_only',entidades_verificadas:escolhidas,aprovacao_importacao_operacional:false,
+    gates_nao_homologados:['identidade_grupo','rbac_ator','policies_comportamentais','fonte_equivalente',...(escolhidas.includes('produto')?['mapa_classe_unidade']:[]),'backup_restauracao']});
   if(!checks.destino||!checks.loginRestrito)return report();
   const relations=await db.query(`SELECT c.relname AS name,c.oid::text AS oid,c.relkind AS kind,c.relrowsecurity AS rls,c.relforcerowsecurity AS force,
     NOT EXISTS(SELECT 1 FROM aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
@@ -45,8 +50,8 @@ export async function inspecionarDestinoPilotoLegado(db,destino,{inspecionarIden
     has_table_privilege(current_user,c.oid,'SELECT') AND has_table_privilege(current_user,c.oid,'INSERT')
       AND has_table_privilege(current_user,c.oid,'UPDATE') AS grants
     FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-    WHERE n.nspname=$1 AND c.relname IN ('clientes','produtos')`,[destino.schema]);
-  checks.mestres=relations.rows.length===2&&relations.rows.every(r=>r.kind==='r');
+    WHERE n.nspname=$1 AND c.relname=ANY($2::text[])`,[destino.schema,tables]);
+  checks.mestres=relations.rows.length===tables.length&&relations.rows.every(r=>r.kind==='r');
   checks.rls=checks.mestres&&relations.rows.every(r=>r.rls===true&&r.force===true);
   checks.grants=checks.mestres&&relations.rows.every(r=>r.grants===true);
   checks.publicAcl=checks.mestres&&relations.rows.every(r=>r.public_safe===true);
