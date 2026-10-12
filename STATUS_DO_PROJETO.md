@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip | pendente · sobre `84f995a2` |
+| tip | **`6d843264`** · sobre `84f995a2` |
 | lote | sky expedição/estoque · mapa Onda E |
 | candidata | #318 `7af84751` |
 | próxima | CI → redeploy |
