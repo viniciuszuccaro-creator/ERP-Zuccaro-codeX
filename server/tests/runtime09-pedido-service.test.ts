@@ -40,3 +40,21 @@ test('conversao Orcamento Pedido e transacional idempotente e preserva snapshots
 test('workflow Pedido bloqueia transicoes invalidas e registra historico Finalizado',async()=>{const f=fixture();const order=await f.service.create(ctx,direct);await assert.rejects(f.service.transition(ctx,order.id,'FINALIZADO'),(error:any)=>error.statusCode===409);await f.service.transition(ctx,order.id,'EM_PRODUCAO');await f.service.transition(ctx,order.id,'PRONTO_ENTREGA');const final=await f.service.transition(ctx,order.id,'FINALIZADO');assert.equal(final.status,'FINALIZADO');assert.deepEqual((await f.service.history(ctx,order.id)).map(row=>row.status_novo),['EM_ABERTO','EM_PRODUCAO','PRONTO_ENTREGA','FINALIZADO']);await assert.rejects(f.service.cancel(ctx,order.id,'cancelar'),(error:any)=>error.statusCode===409);});
 
 test('PedidoService falha fechado em tenant e RBAC',async()=>{const f=fixture();await assert.rejects(f.service.list({...ctx,actorId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd'}),(error:any)=>error.statusCode===403);await assert.rejects(f.service.list({...ctx,empresaId:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'}));await assert.rejects(f.service.get(ctx,'invalido'),(error:any)=>error.statusCode===400);});
+test('Pedido revalida criar editar status cancelar e conversao sem efeitos quando permissao muda',async()=>{
+ for(const action of ['criar','editar','alterar-status','cancelar','converter-pedido'])for(const revokeAt of [2,3]){
+  const f=fixture(),order=await f.service.create(ctx,direct),original=await f.orcamentos.create({groupId,empresaId},quote);
+  const before={orders:await f.repo.list({groupId,empresaId}),history:await f.repo.history({groupId,empresaId},order.id),audit:await f.audit.listByEntity('Pedido',order.id)};
+  const allowed=f.rbac.assertAllowed.bind(f.rbac);let calls=0;
+  f.rbac.assertAllowed=async(...args:any[])=>{if(args[3]===action&&++calls===revokeAt)throw Object.assign(Error('synthetic revoked permission'),{code:'PERMISSION_DENIED'});return(allowed as any)(...args);};
+  const run=()=>action==='criar'?f.service.create(ctx,direct):action==='editar'?f.service.update(ctx,order.id,direct):action==='alterar-status'?f.service.transition(ctx,order.id,'EM_PRODUCAO'):action==='cancelar'?f.service.cancel(ctx,order.id,'Synthetic cancellation'):f.service.convert(ctx,original.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:direct.data_entrega_solicitada});
+  await assert.rejects(run,e=>e.code==='PERMISSION_DENIED');assert.equal(calls,revokeAt);
+  assert.deepEqual({orders:await f.repo.list({groupId,empresaId}),history:await f.repo.history({groupId,empresaId},order.id),audit:await f.audit.listByEntity('Pedido',order.id)},before);
+  f.rbac.assertAllowed=allowed;assert.equal((await f.service.create(ctx,direct)).numero,'00000002');
+ }
+});
+test('Pedido captura tenant e ator antes da espera sem seguir alteracao do chamador',async()=>{
+ const f=fixture(),caller={...ctx},transaction=f.repo.withTransaction.bind(f.repo);
+ f.repo.withTransaction=fn=>transaction(async tx=>{caller.groupId='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';caller.actorId='dddddddd-dddd-4ddd-8ddd-dddddddddddd';return fn(tx);});
+ const order=await f.service.create(caller,direct);assert.equal(order.group_id,ctx.groupId);assert.equal(order.vendedor_id,ctx.actorId);
+ assert.equal((await f.audit.listByEntity('Pedido',order.id))[0].actorId,ctx.actorId);
+});
