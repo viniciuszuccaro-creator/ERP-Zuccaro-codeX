@@ -1,3 +1,13 @@
+## CURSOR — Servico/Kit/Catalogo reopen (2026-10-12T10:55Z)
+
+| Item | Valor |
+|---|---|
+| lote | aliases Visualizador + prevIdRef · Kit sky · colunas codigo_servico/codigo_kit |
+| testes | cobertura 20 PASS |
+| #312 | tip `c5e83312` · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI → redeploy → homolog |
+
 ## CURSOR — CalcularComissoes multiempresa+RBAC (2026-10-12T10:45Z)
 
 | Item | Valor |

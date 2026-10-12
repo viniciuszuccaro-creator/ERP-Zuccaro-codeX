@@ -150,14 +150,14 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
   // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
   const tiles = [
-    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['codigo','nome','descricao','tipo_servico','ativo'],      form: ServicoForm },
+    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['codigo','codigo_servico','nome','descricao','tipo_servico','ativo'], form: ServicoForm },
     { k: 'SetorAtividade', title: 'Setores de Atividade',    Icon: Factory,    campos: ['codigo','nome','descricao'],                    form: SetorAtividadeForm },
     // nome_grupo é o rótulo canônico nos auxiliares; nome pode estar vazio
     { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['codigo','nome_grupo','natureza','nome'],        form: GrupoProdutoForm },
     { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['codigo','nome_marca','nome','pais_origem','categoria'],  form: MarcaForm },
     // Campo canônico é codigo_tabela_legado (não codigo numérico MASTER_CODE)
     { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo_tabela_legado','nome','tipo','ativo'],               form: TabelaPrecoForm },
-    { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['codigo','nome','descricao','ativo'],                     form: KitProdutoForm },
+    { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['codigo','codigo_kit','nome','nome_kit','descricao','ativo'], form: KitProdutoForm },
     { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['codigo','nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];

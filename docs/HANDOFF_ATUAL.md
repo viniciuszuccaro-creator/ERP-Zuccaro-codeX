@@ -1,3 +1,14 @@
+## CURSOR — Servico/Kit/Catalogo reopen (2026-10-12T10:55Z)
+
+| Item | Valor |
+|---|---|
+| #261 | tip CalcularComissoes `e28a2e9d` · runtime ainda `cbd3624f` |
+| lote | Servico/Kit/CatalogoWeb aliases+prevIdRef+sanitize · Kit sky · colunas Bloco2 |
+| testes | cobertura 20 PASS |
+| #312 | tip `c5e83312` · **sem porte** |
+| BLOCKED | secret restrito |
+| próxima | CI tip → redeploy → homolog |
+
 ## CURSOR — CalcularComissoes multiempresa+RBAC (2026-10-12T10:45Z)
 
 | Item | Valor |

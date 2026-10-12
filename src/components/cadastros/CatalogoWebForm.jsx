@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,24 +10,37 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { syncFlagsCatalogoProduto } from "@/components/lib/siteOrigemPolicy";
 
-export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
-  const dadosIniciais = catalogoWeb || catalogo;
+const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const emptyCatalogo = {
+  nome_catalogo: '',
+  descricao: '',
+  produto_id: '',
+  exibir_site: true,
+  exibir_marketplace: false,
+  ordem_exibicao: 1,
+  ativo: true,
+};
+
+export default function CatalogoWebForm({
+  catalogo, catalogoWeb, item, data, initialData, defaultValues, onSubmit, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || catalogoWeb || catalogo;
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.CatalogoWeb.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.CatalogoWeb.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_catalogo: '',
-    descricao: '',
-    produto_id: '',
-    exibir_site: true,
-    exibir_marketplace: false,
-    ordem_exibicao: 1,
-    ativo: true
-  });
+  const [formData, setFormData] = useState(() => ({ ...emptyCatalogo, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyCatalogo, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,11 +57,16 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
       alert('Empresa obrigatoria para catalogo do site.');
       return;
     }
+    const nomeCatalogo = sanitizeText(formData.nome_catalogo || formData.nome || '', 240);
     onSubmit({
-      ...syncFlagsCatalogoProduto(formData),
+      ...syncFlagsCatalogoProduto({
+        ...formData,
+        nome_catalogo: nomeCatalogo,
+        descricao: sanitizeText(formData.descricao, 1000),
+      }),
       group_id: groupId || formData.group_id,
       empresa_id: empresaId,
-      nome: formData.nome_catalogo || formData.nome || ''
+      nome: nomeCatalogo,
     });
   };
 
@@ -146,7 +164,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
         data-action="salvar-catalogo-web"
         data-sensitive="true"
       >
-        {dadosIniciais ? 'Atualizar' : 'Criar Catálogo Web'}
+        {dadosIniciais?.id ? 'Atualizar' : 'Criar Catálogo Web'}
       </Button>
     </form>
   );
@@ -157,7 +175,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
           <Globe className="w-6 h-6 text-blue-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Catálogo' : 'Novo Catálogo Web'}
+            {dadosIniciais?.id ? 'Editar Catálogo' : 'Novo Catálogo Web'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

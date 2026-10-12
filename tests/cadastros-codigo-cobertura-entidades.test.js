@@ -343,6 +343,23 @@ test('CalcularComissoesForm: createInContext + RBAC + sky (sem base44.entities d
   assert.doesNotMatch(src, /bg-purple-/);
 });
 
+test('Servico/Kit/CatalogoWeb: aliases Visualizador + prevIdRef reopen', async () => {
+  const servico = await readFile(new URL('../src/components/cadastros/ServicoForm.jsx', import.meta.url), 'utf8');
+  const kit = await readFile(new URL('../src/components/cadastros/KitProdutoForm.jsx', import.meta.url), 'utf8');
+  const catalogo = await readFile(new URL('../src/components/cadastros/CatalogoWebForm.jsx', import.meta.url), 'utf8');
+  for (const [src, action] of [
+    [servico, 'codigo-registro-servico'],
+    [kit, 'codigo-registro-kit-produto'],
+    [catalogo, 'codigo-registro-catalogo-web'],
+  ]) {
+    assert.match(src, /item \|\| data \|\| initialData \|\| defaultValues/);
+    assert.match(src, /prevIdRef/);
+    assert.match(src, new RegExp(action));
+  }
+  assert.match(kit, /bg-sky-/);
+  assert.doesNotMatch(kit, /bg-purple-/);
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

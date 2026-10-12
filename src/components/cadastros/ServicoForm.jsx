@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,29 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
+const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
+const emptyServico = {
+  descricao: '',
+  codigo_servico: '',
+  tipo_servico: 'Produção',
+  unidade: 'HORA',
+  preco_servico: 0,
+  custo_hora_homem: 0,
+  tempo_execucao_medio_min: 0,
+  margem_servico: 30,
+  requer_especializacao: false,
+  aliquota_iss: 5,
+  ativo: true,
+  observacoes: '',
+};
+
 /**
- * V21.1.2 - WINDOW MODE READY
+ * Serviço — aliases Visualizador + reopen por id (campos não somem).
  */
-export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = servico;
+export default function ServicoForm({
+  servico, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || servico;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -22,20 +40,15 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
   const podeCriar = hasPermission?.("Cadastros.Servico.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.Servico.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    descricao: '',
-    codigo_servico: '',
-    tipo_servico: 'Produção',
-    unidade: 'HORA',
-    preco_servico: 0,
-    custo_hora_homem: 0,
-    tempo_execucao_medio_min: 0,
-    margem_servico: 30,
-    requer_especializacao: false,
-    aliquota_iss: 5,
-    ativo: true,
-    observacoes: ''
-  });
+  const [formData, setFormData] = useState(() => ({ ...emptyServico, ...(dadosIniciais || {}) }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyServico, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -51,11 +64,15 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
       alert('Sem permissão para salvar serviço.');
       return;
     }
+    const descricao = sanitizeText(formData.descricao, 240);
     onSubmit({
       ...formData,
+      descricao,
+      codigo_servico: sanitizeText(formData.codigo_servico, 40),
+      observacoes: sanitizeText(formData.observacoes, 1000),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
-      nome: formData.descricao
+      nome: descricao,
     });
   };
 
@@ -164,7 +181,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {dadosIniciais ? 'Atualizar' : 'Criar Serviço'}
+          {dadosIniciais?.id ? 'Atualizar' : 'Criar Serviço'}
         </Button>
       </div>
     </form>
@@ -174,9 +191,9 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Stars className="w-5 h-5 text-blue-600" />
-            {dadosIniciais ? 'Editar Serviço' : 'Novo Serviço'}
+          <h2 className="text-xl font-bold flex items-center gap-2 text-sky-900">
+            <Stars className="w-5 h-5 text-sky-600" />
+            {dadosIniciais?.id ? 'Editar Serviço' : 'Novo Serviço'}
           </h2>
         </div>
         {formContent}
