@@ -144,4 +144,17 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.doesNotMatch(fechamento, /purple-|indigo-|violet-/);
   assert.match(pedidoHeader, /to-sky-50|from-sky-600/);
   assert.doesNotMatch(pedidoHeader, /purple-|indigo-|violet-/);
+  const priceBrain = await readFile(
+    new URL('../src/components/comercial/PriceBrain.jsx', import.meta.url),
+    'utf8',
+  );
+  const uploadProj = await readFile(
+    new URL('../src/components/comercial/UploadProjetoForm.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(priceBrain, /sky-/);
+  assert.doesNotMatch(priceBrain, /purple-|indigo-|violet-/);
+  assert.match(uploadProj, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(uploadProj, /purple-|indigo-|violet-/);
+
 });
