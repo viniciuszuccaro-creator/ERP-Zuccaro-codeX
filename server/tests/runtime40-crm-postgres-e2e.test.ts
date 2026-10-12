@@ -263,7 +263,7 @@ async function prepareCrmHttpAuth(f:Awaited<ReturnType<typeof realCrmFixture>>) 
         (SELECT count(*)::int FROM pedido_itens) AS items,(SELECT count(*)::int FROM pedido_historico) AS history,
         (SELECT version FROM oportunidades WHERE id=$1) AS version`,[id]);
       const before=(await snapshot()).rows[0];
-      const actor=(await f.admin.query('SELECT p.created_by FROM pedidos p JOIN oportunidades o ON o.convertido_em_id=p.id WHERE o.id=$1',[id])).rows[0];
+      const actor=(await f.admin.query('SELECT p.created_by FROM pedidos p JOIN oportunidades o ON o.convertido_em_id=p.id::text WHERE o.id=$1',[id])).rows[0];
       assert.equal(actor.created_by,ID.runtimeActorA);assert.notEqual(actor.created_by,owner);
       const headers=(token:string,company:string=ID.empresaA)=>({authorization:`Bearer ${token}`,'x-group-id':ID.groupA,'x-empresa-id':company,'Content-Type':'application/json'});
       const post=(token:string,company=ID.empresaA)=>fetch(`${base}/api/v1/oportunidades/${id}/converter-orcamento-pedido`,{method:'POST',headers:headers(token,company),body:JSON.stringify(input)});
