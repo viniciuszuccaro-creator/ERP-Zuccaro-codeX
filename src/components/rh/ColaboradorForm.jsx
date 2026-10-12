@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -51,11 +51,51 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
     aso_validade: ''
   });
 
+  const prevIdRef = useRef(colaborador?.id || null);
+  const prevUpdatedRef = useRef(colaborador?.updated_date);
   useEffect(() => {
-    if (colaborador?.id) {
+    const nextId = colaborador?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && colaborador?.updated_date && colaborador.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData({
+          nome_completo: '',
+          codigo_vendedor_legado: '',
+          cpf: '',
+          email: '',
+          telefone: '',
+          data_nascimento: '',
+          data_admissao: '',
+          cargo: '',
+          departamento: '',
+          salario: 0,
+          tipo_contrato: 'CLT',
+          status: 'Ativo',
+          endereco: '',
+          banco: '',
+          agencia: '',
+          conta: '',
+          pode_apontar_producao: false,
+          pode_dirigir: false,
+          cnh_numero: '',
+          cnh_categoria: '',
+          cnh_validade: '',
+          aso_validade: '',
+        });
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = colaborador.updated_date;
       setFormData({ ...colaborador });
     }
-  }, [colaborador?.id]);
+  }, [colaborador?.id, colaborador?.updated_date]);
 
   const schema = z.object({
     nome_completo: z.string().min(3, 'Nome é obrigatório'),

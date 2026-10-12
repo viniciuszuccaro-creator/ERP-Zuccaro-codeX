@@ -1,3 +1,14 @@
+## CURSOR — Ondas A–C composição+#318 + reopen mestres (2026-10-12T13:55Z)
+
+| Item | Valor |
+|---|---|
+| tip | pendente · implantado **`6a4b304f`** |
+| candidata Codex | **#318** `7af84751` |
+| lote | prevIdRef Cliente/Fornecedor/Colaborador/Produto · sky KPIs estoque/expedição |
+| testes | reopen + azul KPIs |
+| BLOCKED | secret restrito |
+| próxima | CI → Ondas B/C residual · D/E |
+
 ## CURSOR — tip 6a4b304f implantado+homolog (2026-10-12T13:45Z)
 
 | Item | Valor |

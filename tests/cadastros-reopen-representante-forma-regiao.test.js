@@ -211,3 +211,25 @@ test('troca de empresa: contextKey muda e lista não reutiliza chave anterior', 
   const keyB = ['representantes', 'empresa-3z', true];
   assert.notDeepEqual(keyA, keyB);
 });
+
+test('Cliente/Fornecedor/Colaborador/Produto: prevIdRef + updated_date (reabrir sem sujar)', async () => {
+  const cliente = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
+  const colaborador = await readFile(new URL('../src/components/rh/ColaboradorForm.jsx', import.meta.url), 'utf8');
+  const produto = await readFile(new URL('../src/components/cadastros/ProdutoFormV22_Completo.jsx', import.meta.url), 'utf8');
+  for (const [src, label] of [
+    [cliente, 'Cliente'],
+    [fornecedor, 'Fornecedor'],
+    [colaborador, 'Colaborador'],
+    [produto, 'Produto'],
+  ]) {
+    assert.match(src, /prevIdRef/, `${label} prevIdRef`);
+    assert.match(src, /prevUpdatedRef/, `${label} prevUpdatedRef`);
+    assert.match(src, /updated_date/, `${label} updated_date`);
+    assert.match(src, /idChanged \|\| updatedChanged/, `${label} id|updated gate`);
+  }
+  // Visualizador remonta form após getInContext completo
+  const v24 = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
+  assert.match(v24, /key=\{"form-" \+ ENTITY/);
+  assert.match(v24, /setFormKey\(function\(k\) \{ return k \+ 1; \}\)/);
+});

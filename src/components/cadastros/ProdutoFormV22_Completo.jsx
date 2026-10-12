@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -211,6 +211,44 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
       almoxarifado_id: ''
     };
   });
+
+  const prevIdRef = useRef(produto?.id || null);
+  const prevUpdatedRef = useRef(produto?.updated_date);
+  useEffect(() => {
+    const nextId = produto?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && produto?.updated_date && produto.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = produto.updated_date;
+      setFormData({
+        ...produto,
+        tipo_item: normalizeProdutoTipoItem(produto.tipo_item),
+        unidade_principal: produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : 'UN'),
+        unidades_secundarias: (() => {
+          const base = produto.unidades_secundarias || ['KG'];
+          const up = produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : undefined);
+          return up && !base.includes(up) ? [...base, up] : base;
+        })(),
+        fatores_conversao: produto.fatores_conversao || {
+          kg_por_peca: 0,
+          kg_por_metro: 0,
+          metros_por_peca: 0,
+          peca_por_ton: 0,
+          kg_por_ton: 1000,
+        },
+      });
+    }
+  }, [produto?.id, produto?.updated_date]);
 
   const { readyId: produtoHttpReadyId, loadError: produtoHttpLoadError, retry: retryProdutoHttpLoad } = useProdutoHttpEditLoad({
     enabled: produtoHttp,

@@ -16,21 +16,21 @@ export default function KPIsEstoque({
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
           <CardTitle className="text-xs font-medium">Total Produtos</CardTitle>
-          <Box className="w-4 h-4 text-indigo-600" />
+          <Box className="w-4 h-4 text-sky-600" />
         </CardHeader>
         <CardContent className="px-3 pb-2">
-          <div className="text-2xl font-bold text-indigo-600">{produtosAtivos}</div>
+          <div className="text-2xl font-bold text-sky-600">{produtosAtivos}</div>
           <p className="text-xs text-slate-500">ativos</p>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm bg-purple-50">
+      <Card className="border-0 shadow-sm bg-sky-50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
-          <CardTitle className="text-xs font-medium text-purple-700">Revenda</CardTitle>
-          <ShoppingCart className="w-4 h-4 text-purple-600" />
+          <CardTitle className="text-xs font-medium text-sky-700">Revenda</CardTitle>
+          <ShoppingCart className="w-4 h-4 text-sky-600" />
         </CardHeader>
         <CardContent className="px-3 pb-2">
-          <div className="text-2xl font-bold text-purple-900">{produtosRevenda}</div>
+          <div className="text-2xl font-bold text-sky-900">{produtosRevenda}</div>
           <p className="text-xs text-slate-500">produtos</p>
         </CardContent>
       </Card>

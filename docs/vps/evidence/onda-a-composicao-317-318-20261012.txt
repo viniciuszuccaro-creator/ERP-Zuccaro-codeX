@@ -1,0 +1,18 @@
+ONDA A — composição Codex + distinção de refs (Cursor)
+UTC: 2026-10-12T13:55Z
+
+DISTINÇÃO OBRIGATÓRIA
+| Papel | Ref | Nota |
+|---|---|---|
+| main | baba91a6 | sem merge C360 TX |
+| candidata integrada Codex | tip **#318** `7af84751` (inclui #317 `25b9093a` + conteúdo #313/#315/#316) | owner merge/canário |
+| #316 | `18fc6bfe` | prova restore na stack antiga; **não** é mais a candidata tip |
+| #261 Cursor | tip docs atual · runtime implantado **6a4b304f** | UI/cadastros/sky; sem porte TX |
+| implantado erp-dev | `6a4b304f` · asset `index-BluicOIY.js` · rollback `pre-spa-login-20261012-134341` | OWNER homolog fail_count=0 |
+
+COORDENAÇÃO
+- Cursor: UI/cadastros/sky/UTF-8 em #261; arquivos reservados intocados.
+- Codex: #317 composição serviços + #318 preflight; merge owner antes mutações CPA.
+- Restrito: BLOCKED secrets ERP_DEV_LOGIN_RESTRICTED_* (não bloqueia Ondas B–E).
+
+NÃO portar #317/#318 em #261 (pedidoService/orcamentoService/crmPreflight + stack CRM).

@@ -513,8 +513,74 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
+  const prevIdRef = useRef(cliente?.id || null);
+  const prevUpdatedRef = useRef(cliente?.updated_date);
   useEffect(() => {
-    if (cliente?.id) {
+    const nextId = cliente?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && cliente?.updated_date && cliente.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData({
+          tipo: "Pessoa Física",
+          status: "Prospect",
+          nome: "",
+          razao_social: "",
+          nome_fantasia: "",
+          cpf: "",
+          cnpj: "",
+          rg: "",
+          inscricao_estadual: "",
+          inscricao_municipal: "",
+          regiao_atendimento: "Sudeste",
+          endereco_principal: {
+            cep: "",
+            logradouro: "",
+            numero: "",
+            complemento: "",
+            bairro: "",
+            cidade: "",
+            estado: "",
+            latitude: null,
+            longitude: null,
+            mapa_url: "",
+          },
+          contatos: [],
+          locais_entrega: [],
+          condicao_comercial: {
+            tabela_preco_id: "",
+            forma_pagamento_padrao_id: "",
+            percentual_desconto: 0,
+            condicao_pagamento: "À Vista",
+            limite_credito: 0,
+            limite_credito_utilizado: 0,
+            situacao_credito: "OK",
+          },
+          configuracao_fiscal: {
+            regime_tributario: "Simples Nacional",
+            cfop_padrao_venda: "5102",
+            contribuinte_icms: true,
+            tipo_contribuinte: "1 - Contribuinte",
+            isento_ipi: false,
+            isento_icms: false,
+          },
+          documentos: [],
+          vendedor_responsavel: "",
+          vendedor_responsavel_id: "",
+          observacoes: "",
+          empresa_id: empresaAtual?.id,
+          group_id: groupId,
+        });
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = cliente.updated_date;
       setFormData({
         ...cliente,
         contatos: cliente.contatos || [],
@@ -526,7 +592,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           condicao_pagamento: "À Vista",
           limite_credito: 0,
           limite_credito_utilizado: 0,
-          situacao_credito: "OK"
+          situacao_credito: "OK",
         },
         configuracao_fiscal: cliente.configuracao_fiscal || {
           regime_tributario: "Simples Nacional",
@@ -534,12 +600,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           contribuinte_icms: true,
           tipo_contribuinte: "1 - Contribuinte",
           isento_ipi: false,
-          isento_icms: false
+          isento_icms: false,
         },
-        documentos: cliente.documentos || []
+        documentos: cliente.documentos || [],
       });
     }
-  }, [cliente?.id]);
+  }, [cliente?.id, cliente?.updated_date, empresaAtual?.id, groupId]);
 
   const gerarMapaUrl = (endereco) => {
     if (endereco.latitude && endereco.longitude) {

@@ -74,3 +74,13 @@ test('auxiliares: CentroCusto/GrupoProduto codigo; GrupoEmpresarial ID técnico'
   assert.match(b2, /SetorAtividade[\s\S]*?\[['"]codigo['"]/);
   assert.match(b5, /GrupoEmpresarial[\s\S]*?\[['"]id['"]/);
 });
+
+test('Estoque/Expedição launchpad KPIs usam sky (sem purple/indigo)', async () => {
+  const estoque = await readFile(new URL('../src/components/estoque/estoque-launchpad/KPIsEstoque.jsx', import.meta.url), 'utf8');
+  const expedicao = await readFile(new URL('../src/components/expedicao/expedicao-launchpad/KPIsExpedicao.jsx', import.meta.url), 'utf8');
+  const header = await readFile(new URL('../src/components/estoque/estoque-launchpad/HeaderEstoqueCompacto.jsx', import.meta.url), 'utf8');
+  for (const [src, label] of [[estoque,'KPIsEstoque'],[expedicao,'KPIsExpedicao'],[header,'HeaderEstoque']]) {
+    assert.match(src, /sky-/, `${label} sky`);
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${label} sem purple/indigo`);
+  }
+});

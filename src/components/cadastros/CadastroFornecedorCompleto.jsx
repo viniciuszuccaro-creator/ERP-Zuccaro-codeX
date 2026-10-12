@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -304,14 +304,65 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     }
   };
 
+  const prevIdRef = useRef(fornecedor?.id || null);
+  const prevUpdatedRef = useRef(fornecedor?.updated_date);
   useEffect(() => {
-    if (fornecedor) {
+    const nextId = fornecedor?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && fornecedor?.updated_date && fornecedor.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData({
+          nome: "",
+          razao_social: "",
+          nome_fantasia: "",
+          tipo_pessoa: "Pessoa Juridica",
+          cpf_cnpj: "",
+          cpf: "",
+          cnpj: "",
+          rg: "",
+          inscricao_estadual: "",
+          simples_nacional: false,
+          rntrc: "",
+          email: "",
+          telefone: "",
+          whatsapp: "",
+          contato_responsavel: "",
+          endereco: "",
+          bairro: "",
+          cidade: "",
+          estado: "",
+          cep: "",
+          website: "",
+          endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
+          dados_bancarios: { banco: "", agencia: "", conta: "", tipo_conta: "Corrente" },
+          tipo_fornecedor: "Matéria-Prima",
+          categoria: "Matéria Prima",
+          prazo_entrega_padrao: 0,
+          status_fornecedor: "Em Análise",
+          status: "Ativo",
+          avaliacoes: [],
+          nota_media: 0,
+          empresa_id: empresaAtual?.id,
+          empresa_dona_id: empresaAtual?.id,
+          group_id: groupId,
+        });
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = fornecedor.updated_date;
       setFormData({
         ...fornecedor,
-        avaliacoes: fornecedor.avaliacoes || []
+        avaliacoes: fornecedor.avaliacoes || [],
       });
     }
-  }, [fornecedor?.id]);
+  }, [fornecedor?.id, fornecedor?.updated_date, empresaAtual?.id, groupId]);
 
   const content = (
     <>
@@ -319,7 +370,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-cyan-600" />
+              <Building2 className="w-6 h-6 text-sky-600" />
               {fornecedor?.id ? 'Editar Fornecedor' : 'Novo Fornecedor'}
             </h2>
               {fornecedor?.id && (

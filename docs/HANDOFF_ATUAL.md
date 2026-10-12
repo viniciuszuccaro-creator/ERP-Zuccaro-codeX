@@ -1,3 +1,14 @@
+## CURSOR — Ondas A–C: composição #318 + reopen mestres (2026-10-12T13:55Z)
+
+| Item | Valor |
+|---|---|
+| Onda A | candidata Codex tip **#318** `7af84751` (não #316) · implantado **`6a4b304f`** · main `baba91a6` |
+| Onda B | prevIdRef+updated_date Cliente/Fornecedor/Colaborador/Produto |
+| Onda C | sky KPIs Estoque/Expedição · Fornecedor chrome |
+| restrito | **BLOCKED** secrets (só testa restrito) |
+| porte Codex | nenhum |
+| próxima | CI → residual B/C · D UI sem porte · E C360 coord |
+
 ## CURSOR — tip 6a4b304f implantado+homolog (2026-10-12T13:45Z)
 
 | Item | Valor |
