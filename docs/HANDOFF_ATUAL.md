@@ -1,8 +1,23 @@
+## CURSOR — ack Codex C360 + PedidosTab UTF-8/sky (2026-10-12T13:30Z)
+
+| Item | Valor |
+|---|---|
+| HEAD candidata | tip pendente commit · runtime implantado **`4a46520a`** |
+| lote | ack pacote Codex · closeout #313/#315/#316 · PedidosTab mojibake+sky · PedidosEntregaTab sky |
+| evidência | `docs/vps/evidence/coord-codex-c360-313-315-316-20261012.txt` · `review-closeout-313-315-316-tips-20261012.txt` |
+| #313 | `58a9ff9f` CI SUCCESS MERGEABLE · **sem porte** |
+| #315 | `c5870f80` CI SUCCESS MERGEABLE · **sem porte** |
+| #316 | `18fc6bfe` CI SUCCESS MERGEABLE · **sem porte** · candidata integrada tip |
+| CPA UI | OrcamentosTab/PedidosTab prontas · mutações pós-merge Codex |
+| restrito | **BLOCKED** secrets `ERP_DEV_LOGIN_RESTRICTED_*` |
+| porte Codex | nenhum (`pedidoService`/`orcamentoService`/C360/Marca/Legado intocados) |
+| próxima | CI tip → residual Cursor · owner merge canário #313→#315→#316 |
+
 ## CURSOR — tip 4a46520a implantado+homolog sky lote3 (2026-10-12T13:23Z)
 
 | Item | Valor |
 |---|---|
-| HEAD candidata | tip **`4a46520a`** (runtime `d8d15982` sky lote3) |
+| HEAD candidata | tip docs **`f91ed830`** · runtime implantado **`4a46520a`** (`d8d15982`) |
 | implantado | **`4a46520a`** · asset `index-BwUc90Ir.js` · rollback `pre-spa-login-20261012-132204` |
 | lote | sky PriceBrain/Upload/Canais · reopen tests · review #315/#316 |
 | homolog | OWNER `fail_count=0` · `pw-homolog-261-tip-4a46520a.json` |

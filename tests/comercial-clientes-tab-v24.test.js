@@ -156,5 +156,22 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.doesNotMatch(priceBrain, /purple-|indigo-|violet-/);
   assert.match(uploadProj, /bg-sky-600|text-sky-600/);
   assert.doesNotMatch(uploadProj, /purple-|indigo-|violet-/);
+  const pedidosTab = await readFile(
+    new URL('../src/components/comercial/PedidosTab.jsx', import.meta.url),
+    'utf8',
+  );
+  const pedidosEntrega = await readFile(
+    new URL('../src/components/comercial/PedidosEntregaTab.jsx', import.meta.url),
+    'utf8',
+  );
+  // Status canônicos UTF-8 (filtros/badges devem casar com PedidoForm/Expedição)
+  assert.match(pedidosTab, /Em Trânsito/);
+  assert.match(pedidosTab, /Em Expedição/);
+  assert.match(pedidosTab, /Aguardando Aprovação/);
+  assert.doesNotMatch(pedidosTab, /TrÃ¢nsito|ExpediÃ§Ã£o|AprovaÃ§Ã£o|Ã§|Ã£/);
+  assert.match(pedidosTab, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(pedidosTab, /purple-|indigo-|violet-/);
+  assert.match(pedidosEntrega, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(pedidosEntrega, /purple-|indigo-|violet-/);
 
 });

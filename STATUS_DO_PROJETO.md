@@ -1,3 +1,14 @@
+## CURSOR — ack Codex C360 + PedidosTab UTF-8/sky (2026-10-12T13:30Z)
+
+| Item | Valor |
+|---|---|
+| tip | pendente · implantado **`4a46520a`** |
+| lote | coord Codex · closeout reviews · PedidosTab encoding/sky · PedidosEntregaTab sky |
+| testes | comercial-clientes-tab-v24 (status UTF-8 + sky) |
+| #313/#315/#316 | tips atuais SUCCESS · **sem porte** · candidata=`18fc6bfe` |
+| BLOCKED | secret restrito |
+| próxima | CI → residual Cursor · CPA mutações pós-merge |
+
 ## CURSOR — tip 4a46520a implantado+homolog (2026-10-12T13:23Z)
 
 | Item | Valor |
