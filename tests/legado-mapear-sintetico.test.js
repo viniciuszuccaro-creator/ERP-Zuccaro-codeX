@@ -290,6 +290,27 @@ test('opcoes nao substituem empresa da operacao sem comprovacao', () => {
 
 // Completes the class/unit inventory without exposing source customer/product records.
 import { catalogarProdutoClasseUnidadeLegado } from '../scripts/legado/mapear-registro-sintetico.mjs';
+test('classe/tipo exige aliases explicitos concordantes e campos proprios sem primeira escolha',()=>{
+ const source={sku:'0001',descricao:'Synthetic',classe:'CHAPA',unidade:'KG',tipo_item:'REVENDA'};
+ const map=declaration=>mapLegadoRowToCanonicalStub(source,{entidade:'produto',groupId:'g1',produtoClassUnitMap:{'CHAPA|KG':declaration}});
+ for(const declaration of [{tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:'unit'},
+  {tipo_item:'REVENDA',tipo_produto:'MATERIA_PRIMA',unidade_medida_id:'unit'},
+  {tipo_item:'MATERIA_PRIMA',tipo_produto:'Unknown',unidade_medida_id:'unit'},
+  {tipo_item:1,unidade_medida_id:'unit'},
+  Object.assign(Object.create({tipo_item:'MATERIA_PRIMA'}),{unidade_medida_id:'unit'}),
+  Object.assign(Object.create({unidade_medida_id:'unit'}),{tipo_item:'MATERIA_PRIMA'}),
+  Object.assign([],{tipo_item:'MATERIA_PRIMA',unidade_medida_id:'unit'})]){
+  const out=map(declaration);assert.equal(out.quarentena,true);assert.equal(out.tipo_item,undefined);
+  assert.equal(out.codigo_legado,'0001');assert.equal(out.classe_legado,'CHAPA');assert.equal(out.unidade_legado,'KG');
+ }
+ for(const declaration of [{tipo_item:'MATERIA_PRIMA',tipo_produto:'Matéria-Prima Produção',unidade_medida_id:'unit'},
+  {tipo_produto:'MATERIA_PRIMA',unidade_medida_id:'unit'},
+  {tipo_item:null,tipo_produto:'MATERIA_PRIMA',unidade_medida_id:'unit'},
+  {tipo_item:' ',tipo_produto:'MATERIA_PRIMA',unidade_medida_id:'unit'}])assert.equal(map(declaration).tipo_item,'Matéria-Prima Produção');
+ assert(map({tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:'unit'}).quarentena_motivos.includes('produto_tipo_mapeamento_conflitante'));
+ const catalogue=catalogarProdutoClasseUnidadeLegado([source],{groupId:'g1',produtoClassUnitMap:{'CHAPA|KG':{tipo_item:'MATERIA_PRIMA',tipo_produto:'REVENDA',unidade_medida_id:'unit'}},unidadesCanonicas:[{id:'unit',group_id:'g1',ativo:true}]});
+ assert.equal(catalogue.quantidade_sem_mapa,1);
+});
 test('snapshot revisado revalida significado e escopo sem converter unidade ou arredondar fator',()=>{
  const unit={id:'unit',group_id:'g1',empresa_id:null,sigla:'KG',nome_completo:'Quilograma',tipo_grandeza:'Massa',unidade_base_conversao:null,fator_conversao_para_base:1,permite_conversao:true,usa_em_estoque:true,usa_em_compras:true,usa_em_vendas:true,ativo:true};
  const opts={groupId:'g1',produtoClassUnitMap:{'08|01':{tipo_item:'MATERIA_PRIMA',unidade_medida_id:'unit'}},unidadesCanonicas:[unit],

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { unidadeSemanticaEquivalente } from '../../server/src/domain/unidadeSemanticaPolicy.js';
-import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
+import { resolveProdutoTiposImportacaoExplicitos } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
  * Não lê HD real. Não grava staging. Reutiliza migracaoErpPolicy (Regra-Mãe).
@@ -198,11 +198,14 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     && Object.prototype.hasOwnProperty.call(opts.produtoClassUnitMap ?? {},chaveClasseUnidade)
     ? opts.produtoClassUnitMap?.[chaveClasseUnidade]
     : null;
-  const tipoExplicito = first(classificacao?.tipo_item, classificacao?.tipo_produto);
-  const tipoResolvido = tipoExplicito ? resolveProdutoTipoImportacao(tipoExplicito) : null;
-  const classificacaoValida = Boolean(tipoResolvido && !tipoResolvido.requiresReview && !tipoResolvido.usedDefault
-    && typeof classificacao.unidade_medida_id === 'string' && first(classificacao.unidade_medida_id));
+  const registroClassificacao = classificacao && typeof classificacao === 'object' && !Array.isArray(classificacao);
+  const own = key => registroClassificacao && Object.prototype.hasOwnProperty.call(classificacao,key);
+  const tiposDeclarados = ['tipo_item','tipo_produto'].filter(own).map(key => classificacao[key]);
+  const tipoResolvido = resolveProdutoTiposImportacaoExplicitos(tiposDeclarados);
+  const classificacaoValida = Boolean(!tipoResolvido.requiresReview && !tipoResolvido.usedDefault
+    && own('unidade_medida_id') && typeof classificacao.unidade_medida_id === 'string' && first(classificacao.unidade_medida_id));
   const motivos = [...q.motivos];
+  if (entidade === 'produto' && tipoResolvido.conflicting) motivos.push('produto_tipo_mapeamento_conflitante');
   if (entidade === 'produto' && (!classeLegado || !unidadeLegado || !classificacaoValida)) {
     motivos.push('produto_classe_unidade_sem_mapeamento');
   }

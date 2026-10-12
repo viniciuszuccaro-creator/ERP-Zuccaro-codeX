@@ -63,6 +63,21 @@ export function isProdutoTipo(value, expected) {
   return normalizeProdutoTipoItem(value) === expected;
 }
 
+/** Explicit import aliases must agree; an absent/unknown declaration never defaults to Revenda. */
+export function resolveProdutoTiposImportacaoExplicitos(values) {
+  const invalid = { value: undefined, requiresReview: true, usedDefault: false, conflicting: false };
+  if (!Array.isArray(values)) return invalid;
+  const present = values.filter(value => value !== null && value !== undefined);
+  if (present.some(value => typeof value !== 'string')) return invalid;
+  const declared = present.map(value => value.trim()).filter(Boolean);
+  if (!declared.length) return invalid;
+  const resolved = declared.map(resolveProdutoTipoImportacao);
+  const kinds = new Set(resolved.map(result => result.value));
+  if (resolved.some(result => result.requiresReview || result.usedDefault) || kinds.size !== 1)
+    return { ...invalid, conflicting: kinds.size > 1 };
+  return { value: resolved[0].value, requiresReview: false, usedDefault: false, conflicting: false };
+}
+
 export function isProdutoRevenda(value) {
   return isProdutoTipo(value, PRODUTO_TIPOS_CANONICOS.REVENDA);
 }
