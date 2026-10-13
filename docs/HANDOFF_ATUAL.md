@@ -1,3 +1,7 @@
+## CODEX COMERCIAL 360 — snapshot preço→Orçamento→Pedido (2026-10-13)
+
+- Branch `codex/comercial-preco-snapshot-revogacao-20261013` baseada na #324 `b0865363`; reserva de `server/src/services/{orcamento,pedido}Service.ts` e `server/tests/runtime-onda2-preco-snapshot.test.ts`, sem editar a branch Cursor ou Legado. Entrada do cliente com `tabela_preco_id` divergente da tabela efetiva é rejeitada na transação; itens com origens diferentes também falham fechados. Fluxo sintético real `TabelaPrecoService`→Orçamento→Pedido cobre unidade principal trocada, falha sem nova venda, reautorização/retry e snapshots antigos intactos. Unidade secundária para venda não foi ativada: conversão de quantidade/estoque ainda precisa de contrato. Revisão/CI só contam no HEAD final desta branch; sem merge/deploy/importação.
+
 ## CODEX COMERCIAL 360 — revogação de unidade em preço (2026-10-13)
 
 - Após #323 `2de492d7` (CI push/PR SUCCESS e revisão Codex sem achado relevante, **não** Cursor), branch empilhada `codex/comercial-preco-unidade-revogacao-20261013` corrige leitura de item de preço quando Produto perde sua unidade principal/secundária. PostgreSQL e in-memory exigem vínculo vigente; teste sintético prova revogação, bloqueio de edição sem mutação e retry. Escopo: TabelaPreco repositories, teste R07B, STATUS/HANDOFF; não tocar Pedido/Orçamento/Expedição, UI Cursor ou Legado. CI/revisão exigem SHA desta branch, não o de #323.
