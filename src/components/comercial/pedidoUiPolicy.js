@@ -49,6 +49,40 @@ export function createPedidoMutationGate() {
 /** Vive enquanto o módulo estiver carregado, inclusive se WindowRenderer desmontar uma janela minimizada. */
 export const sharedPedidoMutationGate = createPedidoMutationGate();
 
+const PEDIDO_INTENT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const pedidoIntentStorageKey = (scope) => scope?.groupId && scope?.empresaId && scope?.actorId
+  ? `pedido-create-intent:${JSON.stringify([scope.groupId,scope.empresaId,scope.actorId])}` : null;
+
+/** Somente a chave da intenção fica em sessionStorage; nunca persiste cliente, itens ou token. */
+export function getOrCreatePedidoIntentKey(scope, storage, makeId) {
+  const storageKey = pedidoIntentStorageKey(scope);
+  if (!storageKey || !storage || typeof makeId !== 'function') return null;
+  try {
+    const previous = storage.getItem(storageKey);
+    if (previous && PEDIDO_INTENT_UUID.test(previous)) return previous;
+    const next = makeId();
+    if (!PEDIDO_INTENT_UUID.test(next)) return null;
+    storage.setItem(storageKey, next);
+    return next;
+  } catch { return null; }
+}
+
+export function clearPedidoCreateIntentKey(scope, storage, expectedKey) {
+  const storageKey = pedidoIntentStorageKey(scope);
+  if (!storageKey || !storage || !expectedKey) return false;
+  try {
+    if (storage.getItem(storageKey) !== expectedKey) return false;
+    storage.removeItem(storageKey);
+    return true;
+  } catch { return false; }
+}
+
+export async function recoverPedidoCreateIntentAfterConflict(scope, storage, expectedKey, makeId, refresh) {
+  await refresh(scope);
+  if (!clearPedidoCreateIntentKey(scope, storage, expectedKey)) return null;
+  return getOrCreatePedidoIntentKey(scope, storage, makeId);
+}
+
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',
@@ -261,11 +295,12 @@ export function mapPedidoRowToForm(row) {
   };
 }
 
-export function buildPedidoPayload(form) {
+export function buildPedidoPayload(form, idempotencyKey) {
   if (!form.cliente_empresa_id || !form.condicao_pagamento_id || !form.tipo_operacao || !form.data_entrega_solicitada) throw new Error('Preencha cliente, condição, operação e data de entrega.');
   if (!Array.isArray(form.itens) || form.itens.length === 0) throw new Error('Inclua pelo menos um item.');
   form.itens.forEach(calculateItem);
   return {
+    idempotency_key: idempotencyKey || undefined,
     cliente_empresa_id: form.cliente_empresa_id,
     cliente_local_id: form.cliente_local_id || undefined,
     obra_id: form.obra_id || undefined,

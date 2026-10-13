@@ -35,6 +35,35 @@ function fixture() {
 
 test('PedidoService cria lista consulta atualiza e audita sem aceitar total do cliente',async()=>{const f=fixture();const created=await f.service.create(ctx,direct);assert.equal(created.total,'20.000000');await assert.rejects(f.service.create(ctx,{...direct,total:'999'}),/Invalid Pedido payload/);assert.equal((await f.service.list(ctx)).meta.total,1);assert.equal((await f.service.get(ctx,created.id)).id,created.id);const updated=await f.service.update(ctx,created.id,{...direct,itens:[{...direct.itens[0],quantidade:'3'}]});assert.equal(updated.numero,created.numero);assert.equal(updated.total,'30.000000');assert.deepEqual((await f.audit.listByEntity('Pedido',created.id)).map(row=>row.action),['create','update']);});
 
+test('Pedido direto reexecuta a mesma chave sem duplicar, mas rejeita payload divergente',async()=>{
+  const f=fixture();
+  const input={...direct,idempotency_key:'55555555-5555-4555-8555-555555555555'};
+  const first=await f.service.create(ctx,input);
+  const replay=await f.service.create({...ctx,requestId:'retry-after-lost-response'},input);
+  assert.equal(replay.id,first.id);
+  assert.equal((await f.repo.list({groupId,empresaId})).total,1);
+  assert.equal((await f.audit.listByEntity('Pedido',first.id)).filter(row=>row.action==='create').length,1);
+  f.rbac.link({actorId,groupId,permissions:{Comercial:{pedido:['criar']}}});
+  assert.equal((await f.service.create({...ctx,requestId:'retry-create-only'},input)).id,first.id);
+  const otherActor='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+  f.rbac.link({actorId:otherActor,groupId,permissions:{Comercial:{pedido:['criar']}}});
+  await assert.rejects(f.service.create({...ctx,actorId:otherActor},input),(error:any)=>error.statusCode===409&&error.code==='PEDIDO_IDEMPOTENCY_CONFLICT');
+  await assert.rejects(f.service.create(ctx,{...input,itens:[{...input.itens[0],quantidade:'3'}]}),(error:any)=>error.statusCode===409&&error.code==='PEDIDO_IDEMPOTENCY_CONFLICT');
+  assert.equal((await f.repo.list({groupId,empresaId})).total,1);
+  await assert.rejects(f.service.create({...ctx,actorId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd'},input),(error:any)=>error.statusCode===403);
+  f.rbac.link({actorId,groupId,permissions:{Comercial:{pedido:['editar']}}});
+  await assert.rejects(f.service.update(ctx,first.id,input),(error:any)=>error.statusCode===422);
+});
+
+test('cinco retries concorrentes da mesma intenção geram um Pedido e uma auditoria',async()=>{
+  const f=fixture();
+  const input={...direct,idempotency_key:'66666666-6666-4666-8666-666666666666'};
+  const results=await Promise.all(Array.from({length:5},(_,index)=>f.service.create({...ctx,requestId:`parallel-${index}`},input)));
+  assert.equal(new Set(results.map(row=>row.id)).size,1);
+  assert.equal((await f.repo.list({groupId,empresaId})).total,1);
+  assert.equal((await f.audit.listByEntity('Pedido',results[0].id)).filter(row=>row.action==='create').length,1);
+});
+
 test('conversao Orcamento Pedido e transacional idempotente e preserva snapshots',async()=>{const f=fixture();const original=await f.orcamentos.create({groupId,empresaId},quote);const order=await f.service.convert(ctx,original.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z'});assert.equal(order.orcamento_id,original.id);assert.equal(order.numero,'00000001');assert.equal(order.total,original.total);assert.equal(order.itens[0].descricao,original.itens[0].descricao);assert.equal((await f.orcamentos.get({groupId,empresaId},original.id))?.status,'EM_ABERTO');await assert.rejects(f.service.convert(ctx,original.id,{tipo_operacao:'RETIRADA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z'}),(error:any)=>error.statusCode===409&&error.code==='ORCAMENTO_ALREADY_CONVERTED');assert.equal((await f.repo.list({groupId,empresaId})).total,1);});
 
 test('workflow Pedido bloqueia transicoes invalidas e registra historico Finalizado',async()=>{const f=fixture();const order=await f.service.create(ctx,direct);await assert.rejects(f.service.transition(ctx,order.id,'FINALIZADO'),(error:any)=>error.statusCode===409);await f.service.transition(ctx,order.id,'EM_PRODUCAO');await f.service.transition(ctx,order.id,'PRONTO_ENTREGA');const final=await f.service.transition(ctx,order.id,'FINALIZADO');assert.equal(final.status,'FINALIZADO');assert.deepEqual((await f.service.history(ctx,order.id)).map(row=>row.status_novo),['EM_ABERTO','EM_PRODUCAO','PRONTO_ENTREGA','FINALIZADO']);await assert.rejects(f.service.cancel(ctx,order.id,'cancelar'),(error:any)=>error.statusCode===409);});

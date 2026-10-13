@@ -10,6 +10,7 @@ export const pedidoItemSchema = orcamentoItemSchema.extend({
 }).strict();
 
 export const pedidoCreateSchema = z.object({
+  idempotency_key: z.string().uuid().optional(),
   cliente_empresa_id: z.string().uuid(),
   cliente_local_id: z.string().uuid().nullable().optional(),
   obra_id: z.string().uuid().nullable().optional(),
@@ -75,7 +76,9 @@ export function calculatePedido(items: z.infer<typeof pedidoItemSchema>[]): Pick
 
 export interface PedidoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
-  create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido>;
+  lockIdempotency(scope: PedidoScope, key: string, executor?: DbQueryExecutor): Promise<void>;
+  getByIdempotencyKey(scope: PedidoScope, key: string, executor?: DbQueryExecutor): Promise<{ row: Pedido; fingerprint: string } | null>;
+  create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor, fingerprint?: string): Promise<Pedido>;
   get(scope: PedidoScope, id: string, executor?: DbQueryExecutor, lock?: boolean): Promise<Pedido | null>;
   getByOrcamento(scope: PedidoScope, orcamentoId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   list(scope: PedidoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: PedidoListFilters): Promise<PedidoPage>;

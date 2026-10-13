@@ -9,16 +9,35 @@ export class InMemoryPedidoRepository implements PedidoRepository {
   private rows = new Map<string, Pedido>();
   private events: PedidoHistorico[] = [];
   private next = new Map<string, number>();
+  private idempotency = new Map<string, { id: string; fingerprint: string }>();
+  private transactionTail: Promise<void> = Promise.resolve();
 
   async withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> {
+    let release!: () => void;
+    const turn = new Promise<void>((resolve) => { release = resolve; });
+    const previous = this.transactionTail;
+    this.transactionTail = turn;
+    await previous;
     const rows = clone(this.rows);
     const events = clone(this.events);
     const next = new Map(this.next);
+    const idempotency = new Map(this.idempotency);
     try { return await fn(); }
-    catch (error) { this.rows = rows; this.events = events; this.next = next; throw error; }
+    catch (error) { this.rows = rows; this.events = events; this.next = next; this.idempotency = idempotency; throw error; }
+    finally { release(); }
   }
 
-  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, _executor?: DbQueryExecutor): Promise<Pedido> {
+  async lockIdempotency(_scope: PedidoScope, _key: string, _executor?: DbQueryExecutor): Promise<void> {
+    // withTransaction serializa a fixture inteira como o advisory lock da implementação PostgreSQL.
+  }
+
+  async getByIdempotencyKey(scope: PedidoScope, value: string, _executor?: DbQueryExecutor) {
+    const indexed = this.idempotency.get(`${key(scope)}:${value}`);
+    const row = indexed && this.rows.get(indexed.id);
+    return row ? { row: clone(row), fingerprint: indexed.fingerprint } : null;
+  }
+
+  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, _executor?: DbQueryExecutor, fingerprint?: string): Promise<Pedido> {
     if (data.orcamento_id && await this.getByOrcamento(scope, data.orcamento_id)) throw new Error('PEDIDO_ORCAMENTO_ALREADY_CONVERTED');
     const now = new Date().toISOString();
     const sequenceKey = key(scope);
@@ -37,6 +56,12 @@ export class InMemoryPedidoRepository implements PedidoRepository {
     };
     this.next.set(sequenceKey, number + 1);
     this.rows.set(row.id, row);
+    if (data.idempotency_key) {
+      if (!fingerprint) throw new Error('PEDIDO_IDEMPOTENCY_FINGERPRINT_REQUIRED');
+      const scopedKey = `${key(scope)}:${data.idempotency_key}`;
+      if (this.idempotency.has(scopedKey)) throw new Error('PEDIDO_IDEMPOTENCY_DUPLICATE');
+      this.idempotency.set(scopedKey, { id: row.id, fingerprint });
+    }
     this.events.push({ id: randomUUID(), group_id: scope.groupId, empresa_id: scope.empresaId, pedido_id: row.id, status_anterior: null, status_novo: 'EM_ABERTO', actor_id: actorId, motivo: null, created_at: now });
     return clone(row);
   }

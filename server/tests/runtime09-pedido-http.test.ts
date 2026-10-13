@@ -78,6 +78,25 @@ test('HTTP Pedido executa ciclo tenant-scoped com historico e auditoria', async 
   assert.deepEqual((await runtime.auditRepo.listByEntity('Pedido', id)).map((entry) => entry.action), ['create', 'update', 'change_status', 'change_status', 'change_status']);
 });
 
+test('HTTP Pedido repete chave da intenção sem segunda escrita e rejeita conflito', async () => {
+  const runtime = fixture();
+  const payload = { ...pedidoPayload, idempotency_key: '88888888-8888-4888-8888-888888888888' };
+  const post = (body: unknown, customHeaders = headers()) => request(runtime.app, '/api/v1/pedidos', {
+    method: 'POST', headers: customHeaders, body: JSON.stringify(body),
+  });
+  const first = await post(payload);
+  const replay = await post(payload);
+  assert.equal(first.status, 201);
+  assert.equal(replay.status, 201);
+  assert.equal(replay.body.data.id, first.body.data.id);
+  assert.equal((await request(runtime.app, '/api/v1/pedidos?limit=10&offset=0', { headers: headers() })).body.meta.total, 1);
+  assert.equal((await runtime.auditRepo.listByEntity('Pedido', first.body.data.id)).filter(row => row.action === 'create').length, 1);
+  const changed = await post({ ...payload, itens: [{ ...payload.itens[0], quantidade: '3' }] });
+  assert.equal(changed.status, 409);
+  assert.equal(changed.body.error.code, 'PEDIDO_IDEMPOTENCY_CONFLICT');
+  assert.equal((await post(payload, headers({ 'x-actor-id': deniedActorId }))).status, 403);
+});
+
 test('HTTP Pedido cancela sem exclusao e bloqueia repeticao', async () => {
   const runtime = fixture(); const created = await request(runtime.app, '/api/v1/pedidos', { method: 'POST', headers: headers(), body: JSON.stringify(pedidoPayload) }); const id = created.body.data.id;
   const cancelled = await request(runtime.app, `/api/v1/pedidos/${id}/cancelar`, { method: 'POST', headers: headers(), body: JSON.stringify({ motivo: 'Pedido cancelado em teste' }) });

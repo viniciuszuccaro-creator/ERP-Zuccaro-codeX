@@ -67,3 +67,30 @@ test('R09 PostgreSQL real: sequencia concorrente na empresa nao colide', { skip:
     assert.equal((await repo.list(scope, 200, 0)).rows.filter((row) => ids.includes(row.id)).length, 2);
   } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }
 });
+
+test('R09 PostgreSQL real: chave da criação direta serializa retries concorrentes', { skip: !enabled && 'DATABASE_URL not available' }, async () => {
+  const db = createDbClient(loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'true', DATABASE_URL: process.env.DATABASE_URL }));
+  const repo = new PostgresPedidoRepository(db); const ids: string[] = [];
+  try {
+    const migrations = await db.query<{ id: string }>("SELECT id FROM schema_migrations WHERE id='044_pedidos_idempotencia_direta.sql'");
+    assert.equal(migrations.rows.length, 1);
+    const data = { ...(await input(db)), idempotency_key: '77777777-7777-4777-8777-777777777777' };
+    const fingerprint = 'a'.repeat(64);
+    const attempt = () => repo.withTransaction(async (tx) => {
+      await tx!.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)", [scope.groupId, scope.empresaId]);
+      await repo.lockIdempotency(scope, data.idempotency_key, tx);
+      const prior = await repo.getByIdempotencyKey(scope, data.idempotency_key, tx);
+      return prior ? prior.row : repo.create(scope, data, SEED_IDS.runtimeActorA, tx, fingerprint);
+    });
+    const [first, second] = await Promise.all([attempt(), attempt()]);
+    ids.push(first.id);
+    assert.equal(first.id, second.id);
+    const found = await repo.getByIdempotencyKey(scope, data.idempotency_key);
+    assert.equal(found?.fingerprint, fingerprint);
+    assert.equal(found?.row.id, first.id);
+    assert.equal(Object.hasOwn(found!.row, 'idempotency_key'), false);
+    assert.equal(Object.hasOwn(found!.row, 'payload_fingerprint'), false);
+    assert.equal(await repo.getByIdempotencyKey(other, data.idempotency_key), null);
+    assert.deepEqual((await repo.history(scope, first.id)).map(row => row.status_novo), ['EM_ABERTO']);
+  } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }
+});

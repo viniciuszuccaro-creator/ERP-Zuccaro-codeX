@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { AppError, isAppError } from '../api/errors.js';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
@@ -79,16 +80,29 @@ export class PedidoService {
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
     if (data.orcamento_id) throw new AppError(422, 'PEDIDO_ORIGEM_INVALIDA', 'Use quotation conversion endpoint');
+    const fingerprintInput = { ...data, actor_id: ctx.actorId };
+    delete fingerprintInput.idempotency_key;
+    const fingerprint = data.idempotency_key
+      ? createHash('sha256').update(JSON.stringify(fingerprintInput)).digest('hex') : undefined;
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       await this.prepare(ctx,'criar',executor);
+      if (data.idempotency_key) {
+        await this.repo.lockIdempotency(scope, data.idempotency_key, executor);
+        await this.prepare(ctx,'criar',executor);
+        const prior = await this.repo.getByIdempotencyKey(scope, data.idempotency_key, executor);
+        if (prior) {
+          if (prior.fingerprint !== fingerprint) throw new AppError(409, 'PEDIDO_IDEMPOTENCY_CONFLICT', 'Key already used with different input');
+          return prior.row;
+        }
+      }
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data,executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens,executor);
       await this.prepare(ctx,'criar',executor);
-      const created = await this.repo.create(scope, priced, ctx.actorId!, executor);
+      const created = await this.repo.create(scope, priced, ctx.actorId!, executor, fingerprint);
       await this.auditMargemOverride(ctx, created.id, margemDecision, executor);
       await this.auditRow(ctx, 'create', null, created, executor);
       return created;
@@ -190,6 +204,7 @@ export class PedidoService {
   async update(ctx: RequestContext, id: string, payload: unknown) {
     ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'editar'); this.assertId(id, 'pedidoId'); const data = this.parse(payload);
+    if (data.idempotency_key) this.validation({ idempotency_key: 'immutable' });
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       await this.prepare(ctx,'editar',executor);
