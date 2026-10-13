@@ -1,3 +1,12 @@
+## CODEX LEGADO — Auth real isolado no piloto relacional (2026-10-13)
+
+- Responsavel: Legado, branch `codex/legado-historico-audit-20261013`, PR #322. Reutilizados harness privado, API/servicos/repositorios publicados e dez pares Cliente/endereco anteriormente confrontados com a extracao. Nenhum arquivo de runtime ou da frente Comercial/Cursor foi alterado.
+- PostgreSQL descartavel recebeu as 24 migrations da base do piloto; GoTrue real `supabase/gotrue:v2.189.0` usou schema `auth`, rede Docker interna sem portas publicadas e usuarios/segredos efemeros exclusivos. O middleware canonico recebeu tokens reais, sem `authFetchImpl`; proxy HTTP privado apenas encaminhou `/auth/v1/user` ao GoTrue. Isso nao homologa Supabase/Auth/RBAC do destino operacional.
+- Login e refresh de quatro identidades de teste passaram. API validou ausencia/token invalido (401), permissoes insuficientes e Grupo nao autorizado (403), registro de outro Grupo (404), duplicidade (409), desativacao do perfil ERP (403) e reativacao (200). Nao foi comprovada revogacao de access token por logout; desativacao de perfil e controle distinto.
+- Dez Clientes e dez enderecos reais foram persistidos isoladamente e reabertos com campos mapeados; dez auditorias create de Cliente, edicao/reabertura de Cliente e endereco, retry do mapa com zero novas linhas e vinculo empresarial sintetico sem habilitacao operacional passaram. Reversao canonica deixou zero importados ativos; containers/rede removidos e arquivo de segredos efemeros eliminado. Nao houve importacao operacional, alteracao de gates ou atribuicao fiscal automatica.
+- Falhas de infraestrutura corrigidas apenas no ensaio: reinicio inicial da imagem PostgreSQL e GoTrue buscando `schema_migrations.version` no schema publico; conexao de Auth com `search_path=auth` resolveu o conflito sem alterar migrations ou schema operacional. Logs, insumos e harness estao privados recuperaveis na VPS. Codigo permanece sem commit pelo bloqueio de typecheck global registrado; este lote publica somente documentacao sanitizada e passa `git diff --check`.
+- Proximo requisito: integrar/revisar o worker e validar Auth/permissoes reais do destino canônico aprovado, antes de preparar/promover lote operacional. A prova de concorrencia do worker anterior permanece com identidade de teste; nao somar as duas provas como ensaio integrado. Decisao especifica de publicacao do verificador continua pendente, sem excecao aplicada.
+
 ## CURSOR — validação login API pós-secrets (2026-10-08)
 
 | Fase | Estado |
