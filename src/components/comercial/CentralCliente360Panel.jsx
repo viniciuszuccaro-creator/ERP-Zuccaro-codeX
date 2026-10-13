@@ -23,7 +23,7 @@ import {
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
 import { formatCentral360Money as money } from '@/components/comercial/centralCliente360Money';
-import { openCentralOrcamentoWindow, openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
+import { centralOpenErrorMessage, createCentralOpenGate, openCentralOrcamentoWindow, openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useWindow } from '@/components/lib/useWindow';
@@ -218,6 +218,8 @@ export default function CentralCliente360Panel({
   const [conversionError,setConversionError]=useState('');
   const [pedidoOpenError,setPedidoOpenError]=useState('');
   const [orcamentoOpenError,setOrcamentoOpenError]=useState('');
+  const [openingRecord,setOpeningRecord]=useState(/** @type {{pedido?: string|boolean|null, orcamento?: string|boolean|null}} */ ({}));
+  const openGate=useRef(createCentralOpenGate());
   const sessionToken = typeof token === 'string' ? token.trim() : '';
   const enabled = canLoadCentralCliente360({
     flag: isHttpCliente360Enabled,
@@ -230,7 +232,7 @@ export default function CentralCliente360Panel({
   const sessionKey = central360SessionKey(sessionToken);
   const viewKey=JSON.stringify([clienteId,groupId,empresaId,actorId,sessionKey]);
   const viewRef=useRef(null);viewRef.current=viewKey;
-  React.useEffect(()=>{viewRef.current=viewKey;setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');return()=>{viewRef.current=null;};},[viewKey]);
+  React.useEffect(()=>{viewRef.current=viewKey;openGate.current.reset();setOpeningRecord({});setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');return()=>{viewRef.current=null;openGate.current.reset();};},[viewKey]);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
@@ -371,21 +373,26 @@ export default function CentralCliente360Panel({
   const meta = payload?.meta || {};
   const loadingMore = query.isFetching && !query.isLoading;
   const openRecord=async(row,kind)=>{
+    const ticket=openGate.current.begin(kind,viewKey);
+    if(!ticket)return;
     const pedido=kind==='pedido';
     const setError=pedido?setPedidoOpenError:setOrcamentoOpenError;
     setError('');
+    setOpeningRecord(current=>({...current,[kind]:row?.id||true}));
     const openedKey=viewRef.current;
     const openedScope={groupId,empresaId,actorId,token:sessionToken};
     const assertCurrent=()=>{
-      if(viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
+      if(!openGate.current.isCurrent(ticket)||viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
         throw new Error('Contexto alterado. Reabra a Central antes de consultar o registro.');
     };
     try{
       const open=pedido?openCentralPedidoWindow:openCentralOrcamentoWindow;
-      await open({row,block:pedido?blocks.pedidos:blocks.orcamentos,allowed:!permissionsLoading&&hasPermission('Comercial',kind,'visualizar'),
+      const opened=await open({row,block:pedido?blocks.pedidos:blocks.orcamentos,allowed:!permissionsLoading&&hasPermission('Comercial',kind,'visualizar'),
         assertCurrent,loadPanel:pedido?async()=>(await import('@/components/comercial/PedidosTab')).default:async()=>(await import('@/components/comercial/OrcamentosTab')).default,openWindow,
         props:{groupId,empresaId,actorId,actorEmail,sessionToken,hasPermission,filterInContext,empresaAtual}});
-    }catch(error){if(viewRef.current===openedKey)setError(error?.message||'Falha ao abrir registro.');}
+      if(!opened&&openGate.current.isCurrent(ticket)&&viewRef.current===openedKey)setError(centralOpenErrorMessage());
+    }catch{if(openGate.current.isCurrent(ticket)&&viewRef.current===openedKey)setError(centralOpenErrorMessage());}
+    finally{if(openGate.current.end(ticket))setOpeningRecord(current=>({...current,[kind]:null}));}
   };
 
   return (
@@ -489,7 +496,7 @@ export default function CentralCliente360Panel({
               <span className="flex items-center gap-2 shrink-0">
                 {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
                 <span>{money(row.total)}</span>
-                {!permissionsLoading&&hasPermission('Comercial','orcamento','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-orcamento-abrir" onClick={()=>void openRecord(row,'orcamento')}>Abrir</Button>}
+                {!permissionsLoading&&hasPermission('Comercial','orcamento','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-orcamento-abrir" disabled={Boolean(openingRecord.orcamento)} onClick={()=>void openRecord(row,'orcamento')}>{openingRecord.orcamento===row.id?'Abrindo...':'Abrir'}</Button>}
               </span>
             </>
           )}
@@ -513,7 +520,7 @@ export default function CentralCliente360Panel({
               <span className="flex items-center gap-2 shrink-0">
                 {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
                 <span>{money(row.total)}</span>
-                {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" onClick={()=>void openRecord(row,'pedido')}>Abrir</Button>}
+                {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" disabled={Boolean(openingRecord.pedido)} onClick={()=>void openRecord(row,'pedido')}>{openingRecord.pedido===row.id?'Abrindo...':'Abrir'}</Button>}
               </span>
             </>
           )}

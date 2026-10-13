@@ -4,6 +4,29 @@ export const isCanonicalComercialId = (value) => typeof value === 'string' && PE
 export const isCanonicalPedidoId = isCanonicalComercialId;
 let reopenRequestId = 0;
 
+/** Bloqueia importações repetidas do mesmo tipo sem impedir retry após falha. */
+export function createCentralOpenGate() {
+  const pending = new Map();
+  let generation = 0;
+  return {
+    begin(kind, scopeKey) {
+      if (pending.get(kind)?.scopeKey === scopeKey) return null;
+      const ticket = { kind, scopeKey, generation };
+      pending.set(kind, ticket);
+      return ticket;
+    },
+    isCurrent(ticket) { return Boolean(ticket && ticket.generation === generation && pending.get(ticket.kind) === ticket); },
+    end(ticket) {
+      if (!ticket || pending.get(ticket.kind) !== ticket) return false;
+      pending.delete(ticket.kind);
+      return true;
+    },
+    reset() { generation++; pending.clear(); },
+  };
+}
+
+export const centralOpenErrorMessage = () => 'Registro indisponível neste contexto. Atualize a Central e tente novamente.';
+
 /** Abre painéis canônicos existentes; o backend continua autoridade para leitura e RBAC. */
 async function openCanonicalWindow({ row, block, allowed, assertCurrent, loadPanel, openWindow, props, kind, label }) {
   if (!allowed || block?.status !== 'ok' || !isCanonicalComercialId(row?.id)
