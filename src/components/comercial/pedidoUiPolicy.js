@@ -77,6 +77,12 @@ export function clearPedidoCreateIntentKey(scope, storage, expectedKey) {
   } catch { return false; }
 }
 
+export async function recoverPedidoCreateIntentAfterConflict(scope, storage, expectedKey, makeId, refresh) {
+  await refresh(scope);
+  if (!clearPedidoCreateIntentKey(scope, storage, expectedKey)) return null;
+  return getOrCreatePedidoIntentKey(scope, storage, makeId);
+}
+
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',

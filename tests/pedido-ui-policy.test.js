@@ -10,6 +10,7 @@ import {
   createPedidoMutationGate,
   clearPedidoCreateIntentKey,
   getOrCreatePedidoIntentKey,
+  recoverPedidoCreateIntentAfterConflict,
   sharedPedidoMutationGate,
   clampPedidoCancelMotivo,
   evaluatePedidoCancelMotivoUiGate,
@@ -76,7 +77,8 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.ok(saveLine.indexOf('const saved=') < saveLine.indexOf('clearPedidoCreateIntentKey(ticket.scope'));
   assert.ok(saveLine.indexOf('clearPedidoCreateIntentKey(ticket.scope') < saveLine.indexOf('if(!detailGate.current.isCurrent(ticket'), 'sucesso tardio deve retirar a chave antes de descartar a resposta da UI');
   assert.match(saveLine,/error\?\.code==='PEDIDO_IDEMPOTENCY_CONFLICT'/);
-  assert.match(saveLine,/const retired=clearPedidoCreateIntentKey\(ticket\.scope,storage,createKey\);const next=retired\?getOrCreatePedidoIntentKey/);
+  assert.match(saveLine,/recoverPedidoCreateIntentAfterConflict\(ticket\.scope,intentStorage\(\),createKey/);
+  assert.match(saveLine,/invalidateQueries\(\{queryKey:\['pedidos-http',scope\.groupId,scope\.empresaId\],refetchType:'active'\},\{throwOnError:true\}\)/);
   assert.equal((source.match(/mutationGate\.current\.begin\(renderedScope\.current\)/g)||[]).length,3);
   assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,6);
   for(const action of ['save','transition','cancel']){
@@ -193,6 +195,21 @@ test('conflito comprovado apos resposta perdida aposenta chave consumida sem ret
   assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>next),next);
   assert.equal(clearPedidoCreateIntentKey(scope,storage,old),false);
   assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>{throw Error('nao sobrescrever nova intencao');}),next);
+});
+
+test('conflito reconsulta tenant antes de girar chave e falha fechada se refresh falhar',async()=>{
+  const values=new Map();
+  const storage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};
+  const scope={groupId:'g',empresaId:'e',actorId:'u'};
+  const old='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const next='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  getOrCreatePedidoIntentKey(scope,storage,()=>old);
+  await assert.rejects(recoverPedidoCreateIntentAfterConflict(scope,storage,old,()=>next,async()=>{throw Error('offline');}),/offline/);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>{throw Error('chave antiga deve permanecer');}),old);
+  const calls=[];
+  assert.equal(await recoverPedidoCreateIntentAfterConflict(scope,storage,old,()=>next,async received=>{calls.push(received);assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>next),old);}),next);
+  assert.deepEqual(calls,[scope]);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>{throw Error('chave nova deve permanecer');}),next);
 });
 
 test('pedido UI RBAC e fluxo sao fail-closed',()=>{
