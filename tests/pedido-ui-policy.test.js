@@ -75,6 +75,8 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   const saveLine=source.split('\n').find(value=>value.includes('const save=async'));
   assert.ok(saveLine.indexOf('const saved=') < saveLine.indexOf('clearPedidoCreateIntentKey(ticket.scope'));
   assert.ok(saveLine.indexOf('clearPedidoCreateIntentKey(ticket.scope') < saveLine.indexOf('if(!detailGate.current.isCurrent(ticket'), 'sucesso tardio deve retirar a chave antes de descartar a resposta da UI');
+  assert.match(saveLine,/error\?\.code==='PEDIDO_IDEMPOTENCY_CONFLICT'/);
+  assert.match(saveLine,/const retired=clearPedidoCreateIntentKey\(ticket\.scope,storage,createKey\);const next=retired\?getOrCreatePedidoIntentKey/);
   assert.equal((source.match(/mutationGate\.current\.begin\(renderedScope\.current\)/g)||[]).length,3);
   assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,6);
   for(const action of ['save','transition','cancel']){
@@ -177,6 +179,20 @@ test('sucesso tardio em A libera próxima intenção em A sem apagar a intençã
   assert.equal(clearPedidoCreateIntentKey(a,storage,keyA),true);
   assert.equal(getOrCreatePedidoIntentKey(b,storage,()=>{throw Error('B deve permanecer');}),keyB);
   assert.equal(getOrCreatePedidoIntentKey(a,storage,()=>nextA),nextA);
+});
+
+test('conflito comprovado apos resposta perdida aposenta chave consumida sem retry automatico',()=>{
+  const values=new Map();
+  const storage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};
+  const scope={groupId:'g',empresaId:'e',actorId:'u'};
+  const old='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const next='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>old),old);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>{throw Error('reload deve reutilizar');}),old);
+  assert.equal(clearPedidoCreateIntentKey(scope,storage,old),true);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>next),next);
+  assert.equal(clearPedidoCreateIntentKey(scope,storage,old),false);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>{throw Error('nao sobrescrever nova intencao');}),next);
 });
 
 test('pedido UI RBAC e fluxo sao fail-closed',()=>{
