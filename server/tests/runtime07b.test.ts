@@ -804,14 +804,19 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
       nome: 'SOMENTE A2',
       vigencia_inicio: '2020-01-01',
     });
-    await svc.createItem({
-      ...ctxA,
-      empresaId: SEED_IDS.empresaA2,
-    }, onlyA2.id, {
-      produto_id: SEED_IDS.produtoA,
-      unidade_medida_id: SEED_IDS.unidadeA,
-      preco: '55',
-    });
+    const ctxA2 = { ...ctxA, empresaId: SEED_IDS.empresaA2 };
+    await assert.rejects(
+      () => svc.createItem(ctxA2, onlyA2.id, {
+        produto_id: SEED_IDS.produtoA,
+        unidade_medida_id: SEED_IDS.unidadeA,
+        preco: '55',
+      }),
+      { code: 'PRODUTO_UNIDADE_NOT_FOUND' },
+    );
+    const beforeShared = await pg.query<{ total: number }>(
+      'SELECT count(*)::int AS total FROM tabela_preco_itens WHERE tabela_preco_id=$1', [onlyA2.id],
+    );
+    assert.equal(beforeShared.rows[0]?.total, 0);
     const unsafe = await svc.resolvePrice(ctxA, {
       clienteEmpresaTabelaId: onlyA2.id,
       produtoId: SEED_IDS.produtoA,
@@ -822,12 +827,24 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
     assert.notEqual(unsafe?.tabela_preco_id, onlyA2.id);
     assert.equal(unsafe?.origem_resolucao, 'padrao_empresa');
 
-    await svc.setPadrao({ ...ctxA, empresaId: SEED_IDS.empresaA2 }, onlyA2.id);
+    await svc.setPadrao(ctxA2, onlyA2.id);
     const crossCompanyProduct = await svc.resolvePrice(
-      { ...ctxA, empresaId: SEED_IDS.empresaA2 },
+      ctxA2,
       { produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01' },
     );
     assert.equal(crossCompanyProduct, null);
+
+    // Mestre compartilhado pelo Grupo pode entrar na mesma tabela sem duplicar Produto.
+    await pg.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1', [SEED_IDS.produtoA]);
+    await svc.createItem(ctxA2, onlyA2.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeA,
+      preco: '55',
+    });
+    const sharedPrice = await svc.resolvePrice(ctxA2, {
+      produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
+    });
+    assert.equal(sharedPrice?.tabela_preco_id, onlyA2.id);
 
     for (const invalid of [
       { produtoId: 'invalid', unidadeMedidaId: SEED_IDS.unidadeA },
@@ -864,8 +881,14 @@ test('preço em memória respeita Produto específico ou compartilhado', async (
     unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
   };
   repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: SEED_IDS.empresaA });
+  assert.equal(await repo.getProdutoUnidadeContext(
+    SEED_IDS.groupA, SEED_IDS.empresaA2, SEED_IDS.produtoA, SEED_IDS.unidadeA,
+  ), null);
   assert.equal(await repo.resolvePrice(input), null);
   repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null });
+  assert.ok(await repo.getProdutoUnidadeContext(
+    SEED_IDS.groupA, SEED_IDS.empresaA2, SEED_IDS.produtoA, SEED_IDS.unidadeA,
+  ));
   assert.equal((await repo.resolvePrice(input))?.preco, '12.34');
 });
 

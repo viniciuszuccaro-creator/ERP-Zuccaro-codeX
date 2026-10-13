@@ -156,6 +156,7 @@ export interface TabelaPrecoRepository {
   }, executor?: DbQueryExecutor): Promise<ResolvedPrice>;
   getProdutoUnidadeContext(
     groupId: string,
+    empresaId: string,
     produtoId: string,
     unidadeMedidaId: string,
     executor?: DbQueryExecutor,
@@ -615,11 +616,12 @@ export class InMemoryTabelaPrecoRepository implements TabelaPrecoRepository {
     return null;
   }
 
-  async getProdutoUnidadeContext(groupId: string, produtoId: string, unidadeMedidaId: string) {
+  async getProdutoUnidadeContext(groupId: string, empresaId: string, produtoId: string, unidadeMedidaId: string) {
     const produto = this.produtos.get(produtoId);
     const unidade = this.unidades.get(unidadeMedidaId);
     if (!produto || !unidade) return null;
     if (produto.group_id !== groupId || unidade.group_id !== groupId) return null;
+    if (produto.empresa_id !== null && produto.empresa_id !== empresaId) return null;
     return {
       produtoAtivo: produto.ativo,
       unidadeAtivo: unidade.ativo,

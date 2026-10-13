@@ -452,7 +452,7 @@ export class TabelaPrecoService {
   }
 
   private async assertProdutoUnidade(ctx: RequestContext, produtoId: string, unidadeId: string) {
-    const ctxInfo = await this.repo.getProdutoUnidadeContext(ctx.groupId, produtoId, unidadeId);
+    const ctxInfo = await this.repo.getProdutoUnidadeContext(ctx.groupId, ctx.empresaId!, produtoId, unidadeId);
     if (!ctxInfo || !ctxInfo.produtoAtivo || !ctxInfo.unidadeAtivo) {
       throw new AppError(404, 'PRODUTO_UNIDADE_NOT_FOUND', 'Produto/unidade not found in group');
     }

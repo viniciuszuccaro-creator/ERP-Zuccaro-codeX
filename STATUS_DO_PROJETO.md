@@ -1,3 +1,9 @@
+## CODEX — Comercial 360 Onda 2, Produto de empresa irmã em Tabela de Preço (2026-10-13)
+
+- Base isolada `#321` `037985cd` (ancestral `#319` `5568e3a9`); branch `codex/comercial-preco-produto-escopo-20261013`. Cursor #261 está em `6908f74e` documental; #104 congelada em `87101b4d`. Arquivos deste lote: `tabelaPrecoService`, repositórios PostgreSQL/in-memory de Tabela de Preço, teste PGlite existente, STATUS e HANDOFF. Não editar Pedido/Orçamento/Expedição, painel C360, catálogo/outbox, Marca, Legado nem a branch Cursor.
+- Causa reproduzida antes da correção: A2 (mesmo Grupo) criava item de preço para Produto exclusivo da Empresa A; `resolvePrice` já ocultava o preço na A2, mas item inválido persistia. Teste sintético PGlite falhou com `Missing expected rejection`. Lookup Produto/Unidade na criação agora exige Produto do mesmo Grupo e `empresa_id` nulo ou igual à empresa autenticada. Reutilizados RBAC, TenantGuard, transação e auditoria do serviço atual; nenhum schema/rota nova. Rejeição não cria item; após tornar o Produto compartilhado, retry permite inclusão e preço resolve. Teste in-memory confirma paridade.
+- Focados 2/2 PASS após falha reproduzida; backend `npm test` 372 PASS/0 FAIL/18 SKIP condicionais sem PostgreSQL externo, typecheck/build PASS. Frontend audit:baseline, lint e build PASS; `npm test` no Windows falha nos guardas Bash/VPS anteriores, e typecheck global mantém ~2.100 diagnósticos preexistentes fora do diff (nenhum arquivo frontend alterado). `git diff --check` PASS. Nenhuma alteração VPS, importação, dado pessoal ou merge. Próximo P0: publicar PR e CI do SHA; depois integrar sem dispensar gates de item Orçamento/Pedido e revisão independente.
+
 ## CURSOR — policy CRM compartilhada para o pacote 040 (2026-10-10)
 
 | Item | Estado |

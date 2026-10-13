@@ -1,3 +1,10 @@
+## CODEX COMERCIAL 360 — contrato de preço cross-company (2026-10-13)
+
+- Branch própria `codex/comercial-preco-produto-escopo-20261013`, base `#321` `037985cd`/`#319` `5568e3a9`; #104 fica congelada `87101b4d`. HEAD remoto Cursor verificado `6908f74e` em `cursor/cadastros-recuperacao-c360-contrato-392b` (checkpoint documental). Não pressupor porte automático entre as candidatas.
+- Lote proprietário: `server/src/services/tabelaPrecoService.ts`, `server/src/repositories/{inMemory,postgres}TabelaPrecoRepository.ts`, `server/tests/runtime07b.test.ts`, STATUS e este HANDOFF. Cursor mantém UI Cadastros/Estoque/Expedição e sua branch; outras frentes mantêm Pedido/Orçamento/Expedição, painel C360, catálogo/outbox, Marca e Legado. Nenhum arquivo privado, segredo ou dado real entra no GitHub.
+- Regressão comprovada em PGlite: Empresa A2 podia adicionar Produto exclusivo da A à sua Tabela de Preço. Correção usa escopo ativo na validação Produto/Unidade, aceita mestre compartilhado (`empresa_id NULL`) e rejeita empresa irmã. Não cria API/migration/módulo paralelo; `resolvePrice` já filtrava leitura. Backend 372 PASS/0 FAIL/18 SKIP condicionais, typecheck/build PASS; frontend baseline/lint/build PASS, suíte Windows falha em guardas Bash/VPS anteriores e typecheck raiz conserva passivo global. Não declarar CI, revisão independente, integração, implantação ou homologação antes das evidências do HEAD final.
+- Próximo gate: testes completos aplicáveis, commit/push/PR, CI exata e revisão independente quando disponível. Não usar a pausa de créditos do Cursor como aprovação tácita.
+
 ## POLICY CRM COMPARTILHADA — pacote 040 (2026-10-10)
 
 Fonte única: `server/src/domain/crmOportunidadePolicy.js`. O arquivo `src/components/lib/crmOportunidadePolicy.js` permanece wrapper. A API empacota essa fonte porque o contexto Docker continua `server/` (`COPY src` → `dist/domain`). Não alargar o contexto para a raiz: `docker build ./server` é o contrato do compose, do gate-f, do canário e do incidente. Codex importa o módulo; não edita a policy nem a UI. Schema, repositório e RLS da 040 seguem no workspace Codex, sem corte do store e sem dual-write.
