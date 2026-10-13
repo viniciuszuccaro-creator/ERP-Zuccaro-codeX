@@ -196,7 +196,7 @@ export class OrcamentoService {
    */
   private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate,executor?:DbQueryExecutor): Promise<OrcamentoCreate> {
     const itens = [];
-    let tabelaId: string | null | undefined = data.tabela_preco_id;
+    let tabelaId: string | null | undefined;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -209,7 +209,13 @@ export class OrcamentoService {
           unidade_id: item.unidade_id,
         });
       }
-      if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
+      if (resolved.tabela_preco_id) {
+        if ((data.tabela_preco_id && data.tabela_preco_id !== resolved.tabela_preco_id)
+          || (tabelaId && tabelaId !== resolved.tabela_preco_id)) {
+          throw new AppError(422, 'ORCAMENTO_TABELA_PRECO_DIVERGENTE', 'Resolved price table differs from sale table');
+        }
+        tabelaId = resolved.tabela_preco_id;
+      }
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
     return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };

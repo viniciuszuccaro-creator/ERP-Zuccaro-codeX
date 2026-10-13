@@ -108,13 +108,16 @@ export class PedidoService {
         if (!quote) throw new AppError(404, 'ORCAMENTO_NOT_FOUND', 'Orcamento not found');
         if (await this.repo.getByOrcamento(scope, orcamentoId, executor)) this.convertedConflict();
         if (!quote.ativo || quote.status !== 'EM_ABERTO') throw new AppError(409, 'ORCAMENTO_STATE_CONFLICT', 'Orcamento is not open');
+        if (parsed.data.tabela_preco_id && parsed.data.tabela_preco_id !== quote.tabela_preco_id) {
+          throw new AppError(422, 'PEDIDO_TABELA_PRECO_DIVERGENTE', 'Price table differs from quotation snapshot');
+        }
         // Não-retroatividade: preserva preco_unitario já snapshotado no Orçamento.
         const draft = {
           ...parsed.data,
           orcamento_id: quote.id,
           cliente_empresa_id: quote.cliente_empresa_id,
           condicao_pagamento_id: quote.condicao_pagamento_id,
-          tabela_preco_id: parsed.data.tabela_preco_id ?? quote.tabela_preco_id ?? undefined,
+          tabela_preco_id: quote.tabela_preco_id ?? undefined,
           observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
           itens: quote.itens.map((item) => ({
             produto_id: item.produto_id,
@@ -193,9 +196,27 @@ export class PedidoService {
       const before = await this.requirePedido(scope, id, executor);
       if (before.status !== 'EM_ABERTO') this.stateConflict();
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
+      if (before.orcamento_id) {
+        if (data.cliente_empresa_id !== before.cliente_empresa_id) {
+          throw new AppError(422, 'PEDIDO_CLIENTE_IMUTAVEL', 'Quotation customer is immutable');
+        }
+        if (data.tabela_preco_id && data.tabela_preco_id !== before.tabela_preco_id) {
+          throw new AppError(422, 'PEDIDO_TABELA_PRECO_DIVERGENTE', 'Price table differs from quotation snapshot');
+        }
+        if (data.itens.length !== before.itens.length || data.itens.some((item, index) => {
+          const snapshot = before.itens[index];
+          return item.produto_id !== snapshot.produto_id
+            || item.unidade_id !== snapshot.unidade_id
+            || item.descricao !== snapshot.descricao
+            || item.unidade_sigla !== snapshot.unidade_sigla
+            || this.normalizeMoney(item.preco_unitario) !== snapshot.preco_unitario;
+        })) throw new AppError(422, 'PEDIDO_SNAPSHOT_IMUTAVEL', 'Quotation item snapshot is immutable');
+      }
       await this.validateReferences(scope, data, executor);
       // Pedido originado de Orçamento: não reconsultar tabela (não-retroatividade).
-      const priced = before.orcamento_id ? data : await this.applyServerPriceSnapshots(ctx, data,executor);
+      const priced = before.orcamento_id
+        ? { ...data, tabela_preco_id: before.tabela_preco_id }
+        : await this.applyServerPriceSnapshots(ctx, data,executor);
       const criador = await this.resolveCriadorActorId('Pedido', id,executor);
       const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens,executor);
@@ -271,7 +292,7 @@ export class PedidoService {
 
   private async applyServerPriceSnapshots(ctx: RequestContext, data: PedidoCreate,executor?:DbQueryExecutor): Promise<PedidoCreate> {
     const itens = [];
-    let tabelaId: string | null | undefined = data.tabela_preco_id;
+    let tabelaId: string | null | undefined;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -284,7 +305,13 @@ export class PedidoService {
           unidade_id: item.unidade_id,
         });
       }
-      if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
+      if (resolved.tabela_preco_id) {
+        if ((data.tabela_preco_id && data.tabela_preco_id !== resolved.tabela_preco_id)
+          || (tabelaId && tabelaId !== resolved.tabela_preco_id)) {
+          throw new AppError(422, 'PEDIDO_TABELA_PRECO_DIVERGENTE', 'Resolved price table differs from sale table');
+        }
+        tabelaId = resolved.tabela_preco_id;
+      }
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
     return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
