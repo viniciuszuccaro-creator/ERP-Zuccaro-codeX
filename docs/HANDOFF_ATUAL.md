@@ -622,6 +622,8 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 
 ### Checkpoint de destino e backup (2026-10-13)
 
+- Ultimo lote privado: JSDoc em `src/components/lib/marketplacePedidoPolicy.js` e parametro string da mutation em `src/components/integracoes/SincronizacaoMarketplaces.jsx`, mais fixture existente. Reservas comunicadas; runtime/layout/regras emitidos identicos. Dez testes focados e Linux audit/934 testes/lint/build/diff PASS; typecheck FAIL 1.447/233, 26 removidos sem novos, 211 no acumulado. Fixture quinze rejeicoes; pacote v2/patch privados conferidos. Codigo nao publicado pela decisao de corrigir global antes; CI documental 93ec897c SUCCESS. Nao declarar integracao externa ou importacao operacional.
+
 - Atualizacao de passivo: contrato JSDoc de `src/api/httpPilotCountBridge.js` corrigido, Slider/Toggle tipados sem delta de runtime; fixture ampliada para doze rejeicoes. Oito testes focados e Linux audit/934 testes/lint/build/diff PASS; typecheck ainda FAIL 1.473 erros/235 arquivos, cinco removidos sem novos, 185 no acumulado. Codigo reservado na branch propria e pacote/patch privados conferidos, sem commit/push. CI documental c09548b4 SUCCESS. Nao repetir pedido de excecao: proprietario decidiu corrigir global antes de publicar.
 
 - SSH e conexao PostgreSQL efetiva da API conferidos em READ ONLY; mesmo cluster do container do banco, Grupo aprovado existente. Duas Empresas e dois perfis ligados ao Auth real. Health 200 nao comprova login/RBAC; nenhuma identidade foi criada ou impersonada. Role ativa possui create-role/create-db, e imagem nao informa revisao: revisar privilegios e SHA antes de carga.
