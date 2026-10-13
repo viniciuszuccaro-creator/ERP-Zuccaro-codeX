@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 import { readFile } from 'node:fs/promises';
+import { formatCentral360Money } from '../src/components/comercial/centralCliente360Money.js';
 
 test('CRM pagina independentemente e reinicia em cada troca de identidade da sessão', () => {
   const scope = { clienteId:'c1',groupId:'g1',empresaId:'e1',actorId:'a1',sessionKey:'s1' };
@@ -81,4 +82,19 @@ test('CentralCliente360Panel: Carregar mais real sem slice(0,5) morto', async ()
   assert.match(source, /\[clienteId, groupId, empresaId, actorId, sessionKey\]/);
   assert.match(source, /blockKey="crm"/);
   assert.match(source, /shouldUseCrmLegadoAdapter|status === 'skipped'/);
+});
+
+test('Central 360 não apresenta valor monetário desconhecido como zero confirmado', async () => {
+  const source = await readFile(
+    new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.doesNotMatch(source, /Number\(value\s*\|\|\s*0\)/);
+  assert.match(source, /formatCentral360Money as money/);
+  for (const unknown of [null, undefined, '', '   ', 'indisponível', 'NaN', Infinity, false]) {
+    assert.equal(formatCentral360Money(unknown), 'Valor não informado');
+  }
+  assert.equal(formatCentral360Money(0), 'R$ 0,00');
+  assert.equal(formatCentral360Money('0.00'), 'R$ 0,00');
+  assert.equal(formatCentral360Money('25.50'), 'R$ 25,50');
 });

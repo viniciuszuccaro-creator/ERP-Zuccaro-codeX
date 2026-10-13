@@ -22,11 +22,10 @@ import {
   loadCentralCrmLegado,
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
+import { formatCentral360Money as money } from '@/components/comercial/centralCliente360Money';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useWindow } from '@/components/lib/useWindow';
-
-const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 
 function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, actorId, sessionKey, httpBlock }) {
   const { filterInContext } = useContextoVisual();
