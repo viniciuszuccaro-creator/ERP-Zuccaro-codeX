@@ -23,6 +23,7 @@ import {
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
 import { formatCentral360Money as money } from '@/components/comercial/centralCliente360Money';
+import { openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useWindow } from '@/components/lib/useWindow';
@@ -211,10 +212,11 @@ export default function CentralCliente360Panel({
   const queryClient=useQueryClient();
   const {openWindow,closeWindow}=useWindow();
   const {hasPermission,isLoading:permissionsLoading}=usePermissions();
-  const {grupoAtual,empresaAtual}=useContextoVisual();
+  const {grupoAtual,empresaAtual,filterInContext}=useContextoVisual();
   const renderedScope=useRef(null);
   renderedScope.current={groupId:grupoAtual?.id||empresaAtual?.group_id||empresaAtual?.grupo_id,empresaId:empresaAtual?.id||null};
   const [conversionError,setConversionError]=useState('');
+  const [pedidoOpenError,setPedidoOpenError]=useState('');
   const sessionToken = typeof token === 'string' ? token.trim() : '';
   const enabled = canLoadCentralCliente360({
     flag: isHttpCliente360Enabled,
@@ -227,7 +229,7 @@ export default function CentralCliente360Panel({
   const sessionKey = central360SessionKey(sessionToken);
   const viewKey=JSON.stringify([clienteId,groupId,empresaId,actorId,sessionKey]);
   const viewRef=useRef(null);viewRef.current=viewKey;
-  React.useEffect(()=>{viewRef.current=viewKey;setConversionError('');return()=>{viewRef.current=null;};},[viewKey]);
+  React.useEffect(()=>{viewRef.current=viewKey;setConversionError('');setPedidoOpenError('');return()=>{viewRef.current=null;};},[viewKey]);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
@@ -367,6 +369,20 @@ export default function CentralCliente360Panel({
   const blocks = payload?.blocks || {};
   const meta = payload?.meta || {};
   const loadingMore = query.isFetching && !query.isLoading;
+  const openPedido=async(row)=>{
+    setPedidoOpenError('');
+    const openedKey=viewRef.current;
+    const openedScope={groupId,empresaId,actorId,token:sessionToken};
+    const assertCurrent=()=>{
+      if(viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
+        throw new Error('Contexto alterado. Reabra a Central antes de consultar o Pedido.');
+    };
+    try{
+      await openCentralPedidoWindow({row,block:blocks.pedidos,allowed:!permissionsLoading&&hasPermission('Comercial','pedido','visualizar'),
+        assertCurrent,loadPanel:async()=>(await import('@/components/comercial/PedidosTab')).default,openWindow,
+        props:{groupId,empresaId,actorId,actorEmail,hasPermission,filterInContext,empresaAtual}});
+    }catch(error){if(viewRef.current===openedKey)setPedidoOpenError(error?.message||'Falha ao abrir Pedido.');}
+  };
 
   return (
     <div className="mb-6 space-y-3" data-permission="Cadastros.cliente.visualizar" data-central360="true">
@@ -491,10 +507,12 @@ export default function CentralCliente360Panel({
               <span className="flex items-center gap-2 shrink-0">
                 {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
                 <span>{money(row.total)}</span>
+                {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" onClick={()=>void openPedido(row)}>Abrir</Button>}
               </span>
             </>
           )}
         />
+        {pedidoOpenError&&<p role="alert" className="text-sm text-red-700" data-testid="central360-pedido-open-error">{pedidoOpenError}</p>}
         {shouldUseCrmLegadoAdapter(blocks.crm) ? (
           <CrmLegadoAdapterBlock
             clienteId={clienteId}
