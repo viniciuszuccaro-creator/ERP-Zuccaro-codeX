@@ -673,7 +673,8 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
        FROM produtos p
        JOIN unidades_medida u ON u.id=$4
        WHERE p.id=$3 AND p.group_id=$1 AND u.group_id=$1
-         AND (p.empresa_id IS NULL OR p.empresa_id=$2)`,
+         AND (p.empresa_id IS NULL OR p.empresa_id=$2)
+       FOR SHARE OF p`,
       [groupId, empresaId, produtoId, unidadeMedidaId],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;

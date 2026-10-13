@@ -297,6 +297,7 @@ export class TabelaPrecoService {
       await this.requireActive(ctx, tabelaId, executor);
       const before = await this.repo.getItem(this.scope(ctx), tabelaId, itemId, executor);
       if (!before || !before.ativo) this.notFound();
+      await this.assertProdutoUnidade(ctx, before.produto_id, before.unidade_medida_id, executor);
       const after = await this.repo.updateItem(
         this.scope(ctx), tabelaId, itemId, parsed.data, ctx.actorId, executor,
       );

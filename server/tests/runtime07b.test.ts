@@ -845,6 +845,18 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
       produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
     });
     assert.equal(sharedPrice?.tabela_preco_id, onlyA2.id);
+    await pg.query('UPDATE produtos SET empresa_id=$1 WHERE id=$2', [SEED_IDS.empresaA, SEED_IDS.produtoA]);
+    await assert.rejects(
+      () => svc.updateItem(ctxA2, onlyA2.id, sharedItem.id, { preco: '99' }),
+      { code: 'PRODUTO_UNIDADE_NOT_FOUND' },
+    );
+    const unchangedPrice = await pg.query<{ preco: string }>(
+      'SELECT preco::text AS preco FROM tabela_preco_itens WHERE id=$1', [sharedItem.id],
+    );
+    assert.equal(unchangedPrice.rows[0]?.preco, '55.000000');
+    await pg.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1', [SEED_IDS.produtoA]);
+    const updatedShared = await svc.updateItem(ctxA2, onlyA2.id, sharedItem.id, { preco: '56' });
+    assert.equal(updatedShared.preco, '56.000000');
     await svc.softDeleteItem(ctxA2, onlyA2.id, sharedItem.id);
     await pg.query('UPDATE produtos SET empresa_id=$1 WHERE id=$2', [SEED_IDS.empresaA, SEED_IDS.produtoA]);
     await assert.rejects(
