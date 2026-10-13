@@ -8,6 +8,7 @@ import {
   canUsePedidoAction,
   createPedidoDetailGate,
   createPedidoMutationGate,
+  sharedPedidoMutationGate,
   clampPedidoCancelMotivo,
   evaluatePedidoCancelMotivoUiGate,
   evaluatePedidoPrintPdfUiGate,
@@ -62,6 +63,8 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.match(source,/const cancel=async\(row,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
   assert.match(source,/await loadHistory\(row\.id,ticket\)/);
   assert.match(source,/setBusy\(mutationGate\.current\.isPending\(\{groupId,empresaId,actorId\}\)\)/);
+  assert.match(source,/useRef\(sharedPedidoMutationGate\)/);
+  assert.match(source,/mutationGate\.current\.subscribe\(\(\)=>setBusy/);
   assert.equal((source.match(/mutationGate\.current\.begin\(renderedScope\.current\)/g)||[]).length,3);
   assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,6);
   for(const action of ['save','transition','cancel']){
@@ -108,6 +111,21 @@ test('mutação pendente preserva bloqueio em A→B→A e libera após rotação
   assert.equal(gate.isPending(b),true);
   gate.end(second);
   assert.equal(gate.isPending(b),false);
+});
+
+test('gate compartilhado preserva pendência após desmontar e remontar janela',()=>{
+  const scope={groupId:'g-remount',empresaId:'e-remount',actorId:'u-remount'};
+  const states=[];
+  const unsubscribeOld=sharedPedidoMutationGate.subscribe(()=>states.push(`antiga:${sharedPedidoMutationGate.isPending(scope)}`));
+  const pending=sharedPedidoMutationGate.begin(scope);
+  assert.ok(pending);
+  unsubscribeOld();
+  assert.equal(sharedPedidoMutationGate.isPending(scope),true);
+  assert.equal(sharedPedidoMutationGate.begin(scope),null);
+  const unsubscribeNew=sharedPedidoMutationGate.subscribe(()=>states.push(`nova:${sharedPedidoMutationGate.isPending(scope)}`));
+  sharedPedidoMutationGate.end(pending);
+  unsubscribeNew();
+  assert.deepEqual(states,['antiga:true','nova:false']);
 });
 
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{

@@ -22,7 +22,7 @@ import {
   calculatePedidoTotals,
   canUsePedidoAction,
   createPedidoDetailGate,
-  createPedidoMutationGate,
+  sharedPedidoMutationGate,
   clampPedidoCancelMotivo,
   evaluatePedidoCancelMotivoUiGate,
   evaluatePedidoPrintPdfUiGate,
@@ -52,7 +52,7 @@ const message = (error) => error?.status===403?'Seu perfil não possui permissã
 export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, hasPermission, filterInContext, windowMode=false, empresaAtual=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
-  const mutationGate=useRef(createPedidoMutationGate());
+  const mutationGate=useRef(sharedPedidoMutationGate);
   const renderedScope=useRef(null);
   renderedScope.current={groupId,empresaId,actorId};
   const activeScope=()=>readErpHttpSession();
@@ -93,6 +93,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const clienteOptions=useMemo(()=>filterClienteEmpresaOptions(masters.clientesEmpresa, clients, clienteQuery),[masters.clientesEmpresa, clients, clienteQuery]);
   const produtoOptions=useMemo(()=>filterProdutoOptions(masters.produtos, produtoQuery),[masters.produtos, produtoQuery]);
   useEffect(()=>{detailGate.current.invalidate();setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});},[groupId,empresaId,actorId]);
+  useEffect(()=>mutationGate.current.subscribe(()=>setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}))),[groupId,empresaId,actorId]);
   useEffect(()=>{const warn=(e)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   const change=(key,value)=>{setForm(current=>({...current,[key]:value}));setDirty(true);};
   const changeItem=(index,key,value)=>{setForm(current=>({...current,itens:current.itens.map((row,i)=>i===index?{...row,[key]:value}:row)}));setDirty(true);};

@@ -28,6 +28,8 @@ export function createPedidoDetailGate() {
 /** Mutação conserva ownership por tenant/ator mesmo após troca A→B→A ou rotação de token. */
 export function createPedidoMutationGate() {
   const pending = new Set();
+  const listeners = new Set();
+  const notify = () => { for (const listener of listeners) listener(); };
   const key = (scope) => scope?.groupId && scope?.empresaId && scope?.actorId
     ? JSON.stringify([scope.groupId, scope.empresaId, scope.actorId]) : null;
   return {
@@ -35,12 +37,17 @@ export function createPedidoMutationGate() {
       const scopeKey = key(scope);
       if (!scopeKey || pending.has(scopeKey)) return null;
       pending.add(scopeKey);
+      notify();
       return { scopeKey };
     },
     isPending(scope) { return pending.has(key(scope)); },
-    end(ticket) { if (ticket) pending.delete(ticket.scopeKey); },
+    end(ticket) { if (ticket && pending.delete(ticket.scopeKey)) notify(); },
+    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
   };
 }
+
+/** Vive enquanto o módulo estiver carregado, inclusive se WindowRenderer desmontar uma janela minimizada. */
+export const sharedPedidoMutationGate = createPedidoMutationGate();
 
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
