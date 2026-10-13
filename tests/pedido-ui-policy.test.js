@@ -57,13 +57,18 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.match(source,/await api\.get\(row\.id\);if\(!detailGate\.current\.isCurrent/);
   assert.match(source,/await api\.history\(pedidoId\);if\(!detailGate\.current\.isCurrent/);
   assert.match(source,/detailGate\.current\.invalidate\(\)/);
-  assert.match(source,/const save=async\(\)=>\{const ticket=detailGate\.current\.begin/);
+  assert.match(source,/const save=async\(\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
   assert.match(source,/const transition=async\(row,target,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
   assert.match(source,/const cancel=async\(row,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
   assert.match(source,/await loadHistory\(row\.id,ticket\)/);
   assert.match(source,/setBusy\(mutationGate\.current\.isPending\(\{groupId,empresaId,actorId\}\)\)/);
   assert.equal((source.match(/mutationGate\.current\.begin\(renderedScope\.current\)/g)||[]).length,3);
-  assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,3);
+  assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,6);
+  for(const action of ['save','transition','cancel']){
+    const line=source.split('\n').find(value=>value.includes(`const ${action}=async`));
+    assert.ok(line);
+    assert.ok(line.indexOf('mutationGate.current.begin') < line.indexOf('detailGate.current.begin'),`${action} deve reservar mutação antes do ticket de leitura`);
+  }
 });
 
 test('mutação tardia do Pedido A não substitui detalhe/histórico do Pedido B', async()=>{
