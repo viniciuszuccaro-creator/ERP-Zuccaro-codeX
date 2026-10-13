@@ -1,6 +1,7 @@
 ## CODEX — Pedido canônico, detalhe/histórico sob troca de contexto (2026-10-13)
 
 - Branch isolada `codex/comercial-pedido-detalhe-escopo-20261013`, base #326 `5ff621cc`; reutiliza painel HTTP de Pedido, sessão ERP e policy existente. Causa: `api.get`/`api.history` atualizavam seleção após troca de Grupo/Empresa/ator ou abertura de outro Pedido. Gate de leitura com sequência e comparação do escopo renderizado/ativo agora descarta resposta tardia e falha tardia; troca de ator também limpa detalhe/histórico. Nenhuma rota, entidade, permissão ou mutação alterada; backend permanece autoridade de escopo/RBAC. Teste focado reproduz seleção/contexto tardios e invalidade após troca; 14 PASS. Audit:baseline, lint, build e diff-check PASS; suíte global Windows segue FAIL em guardas Bash/legado/VPS fora deste diff e typecheck raiz segue FAIL em diagnósticos preexistentes. Próximo gate: commit/push, CI Linux e revisão do HEAD, sem merge/deploy.
+- Incremento após publicação inicial: teste pré-fix mostrou que sessão rotacionada/revogada do mesmo ator ainda aceitava leitura antiga; gate agora exige token ativo igual ao token capturado, apenas em memória (não registra segredo). Teste focado 14 PASS; CI/revisão do SHA anterior não homologam o próximo commit.
 
 ## CODEX — Central Cliente 360, monetário desconhecido não é zero (2026-10-13)
 

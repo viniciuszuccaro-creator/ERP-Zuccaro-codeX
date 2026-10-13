@@ -26,21 +26,24 @@ const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigl
 test('detalhe/histórico de Pedido ignoram resposta tardia após troca de escopo ou seleção', async()=>{
   const gate=createPedidoDetailGate();
   const scope={groupId:'g',empresaId:'e-a',actorId:'u'};
-  let active={...scope};
+  let active={...scope,token:'session-a'};
   let resolveFirst;
   const firstResponse=new Promise(resolve=>{resolveFirst=resolve;});
   const first=gate.begin(scope,scope,active);
   assert.ok(first);
-  active={...scope,empresaId:'e-b'};
+  active={...scope,empresaId:'e-b',token:'session-a'};
   resolveFirst({id:'pedido-a'});
   await firstResponse;
   assert.equal(gate.isCurrent(first,scope,active),false);
   assert.equal(gate.begin(scope,scope,active),null);
-  active={...scope};
+  active={...scope,token:'session-a'};
   const reopened=gate.begin(scope,scope,active);
   const next=gate.begin(scope,scope,active);
   assert.equal(gate.isCurrent(reopened,scope,active),false);
   assert.equal(gate.isCurrent(next,scope,active),true);
+  active={...scope,token:'session-b'};
+  assert.equal(gate.isCurrent(next,scope,active),false);
+  assert.equal(gate.begin(scope,scope,{...scope}),null);
   gate.invalidate();
   assert.equal(gate.isCurrent(next,scope,active),false);
 });

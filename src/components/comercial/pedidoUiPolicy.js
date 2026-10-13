@@ -10,11 +10,12 @@ export function createPedidoDetailGate() {
       && scope.actorId === opened.actorId));
   return {
     begin(opened, rendered, active) {
-      if (!sameScope(opened, rendered, active)) return null;
-      return { sequence: ++sequence, scope: { ...opened } };
+      if (!sameScope(opened, rendered, active) || !active?.token) return null;
+      return { sequence: ++sequence, scope: { ...opened }, token: active.token };
     },
     isCurrent(ticket, rendered, active) {
-      return Boolean(ticket && ticket.sequence === sequence && sameScope(ticket.scope, rendered, active));
+      return Boolean(ticket && ticket.sequence === sequence && active?.token === ticket.token
+        && sameScope(ticket.scope, rendered, active));
     },
     invalidate() { sequence += 1; },
   };
