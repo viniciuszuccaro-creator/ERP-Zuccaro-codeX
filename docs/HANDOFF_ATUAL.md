@@ -622,6 +622,8 @@ criar migration 016, não promover a API R08 e não fazer merge neste gate.
 
 ### Checkpoint de destino e backup (2026-10-13)
 
+- Ultimo lote privado em usePerformanceMonitor.jsx: metadata opcional tipado e tracker aceita timestamp zero em vez de confundir com null; thresholds/alertas/reset preservados, sem capacidade P2 nova. Dois testes focados PASS (tempo zero, retorno/excecao, metadata/threshold). Linux audit/946 testes/lint/build/diff PASS; typecheck FAIL 1.407/228, sete removidos sem novos, 251 acumulados. Pacote/patch privados conferidos, codigo sem commit/push; retomar passivo/importer sem repetir dados/pilotos e sem dispensar gates.
+
 - Ultimo lote privado em useIndexedDBCache.jsx: request.result capturado em abertura/cursor, IDBDatabase tipado e abort/error resolvidos com fallback false/undefined; chaves/TTL/schema/escopo preservados. Dois testes focados sinteticos PASS; Linux audit/944 testes/lint/build/diff PASS; typecheck FAIL 1.414/229, dois removidos sem novos, 244 acumulados. Pacote/patch privados conferidos, codigo sem commit/push. Retomar passivo/importer sem repetir fontes ou pilotos; cache nao comprova Auth/importacao.
 
 - Ultimo lote privado em uiAudit.jsx: duas Promises AuditLog.create retornadas ao encadeamento para catch de rejeicao async; meta opcional no logUIIssue. Sem mudar API publica nao bloqueante ou persistOperationalAudit; nao declarar auditoria critica homologada. Dois testes novos e seis focados PASS, Linux audit/942 testes/lint/build/diff PASS; typecheck FAIL 1.416/230, um removido sem novos, 242 acumulados. Pacote/patch privados conferidos, codigo sem commit/push. Retomar passivo/importer e gates com economia: sem pilotos/extracoes repetidos ou commits de heartbeat.
