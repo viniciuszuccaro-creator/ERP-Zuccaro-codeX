@@ -186,6 +186,45 @@ test('Onda2: conversao preserva snapshot do Orçamento (nao-retroatividade)', as
   assert.equal(calls.length, 0, 'conversao nao deve reconsultar tabela atual');
 });
 
+test('Onda2: Pedido convertido não troca tabela ou preço snapshotado pelo Orçamento', async () => {
+  const { service, repo, orcamentos } = pedidoFixture();
+  const quote = await orcamentos.create({ groupId, empresaId }, {
+    ...quotePayload, tabela_preco_id: tabelaId,
+    itens: [{ ...quotePayload.itens[0], preco_unitario: '12.340000' }],
+  });
+  const conversion = {
+    tipo_operacao: 'RETIRADA' as const, data_entrega_solicitada: '2027-03-10T00:00:00.000Z',
+  };
+  await assert.rejects(
+    service.convert(ctx, quote.id, { ...conversion, tabela_preco_id: outraTabelaId }),
+    { code: 'PEDIDO_TABELA_PRECO_DIVERGENTE' },
+  );
+  assert.equal((await repo.list({ groupId, empresaId })).total, 0);
+  const order = await service.convert(ctx, quote.id, conversion);
+  assert.equal(order.tabela_preco_id, tabelaId);
+  assert.equal(order.itens[0].preco_unitario, '12.340000');
+  const updatePayload = {
+    ...pedidoPayload, orcamento_id: quote.id, tabela_preco_id: tabelaId,
+    itens: [{ ...pedidoPayload.itens[0], preco_unitario: '12.340000' }],
+  };
+  await assert.rejects(
+    service.update(ctx, order.id, { ...updatePayload, tabela_preco_id: outraTabelaId }),
+    { code: 'PEDIDO_TABELA_PRECO_DIVERGENTE' },
+  );
+  await assert.rejects(
+    service.update(ctx, order.id, { ...updatePayload, itens: [{ ...updatePayload.itens[0], preco_unitario: '99.000000' }] }),
+    { code: 'PEDIDO_SNAPSHOT_IMUTAVEL' },
+  );
+  const unchanged = await service.get(ctx, order.id);
+  assert.equal(unchanged.tabela_preco_id, tabelaId);
+  assert.equal(unchanged.itens[0].preco_unitario, '12.340000');
+  const retry = await service.update(ctx, order.id, {
+    ...updatePayload, itens: [{ ...updatePayload.itens[0], quantidade: '3' }],
+  });
+  assert.equal(retry.tabela_preco_id, tabelaId);
+  assert.equal(retry.itens[0].preco_unitario, '12.340000');
+});
+
 test('Onda2: Pedido create sem preco falha fechado', async () => {
   const { service } = pedidoFixture({ preco: null });
   await assert.rejects(

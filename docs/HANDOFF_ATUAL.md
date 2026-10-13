@@ -1,6 +1,7 @@
 ## CODEX COMERCIAL 360 — snapshot preço→Orçamento→Pedido (2026-10-13)
 
 - Branch `codex/comercial-preco-snapshot-revogacao-20261013` baseada na #324 `b0865363`; reserva de `server/src/services/{orcamento,pedido}Service.ts` e `server/tests/runtime-onda2-preco-snapshot.test.ts`, sem editar a branch Cursor ou Legado. Entrada do cliente com `tabela_preco_id` divergente da tabela efetiva é rejeitada na transação; itens com origens diferentes também falham fechados. Fluxo sintético real `TabelaPrecoService`→Orçamento→Pedido cobre unidade principal trocada, falha sem nova venda, reautorização/retry e snapshots antigos intactos. Unidade secundária para venda não foi ativada: conversão de quantidade/estoque ainda precisa de contrato. Revisão/CI só contam no HEAD final desta branch; sem merge/deploy/importação.
+- Revisão Codex do commit `3fb54caf` apontou P2 válido: override de tabela em `convert()` e update do Pedido convertido. Incremento seguinte bloqueia tabela divergente e campos de snapshot de item (produto/unidade/descrição/preço) alterados, mantém quantidade sujeita às alçadas existentes e testa retry/reabertura. Não atribuir o parecer antigo ao novo HEAD; CI/revisão novas obrigatórias.
 
 ## CODEX COMERCIAL 360 — revogação de unidade em preço (2026-10-13)
 
