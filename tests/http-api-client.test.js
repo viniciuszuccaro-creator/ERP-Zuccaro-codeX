@@ -365,6 +365,28 @@ test('HTTP Bearer delegates actor identity to backend and keeps requested tenant
   assert.equal(calls[0].body, undefined);
 });
 
+test('HTTP detalhe canônico de Pedido e Orçamento envia Bearer e tenant sem expor token na URL', async () => {
+  const calls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'group-synthetic', empresaId: 'empresa-synthetic', actorId: 'actor-synthetic', token: 'synthetic-token' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), init });
+      return new Response(JSON.stringify({ data: { id: 'record-synthetic' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  await client.pedidos.get('record-synthetic');
+  await client.orcamentos.get('record-synthetic');
+  assert.deepEqual(calls.map((call) => new URL(call.url).pathname), ['/api/v1/pedidos/record-synthetic', '/api/v1/orcamentos/record-synthetic']);
+  for (const { url, init } of calls) {
+    assert.equal(init.headers.Authorization, 'Bearer synthetic-token');
+    assert.equal(init.headers['X-Group-Id'], 'group-synthetic');
+    assert.equal(init.headers['X-Empresa-Id'], 'empresa-synthetic');
+    assert.equal(init.headers['X-Actor-Id'], undefined);
+    assert.equal(url.includes('synthetic-token'), false);
+  }
+});
+
 test('HTTP legacy scope still sends actor headers without a Bearer token', async () => {
   let headers;
   const client = createHttpApiClient({

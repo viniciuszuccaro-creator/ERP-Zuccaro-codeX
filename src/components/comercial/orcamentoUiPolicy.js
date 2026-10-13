@@ -2,6 +2,7 @@ const MICROS = 1_000_000n;
 
 export function sameOrcamentoScope(opened, rendered, active) {
   return Boolean(opened?.groupId && opened?.empresaId && opened?.actorId
+    && (!opened.token || active?.token === opened.token)
     && [rendered, active].every((scope) => scope
       && scope.groupId === opened.groupId
       && scope.empresaId === opened.empresaId
