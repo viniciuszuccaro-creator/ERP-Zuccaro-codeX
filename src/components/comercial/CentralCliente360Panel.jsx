@@ -390,8 +390,8 @@ export default function CentralCliente360Panel({
       const opened=await open({row,block:pedido?blocks.pedidos:blocks.orcamentos,allowed:!permissionsLoading&&hasPermission('Comercial',kind,'visualizar'),
         assertCurrent,loadPanel:pedido?async()=>(await import('@/components/comercial/PedidosTab')).default:async()=>(await import('@/components/comercial/OrcamentosTab')).default,openWindow,
         props:{groupId,empresaId,actorId,actorEmail,sessionToken,hasPermission,filterInContext,empresaAtual}});
-      if(!opened&&viewRef.current===openedKey)setError(centralOpenErrorMessage());
-    }catch{if(viewRef.current===openedKey)setError(centralOpenErrorMessage());}
+      if(!opened&&openGate.current.isCurrent(ticket)&&viewRef.current===openedKey)setError(centralOpenErrorMessage());
+    }catch{if(openGate.current.isCurrent(ticket)&&viewRef.current===openedKey)setError(centralOpenErrorMessage());}
     finally{if(openGate.current.end(ticket))setOpeningRecord(current=>({...current,[kind]:null}));}
   };
 

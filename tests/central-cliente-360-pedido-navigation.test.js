@@ -108,6 +108,24 @@ test('Central bloqueia import antigo quando sessão A→B→A retorna aos mesmos
   assert.deepEqual(opened, []);
 });
 
+test('falha tardia do ticket A não pinta erro nem libera a nova tentativa A', async () => {
+  const gate = createCentralOpenGate();
+  const oldTicket = gate.begin('pedido', 'A');
+  let error = '';
+  let releaseOld;
+  const oldImport = new Promise((_resolve, reject) => { releaseOld = reject; });
+  const oldAttempt = oldImport.catch(() => {
+    if (gate.isCurrent(oldTicket)) error = centralOpenErrorMessage();
+  }).finally(() => { gate.end(oldTicket); });
+  gate.reset();
+  const currentTicket = gate.begin('pedido', 'A');
+  releaseOld(new Error('falha privada no import antigo'));
+  await oldAttempt;
+  assert.equal(error, '');
+  assert.equal(gate.isCurrent(currentTicket), true);
+  assert.equal(gate.begin('pedido', 'A'), null, 'ticket novo permanece protegido contra clique duplo');
+});
+
 test('Central não expõe erro bruto de import nem abre registro fora do bloco', async () => {
   const privateError = new Error('private://internal/module-path?token=secret');
   assert.equal(centralOpenErrorMessage(privateError).includes('secret'), false);
@@ -128,6 +146,7 @@ test('Central e Pedido consomem a mesma seleção inicial sem cadastrar fonte pa
   assert.match(pedido, /void show\(\{id:initialSelectedId\}\)/);
   assert.match(central, /data-action="central360-orcamento-abrir"/);
   assert.match(orcamento, /void showDetail\(\{ id: initialSelectedId \}\)/);
-  assert.match(central, /if\(!opened&&viewRef\.current===openedKey\)setError\(centralOpenErrorMessage\(\)\)/);
+  assert.match(central, /if\(!opened&&openGate\.current\.isCurrent\(ticket\)&&viewRef\.current===openedKey\)setError\(centralOpenErrorMessage\(\)\)/);
+  assert.match(central, /catch\{if\(openGate\.current\.isCurrent\(ticket\)&&viewRef\.current===openedKey\)setError\(centralOpenErrorMessage\(\)\);\}/);
   assert.match(central, /disabled=\{Boolean\(openingRecord\.pedido\)\}/);
 });
