@@ -88,6 +88,8 @@ test('R09 PostgreSQL real: chave da criação direta serializa retries concorren
     const found = await repo.getByIdempotencyKey(scope, data.idempotency_key);
     assert.equal(found?.fingerprint, fingerprint);
     assert.equal(found?.row.id, first.id);
+    assert.equal(Object.hasOwn(found!.row, 'idempotency_key'), false);
+    assert.equal(Object.hasOwn(found!.row, 'payload_fingerprint'), false);
     assert.equal(await repo.getByIdempotencyKey(other, data.idempotency_key), null);
     assert.deepEqual((await repo.history(scope, first.id)).map(row => row.status_novo), ['EM_ABERTO']);
   } finally { let error: unknown; try { await cleanup(db, ids); } catch (cause) { error = cause; } finally { await db.end(); } if (error) throw error; }

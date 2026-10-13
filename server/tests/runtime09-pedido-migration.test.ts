@@ -32,3 +32,10 @@ test('migration 044 adiciona chave opcional única por tenant sem alterar pedido
   assert.match(source, /WHERE idempotency_key IS NOT NULL/);
   assert.doesNotMatch(source, /DROP|TRUNCATE|DELETE FROM pedidos/i);
 });
+
+test('repositorio nao serializa chave ou fingerprint da intencao no Pedido publico', async () => {
+  const source = await readFile(new URL('../src/repositories/postgresPedidoRepository.ts', import.meta.url), 'utf8');
+  assert.match(source, /delete safe\.idempotency_key/);
+  assert.match(source, /delete safe\.payload_fingerprint/);
+  assert.match(source, /fingerprint: String\(result\.rows\[0\]\.payload_fingerprint\)/);
+});

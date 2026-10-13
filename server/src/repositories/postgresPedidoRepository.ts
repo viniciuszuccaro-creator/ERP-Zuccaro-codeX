@@ -4,7 +4,7 @@ import { calculatePedido, type Pedido, type PedidoCreate, type PedidoHistorico, 
 type Row = Record<string, unknown>;
 const SELECT = `SELECT p.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.id) FROM pedido_itens i WHERE i.pedido_id=p.id AND i.group_id=p.group_id AND i.empresa_id=p.empresa_id),'[]') itens FROM pedidos p`;
 const map = (row: Row): Pedido => ({
-  ...(row as unknown as Pedido), id: String(row.id), group_id: String(row.group_id), empresa_id: String(row.empresa_id),
+  ...publicRow(row), id: String(row.id), group_id: String(row.group_id), empresa_id: String(row.empresa_id),
   numero: String(row.numero), cliente_empresa_id: String(row.cliente_empresa_id),
   cliente_local_id: row.cliente_local_id == null ? null : String(row.cliente_local_id),
   obra_id: row.obra_id == null ? null : String(row.obra_id), tabela_preco_id: row.tabela_preco_id == null ? null : String(row.tabela_preco_id),
@@ -18,6 +18,13 @@ const map = (row: Row): Pedido => ({
     subtotal: String(item.subtotal), total: String(item.total), requer_producao: Boolean(item.requer_producao),
   })),
 });
+
+function publicRow(row: Row): Pedido {
+  const safe = { ...row };
+  delete safe.idempotency_key;
+  delete safe.payload_fingerprint;
+  return safe as unknown as Pedido;
+}
 
 export class PostgresPedidoRepository implements PedidoRepository {
   constructor(private readonly db: DbClient) {}
