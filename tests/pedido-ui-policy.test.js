@@ -7,6 +7,7 @@ import {
   calculatePedidoTotals,
   canUsePedidoAction,
   createPedidoDetailGate,
+  createPedidoMutationGate,
   clampPedidoCancelMotivo,
   evaluatePedidoCancelMotivoUiGate,
   evaluatePedidoPrintPdfUiGate,
@@ -60,6 +61,9 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.match(source,/const transition=async\(row,target,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
   assert.match(source,/const cancel=async\(row,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
   assert.match(source,/await loadHistory\(row\.id,ticket\)/);
+  assert.match(source,/setBusy\(mutationGate\.current\.isPending\(\{groupId,empresaId,actorId\}\)\)/);
+  assert.equal((source.match(/mutationGate\.current\.begin\(renderedScope\.current\)/g)||[]).length,3);
+  assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,3);
 });
 
 test('mutação tardia do Pedido A não substitui detalhe/histórico do Pedido B', async()=>{
@@ -80,6 +84,25 @@ test('mutação tardia do Pedido A não substitui detalhe/histórico do Pedido B
   assert.deepEqual(history,['B']);
   assert.equal(gate.isCurrent(ticketB,scope,scope),true);
   assert.equal(gate.isScopeCurrent(ticketA,scope,scope),true);
+});
+
+test('mutação pendente preserva bloqueio em A→B→A e libera após rotação de token',()=>{
+  const gate=createPedidoMutationGate();
+  const a={groupId:'g',empresaId:'a',actorId:'u'};
+  const b={...a,empresaId:'b'};
+  const first=gate.begin(a);
+  assert.ok(first);
+  assert.equal(gate.begin(a),null);
+  assert.equal(gate.isPending(b),false);
+  const second=gate.begin(b);
+  assert.ok(second);
+  assert.equal(gate.isPending(a),true);
+  assert.equal(gate.begin({...a,token:'rotated'}),null);
+  gate.end(first);
+  assert.equal(gate.isPending(a),false);
+  assert.equal(gate.isPending(b),true);
+  gate.end(second);
+  assert.equal(gate.isPending(b),false);
 });
 
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{

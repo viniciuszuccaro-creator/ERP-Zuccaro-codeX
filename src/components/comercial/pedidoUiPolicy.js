@@ -25,6 +25,23 @@ export function createPedidoDetailGate() {
   };
 }
 
+/** Mutação conserva ownership por tenant/ator mesmo após troca A→B→A ou rotação de token. */
+export function createPedidoMutationGate() {
+  const pending = new Set();
+  const key = (scope) => scope?.groupId && scope?.empresaId && scope?.actorId
+    ? JSON.stringify([scope.groupId, scope.empresaId, scope.actorId]) : null;
+  return {
+    begin(scope) {
+      const scopeKey = key(scope);
+      if (!scopeKey || pending.has(scopeKey)) return null;
+      pending.add(scopeKey);
+      return { scopeKey };
+    },
+    isPending(scope) { return pending.has(key(scope)); },
+    end(ticket) { if (ticket) pending.delete(ticket.scopeKey); },
+  };
+}
+
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',
