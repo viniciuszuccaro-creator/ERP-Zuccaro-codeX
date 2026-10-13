@@ -1,3 +1,7 @@
+## CODEX COMERCIAL 360 — Pedido detalhe/histórico e troca de contexto (2026-10-13)
+
+- Reserva independente na branch `codex/comercial-pedido-detalhe-escopo-20261013`, base #326 `5ff621cc`: `src/components/comercial/PedidoCanonicoPanel.jsx`, policy e teste de Pedido UI, STATUS/HANDOFF. Corrigir somente resposta tardia de leitura detalhe/histórico após troca Grupo/Empresa/ator ou seleção de outro Pedido, reutilizando HTTP/RBAC existente. Não tocar backend, Expedição, branch Cursor ou entradas Legado; CI/revisão do SHA final antes de integração.
+
 ## CODEX COMERCIAL 360 — Central 360, valor desconhecido (2026-10-13)
 
 - Parecer Codex no `cfc8019e` da #326 identificou fallback CRM legado convertendo ausência em zero. Reserva ampliada ao adaptador já existente `centralCliente360CrmLegado.js` e seu teste focado; cenário sintético com cliente de outra empresa excluído, ausente/vazio/inválido e zero real foi reproduzido antes do fix e passou depois. CI anterior SUCCESS não substitui CI/revisão do novo HEAD. Sem tocar branch Cursor, Legado ou fontes de dados reais.

@@ -1,5 +1,25 @@
 import { calculateItem, calculateTotals, decimalToMicros, microsToDecimal } from './orcamentoUiPolicy.js';
 
+/** Rejeita leitura assíncrona se tenant/ator mudou ou outro detalhe foi aberto. */
+export function createPedidoDetailGate() {
+  let sequence = 0;
+  const sameScope = (opened, rendered, active) => Boolean(opened?.groupId && opened?.empresaId && opened?.actorId
+    && [rendered, active].every((scope) => scope
+      && scope.groupId === opened.groupId
+      && scope.empresaId === opened.empresaId
+      && scope.actorId === opened.actorId));
+  return {
+    begin(opened, rendered, active) {
+      if (!sameScope(opened, rendered, active)) return null;
+      return { sequence: ++sequence, scope: { ...opened } };
+    },
+    isCurrent(ticket, rendered, active) {
+      return Boolean(ticket && ticket.sequence === sequence && sameScope(ticket.scope, rendered, active));
+    },
+    invalidate() { sequence += 1; },
+  };
+}
+
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',

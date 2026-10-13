@@ -6,6 +6,7 @@ import {
   buildPedidoShareText,
   calculatePedidoTotals,
   canUsePedidoAction,
+  createPedidoDetailGate,
   clampPedidoCancelMotivo,
   evaluatePedidoCancelMotivoUiGate,
   evaluatePedidoPrintPdfUiGate,
@@ -21,6 +22,36 @@ import {
 } from '../src/components/comercial/pedidoUiPolicy.js';
 
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
+
+test('detalhe/histórico de Pedido ignoram resposta tardia após troca de escopo ou seleção', async()=>{
+  const gate=createPedidoDetailGate();
+  const scope={groupId:'g',empresaId:'e-a',actorId:'u'};
+  let active={...scope};
+  let resolveFirst;
+  const firstResponse=new Promise(resolve=>{resolveFirst=resolve;});
+  const first=gate.begin(scope,scope,active);
+  assert.ok(first);
+  active={...scope,empresaId:'e-b'};
+  resolveFirst({id:'pedido-a'});
+  await firstResponse;
+  assert.equal(gate.isCurrent(first,scope,active),false);
+  assert.equal(gate.begin(scope,scope,active),null);
+  active={...scope};
+  const reopened=gate.begin(scope,scope,active);
+  const next=gate.begin(scope,scope,active);
+  assert.equal(gate.isCurrent(reopened,scope,active),false);
+  assert.equal(gate.isCurrent(next,scope,active),true);
+  gate.invalidate();
+  assert.equal(gate.isCurrent(next,scope,active),false);
+});
+
+test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=>{
+  const source=await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx',import.meta.url),'utf8');
+  assert.match(source,/detailGate\.current\.begin\(renderedScope\.current,renderedScope\.current,activeScope\(\)\)/);
+  assert.match(source,/await api\.get\(row\.id\);if\(!detailGate\.current\.isCurrent/);
+  assert.match(source,/await api\.history\(pedidoId\);if\(!detailGate\.current\.isCurrent/);
+  assert.match(source,/detailGate\.current\.invalidate\(\)/);
+});
 
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{
   const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item],groupId:'g',empresaId:'e',total:'999'});
