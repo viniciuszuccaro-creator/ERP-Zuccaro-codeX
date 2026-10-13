@@ -24,6 +24,17 @@ export class PostgresPedidoRepository implements PedidoRepository {
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T> { return this.db.withTransaction(fn); }
   private run<T>(executor: DbQueryExecutor | undefined, fn: (query: DbQueryExecutor) => Promise<T>): Promise<T> { return executor ? fn(executor) : this.db.withTransaction(fn); }
 
+  async lockIdempotency(scope: PedidoScope, key: string, executor?: DbQueryExecutor): Promise<void> {
+    if (!executor) throw new Error('PEDIDO_SHARED_TRANSACTION_REQUIRED');
+    await executor.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [JSON.stringify([scope.groupId, scope.empresaId, key])]);
+  }
+
+  async getByIdempotencyKey(scope: PedidoScope, key: string, executor?: DbQueryExecutor) {
+    const query = executor ?? this.db;
+    const result = await query.query<Row>(`${SELECT} WHERE p.group_id=$1 AND p.empresa_id=$2 AND p.idempotency_key=$3`, [scope.groupId, scope.empresaId, key]);
+    return result.rows[0] ? { row: map(result.rows[0]), fingerprint: String(result.rows[0].payload_fingerprint) } : null;
+  }
+
   private async insertItems(query: DbQueryExecutor, scope: PedidoScope, pedidoId: string, data: PedidoCreate, actorId: string) {
     const totals = calculatePedido(data.itens);
     for (const item of totals.itens) await query.query(
@@ -43,7 +54,7 @@ export class PostgresPedidoRepository implements PedidoRepository {
     return result.rows[0] ? map(result.rows[0]) : null;
   }
 
-  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido> {
+  async create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor, fingerprint?: string): Promise<Pedido> {
     return this.run(executor, async (query) => {
       await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`pedido:${scope.empresaId}`]);
       const sequence = await query.query<{ next: string }>('SELECT COALESCE(MAX(numero::int),0)+1 next FROM pedidos WHERE empresa_id=$1', [scope.empresaId]);
@@ -51,8 +62,8 @@ export class PostgresPedidoRepository implements PedidoRepository {
       if (!/^\d{8}$/.test(numero)) throw new Error('PEDIDO_NUMERO_RESERVATION_FAILED');
       const totals = calculatePedido(data.itens);
       const inserted = await query.query<{ id: string }>(
-        'INSERT INTO pedidos(group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,subtotal,desconto,total,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$10,$10) RETURNING id',
-        [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total],
+        'INSERT INTO pedidos(group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,subtotal,desconto,total,idempotency_key,payload_fingerprint,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$10,$10) RETURNING id',
+        [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, data.idempotency_key ?? null, fingerprint ?? null],
       );
       const id = String(inserted.rows[0]?.id);
       await this.insertItems(query, scope, id, data, actorId);

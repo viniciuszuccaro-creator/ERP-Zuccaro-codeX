@@ -8,6 +8,8 @@ import {
   canUsePedidoAction,
   createPedidoDetailGate,
   createPedidoMutationGate,
+  clearPedidoCreateIntentKey,
+  getOrCreatePedidoIntentKey,
   sharedPedidoMutationGate,
   clampPedidoCancelMotivo,
   evaluatePedidoCancelMotivoUiGate,
@@ -65,6 +67,9 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.match(source,/setBusy\(mutationGate\.current\.isPending\(\{groupId,empresaId,actorId\}\)\)/);
   assert.match(source,/useRef\(sharedPedidoMutationGate\)/);
   assert.match(source,/mutationGate\.current\.subscribe\(\(\)=>setBusy/);
+  assert.match(source,/getOrCreatePedidoIntentKey\(renderedScope\.current,intentStorage\(\)/);
+  assert.match(source,/buildPedidoPayload\(form,editing\?undefined:createKey\)/);
+  assert.match(source,/clearPedidoCreateIntentKey\(ticket\.scope,intentStorage\(\),createKey\)/);
   assert.equal((source.match(/mutationGate\.current\.begin\(renderedScope\.current\)/g)||[]).length,3);
   assert.equal((source.match(/mutationGate\.current\.end\(mutation\)/g)||[]).length,6);
   for(const action of ['save','transition','cancel']){
@@ -134,6 +139,24 @@ test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{
   assert.equal(payload.total,undefined);
   assert.equal(payload.groupId,undefined);
   assert.equal(payload.itens[0].requer_producao,true);
+});
+
+test('intenção de criação reutiliza chave após remount/retry e só limpa a própria chave',()=>{
+  const values=new Map();
+  const storage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};
+  const scope={groupId:'g',empresaId:'e',actorId:'u'};
+  const first='99999999-9999-4999-8999-999999999999';
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>first),first);
+  assert.equal(getOrCreatePedidoIntentKey({...scope,empresaId:'other'},storage,()=>first),first);
+  assert.equal(getOrCreatePedidoIntentKey(scope,null,()=>first),null);
+  assert.equal(getOrCreatePedidoIntentKey(scope,{getItem:()=>{throw Error('disabled');}},()=>first),null);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>{throw Error('retry must reuse key');}),first);
+  const payload=buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item]},first);
+  assert.equal(payload.idempotency_key,first);
+  assert.equal(buildPedidoPayload({cliente_empresa_id:'c',condicao_pagamento_id:'f',tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-01-01',itens:[item]}).idempotency_key,undefined);
+  assert.equal(clearPedidoCreateIntentKey(scope,storage,'other-key'),false);
+  assert.equal(clearPedidoCreateIntentKey(scope,storage,first),true);
+  assert.equal(getOrCreatePedidoIntentKey(scope,storage,()=>first),first);
 });
 
 test('pedido UI RBAC e fluxo sao fail-closed',()=>{

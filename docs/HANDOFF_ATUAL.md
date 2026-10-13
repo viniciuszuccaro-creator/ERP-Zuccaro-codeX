@@ -1,3 +1,7 @@
+## CODEX COMERCIAL 360 — idempotência persistente do Pedido direto (2026-10-13)
+
+- Branch `codex/comercial-pedido-idempotencia-20261013` empilhada na #327 `14be3f96`, reserva `server/src/services/pedidoService.ts`, repositórios/tipos de Pedido, migration nova após 043, testes de serviço/HTTP/PostgreSQL, payload UI existente de Pedido, STATUS/HANDOFF. Reutilizar contrato da Oportunidade (chave/fingerprint/lock) somente para criação direta; não editar Expedição, branch Cursor ou Legado. Testar mesmo key/payload, key adulterada, tenant/ator/RBAC, concorrência PostgreSQL e retry depois de resposta perdida antes de declarar proteção. Migration em código/CI isolada; sem banco operacional/VPS.
+
 ## CODEX COMERCIAL 360 — Pedido detalhe/histórico e troca de contexto (2026-10-13)
 
 - Reserva independente na branch `codex/comercial-pedido-detalhe-escopo-20261013`, base #326 `5ff621cc`: `src/components/comercial/PedidoCanonicoPanel.jsx`, policy e teste de Pedido UI, STATUS/HANDOFF. Corrigir somente resposta tardia de leitura detalhe/histórico após troca Grupo/Empresa/ator ou seleção de outro Pedido, reutilizando HTTP/RBAC existente. Não tocar backend, Expedição, branch Cursor ou entradas Legado; CI/revisão do SHA final antes de integração.
