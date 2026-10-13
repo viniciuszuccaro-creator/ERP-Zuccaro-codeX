@@ -8,14 +8,18 @@ export function createPedidoDetailGate() {
       && scope.groupId === opened.groupId
       && scope.empresaId === opened.empresaId
       && scope.actorId === opened.actorId));
+  const scopeCurrent = (ticket, rendered, active) => Boolean(ticket && active?.token === ticket.token
+    && sameScope(ticket.scope, rendered, active));
   return {
     begin(opened, rendered, active) {
       if (!sameScope(opened, rendered, active) || !active?.token) return null;
       return { sequence: ++sequence, scope: { ...opened }, token: active.token };
     },
     isCurrent(ticket, rendered, active) {
-      return Boolean(ticket && ticket.sequence === sequence && active?.token === ticket.token
-        && sameScope(ticket.scope, rendered, active));
+      return Boolean(ticket && ticket.sequence === sequence && scopeCurrent(ticket, rendered, active));
+    },
+    isScopeCurrent(ticket, rendered, active) {
+      return scopeCurrent(ticket, rendered, active);
     },
     invalidate() { sequence += 1; },
   };

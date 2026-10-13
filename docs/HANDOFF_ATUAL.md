@@ -2,6 +2,7 @@
 
 - Reserva independente na branch `codex/comercial-pedido-detalhe-escopo-20261013`, base #326 `5ff621cc`: `src/components/comercial/PedidoCanonicoPanel.jsx`, policy e teste de Pedido UI, STATUS/HANDOFF. Corrigir somente resposta tardia de leitura detalhe/histórico após troca Grupo/Empresa/ator ou seleção de outro Pedido, reutilizando HTTP/RBAC existente. Não tocar backend, Expedição, branch Cursor ou entradas Legado; CI/revisão do SHA final antes de integração.
 - Segundo incremento: mesma sessão/ator com token rotacionado deve invalidar leitura anterior; teste falhou antes da correção e passou após exigir identidade de token no gate local. Token não vai para log, doc ou GitHub. PR #327 deve ser revisada novamente no novo HEAD; não atribuir CI/revisão do commit inicial ao seguinte.
+- Parecer Codex de `89f3d474` identificou mutações tardias sobrescrevendo seleção posterior. Reserva permanece no painel/policy/teste: save/status/cancel capturam ticket original; refresh do histórico não gera ticket novo; lista do tenant inicial é invalidada e a UI atual não é repintada após troca. Teste sintético A→B e avisos de resultado possivelmente persistido sem repetição cega. Exigir CI/revisão do próximo SHA.
 
 ## CODEX COMERCIAL 360 — Central 360, valor desconhecido (2026-10-13)
 

@@ -40,9 +40,11 @@ test('detalhe/histórico de Pedido ignoram resposta tardia após troca de escopo
   const reopened=gate.begin(scope,scope,active);
   const next=gate.begin(scope,scope,active);
   assert.equal(gate.isCurrent(reopened,scope,active),false);
+  assert.equal(gate.isScopeCurrent(reopened,scope,active),true);
   assert.equal(gate.isCurrent(next,scope,active),true);
   active={...scope,token:'session-b'};
   assert.equal(gate.isCurrent(next,scope,active),false);
+  assert.equal(gate.isScopeCurrent(next,scope,active),false);
   assert.equal(gate.begin(scope,scope,{...scope}),null);
   gate.invalidate();
   assert.equal(gate.isCurrent(next,scope,active),false);
@@ -54,6 +56,30 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.match(source,/await api\.get\(row\.id\);if\(!detailGate\.current\.isCurrent/);
   assert.match(source,/await api\.history\(pedidoId\);if\(!detailGate\.current\.isCurrent/);
   assert.match(source,/detailGate\.current\.invalidate\(\)/);
+  assert.match(source,/const save=async\(\)=>\{const ticket=detailGate\.current\.begin/);
+  assert.match(source,/const transition=async\(row,target,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
+  assert.match(source,/const cancel=async\(row,motivo\)=>\{[^\n]*const ticket=detailGate\.current\.begin/);
+  assert.match(source,/await loadHistory\(row\.id,ticket\)/);
+});
+
+test('mutação tardia do Pedido A não substitui detalhe/histórico do Pedido B', async()=>{
+  const gate=createPedidoDetailGate();
+  const scope={groupId:'g',empresaId:'e',actorId:'u',token:'session'};
+  let selected='B';
+  let history=['B'];
+  let finishMutation;
+  const mutation=new Promise(resolve=>{finishMutation=resolve;});
+  const ticketA=gate.begin(scope,scope,scope);
+  const ticketB=gate.begin(scope,scope,scope);
+  assert.ok(ticketA && ticketB);
+  finishMutation({id:'A'});
+  const updated=await mutation;
+  if(gate.isCurrent(ticketA,scope,scope))selected=updated.id;
+  if(gate.isCurrent(ticketA,scope,scope))history=['A'];
+  assert.equal(selected,'B');
+  assert.deepEqual(history,['B']);
+  assert.equal(gate.isCurrent(ticketB,scope,scope),true);
+  assert.equal(gate.isScopeCurrent(ticketA,scope,scope),true);
 });
 
 test('pedido UI calcula sem float e allowlist remove tenant/totais',()=>{
