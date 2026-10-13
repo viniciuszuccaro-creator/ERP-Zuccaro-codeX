@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as policy from '../src/components/comercial/orcamentoUiPolicy.js';
 import * as picker from '../src/components/comercial/comercialMasterPicker.js';
+import * as navigation from '../src/components/comercial/centralCliente360Navigation.js';
 
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const flush = () => new Promise((resolve) => setImmediate(resolve));
@@ -46,6 +47,7 @@ async function mount() {
       pedidos: { convertOrcamento: (...args) => request('convert', getScope(), args) },
     }) },
     './orcamentoUiPolicy': policy, './comercialMasterPicker': picker,
+    './centralCliente360Navigation': navigation,
     sonner: { toast: Object.fromEntries(['error', 'success'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
     '@/components/lib/exportacaoPDF': { gerarPDFOrcamento: () => true },
   };
@@ -123,5 +125,22 @@ test('Orcamento real: detalhe tardio nao reabre dialogo na empresa seguinte', as
   const loading = h.title('Visualizar').props.onClick(); h.setSession(tresZ); h.setProps(tresZ); h.render(); h.render();
   h.pending.get.resolve(row()); await loading; h.render();
   assert.equal(h.nodes().some((n) => n.type === 'Dialog' && n.props.open === true), false);
+  assert.equal(h.messages.length, 0);
+});
+
+test('Orcamento real: selecao inicial consulta ID tecnico e descarta resposta de token anterior', async () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  const h = await mount();
+  h.setSession({ ...cpa, token: 'token-1' });
+  h.setProps({ ...cpa, initialSelectedId: id });
+  h.pending.get = deferred();
+  h.render();
+  assert.equal(h.calls.filter((call) => call.method === 'get').length, 1);
+  assert.equal(h.calls.at(-1).args[0], id);
+  h.setSession({ ...cpa, token: 'token-2' });
+  h.pending.get.resolve({ ...row(), id });
+  await flush();
+  h.render();
+  assert.equal(h.nodes().some((node) => node.type === 'Dialog' && node.props.open === true), false);
   assert.equal(h.messages.length, 0);
 });
