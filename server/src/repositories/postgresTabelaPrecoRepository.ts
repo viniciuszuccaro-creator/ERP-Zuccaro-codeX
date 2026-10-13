@@ -616,7 +616,8 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
          WHERE t.group_id=$1 AND t.id=$5 AND t.ativo=true
            AND t.vigencia_inicio <= $6::date
            AND (t.vigencia_fim IS NULL OR t.vigencia_fim >= $6::date)
-         LIMIT 1`,
+         LIMIT 1
+         FOR SHARE OF p`,
         [
           input.groupId,
           input.empresaId,

@@ -1,6 +1,7 @@
 ## CODEX COMERCIAL 360 — revogação de unidade em preço (2026-10-13)
 
 - Após #323 `2de492d7` (CI push/PR SUCCESS e revisão Codex sem achado relevante, **não** Cursor), branch empilhada `codex/comercial-preco-unidade-revogacao-20261013` corrige leitura de item de preço quando Produto perde sua unidade principal/secundária. PostgreSQL e in-memory exigem vínculo vigente; teste sintético prova revogação, bloqueio de edição sem mutação e retry. Escopo: TabelaPreco repositories, teste R07B, STATUS/HANDOFF; não tocar Pedido/Orçamento/Expedição, UI Cursor ou Legado. CI/revisão exigem SHA desta branch, não o de #323.
+- Incremento de concorrência: `resolvePrice` SQL aplica `FOR SHARE OF p` durante a captura do preço, como o check de inclusão/edição já faz; teste de duas conexões no `test:postgres` exige conflito com `FOR UPDATE` do Produto enquanto o snapshot ainda está na transação. Sem prova PostgreSQL local por falta de `DATABASE_URL`; não declarar CI/homologação até o SHA final.
 
 ## CODEX COMERCIAL 360 — contrato de preço cross-company (2026-10-13)
 
