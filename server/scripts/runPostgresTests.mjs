@@ -8,6 +8,7 @@ const suites = [
   ['LEGACY_IDENTITY', 'tests/legacy-identity.test.ts'],
   ['LEGACY_PRODUCT', 'tests/legacy-product.test.ts'],
   ['R08B', 'tests/runtime08-postgres-e2e.test.ts'],
+  ['R07BPRICE', 'tests/runtime07b-preco-postgres-e2e.test.ts'],
   ['R08C', 'tests/runtime08c-orcamento-postgres-e2e.test.ts'],
   ['R09', 'tests/runtime09-pedido-postgres-e2e.test.ts'],
   ['R10C', 'tests/runtime10-produto-canais-postgres-e2e.test.ts'],

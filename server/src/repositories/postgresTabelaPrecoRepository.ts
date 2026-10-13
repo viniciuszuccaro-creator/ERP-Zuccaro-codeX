@@ -659,6 +659,7 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
 
   async getProdutoUnidadeContext(
     groupId: string,
+    empresaId: string,
     produtoId: string,
     unidadeMedidaId: string,
     executor?: DbQueryExecutor,
@@ -670,9 +671,11 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
               u.ativo AS unidade_ativo,
               u.sigla
        FROM produtos p
-       JOIN unidades_medida u ON u.id=$3
-       WHERE p.id=$2 AND p.group_id=$1 AND u.group_id=$1`,
-      [groupId, produtoId, unidadeMedidaId],
+       JOIN unidades_medida u ON u.id=$4
+       WHERE p.id=$3 AND p.group_id=$1 AND u.group_id=$1
+         AND (p.empresa_id IS NULL OR p.empresa_id=$2)
+       FOR SHARE OF p`,
+      [groupId, empresaId, produtoId, unidadeMedidaId],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) return null;
