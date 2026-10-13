@@ -1,5 +1,54 @@
 import { calculateItem, calculateTotals, decimalToMicros, microsToDecimal } from './orcamentoUiPolicy.js';
 
+/** Rejeita leitura assíncrona se tenant/ator mudou ou outro detalhe foi aberto. */
+export function createPedidoDetailGate() {
+  let sequence = 0;
+  const sameScope = (opened, rendered, active) => Boolean(opened?.groupId && opened?.empresaId && opened?.actorId
+    && [rendered, active].every((scope) => scope
+      && scope.groupId === opened.groupId
+      && scope.empresaId === opened.empresaId
+      && scope.actorId === opened.actorId));
+  const scopeCurrent = (ticket, rendered, active) => Boolean(ticket && active?.token === ticket.token
+    && sameScope(ticket.scope, rendered, active));
+  return {
+    begin(opened, rendered, active) {
+      if (!sameScope(opened, rendered, active) || !active?.token) return null;
+      return { sequence: ++sequence, scope: { ...opened }, token: active.token };
+    },
+    isCurrent(ticket, rendered, active) {
+      return Boolean(ticket && ticket.sequence === sequence && scopeCurrent(ticket, rendered, active));
+    },
+    isScopeCurrent(ticket, rendered, active) {
+      return scopeCurrent(ticket, rendered, active);
+    },
+    invalidate() { sequence += 1; },
+  };
+}
+
+/** Mutação conserva ownership por tenant/ator mesmo após troca A→B→A ou rotação de token. */
+export function createPedidoMutationGate() {
+  const pending = new Set();
+  const listeners = new Set();
+  const notify = () => { for (const listener of listeners) listener(); };
+  const key = (scope) => scope?.groupId && scope?.empresaId && scope?.actorId
+    ? JSON.stringify([scope.groupId, scope.empresaId, scope.actorId]) : null;
+  return {
+    begin(scope) {
+      const scopeKey = key(scope);
+      if (!scopeKey || pending.has(scopeKey)) return null;
+      pending.add(scopeKey);
+      notify();
+      return { scopeKey };
+    },
+    isPending(scope) { return pending.has(key(scope)); },
+    end(ticket) { if (ticket && pending.delete(ticket.scopeKey)) notify(); },
+    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+  };
+}
+
+/** Vive enquanto o módulo estiver carregado, inclusive se WindowRenderer desmontar uma janela minimizada. */
+export const sharedPedidoMutationGate = createPedidoMutationGate();
+
 export const PEDIDO_STATUS_LABELS = {
   EM_ABERTO: 'Em aberto', EM_PRODUCAO: 'Em produção', PRONTO_ENTREGA: 'Pronto para entrega',
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',
