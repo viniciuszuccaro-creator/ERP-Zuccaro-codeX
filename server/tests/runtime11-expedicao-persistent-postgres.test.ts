@@ -26,6 +26,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
     const probeRole = `expedicao_r11_${Math.random().toString(36).slice(2, 10)}`;
     let probeCreated = false;
     let otherCompanyProduct: string | null = null;
+    let secondProduct: string | null = null;
     const qty = async () => {
       const row = await db.query<{ quantidade: string }>(
         'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
@@ -154,25 +155,79 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       assert.equal(await movementCount(first.entregaId), 3);
 
       const second = await makeLinked(2);
+      secondProduct = `eeeeeeee-${randomUUID().slice(9)}`;
+      await db.query(
+        `INSERT INTO produtos(id,group_id,empresa_id,descricao,unidade_medida_id)
+         VALUES($1,$2,$3,'Produto sintético para falha parcial',$4)`,
+        [secondProduct, scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
+      );
+      await db.query(`UPDATE pedido_itens SET quantidade=1,subtotal=10,total=10 WHERE pedido_id=$1 AND produto_id=$2`,
+        [second.pedidoId, product]);
+      await db.query(`INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,
+        quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot)
+        VALUES($1,$2,$3,$4,$5,'Produto sintético 2','UN',1,10,0,10,10,false,'REVENDA')`,
+      [scope.groupId, scope.empresaId, second.pedidoId, secondProduct, SEED_IDS.unidadeA]);
+      await db.query(`UPDATE entrega_itens SET quantidade_pedida=1,quantidade_separada=1 WHERE entrega_id=$1 AND produto_id=$2`,
+        [second.entregaId, product]);
+      await db.query(`INSERT INTO entrega_itens(group_id,empresa_id,entrega_id,produto_id,descricao_snapshot,unidade_snapshot,
+        quantidade_pedida,quantidade_separada,created_by,updated_by)
+        VALUES($1,$2,$3,$4,'Produto sintético 2','UN',1,1,$5,$5)`,
+      [scope.groupId, scope.empresaId, second.entregaId, secondProduct, scope.actorId]);
+      await db.query(`INSERT INTO expedicao_estoque_saldos(group_id,empresa_id,produto_id,quantidade) VALUES($1,$2,$3,0)`,
+        [scope.groupId, scope.empresaId, secondProduct]);
       await assert.rejects(() => db.withTransaction(async (tx) => {
         await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
         await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
-        throw new Error('synthetic failure after intermediate movement');
-      }), /synthetic failure/);
-      assert.equal(await qty(), 10);
+      }), (error: unknown) => (error as { code?: string }).code === 'ESTOQUE_BASELINE_OR_SALDO_INSUFICIENTE');
+      assert.equal(await qty(), 10, 'first item reservation rolls back when next item has no balance');
       assert.equal(await movementCount(second.entregaId), 0);
-      await db.withTransaction(async (tx) => {
+      assert.equal(Number((await db.query<{ count: string }>(
+        'SELECT count(*)::text FROM expedicao_pedido_eventos WHERE pedido_id=$1', [second.pedidoId])).rows[0].count), 0,
+      'Pedido effect is blocked by the failed stock transaction');
+      assert.equal(Number((await db.query<{ count: string }>(
+        `SELECT count(*)::text FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND entity='Estoque' AND after_data->>'entrega_id'=$3`,
+        [scope.groupId, scope.empresaId, second.entregaId])).rows[0].count), 0,
+      'failed attempt leaves no stock audit');
+      await db.query(`UPDATE expedicao_estoque_saldos SET quantidade=10 WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3`,
+        [scope.groupId, scope.empresaId, secondProduct]);
+      const dispatchSecond = () => db.withTransaction(async (tx) => {
         await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
         await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
       });
-      assert.equal(await qty(), 8);
-      await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [second.entregaId]);
-      await db.withTransaction(async (tx) => {
+      const cancelSecond = () => db.withTransaction(async (tx) => {
         await stock.onCancelamento({ ...scope, entregaId: second.entregaId }, tx);
         await pedido.onCancelamento({ ...scope, pedidoId: second.pedidoId, entregaId: second.entregaId }, tx);
       });
+      const secondEffects = async () => ({
+        movements: await movementCount(second.entregaId),
+        events: Number((await db.query<{ count: string }>(
+          'SELECT count(*)::text FROM expedicao_pedido_eventos WHERE pedido_id=$1', [second.pedidoId])).rows[0].count),
+        audits: Number((await db.query<{ count: string }>(
+          `SELECT count(*)::text FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND after_data->>'entrega_id'=$3`,
+          [scope.groupId, scope.empresaId, second.entregaId])).rows[0].count),
+      });
+      const secondQty = async () => Number((await db.query<{ quantidade: string }>(
+        'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+        [scope.groupId, scope.empresaId, secondProduct])).rows[0].quantidade);
+      await dispatchSecond();
+      assert.equal(await qty(), 9);
+      assert.equal(await secondQty(), 9);
+      const dispatchedEffects = await secondEffects();
+      assert.deepEqual(dispatchedEffects, { movements: 2, events: 1, audits: 3 });
+      await dispatchSecond();
+      assert.equal(await qty(), 9);
+      assert.equal(await secondQty(), 9);
+      assert.deepEqual(await secondEffects(), dispatchedEffects, 'multi-item dispatch replay cannot add effects');
+      await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [second.entregaId]);
+      await cancelSecond();
       assert.equal(await qty(), 10);
-      assert.equal(await movementCount(second.entregaId), 2);
+      assert.equal(await secondQty(), 10);
+      const cancelledEffects = await secondEffects();
+      assert.deepEqual(cancelledEffects, { movements: 4, events: 2, audits: 6 });
+      await cancelSecond();
+      assert.equal(await qty(), 10);
+      assert.equal(await secondQty(), 10);
+      assert.deepEqual(await secondEffects(), cancelledEffects, 'multi-item compensation replay cannot add effects');
       const third = await makeLinked(3);
       await db.query(`UPDATE entregas SET status='PRONTO_EXPEDIR',romaneio_id=NULL WHERE id=$1`, [third.entregaId]);
       let releaseFirst!: () => void;
@@ -210,11 +265,13 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
     } finally {
       await db.withTransaction(async (tx) => {
         await tx.query('DELETE FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND entity IN ($3,$4) AND entity_id = ANY($5::text[])',
-          [scope.groupId, scope.empresaId, 'Pedido', 'Estoque', [...created.pedidos, product]]);
+          [scope.groupId, scope.empresaId, 'Pedido', 'Estoque', [...created.pedidos, product, secondProduct].filter(Boolean)]);
         await tx.query('DELETE FROM expedicao_pedido_eventos WHERE pedido_id = ANY($1::uuid[])', [created.pedidos]);
         await tx.query('DELETE FROM expedicao_estoque_movimentos WHERE entrega_id = ANY($1::uuid[])', [created.entregas]);
         await tx.query('DELETE FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
           [scope.groupId, scope.empresaId, product]);
+        if (secondProduct) await tx.query('DELETE FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
+          [scope.groupId, scope.empresaId, secondProduct]);
         await tx.query('DELETE FROM entrega_historico WHERE entrega_id = ANY($1::uuid[])', [created.entregas]);
         await tx.query('DELETE FROM entrega_itens WHERE entrega_id = ANY($1::uuid[])', [created.entregas]);
         await tx.query('DELETE FROM romaneio_entregas WHERE romaneio_id = ANY($1::uuid[])', [created.romaneios]);
@@ -225,6 +282,7 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
         await tx.query('DELETE FROM pedidos WHERE id = ANY($1::uuid[])', [created.pedidos]);
       });
       if (otherCompanyProduct) await db.query('DELETE FROM produtos WHERE id=$1', [otherCompanyProduct]);
+      if (secondProduct) await db.query('DELETE FROM produtos WHERE id=$1', [secondProduct]);
       if(restrictedDb)await restrictedDb.end();
       if (probeCreated) {
         await db.query(`REVOKE SELECT ON expedicao_estoque_saldos,expedicao_estoque_movimentos,expedicao_pedido_eventos FROM ${probeRole}`);
