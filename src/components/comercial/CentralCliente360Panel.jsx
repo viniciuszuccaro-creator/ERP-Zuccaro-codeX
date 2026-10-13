@@ -23,7 +23,7 @@ import {
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
 import { formatCentral360Money as money } from '@/components/comercial/centralCliente360Money';
-import { openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
+import { openCentralOrcamentoWindow, openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useWindow } from '@/components/lib/useWindow';
@@ -217,6 +217,7 @@ export default function CentralCliente360Panel({
   renderedScope.current={groupId:grupoAtual?.id||empresaAtual?.group_id||empresaAtual?.grupo_id,empresaId:empresaAtual?.id||null};
   const [conversionError,setConversionError]=useState('');
   const [pedidoOpenError,setPedidoOpenError]=useState('');
+  const [orcamentoOpenError,setOrcamentoOpenError]=useState('');
   const sessionToken = typeof token === 'string' ? token.trim() : '';
   const enabled = canLoadCentralCliente360({
     flag: isHttpCliente360Enabled,
@@ -229,7 +230,7 @@ export default function CentralCliente360Panel({
   const sessionKey = central360SessionKey(sessionToken);
   const viewKey=JSON.stringify([clienteId,groupId,empresaId,actorId,sessionKey]);
   const viewRef=useRef(null);viewRef.current=viewKey;
-  React.useEffect(()=>{viewRef.current=viewKey;setConversionError('');setPedidoOpenError('');return()=>{viewRef.current=null;};},[viewKey]);
+  React.useEffect(()=>{viewRef.current=viewKey;setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');return()=>{viewRef.current=null;};},[viewKey]);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
@@ -369,19 +370,22 @@ export default function CentralCliente360Panel({
   const blocks = payload?.blocks || {};
   const meta = payload?.meta || {};
   const loadingMore = query.isFetching && !query.isLoading;
-  const openPedido=async(row)=>{
-    setPedidoOpenError('');
+  const openRecord=async(row,kind)=>{
+    const pedido=kind==='pedido';
+    const setError=pedido?setPedidoOpenError:setOrcamentoOpenError;
+    setError('');
     const openedKey=viewRef.current;
     const openedScope={groupId,empresaId,actorId,token:sessionToken};
     const assertCurrent=()=>{
       if(viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
-        throw new Error('Contexto alterado. Reabra a Central antes de consultar o Pedido.');
+        throw new Error('Contexto alterado. Reabra a Central antes de consultar o registro.');
     };
     try{
-      await openCentralPedidoWindow({row,block:blocks.pedidos,allowed:!permissionsLoading&&hasPermission('Comercial','pedido','visualizar'),
-        assertCurrent,loadPanel:async()=>(await import('@/components/comercial/PedidosTab')).default,openWindow,
+      const open=pedido?openCentralPedidoWindow:openCentralOrcamentoWindow;
+      await open({row,block:pedido?blocks.pedidos:blocks.orcamentos,allowed:!permissionsLoading&&hasPermission('Comercial',kind,'visualizar'),
+        assertCurrent,loadPanel:pedido?async()=>(await import('@/components/comercial/PedidosTab')).default:async()=>(await import('@/components/comercial/OrcamentosTab')).default,openWindow,
         props:{groupId,empresaId,actorId,actorEmail,hasPermission,filterInContext,empresaAtual}});
-    }catch(error){if(viewRef.current===openedKey)setPedidoOpenError(error?.message||'Falha ao abrir Pedido.');}
+    }catch(error){if(viewRef.current===openedKey)setError(error?.message||'Falha ao abrir registro.');}
   };
 
   return (
@@ -485,10 +489,12 @@ export default function CentralCliente360Panel({
               <span className="flex items-center gap-2 shrink-0">
                 {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
                 <span>{money(row.total)}</span>
+                {!permissionsLoading&&hasPermission('Comercial','orcamento','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-orcamento-abrir" onClick={()=>void openRecord(row,'orcamento')}>Abrir</Button>}
               </span>
             </>
           )}
         />
+        {orcamentoOpenError&&<p role="alert" className="text-sm text-red-700" data-testid="central360-orcamento-open-error">{orcamentoOpenError}</p>}
         <BlockCard
           title="Pedidos"
           icon={ShoppingCart}
@@ -507,7 +513,7 @@ export default function CentralCliente360Panel({
               <span className="flex items-center gap-2 shrink-0">
                 {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
                 <span>{money(row.total)}</span>
-                {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" onClick={()=>void openPedido(row)}>Abrir</Button>}
+                {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" onClick={()=>void openRecord(row,'pedido')}>Abrir</Button>}
               </span>
             </>
           )}

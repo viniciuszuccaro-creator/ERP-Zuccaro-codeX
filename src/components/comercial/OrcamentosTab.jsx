@@ -24,6 +24,7 @@ import {
   produtoPickerLabel,
 } from './comercialMasterPicker';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
+import { isCanonicalComercialId } from './centralCliente360Navigation';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
 const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', tabela_preco_id: '', validade_em: '', observacoes: '', itens: [emptyItem()] });
@@ -38,7 +39,7 @@ const errorMessage = (error) => {
   return 'Não foi possível comunicar com o servidor. Tente novamente.';
 };
 
-export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, windowMode = false }) {
+export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -50,6 +51,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [dirty, setDirty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const actionGate = useRef(createOrcamentoActionGate());
+  const initialOpened = useRef(null);
   const formScope = useRef(null);
   const cancelScope = useRef(null);
   const conversionScope = useRef(null);
@@ -185,10 +187,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     finally { endAction(ticket); }
   };
   const showDetail = async (row) => {
-    const opened = renderedScope.current;
+    const opened = { ...renderedScope.current, token: activeScope()?.token };
     try { const detail = await api.get(row.id); if (sameOrcamentoScope(opened, renderedScope.current, activeScope())) { setSelected(detail); setDetailOpen(true); } }
     catch (error) { if (sameOrcamentoScope(opened, renderedScope.current, activeScope())) toast.error(errorMessage(error)); }
   };
+  const initialToken = activeScope()?.token;
+  useEffect(() => { const active = activeScope(); if (!contextReady || !canView || !isCanonicalComercialId(initialSelectedId) || !active?.token || !sameOrcamentoScope({ ...renderedScope.current, token: active.token }, renderedScope.current, active)) return; const marker = JSON.stringify([groupId, empresaId, actorId, initialSelectedId, active.token]); if (initialOpened.current === marker) return; initialOpened.current = marker; void showDetail({ id: initialSelectedId }); }, [initialSelectedId, groupId, empresaId, actorId, initialToken, canView, contextReady]);
   const performCancel = async (row) => {
     if (!row) return;
     if (!canCancel(row)) { toast.error('Seu perfil não possui permissão para esta ação.'); return; }
