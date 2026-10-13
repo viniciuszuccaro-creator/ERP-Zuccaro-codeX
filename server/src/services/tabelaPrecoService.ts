@@ -272,10 +272,10 @@ export class TabelaPrecoService {
     await this.prepare(ctx, 'gerenciar-itens', { requireEmpresa: true, tabelaId });
     const parsed = tabelaPrecoItemCreateSchema.safeParse(payload);
     if (!parsed.success) this.validationError(parsed.error.flatten());
-    await this.assertProdutoUnidade(ctx, parsed.data.produto_id, parsed.data.unidade_medida_id);
     try {
       const item = await this.repo.withTransaction(async (executor) => {
         await this.requireActive(ctx, tabelaId, executor);
+        await this.assertProdutoUnidade(ctx, parsed.data.produto_id, parsed.data.unidade_medida_id, executor);
         const created = await this.repo.createItem(
           this.scope(ctx), tabelaId, parsed.data, ctx.actorId, executor,
         );
@@ -329,6 +329,7 @@ export class TabelaPrecoService {
       await this.requireActive(ctx, tabelaId, executor);
       const before = await this.repo.getItem(this.scope(ctx), tabelaId, itemId, executor);
       if (!before || before.ativo) this.notFound();
+      await this.assertProdutoUnidade(ctx, before.produto_id, before.unidade_medida_id, executor);
       const after = await this.repo.restoreItem(
         this.scope(ctx), tabelaId, itemId, ctx.actorId, executor,
       );
@@ -451,8 +452,8 @@ export class TabelaPrecoService {
     });
   }
 
-  private async assertProdutoUnidade(ctx: RequestContext, produtoId: string, unidadeId: string) {
-    const ctxInfo = await this.repo.getProdutoUnidadeContext(ctx.groupId, ctx.empresaId!, produtoId, unidadeId);
+  private async assertProdutoUnidade(ctx: RequestContext, produtoId: string, unidadeId: string, executor?: DbQueryExecutor) {
+    const ctxInfo = await this.repo.getProdutoUnidadeContext(ctx.groupId, ctx.empresaId!, produtoId, unidadeId, executor);
     if (!ctxInfo || !ctxInfo.produtoAtivo || !ctxInfo.unidadeAtivo) {
       throw new AppError(404, 'PRODUTO_UNIDADE_NOT_FOUND', 'Produto/unidade not found in group');
     }

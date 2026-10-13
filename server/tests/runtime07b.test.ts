@@ -836,7 +836,7 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
 
     // Mestre compartilhado pelo Grupo pode entrar na mesma tabela sem duplicar Produto.
     await pg.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1', [SEED_IDS.produtoA]);
-    await svc.createItem(ctxA2, onlyA2.id, {
+    const sharedItem = await svc.createItem(ctxA2, onlyA2.id, {
       produto_id: SEED_IDS.produtoA,
       unidade_medida_id: SEED_IDS.unidadeA,
       preco: '55',
@@ -845,6 +845,19 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
       produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeA, businessDate: '2024-06-01',
     });
     assert.equal(sharedPrice?.tabela_preco_id, onlyA2.id);
+    await svc.softDeleteItem(ctxA2, onlyA2.id, sharedItem.id);
+    await pg.query('UPDATE produtos SET empresa_id=$1 WHERE id=$2', [SEED_IDS.empresaA, SEED_IDS.produtoA]);
+    await assert.rejects(
+      () => svc.restoreItem(ctxA2, onlyA2.id, sharedItem.id),
+      { code: 'PRODUTO_UNIDADE_NOT_FOUND' },
+    );
+    const stillInactive = await pg.query<{ ativo: boolean }>(
+      'SELECT ativo FROM tabela_preco_itens WHERE id=$1', [sharedItem.id],
+    );
+    assert.equal(stillInactive.rows[0]?.ativo, false);
+    await pg.query('UPDATE produtos SET empresa_id=NULL WHERE id=$1', [SEED_IDS.produtoA]);
+    const restored = await svc.restoreItem(ctxA2, onlyA2.id, sharedItem.id);
+    assert.equal(restored.ativo, true);
 
     for (const invalid of [
       { produtoId: 'invalid', unidadeMedidaId: SEED_IDS.unidadeA },
