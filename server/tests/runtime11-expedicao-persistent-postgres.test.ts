@@ -157,8 +157,9 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       const second = await makeLinked(2);
       secondProduct = `eeeeeeee-${randomUUID().slice(9)}`;
       await db.query(
-        `INSERT INTO produtos(id,group_id,empresa_id,descricao) VALUES($1,$2,$3,'Produto sintético para falha parcial')`,
-        [secondProduct, scope.groupId, scope.empresaId],
+        `INSERT INTO produtos(id,group_id,empresa_id,descricao,unidade_medida_id)
+         VALUES($1,$2,$3,'Produto sintético para falha parcial',$4)`,
+        [secondProduct, scope.groupId, scope.empresaId, SEED_IDS.unidadeA],
       );
       await db.query(`UPDATE pedido_itens SET quantidade=1,subtotal=10,total=10 WHERE pedido_id=$1 AND produto_id=$2`,
         [second.pedidoId, product]);
@@ -189,24 +190,44 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       'failed attempt leaves no stock audit');
       await db.query(`UPDATE expedicao_estoque_saldos SET quantidade=10 WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3`,
         [scope.groupId, scope.empresaId, secondProduct]);
-      await db.withTransaction(async (tx) => {
+      const dispatchSecond = () => db.withTransaction(async (tx) => {
         await pedido.onDespacho({ ...scope, pedidoIds: [second.pedidoId], romaneioId: second.romaneioId }, tx);
         await stock.onDespacho({ ...scope, entregaIds: [second.entregaId] }, tx);
       });
-      assert.equal(await qty(), 9);
-      assert.equal(Number((await db.query<{ quantidade: string }>(
-        'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
-        [scope.groupId, scope.empresaId, secondProduct])).rows[0].quantidade), 9);
-      await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [second.entregaId]);
-      await db.withTransaction(async (tx) => {
+      const cancelSecond = () => db.withTransaction(async (tx) => {
         await stock.onCancelamento({ ...scope, entregaId: second.entregaId }, tx);
         await pedido.onCancelamento({ ...scope, pedidoId: second.pedidoId, entregaId: second.entregaId }, tx);
       });
-      assert.equal(await qty(), 10);
-      assert.equal(Number((await db.query<{ quantidade: string }>(
+      const secondEffects = async () => ({
+        movements: await movementCount(second.entregaId),
+        events: Number((await db.query<{ count: string }>(
+          'SELECT count(*)::text FROM expedicao_pedido_eventos WHERE pedido_id=$1', [second.pedidoId])).rows[0].count),
+        audits: Number((await db.query<{ count: string }>(
+          `SELECT count(*)::text FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND after_data->>'entrega_id'=$3`,
+          [scope.groupId, scope.empresaId, second.entregaId])).rows[0].count),
+      });
+      const secondQty = async () => Number((await db.query<{ quantidade: string }>(
         'SELECT quantidade::text FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3',
-        [scope.groupId, scope.empresaId, secondProduct])).rows[0].quantidade), 10);
-      assert.equal(await movementCount(second.entregaId), 4);
+        [scope.groupId, scope.empresaId, secondProduct])).rows[0].quantidade);
+      await dispatchSecond();
+      assert.equal(await qty(), 9);
+      assert.equal(await secondQty(), 9);
+      const dispatchedEffects = await secondEffects();
+      assert.deepEqual(dispatchedEffects, { movements: 2, events: 1, audits: 3 });
+      await dispatchSecond();
+      assert.equal(await qty(), 9);
+      assert.equal(await secondQty(), 9);
+      assert.deepEqual(await secondEffects(), dispatchedEffects, 'multi-item dispatch replay cannot add effects');
+      await db.query(`UPDATE entregas SET status='CANCELADA',ativo=false WHERE id=$1`, [second.entregaId]);
+      await cancelSecond();
+      assert.equal(await qty(), 10);
+      assert.equal(await secondQty(), 10);
+      const cancelledEffects = await secondEffects();
+      assert.deepEqual(cancelledEffects, { movements: 4, events: 2, audits: 6 });
+      await cancelSecond();
+      assert.equal(await qty(), 10);
+      assert.equal(await secondQty(), 10);
+      assert.deepEqual(await secondEffects(), cancelledEffects, 'multi-item compensation replay cannot add effects');
       const third = await makeLinked(3);
       await db.query(`UPDATE entregas SET status='PRONTO_EXPEDIR',romaneio_id=NULL WHERE id=$1`, [third.entregaId]);
       let releaseFirst!: () => void;
