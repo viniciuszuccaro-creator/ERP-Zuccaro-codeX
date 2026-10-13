@@ -12081,6 +12081,8 @@ Checklist inicial:
 
 ### Legado - verificacao Linux e reconciliacao factual (2026-10-13)
 
+- Auxiliares pre-VPS: 15 linhas de unidade representam 10 siglas; repeticoes de KG/UN/MT/TON conferem, PC diverge em permite_conversao. CX atual existe inativa, portanto os 43 Produtos CX aguardam alvo ativo/semantica, sem reativacao automatica. MT foi ensaiada em tabela canonica isolada: dois IDs antigos -> uma unidade, todos os campos reabertos 2/2, retry integral 0 unidades/mapas novos, edicao/reabertura 1/1 e reversao 0. Recuperacao operacional zero. Falha reproduzida do primeiro ensaio: schema versionado 001-024 nao tem unidade.codigo (`column "codigo" does not exist`), mas VPS possui codigo/codigo_origem; conciliar origem do DDL antes de recuperar no destino. Nao inventar codigo antigo vazio nem alterar migrations neste lote.
+
 - Produtos: matriz privada de unidades cobre 1.208 candidatos. KG/Quilograma (669) e UN/Unidade (320) existem, mas pertencem a Empresa; 989 correspondencias de significado aguardam revisao de visibilidade para Produto de Grupo. Faltam alvos para CX 43, PC 164, MT 4, LT 6 e M2 2 (219 registros). Campos normalizados/principais conferem 1.208/1.208, aliases brutos divergem apenas nos oito LT/M2. SQLite de revisao integro, fonte preservada, zero IDs de Produto/mapeamentos aprovados/importacao. Classes/conversoes nao atribuidas; nao duplicar auxiliares existentes.
 
 - Verificador/teste seguem locais, fora da #322. Defeitos do lote corrigidos: `NaN`/infinito rejeitados; relatorio nao pode substituir a fonte SQLite, inclusive por hardlink. Testes sinteticos 6/6 e auditoria real 80.750/49.601 com 1.233 divergencias passaram; copias privadas restritas atualizadas.
