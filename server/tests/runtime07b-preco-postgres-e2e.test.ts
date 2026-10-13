@@ -40,6 +40,29 @@ test('R07B preço PostgreSQL: Produto fica estável até concluir a mutação de
       'SELECT id FROM produtos WHERE group_id=$1 AND id=$2 FOR UPDATE', [SEED_IDS.groupA, SEED_IDS.produtoA],
     );
     assert.equal(unlocked.rows[0]?.id, SEED_IDS.produtoA);
+    await writer.query('ROLLBACK');
+
+    // A captura do preço também mantém o Produto estável até o snapshot da venda.
+    await reader.query('BEGIN');
+    await reader.query("SELECT set_config('app.group_id',$1,true), set_config('app.empresa_id',$2,true)", [SEED_IDS.groupA, SEED_IDS.empresaA]);
+    const price = await repo.resolvePrice({
+      groupId: SEED_IDS.groupA,
+      empresaId: SEED_IDS.empresaA,
+      clienteEmpresaTabelaId: SEED_IDS.tabelaPrecoA,
+      produtoId: SEED_IDS.produtoA,
+      unidadeMedidaId: SEED_IDS.unidadeA,
+      businessDate: '2024-06-01',
+    }, executor);
+    assert.ok(price?.preco);
+    await writer.query('BEGIN');
+    await writer.query("SELECT set_config('app.group_id',$1,true), set_config('app.empresa_id',$2,true)", [SEED_IDS.groupA, SEED_IDS.empresaA]);
+    await writer.query("SET LOCAL lock_timeout = '250ms'");
+    await assert.rejects(
+      () => writer.query('SELECT id FROM produtos WHERE group_id=$1 AND id=$2 FOR UPDATE', [SEED_IDS.groupA, SEED_IDS.produtoA]),
+      { code: '55P03' },
+    );
+    await writer.query('ROLLBACK');
+    await reader.query('COMMIT');
   } finally {
     await reader.query('ROLLBACK');
     await writer.query('ROLLBACK');

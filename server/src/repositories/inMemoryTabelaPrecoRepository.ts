@@ -582,6 +582,8 @@ export class InMemoryTabelaPrecoRepository implements TabelaPrecoRepository {
       if (!produto || !produto.ativo || produto.group_id !== input.groupId) return null;
       if (produto.empresa_id !== null && produto.empresa_id !== input.empresaId) return null;
       if (!unidade || !unidade.ativo || unidade.group_id !== input.groupId) return null;
+      if (produto.unidade_medida_id !== unidade.id
+        && !produto.unidades_secundarias.some((sigla) => sigla.toLowerCase() === unidade.sigla.toLowerCase())) return null;
       if (input.businessDate < tabela.vigencia_inicio) return null;
       if (tabela.vigencia_fim && input.businessDate > tabela.vigencia_fim) return null;
       const item = [...this.itens.values()].find((row) => (
