@@ -212,6 +212,12 @@ test('Onda2: Pedido convertido não troca tabela ou preço snapshotado pelo Orç
     { code: 'PEDIDO_TABELA_PRECO_DIVERGENTE' },
   );
   await assert.rejects(
+    service.update(ctx, order.id, {
+      ...updatePayload, cliente_empresa_id: '88888888-8888-4888-8888-888888888888',
+    }),
+    { code: 'PEDIDO_CLIENTE_IMUTAVEL' },
+  );
+  await assert.rejects(
     service.update(ctx, order.id, { ...updatePayload, itens: [{ ...updatePayload.itens[0], preco_unitario: '99.000000' }] }),
     { code: 'PEDIDO_SNAPSHOT_IMUTAVEL' },
   );

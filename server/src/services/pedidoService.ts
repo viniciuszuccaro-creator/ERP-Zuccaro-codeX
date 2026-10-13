@@ -197,6 +197,9 @@ export class PedidoService {
       if (before.status !== 'EM_ABERTO') this.stateConflict();
       if ((data.orcamento_id ?? null) !== before.orcamento_id) this.validation({ orcamento_id: 'immutable' });
       if (before.orcamento_id) {
+        if (data.cliente_empresa_id !== before.cliente_empresa_id) {
+          throw new AppError(422, 'PEDIDO_CLIENTE_IMUTAVEL', 'Quotation customer is immutable');
+        }
         if (data.tabela_preco_id && data.tabela_preco_id !== before.tabela_preco_id) {
           throw new AppError(422, 'PEDIDO_TABELA_PRECO_DIVERGENTE', 'Price table differs from quotation snapshot');
         }
