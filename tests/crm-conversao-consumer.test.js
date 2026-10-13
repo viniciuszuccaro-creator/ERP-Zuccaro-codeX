@@ -10,6 +10,7 @@ import * as submission from '../src/components/crm/crmFormSubmission.js';
 import * as pagination from '../src/components/comercial/centralCliente360Pagination.js';
 import * as legacy from '../src/components/comercial/centralCliente360CrmLegado.js';
 import * as centralMoney from '../src/components/comercial/centralCliente360Money.js';
+import * as centralNavigation from '../src/components/comercial/centralCliente360Navigation.js';
 import * as http from '../src/api/httpApiClient.js';
 const require=createRequire(import.meta.url);
 const groupId='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',empresaId='11111111-1111-4111-8111-111111111111',actorId='33333333-3333-4333-8333-333333333333';
@@ -90,6 +91,7 @@ async function panelFixture({deny=false,late=false,mismatch=false,groupView=fals
     if(path.includes('centralCliente360Pagination'))return pagination;
     if(path.includes('centralCliente360CrmLegado'))return legacy;
     if(path.includes('centralCliente360Money'))return centralMoney;
+    if(path.includes('centralCliente360Navigation'))return centralNavigation;
     if(path.includes('useContextoVisual'))return {__esModule:true,default:()=>({grupoAtual:{id:groupId},empresaAtual:groupView?null:{id:empresaId}})};
     if(path.includes('usePermissions'))return {__esModule:true,default:()=>({hasPermission:()=>true,isLoading:false})};
     if(path.includes('useWindow'))return {useWindow:()=>({openWindow:(_component,props)=>{windows.push(props);return 'window';},closeWindow:()=>{}})};

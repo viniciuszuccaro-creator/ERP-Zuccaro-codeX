@@ -85,12 +85,27 @@ test('Central bloqueia import concorrente por tipo, libera retry e invalida tick
   assert.ok(quote, 'outro tipo continua independente');
   const changedScope = gate.begin('pedido', 'group-a/company-b/token-2');
   assert.ok(changedScope, 'novo contexto não espera import antigo');
+  assert.equal(gate.isCurrent(first), false);
+  assert.equal(gate.isCurrent(changedScope), true);
   assert.equal(gate.end(first), false, 'import antigo não libera ticket novo');
   assert.equal(gate.end(changedScope), true);
   assert.ok(gate.begin('pedido', 'group-a/company-a/token-1'), 'falha libera retry');
   gate.reset();
   assert.equal(gate.end(quote), false, 'callback antigo não libera estado do novo contexto');
+  assert.equal(gate.isCurrent(quote), false);
   assert.ok(gate.begin('pedido', 'group-a/company-b/token-2'));
+});
+
+test('Central bloqueia import antigo quando sessão A→B→A retorna aos mesmos valores', async () => {
+  const gate = createCentralOpenGate();
+  const ticket = gate.begin('pedido', 'A');
+  let scope = 'A';
+  const opened = [];
+  await assert.rejects(openCentralPedidoWindow({ row, block, allowed: true, props,
+    assertCurrent: () => { if (scope !== 'A' || !gate.isCurrent(ticket)) throw Error('stale ticket'); },
+    loadPanel: async () => { scope = 'B'; gate.reset(); scope = 'A'; gate.begin('pedido', 'A'); return () => null; },
+    openWindow: () => opened.push('opened') }), /stale ticket/);
+  assert.deepEqual(opened, []);
 });
 
 test('Central não expõe erro bruto de import nem abre registro fora do bloco', async () => {

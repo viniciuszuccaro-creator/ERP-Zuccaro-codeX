@@ -382,7 +382,7 @@ export default function CentralCliente360Panel({
     const openedKey=viewRef.current;
     const openedScope={groupId,empresaId,actorId,token:sessionToken};
     const assertCurrent=()=>{
-      if(viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
+      if(!openGate.current.isCurrent(ticket)||viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
         throw new Error('Contexto alterado. Reabra a Central antes de consultar o registro.');
     };
     try{

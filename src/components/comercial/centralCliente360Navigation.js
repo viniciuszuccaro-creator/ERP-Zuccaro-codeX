@@ -7,19 +7,21 @@ let reopenRequestId = 0;
 /** Bloqueia importações repetidas do mesmo tipo sem impedir retry após falha. */
 export function createCentralOpenGate() {
   const pending = new Map();
+  let generation = 0;
   return {
     begin(kind, scopeKey) {
       if (pending.get(kind)?.scopeKey === scopeKey) return null;
-      const ticket = { kind, scopeKey };
+      const ticket = { kind, scopeKey, generation };
       pending.set(kind, ticket);
       return ticket;
     },
+    isCurrent(ticket) { return Boolean(ticket && ticket.generation === generation && pending.get(ticket.kind) === ticket); },
     end(ticket) {
       if (!ticket || pending.get(ticket.kind) !== ticket) return false;
       pending.delete(ticket.kind);
       return true;
     },
-    reset() { pending.clear(); },
+    reset() { generation++; pending.clear(); },
   };
 }
 
