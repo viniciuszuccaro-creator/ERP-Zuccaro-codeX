@@ -784,6 +784,28 @@ test('ClienteEmpresa cross-company + produto/unidade + precisão + vigência', a
       preco: '11',
     });
     await svc.setPadrao(ctxA, vigentePadrao.id);
+    const secondaryItem = await svc.createItem(ctxA, vigentePadrao.id, {
+      produto_id: SEED_IDS.produtoA,
+      unidade_medida_id: SEED_IDS.unidadeUnA,
+      preco: '13',
+    });
+    const secondaryPriceInput = {
+      produtoId: SEED_IDS.produtoA, unidadeMedidaId: SEED_IDS.unidadeUnA, businessDate: '2024-06-01',
+    };
+    assert.equal((await svc.resolvePrice(ctxA, secondaryPriceInput))?.preco, '13.000000');
+    await pg.query("UPDATE produtos SET unidades_secundarias='[]'::jsonb WHERE id=$1", [SEED_IDS.produtoA]);
+    assert.equal(await svc.resolvePrice(ctxA, secondaryPriceInput), null);
+    await assert.rejects(
+      () => svc.updateItem(ctxA, vigentePadrao.id, secondaryItem.id, { preco: '99' }),
+      { code: 'UNIDADE_NOT_ALLOWED' },
+    );
+    const unchangedSecondary = await pg.query<{ preco: string }>(
+      'SELECT preco::text AS preco FROM tabela_preco_itens WHERE id=$1', [secondaryItem.id],
+    );
+    assert.equal(unchangedSecondary.rows[0]?.preco, '13.000000');
+    await pg.query("UPDATE produtos SET unidades_secundarias='[\"UN\"]'::jsonb WHERE id=$1", [SEED_IDS.produtoA]);
+    assert.equal((await svc.resolvePrice(ctxA, secondaryPriceInput))?.preco, '13.000000');
+    assert.equal((await svc.updateItem(ctxA, vigentePadrao.id, secondaryItem.id, { preco: '14' })).preco, '14.000000');
 
     const fromExpiredSpecific = await svc.resolvePrice(ctxA, {
       clienteEmpresaTabelaId: expirada.id,
@@ -910,10 +932,14 @@ test('preço em memória respeita Produto específico ou compartilhado', async (
     SEED_IDS.groupA, SEED_IDS.empresaA2, SEED_IDS.produtoA, SEED_IDS.unidadeA,
   ), null);
   assert.equal(await repo.resolvePrice(input), null);
-  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null });
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null, unidade_medida_id: SEED_IDS.unidadeA });
   assert.ok(await repo.getProdutoUnidadeContext(
     SEED_IDS.groupA, SEED_IDS.empresaA2, SEED_IDS.produtoA, SEED_IDS.unidadeA,
   ));
+  assert.equal((await repo.resolvePrice(input))?.preco, '12.34');
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null, unidade_medida_id: SEED_IDS.unidadeUnA });
+  assert.equal(await repo.resolvePrice(input), null);
+  repo.hydrateProduto({ id: SEED_IDS.produtoA, group_id: SEED_IDS.groupA, empresa_id: null, unidade_medida_id: SEED_IDS.unidadeA });
   assert.equal((await repo.resolvePrice(input))?.preco, '12.34');
 });
 
