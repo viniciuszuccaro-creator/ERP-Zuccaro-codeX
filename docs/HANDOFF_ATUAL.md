@@ -1,3 +1,7 @@
+## CODEX COMERCIAL 360 — Central 360, valor desconhecido (2026-10-13)
+
+- Reserva independente da branch `codex/comercial-central-valor-indisponivel-20261013`, base #325 `834a50b3`: `src/components/comercial/CentralCliente360Panel.jsx`, helper de formatação específico se necessário e teste direto. Cursor branch `cursor/cadastros-recuperacao-c360-contrato-392b` permanece `6908f74e` documental/sem edição por esta frente. Escopo somente exibição de valores monetários ausentes/inválidos, sem criar fonte ou KPI paralelo; distinguir desconhecido de zero confirmado. Não tocar entradas Legado reservadas, Pedido/Orçamento backend, Expedição ou branch Cursor. CI/revisão do HEAD final exigidas.
+
 ## CODEX COMERCIAL 360 — snapshot preço→Orçamento→Pedido (2026-10-13)
 
 - Branch `codex/comercial-preco-snapshot-revogacao-20261013` baseada na #324 `b0865363`; reserva de `server/src/services/{orcamento,pedido}Service.ts` e `server/tests/runtime-onda2-preco-snapshot.test.ts`, sem editar a branch Cursor ou Legado. Entrada do cliente com `tabela_preco_id` divergente da tabela efetiva é rejeitada na transação; itens com origens diferentes também falham fechados. Fluxo sintético real `TabelaPrecoService`→Orçamento→Pedido cobre unidade principal trocada, falha sem nova venda, reautorização/retry e snapshots antigos intactos. Unidade secundária para venda não foi ativada: conversão de quantidade/estoque ainda precisa de contrato. Revisão/CI só contam no HEAD final desta branch; sem merge/deploy/importação.
