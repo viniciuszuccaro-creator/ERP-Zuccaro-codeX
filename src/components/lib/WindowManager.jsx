@@ -81,7 +81,7 @@ export function WindowProvider({ children }) {
         const maxZ = Math.max(...prevWindows.map(w => w.zIndex), 99999000);
         return prevWindows.map(w =>
           w.id === janelaExistente.id
-            ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
+            ? { ...w, props: options.refreshPropsOnReuse ? props : w.props, zIndex: maxZ + 100000, isMinimized: false }
             : w
         );
       });
@@ -101,7 +101,7 @@ export function WindowProvider({ children }) {
           const maxZ = Math.max(...prevWindows.map(w => w.zIndex), 99999000);
           return prevWindows.map(w =>
             w.id === janelaExistente.id
-              ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
+              ? { ...w, props: options.refreshPropsOnReuse ? props : w.props, zIndex: maxZ + 100000, isMinimized: false }
               : w
           );
         }

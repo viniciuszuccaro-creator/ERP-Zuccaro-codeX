@@ -144,3 +144,23 @@ test('Orcamento real: selecao inicial consulta ID tecnico e descarta resposta de
   assert.equal(h.nodes().some((node) => node.type === 'Dialog' && node.props.open === true), false);
   assert.equal(h.messages.length, 0);
 });
+
+test('Orcamento real: GET inicial atrasado não sobrescreve seleção posterior', async () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  const h = await mount();
+  h.setSession({ ...cpa, token: 'token-1' });
+  h.setProps({ ...cpa, initialSelectedId: id });
+  const first = deferred();
+  h.pending.get = first;
+  h.render();
+  h.pending.get = deferred();
+  const latest = h.title('Visualizar').props.onClick();
+  h.pending.get.resolve({ ...row(), numero: '99' });
+  await latest;
+  h.render();
+  first.resolve({ ...row(), id, numero: '11' });
+  await flush();
+  h.render();
+  const detailTitle = h.nodes().find((node) => node.type === 'DialogTitle' && node.children.some((child) => String(child).includes('Orçamento')));
+  assert.equal(detailTitle?.children.join(''), 'Orçamento 99');
+});

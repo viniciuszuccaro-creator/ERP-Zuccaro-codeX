@@ -2,6 +2,7 @@ const PEDIDO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[
 
 export const isCanonicalComercialId = (value) => typeof value === 'string' && PEDIDO_ID.test(value);
 export const isCanonicalPedidoId = isCanonicalComercialId;
+let reopenRequestId = 0;
 
 /** Abre painéis canônicos existentes; o backend continua autoridade para leitura e RBAC. */
 async function openCanonicalWindow({ row, block, allowed, assertCurrent, loadPanel, openWindow, props, kind, label }) {
@@ -10,11 +11,12 @@ async function openCanonicalWindow({ row, block, allowed, assertCurrent, loadPan
   assertCurrent();
   const Panel = await loadPanel();
   assertCurrent();
-  openWindow(Panel, { ...props, canonicalHttp: true, initialSelectedId: row.id, windowMode: true }, {
+  openWindow(Panel, { ...props, canonicalHttp: true, initialSelectedId: row.id, reopenRequestId: ++reopenRequestId, windowMode: true }, {
     title: `${label} ${String(row.numero || '').trim()}`,
     width: 1400,
     height: 850,
     uniqueKey: `comercial-${kind}-${JSON.stringify([props.groupId, props.empresaId, props.actorId, row.id])}`,
+    refreshPropsOnReuse: true,
   });
   return true;
 }

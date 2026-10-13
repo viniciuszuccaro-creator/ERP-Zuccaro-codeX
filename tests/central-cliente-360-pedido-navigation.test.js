@@ -63,6 +63,18 @@ test('Central abre Orçamento pelo mesmo contrato canônico, sem confundir núme
   assert.equal(sameOrcamentoScope({ ...props, token: 'old' }, props, { ...props, token: 'old' }), true);
 });
 
+test('Central sinaliza nova abertura ao reutilizar a mesma janela sem criar chave duplicada', async () => {
+  const calls = [];
+  const input = { row, block, allowed: true, props, assertCurrent: () => {}, loadPanel: async () => () => null,
+    openWindow: (_component, windowProps, options) => calls.push({ windowProps, options }) };
+  await openCentralPedidoWindow(input);
+  await openCentralPedidoWindow(input);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].options.uniqueKey, calls[1].options.uniqueKey);
+  assert.equal(calls[0].options.refreshPropsOnReuse, true);
+  assert.notEqual(calls[0].windowProps.reopenRequestId, calls[1].windowProps.reopenRequestId);
+});
+
 test('Central e Pedido consomem a mesma seleção inicial sem cadastrar fonte paralela', async () => {
   const central = await readFile(new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url), 'utf8');
   const pedido = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
