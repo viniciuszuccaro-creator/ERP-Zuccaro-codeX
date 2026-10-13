@@ -44,11 +44,15 @@ export function filterOportunidadesDoCliente(rows, clienteId) {
  * @param {Record<string, any>} row
  */
 export function resumirOportunidadeCrm(row) {
+  const valorOriginal = row?.valor_estimado ?? row?.valor;
+  const valor = valorOriginal == null || String(valorOriginal).trim() === ''
+    ? null
+    : Number(valorOriginal);
   return {
     id: row?.id || null,
     titulo: row?.titulo || row?.nome || '—',
     etapa: row?.etapa || row?.etapa_funil || row?.status || '—',
-    valor: Number(row?.valor_estimado ?? row?.valor ?? 0) || 0,
+    valor: Number.isFinite(valor) ? valor : null,
     codigo: row?.codigo_oportunidade || row?.codigo || null,
   };
 }

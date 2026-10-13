@@ -1,5 +1,6 @@
 ## CODEX COMERCIAL 360 — Central 360, valor desconhecido (2026-10-13)
 
+- Parecer Codex no `cfc8019e` da #326 identificou fallback CRM legado convertendo ausência em zero. Reserva ampliada ao adaptador já existente `centralCliente360CrmLegado.js` e seu teste focado; cenário sintético com cliente de outra empresa excluído, ausente/vazio/inválido e zero real foi reproduzido antes do fix e passou depois. CI anterior SUCCESS não substitui CI/revisão do novo HEAD. Sem tocar branch Cursor, Legado ou fontes de dados reais.
 - Reserva independente da branch `codex/comercial-central-valor-indisponivel-20261013`, base #325 `834a50b3`: `src/components/comercial/CentralCliente360Panel.jsx`, helper de formatação específico se necessário e teste direto. Cursor branch `cursor/cadastros-recuperacao-c360-contrato-392b` permanece `6908f74e` documental/sem edição por esta frente. Escopo somente exibição de valores monetários ausentes/inválidos, sem criar fonte ou KPI paralelo; distinguir desconhecido de zero confirmado. Não tocar entradas Legado reservadas, Pedido/Orçamento backend, Expedição ou branch Cursor. CI/revisão do HEAD final exigidas.
 
 ## CODEX COMERCIAL 360 — snapshot preço→Orçamento→Pedido (2026-10-13)

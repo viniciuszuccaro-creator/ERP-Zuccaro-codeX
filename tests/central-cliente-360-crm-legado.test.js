@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { readFile } from 'node:fs/promises';
+import { formatCentral360Money } from '../src/components/comercial/centralCliente360Money.js';
 import {
   CRM_CANONICAL_HTTP_PENDING,
   centralCrmLegadoQueryKey,
@@ -77,6 +78,21 @@ test('resumirOportunidadeCrm preserva id técnico e etapa', () => {
   assert.equal(r.etapa, 'Proposta');
   assert.equal(r.valor, 1500);
   assert.equal(r.codigo, 'OP-9');
+});
+
+test('CRM legado mantém valor desconhecido distinto de zero até a Central', async () => {
+  const rows = [
+    { id: 'ausente', cliente_id: 'c-a', valor_estimado: null },
+    { id: 'vazio', cliente_id: 'c-a', valor_estimado: '' },
+    { id: 'invalido', cliente_id: 'c-a', valor_estimado: 'não informado' },
+    { id: 'zero', cliente_id: 'c-a', valor_estimado: 0 },
+    { id: 'outro', cliente_id: 'c-b', valor_estimado: 100 },
+  ];
+  const result = await loadCentralCrmLegado({ clienteId: 'c-a', readRows: async () => rows });
+  assert.deepEqual(result.map((row) => row.id), ['ausente', 'vazio', 'invalido', 'zero']);
+  assert.deepEqual(result.map((row) => formatCentral360Money(row.valor)), [
+    'Valor não informado', 'Valor não informado', 'Valor não informado', 'R$ 0,00',
+  ]);
 });
 
 test('CentralCliente360Panel usa adaptador legado sem criar CRM HTTP paralelo', async () => {
