@@ -80,7 +80,7 @@ export class PedidoService {
     const scope = await this.prepare(ctx, 'criar');
     const data = this.parse(payload);
     if (data.orcamento_id) throw new AppError(422, 'PEDIDO_ORIGEM_INVALIDA', 'Use quotation conversion endpoint');
-    const fingerprintInput = { ...data };
+    const fingerprintInput = { ...data, actor_id: ctx.actorId };
     delete fingerprintInput.idempotency_key;
     const fingerprint = data.idempotency_key
       ? createHash('sha256').update(JSON.stringify(fingerprintInput)).digest('hex') : undefined;
@@ -93,7 +93,6 @@ export class PedidoService {
         const prior = await this.repo.getByIdempotencyKey(scope, data.idempotency_key, executor);
         if (prior) {
           if (prior.fingerprint !== fingerprint) throw new AppError(409, 'PEDIDO_IDEMPOTENCY_CONFLICT', 'Key already used with different input');
-          await this.prepare(ctx,'visualizar',executor);
           return prior.row;
         }
       }

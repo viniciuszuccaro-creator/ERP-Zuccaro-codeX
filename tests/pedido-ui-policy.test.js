@@ -68,6 +68,8 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.match(source,/useRef\(sharedPedidoMutationGate\)/);
   assert.match(source,/mutationGate\.current\.subscribe\(\(\)=>setBusy/);
   assert.match(source,/getOrCreatePedidoIntentKey\(renderedScope\.current,intentStorage\(\)/);
+  assert.match(source,/const openCreate=\(\)=>\{if\(mutationGate\.current\.isPending\(renderedScope\.current\)\)/);
+  assert.match(source,/onClick=\{openCreate\} disabled=\{!ready\|\|busy\}/);
   assert.match(source,/buildPedidoPayload\(form,editing\?undefined:createKey\)/);
   assert.match(source,/clearPedidoCreateIntentKey\(ticket\.scope,intentStorage\(\),createKey\)/);
   const saveLine=source.split('\n').find(value=>value.includes('const save=async'));

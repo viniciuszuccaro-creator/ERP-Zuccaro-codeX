@@ -43,9 +43,15 @@ test('Pedido direto reexecuta a mesma chave sem duplicar, mas rejeita payload di
   assert.equal(replay.id,first.id);
   assert.equal((await f.repo.list({groupId,empresaId})).total,1);
   assert.equal((await f.audit.listByEntity('Pedido',first.id)).filter(row=>row.action==='create').length,1);
+  f.rbac.link({actorId,groupId,permissions:{Comercial:{pedido:['criar']}}});
+  assert.equal((await f.service.create({...ctx,requestId:'retry-create-only'},input)).id,first.id);
+  const otherActor='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+  f.rbac.link({actorId:otherActor,groupId,permissions:{Comercial:{pedido:['criar']}}});
+  await assert.rejects(f.service.create({...ctx,actorId:otherActor},input),(error:any)=>error.statusCode===409&&error.code==='PEDIDO_IDEMPOTENCY_CONFLICT');
   await assert.rejects(f.service.create(ctx,{...input,itens:[{...input.itens[0],quantidade:'3'}]}),(error:any)=>error.statusCode===409&&error.code==='PEDIDO_IDEMPOTENCY_CONFLICT');
   assert.equal((await f.repo.list({groupId,empresaId})).total,1);
   await assert.rejects(f.service.create({...ctx,actorId:'dddddddd-dddd-4ddd-8ddd-dddddddddddd'},input),(error:any)=>error.statusCode===403);
+  f.rbac.link({actorId,groupId,permissions:{Comercial:{pedido:['editar']}}});
   await assert.rejects(f.service.update(ctx,first.id,input),(error:any)=>error.statusCode===422);
 });
 
