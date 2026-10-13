@@ -53,7 +53,7 @@ const money = (value) => new Intl.NumberFormat('pt-BR',{style:'currency',currenc
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
 const message = (error) => error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||'Não foi possível concluir a operação.';
 
-export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null }) {
+export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
   const initialOpened=useRef(null);
@@ -91,7 +91,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const canPrint=canUsePedidoAction(hasPermission,'imprimir') || canUsePedidoAction(hasPermission,'visualizar');
   const canShare=canUsePedidoAction(hasPermission,'compartilhar') || canUsePedidoAction(hasPermission,'visualizar');
   const ready=Boolean(groupId&&empresaId&&actorId);
-  const api=useMemo(()=>createHttpApiClient({getScope:()=>({groupId,empresaId,actorId,actorEmail})}).pedidos,[groupId,empresaId,actorId,actorEmail]);
+  const api=useMemo(()=>createHttpApiClient({getScope:()=>({groupId,empresaId,actorId,actorEmail,token:sessionToken})}).pedidos,[groupId,empresaId,actorId,actorEmail,sessionToken]);
   const list=useQuery({queryKey:['pedidos-http',groupId,empresaId,actorId,page,pageSize,applied],queryFn:({signal})=>api.list({limit:pageSize,offset:(page-1)*pageSize,search:applied.search||undefined,status:applied.status==='TODOS'?undefined:applied.status,clienteEmpresaId:applied.clienteEmpresaId==='TODOS'?undefined:applied.clienteEmpresaId,tipoOperacao:applied.tipoOperacao==='TODOS'?undefined:applied.tipoOperacao,signal}),enabled:ready&&canView,retry:1});
   const master=useQuery({queryKey:['pedido-masters',groupId,empresaId],queryFn:async()=>{const [clientesEmpresa,clientes,condicoes,produtos,unidades,locais,obras,tabelas]=await Promise.all([filterInContext('ClienteEmpresa',{ativo:true,habilitado_operacao:true},'codigo',500),filterInContext('Cliente',{ativo:true},'razao_social',500),filterInContext('CondicaoPagamento',{ativo:true},'nome',500),filterInContext('Produto',{ativo:true},'descricao',500),filterInContext('UnidadeMedida',{ativo:true},'sigla',500),filterInContext('ClienteLocal',{ativo:true},'nome',500),filterInContext('Obra',{ativo:true},'nome',500),filterInContext('TabelaPreco',{ativo:true},'nome',500)]);return{clientesEmpresa,clientes,condicoes,produtos,unidades,locais,obras,tabelas};},enabled:ready&&canView,staleTime:30000});
   const masters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],locais:[],obras:[],tabelas:[]};

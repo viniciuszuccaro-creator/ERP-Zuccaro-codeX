@@ -7,7 +7,7 @@ import { sameOrcamentoScope } from '../src/components/comercial/orcamentoUiPolic
 const id = '11111111-1111-4111-8111-111111111111';
 const row = { id, numero: '00000042' };
 const block = { status: 'ok', data: [row] };
-const props = { groupId: 'g', empresaId: 'e', actorId: 'u' };
+const props = { groupId: 'g', empresaId: 'e', actorId: 'u', sessionToken: 'synthetic-token' };
 
 test('Central abre Pedido existente uma vez por tenant/ator/ID técnico no painel canônico', async () => {
   const calls = [];
@@ -21,6 +21,7 @@ test('Central abre Pedido existente uma vez por tenant/ator/ID técnico no paine
   assert.equal(calls[3].component, Panel);
   assert.equal(calls[3].windowProps.initialSelectedId, id);
   assert.equal(calls[3].windowProps.canonicalHttp, true);
+  assert.equal(calls[3].windowProps.sessionToken, 'synthetic-token');
   assert.match(calls[3].options.uniqueKey, /comercial-pedido-/);
   assert.equal(calls[3].options.title, 'Pedido 00000042');
 });

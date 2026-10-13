@@ -384,7 +384,7 @@ export default function CentralCliente360Panel({
       const open=pedido?openCentralPedidoWindow:openCentralOrcamentoWindow;
       await open({row,block:pedido?blocks.pedidos:blocks.orcamentos,allowed:!permissionsLoading&&hasPermission('Comercial',kind,'visualizar'),
         assertCurrent,loadPanel:pedido?async()=>(await import('@/components/comercial/PedidosTab')).default:async()=>(await import('@/components/comercial/OrcamentosTab')).default,openWindow,
-        props:{groupId,empresaId,actorId,actorEmail,hasPermission,filterInContext,empresaAtual}});
+        props:{groupId,empresaId,actorId,actorEmail,sessionToken,hasPermission,filterInContext,empresaAtual}});
     }catch(error){if(viewRef.current===openedKey)setError(error?.message||'Falha ao abrir registro.');}
   };
 

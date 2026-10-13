@@ -39,7 +39,7 @@ const errorMessage = (error) => {
   return 'Não foi possível comunicar com o servidor. Tente novamente.';
 };
 
-export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null }) {
+export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -80,8 +80,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
   const contextReady = Boolean(groupId && empresaId && actorId);
   const http = useMemo(() => createHttpApiClient({
-    getScope: () => ({ groupId, empresaId, actorId, actorEmail }),
-  }), [groupId, empresaId, actorId, actorEmail]);
+    getScope: () => ({ groupId, empresaId, actorId, actorEmail, token: sessionToken }),
+  }), [groupId, empresaId, actorId, actorEmail, sessionToken]);
   const api = http.orcamentos;
   const pedidosApi = http.pedidos;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');

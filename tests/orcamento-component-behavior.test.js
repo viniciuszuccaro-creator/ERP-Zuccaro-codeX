@@ -132,11 +132,12 @@ test('Orcamento real: selecao inicial consulta ID tecnico e descarta resposta de
   const id = '11111111-1111-4111-8111-111111111111';
   const h = await mount();
   h.setSession({ ...cpa, token: 'token-1' });
-  h.setProps({ ...cpa, initialSelectedId: id });
+  h.setProps({ ...cpa, sessionToken: 'token-1', initialSelectedId: id });
   h.pending.get = deferred();
   h.render();
   assert.equal(h.calls.filter((call) => call.method === 'get').length, 1);
   assert.equal(h.calls.at(-1).args[0], id);
+  assert.equal(h.calls.at(-1).scope.token, 'token-1');
   h.setSession({ ...cpa, token: 'token-2' });
   h.pending.get.resolve({ ...row(), id });
   await flush();
