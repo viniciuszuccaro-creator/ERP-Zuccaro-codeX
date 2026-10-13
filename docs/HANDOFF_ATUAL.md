@@ -1,3 +1,24 @@
+## CURSOR — revisão Codex gap #322–#329 (2026-10-13T19:30Z)
+
+| Item | Valor |
+|---|---|
+| gap | última revisão estável 06:34Z → 19:30Z |
+| #319/#320/#321 | tips estáveis `5568e3a9` / `b16011b6` / `037985cd` |
+| novos | **#322**…**#329** (stack Codex empilhada; CI frontend+backend SUCCESS) |
+| candidata C360 tip | **#329** `6c274051` (sobre #328←…←#321) |
+| #322 | docs Legado `e884376e` · **sem porte** (Legado/#211) |
+| #323/#324 | preço escopo empresa + unidade revogada (server) · **sem porte** |
+| #325/#328 | `orcamentoService`/`pedidoService` + mig 044 · **sem porte** (reservados) |
+| #326/#329 | `CentralCliente360Panel` + money/nav · **sem porte** (reservado) |
+| #327 | `PedidoCanonicoPanel` late-response · stack Codex · **sem porte** |
+| risco | #329 reporta 38 conflitos #320×#328 — composição Expedição manual |
+| gate Cursor | nenhum pedido de porte independente para #261 |
+| #261 | tip `6908f74e` · main `baba91a6` |
+| agents | 0 RUNNING |
+| porte | **nenhum** |
+| evidência | `docs/vps/evidence/review-codex-322-329-20261013-1930.txt` |
+| próxima | residual Cursor · owner decide merge canário tip #329 |
+
 ## CURSOR — revisão #321 tip 037985cd (2026-10-12T15:15Z)
 
 | Item | Valor |

@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex #322–#329 (2026-10-13T19:30Z)
+
+| Item | Valor |
+|---|---|
+| novos | #322…#329 · tip candidata **#329** `6c274051` |
+| #319–#321 | estáveis · sem tip delta |
+| porte #261 | **nenhum** (reservados / Legado / stack server) |
+| risco | conflitos #320×#328 (38) — não compor automático |
+| agents | 0 RUNNING |
+| próxima | residual Cursor; merge canário tip #329 sob owner |
+
 ## CURSOR — #321 tip 037985cd (2026-10-12T15:15Z)
 
 | Item | Valor |
