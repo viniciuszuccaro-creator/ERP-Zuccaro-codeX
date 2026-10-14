@@ -1104,3 +1104,10 @@ test('listagem Entregas liga LogisticaReversa existente com RBAC/contexto (sem m
   assert.match(detalhe, /data-testid="entrega-detalhe-ocorrencia"/);
   assert.doesNotMatch(listagem, /LogisticaReversaNovo|DevolucaoV2|ReversaParallel/);
 });
+
+test('SeparacaoConferencia só envia item_id quando o item veio da Entrega carregada', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../src/components/expedicao/SeparacaoConferencia.jsx', import.meta.url), 'utf8');
+  assert.match(source, /dadosParaSeparacao === entrega && item\.id \? \{ item_id: item\.id \} : \{\}/);
+  assert.match(source, /const dadosParaSeparacao = pedido \|\| pedidoDaEntrega \|\| entrega/);
+});

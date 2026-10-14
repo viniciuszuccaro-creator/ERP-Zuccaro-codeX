@@ -226,6 +226,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
             conferiu_documentos: checklist.conferiu_documentos === true,
           },
           itens: itens.map((item) => ({
+            ...(dadosParaSeparacao === entrega && item.id ? { item_id: item.id } : {}),
             produto_id: item.produto_id || null,
             descricao: item.descricao || item.produto_descricao || "Item",
             unidade_sigla: item.unidade_separada || item.unidade || "UN",
