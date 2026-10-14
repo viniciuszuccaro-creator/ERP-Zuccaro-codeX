@@ -1,5 +1,5 @@
 /**
- * Composição integrada Expedição(#199) + Comercial(#178): migrations 025–035 + 036
+ * Composição isolada Expedição + Comercial: 025–035, 036/037 e 038–044
  * sem colisão de numeração. Fonte comercial via git show (não tip-port; não altera branch Codex).
  * Camada: PGlite — ≠ SPA_LOCAL.
  */
@@ -16,6 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
 /** Tip Comercial (#178) — SHA pinado pela CI; default local = tip #178. */
 const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9';
+const LATE_REF = process.env.COMERCIAL_LATE_MIGRATIONS_REF || 'b3a683bba1bdd8dc3870ce4ba4eeb87430b3e561';
 /** Só o job dedicado (COMERCIAL_COMPOSE_REQUIRE=1) falha fechado; npm test geral faz skip. */
 const REQUIRE_REF = process.env.COMERCIAL_COMPOSE_REQUIRE === '1';
 
@@ -28,7 +29,7 @@ function gitShow(ref, rel) {
   return show.stdout;
 }
 
-test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', async (t) => {
+test('composicao migrations: Comercial 025-035 + Expedição 036/037 + Comercial 038-044', async (t) => {
   const probe = spawnSync('git', ['-C', repoRoot, 'rev-parse', '--verify', CODEX_REF], { encoding: 'utf8' });
   if (probe.status !== 0) {
     const detail = (probe.stderr || probe.stdout || '').trim() || 'rev-parse failed';
@@ -39,6 +40,12 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
       );
     }
     t.skip(`ref ${CODEX_REF} indisponivel neste clone (local only)`);
+    return;
+  }
+  const lateProbe = spawnSync('git', ['-C', repoRoot, 'rev-parse', '--verify', LATE_REF], { encoding: 'utf8' });
+  if (lateProbe.status !== 0) {
+    if (REQUIRE_REF) assert.fail(`COMERCIAL_LATE_MIGRATIONS_REF ausente (${LATE_REF})`);
+    t.skip(`ref ${LATE_REF} indisponivel neste clone (local only)`);
     return;
   }
 
@@ -58,6 +65,10 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
   assert.ok(comercial.some((r) => r.includes('026_pedidos_tipo_comercial')), 'trava histórica 026 tip Comercial');
   assert.ok(comercial.some((r) => r.includes('035_')), '035 comercial');
   assert.ok(!comercial.some((r) => r.includes('036_')), '036 nao e comercial');
+  const lateList = spawnSync('git', ['-C', repoRoot, 'ls-tree', '-r', '--name-only', LATE_REF, '--', 'server/migrations'], { encoding: 'utf8' });
+  assert.equal(lateList.status, 0, lateList.stderr);
+  const late = lateList.stdout.split('\n').filter((rel) => /\/0(3[8-9]|4[0-4])_.*\.sql$/.test(rel));
+  assert.deepEqual(late.map((rel) => Number(rel.split('/').pop()?.slice(0, 3))), [38, 39, 40, 41, 42, 43, 44]);
 
   // Trava: 026 vem do tip Comercial pinado — hash estável; job não reescreve classificação.
   const locked026Rel = comercial.find((r) => r.includes('026_pedidos_tipo_comercial'));
@@ -80,6 +91,7 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
     );
     writeFileSync(join(out, '037_expedicao_estoque_movimentos.sql'),
       readFileSync(join(localMigs, '037_expedicao_estoque_movimentos.sql'), 'utf8'));
+    for (const rel of late) writeFileSync(join(out, rel.split('/').pop()), gitShow(LATE_REF, rel));
 
     const composed = readdirSync(out).filter((n) => /^\d{3}_.*\.sql$/.test(n)).sort();
     const nums = composed.map((f) => f.slice(0, 3));
@@ -87,6 +99,7 @@ test('composicao migrations: comercial 025-035 + expedicao 036 sem colisao', asy
     assert.ok(composed.indexOf('024_produto_canais_rascunho.sql') < composed.findIndex((f) => f.startsWith('025_')));
     assert.ok(composed.findIndex((f) => f.startsWith('035_')) < composed.indexOf('036_expedicao_entregas_romaneios.sql'));
     assert.ok(composed.indexOf('036_expedicao_entregas_romaneios.sql') < composed.indexOf('037_expedicao_estoque_movimentos.sql'));
+    assert.ok(composed.indexOf('037_expedicao_estoque_movimentos.sql') < composed.findIndex((f) => f.startsWith('038_')));
 
     const pg = new PGlite();
     try {
