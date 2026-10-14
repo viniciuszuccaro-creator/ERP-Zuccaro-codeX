@@ -1,5 +1,5 @@
 /**
- * Composição Expedição(#199) + Comercial(#178) em PostgreSQL real isolado.
+ * Composição Expedição + Comercial 025–044 em PostgreSQL real isolado.
  * Fonte comercial: COMERCIAL_MIGRATIONS_REF (SHA tip #178).
  * Trava histórica: migration 026_pedidos_tipo_comercial.sql do tip Comercial
  * é aplicada como veio do SHA — sem reclassificação/edição neste job.
@@ -20,6 +20,7 @@ import pg from 'pg';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '../..');
 const CODEX_REF = process.env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9';
+const LATE_REF = process.env.COMERCIAL_LATE_MIGRATIONS_REF || 'b3a683bba1bdd8dc3870ce4ba4eeb87430b3e561';
 /** Só o job dedicado (COMERCIAL_COMPOSE_REQUIRE=1) falha fechado; npm test geral faz skip. */
 const REQUIRE = process.env.COMERCIAL_COMPOSE_REQUIRE === '1';
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -44,7 +45,7 @@ function adminUrl(databaseUrl: string) {
   return u.toString();
 }
 
-test('composicao PostgreSQL isolado: comercial 025-035 + 036 com trava 026', async (t) => {
+test('composicao PostgreSQL isolado: 025-035 + 036/037 + 038-044 com trava 026', async (t) => {
   if (!DATABASE_URL) {
     if (REQUIRE) assert.fail('DATABASE_URL obrigatório para composição PostgreSQL isolada sob REQUIRE');
     t.skip('DATABASE_URL not available');
@@ -55,6 +56,12 @@ test('composicao PostgreSQL isolado: comercial 025-035 + 036 com trava 026', asy
   if (probe.status !== 0) {
     if (REQUIRE) assert.fail(`COMERCIAL_MIGRATIONS_REF ausente (${CODEX_REF})`);
     t.skip(`ref ${CODEX_REF} indisponivel`);
+    return;
+  }
+  const lateProbe = spawnSync('git', ['-C', repoRoot, 'rev-parse', '--verify', LATE_REF], { encoding: 'utf8' });
+  if (lateProbe.status !== 0) {
+    if (REQUIRE) assert.fail(`COMERCIAL_LATE_MIGRATIONS_REF ausente (${LATE_REF})`);
+    t.skip(`ref ${LATE_REF} indisponivel`);
     return;
   }
 
@@ -71,6 +78,10 @@ test('composicao PostgreSQL isolado: comercial 025-035 + 036 com trava 026', asy
   const comercial = list.stdout.split('\n').filter((rel) => /\/0(2[5-9]|3[0-5])_.*\.sql$/.test(rel));
   assert.ok(comercial.some((r) => r.endsWith(LOCKED_026)), `trava histórica exige ${LOCKED_026} no tip Comercial`);
   assert.ok(comercial.some((r) => r.includes('025_')) && comercial.some((r) => r.includes('035_')));
+  const lateList = spawnSync('git', ['-C', repoRoot, 'ls-tree', '-r', '--name-only', LATE_REF, '--', 'server/migrations'], { encoding: 'utf8' });
+  assert.equal(lateList.status, 0, lateList.stderr);
+  const late = lateList.stdout.split('\n').filter((rel) => /\/0(3[8-9]|4[0-4])_.*\.sql$/.test(rel));
+  assert.deepEqual(late.map((rel) => Number(rel.split('/').pop()?.slice(0, 3))), [38, 39, 40, 41, 42, 43, 44]);
 
   const locked026Source = gitShow(CODEX_REF, `server/migrations/${LOCKED_026}`);
   const locked026Hash = sha256(locked026Source);
@@ -98,12 +109,14 @@ test('composicao PostgreSQL isolado: comercial 025-035 + 036 com trava 026', asy
     );
     writeFileSync(join(out, '037_expedicao_estoque_movimentos.sql'),
       readFileSync(join(localMigs, '037_expedicao_estoque_movimentos.sql'), 'utf8'));
+    for (const rel of late) writeFileSync(join(out, rel.split('/').pop()!), gitShow(LATE_REF, rel));
 
     const composed = readdirSync(out).filter((n) => /^\d{3}_.*\.sql$/.test(n)).sort();
     assert.equal(new Set(composed.map((f) => f.slice(0, 3))).size, composed.length);
     assert.ok(composed.includes(LOCKED_026));
     assert.ok(composed.includes('036_expedicao_entregas_romaneios.sql'));
     assert.ok(composed.includes('037_expedicao_estoque_movimentos.sql'));
+    assert.ok(composed.findIndex((f) => f.startsWith('037_')) < composed.findIndex((f) => f.startsWith('038_')));
 
     await admin.connect();
     await admin.query(`CREATE DATABASE ${dbName}`);

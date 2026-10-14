@@ -111,7 +111,11 @@ jobs:
           git merge-base --is-ancestor "$COMERCIAL_SHA" "origin/$COMERCIAL_BRANCH" \
             || git rev-parse "origin/$COMERCIAL_BRANCH"
           echo "COMERCIAL_MIGRATIONS_REF=$COMERCIAL_SHA" >> "$GITHUB_ENV"
-      - name: Compose PGlite 025-035 + 036 (fail se ref ausente ou suite skip)
+          LATE_SHA=b3a683bba1bdd8dc3870ce4ba4eeb87430b3e561
+          git fetch --no-tags origin "$LATE_SHA"
+          git rev-parse --verify "$LATE_SHA"
+          echo "COMERCIAL_LATE_MIGRATIONS_REF=$LATE_SHA" >> "$GITHUB_ENV"
+      - name: Compose PGlite 025-044 (fail se ref ausente ou suite skip)
         env:
           COMERCIAL_COMPOSE_REQUIRE: '1'
           # Prefer SHA pinado pelo step anterior; fallback explícito para não silenciar.
@@ -142,7 +146,7 @@ jobs:
             exit 1
           fi
           echo "COMPOSE_PGLITE_STATUS=OK ref=$COMERCIAL_MIGRATIONS_REF"
-      - name: Compose PostgreSQL isolado 025-035 + 036 (trava 026 tip Comercial)
+      - name: Compose PostgreSQL isolado 025-044 (trava 026 tip Comercial)
         env:
           COMERCIAL_COMPOSE_REQUIRE: '1'
           COMERCIAL_MIGRATIONS_REF: ${{ env.COMERCIAL_MIGRATIONS_REF || '4f8c6593506f681689e021226ab024f57c7aede9' }}
