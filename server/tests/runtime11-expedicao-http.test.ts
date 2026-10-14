@@ -283,6 +283,53 @@ test('HTTP Expedicao: conferencia associa itens por identidade apesar da ordem P
     [['Barra 1/2', 5], ['Barra 3/8', 10]]);
 });
 
+test('HTTP Expedicao: pareamento global independe da ordem e duplicatas idênticas preservam ordem estável', async () => {
+  const runtime = fixture();
+  const create = (key: string, itens: unknown[]) => request(runtime.app, '/api/v1/entregas', {
+    method: 'POST', headers: headers(), body: JSON.stringify({ ...entregaPayload, idempotency_key: key, itens }),
+  });
+  const separate = (id: string, itens: unknown[]) => request(runtime.app, `/api/v1/entregas/${id}/separacao`, {
+    method: 'POST', headers: headers(), body: JSON.stringify({ confirmed: true, checklist: checklistSep, itens }),
+  });
+  const distinct = await create('sep-global-order', [
+    { descricao: 'Linha A', unidade_sigla: 'UN', quantidade_pedida: '2' },
+    { descricao: 'Linha B', unidade_sigla: 'UN', quantidade_pedida: '2' },
+  ]);
+  assert.equal(distinct.status, 201);
+  const global = await separate(distinct.body.data.id, [
+    { unidade_sigla: 'UN', quantidade_pedida: '2', quantidade_separada: '2' },
+    { descricao: 'Linha A', unidade_sigla: 'UN', quantidade_pedida: '2', quantidade_separada: '2' },
+  ]);
+  assert.equal(global.status, 201, JSON.stringify(global.body));
+
+  const duplicates = await create('sep-duplicate-lines', [
+    { descricao: 'Linha igual', unidade_sigla: 'UN', quantidade_pedida: '2' },
+    { descricao: 'Linha igual', unidade_sigla: 'UN', quantidade_pedida: '2' },
+  ]);
+  assert.equal(duplicates.status, 201);
+  const id = duplicates.body.data.id;
+  const generic = [
+    { descricao: 'Linha igual', unidade_sigla: 'UN', quantidade_pedida: '2', quantidade_separada: '1' },
+    { descricao: 'Linha igual', unidade_sigla: 'UN', quantidade_pedida: '2', quantidade_separada: '2' },
+  ];
+  const exact = await separate(id, generic);
+  assert.equal(exact.status, 201, JSON.stringify(exact.body));
+  const persisted = await runtime.expedicaoService.getEntrega({ groupId, empresaId, actorId, requestId: 'duplicate-lines' }, id);
+  assert.deepEqual(persisted.itens.map((item) => [item.id, Number(item.quantidade_separada)]).sort(),
+    duplicates.body.data.itens.map((item: { id: string }, index: number) => [item.id, index === 0 ? 1 : 2]).sort());
+  const ambiguousDelivery = await create('sep-ambiguous-different-lines', [
+    { descricao: 'Linha A', unidade_sigla: 'UN', quantidade_pedida: '2' },
+    { descricao: 'Linha B', unidade_sigla: 'UN', quantidade_pedida: '2' },
+  ]);
+  assert.equal(ambiguousDelivery.status, 201);
+  const ambiguous = await separate(ambiguousDelivery.body.data.id, [
+    { unidade_sigla: 'UN', quantidade_pedida: '2', quantidade_separada: '1' },
+    { unidade_sigla: 'UN', quantidade_pedida: '2', quantidade_separada: '2' },
+  ]);
+  assert.equal(ambiguous.status, 422);
+  assert.equal(ambiguous.body.error.code, 'SEPARACAO_ITEM_DIVERGENTE');
+});
+
 test('HTTP Expedicao (mock in-memory): ocorrencia + devolucao + falha intermediaria estoque faz rollback', async () => {
   const runtime = fixture({
     expedicaoEstoquePort: {

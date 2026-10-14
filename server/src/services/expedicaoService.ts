@@ -265,20 +265,32 @@ export class ExpedicaoService {
         throw new AppError(422, 'SEPARACAO_ITENS_INCOMPLETOS', 'All delivery items must be separated');
       }
       const matched = new Map<string, typeof data.itens[number]>();
+      const pending = data.itens.map((item) => ({ item, candidates: before.itens.filter((row) =>
+        (!item.item_id || item.item_id === row.id)
+        && (!item.produto_id || item.produto_id === row.produto_id)
+        && (!item.descricao || item.descricao === row.descricao)
+        && (!item.unidade_sigla || item.unidade_sigla === row.unidade_sigla)
+        && qtyMicros(item.quantidade_pedida) === qtyMicros(row.quantidade_pedida)
+        && (!before.pedido_id || Boolean(row.produto_id))) }));
       for (const item of data.itens) {
         if (!(qtyMicros(item.quantidade_separada) > 0n)) {
           throw new AppError(422, 'SEPARACAO_QTY_INVALID', 'Quantidade separada must be > 0');
         }
-        const candidates = before.itens.filter((row) => !matched.has(row.id)
-          && (!item.item_id || item.item_id === row.id)
-          && (!item.produto_id || item.produto_id === row.produto_id)
-          && (!item.descricao || item.descricao === row.descricao)
-          && (!item.unidade_sigla || item.unidade_sigla === row.unidade_sigla)
-          && qtyMicros(item.quantidade_pedida) === qtyMicros(row.quantidade_pedida));
-        if (candidates.length !== 1 || (before.pedido_id && !candidates[0].produto_id)) {
+      }
+      while (pending.length) {
+        const available = pending.map(({ item, candidates }, index) => ({ item,
+          candidates: candidates.filter((row) => !matched.has(row.id)), index }))
+        const next = available.find(({ candidates }) => candidates.length === 1)
+          ?? available.find(({ candidates }) => candidates.length > 1 && candidates.every((row) =>
+            row.produto_id === candidates[0].produto_id
+            && row.descricao === candidates[0].descricao
+            && row.unidade_sigla === candidates[0].unidade_sigla
+            && qtyMicros(row.quantidade_pedida) === qtyMicros(candidates[0].quantidade_pedida)));
+        if (!next) {
           throw new AppError(422, 'SEPARACAO_ITEM_DIVERGENTE', 'Separation differs from delivery item');
         }
-        matched.set(candidates[0].id, item);
+        matched.set(next.candidates[0].id, next.item);
+        pending.splice(next.index, 1);
       }
 
       const divergencias = data.itens.filter((item) => qtyMicros(item.quantidade_separada) !== qtyMicros(item.quantidade_pedida));
