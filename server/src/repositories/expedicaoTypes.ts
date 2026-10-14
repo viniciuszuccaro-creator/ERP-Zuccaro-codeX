@@ -124,6 +124,7 @@ export const separacaoConcluirSchema = z.object({
     conferiu_documentos: z.literal(true),
   }).strict(),
   itens: z.array(z.object({
+    item_id: z.string().uuid().optional(),
     produto_id: z.string().uuid().nullable().optional(),
     descricao: z.string().trim().min(1).max(500).optional(),
     unidade_sigla: z.string().trim().min(1).max(20).optional(),
