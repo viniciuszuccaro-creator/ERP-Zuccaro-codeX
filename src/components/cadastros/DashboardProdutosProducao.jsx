@@ -159,13 +159,13 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
+        <Card className="border-sky-200 bg-gradient-to-br from-sky-50 to-sky-100">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <Zap className="w-8 h-8 text-purple-600" />
-              <Badge className="bg-purple-600 text-white">BITOLAS</Badge>
+              <Zap className="w-8 h-8 text-sky-600" />
+              <Badge className="bg-sky-600 text-white">BITOLAS</Badge>
             </div>
-            <p className="text-3xl font-bold text-purple-700">{bitolas.length}</p>
+            <p className="text-3xl font-bold text-sky-700">{bitolas.length}</p>
             <p className="text-sm text-slate-600 mt-1">Bitolas de Aço</p>
           </CardContent>
         </Card>
@@ -299,20 +299,20 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
       )}
 
       {/* Resumo Geral */}
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <Card className="border-sky-200 bg-gradient-to-r from-sky-50 to-sky-100">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-sky-600 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-bold text-purple-900 text-lg">Sistema de Produção Configurado</p>
-              <p className="text-sm text-purple-700">
+              <p className="font-bold text-sky-900 text-lg">Sistema de Produção Configurado</p>
+              <p className="text-sm text-sky-700">
                 {produtosAtivos.length} produto(s) disponíveis para Ordens de Produção
               </p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-purple-700">{bitolas.length}</p>
+              <p className="text-3xl font-bold text-sky-700">{bitolas.length}</p>
               <p className="text-xs text-slate-600">Bitolas Ativas</p>
             </div>
           </div>

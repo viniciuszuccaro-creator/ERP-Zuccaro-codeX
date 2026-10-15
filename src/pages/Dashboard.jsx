@@ -660,9 +660,9 @@ export default function Dashboard() {
       value: `${taxaConversao}%`,
       subtitle: "vendas/clientes",
       icon: TrendingUp,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
       link: createPageUrl("Comercial"),
       drillDown: () => handleDrillDown(createPageUrl("Comercial"))
     }
@@ -782,7 +782,7 @@ export default function Dashboard() {
       title: "Comercial e Vendas",
       description: "Gestão de Clientes e Vendas",
       icon: ShoppingCart,
-      color: "from-purple-500 to-purple-600",
+      color: "from-blue-500 to-blue-600",
       url: createPageUrl("Comercial"),
       permission: "Comercial.visualizar",
       count: pedidosPeriodo.length

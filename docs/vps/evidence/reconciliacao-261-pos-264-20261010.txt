@@ -1,0 +1,13 @@
+# Reconciliacao #261 apos merge da #264
+# utc=2026-10-10
+#
+# origin/main = baba91a6 (merge #257). HEAD #261 NAO esta na main.
+# #261 OPEN draft HEAD 2f82dea4 branch cursor/cadastros-recuperacao-c360-contrato-392b
+# #264 MERGED na candidata (nao na main): tip d9403665 merge 861513cd ancestral
+# #254 20a2c2fb ancestral — nao re-portar
+# SHA implantado erp-dev = f22d1151 asset index-KP6RdCBA.js
+# Commits apos o implantado ate o HEAD: c3c45c21 e 2f82dea4 (somente docs)
+# Homolog owner fail_count=0 vale para f22d1151, nao para 2f82dea4
+# Usuario restrito: BLOCKED. Environment sem ERP_DEV_LOGIN_RESTRICTED_*
+# CRM HTTP: nao iniciado. Sem rota server Oportunidade. Sem CRM paralelo.
+# Sem credenciais, dumps ou dados reais neste arquivo.

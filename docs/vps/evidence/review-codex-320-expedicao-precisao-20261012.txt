@@ -1,0 +1,9 @@
+REVISÃO #320 — tip 3955c4af (Expedição quantidades exatas parcial/devolução)
+UTC: 2026-10-12T14:30Z
+base: codex/comercial-expedicao-fechamento-20261004 (stack Expedição — não #319)
+CI: SUCCESS (frontend/backend/compose/concurrency)
+files: expedicaoService/Types/PersistentPorts · runtime11* · docs
+Achado: NUMERIC 18,6 via BigInt micros; parcial/retry/devolução 1 micro; 422 overflow
+Cursor: SEM PORTE — serviços Expedição/contratos; UI #261 não toca estes arquivos
+Risco Regra-Mãe: porte misturaria stack Expedição com #261 UI sem coordenação merge
+Candidata C360 owner permanece tip #319 5568e3a9; #320 é pacote Expedição paralelo

@@ -452,12 +452,12 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
   return (
     <div className={containerClass} data-permission="Expedicao.Separacao.editar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
-        <Card className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+        <Card className="bg-gradient-to-r from-sky-600 to-sky-700 text-white">
           <CardHeader>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-2xl">Separacao e Conferencia IA</CardTitle>
-                <CardDescription className="text-purple-100">
+                <CardDescription className="text-sky-100">
                   Pedido: {pedido?.numero_pedido || "-"} - Cliente: {pedido?.cliente_nome || "-"}
                 </CardDescription>
               </div>
@@ -533,7 +533,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
               />
               <Button
                 onClick={handleScanCodigoBarras}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-600 hover:bg-sky-700"
                 disabled={!codigoBarras || validarIAMutation.isPending}
                 data-action="SeparacaoConferenciaIA.scan"
                 data-permission="Expedicao.Separacao.editar"
@@ -563,7 +563,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-purple-600" />
+                <MapPin className="w-5 h-5 text-sky-600" />
                 Rota Otimizada por IA
               </CardTitle>
             </CardHeader>

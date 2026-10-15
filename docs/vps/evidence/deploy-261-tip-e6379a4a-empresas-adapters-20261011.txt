@@ -1,0 +1,20 @@
+# Evidência sanitizada — tip e6379a4a implantado+homolog
+# utc=2026-10-11T21:17Z
+#
+# tip=e6379a4a (HEAD docs) inclui:
+#   3b6ec581 Empresas.jsx → EmpresaForm (tipo/matriz/contato) · FilialForm adapter
+#   7238167d ProdutoFormCompleto → V22 · ClienteForm(Completo) → CadastroClienteCompleto
+#   198ba22b UsuarioForm idOnly
+# asset=index-CCV6avKO.js
+# rollback=pre-spa-login-20261011-211601
+# MERGE_SHA8=e6379a4a · STAMP=20261011-211601
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip: SUCCESS (4 checks)
+# SPA markers: selecionar-tipo-empresa · empresa-matriz-secao · empresa-contato-secao · ProdutoFormV22
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-e6379a4a.json
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-e6379a4a.png
+#
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*
+# #280–#292: sem porte · painel C360 divergente

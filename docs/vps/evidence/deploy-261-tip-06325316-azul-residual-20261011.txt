@@ -1,0 +1,18 @@
+# Evidência sanitizada — tip 06325316 implantado
+# utc=2026-10-11T10:38Z
+#
+# tip=06325316 fix(ui): completa azul residual Relatórios/Dashboard e STATUS
+# inclui tip fd77e533 Estoque/Empresas/Dashboard/WidgetFechamento chrome azul
+# asset=index-BJYf7Dj6.js
+# rollback=pre-spa-login-20261011-103813
+# MERGE_SHA8=06325316 · STAMP=20261011-103813
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip 06325316 / fd77e533: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-06325316.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-06325316.json
+#
+# Preservado: Cadastros multi-cor · Financeiro purple · status green/orange/red
+# #279 Codex tip a0ee2f19: prova Auth×RBAC teste PG — monitorar sem porte
+# Usuário restrito: BLOCKED · Recuperado: NÃO

@@ -1,0 +1,35 @@
+# Evidência sanitizada — homolog Cursor Cadastros/edição/Financeiro/Central360
+# utc=2026-10-09T12:08Z
+# implantado tip = baba91a6 (#257 azul) · asset index-nwadfbws.js
+# #254 tip fd1778f6 = NÃO implantado (CONFLICTING STATUS; revisão independente feita)
+#
+# Acesso efetivo: SSH_OK · health API container healthy · gh auth OK
+#
+# Browser (erp-dev, sessão legítima):
+# login=PASS
+# switch_empresa CPA=PASS
+# switch_empresa 3Z=PASS (corrida anterior com seletor textual; id canônico c2c2…)
+# context_hold após Cadastros (CPA)=PASS · sem banner contexto-invalido
+# Cadastros Gerais página=PASS · padrão azul (from-blue-50/bg-blue-600)=PASS
+# Pessoas accordion tiles Cliente/Fornecedor=PASS (corrida com acordeão expandido)
+#   — corridas sem expandir = tiles 0; NÃO reseed
+# Edição Empresa campos nome/CNPJ preenchidos=PASS (nf_len>0 · cnpj_digits=14)
+#   — distingue carga incompleta vs campo realmente ausente (policy merge/classify)
+# Financeiro launchpad=PASS · CR green ≠ Régua violet=PASS
+# Central360: entry Comercial Clientes cliente-novo=PASS · linhas V24=0
+#   → PASS_ENTRY_SEM_LINHA (store local vazio ≠ DB missing)
+#
+# API (Bearer + X-Group-Id do escopo; sem PII):
+# GET /api/v1/clientes?limit=50 → 200 · n=5 (escopo empresa CPA)
+# GET /api/v1/produtos?limit=50 → 200 · n=1 (escopo empresa)
+#
+# Postgres operacional (contagens canônicas, sem PII):
+# empresas=3 · groups=2 · clientes=6 · produtos=4
+# auxiliares: unidades_medida=4 · marcas=5 · grupos_produto=4 · setores=4 · condicoes_pagamento=8
+#
+# Conclusão: UI/lista vazia NÃO prova desaparecimento no banco.
+# Comparar sempre browser × API × Postgres antes de concluir perda.
+# Auxiliares do ERP novo preservados; sem reseed; sem restaurar versão inteira por layout.
+#
+# screenshot=/opt/cursor/artifacts/screenshots/pw-homolog-254-cadfin-360-baba91a6.png
+# ≠ evidência de deploy do #254 (ainda não mergeado)

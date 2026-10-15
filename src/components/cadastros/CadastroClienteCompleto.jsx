@@ -33,6 +33,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import {
@@ -98,6 +100,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;
+  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);
   const podeCriar = canCreate("Cadastros", "Cliente") || canCreate("Cadastros", null);
@@ -337,6 +340,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      assertFormScopeCurrent();
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o cliente.");
       }
@@ -352,6 +356,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       return createInContext('Cliente', payload);
     },
     onSuccess: (_result, savedPayload) => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
@@ -359,9 +364,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      const sameScope = isFormScopeCurrent();
       toast({
-        title: "❌ Erro ao salvar cliente",
-        description: error.message,
+        title: sameScope ? "❌ Erro ao salvar cliente" : "Contexto alterado",
+        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
     }
@@ -369,26 +375,31 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
+      assertFormScopeCurrent();
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir clientes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir clientes.");
       return deleteInContext('Cliente', id);
     },
     onSuccess: () => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: "✅ Cliente excluído com sucesso!" });
       if (onSuccess) onSuccess();
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      const sameScope = isFormScopeCurrent();
       toast({
-        title: "❌ Erro ao excluir cliente",
-        description: error.message,
+        title: sameScope ? "❌ Erro ao excluir cliente" : "Contexto alterado",
+        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
     }
   });
 
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -409,6 +420,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   const handleSave = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     setIsSaving(true);
     saveMutation.mutate(buildPayload(formData), {
       onSettled: () => setIsSaving(false)
@@ -500,8 +513,74 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
+  const prevIdRef = useRef(cliente?.id || null);
+  const prevUpdatedRef = useRef(cliente?.updated_date);
   useEffect(() => {
-    if (cliente?.id) {
+    const nextId = cliente?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && cliente?.updated_date && cliente.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData({
+          tipo: "Pessoa Física",
+          status: "Prospect",
+          nome: "",
+          razao_social: "",
+          nome_fantasia: "",
+          cpf: "",
+          cnpj: "",
+          rg: "",
+          inscricao_estadual: "",
+          inscricao_municipal: "",
+          regiao_atendimento: "Sudeste",
+          endereco_principal: {
+            cep: "",
+            logradouro: "",
+            numero: "",
+            complemento: "",
+            bairro: "",
+            cidade: "",
+            estado: "",
+            latitude: null,
+            longitude: null,
+            mapa_url: "",
+          },
+          contatos: [],
+          locais_entrega: [],
+          condicao_comercial: {
+            tabela_preco_id: "",
+            forma_pagamento_padrao_id: "",
+            percentual_desconto: 0,
+            condicao_pagamento: "À Vista",
+            limite_credito: 0,
+            limite_credito_utilizado: 0,
+            situacao_credito: "OK",
+          },
+          configuracao_fiscal: {
+            regime_tributario: "Simples Nacional",
+            cfop_padrao_venda: "5102",
+            contribuinte_icms: true,
+            tipo_contribuinte: "1 - Contribuinte",
+            isento_ipi: false,
+            isento_icms: false,
+          },
+          documentos: [],
+          vendedor_responsavel: "",
+          vendedor_responsavel_id: "",
+          observacoes: "",
+          empresa_id: empresaAtual?.id,
+          group_id: groupId,
+        });
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = cliente.updated_date;
       setFormData({
         ...cliente,
         contatos: cliente.contatos || [],
@@ -513,7 +592,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           condicao_pagamento: "À Vista",
           limite_credito: 0,
           limite_credito_utilizado: 0,
-          situacao_credito: "OK"
+          situacao_credito: "OK",
         },
         configuracao_fiscal: cliente.configuracao_fiscal || {
           regime_tributario: "Simples Nacional",
@@ -521,12 +600,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           contribuinte_icms: true,
           tipo_contribuinte: "1 - Contribuinte",
           isento_ipi: false,
-          isento_icms: false
+          isento_icms: false,
         },
-        documentos: cliente.documentos || []
+        documentos: cliente.documentos || [],
       });
     }
-  }, [cliente?.id]);
+  }, [cliente?.id, cliente?.updated_date, empresaAtual?.id, groupId]);
 
   const gerarMapaUrl = (endereco) => {
     if (endereco.latitude && endereco.longitude) {
@@ -572,7 +651,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Button
                                     type="button"
                                     variant="outline"
-                                    data-permission="Cadastros.Cliente.alterarStatus"
+                                    data-permission="Cadastros.Cliente.editar"
+                                    data-action="Cadastros.Cliente.alterarStatus"
                                     data-sensitive
                                     onClick={handleAlternarStatus}
                                     disabled={!podeEditar || !contextoValido}
@@ -605,7 +685,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               )}
               <Button
                 onClick={handleSave}
-                data-permission="Cadastros.Cliente.salvar"
+                data-permission={cliente?.id ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
+                data-action="Cadastros.Cliente.salvar"
                 data-sensitive
                 disabled={isSaving || saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -672,6 +753,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   </AlertDescription>
                 </Alert>
               )}
+              <CadastroCodigoRegistroField
+                hasId={Boolean(cliente?.id)}
+                entityId={cliente?.id}
+                value={formData.codigo ?? cliente?.codigo}
+                action="codigo-registro-cliente-completo"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="tipo">Tipo de Pessoa *</Label>
@@ -1541,3 +1628,6 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     </Dialog>
   );
 }
+
+CadastroClienteCompleto.displayName = 'CadastroClienteCompleto';
+CadastroClienteCompleto.isSelfManagedCadastro = true;

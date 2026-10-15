@@ -1,0 +1,18 @@
+# Evidência sanitizada — tip 4d04a42a implantado
+# utc=2026-10-11T10:21Z
+#
+# tip=4d04a42a docs HANDOFF + tip 8ad26932/6ae463dc chrome azul Agenda/Painel
+# asset=index-pwtjc2Qs.js
+# rollback=pre-spa-login-20261011-102027
+# MERGE_SHA8=4d04a42a · STAMP=20261011-102027
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip 8ad26932/6ae463dc (código UI): SUCCESS · tip docs 4d04a42a deployado
+# Homolog OWNER tipado fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-4d04a42a.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-4d04a42a.json
+#
+# Conteúdo: Agenda/DashboardHeader/DashboardCorporativo/TabsNav chrome azul
+# Keep both Dashboard×Corporativo · POD/Separação inventário keep-both
+# #278/#277 Codex: sem porte Auth
+# Usuário restrito: BLOCKED · Recuperado: NÃO

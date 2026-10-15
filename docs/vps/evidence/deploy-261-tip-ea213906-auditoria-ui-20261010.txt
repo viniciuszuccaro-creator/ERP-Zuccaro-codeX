@@ -1,0 +1,11 @@
+# Deploy #261 tip ea213906 — auditoria UI (2026-10-10)
+# Sanitizado
+
+| Campo | Valor |
+|---|---|
+| tip | ea213906 |
+| asset | /assets/index-Dqf6E74p.js |
+| backup | pre-gate-e-20261010-102145.sql · 1122345 B |
+| rollback | pre-spa-login-20261010-102145 |
+| health | 3080/3081 = 200 |
+| delta | Organizacional data-permission · Marcas fallback · GrupoEmpresarial self-id |

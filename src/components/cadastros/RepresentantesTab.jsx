@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,13 +8,10 @@ import {
   Plus, 
   Search, 
   Users, 
-  DollarSign,
-  TrendingUp,
-  Award,
   Eye,
   Filter
 } from "lucide-react";
-import RepresentanteFormCompleto from "./RepresentanteFormCompleto";
+import RepresentanteForm from "./RepresentanteForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { useWindow } from "@/components/lib/useWindow";
@@ -27,22 +23,28 @@ export default function RepresentantesTab() {
   const [selectedRepresentante, setSelectedRepresentante] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, filtrarPorContexto, filterInContext } = useContextoVisual();
   const { openWindow } = useWindow();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
 
   const { data: representantes = [], isLoading } = useQuery({
-    queryKey: ['representantes', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => base44.entities.Representante.list('-created_date'),
+    queryKey: ['representantes', contextKey, estaNoGrupo],
+    queryFn: () => filterInContext('Representante', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list()
+    queryKey: ['clientes', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list()
+    queryKey: ['pedidos', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const representantesFiltrados = filtrarPorContexto(representantes, 'empresa_dona_id').filter(rep => {
@@ -69,13 +71,22 @@ export default function RepresentantesTab() {
   };
 
   const handleAbrirJanela = (rep) => {
-    openWindow({
-      id: `rep-${rep.id}`,
-      title: `📊 ${rep.nome}`,
-      component: 'RepresentanteFormCompleto',
-      props: { representante: rep, windowMode: true },
-      size: 'large'
-    });
+    if (!rep?.id) return;
+    openWindow(
+      RepresentanteForm,
+      {
+        representante: rep,
+        item: rep,
+        initialData: rep,
+        windowMode: true,
+      },
+      {
+        title: `Representante · ${rep.nome || rep.codigo || rep.id}`,
+        width: 1200,
+        height: 800,
+        uniqueKey: `Cadastros.Representante.form-${rep.id}`,
+      },
+    );
   };
 
   const calcularMetricas = (rep) => {
@@ -146,7 +157,7 @@ export default function RepresentantesTab() {
           </Select>
         </div>
 
-        <Button onClick={handleNovo} className="bg-purple-600 hover:bg-purple-700">
+        <Button onClick={handleNovo} className="bg-sky-600 hover:bg-sky-700">
           <Plus className="w-4 h-4 mr-2" />
           Novo Representante
         </Button>
@@ -165,12 +176,12 @@ export default function RepresentantesTab() {
           {representantesFiltrados.map(rep => {
             const metricas = calcularMetricas(rep);
             return (
-              <Card key={rep.id} className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-purple-500">
+              <Card key={rep.id} className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-sky-500">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center">
                           <span className="text-white text-lg">
                             {rep.tipo_representante === 'Arquiteto' ? '📐' :
                              rep.tipo_representante === 'Engenheiro' ? '⚙️' :
@@ -197,7 +208,7 @@ export default function RepresentantesTab() {
                       <div className="grid grid-cols-4 gap-4 mt-3 pt-3 border-t">
                         <div>
                           <p className="text-xs text-slate-500">Comissão</p>
-                          <p className="font-bold text-purple-600">
+                          <p className="font-bold text-sky-600">
                             {rep.percentual_comissao > 0 && `${rep.percentual_comissao}%`}
                             {rep.valor_fixo_comissao > 0 && ` +R$ ${rep.valor_fixo_comissao}`}
                           </p>
@@ -212,7 +223,7 @@ export default function RepresentantesTab() {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Comissão Gerada</p>
-                          <p className="font-bold text-purple-600">R$ {metricas.totalComissao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
+                          <p className="font-bold text-sky-600">R$ {metricas.totalComissao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
                         </div>
                       </div>
 
@@ -241,7 +252,7 @@ export default function RepresentantesTab() {
       )}
 
       {isFormOpen && (
-        <RepresentanteFormCompleto
+        <RepresentanteForm
           representante={selectedRepresentante}
           isOpen={isFormOpen}
           onClose={() => {

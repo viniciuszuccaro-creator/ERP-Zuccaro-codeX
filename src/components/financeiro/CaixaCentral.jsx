@@ -81,7 +81,7 @@ export default function CaixaCentral({ windowMode = false }) {
   const liquidarOrdens = useMutation({
     mutationFn: async ({ ordensIds, dados }) => {
       const resultados = [];
-      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissÃ£o para liquidar.");
+      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissão para liquidar.");
       
       for (const ordemId of ordensIds) {
         const ordem = ordensLiquidacao.find(o => o.id === ordemId);

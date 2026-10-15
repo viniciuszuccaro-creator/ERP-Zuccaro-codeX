@@ -24,6 +24,7 @@ export type UnidadeMedida = {
   id: string;
   group_id: string;
   empresa_id: string | null;
+  codigo: string | null;
   sigla: string;
   nome_completo: string;
   tipo_grandeza: string;
@@ -37,6 +38,10 @@ export type UnidadeMedida = {
   created_at: string;
   updated_at: string;
 };
+
+export const unidadeCreateSchemaWithCodigo = unidadeCreateSchema.extend({
+  codigo: z.string().trim().max(64).optional().nullable(),
+});
 
 export const grupoProdutoCreateSchema = z.object({
   ...baseCreate,
@@ -72,6 +77,7 @@ export type GrupoProduto = {
 export const setorCreateSchema = z.object({
   ...baseCreate,
   nome: z.string().trim().min(1).max(200),
+  codigo: z.string().trim().max(64).optional().nullable(),
   descricao: z.string().trim().max(2000).optional().nullable(),
   tipo_operacao: z.string().trim().max(60).optional().default('Revenda'),
   icone: z.string().trim().max(80).optional().nullable(),
@@ -84,6 +90,7 @@ export type SetorAtividade = {
   id: string;
   group_id: string;
   empresa_id: string | null;
+  codigo: string | null;
   nome: string;
   descricao: string | null;
   tipo_operacao: string;

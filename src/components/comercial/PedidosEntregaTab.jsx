@@ -339,7 +339,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           
           <Button
             onClick={() => abrirPainelLogistica(MapaRoteirizacaoIA, { title: 'Roteirizacao Inteligente', width: 1000, height: 700 }, "PedidoEntrega.roteirizacao_abrir", canRoute, true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700"
           >
             <Route className="w-4 h-4 mr-2" />
             🤖 Otimizar Rotas
@@ -348,7 +348,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           {permissoes.podeCriarRomaneio && (
             <Button
               onClick={abrirRomaneio}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              className="bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800"
             >
               <FileText className="w-4 h-4 mr-2" />
               Criar Romaneio
@@ -384,7 +384,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
             <CardTitle className="text-sm text-slate-600">Em Trânsito</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-sky-600">
               {pedidosParaEntrega.filter(p => p.status === 'Em Trânsito').length}
             </div>
           </CardContent>
@@ -502,10 +502,10 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                         <TableCell>
                           <Badge className={
                             pedido.status === 'Entregue' ? 'bg-green-600' :
-                            pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
+                            pedido.status === 'Em Trânsito' ? 'bg-sky-600' :
                             pedido.status === 'Em Expedição' ? 'bg-orange-600' :
                             pedido.status === 'Faturado' ? 'bg-blue-600' :
-                            pedido.status === 'Pronto para Faturar' ? 'bg-indigo-600' :
+                            pedido.status === 'Pronto para Faturar' ? 'bg-sky-700' :
                             'bg-slate-600'
                           }>
                             {pedido.status === 'Entregue' ? '✅ Entregue' : pedido.status}
@@ -606,7 +606,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                         <TableCell>
                           <Badge className={
                             pedido.status === 'Entregue' ? 'bg-green-600' :
-                            pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
+                            pedido.status === 'Em Trânsito' ? 'bg-sky-600' :
                             pedido.status === 'Em Expedição' ? 'bg-orange-600' :
                             'bg-blue-600'
                           }>
@@ -767,7 +767,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                         setDetalhesOpen(false);
                         toast.success("🚚 Pedido saiu para entrega!");
                       }}
-                      className="bg-purple-600 hover:bg-purple-700 w-full"
+                      className="bg-sky-600 hover:bg-sky-700 w-full"
                     >
                       <Truck className="w-4 h-4 mr-2" />
                       🚚 Confirmar Saída do Veículo

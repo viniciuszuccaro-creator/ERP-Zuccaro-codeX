@@ -12,6 +12,11 @@ import {
   normalizeEtapaCrm,
   stampOportunidadeConvertida,
 } from '../src/components/lib/crmOportunidadePolicy.js';
+import { assertOportunidadeOnCreate as assertCanonical } from '../server/src/domain/crmOportunidadePolicy.js';
+
+test('wrapper CRM reexporta a fonte única do servidor', () => {
+  assert.equal(assertOportunidadeOnCreate, assertCanonical);
+});
 
 test('crm codes are reserved by master sequence specs', () => {
   assert.equal(MASTER_CODE_SPECS.Oportunidade.prefix, 'OPP-');

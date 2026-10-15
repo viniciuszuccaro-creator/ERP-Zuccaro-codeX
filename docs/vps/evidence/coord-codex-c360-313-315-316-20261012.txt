@@ -1,0 +1,47 @@
+COORDENAÇÃO CURSOR ← pacote CODEX Comercial 360 (chat principal)
+UTC: 2026-10-12T13:30Z
+Branch Cursor: cursor/cadastros-recuperacao-c360-contrato-392b
+Runtime implantado: 4a46520a · asset index-BwUc90Ir.js · rollback pre-spa-login-20261012-132204
+
+RECEBIMENTO
+- Mensagem CODEX Comercial 360 recebida no chat Cursor principal.
+- Confirmação: Cursor NÃO se apresenta como Codex; NÃO porta Pedido/Orçamento TX nem stack Legado.
+- Arquivos reservados intocados nesta entrega: CentralCliente360Panel, pedidoService, orcamentoService, Marca, Legado/Auth.
+
+FECHAMENTO REVISÕES (HEADs atuais)
+| PR  | tip       | CI      | MERGEABLE | papel |
+|-----|-----------|---------|-----------|-------|
+| #313 | 58a9ff9f | SUCCESS | MERGEABLE | Pedido authorize-in-TX (pedidoService) |
+| #315 | c5870f80 | SUCCESS | MERGEABLE | Orçamento authorize-in-TX + fluxo |
+| #316 | 18fc6bfe | SUCCESS | MERGEABLE | prova lifecycle pós-restore (runtime40) |
+
+Stack candidata integrada (dependências reais, não reescrever branches):
+  #313 base: codex/legado-reconciliacao-imutavel-20261011
+  #315 base: tip #313 (pedido TX)
+  #316 base: tip #315 (orcamento TX)
+  Candidata merge owner/canário: tip #316 = 18fc6bfe
+  Legado na base: necessário ao stack; NÃO incorporar assuntos Legado independentes em #261.
+
+Achados tip (sem porte Cursor):
+- pedidoService/orcamentoService: withTransaction + prepare/RBAC/tenant na TX; preço servidor fail-closed; convert idempotente.
+- #316: prova Cliente→Orçamento→edição→conversão→Pedido→status/cancel após restore (CI custom).
+- #261 já tem withTransaction legado em pedidoService; NÃO equalizar com tip #313 sem merge canónico.
+
+CPA / HOMOLOG
+- UI Cursor: OrcamentosTab (convert/cancel RBAC) + PedidosTab (status/contextoValido) prontas para homolog owner.
+- Mutações convert/cancel em erp-dev: aguardar merge/canário #313→#315→#316 (não portar).
+- OWNER homolog tip 4a46520a: fail_count=0 (read-only CPA lists).
+- Restrito: BLOCKED secrets ERP_DEV_LOGIN_RESTRICTED_EMAIL/PASSWORD + user RBAC erp-dev.
+- Backup/reversão: rollback tag pre-spa-login-20261012-132204 no destino autorizado; identidade comprovada no deploy tip.
+
+AÇÃO CURSOR INDEPENDENTE (este lote)
+- PedidosTab: corrigir mojibake UTF-8 status (Em Trânsito/Expedição/Aprovação) — bug verificável de match filtro/badge.
+- PedidosTab + PedidosEntregaTab: chrome purple/indigo → sky (padrão azul claro).
+- Teste: comercial-clientes-tab-v24 cobre status UTF-8 + sky sem purple.
+- Evidências: este arquivo + review-313/315-316 existentes.
+
+PRÓXIMA
+- CI tip Cursor → redeploy/homolog OWNER se necessário.
+- Owner: merge canário #313→#315→#316 quando aprovado.
+- Cursor: residual sky/cadastros; CPA mutações só pós-merge Codex.
+- Decisão faltante restrito: cadastrar secrets + usuário RBAC limitado (não pedir senha no chat).

@@ -1,0 +1,20 @@
+# Inventário residual POD / Separação (2026-10-11)
+# Sanitizado. Regra-Mãe: keep-both até portar capacidades.
+
+## Separação
+- SeparacaoConferencia (lazy Expedicao) — conferência clássica entity SeparacaoConferencia
+- SeparacaoConferenciaIA (tile color blue) — scan, otimizar rota, finalizar+audit SeparacaoConferenciaIA.*
+- Conclusão: NÃO consolidar agora — IA tem capacidades ausentes no clássico.
+
+## POD / Comprovante
+- ComprovanteDigital — dialog isOpen; update Entrega; foto/recebedor; sem GPS/estoque
+- ComprovanteEntregaDigital — Card; pedido+entrega; GPS; baixa estoque; audit detalhado
+- Ambos RBAC Expedicao.ComprovanteDigital.*; contexto grupo/empresa
+- Conclusão: keep both — unificar só após portar GPS+estoque para um shell único (owner).
+
+## Azul
+- Expedicao launchpad tiles já color: blue (sem mudança neste tip).
+
+## Próximo após CI Painel/Agenda
+- Redeploy tip 6ae463dc · homolog owner
+- Secret restrito BLOCKED

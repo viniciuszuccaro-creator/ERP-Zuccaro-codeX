@@ -32,7 +32,15 @@ export type OrcamentoSalePricePort = {
   resolveSalePrice(
     ctx: RequestContext,
     input: { clienteEmpresaId: string; produtoId: string; unidadeMedidaId: string },
-  ): Promise<{ preco: string } | null>;
+  ): Promise<{ preco: string; tabela_preco_id?: string } | null>;
+};
+
+export type OrcamentoTabelaPort = {
+  get(
+    scope: { groupId: string; empresaId: string },
+    id: string,
+    executor?: DbQueryExecutor,
+  ): Promise<{ id: string; ativo: boolean } | null>;
 };
 
 export type { ComercialCostPort, ComercialAlcadaConfigPort };
@@ -41,8 +49,8 @@ export function orcamentoAuditSnapshot(row: Orcamento) {
   return sanitizeAuditSnapshot({
     id: row.id, group_id: row.group_id, empresa_id: row.empresa_id, numero: row.numero,
     status: row.status, cliente_empresa_id: row.cliente_empresa_id,
-    condicao_pagamento_id: row.condicao_pagamento_id, subtotal: row.subtotal,
-    desconto: row.desconto, total: row.total, ativo: row.ativo,
+    condicao_pagamento_id: row.condicao_pagamento_id, tabela_preco_id: row.tabela_preco_id,
+    subtotal: row.subtotal, desconto: row.desconto, total: row.total, ativo: row.ativo,
     quantidade_itens: row.itens.length,
   });
 }
@@ -62,6 +70,8 @@ export class OrcamentoService {
     private readonly costs: ComercialCostPort | null = null,
     /** Opcional: config de alçada (à vista); ausente = fail-closed (não libera). */
     private readonly alcadaConfig: ComercialAlcadaConfigPort | null = null,
+    /** Opcional: validação de TabelaPreco no escopo; ausente = só preço via porta. */
+    private readonly tabelas: OrcamentoTabelaPort | null = null,
   ) {}
 
   async create(ctx: RequestContext, payload: unknown) {
@@ -70,6 +80,8 @@ export class OrcamentoService {
     return this.repo.withTransaction(async (executor) => {
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      // Revalida após snapshot: preço pode preencher tabela_preco_id ausente no payload.
+      await this.validateTabelaPreco(scope, priced.tabela_preco_id, executor);
       // Create: criador = actor → alçada acima da livre nunca autoaprova (à vista com regra explícita dispensa alçada).
       await this.assertDescontoAlcada(ctx, scope, priced, ctx.actorId!, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
@@ -118,6 +130,7 @@ export class OrcamentoService {
       this.requireOpen(before);
       await this.validateReferences(scope, data, executor);
       const priced = await this.applyServerPriceSnapshots(ctx, data);
+      await this.validateTabelaPreco(scope, priced.tabela_preco_id, executor);
       const criador = await this.resolveCriadorActorId('Orcamento', id);
       const alcada = await this.assertDescontoAlcada(ctx, scope, priced, criador, executor);
       const margemDecision = await this.assertMargemAlcada(ctx, scope, priced.itens);
@@ -170,6 +183,7 @@ export class OrcamentoService {
    */
   private async applyServerPriceSnapshots(ctx: RequestContext, data: OrcamentoCreate): Promise<OrcamentoCreate> {
     const itens = [];
+    let tabelaId: string | null | undefined = data.tabela_preco_id;
     for (const item of data.itens) {
       const resolved = await this.prices.resolveSalePrice(ctx, {
         clienteEmpresaId: data.cliente_empresa_id,
@@ -182,9 +196,10 @@ export class OrcamentoService {
           unidade_id: item.unidade_id,
         });
       }
+      if (!tabelaId && resolved.tabela_preco_id) tabelaId = resolved.tabela_preco_id;
       itens.push({ ...item, preco_unitario: this.normalizeMoney(resolved.preco) });
     }
-    return { ...data, itens };
+    return { ...data, tabela_preco_id: tabelaId ?? data.tabela_preco_id ?? null, itens };
   }
 
   private async resolveCriadorActorId(entity: string, entityId: string): Promise<string | null> {
@@ -291,11 +306,23 @@ export class OrcamentoService {
     return `${i}.${(f + '000000').slice(0, 6)}`;
   }
 
+  private async validateTabelaPreco(
+    scope: OrcamentoScope,
+    tabelaPrecoId: string | null | undefined,
+    executor?: DbQueryExecutor,
+  ) {
+    if (!tabelaPrecoId) return;
+    if (!this.tabelas) throw new AppError(422, 'ORCAMENTO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
+    const tabela = await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, tabelaPrecoId, executor);
+    if (!tabela?.ativo) throw new AppError(422, 'ORCAMENTO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
+  }
+
   private async validateReferences(scope: OrcamentoScope, data: OrcamentoCreate, executor?: DbQueryExecutor) {
     const cliente = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!cliente || !cliente.ativo || cliente.bloqueado || !cliente.habilitado_operacao) throw new AppError(422, 'ORCAMENTO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');
     const condicao = await this.condicoes.get(scope, data.condicao_pagamento_id, executor);
     if (!condicao || !condicao.ativo) throw new AppError(422, 'ORCAMENTO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');
+    await this.validateTabelaPreco(scope, data.tabela_preco_id, executor);
     for (const item of data.itens) {
       const produto = await this.produtos.getById(scope, item.produto_id);
       if (!produto || !produto.ativo) throw new AppError(422, 'ORCAMENTO_PRODUTO_INVALIDO', 'Produto unavailable in tenant scope');

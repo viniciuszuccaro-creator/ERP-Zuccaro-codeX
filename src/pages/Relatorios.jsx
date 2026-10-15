@@ -309,7 +309,7 @@ export default function Relatorios() {
     titulo: 'Rentabilidade por Produto',
     descricao: 'Análise de margem e curva ABC',
     icone: Package,
-    cor: 'text-purple-600',
+    cor: 'text-blue-600',
     component: RentabilidadeProduto
   },
   {
@@ -341,7 +341,7 @@ export default function Relatorios() {
     titulo: 'Relatório Detalhado por Origem',
     descricao: 'Lista completa de pedidos filtrados por origem com métricas',
     icone: FileText,
-    cor: 'text-purple-600',
+    cor: 'text-blue-600',
     component: RelatorioPedidosPorOrigem
   }];
 
@@ -429,7 +429,7 @@ export default function Relatorios() {
           <TabsTrigger value="financeiro" data-permission="Financeiro.visualizar" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <DollarSign className="w-4 h-4 mr-2" />Financeiro
           </TabsTrigger>
-          <TabsTrigger value="estoque" data-permission="Estoque.visualizar" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+          <TabsTrigger value="estoque" data-permission="Estoque.visualizar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Package className="w-4 h-4 mr-2" />Estoque
           </TabsTrigger>
           <TabsTrigger value="producao" data-permission="Producao.visualizar" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">

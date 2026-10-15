@@ -1,0 +1,17 @@
+LOTE #261 — Representantes reopen/sky + Canais/Comercial chrome
+UTC: 2026-10-12T13:07Z
+Branch: cursor/cadastros-recuperacao-c360-contrato-392b
+Base tip docs: 0a1a3e87
+Runtime implantado (ainda): a4b8d0fc / index-DhRUrsdH.js / rollback pre-spa-login-20261012-130128
+
+Mudanças (sanitizado):
+- RepresentanteFormCompleto / FormaPagamentoFormCompleto / RegiaoAtendimentoForm: prevIdRef reopen
+- RepresentantesTab: filterInContext (multiempresa) + uniqueKey anti-duplicata + sky
+- Sky chrome: GerenciadorCanaisOrigem, ParametrosOrigemPedidoTab, DetalhesCliente,
+  WidgetFechamentoPedidos, KPIs/Header Comercial, PedidoHeader, PainelDinamicoCliente, HistoricoTab
+- Testes: cobertura entidades + clientes-tab v24 → 37 PASS
+- Reservados intocados: CentralCliente360Panel, pedidoService, Marca, Legado/Auth
+
+#313: tip 58a9ff9f CI SUCCESS — sem porte (base Legado)
+CPA mutações: adiadas até merge/canário #313
+Homolog restrito: BLOCKED — secrets ERP_DEV_LOGIN_RESTRICTED_EMAIL/PASSWORD + user RBAC erp-dev

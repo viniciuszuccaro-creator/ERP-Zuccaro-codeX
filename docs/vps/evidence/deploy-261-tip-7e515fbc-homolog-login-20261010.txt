@@ -1,0 +1,50 @@
+# Deploy #261 tip 7e515fbc — form scope #254 + Onda 5 Pedido UX + homolog login tipado
+# utc=2026-10-10T12:58Z
+# Sanitizado — sem tokens, sem PII, sem .env.
+
+| Campo | Valor |
+|---|---|
+| tip | **7e515fbc0caf569226a660fcf6f99fb8835f4dfe** |
+| branch | cursor/cadastros-recuperacao-c360-contrato-392b |
+| SPA asset | /assets/index-Ctj_ukNA.js |
+| health 3080/3081 | 200 / 200 |
+| backup SQL | pre-gate-e-20261010-125801.sql.gz · 124955 B · sha256=bb1949042f5d9b6817e2c322dd13c94ce37f2b12beaec1ccf41f005edd4ebb31 |
+| rollback | pre-spa-login-20261010-125801 |
+| runtime | ERP-RUNTIME-08B · auth_mode=supabase_user |
+
+## Bundle público
+- sectionKey×96 · shouldAccept×3
+- codigo-registro-forma-pagamento-completo×1
+- Contexto alterado durante×2 (form scope guard)
+- PedidosTab chunk: pedido-cancel-motivo×3 · pedido-status-dialog×1 · pedido-history-empty×1
+
+## Homolog browser (login tipado — ERP_DEV_LOGIN_* Runtime Secrets)
+script=scripts/vps/homolog-browser-login-cadastros.mjs
+- spa_load PASS
+- typed_credentials PASS (não inject)
+- login PASS
+- cadastros_open PASS (Cadastros Base)
+- trocar_empresa PASS (Grupo Corporativo)
+- launchpad_comercial / financeiro / fiscal PASS (0 Acesso negado)
+- clientes_list / abrir / salvar / reabrir: FAIL navegação tile (lista UI) — ≠ DB missing; API clientes n>0 histórica
+- screenshot=/opt/cursor/artifacts/screenshots/pw-homolog-261-login-cadastros.png
+- report=/opt/cursor/artifacts/pw-homolog-261-login-cadastros.json
+
+## Conteúdo tip (desde 4c0c167a)
+1. useCadastroFormScopeGuard em Cliente/Fornecedor/Produto/Representante (tip #254 f0844fa5)
+2. FormaPagamentoFormCompleto: codigo readonly + ID técnico
+3. Onda 5 PedidoCanonicoPanel: cancel motivo, status confirm, history fail-closed, print/share
+
+## Classificação
+| Estado | Item |
+|---|---|
+| implementado | form scope + Pedido UX + codigo FormaPagamento Completo |
+| revisado | #254 tip f0844fa5 nos forms (sem cópia divergente sessão/outbox) |
+| integrado | PR #261 mesmo branch |
+| implantado | erp-dev **7e515fbc** · index-Ctj_ukNA.js |
+| homologado | login tipado + cadastros + switcher + launchpads PASS |
+| recuperado | NÃO legado · SYNTH≠recuperado |
+| importado | N/A |
+
+## ≠ Codex
+sessão/contexto/outbox · #211 legado · CRM HTTP

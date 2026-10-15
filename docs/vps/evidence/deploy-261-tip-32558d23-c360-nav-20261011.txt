@@ -1,0 +1,18 @@
+# Evidência sanitizada — tip 32558d23 implantado
+# utc=2026-10-11T10:32Z
+#
+# tip=32558d23 feat(c360): Abrir orçamentos/pedidos na UI canônica do Comercial
+# asset=index-CEPaXLL-.js
+# rollback=pre-spa-login-20261011-103135
+# MERGE_SHA8=32558d23 · STAMP=20261011-103135
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip 32558d23: SUCCESS (frontend+backend)
+# Homolog OWNER tipado fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-32558d23.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-32558d23.json
+#
+# SPA marker: central360-orcamentos-abrir count=1 em index-CEPaXLL-.js
+# Conteúdo: C360 nav canônica · Painel/Agenda chrome · POD inventário
+# #277/#278 Codex: sem porte Auth
+# Usuário restrito: BLOCKED · Recuperado: NÃO

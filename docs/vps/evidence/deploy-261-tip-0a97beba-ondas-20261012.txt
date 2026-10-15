@@ -1,0 +1,10 @@
+# Evidência — tip 0a97beba implantado+homolog OWNER
+# utc=2026-10-12T14:01Z
+# tip=0a97beba (Ondas A–E: reopen mestres + sky estoque/expedição)
+# asset=index-BZF22CJa.js
+# rollback=pre-spa-login-20261012-140004
+# MERGE_SHA8=0a97beba · STAMP=20261012-140004
+# CI SUCCESS · Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-0a97beba.json
+# candidata Codex #318 7af84751 · revisão timer 13:56Z nada novo · sem porte
+# restrito BLOCKED secrets

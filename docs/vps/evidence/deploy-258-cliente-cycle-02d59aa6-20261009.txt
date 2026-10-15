@@ -1,0 +1,13 @@
+# Evidência sanitizada — deploy tip #258 ciclo edição Cliente
+# utc=2026-10-09T15:20Z
+# tip=02d59aa6 (branch cursor/homolog-254-cadfin-360-legado-392b)
+# implantado=02d59aa6 erp-dev spa-login-rebuild
+# spa_asset=index-BD0zl8Pi.js
+# flag=VITE_ERP_HTTP_CLIENTE_360=true
+# rollback=erp-zuccaro-erp-api:pre-spa-login-20261009-151957 / erp-zuccaro-erp-web:pre-spa-login-20261009-151957
+# health=200 ready=200
+# SPA_LOGIN_REBUILD_OK
+# auth_mode=supabase_user · browser_login=True
+# correções neste tip:
+#   - data-permission Salvar/Inativar → Cadastros.Cliente.editar|criar (antes .salvar/.alterarStatus → Acesso negado)
+#   - toClienteMasterHttpPayload: allowlist master-data (sem vendedor/crédito/endereço) + omite máscara zero

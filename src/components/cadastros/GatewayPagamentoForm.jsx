@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,22 +13,24 @@ import { CreditCard, Globe, Lock, BarChart3, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function GatewayPagamentoForm({ gateway, windowMode = false, onSubmit }) {
+export default function GatewayPagamentoForm({ gateway, item, data, initialData, defaultValues, windowMode = false, onSubmit }) {
+  const registro = item || data || initialData || defaultValues || gateway;
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || gateway?.group_id || null;
-  const contextoValido = Boolean(groupId || empresaAtual?.id || gateway?.empresa_id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || registro?.empresa_id);
   const podeCriar = canCreate("Cadastros", "GatewayPagamento") || canCreate("Financeiro", "GatewayPagamento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "GatewayPagamento") || canEdit("Financeiro", "GatewayPagamento") || canEdit("Cadastros", null);
-  const podeSalvar = gateway?.id ? podeEditar : podeCriar;
+  const podeSalvar = registro?.id ? podeEditar : podeCriar;
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-gateway-pagamento', groupId, empresaAtual?.id],
     queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
     enabled: contextoValido,
   });
 
-  const [formData, setFormData] = useState(gateway || {
+  const [formData, setFormData] = useState(registro || {
     nome: "",
     provedor: "Pagar.me",
     empresa_id: "",
@@ -60,6 +62,16 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     formData.tipos_pagamento_suportados || ["PIX", "Boleto"]
   );
 
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+      setTiposSelecionados(registro?.tipos_pagamento_suportados || ["PIX", "Boleto"]);
+    }
+  }, [registro?.id]);
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!contextoValido) {
@@ -90,6 +102,12 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
   return (
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
+        action="id-tecnico-gateway-pagamento"
+      />
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">

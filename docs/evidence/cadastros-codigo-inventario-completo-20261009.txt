@@ -1,0 +1,84 @@
+# Inventário Código de registro — Cadastros Gerais (sanitizado)
+# Tip alvo: branch cursor/cadastros-codigo-abrir-unico-392b · PR #259
+# Escopo padrão: Grupo (group_id). Empresa só em operacionais por CNPJ.
+# Migration canônica deste pacote: 038_cadastros_codigo_registro.sql
+# (025–037 reservados Codex — não renumerar arquivos já aplicados nessas branches)
+
+## Integração #258 × #259
+| PR | Conteúdo | Relação |
+|---|---|---|
+| #258 | badge HTTP count, CadFin/360 homolog tip d9a72802 | ancestor de #259 |
+| #259 | #258 + Abrir único + código auxiliares + edit merge | supersede merge: integrar #259 em main cobre #258 |
+
+## Cobertura por entidade (MASTER_CODE_SPECS + piloto HTTP)
+Legenda: L=lista · D=detalhe/form · A=API/local · B=banco/seq · Esc=Grupo|Empresa
+
+| Entidade | Esc | Campo | L | D | A | B | Notas |
+|---|---|---|---|---|---|---|---|
+| Cliente | G | codigo | Y | Y | Y | reserve_entity_codigo / 009 | legado=staging; ops n≈6 |
+| Fornecedor | G | codigo | Y | Y | local MASTER | schema ops ausente | reais via #211 |
+| Transportadora | G | codigo | Y | Y | local | local | |
+| Produto | G | codigo | Y | Y | Y | PG+local | reais via legado; ensaios ≠ antigos |
+| Marca | G | codigo | Y | Y | Y | 038+reserve | codigo_origem alfanum |
+| GrupoProduto | G | codigo | Y | Y | Y | 005+038+reserve | alfanum ensaio preservado em codigo+origem |
+| SetorAtividade | G | codigo | Y | Y | Y | 038+reserve | |
+| UnidadeMedida | G | codigo | Y | Y | Y | 038+reserve | sigla ≠ codigo |
+| Servico | G | codigo | Y | Y | local | MASTER | |
+| KitProduto | G | codigo | Y | Y | local | MASTER | |
+| CatalogoWeb | G | codigo | Y | Y | local | MASTER | |
+| SegmentoCliente | G | codigo | Y | Y | local | MASTER | |
+| RegiaoAtendimento | G | codigo | Y | Y | local | MASTER | |
+| Banco | G | codigo | Y | Y | local | MASTER | |
+| FormaPagamento | G | codigo | Y | Y | local | MASTER | |
+| TipoDespesa | G | codigo | Y | Y | local | MASTER | |
+| CentroCusto | G | codigo | Y | Y | local | MASTER | |
+| CentroResultado | G | codigo | Y | Y | local | MASTER | |
+| PlanoDeContas/PlanoContas | G | codigo | Y | Y | local | MASTER | |
+| TipoFrete | G | codigo | Y | Y | local | MASTER | |
+| LocalEstoque | G | codigo | Y | Y | local | MASTER | |
+| Veiculo | G | codigo | Y | Y | local | MASTER | |
+| Motorista | G | codigo | Y | Y | local | MASTER | |
+| Departamento | G | codigo | Y | Y | local | MASTER | |
+| Cargo | G | codigo | Y | Y | local | MASTER | |
+| Turno | G | codigo | Y | Y | local | MASTER | |
+| TabelaPreco | G | codigo | Y | Y | Y | reserve PG | + codigo_tabela_legado |
+| CondicaoPagamento | G | codigo | Y | Y | Y | reserve PG | Codex R08 |
+| Empresa | G | id técnico | Y | Y | Y | N/A seq | mestre organizacional |
+| Pedido/OP/Entrega/… | G | numero_*+prefix | Y | Y | local | operacional | fora deste lote UI |
+
+## Regras validadas em testes
+- próximo = max(numérico puro no grupo)+1 (gaps OK)
+- import maior sobe high-water; menor não retrocede
+- duplicado → conflito explícito (auxiliares); Produto reserva interna
+- Abrir: uniqueKey + registry síncrono; Blocos 1–6
+- Edit: merge grade+GET; Marca/Grupo/Setor/UM identity
+- Troca empresa: Visualizador scopeKey → buildCadastroScopeSwitchReset
+
+## Registros anteriores (sanitizado)
+| Classe | Achado |
+|---|---|
+| GATE-D SYNTH / API Alterado / Longos Sintetico A | ensaios ERP novo — preservar; ≠ mestres ERP antigo |
+| Clientes/Produtos ops | preservados (n pequenos); volume legado só staging authorized=0 |
+| Fornecedor | tabela ops ausente — não seed fake |
+| Recuperação mestres reais | BLOCKED até contrato/crosswalk #211 Codex |
+
+## Abrir único / edição (matriz piloto)
+| Entidade | Abrir 1× | Duplo reusa | Edit→save→reopen | Layout azul |
+|---|---|---|---|---|
+| GrupoProduto | code+WM | code+WM | policy+form | preservado |
+| Marca | code+WM | code+WM | merge+form | preservado |
+| SetorAtividade | code+WM | code+WM | policy+form | preservado |
+| UnidadeMedida | code+WM | code+WM | policy+form | preservado |
+| Cliente | #258 | #258 | PASS tip d9a72802 | PASS |
+| Demais blocos | openCadastroEntityWindow | registry | scope reset | preservado |
+
+## Implantação
+| Item | Estado |
+|---|---|
+| CI tip `55fcac4f` | **SUCCESS** |
+| VPS migrate 038 | **APPLIED** |
+| SPA rebuild tip | **OK** `index-DlbCJL3w.js` |
+| Homolog browser | Grupo/Marca PASS · Setor/UM PARTIAL |
+
+## Integração #258×#259
+Merge #259 → main (contém #258). Não rebase destrutivo.

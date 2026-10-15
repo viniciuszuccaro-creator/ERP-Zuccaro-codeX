@@ -424,7 +424,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
             {formData?.etapas_entrega?.length > 0 && (
               <div className="text-sm">
                 <p className="text-slate-600">Etapas de Faturamento</p>
-                <p className="text-xl font-bold text-purple-600">
+                <p className="text-xl font-bold text-sky-600">
                   {formData.etapas_entrega.length}
                 </p>
               </div>

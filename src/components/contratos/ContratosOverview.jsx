@@ -55,7 +55,7 @@ export default function ContratosOverview({
       <CardContent>
         <div className="overflow-x-auto"><Table className="min-w-[980px]">
           <TableHeader><TableRow>
-            <TableHead>Número</TableHead><TableHead>Tipo</TableHead><TableHead>Parte Contratante</TableHead><TableHead>Objeto</TableHead>
+            <TableHead>Número</TableHead><TableHead>ID técnico</TableHead><TableHead>Tipo</TableHead><TableHead>Parte Contratante</TableHead><TableHead>Objeto</TableHead>
             <TableHead>Vigência</TableHead><TableHead>Valor Mensal</TableHead><TableHead>Status</TableHead><TableHead>Ações</TableHead>
           </TableRow></TableHeader>
           <TableBody>{filtrados.map((contrato) => {
@@ -63,6 +63,7 @@ export default function ContratosOverview({
             const renovavel = (contrato.status === 'Vigente' && diasVencer <= 0) || (contrato.status === 'Vencido' && contrato.renovacao_automatica);
             return <TableRow key={contrato.id}>
               <TableCell className="font-medium">{contrato.numero_contrato}</TableCell>
+              <TableCell className="font-mono text-xs text-slate-600" title="Identificador técnico imutável; distinto do número do contrato">{contrato.id != null ? String(contrato.id) : '—'}</TableCell>
               <TableCell><Badge className={TIPO_COLORS[contrato.tipo] || TIPO_COLORS.Outro}>{contrato.tipo}</Badge></TableCell>
               <TableCell>{contrato.parte_contratante}</TableCell><TableCell className="max-w-xs truncate">{contrato.objeto}</TableCell>
               <TableCell><div className="text-sm">

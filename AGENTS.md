@@ -391,8 +391,9 @@ Nunca migrar diretamente para produção sem staging e relatório de divergênci
 ## 14.1 Exemplos / sintéticos ≠ dados operacionais / legado real
 
 - **Exemplos e cadastros auxiliares** já construídos no ERP novo (DEV/sintético) devem ser preservados quando úteis: verificar origem, consistência e vínculos antes de qualquer limpeza. Quantidades em telas/screenshots variam por versão — não forçar reprodução de contagens fixas (ex.: 11, 91, 14).
-- **Listagem vazia por contexto, permissão ou store local** não autoriza recriar registros, reseed destrutivo nem duplicar códigos/IDs. Diagnosticar filtro/escopo/RBAC primeiro.
-- **Carga real do ERP antigo** (produtos, clientes, fornecedores e demais entidades) ocorre em **staging privado**, a partir do backup original preservado. Reutilizar cadastros auxiliares do ERP novo somente com correspondência comprovada; apresentar conflitos e lacunas — não substituir tudo indiscriminadamente.
+- **Listagem vazia por contexto, permissão ou store local** não autoriza recriar registros, reseed destrutivo nem duplicar códigos/IDs. Diagnosticar filtro/escopo/RBAC primeiro. Antes de concluir que registros “desapareceram”, comparar **navegador × API × banco** no mesmo `groupId`/`empresaId`.
+- **Edição de cadastro:** distinguir falha/carga incompleta de campos realmente ausentes no registro; não sobrescrever valor útil da grade com string vazia da hidratação parcial.
+- **Carga real do ERP antigo** (produtos, clientes, fornecedores e demais entidades) ocorre em **staging privado**, a partir do backup original preservado. Reutilizar o mapeador/contratos existentes (sem mapper paralelo). Separar comprovados de quarentena; não bloquear o lote inteiro por conflitos de uma parte. Reutilizar cadastros auxiliares do ERP novo somente com correspondência comprovada; apresentar conflitos e lacunas — não substituir tudo indiscriminadamente.
 - **Separar** registros de exemplo/fictícios dos operacionais. Não misturar clientes/produtos de demonstração com a carga real; não apagar exemplos com referências sem inventário e análise.
 - **Dados reais e credenciais ficam fora do GitHub.** Evidências publicadas são sanitizadas. Recuperação/carga operacional seguem gates vigentes, com backup e reversão.
 

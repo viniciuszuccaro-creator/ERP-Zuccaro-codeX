@@ -1,0 +1,20 @@
+# Continuidade PC casa — Cursor (sanitizado)
+# utc=2026-10-10T14:53Z
+#
+# branch=cursor/cadastros-recuperacao-c360-contrato-392b
+# PR=#261 https://github.com/viniciuszuccaro-creator/erp-zuccaro-codex/pull/261
+# PR_HEAD_remoto=c3c45c21
+# SHA_implantado=f22d1151 asset=index-KP6RdCBA.js
+# local=remoto (working tree clean)
+# #264=MERGED d9403665
+# #254=OPEN 20a2c2fb (ancestral — não re-portar)
+# merge_integracao=861513cd
+# homolog_owner_implantado=fail_count=0
+# restrito=BLOCKED (sem secret tipado)
+# recuperado=NAO importado=NAO
+# reservado_Codex=sessao/contexto/outbox
+# handoff=docs/HANDOFF_ATUAL.md CONTINUIDADE CASA
+# status=STATUS_DO_PROJETO.md bloco CONTINUIDADE CASA
+#
+# Em casa: git fetch + checkout branch; confirmar HEAD; ler HANDOFF antes de editar.
+# Credenciais/VPS/SFTP não vêm no Git — Environment Cursor.

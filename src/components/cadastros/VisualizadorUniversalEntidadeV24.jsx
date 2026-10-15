@@ -12,8 +12,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
 import {
+  assertCadastroFormScopeCurrent,
   buildCadastroScopeSwitchReset,
   buildMultiempresaReadFilter,
+  getScopedCadastroPlaceholder,
   isEditRequestCurrent,
   isTenantMasterEntity,
   loadEmpresaForEdit,
@@ -21,8 +23,10 @@ import {
 import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
+  classifyCadastroEditLoad,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
+  mergeCadastroEditHydration,
 } from "@/components/cadastros/cadastroEditLoadPolicy";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,7 +42,7 @@ import DetalhesCliente from "@/components/comercial/DetalhesCliente";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
-import RepresentanteFormCompleto from "@/components/cadastros/RepresentanteFormCompleto";
+import RepresentanteForm from "@/components/cadastros/RepresentanteForm";
 import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
@@ -76,16 +80,24 @@ const DEFAULT_FORM_COMPONENTS = {
   Fornecedor: CadastroFornecedorCompleto,
   Transportadora: TransportadoraForm,
   Colaborador: ColaboradorForm,
-  Representante: RepresentanteFormCompleto,
+  Representante: RepresentanteForm,
   ContatoB2B: ContatoB2BForm,
   SegmentoCliente: SegmentoClienteForm,
   RegiaoAtendimento: RegiaoAtendimentoForm,
 };
 
 const SELF_MANAGED_NAMES = new Set([
-  "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto",
+  "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto","RepresentanteForm",
   "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
 ]);
+
+/** Flag estável sob minify (Function.name some no bundle). */
+function isSelfManagedCadastroForm(FormComponent) {
+  if (!FormComponent) return false;
+  if (FormComponent.isSelfManagedCadastro === true) return true;
+  const name = FormComponent.displayName || FormComponent.name || "";
+  return SELF_MANAGED_NAMES.has(name);
+}
 
 const FORM_ALIASES = [
   "item","data","initialData","defaultValues","record","entity","value",
@@ -105,6 +117,9 @@ const FORM_ALIASES = [
   "evento",       // EventoNotificacaoForm usa { evento }
   "tabela",       // TabelaFiscalForm usa { tabela }
   "condicao",     // CondicaoComercialForm usa { condicao }
+  "cadastroFiscal", // CadastroFiscalForm usa { cadastroFiscal }
+  "comissao",       // ComissaoForm usa { comissao }
+  "notaFiscal",     // NotaFiscalFormCompleto usa { notaFiscal }
   "apiExternaForm", // cobertura extra
   "webhookForm",    // cobertura extra
 ];
@@ -141,8 +156,10 @@ function buildFieldVariants(field) {
   }
   // adiciona variante sem sufixo _id
   if (field.endsWith('_id')) variants.push(field.slice(0, -3));
-  // fallback genérico de nome
-  variants = variants.concat(['nome', 'descricao', 'titulo', 'sigla', 'codigo']);
+  // Fallbacks só de rótulo — NÃO cair em codigo/sigla (Marca.pais_origem → 000004).
+  if (/^(nome|titulo|label|descricao)/i.test(String(field || ''))) {
+    variants = variants.concat(['nome', 'descricao', 'titulo']);
+  }
   return variants;
 }
 
@@ -244,9 +261,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const _pageSizeProp     = pageSizeProp || 20;
 
   const isSelfManaged = useMemo(function() {
-    if (!FormComponent) return false;
-    const name = FormComponent.displayName || FormComponent.name || "";
-    return SELF_MANAGED_NAMES.has(name);
+    return isSelfManagedCadastroForm(FormComponent);
   }, [FormComponent]);
 
   const queryClient = useQueryClient();
@@ -271,14 +286,27 @@ export default function VisualizadorUniversalEntidadeV24({
   const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
   const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
   const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
+  // Tenant masters: gate efetivo é Cadastros.Organizacional (não Cadastros.Empresa.*).
+  // data-permission do Button/Input deve espelhar o mesmo gate — senão busca/+ Novo ficam "Acesso negado".
+  const permSection = isTenantMasterEntity(ENTITY) ? "Organizacional" : ENTITY;
+  const cadastroPerm = function(action) { return "Cadastros." + permSection + "." + action; };
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
+    const FIELD_LABELS = {
+      id: "ID técnico",
+      codigo: "Código",
+      codigo_tabela_legado: "Código legado",
+      nome: "Nome",
+      nome_condicao: "Nome da condição",
+      forma_pagamento: "Forma de pagamento",
+      ativo: "Ativo",
+    };
     if (_camposPrincipais.length > 0) {
       return _camposPrincipais.map(function(c) {
         return {
           field: c,
-          label: c.replace(/_/g, " ").replace(/\b\w/g, function(x) { return x.toUpperCase(); }),
+          label: FIELD_LABELS[c] || c.replace(/_/g, " ").replace(/\b\w/g, function(x) { return x.toUpperCase(); }),
           sortable: true,
         };
       });
@@ -307,9 +335,11 @@ export default function VisualizadorUniversalEntidadeV24({
   const [deselectedIds, setDeselectedIds] = useState(function() { return new Set(); });
 
   const lastGoodData  = useRef([]);
+  const lastGoodScope = useRef(null);
   const everLoadedRef = useRef(false);
   const editRequestRef = useRef(0);
   const scopeKey = ENTITY + ":" + (groupId || "") + ":" + (empresaId || "");
+  const formScopeRef = useRef(scopeKey);
   const activeScopeRef = useRef(scopeKey);
   const previousScopeRef = useRef(scopeKey);
   activeScopeRef.current = scopeKey;
@@ -318,6 +348,7 @@ export default function VisualizadorUniversalEntidadeV24({
   useEffect(function() {
     if (previousScopeRef.current === scopeKey) return;
     previousScopeRef.current = scopeKey;
+    formScopeRef.current = null;
     const reset = buildCadastroScopeSwitchReset({ formKey: 0 });
     if (reset.bumpEditRequest) editRequestRef.current += 1;
     setIsLoadingEdit(reset.isLoadingEdit);
@@ -398,6 +429,8 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     const tenantMaster = isTenantMasterEntity(ENTITY);
     const ctxCampo = ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id";
+    // GrupoEmpresarial: o registro mestre tem id === groupId e pode não ter group_id espelhado.
+    const grupoSelfOr = (ENTITY === "GrupoEmpresarial" && groupId) ? [{ id: groupId }] : [];
     return buildMultiempresaReadFilter({
       groupId,
       empresaId: tenantMaster ? null : empresaId,
@@ -407,6 +440,7 @@ export default function VisualizadorUniversalEntidadeV24({
         ? empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean)
         : [],
       rest: {},
+      extraGroupOr: grupoSelfOr,
     });
   }, [ENTITY, empresaId, groupId, empresasDoGrupo]);
 
@@ -417,6 +451,13 @@ export default function VisualizadorUniversalEntidadeV24({
     function() { return ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]; },
     [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]
   );
+  const visibleScope = JSON.stringify([ENTITY, groupId, empresaId, debouncedSearch]);
+  // Limpa cache no render ao trocar tenant/busca — evita um frame com linhas do contexto anterior.
+  if (lastGoodScope.current !== visibleScope) {
+    lastGoodScope.current = visibleScope;
+    lastGoodData.current = [];
+    everLoadedRef.current = false;
+  }
 
   // ── query principal ──────────────────────────────────────────────────────────
   // placeholderData garante que a lista NÃO desaparece durante sort/paginação/exclusão
@@ -443,7 +484,9 @@ export default function VisualizadorUniversalEntidadeV24({
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
-    placeholderData: function(prev) { return prev !== undefined ? prev : []; },
+    placeholderData: function(prev, previousQuery) {
+      return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);
+    },
     enabled: !!ENTITY && contextoValido && canViewCadastro,
   });
 
@@ -507,6 +550,7 @@ export default function VisualizadorUniversalEntidadeV24({
   // ── formulário ───────────────────────────────────────────────────────────────
   const handleCloseForm = useCallback(function(wasSaved) {
     editRequestRef.current += 1;
+    formScopeRef.current = null;
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
@@ -524,6 +568,20 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const handlePersistSubmit = useCallback(async function(formData) {
     if (!formData || !ENTITY) return;
+    try {
+      assertCadastroFormScopeCurrent({
+        formScope: formScopeRef.current,
+        renderedScope: scopeKey,
+        activeScope: activeScopeRef.current,
+      });
+    } catch (error) {
+      await auditCadastroEvent("Bloqueio", "Salvamento bloqueado após troca de contexto", {
+        registro_id: (editItem && editItem.id) || formData.id || null,
+        sucesso: false,
+        motivo: "escopo_alterado",
+      });
+      throw error;
+    }
     if (formData._action === "delete") {
       if (!canDeleteCadastro) {
         await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro pelo formulario sem permissao", { registro_id: formData.id || null, permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false });
@@ -572,7 +630,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked]);
+  }, [ENTITY, editItem, empresaId, groupId, scopeKey, handleCloseForm, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext, auditCadastroEvent, isLoadingEdit, editLoadBlocked]);
 
   const handleNewItem = useCallback(function() {
     if (!contextoValido) {
@@ -586,6 +644,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     auditCadastroEvent("Visualizacao", "Formulario de criacao aberto", { origem: "VisualizadorUniversalEntidadeV24" });
+    formScopeRef.current = scopeKey;
     editRequestRef.current += 1;
     setIsLoadingEdit(false);
     setEditLoadBlocked(false);
@@ -593,7 +652,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setEditError(null);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido]);
+  }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido, scopeKey]);
 
   const handleEditItem = useCallback(async function(item) {
     if (!item || !item.id) return;
@@ -607,6 +666,7 @@ export default function VisualizadorUniversalEntidadeV24({
       alert("Sem permissao para editar.");
       return;
     }
+    formScopeRef.current = scopeKey;
     const request = ++editRequestRef.current;
     const requestedScope = scopeKey;
     const stillCurrent = function() {
@@ -632,16 +692,23 @@ export default function VisualizadorUniversalEntidadeV24({
           fetchById: function(id) { return base44.entities.Empresa.get(id); },
         });
         if (!stillCurrent()) return;
-        if (!isCadastroEditLoadComplete(ENTITY, complete, item.id)) {
+        const classified = classifyCadastroEditLoad({
+          entityName: ENTITY,
+          expectedId: item.id,
+          listRow: item,
+          fullRecord: complete,
+        });
+        if (classified.kind !== "ok") {
           setEditLoadBlocked(true);
-          setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+          setEditError(classified.message);
           await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa incompleta", {
-            registro_id: item.id, sucesso: false, motivo: "carga_incompleta",
+            registro_id: item.id, sucesso: false, motivo: classified.kind,
           });
           return;
         }
-        setEditItem(JSON.parse(JSON.stringify(complete)));
+        setEditItem(JSON.parse(JSON.stringify(mergeCadastroEditHydration(item, complete))));
         setEditLoadBlocked(false);
+        setEditError(classified.message);
         auditCadastroEvent("Visualizacao", "Formulario de edicao aberto com carga completa", {
           registro_id: item.id, origem: "VisualizadorUniversalEntidadeV24",
         });
@@ -650,11 +717,17 @@ export default function VisualizadorUniversalEntidadeV24({
       } catch (error) {
         if (!stillCurrent()) return;
         console.error("[VisualizadorUniversalEntidade] Falha ao carregar Empresa completa", error);
+        const failed = classifyCadastroEditLoad({
+          entityName: ENTITY,
+          expectedId: item.id,
+          listRow: item,
+          loadError: error,
+        });
         setEditItem(null);
         setEditLoadBlocked(true);
-        setEditError("Nao foi possivel carregar o cadastro completo. Edicao bloqueada.");
+        setEditError(failed.message);
         await auditCadastroEvent("Falha", "Leitura completa para edicao de Empresa falhou", {
-          registro_id: item.id, sucesso: false, motivo: "leitura_ou_escopo",
+          registro_id: item.id, sucesso: false, motivo: "load_failed",
           erro: (error && error.message) || String(error),
         });
         alert("Nao foi possivel abrir a edicao: " + ((error && error.message) || String(error)));
@@ -678,20 +751,33 @@ export default function VisualizadorUniversalEntidadeV24({
         empresaId: (contextoCanonico && contextoCanonico.empresaId) || empresaId,
         scopeType: (contextoCanonico && contextoCanonico.scopeType) || null,
       }, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
-      if (!isCadastroEditLoadComplete(ENTITY, full, item.id)) {
+      const classified = classifyCadastroEditLoad({
+        entityName: ENTITY,
+        expectedId: item.id,
+        listRow: item,
+        fullRecord: full,
+      });
+      if (classified.kind !== "ok") {
         setEditLoadBlocked(true);
-        setEditError("Carregamento incompleto do registro. Salvamento bloqueado ate recarregar.");
+        setEditError(classified.message);
+        setEditItem(JSON.parse(JSON.stringify(mergeCadastroEditHydration(item, full || {}))));
         return;
       }
-      setEditItem(JSON.parse(JSON.stringify(Object.assign({}, item, full))));
+      setEditItem(JSON.parse(JSON.stringify(mergeCadastroEditHydration(item, full))));
       setEditLoadBlocked(false);
-      setEditError(null);
+      setEditError(classified.message);
       setFormKey(function(k) { return k + 1; });
     } catch (error) {
       if (!stillCurrent()) return;
       console.error("[VisualizadorUniversalEntidade] Falha ao carregar registro completo", error);
+      const failed = classifyCadastroEditLoad({
+        entityName: ENTITY,
+        expectedId: item.id,
+        listRow: item,
+        loadError: error,
+      });
       setEditLoadBlocked(true);
-      setEditError("Falha ao carregar registro completo. Salvamento bloqueado; campos da lista preservados.");
+      setEditError(failed.message);
     } finally {
       if (stillCurrent()) setIsLoadingEdit(false);
     }
@@ -929,7 +1015,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 checked={allPageSelected}
                 onChange={handleToggleSelectPage}
                 disabled={!contextoValido || !canDeleteCadastro}
-                data-permission={`Cadastros.${ENTITY}.excluir`}
+                data-permission={cadastroPerm("excluir")}
                 data-sensitive="true"
                 className="w-4 h-4 cursor-pointer accent-blue-600"
               />
@@ -957,7 +1043,11 @@ export default function VisualizadorUniversalEntidadeV24({
             return (
               <tr
                 key={item.id}
-                className={"transition-colors hover:bg-blue-50/30" + (checked ? " bg-blue-50/40" : "")}
+                className={"transition-colors hover:bg-blue-50/30 cursor-pointer" + (checked ? " bg-blue-50/40" : "")}
+                onDoubleClick={function() {
+                  if (!FormComponent || !canEditCadastro || isLoadingEdit) return;
+                  handleEditItem(item);
+                }}
               >
                 <td className="px-3 py-2 text-center">
                   <input
@@ -965,7 +1055,7 @@ export default function VisualizadorUniversalEntidadeV24({
                     checked={checked}
                     onChange={function(e) { handleItemCheck(item.id, e.target.checked); }}
                     disabled={!contextoValido || !canDeleteCadastro}
-                    data-permission={`Cadastros.${ENTITY}.excluir`}
+                    data-permission={cadastroPerm("excluir")}
                     data-sensitive="true"
                     className="w-4 h-4 cursor-pointer accent-blue-600"
                   />
@@ -988,12 +1078,17 @@ export default function VisualizadorUniversalEntidadeV24({
                           openWindow(
                             DetalhesCliente,
                             { cliente: item, windowMode: true },
-                            { title: `Cliente ${item.nome || item.razao_social || item.id || ""}`.trim(), width: 1100, height: 720 },
+                            {
+                              title: `Cliente ${item.nome || item.razao_social || item.id || ""}`.trim(),
+                              width: 1100,
+                              height: 720,
+                              uniqueKey: `Comercial.Cliente.detalhes.${item.id}`,
+                            },
                           );
                         }}
                         title="Detalhes / Central 360"
                         disabled={!contextoValido || !canViewCadastro}
-                        data-permission={`Cadastros.${ENTITY}.visualizar`}
+                        data-permission={cadastroPerm("visualizar")}
                         data-action="cliente-detalhes-360"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
@@ -1006,7 +1101,8 @@ export default function VisualizadorUniversalEntidadeV24({
                         onClick={function(e) { e.stopPropagation(); handleEditItem(item); }}
                         title="Editar"
                         disabled={isLoadingEdit || !canEditCadastro}
-                        data-permission={`Cadastros.${ENTITY}.editar`}
+                        data-permission={cadastroPerm("editar")}
+                        data-action={`Cadastros.${ENTITY}.editar`}
                         data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
@@ -1020,7 +1116,7 @@ export default function VisualizadorUniversalEntidadeV24({
                       onClick={function() { handleDelete(item); }}
                       title="Excluir"
                       disabled={!contextoValido || !canDeleteCadastro}
-                      data-permission={`Cadastros.${ENTITY}.excluir`}
+                      data-permission={cadastroPerm("excluir")}
                       data-sensitive="true"
                       className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
@@ -1057,14 +1153,14 @@ export default function VisualizadorUniversalEntidadeV24({
             value={search}
             onChange={function(e) { setSearch(e.target.value); }}
             className="pl-8 h-9 rounded-sm text-sm bg-white border-slate-200"
-            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-permission={cadastroPerm("visualizar")}
             data-action={`Cadastros.${ENTITY}.buscar`}
           />
           {search && (
             <button
               onClick={function() { setSearch(""); }}
               className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600"
-              data-permission={`Cadastros.${ENTITY}.visualizar`}
+              data-permission={cadastroPerm("visualizar")}
               data-action={`Cadastros.${ENTITY}.limpar-busca`}
             >
               <X className="w-3.5 h-3.5" />
@@ -1076,7 +1172,7 @@ export default function VisualizadorUniversalEntidadeV24({
           value={pageSize}
           onChange={function(e) { setPageSize(Number(e.target.value)); setPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={cadastroPerm("visualizar")}
           data-action={`Cadastros.${ENTITY}.alterar-paginacao`}
         >
           {PAGE_SIZES.map(function(ps) { return <option key={ps} value={ps}>{ps}/pág</option>; })}
@@ -1086,7 +1182,7 @@ export default function VisualizadorUniversalEntidadeV24({
           value={sortField + "|" + sortDir}
           onChange={function(e) { handleSortDropdown(e.target.value); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={cadastroPerm("visualizar")}
           data-action={`Cadastros.${ENTITY}.ordenar`}
         >
           <option value="updated_date|desc">↓ Mais Recentes</option>
@@ -1107,7 +1203,7 @@ export default function VisualizadorUniversalEntidadeV24({
           onClick={function() { lastGoodData.current = []; everLoadedRef.current = false; invalidateAll(queryClient, ENTITY); }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0"
           title="Recarregar"
-          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-permission={cadastroPerm("visualizar")}
           data-action={`Cadastros.${ENTITY}.recarregar`}
         >
           <RefreshCw className={"w-4 h-4 " + (isFetching ? "animate-spin text-blue-500" : "text-slate-500")} />
@@ -1119,7 +1215,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={handleNewItem}
             disabled={!contextoValido || !canCreateCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
-            data-permission={`Cadastros.${ENTITY}.criar`}
+            data-permission={cadastroPerm("criar")}
             data-action={ENTITY === 'Cliente' ? 'cliente-novo' : `Cadastros.${ENTITY}.criar`}
             data-action-cadastro={`Cadastros.${ENTITY}.criar`}
             data-sensitive="true"
@@ -1135,7 +1231,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={handleDeleteSelected}
             disabled={!contextoValido || !canDeleteCadastro}
             className="h-9 rounded-sm gap-1 shrink-0"
-            data-permission={`Cadastros.${ENTITY}.excluir`}
+            data-permission={cadastroPerm("excluir")}
             data-action={`Cadastros.${ENTITY}.excluir-selecionados`}
             data-sensitive="true"
           >
@@ -1158,7 +1254,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <button
             onClick={handleActivateCrossPage}
             className="text-blue-600 hover:text-blue-800 underline font-semibold"
-            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-permission={cadastroPerm("visualizar")}
             data-action={`Cadastros.${ENTITY}.selecionar-todos`}
           >
             Selecionar todos os {totalCount} registros

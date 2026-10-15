@@ -1,0 +1,39 @@
+# Evidência sanitizada — Legado #211 staging privado + consumidor Cursor
+# utc=2026-10-09T12:08Z
+#
+# Estado #211 (comentários owner — NÃO repetir pedidos):
+# - checksum export: sameFileAsPaste=true (conferido no PC)
+# - CNPJs operacionais: já corrigidos por autorização específica (07/10)
+# - topology ID+CNPJ pairs: ainda fail-closed no verificador (LEGACY_TOPOLOGY_NO_ID_CNPJ_PAIRS)
+# - nenhuma importação operacional autorizada por esses checkpoints
+#
+# Backup / stage privado VPS (somente leitura Cursor; sem publicar PII):
+# path=/root/erp-private/legacy-stage-20261009T115402Z
+# arquivos: legacy-stage.sqlite · candidates-with-dependencies.sqlite
+#   · clientes-quarentena.csv · fornecedores-quarentena.csv · produtos-revenda-quarentena.csv
+# original preservado (não sobrescrito); import_authorized=0 em 100% dos staging_records
+#
+# Contagens reais staging (entity|staging|quarentena):
+# clientes|18458|4437
+# fornecedores|790|271
+# produtos|1208|14
+# total staging_records=20456 · quarantine_records=4722
+# target_empresa_id: todos sem_empresa no lote atual (vínculo empresa pendente)
+#
+# Bancos isolados existentes (≠ operacional):
+# erp_restore_isolated_20260924_155458
+# erp_restore_isolated_20261006_210124
+# erp_restore_isolated_20261007_094821
+#
+# Consumidor Cursor (sem duplicar mapper):
+# - reutiliza scripts/legado/mapear-registro-sintetico.mjs + migracaoErpPolicy
+# - extensão: entidade fornecedor nos aliases existentes
+# - testes: legado-mapear-sintetico  + cadastro edit load  = 28/28 PASS
+# - lote sintético: gravados / reusos / quarentenas / reconciliação separados
+# - dados reais e credenciais: privados na VPS; GitHub só contagens/sanitizado
+#
+# Fases:
+# implementado = consumidor/fornecedor no mapper existente (este lote Cursor)
+# implantado = tip erp-dev baba91a6 (sem carga operacional deste stage)
+# homologado = browser/API/DB comparação (evidência browser-homolog-254-…)
+# importado = NÃO — gate operacional exige lote concreto + backup destino + reversão

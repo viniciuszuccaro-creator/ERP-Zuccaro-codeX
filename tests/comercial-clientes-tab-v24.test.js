@@ -26,6 +26,7 @@ test('ClientesTab Comercial reutiliza Visualizador V24 com scope (não V23 stale
   assert.match(source, /data-comercial-clientes-tab="v24"/);
   assert.match(source, /nomeEntidade="Cliente"/);
   assert.match(source, /CadastroClienteCompleto/);
+  assert.match(source, /camposPrincipais=\{\["codigo"/);
 });
 
 test('AcoesRapidasGlobal: Novo Cliente exige contexto e expõe data-action', async () => {
@@ -96,15 +97,16 @@ test('diff vs #251: runtime #252 não inclui Empresas/Financeiro/Central360', as
   assert.doesNotMatch(tab, /CentralCliente360|EmpresaSwitcher|LaunchpadCard/);
 });
 
-/** Cadastros Bloco1: padrão azul aprovado (não reverter para primary genérico). */
-test('regressão visual Cadastros Bloco1: tiles Clientes usam azul (bg-blue / text-blue)', async () => {
+/** Cadastros Bloco1: padrão azul claro (sky) aprovado — sem purple/indigo. */
+test('regressão visual Cadastros Bloco1: tiles Clientes usam azul claro (bg-sky / text-sky)', async () => {
   const bloco = await readFile(
     new URL('../src/components/cadastros/blocks/Bloco1Pessoas.jsx', import.meta.url),
     'utf8',
   );
-  assert.match(bloco, /from-blue-50/);
-  assert.match(bloco, /text-blue-600|text-blue-700/);
-  assert.match(bloco, /bg-blue-600/);
+  assert.match(bloco, /from-sky-50/);
+  assert.match(bloco, /text-sky-600|text-sky-700/);
+  assert.match(bloco, /bg-sky-600/);
+  assert.doesNotMatch(bloco, /purple-|indigo-|violet-/);
   assert.match(bloco, /data-action=\{`Cadastros\.\$\{k\}\.abrir`\}/);
   assert.match(bloco, /k: 'Cliente'/);
 });
@@ -126,6 +128,67 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.match(v24, /data-action="cliente-novo"|ENTITY === 'Cliente' \? 'cliente-novo'/);
   assert.match(v24, /data-action="cliente-detalhes-360"/);
   assert.match(detalhes, /CentralCliente360Panel/);
+  assert.match(detalhes, /text-sky-600/);
+  assert.doesNotMatch(detalhes, /purple-|indigo-|violet-/);
   assert.match(panel, /Carregar mais/);
   assert.match(panel, /_limit|_offset|blockLimits/);
+  const fechamento = await readFile(
+    new URL('../src/components/comercial/FechamentoFinanceiroTab.jsx', import.meta.url),
+    'utf8',
+  );
+  const pedidoHeader = await readFile(
+    new URL('../src/components/comercial/pedido/PedidoHeader.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(fechamento, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(fechamento, /purple-|indigo-|violet-/);
+  assert.match(pedidoHeader, /to-sky-50|from-sky-600/);
+  assert.doesNotMatch(pedidoHeader, /purple-|indigo-|violet-/);
+  const priceBrain = await readFile(
+    new URL('../src/components/comercial/PriceBrain.jsx', import.meta.url),
+    'utf8',
+  );
+  const uploadProj = await readFile(
+    new URL('../src/components/comercial/UploadProjetoForm.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(priceBrain, /sky-/);
+  assert.doesNotMatch(priceBrain, /purple-|indigo-|violet-/);
+  assert.match(uploadProj, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(uploadProj, /purple-|indigo-|violet-/);
+  const pedidosTab = await readFile(
+    new URL('../src/components/comercial/PedidosTab.jsx', import.meta.url),
+    'utf8',
+  );
+  const pedidosEntrega = await readFile(
+    new URL('../src/components/comercial/PedidosEntregaTab.jsx', import.meta.url),
+    'utf8',
+  );
+  // Status canônicos UTF-8 (filtros/badges devem casar com PedidoForm/Expedição)
+  assert.match(pedidosTab, /Em Trânsito/);
+  assert.match(pedidosTab, /Em Expedição/);
+  assert.match(pedidosTab, /Aguardando Aprovação/);
+  assert.doesNotMatch(pedidosTab, /TrÃ¢nsito|ExpediÃ§Ã£o|AprovaÃ§Ã£o|Ã§|Ã£/);
+  assert.match(pedidosTab, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(pedidosTab, /purple-|indigo-|violet-/);
+  assert.match(pedidosEntrega, /bg-sky-600|text-sky-600/);
+  assert.doesNotMatch(pedidosEntrega, /purple-|indigo-|violet-/);
+
+  for (const rel of [
+    '../src/components/comercial/FormasPagamentoPedido.jsx',
+    '../src/components/comercial/PainelEntregasPedido.jsx',
+    '../src/components/comercial/CentralAprovacoesLayout.jsx',
+    '../src/components/comercial/GerarOPModal.jsx',
+    '../src/components/comercial/LogisticaEntregaTab.jsx',
+    '../src/components/comercial/HistoricoAlteracoesPedido.jsx',
+    '../src/components/comercial/AuditoriaAprovacaoTab.jsx',
+    '../src/components/comercial/AutomacaoFluxoPedido.jsx',
+    '../src/components/comercial/ValidarPedidosExternos.jsx',
+    '../src/components/comercial/AssistenteInteligente.jsx',
+  ]) {
+    const src = await readFile(new URL(rel, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /purple-|indigo-|violet-/, `${rel} sem purple/indigo/violet`);
+  }
+
+
 });

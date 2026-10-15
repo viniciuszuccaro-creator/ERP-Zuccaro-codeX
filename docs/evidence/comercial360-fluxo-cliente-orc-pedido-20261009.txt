@@ -1,0 +1,41 @@
+# Comercial 360 — lote Cliente → Orçamento → Pedido (Cursor)
+# Branch alvo: cursor/comercial360-fluxo-cliente-orc-pedido-392b
+# ≠ Codex: erpHttpSession / useContextoGrupoEmpresa / useContextoVisual / outbox Onda 15
+
+## Implementado (código)
+
+| Item | Estado | Arquivos |
+|---|---|---|
+| Busca cliente por código/nome (Orçamento) | **implementado** | OrcamentosTab + comercialMasterPicker |
+| Busca produto por código (Orçamento) | **implementado** | idem |
+| Labels com código (cliente/produto/condição) | **implementado** | OrcamentosTab |
+| Busca cliente/produto + labels (Pedido) | **implementado** | PedidoCanonicoPanel |
+| Totais UI + allowlist payload | preservado | orcamentoUiPolicy / pedidoUiPolicy |
+| Tabela preço no Pedido | já existia | PedidoCanonicoPanel + server |
+| Isolamento CPA/3Z | preservado | queryKey groupId+empresaId |
+| RBAC fail-closed | preservado | canUse*Action |
+| Auditoria create/update | server existente | orcamentoService / pedidoService |
+
+## Contrato / gaps explícitos (sem perda silenciosa)
+
+| Campo | Orçamento | Pedido |
+|---|---|---|
+| tabela_preco_id | **sem coluna** no schema; UI declara gap; preço via resolveSalePrice | persiste |
+| preco_unitario digitado | servidor sobrescreve snapshot | servidor sobrescreve |
+| unidade alternativa | só UM principal | só UM principal |
+| total/groupId no payload | omitidos (allowlist) | omitidos |
+
+## Fases
+
+| Fase | Estado |
+|---|---|
+| implementado | sim (picker + gaps) |
+| integrado | PR novo (esta branch) |
+| implantado | **NÃO** (aguarda merge/deploy) |
+| homologado browser | pendente tip implantado |
+| importado legado | **NÃO** (#211) |
+
+## Próximo neste fluxo
+- Preview HTTP de preço (se endpoint seguro existir) ou banner pós-save com snapshot
+- Homolog browser Orçamento→Pedido no tip implantado
+- Conversão Orçamento→Pedido com isolamento CPA/3Z

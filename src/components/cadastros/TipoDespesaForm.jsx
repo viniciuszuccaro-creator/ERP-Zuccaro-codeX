@@ -9,6 +9,7 @@ import { Receipt } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || tipoDespesa || tipo;
@@ -81,10 +82,12 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const content = (
     <form onSubmit={handleSubmit} className={windowMode ? "space-y-4 p-4 h-full overflow-auto" : "space-y-4 p-4"}>
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Código</Label>
-          <Input value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} placeholder="DESP001" disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-codigo-tipo-despesa" data-sensitive />
-        </div>
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-tipo-despesa"
+      />
         <div>
           <Label>Nome *</Label>
           <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Energia Elétrica" required disabled={!podeSalvar} data-permission="Financeiro.TipoDespesa.editar" data-action="editar-nome-tipo-despesa" data-sensitive />
@@ -160,7 +163,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
 
       <Button
         type="submit"
-        className="w-full bg-purple-600 hover:bg-purple-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.TipoDespesa.salvar"
         data-action="salvar-tipo-despesa"
@@ -174,8 +177,8 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
-          <Receipt className="w-6 h-6 text-purple-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Receipt className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}</h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

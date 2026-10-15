@@ -35,18 +35,29 @@ function hasView(hasPermission, section) {
   );
 }
 
+const FINANCEIRO_OWNER_SECTION_KEYS = Object.freeze([
+  'caixa',
+  'contas_receber',
+  'contas_pagar',
+  'conciliacao',
+  'relatorios',
+]);
+
 export function canViewFinanceLaunchpadModule(hasPermission, module, options = {}) {
   if (typeof hasPermission !== 'function' || !module) return false;
   const section = module.sectionKey || module.title;
   if (!section) return false;
 
   if (hasView(hasPermission, section)) return true;
+  // Compat: árvore legada por título UI ainda concede quando sectionKey canônico não casa.
+  if (module.sectionKey && module.title && hasView(hasPermission, module.title)) return true;
 
   const moduleView = hasView(hasPermission, null);
   if (!moduleView) return false;
 
   const probeTitles = options.probeTitles || FINANCEIRO_LAUNCHPAD_MODULE_TITLES;
-  const anySectionGranted = probeTitles.some((title) => hasView(hasPermission, title));
+  const anySectionGranted = probeTitles.some((title) => hasView(hasPermission, title))
+    || FINANCEIRO_OWNER_SECTION_KEYS.some((key) => hasView(hasPermission, key));
   // Grant plano (sem nós de seção do launchpad): módulo visualizar basta.
   if (!anySectionGranted) return true;
   // Árvore granular: esta seção não tem grant.

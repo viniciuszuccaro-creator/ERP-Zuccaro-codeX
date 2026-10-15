@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * FORMULÁRIO DE TABELA FISCAL V21.2 - FASE 2
@@ -21,19 +22,24 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * Com IA de Compliance Fiscal integrada
  */
 export default function TabelaFiscalForm({ 
-  tabela, 
+  tabela,
+  item,
+  data,
+  initialData,
+  defaultValues,
   windowMode = false,
   onSubmit,
   onCancel 
 }) {
+  const registro = item || data || initialData || defaultValues || tabela;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || tabela?.group_id || null;
-  const contextoValido = Boolean(empresaAtual?.id || groupId || tabela?.empresa_id || tabela?.group_id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || registro?.empresa_id || registro?.group_id);
   const podeCriar = hasPermission?.("Cadastros.TabelaFiscal.criar") || hasPermission?.("Financeiro.TabelaFiscal.criar");
   const podeEditar = hasPermission?.("Cadastros.TabelaFiscal.editar") || hasPermission?.("Financeiro.TabelaFiscal.editar");
   const podeUsarIA = hasPermission?.("Cadastros.TabelaFiscal.ia") || hasPermission?.("Financeiro.TabelaFiscal.ia") || podeEditar || podeCriar;
-  const podeSalvar = tabela?.id ? podeEditar : podeCriar;
+  const podeSalvar = registro?.id ? podeEditar : podeCriar;
 
   const [formData, setFormData] = useState({
     nome_regra: "",
@@ -60,8 +66,43 @@ export default function TabelaFiscalForm({
     origem_mercadoria: "0 - Nacional",
     regra_ativa: true,
     prioridade: 100,
-    ...tabela
+    ...registro
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({
+        nome_regra: "",
+        empresa_id: "",
+        regime_tributario: "Simples Nacional",
+        cenario_operacao: "Venda Consumidor Final",
+        ncm: "",
+        cfop: "",
+        destino_operacao: "Dentro do Estado",
+        tipo_cliente: "Pessoa Física",
+        icms_cst_csosn: "",
+        icms_aliquota: 0,
+        icms_reducao_base: 0,
+        icms_st_aliquota: 0,
+        icms_st_mva: 0,
+        pis_cst: "",
+        pis_aliquota: 0,
+        cofins_cst: "",
+        cofins_aliquota: 0,
+        ipi_cst: "",
+        ipi_aliquota: 0,
+        fcp_aliquota: 0,
+        diferencial_aliquota: 0,
+        origem_mercadoria: "0 - Nacional",
+        regra_ativa: true,
+        prioridade: 100,
+        ...(registro || {}),
+      });
+    }
+  }, [registro?.id]);
+
 
   const [abaAtiva, setAbaAtiva] = useState("configuracao");
   const [validandoIA, setValidandoIA] = useState(false);
@@ -181,10 +222,16 @@ Seja preciso e cite a legislação aplicável.`,
     <div className={containerClass}>
       <div className={contentClass}>
         <form onSubmit={handleSubmitForm} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
+        action="id-tecnico-tabela-fiscal"
+      />
           {/* SUGESTÃO IA */}
           {sugestaoIA && (
-            <Alert className="border-purple-300 bg-purple-50">
-              <Sparkles className="w-4 h-4 text-purple-600" />
+            <Alert className="border-sky-300 bg-sky-50">
+              <Sparkles className="w-4 h-4 text-sky-600" />
               <AlertDescription className="text-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -198,7 +245,7 @@ Seja preciso e cite a legislação aplicável.`,
                       </ul>
                     )}
                     {sugestaoIA.legislacao && (
-                      <p className="text-xs mt-2 text-purple-700">
+                      <p className="text-xs mt-2 text-sky-700">
                         <strong>Base Legal:</strong> {sugestaoIA.legislacao}
                       </p>
                     )}
@@ -210,7 +257,7 @@ Seja preciso e cite a legislação aplicável.`,
                     disabled={!podeSalvar}
                     data-permission="Cadastros.TabelaFiscal.ia"
                     data-sensitive="true"
-                    className="ml-4 bg-purple-600 hover:bg-purple-700"
+                    className="ml-4 bg-sky-600 hover:bg-sky-700"
                   >
                     Aplicar Sugestões
                   </Button>
@@ -412,7 +459,7 @@ Seja preciso e cite a legislação aplicável.`,
                   </CardContent>
                 </Card>
 
-                <Card className="bg-purple-50">
+                <Card className="bg-sky-50">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm">COFINS</CardTitle>
                   </CardHeader>

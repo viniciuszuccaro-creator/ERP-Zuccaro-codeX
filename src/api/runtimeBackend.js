@@ -62,8 +62,18 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
   'SetorAtividade',
 ]);
 
-/** Produto HTTP e explicito no formulario; consumidores legados mantem sua fonte. */
+/**
+ * Piloto HTTP efetivo.
+ * - Produto permanece fora do piloto de listagem (consumidores legados / contadores locais).
+ * - Cliente entra quando Central 360 / listagem HTTP esta autorizada em DEV
+ *   (`VITE_ERP_HTTP_CLIENTE_360=true` ou `VITE_ERP_HTTP_CLIENTE=true`).
+ */
 export function resolveHttpPilotEntities(env = import.meta.env) {
-  void env;
-  return [...HTTP_PILOT_ENTITIES];
+  const list = [...HTTP_PILOT_ENTITIES];
+  const clienteOn = String(env?.VITE_ERP_HTTP_CLIENTE_360 || env?.VITE_ERP_HTTP_CLIENTE || '')
+    .trim()
+    .toLowerCase() === 'true';
+  if (clienteOn && !list.includes('Cliente')) list.push('Cliente');
+  void env?.VITE_ERP_HTTP_PRODUTO; // opt-in do formulario; nao troca fonte dos grids
+  return list;
 }

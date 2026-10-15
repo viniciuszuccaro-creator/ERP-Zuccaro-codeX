@@ -18,7 +18,7 @@ export default function PedidoTabsNav({ abas = [], activeTab, setActiveTab }) {
             {Icon && <Icon className="w-4 h-4 mr-2" />}
             {aba.label}
             {aba.novo && (
-              <Badge className="ml-2 bg-purple-600 text-xs">NOVO</Badge>
+              <Badge className="ml-2 bg-sky-600 text-xs">NOVO</Badge>
             )}
             {aba.valido && <Check className="w-4 h-4 ml-2 text-green-600" />}
             {aba.count > 0 && (

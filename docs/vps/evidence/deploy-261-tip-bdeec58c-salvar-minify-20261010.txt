@@ -1,0 +1,26 @@
+# Evidência sanitizada — tip bdeec58c implantado (#261)
+# utc=2026-10-10T13:46Z
+#
+# tip=bdeec58c fix(cadastros): self-managed minify-safe — evita crash no salvar
+# asset=index-5EmU7-cb.js
+# backup=pre-gate-e-20261010-134527.sql sha256=3dcd29968dca51a0189e42ceee4850b44cd4391893736edcf37a615a9d681676
+# rollback=pre-spa-login-20261010-134528
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# Causa crash tip a004044b/0d458ab9:
+# - Function.name some no bundle → isSelfManaged=false
+# - onSuccess do Cliente chamava handlePersistSubmit → assertCadastroFormScopeCurrent
+# - Promise rejeitada → ErrorBoundary "Erro ao iniciar o ERP local"
+#
+# Correção: FormComponent.isSelfManagedCadastro === true (+ displayName)
+#
+# Homolog tipado (este SHA) fail_count=0:
+#   login · Cadastros · Clientes V24 · abrir · campo len=25 · salvar · reabrir
+#   trocar Grupo · launchpads Comercial/Financeiro/Fiscal PASS
+# Save dedicado: no_crash · okToast · reabrir PASS · API GET cliente 200
+#
+# API×DB×UI CPA: n=5 / rows=5 / badge=5
+# Recuperado legado: NÃO (#211) · SYNTH≠recuperado
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-bdeec58c.png
+#   /opt/cursor/artifacts/screenshots/pw-save-bdeec58c.png

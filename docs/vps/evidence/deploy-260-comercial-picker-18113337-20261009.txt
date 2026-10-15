@@ -1,0 +1,19 @@
+# Deploy #260 Comercial picker — tip 18113337 (2026-10-09T19:44Z)
+# Sanitizado — sem dump, sem .env, sem chave.
+
+| Item | Valor |
+|---|---|
+| tip implantado | **18113337** |
+| branch | cursor/comercial360-fluxo-cliente-orc-pedido-392b |
+| PR | #260 |
+| CI | erp-runtime-ci **SUCCESS** (4 checks) |
+| backup | pre-gate-e-20261009-194341.sql · sha256=1a472db46f95eb62f8e06af60f30fc90406a89cef12eaecdd7cfdde2685be16b · 980956 bytes |
+| migration | nenhuma nova (038 já aplicada) |
+| SPA asset | `/assets/index-wiWHreg3.js` |
+| health | 3080=200 · 3081=200 |
+| rollback_api | erp-zuccaro-erp-api:pre-spa-login-20261009-194342 |
+| rollback_web | erp-zuccaro-erp-web:pre-spa-login-20261009-194342 |
+| runtime anterior | 55fcac4f |
+
+## Integração
+Inclui tip Cadastros #259 (ancestor) + picker Comercial 360.

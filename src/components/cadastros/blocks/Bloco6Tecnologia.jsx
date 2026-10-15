@@ -7,6 +7,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Zap, Code, Settings, Package, Link2, Cloud, MessageCircle, Bell } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -96,22 +97,30 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(
-      VisualizadorUniversalEntidadeV24,
-      { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
-      { title: titulo, width: 1400, height: 800 }
-    );
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   const tiles = [
-    { k: 'ApiExterna',         t: 'APIs Externas',          i: Code,          c: ['nome','nome_integracao','url_base','tipo_api'],   f: ApiExternaForm },
-    { k: 'ChatbotCanal',       t: 'Canais Chatbot',         i: MessageCircle, c: ['nome','nome_canal','tipo_canal','ativo'],          f: ChatbotCanalForm },
-    { k: 'ChatbotIntent',      t: 'Intents Chatbot',        i: Zap,           c: ['nome','nome_intent','descricao','ativo'],          f: ChatbotIntentForm },
-    { k: 'GatewayPagamento',   t: 'Gateways de Pagamento',  i: Package,       c: ['nome','provedor','ambiente','ativo'],              f: GatewayPagamentoForm },
-    { k: 'JobAgendado',        t: 'Jobs Agendados',         i: Cloud,         c: ['nome','nome_job','frequencia','tipo_job'],         f: JobAgendadoForm },
-    { k: 'Webhook',            t: 'Webhooks',               i: Link2,         c: ['nome','nome_webhook','evento_gatilho','ativo'],    f: WebhookForm },
-    { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['nome','provedor','ambiente','ativo'],              f: ConfiguracaoNFeForm },
-    { k: 'EventoNotificacao',   t: 'Eventos & Notificações', i: Bell,          c: ['nome_evento','tipo_evento','prioridade','ativo'],  f: EventoNotificacaoForm },
+    { k: 'ApiExterna',         t: 'APIs Externas',          i: Code,          c: ['id','nome_integracao','nome','url_base','tipo_api','ativo'], f: ApiExternaForm },
+    { k: 'ChatbotCanal',       t: 'Canais Chatbot',         i: MessageCircle, c: ['id','nome_canal','nome','tipo_canal','ativo'],            f: ChatbotCanalForm },
+    { k: 'ChatbotIntent',      t: 'Intents Chatbot',        i: Zap,           c: ['id','nome_intent','nome','descricao','ativo'],            f: ChatbotIntentForm },
+    { k: 'GatewayPagamento',   t: 'Gateways de Pagamento',  i: Package,       c: ['id','nome','provedor','ambiente','ativo'],                f: GatewayPagamentoForm },
+    { k: 'JobAgendado',        t: 'Jobs Agendados',         i: Cloud,         c: ['id','nome_job','nome','frequencia','tipo_job','ativo'],   f: JobAgendadoForm },
+    { k: 'Webhook',            t: 'Webhooks',               i: Link2,         c: ['id','nome_webhook','nome','evento_gatilho','url_destino','ativo'], f: WebhookForm },
+    { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['id','provedor','ambiente','serie_nfe','ativo'],           f: ConfiguracaoNFeForm },
+    { k: 'EventoNotificacao',  t: 'Eventos & Notificações', i: Bell,          c: ['id','nome_evento','tipo_evento','prioridade','ativo'],    f: EventoNotificacaoForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 
@@ -135,10 +144,10 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
-        <CardHeader className="bg-gradient-to-r from-indigo-50 to-violet-50 border-b rounded-t-sm">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-sky-100 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-5 h-5 text-indigo-700"/> Tecnologia, IA & Parâmetros
+              <Zap className="w-5 h-5 text-sky-700"/> Tecnologia, IA & Parâmetros
             </CardTitle>
           </div>
         </CardHeader>
@@ -159,8 +168,8 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                <div className="p-1.5 rounded-sm bg-indigo-50 group-hover:bg-indigo-100 transition-colors">
-                  <Icon className="w-4 h-4 text-indigo-600" />
+                <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                  <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {t}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />

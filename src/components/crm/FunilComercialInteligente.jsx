@@ -25,8 +25,9 @@ export default function FunilComercialInteligente({ windowMode = false }) {
   const { filtrarPorContexto, empresaAtual, estaNoGrupo, updateInContext } = useContextoVisual();
   const contextoPronto = estaNoGrupo || Boolean(empresaAtual);
 
+  const groupId = empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const { data: oportunidades = [], isLoading } = useQuery({
-    queryKey: ["oportunidades", empresaAtual?.id],
+    queryKey: ["oportunidades", groupId, empresaAtual?.id, estaNoGrupo ? 'grupo' : 'empresa'],
     queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),
     enabled: contextoPronto,
   });

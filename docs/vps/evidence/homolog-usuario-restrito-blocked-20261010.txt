@@ -1,0 +1,12 @@
+# Homolog usuário restrito — tip implantado 00edfb2b / lote ID técnico
+# utc=2026-10-10
+#
+# Estado: BLOCKED
+# Motivo: Environment só injeta ERP_DEV_LOGIN_EMAIL / ERP_DEV_LOGIN_PASSWORD (owner).
+#         Não há ERP_DEV_LOGIN_RESTRICTED_* (ou equivalente) para prova fail-closed RBAC.
+# auth.users count (VPS, sanitizado): 2 — sem credencial tipada do segundo perfil no agente.
+#
+# Não usar sessão inject como substituto do login tipado restrito.
+# Pedido: secret restrito no Environment Cursor para homolog no tip implantado.
+#
+# Owner homolog tip 00edfb2b: fail_count=0 (evidência deploy-261-tip-00edfb2b-integrado-20261010.txt)

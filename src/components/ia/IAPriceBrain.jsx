@@ -137,7 +137,7 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
   };
 
   if (!produto) {
-    return <div className="p-4 text-slate-500">Selecione um produto para anÃ¡lise</div>;
+    return <div className="p-4 text-slate-500">Selecione um produto para análise</div>;
   }
 
   const margemAtual = produto.custo_medio > 0 
@@ -151,19 +151,19 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Brain className="w-5 h-5 text-purple-500" />
-            AnÃ¡lise Inteligente de PreÃ§o
+            Análise Inteligente de Preço
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs text-slate-600">Custo MÃ©dio</Label>
+              <Label className="text-xs text-slate-600">Custo Médio</Label>
               <p className="text-lg font-bold text-slate-900">
                 R$ {produto.custo_medio?.toFixed(2) || '0.00'}
               </p>
             </div>
             <div>
-              <Label className="text-xs text-slate-600">PreÃ§o Atual</Label>
+              <Label className="text-xs text-slate-600">Preço Atual</Label>
               <p className="text-lg font-bold text-blue-600">
                 R$ {produto.preco_venda?.toFixed(2) || '0.00'}
               </p>
@@ -180,9 +180,9 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-red-900">Margem Abaixo do MÃ­nimo</p>
+                <p className="text-sm font-semibold text-red-900">Margem Abaixo do Mínimo</p>
                 <p className="text-xs text-red-700">
-                  Margem mÃ­nima configurada: {produto.margem_minima_percentual}%
+                  Margem mínima configurada: {produto.margem_minima_percentual}%
                 </p>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
             ) : (
               <>
                 <Brain className="w-4 h-4 mr-2" />
-                Analisar PreÃ§o com IA
+                Analisar Preço com IA
               </>
             )}
           </Button>
@@ -213,18 +213,18 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
               
               <div className="grid grid-cols-3 gap-3">
                 <div className="border rounded-lg p-3 cursor-pointer hover:bg-slate-50" onClick={() => aplicarSugestao(sugestoes.preco_sugerido_minimo)}>
-                  <Label className="text-xs text-slate-600">PreÃ§o MÃ­nimo</Label>
+                  <Label className="text-xs text-slate-600">Preço Mínimo</Label>
                   <p className="text-lg font-bold text-orange-600">R$ {sugestoes.preco_sugerido_minimo?.toFixed(2)}</p>
                 </div>
                 
                 <div className="border rounded-lg p-3 cursor-pointer hover:bg-slate-50 bg-blue-50" onClick={() => aplicarSugestao(sugestoes.preco_sugerido_ideal)}>
-                  <Label className="text-xs text-slate-600">PreÃ§o Ideal</Label>
+                  <Label className="text-xs text-slate-600">Preço Ideal</Label>
                   <p className="text-lg font-bold text-blue-600">R$ {sugestoes.preco_sugerido_ideal?.toFixed(2)}</p>
                   <Badge className="mt-1 bg-blue-600">Recomendado</Badge>
                 </div>
                 
                 <div className="border rounded-lg p-3 cursor-pointer hover:bg-slate-50" onClick={() => aplicarSugestao(sugestoes.preco_sugerido_competitivo)}>
-                  <Label className="text-xs text-slate-600">PreÃ§o Competitivo</Label>
+                  <Label className="text-xs text-slate-600">Preço Competitivo</Label>
                   <p className="text-lg font-bold text-green-600">R$ {sugestoes.preco_sugerido_competitivo?.toFixed(2)}</p>
                 </div>
               </div>

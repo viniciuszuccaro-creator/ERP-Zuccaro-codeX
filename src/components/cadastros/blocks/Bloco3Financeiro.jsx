@@ -7,11 +7,12 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import BancoForm from "@/components/cadastros/BancoForm";
-import FormaPagamentoFormCompleto from "@/components/cadastros/FormaPagamentoFormCompleto";
+import FormaPagamentoForm from "@/components/cadastros/FormaPagamentoForm";
 import ConfiguracaoDespesaRecorrenteForm from "@/components/cadastros/ConfiguracaoDespesaRecorrenteForm";
 import TabelaFiscalForm from "@/components/cadastros/TabelaFiscalForm";
 import CondicaoComercialForm from "@/components/cadastros/CondicaoComercialForm";
@@ -99,26 +100,34 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(
-      VisualizadorUniversalEntidadeV24,
-      { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
-      { title: titulo, width: 1400, height: 800 }
-    );
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   const tiles = [
-    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
-    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
-    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['nome','nome_conta','codigo','codigo_conta','tipo_conta'], f: PlanoContasForm },
+    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['codigo','nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
+    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['codigo','nome','tipo','descricao','ativo'],                        f: FormaPagamentoForm },
+    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['codigo','nome','nome_conta','codigo_conta','tipo_conta'], f: PlanoContasForm },
     // codigo/descricao/tipo: auxiliares usam descricao como rótulo (nome pode vir vazio)
     { k: 'CentroCusto',                   t: 'Centros de Custo',        i: Layers,       c: ['codigo','descricao','tipo','nome'],                       f: CentroCustoForm },
-    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['nome','codigo','descricao'],                              f: CentroResultadoForm },
-    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['nome','codigo','categoria'],                              f: TipoDespesaForm },
-    { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['nome','tipo','sigla','codigo'],                           f: MoedaIndiceForm },
-    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],            f: OperadorCaixaForm },
-    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
-    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
-    { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['nome','nome_condicao','forma_pagamento','ativo'],         f: CondicaoComercialForm },
+    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['codigo','nome','descricao'],                              f: CentroResultadoForm },
+    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['codigo','nome','categoria'],                              f: TipoDespesaForm },
+    { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['id','codigo','nome','tipo','cotacao_atual','ativo'],            f: MoedaIndiceForm },
+    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['id','codigo_operador','nome','nome_caixa','ativo'],            f: OperadorCaixaForm },
+    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['id','nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
+    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['id','nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
+    { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['id','nome','nome_condicao','forma_pagamento','ativo'],    f: CondicaoComercialForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 
@@ -143,10 +152,10 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
-        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b rounded-t-sm">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-sky-100 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-emerald-700" /> Financeiro & Fiscal
+              <Landmark className="w-5 h-5 text-sky-700" /> Financeiro & Fiscal
             </CardTitle>
           </div>
         </CardHeader>
@@ -167,15 +176,15 @@ export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = ""
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                <div className="p-1.5 rounded-sm bg-emerald-50 group-hover:bg-emerald-100 transition-colors">
-                  <Icon className="w-4 h-4 text-emerald-600" />
+                <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                  <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {t}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+                className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
                 disabled={!contextoValido || !canViewEntity(k)}
                 data-permission={`Cadastros.${k}.visualizar`}

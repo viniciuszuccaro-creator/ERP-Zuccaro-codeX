@@ -1,0 +1,26 @@
+# Legado — consumidor Cursor × extração Codex (#211)
+# 2026-10-09T19:40Z · tip workspace pós-#259
+
+## Escopo Cursor
+- Consumidor de lotes em staging privado (já existente)
+- Testes: `tests/legado-consumir-lote-staging.test.js` → **4/4 PASS**
+- Sem duplicar extração/ETL Codex Legado
+- Sem promoção authorized=0 → ops
+
+## Dependências / reconciliação
+| Item | Estado |
+|---|---|
+| staging authorized | 0 (não importar) |
+| quarentena / reuso / rejeição | coberto nos testes |
+| PostgreSQL isolado ensaio | pendente Codex |
+| Produtos/Clientes/Fornecedores reais | origem ERP antigo via #211 |
+| auxiliares ERP novo | preservar (Marca/Setor/Grupo/UM com codigo 038) |
+| Fornecedor ops | schema ausente — não seed |
+
+## Fase
+| Fase | Estado |
+|---|---|
+| implementado consumidor | sim (existente) |
+| reconciliado testes | sim |
+| importado | **NÃO** |
+| ≠ | extração Codex Legado |

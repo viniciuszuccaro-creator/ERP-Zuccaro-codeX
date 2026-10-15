@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 
 /**
  * WINDOW MANAGER V21.0
@@ -19,10 +19,16 @@ export const useWindowManager = () => {
 export function WindowProvider({ children }) {
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
+  /** Registro síncrono uniqueKey→windowId (evita race Card+Abrir antes do setState). */
+  const uniqueKeyRegistryRef = useRef(new Map());
 
   // Fechar janela
   const closeWindow = useCallback((windowId) => {
-    setWindows(prev => prev.filter(w => w.id !== windowId));
+    setWindows(prev => {
+      const closing = prev.find(w => w.id === windowId);
+      if (closing?.uniqueKey) uniqueKeyRegistryRef.current.delete(closing.uniqueKey);
+      return prev.filter(w => w.id !== windowId);
+    });
     if (activeWindowId === windowId) {
       setActiveWindowId(windows[windows.length - 2]?.id || null);
     }
@@ -63,17 +69,38 @@ export function WindowProvider({ children }) {
 
   // Abrir nova janela - V21.7 CORREÇÃO ESTADO UNIFICADO
   const openWindow = useCallback((component, props = {}, options = {}) => {
+    const uniqueKey = options.uniqueKey ? String(options.uniqueKey) : '';
+
+    // Guard síncrono: segundo clique (Card+Abrir / duplo) reutiliza a mesma janela
+    if (uniqueKey && uniqueKeyRegistryRef.current.has(uniqueKey)) {
+      const existingId = uniqueKeyRegistryRef.current.get(uniqueKey);
+      setActiveWindowId(existingId);
+      setWindows(prevWindows => {
+        const janelaExistente = prevWindows.find(w => w.id === existingId || w.uniqueKey === uniqueKey);
+        if (!janelaExistente) return prevWindows;
+        const maxZ = Math.max(...prevWindows.map(w => w.zIndex), 99999000);
+        return prevWindows.map(w =>
+          w.id === janelaExistente.id
+            ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
+            : w
+        );
+      });
+      return existingId;
+    }
+
     const windowId = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+    if (uniqueKey) uniqueKeyRegistryRef.current.set(uniqueKey, windowId);
+
     setWindows(prevWindows => {
-      // 1. Verificar uniqueKey para evitar duplicação
-      if (options.uniqueKey) {
-        const janelaExistente = prevWindows.find(w => w.uniqueKey === options.uniqueKey);
+      // 1. Verificar uniqueKey no estado (rede de segurança)
+      if (uniqueKey) {
+        const janelaExistente = prevWindows.find(w => w.uniqueKey === uniqueKey);
         if (janelaExistente) {
+          uniqueKeyRegistryRef.current.set(uniqueKey, janelaExistente.id);
           setActiveWindowId(janelaExistente.id);
           const maxZ = Math.max(...prevWindows.map(w => w.zIndex), 99999000);
-          return prevWindows.map(w => 
-            w.id === janelaExistente.id 
+          return prevWindows.map(w =>
+            w.id === janelaExistente.id
               ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
               : w
           );
@@ -89,7 +116,7 @@ export function WindowProvider({ children }) {
       const offsetBase = prevWindows.length * 40;
       const maxOffset = 400;
       const cascade = offsetBase % maxOffset;
-      
+
       const newWindow = {
         id: windowId,
         component,
@@ -102,13 +129,13 @@ export function WindowProvider({ children }) {
         x: options.x !== undefined ? options.x : 100 + cascade,
         y: options.y !== undefined ? options.y : 80 + cascade,
         zIndex: finalZ,
-        uniqueKey: options.uniqueKey
+        uniqueKey: uniqueKey || undefined,
       };
 
       setActiveWindowId(windowId);
       return [...prevWindows, newWindow];
     });
-    
+
     return windowId;
   }, []);
 

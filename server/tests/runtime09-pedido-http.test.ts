@@ -48,9 +48,11 @@ function fixture() {
   const produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   const unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
   const condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };
-  const prices = { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: '99999999-9999-4999-8999-999999999999' }) };
-  Object.assign(pedidoRefs, { clientes, produtos, unidades, condicoes, locais: { get: async () => null }, obras: { get: async () => null }, tabelas: { get: async () => null }, prices });
-  Object.assign(orcamentoRefs, { clientes, produtos, unidades, condicoes, prices });
+  const tabelaPrecoId = '99999999-9999-4999-8999-999999999999';
+  const prices = { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: tabelaPrecoId }) };
+  const tabelas = { get: async (_scope: unknown, id: string) => (id === tabelaPrecoId ? { id: tabelaPrecoId, ativo: true } : null) };
+  Object.assign(pedidoRefs, { clientes, produtos, unidades, condicoes, locais: { get: async () => null }, obras: { get: async () => null }, tabelas, prices });
+  Object.assign(orcamentoRefs, { clientes, produtos, unidades, condicoes, tabelas, prices });
   return runtime;
 }
 function headers(overrides: Record<string, string> = {}) { return { 'content-type': 'application/json', 'x-group-id': groupId, 'x-empresa-id': empresaId, 'x-actor-id': actorId, ...overrides }; }

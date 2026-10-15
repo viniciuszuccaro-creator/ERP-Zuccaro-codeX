@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Landmark, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, windowMode = false }) {
+export default function ParametroConciliacaoBancariaForm({ parametro, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
+  const registro = item || data || initialData || defaultValues || parametro;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || parametro?.group_id || null;
-  const contextoValido = Boolean(groupId || empresaAtual?.id || parametro?.empresa_id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
+  const contextoValido = Boolean(groupId || empresaAtual?.id || registro?.empresa_id);
   const podeCriar = canCreate("Cadastros", "ParametroConciliacaoBancaria") || canCreate("Financeiro", "ConciliacaoBancaria") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroConciliacaoBancaria") || canEdit("Financeiro", "ConciliacaoBancaria") || canEdit("Cadastros", null);
-  const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const podeSalvar = registro?.id ? podeEditar : podeCriar;
+  const [formData, setFormData] = useState(registro || {
     tipo_lancamento: "Ambos",
     usar_nsu: true,
     usar_historico: true,
@@ -28,6 +30,15 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
     conciliacao_automatica_ativa: false,
     ativo: true
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -59,6 +70,13 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <CadastroCodigoRegistroField
+              idOnly
+              hasId={Boolean(registro?.id)}
+              entityId={registro?.id}
+              action="id-tecnico-parametro-conciliacao-bancaria"
+            />
+
             <div>
               <Label>Tipo de Lançamento</Label>
               <Select value={formData.tipo_lancamento} onValueChange={(val) => setFormData({ ...formData, tipo_lancamento: val })} disabled={!podeSalvar}>

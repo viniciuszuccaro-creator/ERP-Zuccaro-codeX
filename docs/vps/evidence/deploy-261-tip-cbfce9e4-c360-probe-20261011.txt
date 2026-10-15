@@ -1,0 +1,18 @@
+# Evidência sanitizada — tip cbfce9e4 implantado+homolog
+# utc=2026-10-11T11:53Z
+#
+# tip=cbfce9e4 feat(c360): Abrir cadastro canônico e probe API/DB no contexto
+# inclui tip 92239ff4 idOnly Empresa/Grupo/CentroOperacao/TabelaPreco
+# asset=index-CVJVqGZW.js
+# rollback=pre-spa-login-20261011-115310
+# MERGE_SHA8=cbfce9e4 · STAMP=20261011-115310
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=HEAD@cbfce9e4
+#
+# CI tip cbfce9e4: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-cbfce9e4.json
+# probe API/DB: docs/vps/evidence/probe-registros-contexto-api-db-20261011.txt
+#
+# Tip pendente CI/redeploy: 47e2660d (idOnly Bloco3–6)
+# #279 Codex: sem porte Auth
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

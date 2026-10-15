@@ -11,7 +11,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { Plus, Edit, Trash2, CreditCard, DollarSign, Zap, CheckCircle2, XCircle, ArrowUpDown, TrendingUp, AlertTriangle, BarChart3, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import FormaPagamentoFormCompleto from './FormaPagamentoFormCompleto';
+import FormaPagamentoForm from './FormaPagamentoForm';
 import GestorGatewaysPagamento from './GestorGatewaysPagamento';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,7 +53,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
-      if (!podeExcluir) throw new Error('Sem permissÃ£o para excluir.');
+      if (!podeExcluir) throw new Error('Sem permissão para excluir.');
       return deleteInContext('FormaPagamento', id);
     },
     onSuccess: () => {
@@ -64,7 +64,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
 
   const toggleAtivaMutation = useMutation({
     mutationFn: ({ id, ativa }) => {
-      if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissÃ£o para alterar status.');
+      if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissão para alterar status.');
       return updateInContext('FormaPagamento', id, { ativa });
     },
     onSuccess: () => {
@@ -83,11 +83,11 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     .sort((a, b) => (a.ordem_exibicao || 0) - (b.ordem_exibicao || 0));
 
   const handleNova = () => {
-    openWindow(FormaPagamentoFormCompleto, {
+    openWindow(FormaPagamentoForm, {
       windowMode: true,
       onSubmit: async (data) => {
         try {
-          if (!contextoValido || !podeCriar) throw new Error('Sem contexto ou permissÃ£o para criar.');
+          if (!contextoValido || !podeCriar) throw new Error('Sem contexto ou permissão para criar.');
           await createInContext('FormaPagamento', data);
           queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
           toast.success('✅ Forma criada!');
@@ -98,17 +98,20 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     }, {
       title: '🏦 Nova Forma de Pagamento',
       width: 900,
-      height: 700
+      height: 700,
+      uniqueKey: 'Cadastros.FormaPagamento.gestor-novo',
     });
   };
 
   const handleEditar = (forma) => {
-    openWindow(FormaPagamentoFormCompleto, {
+    openWindow(FormaPagamentoForm, {
       formaPagamento: forma,
+      item: forma,
+      initialData: forma,
       windowMode: true,
       onSubmit: async (data) => {
         try {
-          if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissÃ£o para editar.');
+          if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissão para editar.');
           await updateInContext('FormaPagamento', forma.id, data);
           queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
           toast.success('✅ Forma atualizada!');
@@ -119,7 +122,8 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     }, {
       title: `✏️ Editar: ${forma.descricao}`,
       width: 900,
-      height: 700
+      height: 700,
+      uniqueKey: `Cadastros.FormaPagamento.gestor-${forma.id}`,
     });
   };
 
@@ -179,7 +183,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
           <h2 className="text-2xl font-bold text-slate-900">Formas de Pagamento</h2>
           <p className="text-sm text-slate-600">Configuração centralizada de métodos de pagamento</p>
         </div>
-        <Button onClick={handleNova} disabled={!contextoValido || !podeCriar} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleNova} disabled={!contextoValido || !podeCriar} className="bg-sky-600 hover:bg-sky-700">
           <Plus className="w-4 h-4 mr-2" />
           Nova Forma
         </Button>
@@ -214,9 +218,9 @@ export default function GestorFormasPagamento({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">PDV</p>
-                <p className="text-2xl font-bold text-purple-600">{formasPagamento.filter(f => f.disponivel_pdv).length}</p>
+                <p className="text-2xl font-bold text-sky-600">{formasPagamento.filter(f => f.disponivel_pdv).length}</p>
               </div>
-              <DollarSign className="w-8 h-8 text-purple-600 opacity-20" />
+              <DollarSign className="w-8 h-8 text-sky-600 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -318,7 +322,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
                   </TableCell>
                   <TableCell>
                     {forma.permite_parcelamento ? (
-                      <Badge className="bg-purple-100 text-purple-700">
+                      <Badge className="bg-sky-100 text-sky-700">
                         Até {forma.maximo_parcelas}x
                       </Badge>
                     ) : (
@@ -419,7 +423,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
             <Card>
               <CardHeader className="bg-slate-50 border-b">
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                  <BarChart3 className="w-5 h-5 text-sky-600" />
                   Distribuição de Uso
                 </CardTitle>
               </CardHeader>
@@ -503,7 +507,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
                 </Alert>
               )}
               {formasPagamento.filter(f => f.disponivel_ecommerce && !f.gerar_cobranca_online).length > 0 && (
-                <Alert className="border-purple-300 bg-purple-50">
+                <Alert className="border-sky-300 bg-sky-50">
                   <AlertDescription className="text-sm">
                     <strong>🚀 Melhoria:</strong> Formas disponíveis no e-commerce sem cobrança online. Configure gateways de pagamento.
                   </AlertDescription>
@@ -560,9 +564,9 @@ export default function GestorFormasPagamento({ windowMode = false }) {
           </Card>
 
           {/* GUIA DE INTEGRAÇÃO */}
-          <Card className="border-purple-200">
-            <CardHeader className="bg-purple-50 border-b">
-              <CardTitle className="text-purple-900">Guia de Configuração</CardTitle>
+          <Card className="border-sky-200">
+            <CardHeader className="bg-sky-50 border-b">
+              <CardTitle className="text-sky-900">Guia de Configuração</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
               <div className="space-y-3">
@@ -574,7 +578,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
                   <p className="font-semibold text-sm mb-1">2️⃣ Boleto</p>
                   <p className="text-xs text-slate-600">Configure um banco com suporte a Boleto e vincule à forma de pagamento</p>
                 </div>
-                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="p-3 bg-sky-50 rounded-lg border border-sky-200">
                   <p className="font-semibold text-sm mb-1">3️⃣ Cartão</p>
                   <p className="text-xs text-slate-600">Configure gateway de pagamento para processar cartões de crédito/débito</p>
                 </div>

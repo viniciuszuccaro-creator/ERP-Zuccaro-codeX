@@ -215,7 +215,7 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
           ) : (
             <div className="space-y-3">
               {etapas.map((etapa) => (
-                <div key={etapa.id} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
+                <div key={etapa.id} className="p-4 bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg border-2 border-blue-200">
                   <div className="flex items-start justify-between mb-3 gap-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -231,7 +231,7 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     <div className="bg-white p-2 rounded border text-center"><p className="text-xs text-slate-600">Itens</p><p className="text-lg font-bold text-blue-600">{etapa.quantidade_total_itens}</p></div>
-                    <div className="bg-white p-2 rounded border text-center"><p className="text-xs text-slate-600">Peso (kg)</p><p className="text-lg font-bold text-purple-600">{etapa.peso_total_etapa_kg?.toFixed(2) || "0.00"}</p></div>
+                    <div className="bg-white p-2 rounded border text-center"><p className="text-xs text-slate-600">Peso (kg)</p><p className="text-lg font-bold text-sky-600">{etapa.peso_total_etapa_kg?.toFixed(2) || "0.00"}</p></div>
                     <div className="bg-white p-2 rounded border text-center"><p className="text-xs text-slate-600">Valor</p><p className="text-lg font-bold text-green-600">R$ {(etapa.valor_total_etapa || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                     <div className="bg-white p-2 rounded border text-center"><p className="text-xs text-slate-600">Previsao</p><p className="text-sm font-semibold text-slate-700">{etapa.data_prevista_entrega ? new Date(etapa.data_prevista_entrega).toLocaleDateString("pt-BR") : "-"}</p></div>
                   </div>

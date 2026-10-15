@@ -113,7 +113,7 @@ export function createApp(options: CreateAppOptions) {
   const orcamentoRepo = useMemory ? new InMemoryOrcamentoRepository() : new PostgresOrcamentoRepository(db);
   const pedidoRepo = useMemory ? new InMemoryPedidoRepository() : new PostgresPedidoRepository(db);
 
-  const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard);
+  const marcaService = new MarcaService(marcaRepo, auditRepo, tenantGuard, rbacGuard);
   const unidadeService = new TenantCrudService(unidadeRepo, auditRepo, tenantGuard, {
     entityName: 'UnidadeMedida',
     notFoundCode: 'UNIDADE_NOT_FOUND',
@@ -173,6 +173,7 @@ export function createApp(options: CreateAppOptions) {
     tabelaPrecoService,
     costPort,
     alcadaConfig,
+    tabelaPrecoRepo,
   );
   const pedidoService = new PedidoService(
     pedidoRepo, orcamentoRepo, auditRepo, tenantGuard, rbacGuard, clienteRepo, produtoRepo,

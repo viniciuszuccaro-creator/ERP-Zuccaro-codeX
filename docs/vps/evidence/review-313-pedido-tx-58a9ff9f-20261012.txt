@@ -1,0 +1,24 @@
+# Revisão #313 — tip 58a9ff9f (Comercial 360 Pedido TX)
+# utc=2026-10-12T12:45Z
+# base=codex/legado-reconciliacao-imutavel-20261011
+# CI=SUCCESS · porte=#261 NÃO (stack Legado/Pedido/CRM reserved)
+#
+# Achados (pedidoService.ts):
+# 1) prepare(ctx,action,executor) revalida tenant+RBAC dentro da TX (criar/editar/status/cancelar/converter)
+# 2) ctx congelado (Object.freeze) antes da espera — ator/grupo não seguem mutação do chamador
+# 3) set_config app.group_id/empresa_id no executor (RLS na sessão PG)
+# 4) convert aceita sharedExecutor (composição atômica) + idempotência 23505 constraint pedidos_empresa_id_orcamento_id_key
+# 5) assertDescontoAlcada / assertMargemAlcada / resolveCriadorActorId / getForOperation passam executor
+# 6) testes: revoke mid-TX sem efeitos colaterais; captura tenant/ator pré-espera; histórico FINALIZADO preservado
+#
+# Riscos Regra-Mãe:
+# - base Legado — merge/porte para #261 sem coordenação quebraria divisão Cursor/Codex
+# - mutações convert/cancel em erp-dev tip #261 ainda no runtime pré-#313
+#
+# Homolog integrada (owner, read-only, tip implantado 5b251b1c):
+# - login+tenant · list clientes/orcamentos/pedidos · historico pedido · troca empresa list
+# - report=/opt/cursor/artifacts/homolog-owner-cpa-list-20261012.json fail_count=0
+# - mutações convert/cancel: aguardar merge/canário #313 + synth; não portar agora
+#
+# Homolog restrito: BLOCKED — Environment sem ERP_DEV_LOGIN_RESTRICTED_*
+# Intervenção mínima: cadastrar secrets + usuário RBAC limitado no erp-dev (não pedir senha no chat)

@@ -61,14 +61,14 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
   );
 
   return (
-    <Card className="border-2 border-blue-400 bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-xl transition-all duration-300">
+    <Card className="border-2 border-blue-400 bg-gradient-to-br from-blue-50 to-sky-50 hover:shadow-xl transition-all duration-300">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Zap className="w-5 h-5 text-blue-600" />
             Fechamento Automático
             {estatisticasIA && (
-              <Badge className="bg-purple-600 text-white text-xs ml-1">
+              <Badge className="bg-sky-600 text-white text-xs ml-1">
                 <Sparkles className="w-3 h-3 mr-1" />
                 IA
               </Badge>
@@ -102,29 +102,29 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
             <p className="text-xs text-slate-600">Prontos</p>
           </div>
           <div className="bg-white/80 p-3 rounded-lg border text-center">
-            <p className="text-xl font-bold text-purple-600">~10s</p>
+            <p className="text-xl font-bold text-sky-600">~10s</p>
             <p className="text-xs text-slate-600">Tempo</p>
           </div>
         </div>
 
         {/* V21.6 FINAL: IA Analytics Mini */}
         {estatisticasIA && (
-          <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+          <div className="bg-sky-50 rounded-lg p-3 border border-sky-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-purple-700 flex items-center gap-1 font-semibold">
+              <span className="text-xs text-sky-700 flex items-center gap-1 font-semibold">
                 <Activity className="w-3 h-3" />
                 Analytics IA
               </span>
-              <Badge className="bg-purple-600 text-white text-xs px-2">
+              <Badge className="bg-sky-600 text-white text-xs px-2">
                 {estatisticasIA.diasAnalise}d
               </Badge>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center bg-white/50 rounded p-2">
-                <div className="text-lg font-bold text-purple-600">
+                <div className="text-lg font-bold text-sky-600">
                   {estatisticasIA.totalPedidos}
                 </div>
-                <div className="text-xs text-purple-700">Total</div>
+                <div className="text-xs text-sky-700">Total</div>
               </div>
               <div className="text-center bg-white/50 rounded p-2">
                 <div className="text-lg font-bold text-green-600">
@@ -153,7 +153,7 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
               height: 700
             }
           )}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          className="w-full bg-blue-600 hover:bg-blue-700"
           size="sm"
         >
           Ver Dashboard Completo

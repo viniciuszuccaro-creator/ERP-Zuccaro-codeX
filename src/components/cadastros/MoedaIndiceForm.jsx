@@ -7,9 +7,10 @@ import { Switch } from '@/components/ui/switch';
 import { TrendingUp } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
 
-export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, windowMode = false }) {
-  const dadosIniciais = item || data || moedaIndice || moeda;
+export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || moedaIndice || moeda;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -62,6 +63,12 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-moeda-indice"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Código *</Label>

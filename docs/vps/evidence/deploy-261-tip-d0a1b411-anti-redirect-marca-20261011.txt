@@ -1,0 +1,22 @@
+# Evidência sanitizada — tip d0a1b411 implantado
+# utc=2026-10-11T10:09Z
+#
+# tip=d0a1b411 docs: #278 tip b398202b anti-redirect absorvido em #261
+# inclui tip 5fac2412 fix(marca): bloqueia redirect empresarial no payload (#278)
+# asset=index-Bm9XJE42.js (SPA inalterado — mudança API/serviço)
+# rollback=pre-spa-login-20261011-100903
+# MERGE_SHA8=d0a1b411 · STAMP=20261011-100903
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip d0a1b411 / ancestral 5fac2412: SUCCESS (frontend+backend)
+# Homolog OWNER tipado fail_count=0
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-d0a1b411.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-d0a1b411.json
+#   passos: spa_load · login tipado · cadastros · clientes · abrir/salvar/reabrir · launchpads Comercial/Financeiro/Fiscal
+#
+# VPS: HEAD=/opt/erp-zuccaro @ d0a1b411 · asset index-Bm9XJE42.js
+# API marker: assertTargetScope count=3 em /app/dist/services/marcaService.js
+# imagens rollback: erp-*-pre-spa-login-20261011-100903 · api latest 2026-10-11T10:09Z
+# Bundle SPA markers herdados tip 164e6852: id-tecnico-colaborador · id-tecnico-contato-b2b · codigo-registro-representante
+# #278 Codex tip b398202b: anti-redirect absorvido; stack Auth #277 NÃO mesclada
+# Usuário restrito: BLOCKED · Recuperado: NÃO

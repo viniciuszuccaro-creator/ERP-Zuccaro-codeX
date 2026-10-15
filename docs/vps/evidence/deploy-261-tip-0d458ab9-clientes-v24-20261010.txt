@@ -1,0 +1,25 @@
+# Evidência sanitizada — tip 0d458ab9 implantado (#261)
+# utc=2026-10-10T13:31Z
+#
+# tip=0d458ab9 fix(cadastros): grade Clientes API×UI + V23→V24 canônico
+# asset=index-CEQLA0kg.js
+# backup=pre-gate-e-20261010-133102.sql sha256=19bf0e0e0e11405f37c16cca212e313e0e9e78c6541544ed370422d1ebd2285a
+# rollback=pre-spa-login-20261010-133103
+# script=spa-login-rebuild-api-web.sh CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# API×DB×UI (Grupo CPA consolidado):
+#   DB clientes ativos CPA=5 · API n=5 · UI V24 rows=5 · badge=5 · mismatch=false
+#   causa residual anterior: clique no KPI "Clientes" ≠ LaunchpadCard data-action
+#
+# Homolog tipado (este SHA):
+#   login · Cadastros · Clientes launchpad V24 · abrir · reabrir · trocar Grupo · launchpads PASS
+#   residual: campo_preenchido/salvar (form self-managed — botão Salvar não no 1º viewport headless)
+#
+# Probe: api_n=5 ui_rows=5 abrir=PASS reabrir=PASS
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-0d458ab9.png
+#   /opt/cursor/artifacts/screenshots/pw-probe-clientes-0d458ab9.png
+#
+# V23→V24 redirect: ProdutosTab · FornecedoresTab · ColaboradoresTab · RH window
+# Hardening: Cliente ativoKeys sem status; filter sempre array
+# Recuperado: NÃO legado (#211) · SYNTH≠recuperado

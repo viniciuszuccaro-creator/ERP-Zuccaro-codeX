@@ -1,0 +1,19 @@
+# Evidência sanitizada — tip 27224f87 implantado+homolog
+# utc=2026-10-11T12:28Z
+#
+# tip=27224f87 (HEAD) inclui código b3aca689:
+#   EmpresaForm fiscal/webhooks/status/delete · Completo adapter · empresaFormShared
+#   Bloco1/2/3 + V24/Tab/Gestor/Ações → adapters
+# asset=index-CaMsSipy.js
+# rollback=pre-spa-login-20261011-122739
+# MERGE_SHA8=27224f87 · STAMP=20261011-122739
+#
+# CI tip: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-27224f87.json
+#
+# Revisão Codex timer 12:15Z:
+#   #280 tip 612c2055 — sem porte Marca
+#   #281 tip 2e8ef5bd — sem porte Legado
+#   #282 tip d972179a — sem porte Legado (RUNNING)
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

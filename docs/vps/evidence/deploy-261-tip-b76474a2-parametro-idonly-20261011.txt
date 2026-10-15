@@ -1,0 +1,18 @@
+# Evidência sanitizada — tip b76474a2 implantado+homolog
+# utc=2026-10-11T21:24Z
+#
+# tip=b76474a2 inclui acb29887:
+#   idOnly Parametro* + Config boletos/WhatsApp/integração
+#   + consolidação Empresas/adapters (ancestral e6379a4a)
+# asset=index-QS44q1wq.js
+# rollback=pre-spa-login-20261011-212411
+# MERGE_SHA8=b76474a2 · STAMP=20261011-212411
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip: SUCCESS
+# SPA markers: selecionar-tipo-empresa · id-tecnico-configuracao-boletos · id-tecnico-configuracao-whatsapp
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-b76474a2.json
+#
+# Revisão Codex timer 21:15Z: #280–#292 tips inalterados · sem porte · RUNNING nenhum
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

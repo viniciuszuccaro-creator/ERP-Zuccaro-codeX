@@ -1,0 +1,20 @@
+# Evidência sanitizada — tip 12fb882a implantado+homolog
+# utc=2026-10-12T10:35Z
+#
+# tip=12fb882a inclui:
+#   wire Etapa/Comissão/NF · CalcularComissoes multiempresa · Servico/Kit/Catalogo reopen
+#   ancestral cbd3624f Produto→V22/Fiscal/Comissão/etapa/NF
+# asset=index-1K-l5H8H.js
+# rollback=pre-spa-login-20261012-103423
+# MERGE_SHA8=12fb882a · STAMP=20261012-103423
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-12fb882a.json
+#
+# Revisão Codex timer 10:30Z:
+#   #280–#312 tips inalterados · SUCCESS · sem porte
+#   #313 NOVO tip 58a9ff9f · pedidoService TX · base Legado · sem porte
+#   #314 NOVO tip b24feee2 · Legado clientes destino · sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

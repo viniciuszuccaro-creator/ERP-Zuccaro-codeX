@@ -1,0 +1,22 @@
+# Evidência sanitizada — tip cbd3624f implantado+homolog
+# utc=2026-10-12T10:19Z
+#
+# tip=cbd3624f inclui:
+#   CriarEtapaEntregaForm RBAC/sanitize/sky
+#   NotaFiscalFormCompleto idOnly + empresa obrigatória (fail-closed)
+#   ancestral 74b266dd: ProdutoForm→V22 · CadastroFiscal/Comissão idOnly
+# asset=index-DOE6jLF_.js
+# rollback=pre-spa-login-20261012-101715
+# MERGE_SHA8=cbd3624f · STAMP=20261012-101715
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip: SUCCESS
+# VPS HEAD: cbd3624f · container erp-web-dev asset index-DOE6jLF_.js
+# SPA markers runtime: ProdutoFormV22 / selecionar-tipo-empresa presentes
+#   (ComissaoForm/CadastroFiscal/NotaFiscalFormCompleto/CriarEtapaEntregaForm
+#    ainda fora do grafo de import ativo — próximo pacote: wire runtime)
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-cbd3624f.json
+#
+# Revisão Codex timer 10:15Z: #280–#312 tips inalterados · sem porte · #312 c5e83312
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

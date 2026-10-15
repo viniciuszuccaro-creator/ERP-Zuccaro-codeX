@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { empresaPertenceAoGrupo, userTemAcessoEmpresa, userTemAcessoGrupo } from "./contextoMultiempresaPolicy";
@@ -24,6 +24,7 @@ export function useContextoGrupoEmpresa() {
   const [isLoadingContexto, setIsLoadingContexto] = useState(true);
   const [grupoAtual, setGrupoAtual] = useState(null);
   const [empresaAtual, setEmpresaAtual] = useState(null);
+  const contextLoadVersion = useRef(0);
   const queryClient = useQueryClient();
 
   const resolveSessionUser = async () => {
@@ -31,6 +32,8 @@ export function useContextoGrupoEmpresa() {
       const session = await refreshErpHttpSessionFromServer({});
       if (!session?.token) return null;
       await ensureHttpTenantLocalMirror({
+        token: session.token,
+        actorId: session.actorId,
         groupId: session.groupId,
         empresaId: session.empresaId,
         groupName: session.groupName,
@@ -45,7 +48,7 @@ export function useContextoGrupoEmpresa() {
     return await base44.auth.me();
   };
 
-  const carregarGrupoPorIdOuPadrao = async (currentUser) => {
+  const carregarGrupoPorIdOuPadrao = async (currentUser, isCurrent = () => true) => {
     const grupoId = currentUser?.grupo_atual_id || currentUser?.grupo_padrao_id || localStorage.getItem('group_atual_id');
     if (!grupoId || !userTemAcessoGrupo(currentUser, grupoId)) {
       return null;
@@ -54,6 +57,7 @@ export function useContextoGrupoEmpresa() {
     const grupos = isHttpBackendMode
       ? [{ id: grupoId, nome_do_grupo: currentUser.group_name, status: 'Ativo' }]
       : await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+    if (!isCurrent()) return null;
     if (grupos[0]) {
       setGrupoAtual(grupos[0]);
       try { localStorage.setItem('group_atual_id', grupos[0].id); } catch { /* Estado em memoria permanece valido. */ }
@@ -67,14 +71,21 @@ export function useContextoGrupoEmpresa() {
     carregarContextoInicial();
     if (isHttpBackendMode) {
       window.addEventListener(HTTP_CONTEXT_CHANGED, carregarContextoInicial);
-      return () => window.removeEventListener(HTTP_CONTEXT_CHANGED, carregarContextoInicial);
+      return () => {
+        contextLoadVersion.current += 1;
+        window.removeEventListener(HTTP_CONTEXT_CHANGED, carregarContextoInicial);
+      };
     }
+    return () => { contextLoadVersion.current += 1; };
   }, []);
 
   const carregarContextoInicial = async () => {
+    const version = ++contextLoadVersion.current;
+    const isCurrent = () => version === contextLoadVersion.current;
     setIsLoadingContexto(true);
     try {
       const currentUser = await resolveSessionUser();
+      if (!isCurrent()) return;
       if (!currentUser) {
         setUser(null);
         setGrupoAtual(null);
@@ -93,9 +104,10 @@ export function useContextoGrupoEmpresa() {
 
       if (ctx === 'grupo') {
         setEmpresaAtual(null);
-        await carregarGrupoPorIdOuPadrao(currentUser);
+        await carregarGrupoPorIdOuPadrao(currentUser, isCurrent);
       } else {
-        const grupo = await carregarGrupoPorIdOuPadrao(currentUser);
+        const grupo = await carregarGrupoPorIdOuPadrao(currentUser, isCurrent);
+        if (!isCurrent()) return;
         const groupId = grupo?.id || currentUser.grupo_atual_id || currentUser.grupo_padrao_id;
         let empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
         // HTTP: se ainda sem empresa, auto-seleciona a primeira vinculada (desbloqueia GuardRails).
@@ -110,6 +122,7 @@ export function useContextoGrupoEmpresa() {
           const empresas = isHttpBackendMode
             ? (readErpHttpSession()?.empresas || []).filter(e => e.id === empresaId)
             : await base44.entities.Empresa.filter({ id: empresaId });
+          if (!isCurrent()) return;
           const empresa = empresas[0];
           if (empresa && empresaPertenceAoGrupo(empresa, groupId) && userTemAcessoEmpresa(currentUser, empresa)) {
             setEmpresaAtual(empresa);
@@ -123,13 +136,14 @@ export function useContextoGrupoEmpresa() {
         }
       }
     } catch (error) {
+      if (!isCurrent()) return;
       console.error("Erro ao carregar contexto:", error);
       if (isRemoteApiKeyMode) {
         setUser(localApiUser);
         setContexto('empresa');
       }
     } finally {
-      setIsLoadingContexto(false);
+      if (isCurrent()) setIsLoadingContexto(false);
     }
   };
 
@@ -156,6 +170,8 @@ export function useContextoGrupoEmpresa() {
           switchErpHttpSessionEmpresa({ empresaId: null });
           const session = readErpHttpSession();
           await ensureHttpTenantLocalMirror({
+            token: session?.token,
+            actorId: session?.actorId,
             groupId: grupo.id,
             empresaId: null,
             groupName: session?.groupName || grupo.nome_do_grupo,
@@ -220,6 +236,8 @@ export function useContextoGrupoEmpresa() {
           switchErpHttpSessionEmpresa({ empresaId });
           const session = readErpHttpSession();
           await ensureHttpTenantLocalMirror({
+            token: session?.token,
+            actorId: session?.actorId,
             groupId: empresa.group_id || empresa.grupo_id || user?.grupo_atual_id,
             empresaId,
             groupName: session?.groupName,

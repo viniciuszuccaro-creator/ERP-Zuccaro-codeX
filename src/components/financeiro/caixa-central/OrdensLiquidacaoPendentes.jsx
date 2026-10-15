@@ -139,7 +139,7 @@ export default function OrdensLiquidacaoPendentes() {
 
   const cancelarOrdemMutation = useMutation({
     mutationFn: async (ordemId) => {
-      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissÃ£o para cancelar.");
+      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissão para cancelar.");
       const ordem = ordensLiquidacao.find(o => o.id === ordemId);
       await updateInContext('CaixaOrdemLiquidacao', ordemId, {
         group_id: ordem?.group_id || groupId,

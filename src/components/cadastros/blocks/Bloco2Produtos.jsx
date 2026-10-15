@@ -8,6 +8,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import VisualizadorProdutos from "@/components/cadastros/VisualizadorProdutos";
+import { openCadastroEntityWindow } from "@/components/cadastros/openCadastroWindow";
 import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
@@ -16,7 +17,7 @@ import ServicoForm from "@/components/cadastros/ServicoForm";
 import SetorAtividadeForm from "@/components/cadastros/SetorAtividadeForm";
 import GrupoProdutoForm from "@/components/cadastros/GrupoProdutoForm";
 import MarcaForm from "@/components/cadastros/MarcaForm";
-import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompleto";
+import TabelaPrecoForm from "@/components/cadastros/TabelaPrecoForm";
 import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
@@ -97,7 +98,12 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
       return;
     }
     registrarAuditoria("Produto", "Visualizacao", true, { titulo: "Todos os Produtos", modulo_permissao: "Estoque", visualizador: "VisualizadorProdutos", window_mode: true });
-    openWindow(VisualizadorProdutos, { windowMode: true }, { title: 'Todos os Produtos', width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorProdutos,
+      entityName: "Produto",
+      title: "Todos os Produtos",
+      props: { windowMode: true },
+    });
   };
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
@@ -120,7 +126,19 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
       return;
     }
     registrarAuditoria(entidade, "Visualizacao", true, { titulo, campos_principais: campos, visualizador: "VisualizadorUniversalEntidadeV24", window_mode: true });
-    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+    openCadastroEntityWindow(openWindow, {
+      component: VisualizadorUniversalEntidadeV24,
+      entityName: entidade,
+      title: titulo,
+      props: {
+        nomeEntidade: entidade,
+        tituloDisplay: titulo,
+        icone: Icon,
+        camposPrincipais: campos,
+        componenteEdicao: FormComp,
+        windowMode: true,
+      },
+    });
   };
 
   const canViewEntity = (entidade, modulo = "Cadastros") =>
@@ -132,15 +150,16 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
   // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
   const tiles = [
-    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['nome','descricao','tipo_servico','ativo'],      form: ServicoForm },
+    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['codigo','codigo_servico','nome','descricao','tipo_servico','ativo'], form: ServicoForm },
     { k: 'SetorAtividade', title: 'Setores de Atividade',    Icon: Factory,    campos: ['codigo','nome','descricao'],                    form: SetorAtividadeForm },
     // nome_grupo é o rótulo canônico nos auxiliares; nome pode estar vazio
     { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['codigo','nome_grupo','natureza','nome'],        form: GrupoProdutoForm },
-    { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['nome','nome_marca','pais_origem','categoria'],  form: MarcaForm },
-    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['nome','tipo','ativo'],                          form: TabelaPrecoFormCompleto },
-    { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['nome','descricao','ativo'],                     form: KitProdutoForm },
-    { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
-    { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['sigla','nome','descricao'],                     form: UnidadeMedidaForm },
+    { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['codigo','nome_marca','nome','pais_origem','categoria'],  form: MarcaForm },
+    // Campo canônico é codigo_tabela_legado (não codigo numérico MASTER_CODE)
+    { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['codigo_tabela_legado','nome','tipo','ativo'],               form: TabelaPrecoForm },
+    { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['codigo','codigo_kit','nome','nome_kit','descricao','ativo'], form: KitProdutoForm },
+    { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['codigo','nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
+    { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['codigo','sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
   const filteredTiles = filterTiles(tiles, searchTerm);
 
@@ -159,10 +178,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b rounded-t-sm">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-sky-100 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
+              <Package className="w-5 h-5 text-sky-700"/> Produtos & Serviços
             </CardTitle>
           </div>
         </CardHeader>
@@ -180,13 +199,13 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-              <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
-                <Package className="w-4 h-4 text-purple-600" />
+              <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                <Package className="w-4 h-4 text-sky-600" />
               </div>
               Produtos
               <CountBadgeSimplificado entities={["Produto"]} allCounts={allCounts} isLoading={isLoading} />
             </CardTitle>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
+            <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
               disabled={!contextoValido || !canViewEntity("Produto", "Estoque")}
               data-permission="Cadastros.Produto.visualizar"
@@ -208,8 +227,8 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
-                  <Icon className="w-4 h-4 text-purple-600" />
+                <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                  <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {title}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />

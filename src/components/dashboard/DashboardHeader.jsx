@@ -2,13 +2,16 @@ import React, { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "lucide-react";
+import { Calendar, LayoutDashboard } from "lucide-react";
 
 export default function DashboardHeader({ empresaAtual, estaNoGrupo, grupoAtual, autoRefresh, setAutoRefresh, periodo, setPeriodo, canSeeDashboard = true }) {
   return (
     <div className="flex justify-between items-center" data-permission="Dashboard.visualizar">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+          <LayoutDashboard className="w-8 h-8 text-blue-600" aria-hidden="true" />
+          Dashboard Executivo
+        </h1>
         <p className="text-slate-600">
           {estaNoGrupo
             ? `Visão Consolidada • ${grupoAtual?.nome_do_grupo || 'Grupo'}`

@@ -15,7 +15,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import {
   PRODUTO_TIPOS_CANONICOS,
   isProdutoMateriaPrima,
@@ -148,14 +148,14 @@ export default function ProdutosTab(props) {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="border-sky-200 bg-sky-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-purple-700 mb-1">Revenda</p>
-                <p className="text-2xl font-bold text-purple-900">{isLoadingContagens ? '...' : contagensTotais.revenda}</p>
+                <p className="text-xs text-sky-700 mb-1">Revenda</p>
+                <p className="text-2xl font-bold text-sky-900">{isLoadingContagens ? '...' : contagensTotais.revenda}</p>
               </div>
-              <ShoppingCart className="w-8 h-8 text-purple-600" />
+              <ShoppingCart className="w-8 h-8 text-sky-600" />
             </div>
           </CardContent>
         </Card>
@@ -240,7 +240,7 @@ export default function ProdutosTab(props) {
           {hasPermission('Estoque', 'Produtos', 'editar') && (
             <Button 
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-50" 
+              className="border-sky-300 text-sky-700 hover:bg-sky-50" 
               data-permission="Estoque.Produtos.editar"
               data-action="Estoque.Produtos.abrirConversaoMassa"
               data-context-required="group-or-company"
@@ -332,19 +332,16 @@ export default function ProdutosTab(props) {
         </div>
       </div>
 
-      <VisualizadorUniversalEntidade
+      <div className="w-full h-full" data-estoque-produtos-tab="v24" data-filtro-estoque-baixo={filtroEstoqueBaixo ? '1' : '0'}>
+      <VisualizadorUniversalEntidadeV24
         nomeEntidade="Produto"
         tituloDisplay="Produto"
         icone={Package}
         camposPrincipais={['codigo', 'descricao', 'tipo_item', 'unidade_medida', 'estoque_atual', 'preco_venda']}
         componenteEdicao={ProdutoFormV22_Completo}
-        queryKey={['produtos']}
-        filtroAdicional={filtroEstoqueBaixo ? (produto) => {
-          const disponivel = (produto.estoque_disponivel || 0);
-          return produto.status === 'Ativo' && disponivel <= (produto.estoque_minimo || 0);
-        } : null}
         windowMode={props.windowMode}
       />
+      </div>
     </div>
   );
 }

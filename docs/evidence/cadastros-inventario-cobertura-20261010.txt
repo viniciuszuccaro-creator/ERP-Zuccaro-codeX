@@ -1,0 +1,45 @@
+# Inventário Cadastros Gerais — cobertura código (2026-10-10)
+
+## Blocos e entidades
+
+### Bloco 1 Pessoas — MASTER_CODE codigo na grade
+Cliente, Fornecedor, Transportadora, SegmentoCliente, RegiaoAtendimento
+Colaborador: codigo_vendedor_legado (não campo codigo)
+Representante, ContatoB2B: sem MASTER_CODE codigo numérico
+
+### Bloco 2 Produtos — MASTER_CODE
+Produto (VisualizadorProdutos.camposPrincipais), Servico, SetorAtividade, GrupoProduto,
+Marca, TabelaPreco, KitProduto, CatalogoWeb, UnidadeMedida
+
+### Bloco 3 Financeiro — MASTER_CODE
+Banco, FormaPagamento, PlanoDeContas, CentroCusto, CentroResultado, TipoDespesa
+Fora MASTER_CODE codigo: MoedaIndice (tem codigo na grade), OperadorCaixa (codigo_operador),
+ConfiguracaoDespesaRecorrente, TabelaFiscal, CondicaoComercial
+
+### Bloco 4 Logística — MASTER_CODE
+Veiculo, Motorista, TipoFrete, LocalEstoque, RotaPadrao
+Fora: ModeloDocumento
+
+### Bloco 5 Organizacional
+Departamento, Cargo, Turno (MASTER_CODE)
+GrupoEmpresarial (codigo na grade; identidade grupo)
+Empresa (CNPJ/razão — não MASTER_CODE codigo sequencial)
+PerfilAcesso (sem codigo numérico cadastro geral)
+
+### Bloco 6 Tecnologia
+ApiExterna, ChatbotCanal, ChatbotIntent, GatewayPagamento, JobAgendado, Webhook,
+ConfiguracaoNFe, EventoNotificacao — **fora** MASTER_CODE field=codigo (configs/integrações).
+Não declarar lacuna de “código numérico Cadastros Gerais” nestas entidades.
+
+## Testes automatizados
+- tests/cadastros-codigo-cobertura-entidades.test.js — MASTER_CODE nas grades 1–5 + Produto
+- tests/cadastros-abrir-regressao-comportamental.test.js — uniqueKey + merge GET parcial
+
+## Ciclo Abrir/edit (browser)
+| Escopo | Abrir único | Edit/save/reopen |
+|---|---|---|
+| Grupo CPA | parcial (Fornecedor janela única PASS) | |
+| CPA Visão Individual | Marca toast contexto **BLOCKED #254** | |
+| 3Z | seletor flaky automação | |
+
+Reserva: useContextoVisual / sessão = Codex — Cursor não edita.

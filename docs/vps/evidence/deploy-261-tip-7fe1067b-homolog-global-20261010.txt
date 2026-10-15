@@ -1,0 +1,29 @@
+# Deploy #261 tip 7fe1067b — homolog global + #254 + Cadastros RBAC (2026-10-10)
+# Sanitizado — sem tokens, sem PII.
+
+| Campo | Valor |
+|---|---|
+| tip | **7fe1067b** (código `d88633bf` + docs) |
+| branch | cursor/cadastros-recuperacao-c360-contrato-392b |
+| SPA asset | /assets/index-Dys3YYYF.js |
+| health 3080/3081 | 200 / 200 |
+| backup SQL | pre-gate-e-20261010-112413.sql · 1025365 B · sha256=9dc7770bab52abc427fe4df837f359ebc3a78844a037d7096e0234858499497e |
+| rollback | pre-spa-login-20261010-112413 |
+
+## Homolog browser (API session inject)
+| Módulo | Badges Acesso negado | Resultado |
+|---|---|---|
+| Fiscal | 0 | PASS · Notas Fiscais + Nova NF-e |
+| Financeiro | 0 | PASS |
+| Comercial | 0 | PASS · hub azul |
+| Cadastros | 0 | PASS · ContatoB2B/Depto/Perfil sem badge |
+
+## Login automação
+- xdotool: FAIL (character translation) — erro concreto registrado
+- Alternativa usada: POST `/api/v1/auth/session` + localStorage `base44_access_token`/`erp_runtime_scope`
+
+## #254
+HEAD revisado `860114ca` · port seletivo · piloto HTTP entityListSorted preservado
+
+## Recuperado
+NÃO legado · SYNTH≠recuperado

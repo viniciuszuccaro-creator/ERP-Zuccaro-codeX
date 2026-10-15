@@ -1,0 +1,24 @@
+# Browser homolog Setor/UM/Grupo tip 55fcac4f (Playwright) — 2026-10-09T19:34Z
+# Asset implantado: index-DlbCJL3w.js · mig 038 · SHA VPS 55fcac4f
+
+| Check | Result | Evidence |
+|---|---|---|
+| asset | **PASS** | index-DlbCJL3w.js |
+| contexto CPA | **PASS** | EMPRESA OPERACIONAL CPA ferro e aço |
+| GrupoProduto lista | **PASS** | rows=2 · coluna Código |
+| GrupoProduto edit | **PASS** | nome=Grupo Produto API Alterado · codigo=GP-API (alfanum preservado) |
+| SetorAtividade lista | **PASS** | rows=2 · coluna Código |
+| SetorAtividade edit | **PASS** | nome=Setor API Alterado · codigo=000002 |
+| UnidadeMedida lista | **PASS** | rows=3 · coluna Código |
+| UnidadeMedida edit | **PASS** | nome=Unidade · codigo=000003 |
+| Abrir único (chrome count) | **PARTIAL** | contagem DOM inclui títulos do hub; unitário uniqueKey+registry PASS; 2º clique não duplicou janela operacional |
+| #254 switch flaky | reservado Codex | force-click sem scroll gerava toast “Selecione grupo…”; scrollIntoView + reassert CPA estabilizou |
+
+Screenshots:
+- /opt/cursor/artifacts/screenshots/pw-259-grupo-final-55fcac4f.png
+- /opt/cursor/artifacts/screenshots/pw-259-setor-final-55fcac4f.png
+- /opt/cursor/artifacts/screenshots/pw-259-um-final-55fcac4f.png
+
+Notas:
+- Ensaios GATE-D / API Alterado ≠ mestres ERP antigo; preservação IDs/refs; sem delete.
+- Contagens empresa CPA < totais grupo (esperado).

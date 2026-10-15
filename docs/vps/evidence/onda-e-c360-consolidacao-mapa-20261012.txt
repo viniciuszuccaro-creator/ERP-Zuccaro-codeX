@@ -1,0 +1,12 @@
+ONDA E — mapa consolidação Central 360 (sem editar reservados)
+UTC: 2026-10-12T13:58Z
+
+RESERVADO (Codex / #291): CentralCliente360Panel — Cursor NÃO edita.
+Entrada UI Cursor: DetalhesCliente + data-action cliente-detalhes-360 (V24) — preservada.
+
+Duplicações a coordenar (não retirar sem inventário+aprovação):
+1) HistoricoClienteTab / Top10ProdutosCliente vs painel C360 — capacidades a reunir no panel canônico.
+2) DetalhesCliente chrome vs CentralCliente360Panel — DetalhesCliente é shell; panel é fonte CRM.
+3) #317/#318 candidata serviços Pedido/Orçamento — Cursor só UI OrcamentosTab/PedidosTab.
+
+Próximo passo Onda E: após merge #318, wire UI CPA mutações; consolidar histórico só com gate Cursor explícito no panel.

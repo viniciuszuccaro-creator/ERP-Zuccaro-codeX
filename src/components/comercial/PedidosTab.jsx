@@ -70,12 +70,12 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
   const canMarcarProntoFaturar = hasPermission('Comercial', 'Pedido', 'marcarProntoFaturar') || canEditPedido;
   const canFecharPedido = hasPermission('Comercial', 'Pedido', 'fechar') || hasPermission('Comercial', 'Pedidos', 'fechar') || canEditPedido;
   const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar');
-  const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
+  const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('Expedição', 'Entrega', 'criar') || hasPermission('Expedição', null, 'criar');
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('Producao', 'OrdemProducao', 'criar') || hasPermission('Produção', 'OrdemProducao', 'criar') || hasPermission('Producao', 'Ordens Producao', 'criar') || hasPermission('Produção', 'Ordens Produção', 'criar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 
-  // persistÃªncia de sort movida para usePersistedSort
+  // persistência de sort movida para usePersistedSort
 
   const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { sortField, sortDirection, page, pageSize, limit: pageSize, campo: 'empresa_id', enabled: contextoValido && canViewPedido });
   const pedidosList = Array.isArray(pedidos) && pedidos.length ? pedidos : pedidosBackend;
@@ -114,7 +114,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     }
   };
 
-  // SeleÃ§Ã£o em massa + exportaÃ§Ã£o
+  // Seleção em massa + exportação
   const [selectedPedidos, setSelectedPedidos] = useState([]);
   const togglePedido = (id) => setSelectedPedidos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllPedidos = (checked, lista) => setSelectedPedidos(checked ? lista.map(p => p.id) : []);
@@ -354,12 +354,12 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     return matchStatus && matchSearch && matchEmpresa;
   });
 
-  // ETAPA 4: EstatÃ­sticas de aprovaÃ§Ã£o
+  // ETAPA 4: Estatísticas de aprovação
   const pedidosPendentesAprovacao = pedidosList.filter(p => p.status_aprovacao === "pendente");
   const pedidosAprovados = pedidosList.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidosList.filter(p => p.status_aprovacao === "negado");
 
-  // SeleÃ§Ã£o padronizada (todos os registros visÃ­veis)
+  // Seleção padronizada (todos os registros visíveis)
   const allSelected = React.useMemo(() => selectedPedidos.length === filteredPedidos.length && filteredPedidos.length > 0, [selectedPedidos, filteredPedidos]);
   const onToggleSelectAll = () => {
     if (!allSelected) setSelectedPedidos(filteredPedidos.map(p => p.id));
@@ -381,7 +381,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     }
     try {
       await base44.functions.invoke('whatsappSend', { template: 'aprovacao_pendente', pedido_ids: alvo });
-      toast({ title: 'ðŸ“² WhatsApp enviado', description: `${alvo.length} pedido(s)` });
+      toast({ title: 'WhatsApp enviado', description: `${alvo.length} pedido(s)` });
       await auditPedido({ acao: 'Notificacao', descricao: `WhatsApp aprovacao pendente (${alvo.length})`, detalhes: { canal: 'whatsapp', pedido_ids: alvo, total: alvo.length } });
     } catch {
       await auditPedido({ acao: 'Notificacao falhou', descricao: 'Falha ao notificar aprovacao pendente por WhatsApp', sucesso: false, detalhes: { canal: 'whatsapp', pedido_ids: alvo, total: alvo.length } });
@@ -403,7 +403,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     }
     try {
       await base44.functions.invoke('sendEmailProvider', { tipo: 'aprovacao_pendente', pedido_ids: alvo });
-      toast({ title: 'âœ‰ï¸ E-mails enviados', description: `${alvo.length} pedido(s)` });
+      toast({ title: 'E-mails enviados', description: `${alvo.length} pedido(s)` });
       await auditPedido({ acao: 'Notificacao', descricao: `Email aprovacao pendente (${alvo.length})`, detalhes: { canal: 'email', pedido_ids: alvo, total: alvo.length } });
     } catch {
       await auditPedido({ acao: 'Notificacao falhou', descricao: 'Falha ao notificar aprovacao pendente por email', sucesso: false, detalhes: { canal: 'email', pedido_ids: alvo, total: alvo.length } });
@@ -412,7 +412,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
   };
 
   const columns = React.useMemo(() => ([
-    { key: 'numero_pedido', label: 'NÂ° Pedido', render: (r) => <span className="font-semibold">{r.numero_pedido}</span> },
+    { key: 'numero_pedido', label: 'N° Pedido', render: (r) => <span className="font-semibold">{r.numero_pedido}</span> },
     { key: 'cliente_nome', label: 'Cliente' },
     { key: 'data_pedido', label: 'Data', render: (r) => new Date(r.data_pedido).toLocaleDateString('pt-BR') },
     { key: 'origem_pedido', label: 'Origem', render: (r) => <BadgeOrigemPedido origemPedido={r.origem_pedido} showLock={true} /> },
@@ -420,19 +420,19 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     { key: 'status', label: 'Status', render: (r) => (
       <Badge className={
         r.status === 'Entregue' ? 'bg-green-600 text-white' :
-        r.status === 'Em TrÃ¢nsito' ? 'bg-purple-600 text-white' :
-        r.status === 'Em ExpediÃ§Ã£o' ? 'bg-orange-600 text-white' :
+        r.status === 'Em Trânsito' ? 'bg-sky-600 text-white' :
+        r.status === 'Em Expedição' ? 'bg-orange-600 text-white' :
         r.status === 'Faturado' ? 'bg-blue-600 text-white' :
-        r.status === 'Pronto para Faturar' ? 'bg-indigo-600 text-white' :
+        r.status === 'Pronto para Faturar' ? 'bg-sky-700 text-white' :
         r.status === 'Aprovado' ? 'bg-green-500 text-white' :
-        r.status === 'Aguardando AprovaÃ§Ã£o' ? 'bg-yellow-500 text-white' :
+        r.status === 'Aguardando Aprovação' ? 'bg-yellow-500 text-white' :
         r.status === 'Cancelado' ? 'bg-red-600 text-white' :
         'bg-slate-500 text-white'
       }>
         {r.status}
       </Badge>
     ) },
-    { key: 'aprovacao', label: 'AprovaÃ§Ã£o', render: (r) => (
+    { key: 'aprovacao', label: 'Aprovação', render: (r) => (
       r.status_aprovacao === 'pendente' ? (
         <Badge className="bg-orange-100 text-orange-700"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>
       ) : r.status_aprovacao === 'aprovado' ? (
@@ -443,7 +443,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
         <Badge variant="outline" className="text-xs">-</Badge>
       )
     ) },
-    { key: 'actions', label: 'AÃ§Ãµes RÃ¡pidas', render: (pedido) => (
+    { key: 'actions', label: 'Ações Rápidas', render: (pedido) => (
       <div className="flex items-center gap-1">
         {pedido.status === 'Rascunho' && (
           <Button 
@@ -455,7 +455,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
             className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
           >
             <CheckCircle2 className="w-3 h-3 mr-1" />
-            <span className="text-xs">ðŸš€ Fechar Pedido</span>
+            <span className="text-xs">Fechar Pedido</span>
           </Button>
         )}
 
@@ -466,7 +466,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
            data-sensitive
            disabled={!contextoValido || !canEditPedido || (pedido.status_aprovacao === 'pendente' && !canApprovePedido)}
            onClick={() => editarPedidoSeguro(pedido)}
-           title={pedido.status_aprovacao === 'pendente' ? 'EdiÃ§Ã£o bloqueada atÃ© aprovaÃ§Ã£o' : 'Editar Pedido'}
+           title={pedido.status_aprovacao === 'pendente' ? 'Edição bloqueada até aprovação' : 'Editar Pedido'}
            className="h-8 px-2"
          >
           <Edit2 className="w-3 h-3 mr-1" />
@@ -483,7 +483,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
               className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
             >
               <Truck className="w-4 h-4 mr-1" />
-              <span className="text-xs">ðŸšš Fechar p/ Entrega</span>
+              <span className="text-xs">Fechar p/ Entrega</span>
             </Button>
             <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarNFe" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarNFe, acao: 'Emissao NF-e', descricao: 'Acionada geracao de NF-e', toastTitle: 'Gerando NF-e...' })} disabled={!contextoValido || !canGerarNFe} title="Gerar NF-e" className="h-8 px-2 text-green-600">
               <FileText className="w-3 h-3 mr-1" />
@@ -506,8 +506,8 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
           </Button>
         )}
 
-        {(pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado' && (
-          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarOP" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' })} disabled={!contextoValido || !canGerarOP} title="Gerar Ordem de Produção" className="h-8 px-2 text-purple-600">
+        {(pedido.tipo_pedido === 'Produção Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado' && (
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarOP" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' })} disabled={!contextoValido || !canGerarOP} title="Gerar Ordem de Produção" className="h-8 px-2 text-sky-600">
             <Factory className="w-3 h-3 mr-1" />
             <span className="text-xs">OP</span>
           </Button>
@@ -524,7 +524,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
         </Button>
 
         {pedido.status_aprovacao === 'pendente' && (
-          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.aprovar" data-sensitive onClick={() => analisarAprovacaoSeguro(pedido)} disabled={!contextoValido || !canApprovePedido} title="Analisar AprovaÃ§Ã£o" className="h-8 px-2 text-orange-600 animate-pulse">
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.aprovar" data-sensitive onClick={() => analisarAprovacaoSeguro(pedido)} disabled={!contextoValido || !canApprovePedido} title="Analisar Aprovação" className="h-8 px-2 text-orange-600 animate-pulse">
             <ShieldCheck className="w-3 h-3 mr-1" />
             <span className="text-xs">Analisar</span>
           </Button>
@@ -552,31 +552,31 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     if (contextoValido && canCriarEntrega && pedido.status === 'Faturado') {
       items.push({ key: 'entrega', label: 'Criar Entrega', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' }) });
     }
-    if (contextoValido && canGerarOP && (pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
+    if (contextoValido && canGerarOP && (pedido.tipo_pedido === 'Produção Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
       items.push({ key: 'op', label: 'Gerar OP', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' }) });
     }
     if (contextoValido && canDeletePedido) {
       items.push({ key: 'excluir', label: 'Excluir', action: async () => solicitarExclusaoPedido(pedido) });
     }
     if (contextoValido && canApprovePedido && pedido.status_aprovacao === 'pendente') {
-      items.push({ key: 'aprovar', label: 'Analisar AprovaÃ§Ã£o', action: async () => analisarAprovacaoSeguro(pedido) });
+      items.push({ key: 'aprovar', label: 'Analisar Aprovação', action: async () => analisarAprovacaoSeguro(pedido) });
     }
     return items;
   };
 
   return (
     <div className="w-full h-full flex flex-col space-y-6">
-      {/* ETAPA 4: ALERTA DE APROVAÃ‡Ã•ES PENDENTES */}
+      {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
           <AlertDescription className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-orange-900 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
-                {pedidosPendentesAprovacao.length} pedido(s) aguardando aprovaÃ§Ã£o
+                {pedidosPendentesAprovacao.length} pedido(s) aguardando aprovação
                 </p>
                 <p className="text-xs text-orange-700 mt-1">
-                Pedidos com descontos ou outras pendÃªncias financeiras aguardam sua anÃ¡lise.
+                Pedidos com descontos ou outras pendências financeiras aguardam sua análise.
                 </p>
                 </div>
                 <Button
@@ -587,22 +587,22 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
                 className="bg-orange-600 hover:bg-orange-600/90"
             >
               <ShieldCheck className="w-4 h-4 mr-2" />
-              Gerenciar AprovaÃ§Ãµes
+              Gerenciar Aprovações
             </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Bloco Resumido de AprovaÃ§Ã£o + NotificaÃ§Ãµes */}
+      {/* Bloco Resumido de Aprovação + Notificações */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="text-sm text-slate-700">
-              HÃ¡ <span className="font-semibold">{pedidosPendentesAprovacao.length}</span> pedido(s) aguardando aprovaÃ§Ã£o.
+              Há <span className="font-semibold">{pedidosPendentesAprovacao.length}</span> pedido(s) aguardando aprovação.
             </div>
             <div className="flex items-center gap-2">
               <Button data-permission="Comercial.Pedido.aprovar" data-sensitive onClick={() => analisarAprovacaoSeguro(null)} disabled={!contextoValido || !canApprovePedido} className="bg-orange-600 hover:bg-orange-600/90">
-                Central de AprovaÃ§Ãµes
+                Central de Aprovações
               </Button>
               <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyWhatsAppPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>
                 Notificar WhatsApp
@@ -615,13 +615,13 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
         </Card>
       )}
 
-      {/* ESTATÃSTICAS DE APROVAÃ‡ÃƒO */}
+      {/* ESTATÍSTICAS DE APROVAÇÃO */}
       {(pedidosAprovados.length > 0 || pedidosNegados.length > 0 || pedidosPendentesAprovacao.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-sm text-orange-700">Pendentes AprovaÃ§Ã£o</p>
+                <p className="text-sm text-orange-700">Pendentes Aprovação</p>
                 <p className="text-2xl font-bold text-orange-900">{pedidosPendentesAprovacao.length}</p>
               </div>
               <Clock className="w-8 h-8 text-orange-400" />
@@ -666,7 +666,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
                 <SearchInput
                   value={searchTerm}
                   onChange={setSearchTerm}
-                  placeholder="Buscar por nÃºmero, cliente, vendedor, tipo, origem, status..."
+                  placeholder="Buscar por número, cliente, vendedor, tipo, origem, status..."
                   className="flex-1"
                 />
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -676,11 +676,11 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
                   <SelectContent className="z-[99999]">
                     <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="Rascunho">Rascunho</SelectItem>
-                    <SelectItem value="Aguardando AprovaÃ§Ã£o">Aguardando AprovaÃ§Ã£o</SelectItem>
+                    <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
                     <SelectItem value="Aprovado">Aprovado</SelectItem>
                     <SelectItem value="Pronto para Faturar">Pronto para Faturar</SelectItem>
                     <SelectItem value="Faturado">Faturado</SelectItem>
-                    <SelectItem value="Em ExpediÃ§Ã£o">Em ExpediÃ§Ã£o</SelectItem>
+                    <SelectItem value="Em Expedição">Em Expedição</SelectItem>
                     <SelectItem value="Entregue">Entregue</SelectItem>
                     <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>
@@ -708,7 +708,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
                   </ProtectedAction>
                   <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyWhatsAppPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>WhatsApp</Button>
                   <Button variant="outline" data-permission="Comercial.Pedido.notificar" onClick={() => notifyEmailPendentes(selectedPedidos)} disabled={!contextoValido || !canNotifyPedido}>Email</Button>
-                  <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar SeleÃ§Ã£o</Button>
+                  <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar Seleção</Button>
                 </div>
               </AlertDescription>
             </Alert>
@@ -733,7 +733,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
             onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
           />
 
-{/* paginaÃ§Ã£o integrada ao ERPDataTable */}
+{/* paginação integrada ao ERPDataTable */}
 
           {filteredPedidos.length === 0 && (
             <div className="text-center py-12 text-slate-500">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Sa
 import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.0 - TABELA DE PREÇO RECONSTRUÍDA
@@ -22,7 +23,8 @@ import usePermissions from "@/components/lib/usePermissions";
  * ✅ IA PriceBrain 3.0 com análise de mercado
  * ✅ Histórico de alterações
  */
-export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode = false }) {
+export default function TabelaPrecoFormCompleto({ tabela, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
+  const registro = item || data || initialData || defaultValues || tabela;
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   const [user, setUser] = useState(null);
@@ -35,13 +37,26 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     deleteInContext
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasFieldPermission, isAdmin } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || registro?.group_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeCriar = canCreate("Cadastros", "Tabela de Preco") || canCreate("Cadastros", "TabelaPreco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Tabela de Preco") || canEdit("Cadastros", "TabelaPreco") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Tabela de Preco") || canDelete("Cadastros", "TabelaPreco") || canDelete("Cadastros", null);
   const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Produtos', 'TabelaPreco', 'codigo_tabela_legado', 'editar');
+
+  const buildForm = (src) => ({
+    nome: src?.nome || '',
+    codigo_tabela_legado: src?.codigo_tabela_legado || '',
+    descricao: src?.descricao || '',
+    tipo: src?.tipo || 'Padrão',
+    data_inicio: src?.data_inicio || new Date().toISOString().split('T')[0],
+    data_fim: src?.data_fim || '',
+    ativo: src?.ativo !== undefined ? src.ativo : true,
+    empresa_id: src?.empresa_id || empresaAtual?.id || '',
+    group_id: src?.group_id || groupId || '',
+    compartilhar_grupo: src?.compartilhar_grupo || false
+  });
   
   useEffect(() => {
     const loadUser = async () => {
@@ -51,24 +66,22 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     loadUser();
   }, []);
 
-  const [formData, setFormData] = useState({
-    nome: tabela?.nome || '',
-    codigo_tabela_legado: tabela?.codigo_tabela_legado || '',
-    descricao: tabela?.descricao || '',
-    tipo: tabela?.tipo || 'Padrão',
-    data_inicio: tabela?.data_inicio || new Date().toISOString().split('T')[0],
-    data_fim: tabela?.data_fim || '',
-    ativo: tabela?.ativo !== undefined ? tabela.ativo : true,
-    empresa_id: tabela?.empresa_id || empresaAtual?.id || user?.empresa_selecionada_id || '',
-    group_id: tabela?.group_id || groupId || '',
-    compartilhar_grupo: tabela?.compartilhar_grupo || false
-  });
+  const [formData, setFormData] = useState(() => buildForm(registro));
 
   const [activeTab, setActiveTab] = useState('config');
   const [modoInclusao, setModoInclusao] = useState('lote');
   const [calculando, setCalculando] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
   const [itensTabela, setItensTabela] = useState([]);
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData(buildForm(registro));
+      setItensTabela([]);
+    }
+  }, [registro?.id, empresaAtual?.id, groupId]);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', contextKey],
@@ -95,11 +108,11 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
   });
 
   const { data: itensExistentes = [] } = useQuery({
-    queryKey: ['tabela-preco-itens', tabela?.id, contextKey],
-    queryFn: () => tabela?.id 
-      ? filterInContext('TabelaPrecoItem', { tabela_preco_id: tabela.id }, 'produto_descricao', 1000)
+    queryKey: ['tabela-preco-itens', registro?.id, contextKey],
+    queryFn: () => registro?.id
+      ? filterInContext('TabelaPrecoItem', { tabela_preco_id: registro.id }, 'produto_descricao', 1000)
       : Promise.resolve([]),
-    enabled: !!tabela?.id && contextoValido
+    enabled: !!registro?.id && contextoValido
   });
 
   useEffect(() => {
@@ -348,8 +361,8 @@ RETORNE:
       toast.error('Seu perfil nao permite excluir tabelas de preco');
       return;
     }
-    if (tabela?.id) {
-      await deleteInContext('TabelaPreco', tabela.id);
+    if (registro?.id) {
+      await deleteInContext('TabelaPreco', registro.id);
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
     }
     if (onSubmit) {
@@ -372,7 +385,7 @@ RETORNE:
       toast.error('Selecione um grupo ou empresa antes de salvar a tabela de preco');
       return;
     }
-    if (tabela?.id ? !podeEditar : !podeCriar) {
+    if (registro?.id ? !podeEditar : !podeCriar) {
       toast.error('Seu perfil nao permite salvar tabelas de preco');
       return;
     }
@@ -388,7 +401,7 @@ RETORNE:
       };
       if (!podeEditarCodigoLegado) delete dadosTabela.codigo_tabela_legado;
 
-      let tabelaId = tabela?.id;
+      let tabelaId = registro?.id;
       
       if (!tabelaId) {
         const tabelaCriada = await createInContext('TabelaPreco', dadosTabela);
@@ -399,7 +412,7 @@ RETORNE:
         console.log('✅ Tabela atualizada:', tabelaId);
       }
 
-      if (tabela?.id && itensExistentes.length > 0) {
+      if (registro?.id && itensExistentes.length > 0) {
         console.log('🗑️ Deletando itens antigos...');
         for (const itemAntigo of itensExistentes) {
           await deleteInContext('TabelaPrecoItem', itemAntigo.id);
@@ -464,9 +477,9 @@ RETORNE:
 
   const content = (
     <div className={`space-y-4 flex flex-col ${windowMode ? 'h-full p-6' : ''}`}>
-      <Alert className="border-purple-300 bg-purple-50">
-        <Sparkles className="w-4 h-4 text-purple-600" />
-        <AlertDescription className="text-sm text-purple-900">
+      <Alert className="border-sky-300 bg-sky-50">
+        <Sparkles className="w-4 h-4 text-sky-600" />
+        <AlertDescription className="text-sm text-sky-900">
           🚀 <strong>V21.0:</strong> Tabela de Preço reconstruída com Dupla Classificação, Multiempresa e IA PriceBrain 3.0
         </AlertDescription>
       </Alert>
@@ -493,6 +506,13 @@ RETORNE:
               <CardContent className="p-4 space-y-4">
                 <h3 className="font-bold text-blue-900">⚙️ Identificação da Tabela</h3>
 
+                <CadastroCodigoRegistroField
+                  idOnly
+                  hasId={Boolean(registro?.id)}
+                  entityId={registro?.id}
+                  action="id-tecnico-tabela-preco"
+                />
+
                 <div>
                   <Label>Nome da Tabela *</Label>
                   <Input
@@ -513,7 +533,7 @@ RETORNE:
                     onChange={(e) => setFormData({...formData, codigo_tabela_legado: e.target.value.replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 64)})}
                     maxLength={64}
                     placeholder="Ex: TAB-01"
-                    disabled={!podeEditarCodigoLegado || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    disabled={!podeEditarCodigoLegado || !contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
                     data-permission="Cadastros.Produtos.TabelaPreco.codigo_tabela_legado.editar"
                     data-action="editar-codigo-legado-tabela-preco"
                     data-sensitive
@@ -586,7 +606,7 @@ RETORNE:
                   <Switch
                     checked={formData.compartilhar_grupo}
                     onCheckedChange={(v) => setFormData({...formData, compartilhar_grupo: v})}
-                    disabled={!contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    disabled={!contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
                     data-permission="Cadastros.TabelaPreco.compartilhar"
                     data-action="alternar-compartilhar-grupo-tabela-preco"
                     data-sensitive
@@ -601,7 +621,7 @@ RETORNE:
                   <Switch
                     checked={formData.ativo}
                     onCheckedChange={(v) => setFormData({...formData, ativo: v})}
-                    disabled={!contextoValido || (tabela?.id ? !podeEditar : !podeCriar)}
+                    disabled={!contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
                     data-permission="Cadastros.TabelaPreco.alterarStatus"
                     data-action="alternar-status-tabela-preco"
                     data-sensitive
@@ -702,12 +722,12 @@ RETORNE:
 
             {modoInclusao === 'lote' && (
               <Card>
-                <CardHeader className="bg-purple-50 border-b pb-3">
+                <CardHeader className="bg-sky-50 border-b pb-3">
                   <CardTitle className="text-base">🎯 V21.0: Filtros por Dupla Classificação</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
-                  <Alert className="border-indigo-200 bg-indigo-50">
-                    <AlertDescription className="text-xs text-indigo-900">
+                  <Alert className="border-sky-200 bg-sky-50">
+                    <AlertDescription className="text-xs text-sky-900">
                       💡 Combine Setor + Grupo + Marca para inclusão cirúrgica de produtos
                     </AlertDescription>
                   </Alert>
@@ -805,7 +825,7 @@ RETORNE:
                   <Button 
                     type="button" 
                     onClick={handleAdicionarProdutosLote} 
-                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    className="w-full bg-sky-600 hover:bg-sky-700"
                     disabled={produtosDisponiveis.length === 0}
                     data-permission="Cadastros.TabelaPreco.editar"
                     data-action="adicionar-produtos-lote-tabela-preco"
@@ -816,9 +836,9 @@ RETORNE:
                   </Button>
 
                   <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                    <div className="p-2 bg-indigo-50 rounded">
-                      <p className="font-semibold text-indigo-900">{produtosDisponiveis.length}</p>
-                      <p className="text-indigo-600">Disponíveis</p>
+                    <div className="p-2 bg-sky-50 rounded">
+                      <p className="font-semibold text-sky-900">{produtosDisponiveis.length}</p>
+                      <p className="text-sky-600">Disponíveis</p>
                     </div>
                     <div className="p-2 bg-green-50 rounded">
                       <p className="font-semibold text-green-900">{itensTabela.length}</p>
@@ -846,7 +866,7 @@ RETORNE:
                           <p className="font-semibold text-sm">{item.produto_descricao}</p>
                           <div className="flex gap-3 mt-1 text-xs">
                             {item.setor_atividade_nome && (
-                              <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                              <Badge className="bg-sky-100 text-sky-700 text-xs">
                                 <Factory className="w-3 h-3 mr-1" />
                                 {item.setor_atividade_nome}
                               </Badge>
@@ -869,7 +889,7 @@ RETORNE:
                             <span>Preço: <strong className="text-green-700">R$ {(item.preco || 0).toFixed(2)}</strong></span>
                             <span>Margem: <strong>{(item.margem_percentual || 0).toFixed(1)}%</strong></span>
                             {item.markup_aplicado_ia && (
-                              <Badge className="bg-purple-100 text-purple-700 text-xs">
+                              <Badge className="bg-sky-100 text-sky-700 text-xs">
                                 <Sparkles className="w-3 h-3 mr-1" />
                                 Markup IA: {item.markup_aplicado_ia.toFixed(1)}%
                               </Badge>
@@ -901,9 +921,9 @@ RETORNE:
           </TabsContent>
 
           <TabsContent value="calculo" className="space-y-4 mt-4">
-            <Alert className="border-purple-200 bg-purple-50">
-              <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
-              <AlertDescription className="text-sm text-purple-900">
+            <Alert className="border-sky-200 bg-sky-50">
+              <Sparkles className="w-4 h-4 mr-2 text-sky-600" />
+              <AlertDescription className="text-sm text-sky-900">
                 🧠 <strong>PriceBrain 3.0:</strong> IA analisa Setor + Grupo + Marca e sugere markup diferenciado
               </AlertDescription>
             </Alert>
@@ -983,16 +1003,16 @@ RETORNE:
               </CardContent>
             </Card>
 
-            <Card className="border-purple-200 bg-purple-50">
-              <CardHeader className="bg-purple-100 border-b pb-3">
+            <Card className="border-sky-200 bg-sky-50">
+              <CardHeader className="bg-sky-100 border-b pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-700" />
+                  <Sparkles className="w-5 h-5 text-sky-700" />
                   IA PriceBrain 3.0 - Precificação Inteligente
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                <Alert className="border-purple-300 bg-white">
-                  <AlertDescription className="text-xs text-purple-900">
+                <Alert className="border-sky-300 bg-white">
+                  <AlertDescription className="text-xs text-sky-900">
                     🧠 A IA analisa Setor + Grupo + Marca e sugere markup diferenciado por categoria
                   </AlertDescription>
                 </Alert>
@@ -1001,7 +1021,7 @@ RETORNE:
                   type="button"
                   onClick={handleSugerirPrecosIA}
                   disabled={calculando || itensTabela.length === 0}
-                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  className="w-full bg-sky-600 hover:bg-sky-700"
                   data-permission="Cadastros.TabelaPreco.ia"
                   data-action="sugerir-precos-tabela-preco-ia"
                   data-sensitive
@@ -1044,7 +1064,7 @@ RETORNE:
                         <p className="font-semibold">{item.produto_descricao}</p>
                         <div className="flex gap-2 mt-1 flex-wrap">
                           {item.setor_atividade_nome && (
-                            <Badge className="bg-indigo-100 text-indigo-700 text-xs">{item.setor_atividade_nome}</Badge>
+                            <Badge className="bg-sky-100 text-sky-700 text-xs">{item.setor_atividade_nome}</Badge>
                           )}
                           {item.grupo_produto_nome && (
                             <Badge className="bg-cyan-100 text-cyan-700 text-xs">{item.grupo_produto_nome}</Badge>
@@ -1118,7 +1138,7 @@ RETORNE:
             <Button 
               type="button" 
               onClick={handleSalvar}
-              disabled={salvando || !podeAvancar || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)} 
+              disabled={salvando || !podeAvancar || !contextoValido || (registro?.id ? !podeEditar : !podeCriar)}
               className="bg-green-600 hover:bg-green-700 min-w-[180px]"
               data-permission="Cadastros.TabelaPreco.salvar"
               data-action="salvar-tabela-preco"

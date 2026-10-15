@@ -1,0 +1,29 @@
+# Homolog API Comercial 360 — tip implantado d6952b9d (2026-10-10)
+# Sanitizado — sem tokens, sem PII.
+
+## CPA ferro e aço
+
+| Step | Status | Notas |
+|---|---|---|
+| auth session | PASS | |
+| marcas list + codigo | PASS | códigos numéricos presentes (000001…); order_by encaminhado |
+| clientes list + codigo | PASS | 000001…000005 |
+| cliente_empresa link | PASS | |
+| produto + unidade | PASS | PROD-A-001 · KG |
+| condição + tabela | PASS | tabela ATACADO autorizada |
+| POST orçamento | PASS 201 | numero 00000003 · total 24.691356 (servidor) · tabela_preco_id gravado |
+| GET reabrir | PASS | total+tabela preservados |
+| converter-pedido | PASS 201 | pedido 00000002 · mesma tabela/total · orcamento_id link |
+| dup convert | PASS 409 | ORCAMENTO_ALREADY_CONVERTED |
+| GET cross-empresa 3Z | PASS 404 | isolamento |
+
+## UI browser
+Lista Orçamentos / Abrir Marca em modo consolidado ainda depende de contexto visual (#254 Codex).
+Contrato backend + mig 039 + forms codigo-registro = implantados neste tip.
+
+## Recuperação (reafirmação)
+| Classe | Estado |
+|---|---|
+| auxiliares com codigo | PRESERVADOS / visíveis API (Marca/UM/…) |
+| GATE-D SYNTH | NÃO contar como recuperação |
+| Produtos/Clientes/Fornecedores reais | #211 legado staging (não este lote) |

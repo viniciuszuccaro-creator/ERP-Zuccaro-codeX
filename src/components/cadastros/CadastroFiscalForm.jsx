@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,24 @@ import { Loader2, FileText } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value) => String(value ?? "").replace(/[^0-9A-Za-z./-]/g, "").slice(0, 32).trim().toUpperCase();
 const toPercent = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
+const emptyForm = {
+  tipo_cadastro: "NCM",
+  codigo: "",
+  descricao: "",
+  aliquota_padrao: 0,
+  observacoes: "",
+};
+
+/**
+ * Código NCM/CFOP/CEST/CST é domínio fiscal (não MASTER_CODE numérico).
+ * ID técnico separado via CadastroCodigoRegistroField idOnly.
+ */
 export default function CadastroFiscalForm({ cadastroFiscal, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
   const dadosIniciais = item || data || initialData || defaultValues || cadastroFiscal;
   const { canCreate, canEdit } = usePermissions();
@@ -22,22 +35,24 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
   const podeCriar = canCreate("Cadastros", "CadastroFiscal") || canCreate("Fiscal", "CadastroFiscal") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CadastroFiscal") || canEdit("Fiscal", "CadastroFiscal") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    tipo_cadastro: 'NCM',
-    codigo: '',
-    descricao: '',
-    aliquota_padrao: 0,
-    observacoes: ''
-  });
+  const [formData, setFormData] = useState(dadosIniciais || emptyForm);
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...emptyForm, ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!podeSalvar) {
-      alert(dadosIniciais?.id ? 'Sem permissao para editar cadastro fiscal.' : 'Sem permissao para criar cadastro fiscal.');
+      alert(dadosIniciais?.id ? "Sem permissao para editar cadastro fiscal." : "Sem permissao para criar cadastro fiscal.");
       return;
     }
     if (!contextoValido) {
-      alert('Selecione um grupo ou empresa antes de salvar.');
+      alert("Selecione um grupo ou empresa antes de salvar.");
       return;
     }
     const payload = {
@@ -49,20 +64,27 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
       observacoes: sanitizeText(formData.observacoes, 1000),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
-      nome: sanitizeCode(formData.codigo) + " - " + sanitizeText(formData.descricao, 120)
+      nome: sanitizeCode(formData.codigo) + " - " + sanitizeText(formData.descricao, 120),
     };
     if (!payload.tipo_cadastro || !payload.codigo) {
-      alert('Preencha os campos obrigatorios');
+      alert("Preencha os campos obrigatorios");
       return;
     }
     onSubmit(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full h-full">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-cadastro-fiscal"
+      />
+
       <div>
         <Label>Tipo de Cadastro *</Label>
-        <Select value={formData.tipo_cadastro} onValueChange={(v) => setFormData({...formData, tipo_cadastro: v})} disabled={!podeSalvar}>
+        <Select value={formData.tipo_cadastro} onValueChange={(v) => setFormData({ ...formData, tipo_cadastro: v })} disabled={!podeSalvar}>
           <SelectTrigger data-permission="Cadastros.CadastroFiscal.editar" data-action="editar-tipo-cadastro-fiscal" data-sensitive>
             <SelectValue />
           </SelectTrigger>
@@ -76,28 +98,31 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
       </div>
 
       <div>
-        <Label>Codigo *</Label>
+        <Label>Codigo fiscal *</Label>
         <Input
           value={formData.codigo}
-          onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
           placeholder={
-            formData.tipo_cadastro === 'NCM' ? 'Ex: 7213.10.00' :
-            formData.tipo_cadastro === 'CFOP' ? 'Ex: 5102' :
-            formData.tipo_cadastro === 'CEST' ? 'Ex: 01.001.00' :
-            'Ex: 00'
+            formData.tipo_cadastro === "NCM" ? "Ex: 7213.10.00" :
+            formData.tipo_cadastro === "CFOP" ? "Ex: 5102" :
+            formData.tipo_cadastro === "CEST" ? "Ex: 01.001.00" :
+            "Ex: 00"
           }
           disabled={!podeSalvar}
           data-permission="Cadastros.CadastroFiscal.editar"
           data-action="editar-codigo-cadastro-fiscal"
           data-sensitive
         />
+        <p className="text-xs text-slate-500 mt-1">
+          Código de domínio fiscal (NCM/CFOP/CEST/CST), distinto do ID técnico.
+        </p>
       </div>
 
       <div>
         <Label>Descricao *</Label>
         <Textarea
           value={formData.descricao}
-          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={2}
           placeholder="Descricao completa"
           disabled={!podeSalvar}
@@ -107,14 +132,14 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
         />
       </div>
 
-      {formData.tipo_cadastro === 'NCM' && (
+      {formData.tipo_cadastro === "NCM" && (
         <div>
           <Label>Aliquota Padrao IPI (%)</Label>
           <Input
             type="number"
             step="0.01"
             value={formData.aliquota_padrao}
-            onChange={(e) => setFormData({...formData, aliquota_padrao: parseFloat(e.target.value)})}
+            onChange={(e) => setFormData({ ...formData, aliquota_padrao: parseFloat(e.target.value) })}
             disabled={!podeSalvar}
             data-permission="Cadastros.CadastroFiscal.editar"
             data-action="editar-aliquota-cadastro-fiscal"
@@ -127,7 +152,7 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
         <Label>Observacoes</Label>
         <Textarea
           value={formData.observacoes}
-          onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
           rows={2}
           disabled={!podeSalvar}
           data-permission="Cadastros.CadastroFiscal.editar"
@@ -136,17 +161,24 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
         />
       </div>
 
-      <Alert className="border-purple-200 bg-purple-50">
-        <FileText className="w-4 h-4" />
-        <AlertDescription className="text-sm">
+      <Alert className="border-sky-200 bg-sky-50">
+        <FileText className="w-4 h-4 text-sky-700" />
+        <AlertDescription className="text-sm text-sky-900">
           IA DIFAL atualiza aliquotas automaticamente via API Sefaz
         </AlertDescription>
       </Alert>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.CadastroFiscal.salvar" data-action="salvar-cadastro-fiscal" data-sensitive>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          className="bg-sky-600 hover:bg-sky-700"
+          data-permission="Cadastros.CadastroFiscal.salvar"
+          data-action="salvar-cadastro-fiscal"
+          data-sensitive
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {dadosIniciais ? 'Atualizar' : 'Criar Cadastro Fiscal'}
+          {dadosIniciais?.id ? "Atualizar" : "Criar Cadastro Fiscal"}
         </Button>
       </div>
     </form>

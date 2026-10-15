@@ -115,12 +115,40 @@ export const assertLegacyReferenceScope = ({
   return true;
 };
 
-/** @type {Record<string, MasterCodeSpec>} */
+/**
+ * Escopo de sequência: Grupo (group_id) — cadastros mestres/compartilhados.
+ * Empresa só quando a entidade for operacional por CNPJ (não listada aqui).
+ * @type {Record<string, MasterCodeSpec>}
+ */
 export const MASTER_CODE_SPECS = {
   Produto: { field: 'codigo', width: 4 },
   Cliente: { field: 'codigo', width: 6 },
   Fornecedor: { field: 'codigo', width: 6 },
   Transportadora: { field: 'codigo', width: 6 },
+  // Cadastros Gerais auxiliares (escopo Grupo)
+  Marca: { field: 'codigo', width: 6 },
+  GrupoProduto: { field: 'codigo', width: 6 },
+  SetorAtividade: { field: 'codigo', width: 6 },
+  UnidadeMedida: { field: 'codigo', width: 6 },
+  Servico: { field: 'codigo', width: 6 },
+  KitProduto: { field: 'codigo', width: 6 },
+  CatalogoWeb: { field: 'codigo', width: 6 },
+  SegmentoCliente: { field: 'codigo', width: 6 },
+  RegiaoAtendimento: { field: 'codigo', width: 6 },
+  Banco: { field: 'codigo', width: 6 },
+  FormaPagamento: { field: 'codigo', width: 6 },
+  TipoDespesa: { field: 'codigo', width: 6 },
+  CentroCusto: { field: 'codigo', width: 6 },
+  CentroResultado: { field: 'codigo', width: 6 },
+  PlanoDeContas: { field: 'codigo', width: 6 },
+  PlanoContas: { field: 'codigo', width: 6 },
+  TipoFrete: { field: 'codigo', width: 6 },
+  LocalEstoque: { field: 'codigo', width: 6 },
+  Veiculo: { field: 'codigo', width: 6 },
+  Motorista: { field: 'codigo', width: 6 },
+  Departamento: { field: 'codigo', width: 6 },
+  Cargo: { field: 'codigo', width: 6 },
+  Turno: { field: 'codigo', width: 6 },
   Pedido: { field: 'numero_pedido', width: 6, prefix: 'PED-' },
   OrdemProducao: { field: 'numero_op', width: 6, prefix: 'OP-' },
   Entrega: { field: 'qr_code', width: 6, prefix: 'ENT-' },
@@ -133,6 +161,7 @@ export const MASTER_CODE_SPECS = {
   Interacao: { field: 'codigo_interacao', width: 6, prefix: 'INT-' },
   Campanha: { field: 'codigo_campanha', width: 6, prefix: 'CAMP-' },
   Rota: { field: 'codigo_rota', width: 6, prefix: 'ROT-' },
+  RotaPadrao: { field: 'codigo', width: 6 },
 };
 
 /**
@@ -372,7 +401,7 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
       codigo_legado: record.codigo_legado || incoming,
     };
   }
-  // Produto (nao migracao): codigo interno sempre reservado no backend
+  // Produto: código interno sempre reservado; origem/legado preservados (sem remap silencioso em applyMaster)
   if (entityName === 'Produto' && !isMigracao) {
     return {
       ...record,
@@ -381,13 +410,14 @@ export const applyCodigoOnCreate = ({ entityName, record = {}, records = [], seq
       codigo_legado: record.codigo_legado || incoming,
     };
   }
-  if (!conflict) return record;
-  return {
-    ...record,
-    [spec.field]: next,
-    codigo_origem: record.codigo_origem || incoming,
-    codigo_legado: record.codigo_legado || incoming,
-  };
+  if (conflict) {
+    // Cadastros Gerais / demais mestres: conflito explícito — sem renumeração silenciosa
+    const error = /** @type {MasterPolicyError} */ (new Error('Codigo duplicado no grupo para este cadastro.'));
+    error.duplicate = { type: 'codigo', existingId: records.find((item) => firstText(item[spec.field]) === incoming)?.id };
+    throw error;
+  }
+  // Importação/código explícito sem conflito: preserva o informado
+  return record;
 };
 
 /** @param {ReferenceCodeOptions} options */
@@ -401,10 +431,15 @@ export const findDuplicateMaster = ({ entityName, record = {}, records = [], cur
   }
   const sameGroup = (item) => firstText(item.group_id, item.grupo_id) === groupId;
 
-  if (entityName === 'Produto') {
-    const codigo = firstText(record.codigo);
+  const codeSpec = MASTER_CODE_SPECS[entityName];
+  if (codeSpec && (!codeSpec.prefix || entityName === 'Produto')) {
+    const codigo = firstText(record[codeSpec.field]);
     if (codigo) {
-      const hit = records.find((item) => sameGroup(item) && firstText(item.codigo) === codigo);
+      const hit = records.find((item) => (
+        firstText(item.id) !== firstText(currentId)
+        && sameGroup(item)
+        && firstText(item[codeSpec.field]) === codigo
+      ));
       if (hit) return { type: 'codigo', existingId: hit.id };
     }
   }

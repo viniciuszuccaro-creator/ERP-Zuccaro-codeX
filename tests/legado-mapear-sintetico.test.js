@@ -44,6 +44,42 @@ test('mapear legado sintetico produto usa descricao', () => {
   assert.match(out.chave_idempotente_migracao, /\|produto\|SKU-1$/);
 });
 
+test('mapear legado sintetico fornecedor (consumidor sem mapper paralelo)', () => {
+  const lote = mapLegadoLoteSintetico([
+    {
+      cod_fornecedor: 'F-10',
+      razao_social: 'Fornecedor Sintetico',
+      cnpj: '00000000000191',
+      group_id: 'g1',
+      empresa_id: 'e1',
+      codigo_empresa: '2',
+    },
+    {
+      cod_fornecedor: 'F-10',
+      razao_social: 'Fornecedor Sintetico dup',
+      group_id: 'g1',
+      empresa_id: 'e1',
+      codigo_empresa: '2',
+    },
+    {
+      cod_fornecedor: 'F-0',
+      nome: 'Quarentena Forn',
+      group_id: 'g1',
+      empresa_id: 'e1',
+      codigo_empresa: '0',
+    },
+  ], { entidade: 'fornecedor', arquivoNome: 'fornecedores_sintetico.csv' });
+
+  assert.equal(lote.entidade, 'fornecedor');
+  assert.equal(lote.gravados.length, 2);
+  assert.equal(lote.reusos.length, 1);
+  assert.equal(lote.quarentenas.length, 1);
+  assert.equal(lote.gravados[0].nome, 'Fornecedor Sintetico');
+  assert.equal(lote.gravados[0].documento, '00000000000191');
+  assert.equal(lote.gravados[0].destino_migracao, 'staging');
+  assert.match(lote.gravados[0].chave_idempotente_migracao, /\|fornecedor\|F-10$/);
+});
+
 test('mapear legado sintetico empresa', () => {
   const out = mapLegadoRowToCanonicalStub({
     codigoempresa: '2',

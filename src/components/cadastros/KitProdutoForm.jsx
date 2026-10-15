@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,9 +8,24 @@ import { Box, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode = false }) {
-  const dadosIniciais = kitProduto || kit;
+const sanitizeText = (value, max = 500) => String(value ?? '').replace(/[<>]/g, '').slice(0, max).trim();
+const emptyKit = {
+  nome_kit: '',
+  codigo_kit: '',
+  descricao: '',
+  itens_kit: [],
+  preco_kit: 0,
+  aplicar_desconto_kit: false,
+  percentual_desconto: 0,
+  ativo: true,
+};
+
+export default function KitProdutoForm({
+  kit, kitProduto, item, data, initialData, defaultValues, onSubmit, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || kitProduto || kit;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -18,16 +33,23 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
   const podeCriar = hasPermission?.("Cadastros.KitProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.KitProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    nome_kit: '',
-    codigo_kit: '',
-    descricao: '',
-    itens_kit: [],
-    preco_kit: 0,
-    aplicar_desconto_kit: false,
-    percentual_desconto: 0,
-    ativo: true
-  });
+  const [formData, setFormData] = useState(() => ({
+    ...emptyKit,
+    ...(dadosIniciais || {}),
+    itens_kit: Array.isArray(dadosIniciais?.itens_kit) ? dadosIniciais.itens_kit : [],
+  }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({
+        ...emptyKit,
+        ...dadosIniciais,
+        itens_kit: Array.isArray(dadosIniciais.itens_kit) ? dadosIniciais.itens_kit : [],
+      });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -39,11 +61,15 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
       alert('Sem permissão para salvar kit de produtos.');
       return;
     }
+    const nomeKit = sanitizeText(formData.nome_kit || formData.nome || '', 240);
     onSubmit({
       ...formData,
+      nome_kit: nomeKit,
+      codigo_kit: sanitizeText(formData.codigo_kit, 40),
+      descricao: sanitizeText(formData.descricao, 1000),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
-      nome: formData.nome_kit || formData.nome || ''
+      nome: nomeKit,
     });
   };
 
@@ -63,6 +89,13 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-kit-produto"
+      />
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Nome do Kit *</Label>
@@ -205,13 +238,13 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
 
       <Button
         type="submit"
-        className="w-full bg-purple-600 hover:bg-purple-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.KitProduto.salvar"
         data-action="salvar-kit-produto"
         data-sensitive="true"
       >
-        {dadosIniciais ? 'Atualizar Kit' : 'Criar Kit de Produtos'}
+        {dadosIniciais?.id ? 'Atualizar Kit' : 'Criar Kit de Produtos'}
       </Button>
     </form>
   );
@@ -219,10 +252,10 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
-          <Box className="w-6 h-6 text-purple-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Kit' : 'Novo Kit de Produtos'}
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Box className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-sky-900">
+            {dadosIniciais?.id ? 'Editar Kit' : 'Novo Kit de Produtos'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

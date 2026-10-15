@@ -236,14 +236,14 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-purple-600" />
+                    <TrendingUp className="w-4 h-4 text-sky-600" />
                     Performance
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
                     <p className="text-xs text-slate-500">Total em Vendas (12 meses)</p>
-                    <p className="text-xl font-bold text-purple-600">
+                    <p className="text-xl font-bold text-sky-600">
                       R$ {(cliente.valor_compras_12meses || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -437,7 +437,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
               <Card className="border-0 shadow-sm mt-4">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-purple-600" />
+                    <ShoppingBag className="w-4 h-4 text-sky-600" />
                     Últimos Pedidos
                   </CardTitle>
                 </CardHeader>

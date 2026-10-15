@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,9 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Webhook as WebhookIcon } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = webhook;
+export default function WebhookForm({ webhook, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || webhook;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
@@ -26,6 +27,15 @@ export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMod
     formato_payload: 'JSON',
     ativo: true
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -47,6 +57,12 @@ export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMod
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-webhook"
+      />
       <div>
         <Label>Nome do Webhook *</Label>
         <Input
@@ -131,7 +147,7 @@ export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMod
         />
       </div>
 
-      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Webhook.salvar" data-action="salvar-webhook" data-sensitive>
+      <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Webhook.salvar" data-action="salvar-webhook" data-sensitive>
         {dadosIniciais ? 'Atualizar' : 'Criar Webhook'}
       </Button>
     </form>
@@ -140,8 +156,8 @@ export default function WebhookForm({ webhook, onSubmit, isSubmitting, windowMod
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
-          <WebhookIcon className="w-6 h-6 text-indigo-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <WebhookIcon className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Webhook' : 'Novo Webhook'}
           </h2>

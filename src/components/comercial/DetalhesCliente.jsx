@@ -72,7 +72,17 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <CardTitle className="text-xl">{cliente.nome || cliente.razao_social}</CardTitle>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex flex-wrap items-center gap-3 mt-1">
+                {cliente.codigo != null && String(cliente.codigo).trim() !== '' && (
+                  <p className="text-sm font-mono tabular-nums text-slate-700" data-action="codigo-registro-cliente-360" title="Código de registro (não é o ID técnico)">
+                    Cód. {String(cliente.codigo)}
+                  </p>
+                )}
+                {cliente.id && (
+                  <p className="text-xs font-mono text-slate-500" data-action="id-tecnico-cliente-360" title="ID técnico imutável">
+                    ID {String(cliente.id)}
+                  </p>
+                )}
                 <p className="text-sm text-slate-600">{cliente.tipo}</p>
                 <Badge className={statusColors[cliente.status]}>{cliente.status}</Badge>
               </div>
@@ -122,10 +132,10 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                    <TrendingUp className="w-5 h-5 text-sky-600" />
                   </div>
                   <p className="text-xs text-slate-600">Ticket Médio</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-2xl font-bold text-sky-600">
                     R$ {ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </CardContent>

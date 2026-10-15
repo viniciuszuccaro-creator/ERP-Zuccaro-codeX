@@ -1,0 +1,23 @@
+# Evidência sanitizada — tip 00edfb2b implantado (#261 integrado)
+# utc=2026-10-10T14:24Z
+#
+# tip=00edfb2b docs(handoff): ManagePR URL lowercase ok
+# merge_codigo=861513cd (#264 ort → candidata)
+# incorporado=#254 20a2c2fb · #264 d9403665 · minify-safe bdeec58c
+# asset=index-ChwPPG6e.js
+# backup=pre-gate-e-20261010-142336.sql sha256=501c0400ed9353db3620a80cf662f4ce6ce4992f8cf923628734aaf78ef0ba5f
+# rollback=pre-spa-login-20261010-142346
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip 00edfb2b: erp-runtime-ci 4 checks SUCCESS
+#
+# Homolog tipado (este SHA) fail_count=0:
+#   login · Cadastros · Clientes V24 · abrir · campo len=25 · salvar · reabrir
+#   trocar Grupo · launchpads Comercial/Financeiro/Fiscal PASS
+# Sessão: credenciais tipadas (não inject)
+#
+# Recuperado legado: NÃO (#211) · SYNTH≠recuperado
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-00edfb2b.png
+# report:
+#   /opt/cursor/artifacts/pw-homolog-261-tip-00edfb2b.json

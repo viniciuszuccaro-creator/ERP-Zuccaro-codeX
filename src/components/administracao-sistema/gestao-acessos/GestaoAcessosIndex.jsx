@@ -177,19 +177,19 @@ export default function GestaoAcessosIndex() {
       <div className="p-6 flex flex-col items-center gap-3 text-center">
         <AlertTriangle className="w-10 h-10 text-amber-500" />
         <p className="font-semibold text-slate-800">Acesso Restrito</p>
-        <p className="text-sm text-slate-500">VocÃª nÃ£o tem permissÃ£o para acessar a GestÃ£o de Acessos.</p>
+        <p className="text-sm text-slate-500">Você não tem permissão para acessar a Gestão de Acessos.</p>
       </div>
     );
   }
 
-  // EstatÃ­sticas rÃ¡pidas para o banner de status do RBAC
+  // Estatísticas rápidas para o banner de status do RBAC
   const usuariosNoEscopo = usuarios;
   const usuariosSemPerfil = usuariosNoEscopo.filter(u => !u.perfil_acesso_id && u.role !== 'admin').length;
   const perfisAtivos = perfis.filter(p => p.ativo !== false).length;
 
   return (
     <div className="w-full h-full flex flex-col gap-3 min-h-0 overflow-hidden">
-      {/* Banner RBAC com estatÃ­sticas */}
+      {/* Banner RBAC com estatísticas */}
       <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-3 flex items-center gap-3">
@@ -207,10 +207,10 @@ export default function GestaoAcessosIndex() {
               : <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0" />}
             <div>
               <p className={`text-xs font-medium ${usuariosSemPerfil > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                {usuariosSemPerfil > 0 ? 'Sem perfil atribuÃ­do' : 'Todos com perfil'}
+                {usuariosSemPerfil > 0 ? 'Sem perfil atribuído' : 'Todos com perfil'}
               </p>
               <p className={`text-lg font-bold ${usuariosSemPerfil > 0 ? 'text-amber-900' : 'text-green-900'}`}>
-                {usuariosSemPerfil > 0 ? `${usuariosSemPerfil} usuÃ¡rio(s)` : `${usuariosNoEscopo.length} usuÃ¡rio(s)`}
+                {usuariosSemPerfil > 0 ? `${usuariosSemPerfil} usuário(s)` : `${usuariosNoEscopo.length} usuário(s)`}
               </p>
             </div>
           </CardContent>
@@ -219,20 +219,20 @@ export default function GestaoAcessosIndex() {
           <CardContent className="p-3 flex items-center gap-3">
             <Users className="w-8 h-8 text-slate-600 flex-shrink-0" />
             <div>
-              <p className="text-xs text-slate-600 font-medium">Total de UsuÃ¡rios</p>
+              <p className="text-xs text-slate-600 font-medium">Total de Usuários</p>
               <p className="text-lg font-bold text-slate-900">{usuariosNoEscopo.length}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Aviso se hÃ¡ usuÃ¡rios sem perfil */}
+      {/* Aviso se há usuários sem perfil */}
       {usuariosSemPerfil > 0 && (
         <div className="flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 w-full">
           <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-600 mt-0.5" />
           <span>
-            <strong>{usuariosSemPerfil} usuÃ¡rio(s)</strong> sem perfil RBAC atribuÃ­do.
-            Acesse a aba <strong>UsuÃ¡rios</strong> para corrigir.
+            <strong>{usuariosSemPerfil} usuário(s)</strong> sem perfil RBAC atribuído.
+            Acesse a aba <strong>Usuários</strong> para corrigir.
           </span>
         </div>
       )}
@@ -241,9 +241,9 @@ export default function GestaoAcessosIndex() {
        <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 w-full">
          <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
          <span className="leading-relaxed break-words min-w-0 flex-1">
-           <strong>RBAC granular + multiempresa</strong> â€” Perfis controlam acesso por mÃ³dulo, seÃ§Ã£o e aÃ§Ã£o. 
-           PermissÃµes propagam automaticamente entre grupo â†” empresas. 
-           Admins tÃªm acesso total. Atribua perfis na aba <em>UsuÃ¡rios</em>.
+           <strong>RBAC granular + multiempresa</strong> — Perfis controlam acesso por módulo, seção e ação.
+           Permissões propagam automaticamente entre grupo ↔ empresas.
+           Admins têm acesso total. Atribua perfis na aba <em>Usuários</em>.
            Verifique conflitos SoD na aba correspondente.
          </span>
        </div>
@@ -269,7 +269,7 @@ export default function GestaoAcessosIndex() {
             </TabsTrigger>
             <TabsTrigger value="relatorios" data-action="RBAC.tab.relatorios" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-3.5 h-3.5 mr-1" />
-              RelatÃ³rios
+              Relatórios
             </TabsTrigger>
           </TabsList>
         </div>

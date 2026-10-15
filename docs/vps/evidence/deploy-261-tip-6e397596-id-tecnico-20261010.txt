@@ -1,0 +1,21 @@
+# Evidência sanitizada — tip 6e397596 implantado (#261 ID técnico)
+# utc=2026-10-10T14:39Z
+#
+# tip=6e397596 docs: lote ID técnico e BLOCKED usuário restrito
+# codigo=5f1d1f0f feat(cadastros): ID técnico MASTER_CODE/Cliente/Produto
+# asset=index-BE23NqEC.js
+# backup=pre-gate-e-20261010-143842.sql sha256=4b16638b05946d112aa9d9e0e6624e361ccba1eafe56f66c6ab73208c61975fd
+# rollback=pre-spa-login-20261010-143842
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+#
+# CI tip 6e397596: erp-runtime-ci SUCCESS (4)
+# Bundle: id-tecnico- · codigo-registro-cliente-completo · id-tecnico-produto · central360-fonte-canonica · isSelfManagedCadastro
+#
+# Homolog tipado (este SHA) fail_count=0:
+#   login · Cadastros · Clientes V24 · abrir · campo len=25 · salvar · reabrir
+#   trocar Grupo · launchpads Comercial/Financeiro/Fiscal PASS
+#
+# Usuário restrito: BLOCKED (sem ERP_DEV_LOGIN_RESTRICTED_*)
+# Recuperado legado: NÃO (#211) · SYNTH≠recuperado
+# screenshots: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-6e397596.png
+# report: /opt/cursor/artifacts/pw-homolog-261-tip-6e397596.json

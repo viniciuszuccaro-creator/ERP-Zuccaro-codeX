@@ -91,7 +91,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const statusColors = {
     'Aguardando Separacao': 'bg-yellow-100 text-yellow-700',
     'Em Separacao': 'bg-blue-100 text-blue-700',
-    'Pronto para Expedir': 'bg-indigo-100 text-indigo-700',
+    'Pronto para Expedir': 'bg-sky-100 text-sky-700',
     'Saiu para Entrega': 'bg-orange-100 text-orange-700',
     'Em Transito': 'bg-cyan-100 text-cyan-700',
     'Entregue': 'bg-green-100 text-green-700',

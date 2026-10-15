@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,30 @@ import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeEmail = (value) => sanitizeText(value, 180).toLowerCase();
 const sanitizePhone = (value) => String(value ?? "").replace(/[^0-9+()\-\s]/g, "").slice(0, 30).trim();
+const emptyContato = {
+  cliente_id: "",
+  nome_contato: "",
+  cargo: "",
+  departamento: "Compras",
+  email: "",
+  telefone: "",
+  whatsapp: "",
+  preferencias_comunicacao: {
+    receber_transacionais: true,
+    receber_marketing: false,
+    canal_preferencial: "Email",
+  },
+  principal: false,
+  ativo: true,
+};
 
 /**
- * V21.1.2 - WINDOW MODE READY
+ * Contato B2B — reopen por id (prevIdRef) + aliases Visualizador.
  */
 export default function ContatoB2BForm({ contato, contatoB2B, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || contatoB2B || contato;
@@ -25,22 +42,29 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   const podeCriar = canCreate("Cadastros", "ContatoB2B") || canCreate("Comercial", "ContatoB2B") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ContatoB2B") || canEdit("Comercial", "ContatoB2B") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
-    cliente_id: "",
-    nome_contato: "",
-    cargo: "",
-    departamento: "Compras",
-    email: "",
-    telefone: "",
-    whatsapp: "",
+  const [formData, setFormData] = useState(() => ({
+    ...emptyContato,
+    ...(dadosIniciais || {}),
     preferencias_comunicacao: {
-      receber_transacionais: true,
-      receber_marketing: false,
-      canal_preferencial: "Email"
+      ...emptyContato.preferencias_comunicacao,
+      ...(dadosIniciais?.preferencias_comunicacao || {}),
     },
-    principal: false,
-    ativo: true
-  });
+  }));
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({
+        ...emptyContato,
+        ...dadosIniciais,
+        preferencias_comunicacao: {
+          ...emptyContato.preferencias_comunicacao,
+          ...(dadosIniciais.preferencias_comunicacao || {}),
+        },
+      });
+    }
+  }, [dadosIniciais?.id]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-contato-b2b", empresaAtual?.id || groupId || "sem-contexto"],
@@ -94,6 +118,12 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-contato-b2b"
+      />
       <div>
         <Label>Cliente *</Label>
         <Select value={formData.cliente_id} onValueChange={(v) => setFormData({ ...formData, cliente_id: v })} disabled={!contextoValido || !podeSalvar}>

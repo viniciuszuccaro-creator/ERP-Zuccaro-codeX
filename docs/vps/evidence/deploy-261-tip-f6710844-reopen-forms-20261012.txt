@@ -1,0 +1,12 @@
+# Evidência sanitizada — tip f6710844 implantado+homolog
+# utc=2026-10-12T11:17Z
+#
+# tip=f6710844: reopen Segmento/TipoFrete/LocalEstoque/Transportadora
+# asset=index-CZpoqayZ.js
+# rollback=pre-spa-login-20261012-111610
+# MERGE_SHA8=f6710844 · STAMP=20261012-111610
+# CI SUCCESS · Homolog OWNER fail_count=0
+# report=/opt/cursor/artifacts/pw-homolog-261-tip-f6710844.json
+#
+# Revisão Codex timer 11:15Z: #280–#314 tips inalterados · sem porte · gt314 nenhum
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

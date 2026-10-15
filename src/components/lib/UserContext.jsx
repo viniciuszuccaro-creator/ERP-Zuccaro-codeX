@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44, isApiKeyMode, isHttpBackendMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 import { HTTP_CONTEXT_CHANGED } from "@/api/erpHttpSession";
 
@@ -17,6 +17,8 @@ const resolveBootUser = async () => {
     }
     try {
       await ensureHttpTenantLocalMirror({
+        token: session.token,
+        actorId: session.actorId,
         groupId: session.groupId,
         empresaId: session.empresaId,
         groupName: session.groupName,
@@ -63,25 +65,28 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const loadVersion = useRef(0);
 
   useEffect(() => {
     let mounted = true;
 
     const loadUser = async () => {
+      const version = ++loadVersion.current;
+      setIsLoading(true);
       try {
         const currentUser = await resolveBootUser();
-        if (mounted) {
+        if (mounted && version === loadVersion.current) {
           setUser(currentUser);
           setError(null);
         }
       } catch (err) {
-        if (mounted) {
+        if (mounted && version === loadVersion.current) {
           console.error("Erro ao carregar usuário:", err);
           setUser(null);
           setError(err);
         }
       } finally {
-        if (mounted) {
+        if (mounted && version === loadVersion.current) {
           setIsLoading(false);
         }
       }
@@ -92,20 +97,29 @@ export function UserProvider({ children }) {
 
     return () => {
       mounted = false;
+      loadVersion.current += 1;
       if (isHttpBackendMode) window.removeEventListener(HTTP_CONTEXT_CHANGED, loadUser);
     };
   }, []);
 
   const refreshUser = async () => {
+    const version = ++loadVersion.current;
+    setIsLoading(true);
     try {
       const currentUser = await resolveBootUser();
-      setUser(currentUser);
-      setError(null);
+      if (version === loadVersion.current) {
+        setUser(currentUser);
+        setError(null);
+      }
       return currentUser;
     } catch (err) {
-      console.error("Erro ao atualizar usuário:", err);
-      setError(err);
+      if (version === loadVersion.current) {
+        console.error("Erro ao atualizar usuário:", err);
+        setError(err);
+      }
       throw err;
+    } finally {
+      if (version === loadVersion.current) setIsLoading(false);
     }
   };
 

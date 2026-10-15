@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { MessageCircle, Save, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmitting, windowMode = false }) {
+export default function ChatbotIntentForm({ chatbotIntent, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || chatbotIntent?.group_id || null;
@@ -18,7 +19,8 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
   const podeCriar = canCreate("Cadastros", "ChatbotIntent") || canCreate("Sistema", "ChatbotIntent") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ChatbotIntent") || canEdit("Sistema", "ChatbotIntent") || canEdit("Cadastros", null);
   const podeSalvar = chatbotIntent?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(chatbotIntent || {
+  const registro = item || data || initialData || defaultValues || chatbotIntent;
+  const [formData, setFormData] = useState(registro || {
     nome_intent: "",
     descricao: "",
     frases_treinamento: [],
@@ -28,6 +30,15 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
     ativo: true,
     observacoes: ""
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const [novaFrase, setNovaFrase] = useState("");
 
@@ -73,10 +84,16 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
+        action="id-tecnico-chatbot-intent"
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-purple-600" />
+            <MessageCircle className="w-5 h-5 text-sky-600" />
             Intent do Chatbot
           </CardTitle>
         </CardHeader>
@@ -123,7 +140,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
             </div>
             <div className="flex flex-wrap gap-2">
               {(formData.frases_treinamento || []).map((frase, idx) => (
-                <Badge key={idx} className="bg-purple-100 text-purple-700">
+                <Badge key={idx} className="bg-sky-100 text-sky-700">
                   {frase}
                   <button
                     type="button"
@@ -170,7 +187,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ChatbotIntent.salvar" data-action="salvar-intent-chatbot" data-sensitive>
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ChatbotIntent.salvar" data-action="salvar-intent-chatbot" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? 'Salvando...' : chatbotIntent ? 'Atualizar' : 'Criar'}
         </Button>
@@ -183,7 +200,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-            <MessageCircle className="w-8 h-8 text-purple-600" />
+            <MessageCircle className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {chatbotIntent ? 'Editar Intent' : 'Nova Intent'}
             </h2>

@@ -17,15 +17,15 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
   return (
     <Card className="border-orange-200 bg-orange-50">
       <CardContent className="p-4 space-y-4">
-        <h3 className="font-bold text-orange-900">ðŸ“¦ Peso e DimensÃµes (LogÃ­stica)</h3>
+        <h3 className="font-bold text-orange-900">Peso e Dimensões (Logística)</h3>
         <Alert className="border-orange-300 bg-orange-100">
           <AlertDescription className="text-xs text-orange-900">
-            <strong>Usado em:</strong> CÃ¡lculo de frete, cubagem, marketplace, Portal
+            <strong>Usado em:</strong> Cálculo de frete, cubagem, marketplace, Portal
           </AlertDescription>
         </Alert>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Peso LÃ­quido (kg)</Label>
+            <Label>Peso Líquido (kg)</Label>
             <Input
               type="number"
               step="0.001"
@@ -92,7 +92,7 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
             />
           </div>
           <div>
-            <Label>Volume (mÂ³)</Label>
+            <Label>Volume (m³)</Label>
             <Input
               type="number"
               value={formData.volume_m3?.toFixed(6) || 0}
@@ -106,8 +106,8 @@ export default function PesoDimensoesSection({ formData, setFormData }) {
         {formData.volume_m3 > 0 && (
           <Alert className="border-green-300 bg-green-50">
             <AlertDescription className="text-xs text-green-900">
-              âœ… Cubagem: {formData.volume_m3.toFixed(6)} mÂ³
-              {formData.peso_bruto_kg > 0 && ` â€¢ Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
+              ✓ Cubagem: {formData.volume_m3.toFixed(6)} m³
+              {formData.peso_bruto_kg > 0 && ` • Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
             </AlertDescription>
           </Alert>
         )}

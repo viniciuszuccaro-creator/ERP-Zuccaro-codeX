@@ -165,5 +165,5 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
     if (typeof onSubmit === "function") onSubmit(toLegacy(registro || payload));
   };
 
-  return <ChatbotIntentForm chatbotIntent={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={false} />;
+  return <ChatbotIntentForm chatbotIntent={initial} item={initial} data={initial} initialData={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={false} />;
 }

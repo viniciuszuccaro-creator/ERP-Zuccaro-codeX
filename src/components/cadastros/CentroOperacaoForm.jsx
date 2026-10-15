@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import BuscaCEP from "../comercial/BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeEndereco = (endereco = {}) => Object.fromEntries(Object.entries(endereco || {}).map(([key, value]) => [key, sanitizeText(value, 180)]));
@@ -40,6 +41,15 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     ativo: true,
     ...dadosIniciais
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...(dadosIniciais || {}) });
+    }
+  }, [dadosIniciais?.id]);
+
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],
@@ -98,6 +108,12 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-centro-operacao"
+      />
       <div>
         <Label>Nome do Centro *</Label>
         <Input value={formData.nome_centro} onChange={(e) => setFormData({ ...formData, nome_centro: e.target.value })} placeholder="Ex: CD Guarulhos, Obra Cliente X" disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="editar-nome-centro-operacao" data-sensitive />

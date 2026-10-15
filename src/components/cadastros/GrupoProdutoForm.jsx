@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -83,6 +84,12 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-grupo-produto"
+      />
       <div>
         <Label>Nome do Grupo *</Label>
         <Input
@@ -93,30 +100,19 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Código</Label>
-          <Input
-            value={formData.codigo}
-            onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-            placeholder="Ex: FERR001"
-            data-action="editar-codigo-grupo-produto"
-          />
-        </div>
-        <div>
-          <Label>Natureza *</Label>
-          <Select value={formData.natureza} onValueChange={(v) => setFormData({...formData, natureza: v})}>
-            <SelectTrigger data-action="selecionar-natureza-grupo-produto">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Revenda">Revenda</SelectItem>
-              <SelectItem value="Produção">Produção</SelectItem>
-              <SelectItem value="Consumo">Consumo</SelectItem>
-              <SelectItem value="Serviço">Serviço</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Label>Natureza *</Label>
+        <Select value={formData.natureza} onValueChange={(v) => setFormData({...formData, natureza: v})}>
+          <SelectTrigger data-action="selecionar-natureza-grupo-produto">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Revenda">Revenda</SelectItem>
+            <SelectItem value="Produção">Produção</SelectItem>
+            <SelectItem value="Consumo">Consumo</SelectItem>
+            <SelectItem value="Serviço">Serviço</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -188,7 +184,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission="Cadastros.GrupoProduto.salvar"
+          data-permission={dadosIniciais?.id ? "Cadastros.GrupoProduto.editar" : "Cadastros.GrupoProduto.criar"}
           data-action="salvar-grupo-produto"
           data-sensitive="true"
         >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,10 +14,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from "@/components/lib/usePermissions";
 import FormWrapper from "@/components/common/FormWrapper";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import { toast } from 'sonner';
 
-export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, onSubmit, onSave, onClose, windowMode = false }) {
-  const formaPagamentoNorm = formaPagamento || item || data;
+export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, initialData, defaultValues, onSubmit, onSave, onClose, windowMode = false }) {
+  const formaPagamentoNorm = item || data || initialData || defaultValues || formaPagamento;
   const [abaAtiva, setAbaAtiva] = useState('geral');
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -103,13 +104,17 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
 
+  const prevIdRef = useRef(formaPagamentoNorm?.id);
   useEffect(() => {
-    if (formaPagamentoNorm?.id) setFormData({ ...formaPagamentoNorm });
+    if (formaPagamentoNorm?.id && formaPagamentoNorm.id !== prevIdRef.current) {
+      prevIdRef.current = formaPagamentoNorm.id;
+      setFormData({ ...formaPagamentoNorm });
+    }
   }, [formaPagamentoNorm?.id]);
 
   const handleSubmit = async () => {
-    if (!formData.codigo || !formData.descricao) {
-      toast.error('Preencha código e descrição');
+    if (!formData.descricao) {
+      toast.error('Preencha a descrição');
       return;
     }
     if (!contextoValido) {
@@ -120,11 +125,14 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
       toast.error('Sem permissão para salvar forma de pagamento.');
       return;
     }
+    const codigoReservado = String(formData.codigo ?? '').trim();
     const payload = {
       ...formData,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+      ...(codigoReservado ? { codigo: codigoReservado } : {}),
     };
+    if (!formaPagamentoNorm?.id) delete payload.codigo;
     if (onSubmit) onSubmit(payload);
     if (onSave) onSave();
     if (onClose) onClose();
@@ -177,15 +185,12 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
         {/* ABA 1: GERAL */}
         <TabsContent value="geral" className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Código *</Label>
-              <Input
-                value={formData.codigo}
-                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-                placeholder="Ex: FP001"
-                required
-              />
-            </div>
+            <CadastroCodigoRegistroField
+              hasId={Boolean(formaPagamentoNorm?.id)}
+              entityId={formaPagamentoNorm?.id}
+              value={formData.codigo}
+              action="codigo-registro-forma-pagamento-completo"
+            />
 
             <div>
               <Label>Descrição *</Label>
@@ -338,7 +343,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
 
         {/* ABA 3: PARCELAMENTO */}
         <TabsContent value="parcelamento" className="space-y-4 mt-4">
-          <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+          <div className="flex items-center justify-between p-4 bg-sky-50 rounded-lg border border-sky-200">
             <div>
               <Label className="font-semibold">Permite Parcelamento</Label>
               <p className="text-xs text-slate-500">Habilitar pagamento em múltiplas parcelas</p>
@@ -507,8 +512,8 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
               )}
 
               {formData.tipo !== 'Cartão Crédito' && (
-                <Alert className="border-purple-300 bg-purple-50">
-                  <AlertDescription className="text-xs text-purple-900">
+                <Alert className="border-sky-300 bg-sky-50">
+                  <AlertDescription className="text-xs text-sky-900">
                     <strong>Exemplo:</strong> Valor de R$ 1.200,00 em {formData.maximo_parcelas}x = 
                     {formData.maximo_parcelas > 0 ? ` ${formData.maximo_parcelas}x de R$ ${(1200 / formData.maximo_parcelas).toFixed(2)}` : ' -'}
                     {formData.taxa_por_parcela > 0 && ` + ${formData.taxa_por_parcela}% taxa/parcela`}
@@ -522,10 +527,10 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
         {/* ABA 4: CONFIGURAÇÕES */}
         <TabsContent value="config" className="space-y-4 mt-4">
           {/* ESCOPO MULTIEMPRESA */}
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="border-sky-200 bg-sky-50">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Building2 className="w-4 h-4 text-purple-600" />
+                <Building2 className="w-4 h-4 text-sky-600" />
                 <Label className="font-semibold">Escopo Multiempresa</Label>
               </div>
               <p className="text-xs text-slate-600 mb-3">
@@ -688,7 +693,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
                     </Badge>
                   )}
                   {formData.permite_parcelamento && (
-                    <Badge className="bg-purple-100 text-purple-700 text-xs">
+                    <Badge className="bg-sky-100 text-sky-700 text-xs">
                       Até {formData.maximo_parcelas}x
                     </Badge>
                   )}

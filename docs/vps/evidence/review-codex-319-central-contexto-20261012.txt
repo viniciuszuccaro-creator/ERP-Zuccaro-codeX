@@ -1,0 +1,9 @@
+REVISÃO #319 — tip 5568e3a9 (Comercial 360 contexto estável Central)
+UTC: 2026-10-12T14:05Z
+base: tip #318 7af84751 (preflight)
+CI: SUCCESS frontend/backend · MERGEABLE
+files: clienteCentral360Service.ts · runtime-onda3 · runtime40 · docs
+Achado: captura contexto/paginação antes awaits (Grupo/Empresa/ator estáveis)
+Cursor: SEM PORTE — serviço backend C360; UI panel reservado intocado
+Body Codex: "Nenhuma UI/store/policy reservada Cursor modificada"
+Candidata owner atualizada: tip #319 5568e3a9 (stack #318+#317+#313–316)

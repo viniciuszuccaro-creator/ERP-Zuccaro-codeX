@@ -1,0 +1,26 @@
+# Evidência sanitizada — tip 346192e4 implantado (CRM legado C360 + Contratos ID)
+# utc=2026-10-10T16:40Z
+#
+# tip=346192e4 docs: tip 21a63549 CI SUCCESS e Contratos ID na matriz
+# codigo_crm=21a63549 feat C360 adaptador CRM legado opção B
+# codigo_contratos=c1e70cfa fix Contratos lista ID técnico
+# asset=index-BvhNui57.js
+# rollback=pre-spa-login-20261010-163939
+# script=spa-login-rebuild CONFIRM=YES GIT_REF=origin/cursor/cadastros-recuperacao-c360-contrato-392b
+# backup_sql=prévio pre-gate-e-20261010-144428.sql (SPA-only; sem migration neste tip)
+#
+# CI tip 21a63549: erp-runtime-ci SUCCESS (38068118516 / 38068115361)
+# CI tip 346192e4: erp-runtime-ci SUCCESS (38068372518 / 38068369460)
+#
+# Bundle markers: CRM_CANONICAL_HTTP_PENDING · id-tecnico-contrato ·
+#   codigo-registro-fornecedor · isSelfManagedCadastro · oportunidades
+#
+# Homolog tipado OWNER (este SHA) fail_count=0:
+#   login tipado · Clientes V24 abrir/campo/salvar/reabrir · launchpads Comercial/Financeiro/Fiscal PASS
+#   screenshot: /opt/cursor/artifacts/screenshots/pw-homolog-261-tip-346192e4.png
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-346192e4.json
+#
+# Usuário restrito: BLOCKED (sem ERP_DEV_LOGIN_RESTRICTED_* no Environment)
+# Recuperado legado: NÃO (#211) · SYNTH≠recuperado
+# main: baba91a6 · #261 ainda não mesclada · #264 ancestral na #261 (861513cd)
+# Não atribuir homolog de f22d1151 a este tip.

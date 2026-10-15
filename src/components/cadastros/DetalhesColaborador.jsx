@@ -238,12 +238,12 @@ export default function DetalhesColaborador({ colaborador, onClose, windowMode =
             {/* ABA 1: HISTÓRICO */}
             <TabsContent value="historico" className="space-y-6">
               {/* IA - Análise de Desempenho */}
-              <Card className="border-l-4 border-l-purple-500 bg-purple-50">
+              <Card className="border-l-4 border-l-sky-500 bg-sky-50">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <TrendingUp className="w-5 h-5 text-purple-600 mt-1" />
+                    <TrendingUp className="w-5 h-5 text-sky-600 mt-1" />
                     <div>
-                      <h4 className="font-semibold text-purple-900">Análise Inteligente</h4>
+                      <h4 className="font-semibold text-sky-900">Análise Inteligente</h4>
                       <p className={`text-sm mt-1 ${analiseDesempenho.cor}`}>
                         {analiseDesempenho.mensagem}
                       </p>

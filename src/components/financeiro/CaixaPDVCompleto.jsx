@@ -189,7 +189,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
   const abrirCaixa = useMutation({
     mutationFn: async (saldo) => {
-      if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para abrir caixa.");
+      if (controlesDesabilitados) throw new Error("Sem contexto ou permissão para abrir caixa.");
       await createInContext('CaixaMovimento', {
         ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
         ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
@@ -430,7 +430,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
   const fecharCaixa = useMutation({
     mutationFn: async () => {
-      if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para fechar caixa.");
+      if (controlesDesabilitados) throw new Error("Sem contexto ou permissão para fechar caixa.");
       await createInContext('CaixaMovimento', {
         ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
         ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),

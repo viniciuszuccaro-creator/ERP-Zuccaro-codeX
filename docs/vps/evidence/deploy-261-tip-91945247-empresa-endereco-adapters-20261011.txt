@@ -1,0 +1,17 @@
+# Evidência sanitizada — tip 91945247 implantado+homolog
+# utc=2026-10-11T12:07Z
+#
+# tip=91945247 (HEAD) inclui:
+#   ffdb86d9 TabelaPrecoForm→Completo
+#   535a1fc0 EmpresaForm endereço/CEP
+#   4adb7e21 FormaPagamento adapter + idOnly Bloco3–6 + C360
+# asset=index-BFDYWtUK.js
+# rollback=pre-spa-login-20261011-120701
+# MERGE_SHA8=91945247 · STAMP=20261011-120701
+#
+# CI tip: SUCCESS
+# Homolog OWNER tipado fail_count=0
+#   report: /opt/cursor/artifacts/pw-homolog-261-tip-91945247.json
+#
+# #280 Codex tip a76335b7: Marca atômica — sem porte
+# Usuário restrito: BLOCKED · secret ERP_DEV_LOGIN_RESTRICTED_*

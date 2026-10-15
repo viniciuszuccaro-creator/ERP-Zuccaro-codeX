@@ -41,7 +41,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
 
   const toggleAtivaMutation = useMutation({
     mutationFn: async ({ id, ativa }) => {
-      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para alterar.");
+      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissão para alterar.");
       await updateInContext('ConfiguracaoDespesaRecorrente', id, { ativa: !ativa });
     },
     onSuccess: () => {
@@ -52,7 +52,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
-      if (!podeExcluir) throw new Error("Sem permissÃ£o para excluir.");
+      if (!podeExcluir) throw new Error("Sem permissão para excluir.");
       return deleteInContext('ConfiguracaoDespesaRecorrente', id);
     },
     onSuccess: () => {
@@ -106,7 +106,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Repeat className="w-5 h-5 text-purple-600" />
+              <Repeat className="w-5 h-5 text-sky-600" />
               Despesas Recorrentes
             </CardTitle>
             <div className="flex gap-2">
@@ -121,7 +121,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                   windowMode: true,
                   onSubmit: async (data) => {
                     try {
-                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissÃ£o para criar.");
+                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissão para criar.");
                       await createInContext('ConfiguracaoDespesaRecorrente', data);
                       queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
                       toast({ title: "✅ Configuração criada!" });
@@ -132,10 +132,11 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                 }, {
                   title: '🔄 Nova Despesa Recorrente',
                   width: 900,
-                  height: 650
+                  height: 650,
+                  uniqueKey: 'Cadastros.ConfiguracaoDespesaRecorrente.gestor-novo',
                 })}
                 disabled={!contextoValido || !podeCriar}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-600 hover:bg-sky-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Configuração
@@ -188,7 +189,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         title={config.ativa ? "Desativar" : "Ativar"}
                       >
                         {config.ativa ? (
-                          <Pause className="w-4 h-4 text-orange-600" />
+                          <Pause className="w-4 h-4 text-sky-600" />
                         ) : (
                           <Play className="w-4 h-4 text-green-600" />
                         )}
@@ -198,10 +199,12 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         size="icon"
                         onClick={() => openWindow(ConfiguracaoDespesaRecorrenteForm, {
                           config,
+                          item: config,
+                          initialData: config,
                           windowMode: true,
                           onSubmit: async (data) => {
                             try {
-                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para editar.");
+                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissão para editar.");
                               await updateInContext('ConfiguracaoDespesaRecorrente', config.id, data);
                               queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
                               toast({ title: "✅ Configuração atualizada!" });
@@ -212,12 +215,13 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         }, {
                           title: `✏️ Editar: ${config.descricao}`,
                           width: 900,
-                          height: 650
+                          height: 650,
+                          uniqueKey: `Cadastros.ConfiguracaoDespesaRecorrente.gestor-${config.id}`,
                         })}
                         disabled={!contextoValido || !podeEditar}
                         title="Editar"
                       >
-                        <Edit2 className="w-4 h-4 text-blue-600" />
+                        <Edit2 className="w-4 h-4 text-sky-600" />
                       </Button>
                       <Button
                         variant="ghost"

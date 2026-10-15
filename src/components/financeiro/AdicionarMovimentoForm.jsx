@@ -38,8 +38,8 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
   const handleAdicionarMovimento = async () => {
     if (!contextoValido || !podeRegistrarMovimento) {
       toast({
-        title: "AÃ§Ã£o bloqueada",
-        description: "Selecione um grupo/empresa e confirme sua permissÃ£o para movimentar caixa.",
+        title: "Ação bloqueada",
+        description: "Selecione um grupo/empresa e confirme sua permissão para movimentar caixa.",
         variant: "destructive"
       });
       return;

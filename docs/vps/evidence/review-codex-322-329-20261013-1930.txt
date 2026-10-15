@@ -1,0 +1,43 @@
+CURSOR revisão Codex autônomo — gap 2026-10-13T06:34Z → 19:30Z
+================================================================
+
+Contexto
+- Timer revisao-codex-autonomo após gap longo (sem tip delta desde 15:17Z em #319–#321).
+- #261 tip: 6908f74e (cursor/cadastros-recuperacao-c360-contrato-392b)
+- main: baba91a6
+- agents RUNNING: 0
+
+Tips estáveis anteriores
+- #319 5568e3a9 Comercial 360 contexto Central
+- #320 b16011b6 Expedição quantidades parciais
+- #321 037985cd PIM projeção catálogo
+
+Novas PRs abertas (todas CI frontend+backend SUCCESS no tip)
+----------------------------------------------------------------
+#322 e884376e docs(legado) pilotos isolados — base legado · SEM PORTE
+#323 2de492d7 preço Produto empresa irmã — server tabelaPreco · SEM PORTE
+#324 b0865363 preço unidade revogada — server · SEM PORTE (empilha #323)
+#325 834a50b3 proveniência preço Orçamento/Pedido — orcamentoService+pedidoService RESERVADOS · SEM PORTE
+#326 5ff621cc Central valor desconhecido≠zero — CentralCliente360Panel RESERVADO · SEM PORTE
+#327 14be3f96 Pedido detalhe/histórico late-response — PedidoCanonicoPanel stack · SEM PORTE
+#328 eaa11d2b Pedido criação idempotente + mig 044 — pedidoService RESERVADO · SEM PORTE
+#329 6c274051 abrir Pedido canônico pela Central — CentralCliente360Panel RESERVADO · SEM PORTE
+
+Candidata C360 tip
+- Antes: #319 5568e3a9
+- Agora (stack tip): #329 6c274051
+
+Gate Cursor / porte
+- Nenhum PR pediu porte independente de correção UI para #261.
+- #322 sem aprovação Cursor (docs Legado).
+- #323–#329 explicitam não alterar branch Cursor #261 / sem VPS.
+
+Riscos Regra-Mãe
+- #329: composição #320 Expedição × #328 gera 38 conflitos — integração manual staging.
+- Migrations 025–037 e 038–044 não aplicadas em banco operacional.
+- Não portar TX server nem tocar reservados sem coordenação owner.
+
+Decisão
+- PORTE: nenhum
+- HANDOFF/STATUS atualizados
+- Timer mantido

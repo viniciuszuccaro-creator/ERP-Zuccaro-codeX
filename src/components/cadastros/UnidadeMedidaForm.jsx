@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Ruler } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
@@ -57,6 +58,12 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo}
+        action="codigo-registro-unidade-medida"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Sigla *</Label>
@@ -172,9 +179,9 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
       <Button
         type="submit"
-        className="w-full bg-indigo-600 hover:bg-indigo-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
-        data-permission="Cadastros.UnidadeMedida.salvar"
+        data-permission={dadosIniciais?.id ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
         data-action="salvar-unidade-medida"
         data-sensitive="true"
       >
@@ -186,8 +193,8 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
-          <Ruler className="w-6 h-6 text-indigo-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Ruler className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Unidade' : 'Nova Unidade de Medida'}
           </h2>

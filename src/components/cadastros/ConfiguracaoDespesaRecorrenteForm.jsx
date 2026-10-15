@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Repeat, DollarSign, Calendar, Bell, Users } from "lucide-react";
 import { toast } from "sonner";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode = false, onSubmit }) {
-  const [formData, setFormData] = useState(config || {
+export default function ConfiguracaoDespesaRecorrenteForm({ config, item, data, initialData, defaultValues, windowMode = false, onSubmit }) {
+  const registro = item || data || initialData || defaultValues || config;
+  const [formData, setFormData] = useState(registro || {
     tipo_despesa_id: "",
     tipo_despesa_nome: "",
     descricao: "",
@@ -49,6 +51,15 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
     empresa_id: "",
     origem: "empresa"
   });
+
+  const prevIdRef = useRef(registro?.id);
+  useEffect(() => {
+    if (registro?.id && registro.id !== prevIdRef.current) {
+      prevIdRef.current = registro.id;
+      setFormData({ ...(registro || {}) });
+    }
+  }, [registro?.id]);
+
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
@@ -128,6 +139,12 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
   return (
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(registro?.id)}
+        entityId={registro?.id}
+        action="id-tecnico-despesa-recorrente"
+      />
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
@@ -574,7 +591,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
         <div className={windowMode ? "border-t bg-slate-50 p-4" : "mt-6"}>
           <div className="flex justify-end gap-3">
-            <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700">
               <Repeat className="w-4 h-4 mr-2" />
               {config ? 'Atualizar Configuração' : 'Criar Configuração'}
             </Button>

@@ -1,0 +1,21 @@
+# Evidência sanitizada — ensaio consumidor legado #211 (sem import ops)
+# utc=2026-10-09
+
+stage_privado=/root/erp-private/legacy-stage-20261009T115402Z
+staging_records=20456
+  clientes=18458 fornecedores=790 produtos=1208
+import_authorized_1=0
+target_empresa_id_vazio=20456
+quarantine_records=4722
+contratoEntrada_em_disco=AUSENTE
+crosswalkEmpresas_em_disco=AUSENTE
+
+consumidor_repo=scripts/legado/consumir-lote-staging.mjs
+gate=sem contrato → quarentena (contrato_entrada_ausente); tip d9a72802+
+testes_docker_node22=legado-consumir-lote-staging + legado-mapear-sintetico → 15/15 PASS
+ensaio_postgres_isolado=pendente Codex Legado (deps/dedup/idempotência já cobertos em testes sintéticos)
+importado_operacional=NÃO
+preservar_auxiliares_erp_novo=SIM (não sobrescrever)
+diff_reversao=não aplicar carga sem authorized+crosswalk+contrato
+
+coordenacao=Codex Legado valida lotes reais em staging privado; Cursor não importa.

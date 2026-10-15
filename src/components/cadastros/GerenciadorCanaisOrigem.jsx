@@ -84,7 +84,8 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
   const CORES_BADGE = {
     blue: 'bg-blue-100 text-blue-700 border-blue-300',
     green: 'bg-green-100 text-green-700 border-green-300',
-    purple: 'bg-purple-100 text-purple-700 border-purple-300',
+    purple: 'bg-sky-100 text-sky-700 border-sky-300',
+    sky: 'bg-sky-100 text-sky-700 border-sky-300',
     orange: 'bg-orange-100 text-orange-700 border-orange-300',
     red: 'bg-red-100 text-red-700 border-red-300',
     yellow: 'bg-yellow-100 text-yellow-700 border-yellow-300',
@@ -141,11 +142,11 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Automáticos</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-sky-600">
                   {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
                 </p>
               </div>
-              <Bolt className="w-8 h-8 text-purple-600 opacity-20" />
+              <Bolt className="w-8 h-8 text-sky-600 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -291,10 +292,10 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
       </div>
 
       {/* Insights IA sobre Configuração */}
-      <Card className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+      <Card className="mt-6 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Bolt className="w-5 h-5 text-purple-600" />
+            <Bolt className="w-5 h-5 text-sky-600" />
             🤖 Insights Inteligentes de Configuração
           </CardTitle>
         </CardHeader>

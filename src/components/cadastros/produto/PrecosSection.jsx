@@ -48,10 +48,10 @@ export default function PrecosSection({ formData, setFormData }) {
   return (
     <Card className="border-green-200 bg-green-50">
       <CardContent className="p-4 space-y-4">
-        <h3 className="font-bold text-green-900">ðŸ’° PrecificaÃ§Ã£o</h3>
+        <h3 className="font-bold text-green-900">Precificação</h3>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label>Custo AquisiÃ§Ã£o</Label>
+            <Label>Custo Aquisição</Label>
             <Input
               type="number"
               step="0.01"
@@ -64,7 +64,7 @@ export default function PrecosSection({ formData, setFormData }) {
             />
           </div>
           <div>
-            <Label>PreÃ§o Venda</Label>
+            <Label>Preço Venda</Label>
             <Input
               type="number"
               step="0.01"
@@ -88,7 +88,7 @@ export default function PrecosSection({ formData, setFormData }) {
             />
           </div>
           <div>
-            <Label>Margem MÃ­nima (%)</Label>
+            <Label>Margem Mínima (%)</Label>
             <Input
               type="number"
               step="0.01"
@@ -99,7 +99,7 @@ export default function PrecosSection({ formData, setFormData }) {
               data-action="editar-margem-minima-produto"
               data-sensitive
             />
-            <p className="text-xs text-slate-500 mt-1">Usada na aprovaÃ§Ã£o de descontos</p>
+            <p className="text-xs text-slate-500 mt-1">Usada na aprovação de descontos</p>
           </div>
         </div>
         <div className="flex justify-end pt-2">
@@ -111,7 +111,7 @@ export default function PrecosSection({ formData, setFormData }) {
             data-action="otimizar-preco-produto"
             data-sensitive
           >
-            {optimizing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Otimizando...</>) : 'Otimizar PreÃ§o (PolÃ­ticas)'}
+            {optimizing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Otimizando...</>) : 'Otimizar Preço (Políticas)'}
           </Button>
         </div>
       </CardContent>

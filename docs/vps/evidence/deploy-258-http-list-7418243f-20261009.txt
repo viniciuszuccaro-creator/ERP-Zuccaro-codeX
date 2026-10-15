@@ -1,0 +1,11 @@
+# Evidência sanitizada — deploy tip #258 lista HTTP Cadastros
+# utc=2026-10-09T14:37Z
+# tip=7418243f (branch cursor/homolog-254-cadfin-360-legado-392b)
+# implantado=7418243f erp-dev spa-login-rebuild
+# spa_asset=index-Bc213K00.js
+# flag=VITE_ERP_HTTP_CLIENTE_360=true
+# rollback=erp-zuccaro-erp-api:pre-spa-login-20261009-143634 / erp-zuccaro-erp-web:pre-spa-login-20261009-143634
+# health=200 ready=200
+# SPA_LOGIN_REBUILD_OK
+# auth_mode=supabase_user · browser_login=True
+# ≠ tip main baba91a6 anterior

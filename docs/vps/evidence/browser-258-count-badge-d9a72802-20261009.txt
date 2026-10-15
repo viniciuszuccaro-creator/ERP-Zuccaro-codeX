@@ -1,0 +1,31 @@
+# Evidência sanitizada — homolog tip implantado d9a72802 (badge HTTP)
+# utc=2026-10-09T16:07Z
+#
+# Fases:
+# - implementado: countEntities batch→HTTP piloto
+# - implantado: d9a72802 · asset index-okyVzZdT.js · rollback pre-spa-login-20261009-155123
+# - homologado: abaixo (Playwright headless; tip = d9a72802 apenas)
+# - importado: NÃO (#211 staging authorized=0)
+#
+# asset=PASS index-okyVzZdT.js
+# login=PASS
+# switch CPA/3Z=FAIL (opts missing nesta corrida — #254 reservado Codex)
+# hub tile Clientes badge=5 (texto "Clientes / 5 / Abrir")
+# hub bloco1 total=5
+# Visualizador badge Clientes:=5
+# Visualizador rows=5
+# API GET /api/v1/clientes n=5 status=200
+# net count limit=500 n=5 (bridge batch) · list limit=20/100 n=5
+# badge_ok=true · list_ok=true
+# cliente_edit_open=ver corrida dedicada (rs/nf)
+#
+# Regressão corrigida: tip anterior podia mostrar badge 0 com API n>0
+# (countEntities só single-entity no híbrido).
+#
+# ops DB: clientes=6 produtos=4 empresas=3 auxiliares OK · fornecedores tabela ausente
+# staging #211: 20456 records · authorized=0 · sem contrato/crosswalk · importado=NÃO
+# legado testes (docker node): consumir-lote + mapear = 15/15 PASS
+#
+# screenshots:
+#   /opt/cursor/artifacts/screenshots/pw-258-badge-final-d9a72802.png
+#   /opt/cursor/artifacts/screenshots/pw-258-edit-open-d9a72802.png

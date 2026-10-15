@@ -107,6 +107,7 @@ export class PedidoService {
           orcamento_id: quote.id,
           cliente_empresa_id: quote.cliente_empresa_id,
           condicao_pagamento_id: quote.condicao_pagamento_id,
+          tabela_preco_id: parsed.data.tabela_preco_id ?? quote.tabela_preco_id ?? undefined,
           observacoes: parsed.data.observacoes ?? quote.observacoes ?? undefined,
           itens: quote.itens.map((item) => ({
             produto_id: item.produto_id,

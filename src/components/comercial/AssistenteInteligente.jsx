@@ -204,7 +204,7 @@ export default function AssistenteInteligente({ pedido, cliente }) {
         );
       })}
 
-      <Badge className="bg-purple-600 text-white w-full flex items-center justify-center gap-2 px-4 py-3 shadow-lg">
+      <Badge className="bg-sky-600 text-white w-full flex items-center justify-center gap-2 px-4 py-3 shadow-lg">
         <Brain className="w-4 h-4 animate-pulse" />
         Assistente IA Ativo • {sugestoes.length} sugestão(ões)
       </Badge>

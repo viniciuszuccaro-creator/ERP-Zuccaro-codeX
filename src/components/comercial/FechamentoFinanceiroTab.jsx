@@ -82,17 +82,17 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
     <div className="w-full h-full space-y-6" role="region" aria-label="Fechamento Financeiro do Pedido">
       {/* V21.1: Barra de Progresso do Faturamento */}
       {etapas.length > 0 && (
-        <Card className="border-2 border-purple-300 bg-purple-50">
+        <Card className="border-2 border-sky-300 bg-sky-50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-purple-600" />
+              <Receipt className="w-5 h-5 text-sky-600" />
               Progresso de Faturamento por Etapas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-slate-700">Valor Faturado</span>
-              <span className="font-bold text-purple-900">
+              <span className="font-bold text-sky-900">
                 R$ {valorFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -101,7 +101,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               <span className="text-slate-600">
                 {etapas.filter(e => e.faturada).length} de {etapas.length} etapa(s) faturada(s)
               </span>
-              <span className="font-bold text-purple-600">
+              <span className="font-bold text-sky-600">
                 {percentualFaturado.toFixed(1)}%
               </span>
             </div>
@@ -127,7 +127,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             {/* V21.1: Botao Emitir NF-e com Escopo */}
             <Button
               onClick={abrirModalNFe}
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-sky-600 hover:bg-sky-700"
               size="lg"
               disabled={!contextoValido || !empresaId || !canEmitirNFe}
               data-action="Fiscal.NotaFiscal.emitir"
@@ -275,7 +275,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-600" />
+            <FileText className="w-5 h-5 text-sky-600" />
             Informações Fiscais (NF-e)
           </CardTitle>
         </CardHeader>

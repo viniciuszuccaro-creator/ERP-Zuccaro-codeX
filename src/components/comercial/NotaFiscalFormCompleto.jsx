@@ -22,6 +22,9 @@ import TributosTab from "@/components/comercial/nota-fiscal/TributosTab";
 import TransporteTab from "@/components/comercial/nota-fiscal/TransporteTab";
 import { base44 } from "@/api/base44Client";
 import FormWrapper from "@/components/common/FormWrapper";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * FORMULÁRIO COMPLETO DE NOTA FISCAL V21.2
@@ -29,6 +32,7 @@ import FormWrapper from "@/components/common/FormWrapper";
  * 
  * Modo Window: w-full h-full responsivo
  * Suporta multiempresa, IA fiscal, validações
+ * Emissão NF somente com empresa jurídica no contexto (nunca pelo Grupo genérico).
  */
 export default function NotaFiscalFormCompleto({ 
   notaFiscal, 
@@ -37,6 +41,15 @@ export default function NotaFiscalFormCompleto({
   onSubmit,
   onCancel 
 }) {
+  const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || notaFiscal?.group_id || pedido?.group_id || null;
+  const empresaFaturamentoId = empresaAtual?.id || notaFiscal?.empresa_faturamento_id || pedido?.empresa_id || null;
+  const contextoEmpresaValido = Boolean(empresaFaturamentoId);
+  const podeCriar = canCreate("Fiscal", "NotaFiscal") || canCreate("Comercial", "NotaFiscal") || canCreate("Fiscal", null);
+  const podeEditar = canEdit("Fiscal", "NotaFiscal") || canEdit("Comercial", "NotaFiscal") || canEdit("Fiscal", null);
+  const podeSalvar = notaFiscal?.id ? podeEditar : podeCriar;
+
   const [formData, setFormData] = useState({
     tipo: "NF-e (Saída)",
     numero: "",
@@ -48,8 +61,8 @@ export default function NotaFiscalFormCompleto({
     cliente_cpf_cnpj: "",
     pedido_id: "",
     numero_pedido: "",
-    empresa_faturamento_id: "",
-    group_id: "",
+    empresa_faturamento_id: empresaFaturamentoId || "",
+    group_id: groupId || "",
     data_emissao: new Date().toISOString().split('T')[0],
     data_saida: new Date().toISOString().split('T')[0],
     hora_emissao: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -172,14 +185,27 @@ export default function NotaFiscalFormCompleto({
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
-    
+
+    if (!contextoEmpresaValido) {
+      toast.error("Emissão de NF exige empresa jurídica selecionada (não pelo Grupo genérico).");
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error(notaFiscal?.id ? "Sem permissão para editar NF." : "Sem permissão para criar NF.");
+      return;
+    }
     if (!formData.numero || !formData.cliente_fornecedor) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
 
     if (onSubmit) {
-      await onSubmit(formData);
+      await onSubmit({
+        ...formData,
+        group_id: groupId || formData.group_id,
+        empresa_faturamento_id: empresaFaturamentoId || formData.empresa_faturamento_id,
+        empresa_id: empresaFaturamentoId || formData.empresa_id,
+      });
     }
   };
 
@@ -191,6 +217,21 @@ export default function NotaFiscalFormCompleto({
     <div className={containerClass}>
       <div className={contentClass}>
         <FormWrapper schema={schema} withContext onSubmit={(values) => onSubmit && onSubmit(values)} externalData={formData} className="space-y-6">
+          <CadastroCodigoRegistroField
+            idOnly
+            hasId={Boolean(notaFiscal?.id)}
+            entityId={notaFiscal?.id}
+            action="id-tecnico-nota-fiscal"
+          />
+          {!contextoEmpresaValido && (
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertCircle className="w-4 h-4 text-amber-700" />
+              <AlertDescription className="text-sm text-amber-900">
+                Selecione a empresa de faturamento. NF não pode ser emitida pela identidade genérica do Grupo.
+                {contexto === "grupo" ? " Use a empresa jurídica responsável." : ""}
+              </AlertDescription>
+            </Alert>
+          )}
           {/* VALIDAÇÃO IA */}
           {validacaoIA && (
             <Alert className={validacaoIA.valido ? "border-green-300 bg-green-50" : "border-orange-300 bg-orange-50"}>

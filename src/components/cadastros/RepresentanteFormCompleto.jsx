@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,6 +29,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
@@ -68,6 +70,7 @@ export default function RepresentanteFormCompleto({ representante: representante
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || representante?.group_id || null;
+  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = Boolean(empresaAtual?.id || groupId || representante?.empresa_id || representante?.group_id);
   const podeCriar = canCreate("Cadastros", "Representante") || canCreate("Cadastros", null);
@@ -167,8 +170,10 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: !!representante?.id && contextoValido
   });
 
+  const prevIdRef = useRef(representante?.id);
   useEffect(() => {
-    if (representante) {
+    if (representante?.id && representante.id !== prevIdRef.current) {
+      prevIdRef.current = representante.id;
       setFormData({
         ...representante,
         endereco: representante.endereco || {},
@@ -180,6 +185,7 @@ export default function RepresentanteFormCompleto({ representante: representante
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      assertFormScopeCurrent();
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o representante.");
       }
@@ -193,6 +199,7 @@ export default function RepresentanteFormCompleto({ representante: representante
       return createInContext('Representante', payload);
     },
     onSuccess: (_result, savedPayload) => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: `✅ Representante ${representante?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
@@ -200,17 +207,20 @@ export default function RepresentanteFormCompleto({ representante: representante
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
+      if (!isFormScopeCurrent()) return;
       toast({ title: "❌ Erro ao salvar", description: error.message, variant: "destructive" });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => {
+      assertFormScopeCurrent();
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir representantes.");
       if (!podeExcluir) throw new Error("Seu perfil nao permite excluir representantes.");
       return deleteInContext('Representante', id);
     },
     onSuccess: () => {
+      if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: "✅ Representante excluído!" });
       if (onSuccess) onSuccess();
@@ -218,8 +228,14 @@ export default function RepresentanteFormCompleto({ representante: representante
     }
   });
 
-  const handleSave = () => saveMutation.mutate(buildPayload(formData));
+  const handleSave = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    saveMutation.mutate(buildPayload(formData));
+  };
   const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
       deleteMutation.mutate(representante.id);
     }
@@ -287,7 +303,7 @@ export default function RepresentanteFormCompleto({ representante: representante
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="w-6 h-6 text-purple-600" />
+              <Users className="w-6 h-6 text-sky-600" />
               {representante?.id ? 'Editar Representante' : 'Novo Representante'}
             </h2>
             {representante?.id && (
@@ -336,7 +352,7 @@ export default function RepresentanteFormCompleto({ representante: representante
               disabled={saveMutation.isPending || !contextoValido || (representante?.id ? !podeEditar : !podeCriar)}
               data-permission="Cadastros.Representante.salvar"
               data-sensitive
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-sky-600 hover:bg-sky-700"
             >
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
@@ -357,6 +373,12 @@ export default function RepresentanteFormCompleto({ representante: representante
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
+              <CadastroCodigoRegistroField
+                hasId={Boolean(representante?.id)}
+                entityId={representante?.id}
+                value={formData.codigo ?? representante?.codigo}
+                action="codigo-registro-representante-completo"
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Tipo de Pessoa *</Label>
@@ -498,7 +520,7 @@ export default function RepresentanteFormCompleto({ representante: representante
                         <Badge
                           key={regiao.id}
                           variant={selecionada ? "default" : "outline"}
-                          className={`cursor-pointer ${selecionada ? 'bg-purple-600' : ''}`}
+                          className={`cursor-pointer ${selecionada ? 'bg-sky-600' : ''}`}
                           onClick={() => {
                             const atual = formData.regioes_atendimento || [];
                             setFormData({
@@ -590,28 +612,28 @@ export default function RepresentanteFormCompleto({ representante: representante
                 </div>
 
                 <div className="col-span-2">
-                  <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                  <Card className="bg-gradient-to-r from-sky-50 to-sky-100 border-sky-200">
                     <CardContent className="p-4">
-                      <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                      <h4 className="font-semibold text-sky-900 mb-2 flex items-center gap-2">
                         <Award className="w-4 h-4" />
                         Simulação de Comissão
                       </h4>
                       <div className="grid grid-cols-3 gap-4 text-center">
                         <div>
                           <p className="text-xs text-slate-600">Venda de R$ 10.000</p>
-                          <p className="text-lg font-bold text-purple-600">
+                          <p className="text-lg font-bold text-sky-600">
                             R$ {((10000 * (formData.percentual_comissao || 0) / 100) + (formData.valor_fixo_comissao || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-slate-600">Venda de R$ 50.000</p>
-                          <p className="text-lg font-bold text-purple-600">
+                          <p className="text-lg font-bold text-sky-600">
                             R$ {((50000 * (formData.percentual_comissao || 0) / 100) + (formData.valor_fixo_comissao || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-slate-600">Venda de R$ 100.000</p>
-                          <p className="text-lg font-bold text-purple-600">
+                          <p className="text-lg font-bold text-sky-600">
                             R$ {((100000 * (formData.percentual_comissao || 0) / 100) + (formData.valor_fixo_comissao || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
                         </div>
@@ -717,12 +739,12 @@ export default function RepresentanteFormCompleto({ representante: representante
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-purple-600" />
+                      <DollarSign className="w-4 h-4 text-sky-600" />
                       Comissão Gerada
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-purple-600">
+                    <p className="text-2xl font-bold text-sky-600">
                       R$ {totais.totalComissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </CardContent>
@@ -743,7 +765,7 @@ export default function RepresentanteFormCompleto({ representante: representante
                         </div>
                         <div>
                           <p className="text-slate-600">Total Comissão Gerada:</p>
-                          <p className="font-bold text-purple-600">R$ {(formData.total_comissao_gerada || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className="font-bold text-sky-600">R$ {(formData.total_comissao_gerada || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                         <div>
                           <p className="text-slate-600">Comissão Paga:</p>
@@ -813,3 +835,6 @@ export default function RepresentanteFormCompleto({ representante: representante
     </Dialog>
   );
 }
+
+RepresentanteFormCompleto.displayName = 'RepresentanteFormCompleto';
+RepresentanteFormCompleto.isSelfManagedCadastro = true;

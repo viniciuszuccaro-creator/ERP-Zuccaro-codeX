@@ -1,0 +1,37 @@
+CURSOR revisão Codex autônomo — 2026-10-15T18:45Z
+==================================================
+
+Contexto
+- Gap desde revisão #322–#329 (19:30Z 13/out) + tick parcial 02:30Z 14/out sem docs.
+- #261 tip: 016cf9d8
+- main: baba91a6
+- agents RUNNING: 0
+
+Duas stacks Codex (paralelas; não unificadas)
+--------------------------------------------
+A) Comercial 360 / Central
+  #329 6c274051 → #331 b3a683bb (tip)
+  #331: abertura segura Central (pending/retry/ticket) — toca CentralCliente360Panel
+  CI SUCCESS · draft · sem alteração branch Cursor · SEM PORTE (reservado)
+
+B) Expedição
+  #320 b16011b6 → #330 d5443639 → #332 bf6c0068 → #333 1ba4c4d2 (tip)
+  #330: testes rollback/compensação 2º item (só tests)
+  #332: conferência por identidade item_id (expedicaoService + SeparacaoConferencia)
+  #333: compose migrations 001–044 PGlite/PG + CI workflow
+  CI SUCCESS · drafts · SEM PORTE
+
+Outros
+- #322 tip atualizado e884376e → ba0efc2d (docs Legado) · SEM PORTE
+- #319–#321/#323–#328 tips estáveis
+
+Riscos Regra-Mãe
+- #333: merge-tree #331×#332 = 38 conflitos (contratos/UI/RBAC/legado)
+- Cherry-pick experimental Central abortado (não commitar estrutura CRM/sessão #331)
+- Migrations 025–044 não aplicadas em banco operacional
+- Nenhum PR pediu porte independente de correção UI para #261
+
+Decisão
+- PORTE: nenhum
+- HANDOFF/STATUS atualizados
+- Timer mantido

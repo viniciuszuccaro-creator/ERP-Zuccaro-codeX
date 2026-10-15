@@ -15,6 +15,7 @@ import type {
   TabelaPrecoItemUpdate,
   TabelaPrecoUpdate,
 } from './tabelaPrecoTypes.js';
+import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 
 function iso(value: unknown): string | null {
   if (value == null) return null;
@@ -197,10 +198,14 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
     executor?: DbQueryExecutor,
   ) {
     const db = this.exec(executor);
-    const codigo = await db.query<{ codigo: string }>(
-      'SELECT reserve_entity_codigo($1, $2, 6) AS codigo',
-      [scope.groupId, 'TabelaPreco'],
-    );
+    const codigo = await reserveEntityCodigo({
+      db,
+      groupId: scope.groupId,
+      entityName: 'TabelaPreco',
+      table: 'tabelas_preco',
+      width: 6,
+      incomingCodigo: data.codigo,
+    });
     const inserted = await db.query(
       `INSERT INTO tabelas_preco (
          group_id, empresa_id, codigo, nome, descricao, moeda,
@@ -214,7 +219,7 @@ export class PostgresTabelaPrecoRepository implements TabelaPrecoRepository {
       [
         scope.groupId,
         scope.empresaId,
-        codigo.rows[0]?.codigo,
+        codigo,
         data.nome,
         data.descricao ?? null,
         data.vigencia_inicio,

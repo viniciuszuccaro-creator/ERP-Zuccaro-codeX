@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import usePermissions from "@/components/lib/usePermissions";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
@@ -86,17 +87,22 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     enabled: contextoValido,
   });
 
+  const prevIdRef = useRef(dadosIniciaisProps?.id || regiaoId || null);
   useEffect(() => {
-    if (dadosIniciaisProps && (open || windowMode)) {
+    const nextId = dadosIniciaisProps?.id || regiaoId || null;
+    if (dadosIniciaisProps && (open || windowMode) && nextId && nextId !== prevIdRef.current) {
+      prevIdRef.current = nextId;
       setFormData(dadosIniciaisProps);
-    } else if (regiaoId && open && !dadosIniciaisProps) {
+    } else if (regiaoId && open && !dadosIniciaisProps && regiaoId !== prevIdRef.current) {
+      prevIdRef.current = regiaoId;
       base44.entities.RegiaoAtendimento.list().then(regioes => {
         const regiao = regioes.find(r => r.id === regiaoId);
         if (regiao) {
           setFormData(regiao);
         }
       });
-    } else if (!regiaoId && !dadosIniciaisProps && open) {
+    } else if (!regiaoId && !dadosIniciaisProps && open && prevIdRef.current !== null) {
+      prevIdRef.current = null;
       setFormData({
         nome_regiao: "",
         codigo_regiao: "",
@@ -235,7 +241,13 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
 
   const FormContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Tabs defaultValue="geral" className="w-full">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciaisProps?.id || regiaoId)}
+        entityId={dadosIniciaisProps?.id || regiaoId}
+        value={formData.codigo}
+        action="codigo-registro-regiao-atendimento"
+      />
+<Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="geral" data-permission="Cadastros.RegiaoAtendimento.visualizar" data-action="Cadastros.RegiaoAtendimento.tab.geral">
             <MapPin className="w-4 h-4 mr-2" />

@@ -15,7 +15,7 @@ import { useWindow } from '@/components/lib/useWindow';
 import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
 import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
-import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompleto';
+import TabelaPrecoForm from '@/components/cadastros/TabelaPrecoForm';
 
 /**
  * V21.1.2 - DEMO do Sistema de Multitarefas
@@ -62,7 +62,7 @@ export default function DemoMultitarefas() {
       title: 'Abrir Tabela Preço',
       icon: DollarSign,
       color: 'yellow',
-      action: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, {
+      action: () => openWindow(TabelaPrecoForm, { windowMode: true }, {
         title: 'Nova Tabela de Preço',
         width: 1200,
         height: 700

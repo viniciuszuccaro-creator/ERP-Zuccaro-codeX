@@ -186,7 +186,7 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col" : "w-full h-full space-y-4"} data-context-required="true" data-permission="Comercial.PedidoExterno.visualizar">
-      <Card className="border-2 border-indigo-300 bg-indigo-50/40">
+      <Card className="border-2 border-sky-300 bg-sky-50/40">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Validar Pedidos Externos</CardTitle>
         </CardHeader>
