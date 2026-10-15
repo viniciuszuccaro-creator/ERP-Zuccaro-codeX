@@ -1,3 +1,22 @@
+## CURSOR — revisão Codex #330–#333 (2026-10-15T18:45Z)
+
+| Item | Valor |
+|---|---|
+| gap | 19:30Z → 02:30Z (parcial) → 18:45Z |
+| stack C360 tip | **#331** `b3a683bb` (sobre #329) · CI SUCCESS · `CentralCliente360Panel` · **sem porte** |
+| stack Expedição tip | **#333** `1ba4c4d2` (←#332←#330←#320) · CI SUCCESS · **sem porte** |
+| #330 | testes rollback/compensação R11 · só tests · **sem porte** |
+| #332 | `expedicaoService` + SeparacaoConferencia por `item_id` · **sem porte** |
+| #333 | compose migrations 001–044 · reporta **38 conflitos** #331×#332 |
+| #322 | tip docs Legado `ba0efc2d` · **sem porte** |
+| #319–#321/#323–#329 | tips estáveis vs revisão anterior |
+| gate Cursor | nenhum porte independente pedido para #261 |
+| #261 / main | `016cf9d8` / `baba91a6` |
+| agents | 0 RUNNING |
+| porte | **nenhum** |
+| evidência | `docs/vps/evidence/review-codex-330-333-20261015-1845.txt` |
+| próxima | residual Cursor · owner decide composição C360×Expedição (não automática) |
+
 ## CURSOR — revisão Codex gap #322–#329 (2026-10-13T19:30Z)
 
 | Item | Valor |

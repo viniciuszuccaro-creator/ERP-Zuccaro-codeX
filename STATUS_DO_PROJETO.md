@@ -1,3 +1,14 @@
+## CURSOR — revisão Codex #330–#333 (2026-10-15T18:45Z)
+
+| Item | Valor |
+|---|---|
+| C360 tip | **#331** `b3a683bb` |
+| Expedição tip | **#333** `1ba4c4d2` |
+| risco | 38 conflitos #331×#332 — sem merge automático |
+| porte #261 | **nenhum** |
+| agents | 0 RUNNING |
+| próxima | residual Cursor; composição owner |
+
 ## CURSOR — revisão Codex #322–#329 (2026-10-13T19:30Z)
 
 | Item | Valor |
