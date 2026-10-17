@@ -29,6 +29,12 @@ export function mountOportunidadeRoutes(router:Router,service:OportunidadeServic
   router.get('/api/v1/oportunidades/:id',requireTenantScope,run(async(s,req,res)=>{
     res.json({data:await s.get(context(req),req.params.id)});
   }));
+  router.get('/api/v1/oportunidades/:id/historico',requireTenantScope,run(async(s,req,res)=>{
+    const parsed=z.object({limit:z.coerce.number().int().min(1).max(200).optional(),
+      offset:z.coerce.number().int().min(0).max(1000000).optional()}).strict().safeParse(req.query);
+    if(!parsed.success)throw new AppError(422,'VALIDATION_ERROR','Invalid history filters');
+    res.json(await s.history(context(req),req.params.id,parsed.data));
+  }));
   router.post('/api/v1/oportunidades',requireTenantScope,run(async(s,req,res)=>{
     res.status(201).json({data:await s.create(context(req),req.body)});
   }));

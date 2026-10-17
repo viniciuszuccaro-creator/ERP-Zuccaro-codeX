@@ -1,6 +1,6 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
-import { OPORTUNIDADE_FIELDS } from './oportunidadeTypes.js';
+import { OPORTUNIDADE_FIELDS, OPORTUNIDADE_HISTORY_KEYS, type OportunidadeHistoryEntry } from './oportunidadeTypes.js';
 import type { Oportunidade, OportunidadeFields, OportunidadeFilters, OportunidadeRepository, OportunidadeScope } from './oportunidadeTypes.js';
 
 const FIELDS = OPORTUNIDADE_FIELDS;
@@ -84,6 +84,22 @@ export class PostgresOportunidadeRepository implements OportunidadeRepository {
         (group_id,empresa_id,codigo,codigo_oportunidade,idempotency_key,payload_fingerprint,created_by,updated_by,${FIELDS.join(',')})
         VALUES ($1,$2,$3,$4,$5,$6,$7,$7,${FIELDS.map((_,i) => `$${i+8}`).join(',')}) RETURNING *`,p);
       return map(r.rows[0]);
+    });
+  }
+  history(scope:OportunidadeScope,id:string,limit:number,offset:number,tx?:DbQueryExecutor) {
+    return this.run(scope,tx,async q=>{
+      // Pick scalars at the source: neither private keys nor nested historical payloads leave SQL.
+      const projection=(column:'before_data'|'after_data')=>`CASE WHEN jsonb_typeof(a.${column})='object'
+        THEN (SELECT COALESCE(jsonb_object_agg(k,v),'{}'::jsonb) FROM jsonb_each(a.${column}) e(k,v)
+          WHERE k=ANY($4::text[]) AND jsonb_typeof(v) IN ('string','number','boolean','null')) ELSE NULL END`;
+      const result=await q.query<{total:number;rows:OportunidadeHistoryEntry[]}>(`WITH filtered AS (
+        SELECT * FROM audit_logs WHERE group_id=$1 AND empresa_id=$2 AND entity='Oportunidade' AND entity_id=$3),
+        page AS (SELECT id,action,actor_id,created_at,${projection('before_data')} AS before,${projection('after_data')} AS after
+          FROM filtered a ORDER BY created_at DESC,id DESC LIMIT $5 OFFSET $6)
+        SELECT (SELECT count(*)::int FROM filtered) AS total,
+          COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY created_at DESC,id DESC) FROM page p),'[]'::jsonb) AS rows`,
+        [scope.groupId,scope.empresaId,id,OPORTUNIDADE_HISTORY_KEYS,limit,offset]);
+      return {total:Number(result.rows[0]?.total??0),rows:result.rows[0]?.rows??[]};
     });
   }
   byPedido(scope:OportunidadeScope,id:string,tx?:DbQueryExecutor) {
