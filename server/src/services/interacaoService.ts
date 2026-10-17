@@ -125,7 +125,7 @@ export class InteracaoService {
     if(!ctx.groupId || !ctx.empresaId)throw new AppError(400,'TENANT_REQUIRED','Group and company required');
     this.id(ctx.groupId);this.id(ctx.empresaId);
     if(!ctx.actorId)throw new AppError(403,'ACTOR_REQUIRED','Actor required');this.id(ctx.actorId);
-    return {groupId:ctx.groupId,empresaId:ctx.empresaId};
+    return {groupId:ctx.groupId.toLowerCase(),empresaId:ctx.empresaId.toLowerCase()};
   }
   private async require(scope:InteracaoScope,id:string,tx:DbQueryExecutor,lock=false) {
     const row=await this.repo.get(scope,id,tx,lock);

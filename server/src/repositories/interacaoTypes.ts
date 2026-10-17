@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const text = (max: number) => z.string().trim().max(max);
+const uuid = z.string().uuid().transform(value=>value.toLowerCase());
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => v.slice(0,4)!=='0000'
   && Number.isFinite(new Date(v+'T00:00:00Z').getTime())
   && new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v, 'Invalid calendar day');
@@ -14,8 +15,8 @@ export const interacaoFieldsSchema = z.object({
   observacoes: text(4000).nullable().default(null),
 }).strict();
 export const interacaoCreateSchema = interacaoFieldsSchema.extend({
-  cliente_empresa_id: z.string().uuid().nullable().default(null),
-  oportunidade_id: z.string().uuid().nullable().default(null),
+  cliente_empresa_id: uuid.nullable().default(null),
+  oportunidade_id: uuid.nullable().default(null),
   idempotency_key: text(120).min(8),
 }).refine(v => v.cliente_empresa_id || v.oportunidade_id, 'Canonical reference required');
 export const interacaoPatchSchema = interacaoFieldsSchema.partial().extend({
@@ -25,7 +26,7 @@ export const interacaoVersionSchema = z.object({expected_version:z.number().int(
 export const interacaoListSchema = z.object({
   limit:z.coerce.number().int().min(1).max(200).default(50),
   offset:z.coerce.number().int().min(0).max(1000000).default(0),
-  clienteEmpresaId:z.string().uuid().optional(), oportunidadeId:z.string().uuid().optional(),
+  clienteEmpresaId:uuid.optional(), oportunidadeId:uuid.optional(),
   search:text(80).optional(), ativo:z.boolean().optional(),
 }).strict();
 export type InteracaoFields = z.infer<typeof interacaoFieldsSchema>;

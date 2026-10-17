@@ -36,7 +36,11 @@ async function journey(f:Awaited<ReturnType<typeof localCrmFixture>>,role:string
   const payload={tipo:'Ligação',titulo:'Retorno sintético comercial',descricao:'Nota sintética privada preservada',
     cliente_empresa_id:link,data_interacao:'2026-10-17',duracao:12.25,resultado:'Positivo',responsavel:'Equipe sintética',
     proxima_acao:'Reunião sintética',data_proxima_acao:'2026-10-20',idempotency_key:'interacao-synthetic-intent'};
-  const same=await Promise.all(Array.from({length:3},()=>service.create(ctx,payload)));
+  const same=await Promise.all([
+    service.create(ctx,payload),
+    service.create(ctx,{...payload,cliente_empresa_id:link.toUpperCase()}),
+    service.create({...ctx,groupId:ctx.groupId.toUpperCase(),empresaId:ctx.empresaId!.toUpperCase()},payload),
+  ]);
   assert.equal(new Set(same.map(r=>r.id)).size,1);const row=same[0];
   assert.match(row.codigo,/^\d{6,}$/);assert.notEqual(row.codigo,row.id);
   assert.equal('idempotency_key' in row,false);assert.equal('payload_fingerprint' in row,false);
