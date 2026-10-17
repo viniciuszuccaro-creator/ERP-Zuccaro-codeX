@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,13 @@ import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { assertSeparacaoOnCreate, conferirQuantidadesPedido, findDuplicateSeparacao, selecionarEntregaConferencia } from "@/components/lib/expedicaoEntregaPolicy";
+import {
+  assertSeparacaoChecklist,
+  assertSeparacaoQuantidades,
+  resolveSeparacaoConclusion,
+  SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
 
@@ -27,7 +36,9 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
-  const contextoBaseValido = Boolean(grupoAtual?.id || empresaAtual?.id || empresaId);
+  const baseGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const baseEmpresaId = empresaId || empresaAtual?.id || null;
+  const contextoBaseValido = Boolean(baseGroupId && baseEmpresaId);
   const canConcluirSeparacao = hasPermission("Expedicao", "Separacao", "conferir") ||
     hasPermission("Expedicao", "Entrega", "conferir") ||
     hasPermission("Expedicao", "Separacao", "criar") ||
@@ -39,21 +50,39 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   // Fetch the delivery details (only if entregaId provided and no pedido)
   const { data: entrega, isLoading, isError, error } = useQuery({
-    queryKey: ['entrega', entregaId],
+    queryKey: ['entrega', entregaId, baseGroupId, baseEmpresaId],
     queryFn: async () => {
-      const entregas = await filterInContext("Entrega", {}, "-created_date", 500);
-      return entregas.find(e => e.id === entregaId);
+      const entregas = await filterInContext("Entrega", { id: entregaId }, undefined, 1);
+      return selecionarEntregaConferencia(entregas, {
+        id: entregaId, groupId: baseGroupId, empresaId: baseEmpresaId
+      });
     },
-    enabled: !!entregaId && !pedido && contextoBaseValido && canConcluirSeparacao,
+    enabled: !!entregaId && contextoBaseValido && canConcluirSeparacao,
+  });
+
+  const { data: pedidoDaEntrega, isLoading: pedidoLoading } = useQuery({
+    queryKey: ['pedido-da-entrega', entrega?.pedido_id, baseGroupId, baseEmpresaId],
+    queryFn: async () => {
+      const pedidos = await filterInContext("Pedido", { id: entrega.pedido_id }, undefined, 1);
+      return pedidos.find((item) => item.id === entrega.pedido_id
+        && item.empresa_id === baseEmpresaId
+        && (item.group_id || item.grupo_id) === baseGroupId) || null;
+    },
+    enabled: !!entrega?.pedido_id && !pedido && contextoBaseValido && canConcluirSeparacao,
   });
 
   const [itens, setItens] = useState([]);
 
+  const pedidoOperacao = pedido || pedidoDaEntrega;
   // Use pedido if provided, otherwise use entrega
-  const dadosParaSeparacao = pedido || entrega;
+  const dadosParaSeparacao = pedido || pedidoDaEntrega || entrega;
   const effectiveEmpresaId = dadosParaSeparacao?.empresa_id || empresaId || empresaAtual?.id || null;
   const effectiveGroupId = dadosParaSeparacao?.group_id || dadosParaSeparacao?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
+  const vinculoValido = !entregaId || (entrega?.id === entregaId
+    && (!pedidoOperacao || entrega.pedido_id === pedidoOperacao.id)
+    && (!entrega.pedido_id || pedidoOperacao?.id === entrega.pedido_id));
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId
+    && effectiveGroupId === baseGroupId && effectiveEmpresaId === baseEmpresaId && vinculoValido);
 
   const auditarSeparacao = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = null, registroId = null }) => {
     try {
@@ -80,11 +109,16 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   };
 
   useEffect(() => {
-    if (dadosParaSeparacao?.itens_revenda && dadosParaSeparacao.itens_revenda.length > 0) {
-      const initialItens = dadosParaSeparacao.itens_revenda.map(i => ({
+    const fonteItens = Array.isArray(dadosParaSeparacao?.itens_revenda) && dadosParaSeparacao.itens_revenda.length > 0
+      ? dadosParaSeparacao.itens_revenda
+      : (Array.isArray(dadosParaSeparacao?.itens) ? dadosParaSeparacao.itens : []);
+    if (fonteItens.length > 0) {
+      const initialItens = fonteItens.map(i => ({
         ...i,
-        quantidade_pedida: i.quantidade,
+        quantidade_pedida: Number(i.quantidade_pedida ?? i.quantidade ?? 0),
         quantidade_separada: 0,
+        unidade: i.unidade || i.unidade_medida || "",
+        unidade_separada: i.unidade || i.unidade_medida || "",
         status_item: "aguardando",
         divergencia: false,
         observacao_item: "",
@@ -133,61 +167,116 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         throw new Error("Sem permissao para concluir separacao/conferencia.");
       }
 
-      const temDivergencia = itens.some(i => i.divergencia);
-      
-      const separacao = await createInContext("SeparacaoConferencia", {
-        group_id: effectiveGroupId,
-        grupo_id: effectiveGroupId,
-        empresa_id: effectiveEmpresaId,
-        pedido_id: dadosParaSeparacao.id,
+      const conclusion = resolveSeparacaoConclusion({
+        itens,
+        checklist,
+        groupId: effectiveGroupId,
+        empresaId: effectiveEmpresaId,
+        entregaId: entrega?.id || entregaId || null,
+        pedidoId: pedidoOperacao?.id || entrega?.pedido_id || null,
+        confirmed: true,
+      });
+
+      const separacaoRecord = {
+        ...conclusion.separacaoRecord,
+        pedido_id: pedidoOperacao?.id || entrega?.pedido_id || null,
         numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
         cliente_id: dadosParaSeparacao.cliente_id,
         cliente_nome: dadosParaSeparacao.cliente_nome,
-        tipo: "conferencia",
         data_inicio: new Date().toISOString(),
         data_conclusao: new Date().toISOString(),
         responsavel_nome: (user?.full_name || user?.email || "Conferente"),
-        itens: itens,
-        status: temDivergencia ? "com_divergencia" : "concluido",
-        tem_divergencia: temDivergencia,
-        divergencias_resumo: temDivergencia 
-          ? `${itens.filter(i => i.divergencia).length} item(ns) com divergência`
-          : "",
-        checklist: checklist,
-        tempo_separacao_min: 0
-      });
+        tempo_separacao_min: 0,
+      };
 
-      // Se não tem divergência, atualizar status do pedido
-      if (!temDivergencia && dadosParaSeparacao) {
-        if (entrega?.id) {
-          await updateInContext("Entrega", entrega.id, {
-            status: "Pronto para Expedir",
-            group_id: effectiveGroupId,
-            grupo_id: effectiveGroupId,
-            empresa_id: effectiveEmpresaId,
-            historico_status: [
-              ...(entrega.historico_status || []),
-              {
-                status: "Pronto para Expedir",
-                data_hora: new Date().toISOString(),
-                usuario: user?.full_name || user?.email || "Sistema",
-                usuario_id: user?.id,
-                observacao: "Separacao e conferencia concluida sem divergencia."
-              }
-            ]
-          });
-        }
-        
-        if (pedido?.id) {
-          await updateInContext("Pedido", pedido.id, {
-            status: "Pronto para Faturar",
-            group_id: effectiveGroupId,
-            grupo_id: effectiveGroupId,
-            empresa_id: effectiveEmpresaId
-          });
-        }
+      const conferenciaQuantidades = conferirQuantidadesPedido(
+        pedidoOperacao?.itens_revenda || pedidoOperacao?.itens || dadosParaSeparacao.itens_revenda || dadosParaSeparacao.itens || [],
+        itens,
+      );
+      if (conclusion.nextEntregaStatus && !conferenciaQuantidades.conforme) {
+        throw new Error("Quantidade divergente nao pode liberar a entrega.");
+      }
+      const anteriores = isHttpExpedicaoMode ? [] : await filterInContext(
+        "SeparacaoConferencia", { pedido_id: separacaoRecord.pedido_id }, "-created_date", 100,
+      );
+      const existente = findDuplicateSeparacao(separacaoRecord, anteriores);
+      if (existente && !String(existente.status || "").toLowerCase().includes("diverg")) {
+        return { ...existente, _reused: true };
+      }
+      const decision = assertSeparacaoOnCreate({ record: separacaoRecord, separacoes: anteriores });
+      if (decision.reuse) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.retry",
+          descricao: "Separacao reusada por idempotencia (mesmo pedido/empresa/tipo).",
+          dadosNovos: { reuse_id: decision.reuse.id },
+        });
+        return decision.reuse;
+      }
 
-        // Registrar histórico
+      // Persistência canônica HTTP (BFF+PG) quando flag ativa — SPA local não é prova PG.
+      if (isHttpExpedicaoMode && (entrega?.id || entregaId)) {
+        const targetEntregaId = entrega?.id || entregaId;
+        const result = await httpApiClient.expedicao.separacao(targetEntregaId, {
+          confirmed: true,
+          checklist: {
+            conferiu_quantidade: checklist.conferiu_quantidade === true,
+            conferiu_qualidade: checklist.conferiu_qualidade === true,
+            conferiu_embalagem: checklist.conferiu_embalagem === true,
+            conferiu_etiquetas: checklist.conferiu_etiquetas === true,
+            conferiu_documentos: checklist.conferiu_documentos === true,
+          },
+          itens: itens.map((item) => ({
+            ...(dadosParaSeparacao === entrega && item.id ? { item_id: item.id } : {}),
+            produto_id: item.produto_id || null,
+            descricao: item.descricao || item.produto_descricao || "Item",
+            unidade_sigla: item.unidade_separada || item.unidade || "UN",
+            quantidade_pedida: item.quantidade_pedida ?? item.quantidade ?? 0,
+            quantidade_separada: item.quantidade_separada ?? 0,
+          })),
+          idempotency_key: `sep:${targetEntregaId}:${effectiveEmpresaId}`,
+        });
+        // Pedido/estoque side-effect permanece reserved no BFF (coordenação Codex).
+        void SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT;
+        return result?.separacao || result;
+      }
+
+      const separacao = existente
+        ? await updateInContext("SeparacaoConferencia", existente.id, separacaoRecord)
+        : await createInContext("SeparacaoConferencia", separacaoRecord);
+
+      if (conclusion.nextEntregaStatus && (entrega?.id || entregaId)) {
+        const targetEntregaId = entrega?.id || entregaId;
+        const historicoBase = Array.isArray(entrega?.historico_status)
+          ? entrega.historico_status
+          : (Array.isArray(dadosParaSeparacao?.historico_status) ? dadosParaSeparacao.historico_status : []);
+        await updateInContext("Entrega", targetEntregaId, {
+          status: conclusion.nextEntregaStatus,
+          group_id: effectiveGroupId,
+          grupo_id: effectiveGroupId,
+          empresa_id: effectiveEmpresaId,
+          historico_status: [
+            ...historicoBase,
+            {
+              status: conclusion.nextEntregaStatus,
+              data_hora: new Date().toISOString(),
+              usuario: user?.full_name || user?.email || "Sistema",
+              usuario_id: user?.id,
+              observacao: "Separacao e conferencia concluida sem divergencia."
+            }
+          ]
+        });
+      }
+
+      // LEGADO COORDENADO COM CODEX: updateInContext("Pedido") — não altera contrato canônico.
+      // Ver docs/EXPEDICAO_SEPARACAO_PEDIDO_LEGADO.md e SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT.
+      if (conclusion.shouldUpdatePedidoLegado && pedido?.id && conclusion.pedidoLegadoPatch) {
+        const { _legado_side_effect: _ignored, ...pedidoPatch } = conclusion.pedidoLegadoPatch;
+        void _ignored;
+        void SEPARACAO_PEDIDO_LEGADO_SIDE_EFFECT;
+        await updateInContext("Pedido", pedido.id, pedidoPatch);
+      }
+
+      if (!conclusion.qty.temDivergencia && dadosParaSeparacao) {
         await createInContext("HistoricoCliente", {
           group_id: effectiveGroupId,
           grupo_id: effectiveGroupId,
@@ -202,13 +291,23 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
           descricao_detalhada: `Separação conferida e liberada para expedição.`,
           usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
           data_evento: new Date().toISOString(),
-          status_relacionado: "Pronto para Expedir"
+          status_relacionado: conclusion.nextEntregaStatus || "Pronto para Expedir"
         });
       }
 
       return separacao;
     },
     onSuccess: async (separacao) => {
+      if (separacao?._reused) {
+        await auditarSeparacao({
+          acao: "SeparacaoConferencia.reutilizada",
+          descricao: "Conferencia ja registrada; nenhum status foi alterado.",
+          dadosNovos: { registro_id: separacao.id },
+          registroId: separacao.id
+        });
+        toast({ title: "Conferência já registrada", description: "Nenhum novo efeito foi aplicado." });
+        return;
+      }
       // Auditoria mínima
       try {
         await base44.entities.AuditLog.create({
@@ -243,7 +342,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       console.error("Erro ao concluir conferência:", error);
       toast({
         title: "Erro ao concluir conferência",
-        description: error.message || "Ocorreu um erro ao salvar a conferência.",
+        description: formatExpedicaoHttpError(error),
         variant: "destructive",
       });
     }
@@ -320,22 +419,13 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
       return;
     }
 
-    const todosConferidos = itens.every(i => i.quantidade_separada === i.quantidade_pedida); // Check exact match
-    const todosSeparadosMinimo = itens.every(i => i.quantidade_separada > 0); // Check if at least some quantity separated
-
-    if (!todosSeparadosMinimo) {
+    try {
+      assertSeparacaoQuantidades({ itens });
+      assertSeparacaoChecklist(checklist);
+    } catch (policyError) {
       toast({
-        title: "Itens não conferidos",
-        description: "Pelo menos um item não teve sua quantidade separada informada ou é zero.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!checklist.conferiu_quantidade || !checklist.conferiu_qualidade || !checklist.conferiu_embalagem || !checklist.conferiu_etiquetas || !checklist.conferiu_documentos) {
-      toast({
-        title: "Checklist incompleto",
-        description: "Por favor, marque todos os itens do checklist de conferência.",
+        title: "Validacao de separacao",
+        description: String(policyError?.message || policyError),
         variant: "destructive"
       });
       return;
@@ -357,7 +447,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
   const itensDivergentes = itens.filter(i => i.divergencia);
 
-  if (isLoading) {
+  if (isLoading || pedidoLoading) {
     return <p>Carregando dados da entrega...</p>;
   }
 
@@ -406,7 +496,11 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         <TabsContent value="scanner">
           <ScannerQRCode
             entregaId={entregaId}
-            itensEsperados={dadosParaSeparacao?.itens_revenda || []}
+            itensEsperados={
+              (Array.isArray(dadosParaSeparacao?.itens_revenda) && dadosParaSeparacao.itens_revenda.length > 0)
+                ? dadosParaSeparacao.itens_revenda
+                : (Array.isArray(dadosParaSeparacao?.itens) ? dadosParaSeparacao.itens : [])
+            }
             modo="separacao"
             onItemEscaneado={handleItemEscaneado}
           />

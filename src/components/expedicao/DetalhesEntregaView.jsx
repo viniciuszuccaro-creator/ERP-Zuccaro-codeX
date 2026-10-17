@@ -1,18 +1,31 @@
 ﻿import React from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Truck, Building2, Pen } from "lucide-react";
+import { Truck, Building2, Pen, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import EnvioMensagemAutomatica from "./EnvioMensagemAutomatica";
 import AssinaturaDigitalEntrega from "./AssinaturaDigitalEntrega";
+import LogisticaReversa from "./LogisticaReversa";
+import {
+  assertEntregaOnUpdate,
+  hasProvaEntrega,
+  resolveEntregaClienteCalendarDay,
+} from "@/components/lib/expedicaoEntregaPolicy";
+import {
+  isEntregaElegivelLogisticaReversa,
+  resolveRegistroEntregaFinal,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -29,15 +42,24 @@ export default function DetalhesEntregaView({
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "";
   const queryClient = useQueryClient();
   const [showAssinatura, setShowAssinatura] = React.useState(false);
+  const [showLogisticaReversa, setShowLogisticaReversa] = React.useState(false);
   const { empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
+  const { openWindow } = useWindow();
   const groupId = entrega?.group_id || grupoAtual?.id || empresaAtual?.group_id || null;
   const empresaId = entrega?.empresa_id || empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
+  const dataEntregaCliente = resolveEntregaClienteCalendarDay(entrega);
   const canUpdateEntrega = hasPermission("Expedicao", "Entrega", "editar") || hasPermission("Expedicao", "Entregas", "editar") || hasPermission("Expedicao", "Painel Logistico", "editar");
   const canEntregar = hasPermission("Expedicao", "Entrega", "entregar") || hasPermission("Expedicao", "Entregas", "entregar") || hasPermission("Expedicao", "Entrega", "confirmar");
   const canOcorrencia = hasPermission("Expedicao", "Entrega", "ocorrencia") || hasPermission("Expedicao", "Ocorrencias", "criar") || canUpdateEntrega;
+  const canLogisticaReversa = hasPermission("Expedicao", "Logistica Reversa", "editar")
+    || hasPermission("Expedicao", "LogisticaReversa", "editar")
+    || hasPermission("Expedicao", "Entregas", "editar")
+    || hasPermission("Expedicao", "Painel Logistico", "editar")
+    || canUpdateEntrega;
+  const elegivelReversa = isEntregaElegivelLogisticaReversa(entrega?.status);
 
   const auditarEntrega = async ({ acao, descricao, sucesso = true, dadosNovos = {}, dadosAnteriores = entrega }) => {
     try {
@@ -85,6 +107,7 @@ export default function DetalhesEntregaView({
     }
 
     let motivoOcorrencia = '';
+    let quantidadeParcial = null;
     if (precisaOcorrencia) {
       if (!canOcorrencia) {
         toast.error("Sem permissao para registrar ocorrencia.");
@@ -93,6 +116,14 @@ export default function DetalhesEntregaView({
       motivoOcorrencia = window.prompt("Informe o motivo da entrega frustrada:");
       if (!String(motivoOcorrencia || '').trim()) {
         toast.error("Ocorrencia exige motivo.");
+        return;
+      }
+    }
+    if (statusNorm.includes('parcial')) {
+      const rawQty = window.prompt("Informe a quantidade entregue (parcial):");
+      quantidadeParcial = Number(rawQty);
+      if (!(quantidadeParcial > 0)) {
+        toast.error("Quantidade entregue obrigatoria na entrega parcial.");
         return;
       }
     }
@@ -118,12 +149,66 @@ export default function DetalhesEntregaView({
       return;
     }
 
+    if (precisaOcorrencia || statusNorm.includes('parcial') || (statusNorm.includes('entregue') && !statusNorm.includes('parcial'))) {
+      try {
+        const modo = precisaOcorrencia ? 'ocorrencia' : (statusNorm.includes('parcial') ? 'parcial' : 'total');
+        const resolved = resolveRegistroEntregaFinal({
+          before: entrega,
+          modo,
+          comprovante: entrega.comprovante_entrega || {},
+          quantidade_entregue: quantidadeParcial,
+          motivo: motivoOcorrencia,
+          groupId,
+          empresaId,
+          confirmed: true,
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id,
+        });
+        if (modo === 'total' || modo === 'parcial') {
+          if (!hasProvaEntrega(resolved.record)) {
+            toast.error("Entrega exige comprovante (recebedor e prova). Use Confirmar Entrega com assinatura.");
+            return;
+          }
+        }
+        let atualizada;
+        if (isHttpExpedicaoMode) {
+          const result = await httpApiClient.expedicao.registrar(entrega.id, {
+            confirmed: true,
+            modo,
+            comprovante: entrega.comprovante_entrega || {},
+            quantidade_entregue: quantidadeParcial,
+            motivo: motivoOcorrencia,
+            idempotency_key: `reg:${entrega.id}:${modo}:${quantidadeParcial || motivoOcorrencia || 'total'}`,
+          });
+          atualizada = result?.entrega || result;
+        } else {
+          atualizada = await updateInContext("Entrega", entrega.id, resolved.patch);
+        }
+        await auditarEntrega({
+          acao: "DetalhesEntrega.alterar_status",
+          descricao: `Status da entrega alterado para ${resolved.patch.status}.`,
+          dadosNovos: atualizada || resolved.patch,
+        });
+        queryClient.invalidateQueries({ queryKey: ["entregas"] });
+        toast.success(`Status alterado para ${atualizada?.status || resolved.patch.status}.`);
+        return;
+      } catch (policyError) {
+        await auditarEntrega({
+          acao: "DetalhesEntrega.status_bloqueado",
+          descricao: String(policyError?.message || policyError),
+          sucesso: false,
+          dadosNovos: { status_novo: novoStatus, motivo: "policy_fail_closed" },
+        });
+        toast.error(formatExpedicaoHttpError(policyError));
+        return;
+      }
+    }
+
     const payload = {
       status: novoStatus,
       group_id: groupId,
       grupo_id: groupId,
       empresa_id: empresaId,
-      ...(motivoOcorrencia ? { entrega_frustrada: { ...(entrega.entrega_frustrada || {}), motivo: motivoOcorrencia } } : {}),
       historico_status: [
         ...(entrega.historico_status || []),
         {
@@ -131,10 +216,23 @@ export default function DetalhesEntregaView({
           data_hora: new Date().toISOString(),
           usuario: user?.full_name || user?.email || "Sistema",
           usuario_id: user?.id,
-          observacao: motivoOcorrencia || `Status alterado pela tela de detalhes para ${novoStatus}.`,
+          observacao: `Status alterado pela tela de detalhes para ${novoStatus}.`,
         }
       ]
     };
+
+    try {
+      assertEntregaOnUpdate({ before: entrega, patch: payload });
+    } catch (policyError) {
+      await auditarEntrega({
+        acao: "DetalhesEntrega.status_bloqueado",
+        descricao: String(policyError?.message || policyError),
+        sucesso: false,
+        dadosNovos: { status_novo: novoStatus, motivo: "policy_fail_closed" },
+      });
+      toast.error(String(policyError?.message || policyError));
+      return;
+    }
 
     const atualizada = await updateInContext("Entrega", entrega.id, payload);
     await auditarEntrega({
@@ -166,7 +264,7 @@ export default function DetalhesEntregaView({
       }
       const nomeRecebedor = String(dadosAssinatura.nome_recebedor || "").replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "").replace(/javascript:\s*/gi, "").trim();
       const documentoRecebedor = String(dadosAssinatura.documento_recebedor || "").replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "").replace(/javascript:\s*/gi, "").trim();
-      const atualizada = await updateInContext("Entrega", entrega.id, {
+      const patch = {
         status: "Entregue",
         data_entrega: new Date().toISOString(),
         group_id: groupId,
@@ -190,7 +288,31 @@ export default function DetalhesEntregaView({
             observacao: `Entrega confirmada com assinatura digital. Recebido por: ${nomeRecebedor}`
           }
         ]
-      });
+      };
+      assertEntregaOnUpdate({ before: entrega, patch });
+      if (!hasProvaEntrega({ ...entrega, ...patch })) {
+        throw new Error("Entrega exige comprovante (recebedor e prova).");
+      }
+      let atualizada;
+      if (isHttpExpedicaoMode) {
+        const result = await httpApiClient.expedicao.registrar(entrega.id, {
+          confirmed: true,
+          modo: 'total',
+          comprovante: {
+            nome_recebedor: nomeRecebedor,
+            documento_recebedor: documentoRecebedor,
+            foto_comprovante: dadosAssinatura.assinatura_base64,
+            assinatura_digital: dadosAssinatura.assinatura_base64,
+            data_hora_recebimento: dadosAssinatura.data_hora_assinatura,
+            latitude_entrega: dadosAssinatura.latitude || null,
+            longitude_entrega: dadosAssinatura.longitude || null,
+          },
+          idempotency_key: `assinatura:${entrega.id}:${dadosAssinatura.data_hora_assinatura || Date.now()}`,
+        });
+        atualizada = result?.entrega || result;
+      } else {
+        atualizada = await updateInContext("Entrega", entrega.id, patch);
+      }
       await auditarEntrega({
         acao: "DetalhesEntrega.confirmar_entrega",
         descricao: "Entrega confirmada com assinatura digital.",
@@ -204,7 +326,7 @@ export default function DetalhesEntregaView({
       toast.success("Entrega confirmada com assinatura.");
     },
     onError: (error) => {
-      if (error?.message !== "Confirmacao cancelada pelo usuario.") toast.error(error.message || "Erro ao confirmar entrega.");
+      if (error?.message !== "Confirmacao cancelada pelo usuario.") toast.error(formatExpedicaoHttpError(error));
     }
   });
 
@@ -256,6 +378,15 @@ export default function DetalhesEntregaView({
               </div>
             </div>
           )}
+
+          <div data-testid="entrega-detalhe-data-cliente" data-action="Expedicao.entrega.acompanhamento-data-cliente">
+            <Label className="text-slate-600">Data de entrega do cliente</Label>
+            <p className="font-medium">
+              {dataEntregaCliente
+                ? new Date(`${dataEntregaCliente}T12:00:00`).toLocaleDateString('pt-BR')
+                : '—'}
+            </p>
+          </div>
 
           <div>
             <Label className="text-slate-600">Endereco de Entrega</Label>
@@ -319,7 +450,7 @@ export default function DetalhesEntregaView({
             </div>
           )}
 
-          {!showAssinatura ? (
+          {!showAssinatura && !showLogisticaReversa ? (
             <div className="flex flex-wrap gap-2 pt-4 border-t">
               <Button
                 onClick={() => handleStatusChangeLocal("Em Separacao")}
@@ -362,14 +493,77 @@ export default function DetalhesEntregaView({
                 Confirmar Entrega
               </Button>
               <Button
+                onClick={() => handleStatusChangeLocal("Entrega Parcial")}
+                disabled={!contextoValido || !canEntregar || !["Saiu para Entrega", "Em Transito", "Chegada no Cliente"].includes(entrega.status)}
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700"
+                data-permission="Expedicao.Entrega.entregar" data-context-required="true" data-sensitive
+                data-action="entrega-parcial"
+                data-testid="entrega-detalhe-parcial"
+              >
+                Entrega Parcial
+              </Button>
+              <Button
                 onClick={() => handleStatusChangeLocal("Entrega Frustrada")}
-                disabled={!contextoValido || !canUpdateEntrega || ["Entregue", "Cancelado", "Aguardando Separacao"].includes(entrega.status)}
+                disabled={!contextoValido || !canOcorrencia || ["Entregue", "Cancelado", "Aguardando Separacao", "Devolvido"].includes(entrega.status)}
                 size="sm"
                 variant="destructive"
-                data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
+                data-permission="Expedicao.Entrega.ocorrencia" data-context-required="true" data-sensitive
                 data-action="marcar-entrega-frustrada"
+                data-testid="entrega-detalhe-ocorrencia"
               >
                 Marcar como Frustrada
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!contextoValido || !canLogisticaReversa || !elegivelReversa) {
+                    toast.error(!contextoValido
+                      ? "Selecione contexto grupo/empresa para logística reversa."
+                      : !canLogisticaReversa
+                        ? "Sem permissão para logística reversa."
+                        : "Status da entrega não permite logística reversa.");
+                    return;
+                  }
+                  if (windowMode) {
+                    setShowLogisticaReversa(true);
+                    return;
+                  }
+                  openWindow(
+                    LogisticaReversa,
+                    { entrega, windowMode: true, onConcluido: () => {} },
+                    { title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`, width: 720, height: 680 },
+                  );
+                }}
+                disabled={!contextoValido || !canLogisticaReversa || !elegivelReversa}
+                size="sm"
+                className="bg-orange-700 hover:bg-orange-800"
+                data-permission="Expedicao.LogisticaReversa.editar"
+                data-context-required="true"
+                data-sensitive
+                data-action="Entrega.logisticaReversa.abrir"
+                data-testid="entrega-detalhe-logistica-reversa"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Logística Reversa
+              </Button>
+            </div>
+          ) : showLogisticaReversa ? (
+            <div className="pt-4 border-t" data-testid="entrega-detalhe-painel-reversa">
+              <LogisticaReversa
+                entrega={entrega}
+                onConcluido={() => {
+                  setShowLogisticaReversa(false);
+                  queryClient.invalidateQueries({ queryKey: ["entregas"] });
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => setShowLogisticaReversa(false)}
+                data-action="Entrega.logisticaReversa.fechar-painel"
+              >
+                Voltar ao detalhe
               </Button>
             </div>
           ) : (

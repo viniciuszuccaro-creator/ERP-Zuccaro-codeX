@@ -13,6 +13,7 @@ import {
 } from './httpPilotCountBridge.js';
 import {
   HTTP_PILOT_ENTITIES,
+  isHttpExpedicaoEnabled as expedicaoFlag,
   resolveErpApiBaseUrl,
   resolveErpBackendMode,
   resolveHttpPilotEntities,
@@ -32,6 +33,8 @@ export const isLocalOnlyMode = erpBackendMode === 'local'
 export const isHttpBackendMode = erpBackendMode === 'http';
 export const isApiKeyMode = isLocalOnlyMode || isHttpBackendMode || !!apiKey;
 
+export const isHttpExpedicaoEnabled = expedicaoFlag(import.meta.env);
+export const isHttpExpedicaoMode = isHttpExpedicaoEnabled;
 export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';
 export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';
 export const localApiUser = (isLocalOnlyMode || isHttpBackendMode) ? localOnlyUser : {

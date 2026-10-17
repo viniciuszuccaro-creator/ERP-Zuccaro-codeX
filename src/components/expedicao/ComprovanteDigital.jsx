@@ -11,6 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
+import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -29,7 +30,7 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose, windowMod
 
   const effectiveEmpresaId = entrega?.empresa_id || empresaAtual?.id || null;
   const effectiveGroupId = entrega?.group_id || entrega?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(entrega?.id && (effectiveEmpresaId || effectiveGroupId));
+  const contextoValido = Boolean(entrega?.id && effectiveEmpresaId && effectiveGroupId);
   const canConfirm = hasPermission("Expedicao", "Comprovante Digital", "criar")
     || hasPermission("Expedicao", "Entregas", "editar")
     || hasPermission("Expedicao", "Painel Logistico", "editar");
@@ -158,33 +159,38 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose, windowMod
 
       await updateMutation.mutateAsync({
         id: entrega.id,
-        data: {
-          status: "Entregue",
-          data_entrega: new Date().toISOString(),
-          group_id: effectiveGroupId,
-          grupo_id: effectiveGroupId,
-          empresa_id: effectiveEmpresaId,
-          comprovante_entrega: {
-            foto_comprovante: fotoUrl,
-            nome_recebedor: nomeRecebedor,
-            documento_recebedor: sanitizeText(formData.documento_recebedor),
-            cargo_recebedor: sanitizeText(formData.cargo_recebedor),
-            data_hora_recebimento: new Date().toISOString(),
-            latitude_entrega: latitude,
-            longitude_entrega: longitude,
-            observacoes_recebimento: sanitizeText(formData.observacoes_recebimento)
-          },
-          historico_status: [
-            ...(entrega.historico_status || []),
-            {
-              status: "Entregue",
-              data_hora: new Date().toISOString(),
-              usuario: user?.full_name || user?.email || "Sistema",
+        data: (() => {
+          const agora = new Date().toISOString();
+          const resolved = resolveRegistroEntregaFinal({
+            before: entrega,
+            modo: "total",
+            comprovante: {
+              foto_comprovante: fotoUrl,
+              nome_recebedor: nomeRecebedor,
+              documento_recebedor: sanitizeText(formData.documento_recebedor),
+              cargo_recebedor: sanitizeText(formData.cargo_recebedor),
+              data_hora_recebimento: agora,
+              latitude_entrega: latitude,
+              longitude_entrega: longitude,
+              observacoes_recebimento: sanitizeText(formData.observacoes_recebimento),
+            },
+            groupId: effectiveGroupId,
+            empresaId: effectiveEmpresaId,
+            confirmed: true,
+            now: agora,
+            usuario: user?.full_name || user?.email || "Sistema",
+            usuario_id: user?.id,
+          });
+          const historico = Array.isArray(resolved.patch.historico_status) ? [...resolved.patch.historico_status] : [];
+          if (historico.length > 0) {
+            historico[historico.length - 1] = {
+              ...historico[historico.length - 1],
               observacao: `Entrega confirmada. Recebido por: ${nomeRecebedor}`,
-              localizacao: latitude && longitude ? { latitude, longitude } : null
-            }
-          ]
-        }
+              localizacao: latitude && longitude ? { latitude, longitude } : null,
+            };
+          }
+          return { ...resolved.patch, historico_status: historico };
+        })(),
       });
       await auditComprovante({ acao: "Entrega.comprovante.confirmar", detalhes: { possui_foto: Boolean(fotoUrl), possui_gps: Boolean(latitude && longitude) } });
     } catch (error) {

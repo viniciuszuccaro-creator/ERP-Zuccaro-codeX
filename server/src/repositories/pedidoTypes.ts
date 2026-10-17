@@ -80,6 +80,7 @@ export interface PedidoRepository {
   getByIdempotencyKey(scope: PedidoScope, key: string, executor?: DbQueryExecutor): Promise<{ row: Pedido; fingerprint: string } | null>;
   create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor, fingerprint?: string): Promise<Pedido>;
   get(scope: PedidoScope, id: string, executor?: DbQueryExecutor, lock?: boolean): Promise<Pedido | null>;
+  getForExpedicao(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   getByOrcamento(scope: PedidoScope, orcamentoId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;
   list(scope: PedidoScope, limit?: number, offset?: number, executor?: DbQueryExecutor, filters?: PedidoListFilters): Promise<PedidoPage>;
   update(scope: PedidoScope, id: string, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor): Promise<Pedido | null>;

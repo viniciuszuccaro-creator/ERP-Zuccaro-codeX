@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, Edit, CheckCircle2, AlertCircle, MessageCircle, Camera, Download, Search, Building2, Package } from 'lucide-react';
+import { Eye, Edit, CheckCircle2, AlertCircle, MessageCircle, Camera, Download, Search, Building2, Package, RotateCcw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
@@ -21,6 +21,18 @@ const EXIBIR_TABELA_LEGADA = false;
 import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
 import DetalhesEntregaView from './DetalhesEntregaView';
+import SeparacaoConferencia from './SeparacaoConferencia';
+import LogisticaReversa from './LogisticaReversa';
+import {
+  filterEntregasList,
+  listCidadesFromEntregas,
+  normalizeEntregaListFilters,
+} from '@/components/lib/expedicaoEntregaPolicy';
+import {
+  filterEntregasPendencias,
+  isEntregaElegivelLogisticaReversa,
+  revalidarSelecaoAposTrocaEmpresa,
+} from '@/components/lib/expedicaoFluxoOperacionalPolicy';
 
 export default function EntregasListagem({ entregas, clientes, pedidos, empresasDoGrupo, estaNoGrupo, windowMode = false }) {
   const [page, setPage] = React.useState(1);
@@ -29,6 +41,12 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const [sortDirection, setSortDirection] = React.useState('desc');
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
+  const [selectedEmpresaId, setSelectedEmpresaId] = useState("todas");
+  const [selectedCidade, setSelectedCidade] = useState("todas");
+  const [dataDe, setDataDe] = useState("");
+  const [dataAte, setDataAte] = useState("");
+  const [soFuturas, setSoFuturas] = useState(false);
+  const [selectedClienteId, setSelectedClienteId] = useState("todos");
   const [selectedEntregas, setSelectedEntregas] = useState([]);
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
@@ -36,10 +54,50 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const { user } = useUser();
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
   const effectiveEmpresaId = estaNoGrupo ? null : (empresaAtual?.id || null);
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId && (estaNoGrupo || effectiveEmpresaId));
   const canViewEntrega = hasPermission('Expedicao', 'Entrega', 'visualizar') || hasPermission('Expedicao', 'Entregas', 'visualizar') || hasPermission('Expedicao', 'Entrega', 'ver');
   const canEditEntrega = hasPermission('Expedicao', 'Entrega', 'editar') || hasPermission('Expedicao', 'Entregas', 'editar');
+  const canSeparar = hasPermission('Expedicao', 'Separacao', 'conferir') || hasPermission('Expedicao', 'Separacao', 'criar') || hasPermission('Expedicao', 'Entrega', 'conferir') || canEditEntrega;
+  const canLogisticaReversa = hasPermission('Expedicao', 'Logistica Reversa', 'editar')
+    || hasPermission('Expedicao', 'LogisticaReversa', 'editar')
+    || hasPermission('Expedicao', 'Entregas', 'editar')
+    || hasPermission('Expedicao', 'Painel Logistico', 'editar')
+    || canEditEntrega;
   const canExportEntrega = hasPermission('Expedicao', 'Entrega', 'exportar') || hasPermission('Expedicao', 'Entregas', 'exportar') || hasPermission('Expedicao', 'Relatorios', 'exportar');
+
+  const abrirLogisticaReversa = async (entrega) => {
+    if (!contextoValido || !canLogisticaReversa) {
+      await auditListagem({
+        acao: 'Entrega.logisticaReversa.abrir.bloqueado',
+        sucesso: false,
+        motivo: !contextoValido ? 'contexto_obrigatorio' : 'permissao_negada',
+        detalhes: { entrega_id: entrega?.id, numero_pedido: entrega?.numero_pedido },
+      });
+      return;
+    }
+    if (!isEntregaElegivelLogisticaReversa(entrega?.status)) {
+      await auditListagem({
+        acao: 'Entrega.logisticaReversa.abrir.bloqueado',
+        sucesso: false,
+        motivo: 'status_inelegivel',
+        detalhes: { entrega_id: entrega?.id, status: entrega?.status },
+      });
+      return;
+    }
+    await auditListagem({
+      acao: 'Entrega.logisticaReversa.abrir',
+      detalhes: { entrega_id: entrega.id, numero_pedido: entrega.numero_pedido, status: entrega.status },
+    });
+    openWindow(
+      LogisticaReversa,
+      {
+        entrega,
+        windowMode: true,
+        onConcluido: () => {},
+      },
+      { title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`, width: 720, height: 680 },
+    );
+  };
 
   const auditListagem = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
     try {
@@ -69,24 +127,48 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
     return true;
   });
 
-  const filteredEntregas = entregasContextuais.filter(e => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchSearch = e.numero_pedido?.toLowerCase().includes(searchLower) ||
-                       e.cliente_nome?.toLowerCase().includes(searchLower) ||
-                       e.codigo_rastreamento?.toLowerCase().includes(searchLower) ||
-                       e.qr_code?.toLowerCase().includes(searchLower) ||
-                       e.motorista?.toLowerCase().includes(searchLower) ||
-                       e.transportadora?.toLowerCase().includes(searchLower) ||
-                       e.regiao_entrega_nome?.toLowerCase().includes(searchLower) ||
-                       e.status?.toLowerCase().includes(searchLower) ||
-                       e.endereco_entrega_completo?.cidade?.toLowerCase().includes(searchLower) ||
-                       e.endereco_entrega_completo?.bairro?.toLowerCase().includes(searchLower) ||
-                       e.endereco_entrega_completo?.logradouro?.toLowerCase().includes(searchLower) ||
-                       e.contato_entrega?.nome?.toLowerCase().includes(searchLower) ||
-                       e.contato_entrega?.telefone?.includes(searchLower);
-    const matchStatus = selectedStatus === "todos" || e.status === selectedStatus;
-    return matchSearch && matchStatus;
+  const listFilters = normalizeEntregaListFilters({
+    status: selectedStatus,
+    empresaId: estaNoGrupo && selectedEmpresaId !== 'todas' ? selectedEmpresaId : (effectiveEmpresaId || ''),
+    clienteId: selectedClienteId !== 'todos' ? selectedClienteId : '',
+    cidade: selectedCidade !== 'todas' ? selectedCidade : '',
+    dataDe,
+    dataAte,
+    soFuturas,
+    busca: searchTerm,
   });
+
+  const cidadesDisponiveis = listCidadesFromEntregas(entregasContextuais);
+  const filteredEntregas = (!contextoValido || !canViewEntrega)
+    ? []
+    : filterEntregasList(entregasContextuais, listFilters);
+
+  const pendencias = (!contextoValido || !canViewEntrega)
+    ? []
+    : filterEntregasPendencias(entregasContextuais, {
+      empresaId: listFilters.empresaId || null,
+      groupId: effectiveGroupId,
+    });
+
+  const empresaFiltroSelecaoRef = React.useRef(selectedEmpresaId);
+  React.useEffect(() => {
+    if (!estaNoGrupo) return;
+    const anterior = empresaFiltroSelecaoRef.current;
+    empresaFiltroSelecaoRef.current = selectedEmpresaId;
+    if (anterior === selectedEmpresaId) return;
+    if (selectedEmpresaId === 'todas' || selectedEntregas.length === 0) return;
+    const result = revalidarSelecaoAposTrocaEmpresa({
+      selectedIds: selectedEntregas,
+      entregas: entregasContextuais,
+      empresaIdAnterior: anterior === 'todas' ? null : anterior,
+      empresaIdNovo: selectedEmpresaId,
+      groupId: effectiveGroupId,
+    });
+    if (result.removidos.length > 0) {
+      setSelectedEntregas(result.selectedIds);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- só reage à troca de empresa do filtro
+  }, [selectedEmpresaId, estaNoGrupo, effectiveGroupId]);
 
   const statusColors = {
     'Aguardando Separacao': 'bg-yellow-100 text-yellow-700',
@@ -145,7 +227,21 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    await auditListagem({ acao: 'Entrega.exportar_csv', detalhes: { quantidade: selecionadas.length, filtros: { status: selectedStatus, busca: searchTerm } } });
+    await auditListagem({
+      acao: 'Entrega.exportar_csv',
+      detalhes: {
+        quantidade: selecionadas.length,
+        filtros: {
+          status: selectedStatus,
+          busca: searchTerm,
+          empresa_id: listFilters.empresaId || null,
+          cidade: listFilters.cidade || null,
+          data_de: listFilters.dataDe || null,
+          data_ate: listFilters.dataAte || null,
+          so_futuras: listFilters.soFuturas,
+        },
+      },
+    });
   };
 
   const content = (
@@ -158,9 +254,21 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
           </AlertDescription>
         </Alert>
       )}
+      {contextoValido && canViewEntrega && pendencias.length > 0 && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-950" data-testid="entrega-list-pendencias">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <span className="font-semibold">{pendencias.length} pendência(s)</span>
+            {' — '}
+            {[...new Set(pendencias.slice(0, 8).map((p) => p.pendencia?.label).filter(Boolean))].join(' · ')}
+            {pendencias.length > 8 ? ` · +${pendencias.length - 8}` : ''}
+          </AlertDescription>
+        </Alert>
+      )}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-3">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_12rem_auto] gap-3">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_12rem_auto] gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
@@ -168,10 +276,12 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 h-8"
+                data-testid="entrega-list-busca"
+                data-action="Expedicao.entrega.filtro-busca"
               />
             </div>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-48 h-8">
+              <SelectTrigger className="w-48 h-8" data-testid="entrega-list-status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -196,6 +306,78 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
               >
                 <Download className="w-3 h-3 mr-1" /> CSV ({selectedEntregas.length})
               </Button>
+            )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3" data-testid="entrega-list-filtros-estruturados" data-action="Expedicao.entrega.filtros">
+              {estaNoGrupo && (
+                <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+                  <SelectTrigger className="h-8" data-testid="entrega-list-empresa">
+                    <SelectValue placeholder="Empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as empresas</SelectItem>
+                    {(empresasDoGrupo || []).map((empresa) => (
+                      <SelectItem key={empresa.id} value={empresa.id}>
+                        {empresa.nome_fantasia || empresa.razao_social || empresa.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={selectedClienteId} onValueChange={setSelectedClienteId}>
+                <SelectTrigger className="h-8" data-testid="entrega-list-cliente">
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os clientes</SelectItem>
+                  {(clientes || []).map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id}>
+                      {cliente.nome || cliente.razao_social || cliente.nome_fantasia || cliente.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedCidade} onValueChange={setSelectedCidade}>
+                <SelectTrigger className="h-8" data-testid="entrega-list-cidade">
+                  <SelectValue placeholder="Cidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as cidades</SelectItem>
+                  {cidadesDisponiveis.map((cidade) => (
+                    <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="date"
+                value={dataDe}
+                onChange={(e) => setDataDe(e.target.value)}
+                className="h-8"
+                data-testid="entrega-list-data-de"
+                aria-label="Data entrega do cliente de"
+              />
+              <Input
+                type="date"
+                value={dataAte}
+                onChange={(e) => setDataAte(e.target.value)}
+                className="h-8"
+                data-testid="entrega-list-data-ate"
+                aria-label="Data entrega do cliente até"
+              />
+              <label className="flex items-center gap-2 text-xs text-slate-700 h-8 px-1" data-testid="entrega-list-so-futuras">
+                <Checkbox
+                  checked={soFuturas}
+                  onCheckedChange={(checked) => setSoFuturas(checked === true)}
+                  data-action="Expedicao.entrega.filtro-futuras"
+                />
+                Só entregas futuras
+              </label>
+            </div>
+            {listFilters.rangeInvalid && (
+              <Alert className="border-amber-300 bg-amber-50 text-amber-900" data-testid="entrega-list-range-invalid">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>Intervalo de datas inválido: a data inicial não pode ser maior que a final.</AlertDescription>
+              </Alert>
             )}
           </div>
         </CardContent>
@@ -227,6 +409,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                     className="h-7 w-7"
                     data-permission="Expedicao.Entrega.visualizar" data-context-required="true"
                     data-action="Entrega.visualizar"
+                    data-testid="entrega-list-abrir-detalhe"
                   >
                     <Eye className="w-3 h-3" />
                   </Button>
@@ -240,6 +423,46 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                       data-action="Entrega.editar"
                     >
                       <Edit className="w-3 h-3" />
+                    </Button>
+                  )}
+                  {canSeparar && ['Aguardando Separacao', 'Aguardando Separação', 'Em Separacao', 'Em Separação'].includes(e.status) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={async () => {
+                        await auditListagem({ acao: 'Entrega.separacao.abrir', detalhes: { entrega_id: e.id, numero_pedido: e.numero_pedido } });
+                        const pedidoRelacionado = (pedidos || []).find((p) => p.id === e.pedido_id) || null;
+                        openWindow(
+                          SeparacaoConferencia,
+                          { entregaId: e.id, pedido: pedidoRelacionado, empresaId: e.empresa_id, windowMode: true },
+                          { title: `Separação ${e.numero_pedido || e.id}`, width: 1200, height: 800 },
+                        );
+                      }}
+                      className="h-7 w-7"
+                      data-permission="Expedicao.Separacao.conferir"
+                      data-context-required="true"
+                      data-sensitive="true"
+                      data-action="Entrega.separacao"
+                      data-testid="entrega-list-abrir-separacao"
+                      title="Abrir separação/conferência"
+                    >
+                      <Package className="w-3 h-3" />
+                    </Button>
+                  )}
+                  {canLogisticaReversa && isEntregaElegivelLogisticaReversa(e.status) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => abrirLogisticaReversa(e)}
+                      className="h-7 w-7 text-orange-700"
+                      data-permission="Expedicao.LogisticaReversa.editar"
+                      data-context-required="true"
+                      data-sensitive="true"
+                      data-action="Entrega.logisticaReversa.abrir"
+                      data-testid="entrega-list-abrir-logistica-reversa"
+                      title="Processar logística reversa / devolução"
+                    >
+                      <RotateCcw className="w-3 h-3" />
                     </Button>
                   )}
                 </div>
@@ -316,12 +539,44 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                     <TableCell><Badge className={statusColors[entrega.status]} style={{ fontSize: '10px' }}>{entrega.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${entrega.numero_pedido}`, width: 1000, height: 700 })} className="h-7 w-7">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${entrega.numero_pedido}`, width: 1000, height: 700 })}
+                          className="h-7 w-7"
+                          data-action="Entrega.visualizar"
+                          data-permission="Expedicao.Entrega.visualizar"
+                          data-context-required="true"
+                          data-testid="entrega-list-abrir-detalhe"
+                        >
                           <Eye className="w-3 h-3" />
                         </Button>
                         {canEditEntrega && (
-                          <Button variant="ghost" size="icon" onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `Editar ${entrega.numero_pedido}`, width: 1100, height: 650 })} className="h-7 w-7">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `Editar ${entrega.numero_pedido}`, width: 1100, height: 650 })}
+                            className="h-7 w-7"
+                            data-action="Entrega.editar"
+                            data-permission="Expedicao.Entrega.editar"
+                            data-context-required="true"
+                          >
                             <Edit className="w-3 h-3" />
+                          </Button>
+                        )}
+                        {canLogisticaReversa && isEntregaElegivelLogisticaReversa(entrega.status) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => abrirLogisticaReversa(entrega)}
+                            className="h-7 w-7 text-orange-700"
+                            data-action="Entrega.logisticaReversa.abrir"
+                            data-permission="Expedicao.LogisticaReversa.editar"
+                            data-context-required="true"
+                            data-testid="entrega-list-abrir-logistica-reversa"
+                            title="Processar logística reversa / devolução"
+                          >
+                            <RotateCcw className="w-3 h-3" />
                           </Button>
                         )}
                       </div>

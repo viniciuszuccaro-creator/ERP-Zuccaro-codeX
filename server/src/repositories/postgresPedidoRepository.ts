@@ -10,6 +10,7 @@ const map = (row: Row): Pedido => ({
   obra_id: row.obra_id == null ? null : String(row.obra_id), tabela_preco_id: row.tabela_preco_id == null ? null : String(row.tabela_preco_id),
   condicao_pagamento_id: String(row.condicao_pagamento_id), orcamento_id: row.orcamento_id == null ? null : String(row.orcamento_id),
   vendedor_id: String(row.vendedor_id), ativo: Boolean(row.ativo), subtotal: String(row.subtotal), desconto: String(row.desconto), total: String(row.total),
+  data_entrega_solicitada: new Date(String(row.data_entrega_solicitada)).toISOString(),
   created_at: new Date(String(row.created_at)).toISOString(), updated_at: new Date(String(row.updated_at)).toISOString(),
   itens: (Array.isArray(row.itens) ? row.itens : JSON.parse(String(row.itens ?? '[]'))).map((item: Row) => ({
     ...item, id: String(item.id), produto_id: String(item.produto_id), unidade_id: String(item.unidade_id),
@@ -54,6 +55,10 @@ export class PostgresPedidoRepository implements PedidoRepository {
   async get(scope: PedidoScope, id: string, executor: DbQueryExecutor = this.db, lock=false): Promise<Pedido | null> {
     const result = await executor.query<Row>(`${SELECT} WHERE p.id=$1 AND p.group_id=$2 AND p.empresa_id=$3${lock?' FOR UPDATE OF p':''}`, [id, scope.groupId, scope.empresaId]);
     return result.rows[0] ? map(result.rows[0]) : null;
+  }
+
+  async getForExpedicao(scope: PedidoScope, id: string, executor?: DbQueryExecutor): Promise<Pedido | null> {
+    return this.get(scope, id, executor, true);
   }
 
   async getByOrcamento(scope: PedidoScope, orcamentoId: string, executor: DbQueryExecutor = this.db): Promise<Pedido | null> {

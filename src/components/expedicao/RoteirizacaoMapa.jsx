@@ -18,6 +18,9 @@ import {
   reordenarPontosRota,
   resolveCoordenadas,
 } from "@/components/lib/roteirizacaoPolicy";
+import { filterEntregasList, listCidadesFromEntregas } from "@/components/lib/expedicaoEntregaPolicy";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 
 export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veiculos = [], windowMode = false }) {
   const [entregasSelecionadas, setEntregasSelecionadas] = useState([]);
@@ -25,6 +28,11 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
   const [motoristaSelecionado, setMotoristaSelecionado] = useState("");
   const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [cidadeFiltro, setCidadeFiltro] = useState("todas");
+  const [soFuturas, setSoFuturas] = useState(true);
+  const [dataDe, setDataDe] = useState("");
+  const [dataAte, setDataAte] = useState("");
+  const [clienteIdFiltro, setClienteIdFiltro] = useState("todos");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -33,7 +41,7 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextoValido = Boolean(groupId || empresaId);
+  const contextoValido = Boolean(groupId && empresaId);
   const canOptimizeRoute = hasPermission("Expedicao", "Rotas", "editar") || hasPermission("Expedicao", "Roteirizacao", "editar") || hasPermission("Expedicao", "Rotas", "criar");
   const canCreateRomaneio = hasPermission("Expedicao", "Romaneios", "criar") || hasPermission("Expedicao", "Romaneio", "criar");
 
@@ -59,10 +67,31 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
     }
   };
 
-  const entregasContextuais = entregas.filter(e => {
-    if (empresaId && e.empresa_id && e.empresa_id !== empresaId && e.empresa_responsavel_id !== empresaId) return false;
-    if (groupId && e.group_id && e.group_id !== groupId) return false;
-    return true;
+  const entregasContextuais = (!contextoValido
+    ? []
+    : entregas.filter(e => {
+      if (empresaId && e.empresa_id && e.empresa_id !== empresaId && e.empresa_responsavel_id !== empresaId) return false;
+      if (groupId && e.group_id && e.group_id !== groupId) return false;
+      return true;
+    }));
+
+  const cidadesDisponiveis = listCidadesFromEntregas(entregasContextuais);
+  const clientesDisponiveis = React.useMemo(() => {
+    const map = new Map();
+    for (const e of entregasContextuais) {
+      if (e?.cliente_id && !map.has(String(e.cliente_id))) {
+        map.set(String(e.cliente_id), e.cliente_nome || e.cliente_id);
+      }
+    }
+    return [...map.entries()].map(([id, nome]) => ({ id, nome }));
+  }, [entregasContextuais]);
+  const entregasFiltradas = filterEntregasList(entregasContextuais, {
+    empresaId,
+    cidade: cidadeFiltro !== "todas" ? cidadeFiltro : "",
+    clienteId: clienteIdFiltro !== "todos" ? clienteIdFiltro : "",
+    dataDe,
+    dataAte,
+    soFuturas,
   });
 
   const handleSelecionarEntrega = (entrega) => {
@@ -260,8 +289,10 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
     }
   };
 
-  const entregasPendentes = entregasContextuais.filter(e =>
+  const entregasPendentes = entregasFiltradas.filter(e =>
     e.status === 'Aguardando Separação' ||
+    e.status === 'Pronto para Expedir' ||
+    e.status === 'Aguardando Separacao' ||
     e.status === 'Pronto para Expedir'
   );
 
@@ -305,7 +336,43 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
               Entregas Disponíveis ({entregasPendentes.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 space-y-2 max-h-[600px] overflow-y-auto">
+          <CardContent className="p-4 space-y-3 max-h-[600px] overflow-y-auto" data-testid="roteirizacao-entregas-filtros" data-action="Expedicao.rota.filtro-entregas">
+            <div className="grid grid-cols-1 gap-2" data-testid="roteirizacao-filtros-estruturados">
+              <Select value={cidadeFiltro} onValueChange={setCidadeFiltro}>
+                <SelectTrigger className="h-8" data-testid="roteirizacao-filtro-cidade">
+                  <SelectValue placeholder="Cidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as cidades</SelectItem>
+                  {cidadesDisponiveis.map((cidade) => (
+                    <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={clienteIdFiltro} onValueChange={setClienteIdFiltro}>
+                <SelectTrigger className="h-8" data-testid="roteirizacao-filtro-cliente">
+                  <SelectValue placeholder="Cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os clientes</SelectItem>
+                  {clientesDisponiveis.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-8" data-testid="roteirizacao-data-de" aria-label="Data entrega de" />
+              <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-8" data-testid="roteirizacao-data-ate" aria-label="Data entrega até" />
+              <label className="flex items-center gap-2 text-xs text-slate-700" data-testid="roteirizacao-so-futuras">
+                <Checkbox checked={soFuturas} onCheckedChange={(checked) => setSoFuturas(checked === true)} />
+                Só entregas futuras
+              </label>
+            </div>
+            {!contextoValido && (
+              <Alert className="border-red-300 bg-red-50 text-red-800">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>Selecione grupo e empresa para roteirizar entregas.</AlertDescription>
+              </Alert>
+            )}
             {entregasPendentes.length === 0 ? (
               <p className="text-sm text-slate-500 text-center">Nenhuma entrega disponível para roteirização.</p>
             ) : (

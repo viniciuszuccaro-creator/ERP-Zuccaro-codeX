@@ -75,5 +75,16 @@ export function resolveHttpPilotEntities(env = import.meta.env) {
     .toLowerCase() === 'true';
   if (clienteOn && !list.includes('Cliente')) list.push('Cliente');
   void env?.VITE_ERP_HTTP_PRODUTO; // opt-in do formulario; nao troca fonte dos grids
+  if (isHttpExpedicaoEnabled(env)) list.push(...HTTP_EXPEDICAO_ENTITIES);
   return list;
+}
+
+export const HTTP_EXPEDICAO_ENTITIES = Object.freeze([
+  'Entrega',
+  'Romaneio',
+  'SeparacaoConferencia',
+]);
+export function isHttpExpedicaoEnabled(env = import.meta.env) {
+  return resolveErpBackendMode(env) === 'http'
+    && String(env?.VITE_ERP_HTTP_EXPEDICAO || '').trim().toLowerCase() === 'true';
 }

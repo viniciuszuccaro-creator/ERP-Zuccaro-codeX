@@ -158,6 +158,7 @@ export const OWNER_ERP_PERMISSION_TREE = {
     orcamento: A,
     pedido: A,
   },
+  Expedicao: { entrega: A, separacao: A, romaneio: A },
   Sistema: {
     ...OWNER_UI_PERMISSION_TREE.Sistema,
     configuracoes: { ...OWNER_UI_PERMISSION_TREE.Sistema.configuracoes, gerais: A, fiscal: A, integracoes: A, ia: A, conflictPolicy: A, heranca: A, versionamento: A, conflitos: A },

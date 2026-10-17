@@ -61,6 +61,11 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import { InMemoryExpedicaoRepository } from './repositories/inMemoryExpedicaoRepository.js';
+import { PostgresExpedicaoRepository } from './repositories/postgresExpedicaoRepository.js';
+import { ExpedicaoService } from './services/expedicaoService.js';
+import type { ExpedicaoEstoquePort, ExpedicaoPedidoSideEffectPort } from './repositories/expedicaoTypes.js';
+import type { PedidoRepository } from './repositories/pedidoTypes.js';
 import { OportunidadeService } from './services/oportunidadeService.js';
 import { PostgresOportunidadeRepository } from './repositories/postgresOportunidadeRepository.js';
 import { InMemoryOportunidadeRepository } from './repositories/inMemoryOportunidadeRepository.js';
@@ -69,6 +74,9 @@ import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvis
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
 
 export type CreateAppOptions = {
+  expedicaoPedidoPort?: ExpedicaoPedidoSideEffectPort;
+  expedicaoEstoquePort?: ExpedicaoEstoquePort;
+  expedicaoPedidoReader?: Pick<PedidoRepository, "getForExpedicao">;
   config: AppConfig;
   db: DbClient;
   authDb?: AuthDbClient;
@@ -190,6 +198,7 @@ export function createApp(options: CreateAppOptions) {
     costPort,
     alcadaConfig,
   );
+  const expedicaoService = new ExpedicaoService(useMemory ? new InMemoryExpedicaoRepository() : new PostgresExpedicaoRepository(db), auditRepo, tenantGuard, rbacGuard, options.expedicaoPedidoPort, options.expedicaoEstoquePort, options.expedicaoPedidoReader ?? pedidoRepo);
   const oportunidadeService = config.crmHttpEnabled===true
     ? new OportunidadeService(useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db),
       auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo,pedidoRepo,useMemory?null:pedidoService) : null;
@@ -290,6 +299,7 @@ export function createApp(options: CreateAppOptions) {
     orcamentoService,
     pedidoService,
     oportunidadeService,
+    expedicaoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -311,6 +321,7 @@ export function createApp(options: CreateAppOptions) {
     pedidoService,
     auditRepo,
     oportunidadeService,
+    expedicaoService,
     tenantGuard,
     produtoRelationGuard,
     rbacGuard,

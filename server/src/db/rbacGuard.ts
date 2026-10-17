@@ -25,7 +25,11 @@ export type RbacAction =
   | 'publicar'
   | 'reprocessar'
   | 'descartar'
-  | 'alterar-status';
+  | 'alterar-status'
+  | 'conferir'
+  | 'entregar'
+  | 'ocorrencia'
+  | 'expedir';
 
 export type PermissionTree = Record<string, unknown>;
 
