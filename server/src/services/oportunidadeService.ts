@@ -25,6 +25,7 @@ const LIST = z.object({ limit:z.number().int().min(1).max(200).default(50), offs
   status:z.enum(['Aberto','Em Andamento','Nova','Ganho','Perdido','Cancelado']).optional(),
   clienteEmpresaId:z.string().uuid().optional() }).strict();
 const FIELDS = OPORTUNIDADE_FIELDS;
+const HISTORY=z.object({limit:z.number().int().min(1).max(200).default(50),offset:z.number().int().min(0).max(1000000).default(0)}).strict();
 const snapshot = (row: Oportunidade) => sanitizeAuditSnapshot(row);
 
 export class OportunidadeService {
@@ -75,6 +76,19 @@ export class OportunidadeService {
     if(!z.string().trim().min(1).max(180).safeParse(id).success)throw new AppError(422,'VALIDATION_ERROR','Invalid legacy identifier');
     const row=await this.repo.withTransaction(scope,tx=>this.repo.byLegacy(scope,id,tx));
     if(!row)throw new AppError(404,'OPORTUNIDADE_NOT_FOUND','Oportunidade unavailable');return row;
+  }
+  async history(context:RequestContext,id:string,options:unknown={}) {
+    const ctx=Object.freeze({...context}),page=this.parse(HISTORY,options) as z.output<typeof HISTORY>;this.id(id);
+    const scope=await this.prepare(ctx,'visualizar');
+    if(!this.repo.history)throw new AppError(503,'CRM_HISTORY_UNAVAILABLE','Canonical SQL audit history unavailable');
+    return this.repo.withTransaction(scope,async tx=>{
+      await this.prepare(ctx,'visualizar',tx);
+      const parent=await this.require(scope,id,tx);
+      const result=await this.repo.history!(scope,parent.id,page.limit,page.offset,tx);
+      await this.prepare(ctx,'visualizar',tx);
+      return {data:result.rows,meta:{limit:page.limit,offset:page.offset,total:result.total,
+        hasMore:page.offset+result.rows.length<result.total}};
+    });
   }
   async update(ctx:RequestContext,id:string,payload:unknown) {
     const scope=await this.prepare(ctx,'editar'); this.id(id); const input=this.parse(oportunidadeUpdateSchema,payload);

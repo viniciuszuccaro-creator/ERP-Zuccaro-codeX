@@ -64,6 +64,7 @@ export const OPORTUNIDADE_FIELDS = ['cliente_empresa_id','cliente_id','cliente_n
 export type OportunidadeFilters = { limit: number; offset: number; search?: string;
   ativo?: boolean; status?: string; clienteEmpresaId?: string };
 export interface OportunidadeRepository {
+  history?(scope:OportunidadeScope,id:string,limit:number,offset:number,tx?:DbQueryExecutor):Promise<{rows:OportunidadeHistoryEntry[];total:number}>;
   withTransaction<T>(scope: OportunidadeScope, fn: (tx?: DbQueryExecutor) => Promise<T>): Promise<T>;
   lockIdempotency(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<void>;
   byKey(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
@@ -78,3 +79,7 @@ export interface OportunidadeRepository {
   setActive(scope: OportunidadeScope, id: string, expectedVersion: number, active: boolean,
     actor: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
 }
+export type OportunidadeHistoryEntry={id:string;action:string;actor_id:string|null;created_at:string;
+  before:Record<string,unknown>|null;after:Record<string,unknown>|null};
+export const OPORTUNIDADE_HISTORY_KEYS=['codigo','codigo_oportunidade','version','etapa','status','valor_estimado',
+  'ativo','orcamento_id','pedido_id','convertido_em','convertido_em_id','data_proxima_acao'] as const;
