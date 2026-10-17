@@ -2,8 +2,10 @@ import { spawnSync } from 'node:child_process';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required for test:postgres');
 const suites = [
+  ['R40COMPOSE', 'tests/runtime40-crm-consultas-compostas.test.ts'],
   ['R40EXPORT', 'tests/runtime40-crm-export.test.ts'],
   ['R40AGENDA', 'tests/runtime40-crm-agenda.test.ts'],
+  ['R40FUNIL', 'tests/runtime40-crm-funil.test.ts'],
   ['OWNER_COPY', 'tests/owner-provision-sql.test.ts'],
   ['R01AUTH', 'tests/runtime01.test.ts'],
   ['LEGACY_CLIENT', 'tests/runtime04.test.ts'],

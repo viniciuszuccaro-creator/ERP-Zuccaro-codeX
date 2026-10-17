@@ -57,7 +57,7 @@ async function journey(f:Fixture) {
   assert.equal((await service.exportCsv(ctx,{status:'Ganho'})).total,0);
   assert.equal((await service.exportCsv(ctx,{ativo:false})).total,0);
   assert.equal((await service.exportCsv(ctx,{search:'Export 30'})).total,5);
-  for(const filters of [{limit:1},{offset:200},{group_id:ID.groupB},{status:'unknown'},{search:'x'.repeat(81)}])
+  for(const filters of [{limit:1},{offset:200},{group_id:ID.groupB},{status:''},{search:'x'.repeat(81)}])
     await assert.rejects(service.exportCsv(ctx,filters),{statusCode:422});
   const entries=(await f.admin.query<{after_data:any}>('SELECT after_data FROM audit_logs WHERE request_id=$1 AND action=$2',[ctx.requestId,'read'])).rows;
   assert.equal(entries.length,5);
