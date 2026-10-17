@@ -1,11 +1,12 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
+import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
  * Não lê HD real. Não grava staging. Reutiliza migracaoErpPolicy (Regra-Mãe).
  */
 import {
   buildReconciliacaoMigracao,
-  findRegistroMigracaoDuplicado,
   MIGRACAO_DESTINO_STAGING,
   MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
   stampMigracaoRecord,
@@ -15,18 +16,22 @@ import {
 /** Aliases comuns de planilhas/ERP antigo → campo canônico (hipótese até inventário). */
 export const LEGADO_FIELD_ALIASES = Object.freeze({
   cliente: {
-    codigo: ['codigo', 'cod_cliente', 'codigo_cliente', 'id_cliente', 'codigo_legado'],
-    nome: ['nome', 'razao_social', 'nome_cliente', 'descricao'],
+    codigo: ['codigo', 'cod_cliente', 'codigo_cliente', 'codigocliente', 'id_cliente', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'razaosocial', 'nome_cliente', 'descricao'],
+    nome_fantasia: ['nome_fantasia', 'nomefantasia', 'nomeguerra'],
     documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
   },
   fornecedor: {
-    codigo: ['codigo', 'cod_fornecedor', 'codigo_fornecedor', 'id_fornecedor', 'codigo_legado'],
-    nome: ['nome', 'razao_social', 'nome_fornecedor', 'descricao'],
-    documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc'],
+    codigo: ['codigo', 'cod_fornecedor', 'codigo_fornecedor', 'codigofornec', 'id_fornecedor', 'codigo_legado'],
+    nome: ['nome', 'razao_social', 'razaosocial', 'nome_fornecedor', 'descricao'],
+    nome_fantasia: ['nome_fantasia', 'nomefantasia'],
+    documento: ['documento', 'cpf_cnpj', 'cnpj', 'cpf', 'cgc', 'cgcfornec'],
   },
   produto: {
-    codigo: ['codigo', 'cod_produto', 'sku', 'codigo_legado'],
+    codigo: ['codigo', 'cod_produto', 'codigomaterial', 'sku', 'codigo_legado'],
     descricao: ['descricao', 'nome', 'produto'],
+    classe: ['classe', 'classe_produto', 'codigoclasse', 'tipo_produto'],
+    unidade: ['unidade', 'unidade_medida', 'um'],
   },
   empresa: {
     codigo: ['codigo', 'cod_empresa', 'codigo_empresa', 'codigoempresa', 'codigo_legado'],
@@ -42,6 +47,8 @@ export const LEGADO_FIELD_ALIASES = Object.freeze({
     nome: ['nome', 'descricao', 'condicao', 'titulo'],
   },
 });
+
+export const LEGADO_MESTRES_COMPARTILHADOS = Object.freeze(['cliente', 'fornecedor', 'produto']);
 
 /** Códigos empresariais legados válidos conhecidos (Gate 18); `0` = quarentena. */
 export const LEGADO_EMPRESA_CODIGOS_VALIDOS = Object.freeze(['1', '2', '3', '4', '5']);
@@ -145,7 +152,14 @@ export const avaliarQuarentenaLegado = (row = {}, opts = {}) => {
  * @param {{ entidade?: keyof typeof LEGADO_FIELD_ALIASES, groupId?: string, empresaId?: string, arquivoNome?: string }} opts
  */
 export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
+  if (opts.groupId && [row.group_id, row.grupo_id].some((id) => first(id) && first(id) !== first(opts.groupId))) {
+    throw new Error('LEGACY_GROUP_MISMATCH');
+  }
   const entidade = opts.entidade || 'cliente';
+  if (!LEGADO_MESTRES_COMPARTILHADOS.includes(entidade) && opts.empresaId
+    && first(row.empresa_id) && first(row.empresa_id) !== first(opts.empresaId)) {
+    throw new Error('LEGACY_COMPANY_MISMATCH');
+  }
   const aliases = LEGADO_FIELD_ALIASES[entidade];
   if (!aliases) {
     throw new Error(`Entidade de mapeamento nao suportada: ${entidade}`);
@@ -158,6 +172,7 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const documento = (entidade === 'cliente' || entidade === 'fornecedor' || entidade === 'empresa')
     ? pickAlias(row, aliases.documento)
     : '';
+  const nomeFantasia = aliases.nome_fantasia ? pickAlias(row, aliases.nome_fantasia) : '';
 
   if (!codigo && !nomeOuDesc) {
     throw new Error('Registro sintetico sem codigo nem nome/descricao mapeavel.');
@@ -173,10 +188,27 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
   const empresaLegado = codigoEmpresaLegado
     ? resolverEmpresaLegadoCodigo(codigoEmpresaLegado)
     : null;
+  const compartilhado = LEGADO_MESTRES_COMPARTILHADOS.includes(entidade);
+  const classeLegado = entidade === 'produto' ? String(pickAlias(row, aliases.classe)).trim() : '';
+  const unidadeLegado = entidade === 'produto' ? String(pickAlias(row, aliases.unidade)).trim() : '';
+  const chaveClasseUnidade = `${classeLegado}|${unidadeLegado}`;
+  const classificacao = entidade === 'produto'
+    ? opts.produtoClassUnitMap?.[chaveClasseUnidade]
+    : null;
+  const tipoExplicito = first(classificacao?.tipo_item, classificacao?.tipo_produto);
+  const tipoResolvido = tipoExplicito ? resolveProdutoTipoImportacao(tipoExplicito) : null;
+  const classificacaoValida = Boolean(tipoResolvido && !tipoResolvido.requiresReview && !tipoResolvido.usedDefault
+    && typeof classificacao.unidade_medida_id === 'string' && first(classificacao.unidade_medida_id));
+  const motivos = [...q.motivos];
+  if (entidade === 'produto' && (!classeLegado || !unidadeLegado || !classificacaoValida)) {
+    motivos.push('produto_classe_unidade_sem_mapeamento');
+  }
 
   const base = stripSegredosMigracao({
     group_id: first(opts.groupId, row.group_id, row.grupo_id),
-    empresa_id: first(opts.empresaId, row.empresa_id),
+    // Cadastros mestres pertencem ao Grupo. A empresa legada e somente procedencia.
+    empresa_id: compartilhado ? undefined : first(opts.empresaId, row.empresa_id),
+    scopeType: compartilhado ? 'group' : 'empresa',
     codigo_legado: codigo,
     id_antigo: codigo,
     ...(empresaLegado
@@ -187,14 +219,22 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
       }
       : {}),
     ...(entidade === 'produto'
-      ? { descricao: nomeOuDesc }
-      : { nome: nomeOuDesc, ...(documento ? { documento } : {}) }),
+      ? {
+        descricao: nomeOuDesc,
+        classe_legado: classeLegado || undefined,
+        unidade_legado: unidadeLegado || undefined,
+        ...(classificacaoValida
+          ? { tipo_item: tipoResolvido.value, unidade_medida_id: classificacao.unidade_medida_id }
+          : {}),
+      }
+      : { nome: nomeOuDesc, ...(nomeFantasia ? { nome_fantasia: nomeFantasia } : {}),
+        ...(documento ? { documento } : {}) }),
     origem: 'erp_antigo',
-    ...(q.quarentena
+    ...(motivos.length
       ? {
         status_migracao: MIGRACAO_STATUS_PENDING_MANUAL_RECONCILIATION,
         requer_conciliacao_manual: true,
-        quarentena_motivos: q.motivos,
+        quarentena_motivos: motivos,
       }
       : {}),
   });
@@ -206,11 +246,21 @@ export const mapLegadoRowToCanonicalStub = (row = {}, opts = {}) => {
     destino: MIGRACAO_DESTINO_STAGING,
   });
 
+  const fingerprint = createHash('sha256').update(JSON.stringify([
+    entidade, first(stamped.group_id), first(stamped.empresa_id),
+    first(stamped.codigo_legado), first(stamped.nome).toLowerCase(),
+    first(stamped.descricao).toLowerCase(), first(stamped.documento), first(stamped.nome_fantasia).toLowerCase(),
+    first(stamped.classe_legado).toLowerCase(), first(stamped.unidade_legado).toLowerCase(),
+    first(stamped.tipo_item), first(stamped.unidade_medida_id),
+  ])).digest('hex');
+
   return {
     ...stamped,
     entidade_migracao: entidade,
-    quarentena: q.quarentena,
-    quarentena_motivos: q.motivos,
+    fingerprint_migracao: fingerprint,
+    origens_empresa_legado: empresaLegado?.codigo ? [empresaLegado.codigo] : [],
+    quarentena: motivos.length > 0,
+    quarentena_motivos: motivos,
     chave_idempotente_migracao: buildChaveIdempotenteMigracaoLegado(stamped, { entidade }),
   };
 };
@@ -229,20 +279,33 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
 
   const mapped = [];
   const reusos = [];
+  const conflitos = [];
   const erros = [];
   const quarentenas = [];
 
   for (let i = 0; i < list.length; i += 1) {
     try {
       const out = mapLegadoRowToCanonicalStub(list[i], opts);
-      const dup = findRegistroMigracaoDuplicado(out, mapped);
+      const dup = !out.quarentena && mapped.find((item) => !item.quarentena
+        && item.chave_idempotente_migracao === out.chave_idempotente_migracao);
       if (dup) {
+        const same = dup.fingerprint_migracao === out.fingerprint_migracao;
+        if (!same) {
+          conflitos.push({ indice: i, codigo_legado: out.codigo_legado,
+            chave_idempotente_migracao: out.chave_idempotente_migracao,
+            motivo: 'mestre_compartilhado_divergente' });
+          continue;
+        }
         reusos.push({
           indice: i,
           codigo_legado: out.codigo_legado,
           chave_idempotente_migracao: out.chave_idempotente_migracao,
           reuso_de: dup.chave_idempotente_migracao,
         });
+        if (out.codigo_empresa_legado && !dup.origens_empresa_legado.includes(out.codigo_empresa_legado)) {
+          dup.origens_empresa_legado.push(out.codigo_empresa_legado);
+          dup.origens_empresa_legado.sort();
+        }
         continue;
       }
       if (out.quarentena) {
@@ -272,6 +335,7 @@ export const mapLegadoLoteSintetico = (rows = [], opts = {}) => {
     importacao_erp: true,
     gravados: mapped,
     reusos,
+    conflitos,
     erros,
     quarentenas,
     reconciliacao,
