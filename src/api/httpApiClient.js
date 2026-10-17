@@ -251,27 +251,29 @@ export function createHttpApiClient(options = {}) {
   }
 
   const expedicao = {
+    /** @param {{limit?: number, offset?: number, search?: string, status?: string, pedidoId?: string, cidade?: string, clienteId?: string, signal?: AbortSignal}} options */
     listEntregas({ limit = 50, offset = 0, search, status, pedidoId, cidade, clienteId, signal } = {}) {
       return request('/api/v1/entregas', { query: { limit, offset, search, status, pedidoId, cidade, clienteId }, signal, unwrap: false });
     },
-    getEntrega(id, { signal } = {}) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { signal }); },
-    createEntrega(payload, { signal } = {}) { return request('/api/v1/entregas', { method: 'POST', body: payload, signal }); },
-    patchEntrega(id, payload, { signal } = {}) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, signal }); },
-    historyEntrega(id, { signal } = {}) { return request(`/api/v1/entregas/${encodeURIComponent(id)}/historico`, { signal }); },
-    separacao(id, payload, { signal } = {}) {
+    getEntrega(id, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { signal }); },
+    createEntrega(payload, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) { return request('/api/v1/entregas', { method: 'POST', body: payload, signal }); },
+    patchEntrega(id, payload, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) { return request(`/api/v1/entregas/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, signal }); },
+    historyEntrega(id, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) { return request(`/api/v1/entregas/${encodeURIComponent(id)}/historico`, { signal }); },
+    separacao(id, payload, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) {
       return request(`/api/v1/entregas/${encodeURIComponent(id)}/separacao`, { method: 'POST', body: payload, signal });
     },
-    registrar(id, payload, { signal } = {}) {
+    registrar(id, payload, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) {
       return request(`/api/v1/entregas/${encodeURIComponent(id)}/registrar`, { method: 'POST', body: payload, signal });
     },
-    devolucao(id, payload, { signal } = {}) {
+    devolucao(id, payload, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) {
       return request(`/api/v1/entregas/${encodeURIComponent(id)}/devolucao`, { method: 'POST', body: payload, signal });
     },
+    /** @param {{limit?: number, offset?: number, signal?: AbortSignal}} options */
     listRomaneios({ limit = 50, offset = 0, signal } = {}) {
       return request('/api/v1/romaneios', { query: { limit, offset }, signal, unwrap: false });
     },
-    getRomaneio(id, { signal } = {}) { return request(`/api/v1/romaneios/${encodeURIComponent(id)}`, { signal }); },
-    criarRomaneio(payload, { signal } = {}) { return request('/api/v1/romaneios', { method: 'POST', body: payload, signal }); },
+    getRomaneio(id, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) { return request(`/api/v1/romaneios/${encodeURIComponent(id)}`, { signal }); },
+    criarRomaneio(payload, { signal } = /** @type {{signal?: AbortSignal}} */ ({})) { return request('/api/v1/romaneios', { method: 'POST', body: payload, signal }); },
   };
 
   const entityRoutes = {

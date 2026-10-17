@@ -5,9 +5,16 @@
  */
 export function formatExpedicaoHttpError(error) {
   if (!error) return 'Falha na operacao de Expedicao.';
-  const code = String(error.code || error?.body?.error?.code || '').trim();
-  const status = Number(error.status || 0);
-  const message = String(error.message || error?.body?.error?.message || '').trim();
+  const record = (value) => value && typeof value === 'object' ? value : {};
+  /** @type {Record<string, unknown>} */
+  const source = record(error);
+  /** @type {Record<string, unknown>} */
+  const body = record(source.body);
+  /** @type {Record<string, unknown>} */
+  const detail = record(body.error);
+  const code = String(source.code || detail.code || '').trim();
+  const status = Number(source.status || 0);
+  const message = String(source.message || detail.message || '').trim();
 
   const byCode = {
     ESTOQUE_SIDE_EFFECT_FAILED: 'Falha no side-effect de estoque. Nenhuma expedicao foi confirmada (rollback).',

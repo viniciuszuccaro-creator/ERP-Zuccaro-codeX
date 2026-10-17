@@ -1,6 +1,6 @@
 /**
  * @typedef {Record<string, unknown> & {
- *   id?: unknown,
+ *   id?: string,
  *   status?: string,
  *   tipo_frete?: unknown,
  *   entregas_ids?: unknown[],
@@ -30,6 +30,17 @@
  *   valor_devolvido?: unknown,
  *   qr_code?: unknown,
  *   numero_entrega?: unknown,
+ *   cliente_nome?: string,
+ *   numero_pedido?: string,
+ *   data_previsao?: string,
+ *   data_entrega_solicitada?: string,
+ *   valor_total?: number,
+ *   entrega_parcial?: {quantidade_pedida?: number|string, quantidade_entregue?: number|string, ativada?: boolean},
+ *   historico_status?: Array<Record<string, unknown>>,
+ *   peso_total_kg?: number,
+ *   endereco_entrega_completo?: import('../expedicao/formulario-entrega/entregaFormPolicy.js').EnderecoEntrega,
+ *   endereco_entrega_principal?: import('../expedicao/formulario-entrega/entregaFormPolicy.js').EnderecoEntrega,
+ *   contato_entrega?: import('../expedicao/formulario-entrega/entregaFormPolicy.js').ContatoEntrega,
  * }} ExpedicaoRecord
  * @typedef {{ record?: ExpedicaoRecord, entregas?: ExpedicaoRecord[] }} EntregaCreateOptions
  * @typedef {{ record?: ExpedicaoRecord, romaneios?: ExpedicaoRecord[] }} RomaneioCreateOptions
@@ -196,7 +207,10 @@ export const validarRespostaConferenciaIA = (resposta) => {
   return campos;
 };
 
-/** Seleciona somente a entrega pedida no escopo completo. */
+/** Seleciona somente a entrega pedida no escopo completo.
+ * @param {ExpedicaoRecord[]} entregas
+ * @param {{id?: string, groupId?: string, empresaId?: string}} scope
+ */
 export const selecionarEntregaConferencia = (entregas = [], { id, groupId, empresaId } = {}) => {
   if (!firstText(id) || !firstText(groupId) || !firstText(empresaId)) return null;
   return (Array.isArray(entregas) ? entregas : []).find((item) => (

@@ -161,7 +161,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   };
 
   const validarIAMutation = useMutation({
-    mutationFn: async (item) => {
+    mutationFn: async (/** @type {Record<string, unknown>} */ item) => {
       if (!contextoValido || !canUseSeparacaoIA) {
         await auditarSeparacaoIA({
           acao: "SeparacaoConferenciaIA.validacao_bloqueada",

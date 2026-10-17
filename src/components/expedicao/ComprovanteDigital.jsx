@@ -70,7 +70,7 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose, windowMod
   };
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateInContext("Entrega", id, data),
+    mutationFn: (/** @type {{id: string, data: Record<string, unknown>}} */ { id, data }) => updateInContext("Entrega", id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["entregas"] });
       queryClient.invalidateQueries({ queryKey: ["painel-logistico-entregas"] });

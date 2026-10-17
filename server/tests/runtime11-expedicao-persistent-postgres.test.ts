@@ -54,8 +54,8 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       const pedidoId = order.rows[0].id; created.pedidos.push(pedidoId);
       await db.query(
         `INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,
-          quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot)
-         VALUES($1,$2,$3,$4,$5,'Produto sintético','UN',2,10,0,20,20,false,'REVENDA')`,
+          quantidade,preco_unitario,desconto,subtotal,total,requer_producao)
+         VALUES($1,$2,$3,$4,$5,'Produto sintético','UN',2,10,0,20,20,false)`,
         [scope.groupId, scope.empresaId, pedidoId, product, SEED_IDS.unidadeA],
       );
       const delivery = await db.query<{ id: string }>(
@@ -164,8 +164,8 @@ test('R11 PostgreSQL real: despacho concorrente/retry, parcial, devolução, can
       await db.query(`UPDATE pedido_itens SET quantidade=1,subtotal=10,total=10 WHERE pedido_id=$1 AND produto_id=$2`,
         [second.pedidoId, product]);
       await db.query(`INSERT INTO pedido_itens(group_id,empresa_id,pedido_id,produto_id,unidade_id,descricao_snapshot,unidade_snapshot,
-        quantidade,preco_unitario,desconto,subtotal,total,requer_producao,tipo_comercial_snapshot)
-        VALUES($1,$2,$3,$4,$5,'Produto sintético 2','UN',1,10,0,10,10,false,'REVENDA')`,
+        quantidade,preco_unitario,desconto,subtotal,total,requer_producao)
+        VALUES($1,$2,$3,$4,$5,'Produto sintético 2','UN',1,10,0,10,10,false)`,
       [scope.groupId, scope.empresaId, second.pedidoId, secondProduct, SEED_IDS.unidadeA]);
       await db.query(`UPDATE entrega_itens SET quantidade_pedida=1,quantidade_separada=1 WHERE entrega_id=$1 AND produto_id=$2`,
         [second.entregaId, product]);

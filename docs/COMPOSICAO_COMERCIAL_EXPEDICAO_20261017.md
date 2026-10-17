@@ -33,3 +33,9 @@ Pendências transparentes: typecheck JS global já falha na #331 (1660 diagnóst
 ## Liberação
 
 Implementado na candidata; não integrado, implantado nem homologado. CI do SHA final e revisão independente Cursor exigidas. Portas de estoque/Pedido permanecem reservadas por padrão no runtime; fixture opta por portas persistentes somente no banco descartável. 026 permanece fail-closed. Backup recuperável, destino/configuração, grants/RLS/unidades/saldos reais e reversão continuam gates operacionais, sem inferir aprovação de testes sintéticos.
+
+### Reconciliação do delta e primeira CI
+
+CI runtime #4392 (`1f7bc45d`): frontend Linux 1014/1014, lint/build/audit aprovados; composição histórica de migrations PGlite/PostgreSQL aprovada. Backend typecheck/test/build/migrate aprovados; novo percurso Comercial executou 2/2 no runner PostgreSQL. Suíte adicional R11 detectou fixture ainda dependente de `pedido_itens.tipo_comercial_snapshot` histórico, ausente na referência #331; removida somente essa dependência dos dois INSERTs sintéticos, mantendo todas as asserções e sem adicionar coluna comercial paralela. Novo SHA exige nova CI.
+
+Delta frontend: corrigida colisão real do ícone `Map` com o Map nativo da roteirização; contratos JSDoc de filtros HTTP, assinatura, formulário e policy extraída foram reconciliados sem `ts-ignore`, `nocheck`, redução de regras ou alteração de expectativas. Regressão focal ampliada: 99/99; lint sem erros, build aprovado. A comparação completa de typecheck permanece registrada localmente: baseline 1660, primeiro port 1741; o próximo resultado deve ser distinguido do baseline, sem declarar typecheck global verde. Não há parecer Cursor aprovando o novo SHA, integração ou implantação.

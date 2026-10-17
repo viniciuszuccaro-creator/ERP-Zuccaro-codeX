@@ -12,6 +12,8 @@ import {
   todayCalendarDay,
 } from './expedicaoEntregaPolicy.js';
 
+/** @typedef {import('./expedicaoEntregaPolicy.js').ExpedicaoRecord} ExpedicaoRecord */
+
 /** @param {...unknown} values */
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
@@ -300,6 +302,7 @@ export const selectEntregasParaRomaneio = (entregas = [], {
  *   usuario?: unknown,
  *   usuario_id?: unknown,
  *   romaneiosExistentes?: ExpedicaoRecord[],
+ *   exigirChecklist?: boolean,
  * }} options
  */
 export const resolveRomaneioDespacho = ({

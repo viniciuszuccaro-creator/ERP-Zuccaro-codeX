@@ -77,7 +77,7 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
 
   const cidadesDisponiveis = listCidadesFromEntregas(entregasContextuais);
   const clientesDisponiveis = React.useMemo(() => {
-    const map = new Map();
+    const map = new globalThis.Map();
     for (const e of entregasContextuais) {
       if (e?.cliente_id && !map.has(String(e.cliente_id))) {
         map.set(String(e.cliente_id), e.cliente_nome || e.cliente_id);

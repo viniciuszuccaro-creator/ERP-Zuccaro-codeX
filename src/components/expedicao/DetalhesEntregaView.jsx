@@ -245,7 +245,7 @@ export default function DetalhesEntregaView({
   };
 
   const confirmarEntregaAssinaturaMutation = useMutation({
-    mutationFn: async (dadosAssinatura) => {
+    mutationFn: async (/** @type {{assinatura_base64: string, nome_recebedor?: string, documento_recebedor?: string, data_hora_assinatura?: string, latitude?: number, longitude?: number}} */ dadosAssinatura) => {
       if (!contextoValido) {
         throw new Error("Contexto multiempresa obrigatorio para confirmar entrega.");
       }

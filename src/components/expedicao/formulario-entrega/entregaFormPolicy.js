@@ -41,6 +41,8 @@
  * @property {string} [numero_pedido]
  * @property {string} [cliente_id]
  * @property {string} [cliente_nome]
+ * @property {string} [motorista_nome]
+ * @property {string} [veiculo]
  * @property {string} [data_previsao]
  * @property {string} [prioridade]
  * @property {string} [status]
