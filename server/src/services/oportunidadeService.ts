@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { oportunidadeCsv, OPORTUNIDADE_CSV_COLUMNS, OPORTUNIDADE_EXPORT_LIMIT } from './oportunidadeCsv.js';
 import { z } from 'zod';
 import { AppError } from '../api/errors.js';
 import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
@@ -13,7 +14,7 @@ import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import type { PedidoRepository } from '../repositories/pedidoTypes.js';
 import { conversionSchema, type PedidoService } from './pedidoService.js';
 import { oportunidadeCreateSchema, oportunidadeUpdateSchema, oportunidadeLinkSchema,
-  OPORTUNIDADE_FIELDS, oportunidadePedidoLinkSchema,
+  OPORTUNIDADE_FIELDS, oportunidadePedidoLinkSchema, sumOportunidadeValues, oportunidadeAgendaFilters,
   type Oportunidade, type OportunidadeFields, type OportunidadeFilters,
   type OportunidadeRepository, type OportunidadeScope } from '../repositories/oportunidadeTypes.js';
 
@@ -22,8 +23,15 @@ const CONVERT_PEDIDO = z.object({ expected_version:z.number().int().positive(),
   orcamento_id:z.string().uuid(),pedido:conversionSchema }).strict();
 const LIST = z.object({ limit:z.number().int().min(1).max(200).default(50), offset:z.number().int().min(0).max(1000000).default(0),
   search:z.string().trim().max(80).optional(), ativo:z.boolean().optional(),
-  status:z.enum(['Aberto','Em Andamento','Nova','Ganho','Perdido','Cancelado']).optional(),
-  clienteEmpresaId:z.string().uuid().optional() }).strict();
+  // Read filters also support bounded historical labels; mutation states stay strict.
+  status:z.string().min(1).max(60).optional(),
+  clienteEmpresaId:z.string().uuid().optional(),etapa:z.string().min(1).max(60).optional(),...oportunidadeAgendaFilters }).strict();
+const validateAgenda=<T extends {agenda?:boolean;acaoDe?:string;acaoAte?:string}>(schema:z.ZodType<T>)=>schema
+  .refine(v=>(!v.acaoDe&&!v.acaoAte)||v.agenda===true,'Agenda required for date filters')
+  .refine(v=>!v.acaoDe||!v.acaoAte||v.acaoDe<=v.acaoAte,'Invalid agenda interval');
+const LIST_FILTERS=validateAgenda(LIST);
+const FUNNEL=validateAgenda(LIST.omit({limit:true,offset:true}));
+const EXPORT=FUNNEL;
 const FIELDS = OPORTUNIDADE_FIELDS;
 const snapshot = (row: Oportunidade) => sanitizeAuditSnapshot(row);
 
@@ -65,8 +73,13 @@ export class OportunidadeService {
     return this.repo.withTransaction(scope,tx=>this.require(scope,id,tx));
   }
   async list(ctx:RequestContext,options:unknown={}) {
-    const scope=await this.prepare(ctx,'visualizar'), filters=this.parse(LIST,options) as OportunidadeFilters;
-    const page=await this.repo.withTransaction(scope,tx=>this.repo.list(scope,filters,tx));
+    ctx=Object.freeze({...ctx});
+    const filters=this.parse(LIST_FILTERS,options) as OportunidadeFilters,scope=await this.prepare(ctx,'visualizar');
+    const page=await this.repo.withTransaction(scope,async tx=>{
+      if(filters.agenda)await this.prepare(ctx,'visualizar',tx);
+      const result=await this.repo.list(scope,filters,tx);
+      if(filters.agenda)await this.prepare(ctx,'visualizar',tx);return result;
+    });
     return {data:page.rows,meta:{limit:filters.limit,offset:filters.offset,total:page.total,
       hasMore:filters.offset+page.rows.length<page.total}};
   }
@@ -75,6 +88,45 @@ export class OportunidadeService {
     if(!z.string().trim().min(1).max(180).safeParse(id).success)throw new AppError(422,'VALIDATION_ERROR','Invalid legacy identifier');
     const row=await this.repo.withTransaction(scope,tx=>this.repo.byLegacy(scope,id,tx));
     if(!row)throw new AppError(404,'OPORTUNIDADE_NOT_FOUND','Oportunidade unavailable');return row;
+  }
+  async exportCsv(context:RequestContext,options:unknown={}) {
+    // Capture request inputs before any guard/repository await; do not follow a mutable caller.
+    const ctx=Object.freeze({...context}), filters=this.parse(EXPORT,options);
+    const scope=await this.prepare(ctx,'exportar');
+    return this.repo.withTransaction(scope,async tx=>{
+      await this.prepare(ctx,'visualizar',tx);
+      await this.allowed(ctx,'exportar',tx);
+      // One repository statement supplies both total and rows from the same snapshot.
+      const page=await this.repo.list(scope,{...filters,offset:0,limit:OPORTUNIDADE_EXPORT_LIMIT},tx);
+      if(page.total>OPORTUNIDADE_EXPORT_LIMIT)
+        throw new AppError(413,'OPORTUNIDADE_EXPORT_LIMIT','Refine filters before exporting more than 2000 opportunities');
+      if(page.rows.length!==page.total)
+        throw new AppError(503,'OPORTUNIDADE_EXPORT_INCOMPLETE','Complete export unavailable');
+      const csv=oportunidadeCsv(page.rows);
+      await this.prepare(ctx,'visualizar',tx);
+      await this.allowed(ctx,'exportar',tx);
+      // Audit only technical metadata; the free-text search and exported content stay private.
+      await this.audit.append({groupId:scope.groupId,empresaId:scope.empresaId,actorId:ctx.actorId,
+        actorEmail:ctx.actorEmail,entity:'Oportunidade',action:'read',requestId:ctx.requestId,ipAddress:ctx.ipAddress,
+        afterData:{operation:'export_csv',count:page.total,columns:OPORTUNIDADE_CSV_COLUMNS,
+          filters:{status:filters.status??null,ativo:filters.ativo??null,etapa:filters.etapa??null,agenda:filters.agenda??false,acaoDe:filters.acaoDe??null,acaoAte:filters.acaoAte??null,
+            clienteEmpresaId:filters.clienteEmpresaId??null,searchApplied:!!filters.search},
+          sha256:createHash('sha256').update(csv).digest('hex')}},tx);
+      return {csv,total:page.total};
+    });
+  }
+  async funnel(context:RequestContext,options:unknown={}) {
+    const ctx=Object.freeze({...context}), filters=this.parse(FUNNEL,options);
+    const scope=await this.prepare(ctx,'visualizar');
+    return this.repo.withTransaction(scope,async tx=>{
+      await this.prepare(ctx,'visualizar',tx);
+      const groups=await this.repo.funnel(scope,filters,tx);
+      await this.prepare(ctx,'visualizar',tx);
+      const compare=(a:string,b:string)=>a<b?-1:a>b?1:0;
+      groups.sort((a,b)=>compare(a.etapa,b.etapa)||compare(a.status,b.status));
+      return {data:groups.map(row=>({...row,drilldown:{...filters,etapa:row.etapa,status:row.status}})),
+        meta:{total:groups.reduce((n,row)=>n+row.total,0),valor_estimado:sumOportunidadeValues(groups.map(row=>row.valor_estimado))}};
+    });
   }
   async update(ctx:RequestContext,id:string,payload:unknown) {
     const scope=await this.prepare(ctx,'editar'); this.id(id); const input=this.parse(oportunidadeUpdateSchema,payload);

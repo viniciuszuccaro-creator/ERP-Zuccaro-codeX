@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { OPORTUNIDADE_AGENDA_OPEN, sumOportunidadeValues } from './oportunidadeTypes.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { Oportunidade, OportunidadeFields, OportunidadeFilters, OportunidadeRepository, OportunidadeScope } from './oportunidadeTypes.js';
 
@@ -27,14 +28,30 @@ export class InMemoryOportunidadeRepository implements OportunidadeRepository {
   async byLegacy(scope:OportunidadeScope,id:string) {
     return structuredClone([...this.rows.values()].find(r=>this.scoped(scope,r)&&r.legacy_store_id===id)??null);
   }
-  async list(scope: OportunidadeScope, filters: OportunidadeFilters) {
+  private filtered(scope:OportunidadeScope,filters:Omit<OportunidadeFilters,'limit'|'offset'>) {
     const search=filters.search?.toLocaleLowerCase('pt-BR');
-    const rows=[...this.rows.values()].filter(r => this.scoped(scope,r)
+    return [...this.rows.values()].filter(r => this.scoped(scope,r)
       && (filters.ativo===undefined || r.ativo===filters.ativo) && (!filters.status || r.status===filters.status)
+      && (!filters.agenda || (r.ativo && (OPORTUNIDADE_AGENDA_OPEN as readonly string[]).includes(r.status) && r.data_proxima_acao!==null))
+      && (!filters.acaoDe || (r.data_proxima_acao!==null && r.data_proxima_acao>=filters.acaoDe))
+      && (!filters.acaoAte || (r.data_proxima_acao!==null && r.data_proxima_acao<=filters.acaoAte))
       && (!filters.clienteEmpresaId || r.cliente_empresa_id===filters.clienteEmpresaId)
+      && (!filters.etapa || r.etapa===filters.etapa)
       && (!search || [r.titulo,r.codigo_oportunidade].some(s => s.toLocaleLowerCase('pt-BR').includes(search))))
       .sort((a,b) => b.updated_at.localeCompare(a.updated_at) || b.id.localeCompare(a.id));
+  }
+  async list(scope: OportunidadeScope, filters: OportunidadeFilters) {
+    const rows=this.filtered(scope,filters);
+    if(filters.agenda)rows.sort((a,b)=>a.data_proxima_acao!.localeCompare(b.data_proxima_acao!)||a.id.localeCompare(b.id));
     return {total:rows.length,rows:structuredClone(rows.slice(filters.offset,filters.offset+filters.limit))};
+  }
+  async funnel(scope:OportunidadeScope,filters:Omit<OportunidadeFilters,'limit'|'offset'>) {
+    const groups=new Map<string,Oportunidade[]>();
+    for(const row of this.filtered(scope,filters)) {
+      const key=JSON.stringify([row.etapa,row.status]),bucket=groups.get(key)??[];bucket.push(row);groups.set(key,bucket);
+    }
+    return [...groups.values()].map(rows=>({etapa:rows[0].etapa,status:rows[0].status,total:rows.length,
+      valor_estimado:sumOportunidadeValues(rows.map(r=>r.valor_estimado))}));
   }
   async create(scope: OportunidadeScope, fields: OportunidadeFields, key: string, hash: string, actor: string) {
     if (await this.byKey(scope,key)) throw new Error('OPORTUNIDADE_IDEMPOTENCY_CONFLICT');

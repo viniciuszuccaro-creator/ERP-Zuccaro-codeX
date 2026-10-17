@@ -61,9 +61,10 @@ export const OPORTUNIDADE_FIELDS = ['cliente_empresa_id','cliente_id','cliente_n
   'titulo','descricao','responsavel','etapa','status','valor_estimado','orcamento_cliente','probabilidade','temperatura','origem',
   'observacoes','necessidades','data_abertura','data_previsao','proxima_acao','data_proxima_acao','produtos_interesse',
   'data_fechamento','historico_mudancas_etapa','orcamento_id','legacy_orcamento_id','pedido_id','legacy_pedido_id','convertido_em','convertido_em_id'] as const satisfies readonly (keyof OportunidadeFields)[];
-export type OportunidadeFilters = { limit: number; offset: number; search?: string;
-  ativo?: boolean; status?: string; clienteEmpresaId?: string };
+export type OportunidadeFilters = { limit: number; offset: number; search?: string; etapa?:string;
+  ativo?: boolean; status?: string; clienteEmpresaId?: string; agenda?:boolean; acaoDe?:string; acaoAte?:string };
 export interface OportunidadeRepository {
+  funnel(scope:OportunidadeScope,filters:Omit<OportunidadeFilters,'limit'|'offset'>,tx?:DbQueryExecutor):Promise<OportunidadeFunnelGroup[]>;
   withTransaction<T>(scope: OportunidadeScope, fn: (tx?: DbQueryExecutor) => Promise<T>): Promise<T>;
   lockIdempotency(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<void>;
   byKey(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
@@ -78,3 +79,13 @@ export interface OportunidadeRepository {
   setActive(scope: OportunidadeScope, id: string, expectedVersion: number, active: boolean,
     actor: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
 }
+export type OportunidadeFunnelGroup={etapa:string;status:string;total:number;valor_estimado:string};
+// Canonical amounts have at most six decimal places; do not sum through JS Number.
+export function sumOportunidadeValues(values:Iterable<string>):string {
+  let sum=0n;
+  for(const value of values){const [whole,fraction='']=value.split('.');sum+=BigInt(whole)*1000000n+BigInt((fraction+'000000').slice(0,6));}
+  return `${sum/1000000n}.${(sum%1000000n).toString().padStart(6,'0')}`;
+}
+
+export const OPORTUNIDADE_AGENDA_OPEN = ['Aberto','Em Andamento','Nova'] as const;
+export const oportunidadeAgendaFilters = {agenda:z.boolean().optional(),acaoDe:day.optional(),acaoAte:day.optional()};
