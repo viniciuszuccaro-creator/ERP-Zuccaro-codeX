@@ -61,6 +61,9 @@ import { OrcamentoService } from './services/orcamentoService.js';
 import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepository.js';
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
+import { OportunidadeService } from './services/oportunidadeService.js';
+import { PostgresOportunidadeRepository } from './repositories/postgresOportunidadeRepository.js';
+import { InMemoryOportunidadeRepository } from './repositories/inMemoryOportunidadeRepository.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
 import type { ComercialAlcadaConfigPort } from './services/comercialCondicaoAvistaPolicy.js';
 import type { MalwareScanPort, StoragePort } from './services/storagePort.js';
@@ -182,6 +185,9 @@ export function createApp(options: CreateAppOptions) {
     costPort,
     alcadaConfig,
   );
+  const oportunidadeService = config.crmHttpEnabled===true
+    ? new OportunidadeService(useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db),
+      auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo) : null;
   const obraService = new ObraService(
     obraRepo,
     clienteRepo,
@@ -262,6 +268,7 @@ export function createApp(options: CreateAppOptions) {
     condicaoPagamentoService,
     orcamentoService,
     pedidoService,
+    oportunidadeService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -282,6 +289,7 @@ export function createApp(options: CreateAppOptions) {
     orcamentoService,
     pedidoService,
     auditRepo,
+    oportunidadeService,
     tenantGuard,
     produtoRelationGuard,
     rbacGuard,

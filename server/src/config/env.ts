@@ -23,6 +23,7 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   APP_VERSION: z.string().default('0.1.0-runtime-01'),
   REQUIRE_DATABASE: z.string().optional(),
+  ENABLE_CRM_HTTP: z.string().optional(),
 });
 
 export type AppConfig = {
@@ -44,6 +45,7 @@ export type AppConfig = {
   appVersion: string;
   requireDatabase: boolean;
   isProduction: boolean;
+  crmHttpEnabled?: boolean;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -87,6 +89,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     appVersion: data.APP_VERSION,
     requireDatabase,
     isProduction: data.NODE_ENV === 'production',
+    crmHttpEnabled: boolFromEnv(data.ENABLE_CRM_HTTP, false),
   };
 }
 
