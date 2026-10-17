@@ -117,6 +117,22 @@ export function WindowProvider({ children }) {
       const maxOffset = 400;
       const cascade = offsetBase % maxOffset;
 
+      const viewportW = typeof globalThis !== 'undefined' && globalThis.window
+        ? globalThis.window.innerWidth
+        : 1280;
+      const viewportH = typeof globalThis !== 'undefined' && globalThis.window
+        ? globalThis.window.innerHeight
+        : 800;
+      const requestedW = options.width || 900;
+      const requestedH = options.height || 600;
+      const width = Math.min(requestedW, Math.max(480, viewportW - 24));
+      const height = Math.min(requestedH, Math.max(320, viewportH - 24));
+      const rawX = options.x !== undefined ? options.x : 100 + cascade;
+      const rawY = options.y !== undefined ? options.y : 80 + cascade;
+      const x = Math.max(0, Math.min(rawX, Math.max(0, viewportW - width)));
+      const y = Math.max(0, Math.min(rawY, Math.max(0, viewportH - height)));
+
+
       const newWindow = {
         id: windowId,
         component,
@@ -124,10 +140,10 @@ export function WindowProvider({ children }) {
         title: options.title || 'Nova Janela',
         isMinimized: false,
         isMaximized: false,
-        width: options.width || 900,
-        height: options.height || 600,
-        x: options.x !== undefined ? options.x : 100 + cascade,
-        y: options.y !== undefined ? options.y : 80 + cascade,
+        width,
+        height,
+        x,
+        y,
         zIndex: finalZ,
         uniqueKey: uniqueKey || undefined,
       };

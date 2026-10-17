@@ -69,7 +69,7 @@ export default function ConfiguracaoExpedicao({ empresaId }) {
 
   const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(effectiveGroupId);
   const canViewConfig = hasPermission("Expedicao", "Configuracoes", "visualizar") || hasPermission("Expedicao", "Painel Logistico", "visualizar");
   const canEditConfig = hasPermission("Expedicao", "Configuracoes", "editar") || hasPermission("Expedicao", "Painel Logistico", "editar");
   const configKey = effectiveEmpresaId ? `expedicao_${effectiveEmpresaId}` : `expedicao_grupo_${effectiveGroupId || "sem_contexto"}`;

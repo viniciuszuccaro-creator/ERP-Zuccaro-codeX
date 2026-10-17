@@ -25,8 +25,12 @@ import NotificadorAutomaticoEntrega from "../components/logistica/NotificadorAut
 import ComprovanteEntregaDigital from "../components/logistica/ComprovanteEntregaDigital";
 import RegistroOcorrenciaLogistica from "../components/logistica/RegistroOcorrenciaLogistica";
 import IntegracaoRomaneio from "../components/logistica/IntegracaoRomaneio";
+import {
+  isPedidoStatusElegivelRomaneio,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const EntregasListagem = React.lazy(() => import("../components/expedicao/EntregasListagem"));
+const FormularioEntrega = React.lazy(() => import("../components/expedicao/FormularioEntrega"));
 const SeparacaoConferencia = React.lazy(() => import("../components/expedicao/SeparacaoConferencia"));
 const SeparacaoConferenciaIA = React.lazy(() => import("@/components/expedicao/SeparacaoConferenciaIA"));
 const RoteirizacaoInteligente = React.lazy(() => import("@/components/expedicao/RoteirizacaoInteligente"));
@@ -176,7 +180,6 @@ export default function Expedicao() {
   const modules = [
     {
       title: 'Entregas',
-      sectionKey: 'entregas',
       description: 'Lista e gestão',
       icon: Truck,
       color: 'blue',
@@ -188,7 +191,6 @@ export default function Expedicao() {
     },
     {
       title: 'Separação',
-      sectionKey: 'entregas',
       description: 'Picking de pedidos',
       icon: Package,
       color: 'blue',
@@ -199,7 +201,6 @@ export default function Expedicao() {
     },
     {
       title: 'Romaneios',
-      sectionKey: 'romaneios',
       description: 'Gestão de cargas',
       icon: FileText,
       color: 'blue',
@@ -207,11 +208,16 @@ export default function Expedicao() {
       windowTitle: '📋 Romaneios',
       width: 1400,
       height: 800,
-      props: { pedidosSelecionados: pedidos.filter(p => ['Faturado', 'Em Expedição', 'Pronto para Faturar'].includes(p.status)) }
+      // Só pré-seleciona pedidos com empresa_id + status elegível (policy).
+      // Órfãos só com group_id bloqueavam effectiveEmpresaId em visão grupo.
+      props: {
+        pedidosSelecionados: pedidos.filter((p) => (
+          Boolean(p?.empresa_id) && isPedidoStatusElegivelRomaneio(p?.status)
+        )),
+      },
     },
     {
       title: 'Rotas e Mapa',
-      sectionKey: 'roteirizacao',
       description: 'Visualização cartográfica',
       icon: Map,
       color: 'blue',
@@ -223,7 +229,6 @@ export default function Expedicao() {
     },
     {
       title: 'Roteirização IA',
-      sectionKey: 'roteirizacao',
       description: 'Otimização automática',
       icon: Route,
       color: 'blue',
@@ -234,7 +239,6 @@ export default function Expedicao() {
     },
     {
       title: 'Métricas Realtime',
-      sectionKey: 'entregas',
       description: 'Monitoramento ao vivo',
       icon: Activity,
       color: 'blue',
@@ -245,7 +249,6 @@ export default function Expedicao() {
     },
     {
       title: 'Dashboard IA',
-      sectionKey: 'entregas',
       description: 'Analytics inteligente',
       icon: BarChart3,
       color: 'blue',
@@ -256,7 +259,6 @@ export default function Expedicao() {
     },
     {
       title: 'Dashboard Entregas',
-      sectionKey: 'entregas',
       description: 'Visão geral realtime',
       icon: Activity,
       color: 'blue',
@@ -268,7 +270,6 @@ export default function Expedicao() {
     },
     {
       title: 'Financeiro Logístico',
-      sectionKey: 'romaneios',
       description: 'CR/CP e conciliação',
       icon: BarChart3,
       color: 'blue',
@@ -280,7 +281,6 @@ export default function Expedicao() {
     },
     {
       title: 'Relatório Financeiro',
-      sectionKey: 'romaneios',
       description: 'KPIs, grupos e detalhamento',
       icon: BarChart3,
       color: 'blue',
@@ -291,7 +291,6 @@ export default function Expedicao() {
     },
     {
       title: 'Relatórios',
-      sectionKey: 'entregas',
       description: 'Análises e exportação',
       icon: FileText,
       color: 'blue',
@@ -303,7 +302,6 @@ export default function Expedicao() {
     },
     {
       title: 'Configurações',
-      sectionKey: 'transportadoras',
       description: 'Parâmetros e ajustes',
       icon: Settings,
       color: 'blue',
@@ -315,7 +313,6 @@ export default function Expedicao() {
     },
   {
     title: 'Painel Logístico',
-    sectionKey: 'roteirizacao',
     description: 'Mapa + filas em tempo real',
     icon: Activity,
     color: 'blue',
@@ -374,12 +371,7 @@ export default function Expedicao() {
       return;
     }
 
-    const canCreateEntrega = hasPermission('Expedição', 'entregas', 'criar')
-      || hasPermission('Expedição', 'Entregas', 'criar')
-      || hasPermission('Expedição', 'Entregas', 'incluir')
-      || hasPermission('Expedicao', 'entregas', 'criar')
-      || hasPermission('Expedicao', 'Entregas', 'criar')
-      || hasPermission('Expedicao', 'Entregas', 'incluir');
+    const canCreateEntrega = hasPermission('Expedição', 'Entregas', 'criar') || hasPermission('Expedição', 'Entregas', 'incluir') || hasPermission('Expedicao', 'Entregas', 'criar') || hasPermission('Expedicao', 'Entregas', 'incluir');
     if (!canCreateEntrega) {
       await auditExpedicaoAction('nova_entrega_bloqueada', { title: 'Nova Entrega' }, {
         sucesso: false,
@@ -398,6 +390,26 @@ export default function Expedicao() {
       descricao: 'Acionamento do comando principal de nova entrega.',
     });
     base44.analytics.track({ eventName: 'expedicao_primary_action' });
+    // Reutiliza FormularioEntrega existente (HTTP canônico quando VITE_ERP_HTTP_EXPEDICAO).
+    React.startTransition(() => {
+      openWindow(
+        FormularioEntrega,
+        {
+          clientes,
+          pedidos,
+          empresasDoGrupo,
+          estaNoGrupo,
+          windowMode: true,
+          isEditing: false,
+        },
+        {
+          title: 'Nova Entrega',
+          width: 1100,
+          height: 650,
+          uniqueKey: 'expedicao-nova-entrega',
+        },
+      );
+    });
   };
   const handleModuleClick = (module) => {
     if (!contextoValido) {

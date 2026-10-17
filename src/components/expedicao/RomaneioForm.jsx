@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,12 @@ import { FileText, Truck, CheckCircle, MapPin } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { filterEntregasList, listCidadesFromEntregas } from "@/components/lib/expedicaoEntregaPolicy";
+import {
+  resolveRomaneioDespacho,
+  selectEntregasParaRomaneio,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /**
  * Formulário para Geração de Romaneio
@@ -47,6 +54,11 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     instrucoes_motorista: "",
     entregas_selecionadas: []
   });
+  const [cidadeFiltro, setCidadeFiltro] = useState("todas");
+  const [soFuturasRomaneio, setSoFuturasRomaneio] = useState(false);
+  const [dataDeRomaneio, setDataDeRomaneio] = useState("");
+  const [dataAteRomaneio, setDataAteRomaneio] = useState("");
+  const [clienteIdRomaneio, setClienteIdRomaneio] = useState("todos");
 
   const [checklist, setChecklist] = useState({
     documentos_ok: false,
@@ -76,7 +88,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     enabled: (isOpen || windowMode) && contextoValido && canGerarRomaneio,
   });
 
-  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null }) => {
+  const auditRomaneio = async ({ acao, sucesso = true, motivo = null, dadosAnteriores = null, dadosNovos = null, failClosed = false }) => {
     try {
       await base44.entities.AuditLog.create({
         acao,
@@ -95,6 +107,9 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         data_hora: new Date().toISOString()
       });
     } catch (error) {
+      if (failClosed) {
+        throw new Error(`Falha ao auditar romaneio: ${error?.message || error}`);
+      }
       console.warn("Falha ao auditar romaneio", error);
     }
   };
@@ -130,27 +145,22 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         throw new Error("Conclua o checklist de saida antes de gerar o romaneio.");
       }
 
-      const entregasSelecionadas = entregas.filter(e =>
-        formData.entregas_selecionadas.includes(e.id)
-      );
-
-      if (entregasSelecionadas.length === 0) {
-        throw new Error("Selecione pelo menos uma entrega");
-      }
-
-      const entregaForaDoContexto = entregasSelecionadas.find(e =>
-        (effectiveEmpresaId && e.empresa_id !== effectiveEmpresaId) ||
-        (effectiveGroupId && e.group_id && e.group_id !== effectiveGroupId)
-      );
-
-      if (entregaForaDoContexto) {
+      let entregasSelecionadas;
+      try {
+        entregasSelecionadas = selectEntregasParaRomaneio(entregas, {
+          empresaId: effectiveEmpresaId,
+          groupId: effectiveGroupId,
+          selectedIds: formData.entregas_selecionadas,
+          exigirSelecao: true,
+        });
+      } catch (selectionError) {
         await auditRomaneio({
           acao: "Romaneio.gerar.bloqueado",
           sucesso: false,
-          motivo: "entrega_fora_do_contexto",
-          dadosNovos: { entrega_id: entregaForaDoContexto.id }
+          motivo: "selecao_invalida",
+          dadosNovos: { message: String(selectionError?.message || selectionError) },
         });
-        throw new Error("A entrega selecionada nao pertence ao contexto ativo.");
+        throw selectionError;
       }
 
       if (!String(formData.motorista_id || '').trim() && !String(formData.motorista || '').trim()) {
@@ -172,64 +182,140 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
       const motoristaEmail = motoristaCadastro?.email || formData.motorista_email || '';
       const motoristaTelefone = motoristaCadastro?.whatsapp || motoristaCadastro?.telefone || formData.motorista_telefone;
 
-      const romaneio = await createInContext("Romaneio", {
-        group_id: groupId,
-        grupo_id: groupId,
-        empresa_id: selectedEmpresaId,
-        data_romaneio: now.split('T')[0],
-        data_saida: now,
+      const fluxo = resolveRomaneioDespacho({
+        entregasSelecionadas,
+        empresaId: selectedEmpresaId,
+        groupId,
         motorista_id: formData.motorista_id || motoristaCadastro?.id || null,
+        motorista_nome: motoristaNome,
         motorista: motoristaNome,
-        motorista_email: motoristaEmail,
-        motorista_telefone: motoristaTelefone,
         veiculo: formData.veiculo,
         placa: formData.placa,
         tipo_veiculo: formData.tipo_veiculo,
-        entregas_ids: formData.entregas_selecionadas,
-        quantidade_entregas: entregasSelecionadas.length,
+        instrucoes_motorista: formData.instrucoes_motorista,
+        checklist_saida: checklist,
+        confirmed: true,
+        now,
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || user?.email || null,
+        romaneiosExistentes: [],
+      });
+
+      if (fluxo.reuse) {
+        await auditRomaneio({
+          acao: "Romaneio.gerar.retry",
+          sucesso: true,
+          dadosNovos: { reuse_id: fluxo.reuse.id },
+        });
+        return fluxo.reuse;
+      }
+
+      if (isHttpExpedicaoMode) {
+        const result = await httpApiClient.expedicao.criarRomaneio({
+          confirmed: true,
+          motorista_nome: fluxo.romaneioRecord.motorista || motoristaNome,
+          motorista_id: fluxo.romaneioRecord.motorista_id || null,
+          veiculo: fluxo.romaneioRecord.veiculo,
+          placa: fluxo.romaneioRecord.placa,
+          tipo_veiculo: fluxo.romaneioRecord.tipo_veiculo,
+          instrucoes_motorista: fluxo.romaneioRecord.instrucoes_motorista,
+          checklist_saida: checklist,
+          entregas_ids: entregasSelecionadas.map((e) => e.id),
+          despachar: true,
+          idempotency_key: `rom-form:${effectiveEmpresaId}:${entregasSelecionadas.map((e) => e.id).sort().join(",")}`,
+        });
+        const romaneioHttp = result?.romaneio || result;
+        await auditRomaneio({
+          acao: result?.reused ? "Romaneio.gerar.retry" : "Romaneio.gerar",
+          sucesso: true,
+          dadosNovos: {
+            romaneio_id: romaneioHttp?.id,
+            persistencia: "http_canonica",
+            pedido_side_effect: result?.pedidoSideEffect || "reserved",
+            estoque_side_effect: result?.estoqueSideEffect || "reserved",
+          },
+        });
+        return romaneioHttp;
+      }
+
+      const romaneio = await createInContext("Romaneio", {
+        ...fluxo.romaneioRecord,
+        motorista_email: motoristaEmail,
+        motorista_telefone: motoristaTelefone,
         quantidade_volumes: volumesTotal,
         peso_total_kg: pesoTotal,
         valor_total_mercadoria: valorTotal,
-        status: "Aprovado",
-        instrucoes_motorista: formData.instrucoes_motorista,
-        checklist_saida: checklist,
         entregas_realizadas: 0,
         entregas_frustradas: 0
       });
 
-      for (let idx = 0; idx < entregasSelecionadas.length; idx += 1) {
-        const entrega = entregasSelecionadas[idx];
-        await updateInContext("Entrega", entrega.id, {
-          group_id: groupId,
-          grupo_id: groupId,
-          empresa_id: selectedEmpresaId,
-          romaneio_id: romaneio.id,
-          motorista_id: formData.motorista_id || motoristaCadastro?.id || null,
-          motorista: motoristaNome,
-          motorista_email: motoristaEmail,
-          motorista_telefone: motoristaTelefone,
-          motorista_usuario_id: motoristaCadastro?.usuario_id || null,
-          veiculo: formData.veiculo,
-          placa: formData.placa,
-          sequencia_rota: idx + 1,
-          status: "Saiu para Entrega",
-          data_saida: now,
-          historico_status: [
-            ...(entrega.historico_status || []),
-            {
-              status: "Saiu para Entrega",
-              data_hora: now,
-              usuario: user?.full_name || user?.email || "Sistema",
-              usuario_id: user?.id || user?.email || null,
-              observacao: "Incluido no romaneio " + (romaneio.numero_romaneio || romaneio.id)
-            }
-          ]
+      const entregasById = new Map(entregasSelecionadas.map((e) => [String(e.id), { ...e }]));
+      const patchesComRomaneio = fluxo.despachoPatches.map((item) => {
+        const historico = Array.isArray(item.patch.historico_status) ? [...item.patch.historico_status] : [];
+        if (historico.length > 0) {
+          historico[historico.length - 1] = {
+            ...historico[historico.length - 1],
+            observacao: "Incluido no romaneio " + (romaneio.numero_romaneio || romaneio.id),
+          };
+        }
+        return {
+          entregaId: item.entregaId,
+          patch: {
+            ...item.patch,
+            romaneio_id: romaneio.id,
+            sequencia_rota: item.patch.sequencia_rota,
+            motorista_email: motoristaEmail,
+            motorista_telefone: motoristaTelefone,
+            motorista_usuario_id: motoristaCadastro?.usuario_id || null,
+            historico_status: historico,
+          },
+        };
+      });
+
+      const applied = [];
+      try {
+        for (const item of patchesComRomaneio) {
+          const before = entregasById.get(String(item.entregaId));
+          applied.push({ id: item.entregaId, before });
+          await updateInContext("Entrega", item.entregaId, item.patch);
+        }
+      } catch (persistError) {
+        for (let i = applied.length - 1; i >= 0; i -= 1) {
+          const snap = applied[i];
+          try {
+            await updateInContext("Entrega", snap.id, {
+              status: snap.before.status,
+              romaneio_id: snap.before.romaneio_id || null,
+              sequencia_rota: snap.before.sequencia_rota || null,
+              motorista_id: snap.before.motorista_id || null,
+              motorista: snap.before.motorista || null,
+              data_saida: snap.before.data_saida || null,
+              historico_status: snap.before.historico_status || [],
+              group_id: snap.before.group_id || groupId,
+              grupo_id: snap.before.grupo_id || groupId,
+              empresa_id: snap.before.empresa_id || selectedEmpresaId,
+            });
+          } catch (rollbackError) {
+            console.error("Falha no rollback de despacho", rollbackError);
+          }
+        }
+        await auditRomaneio({
+          acao: "Romaneio.gerar.rollback",
+          sucesso: false,
+          motivo: "persistencia_parcial",
+          dadosNovos: {
+            romaneio_id: romaneio.id,
+            erro: String(persistError?.message || persistError),
+            rolled_back: applied.map((a) => a.id),
+          },
         });
+        throw persistError;
       }
 
       await auditRomaneio({
         acao: "Romaneio.gerar",
         sucesso: true,
+        failClosed: true,
         dadosAnteriores: { entregas: entregasSelecionadas.map(e => ({ id: e.id, status: e.status, romaneio_id: e.romaneio_id || null })) },
         dadosNovos: { romaneio_id: romaneio.id, numero_romaneio: romaneio.numero_romaneio, entregas_ids: formData.entregas_selecionadas }
       });
@@ -272,7 +358,25 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
 
     gerarRomaneioMutation.mutate();
   }, [auditRomaneio, canGerarRomaneio, contextoValido, formData.entregas_selecionadas.length, gerarRomaneioMutation, toast]);
-  const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
+  const cidadesRomaneio = listCidadesFromEntregas(entregas);
+  const clientesRomaneio = React.useMemo(() => {
+    const map = new Map();
+    for (const e of entregas) {
+      if (e?.cliente_id && !map.has(String(e.cliente_id))) {
+        map.set(String(e.cliente_id), e.cliente_nome || e.cliente_id);
+      }
+    }
+    return [...map.entries()].map(([id, nome]) => ({ id, nome }));
+  }, [entregas]);
+  const entregasFiltradas = filterEntregasList(entregas, {
+    empresaId: effectiveEmpresaId,
+    cidade: cidadeFiltro !== "todas" ? cidadeFiltro : "",
+    clienteId: clienteIdRomaneio !== "todos" ? clienteIdRomaneio : "",
+    dataDe: dataDeRomaneio,
+    dataAte: dataAteRomaneio,
+    soFuturas: soFuturasRomaneio,
+  });
+  const entregasSelecionadas = entregasFiltradas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
   const content = (
     <div className={containerClass} data-permission="Expedicao.Romaneios.criar" data-context-required="true">
@@ -364,20 +468,67 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                 Selecionar Entregas ({formData.entregas_selecionadas.length} selecionadas)
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-3 space-y-3" data-testid="romaneio-entregas-filtros" data-action="Expedicao.romaneio.filtro-entregas">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <Select value={cidadeFiltro} onValueChange={setCidadeFiltro}>
+                  <SelectTrigger className="h-8" data-testid="romaneio-filtro-cidade">
+                    <SelectValue placeholder="Cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as cidades</SelectItem>
+                    {cidadesRomaneio.map((cidade) => (
+                      <SelectItem key={cidade} value={cidade}>{cidade}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={clienteIdRomaneio} onValueChange={setClienteIdRomaneio}>
+                  <SelectTrigger className="h-8" data-testid="romaneio-filtro-cliente">
+                    <SelectValue placeholder="Cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os clientes</SelectItem>
+                    {clientesRomaneio.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="date"
+                  value={dataDeRomaneio}
+                  onChange={(e) => setDataDeRomaneio(e.target.value)}
+                  className="h-8"
+                  data-testid="romaneio-filtro-data-de"
+                  aria-label="Data entrega de"
+                />
+                <Input
+                  type="date"
+                  value={dataAteRomaneio}
+                  onChange={(e) => setDataAteRomaneio(e.target.value)}
+                  className="h-8"
+                  data-testid="romaneio-filtro-data-ate"
+                  aria-label="Data entrega até"
+                />
+                <label className="flex items-center gap-2 text-xs text-slate-700 h-8 px-1" data-testid="romaneio-filtro-futuras">
+                  <Checkbox
+                    checked={soFuturasRomaneio}
+                    onCheckedChange={(checked) => setSoFuturasRomaneio(checked === true)}
+                  />
+                  Só entregas futuras
+                </label>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
                     <TableHead className="w-12">
                       <Checkbox
-                        checked={entregas.length > 0 && formData.entregas_selecionadas.length === entregas.length}
+                        checked={entregasFiltradas.length > 0 && formData.entregas_selecionadas.length === entregasFiltradas.length}
                         disabled={!contextoValido || !canGerarRomaneio}
                         data-permission="Expedicao.Romaneios.criar"
                         data-context-required="true"
                         onCheckedChange={(checked) => {
                           setFormData({
                             ...formData,
-                            entregas_selecionadas: checked ? entregas.map(e => e.id) : []
+                            entregas_selecionadas: checked ? entregasFiltradas.map(e => e.id) : []
                           });
                         }}
                       />
@@ -391,7 +542,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entregas.map(entrega => (
+                  {entregasFiltradas.map(entrega => (
                     <TableRow key={entrega.id}>
                       <TableCell>
                         <Checkbox
@@ -430,6 +581,11 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
                 <div className="text-center py-12 text-slate-500">
                   <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
                   <p>Nenhuma entrega pronta para romaneio</p>
+                </div>
+              )}
+              {entregas.length > 0 && entregasFiltradas.length === 0 && (
+                <div className="text-center py-8 text-slate-500 text-sm" data-testid="romaneio-entregas-filtro-vazio">
+                  Nenhuma entrega corresponde aos filtros de cidade/futuras.
                 </div>
               )}
             </CardContent>

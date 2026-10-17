@@ -54,7 +54,7 @@ test('fachada Base44 real em HTTP encaminha entityGuard somente ao BFF, sem fall
       runHttpPilotAwareCountEntities: async () => ({ data: { counts: {} } }),
     },
     './httpApiClient.js': { createHttpApiClient: () => ({ entities: {}, entityGuard: async payload => { backendCalls++; assert.equal(payload.module, 'Comercial'); throw new Error('Bearer rejected'); } }) },
-    './runtimeBackend.js': { HTTP_PILOT_ENTITIES: [], resolveErpApiBaseUrl: () => '', resolveErpBackendMode: () => 'http', resolveHttpPilotEntities: () => [] },
+    './runtimeBackend.js': { HTTP_PILOT_ENTITIES: [], isHttpExpedicaoEnabled: () => false, resolveErpApiBaseUrl: () => '', resolveErpBackendMode: () => 'http', resolveHttpPilotEntities: () => [] },
   });
   await assert.rejects(facade.base44.functions.invoke('entityGuard', { module: 'Comercial' }), /Bearer rejected/);
   assert.equal(backendCalls, 1); assert.equal(localCalls, 0);
