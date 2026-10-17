@@ -64,6 +64,7 @@ export const OPORTUNIDADE_FIELDS = ['cliente_empresa_id','cliente_id','cliente_n
 export type OportunidadeFilters = { limit: number; offset: number; search?: string;
   ativo?: boolean; status?: string; clienteEmpresaId?: string };
 export interface OportunidadeRepository {
+  duplicateCandidate?(scope:OportunidadeScope,input:OportunidadeDuplicateInput,tx?:DbQueryExecutor):Promise<OportunidadeDuplicateCandidate|null>;
   withTransaction<T>(scope: OportunidadeScope, fn: (tx?: DbQueryExecutor) => Promise<T>): Promise<T>;
   lockIdempotency(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<void>;
   byKey(scope: OportunidadeScope, key: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
@@ -78,3 +79,5 @@ export interface OportunidadeRepository {
   setActive(scope: OportunidadeScope, id: string, expectedVersion: number, active: boolean,
     actor: string, tx?: DbQueryExecutor): Promise<Oportunidade | null>;
 }
+export type OportunidadeDuplicateInput={titulo:string;email?:string;telefone?:string};
+export type OportunidadeDuplicateCandidate=Pick<Oportunidade,'id'|'group_id'|'empresa_id'|'codigo'|'codigo_oportunidade'|'titulo'|'cliente_email'|'cliente_telefone'|'etapa'|'status'>;

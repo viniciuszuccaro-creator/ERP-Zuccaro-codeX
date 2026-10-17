@@ -32,6 +32,10 @@ export function mountOportunidadeRoutes(router:Router,service:OportunidadeServic
   router.post('/api/v1/oportunidades',requireTenantScope,run(async(s,req,res)=>{
     res.status(201).json({data:await s.create(context(req),req.body)});
   }));
+  router.post('/api/v1/oportunidades/sugestao-duplicidade',requireTenantScope,run(async(s,req,res)=>{
+    if(Object.keys(req.query).length)throw new AppError(422,'VALIDATION_ERROR','Use the request body for contact lookup');
+    res.json(await s.suggestDuplicate(context(req),req.body));
+  }));
   router.patch('/api/v1/oportunidades/:id',requireTenantScope,run(async(s,req,res)=>{
     res.json({data:await s.update(context(req),req.params.id,req.body)});
   }));
