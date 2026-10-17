@@ -14,7 +14,7 @@ import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import type { PedidoRepository } from '../repositories/pedidoTypes.js';
 import { conversionSchema, type PedidoService } from './pedidoService.js';
 import { oportunidadeCreateSchema, oportunidadeUpdateSchema, oportunidadeLinkSchema,
-  OPORTUNIDADE_FIELDS, oportunidadePedidoLinkSchema,
+  OPORTUNIDADE_FIELDS, oportunidadePedidoLinkSchema, oportunidadeAgendaFilters,
   type Oportunidade, type OportunidadeFields, type OportunidadeFilters,
   type OportunidadeRepository, type OportunidadeScope } from '../repositories/oportunidadeTypes.js';
 
@@ -24,7 +24,10 @@ const CONVERT_PEDIDO = z.object({ expected_version:z.number().int().positive(),
 const LIST = z.object({ limit:z.number().int().min(1).max(200).default(50), offset:z.number().int().min(0).max(1000000).default(0),
   search:z.string().trim().max(80).optional(), ativo:z.boolean().optional(),
   status:z.enum(['Aberto','Em Andamento','Nova','Ganho','Perdido','Cancelado']).optional(),
-  clienteEmpresaId:z.string().uuid().optional() }).strict();
+  clienteEmpresaId:z.string().uuid().optional(),...oportunidadeAgendaFilters }).strict();
+const LIST_FILTERS = LIST
+  .refine(v=>(!v.acaoDe&&!v.acaoAte)||v.agenda===true,'Agenda required for date filters')
+  .refine(v=>!v.acaoDe||!v.acaoAte||v.acaoDe<=v.acaoAte,'Invalid agenda interval');
 const FIELDS = OPORTUNIDADE_FIELDS;
 const EXPORT = LIST.omit({limit:true,offset:true});
 const snapshot = (row: Oportunidade) => sanitizeAuditSnapshot(row);
@@ -67,8 +70,13 @@ export class OportunidadeService {
     return this.repo.withTransaction(scope,tx=>this.require(scope,id,tx));
   }
   async list(ctx:RequestContext,options:unknown={}) {
-    const scope=await this.prepare(ctx,'visualizar'), filters=this.parse(LIST,options) as OportunidadeFilters;
-    const page=await this.repo.withTransaction(scope,tx=>this.repo.list(scope,filters,tx));
+    ctx=Object.freeze({...ctx});
+    const filters=this.parse(LIST_FILTERS,options) as OportunidadeFilters, scope=await this.prepare(ctx,'visualizar');
+    const page=await this.repo.withTransaction(scope,async tx=>{
+      if(filters.agenda)await this.prepare(ctx,'visualizar',tx);
+      const page=await this.repo.list(scope,filters,tx);
+      if(filters.agenda)await this.prepare(ctx,'visualizar',tx);return page;
+    });
     return {data:page.rows,meta:{limit:filters.limit,offset:filters.offset,total:page.total,
       hasMore:filters.offset+page.rows.length<page.total}};
   }

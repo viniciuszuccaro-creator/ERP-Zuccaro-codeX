@@ -1,6 +1,6 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
-import { OPORTUNIDADE_FIELDS } from './oportunidadeTypes.js';
+import { OPORTUNIDADE_FIELDS, OPORTUNIDADE_AGENDA_OPEN } from './oportunidadeTypes.js';
 import type { Oportunidade, OportunidadeFields, OportunidadeFilters, OportunidadeRepository, OportunidadeScope } from './oportunidadeTypes.js';
 
 const FIELDS = OPORTUNIDADE_FIELDS;
@@ -66,13 +66,22 @@ export class PostgresOportunidadeRepository implements OportunidadeRepository {
         `WITH filtered AS (SELECT * FROM oportunidades WHERE group_id=$1 AND empresa_id=$2
           AND ($3::boolean IS NULL OR ativo=$3) AND ($4::text IS NULL OR status=$4)
           AND ($5::uuid IS NULL OR cliente_empresa_id=$5)
-          AND ($6::text IS NULL OR titulo ILIKE '%'||$6||'%' OR codigo_oportunidade ILIKE '%'||$6||'%')),
-        page AS (SELECT * FROM filtered ORDER BY updated_at DESC,id DESC LIMIT $7 OFFSET $8)
+          AND ($6::text IS NULL OR titulo ILIKE '%'||$6||'%' OR codigo_oportunidade ILIKE '%'||$6||'%')
+          AND (NOT $9::boolean OR (ativo=true AND status=ANY($12::text[]) AND data_proxima_acao IS NOT NULL))
+          AND ($10::date IS NULL OR data_proxima_acao >= $10)
+          AND ($11::date IS NULL OR data_proxima_acao <= $11)),
+        page AS (SELECT * FROM filtered ORDER BY
+          CASE WHEN $9::boolean THEN data_proxima_acao END ASC,
+          CASE WHEN $9::boolean THEN id END ASC,
+          CASE WHEN NOT $9::boolean THEN updated_at END DESC,id DESC LIMIT $7 OFFSET $8)
         SELECT (SELECT count(*)::int FROM filtered) total,
           COALESCE((SELECT jsonb_agg(to_jsonb(p)||jsonb_build_object('valor_estimado',p.valor_estimado::text,'orcamento_cliente',p.orcamento_cliente::text)
-            ORDER BY updated_at DESC,id DESC) FROM page p),'[]'::jsonb) rows`,
+            ORDER BY CASE WHEN $9::boolean THEN data_proxima_acao END ASC,
+              CASE WHEN $9::boolean THEN id END ASC,
+              CASE WHEN NOT $9::boolean THEN updated_at END DESC,id DESC) FROM page p),'[]'::jsonb) rows`,
         [scope.groupId,scope.empresaId,filters.ativo ?? null,filters.status ?? null,
-          filters.clienteEmpresaId ?? null,filters.search ?? null,filters.limit,filters.offset]);
+          filters.clienteEmpresaId ?? null,filters.search ?? null,filters.limit,filters.offset,
+          filters.agenda??false,filters.acaoDe??null,filters.acaoAte??null,OPORTUNIDADE_AGENDA_OPEN]);
       return { total: Number(r.rows[0]?.total ?? 0), rows: (r.rows[0]?.rows ?? []).map(map) };
     });
   }
