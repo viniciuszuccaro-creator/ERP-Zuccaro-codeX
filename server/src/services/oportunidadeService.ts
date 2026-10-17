@@ -7,7 +7,7 @@ import type { DbQueryExecutor } from '../db/client.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
 import type { TenantGuard } from '../db/tenantGuard.js';
 import { assertOportunidadeOnCreate, assertOportunidadeOnUpdate, CRM_ETAPAS,
-  normalizeEtapaCrm, oportunidadeAberta, stampOportunidadeConvertida } from '../domain/crmOportunidadePolicy.js';
+  normalizeEtapaCrm, oportunidadeAberta, stampOportunidadeConvertida, digitsOnly, findDuplicateOportunidade } from '../domain/crmOportunidadePolicy.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import type { OrcamentoRepository } from '../repositories/orcamentoTypes.js';
 import type { PedidoRepository } from '../repositories/pedidoTypes.js';
@@ -25,6 +25,10 @@ const LIST = z.object({ limit:z.number().int().min(1).max(200).default(50), offs
   status:z.enum(['Aberto','Em Andamento','Nova','Ganho','Perdido','Cancelado']).optional(),
   clienteEmpresaId:z.string().uuid().optional() }).strict();
 const FIELDS = OPORTUNIDADE_FIELDS;
+const DUPLICATE=z.object({titulo:z.string().trim().min(1).max(240),
+  email:z.string().trim().email().max(254).transform(v=>v.toLowerCase()).optional(),
+  telefone:z.string().trim().max(40).regex(/^[+()\d\s.\-]+$/).transform(digitsOnly).refine(v=>/^\d{8,15}$/.test(v),'Invalid phone').optional(),
+}).strict().refine(v=>!!v.email||!!v.telefone,'Contact required');
 const snapshot = (row: Oportunidade) => sanitizeAuditSnapshot(row);
 
 export class OportunidadeService {
@@ -75,6 +79,26 @@ export class OportunidadeService {
     if(!z.string().trim().min(1).max(180).safeParse(id).success)throw new AppError(422,'VALIDATION_ERROR','Invalid legacy identifier');
     const row=await this.repo.withTransaction(scope,tx=>this.repo.byLegacy(scope,id,tx));
     if(!row)throw new AppError(404,'OPORTUNIDADE_NOT_FOUND','Oportunidade unavailable');return row;
+  }
+  async suggestDuplicate(context:RequestContext,payload:unknown) {
+    const ctx=Object.freeze({...context}),input=this.parse(DUPLICATE,payload);
+    const scope=await this.prepare(ctx,'visualizar');
+    await this.allowed(ctx,'dados-sensiveis.visualizar');
+    if(!this.repo.duplicateCandidate)throw new AppError(503,'CRM_DUPLICATE_LOOKUP_UNAVAILABLE','Canonical SQL contact lookup unavailable');
+    return this.repo.withTransaction(scope,async tx=>{
+      await this.prepare(ctx,'visualizar',tx);await this.allowed(ctx,'dados-sensiveis.visualizar',tx);
+      const candidate=await this.repo.duplicateCandidate!(scope,input,tx);
+      // Reuse the existing fallback key/contact precedence; never classify by contact alone.
+      const duplicate=(candidate&&findDuplicateOportunidade({empresa_id:scope.empresaId,titulo:input.titulo,
+        cliente_email:input.email,cliente_telefone:input.telefone},[candidate]))?candidate:null;
+      await this.prepare(ctx,'visualizar',tx);await this.allowed(ctx,'dados-sensiveis.visualizar',tx);
+      await this.audit.append({groupId:scope.groupId,empresaId:scope.empresaId,actorId:ctx.actorId,actorEmail:ctx.actorEmail,
+        entity:'Oportunidade',entityId:duplicate?.id??null,action:duplicate?'possible_duplicate':'read',requestId:ctx.requestId,ipAddress:ctx.ipAddress,
+        afterData:{operation:'suggest_duplicate',matched:!!duplicate,criterion:input.email?'email_title':'phone_title'}},tx);
+      return {sugestao:!!duplicate,mescla:'revisao_humana_obrigatoria' as const,
+        data:duplicate?{id:duplicate.id,codigo:duplicate.codigo,codigo_oportunidade:duplicate.codigo_oportunidade,
+          etapa:duplicate.etapa,status:duplicate.status}:null};
+    });
   }
   async update(ctx:RequestContext,id:string,payload:unknown) {
     const scope=await this.prepare(ctx,'editar'); this.id(id); const input=this.parse(oportunidadeUpdateSchema,payload);

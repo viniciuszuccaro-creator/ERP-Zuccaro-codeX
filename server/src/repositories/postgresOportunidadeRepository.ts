@@ -1,7 +1,7 @@
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 import { OPORTUNIDADE_FIELDS } from './oportunidadeTypes.js';
-import type { Oportunidade, OportunidadeFields, OportunidadeFilters, OportunidadeRepository, OportunidadeScope } from './oportunidadeTypes.js';
+import type { Oportunidade, OportunidadeFields, OportunidadeFilters, OportunidadeDuplicateInput, OportunidadeDuplicateCandidate, OportunidadeRepository, OportunidadeScope } from './oportunidadeTypes.js';
 
 const FIELDS = OPORTUNIDADE_FIELDS;
 const values = (fields: OportunidadeFields) => FIELDS.map(key => ['historico_mudancas_etapa','produtos_interesse'].includes(key)
@@ -84,6 +84,20 @@ export class PostgresOportunidadeRepository implements OportunidadeRepository {
         (group_id,empresa_id,codigo,codigo_oportunidade,idempotency_key,payload_fingerprint,created_by,updated_by,${FIELDS.join(',')})
         VALUES ($1,$2,$3,$4,$5,$6,$7,$7,${FIELDS.map((_,i) => `$${i+8}`).join(',')}) RETURNING *`,p);
       return map(r.rows[0]);
+    });
+  }
+  duplicateCandidate(scope:OportunidadeScope,input:OportunidadeDuplicateInput,tx?:DbQueryExecutor) {
+    return this.run(scope,tx,async q=>{
+      // The selected contact view omits receipts and unrequested email; no stored identity changes.
+      const r=await q.query<OportunidadeDuplicateCandidate>(`SELECT id,group_id,empresa_id,codigo,codigo_oportunidade,
+        titulo,CASE WHEN $4::text IS NOT NULL THEN cliente_email ELSE NULL END AS cliente_email,
+        cliente_telefone,etapa,status FROM oportunidades
+        WHERE group_id=$1 AND empresa_id=$2 AND ativo=true AND status IN ('Aberto','Em Andamento','Nova')
+          AND lower(btrim(titulo))=$3
+          AND CASE WHEN $4::text IS NOT NULL THEN lower(btrim(COALESCE(cliente_email,'')))=$4
+            ELSE regexp_replace(COALESCE(cliente_telefone,''),'[^0-9]','','g')=$5 END
+        ORDER BY updated_at DESC,id DESC LIMIT 1`,[scope.groupId,scope.empresaId,input.titulo.toLowerCase(),input.email??null,input.telefone??null]);
+      return r.rows[0]??null;
     });
   }
   byPedido(scope:OportunidadeScope,id:string,tx?:DbQueryExecutor) {
