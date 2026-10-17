@@ -237,6 +237,9 @@ export class ExpedicaoService {
           return toSpaEntrega(byIdem);
         }
       }
+      // Recheck after Pedido's lock/any wait and before persisting the snapshot.
+      await this.tenantGuard.assertEmpresaInGroup(scope.groupId, scope.empresaId, executor);
+      await this.rbac.assertAllowed(ctx, 'Expedicao', 'entrega', 'criar', { allowGlobalWildcard: false, executor });
       const created = await this.repo.createEntrega(scope, canonical, ctx.actorId!, executor);
       await this.auditRow(ctx, 'Entrega', 'create', null, created, executor);
       return toSpaEntrega(created);
@@ -251,9 +254,9 @@ export class ExpedicaoService {
     const data = parsed.data as SeparacaoConcluir;
 
     return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       await this.tenantGuard.assertEmpresaInGroup(scope.groupId, scope.empresaId, executor);
       await this.rbac.assertAllowed(ctx, 'Expedicao', 'separacao', 'conferir', { allowGlobalWildcard: false, executor });
-      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (data.idempotency_key) {
         const existingSep = await this.repo.getSeparacaoByEntrega(scope, entregaId, 'conferencia', executor);
@@ -472,9 +475,9 @@ export class ExpedicaoService {
     this.assertId(entregaId, 'entregaId');
 
     return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       await this.tenantGuard.assertEmpresaInGroup(scope.groupId, scope.empresaId, executor);
       await this.rbac.assertAllowed(ctx, 'Expedicao', 'entrega', action, { allowGlobalWildcard: false, executor });
-      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
 
       if (data.idempotency_key) {
@@ -576,9 +579,9 @@ export class ExpedicaoService {
     const data = parsed.data as DevolucaoInput;
 
     return this.repo.withTransaction(async (executor) => {
+      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       await this.tenantGuard.assertEmpresaInGroup(scope.groupId, scope.empresaId, executor);
       await this.rbac.assertAllowed(ctx, 'Expedicao', 'entrega', 'ocorrencia', { allowGlobalWildcard: false, executor });
-      const before = await this.repo.getEntregaForUpdate(scope, entregaId, executor);
       if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
       if (data.idempotency_key) {
         const hist = await this.repo.historyEntrega(scope, entregaId, executor);
@@ -711,9 +714,9 @@ export class ExpedicaoService {
       }
       const scope = await this.prepare(ctx, rbacForStatus(next), 'entrega');
       return this.repo.withTransaction(async (executor) => {
-      await this.tenantGuard.assertEmpresaInGroup(scope.groupId, scope.empresaId, executor);
-      await this.rbac.assertAllowed(ctx, 'Expedicao', 'entrega', rbacForStatus(next), { allowGlobalWildcard: false, executor });
         const before = await this.repo.getEntregaForUpdate(scope, id, executor);
+        await this.tenantGuard.assertEmpresaInGroup(scope.groupId, scope.empresaId, executor);
+        await this.rbac.assertAllowed(ctx, 'Expedicao', 'entrega', rbacForStatus(next), { allowGlobalWildcard: false, executor });
         if (!before) throw new AppError(404, 'ENTREGA_NOT_FOUND', 'Entrega not found');
         if (before.status === next) return toSpaEntrega(before);
         if (!ALLOWED_TRANSITIONS[before.status].includes(next)) {

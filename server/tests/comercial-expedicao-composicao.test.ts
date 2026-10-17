@@ -76,6 +76,18 @@ async function journey(f: Awaited<ReturnType<typeof localCrmFixture>>) {
   const balance = async () => String((await f.admin.query('SELECT quantidade::text AS n FROM expedicao_estoque_saldos WHERE group_id=$1 AND empresa_id=$2 AND produto_id=$3', [ID.groupA, ID.empresaA, ID.produtoA])).rows[0].n);
   assert.equal(Number(await balance()), 17);
   const partial = { confirmed: true, modo: 'parcial', quantidade_entregue: '1.000001', comprovante: { nome_recebedor: 'Synthetic receiver', documento_recebedor: 'synthetic-proof' }, idempotency_key: 'composition-partial' };
+  const revokedAfterLock = createApp({ config, useMemory: false, db: { ...f.admin,
+    withTransaction: fn => f.admin.withTransaction(executor => fn({
+      query: async (sql, params) => {
+        const result = await executor.query(sql, params);
+        if (/SELECT \* FROM entregas.*FOR UPDATE/.test(sql)) {
+          await executor.query("UPDATE profiles SET permissoes='{}'::jsonb WHERE id=$1", [ctx.actorId]);
+        }
+        return result;
+      },
+    })) } });
+  await assert.rejects(() => revokedAfterLock.expedicaoService.registrarFinal(ctx, delivery.id, partial), (e: any) => e.statusCode === 403);
+  assert.equal((await runtime.expedicaoService.getEntrega(ctx, delivery.id)).status, 'Saiu para Entrega');
   await runtime.expedicaoService.registrarFinal(ctx, delivery.id, partial);
   await runtime.expedicaoService.registrarFinal(ctx, delivery.id, partial);
   assert.equal((await runtime.expedicaoService.getEntrega(ctx, delivery.id)).itens[0].quantidade_entregue, '1.000001');
