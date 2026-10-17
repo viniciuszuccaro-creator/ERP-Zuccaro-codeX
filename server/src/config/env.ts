@@ -26,6 +26,7 @@ const envSchema = z.object({
   APP_VERSION: z.string().default('0.1.0-runtime-01'),
   REQUIRE_DATABASE: z.string().optional(),
   ENABLE_CRM_HTTP: z.string().optional(),
+  ENABLE_CRM_INTERACOES_HTTP: z.string().optional(),
   ENABLE_PRODUTO_EMPRESA: z.string().optional(),
 });
 
@@ -51,6 +52,7 @@ export type AppConfig = {
   requireDatabase: boolean;
   isProduction: boolean;
   crmHttpEnabled?: boolean;
+  crmInteracoesHttpEnabled?: boolean;
   produtoEmpresaEnabled?:boolean;
 };
 
@@ -105,6 +107,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     requireDatabase,
     isProduction: data.NODE_ENV === 'production',
     crmHttpEnabled: boolFromEnv(data.ENABLE_CRM_HTTP, false),
+    crmInteracoesHttpEnabled: boolFromEnv(data.ENABLE_CRM_INTERACOES_HTTP, false),
     produtoEmpresaEnabled:boolFromEnv(data.ENABLE_PRODUTO_EMPRESA,false),
   };
 }

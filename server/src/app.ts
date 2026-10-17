@@ -62,6 +62,8 @@ import { InMemoryPedidoRepository } from './repositories/inMemoryPedidoRepositor
 import { PostgresPedidoRepository } from './repositories/postgresPedidoRepository.js';
 import { PedidoService } from './services/pedidoService.js';
 import { OportunidadeService } from './services/oportunidadeService.js';
+import { InteracaoService } from './services/interacaoService.js';
+import { PostgresInteracaoRepository } from './repositories/postgresInteracaoRepository.js';
 import { PostgresOportunidadeRepository } from './repositories/postgresOportunidadeRepository.js';
 import { InMemoryOportunidadeRepository } from './repositories/inMemoryOportunidadeRepository.js';
 import type { ComercialCostPort } from './services/comercialMargemAlcadaPolicy.js';
@@ -190,8 +192,11 @@ export function createApp(options: CreateAppOptions) {
     costPort,
     alcadaConfig,
   );
+  const oportunidadeRepo = useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db);
+  const interacaoService = config.crmInteracoesHttpEnabled===true && !useMemory
+    ? new InteracaoService(new PostgresInteracaoRepository(db),auditRepo,tenantGuard,rbacGuard,clienteRepo,oportunidadeRepo) : null;
   const oportunidadeService = config.crmHttpEnabled===true
-    ? new OportunidadeService(useMemory ? new InMemoryOportunidadeRepository() : new PostgresOportunidadeRepository(db),
+    ? new OportunidadeService(oportunidadeRepo,
       auditRepo,tenantGuard,rbacGuard,clienteRepo,orcamentoRepo,pedidoRepo,useMemory?null:pedidoService) : null;
   const obraService = new ObraService(
     obraRepo,
@@ -290,6 +295,7 @@ export function createApp(options: CreateAppOptions) {
     orcamentoService,
     pedidoService,
     oportunidadeService,
+    interacaoService,
   }));
   app.use(notFoundHandler);
   app.use(createErrorHandler(config));
@@ -311,6 +317,7 @@ export function createApp(options: CreateAppOptions) {
     pedidoService,
     auditRepo,
     oportunidadeService,
+    interacaoService,
     tenantGuard,
     produtoRelationGuard,
     rbacGuard,
