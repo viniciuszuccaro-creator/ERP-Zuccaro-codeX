@@ -8,7 +8,9 @@ import type { OportunidadeService } from '../services/oportunidadeService.js';
 const query=z.object({ search:z.string().max(80).optional(),status:z.string().max(60).optional(),
   clienteEmpresaId:z.string().uuid().optional(),limit:z.coerce.number().int().min(1).max(200).optional(),
   offset:z.coerce.number().int().min(0).max(1000000).optional(),
-  ativo:z.enum(['true','false']).transform(v=>v==='true').optional() }).strict();
+  ativo:z.enum(['true','false']).transform(v=>v==='true').optional(),
+  agenda:z.enum(['true','false']).transform(v=>v==='true').optional(),
+  acaoDe:z.string().max(10).optional(),acaoAte:z.string().max(10).optional() }).strict();
 export function mountOportunidadeRoutes(router:Router,service:OportunidadeService|null|undefined,
   context:(req:Request)=>RequestContext) {
   const run=(fn:(s:OportunidadeService,req:Request,res:Response)=>Promise<void>) =>
