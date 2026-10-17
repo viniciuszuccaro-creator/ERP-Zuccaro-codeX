@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { oportunidadeCsv, OPORTUNIDADE_CSV_COLUMNS, OPORTUNIDADE_EXPORT_LIMIT } from './oportunidadeCsv.js';
 import { z } from 'zod';
 import { AppError } from '../api/errors.js';
 import type { AuditAction, AuditRepository, RequestContext } from '../audit/types.js';
@@ -25,6 +26,7 @@ const LIST = z.object({ limit:z.number().int().min(1).max(200).default(50), offs
   status:z.enum(['Aberto','Em Andamento','Nova','Ganho','Perdido','Cancelado']).optional(),
   clienteEmpresaId:z.string().uuid().optional() }).strict();
 const FIELDS = OPORTUNIDADE_FIELDS;
+const EXPORT = LIST.omit({limit:true,offset:true});
 const snapshot = (row: Oportunidade) => sanitizeAuditSnapshot(row);
 
 export class OportunidadeService {
@@ -75,6 +77,32 @@ export class OportunidadeService {
     if(!z.string().trim().min(1).max(180).safeParse(id).success)throw new AppError(422,'VALIDATION_ERROR','Invalid legacy identifier');
     const row=await this.repo.withTransaction(scope,tx=>this.repo.byLegacy(scope,id,tx));
     if(!row)throw new AppError(404,'OPORTUNIDADE_NOT_FOUND','Oportunidade unavailable');return row;
+  }
+  async exportCsv(context:RequestContext,options:unknown={}) {
+    // Capture request inputs before any guard/repository await; do not follow a mutable caller.
+    const ctx=Object.freeze({...context}), filters=this.parse(EXPORT,options);
+    const scope=await this.prepare(ctx,'exportar');
+    return this.repo.withTransaction(scope,async tx=>{
+      await this.prepare(ctx,'visualizar',tx);
+      await this.allowed(ctx,'exportar',tx);
+      // One repository statement supplies both total and rows from the same snapshot.
+      const page=await this.repo.list(scope,{...filters,offset:0,limit:OPORTUNIDADE_EXPORT_LIMIT},tx);
+      if(page.total>OPORTUNIDADE_EXPORT_LIMIT)
+        throw new AppError(413,'OPORTUNIDADE_EXPORT_LIMIT','Refine filters before exporting more than 2000 opportunities');
+      if(page.rows.length!==page.total)
+        throw new AppError(503,'OPORTUNIDADE_EXPORT_INCOMPLETE','Complete export unavailable');
+      const csv=oportunidadeCsv(page.rows);
+      await this.prepare(ctx,'visualizar',tx);
+      await this.allowed(ctx,'exportar',tx);
+      // Audit only technical metadata; the free-text search and exported content stay private.
+      await this.audit.append({groupId:scope.groupId,empresaId:scope.empresaId,actorId:ctx.actorId,
+        actorEmail:ctx.actorEmail,entity:'Oportunidade',action:'read',requestId:ctx.requestId,ipAddress:ctx.ipAddress,
+        afterData:{operation:'export_csv',count:page.total,columns:OPORTUNIDADE_CSV_COLUMNS,
+          filters:{status:filters.status??null,ativo:filters.ativo??null,
+            clienteEmpresaId:filters.clienteEmpresaId??null,searchApplied:!!filters.search},
+          sha256:createHash('sha256').update(csv).digest('hex')}},tx);
+      return {csv,total:page.total};
+    });
   }
   async update(ctx:RequestContext,id:string,payload:unknown) {
     const scope=await this.prepare(ctx,'editar'); this.id(id); const input=this.parse(oportunidadeUpdateSchema,payload);
