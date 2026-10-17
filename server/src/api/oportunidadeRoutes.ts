@@ -26,6 +26,16 @@ export function mountOportunidadeRoutes(router:Router,service:OportunidadeServic
   router.get('/api/v1/oportunidades/legado/:legacyId',requireTenantScope,run(async(s,req,res)=>{
     res.json({data:await s.getByLegacy(context(req),req.params.legacyId)});
   }));
+  router.get('/api/v1/oportunidades/exportar.csv',requireTenantScope,run(async(s,req,res)=>{
+    const parsed=query.omit({limit:true,offset:true}).safeParse(req.query);
+    if(!parsed.success)throw new AppError(422,'VALIDATION_ERROR','Invalid export filters');
+    const file=await s.exportCsv(context(req),parsed.data);
+    res.setHeader('Content-Type','text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition','attachment; filename="oportunidades.csv"');
+    res.setHeader('X-Content-Type-Options','nosniff');
+    res.setHeader('X-Total-Count',String(file.total));
+    res.send(file.csv);
+  }));
   router.get('/api/v1/oportunidades/:id',requireTenantScope,run(async(s,req,res)=>{
     res.json({data:await s.get(context(req),req.params.id)});
   }));
