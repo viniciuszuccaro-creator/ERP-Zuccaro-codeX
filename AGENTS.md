@@ -69,15 +69,17 @@ Usar o menor contexto e o menor número de operações necessários para resolve
 6. Expandir a busca apenas quando dependência real exigir.
 7. Reutilizar diagnóstico já registrado no status quando ainda for válido.
 
-## 2.3 Unidade de trabalho
+## 2.3 Unidade de trabalho e continuidade do programa autorizado
 
-Trabalhar em UMA tarefa, Gate, subgate ou defeito por vez, salvo quando dependências inseparáveis exigirem um lote pequeno conjunto.
+Em tarefa localizada, resolver completamente o defeito ou Gate solicitado, sem expandir para módulos não relacionados.
 
-Não avançar automaticamente para a próxima tarefa.
+Quando o proprietário autorizar expressamente um programa contínuo (como o Comercial 360), executar vários incrementos relacionados e independentes na mesma execução, em lotes funcionais substanciais. Após validar e publicar cada incremento na branch própria, seguir o próximo item elegível do plano e do status sem pedir “próximo” e sem aguardar revisão do Cursor entre commits. Coordenar arquivos e solicitar revisão independente do HEAD final do conjunto. Priorizar testes comportamentais dos fluxos reais, além de checks de CI.
 
-Não aproveitar uma tarefa para “melhorar” módulos não relacionados.
+Encerrar a execução somente ao concluir o objetivo autorizado, atingir um limite real da ferramenta/tempo, ou encontrar bloqueio concreto que impeça todos os itens independentes disponíveis. Registrar no handoff o último SHA remoto, os testes/CI, o próximo item executável e o bloqueio preciso; não chamar “CI pendente”, “revisão pendente” ou “tarefa ativa” de bloqueio para itens independentes.
 
-Não refatorar código saudável fora do escopo apenas por preferência estética.
+Estas instruções persistentes orientam cada execução, mas não iniciam uma nova sessão em segundo plano. Se a execução terminar, só uma automação/agendamento realmente configurado ou uma nova mensagem pode reabri-la; nunca prometer retomada automática inexistente.
+
+Não aproveitar uma tarefa para “melhorar” módulos não relacionados. Não refatorar código saudável fora do escopo apenas por preferência estética. Não executar merge, migration, importação real ou deploy sem cumprir os Gates e autorizações próprios.
 
 ## 2.4 Busca econômica
 
