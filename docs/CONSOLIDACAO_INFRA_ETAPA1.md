@@ -15,12 +15,18 @@ As 12 provas Linux antes ignoradas no Windows executaram no backend. Estas
 evidencias NAO validam a persistencia das migrations privadas045-049 ou cofre
 operacional/trust/CRL. Nenhum merge ou acesso a banco operacional executado.
 
-Continuidade em nuvem: localizado o chat existente Nuvem ERP-Zuccaro-codeX em
-host remoto durable. Historico comprova setup antigo de main,800testes frontend,
-35PG e typecheck legado com falhas; install/start eram rascunhos. Nao e prova de
-checkout atual, persistencia, Codespace publicado, custo ou homologacao do novo
-SHA. Inspecao atual somente leitura ainda exige execucao autorizada nesse host;
-nenhum servico, recurso pago ou configuracao de cobranca criado nesta etapa.
+Continuidade em nuvem: inspecao somente leitura autorizada e concluida no chat
+existente Nuvem ERP-Zuccaro-codeX/host durable. Ambiente real Linux x86_64 ready;
+repositorio correto, checkout limpo em work/baba91a6b0d5d626edd607b8cd3522927e1904ab.
+Commits consolidados0b68332d/a81b14f8 ausentes localmente; ls-remote falhou por
+proxy. Dependencias/builds antigos retidos, Node22/24, Python e psql disponiveis;
+Docker CLI presente, leitura do daemon negada. Install/start ainda rascunho1/main.
+Persistencia apos restauracao e bloqueio de custos adicionais NAO comprovados.
+Nenhum teste, fetch, checkout, servico, instalacao ou alteracao executado nessa
+inspecao. Proximo gate: resolver acesso GitHub e autorizar sincronizacao/verificacao
+do SHA correto; depois provar restauracao/testes/custos antes de transicao exclusiva.
+Historico800testes/35PG nao e validacao da consolidacao atual nesse ambiente.
+CI do fechamento documental a81b14f8:4421/39670906262 SUCCESS; codigo inalterado.
 Captura e cinco worktrees novamente conferidas,9220arquivos de codigo/estados
 Git intactos. AgendamentoPAUSED; checkout de consolidacao limpo apos publicacao.
 

@@ -4,8 +4,10 @@ Publicacao validada em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342.
 CI4419 SUCCESS: frontend2172PASS/0FAIL/0SKIP; backend515PASS/0FAIL/23SKIP;
 85 testes PostgreSQL/17suites PASS sem skips; composicao PGlite/PG PASS.
 Typechecks0, audit/lint/buildPASS. Nao e homologacao de migrations privadas ou
-operacao. Chat Nuvem ERP-Zuccaro-codeX localizado; estado atual/persistencia/
-custo ainda nao comprovados. Originais intactos e agendamentoPAUSED.
+operacao. Nuvem inspecionada somente leitura: Linux real, checkout antigo work/
+baba91a6, consolidacao ausente, GitHub bloqueado por proxy e Docker sem permissao.
+Persistencia apos restauracao/custos nao comprovados; nao migrar exclusivamente.
+CI documental4421 SUCCESS. Originais intactos e agendamentoPAUSED.
 Registro de correcao anterior abaixo e historico; fechamento completo no documento.
 
 Commit85 d312fbcd publicado na branch de consolidacao; PR draft342 sobre334.

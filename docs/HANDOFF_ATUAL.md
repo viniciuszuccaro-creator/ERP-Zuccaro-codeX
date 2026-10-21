@@ -4,8 +4,10 @@ Codigo publicado em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342 sobre33
 CI4419 SUCCESS em frontend/backend/composicao. Frontend2172PASS; backend515PASS/
 23SKIP separados de85testesPG PASS sem skips. Typechecks0/audit/lint/buildPASS.
 Nenhum merge/main, carga, VPS ou ativacao de rotas. Continuar pela mesma branch.
-Nuvem ERP-Zuccaro-codeX e um chat remoto encontrado, nao ambiente atual homologado;
-revalidar checkout/persistencia/custo antes de transicao exclusiva. Detalhes e
+Nuvem ERP-Zuccaro-codeX inspecionada somente leitura: Linux real, checkout antigo
+work/baba91a6, consolidacao ausente; proxy bloqueia GitHub e Docker sem permissao.
+Restauracao/testes no SHA atual/custos nao comprovados; nao transicionar ainda.
+CI do fechamento documental a81b14f8/4421 SUCCESS. Detalhes e
 limites em CONSOLIDACAO_INFRA_ETAPA1.md. Originais intactos/agendamentoPAUSED.
 
 Mesma branch, commit85 d312fbcd no remoto e PR draft342 empilhada na334.
