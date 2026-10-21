@@ -1,9 +1,17 @@
 ## CODEX - Consolidacao etapa86 (2026-10-21)
 
+Codigo publicado em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342 sobre334.
+CI4419 SUCCESS em frontend/backend/composicao. Frontend2172PASS; backend515PASS/
+23SKIP separados de85testesPG PASS sem skips. Typechecks0/audit/lint/buildPASS.
+Nenhum merge/main, carga, VPS ou ativacao de rotas. Continuar pela mesma branch.
+Nuvem ERP-Zuccaro-codeX e um chat remoto encontrado, nao ambiente atual homologado;
+revalidar checkout/persistencia/custo antes de transicao exclusiva. Detalhes e
+limites em CONSOLIDACAO_INFRA_ETAPA1.md. Originais intactos/agendamentoPAUSED.
+
 Mesma branch, commit85 d312fbcd no remoto e PR draft342 empilhada na334.
 CI4417 comprovou composicao, mas falhou testes frontend/backend. Correcoes de
 dependencias cruzadas e canonicalizacao LF/CRLF das provas: root2172PASS/0FAIL/
-0SKIP, typecheck0 e audit/lint/build/diffPASS. Novo CI ainda pendente.
+0SKIP, typecheck0 e audit/lint/build/diffPASS. Novo CI confirmado acima.
 Consultar CONSOLIDACAO_INFRA_ETAPA1.md etapa86; nao tratar CI anterior como verde.
 Originais preservados, agendamentoPAUSED, nenhum merge ou acesso operacional.
 

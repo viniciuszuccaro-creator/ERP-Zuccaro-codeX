@@ -1,11 +1,19 @@
 ## CODEX - Consolidacao etapa86 (2026-10-21)
 
+Publicacao validada em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342.
+CI4419 SUCCESS: frontend2172PASS/0FAIL/0SKIP; backend515PASS/0FAIL/23SKIP;
+85 testes PostgreSQL/17suites PASS sem skips; composicao PGlite/PG PASS.
+Typechecks0, audit/lint/buildPASS. Nao e homologacao de migrations privadas ou
+operacao. Chat Nuvem ERP-Zuccaro-codeX localizado; estado atual/persistencia/
+custo ainda nao comprovados. Originais intactos e agendamentoPAUSED.
+Registro de correcao anterior abaixo e historico; fechamento completo no documento.
+
 Commit85 d312fbcd publicado na branch de consolidacao; PR draft342 sobre334.
 CI4417 falhou: frontend13FAIL (12 hashes LF/CRLF + dependencia server ausente),
 backend4FAIL (dependencia raiz ausente). Composicao PGlite/PostgreSQL PASS.
 Correcoes em provas/workflow sem mudar regras de negocio nem hashes esperados;
 focados118PASS e simulacaoLF115PASS. Root final2172PASS/0FAIL/0SKIP,
-typecheck0 e audit/lint/build/diffPASS. Novo CI ainda pendente.
+typecheck0 e audit/lint/build/diffPASS. Novo CI confirmado no fechamento acima.
 Detalhes: docs/CONSOLIDACAO_INFRA_ETAPA1.md, etapa86. Nenhum merge/operacao.
 
 ## CODEX - Consolidacao etapa85 (2026-10-21)

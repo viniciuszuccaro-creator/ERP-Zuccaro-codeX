@@ -5,6 +5,25 @@ Entrega/A1 mantem os gates privados. Secoes anteriores sao historicas.
 
 ## Etapa86: dependencias cruzadas e provas de runtime portaveis
 
+Publicacao validada: commit0b68332d6781f726ec5bb4e5354deef899c0731b no remoto,
+PR draft342 sobre334. CI4419/39669832174 SUCCESS nos tres jobs:
+frontend2172PASS/0FAIL/0SKIP; backend538total/515PASS/0FAIL/23SKIP;
+test:postgres85PASS/0FAIL/0SKIP em17suites, separado dos skips do npm test;
+composicao PGlite1PASS e PostgreSQL1PASS, sem skips, mais guard isolado e
+R07B_API_COMPAT_STATUS=OK. Typechecks/frontend/backend, audit/lint/build PASS.
+As 12 provas Linux antes ignoradas no Windows executaram no backend. Estas
+evidencias NAO validam a persistencia das migrations privadas045-049 ou cofre
+operacional/trust/CRL. Nenhum merge ou acesso a banco operacional executado.
+
+Continuidade em nuvem: localizado o chat existente Nuvem ERP-Zuccaro-codeX em
+host remoto durable. Historico comprova setup antigo de main,800testes frontend,
+35PG e typecheck legado com falhas; install/start eram rascunhos. Nao e prova de
+checkout atual, persistencia, Codespace publicado, custo ou homologacao do novo
+SHA. Inspecao atual somente leitura ainda exige execucao autorizada nesse host;
+nenhum servico, recurso pago ou configuracao de cobranca criado nesta etapa.
+Captura e cinco worktrees novamente conferidas,9220arquivos de codigo/estados
+Git intactos. AgendamentoPAUSED; checkout de consolidacao limpo apos publicacao.
+
 Etapa85 publicada no commit d312fbcd46641c4be9d05b17bce1ecb1fbd4c9c3;
 SHA remoto confirmado e PR draft342 sobre334 aberta. Autoria anterior conferida
 com a conta autenticada e aplicada somente no comando, sem git config.
@@ -32,7 +51,7 @@ invalida no Windows; corrigida para file URL sem alterar codigo/testes.
 Fechamento local fresco: root2172PASS/0FAIL/0SKIP,1054733.7444ms/exit0;
 typecheck0, audit/lint/build/diffPASS. Avisos anteriores mantidos. Backend de
 negocio inalterado:503PASS/35SKIP da85 reutilizados, nao nova prova PostgreSQL.
-Novo CI do ajuste ainda a confirmar. Sem merge ou ativacao.
+CI do ajuste confirmado acima; registro anterior preservado. Sem merge ou ativacao.
 
 ## Etapa85: validacao composta e publicacao sanitizada
 
