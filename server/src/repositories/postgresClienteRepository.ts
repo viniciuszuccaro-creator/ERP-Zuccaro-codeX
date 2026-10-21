@@ -16,6 +16,7 @@ import type {
   ClienteRepository,
 } from './inMemoryClienteRepository.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
+import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
@@ -98,16 +99,50 @@ export class PostgresClienteRepository implements ClienteRepository {
     return this.db.withTransaction(fn);
   }
 
+  async getBulkSnapshot(scope: Scope, id: string, executor: DbQueryExecutor) {
+    const result = await executor.query(`SELECT to_jsonb(c) AS snapshot FROM clientes c
+      WHERE c.group_id=$1 AND c.id=$2 AND ($3::uuid IS NULL OR c.empresa_id=$3::uuid) FOR UPDATE OF c`,
+    [scope.groupId, id, scope.empresaId ?? null]);
+    return result.rows.length ? clienteBulkSnapshotSchema.parse(result.rows[0].snapshot) : null;
+  }
+
   async list(filter: Scope & ListOptions): Promise<Cliente[]> {
     const page = await this.listPage({ ...filter, offset: 0 });
     return page.rows;
   }
 
-  async listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }> {
+  async prepareExport(scope: Scope, executor: DbQueryExecutor): Promise<() => Promise<void>> {
+    const state = await executor.query(`SELECT current_setting('app.group_id',true) AS group_id,
+      NULLIF(current_setting('app.empresa_id',true),'') AS empresa_id,
+      current_setting('transaction_isolation') AS isolation, current_setting('row_security') AS row_security`);
+    if (state.rows[0]?.group_id !== scope.groupId || state.rows[0]?.empresa_id !== (scope.empresaId ?? null)
+      || state.rows[0]?.isolation !== 'read committed') {
+      throw new AppError(403, 'CLIENTE_EXPORT_CONTEXT_REQUIRED', 'Matching tenant transaction required');
+    }
+    await executor.query('LOCK TABLE clientes IN SHARE MODE NOWAIT');
+    const previous = state.rows[0]?.row_security;
+    if (previous !== 'on' && previous !== 'off') throw new Error('CLIENTE_EXPORT_VISIBILITY_UNVERIFIED');
+    // off does not bypass policies: PostgreSQL rejects a query affected by RLS instead of silently filtering.
+    await executor.query("SELECT set_config('row_security','off',true)");
+    return async () => { await executor.query("SELECT set_config('row_security',$1,true)", [previous]); };
+  }
+
+  async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
+    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: Cliente[]; total: number }> {
+    if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');
+    const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
     const params: unknown[] = [filter.groupId];
     const where = ['group_id = $1'];
+    if (exportOptions?.exactEmpresa && filter.empresaId != null) {
+      params.push(filter.empresaId);
+      where.push(`empresa_id = $${params.length}::uuid`);
+    }
+    if (exportOptions?.ids) {
+      params.push(exportOptions.ids);
+      where.push(`id = ANY($${params.length}::uuid[])`);
+    }
     const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
     params.push(ativoFilter);
     where.push(`ativo = $${params.length}`);
@@ -153,14 +188,14 @@ export class PostgresClienteRepository implements ClienteRepository {
       ? `lower(coalesce(nome, razao_social, '')) ${filter.orderDir === 'desc' ? 'DESC' : 'ASC'}`
       : `(NULLIF(regexp_replace(codigo, '\\D', '', 'g'), '')::BIGINT) ${filter.orderDir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST`;
 
-    const countResult = await this.db.query(
+    const countResult = await query.query(
       `SELECT count(*)::int AS total FROM clientes WHERE ${whereSql}`,
       params,
     );
     const total = Number(countResult.rows[0]?.total ?? 0);
     params.push(limit, offset);
-    const result = await this.db.query(
-      `SELECT * FROM clientes WHERE ${whereSql} ORDER BY ${orderBy}, created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    const result = await query.query(
+      `SELECT * FROM clientes WHERE ${whereSql} ORDER BY ${orderBy}, created_at DESC${exportOptions ? ', id ASC' : ''} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
     return {

@@ -1,6 +1,9 @@
 import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
-import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
+import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
+import { restoreClienteBulkSnapshot } from './clienteBulkLifecycle.js';
+import { exportClientes } from './clienteExport.js';
+import type { AppliedBulkItem } from './cadastroBulkPolicy.js';
 import { AppError } from '../api/errors.js';
 import { maskDocumento, normalizeDocumento } from '../db/documentoValidators.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
@@ -27,16 +30,6 @@ export type ClienteListOptions = {
   limit?: number;
   offset?: number;
 };
-
-function sanitizeClienteAudit(row: unknown): Record<string, unknown> | null {
-  const snap = sanitizeAuditSnapshot(row);
-  if (!snap) return null;
-  if (snap.documento != null) snap.documento = maskDocumento(snap.documento);
-  if (snap.documento_normalizado != null) {
-    snap.documento_normalizado = maskDocumento(snap.documento_normalizado);
-  }
-  return snap;
-}
 
 export class ClienteService {
   private readonly empresaOperations: ClienteEmpresaOperations;
@@ -87,6 +80,10 @@ export class ClienteService {
         hasMore: offset + page.rows.length < page.total,
       },
     };
+  }
+
+  export(ctx: RequestContext, input: unknown) {
+    return exportClientes({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard, tenant: this.tenantGuard }, ctx, input);
   }
 
   async get(ctx: RequestContext, id: string) {
@@ -366,6 +363,11 @@ export class ClienteService {
       },executor);
       return updated;
     });
+  }
+
+  restoreBulkSnapshot(ctx: RequestContext, item: AppliedBulkItem) {
+    this.assertScope(ctx);
+    return restoreClienteBulkSnapshot({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard, tenant: this.tenantGuard }, ctx, item);
   }
 
   async restore(ctx: RequestContext, id: string) {

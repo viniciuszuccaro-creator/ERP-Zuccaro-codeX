@@ -18,6 +18,75 @@ test('HTTP entityGuard usa sessão Bearer canônica e não aceita profile_id fab
   await assert.rejects(missing.entityGuard(), error => error.status === 401);
 });
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
+
+test('Pedido facade preserves filters, request methods, payloads and AbortSignal', async () => {
+  const calls = [];
+  const controller = new AbortController();
+  const client = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ token: 'synthetic-token', groupId: 'synthetic-group', empresaId: 'synthetic-company' }),
+    fetchImpl: async (url, init) => {
+      calls.push({ url: new URL(String(url)), init });
+      return new Response(JSON.stringify({ data: { id: 'synthetic-id' }, meta: { total: 1 } }), { status: 200 });
+    },
+  });
+  const options = { signal: controller.signal };
+  const envelope = await client.pedidos.list({ limit: 7, offset: 2, search: 'synthetic', status: 'Aberto', clienteEmpresaId: 'synthetic-link', tipoOperacao: 'Venda', ...options });
+  assert.equal(envelope.meta.total, 1);
+  assert.equal(calls[0].url.searchParams.get('clienteEmpresaId'), 'synthetic-link');
+  assert.equal(calls[0].url.searchParams.get('tipoOperacao'), 'Venda');
+  await client.pedidos.get('synthetic/id', options);
+  await client.pedidos.create({ referencia: 'synthetic' }, options);
+  await client.pedidos.update('synthetic/id', { observacoes: 'synthetic' }, options);
+  await client.pedidos.cancel('synthetic/id', 'synthetic-reason', options);
+  await client.pedidos.transition('synthetic/id', 'Aprovado', 'synthetic-reason', options);
+  await client.pedidos.history('synthetic/id', options);
+  await client.pedidos.convertOrcamento('synthetic/id', { referencia: 'synthetic' }, options);
+  assert.deepEqual(calls.map(call => call.init.method), ['GET', 'GET', 'POST', 'PATCH', 'POST', 'POST', 'GET', 'POST']);
+  assert.equal(calls[1].url.pathname, '/api/v1/pedidos/synthetic%2Fid');
+  assert.deepEqual(JSON.parse(calls[5].init.body), { status: 'Aprovado', motivo: 'synthetic-reason' });
+  for (const call of calls) {
+    assert.equal(call.init.signal, controller.signal);
+    assert.equal(call.init.headers.Authorization, 'Bearer synthetic-token');
+  }
+  const before = calls.length;
+  const absent = await client.clientes.sugestaoVinculo();
+  assert.equal(absent.data.motivo, 'documento_ausente');
+  assert.equal(calls.length, before);
+});
+
+test('CRUD count uses authoritative meta total, preserves filters and leaves list arrays intact', async () => {
+  const urls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'synthetic-group', empresaId: 'synthetic-company', token: 'synthetic-token' }),
+    fetchImpl: async (url, init) => {
+      urls.push(new URL(String(url)));
+      assert.equal(init.headers.Authorization, 'Bearer synthetic-token');
+      return new Response(JSON.stringify({ data: [{ id: 'synthetic-row' }], meta: { total: 1505 } }), { status: 200 });
+    },
+  });
+  assert.equal(await client.entities.Cliente.count({ search: 'synthetic', ativo: 'Inativo' }), 1505);
+  assert.equal(urls[0].searchParams.get('limit'), '1');
+  assert.equal(urls[0].searchParams.get('search'), 'synthetic');
+  assert.equal(urls[0].searchParams.get('ativo'), 'false');
+  assert.deepEqual(await client.entities.Cliente.filter({}, 'codigo', 50), [{ id: 'synthetic-row' }]);
+  assert.equal(urls[1].searchParams.get('limit'), '50');
+  assert.equal(urls[1].searchParams.get('order_by'), 'codigo');
+});
+
+test('CRUD count rejects missing or invalid totals and preserves authorization failure', async () => {
+  for (const total of [undefined, null, '5', -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+    const client = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', fetchImpl: async () =>
+      new Response(JSON.stringify({ data: [], meta: { total } }), { status: 200 }) });
+    await assert.rejects(client.entities.Cliente.count(), /HTTP_COUNT_UNAVAILABLE/);
+  }
+  const denied = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', fetchImpl: async () =>
+    new Response(JSON.stringify({ error: { message: 'Forbidden' } }), { status: 403 }) });
+  await assert.rejects(denied.entities.Cliente.count(), error => error.status === 403);
+  const empty = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', fetchImpl: async () =>
+    new Response(JSON.stringify({ data: [], meta: { total: 0 } }), { status: 200 }) });
+  assert.equal(await empty.entities.Cliente.count(), 0);
+});
 import {
   HTTP_PILOT_ENTITIES,
   resolveErpApiBaseUrl,

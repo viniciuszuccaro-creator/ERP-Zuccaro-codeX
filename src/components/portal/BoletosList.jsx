@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Receipt, Clipboard, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { displayScalar, isSafeHttpUrl } from '@/lib/utils';
 import {
+  assertPortalTituloDoCliente,
   buildSegundaViaPortal,
   calcularSaldoPortal,
   filtrarTitulosPortal,
@@ -17,14 +19,19 @@ export default function BoletosList({ cliente }) {
   const { data: boletosRaw = [] } = useQuery({
     queryKey: ['portal-boletos', cliente?.id],
     enabled: !!cliente?.id,
-    queryFn: async () => base44.entities.ContaReceber.filter({ cliente_id: cliente.id }, '-data_vencimento', 100),
+    queryFn: async () => {
+      if (!cliente?.id) return [];
+      if (!(typeof cliente.id === 'string' && cliente.id.trim()) && !(typeof cliente.id === 'number' && Number.isFinite(cliente.id))) throw new Error('Cliente do portal invalido.');
+      return base44.entities.ContaReceber.filter({ cliente_id: cliente.id }, '-data_vencimento', 100);
+    },
   });
 
   const boletos = filtrarTitulosPortal(boletosRaw, cliente?.id);
   const saldo = calcularSaldoPortal(boletosRaw, cliente?.id);
 
   const emitir = useMutation({
-    mutationFn: async (titulo) => {
+    mutationFn: async (/** @type {import('../lib/portalClientePolicy').PortalRecord} */ titulo) => {
+      if (typeof titulo?.id !== 'string' || !titulo.id.trim()) throw new Error('Identificador do titulo invalido para escrita.');
       const decision = buildSegundaViaPortal({ titulo, cliente });
       if (decision.reuse) return decision.record;
       return base44.entities.ContaReceber.update(titulo.id, {
@@ -41,13 +48,16 @@ export default function BoletosList({ cliente }) {
       qc.invalidateQueries({ queryKey: ['portal-boletos', cliente?.id] });
       qc.invalidateQueries({ queryKey: ['minhas-contas', cliente?.id] });
       qc.invalidateQueries({ queryKey: ['meus-boletos'] });
-      toast.success('2ª via e PIX atualizados no portal');
+      toast.success('Dados existentes disponibilizados no portal');
     },
     onError: (error) => toast.error(error?.message || 'Falha ao gerar 2ª via'),
   });
 
-  const copiarPix = async (pix) => {
+  const copiarPix = async (titulo) => {
     try {
+      assertPortalTituloDoCliente({titulo, clienteId: cliente?.id});
+      const pix = titulo.pix_copia_cola;
+      if (typeof pix !== 'string' || !pix.trim()) throw new Error('PIX nao disponivel.');
       await navigator.clipboard.writeText(pix);
       toast.success('PIX copiado');
     } catch {
@@ -72,21 +82,21 @@ export default function BoletosList({ cliente }) {
               <Receipt className="w-5 h-5 mt-0.5 text-primary" />
               <div className="min-w-0 w-full">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="font-medium truncate">{b.descricao || b.numero_documento || 'Título a receber'}</div>
+                  <div className="font-medium truncate">{displayScalar(b.descricao) || displayScalar(b.numero_documento) || 'Título a receber'}</div>
                   <div className="text-xs text-muted-foreground">Venc.: {b.data_vencimento || '—'}</div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Valor: R$ {Number(b.valor || b.valor_total || 0).toFixed(2)} • Status: {b.status}
+                  Valor: R$ {Number(b.valor || b.valor_total || 0).toFixed(2)} • Status: {displayScalar(b.status)}
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {b.url_boleto_pdf && !String(b.url_boleto_pdf).startsWith('portal://') && (
+                  {isSafeHttpUrl(b.url_boleto_pdf) && (
                     <a className="text-xs underline" href={b.url_boleto_pdf} target="_blank" rel="noreferrer">Baixar Boleto (PDF)</a>
                   )}
                   {b.url_boleto_pdf && String(b.url_boleto_pdf).startsWith('portal://') && (
-                    <span className="text-xs text-slate-500">2ª via pronta • linha: {(b.linha_digitavel || '').slice(0, 12)}...</span>
+                    <span className="text-xs text-slate-500">2ª via pronta • linha: {typeof b.linha_digitavel === 'string' ? b.linha_digitavel.slice(0, 12) : ''}...</span>
                   )}
                   {b.pix_copia_cola && (
-                    <Button variant="outline" size="sm" onClick={() => copiarPix(b.pix_copia_cola)} className="h-8">
+                    <Button variant="outline" size="sm" onClick={() => copiarPix(b)} className="h-8">
                       <Clipboard className="w-3.5 h-3.5" /> Copiar PIX
                     </Button>
                   )}

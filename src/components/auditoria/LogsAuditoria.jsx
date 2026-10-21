@@ -271,7 +271,7 @@ export default function LogsAuditoria() {
               <div className="flex items-center gap-2 mt-4">
                 <Checkbox
                   checked={filtroCritico}
-                  onCheckedChange={setFiltroCritico}
+                  onCheckedChange={(checked) => setFiltroCritico(checked === true)}
                   data-action="LogsAuditoria.filtroCritico"
                   data-permission="Sistema.Auditoria.visualizar"
                 />
@@ -289,10 +289,10 @@ export default function LogsAuditoria() {
             <CardTitle>Registro de Atividades ({logsFiltrados.length})</CardTitle>
             <div className="flex items-center gap-4 text-sm flex-wrap justify-end">
               <div className="flex items-center gap-2">
-                <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} data-action="LogsAuditoria.colunaDescricao" data-permission="Sistema.Auditoria.visualizar" /> Descrição
+                <Checkbox checked={showDescricao} onCheckedChange={(checked) => setShowDescricao(checked === true)} data-action="LogsAuditoria.colunaDescricao" data-permission="Sistema.Auditoria.visualizar" /> Descrição
               </div>
               <div className="flex items-center gap-2">
-                <Checkbox checked={showIP} onCheckedChange={setShowIP} data-action="LogsAuditoria.colunaIP" data-permission="Sistema.Auditoria.visualizar" /> IP
+                <Checkbox checked={showIP} onCheckedChange={(checked) => setShowIP(checked === true)} data-action="LogsAuditoria.colunaIP" data-permission="Sistema.Auditoria.visualizar" /> IP
               </div>
               <Button
                 size="sm"

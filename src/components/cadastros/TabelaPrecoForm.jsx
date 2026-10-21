@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,7 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
   const podeEditar = canEdit("Cadastros", "TabelaPreco") || canEdit("Comercial", "TabelaPreco") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Produtos', 'TabelaPreco', 'codigo_tabela_legado', 'editar');
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome: '',
     descricao: '',
     codigo_tabela_legado: '',
@@ -30,7 +31,7 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
     data_inicio: new Date().toISOString().split('T')[0],
     data_fim: '',
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

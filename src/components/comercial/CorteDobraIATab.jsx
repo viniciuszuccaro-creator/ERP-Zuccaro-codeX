@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { validarPosicoesCorteDobraIA } from '@/components/lib/iaResponsePolicy';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,7 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = validarPosicoesCorteDobraIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Analise este projeto de estrutura metálica e extraia TODAS as posições de corte e dobra.
         
 Para cada posição, retorne:
@@ -102,7 +103,7 @@ Retorne APENAS posições claramente identificadas.`,
             observacoes: { type: 'string' }
           }
         }
-      });
+      }));
 
       if (resultado.posicoes && resultado.posicoes.length > 0) {
         const posicoesComPeso = resultado.posicoes.map(pos => {

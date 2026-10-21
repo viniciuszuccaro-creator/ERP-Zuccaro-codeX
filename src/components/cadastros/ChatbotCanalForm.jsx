@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
   const podeCriar = canCreate("Cadastros", "ChatbotCanal") || canCreate("Sistema", "ChatbotCanal") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ChatbotCanal") || canEdit("Sistema", "ChatbotCanal") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome_canal: "",
     tipo_canal: "WhatsApp",
     whatsapp_numero: "",
@@ -29,7 +30,7 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
     transfere_para_humano: true,
     ativo: true,
     observacoes: ""
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

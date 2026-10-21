@@ -198,13 +198,13 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-              <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
-                <Package className="w-4 h-4 text-purple-600" />
+              <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                <Package className="w-4 h-4 text-sky-600" />
               </div>
               Produtos
               <CountBadgeSimplificado entities={["Produto"]} allCounts={allCounts} isLoading={isLoading} />
             </CardTitle>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
+            <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
               disabled={!contextoValido || !canViewEntity("Produto", "Estoque")}
               data-permission="Cadastros.Produto.visualizar"
@@ -226,8 +226,8 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
-                  <Icon className="w-4 h-4 text-purple-600" />
+                <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                  <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {title}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />

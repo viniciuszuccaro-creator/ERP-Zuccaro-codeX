@@ -65,6 +65,14 @@ export function createPoolDbClient(pool: Pool): DbClient {
         }
         return fn();
       }
+      const inherited = tenants.getStore();
+      if (inherited) {
+        ensureAlive(inherited);
+        if (inherited.scope.groupId !== frozen.groupId || inherited.scope.empresaId !== frozen.empresaId) {
+          throw new Error('TENANT_CONTEXT_MISMATCH');
+        }
+        return tenants.run({ scope: inherited.scope, alive: () => inherited.alive() && alive() }, fn);
+      }
       return tenants.run({ scope: frozen, alive }, fn);
     },
     async query(text, params) {

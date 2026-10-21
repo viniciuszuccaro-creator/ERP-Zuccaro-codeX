@@ -1,60 +1,16 @@
-const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
+import { validarRespostaFiscalIA } from './iaResponsePolicy.js';
+export { validarPosicoesCorteDobraIA } from './iaResponsePolicy.js';
+import { buildFinanceAnomalySuggestions, buildConciliacaoMatchSuggestions, buildFluxoCaixaProjection } from './iaFinancePolicy.js';
+export { buildFinanceAnomalySuggestions, buildConciliacaoMatchSuggestions, buildFluxoCaixaProjection };
 
-const SENSITIVE_IA_HINTS = [
-  'pagar',
-  'receber',
-  'baixar',
-  'baixa',
-  'emitir',
-  'cancelar nf',
-  'estoque',
-  'preco',
-  'preço',
-  'desconto',
-  'permissao',
-  'permissão',
-  'liquidar',
-];
+import {
+  firstText, IA_MODO_SUGESTAO, sanitizeIaPrompt, isSensitiveIaExecution, stampIaSuggestion,
+  assertIaInvocation, assertIaUiContext, assertAnomalyScanContext, assertForecastUiContext,
+} from './iaInvocationPolicy.js';
 
-export const IA_MODO_SUGESTAO = 'sugestao';
-
-const replaceControlCharacters = (value) => Array.from(value, (character) => {
-  const code = character.charCodeAt(0);
-  return code <= 31 || code === 127 ? ' ' : character;
-}).join('');
-
-export const sanitizeIaPrompt = (value, max = 4000) => String(value ?? '')
-  .replace(/[<>]/g, '')
-  .replace(/javascript:/gi, '')
-  .split('\n')
-  .map(replaceControlCharacters)
-  .join(' ')
-  .replace(/\s+/g, ' ')
-  .trim()
-  .slice(0, max);
-
-export const isSensitiveIaExecution = (payload = {}) => {
-  if (payload.executar === true || payload.auto_executar === true || payload.aplicar_automaticamente === true) {
-    return true;
-  }
-  const action = `${payload.acao || ''} ${payload.action || ''}`.toLowerCase();
-  return SENSITIVE_IA_HINTS.some((hint) => action.includes(hint));
-};
-
-export const assertIaInvocation = ({ payload = {}, groupId, empresaId } = {}) => {
-  if (!firstText(groupId)) {
-    throw new Error('Grupo obrigatorio para IA.');
-  }
-  if (isSensitiveIaExecution(payload)) {
-    throw new Error('IA nao executa acao sensivel. Apenas sugere.');
-  }
-  return {
-    ...payload,
-    prompt: sanitizeIaPrompt(payload.prompt),
-    group_id: firstText(groupId),
-    empresa_id: firstText(empresaId) || null,
-    modo: IA_MODO_SUGESTAO,
-  };
+export {
+  IA_MODO_SUGESTAO, sanitizeIaPrompt, isSensitiveIaExecution, stampIaSuggestion,
+  assertIaInvocation, assertIaUiContext, assertAnomalyScanContext, assertForecastUiContext,
 };
 
 export const buildChurnSuggestions = ({ clientes = [], pedidos = [], hoje = new Date() } = {}) => {
@@ -64,7 +20,7 @@ export const buildChurnSuggestions = ({ clientes = [], pedidos = [], hoje = new 
     .map((cliente) => {
       const ultimaCompra = cliente.data_ultima_compra ? new Date(cliente.data_ultima_compra) : null;
       const diasSemComprar = ultimaCompra
-        ? Math.floor((now - ultimaCompra) / (1000 * 60 * 60 * 24))
+        ? Math.floor((now.getTime() - ultimaCompra.getTime()) / (1000 * 60 * 60 * 24))
         : 999;
       let riscoChurn = 'Baixo';
       if (diasSemComprar > 180) riscoChurn = 'Crítico';
@@ -95,28 +51,6 @@ export const buildChurnOportunidade = (cliente = {}) => ({
   status: 'Nova',
   responsavel_id: cliente.vendedor_responsavel_id,
   proxima_acao: 'Ligar para o cliente e entender motivo da inatividade',
-});
-
-/** Fail-closed UI guard for module IA surfaces (Gate 16 / P2). */
-export const assertIaUiContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => {
-  if (!firstText(groupId)) {
-    throw new Error('Grupo obrigatorio para IA.');
-  }
-  if (scopeType !== 'grupo' && !firstText(empresaId)) {
-    throw new Error('Empresa obrigatoria para IA no escopo empresa.');
-  }
-  return {
-    group_id: firstText(groupId),
-    empresa_id: firstText(empresaId) || null,
-    scopeType: firstText(scopeType) || 'empresa',
-    modo: IA_MODO_SUGESTAO,
-  };
-};
-
-export const stampIaSuggestion = (payload = {}) => ({
-  ...payload,
-  modo: IA_MODO_SUGESTAO,
-  fonte: firstText(payload.fonte) || 'ia_local',
 });
 
 /**
@@ -168,125 +102,6 @@ export const buildCrmAbcChurnOportunidade = (cliente = {}) => ({
   observacoes: `Sugestao IA (confirmada pelo usuario). Motivo: ${cliente.motivo_risco || ''}`,
 });
 
-export const buildFinanceAnomalySuggestions = ({ receber = [], pagar = [], limite = 20 } = {}) => {
-  const detectadas = [];
-  const valores = [...receber, ...pagar].map((c) => c.valor || 0).filter((v) => v > 0);
-  const media = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
-  const desvio = valores.length
-    ? Math.sqrt(valores.map((v) => Math.pow(v - media, 2)).reduce((a, b) => a + b, 0) / valores.length)
-    : 0;
-
-  [...receber, ...pagar].forEach((conta) => {
-    if ((conta.valor || 0) > media + (3 * desvio) && desvio > 0) {
-      detectadas.push({
-        tipo: 'Valor Atípico',
-        severidade: 'alta',
-        conta,
-        descricao: `Valor R$ ${Number(conta.valor).toLocaleString('pt-BR')} e 3x acima da media (R$ ${media.toFixed(2)})`,
-        recomendacao: 'Verificar se o valor esta correto e se nao e duplicidade',
-      });
-    }
-  });
-
-  const mapa = {};
-  [...receber, ...pagar].forEach((conta) => {
-    const chave = `${conta.descricao}_${conta.valor}_${conta.data_vencimento}`;
-    if (!mapa[chave]) mapa[chave] = [];
-    mapa[chave].push(conta);
-  });
-  Object.values(mapa).forEach((grupo) => {
-    if (grupo.length > 1) {
-      detectadas.push({
-        tipo: 'Possível Duplicidade',
-        severidade: 'media',
-        conta: grupo[0],
-        descricao: `${grupo.length} titulos com descricao, valor e vencimento identicos`,
-        recomendacao: 'Verificar se nao sao lancamentos duplicados',
-        relacionados: grupo.slice(1).map((c) => c.id),
-      });
-    }
-  });
-
-  pagar.forEach((conta, idx) => {
-    if (idx > 0 && conta.fornecedor === pagar[idx - 1].fornecedor) {
-      const diff = Math.abs(
-        new Date(conta.created_date).getTime() - new Date(pagar[idx - 1].created_date).getTime()
-      ) / (1000 * 60);
-      if (diff < 5) {
-        detectadas.push({
-          tipo: 'Lançamentos Sequenciais',
-          severidade: 'baixa',
-          conta,
-          descricao: `2 lancamentos para ${conta.fornecedor} em ${Math.round(diff)} minutos`,
-          recomendacao: 'Verificar se ambos sao necessarios',
-        });
-      }
-    }
-  });
-
-  receber.forEach((conta) => {
-    const taxa = conta.detalhes_pagamento?.taxa_operadora || 0;
-    if (taxa > 5 && String(conta.forma_recebimento || '').includes('Cartão Débito')) {
-      detectadas.push({
-        tipo: 'Taxa Elevada',
-        severidade: 'media',
-        conta,
-        descricao: `Taxa de ${taxa}% em cartao debito (esperado: 1-2%)`,
-        recomendacao: 'Revisar taxa cobrada pela operadora',
-      });
-    }
-    if (taxa > 8 && String(conta.forma_recebimento || '').includes('Cartão Crédito')) {
-      detectadas.push({
-        tipo: 'Taxa Elevada',
-        severidade: 'media',
-        conta,
-        descricao: `Taxa de ${taxa}% em cartao credito (esperado: 2-5%)`,
-        recomendacao: 'Revisar taxa cobrada pela operadora',
-      });
-    }
-  });
-
-  return stampIaSuggestion({
-    anomalias: detectadas.slice(0, Math.max(1, Number(limite) || 20)),
-    fonte: 'ia_financeira_local',
-  });
-};
-
-export const buildConciliacaoMatchSuggestions = ({ extratos = [], movimentos = [] } = {}) => {
-  const matches = [];
-  let conciliados = 0;
-  let divergencias = 0;
-  const usados = new Set();
-
-  (extratos || []).forEach((extrato) => {
-    const movimentoMatch = (movimentos || []).find((mov) => {
-      if (usados.has(mov.id)) return false;
-      const diferencaValor = Math.abs(Math.abs(extrato.valor) - Math.abs(mov.valor));
-      const diferencaDias = Math.abs(
-        new Date(extrato.data_movimento).getTime() - new Date(mov.data_movimento).getTime()
-      ) / (1000 * 60 * 60 * 24);
-      return diferencaValor < 1 && diferencaDias <= 3;
-    });
-
-    if (movimentoMatch) {
-      usados.add(movimentoMatch.id);
-      const exato = Math.abs(Number(extrato.valor) - Number(movimentoMatch.valor)) < 0.01;
-      if (exato) conciliados += 1;
-      else divergencias += 1;
-      matches.push({ extrato, movimento: movimentoMatch, exato });
-    }
-  });
-
-  return stampIaSuggestion({
-    total_analisados: (extratos || []).length,
-    conciliados,
-    divergencias,
-    sem_match: (extratos || []).length - matches.length,
-    matches,
-    fonte: 'ia_conciliacao_local',
-  });
-};
-
 export const requireIaHumanConfirm = (mensagem) => {
   if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
     return false;
@@ -315,7 +130,7 @@ export const buildUpsellSuggestions = ({ pedidos = [], pedidoAtual = null, hoje 
   const ultimoPedido = list[0];
 
   if (ultimoPedido?.data_pedido) {
-    const diasDesdeUltimoP = Math.floor((now - new Date(ultimoPedido.data_pedido)) / (1000 * 60 * 60 * 24));
+    const diasDesdeUltimoP = Math.floor((now.getTime() - new Date(ultimoPedido.data_pedido).getTime()) / (1000 * 60 * 60 * 24));
     if (diasDesdeUltimoP >= 25 && diasDesdeUltimoP <= 35) {
       sugestoes.push({
         tipo: 'reposicao',
@@ -471,17 +286,12 @@ export const buildSodConflictSuggestions = ({ perfis = [], usuarios = [] } = {})
   });
 };
 
-export const stampIaFiscalSuggestion = (validacao = {}) => stampIaSuggestion({
-  ...validacao,
-  emite_nf: false,
-  fonte: 'ia_fiscal_local',
-});
+/** @param {unknown} validacao */
+export const stampIaFiscalSuggestion = (validacao) => {
+  return stampIaSuggestion({ ...validarRespostaFiscalIA(validacao), emite_nf: false, fonte: 'ia_fiscal_local' });
+};
 
-/** Fail-closed context for anomaly scans (financeiro/seguranca). */
-export const assertAnomalyScanContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
-  assertIaUiContext({ groupId, empresaId, scopeType })
-);
-
+/** @param {{issues?: unknown, details?: unknown, sugestoes?: unknown[], previsoes?: unknown[], warnings?: unknown[], ok?: boolean, extra?: Record<string, unknown>}} [options] */
 export const stampAnomalyScanResult = ({
   issues = null,
   details = null,
@@ -568,11 +378,6 @@ export const buildSecurityAnomalySuggestions = ({
   });
 };
 
-/** Fail-closed context for forecast UIs (caixa, reposicao, recompra, atraso). */
-export const assertForecastUiContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => (
-  assertIaUiContext({ groupId, empresaId, scopeType })
-);
-
 export const buildReposicaoSuggestions = ({
   produtos = [],
   movimentacoes = [],
@@ -646,18 +451,18 @@ export const buildVendasRecompraSuggestions = ({
       const datas = pedidosCliente
         .map((p) => new Date(p.data_pedido))
         .filter((d) => !Number.isNaN(d.getTime()))
-        .sort((a, b) => a - b);
+        .sort((a, b) => a.getTime() - b.getTime());
       if (datas.length < 2) return;
 
       const intervalos = [];
       for (let i = 1; i < datas.length; i += 1) {
-        intervalos.push(Math.floor((datas[i] - datas[i - 1]) / (1000 * 60 * 60 * 24)));
+        intervalos.push(Math.floor((datas[i].getTime() - datas[i - 1].getTime()) / (1000 * 60 * 60 * 24)));
       }
       const cicloMedio = intervalos.reduce((sum, i) => sum + i, 0) / intervalos.length;
       if (!cicloMedio) return;
 
       const diasDesdeUltima = Math.floor(
-        (now - new Date(cliente.data_ultima_compra)) / (1000 * 60 * 60 * 24),
+        (now.getTime() - new Date(cliente.data_ultima_compra).getTime()) / (1000 * 60 * 60 * 24),
       );
       let probabilidade = Math.min(100, Math.max(0, (diasDesdeUltima / cicloMedio) * 100));
       if (cliente.classificacao_abc === 'A') probabilidade += 10;
@@ -684,57 +489,5 @@ export const buildVendasRecompraSuggestions = ({
     previsoes,
     total: previsoes.length,
     fonte: 'previsao_recompra_local',
-  });
-};
-
-export const buildFluxoCaixaProjection = ({
-  contasReceber = [],
-  contasPagar = [],
-  mesesProjecao = 6,
-  hoje = new Date(),
-} = {}) => {
-  const now = hoje instanceof Date ? hoje : new Date(hoje);
-  const recebido = (contasReceber || [])
-    .filter((c) => c.status === 'Recebido')
-    .reduce((sum, c) => sum + (Number(c.valor_recebido) || Number(c.valor) || 0), 0);
-  const pago = (contasPagar || [])
-    .filter((c) => c.status === 'Pago')
-    .reduce((sum, c) => sum + (Number(c.valor_pago) || Number(c.valor) || 0), 0);
-  let saldoAcumulado = recebido - pago;
-  const meses = Math.min(Math.max(Number(mesesProjecao) || 6, 1), 24);
-  const dados = [];
-
-  for (let i = 0; i < meses; i += 1) {
-    const mesRef = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    const inicio = new Date(mesRef.getFullYear(), mesRef.getMonth(), 1);
-    const fim = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 0, 23, 59, 59, 999);
-    const inMes = (raw) => {
-      const d = new Date(raw);
-      return !Number.isNaN(d.getTime()) && d >= inicio && d <= fim;
-    };
-    const receitaPrevista = (contasReceber || [])
-      .filter((c) => (c.status === 'Pendente' || c.status === 'Atrasado') && inMes(c.data_vencimento))
-      .reduce((sum, c) => sum + (Number(c.valor) || 0), 0);
-    const despesaPrevista = (contasPagar || [])
-      .filter((c) => (c.status === 'Pendente' || c.status === 'Atrasado') && inMes(c.data_vencimento))
-      .reduce((sum, c) => sum + (Number(c.valor) || 0), 0);
-    const saldoMes = receitaPrevista - despesaPrevista;
-    saldoAcumulado += saldoMes;
-    dados.push({
-      mes: mesRef.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-      mesCompleto: `${mesRef.getFullYear()}-${String(mesRef.getMonth() + 1).padStart(2, '0')}`,
-      receitaPrevista,
-      despesaPrevista,
-      saldoMes,
-      saldoAcumulado,
-      deficitPrevisto: saldoAcumulado < 0,
-      alertaNivel: saldoAcumulado < 0 ? 'critico' : saldoAcumulado < 10000 ? 'alerta' : 'ok',
-    });
-  }
-
-  return stampIaSuggestion({
-    saldoInicial: recebido - pago,
-    meses: dados,
-    fonte: 'previsao_caixa_local',
   });
 };

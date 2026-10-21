@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
   const podeEditar = canEdit("Cadastros", "FormaPagamento") || canEdit("Financeiro", "FormaPagamento") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "FormaPagamento") || canDelete("Financeiro", "FormaPagamento") || canDelete("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Dinheiro",
@@ -42,7 +42,16 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     permite_parcelamento: false,
     maximo_parcelas: 1,
     intervalo_parcelas_dias: 30
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
+  const prevIdRef = useRef(dadosIniciais?.id || null);
+  useEffect(() => {
+    const nextId = dadosIniciais?.id || null;
+    if (nextId !== prevIdRef.current) {
+      prevIdRef.current = nextId;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id]);
 
   const schema = z.object({
     descricao: z.string().min(1, "Descricao e obrigatoria"),

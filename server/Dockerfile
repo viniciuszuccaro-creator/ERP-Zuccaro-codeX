@@ -17,6 +17,9 @@ RUN npm run build \
   && test -f dist/domain/index.js
 
 FROM node:22-bookworm-slim AS runtime
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3080

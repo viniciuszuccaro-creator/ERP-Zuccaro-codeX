@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +26,15 @@ import { toast } from "sonner";
 import ConciliacaoAutomaticaIA from "./ConciliacaoAutomaticaIA";
 import HeaderConciliacaoCompacto from "./conciliacao/HeaderConciliacaoCompacto";
 import KPIsConciliacao from "./conciliacao/KPIsConciliacao";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import ExtratoBancarioImportDialog from "./ExtratoBancarioImportDialog";
 
 export default function ConciliacaoBancaria({ windowMode = false }) {
   const { user } = useUser();
-  const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const [sourceOpen, setSourceOpen] = useState(false);
   const [filtros, setFiltros] = useState({
     banco_id: "",
     data_inicio: "",
@@ -66,45 +71,16 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
       : base44.entities.CaixaMovimento.list('-data_movimento'),
   });
 
-  // Mutation para conciliar
-  const conciliar = useMutation({
-    mutationFn: async ({ lancamentoBanco, movimento }) => {
-      // Atualizar status do movimento
-      if (movimento.tipo === "pagamento_omnichannel") {
-        await base44.entities.PagamentoOmnichannel.update(movimento.id, {
-          status_conferencia: "Conciliado",
-          data_credito_efetiva: lancamentoBanco.data
-        });
-      } else if (movimento.tipo === "ordem_liquidacao") {
-        // Já está liquidado, apenas marcar como conciliado
-      }
-
-      // Registrar auditoria
-      await base44.entities.AuditLog.create({
-        group_id: movimento.group_id,
-        empresa_id: movimento.empresa_id,
-        usuario_id: user.id,
-        usuario_nome: user.full_name,
-        acao: "Conciliação Bancária",
-        modulo: "Financeiro",
-        entidade: "ConciliacaoBancaria",
-        detalhes: {
-          lancamento_banco_valor: lancamentoBanco.valor,
-          movimento_valor: movimento.valor,
-          diferenca: Math.abs(lancamentoBanco.valor - movimento.valor)
-        }
-      });
-
-      return true;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['pagamentos-omnichannel-pendentes']);
-      queryClient.invalidateQueries(['caixa-ordens-liquidadas']);
-      setLancamentoSelecionado(null);
-      setMovimentoParaConciliar(null);
-      toast.success("Conciliação realizada com sucesso!");
-    }
-  });
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const sourceScope = typeof groupId === 'string' && typeof empresaAtual?.id === 'string' && typeof user?.id === 'string'
+    && (!empresaSelecionada || empresaSelecionada === empresaAtual.id)
+    ? {groupId, empresaId:empresaAtual.id, actorId:user.id} : null;
+  const canReadSource = hasPermission('Financeiro','ContaBancariaEmpresa','visualizar')
+    && hasPermission('Financeiro','ContaBancariaEmpresa','dados-sensiveis.visualizar')
+    && hasPermission('Financeiro','conciliacao','visualizar')
+    && hasPermission('Financeiro','conciliacao','dados-sensiveis.visualizar');
+  const canReadMovements = canReadSource && hasPermission('Financeiro','Caixa','visualizar')
+    && hasPermission('Financeiro','Caixa','dados-sensiveis.visualizar');
 
   const extratosPendentes = extratos.filter(e => !e.conciliado);
   const extratosConciliados = extratos.filter(e => e.conciliado);
@@ -113,6 +89,14 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
   const content = (
     <div className="space-y-1.5">
       <HeaderConciliacaoCompacto />
+      {sourceOpen && sourceScope && canReadSource && <ExtratoBancarioImportDialog
+        key={`${sourceScope.actorId}:${sourceScope.groupId}:${sourceScope.empresaId}`}
+        scope={sourceScope} canImport={hasPermission('Financeiro','conciliacao','importar')}
+        canReadMovements={canReadMovements}
+        canReconcile={canReadMovements && hasPermission('Financeiro','conciliacao','conciliar')}
+        canReverseLink={canReadMovements && hasPermission('Financeiro','conciliacao','estornar')}
+        canAnalyze={canReadMovements && hasPermission('IA','financeiro_conciliacao','visualizar')}
+        onClose={()=>setSourceOpen(false)} />}
       <KPIsConciliacao 
         extratosPendentes={extratosPendentes.length}
         extratosConciliados={extratosConciliados.length}
@@ -140,7 +124,7 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
             </div>
             <div>
               <Label className="text-xs">&nbsp;</Label>
-              <Button variant="outline" size="sm" className="h-8">
+              <Button variant="outline" size="sm" className="h-8" onClick={()=>setSourceOpen(true)} disabled={!sourceScope || !canReadSource}>
                 <Upload className="w-3 h-3 mr-1" /> Importar
               </Button>
             </div>
@@ -192,7 +176,8 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
                         <Badge variant="outline">{extrato.tipo || 'N/A'}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={()=>setSourceOpen(true)}
+                          disabled={!sourceScope || !canReadMovements || !hasPermission('Financeiro','conciliacao','conciliar')}>
                           <CheckCircle2 className="w-4 h-4 mr-1" />
                           Conciliar
                         </Button>
@@ -367,13 +352,11 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
                 </Button>
                 <Button 
                   onClick={() => {
-                    conciliar.mutate({
-                      lancamentoBanco: { valor: movimentoParaConciliar.valor, data: new Date() },
-                      movimento: movimentoParaConciliar
-                    });
+                    setMovimentoParaConciliar(null);
+                    setSourceOpen(true);
                   }}
                   className="flex-1 bg-green-600 hover:bg-green-700"
-                  disabled={conciliar.isPending}
+                  disabled={!sourceScope || !canReadMovements || !hasPermission('Financeiro','conciliacao','conciliar')}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Confirmar Conciliação

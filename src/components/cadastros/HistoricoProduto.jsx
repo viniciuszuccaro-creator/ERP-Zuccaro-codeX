@@ -34,6 +34,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
   const contextoValido = Boolean(groupId || empresaId);
   const podeEditarProduto = canEdit("Cadastros", "Produto") || canEdit("Estoque", "Produto") || canEdit("Cadastros", null);
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditHistoricoProduto = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -316,7 +317,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
                 <XAxis dataKey="data" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => `R$ ${value.toFixed(2)}`}
+                  formatter={(value) => `R$ ${typeof value === 'number' && Number.isFinite(value) ? value.toFixed(2) : '-'}`}
                   labelStyle={{ color: '#000' }}
                 />
                 <Line 
@@ -338,9 +339,9 @@ export default function HistoricoProduto({ produtoId, produto }) {
       </Card>
 
       {/* Análise Preditiva */}
-      <Card className="border-purple-200 bg-purple-50">
+      <Card className="border-sky-200 bg-sky-50">
         <CardContent className="p-6 space-y-3">
-          <h3 className="font-bold text-purple-900 flex items-center gap-2">
+          <h3 className="font-bold text-sky-900 flex items-center gap-2">
             <DollarSign className="w-5 h-5" />
             Análise Preditiva (IA)
           </h3>
@@ -348,7 +349,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-white rounded border">
               <p className="text-xs text-slate-600 mb-1">Projeção Custo (30d)</p>
-              <p className="font-bold text-purple-700">
+              <p className="font-bold text-sky-700">
                 {tendenciaCusto === 'alta' ? '+3.5%' : tendenciaCusto === 'baixa' ? '-2.1%' : '0%'}
               </p>
             </div>

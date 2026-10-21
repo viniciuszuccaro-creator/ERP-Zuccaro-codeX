@@ -18,7 +18,7 @@ export default function BottlenecksPanel({ entregas = [], rules, onSelectEntrega
       if (!tsPronto && e.data_separacao) tsPronto = new Date(e.data_separacao);
 
       if (tsPronto && (e.status === 'Pronto para Expedir' || e.status === 'Em Separação')) {
-        const esperaH = msToH(now - tsPronto);
+        const esperaH = msToH(now.getTime() - tsPronto.getTime());
         const thr = rules?.maxEsperaCentroHoras ?? 4;
         if (esperaH >= 1) {
           list.push({

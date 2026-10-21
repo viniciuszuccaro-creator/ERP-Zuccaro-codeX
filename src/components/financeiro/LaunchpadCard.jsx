@@ -17,6 +17,9 @@ const COLOR_CLASSES = Object.freeze({
   rose: 'from-rose-500 to-rose-600 hover:shadow-rose-200',
 });
 
+/** @param {{title: React.ReactNode, description: React.ReactNode, icon: React.ElementType,
+ * onClick?: (event: React.MouseEvent | React.KeyboardEvent) => void, color?: string,
+ * badge?: React.ReactNode, badgeVariant?: string, dataPermission?: string, dataAction?: string}} props */
 export default function LaunchpadCard({
   title,
   description,

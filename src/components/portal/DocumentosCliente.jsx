@@ -8,12 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Download, Search, CreditCard, Eye, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import { displayScalar, isSafeHttpUrl } from '@/lib/utils';
+import { useUser } from '@/components/lib/UserContext';
 import {
   applyPortalReadScope,
+  assertPortalTituloDoCliente,
   buildPortalDocumentoLinks,
   buildSegundaViaPortal,
   filtrarTitulosPortal,
-  resolvePortalClienteId,
+  resolvePortalClienteVinculado,
 } from '@/components/lib/portalClientePolicy';
 
 /**
@@ -25,26 +28,31 @@ import {
  * ✅ w-full h-full
  */
 export default function DocumentosCliente() {
+  const { user: sessionUser, isLoading: authLoading, error: authError } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const qc = useQueryClient();
 
-  const { data: contexto = {}, isLoading: loadingCtx } = useQuery({
-    queryKey: ['portal-docs-contexto'],
+  const { data: contexto, isLoading: loadingCtx } = useQuery({
+    queryKey: ['portal-docs-contexto', sessionUser?.id],
+    enabled: !!sessionUser?.id && !authLoading && !authError,
     queryFn: async () => {
+      if (!sessionUser?.id || authLoading || authError) throw new Error('Sessao do portal indisponivel.');
       const user = await base44.auth.me();
+      if (user?.id !== sessionUser.id) throw new Error('Sessao do portal alterada.');
       const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      const cliente = clientes[0] || null;
-      return { user, cliente, clienteId: resolvePortalClienteId(clientes, user) };
+      const cliente = resolvePortalClienteVinculado(clientes, user);
+      return { user, cliente, clienteId: cliente?.id || null };
     },
   });
 
-  const cliente = contexto.cliente;
-  const clienteId = contexto.clienteId;
+  const cliente = !authLoading && !authError && contexto?.user?.id === sessionUser?.id ? contexto?.cliente : null;
+  const clienteId = cliente?.id;
 
   const { data: notasFiscais = [], isLoading: loadingNFe } = useQuery({
-    queryKey: ['minhas-nfes', clienteId],
+    queryKey: ['minhas-nfes', clienteId, sessionUser?.id],
     enabled: !!clienteId,
     queryFn: async () => {
+      if (!clienteId) return [];
       const list = await base44.entities.NotaFiscal.filter({
         cliente_fornecedor_id: clienteId,
       }, '-data_emissao', 100);
@@ -57,16 +65,18 @@ export default function DocumentosCliente() {
   });
 
   const { data: contasReceber = [], isLoading: loadingBoletos } = useQuery({
-    queryKey: ['meus-boletos', clienteId],
+    queryKey: ['meus-boletos', clienteId, sessionUser?.id],
     enabled: !!clienteId,
     queryFn: async () => {
+      if (!clienteId) return [];
       const list = await base44.entities.ContaReceber.filter({ cliente_id: clienteId }, '-data_vencimento', 100);
       return filtrarTitulosPortal(list, clienteId);
     },
   });
 
   const emitirSegundaVia = useMutation({
-    mutationFn: async (titulo) => {
+    mutationFn: async (/** @type {import('../lib/portalClientePolicy').PortalRecord} */ titulo) => {
+      if (typeof titulo?.id !== 'string' || !titulo.id.trim()) throw new Error('Identificador do titulo invalido para escrita.');
       const decision = buildSegundaViaPortal({ titulo, cliente });
       if (decision.reuse) return decision.record;
       return base44.entities.ContaReceber.update(titulo.id, {
@@ -81,7 +91,7 @@ export default function DocumentosCliente() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['meus-boletos', clienteId] });
-      toast.success('2ª via / PIX gerados');
+      toast.success('Dados existentes disponibilizados no portal');
     },
     onError: (error) => toast.error(error?.message || 'Falha na 2ª via'),
   });
@@ -96,7 +106,7 @@ export default function DocumentosCliente() {
   const handleDownloadNFe = async (nfe) => {
     try {
       const links = buildPortalDocumentoLinks({ nfe, clienteId });
-      if (links.xml) window.open(links.xml, '_blank');
+      if (isSafeHttpUrl(links.xml)) window.open(links.xml, '_blank', 'noopener,noreferrer');
       else toast.error('XML nao disponivel');
     } catch (error) {
       toast.error(error?.message || 'Download bloqueado');
@@ -104,22 +114,32 @@ export default function DocumentosCliente() {
   };
 
   const handleVisualizarBoleto = (conta) => {
-    if (conta.url_boleto_pdf && !String(conta.url_boleto_pdf).startsWith('portal://')) {
-      window.open(conta.url_boleto_pdf, '_blank');
-    } else if (conta.linha_digitavel) {
-      toast.message(`Linha digitavel: ${conta.linha_digitavel}`);
-    } else {
-      emitirSegundaVia.mutate(conta);
+    try {
+      assertPortalTituloDoCliente({titulo: conta, clienteId});
+      if (conta.url_boleto_pdf && (typeof conta.url_boleto_pdf !== 'string' || !conta.url_boleto_pdf.startsWith('portal://'))) {
+        if (!isSafeHttpUrl(conta.url_boleto_pdf)) throw new Error('URL do boleto invalida ou insegura');
+        window.open(conta.url_boleto_pdf, '_blank', 'noopener,noreferrer');
+      } else if (conta.linha_digitavel) {
+        if (typeof conta.linha_digitavel !== 'string' || !conta.linha_digitavel.trim()) throw new Error('Linha digitavel invalida.');
+        toast.message(`Linha digitavel: ${conta.linha_digitavel}`);
+      } else {
+        emitirSegundaVia.mutate(conta);
+      }
+    } catch (error) {
+      toast.error(error?.message || 'Visualizacao do boleto bloqueada.');
     }
   };
 
   const handleCopiarPix = async (conta) => {
     try {
+      assertPortalTituloDoCliente({titulo: conta, clienteId});
       let pix = conta.pix_copia_cola;
       if (!pix) {
         const updated = await emitirSegundaVia.mutateAsync(conta);
+        assertPortalTituloDoCliente({titulo: updated, clienteId});
         pix = updated.pix_copia_cola;
       }
+      if (typeof pix !== 'string' || !pix.trim()) throw new Error('PIX nao disponivel.');
       await navigator.clipboard.writeText(pix);
       toast.success('Codigo PIX copiado');
     } catch (error) {
@@ -128,13 +148,13 @@ export default function DocumentosCliente() {
   };
 
   const filteredNFes = notasFiscais.filter(nfe =>
-    nfe.numero?.toString().includes(searchTerm) ||
-    nfe.chave_acesso?.includes(searchTerm)
+    ((typeof nfe.numero === 'string' || typeof nfe.numero === 'number') && String(nfe.numero).includes(searchTerm)) ||
+    (typeof nfe.chave_acesso === 'string' && nfe.chave_acesso.includes(searchTerm))
   );
 
   const filteredBoletos = contasReceber.filter(conta =>
-    conta.numero_documento?.includes(searchTerm) ||
-    conta.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+    (typeof conta.numero_documento === 'string' && conta.numero_documento.includes(searchTerm)) ||
+    (typeof conta.descricao === 'string' && conta.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (loadingCtx) {
@@ -185,20 +205,20 @@ export default function DocumentosCliente() {
                           <FileText className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">NF-e Nº {nfe.numero}</h3>
+                          <h3 className="font-semibold text-lg">NF-e Nº {displayScalar(nfe.numero)}</h3>
                           <p className="text-sm text-slate-600">
-                            Série: {nfe.serie} | Chave: {nfe.chave_acesso?.substring(0, 20)}...
+                            Série: {displayScalar(nfe.serie)} | Chave: {typeof nfe.chave_acesso === 'string' ? nfe.chave_acesso.substring(0, 20) : ''}...
                           </p>
                           <p className="text-sm text-slate-600">
-                            Emissão: {new Date(nfe.data_emissao).toLocaleDateString('pt-BR')}
+                            Emissão: {typeof nfe.data_emissao === 'string' || typeof nfe.data_emissao === 'number' ? new Date(nfe.data_emissao).toLocaleDateString('pt-BR') : '—'}
                           </p>
                           <p className="text-sm font-medium text-green-600 mt-1">
-                            Valor: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(nfe.valor_total)}
+                            Valor: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(nfe.valor_total))}
                           </p>
                         </div>
                       </div>
                       <Badge className="bg-green-100 text-green-800">
-                        {nfe.status || 'Autorizada'}
+                        {displayScalar(nfe.status) || 'Autorizada'}
                       </Badge>
                     </div>
 
@@ -215,11 +235,11 @@ export default function DocumentosCliente() {
                       {(() => {
                         try {
                           const links = buildPortalDocumentoLinks({ nfe, clienteId });
-                          return links.danfe ? (
+                          return isSafeHttpUrl(links.danfe) ? (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(links.danfe, '_blank')}
+                              onClick={() => window.open(links.danfe, '_blank', 'noopener,noreferrer')}
                               className="flex items-center gap-2"
                             >
                               <Eye className="w-4 h-4" />
@@ -254,7 +274,7 @@ export default function DocumentosCliente() {
             <div className="grid gap-4 w-full">
               {filteredBoletos.map((conta) => {
                 const isVencido = new Date(conta.data_vencimento) < new Date() && conta.status === 'Pendente';
-                const diasAtraso = isVencido ? Math.floor((new Date() - new Date(conta.data_vencimento)) / (1000 * 60 * 60 * 24)) : 0;
+                const diasAtraso = isVencido ? Math.floor((new Date().getTime() - new Date(conta.data_vencimento).getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
                 return (
                   <Card key={conta.id} className="hover:shadow-lg transition-shadow">
@@ -267,9 +287,9 @@ export default function DocumentosCliente() {
                             <CreditCard className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-lg">{conta.descricao}</h3>
+                            <h3 className="font-semibold text-lg">{displayScalar(conta.descricao)}</h3>
                             <p className="text-sm text-slate-600">
-                              Doc: {conta.numero_documento || 'N/A'}
+                              Doc: {displayScalar(conta.numero_documento) || 'N/A'}
                             </p>
                             <p className="text-sm text-slate-600">
                               Vencimento: {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
@@ -280,12 +300,12 @@ export default function DocumentosCliente() {
                               </p>
                             )}
                             <p className="text-lg font-bold text-blue-600 mt-2">
-                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(conta.valor)}
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(conta.valor))}
                             </p>
                           </div>
                         </div>
                         <Badge className={statusColorBoleto[conta.status] || 'bg-gray-100'}>
-                          {conta.status}
+                          {displayScalar(conta.status)}
                         </Badge>
                       </div>
 
@@ -309,11 +329,20 @@ export default function DocumentosCliente() {
                             <Download className="w-4 h-4" />
                             {conta.pix_copia_cola ? 'Copiar PIX' : 'Gerar PIX'}
                           </Button>
-                          {conta.url_fatura && (
+                          {isSafeHttpUrl(conta.url_fatura) && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(conta.url_fatura, '_blank')}
+                              onClick={() => {
+                                try {
+                                  assertPortalTituloDoCliente({titulo: conta, clienteId});
+                                  const url = conta.url_fatura;
+                                  if (isSafeHttpUrl(url)) window.open(url, '_blank', 'noopener,noreferrer');
+                                  else toast.error('URL da fatura invalida.');
+                                } catch (error) {
+                                  toast.error(error?.message || 'Visualizacao da fatura bloqueada.');
+                                }
+                              }}
                               className="flex items-center gap-2"
                             >
                               <Calendar className="w-4 h-4" />

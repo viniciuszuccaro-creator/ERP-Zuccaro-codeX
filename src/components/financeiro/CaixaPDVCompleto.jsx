@@ -188,7 +188,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
   };
 
   const abrirCaixa = useMutation({
-    mutationFn: async (saldo) => {
+    mutationFn: async (/** @type {typeof saldoInicial} */ saldo) => {
       if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para abrir caixa.");
       await createInContext('CaixaMovimento', {
         ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
@@ -368,7 +368,7 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
   });
 
   const liquidarTitulo = useMutation({
-    mutationFn: async ({ titulo, tipo, forma }) => {
+    mutationFn: async (/** @type {{titulo: {id: string, valor: number, cliente?: string, fornecedor?: string}, tipo: string, forma: string}} */ { titulo, tipo, forma }) => {
       const podeTipo = tipo === 'receber' ? podeLiquidarTitulosReceber : podeLiquidarTitulosPagar;
       if (!contextoValido || !podeTipo) {
         await auditCaixaAction('pdv_liquidacao_bloqueada', { motivo: 'contexto_ou_permissao', entidade: tipo === 'receber' ? 'ContaReceber' : 'ContaPagar', titulo_id: titulo?.id }, false);
@@ -727,15 +727,15 @@ export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode
 
                   <div className="space-y-1 p-2 bg-slate-50 rounded">
                     <div className="flex items-center gap-2">
-                      <Checkbox checked={emitirRecibo} onCheckedChange={setEmitirRecibo} id="recibo" />
+                      <Checkbox checked={emitirRecibo} onCheckedChange={(checked) => setEmitirRecibo(checked === true)} id="recibo" />
                       <Label htmlFor="recibo" className="text-sm">Emitir Recibo</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Checkbox checked={emitirNFe} onCheckedChange={setEmitirNFe} id="nfe" disabled={!empresaId || !podeEmitirNFePDV || !clienteSelecionado} data-action="PDV.nfe.marcar" data-permission="Fiscal.Notas Fiscais.emitir" data-context-required="true" data-sensitive="true" />
+                      <Checkbox checked={emitirNFe} onCheckedChange={(checked) => setEmitirNFe(checked === true)} id="nfe" disabled={!empresaId || !podeEmitirNFePDV || !clienteSelecionado} data-action="PDV.nfe.marcar" data-permission="Fiscal.Notas Fiscais.emitir" data-context-required="true" data-sensitive="true" />
                       <Label htmlFor="nfe" className="text-sm">Emitir NF-e</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Checkbox checked={emitirBoleto} onCheckedChange={setEmitirBoleto} id="boleto" disabled={!podeCriarReceberPDV} data-action="PDV.boleto.marcar" data-permission="Financeiro.Contas a Receber.criar" data-context-required="true" data-sensitive="true" />
+                      <Checkbox checked={emitirBoleto} onCheckedChange={(checked) => setEmitirBoleto(checked === true)} id="boleto" disabled={!podeCriarReceberPDV} data-action="PDV.boleto.marcar" data-permission="Financeiro.Contas a Receber.criar" data-context-required="true" data-sensitive="true" />
                       <Label htmlFor="boleto" className="text-sm">Gerar Boleto</Label>
                     </div>
                   </div>

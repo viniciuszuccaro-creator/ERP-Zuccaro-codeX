@@ -1,5 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
+import { useMemo } from 'react';
+import useCadastroRecordState from './useCadastroRecordState';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,7 +43,7 @@ export default function ProdutoForm({ produto, item, data, initialData, defaultV
   const podeCriar = canCreate("Cadastros", "Produto") || canCreate("Estoque", "Produto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Produto") || canEdit("Estoque", "Produto") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(() => {
+  const initialFormData = useMemo(() => {
     if (dadosIniciais) {
       return {
         ...dadosIniciais,
@@ -97,7 +99,11 @@ export default function ProdutoForm({ produto, item, data, initialData, defaultV
       largura_cm: 0,
       comprimento_cm: 0
     };
-  });
+  }, [dadosIniciais]);
+  const [formData, setFormData] = useCadastroRecordState(initialFormData, JSON.stringify([
+    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
+    grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto,
+  ]));
 
   const [iaSugestao, setIaSugestao] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);

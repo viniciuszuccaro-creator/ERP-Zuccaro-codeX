@@ -56,6 +56,12 @@ export const PERFIL_FORM_DEFAULT = {
   ativo: true,
 };
 
+/** @typedef {Omit<Partial<typeof PERFIL_FORM_DEFAULT>, 'permissoes' | 'setores_permitidos'> & {
+ * permissoes?: Record<string, Record<string, string[]>>,
+ * setores_permitidos?: string[]
+ * } & Record<string, unknown>} PerfilFormInput
+ */
+
 export const normalizeSetoresPerfil = (valor = []) => {
   const origem = Array.isArray(valor) ? valor : String(valor || "").split(",");
   return origem
@@ -99,6 +105,7 @@ export const countPermissoesTotal = (permissoes = {}) => Object.values(permissoe
   .reduce((total, modulo) => total + Object.values(modulo || {})
     .reduce((subtotal, secao) => subtotal + (secao?.length || 0), 0), 0);
 
+/** @param {{perfil?: PerfilFormInput & {id?: string, nome?: string}, usuarios?: {perfil_acesso_id?: string}[]}} options */
 export const buildPerfilCardInfo = ({ perfil = {}, usuarios = [] }) => {
   const usuariosVinculados = usuarios.filter((usuario) => usuario.perfil_acesso_id === perfil.id);
 
@@ -114,6 +121,7 @@ export const buildPerfilCardInfo = ({ perfil = {}, usuarios = [] }) => {
 export const countPermissoesModulo = (permissoes = {}, modulo) => Object.values(permissoes?.[modulo] || {})
   .reduce((total, secao) => total + (secao?.length || 0), 0);
 
+/** @param {{formPerfil?: PerfilFormInput, grupoAtivoId?: string | null, empresaAtivaId?: string | null}} options */
 export const buildPerfilFormSubmitPayload = ({ formPerfil = {}, grupoAtivoId, empresaAtivaId }) => ({
   ...formPerfil,
   nivel_acesso_contexto: formPerfil.escopo_acesso,
@@ -218,6 +226,8 @@ export const buildPerfilAuditPayload = ({
   data_hora: timestamp,
 });
 
+/** @param {{data?: PerfilFormInput, contexto: string, contextoValido: boolean,
+ * perfilId?: string, criando: boolean, podeCriarPerfil: boolean, podeEditarPerfil: boolean}} options */
 export const buildPerfilSaveBlock = ({
   data = {},
   contexto,
@@ -274,6 +284,8 @@ export const buildPerfilDeleteBlock = ({ contexto, contextoValido, podeExcluirPe
   return null;
 };
 
+/** @param {{data?: PerfilFormInput, contexto: string, contextoValido: boolean,
+ * grupoAtivoId?: string | null, empresaAtivaId?: string | null, empresasGrupoIds?: string[]}} options */
 export const buildPerfilRbacPayload = ({ data = {}, contexto, contextoValido, grupoAtivoId, empresaAtivaId, empresasGrupoIds = [] }) => ({
   ...data,
   contexto_valido: Boolean(contextoValido),

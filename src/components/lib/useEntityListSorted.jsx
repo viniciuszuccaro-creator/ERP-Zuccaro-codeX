@@ -1,3 +1,4 @@
+/// <reference path="./browserRuntimeContracts.d.ts" />
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
@@ -28,6 +29,9 @@ function stableStringify(value) {
   return stringify(value);
 }
 
+/** @param {string} entityName
+ * @param {Record<string, unknown>} [criterios]
+ */
 export default function useEntityListSorted(entityName, criterios = {}, options = {}) {
   const { getFiltroContexto, grupoAtual, empresaAtual } = useContextoVisual();
   const {

@@ -1,3 +1,4 @@
+/// <reference path="../lib/browserRuntimeContracts.d.ts" />
 import React, { useState, useEffect, Suspense } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -306,7 +307,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   const isLockedFooter = isFaturadoFooter || (isTransferidoFooter && !formData?.__liberado_gerencia);
 
   const content = (
-    <FormWrapper schema={pedidoCompletoSchema} defaultValues={formData} externalData={formData} onSubmit={rhfHandleSubmit(handleSubmit)} className="w-full h-full">
+    <FormWrapper schema={pedidoCompletoSchema} defaultValues={formData} externalData={formData} onSubmit={() => rhfHandleSubmit(handleSubmit)()} className="w-full h-full">
       <div className="w-full h-full flex flex-col bg-white">
       {/* Header - FIXO */}
       <PedidoHeader formData={formData} pedido={pedido} />
@@ -424,7 +425,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
             {formData?.etapas_entrega?.length > 0 && (
               <div className="text-sm">
                 <p className="text-slate-600">Etapas de Faturamento</p>
-                <p className="text-xl font-bold text-purple-600">
+                <p className="text-xl font-bold text-sky-600">
                   {formData.etapas_entrega.length}
                 </p>
               </div>

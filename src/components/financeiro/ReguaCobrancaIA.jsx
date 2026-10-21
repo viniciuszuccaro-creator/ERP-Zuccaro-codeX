@@ -65,7 +65,7 @@ export default function ReguaCobrancaIA({ empresaId: empresaIdProp, windowMode =
 
       for (const titulo of titulosVencidos) {
         const diasAtraso = Math.floor(
-          (hoje - new Date(titulo.data_vencimento)) / (1000 * 60 * 60 * 24),
+          (hoje.getTime() - new Date(titulo.data_vencimento).getTime()) / (1000 * 60 * 60 * 24),
         );
         let acao = null;
 
@@ -158,15 +158,15 @@ export default function ReguaCobrancaIA({ empresaId: empresaIdProp, windowMode =
 
   const hoje = new Date();
   const ate3Dias = titulosVencidos.filter((t) => {
-    const dias = Math.floor((hoje - new Date(t.data_vencimento)) / (1000 * 60 * 60 * 24));
+    const dias = Math.floor((hoje.getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
     return dias >= 1 && dias <= 3;
   });
   const de4a10Dias = titulosVencidos.filter((t) => {
-    const dias = Math.floor((hoje - new Date(t.data_vencimento)) / (1000 * 60 * 60 * 24));
+    const dias = Math.floor((hoje.getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
     return dias >= 4 && dias <= 10;
   });
   const acima10Dias = titulosVencidos.filter((t) => {
-    const dias = Math.floor((hoje - new Date(t.data_vencimento)) / (1000 * 60 * 60 * 24));
+    const dias = Math.floor((hoje.getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
     return dias > 10;
   });
 

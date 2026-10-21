@@ -28,7 +28,7 @@ export default function HistoricoTab({ cliente, formData }) {
 
         <Card className="p-4">
           <Label className="text-sm">Ticket Médio</Label>
-          <p className="text-2xl font-bold text-purple-600">R$ {(formData.ticket_medio || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-sky-600">R$ {(formData.ticket_medio || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
           <p className="text-xs text-slate-500 mt-1">Valor médio por pedido</p>
         </Card>
       </div>

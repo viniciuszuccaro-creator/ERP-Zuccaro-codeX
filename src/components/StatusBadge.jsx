@@ -8,10 +8,7 @@ import { cn } from "@/lib/utils";
  * Componente inteligente que aplica cores baseadas no status fornecido,
  * seguindo padrões visuais do sistema.
  * 
- * @param {string} status - Status a ser exibido
- * @param {Object} customColors - Mapa customizado de cores {status: "classes tailwind"}
- * @param {string} variant - Variante do badge (padrão: com fundo colorido)
- * @param {string} className - Classes CSS adicionais
+ * @param {{status: string, customColors?: Record<string, string>, variant?: React.ComponentProps<typeof Badge>['variant'], className?: string}} props
  * 
  * @example
  * <StatusBadge status="Aprovado" />

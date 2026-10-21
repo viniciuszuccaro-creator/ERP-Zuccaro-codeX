@@ -13,7 +13,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { z } from "zod";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import FormErrorSummary from "@/components/common/FormErrorSummary";
+import FormErrorSummary, { formErrorMessage } from "@/components/common/FormErrorSummary";
 
 /**
  * V21.1.2: Ordem Compra Form - Adaptado para Window Mode
@@ -202,7 +202,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                   </Select>
                 )}
               />
-              {errors.fornecedor_id && <p className="text-red-600 text-xs mt-1">{errors.fornecedor_id.message}</p>}
+              {errors.fornecedor_id && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.fornecedor_id.message)}</p>}
             </div>
 
             <div>
@@ -214,7 +214,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
                 data-action="Compras.OrdemCompra.dataSolicitacao"
                 data-context-required="group-or-company"
               />
-              {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
+              {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.data_solicitacao.message)}</p>}
             </div>
 
             <div>
@@ -285,7 +285,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
       >
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg">Itens da OC</h3>
-          {errors.itens && <p className="text-red-600 text-xs mt-1">{errors.itens.message}</p>}
+          {errors.itens && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.itens.message)}</p>}
 
           <div className="grid grid-cols-5 gap-3 p-4 bg-slate-50 rounded-lg">
             <div>

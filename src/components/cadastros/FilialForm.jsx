@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export default function FilialForm({ filial, item, data, initialData, defaultVal
   const podeCriar = canCreate("Cadastros", "Filial") || canCreate("Administracao", "Filial") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Filial") || canEdit("Administracao", "Filial") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     razao_social: "",
     nome_fantasia: "",
     cnpj: "",
@@ -29,7 +30,7 @@ export default function FilialForm({ filial, item, data, initialData, defaultVal
     tipo: "Filial",
     matriz_id: "",
     status: "Ativa"
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas", groupId],

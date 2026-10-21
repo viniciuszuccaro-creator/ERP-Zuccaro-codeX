@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { DbQueryExecutor } from '../db/client.js';
+import type { CadastroBulkRow } from '../services/cadastroBulkPolicy.js';
 import type {
   Cliente,
   ClienteCreate,
@@ -33,6 +34,8 @@ export type ClienteEmpresaListFilter = Scope & ListOptions & {
 };
 
 export interface ClienteRepository extends TenantEntityRepository<Cliente, ClienteCreate, ClienteUpdate> {
+  prepareExport?(scope: Scope, executor: DbQueryExecutor): Promise<() => Promise<void>>;
+  getBulkSnapshot?(scope: Scope, id: string, executor: DbQueryExecutor): Promise<CadastroBulkRow | null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   create(
     scope: Scope,
@@ -43,7 +46,8 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
   getById(scope: Scope,id:string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}):Promise<Cliente|null>;
   update(scope:Scope,id:string,data:ClienteUpdate,executor?:DbQueryExecutor):Promise<Cliente|null>;
   softDelete(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Cliente|null>;
-  listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
+  listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
+    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: Cliente[]; total: number }>;
   findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
   findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null>;

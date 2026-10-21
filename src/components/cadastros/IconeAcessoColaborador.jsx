@@ -14,7 +14,7 @@ export default function IconeAcessoColaborador({ colaborador, variant = "default
       <>
         <button
           onClick={() => setPainelAberto(true)}
-          className="text-purple-600 hover:text-purple-700 hover:underline font-medium text-sm"
+          className="text-sky-600 hover:text-sky-700 hover:underline font-medium text-sm"
         >
           {colaborador.nome_completo}
         </button>
@@ -32,7 +32,7 @@ export default function IconeAcessoColaborador({ colaborador, variant = "default
       <>
         <Badge
           variant="outline"
-          className="cursor-pointer hover:bg-purple-50 transition-colors"
+          className="cursor-pointer hover:bg-sky-50 transition-colors"
           onClick={() => setPainelAberto(true)}
         >
           <UserCircle className="w-3 h-3 mr-1" />

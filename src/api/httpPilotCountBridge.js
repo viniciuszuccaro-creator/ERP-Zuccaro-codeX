@@ -7,9 +7,7 @@
 import { runLocalEntityCounts } from './localEntityCountApi.js';
 
 /**
- * @param {unknown} payload
- * @param {Set<string>} pilotSet
- * @param {Record<string, { filter?: Function } | undefined>} httpEntities
+ * @param {{ entityName?: unknown, entities?: unknown }} payload
  * @returns {string[]}
  */
 export function listCountEntityNames(payload = {}) {
@@ -26,7 +24,7 @@ export function listCountEntityNames(payload = {}) {
 }
 
 /**
- * @param {unknown} payload
+ * @param {{ entityName?: unknown, entities?: unknown }} payload
  * @param {Set<string>} pilotSet
  * @param {Record<string, unknown>} httpEntities
  */
@@ -41,7 +39,7 @@ export function countEntitiesTouchesHttpPilot(payload, pilotSet, httpEntities = 
  * @param {object} payload
  * @param {{
  *   pilotSet: Set<string>,
- *   httpEntities: Record<string, { filter: Function }>,
+ *   httpEntities: Record<string, { filter: Function, count?: Function }>,
  *   countLocal: (entityName: string, filter: object) => Promise<number>,
  *   httpLimit?: number,
  * }} deps
@@ -49,21 +47,20 @@ export function countEntitiesTouchesHttpPilot(payload, pilotSet, httpEntities = 
 export async function runHttpPilotAwareCountEntities(payload = {}, deps) {
   const pilotSet = deps.pilotSet || new Set();
   const httpEntities = deps.httpEntities || {};
-  const httpLimit = Number.isInteger(deps.httpLimit) && deps.httpLimit > 0
-    ? deps.httpLimit
-    : 500;
-
   return runLocalEntityCounts(payload, {
     expandFilter: (_entity, nextFilter) => nextFilter || {},
     countEntity: async (entityName, filter) => {
       if (pilotSet.has(entityName) && httpEntities[entityName]?.filter) {
-        const rows = await httpEntities[entityName].filter(
+        if (typeof httpEntities[entityName].count !== 'function') {
+          throw new Error('HTTP_COUNT_UNAVAILABLE: entidade sem contrato de contagem.');
+        }
+        const total = await httpEntities[entityName].count(
           filter && typeof filter === 'object' ? filter : {},
-          undefined,
-          httpLimit,
-          0,
         );
-        return Array.isArray(rows) ? rows.length : 0;
+        if (typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0) {
+          throw new Error('HTTP_COUNT_UNAVAILABLE: total autoritativo invalido.');
+        }
+        return total;
       }
       return deps.countLocal(entityName, filter && typeof filter === 'object' ? filter : {});
     },

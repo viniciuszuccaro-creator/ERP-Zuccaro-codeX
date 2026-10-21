@@ -44,9 +44,9 @@ export default function AbaConversoesProduto({ formData, setFormData }) {
 
   return (
     <div className="space-y-6">
-      <Alert className="border-indigo-300 bg-indigo-50">
-        <Calculator className="w-5 h-5 text-indigo-600" />
-        <AlertDescription className="text-sm text-indigo-900">
+      <Alert className="border-sky-300 bg-sky-50">
+        <Calculator className="w-5 h-5 text-sky-600" />
+        <AlertDescription className="text-sm text-sky-900">
           <p className="font-semibold mb-2">🔧 Fatores de Conversão Automáticos</p>
           <p>Esses fatores são calculados automaticamente quando você preenche peso teórico e comprimento da barra.</p>
         </AlertDescription>
@@ -136,13 +136,13 @@ export default function AbaConversoesProduto({ formData, setFormData }) {
       </Card>
 
       {/* Unidades Habilitadas */}
-      <Card className="border-purple-200 bg-purple-50">
+      <Card className="border-sky-200 bg-sky-50">
         <CardContent className="p-6">
-          <h3 className="font-bold text-purple-900 mb-4">✅ Unidades Habilitadas para Este Produto</h3>
+          <h3 className="font-bold text-sky-900 mb-4">✅ Unidades Habilitadas para Este Produto</h3>
           
           <div className="flex flex-wrap gap-2">
             {(formData.unidades_secundarias || []).map(unidade => (
-              <Badge key={unidade} className="bg-purple-600 text-white px-4 py-2">
+              <Badge key={unidade} className="bg-sky-600 text-white px-4 py-2">
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 {unidade}
               </Badge>

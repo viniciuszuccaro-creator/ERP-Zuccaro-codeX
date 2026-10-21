@@ -335,12 +335,18 @@ export const statusNaFilaAtendimento = (status) => {
   return s.includes('aguard') || s.includes('não atribu') || s.includes('nao atribu') || s.includes('nao_atribu') || s === 'nova';
 };
 
-/** @param {AtendimentoRecord[]} conversas */
+/** @template {AtendimentoRecord} T
+ * @param {T[]} [conversas]
+ * @returns {T[]}
+ */
 export const filtrarFilaAtendimento = (conversas = []) => (
   (Array.isArray(conversas) ? conversas : []).filter((item) => statusNaFilaAtendimento(item.status) && conversaAberta(item))
 );
 
-/** @param {AtendimentoRecord[]} conversas */
+/** @template {AtendimentoRecord} T
+ * @param {T[]} [conversas]
+ * @returns {T[]}
+ */
 export const ordenarFilaAtendimento = (conversas = []) => (
   [...filtrarFilaAtendimento(conversas)].sort((a, b) => {
     const scoreDiff = (prioridadeScore(b) + sentimentoScore(b)) - (prioridadeScore(a) + sentimentoScore(a));

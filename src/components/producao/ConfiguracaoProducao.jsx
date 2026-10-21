@@ -144,7 +144,7 @@ export default function ConfiguracaoProducao({ empresaId }) {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {Record<string, unknown>} */ data) => {
       if (!contextoValido) {
         await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de salvar configuração sem contexto grupo/empresa.", sucesso: false, dadosNovos: data });
         throw new Error("Contexto multiempresa obrigatório.");
@@ -207,7 +207,7 @@ export default function ConfiguracaoProducao({ empresaId }) {
   });
 
   const toggleBloquear = useMutation({
-    mutationFn: async (bloquear) => {
+    mutationFn: async (/** @type {boolean} */ bloquear) => {
       if (!contextoValido || !empresaOperacionalId) {
         await auditarConfiguracao({ acao: "ConfiguracaoProducao.bloqueada", descricao: "Tentativa de bloquear/desbloquear sem contexto grupo/empresa.", sucesso: false, dadosNovos: { bloquear } });
         throw new Error("Selecione grupo/empresa antes de bloquear configurações.");

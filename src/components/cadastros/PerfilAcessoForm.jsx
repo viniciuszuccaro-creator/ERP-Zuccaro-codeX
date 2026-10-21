@@ -1,4 +1,8 @@
-import React, { useState } from "react";
+import React, { useRef } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import useCadastroFormScopeGuard from './hooks/useCadastroFormScopeGuard';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { assertCadastroRecordInTenant, getCadastroEntityPermissionKey } from './cadastroEditLoadPolicy';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,11 +19,17 @@ import usePermissions from "@/components/lib/usePermissions";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windowMode = false }) {
-  const { canCreate, canEdit, canDelete } = usePermissions();
-  const podeCriar = canCreate("Cadastros", "PerfilAcesso") || canCreate("Sistema", "Controle de Acesso") || canCreate("Cadastros", null);
-  const podeEditar = canEdit("Cadastros", "PerfilAcesso") || canEdit("Sistema", "Controle de Acesso") || canEdit("Cadastros", null);
-  const podeExcluir = canDelete("Cadastros", "PerfilAcesso") || canDelete("Sistema", "Controle de Acesso") || canDelete("Cadastros", null);
-  const [formData, setFormData] = useState(perfil || {
+  const { canCreate, canEdit, canDelete, isLoading } = usePermissions();
+  const { grupoAtual, empresaAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const scope = useCadastroFormScopeGuard(groupId, empresaAtual?.id || null);
+  const identity = JSON.stringify([perfil?.id ?? null, perfil?.updated_date ?? null, groupId, empresaAtual?.id ?? null, contexto]);
+  const current = useRef(null);
+  const podeCriar = !isLoading && canCreate("Sistema", "Controle de Acesso");
+  const podeEditar = !isLoading && canEdit("Sistema", "Controle de Acesso");
+  const podeExcluir = !isLoading && canDelete("Sistema", "Controle de Acesso");
+  current.current = { identity, podeCriar, podeEditar, podeExcluir };
+  const [formData, setFormData] = useCadastroRecordState(perfil || {
     nome: '',
     descricao: '',
     nivel_acesso: 'Básico',
@@ -29,18 +39,18 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
       comercial: { criar_pedido: false, aprovar_desconto_acima_10: false }
     },
     ativo: true
-  });
+  }, identity);
 
-  const [conflitosIA, setConflitosIA] = useState([]);
-  const [bloqueioSoD, setBloqueioSoD] = useState(false);
+  const [conflitosIA, setConflitosIA] = useCadastroRecordState([], identity);
+  const [bloqueioSoD, setBloqueioSoD] = useCadastroRecordState(false, identity);
 
   // IA de Compliance (SoD) V18.0 - BLOQUEIA salvamento
   const validarSegregacaoFuncao = async () => {
     const conflitos = [];
     
     // Regra 1: Criar Fornecedor + Aprovar Pagamentos
-    if (formData.permissoes.cadastros?.criar_fornecedor && 
-        formData.permissoes.financeiro?.aprovar_pagamentos) {
+    if (formData.permissoes?.cadastros?.criar_fornecedor &&
+        formData.permissoes?.financeiro?.aprovar_pagamentos) {
       conflitos.push({
         tipo: 'CRÍTICO',
         regra: 'SoD-001',
@@ -50,8 +60,8 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
     }
 
     // Regra 2: Criar Cliente + Aprovar Desconto Alto
-    if (formData.permissoes.cadastros?.criar_cliente && 
-        formData.permissoes.comercial?.aprovar_desconto_acima_10) {
+    if (formData.permissoes?.cadastros?.criar_cliente &&
+        formData.permissoes?.comercial?.aprovar_desconto_acima_10) {
       conflitos.push({
         tipo: 'AVISO',
         regra: 'SoD-002',
@@ -86,6 +96,16 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!scope.isCurrent() || current.current.identity !== identity) {
+      toast.error('Contexto alterado. Reabra o perfil antes de salvar.');
+      return;
+    }
+    try {
+      assertCadastroRecordInTenant('PerfilAcesso', perfil, { groupId, empresaId: empresaAtual?.id || null, scopeType: empresaAtual?.id ? 'empresa' : 'grupo' });
+    } catch {
+      toast.error('Perfil fora do contexto ativo.');
+      return;
+    }
     if (perfil && !podeEditar) {
       toast.error('Seu perfil nao permite editar perfis de acesso.');
       return;
@@ -102,6 +122,11 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
 
     // IA de Compliance - BLOQUEIA se conflito crítico
     const temConflitoCritico = await validarSegregacaoFuncao();
+    if (!scope.isCurrent() || current.current.identity !== identity
+      || !(perfil ? current.current.podeEditar : current.current.podeCriar)) {
+      toast.error('Contexto ou permissao alterados. Reabra o perfil antes de salvar.');
+      return;
+    }
     
     if (temConflitoCritico) {
       toast.error('❌ Salvamento BLOQUEADO! Remova as permissões conflitantes.');
@@ -113,13 +138,20 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
   };
 
   const handleExcluir = () => {
-    if (!podeExcluir) {
+    if (!scope.isCurrent() || current.current.identity !== identity || !current.current.podeExcluir) {
       toast.error('Seu perfil nao permite excluir perfis de acesso.');
+      return;
+    }
+    try {
+      assertCadastroRecordInTenant('PerfilAcesso', perfil, { groupId, empresaId: empresaAtual?.id || null, scopeType: empresaAtual?.id ? 'empresa' : 'grupo' });
+    } catch {
+      toast.error('Perfil fora do contexto ativo.');
       return;
     }
     if (!window.confirm(`Tem certeza que deseja excluir o perfil "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
+    if (!scope.isCurrent() || current.current.identity !== identity || !current.current.podeExcluir) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
     }
@@ -232,7 +264,7 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
               variant="outline"
               onClick={handleAlternarStatus}
               disabled={!podeEditar}
-              data-permission="Cadastros.PerfilAcesso.alterarStatus"
+              data-permission={getCadastroEntityPermissionKey('PerfilAcesso', 'editar')}
               data-sensitive
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
@@ -253,7 +285,7 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
               variant="destructive"
               onClick={handleExcluir}
               disabled={!podeExcluir}
-              data-permission="Cadastros.PerfilAcesso.excluir"
+              data-permission={getCadastroEntityPermissionKey('PerfilAcesso', 'excluir')}
               data-sensitive
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -264,7 +296,7 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
         <Button
           type="submit"
           disabled={isSubmitting || bloqueioSoD || (perfil ? !podeEditar : !podeCriar)}
-          data-permission="Cadastros.PerfilAcesso.salvar"
+          data-permission={getCadastroEntityPermissionKey('PerfilAcesso', perfil ? 'editar' : 'criar')}
           data-sensitive
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

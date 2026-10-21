@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { isPortalClienteIdentificado, assertPortalOrcamentoIdentificado, calcularChecksumAssinaturaPortal } from '@/components/lib/portalClientePolicy';
 
 const reportApprovalSignatureFailure = (operation, error, context = {}) => {
   console.error('[AprovacaoComAssinatura] ' + operation, {
@@ -32,6 +33,7 @@ const reportApprovalSignatureFailure = (operation, error, context = {}) => {
  * ✅ Histórico de aprovações
  * ✅ 100% Responsivo w-full h-full
  */
+/** @param {{clienteId?: string}} props */
 export default function AprovacaoComAssinatura({ clienteId }) {
   const queryClient = useQueryClient();
   const canvasRef = useRef(null);
@@ -43,13 +45,13 @@ export default function AprovacaoComAssinatura({ clienteId }) {
   const { data: orcamentos = [] } = useQuery({
     queryKey: ['orcamentos-aprovacao', clienteId],
     queryFn: async () => {
-      if (!clienteId) return [];
+      if (!isPortalClienteIdentificado(clienteId)) return [];
       return base44.entities.OrcamentoCliente.filter({
         cliente_id: clienteId,
         status: 'Pendente'
       }, '-created_date');
     },
-    enabled: !!clienteId
+    enabled: isPortalClienteIdentificado(clienteId)
   });
 
   // Canvas de Assinatura
@@ -94,9 +96,15 @@ export default function AprovacaoComAssinatura({ clienteId }) {
   };
 
   const aprovarMutation = useMutation({
-    mutationFn: async ({ orcamento, assinaturaDataUrl }) => {
+    mutationFn: async (/** @type {{orcamento: import('../lib/portalClientePolicy').PortalRecord, assinaturaDataUrl: string}} */ { orcamento, assinaturaDataUrl }) => {
+      assertPortalOrcamentoIdentificado(orcamento, clienteId);
+      if (typeof assinaturaDataUrl !== 'string' || !assinaturaDataUrl.startsWith('data:image/png;base64,')
+        || assinaturaDataUrl.length > Math.ceil(2 * 1024 * 1024 * 4 / 3) + 32) {
+        throw new Error('Origem da assinatura PNG invalida.');
+      }
       // 1. Upload da assinatura
       const blob = await (await fetch(assinaturaDataUrl)).blob();
+      const assinaturaHash = await calcularChecksumAssinaturaPortal(blob);
       const file = new File([blob], 'assinatura.png', { type: 'image/png' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
@@ -107,7 +115,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
         data_aprovacao: new Date().toISOString(),
         assinatura_url: file_url,
         assinatura_ip: 'Portal',
-        assinatura_hash: btoa(assinaturaDataUrl.substring(0, 100))
+        assinatura_hash: assinaturaHash
       });
 
       // 3. Criar pedido automaticamente
@@ -173,8 +181,8 @@ export default function AprovacaoComAssinatura({ clienteId }) {
       return { orcamento, pedido, assinaturaUrl: file_url };
     },
     onSuccess: async ({ pedido, assinaturaUrl }) => {
-      queryClient.invalidateQueries(['orcamentos-aprovacao']);
-      queryClient.invalidateQueries(['pedidos-dashboard']);
+      queryClient.invalidateQueries({ queryKey: ['orcamentos-aprovacao'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos-dashboard'] });
       setAssinaturaModal(false);
       setOrcamentoSelecionado(null);
       setNomeAssinante('');
@@ -206,7 +214,8 @@ export default function AprovacaoComAssinatura({ clienteId }) {
   });
 
   const rejeitarMutation = useMutation({
-    mutationFn: async ({ orcamento, motivo }) => {
+    mutationFn: async (/** @type {{orcamento: import('../lib/portalClientePolicy').PortalRecord, motivo: string}} */ { orcamento, motivo }) => {
+      assertPortalOrcamentoIdentificado(orcamento, clienteId);
       await base44.entities.OrcamentoCliente.update(orcamento.id, {
         status: 'Revisao Solicitada',
         comentario_revisao: motivo,
@@ -235,7 +244,7 @@ Motivo: ${motivo || 'Não informado'}`
       } catch (error) { reportApprovalSignatureFailure('Falha ao enviar WhatsApp de revisao', error, { orcamento_id: orcamento.id }); }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['orcamentos-aprovacao']);
+      queryClient.invalidateQueries({ queryKey: ['orcamentos-aprovacao'] });
       toast.success('Revisão solicitada');
     }
   });
@@ -265,6 +274,7 @@ Motivo: ${motivo || 'Não informado'}`
     });
   };
 
+  if (!isPortalClienteIdentificado(clienteId)) return <p role="status">Cliente do portal nao identificado. Operacoes indisponiveis.</p>;
   return (
     <div className="space-y-4 w-full h-full">
       <Card className="border-2 border-blue-300 bg-blue-50 shadow-lg w-full">

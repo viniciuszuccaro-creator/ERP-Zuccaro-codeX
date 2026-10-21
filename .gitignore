@@ -1,5 +1,15 @@
 #env
 .env
+
+# Private migration sources and secret material never belong in future commits.
+/local-imports/
+/backups/
+*.p12
+*.pfx
+*.pem
+*.key
+*.dump
+*.bak
 .env.*
 !.env.example
 !.env.*.example

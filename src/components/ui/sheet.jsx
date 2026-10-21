@@ -8,6 +8,7 @@ const SheetTrigger = SheetPrimitive.Trigger
 const SheetClose = SheetPrimitive.Close
 const SheetPortal = SheetPrimitive.Portal
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay> & React.RefAttributes<React.ElementRef<typeof SheetPrimitive.Overlay>>>} */
 const SheetOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
@@ -20,6 +21,7 @@ const SheetOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ))
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & {side?: 'top'|'bottom'|'left'|'right'} & React.RefAttributes<React.ElementRef<typeof SheetPrimitive.Content>>>} */
 const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
@@ -41,16 +43,19 @@ const SheetContent = React.forwardRef(({ side = "right", className, children, ..
 ))
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
+/** @param {React.HTMLAttributes<HTMLDivElement>} props */
 const SheetHeader = ({ className, ...props }) => (
   <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
 )
 SheetHeader.displayName = "SheetHeader"
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title> & React.RefAttributes<React.ElementRef<typeof SheetPrimitive.Title>>>} */
 const SheetTitle = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Title ref={ref} className={cn("text-lg font-semibold text-slate-900", className)} {...props} />
 ))
 SheetTitle.displayName = SheetPrimitive.Title.displayName
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description> & React.RefAttributes<React.ElementRef<typeof SheetPrimitive.Description>>>} */
 const SheetDescription = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Description ref={ref} className={cn("text-sm text-slate-600", className)} {...props} />
 ))

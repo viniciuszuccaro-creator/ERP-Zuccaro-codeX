@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { MapPin, Truck, DollarSign, TrendingUp, X, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import usePermissions from "@/components/lib/usePermissions";
+import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s#]/g, "").slice(0, max).trim();
@@ -34,15 +34,21 @@ const ESTADOS_BRASIL = [
 ];
 
 export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, item, data, initialData, defaultValues, open, onOpenChange, onSubmit, onSave, onClose, windowMode = false }) {
-  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { filterInContext, getInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const dadosIniciaisProps = item || data || initialData || defaultValues || regiaoAtendimento;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
+  const { isCurrent: isFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loading, setLoading] = useState(Boolean(regiaoId && !dadosIniciaisProps));
+  const prevIdRef = useRef(dadosIniciaisProps?.id || null);
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
   const podeCriar = canCreate("Cadastros", "RegiaoAtendimento") || canCreate("Logistica", "RegiaoAtendimento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "RegiaoAtendimento") || canEdit("Logistica", "RegiaoAtendimento") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "RegiaoAtendimento") || canDelete("Logistica", "RegiaoAtendimento") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciaisProps?.id || regiaoId ? podeEditar : podeCriar;
+  const requestedId = dadosIniciaisProps?.id || regiaoId || null;
+  const loadReady = !loading && !loadFailed && prevIdRef.current === requestedId;
+  const podeSalvar = (dadosIniciaisProps?.id || regiaoId ? podeEditar : podeCriar) && loadReady && isFormScopeCurrent();
   const [formData, setFormData] = useState(dadosIniciaisProps || {
     nome_regiao: "",
     codigo_regiao: "",
@@ -88,16 +94,37 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   });
 
   useEffect(() => {
-    if (dadosIniciaisProps && (open || windowMode)) {
+    if (!(open || windowMode) || !isFormScopeCurrent()) return;
+    let cancelled = false;
+    const nextId = dadosIniciaisProps?.id || regiaoId || null;
+    if (dadosIniciaisProps && nextId && nextId !== prevIdRef.current) {
+      prevIdRef.current = nextId;
+      setLoadFailed(false);
+      setLoading(false);
       setFormData(dadosIniciaisProps);
-    } else if (regiaoId && open && !dadosIniciaisProps) {
-      base44.entities.RegiaoAtendimento.list().then(regioes => {
-        const regiao = regioes.find(r => r.id === regiaoId);
-        if (regiao) {
+    } else if (regiaoId && !dadosIniciaisProps && regiaoId !== prevIdRef.current) {
+      setLoading(true);
+      setLoadFailed(false);
+      getInContext('RegiaoAtendimento', regiaoId).then(regiao => {
+        if (cancelled || !isFormScopeCurrent()) return;
+        if (regiao?.id === regiaoId && regiao.nome_regiao) {
+          prevIdRef.current = regiaoId;
           setFormData(regiao);
+        } else {
+          setLoadFailed(true);
+          toast.error('Carga incompleta da regiao. Reabra o cadastro.');
         }
+      }).catch(() => {
+        if (cancelled || !isFormScopeCurrent()) return;
+        setLoadFailed(true);
+        toast.error('Falha ao carregar regiao. Reabra o cadastro.');
+      }).finally(() => {
+        if (!cancelled && isFormScopeCurrent()) setLoading(false);
       });
-    } else if (!regiaoId && !dadosIniciaisProps && open) {
+    } else if (!regiaoId && !dadosIniciaisProps && prevIdRef.current !== null) {
+      prevIdRef.current = null;
+      setLoadFailed(false);
+      setLoading(false);
       setFormData({
         nome_regiao: "",
         codigo_regiao: "",
@@ -128,7 +155,8 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         observacoes: ""
       });
     }
-  }, [regiaoId, open]);
+    return () => { cancelled = true; };
+  }, [regiaoId, dadosIniciaisProps?.id, open, windowMode, groupId, empresaAtual?.id]);
 
   const buildPayload = () => ({
     ...formData,
@@ -166,7 +194,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
 
   const handleSubmit = (e) => {
     e?.preventDefault();
-    if (!podeSalvar) {
+    if (!podeSalvar || !isFormScopeCurrent()) {
       toast.error(dadosIniciaisProps?.id || regiaoId ? "Sem permissao para editar regiao." : "Sem permissao para criar regiao.");
       return;
     }
@@ -190,7 +218,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   };
 
   const handleExcluir = () => {
-    if (!podeExcluir) {
+    if (!podeExcluir || !loadReady || !isFormScopeCurrent()) {
       toast.error("Sem permissao para excluir regiao.");
       return;
     }
@@ -201,7 +229,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   };
 
   const handleAlternarStatus = () => {
-    if (!podeEditar) {
+    if (!podeEditar || !loadReady || !isFormScopeCurrent()) {
       toast.error("Sem permissao para alterar status da regiao.");
       return;
     }
@@ -646,14 +674,14 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
                 type="button"
                 variant={formData.ativo ? "outline" : "default"}
                 onClick={handleAlternarStatus}
-                disabled={!podeEditar}
+                disabled={!podeEditar || !loadReady || !isFormScopeCurrent()}
                 data-permission="Cadastros.RegiaoAtendimento.editar"
                 data-action="Cadastros.RegiaoAtendimento.alternar-status"
                 data-sensitive="true"
               >
                 {formData.ativo ? "Inativar" : "Ativar"}
               </Button>
-              <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!podeExcluir} data-permission="Cadastros.RegiaoAtendimento.excluir" data-action="Cadastros.RegiaoAtendimento.excluir" data-sensitive="true">
+              <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!podeExcluir || !loadReady || !isFormScopeCurrent()} data-permission="Cadastros.RegiaoAtendimento.excluir" data-action="Cadastros.RegiaoAtendimento.excluir" data-sensitive="true">
                 Excluir
               </Button>
             </>

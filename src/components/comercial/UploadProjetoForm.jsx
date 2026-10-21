@@ -165,16 +165,16 @@ export default function UploadProjetoForm({ onPecasExtraidas, windowMode = false
       )}
 
       {processando && (
-        <Card className="bg-purple-50 border-purple-200">
+        <Card className="bg-sky-50 border-sky-200">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+              <Loader2 className="w-6 h-6 text-sky-600 animate-spin" />
               <div className="flex-1">
-                <p className="font-semibold text-purple-900 mb-1">Processando projeto com IA...</p>
-                <div className="w-full bg-purple-200 rounded-full h-2">
-                  <div className="bg-purple-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progresso}%` }} />
+                <p className="font-semibold text-sky-900 mb-1">Processando projeto com IA...</p>
+                <div className="w-full bg-sky-200 rounded-full h-2">
+                  <div className="bg-sky-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progresso}%` }} />
                 </div>
-                <p className="text-xs text-purple-700 mt-1">{progresso}% concluído</p>
+                <p className="text-xs text-sky-700 mt-1">{progresso}% concluído</p>
               </div>
             </div>
           </CardContent>
@@ -246,7 +246,7 @@ export default function UploadProjetoForm({ onPecasExtraidas, windowMode = false
         <Card>
           <CardContent className="p-4">
             <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-600" />
+              <Sparkles className="w-4 h-4 text-sky-600" />
               Como funciona a análise com IA
             </h4>
             <ol className="text-sm text-slate-700 space-y-2 list-decimal list-inside">
@@ -276,7 +276,7 @@ export default function UploadProjetoForm({ onPecasExtraidas, windowMode = false
             type="button" 
             onClick={processarComIA}
             disabled={!arquivo || processando}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-sky-600 hover:bg-sky-700"
           >
             {processando ? (
               <>

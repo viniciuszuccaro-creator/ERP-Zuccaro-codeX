@@ -5,6 +5,16 @@ import { cn } from "@/lib/utils";
 import FormErrorSummary from "@/components/common/FormErrorSummary";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
+/** @param {unknown} mode @param {unknown} reValidateMode
+ * @returns {{mode: import('react-hook-form').Mode, reValidateMode: 'onBlur' | 'onChange' | 'onSubmit'}}
+ */
+export function normalizeFormValidationModes(mode, reValidateMode) {
+  return {
+    mode: mode === 'onBlur' || mode === 'onChange' || mode === 'onSubmit' || mode === 'all' || mode === 'onTouched' ? mode : 'onChange',
+    reValidateMode: reValidateMode === 'onBlur' || reValidateMode === 'onChange' || reValidateMode === 'onSubmit' ? reValidateMode : 'onChange',
+  };
+}
+
 /**
  * FormWrapper
  * - Padroniza RHF + Zod
@@ -14,7 +24,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
  *
  * Props principais:
  * - schema?: zod schema (opcional)
- * - defaultValues?: any
+ * - defaultValues?: valores iniciais opcionais
  * - onSubmit: (dadosCarimbados, methods) => void | Promise<void>
  * - withContext?: boolean (default true)
  * - contextFieldName?: string (default 'empresa_id')
@@ -22,24 +32,25 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
  * - children: ReactNode | (methods) => ReactNode
  */
 export default function FormWrapper({
-  schema,
-  defaultValues,
+  schema = undefined,
+  defaultValues = undefined,
   onSubmit,
   withContext = true,
   contextFieldName = 'empresa_id',
   className = '',
   mode = 'onChange',
   reValidateMode = 'onChange',
-  externalData,
+  externalData = undefined,
   children,
   ...formProps
 }) {
   const { carimbarContexto } = useContextoVisual();
+  const validationModes = normalizeFormValidationModes(mode, reValidateMode);
   const methods = useForm({
     resolver: schema ? zodResolver(schema) : undefined,
     defaultValues,
-    mode,
-    reValidateMode,
+    mode: validationModes.mode,
+    reValidateMode: validationModes.reValidateMode,
   });
 
   const [errorMessages, setErrorMessages] = React.useState([]);

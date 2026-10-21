@@ -60,7 +60,7 @@ export default function FunilVendasAvancado({ windowMode = false }) {
   });
 
   const updateEtapaMutation = useMutation({
-    mutationFn: ({ id, etapa }) => updateInContext('Oportunidade', id, {
+    mutationFn: (/** @type {{id: string, etapa: string}} */ { id, etapa }) => updateInContext('Oportunidade', id, {
       etapa,
       etapa_funil: etapa,
     }),
@@ -74,14 +74,14 @@ export default function FunilVendasAvancado({ windowMode = false }) {
   });
 
   const priorizarIAMutation = useMutation({
-    mutationFn: async (oportunidade) => {
+    mutationFn: async (/** @type {{cliente_nome?: string, valor_estimado?: string | number, etapa_funil?: string, data_ultimo_contato?: string | number, origem?: string}} */ oportunidade) => {
       return await base44.integrations.Core.InvokeLLM({
         prompt: `Analise a oportunidade de venda:
         
 Cliente: ${oportunidade.cliente_nome}
 Valor: R$ ${oportunidade.valor_estimado}
 Etapa: ${oportunidade.etapa_funil}
-Dias desde último contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now())) / 86400000)}
+Dias desde último contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now()).getTime()) / 86400000)}
 Fonte: ${oportunidade.origem}
 
 Calcule:
@@ -173,8 +173,8 @@ Calcule:
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-purple-600" />
               <span className="text-2xl font-bold">{metricas.taxaConversao}%</span>
-              <Badge variant={metricas.taxaConversao >= 20 ? 'default' : 'secondary'}>
-                {metricas.taxaConversao >= 20 ? 'Excelente' : 'Bom'}
+              <Badge variant={Number(metricas.taxaConversao) >= 20 ? 'default' : 'secondary'}>
+                {Number(metricas.taxaConversao) >= 20 ? 'Excelente' : 'Bom'}
               </Badge>
             </div>
           </CardContent>

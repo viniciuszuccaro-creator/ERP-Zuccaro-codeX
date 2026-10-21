@@ -125,7 +125,9 @@ export default function DREComparativo({ empresaId, windowMode = false }) {
     return ((atual - anterior) / anterior) * 100;
   };
 
+  /** @type {Partial<(typeof dadosComparativos)[number]>} */
   const ultimoMes = dadosComparativos[dadosComparativos.length - 1] || {};
+  /** @type {Partial<(typeof dadosComparativos)[number]>} */
   const penultimoMes = dadosComparativos[dadosComparativos.length - 2] || {};
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";

@@ -1,3 +1,21 @@
+## CODEX - Consolidacao etapa85 (2026-10-21)
+
+Retomada: branch codex/consolidacao-infra-20261017 no clone independente existente.
+Fonte de continuidade: CONSOLIDACAO_INFRA_ETAPA1.md, topo etapa85.
+Root2170PASS/0FAIL/0SKIP; typecheck0; backend503PASS/35SKIP nao operacionais.
+Preparacao de publicacao sanitizada sobre334; verificar SHA remoto e CI novos.
+Sem merge/main, migrations privadas, carga ou implantacao. Captura/worktrees
+originais intactas, agendamentoPAUSED. Historico de exports requer acao separada.
+Registros anteriores abaixo nao representam estado atual de publicacao.
+
+## CODEX - Consolidacao infraestrutura etapa 1 (2026-10-17)
+
+Trabalho local na branch codex/consolidacao-infra-20261017 sobre334 e36231b3.
+Consultar CONSOLIDACAO_INFRA_ETAPA1.md para proveniencia, validacao e limites.
+Nao integrado em main, sem publicacao ou liberacao operacional. Journal de destino
+nao comprovado:045 e demais migrations privadas nao renumeradas nem executadas.
+Preservar residual Cursor, SQL/runner e protecoes remotas; agendamento pausado.
+
 ## CODEX COMERCIAL 360 — idempotência persistente do Pedido direto (2026-10-13)
 
 - Branch `codex/comercial-pedido-idempotencia-20261013` empilhada na #327 `14be3f96`, reserva `server/src/services/pedidoService.ts`, repositórios/tipos de Pedido, migration nova após 043, testes de serviço/HTTP/PostgreSQL, payload UI existente de Pedido, STATUS/HANDOFF. Reutilizar contrato da Oportunidade (chave/fingerprint/lock) somente para criação direta; não editar Expedição, branch Cursor ou Legado. Testar mesmo key/payload, key adulterada, tenant/ator/RBAC, concorrência PostgreSQL e retry depois de resposta perdida antes de declarar proteção. Migration em código/CI isolada; sem banco operacional/VPS.
@@ -847,7 +865,7 @@ PR: [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211
 **HUMAN_NEXT (Legado — PC com HD):** somente verifier host-local — sem re-export/CADESP/transferência; sem tratar teste sintético como importação:
 ```bash
 bash scripts/legado/executar-verifier-host-local.sh
-# ou: --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+# ou: --reports-dir "[caminho-privado] ERP ANTIGO - CODEX/04_REPORTS"
 ```
 Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier.
 
@@ -945,7 +963,7 @@ Agente: [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
 | Estado | **BLOCKED** — execução real não avançou |
 | Checksum | **UNVERIFIED** (`FOUND_EXPORT=NONE`) |
 | Tentativa Cloud | `executar-verifier-host-local.sh` exit 4 `LEGACY_HOST_REPORTS_DIR_NOT_FOUND` |
-| Host com backup | PC proprietário `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS` (não este Cloud) |
+| Host com backup | PC proprietário `[caminho privado preservado fora do Git]` (não este Cloud) |
 | Workers | 0 · sem `usePrivateWorker` |
 | Contagens reais | **0** processadas |
 | Sintético (≠ efetivo) | staging 8→4/1/1/2 · vínculos 3/4 |

@@ -93,8 +93,9 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
   });
 
   const enviarBoletoMutation = useMutation({
-    mutationFn: async (titulo) => {
-      if (!titulo?.id) throw new Error("Selecione um titulo financeiro.");
+    mutationFn: async (/** @type {Record<string, unknown>} */ titulo) => {
+      if (!titulo || typeof titulo !== 'object' || Array.isArray(titulo)
+        || typeof titulo.id !== 'string' || !titulo.id.trim()) throw new Error("Selecione um titulo financeiro.");
       if (!contextoValido || !empresaId) {
         await auditBoletoChat("bloqueado_sem_contexto", false, { titulo_id: titulo.id });
         throw new Error("Selecione uma empresa do grupo antes de gerar boleto.");
@@ -103,16 +104,18 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
         await auditBoletoChat("bloqueado_sem_permissao", false, { titulo_id: titulo.id, permissao: "Financeiro.ContaReceber.editar" });
         throw new Error("Sem permissao para gerar boleto pelo chat.");
       }
-      const confirmado = window.confirm("Gerar 2a via de boleto e registrar o envio na conversa? Esta acao sera auditada.");
+      const confirmado = window.confirm("Disponibilizar boleto existente e registrar na conversa? Esta acao sera auditada.");
       if (!confirmado) {
         await auditBoletoChat("cancelado_pelo_usuario", false, { titulo_id: titulo.id, valor: titulo.valor || 0 });
         throw new Error("Geracao cancelada pelo usuario.");
       }
 
-      const linhaDigitavel = sanitizeLinhaDigitavel(titulo.linha_digitavel)
-        || `23793.38128 60000.000003 00000.000409 1 ${Math.random().toString().slice(2, 16)}`;
-      const urlBoleto = sanitizeText(titulo.url_boleto_pdf || titulo.boleto_url)
-        || `https://boleto.exemplo.com/${encodeURIComponent(titulo.id)}`;
+      const linhaDigitavel = sanitizeLinhaDigitavel(titulo.linha_digitavel);
+      const urlBoleto = sanitizeText(titulo.url_boleto_pdf || titulo.boleto_url);
+      if (!/\d/.test(linhaDigitavel) || !urlBoleto) {
+        await auditBoletoChat("bloqueado_boleto_indisponivel", false, { titulo_id: titulo.id });
+        throw new Error("Boleto indisponivel: aguarde os dados da emissao bancaria.");
+      }
 
       if (!isSafeUrl(urlBoleto)) {
         await auditBoletoChat("bloqueado_url_insegura", false, { titulo_id: titulo.id, url_boleto: urlBoleto });
@@ -158,7 +161,7 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
       };
     },
     onSuccess: (data) => {
-      toast.success("Boleto gerado com sucesso!");
+      toast.success("Boleto existente disponibilizado.");
       setTituloSelecionado(data);
       queryClient.invalidateQueries({ queryKey: ["titulos-cliente"] });
       queryClient.invalidateQueries({ queryKey: ["contasReceber"] });
@@ -187,7 +190,7 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
     if (!dataVencimento) return 0;
     const hoje = new Date();
     const vencimento = new Date(dataVencimento);
-    const diff = Math.floor((hoje - vencimento) / (1000 * 60 * 60 * 24));
+    const diff = Math.floor((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
   };
 
@@ -324,7 +327,7 @@ export default function GerarBoletoChat({ conversa, clienteId, onBoletoEnviado }
                     ) : (
                       <>
                         <Send className="w-4 h-4 mr-2" />
-                        Gerar 2a Via
+                        Disponibilizar 2a Via
                       </>
                     )}
                   </Button>

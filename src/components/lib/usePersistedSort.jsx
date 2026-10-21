@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 
 // Hook simples para padronizar e persistir sort por entidade (localStorage)
 // Uso: const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('OrdemCompra', 'data_solicitacao', 'desc')
+/**
+ * @param {string} entityName
+ * @param {string} [defaultField]
+ * @param {string} [defaultDirection]
+ * @returns {[string, import('react').Dispatch<import('react').SetStateAction<string>>, string, import('react').Dispatch<import('react').SetStateAction<string>>]}
+ */
 export default function usePersistedSort(entityName, defaultField = 'updated_date', defaultDirection = 'desc') {
   const [sortField, setSortField] = useState(defaultField);
   const [sortDirection, setSortDirection] = useState(defaultDirection);

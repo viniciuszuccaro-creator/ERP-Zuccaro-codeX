@@ -59,7 +59,7 @@ export default function ConfiguracoesPortal() {
   }, [cliente?.id, cliente?.updated_date]);
 
   const salvarMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof config} */ dados) => {
       if (!cliente?.id) throw new Error('Cliente não encontrado');
 
       await base44.entities.Cliente.update(cliente.id, {

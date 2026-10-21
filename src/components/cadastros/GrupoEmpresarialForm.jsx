@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDocument = (value, max = 32) => String(value ?? "").replace(/[^0-9A-Za-z.\-/]/g, "").slice(0, max).trim();
@@ -39,7 +41,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   const podeExcluir = canDelete("Cadastros", "GrupoEmpresarial") || canDelete("Sistema", "Grupos") || canDelete("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
 
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome: "",
     cnpj: "",
     descricao: "",
@@ -48,7 +50,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     status: "Ativo",
     governanca_consolidada: false,
     score_integracao_erp: 0
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
 
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas", groupId || "sem-grupo"],
@@ -131,6 +133,12 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-grupo-empresarial"
+      />
       <div>
         <Label>Nome do Grupo *</Label>
         <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Ex: Grupo CPA" disabled={!podeSalvar} data-permission="Cadastros.GrupoEmpresarial.editar" data-action="editar-nome-grupo" data-sensitive />

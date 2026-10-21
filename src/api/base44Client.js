@@ -6,7 +6,8 @@ import {
   createAuthDeniedError,
 } from './localAuthSessionPolicy.js';
 import { createHttpApiClient } from './httpApiClient.js';
-import { runLocalEntityReadFunction } from './localEntityReadApi.js';
+import { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';
+import { runLocalEntityReadFunction, notifyEntityApiAccess } from './localEntityReadApi.js';
 import {
   countEntitiesTouchesHttpPilot,
   runHttpPilotAwareCountEntities,
@@ -37,6 +38,25 @@ export const isHttpExpedicaoEnabled = expedicaoFlag(import.meta.env);
 export const isHttpExpedicaoMode = isHttpExpedicaoEnabled;
 export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';
 export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';
+/**
+ * Contrato do produtor local/API key; nao representa uma sessao HTTP autenticada.
+ * @typedef {Pick<import('@base44/sdk').User,
+ * 'id' | 'created_date' | 'updated_date' | 'email' | 'full_name' | 'disabled' |
+ * 'is_verified' | 'app_id' | 'is_service' | '_app_role' | 'role'> & {
+ *   perfil_acesso_id?: string,
+ *   contexto_atual?: 'grupo' | 'empresa',
+ *   grupo_atual_id?: string,
+ *   grupo_padrao_id?: string,
+ *   empresa_atual_id?: string,
+ *   empresa_padrao_id?: string,
+ *   pode_operar_em_grupo?: boolean,
+ *   pode_ver_todas_empresas?: boolean,
+ *   empresas_vinculadas?: Array<{ empresa_id: string, ativo: boolean }>,
+ *   grupos_vinculados?: Array<{ grupo_id: string, ativo: boolean }>,
+ *   mestre_local?: boolean
+ * }} LocalApiUser
+ */
+/** @type {LocalApiUser} */
 export const localApiUser = (isLocalOnlyMode || isHttpBackendMode) ? localOnlyUser : {
   id: 'local-api-key-user',
   email: 'local-api@erp-integra.local',
@@ -103,9 +123,10 @@ function createHttpHybridClient() {
   const entities = new Proxy(localBase44.entities || {}, {
     get(target, prop, receiver) {
       if (typeof prop === 'string' && pilotSet.has(prop)) {
-        if (http.entities[prop]) return http.entities[prop];
+        if (http.entities[prop]) return notifyEntityApiAccess(entities, prop, http.entities[prop], 'http');
       }
-      return Reflect.get(target, prop, receiver);
+      const api = Reflect.get(target, prop, receiver);
+      return typeof prop === 'string' ? notifyEntityApiAccess(entities, prop, api) : api;
     },
   });
 
@@ -237,6 +258,39 @@ function resolveBase44Client() {
   return remoteBase44;
 }
 const resolvedBase44 = resolveBase44Client();
+
+/**
+ * First migrated capability in the existing facade; never invokes local/remote demo IA.
+ * @param {'atendimento_analise'|'atendimento_intencao'|'comercial_produtos'|'fiscal_validacao'|'entrega_previsao'|'financeiro_conciliacao'} purpose
+ * @param {{prompt: string, group_id?: unknown, empresa_id?: unknown, response_json_schema?: Record<string, unknown>, tipo_ia?: string, signal?:AbortSignal}} input
+ * @returns {Promise<string | object>}
+ */
+export async function invokeErpIa(purpose, input) {
+  if (!isHttpBackendMode || !httpHybridClient) {
+    throw Object.assign(new Error('IA requer a API propria autenticada do ERP.'), { code: 'IA_ERP_API_REQUIRED', status: 503 });
+  }
+  const groupId = input.group_id;
+  if (typeof groupId !== 'string' || !groupId || (input.empresa_id != null && typeof input.empresa_id !== 'string')) {
+    throw Object.assign(new Error('Contexto de IA invalido.'), { code: 'IA_SCOPE_INVALID', status: 403 });
+  }
+  const empresaId = typeof input.empresa_id === 'string' ? input.empresa_id : null;
+  const controller = new AbortController();
+  const onChange = () => controller.abort();
+  if (typeof window !== 'undefined') window.addEventListener(HTTP_CONTEXT_CHANGED, onChange);
+  const signal=input.signal?AbortSignal.any([controller.signal,input.signal]):controller.signal;
+  try {
+    if(signal.aborted)throw Object.assign(new Error('Contexto alterado durante a IA.'),{code:'IA_STALE_CONTEXT',status:409});
+    const result = await httpHybridClient.invokeIaContextual({ purpose, prompt: input.prompt,
+      group_id: groupId, empresa_id: empresaId, response_json_schema: input.response_json_schema, signal });
+    if (signal.aborted) throw Object.assign(new Error('Contexto alterado durante a IA.'), { code: 'IA_STALE_CONTEXT', status: 409 });
+    if (typeof result !== 'string' && (!result || typeof result !== 'object' || Array.isArray(result))) {
+      throw Object.assign(new Error('Resposta IA invalida.'), { code: 'IA_RESPONSE_INVALID', status: 502 });
+    }
+    return result;
+  } finally {
+    if (typeof window !== 'undefined') window.removeEventListener(HTTP_CONTEXT_CHANGED, onChange);
+  }
+}
 
 export function getHttpProdutoApi() {
   if (!isHttpProdutoEnabled || !httpHybridClient) {

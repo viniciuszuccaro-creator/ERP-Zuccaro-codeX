@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -170,8 +170,10 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: !!representante?.id && contextoValido
   });
 
+  const prevIdRef = useRef(representante?.id);
   useEffect(() => {
-    if (representante) {
+    if (representante?.id && representante.id !== prevIdRef.current) {
+      prevIdRef.current = representante.id;
       setFormData({
         ...representante,
         endereco: representante.endereco || {},
@@ -182,6 +184,7 @@ export default function RepresentanteFormCompleto({ representante: representante
   }, [representante?.id]);
 
   const saveMutation = useMutation({
+    /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
       assertFormScopeCurrent();
       if (!contextoValido) {
@@ -301,7 +304,7 @@ export default function RepresentanteFormCompleto({ representante: representante
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="w-6 h-6 text-purple-600" />
+              <Users className="w-6 h-6 text-sky-600" />
               {representante?.id ? 'Editar Representante' : 'Novo Representante'}
             </h2>
             {representante?.id && (
@@ -350,7 +353,7 @@ export default function RepresentanteFormCompleto({ representante: representante
               disabled={saveMutation.isPending || !contextoValido || (representante?.id ? !podeEditar : !podeCriar)}
               data-permission="Cadastros.Representante.salvar"
               data-sensitive
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-sky-600 hover:bg-sky-700"
             >
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
@@ -518,7 +521,7 @@ export default function RepresentanteFormCompleto({ representante: representante
                         <Badge
                           key={regiao.id}
                           variant={selecionada ? "default" : "outline"}
-                          className={`cursor-pointer ${selecionada ? 'bg-purple-600' : ''}`}
+                          className={`cursor-pointer ${selecionada ? 'bg-sky-600' : ''}`}
                           onClick={() => {
                             const atual = formData.regioes_atendimento || [];
                             setFormData({
@@ -737,12 +740,12 @@ export default function RepresentanteFormCompleto({ representante: representante
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-purple-600" />
+                      <DollarSign className="w-4 h-4 text-sky-600" />
                       Comissão Gerada
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-purple-600">
+                    <p className="text-2xl font-bold text-sky-600">
                       R$ {totais.totalComissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </CardContent>
@@ -763,7 +766,7 @@ export default function RepresentanteFormCompleto({ representante: representante
                         </div>
                         <div>
                           <p className="text-slate-600">Total Comissão Gerada:</p>
-                          <p className="font-bold text-purple-600">R$ {(formData.total_comissao_gerada || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className="font-bold text-sky-600">R$ {(formData.total_comissao_gerada || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         </div>
                         <div>
                           <p className="text-slate-600">Comissão Paga:</p>

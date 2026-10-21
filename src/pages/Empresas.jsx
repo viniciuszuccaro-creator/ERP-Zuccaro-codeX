@@ -99,7 +99,7 @@ export default function Empresas() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext('Empresa', data, 'group_id'),
+    mutationFn: (/** @type {typeof formData} */ data) => createInContext('Empresa', data, 'group_id'),
     onSuccess: () => {
       invalidateEmpresasQueries();
       setIsDialogOpen(false);
@@ -109,7 +109,7 @@ export default function Empresas() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateInContext('Empresa', id, data, 'group_id'),
+    mutationFn: (/** @type {{id: string, data: typeof formData}} */ { id, data }) => updateInContext('Empresa', id, data, 'group_id'),
     onSuccess: () => {
       invalidateEmpresasQueries();
       setIsDialogOpen(false);

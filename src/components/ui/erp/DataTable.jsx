@@ -13,42 +13,42 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ERPDataTable({
   columns = [], // [{ key, label, isNumeric, render?: (row) => ReactNode }]
   data = [],
-  sortField,
+  sortField = undefined,
   sortDirection = "asc",
-  onSortChange,
-  onToggleSelectAll,
-  onToggleItem,
+  onSortChange = undefined,
+  onToggleSelectAll = undefined,
+  onToggleItem = undefined,
   allSelected = false,
-  selectedIds = new Set(),
+  selectedIds = (/** @returns {Set<string | number> | Array<string | number>} */ () => new Set())(),
   enableColumnFilters = true,
   columnFilters = {},
-  onColumnFiltersChange,
+  onColumnFiltersChange = undefined,
   hiddenColumns = new Set(),
-  onHiddenColumnsChange,
+  onHiddenColumnsChange = undefined,
   footerTotals = true,
   enableGlobalSearch = false,
   globalSearchValue = "",
-  onGlobalSearchChange,
+  onGlobalSearchChange = undefined,
   // Fase 2: padronização opcional por entidade
-  entityName, // para persistência de sort por entidade
+  entityName = undefined, // para persistência de sort por entidade
   autoPersistSort = true,
   page = 1,
   pageSize = 20,
   totalItems = 0,
   isLoading = false,
-  onPageChange,
-  onPageSizeChange,
+  onPageChange = undefined,
+  onPageSizeChange = undefined,
   // RBAC: permissão global opcional para visualizar a tabela
-  permission,
+  permission = undefined,
   // Seleção granular por linha
-  isRowSelectable = () => true,
+  isRowSelectable = (_row) => true,
   // Ações inline e menu de contexto por linha
-  rowActionsRender,
-  rowContextMenuItems,
+  rowActionsRender = undefined,
+  rowContextMenuItems = undefined,
   // Barra superior para operações em massa
   showBulkBar = false,
-  onBulkDeleteSelected,
-  onBulkExportSelected,
+  onBulkDeleteSelected = undefined,
+  onBulkExportSelected = undefined,
   // Densidade visual
   density = "comfortable",
 }) {
@@ -97,7 +97,9 @@ export default function ERPDataTable({
     onGlobalSearchChange: wrapAudit('ERPDataTable.onGlobalSearchChange', onGlobalSearchChange),
     onToggleSelectAll: wrapAudit('ERPDataTable.onToggleSelectAll', onToggleSelectAll),
     onToggleItem: wrapAudit('ERPDataTable.onToggleItem', onToggleItem),
-  }), [onSortChange, onPageChange, onPageSizeChange, onColumnFiltersChange, onHiddenColumnsChange, onGlobalSearchChange, onToggleSelectAll, onToggleItem]);
+    onBulkDeleteSelected: wrapAudit('ERPDataTable.onBulkDeleteSelected', onBulkDeleteSelected),
+    onBulkExportSelected: wrapAudit('ERPDataTable.onBulkExportSelected', onBulkExportSelected),
+  }), [onSortChange, onPageChange, onPageSizeChange, onColumnFiltersChange, onHiddenColumnsChange, onGlobalSearchChange, onToggleSelectAll, onToggleItem, onBulkDeleteSelected, onBulkExportSelected]);
 
   // Aceita Set ou Array para seleção
   const selectedSet = useMemo(() => {

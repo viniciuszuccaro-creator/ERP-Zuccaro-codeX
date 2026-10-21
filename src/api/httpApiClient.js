@@ -1,10 +1,17 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
 import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';
+import { readErpHttpSession } from './erpHttpSession.js';
+import { parseA1CertificateMetadata } from './a1CertificateContract.js';
+import { createBankStatementApi } from './bankStatementHttp.js';
+import { createFinancialMovementApi } from './financialMovementHttp.js';
+import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
  * UI → facade → HttpApiClient → BFF → PostgreSQL
  */
+
+/** @typedef {Error & { status: number, code: string, requestId?: unknown, body?: unknown }} HttpApiError */
 
 function createHttpError(status, body, requestId) {
   const message = body?.error?.message || `HTTP ${status}`;
@@ -15,6 +22,31 @@ function createHttpError(status, body, requestId) {
     requestId: requestId || body?.error?.requestId,
     body,
   });
+}
+
+/**
+ * @param {unknown} error
+ * @returns {error is HttpApiError}
+ */
+export function isHttpApiError(error) {
+  return error instanceof Error
+    && error.name === 'HttpApiError'
+    && 'status' in error
+    && Number.isInteger(error.status)
+    && 'code' in error
+    && typeof error.code === 'string';
+}
+
+/**
+ * Extrai somente codigo textual, preservando o corpo bruto nao confiavel.
+ * @param {unknown} body
+ * @returns {string | undefined}
+ */
+export function readHttpErrorBodyCode(body) {
+  if (!body || typeof body !== 'object' || !('error' in body)) return undefined;
+  const detail = body.error;
+  if (!detail || typeof detail !== 'object' || !('code' in detail)) return undefined;
+  return typeof detail.code === 'string' ? detail.code : undefined;
 }
 
 /**
@@ -111,14 +143,16 @@ export function createHttpApiClient(options = {}) {
     : resolveErpApiBaseUrl();
   const baseUrl = String(resolvedBase || '').replace(/\/$/, '');
   const fetchImpl = options.fetchImpl || fetch;
+  /** @type {() => {groupId?: string, empresaId?: string, actorId?: string, actorEmail?: string, token?: string}} */
   const getScope = options.getScope || (() => ({}));
 
   /**
    * @param {string} path
-   * @param {{ method?: string, body?: unknown, query?: Record<string, unknown>, signal?: AbortSignal, unwrap?: boolean }} [requestOptions]
+   * @param {{ method?: string, body?: unknown, query?: Record<string, unknown>, signal?: AbortSignal, unwrap?: boolean, ofx?: boolean }} [requestOptions]
+   * @param {{groupId?: string, empresaId?: string, actorId?: string, actorEmail?: string, token?: string}} [boundScope]
    */
-  async function request(path, { method = 'GET', body, query, signal, unwrap = true } = {}) {
-    const scope = /** @type {{ groupId?: string, empresaId?: string, actorId?: string, actorEmail?: string, token?: string }} */ (getScope() || {});
+  async function request(path, { method = 'GET', body, query, signal, unwrap = true, ofx = false } = {}, boundScope = undefined) {
+    const scope = boundScope || getScope() || {};
     const url = baseUrl
       ? new URL(`${baseUrl}${path}`)
       : new URL(path, 'http://same-origin.local');
@@ -129,9 +163,15 @@ export function createHttpApiClient(options = {}) {
       }
     }
 
+    const multipart = typeof FormData !== 'undefined' && body instanceof FormData;
+    const bankFile = ofx && typeof Blob !== 'undefined' && body instanceof Blob;
+    if (ofx && (!bankFile || body.size < 1 || body.size > MAX_BANK_STATEMENT_BYTES || method !== 'POST')) {
+      throw createHttpError(422, { error: { code: 'BANK_INPUT_INVALID' } }, undefined);
+    }
+    /** @type {Record<string, string>} */
     const headers = {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
+      ...(multipart ? {} : { 'Content-Type': bankFile ? 'application/x-ofx' : 'application/json' }),
     };
     if (scope.groupId) headers['X-Group-Id'] = String(scope.groupId);
     if (scope.empresaId) headers['X-Empresa-Id'] = String(scope.empresaId);
@@ -146,7 +186,7 @@ export function createHttpApiClient(options = {}) {
     const response = await fetchImpl(fetchUrl, {
       method,
       headers,
-      body: body == null ? undefined : JSON.stringify(body),
+      body: body == null ? undefined : multipart || bankFile ? body : JSON.stringify(body),
       signal,
     });
 
@@ -188,11 +228,7 @@ export function createHttpApiClient(options = {}) {
   function createCrudEntity(basePath, opts = {}) {
     const searchKeys = opts.searchKeys || ['search', 'nome', 'descricao'];
     const ativoKeys = opts.ativoKeys || ['ativo', 'ativa'];
-    return {
-      async list(orderBy, limit = 100) {
-        return request(basePath, { query: { limit, ...normalizeOrderByQuery(orderBy) } });
-      },
-      async filter(query = {}, orderBy, limit = 100, skip = 0) {
+    async function readFilterPage(query = {}, orderBy, limit = 100, skip = 0, unwrap = true) {
         if (typeof orderBy === 'number') {
           skip = limit || 0;
           limit = orderBy;
@@ -223,14 +259,30 @@ export function createHttpApiClient(options = {}) {
           if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;
           else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;
         }
-        const result = await request(basePath, {
+        return request(basePath, {
           query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },
+          unwrap,
         });
+    }
+    return {
+      async list(orderBy, limit = 100) {
+        return request(basePath, { query: { limit, ...normalizeOrderByQuery(orderBy) } });
+      },
+      async filter(query = {}, orderBy, limit = 100, skip = 0) {
+        const result = await readFilterPage(query, orderBy, limit, skip);
         // entityListSorted exige array; BFF pode devolver página {data|rows}.
         if (Array.isArray(result)) return result;
         if (Array.isArray(result?.data)) return result.data;
         if (Array.isArray(result?.rows)) return result.rows;
         return [];
+      },
+      async count(query = {}) {
+        const page = await readFilterPage(query, undefined, 1, 0, false);
+        const total = page?.meta?.total;
+        if (typeof total !== 'number' || !Number.isSafeInteger(total) || total < 0) {
+          throw new Error('HTTP_COUNT_UNAVAILABLE: total autoritativo ausente ou invalido.');
+        }
+        return total;
       },
       async get(id) {
         return request(`${basePath}/${encodeURIComponent(id)}`);
@@ -576,15 +628,23 @@ SeparacaoConferencia: {
     },
   };
   const pedidos = {
+    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */
     list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {
       return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });
     },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
     get(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}`, { signal }); },
+    /** @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
     create(payload, { signal } = {}) { return request('/api/v1/pedidos', { method: 'POST', body: payload, signal }); },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
     update(id, payload, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, signal }); },
+    /** @param {string} id @param {string} motivo @param {{ signal?: AbortSignal }} [options] */
     cancel(id, motivo, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/cancelar`, { method: 'POST', body: motivo ? { motivo } : {}, signal }); },
+    /** @param {string} id @param {string} status @param {string} motivo @param {{ signal?: AbortSignal }} [options] */
     transition(id, status, motivo, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/status`, { method: 'POST', body: { status, ...(motivo ? { motivo } : {}) }, signal }); },
+    /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
     history(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}/historico`, { signal }); },
+    /** @param {string} id @param {Record<string, unknown>} payload @param {{ signal?: AbortSignal }} [options] */
     convertOrcamento(id, payload, { signal } = {}) { return request(`/api/v1/orcamentos/${encodeURIComponent(id)}/converter-pedido`, { method: 'POST', body: payload, signal }); },
   };
   // Prepared CRM surface: explicit callers only; never adds Oportunidade to the pilot.
@@ -664,7 +724,7 @@ SeparacaoConferencia: {
     },
     /**
      * Sugestão de vínculo por documento no Grupo (sem mescla).
-     * @param {{ documento: string, signal?: AbortSignal }} input
+     * @param {{ documento?: string, signal?: AbortSignal }} [input]
      */
     sugestaoVinculo({ documento, signal } = {}) {
       const doc = String(documento ?? '').trim();
@@ -692,6 +752,73 @@ SeparacaoConferencia: {
 
   return {
     entities,
+    bankStatements: createBankStatementApi({ getScope, request }),
+    financialMovements: createFinancialMovementApi({ getScope, request }),
+    /** @param {{purpose: string, prompt: string, response_json_schema?: unknown, group_id: string, empresa_id?: string | null, signal?: AbortSignal}} input */
+    async invokeIaContextual(input) {
+      const scope = getScope() || {};
+      const token = typeof scope.token === 'string' ? scope.token.trim() : '';
+      const groupId = String(scope.groupId || '');
+      const empresaId = String(scope.empresaId || '');
+      const actorId = String(scope.actorId || '');
+      if (!token || !actorId || !groupId) throw createHttpError(401, { error: { code: 'AUTH_REQUIRED' } }, undefined);
+      if (!input || input.group_id !== groupId || String(input.empresa_id || '') !== empresaId) {
+        throw createHttpError(403, { error: { code: 'IA_SCOPE_MISMATCH' } }, undefined);
+      }
+      const snapshot = Object.freeze({ groupId, empresaId, actorId, token });
+      const assertCurrent = () => {
+        const current = getScope() || {};
+        if (input.signal?.aborted || (typeof current.token === 'string' ? current.token.trim() : '') !== token
+          || String(current.actorId || '') !== actorId || String(current.groupId || '') !== groupId
+          || String(current.empresaId || '') !== empresaId) {
+          throw createHttpError(409, { error: { code: 'IA_STALE_CONTEXT' } }, undefined);
+        }
+      };
+      if (input.signal?.aborted) assertCurrent();
+      try {
+        const result = await request('/api/v1/ia/invocations', { method: 'POST',
+          body: { purpose: input.purpose, prompt: input.prompt,
+            ...(input.response_json_schema === undefined ? {} : { response_json_schema: input.response_json_schema }),
+            group_id: groupId, empresa_id: empresaId || null }, signal: input.signal }, snapshot);
+        assertCurrent();
+        return result;
+      } catch (error) {
+        assertCurrent();
+        const status = isHttpApiError(error) ? error.status : 503;
+        const code = isHttpApiError(error) && /^[A-Z][A-Z0-9_]{0,79}$/.test(error.code) ? error.code : 'IA_PROVIDER_UNAVAILABLE';
+        throw createHttpError(status, { error: { code } }, undefined);
+      }
+    },
+    a1Certificates: {
+      /** @param {{groupId: string, empresaId: string, actorId: string}} expected @param {{signal?: AbortSignal}} [options] */
+      metadata(expected, options = {}) {
+        return a1Operation(expected, scope => request('/api/v1/fiscal/certificados-a1', { signal: options.signal }, scope), options.signal);
+      },
+      /** @param {{groupId: string, empresaId: string, actorId: string}} expected
+       * @param {{file: File, password: string, operationId: string, replaces?: {id: string, revision: string}}} input
+       * @param {{signal?: AbortSignal}} [options] */
+      upload(expected, input, options = {}) {
+        return a1Operation(expected, async scope => {
+          if (!(input.file instanceof File) || !/\.(pfx|p12)$/i.test(input.file.name)
+            || input.file.size < 1 || input.file.size > 5000000
+            || new TextEncoder().encode(input.password).byteLength > 4096
+            || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.operationId)) {
+            throw Object.assign(new Error('Envio A1 invalido.'), { code: 'A1_UPLOAD_INVALID', status: 422 });
+          }
+          const form = new FormData();
+          form.append('certificate', new Blob([input.file], { type: 'application/x-pkcs12' }), input.file.name);
+          form.append('password', input.password);
+          form.append('operationId', input.operationId);
+          if (input.replaces) form.append('replaces', JSON.stringify(input.replaces));
+          try {
+            const result = await request('/api/v1/fiscal/certificados-a1', { method: 'POST', body: form, signal: options.signal }, scope);
+            if (result === null) throw new Error('A1 upload response missing');
+            return result;
+          }
+          finally { for (const key of ['certificate', 'password', 'operationId', 'replaces']) form.delete(key); }
+        }, options.signal);
+      },
+    },
     async entityGuard(payload = {}) {
       /** @type {{ token?: string, actorId?: string, groupId?: string }} */
       const scope = getScope() || {};
@@ -716,6 +843,46 @@ SeparacaoConferencia: {
       return request('/ready');
     },
   };
+
+  // Storage selects a context, never authorizes it; the backend verifies Bearer/RBAC.
+  /** @param {{groupId:string,empresaId:string,actorId:string}} expected
+   * @param {(scope:Readonly<ReturnType<typeof getScope>>)=>Promise<unknown>} operation
+   * @param {AbortSignal} [signal] */
+  async function a1Operation(expected, operation, signal) {
+    /** @param {number} status @param {string} [code] */
+    const failure = (status, code = 'A1_OPERATION_FAILED') => Object.assign(
+      new Error('Nao foi possivel concluir a operacao no cofre A1.'), { code, status });
+    /** @param {unknown} error */
+    const sanitized = error => failure(error instanceof Error && 'status' in error
+      && typeof error.status === 'number' && Number.isInteger(error.status)
+      && error.status >= 400 && error.status <= 599 ? error.status : 503);
+    /** @type {ReturnType<typeof getScope>} */ let before;
+    try { before = Object.freeze({ ...(getScope() || {}) }); }
+    catch { throw failure(401, 'A1_AUTH_REQUIRED'); }
+    const { groupId, empresaId, actorId } = expected;
+    const token = before.token;
+    const matches = scope => typeof scope.token === 'string' && scope.token.trim()
+      && scope.groupId === groupId && scope.empresaId === empresaId && scope.actorId === actorId;
+    if (!groupId || !empresaId || !actorId || !matches(before)) {
+      throw failure(401, 'A1_AUTH_REQUIRED');
+    }
+    if (signal?.aborted) throw failure(409);
+    /** @type {unknown} */ let result;
+    /** @type {unknown} */ let error;
+    let rejected = false;
+    try { result = await operation(before); }
+    catch (caught) { rejected = true; error = caught; }
+    /** @type {ReturnType<typeof getScope>} */ let current;
+    try { current = getScope() || {}; }
+    catch { throw failure(409); }
+    if (signal?.aborted || !matches(current) || current.token !== token) throw failure(409);
+    if (rejected) throw sanitized(error);
+    try { return parseA1CertificateMetadata(result); }
+    catch (caught) { throw sanitized(caught); }
+  }
 }
 
 export const httpApiClient = createHttpApiClient();
+export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;
+export const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;
+export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;
