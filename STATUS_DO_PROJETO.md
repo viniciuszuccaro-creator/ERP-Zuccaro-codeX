@@ -1,3 +1,13 @@
+## CODEX - Consolidacao etapa86 (2026-10-21)
+
+Commit85 d312fbcd publicado na branch de consolidacao; PR draft342 sobre334.
+CI4417 falhou: frontend13FAIL (12 hashes LF/CRLF + dependencia server ausente),
+backend4FAIL (dependencia raiz ausente). Composicao PGlite/PostgreSQL PASS.
+Correcoes em provas/workflow sem mudar regras de negocio nem hashes esperados;
+focados118PASS e simulacaoLF115PASS. Root final2172PASS/0FAIL/0SKIP,
+typecheck0 e audit/lint/build/diffPASS. Novo CI ainda pendente.
+Detalhes: docs/CONSOLIDACAO_INFRA_ETAPA1.md, etapa86. Nenhum merge/operacao.
+
 ## CODEX - Consolidacao etapa85 (2026-10-21)
 
 Mesma branch codex/consolidacao-infra-20261017, proposta draft sobre334.

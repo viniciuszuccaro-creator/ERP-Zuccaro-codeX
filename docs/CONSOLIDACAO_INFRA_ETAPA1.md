@@ -1,7 +1,38 @@
 # Consolidacao: infraestrutura e pacotes preservados
 
-Ultimo checkpoint: etapa85, preparacao para publicacao, em21/10/2026.
+Ultimo checkpoint: etapa86, reproducibilidade do CI, em21/10/2026.
 Entrega/A1 mantem os gates privados. Secoes anteriores sao historicas.
+
+## Etapa86: dependencias cruzadas e provas de runtime portaveis
+
+Etapa85 publicada no commit d312fbcd46641c4be9d05b17bce1ecb1fbd4c9c3;
+SHA remoto confirmado e PR draft342 sobre334 aberta. Autoria anterior conferida
+com a conta autenticada e aplicada somente no comando, sem git config.
+Diff/manifesto privados da85 preservados: incremental SHA256
+4d784fba7ea828b3175102c54a1c9d653c74d50ca8d7e7970f301abcb6ee570b;
+acumulado354dfea9931e77475c24f7321264a25123ac976ff4691cd5f07bb60fbad05e5e.
+
+CI4417 do SHA85: composicao Comercial/Expedicao PASS em PGlite e PostgreSQL;
+frontend2157PASS/13FAIL/0SKIP; backend501PASS/4FAIL/23SKIP. NAO CI verde.
+Causas comprovadas nos logs sinteticos:
+- Frontend nao instalava dependencias server/tsx para a prova financeira; backend
+  nao instalava dependencias raiz/zod para consumidores HTTP compartilhados.
+- Doze provas frontend usavam hashes de emissao TypeScript capturados em CRLF.
+  LF altera bytes emitidos de templates multiline, apesar de manter seu valor JS.
+
+Correcao sem runtime de negocio: workflow instala ambos os lockfiles nos dois
+jobs consumidores; mesmos runners/servicos, sem novos custos ou grants. Leitor
+auxiliar de provas canoniza somente LF/CRLF antes dos helpers de hunks contados.
+Todos os hashes esperados anteriores conservados. Teste novo demonstra diferenca
+de hash sem canonizacao, mesmo valor JS e rejeicao de mutacao executavel; outra
+prova compara todos os hashes das seis suites com o commit85 imutavel.
+Focados118PASS/0FAIL/0SKIP; simulacao checkoutLF115PASS/0FAIL/0SKIP, incluindo
+as duas novas provas. Primeira chamada da simulacao falhou por URL de --import
+invalida no Windows; corrigida para file URL sem alterar codigo/testes.
+Fechamento local fresco: root2172PASS/0FAIL/0SKIP,1054733.7444ms/exit0;
+typecheck0, audit/lint/build/diffPASS. Avisos anteriores mantidos. Backend de
+negocio inalterado:503PASS/35SKIP da85 reutilizados, nao nova prova PostgreSQL.
+Novo CI do ajuste ainda a confirmar. Sem merge ou ativacao.
 
 ## Etapa85: validacao composta e publicacao sanitizada
 

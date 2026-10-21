@@ -1,4 +1,5 @@
 import { portalReadRemainder } from './helpers/portalReadRemainder.js';
+import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import { boletoSourceRemainder } from './helpers/boletoSourceRemainder.js';
 import { partialInputRemainder } from './helpers/partialInputRemainder.js';
 import { metricReportRemainder } from './helpers/metricReportRemainder.js';
@@ -22,7 +23,7 @@ test('date arithmetic cohort is fixed at 28 modules and 79 proven native Date op
   assert.equal(new Set(fixtures.map(f=>f.file)).size,28);
 });
 for(const fixture of fixtures) test(`${fixture.file}: exact timestamp edits preserve all remaining executable code`,()=>{
-  let source=queryKeyMigrationRemainder(fixture.file,primitiveUiBoundaryRemainder(fixture.file,iaResponseValidationRemainder(fixture.file,readBoundaryRemainder(fixture.file,componentContractRemainder(fixture.file,portalReadRemainder(fixture.file,fs.readFileSync(fixture.file,'utf8')))))));
+  let source=queryKeyMigrationRemainder(fixture.file,primitiveUiBoundaryRemainder(fixture.file,iaResponseValidationRemainder(fixture.file,readBoundaryRemainder(fixture.file,componentContractRemainder(fixture.file,portalReadRemainder(fixture.file,runtimeProofSource(fixture.file)))))));
   source=metricReportRemainder(fixture.file,boletoSourceRemainder(fixture.file,source));
   if(fixture.file==='src/components/rh/PontoTab.jsx')source=partialInputRemainder(fixture.file,source);
   if(fixture.file==='src/components/financeiro/contas-receber/TabelaReceber.jsx') source=consumerWindowRemainder(fixture.file,source);

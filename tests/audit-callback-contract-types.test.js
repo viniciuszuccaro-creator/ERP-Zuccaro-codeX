@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import {commandAuditRemainder} from './helpers/commandAuditRemainder.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -17,7 +18,7 @@ const cases=[
   {file:'src/components/sistema/RelatorioPermissoes.jsx',name:'auditarRelatorio',hash:'59d6de3ddc78d83d8b54a457a8d82e69718da9f78d7db7e91d6b5ed29e0972e6',good:"{formato:'synthetic',resumo:{total:1}}",throws:false},
 ];
 for(const entry of cases)test(`${entry.file}: complete executable runtime unchanged`,()=>{
-  const output=ts.transpileModule(iaResponseValidationRemainder(entry.file,primitiveUiBoundaryRemainder(entry.file,commandAuditRemainder(entry.file,fs.readFileSync(entry.file,'utf8')))),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
+  const output=ts.transpileModule(iaResponseValidationRemainder(entry.file,primitiveUiBoundaryRemainder(entry.file,commandAuditRemainder(entry.file,runtimeProofSource(entry.file)))),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(output).digest('hex'),entry.hash);
 });
 function actual(entry){

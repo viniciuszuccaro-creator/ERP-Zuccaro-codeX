@@ -1,6 +1,6 @@
 import test from 'node:test';
+import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import ts from 'typescript';
@@ -8,7 +8,7 @@ import {QueryClient} from '@tanstack/react-query';
 import {queryKeyMigrationCalls,queryKeyMigrationRemainder} from './helpers/queryKeyMigrationRemainder.js';
 import {consumerWindowRemainder} from './helpers/consumerWindowRemainder.js';
 
-const read=file=>fs.readFileSync(file,'utf8');
+const read=file=>runtimeProofSource(file);
 const options={target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true};
 const hash=source=>crypto.createHash('sha256').update(ts.transpileModule(source,{compilerOptions:options}).outputText).digest('hex');
 function load(file,dependencies={},globals={}){

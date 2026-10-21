@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
@@ -11,7 +12,7 @@ const cases=[
   {file:'src/components/estoque/ProdutosTab.jsx',count:4,hash:'cd8dd5ebcac1f1558ef3b2e27f86e26748e0ede0e486cd222139aae8babd59f4'},
 ];
 function queries(file){
-  const source=fs.readFileSync(file,'utf8'),ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX),result=[];
+  const source=runtimeProofSource(file),ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX),result=[];
   function visit(node){if(ts.isCallExpression(node)&&node.expression.getText(ast)==='useQuery')result.push(node.arguments[0]);ts.forEachChild(node,visit);}
   visit(ast);return {source,ast,result};
 }

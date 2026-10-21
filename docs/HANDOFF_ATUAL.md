@@ -1,3 +1,12 @@
+## CODEX - Consolidacao etapa86 (2026-10-21)
+
+Mesma branch, commit85 d312fbcd no remoto e PR draft342 empilhada na334.
+CI4417 comprovou composicao, mas falhou testes frontend/backend. Correcoes de
+dependencias cruzadas e canonicalizacao LF/CRLF das provas: root2172PASS/0FAIL/
+0SKIP, typecheck0 e audit/lint/build/diffPASS. Novo CI ainda pendente.
+Consultar CONSOLIDACAO_INFRA_ETAPA1.md etapa86; nao tratar CI anterior como verde.
+Originais preservados, agendamentoPAUSED, nenhum merge ou acesso operacional.
+
 ## CODEX - Consolidacao etapa85 (2026-10-21)
 
 Retomada: branch codex/consolidacao-infra-20261017 no clone independente existente.

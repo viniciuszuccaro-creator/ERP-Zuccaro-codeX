@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import {commandAuditRemainder} from './helpers/commandAuditRemainder.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -51,7 +52,7 @@ function invalid(kind,name){const data=payload(kind,name);
 }
 for(const [kind,entry] of Object.entries(entries))test(`${entry.file}: whole executable runtime unchanged`,()=>{
   const file='src/components/'+entry.file+'.jsx';
-  const emitted=ts.transpileModule(primitiveUiBoundaryRemainder(file,financialUiBoundaryRemainder(file,commandAuditRemainder(file,fs.readFileSync(file,'utf8')))),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
+  const emitted=ts.transpileModule(primitiveUiBoundaryRemainder(file,financialUiBoundaryRemainder(file,commandAuditRemainder(file,runtimeProofSource(file)))),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),entry.hash);
 });
 test('seventeen actual command parameters preserve valid payloads and reject malformed envelopes',()=>{

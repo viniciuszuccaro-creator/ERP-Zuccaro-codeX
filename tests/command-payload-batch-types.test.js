@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {runtimeProofSource} from './helpers/runtimeProofSource.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -40,7 +41,7 @@ function payload(kind,name){
 }
 for(const [kind,entry] of Object.entries(entries))test(`${entry.file}: whole prior runtime retained outside proven numeric conversions and explicit absence`,()=>{
   const file='src/components/'+entry.file+'.jsx';
-    let source=queryKeyMigrationRemainder(file,primitiveUiBoundaryRemainder(file,commandAuditRemainder(file,fs.readFileSync(file,'utf8'))));
+    let source=queryKeyMigrationRemainder(file,primitiveUiBoundaryRemainder(file,commandAuditRemainder(file,runtimeProofSource(file))));
   if(kind==='ponto')source=partialInputRemainder(file,source);
   if(kind==='mov'){
     const needle='const quantidade = parseFloat(String(data.quantidade));';assert.equal(source.split(needle).length,2);
