@@ -1,3 +1,18 @@
+## CODEX - Handoff da homologacao parcial da nuvem (2026-10-22)
+
+Atualizacao exclusivamente documental para PR342. Na nuvem, branch de consolidacao
+eSHA d6d6e98b4bb92f0f5098eb53b0e7b9ff8b4ea264 comprovados. Provas reutilizadas:
+raiz2172PASS/0FAIL/0SKIP; backend final513PASS/2FAIL/23SKIP;PG85PASS sem skips.
+Dois positivos A1 bloqueados por ownership de ancestrais do runtime, nao por falta
+de certificado real. Nao enfraquecer seguranca nem declarar desenvolvimento
+exclusivo homologado. Marcador conservado entre retomadas; restauracao de outra
+sessao e custos nao comprovados. Procedimentos e alternativa sem nova contratacao
+em docs/HANDOFF_ATUAL.md. Restauracao de workspace e restore operacional sao gates distintos.
+Codigo nao alterado, suites nao repetidas. Validacao deste lote documental:
+diff-check e revisao de sanitizacao; checks de runtime anteriores apenas reutilizados.
+Manter frente unica no clone independente existente, originais preservados e
+agendamentoPAUSED. Nenhum merge, deploy ou carga autorizado por este registro.
+
 ## CODEX - Consolidacao etapa86 (2026-10-21)
 
 Publicacao validada em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342.

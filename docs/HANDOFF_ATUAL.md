@@ -1,4 +1,172 @@
-## CODEX - Consolidacao etapa86 (2026-10-21)
+## Homologacao da nuvem - continuidade parcial (2026-10-22)
+
+Este registro sanitizado prevalece sobre os relatos anteriores de nuvem ainda em
+main/work. Reutiliza as execucoes ja registradas; nenhuma suite foi repetida para
+esta atualizacao exclusivamente documental. A PR342 permanece draft sobre334.
+Nao declarar transicao exclusiva concluida.
+
+### Candidata efetivamente executada
+
+Repositorio: viniciuszuccaro-creator/ERP-Zuccaro-codeX.
+Chat existente: Nuvem ERP-Zuccaro-codeX, ambiente gerenciado Codex/OpenAI,
+Linux x86_64/Debian13, checkout /workspace/ERP-Zuccaro-codeX.
+Branch: codex/consolidacao-infra-20261017.
+SHA executado: d6d6e98b4bb92f0f5098eb53b0e7b9ff8b4ea264.
+Antes da sincronizacao: work/baba91a6b0d5d626edd607b8cd3522927e1904ab, limpo.
+Depois: candidata exata; apenas docs/HANDOFF_ATUAL.md modificado na nuvem.
+Esse trabalho remoto nao commitado permanece preservado; nao foi sobrescrito.
+Um eventual novo SHA desta publicacao documental NAO foi executado na nuvem.
+
+Provas obtidas no SHA acima, com Node22.23.3 e dados exclusivamente sinteticos:
+
+| Verificacao | Resultado e escopo |
+| --- | --- |
+| Raiz completa | 2172 PASS / 0 FAIL / 0 SKIP |
+| Audit, lint, typecheck global, build | PASS; aviso de lint anterior mantido |
+| Backend typecheck/build | PASS |
+| Backend completo final, com concessao de rede | 538 testes: 513 PASS / 2 FAIL / 23 SKIP; exit1 |
+| HTTP focados apos concessao por turno | 7 PASS / 0 FAIL / 0 SKIP |
+| A1 focado | 5 PASS / 2 FAIL; positivos de leitura e rotacao de chave |
+| PostgreSQL sintetico local | 85 PASS / 0 FAIL / 0 SKIP em17suites |
+| Composicao PGlite / PostgreSQL dedicada | 1 PASS em cada, sem skips |
+| Diff-check do handoff remoto | PASS |
+
+Nao somar suites sobrepostas nem contar skips como aprovacao. PG85 e raiz2172
+sao da primeira execucao; nao foram repetidos nas retomadas sem mudanca.
+Primeiro backend512/3/23 incluiu falta de refs historicas: composicao passou
+apos fetch dos SHAs fixados pelo CI. Uma retomada sem concessao de loopback
+reportou52arquivos PASS/43FAIL/0SKIP (95arquivos, NAO538assercoes), com listenEPERM.
+Isso nao e a contagem final. Probe e HTTP passaram com a concessao autorizada;
+o backend final513/2/23 deixou apenas as duas falhas A1. Nenhum teste removido,
+hash esperado alterado, permissao ampliada ou validacao de seguranca relaxada.
+CI4423 no GitHub foi verde neste SHA; nao equivale a aprovar este runtime da nuvem.
+
+### Persistencia: o que foi realmente demonstrado
+
+Arquivo temporario sintetico fora do checkout:
+/workspace/erp-cloud-persistence-probe-20261022.json
+453bytes, criado2026-10-22T09:37:16.977466Z, SHA256:
+17e4a13ce53cbbc4a6446821b546c5967bbd82c78a9cd85e8981f4ee37741c5a.
+Conteudo nao publicado. O agente encerrou um turno e retomou no mesmo chat e
+ambiente; tamanho/hash/data foram conservados sem regravar o marcador, inclusive
+nas retomadas seguintes. Um identificador distinto de sessao do executor nao foi
+exposto. Portanto: conservacao entre turnos retomados COMPROVADA; encerramento
+e restauracao de uma sessao/workspace independente NAO comprovados. Nenhum reset,
+invalidacao de cache ou reprovisionamento foi executado para simular essa prova.
+
+### Definicao precisa do gate A1
+
+Gate de seguranca do filesystem em server/src/services/a1FileProtectionKeys.ts,
+nao falta de certificado real, senha ou autenticacao do usuario. O servico abre
+cada ancestral por descritor, rejeita symlinks e exige ownership UID0 ou UID do
+processo; rejeita escrita de grupo/outros exceto sticky confiavel de UID0.
+Diretorio final pertence ao processo, sem acesso de grupo/outros; chave exige
+arquivo regular de32bytes, UID do processo, modo0400 e um unico hardlink, com
+metadados estaveis durante leitura. Somente fixtures sinteticas foram usadas.
+
+Observado no sandbox: processo1000:1000; raiz/65534:65534,0755;
+/tmp65534:65534,1777. A raiz ja e rejeitada antes de acessar a chave. Por isso
+falham os positivos de leitura valida e rotacao, com bloqueio seguro. Criar so
+um subdiretorio privado nao resolve o ancestral/ rejeitado.
+
+Impacto: nao impede toda edicao, compilacao ou teste dos demais modulos. Impede
+executar/validar o carregador seguro A1 neste runtime e obter suite totalmente
+verde, logo bloqueia a homologacao COMPLETA/exclusiva exigida para a nuvem.
+Nao comprova defeito criptografico nem autoriza enfraquecer a politica.
+
+Acao concreta: solicitar ao administrador/suporte da plataforma um runtime
+SUPORTADO no ambiente existente em que toda a cadeia de ancestrais seja confiavel
+segundo a regra acima (raiz UID0 ou UID executor e modos compativeis). Nao fazer
+chown/chmod da raiz, aceitar UID65534 genericamente, elevar privilegios ou criar
+outro servico pago como contorno. Nao ha seletor de imagem/usuario/mapeamento UID
+exposto pelas ferramentas atuais. Apos ajuste suportado, registrar os metadados
+e repetir apenas tests/a1-file-protection-keys.test.ts; depois o backend completo
+se os positivos passarem. Cofre operacional, trust/CRL, Auth/RBAC/UsageGuard real
+e migrations privadas045-049 continuam gates SEPARADOS, nao resolvidos por isso.
+
+### Workspace de desenvolvimento NAO e banco operacional
+
+Restaurar workspace significa recuperar checkout/branch/SHA, alteracoes locais,
+handoff, ferramentas/dependencias e o marcador sintetico entre sessoes. Git
+recupera codigo commitado; nao garante arquivos novos, dirty, cache ou banco.
+Install/start ainda sao rascunho revisao1 associado a main: nao presumir que
+sejam uma configuracao publicada da candidata nem executar setup antigo cegamente.
+
+Restaurar PostgreSQL sintetico para testes e outro procedimento descartavel:
+PG85 nao comprova backup/restore do ERP real. Restauracao de banco/backup
+operacional envolve dados, identidades, journals, chaves, auditoria e rollback;
+exige autorizacao/plano/provas proprias. Nada disso foi executado aqui. Nao copiar
+backup privado ou certificados para provar persistencia de workspace.
+
+### Procedimento e intervencoes necessarias
+
+1. Rede: solicitar request_permissions da plataforma com scope turn antes dos
+   comandos que necessitam GitHub/loopback; e ferramenta da plataforma, NAO um
+   comando shell. github.com HTTPS443 ja era permitido. Git fetch de leitura pode
+   precisar GET e POST/git-upload-pack. Conservar proxy/TLS/credenciais/allowlist;
+   nao liberar internet irrestrita. Se o mecanismo nao aparecer, pedir habilitacao
+   da concessao minima ao administrador; nao contornar restricoes. O probe
+   127.0.0.1:0 abriu/fechou socket e passou quando a concessao estava ativa.
+2. Conferir a candidata e o marcador, sem mudar arquivos:
+
+```sh
+cd /workspace/ERP-Zuccaro-codeX
+git branch --show-current
+git rev-parse HEAD
+git status --short
+sha256sum /workspace/erp-cloud-persistence-probe-20261022.json
+wc -c /workspace/erp-cloud-persistence-probe-20261022.json
+stat -c '%u:%g %a %n' / /tmp
+```
+
+3. Somente apos ajuste ambiental A1, em processo de testes sem DATABASE_URL,
+   credenciais operacionais ou integracoes externas, reutilizar Node22 existente:
+
+```sh
+export PATH=/workspace/.erp-tools:/workspace/.erp-tools/node_modules/node/bin:$PATH
+cd /workspace/ERP-Zuccaro-codeX/server
+node --import tsx --test tests/a1-file-protection-keys.test.ts
+# Backend completo somente depois do gate focado passar:
+npm test
+```
+
+4. Persistencia: preservar primeiro o handoff dirty fora de qualquer operacao que
+   possa substituir o checkout. Pedir ao administrador a identificacao da versao
+   publicada do ambiente e uma retomada NAO destrutiva de outra sessao do MESMO
+   ambiente. Nao clicar Reset cache, nao recriar ambiente ou descartar dirty.
+   Registrar sessao/versao antes/depois quando expostas, repetir apenas os comandos
+   de identidade/hash acima e comparar SHA,453bytes/hash do marcador e handoff.
+   Ferramentas de publicacao/restauracao nao estao expostas aqui; na ausencia dessa
+   capacidade, registrar gate aberto em vez de alegar restauracao comprovada.
+5. Custos: conferir na mesma conta https://chatgpt.com/codex/settings/usage,
+   creditos/recarga e controles de gasto efetivamente exibidos. Nomes e estado do
+   controle de recarga nao foram observados: nao inventar submenus. Em workspace
+   com cobranca administrada, o proprietario deve conferir Billing e o limite de
+   excedente aplicavel. Alertas nao equivalem a bloqueio. As ferramentas leem
+   franquia/saldo, mas nao recarga/budget do ambiente; a UI falhou antes de abrir.
+   Login atual ChatGPT comprovado, sem criar APIkey. Isso nao prova ausencia de
+   toda configuracao paga na conta. Nao comprar, ativar recarga ou vincular API.
+   Bloqueio de gastos de Actions NAO comprova custos Codex/cloud.
+
+### Alternativa sem nova infraestrutura ou desenvolvimento concorrente
+
+Enquanto esses gates estiverem abertos, manter UMA frente de desenvolvimento no
+clone independente ERP-Integracao-Privada/comparacao-20261017 ja existente na
+maquina do proprietario, branch codex/consolidacao-infra-20261017. Nao usar a raiz
+antiga do HD, mover originais ou copiar uma worktree como repositorio independente.
+Reutilizar o hardware atual e o CI ubuntu-latest ja existente; novas execucoes
+somente quando necessarias, dentro da franquia Actions confirmada com budget zero.
+Se a franquia acabar, aguardar: nao comprar capacidade. Nao contratar Codespace,
+VPS, API ou novo ambiente. A nuvem fica sem edicao concorrente; preservar seu
+handoff dirty e o marcador, sincronizando somente codigo aprovado quando liberada.
+
+Essa alternativa nao exige nova contratacao, mas NAO e prova de homologacao da
+nuvem nem garante gratuidade ilimitada da assinatura/CI. A publicacao da PR342
+preserva o codigo para retomada; documentacao posterior nao altera silenciosamente
+o SHA testado na nuvem. Agendamento Legado PAUSED, originais/backups intactos.
+Nenhum merge, deploy, importacao operacional ou permissao de faturamento emitida.
+
+### Historico preservado - consolidacao etapa86 (2026-10-21)
 
 Codigo publicado em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342 sobre334.
 CI4419 SUCCESS em frontend/backend/composicao. Frontend2172PASS; backend515PASS/

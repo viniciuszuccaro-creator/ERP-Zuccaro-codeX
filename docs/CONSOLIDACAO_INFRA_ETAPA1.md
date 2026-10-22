@@ -1,6 +1,15 @@
 # Consolidacao: infraestrutura e pacotes preservados
 
-Ultimo checkpoint: etapa86, reproducibilidade do CI, em21/10/2026.
+Ultimo checkpoint documental: homologacao parcial da nuvem em22/10/2026.
+O handoff canonico docs/HANDOFF_ATUAL.md registra o SHA d6d6e98b efetivamente
+executado, raiz2172PASS, backend final513PASS/2FAIL/23SKIP ePG85PASS. Gate A1 e
+restauracao independente/custos continuam abertos; conservacao do marcador entre
+turnos nao e restauracao de workspace nem restore operacional. Atualizacao apenas
+documental: provas validas reutilizadas, sem repetir suites ou alterar runtime.
+Alternativa: unica frente no clone independente existente, sem nova contratacao.
+Os relatos anteriores de nuvem em main/proxy bloqueado abaixo sao historicos.
+
+Checkpoint anterior: etapa86, reproducibilidade do CI, em21/10/2026.
 Entrega/A1 mantem os gates privados. Secoes anteriores sao historicas.
 
 ## Etapa86: dependencias cruzadas e provas de runtime portaveis
