@@ -1,5 +1,15 @@
 # Consolidacao: infraestrutura e pacotes preservados
 
+## Produto SEO/slug - lote de continuidade (2026-10-22)
+
+Base66b88c2b/PR342 sobre334; implementacao/testes no sandbox existente, nao
+Codespace. Patch transitório da aba unido ao envio dos Dados Gerais, mantendo
+montagem entre abas; V24 classifica os dois formularios callback corretamente e
+permanece dono unico da persistencia/auditoria. V22 self-managed intacto.
+Registro/versao/Grupo/Empresa/ator e revogacao invalidam callbacks; falha conserva
+rascunho; duplo envio bloqueado. Validacao final e limites no topo do HANDOFF.
+Sem novo cadastro, persistencia paralela, backend, migration, publicacao ou IA.
+
 ## Continuidade atual e requisitos preservados (2026-10-22)
 
 Decisao expressa do proprietario: Nuvem ERP-Zuccaro-codeX coordena; Codespace unico
@@ -22,7 +32,7 @@ Historico comercial/financeiro preserva procedencia,sem virar regra fiscal ou
 financeiro derivado de extrato; NCM/RNTRC IA continuam sugestoes nao verificadas.
 Nao houve transferencia/importacao ou execucao045-049 neste lote. Legado PAUSED.
 
-Proximo lote funcional delimitado: ProdutoFormCompleto/aba E-Commerce,SEO/slug
+No checkpoint documental66b88c2b, lote delimitado: ProdutoFormCompleto/aba E-Commerce,SEO/slug
 manuais com salvamento unico e reabertura; sem alterar layout/canais/IA. Leitura
 de fonte confirma setter vazio; nao se declara correcao implementada. Registros
 seguintes sao checkpoints historicos; nao reiniciar Gate2 nem usar main antiga.

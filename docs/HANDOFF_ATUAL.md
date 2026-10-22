@@ -1,3 +1,56 @@
+## Continuidade Comercial360 - Produto SEO/slug (2026-10-22)
+
+Execucao declarada: sandbox existente `/workspace/ERP-Zuccaro-codeX`, NAO
+Codespace; base66b88c2b/PR342 draft sobre334, unico escritor deste lote. Remoto
+HEAD66b88c2b e CI4431/run39795353934 SUCCESS conferidos nesta retomada. Handoff
+publicado lido; dirty integral/diff/manifesto preservados fora do checkout antes
+sem descarte. Evidencias locais brutas continuam privadas e nao entram no indice.
+
+Duas causas: callback vazio da aba E-Commerce e classificacao incorreta de
+ProdutoFormCompleto/ProdutoForm como self-managed no V24, que lhes passava apenas
+fechar janela em vez de persistir. Corrigidos no fluxo existente. Produto V22
+continua self-managed. O V24 permanece unico escritor/auditor dos formularios
+callback; nenhuma gravacao foi adicionada a aba ou ao ProdutoFormCompleto.
+
+Reutiliza useCadastroRecordState para patch transitório; apenas campos alterados
+sao unidos ao payload dos Dados Gerais. Dados Gerais ficam montados/ocultos ao
+trocar abas. Registro/versao/Grupo/Empresa/ator invalidam rascunho e callbacks
+antigos; acesso revogado bloqueia envio capturado, envio pendente bloqueia duplo
+clique. Falha comunica erro e conserva rascunho; cancelar nao grava. IDs/codigos/
+vinculos/campos legados e layout preservados. Sem chamadas IA, publicacao externa,
+ativacao Produto HTTP, migrations ou alteracao backend. Slug do master HTTP nao
+foi inventado: este pacote e do formulario callback legado explicitamente citado.
+
+V24 recebeu somente correcao cirurgica de ownership (dois nomes); nao se expandiu
+refatoracao de arquivo grande, preservando todos os handlers/gates existentes.
+Teste historico integral continua intacto e seu hash nao mudou: helper de resto
+reverte UMA hunk exata/contada desta correcao para comparar os demais contratos.
+Novos testes executam os handlers reais de input, wrapper e escritor/auditoria
+V24 com portas sinteticas; nao sao E2E visual, banco operacional ou Codespace.
+
+Validacao final neste sandbox: raiz2183PASS/0FAIL/0SKIP; foco37PASS/0FAIL/
+0SKIP (11 casos novos de Produto e26 de preservacao), audit/lint/typecheck/build/
+diff-check PASS. Primeira rodada intermediaria2180/2179PASS/1FAIL/0SKIP apontou
+contrato historico de hash; teste original e hash foram preservados, helper de
+resto exato/contado reconciliado e final completo repetido apos estabilizar codigo.
+Sem alterar baseline/config/supressoes nem remover assercoes. Avisos preexistentes
+de build (browsers/chunks) mantidos. CI nova ainda PENDENTE deste push. Receita Node22:
+`npm run audit:baseline`; `npm test`; `npm run lint`; `npm run typecheck`;
+`npm run build`; `git diff --check`, sequenciais, com dependencias existentes.
+Backend/PG inalterados nao repetidos localmente; CI do SHA publicado e prova
+separada. Concessao oficial de rede por turno obtida; nao alterou proxy/TLS ou
+allowlist salva. Execucao no Codespace continua NAO comprovada por este executor.
+
+Fluxo seguinte: confirmar SHA remoto/CI; no MESMO Codespace preservar dirty,
+comparar refs e fazer FF somente seguro, validar EXATAMENTE esse SHA e parar
+apos uso. Nao criar outro ambiente ou executar escritor concorrente. Rollback
+por revert revisado deste lote; sem reset/force ou mexer em dados reais.
+
+Legado: preparacao continua nos scripts/mapa existentes, sem transferencia.
+HD/alias SSH da estacao nao acessiveis/comprovados neste executor; destino/ACL/
+criptografia-recuperacao/retencao e tamanho+folga atuais continuam gates externos.
+Agendamento PAUSED; piloto PREPARED_NOT_AUTHORIZED;045-049 foraexecucaoautomatica.
+
 ## Estado atual: coordenacao, decisoes preservadas e proximo lote (2026-10-22)
 
 Coordenacao definitiva: chat existente **Nuvem ERP-Zuccaro-codeX**, por decisao
@@ -47,7 +100,7 @@ GitHub/CI/logs/chats. Piloto PREPARED_NOT_AUTHORIZED; agendamento Legado PAUSED.
 As migrations privadas045bulk/046stage/047A1/048contas/049financeiro seguem fora
 execucao automatica ate resolver identidade, dependencias e journals dos destinos.
 
-### Proximo pacote concreto e local real de execucao
+### Pacote planejado no checkpoint66b88c2b (historico)
 
 Primeiro lote de codigo: salvamento e reabertura de `descricao_seo` e `slug_site`
 preenchidos MANUALMENTE na aba E-Commerce existente de ProdutoFormCompleto.

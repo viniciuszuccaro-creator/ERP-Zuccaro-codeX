@@ -10,7 +10,11 @@ function restore(source, changes) {
 }
 
 export function perfilViewerRemainder(source) {
+  // V24 callback Product forms now use its existing writer. Restore precisely
+  // this proven ownership delta for historical whole-viewer equivalence checks;
+  // produto-completo-ecommerce.test.js exercises the actual writer and audit.
   return restore(source, [
+    ['  "ProdutoFormV22_Completo",\n', '  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",\n'],
     ['  getCadastroEntityPermissionKey,\n', ''],
     ['  const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };', '  const permCheckers = { hasPermission, canCreate, canEdit, canDelete };'],
     ['  const cadastroPerm = function(action) { return getCadastroEntityPermissionKey(ENTITY, action); };', '  const permSection = isTenantMasterEntity(ENTITY) ? "Organizacional" : ENTITY;\n  const cadastroPerm = function(action) { return "Cadastros." + permSection + "." + action; };'],

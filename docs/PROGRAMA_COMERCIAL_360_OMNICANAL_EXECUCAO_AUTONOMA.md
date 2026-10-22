@@ -23,8 +23,12 @@ ACL,criptografia/recuperacao,integridade/retencao. Nao e importacao operacional.
 Historico comercial/financeiro com procedencia,separado de regras fiscais;
 extrato nao gera titulos/baixas e sugestao IA nao e fonte oficial. Piloto
 PREPARED_NOT_AUTHORIZED,agendamentoPAUSED,045-049 foraexecucaoautomatica.
-Proximo lote delimitado: SEO/slug manuais no formulario existente de Produto,
-salvamento unico/reabertura. Nenhuma implementacao por esta atualizacao documental.
+Checkpoint funcional posterior (22/10): SEO/slug manuais de ProdutoFormCompleto
+conectados ao escritor existente V24; Produto V22 conserva sua persistencia propria.
+Execucao local no sandbox explicitamente declarado, um escritor, sem conexao
+Codespace presumida. Testes/commit/CI e limites no topo do HANDOFF e STATUS;
+nao e homologacao operacional, publicacao de canal ou ativacao HTTP. O registro
+anterior de setter vazio descreve o planejamento em66b88c2b, nao estado atual.
 
 ### Cabecalho e baseline historicos — nao descrevem o estado atual
 

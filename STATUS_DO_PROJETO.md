@@ -1,4 +1,18 @@
-## Estado atual: coordenacao neste chat e consolidacao documental (2026-10-22)
+## Comercial360 - Produto SEO/slug no formulario existente (2026-10-22)
+
+Base66b88c2b, PR342 draft sobre334. Executor unico: sandbox /workspace,
+NAO Codespace. Conexao remota segue pendente; fluxo sequencial registrado no
+HANDOFF, sem escritor concorrente. Corrigidos setter vazio da aba e ownership
+callback de ProdutoFormCompleto/ProdutoForm no V24; V22 conserva persistencia
+propria. Um envio pelo escritor/auditoria existentes, patch sem perder Dados
+Gerais, reabertura/cancelamento/falha/contexto e duplo envio cobertos por fixtures.
+Validacao: raiz2183/0/0, foco37/0/0, audit/lint/types/build/diff-check PASS.
+CI nova pendente; nao declarar implantacao, homologacao operacional ou
+execucao Codespace. Backend/PG inalterados; sem ativacao HTTP/canal/IA/migration.
+Legado: scripts existentes reutilizados, transferencia bloqueada por capacidade
+de origem/destino e protecoes ainda nao comprovadas. PAUSED preservado.
+
+## Historico documental66b88c2b - coordenacao e consolidacao (2026-10-22)
 
 Coordenador: **Nuvem ERP-Zuccaro-codeX**, por decisao expressa do proprietario.
 Codespace unico e local de desenvolvimento/testes; clone local STANDBY, um

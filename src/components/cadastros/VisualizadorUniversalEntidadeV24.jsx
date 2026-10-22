@@ -90,7 +90,7 @@ const DEFAULT_FORM_COMPONENTS = {
 
 const SELF_MANAGED_NAMES = new Set([
   "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto",
-  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
+  "ProdutoFormV22_Completo",
 ]);
 
 /** Flag estável sob minify (Function.name some no bundle). */
