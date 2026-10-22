@@ -1,3 +1,14 @@
+## Pos-login GitHub CLI: acesso Codespaces ainda bloqueado (2026-10-22)
+
+Proprietario concluiu OAuth oficial, exit0/identidade confirmada. API /user e
+repositorio respondem200; Codespaces403 Resource not accessible by integration,
+escopos reportados none. Requisicao sem credencial fornecida tambem autentica:
+rota tem autenticacao automatica, ponto de substituicao nao comprovado. Nao e o
+antigo bloqueio DNS/allowlist. Nao repetir login nem contornar proxy. Sem shell
+Codespace/VPS, transferencia ou preview. Solicitação unica para recuperar canal
+no executor original preparada no HANDOFF; nenhuma mensagem externa enviada.
+Base52b5f7f7/CIs4434 e4435 SUCCESS. Este lote somente docs; runtime inalterado.
+
 ## Acesso: canal definitivo e limites atuais (2026-10-22)
 
 Base67c002a4/PR342 draft sobre334; CIs4432 e4433 SUCCESS conferidas agora.

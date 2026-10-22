@@ -1,5 +1,20 @@
 # Abrir o ERP em outro computador
 
+## Pos-login: bloqueio atual confirmado (2026-10-22)
+
+A API agora e alcancavel, mas Codespaces retorna403 Resource not accessible by
+integration mesmo apos login GitHub CLI oficial concluido pelo proprietario. A
+identidade /user e o repositorio respondem200; escopo codespace nao e confirmado
+(gh reporta none). /user tambem autentica sem credencial fornecida pela aplicacao,
+comprovando autenticacao automatica do caminho, sem provar o ponto de substituicao.
+Nao repetir login, extrair token, remover proxy ou procurar host/IP alternativo.
+Neste sandbox ainda NAO houve shell remoto, sync/teste, marcador ou preview.
+Alternativa concreta: recuperar o canal do executor original/IDE remoto fora dessa
+rota restrita, com UM escritor no mesmo Codespace. Solicitacao unica e provas no
+[HANDOFF atual](docs/HANDOFF_ATUAL.md#pos-login-autenticacao-concluida-e-limite-codespaces-2026-10-22).
+As referencias anteriores a dominio foraallowlist descrevem o diagnostico anterior,
+nao o atual403 de autorizacao. O roteiro abaixo continua receita, nao prova feita.
+
 ## Conexao do agente: resultado da inspecao e acao interativa (2026-10-22)
 
 Este chat continua coordenador. O executor desta inspecao e o sandbox

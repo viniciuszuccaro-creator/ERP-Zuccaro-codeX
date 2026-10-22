@@ -1,3 +1,70 @@
+## Pos-login: autenticacao concluida e limite Codespaces (2026-10-22)
+
+Base52b5f7f7cb43aeb3e7c6e50c9809a14f1d57efe5, PR342 draft sobre334; API
+confirmou CIs4434/run39807525230 e4435/run39807532238 completed/success no SHA.
+Sandbox continua /workspace/ERP-Zuccaro-codeX, nao Codespace. O erro bwrap do
+turno anterior nao ocorreu com a concessao atual somente de rede; nao repetir a
+concessao por arquivo config.toml que causou o erro interno, nem desligar sandbox.
+
+Proprietario concluiu login OFICIAL GitHub CLI pelo navegador. CLI confirmou
+viniciuszuccaro-creator e exit0; sessao isolada fora checkout, diretorio0700 e
+arquivo0600. CLI informou armazenamento em arquivo texto, nao keychain; nenhum
+valor foi lido/exibido/copied para Git, logs ou chats. Nao usar o rascunho de
+publicacao do ambiente para presumir backup/retencao dessas credenciais temporarias.
+Autenticacao do Git/proxy original preservada; GH_TOKEN nao selecionado no
+subprocesso dedicado, sem alterar proxy/TLS/NO_PROXY ou Git config do repositorio.
+
+Diagnostico novo: GET /user funciona como User viniciuszuccaro-creator; GET do
+repositorio publico funciona. GET /user/codespaces/NOME e GET /repos/OWNER/REPO/
+codespaces retornam HTTP403 Resource not accessible by integration. gh auth status
+reporta escopos none, sem codespace confirmado, apesar da solicitacao do fluxo.
+Requisicao urllib padrao a /user SEM credencial fornecida tambem retorna200 e a
+conta proprietaria: autenticacao automatica do caminho/proxy comprovada. Isso nao
+prova onde ocorre substituicao do OAuth; nao afirmar que consentimento novo
+removeu a restricao nem repetir login/refresh sem mudanca de capacidade. O dominio
+api.github.com AGORA e alcancavel: a restricao atual e de autorizacao efetiva,
+nao o antigo Forbidden de rede. Nenhum header ou token foi extraido para contorno.
+
+Canal deste executor para Codespace BLOQUEADO antes de shell. Nao houve SSH,
+marcador remoto, sync/testes remotos, preview, canal VPS ou transferencia real.
+Nao habilitar chave/tunnel/API paga nem fabricar prova a partir de API/URL/editor.
+A alternativa concreta e o canal autorizado no executor original/local ou IDE
+remoto, fora desta rota cloud restrita, sem criar outro Codespace/clone/frente.
+
+Recuperacao VPS existente: OPERACAO_DEV_VPS documenta secrets Runtime Cursor
+ERP_DEV_VPS_SSH_PRIVATE_KEY/ERP_DEV_VPS_SSH_USER e SSH/Web Console. Historico no
+programa/HANDOFF comprova somente leituras anteriores por WebConsole. Instrucao
+do proprietario registra alias erp-zuccaro-vps na estacao original com HD; nao e
+configuracao herdada. Neste executor bindings ausentes, sem SSH config/agente e
+sem ferramentas VPS. Nenhuma consulta/mensagem ao chat ERP ZUCCARO - CODEX/CURSOR
+e exposta; metadados locais sessions/index/daemon tambem ausentes. Nao alegar
+leitura do chat, HD, inventario privado ou chave; nao repetir provisionamento.
+
+Solicitacao UNICA preparada para a frente existente, sem envio automatico:
+
+> No executor original que ja tinha acesso, recupere o canal autorizado VPS/SFTP
+> erp-zuccaro-vps ou Web Console e o acesso ao MESMO Codespace
+> potential-xylophone-5gj7r9v9qqg637vxp. Esta frente atual nao editara codigo em
+> paralelo. Primeiro devolva somente recibo sanitizado do executor/host/ferramenta,
+> acesso VPS somente leitura e prova pelo agente no Codespace (pwd/origin
+> sanitizado/branch/SHA/status e marcador sintetico fora checkout criado/lido/
+> removido). Indique o mecanismo seguro ja existente de reutilizacao do canal e
+> a referencia do inventario/precheck privado do HD, sem valores de credenciais,
+> dados reais ou reinicio de setup. Nao substituir authorized_keys, criar clone/
+> recurso/chave, nem transferir antes de comprovar os seis gates privados.
+
+Depois do recibo: um escritor, preservar dirty antes de sync do SHA publicado,
+CodeSpace testar exatamente essa versao; reusar inventarios/mapeadores existentes
+na estacao com HD RO e provar capacidade/destino/ACL/criptografia-recuperacao/
+integridade-retomada/retencao antes do primeiro byte real. Sem carga operacional.
+Cursor/preview privados dependem da conexao comprovada; nenhum link nao testado
+foi anunciado. Agendamento nao reativado, nenhuma nova tarefa/frente foi criada.
+
+Validacao deste registro: somente docs, diff-check/sanitizacao/continuidade; suites
+runtime inalteradas nao repetidas. OAuth e comandos de consulta encerrados, sem
+servico de teste iniciado. Marcadores anteriores preservados. CI nova deste push
+so e resultado quando retornar; nao atribuir4435 ao SHA documental seguinte.
+
 ## Conexao Codespace/VPS - fechamento de capacidade (2026-10-22)
 
 Base conferida67c002a4a3717658a4e6e75ee1589e138d663da3; branch consolidada/PR342
