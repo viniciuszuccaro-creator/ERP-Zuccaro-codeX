@@ -1,3 +1,92 @@
+## Intervencao de plataforma e continuidade unica (2026-10-22)
+
+Base deste lote: 1ab49e9e05dde4005b6eadb3b992fdd20e502d3e, conferida
+no clone independente e no remoto. Runtime inalterado; nao repetir suas suites.
+O gate ambiental nao autoriza alterar o carregador A1 nem o criterio dos testes.
+
+Preservacao administrativa da nuvem CONCLUIDA antes da sincronizacao: copia
+integral/base/diff/manifesto/SHA256SUMS fora do checkout, com integridade conferida.
+Handoff inicial226493bytes, SHA256:
+04abafefe3ec5d1637cfcd9529a59d6fde83795e3dc1eb15b074dfa7876a584a.
+Quatro secoes locais foram conservadas byte a byte junto ao documento publicado.
+HEAD avancou por fast-forward de d6d6e98b para1ab49e9e (somente tres documentos).
+Estado final: somente docs/HANDOFF_ATUAL.md dirty, indice limpo, diff-checkPASS;
+marcador453bytes/hash anterior confirmado. Localizacao da copia no relatorio
+privado. Essa copia ainda esta NA VM, nao comprova backup externo/restauracao.
+Nenhum teste foi repetido nesse SHA documental; provas de runtime continuam
+atribuidas ao d6d6e98b, nao transferidas ao novo SHA por presuncao.
+
+### Solicitacao preparada ao suporte (nao enviada)
+
+Assunto: runtime gerenciado Codex rejeitado por carregador seguro de chave local.
+
+Solicitamos configuracao SUPORTADA de ownership/namespace no ambiente existente,
+sem elevar privilegios ou enfraquecer a aplicacao. Prova exclusivamente sintetica:
+Linux, processo UID/GID1000:1000; ancestral / UID/GID65534:65534 modo0755;
+/tmp UID/GID65534:65534 modo1777. O carregador percorre todos os ancestrais
+por descritores sem seguir symlinks e aceita apenas UID0 ou UID do processo.
+Escrita de grupo/outros so e aceita em ancestral sticky pertencente a UID0.
+Diretorio final privado e chave sintetica de32bytes/0400 nao corrigem a raiz
+incompativel. Dois testes positivos de leitura/rotacao falham; negativos continuam
+protegendo o contrato. Nao enviamos chave, certificado, senha, .env ou logs brutos.
+
+Perguntas objetivas: qual configuracao suportada atende esse contrato em TODA a
+cadeia, sem chown/chmod da raiz pelo usuario? Como preservar e recuperar o MESMO
+workspace dirty em sessao independente, sem reset/cache/recriacao? Qual versao do
+ambiente sera usada e como verificar o ajuste sem perder o estado atual?
+IDs privados do ambiente/tarefa somente no chamado privado, se solicitados.
+
+Encaminhar ao atendimento privado em https://help.openai.com pelo widget de
+suporte, pedindo encaminhamento ao runtime gerenciado Codex. Como canal de
+diagnostico documentado no app, abrir o menu / no compositor e usar o fluxo de
+feedback para a equipe; revisar o material antes de consentir compartilhar a
+sessao. Nao anexar
+automaticamente a sessao inteira nem logs nao sanitizados. O relato acima esta
+preparado, NAO foi submetido em nome do proprietario.
+Fonte: https://learn.chatgpt.com/docs/reference/troubleshooting#feedback-and-logs
+
+### Recuperacao suportada versus prova ainda pendente
+
+A documentacao orienta reabrir a MESMA tarefa para continuar entre dispositivos;
+uma NOVA tarefa parte do setup publicado e nao herda necessariamente seu dirty.
+O estado salvo da VM e recuperavel, por padrao, por ate sete dias desde iniciar
+um turno ou retomar a tarefa. Isso nao e backup permanente nem prova de restore.
+Fonte: https://learn.chatgpt.com/docs/environments/cloud-environments#run-and-return-to-a-task
+
+Procedimento: preservar handoff/diff/arquivos novos e manifesto com hashes fora
+do checkout antes de qualquer sincronizacao; manter tambem copia privada fora
+da VM antes de testar sua recuperacao. Encerrar o turno, abrir a mesma tarefa
+existente por outra sessao web/mobile autorizada, conferir identidade do ambiente,
+branch/SHA/status e hashes preservados sem regravar o marcador. Uma nova tarefa,
+fork ou ambiente com mesmo nome nao comprova recuperacao do original. Se a UI
+nao oferecer a retomada, solicitar o procedimento ao suporte; nao usar Reset
+cache ou recriar o ambiente. Sem acesso a sessao independente neste executor,
+a prova continua pendente, mesmo com conservacao ja demonstrada entre turnos.
+
+### Controle de cobranca a confirmar pelo proprietario
+
+Na conta que fornece este ambiente, abrir https://chatgpt.com/codex/settings/usage
+e conferir se COMPRA/RECARGA AUTOMATICA de creditos esta DESATIVADA e se qualquer
+limite de gasto extra/excedente aplicavel e um bloqueio efetivo de valor ZERO.
+Em workspace administrado, pedir ao administrador a politica de Billing aplicavel
+ao ambiente. Saldo zero, franquia restante e alerta de gasto nao provam esse
+bloqueio; No limit nao significa zero. Registrar apenas resultado/data/escopo,
+sem dados financeiros pessoais. Se o controle nao aparecer, o suporte deve
+confirmar se existe cobranca automatica alem do plano e qual politica a impede.
+Nao ativar recarga, comprar creditos, vincular API paga ou contratar recursos.
+Budget zero de Actions continua sendo prova APENAS de Actions.
+
+### Trabalho independente: Gate0 de rastreabilidade
+
+O resumo inicial do PLANO_GO_LIVE.md tinha todos os P0/P1/P2 marcados como
+concluidos, sem distinguir implementacao historica de homologacao operacional.
+Foi acrescentada precedencia explicita das evidencias atuais: esses marcadores
+nao autorizam operacao. Nenhuma funcionalidade foi retirada ou reclassificada
+como defeituosa sem prova. Proximo trabalho de codigo independente segue o Gate2
+ja registrado no PLANO_MELHORIA_ERP_ZUCCARO.md: revisar criacao/edicao de perfis
+e vinculos existentes, por consumidor/backend, sem promover rotas privadas.
+Esta correcao documental nao afirma que essa revisao ja foi executada.
+
 ## Homologacao da nuvem - continuidade parcial (2026-10-22)
 
 Este registro sanitizado prevalece sobre os relatos anteriores de nuvem ainda em

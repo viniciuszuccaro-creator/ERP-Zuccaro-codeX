@@ -14,6 +14,16 @@ O ERP somente poderá ser considerado apto para uso real quando os blocos P0 est
 
 ## P0 — bloqueia entrada em produção
 
+> Precedencia de evidencias (2026-10-22): os checkboxes abaixo sao marcadores
+> historicos, NAO aceite operacional nem autorizacao de go-live. Consultar o topo
+> de docs/HANDOFF_ATUAL.md e STATUS_DO_PROJETO.md para provas do SHA/ambiente.
+> Permanecem abertos: homologacao completa da nuvem (A1/ownership, recuperacao
+> independente e controle de custos), Auth/RBAC operacional, trust/CRL do cofre,
+> UsageGuard real e journals/dependencias das migrations privadas045-049.
+> Persistencia de workspace nao comprova backup/restore do banco real; piloto
+> continua PREPARED_NOT_AUTHORIZED. CI verde/publicacao nao autorizam deploy,
+> migrations ou importacao. Esta ressalva tambem se aplica aos P1/P2 abaixo.
+
 - [x] Segurança e autenticação.
 - [x] RBAC granular frontend + backend.
 - [x] Multiempresa Grupo/Empresas.

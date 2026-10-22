@@ -1,3 +1,20 @@
+## CODEX - Gate0 e intervencao de plataforma preparados (2026-10-22)
+
+Base local/remota1ab49e9e confirmada. Solicitacao sintetica A1 preparada no
+HANDOFF, nao enviada; canal de feedback do Codex conferido na documentacao
+oficial. Recuperacao suportada reabre mesma tarefa; nova tarefa nao herda dirty.
+Prova independente permanece aberta. Controle pendente: recarga automatica
+desativada e bloqueio efetivo de excedente zero na conta/ambiente, nao Actions.
+Corrigida ambiguidade documental dos checkboxes historicos do PLANO_GO_LIVE:
+nao sao aceite operacional. Sem alteracao de runtime, suites anteriores
+reutilizadas; diff-check e revisao das adicoes sanitizadas sao os checks do lote.
+Preservacao/reconciliacao administrativa do handoff remoto concluida na tarefa
+existente: copia226493bytes/hash verificado fora do checkout, quatro secoes locais
+conservadas byte a byte. FF documental d6d6e98b->1ab49e9e; somente handoff dirty,
+indice limpo/diff-checkPASS. Copia continua na VM, nao e backup externo/restore.
+Originais intactos, agendamentoPAUSED e rotas inativas.
+Proximo codigo independente: Gate2 perfis/vinculos, sem ampliar permissoes.
+
 ## CODEX - Handoff da homologacao parcial da nuvem (2026-10-22)
 
 Atualizacao exclusivamente documental para PR342. Na nuvem, branch de consolidacao
