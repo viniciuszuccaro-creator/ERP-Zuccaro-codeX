@@ -1,3 +1,116 @@
+## Prioridade corrigida: Codespace unico, Comercial360 e legado (2026-10-22)
+
+Esta orientacao substitui a proposta anterior de iniciar Gate2. Coordenador
+permanece o MESMO chat `ERP ZUCCARO - CODEX/CURSOR`; nenhum chat novo criado,
+nenhum desenvolvimento delegado ao chat antigo da nuvem. Uma unica frente.
+
+### Identidade e candidata
+
+O ambiente chamado `Nuvem ERP-Zuccaro-codeX` e uma tarefa Linux gerenciada
+Codex/OpenAI, nao GitHub Codespaces. Seu handoff dirty foi preservado/reconciliado
+antes do FF documental para1ab49e9e; permanece inalterado nesta nova execucao.
+Nao transferir ou sobrescrever seus registros para provar continuidade.
+
+Codespace criado com autorizacao condicional, depois de verificar conta,
+franquia e controle especifico de gasto: `potential-xylophone-5gj7r9v9qqg637vxp`.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Repositorio viniciuszuccaro-creator/ERP-Zuccaro-codeX; branch
+codex/consolidacao-infra-20261017; checkout /workspaces/ERP-Zuccaro-codeX.
+SHA inicial/testado6f0f0298f8180c45a195987e7f5efef65a298f25, CI4427 SUCCESS.
+Nenhum Codespace existia antes: criado somente um,2cores, imagem padrao/US East.
+Checkout inicialmente limpo; preservacao/manifesto e marcador sintetico fora
+do checkout precederam instalacao/testes. Node22.23.4, UID1000; / e /tmp UID0.
+O gate de ownership A1 passou SEM alterar o carregador nem elevar permissoes.
+
+### Evidencias novas neste Codespace
+
+| Check | Resultado |
+| --- | --- |
+| npm ci raiz e server | exit0 em ambos; lockfiles preservados |
+| A1 focado | 7 PASS / 0 FAIL / 0 SKIP |
+| Audit/lint/typecheck/build raiz | PASS; avisos anteriores conservados |
+| Raiz completa | 2172 PASS / 0 FAIL / 0 SKIP; exit0 |
+| Backend typecheck/build | PASS |
+| Backend completo sem banco | 538 testes:515 PASS / 0 FAIL / 23 SKIP; exit0 |
+| PostgreSQL sintetico | 85 PASS / 0 FAIL / 0 SKIP em17suites; composicao de provas abaixo |
+| Stop/start e outro acesso ao mesmo Codespace | PASS;36artefatos, marcador183bytes e arquivo nao commitado conferidos por hash |
+| A1 apos restart | 7 PASS / 0 FAIL / 0 SKIP; execucao comprovada na nova conexao |
+
+Primeira prova PG85:67PASS/18FAIL/0SKIP, por bootstrap incompleto deste ensaio
+(schema_migrations e tabelas de seed ausentes). Mantidos log e resultados.
+Corrigido SOMENTE o preparo efemero, reproduzindo npm run migrate +
+scripts/seed-dev-synthetic.sql existentes do CI no novo container erp_test,
+loopback127.0.0.1:55432. Nao e migration de ambiente operacional nem promocao de
+SQL privado045-049. Dez suites aprovadas reaproveitadas; sete arquivos falhos
+repetidos apos bootstrap: R11_STOCK/R08B/R07BPRICE/R08C/R09/R10C/R10. Resultado
+reconciliado85/0/0, NAO uma nova execucao integral das17suites. Containers
+sinteticos encerrados/removidos, sem volumes de dados reais ou grants externos.
+
+Retomada real: parada confirmada pelo painel GitHub, conexao original fechada,
+mesmo Codespace iniciado pela NOVA conexao web. SHA/branch e status do arquivo
+nao commitado iguais;36entradas de SHA256SUMS conferidas, incluindo logs,
+manifestos e copia do probe. Marcador183bytes conservado sem regravar; probe no
+checkout removido somente apos comparar hash e preservar copia fora dele.
+Checkout limpo apos a prova; Node22.23.4 e ownership confiavel conservados.
+Instalacao, execucao e persistencia do AMBIENTE DE DESENVOLVIMENTO homologadas.
+O erro transitorio de leitura CDP durante o startup nao alterou arquivos; o mesmo
+cliente de retomada ficou disponivel sem reset/rebuild/recriacao.
+
+Os resultados acima pertencem ao SHA inicial, nao ao main antigo nem ao runtime
+OpenAI anterior. Skips nao sao aprovacao. PostgreSQL usa somente container
+descartavel/loopback e fixtures; nenhum banco operacional ou backup real.
+Detalhes privados em HOMOLOGACAO_CODESPACES_20261022.json fora do checkout;
+logs/manifestos sinteticos privados no volume persistente do Codespace.
+
+### Custos e acesso de outros computadores
+
+Leitura autenticada confirmou GitHub Free, nenhum Codespace anterior/nenhum uso
+reportado no mes antes da criacao e orcamento Codespaces US$0/Usage blocked.
+Isso foi verificado no PRODUTO Codespaces, nao inferido de Actions. Nenhum budget,
+pagamento ou recurso pago foi habilitado; sem prebuilds. Relatorio de uso pode
+ter atraso. Franquia Free documentada:120core-horas/15GB-mes; em2cores ate60h
+de execucao, menos outros consumos. Nao prometer disponibilidade ilimitada.
+Fonte: https://docs.github.com/en/billing/concepts/product-billing/github-codespaces
+
+Abrir o mesmo URL/mesma conta, nao criar outro Codespace. Procedimento simples
+em ABRIR_NO_OUTRO_COMPUTADOR.md. Parar ao encerrar; storage permanece enquanto
+existe. Nao apagar/recriar para retomar. Preservar dirty/novos fora do checkout
+antes de sincronizar; conferir branch/SHA e so aceitar FF previamente comparado.
+O teste de outra conexao web nao comprova acesso fisico do computador de casa,
+nem restaura banco/backup operacional. A prova de retomada exigida para esse
+workspace foi obtida; desenvolvimento passa para esse Codespace unico. O clone
+independente local fica preservado/standby, sem outra frente de codigo. Este
+chat continua como coordenador; abrir VS Code nao muda automaticamente o host
+de execucao local deste chat nem ativa outro agente/Copilot. Nenhuma chamada de
+IA paga foi configurada para os testes ou para a continuidade.
+
+### Canal privado do legado e proxima frente
+
+O Codespace NAO ganha acesso ao HD. Extracao futura ocorre na estacao autorizada
+com a fonte original preservada/somente leitura, nunca por tunel ou mount aberto.
+Reutilizar scripts/legado/consumir-lote-staging.mjs, persistencia-endereco-legado.mjs
+e docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md, sem importador ou cadastro paralelo.
+
+Canal preparado por separacao de artefatos: origem privada -> staging isolado
+privado na estacao -> revisao de reconciliacao -> somente codigo, contratos de
+mapeamento e relatorio agregado/sintetico sanitizado no GitHub -> Codespace.
+Lotes reais, mapa antigo->novo com IDs/PII, hashes da fonte, backups e rejeicoes
+nominais ficam em armazenamento privado controlado pelo proprietario, fora do
+Git e fora do Codespace. Nao existe upload/tunel/credencial persistente novo.
+Este preparo NAO executa extracao, leitura do backup, carga ou importacao.
+
+Antes de eventual envio de lote real a outro destino, exigir destino privado
+existente autorizado, ACL/retencao, verificacao de integridade e autorizacao
+explicita. Importacao posterior exige staging, identidade Grupo/Empresa,
+reconciliacao, journals/dependencias, RBAC/auditoria/rollback e gate proprio;
+piloto permanece PREPARED_NOT_AUTHORIZED. Dados nao migram com o codigo.
+
+Continuar Comercial360 no Codespace homologado pelo programa existente,
+preservando contratos/proprietarios da persistencia e contexto multiempresa.
+Nao iniciar Gate2 por apontamento historico. Originais/captura/cinco worktrees
+intactos; agendamento Legado PAUSED; rotas operacionais inativas. Publicacao nao
+autoriza merge, VPS, migrations operacionais, integracao bancaria ou carga real.
+
 ## Intervencao de plataforma e continuidade unica (2026-10-22)
 
 Base deste lote: 1ab49e9e05dde4005b6eadb3b992fdd20e502d3e, conferida

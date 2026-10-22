@@ -1,3 +1,22 @@
+## CODEX - Prioridade ambiente unico Codespaces (2026-10-22)
+
+Nao iniciar Gate2 pela recomendacao anterior. Coordenacao mantida no chat
+ERP ZUCCARO - CODEX/CURSOR. Um Codespace de2cores criado na branch consolidada,
+apos leitura direta do budget Codespaces US$0/Usage blocked e franquia Free.
+SHA6f0f0298, checkout limpo; Node22.23.4. A1 focado7/0/0; raiz2172/0/0;
+backend515PASS/0FAIL/23SKIP; types/builds/audit/lintPASS. PG sintetico85/0/0 em17
+suites reconciliadas: primeira67/18/0 por bootstrap omitido;10 suites validas
+reutilizadas/7 falhas repetidas apos bootstrap CI no container isolado. Nenhuma
+mudanca de produto/teste para obter PASS. Container efemero encerrado.
+Stop/start e NOVA conexao web:36artefatos/arquivo nao commitado conservados por
+hash; A1 apos restart7/0/0, checkout limpo. Ambiente de DESENVOLVIMENTO homologado,
+nao operacao do ERP. Frente de codigo passa ao Codespace; clone local standby.
+Roteiro em ABRIR_NO_OUTRO_COMPUTADOR.md e provas no topo do HANDOFF.
+Lote documental: diff-check/revisao de sanitizacao, sem repetir suites inalteradas.
+Legado: canal de artefatos sanitizados pelo GitHub, dados/staging privados na
+estacao com HD; sem transferencia real ou novo acesso ao backup. Piloto nao
+autorizado. Originais preservados, automacaoPAUSED, sem VPS/rotas operacionais.
+
 ## CODEX - Gate0 e intervencao de plataforma preparados (2026-10-22)
 
 Base local/remota1ab49e9e confirmada. Solicitacao sintetica A1 preparada no

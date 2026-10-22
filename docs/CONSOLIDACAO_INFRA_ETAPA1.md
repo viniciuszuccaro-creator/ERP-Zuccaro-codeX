@@ -1,5 +1,15 @@
 # Consolidacao: infraestrutura e pacotes preservados
 
+Prioridade corrigida22/10: ambiente unico de desenvolvimento -> Comercial360 ->
+migracao legada coordenada, NAO Gate2 pelo apontamento anterior. Mesmo chat
+principal e mesma branch consolidada. Um Codespace autorizado criado no SHA
+6f0f0298; controle de custos proprio verificado, A1 7/0/0, raiz2172/0/0 e backend
+515/0/23. PG85/0/0 reconciliado (10suites reutilizadas/7 repetidas apos corrigir
+bootstrap isolado). Stop/start + nova conexao:36artefatos e arquivo nao commitado
+conservados por hash; A1 retomado7/0/0. Desenvolvimento homologado nesse Codespace
+unico, sem aceite operacional. Identidade/procedimento no topo do HANDOFF; secoes de nuvem
+OpenAI abaixo sao historicas e nao descrevem GitHub Codespaces.
+
 Ultimo checkpoint documental: homologacao parcial da nuvem em22/10/2026.
 O handoff canonico docs/HANDOFF_ATUAL.md registra o SHA d6d6e98b efetivamente
 executado, raiz2172PASS, backend final513PASS/2FAIL/23SKIP ePG85PASS. Gate A1 e
