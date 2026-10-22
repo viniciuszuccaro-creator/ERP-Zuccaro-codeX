@@ -1,4 +1,35 @@
-## CODEX - Prioridade ambiente unico Codespaces (2026-10-22)
+## Estado atual: coordenacao neste chat e consolidacao documental (2026-10-22)
+
+Coordenador: **Nuvem ERP-Zuccaro-codeX**, por decisao expressa do proprietario.
+Codespace unico e local de desenvolvimento/testes; clone local STANDBY, um
+escritor por checkout e nenhuma frente concorrente. Base deste lote d425138f,
+branch codex/consolidacao-infra-20261017,PR342 draft sobre334; nao main antiga.
+Nao reiniciar Gate2: ambiente unico -> Comercial360 -> legado coordenado.
+
+Decisoes atuais e fontes em [HANDOFF](docs/HANDOFF_ATUAL.md): preservar layout
+azul-claro aprovado informado, funcionalidades/recuperacao/submodulos; desenho
+aprovado antes de mudancas amplas; codigos NUMERICOS SEQUENCIAIS em TODOS cadastros
+com reserva concorrente backend e preservacao de codigos importados/IDs/vinculos.
+Programa completo e experiencia Comercial360 unica, sem frentes descartadas.
+Historico comercial/financeiro legado com procedencia e separado das regras
+fiscais; extrato nao cria titulos/baixas, sugestao IA nao e validacao oficial.
+
+Autorizacao posterior permite staging privado remoto e lotes minimos protegidos
+para Codespace/Cursor fora do checkout,apos provar destino/ACL/criptografia/
+integridade/retencao. Original RO e dados reais foraGit; nenhuma transferencia
+ou importacao executada por este registro. Piloto PREPARED_NOT_AUTHORIZED e
+agendamentoPAUSED. Migrations privadas045-049 e operacao continuam em gates proprios.
+
+Proximo pacote: descricao SEO/slug manuais da aba E-Commerce de ProdutoFormCompleto
+salvam e reabrem pelo dono existente,sem dupla gravacao. Este lote nao implementa
+o pacote. Executor documental atual e sandbox /workspace,nao Codespace; canal
+remoto deve ser comprovado ou designado um unico executor existente autorizado.
+
+Validacao documental: diff-check/sanitizacao/rastreabilidade e caminhos somenteMD;
+nenhum runtime alterado ou suite local repetida. CI nova so pode ser atribuida ao
+SHA deste push quando retornar. Historicos abaixo NAO definem estado atual.
+
+## Historico - prioridade Codespaces e coordenacao anterior (2026-10-22)
 
 Nao iniciar Gate2 pela recomendacao anterior. Coordenacao mantida no chat
 ERP ZUCCARO - CODEX/CURSOR. Um Codespace de2cores criado na branch consolidada,
@@ -17,7 +48,7 @@ Legado: canal de artefatos sanitizados pelo GitHub, dados/staging privados na
 estacao com HD; sem transferencia real ou novo acesso ao backup. Piloto nao
 autorizado. Originais preservados, automacaoPAUSED, sem VPS/rotas operacionais.
 
-## CODEX - Gate0 e intervencao de plataforma preparados (2026-10-22)
+## Historico - Gate0 e proposta Gate2 superada (2026-10-22)
 
 Base local/remota1ab49e9e confirmada. Solicitacao sintetica A1 preparada no
 HANDOFF, nao enviada; canal de feedback do Codex conferido na documentacao

@@ -2,7 +2,8 @@
 
 ## Caminho unico homologado para desenvolvimento - Codespaces (2026-10-22)
 
-Coordenacao: manter o chat existente `ERP ZUCCARO - CODEX/CURSOR`.
+Coordenacao: manter o chat existente **Nuvem ERP-Zuccaro-codeX**, por decisao
+expressa posterior do proprietario. Isso nao depende de trocar o executor.
 Nao iniciar Gate2 pela recomendacao historica: prioridade e ambiente unico,
 Comercial360 e migracao legada coordenada.
 
@@ -35,8 +36,11 @@ nvm use 22
 
 3. Ler o handoff existente. Se houver dirty, preservar diff, arquivos novos e
    hashes antes de qualquer sincronizacao; nunca descartar alteracoes.
-4. O codigo e os testes usam dados sinteticos. Backup legado, certificados,
-   credenciais e dados reais NAO pertencem ao workspace de desenvolvimento.
+4. Codigo/testes usam fixtures sinteticas. Original legado intocado e dados
+   reais/PII/backups/certificados/chaves/env foraGit/CI/logs/chats. Autorizacao
+   posterior permite staging privado remoto e acesso a lotes minimos protegidos
+   por Codespace/Cursor,FORA do checkout,apos provar destino/ACL/criptografia/
+   integridade/retencao. Nao e importacao operacional nem transferencia executada.
 5. Ao terminar, preservar/publicar somente o lote validado na branch existente
    e usar Stop codespace no painel GitHub. Nao apagar o Codespace para sair.
    Fechar a aba sozinho nao garante parada imediata. Storage continua consumindo
@@ -49,10 +53,27 @@ sem alterar cobranca. Ao esgotar franquia, parar/aguardar renovacao; nao elevar
 orcamento nem contratar recursos. A retencao automatica exige manter codigo
 validado publicado e material privado preservado fora do ambiente.
 
-O chat antigo `Nuvem ERP-Zuccaro-codeX` executa em Codex/OpenAI, NAO e este
-Codespace. Nao editar nos dois ambientes nem usar uma copia divergente em cada PC.
+O chat **Nuvem ERP-Zuccaro-codeX** e o coordenador. Seu executor cloud anterior
+NAO e automaticamente este Codespace. Nao editar nos dois ambientes nem usar
+checkout divergente em cada PC; um escritor autorizado por vez.
 Publicacao no GitHub, homologacao de desenvolvimento e implantacao VPS sao gates
 distintos. Este roteiro nao autoriza operacao real, importacao ou deploy.
+
+## Agente no IDE remoto e preservacao do programa
+
+Caminho informado pelo proprietario: VSCode desktop,extensao GitHub Codespaces,
+Remote Explorer -> GitHub Codespaces -> login existente -> conectar ao MESMO
+recurso (icone de conexao,nao Create). Codex oficial no IDE remoto com a conta;
+nao configurar API paga. Suporte da extensao no Cursor nao e presumido.
+O agente deve provar pwd/origin sanitizado/branch/SHA/status e marcador sintetico
+temporario escrito/lido/removido antes de afirmar que executa nesse Codespace.
+
+Preservar layout azul-claro aprovado e funcionalidades/submodulos,com desenho
+aprovado antes de mudancas amplas. Codigos numericos sequenciais sao requisito
+transversal com reserva backend; preservar legado/IDs sem renumeracao silenciosa.
+Fontes,lacunas,autorizacoes atuais e fluxo sequencial sem executor remoto no topo
+de [HANDOFF_ATUAL.md](docs/HANDOFF_ATUAL.md). Nao criar outra frente nem substituir
+a candidata pela main antiga. Telefone/app/site/canais/industria seguem no programa.
 
 ## Historico local - nao usar como frente paralela
 
@@ -61,13 +82,13 @@ para a rotina casa/empresa. O clone independente preservado fica para
 preservacao/recuperacao controlada, sem desenvolvimento concorrente. A rotina
 passa para o Codespace acima; nao substituir as cinco worktrees/captura originais.
 
-## 1. Instalar antes
+## Historico local — 1. Instalar antes
 
 Instale o Node.js LTS:
 
 https://nodejs.org/
 
-## 2. Extrair o ZIP
+## Historico local — 2. Extrair o ZIP
 
 Extraia o ZIP em uma pasta simples, por exemplo:
 
@@ -82,7 +103,7 @@ git clone https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX.git "C:\E
 cd "C:\ERP Zuccaro\ERP-Zuccaro-codeX"
 ```
 
-## 3. Rodar o projeto
+## Historico local — 3. Rodar o projeto
 
 Abra o PowerShell dentro da pasta extraida e rode:
 
@@ -97,7 +118,7 @@ Depois abra:
 http://localhost:5173/
 ```
 
-## 4. Confirmar modo local
+## Historico local — 4. Confirmar modo local
 
 O arquivo `.env.local` deve estar assim:
 
@@ -110,7 +131,7 @@ VITE_BASE44_API_KEY=
 
 Assim o sistema abre em modo local e nao grava no Base44 nem no GitHub.
 
-## 5. Se nao abrir
+## Historico local — 5. Se nao abrir
 
 Rode:
 
@@ -130,7 +151,7 @@ E abra:
 http://localhost:5174/
 ```
 
-## 6. Continuar o plano de melhoria
+## Historico local — 6. Continuar o plano de melhoria
 
 Para continuar em outro computador, abra primeiro:
 

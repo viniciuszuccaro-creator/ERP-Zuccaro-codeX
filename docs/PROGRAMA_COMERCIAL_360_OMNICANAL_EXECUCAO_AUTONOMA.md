@@ -1,5 +1,33 @@
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
+## Referencia atual de coordenacao e precedencia (2026-10-22)
+
+Este e o programa existente; nao reiniciar ondas nem criar manual paralelo.
+Coordenador: **Nuvem ERP-Zuccaro-codeX**. Desenvolvimento/testes: Codespace unico
+existente; clone local standby e UM escritor autorizado por checkout. Branch
+codex/consolidacao-infra-20261017,PR342 draft sobre334; d425138f e base documental
+deste checkpoint. Cabecalho PR33 e estados iniciais abaixo sao HISTORICOS.
+Nao iniciar Gate2 pela sugestao antiga: ambiente unico -> Comercial360 -> legado.
+
+Decisoes recebidas do proprietario e lacunas estao no topo de
+[HANDOFF_ATUAL.md](HANDOFF_ATUAL.md). Preservar layout azul-claro aprovado,
+funcionalidades, recuperacao/submodulos e DESENHO APROVADO antes de mudancas amplas;
+codigos NUMERICOS SEQUENCIAIS em TODOS cadastros com reserva backend concorrente,
+IDs/vinculos/codigos importados e mapeamento de colisao sem renumeracao silenciosa.
+A experiencia Comercial360 e unica; site/app/marketplaces/chatbots/telefonia,
+logistica/corte-dobra/CAD/fabricacao/montagem permanecem nas ondas previstas.
+
+Autorizacao posterior permite staging privado remoto e acesso protegido a lotes
+minimos no Codespace/Cursor fora do checkout/Git,com original RO e gates de destino,
+ACL,criptografia/recuperacao,integridade/retencao. Nao e importacao operacional.
+Historico comercial/financeiro com procedencia,separado de regras fiscais;
+extrato nao gera titulos/baixas e sugestao IA nao e fonte oficial. Piloto
+PREPARED_NOT_AUTHORIZED,agendamentoPAUSED,045-049 foraexecucaoautomatica.
+Proximo lote delimitado: SEO/slug manuais no formulario existente de Produto,
+salvamento unico/reabertura. Nenhuma implementacao por esta atualizacao documental.
+
+### Cabecalho e baseline historicos — nao descrevem o estado atual
+
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 > Baseline verificado em 24/09/2026: PR #33 draft, branch `codex/comercial-360`,
 > Checkpoint funcional anterior `c09d69654259eafffd8ad8d2df5362f098308a53` (fundacao dos rascunhos por canal); consultar o HEAD atual da PR #33 no GitHub. Gate C operacional ainda parcial.
@@ -42,7 +70,7 @@ Toda instrução deste documento é destinada conjuntamente ao **Codex e ao Curs
 
 1. Ler este documento completamente antes de modificar código.
 2. Executar as ondas na ordem de dependência indicada.
-3. Frentes independentes podem ser trabalhadas em paralelo, sempre em branches/worktrees isoladas.
+3. Nesta continuidade, uma unica frente e um escritor por checkout. Paralelismo historico nao autoriza nova frente sem decisao expressa do proprietario.
 4. Não parar após inventário, diagnóstico, documento, teste local ou commit intermediário.
 5. Após cada checkpoint estável: revisar, testar, commitar, fazer push e confirmar o remoto.
 6. Acompanhar a CI; corrigir automaticamente falhas corrigíveis.

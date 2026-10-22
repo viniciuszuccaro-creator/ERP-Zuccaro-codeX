@@ -1,4 +1,101 @@
-## Prioridade corrigida: Codespace unico, Comercial360 e legado (2026-10-22)
+## Estado atual: coordenacao, decisoes preservadas e proximo lote (2026-10-22)
+
+Coordenacao definitiva: chat existente **Nuvem ERP-Zuccaro-codeX**, por decisao
+expressa do proprietario recebida neste chat. A troca do centro de conversa nao
+exige converter o executor cloud em Codespace. Desenvolvimento/testes pertencem
+ao UNICO Codespace existente; um escritor por checkout, sem frente local/Cursor
+concorrente. Nao criar outro chat, ERP, Codespace ou recurso. Registros datados
+abaixo sao historicos quando divergirem destas decisoes atuais.
+
+Referencia documental deste lote: branch `codex/consolidacao-infra-20261017`,
+base `d425138ff9121d47c0a7ca8db49e6701630b5d29`, PR342 draft sobre
+`codex/comercial-composicao-20261017` (#334), nunca main antiga. Nao reiniciar o
+programa nem iniciar Gate2 por sugestao superada. Prioridade: ambiente unico ->
+Comercial360 integrado -> migracao legada coordenada. Fonte de execucao:
+[programa existente](PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md),
+[consolidacao](CONSOLIDACAO_INFRA_ETAPA1.md), [AGENTS](../AGENTS.md) e
+[acesso](../ABRIR_NO_OUTRO_COMPUTADOR.md).
+
+### Decisoes do proprietario que devem sobreviver aos lotes
+
+| Decisao/requisito | Preservacao e limite de evidencia |
+| --- | --- |
+| Layout azul-claro APROVADO | Aprovacao informada pelo proprietario; preservar funcionalidades, recuperacao de registros e submodulos ausentes. Referencias historicas: `docs/vps/evidence/ref-visual-azul-aprovado-proprietario-20261009.txt` e `ref-visual-azul-financeiro-20261009.txt`. Essas referencias nao comprovam inventario visual completo do estado atual. Desenho aprovado e inventario de telas/submodulos ainda devem ser vinculados antes de mudancas amplas; nao inventar substituto. |
+| Codigos NUMERICOS SEQUENCIAIS em TODOS os cadastros | Requisito transversal, nao afirmacao de cobertura ja concluida. Reserva concorrente no backend, nunca count+1 na UI. Conservar codigo importado, ID, vinculos e historico; colisao preserva origem e mapeamento, sem renumeracao silenciosa. AGENTS/Regra-Mae permanecem aplicaveis. |
+| Comercial360 como experiencia unica | Integrar modulos donos dos dados, sem central/cadastro/importador paralelo. DESENHO APROVADO antes de mudancas amplas; layout aprovado, contexto multiempresa, RBAC e auditoria preservados. |
+| Programa completo | Site, app, marketplaces, chatbots, telefonia, logistica, corte/dobra, CAD, fabricacao e montagem continuam previstos nas ondas existentes; este checkpoint nao elimina essas frentes nem as declara concluidas. |
+| Historico legado comercial/financeiro | Preservar procedencia, IDs e vinculos; fatos historicos separados das regras fiscais atuais. Extrato e evidencia para conciliacao, nao origem automatica de titulos/baixas. Sugestoes IA, inclusive NCM/RNTRC, nao sao fonte oficial nem validacao fiscal/registro oficial; revisao manual obrigatoria. |
+| Custos, autorizacoes e agentes | Codex/Cursor compartilham referencia e reservas; somente um escritor autorizado. Sem novas tarefas Cursor por este registro. Franquia/budget Codespaces e Actions sao controles separados; sem compra, API paga, recarga ou elevacao de gasto. Codigo/CI nao autorizam merge, deploy, migration operacional ou importacao real. |
+
+### Autorizacao posterior de legado: substitui restricoes historicas mais estreitas
+
+O proprietario autorizou **copia/transferencia privada controlada** para destino
+VPS existente protegido, staging isolado e acesso a lotes minimos por
+Codespace/Cursor sob protecoes comprovadas, sempre FORA do checkout e do Git.
+O original permanece intocado/somente leitura. Esta e uma decisao relatada pelo
+proprietario, nao prova de transferencia executada ou destino pronto.
+
+Antes de qualquer transferencia: medir fonte e folga; confirmar destino privado
+fora de publico/build/operacao; ACL de menor privilegio; criptografia e recuperacao;
+integridade origem/destino; retomada autenticada e retencao. HD, SSH, relatorios
+privados e precheck de outra estacao nao ficam acessiveis automaticamente aqui.
+Nenhuma correspondencia de identidade por palpite. Reutilizar
+`scripts/legado/consumir-lote-staging.mjs`, `persistencia-endereco-legado.mjs` e
+[mapa canonico](LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md). Dados reais, mapas de
+IDs/PII, backups, certificados, chaves, segredos e .env permanecem fora de
+GitHub/CI/logs/chats. Piloto PREPARED_NOT_AUTHORIZED; agendamento Legado PAUSED.
+As migrations privadas045bulk/046stage/047A1/048contas/049financeiro seguem fora
+execucao automatica ate resolver identidade, dependencias e journals dos destinos.
+
+### Proximo pacote concreto e local real de execucao
+
+Primeiro lote de codigo: salvamento e reabertura de `descricao_seo` e `slug_site`
+preenchidos MANUALMENTE na aba E-Commerce existente de ProdutoFormCompleto.
+Gap lido na base documental: setter vazio no wrapper; o consumidor ja usa esse
+setter. Reutilizar estado/onSubmit e o proprietario atual da persistencia; uma
+unica gravacao. Preservar IDs, campos legados, cancelamento, layout, contexto,
+RBAC e auditoria. Nao gerar IA paga, publicar canal ou ativar Produto HTTP.
+Conversoes e leitura/calculo; nao inventar editor por haver prop sem uso.
+Representante/TabelaPreco mantem salvamento legado e reabertura consolidada sem
+dupla gravacao. Entregas resolvem cliente_empresas -> clientes; identidade avulsa
+nao comprovada bloqueia e referencias historicas permanecem. Baixa em lote exige
+permissao propria; estas regras nao sao escopo de alteracao deste lote documental.
+
+Codespace unico: `potential-xylophone-5gj7r9v9qqg637vxp`, checkout
+`/workspaces/ERP-Zuccaro-codeX`. VSCode desktop -> extensao GitHub Codespaces ->
+Remote Explorer -> GitHub Codespaces -> login existente -> conectar ao MESMO
+recurso (icone de conexao, nao Create). Codex oficial no IDE remoto com a conta;
+nao presumir suporte da extensao no Cursor. Antes de afirmar execucao la, o agente
+confere pwd/origin sanitizado/branch/SHA/status e escreve/le/remove um marcador
+sintetico temporario proprio. Nao remover marcadores anteriores de preservacao.
+
+O executor deste lote documental continua em `/workspace/ERP-Zuccaro-codeX`,
+NAO no Codespace. Seu dirty/evidencias brutas foram preservados privadamente
+antes do sync e nao entram neste commit. A API de metadados nao e shell; acesso
+remoto por este executor ainda nao comprovado. Sem canal remoto, o fluxo e
+sequencial: designar UM executor/checkout existente autorizado -> conferir SHA e
+preservar dirty -> sincronizar sem descarte -> implementar/testar -> publicar na
+mesma branch/PR -> confirmar remoto -> Codespace preservar/comparar/FF seguro ->
+testar o SHA EXATO publicado e parar apos uso. Nao editar simultaneamente sandbox
+e Codespace; coordenacao neste chat continua mesmo com esse bloqueio de canal.
+
+### Fontes, lacunas e validacao deste registro
+
+Fontes: instrucoes explicitas do proprietario recebidas neste chat, documentos
+da base acima, leitura Git do remoto e codigo dos consumidores citados. Nao se
+alega leitura de chats, relatorios privados ou arquivos de outros computadores
+inacessiveis. Decisao recebida nao equivale a implementacao ou aceite operacional.
+As provas Codespace no SHA6f0f0298 e CI4429 sao historicas conforme registro
+anterior; nao foram executadas novamente aqui. A1 ownership do sandbox antigo
+nao e regressao de codigo no Codespace. Auth real, menor privilegio, trust/CRL,
+schema/UsageGuard, reconciliacao e rollback continuam gates independentes.
+
+Lote SOMENTE DOCUMENTAL: diff-check, comparacao de caminhos, rastreabilidade e
+revisao de sanitizacao; nenhuma suite runtime inalterada repetida localmente.
+CI do push autorizado usa o workflow existente/runners padrao/budget zero; seu
+resultado deve ser confirmado para o SHA publicado, sem reutilizar CI anterior.
+
+## Historico: orientacao anterior de coordenacao e Codespace (2026-10-22)
 
 Esta orientacao substitui a proposta anterior de iniciar Gate2. Coordenador
 permanece o MESMO chat `ERP ZUCCARO - CODEX/CURSOR`; nenhum chat novo criado,
@@ -111,7 +208,7 @@ Nao iniciar Gate2 por apontamento historico. Originais/captura/cinco worktrees
 intactos; agendamento Legado PAUSED; rotas operacionais inativas. Publicacao nao
 autoriza merge, VPS, migrations operacionais, integracao bancaria ou carga real.
 
-## Intervencao de plataforma e continuidade unica (2026-10-22)
+## Historico: intervencao de plataforma e proposta Gate2 superada (2026-10-22)
 
 Base deste lote: 1ab49e9e05dde4005b6eadb3b992fdd20e502d3e, conferida
 no clone independente e no remoto. Runtime inalterado; nao repetir suas suites.
@@ -200,7 +297,7 @@ ja registrado no PLANO_MELHORIA_ERP_ZUCCARO.md: revisar criacao/edicao de perfis
 e vinculos existentes, por consumidor/backend, sem promover rotas privadas.
 Esta correcao documental nao afirma que essa revisao ja foi executada.
 
-## Homologacao da nuvem - continuidade parcial (2026-10-22)
+## Historico: homologacao parcial do executor cloud (2026-10-22)
 
 Este registro sanitizado prevalece sobre os relatos anteriores de nuvem ainda em
 main/work. Reutiliza as execucoes ja registradas; nenhuma suite foi repetida para

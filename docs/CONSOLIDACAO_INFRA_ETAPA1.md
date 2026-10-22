@@ -1,5 +1,34 @@
 # Consolidacao: infraestrutura e pacotes preservados
 
+## Continuidade atual e requisitos preservados (2026-10-22)
+
+Decisao expressa do proprietario: Nuvem ERP-Zuccaro-codeX coordena; Codespace unico
+desenvolve/testa; clone local standby. A mudanca de conversa nao depende de mudar
+executor. Somente um escritor autorizado por checkout; nenhuma frente paralela.
+Referencia deste lote documental d425138f/PR342 draft sobre334; regras atuais e
+matriz de fontes/lacunas no topo de [HANDOFF_ATUAL.md](HANDOFF_ATUAL.md).
+
+A consolidacao tecnica nao substitui as decisoes de produto: layout azul-claro
+APROVADO informado,funcionalidades/recuperacao/submodulos preservados; desenho
+aprovado antes de mudancas amplas; codigos NUMERICOS SEQUENCIAIS em TODOS cadastros
+reservados no backend com concorrencia e sem renumerar silenciosamente legado.
+Comercial360 integrado e todas as ondas/canais/industria continuam no programa.
+Referencias visuais historicas nao comprovam inventario/desenho atuais completos.
+
+Autorizacao posterior amplia staging privado remoto e acesso controlado de lotes
+minimos por Codespace/Cursor,FORA checkout/Git,original intocado. Destino,ACL,
+criptografia/recuperacao,integridade e retencao precisam prova antes de transferir.
+Historico comercial/financeiro preserva procedencia,sem virar regra fiscal ou
+financeiro derivado de extrato; NCM/RNTRC IA continuam sugestoes nao verificadas.
+Nao houve transferencia/importacao ou execucao045-049 neste lote. Legado PAUSED.
+
+Proximo lote funcional delimitado: ProdutoFormCompleto/aba E-Commerce,SEO/slug
+manuais com salvamento unico e reabertura; sem alterar layout/canais/IA. Leitura
+de fonte confirma setter vazio; nao se declara correcao implementada. Registros
+seguintes sao checkpoints historicos; nao reiniciar Gate2 nem usar main antiga.
+
+### Historico da prioridade e homologacao anterior
+
 Prioridade corrigida22/10: ambiente unico de desenvolvimento -> Comercial360 ->
 migracao legada coordenada, NAO Gate2 pelo apontamento anterior. Mesmo chat
 principal e mesma branch consolidada. Um Codespace autorizado criado no SHA
@@ -10,7 +39,7 @@ conservados por hash; A1 retomado7/0/0. Desenvolvimento homologado nesse Codespa
 unico, sem aceite operacional. Identidade/procedimento no topo do HANDOFF; secoes de nuvem
 OpenAI abaixo sao historicas e nao descrevem GitHub Codespaces.
 
-Ultimo checkpoint documental: homologacao parcial da nuvem em22/10/2026.
+Checkpoint documental historico: homologacao parcial da nuvem em22/10/2026.
 O handoff canonico docs/HANDOFF_ATUAL.md registra o SHA d6d6e98b efetivamente
 executado, raiz2172PASS, backend final513PASS/2FAIL/23SKIP ePG85PASS. Gate A1 e
 restauracao independente/custos continuam abertos; conservacao do marcador entre
