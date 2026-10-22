@@ -1,3 +1,68 @@
+## Conexao Codespace/VPS - fechamento de capacidade (2026-10-22)
+
+Base conferida67c002a4a3717658a4e6e75ee1589e138d663da3; branch consolidada/PR342
+draft sobre334. CIs4432/run39800779724 e4433/run39800790073 AGORA SUCCESS, lidas
+nesta retomada; supera o status geral In progress anotado no fechamento anterior.
+Runtime5ab608e6 e raiz2183/0/0 permanecem provas anteriores, nao suites repetidas.
+
+Unico escritor desta inspecao: sandbox /workspace/ERP-Zuccaro-codeX, NAO Codespace.
+Handoff dirty271724bytes/hash preservado integralmente em arquivo privado antes
+sem descarte; sufixo de registros unicos mantido byte a byte e fora do indice.
+Novas conclusoes sanitizadas reconciliadas aqui e no roteiro EXISTENTE
+[ABRIR_NO_OUTRO_COMPUTADOR.md](../ABRIR_NO_OUTRO_COMPUTADOR.md#conexao-do-agente-resultado-da-inspecao-e-acao-interativa-2026-10-22).
+Nao foi substituido o handoff inteiro por outro host/branch nem lido chat externo.
+
+Diagnostico terminal desta sessao: gh/ssh presentes, API Codespaces Forbidden em
+api.github.com foraallowlist ativa; nenhuma prova de shell remoto. Nao ha chaves
+publicas/config SSH/agente herdados e home/MCP config em filesystem ro. Help gh
+informa geracao automatica de chave ausente; nao executar esse efeito como teste
+cego. Codex --remote ws/wss/unix exige app-server existente e nao converte esta
+tarefa cloud em Codespace; nao iniciado daemon/pareamento/tunnel. Binarios GUI
+VS Code/Cursor e ferramentas de scheduler/VPS ausentes. Autorizacao ja existe;
+nao ha pedido generico de permissao nem alegacao de acesso por URL/titulo.
+
+Caminho principal suportado: no computador do proprietario VS Code desktop ->
+Remote Explorer -> GitHub Codespaces -> Sign in to GitHub -> plug do MESMO recurso
+potential-xylophone-5gj7r9v9qqg637vxp; Codex no IDE remoto -> Sign in with ChatGPT.
+Acao interativa no cliente e indispensavel; este executor nao clica/login nele.
+Roteiro publicado contem probe guardado de identidade/repositorio/branch/SHA e
+write/read/delete sintetico FORA checkout. Sintaxe validada e guard negativo
+comprovado aqui antes de qualquer escrita; positivo remoto NOT RUN. Sync e teste
+focado do SHA final somente apos essa prova/preservacao de dirty, sem main/reset.
+
+Cursor: suporte Codex IDE documentado no README OpenAI nao equivale a conexao
+Codespaces. Cliente Cursor nao disponivel; Remote-SSH/gh --config e candidato a
+validar no cliente com a mesma prova e um escritor. Nao declarar compatibilidade
+real/instalacao de extensao Microsoft verificada. Alternativa VS Code concreta.
+
+Rascunho do ambiente SALVO oficialmente: unico customdomain api.github.com,
+presets mantidos, membership do checkout existente/SHA exato e start_skill seguro
+sem autoDocker/migrations/seeds/servidores. install_script/segredos/cobranca nao
+alterados. Antes constava main historica/start automatico; reconciliado somente
+no rascunho. requires_publish=true: NAO aplicado/publicado/reconectado/restaurado.
+Revisar/salvar/publicar ocorre na plataforma; publicacao cria snapshot/reconecta,
+nao foi acionada por este lote. Preservacao local nao prova backup externo. Nao
+usar reset/restore para destravar rede. IDE nao depende dessa publicacao antiga.
+
+Hostinger: skills consultadas, mas nenhuma ferramenta VPS_* efetiva. Registro
+MCP aqui bloqueado pelo filesystem ro; nao alterar privilegios nem improvisar
+API/credencial. Cliente host precisa expor conector e seu OAuth Allow. Alternativa
+precheck pelo console/SSH JA configurado na estacao autorizada. Nenhuma consulta
+nova de capacidade, criacao de diretorio/ACL, criptografia ou transferencia VPS
+foi executada. HD/SSH da estacao nao sao automaticamente acessiveis aqui.
+
+Agendamento recebido como PAUSED. Nao existe ferramenta/diretorio de automacao
+nesta sessao para ler/editar o prompt REAL: nao se declara scheduler atualizado.
+Prompt substituto e precheck de retomada publicados NO documento legado existente;
+nao criada nova automacao. Retomar so apos executor real e reserva unica, gates
+privados e budget zero comprovados. Manualmente avancaram os itens acessiveis:
+Git/CI, preservacao, diagnostico, rascunho e procedimentos/teste negativo do probe.
+
+Validacao doc-only: diff-check, sanitizacao, links/rastreabilidade e diff somente
+MD; codigo/dependencias/runtime inalterados, nenhuma suite antiga repetida.
+Nenhum novo servico/teste remoto/recurso pago, dados reais, banco operacional,
+merge/deploy ou045-049 executados. Resultado do novo push/CI somente apos retorno.
+
 ## Preparacao privada legado e fechamento deste lote (2026-10-22)
 
 Runtime publicado por este lote: `5ab608e6dadb8ddc054747f45ede24f7ecafcca9` (commit anterior deste mesmo push).

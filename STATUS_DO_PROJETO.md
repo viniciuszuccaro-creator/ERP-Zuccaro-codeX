@@ -1,3 +1,18 @@
+## Acesso: canal definitivo e limites atuais (2026-10-22)
+
+Base67c002a4/PR342 draft sobre334; CIs4432 e4433 SUCCESS conferidas agora.
+Execucao sandbox /workspace, nao Codespace. Git API Codespaces Forbidden;
+config MCP/SSH home ro, sem identidade SSH nem GUI. VS Code desktop + extensao
+GitHub Codespaces + Codex Sign in with ChatGPT e caminho principal documentado;
+acao interativa do cliente necessaria. Probe remoto positivo/sync/testes NOT RUN;
+guard negativo e sintaxe do comando PASS aqui. Cursor remoto NAO VALIDADO.
+Rascunho oficial reconciliado (api.github.com somente, checkout correto, start sem
+servicos automaticos), salvo mas requires_publish: nao rede ativa/restauracao.
+Hostinger sem VPS_* ativo: nenhum precheck/config VPS real. Agendamento sem tool:
+instrucoes substitutas publicadas no documento existente, scheduler nao editado,
+PAUSED mantido. Gates legado/budget zero intactos. Detalhes e acoes exatas no
+HANDOFF e ABRIR_NO_OUTRO_COMPUTADOR; lote exclusivamente documental.
+
 ## Preparacao privada legado - gates explicitos (2026-10-22)
 
 Documentacao existente de descoberta/mapa atualizada com autorizacao posterior e
