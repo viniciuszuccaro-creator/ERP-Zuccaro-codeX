@@ -1,3 +1,13 @@
+## Recibo de execucao via terminal web do Codespace (2026-10-22)
+
+Executor: ChatGPT Work, navegador autenticado do proprietario, terminal integrado web; nao e conexao direta Codex/Cursor.
+Host: potential-xylophone-5gj7r9v9qqg637vxp; checkout /workspaces/ERP-Zuccaro-codeX; branch codex/consolidacao-infra-20261017.
+Checkout inicialmente limpo em d425138ff9121d47c0a7ca8db49e6701630b5d29. Origin sanitizado github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX. Fetch e fast-forward para 9a53f66341cac865f55b5c7ad2a7c0aa0e5b8dbd concluidos sem reset/force; status limpo apos sincronizacao.
+Marcador sintetico fora do checkout criado, lido e removido com verificacao de ausencia: PASS.
+Testes nesta versao: node --test tests/produto-completo-ecommerce.test.js tests/produto-pim-ui.test.js tests/produto-http-policy.test.js; exit0, sem falhas/skips. Node observado v24.9.0, distinto do Node22 da homologacao anterior; nao atribuir esta execucao ao Node22. Log sintetico fora do checkout em /workspaces/erp-produto-web-20261022.log. Git diff --check PASS. Nenhum codigo funcional alterado.
+Estacao Windows/HD e alias SSH nao disponiveis no terminal deste executor. Nenhuma transferencia real, precheck de fonte ou acesso VPS alegado. Gate impeditivo do legado: executor com acesso a origem privada e canal SSH/SFTP, seguido de validacao das protecoes existentes.
+Acesso pelo terminal web comprovado; conexao direta do chat Nuvem/Codex/Cursor permanece separada. Autorizacao nao transfere cookies, chaves ou ferramentas entre chats. Agendamento mantido pausado. Sem merge/deploy/migration/carga.
+
 ## Pos-login GitHub CLI: acesso Codespaces ainda bloqueado (2026-10-22)
 
 Proprietario concluiu OAuth oficial, exit0/identidade confirmada. API /user e
