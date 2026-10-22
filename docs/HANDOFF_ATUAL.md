@@ -1,3 +1,24 @@
+## Preparacao privada legado e fechamento deste lote (2026-10-22)
+
+Runtime publicado por este lote: `5ab608e6dadb8ddc054747f45ede24f7ecafcca9` (commit anterior deste mesmo push).
+Raiz2183/0/0 e checks locais PASS, conforme secao seguinte; este commit altera
+somente documentacao e preserva a arvore src/server/locks. CI do HEAD final ainda
+PENDENTE ate retorno real. Branch/PR342 sobre334 continuam, sem merge/deploy.
+
+Atualizados os documentos EXISTENTES de descoberta e mapa legado com precedencia
+da autorizacao posterior e seis gates: origem/capacidade, destino isolado, menor
+privilegio, criptografia/recuperacao, integridade/retomada e retencao. Nenhum manual
+paralelo, novo importador ou correspondencia por palpite. Precheck recebido nao
+foi apresentado como consulta atual ou reserva de espaco. Origem/SSH da estacao
+nao acessiveis aqui; transferencia BLOQUEADA ate evidencia atual dos seis gates
+por executor autorizado com acesso existente. Nenhum arquivo real acessado.
+
+Validacao doc-only: diff-check, sanitizacao, rastreabilidade e diff somenteMD;
+suites runtime inalteradas nao repetidas. Agendamento PAUSED e piloto
+PREPARED_NOT_AUTHORIZED,045-049 intactas. Conexao de agente ao Codespace segue
+pendente: nao ha shell remoto comprovado para testar o SHA final nesse host.
+Codigo e CI publicados nao equivalem a aceite operacional ou teste no Codespace.
+
 ## Continuidade Comercial360 - Produto SEO/slug (2026-10-22)
 
 Execucao declarada: sandbox existente `/workspace/ERP-Zuccaro-codeX`, NAO

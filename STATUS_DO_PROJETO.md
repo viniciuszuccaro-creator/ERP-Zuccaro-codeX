@@ -1,3 +1,11 @@
+## Preparacao privada legado - gates explicitos (2026-10-22)
+
+Documentacao existente de descoberta/mapa atualizada com autorizacao posterior e
+seis evidencias exigidas antes da transferencia. Nenhum lote real transferido,
+novo importador ou recurso criado. Origem/SSH e destino protegido nao comprovados
+neste executor; PAUSED/PREPARED_NOT_AUTHORIZED mantidos. Runtime abaixo permanece
+inalterado neste checkpoint documental. CI final pendente do retorno do push.
+
 ## Comercial360 - Produto SEO/slug no formulario existente (2026-10-22)
 
 Base66b88c2b, PR342 draft sobre334. Executor unico: sandbox /workspace,

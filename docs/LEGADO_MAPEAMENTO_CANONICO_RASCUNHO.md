@@ -1,5 +1,18 @@
 # Legado → canônico — rascunho de mapeamento (somente sintético)
 
+## Precedencia atual - 22/10/2026
+
+A autorizacao posterior do proprietario permite staging privado remoto protegido
+e lotes minimos fora do checkout no Codespace/Cursor. Gates/evidencias e bloqueios
+atuais em [descoberta existente](LEGADO_BACKUP_DESCOBERTA_SOMENTE_LEITURA.md#preparacao-privada-vigente---22102026).
+Nao ha transferencia ou importacao operacional autorizada automaticamente por
+este documento. Reutilizar o mapeador e persistencia existentes; dados reais/
+mapas/manifestos privados foraGit. Piloto PREPARED_NOT_AUTHORIZED e PAUSED.
+Faixas de migrations/main/PR33 abaixo sao historicas e precisam revalidacao no
+destino antes de operacao;045-049 nao devem executar automaticamente.
+
+## Contrato e referencia historica preservados
+
 **Status:** `CONTRATO DE STAGING SINTÉTICO / SEM IMPORTAÇÃO REAL`
 **Onda:** 25 (bloqueada)
 **Política existente (não duplicar):** `src/components/lib/migracaoErpPolicy.js`
