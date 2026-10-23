@@ -1,3 +1,78 @@
+## Coordenacao local retomada e precheck privado #344 (2026-10-23)
+
+Por decisao posterior do proprietario, o chat existente ERP ZUCCARO -
+CODEX/CURSOR volta a coordenar. Isso substitui a atribuicao anterior ao chat
+Nuvem; nao altera o Codespace unico nem cria escritor concorrente. Codigo e
+testes continuam em /workspaces/ERP-Zuccaro-codeX, no Codespace
+potential-xylophone-5gj7r9v9qqg637vxp, branch codex/consolidacao-infra-20261017.
+Base local/remota conferida7615691a3e78e5536d24f17d5f0c9b41bab8c94e, PR342
+sobre334, checkout limpo antes do lote. Terminal WEB autenticado e operante.
+A UI da extensao Codex informa que nao iniciou; isso nao bloqueia esse terminal.
+Publicar uma issue nao encaminha automaticamente instrucao ao agente.
+
+### Escritor, preservacao e escopo
+
+Ultimo recibo347 fecha o pacote e libera reserva. Frente Nuvem estava idle.
+Precheck local ao Codespace nao encontrou index.lock, processo codex exec ou
+descritor de escrita aberto no checkout; apenas app-server fora dele.
+Sao observacoes pontuais, nao exclusao tecnica de acesso futuro. Nao encerrar
+esse servidor nem processos de terceiros. Reserva desta execucao registrada na
+issue344: SOMENTE HANDOFF e STATUS, um escritor por vez, parar se HEAD/status
+mudarem inesperadamente. Base dos dois documentos, diff e hashes preservados
+fora do checkout antes da edicao. Nenhum dirty anterior para descartar.
+
+### Copias privadas: metadados primeiro, sem transferencia
+
+A estacao voltou a comprovar SSH com autenticacao e hostkey existentes; nenhuma
+chave ou segredo lido, copiado ou trocado. O original no HD esta presente e recebeu
+apenas leitura de metadados: oito diretorios imediatos. Captura privada de
+preservacao existente e seu manifesto tambem localizados. Essa captura preserva
+codigo/Git/worktrees: NAO equivale a backup integral dos dados do ERP antigo.
+Nao foi reexecutada varredura/hash do original nem aberto seu conteudo.
+
+Na VPS, df do filesystem mostrou83992498176bytes disponiveis naquele instante,
+compartilhados com servicos existentes, nao reserva de capacidade. Area privada
+existente root:root700 ocupa3098460160bytes. Quatro candidatos historicos
+inspecionados por metadados:142635008/23195648/8192/589824bytes alocados;
+6/12/1/4arquivos ate profundidade2, respectivamente. Ha um candidato de
+manifesto no segundo e um formato de backup no quarto. Tamanho/nome/extensao
+nao provam origem, completude ou equivalencia. Backups operacionais separados
+ocupam69455872bytes e nao devem ser confundidos com copia do ERP antigo.
+Caminhos reais e eventuais nomes vinculaveis permanecem privados.
+
+Destinos propostos de staging ainda ausentes. Nenhuma pasta criada, permissao
+alterada, transferencia, duplicacao, extracao ou importacao. Reutilizar primeiro
+os inventarios/manifestos existentes; falta vincular manifesto de origem e de
+cada candidato com cobertura/versao e igualdade verificadas, sem presumir que
+todos sao dados reais ou todos sao fixtures. Criptografia, recuperacao, retencao,
+ACL e folga de capacidade continuam gates antes de transferir. Original intocado.
+
+Conector Drive respondeu com sucesso a buscas de PASTAS por BACKUP ERP ANTIGO,
+ERP Zuccaro e legado, metadata-only, sem resultados pertinentes. Isso comprova
+a disponibilidade da busca, NAO acesso a uma pasta de backup, capacidade livre,
+privacidade/ACL, ausencia de outros arquivos ou integridade. Nenhum download,
+upload, link publico, compartilhamento ou pasta Git no Drive. Sem identificador
+de pasta pertinente, nao ampliar a busca a documentos pessoais sem necessidade.
+
+### Continuidade e validacao
+
+345 Produto,346 sessao de Orcamento,348 leitura/relatorios seguros e347 proposta
+navegavel permanecem publicados; nao refazer nem atribuir novos testes a eles.
+Aprovacao visual de347 ainda necessaria antes de adocao ampla. Layout azul-claro,
+codigos sequenciais backend/IDs/importados, RBAC/multiempresa/auditoria e
+proveniencia comercial-financeira separada de regras fiscais preservados.
+344/349 recuperacao real seguem separadas, nao comprovadas por esta inspecao.
+Proximo passo344: reconciliar evidencias privadas existentes de origem/candidatos
+antes de calcular faltantes; nao copiar um backup inteiro por conveniencia.
+
+Lote somente documental: diff-check, allowlist dos dois arquivos e revisao de
+sanitizacao; nenhuma suite runtime inalterada repetida. Resultado de commit/CI
+sera registrado na issue344, sem inferir CI nova dos recibos anteriores. Nenhum
+codigo funcional alterado. Custos bloqueados, agendamento Legado PAUSED,
+Codespace unico, sem merge/deploy/migration operacional/carga real.
+
+### Historico preservado: proposta347 e pacotes anteriores
+
 ## #347 — proposta Comercial navegável e defeito de diálogo corrigido (2026-10-23)
 
 Executor único potential-xylophone-5gj7r9v9qqg637vxp, mesma branch PR342 sobre334,

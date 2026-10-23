@@ -1,3 +1,25 @@
+## #344 - coordenacao retomada e copias privadas identificadas (2026-10-23)
+
+Coordenador volta ao chat ERP ZUCCARO - CODEX/CURSOR por decisao expressa.
+Codespace unico e canal direto terminal WEB; um escritor, reserva documental344.
+Base7615691a local/remota limpa, pacotes345/346/348/347 preservados; gate visual
+da proposta347 ainda pendente. Nao criar outra frente nem depender da UI Codex.
+
+Precheck344: original HD e captura privada de codigo localizados por metadados.
+VPS com area privada anterior e quatro candidatos de staging/historico/backup;
+origem/completude/integridade ainda NAO comprovadas. Backups operacionais e
+captura Git NAO equivalem automaticamente ao backup do ERP antigo. Nao duplicar.
+Drive metadata-only: tres buscas de pastas pertinentes sem resultados; nenhuma
+pasta, ACL, capacidade ou integridade de backup Drive comprovada.
+
+Metadados agregados, limites e proximo passo no topo HANDOFF_ATUAL.md.
+Nenhuma transferencia, dados reais no Git, backup aberto ou alteracao VPS.
+Lote exclusivamente documental, validacao diff-check/allowlist/sanitizacao;
+nao repetir testes runtime inalterados. SHA remoto/CI registrados na issue344.
+Agendamento PAUSED, custos e gates operacionais mantidos.
+
+### Historico preservado: proposta347
+
 ## #347 — proposta privada implementada; gate visual pendente (2026-10-23)
 
 Base0409d3f7/PR342 sobre334, mesmo Codespace único. #348 publicada com CI SUCCESS
