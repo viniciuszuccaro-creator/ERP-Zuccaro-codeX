@@ -1,3 +1,13 @@
+## Comparacao ERP inteiro com referencia indicada pelo proprietario (2026-10-23)
+
+Referencia erp-integra-novo main37c6f7d39e60736cbb862d122de9be23c06db8f6 conferida; candidata c9f1c71c31526dd1d9795627f2fbc5cd985793ff, CI4448/4449 SUCCESS. Comparacao completa dos inventarios de codigo:953 versus1426 arquivos;99 blobs iguais,456 paths alterados,398 exclusivos referencia,871 exclusivos candidata; paginas25 versus46. Leitura60 arquivos, incluindo todas as25 entradas referencia e22 homonimas candidata. Nao equivale a auditoria de cada botao/fluxo nem a prova de funcionamento. Matriz de25 entradas e classes/prioridades integradas ao programa existente, issue347 ampliada, sem novo plano.
+
+Achado concreto: abas Representantes/Personalizado montadas na referencia, ausentes na pagina Relatorios atual apesar de componentes canonicos preservados. Issue348 publicada para recuperar com testes negativos/positivos RBAC/tenant/query/export/auditoria e reuso, sem nova entidade. Codigo nao editado no sandbox; AGUARDANDO ACEITE do mesmo agente Codespace, sem recebido automatico. Os3 paths exclusivos de paginas (Documentacao/EmpresaOnboarding/OAuthConsent) exigem equivalente/historico antes de alegar perda/restaurar.
+
+Preservar melhorias atuais/Auth/RBAC/auditoria/tenant/persistencia/IDs/reservas backend; nao copiar admin local/fallback da referencia. Verificacao numeracao de TODOS cadastros permanece tarefa de cobertura, nao declarada aprovada por mapa frontend. Referencia local-imports tem3 arquivos17185563bytes por metadados; conteudo NAO ABERTO, origem/exposicao/completude nao classificadas. Fontes Base44/snapshot/localStorage/export sao candidatas, nao registros comprovados. Nenhuma recuperacao de dado real; ERP novo e legado344 separados. Dados reais/manifestos privados fora Git/log/CI; gates operacionais intactos.
+
+Layout ERP inteiro e proposta azul-clara na347 exigem historico e aprovacao visual antes de mudanca ampla. Recebimento dos pacotes so por aceite explicito; sem Browser/ponte desta conversa. Nenhum teste runtime repetido por lote documental. Trabalho privado local preservado antes de publicar somente textos sanitizados.
+
 ## Tres frentes coordenadas e entrega por pacotes coesos (2026-10-23)
 
 Ordem expressa do proprietario: esta conversa centraliza instrucoes; GitHub fonte oficial; mesmo Codespace codigo/testes; VPS separada para ERP/staging. Regra-Mae e programa existentes reutilizados, sem novo manual/ambiente. Base consolidada a08bf4c931ea89003d62eb6e0ef64d98bd2d6c69, PR342 aberta draft sobre334; CI4446/4447 completed/success conferidas. Conversoes990e6c9a permanece com CI4442/4443 success e2186/0/0 no recibo Codespace. Sem implantacao VPS alegada.

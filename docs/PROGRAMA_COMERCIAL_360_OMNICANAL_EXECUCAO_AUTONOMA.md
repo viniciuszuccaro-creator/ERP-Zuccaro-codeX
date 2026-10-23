@@ -1,3 +1,73 @@
+## Recuperacao e evolucao com referencia externa — investigacao integrada (2026-10-23)
+
+Solicitacao expressa do proprietario, vinculada a issue347 existente; nao cria plano/manual paralelo. Fonte de investigacao: https://github.com/viniciuszuccaro-creator/erp-integra-novo/tree/37c6f7d39e60736cbb862d122de9be23c06db8f6 (main conferida nesse SHA). Candidata comparada: c9f1c71c31526dd1d9795627f2fbc5cd985793ff, PR342 sobre334. A referencia NAO substitui candidata/main, Auth ou persistencia. Todas as frentes do programa permanecem.
+
+### Cobertura e limites da comparacao
+
+Inventarios Git completos sem truncamento comparados, filtrando src com extensoes js/jsx/ts/tsx/css: referencia953, candidata1426;99 paths/blobs iguais,456 mesmos paths alterados,398 paths exclusivos referencia,871 exclusivos candidata. Contagem inclui documentacao com extensao de codigo: nao e contagem de funcionalidades. Leitura dirigida de60 arquivos (34 referencia/26 candidata):25 paginas referencia,22 homonimas candidata e entradas de navegacao/configuracao/adaptadores. Candidata tem46 paginas contra25 referencia. Muitos paths exclusivos da referencia sao extracoes: ausencia do arquivo NAO comprova perda de capacidade nem justifica copia.
+
+Esta e cobertura ESTRUTURAL de todos os modulos de entrada, nao comparacao comportamental completa de cada submodulo/campo/botao/relatorio/integracao. Esse detalhamento deve seguir consumidores e testes por pacote/ator/contexto; nao foi declarado completo. Nenhum arquivo de export/dado real foi lido. Nenhuma verificacao de UI rodou no Codespace por este executor; trabalho de leitura coordenadora ocorreu fora checkout, sem implementacao paralela.
+
+### Quadro sanitizado de classificacao/prioridade
+
+| Classe | Evidencia e destino | Estado / prioridade |
+| --- | --- | --- |
+| Atual com evidencias de testes | SEO/slug5ab608e6 e Conversoes990e6c9a, recibo2186/0/0 e CI4442/4443; base documentalc9f1c71c CI4448/4449 SUCCESS | Preservar; nao regredir/recopiar |
+| Codigo presente mas entrada ausente | Relatorios.jsx atual importa DashboardRepresentantes sem montar a aba; nao monta Personalizado; ambos componentes canonicos existem. Referencia monta abas representantes/personalizado | Recuperacao candidata P1 issue348; gates de seguranca antes de expor |
+| Exclusivo referencia, anterioridade nao provada | Documentacao.jsx, EmpresaOnboarding.jsx, OAuthConsent.jsx ausentes pelo mesmo path na candidata | Investigar equivalente/historico, NAO afirmar removido nem restaurar auth automaticamente |
+| Adicional potencialmente util | Extracoes de Agenda, Cadastros, Relatorios e Layout; mapeamento entityCodeFields da referencia | Avaliar manutencao/consumidores; nao copiar modulo inteiro nem supor equivalente inferior |
+| Atual deve permanecer | Auth real, tenant/RBAC/auditoria, reservas backend/IDs e precos snapshotados; consolidacao atual/Comercial360; componentes de relatorio ja possuem gates que a referencia nao substitui | Nao importar admin local/fallback/permissoes referencia |
+| Fonte de registros ERP novo | Referencia possui adaptadores local-base44/snapshot/store; sao codigo, nao prova de registros. Arvore local-imports tem3 arquivos17185563bytes, conteudo nao aberto | Origem/conteudo/exposicao/integridade ainda desconhecidos; investigacao privada, nao Git publico |
+| Legado ERP antigo | Inventario privado/VPS/HD da344, frente SEPARADA da recuperacao ERP novo | Canal privado ausente; transferencia/piloto NOT RUN |
+
+Evidencia do achado de Relatorios: referencia src/pages/Relatorios.jsx linhas108-109 e161-162; candidata mesmo path linhas29 e410-564, apenas import de DashboardRepresentantes e nenhuma montagem dessas duas abas. Componentes atuais src/components/relatorios/DashboardRepresentantes.jsx e RelatorioPersonalizado.jsx devem ser reutilizados com negativos RBAC/tenant/exportacao; outros consumers encontrados foram mencoes documentais, nao navegacao funcional. Codigo existente pode conter limites de query/export e nao e liberado apenas pela restauracao da aba.
+
+### Matriz de paginas — contagens sao somente TabsTrigger literais detectados
+
+| Entrada | Referencia | Candidata | Evidencia estatica / pendencia |
+| --- | ---: | ---: | --- |
+| AdministracaoSistema | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Agenda | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| CRM | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Cadastros | 2 | 2 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Comercial | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Compras | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| ConfiguracoesUsuario | 3 | 3 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Contratos | 5 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Dashboard | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Documentacao | 2 | — | Path exclusivo da referencia; equivalente/historico anterior pendentes |
+| EmpresaOnboarding | 0 | — | Path exclusivo da referencia; equivalente/historico anterior pendentes |
+| EntregasMobile | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Estoque | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Expedicao | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Financeiro | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Fiscal | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Home | 0 | 0 | Mesmo blob; funcionamento/permissoes nao homologados por isso |
+| HubAtendimento | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| OAuthConsent | 0 | — | Path exclusivo da referencia; equivalente/historico anterior pendentes |
+| OrcamentoSite | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| PortalCliente | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Producao | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| ProducaoMobile | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| RH | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Relatorios | 11 | 9 | Entradas representantes/personalizado ausentes; componentes atuais preservados (issue348) |
+
+Abas dinamicas/configuradas por dados nao entram nessa contagem; zero nao significa pagina vazia. Para todos os modulos acima, o detalhamento deve registrar rotas/imports/consumidores, abas/campos/acoes, perm/contexto/config, teste e disponibilidade na interface antes de classificar como funcionando ou inferior. ERP implantado nao e deduzido de codigo/CI.
+
+### Registros e codigos — investigacao sem inventar recuperacao
+
+Distinguir definicao de entidade, registro real, auxiliar/configuracao e sintetico. Base44/snapshots/localStorage/exports sao fontes CANDIDATAS ate origem e abrangencia comprovadas. Nao ler dumps/PII em logs/chats nem republicar dados ja publicos; avaliar possivel exposicao privadamente e avisar proprietario por canal protegido se confirmada. Nenhum dado foi recuperado/copied; original protegido. Reconciliação/deduplicacao, IDs/codigos/vinculos e Grupo/Empresa obrigatorios antes de carga. Manter recuperacao ERP novo separada da importacao ERP antigo344.
+
+Codigo numerico sequencial: mapear TODOS cadastros/campos e escopo, confrontar mecanismo backend existente e consumidores; preservar IDs tecnicos/codigos importados. entityCodeFields da referencia e apenas mapeamento de nomes, NAO reserva concorrente. Nao copiar count+1, renumerar em massa ou substituir codigo legado. Conflito exige preservar legado, reservar canonicamente e mapear/auditar. Cobertura backend de todos cadastros ainda nao afirmada.
+
+### Pacotes coordenados e aceite
+
+Issue347 foi ampliada para o ERP inteiro/layout, com proposta navegavel no MESMO Codespace, azul-claro e melhorias preservados, aprovacao visual antes de redesenho amplo. Fonte visual exata e comportamento anterior ainda precisam ser demonstrados, nao mera troca de cores. Comercial integrado preserva rascunhos e componentes346 existentes.
+
+Issue348 e a primeira recuperacao coesa selecionada: reabrir capacidades Representantes/Personalizado nos componentes canonicos, primeiro teste que reproduza entrada ausente e valida RBAC granular/tenant/consulta/exportacao/auditoria/completude. Bloquear exposicao se faltar contrato seguro, nao copiar seguranca referencia. Teste pre/pós-fix, checks Regra-Mae, docs/commit/push/CI e recibo por SHA. Estado AGUARDANDO ACEITE do MESMO agente Codespace, nao implementado/encaminhado automaticamente. Nao tocar Produto345 ou Comercial346/347 sem reserva.
+
+Coordenacao leu fonte e publicou tarefas/docs; nao possui Browser/ponte autenticada para iniciar aquele agente. Sem escritor concorrente, sem novo ambiente/billing, merge/deploy/migrations045-049/carga operacional. PAUSED legado mantido. Continuidade em347/348 e documentos existentes, nao manual novo.
+
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
 ## Continuidade — conversões existentes de Produto (2026-10-22)
