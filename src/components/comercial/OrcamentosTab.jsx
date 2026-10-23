@@ -39,6 +39,9 @@ const errorMessage = (error) => {
   return 'Não foi possível comunicar com o servidor. Tente novamente.';
 };
 
+// Cache generations never contain credentials and are unique across remounts.
+let orcamentoSessionSequence = 0;
+
 export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -57,7 +60,9 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const cancelScope = useRef(null);
   const conversionScope = useRef(null);
   const renderedScope = useRef(null);
-  renderedScope.current = { groupId, empresaId, actorId };
+  const sessionIdentity = sessionToken || readErpHttpSession()?.token || null;
+  const sessionCacheGeneration = useMemo(() => ++orcamentoSessionSequence, [sessionIdentity]);
+  renderedScope.current = { groupId, empresaId, actorId, token: sessionIdentity };
   const activeScope = () => readErpHttpSession();
   const beginAction = (opened) => {
     const ticket = actionGate.current.begin(opened, renderedScope.current, activeScope());
@@ -85,7 +90,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const api = http.orcamentos;
   const pedidosApi = http.pedidos;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
-  const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
+  const queryKey = ['orcamentos-http', groupId, empresaId, actorId, sessionCacheGeneration, page, pageSize, appliedFilters];
   const listQuery = useQuery({
     queryKey,
     queryFn: ({ signal }) => api.list({ limit: pageSize, offset: (page - 1) * pageSize, search: appliedFilters.search || undefined, status: appliedFilters.status === 'TODOS' ? undefined : appliedFilters.status, clienteEmpresaId: appliedFilters.clienteEmpresaId === 'TODOS' ? undefined : appliedFilters.clienteEmpresaId, validadeDe: appliedFilters.validadeDe || undefined, validadeAte: appliedFilters.validadeAte || undefined, signal }),
@@ -93,7 +98,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     retry: 1,
   });
   const mastersQuery = useQuery({
-    queryKey: ['orcamento-masters', groupId, empresaId],
+    queryKey: ['orcamento-masters', groupId, empresaId, actorId, sessionCacheGeneration],
     queryFn: async () => {
       const [clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas] = await Promise.all([
         filterInContext('ClienteEmpresa', { ativo: true, habilitado_operacao: true }, 'codigo', 500),
@@ -128,7 +133,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     [masters.produtos, produtoQuery],
   );
 
-  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId]);
+  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId, sessionIdentity]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);

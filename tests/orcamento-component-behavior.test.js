@@ -33,12 +33,13 @@ async function mount() {
       prev?.cleanup?.(); scheduled.push(() => { effects[i] = { deps, cleanup: fn() }; }); },
   };
   let active = cpa; let permission = true; let current = row(); let props = { ...cpa };
+  const queries = [];
   const calls = []; const invalidations = []; const messages = []; const pending = {};
   const request = (method, scope, args) => { calls.push({ method, scope, args }); return pending[method]?.promise || Promise.resolve(current); };
   const modules = {
     react: { __esModule: true, default: react, ...react },
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: (key) => invalidations.push(key) }),
-      useQuery: ({ queryKey }) => queryKey[0] === 'orcamentos-http'
+      useQuery: ({ queryKey }) => (queries.push(queryKey), queryKey[0] === 'orcamentos-http')
         ? { data: { data: [current], meta: { total: 1 } } }
         : { data: { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] } } },
     '@/api/erpHttpSession': { readErpHttpSession: () => active },
@@ -64,7 +65,7 @@ async function mount() {
   const text = (node) => typeof node === 'string' ? node : (node?.children || []).map(text).join('');
   const find = (predicate) => { const found = nodes().find(predicate); assert.ok(found, 'controle esperado no componente real'); return found; };
   render(); render();
-  return { calls, invalidations, messages, pending, render,
+  return { calls, invalidations, messages, pending, render, queries,
     title: (title) => find((n) => n.props?.title === title),
     button: (label) => find((n) => n.type === 'Button' && text(n) === label),
     find, nodes, setSession: (scope) => { active = scope; }, setProps: (scope) => { props = scope; },
@@ -164,4 +165,41 @@ test('Orcamento real: GET inicial atrasado não sobrescreve seleção posterior'
   h.render();
   const detailTitle = h.nodes().find((node) => node.type === 'DialogTitle' && node.children.some((child) => String(child).includes('Orçamento')));
   assert.equal(detailTitle?.children.join(''), 'Orçamento 99');
+});
+
+
+for (const method of ['update', 'cancel', 'convert']) {
+  test(`346 session rotation blocks captured ${method} before transport`, async () => {
+    const h = await mount();
+    h.setSession({ ...cpa, token: 'synthetic-old' }); h.setProps({ ...cpa, sessionToken: 'synthetic-old' });
+    h.render(); h.render(); let click;
+    if (method === 'update') { h.title('Editar').props.onClick(); h.render(); click = h.button('Salvar orçamento').props.onClick; }
+    if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find(n => typeof n.props.onConfirm === 'function').props.onConfirm; }
+    if (method === 'convert') {
+      await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render();
+      h.nodes().filter(n => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
+      h.render(); click = h.button('Criar pedido').props.onClick;
+    }
+    const previous = h.calls.length;
+    h.setSession({ ...cpa, token: 'synthetic-new' });
+    await click();
+    assert.equal(h.calls.length, previous, 'no request from a previous session');
+  });
+}
+
+test('346 response after session revocation cannot close draft or report successful save', async () => {
+  const h = await mount(); h.setSession({ ...cpa, token: 'synthetic-old' });
+  h.setProps({ ...cpa, sessionToken: 'synthetic-old' }); h.render(); h.render();
+  h.title('Editar').props.onClick(); h.render(); h.pending.update = deferred();
+  const result = h.button('Salvar orçamento').props.onClick(); h.setSession(null);
+  h.pending.update.resolve(row()); await result;
+  assert.equal(h.invalidations.length, 0); assert.equal(h.messages.length, 0);
+});
+
+test('346 quote query keys separate actor and session without embedding credentials', async () => {
+  const h = await mount(); h.setSession({ ...cpa, token: 'synthetic-secret' });
+  h.setProps({ ...cpa, sessionToken: 'synthetic-secret' }); h.render();
+  const keys = h.queries.slice(-2);
+  assert.ok(keys.every(key => key.includes(cpa.actorId)));
+  assert.ok(keys.every(key => !JSON.stringify(key).includes('synthetic-secret')));
 });

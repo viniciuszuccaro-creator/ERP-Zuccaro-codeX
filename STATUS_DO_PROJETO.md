@@ -1,3 +1,38 @@
+## #346 — ações de Orçamento vinculadas à sessão (2026-10-23)
+
+Nova ordem346→348→347 recebida/ACEITO na issue346 pelo Codespace único
+potential-xylophone-5gj7r9v9qqg637vxp, branch PR342, base312295c1 após FF
+exclusivamente documental com checkout limpo. Produto04f644a1 não alterado.
+Reserva: OrcamentosTab.jsx e teste comportamental existente + continuidade.
+
+Defeito reproduzido: ações abertas não capturavam token, e consultas não incluíam
+ator/sessão. Cinco cenários adicionados: antes8 PASS/4 FAIL (revogação total já
+bloqueava); depois12 PASS/0 FAIL/0 SKIP. Editar/cancelar/converter capturados em
+sessão anterior não chamam transporte; resposta tardia não fecha nem anuncia
+sucesso. renderedScope passa a capturar sessão; geração opaca em memória separa
+cache por sessão/remount, sem credenciais em queryKey; ator incluído nos mestres
+e listagem. Troca de sessão invalida ações/formulários como troca de tenant.
+
+Reutilizados gate de Orçamento e cliente HTTP existentes; serviços mantêm preço
+servidor/snapshot, vínculo ClienteEmpresa, conversão idempotente, persistência,
+auditoria e reabertura. Testes reais dos dois serviços Orçamento/Pedido (fixtures
+sintéticas) aprovados:2 arquivos PASS, exit0; não confundir essa contagem com
+casos internos. Layout, IDs e fluxos downstream preservados, sem novos serviços,
+fatores, estoque/pagamento/fiscal simulados ou mudança backend neste pacote.
+Interface implementada/testada no harness real; não é deploy/homologação visual.
+
+Audit/lint/typecheck/build exit0; lint conserva um warning preexistente de
+EntregasListagem170. Suíte completa final2197 PASS/0 FAIL/0 SKIP, exit0, pelo mecanismo suportado de
+concessão Codex (EPERM conhecido), sem mudança de baseline/testes/SO para verde.
+Primeira execução2196 PASS/1 FAIL: asserção estática exigia dependências antigas.
+Expectativa fortalecida para incluir sessão, preservando cobertura tenant/ator;
+policy9 PASS e repetição completa final aprovada, sem relaxar baseline/config.
+Diff-check/sanitização PASS; SHA é o commit desta seção.
+CI do SHA e retorno346 antes de passar à implementação348; nenhum writer extra.
+Rollback por revert revisado. Dados reais privados, gates operacionais e PAUSED
+mantidos. Próximo:348 agora autorizada a corrigir contrato (não repetir diagnóstico),
+depois347 com preview privado e gate visual para redesign amplo.
+
 ## Ordem atual: ciclo comercial, contrato seguro e proposta privada (2026-10-23)
 
 Base confirmada PR342:04f644a11ae360dcf9010697b87d0ec424f76698, branch codex/consolidacao-infra-20261017 sobre codex/comercial-composicao-20261017 (#334), aberta DRAFT. CI4454/run39955762072 e4455/run39955769075 completed/success. Recibo issue345#issuecomment-6365293796 confirma mesmo Codespace, HEAD local/remoto04f644a1 e checkout limpo naquele instante;2192 PASS/0 FAIL/0 SKIP, demais checks exit0. Produto345 CONCLUIDO, reserva liberada, nao refazer. Nao e inspecao direta atual do Codespace pela coordenacao nem prova de deploy/previa.

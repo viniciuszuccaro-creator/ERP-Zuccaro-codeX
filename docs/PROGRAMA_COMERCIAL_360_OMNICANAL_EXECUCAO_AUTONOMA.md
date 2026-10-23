@@ -1,5 +1,14 @@
 ## Recuperacao e evolucao com referencia externa — investigacao integrada (2026-10-23)
 
+## Fila346→348→347 — execução atual (2026-10-23)
+
+346: lacuna de sessão/cache reproduzida e corrigida no Orçamento existente,
+sem refazer Produto. Gates/HTTP/persistência atuais reutilizados; testes/resultado
+no topo de HANDOFF/STATUS.348: correção compartilhada server-side explicitamente
+autorizada, antes de remontar abas;347: prévia privada e aprovação visual própria.
+Código publicado/testado não comprova implantação ou recuperação de registros.
+
+
 ## Continuidade345/348 (2026-10-23)
 
 348 bloqueada ANTES de reexpor Relatórios: handler genérico real aceita leitura
