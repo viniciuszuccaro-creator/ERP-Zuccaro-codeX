@@ -1,3 +1,34 @@
+## #348 — gate de Relatórios bloqueado; sequência #345 liberada (2026-10-23)
+
+Executor único Codespace potential-xylophone-5gj7r9v9qqg637vxp, base3f972e4c,
+branch PR342. AGENTS/Regra-Mãe/HANDOFF/fila lidos; FF de três commits somente
+MD com checkout limpo. Nenhum pacote anterior aberto. ACEITO registrado na348.
+Busca de consumidores confirmou DashboardRepresentantes apenas importado sem
+montagem e RelatorioPersonalizado sem consumidor; sem caminho equivalente.
+
+Gate ANTES de expor falhou em prova comportamental sintética do handler REAL
+base44/functions/entityListSorted/entry.ts, transpilado sem rede com SDK fixture:
+ator sem permissões de relatório, com filtro vazio ou empresa de terceiro,
+recebe HTTP200 e consulta asServiceRole. Dois cenários confirmados, comando
+Node exit0 (diagnóstico de ausência de negação, NÃO teste de segurança aprovado).
+listOne não autoriza o ator por empresa/ação; Representante é SIMPLE_CATALOG.
+Não executar contra serviço remoto nem dados reais. Backend HTTP não oferece
+contrato específico de relatório com projeção/agregação/exportação autorizadas.
+Os componentes também usam fallback de permissão geral, cache sem ator/sessão,
+leitura limitada (backend máximo500) como total, custo/crédito/comissão e CSV sem
+neutralização de fórmulas; captura de auditoria não bloqueia exportação na falha.
+
+BLOCKED348 pelo contrato real de autorização/consulta/exportação segura, conforme
+item4 da issue: não basta remontar abas nem copiar a referência insegura.
+Nenhuma aba exposta, recurso removido ou registro recuperado. Próxima dependência:
+evoluir camada canônica de leitura/exportação com autorização de ator, Grupo/
+Empresa, projeção por campo e completude comprovável antes de ativar capacidades.
+Esse gate envolve contrato compartilhado e não é contornado por filtros frontend.
+Sem alteração runtime neste diagnóstico; diff-check/sanitização são os checks do
+lote documental, suites2186 já aprovadas não repetidas. Código348 não concluído.
+Liberada reserva dos componentes Relatórios; prosseguir345 no mesmo checkout,
+sem escritor paralelo, dados reais, deploy, migration ou ativação operacional.
+
 ## Comparacao ERP inteiro com referencia indicada pelo proprietario (2026-10-23)
 
 Referencia erp-integra-novo main37c6f7d39e60736cbb862d122de9be23c06db8f6 conferida; candidata c9f1c71c31526dd1d9795627f2fbc5cd985793ff, CI4448/4449 SUCCESS. Comparacao completa dos inventarios de codigo:953 versus1426 arquivos;99 blobs iguais,456 paths alterados,398 exclusivos referencia,871 exclusivos candidata; paginas25 versus46. Leitura60 arquivos, incluindo todas as25 entradas referencia e22 homonimas candidata. Nao equivale a auditoria de cada botao/fluxo nem a prova de funcionamento. Matriz de25 entradas e classes/prioridades integradas ao programa existente, issue347 ampliada, sem novo plano.
